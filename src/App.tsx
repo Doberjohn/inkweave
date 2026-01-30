@@ -1,8 +1,9 @@
 import { useMemo } from "react";
-import { useSynergyFinder, useDeckBuilder } from "./hooks";
-import { Header, CardList, SynergyResults, DeckPanel, ErrorBoundary, CardPreviewProvider, CardPreviewPopover } from "./components";
-import { COLORS, LAYOUT } from "./constants/theme";
-import { filterCards } from "./data/loader";
+import { CardList, CardPreviewProvider, CardPreviewPopover, filterCards } from "./features/cards";
+import { useSynergyFinder, SynergyResults } from "./features/synergies";
+import { useDeckBuilder, DeckPanel } from "./features/deck";
+import { Header, ErrorBoundary } from "./shared/components";
+import { COLORS, LAYOUT } from "./shared/constants/theme";
 
 function SynergyFinderApp() {
   const {
