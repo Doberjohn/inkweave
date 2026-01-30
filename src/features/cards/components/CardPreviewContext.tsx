@@ -4,11 +4,12 @@ import type { LorcanaCard } from "../types";
 interface CardPreviewState {
   card: LorcanaCard | null;
   position: { x: number; y: number };
+  isTouchMode: boolean;
 }
 
 interface CardPreviewContextValue {
   previewState: CardPreviewState;
-  showPreview: (card: LorcanaCard, x: number, y: number) => void;
+  showPreview: (card: LorcanaCard, x: number, y: number, isTouchMode?: boolean) => void;
   updatePosition: (x: number, y: number) => void;
   hidePreview: () => void;
 }
@@ -19,10 +20,11 @@ export function CardPreviewProvider({ children }: { children: ReactNode }) {
   const [previewState, setPreviewState] = useState<CardPreviewState>({
     card: null,
     position: { x: 0, y: 0 },
+    isTouchMode: false,
   });
 
-  const showPreview = useCallback((card: LorcanaCard, x: number, y: number) => {
-    setPreviewState({ card, position: { x, y } });
+  const showPreview = useCallback((card: LorcanaCard, x: number, y: number, isTouchMode = false) => {
+    setPreviewState({ card, position: { x, y }, isTouchMode });
   }, []);
 
   const updatePosition = useCallback((x: number, y: number) => {
@@ -30,7 +32,7 @@ export function CardPreviewProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const hidePreview = useCallback(() => {
-    setPreviewState({ card: null, position: { x: 0, y: 0 } });
+    setPreviewState({ card: null, position: { x: 0, y: 0 }, isTouchMode: false });
   }, []);
 
   return (

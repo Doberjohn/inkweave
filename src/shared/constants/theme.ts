@@ -100,3 +100,27 @@ export const COLORS = {
 
 // All inks for iteration
 export const ALL_INKS: Ink[] = ["Amber", "Amethyst", "Emerald", "Ruby", "Sapphire", "Steel"];
+
+// Breakpoints for responsive design
+export const BREAKPOINTS = {
+  mobile: 480,
+  tablet: 768,
+  desktop: 1024,
+} as const;
+
+// Mobile-specific layout constants
+export const LAYOUT_MOBILE = {
+  headerHeight: 56,
+  bottomNavHeight: 56,
+  cardTileImageWidth: 48,
+  cardTileImageHeight: 67,
+} as const;
+
+// Z-index scale for layering
+export const Z_INDEX = {
+  mobileNav: 900,
+  modalBackdrop: 999,
+  modal: 1000,
+  popoverBackdrop: 1099,
+  popover: 1100,
+} as const;

@@ -1,5 +1,6 @@
 import type { LorcanaCard } from "../../cards/types";
 import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT } from "../../../shared/constants/theme";
+import { CardImage } from "../../../shared/components";
 
 interface CardDetailProps {
   card: LorcanaCard;
@@ -21,17 +22,16 @@ export function CardDetail({ card, onClear }: CardDetailProps) {
         gap: `${SPACING.xl}px`,
       }}
     >
-      {card.imageUrl && (
-        <img
-          src={card.imageUrl}
-          alt=""
-          style={{
-            width: `${LAYOUT.selectedCardImageWidth}px`,
-            borderRadius: `${RADIUS.lg}px`,
-            flexShrink: 0,
-          }}
-        />
-      )}
+      <CardImage
+        src={card.imageUrl}
+        alt=""
+        width={LAYOUT.selectedCardImageWidth}
+        height={Math.round(LAYOUT.selectedCardImageWidth * 1.4)}
+        inkColor={card.ink}
+        cost={card.cost}
+        lazy={false}
+        borderRadius={RADIUS.lg}
+      />
       <div style={{ flex: 1 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>

@@ -1,7 +1,9 @@
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import type { LorcanaCard } from "../types";
 import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, LAYOUT } from "../../../shared/constants/theme";
+import { CardImage } from "../../../shared/components";
 import { useCardPreview } from "./CardPreviewContext";
+import { useTouchPreview } from "../../../shared/hooks/useTouchPreview";
 
 interface CardTileProps {
   card: LorcanaCard;
@@ -13,7 +15,6 @@ interface CardTileProps {
 
 export function CardTile({ card, onClick, isSelected, onAddToDeck, deckQuantity = 0 }: CardTileProps) {
   const colors = INK_COLORS[card.ink];
-  const [imgError, setImgError] = useState(false);
   const { showPreview, updatePosition, hidePreview } = useCardPreview();
 
   const handleMouseEnter = useCallback(
@@ -34,12 +35,22 @@ export function CardTile({ card, onClick, isSelected, onAddToDeck, deckQuantity 
     hidePreview();
   }, [hidePreview]);
 
+  // Touch support for mobile
+  const { touchHandlers } = useTouchPreview({
+    onLongPress: () => {
+      showPreview(card, 0, 0, true); // isTouchMode = true, position ignored for centered modal
+    },
+    onTap: onClick,
+    onTouchEnd: hidePreview,
+  });
+
   return (
     <button
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      {...touchHandlers}
       aria-pressed={isSelected}
       style={{
         display: "flex",
@@ -58,36 +69,16 @@ export function CardTile({ card, onClick, isSelected, onAddToDeck, deckQuantity 
         alignItems: "center",
       }}
     >
-      {card.imageUrl && !imgError ? (
-        <img
-          src={card.imageUrl}
-          alt=""
-          onError={() => setImgError(true)}
-          style={{
-            width: `${LAYOUT.cardTileImageWidth}px`,
-            height: `${LAYOUT.cardTileImageHeight}px`,
-            borderRadius: `${RADIUS.sm}px`,
-            objectFit: "cover",
-          }}
-        />
-      ) : (
-        <div
-          style={{
-            width: `${LAYOUT.cardTileImageWidth}px`,
-            height: `${LAYOUT.cardTileImageHeight}px`,
-            borderRadius: `${RADIUS.sm}px`,
-            background: colors.bg,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: `${FONT_SIZES.lg}px`,
-            fontWeight: 600,
-            color: colors.text,
-          }}
-        >
-          {card.cost}
-        </div>
-      )}
+      <CardImage
+        src={card.imageUrl}
+        alt=""
+        width={LAYOUT.cardTileImageWidth}
+        height={LAYOUT.cardTileImageHeight}
+        inkColor={card.ink}
+        cost={card.cost}
+        lazy={true}
+        borderRadius={RADIUS.sm}
+      />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{

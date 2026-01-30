@@ -1,15 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { LorcanaCard, Ink, CardType } from "../types";
 import type { CardFilterOptions } from "../loader";
 import { CardTile } from "./CardTile";
 import { LoadingSpinner } from "../../../shared/components/LoadingSpinner";
-import { INK_COLORS, ALL_INKS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT } from "../../../shared/constants/theme";
+import { FilterDrawer } from "../../../shared/components/FilterDrawer";
+import { INK_COLORS, ALL_INKS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, LAYOUT_MOBILE } from "../../../shared/constants/theme";
+import { isCardType } from "../utils/typeGuards";
 
 const CARD_TYPES: CardType[] = ["Character", "Action", "Item", "Location"];
-
-function isCardType(value: unknown): value is CardType {
-  return typeof value === "string" && CARD_TYPES.includes(value as CardType);
-}
 const COST_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 interface CardListProps {
@@ -28,6 +26,7 @@ interface CardListProps {
   onCardSelect: (card: LorcanaCard) => void;
   onAddToDeck?: (card: LorcanaCard) => boolean;
   getCardQuantity?: (cardId: string) => number;
+  isMobile?: boolean;
 }
 
 export function CardList({
@@ -46,12 +45,20 @@ export function CardList({
   onCardSelect,
   onAddToDeck,
   getCardQuantity,
+  isMobile = false,
 }: CardListProps) {
   const [showMoreFilters, setShowMoreFilters] = useState(false);
-  const displayedCards = cards.slice(0, LAYOUT.maxDisplayedCards);
+  const [showFilterDrawer, setShowFilterDrawer] = useState(false);
+
+  // Memoize the sliced array to avoid creating new array on every render
+  const displayedCards = useMemo(
+    () => cards.slice(0, LAYOUT.maxDisplayedCards),
+    [cards]
+  );
 
   const selectedType = isCardType(filters.type) ? filters.type : undefined;
   const activeFilterCount = [
+    inkFilter !== "all",
     filters.type,
     filters.minCost !== undefined,
     filters.maxCost !== undefined,
@@ -76,6 +83,144 @@ export function CardList({
     onSearchChange("");
   };
 
+  // Mobile layout
+  if (isMobile) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          height: `calc(100vh - ${LAYOUT_MOBILE.headerHeight}px - ${LAYOUT_MOBILE.bottomNavHeight}px)`,
+          background: COLORS.white,
+        }}
+      >
+        {isLoading ? (
+          <div style={{ padding: `${SPACING.lg}px` }}>
+            <LoadingSpinner />
+          </div>
+        ) : (
+          <>
+            {/* Mobile Search Header */}
+            <div
+              style={{
+                padding: `${SPACING.md}px ${SPACING.lg}px`,
+                background: COLORS.white,
+                borderBottom: `1px solid ${COLORS.gray200}`,
+                position: "sticky",
+                top: 0,
+                zIndex: 10,
+              }}
+            >
+              <div style={{ display: "flex", gap: `${SPACING.md}px` }}>
+                <input
+                  type="text"
+                  placeholder="Search cards..."
+                  value={searchQuery}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: "12px 16px",
+                    borderRadius: `${RADIUS.lg}px`,
+                    border: `1px solid ${COLORS.gray200}`,
+                    fontSize: "16px", // Prevent iOS zoom
+                    boxSizing: "border-box",
+                  }}
+                />
+                <button
+                  onClick={() => setShowFilterDrawer(true)}
+                  style={{
+                    width: "48px",
+                    height: "48px",
+                    borderRadius: `${RADIUS.lg}px`,
+                    border: `1px solid ${COLORS.gray200}`,
+                    background: activeFilterCount > 0 ? COLORS.primary100 : COLORS.white,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    position: "relative",
+                    flexShrink: 0,
+                  }}
+                  aria-label={`Filters${activeFilterCount > 0 ? ` (${activeFilterCount} active)` : ""}`}
+                >
+                  <FilterIcon color={activeFilterCount > 0 ? COLORS.primary600 : COLORS.gray600} />
+                  {activeFilterCount > 0 && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "-4px",
+                        right: "-4px",
+                        background: COLORS.primary600,
+                        color: COLORS.white,
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "50%",
+                        fontSize: `${FONT_SIZES.xs}px`,
+                        fontWeight: 600,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+              <p
+                style={{
+                  fontSize: `${FONT_SIZES.sm}px`,
+                  color: COLORS.gray400,
+                  marginTop: `${SPACING.sm}px`,
+                  marginBottom: 0,
+                }}
+              >
+                {displayedCards.length} of {cards.length} cards
+              </p>
+            </div>
+
+            {/* Card List */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: `${SPACING.md}px`,
+              }}
+            >
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {displayedCards.map((card) => (
+                  <CardTile
+                    key={card.id}
+                    card={card}
+                    onClick={() => onCardSelect(card)}
+                    isSelected={selectedCard?.id === card.id}
+                    onAddToDeck={onAddToDeck}
+                    deckQuantity={getCardQuantity?.(card.id) ?? 0}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Filter Drawer */}
+            <FilterDrawer
+              isOpen={showFilterDrawer}
+              onClose={() => setShowFilterDrawer(false)}
+              inkFilter={inkFilter}
+              filters={filters}
+              uniqueKeywords={uniqueKeywords}
+              uniqueClassifications={uniqueClassifications}
+              uniqueSets={uniqueSets}
+              onInkFilterChange={onInkFilterChange}
+              onFiltersChange={onFiltersChange}
+              onClearAll={clearAllFilters}
+            />
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop layout
   return (
     <div
       style={{
@@ -337,6 +482,14 @@ const selectStyle: React.CSSProperties = {
   background: COLORS.white,
   cursor: "pointer",
 };
+
+function FilterIcon({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+    </svg>
+  );
+}
 
 function FilterButton({
   active,

@@ -1,8 +1,10 @@
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import type { LorcanaCard } from "../../cards/types";
 import type { SynergyStrength } from "../types";
 import { INK_COLORS, STRENGTH_STYLES, COLORS, FONT_SIZES, RADIUS, LAYOUT } from "../../../shared/constants/theme";
+import { CardImage } from "../../../shared/components";
 import { useCardPreview } from "../../cards";
+import { useTouchPreview } from "../../../shared/hooks/useTouchPreview";
 
 interface SynergyCardProps {
   card: LorcanaCard;
@@ -15,7 +17,6 @@ interface SynergyCardProps {
 export function SynergyCard({ card, strength, explanation, onAddToDeck, deckQuantity = 0 }: SynergyCardProps) {
   const colors = INK_COLORS[card.ink];
   const strengthStyle = STRENGTH_STYLES[strength];
-  const [imgError, setImgError] = useState(false);
   const { showPreview, updatePosition, hidePreview } = useCardPreview();
 
   const handleMouseEnter = useCallback(
@@ -36,11 +37,20 @@ export function SynergyCard({ card, strength, explanation, onAddToDeck, deckQuan
     hidePreview();
   }, [hidePreview]);
 
+  // Touch support for mobile
+  const { touchHandlers } = useTouchPreview({
+    onLongPress: () => {
+      showPreview(card, 0, 0, true); // isTouchMode = true
+    },
+    onTouchEnd: hidePreview,
+  });
+
   return (
     <div
       onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      {...touchHandlers}
       style={{
         display: "flex",
         gap: "12px",
@@ -50,37 +60,16 @@ export function SynergyCard({ card, strength, explanation, onAddToDeck, deckQuan
         background: COLORS.white,
       }}
     >
-      {card.imageUrl && !imgError ? (
-        <img
-          src={card.imageUrl}
-          alt=""
-          onError={() => setImgError(true)}
-          style={{
-            width: `${LAYOUT.synergyCardImageWidth}px`,
-            height: `${LAYOUT.synergyCardImageHeight}px`,
-            borderRadius: `${RADIUS.sm}px`,
-            objectFit: "cover",
-            flexShrink: 0,
-          }}
-        />
-      ) : (
-        <div
-          style={{
-            width: `${LAYOUT.synergyCardImageWidth}px`,
-            height: `${LAYOUT.synergyCardImageHeight}px`,
-            borderRadius: `${RADIUS.sm}px`,
-            background: colors.bg,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <span style={{ fontSize: "18px", fontWeight: 600, color: colors.text }}>
-            {card.cost}
-          </span>
-        </div>
-      )}
+      <CardImage
+        src={card.imageUrl}
+        alt=""
+        width={LAYOUT.synergyCardImageWidth}
+        height={LAYOUT.synergyCardImageHeight}
+        inkColor={card.ink}
+        cost={card.cost}
+        lazy={true}
+        borderRadius={RADIUS.sm}
+      />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{

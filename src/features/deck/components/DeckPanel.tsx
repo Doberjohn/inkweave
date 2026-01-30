@@ -2,7 +2,7 @@ import { useState, useMemo, useRef } from "react";
 import type { LorcanaCard } from "../../cards/types";
 import type { Deck, DeckStats as DeckStatsType } from "../types";
 import type { DeckSuggestion, DeckSynergyAnalysis as DeckSynergyAnalysisType } from "../hooks/useDeckBuilder";
-import { COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT } from "../../../shared/constants/theme";
+import { COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, LAYOUT_MOBILE } from "../../../shared/constants/theme";
 import { DeckCardRow } from "./DeckCardRow";
 import { DeckStats } from "./DeckStats";
 import { DeckSuggestions } from "./DeckSuggestions";
@@ -27,6 +27,7 @@ interface DeckPanelProps {
   getSavedDecks: () => Deck[];
   onExportDeck: () => string;
   onImportDeck: (json: string) => boolean;
+  isMobile?: boolean;
 }
 
 export function DeckPanel({
@@ -47,13 +48,20 @@ export function DeckPanel({
   getSavedDecks,
   onExportDeck,
   onImportDeck,
+  isMobile = false,
 }: DeckPanelProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(deck.name);
   const [showLoadModal, setShowLoadModal] = useState(false);
-  const [statsCollapsed, setStatsCollapsed] = useState(false);
-  const [analysisCollapsed, setAnalysisCollapsed] = useState(false);
-  const [suggestionsCollapsed, setSuggestionsCollapsed] = useState(true);
+  // Consolidated state for collapsible sections
+  const [collapsed, setCollapsed] = useState({
+    stats: false,
+    analysis: false,
+    suggestions: true,
+  });
+  const toggleSection = (section: keyof typeof collapsed) => {
+    setCollapsed((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sort deck cards by cost, then name
@@ -79,7 +87,8 @@ export function DeckPanel({
     a.href = url;
     a.download = `${deck.name.replace(/[^a-z0-9]/gi, "-")}.json`;
     a.click();
-    URL.revokeObjectURL(url);
+    // Delay URL revocation to ensure download has started
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const handleImportClick = () => {
@@ -89,6 +98,13 @@ export function DeckPanel({
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Validate file extension
+    if (!file.name.toLowerCase().endsWith(".json")) {
+      alert("Please select a JSON file.");
+      e.target.value = "";
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -114,12 +130,14 @@ export function DeckPanel({
   return (
     <div
       style={{
-        width: `${LAYOUT.deckPanelWidth}px`,
+        width: isMobile ? "100%" : `${LAYOUT.deckPanelWidth}px`,
         background: COLORS.white,
-        borderLeft: `1px solid ${COLORS.gray200}`,
+        borderLeft: isMobile ? "none" : `1px solid ${COLORS.gray200}`,
         display: "flex",
         flexDirection: "column",
-        height: `calc(100vh - ${LAYOUT.headerHeight}px)`,
+        height: isMobile
+          ? `calc(100vh - ${LAYOUT_MOBILE.headerHeight}px - ${LAYOUT_MOBILE.bottomNavHeight}px)`
+          : `calc(100vh - ${LAYOUT.headerHeight}px)`,
       }}
     >
       {/* Header */}
@@ -304,16 +322,16 @@ export function DeckPanel({
       >
         <DeckStats
           stats={deckStats}
-          collapsed={statsCollapsed}
-          onToggleCollapse={() => setStatsCollapsed(!statsCollapsed)}
+          collapsed={collapsed.stats}
+          onToggleCollapse={() => toggleSection("stats")}
         />
 
         {synergyAnalysis.cardSynergies.length > 0 && (
           <DeckSynergyAnalysis
             analysis={synergyAnalysis}
             onRemoveCard={onRemoveAllCopies}
-            collapsed={analysisCollapsed}
-            onToggleCollapse={() => setAnalysisCollapsed(!analysisCollapsed)}
+            collapsed={collapsed.analysis}
+            onToggleCollapse={() => toggleSection("analysis")}
           />
         )}
 
@@ -321,8 +339,8 @@ export function DeckPanel({
           <DeckSuggestions
             suggestions={suggestions}
             onAddCard={onAddCard}
-            collapsed={suggestionsCollapsed}
-            onToggleCollapse={() => setSuggestionsCollapsed(!suggestionsCollapsed)}
+            collapsed={collapsed.suggestions}
+            onToggleCollapse={() => toggleSection("suggestions")}
           />
         )}
       </div>

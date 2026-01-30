@@ -1,7 +1,10 @@
-import { useState, useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import type { LorcanaCard } from "../../cards/types";
-import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING } from "../../../shared/constants/theme";
+import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT } from "../../../shared/constants/theme";
+import { CardImage } from "../../../shared/components";
 import { useCardPreview } from "../../cards";
+import { useTouchPreview } from "../../../shared/hooks/useTouchPreview";
+import { useResponsive } from "../../../shared/hooks/useResponsive";
 
 interface DeckCardRowProps {
   card: LorcanaCard;
@@ -11,6 +14,12 @@ interface DeckCardRowProps {
   onRemoveAll: () => void;
 }
 
+// Minimum touch target size for mobile
+const TOUCH_TARGET_SIZE = 44;
+const DESKTOP_BUTTON_SIZE = 28;
+const DESKTOP_REMOVE_SIZE = 24;
+const MOBILE_REMOVE_SIZE = 36;
+
 export function DeckCardRow({
   card,
   quantity,
@@ -19,8 +28,8 @@ export function DeckCardRow({
   onRemoveAll,
 }: DeckCardRowProps) {
   const colors = INK_COLORS[card.ink];
-  const [imgError, setImgError] = useState(false);
   const { showPreview, updatePosition, hidePreview } = useCardPreview();
+  const { isMobile } = useResponsive();
 
   const handleMouseEnter = useCallback(
     (e: React.MouseEvent) => {
@@ -40,55 +49,56 @@ export function DeckCardRow({
     hidePreview();
   }, [hidePreview]);
 
+  // Touch support for mobile
+  const { touchHandlers } = useTouchPreview({
+    onLongPress: () => {
+      showPreview(card, 0, 0, true);
+    },
+    onTouchEnd: hidePreview,
+  });
+
   const totalCost = card.cost * quantity;
+
+  // Memoize derived sizing values to avoid recalculating on every render
+  const { buttonSize, removeButtonSize, buttonFontSize, removeFontSize, quantityMinWidth, rowPadding } = useMemo(
+    () => ({
+      buttonSize: isMobile ? TOUCH_TARGET_SIZE : DESKTOP_BUTTON_SIZE,
+      removeButtonSize: isMobile ? MOBILE_REMOVE_SIZE : DESKTOP_REMOVE_SIZE,
+      buttonFontSize: `${isMobile ? FONT_SIZES.xl : FONT_SIZES.lg}px`,
+      removeFontSize: `${isMobile ? FONT_SIZES.xl : FONT_SIZES.base}px`,
+      quantityMinWidth: isMobile ? 28 : 20,
+      rowPadding: isMobile ? `${SPACING.md}px` : `${SPACING.sm}px ${SPACING.md}px`,
+    }),
+    [isMobile]
+  );
 
   return (
     <div
       onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      {...touchHandlers}
       style={{
         display: "flex",
         alignItems: "center",
         gap: `${SPACING.md}px`,
-        padding: `${SPACING.sm}px ${SPACING.md}px`,
+        padding: rowPadding,
         borderRadius: `${RADIUS.lg}px`,
         background: COLORS.white,
         border: `1px solid ${colors.border}30`,
       }}
     >
       {/* Card thumbnail */}
-      {card.imageUrl && !imgError ? (
-        <img
-          src={card.imageUrl}
-          alt=""
-          onError={() => setImgError(true)}
-          style={{
-            width: 40,
-            height: 56,
-            borderRadius: `${RADIUS.sm}px`,
-            objectFit: "cover",
-            flexShrink: 0,
-          }}
-        />
-      ) : (
-        <div
-          style={{
-            width: 40,
-            height: 56,
-            borderRadius: `${RADIUS.sm}px`,
-            background: colors.bg,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <span style={{ fontSize: `${FONT_SIZES.lg}px`, fontWeight: 600, color: colors.text }}>
-            {card.cost}
-          </span>
-        </div>
-      )}
+      <CardImage
+        src={card.imageUrl}
+        alt=""
+        width={LAYOUT.cardTileImageWidth}
+        height={LAYOUT.cardTileImageHeight}
+        inkColor={card.ink}
+        cost={card.cost}
+        lazy={true}
+        borderRadius={RADIUS.sm}
+      />
 
       {/* Card info */}
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -135,8 +145,8 @@ export function DeckCardRow({
           }}
           aria-label={`Remove one copy of ${card.name}`}
           style={{
-            width: 28,
-            height: 28,
+            width: buttonSize,
+            height: buttonSize,
             borderRadius: `${RADIUS.md}px`,
             border: `1px solid ${COLORS.gray300}`,
             background: COLORS.white,
@@ -144,7 +154,7 @@ export function DeckCardRow({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: `${FONT_SIZES.lg}px`,
+            fontSize: buttonFontSize,
             color: COLORS.gray600,
           }}
           title="Remove one"
@@ -154,10 +164,10 @@ export function DeckCardRow({
 
         <span
           style={{
-            fontSize: `${FONT_SIZES.lg}px`,
+            fontSize: buttonFontSize,
             fontWeight: 600,
             color: COLORS.gray800,
-            minWidth: 20,
+            minWidth: quantityMinWidth,
             textAlign: "center",
           }}
         >
@@ -172,8 +182,8 @@ export function DeckCardRow({
           disabled={quantity >= 4}
           aria-label={quantity >= 4 ? `Maximum 4 copies of ${card.name}` : `Add one copy of ${card.name}`}
           style={{
-            width: 28,
-            height: 28,
+            width: buttonSize,
+            height: buttonSize,
             borderRadius: `${RADIUS.md}px`,
             border: `1px solid ${quantity >= 4 ? COLORS.gray200 : COLORS.gray300}`,
             background: COLORS.white,
@@ -181,7 +191,7 @@ export function DeckCardRow({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: `${FONT_SIZES.lg}px`,
+            fontSize: buttonFontSize,
             color: quantity >= 4 ? COLORS.gray400 : COLORS.gray600,
           }}
           title={quantity >= 4 ? "Maximum 4 copies" : "Add one"}
@@ -216,8 +226,8 @@ export function DeckCardRow({
         }}
         aria-label={`Remove all copies of ${card.name} from deck`}
         style={{
-          width: 24,
-          height: 24,
+          width: removeButtonSize,
+          height: removeButtonSize,
           borderRadius: "50%",
           border: "none",
           background: COLORS.gray100,
@@ -225,7 +235,7 @@ export function DeckCardRow({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: `${FONT_SIZES.base}px`,
+          fontSize: removeFontSize,
           color: COLORS.gray500,
           flexShrink: 0,
         }}

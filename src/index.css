@@ -63,3 +63,43 @@ input {
     transform: rotate(360deg);
   }
 }
+
+/* Mobile-specific styles */
+@media (max-width: 767px) {
+  /* Prevent pull-to-refresh on mobile */
+  body {
+    overscroll-behavior-y: contain;
+  }
+
+  /* Smooth touch scrolling */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent text selection on long press for interactive elements */
+  button,
+  a,
+  [role="button"] {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* Remove tap highlight on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Ensure inputs don't zoom on focus (iOS) */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Touch target minimum size utility */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}

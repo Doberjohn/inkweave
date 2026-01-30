@@ -1,21 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { SynergyEngine } from "./SynergyEngine";
-import type { LorcanaCard } from "../../cards/types";
-import type { SynergyRule } from "../types";
-
-// Helper to create mock cards
-function createCard(overrides: Partial<LorcanaCard>): LorcanaCard {
-  return {
-    id: "test-1",
-    name: "Test Card",
-    fullName: "Test Card - Version",
-    cost: 3,
-    ink: "Amber",
-    inkwell: true,
-    type: "Character",
-    ...overrides,
-  };
-}
+import { SynergyEngine } from "../SynergyEngine";
+import type { SynergyRule } from "../../types";
+import { createCard } from "../../../../shared/test-utils/factories";
 
 describe("SynergyEngine", () => {
   describe("findSynergies", () => {

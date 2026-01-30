@@ -1,21 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { getRuleById } from "./rules";
-import { hasNegativeTargeting, hasPositiveClassificationEffect } from "../../cards";
-import type { LorcanaCard } from "../../cards/types";
-
-// Helper to create mock cards
-function createCard(overrides: Partial<LorcanaCard>): LorcanaCard {
-  return {
-    id: "test-1",
-    name: "Test Card",
-    fullName: "Test Card - Version",
-    cost: 3,
-    ink: "Amber",
-    inkwell: true,
-    type: "Character",
-    ...overrides,
-  };
-}
+import { getRuleById } from "../rules";
+import { hasNegativeTargeting, hasPositiveClassificationEffect } from "../../../cards";
+import { createCard } from "../../../../shared/test-utils/factories";
 
 describe("Synergy Rules", () => {
   describe("Princess Tribal", () => {

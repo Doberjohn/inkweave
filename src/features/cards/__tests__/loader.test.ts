@@ -5,22 +5,9 @@ import {
   getUniqueKeywords,
   getUniqueClassifications,
   getUniqueSets,
-} from "./loader";
-import type { LorcanaCard } from "./types";
-
-// Helper to create mock cards
-function createCard(overrides: Partial<LorcanaCard>): LorcanaCard {
-  return {
-    id: "test-1",
-    name: "Test Card",
-    fullName: "Test Card - Version",
-    cost: 3,
-    ink: "Amber",
-    inkwell: true,
-    type: "Character",
-    ...overrides,
-  };
-}
+} from "../loader";
+import type { LorcanaCard } from "../types";
+import { createCard } from "../../../shared/test-utils/factories";
 
 describe("Card Search", () => {
   const cards: LorcanaCard[] = [

@@ -1,5 +1,6 @@
 import type { Deck } from "../types";
-import { COLORS, FONT_SIZES, RADIUS, SPACING } from "../../../shared/constants/theme";
+import { COLORS, FONT_SIZES, RADIUS, SPACING, Z_INDEX } from "../../../shared/constants/theme";
+import { useResponsive } from "../../../shared/hooks/useResponsive";
 
 interface SavedDecksModalProps {
   decks: Deck[];
@@ -10,6 +11,8 @@ interface SavedDecksModalProps {
 }
 
 export function SavedDecksModal({ decks, isOpen, onClose, onLoad, onDelete }: SavedDecksModalProps) {
+  const { isMobile } = useResponsive();
+
   if (!isOpen) return null;
 
   const formatDate = (timestamp: number) => {
@@ -33,9 +36,9 @@ export function SavedDecksModal({ decks, isOpen, onClose, onLoad, onDelete }: Sa
         inset: 0,
         background: "rgba(0, 0, 0, 0.5)",
         display: "flex",
-        alignItems: "center",
+        alignItems: isMobile ? "flex-end" : "center",
         justifyContent: "center",
-        zIndex: 1000,
+        zIndex: Z_INDEX.modal,
       }}
       onClick={onClose}
     >
@@ -45,13 +48,14 @@ export function SavedDecksModal({ decks, isOpen, onClose, onLoad, onDelete }: Sa
         aria-labelledby="saved-decks-title"
         style={{
           background: COLORS.white,
-          borderRadius: `${RADIUS.xl}px`,
+          borderRadius: isMobile ? `${RADIUS.xl}px ${RADIUS.xl}px 0 0` : `${RADIUS.xl}px`,
           width: "100%",
-          maxWidth: 400,
-          maxHeight: "80vh",
+          maxWidth: isMobile ? "100%" : 400,
+          maxHeight: isMobile ? "90vh" : "80vh",
           display: "flex",
           flexDirection: "column",
           boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+          paddingBottom: isMobile ? "env(safe-area-inset-bottom)" : 0,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -79,8 +83,8 @@ export function SavedDecksModal({ decks, isOpen, onClose, onLoad, onDelete }: Sa
           <button
             onClick={onClose}
             style={{
-              width: 28,
-              height: 28,
+              width: isMobile ? 44 : 28,
+              height: isMobile ? 44 : 28,
               borderRadius: "50%",
               border: "none",
               background: COLORS.gray100,
@@ -88,7 +92,7 @@ export function SavedDecksModal({ decks, isOpen, onClose, onLoad, onDelete }: Sa
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: `${FONT_SIZES.lg}px`,
+              fontSize: isMobile ? `${FONT_SIZES.xxl}px` : `${FONT_SIZES.lg}px`,
               color: COLORS.gray600,
             }}
           >
@@ -202,14 +206,15 @@ export function SavedDecksModal({ decks, isOpen, onClose, onLoad, onDelete }: Sa
                         onClick={() => onLoad(deck.id)}
                         style={{
                           flex: 1,
-                          padding: `${SPACING.sm}px`,
+                          padding: isMobile ? `${SPACING.md}px` : `${SPACING.sm}px`,
                           background: COLORS.primary600,
                           color: COLORS.white,
                           border: "none",
                           borderRadius: `${RADIUS.md}px`,
                           cursor: "pointer",
-                          fontSize: `${FONT_SIZES.sm}px`,
+                          fontSize: isMobile ? `${FONT_SIZES.base}px` : `${FONT_SIZES.sm}px`,
                           fontWeight: 500,
+                          minHeight: isMobile ? 44 : "auto",
                         }}
                       >
                         Load
@@ -221,14 +226,15 @@ export function SavedDecksModal({ decks, isOpen, onClose, onLoad, onDelete }: Sa
                           }
                         }}
                         style={{
-                          padding: `${SPACING.sm}px ${SPACING.md}px`,
+                          padding: isMobile ? `${SPACING.md}px ${SPACING.lg}px` : `${SPACING.sm}px ${SPACING.md}px`,
                           background: COLORS.white,
                           color: COLORS.error,
                           border: `1px solid ${COLORS.gray300}`,
                           borderRadius: `${RADIUS.md}px`,
                           cursor: "pointer",
-                          fontSize: `${FONT_SIZES.sm}px`,
+                          fontSize: isMobile ? `${FONT_SIZES.base}px` : `${FONT_SIZES.sm}px`,
                           fontWeight: 500,
+                          minHeight: isMobile ? 44 : "auto",
                         }}
                       >
                         Delete

@@ -3,7 +3,7 @@ import type { GroupedSynergies } from "../types";
 import { CardDetail } from "./CardDetail";
 import { SynergyGroup } from "./SynergyGroup";
 import { EmptyState } from "../../../shared/components/EmptyState";
-import { COLORS, FONT_SIZES, SPACING, LAYOUT } from "../../../shared/constants/theme";
+import { COLORS, FONT_SIZES, SPACING, LAYOUT, LAYOUT_MOBILE } from "../../../shared/constants/theme";
 
 interface SynergyResultsProps {
   selectedCard: LorcanaCard | null;
@@ -12,6 +12,7 @@ interface SynergyResultsProps {
   onClearSelection: () => void;
   onAddToDeck?: (card: LorcanaCard) => boolean;
   getCardQuantity?: (cardId: string) => number;
+  isMobile?: boolean;
 }
 
 export function SynergyResults({
@@ -21,14 +22,18 @@ export function SynergyResults({
   onClearSelection,
   onAddToDeck,
   getCardQuantity,
+  isMobile = false,
 }: SynergyResultsProps) {
   return (
     <div
       style={{
         flex: 1,
-        padding: `${SPACING.xl}px`,
+        padding: isMobile ? `${SPACING.md}px` : `${SPACING.xl}px`,
         overflowY: "auto",
-        maxHeight: `calc(100vh - ${LAYOUT.headerHeight}px)`,
+        maxHeight: isMobile
+          ? `calc(100vh - ${LAYOUT_MOBILE.headerHeight}px - ${LAYOUT_MOBILE.bottomNavHeight}px)`
+          : `calc(100vh - ${LAYOUT.headerHeight}px)`,
+        background: isMobile ? COLORS.white : undefined,
       }}
     >
       {!selectedCard ? (
