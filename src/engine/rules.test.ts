@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { synergyRules, getRuleById } from "./rules";
+import { getRuleById } from "./rules";
 import { hasNegativeTargeting, hasPositiveClassificationEffect } from "../utils";
 import type { LorcanaCard } from "../types";
 
@@ -12,7 +12,7 @@ function createCard(overrides: Partial<LorcanaCard>): LorcanaCard {
     cost: 3,
     ink: "Amber",
     inkwell: true,
-    type: ["Character"],
+    type: "Character",
     ...overrides,
   };
 }
@@ -36,7 +36,7 @@ describe("Synergy Rules", () => {
       const princessBuff = createCard({
         id: "buff-1",
         name: "Royal Decree",
-        type: ["Action"],
+        type: "Action",
         text: "While you have a Princess character in play, this character gains Ward.",
       });
 
@@ -99,7 +99,7 @@ describe("Synergy Rules", () => {
       const princessBuff = createCard({
         id: "buff-1",
         name: "Royal Gathering",
-        type: ["Action"],
+        type: "Action",
         text: "While you have a Princess character in play, draw a card.",
       });
 
@@ -118,7 +118,7 @@ describe("Synergy Rules", () => {
       const antiVillain = createCard({
         id: "anti-1",
         name: "Hero's Strike",
-        type: ["Action"],
+        type: "Action",
         text: "Banish chosen Villain character.",
       });
 
@@ -129,7 +129,7 @@ describe("Synergy Rules", () => {
       const villainBuff = createCard({
         id: "vbuff-1",
         name: "Villain's Scheme",
-        type: ["Action"],
+        type: "Action",
         text: "Your Villain characters gain +1 lore this turn.",
       });
 
@@ -163,7 +163,7 @@ describe("Synergy Rules", () => {
       const cheapSong = createCard({
         id: "song-1",
         name: "Part of Your World",
-        type: ["Action"],
+        type: "Action",
         cost: 3,
         classifications: ["Song"],
       });
@@ -171,7 +171,7 @@ describe("Synergy Rules", () => {
       const expensiveSong = createCard({
         id: "song-2",
         name: "Powerful Song",
-        type: ["Action"],
+        type: "Action",
         cost: 7,
         classifications: ["Song"],
       });

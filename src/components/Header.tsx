@@ -28,9 +28,10 @@ export function Header({ totalCards, isLoading, gameMode, onGameModeChange }: He
           {isLoading ? "Loading..." : `${totalCards} cards loaded`}
         </p>
       </div>
-      <div style={{ display: "flex", gap: "4px" }}>
+      <div style={{ display: "flex", gap: "4px" }} role="group" aria-label="Game mode">
         <button
           onClick={() => onGameModeChange("infinity")}
+          aria-pressed={gameMode === "infinity"}
           style={{
             padding: "8px 16px",
             borderRadius: `${RADIUS.md}px`,
@@ -47,6 +48,7 @@ export function Header({ totalCards, isLoading, gameMode, onGameModeChange }: He
         </button>
         <button
           onClick={() => onGameModeChange("core")}
+          aria-pressed={gameMode === "core"}
           style={{
             padding: "8px 16px",
             borderRadius: `${RADIUS.md}px`,

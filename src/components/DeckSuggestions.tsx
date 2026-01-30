@@ -31,6 +31,7 @@ export function DeckSuggestions({
       {/* Header */}
       <button
         onClick={onToggleCollapse}
+        aria-expanded={!collapsed}
         style={{
           width: "100%",
           display: "flex",

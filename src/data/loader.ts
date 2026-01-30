@@ -110,7 +110,7 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
     cost: raw.cost,
     ink,
     inkwell: raw.inkwell,
-    type: [type],
+    type,
     classifications: classifications.length > 0 ? classifications : undefined,
     text: raw.fullText,
     strength: raw.strength,
@@ -177,7 +177,15 @@ export async function fetchCardsFromLocal(
     throw new Error(`Failed to fetch local cards: ${response.status}`);
   }
 
-  const data: LorcanaJSONData = await response.json();
+  let data: LorcanaJSONData;
+  try {
+    data = await response.json();
+  } catch (parseError) {
+    throw new Error(
+      `Failed to parse card data: ${parseError instanceof Error ? parseError.message : "Invalid JSON"}`
+    );
+  }
+
   return loadCardsFromJSON(data);
 }
 
@@ -223,7 +231,7 @@ export function filterCards(cards: LorcanaCard[], options: CardFilterOptions): L
     // Type filter
     if (options.type) {
       const types = Array.isArray(options.type) ? options.type : [options.type];
-      if (!card.type.some((t) => types.includes(t))) return false;
+      if (!types.includes(card.type)) return false;
     }
 
     // Cost range

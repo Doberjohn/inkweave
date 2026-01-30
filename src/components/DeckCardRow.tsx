@@ -133,6 +133,7 @@ export function DeckCardRow({
             e.stopPropagation();
             onDecrement();
           }}
+          aria-label={`Remove one copy of ${card.name}`}
           style={{
             width: 28,
             height: 28,
@@ -169,6 +170,7 @@ export function DeckCardRow({
             onIncrement();
           }}
           disabled={quantity >= 4}
+          aria-label={quantity >= 4 ? `Maximum 4 copies of ${card.name}` : `Add one copy of ${card.name}`}
           style={{
             width: 28,
             height: 28,
@@ -212,6 +214,7 @@ export function DeckCardRow({
           e.stopPropagation();
           onRemoveAll();
         }}
+        aria-label={`Remove all copies of ${card.name} from deck`}
         style={{
           width: 24,
           height: 24,

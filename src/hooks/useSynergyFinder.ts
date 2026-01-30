@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import type { LorcanaCard, GroupedSynergies, Ink, GameMode } from "../types";
-import { SynergyEngine } from "../engine";
+import { sharedEngine } from "../engine/shared";
 import {
   fetchCardsFromLocal,
   filterCards,
@@ -10,9 +10,6 @@ import {
   getUniqueSets,
   type CardFilterOptions,
 } from "../data/loader";
-
-// Singleton engine instance
-const engine = new SynergyEngine();
 
 export interface UseCardDataReturn {
   cards: LorcanaCard[];
@@ -75,36 +72,56 @@ export function useCardData(): UseCardDataReturn {
   };
 }
 
+/**
+ * Return type for the useSynergyFinder hook.
+ * Provides card data, filtering, selection, and synergy calculation.
+ */
 export interface UseSynergyFinderReturn {
-  // Card data
+  /** All loaded cards (unfiltered) */
   cards: LorcanaCard[];
+  /** Cards after applying search query and filters */
   filteredCards: LorcanaCard[];
+  /** True while card data is loading */
   isLoading: boolean;
+  /** Error if card loading failed, null otherwise */
   error: Error | null;
+  /** Total number of cards loaded */
   totalCards: number;
 
-  // Selection
+  /** Currently selected card for synergy analysis */
   selectedCard: LorcanaCard | null;
+  /** Select a card to see its synergies */
   selectCard: (card: LorcanaCard | null) => void;
+  /** Clear the current card selection */
   clearSelection: () => void;
 
-  // Synergies
+  /** Synergies grouped by type for the selected card */
   synergies: GroupedSynergies[];
+  /** Total count of synergistic cards found */
   totalSynergyCount: number;
 
-  // Search and filters
+  /** Current search query for card names */
   searchQuery: string;
+  /** Update the search query */
   setSearchQuery: (query: string) => void;
+  /** Current ink color filter ("all" or specific ink) */
   inkFilter: Ink | "all";
+  /** Set the ink color filter */
   setInkFilter: (ink: Ink | "all") => void;
+  /** Current game mode ("core" excludes sets 1-4, "infinity" includes all) */
   gameMode: GameMode;
+  /** Set the game mode */
   setGameMode: (mode: GameMode) => void;
+  /** Additional filter options (type, cost, keywords, etc.) */
   filters: CardFilterOptions;
+  /** Update filter options */
   setFilters: (filters: CardFilterOptions) => void;
 
-  // Metadata
+  /** All unique keywords found in the card pool */
   uniqueKeywords: string[];
+  /** All unique classifications found in the card pool */
   uniqueClassifications: string[];
+  /** All unique set codes found in the card pool */
   uniqueSets: string[];
 }
 
@@ -179,7 +196,7 @@ export function useSynergyFinder(): UseSynergyFinderReturn {
   // Calculate synergies for selected card (respects game mode)
   const synergies = useMemo(() => {
     if (!selectedCard || gameModeFilteredCards.length === 0) return [];
-    return engine.findSynergies(selectedCard, gameModeFilteredCards);
+    return sharedEngine.findSynergies(selectedCard, gameModeFilteredCards);
   }, [selectedCard, gameModeFilteredCards]);
 
   // Total synergy count
@@ -235,7 +252,7 @@ export function useSynergyFinder(): UseSynergyFinderReturn {
  */
 export function useCardPairSynergy() {
   const checkPair = useCallback((cardA: LorcanaCard, cardB: LorcanaCard) => {
-    const result = engine.checkSynergy(cardA, cardB);
+    const result = sharedEngine.checkSynergy(cardA, cardB);
     return {
       hasSynergy: result.hasSynergy,
       synergies: result.synergies,

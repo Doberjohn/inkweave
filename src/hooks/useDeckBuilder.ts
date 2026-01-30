@@ -1,13 +1,10 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { LorcanaCard, Deck, DeckCard, DeckStats, Ink, CardType, SynergyStrength } from "../types";
-import { SynergyEngine } from "../engine";
+import { sharedEngine } from "../engine/shared";
 import { ALL_INKS } from "../constants/theme";
 
 const STORAGE_KEY_DECKS = "lorcana-synergy-finder-decks";
 const STORAGE_KEY_CURRENT = "lorcana-synergy-finder-current-deck";
-
-// Singleton engine for synergy calculations
-const engine = new SynergyEngine();
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -52,9 +49,7 @@ function calculateStats(deck: Deck): DeckStats {
     const cost = Math.min(card.cost, 10); // Cap at 10+ for display
     costCurve[cost] = (costCurve[cost] || 0) + quantity;
 
-    for (const type of card.type) {
-      typeDistribution[type] += quantity;
-    }
+    typeDistribution[card.type] += quantity;
   }
 
   const usedInks = ALL_INKS.filter((ink) => inkDistribution[ink] > 0);
@@ -119,35 +114,51 @@ export interface DeckSynergyAnalysis {
   connectionCount: number; // Total synergy connections
 }
 
+/**
+ * Return type for the useDeckBuilder hook.
+ * Provides deck state, card management, persistence, and synergy analysis.
+ */
 export interface UseDeckBuilderReturn {
-  // Current deck
+  /** Current deck being edited */
   deck: Deck;
+  /** Computed statistics for the current deck (card counts, ink distribution, cost curve, validation) */
   deckStats: DeckStats;
 
-  // Card management
-  addCard: (card: LorcanaCard) => boolean; // returns false if at limit
+  /** Add a card to the deck. Returns false if at max copies (4) or deck is full (60 cards). */
+  addCard: (card: LorcanaCard) => boolean;
+  /** Remove one copy of a card from the deck */
   removeCard: (cardId: string) => void;
+  /** Remove all copies of a card from the deck */
   removeAllCopies: (cardId: string) => void;
+  /** Set exact quantity for a card (1-4, or 0 to remove) */
   setQuantity: (cardId: string, quantity: number) => void;
+  /** Get current quantity of a card in the deck (0 if not present) */
   getCardQuantity: (cardId: string) => number;
+  /** Remove all cards from the current deck */
   clearDeck: () => void;
 
-  // Deck management
+  /** Rename the current deck */
   renameDeck: (name: string) => void;
+  /** Create a new empty deck (replaces current deck) */
   newDeck: () => void;
+  /** Save current deck to localStorage */
   saveDeck: () => void;
+  /** Load a saved deck by ID. Returns false if not found. */
   loadDeck: (id: string) => boolean;
+  /** Delete a saved deck from localStorage */
   deleteSavedDeck: (id: string) => void;
+  /** Get all saved decks from localStorage, sorted by most recently updated */
   getSavedDecks: () => Deck[];
 
-  // Import/Export
+  /** Export current deck as JSON string */
   exportDeck: () => string;
+  /** Import deck from JSON string. Returns false if invalid. */
   importDeck: (json: string) => boolean;
 
-  // Synergy suggestions
+  /** Get card suggestions that synergize with 2+ cards in the current deck */
   getDeckSuggestions: (allCards: LorcanaCard[], limit?: number) => DeckSuggestion[];
 
-  // Synergy analysis
+  /** Analyze synergy relationships between all cards in the deck */
   getDeckSynergyAnalysis: () => DeckSynergyAnalysis;
 }
 
@@ -183,14 +194,22 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
   const deckStats = useMemo(() => calculateStats(deck), [deck]);
 
   const addCard = useCallback((card: LorcanaCard): boolean => {
-    let added = false;
+    // Check constraints using ref to avoid stale closure issues
+    const currentDeck = deckRef.current;
+    const existing = currentDeck.cards.find((dc) => dc.card.id === card.id);
+
+    if (existing && existing.quantity >= 4) {
+      return false; // Already at max copies
+    }
+
+    const totalCards = currentDeck.cards.reduce((sum, dc) => sum + dc.quantity, 0);
+    if (!existing && totalCards >= 60) {
+      return false; // Deck is full
+    }
+
     setDeck((prev) => {
-      const existing = prev.cards.find((dc) => dc.card.id === card.id);
-      if (existing) {
-        if (existing.quantity >= 4) {
-          return prev; // Already at max
-        }
-        added = true;
+      const existingInState = prev.cards.find((dc) => dc.card.id === card.id);
+      if (existingInState) {
         return {
           ...prev,
           cards: prev.cards.map((dc) =>
@@ -199,12 +218,6 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
           updatedAt: Date.now(),
         };
       } else {
-        // Check total card count
-        const totalCards = prev.cards.reduce((sum, dc) => sum + dc.quantity, 0);
-        if (totalCards >= 60) {
-          return prev; // Deck is full
-        }
-        added = true;
         return {
           ...prev,
           cards: [...prev.cards, { card, quantity: 1 }],
@@ -212,7 +225,7 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
         };
       }
     });
-    return added;
+    return true;
   }, []);
 
   const removeCard = useCallback((cardId: string) => {
@@ -271,12 +284,20 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
     });
   }, []);
 
+  // Memoized map for O(1) card quantity lookups
+  const cardQuantityMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const { card, quantity } of deck.cards) {
+      map.set(card.id, quantity);
+    }
+    return map;
+  }, [deck.cards]);
+
   const getCardQuantity = useCallback(
     (cardId: string): number => {
-      const existing = deck.cards.find((dc) => dc.card.id === cardId);
-      return existing?.quantity ?? 0;
+      return cardQuantityMap.get(cardId) ?? 0;
     },
-    [deck.cards]
+    [cardQuantityMap]
   );
 
   const clearDeck = useCallback(() => {
@@ -368,14 +389,51 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
   const importDeck = useCallback((json: string): boolean => {
     try {
       const imported = JSON.parse(json) as Deck;
-      // Basic validation
+
+      // Basic structure validation
       if (!imported.id || !imported.name || !Array.isArray(imported.cards)) {
         return false;
       }
+
+      // Validate each card entry
+      const validCards: DeckCard[] = [];
+      let totalCards = 0;
+
+      for (const entry of imported.cards) {
+        // Validate card object has required fields
+        if (
+          !entry.card ||
+          typeof entry.card.id !== "string" ||
+          typeof entry.card.name !== "string" ||
+          typeof entry.card.cost !== "number" ||
+          typeof entry.card.ink !== "string" ||
+          typeof entry.card.type !== "string"
+        ) {
+          continue; // Skip invalid cards
+        }
+
+        // Validate quantity is 1-4
+        const quantity = Math.min(4, Math.max(1, Math.floor(entry.quantity) || 1));
+
+        // Check total doesn't exceed 60
+        if (totalCards + quantity > 60) {
+          const remaining = 60 - totalCards;
+          if (remaining > 0) {
+            validCards.push({ card: entry.card, quantity: remaining });
+            totalCards = 60;
+          }
+          break;
+        }
+
+        validCards.push({ card: entry.card, quantity });
+        totalCards += quantity;
+      }
+
       // Assign new ID to avoid conflicts
       setDeck({
         ...imported,
         id: generateId(),
+        cards: validCards,
         updatedAt: Date.now(),
       });
       return true;
@@ -409,7 +467,7 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
 
         // Check synergy with each deck card
         for (const { card: deckCard } of deck.cards) {
-          const result = engine.checkSynergy(candidate, deckCard);
+          const result = sharedEngine.checkSynergy(candidate, deckCard);
           if (result.hasSynergy) {
             synergyCount++;
             synergizingWith.push(deckCard.fullName);
@@ -421,7 +479,7 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
           }
 
           // Also check reverse direction
-          const reverseResult = engine.checkSynergy(deckCard, candidate);
+          const reverseResult = sharedEngine.checkSynergy(deckCard, candidate);
           if (reverseResult.hasSynergy && !result.hasSynergy) {
             synergyCount++;
             if (!synergizingWith.includes(deckCard.fullName)) {
@@ -483,8 +541,8 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
         if (card.id === otherCard.id) continue;
 
         // Check both directions for synergies
-        const result = engine.checkSynergy(card, otherCard);
-        const reverseResult = engine.checkSynergy(otherCard, card);
+        const result = sharedEngine.checkSynergy(card, otherCard);
+        const reverseResult = sharedEngine.checkSynergy(otherCard, card);
 
         const hasSynergy = result.hasSynergy || reverseResult.hasSynergy;
         if (hasSynergy) {

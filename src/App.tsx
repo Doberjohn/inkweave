@@ -96,7 +96,6 @@ function SynergyFinderApp() {
         <DeckPanel
           deck={deckBuilder.deck}
           deckStats={deckBuilder.deckStats}
-          allCards={gameModeFilteredCards}
           suggestions={deckSuggestions}
           synergyAnalysis={deckSynergyAnalysis}
           onAddCard={deckBuilder.addCard}

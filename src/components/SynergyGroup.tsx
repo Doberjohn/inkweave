@@ -1,23 +1,23 @@
 import { useState } from "react";
 import type { GroupedSynergies, LorcanaCard } from "../types";
 import { SynergyCard } from "./SynergyCard";
-import { COLORS, FONT_SIZES } from "../constants/theme";
+import { COLORS, FONT_SIZES, SPACING } from "../constants/theme";
 
 interface SynergyGroupProps {
   group: GroupedSynergies;
   defaultExpanded?: boolean;
-  showDebug?: boolean;
   onAddToDeck?: (card: LorcanaCard) => void;
   getCardQuantity?: (cardId: string) => number;
 }
 
-export function SynergyGroup({ group, defaultExpanded = true, showDebug, onAddToDeck, getCardQuantity }: SynergyGroupProps) {
+export function SynergyGroup({ group, defaultExpanded = true, onAddToDeck, getCardQuantity }: SynergyGroupProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
-    <div style={{ marginBottom: "20px" }}>
+    <div style={{ marginBottom: `${SPACING.xl}px` }}>
       <button
         onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
         style={{
           display: "flex",
           alignItems: "center",
@@ -52,8 +52,6 @@ export function SynergyGroup({ group, defaultExpanded = true, showDebug, onAddTo
               card={synergy.card}
               strength={synergy.strength}
               explanation={synergy.explanation}
-              ruleName={synergy.ruleName}
-              showDebug={showDebug}
               onAddToDeck={onAddToDeck}
               deckQuantity={getCardQuantity?.(synergy.card.id) ?? 0}
             />

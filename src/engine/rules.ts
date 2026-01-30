@@ -1,4 +1,4 @@
-import type { LorcanaCard, SynergyRule, SynergyMatch, SynergyStrength } from "../types";
+import type { SynergyRule, SynergyMatch, SynergyStrength } from "../types";
 import {
   textContains,
   hasKeyword,
@@ -8,7 +8,6 @@ import {
   isSong,
   isCharacter,
   hasNegativeTargeting,
-  hasPositiveClassificationEffect,
 } from "../utils";
 
 // ============================================

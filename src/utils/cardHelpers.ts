@@ -67,7 +67,7 @@ export function getKeywordValue(card: LorcanaCard, keyword: string): number | nu
  */
 export function isSong(card: LorcanaCard): boolean {
   return (
-    card.type.includes("Action") &&
+    card.type === "Action" &&
     (card.classifications?.includes("Song") || textContains(card, "song"))
   );
 }
@@ -76,28 +76,28 @@ export function isSong(card: LorcanaCard): boolean {
  * Check if card is a character
  */
 export function isCharacter(card: LorcanaCard): boolean {
-  return card.type.includes("Character");
+  return card.type === "Character";
 }
 
 /**
  * Check if card is an action
  */
 export function isAction(card: LorcanaCard): boolean {
-  return card.type.includes("Action");
+  return card.type === "Action";
 }
 
 /**
  * Check if card is an item
  */
 export function isItem(card: LorcanaCard): boolean {
-  return card.type.includes("Item");
+  return card.type === "Item";
 }
 
 /**
  * Check if card is a location
  */
 export function isLocation(card: LorcanaCard): boolean {
-  return card.type.includes("Location");
+  return card.type === "Location";
 }
 
 /**

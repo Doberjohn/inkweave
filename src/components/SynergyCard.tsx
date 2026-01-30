@@ -7,13 +7,11 @@ interface SynergyCardProps {
   card: LorcanaCard;
   strength: SynergyStrength;
   explanation: string;
-  ruleName?: string;
-  showDebug?: boolean;
   onAddToDeck?: (card: LorcanaCard) => void;
   deckQuantity?: number;
 }
 
-export function SynergyCard({ card, strength, explanation, ruleName, showDebug, onAddToDeck, deckQuantity = 0 }: SynergyCardProps) {
+export function SynergyCard({ card, strength, explanation, onAddToDeck, deckQuantity = 0 }: SynergyCardProps) {
   const colors = INK_COLORS[card.ink];
   const strengthStyle = STRENGTH_STYLES[strength];
   const [imgError, setImgError] = useState(false);
@@ -156,20 +154,6 @@ export function SynergyCard({ card, strength, explanation, ruleName, showDebug, 
           >
             Cost {card.cost}
           </span>
-          {showDebug && ruleName && (
-            <span
-              style={{
-                fontSize: `${FONT_SIZES.sm}px`,
-                background: COLORS.primary100,
-                color: COLORS.primary700,
-                padding: "2px 6px",
-                borderRadius: `${RADIUS.sm}px`,
-                fontStyle: "italic",
-              }}
-            >
-              Rule: {ruleName}
-            </span>
-          )}
         </div>
       </div>
 

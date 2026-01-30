@@ -6,6 +6,10 @@ import { LoadingSpinner } from "./LoadingSpinner";
 import { INK_COLORS, ALL_INKS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT } from "../constants/theme";
 
 const CARD_TYPES: CardType[] = ["Character", "Action", "Item", "Location"];
+
+function isCardType(value: unknown): value is CardType {
+  return typeof value === "string" && CARD_TYPES.includes(value as CardType);
+}
 const COST_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 interface CardListProps {
@@ -46,7 +50,7 @@ export function CardList({
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const displayedCards = cards.slice(0, LAYOUT.maxDisplayedCards);
 
-  const selectedType = filters.type as CardType | undefined;
+  const selectedType = isCardType(filters.type) ? filters.type : undefined;
   const activeFilterCount = [
     filters.type,
     filters.minCost !== undefined,
@@ -352,6 +356,7 @@ function FilterButton({
   return (
     <button
       onClick={onClick}
+      aria-pressed={active}
       style={{
         padding: "5px 10px",
         borderRadius: `${RADIUS.md}px`,

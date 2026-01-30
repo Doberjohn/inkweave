@@ -13,7 +13,7 @@ export function CardPreviewPopover() {
   if (!card) return null;
 
   const colors = INK_COLORS[card.ink];
-  const isLocation = card.type.includes("Location");
+  const isLocation = card.type === "Location";
 
   // Locations are displayed rotated (landscape)
   const containerWidth = isLocation ? PREVIEW_HEIGHT : PREVIEW_WIDTH;

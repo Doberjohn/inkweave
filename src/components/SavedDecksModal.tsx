@@ -40,6 +40,9 @@ export function SavedDecksModal({ decks, isOpen, onClose, onLoad, onDelete }: Sa
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="saved-decks-title"
         style={{
           background: COLORS.white,
           borderRadius: `${RADIUS.xl}px`,
@@ -63,6 +66,7 @@ export function SavedDecksModal({ decks, isOpen, onClose, onLoad, onDelete }: Sa
           }}
         >
           <h2
+            id="saved-decks-title"
             style={{
               margin: 0,
               fontSize: `${FONT_SIZES.xl}px`,

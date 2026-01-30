@@ -40,6 +40,7 @@ export function CardTile({ card, onClick, isSelected, onAddToDeck, deckQuantity 
       onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      aria-pressed={isSelected}
       style={{
         display: "flex",
         gap: "12px",
@@ -156,15 +157,19 @@ export function CardTile({ card, onClick, isSelected, onAddToDeck, deckQuantity 
 
       {/* Add to deck button */}
       {onAddToDeck && (
-        <div
+        <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onAddToDeck(card);
           }}
+          disabled={deckQuantity >= 4}
+          aria-label={deckQuantity >= 4 ? "Maximum 4 copies" : `Add ${card.name} to deck`}
           style={{
             width: 26,
             height: 26,
             borderRadius: "50%",
+            border: "none",
             background: deckQuantity >= 4 ? COLORS.gray200 : COLORS.primary500,
             color: deckQuantity >= 4 ? COLORS.gray400 : COLORS.white,
             display: "flex",
@@ -179,7 +184,7 @@ export function CardTile({ card, onClick, isSelected, onAddToDeck, deckQuantity 
           title={deckQuantity >= 4 ? "Maximum 4 copies" : "Add to deck"}
         >
           {deckQuantity > 0 ? deckQuantity : "+"}
-        </div>
+        </button>
       )}
     </button>
   );

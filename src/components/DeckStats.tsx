@@ -1,4 +1,4 @@
-import type { DeckStats as DeckStatsType, Ink, CardType } from "../types";
+import type { DeckStats as DeckStatsType, CardType } from "../types";
 import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, ALL_INKS } from "../constants/theme";
 
 interface DeckStatsProps {
@@ -25,6 +25,7 @@ export function DeckStats({ stats, collapsed = false, onToggleCollapse }: DeckSt
       {/* Header */}
       <button
         onClick={onToggleCollapse}
+        aria-expanded={!collapsed}
         style={{
           width: "100%",
           display: "flex",
@@ -238,9 +239,10 @@ export function DeckStats({ stats, collapsed = false, onToggleCollapse }: DeckSt
           {/* Validation Errors */}
           {stats.validationErrors.length > 0 && (
             <div
+              role="alert"
               style={{
-                background: "#fef2f2",
-                border: `1px solid #fecaca`,
+                background: COLORS.errorBg,
+                border: `1px solid ${COLORS.errorBorder}`,
                 borderRadius: `${RADIUS.lg}px`,
                 padding: `${SPACING.md}px`,
               }}

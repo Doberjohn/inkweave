@@ -11,7 +11,6 @@ import { SavedDecksModal } from "./SavedDecksModal";
 interface DeckPanelProps {
   deck: Deck;
   deckStats: DeckStatsType;
-  allCards: LorcanaCard[];
   suggestions: DeckSuggestion[];
   synergyAnalysis: DeckSynergyAnalysisType;
   onAddCard: (card: LorcanaCard) => void;
@@ -197,10 +196,11 @@ export function DeckPanel({
         {/* Ink warning */}
         {deckStats.inkCount > 2 && (
           <div
+            role="alert"
             style={{
               fontSize: `${FONT_SIZES.sm}px`,
               color: COLORS.error,
-              background: "#fef2f2",
+              background: COLORS.errorBg,
               padding: `${SPACING.sm}px ${SPACING.md}px`,
               borderRadius: `${RADIUS.md}px`,
               marginBottom: `${SPACING.md}px`,
@@ -352,7 +352,7 @@ function ActionButton({ children, onClick, title, variant = "default" }: ActionB
       title={title}
       style={{
         padding: `${SPACING.sm}px ${SPACING.md}px`,
-        background: variant === "danger" ? "#fef2f2" : COLORS.gray100,
+        background: variant === "danger" ? COLORS.errorBg : COLORS.gray100,
         color: variant === "danger" ? COLORS.error : COLORS.gray700,
         border: "none",
         borderRadius: `${RADIUS.md}px`,

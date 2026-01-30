@@ -22,7 +22,7 @@ export interface LorcanaCard {
   cost: number;
   ink: Ink;
   inkwell: boolean;
-  type: CardType[];
+  type: CardType;             // Character, Action, Item, or Location
   classifications?: string[]; // Floodborn, Hero, Villain, Princess, etc.
   text?: string;              // abilities/rules text
   strength?: number;

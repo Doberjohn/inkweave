@@ -87,6 +87,9 @@ export const COLORS = {
   // Semantic
   white: "#ffffff",
   error: "#dc2626",
+  errorBg: "#fef2f2",
+  errorBorder: "#fecaca",
+  successBg: "#dcfce7",
 
   // Backgrounds
   bgGradientStart: "#f8fafc",

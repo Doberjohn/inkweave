@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import type { LorcanaCard } from "../types";
 import type { DeckSynergyAnalysis as DeckSynergyAnalysisType, DeckCardSynergy } from "../hooks/useDeckBuilder";
 import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, STRENGTH_STYLES } from "../constants/theme";
 import { useCardPreview } from "./CardPreviewContext";
@@ -35,6 +34,7 @@ export function DeckSynergyAnalysis({
       {/* Header */}
       <button
         onClick={onToggleCollapse}
+        aria-expanded={!collapsed}
         style={{
           width: "100%",
           display: "flex",
@@ -159,6 +159,7 @@ function TabButton({
   return (
     <button
       onClick={onClick}
+      aria-pressed={active}
       style={{
         padding: `${SPACING.xs}px ${SPACING.sm}px`,
         background: active ? COLORS.primary100 : "transparent",
@@ -230,7 +231,7 @@ function OverviewTab({ analysis }: { analysis: DeckSynergyAnalysisType }) {
                 key={cs.card.id}
                 style={{
                   fontSize: `${FONT_SIZES.sm}px`,
-                  background: "#fef2f2",
+                  background: COLORS.errorBg,
                   color: COLORS.error,
                   padding: `${SPACING.xs}px ${SPACING.sm}px`,
                   borderRadius: `${RADIUS.md}px`,
@@ -250,7 +251,7 @@ function OverviewTab({ analysis }: { analysis: DeckSynergyAnalysisType }) {
           style={{
             fontSize: `${FONT_SIZES.sm}px`,
             color: COLORS.gray600,
-            background: "#dcfce7",
+            background: COLORS.successBg,
             padding: `${SPACING.md}px`,
             borderRadius: `${RADIUS.md}px`,
             textAlign: "center",
@@ -324,8 +325,8 @@ function SynergyCardRow({
     hidePreview();
   }, [hidePreview]);
 
-  const bgColor = type === "key" ? COLORS.primary50 : type === "weak" ? "#fef2f2" : COLORS.white;
-  const borderColor = type === "key" ? COLORS.primary200 : type === "weak" ? "#fecaca" : COLORS.gray200;
+  const bgColor = type === "key" ? COLORS.primary50 : type === "weak" ? COLORS.errorBg : COLORS.white;
+  const borderColor = type === "key" ? COLORS.primary200 : type === "weak" ? COLORS.errorBorder : COLORS.gray200;
 
   return (
     <div
