@@ -1,10 +1,8 @@
-import { useCallback } from "react";
 import { motion } from "framer-motion";
 import type { LorcanaCard } from "../types";
 import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, LAYOUT } from "../../../shared/constants";
 import { CardImage } from "../../../shared/components";
-import { useCardPreview } from "./useCardPreview";
-import { useTouchPreview } from "../../../shared/hooks";
+import { useCardPreviewHandlers } from "./useCardPreviewHandlers";
 
 interface CardTileProps {
   card: LorcanaCard;
@@ -16,42 +14,12 @@ interface CardTileProps {
 
 export function CardTile({ card, onClick, isSelected, onAddToDeck, deckQuantity = 0 }: CardTileProps) {
   const colors = INK_COLORS[card.ink];
-  const { showPreview, updatePosition, hidePreview } = useCardPreview();
-
-  const handleMouseEnter = useCallback(
-    (e: React.MouseEvent) => {
-      showPreview(card, e.clientX, e.clientY);
-    },
-    [card, showPreview]
-  );
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      updatePosition(e.clientX, e.clientY);
-    },
-    [updatePosition]
-  );
-
-  const handleMouseLeave = useCallback(() => {
-    hidePreview();
-  }, [hidePreview]);
-
-  // Touch support for mobile
-  const { touchHandlers } = useTouchPreview({
-    onLongPress: () => {
-      showPreview(card, 0, 0, true); // isTouchMode = true, position ignored for centered modal
-    },
-    onTap: onClick,
-    onTouchEnd: hidePreview,
-  });
+  const { previewHandlers } = useCardPreviewHandlers({ card, onTap: onClick });
 
   return (
     <motion.button
       onClick={onClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      {...touchHandlers}
+      {...previewHandlers}
       aria-pressed={isSelected}
       whileHover={{ scale: 1.02, y: -2 }}
       whileTap={{ scale: 0.98 }}

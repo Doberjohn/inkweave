@@ -1,7 +1,8 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import type { DeckSynergyAnalysis as DeckSynergyAnalysisType, DeckCardSynergy } from "../hooks";
 import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, STRENGTH_STYLES } from "../../../shared/constants";
-import { useCardPreview } from "../../cards";
+import { CollapsibleSection } from "../../../shared/components";
+import { useCardPreviewHandlers } from "../../cards";
 
 interface DeckSynergyAnalysisProps {
   analysis: DeckSynergyAnalysisType;
@@ -23,106 +24,65 @@ export function DeckSynergyAnalysis({
   }
 
   return (
-    <div
-      style={{
-        background: COLORS.gray50,
-        borderRadius: `${RADIUS.lg}px`,
-        padding: `${SPACING.lg}px`,
-        border: `1px solid ${COLORS.gray200}`,
-      }}
+    <CollapsibleSection
+      title="Synergy Analysis"
+      collapsed={collapsed}
+      onToggle={onToggleCollapse}
     >
-      {/* Header */}
-      <button
-        onClick={onToggleCollapse}
-        aria-expanded={!collapsed}
+      {/* Overview Stats */}
+      <div
         style={{
-          width: "100%",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          background: "none",
-          border: "none",
-          cursor: onToggleCollapse ? "pointer" : "default",
-          padding: 0,
-          marginBottom: collapsed ? 0 : `${SPACING.lg}px`,
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr",
+          gap: `${SPACING.md}px`,
+          marginBottom: `${SPACING.lg}px`,
         }}
       >
-        <span
-          style={{
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 600,
-            color: COLORS.gray700,
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-          }}
-        >
-          Synergy Analysis
-        </span>
-        {onToggleCollapse && (
-          <span style={{ color: COLORS.gray500, fontSize: `${FONT_SIZES.base}px` }}>
-            {collapsed ? "+" : "-"}
-          </span>
+        <StatBox label="Score" value={analysis.overallScore} />
+        <StatBox label="Connections" value={analysis.connectionCount} />
+        <StatBox label="Avg/Card" value={analysis.averageScore} />
+      </div>
+
+      {/* Tabs */}
+      <div
+        style={{
+          display: "flex",
+          gap: `${SPACING.xs}px`,
+          marginBottom: `${SPACING.md}px`,
+          borderBottom: `1px solid ${COLORS.gray200}`,
+          paddingBottom: `${SPACING.sm}px`,
+        }}
+      >
+        <TabButton active={activeTab === "overview"} onClick={() => setActiveTab("overview")}>
+          Overview
+        </TabButton>
+        <TabButton active={activeTab === "key"} onClick={() => setActiveTab("key")}>
+          Key Cards ({analysis.keyCards.length})
+        </TabButton>
+        <TabButton active={activeTab === "weak"} onClick={() => setActiveTab("weak")}>
+          Weak Links ({analysis.weakLinks.length})
+        </TabButton>
+        <TabButton active={activeTab === "all"} onClick={() => setActiveTab("all")}>
+          All
+        </TabButton>
+      </div>
+
+      {/* Tab Content */}
+      <div style={{ maxHeight: 300, overflowY: "auto" }}>
+        {activeTab === "overview" && (
+          <OverviewTab analysis={analysis} />
         )}
-      </button>
-
-      {!collapsed && (
-        <>
-          {/* Overview Stats */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr",
-              gap: `${SPACING.md}px`,
-              marginBottom: `${SPACING.lg}px`,
-            }}
-          >
-            <StatBox label="Score" value={analysis.overallScore} />
-            <StatBox label="Connections" value={analysis.connectionCount} />
-            <StatBox label="Avg/Card" value={analysis.averageScore} />
-          </div>
-
-          {/* Tabs */}
-          <div
-            style={{
-              display: "flex",
-              gap: `${SPACING.xs}px`,
-              marginBottom: `${SPACING.md}px`,
-              borderBottom: `1px solid ${COLORS.gray200}`,
-              paddingBottom: `${SPACING.sm}px`,
-            }}
-          >
-            <TabButton active={activeTab === "overview"} onClick={() => setActiveTab("overview")}>
-              Overview
-            </TabButton>
-            <TabButton active={activeTab === "key"} onClick={() => setActiveTab("key")}>
-              Key Cards ({analysis.keyCards.length})
-            </TabButton>
-            <TabButton active={activeTab === "weak"} onClick={() => setActiveTab("weak")}>
-              Weak Links ({analysis.weakLinks.length})
-            </TabButton>
-            <TabButton active={activeTab === "all"} onClick={() => setActiveTab("all")}>
-              All
-            </TabButton>
-          </div>
-
-          {/* Tab Content */}
-          <div style={{ maxHeight: 300, overflowY: "auto" }}>
-            {activeTab === "overview" && (
-              <OverviewTab analysis={analysis} />
-            )}
-            {activeTab === "key" && (
-              <CardList cards={analysis.keyCards} type="key" onRemoveCard={onRemoveCard} />
-            )}
-            {activeTab === "weak" && (
-              <CardList cards={analysis.weakLinks} type="weak" onRemoveCard={onRemoveCard} />
-            )}
-            {activeTab === "all" && (
-              <CardList cards={analysis.cardSynergies} type="all" onRemoveCard={onRemoveCard} />
-            )}
-          </div>
-        </>
-      )}
-    </div>
+        {activeTab === "key" && (
+          <CardList cards={analysis.keyCards} type="key" onRemoveCard={onRemoveCard} />
+        )}
+        {activeTab === "weak" && (
+          <CardList cards={analysis.weakLinks} type="weak" onRemoveCard={onRemoveCard} />
+        )}
+        {activeTab === "all" && (
+          <CardList cards={analysis.cardSynergies} type="all" onRemoveCard={onRemoveCard} />
+        )}
+      </div>
+    </CollapsibleSection>
   );
 }
 
@@ -305,25 +265,7 @@ function SynergyCardRow({
   const colors = INK_COLORS[card.ink];
   const [expanded, setExpanded] = useState(false);
   const [imgError, setImgError] = useState(false);
-  const { showPreview, updatePosition, hidePreview } = useCardPreview();
-
-  const handleMouseEnter = useCallback(
-    (e: React.MouseEvent) => {
-      showPreview(card, e.clientX, e.clientY);
-    },
-    [card, showPreview]
-  );
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      updatePosition(e.clientX, e.clientY);
-    },
-    [updatePosition]
-  );
-
-  const handleMouseLeave = useCallback(() => {
-    hidePreview();
-  }, [hidePreview]);
+  const { previewHandlers } = useCardPreviewHandlers({ card });
 
   const bgColor = type === "key" ? COLORS.primary50 : type === "weak" ? COLORS.errorBg : COLORS.white;
   const borderColor = type === "key" ? COLORS.primary200 : type === "weak" ? COLORS.errorBorder : COLORS.gray200;
@@ -338,9 +280,7 @@ function SynergyCardRow({
       }}
     >
       <div
-        onMouseEnter={handleMouseEnter}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
+        {...previewHandlers}
         style={{
           display: "flex",
           alignItems: "center",

@@ -1,8 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import type { LorcanaCard } from "../../cards";
 import type { DeckSuggestion } from "../hooks";
 import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING } from "../../../shared/constants";
-import { useCardPreview } from "../../cards";
+import { CollapsibleSection } from "../../../shared/components";
+import { useCardPreviewHandlers } from "../../cards";
 
 interface DeckSuggestionsProps {
   suggestions: DeckSuggestion[];
@@ -20,60 +21,21 @@ export function DeckSuggestions({
   if (suggestions.length === 0) return null;
 
   return (
-    <div
-      style={{
-        background: COLORS.gray50,
-        borderRadius: `${RADIUS.lg}px`,
-        padding: `${SPACING.lg}px`,
-        border: `1px solid ${COLORS.gray200}`,
-      }}
+    <CollapsibleSection
+      title="Suggestions"
+      collapsed={collapsed}
+      onToggle={onToggleCollapse}
     >
-      {/* Header */}
-      <button
-        onClick={onToggleCollapse}
-        aria-expanded={!collapsed}
-        style={{
-          width: "100%",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          background: "none",
-          border: "none",
-          cursor: onToggleCollapse ? "pointer" : "default",
-          padding: 0,
-          marginBottom: collapsed ? 0 : `${SPACING.lg}px`,
-        }}
-      >
-        <span
-          style={{
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 600,
-            color: COLORS.gray700,
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-          }}
-        >
-          Suggestions
-        </span>
-        {onToggleCollapse && (
-          <span style={{ color: COLORS.gray500, fontSize: `${FONT_SIZES.base}px` }}>
-            {collapsed ? "+" : "-"}
-          </span>
-        )}
-      </button>
-
-      {!collapsed && (
-        <div style={{ display: "flex", flexDirection: "column", gap: `${SPACING.sm}px` }}>
-          {suggestions.slice(0, 8).map((suggestion) => (
-            <SuggestionRow
-              key={suggestion.card.id}
-              suggestion={suggestion}
-              onAddCard={onAddCard}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: `${SPACING.sm}px` }}>
+        {suggestions.slice(0, 8).map((suggestion) => (
+          <SuggestionRow
+            key={suggestion.card.id}
+            suggestion={suggestion}
+            onAddCard={onAddCard}
+          />
+        ))}
+      </div>
+    </CollapsibleSection>
   );
 }
 
@@ -86,31 +48,11 @@ function SuggestionRow({ suggestion, onAddCard }: SuggestionRowProps) {
   const { card, synergyCount, synergizingWith } = suggestion;
   const colors = INK_COLORS[card.ink];
   const [imgError, setImgError] = useState(false);
-  const { showPreview, updatePosition, hidePreview } = useCardPreview();
-
-  const handleMouseEnter = useCallback(
-    (e: React.MouseEvent) => {
-      showPreview(card, e.clientX, e.clientY);
-    },
-    [card, showPreview]
-  );
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      updatePosition(e.clientX, e.clientY);
-    },
-    [updatePosition]
-  );
-
-  const handleMouseLeave = useCallback(() => {
-    hidePreview();
-  }, [hidePreview]);
+  const { previewHandlers } = useCardPreviewHandlers({ card });
 
   return (
     <div
-      onMouseEnter={handleMouseEnter}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+      {...previewHandlers}
       style={{
         display: "flex",
         alignItems: "center",

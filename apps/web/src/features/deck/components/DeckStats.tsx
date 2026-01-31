@@ -1,6 +1,6 @@
-import type { CardType } from "../../cards";
 import type { DeckStats as DeckStatsType } from "../types";
-import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, ALL_INKS } from "../../../shared/constants";
+import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, ALL_INKS, CARD_TYPES } from "../../../shared/constants";
+import { CollapsibleSection } from "../../../shared/components";
 
 interface DeckStatsProps {
   stats: DeckStatsType;
@@ -8,58 +8,18 @@ interface DeckStatsProps {
   onToggleCollapse?: () => void;
 }
 
-const CARD_TYPES: CardType[] = ["Character", "Action", "Item", "Location"];
-
 export function DeckStats({ stats, collapsed = false, onToggleCollapse }: DeckStatsProps) {
   const costCurveValues = Object.values(stats.costCurve);
   const maxCostCount = costCurveValues.length > 0 ? Math.max(...costCurveValues) : 1;
   const usedInks = ALL_INKS.filter((ink) => stats.inkDistribution[ink] > 0);
 
   return (
-    <div
-      style={{
-        background: COLORS.gray50,
-        borderRadius: `${RADIUS.lg}px`,
-        padding: `${SPACING.lg}px`,
-        border: `1px solid ${COLORS.gray200}`,
-      }}
+    <CollapsibleSection
+      title="Statistics"
+      collapsed={collapsed}
+      onToggle={onToggleCollapse}
     >
-      {/* Header */}
-      <button
-        onClick={onToggleCollapse}
-        aria-expanded={!collapsed}
-        style={{
-          width: "100%",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          background: "none",
-          border: "none",
-          cursor: onToggleCollapse ? "pointer" : "default",
-          padding: 0,
-          marginBottom: collapsed ? 0 : `${SPACING.lg}px`,
-        }}
-      >
-        <span
-          style={{
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 600,
-            color: COLORS.gray700,
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-          }}
-        >
-          Statistics
-        </span>
-        {onToggleCollapse && (
-          <span style={{ color: COLORS.gray500, fontSize: `${FONT_SIZES.base}px` }}>
-            {collapsed ? "+" : "-"}
-          </span>
-        )}
-      </button>
-
-      {!collapsed && (
-        <>
+      <>
           {/* Card counts */}
           <div
             style={{
@@ -263,7 +223,6 @@ export function DeckStats({ stats, collapsed = false, onToggleCollapse }: DeckSt
             </div>
           )}
         </>
-      )}
-    </div>
+    </CollapsibleSection>
   );
 }

@@ -11,6 +11,11 @@ describe("FilterDrawer", () => {
     uniqueKeywords: ["Singer", "Evasive", "Ward"],
     uniqueClassifications: ["Princess", "Hero", "Villain"],
     uniqueSets: ["1", "5", "10"],
+    sets: [
+      { code: "1", name: "The First Chapter", number: 1 },
+      { code: "5", name: "Shimmering Skies", number: 5 },
+      { code: "10", name: "Set Ten", number: 10 },
+    ],
     onInkFilterChange: vi.fn(),
     onFiltersChange: vi.fn(),
     onClearAll: vi.fn(),

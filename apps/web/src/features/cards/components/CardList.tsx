@@ -1,13 +1,10 @@
 import { useState, useMemo } from "react";
-import type { LorcanaCard, Ink, CardType } from "../types";
-import type { CardFilterOptions } from "../loader";
+import type { LorcanaCard, Ink } from "../types";
+import type { CardFilterOptions, SetInfo } from "../loader";
 import { CardTile } from "./CardTile";
 import { LoadingSpinner, FilterDrawer } from "../../../shared/components";
-import { INK_COLORS, ALL_INKS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, LAYOUT_MOBILE } from "../../../shared/constants";
+import { INK_COLORS, ALL_INKS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, LAYOUT_MOBILE, CARD_TYPES, COST_OPTIONS } from "../../../shared/constants";
 import { isCardType } from "../utils";
-
-const CARD_TYPES: CardType[] = ["Character", "Action", "Item", "Location"];
-const COST_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 interface CardListProps {
   cards: LorcanaCard[];
@@ -19,6 +16,7 @@ interface CardListProps {
   uniqueKeywords: string[];
   uniqueClassifications: string[];
   uniqueSets: string[];
+  sets: SetInfo[];
   onSearchChange: (query: string) => void;
   onInkFilterChange: (ink: Ink | "all") => void;
   onFiltersChange: (filters: CardFilterOptions) => void;
@@ -38,6 +36,7 @@ export function CardList({
   uniqueKeywords,
   uniqueClassifications,
   uniqueSets,
+  sets,
   onSearchChange,
   onInkFilterChange,
   onFiltersChange,
@@ -209,6 +208,7 @@ export function CardList({
               uniqueKeywords={uniqueKeywords}
               uniqueClassifications={uniqueClassifications}
               uniqueSets={uniqueSets}
+              sets={sets}
               onInkFilterChange={onInkFilterChange}
               onFiltersChange={onFiltersChange}
               onClearAll={clearAllFilters}
@@ -406,8 +406,8 @@ export function CardList({
                     style={{ ...selectStyle, width: "100%" }}
                   >
                     <option value="">Any set</option>
-                    {uniqueSets.map((s) => (
-                      <option key={s} value={s}>Set {s}</option>
+                    {sets.map((s) => (
+                      <option key={s.code} value={s.code}>{s.name}</option>
                     ))}
                   </select>
                 </div>

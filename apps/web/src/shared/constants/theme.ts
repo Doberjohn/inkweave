@@ -1,4 +1,4 @@
-import type { Ink } from "lorcana-synergy-engine";
+import type { Ink, CardType } from "lorcana-synergy-engine";
 
 // Ink color styling
 export const INK_COLORS: Record<Ink, { bg: string; text: string; border: string }> = {
@@ -124,3 +124,9 @@ export const Z_INDEX = {
   popoverBackdrop: 1099,
   popover: 1100,
 } as const;
+
+// Card types for filtering
+export const CARD_TYPES: CardType[] = ["Character", "Action", "Item", "Location"];
+
+// Cost options for filtering (0-10, where 10 represents 10+)
+export const COST_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;

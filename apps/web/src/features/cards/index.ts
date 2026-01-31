@@ -4,6 +4,7 @@ export type { Ink, GameMode, CardType, LorcanaCard } from "./types";
 // Loader functions
 export {
   loadCardsFromJSON,
+  loadSetsFromJSON,
   fetchCardsFromLocal,
   searchCardsByName,
   filterCards,
@@ -11,7 +12,7 @@ export {
   getUniqueClassifications,
   getUniqueSets,
 } from "./loader";
-export type { CardFilterOptions } from "./loader";
+export type { CardFilterOptions, SetInfo, CardDataResult } from "./loader";
 
 // Card helpers
 export * from "./utils";

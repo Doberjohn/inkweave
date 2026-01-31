@@ -37,13 +37,28 @@ interface LorcanaJSONCard {
   rarity?: string;
 }
 
+interface LorcanaJSONSet {
+  name: string;
+  number: number;
+  type: string;
+  releaseDate?: string;
+}
+
 interface LorcanaJSONData {
   metadata: {
     formatVersion: string;
     generatedOn: string;
     language: string;
   };
+  sets?: Record<string, LorcanaJSONSet>;
   cards: LorcanaJSONCard[];
+}
+
+// Set info type exported for components
+export interface SetInfo {
+  code: string;
+  name: string;
+  number: number;
 }
 
 // Valid ink colors
@@ -137,6 +152,26 @@ function parseSetOrder(setCode: string | undefined): number {
 }
 
 /**
+ * Extract set information from LorcanaJSON data
+ */
+export function loadSetsFromJSON(data: LorcanaJSONData): SetInfo[] {
+  if (!data.sets) return [];
+
+  return Object.entries(data.sets)
+    .map(([code, set]) => ({
+      code,
+      name: set.name,
+      number: set.number,
+    }))
+    .sort((a, b) => {
+      // Sort by number, with Q sets (negative or special) at the end
+      const numA = typeof a.number === 'number' ? a.number : 999;
+      const numB = typeof b.number === 'number' ? b.number : 999;
+      return numA - numB;
+    });
+}
+
+/**
  * Load cards from a LorcanaJSON data object
  * Deduplicates by fullName (keeps latest printing - highest set number)
  */
@@ -164,13 +199,18 @@ export function loadCardsFromJSON(data: LorcanaJSONData): LorcanaCard[] {
   return Array.from(cardMap.values());
 }
 
+export interface CardDataResult {
+  cards: LorcanaCard[];
+  sets: SetInfo[];
+}
+
 /**
  * Fetch cards from a local file (for offline use)
  * Place allCards.json in your public folder
  */
 export async function fetchCardsFromLocal(
   path: string = "/data/allCards.json"
-): Promise<LorcanaCard[]> {
+): Promise<CardDataResult> {
   const response = await fetch(path);
 
   if (!response.ok) {
@@ -186,7 +226,10 @@ export async function fetchCardsFromLocal(
     );
   }
 
-  return loadCardsFromJSON(data);
+  return {
+    cards: loadCardsFromJSON(data),
+    sets: loadSetsFromJSON(data),
+  };
 }
 
 /**

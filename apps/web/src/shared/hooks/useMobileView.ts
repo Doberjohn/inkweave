@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 
 export type MobileView = "cards" | "synergies" | "deck";
 
@@ -8,11 +8,7 @@ interface UseMobileViewReturn {
 }
 
 export function useMobileView(initialView: MobileView = "cards"): UseMobileViewReturn {
-  const [activeView, setActiveViewState] = useState<MobileView>(initialView);
-
-  const setActiveView = useCallback((view: MobileView) => {
-    setActiveViewState(view);
-  }, []);
+  const [activeView, setActiveView] = useState<MobileView>(initialView);
 
   return {
     activeView,

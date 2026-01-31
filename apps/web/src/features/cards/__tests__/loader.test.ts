@@ -448,11 +448,12 @@ describe("fetchCardsFromLocal", () => {
       json: () => Promise.resolve(mockData),
     });
 
-    const cards = await fetchCardsFromLocal("/data/test.json");
+    const result = await fetchCardsFromLocal("/data/test.json");
 
     expect(mockFetch).toHaveBeenCalledWith("/data/test.json");
-    expect(cards).toHaveLength(1);
-    expect(cards[0].name).toBe("Test");
+    expect(result.cards).toHaveLength(1);
+    expect(result.cards[0].name).toBe("Test");
+    expect(result.sets).toEqual([]);
   });
 
   it("should throw error when fetch fails", async () => {

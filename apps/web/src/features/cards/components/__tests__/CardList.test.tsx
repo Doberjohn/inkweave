@@ -4,7 +4,7 @@ import { CardList } from "../CardList";
 import { CardPreviewProvider } from "../CardPreviewContext";
 import { createCard } from "../../../../shared/test-utils";
 import type { LorcanaCard, Ink } from "../../types";
-import type { CardFilterOptions } from "../../loader";
+import type { CardFilterOptions, SetInfo } from "../../loader";
 
 // Wrapper to provide required context
 function renderWithProvider(ui: React.ReactElement) {
@@ -28,6 +28,11 @@ describe("CardList", () => {
     uniqueKeywords: ["Evasive", "Singer", "Challenger"],
     uniqueClassifications: ["Princess", "Hero", "Villain"],
     uniqueSets: ["1", "2", "3"],
+    sets: [
+      { code: "1", name: "The First Chapter", number: 1 },
+      { code: "2", name: "Rise of the Floodborn", number: 2 },
+      { code: "3", name: "Into the Inklands", number: 3 },
+    ],
     onSearchChange: vi.fn(),
     onInkFilterChange: vi.fn(),
     onFiltersChange: vi.fn(),

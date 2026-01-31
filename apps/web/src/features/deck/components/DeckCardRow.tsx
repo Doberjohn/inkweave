@@ -1,9 +1,9 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import type { LorcanaCard } from "../../cards";
 import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT } from "../../../shared/constants";
 import { CardImage } from "../../../shared/components";
-import { useCardPreview } from "../../cards";
-import { useTouchPreview, useResponsive } from "../../../shared/hooks";
+import { useCardPreviewHandlers } from "../../cards";
+import { useResponsive } from "../../../shared/hooks";
 
 interface DeckCardRowProps {
   card: LorcanaCard;
@@ -27,34 +27,8 @@ export function DeckCardRow({
   onRemoveAll,
 }: DeckCardRowProps) {
   const colors = INK_COLORS[card.ink];
-  const { showPreview, updatePosition, hidePreview } = useCardPreview();
+  const { previewHandlers } = useCardPreviewHandlers({ card });
   const { isMobile } = useResponsive();
-
-  const handleMouseEnter = useCallback(
-    (e: React.MouseEvent) => {
-      showPreview(card, e.clientX, e.clientY);
-    },
-    [card, showPreview]
-  );
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      updatePosition(e.clientX, e.clientY);
-    },
-    [updatePosition]
-  );
-
-  const handleMouseLeave = useCallback(() => {
-    hidePreview();
-  }, [hidePreview]);
-
-  // Touch support for mobile
-  const { touchHandlers } = useTouchPreview({
-    onLongPress: () => {
-      showPreview(card, 0, 0, true);
-    },
-    onTouchEnd: hidePreview,
-  });
 
   const totalCost = card.cost * quantity;
 
@@ -73,10 +47,7 @@ export function DeckCardRow({
 
   return (
     <div
-      onMouseEnter={handleMouseEnter}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      {...touchHandlers}
+      {...previewHandlers}
       style={{
         display: "flex",
         alignItems: "center",

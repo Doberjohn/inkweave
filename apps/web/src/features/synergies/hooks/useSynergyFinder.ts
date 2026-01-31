@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import type { LorcanaCard, Ink, GameMode } from "../../cards";
+import type { LorcanaCard, Ink, GameMode, SetInfo } from "../../cards";
 import type { GroupedSynergies } from "../types";
 import { sharedEngine } from "../engine";
 import {
@@ -20,6 +20,8 @@ export interface UseCardDataReturn {
   uniqueKeywords: string[];
   uniqueClassifications: string[];
   uniqueSets: string[];
+  /** Set info with names and codes */
+  sets: SetInfo[];
   retryLoad: () => void;
 }
 
@@ -28,6 +30,7 @@ export interface UseCardDataReturn {
  */
 export function useCardData(): UseCardDataReturn {
   const [cards, setCards] = useState<LorcanaCard[]>([]);
+  const [sets, setSets] = useState<SetInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -45,7 +48,8 @@ export function useCardData(): UseCardDataReturn {
         setError(null);
         const data = await fetchCardsFromLocal();
         if (!cancelled) {
-          setCards(data);
+          setCards(data.cards);
+          setSets(data.sets);
         }
       } catch (err) {
         if (!cancelled) {
@@ -76,6 +80,7 @@ export function useCardData(): UseCardDataReturn {
     uniqueKeywords,
     uniqueClassifications,
     uniqueSets,
+    sets,
     retryLoad,
   };
 }
@@ -133,6 +138,8 @@ export interface UseSynergyFinderReturn {
   uniqueClassifications: string[];
   /** All unique set codes found in the card pool */
   uniqueSets: string[];
+  /** Set info with names, codes, and numbers */
+  sets: SetInfo[];
 }
 
 /**
@@ -147,6 +154,7 @@ export function useSynergyFinder(): UseSynergyFinderReturn {
     uniqueKeywords,
     uniqueClassifications,
     uniqueSets,
+    sets,
     retryLoad,
   } = useCardData();
 
@@ -256,6 +264,7 @@ export function useSynergyFinder(): UseSynergyFinderReturn {
     uniqueKeywords,
     uniqueClassifications,
     uniqueSets,
+    sets,
   };
 }
 

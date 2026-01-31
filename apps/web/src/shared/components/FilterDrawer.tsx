@@ -1,12 +1,9 @@
 import { useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Ink, CardType } from "../../features/cards";
+import type { Ink, SetInfo } from "../../features/cards";
 import type { CardFilterOptions } from "../../features/cards";
-import { COLORS, FONT_SIZES, RADIUS, SPACING, Z_INDEX, INK_COLORS, ALL_INKS } from "../constants";
+import { COLORS, FONT_SIZES, RADIUS, SPACING, Z_INDEX, INK_COLORS, ALL_INKS, CARD_TYPES, COST_OPTIONS } from "../constants";
 import { isCardType } from "../../features/cards";
-
-const CARD_TYPES: CardType[] = ["Character", "Action", "Item", "Location"];
-const COST_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 interface FilterDrawerProps {
   isOpen: boolean;
@@ -16,6 +13,7 @@ interface FilterDrawerProps {
   uniqueKeywords: string[];
   uniqueClassifications: string[];
   uniqueSets: string[];
+  sets: SetInfo[];
   onInkFilterChange: (ink: Ink | "all") => void;
   onFiltersChange: (filters: CardFilterOptions) => void;
   onClearAll: () => void;
@@ -29,6 +27,7 @@ export function FilterDrawer({
   uniqueKeywords,
   uniqueClassifications,
   uniqueSets,
+  sets,
   onInkFilterChange,
   onFiltersChange,
   onClearAll,
@@ -291,8 +290,8 @@ export function FilterDrawer({
               style={{ ...selectStyle, width: "100%" }}
             >
               <option value="">Any set</option>
-              {uniqueSets.map((s) => (
-                <option key={s} value={s}>Set {s}</option>
+              {sets.map((s) => (
+                <option key={s.code} value={s.code}>{s.name}</option>
               ))}
             </select>
           </FilterSection>

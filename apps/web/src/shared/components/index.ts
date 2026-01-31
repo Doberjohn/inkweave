@@ -1,4 +1,5 @@
 export { CardImage } from "./CardImage";
+export { CollapsibleSection } from "./CollapsibleSection";
 export { Header } from "./Header";
 export { MobileHeader } from "./MobileHeader";
 export { MobileNav } from "./MobileNav";

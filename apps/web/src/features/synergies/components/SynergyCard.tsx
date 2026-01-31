@@ -1,10 +1,9 @@
-import { useCallback, memo } from "react";
+import { memo } from "react";
 import type { LorcanaCard } from "../../cards";
 import type { SynergyStrength } from "../types";
 import { INK_COLORS, STRENGTH_STYLES, COLORS, FONT_SIZES, RADIUS, LAYOUT } from "../../../shared/constants";
 import { CardImage } from "../../../shared/components";
-import { useCardPreview } from "../../cards";
-import { useTouchPreview } from "../../../shared/hooks";
+import { useCardPreviewHandlers } from "../../cards";
 
 interface SynergyCardProps {
   card: LorcanaCard;
@@ -17,40 +16,11 @@ interface SynergyCardProps {
 export const SynergyCard = memo(function SynergyCard({ card, strength, explanation, onAddToDeck, deckQuantity = 0 }: SynergyCardProps) {
   const colors = INK_COLORS[card.ink];
   const strengthStyle = STRENGTH_STYLES[strength];
-  const { showPreview, updatePosition, hidePreview } = useCardPreview();
-
-  const handleMouseEnter = useCallback(
-    (e: React.MouseEvent) => {
-      showPreview(card, e.clientX, e.clientY);
-    },
-    [card, showPreview]
-  );
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      updatePosition(e.clientX, e.clientY);
-    },
-    [updatePosition]
-  );
-
-  const handleMouseLeave = useCallback(() => {
-    hidePreview();
-  }, [hidePreview]);
-
-  // Touch support for mobile
-  const { touchHandlers } = useTouchPreview({
-    onLongPress: () => {
-      showPreview(card, 0, 0, true); // isTouchMode = true
-    },
-    onTouchEnd: hidePreview,
-  });
+  const { previewHandlers } = useCardPreviewHandlers({ card });
 
   return (
     <div
-      onMouseEnter={handleMouseEnter}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      {...touchHandlers}
+      {...previewHandlers}
       style={{
         display: "flex",
         gap: "12px",
