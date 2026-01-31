@@ -1,5 +1,6 @@
 # Lorcana Synergy Finder
 
+[![CI](https://github.com/Doberjohn/lorcana-synergy-finder/actions/workflows/ci.yml/badge.svg)](https://github.com/Doberjohn/lorcana-synergy-finder/actions/workflows/ci.yml)
 ![Coverage](https://img.shields.io/badge/coverage-98.07%25-brightgreen)
 
 A React web application for discovering synergistic card combinations in Disney Lorcana TCG. Select a card to find cards that synergize with it, and build decks with automatic synergy analysis.
