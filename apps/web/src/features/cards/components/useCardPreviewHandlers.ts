@@ -1,7 +1,7 @@
-import { useCallback, useMemo } from "react";
-import { useCardPreview } from "./useCardPreview";
-import { useTouchPreview } from "../../../shared/hooks";
-import type { LorcanaCard } from "../types";
+import {useCallback, useMemo} from 'react';
+import {useCardPreview} from './useCardPreview';
+import {useTouchPreview} from '../../../shared/hooks';
+import type {LorcanaCard} from '../types';
 
 interface UseCardPreviewHandlersOptions {
   card: LorcanaCard;
@@ -12,21 +12,21 @@ interface UseCardPreviewHandlersOptions {
  * Reusable hook for card preview hover/touch handlers.
  * Consolidates the repeated mouse enter/move/leave pattern used across components.
  */
-export function useCardPreviewHandlers({ card, onTap }: UseCardPreviewHandlersOptions) {
-  const { showPreview, updatePosition, hidePreview } = useCardPreview();
+export function useCardPreviewHandlers({card, onTap}: UseCardPreviewHandlersOptions) {
+  const {showPreview, updatePosition, hidePreview} = useCardPreview();
 
   const handleMouseEnter = useCallback(
     (e: React.MouseEvent) => {
       showPreview(card, e.clientX, e.clientY);
     },
-    [card, showPreview]
+    [card, showPreview],
   );
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
       updatePosition(e.clientX, e.clientY);
     },
-    [updatePosition]
+    [updatePosition],
   );
 
   const handleMouseLeave = useCallback(() => {
@@ -34,7 +34,7 @@ export function useCardPreviewHandlers({ card, onTap }: UseCardPreviewHandlersOp
   }, [hidePreview]);
 
   // Touch support for mobile
-  const { touchHandlers } = useTouchPreview({
+  const {touchHandlers} = useTouchPreview({
     onLongPress: () => {
       showPreview(card, 0, 0, true); // isTouchMode = true, position ignored for centered modal
     },
@@ -50,7 +50,7 @@ export function useCardPreviewHandlers({ card, onTap }: UseCardPreviewHandlersOp
       onMouseLeave: handleMouseLeave,
       ...touchHandlers,
     }),
-    [handleMouseEnter, handleMouseMove, handleMouseLeave, touchHandlers]
+    [handleMouseEnter, handleMouseMove, handleMouseLeave, touchHandlers],
   );
 
   return {

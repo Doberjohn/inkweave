@@ -1,10 +1,10 @@
-import { useMemo } from "react";
-import { CardList, CardPreviewProvider, CardPreviewPopover, filterCards } from "./features/cards";
-import { useSynergyFinder, SynergyResults } from "./features/synergies";
-import { useDeckBuilder, DeckPanel } from "./features/deck";
-import { Header, MobileHeader, MobileNav, ErrorBoundary } from "./shared/components";
-import { COLORS, LAYOUT, LAYOUT_MOBILE } from "./shared/constants";
-import { useResponsive, useMobileView } from "./shared/hooks";
+import {useMemo} from 'react';
+import {CardList, CardPreviewProvider, CardPreviewPopover, filterCards} from './features/cards';
+import {useSynergyFinder, SynergyResults} from './features/synergies';
+import {useDeckBuilder, DeckPanel} from './features/deck';
+import {Header, MobileHeader, MobileNav, ErrorBoundary} from './shared/components';
+import {COLORS, LAYOUT, LAYOUT_MOBILE} from './shared/constants';
+import {useResponsive, useMobileView} from './shared/hooks';
 
 function SynergyFinderApp() {
   const {
@@ -33,12 +33,12 @@ function SynergyFinderApp() {
   } = useSynergyFinder();
 
   const deckBuilder = useDeckBuilder();
-  const { isMobile } = useResponsive();
-  const { activeView, setActiveView } = useMobileView();
+  const {isMobile} = useResponsive();
+  const {activeView, setActiveView} = useMobileView();
 
   // Get cards filtered by game mode for suggestions
   const gameModeFilteredCards = useMemo(() => {
-    return filterCards(cards, { gameMode });
+    return filterCards(cards, {gameMode});
   }, [cards, gameMode]);
 
   // Get deck suggestions
@@ -53,22 +53,21 @@ function SynergyFinderApp() {
 
   if (error) {
     return (
-      <div style={{ padding: "40px", textAlign: "center" }}>
-        <h2 style={{ color: COLORS.error }}>Error loading cards</h2>
-        <p style={{ color: COLORS.gray600, marginBottom: "20px" }}>{error.message}</p>
+      <div style={{padding: '40px', textAlign: 'center'}}>
+        <h2 style={{color: COLORS.error}}>Error loading cards</h2>
+        <p style={{color: COLORS.gray600, marginBottom: '20px'}}>{error.message}</p>
         <button
           onClick={retryLoad}
           style={{
-            padding: "10px 20px",
+            padding: '10px 20px',
             background: COLORS.primary500,
             color: COLORS.white,
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "16px",
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '16px',
             fontWeight: 500,
-          }}
-        >
+          }}>
           Try Again
         </button>
       </div>
@@ -80,23 +79,21 @@ function SynergyFinderApp() {
     return (
       <div
         style={{
-          minHeight: "100vh",
+          minHeight: '100vh',
           background: `linear-gradient(135deg, ${COLORS.bgGradientStart} 0%, ${COLORS.bgGradientEnd} 100%)`,
           fontFamily: "'Inter', -apple-system, sans-serif",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
         <MobileHeader gameMode={gameMode} onGameModeChange={setGameMode} />
 
         <main
           style={{
             flex: 1,
-            overflowY: "auto",
+            overflowY: 'auto',
             paddingBottom: `${LAYOUT_MOBILE.bottomNavHeight}px`,
-          }}
-        >
-          {activeView === "cards" && (
+          }}>
+          {activeView === 'cards' && (
             <ErrorBoundary>
               <CardList
                 cards={filteredCards}
@@ -113,7 +110,7 @@ function SynergyFinderApp() {
                 onFiltersChange={setFilters}
                 onCardSelect={(card) => {
                   selectCard(card);
-                  setActiveView("synergies");
+                  setActiveView('synergies');
                 }}
                 onAddToDeck={deckBuilder.addCard}
                 getCardQuantity={deckBuilder.getCardQuantity}
@@ -122,7 +119,7 @@ function SynergyFinderApp() {
             </ErrorBoundary>
           )}
 
-          {activeView === "synergies" && (
+          {activeView === 'synergies' && (
             <ErrorBoundary>
               <SynergyResults
                 selectedCard={selectedCard}
@@ -136,7 +133,7 @@ function SynergyFinderApp() {
             </ErrorBoundary>
           )}
 
-          {activeView === "deck" && (
+          {activeView === 'deck' && (
             <ErrorBoundary>
               <DeckPanel
                 deck={deckBuilder.deck}
@@ -175,11 +172,10 @@ function SynergyFinderApp() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        minHeight: '100vh',
         background: `linear-gradient(135deg, ${COLORS.bgGradientStart} 0%, ${COLORS.bgGradientEnd} 100%)`,
         fontFamily: "'Inter', -apple-system, sans-serif",
-      }}
-    >
+      }}>
       <Header
         totalCards={totalCards}
         isLoading={isLoading}
@@ -187,7 +183,7 @@ function SynergyFinderApp() {
         onGameModeChange={setGameMode}
       />
 
-      <div style={{ display: "flex", minHeight: `calc(100vh - ${LAYOUT.headerHeight}px)` }}>
+      <div style={{display: 'flex', minHeight: `calc(100vh - ${LAYOUT.headerHeight}px)`}}>
         <CardList
           cards={filteredCards}
           isLoading={isLoading}

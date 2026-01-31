@@ -12,4 +12,4 @@ export {
   Z_INDEX,
   CARD_TYPES,
   COST_OPTIONS,
-} from "./theme";
+} from './theme';

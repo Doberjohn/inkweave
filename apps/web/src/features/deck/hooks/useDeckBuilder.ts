@@ -1,12 +1,12 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import type { LorcanaCard, Ink, CardType } from "../../cards";
-import type { SynergyStrength } from "../../synergies";
-import type { Deck, DeckCard, DeckStats } from "../types";
-import { synergyCache } from "../../synergies";
-import { ALL_INKS } from "../../../shared/constants";
+import {useState, useCallback, useMemo, useEffect, useRef} from 'react';
+import type {LorcanaCard, Ink, CardType} from '../../cards';
+import type {SynergyStrength} from '../../synergies';
+import type {Deck, DeckCard, DeckStats} from '../types';
+import {synergyCache} from '../../synergies';
+import {ALL_INKS} from '../../../shared/constants';
 
-const STORAGE_KEY_DECKS = "lorcana-synergy-finder-decks";
-const STORAGE_KEY_CURRENT = "lorcana-synergy-finder-current-deck";
+const STORAGE_KEY_DECKS = 'lorcana-synergy-finder-decks';
+const STORAGE_KEY_CURRENT = 'lorcana-synergy-finder-current-deck';
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -16,7 +16,7 @@ function createEmptyDeck(): Deck {
   const now = Date.now();
   return {
     id: generateId(),
-    name: "New Deck",
+    name: 'New Deck',
     cards: [],
     createdAt: now,
     updatedAt: now,
@@ -44,7 +44,7 @@ function calculateStats(deck: Deck): DeckStats {
   let totalCards = 0;
   const uniqueCards = deck.cards.length;
 
-  for (const { card, quantity } of deck.cards) {
+  for (const {card, quantity} of deck.cards) {
     totalCards += quantity;
     inkDistribution[card.ink] += quantity;
 
@@ -66,7 +66,7 @@ function calculateStats(deck: Deck): DeckStats {
   }
 
   // Check for cards with >4 copies (shouldn't happen with UI limits, but validate anyway)
-  for (const { card, quantity } of deck.cards) {
+  for (const {card, quantity} of deck.cards) {
     if (quantity > 4) {
       validationErrors.push(`${card.name} has ${quantity} copies (max 4)`);
     }
@@ -190,8 +190,8 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
       localStorage.setItem(STORAGE_KEY_CURRENT, JSON.stringify(deck));
     } catch (err) {
       // Handle storage quota exceeded
-      if (err instanceof DOMException && err.name === "QuotaExceededError") {
-        console.warn("localStorage quota exceeded. Current deck may not persist.");
+      if (err instanceof DOMException && err.name === 'QuotaExceededError') {
+        console.warn('localStorage quota exceeded. Current deck may not persist.');
       }
     }
   }, [deck]);
@@ -218,14 +218,14 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
         return {
           ...prev,
           cards: prev.cards.map((dc) =>
-            dc.card.id === card.id ? { ...dc, quantity: dc.quantity + 1 } : dc
+            dc.card.id === card.id ? {...dc, quantity: dc.quantity + 1} : dc,
           ),
           updatedAt: Date.now(),
         };
       } else {
         return {
           ...prev,
-          cards: [...prev.cards, { card, quantity: 1 }],
+          cards: [...prev.cards, {card, quantity: 1}],
           updatedAt: Date.now(),
         };
       }
@@ -249,7 +249,7 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
       return {
         ...prev,
         cards: prev.cards.map((dc) =>
-          dc.card.id === cardId ? { ...dc, quantity: dc.quantity - 1 } : dc
+          dc.card.id === cardId ? {...dc, quantity: dc.quantity - 1} : dc,
         ),
         updatedAt: Date.now(),
       };
@@ -281,7 +281,7 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
 
       return {
         ...prev,
-        cards: prev.cards.map((dc) => (dc.card.id === cardId ? { ...dc, quantity } : dc)),
+        cards: prev.cards.map((dc) => (dc.card.id === cardId ? {...dc, quantity} : dc)),
         updatedAt: Date.now(),
       };
     });
@@ -290,7 +290,7 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
   // Memoized map for O(1) card quantity lookups
   const cardQuantityMap = useMemo(() => {
     const map = new Map<string, number>();
-    for (const { card, quantity } of deck.cards) {
+    for (const {card, quantity} of deck.cards) {
       map.set(card.id, quantity);
     }
     return map;
@@ -300,7 +300,7 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
     (cardId: string): number => {
       return cardQuantityMap.get(cardId) ?? 0;
     },
-    [cardQuantityMap]
+    [cardQuantityMap],
   );
 
   const clearDeck = useCallback(() => {
@@ -314,7 +314,7 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
   const renameDeck = useCallback((name: string) => {
     setDeck((prev) => ({
       ...prev,
-      name: name.trim() || "Untitled Deck",
+      name: name.trim() || 'Untitled Deck',
       updatedAt: Date.now(),
     }));
   }, []);
@@ -332,16 +332,16 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
       // Update existing or add new
       const existingIndex = decks.findIndex((d) => d.id === currentDeck.id);
       if (existingIndex >= 0) {
-        decks[existingIndex] = { ...currentDeck, updatedAt: Date.now() };
+        decks[existingIndex] = {...currentDeck, updatedAt: Date.now()};
       } else {
-        decks.push({ ...currentDeck, updatedAt: Date.now() });
+        decks.push({...currentDeck, updatedAt: Date.now()});
       }
 
       localStorage.setItem(STORAGE_KEY_DECKS, JSON.stringify(decks));
       return true;
     } catch (err) {
-      if (err instanceof DOMException && err.name === "QuotaExceededError") {
-        alert("Storage is full. Please delete some saved decks to save new ones.");
+      if (err instanceof DOMException && err.name === 'QuotaExceededError') {
+        alert('Storage is full. Please delete some saved decks to save new ones.');
       }
       return false;
     }
@@ -410,11 +410,11 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
         // Validate card object has required fields
         if (
           !entry.card ||
-          typeof entry.card.id !== "string" ||
-          typeof entry.card.name !== "string" ||
-          typeof entry.card.cost !== "number" ||
-          typeof entry.card.ink !== "string" ||
-          typeof entry.card.type !== "string"
+          typeof entry.card.id !== 'string' ||
+          typeof entry.card.name !== 'string' ||
+          typeof entry.card.cost !== 'number' ||
+          typeof entry.card.ink !== 'string' ||
+          typeof entry.card.type !== 'string'
         ) {
           continue; // Skip invalid cards
         }
@@ -426,13 +426,13 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
         if (totalCards + quantity > 60) {
           const remaining = 60 - totalCards;
           if (remaining > 0) {
-            validCards.push({ card: entry.card, quantity: remaining });
+            validCards.push({card: entry.card, quantity: remaining});
             totalCards = 60;
           }
           break;
         }
 
-        validCards.push({ card: entry.card, quantity });
+        validCards.push({card: entry.card, quantity});
         totalCards += quantity;
       }
 
@@ -461,7 +461,7 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
 
       // Filter candidates: not in deck, matching deck's ink colors
       const candidates = allCards.filter(
-        (card) => !deckCardIds.has(card.id) && deckInks.has(card.ink)
+        (card) => !deckCardIds.has(card.id) && deckInks.has(card.ink),
       );
 
       // Calculate synergy score for each candidate
@@ -473,10 +473,10 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
         const synergizingWith: string[] = [];
 
         // Check synergy with each deck card (using cache)
-        for (const { card: deckCard } of deck.cards) {
-          const { hasSynergy, forward, reverse } = synergyCache.checkBidirectionalSynergy(
+        for (const {card: deckCard} of deck.cards) {
+          const {hasSynergy, forward, reverse} = synergyCache.checkBidirectionalSynergy(
             candidate,
-            deckCard
+            deckCard,
           );
 
           if (hasSynergy) {
@@ -514,7 +514,7 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
 
       return suggestions.slice(0, limit);
     },
-    [deck.cards]
+    [deck.cards],
   );
 
   const getDeckSynergyAnalysis = useCallback((): DeckSynergyAnalysis => {
@@ -534,16 +534,16 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
     let totalConnections = 0;
 
     // Analyze each card in the deck (using cache for performance)
-    for (const { card, quantity } of deck.cards) {
-      const synergizingWith: DeckCardSynergy["synergizingWith"] = [];
+    for (const {card, quantity} of deck.cards) {
+      const synergizingWith: DeckCardSynergy['synergizingWith'] = [];
       let cardTotalStrength = 0;
 
       // Check synergy with every other card in deck
-      for (const { card: otherCard } of deck.cards) {
+      for (const {card: otherCard} of deck.cards) {
         if (card.id === otherCard.id) continue;
 
         // Check both directions for synergies (cached)
-        const { hasSynergy, bestSynergy } = synergyCache.checkBidirectionalSynergy(card, otherCard);
+        const {hasSynergy, bestSynergy} = synergyCache.checkBidirectionalSynergy(card, otherCard);
 
         if (hasSynergy && bestSynergy) {
           synergizingWith.push({
@@ -555,7 +555,7 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
           cardTotalStrength += strengthWeight(bestSynergy.strength);
 
           // Count unique pair connections (avoid double counting)
-          const pairKey = [card.id, otherCard.id].sort().join("-");
+          const pairKey = [card.id, otherCard.id].sort().join('-');
           if (!seenPairs.has(pairKey)) {
             seenPairs.add(pairKey);
             totalConnections++;
@@ -628,11 +628,11 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
 
 function strengthWeight(strength: SynergyStrength): number {
   switch (strength) {
-    case "strong":
+    case 'strong':
       return 3;
-    case "moderate":
+    case 'moderate':
       return 2;
-    case "weak":
+    case 'weak':
       return 1;
   }
 }

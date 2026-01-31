@@ -1,17 +1,17 @@
-import type { LorcanaCard } from "./card.js";
+import type {LorcanaCard} from './card.js';
 
 // Synergy types - what kind of connection exists between cards
 export type SynergyType =
-  | "keyword" // Evasive + quest triggers, Singer + Songs
-  | "classification" // Floodborn synergies, Princess tribal
-  | "shift" // Shift onto same-named characters
-  | "named" // Card explicitly references another by name
-  | "mechanic" // Exert synergies, draw engines, ramp
-  | "ink" // Same ink color benefits
-  | "cost-curve"; // Good mana curve progression
+  | 'keyword' // Evasive + quest triggers, Singer + Songs
+  | 'classification' // Floodborn synergies, Princess tribal
+  | 'shift' // Shift onto same-named characters
+  | 'named' // Card explicitly references another by name
+  | 'mechanic' // Exert synergies, draw engines, ramp
+  | 'ink' // Same ink color benefits
+  | 'cost-curve'; // Good mana curve progression
 
 // How strong is this synergy
-export type SynergyStrength = "weak" | "moderate" | "strong";
+export type SynergyStrength = 'weak' | 'moderate' | 'strong';
 
 // A detected synergy between two cards
 export interface Synergy {

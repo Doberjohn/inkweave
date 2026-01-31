@@ -1,22 +1,21 @@
-import type { Ink, CardType } from "lorcana-synergy-engine";
+import type {Ink, CardType} from 'lorcana-synergy-engine';
 
 // Ink color styling
-export const INK_COLORS: Record<Ink, { bg: string; text: string; border: string }> = {
-  Amber: { bg: "#fef3c7", text: "#92400e", border: "#f59e0b" },
-  Amethyst: { bg: "#ede9fe", text: "#5b21b6", border: "#8b5cf6" },
-  Emerald: { bg: "#d1fae5", text: "#065f46", border: "#10b981" },
-  Ruby: { bg: "#fee2e2", text: "#991b1b", border: "#ef4444" },
-  Sapphire: { bg: "#dbeafe", text: "#1e40af", border: "#3b82f6" },
-  Steel: { bg: "#e5e7eb", text: "#374151", border: "#6b7280" },
+export const INK_COLORS: Record<Ink, {bg: string; text: string; border: string}> = {
+  Amber: {bg: '#fef3c7', text: '#92400e', border: '#f59e0b'},
+  Amethyst: {bg: '#ede9fe', text: '#5b21b6', border: '#8b5cf6'},
+  Emerald: {bg: '#d1fae5', text: '#065f46', border: '#10b981'},
+  Ruby: {bg: '#fee2e2', text: '#991b1b', border: '#ef4444'},
+  Sapphire: {bg: '#dbeafe', text: '#1e40af', border: '#3b82f6'},
+  Steel: {bg: '#e5e7eb', text: '#374151', border: '#6b7280'},
 };
 
 // Synergy strength styling
-export const STRENGTH_STYLES: Record<"strong" | "moderate" | "weak", { bg: string; text: string }> =
-  {
-    strong: { bg: "#dcfce7", text: "#166534" },
-    moderate: { bg: "#fef9c3", text: "#854d0e" },
-    weak: { bg: "#f3f4f6", text: "#6b7280" },
-  };
+export const STRENGTH_STYLES: Record<'strong' | 'moderate' | 'weak', {bg: string; text: string}> = {
+  strong: {bg: '#dcfce7', text: '#166534'},
+  moderate: {bg: '#fef9c3', text: '#854d0e'},
+  weak: {bg: '#f3f4f6', text: '#6b7280'},
+};
 
 // Layout constants
 export const LAYOUT = {
@@ -64,43 +63,43 @@ export const FONT_SIZES = {
 // Common colors
 export const COLORS = {
   // Grays
-  gray50: "#f9fafb",
-  gray100: "#f3f4f6",
-  gray200: "#e5e7eb",
-  gray300: "#d1d5db",
-  gray400: "#9ca3af",
-  gray500: "#6b7280",
-  gray600: "#4b5563",
-  gray700: "#374151",
-  gray800: "#1f2937",
-  gray900: "#111827",
+  gray50: '#f9fafb',
+  gray100: '#f3f4f6',
+  gray200: '#e5e7eb',
+  gray300: '#d1d5db',
+  gray400: '#9ca3af',
+  gray500: '#6b7280',
+  gray600: '#4b5563',
+  gray700: '#374151',
+  gray800: '#1f2937',
+  gray900: '#111827',
 
   // Primary (Indigo)
-  primary50: "#eef2ff",
-  primary100: "#e0e7ff",
-  primary200: "#c7d2fe",
-  primary500: "#6366f1",
-  primary600: "#4f46e5",
-  primary700: "#4338ca",
-  primary800: "#312e81",
-  primary900: "#1e1b4b",
+  primary50: '#eef2ff',
+  primary100: '#e0e7ff',
+  primary200: '#c7d2fe',
+  primary500: '#6366f1',
+  primary600: '#4f46e5',
+  primary700: '#4338ca',
+  primary800: '#312e81',
+  primary900: '#1e1b4b',
 
   // Semantic
-  white: "#ffffff",
-  error: "#dc2626",
-  errorBg: "#fef2f2",
-  errorBorder: "#fecaca",
-  successBg: "#dcfce7",
+  white: '#ffffff',
+  error: '#dc2626',
+  errorBg: '#fef2f2',
+  errorBorder: '#fecaca',
+  successBg: '#dcfce7',
 
   // Backgrounds
-  bgGradientStart: "#f8fafc",
-  bgGradientEnd: "#e2e8f0",
-  headerGradientStart: "#1e1b4b",
-  headerGradientEnd: "#312e81",
+  bgGradientStart: '#f8fafc',
+  bgGradientEnd: '#e2e8f0',
+  headerGradientStart: '#1e1b4b',
+  headerGradientEnd: '#312e81',
 } as const;
 
 // All inks for iteration
-export const ALL_INKS: Ink[] = ["Amber", "Amethyst", "Emerald", "Ruby", "Sapphire", "Steel"];
+export const ALL_INKS: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
 
 // Breakpoints for responsive design
 export const BREAKPOINTS = {
@@ -127,7 +126,7 @@ export const Z_INDEX = {
 } as const;
 
 // Card types for filtering
-export const CARD_TYPES: CardType[] = ["Character", "Action", "Item", "Location"];
+export const CARD_TYPES: CardType[] = ['Character', 'Action', 'Item', 'Location'];
 
 // Cost options for filtering (0-10, where 10 represents 10+)
 export const COST_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;

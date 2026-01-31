@@ -1,8 +1,8 @@
-import type { LorcanaCard } from "../../cards";
-import type { GroupedSynergies } from "../types";
-import { CardDetail, SynergyGroup } from ".";
-import { EmptyState } from "../../../shared/components";
-import { COLORS, FONT_SIZES, SPACING, LAYOUT, LAYOUT_MOBILE } from "../../../shared/constants";
+import type {LorcanaCard} from '../../cards';
+import type {GroupedSynergies} from '../types';
+import {CardDetail, SynergyGroup} from '.';
+import {EmptyState} from '../../../shared/components';
+import {COLORS, FONT_SIZES, SPACING, LAYOUT, LAYOUT_MOBILE} from '../../../shared/constants';
 
 interface SynergyResultsProps {
   selectedCard: LorcanaCard | null;
@@ -28,13 +28,12 @@ export function SynergyResults({
       style={{
         flex: 1,
         padding: isMobile ? `${SPACING.md}px` : `${SPACING.xl}px`,
-        overflowY: "auto",
+        overflowY: 'auto',
         maxHeight: isMobile
           ? `calc(100vh - ${LAYOUT_MOBILE.headerHeight}px - ${LAYOUT_MOBILE.bottomNavHeight}px)`
           : `calc(100vh - ${LAYOUT.headerHeight}px)`,
         background: isMobile ? COLORS.white : undefined,
-      }}
-    >
+      }}>
       {!selectedCard ? (
         <EmptyState
           title="Select a card to see synergies"
@@ -47,21 +46,20 @@ export function SynergyResults({
           {synergies.length === 0 ? (
             <div
               style={{
-                textAlign: "center",
+                textAlign: 'center',
                 padding: `${SPACING.xxl * 2}px`,
                 color: COLORS.gray400,
-              }}
-            >
+              }}>
               <p>No synergies found for this card.</p>
-              <p style={{ fontSize: `${FONT_SIZES.base}px`, marginTop: `${SPACING.sm}px` }}>
+              <p style={{fontSize: `${FONT_SIZES.base}px`, marginTop: `${SPACING.sm}px`}}>
                 Try a card with Singer, Shift, Evasive, or Bodyguard.
               </p>
             </div>
           ) : (
             <>
-              <div style={{ marginBottom: `${SPACING.lg}px` }}>
-                <span style={{ fontSize: `${FONT_SIZES.lg}px`, color: COLORS.gray500 }}>
-                  Found <strong style={{ color: COLORS.primary600 }}>{totalSynergyCount}</strong>{" "}
+              <div style={{marginBottom: `${SPACING.lg}px`}}>
+                <span style={{fontSize: `${FONT_SIZES.lg}px`, color: COLORS.gray500}}>
+                  Found <strong style={{color: COLORS.primary600}}>{totalSynergyCount}</strong>{' '}
                   synergistic cards
                 </span>
               </div>

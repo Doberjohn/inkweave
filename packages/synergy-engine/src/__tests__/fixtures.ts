@@ -1,4 +1,4 @@
-import type { LorcanaCard } from "../types/card.js";
+import type {LorcanaCard} from '../types/card.js';
 
 /**
  * Factory function to create mock LorcanaCard objects for testing.
@@ -6,13 +6,13 @@ import type { LorcanaCard } from "../types/card.js";
  */
 export function createCard(overrides: Partial<LorcanaCard> = {}): LorcanaCard {
   return {
-    id: "test-1",
-    name: "Test Card",
-    fullName: "Test Card - Version",
+    id: 'test-1',
+    name: 'Test Card',
+    fullName: 'Test Card - Version',
     cost: 3,
-    ink: "Amber",
+    ink: 'Amber',
     inkwell: true,
-    type: "Character",
+    type: 'Character',
     ...overrides,
   };
 }

@@ -7,13 +7,13 @@ export type {
   SynergyMatch,
   SynergyMatchDisplay,
   GroupedSynergies,
-} from "./types";
+} from './types';
 
 // Engine
-export * from "./engine";
+export * from './engine';
 
 // Hooks
-export * from "./hooks";
+export * from './hooks';
 
 // Components
-export * from "./components";
+export * from './components';

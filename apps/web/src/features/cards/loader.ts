@@ -1,7 +1,7 @@
-import type { LorcanaCard, Ink, CardType, GameMode } from "./types";
+import type {LorcanaCard, Ink, CardType, GameMode} from './types';
 
 // Sets excluded from Core mode (only valid in Infinity)
-const INFINITY_ONLY_SETS = ["1", "2", "3", "4"];
+const INFINITY_ONLY_SETS = ['1', '2', '3', '4'];
 
 // LorcanaJSON data structure (partial - only fields we need)
 interface LorcanaJSONCard {
@@ -62,10 +62,10 @@ export interface SetInfo {
 }
 
 // Valid ink colors
-const VALID_INKS: Ink[] = ["Amber", "Amethyst", "Emerald", "Ruby", "Sapphire", "Steel"];
+const VALID_INKS: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
 
 // Valid card types
-const VALID_TYPES: CardType[] = ["Character", "Action", "Item", "Location"];
+const VALID_TYPES: CardType[] = ['Character', 'Action', 'Item', 'Location'];
 
 /**
  * Parse ink color from raw color string (handles dual-ink cards like "Amethyst-Sapphire")
@@ -73,7 +73,7 @@ const VALID_TYPES: CardType[] = ["Character", "Action", "Item", "Location"];
  */
 function parseInk(colorStr: string): Ink | null {
   // Handle dual-ink cards by taking the first ink
-  const primaryColor = colorStr.split("-")[0] as Ink;
+  const primaryColor = colorStr.split('-')[0] as Ink;
   if (VALID_INKS.includes(primaryColor)) {
     return primaryColor;
   }
@@ -102,7 +102,7 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
 
   if (raw.abilities) {
     for (const ability of raw.abilities) {
-      if (ability.type === "keyword" && ability.keyword) {
+      if (ability.type === 'keyword' && ability.keyword) {
         if (ability.keywordValue) {
           keywords.push(`${ability.keyword} ${ability.keywordValue}`);
         } else {
@@ -115,7 +115,7 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
   // Extract classifications from subtypes
   // Subtypes include things like "Floodborn", "Hero", "Princess", "Song"
   // We filter out "Song" since that's more of a card type indicator
-  const classifications = raw.subtypes?.filter((s) => s !== "Song") ?? [];
+  const classifications = raw.subtypes?.filter((s) => s !== 'Song') ?? [];
 
   return {
     id: String(raw.id),
@@ -147,7 +147,7 @@ function parseSetOrder(setCode: string | undefined): number {
   const num = parseInt(setCode, 10);
   if (!isNaN(num)) return num;
   // Q1, Q2 etc. get negative priority (older than regular sets)
-  if (setCode.startsWith("Q")) return -parseInt(setCode.slice(1), 10);
+  if (setCode.startsWith('Q')) return -parseInt(setCode.slice(1), 10);
   return -1;
 }
 
@@ -165,8 +165,8 @@ export function loadSetsFromJSON(data: LorcanaJSONData): SetInfo[] {
     }))
     .sort((a, b) => {
       // Sort by number, with Q sets (negative or special) at the end
-      const numA = typeof a.number === "number" ? a.number : 999;
-      const numB = typeof b.number === "number" ? b.number : 999;
+      const numA = typeof a.number === 'number' ? a.number : 999;
+      const numB = typeof b.number === 'number' ? b.number : 999;
       return numA - numB;
     });
 }
@@ -209,7 +209,7 @@ export interface CardDataResult {
  * Place allCards.json in your public folder
  */
 export async function fetchCardsFromLocal(
-  path: string = "/data/allCards.json"
+  path: string = '/data/allCards.json',
 ): Promise<CardDataResult> {
   const response = await fetch(path);
 
@@ -222,7 +222,7 @@ export async function fetchCardsFromLocal(
     data = await response.json();
   } catch (parseError) {
     throw new Error(
-      `Failed to parse card data: ${parseError instanceof Error ? parseError.message : "Invalid JSON"}`
+      `Failed to parse card data: ${parseError instanceof Error ? parseError.message : 'Invalid JSON'}`,
     );
   }
 
@@ -241,7 +241,7 @@ export function searchCardsByName(cards: LorcanaCard[], query: string): LorcanaC
     (card) =>
       card.name.toLowerCase().includes(lowerQuery) ||
       card.fullName.toLowerCase().includes(lowerQuery) ||
-      card.version?.toLowerCase().includes(lowerQuery)
+      card.version?.toLowerCase().includes(lowerQuery),
   );
 }
 
@@ -285,7 +285,7 @@ export function filterCards(cards: LorcanaCard[], options: CardFilterOptions): L
     if (options.setCode && card.setCode !== options.setCode) return false;
 
     // Game mode filter - Core excludes sets 1-4
-    if (options.gameMode === "core" && card.setCode && INFINITY_ONLY_SETS.includes(card.setCode)) {
+    if (options.gameMode === 'core' && card.setCode && INFINITY_ONLY_SETS.includes(card.setCode)) {
       return false;
     }
 
@@ -293,7 +293,7 @@ export function filterCards(cards: LorcanaCard[], options: CardFilterOptions): L
     if (options.keywords && options.keywords.length > 0) {
       if (!card.keywords) return false;
       const hasKeyword = options.keywords.some((k) =>
-        card.keywords!.some((ck) => ck.toLowerCase().includes(k.toLowerCase()))
+        card.keywords!.some((ck) => ck.toLowerCase().includes(k.toLowerCase())),
       );
       if (!hasKeyword) return false;
     }
@@ -302,7 +302,7 @@ export function filterCards(cards: LorcanaCard[], options: CardFilterOptions): L
     if (options.classifications && options.classifications.length > 0) {
       if (!card.classifications) return false;
       const hasClass = options.classifications.some((c) =>
-        card.classifications!.some((cc) => cc.toLowerCase() === c.toLowerCase())
+        card.classifications!.some((cc) => cc.toLowerCase() === c.toLowerCase()),
       );
       if (!hasClass) return false;
     }
@@ -327,7 +327,7 @@ export function getUniqueKeywords(cards: LorcanaCard[]): string[] {
   for (const card of cards) {
     card.keywords?.forEach((k) => {
       // Extract base keyword (e.g., "Singer 5" -> "Singer")
-      const base = k.split(" ")[0];
+      const base = k.split(' ')[0];
       keywords.add(base);
     });
   }

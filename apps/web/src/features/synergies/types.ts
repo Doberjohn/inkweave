@@ -7,4 +7,4 @@ export type {
   SynergyMatch,
   SynergyMatchDisplay,
   GroupedSynergies,
-} from "lorcana-synergy-engine";
+} from 'lorcana-synergy-engine';

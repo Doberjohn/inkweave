@@ -1,6 +1,6 @@
-import { useState } from "react";
-import type { Ink } from "../../features/cards";
-import { INK_COLORS, FONT_SIZES, RADIUS } from "../constants";
+import {useState} from 'react';
+import type {Ink} from '../../features/cards';
+import {INK_COLORS, FONT_SIZES, RADIUS} from '../constants';
 
 interface CardImageProps {
   src: string | undefined;
@@ -41,14 +41,14 @@ export function CardImage({
       <img
         src={src}
         alt={alt}
-        loading={lazy ? "lazy" : undefined}
+        loading={lazy ? 'lazy' : undefined}
         decoding="async"
         onError={() => setImgError(true)}
         style={{
           width: `${width}px`,
           height: `${height}px`,
           borderRadius: `${borderRadius}px`,
-          objectFit: "cover",
+          objectFit: 'cover',
           flexShrink: 0,
         }}
       />
@@ -63,19 +63,17 @@ export function CardImage({
         height: `${height}px`,
         borderRadius: `${borderRadius}px`,
         background: colors.bg,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         flexShrink: 0,
-      }}
-    >
+      }}>
       <span
         style={{
           fontSize: `${fontSize}px`,
           fontWeight: 600,
           color: colors.text,
-        }}
-      >
+        }}>
         {cost}
       </span>
     </div>

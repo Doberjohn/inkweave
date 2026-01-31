@@ -12,6 +12,6 @@ export {
   isLocation,
   hasNegativeTargeting,
   hasPositiveClassificationEffect,
-} from "./cardHelpers.js";
+} from './cardHelpers.js';
 
-export { isCardType } from "./typeGuards.js";
+export {isCardType} from './typeGuards.js';

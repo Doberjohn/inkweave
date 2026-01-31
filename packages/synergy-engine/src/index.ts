@@ -11,7 +11,7 @@ export type {
   SynergyMatch,
   SynergyMatchDisplay,
   GroupedSynergies,
-} from "./types/index.js";
+} from './types/index.js';
 
 // Engine
 export {
@@ -23,8 +23,8 @@ export {
   getAllRules,
   getRulesByType,
   getRuleById,
-} from "./engine/index.js";
-export type { SynergyEngineOptions, CachedSynergyResult } from "./engine/index.js";
+} from './engine/index.js';
+export type {SynergyEngineOptions, CachedSynergyResult} from './engine/index.js';
 
 // Utilities (for custom rule authors)
 export {
@@ -42,4 +42,4 @@ export {
   hasNegativeTargeting,
   hasPositiveClassificationEffect,
   isCardType,
-} from "./utils/index.js";
+} from './utils/index.js';

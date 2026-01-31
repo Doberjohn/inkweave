@@ -1,5 +1,5 @@
-import { useState } from "react";
-import type { DeckSynergyAnalysis as DeckSynergyAnalysisType, DeckCardSynergy } from "../hooks";
+import {useState} from 'react';
+import type {DeckSynergyAnalysis as DeckSynergyAnalysisType, DeckCardSynergy} from '../hooks';
 import {
   INK_COLORS,
   COLORS,
@@ -7,9 +7,9 @@ import {
   RADIUS,
   SPACING,
   STRENGTH_STYLES,
-} from "../../../shared/constants";
-import { CollapsibleSection } from "../../../shared/components";
-import { useCardPreviewHandlers } from "../../cards";
+} from '../../../shared/constants';
+import {CollapsibleSection} from '../../../shared/components';
+import {useCardPreviewHandlers} from '../../cards';
 
 interface DeckSynergyAnalysisProps {
   analysis: DeckSynergyAnalysisType;
@@ -24,7 +24,7 @@ export function DeckSynergyAnalysis({
   collapsed = false,
   onToggleCollapse,
 }: DeckSynergyAnalysisProps) {
-  const [activeTab, setActiveTab] = useState<"overview" | "key" | "weak" | "all">("overview");
+  const [activeTab, setActiveTab] = useState<'overview' | 'key' | 'weak' | 'all'>('overview');
 
   if (analysis.cardSynergies.length === 0) {
     return null;
@@ -35,12 +35,11 @@ export function DeckSynergyAnalysis({
       {/* Overview Stats */}
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr',
           gap: `${SPACING.md}px`,
           marginBottom: `${SPACING.lg}px`,
-        }}
-      >
+        }}>
         <StatBox label="Score" value={analysis.overallScore} />
         <StatBox label="Connections" value={analysis.connectionCount} />
         <StatBox label="Avg/Card" value={analysis.averageScore} />
@@ -49,37 +48,36 @@ export function DeckSynergyAnalysis({
       {/* Tabs */}
       <div
         style={{
-          display: "flex",
+          display: 'flex',
           gap: `${SPACING.xs}px`,
           marginBottom: `${SPACING.md}px`,
           borderBottom: `1px solid ${COLORS.gray200}`,
           paddingBottom: `${SPACING.sm}px`,
-        }}
-      >
-        <TabButton active={activeTab === "overview"} onClick={() => setActiveTab("overview")}>
+        }}>
+        <TabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>
           Overview
         </TabButton>
-        <TabButton active={activeTab === "key"} onClick={() => setActiveTab("key")}>
+        <TabButton active={activeTab === 'key'} onClick={() => setActiveTab('key')}>
           Key Cards ({analysis.keyCards.length})
         </TabButton>
-        <TabButton active={activeTab === "weak"} onClick={() => setActiveTab("weak")}>
+        <TabButton active={activeTab === 'weak'} onClick={() => setActiveTab('weak')}>
           Weak Links ({analysis.weakLinks.length})
         </TabButton>
-        <TabButton active={activeTab === "all"} onClick={() => setActiveTab("all")}>
+        <TabButton active={activeTab === 'all'} onClick={() => setActiveTab('all')}>
           All
         </TabButton>
       </div>
 
       {/* Tab Content */}
-      <div style={{ maxHeight: 300, overflowY: "auto" }}>
-        {activeTab === "overview" && <OverviewTab analysis={analysis} />}
-        {activeTab === "key" && (
+      <div style={{maxHeight: 300, overflowY: 'auto'}}>
+        {activeTab === 'overview' && <OverviewTab analysis={analysis} />}
+        {activeTab === 'key' && (
           <CardList cards={analysis.keyCards} type="key" onRemoveCard={onRemoveCard} />
         )}
-        {activeTab === "weak" && (
+        {activeTab === 'weak' && (
           <CardList cards={analysis.weakLinks} type="weak" onRemoveCard={onRemoveCard} />
         )}
-        {activeTab === "all" && (
+        {activeTab === 'all' && (
           <CardList cards={analysis.cardSynergies} type="all" onRemoveCard={onRemoveCard} />
         )}
       </div>
@@ -87,21 +85,20 @@ export function DeckSynergyAnalysis({
   );
 }
 
-function StatBox({ label, value }: { label: string; value: number }) {
+function StatBox({label, value}: {label: string; value: number}) {
   return (
     <div
       style={{
         background: COLORS.white,
         borderRadius: `${RADIUS.md}px`,
         padding: `${SPACING.sm}px`,
-        textAlign: "center",
+        textAlign: 'center',
         border: `1px solid ${COLORS.gray200}`,
-      }}
-    >
-      <div style={{ fontSize: `${FONT_SIZES.xxl}px`, fontWeight: 600, color: COLORS.primary600 }}>
+      }}>
+      <div style={{fontSize: `${FONT_SIZES.xxl}px`, fontWeight: 600, color: COLORS.primary600}}>
         {value}
       </div>
-      <div style={{ fontSize: `${FONT_SIZES.xs}px`, color: COLORS.gray500, marginTop: 2 }}>
+      <div style={{fontSize: `${FONT_SIZES.xs}px`, color: COLORS.gray500, marginTop: 2}}>
         {label}
       </div>
     </div>
@@ -123,23 +120,22 @@ function TabButton({
       aria-pressed={active}
       style={{
         padding: `${SPACING.xs}px ${SPACING.sm}px`,
-        background: active ? COLORS.primary100 : "transparent",
+        background: active ? COLORS.primary100 : 'transparent',
         color: active ? COLORS.primary700 : COLORS.gray600,
-        border: "none",
+        border: 'none',
         borderRadius: `${RADIUS.md}px`,
-        cursor: "pointer",
+        cursor: 'pointer',
         fontSize: `${FONT_SIZES.xs}px`,
         fontWeight: 500,
-      }}
-    >
+      }}>
       {children}
     </button>
   );
 }
 
-function OverviewTab({ analysis }: { analysis: DeckSynergyAnalysisType }) {
+function OverviewTab({analysis}: {analysis: DeckSynergyAnalysisType}) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: `${SPACING.md}px` }}>
+    <div style={{display: 'flex', flexDirection: 'column', gap: `${SPACING.md}px`}}>
       {/* Key Cards Summary */}
       {analysis.keyCards.length > 0 && (
         <div>
@@ -149,11 +145,10 @@ function OverviewTab({ analysis }: { analysis: DeckSynergyAnalysisType }) {
               fontWeight: 600,
               color: COLORS.primary600,
               marginBottom: `${SPACING.sm}px`,
-            }}
-          >
+            }}>
             Key Synergy Cards
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: `${SPACING.xs}px` }}>
+          <div style={{display: 'flex', flexWrap: 'wrap', gap: `${SPACING.xs}px`}}>
             {analysis.keyCards.map((cs) => (
               <span
                 key={cs.card.id}
@@ -164,8 +159,7 @@ function OverviewTab({ analysis }: { analysis: DeckSynergyAnalysisType }) {
                   padding: `${SPACING.xs}px ${SPACING.sm}px`,
                   borderRadius: `${RADIUS.md}px`,
                 }}
-                title={`${cs.synergyCount} synergies, score: ${cs.totalStrength}`}
-              >
+                title={`${cs.synergyCount} synergies, score: ${cs.totalStrength}`}>
                 {cs.card.name} ({cs.synergyCount})
               </span>
             ))}
@@ -182,11 +176,10 @@ function OverviewTab({ analysis }: { analysis: DeckSynergyAnalysisType }) {
               fontWeight: 600,
               color: COLORS.error,
               marginBottom: `${SPACING.sm}px`,
-            }}
-          >
+            }}>
             Weak Links (Consider Replacing)
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: `${SPACING.xs}px` }}>
+          <div style={{display: 'flex', flexWrap: 'wrap', gap: `${SPACING.xs}px`}}>
             {analysis.weakLinks.map((cs) => (
               <span
                 key={cs.card.id}
@@ -197,8 +190,7 @@ function OverviewTab({ analysis }: { analysis: DeckSynergyAnalysisType }) {
                   padding: `${SPACING.xs}px ${SPACING.sm}px`,
                   borderRadius: `${RADIUS.md}px`,
                 }}
-                title={cs.synergyCount === 0 ? "No synergies" : `Only ${cs.synergyCount} synergy`}
-              >
+                title={cs.synergyCount === 0 ? 'No synergies' : `Only ${cs.synergyCount} synergy`}>
                 {cs.card.name} ({cs.synergyCount})
               </span>
             ))}
@@ -215,9 +207,8 @@ function OverviewTab({ analysis }: { analysis: DeckSynergyAnalysisType }) {
             background: COLORS.successBg,
             padding: `${SPACING.md}px`,
             borderRadius: `${RADIUS.md}px`,
-            textAlign: "center",
-          }}
-        >
+            textAlign: 'center',
+          }}>
           All cards have good synergy connections!
         </div>
       )}
@@ -231,21 +222,21 @@ function CardList({
   onRemoveCard,
 }: {
   cards: DeckCardSynergy[];
-  type: "key" | "weak" | "all";
+  type: 'key' | 'weak' | 'all';
   onRemoveCard?: (cardId: string) => void;
 }) {
   if (cards.length === 0) {
     return (
-      <div style={{ textAlign: "center", padding: `${SPACING.lg}px`, color: COLORS.gray500 }}>
-        {type === "key" && "No standout synergy cards yet"}
-        {type === "weak" && "No weak links - great deck cohesion!"}
-        {type === "all" && "Add cards to see synergy analysis"}
+      <div style={{textAlign: 'center', padding: `${SPACING.lg}px`, color: COLORS.gray500}}>
+        {type === 'key' && 'No standout synergy cards yet'}
+        {type === 'weak' && 'No weak links - great deck cohesion!'}
+        {type === 'all' && 'Add cards to see synergy analysis'}
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: `${SPACING.sm}px` }}>
+    <div style={{display: 'flex', flexDirection: 'column', gap: `${SPACING.sm}px`}}>
       {cards.map((cs) => (
         <SynergyCardRow key={cs.card.id} cardSynergy={cs} type={type} onRemove={onRemoveCard} />
       ))}
@@ -259,19 +250,19 @@ function SynergyCardRow({
   onRemove,
 }: {
   cardSynergy: DeckCardSynergy;
-  type: "key" | "weak" | "all";
+  type: 'key' | 'weak' | 'all';
   onRemove?: (cardId: string) => void;
 }) {
-  const { card, quantity, synergyCount, totalStrength, synergizingWith } = cardSynergy;
+  const {card, quantity, synergyCount, totalStrength, synergizingWith} = cardSynergy;
   const colors = INK_COLORS[card.ink];
   const [expanded, setExpanded] = useState(false);
   const [imgError, setImgError] = useState(false);
-  const { previewHandlers } = useCardPreviewHandlers({ card });
+  const {previewHandlers} = useCardPreviewHandlers({card});
 
   const bgColor =
-    type === "key" ? COLORS.primary50 : type === "weak" ? COLORS.errorBg : COLORS.white;
+    type === 'key' ? COLORS.primary50 : type === 'weak' ? COLORS.errorBg : COLORS.white;
   const borderColor =
-    type === "key" ? COLORS.primary200 : type === "weak" ? COLORS.errorBorder : COLORS.gray200;
+    type === 'key' ? COLORS.primary200 : type === 'weak' ? COLORS.errorBorder : COLORS.gray200;
 
   return (
     <div
@@ -279,20 +270,18 @@ function SynergyCardRow({
         background: bgColor,
         borderRadius: `${RADIUS.lg}px`,
         border: `1px solid ${borderColor}`,
-        overflow: "hidden",
-      }}
-    >
+        overflow: 'hidden',
+      }}>
       <div
         {...previewHandlers}
         style={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: `${SPACING.md}px`,
           padding: `${SPACING.sm}px ${SPACING.md}px`,
-          cursor: synergizingWith.length > 0 ? "pointer" : "default",
+          cursor: synergizingWith.length > 0 ? 'pointer' : 'default',
         }}
-        onClick={() => synergizingWith.length > 0 && setExpanded(!expanded)}
-      >
+        onClick={() => synergizingWith.length > 0 && setExpanded(!expanded)}>
         {/* Thumbnail */}
         {card.imageUrl && !imgError ? (
           <img
@@ -303,7 +292,7 @@ function SynergyCardRow({
               width: 32,
               height: 44,
               borderRadius: `${RADIUS.sm}px`,
-              objectFit: "cover",
+              objectFit: 'cover',
               flexShrink: 0,
             }}
           />
@@ -314,37 +303,35 @@ function SynergyCardRow({
               height: 44,
               borderRadius: `${RADIUS.sm}px`,
               background: colors.bg,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               flexShrink: 0,
-            }}
-          >
-            <span style={{ fontSize: `${FONT_SIZES.sm}px`, fontWeight: 600, color: colors.text }}>
+            }}>
+            <span style={{fontSize: `${FONT_SIZES.sm}px`, fontWeight: 600, color: colors.text}}>
               {card.cost}
             </span>
           </div>
         )}
 
         {/* Card info */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{flex: 1, minWidth: 0}}>
           <div
             style={{
               fontWeight: 600,
               fontSize: `${FONT_SIZES.sm}px`,
               color: COLORS.gray800,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
             {card.name}
             {quantity > 1 && (
-              <span style={{ color: COLORS.gray500, fontWeight: 400 }}> x{quantity}</span>
+              <span style={{color: COLORS.gray500, fontWeight: 400}}> x{quantity}</span>
             )}
           </div>
-          <div style={{ fontSize: `${FONT_SIZES.xs}px`, color: COLORS.gray500 }}>
-            {synergyCount} {synergyCount === 1 ? "synergy" : "synergies"} (score: {totalStrength})
+          <div style={{fontSize: `${FONT_SIZES.xs}px`, color: COLORS.gray500}}>
+            {synergyCount} {synergyCount === 1 ? 'synergy' : 'synergies'} (score: {totalStrength})
           </div>
         </div>
 
@@ -354,16 +341,15 @@ function SynergyCardRow({
             style={{
               color: COLORS.gray400,
               fontSize: `${FONT_SIZES.sm}px`,
-              transform: expanded ? "rotate(90deg)" : "rotate(0)",
-              transition: "transform 0.2s",
-            }}
-          >
+              transform: expanded ? 'rotate(90deg)' : 'rotate(0)',
+              transition: 'transform 0.2s',
+            }}>
             ▶
           </span>
         )}
 
         {/* Remove button for weak cards */}
-        {type === "weak" && onRemove && (
+        {type === 'weak' && onRemove && (
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -373,14 +359,13 @@ function SynergyCardRow({
               padding: `${SPACING.xs}px ${SPACING.sm}px`,
               background: COLORS.error,
               color: COLORS.white,
-              border: "none",
+              border: 'none',
               borderRadius: `${RADIUS.sm}px`,
-              cursor: "pointer",
+              cursor: 'pointer',
               fontSize: `${FONT_SIZES.xs}px`,
               fontWeight: 500,
             }}
-            title="Remove from deck"
-          >
+            title="Remove from deck">
             Cut
           </button>
         )}
@@ -393,28 +378,25 @@ function SynergyCardRow({
             borderTop: `1px solid ${borderColor}`,
             padding: `${SPACING.sm}px ${SPACING.md}px`,
             background: COLORS.white,
-          }}
-        >
+          }}>
           <div
             style={{
               fontSize: `${FONT_SIZES.xs}px`,
               color: COLORS.gray500,
               marginBottom: `${SPACING.xs}px`,
-            }}
-          >
+            }}>
             Synergizes with:
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: `${SPACING.xs}px` }}>
+          <div style={{display: 'flex', flexDirection: 'column', gap: `${SPACING.xs}px`}}>
             {synergizingWith.map((syn) => (
               <div
                 key={syn.card.id}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: `${SPACING.sm}px`,
                   fontSize: `${FONT_SIZES.xs}px`,
-                }}
-              >
+                }}>
                 <span
                   style={{
                     background: STRENGTH_STYLES[syn.strength].bg,
@@ -422,14 +404,13 @@ function SynergyCardRow({
                     padding: `1px 6px`,
                     borderRadius: `${RADIUS.sm}px`,
                     fontSize: `${FONT_SIZES.xs}px`,
-                    textTransform: "capitalize",
+                    textTransform: 'capitalize',
                     flexShrink: 0,
-                  }}
-                >
+                  }}>
                   {syn.strength}
                 </span>
-                <span style={{ color: COLORS.gray700, fontWeight: 500 }}>{syn.card.name}</span>
-                <span style={{ color: COLORS.gray500, flex: 1 }}>- {syn.explanation}</span>
+                <span style={{color: COLORS.gray700, fontWeight: 500}}>{syn.card.name}</span>
+                <span style={{color: COLORS.gray500, flex: 1}}>- {syn.explanation}</span>
               </div>
             ))}
           </div>

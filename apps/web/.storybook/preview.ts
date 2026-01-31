@@ -1,7 +1,7 @@
-import type { Preview } from "@storybook/react-vite";
-import { MotionGlobalConfig } from "framer-motion";
+import type {Preview} from '@storybook/react-vite';
+import {MotionGlobalConfig} from 'framer-motion';
 
-if (typeof window !== "undefined" && window.navigator.userAgent.includes("Chromatic")) {
+if (typeof window !== 'undefined' && window.navigator.userAgent.includes('Chromatic')) {
   MotionGlobalConfig.skipAnimations = true;
 }
 

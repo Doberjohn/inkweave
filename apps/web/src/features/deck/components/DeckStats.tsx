@@ -1,4 +1,4 @@
-import type { DeckStats as DeckStatsType } from "../types";
+import type {DeckStats as DeckStatsType} from '../types';
 import {
   INK_COLORS,
   COLORS,
@@ -7,8 +7,8 @@ import {
   SPACING,
   ALL_INKS,
   CARD_TYPES,
-} from "../../../shared/constants";
-import { CollapsibleSection } from "../../../shared/components";
+} from '../../../shared/constants';
+import {CollapsibleSection} from '../../../shared/components';
 
 interface DeckStatsProps {
   stats: DeckStatsType;
@@ -16,7 +16,7 @@ interface DeckStatsProps {
   onToggleCollapse?: () => void;
 }
 
-export function DeckStats({ stats, collapsed = false, onToggleCollapse }: DeckStatsProps) {
+export function DeckStats({stats, collapsed = false, onToggleCollapse}: DeckStatsProps) {
   const costCurveValues = Object.values(stats.costCurve);
   const maxCostCount = costCurveValues.length > 0 ? Math.max(...costCurveValues) : 1;
   const usedInks = ALL_INKS.filter((ink) => stats.inkDistribution[ink] > 0);
@@ -27,14 +27,13 @@ export function DeckStats({ stats, collapsed = false, onToggleCollapse }: DeckSt
         {/* Card counts */}
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
             gap: `${SPACING.md}px`,
             marginBottom: `${SPACING.lg}px`,
-          }}
-        >
+          }}>
           <div>
-            <div style={{ fontSize: `${FONT_SIZES.sm}px`, color: COLORS.gray500, marginBottom: 2 }}>
+            <div style={{fontSize: `${FONT_SIZES.sm}px`, color: COLORS.gray500, marginBottom: 2}}>
               Total Cards
             </div>
             <div
@@ -42,56 +41,51 @@ export function DeckStats({ stats, collapsed = false, onToggleCollapse }: DeckSt
                 fontSize: `${FONT_SIZES.xxl}px`,
                 fontWeight: 600,
                 color: stats.totalCards === 60 ? COLORS.primary600 : COLORS.gray800,
-              }}
-            >
+              }}>
               {stats.totalCards}/60
             </div>
           </div>
           <div>
-            <div style={{ fontSize: `${FONT_SIZES.sm}px`, color: COLORS.gray500, marginBottom: 2 }}>
+            <div style={{fontSize: `${FONT_SIZES.sm}px`, color: COLORS.gray500, marginBottom: 2}}>
               Unique Cards
             </div>
-            <div
-              style={{ fontSize: `${FONT_SIZES.xxl}px`, fontWeight: 600, color: COLORS.gray800 }}
-            >
+            <div style={{fontSize: `${FONT_SIZES.xxl}px`, fontWeight: 600, color: COLORS.gray800}}>
               {stats.uniqueCards}
             </div>
           </div>
         </div>
 
         {/* Cost Curve */}
-        <div style={{ marginBottom: `${SPACING.lg}px` }}>
+        <div style={{marginBottom: `${SPACING.lg}px`}}>
           <div
             style={{
               fontSize: `${FONT_SIZES.sm}px`,
               color: COLORS.gray500,
               marginBottom: `${SPACING.sm}px`,
-            }}
-          >
+            }}>
             Cost Curve
           </div>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 50 }}>
-            {Array.from({ length: 11 }, (_, i) => {
+          <div style={{display: 'flex', alignItems: 'flex-end', gap: 3, height: 50}}>
+            {Array.from({length: 11}, (_, i) => {
               const count = stats.costCurve[i] || 0;
               const height = count > 0 ? Math.max(6, (count / maxCostCount) * 44) : 3;
-              const label = i === 10 ? "10+" : String(i);
+              const label = i === 10 ? '10+' : String(i);
               return (
                 <div
                   key={i}
                   style={{
                     flex: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                  }}
-                >
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                  }}>
                   <div
                     style={{
-                      width: "100%",
+                      width: '100%',
                       height,
                       background: count > 0 ? COLORS.primary500 : COLORS.gray200,
                       borderRadius: `${RADIUS.sm}px ${RADIUS.sm}px 0 0`,
-                      transition: "height 0.2s ease",
+                      transition: 'height 0.2s ease',
                     }}
                     title={`Cost ${label}: ${count} cards`}
                   />
@@ -100,8 +94,7 @@ export function DeckStats({ stats, collapsed = false, onToggleCollapse }: DeckSt
                       fontSize: `${FONT_SIZES.xs}px`,
                       color: COLORS.gray400,
                       marginTop: 3,
-                    }}
-                  >
+                    }}>
                     {label}
                   </span>
                 </div>
@@ -111,20 +104,19 @@ export function DeckStats({ stats, collapsed = false, onToggleCollapse }: DeckSt
         </div>
 
         {/* Ink Distribution */}
-        <div style={{ marginBottom: `${SPACING.lg}px` }}>
+        <div style={{marginBottom: `${SPACING.lg}px`}}>
           <div
             style={{
               fontSize: `${FONT_SIZES.sm}px`,
               color: COLORS.gray500,
               marginBottom: `${SPACING.sm}px`,
-            }}
-          >
-            Ink Distribution{" "}
+            }}>
+            Ink Distribution{' '}
             {stats.inkCount > 2 && (
-              <span style={{ color: COLORS.error, fontWeight: 500 }}>({stats.inkCount} inks!)</span>
+              <span style={{color: COLORS.error, fontWeight: 500}}>({stats.inkCount} inks!)</span>
             )}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: `${SPACING.sm}px` }}>
+          <div style={{display: 'flex', flexDirection: 'column', gap: `${SPACING.sm}px`}}>
             {usedInks.map((ink) => {
               const count = stats.inkDistribution[ink];
               const percentage = stats.totalCards > 0 ? (count / stats.totalCards) * 100 : 0;
@@ -132,8 +124,7 @@ export function DeckStats({ stats, collapsed = false, onToggleCollapse }: DeckSt
               return (
                 <div
                   key={ink}
-                  style={{ display: "flex", alignItems: "center", gap: `${SPACING.md}px` }}
-                >
+                  style={{display: 'flex', alignItems: 'center', gap: `${SPACING.md}px`}}>
                   <span
                     style={{
                       fontSize: `${FONT_SIZES.sm}px`,
@@ -141,8 +132,7 @@ export function DeckStats({ stats, collapsed = false, onToggleCollapse }: DeckSt
                       width: 60,
                       flexShrink: 0,
                       fontWeight: 500,
-                    }}
-                  >
+                    }}>
                     {ink}
                   </span>
                   <div
@@ -151,15 +141,14 @@ export function DeckStats({ stats, collapsed = false, onToggleCollapse }: DeckSt
                       height: 10,
                       background: COLORS.gray200,
                       borderRadius: `${RADIUS.sm}px`,
-                      overflow: "hidden",
-                    }}
-                  >
+                      overflow: 'hidden',
+                    }}>
                     <div
                       style={{
                         width: `${percentage}%`,
-                        height: "100%",
+                        height: '100%',
                         background: inkColors.border,
-                        transition: "width 0.2s ease",
+                        transition: 'width 0.2s ease',
                       }}
                     />
                   </div>
@@ -168,11 +157,10 @@ export function DeckStats({ stats, collapsed = false, onToggleCollapse }: DeckSt
                       fontSize: `${FONT_SIZES.sm}px`,
                       color: COLORS.gray500,
                       width: 28,
-                      textAlign: "right",
+                      textAlign: 'right',
                       flexShrink: 0,
                       fontWeight: 500,
-                    }}
-                  >
+                    }}>
                     {count}
                   </span>
                 </div>
@@ -182,17 +170,16 @@ export function DeckStats({ stats, collapsed = false, onToggleCollapse }: DeckSt
         </div>
 
         {/* Type Distribution */}
-        <div style={{ marginBottom: stats.validationErrors.length > 0 ? `${SPACING.lg}px` : 0 }}>
+        <div style={{marginBottom: stats.validationErrors.length > 0 ? `${SPACING.lg}px` : 0}}>
           <div
             style={{
               fontSize: `${FONT_SIZES.sm}px`,
               color: COLORS.gray500,
               marginBottom: `${SPACING.sm}px`,
-            }}
-          >
+            }}>
             Card Types
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: `${SPACING.sm}px` }}>
+          <div style={{display: 'flex', flexWrap: 'wrap', gap: `${SPACING.sm}px`}}>
             {CARD_TYPES.filter((type) => stats.typeDistribution[type] > 0).map((type) => (
               <span
                 key={type}
@@ -203,8 +190,7 @@ export function DeckStats({ stats, collapsed = false, onToggleCollapse }: DeckSt
                   padding: `${SPACING.xs}px ${SPACING.md}px`,
                   borderRadius: `${RADIUS.md}px`,
                   fontWeight: 500,
-                }}
-              >
+                }}>
                 {type}: {stats.typeDistribution[type]}
               </span>
             ))}
@@ -220,16 +206,14 @@ export function DeckStats({ stats, collapsed = false, onToggleCollapse }: DeckSt
               border: `1px solid ${COLORS.errorBorder}`,
               borderRadius: `${RADIUS.lg}px`,
               padding: `${SPACING.md}px`,
-            }}
-          >
+            }}>
             {stats.validationErrors.map((error, i) => (
               <div
                 key={i}
                 style={{
                   fontSize: `${FONT_SIZES.sm}px`,
                   color: COLORS.error,
-                }}
-              >
+                }}>
                 {error}
               </div>
             ))}

@@ -1,4 +1,4 @@
-import type { LorcanaCard } from "../types/card.js";
+import type {LorcanaCard} from '../types/card.js';
 
 /**
  * Check if card text contains a pattern (case-insensitive)
@@ -7,8 +7,8 @@ import type { LorcanaCard } from "../types/card.js";
 export function textContains(card: LorcanaCard, pattern: string | RegExp): boolean {
   if (!card.text) return false;
   // Normalize newlines to spaces for matching across line breaks
-  const normalizedText = card.text.replace(/\n/g, " ");
-  if (typeof pattern === "string") {
+  const normalizedText = card.text.replace(/\n/g, ' ');
+  if (typeof pattern === 'string') {
     return normalizedText.toLowerCase().includes(pattern.toLowerCase());
   }
   return pattern.test(normalizedText);
@@ -42,7 +42,7 @@ export function hasClassification(card: LorcanaCard, classification: string): bo
  * e.g., "Elsa, Snow Queen" -> "Elsa"
  */
 export function getBaseName(card: LorcanaCard): string {
-  return card.name.split(",")[0].trim();
+  return card.name.split(',')[0].trim();
 }
 
 /**
@@ -52,7 +52,7 @@ export function getKeywordValue(card: LorcanaCard, keyword: string): number | nu
   const match = card.keywords?.find((k) => k.toLowerCase().startsWith(keyword.toLowerCase()));
   if (!match) return null;
 
-  const parts = match.split(" ");
+  const parts = match.split(' ');
   if (parts.length < 2) return null;
 
   const value = parseInt(parts[1], 10);
@@ -64,7 +64,7 @@ export function getKeywordValue(card: LorcanaCard, keyword: string): number | nu
  */
 export function isSong(card: LorcanaCard): boolean {
   return (
-    card.type === "Action" && (card.classifications?.includes("Song") || textContains(card, "song"))
+    card.type === 'Action' && (card.classifications?.includes('Song') || textContains(card, 'song'))
   );
 }
 
@@ -72,28 +72,28 @@ export function isSong(card: LorcanaCard): boolean {
  * Check if card is a character
  */
 export function isCharacter(card: LorcanaCard): boolean {
-  return card.type === "Character";
+  return card.type === 'Character';
 }
 
 /**
  * Check if card is an action
  */
 export function isAction(card: LorcanaCard): boolean {
-  return card.type === "Action";
+  return card.type === 'Action';
 }
 
 /**
  * Check if card is an item
  */
 export function isItem(card: LorcanaCard): boolean {
-  return card.type === "Item";
+  return card.type === 'Item';
 }
 
 /**
  * Check if card is a location
  */
 export function isLocation(card: LorcanaCard): boolean {
-  return card.type === "Location";
+  return card.type === 'Location';
 }
 
 /**
@@ -130,7 +130,7 @@ export function hasNegativeTargeting(card: LorcanaCard, classification: string):
  */
 export function hasPositiveClassificationEffect(
   card: LorcanaCard,
-  classification: string
+  classification: string,
 ): boolean {
   if (!card.text) return false;
   const text = card.text.toLowerCase();

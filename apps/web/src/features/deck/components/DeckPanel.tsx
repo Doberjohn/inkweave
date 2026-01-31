@@ -1,7 +1,7 @@
-import { useState, useMemo, useRef } from "react";
-import type { LorcanaCard } from "../../cards";
-import type { Deck, DeckStats as DeckStatsType } from "../types";
-import type { DeckSuggestion, DeckSynergyAnalysis as DeckSynergyAnalysisType } from "../hooks";
+import {useState, useMemo, useRef} from 'react';
+import type {LorcanaCard} from '../../cards';
+import type {Deck, DeckStats as DeckStatsType} from '../types';
+import type {DeckSuggestion, DeckSynergyAnalysis as DeckSynergyAnalysisType} from '../hooks';
 import {
   COLORS,
   FONT_SIZES,
@@ -9,8 +9,8 @@ import {
   SPACING,
   LAYOUT,
   LAYOUT_MOBILE,
-} from "../../../shared/constants";
-import { DeckCardRow, DeckStats, DeckSuggestions, DeckSynergyAnalysis, SavedDecksModal } from ".";
+} from '../../../shared/constants';
+import {DeckCardRow, DeckStats, DeckSuggestions, DeckSynergyAnalysis, SavedDecksModal} from '.';
 
 interface DeckPanelProps {
   deck: Deck;
@@ -63,7 +63,7 @@ export function DeckPanel({
     suggestions: true,
   });
   const toggleSection = (section: keyof typeof collapsed) => {
-    setCollapsed((prev) => ({ ...prev, [section]: !prev[section] }));
+    setCollapsed((prev) => ({...prev, [section]: !prev[section]}));
   };
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -84,11 +84,11 @@ export function DeckPanel({
 
   const handleExport = () => {
     const json = onExportDeck();
-    const blob = new Blob([json], { type: "application/json" });
+    const blob = new Blob([json], {type: 'application/json'});
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
-    a.download = `${deck.name.replace(/[^a-z0-9]/gi, "-")}.json`;
+    a.download = `${deck.name.replace(/[^a-z0-9]/gi, '-')}.json`;
     a.click();
     // Delay URL revocation to ensure download has started
     setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -103,29 +103,29 @@ export function DeckPanel({
     if (!file) return;
 
     // Validate file extension
-    if (!file.name.toLowerCase().endsWith(".json")) {
-      alert("Please select a JSON file.");
-      e.target.value = "";
+    if (!file.name.toLowerCase().endsWith('.json')) {
+      alert('Please select a JSON file.');
+      e.target.value = '';
       return;
     }
 
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result;
-      if (typeof content === "string") {
+      if (typeof content === 'string') {
         const success = onImportDeck(content);
         if (!success) {
-          alert("Failed to import deck. Invalid format.");
+          alert('Failed to import deck. Invalid format.');
         }
       }
     };
     reader.onerror = () => {
-      alert("Failed to read file. Please try again.");
+      alert('Failed to read file. Please try again.');
     };
     reader.readAsText(file);
 
     // Reset input
-    e.target.value = "";
+    e.target.value = '';
   };
 
   const handleLoadDeck = (id: string) => {
@@ -136,32 +136,29 @@ export function DeckPanel({
   return (
     <div
       style={{
-        width: isMobile ? "100%" : `${LAYOUT.deckPanelWidth}px`,
+        width: isMobile ? '100%' : `${LAYOUT.deckPanelWidth}px`,
         background: COLORS.white,
-        borderLeft: isMobile ? "none" : `1px solid ${COLORS.gray200}`,
-        display: "flex",
-        flexDirection: "column",
+        borderLeft: isMobile ? 'none' : `1px solid ${COLORS.gray200}`,
+        display: 'flex',
+        flexDirection: 'column',
         height: isMobile
           ? `calc(100vh - ${LAYOUT_MOBILE.headerHeight}px - ${LAYOUT_MOBILE.bottomNavHeight}px)`
           : `calc(100vh - ${LAYOUT.headerHeight}px)`,
-      }}
-    >
+      }}>
       {/* Header */}
       <div
         style={{
           padding: `${SPACING.lg}px`,
           borderBottom: `1px solid ${COLORS.gray200}`,
-        }}
-      >
+        }}>
         {/* Deck name */}
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: `${SPACING.md}px`,
             marginBottom: `${SPACING.md}px`,
-          }}
-        >
+          }}>
           {isEditing ? (
             <input
               type="text"
@@ -169,8 +166,8 @@ export function DeckPanel({
               onChange={(e) => setEditName(e.target.value)}
               onBlur={handleNameSubmit}
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleNameSubmit();
-                if (e.key === "Escape") {
+                if (e.key === 'Enter') handleNameSubmit();
+                if (e.key === 'Escape') {
                   setEditName(deck.name);
                   setIsEditing(false);
                 }
@@ -183,7 +180,7 @@ export function DeckPanel({
                 border: `2px solid ${COLORS.primary500}`,
                 borderRadius: `${RADIUS.md}px`,
                 padding: `${SPACING.sm}px ${SPACING.md}px`,
-                outline: "none",
+                outline: 'none',
               }}
             />
           ) : (
@@ -197,14 +194,13 @@ export function DeckPanel({
                 fontSize: `${FONT_SIZES.xl}px`,
                 fontWeight: 600,
                 color: COLORS.gray800,
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                textAlign: "left",
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left',
                 padding: `${SPACING.xs}px 0`,
               }}
-              title="Click to rename"
-            >
+              title="Click to rename">
               {deck.name}
             </button>
           )}
@@ -219,8 +215,7 @@ export function DeckPanel({
               padding: `${SPACING.sm}px ${SPACING.md}px`,
               borderRadius: `${RADIUS.lg}px`,
               flexShrink: 0,
-            }}
-          >
+            }}>
             {deckStats.totalCards}/60
           </span>
         </div>
@@ -236,14 +231,13 @@ export function DeckPanel({
               padding: `${SPACING.sm}px ${SPACING.md}px`,
               borderRadius: `${RADIUS.md}px`,
               marginBottom: `${SPACING.md}px`,
-            }}
-          >
+            }}>
             {deckStats.inkCount} ink colors (2 recommended)
           </div>
         )}
 
         {/* Action buttons */}
-        <div style={{ display: "flex", gap: `${SPACING.sm}px`, flexWrap: "wrap" }}>
+        <div style={{display: 'flex', gap: `${SPACING.sm}px`, flexWrap: 'wrap'}}>
           <ActionButton onClick={onNewDeck} title="New deck">
             New
           </ActionButton>
@@ -261,13 +255,12 @@ export function DeckPanel({
           </ActionButton>
           <ActionButton
             onClick={() => {
-              if (deck.cards.length === 0 || confirm("Clear all cards from deck?")) {
+              if (deck.cards.length === 0 || confirm('Clear all cards from deck?')) {
                 onClearDeck();
               }
             }}
             title="Clear all cards"
-            variant="danger"
-          >
+            variant="danger">
             Clear
           </ActionButton>
         </div>
@@ -278,7 +271,7 @@ export function DeckPanel({
           type="file"
           accept=".json"
           onChange={handleImportFile}
-          style={{ display: "none" }}
+          style={{display: 'none'}}
         />
       </div>
 
@@ -286,28 +279,26 @@ export function DeckPanel({
       <div
         style={{
           flex: 1,
-          overflowY: "auto",
+          overflowY: 'auto',
           padding: `${SPACING.md}px`,
-        }}
-      >
+        }}>
         {sortedCards.length === 0 ? (
           <div
             style={{
-              textAlign: "center",
+              textAlign: 'center',
               padding: `${SPACING.xxl}px ${SPACING.lg}px`,
               color: COLORS.gray500,
-            }}
-          >
-            <div style={{ fontSize: `${FONT_SIZES.xl}px`, marginBottom: `${SPACING.md}px` }}>
+            }}>
+            <div style={{fontSize: `${FONT_SIZES.xl}px`, marginBottom: `${SPACING.md}px`}}>
               No cards in deck
             </div>
-            <div style={{ fontSize: `${FONT_SIZES.base}px` }}>
+            <div style={{fontSize: `${FONT_SIZES.base}px`}}>
               Click the + button on cards to add them
             </div>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: `${SPACING.sm}px` }}>
-            {sortedCards.map(({ card, quantity }) => (
+          <div style={{display: 'flex', flexDirection: 'column', gap: `${SPACING.sm}px`}}>
+            {sortedCards.map(({card, quantity}) => (
               <DeckCardRow
                 key={card.id}
                 card={card}
@@ -326,17 +317,16 @@ export function DeckPanel({
         style={{
           borderTop: `1px solid ${COLORS.gray200}`,
           padding: `${SPACING.md}px`,
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
           gap: `${SPACING.md}px`,
-          maxHeight: "40%",
-          overflowY: "auto",
-        }}
-      >
+          maxHeight: '40%',
+          overflowY: 'auto',
+        }}>
         <DeckStats
           stats={deckStats}
           collapsed={collapsed.stats}
-          onToggleCollapse={() => toggleSection("stats")}
+          onToggleCollapse={() => toggleSection('stats')}
         />
 
         {synergyAnalysis.cardSynergies.length > 0 && (
@@ -344,7 +334,7 @@ export function DeckPanel({
             analysis={synergyAnalysis}
             onRemoveCard={onRemoveAllCopies}
             collapsed={collapsed.analysis}
-            onToggleCollapse={() => toggleSection("analysis")}
+            onToggleCollapse={() => toggleSection('analysis')}
           />
         )}
 
@@ -353,7 +343,7 @@ export function DeckPanel({
             suggestions={suggestions}
             onAddCard={onAddCard}
             collapsed={collapsed.suggestions}
-            onToggleCollapse={() => toggleSection("suggestions")}
+            onToggleCollapse={() => toggleSection('suggestions')}
           />
         )}
       </div>
@@ -374,25 +364,24 @@ interface ActionButtonProps {
   children: React.ReactNode;
   onClick: () => void;
   title?: string;
-  variant?: "default" | "danger";
+  variant?: 'default' | 'danger';
 }
 
-function ActionButton({ children, onClick, title, variant = "default" }: ActionButtonProps) {
+function ActionButton({children, onClick, title, variant = 'default'}: ActionButtonProps) {
   return (
     <button
       onClick={onClick}
       title={title}
       style={{
         padding: `${SPACING.sm}px ${SPACING.md}px`,
-        background: variant === "danger" ? COLORS.errorBg : COLORS.gray100,
-        color: variant === "danger" ? COLORS.error : COLORS.gray700,
-        border: "none",
+        background: variant === 'danger' ? COLORS.errorBg : COLORS.gray100,
+        color: variant === 'danger' ? COLORS.error : COLORS.gray700,
+        border: 'none',
         borderRadius: `${RADIUS.md}px`,
-        cursor: "pointer",
+        cursor: 'pointer',
         fontSize: `${FONT_SIZES.sm}px`,
         fontWeight: 500,
-      }}
-    >
+      }}>
       {children}
     </button>
   );

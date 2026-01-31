@@ -1,21 +1,21 @@
-import type { LorcanaCard } from "../types/card.js";
+import type {LorcanaCard} from '../types/card.js';
 import type {
   SynergyRule,
   GroupedSynergies,
   SynergyType,
   SynergyStrength,
-} from "../types/synergy.js";
-import { getAllRules } from "./rules.js";
+} from '../types/synergy.js';
+import {getAllRules} from './rules.js';
 
 // Labels for synergy types (for display)
 const TYPE_LABELS: Record<SynergyType, string> = {
-  keyword: "Keyword Synergies",
-  classification: "Tribal Synergies",
-  shift: "Shift Targets",
-  named: "Named References",
-  mechanic: "Mechanical Synergies",
-  ink: "Ink Synergies",
-  "cost-curve": "Cost Curve",
+  keyword: 'Keyword Synergies',
+  classification: 'Tribal Synergies',
+  shift: 'Shift Targets',
+  named: 'Named References',
+  mechanic: 'Mechanical Synergies',
+  ink: 'Ink Synergies',
+  'cost-curve': 'Cost Curve',
 };
 
 // Sort order for synergy strength
@@ -27,13 +27,13 @@ const STRENGTH_ORDER: Record<SynergyStrength, number> = {
 
 // Type priority order for display
 const TYPE_ORDER: SynergyType[] = [
-  "shift",
-  "keyword",
-  "classification",
-  "mechanic",
-  "named",
-  "ink",
-  "cost-curve",
+  'shift',
+  'keyword',
+  'classification',
+  'mechanic',
+  'named',
+  'ink',
+  'cost-curve',
 ];
 
 export interface SynergyEngineOptions {
@@ -113,7 +113,7 @@ export class SynergyEngine {
    */
   findSynergiesFlat(
     card: LorcanaCard,
-    allCards: LorcanaCard[]
+    allCards: LorcanaCard[],
   ): Array<{
     card: LorcanaCard;
     strength: SynergyStrength;
@@ -149,7 +149,7 @@ export class SynergyEngine {
    */
   checkSynergy(
     cardA: LorcanaCard,
-    cardB: LorcanaCard
+    cardB: LorcanaCard,
   ): {
     hasSynergy: boolean;
     synergies: Array<{

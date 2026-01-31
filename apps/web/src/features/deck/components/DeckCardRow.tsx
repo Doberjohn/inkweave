@@ -1,9 +1,9 @@
-import { useMemo } from "react";
-import type { LorcanaCard } from "../../cards";
-import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT } from "../../../shared/constants";
-import { CardImage } from "../../../shared/components";
-import { useCardPreviewHandlers } from "../../cards";
-import { useResponsive } from "../../../shared/hooks";
+import {useMemo} from 'react';
+import type {LorcanaCard} from '../../cards';
+import {INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT} from '../../../shared/constants';
+import {CardImage} from '../../../shared/components';
+import {useCardPreviewHandlers} from '../../cards';
+import {useResponsive} from '../../../shared/hooks';
 
 interface DeckCardRowProps {
   card: LorcanaCard;
@@ -27,8 +27,8 @@ export function DeckCardRow({
   onRemoveAll,
 }: DeckCardRowProps) {
   const colors = INK_COLORS[card.ink];
-  const { previewHandlers } = useCardPreviewHandlers({ card });
-  const { isMobile } = useResponsive();
+  const {previewHandlers} = useCardPreviewHandlers({card});
+  const {isMobile} = useResponsive();
 
   const totalCost = card.cost * quantity;
 
@@ -49,22 +49,21 @@ export function DeckCardRow({
       quantityMinWidth: isMobile ? 28 : 20,
       rowPadding: isMobile ? `${SPACING.md}px` : `${SPACING.sm}px ${SPACING.md}px`,
     }),
-    [isMobile]
+    [isMobile],
   );
 
   return (
     <div
       {...previewHandlers}
       style={{
-        display: "flex",
-        alignItems: "center",
+        display: 'flex',
+        alignItems: 'center',
         gap: `${SPACING.md}px`,
         padding: rowPadding,
         borderRadius: `${RADIUS.lg}px`,
         background: COLORS.white,
         border: `1px solid ${colors.border}30`,
-      }}
-    >
+      }}>
       {/* Card thumbnail */}
       <CardImage
         src={card.imageUrl}
@@ -78,17 +77,16 @@ export function DeckCardRow({
       />
 
       {/* Card info */}
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{flex: 1, minWidth: 0}}>
         <div
           style={{
             fontWeight: 600,
             fontSize: `${FONT_SIZES.base}px`,
             color: COLORS.gray800,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}>
           {card.name}
         </div>
         {card.version && (
@@ -96,11 +94,10 @@ export function DeckCardRow({
             style={{
               fontSize: `${FONT_SIZES.sm}px`,
               color: COLORS.gray500,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
             {card.version}
           </div>
         )}
@@ -109,12 +106,11 @@ export function DeckCardRow({
       {/* Quantity controls */}
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: `${SPACING.sm}px`,
           flexShrink: 0,
-        }}
-      >
+        }}>
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -127,15 +123,14 @@ export function DeckCardRow({
             borderRadius: `${RADIUS.md}px`,
             border: `1px solid ${COLORS.gray300}`,
             background: COLORS.white,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             fontSize: buttonFontSize,
             color: COLORS.gray600,
           }}
-          title="Remove one"
-        >
+          title="Remove one">
           -
         </button>
 
@@ -145,9 +140,8 @@ export function DeckCardRow({
             fontWeight: 600,
             color: COLORS.gray800,
             minWidth: quantityMinWidth,
-            textAlign: "center",
-          }}
-        >
+            textAlign: 'center',
+          }}>
           {quantity}
         </span>
 
@@ -166,15 +160,14 @@ export function DeckCardRow({
             borderRadius: `${RADIUS.md}px`,
             border: `1px solid ${quantity >= 4 ? COLORS.gray200 : COLORS.gray300}`,
             background: COLORS.white,
-            cursor: quantity >= 4 ? "not-allowed" : "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            cursor: quantity >= 4 ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             fontSize: buttonFontSize,
             color: quantity >= 4 ? COLORS.gray400 : COLORS.gray600,
           }}
-          title={quantity >= 4 ? "Maximum 4 copies" : "Add one"}
-        >
+          title={quantity >= 4 ? 'Maximum 4 copies' : 'Add one'}>
           +
         </button>
       </div>
@@ -190,10 +183,9 @@ export function DeckCardRow({
           fontWeight: 600,
           flexShrink: 0,
           minWidth: 28,
-          textAlign: "center",
+          textAlign: 'center',
         }}
-        title={`${card.cost} ink x ${quantity} = ${totalCost} total`}
-      >
+        title={`${card.cost} ink x ${quantity} = ${totalCost} total`}>
         {card.cost}
       </div>
 
@@ -207,19 +199,18 @@ export function DeckCardRow({
         style={{
           width: removeButtonSize,
           height: removeButtonSize,
-          borderRadius: "50%",
-          border: "none",
+          borderRadius: '50%',
+          border: 'none',
           background: COLORS.gray100,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           fontSize: removeFontSize,
           color: COLORS.gray500,
           flexShrink: 0,
         }}
-        title="Remove all copies"
-      >
+        title="Remove all copies">
         ×
       </button>
     </div>

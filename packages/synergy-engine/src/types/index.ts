@@ -1,4 +1,4 @@
-export type { Ink, GameMode, CardType, LorcanaCard } from "./card.js";
+export type {Ink, GameMode, CardType, LorcanaCard} from './card.js';
 export type {
   SynergyType,
   SynergyStrength,
@@ -7,4 +7,4 @@ export type {
   SynergyMatch,
   SynergyMatchDisplay,
   GroupedSynergies,
-} from "./synergy.js";
+} from './synergy.js';

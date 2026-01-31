@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
-import { useTouchPreview } from "..";
+import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
+import {renderHook, act} from '@testing-library/react';
+import {useTouchPreview} from '..';
 
-describe("useTouchPreview", () => {
+describe('useTouchPreview', () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -13,13 +13,13 @@ describe("useTouchPreview", () => {
 
   const createTouchEvent = (clientX = 100, clientY = 100): React.TouchEvent =>
     ({
-      touches: [{ clientX, clientY }] as unknown as React.TouchList,
+      touches: [{clientX, clientY}] as unknown as React.TouchList,
       preventDefault: vi.fn(),
     }) as unknown as React.TouchEvent;
 
-  it("should call onLongPress after 400ms hold", () => {
+  it('should call onLongPress after 400ms hold', () => {
     const onLongPress = vi.fn();
-    const { result } = renderHook(() => useTouchPreview({ onLongPress }));
+    const {result} = renderHook(() => useTouchPreview({onLongPress}));
 
     act(() => {
       result.current.touchHandlers.onTouchStart(createTouchEvent());
@@ -34,10 +34,10 @@ describe("useTouchPreview", () => {
     expect(onLongPress).toHaveBeenCalledTimes(1);
   });
 
-  it("should call onTap for quick touch", () => {
+  it('should call onTap for quick touch', () => {
     const onLongPress = vi.fn();
     const onTap = vi.fn();
-    const { result } = renderHook(() => useTouchPreview({ onLongPress, onTap }));
+    const {result} = renderHook(() => useTouchPreview({onLongPress, onTap}));
 
     act(() => {
       result.current.touchHandlers.onTouchStart(createTouchEvent());
@@ -53,10 +53,10 @@ describe("useTouchPreview", () => {
     expect(onTap).toHaveBeenCalledTimes(1);
   });
 
-  it("should call onTouchEnd after long press completes", () => {
+  it('should call onTouchEnd after long press completes', () => {
     const onLongPress = vi.fn();
     const onTouchEnd = vi.fn();
-    const { result } = renderHook(() => useTouchPreview({ onLongPress, onTouchEnd }));
+    const {result} = renderHook(() => useTouchPreview({onLongPress, onTouchEnd}));
 
     act(() => {
       result.current.touchHandlers.onTouchStart(createTouchEvent());
@@ -77,9 +77,9 @@ describe("useTouchPreview", () => {
     expect(touchEndEvent.preventDefault).toHaveBeenCalled();
   });
 
-  it("should cancel long press on touch move", () => {
+  it('should cancel long press on touch move', () => {
     const onLongPress = vi.fn();
-    const { result } = renderHook(() => useTouchPreview({ onLongPress }));
+    const {result} = renderHook(() => useTouchPreview({onLongPress}));
 
     act(() => {
       result.current.touchHandlers.onTouchStart(createTouchEvent(100, 100));
@@ -99,9 +99,9 @@ describe("useTouchPreview", () => {
     expect(onLongPress).not.toHaveBeenCalled();
   });
 
-  it("should not cancel long press for small movements", () => {
+  it('should not cancel long press for small movements', () => {
     const onLongPress = vi.fn();
-    const { result } = renderHook(() => useTouchPreview({ onLongPress }));
+    const {result} = renderHook(() => useTouchPreview({onLongPress}));
 
     act(() => {
       result.current.touchHandlers.onTouchStart(createTouchEvent(100, 100));
@@ -120,9 +120,9 @@ describe("useTouchPreview", () => {
     expect(onLongPress).toHaveBeenCalledTimes(1);
   });
 
-  it("should cancel long press on touch cancel", () => {
+  it('should cancel long press on touch cancel', () => {
     const onLongPress = vi.fn();
-    const { result } = renderHook(() => useTouchPreview({ onLongPress }));
+    const {result} = renderHook(() => useTouchPreview({onLongPress}));
 
     act(() => {
       result.current.touchHandlers.onTouchStart(createTouchEvent());
@@ -140,10 +140,10 @@ describe("useTouchPreview", () => {
     expect(onLongPress).not.toHaveBeenCalled();
   });
 
-  it("should not call onTap when scrolling (finger moved > 10px)", () => {
+  it('should not call onTap when scrolling (finger moved > 10px)', () => {
     const onLongPress = vi.fn();
     const onTap = vi.fn();
-    const { result } = renderHook(() => useTouchPreview({ onLongPress, onTap }));
+    const {result} = renderHook(() => useTouchPreview({onLongPress, onTap}));
 
     act(() => {
       result.current.touchHandlers.onTouchStart(createTouchEvent(100, 100));

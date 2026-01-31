@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { BREAKPOINTS } from "../constants";
+import {useState, useEffect, useMemo} from 'react';
+import {BREAKPOINTS} from '../constants';
 
 interface ResponsiveState {
   isMobile: boolean;
@@ -11,8 +11,8 @@ interface ResponsiveState {
 
 // Touch detection is constant for a session - compute once
 const detectTouchDevice = (): boolean => {
-  if (typeof window === "undefined") return false;
-  return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  if (typeof window === 'undefined') return false;
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 };
 
 const getWidthState = (width: number) => ({
@@ -27,21 +27,21 @@ export function useResponsive(): ResponsiveState {
   const isTouchDevice = useMemo(() => detectTouchDevice(), []);
 
   const [widthState, setWidthState] = useState(() => {
-    const width = typeof window !== "undefined" ? window.innerWidth : BREAKPOINTS.desktop;
+    const width = typeof window !== 'undefined' ? window.innerWidth : BREAKPOINTS.desktop;
     return getWidthState(width);
   });
 
   useEffect(() => {
     // SSR check
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
 
     const handleResize = () => {
       const width = window.innerWidth;
       setWidthState(getWidthState(width));
     };
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   return {

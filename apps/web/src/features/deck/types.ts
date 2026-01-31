@@ -1,4 +1,4 @@
-import type { Ink, CardType, LorcanaCard } from "../cards";
+import type {Ink, CardType, LorcanaCard} from '../cards';
 
 // Card entry in a deck (card + quantity)
 export interface DeckCard {

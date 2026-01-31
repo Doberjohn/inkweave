@@ -1,6 +1,6 @@
-import type { LorcanaCard } from "../types/card.js";
-import type { SynergyStrength } from "../types/synergy.js";
-import type { SynergyEngine } from "./SynergyEngine.js";
+import type {LorcanaCard} from '../types/card.js';
+import type {SynergyStrength} from '../types/synergy.js';
+import type {SynergyEngine} from './SynergyEngine.js';
 
 export interface CachedSynergyResult {
   hasSynergy: boolean;
@@ -73,18 +73,18 @@ export class SynergyCache {
    */
   checkBidirectionalSynergy(
     cardA: LorcanaCard,
-    cardB: LorcanaCard
+    cardB: LorcanaCard,
   ): {
     hasSynergy: boolean;
     forward: CachedSynergyResult;
     reverse: CachedSynergyResult;
-    bestSynergy: { strength: SynergyStrength; explanation: string } | null;
+    bestSynergy: {strength: SynergyStrength; explanation: string} | null;
   } {
     const forward = this.checkSynergy(cardA, cardB);
     const reverse = this.checkSynergy(cardB, cardA);
     const hasSynergy = forward.hasSynergy || reverse.hasSynergy;
 
-    let bestSynergy: { strength: SynergyStrength; explanation: string } | null = null;
+    let bestSynergy: {strength: SynergyStrength; explanation: string} | null = null;
     if (hasSynergy) {
       const allSynergies = [...forward.synergies, ...reverse.synergies];
       bestSynergy = allSynergies.reduce(
@@ -93,11 +93,11 @@ export class SynergyCache {
           const bestWeight = best ? strengthWeight(best.strength) : 0;
           return currentWeight > bestWeight ? syn : best;
         },
-        null as { strength: SynergyStrength; explanation: string } | null
+        null as {strength: SynergyStrength; explanation: string} | null,
       );
     }
 
-    return { hasSynergy, forward, reverse, bestSynergy };
+    return {hasSynergy, forward, reverse, bestSynergy};
   }
 
   /**
@@ -110,22 +110,22 @@ export class SynergyCache {
   /**
    * Get cache statistics for debugging.
    */
-  getStats(): { size: number; maxSize: number } {
-    return { size: this.cache.size, maxSize: this.maxSize };
+  getStats(): {size: number; maxSize: number} {
+    return {size: this.cache.size, maxSize: this.maxSize};
   }
 }
 
 function strengthWeight(strength: SynergyStrength): number {
   switch (strength) {
-    case "strong":
+    case 'strong':
       return 3;
-    case "moderate":
+    case 'moderate':
       return 2;
-    case "weak":
+    case 'weak':
       return 1;
   }
 }
 
 // Create default cache with default engine
-import { synergyEngine } from "./SynergyEngine.js";
+import {synergyEngine} from './SynergyEngine.js';
 export const synergyCache = new SynergyCache(synergyEngine);

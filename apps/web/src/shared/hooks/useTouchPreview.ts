@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import {useRef, useCallback} from 'react';
 
 const LONG_PRESS_DURATION = 400; // milliseconds
 
@@ -25,7 +25,7 @@ export function useTouchPreview({
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPressRef = useRef(false);
   const isScrollingRef = useRef(false);
-  const startPosRef = useRef<{ x: number; y: number } | null>(null);
+  const startPosRef = useRef<{x: number; y: number} | null>(null);
 
   const clearLongPressTimer = useCallback(() => {
     if (longPressTimerRef.current) {
@@ -39,14 +39,14 @@ export function useTouchPreview({
       isLongPressRef.current = false;
       isScrollingRef.current = false;
       const touch = e.touches[0];
-      startPosRef.current = { x: touch.clientX, y: touch.clientY };
+      startPosRef.current = {x: touch.clientX, y: touch.clientY};
 
       longPressTimerRef.current = setTimeout(() => {
         isLongPressRef.current = true;
         onLongPress();
       }, LONG_PRESS_DURATION);
     },
-    [onLongPress]
+    [onLongPress],
   );
 
   const handleTouchEnd = useCallback(
@@ -67,7 +67,7 @@ export function useTouchPreview({
       isScrollingRef.current = false;
       startPosRef.current = null;
     },
-    [clearLongPressTimer, onTap, onTouchEnd]
+    [clearLongPressTimer, onTap, onTouchEnd],
   );
 
   const handleTouchMove = useCallback(
@@ -84,7 +84,7 @@ export function useTouchPreview({
         isScrollingRef.current = true;
       }
     },
-    [clearLongPressTimer]
+    [clearLongPressTimer],
   );
 
   const handleTouchCancel = useCallback(() => {

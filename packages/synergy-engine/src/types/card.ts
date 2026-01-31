@@ -1,11 +1,11 @@
 // Ink colors in Lorcana
-export type Ink = "Amber" | "Amethyst" | "Emerald" | "Ruby" | "Sapphire" | "Steel";
+export type Ink = 'Amber' | 'Amethyst' | 'Emerald' | 'Ruby' | 'Sapphire' | 'Steel';
 
 // Game modes
-export type GameMode = "infinity" | "core";
+export type GameMode = 'infinity' | 'core';
 
 // Card types
-export type CardType = "Character" | "Action" | "Item" | "Location";
+export type CardType = 'Character' | 'Action' | 'Item' | 'Location';
 
 // Core card interface (based on LorcanaJSON structure)
 export interface LorcanaCard {

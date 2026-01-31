@@ -1,4 +1,4 @@
-import type { LorcanaCard } from "lorcana-synergy-engine";
+import type {LorcanaCard} from 'lorcana-synergy-engine';
 
 /**
  * Factory function to create mock LorcanaCard objects for testing.
@@ -6,13 +6,13 @@ import type { LorcanaCard } from "lorcana-synergy-engine";
  */
 export function createCard(overrides: Partial<LorcanaCard> = {}): LorcanaCard {
   return {
-    id: "test-1",
-    name: "Test Card",
-    fullName: "Test Card - Version",
+    id: 'test-1',
+    name: 'Test Card',
+    fullName: 'Test Card - Version',
     cost: 3,
-    ink: "Amber",
+    ink: 'Amber',
     inkwell: true,
-    type: "Character",
+    type: 'Character',
     ...overrides,
   };
 }

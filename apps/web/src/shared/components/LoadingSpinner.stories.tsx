@@ -1,13 +1,13 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { LoadingSpinner } from "./LoadingSpinner";
+import type {Meta, StoryObj} from '@storybook/react-vite';
+import {LoadingSpinner} from './LoadingSpinner';
 
 const meta: Meta<typeof LoadingSpinner> = {
-  title: "Components/LoadingSpinner",
+  title: 'Components/LoadingSpinner',
   component: LoadingSpinner,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
 };
 
 export default meta;
@@ -19,12 +19,12 @@ export const Default: Story = {
 
 export const CustomMessage: Story = {
   args: {
-    message: "Calculating synergies...",
+    message: 'Calculating synergies...',
   },
 };
 
 export const LoadingDeck: Story = {
   args: {
-    message: "Loading your saved decks...",
+    message: 'Loading your saved decks...',
   },
 };

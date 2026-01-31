@@ -4,31 +4,31 @@
  * Run after: pnpm vitest run --coverage
  */
 
-import { readFileSync, writeFileSync, existsSync } from "fs";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
+import {readFileSync, writeFileSync, existsSync} from 'fs';
+import {resolve, dirname} from 'path';
+import {fileURLToPath} from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const rootDir = resolve(__dirname, "../../..");
-const readmePath = resolve(rootDir, "README.md");
-const coveragePath = resolve(__dirname, "../coverage/coverage-summary.json");
+const rootDir = resolve(__dirname, '../../..');
+const readmePath = resolve(rootDir, 'README.md');
+const coveragePath = resolve(__dirname, '../coverage/coverage-summary.json');
 
 function getBadgeColor(pct) {
-  if (pct >= 90) return "brightgreen";
-  if (pct >= 80) return "green";
-  if (pct >= 70) return "yellowgreen";
-  if (pct >= 60) return "yellow";
-  if (pct >= 50) return "orange";
-  return "red";
+  if (pct >= 90) return 'brightgreen';
+  if (pct >= 80) return 'green';
+  if (pct >= 70) return 'yellowgreen';
+  if (pct >= 60) return 'yellow';
+  if (pct >= 50) return 'orange';
+  return 'red';
 }
 
 function updateReadme() {
   if (!existsSync(coveragePath)) {
-    console.error("Coverage summary not found. Run: pnpm --filter web vitest run --coverage");
+    console.error('Coverage summary not found. Run: pnpm --filter web vitest run --coverage');
     process.exit(1);
   }
 
-  const coverage = JSON.parse(readFileSync(coveragePath, "utf8"));
+  const coverage = JSON.parse(readFileSync(coveragePath, 'utf8'));
   const totalLines = coverage.total.lines.pct;
   const totalStatements = coverage.total.statements.pct;
   const totalBranches = coverage.total.branches.pct;
@@ -37,7 +37,7 @@ function updateReadme() {
   const color = getBadgeColor(totalLines);
   const badge = `![Coverage](https://img.shields.io/badge/coverage-${totalLines}%25-${color})`;
 
-  let readme = readFileSync(readmePath, "utf8");
+  let readme = readFileSync(readmePath, 'utf8');
 
   // Update or add badge after title
   const badgeRegex = /!\[Coverage\]\(https:\/\/img\.shields\.io\/badge\/coverage-[\d.]+%25-\w+\)/;

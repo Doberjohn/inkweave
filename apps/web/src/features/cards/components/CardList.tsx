@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
-import type { LorcanaCard, Ink } from "../types";
-import type { CardFilterOptions, SetInfo } from "../loader";
-import { CardTile } from "./CardTile";
-import { LoadingSpinner, FilterDrawer } from "../../../shared/components";
+import {useState, useMemo} from 'react';
+import type {LorcanaCard, Ink} from '../types';
+import type {CardFilterOptions, SetInfo} from '../loader';
+import {CardTile} from './CardTile';
+import {LoadingSpinner, FilterDrawer} from '../../../shared/components';
 import {
   INK_COLORS,
   ALL_INKS,
@@ -14,21 +14,21 @@ import {
   LAYOUT_MOBILE,
   CARD_TYPES,
   COST_OPTIONS,
-} from "../../../shared/constants";
-import { isCardType } from "../utils";
+} from '../../../shared/constants';
+import {isCardType} from '../utils';
 
 interface CardListProps {
   cards: LorcanaCard[];
   isLoading: boolean;
   selectedCard: LorcanaCard | null;
   searchQuery: string;
-  inkFilter: Ink | "all";
+  inkFilter: Ink | 'all';
   filters: CardFilterOptions;
   uniqueKeywords: string[];
   uniqueClassifications: string[];
   sets: SetInfo[];
   onSearchChange: (query: string) => void;
-  onInkFilterChange: (ink: Ink | "all") => void;
+  onInkFilterChange: (ink: Ink | 'all') => void;
   onFiltersChange: (filters: CardFilterOptions) => void;
   onCardSelect: (card: LorcanaCard) => void;
   onAddToDeck?: (card: LorcanaCard) => boolean;
@@ -62,7 +62,7 @@ export function CardList({
 
   const selectedType = isCardType(filters.type) ? filters.type : undefined;
   const activeFilterCount = [
-    inkFilter !== "all",
+    inkFilter !== 'all',
     filters.type,
     filters.minCost !== undefined,
     filters.maxCost !== undefined,
@@ -72,8 +72,8 @@ export function CardList({
   ].filter(Boolean).length;
 
   const updateFilter = <K extends keyof CardFilterOptions>(key: K, value: CardFilterOptions[K]) => {
-    const newFilters = { ...filters };
-    if (value === undefined || value === "" || (Array.isArray(value) && value.length === 0)) {
+    const newFilters = {...filters};
+    if (value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
       delete newFilters[key];
     } else {
       newFilters[key] = value;
@@ -83,8 +83,8 @@ export function CardList({
 
   const clearAllFilters = () => {
     onFiltersChange({});
-    onInkFilterChange("all");
-    onSearchChange("");
+    onInkFilterChange('all');
+    onSearchChange('');
   };
 
   // Mobile layout
@@ -92,14 +92,13 @@ export function CardList({
     return (
       <div
         style={{
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
           height: `calc(100vh - ${LAYOUT_MOBILE.headerHeight}px - ${LAYOUT_MOBILE.bottomNavHeight}px)`,
           background: COLORS.white,
-        }}
-      >
+        }}>
         {isLoading ? (
-          <div style={{ padding: `${SPACING.lg}px` }}>
+          <div style={{padding: `${SPACING.lg}px`}}>
             <LoadingSpinner />
           </div>
         ) : (
@@ -110,12 +109,11 @@ export function CardList({
                 padding: `${SPACING.md}px ${SPACING.lg}px`,
                 background: COLORS.white,
                 borderBottom: `1px solid ${COLORS.gray200}`,
-                position: "sticky",
+                position: 'sticky',
                 top: 0,
                 zIndex: 10,
-              }}
-            >
-              <div style={{ display: "flex", gap: `${SPACING.md}px` }}>
+              }}>
+              <div style={{display: 'flex', gap: `${SPACING.md}px`}}>
                 <input
                   type="text"
                   placeholder="Search cards..."
@@ -123,49 +121,47 @@ export function CardList({
                   onChange={(e) => onSearchChange(e.target.value)}
                   style={{
                     flex: 1,
-                    padding: "12px 16px",
+                    padding: '12px 16px',
                     borderRadius: `${RADIUS.lg}px`,
                     border: `1px solid ${COLORS.gray200}`,
-                    fontSize: "16px", // Prevent iOS zoom
-                    boxSizing: "border-box",
+                    fontSize: '16px', // Prevent iOS zoom
+                    boxSizing: 'border-box',
                   }}
                 />
                 <button
                   onClick={() => setShowFilterDrawer(true)}
                   style={{
-                    width: "48px",
-                    height: "48px",
+                    width: '48px',
+                    height: '48px',
                     borderRadius: `${RADIUS.lg}px`,
                     border: `1px solid ${COLORS.gray200}`,
                     background: activeFilterCount > 0 ? COLORS.primary100 : COLORS.white,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    position: "relative",
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
                     flexShrink: 0,
                   }}
-                  aria-label={`Filters${activeFilterCount > 0 ? ` (${activeFilterCount} active)` : ""}`}
-                >
+                  aria-label={`Filters${activeFilterCount > 0 ? ` (${activeFilterCount} active)` : ''}`}>
                   <FilterIcon color={activeFilterCount > 0 ? COLORS.primary600 : COLORS.gray600} />
                   {activeFilterCount > 0 && (
                     <span
                       style={{
-                        position: "absolute",
-                        top: "-4px",
-                        right: "-4px",
+                        position: 'absolute',
+                        top: '-4px',
+                        right: '-4px',
                         background: COLORS.primary600,
                         color: COLORS.white,
-                        width: "20px",
-                        height: "20px",
-                        borderRadius: "50%",
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
                         fontSize: `${FONT_SIZES.xs}px`,
                         fontWeight: 600,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
                       {activeFilterCount}
                     </span>
                   )}
@@ -177,8 +173,7 @@ export function CardList({
                   color: COLORS.gray400,
                   marginTop: `${SPACING.sm}px`,
                   marginBottom: 0,
-                }}
-              >
+                }}>
                 {displayedCards.length} of {cards.length} cards
               </p>
             </div>
@@ -187,11 +182,10 @@ export function CardList({
             <div
               style={{
                 flex: 1,
-                overflowY: "auto",
+                overflowY: 'auto',
                 padding: `${SPACING.md}px`,
-              }}
-            >
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              }}>
+              <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
                 {displayedCards.map((card) => (
                   <CardTile
                     key={card.id}
@@ -231,21 +225,19 @@ export function CardList({
         width: `${LAYOUT.sidebarWidth}px`,
         borderRight: `1px solid ${COLORS.gray200}`,
         background: COLORS.white,
-        display: "flex",
-        flexDirection: "column",
+        display: 'flex',
+        flexDirection: 'column',
         maxHeight: `calc(100vh - ${LAYOUT.headerHeight}px)`,
-      }}
-    >
+      }}>
       {isLoading ? (
-        <div style={{ padding: `${SPACING.lg}px` }}>
+        <div style={{padding: `${SPACING.lg}px`}}>
           <LoadingSpinner />
         </div>
       ) : (
         <>
           {/* Filter Panel - Fixed */}
           <div
-            style={{ padding: `${SPACING.lg}px`, paddingBottom: `${SPACING.sm}px`, flexShrink: 0 }}
-          >
+            style={{padding: `${SPACING.lg}px`, paddingBottom: `${SPACING.sm}px`, flexShrink: 0}}>
             {/* Search */}
             <input
               type="text"
@@ -253,29 +245,28 @@ export function CardList({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               style={{
-                width: "100%",
-                padding: "10px 12px",
+                width: '100%',
+                padding: '10px 12px',
                 borderRadius: `${RADIUS.lg}px`,
                 border: `1px solid ${COLORS.gray200}`,
                 fontSize: `${FONT_SIZES.lg}px`,
                 marginBottom: `${SPACING.md}px`,
-                boxSizing: "border-box",
+                boxSizing: 'border-box',
               }}
             />
 
             {/* Ink Filter */}
-            <div style={{ marginBottom: `${SPACING.md}px` }}>
+            <div style={{marginBottom: `${SPACING.md}px`}}>
               <div
                 style={{
                   fontSize: `${FONT_SIZES.sm}px`,
                   color: COLORS.gray500,
-                  marginBottom: "4px",
-                }}
-              >
+                  marginBottom: '4px',
+                }}>
                 Ink
               </div>
-              <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-                <FilterButton active={inkFilter === "all"} onClick={() => onInkFilterChange("all")}>
+              <div style={{display: 'flex', gap: '4px', flexWrap: 'wrap'}}>
+                <FilterButton active={inkFilter === 'all'} onClick={() => onInkFilterChange('all')}>
                   All
                 </FilterButton>
                 {ALL_INKS.map((ink) => (
@@ -285,8 +276,7 @@ export function CardList({
                     onClick={() => onInkFilterChange(ink)}
                     activeColor={INK_COLORS[ink].border}
                     inactiveColor={INK_COLORS[ink].bg}
-                    inactiveTextColor={INK_COLORS[ink].text}
-                  >
+                    inactiveTextColor={INK_COLORS[ink].text}>
                     {ink}
                   </FilterButton>
                 ))}
@@ -294,29 +284,26 @@ export function CardList({
             </div>
 
             {/* Card Type Filter */}
-            <div style={{ marginBottom: `${SPACING.md}px` }}>
+            <div style={{marginBottom: `${SPACING.md}px`}}>
               <div
                 style={{
                   fontSize: `${FONT_SIZES.sm}px`,
                   color: COLORS.gray500,
-                  marginBottom: "4px",
-                }}
-              >
+                  marginBottom: '4px',
+                }}>
                 Type
               </div>
-              <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+              <div style={{display: 'flex', gap: '4px', flexWrap: 'wrap'}}>
                 <FilterButton
                   active={!selectedType}
-                  onClick={() => updateFilter("type", undefined)}
-                >
+                  onClick={() => updateFilter('type', undefined)}>
                   All
                 </FilterButton>
                 {CARD_TYPES.map((type) => (
                   <FilterButton
                     key={type}
                     active={selectedType === type}
-                    onClick={() => updateFilter("type", type)}
-                  >
+                    onClick={() => updateFilter('type', type)}>
                     {type}
                   </FilterButton>
                 ))}
@@ -327,23 +314,21 @@ export function CardList({
             <button
               onClick={() => setShowMoreFilters(!showMoreFilters)}
               style={{
-                background: "none",
-                border: "none",
+                background: 'none',
+                border: 'none',
                 padding: 0,
                 color: COLORS.primary600,
                 fontSize: `${FONT_SIZES.sm}px`,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}>
               <span
                 style={{
-                  transform: showMoreFilters ? "rotate(90deg)" : "rotate(0)",
-                  transition: "transform 0.2s",
-                }}
-              >
+                  transform: showMoreFilters ? 'rotate(90deg)' : 'rotate(0)',
+                  transition: 'transform 0.2s',
+                }}>
                 &#9654;
               </span>
               More filters {activeFilterCount > 0 && `(${activeFilterCount} active)`}
@@ -351,26 +336,24 @@ export function CardList({
 
             {/* Expanded Filters */}
             {showMoreFilters && (
-              <div style={{ marginTop: `${SPACING.md}px` }}>
+              <div style={{marginTop: `${SPACING.md}px`}}>
                 {/* Cost Range */}
-                <div style={{ marginBottom: `${SPACING.md}px` }}>
+                <div style={{marginBottom: `${SPACING.md}px`}}>
                   <div
                     style={{
                       fontSize: `${FONT_SIZES.sm}px`,
                       color: COLORS.gray500,
-                      marginBottom: "4px",
-                    }}
-                  >
+                      marginBottom: '4px',
+                    }}>
                     Cost
                   </div>
-                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
                     <select
-                      value={filters.minCost ?? ""}
+                      value={filters.minCost ?? ''}
                       onChange={(e) =>
-                        updateFilter("minCost", e.target.value ? Number(e.target.value) : undefined)
+                        updateFilter('minCost', e.target.value ? Number(e.target.value) : undefined)
                       }
-                      style={selectStyle}
-                    >
+                      style={selectStyle}>
                       <option value="">Min</option>
                       {COST_OPTIONS.map((c) => (
                         <option key={c} value={c}>
@@ -378,14 +361,13 @@ export function CardList({
                         </option>
                       ))}
                     </select>
-                    <span style={{ color: COLORS.gray400 }}>-</span>
+                    <span style={{color: COLORS.gray400}}>-</span>
                     <select
-                      value={filters.maxCost ?? ""}
+                      value={filters.maxCost ?? ''}
                       onChange={(e) =>
-                        updateFilter("maxCost", e.target.value ? Number(e.target.value) : undefined)
+                        updateFilter('maxCost', e.target.value ? Number(e.target.value) : undefined)
                       }
-                      style={selectStyle}
-                    >
+                      style={selectStyle}>
                       <option value="">Max</option>
                       {COST_OPTIONS.map((c) => (
                         <option key={c} value={c}>
@@ -397,23 +379,21 @@ export function CardList({
                 </div>
 
                 {/* Keywords */}
-                <div style={{ marginBottom: `${SPACING.md}px` }}>
+                <div style={{marginBottom: `${SPACING.md}px`}}>
                   <div
                     style={{
                       fontSize: `${FONT_SIZES.sm}px`,
                       color: COLORS.gray500,
-                      marginBottom: "4px",
-                    }}
-                  >
+                      marginBottom: '4px',
+                    }}>
                     Keyword
                   </div>
                   <select
-                    value={filters.keywords?.[0] ?? ""}
+                    value={filters.keywords?.[0] ?? ''}
                     onChange={(e) =>
-                      updateFilter("keywords", e.target.value ? [e.target.value] : undefined)
+                      updateFilter('keywords', e.target.value ? [e.target.value] : undefined)
                     }
-                    style={{ ...selectStyle, width: "100%" }}
-                  >
+                    style={{...selectStyle, width: '100%'}}>
                     <option value="">Any keyword</option>
                     {uniqueKeywords.map((kw) => (
                       <option key={kw} value={kw}>
@@ -424,23 +404,21 @@ export function CardList({
                 </div>
 
                 {/* Classifications */}
-                <div style={{ marginBottom: `${SPACING.md}px` }}>
+                <div style={{marginBottom: `${SPACING.md}px`}}>
                   <div
                     style={{
                       fontSize: `${FONT_SIZES.sm}px`,
                       color: COLORS.gray500,
-                      marginBottom: "4px",
-                    }}
-                  >
+                      marginBottom: '4px',
+                    }}>
                     Classification
                   </div>
                   <select
-                    value={filters.classifications?.[0] ?? ""}
+                    value={filters.classifications?.[0] ?? ''}
                     onChange={(e) =>
-                      updateFilter("classifications", e.target.value ? [e.target.value] : undefined)
+                      updateFilter('classifications', e.target.value ? [e.target.value] : undefined)
                     }
-                    style={{ ...selectStyle, width: "100%" }}
-                  >
+                    style={{...selectStyle, width: '100%'}}>
                     <option value="">Any classification</option>
                     {uniqueClassifications.map((c) => (
                       <option key={c} value={c}>
@@ -451,21 +429,19 @@ export function CardList({
                 </div>
 
                 {/* Set */}
-                <div style={{ marginBottom: `${SPACING.md}px` }}>
+                <div style={{marginBottom: `${SPACING.md}px`}}>
                   <div
                     style={{
                       fontSize: `${FONT_SIZES.sm}px`,
                       color: COLORS.gray500,
-                      marginBottom: "4px",
-                    }}
-                  >
+                      marginBottom: '4px',
+                    }}>
                     Set
                   </div>
                   <select
-                    value={filters.setCode ?? ""}
-                    onChange={(e) => updateFilter("setCode", e.target.value || undefined)}
-                    style={{ ...selectStyle, width: "100%" }}
-                  >
+                    value={filters.setCode ?? ''}
+                    onChange={(e) => updateFilter('setCode', e.target.value || undefined)}
+                    style={{...selectStyle, width: '100%'}}>
                     <option value="">Any set</option>
                     {sets.map((s) => (
                       <option key={s.code} value={s.code}>
@@ -478,20 +454,19 @@ export function CardList({
             )}
 
             {/* Clear Filters */}
-            {(searchQuery || inkFilter !== "all" || activeFilterCount > 0) && (
+            {(searchQuery || inkFilter !== 'all' || activeFilterCount > 0) && (
               <button
                 onClick={clearAllFilters}
                 style={{
                   marginTop: `${SPACING.sm}px`,
-                  background: "none",
-                  border: "none",
+                  background: 'none',
+                  border: 'none',
                   padding: 0,
                   color: COLORS.gray500,
                   fontSize: `${FONT_SIZES.sm}px`,
-                  cursor: "pointer",
-                  textDecoration: "underline",
-                }}
-              >
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}>
                 Clear all filters
               </button>
             )}
@@ -503,8 +478,7 @@ export function CardList({
                 color: COLORS.gray400,
                 marginTop: `${SPACING.md}px`,
                 marginBottom: 0,
-              }}
-            >
+              }}>
               Showing {displayedCards.length} of {cards.length} cards
             </p>
           </div>
@@ -513,11 +487,10 @@ export function CardList({
           <div
             style={{
               flex: 1,
-              overflowY: "auto",
+              overflowY: 'auto',
               padding: `${SPACING.sm}px ${SPACING.lg}px ${SPACING.lg}px`,
-            }}
-          >
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            }}>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '6px'}}>
               {displayedCards.map((card) => (
                 <CardTile
                   key={card.id}
@@ -537,15 +510,15 @@ export function CardList({
 }
 
 const selectStyle: React.CSSProperties = {
-  padding: "6px 8px",
+  padding: '6px 8px',
   borderRadius: `${RADIUS.md}px`,
   border: `1px solid ${COLORS.gray200}`,
   fontSize: `${FONT_SIZES.sm}px`,
   background: COLORS.white,
-  cursor: "pointer",
+  cursor: 'pointer',
 };
 
-function FilterIcon({ color }: { color: string }) {
+function FilterIcon({color}: {color: string}) {
   return (
     <svg
       width="20"
@@ -555,8 +528,7 @@ function FilterIcon({ color }: { color: string }) {
       stroke={color}
       strokeWidth="2"
       strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+      strokeLinejoin="round">
       <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
     </svg>
   );
@@ -582,16 +554,15 @@ function FilterButton({
       onClick={onClick}
       aria-pressed={active}
       style={{
-        padding: "5px 10px",
+        padding: '5px 10px',
         borderRadius: `${RADIUS.md}px`,
-        border: "none",
+        border: 'none',
         background: active ? activeColor : inactiveColor,
         color: active ? COLORS.white : inactiveTextColor,
         fontSize: `${FONT_SIZES.sm}px`,
         fontWeight: 500,
-        cursor: "pointer",
-      }}
-    >
+        cursor: 'pointer',
+      }}>
       {children}
     </button>
   );
