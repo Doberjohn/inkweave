@@ -4,7 +4,7 @@ import { CardList } from "../CardList";
 import { CardPreviewProvider } from "../CardPreviewContext";
 import { createCard } from "../../../../shared/test-utils";
 import type { LorcanaCard, Ink } from "../../types";
-import type { CardFilterOptions, SetInfo } from "../../loader";
+import type { CardFilterOptions } from "../../loader";
 
 // Wrapper to provide required context
 function renderWithProvider(ui: React.ReactElement) {

@@ -10,7 +10,6 @@ describe("FilterDrawer", () => {
     filters: {},
     uniqueKeywords: ["Singer", "Evasive", "Ward"],
     uniqueClassifications: ["Princess", "Hero", "Villain"],
-    uniqueSets: ["1", "5", "10"],
     sets: [
       { code: "1", name: "The First Chapter", number: 1 },
       { code: "5", name: "Shimmering Skies", number: 5 },

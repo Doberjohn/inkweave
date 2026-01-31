@@ -27,7 +27,6 @@ export const Default: Story = {
     filters: {},
     uniqueKeywords: ['Singer', 'Evasive', 'Ward', 'Bodyguard', 'Challenger', 'Rush'],
     uniqueClassifications: ['Princess', 'Hero', 'Villain', 'Floodborn', 'Storyborn'],
-    uniqueSets: ['1', '2', '3', '4', '5', '6'],
     sets: [
       { code: '1', name: 'The First Chapter', number: 1 },
       { code: '2', name: 'Rise of the Floodborn', number: 2 },
@@ -51,7 +50,6 @@ export const WithActiveFilters: Story = {
     },
     uniqueKeywords: ['Singer', 'Evasive', 'Ward', 'Bodyguard'],
     uniqueClassifications: ['Princess', 'Hero', 'Villain'],
-    uniqueSets: ['1', '5', '6'],
     sets: [
       { code: '1', name: 'The First Chapter', number: 1 },
       { code: '5', name: 'Shimmering Skies', number: 5 },
@@ -67,7 +65,6 @@ export const Closed: Story = {
     filters: {},
     uniqueKeywords: [],
     uniqueClassifications: [],
-    uniqueSets: [],
     sets: [],
   },
 };

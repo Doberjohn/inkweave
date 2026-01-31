@@ -28,7 +28,6 @@ function SynergyFinderApp() {
     setFilters,
     uniqueKeywords,
     uniqueClassifications,
-    uniqueSets,
     sets,
     retryLoad,
   } = useSynergyFinder();
@@ -108,7 +107,6 @@ function SynergyFinderApp() {
                 filters={filters}
                 uniqueKeywords={uniqueKeywords}
                 uniqueClassifications={uniqueClassifications}
-                uniqueSets={uniqueSets}
                 sets={sets}
                 onSearchChange={setSearchQuery}
                 onInkFilterChange={setInkFilter}
@@ -194,7 +192,6 @@ function SynergyFinderApp() {
           filters={filters}
           uniqueKeywords={uniqueKeywords}
           uniqueClassifications={uniqueClassifications}
-          uniqueSets={uniqueSets}
           sets={sets}
           onSearchChange={setSearchQuery}
           onInkFilterChange={setInkFilter}

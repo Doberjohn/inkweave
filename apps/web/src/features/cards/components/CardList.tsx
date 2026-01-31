@@ -15,7 +15,6 @@ interface CardListProps {
   filters: CardFilterOptions;
   uniqueKeywords: string[];
   uniqueClassifications: string[];
-  uniqueSets: string[];
   sets: SetInfo[];
   onSearchChange: (query: string) => void;
   onInkFilterChange: (ink: Ink | "all") => void;
@@ -35,7 +34,6 @@ export function CardList({
   filters,
   uniqueKeywords,
   uniqueClassifications,
-  uniqueSets,
   sets,
   onSearchChange,
   onInkFilterChange,
@@ -207,7 +205,6 @@ export function CardList({
               filters={filters}
               uniqueKeywords={uniqueKeywords}
               uniqueClassifications={uniqueClassifications}
-              uniqueSets={uniqueSets}
               sets={sets}
               onInkFilterChange={onInkFilterChange}
               onFiltersChange={onFiltersChange}

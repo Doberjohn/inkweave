@@ -12,7 +12,6 @@ interface FilterDrawerProps {
   filters: CardFilterOptions;
   uniqueKeywords: string[];
   uniqueClassifications: string[];
-  uniqueSets: string[];
   sets: SetInfo[];
   onInkFilterChange: (ink: Ink | "all") => void;
   onFiltersChange: (filters: CardFilterOptions) => void;
@@ -26,7 +25,6 @@ export function FilterDrawer({
   filters,
   uniqueKeywords,
   uniqueClassifications,
-  uniqueSets,
   sets,
   onInkFilterChange,
   onFiltersChange,
