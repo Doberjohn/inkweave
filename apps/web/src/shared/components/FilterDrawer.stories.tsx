@@ -1,0 +1,59 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { fn } from 'storybook/test';
+import { FilterDrawer } from './FilterDrawer';
+
+const meta: Meta<typeof FilterDrawer> = {
+  title: 'Components/FilterDrawer',
+  component: FilterDrawer,
+  parameters: {
+    layout: 'fullscreen',
+  },
+  tags: ['autodocs'],
+  args: {
+    onClose: fn(),
+    onInkFilterChange: fn(),
+    onFiltersChange: fn(),
+    onClearAll: fn(),
+  },
+};
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {
+  args: {
+    isOpen: true,
+    inkFilter: 'all',
+    filters: {},
+    uniqueKeywords: ['Singer', 'Evasive', 'Ward', 'Bodyguard', 'Challenger', 'Rush'],
+    uniqueClassifications: ['Princess', 'Hero', 'Villain', 'Floodborn', 'Storyborn'],
+    uniqueSets: ['1', '2', '3', '4', '5', '6'],
+  },
+};
+
+export const WithActiveFilters: Story = {
+  args: {
+    isOpen: true,
+    inkFilter: 'Sapphire',
+    filters: {
+      type: 'Character',
+      minCost: 3,
+      maxCost: 6,
+      keywords: ['Singer'],
+    },
+    uniqueKeywords: ['Singer', 'Evasive', 'Ward', 'Bodyguard'],
+    uniqueClassifications: ['Princess', 'Hero', 'Villain'],
+    uniqueSets: ['1', '5', '6'],
+  },
+};
+
+export const Closed: Story = {
+  args: {
+    isOpen: false,
+    inkFilter: 'all',
+    filters: {},
+    uniqueKeywords: [],
+    uniqueClassifications: [],
+    uniqueSets: [],
+  },
+};
