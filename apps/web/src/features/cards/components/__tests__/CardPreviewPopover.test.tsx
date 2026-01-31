@@ -22,9 +22,7 @@ function PreviewController({
 
   return (
     <div>
-      {card && (
-        <button onClick={() => showPreview(card, x, y, isTouchMode)}>Show Preview</button>
-      )}
+      {card && <button onClick={() => showPreview(card, x, y, isTouchMode)}>Show Preview</button>}
       <button onClick={hidePreview}>Hide Preview</button>
       <CardPreviewPopover />
     </div>

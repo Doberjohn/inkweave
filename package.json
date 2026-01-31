@@ -12,9 +12,12 @@
     "test": "pnpm -r test:run",
     "test:engine": "pnpm --filter lorcana-synergy-engine test:run",
     "test:web": "pnpm --filter lorcana-synergy-finder-web test:run",
-    "lint": "pnpm -r lint"
+    "lint": "pnpm -r lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "prettier": "^3.8.1",
     "typescript": "^5.3.0"
   },
   "packageManager": "pnpm@9.0.0"

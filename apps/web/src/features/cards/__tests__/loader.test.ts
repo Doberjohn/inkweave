@@ -49,7 +49,13 @@ describe("Card Filtering", () => {
     createCard({ id: "2", ink: "Amethyst", cost: 4, type: "Action" }),
     createCard({ id: "3", ink: "Amber", cost: 6, type: "Item" }),
     createCard({ id: "4", ink: "Ruby", cost: 3, type: "Character", keywords: ["Evasive"] }),
-    createCard({ id: "5", ink: "Sapphire", cost: 5, type: "Character", classifications: ["Princess"] }),
+    createCard({
+      id: "5",
+      ink: "Sapphire",
+      cost: 5,
+      type: "Character",
+      classifications: ["Princess"],
+    }),
     createCard({ id: "6", ink: "Steel", cost: 1, type: "Location", setCode: "1" }),
     createCard({ id: "7", ink: "Emerald", cost: 7, type: "Character", setCode: "5" }),
   ];
@@ -530,9 +536,7 @@ describe("Card Filtering - Additional Cases", () => {
   });
 
   it("should return empty when filtering keywords on cards without keywords", () => {
-    const cardsWithoutKeywords: LorcanaCard[] = [
-      createCard({ id: "1", keywords: undefined }),
-    ];
+    const cardsWithoutKeywords: LorcanaCard[] = [createCard({ id: "1", keywords: undefined })];
     const results = filterCards(cardsWithoutKeywords, { keywords: ["Evasive"] });
     expect(results).toHaveLength(0);
   });

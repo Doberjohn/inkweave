@@ -193,11 +193,7 @@ describe("FilterDrawer", () => {
   it("should clear minCost when selecting empty option", () => {
     const onFiltersChange = vi.fn();
     render(
-      <FilterDrawer
-        {...defaultProps}
-        filters={{ minCost: 3 }}
-        onFiltersChange={onFiltersChange}
-      />
+      <FilterDrawer {...defaultProps} filters={{ minCost: 3 }} onFiltersChange={onFiltersChange} />
     );
 
     const selects = screen.getAllByRole("combobox");
@@ -281,12 +277,7 @@ describe("FilterDrawer", () => {
   });
 
   it("should show selected keyword value in dropdown", () => {
-    render(
-      <FilterDrawer
-        {...defaultProps}
-        filters={{ keywords: ["Evasive"] }}
-      />
-    );
+    render(<FilterDrawer {...defaultProps} filters={{ keywords: ["Evasive"] }} />);
 
     const selects = screen.getAllByRole("combobox");
     const keywordSelect = selects[2] as HTMLSelectElement;

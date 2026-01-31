@@ -11,11 +11,12 @@ export const INK_COLORS: Record<Ink, { bg: string; text: string; border: string 
 };
 
 // Synergy strength styling
-export const STRENGTH_STYLES: Record<"strong" | "moderate" | "weak", { bg: string; text: string }> = {
-  strong: { bg: "#dcfce7", text: "#166534" },
-  moderate: { bg: "#fef9c3", text: "#854d0e" },
-  weak: { bg: "#f3f4f6", text: "#6b7280" },
-};
+export const STRENGTH_STYLES: Record<"strong" | "moderate" | "weak", { bg: string; text: string }> =
+  {
+    strong: { bg: "#dcfce7", text: "#166534" },
+    moderate: { bg: "#fef9c3", text: "#854d0e" },
+    weak: { bg: "#f3f4f6", text: "#6b7280" },
+  };
 
 // Layout constants
 export const LAYOUT = {

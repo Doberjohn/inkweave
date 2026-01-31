@@ -45,7 +45,13 @@ export function SynergyResults({
           <CardDetail card={selectedCard} onClear={onClearSelection} />
 
           {synergies.length === 0 ? (
-            <div style={{ textAlign: "center", padding: `${SPACING.xxl * 2}px`, color: COLORS.gray400 }}>
+            <div
+              style={{
+                textAlign: "center",
+                padding: `${SPACING.xxl * 2}px`,
+                color: COLORS.gray400,
+              }}
+            >
               <p>No synergies found for this card.</p>
               <p style={{ fontSize: `${FONT_SIZES.base}px`, marginTop: `${SPACING.sm}px` }}>
                 Try a card with Singer, Shift, Evasive, or Bodyguard.
@@ -55,8 +61,7 @@ export function SynergyResults({
             <>
               <div style={{ marginBottom: `${SPACING.lg}px` }}>
                 <span style={{ fontSize: `${FONT_SIZES.lg}px`, color: COLORS.gray500 }}>
-                  Found{" "}
-                  <strong style={{ color: COLORS.primary600 }}>{totalSynergyCount}</strong>{" "}
+                  Found <strong style={{ color: COLORS.primary600 }}>{totalSynergyCount}</strong>{" "}
                   synergistic cards
                 </span>
               </div>

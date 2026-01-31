@@ -2,7 +2,17 @@ import { useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Ink, SetInfo } from "../../features/cards";
 import type { CardFilterOptions } from "../../features/cards";
-import { COLORS, FONT_SIZES, RADIUS, SPACING, Z_INDEX, INK_COLORS, ALL_INKS, CARD_TYPES, COST_OPTIONS } from "../constants";
+import {
+  COLORS,
+  FONT_SIZES,
+  RADIUS,
+  SPACING,
+  Z_INDEX,
+  INK_COLORS,
+  ALL_INKS,
+  CARD_TYPES,
+  COST_OPTIONS,
+} from "../constants";
 import { isCardType } from "../../features/cards";
 
 interface FilterDrawerProps {
@@ -122,178 +132,196 @@ export function FilterDrawer({
               paddingBottom: "env(safe-area-inset-bottom)",
             }}
           >
-        {/* Header */}
-        <div
-          style={{
-            padding: `${SPACING.lg}px`,
-            borderBottom: `1px solid ${COLORS.gray200}`,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <h2 id="filter-drawer-title" style={{ margin: 0, fontSize: `${FONT_SIZES.xl}px`, fontWeight: 600 }}>
-            Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
-          </h2>
-          <div style={{ display: "flex", gap: `${SPACING.md}px` }}>
-            {activeFilterCount > 0 && (
-              <button
-                onClick={() => {
-                  onClearAll();
-                }}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: COLORS.primary600,
-                  fontSize: `${FONT_SIZES.base}px`,
-                  cursor: "pointer",
-                  padding: `${SPACING.sm}px`,
-                }}
-              >
-                Clear all
-              </button>
-            )}
-            <button
-              onClick={onClose}
+            {/* Header */}
+            <div
               style={{
-                background: COLORS.primary600,
-                color: COLORS.white,
-                border: "none",
-                borderRadius: `${RADIUS.md}px`,
-                padding: `${SPACING.sm}px ${SPACING.lg}px`,
-                fontSize: `${FONT_SIZES.base}px`,
-                fontWeight: 600,
-                cursor: "pointer",
-                minHeight: "44px",
+                padding: `${SPACING.lg}px`,
+                borderBottom: `1px solid ${COLORS.gray200}`,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
               }}
             >
-              Apply
-            </button>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: `${SPACING.lg}px`,
-          }}
-        >
-          {/* Ink Filter */}
-          <FilterSection label="Ink">
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              <FilterChip
-                active={inkFilter === "all"}
-                onClick={() => onInkFilterChange("all")}
+              <h2
+                id="filter-drawer-title"
+                style={{ margin: 0, fontSize: `${FONT_SIZES.xl}px`, fontWeight: 600 }}
               >
-                All
-              </FilterChip>
-              {ALL_INKS.map((ink) => (
-                <FilterChip
-                  key={ink}
-                  active={inkFilter === ink}
-                  onClick={() => onInkFilterChange(ink)}
-                  activeColor={INK_COLORS[ink].border}
-                  inactiveColor={INK_COLORS[ink].bg}
-                  inactiveTextColor={INK_COLORS[ink].text}
+                Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
+              </h2>
+              <div style={{ display: "flex", gap: `${SPACING.md}px` }}>
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={() => {
+                      onClearAll();
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: COLORS.primary600,
+                      fontSize: `${FONT_SIZES.base}px`,
+                      cursor: "pointer",
+                      padding: `${SPACING.sm}px`,
+                    }}
+                  >
+                    Clear all
+                  </button>
+                )}
+                <button
+                  onClick={onClose}
+                  style={{
+                    background: COLORS.primary600,
+                    color: COLORS.white,
+                    border: "none",
+                    borderRadius: `${RADIUS.md}px`,
+                    padding: `${SPACING.sm}px ${SPACING.lg}px`,
+                    fontSize: `${FONT_SIZES.base}px`,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    minHeight: "44px",
+                  }}
                 >
-                  {ink}
-                </FilterChip>
-              ))}
+                  Apply
+                </button>
+              </div>
             </div>
-          </FilterSection>
 
-          {/* Card Type Filter */}
-          <FilterSection label="Type">
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              <FilterChip
-                active={!selectedType}
-                onClick={() => updateFilter("type", undefined)}
-              >
-                All
-              </FilterChip>
-              {CARD_TYPES.map((type) => (
-                <FilterChip
-                  key={type}
-                  active={selectedType === type}
-                  onClick={() => updateFilter("type", type)}
+            {/* Content */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: `${SPACING.lg}px`,
+              }}
+            >
+              {/* Ink Filter */}
+              <FilterSection label="Ink">
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  <FilterChip active={inkFilter === "all"} onClick={() => onInkFilterChange("all")}>
+                    All
+                  </FilterChip>
+                  {ALL_INKS.map((ink) => (
+                    <FilterChip
+                      key={ink}
+                      active={inkFilter === ink}
+                      onClick={() => onInkFilterChange(ink)}
+                      activeColor={INK_COLORS[ink].border}
+                      inactiveColor={INK_COLORS[ink].bg}
+                      inactiveTextColor={INK_COLORS[ink].text}
+                    >
+                      {ink}
+                    </FilterChip>
+                  ))}
+                </div>
+              </FilterSection>
+
+              {/* Card Type Filter */}
+              <FilterSection label="Type">
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  <FilterChip
+                    active={!selectedType}
+                    onClick={() => updateFilter("type", undefined)}
+                  >
+                    All
+                  </FilterChip>
+                  {CARD_TYPES.map((type) => (
+                    <FilterChip
+                      key={type}
+                      active={selectedType === type}
+                      onClick={() => updateFilter("type", type)}
+                    >
+                      {type}
+                    </FilterChip>
+                  ))}
+                </div>
+              </FilterSection>
+
+              {/* Cost Range */}
+              <FilterSection label="Cost Range">
+                <div style={{ display: "flex", gap: `${SPACING.md}px`, alignItems: "center" }}>
+                  <select
+                    value={filters.minCost ?? ""}
+                    onChange={(e) =>
+                      updateFilter("minCost", e.target.value ? Number(e.target.value) : undefined)
+                    }
+                    style={selectStyle}
+                  >
+                    <option value="">Min</option>
+                    {COST_OPTIONS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                  <span style={{ color: COLORS.gray400 }}>to</span>
+                  <select
+                    value={filters.maxCost ?? ""}
+                    onChange={(e) =>
+                      updateFilter("maxCost", e.target.value ? Number(e.target.value) : undefined)
+                    }
+                    style={selectStyle}
+                  >
+                    <option value="">Max</option>
+                    {COST_OPTIONS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </FilterSection>
+
+              {/* Keyword */}
+              <FilterSection label="Keyword">
+                <select
+                  value={filters.keywords?.[0] ?? ""}
+                  onChange={(e) =>
+                    updateFilter("keywords", e.target.value ? [e.target.value] : undefined)
+                  }
+                  style={{ ...selectStyle, width: "100%" }}
                 >
-                  {type}
-                </FilterChip>
-              ))}
+                  <option value="">Any keyword</option>
+                  {uniqueKeywords.map((kw) => (
+                    <option key={kw} value={kw}>
+                      {kw}
+                    </option>
+                  ))}
+                </select>
+              </FilterSection>
+
+              {/* Classification */}
+              <FilterSection label="Classification">
+                <select
+                  value={filters.classifications?.[0] ?? ""}
+                  onChange={(e) =>
+                    updateFilter("classifications", e.target.value ? [e.target.value] : undefined)
+                  }
+                  style={{ ...selectStyle, width: "100%" }}
+                >
+                  <option value="">Any classification</option>
+                  {uniqueClassifications.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </FilterSection>
+
+              {/* Set */}
+              <FilterSection label="Set">
+                <select
+                  value={filters.setCode ?? ""}
+                  onChange={(e) => updateFilter("setCode", e.target.value || undefined)}
+                  style={{ ...selectStyle, width: "100%" }}
+                >
+                  <option value="">Any set</option>
+                  {sets.map((s) => (
+                    <option key={s.code} value={s.code}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </FilterSection>
             </div>
-          </FilterSection>
-
-          {/* Cost Range */}
-          <FilterSection label="Cost Range">
-            <div style={{ display: "flex", gap: `${SPACING.md}px`, alignItems: "center" }}>
-              <select
-                value={filters.minCost ?? ""}
-                onChange={(e) => updateFilter("minCost", e.target.value ? Number(e.target.value) : undefined)}
-                style={selectStyle}
-              >
-                <option value="">Min</option>
-                {COST_OPTIONS.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-              <span style={{ color: COLORS.gray400 }}>to</span>
-              <select
-                value={filters.maxCost ?? ""}
-                onChange={(e) => updateFilter("maxCost", e.target.value ? Number(e.target.value) : undefined)}
-                style={selectStyle}
-              >
-                <option value="">Max</option>
-                {COST_OPTIONS.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-          </FilterSection>
-
-          {/* Keyword */}
-          <FilterSection label="Keyword">
-            <select
-              value={filters.keywords?.[0] ?? ""}
-              onChange={(e) => updateFilter("keywords", e.target.value ? [e.target.value] : undefined)}
-              style={{ ...selectStyle, width: "100%" }}
-            >
-              <option value="">Any keyword</option>
-              {uniqueKeywords.map((kw) => (
-                <option key={kw} value={kw}>{kw}</option>
-              ))}
-            </select>
-          </FilterSection>
-
-          {/* Classification */}
-          <FilterSection label="Classification">
-            <select
-              value={filters.classifications?.[0] ?? ""}
-              onChange={(e) => updateFilter("classifications", e.target.value ? [e.target.value] : undefined)}
-              style={{ ...selectStyle, width: "100%" }}
-            >
-              <option value="">Any classification</option>
-              {uniqueClassifications.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </FilterSection>
-
-          {/* Set */}
-          <FilterSection label="Set">
-            <select
-              value={filters.setCode ?? ""}
-              onChange={(e) => updateFilter("setCode", e.target.value || undefined)}
-              style={{ ...selectStyle, width: "100%" }}
-            >
-              <option value="">Any set</option>
-              {sets.map((s) => (
-                <option key={s.code} value={s.code}>{s.name}</option>
-              ))}
-            </select>
-          </FilterSection>
-        </div>
           </motion.div>
         </>
       )}

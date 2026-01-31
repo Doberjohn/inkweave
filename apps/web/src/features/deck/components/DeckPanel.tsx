@@ -2,7 +2,14 @@ import { useState, useMemo, useRef } from "react";
 import type { LorcanaCard } from "../../cards";
 import type { Deck, DeckStats as DeckStatsType } from "../types";
 import type { DeckSuggestion, DeckSynergyAnalysis as DeckSynergyAnalysisType } from "../hooks";
-import { COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, LAYOUT_MOBILE } from "../../../shared/constants";
+import {
+  COLORS,
+  FONT_SIZES,
+  RADIUS,
+  SPACING,
+  LAYOUT,
+  LAYOUT_MOBILE,
+} from "../../../shared/constants";
 import { DeckCardRow, DeckStats, DeckSuggestions, DeckSynergyAnalysis, SavedDecksModal } from ".";
 
 interface DeckPanelProps {
@@ -147,7 +154,14 @@ export function DeckPanel({
         }}
       >
         {/* Deck name */}
-        <div style={{ display: "flex", alignItems: "center", gap: `${SPACING.md}px`, marginBottom: `${SPACING.md}px` }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: `${SPACING.md}px`,
+            marginBottom: `${SPACING.md}px`,
+          }}
+        >
           {isEditing ? (
             <input
               type="text"

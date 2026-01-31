@@ -1,7 +1,14 @@
 import { memo } from "react";
 import type { LorcanaCard } from "../../cards";
 import type { SynergyStrength } from "../types";
-import { INK_COLORS, STRENGTH_STYLES, COLORS, FONT_SIZES, RADIUS, LAYOUT } from "../../../shared/constants";
+import {
+  INK_COLORS,
+  STRENGTH_STYLES,
+  COLORS,
+  FONT_SIZES,
+  RADIUS,
+  LAYOUT,
+} from "../../../shared/constants";
 import { CardImage } from "../../../shared/components";
 import { useCardPreviewHandlers } from "../../cards";
 
@@ -13,7 +20,13 @@ interface SynergyCardProps {
   deckQuantity?: number;
 }
 
-export const SynergyCard = memo(function SynergyCard({ card, strength, explanation, onAddToDeck, deckQuantity = 0 }: SynergyCardProps) {
+export const SynergyCard = memo(function SynergyCard({
+  card,
+  strength,
+  explanation,
+  onAddToDeck,
+  deckQuantity = 0,
+}: SynergyCardProps) {
   const colors = INK_COLORS[card.ink];
   const strengthStyle = STRENGTH_STYLES[strength];
   const { previewHandlers } = useCardPreviewHandlers({ card });

@@ -165,8 +165,8 @@ export function loadSetsFromJSON(data: LorcanaJSONData): SetInfo[] {
     }))
     .sort((a, b) => {
       // Sort by number, with Q sets (negative or special) at the end
-      const numA = typeof a.number === 'number' ? a.number : 999;
-      const numB = typeof b.number === 'number' ? b.number : 999;
+      const numA = typeof a.number === "number" ? a.number : 999;
+      const numB = typeof b.number === "number" ? b.number : 999;
       return numA - numB;
     });
 }

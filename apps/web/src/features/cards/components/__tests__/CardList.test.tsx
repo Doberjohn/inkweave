@@ -15,7 +15,13 @@ describe("CardList", () => {
   const mockCards: LorcanaCard[] = [
     createCard({ id: "1", name: "Elsa", fullName: "Elsa - Snow Queen", ink: "Sapphire", cost: 5 }),
     createCard({ id: "2", name: "Simba", fullName: "Simba - Future King", ink: "Amber", cost: 3 }),
-    createCard({ id: "3", name: "Maleficent", fullName: "Maleficent - Sorceress", ink: "Amethyst", cost: 7 }),
+    createCard({
+      id: "3",
+      name: "Maleficent",
+      fullName: "Maleficent - Sorceress",
+      ink: "Amethyst",
+      cost: 7,
+    }),
   ];
 
   const defaultProps = {
@@ -112,7 +118,11 @@ describe("CardList", () => {
     it("should call onFiltersChange to clear type when clicking All in type filter", () => {
       const onFiltersChange = vi.fn();
       renderWithProvider(
-        <CardList {...defaultProps} filters={{ type: "Character" }} onFiltersChange={onFiltersChange} />
+        <CardList
+          {...defaultProps}
+          filters={{ type: "Character" }}
+          onFiltersChange={onFiltersChange}
+        />
       );
 
       // Second "All" button is for type filter
@@ -292,9 +302,7 @@ describe("CardList", () => {
     });
 
     it("should show filter badge count when filters are active", () => {
-      renderWithProvider(
-        <CardList {...defaultProps} isMobile={true} inkFilter="Sapphire" />
-      );
+      renderWithProvider(<CardList {...defaultProps} isMobile={true} inkFilter="Sapphire" />);
 
       // Should show badge with count on filter button
       expect(screen.getByRole("button", { name: /Filters \(1 active\)/i })).toBeInTheDocument();

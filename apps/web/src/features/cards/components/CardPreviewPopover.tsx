@@ -114,9 +114,7 @@ function PreviewCardImage({
         justifyContent: "center",
       }}
     >
-      <span style={{ fontSize: "48px", fontWeight: 700, color: colors.text }}>
-        {card.cost}
-      </span>
+      <span style={{ fontSize: "48px", fontWeight: 700, color: colors.text }}>{card.cost}</span>
     </div>
   );
 }

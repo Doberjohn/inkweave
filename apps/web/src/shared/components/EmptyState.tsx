@@ -33,9 +33,7 @@ export function EmptyState({ icon = defaultIcon, title, subtitle }: EmptyStatePr
     >
       {icon}
       <p style={{ marginTop: "16px", fontSize: `${FONT_SIZES.xl}px` }}>{title}</p>
-      {subtitle && (
-        <p style={{ fontSize: `${FONT_SIZES.base}px`, marginTop: "4px" }}>{subtitle}</p>
-      )}
+      {subtitle && <p style={{ fontSize: `${FONT_SIZES.base}px`, marginTop: "4px" }}>{subtitle}</p>}
     </div>
   );
 }

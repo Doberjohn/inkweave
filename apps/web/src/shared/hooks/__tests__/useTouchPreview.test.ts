@@ -11,10 +11,11 @@ describe("useTouchPreview", () => {
     vi.useRealTimers();
   });
 
-  const createTouchEvent = (clientX = 100, clientY = 100): React.TouchEvent => ({
-    touches: [{ clientX, clientY }] as unknown as React.TouchList,
-    preventDefault: vi.fn(),
-  } as unknown as React.TouchEvent);
+  const createTouchEvent = (clientX = 100, clientY = 100): React.TouchEvent =>
+    ({
+      touches: [{ clientX, clientY }] as unknown as React.TouchList,
+      preventDefault: vi.fn(),
+    }) as unknown as React.TouchEvent;
 
   it("should call onLongPress after 400ms hold", () => {
     const onLongPress = vi.fn();

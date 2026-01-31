@@ -4,7 +4,9 @@ interface LoadingSpinnerProps {
   message?: string;
 }
 
-export function LoadingSpinner({ message = "Loading cards from LorcanaJSON..." }: LoadingSpinnerProps) {
+export function LoadingSpinner({
+  message = "Loading cards from LorcanaJSON...",
+}: LoadingSpinnerProps) {
   return (
     <div
       style={{

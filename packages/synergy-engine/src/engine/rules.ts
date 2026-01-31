@@ -32,12 +32,14 @@ export const synergyRules: SynergyRule[] = [
 
       return allCards
         .filter((other) => isSong(other) && other.cost <= singerValue)
-        .map((song): SynergyMatch => ({
-          card: song,
-          strength: song.cost >= singerValue - 1 ? "strong" : "moderate",
-          explanation: `${card.name} (Singer ${singerValue}) can play ${song.name} (cost ${song.cost}) for free`,
-          bidirectional: true,
-        }));
+        .map(
+          (song): SynergyMatch => ({
+            card: song,
+            strength: song.cost >= singerValue - 1 ? "strong" : "moderate",
+            explanation: `${card.name} (Singer ${singerValue}) can play ${song.name} (cost ${song.cost}) for free`,
+            bidirectional: true,
+          })
+        );
     },
   },
 
@@ -61,12 +63,14 @@ export const synergyRules: SynergyRule[] = [
               textContains(other, /whenever .* quests/i) ||
               textContains(other, "gains evasive"))
         )
-        .map((other): SynergyMatch => ({
-          card: other,
-          strength: "moderate",
-          explanation: `${card.name}'s Evasive allows safe questing to trigger ${other.name}'s ability`,
-          bidirectional: false,
-        }));
+        .map(
+          (other): SynergyMatch => ({
+            card: other,
+            strength: "moderate",
+            explanation: `${card.name}'s Evasive allows safe questing to trigger ${other.name}'s ability`,
+            bidirectional: false,
+          })
+        );
     },
   },
 
@@ -130,22 +134,26 @@ export const synergyRules: SynergyRule[] = [
               !hasClassification(other, "Princess") &&
               !hasNegativeTargeting(other, "Princess")
           )
-          .map((other): SynergyMatch => ({
-            card: other,
-            strength: "moderate",
-            explanation: `${other.name} benefits Princess characters like ${card.name}`,
-            bidirectional: true,
-          }));
+          .map(
+            (other): SynergyMatch => ({
+              card: other,
+              strength: "moderate",
+              explanation: `${other.name} benefits Princess characters like ${card.name}`,
+              bidirectional: true,
+            })
+          );
       } else {
         // Card that benefits Princesses: find Princess characters
         return allCards
           .filter((other) => other.id !== card.id && hasClassification(other, "Princess"))
-          .map((other): SynergyMatch => ({
-            card: other,
-            strength: "moderate",
-            explanation: `${card.name} benefits ${other.name} (Princess)`,
-            bidirectional: true,
-          }));
+          .map(
+            (other): SynergyMatch => ({
+              card: other,
+              strength: "moderate",
+              explanation: `${card.name} benefits ${other.name} (Princess)`,
+              bidirectional: true,
+            })
+          );
       }
     },
   },
@@ -175,22 +183,26 @@ export const synergyRules: SynergyRule[] = [
               !hasClassification(other, "Villain") &&
               !hasNegativeTargeting(other, "Villain")
           )
-          .map((other): SynergyMatch => ({
-            card: other,
-            strength: "moderate",
-            explanation: `${other.name} benefits Villain characters like ${card.name}`,
-            bidirectional: true,
-          }));
+          .map(
+            (other): SynergyMatch => ({
+              card: other,
+              strength: "moderate",
+              explanation: `${other.name} benefits Villain characters like ${card.name}`,
+              bidirectional: true,
+            })
+          );
       } else {
         // Card that benefits Villains: find Villain characters
         return allCards
           .filter((other) => other.id !== card.id && hasClassification(other, "Villain"))
-          .map((other): SynergyMatch => ({
-            card: other,
-            strength: "moderate",
-            explanation: `${card.name} benefits ${other.name} (Villain)`,
-            bidirectional: true,
-          }));
+          .map(
+            (other): SynergyMatch => ({
+              card: other,
+              strength: "moderate",
+              explanation: `${card.name} benefits ${other.name} (Villain)`,
+              bidirectional: true,
+            })
+          );
       }
     },
   },
@@ -220,22 +232,26 @@ export const synergyRules: SynergyRule[] = [
               !hasClassification(other, "Hero") &&
               !hasNegativeTargeting(other, "Hero")
           )
-          .map((other): SynergyMatch => ({
-            card: other,
-            strength: "moderate",
-            explanation: `${other.name} benefits Hero characters like ${card.name}`,
-            bidirectional: true,
-          }));
+          .map(
+            (other): SynergyMatch => ({
+              card: other,
+              strength: "moderate",
+              explanation: `${other.name} benefits Hero characters like ${card.name}`,
+              bidirectional: true,
+            })
+          );
       } else {
         // Card that benefits Heroes: find Hero characters
         return allCards
           .filter((other) => other.id !== card.id && hasClassification(other, "Hero"))
-          .map((other): SynergyMatch => ({
-            card: other,
-            strength: "moderate",
-            explanation: `${card.name} benefits ${other.name} (Hero)`,
-            bidirectional: true,
-          }));
+          .map(
+            (other): SynergyMatch => ({
+              card: other,
+              strength: "moderate",
+              explanation: `${card.name} benefits ${other.name} (Hero)`,
+              bidirectional: true,
+            })
+          );
       }
     },
   },
@@ -260,12 +276,14 @@ export const synergyRules: SynergyRule[] = [
               textContains(other, /gets? \+/i) ||
               textContains(other, /gains? \+/i))
         )
-        .map((other): SynergyMatch => ({
-          card: other,
-          strength: "moderate",
-          explanation: `${other.name} can buff ${card.name}'s Challenger attacks`,
-          bidirectional: false,
-        }));
+        .map(
+          (other): SynergyMatch => ({
+            card: other,
+            strength: "moderate",
+            explanation: `${other.name} can buff ${card.name}'s Challenger attacks`,
+            bidirectional: false,
+          })
+        );
     },
   },
 
@@ -293,12 +311,14 @@ export const synergyRules: SynergyRule[] = [
               other.id !== card.id &&
               (textContains(other, "exerted character") || textContains(other, /if .* exerted/i))
           )
-          .map((other): SynergyMatch => ({
-            card: other,
-            strength: "strong",
-            explanation: `${card.name} exerts opponents, enabling ${other.name}'s effects`,
-            bidirectional: true,
-          }));
+          .map(
+            (other): SynergyMatch => ({
+              card: other,
+              strength: "strong",
+              explanation: `${card.name} exerts opponents, enabling ${other.name}'s effects`,
+              bidirectional: true,
+            })
+          );
       }
 
       return [];
@@ -331,12 +351,14 @@ export const synergyRules: SynergyRule[] = [
                 textContains(other, "when you draw") ||
                 textContains(other, "for each card you drew"))
           )
-          .map((other): SynergyMatch => ({
-            card: other,
-            strength: "strong",
-            explanation: `${card.name}'s draw triggers ${other.name}'s ability`,
-            bidirectional: true,
-          }));
+          .map(
+            (other): SynergyMatch => ({
+              card: other,
+              strength: "strong",
+              explanation: `${card.name}'s draw triggers ${other.name}'s ability`,
+              bidirectional: true,
+            })
+          );
       }
 
       return [];
@@ -361,12 +383,14 @@ export const synergyRules: SynergyRule[] = [
       return allCards
         .filter((other) => other.id !== card.id && other.cost >= 6)
         .slice(0, 10)
-        .map((other): SynergyMatch => ({
-          card: other,
-          strength: other.cost >= 8 ? "strong" : "moderate",
-          explanation: `${card.name}'s ink ramp helps play ${other.name} (cost ${other.cost}) earlier`,
-          bidirectional: false,
-        }));
+        .map(
+          (other): SynergyMatch => ({
+            card: other,
+            strength: other.cost >= 8 ? "strong" : "moderate",
+            explanation: `${card.name}'s ink ramp helps play ${other.name} (cost ${other.cost}) earlier`,
+            bidirectional: false,
+          })
+        );
     },
   },
 
@@ -390,12 +414,14 @@ export const synergyRules: SynergyRule[] = [
               hasKeyword(other, "Challenger") ||
               textContains(other, "ready"))
         )
-        .map((other): SynergyMatch => ({
-          card: other,
-          strength: "moderate",
-          explanation: `${card.name}'s Ward makes it a safer target for ${other.name}'s effects`,
-          bidirectional: false,
-        }));
+        .map(
+          (other): SynergyMatch => ({
+            card: other,
+            strength: "moderate",
+            explanation: `${card.name}'s Ward makes it a safer target for ${other.name}'s effects`,
+            bidirectional: false,
+          })
+        );
     },
   },
 ];

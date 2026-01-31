@@ -11,7 +11,12 @@ interface SynergyGroupProps {
   getCardQuantity?: (cardId: string) => number;
 }
 
-export function SynergyGroup({ group, defaultExpanded = true, onAddToDeck, getCardQuantity }: SynergyGroupProps) {
+export function SynergyGroup({
+  group,
+  defaultExpanded = true,
+  onAddToDeck,
+  getCardQuantity,
+}: SynergyGroupProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (

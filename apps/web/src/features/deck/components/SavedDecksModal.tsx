@@ -10,7 +10,13 @@ interface SavedDecksModalProps {
   onDelete: (id: string) => void;
 }
 
-export function SavedDecksModal({ decks, isOpen, onClose, onLoad, onDelete }: SavedDecksModalProps) {
+export function SavedDecksModal({
+  decks,
+  isOpen,
+  onClose,
+  onLoad,
+  onDelete,
+}: SavedDecksModalProps) {
   const { isMobile } = useResponsive();
 
   if (!isOpen) return null;
@@ -226,7 +232,9 @@ export function SavedDecksModal({ decks, isOpen, onClose, onLoad, onDelete }: Sa
                           }
                         }}
                         style={{
-                          padding: isMobile ? `${SPACING.md}px ${SPACING.lg}px` : `${SPACING.sm}px ${SPACING.md}px`,
+                          padding: isMobile
+                            ? `${SPACING.md}px ${SPACING.lg}px`
+                            : `${SPACING.sm}px ${SPACING.md}px`,
                           background: COLORS.white,
                           color: COLORS.error,
                           border: `1px solid ${COLORS.gray300}`,

@@ -18,9 +18,7 @@ export function textContains(card: LorcanaCard, pattern: string | RegExp): boole
  * Check if card has a keyword (case-insensitive, prefix match)
  */
 export function hasKeyword(card: LorcanaCard, keyword: string): boolean {
-  return (
-    card.keywords?.some((k) => k.toLowerCase().startsWith(keyword.toLowerCase())) ?? false
-  );
+  return card.keywords?.some((k) => k.toLowerCase().startsWith(keyword.toLowerCase())) ?? false;
 }
 
 /**
@@ -35,8 +33,7 @@ export function hasKeywordExact(card: LorcanaCard, keyword: string): boolean {
  */
 export function hasClassification(card: LorcanaCard, classification: string): boolean {
   return (
-    card.classifications?.some((c) => c.toLowerCase() === classification.toLowerCase()) ??
-    false
+    card.classifications?.some((c) => c.toLowerCase() === classification.toLowerCase()) ?? false
   );
 }
 
@@ -67,8 +64,7 @@ export function getKeywordValue(card: LorcanaCard, keyword: string): number | nu
  */
 export function isSong(card: LorcanaCard): boolean {
   return (
-    card.type === "Action" &&
-    (card.classifications?.includes("Song") || textContains(card, "song"))
+    card.type === "Action" && (card.classifications?.includes("Song") || textContains(card, "song"))
   );
 }
 
@@ -132,7 +128,10 @@ export function hasNegativeTargeting(card: LorcanaCard, classification: string):
  * Check if card text contains a POSITIVE effect for a classification
  * e.g., "Princess characters get +1", "your Villains gain", "whenever a Hero"
  */
-export function hasPositiveClassificationEffect(card: LorcanaCard, classification: string): boolean {
+export function hasPositiveClassificationEffect(
+  card: LorcanaCard,
+  classification: string
+): boolean {
   if (!card.text) return false;
   const text = card.text.toLowerCase();
   const classLower = classification.toLowerCase();

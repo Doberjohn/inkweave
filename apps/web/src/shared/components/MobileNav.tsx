@@ -115,7 +115,16 @@ function NavButton({ label, icon, isActive, onClick, badge }: NavButtonProps) {
 // Memoized icon components - static SVGs that never need to re-render
 const CardsIcon = memo(function CardsIcon() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <rect x="3" y="3" width="7" height="9" rx="1" />
       <rect x="14" y="3" width="7" height="9" rx="1" />
       <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -126,7 +135,16 @@ const CardsIcon = memo(function CardsIcon() {
 
 const SynergiesIcon = memo(function SynergiesIcon() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <circle cx="12" cy="12" r="3" />
       <circle cx="19" cy="5" r="2" />
       <circle cx="5" cy="5" r="2" />
@@ -142,7 +160,16 @@ const SynergiesIcon = memo(function SynergiesIcon() {
 
 const DeckIcon = memo(function DeckIcon() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <rect x="4" y="4" width="16" height="16" rx="2" />
       <rect x="6" y="2" width="12" height="2" rx="1" />
       <line x="12" y1="8" x2="12" y2="16" />

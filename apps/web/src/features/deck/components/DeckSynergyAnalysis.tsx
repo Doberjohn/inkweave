@@ -1,6 +1,13 @@
 import { useState } from "react";
 import type { DeckSynergyAnalysis as DeckSynergyAnalysisType, DeckCardSynergy } from "../hooks";
-import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, STRENGTH_STYLES } from "../../../shared/constants";
+import {
+  INK_COLORS,
+  COLORS,
+  FONT_SIZES,
+  RADIUS,
+  SPACING,
+  STRENGTH_STYLES,
+} from "../../../shared/constants";
 import { CollapsibleSection } from "../../../shared/components";
 import { useCardPreviewHandlers } from "../../cards";
 
@@ -24,11 +31,7 @@ export function DeckSynergyAnalysis({
   }
 
   return (
-    <CollapsibleSection
-      title="Synergy Analysis"
-      collapsed={collapsed}
-      onToggle={onToggleCollapse}
-    >
+    <CollapsibleSection title="Synergy Analysis" collapsed={collapsed} onToggle={onToggleCollapse}>
       {/* Overview Stats */}
       <div
         style={{
@@ -69,9 +72,7 @@ export function DeckSynergyAnalysis({
 
       {/* Tab Content */}
       <div style={{ maxHeight: 300, overflowY: "auto" }}>
-        {activeTab === "overview" && (
-          <OverviewTab analysis={analysis} />
-        )}
+        {activeTab === "overview" && <OverviewTab analysis={analysis} />}
         {activeTab === "key" && (
           <CardList cards={analysis.keyCards} type="key" onRemoveCard={onRemoveCard} />
         )}
@@ -267,8 +268,10 @@ function SynergyCardRow({
   const [imgError, setImgError] = useState(false);
   const { previewHandlers } = useCardPreviewHandlers({ card });
 
-  const bgColor = type === "key" ? COLORS.primary50 : type === "weak" ? COLORS.errorBg : COLORS.white;
-  const borderColor = type === "key" ? COLORS.primary200 : type === "weak" ? COLORS.errorBorder : COLORS.gray200;
+  const bgColor =
+    type === "key" ? COLORS.primary50 : type === "weak" ? COLORS.errorBg : COLORS.white;
+  const borderColor =
+    type === "key" ? COLORS.primary200 : type === "weak" ? COLORS.errorBorder : COLORS.gray200;
 
   return (
     <div

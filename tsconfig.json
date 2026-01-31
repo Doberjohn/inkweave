@@ -1,7 +1,4 @@
 {
   "files": [],
-  "references": [
-    { "path": "./packages/synergy-engine" },
-    { "path": "./apps/web" }
-  ]
+  "references": [{ "path": "./packages/synergy-engine" }, { "path": "./apps/web" }]
 }

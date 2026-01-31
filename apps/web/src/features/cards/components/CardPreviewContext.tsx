@@ -23,9 +23,12 @@ export function CardPreviewProvider({ children }: { children: ReactNode }) {
     isTouchMode: false,
   });
 
-  const showPreview = useCallback((card: LorcanaCard, x: number, y: number, isTouchMode = false) => {
-    setPreviewState({ card, position: { x, y }, isTouchMode });
-  }, []);
+  const showPreview = useCallback(
+    (card: LorcanaCard, x: number, y: number, isTouchMode = false) => {
+      setPreviewState({ card, position: { x, y }, isTouchMode });
+    },
+    []
+  );
 
   const updatePosition = useCallback((x: number, y: number) => {
     setPreviewState((prev) => ({ ...prev, position: { x, y } }));

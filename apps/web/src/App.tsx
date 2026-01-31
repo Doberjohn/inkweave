@@ -180,7 +180,12 @@ function SynergyFinderApp() {
         fontFamily: "'Inter', -apple-system, sans-serif",
       }}
     >
-      <Header totalCards={totalCards} isLoading={isLoading} gameMode={gameMode} onGameModeChange={setGameMode} />
+      <Header
+        totalCards={totalCards}
+        isLoading={isLoading}
+        gameMode={gameMode}
+        onGameModeChange={setGameMode}
+      />
 
       <div style={{ display: "flex", minHeight: `calc(100vh - ${LAYOUT.headerHeight}px)` }}>
         <CardList

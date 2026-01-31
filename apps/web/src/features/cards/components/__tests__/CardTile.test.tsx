@@ -158,7 +158,9 @@ describe("CardTile", () => {
     it("should not trigger main onClick when add button clicked", () => {
       const onClick = vi.fn();
       const onAddToDeck = vi.fn();
-      renderWithProvider(<CardTile {...defaultProps} onClick={onClick} onAddToDeck={onAddToDeck} />);
+      renderWithProvider(
+        <CardTile {...defaultProps} onClick={onClick} onAddToDeck={onAddToDeck} />
+      );
 
       fireEvent.click(screen.getByRole("button", { name: /add elsa to deck/i }));
 

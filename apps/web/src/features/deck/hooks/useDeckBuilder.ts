@@ -281,9 +281,7 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
 
       return {
         ...prev,
-        cards: prev.cards.map((dc) =>
-          dc.card.id === cardId ? { ...dc, quantity } : dc
-        ),
+        cards: prev.cards.map((dc) => (dc.card.id === cardId ? { ...dc, quantity } : dc)),
         updatedAt: Date.now(),
       };
     });
@@ -545,10 +543,7 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
         if (card.id === otherCard.id) continue;
 
         // Check both directions for synergies (cached)
-        const { hasSynergy, bestSynergy } = synergyCache.checkBidirectionalSynergy(
-          card,
-          otherCard
-        );
+        const { hasSynergy, bestSynergy } = synergyCache.checkBidirectionalSynergy(card, otherCard);
 
         if (hasSynergy && bestSynergy) {
           synergizingWith.push({
@@ -590,8 +585,11 @@ export function useDeckBuilder(): UseDeckBuilderReturn {
     const averageScore = deck.cards.length > 0 ? overallScore / deck.cards.length : 0;
 
     // Key cards: top 20% or cards with above-average synergies
-    const avgSynergyCount = cardSynergies.reduce((sum, cs) => sum + cs.synergyCount, 0) / cardSynergies.length;
-    const keyCards = cardSynergies.filter((cs) => cs.synergyCount >= avgSynergyCount && cs.synergyCount > 0).slice(0, 5);
+    const avgSynergyCount =
+      cardSynergies.reduce((sum, cs) => sum + cs.synergyCount, 0) / cardSynergies.length;
+    const keyCards = cardSynergies
+      .filter((cs) => cs.synergyCount >= avgSynergyCount && cs.synergyCount > 0)
+      .slice(0, 5);
 
     // Weak links: cards with 0-1 synergies (potential cuts)
     const weakLinks = cardSynergies.filter((cs) => cs.synergyCount <= 1).slice(0, 5);

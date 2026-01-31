@@ -33,7 +33,14 @@ export function DeckCardRow({
   const totalCost = card.cost * quantity;
 
   // Memoize derived sizing values to avoid recalculating on every render
-  const { buttonSize, removeButtonSize, buttonFontSize, removeFontSize, quantityMinWidth, rowPadding } = useMemo(
+  const {
+    buttonSize,
+    removeButtonSize,
+    buttonFontSize,
+    removeFontSize,
+    quantityMinWidth,
+    rowPadding,
+  } = useMemo(
     () => ({
       buttonSize: isMobile ? TOUCH_TARGET_SIZE : DESKTOP_BUTTON_SIZE,
       removeButtonSize: isMobile ? MOBILE_REMOVE_SIZE : DESKTOP_REMOVE_SIZE,
@@ -150,7 +157,9 @@ export function DeckCardRow({
             onIncrement();
           }}
           disabled={quantity >= 4}
-          aria-label={quantity >= 4 ? `Maximum 4 copies of ${card.name}` : `Add one copy of ${card.name}`}
+          aria-label={
+            quantity >= 4 ? `Maximum 4 copies of ${card.name}` : `Add one copy of ${card.name}`
+          }
           style={{
             width: buttonSize,
             height: buttonSize,

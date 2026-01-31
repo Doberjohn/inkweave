@@ -31,12 +31,18 @@ describe("Header", () => {
   it("should mark correct button as active based on gameMode", () => {
     const { rerender } = render(<Header {...defaultProps} gameMode="infinity" />);
 
-    expect(screen.getByRole("button", { name: /infinity/i })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /infinity/i })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
     expect(screen.getByRole("button", { name: /core/i })).toHaveAttribute("aria-pressed", "false");
 
     rerender(<Header {...defaultProps} gameMode="core" />);
 
-    expect(screen.getByRole("button", { name: /infinity/i })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: /infinity/i })).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
     expect(screen.getByRole("button", { name: /core/i })).toHaveAttribute("aria-pressed", "true");
   });
 

@@ -18,13 +18,19 @@ describe("MobileHeader", () => {
     // Test infinity mode
     const { rerender } = render(<MobileHeader {...defaultProps} gameMode="infinity" />);
 
-    expect(screen.getByRole("button", { name: /infinity/i })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /infinity/i })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
     expect(screen.getByRole("button", { name: /core/i })).toHaveAttribute("aria-pressed", "false");
 
     // Test core mode
     rerender(<MobileHeader {...defaultProps} gameMode="core" />);
 
-    expect(screen.getByRole("button", { name: /infinity/i })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: /infinity/i })).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
     expect(screen.getByRole("button", { name: /core/i })).toHaveAttribute("aria-pressed", "true");
   });
 

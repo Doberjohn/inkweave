@@ -21,18 +21,10 @@ export function DeckSuggestions({
   if (suggestions.length === 0) return null;
 
   return (
-    <CollapsibleSection
-      title="Suggestions"
-      collapsed={collapsed}
-      onToggle={onToggleCollapse}
-    >
+    <CollapsibleSection title="Suggestions" collapsed={collapsed} onToggle={onToggleCollapse}>
       <div style={{ display: "flex", flexDirection: "column", gap: `${SPACING.sm}px` }}>
         {suggestions.slice(0, 8).map((suggestion) => (
-          <SuggestionRow
-            key={suggestion.card.id}
-            suggestion={suggestion}
-            onAddCard={onAddCard}
-          />
+          <SuggestionRow key={suggestion.card.id} suggestion={suggestion} onAddCard={onAddCard} />
         ))}
       </div>
     </CollapsibleSection>

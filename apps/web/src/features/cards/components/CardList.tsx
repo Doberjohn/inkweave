@@ -3,7 +3,18 @@ import type { LorcanaCard, Ink } from "../types";
 import type { CardFilterOptions, SetInfo } from "../loader";
 import { CardTile } from "./CardTile";
 import { LoadingSpinner, FilterDrawer } from "../../../shared/components";
-import { INK_COLORS, ALL_INKS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, LAYOUT_MOBILE, CARD_TYPES, COST_OPTIONS } from "../../../shared/constants";
+import {
+  INK_COLORS,
+  ALL_INKS,
+  COLORS,
+  FONT_SIZES,
+  RADIUS,
+  SPACING,
+  LAYOUT,
+  LAYOUT_MOBILE,
+  CARD_TYPES,
+  COST_OPTIONS,
+} from "../../../shared/constants";
 import { isCardType } from "../utils";
 
 interface CardListProps {
@@ -47,10 +58,7 @@ export function CardList({
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
 
   // Memoize the sliced array to avoid creating new array on every render
-  const displayedCards = useMemo(
-    () => cards.slice(0, LAYOUT.maxDisplayedCards),
-    [cards]
-  );
+  const displayedCards = useMemo(() => cards.slice(0, LAYOUT.maxDisplayedCards), [cards]);
 
   const selectedType = isCardType(filters.type) ? filters.type : undefined;
   const activeFilterCount = [
@@ -235,7 +243,9 @@ export function CardList({
       ) : (
         <>
           {/* Filter Panel - Fixed */}
-          <div style={{ padding: `${SPACING.lg}px`, paddingBottom: `${SPACING.sm}px`, flexShrink: 0 }}>
+          <div
+            style={{ padding: `${SPACING.lg}px`, paddingBottom: `${SPACING.sm}px`, flexShrink: 0 }}
+          >
             {/* Search */}
             <input
               type="text"
@@ -255,14 +265,17 @@ export function CardList({
 
             {/* Ink Filter */}
             <div style={{ marginBottom: `${SPACING.md}px` }}>
-              <div style={{ fontSize: `${FONT_SIZES.sm}px`, color: COLORS.gray500, marginBottom: "4px" }}>
+              <div
+                style={{
+                  fontSize: `${FONT_SIZES.sm}px`,
+                  color: COLORS.gray500,
+                  marginBottom: "4px",
+                }}
+              >
                 Ink
               </div>
               <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-                <FilterButton
-                  active={inkFilter === "all"}
-                  onClick={() => onInkFilterChange("all")}
-                >
+                <FilterButton active={inkFilter === "all"} onClick={() => onInkFilterChange("all")}>
                   All
                 </FilterButton>
                 {ALL_INKS.map((ink) => (
@@ -282,7 +295,13 @@ export function CardList({
 
             {/* Card Type Filter */}
             <div style={{ marginBottom: `${SPACING.md}px` }}>
-              <div style={{ fontSize: `${FONT_SIZES.sm}px`, color: COLORS.gray500, marginBottom: "4px" }}>
+              <div
+                style={{
+                  fontSize: `${FONT_SIZES.sm}px`,
+                  color: COLORS.gray500,
+                  marginBottom: "4px",
+                }}
+              >
                 Type
               </div>
               <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
@@ -319,7 +338,12 @@ export function CardList({
                 gap: "4px",
               }}
             >
-              <span style={{ transform: showMoreFilters ? "rotate(90deg)" : "rotate(0)", transition: "transform 0.2s" }}>
+              <span
+                style={{
+                  transform: showMoreFilters ? "rotate(90deg)" : "rotate(0)",
+                  transition: "transform 0.2s",
+                }}
+              >
                 &#9654;
               </span>
               More filters {activeFilterCount > 0 && `(${activeFilterCount} active)`}
@@ -330,29 +354,43 @@ export function CardList({
               <div style={{ marginTop: `${SPACING.md}px` }}>
                 {/* Cost Range */}
                 <div style={{ marginBottom: `${SPACING.md}px` }}>
-                  <div style={{ fontSize: `${FONT_SIZES.sm}px`, color: COLORS.gray500, marginBottom: "4px" }}>
+                  <div
+                    style={{
+                      fontSize: `${FONT_SIZES.sm}px`,
+                      color: COLORS.gray500,
+                      marginBottom: "4px",
+                    }}
+                  >
                     Cost
                   </div>
                   <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                     <select
                       value={filters.minCost ?? ""}
-                      onChange={(e) => updateFilter("minCost", e.target.value ? Number(e.target.value) : undefined)}
+                      onChange={(e) =>
+                        updateFilter("minCost", e.target.value ? Number(e.target.value) : undefined)
+                      }
                       style={selectStyle}
                     >
                       <option value="">Min</option>
                       {COST_OPTIONS.map((c) => (
-                        <option key={c} value={c}>{c}</option>
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
                       ))}
                     </select>
                     <span style={{ color: COLORS.gray400 }}>-</span>
                     <select
                       value={filters.maxCost ?? ""}
-                      onChange={(e) => updateFilter("maxCost", e.target.value ? Number(e.target.value) : undefined)}
+                      onChange={(e) =>
+                        updateFilter("maxCost", e.target.value ? Number(e.target.value) : undefined)
+                      }
                       style={selectStyle}
                     >
                       <option value="">Max</option>
                       {COST_OPTIONS.map((c) => (
-                        <option key={c} value={c}>{c}</option>
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -360,41 +398,67 @@ export function CardList({
 
                 {/* Keywords */}
                 <div style={{ marginBottom: `${SPACING.md}px` }}>
-                  <div style={{ fontSize: `${FONT_SIZES.sm}px`, color: COLORS.gray500, marginBottom: "4px" }}>
+                  <div
+                    style={{
+                      fontSize: `${FONT_SIZES.sm}px`,
+                      color: COLORS.gray500,
+                      marginBottom: "4px",
+                    }}
+                  >
                     Keyword
                   </div>
                   <select
                     value={filters.keywords?.[0] ?? ""}
-                    onChange={(e) => updateFilter("keywords", e.target.value ? [e.target.value] : undefined)}
+                    onChange={(e) =>
+                      updateFilter("keywords", e.target.value ? [e.target.value] : undefined)
+                    }
                     style={{ ...selectStyle, width: "100%" }}
                   >
                     <option value="">Any keyword</option>
                     {uniqueKeywords.map((kw) => (
-                      <option key={kw} value={kw}>{kw}</option>
+                      <option key={kw} value={kw}>
+                        {kw}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 {/* Classifications */}
                 <div style={{ marginBottom: `${SPACING.md}px` }}>
-                  <div style={{ fontSize: `${FONT_SIZES.sm}px`, color: COLORS.gray500, marginBottom: "4px" }}>
+                  <div
+                    style={{
+                      fontSize: `${FONT_SIZES.sm}px`,
+                      color: COLORS.gray500,
+                      marginBottom: "4px",
+                    }}
+                  >
                     Classification
                   </div>
                   <select
                     value={filters.classifications?.[0] ?? ""}
-                    onChange={(e) => updateFilter("classifications", e.target.value ? [e.target.value] : undefined)}
+                    onChange={(e) =>
+                      updateFilter("classifications", e.target.value ? [e.target.value] : undefined)
+                    }
                     style={{ ...selectStyle, width: "100%" }}
                   >
                     <option value="">Any classification</option>
                     {uniqueClassifications.map((c) => (
-                      <option key={c} value={c}>{c}</option>
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 {/* Set */}
                 <div style={{ marginBottom: `${SPACING.md}px` }}>
-                  <div style={{ fontSize: `${FONT_SIZES.sm}px`, color: COLORS.gray500, marginBottom: "4px" }}>
+                  <div
+                    style={{
+                      fontSize: `${FONT_SIZES.sm}px`,
+                      color: COLORS.gray500,
+                      marginBottom: "4px",
+                    }}
+                  >
                     Set
                   </div>
                   <select
@@ -404,7 +468,9 @@ export function CardList({
                   >
                     <option value="">Any set</option>
                     {sets.map((s) => (
-                      <option key={s.code} value={s.code}>{s.name}</option>
+                      <option key={s.code} value={s.code}>
+                        {s.name}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -481,7 +547,16 @@ const selectStyle: React.CSSProperties = {
 
 function FilterIcon({ color }: { color: string }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
     </svg>
   );

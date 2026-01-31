@@ -14,14 +14,20 @@ describe("MobileNav", () => {
     const { rerender } = render(<MobileNav {...defaultProps} activeView="cards" />);
 
     expect(screen.getByRole("button", { name: /cards/i })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: /synergies/i })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: /synergies/i })).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
     expect(screen.getByRole("button", { name: /deck/i })).toHaveAttribute("aria-pressed", "false");
 
     // Test synergies active
     rerender(<MobileNav {...defaultProps} activeView="synergies" />);
 
     expect(screen.getByRole("button", { name: /cards/i })).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByRole("button", { name: /synergies/i })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /synergies/i })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
     expect(screen.getByRole("button", { name: /deck/i })).toHaveAttribute("aria-pressed", "false");
   });
 

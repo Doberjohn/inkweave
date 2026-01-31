@@ -12,7 +12,13 @@ interface CardTileProps {
   deckQuantity?: number;
 }
 
-export function CardTile({ card, onClick, isSelected, onAddToDeck, deckQuantity = 0 }: CardTileProps) {
+export function CardTile({
+  card,
+  onClick,
+  isSelected,
+  onAddToDeck,
+  deckQuantity = 0,
+}: CardTileProps) {
   const colors = INK_COLORS[card.ink];
   const { previewHandlers } = useCardPreviewHandlers({ card, onTap: onClick });
 
@@ -31,9 +37,7 @@ export function CardTile({ card, onClick, isSelected, onAddToDeck, deckQuantity 
         borderRadius: `${RADIUS.lg}px`,
         border: `2px solid ${isSelected ? colors.border : "transparent"}`,
         background: isSelected ? colors.bg : COLORS.white,
-        boxShadow: isSelected
-          ? `0 0 0 2px ${colors.border}40`
-          : "0 1px 3px rgba(0,0,0,0.1)",
+        boxShadow: isSelected ? `0 0 0 2px ${colors.border}40` : "0 1px 3px rgba(0,0,0,0.1)",
         cursor: "pointer",
         textAlign: "left",
         width: "100%",
