@@ -1,9 +1,10 @@
 # Lorcana Synergy Finder
 
-React web application for finding synergistic card combinations in Disney Lorcana TCG.
+Monorepo containing the Lorcana synergy detection engine and web application.
 
 ## Tech Stack
 
+- pnpm workspaces monorepo
 - React 18 + TypeScript 5
 - Vite bundler
 - Inline CSS with design tokens (no UI framework)
@@ -12,34 +13,48 @@ React web application for finding synergistic card combinations in Disney Lorcan
 ## Project Structure
 
 ```
-src/
-├── components/
-│   ├── CardPreviewContext.tsx  # Hover preview state management
-│   ├── CardPreviewPopover.tsx  # Floating card image on hover
-│   ├── CardTile.tsx            # Card in list (has +add to deck button)
-│   ├── SynergyCard.tsx         # Synergy result (has +add to deck button)
-│   ├── Header.tsx              # App header with game mode toggle
-│   ├── DeckPanel.tsx           # Main deck builder panel (right column)
-│   ├── DeckCardRow.tsx         # Card row in deck with quantity controls
-│   ├── DeckStats.tsx           # Cost curve, ink distribution, type breakdown
-│   ├── DeckSynergyAnalysis.tsx # Deck synergy score, key cards, weak links
-│   ├── DeckSuggestions.tsx     # Cards that synergize with deck
-│   ├── SavedDecksModal.tsx     # Load/delete saved decks modal
-│   └── ...                     # Other UI components
-├── constants/      # Design tokens (theme.ts)
-├── data/           # Card loading from LorcanaJSON format
-├── engine/         # Synergy detection
-│   ├── index.ts    # SynergyEngine class
-│   └── rules.ts    # 12 synergy detection rules
-├── hooks/
-│   ├── useSynergyFinder.ts  # Card data, filtering, synergy calculation
-│   └── useDeckBuilder.ts    # Deck state, persistence, synergy analysis
-├── types/          # TypeScript interfaces
-├── utils/          # Card helper functions
-└── App.tsx         # Root component (three-column layout)
-
-public/data/allCards.json  # Card database (LorcanaJSON format)
+lorcana-synergy-finder/
+├── package.json              # Root workspace config
+├── pnpm-workspace.yaml
+├── packages/
+│   └── synergy-engine/       # Standalone synergy detection package
+│       ├── package.json      # lorcana-synergy-engine
+│       ├── tsup.config.ts    # Build config
+│       └── src/
+│           ├── index.ts      # Public API exports
+│           ├── types/        # LorcanaCard, Synergy types
+│           ├── utils/        # Card helpers (textContains, hasKeyword, etc.)
+│           └── engine/       # SynergyEngine class + rules
+└── apps/
+    └── web/                  # React web application
+        ├── package.json      # lorcana-synergy-finder-web
+        ├── vite.config.ts
+        └── src/
+            ├── App.tsx       # Root component (three-column layout)
+            ├── features/
+            │   ├── cards/    # Card loading, components, hooks
+            │   ├── deck/     # Deck builder components, hooks
+            │   └── synergies/# Synergy display components, hooks
+            └── shared/       # Constants, utilities, shared components
 ```
+
+## Packages
+
+### lorcana-synergy-engine
+
+Standalone npm package for synergy detection. Zero React dependencies.
+
+```typescript
+import { SynergyEngine, type LorcanaCard } from "lorcana-synergy-engine";
+
+const engine = new SynergyEngine();
+const synergies = engine.findSynergies(card, allCards);
+const result = engine.checkSynergy(cardA, cardB);
+```
+
+### lorcana-synergy-finder-web
+
+React web application that consumes the synergy engine package.
 
 ## Key Concepts
 
@@ -56,7 +71,9 @@ public/data/allCards.json  # Card database (LorcanaJSON format)
 
 **Synergy Strength**: weak, moderate, strong
 
-## Synergy Rules (src/engine/rules.ts)
+## Synergy Rules
+
+Built-in rules in the engine package:
 
 1. Singer + Songs - Singer keyword plays Songs at reduced cost
 2. Evasive + Quest - Evasive characters trigger quest abilities safely
@@ -66,16 +83,22 @@ public/data/allCards.json  # Card database (LorcanaJSON format)
 6. Exert Synergies - Exert effects + exerted-enemy benefits
 7. Draw Engine - Draw triggers + "when you draw" effects
 8. Ink Ramp - Ink acceleration + high-cost cards
-9. Bodyguard Protection - Bodyguards protecting key characters
-10. Ward + Aggression - Ward protects against removal
+9. Ward + Aggression - Ward protects against removal
 
 ## Commands
 
 ```bash
-npm run dev      # Start dev server
-npm run build    # Production build
-npm run preview  # Preview production build
-npm run lint     # Run ESLint
+# Root commands
+pnpm install          # Install all dependencies
+pnpm build            # Build all packages
+pnpm test             # Run all tests
+pnpm dev              # Start web dev server
+
+# Package-specific
+pnpm build:engine     # Build synergy-engine package
+pnpm test:engine      # Run engine tests (26 tests)
+pnpm build:web        # Build web app
+pnpm test:web         # Run web tests (68 tests)
 ```
 
 ## Architecture Notes
@@ -90,12 +113,12 @@ npm run lint     # Run ESLint
 
 ## Deck Builder
 
-### Key Types (src/types/index.ts)
+### Key Types (apps/web/src/features/deck/types.ts)
 - `DeckCard` - Card + quantity (1-4)
 - `Deck` - id, name, cards[], createdAt, updatedAt
 - `DeckStats` - totalCards, inkDistribution, costCurve, typeDistribution, validation
 
-### useDeckBuilder Hook (src/hooks/useDeckBuilder.ts)
+### useDeckBuilder Hook
 Main state management for deck building:
 - `deck` / `deckStats` - Current deck and computed statistics
 - `addCard(card)` - Add card (max 4 copies, max 60 total)

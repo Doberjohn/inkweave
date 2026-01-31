@@ -1,5 +1,7 @@
 # Lorcana Synergy Finder
 
+![Coverage](https://img.shields.io/badge/coverage-98.07%25-brightgreen)
+
 A React web application for discovering synergistic card combinations in Disney Lorcana TCG. Select a card to find cards that synergize with it, and build decks with automatic synergy analysis.
 
 ## Features
@@ -92,6 +94,25 @@ src/
 | `npm run test:run` | Run tests once |
 | `npm run test:coverage` | Run tests with coverage report |
 | `npm run lint` | Run ESLint |
+
+## Testing
+
+| Metric | Coverage |
+|--------|----------|
+| Statements | 96.46% |
+| Branches | 93.17% |
+| Functions | 97.01% |
+| Lines | 98.07% |
+
+Run tests with coverage:
+```bash
+pnpm --filter web vitest run --coverage
+```
+
+Update README badge after running coverage:
+```bash
+node apps/web/scripts/update-coverage-badge.js
+```
 
 ## Card Data
 

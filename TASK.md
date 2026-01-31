@@ -54,9 +54,43 @@ Application is functional with all core features implemented including mobile re
 
 ### 🟠 High Priority
 
-- [ ] **[PERFORMANCE]** `getDeckSuggestions` in `src/features/deck/hooks/useDeckBuilder.ts` has O(n*m) complexity checking synergies both directions for every candidate card. For large card pools this could cause UI lag when deck changes.
+(None currently)
 
-- [ ] **[PERFORMANCE]** `getDeckSynergyAnalysis` in `src/features/deck/hooks/useDeckBuilder.ts` recalculates all pairwise synergies on every deck change. Consider caching synergy pairs or using incremental updates.
+### 🟡 Medium Priority
+
+(None currently)
+
+### 🟢 Low Priority
+
+(None currently)
+
+---
+
+## Recently Resolved (Code Review Round 2)
+
+### 🟠 High Priority
+
+- [x] **[PERFORMANCE]** `getDeckSuggestions` O(n*m) complexity. **FIXED**: Implemented `SynergyCache` module (`src/features/synergies/engine/SynergyCache.ts`) that caches synergy results keyed by card pair IDs. Both functions now use cached lookups.
+
+- [x] **[PERFORMANCE]** `getDeckSynergyAnalysis` O(n²) complexity with 3,600+ calls per deck change. **FIXED**: Now uses shared `synergyCache.checkBidirectionalSynergy()` which caches results. Subsequent deck modifications hit the cache for already-computed pairs.
+
+### 🟡 Medium Priority
+
+- [x] **[BUG]** `DeckPanel.tsx:105-115` - FileReader has no error handler. **FIXED**: Added `reader.onerror` handler with user alert.
+
+- [x] **[PERFORMANCE]** `SynergyCard.tsx` - Component not wrapped in `React.memo()`. **FIXED**: Wrapped component in `memo()` to prevent unnecessary re-renders.
+
+- [x] **[PERFORMANCE]** `SynergyGroup.tsx:50-58` - Card list causes re-renders on toggle. **FIXED**: Extracted card list to memoized `SynergyCardList` subcomponent.
+
+- [x] **[UX]** `useSynergyFinder.ts` - No error recovery for failed card load. **FIXED**: Added `retryLoad` callback and "Try Again" button in App.tsx error UI.
+
+### 🟢 Low Priority
+
+- [x] **[BUG]** `DeckStats.tsx:14` - `Math.max(...[])` returns `-Infinity`. **FIXED**: Check array length before spread.
+
+- [x] **[CODE-QUALITY]** `CardPreviewContext.tsx` - Fast Refresh warning from mixed exports. **FIXED**: Extracted `useCardPreview` hook to separate `useCardPreview.ts` file.
+
+- [x] **[ROBUSTNESS]** `useDeckBuilder.ts` - localStorage QuotaExceededError not handled. **FIXED**: Added error handling with user feedback when storage is full.
 
 ---
 
@@ -180,4 +214,4 @@ Potential improvements (not yet started):
 - [ ] Deck sharing via URL
 - [ ] Filter synergy results by type
 - [ ] Card image lazy loading/caching
-- [ ] Add tests for mobile responsive components
+- [ ] Add tests for deck builder components
