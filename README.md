@@ -5,10 +5,11 @@ A React web application for discovering synergistic card combinations in Disney 
 ## Features
 
 - **Card Browser**: Search and filter cards by name, ink color, type, keyword, classification, or set
-- **Synergy Detection**: 10 synergy rules detect connections like Singer+Songs, Shift targets, tribal synergies, and more
+- **Synergy Detection**: 12 synergy rules detect connections like Singer+Songs, Shift targets, tribal synergies, and more
 - **Deck Builder**: Build decks with quantity controls, save/load multiple decks, import/export as JSON
 - **Deck Analysis**: View synergy scores, identify key cards and weak links, get card suggestions
 - **Game Modes**: Toggle between Core (sets 5+) and Infinity (all sets)
+- **Responsive Design**: Full mobile support with touch-friendly interface and card preview on long-press
 
 ## Getting Started
 
@@ -52,6 +53,34 @@ npm run preview
 - Vitest for testing
 - Inline CSS with design tokens
 
+## Project Structure
+
+```
+src/
+├── features/           # Feature-based modules
+│   ├── cards/          # Card browsing, filtering, preview
+│   │   ├── components/ # CardList, CardTile, CardPreviewPopover
+│   │   ├── utils/      # Card helper functions, type guards
+│   │   ├── loader.ts   # Card data loading and filtering
+│   │   └── types.ts    # Card-related types
+│   ├── deck/           # Deck building functionality
+│   │   ├── components/ # DeckPanel, DeckStats, DeckSuggestions
+│   │   ├── hooks/      # useDeckBuilder hook
+│   │   └── types.ts    # Deck-related types
+│   └── synergies/      # Synergy detection engine
+│       ├── components/ # SynergyResults, SynergyCard
+│       ├── engine/     # SynergyEngine, rules
+│       ├── hooks/      # useSynergyFinder hook
+│       └── types.ts    # Synergy-related types
+├── shared/             # Shared utilities and components
+│   ├── components/     # Header, ErrorBoundary, FilterDrawer
+│   ├── constants/      # Design tokens (theme.ts)
+│   ├── hooks/          # useResponsive, useMobileView
+│   └── test-utils/     # Test factories and setup
+├── App.tsx             # Root component
+└── main.tsx            # Entry point
+```
+
 ## Commands
 
 | Command | Description |
@@ -61,6 +90,7 @@ npm run preview
 | `npm run preview` | Preview production build |
 | `npm run test` | Run tests in watch mode |
 | `npm run test:run` | Run tests once |
+| `npm run test:coverage` | Run tests with coverage report |
 | `npm run lint` | Run ESLint |
 
 ## Card Data

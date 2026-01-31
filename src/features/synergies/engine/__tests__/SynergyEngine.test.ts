@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { SynergyEngine } from "../SynergyEngine";
+import { SynergyEngine } from "..";
 import type { SynergyRule } from "../../types";
-import { createCard } from "../../../../shared/test-utils/factories";
+import { createCard } from "../../../../shared/test-utils";
 
 describe("SynergyEngine", () => {
   describe("findSynergies", () => {

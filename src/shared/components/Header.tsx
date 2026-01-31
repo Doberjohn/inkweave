@@ -1,5 +1,5 @@
-import type { GameMode } from "../../features/cards/types";
-import { COLORS, FONT_SIZES, SPACING, RADIUS } from "../constants/theme";
+import type { GameMode } from "../../features/cards";
+import { COLORS, FONT_SIZES, SPACING, RADIUS } from "../constants";
 
 interface HeaderProps {
   totalCards: number;

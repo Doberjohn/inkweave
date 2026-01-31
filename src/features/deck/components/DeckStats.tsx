@@ -1,6 +1,6 @@
-import type { CardType } from "../../cards/types";
+import type { CardType } from "../../cards";
 import type { DeckStats as DeckStatsType } from "../types";
-import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, ALL_INKS } from "../../../shared/constants/theme";
+import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, ALL_INKS } from "../../../shared/constants";
 
 interface DeckStatsProps {
   stats: DeckStatsType;

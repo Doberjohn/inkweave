@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useCardPreview } from "./CardPreviewContext";
-import { useResponsive } from "../../../shared/hooks/useResponsive";
-import { INK_COLORS, RADIUS, Z_INDEX, COLORS } from "../../../shared/constants/theme";
+import { useResponsive } from "../../../shared/hooks";
+import { INK_COLORS, RADIUS, Z_INDEX, COLORS } from "../../../shared/constants";
 import type { LorcanaCard } from "../types";
 
 const PREVIEW_WIDTH = 280;

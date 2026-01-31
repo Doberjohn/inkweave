@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import type { LorcanaCard, Ink, GameMode } from "../../cards/types";
+import type { LorcanaCard, Ink, GameMode } from "../../cards";
 import type { GroupedSynergies } from "../types";
-import { sharedEngine } from "../engine/shared";
+import { sharedEngine } from "../engine";
 import {
   fetchCardsFromLocal,
   filterCards,

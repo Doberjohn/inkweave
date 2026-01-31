@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
-import type { DeckSynergyAnalysis as DeckSynergyAnalysisType, DeckCardSynergy } from "../hooks/useDeckBuilder";
-import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, STRENGTH_STYLES } from "../../../shared/constants/theme";
+import type { DeckSynergyAnalysis as DeckSynergyAnalysisType, DeckCardSynergy } from "../hooks";
+import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, STRENGTH_STYLES } from "../../../shared/constants";
 import { useCardPreview } from "../../cards";
 
 interface DeckSynergyAnalysisProps {

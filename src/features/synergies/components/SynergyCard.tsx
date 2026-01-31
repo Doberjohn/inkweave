@@ -1,10 +1,10 @@
 import { useCallback } from "react";
-import type { LorcanaCard } from "../../cards/types";
+import type { LorcanaCard } from "../../cards";
 import type { SynergyStrength } from "../types";
-import { INK_COLORS, STRENGTH_STYLES, COLORS, FONT_SIZES, RADIUS, LAYOUT } from "../../../shared/constants/theme";
+import { INK_COLORS, STRENGTH_STYLES, COLORS, FONT_SIZES, RADIUS, LAYOUT } from "../../../shared/constants";
 import { CardImage } from "../../../shared/components";
 import { useCardPreview } from "../../cards";
-import { useTouchPreview } from "../../../shared/hooks/useTouchPreview";
+import { useTouchPreview } from "../../../shared/hooks";
 
 interface SynergyCardProps {
   card: LorcanaCard;

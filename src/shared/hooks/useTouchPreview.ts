@@ -24,6 +24,7 @@ export function useTouchPreview({
 }: UseTouchPreviewOptions): UseTouchPreviewReturn {
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPressRef = useRef(false);
+  const isScrollingRef = useRef(false);
   const startPosRef = useRef<{ x: number; y: number } | null>(null);
 
   const clearLongPressTimer = useCallback(() => {
@@ -36,6 +37,7 @@ export function useTouchPreview({
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
       isLongPressRef.current = false;
+      isScrollingRef.current = false;
       const touch = e.touches[0];
       startPosRef.current = { x: touch.clientX, y: touch.clientY };
 
@@ -54,17 +56,15 @@ export function useTouchPreview({
       if (isLongPressRef.current) {
         // Long press was triggered, call onTouchEnd for cleanup
         onTouchEnd?.();
-      } else {
-        // It was a tap, not a long press
+        e.preventDefault();
+      } else if (!isScrollingRef.current) {
+        // It was a tap (not a scroll or long press)
         onTap?.();
       }
-
-      // Prevent ghost click after touch
-      if (isLongPressRef.current) {
-        e.preventDefault();
-      }
+      // If scrolling, do nothing - let the scroll complete naturally
 
       isLongPressRef.current = false;
+      isScrollingRef.current = false;
       startPosRef.current = null;
     },
     [clearLongPressTimer, onTap, onTouchEnd]
@@ -78,10 +78,10 @@ export function useTouchPreview({
       const deltaX = Math.abs(touch.clientX - startPosRef.current.x);
       const deltaY = Math.abs(touch.clientY - startPosRef.current.y);
 
-      // If finger moved more than 10px, cancel long press
+      // If finger moved more than 10px, this is a scroll, not a tap
       if (deltaX > 10 || deltaY > 10) {
         clearLongPressTimer();
-        startPosRef.current = null;
+        isScrollingRef.current = true;
       }
     },
     [clearLongPressTimer]
@@ -90,6 +90,7 @@ export function useTouchPreview({
   const handleTouchCancel = useCallback(() => {
     clearLongPressTimer();
     isLongPressRef.current = false;
+    isScrollingRef.current = false;
     startPosRef.current = null;
   }, [clearLongPressTimer]);
 

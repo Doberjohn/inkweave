@@ -26,3 +26,4 @@ TASK.md
 *.njsproj
 *.sln
 *.sw?
+coverage/

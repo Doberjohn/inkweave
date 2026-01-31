@@ -1,4 +1,4 @@
-import { COLORS, FONT_SIZES } from "../constants/theme";
+import { COLORS, FONT_SIZES } from "../constants";
 
 interface EmptyStateProps {
   icon?: React.ReactNode;

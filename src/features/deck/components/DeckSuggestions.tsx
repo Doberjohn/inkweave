@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
-import type { LorcanaCard } from "../../cards/types";
-import type { DeckSuggestion } from "../hooks/useDeckBuilder";
-import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING } from "../../../shared/constants/theme";
+import type { LorcanaCard } from "../../cards";
+import type { DeckSuggestion } from "../hooks";
+import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING } from "../../../shared/constants";
 import { useCardPreview } from "../../cards";
 
 interface DeckSuggestionsProps {

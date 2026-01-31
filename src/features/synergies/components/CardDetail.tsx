@@ -1,5 +1,5 @@
-import type { LorcanaCard } from "../../cards/types";
-import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT } from "../../../shared/constants/theme";
+import type { LorcanaCard } from "../../cards";
+import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT } from "../../../shared/constants";
 import { CardImage } from "../../../shared/components";
 
 interface CardDetailProps {

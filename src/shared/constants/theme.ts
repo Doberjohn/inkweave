@@ -1,4 +1,4 @@
-import type { Ink } from "../../features/cards/types";
+import type { Ink } from "../../features/cards";
 
 // Ink color styling
 export const INK_COLORS: Record<Ink, { bg: string; text: string; border: string }> = {

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { Ink } from "../../features/cards/types";
-import { INK_COLORS, FONT_SIZES, RADIUS } from "../constants/theme";
+import type { Ink } from "../../features/cards";
+import { INK_COLORS, FONT_SIZES, RADIUS } from "../constants";
 
 interface CardImageProps {
   src: string | undefined;

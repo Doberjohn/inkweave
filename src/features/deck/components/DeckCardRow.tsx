@@ -1,10 +1,9 @@
 import { useCallback, useMemo } from "react";
-import type { LorcanaCard } from "../../cards/types";
-import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT } from "../../../shared/constants/theme";
+import type { LorcanaCard } from "../../cards";
+import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT } from "../../../shared/constants";
 import { CardImage } from "../../../shared/components";
 import { useCardPreview } from "../../cards";
-import { useTouchPreview } from "../../../shared/hooks/useTouchPreview";
-import { useResponsive } from "../../../shared/hooks/useResponsive";
+import { useTouchPreview, useResponsive } from "../../../shared/hooks";
 
 interface DeckCardRowProps {
   card: LorcanaCard;

@@ -1,13 +1,9 @@
 import { useState, useMemo, useRef } from "react";
-import type { LorcanaCard } from "../../cards/types";
+import type { LorcanaCard } from "../../cards";
 import type { Deck, DeckStats as DeckStatsType } from "../types";
-import type { DeckSuggestion, DeckSynergyAnalysis as DeckSynergyAnalysisType } from "../hooks/useDeckBuilder";
-import { COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, LAYOUT_MOBILE } from "../../../shared/constants/theme";
-import { DeckCardRow } from "./DeckCardRow";
-import { DeckStats } from "./DeckStats";
-import { DeckSuggestions } from "./DeckSuggestions";
-import { DeckSynergyAnalysis } from "./DeckSynergyAnalysis";
-import { SavedDecksModal } from "./SavedDecksModal";
+import type { DeckSuggestion, DeckSynergyAnalysis as DeckSynergyAnalysisType } from "../hooks";
+import { COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, LAYOUT_MOBILE } from "../../../shared/constants";
+import { DeckCardRow, DeckStats, DeckSuggestions, DeckSynergyAnalysis, SavedDecksModal } from ".";
 
 interface DeckPanelProps {
   deck: Deck;

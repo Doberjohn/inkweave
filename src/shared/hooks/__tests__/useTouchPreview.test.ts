@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useTouchPreview } from "../useTouchPreview";
+import { useTouchPreview } from "..";
 
 describe("useTouchPreview", () => {
   beforeEach(() => {
@@ -137,5 +137,29 @@ describe("useTouchPreview", () => {
     });
 
     expect(onLongPress).not.toHaveBeenCalled();
+  });
+
+  it("should not call onTap when scrolling (finger moved > 10px)", () => {
+    const onLongPress = vi.fn();
+    const onTap = vi.fn();
+    const { result } = renderHook(() => useTouchPreview({ onLongPress, onTap }));
+
+    act(() => {
+      result.current.touchHandlers.onTouchStart(createTouchEvent(100, 100));
+    });
+
+    // Move finger more than 10px (simulating scroll)
+    act(() => {
+      vi.advanceTimersByTime(50);
+      result.current.touchHandlers.onTouchMove(createTouchEvent(100, 150));
+    });
+
+    // End touch
+    act(() => {
+      result.current.touchHandlers.onTouchEnd(createTouchEvent(100, 150));
+    });
+
+    expect(onLongPress).not.toHaveBeenCalled();
+    expect(onTap).not.toHaveBeenCalled();
   });
 });

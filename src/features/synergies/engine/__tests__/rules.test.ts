@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { getRuleById } from "../rules";
+import { getRuleById } from "..";
 import { hasNegativeTargeting, hasPositiveClassificationEffect } from "../../../cards";
-import { createCard } from "../../../../shared/test-utils/factories";
+import { createCard } from "../../../../shared/test-utils";
 
 describe("Synergy Rules", () => {
   describe("Princess Tribal", () => {

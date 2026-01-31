@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { BREAKPOINTS } from "../constants/theme";
+import { BREAKPOINTS } from "../constants";
 
 interface ResponsiveState {
   isMobile: boolean;

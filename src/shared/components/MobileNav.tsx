@@ -1,6 +1,6 @@
 import { memo } from "react";
-import type { MobileView } from "../hooks/useMobileView";
-import { COLORS, FONT_SIZES, LAYOUT_MOBILE, Z_INDEX, RADIUS } from "../constants/theme";
+import type { MobileView } from "../hooks";
+import { COLORS, FONT_SIZES, LAYOUT_MOBILE, Z_INDEX, RADIUS } from "../constants";
 
 interface MobileNavProps {
   activeView: MobileView;

@@ -1,4 +1,4 @@
-import type { LorcanaCard } from "../cards/types";
+import type { LorcanaCard } from "../cards";
 
 // Synergy types - what kind of connection exists between cards
 export type SynergyType =

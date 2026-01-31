@@ -7,7 +7,7 @@ import {
   getUniqueSets,
 } from "../loader";
 import type { LorcanaCard } from "../types";
-import { createCard } from "../../../shared/test-utils/factories";
+import { createCard } from "../../../shared/test-utils";
 
 describe("Card Search", () => {
   const cards: LorcanaCard[] = [

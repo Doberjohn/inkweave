@@ -1,9 +1,9 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import type { LorcanaCard, Ink, CardType } from "../../cards/types";
-import type { SynergyStrength } from "../../synergies/types";
+import type { LorcanaCard, Ink, CardType } from "../../cards";
+import type { SynergyStrength } from "../../synergies";
 import type { Deck, DeckCard, DeckStats } from "../types";
 import { sharedEngine } from "../../synergies";
-import { ALL_INKS } from "../../../shared/constants/theme";
+import { ALL_INKS } from "../../../shared/constants";
 
 const STORAGE_KEY_DECKS = "lorcana-synergy-finder-decks";
 const STORAGE_KEY_CURRENT = "lorcana-synergy-finder-current-deck";

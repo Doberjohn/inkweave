@@ -1,4 +1,4 @@
-import type { LorcanaCard } from "../../cards/types";
+import type { LorcanaCard } from "../../cards";
 import type {
   SynergyRule,
   GroupedSynergies,

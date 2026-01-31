@@ -1,9 +1,8 @@
-import type { LorcanaCard } from "../../cards/types";
+import type { LorcanaCard } from "../../cards";
 import type { GroupedSynergies } from "../types";
-import { CardDetail } from "./CardDetail";
-import { SynergyGroup } from "./SynergyGroup";
-import { EmptyState } from "../../../shared/components/EmptyState";
-import { COLORS, FONT_SIZES, SPACING, LAYOUT, LAYOUT_MOBILE } from "../../../shared/constants/theme";
+import { CardDetail, SynergyGroup } from ".";
+import { EmptyState } from "../../../shared/components";
+import { COLORS, FONT_SIZES, SPACING, LAYOUT, LAYOUT_MOBILE } from "../../../shared/constants";
 
 interface SynergyResultsProps {
   selectedCard: LorcanaCard | null;

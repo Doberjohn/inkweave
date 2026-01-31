@@ -1,9 +1,9 @@
 import { useCallback } from "react";
 import type { LorcanaCard } from "../types";
-import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, LAYOUT } from "../../../shared/constants/theme";
+import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, LAYOUT } from "../../../shared/constants";
 import { CardImage } from "../../../shared/components";
 import { useCardPreview } from "./CardPreviewContext";
-import { useTouchPreview } from "../../../shared/hooks/useTouchPreview";
+import { useTouchPreview } from "../../../shared/hooks";
 
 interface CardTileProps {
   card: LorcanaCard;

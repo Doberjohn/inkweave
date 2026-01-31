@@ -1,5 +1,5 @@
 import { Component, type ReactNode } from "react";
-import { COLORS, FONT_SIZES, SPACING, RADIUS } from "../constants/theme";
+import { COLORS, FONT_SIZES, SPACING, RADIUS } from "../constants";
 
 interface Props {
   children: ReactNode;

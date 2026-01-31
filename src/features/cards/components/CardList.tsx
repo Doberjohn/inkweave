@@ -2,10 +2,9 @@ import { useState, useMemo } from "react";
 import type { LorcanaCard, Ink, CardType } from "../types";
 import type { CardFilterOptions } from "../loader";
 import { CardTile } from "./CardTile";
-import { LoadingSpinner } from "../../../shared/components/LoadingSpinner";
-import { FilterDrawer } from "../../../shared/components/FilterDrawer";
-import { INK_COLORS, ALL_INKS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, LAYOUT_MOBILE } from "../../../shared/constants/theme";
-import { isCardType } from "../utils/typeGuards";
+import { LoadingSpinner, FilterDrawer } from "../../../shared/components";
+import { INK_COLORS, ALL_INKS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, LAYOUT_MOBILE } from "../../../shared/constants";
+import { isCardType } from "../utils";
 
 const CARD_TYPES: CardType[] = ["Character", "Action", "Item", "Location"];
 const COST_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -308,36 +307,6 @@ export function CardList({
               </div>
             </div>
 
-            {/* Cost Range */}
-            <div style={{ marginBottom: `${SPACING.md}px` }}>
-              <div style={{ fontSize: `${FONT_SIZES.sm}px`, color: COLORS.gray500, marginBottom: "4px" }}>
-                Cost
-              </div>
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <select
-                  value={filters.minCost ?? ""}
-                  onChange={(e) => updateFilter("minCost", e.target.value ? Number(e.target.value) : undefined)}
-                  style={selectStyle}
-                >
-                  <option value="">Min</option>
-                  {COST_OPTIONS.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-                <span style={{ color: COLORS.gray400 }}>-</span>
-                <select
-                  value={filters.maxCost ?? ""}
-                  onChange={(e) => updateFilter("maxCost", e.target.value ? Number(e.target.value) : undefined)}
-                  style={selectStyle}
-                >
-                  <option value="">Max</option>
-                  {COST_OPTIONS.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
             {/* More Filters Toggle */}
             <button
               onClick={() => setShowMoreFilters(!showMoreFilters)}
@@ -362,6 +331,36 @@ export function CardList({
             {/* Expanded Filters */}
             {showMoreFilters && (
               <div style={{ marginTop: `${SPACING.md}px` }}>
+                {/* Cost Range */}
+                <div style={{ marginBottom: `${SPACING.md}px` }}>
+                  <div style={{ fontSize: `${FONT_SIZES.sm}px`, color: COLORS.gray500, marginBottom: "4px" }}>
+                    Cost
+                  </div>
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <select
+                      value={filters.minCost ?? ""}
+                      onChange={(e) => updateFilter("minCost", e.target.value ? Number(e.target.value) : undefined)}
+                      style={selectStyle}
+                    >
+                      <option value="">Min</option>
+                      {COST_OPTIONS.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    <span style={{ color: COLORS.gray400 }}>-</span>
+                    <select
+                      value={filters.maxCost ?? ""}
+                      onChange={(e) => updateFilter("maxCost", e.target.value ? Number(e.target.value) : undefined)}
+                      style={selectStyle}
+                    >
+                      <option value="">Max</option>
+                      {COST_OPTIONS.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
                 {/* Keywords */}
                 <div style={{ marginBottom: `${SPACING.md}px` }}>
                   <div style={{ fontSize: `${FONT_SIZES.sm}px`, color: COLORS.gray500, marginBottom: "4px" }}>

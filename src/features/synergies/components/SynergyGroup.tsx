@@ -1,8 +1,8 @@
 import { useState } from "react";
-import type { LorcanaCard } from "../../cards/types";
+import type { LorcanaCard } from "../../cards";
 import type { GroupedSynergies } from "../types";
 import { SynergyCard } from "./SynergyCard";
-import { COLORS, FONT_SIZES, SPACING } from "../../../shared/constants/theme";
+import { COLORS, FONT_SIZES, SPACING } from "../../../shared/constants";
 
 interface SynergyGroupProps {
   group: GroupedSynergies;

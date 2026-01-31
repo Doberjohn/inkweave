@@ -1,6 +1,6 @@
 import type { Deck } from "../types";
-import { COLORS, FONT_SIZES, RADIUS, SPACING, Z_INDEX } from "../../../shared/constants/theme";
-import { useResponsive } from "../../../shared/hooks/useResponsive";
+import { COLORS, FONT_SIZES, RADIUS, SPACING, Z_INDEX } from "../../../shared/constants";
+import { useResponsive } from "../../../shared/hooks";
 
 interface SavedDecksModalProps {
   decks: Deck[];

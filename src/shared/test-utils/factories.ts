@@ -1,4 +1,4 @@
-import type { LorcanaCard } from "../../features/cards/types";
+import type { LorcanaCard } from "../../features/cards";
 
 /**
  * Factory function to create mock LorcanaCard objects for testing.

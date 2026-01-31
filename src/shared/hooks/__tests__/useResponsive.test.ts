@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useResponsive } from "../useResponsive";
-import { BREAKPOINTS } from "../../constants/theme";
+import { useResponsive } from "..";
+import { BREAKPOINTS } from "../../constants";
 
 describe("useResponsive", () => {
   const originalInnerWidth = window.innerWidth;

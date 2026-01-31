@@ -3,9 +3,8 @@ import { CardList, CardPreviewProvider, CardPreviewPopover, filterCards } from "
 import { useSynergyFinder, SynergyResults } from "./features/synergies";
 import { useDeckBuilder, DeckPanel } from "./features/deck";
 import { Header, MobileHeader, MobileNav, ErrorBoundary } from "./shared/components";
-import { COLORS, LAYOUT, LAYOUT_MOBILE } from "./shared/constants/theme";
-import { useResponsive } from "./shared/hooks/useResponsive";
-import { useMobileView } from "./shared/hooks/useMobileView";
+import { COLORS, LAYOUT, LAYOUT_MOBILE } from "./shared/constants";
+import { useResponsive, useMobileView } from "./shared/hooks";
 
 function SynergyFinderApp() {
   const {
