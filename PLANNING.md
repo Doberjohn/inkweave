@@ -4,7 +4,7 @@
 
 ### Overview
 
-Three-column single-page application:
+Three-column single-page application (desktop) / tab-based navigation (mobile):
 - **CardList** (340px fixed) - Card browser with search/filter
 - **SynergyResults** (flex) - Synergy display for selected card
 - **DeckPanel** (380px fixed) - Deck builder and analysis
@@ -13,17 +13,39 @@ Three-column single-page application:
 
 ```
 src/
-├── components/     # React components
-├── constants/      # Design tokens (theme.ts)
-├── data/           # Card loading from LorcanaJSON
-├── engine/         # Synergy detection (rules + engine)
-├── hooks/          # React hooks (useSynergyFinder, useDeckBuilder)
-├── types/          # TypeScript interfaces
-├── utils/          # Card helper functions
-└── App.tsx         # Root component
+├── features/
+│   ├── cards/           # Card data, loading, filtering
+│   │   ├── components/  # CardList, CardTile, CardPreview
+│   │   ├── utils/       # Card helpers, type guards
+│   │   ├── __tests__/   # Card loader tests
+│   │   ├── loader.ts    # Card data loading
+│   │   ├── types.ts     # Card types (Ink, CardType, LorcanaCard)
+│   │   └── index.ts     # Barrel file
+│   ├── deck/            # Deck building functionality
+│   │   ├── components/  # DeckPanel, DeckStats, etc.
+│   │   ├── hooks/       # useDeckBuilder
+│   │   ├── types.ts     # Deck types
+│   │   └── index.ts     # Barrel file
+│   └── synergies/       # Synergy detection
+│       ├── components/  # SynergyResults, SynergyCard
+│       ├── engine/      # SynergyEngine, rules
+│       ├── hooks/       # useSynergyFinder
+│       ├── types.ts     # Synergy types
+│       └── index.ts     # Barrel file
+├── shared/
+│   ├── components/      # Header, MobileNav, FilterDrawer, etc.
+│   ├── constants/       # Design tokens (theme.ts)
+│   ├── hooks/           # useResponsive, useMobileView, useTouchPreview
+│   └── test-utils/      # Test factories
+└── App.tsx              # Root component
 ```
 
 ### Key Design Decisions
+
+**Feature-Based Architecture**
+- Code organized by feature domain (cards, deck, synergies)
+- Shared code in `shared/` directory
+- Barrel files (index.ts) for clean imports
 
 **Synergy Engine**
 - Pluggable rules pattern via `SynergyRule` interface
@@ -46,6 +68,11 @@ src/
 - Current working deck auto-persisted
 - JSON import/export for sharing
 
+**Responsive Design**
+- Desktop: Three-column layout
+- Mobile: Tab-based navigation with bottom nav
+- Touch-optimized interactions (long-press preview)
+
 ## Technology Stack
 
 | Layer | Technology |
@@ -53,7 +80,7 @@ src/
 | UI Framework | React 18 |
 | Language | TypeScript 5 |
 | Bundler | Vite 5 |
-| Testing | Vitest |
+| Testing | Vitest + @testing-library/react |
 | Styling | Inline CSS + design tokens |
 | State | React hooks (no external library) |
 | Storage | localStorage |
@@ -78,6 +105,5 @@ src/
 - Card image caching/optimization
 - Deck sharing via URL
 - Match simulation/goldfish testing
-- Mobile-responsive layout
 - Filter by synergy type in results
 - Batch synergy analysis (multiple selected cards)
