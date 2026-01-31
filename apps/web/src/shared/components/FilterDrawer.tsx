@@ -1,4 +1,5 @@
 import { useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import type { Ink, CardType } from "../../features/cards";
 import type { CardFilterOptions } from "../../features/cards";
 import { COLORS, FONT_SIZES, RADIUS, SPACING, Z_INDEX, INK_COLORS, ALL_INKS } from "../constants";
@@ -49,8 +50,6 @@ export function FilterDrawer({
     }
   }, [isOpen, handleKeyDown]);
 
-  if (!isOpen) return null;
-
   const selectedType = isCardType(filters.type) ? filters.type : undefined;
 
   const updateFilter = <K extends keyof CardFilterOptions>(key: K, value: CardFilterOptions[K]) => {
@@ -74,48 +73,58 @@ export function FilterDrawer({
   ].filter(Boolean).length;
 
   return (
-    <>
-      {/* Backdrop - accessible button for keyboard users */}
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={onClose}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onClose();
-          }
-        }}
-        aria-label="Close filters"
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(0, 0, 0, 0.5)",
-          zIndex: Z_INDEX.modalBackdrop,
-          cursor: "pointer",
-        }}
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop - accessible button for keyboard users */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            role="button"
+            tabIndex={0}
+            onClick={onClose}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClose();
+              }
+            }}
+            aria-label="Close filters"
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0, 0, 0, 0.5)",
+              zIndex: Z_INDEX.modalBackdrop,
+              cursor: "pointer",
+            }}
+          />
 
-      {/* Drawer */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="filter-drawer-title"
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: COLORS.white,
-          borderTopLeftRadius: `${RADIUS.xl}px`,
-          borderTopRightRadius: `${RADIUS.xl}px`,
-          zIndex: Z_INDEX.modal,
-          maxHeight: "85vh",
-          display: "flex",
-          flexDirection: "column",
-          paddingBottom: "env(safe-area-inset-bottom)",
-        }}
-      >
+          {/* Drawer */}
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", stiffness: 400, damping: 35 }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="filter-drawer-title"
+            style={{
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: COLORS.white,
+              borderTopLeftRadius: `${RADIUS.xl}px`,
+              borderTopRightRadius: `${RADIUS.xl}px`,
+              zIndex: Z_INDEX.modal,
+              maxHeight: "85vh",
+              display: "flex",
+              flexDirection: "column",
+              paddingBottom: "env(safe-area-inset-bottom)",
+            }}
+          >
         {/* Header */}
         <div
           style={{
@@ -288,8 +297,10 @@ export function FilterDrawer({
             </select>
           </FilterSection>
         </div>
-      </div>
-    </>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
 

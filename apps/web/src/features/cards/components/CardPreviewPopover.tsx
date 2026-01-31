@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useCardPreview } from "./useCardPreview";
 import { useResponsive } from "../../../shared/hooks";
 import { INK_COLORS, RADIUS, Z_INDEX, COLORS } from "../../../shared/constants";
@@ -134,9 +135,7 @@ export function CardPreviewPopover() {
     return { width: windowWidth, height: window.innerHeight };
   }, [windowWidth]);
 
-  if (!card) return null;
-
-  const isLocation = card.type === "Location";
+  const isLocation = card?.type === "Location";
 
   // Use smaller dimensions on mobile touch mode
   const previewWidth = isTouchMode ? MOBILE_PREVIEW_WIDTH : PREVIEW_WIDTH;
@@ -149,61 +148,78 @@ export function CardPreviewPopover() {
   // On touch mode, show centered modal with backdrop
   if (isTouchMode) {
     return (
-      <>
-        {/* Backdrop */}
-        <div
-          onClick={hidePreview}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0, 0, 0, 0.5)",
-            zIndex: Z_INDEX.popoverBackdrop,
-          }}
-        />
-        {/* Centered card */}
-        <div
-          onClick={hidePreview}
-          style={{
-            position: "fixed",
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
-            width: `${containerWidth}px`,
-            height: `${containerHeight}px`,
-            borderRadius: `${RADIUS.xl}px`,
-            boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
-            zIndex: Z_INDEX.popover,
-            overflow: "hidden",
-          }}
-        >
-          <PreviewCardImage
-            card={card}
-            isLocation={isLocation}
-            previewWidth={previewWidth}
-            previewHeight={previewHeight}
-          />
-        </div>
-        {/* Tap to dismiss hint - accessible */}
-        <div
-          role="status"
-          aria-live="polite"
-          style={{
-            position: "fixed",
-            bottom: "20%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: COLORS.gray800,
-            color: COLORS.white,
-            padding: "8px 16px",
-            borderRadius: `${RADIUS.lg}px`,
-            fontSize: "14px",
-            zIndex: Z_INDEX.popover,
-            pointerEvents: "none",
-          }}
-        >
-          Tap anywhere to dismiss
-        </div>
-      </>
+      <AnimatePresence>
+        {card && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={hidePreview}
+              style={{
+                position: "fixed",
+                inset: 0,
+                background: "rgba(0, 0, 0, 0.5)",
+                zIndex: Z_INDEX.popoverBackdrop,
+              }}
+            />
+            {/* Centered card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              onClick={hidePreview}
+              style={{
+                position: "fixed",
+                left: "50%",
+                top: "50%",
+                x: "-50%",
+                y: "-50%",
+                width: `${containerWidth}px`,
+                height: `${containerHeight}px`,
+                borderRadius: `${RADIUS.xl}px`,
+                boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
+                zIndex: Z_INDEX.popover,
+                overflow: "hidden",
+              }}
+            >
+              <PreviewCardImage
+                card={card}
+                isLocation={isLocation}
+                previewWidth={previewWidth}
+                previewHeight={previewHeight}
+              />
+            </motion.div>
+            {/* Tap to dismiss hint - accessible */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 0.1 }}
+              role="status"
+              aria-live="polite"
+              style={{
+                position: "fixed",
+                bottom: "20%",
+                left: "50%",
+                x: "-50%",
+                background: COLORS.gray800,
+                color: COLORS.white,
+                padding: "8px 16px",
+                borderRadius: `${RADIUS.lg}px`,
+                fontSize: "14px",
+                zIndex: Z_INDEX.popover,
+                pointerEvents: "none",
+              }}
+            >
+              Tap anywhere to dismiss
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     );
   }
 
@@ -230,26 +246,34 @@ export function CardPreviewPopover() {
   }
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        left: `${left}px`,
-        top: `${top}px`,
-        width: `${containerWidth}px`,
-        height: `${containerHeight}px`,
-        borderRadius: `${RADIUS.xl}px`,
-        boxShadow: "0 20px 40px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05)",
-        zIndex: Z_INDEX.popover,
-        pointerEvents: "none",
-        overflow: "hidden",
-      }}
-    >
-      <PreviewCardImage
-        card={card}
-        isLocation={isLocation}
-        previewWidth={previewWidth}
-        previewHeight={previewHeight}
-      />
-    </div>
+    <AnimatePresence>
+      {card && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.15 }}
+          style={{
+            position: "fixed",
+            left: `${left}px`,
+            top: `${top}px`,
+            width: `${containerWidth}px`,
+            height: `${containerHeight}px`,
+            borderRadius: `${RADIUS.xl}px`,
+            boxShadow: "0 20px 40px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05)",
+            zIndex: Z_INDEX.popover,
+            pointerEvents: "none",
+            overflow: "hidden",
+          }}
+        >
+          <PreviewCardImage
+            card={card}
+            isLocation={isLocation}
+            previewWidth={previewWidth}
+            previewHeight={previewHeight}
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { motion } from "framer-motion";
 import type { LorcanaCard } from "../types";
 import { INK_COLORS, COLORS, FONT_SIZES, RADIUS, LAYOUT } from "../../../shared/constants";
 import { CardImage } from "../../../shared/components";
@@ -45,13 +46,16 @@ export function CardTile({ card, onClick, isSelected, onAddToDeck, deckQuantity 
   });
 
   return (
-    <button
+    <motion.button
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       {...touchHandlers}
       aria-pressed={isSelected}
+      whileHover={{ scale: 1.02, y: -2 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
       style={{
         display: "flex",
         gap: "12px",
@@ -64,7 +68,6 @@ export function CardTile({ card, onClick, isSelected, onAddToDeck, deckQuantity 
           : "0 1px 3px rgba(0,0,0,0.1)",
         cursor: "pointer",
         textAlign: "left",
-        transition: "all 0.15s ease",
         width: "100%",
         alignItems: "center",
       }}
@@ -148,7 +151,7 @@ export function CardTile({ card, onClick, isSelected, onAddToDeck, deckQuantity 
 
       {/* Add to deck button */}
       {onAddToDeck && (
-        <button
+        <motion.button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
@@ -156,6 +159,10 @@ export function CardTile({ card, onClick, isSelected, onAddToDeck, deckQuantity 
           }}
           disabled={deckQuantity >= 4}
           aria-label={deckQuantity >= 4 ? "Maximum 4 copies" : `Add ${card.name} to deck`}
+          whileHover={deckQuantity < 4 ? { scale: 1.15 } : {}}
+          whileTap={deckQuantity < 4 ? { scale: 0.9 } : {}}
+          animate={deckQuantity > 0 ? { scale: [1, 1.2, 1] } : {}}
+          transition={{ type: "spring", stiffness: 500, damping: 20 }}
           style={{
             width: 26,
             height: 26,
@@ -175,8 +182,8 @@ export function CardTile({ card, onClick, isSelected, onAddToDeck, deckQuantity 
           title={deckQuantity >= 4 ? "Maximum 4 copies" : "Add to deck"}
         >
           {deckQuantity > 0 ? deckQuantity : "+"}
-        </button>
+        </motion.button>
       )}
-    </button>
+    </motion.button>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import { CardPreviewPopover } from "../CardPreviewPopover";
 import { CardPreviewProvider } from "../CardPreviewContext";
 import { useCardPreview } from "../useCardPreview";
@@ -96,7 +96,7 @@ describe("CardPreviewPopover", () => {
     expect(img).toHaveAttribute("alt", mockCard.fullName);
   });
 
-  it("should hide preview when hidePreview is called", () => {
+  it("should hide preview when hidePreview is called", async () => {
     renderWithProvider(mockCard);
 
     act(() => {
@@ -109,7 +109,10 @@ describe("CardPreviewPopover", () => {
       screen.getByText("Hide Preview").click();
     });
 
-    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    // Wait for exit animation to complete
+    await waitFor(() => {
+      expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    });
   });
 
   describe("Touch mode", () => {
@@ -125,7 +128,7 @@ describe("CardPreviewPopover", () => {
       expect(hint).toHaveTextContent("Tap anywhere to dismiss");
     });
 
-    it("should hide preview when backdrop clicked", () => {
+    it("should hide preview when backdrop clicked", async () => {
       renderWithProvider(mockCard, { isTouchMode: true });
 
       act(() => {
@@ -141,7 +144,10 @@ describe("CardPreviewPopover", () => {
         screen.getByText("Hide Preview").click();
       });
 
-      expect(screen.queryByRole("img")).not.toBeInTheDocument();
+      // Wait for exit animation to complete
+      await waitFor(() => {
+        expect(screen.queryByRole("img")).not.toBeInTheDocument();
+      });
     });
   });
 
