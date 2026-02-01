@@ -209,9 +209,31 @@ None currently tracked.
 
 ## Next Steps
 
-Potential improvements (not yet started):
-- [ ] Add more synergy rules (Bodyguard protection, location synergies)
-- [ ] Deck sharing via URL
-- [ ] Filter synergy results by type
-- [ ] Card image lazy loading/caching
-- [ ] Add tests for deck builder components
+See [GitHub Issues](https://github.com/Doberjohn/lorcana-synergy-finder/issues) for full backlog.
+
+### Core Features
+- [ ] Add more synergy rules (Bodyguard, location) - #1
+- [ ] Deck sharing via URL - #2
+- [ ] Filter synergy results by type - #3
+- [ ] Add tests for deck builder components - #5
+
+### Community Synergies Epic (#6)
+- [ ] User synergy suggestions (anonymous) - #7
+- [ ] User-created synergies + sharing - #8
+- [ ] Vote for synergies + score system - #9
+
+### UX & Performance
+- [ ] Enlarge middle column card on hover - #10
+- [ ] Add E2E testing with Playwright - #11
+- [ ] SEO improvements - #12
+- [ ] Add Vercel Analytics and Speed Insights - #13
+- [ ] Protect synergy rules in production - #14
+
+### Non-GitHub Tasks
+- [ ] Update app name and icon
+- [ ] Buy domain
+- [ ] Configure domain in Vercel
+
+## Recently Completed
+
+- [x] Card image lazy loading/caching - Implemented in `CardImage.tsx` with native `loading="lazy"` and `decoding="async"`
