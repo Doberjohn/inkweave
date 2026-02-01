@@ -147,3 +147,17 @@ Main state management for deck building:
 - Maximum 60 cards per deck
 - Maximum 4 copies of any card
 - Warning (not error) for 3+ ink colors
+
+## Workflow Preferences
+
+### Git Workflow
+- Use `/commit-and-push` command for all commits (runs format + lint before committing)
+- Feature branches: `feature/<issue-number>-<description>` (e.g., `feature/5-deck-builder-tests`)
+- Commit messages: Use semantic commit notation with issue reference (e.g., `test(deck): add tests (#5)`)
+- PRs should include `Closes #<issue>` to auto-close issues on merge
+
+### Branch Naming
+- `feature/` - New features or enhancements
+- `fix/` - Bug fixes
+- `docs/` - Documentation only
+- `test/` - Test additions/improvements

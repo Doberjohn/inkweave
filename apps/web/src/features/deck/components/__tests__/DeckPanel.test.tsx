@@ -1,4 +1,4 @@
-import {render, screen, fireEvent, within} from '@testing-library/react';
+import {render, screen, fireEvent} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {DeckPanel} from '../DeckPanel';
@@ -13,7 +13,10 @@ const renderWithProvider = (ui: React.ReactElement) => {
 };
 
 // Mock window.confirm
-vi.stubGlobal('confirm', vi.fn(() => true));
+vi.stubGlobal(
+  'confirm',
+  vi.fn(() => true),
+);
 
 // Mock window.alert
 vi.stubGlobal('alert', vi.fn());
@@ -107,7 +110,9 @@ describe('DeckPanel', () => {
 
     it('should render card count badge', () => {
       const props = createDefaultProps();
-      const {container} = render(<DeckPanel {...props} deckStats={createEmptyStats({totalCards: 45})} />);
+      const {container} = render(
+        <DeckPanel {...props} deckStats={createEmptyStats({totalCards: 45})} />,
+      );
 
       // Find the badge in the header area
       const badges = container.querySelectorAll('span');
@@ -290,7 +295,9 @@ describe('DeckPanel', () => {
         ],
       });
 
-      renderWithProvider(<DeckPanel {...props} deck={deck} deckStats={createEmptyStats({totalCards: 4})} />);
+      renderWithProvider(
+        <DeckPanel {...props} deck={deck} deckStats={createEmptyStats({totalCards: 4})} />,
+      );
 
       const cardNames = screen.getAllByText(/Apple|Banana|Cherry|Zebra/);
       expect(cardNames.map((el) => el.textContent)).toEqual(['Apple', 'Cherry', 'Banana', 'Zebra']);
