@@ -12,8 +12,12 @@ import {
   ALL_INKS,
   CARD_TYPES,
   COST_OPTIONS,
+  SELECT_STYLE_MD,
 } from '../constants';
+// FONT_SIZES and RADIUS are still used for header/drawer styling
 import {isCardType} from '../../features/cards';
+import {FilterButton} from './FilterButton';
+import {FilterSection} from './FilterSection';
 
 interface FilterDrawerProps {
   isOpen: boolean;
@@ -190,19 +194,23 @@ export function FilterDrawer({
               {/* Ink Filter */}
               <FilterSection label="Ink">
                 <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
-                  <FilterChip active={inkFilter === 'all'} onClick={() => onInkFilterChange('all')}>
+                  <FilterButton
+                    size="md"
+                    active={inkFilter === 'all'}
+                    onClick={() => onInkFilterChange('all')}>
                     All
-                  </FilterChip>
+                  </FilterButton>
                   {ALL_INKS.map((ink) => (
-                    <FilterChip
+                    <FilterButton
                       key={ink}
+                      size="md"
                       active={inkFilter === ink}
                       onClick={() => onInkFilterChange(ink)}
                       activeColor={INK_COLORS[ink].border}
                       inactiveColor={INK_COLORS[ink].bg}
                       inactiveTextColor={INK_COLORS[ink].text}>
                       {ink}
-                    </FilterChip>
+                    </FilterButton>
                   ))}
                 </div>
               </FilterSection>
@@ -210,18 +218,20 @@ export function FilterDrawer({
               {/* Card Type Filter */}
               <FilterSection label="Type">
                 <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
-                  <FilterChip
+                  <FilterButton
+                    size="md"
                     active={!selectedType}
                     onClick={() => updateFilter('type', undefined)}>
                     All
-                  </FilterChip>
+                  </FilterButton>
                   {CARD_TYPES.map((type) => (
-                    <FilterChip
+                    <FilterButton
                       key={type}
+                      size="md"
                       active={selectedType === type}
                       onClick={() => updateFilter('type', type)}>
                       {type}
-                    </FilterChip>
+                    </FilterButton>
                   ))}
                 </div>
               </FilterSection>
@@ -234,7 +244,7 @@ export function FilterDrawer({
                     onChange={(e) =>
                       updateFilter('minCost', e.target.value ? Number(e.target.value) : undefined)
                     }
-                    style={selectStyle}>
+                    style={SELECT_STYLE_MD}>
                     <option value="">Min</option>
                     {COST_OPTIONS.map((c) => (
                       <option key={c} value={c}>
@@ -248,7 +258,7 @@ export function FilterDrawer({
                     onChange={(e) =>
                       updateFilter('maxCost', e.target.value ? Number(e.target.value) : undefined)
                     }
-                    style={selectStyle}>
+                    style={SELECT_STYLE_MD}>
                     <option value="">Max</option>
                     {COST_OPTIONS.map((c) => (
                       <option key={c} value={c}>
@@ -266,7 +276,7 @@ export function FilterDrawer({
                   onChange={(e) =>
                     updateFilter('keywords', e.target.value ? [e.target.value] : undefined)
                   }
-                  style={{...selectStyle, width: '100%'}}>
+                  style={{...SELECT_STYLE_MD, width: '100%'}}>
                   <option value="">Any keyword</option>
                   {uniqueKeywords.map((kw) => (
                     <option key={kw} value={kw}>
@@ -283,7 +293,7 @@ export function FilterDrawer({
                   onChange={(e) =>
                     updateFilter('classifications', e.target.value ? [e.target.value] : undefined)
                   }
-                  style={{...selectStyle, width: '100%'}}>
+                  style={{...SELECT_STYLE_MD, width: '100%'}}>
                   <option value="">Any classification</option>
                   {uniqueClassifications.map((c) => (
                     <option key={c} value={c}>
@@ -298,7 +308,7 @@ export function FilterDrawer({
                 <select
                   value={filters.setCode ?? ''}
                   onChange={(e) => updateFilter('setCode', e.target.value || undefined)}
-                  style={{...selectStyle, width: '100%'}}>
+                  style={{...SELECT_STYLE_MD, width: '100%'}}>
                   <option value="">Any set</option>
                   {sets.map((s) => (
                     <option key={s.code} value={s.code}>
@@ -314,65 +324,3 @@ export function FilterDrawer({
     </AnimatePresence>
   );
 }
-
-function FilterSection({label, children}: {label: string; children: React.ReactNode}) {
-  return (
-    <div style={{marginBottom: `${SPACING.xl}px`}}>
-      <div
-        style={{
-          fontSize: `${FONT_SIZES.sm}px`,
-          color: COLORS.gray500,
-          marginBottom: `${SPACING.sm}px`,
-          fontWeight: 500,
-        }}>
-        {label}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function FilterChip({
-  active,
-  onClick,
-  children,
-  activeColor = COLORS.primary600,
-  inactiveColor = COLORS.gray100,
-  inactiveTextColor = COLORS.gray700,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  activeColor?: string;
-  inactiveColor?: string;
-  inactiveTextColor?: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      aria-pressed={active}
-      style={{
-        padding: '10px 16px',
-        borderRadius: `${RADIUS.lg}px`,
-        border: 'none',
-        background: active ? activeColor : inactiveColor,
-        color: active ? COLORS.white : inactiveTextColor,
-        fontSize: `${FONT_SIZES.base}px`,
-        fontWeight: 500,
-        cursor: 'pointer',
-        minHeight: '44px',
-      }}>
-      {children}
-    </button>
-  );
-}
-
-const selectStyle: React.CSSProperties = {
-  padding: '12px 16px',
-  borderRadius: `${RADIUS.lg}px`,
-  border: `1px solid ${COLORS.gray200}`,
-  fontSize: `${FONT_SIZES.base}px`,
-  background: COLORS.white,
-  cursor: 'pointer',
-  minHeight: '44px',
-};

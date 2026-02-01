@@ -2,7 +2,12 @@ import {useState, useMemo} from 'react';
 import type {LorcanaCard, Ink} from '../types';
 import type {CardFilterOptions, SetInfo} from '../loader';
 import {CardTile} from './CardTile';
-import {LoadingSpinner, FilterDrawer} from '../../../shared/components';
+import {
+  LoadingSpinner,
+  FilterDrawer,
+  FilterButton,
+  FilterSection,
+} from '../../../shared/components';
 import {
   INK_COLORS,
   ALL_INKS,
@@ -14,6 +19,7 @@ import {
   LAYOUT_MOBILE,
   CARD_TYPES,
   COST_OPTIONS,
+  SELECT_STYLE_SM,
 } from '../../../shared/constants';
 import {isCardType} from '../utils';
 
@@ -256,15 +262,7 @@ export function CardList({
             />
 
             {/* Ink Filter */}
-            <div style={{marginBottom: `${SPACING.md}px`}}>
-              <div
-                style={{
-                  fontSize: `${FONT_SIZES.sm}px`,
-                  color: COLORS.gray500,
-                  marginBottom: '4px',
-                }}>
-                Ink
-              </div>
+            <FilterSection label="Ink" compact>
               <div style={{display: 'flex', gap: '4px', flexWrap: 'wrap'}}>
                 <FilterButton active={inkFilter === 'all'} onClick={() => onInkFilterChange('all')}>
                   All
@@ -281,18 +279,10 @@ export function CardList({
                   </FilterButton>
                 ))}
               </div>
-            </div>
+            </FilterSection>
 
             {/* Card Type Filter */}
-            <div style={{marginBottom: `${SPACING.md}px`}}>
-              <div
-                style={{
-                  fontSize: `${FONT_SIZES.sm}px`,
-                  color: COLORS.gray500,
-                  marginBottom: '4px',
-                }}>
-                Type
-              </div>
+            <FilterSection label="Type" compact>
               <div style={{display: 'flex', gap: '4px', flexWrap: 'wrap'}}>
                 <FilterButton
                   active={!selectedType}
@@ -308,7 +298,7 @@ export function CardList({
                   </FilterButton>
                 ))}
               </div>
-            </div>
+            </FilterSection>
 
             {/* More Filters Toggle */}
             <button
@@ -338,22 +328,14 @@ export function CardList({
             {showMoreFilters && (
               <div style={{marginTop: `${SPACING.md}px`}}>
                 {/* Cost Range */}
-                <div style={{marginBottom: `${SPACING.md}px`}}>
-                  <div
-                    style={{
-                      fontSize: `${FONT_SIZES.sm}px`,
-                      color: COLORS.gray500,
-                      marginBottom: '4px',
-                    }}>
-                    Cost
-                  </div>
+                <FilterSection label="Cost" compact>
                   <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
                     <select
                       value={filters.minCost ?? ''}
                       onChange={(e) =>
                         updateFilter('minCost', e.target.value ? Number(e.target.value) : undefined)
                       }
-                      style={selectStyle}>
+                      style={SELECT_STYLE_SM}>
                       <option value="">Min</option>
                       {COST_OPTIONS.map((c) => (
                         <option key={c} value={c}>
@@ -367,7 +349,7 @@ export function CardList({
                       onChange={(e) =>
                         updateFilter('maxCost', e.target.value ? Number(e.target.value) : undefined)
                       }
-                      style={selectStyle}>
+                      style={SELECT_STYLE_SM}>
                       <option value="">Max</option>
                       {COST_OPTIONS.map((c) => (
                         <option key={c} value={c}>
@@ -376,24 +358,16 @@ export function CardList({
                       ))}
                     </select>
                   </div>
-                </div>
+                </FilterSection>
 
                 {/* Keywords */}
-                <div style={{marginBottom: `${SPACING.md}px`}}>
-                  <div
-                    style={{
-                      fontSize: `${FONT_SIZES.sm}px`,
-                      color: COLORS.gray500,
-                      marginBottom: '4px',
-                    }}>
-                    Keyword
-                  </div>
+                <FilterSection label="Keyword" compact>
                   <select
                     value={filters.keywords?.[0] ?? ''}
                     onChange={(e) =>
                       updateFilter('keywords', e.target.value ? [e.target.value] : undefined)
                     }
-                    style={{...selectStyle, width: '100%'}}>
+                    style={{...SELECT_STYLE_SM, width: '100%'}}>
                     <option value="">Any keyword</option>
                     {uniqueKeywords.map((kw) => (
                       <option key={kw} value={kw}>
@@ -401,24 +375,16 @@ export function CardList({
                       </option>
                     ))}
                   </select>
-                </div>
+                </FilterSection>
 
                 {/* Classifications */}
-                <div style={{marginBottom: `${SPACING.md}px`}}>
-                  <div
-                    style={{
-                      fontSize: `${FONT_SIZES.sm}px`,
-                      color: COLORS.gray500,
-                      marginBottom: '4px',
-                    }}>
-                    Classification
-                  </div>
+                <FilterSection label="Classification" compact>
                   <select
                     value={filters.classifications?.[0] ?? ''}
                     onChange={(e) =>
                       updateFilter('classifications', e.target.value ? [e.target.value] : undefined)
                     }
-                    style={{...selectStyle, width: '100%'}}>
+                    style={{...SELECT_STYLE_SM, width: '100%'}}>
                     <option value="">Any classification</option>
                     {uniqueClassifications.map((c) => (
                       <option key={c} value={c}>
@@ -426,22 +392,14 @@ export function CardList({
                       </option>
                     ))}
                   </select>
-                </div>
+                </FilterSection>
 
                 {/* Set */}
-                <div style={{marginBottom: `${SPACING.md}px`}}>
-                  <div
-                    style={{
-                      fontSize: `${FONT_SIZES.sm}px`,
-                      color: COLORS.gray500,
-                      marginBottom: '4px',
-                    }}>
-                    Set
-                  </div>
+                <FilterSection label="Set" compact>
                   <select
                     value={filters.setCode ?? ''}
                     onChange={(e) => updateFilter('setCode', e.target.value || undefined)}
-                    style={{...selectStyle, width: '100%'}}>
+                    style={{...SELECT_STYLE_SM, width: '100%'}}>
                     <option value="">Any set</option>
                     {sets.map((s) => (
                       <option key={s.code} value={s.code}>
@@ -449,7 +407,7 @@ export function CardList({
                       </option>
                     ))}
                   </select>
-                </div>
+                </FilterSection>
               </div>
             )}
 
@@ -509,15 +467,6 @@ export function CardList({
   );
 }
 
-const selectStyle: React.CSSProperties = {
-  padding: '6px 8px',
-  borderRadius: `${RADIUS.md}px`,
-  border: `1px solid ${COLORS.gray200}`,
-  fontSize: `${FONT_SIZES.sm}px`,
-  background: COLORS.white,
-  cursor: 'pointer',
-};
-
 function FilterIcon({color}: {color: string}) {
   return (
     <svg
@@ -531,39 +480,5 @@ function FilterIcon({color}: {color: string}) {
       strokeLinejoin="round">
       <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
     </svg>
-  );
-}
-
-function FilterButton({
-  active,
-  onClick,
-  children,
-  activeColor = COLORS.primary600,
-  inactiveColor = COLORS.gray100,
-  inactiveTextColor = COLORS.gray700,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  activeColor?: string;
-  inactiveColor?: string;
-  inactiveTextColor?: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      aria-pressed={active}
-      style={{
-        padding: '5px 10px',
-        borderRadius: `${RADIUS.md}px`,
-        border: 'none',
-        background: active ? activeColor : inactiveColor,
-        color: active ? COLORS.white : inactiveTextColor,
-        fontSize: `${FONT_SIZES.sm}px`,
-        fontWeight: 500,
-        cursor: 'pointer',
-      }}>
-      {children}
-    </button>
   );
 }

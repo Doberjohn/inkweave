@@ -130,3 +130,23 @@ export const CARD_TYPES: CardType[] = ['Character', 'Action', 'Item', 'Location'
 
 // Cost options for filtering (0-10, where 10 represents 10+)
 export const COST_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+
+// Shared select styles
+export const SELECT_STYLE_SM: React.CSSProperties = {
+  padding: '6px 8px',
+  borderRadius: `${RADIUS.md}px`,
+  border: `1px solid ${COLORS.gray200}`,
+  fontSize: `${FONT_SIZES.sm}px`,
+  background: COLORS.white,
+  cursor: 'pointer',
+};
+
+export const SELECT_STYLE_MD: React.CSSProperties = {
+  padding: '12px 16px',
+  borderRadius: `${RADIUS.lg}px`,
+  border: `1px solid ${COLORS.gray200}`,
+  fontSize: `${FONT_SIZES.base}px`,
+  background: COLORS.white,
+  cursor: 'pointer',
+  minHeight: '44px',
+};

@@ -1,5 +1,7 @@
 export {CardImage} from './CardImage';
 export {CollapsibleSection} from './CollapsibleSection';
+export {FilterButton} from './FilterButton';
+export {FilterSection} from './FilterSection';
 export {Header} from './Header';
 export {MobileHeader} from './MobileHeader';
 export {MobileNav} from './MobileNav';
