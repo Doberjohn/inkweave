@@ -215,7 +215,7 @@ See [GitHub Issues](https://github.com/Doberjohn/lorcana-synergy-finder/issues) 
 - [ ] Add more synergy rules (Bodyguard, location) - #1
 - [ ] Deck sharing via URL - #2
 - [ ] Filter synergy results by type - #3
-- [ ] Add tests for deck builder components - #5
+- [ ] Add tests for remaining deck components - #16
 
 ### Community Synergies Epic (#6)
 - [ ] User synergy suggestions (anonymous) - #7
@@ -236,4 +236,5 @@ See [GitHub Issues](https://github.com/Doberjohn/lorcana-synergy-finder/issues) 
 
 ## Recently Completed
 
+- [x] Add tests for deck builder components (#5) - Added 56 tests for `useDeckBuilder` hook and `DeckPanel` component
 - [x] Card image lazy loading/caching - Implemented in `CardImage.tsx` with native `loading="lazy"` and `decoding="async"`
