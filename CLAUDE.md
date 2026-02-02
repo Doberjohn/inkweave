@@ -161,3 +161,7 @@ Main state management for deck building:
 - `fix/` - Bug fixes
 - `docs/` - Documentation only
 - `test/` - Test additions/improvements
+
+### Code Quality
+- After writing or modifying significant code (new features, refactors, bug fixes), run the `code-simplifier` agent to polish for clarity and consistency
+- Use `/refactor-code` for periodic comprehensive codebase audits
