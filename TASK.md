@@ -230,11 +230,13 @@ See [GitHub Issues](https://github.com/Doberjohn/lorcana-synergy-finder/issues) 
 - [ ] Protect synergy rules in production - #14
 
 ### Non-GitHub Tasks
-- [ ] Update app name and icon
-- [ ] Buy domain
-- [ ] Configure domain in Vercel
+- [x] App name decided: **Inkweave**
+- [ ] Update app icon
+- [x] Buy domain
+- [x] Configure domain in Vercel
 
 ## Recently Completed
 
+- [x] App branding: Name "Inkweave", domain purchased and configured on Vercel
 - [x] Add tests for deck builder components (#5) - Added 56 tests for `useDeckBuilder` hook and `DeckPanel` component
 - [x] Card image lazy loading/caching - Implemented in `CardImage.tsx` with native `loading="lazy"` and `decoding="async"`
