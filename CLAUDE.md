@@ -1,6 +1,15 @@
 # Inkweave
 
-Monorepo containing the Lorcana synergy detection engine and web application.
+Lorcana synergy finder for Core format with archetype-based synergy detection.
+
+## MVP Status
+
+Currently implementing MVP with:
+- **Scope**: Core format only (sets 5+), no deck builder
+- **UI**: Dark fantasy theme (deep purple, gold accents)
+- **Synergies**: 4 archetypes (Discard, Bounce, Ramp, Damage/Removal) + existing rules
+
+See `TASK.md` for MVP roadmap and GitHub issues #28-49.
 
 ## Tech Stack
 
@@ -63,11 +72,15 @@ React web application that consumes the synergy engine package.
 
 **Card Types**: Character, Action, Item, Location
 
-**Game Modes**:
-- **Core** (default) - Sets 5+ only (excludes sets 1-4)
-- **Infinity** - All sets included
+**Game Mode**: Core only (sets 5+) - Infinity mode removed for MVP
 
-**Synergy Types**: keyword, classification, shift, named, mechanic, ink, cost-curve
+**Synergy Types**: keyword, classification, shift, named, mechanic, ink, cost-curve, archetype
+
+**Archetypes** (MVP):
+- Discard - opponent discard + payoffs
+- Bounce - return to hand + ETB effects
+- Ramp - ink acceleration + high-cost cards
+- Damage/Removal - deal damage, banish + payoffs
 
 **Synergy Strength**: weak, moderate, strong
 
@@ -107,46 +120,18 @@ pnpm test:web         # Run web tests (68 tests)
 - Synergies memoized - only recompute on card selection or game mode change
 - Card data loaded once on init, all operations in-memory
 - Cards deduplicated by `fullName` (same card in multiple sets appears once)
-- Three-column UI: CardList (340px) | SynergyResults (flex) | DeckPanel (380px)
+- Two-column UI: CardList (340px) | SynergyResults (flex) - deck builder removed for MVP
 - Floating card preview popover on hover (CardPreviewContext + CardPreviewPopover)
-- Game mode toggle in header filters both card list and synergy results
+- Core format only (sets 5+)
 
-## Deck Builder
+## UI Theme (MVP)
 
-### Key Types (apps/web/src/features/deck/types.ts)
-- `DeckCard` - Card + quantity (1-4)
-- `Deck` - id, name, cards[], createdAt, updatedAt
-- `DeckStats` - totalCards, inkDistribution, costCurve, typeDistribution, validation
-
-### useDeckBuilder Hook
-Main state management for deck building:
-- `deck` / `deckStats` - Current deck and computed statistics
-- `addCard(card)` - Add card (max 4 copies, max 60 total)
-- `removeCard(cardId)` - Remove one copy
-- `removeAllCopies(cardId)` - Remove all copies
-- `setQuantity(cardId, qty)` - Set exact quantity
-- `newDeck()` / `clearDeck()` / `renameDeck(name)`
-- `saveDeck()` / `loadDeck(id)` / `deleteSavedDeck(id)` / `getSavedDecks()`
-- `exportDeck()` / `importDeck(json)` - JSON import/export
-- `getDeckSuggestions(allCards)` - Cards synergizing with 2+ deck cards
-- `getDeckSynergyAnalysis()` - Full deck synergy analysis
-
-**Important**: Uses `useRef` for `deckRef` to avoid stale closures in `saveDeck`/`exportDeck`.
-
-### Synergy Analysis (DeckSynergyAnalysis type)
-- `cardSynergies[]` - Each card's synergy count and connections
-- `keyCards[]` - Top synergy hubs (above-average connections)
-- `weakLinks[]` - Cards with 0-1 synergies (cut candidates)
-- `overallScore` / `averageScore` / `connectionCount`
-
-### localStorage Keys
-- `inkweave-decks` - Array of saved Deck objects
-- `inkweave-current-deck` - Current working deck (auto-persisted)
-
-### Validation Rules
-- Maximum 60 cards per deck
-- Maximum 4 copies of any card
-- Warning (not error) for 3+ ink colors
+Dark fantasy theme inspired by Lorcana:
+- Background: #0d0d14 (near black)
+- Surface: #1a1a2e (dark purple)
+- Primary: #d4af37 (gold accents)
+- Text: #e8e8e8 (off-white)
+- Glowing borders on hover, purple-tinted shadows
 
 ## Workflow Preferences
 

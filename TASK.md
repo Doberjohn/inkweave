@@ -207,36 +207,67 @@ Application is functional with all core features implemented including mobile re
 
 None currently tracked.
 
-## Next Steps
+## MVP Roadmap
 
 See [GitHub Issues](https://github.com/Doberjohn/lorcana-synergy-finder/issues) for full backlog.
+
+### Epic 1: MVP Scope Reduction (#28)
+- [ ] Remove Deck Builder - #33
+- [ ] Remove Infinity Mode - #34
+
+### Epic 2: Dark Fantasy UI Theme (#29)
+- [ ] Design System Update - #35
+- [ ] Header Redesign - #36
+- [ ] Card List Polish - #37
+- [ ] Filter Redesign - #38
+
+### Epic 3: Archetype Synergies (#30)
+- [ ] Archetype Engine Infrastructure - #39
+- [ ] Discard Archetype - #40
+- [ ] Bounce Archetype - #41
+- [ ] Ramp Archetype - #42
+- [ ] Damage/Removal Archetype - #43
+
+### Epic 4: Synergy Panel Redesign (#31)
+- [ ] SynergyCard Restyle - #44
+- [ ] Archetype Grouping - #45
+- [ ] Archetype Filtering - #46
+
+### Epic 5: Launch Readiness (#32)
+- [ ] MVP Testing - #47
+- [ ] MVP Documentation - #48
+- [ ] MVP Final Polish - #49
+
+---
+
+## Backlog (Post-MVP)
 
 ### Core Features
 - [ ] Add more synergy rules (Bodyguard, location) - #1
 - [ ] Deck sharing via URL - #2
 - [ ] Filter synergy results by type - #3
-- [ ] Add tests for remaining deck components - #16
 
 ### Community Synergies Epic (#6)
 - [ ] User synergy suggestions (anonymous) - #7
 - [ ] User-created synergies + sharing - #8
 - [ ] Vote for synergies + score system - #9
 
-### UX & Performance
-- [ ] Enlarge middle column card on hover - #10
-- [ ] Add E2E testing with Playwright - #11
+### Infrastructure
 - [ ] SEO improvements - #12
-- [ ] Add Vercel Analytics and Speed Insights - #13
 - [ ] Protect synergy rules in production - #14
 
 ### Non-GitHub Tasks
-- [x] App name decided: **Inkweave**
 - [ ] Update app icon
-- [x] Buy domain
-- [x] Configure domain in Vercel
+
+---
 
 ## Recently Completed
 
 - [x] App branding: Name "Inkweave", domain purchased and configured on Vercel
-- [x] Add tests for deck builder components (#5) - Added 56 tests for `useDeckBuilder` hook and `DeckPanel` component
-- [x] Card image lazy loading/caching - Implemented in `CardImage.tsx` with native `loading="lazy"` and `decoding="async"`
+- [x] Add tests for deck builder components (#5)
+- [x] Add E2E testing with Playwright (#11) - #24
+- [x] Add Vercel Analytics and Speed Insights (#13) - #19
+- [x] Enlarge middle column card on hover (#10) - #21
+- [x] Add tests for remaining deck components (#16) - #20
+- [x] Rename app to Inkweave (#17) - #18
+- [x] Card image lazy loading/caching
