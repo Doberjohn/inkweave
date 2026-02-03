@@ -1,17 +1,17 @@
 {
-  "name": "lorcana-synergy-finder-monorepo",
+  "name": "inkweave",
   "version": "0.1.0",
   "private": true,
-  "description": "Monorepo for Lorcana Synergy Finder",
+  "description": "Monorepo for Inkweave - Disney Lorcana synergy finder",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter lorcana-synergy-finder-web dev",
+    "dev": "pnpm --filter inkweave-web dev",
     "build": "pnpm -r build",
     "build:engine": "pnpm --filter lorcana-synergy-engine build",
-    "build:web": "pnpm --filter lorcana-synergy-finder-web build",
+    "build:web": "pnpm --filter inkweave-web build",
     "test": "pnpm -r test:run",
     "test:engine": "pnpm --filter lorcana-synergy-engine test:run",
-    "test:web": "pnpm --filter lorcana-synergy-finder-web test:run",
+    "test:web": "pnpm --filter inkweave-web test:run",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

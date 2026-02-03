@@ -20,9 +20,7 @@ export function Header({totalCards, isLoading, gameMode, onGameModeChange}: Head
         alignItems: 'center',
       }}>
       <div>
-        <h1 style={{fontSize: `${FONT_SIZES.xxxl}px`, fontWeight: 700, margin: 0}}>
-          Lorcana Synergy Finder
-        </h1>
+        <h1 style={{fontSize: `${FONT_SIZES.xxxl}px`, fontWeight: 700, margin: 0}}>Inkweave</h1>
         <p style={{fontSize: `${FONT_SIZES.base}px`, color: COLORS.primary200, marginTop: '4px'}}>
           {isLoading ? 'Loading...' : `${totalCards} cards loaded`}
         </p>

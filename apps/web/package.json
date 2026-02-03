@@ -1,8 +1,8 @@
 {
-  "name": "lorcana-synergy-finder-web",
+  "name": "inkweave-web",
   "version": "0.1.0",
   "private": true,
-  "description": "Find synergistic card combinations for Disney Lorcana TCG",
+  "description": "Discover synergistic card combinations for Disney Lorcana TCG",
   "type": "module",
   "scripts": {
     "dev": "vite",

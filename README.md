@@ -1,4 +1,4 @@
-# Lorcana Synergy Finder
+# Inkweave
 
 [![CI](https://github.com/Doberjohn/lorcana-synergy-finder/actions/workflows/ci.yml/badge.svg)](https://github.com/Doberjohn/lorcana-synergy-finder/actions/workflows/ci.yml)
 ![Coverage](https://img.shields.io/badge/coverage-98.07%25-brightgreen)
