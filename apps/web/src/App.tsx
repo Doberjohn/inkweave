@@ -1,4 +1,6 @@
 import {useMemo} from 'react';
+import {Analytics} from '@vercel/analytics/react';
+import {SpeedInsights} from '@vercel/speed-insights/react';
 import {CardList, CardPreviewProvider, CardPreviewPopover, filterCards} from './features/cards';
 import {useSynergyFinder, SynergyResults} from './features/synergies';
 import {useDeckBuilder, DeckPanel} from './features/deck';
@@ -242,6 +244,8 @@ export default function App() {
         <SynergyFinderApp />
         <CardPreviewPopover />
       </CardPreviewProvider>
+      <Analytics />
+      <SpeedInsights />
     </ErrorBoundary>
   );
 }
