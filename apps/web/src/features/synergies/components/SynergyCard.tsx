@@ -1,4 +1,5 @@
 import {memo} from 'react';
+import {motion} from 'framer-motion';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyStrength} from '../types';
 import {
@@ -32,8 +33,11 @@ export const SynergyCard = memo(function SynergyCard({
   const {previewHandlers} = useCardPreviewHandlers({card});
 
   return (
-    <div
+    <motion.div
       {...previewHandlers}
+      whileHover={{scale: 1.02, y: -2}}
+      whileTap={{scale: 0.98}}
+      transition={{type: 'spring', stiffness: 400, damping: 25}}
       style={{
         display: 'flex',
         gap: '12px',
@@ -41,6 +45,7 @@ export const SynergyCard = memo(function SynergyCard({
         borderRadius: `${RADIUS.lg}px`,
         border: `1px solid ${colors.border}40`,
         background: COLORS.white,
+        cursor: 'pointer',
       }}>
       <CardImage
         src={card.imageUrl}
@@ -125,12 +130,18 @@ export const SynergyCard = memo(function SynergyCard({
 
       {/* Add to deck button */}
       {onAddToDeck && (
-        <button
+        <motion.button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onAddToDeck(card);
           }}
           disabled={deckQuantity >= 4}
+          aria-label={deckQuantity >= 4 ? 'Maximum 4 copies' : `Add ${card.name} to deck`}
+          whileHover={deckQuantity < 4 ? {scale: 1.15} : {}}
+          whileTap={deckQuantity < 4 ? {scale: 0.9} : {}}
+          animate={deckQuantity > 0 ? {scale: [1, 1.2, 1]} : {}}
+          transition={{type: 'spring', stiffness: 500, damping: 20}}
           style={{
             width: 32,
             height: 32,
@@ -149,8 +160,8 @@ export const SynergyCard = memo(function SynergyCard({
           }}
           title={deckQuantity >= 4 ? 'Maximum 4 copies' : 'Add to deck'}>
           {deckQuantity > 0 ? deckQuantity : '+'}
-        </button>
+        </motion.button>
       )}
-    </div>
+    </motion.div>
   );
 });
