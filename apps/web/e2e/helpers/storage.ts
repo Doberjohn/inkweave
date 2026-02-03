@@ -1,7 +1,7 @@
 import {Page} from '@playwright/test';
 
-const STORAGE_KEY_DECKS = 'lorcana-synergy-finder-decks';
-const STORAGE_KEY_CURRENT = 'lorcana-synergy-finder-current-deck';
+const STORAGE_KEY_DECKS = 'inkweave-decks';
+const STORAGE_KEY_CURRENT = 'inkweave-current-deck';
 
 /**
  * Clear all stored deck data from localStorage
