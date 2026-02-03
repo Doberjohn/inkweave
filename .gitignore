@@ -31,3 +31,4 @@ storybook-static
 
 .vercel
 .env*.local
+.claude/settings.local.json
