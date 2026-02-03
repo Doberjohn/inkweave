@@ -151,10 +151,17 @@ Main state management for deck building:
 ## Workflow Preferences
 
 ### Git Workflow
-- Use `/commit-and-push` command for all commits (runs format + lint before committing)
 - Feature branches: `feature/<issue-number>-<description>` (e.g., `feature/5-deck-builder-tests`)
 - Commit messages: Use semantic commit notation with issue reference (e.g., `test(deck): add tests (#5)`)
 - PRs should include `Closes #<issue>` to auto-close issues on merge
+
+### Pre-Commit Checks (REQUIRED)
+Before EVERY commit, run these checks and fix any issues:
+1. `pnpm run lint` - Fix all errors (warnings OK)
+2. `pnpm run test` - All unit tests must pass
+3. `pnpm run test:e2e` - All E2E tests must pass
+
+Do NOT commit or push if any check fails.
 
 ### Branch Naming
 - `feature/` - New features or enhancements
