@@ -49,7 +49,7 @@ describe('DeckStats', () => {
     });
 
     it('should highlight total cards when deck is complete (60)', () => {
-      const {container} = render(<DeckStats stats={createDefaultStats({totalCards: 60})} />);
+      render(<DeckStats stats={createDefaultStats({totalCards: 60})} />);
 
       const totalText = screen.getByText('60/60');
       // Check if primary color is applied (primary600)
@@ -226,7 +226,7 @@ describe('DeckStats', () => {
 
   describe('collapsible behavior', () => {
     it('should render collapsed when collapsed prop is true', () => {
-      const {container} = render(<DeckStats stats={createDefaultStats()} collapsed={true} />);
+      render(<DeckStats stats={createDefaultStats()} collapsed={true} />);
 
       // Content should be hidden when collapsed
       // The CollapsibleSection hides content when collapsed
