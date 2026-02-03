@@ -12,6 +12,8 @@
     "test": "pnpm -r test:run",
     "test:engine": "pnpm --filter lorcana-synergy-engine test:run",
     "test:web": "pnpm --filter inkweave-web test:run",
+    "test:e2e": "pnpm --filter inkweave-web test:e2e",
+    "test:e2e:ui": "pnpm --filter inkweave-web test:e2e:ui",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

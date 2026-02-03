@@ -32,3 +32,8 @@ storybook-static
 .vercel
 .env*.local
 .claude/settings.local.json
+
+# Playwright
+/apps/web/test-results/
+/apps/web/playwright-report/
+/apps/web/playwright/.cache/
