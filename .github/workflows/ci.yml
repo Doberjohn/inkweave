@@ -69,10 +69,10 @@ jobs:
         run: pnpm build
 
       - name: Install Playwright browsers
-        run: pnpm --filter lorcana-synergy-finder-web exec playwright install --with-deps chromium
+        run: pnpm --filter inkweave-web exec playwright install --with-deps chromium
 
       - name: Run E2E tests
-        run: pnpm --filter lorcana-synergy-finder-web test:e2e
+        run: pnpm --filter inkweave-web test:e2e
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
