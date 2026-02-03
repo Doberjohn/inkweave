@@ -1,7 +1,7 @@
-import { Page } from "@playwright/test";
+import {Page} from '@playwright/test';
 
-const STORAGE_KEY_DECKS = "lorcana-synergy-finder-decks";
-const STORAGE_KEY_CURRENT = "lorcana-synergy-finder-current-deck";
+const STORAGE_KEY_DECKS = 'lorcana-synergy-finder-decks';
+const STORAGE_KEY_CURRENT = 'lorcana-synergy-finder-current-deck';
 
 /**
  * Clear all stored deck data from localStorage
@@ -12,7 +12,7 @@ export async function clearStoredDecks(page: Page): Promise<void> {
       localStorage.removeItem(decksKey);
       localStorage.removeItem(currentKey);
     },
-    [STORAGE_KEY_DECKS, STORAGE_KEY_CURRENT]
+    [STORAGE_KEY_DECKS, STORAGE_KEY_CURRENT],
   );
 }
 
@@ -35,7 +35,7 @@ export async function seedSavedDeck(
       };
       quantity: number;
     }>;
-  }
+  },
 ): Promise<void> {
   const fullDeck = {
     ...deck,
@@ -45,11 +45,11 @@ export async function seedSavedDeck(
 
   await page.evaluate(
     ([key, deckData]) => {
-      const existingDecks = JSON.parse(localStorage.getItem(key) || "[]");
+      const existingDecks = JSON.parse(localStorage.getItem(key) || '[]');
       existingDecks.push(deckData);
       localStorage.setItem(key, JSON.stringify(existingDecks));
     },
-    [STORAGE_KEY_DECKS, fullDeck]
+    [STORAGE_KEY_DECKS, fullDeck],
   );
 }
 
@@ -72,7 +72,7 @@ export async function setCurrentDeck(
       };
       quantity: number;
     }>;
-  }
+  },
 ): Promise<void> {
   const fullDeck = {
     ...deck,
@@ -84,7 +84,7 @@ export async function setCurrentDeck(
     ([key, deckData]) => {
       localStorage.setItem(key, JSON.stringify(deckData));
     },
-    [STORAGE_KEY_CURRENT, fullDeck]
+    [STORAGE_KEY_CURRENT, fullDeck],
   );
 }
 

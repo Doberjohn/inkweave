@@ -1,30 +1,26 @@
-import { test, expect } from "../fixtures";
-import { clearStoredDecks } from "../helpers/storage";
+import {test, expect} from '../fixtures';
+import {clearStoredDecks} from '../helpers/storage';
 
-test.describe("Deck Persistence", () => {
+test.describe('Deck Persistence', () => {
   // Skip on mobile - deck panel requires navigation
-  test.beforeEach(async ({ page, appPage }, testInfo) => {
-    if (testInfo.project.name === "mobile-chrome") {
+  test.beforeEach(async ({page, appPage}, testInfo) => {
+    if (testInfo.project.name === 'mobile-chrome') {
       test.skip();
     }
     // Clear localStorage before each test
-    await page.goto("/");
+    await page.goto('/');
     await clearStoredDecks(page);
     await page.reload();
     await appPage.waitForCardsLoaded();
   });
 
-  test("should save and load a deck", async ({
-    cardListPage,
-    deckPanelPage,
-    page,
-  }) => {
+  test('should save and load a deck', async ({cardListPage, deckPanelPage}) => {
     // Build a deck
-    await cardListPage.filterByInk("Amber");
+    await cardListPage.filterByInk('Amber');
     await cardListPage.addFirstCardToDeck();
 
     // Rename the deck
-    await deckPanelPage.renameDeck("My Test Deck");
+    await deckPanelPage.renameDeck('My Test Deck');
 
     // Save the deck
     await deckPanelPage.saveDeck();
@@ -34,45 +30,42 @@ test.describe("Deck Persistence", () => {
     expect(await deckPanelPage.isDeckEmpty()).toBe(true);
 
     // Load saved deck
-    await deckPanelPage.loadDeck("My Test Deck");
+    await deckPanelPage.loadDeck('My Test Deck');
 
     // Verify deck loaded
     const count = await deckPanelPage.getCardCount();
     expect(count).toBe(1);
   });
 
-  test("should export deck as JSON", async ({
-    cardListPage,
-    deckPanelPage,
-  }) => {
+  test('should export deck as JSON', async ({cardListPage, deckPanelPage}) => {
     // Build a deck
-    await cardListPage.filterByInk("Sapphire");
+    await cardListPage.filterByInk('Sapphire');
     await cardListPage.addFirstCardToDeck();
 
     // Rename for recognizable filename
-    await deckPanelPage.renameDeck("Export Test Deck");
+    await deckPanelPage.renameDeck('Export Test Deck');
 
     // Export the deck
     const filename = await deckPanelPage.exportDeck();
-    expect(filename).toContain(".json");
-    expect(filename).toContain("Export-Test-Deck");
+    expect(filename).toContain('.json');
+    expect(filename).toContain('Export-Test-Deck');
   });
 
-  test("should import deck from JSON", async ({ deckPanelPage, page }) => {
+  test('should import deck from JSON', async ({deckPanelPage, page}) => {
     // Prepare a valid deck JSON
     const deckJson = JSON.stringify({
-      id: "test-import-1",
-      name: "Imported Deck",
+      id: 'test-import-1',
+      name: 'Imported Deck',
       cards: [
         {
           card: {
-            id: "card-test-1",
-            name: "Test Card",
-            fullName: "Test Card - Imported",
+            id: 'card-test-1',
+            name: 'Test Card',
+            fullName: 'Test Card - Imported',
             cost: 3,
-            ink: "Amber",
+            ink: 'Amber',
             inkwell: true,
-            type: "Character",
+            type: 'Character',
           },
           quantity: 2,
         },
@@ -85,17 +78,17 @@ test.describe("Deck Persistence", () => {
     await deckPanelPage.importDeck(deckJson);
 
     // Verify import - deck name should update
-    await expect(page.getByText("Imported Deck")).toBeVisible();
+    await expect(page.getByText('Imported Deck')).toBeVisible();
   });
 
-  test("should persist current deck across page reload", async ({
+  test('should persist current deck across page reload', async ({
     cardListPage,
     deckPanelPage,
     page,
     appPage,
   }) => {
     // Build a deck
-    await cardListPage.filterByInk("Emerald");
+    await cardListPage.filterByInk('Emerald');
     await cardListPage.addFirstCardToDeck();
 
     const countBefore = await deckPanelPage.getCardCount();
@@ -110,9 +103,9 @@ test.describe("Deck Persistence", () => {
     expect(countAfter).toBe(1);
   });
 
-  test("should clear deck", async ({ cardListPage, deckPanelPage }) => {
+  test('should clear deck', async ({cardListPage, deckPanelPage}) => {
     // Build a deck
-    await cardListPage.filterByInk("Steel");
+    await cardListPage.filterByInk('Steel');
     await cardListPage.addFirstCardToDeck();
     await cardListPage.addFirstCardToDeck();
 
@@ -126,16 +119,16 @@ test.describe("Deck Persistence", () => {
     expect(await deckPanelPage.isDeckEmpty()).toBe(true);
   });
 
-  test("should rename deck", async ({ deckPanelPage }) => {
+  test('should rename deck', async ({deckPanelPage}) => {
     // Default name should be "New Deck"
     const initialName = await deckPanelPage.getDeckName();
-    expect(initialName).toBe("New Deck");
+    expect(initialName).toBe('New Deck');
 
     // Rename the deck
-    await deckPanelPage.renameDeck("My Custom Deck Name");
+    await deckPanelPage.renameDeck('My Custom Deck Name');
 
     // Verify new name
     const newName = await deckPanelPage.getDeckName();
-    expect(newName).toBe("My Custom Deck Name");
+    expect(newName).toBe('My Custom Deck Name');
   });
 });

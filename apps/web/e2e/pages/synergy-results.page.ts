@@ -1,4 +1,4 @@
-import { Page, Locator } from "@playwright/test";
+import {Page, Locator} from '@playwright/test';
 
 export class SynergyResultsPage {
   readonly page: Page;
@@ -9,10 +9,10 @@ export class SynergyResultsPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.emptyState = page.getByText("Select a card to see synergies");
-    this.clearSelectionButton = page.getByRole("button", { name: /×|clear/i });
+    this.emptyState = page.getByText('Select a card to see synergies');
+    this.clearSelectionButton = page.getByRole('button', {name: /×|clear/i});
     this.synergyCountText = page.getByText(/Found \d+ synergistic cards/);
-    this.noSynergiesMessage = page.getByText("No synergies found for this card");
+    this.noSynergiesMessage = page.getByText('No synergies found for this card');
   }
 
   async isEmptyStateVisible(): Promise<boolean> {
@@ -36,10 +36,13 @@ export class SynergyResultsPage {
 
   getSelectedCardDetail(): Locator {
     // The card detail section shows the selected card's info
-    return this.page.locator("div").filter({ hasText: /Clear selection|×/ }).first();
+    return this.page
+      .locator('div')
+      .filter({hasText: /Clear selection|×/})
+      .first();
   }
 
   getSynergyGroup(type: string): Locator {
-    return this.page.locator("div").filter({ hasText: new RegExp(type, "i") });
+    return this.page.locator('div').filter({hasText: new RegExp(type, 'i')});
   }
 }

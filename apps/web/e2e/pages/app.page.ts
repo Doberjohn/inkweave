@@ -1,4 +1,4 @@
-import { Page, Locator } from "@playwright/test";
+import {Page, Locator} from '@playwright/test';
 
 export class AppPage {
   readonly page: Page;
@@ -18,21 +18,21 @@ export class AppPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.header = page.locator("header");
+    this.header = page.locator('header');
     this.gameModeButtons = {
-      core: page.getByRole("button", { name: "Core" }),
-      infinity: page.getByRole("button", { name: "Infinity" }),
+      core: page.getByRole('button', {name: 'Core'}),
+      infinity: page.getByRole('button', {name: 'Infinity'}),
     };
     this.desktopCardCountText = page.getByText(/\d+ cards loaded/);
     this.mobileCardCountText = page.getByText(/\d+ of \d+ cards/);
     this.loadingSpinner = page.locator('[role="status"]');
-    this.searchInput = page.getByPlaceholder("Search cards...");
-    this.errorMessage = page.getByText("Error loading cards");
-    this.retryButton = page.getByRole("button", { name: "Try Again" });
+    this.searchInput = page.getByPlaceholder('Search cards...');
+    this.errorMessage = page.getByText('Error loading cards');
+    this.retryButton = page.getByRole('button', {name: 'Try Again'});
   }
 
   async goto() {
-    await this.page.goto("/");
+    await this.page.goto('/');
     await this.waitForCardsLoaded();
   }
 
@@ -42,29 +42,27 @@ export class AppPage {
   async waitForCardsLoaded() {
     // Wait for the search input to be visible - this indicates the app is ready
     // Both desktop and mobile show the search input after cards load
-    await this.searchInput.waitFor({ state: "visible", timeout: 30000 });
+    await this.searchInput.waitFor({state: 'visible', timeout: 30000});
     // Give a small delay for the UI to stabilize
     await this.page.waitForTimeout(100);
   }
 
-  async setGameMode(mode: "core" | "infinity") {
+  async setGameMode(mode: 'core' | 'infinity') {
     await this.gameModeButtons[mode].click();
     // Wait for the mode to be applied
     await this.page.waitForTimeout(100);
   }
 
-  async getGameMode(): Promise<"core" | "infinity"> {
-    const corePressed = await this.gameModeButtons.core.getAttribute(
-      "aria-pressed"
-    );
-    return corePressed === "true" ? "core" : "infinity";
+  async getGameMode(): Promise<'core' | 'infinity'> {
+    const corePressed = await this.gameModeButtons.core.getAttribute('aria-pressed');
+    return corePressed === 'true' ? 'core' : 'infinity';
   }
 
   /**
    * Check if in mobile viewport based on mobile nav visibility
    */
   async isMobileViewport(): Promise<boolean> {
-    const mobileNav = this.page.locator("nav");
+    const mobileNav = this.page.locator('nav');
     return await mobileNav.isVisible().catch(() => false);
   }
 }
