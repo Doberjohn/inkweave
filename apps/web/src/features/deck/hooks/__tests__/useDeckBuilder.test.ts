@@ -53,7 +53,7 @@ describe('useDeckBuilder', () => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
-      localStorageMock.setItem('lorcana-synergy-finder-current-deck', JSON.stringify(savedDeck));
+      localStorageMock.setItem('inkweave-current-deck', JSON.stringify(savedDeck));
 
       const {result} = renderHook(() => useDeckBuilder());
 

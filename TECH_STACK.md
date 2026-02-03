@@ -83,7 +83,7 @@ pnpm lint             # Lint all packages
 ### Project Structure
 
 ```
-lorcana-synergy-finder/
+inkweave/
 ├── apps/
 │   └── web/                   # React web app (Vite)
 │       ├── src/

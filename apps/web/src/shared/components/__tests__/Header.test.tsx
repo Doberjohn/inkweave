@@ -13,7 +13,7 @@ describe('Header', () => {
   it('should render the app title', () => {
     render(<Header {...defaultProps} />);
 
-    expect(screen.getByRole('heading', {name: /lorcana synergy finder/i})).toBeInTheDocument();
+    expect(screen.getByRole('heading', {name: /inkweave/i})).toBeInTheDocument();
   });
 
   it('should show loading state', () => {

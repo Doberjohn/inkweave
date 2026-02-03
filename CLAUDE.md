@@ -1,4 +1,4 @@
-# Lorcana Synergy Finder
+# Inkweave
 
 Monorepo containing the Lorcana synergy detection engine and web application.
 
@@ -13,7 +13,7 @@ Monorepo containing the Lorcana synergy detection engine and web application.
 ## Project Structure
 
 ```
-lorcana-synergy-finder/
+inkweave/
 ├── package.json              # Root workspace config
 ├── pnpm-workspace.yaml
 ├── packages/
@@ -27,7 +27,7 @@ lorcana-synergy-finder/
 │           └── engine/       # SynergyEngine class + rules
 └── apps/
     └── web/                  # React web application
-        ├── package.json      # lorcana-synergy-finder-web
+        ├── package.json      # inkweave-web
         ├── vite.config.ts
         └── src/
             ├── App.tsx       # Root component (three-column layout)
@@ -52,7 +52,7 @@ const synergies = engine.findSynergies(card, allCards);
 const result = engine.checkSynergy(cardA, cardB);
 ```
 
-### lorcana-synergy-finder-web
+### inkweave-web
 
 React web application that consumes the synergy engine package.
 
@@ -140,8 +140,8 @@ Main state management for deck building:
 - `overallScore` / `averageScore` / `connectionCount`
 
 ### localStorage Keys
-- `lorcana-synergy-finder-decks` - Array of saved Deck objects
-- `lorcana-synergy-finder-current-deck` - Current working deck (auto-persisted)
+- `inkweave-decks` - Array of saved Deck objects
+- `inkweave-current-deck` - Current working deck (auto-persisted)
 
 ### Validation Rules
 - Maximum 60 cards per deck

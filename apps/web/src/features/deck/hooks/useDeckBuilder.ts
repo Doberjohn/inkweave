@@ -5,8 +5,8 @@ import type {Deck, DeckCard, DeckStats} from '../types';
 import {synergyCache} from '../../synergies';
 import {ALL_INKS} from '../../../shared/constants';
 
-const STORAGE_KEY_DECKS = 'lorcana-synergy-finder-decks';
-const STORAGE_KEY_CURRENT = 'lorcana-synergy-finder-current-deck';
+const STORAGE_KEY_DECKS = 'inkweave-decks';
+const STORAGE_KEY_CURRENT = 'inkweave-current-deck';
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
