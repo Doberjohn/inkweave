@@ -163,6 +163,8 @@ Before EVERY commit, run these checks and fix any issues:
 
 Do NOT commit or push if any check fails.
 
+After pushing, always confirm with clear output (e.g., git log showing commit on origin/master).
+
 ### Branch Naming
 - `feature/` - New features or enhancements
 - `fix/` - Bug fixes
