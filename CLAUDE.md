@@ -165,3 +165,10 @@ Main state management for deck building:
 ### Code Quality
 - After writing or modifying significant code (new features, refactors, bug fixes), run the `code-simplifier` agent to polish for clarity and consistency
 - Use `/refactor-code` for periodic comprehensive codebase audits
+
+### Testing Style
+- Write focused, minimal tests - not exhaustive coverage
+- One test per distinct behavior, no redundant variations
+- Skip trivial edge cases unless they're critical paths
+- Prefer readability over coverage percentage
+- Aim for 5-15 tests per component/hook, not 30+
