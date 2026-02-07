@@ -1,4 +1,4 @@
-import {COLORS, FONT_SIZES, SPACING} from '../constants';
+import {APP_NAME, COLORS, FONT_SIZES, SPACING} from '../constants';
 
 interface HeaderProps {
   totalCards: number;
@@ -17,7 +17,7 @@ export function Header({totalCards, isLoading}: HeaderProps) {
         alignItems: 'center',
       }}>
       <div>
-        <h1 style={{fontSize: `${FONT_SIZES.xxxl}px`, fontWeight: 700, margin: 0}}>Inkweave</h1>
+        <h1 style={{fontSize: `${FONT_SIZES.xxxl}px`, fontWeight: 700, margin: 0}}>{APP_NAME}</h1>
         <p style={{fontSize: `${FONT_SIZES.base}px`, color: COLORS.primary200, marginTop: '4px'}}>
           {isLoading ? 'Loading...' : `${totalCards} cards loaded`}
         </p>
