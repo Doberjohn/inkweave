@@ -14,7 +14,6 @@ function SynergyFinderApp() {
     filteredCards,
     isLoading,
     error,
-    totalCards,
     selectedCard,
     selectCard,
     clearSelection,
