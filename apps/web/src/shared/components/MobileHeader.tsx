@@ -4,7 +4,7 @@ export function MobileHeader() {
   return (
     <header
       style={{
-        background: COLORS.white,
+        backgroundColor: COLORS.white,
         borderBottom: `1px solid ${COLORS.gray200}`,
         padding: `${SPACING.md}px ${SPACING.lg}px`,
         paddingTop: `calc(${SPACING.md}px + env(safe-area-inset-top))`,
