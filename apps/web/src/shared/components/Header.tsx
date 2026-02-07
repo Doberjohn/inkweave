@@ -14,12 +14,7 @@ export function Header() {
         minHeight: `${LAYOUT.headerHeight}px`,
         boxSizing: 'border-box',
       }}>
-      <div>
-        <h1 style={{fontSize: `${FONT_SIZES.xxxl}px`, fontWeight: 700, margin: 0}}>{APP_NAME}</h1>
-        <p style={{fontSize: `${FONT_SIZES.base}px`, color: COLORS.gray600, marginTop: '4px'}}>
-          {isLoading ? 'Loading...' : `${totalCards} cards loaded`}
-        </p>
-      </div>
+      <h1 style={{fontSize: `${FONT_SIZES.xl}px`, fontWeight: 700, margin: 0}}>{APP_NAME}</h1>
     </header>
   );
 }
