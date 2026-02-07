@@ -68,10 +68,9 @@ test.describe('Mobile Viewport', () => {
     await expect(page.getByRole('button', {name: 'Sapphire', exact: true})).toBeVisible();
   });
 
-  test('should show game mode toggle in mobile header', async ({page}) => {
-    // Game mode buttons should be in mobile header
-    await expect(page.getByRole('button', {name: 'Core'})).toBeVisible();
-    await expect(page.getByRole('button', {name: 'Infinity'})).toBeVisible();
+  test('should show mobile header', async ({page}) => {
+    // Header should be visible
+    await expect(page.locator('header')).toBeVisible();
   });
 
   test('should search for cards on mobile', async ({cardListPage, page}) => {

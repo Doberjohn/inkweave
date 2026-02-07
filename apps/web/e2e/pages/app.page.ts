@@ -3,10 +3,6 @@ import {Page, Locator} from '@playwright/test';
 export class AppPage {
   readonly page: Page;
   readonly header: Locator;
-  readonly gameModeButtons: {
-    core: Locator;
-    infinity: Locator;
-  };
   // Desktop header shows card count like "123 cards loaded"
   readonly desktopCardCountText: Locator;
   // Mobile card list shows count like "50 of 123 cards"
@@ -19,10 +15,6 @@ export class AppPage {
   constructor(page: Page) {
     this.page = page;
     this.header = page.locator('header');
-    this.gameModeButtons = {
-      core: page.getByRole('button', {name: 'Core'}),
-      infinity: page.getByRole('button', {name: 'Infinity'}),
-    };
     this.desktopCardCountText = page.getByText(/\d+ cards loaded/);
     this.mobileCardCountText = page.getByText(/\d+ of \d+ cards/);
     this.loadingSpinner = page.locator('[role="status"]');
@@ -45,17 +37,6 @@ export class AppPage {
     await this.searchInput.waitFor({state: 'visible', timeout: 30000});
     // Give a small delay for the UI to stabilize
     await this.page.waitForTimeout(100);
-  }
-
-  async setGameMode(mode: 'core' | 'infinity') {
-    await this.gameModeButtons[mode].click();
-    // Wait for the mode to be applied
-    await this.page.waitForTimeout(100);
-  }
-
-  async getGameMode(): Promise<'core' | 'infinity'> {
-    const corePressed = await this.gameModeButtons.core.getAttribute('aria-pressed');
-    return corePressed === 'true' ? 'core' : 'infinity';
   }
 
   /**

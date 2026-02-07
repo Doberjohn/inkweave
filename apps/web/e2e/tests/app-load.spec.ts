@@ -18,18 +18,10 @@ test.describe('App Loading', () => {
     await expect(cardListPage.cardCountText).toBeVisible();
   });
 
-  test('should display header with game mode toggle', async ({appPage}) => {
+  test('should display header', async ({appPage}) => {
     await appPage.goto();
 
-    await expect(appPage.gameModeButtons.core).toBeVisible();
-    await expect(appPage.gameModeButtons.infinity).toBeVisible();
-  });
-
-  test('should default to Core game mode', async ({appPage}) => {
-    await appPage.goto();
-
-    await expect(appPage.gameModeButtons.core).toHaveAttribute('aria-pressed', 'true');
-    await expect(appPage.gameModeButtons.infinity).toHaveAttribute('aria-pressed', 'false');
+    await expect(appPage.header).toBeVisible();
   });
 
   test('should show card count after loading', async ({appPage, cardListPage}) => {

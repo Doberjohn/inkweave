@@ -1,7 +1,7 @@
 import {useMemo} from 'react';
 import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
-import {CardList, CardPreviewProvider, CardPreviewPopover, filterCards} from './features/cards';
+import {CardList, CardPreviewProvider, CardPreviewPopover} from './features/cards';
 import {useSynergyFinder, SynergyResults} from './features/synergies';
 import {useDeckBuilder, DeckPanel} from './features/deck';
 import {Header, MobileHeader, MobileNav, ErrorBoundary} from './shared/components';
@@ -24,8 +24,6 @@ function SynergyFinderApp() {
     setSearchQuery,
     inkFilter,
     setInkFilter,
-    gameMode,
-    setGameMode,
     filters,
     setFilters,
     uniqueKeywords,
@@ -38,15 +36,10 @@ function SynergyFinderApp() {
   const {isMobile} = useResponsive();
   const {activeView, setActiveView} = useMobileView();
 
-  // Get cards filtered by game mode for suggestions
-  const gameModeFilteredCards = useMemo(() => {
-    return filterCards(cards, {gameMode});
-  }, [cards, gameMode]);
-
   // Get deck suggestions
   const deckSuggestions = useMemo(() => {
-    return deckBuilder.getDeckSuggestions(gameModeFilteredCards);
-  }, [deckBuilder, gameModeFilteredCards]);
+    return deckBuilder.getDeckSuggestions(cards);
+  }, [deckBuilder, cards]);
 
   // Get deck synergy analysis
   const deckSynergyAnalysis = useMemo(() => {
@@ -87,7 +80,7 @@ function SynergyFinderApp() {
           display: 'flex',
           flexDirection: 'column',
         }}>
-        <MobileHeader gameMode={gameMode} onGameModeChange={setGameMode} />
+        <MobileHeader />
 
         <main
           style={{
@@ -181,8 +174,6 @@ function SynergyFinderApp() {
       <Header
         totalCards={totalCards}
         isLoading={isLoading}
-        gameMode={gameMode}
-        onGameModeChange={setGameMode}
       />
 
       <div style={{display: 'flex', minHeight: `calc(100vh - ${LAYOUT.headerHeight}px)`}}>

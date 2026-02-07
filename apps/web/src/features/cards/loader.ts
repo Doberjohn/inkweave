@@ -1,7 +1,4 @@
-import type {LorcanaCard, Ink, CardType, GameMode} from './types';
-
-// Sets excluded from Core mode (only valid in Infinity)
-const INFINITY_ONLY_SETS = ['1', '2', '3', '4'];
+import type {LorcanaCard, Ink, CardType} from './types';
 
 // LorcanaJSON data structure (partial - only fields we need)
 interface LorcanaJSONCard {
@@ -257,7 +254,6 @@ export interface CardFilterOptions {
   classifications?: string[];
   textSearch?: string;
   setCode?: string;
-  gameMode?: GameMode;
 }
 
 /**
@@ -283,11 +279,6 @@ export function filterCards(cards: LorcanaCard[], options: CardFilterOptions): L
 
     // Set filter
     if (options.setCode && card.setCode !== options.setCode) return false;
-
-    // Game mode filter - Core excludes sets 1-4
-    if (options.gameMode === 'core' && card.setCode && INFINITY_ONLY_SETS.includes(card.setCode)) {
-      return false;
-    }
 
     // Keywords filter (any match)
     if (options.keywords && options.keywords.length > 0) {
