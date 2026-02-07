@@ -4,11 +4,11 @@ export function MobileHeader() {
   return (
     <header
       style={{
-        background: `linear-gradient(135deg, ${COLORS.headerGradientStart} 0%, ${COLORS.headerGradientEnd} 100%)`,
+        background: COLORS.white,
         borderBottom: `1px solid ${COLORS.gray200}`,
         padding: `${SPACING.md}px ${SPACING.lg}px`,
         paddingTop: `calc(${SPACING.md}px + env(safe-area-inset-top))`,
-        color: COLORS.white,
+        color: COLORS.gray900,
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
