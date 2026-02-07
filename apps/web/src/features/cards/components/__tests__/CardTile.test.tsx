@@ -38,12 +38,21 @@ describe('CardTile', () => {
     expect(screen.getByText('Snow Queen')).toBeInTheDocument();
   });
 
-  it('should render card cost in badge', () => {
-    renderWithProvider(<CardTile {...defaultProps} />);
+  it('should not render cost in tile body when imageUrl is provided', () => {
+    const cardWithImage = createCard({
+      ...mockCard,
+      imageUrl: 'https://example.com/elsa.jpg',
+    });
+    const {container} = renderWithProvider(<CardTile {...defaultProps} card={cardWithImage} />);
 
-    // Cost appears in the styled badge (there may be multiple "5"s due to image fallback)
-    const costElements = screen.getAllByText('5');
-    expect(costElements.length).toBeGreaterThanOrEqual(1);
+    // Cost should not appear as text in the tile body (only in CardImage fallback if image fails)
+    // The image should be loaded, so no cost fallback should be visible
+    const img = container.querySelector('img');
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', 'https://example.com/elsa.jpg');
+    
+    // Cost text "5" should not be in the document when image loads successfully
+    expect(screen.queryByText('5')).not.toBeInTheDocument();
   });
 
   it('should render keywords (base form)', () => {
