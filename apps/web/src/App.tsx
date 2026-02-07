@@ -171,10 +171,7 @@ function SynergyFinderApp() {
         background: `linear-gradient(135deg, ${COLORS.bgGradientStart} 0%, ${COLORS.bgGradientEnd} 100%)`,
         fontFamily: "'Inter', -apple-system, sans-serif",
       }}>
-      <Header
-        totalCards={totalCards}
-        isLoading={isLoading}
-      />
+      <Header />
 
       <div style={{display: 'flex', minHeight: `calc(100vh - ${LAYOUT.headerHeight}px)`}}>
         <CardList

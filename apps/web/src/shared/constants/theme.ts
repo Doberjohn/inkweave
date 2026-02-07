@@ -24,7 +24,7 @@ export const STRENGTH_STYLES: Record<'strong' | 'moderate' | 'weak', {bg: string
 export const LAYOUT = {
   sidebarWidth: 340,
   deckPanelWidth: 380,
-  headerHeight: 80,
+  headerHeight: 56,
   cardTileImageWidth: 40,
   cardTileImageHeight: 56,
   synergyCardImageWidth: 60,

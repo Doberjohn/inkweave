@@ -13,16 +13,4 @@ const meta: Meta<typeof Header> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
-  args: {
-    totalCards: 1234,
-    isLoading: false,
-  },
-};
-
-export const Loading: Story = {
-  args: {
-    totalCards: 0,
-    isLoading: true,
-  },
-};
+export const Default: Story = {};
