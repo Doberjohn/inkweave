@@ -54,37 +54,18 @@ export function CardTile({
         borderRadius={RADIUS.sm}
       />
       <div style={{flex: 1, minWidth: 0}}>
-        <div
+        <span
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: '8px',
+            fontWeight: 600,
+            fontSize: `${FONT_SIZES.base}px`,
+            color: COLORS.gray800,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            display: 'block',
           }}>
-          <span
-            style={{
-              fontWeight: 600,
-              fontSize: `${FONT_SIZES.base}px`,
-              color: COLORS.gray800,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}>
-            {card.name}
-          </span>
-          <span
-            style={{
-              background: colors.bg,
-              color: colors.text,
-              padding: '2px 6px',
-              borderRadius: '10px',
-              fontSize: `${FONT_SIZES.sm}px`,
-              fontWeight: 500,
-              flexShrink: 0,
-            }}>
-            {card.cost}
-          </span>
-        </div>
+          {card.name}
+        </span>
         {card.version && (
           <span
             style={{
