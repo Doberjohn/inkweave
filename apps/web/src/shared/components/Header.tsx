@@ -12,7 +12,7 @@ export function Header({totalCards, isLoading, gameMode, onGameModeChange}: Head
   return (
     <header
       style={{
-        background: COLORS.white,
+        background: `linear-gradient(90deg, ${COLORS.headerGradientStart}, ${COLORS.headerGradientEnd})`,
         borderBottom: `1px solid ${COLORS.gray200}`,
         padding: `${SPACING.xl}px ${SPACING.xxl}px`,
         color: COLORS.gray900,
