@@ -183,7 +183,8 @@ export function useSynergyFinder(): UseSynergyFinderReturn {
     }
 
     // Sort by set (latest first), then by card number in set
-    return result.sort((a, b) => {
+    // Clone before sorting to avoid mutating the original array
+    return [...result].sort((a, b) => {
       const setA = a.setCode ?? '';
       const setB = b.setCode ?? '';
       if (setA !== setB) {
