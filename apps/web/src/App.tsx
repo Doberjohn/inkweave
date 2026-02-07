@@ -76,7 +76,7 @@ function SynergyFinderApp() {
         style={{
           minHeight: '100vh',
           background: `linear-gradient(135deg, ${COLORS.bgGradientStart} 0%, ${COLORS.bgGradientEnd} 100%)`,
-          fontFamily: "'Inter', -apple-system, sans-serif",
+          fontFamily: "'Avenir', 'Avenir Next', -apple-system, sans-serif",
           display: 'flex',
           flexDirection: 'column',
         }}>
@@ -169,7 +169,7 @@ function SynergyFinderApp() {
       style={{
         minHeight: '100vh',
         background: `linear-gradient(135deg, ${COLORS.bgGradientStart} 0%, ${COLORS.bgGradientEnd} 100%)`,
-        fontFamily: "'Inter', -apple-system, sans-serif",
+        fontFamily: "'Avenir', 'Avenir Next', -apple-system, sans-serif",
       }}>
       <Header
         totalCards={totalCards}
