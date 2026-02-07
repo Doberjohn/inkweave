@@ -6,6 +6,6 @@ describe('MobileHeader', () => {
   it('should render the app title', () => {
     render(<MobileHeader />);
 
-    expect(screen.getByRole('heading', {name: /lorcana synergy/i})).toBeInTheDocument();
+    expect(screen.getByRole('heading', {name: /inkweave/i})).toBeInTheDocument();
   });
 });

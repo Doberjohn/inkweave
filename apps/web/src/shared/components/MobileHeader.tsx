@@ -1,4 +1,4 @@
-import {COLORS, FONT_SIZES, SPACING, LAYOUT_MOBILE} from '../constants';
+import {APP_NAME, COLORS, FONT_SIZES, SPACING, LAYOUT_MOBILE} from '../constants';
 
 export function MobileHeader() {
   return (
@@ -14,7 +14,7 @@ export function MobileHeader() {
         height: `${LAYOUT_MOBILE.headerHeight}px`,
         boxSizing: 'border-box',
       }}>
-      <h1 style={{fontSize: `${FONT_SIZES.xl}px`, fontWeight: 700, margin: 0}}>Lorcana Synergy</h1>
+      <h1 style={{fontSize: `${FONT_SIZES.xl}px`, fontWeight: 700, margin: 0}}>{APP_NAME}</h1>
     </header>
   );
 }
