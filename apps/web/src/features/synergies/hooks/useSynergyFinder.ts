@@ -1,5 +1,5 @@
 import {useState, useEffect, useMemo, useCallback} from 'react';
-import type {LorcanaCard, Ink, GameMode, SetInfo} from '../../cards';
+import type {LorcanaCard, Ink, SetInfo} from '../../cards';
 import type {GroupedSynergies} from '../types';
 import {sharedEngine} from '../engine';
 import {
@@ -123,10 +123,6 @@ export interface UseSynergyFinderReturn {
   inkFilter: Ink | 'all';
   /** Set the ink color filter */
   setInkFilter: (ink: Ink | 'all') => void;
-  /** Current game mode ("core" excludes sets 1-4, "infinity" includes all) */
-  gameMode: GameMode;
-  /** Set the game mode */
-  setGameMode: (mode: GameMode) => void;
   /** Additional filter options (type, cost, keywords, etc.) */
   filters: CardFilterOptions;
   /** Update filter options */
@@ -161,17 +157,16 @@ export function useSynergyFinder(): UseSynergyFinderReturn {
   const [selectedCard, setSelectedCard] = useState<LorcanaCard | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [inkFilter, setInkFilter] = useState<Ink | 'all'>('all');
-  const [gameMode, setGameMode] = useState<GameMode>('core');
   const [filters, setFilters] = useState<CardFilterOptions>({});
 
-  // Combine ink filter and game mode with other filters
+  // Combine ink filter with other filters
   const combinedFilters = useMemo(() => {
-    const combined: CardFilterOptions = {...filters, gameMode};
+    const combined: CardFilterOptions = {...filters};
     if (inkFilter !== 'all') {
       combined.ink = inkFilter;
     }
     return combined;
-  }, [filters, inkFilter, gameMode]);
+  }, [filters, inkFilter]);
 
   // Filter and sort cards
   const filteredCards = useMemo(() => {
@@ -188,7 +183,8 @@ export function useSynergyFinder(): UseSynergyFinderReturn {
     }
 
     // Sort by set (latest first), then by card number in set
-    return result.sort((a, b) => {
+    // Clone before sorting to avoid mutating the original array
+    return [...result].sort((a, b) => {
       const setA = a.setCode ?? '';
       const setB = b.setCode ?? '';
       if (setA !== setB) {
@@ -207,16 +203,11 @@ export function useSynergyFinder(): UseSynergyFinderReturn {
     });
   }, [cards, searchQuery, combinedFilters]);
 
-  // Cards filtered by game mode (for synergy calculation)
-  const gameModeFilteredCards = useMemo(() => {
-    return filterCards(cards, {gameMode});
-  }, [cards, gameMode]);
-
-  // Calculate synergies for selected card (respects game mode)
+  // Calculate synergies for selected card
   const synergies = useMemo(() => {
-    if (!selectedCard || gameModeFilteredCards.length === 0) return [];
-    return sharedEngine.findSynergies(selectedCard, gameModeFilteredCards);
-  }, [selectedCard, gameModeFilteredCards]);
+    if (!selectedCard || cards.length === 0) return [];
+    return sharedEngine.findSynergies(selectedCard, cards);
+  }, [selectedCard, cards]);
 
   // Total synergy count
   const totalSynergyCount = useMemo(() => {
@@ -255,8 +246,6 @@ export function useSynergyFinder(): UseSynergyFinderReturn {
     setSearchQuery,
     inkFilter,
     setInkFilter,
-    gameMode,
-    setGameMode,
     filters,
     setFilters,
 

@@ -101,17 +101,6 @@ describe('Card Filtering', () => {
     expect(results[0].id).toBe('7');
   });
 
-  it('should filter by game mode (core excludes sets 1-4)', () => {
-    const results = filterCards(cards, {gameMode: 'core'});
-    expect(results).toHaveLength(6); // All except setCode "1"
-    expect(results.find((c) => c.setCode === '1')).toBeUndefined();
-  });
-
-  it('should include all sets in infinity mode', () => {
-    const results = filterCards(cards, {gameMode: 'infinity'});
-    expect(results).toHaveLength(7);
-  });
-
   it('should combine multiple filters', () => {
     const results = filterCards(cards, {ink: 'Amber', minCost: 3});
     expect(results).toHaveLength(1);

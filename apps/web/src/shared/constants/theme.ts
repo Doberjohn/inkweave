@@ -1,5 +1,8 @@
 import type {Ink, CardType} from 'lorcana-synergy-engine';
 
+// App branding
+export const APP_NAME = 'Inkweave';
+
 // Ink color styling
 export const INK_COLORS: Record<Ink, {bg: string; text: string; border: string}> = {
   Amber: {bg: '#fef3c7', text: '#92400e', border: '#f59e0b'},

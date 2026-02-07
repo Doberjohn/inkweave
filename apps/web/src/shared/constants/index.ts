@@ -1,4 +1,5 @@
 export {
+  APP_NAME,
   INK_COLORS,
   STRENGTH_STYLES,
   LAYOUT,

@@ -1,5 +1,5 @@
 // Types
-export type {Ink, GameMode, CardType, LorcanaCard} from './types';
+export type {Ink, CardType, LorcanaCard} from './types';
 
 // Loader functions
 export {
