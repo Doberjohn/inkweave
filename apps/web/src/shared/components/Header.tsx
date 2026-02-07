@@ -9,7 +9,7 @@ export function Header({totalCards, isLoading}: HeaderProps) {
   return (
     <header
       style={{
-        background: COLORS.white,
+        backgroundColor: COLORS.white,
         borderBottom: `1px solid ${COLORS.gray200}`,
         padding: `${SPACING.xl}px ${SPACING.xxl}px`,
         color: COLORS.gray900,
