@@ -1,16 +1,13 @@
-import {useMemo} from 'react';
 import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
 import {CardList, CardPreviewProvider, CardPreviewPopover} from './features/cards';
 import {useSynergyFinder, SynergyResults} from './features/synergies';
-import {useDeckBuilder, DeckPanel} from './features/deck';
 import {Header, MobileHeader, MobileNav, ErrorBoundary} from './shared/components';
 import {COLORS, LAYOUT, LAYOUT_MOBILE} from './shared/constants';
 import {useResponsive, useMobileView} from './shared/hooks';
 
 function SynergyFinderApp() {
   const {
-    cards,
     filteredCards,
     isLoading,
     error,
@@ -31,19 +28,8 @@ function SynergyFinderApp() {
     retryLoad,
   } = useSynergyFinder();
 
-  const deckBuilder = useDeckBuilder();
   const {isMobile} = useResponsive();
   const {activeView, setActiveView} = useMobileView();
-
-  // Get deck suggestions
-  const deckSuggestions = useMemo(() => {
-    return deckBuilder.getDeckSuggestions(cards);
-  }, [deckBuilder, cards]);
-
-  // Get deck synergy analysis
-  const deckSynergyAnalysis = useMemo(() => {
-    return deckBuilder.getDeckSynergyAnalysis();
-  }, [deckBuilder]);
 
   if (error) {
     return (
@@ -106,8 +92,6 @@ function SynergyFinderApp() {
                   selectCard(card);
                   setActiveView('synergies');
                 }}
-                onAddToDeck={deckBuilder.addCard}
-                getCardQuantity={deckBuilder.getCardQuantity}
                 isMobile
               />
             </ErrorBoundary>
@@ -120,43 +104,16 @@ function SynergyFinderApp() {
                 synergies={synergies}
                 totalSynergyCount={totalSynergyCount}
                 onClearSelection={clearSelection}
-                onAddToDeck={deckBuilder.addCard}
-                getCardQuantity={deckBuilder.getCardQuantity}
                 isMobile
               />
             </ErrorBoundary>
           )}
 
-          {activeView === 'deck' && (
-            <ErrorBoundary>
-              <DeckPanel
-                deck={deckBuilder.deck}
-                deckStats={deckBuilder.deckStats}
-                suggestions={deckSuggestions}
-                synergyAnalysis={deckSynergyAnalysis}
-                onAddCard={deckBuilder.addCard}
-                onRemoveCard={deckBuilder.removeCard}
-                onRemoveAllCopies={deckBuilder.removeAllCopies}
-                onSetQuantity={deckBuilder.setQuantity}
-                onClearDeck={deckBuilder.clearDeck}
-                onRenameDeck={deckBuilder.renameDeck}
-                onNewDeck={deckBuilder.newDeck}
-                onSaveDeck={deckBuilder.saveDeck}
-                onLoadDeck={deckBuilder.loadDeck}
-                onDeleteSavedDeck={deckBuilder.deleteSavedDeck}
-                getSavedDecks={deckBuilder.getSavedDecks}
-                onExportDeck={deckBuilder.exportDeck}
-                onImportDeck={deckBuilder.importDeck}
-                isMobile
-              />
-            </ErrorBoundary>
-          )}
         </main>
 
         <MobileNav
           activeView={activeView}
           onViewChange={setActiveView}
-          deckCardCount={deckBuilder.deckStats.totalCards}
         />
       </div>
     );
@@ -187,8 +144,6 @@ function SynergyFinderApp() {
           onInkFilterChange={setInkFilter}
           onFiltersChange={setFilters}
           onCardSelect={selectCard}
-          onAddToDeck={deckBuilder.addCard}
-          getCardQuantity={deckBuilder.getCardQuantity}
         />
 
         <SynergyResults
@@ -196,28 +151,6 @@ function SynergyFinderApp() {
           synergies={synergies}
           totalSynergyCount={totalSynergyCount}
           onClearSelection={clearSelection}
-          onAddToDeck={deckBuilder.addCard}
-          getCardQuantity={deckBuilder.getCardQuantity}
-        />
-
-        <DeckPanel
-          deck={deckBuilder.deck}
-          deckStats={deckBuilder.deckStats}
-          suggestions={deckSuggestions}
-          synergyAnalysis={deckSynergyAnalysis}
-          onAddCard={deckBuilder.addCard}
-          onRemoveCard={deckBuilder.removeCard}
-          onRemoveAllCopies={deckBuilder.removeAllCopies}
-          onSetQuantity={deckBuilder.setQuantity}
-          onClearDeck={deckBuilder.clearDeck}
-          onRenameDeck={deckBuilder.renameDeck}
-          onNewDeck={deckBuilder.newDeck}
-          onSaveDeck={deckBuilder.saveDeck}
-          onLoadDeck={deckBuilder.loadDeck}
-          onDeleteSavedDeck={deckBuilder.deleteSavedDeck}
-          getSavedDecks={deckBuilder.getSavedDecks}
-          onExportDeck={deckBuilder.exportDeck}
-          onImportDeck={deckBuilder.importDeck}
         />
       </div>
     </div>

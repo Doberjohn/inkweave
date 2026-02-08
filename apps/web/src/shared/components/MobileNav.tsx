@@ -5,10 +5,9 @@ import {COLORS, FONT_SIZES, LAYOUT_MOBILE, Z_INDEX, RADIUS} from '../constants';
 interface MobileNavProps {
   activeView: MobileView;
   onViewChange: (view: MobileView) => void;
-  deckCardCount: number;
 }
 
-export function MobileNav({activeView, onViewChange, deckCardCount}: MobileNavProps) {
+export function MobileNav({activeView, onViewChange}: MobileNavProps) {
   return (
     <nav
       style={{
@@ -36,13 +35,6 @@ export function MobileNav({activeView, onViewChange, deckCardCount}: MobileNavPr
         icon={<SynergiesIcon />}
         isActive={activeView === 'synergies'}
         onClick={() => onViewChange('synergies')}
-      />
-      <NavButton
-        label="Deck"
-        icon={<DeckIcon />}
-        isActive={activeView === 'deck'}
-        onClick={() => onViewChange('deck')}
-        badge={deckCardCount > 0 ? deckCardCount : undefined}
       />
     </nav>
   );
@@ -152,21 +144,3 @@ const SynergiesIcon = memo(function SynergiesIcon() {
   );
 });
 
-const DeckIcon = memo(function DeckIcon() {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round">
-      <rect x="4" y="4" width="16" height="16" rx="2" />
-      <rect x="6" y="2" width="12" height="2" rx="1" />
-      <line x="12" y1="8" x2="12" y2="16" />
-      <line x1="8" y1="12" x2="16" y2="12" />
-    </svg>
-  );
-});

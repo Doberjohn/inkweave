@@ -8,17 +8,9 @@ interface CardTileProps {
   card: LorcanaCard;
   onClick: () => void;
   isSelected: boolean;
-  onAddToDeck?: (card: LorcanaCard) => void;
-  deckQuantity?: number;
 }
 
-export function CardTile({
-  card,
-  onClick,
-  isSelected,
-  onAddToDeck,
-  deckQuantity = 0,
-}: CardTileProps) {
+export function CardTile({card, onClick, isSelected}: CardTileProps) {
   const colors = INK_COLORS[card.ink];
   const {previewHandlers} = useCardPreviewHandlers({card, onTap: onClick});
 
@@ -96,40 +88,6 @@ export function CardTile({
         </div>
       </div>
 
-      {/* Add to deck button */}
-      {onAddToDeck && (
-        <motion.button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddToDeck(card);
-          }}
-          disabled={deckQuantity >= 4}
-          aria-label={deckQuantity >= 4 ? 'Maximum 4 copies' : `Add ${card.name} to deck`}
-          whileHover={deckQuantity < 4 ? {scale: 1.15} : {}}
-          whileTap={deckQuantity < 4 ? {scale: 0.9} : {}}
-          animate={deckQuantity > 0 ? {scale: [1, 1.2, 1]} : {}}
-          transition={{type: 'spring', stiffness: 500, damping: 20}}
-          style={{
-            width: 26,
-            height: 26,
-            borderRadius: '50%',
-            border: 'none',
-            background: deckQuantity >= 4 ? COLORS.gray200 : COLORS.primary500,
-            color: deckQuantity >= 4 ? COLORS.gray400 : COLORS.white,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: `${FONT_SIZES.sm}px`,
-            fontWeight: 600,
-            cursor: deckQuantity >= 4 ? 'not-allowed' : 'pointer',
-            flexShrink: 0,
-            position: 'relative',
-          }}
-          title={deckQuantity >= 4 ? 'Maximum 4 copies' : 'Add to deck'}>
-          {deckQuantity > 0 ? deckQuantity : '+'}
-        </motion.button>
-      )}
     </motion.button>
   );
 }

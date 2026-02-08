@@ -17,16 +17,12 @@ interface SynergyCardProps {
   card: LorcanaCard;
   strength: SynergyStrength;
   explanation: string;
-  onAddToDeck?: (card: LorcanaCard) => void;
-  deckQuantity?: number;
 }
 
 export const SynergyCard = memo(function SynergyCard({
   card,
   strength,
   explanation,
-  onAddToDeck,
-  deckQuantity = 0,
 }: SynergyCardProps) {
   const colors = INK_COLORS[card.ink];
   const strengthStyle = STRENGTH_STYLES[strength];
@@ -128,40 +124,6 @@ export const SynergyCard = memo(function SynergyCard({
         </div>
       </div>
 
-      {/* Add to deck button */}
-      {onAddToDeck && (
-        <motion.button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddToDeck(card);
-          }}
-          disabled={deckQuantity >= 4}
-          aria-label={deckQuantity >= 4 ? 'Maximum 4 copies' : `Add ${card.name} to deck`}
-          whileHover={deckQuantity < 4 ? {scale: 1.15} : {}}
-          whileTap={deckQuantity < 4 ? {scale: 0.9} : {}}
-          animate={deckQuantity > 0 ? {scale: [1, 1.2, 1]} : {}}
-          transition={{type: 'spring', stiffness: 500, damping: 20}}
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: '50%',
-            border: 'none',
-            background: deckQuantity >= 4 ? COLORS.gray200 : COLORS.primary500,
-            color: deckQuantity >= 4 ? COLORS.gray400 : COLORS.white,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 600,
-            cursor: deckQuantity >= 4 ? 'not-allowed' : 'pointer',
-            flexShrink: 0,
-            alignSelf: 'center',
-          }}
-          title={deckQuantity >= 4 ? 'Maximum 4 copies' : 'Add to deck'}>
-          {deckQuantity > 0 ? deckQuantity : '+'}
-        </motion.button>
-      )}
     </motion.div>
   );
 });

@@ -354,26 +354,4 @@ describe('CardList', () => {
     });
   });
 
-  describe('Add to deck functionality', () => {
-    it('should pass onAddToDeck to CardTile', () => {
-      const onAddToDeck = vi.fn().mockReturnValue(true);
-      renderWithProvider(<CardList {...defaultProps} onAddToDeck={onAddToDeck} />);
-
-      // The add button should appear on cards
-      expect(screen.getByRole('button', {name: /add elsa to deck/i})).toBeInTheDocument();
-    });
-
-    it('should pass getCardQuantity to CardTile', () => {
-      // Return quantity only for the first card to make assertions easier
-      const getCardQuantity = vi.fn((id: string) => (id === '1' ? 2 : 0));
-      const onAddToDeck = vi.fn().mockReturnValue(true);
-      renderWithProvider(
-        <CardList {...defaultProps} onAddToDeck={onAddToDeck} getCardQuantity={getCardQuantity} />,
-      );
-
-      // Should show quantity badge - there will be multiple "2"s but at least one
-      const twoElements = screen.getAllByText('2');
-      expect(twoElements.length).toBeGreaterThanOrEqual(1);
-    });
-  });
 });

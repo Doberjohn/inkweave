@@ -9,8 +9,6 @@ interface SynergyResultsProps {
   synergies: GroupedSynergies[];
   totalSynergyCount: number;
   onClearSelection: () => void;
-  onAddToDeck?: (card: LorcanaCard) => boolean;
-  getCardQuantity?: (cardId: string) => number;
   isMobile?: boolean;
 }
 
@@ -19,8 +17,6 @@ export function SynergyResults({
   synergies,
   totalSynergyCount,
   onClearSelection,
-  onAddToDeck,
-  getCardQuantity,
   isMobile = false,
 }: SynergyResultsProps) {
   return (
@@ -64,12 +60,7 @@ export function SynergyResults({
                 </span>
               </div>
               {synergies.map((group) => (
-                <SynergyGroup
-                  key={group.type}
-                  group={group}
-                  onAddToDeck={onAddToDeck}
-                  getCardQuantity={getCardQuantity}
-                />
+                <SynergyGroup key={group.type} group={group} />
               ))}
             </>
           )}

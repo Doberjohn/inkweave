@@ -10,24 +10,18 @@ describe('useMobileView', () => {
   });
 
   it('should accept custom initial view', () => {
-    const {result} = renderHook(() => useMobileView('deck'));
+    const {result} = renderHook(() => useMobileView('synergies'));
 
-    expect(result.current.activeView).toBe('deck');
+    expect(result.current.activeView).toBe('synergies');
   });
 
   it('should switch views correctly', () => {
     const {result} = renderHook(() => useMobileView());
 
-    // Test switching to each view
     act(() => {
       result.current.setActiveView('synergies');
     });
     expect(result.current.activeView).toBe('synergies');
-
-    act(() => {
-      result.current.setActiveView('deck');
-    });
-    expect(result.current.activeView).toBe('deck');
 
     act(() => {
       result.current.setActiveView('cards');
