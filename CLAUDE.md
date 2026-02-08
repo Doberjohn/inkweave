@@ -39,10 +39,9 @@ inkweave/
         ├── package.json      # inkweave-web
         ├── vite.config.ts
         └── src/
-            ├── App.tsx       # Root component (three-column layout)
+            ├── App.tsx       # Root component (two-column layout)
             ├── features/
             │   ├── cards/    # Card loading, components, hooks
-            │   ├── deck/     # Deck builder components, hooks
             │   └── synergies/# Synergy display components, hooks
             └── shared/       # Constants, utilities, shared components
 ```

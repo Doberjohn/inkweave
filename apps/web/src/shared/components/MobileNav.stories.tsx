@@ -30,34 +30,11 @@ type Story = StoryObj<typeof meta>;
 export const CardsActive: Story = {
   args: {
     activeView: 'cards',
-    deckCardCount: 0,
   },
 };
 
 export const SynergiesActive: Story = {
   args: {
     activeView: 'synergies',
-    deckCardCount: 0,
-  },
-};
-
-export const DeckActive: Story = {
-  args: {
-    activeView: 'deck',
-    deckCardCount: 15,
-  },
-};
-
-export const WithDeckBadge: Story = {
-  args: {
-    activeView: 'cards',
-    deckCardCount: 42,
-  },
-};
-
-export const MaxDeckBadge: Story = {
-  args: {
-    activeView: 'cards',
-    deckCardCount: 120,
   },
 };

@@ -12,7 +12,6 @@ interface CollapsibleSectionProps {
 
 /**
  * Reusable collapsible section with header toggle.
- * Used in DeckStats, DeckSuggestions, DeckSynergyAnalysis.
  */
 export function CollapsibleSection({
   title,

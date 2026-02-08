@@ -4,10 +4,9 @@
 
 ### Overview
 
-Three-column single-page application (desktop) / tab-based navigation (mobile):
+Two-column single-page application (desktop) / tab-based navigation (mobile):
 - **CardList** (340px fixed) - Card browser with search/filter
 - **SynergyResults** (flex) - Synergy display for selected card
-- **DeckPanel** (380px fixed) - Deck builder and analysis
 
 ### Directory Structure
 
@@ -20,11 +19,6 @@ src/
 │   │   ├── __tests__/   # Card loader tests
 │   │   ├── loader.ts    # Card data loading
 │   │   ├── types.ts     # Card types (Ink, CardType, LorcanaCard)
-│   │   └── index.ts     # Barrel file
-│   ├── deck/            # Deck building functionality
-│   │   ├── components/  # DeckPanel, DeckStats, etc.
-│   │   ├── hooks/       # useDeckBuilder
-│   │   ├── types.ts     # Deck types
 │   │   └── index.ts     # Barrel file
 │   └── synergies/       # Synergy detection
 │       ├── components/  # SynergyResults, SynergyCard
@@ -43,7 +37,7 @@ src/
 ### Key Design Decisions
 
 **Feature-Based Architecture**
-- Code organized by feature domain (cards, deck, synergies)
+- Code organized by feature domain (cards, synergies)
 - Shared code in `shared/` directory
 - Barrel files (index.ts) for clean imports
 
@@ -55,7 +49,6 @@ src/
 
 **State Management**
 - `useSynergyFinder` hook manages card data, filters, selection, and synergy calculation
-- `useDeckBuilder` hook manages deck state with `useRef` to avoid stale closures
 - Synergies memoized and only recompute on card selection or game mode change
 
 **Data Loading**
@@ -63,13 +56,8 @@ src/
 - All operations in-memory after initial load
 - Cards deduplicated by `fullName`
 
-**Persistence**
-- Decks saved to localStorage
-- Current working deck auto-persisted
-- JSON import/export for sharing
-
 **Responsive Design**
-- Desktop: Three-column layout
+- Desktop: Two-column layout
 - Mobile: Tab-based navigation with bottom nav
 - Touch-optimized interactions (long-press preview)
 
@@ -83,7 +71,6 @@ src/
 | Testing | Vitest + @testing-library/react |
 | Styling | Inline CSS + design tokens |
 | State | React hooks (no external library) |
-| Storage | localStorage |
 
 ## Synergy Rules
 

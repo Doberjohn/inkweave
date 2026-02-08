@@ -1,6 +1,6 @@
 import {useState} from 'react';
 
-export type MobileView = 'cards' | 'synergies' | 'deck';
+export type MobileView = 'cards' | 'synergies';
 
 interface UseMobileViewReturn {
   activeView: MobileView;

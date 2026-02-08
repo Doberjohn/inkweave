@@ -212,7 +212,7 @@ None currently tracked.
 See [GitHub Issues](https://github.com/Doberjohn/lorcana-synergy-finder/issues) for full backlog.
 
 ### Epic 1: MVP Scope Reduction (#28)
-- [ ] Remove Deck Builder - #33
+- [x] Remove Deck Builder - #33
 - [ ] Remove Infinity Mode - #34
 
 ### Epic 2: Dark Fantasy UI Theme (#29)

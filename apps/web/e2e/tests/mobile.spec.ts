@@ -1,5 +1,4 @@
 import {test, expect} from '../fixtures';
-import {clearStoredDecks} from '../helpers/storage';
 
 test.describe('Mobile Viewport', () => {
   // This test file should only run on mobile-chrome project
@@ -10,8 +9,6 @@ test.describe('Mobile Viewport', () => {
     }
 
     await page.goto('/');
-    await clearStoredDecks(page);
-    await page.reload();
     await appPage.waitForCardsLoaded();
   });
 
@@ -22,7 +19,6 @@ test.describe('Mobile Viewport', () => {
     // Check nav buttons - use nav locator to avoid matching card buttons
     await expect(mobileNav.getByRole('button', {name: 'Cards'})).toBeVisible();
     await expect(mobileNav.getByRole('button', {name: 'Synergies'})).toBeVisible();
-    await expect(mobileNav.getByRole('button', {name: 'Deck'})).toBeVisible();
   });
 
   test('should start on Cards view', async ({page}) => {
@@ -43,19 +39,6 @@ test.describe('Mobile Viewport', () => {
 
     // Should show empty state
     await expect(page.getByText('Select a card to see synergies')).toBeVisible();
-  });
-
-  test('should switch to Deck view', async ({page}) => {
-    const mobileNav = page.locator('nav');
-    await mobileNav.getByRole('button', {name: 'Deck'}).click();
-
-    await expect(mobileNav.getByRole('button', {name: 'Deck'})).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-
-    // Should show empty deck state
-    await expect(page.getByText('No cards in deck')).toBeVisible();
   });
 
   test('should show filter drawer on mobile', async ({page}) => {
@@ -85,28 +68,14 @@ test.describe('Mobile Viewport', () => {
     await expect(page.getByText('Elsa').first()).toBeVisible();
   });
 
-  test('should add card to deck on mobile', async ({page}) => {
-    const mobileNav = page.locator('nav');
-
-    // Find first add button and click it
-    const addButton = page.getByLabel(/Add .* to deck/i).first();
-    await addButton.click();
-
-    // Switch to Deck view
-    await mobileNav.getByRole('button', {name: 'Deck'}).click();
-
-    // Should show deck count
-    await expect(page.locator('span').filter({hasText: /1\/60/})).toBeVisible();
-  });
-
   test('should maintain search state when switching views', async ({cardListPage, page}) => {
     const mobileNav = page.locator('nav');
 
     // Search for a card
     await cardListPage.searchFor('Elsa');
 
-    // Switch to Deck view and back
-    await mobileNav.getByRole('button', {name: 'Deck'}).click();
+    // Switch to Synergies view and back
+    await mobileNav.getByRole('button', {name: 'Synergies'}).click();
     await mobileNav.getByRole('button', {name: 'Cards'}).click();
 
     // Search should still be there

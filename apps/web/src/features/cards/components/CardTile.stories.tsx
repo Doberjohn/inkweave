@@ -63,33 +63,6 @@ export const Selected: Story = {
   },
 };
 
-export const WithAddToDeck: Story = {
-  args: {
-    card: createMockCard(),
-    isSelected: false,
-    onAddToDeck: fn(),
-    deckQuantity: 0,
-  },
-};
-
-export const WithQuantityInDeck: Story = {
-  args: {
-    card: createMockCard(),
-    isSelected: false,
-    onAddToDeck: fn(),
-    deckQuantity: 2,
-  },
-};
-
-export const MaxQuantity: Story = {
-  args: {
-    card: createMockCard(),
-    isSelected: false,
-    onAddToDeck: fn(),
-    deckQuantity: 4,
-  },
-};
-
 export const ActionCard: Story = {
   args: {
     card: createMockCard({

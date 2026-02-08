@@ -37,8 +37,6 @@ interface CardListProps {
   onInkFilterChange: (ink: Ink | 'all') => void;
   onFiltersChange: (filters: CardFilterOptions) => void;
   onCardSelect: (card: LorcanaCard) => void;
-  onAddToDeck?: (card: LorcanaCard) => boolean;
-  getCardQuantity?: (cardId: string) => number;
   isMobile?: boolean;
 }
 
@@ -56,8 +54,6 @@ export function CardList({
   onInkFilterChange,
   onFiltersChange,
   onCardSelect,
-  onAddToDeck,
-  getCardQuantity,
   isMobile = false,
 }: CardListProps) {
   const [showMoreFilters, setShowMoreFilters] = useState(false);
@@ -198,8 +194,6 @@ export function CardList({
                     card={card}
                     onClick={() => onCardSelect(card)}
                     isSelected={selectedCard?.id === card.id}
-                    onAddToDeck={onAddToDeck}
-                    deckQuantity={getCardQuantity?.(card.id) ?? 0}
                   />
                 ))}
               </div>
@@ -455,8 +449,6 @@ export function CardList({
                   card={card}
                   onClick={() => onCardSelect(card)}
                   isSelected={selectedCard?.id === card.id}
-                  onAddToDeck={onAddToDeck}
-                  deckQuantity={getCardQuantity?.(card.id) ?? 0}
                 />
               ))}
             </div>

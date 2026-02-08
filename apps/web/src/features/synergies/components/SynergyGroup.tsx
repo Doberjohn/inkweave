@@ -1,5 +1,4 @@
 import {useState, memo} from 'react';
-import type {LorcanaCard} from '../../cards';
 import type {GroupedSynergies, SynergyMatchDisplay} from '../types';
 import {SynergyCard} from './SynergyCard';
 import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
@@ -7,16 +6,9 @@ import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
 interface SynergyGroupProps {
   group: GroupedSynergies;
   defaultExpanded?: boolean;
-  onAddToDeck?: (card: LorcanaCard) => void;
-  getCardQuantity?: (cardId: string) => number;
 }
 
-export function SynergyGroup({
-  group,
-  defaultExpanded = true,
-  onAddToDeck,
-  getCardQuantity,
-}: SynergyGroupProps) {
+export function SynergyGroup({group, defaultExpanded = true}: SynergyGroupProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
@@ -48,13 +40,7 @@ export function SynergyGroup({
         </span>
         {group.label} ({group.synergies.length})
       </button>
-      {expanded && (
-        <SynergyCardList
-          synergies={group.synergies}
-          onAddToDeck={onAddToDeck}
-          getCardQuantity={getCardQuantity}
-        />
-      )}
+      {expanded && <SynergyCardList synergies={group.synergies} />}
     </div>
   );
 }
@@ -62,15 +48,9 @@ export function SynergyGroup({
 // Memoized card list to prevent re-renders when parent toggles expansion
 interface SynergyCardListProps {
   synergies: SynergyMatchDisplay[];
-  onAddToDeck?: (card: LorcanaCard) => void;
-  getCardQuantity?: (cardId: string) => number;
 }
 
-const SynergyCardList = memo(function SynergyCardList({
-  synergies,
-  onAddToDeck,
-  getCardQuantity,
-}: SynergyCardListProps) {
+const SynergyCardList = memo(function SynergyCardList({synergies}: SynergyCardListProps) {
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
       {synergies.map((synergy) => (
@@ -79,8 +59,6 @@ const SynergyCardList = memo(function SynergyCardList({
           card={synergy.card}
           strength={synergy.strength}
           explanation={synergy.explanation}
-          onAddToDeck={onAddToDeck}
-          deckQuantity={getCardQuantity?.(synergy.card.id) ?? 0}
         />
       ))}
     </div>
