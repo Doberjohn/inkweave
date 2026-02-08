@@ -14,7 +14,6 @@ function SynergyFinderApp() {
     filteredCards,
     isLoading,
     error,
-    totalCards,
     selectedCard,
     selectCard,
     clearSelection,
@@ -76,7 +75,7 @@ function SynergyFinderApp() {
         style={{
           minHeight: '100vh',
           background: `linear-gradient(135deg, ${COLORS.bgGradientStart} 0%, ${COLORS.bgGradientEnd} 100%)`,
-          fontFamily: "'Avenir Next', 'Avenir', -apple-system, sans-serif",
+          fontFamily: "'Avenir', 'Avenir Next', -apple-system, sans-serif",
           display: 'flex',
           flexDirection: 'column',
         }}>
@@ -169,12 +168,9 @@ function SynergyFinderApp() {
       style={{
         minHeight: '100vh',
         background: `linear-gradient(135deg, ${COLORS.bgGradientStart} 0%, ${COLORS.bgGradientEnd} 100%)`,
-        fontFamily: "'Avenir Next', 'Avenir', -apple-system, sans-serif",
+        fontFamily: "'Avenir', 'Avenir Next', -apple-system, sans-serif",
       }}>
-      <Header
-        totalCards={totalCards}
-        isLoading={isLoading}
-      />
+      <Header />
 
       <div style={{display: 'flex', minHeight: `calc(100vh - ${LAYOUT.headerHeight}px)`}}>
         <CardList
