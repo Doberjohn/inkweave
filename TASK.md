@@ -216,10 +216,10 @@ See [GitHub Issues](https://github.com/Doberjohn/lorcana-synergy-finder/issues) 
 - [ ] Remove Infinity Mode - #34
 
 ### Epic 2: Dark Fantasy UI Theme (#29)
-- [ ] Design System Update - #35
-- [ ] Header Redesign - #36
-- [ ] Card List Polish - #37
-- [ ] Filter Redesign - #38
+- [x] Design System Foundation - #35 (PR #69)
+- [ ] Card Grid Transformation - #36
+- [ ] Synergy Panel Redesign - #37
+- [ ] Header, Filters, and Polish - #38
 
 ### Epic 3: Archetype Synergies (#30)
 - [ ] Archetype Engine Infrastructure - #39
@@ -263,6 +263,9 @@ See [GitHub Issues](https://github.com/Doberjohn/lorcana-synergy-finder/issues) 
 
 ## Recently Completed
 
+- [x] Dark Fantasy Design System Foundation (#35, PR #69) - Complete color palette overhaul, dark theme tokens, 12 files updated
+- [x] Import type cleanup and e2e tsconfig fix (#68)
+- [x] Remove Deck Builder for MVP (#33, PR #67) - Removed DeckPanel, useDeckBuilder, deck analysis components
 - [x] App branding: Name "Inkweave", domain purchased and configured on Vercel
 - [x] Add tests for deck builder components (#5)
 - [x] Add E2E testing with Playwright (#11) - #24
