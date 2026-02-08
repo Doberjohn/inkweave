@@ -28,7 +28,7 @@ export function SynergyResults({
         maxHeight: isMobile
           ? `calc(100vh - ${LAYOUT_MOBILE.headerHeight}px - ${LAYOUT_MOBILE.bottomNavHeight}px)`
           : `calc(100vh - ${LAYOUT.headerHeight}px)`,
-        background: isMobile ? COLORS.white : undefined,
+        background: isMobile ? COLORS.background : undefined,
       }}>
       {!selectedCard ? (
         <EmptyState

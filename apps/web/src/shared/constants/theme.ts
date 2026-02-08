@@ -3,21 +3,21 @@ import type {Ink, CardType} from 'lorcana-synergy-engine';
 // App branding
 export const APP_NAME = 'Inkweave';
 
-// Ink color styling
+// Ink color styling (vibrant on dark backgrounds)
 export const INK_COLORS: Record<Ink, {bg: string; text: string; border: string}> = {
-  Amber: {bg: '#fef3c7', text: '#92400e', border: '#f59e0b'},
-  Amethyst: {bg: '#ede9fe', text: '#5b21b6', border: '#8b5cf6'},
-  Emerald: {bg: '#d1fae5', text: '#065f46', border: '#10b981'},
-  Ruby: {bg: '#fee2e2', text: '#991b1b', border: '#ef4444'},
-  Sapphire: {bg: '#dbeafe', text: '#1e40af', border: '#3b82f6'},
-  Steel: {bg: '#e5e7eb', text: '#374151', border: '#6b7280'},
+  Amber: {bg: '#3d2e10', text: '#f5c542', border: '#f59e0b'},
+  Amethyst: {bg: '#2a1a45', text: '#c4a5f5', border: '#8b5cf6'},
+  Emerald: {bg: '#0f2e1f', text: '#6ee7a0', border: '#10b981'},
+  Ruby: {bg: '#3d1515', text: '#f87171', border: '#ef4444'},
+  Sapphire: {bg: '#0f1e3d', text: '#7db5f5', border: '#3b82f6'},
+  Steel: {bg: '#252530', text: '#a0a0b0', border: '#6b7280'},
 };
 
-// Synergy strength styling
+// Synergy strength styling (dark mode)
 export const STRENGTH_STYLES: Record<'strong' | 'moderate' | 'weak', {bg: string; text: string}> = {
-  strong: {bg: '#dcfce7', text: '#166534'},
-  moderate: {bg: '#fef9c3', text: '#854d0e'},
-  weak: {bg: '#f3f4f6', text: '#6b7280'},
+  strong: {bg: '#1a3d1a', text: '#6ee7a0'},
+  moderate: {bg: '#3d3010', text: '#f5d560'},
+  weak: {bg: '#252530', text: '#8888aa'},
 };
 
 // Layout constants
@@ -62,42 +62,59 @@ export const FONT_SIZES = {
   xxxl: 22,
 } as const;
 
-// Common colors
+// Dark fantasy color palette
 export const COLORS = {
-  // Grays
-  gray50: '#f9fafb',
-  gray100: '#f3f4f6',
-  gray200: '#e5e7eb',
-  gray300: '#d1d5db',
-  gray400: '#9ca3af',
-  gray500: '#6b7280',
-  gray600: '#4b5563',
-  gray700: '#374151',
-  gray800: '#1f2937',
-  gray900: '#111827',
+  // Dark backgrounds
+  background: '#0d0d14',
+  surface: '#1a1a2e',
+  surfaceHover: '#252540',
+  surfaceAlt: '#151525',
+  surfaceBorder: '#333355',
 
-  // Primary (Indigo)
-  primary50: '#eef2ff',
-  primary100: '#e0e7ff',
-  primary200: '#c7d2fe',
-  primary500: '#6366f1',
-  primary600: '#4f46e5',
-  primary700: '#4338ca',
-  primary800: '#312e81',
-  primary900: '#1e1b4b',
+  // Primary accent (gold)
+  primary: '#d4af37',
+  primaryHover: '#e5c34a',
+  primaryMuted: '#b8962e',
+
+  // Text
+  text: '#e8e8e8',
+  textMuted: '#8888aa',
+  textDim: '#666680',
 
   // Semantic
-  white: '#ffffff',
-  error: '#dc2626',
-  errorBg: '#fef2f2',
-  errorBorder: '#fecaca',
-  successBg: '#dcfce7',
+  white: '#e8e8e8',
+  error: '#ef4444',
+  errorBg: '#2a1515',
+  errorBorder: '#5c2020',
+  successBg: '#152a15',
+
+  // Gray scale (remapped for dark theme)
+  gray50: '#1a1a2e',
+  gray100: '#1e1e35',
+  gray200: '#333355',
+  gray300: '#444466',
+  gray400: '#8888aa',
+  gray500: '#8888aa',
+  gray600: '#aaaacc',
+  gray700: '#ccccdd',
+  gray800: '#e8e8e8',
+  gray900: '#f0f0f5',
+
+  // Primary shades (gold-based for dark theme)
+  primary50: '#1a1810',
+  primary100: '#2a2515',
+  primary200: '#3d3520',
+  primary500: '#d4af37',
+  primary600: '#d4af37',
+  primary700: '#b8962e',
+  primary800: '#8a7022',
+  primary900: '#5c4a16',
 
   // Backgrounds
-  bgGradientStart: '#f8fafc',
-  bgGradientEnd: '#e2e8f0',
-  headerGradientStart: '#1e1b4b',
-  headerGradientEnd: '#312e81',
+  bgGradientStart: '#0d0d14',
+  bgGradientEnd: '#12121f',
+  headerGradientStart: '#0d0d14',
+  headerGradientEnd: '#1a1a2e',
 } as const;
 
 // All inks for iteration
@@ -133,22 +150,24 @@ export const CARD_TYPES: CardType[] = ['Character', 'Action', 'Item', 'Location'
 // Cost options for filtering (0-10, where 10 represents 10+)
 export const COST_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
-// Shared select styles
+// Shared select styles (dark theme)
 export const SELECT_STYLE_SM: React.CSSProperties = {
   padding: '6px 8px',
   borderRadius: `${RADIUS.md}px`,
-  border: `1px solid ${COLORS.gray200}`,
+  border: `1px solid ${COLORS.surfaceBorder}`,
   fontSize: `${FONT_SIZES.sm}px`,
-  background: COLORS.white,
+  background: COLORS.gray100,
+  color: COLORS.text,
   cursor: 'pointer',
 };
 
 export const SELECT_STYLE_MD: React.CSSProperties = {
   padding: '12px 16px',
   borderRadius: `${RADIUS.lg}px`,
-  border: `1px solid ${COLORS.gray200}`,
+  border: `1px solid ${COLORS.surfaceBorder}`,
   fontSize: `${FONT_SIZES.base}px`,
-  background: COLORS.white,
+  background: COLORS.gray100,
+  color: COLORS.text,
   cursor: 'pointer',
   minHeight: '44px',
 };

@@ -126,7 +126,7 @@ export function FilterDrawer({
               bottom: 0,
               left: 0,
               right: 0,
-              background: COLORS.white,
+              background: COLORS.surface,
               borderTopLeftRadius: `${RADIUS.xl}px`,
               borderTopRightRadius: `${RADIUS.xl}px`,
               zIndex: Z_INDEX.modal,

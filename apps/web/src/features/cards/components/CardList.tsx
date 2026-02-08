@@ -97,7 +97,7 @@ export function CardList({
           display: 'flex',
           flexDirection: 'column',
           height: `calc(100vh - ${LAYOUT_MOBILE.headerHeight}px - ${LAYOUT_MOBILE.bottomNavHeight}px)`,
-          background: COLORS.white,
+          background: COLORS.background,
         }}>
         {isLoading ? (
           <div style={{padding: `${SPACING.lg}px`}}>
@@ -109,7 +109,7 @@ export function CardList({
             <div
               style={{
                 padding: `${SPACING.md}px ${SPACING.lg}px`,
-                background: COLORS.white,
+                background: COLORS.background,
                 borderBottom: `1px solid ${COLORS.gray200}`,
                 position: 'sticky',
                 top: 0,
@@ -125,7 +125,9 @@ export function CardList({
                     flex: 1,
                     padding: '12px 16px',
                     borderRadius: `${RADIUS.lg}px`,
-                    border: `1px solid ${COLORS.gray200}`,
+                    border: `1px solid ${COLORS.surfaceBorder}`,
+                    background: COLORS.surfaceAlt,
+                    color: COLORS.text,
                     fontSize: '16px', // Prevent iOS zoom
                     boxSizing: 'border-box',
                   }}
@@ -137,7 +139,7 @@ export function CardList({
                     height: '48px',
                     borderRadius: `${RADIUS.lg}px`,
                     border: `1px solid ${COLORS.gray200}`,
-                    background: activeFilterCount > 0 ? COLORS.primary100 : COLORS.white,
+                    background: activeFilterCount > 0 ? COLORS.primary100 : COLORS.surface,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -224,7 +226,7 @@ export function CardList({
       style={{
         width: `${LAYOUT.sidebarWidth}px`,
         borderRight: `1px solid ${COLORS.gray200}`,
-        background: COLORS.white,
+        background: COLORS.surface,
         display: 'flex',
         flexDirection: 'column',
         maxHeight: `calc(100vh - ${LAYOUT.headerHeight}px)`,
@@ -248,7 +250,9 @@ export function CardList({
                 width: '100%',
                 padding: '10px 12px',
                 borderRadius: `${RADIUS.lg}px`,
-                border: `1px solid ${COLORS.gray200}`,
+                border: `1px solid ${COLORS.surfaceBorder}`,
+                background: COLORS.surfaceAlt,
+                color: COLORS.text,
                 fontSize: `${FONT_SIZES.lg}px`,
                 marginBottom: `${SPACING.md}px`,
                 boxSizing: 'border-box',

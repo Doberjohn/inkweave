@@ -16,7 +16,7 @@ export function MobileNav({activeView, onViewChange}: MobileNavProps) {
         left: 0,
         right: 0,
         height: `${LAYOUT_MOBILE.bottomNavHeight}px`,
-        background: COLORS.white,
+        background: COLORS.background,
         borderTop: `1px solid ${COLORS.gray200}`,
         display: 'flex',
         justifyContent: 'space-around',

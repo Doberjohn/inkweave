@@ -40,7 +40,7 @@ export const SynergyCard = memo(function SynergyCard({
         padding: '12px',
         borderRadius: `${RADIUS.lg}px`,
         border: `1px solid ${colors.border}40`,
-        background: COLORS.white,
+        background: COLORS.surface,
         cursor: 'pointer',
       }}>
       <CardImage

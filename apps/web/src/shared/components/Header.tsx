@@ -4,7 +4,7 @@ export function Header() {
   return (
     <header
       style={{
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.background,
         borderBottom: `1px solid ${COLORS.gray200}`,
         padding: `${SPACING.xl}px ${SPACING.xxl}px`,
         color: COLORS.gray900,
