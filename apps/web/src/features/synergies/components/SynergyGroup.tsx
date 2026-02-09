@@ -52,7 +52,11 @@ interface SynergyCardListProps {
 
 const SynergyCardList = memo(function SynergyCardList({synergies}: SynergyCardListProps) {
   return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+      gap: '8px',
+    }}>
       {synergies.map((synergy) => (
         <SynergyCard
           key={synergy.card.id}

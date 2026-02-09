@@ -1,4 +1,4 @@
-import {memo} from 'react';
+import {useState, memo} from 'react';
 import {motion} from 'framer-motion';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyStrength} from '../types';
@@ -8,9 +8,7 @@ import {
   COLORS,
   FONT_SIZES,
   RADIUS,
-  LAYOUT,
 } from '../../../shared/constants';
-import {CardImage} from '../../../shared/components';
 import {useCardPreviewHandlers} from '../../cards';
 
 interface SynergyCardProps {
@@ -27,103 +25,110 @@ export const SynergyCard = memo(function SynergyCard({
   const colors = INK_COLORS[card.ink];
   const strengthStyle = STRENGTH_STYLES[strength];
   const {previewHandlers} = useCardPreviewHandlers({card});
+  const [imgError, setImgError] = useState(false);
+  const imgSrc = card.thumbnailUrl || card.imageUrl;
 
   return (
     <motion.div
       {...previewHandlers}
-      whileHover={{scale: 1.02, y: -2}}
-      whileTap={{scale: 0.98}}
+      whileHover={{scale: 1.04, y: -3}}
+      whileTap={{scale: 0.97}}
       transition={{type: 'spring', stiffness: 400, damping: 25}}
       style={{
-        display: 'flex',
-        gap: '12px',
-        padding: '12px',
+        position: 'relative',
         borderRadius: `${RADIUS.lg}px`,
         border: `1px solid ${colors.border}40`,
         background: COLORS.surface,
         cursor: 'pointer',
+        overflow: 'hidden',
+        aspectRatio: '0.72',
       }}>
-      <CardImage
-        src={card.imageUrl}
-        alt=""
-        width={LAYOUT.synergyCardImageWidth}
-        height={LAYOUT.synergyCardImageHeight}
-        inkColor={card.ink}
-        cost={card.cost}
-        lazy={true}
-        borderRadius={RADIUS.sm}
-      />
-      <div style={{flex: 1, minWidth: 0}}>
+      {/* Card image or fallback */}
+      {imgSrc && !imgError ? (
+        <img
+          src={imgSrc}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onError={() => setImgError(true)}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+          }}
+        />
+      ) : (
         <div
           style={{
+            width: '100%',
+            height: '100%',
+            background: colors.bg,
             display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: '8px',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}>
-          <div style={{minWidth: 0}}>
-            <span
-              style={{
-                fontWeight: 600,
-                fontSize: `${FONT_SIZES.lg}px`,
-                color: COLORS.gray800,
-                display: 'block',
-              }}>
-              {card.name}
-            </span>
-            {card.version && (
-              <span style={{fontSize: `${FONT_SIZES.md}px`, color: COLORS.gray500}}>
-                {card.version}
-              </span>
-            )}
-          </div>
-          <span
-            style={{
-              background: strengthStyle.bg,
-              color: strengthStyle.text,
-              padding: '2px 8px',
-              borderRadius: '12px',
-              fontSize: `${FONT_SIZES.sm}px`,
-              fontWeight: 500,
-              textTransform: 'capitalize',
-              flexShrink: 0,
-            }}>
-            {strength}
+          <span style={{fontSize: `${FONT_SIZES.xxxl}px`, fontWeight: 600, color: colors.text}}>
+            {card.cost}
           </span>
         </div>
-        <p
+      )}
+
+      {/* Strength badge - top right */}
+      <span
+        style={{
+          position: 'absolute',
+          top: '4px',
+          right: '4px',
+          background: strengthStyle.bg,
+          color: strengthStyle.text,
+          padding: '2px 6px',
+          borderRadius: '10px',
+          fontSize: `${FONT_SIZES.xs}px`,
+          fontWeight: 600,
+          textTransform: 'capitalize',
+          border: `1px solid ${strengthStyle.text}40`,
+        }}>
+        {strength}
+      </span>
+
+      {/* Name + explanation overlay */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: 'linear-gradient(transparent, rgba(0,0,0,0.9))',
+          padding: '20px 6px 5px',
+        }}>
+        <span
           style={{
-            fontSize: `${FONT_SIZES.base}px`,
-            color: COLORS.gray600,
-            marginTop: '6px',
-            lineHeight: 1.4,
+            fontWeight: 600,
+            fontSize: `${FONT_SIZES.sm}px`,
+            color: '#fff',
+            display: 'block',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            lineHeight: 1.2,
+          }}>
+          {card.name}
+        </span>
+        <span
+          style={{
+            fontSize: `${FONT_SIZES.xs}px`,
+            color: 'rgba(255,255,255,0.6)',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            lineHeight: 1.2,
+            marginTop: '2px',
           }}>
           {explanation}
-        </p>
-        <div style={{display: 'flex', gap: '4px', marginTop: '8px', flexWrap: 'wrap'}}>
-          <span
-            style={{
-              fontSize: `${FONT_SIZES.sm}px`,
-              background: colors.bg,
-              color: colors.text,
-              padding: '2px 6px',
-              borderRadius: `${RADIUS.sm}px`,
-            }}>
-            {card.ink}
-          </span>
-          <span
-            style={{
-              fontSize: `${FONT_SIZES.sm}px`,
-              background: COLORS.gray100,
-              color: COLORS.gray700,
-              padding: '2px 6px',
-              borderRadius: `${RADIUS.sm}px`,
-            }}>
-            Cost {card.cost}
-          </span>
-        </div>
+        </span>
       </div>
-
     </motion.div>
   );
 });
