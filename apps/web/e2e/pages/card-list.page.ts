@@ -18,7 +18,7 @@ export class CardListPage {
       name: 'Clear all filters',
     });
     this.cardCountText = page.getByText(/\d+ of \d+ cards/);
-    this.cardList = page.locator('[style*="flex-direction: column"]').first();
+    this.cardList = page.locator('[style*="display: grid"]').first();
   }
 
   getInkFilterButton(ink: string): Locator {

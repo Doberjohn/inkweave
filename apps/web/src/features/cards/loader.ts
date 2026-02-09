@@ -130,6 +130,7 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
     lore: raw.lore,
     keywords: keywords.length > 0 ? keywords : undefined,
     imageUrl: raw.images?.full,
+    thumbnailUrl: raw.images?.thumbnail,
     setCode: raw.setCode,
     setNumber: raw.number,
   };

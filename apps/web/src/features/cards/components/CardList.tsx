@@ -182,14 +182,18 @@ export function CardList({
               </p>
             </div>
 
-            {/* Card List */}
+            {/* Card Grid */}
             <div
               style={{
                 flex: 1,
                 overflowY: 'auto',
                 padding: `${SPACING.md}px`,
               }}>
-              <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(95px, 1fr))',
+                gap: '6px',
+              }}>
                 {displayedCards.map((card) => (
                   <CardTile
                     key={card.id}
@@ -439,14 +443,18 @@ export function CardList({
             </p>
           </div>
 
-          {/* Card List - Scrollable */}
+          {/* Card Grid - Scrollable */}
           <div
             style={{
               flex: 1,
               overflowY: 'auto',
               padding: `${SPACING.sm}px ${SPACING.lg}px ${SPACING.lg}px`,
             }}>
-            <div style={{display: 'flex', flexDirection: 'column', gap: '6px'}}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(105px, 1fr))',
+              gap: '6px',
+            }}>
               {displayedCards.map((card) => (
                 <CardTile
                   key={card.id}

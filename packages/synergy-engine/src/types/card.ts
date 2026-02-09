@@ -24,6 +24,7 @@ export interface LorcanaCard {
   lore?: number;
   keywords?: string[]; // Shift, Evasive, Singer, Challenger, etc.
   imageUrl?: string;
+  thumbnailUrl?: string;
   setCode?: string;
   setNumber?: number;
 }

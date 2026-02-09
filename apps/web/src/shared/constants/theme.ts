@@ -22,10 +22,8 @@ export const STRENGTH_STYLES: Record<'strong' | 'moderate' | 'weak', {bg: string
 
 // Layout constants
 export const LAYOUT = {
-  sidebarWidth: 340,
+  sidebarWidth: 480,
   headerHeight: 56,
-  cardTileImageWidth: 40,
-  cardTileImageHeight: 56,
   synergyCardImageWidth: 60,
   synergyCardImageHeight: 84,
   selectedCardImageWidth: 120,

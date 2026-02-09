@@ -38,28 +38,36 @@ describe('CardTile', () => {
     expect(screen.getByText('Snow Queen')).toBeInTheDocument();
   });
 
-  it('should not render cost in tile body when imageUrl is provided', () => {
+  it('should render thumbnail image when available', () => {
+    const cardWithThumbnail = createCard({
+      ...mockCard,
+      thumbnailUrl: 'https://example.com/elsa-thumb.jpg',
+      imageUrl: 'https://example.com/elsa.jpg',
+    });
+    const {container} = renderWithProvider(<CardTile {...defaultProps} card={cardWithThumbnail} />);
+
+    const img = container.querySelector('img');
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', 'https://example.com/elsa-thumb.jpg');
+  });
+
+  it('should fall back to imageUrl when no thumbnailUrl', () => {
     const cardWithImage = createCard({
       ...mockCard,
       imageUrl: 'https://example.com/elsa.jpg',
     });
     const {container} = renderWithProvider(<CardTile {...defaultProps} card={cardWithImage} />);
 
-    // Cost should not appear as text in the tile body (only in CardImage fallback if image fails)
-    // The image should be loaded, so no cost fallback should be visible
     const img = container.querySelector('img');
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute('src', 'https://example.com/elsa.jpg');
-    
-    // Cost text "5" should not be in the document when image loads successfully
-    expect(screen.queryByText('5')).not.toBeInTheDocument();
   });
 
-  it('should render keywords (base form)', () => {
-    renderWithProvider(<CardTile {...defaultProps} />);
+  it('should show cost fallback when no image available', () => {
+    const cardNoImage = createCard({...mockCard, imageUrl: undefined});
+    renderWithProvider(<CardTile {...defaultProps} card={cardNoImage} />);
 
-    expect(screen.getByText('Singer')).toBeInTheDocument();
-    expect(screen.getByText('Evasive')).toBeInTheDocument();
+    expect(screen.getByText('5')).toBeInTheDocument();
   });
 
   it('should call onClick when clicked', () => {

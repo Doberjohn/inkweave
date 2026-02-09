@@ -1,7 +1,7 @@
+import {useState} from 'react';
 import {motion} from 'framer-motion';
 import type {LorcanaCard} from '../types';
-import {INK_COLORS, COLORS, FONT_SIZES, RADIUS, LAYOUT} from '../../../shared/constants';
-import {CardImage} from '../../../shared/components';
+import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {useCardPreviewHandlers} from './useCardPreviewHandlers';
 
 interface CardTileProps {
@@ -13,81 +13,100 @@ interface CardTileProps {
 export function CardTile({card, onClick, isSelected}: CardTileProps) {
   const colors = INK_COLORS[card.ink];
   const {previewHandlers} = useCardPreviewHandlers({card, onTap: onClick});
+  const [imgError, setImgError] = useState(false);
+  const imgSrc = card.thumbnailUrl || card.imageUrl;
 
   return (
     <motion.button
       onClick={onClick}
       {...previewHandlers}
       aria-pressed={isSelected}
-      whileHover={{scale: 1.02, y: -2}}
-      whileTap={{scale: 0.98}}
+      whileHover={{scale: 1.04, y: -3}}
+      whileTap={{scale: 0.97}}
       transition={{type: 'spring', stiffness: 400, damping: 25}}
       style={{
-        display: 'flex',
-        gap: '12px',
-        padding: '10px',
+        position: 'relative',
         borderRadius: `${RADIUS.lg}px`,
         border: `2px solid ${isSelected ? colors.border : 'transparent'}`,
-        background: isSelected ? colors.bg : COLORS.surface,
-        boxShadow: isSelected ? `0 0 0 2px ${colors.border}40` : '0 1px 3px rgba(0,0,0,0.2)',
+        background: COLORS.surface,
+        boxShadow: isSelected
+          ? `0 0 8px ${colors.border}60`
+          : '0 2px 6px rgba(0,0,0,0.3)',
         cursor: 'pointer',
-        textAlign: 'left',
+        padding: 0,
+        overflow: 'hidden',
         width: '100%',
-        alignItems: 'center',
+        aspectRatio: '0.72',
       }}>
-      <CardImage
-        src={card.imageUrl}
-        alt=""
-        width={LAYOUT.cardTileImageWidth}
-        height={LAYOUT.cardTileImageHeight}
-        inkColor={card.ink}
-        cost={card.cost}
-        lazy={true}
-        borderRadius={RADIUS.sm}
-      />
-      <div style={{flex: 1, minWidth: 0}}>
+      {/* Card image or fallback */}
+      {imgSrc && !imgError ? (
+        <img
+          src={imgSrc}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onError={() => setImgError(true)}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            background: colors.bg,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+          <span style={{fontSize: `${FONT_SIZES.xxxl}px`, fontWeight: 600, color: colors.text}}>
+            {card.cost}
+          </span>
+        </div>
+      )}
+
+      {/* Name overlay */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: 'linear-gradient(transparent, rgba(0,0,0,0.85))',
+          padding: '16px 6px 5px',
+        }}>
         <span
           style={{
             fontWeight: 600,
-            fontSize: `${FONT_SIZES.base}px`,
-            color: COLORS.gray800,
+            fontSize: `${FONT_SIZES.sm}px`,
+            color: '#fff',
+            display: 'block',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            display: 'block',
+            lineHeight: 1.2,
           }}>
           {card.name}
         </span>
         {card.version && (
           <span
             style={{
-              fontSize: `${FONT_SIZES.sm}px`,
-              color: COLORS.gray500,
+              fontSize: `${FONT_SIZES.xs}px`,
+              color: 'rgba(255,255,255,0.7)',
               display: 'block',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
+              lineHeight: 1.2,
             }}>
             {card.version}
           </span>
         )}
-        <div style={{display: 'flex', gap: '4px', marginTop: '4px', flexWrap: 'wrap'}}>
-          {card.keywords?.slice(0, 2).map((k) => (
-            <span
-              key={k}
-              style={{
-                fontSize: `${FONT_SIZES.xs}px`,
-                background: COLORS.gray100,
-                color: COLORS.gray700,
-                padding: '1px 4px',
-                borderRadius: '3px',
-              }}>
-              {k.split(' ')[0]}
-            </span>
-          ))}
-        </div>
       </div>
-
     </motion.button>
   );
 }
