@@ -17,13 +17,21 @@ export const INK_COLORS: Record<Ink, {bg: string; text: string; border: string}>
 export const STRENGTH_STYLES: Record<'strong' | 'moderate' | 'weak', {bg: string; text: string}> = {
   strong: {bg: '#1a3d1a', text: '#6ee7a0'},
   moderate: {bg: '#3d3010', text: '#f5d560'},
-  weak: {bg: '#252530', text: '#8888aa'},
+  weak: {bg: '#3d1a1a', text: '#f59090'},
 };
+
+// Font families
+export const FONTS = {
+  body: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+  hero: "'Cinzel', 'Georgia', serif",
+} as const;
 
 // Layout constants
 export const LAYOUT = {
   sidebarWidth: 480,
   headerHeight: 56,
+  compactHeaderHeight: 52,
+  cardDetailWidth: 290,
   selectedCardImageWidth: 120,
   maxDisplayedCards: 200,
 } as const;
@@ -111,6 +119,15 @@ export const COLORS = {
   bgGradientEnd: '#12121f',
   headerGradientStart: '#0d0d14',
   headerGradientEnd: '#1a1a2e',
+
+  // Hero section
+  heroTitle: '#d4b8f0',
+  heroSubtitle: '#b0b0c8',
+
+  // Ethereal glow orbs
+  etherealPurple: 'rgba(139, 92, 246, 0.15)',
+  etherealGold: 'rgba(212, 175, 55, 0.10)',
+  etherealEmerald: 'rgba(16, 185, 129, 0.12)',
 } as const;
 
 // All inks for iteration

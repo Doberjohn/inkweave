@@ -38,29 +38,30 @@ describe('CardTile', () => {
     expect(screen.getByText('Snow Queen')).toBeInTheDocument();
   });
 
-  it('should render thumbnail image when available', () => {
-    const cardWithThumbnail = createCard({
+  it('should prefer full image over thumbnail when both available', () => {
+    const cardWithBoth = createCard({
       ...mockCard,
       thumbnailUrl: 'https://example.com/elsa-thumb.jpg',
       imageUrl: 'https://example.com/elsa.jpg',
     });
-    const {container} = renderWithProvider(<CardTile {...defaultProps} card={cardWithThumbnail} />);
-
-    const img = container.querySelector('img');
-    expect(img).toBeInTheDocument();
-    expect(img).toHaveAttribute('src', 'https://example.com/elsa-thumb.jpg');
-  });
-
-  it('should fall back to imageUrl when no thumbnailUrl', () => {
-    const cardWithImage = createCard({
-      ...mockCard,
-      imageUrl: 'https://example.com/elsa.jpg',
-    });
-    const {container} = renderWithProvider(<CardTile {...defaultProps} card={cardWithImage} />);
+    const {container} = renderWithProvider(<CardTile {...defaultProps} card={cardWithBoth} />);
 
     const img = container.querySelector('img');
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute('src', 'https://example.com/elsa.jpg');
+  });
+
+  it('should fall back to thumbnailUrl when no imageUrl', () => {
+    const cardWithThumb = createCard({
+      ...mockCard,
+      imageUrl: undefined,
+      thumbnailUrl: 'https://example.com/elsa-thumb.jpg',
+    });
+    const {container} = renderWithProvider(<CardTile {...defaultProps} card={cardWithThumb} />);
+
+    const img = container.querySelector('img');
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', 'https://example.com/elsa-thumb.jpg');
   });
 
   it('should show cost fallback when no image available', () => {

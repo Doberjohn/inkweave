@@ -8,18 +8,22 @@ interface CardTileProps {
   card: LorcanaCard;
   onClick: () => void;
   isSelected: boolean;
+  variant?: 'full' | 'minimal';
+  useThumbnail?: boolean;
 }
 
-export function CardTile({card, onClick, isSelected}: CardTileProps) {
+export function CardTile({card, onClick, isSelected, variant = 'full', useThumbnail}: CardTileProps) {
   const colors = INK_COLORS[card.ink];
   const {previewHandlers} = useCardPreviewHandlers({card, onTap: onClick});
   const [imgError, setImgError] = useState(false);
-  const imgSrc = card.thumbnailUrl || card.imageUrl;
+  const imgSrc = useThumbnail
+    ? (card.thumbnailUrl || card.imageUrl)
+    : (card.imageUrl || card.thumbnailUrl);
 
   return (
     <motion.button
       onClick={onClick}
-      {...previewHandlers}
+      {...(variant === 'minimal' ? {} : previewHandlers)}
       aria-pressed={isSelected}
       whileHover={{scale: 1.04, y: -3}}
       whileTap={{scale: 0.97}}
@@ -27,11 +31,15 @@ export function CardTile({card, onClick, isSelected}: CardTileProps) {
       style={{
         position: 'relative',
         borderRadius: `${RADIUS.lg}px`,
-        border: `2px solid ${isSelected ? colors.border : 'transparent'}`,
+        border: variant === 'minimal'
+          ? '2px solid transparent'
+          : `2px solid ${isSelected ? colors.border : 'transparent'}`,
         background: COLORS.surface,
-        boxShadow: isSelected
-          ? `0 0 8px ${colors.border}60`
-          : '0 2px 6px rgba(0,0,0,0.3)',
+        boxShadow: variant === 'minimal'
+          ? '0 2px 8px rgba(0,0,0,0.4)'
+          : isSelected
+            ? `0 0 8px ${colors.border}60`
+            : '0 2px 6px rgba(0,0,0,0.3)',
         cursor: 'pointer',
         padding: 0,
         overflow: 'hidden',
@@ -69,44 +77,46 @@ export function CardTile({card, onClick, isSelected}: CardTileProps) {
         </div>
       )}
 
-      {/* Name overlay */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: 'linear-gradient(transparent, rgba(0,0,0,0.85))',
-          padding: '16px 6px 5px',
-        }}>
-        <span
+      {/* Name overlay (hidden in minimal variant) */}
+      {variant !== 'minimal' && (
+        <div
           style={{
-            fontWeight: 600,
-            fontSize: `${FONT_SIZES.sm}px`,
-            color: '#fff',
-            display: 'block',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            lineHeight: 1.2,
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: 'linear-gradient(transparent, rgba(0,0,0,0.85))',
+            padding: '16px 6px 5px',
           }}>
-          {card.name}
-        </span>
-        {card.version && (
           <span
             style={{
-              fontSize: `${FONT_SIZES.xs}px`,
-              color: 'rgba(255,255,255,0.7)',
+              fontWeight: 600,
+              fontSize: `${FONT_SIZES.sm}px`,
+              color: '#fff',
               display: 'block',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               lineHeight: 1.2,
             }}>
-            {card.version}
+            {card.name}
           </span>
-        )}
-      </div>
+          {card.version && (
+            <span
+              style={{
+                fontSize: `${FONT_SIZES.xs}px`,
+                color: 'rgba(255,255,255,0.7)',
+                display: 'block',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                lineHeight: 1.2,
+              }}>
+              {card.version}
+            </span>
+          )}
+        </div>
+      )}
     </motion.button>
   );
 }

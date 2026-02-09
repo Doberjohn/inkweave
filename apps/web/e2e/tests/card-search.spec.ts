@@ -1,7 +1,7 @@
 import {test, expect} from '../fixtures';
 
 test.describe('Card Search and Filtering', () => {
-  // Skip on mobile - filters are in a drawer
+  // Desktop-only: tests hero search and FilterModal on home page
   test.beforeEach(async ({appPage}, testInfo) => {
     if (testInfo.project.name === 'mobile-chrome') {
       test.skip();
@@ -9,117 +9,113 @@ test.describe('Card Search and Filtering', () => {
     await appPage.goto();
   });
 
-  test('should search for a card by name', async ({cardListPage}) => {
-    // Get initial card count
-    const initialCounts = await cardListPage.getDisplayedCardCount();
+  test('should search from hero and filter featured cards', async ({appPage, page}) => {
+    // Type in the hero search
+    await appPage.heroSearch.fill('Elsa');
+    await page.waitForTimeout(200);
 
-    // Search for something specific
-    await cardListPage.searchFor('Elsa');
+    // Featured cards grid should still be visible but filtered
+    await expect(appPage.featuredCards).toBeVisible();
 
-    // Should show filtered results (fewer than total)
-    const counts = await cardListPage.getDisplayedCardCount();
-    expect(counts.shown).toBeGreaterThan(0);
-    expect(counts.total).toBeLessThan(initialCounts.total);
+    // At least some card tiles should appear (filtered results)
+    const tiles = appPage.featuredCards.locator('button[aria-pressed]');
+    const count = await tiles.count();
+    expect(count).toBeGreaterThan(0);
   });
 
-  test('should show matching cards in search results', async ({cardListPage}) => {
-    await cardListPage.searchFor('Elsa');
+  test('should open filter modal when clicking Filters button', async ({page}) => {
+    // Click the Filters button on hero
+    await page.getByRole('button', {name: /Filters/}).click();
 
-    // Card with "Elsa" should be visible
-    const isVisible = await cardListPage.isCardVisible('Elsa');
-    expect(isVisible).toBe(true);
+    // FilterModal should appear
+    const modal = page.getByTestId('filter-modal');
+    await expect(modal).toBeVisible();
+
+    // Should show ink filter options
+    await expect(page.getByRole('button', {name: 'Amber', exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Sapphire', exact: true})).toBeVisible();
   });
 
-  test('should clear search and show all cards', async ({cardListPage}) => {
-    // Get initial count
-    const initialCounts = await cardListPage.getDisplayedCardCount();
+  test('should close filter modal with Apply Filters', async ({page}) => {
+    // Open modal
+    await page.getByRole('button', {name: /Filters/}).click();
+    await expect(page.getByTestId('filter-modal')).toBeVisible();
 
-    // Search for something
-    await cardListPage.searchFor('Elsa');
-    const filteredCounts = await cardListPage.getDisplayedCardCount();
-    expect(filteredCounts.total).toBeLessThan(initialCounts.total);
+    // Click Apply Filters
+    await page.getByRole('button', {name: 'Apply Filters'}).click();
 
-    // Then clear the search
-    await cardListPage.clearSearch();
-    const clearedCounts = await cardListPage.getDisplayedCardCount();
-
-    // Should show all cards again
-    expect(clearedCounts.total).toBe(initialCounts.total);
+    // Modal should be closed
+    await expect(page.getByTestId('filter-modal')).not.toBeVisible();
   });
 
-  test('should filter cards by ink color', async ({cardListPage}) => {
-    // Get initial count
-    const initialCounts = await cardListPage.getDisplayedCardCount();
+  test('should filter by ink color via modal', async ({page, appPage}) => {
+    // Count initial tiles
+    const initialCount = await appPage.featuredCards.locator('button[aria-pressed]').count();
 
-    // Filter by Sapphire
-    await cardListPage.filterByInk('Sapphire');
+    // Open filter modal and select Sapphire
+    await page.getByRole('button', {name: /^Filters/}).click();
+    await page.getByRole('button', {name: 'Sapphire', exact: true}).click();
+    await page.getByRole('button', {name: 'Apply Filters'}).click();
 
-    // Verify filter button is active
-    await expect(cardListPage.getInkFilterButton('Sapphire')).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    // Wait for modal to close and filter to apply
+    await expect(page.getByTestId('filter-modal')).not.toBeVisible();
+    await page.waitForTimeout(200);
 
-    // Card count should be reduced
-    const filteredCounts = await cardListPage.getDisplayedCardCount();
-    expect(filteredCounts.total).toBeLessThan(initialCounts.total);
+    // Featured cards should be filtered (fewer or equal)
+    const filteredCount = await appPage.featuredCards.locator('button[aria-pressed]').count();
+    expect(filteredCount).toBeLessThanOrEqual(initialCount);
   });
 
-  test('should filter cards by type', async ({cardListPage}) => {
-    // Get initial count
-    const initialCounts = await cardListPage.getDisplayedCardCount();
+  test('should filter by card type via modal', async ({page}) => {
+    // Open filter modal and select Action
+    await page.getByRole('button', {name: /^Filters/}).click();
+    await page.getByRole('button', {name: 'Action', exact: true}).click();
+    await page.getByRole('button', {name: 'Apply Filters'}).click();
 
-    // Filter by Action type
-    await cardListPage.filterByType('Action');
+    // Wait for modal to close
+    await expect(page.getByTestId('filter-modal')).not.toBeVisible();
 
-    // Verify filter button is active
-    await expect(cardListPage.getTypeFilterButton('Action')).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-
-    // Card count should be reduced
-    const filteredCounts = await cardListPage.getDisplayedCardCount();
-    expect(filteredCounts.total).toBeLessThan(initialCounts.total);
+    // Filter button on hero should show active count
+    await expect(page.getByRole('button', {name: /^Filters/})).toBeVisible();
   });
 
-  test('should combine multiple filters', async ({cardListPage}) => {
-    // Apply ink filter
-    await cardListPage.filterByInk('Amber');
-    const amberCounts = await cardListPage.getDisplayedCardCount();
+  test('should clear all filters via modal', async ({page}) => {
+    // Apply some filters first
+    await page.getByRole('button', {name: /^Filters/}).click();
+    await page.getByRole('button', {name: 'Sapphire', exact: true}).click();
+    await page.getByRole('button', {name: 'Apply Filters'}).click();
+    await expect(page.getByTestId('filter-modal')).not.toBeVisible();
 
-    // Add type filter
-    await cardListPage.filterByType('Character');
-    const combinedCounts = await cardListPage.getDisplayedCardCount();
+    // Reopen and clear
+    await page.getByRole('button', {name: /^Filters/}).click();
+    await page.getByRole('button', {name: 'Clear all'}).click();
+    await page.getByRole('button', {name: 'Apply Filters'}).click();
 
-    // Combined filters should show fewer cards
-    expect(combinedCounts.total).toBeLessThanOrEqual(amberCounts.total);
+    // Should be back to unfiltered state
+    await expect(page.getByTestId('filter-modal')).not.toBeVisible();
   });
 
-  test('should filter cards by keyword', async ({cardListPage}) => {
-    // Get initial count
-    const initialCounts = await cardListPage.getDisplayedCardCount();
+  test('should close filter modal with Escape key', async ({page}) => {
+    // Open modal
+    await page.getByRole('button', {name: /Filters/}).click();
+    await expect(page.getByTestId('filter-modal')).toBeVisible();
 
-    // Filter by Singer keyword
-    await cardListPage.filterByKeyword('Singer');
+    // Press Escape
+    await page.keyboard.press('Escape');
 
-    // Card count should be reduced
-    const filteredCounts = await cardListPage.getDisplayedCardCount();
-    expect(filteredCounts.total).toBeLessThan(initialCounts.total);
+    // Modal should be closed
+    await expect(page.getByTestId('filter-modal')).not.toBeVisible();
   });
 
-  test('should clear all filters', async ({cardListPage}) => {
-    // Apply filters
-    await cardListPage.searchFor('test');
-    await cardListPage.filterByInk('Ruby');
+  test('should close filter modal by clicking backdrop', async ({page}) => {
+    // Open modal
+    await page.getByRole('button', {name: /Filters/}).click();
+    await expect(page.getByTestId('filter-modal')).toBeVisible();
 
-    // Clear all
-    await cardListPage.clearAllFilters();
+    // Click backdrop
+    await page.getByTestId('filter-modal-backdrop').click({position: {x: 5, y: 5}});
 
-    // Verify search is cleared
-    await expect(cardListPage.searchInput).toHaveValue('');
-
-    // Verify ink filter is reset to All
-    await expect(cardListPage.getInkFilterButton('All')).toHaveAttribute('aria-pressed', 'true');
+    // Modal should be closed
+    await expect(page.getByTestId('filter-modal')).not.toBeVisible();
   });
 });

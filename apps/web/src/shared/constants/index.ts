@@ -6,6 +6,7 @@ export {
   SPACING,
   RADIUS,
   FONT_SIZES,
+  FONTS,
   COLORS,
   ALL_INKS,
   BREAKPOINTS,

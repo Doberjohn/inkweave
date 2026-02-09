@@ -10,7 +10,7 @@ export class SynergyResultsPage {
   constructor(page: Page) {
     this.page = page;
     this.emptyState = page.getByText('Select a card to see synergies');
-    this.clearSelectionButton = page.getByRole('button', {name: /×|clear/i});
+    this.clearSelectionButton = page.getByRole('button', {name: /×|clear|← back to home/i});
     this.synergyCountText = page.getByText(/Found \d+ synergistic cards/);
     this.noSynergiesMessage = page.getByText('No synergies found for this card');
   }

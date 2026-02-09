@@ -1,0 +1,364 @@
+import {useEffect, useCallback} from 'react';
+import {motion, AnimatePresence} from 'framer-motion';
+import type {Ink, SetInfo} from '../../features/cards';
+import type {CardFilterOptions} from '../../features/cards';
+import {
+  COLORS,
+  FONT_SIZES,
+  RADIUS,
+  SPACING,
+  Z_INDEX,
+  INK_COLORS,
+  ALL_INKS,
+  CARD_TYPES,
+  COST_OPTIONS,
+  SELECT_STYLE_MD,
+} from '../constants';
+import {isCardType} from '../../features/cards';
+import {FilterButton} from './FilterButton';
+import {FilterSection} from './FilterSection';
+
+interface FilterModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  inkFilter: Ink | 'all';
+  filters: CardFilterOptions;
+  uniqueKeywords: string[];
+  uniqueClassifications: string[];
+  sets: SetInfo[];
+  onInkFilterChange: (ink: Ink | 'all') => void;
+  onFiltersChange: (filters: CardFilterOptions) => void;
+  onClearAll: () => void;
+}
+
+export function FilterModal({
+  isOpen,
+  onClose,
+  inkFilter,
+  filters,
+  uniqueKeywords,
+  uniqueClassifications,
+  sets,
+  onInkFilterChange,
+  onFiltersChange,
+  onClearAll,
+}: FilterModalProps) {
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    },
+    [onClose],
+  );
+
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, handleKeyDown]);
+
+  const selectedType = isCardType(filters.type) ? filters.type : undefined;
+
+  const updateFilter = <K extends keyof CardFilterOptions>(key: K, value: CardFilterOptions[K]) => {
+    const newFilters = {...filters};
+    if (value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
+      delete newFilters[key];
+    } else {
+      newFilters[key] = value;
+    }
+    onFiltersChange(newFilters);
+  };
+
+  const activeFilterCount = [
+    inkFilter !== 'all',
+    filters.type,
+    filters.minCost !== undefined,
+    filters.maxCost !== undefined,
+    filters.keywords?.length,
+    filters.classifications?.length,
+    filters.setCode,
+  ].filter(Boolean).length;
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{opacity: 0}}
+            animate={{opacity: 1}}
+            exit={{opacity: 0}}
+            transition={{duration: 0.2}}
+            role="button"
+            tabIndex={0}
+            onClick={onClose}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClose();
+              }
+            }}
+            aria-label="Close filters"
+            data-testid="filter-modal-backdrop"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.6)',
+              zIndex: Z_INDEX.modalBackdrop,
+              cursor: 'pointer',
+              backdropFilter: 'blur(4px)',
+            }}
+          />
+
+          {/* Centering wrapper */}
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: Z_INDEX.modal,
+              pointerEvents: 'none',
+            }}>
+          <motion.div
+            initial={{opacity: 0, scale: 0.95}}
+            animate={{opacity: 1, scale: 1}}
+            exit={{opacity: 0, scale: 0.95}}
+            transition={{duration: 0.2, ease: 'easeOut'}}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="filter-modal-title"
+            data-testid="filter-modal"
+            style={{
+              width: '90%',
+              maxWidth: 520,
+              maxHeight: '80vh',
+              background: COLORS.surface,
+              borderRadius: `${RADIUS.xl}px`,
+              border: `1px solid ${COLORS.surfaceBorder}`,
+              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.5), 0 0 1px rgba(212, 175, 55, 0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              pointerEvents: 'auto',
+            }}>
+            {/* Header */}
+            <div
+              style={{
+                padding: `${SPACING.lg}px ${SPACING.xl}px`,
+                borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexShrink: 0,
+              }}>
+              <h2
+                id="filter-modal-title"
+                style={{
+                  margin: 0,
+                  fontSize: `${FONT_SIZES.xl}px`,
+                  fontWeight: 600,
+                  color: COLORS.text,
+                }}>
+                Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+              </h2>
+              <div style={{display: 'flex', gap: `${SPACING.md}px`, alignItems: 'center'}}>
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={onClearAll}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: COLORS.primary,
+                      fontSize: `${FONT_SIZES.base}px`,
+                      cursor: 'pointer',
+                      padding: `${SPACING.sm}px`,
+                    }}>
+                    Clear all
+                  </button>
+                )}
+                <button
+                  onClick={onClose}
+                  aria-label="Close filters"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: COLORS.textMuted,
+                    fontSize: `${FONT_SIZES.xxl}px`,
+                    cursor: 'pointer',
+                    padding: `${SPACING.xs}px`,
+                    lineHeight: 1,
+                  }}>
+                  ×
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: `${SPACING.xl}px`,
+              }}>
+              {/* Ink Filter */}
+              <FilterSection label="Ink Color">
+                <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
+                  <FilterButton
+                    size="md"
+                    active={inkFilter === 'all'}
+                    onClick={() => onInkFilterChange('all')}>
+                    All
+                  </FilterButton>
+                  {ALL_INKS.map((ink) => (
+                    <FilterButton
+                      key={ink}
+                      size="md"
+                      active={inkFilter === ink}
+                      onClick={() => onInkFilterChange(ink)}
+                      activeColor={INK_COLORS[ink].border}
+                      inactiveColor={INK_COLORS[ink].bg}
+                      inactiveTextColor={INK_COLORS[ink].text}>
+                      {ink}
+                    </FilterButton>
+                  ))}
+                </div>
+              </FilterSection>
+
+              {/* Card Type Filter */}
+              <FilterSection label="Card Type">
+                <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
+                  <FilterButton
+                    size="md"
+                    active={!selectedType}
+                    onClick={() => updateFilter('type', undefined)}>
+                    All
+                  </FilterButton>
+                  {CARD_TYPES.map((type) => (
+                    <FilterButton
+                      key={type}
+                      size="md"
+                      active={selectedType === type}
+                      onClick={() => updateFilter('type', type)}>
+                      {type}
+                    </FilterButton>
+                  ))}
+                </div>
+              </FilterSection>
+
+              {/* Cost Range */}
+              <FilterSection label="Ink Cost">
+                <div style={{display: 'flex', gap: `${SPACING.md}px`, alignItems: 'center'}}>
+                  <select
+                    value={filters.minCost ?? ''}
+                    onChange={(e) =>
+                      updateFilter('minCost', e.target.value ? Number(e.target.value) : undefined)
+                    }
+                    style={SELECT_STYLE_MD}>
+                    <option value="">Min</option>
+                    {COST_OPTIONS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                  <span style={{color: COLORS.textMuted}}>to</span>
+                  <select
+                    value={filters.maxCost ?? ''}
+                    onChange={(e) =>
+                      updateFilter('maxCost', e.target.value ? Number(e.target.value) : undefined)
+                    }
+                    style={SELECT_STYLE_MD}>
+                    <option value="">Max</option>
+                    {COST_OPTIONS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </FilterSection>
+
+              {/* Keywords */}
+              <FilterSection label="Keywords">
+                <select
+                  value={filters.keywords?.[0] ?? ''}
+                  onChange={(e) =>
+                    updateFilter('keywords', e.target.value ? [e.target.value] : undefined)
+                  }
+                  style={{...SELECT_STYLE_MD, width: '100%'}}>
+                  <option value="">Any keyword</option>
+                  {uniqueKeywords.map((kw) => (
+                    <option key={kw} value={kw}>
+                      {kw}
+                    </option>
+                  ))}
+                </select>
+              </FilterSection>
+
+              {/* Classification */}
+              <FilterSection label="Classification">
+                <select
+                  value={filters.classifications?.[0] ?? ''}
+                  onChange={(e) =>
+                    updateFilter('classifications', e.target.value ? [e.target.value] : undefined)
+                  }
+                  style={{...SELECT_STYLE_MD, width: '100%'}}>
+                  <option value="">Any classification</option>
+                  {uniqueClassifications.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </FilterSection>
+
+              {/* Set */}
+              <FilterSection label="Set">
+                <select
+                  value={filters.setCode ?? ''}
+                  onChange={(e) => updateFilter('setCode', e.target.value || undefined)}
+                  style={{...SELECT_STYLE_MD, width: '100%'}}>
+                  <option value="">Any set</option>
+                  {sets.map((s) => (
+                    <option key={s.code} value={s.code}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </FilterSection>
+            </div>
+
+            {/* Footer */}
+            <div
+              style={{
+                padding: `${SPACING.lg}px ${SPACING.xl}px`,
+                borderTop: `1px solid ${COLORS.surfaceBorder}`,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                flexShrink: 0,
+              }}>
+              <button
+                onClick={onClose}
+                style={{
+                  padding: `${SPACING.sm}px ${SPACING.xl}px`,
+                  background: COLORS.primary,
+                  color: COLORS.background,
+                  border: 'none',
+                  borderRadius: `${RADIUS.md}px`,
+                  fontSize: `${FONT_SIZES.base}px`,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  minHeight: '40px',
+                }}>
+                Apply Filters
+              </button>
+            </div>
+          </motion.div>
+          </div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}

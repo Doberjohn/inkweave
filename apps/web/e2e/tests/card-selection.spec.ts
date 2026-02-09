@@ -9,89 +9,58 @@ test.describe('Card Selection and Synergies', () => {
     await appPage.goto();
   });
 
-  test('should show empty state when no card selected', async ({synergyResultsPage}) => {
-    const isEmpty = await synergyResultsPage.isEmptyStateVisible();
-    expect(isEmpty).toBe(true);
+  test('should show home state when no card selected', async ({appPage}) => {
+    await expect(appPage.heroSection).toBeVisible();
+    await expect(appPage.featuredCards).toBeVisible();
   });
 
-  test('should display synergies when card is selected', async ({
-    cardListPage,
-    synergyResultsPage,
-  }) => {
-    // Search for a card with known synergies (Singer cards have synergies with Songs)
-    await cardListPage.searchFor('Singer');
-    await cardListPage.selectCard('Singer');
+  test('should display card detail panel when card is selected', async ({appPage, page}) => {
+    await appPage.selectFeaturedCard();
 
-    // Synergy results should appear (empty state should be gone)
-    const isEmpty = await synergyResultsPage.isEmptyStateVisible();
-    expect(isEmpty).toBe(false);
+    // Card detail panel should be visible
+    const detailPanel = page.getByTestId('card-detail-panel');
+    await expect(detailPanel).toBeVisible();
+
+    // Compact header should be visible
+    const compactHeader = page.getByTestId('compact-header');
+    await expect(compactHeader).toBeVisible();
   });
 
-  test('should show synergy count for selected card with synergies', async ({
-    cardListPage,
-    synergyResultsPage,
-  }) => {
-    // Search for a card that typically has synergies
-    await cardListPage.filterByKeyword('Singer');
+  test('should show synergy results area when card is selected', async ({appPage, page}) => {
+    await appPage.selectFeaturedCard();
 
-    // Select first visible card
-    const cardTiles = cardListPage.page.locator('button').filter({hasText: /\d+ ink/});
-    if (await cardTiles.first().isVisible()) {
-      await cardTiles.first().click();
-    }
+    // Either synergy count or "no synergies" message should be visible
+    const hasSynergies = page.getByText(/Found \d+ synergistic cards/);
+    const noSynergies = page.getByText('No synergies found for this card');
 
-    // Check if synergies are shown (some Singer cards should have Song synergies)
-    const hasSynergies = await synergyResultsPage.hasSynergies();
-    // Note: Some cards might not have synergies in the current game mode
-    // This test verifies the UI works, not that every card has synergies
-    expect(typeof hasSynergies).toBe('boolean');
+    const synergiesVisible = await hasSynergies.isVisible().catch(() => false);
+    const noSynergiesVisible = await noSynergies.isVisible().catch(() => false);
+
+    expect(synergiesVisible || noSynergiesVisible).toBe(true);
   });
 
-  test('should clear selection and return to empty state', async ({
-    cardListPage,
+  test('should clear selection and return to home state', async ({
+    appPage,
     synergyResultsPage,
   }) => {
-    // Select a card
-    await cardListPage.filterByInk('Amber');
-    const cardTiles = cardListPage.page.locator('button').filter({hasText: /\d+ ink/});
-    if (await cardTiles.first().isVisible()) {
-      await cardTiles.first().click();
+    await appPage.selectFeaturedCard();
 
-      // Clear selection
-      await synergyResultsPage.clearSelection();
+    // Clear selection via back button
+    await synergyResultsPage.clearSelection();
 
-      // Should return to empty state
-      const isEmpty = await synergyResultsPage.isEmptyStateVisible();
-      expect(isEmpty).toBe(true);
-    }
+    // Should return to home state
+    await expect(appPage.heroSection).toBeVisible();
   });
 
-  test('should update synergies when selecting different card', async ({
-    cardListPage,
-    synergyResultsPage,
-    page,
-  }) => {
-    // Select first card
-    await cardListPage.filterByInk('Amber');
-    await cardListPage.filterByType('Character');
-    const cardTiles = page.locator('button').filter({hasText: /\d+ ink/});
+  test('should return to home when clicking logo', async ({appPage, page}) => {
+    await appPage.selectFeaturedCard();
 
-    const firstCardCount = await cardTiles.count();
-    if (firstCardCount < 2) {
-      // Not enough cards to test, skip
-      return;
-    }
+    // Click the logo in compact header
+    const logoButton = page.getByLabel('Return to home');
+    await logoButton.click();
+    await page.waitForTimeout(100);
 
-    // Select first card
-    await cardTiles.first().click();
-    await page.waitForTimeout(200);
-
-    // Select second card
-    await cardTiles.nth(1).click();
-    await page.waitForTimeout(200);
-
-    // Synergy results should still be visible (not in empty state)
-    const isEmpty = await synergyResultsPage.isEmptyStateVisible();
-    expect(isEmpty).toBe(false);
+    // Should return to home state
+    await expect(appPage.heroSection).toBeVisible();
   });
 });

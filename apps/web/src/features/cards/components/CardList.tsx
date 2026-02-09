@@ -16,7 +16,6 @@ import {
   RADIUS,
   SPACING,
   LAYOUT,
-  LAYOUT_MOBILE,
   CARD_TYPES,
   COST_OPTIONS,
   SELECT_STYLE_SM,
@@ -38,6 +37,8 @@ interface CardListProps {
   onFiltersChange: (filters: CardFilterOptions) => void;
   onCardSelect: (card: LorcanaCard) => void;
   isMobile?: boolean;
+  /** Back button handler for mobile linear flow */
+  onBack?: () => void;
 }
 
 export function CardList({
@@ -55,6 +56,7 @@ export function CardList({
   onFiltersChange,
   onCardSelect,
   isMobile = false,
+  onBack,
 }: CardListProps) {
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
@@ -96,7 +98,7 @@ export function CardList({
         style={{
           display: 'flex',
           flexDirection: 'column',
-          height: `calc(100vh - ${LAYOUT_MOBILE.headerHeight}px - ${LAYOUT_MOBILE.bottomNavHeight}px)`,
+          height: '100vh',
           background: COLORS.background,
         }}>
         {isLoading ? (
@@ -115,7 +117,24 @@ export function CardList({
                 top: 0,
                 zIndex: 10,
               }}>
-              <div style={{display: 'flex', gap: `${SPACING.md}px`}}>
+              <div style={{display: 'flex', gap: `${SPACING.md}px`, alignItems: 'center'}}>
+                {onBack && (
+                  <button
+                    onClick={onBack}
+                    aria-label="Back to home"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: COLORS.primary,
+                      fontSize: `${FONT_SIZES.xl}px`,
+                      cursor: 'pointer',
+                      padding: `${SPACING.xs}px`,
+                      flexShrink: 0,
+                      lineHeight: 1,
+                    }}>
+                    ←
+                  </button>
+                )}
                 <input
                   type="text"
                   placeholder="Search cards..."
