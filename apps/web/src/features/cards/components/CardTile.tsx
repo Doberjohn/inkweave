@@ -28,6 +28,7 @@ export function CardTile({card, onClick, isSelected, variant = 'full', useThumbn
       onClick={() => { hidePreview(); onClick(); }}
       {...(disablePreview ? {} : previewHandlers)}
       aria-pressed={isSelected}
+      aria-label={card.fullName || card.name || 'View card details'}
       whileHover={{
         scale: 1.04,
         y: -3,
