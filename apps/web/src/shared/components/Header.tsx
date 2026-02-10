@@ -4,17 +4,25 @@ export function Header() {
   return (
     <header
       style={{
-        backgroundColor: COLORS.white,
-        borderBottom: `1px solid ${COLORS.gray200}`,
+        background: `linear-gradient(135deg, ${COLORS.headerGradientStart} 0%, ${COLORS.headerGradientEnd} 100%)`,
+        borderBottom: `1px solid ${COLORS.surfaceBorder}`,
         padding: `${SPACING.xl}px ${SPACING.xxl}px`,
-        color: COLORS.gray900,
         display: 'flex',
         alignItems: 'center',
         height: `${LAYOUT.headerHeight}px`,
         minHeight: `${LAYOUT.headerHeight}px`,
         boxSizing: 'border-box',
       }}>
-      <h1 style={{fontSize: `${FONT_SIZES.xl}px`, fontWeight: 700, margin: 0}}>{APP_NAME}</h1>
+      <h1
+        style={{
+          fontSize: `${FONT_SIZES.xxl}px`,
+          fontWeight: 700,
+          margin: 0,
+          color: COLORS.primary,
+          letterSpacing: '0.02em',
+        }}>
+        {APP_NAME}
+      </h1>
     </header>
   );
 }

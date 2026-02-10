@@ -13,11 +13,11 @@ export function CardDetail({card, onClear}: CardDetailProps) {
   return (
     <div
       style={{
-        background: COLORS.white,
+        background: COLORS.surface,
         borderRadius: `${RADIUS.xl}px`,
         padding: `${SPACING.xl}px`,
         marginBottom: `${SPACING.xl}px`,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
         display: 'flex',
         gap: `${SPACING.xl}px`,
       }}>
@@ -75,8 +75,8 @@ export function CardDetail({card, onClear}: CardDetailProps) {
                 <span
                   key={k}
                   style={{
-                    background: '#dbeafe',
-                    color: '#1e40af',
+                    background: COLORS.surfaceAlt,
+                    color: COLORS.textMuted,
                     padding: '4px 10px',
                     borderRadius: `${RADIUS.md}px`,
                     fontSize: `${FONT_SIZES.base}px`,

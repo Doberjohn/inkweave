@@ -9,39 +9,43 @@ test.describe('App Loading', () => {
     }
   });
 
-  test('should display card list when app loads', async ({appPage, cardListPage}) => {
+  test('should display hero home page when app loads', async ({appPage}) => {
     await appPage.goto();
 
+    await expect(appPage.heroSection).toBeVisible();
+    await expect(appPage.heroSearch).toBeVisible();
+    await expect(appPage.featuredCards).toBeVisible();
+    await expect(appPage.etherealBackground).toBeVisible();
+  });
+
+  test('should display search input on home page', async ({appPage}) => {
+    await appPage.goto();
+
+    await expect(appPage.heroSearch).toBeVisible();
+  });
+
+  test('should show featured cards after loading', async ({appPage}) => {
+    await appPage.goto();
+
+    // Featured cards grid should have card tiles
+    const cardTiles = appPage.featuredCards.getByTestId('card-tile');
+    await expect(cardTiles.first()).toBeVisible();
+    const count = await cardTiles.count();
+    expect(count).toBeGreaterThan(0);
+    expect(count).toBeLessThanOrEqual(12);
+  });
+
+  test('should transition to sidebar layout when card is selected', async ({appPage}) => {
+    await appPage.goto();
+
+    // Home state: no header visible
+    await expect(appPage.header).not.toBeVisible();
+
+    // Click a featured card to enter selected state
+    await appPage.selectFeaturedCard();
+
+    // Card-selected state: header and sidebar layout visible
     await expect(appPage.header).toBeVisible();
-    await expect(cardListPage.searchInput).toBeVisible();
-    // Verify card count is shown somewhere on the page
-    await expect(cardListPage.cardCountText).toBeVisible();
-  });
-
-  test('should display header', async ({appPage}) => {
-    await appPage.goto();
-
-    await expect(appPage.header).toBeVisible();
-  });
-
-  test('should show card count after loading', async ({appPage, cardListPage}) => {
-    await appPage.goto();
-
-    // Wait for card count text to appear (shows "X of Y cards")
-    await expect(cardListPage.cardCountText).toBeVisible();
-    const text = await cardListPage.cardCountText.textContent();
-    const match = text?.match(/\d+ of (\d+) cards/);
-    expect(match).toBeTruthy();
-    const totalCards = parseInt(match![1], 10);
-    expect(totalCards).toBeGreaterThan(0);
-  });
-
-  test('should display search input and filters', async ({appPage, cardListPage}) => {
-    await appPage.goto();
-
-    await expect(cardListPage.searchInput).toBeVisible();
-    await expect(cardListPage.getInkFilterButton('All')).toBeVisible();
-    await expect(cardListPage.getInkFilterButton('Amber')).toBeVisible();
-    await expect(cardListPage.getTypeFilterButton('Character')).toBeVisible();
+    await expect(appPage.heroSection).not.toBeVisible();
   });
 });

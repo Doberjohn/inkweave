@@ -1,14 +1,29 @@
+import {useState} from 'react';
 import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
-import {CardList, CardPreviewProvider, CardPreviewPopover} from './features/cards';
-import {useSynergyFinder, SynergyResults} from './features/synergies';
-import {Header, MobileHeader, MobileNav, ErrorBoundary} from './shared/components';
-import {COLORS, LAYOUT, LAYOUT_MOBILE} from './shared/constants';
-import {useResponsive, useMobileView} from './shared/hooks';
+import {CardList, FeaturedCards, CardPreviewProvider, CardPreviewPopover} from './features/cards';
+import {
+  useSynergyFinder,
+  SynergyResults,
+  SynergyBreakdown,
+  CardDetailPanel,
+} from './features/synergies';
+import {
+  CompactHeader,
+  HeroSection,
+  EtherealBackground,
+  FilterModal,
+  FilterDrawer,
+  ErrorBoundary,
+} from './shared/components';
+import {COLORS, FONTS, FONT_SIZES, LAYOUT} from './shared/constants';
+import {useResponsive} from './shared/hooks';
 
 function SynergyFinderApp() {
   const {
+    cards,
     filteredCards,
+    totalCards,
     isLoading,
     error,
     selectedCard,
@@ -29,7 +44,38 @@ function SynergyFinderApp() {
   } = useSynergyFinder();
 
   const {isMobile} = useResponsive();
-  const {activeView, setActiveView} = useMobileView();
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [browsing, setBrowsing] = useState(false);
+
+  // Mobile linear flow: 'home' → 'cards' (browsing) → 'synergies' (card selected)
+  const [mobileView, setMobileView] = useState<'home' | 'cards' | 'synergies'>('home');
+
+  const activeFilterCount = [
+    inkFilter !== 'all',
+    filters.type,
+    filters.minCost !== undefined,
+    filters.maxCost !== undefined,
+    filters.keywords?.length,
+    filters.classifications?.length,
+    filters.setCode,
+  ].filter(Boolean).length;
+
+  const clearAllFilters = () => {
+    setInkFilter('all');
+    setFilters({});
+    setSearchQuery('');
+  };
+
+  const filterProps = {
+    inkFilter,
+    filters,
+    uniqueKeywords,
+    uniqueClassifications,
+    sets,
+    onInkFilterChange: setInkFilter,
+    onFiltersChange: setFilters,
+    onClearAll: clearAllFilters,
+  };
 
   if (error) {
     return (
@@ -54,105 +100,264 @@ function SynergyFinderApp() {
     );
   }
 
-  // Mobile layout
+  // Mobile layout — linear flow (no bottom nav)
   if (isMobile) {
     return (
       <div
         style={{
           minHeight: '100vh',
-          background: `linear-gradient(135deg, ${COLORS.bgGradientStart} 0%, ${COLORS.bgGradientEnd} 100%)`,
-          fontFamily: "'Avenir Next', 'Avenir', -apple-system, sans-serif",
-          display: 'flex',
-          flexDirection: 'column',
+          fontFamily: FONTS.body,
+          position: 'relative',
+          ...(mobileView === 'home' && !selectedCard
+            ? {display: 'flex', flexDirection: 'column' as const, alignItems: 'center'}
+            : {}),
         }}>
-        <MobileHeader />
+        {/* Mobile Home — Hero + Featured Cards */}
+        {mobileView === 'home' && !selectedCard && (
+          <>
+            <EtherealBackground isMobile />
+            <HeroSection
+              searchQuery={searchQuery}
+              onSearchChange={(query) => {
+                setSearchQuery(query);
+                if (query.length > 0) {
+                  setMobileView('cards');
+                }
+              }}
+              onFiltersClick={() => setShowFilterModal(true)}
+              activeFilterCount={activeFilterCount}
+              isMobile
+            />
+            <FeaturedCards
+              cards={cards}
+              onCardSelect={(card) => {
+                selectCard(card);
+                setMobileView('synergies');
+              }}
+              isMobile
+            />
 
-        <main
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            paddingBottom: `${LAYOUT_MOBILE.bottomNavHeight}px`,
-          }}>
-          {activeView === 'cards' && (
-            <ErrorBoundary>
-              <CardList
-                cards={filteredCards}
-                isLoading={isLoading}
-                selectedCard={selectedCard}
-                searchQuery={searchQuery}
-                inkFilter={inkFilter}
-                filters={filters}
-                uniqueKeywords={uniqueKeywords}
-                uniqueClassifications={uniqueClassifications}
-                sets={sets}
-                onSearchChange={setSearchQuery}
-                onInkFilterChange={setInkFilter}
-                onFiltersChange={setFilters}
-                onCardSelect={(card) => {
-                  selectCard(card);
-                  setActiveView('synergies');
-                }}
-                isMobile
-              />
-            </ErrorBoundary>
-          )}
+            {/* See all cards link */}
+            <button
+              onClick={() => setMobileView('cards')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: COLORS.primary,
+                fontSize: `${FONT_SIZES.md}px`,
+                cursor: 'pointer',
+                padding: '0 0 48px',
+                position: 'relative',
+                zIndex: 1,
+                letterSpacing: '1px',
+              }}>
+              See all cards →
+            </button>
+          </>
+        )}
 
-          {activeView === 'synergies' && (
-            <ErrorBoundary>
-              <SynergyResults
-                selectedCard={selectedCard}
-                synergies={synergies}
-                totalSynergyCount={totalSynergyCount}
-                onClearSelection={clearSelection}
-                isMobile
-              />
-            </ErrorBoundary>
-          )}
+        {/* Mobile Cards — browsing/filtering */}
+        {mobileView === 'cards' && !selectedCard && (
+          <ErrorBoundary>
+            <CardList
+              cards={filteredCards}
+              isLoading={isLoading}
+              selectedCard={selectedCard}
+              searchQuery={searchQuery}
+              inkFilter={inkFilter}
+              filters={filters}
+              uniqueKeywords={uniqueKeywords}
+              uniqueClassifications={uniqueClassifications}
+              sets={sets}
+              onSearchChange={setSearchQuery}
+              onInkFilterChange={setInkFilter}
+              onFiltersChange={setFilters}
+              onCardSelect={(card) => {
+                selectCard(card);
+                setMobileView('synergies');
+              }}
+              isMobile
+              onBack={() => {
+                setMobileView('home');
+                setSearchQuery('');
+              }}
+            />
+          </ErrorBoundary>
+        )}
 
-        </main>
+        {/* Mobile Synergies — card selected */}
+        {(mobileView === 'synergies' || selectedCard) && (
+          <ErrorBoundary>
+            <SynergyResults
+              selectedCard={selectedCard}
+              synergies={synergies}
+              totalSynergyCount={totalSynergyCount}
+              onClearSelection={() => {
+                clearSelection();
+                setMobileView('home');
+              }}
+              isMobile
+            />
+          </ErrorBoundary>
+        )}
 
-        <MobileNav
-          activeView={activeView}
-          onViewChange={setActiveView}
+        {/* Mobile filter bottom sheet */}
+        <FilterDrawer
+          isOpen={showFilterModal}
+          onClose={() => setShowFilterModal(false)}
+          {...filterProps}
         />
       </div>
     );
   }
 
-  // Desktop layout
+  // Desktop — Home state (no card selected, not browsing)
+  if (!selectedCard && !browsing) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          fontFamily: FONTS.body,
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+        <EtherealBackground />
+
+        <HeroSection
+          searchQuery={searchQuery}
+          onSearchChange={(query) => {
+            setSearchQuery(query);
+            if (query.length > 0) {
+              setBrowsing(true);
+            }
+          }}
+          onFiltersClick={() => setShowFilterModal(true)}
+          activeFilterCount={activeFilterCount}
+        />
+
+        <FeaturedCards cards={cards} onCardSelect={selectCard} />
+
+        {/* See all cards link */}
+        <button
+          onClick={() => setBrowsing(true)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: COLORS.primary,
+            fontSize: `${FONT_SIZES.lg}px`,
+            cursor: 'pointer',
+            padding: '24px 0 48px',
+            position: 'relative',
+            zIndex: 1,
+            letterSpacing: '1px',
+          }}>
+          See all cards →
+        </button>
+
+        <FilterModal
+          isOpen={showFilterModal}
+          onClose={() => setShowFilterModal(false)}
+          {...filterProps}
+        />
+      </div>
+    );
+  }
+
+  // Desktop — Browsing state (searching/filtering, no card selected)
+  if (!selectedCard && browsing) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: COLORS.background,
+          fontFamily: FONTS.body,
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+        <CompactHeader
+          totalCards={totalCards}
+          onLogoClick={() => {
+            setBrowsing(false);
+            setSearchQuery('');
+            clearAllFilters();
+          }}
+        />
+
+        <div
+          style={{
+            display: 'flex',
+            flex: 1,
+            minHeight: `calc(100vh - ${LAYOUT.compactHeaderHeight}px)`,
+          }}>
+          <ErrorBoundary>
+            <CardList
+              cards={filteredCards}
+              isLoading={isLoading}
+              selectedCard={selectedCard}
+              searchQuery={searchQuery}
+              inkFilter={inkFilter}
+              filters={filters}
+              uniqueKeywords={uniqueKeywords}
+              uniqueClassifications={uniqueClassifications}
+              sets={sets}
+              onSearchChange={setSearchQuery}
+              onInkFilterChange={setInkFilter}
+              onFiltersChange={setFilters}
+              onCardSelect={selectCard}
+            />
+          </ErrorBoundary>
+        </div>
+
+        <FilterModal
+          isOpen={showFilterModal}
+          onClose={() => setShowFilterModal(false)}
+          {...filterProps}
+        />
+      </div>
+    );
+  }
+
+  // Desktop — Card-selected state (CompactHeader + 3-column layout)
   return (
     <div
       style={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${COLORS.bgGradientStart} 0%, ${COLORS.bgGradientEnd} 100%)`,
-        fontFamily: "'Avenir Next', 'Avenir', -apple-system, sans-serif",
+        background: COLORS.background,
+        fontFamily: FONTS.body,
+        display: 'flex',
+        flexDirection: 'column',
       }}>
-      <Header />
+      <CompactHeader totalCards={totalCards} onLogoClick={() => { clearSelection(); setBrowsing(false); }} />
 
-      <div style={{display: 'flex', minHeight: `calc(100vh - ${LAYOUT.headerHeight}px)`}}>
-        <CardList
-          cards={filteredCards}
-          isLoading={isLoading}
-          selectedCard={selectedCard}
-          searchQuery={searchQuery}
-          inkFilter={inkFilter}
-          filters={filters}
-          uniqueKeywords={uniqueKeywords}
-          uniqueClassifications={uniqueClassifications}
-          sets={sets}
-          onSearchChange={setSearchQuery}
-          onInkFilterChange={setInkFilter}
-          onFiltersChange={setFilters}
-          onCardSelect={selectCard}
-        />
+      <div
+        style={{
+          display: 'flex',
+          flex: 1,
+          minHeight: `calc(100vh - ${LAYOUT.compactHeaderHeight}px)`,
+        }}>
+        {/* Left: Card detail panel */}
+        <CardDetailPanel card={selectedCard} onClear={() => { clearSelection(); setBrowsing(false); }} />
 
+        {/* Center: Synergy grid */}
         <SynergyResults
           selectedCard={selectedCard}
           synergies={synergies}
           totalSynergyCount={totalSynergyCount}
           onClearSelection={clearSelection}
         />
+
+        {/* Right: Synergy breakdown sidebar */}
+        <SynergyBreakdown synergies={synergies} totalCount={totalSynergyCount} />
       </div>
+
+      <FilterModal
+        isOpen={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        {...filterProps}
+      />
     </div>
   );
 }

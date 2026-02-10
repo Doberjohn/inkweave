@@ -13,6 +13,7 @@ import {
   CARD_TYPES,
   COST_OPTIONS,
   SELECT_STYLE_MD,
+  CTA_BUTTON_STYLE,
 } from '../constants';
 // FONT_SIZES and RADIUS are still used for header/drawer styling
 import {isCardType} from '../../features/cards';
@@ -126,7 +127,7 @@ export function FilterDrawer({
               bottom: 0,
               left: 0,
               right: 0,
-              background: COLORS.white,
+              background: COLORS.surface,
               borderTopLeftRadius: `${RADIUS.xl}px`,
               borderTopRightRadius: `${RADIUS.xl}px`,
               zIndex: Z_INDEX.modal,
@@ -135,6 +136,23 @@ export function FilterDrawer({
               flexDirection: 'column',
               paddingBottom: 'env(safe-area-inset-bottom)',
             }}>
+            {/* Drag handle */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                paddingTop: `${SPACING.md}px`,
+              }}>
+              <div
+                style={{
+                  width: 36,
+                  height: 4,
+                  borderRadius: 2,
+                  background: COLORS.gray300,
+                }}
+              />
+            </div>
+
             {/* Header */}
             <div
               style={{
@@ -168,17 +186,7 @@ export function FilterDrawer({
                 )}
                 <button
                   onClick={onClose}
-                  style={{
-                    background: COLORS.primary600,
-                    color: COLORS.white,
-                    border: 'none',
-                    borderRadius: `${RADIUS.md}px`,
-                    padding: `${SPACING.sm}px ${SPACING.lg}px`,
-                    fontSize: `${FONT_SIZES.base}px`,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    minHeight: '44px',
-                  }}>
+                  style={CTA_BUTTON_STYLE}>
                   Apply
                 </button>
               </div>

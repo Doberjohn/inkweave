@@ -2,7 +2,7 @@ import type {LorcanaCard} from '../../cards';
 import type {GroupedSynergies} from '../types';
 import {CardDetail, SynergyGroup} from '.';
 import {EmptyState} from '../../../shared/components';
-import {COLORS, FONT_SIZES, SPACING, LAYOUT, LAYOUT_MOBILE} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, SPACING, LAYOUT} from '../../../shared/constants';
 
 interface SynergyResultsProps {
   selectedCard: LorcanaCard | null;
@@ -10,6 +10,8 @@ interface SynergyResultsProps {
   totalSynergyCount: number;
   onClearSelection: () => void;
   isMobile?: boolean;
+  /** When false, CardDetail is rendered externally (e.g. CardDetailPanel). Default: true for mobile. */
+  showCardDetail?: boolean;
 }
 
 export function SynergyResults({
@@ -18,17 +20,19 @@ export function SynergyResults({
   totalSynergyCount,
   onClearSelection,
   isMobile = false,
+  showCardDetail,
 }: SynergyResultsProps) {
+  // Default: show card detail on mobile, hide on desktop (it's in its own panel)
+  const renderCardDetail = showCardDetail ?? isMobile;
+
   return (
     <div
       style={{
         flex: 1,
         padding: isMobile ? `${SPACING.md}px` : `${SPACING.xl}px`,
         overflowY: 'auto',
-        maxHeight: isMobile
-          ? `calc(100vh - ${LAYOUT_MOBILE.headerHeight}px - ${LAYOUT_MOBILE.bottomNavHeight}px)`
-          : `calc(100vh - ${LAYOUT.headerHeight}px)`,
-        background: isMobile ? COLORS.white : undefined,
+        maxHeight: isMobile ? '100vh' : `calc(100vh - ${LAYOUT.compactHeaderHeight}px)`,
+        background: isMobile ? COLORS.background : undefined,
       }}>
       {!selectedCard ? (
         <EmptyState
@@ -37,7 +41,9 @@ export function SynergyResults({
         />
       ) : (
         <>
-          <CardDetail card={selectedCard} onClear={onClearSelection} />
+          {renderCardDetail && (
+            <CardDetail card={selectedCard} onClear={onClearSelection} />
+          )}
 
           {synergies.length === 0 ? (
             <div

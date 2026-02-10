@@ -16,7 +16,6 @@ import {
   RADIUS,
   SPACING,
   LAYOUT,
-  LAYOUT_MOBILE,
   CARD_TYPES,
   COST_OPTIONS,
   SELECT_STYLE_SM,
@@ -38,6 +37,8 @@ interface CardListProps {
   onFiltersChange: (filters: CardFilterOptions) => void;
   onCardSelect: (card: LorcanaCard) => void;
   isMobile?: boolean;
+  /** Back button handler for mobile linear flow */
+  onBack?: () => void;
 }
 
 export function CardList({
@@ -55,6 +56,7 @@ export function CardList({
   onFiltersChange,
   onCardSelect,
   isMobile = false,
+  onBack,
 }: CardListProps) {
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
@@ -96,8 +98,8 @@ export function CardList({
         style={{
           display: 'flex',
           flexDirection: 'column',
-          height: `calc(100vh - ${LAYOUT_MOBILE.headerHeight}px - ${LAYOUT_MOBILE.bottomNavHeight}px)`,
-          background: COLORS.white,
+          height: '100vh',
+          background: COLORS.background,
         }}>
         {isLoading ? (
           <div style={{padding: `${SPACING.lg}px`}}>
@@ -109,13 +111,30 @@ export function CardList({
             <div
               style={{
                 padding: `${SPACING.md}px ${SPACING.lg}px`,
-                background: COLORS.white,
+                background: COLORS.background,
                 borderBottom: `1px solid ${COLORS.gray200}`,
                 position: 'sticky',
                 top: 0,
                 zIndex: 10,
               }}>
-              <div style={{display: 'flex', gap: `${SPACING.md}px`}}>
+              <div style={{display: 'flex', gap: `${SPACING.md}px`, alignItems: 'center'}}>
+                {onBack && (
+                  <button
+                    onClick={onBack}
+                    aria-label="Back to home"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: COLORS.primary,
+                      fontSize: `${FONT_SIZES.xl}px`,
+                      cursor: 'pointer',
+                      padding: `${SPACING.xs}px`,
+                      flexShrink: 0,
+                      lineHeight: 1,
+                    }}>
+                    ←
+                  </button>
+                )}
                 <input
                   type="text"
                   placeholder="Search cards..."
@@ -125,7 +144,9 @@ export function CardList({
                     flex: 1,
                     padding: '12px 16px',
                     borderRadius: `${RADIUS.lg}px`,
-                    border: `1px solid ${COLORS.gray200}`,
+                    border: `1px solid ${COLORS.surfaceBorder}`,
+                    background: COLORS.surfaceAlt,
+                    color: COLORS.text,
                     fontSize: '16px', // Prevent iOS zoom
                     boxSizing: 'border-box',
                   }}
@@ -137,7 +158,7 @@ export function CardList({
                     height: '48px',
                     borderRadius: `${RADIUS.lg}px`,
                     border: `1px solid ${COLORS.gray200}`,
-                    background: activeFilterCount > 0 ? COLORS.primary100 : COLORS.white,
+                    background: activeFilterCount > 0 ? COLORS.primary100 : COLORS.surface,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -180,20 +201,25 @@ export function CardList({
               </p>
             </div>
 
-            {/* Card List */}
+            {/* Card Grid */}
             <div
               style={{
                 flex: 1,
                 overflowY: 'auto',
                 padding: `${SPACING.md}px`,
               }}>
-              <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(95px, 1fr))',
+                gap: '6px',
+              }}>
                 {displayedCards.map((card) => (
                   <CardTile
                     key={card.id}
                     card={card}
                     onClick={() => onCardSelect(card)}
                     isSelected={selectedCard?.id === card.id}
+                    disablePreview
                   />
                 ))}
               </div>
@@ -224,7 +250,7 @@ export function CardList({
       style={{
         width: `${LAYOUT.sidebarWidth}px`,
         borderRight: `1px solid ${COLORS.gray200}`,
-        background: COLORS.white,
+        background: COLORS.surface,
         display: 'flex',
         flexDirection: 'column',
         maxHeight: `calc(100vh - ${LAYOUT.headerHeight}px)`,
@@ -248,7 +274,9 @@ export function CardList({
                 width: '100%',
                 padding: '10px 12px',
                 borderRadius: `${RADIUS.lg}px`,
-                border: `1px solid ${COLORS.gray200}`,
+                border: `1px solid ${COLORS.surfaceBorder}`,
+                background: COLORS.surfaceAlt,
+                color: COLORS.text,
                 fontSize: `${FONT_SIZES.lg}px`,
                 marginBottom: `${SPACING.md}px`,
                 boxSizing: 'border-box',
@@ -435,14 +463,18 @@ export function CardList({
             </p>
           </div>
 
-          {/* Card List - Scrollable */}
+          {/* Card Grid - Scrollable */}
           <div
             style={{
               flex: 1,
               overflowY: 'auto',
               padding: `${SPACING.sm}px ${SPACING.lg}px ${SPACING.lg}px`,
             }}>
-            <div style={{display: 'flex', flexDirection: 'column', gap: '6px'}}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(105px, 1fr))',
+              gap: '6px',
+            }}>
               {displayedCards.map((card) => (
                 <CardTile
                   key={card.id}

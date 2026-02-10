@@ -43,11 +43,13 @@ export function FilterButton({
       aria-pressed={active}
       style={{
         ...sizeStyle,
-        border: 'none',
+        border: active ? `1px solid ${activeColor}80` : `1px solid transparent`,
         background: active ? activeColor : inactiveColor,
         color: active ? COLORS.white : inactiveTextColor,
         fontWeight: 500,
         cursor: 'pointer',
+        boxShadow: active ? `0 0 6px ${activeColor}40` : 'none',
+        transition: 'box-shadow 0.2s, background 0.2s',
       }}>
       {children}
     </button>

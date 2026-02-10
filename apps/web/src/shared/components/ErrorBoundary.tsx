@@ -36,7 +36,7 @@ export class ErrorBoundary extends Component<Props, State> {
           style={{
             padding: `${SPACING.xxl}px`,
             textAlign: 'center',
-            background: COLORS.white,
+            background: COLORS.surface,
             borderRadius: `${RADIUS.lg}px`,
             margin: `${SPACING.xl}px`,
           }}>

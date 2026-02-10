@@ -1,3 +1,6 @@
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Tinos:wght@400;700&family=Cinzel:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
+
 /* Base styles for Inkweave */
 *,
 *::before,
@@ -7,9 +10,7 @@
 
 :root {
   font-family:
-    'Avenir Next',
-    'Avenir',
-    system-ui,
+    'Inter',
     -apple-system,
     BlinkMacSystemFont,
     'Segoe UI',
@@ -18,6 +19,8 @@
     sans-serif;
   line-height: 1.5;
   font-weight: 400;
+
+  color-scheme: dark;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -29,6 +32,8 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background: #0d0d14;
+  color: #e8e8e8;
 }
 
 #root {
@@ -45,24 +50,38 @@ input {
   font-family: inherit;
 }
 
-/* Scrollbar styling */
+/* Dark theme form elements */
+input::placeholder {
+  color: #90a1b9;
+}
+
+select {
+  color: #e8e8e8;
+}
+
+option {
+  background: #1e1e35;
+  color: #e8e8e8;
+}
+
+/* Scrollbar styling (dark theme) */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #1a1a2e;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: #333355;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  background: #444466;
 }
 
 /* Animations */

@@ -86,6 +86,30 @@ src/
 10. **Ink Ramp** - Ink acceleration + high-cost cards
 11. **Ward + Aggression** - Ward protects aggressive plays
 
+## UI Redesign Plan (Epic #29)
+
+Dark fantasy theme with Scryfall-inspired card grids and Dreamborn-style two-column layout.
+
+### Phase 1: Design System Foundation (#35) - DONE
+- Dark color palette: background `#0d0d14`, surface `#1a1a2e`, gold `#d4af37`
+- Gray scale inversion for automatic dark adaptation
+- All `COLORS.white` background usages split to `surface`/`background` tokens
+
+### Phase 2: Card Grid Transformation (#36) - Next
+- Add `thumbnailUrl` to LorcanaCard (extract from raw `images.thumbnail`)
+- Rewrite CardTile to vertical image tile (thumbnail + name overlay)
+- CardList from flex-column → CSS Grid (`repeat(auto-fill, minmax(110px, 1fr))`)
+- Widen sidebar 340px → 480px
+- Fix E2E selectors that depend on current layout
+
+### Phase 3: Synergy Panel Redesign (#37)
+- SynergyCard → image tile with overlaid strength badges
+- SynergyGroup → CSS Grid layout
+
+### Phase 4: Header, Filters, and Polish (#38)
+- Gold header wordmark, glowing filter buttons
+- Polish remaining components
+
 ## Future Considerations
 
 - Add more synergy rules (Bodyguard, location synergies, damage-based)

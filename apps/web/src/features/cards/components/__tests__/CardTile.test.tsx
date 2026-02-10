@@ -26,47 +26,44 @@ describe('CardTile', () => {
     isSelected: false,
   };
 
-  it('should render card name', () => {
-    renderWithProvider(<CardTile {...defaultProps} />);
-
-    expect(screen.getByText('Elsa')).toBeInTheDocument();
-  });
-
-  it('should render card version', () => {
-    renderWithProvider(<CardTile {...defaultProps} />);
-
-    expect(screen.getByText('Snow Queen')).toBeInTheDocument();
-  });
-
-  it('should not render cost in tile body when imageUrl is provided', () => {
-    const cardWithImage = createCard({
+  it('should prefer full image over thumbnail when both available', () => {
+    const cardWithBoth = createCard({
       ...mockCard,
+      thumbnailUrl: 'https://example.com/elsa-thumb.jpg',
       imageUrl: 'https://example.com/elsa.jpg',
     });
-    const {container} = renderWithProvider(<CardTile {...defaultProps} card={cardWithImage} />);
+    const {container} = renderWithProvider(<CardTile {...defaultProps} card={cardWithBoth} />);
 
-    // Cost should not appear as text in the tile body (only in CardImage fallback if image fails)
-    // The image should be loaded, so no cost fallback should be visible
     const img = container.querySelector('img');
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute('src', 'https://example.com/elsa.jpg');
-    
-    // Cost text "5" should not be in the document when image loads successfully
-    expect(screen.queryByText('5')).not.toBeInTheDocument();
   });
 
-  it('should render keywords (base form)', () => {
-    renderWithProvider(<CardTile {...defaultProps} />);
+  it('should fall back to thumbnailUrl when no imageUrl', () => {
+    const cardWithThumb = createCard({
+      ...mockCard,
+      imageUrl: undefined,
+      thumbnailUrl: 'https://example.com/elsa-thumb.jpg',
+    });
+    const {container} = renderWithProvider(<CardTile {...defaultProps} card={cardWithThumb} />);
 
-    expect(screen.getByText('Singer')).toBeInTheDocument();
-    expect(screen.getByText('Evasive')).toBeInTheDocument();
+    const img = container.querySelector('img');
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', 'https://example.com/elsa-thumb.jpg');
+  });
+
+  it('should show cost fallback when no image available', () => {
+    const cardNoImage = createCard({...mockCard, imageUrl: undefined});
+    renderWithProvider(<CardTile {...defaultProps} card={cardNoImage} />);
+
+    expect(screen.getByText('5')).toBeInTheDocument();
   });
 
   it('should call onClick when clicked', () => {
     const onClick = vi.fn();
     renderWithProvider(<CardTile {...defaultProps} onClick={onClick} />);
 
-    fireEvent.click(screen.getByRole('button', {name: /elsa/i}));
+    fireEvent.click(screen.getByRole('button'));
 
     expect(onClick).toHaveBeenCalledTimes(1);
   });
@@ -85,32 +82,20 @@ describe('CardTile', () => {
     expect(screen.getByRole('button')).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('should not render version when not provided', () => {
-    const cardWithoutVersion = createCard({
-      ...mockCard,
-      version: undefined,
-    });
-
-    renderWithProvider(<CardTile {...defaultProps} card={cardWithoutVersion} />);
-
-    expect(screen.queryByText('Snow Queen')).not.toBeInTheDocument();
-  });
-
   describe('Mouse preview interactions', () => {
     it('should show preview on mouse enter', () => {
       renderWithProvider(<CardTile {...defaultProps} />);
 
-      const button = screen.getByRole('button', {name: /elsa/i});
+      const button = screen.getByRole('button');
       fireEvent.mouseEnter(button, {clientX: 100, clientY: 200});
 
-      // Preview is shown via context - button should still be interactive
       expect(button).toBeInTheDocument();
     });
 
     it('should update preview position on mouse move', () => {
       renderWithProvider(<CardTile {...defaultProps} />);
 
-      const button = screen.getByRole('button', {name: /elsa/i});
+      const button = screen.getByRole('button');
       fireEvent.mouseMove(button, {clientX: 150, clientY: 250});
 
       expect(button).toBeInTheDocument();
@@ -119,7 +104,7 @@ describe('CardTile', () => {
     it('should hide preview on mouse leave', () => {
       renderWithProvider(<CardTile {...defaultProps} />);
 
-      const button = screen.getByRole('button', {name: /elsa/i});
+      const button = screen.getByRole('button');
       fireEvent.mouseEnter(button, {clientX: 100, clientY: 200});
       fireEvent.mouseLeave(button);
 

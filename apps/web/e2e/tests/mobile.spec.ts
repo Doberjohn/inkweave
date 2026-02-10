@@ -12,37 +12,34 @@ test.describe('Mobile Viewport', () => {
     await appPage.waitForCardsLoaded();
   });
 
-  test('should display mobile navigation', async ({page}) => {
-    const mobileNav = page.locator('nav');
-    await expect(mobileNav).toBeVisible();
-
-    // Check nav buttons - use nav locator to avoid matching card buttons
-    await expect(mobileNav.getByRole('button', {name: 'Cards'})).toBeVisible();
-    await expect(mobileNav.getByRole('button', {name: 'Synergies'})).toBeVisible();
+  test('should display hero home page on mobile', async ({appPage}) => {
+    // Mobile now shows hero home just like desktop
+    await expect(appPage.heroSection).toBeVisible();
+    await expect(appPage.heroSearch).toBeVisible();
+    await expect(appPage.featuredCards).toBeVisible();
   });
 
-  test('should start on Cards view', async ({page}) => {
-    await expect(page.getByRole('button', {name: 'Cards'})).toHaveAttribute('aria-pressed', 'true');
-
-    // Search input should be visible (Cards view)
-    await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
+  test('should show search input on home', async ({page}) => {
+    // Search input should be visible on home hero
+    await expect(page.getByPlaceholder('Search for a card...')).toBeVisible();
   });
 
-  test('should switch to Synergies view', async ({page}) => {
-    const mobileNav = page.locator('nav');
-    await mobileNav.getByRole('button', {name: 'Synergies'}).click();
+  test('should navigate to synergies when selecting a featured card', async ({appPage, page}) => {
+    // Click a featured card
+    await appPage.selectFeaturedCard();
 
-    await expect(mobileNav.getByRole('button', {name: 'Synergies'})).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    // Should show synergy results (card detail + synergies)
+    const hasSynergies = page.getByText(/Found \d+ synergistic cards/);
+    const noSynergies = page.getByText('No synergies found for this card');
 
-    // Should show empty state
-    await expect(page.getByText('Select a card to see synergies')).toBeVisible();
+    const synergiesVisible = await hasSynergies.isVisible().catch(() => false);
+    const noSynergiesVisible = await noSynergies.isVisible().catch(() => false);
+
+    expect(synergiesVisible || noSynergiesVisible).toBe(true);
   });
 
-  test('should show filter drawer on mobile', async ({page}) => {
-    // Click filter button
+  test('should show filter bottom sheet on mobile', async ({page}) => {
+    // Click filter button on hero
     const filterButton = page.getByRole('button', {name: /Filters/});
     await filterButton.click();
 
@@ -51,34 +48,17 @@ test.describe('Mobile Viewport', () => {
     await expect(page.getByRole('button', {name: 'Sapphire', exact: true})).toBeVisible();
   });
 
-  test('should show mobile header', async ({page}) => {
-    // Header should be visible
-    await expect(page.locator('header')).toBeVisible();
-  });
+  test('should return to home when clearing selection on mobile', async ({
+    appPage,
+    synergyResultsPage,
+  }) => {
+    // Select a card
+    await appPage.selectFeaturedCard();
 
-  test('should search for cards on mobile', async ({cardListPage, page}) => {
-    // Search should work on mobile
-    await cardListPage.searchFor('Elsa');
+    // Clear selection
+    await synergyResultsPage.clearSelection();
 
-    // Should show filtered results
-    const counts = await cardListPage.getDisplayedCardCount();
-    expect(counts.shown).toBeGreaterThan(0);
-
-    // At least one Elsa card should be visible
-    await expect(page.getByText('Elsa').first()).toBeVisible();
-  });
-
-  test('should maintain search state when switching views', async ({cardListPage, page}) => {
-    const mobileNav = page.locator('nav');
-
-    // Search for a card
-    await cardListPage.searchFor('Elsa');
-
-    // Switch to Synergies view and back
-    await mobileNav.getByRole('button', {name: 'Synergies'}).click();
-    await mobileNav.getByRole('button', {name: 'Cards'}).click();
-
-    // Search should still be there
-    await expect(cardListPage.searchInput).toHaveValue('Elsa');
+    // Should return to home state with hero
+    await expect(appPage.heroSection).toBeVisible();
   });
 });

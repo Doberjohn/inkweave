@@ -1,4 +1,4 @@
-import {memo} from 'react';
+import {useState, memo} from 'react';
 import {motion} from 'framer-motion';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyStrength} from '../types';
@@ -8,15 +8,56 @@ import {
   COLORS,
   FONT_SIZES,
   RADIUS,
-  LAYOUT,
 } from '../../../shared/constants';
-import {CardImage} from '../../../shared/components';
 import {useCardPreviewHandlers} from '../../cards';
+import {useResponsive} from '../../../shared/hooks';
 
 interface SynergyCardProps {
   card: LorcanaCard;
   strength: SynergyStrength;
   explanation: string;
+}
+
+/**
+ * Extract a short reason tag from the full explanation.
+ * e.g. "Singer keyword reduces Song cost" → "Singer"
+ *      "Can Shift onto this character" → "Shift Target"
+ *      "Evasive + quest synergy" → "Evasive"
+ */
+function extractReasonTag(explanation: string): string {
+  // Match common patterns
+  const patterns: [RegExp, string][] = [
+    [/\bSinger\b/i, 'Singer'],
+    [/\bShift\b/i, 'Shift'],
+    [/\bEvasive\b/i, 'Evasive'],
+    [/\bChallenger\b/i, 'Challenger'],
+    [/\bWard\b/i, 'Ward'],
+    [/\bBodyguard\b/i, 'Bodyguard'],
+    [/\bRush\b/i, 'Rush'],
+    [/\bExert\b/i, 'Exert'],
+    [/\bDraw\b/i, 'Draw'],
+    [/\bRamp\b|ink acceleration/i, 'Ramp'],
+    [/\bDiscard\b/i, 'Discard'],
+    [/\bBounce\b|return to hand/i, 'Bounce'],
+    [/\bDamage\b|deal damage/i, 'Damage'],
+    [/\bBanish\b/i, 'Removal'],
+    [/\bPrincess\b/i, 'Princess'],
+    [/\bVillain\b/i, 'Villain'],
+    [/\bHero\b/i, 'Hero'],
+    [/\bSong\b/i, 'Song'],
+    [/\bquest\b/i, 'Quest'],
+    [/same name/i, 'Same Name'],
+    [/ink color/i, 'Same Ink'],
+    [/cost curve/i, 'Curve'],
+  ];
+
+  for (const [pattern, tag] of patterns) {
+    if (pattern.test(explanation)) return tag;
+  }
+
+  // Fallback: first two words of explanation
+  const words = explanation.split(/\s+/);
+  return words.slice(0, 2).join(' ');
 }
 
 export const SynergyCard = memo(function SynergyCard({
@@ -26,104 +67,106 @@ export const SynergyCard = memo(function SynergyCard({
 }: SynergyCardProps) {
   const colors = INK_COLORS[card.ink];
   const strengthStyle = STRENGTH_STYLES[strength];
+  const {isMobile} = useResponsive();
   const {previewHandlers} = useCardPreviewHandlers({card});
+  const [imgError, setImgError] = useState(false);
+  const imgSrc = card.thumbnailUrl || card.imageUrl;
+  const reasonTag = extractReasonTag(explanation);
 
   return (
-    <motion.div
-      {...previewHandlers}
-      whileHover={{scale: 1.02, y: -2}}
-      whileTap={{scale: 0.98}}
-      transition={{type: 'spring', stiffness: 400, damping: 25}}
-      style={{
-        display: 'flex',
-        gap: '12px',
-        padding: '12px',
-        borderRadius: `${RADIUS.lg}px`,
-        border: `1px solid ${colors.border}40`,
-        background: COLORS.white,
-        cursor: 'pointer',
-      }}>
-      <CardImage
-        src={card.imageUrl}
-        alt=""
-        width={LAYOUT.synergyCardImageWidth}
-        height={LAYOUT.synergyCardImageHeight}
-        inkColor={card.ink}
-        cost={card.cost}
-        lazy={true}
-        borderRadius={RADIUS.sm}
-      />
-      <div style={{flex: 1, minWidth: 0}}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: '8px',
-          }}>
-          <div style={{minWidth: 0}}>
-            <span
-              style={{
-                fontWeight: 600,
-                fontSize: `${FONT_SIZES.lg}px`,
-                color: COLORS.gray800,
-                display: 'block',
-              }}>
-              {card.name}
-            </span>
-            {card.version && (
-              <span style={{fontSize: `${FONT_SIZES.md}px`, color: COLORS.gray500}}>
-                {card.version}
-              </span>
-            )}
-          </div>
-          <span
+    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+      {/* Card image tile */}
+      <motion.div
+        {...(isMobile ? {} : previewHandlers)}
+        whileHover={{scale: 1.04, y: -3}}
+        whileTap={{scale: 0.97}}
+        transition={{type: 'spring', stiffness: 400, damping: 25}}
+        style={{
+          position: 'relative',
+          borderRadius: `${RADIUS.lg}px`,
+          border: `1px solid ${colors.border}40`,
+          background: COLORS.surface,
+          cursor: 'pointer',
+          overflow: 'hidden',
+          aspectRatio: '0.72',
+        }}>
+        {/* Card image or fallback */}
+        {imgSrc && !imgError ? (
+          <img
+            src={imgSrc}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            onError={() => setImgError(true)}
             style={{
-              background: strengthStyle.bg,
-              color: strengthStyle.text,
-              padding: '2px 8px',
-              borderRadius: '12px',
-              fontSize: `${FONT_SIZES.sm}px`,
-              fontWeight: 500,
-              textTransform: 'capitalize',
-              flexShrink: 0,
-            }}>
-            {strength}
-          </span>
-        </div>
-        <p
-          style={{
-            fontSize: `${FONT_SIZES.base}px`,
-            color: COLORS.gray600,
-            marginTop: '6px',
-            lineHeight: 1.4,
-          }}>
-          {explanation}
-        </p>
-        <div style={{display: 'flex', gap: '4px', marginTop: '8px', flexWrap: 'wrap'}}>
-          <span
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+            }}
+          />
+        ) : (
+          <div
             style={{
-              fontSize: `${FONT_SIZES.sm}px`,
+              width: '100%',
+              height: '100%',
               background: colors.bg,
-              color: colors.text,
-              padding: '2px 6px',
-              borderRadius: `${RADIUS.sm}px`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}>
-            {card.ink}
-          </span>
-          <span
-            style={{
-              fontSize: `${FONT_SIZES.sm}px`,
-              background: COLORS.gray100,
-              color: COLORS.gray700,
-              padding: '2px 6px',
-              borderRadius: `${RADIUS.sm}px`,
-            }}>
-            Cost {card.cost}
-          </span>
-        </div>
-      </div>
+            <span style={{fontSize: `${FONT_SIZES.xxxl}px`, fontWeight: 600, color: colors.text}}>
+              {card.cost}
+            </span>
+          </div>
+        )}
 
-    </motion.div>
+        {/* Strength badge - top right */}
+        <span
+          style={{
+            position: 'absolute',
+            top: '4px',
+            right: '4px',
+            background: strengthStyle.bg,
+            color: strengthStyle.text,
+            padding: '2px 6px',
+            borderRadius: '10px',
+            fontSize: `${FONT_SIZES.xs}px`,
+            fontWeight: 600,
+            textTransform: 'capitalize',
+            border: `1px solid ${strengthStyle.text}40`,
+          }}>
+          {strength}
+        </span>
+
+
+      </motion.div>
+
+      {/* Reason tag pill */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+        }}>
+        <span
+          data-testid="reason-tag"
+          title={explanation}
+          style={{
+            background: COLORS.surfaceAlt,
+            color: COLORS.textMuted,
+            border: `1px solid ${COLORS.surfaceBorder}`,
+            padding: '2px 8px',
+            borderRadius: `${RADIUS.sm}px`,
+            fontSize: `${FONT_SIZES.xs}px`,
+            fontWeight: 500,
+            maxWidth: '100%',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}>
+          {reasonTag}
+        </span>
+      </div>
+    </div>
   );
 });
