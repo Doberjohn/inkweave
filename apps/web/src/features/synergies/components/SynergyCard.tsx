@@ -139,30 +139,7 @@ export const SynergyCard = memo(function SynergyCard({
           {strength}
         </span>
 
-        {/* Name overlay */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: 'linear-gradient(transparent, rgba(0,0,0,0.9))',
-            padding: '20px 6px 5px',
-          }}>
-          <span
-            style={{
-              fontWeight: 600,
-              fontSize: `${FONT_SIZES.sm}px`,
-              color: '#fff',
-              display: 'block',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              lineHeight: 1.2,
-            }}>
-            {card.name}
-          </span>
-        </div>
+
       </motion.div>
 
       {/* Reason tag pill */}

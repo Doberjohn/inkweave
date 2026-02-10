@@ -27,9 +27,20 @@ export function CardTile({card, onClick, isSelected, variant = 'full', useThumbn
       onClick={() => { hidePreview(); onClick(); }}
       {...(disablePreview ? {} : previewHandlers)}
       aria-pressed={isSelected}
-      whileHover={{scale: 1.04, y: -3}}
+      whileHover={{
+        scale: 1.04,
+        y: -3,
+        boxShadow: isSelected
+          ? `0 0 12px ${colors.border}80`
+          : variant === 'minimal'
+            ? `0 0 14px ${COLORS.primary}30, 0 25px 50px -12px rgba(0,0,0,0.5)`
+            : `0 4px 16px ${colors.border}40`,
+      }}
       whileTap={{scale: 0.97}}
-      transition={{type: 'spring', stiffness: 400, damping: 25}}
+      transition={{
+        default: {type: 'spring', stiffness: 400, damping: 25},
+        boxShadow: {type: 'tween', duration: 0.15},
+      }}
       style={{
         position: 'relative',
         borderRadius: `${borderRadius ?? RADIUS.xl}px`,
@@ -79,46 +90,6 @@ export function CardTile({card, onClick, isSelected, variant = 'full', useThumbn
         </div>
       )}
 
-      {/* Name overlay (hidden in minimal variant) */}
-      {variant !== 'minimal' && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: 'linear-gradient(transparent, rgba(0,0,0,0.85))',
-            padding: '16px 6px 5px',
-          }}>
-          <span
-            style={{
-              fontWeight: 600,
-              fontSize: `${FONT_SIZES.sm}px`,
-              color: '#fff',
-              display: 'block',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              lineHeight: 1.2,
-            }}>
-            {card.name}
-          </span>
-          {card.version && (
-            <span
-              style={{
-                fontSize: `${FONT_SIZES.xs}px`,
-                color: 'rgba(255,255,255,0.7)',
-                display: 'block',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                lineHeight: 1.2,
-              }}>
-              {card.version}
-            </span>
-          )}
-        </div>
-      )}
     </motion.button>
   );
 }

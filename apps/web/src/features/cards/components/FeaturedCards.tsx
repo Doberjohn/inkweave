@@ -17,7 +17,7 @@ interface FeaturedCardsProps {
 
 /** Pick one random card per ink in display order. */
 function pickFeatured(cards: LorcanaCard[]): LorcanaCard[] {
-  const withImages = cards.filter((c) => c.imageUrl || c.thumbnailUrl);
+  const withImages = cards.filter((c) => (c.imageUrl || c.thumbnailUrl) && c.type !== 'Location');
   const result: LorcanaCard[] = [];
 
   for (const ink of INK_ORDER) {

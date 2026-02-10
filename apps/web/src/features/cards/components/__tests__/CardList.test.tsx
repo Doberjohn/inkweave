@@ -45,6 +45,11 @@ describe('CardList', () => {
     onCardSelect: vi.fn(),
   };
 
+  /** Get card tile buttons (distinguished from filter buttons by aspect-ratio style) */
+  function getCardButtons() {
+    return screen.getAllByRole('button').filter((b) => b.style.aspectRatio === '0.72');
+  }
+
   describe('Desktop layout', () => {
     it('should render loading spinner when loading', () => {
       renderWithProvider(<CardList {...defaultProps} isLoading={true} />);
@@ -52,12 +57,11 @@ describe('CardList', () => {
       expect(screen.getByText(/Loading/)).toBeInTheDocument();
     });
 
-    it('should render card list when not loading', () => {
+    it('should render card tiles when not loading', () => {
       renderWithProvider(<CardList {...defaultProps} />);
 
-      expect(screen.getByText('Elsa')).toBeInTheDocument();
-      expect(screen.getByText('Simba')).toBeInTheDocument();
-      expect(screen.getByText('Maleficent')).toBeInTheDocument();
+      // 3 card tiles (each shows cost fallback since no images)
+      expect(getCardButtons()).toHaveLength(3);
     });
 
     it('should render card count', () => {
@@ -241,7 +245,8 @@ describe('CardList', () => {
       const onCardSelect = vi.fn();
       renderWithProvider(<CardList {...defaultProps} onCardSelect={onCardSelect} />);
 
-      fireEvent.click(screen.getByRole('button', {name: /elsa/i}));
+      const cardButtons = getCardButtons();
+      fireEvent.click(cardButtons[0]);
 
       expect(onCardSelect).toHaveBeenCalledWith(mockCards[0]);
     });
@@ -249,8 +254,8 @@ describe('CardList', () => {
     it('should show selected state on selected card', () => {
       renderWithProvider(<CardList {...defaultProps} selectedCard={mockCards[0]} />);
 
-      const elsaButton = screen.getByRole('button', {name: /elsa/i});
-      expect(elsaButton).toHaveAttribute('aria-pressed', 'true');
+      const cardButtons = getCardButtons();
+      expect(cardButtons[0]).toHaveAttribute('aria-pressed', 'true');
     });
 
     it('should show Clear all filters button when filters active', () => {
@@ -314,11 +319,10 @@ describe('CardList', () => {
       expect(screen.getByText(/Loading/)).toBeInTheDocument();
     });
 
-    it('should render cards in mobile layout', () => {
+    it('should render card tiles in mobile layout', () => {
       renderWithProvider(<CardList {...defaultProps} isMobile={true} />);
 
-      expect(screen.getByText('Elsa')).toBeInTheDocument();
-      expect(screen.getByText('Simba')).toBeInTheDocument();
+      expect(getCardButtons()).toHaveLength(3);
     });
 
     it('should call onSearchChange in mobile layout', () => {
@@ -339,7 +343,8 @@ describe('CardList', () => {
         <CardList {...defaultProps} isMobile={true} onCardSelect={onCardSelect} />,
       );
 
-      fireEvent.click(screen.getByRole('button', {name: /elsa/i}));
+      const cardButtons = getCardButtons();
+      fireEvent.click(cardButtons[0]);
 
       expect(onCardSelect).toHaveBeenCalledWith(mockCards[0]);
     });
@@ -349,8 +354,8 @@ describe('CardList', () => {
         <CardList {...defaultProps} isMobile={true} selectedCard={mockCards[0]} />,
       );
 
-      const elsaButton = screen.getByRole('button', {name: /elsa/i});
-      expect(elsaButton).toHaveAttribute('aria-pressed', 'true');
+      const cardButtons = getCardButtons();
+      expect(cardButtons[0]).toHaveAttribute('aria-pressed', 'true');
     });
   });
 

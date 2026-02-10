@@ -136,6 +136,23 @@ export function FilterDrawer({
               flexDirection: 'column',
               paddingBottom: 'env(safe-area-inset-bottom)',
             }}>
+            {/* Drag handle */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                paddingTop: `${SPACING.md}px`,
+              }}>
+              <div
+                style={{
+                  width: 36,
+                  height: 4,
+                  borderRadius: 2,
+                  background: COLORS.gray300,
+                }}
+              />
+            </div>
+
             {/* Header */}
             <div
               style={{

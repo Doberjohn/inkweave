@@ -16,7 +16,7 @@ export function CompactHeader({totalCards, onLogoClick}: CompactHeaderProps) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        background: COLORS.background,
+        background: `linear-gradient(180deg, ${COLORS.headerGradientStart} 0%, ${COLORS.headerGradientEnd} 100%)`,
         borderBottom: `1px solid ${COLORS.surfaceBorder}`,
         boxSizing: 'border-box',
       }}>
