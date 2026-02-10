@@ -36,7 +36,7 @@ export function CardDetailPanel({card, onClear}: CardDetailPanelProps) {
       {/* Card image */}
       <div style={{display: 'flex', justifyContent: 'center'}}>
         <CardImage
-          src={card.imageUrl}
+          src={card.imageUrl ?? card.thumbnailUrl}
           alt={card.fullName}
           width={220}
           height={308}
