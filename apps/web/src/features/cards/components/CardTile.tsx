@@ -11,9 +11,10 @@ interface CardTileProps {
   variant?: 'full' | 'minimal';
   useThumbnail?: boolean;
   borderRadius?: number;
+  disablePreview?: boolean;
 }
 
-export function CardTile({card, onClick, isSelected, variant = 'full', useThumbnail, borderRadius}: CardTileProps) {
+export function CardTile({card, onClick, isSelected, variant = 'full', useThumbnail, borderRadius, disablePreview}: CardTileProps) {
   const colors = INK_COLORS[card.ink];
   const {previewHandlers, hidePreview} = useCardPreviewHandlers({card, onTap: onClick});
   const [imgError, setImgError] = useState(false);
@@ -24,7 +25,7 @@ export function CardTile({card, onClick, isSelected, variant = 'full', useThumbn
   return (
     <motion.button
       onClick={() => { hidePreview(); onClick(); }}
-      {...previewHandlers}
+      {...(disablePreview ? {} : previewHandlers)}
       aria-pressed={isSelected}
       whileHover={{scale: 1.04, y: -3}}
       whileTap={{scale: 0.97}}

@@ -219,6 +219,7 @@ export function CardList({
                     card={card}
                     onClick={() => onCardSelect(card)}
                     isSelected={selectedCard?.id === card.id}
+                    disablePreview
                   />
                 ))}
               </div>

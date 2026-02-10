@@ -102,6 +102,7 @@ export function FeaturedCards({cards, onCardSelect, isMobile}: FeaturedCardsProp
             variant="minimal"
             useThumbnail
             borderRadius={isMobile ? 10 : undefined}
+            disablePreview={isMobile}
           />
         ))}
       </div>

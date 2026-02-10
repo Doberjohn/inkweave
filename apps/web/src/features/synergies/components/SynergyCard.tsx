@@ -10,6 +10,7 @@ import {
   RADIUS,
 } from '../../../shared/constants';
 import {useCardPreviewHandlers} from '../../cards';
+import {useResponsive} from '../../../shared/hooks';
 
 interface SynergyCardProps {
   card: LorcanaCard;
@@ -66,6 +67,7 @@ export const SynergyCard = memo(function SynergyCard({
 }: SynergyCardProps) {
   const colors = INK_COLORS[card.ink];
   const strengthStyle = STRENGTH_STYLES[strength];
+  const {isMobile} = useResponsive();
   const {previewHandlers} = useCardPreviewHandlers({card});
   const [imgError, setImgError] = useState(false);
   const imgSrc = card.thumbnailUrl || card.imageUrl;
@@ -75,7 +77,7 @@ export const SynergyCard = memo(function SynergyCard({
     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
       {/* Card image tile */}
       <motion.div
-        {...previewHandlers}
+        {...(isMobile ? {} : previewHandlers)}
         whileHover={{scale: 1.04, y: -3}}
         whileTap={{scale: 0.97}}
         transition={{type: 'spring', stiffness: 400, damping: 25}}
