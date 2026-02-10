@@ -1,4 +1,4 @@
-import {useEffect, useCallback} from 'react';
+import {useEffect, useCallback, useRef} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
 import type {Ink, SetInfo} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards';
@@ -44,6 +44,10 @@ export function FilterModal({
   onFiltersChange,
   onClearAll,
 }: FilterModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -51,12 +55,46 @@ export function FilterModal({
     [onClose],
   );
 
+  // Focus management: save previous focus, set initial focus, restore on close
   useEffect(() => {
     if (isOpen) {
+      // Save the currently focused element
+      previousActiveElement.current = document.activeElement as HTMLElement;
+
+      // Set focus to close button when modal opens
+      setTimeout(() => {
+        closeButtonRef.current?.focus();
+      }, 100);
+
       document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        // Restore focus when modal closes
+        previousActiveElement.current?.focus();
+      };
     }
   }, [isOpen, handleKeyDown]);
+
+  // Focus trap: keep focus within modal
+  const handleModalKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab' || !modalRef.current) return;
+
+    const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (e.shiftKey && document.activeElement === firstElement) {
+      // Shift+Tab on first element: go to last
+      e.preventDefault();
+      lastElement?.focus();
+    } else if (!e.shiftKey && document.activeElement === lastElement) {
+      // Tab on last element: go to first
+      e.preventDefault();
+      firstElement?.focus();
+    }
+  };
 
   const selectedType = isCardType(filters.type) ? filters.type : undefined;
 
@@ -123,6 +161,7 @@ export function FilterModal({
               pointerEvents: 'none',
             }}>
           <motion.div
+            ref={modalRef}
             initial={{opacity: 0, scale: 0.95}}
             animate={{opacity: 1, scale: 1}}
             exit={{opacity: 0, scale: 0.95}}
@@ -131,6 +170,7 @@ export function FilterModal({
             aria-modal="true"
             aria-labelledby="filter-modal-title"
             data-testid="filter-modal"
+            onKeyDown={handleModalKeyDown}
             style={{
               width: '90%',
               maxWidth: 520,
@@ -180,6 +220,7 @@ export function FilterModal({
                   </button>
                 )}
                 <button
+                  ref={closeButtonRef}
                   onClick={onClose}
                   aria-label="Close filters"
                   style={{
