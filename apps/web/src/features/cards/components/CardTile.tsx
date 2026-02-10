@@ -24,6 +24,7 @@ export function CardTile({card, onClick, isSelected, variant = 'full', useThumbn
 
   return (
     <motion.button
+      data-testid="card-tile"
       onClick={() => { hidePreview(); onClick(); }}
       {...(disablePreview ? {} : previewHandlers)}
       aria-pressed={isSelected}

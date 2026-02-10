@@ -49,7 +49,7 @@ test.describe('Card Search and Filtering', () => {
 
   test('should not filter featured cards when applying ink filter via modal', async ({page, appPage}) => {
     // Count initial featured tiles
-    const initialCount = await appPage.featuredCards.locator('button[aria-pressed]').count();
+    const initialCount = await appPage.featuredCards.getByTestId('card-tile').count();
 
     // Open filter modal and select Sapphire
     await page.getByRole('button', {name: /^Filters/}).click();
@@ -61,7 +61,7 @@ test.describe('Card Search and Filtering', () => {
     await page.waitForTimeout(200);
 
     // Featured cards should remain unchanged (decoupled from filters)
-    const afterCount = await appPage.featuredCards.locator('button[aria-pressed]').count();
+    const afterCount = await appPage.featuredCards.getByTestId('card-tile').count();
     expect(afterCount).toBe(initialCount);
   });
 

@@ -28,7 +28,7 @@ test.describe('App Loading', () => {
     await appPage.goto();
 
     // Featured cards grid should have card tiles
-    const cardTiles = appPage.featuredCards.locator('button[aria-pressed]');
+    const cardTiles = appPage.featuredCards.getByTestId('card-tile');
     await expect(cardTiles.first()).toBeVisible();
     const count = await cardTiles.count();
     expect(count).toBeGreaterThan(0);

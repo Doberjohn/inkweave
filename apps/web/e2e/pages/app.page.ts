@@ -58,7 +58,7 @@ export class AppPage {
    * Mobile: SynergyResults full screen
    */
   async selectFeaturedCard() {
-    const firstCard = this.featuredCards.locator('button[aria-pressed]').first();
+    const firstCard = this.featuredCards.getByTestId('card-tile').first();
     await firstCard.click();
     // Wait for hero to disappear (transition to card-selected state)
     await this.heroSection.waitFor({state: 'hidden', timeout: 10000});

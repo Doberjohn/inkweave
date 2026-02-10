@@ -45,9 +45,9 @@ describe('CardList', () => {
     onCardSelect: vi.fn(),
   };
 
-  /** Get card tile buttons (distinguished from filter buttons by aspect-ratio style) */
+  /** Get card tile buttons via data-testid (stable across style changes) */
   function getCardButtons() {
-    return screen.getAllByRole('button').filter((b) => b.style.aspectRatio === '0.72');
+    return screen.getAllByTestId('card-tile');
   }
 
   describe('Desktop layout', () => {

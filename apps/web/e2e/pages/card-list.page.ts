@@ -6,7 +6,6 @@ export class CardListPage {
   readonly moreFiltersToggle: Locator;
   readonly clearFiltersButton: Locator;
   readonly cardCountText: Locator;
-  readonly cardList: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -18,7 +17,6 @@ export class CardListPage {
       name: 'Clear all filters',
     });
     this.cardCountText = page.getByText(/\d+ of \d+ cards/);
-    this.cardList = page.locator('[style*="display: grid"]').first();
   }
 
   getInkFilterButton(ink: string): Locator {
@@ -98,45 +96,22 @@ export class CardListPage {
   }
 
   /**
-   * Get a card tile by card name (partial match)
-   * Card tiles are buttons with aria-pressed attribute
-   */
-  getCardTile(cardName: string): Locator {
-    return this.page
-      .locator('button[aria-pressed]')
-      .filter({hasText: new RegExp(cardName, 'i')})
-      .first();
-  }
-
-  /**
-   * Get all visible card tiles
+   * Get all visible card tiles via stable data-testid selector
    */
   getAllCardTiles(): Locator {
-    return this.page.locator('button[aria-pressed]');
+    return this.page.getByTestId('card-tile');
   }
 
-  async selectCard(cardName: string) {
-    const card = this.getCardTile(cardName);
-    await card.click();
+  /**
+   * Get a card tile by zero-based index
+   */
+  getCardTileByIndex(index: number): Locator {
+    return this.getAllCardTiles().nth(index);
+  }
+
+  async selectCardByIndex(index: number) {
+    await this.getCardTileByIndex(index).click();
     await this.page.waitForTimeout(100);
-  }
-
-  /**
-   * Add a card to deck using the add button
-   * The add button has aria-label containing "Add {cardName} to deck"
-   */
-  async addCardToDeck(cardName: string) {
-    // Find the add button by its aria-label
-    const addButton = this.page.getByLabel(new RegExp(`Add.*${cardName}.*to deck`, 'i'));
-    await addButton.first().click();
-  }
-
-  /**
-   * Add first visible card to deck
-   */
-  async addFirstCardToDeck() {
-    const addButton = this.page.getByLabel(/Add .* to deck/i).first();
-    await addButton.click();
   }
 
   async getDisplayedCardCount(): Promise<{shown: number; total: number}> {
@@ -148,9 +123,8 @@ export class CardListPage {
     return {shown: 0, total: 0};
   }
 
-  async isCardVisible(cardName: string): Promise<boolean> {
-    const card = this.getCardTile(cardName);
-    return await card.isVisible().catch(() => false);
+  async isCardTileVisible(index: number): Promise<boolean> {
+    return await this.getCardTileByIndex(index).isVisible().catch(() => false);
   }
 
   /**
