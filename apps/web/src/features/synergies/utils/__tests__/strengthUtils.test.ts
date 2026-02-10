@@ -1,6 +1,7 @@
 import {describe, it, expect} from 'vitest';
 import {STRENGTH_ORDER, getDominantStrength} from '../strengthUtils';
 import type {SynergyMatchDisplay} from '../../types';
+import type {LorcanaCard} from 'lorcana-synergy-engine';
 
 describe('strengthUtils', () => {
   describe('STRENGTH_ORDER', () => {
@@ -19,7 +20,7 @@ describe('strengthUtils', () => {
   describe('getDominantStrength', () => {
     const createMockSynergy = (strength: 'weak' | 'moderate' | 'strong'): SynergyMatchDisplay =>
       ({
-        card: {} as any, // Mock card - only strength matters for this test
+        card: {} as LorcanaCard, // Mock card - only strength matters for this test
         strength,
         explanation: 'Test explanation',
       }) as SynergyMatchDisplay;
