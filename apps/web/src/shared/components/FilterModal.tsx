@@ -62,6 +62,7 @@ export function FilterModal({
       previousActiveElement.current = document.activeElement as HTMLElement;
 
       // Set focus to close button when modal opens
+      // Small delay ensures modal animation has started and element is focusable
       setTimeout(() => {
         closeButtonRef.current?.focus();
       }, 100);
@@ -80,7 +81,7 @@ export function FilterModal({
     if (e.key !== 'Tab' || !modalRef.current) return;
 
     const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
     );
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
