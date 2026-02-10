@@ -3,6 +3,7 @@ import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../constants';
 interface HeroSectionProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  onSearchSubmit?: () => void;
   onFiltersClick: () => void;
   activeFilterCount: number;
   isMobile?: boolean;
@@ -11,6 +12,7 @@ interface HeroSectionProps {
 export function HeroSection({
   searchQuery,
   onSearchChange,
+  onSearchSubmit,
   onFiltersClick,
   activeFilterCount,
   isMobile,
@@ -128,6 +130,9 @@ export function HeroSection({
             placeholder="Search for a card..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') onSearchSubmit?.();
+            }}
             data-testid="hero-search"
             style={{
               width: '100%',

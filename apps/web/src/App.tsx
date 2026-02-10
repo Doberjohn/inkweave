@@ -118,9 +118,9 @@ function SynergyFinderApp() {
             <EtherealBackground isMobile />
             <HeroSection
               searchQuery={searchQuery}
-              onSearchChange={(query) => {
-                setSearchQuery(query);
-                if (query.length > 0) {
+              onSearchChange={setSearchQuery}
+              onSearchSubmit={() => {
+                if (searchQuery.trim().length > 0) {
                   setMobileView('cards');
                 }
               }}
@@ -228,9 +228,9 @@ function SynergyFinderApp() {
 
         <HeroSection
           searchQuery={searchQuery}
-          onSearchChange={(query) => {
-            setSearchQuery(query);
-            if (query.length > 0) {
+          onSearchChange={setSearchQuery}
+          onSearchSubmit={() => {
+            if (searchQuery.trim().length > 0) {
               setBrowsing(true);
             }
           }}
