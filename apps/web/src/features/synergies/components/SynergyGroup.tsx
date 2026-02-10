@@ -1,7 +1,8 @@
 import {useState, memo} from 'react';
-import type {GroupedSynergies, SynergyMatchDisplay, SynergyStrength, SynergyType} from '../types';
+import type {GroupedSynergies, SynergyMatchDisplay, SynergyType} from '../types';
 import {SynergyCard} from './SynergyCard';
 import {COLORS, FONT_SIZES, SPACING, RADIUS, STRENGTH_STYLES} from '../../../shared/constants';
+import {getDominantStrength} from '../utils';
 
 /** Short explanation for each synergy group type */
 const GROUP_EXPLANATIONS: Record<SynergyType, string> = {
@@ -13,22 +14,6 @@ const GROUP_EXPLANATIONS: Record<SynergyType, string> = {
   ink: 'Cards that share ink color for deck-building synergy',
   'cost-curve': 'Cards that complement the mana curve progression',
 };
-
-const STRENGTH_ORDER: Record<SynergyStrength, number> = {
-  strong: 3,
-  moderate: 2,
-  weak: 1,
-};
-
-function getDominantStrength(synergies: SynergyMatchDisplay[]): SynergyStrength {
-  let best: SynergyStrength = 'weak';
-  for (const s of synergies) {
-    if (STRENGTH_ORDER[s.strength] > STRENGTH_ORDER[best]) {
-      best = s.strength;
-    }
-  }
-  return best;
-}
 
 interface SynergyGroupProps {
   group: GroupedSynergies;

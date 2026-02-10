@@ -1,25 +1,10 @@
-import type {GroupedSynergies, SynergyStrength} from '../types';
+import type {GroupedSynergies} from '../types';
 import {COLORS, FONT_SIZES, RADIUS, SPACING, STRENGTH_STYLES} from '../../../shared/constants';
+import {getDominantStrength} from '../utils';
 
 interface SynergyBreakdownProps {
   synergies: GroupedSynergies[];
   totalCount: number;
-}
-
-const STRENGTH_ORDER: Record<SynergyStrength, number> = {
-  strong: 3,
-  moderate: 2,
-  weak: 1,
-};
-
-function getDominantStrength(group: GroupedSynergies): SynergyStrength {
-  let best: SynergyStrength = 'weak';
-  for (const s of group.synergies) {
-    if (STRENGTH_ORDER[s.strength] > STRENGTH_ORDER[best]) {
-      best = s.strength;
-    }
-  }
-  return best;
 }
 
 export function SynergyBreakdown({synergies, totalCount}: SynergyBreakdownProps) {
@@ -76,7 +61,7 @@ export function SynergyBreakdown({synergies, totalCount}: SynergyBreakdownProps)
 
       {/* Groups */}
       {synergies.map((group) => {
-        const strength = getDominantStrength(group);
+        const strength = getDominantStrength(group.synergies);
         const style = STRENGTH_STYLES[strength];
         return (
           <div key={group.type} style={{display: 'flex', alignItems: 'center', gap: `${SPACING.sm}px`}}>
