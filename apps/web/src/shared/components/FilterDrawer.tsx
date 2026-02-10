@@ -13,6 +13,7 @@ import {
   CARD_TYPES,
   COST_OPTIONS,
   SELECT_STYLE_MD,
+  CTA_BUTTON_STYLE,
 } from '../constants';
 // FONT_SIZES and RADIUS are still used for header/drawer styling
 import {isCardType} from '../../features/cards';
@@ -168,17 +169,7 @@ export function FilterDrawer({
                 )}
                 <button
                   onClick={onClose}
-                  style={{
-                    background: COLORS.primary600,
-                    color: COLORS.white,
-                    border: 'none',
-                    borderRadius: `${RADIUS.md}px`,
-                    padding: `${SPACING.sm}px ${SPACING.lg}px`,
-                    fontSize: `${FONT_SIZES.base}px`,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    minHeight: '44px',
-                  }}>
+                  style={CTA_BUTTON_STYLE}>
                   Apply
                 </button>
               </div>

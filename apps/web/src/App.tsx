@@ -108,13 +108,13 @@ function SynergyFinderApp() {
           fontFamily: FONTS.body,
           position: 'relative',
           ...(mobileView === 'home' && !selectedCard
-            ? {display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center'}
+            ? {display: 'flex', flexDirection: 'column' as const, alignItems: 'center'}
             : {}),
         }}>
         {/* Mobile Home — Hero + Featured Cards */}
         {mobileView === 'home' && !selectedCard && (
           <>
-            <EtherealBackground />
+            <EtherealBackground isMobile />
             <HeroSection
               searchQuery={searchQuery}
               onSearchChange={(query) => {

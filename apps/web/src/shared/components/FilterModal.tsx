@@ -13,6 +13,7 @@ import {
   CARD_TYPES,
   COST_OPTIONS,
   SELECT_STYLE_MD,
+  CTA_BUTTON_STYLE,
 } from '../constants';
 import {isCardType} from '../../features/cards';
 import {FilterButton} from './FilterButton';
@@ -341,17 +342,7 @@ export function FilterModal({
               }}>
               <button
                 onClick={onClose}
-                style={{
-                  padding: `${SPACING.sm}px ${SPACING.xl}px`,
-                  background: COLORS.primary,
-                  color: COLORS.background,
-                  border: 'none',
-                  borderRadius: `${RADIUS.md}px`,
-                  fontSize: `${FONT_SIZES.base}px`,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  minHeight: '40px',
-                }}>
+                style={CTA_BUTTON_STYLE}>
                 Apply Filters
               </button>
             </div>

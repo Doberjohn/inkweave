@@ -10,11 +10,12 @@ interface CardTileProps {
   isSelected: boolean;
   variant?: 'full' | 'minimal';
   useThumbnail?: boolean;
+  borderRadius?: number;
 }
 
-export function CardTile({card, onClick, isSelected, variant = 'full', useThumbnail}: CardTileProps) {
+export function CardTile({card, onClick, isSelected, variant = 'full', useThumbnail, borderRadius}: CardTileProps) {
   const colors = INK_COLORS[card.ink];
-  const {previewHandlers} = useCardPreviewHandlers({card, onTap: onClick});
+  const {previewHandlers, hidePreview} = useCardPreviewHandlers({card, onTap: onClick});
   const [imgError, setImgError] = useState(false);
   const imgSrc = useThumbnail
     ? (card.thumbnailUrl || card.imageUrl)
@@ -22,21 +23,21 @@ export function CardTile({card, onClick, isSelected, variant = 'full', useThumbn
 
   return (
     <motion.button
-      onClick={onClick}
-      {...(variant === 'minimal' ? {} : previewHandlers)}
+      onClick={() => { hidePreview(); onClick(); }}
+      {...previewHandlers}
       aria-pressed={isSelected}
       whileHover={{scale: 1.04, y: -3}}
       whileTap={{scale: 0.97}}
       transition={{type: 'spring', stiffness: 400, damping: 25}}
       style={{
         position: 'relative',
-        borderRadius: `${RADIUS.lg}px`,
+        borderRadius: `${borderRadius ?? RADIUS.xl}px`,
         border: variant === 'minimal'
-          ? '2px solid transparent'
+          ? 'none'
           : `2px solid ${isSelected ? colors.border : 'transparent'}`,
         background: COLORS.surface,
         boxShadow: variant === 'minimal'
-          ? '0 2px 8px rgba(0,0,0,0.4)'
+          ? '0 0 0 1px rgba(255,255,255,0.1), 0 25px 50px -12px rgba(0,0,0,0.5)'
           : isSelected
             ? `0 0 8px ${colors.border}60`
             : '0 2px 6px rgba(0,0,0,0.3)',

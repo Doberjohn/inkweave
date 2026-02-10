@@ -23,7 +23,7 @@ export const STRENGTH_STYLES: Record<'strong' | 'moderate' | 'weak', {bg: string
 // Font families
 export const FONTS = {
   body: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-  hero: "'Cinzel', 'Georgia', serif",
+  hero: "'Tinos', 'Cinzel', 'Georgia', serif",
 } as const;
 
 // Layout constants
@@ -51,7 +51,7 @@ export const RADIUS = {
   sm: 4,
   md: 6,
   lg: 8,
-  xl: 12,
+  xl: 14,
 } as const;
 
 // Typography
@@ -76,9 +76,9 @@ export const COLORS = {
   surfaceBorder: '#333355',
 
   // Primary accent (gold)
-  primary: '#d4af37',
-  primaryHover: '#e5c34a',
-  primaryMuted: '#b8962e',
+  primary: '#ffb900',
+  primaryHover: '#ffc933',
+  primaryMuted: '#d49a00',
 
   // Text
   text: '#e8e8e8',
@@ -121,11 +121,28 @@ export const COLORS = {
   headerGradientEnd: '#1a1a2e',
 
   // Hero section
-  heroTitle: '#d4b8f0',
-  heroSubtitle: '#b0b0c8',
+  heroTitle: '#ffffff',
+  heroSubtitle: '#cad5e2',
+  heroSubtitleSecondary: '#90a1b9',
+  heroGradient: 'linear-gradient(90deg, #bedBff 0%, #e9d4ff 50%, #fcCEe8 100%)',
+
+  // Search / Filter bar
+  searchBg: 'rgba(15, 23, 43, 0.5)',
+  searchBorder: 'rgba(49, 65, 88, 0.5)',
+  searchPlaceholder: '#90a1b9',
+  filterGradient: 'linear-gradient(90deg, #fe9a00, #e17100)',
+  filterText: '#0f172b',
+  filterShadow: '0px 10px 15px 0px rgba(254,154,0,0.2), 0px 4px 6px 0px rgba(254,154,0,0.2)',
+
+  // Featured section
+  featuredLabel: '#90a1b9',
+  featuredDivider: '#314158',
 
   // Ethereal glow orbs
-  etherealPurple: 'rgba(139, 92, 246, 0.15)',
+  etherealBlue: 'rgba(43, 127, 255, 0.1)',
+  etherealPurple: 'rgba(173, 70, 255, 0.1)',
+  etherealTeal: 'rgba(0, 187, 167, 0.05)',
+  // Legacy orb aliases (keep for backward compat)
   etherealGold: 'rgba(212, 175, 55, 0.10)',
   etherealEmerald: 'rgba(16, 185, 129, 0.12)',
 } as const;
@@ -183,4 +200,18 @@ export const SELECT_STYLE_MD: React.CSSProperties = {
   color: COLORS.text,
   cursor: 'pointer',
   minHeight: '44px',
+};
+
+// CTA button style (orange gradient, matching Figma Filters button)
+export const CTA_BUTTON_STYLE: React.CSSProperties = {
+  background: COLORS.filterGradient,
+  color: COLORS.filterText,
+  border: 'none',
+  borderRadius: `${RADIUS.lg}px`,
+  padding: `${SPACING.sm}px ${SPACING.xl}px`,
+  fontSize: `${FONT_SIZES.lg}px`,
+  fontWeight: 500,
+  cursor: 'pointer',
+  minHeight: '44px',
+  boxShadow: COLORS.filterShadow,
 };

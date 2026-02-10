@@ -22,8 +22,9 @@ export function HeroSection({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        paddingBottom: isMobile ? 20 : 40,
-        padding: isMobile ? `0 ${SPACING.md}px 20px` : undefined,
+        ...(isMobile
+          ? {padding: `64px ${SPACING.lg}px 48px`}
+          : {paddingBottom: 80}),
         position: 'relative',
         zIndex: 1,
         width: isMobile ? '100%' : undefined,
@@ -32,11 +33,12 @@ export function HeroSection({
       {/* Sparkle + Title */}
       <div
         style={{
-          fontSize: `${isMobile ? FONT_SIZES.sm : FONT_SIZES.base}px`,
-          letterSpacing: '0.3em',
+          fontSize: `${isMobile ? FONT_SIZES.md : FONT_SIZES.lg}px`,
+          letterSpacing: isMobile ? '3.6px' : '4.2px',
           color: COLORS.primary,
-          fontWeight: 600,
+          fontWeight: 400,
           marginBottom: SPACING.sm,
+          textTransform: 'uppercase',
         }}>
         ✦ INKWEAVE ✦
       </div>
@@ -45,86 +47,137 @@ export function HeroSection({
       <h1
         style={{
           fontFamily: FONTS.hero,
-          fontSize: isMobile ? 28 : 48,
-          fontWeight: 700,
+          fontSize: isMobile ? 48 : 72,
+          fontWeight: 400,
           color: COLORS.heroTitle,
           margin: 0,
           marginBottom: SPACING.sm,
           textAlign: 'center',
-          letterSpacing: '0.04em',
-          lineHeight: 1.15,
+          lineHeight: isMobile ? '60px' : '90px',
         }}>
-        MASTER LORCANA
+        MASTER
         <br />
-        SYNERGIES
+        <span
+          style={{
+            background: COLORS.heroGradient,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}>
+          LORCANA SYNERGIES
+        </span>
       </h1>
 
       {/* Subtitle */}
-      <p
+      <div
         style={{
-          fontSize: `${isMobile ? FONT_SIZES.base : FONT_SIZES.xl}px`,
-          color: COLORS.heroSubtitle,
-          margin: 0,
-          marginBottom: isMobile ? 20 : 32,
           textAlign: 'center',
-          lineHeight: 1.5,
+          marginBottom: isMobile ? 24 : 32,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
         }}>
-        Select any Lorcana card and instantly discover powerful combinations.
-        <br />
-        Build stronger decks with intelligent synergy detection.
-      </p>
+        <p
+          style={{
+            fontSize: `${isMobile ? 16 : 18}px`,
+            color: COLORS.heroSubtitle,
+            margin: 0,
+            lineHeight: '24px',
+          }}>
+          Select any Lorcana card and instantly discover powerful combinations.
+        </p>
+        <p
+          style={{
+            fontSize: `${isMobile ? 14 : 16}px`,
+            color: COLORS.heroSubtitleSecondary,
+            margin: 0,
+            lineHeight: '20px',
+          }}>
+          Build stronger decks with intelligent synergy detection.
+        </p>
+      </div>
 
       {/* Search Bar + Filters */}
       <div
         style={{
           display: 'flex',
-          gap: `${SPACING.sm}px`,
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? 12 : 0,
           width: '100%',
-          maxWidth: isMobile ? undefined : 520,
+          maxWidth: isMobile ? undefined : 768,
         }}>
-        <input
-          type="text"
-          placeholder="Search for a card..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          data-testid="hero-search"
-          style={{
-            flex: 1,
-            height: isMobile ? 42 : 48,
-            padding: '0 14px',
-            borderRadius: `${RADIUS.lg}px`,
-            border: `1px solid ${COLORS.surfaceBorder}`,
-            background: COLORS.surfaceAlt,
-            color: COLORS.text,
-            fontSize: `${isMobile ? FONT_SIZES.base : FONT_SIZES.lg}px`,
-            boxSizing: 'border-box',
-            outline: 'none',
-          }}
-        />
+        <div style={{flex: 1, position: 'relative'}}>
+          {/* Search icon */}
+          <svg
+            style={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 20,
+              height: 20,
+              pointerEvents: 'none',
+            }}
+            viewBox="0 0 20 20"
+            fill="none">
+            <circle cx="9" cy="9" r="6" stroke={COLORS.searchPlaceholder} strokeWidth="1.5" />
+            <line x1="13.5" y1="13.5" x2="17" y2="17" stroke={COLORS.searchPlaceholder} strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search for a card..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            data-testid="hero-search"
+            style={{
+              width: '100%',
+              height: 56,
+              padding: '0 12px 0 48px',
+              borderRadius: isMobile
+                ? `${RADIUS.lg}px`
+                : `${RADIUS.lg}px 0 0 ${RADIUS.lg}px`,
+              border: `1px solid ${COLORS.searchBorder}`,
+              borderRight: isMobile ? undefined : 'none',
+              background: COLORS.searchBg,
+              color: COLORS.text,
+              fontSize: `${FONT_SIZES.xl}px`,
+              boxSizing: 'border-box',
+              outline: 'none',
+            }}
+          />
+        </div>
         <button
           onClick={onFiltersClick}
           aria-label={`Filters${activeFilterCount > 0 ? ` (${activeFilterCount} active)` : ''}`}
           style={{
-            height: isMobile ? 42 : 48,
-            padding: isMobile ? '0 16px' : '0 24px',
-            borderRadius: `${RADIUS.lg}px`,
+            height: 56,
+            padding: '0 24px',
+            borderRadius: isMobile
+              ? `${RADIUS.lg}px`
+              : `0 ${RADIUS.lg}px ${RADIUS.lg}px 0`,
             border: 'none',
-            background: COLORS.primary,
-            color: COLORS.background,
-            fontSize: `${isMobile ? FONT_SIZES.base : FONT_SIZES.lg}px`,
-            fontWeight: 600,
+            background: COLORS.filterGradient,
+            color: COLORS.filterText,
+            fontSize: `${FONT_SIZES.xl}px`,
+            fontWeight: 400,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
+            justifyContent: 'center',
+            gap: '8px',
             flexShrink: 0,
+            boxShadow: COLORS.filterShadow,
           }}>
+          {/* Filter icon */}
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M2 4h12M4 8h8M6 12h4" stroke={COLORS.filterText} strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
           Filters
           {activeFilterCount > 0 && (
             <span
               style={{
-                background: COLORS.background,
-                color: COLORS.primary,
+                background: COLORS.filterText,
+                color: '#fe9a00',
                 width: 20,
                 height: 20,
                 borderRadius: '50%',
