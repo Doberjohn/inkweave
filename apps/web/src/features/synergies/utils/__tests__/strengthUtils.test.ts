@@ -17,27 +17,12 @@ describe('strengthUtils', () => {
   });
 
   describe('getDominantStrength', () => {
-    const createMockSynergy = (strength: 'weak' | 'moderate' | 'strong'): SynergyMatchDisplay => ({
-      card: {
-        id: 'test-id',
-        name: 'Test Card',
-        fullName: 'Test Card - Title',
-        version: '1',
-        set: 5,
-        inkColor: 'Amber',
-        cost: 3,
-        type: 'Character',
-        inkable: true,
-        rarity: 'Common',
-        strength: 2,
-        willpower: 2,
-        lore: 1,
-        artist: 'Test Artist',
-        fullTextRaw: 'Test text',
-      },
-      strength,
-      explanation: 'Test explanation',
-    });
+    const createMockSynergy = (strength: 'weak' | 'moderate' | 'strong'): SynergyMatchDisplay =>
+      ({
+        card: {} as any, // Mock card - only strength matters for this test
+        strength,
+        explanation: 'Test explanation',
+      }) as SynergyMatchDisplay;
 
     it('should return weak when all synergies are weak', () => {
       const synergies = [createMockSynergy('weak'), createMockSynergy('weak')];
