@@ -9,18 +9,17 @@ test.describe('Card Search and Filtering', () => {
     await appPage.goto();
   });
 
-  test('should search from hero and filter featured cards', async ({appPage, page}) => {
+  test('should transition to browsing view when searching from hero', async ({appPage, page}) => {
     // Type in the hero search
     await appPage.heroSearch.fill('Elsa');
     await page.waitForTimeout(200);
 
-    // Featured cards grid should still be visible but filtered
-    await expect(appPage.featuredCards).toBeVisible();
+    // Should transition away from home — hero and featured cards disappear
+    await expect(appPage.heroSection).not.toBeVisible();
+    await expect(appPage.featuredCards).not.toBeVisible();
 
-    // At least some card tiles should appear (filtered results)
-    const tiles = appPage.featuredCards.locator('button[aria-pressed]');
-    const count = await tiles.count();
-    expect(count).toBeGreaterThan(0);
+    // CardList sidebar should be visible with search results
+    await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
   });
 
   test('should open filter modal when clicking Filters button', async ({page}) => {
@@ -48,8 +47,8 @@ test.describe('Card Search and Filtering', () => {
     await expect(page.getByTestId('filter-modal')).not.toBeVisible();
   });
 
-  test('should filter by ink color via modal', async ({page, appPage}) => {
-    // Count initial tiles
+  test('should not filter featured cards when applying ink filter via modal', async ({page, appPage}) => {
+    // Count initial featured tiles
     const initialCount = await appPage.featuredCards.locator('button[aria-pressed]').count();
 
     // Open filter modal and select Sapphire
@@ -57,13 +56,13 @@ test.describe('Card Search and Filtering', () => {
     await page.getByRole('button', {name: 'Sapphire', exact: true}).click();
     await page.getByRole('button', {name: 'Apply Filters'}).click();
 
-    // Wait for modal to close and filter to apply
+    // Wait for modal to close
     await expect(page.getByTestId('filter-modal')).not.toBeVisible();
     await page.waitForTimeout(200);
 
-    // Featured cards should be filtered (fewer or equal)
-    const filteredCount = await appPage.featuredCards.locator('button[aria-pressed]').count();
-    expect(filteredCount).toBeLessThanOrEqual(initialCount);
+    // Featured cards should remain unchanged (decoupled from filters)
+    const afterCount = await appPage.featuredCards.locator('button[aria-pressed]').count();
+    expect(afterCount).toBe(initialCount);
   });
 
   test('should filter by card type via modal', async ({page}) => {
@@ -117,5 +116,15 @@ test.describe('Card Search and Filtering', () => {
 
     // Modal should be closed
     await expect(page.getByTestId('filter-modal')).not.toBeVisible();
+  });
+
+  test('should navigate to browsing view via See all cards', async ({appPage, page}) => {
+    // Click "See all cards" button
+    await page.getByRole('button', {name: /See all cards/}).click();
+    await page.waitForTimeout(200);
+
+    // Should transition to browsing — hero gone, CardList visible
+    await expect(appPage.heroSection).not.toBeVisible();
+    await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
   });
 });
