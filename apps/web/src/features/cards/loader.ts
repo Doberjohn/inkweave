@@ -357,3 +357,23 @@ export function getUniqueSets(cards: LorcanaCard[]): string[] {
     return a.localeCompare(b);
   });
 }
+
+/**
+ * Sort cards by set (latest first), then by card number within set.
+ * Returns a new array — does not mutate the input.
+ */
+export function sortBySetThenNumber(cards: LorcanaCard[]): LorcanaCard[] {
+  return [...cards].sort((a, b) => {
+    const setA = a.setCode ?? '';
+    const setB = b.setCode ?? '';
+    if (setA !== setB) {
+      const numA = parseInt(setA, 10);
+      const numB = parseInt(setB, 10);
+      if (!isNaN(numA) && !isNaN(numB)) return numB - numA;
+      if (!isNaN(numA)) return -1;
+      if (!isNaN(numB)) return 1;
+      return setB.localeCompare(setA);
+    }
+    return (a.setNumber ?? 0) - (b.setNumber ?? 0);
+  });
+}

@@ -26,11 +26,13 @@
     "framer-motion": "^12.29.2",
     "lorcana-synergy-engine": "workspace:*",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.13.0"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.0.0",
     "@eslint/js": "^9.39.2",
+    "@playwright/test": "^1.50.0",
     "@storybook/addon-a11y": "^10.2.3",
     "@storybook/addon-docs": "^10.2.3",
     "@storybook/addon-onboarding": "^10.2.3",
@@ -50,7 +52,6 @@
     "eslint-plugin-storybook": "^10.2.3",
     "globals": "^17.2.0",
     "jsdom": "^24.0.0",
-    "@playwright/test": "^1.50.0",
     "playwright": "^1.58.1",
     "storybook": "^10.2.3",
     "typescript": "^5.3.0",

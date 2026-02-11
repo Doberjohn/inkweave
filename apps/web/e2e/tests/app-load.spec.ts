@@ -35,16 +35,19 @@ test.describe('App Loading', () => {
     expect(count).toBeLessThanOrEqual(12);
   });
 
-  test('should transition to sidebar layout when card is selected', async ({appPage}) => {
+  test('should transition to card page when card is selected', async ({appPage, page}) => {
     await appPage.goto();
 
     // Home state: no header visible
     await expect(appPage.header).not.toBeVisible();
 
-    // Click a featured card to enter selected state
+    // Click a featured card to enter card page
     await appPage.selectFeaturedCard();
 
-    // Card-selected state: header and sidebar layout visible
+    // Should navigate to /card/:id
+    await expect(page).toHaveURL(/\/card\/\d+/);
+
+    // Card page: compact header and sidebar layout visible
     await expect(appPage.header).toBeVisible();
     await expect(appPage.heroSection).not.toBeVisible();
   });

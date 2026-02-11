@@ -9,13 +9,17 @@ test.describe('Card Selection and Synergies', () => {
     await appPage.goto();
   });
 
-  test('should show home state when no card selected', async ({appPage}) => {
+  test('should show home state at root URL', async ({appPage, page}) => {
     await expect(appPage.heroSection).toBeVisible();
     await expect(appPage.featuredCards).toBeVisible();
+    await expect(page).toHaveURL('/');
   });
 
   test('should display card detail panel when card is selected', async ({appPage, page}) => {
     await appPage.selectFeaturedCard();
+
+    // Should navigate to /card/:id
+    await expect(page).toHaveURL(/\/card\/\d+/);
 
     // Card detail panel should be visible
     const detailPanel = page.getByTestId('card-detail-panel');
@@ -39,17 +43,19 @@ test.describe('Card Selection and Synergies', () => {
     expect(synergiesVisible || noSynergiesVisible).toBe(true);
   });
 
-  test('should clear selection and return to home state', async ({
+  test('should clear selection and return to home', async ({
     appPage,
     synergyResultsPage,
+    page,
   }) => {
     await appPage.selectFeaturedCard();
 
     // Clear selection via back button
     await synergyResultsPage.clearSelection();
 
-    // Should return to home state
+    // Should return to home
     await expect(appPage.heroSection).toBeVisible();
+    await expect(page).toHaveURL('/');
   });
 
   test('should return to home when clicking logo', async ({appPage, page}) => {
@@ -60,7 +66,8 @@ test.describe('Card Selection and Synergies', () => {
     await logoButton.click();
     await page.waitForTimeout(100);
 
-    // Should return to home state
+    // Should return to home state with correct URL
     await expect(appPage.heroSection).toBeVisible();
+    await expect(page).toHaveURL('/');
   });
 });

@@ -1,4 +1,4 @@
-import {useState, useEffect, useMemo} from 'react';
+import {useState, useEffect, useRef, useMemo} from 'react';
 import {BREAKPOINTS} from '../constants';
 
 interface ResponsiveState {
@@ -22,6 +22,8 @@ const getWidthState = (width: number) => ({
   windowWidth: width,
 });
 
+const RESIZE_DEBOUNCE_MS = 150;
+
 export function useResponsive(): ResponsiveState {
   // Touch capability is constant - compute once on mount
   const isTouchDevice = useMemo(() => detectTouchDevice(), []);
@@ -31,17 +33,24 @@ export function useResponsive(): ResponsiveState {
     return getWidthState(width);
   });
 
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
   useEffect(() => {
     // SSR check
     if (typeof window === 'undefined') return;
 
     const handleResize = () => {
-      const width = window.innerWidth;
-      setWidthState(getWidthState(width));
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        setWidthState(getWidthState(window.innerWidth));
+      }, RESIZE_DEBOUNCE_MS);
     };
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timeoutRef.current);
+    };
   }, []);
 
   return {

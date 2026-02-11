@@ -1,7 +1,7 @@
 import {test, expect} from '../fixtures';
 
 test.describe('Card Search and Filtering', () => {
-  // Desktop-only: tests hero search on home page
+  // Desktop-only: tests hero search and browse page routing
   test.beforeEach(async ({appPage}, testInfo) => {
     if (testInfo.project.name === 'mobile-chrome') {
       test.skip();
@@ -9,49 +9,83 @@ test.describe('Card Search and Filtering', () => {
     await appPage.goto();
   });
 
-  test('should transition to browsing view when pressing Enter in hero search', async ({appPage, page}) => {
+  test('should navigate to browse when searching from hero', async ({appPage, page}) => {
     // Type in the hero search and press Enter to navigate
     await appPage.heroSearch.fill('Elsa');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(200);
+    await appPage.heroSearch.press('Enter');
 
-    // Should transition away from home — hero and featured cards disappear
+    // Should navigate to /browse with query param
+    await expect(page).toHaveURL(/\/browse\?q=Elsa/);
+
+    // Hero and featured cards should be gone
     await expect(appPage.heroSection).not.toBeVisible();
     await expect(appPage.featuredCards).not.toBeVisible();
 
-    // CardList sidebar should be visible with search results
+    // CardList should be visible with search results
     await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
   });
 
-  test('should stay on home when typing without pressing Enter', async ({appPage}) => {
-    // Type in the hero search without pressing Enter
-    await appPage.heroSearch.fill('Elsa');
-
-    // Should remain on home — hero and featured cards still visible
-    await expect(appPage.heroSection).toBeVisible();
-    await expect(appPage.featuredCards).toBeVisible();
-  });
-
-  test('should transition to browsing view when clicking Search button', async ({appPage, page}) => {
-    // Type in the hero search
-    await appPage.heroSearch.fill('Elsa');
-
-    // Click the Search button
-    await page.getByRole('button', {name: 'Search'}).click();
+  test('should open filter modal on browse page', async ({page}) => {
+    // Navigate to browse page via "See all cards"
+    await page.getByRole('button', {name: /See all cards/}).click();
     await page.waitForTimeout(200);
 
-    // Should transition to browsing
-    await expect(appPage.heroSection).not.toBeVisible();
+    // Should be on /browse
+    await expect(page).toHaveURL(/\/browse/);
+
+    // Click the Filters button to open the filter modal
+    await page.getByRole('button', {name: /Filters/}).click();
+    await page.waitForTimeout(200);
+
+    // Filter modal should be visible with ink options
+    await expect(page.getByTestId('filter-modal')).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Amber', exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Sapphire', exact: true})).toBeVisible();
+  });
+
+  test('should deep link to browse with ink filter in URL', async ({page}) => {
+    // Navigate directly to browse with ink filter
+    await page.goto('/browse?ink=Sapphire');
+    await page.waitForTimeout(500);
+
+    // URL should have ink filter
+    await expect(page).toHaveURL(/ink=Sapphire/);
+
+    // Should show card list (not hero)
     await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
   });
 
-  test('should navigate to browsing view via See all cards', async ({appPage, page}) => {
+  test('should navigate to browse via See all cards', async ({appPage, page}) => {
     // Click "See all cards" button
     await page.getByRole('button', {name: /See all cards/}).click();
     await page.waitForTimeout(200);
 
-    // Should transition to browsing — hero gone, CardList visible
+    // Should navigate to /browse
+    await expect(page).toHaveURL(/\/browse/);
+
+    // Hero should be gone, CardList visible
     await expect(appPage.heroSection).not.toBeVisible();
     await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
+  });
+
+  test('should preserve search query in URL on browse page', async ({page, appPage}) => {
+    // Search from hero and submit
+    await appPage.heroSearch.fill('Ariel');
+    await appPage.heroSearch.press('Enter');
+
+    // URL should contain the search query
+    await expect(page).toHaveURL(/q=Ariel/);
+
+    // Browse page search input should have the query
+    await expect(page.getByPlaceholder('Search cards...')).toHaveValue('Ariel');
+  });
+
+  test('should deep link to browse with filters', async ({page}) => {
+    // Navigate directly to browse with query params
+    await page.goto('/browse?q=Elsa&ink=Sapphire');
+    await page.waitForTimeout(500);
+
+    // Search input should have the query
+    await expect(page.getByPlaceholder('Search cards...')).toHaveValue('Elsa');
   });
 });

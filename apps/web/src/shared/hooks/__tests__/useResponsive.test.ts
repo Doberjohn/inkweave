@@ -57,7 +57,8 @@ describe('useResponsive', () => {
     expect(result.current.windowWidth).toBe(testWidth);
   });
 
-  it('should update on window resize', () => {
+  it('should update on window resize (debounced)', () => {
+    vi.useFakeTimers();
     vi.stubGlobal('innerWidth', BREAKPOINTS.desktop + 100);
 
     const {result} = renderHook(() => useResponsive());
@@ -70,8 +71,18 @@ describe('useResponsive', () => {
       window.dispatchEvent(new Event('resize'));
     });
 
+    // Still desktop — debounce hasn't fired yet
+    expect(result.current.isDesktop).toBe(true);
+
+    // Advance past debounce delay
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+
     expect(result.current.isMobile).toBe(true);
     expect(result.current.isDesktop).toBe(false);
+
+    vi.useRealTimers();
   });
 
   it('should detect touch device', () => {

@@ -8,6 +8,7 @@ export {
   fetchCardsFromLocal,
   searchCardsByName,
   filterCards,
+  sortBySetThenNumber,
   getUniqueKeywords,
   getUniqueClassifications,
   getUniqueSets,

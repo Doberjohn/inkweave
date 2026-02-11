@@ -1,3 +1,4 @@
+import {memo} from 'react';
 import type {LorcanaCard} from '../../cards';
 import {
   INK_COLORS,
@@ -14,7 +15,7 @@ interface CardDetailPanelProps {
   onClear: () => void;
 }
 
-export function CardDetailPanel({card, onClear}: CardDetailPanelProps) {
+export const CardDetailPanel = memo(function CardDetailPanel({card, onClear}: CardDetailPanelProps) {
   const inkColors = INK_COLORS[card.ink];
 
   return (
@@ -176,7 +177,7 @@ export function CardDetailPanel({card, onClear}: CardDetailPanelProps) {
       </button>
     </div>
   );
-}
+});
 
 function StatBadge({
   bg,

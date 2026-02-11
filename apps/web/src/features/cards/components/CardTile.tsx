@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, useCallback, memo} from 'react';
 import {motion} from 'framer-motion';
 import type {LorcanaCard} from '../types';
 import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
@@ -6,7 +6,10 @@ import {useCardPreviewHandlers} from './useCardPreviewHandlers';
 
 interface CardTileProps {
   card: LorcanaCard;
-  onClick: () => void;
+  /** @deprecated Use onSelect instead for stable references with React.memo */
+  onClick?: () => void;
+  /** Stable callback — receives the card, so parent doesn't need per-item closures */
+  onSelect?: (card: LorcanaCard) => void;
   isSelected: boolean;
   variant?: 'full' | 'minimal';
   useThumbnail?: boolean;
@@ -14,9 +17,13 @@ interface CardTileProps {
   disablePreview?: boolean;
 }
 
-export function CardTile({card, onClick, isSelected, variant = 'full', useThumbnail, borderRadius, disablePreview}: CardTileProps) {
+export const CardTile = memo(function CardTile({card, onClick, onSelect, isSelected, variant = 'full', useThumbnail, borderRadius, disablePreview}: CardTileProps) {
+  const handleClick = useCallback(() => {
+    onClick?.();
+    onSelect?.(card);
+  }, [onClick, onSelect, card]);
   const colors = INK_COLORS[card.ink];
-  const {previewHandlers, hidePreview} = useCardPreviewHandlers({card, onTap: onClick});
+  const {previewHandlers, hidePreview} = useCardPreviewHandlers({card, onTap: handleClick});
   const [imgError, setImgError] = useState(false);
   const imgSrc = useThumbnail
     ? (card.thumbnailUrl || card.imageUrl)
@@ -25,7 +32,7 @@ export function CardTile({card, onClick, isSelected, variant = 'full', useThumbn
   return (
     <motion.button
       data-testid="card-tile"
-      onClick={() => { hidePreview(); onClick(); }}
+      onClick={() => { hidePreview(); handleClick(); }}
       {...(disablePreview ? {} : previewHandlers)}
       aria-pressed={isSelected}
       aria-label={card.fullName || card.name || 'View card details'}
@@ -94,4 +101,4 @@ export function CardTile({card, onClick, isSelected, variant = 'full', useThumbn
 
     </motion.button>
   );
-}
+});

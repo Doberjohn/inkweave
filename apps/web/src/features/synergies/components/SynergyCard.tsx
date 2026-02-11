@@ -1,4 +1,4 @@
-import {useState, memo} from 'react';
+import {useState, useMemo, memo} from 'react';
 import {motion} from 'framer-motion';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyStrength} from '../types';
@@ -71,7 +71,7 @@ export const SynergyCard = memo(function SynergyCard({
   const {previewHandlers} = useCardPreviewHandlers({card});
   const [imgError, setImgError] = useState(false);
   const imgSrc = card.thumbnailUrl || card.imageUrl;
-  const reasonTag = extractReasonTag(explanation);
+  const reasonTag = useMemo(() => extractReasonTag(explanation), [explanation]);
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>

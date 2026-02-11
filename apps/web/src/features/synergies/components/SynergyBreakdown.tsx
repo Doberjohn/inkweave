@@ -1,3 +1,4 @@
+import {memo} from 'react';
 import type {GroupedSynergies} from '../types';
 import {COLORS, FONT_SIZES, RADIUS, SPACING, STRENGTH_STYLES} from '../../../shared/constants';
 import {getDominantStrength} from '../utils';
@@ -7,7 +8,7 @@ interface SynergyBreakdownProps {
   totalCount: number;
 }
 
-export function SynergyBreakdown({synergies, totalCount}: SynergyBreakdownProps) {
+export const SynergyBreakdown = memo(function SynergyBreakdown({synergies, totalCount}: SynergyBreakdownProps) {
   if (synergies.length === 0) return null;
 
   return (
@@ -115,4 +116,4 @@ export function SynergyBreakdown({synergies, totalCount}: SynergyBreakdownProps)
       })}
     </div>
   );
-}
+});

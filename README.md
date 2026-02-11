@@ -10,6 +10,7 @@ A React web application for discovering synergistic card combinations in Disney 
 - **Synergy Detection**: Multiple synergy rules detect connections like Singer+Songs, Shift targets, tribal synergies
 - **Archetype Synergies**: Detects archetype patterns (Discard, Bounce, Ramp, Damage/Removal)
 - **Core Format**: Focused on Core format cards (sets 5+)
+- **Deep Linking**: URL-based navigation — share links to specific cards (`/card/123`) or filtered views (`/browse?q=Elsa&ink=Sapphire`)
 - **Responsive Design**: Full mobile support with touch-friendly interface and card preview on long-press
 
 ## Getting Started
@@ -42,13 +43,15 @@ pnpm preview
 
 ## Usage
 
-1. **Browse Cards**: Use the left panel to search and filter the card database
-2. **Find Synergies**: Click a card to see all cards that synergize with it in the right panel
+1. **Home** (`/`): Search from the hero or click a featured card
+2. **Browse** (`/browse`): Search, filter by ink/type/cost/keyword, and browse all cards
+3. **Card Detail** (`/card/:id`): View a card and its synergies — share the URL to link directly
 
 ## Tech Stack
 
 - pnpm workspaces monorepo
 - React 18 + TypeScript 5
+- React Router v7 (URL-based navigation)
 - Vite bundler
 - Vitest + Playwright for testing
 - Inline CSS with design tokens
@@ -66,10 +69,16 @@ inkweave/
 └── apps/
     └── web/                  # React web application
         └── src/
+            ├── pages/        # Route pages (Home, Browse, Card, NotFound)
+            ├── router.tsx    # React Router config
             ├── features/
             │   ├── cards/    # Card browsing, filtering, preview
             │   └── synergies/# Synergy display components
-            └── shared/       # Constants, utilities, shared components
+            └── shared/
+                ├── components/# UI components (HeroSection, FilterModal, etc.)
+                ├── contexts/  # CardDataContext (shared card state)
+                ├── hooks/     # useResponsive, useFilterParams (URL sync)
+                └── constants/ # Design tokens, layout values
 ```
 
 ## Commands

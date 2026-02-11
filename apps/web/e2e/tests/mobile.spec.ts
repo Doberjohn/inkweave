@@ -24,9 +24,12 @@ test.describe('Mobile Viewport', () => {
     await expect(page.getByPlaceholder('Search for a card...')).toBeVisible();
   });
 
-  test('should navigate to synergies when selecting a featured card', async ({appPage, page}) => {
+  test('should navigate to card page when selecting a featured card', async ({appPage, page}) => {
     // Click a featured card
     await appPage.selectFeaturedCard();
+
+    // Should navigate to /card/:id
+    await expect(page).toHaveURL(/\/card\/\d+/);
 
     // Should show synergy results (card detail + synergies)
     const hasSynergies = page.getByText(/Found \d+ synergistic cards/);
@@ -38,9 +41,24 @@ test.describe('Mobile Viewport', () => {
     expect(synergiesVisible || noSynergiesVisible).toBe(true);
   });
 
+  test('should show filter drawer on mobile browse', async ({page}) => {
+    // Navigate to browse page first
+    await page.goto('/browse');
+    await page.waitForTimeout(500);
+
+    // Click filter button in CardList
+    const filterButton = page.getByRole('button', {name: /Filters/});
+    await filterButton.click();
+
+    // Filter drawer should show ink options
+    await expect(page.getByRole('button', {name: 'Amber', exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Sapphire', exact: true})).toBeVisible();
+  });
+
   test('should return to home when clearing selection on mobile', async ({
     appPage,
     synergyResultsPage,
+    page,
   }) => {
     // Select a card
     await appPage.selectFeaturedCard();
@@ -50,31 +68,18 @@ test.describe('Mobile Viewport', () => {
 
     // Should return to home state with hero
     await expect(appPage.heroSection).toBeVisible();
+    await expect(page).toHaveURL('/');
   });
 
-  test('should transition to browsing view when pressing Enter in hero search', async ({appPage, page}) => {
-    // Type in the hero search and press Enter to navigate
+  test('should navigate to browse when searching from hero', async ({appPage, page}) => {
+    // Type in hero search and press Enter to navigate
     await appPage.heroSearch.fill('Elsa');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(200);
+    await appPage.heroSearch.press('Enter');
 
-    // Should transition away from home — hero and featured cards disappear
-    await expect(appPage.heroSection).not.toBeVisible();
-    await expect(appPage.featuredCards).not.toBeVisible();
+    // Should navigate to browse with query param
+    await expect(page).toHaveURL(/\/browse\?q=Elsa/);
 
-    // CardList sidebar should be visible with search results
-    await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
-  });
-
-  test('should transition to browsing view when clicking Search button', async ({appPage, page}) => {
-    // Type in the hero search
-    await appPage.heroSearch.fill('Elsa');
-
-    // Click the Search button
-    await page.getByRole('button', {name: 'Search'}).click();
-    await page.waitForTimeout(200);
-
-    // Should transition to browsing
+    // Hero should be gone, card list visible
     await expect(appPage.heroSection).not.toBeVisible();
     await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
   });

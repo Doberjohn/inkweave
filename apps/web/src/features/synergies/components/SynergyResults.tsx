@@ -1,3 +1,4 @@
+import {memo} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {GroupedSynergies} from '../types';
 import {CardDetail, SynergyGroup} from '.';
@@ -14,7 +15,7 @@ interface SynergyResultsProps {
   showCardDetail?: boolean;
 }
 
-export function SynergyResults({
+export const SynergyResults = memo(function SynergyResults({
   selectedCard,
   synergies,
   totalSynergyCount,
@@ -74,4 +75,4 @@ export function SynergyResults({
       )}
     </div>
   );
-}
+});
