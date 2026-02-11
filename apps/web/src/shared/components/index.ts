@@ -1,6 +1,7 @@
 export {CardImage} from './CardImage';
 export {CollapsibleSection} from './CollapsibleSection';
 export {CompactHeader} from './CompactHeader';
+export {CostIcon} from './CostIcon';
 export {EtherealBackground} from './EtherealBackground';
 export {FilterButton} from './FilterButton';
 export {FilterModal} from './FilterModal';

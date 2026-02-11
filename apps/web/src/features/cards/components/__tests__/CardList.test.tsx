@@ -3,7 +3,7 @@ import {render, screen, fireEvent} from '@testing-library/react';
 import {CardList} from '../CardList';
 import {CardPreviewProvider} from '../CardPreviewContext';
 import {createCard} from '../../../../shared/test-utils';
-import type {LorcanaCard, Ink} from '../../types';
+import type {LorcanaCard} from '../../types';
 import type {CardFilterOptions} from '../../loader';
 
 // Wrapper to provide required context
@@ -29,7 +29,9 @@ describe('CardList', () => {
     isLoading: false,
     selectedCard: null,
     searchQuery: '',
-    inkFilter: 'all' as Ink | 'all',
+    inkFilters: [] as string[],
+    typeFilters: [] as string[],
+    costFilters: [] as number[],
     filters: {} as CardFilterOptions,
     uniqueKeywords: ['Evasive', 'Singer', 'Challenger'],
     uniqueClassifications: ['Princess', 'Hero', 'Villain'],
@@ -40,7 +42,9 @@ describe('CardList', () => {
       {code: '3', name: 'Into the Inklands', number: 3},
     ],
     onSearchChange: vi.fn(),
-    onInkFilterChange: vi.fn(),
+    onToggleInk: vi.fn(),
+    onToggleType: vi.fn(),
+    onToggleCost: vi.fn(),
     onFiltersChange: vi.fn(),
     onCardSelect: vi.fn(),
   };
@@ -102,7 +106,7 @@ describe('CardList', () => {
 
     it('should show active filter count badge', () => {
       renderWithProvider(
-        <CardList {...defaultProps} inkFilter="Sapphire" onFiltersClick={vi.fn()} />,
+        <CardList {...defaultProps} inkFilters={['Sapphire']} onFiltersClick={vi.fn()} />,
       );
 
       expect(screen.getByRole('button', {name: /Filters \(1 active\)/i})).toBeInTheDocument();
@@ -118,7 +122,7 @@ describe('CardList', () => {
     });
 
     it('should show filter badge count when filters are active', () => {
-      renderWithProvider(<CardList {...defaultProps} isMobile={true} inkFilter="Sapphire" />);
+      renderWithProvider(<CardList {...defaultProps} isMobile={true} inkFilters={['Sapphire']} />);
 
       expect(screen.getByRole('button', {name: /Filters \(1 active\)/i})).toBeInTheDocument();
     });

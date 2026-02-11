@@ -11,10 +11,11 @@ export function FilterSection({label, children, compact = false}: FilterSectionP
     <div style={{marginBottom: compact ? `${SPACING.md}px` : `${SPACING.xl}px`}}>
       <div
         style={{
-          fontSize: `${FONT_SIZES.sm}px`,
-          color: COLORS.gray500,
+          fontSize: `${FONT_SIZES.base}px`,
+          color: COLORS.gray700,
           marginBottom: compact ? '4px' : `${SPACING.sm}px`,
           fontWeight: 500,
+          letterSpacing: '0.02em',
         }}>
         {label}
       </div>

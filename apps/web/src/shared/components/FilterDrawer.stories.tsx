@@ -43,11 +43,9 @@ export const WithActiveFilters: Story = {
     isOpen: true,
     inkFilter: 'Sapphire',
     filters: {
-      type: 'Character',
-      minCost: 3,
-      maxCost: 6,
       keywords: ['Singer'],
     },
+    costFilters: [3, 4, 5, 6],
     uniqueKeywords: ['Singer', 'Evasive', 'Ward', 'Bodyguard'],
     uniqueClassifications: ['Princess', 'Hero', 'Villain'],
     sets: [

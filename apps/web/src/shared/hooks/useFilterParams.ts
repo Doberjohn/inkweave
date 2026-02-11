@@ -1,6 +1,6 @@
 import {useMemo, useCallback} from 'react';
 import {useSearchParams} from 'react-router-dom';
-import type {Ink} from '../../features/cards';
+import type {Ink, CardType} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards/loader';
 
 const VALID_INKS = new Set<string>(['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel']);
@@ -10,20 +10,43 @@ function isValidInk(value: string): value is Ink {
   return VALID_INKS.has(value);
 }
 
-function isValidType(value: string): value is NonNullable<CardFilterOptions['type']> {
+function isValidType(value: string): value is CardType {
   return VALID_TYPES.has(value);
 }
 
-function parseIntSafe(value: string): number | undefined {
-  const parsed = parseInt(value, 10);
-  return isNaN(parsed) ? undefined : parsed;
+const VALID_COSTS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+
+function isValidCost(value: string): boolean {
+  const n = Number(value);
+  return VALID_COSTS.has(n);
+}
+
+function parseCostParam(raw: string | null): number[] {
+  if (!raw) return [];
+  return raw
+    .split(',')
+    .filter(isValidCost)
+    .map(Number);
+}
+
+/** Parse comma-separated values from a URL param, filtering by validator */
+function parseCommaSeparated<T extends string>(
+  raw: string | null,
+  isValid: (v: string) => v is T,
+): T[] {
+  if (!raw) return [];
+  return raw.split(',').filter(isValid);
 }
 
 export interface UseFilterParamsReturn {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  inkFilter: Ink | 'all';
-  setInkFilter: (ink: Ink | 'all') => void;
+  inkFilters: Ink[];
+  toggleInk: (ink: Ink) => void;
+  typeFilters: CardType[];
+  toggleType: (type: CardType) => void;
+  costFilters: number[];
+  toggleCost: (cost: number) => void;
   filters: CardFilterOptions;
   setFilters: (filters: CardFilterOptions) => void;
   clearAllFilters: () => void;
@@ -36,25 +59,23 @@ export function useFilterParams(): UseFilterParamsReturn {
   // Read filter state from URL params
   const searchQuery = searchParams.get('q') ?? '';
 
-  const inkFilter: Ink | 'all' = useMemo(() => {
-    const ink = searchParams.get('ink');
-    return ink && isValidInk(ink) ? ink : 'all';
-  }, [searchParams]);
+  const inkFilters: Ink[] = useMemo(
+    () => parseCommaSeparated(searchParams.get('ink'), isValidInk),
+    [searchParams],
+  );
+
+  const typeFilters: CardType[] = useMemo(
+    () => parseCommaSeparated(searchParams.get('type'), isValidType),
+    [searchParams],
+  );
+
+  const costFilters: number[] = useMemo(
+    () => parseCostParam(searchParams.get('cost')),
+    [searchParams],
+  );
 
   const filters: CardFilterOptions = useMemo(() => {
     const f: CardFilterOptions = {};
-    const type = searchParams.get('type');
-    if (type && isValidType(type)) f.type = type;
-    const minCost = searchParams.get('minCost');
-    if (minCost) {
-      const parsed = parseIntSafe(minCost);
-      if (parsed !== undefined) f.minCost = parsed;
-    }
-    const maxCost = searchParams.get('maxCost');
-    if (maxCost) {
-      const parsed = parseIntSafe(maxCost);
-      if (parsed !== undefined) f.maxCost = parsed;
-    }
     const keyword = searchParams.get('keyword');
     if (keyword) f.keywords = [keyword];
     const classification = searchParams.get('classification');
@@ -66,16 +87,12 @@ export function useFilterParams(): UseFilterParamsReturn {
 
   const activeFilterCount = useMemo(
     () =>
-      [
-        inkFilter !== 'all',
-        filters.type,
-        filters.minCost !== undefined,
-        filters.maxCost !== undefined,
-        filters.keywords?.length,
-        filters.classifications?.length,
-        filters.setCode,
-      ].filter(Boolean).length,
-    [inkFilter, filters],
+      inkFilters.length +
+      typeFilters.length +
+      costFilters.length +
+      [filters.keywords?.length, filters.classifications?.length, filters.setCode].filter(Boolean)
+        .length,
+    [inkFilters, typeFilters, costFilters, filters],
   );
 
   // Write helpers — all use replace to avoid history pollution
@@ -103,11 +120,39 @@ export function useFilterParams(): UseFilterParamsReturn {
     [updateParams],
   );
 
-  const setInkFilter = useCallback(
-    (ink: Ink | 'all') => {
+  const toggleInk = useCallback(
+    (ink: Ink) => {
       updateParams((p) => {
-        if (ink !== 'all') p.set('ink', ink);
+        const current = parseCommaSeparated(p.get('ink'), isValidInk);
+        const next = current.includes(ink) ? current.filter((i) => i !== ink) : [...current, ink];
+        if (next.length > 0) p.set('ink', next.join(','));
         else p.delete('ink');
+      });
+    },
+    [updateParams],
+  );
+
+  const toggleType = useCallback(
+    (type: CardType) => {
+      updateParams((p) => {
+        const current = parseCommaSeparated(p.get('type'), isValidType);
+        const next = current.includes(type)
+          ? current.filter((t) => t !== type)
+          : [...current, type];
+        if (next.length > 0) p.set('type', next.join(','));
+        else p.delete('type');
+      });
+    },
+    [updateParams],
+  );
+
+  const toggleCost = useCallback(
+    (cost: number) => {
+      updateParams((p) => {
+        const current = parseCostParam(p.get('cost'));
+        const next = current.includes(cost) ? current.filter((c) => c !== cost) : [...current, cost];
+        if (next.length > 0) p.set('cost', next.join(','));
+        else p.delete('cost');
       });
     },
     [updateParams],
@@ -116,17 +161,11 @@ export function useFilterParams(): UseFilterParamsReturn {
   const setFilters = useCallback(
     (newFilters: CardFilterOptions) => {
       updateParams((p) => {
-        // Clear all filter params first
-        p.delete('type');
-        p.delete('minCost');
-        p.delete('maxCost');
+        // Clear non-ink/type/cost filter params
         p.delete('keyword');
         p.delete('classification');
         p.delete('set');
         // Set new values
-        if (newFilters.type) p.set('type', newFilters.type);
-        if (newFilters.minCost !== undefined) p.set('minCost', String(newFilters.minCost));
-        if (newFilters.maxCost !== undefined) p.set('maxCost', String(newFilters.maxCost));
         if (newFilters.keywords?.length) p.set('keyword', newFilters.keywords[0]);
         if (newFilters.classifications?.length) p.set('classification', newFilters.classifications[0]);
         if (newFilters.setCode) p.set('set', newFilters.setCode);
@@ -142,8 +181,12 @@ export function useFilterParams(): UseFilterParamsReturn {
   return {
     searchQuery,
     setSearchQuery,
-    inkFilter,
-    setInkFilter,
+    inkFilters,
+    toggleInk,
+    typeFilters,
+    toggleType,
+    costFilters,
+    toggleCost,
     filters,
     setFilters,
     clearAllFilters,

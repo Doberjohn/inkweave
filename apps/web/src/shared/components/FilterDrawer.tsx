@@ -1,6 +1,6 @@
 import {useEffect, useCallback} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
-import type {Ink, SetInfo} from '../../features/cards';
+import type {Ink, CardType, SetInfo} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards';
 import {
   COLORS,
@@ -11,38 +11,50 @@ import {
   INK_COLORS,
   ALL_INKS,
   CARD_TYPES,
-  COST_OPTIONS,
   SELECT_STYLE_MD,
   CTA_BUTTON_STYLE,
 } from '../constants';
-// FONT_SIZES and RADIUS are still used for header/drawer styling
-import {isCardType} from '../../features/cards';
+import {CostIcon} from './CostIcon';
 import {FilterButton} from './FilterButton';
 import {FilterSection} from './FilterSection';
 import {InkIcon} from './InkIcon';
 
+const COST_BUTTONS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+/** Convert a hex color (#rrggbb) to rgba with the given alpha */
+const hexRgba = (hex: string, a: number) =>
+  `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${a})`;
+
 interface FilterDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  inkFilter: Ink | 'all';
+  inkFilters: Ink[];
+  typeFilters: CardType[];
+  costFilters: number[];
   filters: CardFilterOptions;
   uniqueKeywords: string[];
   uniqueClassifications: string[];
   sets: SetInfo[];
-  onInkFilterChange: (ink: Ink | 'all') => void;
+  onToggleInk: (ink: Ink) => void;
+  onToggleType: (type: CardType) => void;
+  onToggleCost: (cost: number) => void;
   onFiltersChange: (filters: CardFilterOptions) => void;
-  onClearAll: () => void;
+  onClearAll?: () => void;
 }
 
 export function FilterDrawer({
   isOpen,
   onClose,
-  inkFilter,
+  inkFilters,
+  typeFilters,
+  costFilters,
   filters,
   uniqueKeywords,
   uniqueClassifications,
   sets,
-  onInkFilterChange,
+  onToggleInk,
+  onToggleType,
+  onToggleCost,
   onFiltersChange,
   onClearAll,
 }: FilterDrawerProps) {
@@ -63,8 +75,6 @@ export function FilterDrawer({
     }
   }, [isOpen, handleKeyDown]);
 
-  const selectedType = isCardType(filters.type) ? filters.type : undefined;
-
   const updateFilter = <K extends keyof CardFilterOptions>(key: K, value: CardFilterOptions[K]) => {
     const newFilters = {...filters};
     if (value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
@@ -75,15 +85,12 @@ export function FilterDrawer({
     onFiltersChange(newFilters);
   };
 
-  const activeFilterCount = [
-    inkFilter !== 'all',
-    filters.type,
-    filters.minCost !== undefined,
-    filters.maxCost !== undefined,
-    filters.keywords?.length,
-    filters.classifications?.length,
-    filters.setCode,
-  ].filter(Boolean).length;
+  const activeFilterCount =
+    inkFilters.length +
+    typeFilters.length +
+    costFilters.length +
+    [filters.keywords?.length, filters.classifications?.length, filters.setCode].filter(Boolean)
+      .length;
 
   return (
     <AnimatePresence>
@@ -202,20 +209,14 @@ export function FilterDrawer({
               }}>
               {/* Ink Filter */}
               <FilterSection label="Ink">
-                <div style={{display: 'flex', gap: '6px', flexWrap: 'nowrap'}}>
-                  <FilterButton
-                    size="sm"
-                    active={inkFilter === 'all'}
-                    onClick={() => onInkFilterChange('all')}>
-                    All
-                  </FilterButton>
+                <div style={{display: 'flex', flexWrap: 'nowrap', justifyContent: 'space-evenly'}}>
                   {ALL_INKS.map((ink) => (
                     <FilterButton
                       key={ink}
                       size="sm"
-                      active={inkFilter === ink}
-                      onClick={() => onInkFilterChange(ink)}
-                      activeColor={INK_COLORS[ink].border}
+                      active={inkFilters.includes(ink)}
+                      onClick={() => onToggleInk(ink)}
+                      activeColor={hexRgba(INK_COLORS[ink].border, 0.3)}
                       inactiveColor="transparent"
                       inactiveTextColor="transparent">
                       <InkIcon ink={ink} size={30} decorative={false} />
@@ -224,57 +225,36 @@ export function FilterDrawer({
                 </div>
               </FilterSection>
 
-              {/* Card Type Filter */}
-              <FilterSection label="Type">
-                <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
-                  <FilterButton
-                    size="md"
-                    active={!selectedType}
-                    onClick={() => updateFilter('type', undefined)}>
-                    All
-                  </FilterButton>
-                  {CARD_TYPES.map((type) => (
+              {/* Ink Cost */}
+              <FilterSection label="Ink Cost">
+                <div style={{display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center'}}>
+                  {COST_BUTTONS.map((cost) => (
                     <FilterButton
-                      key={type}
-                      size="md"
-                      active={selectedType === type}
-                      onClick={() => updateFilter('type', type)}>
-                      {type}
+                      key={cost}
+                      size="sm"
+                      active={costFilters.includes(cost)}
+                      onClick={() => onToggleCost(cost)}
+                      activeColor="rgba(212, 175, 55, 0.3)"
+                      inactiveColor="transparent"
+                      inactiveTextColor="transparent">
+                      <CostIcon cost={cost} size={34} />
                     </FilterButton>
                   ))}
                 </div>
               </FilterSection>
 
-              {/* Cost Range */}
-              <FilterSection label="Cost Range">
-                <div style={{display: 'flex', gap: `${SPACING.md}px`, alignItems: 'center'}}>
-                  <select
-                    value={filters.minCost ?? ''}
-                    onChange={(e) =>
-                      updateFilter('minCost', e.target.value ? Number(e.target.value) : undefined)
-                    }
-                    style={SELECT_STYLE_MD}>
-                    <option value="">Min</option>
-                    {COST_OPTIONS.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                  <span style={{color: COLORS.gray400}}>to</span>
-                  <select
-                    value={filters.maxCost ?? ''}
-                    onChange={(e) =>
-                      updateFilter('maxCost', e.target.value ? Number(e.target.value) : undefined)
-                    }
-                    style={SELECT_STYLE_MD}>
-                    <option value="">Max</option>
-                    {COST_OPTIONS.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
+              {/* Card Type Filter */}
+              <FilterSection label="Type">
+                <div style={{display: 'flex', flexWrap: 'wrap', justifyContent: 'space-evenly'}}>
+                  {CARD_TYPES.map((type) => (
+                    <FilterButton
+                      key={type}
+                      size="md"
+                      active={typeFilters.includes(type)}
+                      onClick={() => onToggleType(type)}>
+                      {type}
+                    </FilterButton>
+                  ))}
                 </div>
               </FilterSection>
 

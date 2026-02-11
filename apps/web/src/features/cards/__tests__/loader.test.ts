@@ -77,10 +77,10 @@ describe('Card Filtering', () => {
     expect(results.every((c) => c.type === 'Character')).toBe(true);
   });
 
-  it('should filter by cost range', () => {
-    const results = filterCards(cards, {minCost: 3, maxCost: 5});
+  it('should filter by discrete costs', () => {
+    const results = filterCards(cards, {costs: [3, 4, 5]});
     expect(results).toHaveLength(3);
-    expect(results.every((c) => c.cost >= 3 && c.cost <= 5)).toBe(true);
+    expect(results.every((c) => [3, 4, 5].includes(c.cost))).toBe(true);
   });
 
   it('should filter by keywords', () => {
@@ -102,7 +102,7 @@ describe('Card Filtering', () => {
   });
 
   it('should combine multiple filters', () => {
-    const results = filterCards(cards, {ink: 'Amber', minCost: 3});
+    const results = filterCards(cards, {ink: 'Amber', costs: [6]});
     expect(results).toHaveLength(1);
     expect(results[0].id).toBe('3');
   });
