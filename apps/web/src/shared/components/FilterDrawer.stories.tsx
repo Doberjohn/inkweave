@@ -11,7 +11,9 @@ const meta: Meta<typeof FilterDrawer> = {
   tags: ['autodocs'],
   args: {
     onClose: fn(),
-    onInkFilterChange: fn(),
+    onToggleInk: fn(),
+    onToggleType: fn(),
+    onToggleCost: fn(),
     onFiltersChange: fn(),
     onClearAll: fn(),
   },
@@ -23,7 +25,9 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     isOpen: true,
-    inkFilter: 'all',
+    inkFilters: [],
+    typeFilters: [],
+    costFilters: [],
     filters: {},
     uniqueKeywords: ['Singer', 'Evasive', 'Ward', 'Bodyguard', 'Challenger', 'Rush'],
     uniqueClassifications: ['Princess', 'Hero', 'Villain', 'Floodborn', 'Storyborn'],
@@ -41,11 +45,12 @@ export const Default: Story = {
 export const WithActiveFilters: Story = {
   args: {
     isOpen: true,
-    inkFilter: 'Sapphire',
+    inkFilters: ['Sapphire'],
+    typeFilters: ['Character'],
+    costFilters: [3, 4, 5, 6],
     filters: {
       keywords: ['Singer'],
     },
-    costFilters: [3, 4, 5, 6],
     uniqueKeywords: ['Singer', 'Evasive', 'Ward', 'Bodyguard'],
     uniqueClassifications: ['Princess', 'Hero', 'Villain'],
     sets: [
@@ -59,7 +64,9 @@ export const WithActiveFilters: Story = {
 export const Closed: Story = {
   args: {
     isOpen: false,
-    inkFilter: 'all',
+    inkFilters: [],
+    typeFilters: [],
+    costFilters: [],
     filters: {},
     uniqueKeywords: [],
     uniqueClassifications: [],

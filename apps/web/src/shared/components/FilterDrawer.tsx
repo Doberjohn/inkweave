@@ -39,7 +39,7 @@ interface FilterDrawerProps {
   onToggleType: (type: CardType) => void;
   onToggleCost: (cost: number) => void;
   onFiltersChange: (filters: CardFilterOptions) => void;
-  onClearAll?: () => void;
+  onClearAll: () => void;
 }
 
 export function FilterDrawer({

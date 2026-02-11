@@ -101,6 +101,18 @@ describe('Card Filtering', () => {
     expect(results[0].id).toBe('7');
   });
 
+  it('should treat cost 9 as 9+ bucket (matching cost 9, 10, 12)', () => {
+    const highCostCards = [
+      createCard({id: '1', cost: 9}),
+      createCard({id: '2', cost: 10}),
+      createCard({id: '3', cost: 12}),
+      createCard({id: '4', cost: 8}),
+    ];
+    const results = filterCards(highCostCards, {costs: [9]});
+    expect(results).toHaveLength(3);
+    expect(results.map((c) => c.id)).toEqual(['1', '2', '3']);
+  });
+
   it('should combine multiple filters', () => {
     const results = filterCards(cards, {ink: 'Amber', costs: [6]});
     expect(results).toHaveLength(1);
