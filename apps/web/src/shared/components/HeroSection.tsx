@@ -1,4 +1,3 @@
-import {useState} from 'react';
 import {motion} from 'framer-motion';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../constants';
 
@@ -134,8 +133,6 @@ export function HeroSection({
             onKeyDown={(e) => {
               if (e.key === 'Enter') onSearchSubmit?.();
             }}
-            onFocus={() => setIsSearchFocused(true)}
-            onBlur={() => setIsSearchFocused(false)}
             data-testid="hero-search"
             style={{
               width: '100%',
@@ -144,17 +141,13 @@ export function HeroSection({
               borderRadius: isMobile
                 ? `${RADIUS.lg}px`
                 : `${RADIUS.lg}px 0 0 ${RADIUS.lg}px`,
-              border: `1px solid ${isSearchFocused ? 'rgba(212, 175, 55, 0.5)' : COLORS.searchBorder}`,
+              border: `1px solid ${COLORS.searchBorder}`,
               borderRight: isMobile ? undefined : 'none',
               background: COLORS.searchBg,
               color: COLORS.text,
               fontSize: `${FONT_SIZES.xl}px`,
               boxSizing: 'border-box',
               outline: 'none',
-              boxShadow: isSearchFocused
-                ? '0 0 0 3px rgba(212, 175, 55, 0.15), 0 0 20px rgba(212, 175, 55, 0.1)'
-                : 'none',
-              transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
             }}
           />
         </div>

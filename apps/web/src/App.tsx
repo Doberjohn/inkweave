@@ -281,7 +281,6 @@ function SynergyFinderApp() {
               onInkFilterChange={setInkFilter}
               onFiltersChange={setFilters}
               onCardSelect={selectCard}
-              onFiltersClick={() => setShowFilterModal(true)}
             />
           </ErrorBoundary>
         </div>
