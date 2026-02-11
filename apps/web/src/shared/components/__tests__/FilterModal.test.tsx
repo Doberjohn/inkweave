@@ -10,6 +10,7 @@ describe('FilterModal', () => {
     typeFilters: [] as string[],
     costFilters: [] as number[],
     filters: {},
+    activeFilterCount: 0,
     uniqueKeywords: ['Singer', 'Evasive', 'Ward'],
     uniqueClassifications: ['Princess', 'Hero', 'Villain'],
     sets: [
@@ -98,7 +99,7 @@ describe('FilterModal', () => {
   });
 
   it('should show Clear all button when filters are active', () => {
-    render(<FilterModal {...defaultProps} inkFilters={['Amber']} />);
+    render(<FilterModal {...defaultProps} inkFilters={['Amber']} activeFilterCount={1} />);
 
     expect(screen.getByRole('button', {name: /clear all/i})).toBeInTheDocument();
   });
@@ -111,7 +112,7 @@ describe('FilterModal', () => {
 
   it('should call onClearAll when clicking Clear all', () => {
     const onClearAll = vi.fn();
-    render(<FilterModal {...defaultProps} inkFilters={['Amber']} onClearAll={onClearAll} />);
+    render(<FilterModal {...defaultProps} inkFilters={['Amber']} activeFilterCount={1} onClearAll={onClearAll} />);
 
     fireEvent.click(screen.getByRole('button', {name: /clear all/i}));
 
@@ -119,13 +120,13 @@ describe('FilterModal', () => {
   });
 
   it('should show active filter count in title', () => {
-    render(<FilterModal {...defaultProps} inkFilters={['Amber']} typeFilters={['Character']} />);
+    render(<FilterModal {...defaultProps} inkFilters={['Amber']} typeFilters={['Character']} activeFilterCount={2} />);
 
     expect(screen.getByText(/filters \(2\)/i)).toBeInTheDocument();
   });
 
   it('should mark current ink as active', () => {
-    render(<FilterModal {...defaultProps} inkFilters={['Ruby']} />);
+    render(<FilterModal {...defaultProps} inkFilters={['Ruby']} activeFilterCount={1} />);
 
     expect(screen.getByRole('button', {name: /ruby/i})).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'false');
@@ -250,6 +251,7 @@ describe('FilterModal', () => {
         inkFilters={['Amber']}
         typeFilters={['Character']}
         costFilters={[2, 5]}
+        activeFilterCount={7}
         filters={{
           keywords: ['Singer'],
           classifications: ['Princess'],

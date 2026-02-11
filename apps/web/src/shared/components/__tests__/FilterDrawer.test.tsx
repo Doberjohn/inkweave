@@ -10,6 +10,7 @@ describe('FilterDrawer', () => {
     typeFilters: [] as string[],
     costFilters: [] as number[],
     filters: {},
+    activeFilterCount: 0,
     uniqueKeywords: ['Singer', 'Evasive', 'Ward'],
     uniqueClassifications: ['Princess', 'Hero', 'Villain'],
     sets: [
@@ -93,7 +94,7 @@ describe('FilterDrawer', () => {
   });
 
   it('should show Clear all button when filters are active', () => {
-    render(<FilterDrawer {...defaultProps} inkFilters={['Amber']} />);
+    render(<FilterDrawer {...defaultProps} inkFilters={['Amber']} activeFilterCount={1} />);
 
     expect(screen.getByRole('button', {name: /clear all/i})).toBeInTheDocument();
   });
@@ -106,7 +107,7 @@ describe('FilterDrawer', () => {
 
   it('should call onClearAll when clicking Clear all', () => {
     const onClearAll = vi.fn();
-    render(<FilterDrawer {...defaultProps} inkFilters={['Amber']} onClearAll={onClearAll} />);
+    render(<FilterDrawer {...defaultProps} inkFilters={['Amber']} activeFilterCount={1} onClearAll={onClearAll} />);
 
     fireEvent.click(screen.getByRole('button', {name: /clear all/i}));
 
@@ -114,13 +115,13 @@ describe('FilterDrawer', () => {
   });
 
   it('should show active filter count in title', () => {
-    render(<FilterDrawer {...defaultProps} inkFilters={['Amber']} typeFilters={['Character']} />);
+    render(<FilterDrawer {...defaultProps} inkFilters={['Amber']} typeFilters={['Character']} activeFilterCount={2} />);
 
     expect(screen.getByText(/filters \(2\)/i)).toBeInTheDocument();
   });
 
   it('should mark current ink as active', () => {
-    render(<FilterDrawer {...defaultProps} inkFilters={['Ruby']} />);
+    render(<FilterDrawer {...defaultProps} inkFilters={['Ruby']} activeFilterCount={1} />);
 
     expect(screen.getByRole('button', {name: /ruby/i})).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'false');
@@ -243,6 +244,7 @@ describe('FilterDrawer', () => {
         inkFilters={['Amber']}
         typeFilters={['Character']}
         costFilters={[2, 5]}
+        activeFilterCount={7}
         filters={{
           keywords: ['Singer'],
           classifications: ['Princess'],

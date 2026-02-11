@@ -28,6 +28,7 @@ export const Default: Story = {
     inkFilters: [],
     typeFilters: [],
     costFilters: [],
+    activeFilterCount: 0,
     filters: {},
     uniqueKeywords: ['Singer', 'Evasive', 'Ward', 'Bodyguard', 'Challenger', 'Rush'],
     uniqueClassifications: ['Princess', 'Hero', 'Villain', 'Floodborn', 'Storyborn'],
@@ -48,6 +49,7 @@ export const WithActiveFilters: Story = {
     inkFilters: ['Sapphire'],
     typeFilters: ['Character'],
     costFilters: [3, 4, 5, 6],
+    activeFilterCount: 7,
     filters: {
       keywords: ['Singer'],
     },
@@ -67,6 +69,7 @@ export const Closed: Story = {
     inkFilters: [],
     typeFilters: [],
     costFilters: [],
+    activeFilterCount: 0,
     filters: {},
     uniqueKeywords: [],
     uniqueClassifications: [],

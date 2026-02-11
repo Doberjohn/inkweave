@@ -201,6 +201,13 @@ export const SELECT_STYLE_MD: React.CSSProperties = {
   minHeight: '44px',
 };
 
+// Ink cost values for filter buttons
+export const COST_BUTTONS = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
+
+/** Convert a hex color (#rrggbb) to rgba with the given alpha */
+export const hexRgba = (hex: string, a: number) =>
+  `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${a})`;
+
 // CTA button style (orange gradient, matching Figma Filters button)
 export const CTA_BUTTON_STYLE: React.CSSProperties = {
   background: COLORS.filterGradient,

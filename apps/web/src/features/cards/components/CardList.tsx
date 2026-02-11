@@ -23,7 +23,8 @@ interface CardListProps {
   onToggleCost: (cost: number) => void;
   onFiltersChange: (filters: CardFilterOptions) => void;
   onCardSelect: (card: LorcanaCard) => void;
-  onClearAll?: () => void;
+  onClearAll: () => void;
+  activeFilterCount: number;
   isMobile?: boolean;
   /** Back button handler for mobile linear flow */
   onBack?: () => void;
@@ -50,6 +51,7 @@ export function CardList({
   onFiltersChange,
   onCardSelect,
   onClearAll,
+  activeFilterCount,
   isMobile = false,
   onBack,
   onFiltersClick,
@@ -58,13 +60,6 @@ export function CardList({
 
   // Memoize the sliced array to avoid creating new array on every render
   const displayedCards = useMemo(() => cards.slice(0, LAYOUT.maxDisplayedCards), [cards]);
-
-  const activeFilterCount =
-    inkFilters.length +
-    typeFilters.length +
-    costFilters.length +
-    [filters.keywords?.length, filters.classifications?.length, filters.setCode].filter(Boolean)
-      .length;
 
   // Mobile layout
   if (isMobile) {
@@ -199,6 +194,7 @@ export function CardList({
               typeFilters={typeFilters}
               costFilters={costFilters}
               filters={filters}
+              activeFilterCount={activeFilterCount}
               uniqueKeywords={uniqueKeywords}
               uniqueClassifications={uniqueClassifications}
               sets={sets}

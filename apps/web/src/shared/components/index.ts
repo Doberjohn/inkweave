@@ -4,6 +4,7 @@ export {CompactHeader} from './CompactHeader';
 export {CostIcon} from './CostIcon';
 export {EtherealBackground} from './EtherealBackground';
 export {FilterButton} from './FilterButton';
+export {FilterContent} from './FilterContent';
 export {FilterModal} from './FilterModal';
 export {FilterSection} from './FilterSection';
 export {Header} from './Header';

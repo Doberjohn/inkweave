@@ -47,6 +47,8 @@ describe('CardList', () => {
     onToggleCost: vi.fn(),
     onFiltersChange: vi.fn(),
     onCardSelect: vi.fn(),
+    onClearAll: vi.fn(),
+    activeFilterCount: 0,
   };
 
   /** Get card tile buttons via data-testid (stable across style changes) */
@@ -106,7 +108,7 @@ describe('CardList', () => {
 
     it('should show active filter count badge', () => {
       renderWithProvider(
-        <CardList {...defaultProps} inkFilters={['Sapphire']} onFiltersClick={vi.fn()} />,
+        <CardList {...defaultProps} inkFilters={['Sapphire']} activeFilterCount={1} onFiltersClick={vi.fn()} />,
       );
 
       expect(screen.getByRole('button', {name: /Filters \(1 active\)/i})).toBeInTheDocument();
@@ -122,7 +124,7 @@ describe('CardList', () => {
     });
 
     it('should show filter badge count when filters are active', () => {
-      renderWithProvider(<CardList {...defaultProps} isMobile={true} inkFilters={['Sapphire']} />);
+      renderWithProvider(<CardList {...defaultProps} isMobile={true} inkFilters={['Sapphire']} activeFilterCount={1} />);
 
       expect(screen.getByRole('button', {name: /Filters \(1 active\)/i})).toBeInTheDocument();
     });

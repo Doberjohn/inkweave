@@ -13,7 +13,7 @@ export function BrowsePage() {
   const {isMobile} = useResponsive();
   const {cards, isLoading, totalCards, uniqueKeywords, uniqueClassifications, sets} =
     useCardDataContext();
-  const {searchQuery, setSearchQuery, inkFilters, toggleInk, typeFilters, toggleType, costFilters, toggleCost, filters, setFilters, clearAllFilters} =
+  const {searchQuery, setSearchQuery, inkFilters, toggleInk, typeFilters, toggleType, costFilters, toggleCost, filters, setFilters, clearAllFilters, activeFilterCount} =
     useFilterParams();
   const [showFilterModal, setShowFilterModal] = useState(false);
 
@@ -63,6 +63,7 @@ export function BrowsePage() {
         onFiltersChange={setFilters}
         onCardSelect={selectCard}
         onClearAll={clearAllFilters}
+        activeFilterCount={activeFilterCount}
         isMobile={isMobile}
         onBack={isMobile ? goHome : undefined}
         onFiltersClick={!isMobile ? () => setShowFilterModal(true) : undefined}
@@ -94,6 +95,7 @@ export function BrowsePage() {
         typeFilters={typeFilters}
         costFilters={costFilters}
         filters={filters}
+        activeFilterCount={activeFilterCount}
         uniqueKeywords={uniqueKeywords}
         uniqueClassifications={uniqueClassifications}
         sets={sets}
