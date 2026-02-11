@@ -1,4 +1,4 @@
-import {useCallback} from 'react';
+import {useCallback, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {FeaturedCards} from '../features/cards';
 import {HeroSection, EtherealBackground} from '../shared/components';
@@ -10,17 +10,12 @@ export function HomePage() {
   const navigate = useNavigate();
   const {isMobile} = useResponsive();
   const {cards} = useCardDataContext();
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const handleSearchChange = useCallback(
-    (query: string) => {
-      if (query.length > 0) {
-        navigate(`/browse?q=${encodeURIComponent(query)}`);
-      }
-    },
-    [navigate],
-  );
-
-  const handleSearchSubmit = useCallback(() => navigate('/browse'), [navigate]);
+  const handleSearchSubmit = useCallback(() => {
+    const q = searchQuery.trim();
+    navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
+  }, [navigate, searchQuery]);
   const handleCardSelect = useCallback(
     (card: {id: string}) => navigate(`/card/${card.id}`),
     [navigate],
@@ -40,8 +35,8 @@ export function HomePage() {
       <EtherealBackground isMobile={isMobile} />
 
       <HeroSection
-        searchQuery=""
-        onSearchChange={handleSearchChange}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
         onSearchSubmit={handleSearchSubmit}
         isMobile={isMobile}
       />

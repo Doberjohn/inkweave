@@ -4,9 +4,19 @@ import type {Ink} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards/loader';
 
 const VALID_INKS = new Set<string>(['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel']);
+const VALID_TYPES = new Set<string>(['Character', 'Action', 'Item', 'Location']);
 
 function isValidInk(value: string): value is Ink {
   return VALID_INKS.has(value);
+}
+
+function isValidType(value: string): value is NonNullable<CardFilterOptions['type']> {
+  return VALID_TYPES.has(value);
+}
+
+function parseIntSafe(value: string): number | undefined {
+  const parsed = parseInt(value, 10);
+  return isNaN(parsed) ? undefined : parsed;
 }
 
 export interface UseFilterParamsReturn {
@@ -34,11 +44,17 @@ export function useFilterParams(): UseFilterParamsReturn {
   const filters: CardFilterOptions = useMemo(() => {
     const f: CardFilterOptions = {};
     const type = searchParams.get('type');
-    if (type) f.type = type as CardFilterOptions['type'];
+    if (type && isValidType(type)) f.type = type;
     const minCost = searchParams.get('minCost');
-    if (minCost) f.minCost = parseInt(minCost, 10);
+    if (minCost) {
+      const parsed = parseIntSafe(minCost);
+      if (parsed !== undefined) f.minCost = parsed;
+    }
     const maxCost = searchParams.get('maxCost');
-    if (maxCost) f.maxCost = parseInt(maxCost, 10);
+    if (maxCost) {
+      const parsed = parseIntSafe(maxCost);
+      if (parsed !== undefined) f.maxCost = parsed;
+    }
     const keyword = searchParams.get('keyword');
     if (keyword) f.keywords = [keyword];
     const classification = searchParams.get('classification');

@@ -71,10 +71,10 @@ test.describe('Mobile Viewport', () => {
     await expect(page).toHaveURL('/');
   });
 
-  test('should navigate to browse when typing in hero search', async ({appPage, page}) => {
-    // Typing in hero search navigates to /browse immediately (React Router)
+  test('should navigate to browse when searching from hero', async ({appPage, page}) => {
+    // Type in hero search and press Enter to navigate
     await appPage.heroSearch.fill('Elsa');
-    await page.waitForTimeout(300);
+    await appPage.heroSearch.press('Enter');
 
     // Should navigate to browse with query param
     await expect(page).toHaveURL(/\/browse\?q=Elsa/);

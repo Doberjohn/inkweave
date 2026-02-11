@@ -25,7 +25,12 @@ export function CardPage() {
 
   const synergies = useMemo(() => {
     if (!selectedCard || cards.length === 0) return [];
-    return sharedEngine.findSynergies(selectedCard, cards);
+    try {
+      return sharedEngine.findSynergies(selectedCard, cards);
+    } catch (err) {
+      console.error(`Synergy computation failed for card ${selectedCard.id}:`, err);
+      return [];
+    }
   }, [selectedCard, cards]);
 
   const totalSynergyCount = useMemo(
@@ -96,13 +101,15 @@ export function CardPage() {
       <CompactHeader totalCards={totalCards} onLogoClick={goHome} />
       <div style={{display: 'flex', flex: 1, minHeight: `calc(100vh - ${LAYOUT.compactHeaderHeight}px)`}}>
         <CardDetailPanel card={selectedCard} onClear={goHome} />
-        <SynergyResults
-          selectedCard={selectedCard}
-          synergies={synergies}
-          totalSynergyCount={totalSynergyCount}
-          onClearSelection={goHome}
-        />
-        <SynergyBreakdown synergies={synergies} totalCount={totalSynergyCount} />
+        <ErrorBoundary>
+          <SynergyResults
+            selectedCard={selectedCard}
+            synergies={synergies}
+            totalSynergyCount={totalSynergyCount}
+            onClearSelection={goHome}
+          />
+          <SynergyBreakdown synergies={synergies} totalCount={totalSynergyCount} />
+        </ErrorBoundary>
       </div>
     </div>
   );

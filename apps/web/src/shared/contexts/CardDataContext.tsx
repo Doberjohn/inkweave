@@ -1,9 +1,9 @@
-import {createContext, useContext, useMemo, type ReactNode} from 'react';
+import {createContext, useCallback, useContext, useMemo, type ReactNode} from 'react';
 import type {LorcanaCard} from '../../features/cards';
 import {useCardData, type UseCardDataReturn} from '../../features/synergies/hooks/useSynergyFinder';
 
 interface CardDataContextValue extends UseCardDataReturn {
-  /** O(1) card lookup by numeric ID */
+  /** O(1) card lookup by string ID */
   getCardById: (id: string) => LorcanaCard | undefined;
 }
 
@@ -21,6 +21,8 @@ export function CardDataProvider({children}: {children: ReactNode}) {
     return map;
   }, [cards]);
 
+  const getCardById = useCallback((id: string) => cardMap.get(id), [cardMap]);
+
   const value = useMemo(
     () => ({
       cards,
@@ -32,9 +34,9 @@ export function CardDataProvider({children}: {children: ReactNode}) {
       uniqueSets,
       sets,
       retryLoad,
-      getCardById: (id: string) => cardMap.get(id),
+      getCardById,
     }),
-    [cards, isLoading, error, totalCards, uniqueKeywords, uniqueClassifications, uniqueSets, sets, retryLoad, cardMap],
+    [cards, isLoading, error, totalCards, uniqueKeywords, uniqueClassifications, uniqueSets, sets, retryLoad, getCardById],
   );
 
   return <CardDataContext.Provider value={value}>{children}</CardDataContext.Provider>;

@@ -43,7 +43,7 @@
 | should navigate to card page when selecting a featured card | Card click navigates to `/card/:id`, shows synergy results or "no synergies" |
 | should show filter drawer on mobile browse | Navigate to `/browse`, tap filter icon, drawer shows Amber/Sapphire ink buttons |
 | should return to home when clearing selection on mobile | Clear selection navigates back to `/`, hero reappears |
-| should navigate to browse when typing in hero search | Typing "Elsa" in hero search navigates to `/browse?q=Elsa`, hero hidden, CardList visible |
+| should navigate to browse when searching from hero | Typing "Elsa" + Enter navigates to `/browse?q=Elsa`, hero hidden, CardList visible |
 | should navigate to browsing view via See all cards button | "See all cards" navigates away from hero, shows browse search input |
 | should open filter drawer in mobile browsing view | From browsing view, tap Filters button, drawer shows Amber/Sapphire/Steel ink buttons |
 

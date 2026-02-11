@@ -10,9 +10,9 @@ test.describe('Card Search and Filtering', () => {
   });
 
   test('should navigate to browse when searching from hero', async ({appPage, page}) => {
-    // Type in the hero search — navigates to /browse?q=...
+    // Type in the hero search and press Enter to navigate
     await appPage.heroSearch.fill('Elsa');
-    await page.waitForTimeout(200);
+    await appPage.heroSearch.press('Enter');
 
     // Should navigate to /browse with query param
     await expect(page).toHaveURL(/\/browse\?q=Elsa/);
@@ -63,9 +63,9 @@ test.describe('Card Search and Filtering', () => {
   });
 
   test('should preserve search query in URL on browse page', async ({page, appPage}) => {
-    // Search from hero
+    // Search from hero and submit
     await appPage.heroSearch.fill('Ariel');
-    await page.waitForTimeout(200);
+    await appPage.heroSearch.press('Enter');
 
     // URL should contain the search query
     await expect(page).toHaveURL(/q=Ariel/);
