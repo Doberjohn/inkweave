@@ -25,7 +25,7 @@ test.describe('Card Search and Filtering', () => {
     await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
   });
 
-  test('should show inline filters on browse page', async ({page}) => {
+  test('should open filter modal on browse page', async ({page}) => {
     // Navigate to browse page via "See all cards"
     await page.getByRole('button', {name: /See all cards/}).click();
     await page.waitForTimeout(200);
@@ -33,8 +33,14 @@ test.describe('Card Search and Filtering', () => {
     // Should be on /browse
     await expect(page).toHaveURL(/\/browse/);
 
-    // Inline ink filter buttons should be visible
-    await expect(page.getByRole('button', {name: 'All'}).first()).toBeVisible();
+    // Click the Filters button to open the filter modal
+    await page.getByRole('button', {name: /Filters/}).click();
+    await page.waitForTimeout(200);
+
+    // Filter modal should be visible with ink options
+    await expect(page.getByTestId('filter-modal')).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Amber', exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Sapphire', exact: true})).toBeVisible();
   });
 
   test('should deep link to browse with ink filter in URL', async ({page}) => {

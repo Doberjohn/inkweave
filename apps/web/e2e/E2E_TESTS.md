@@ -18,7 +18,7 @@
 | Test | What it verifies |
 |---|---|
 | should navigate to browse when searching from hero | Typing in hero search navigates to `/browse?q=Elsa`, hides hero, shows CardList |
-| should show inline filters on browse page | "See all cards" navigates to `/browse`, ink filter buttons are visible |
+| should open filter modal on browse page | "See all cards" navigates to `/browse`, clicking Filters opens modal with Amber/Sapphire ink buttons |
 | should deep link to browse with ink filter in URL | Direct navigation to `/browse?ink=Sapphire` shows filtered browse page |
 | should navigate to browse via See all cards | "See all cards" button navigates to `/browse`, hero gone, CardList visible |
 | should preserve search query in URL on browse page | Hero search for "Ariel" puts `q=Ariel` in URL, browse search input shows "Ariel" |
