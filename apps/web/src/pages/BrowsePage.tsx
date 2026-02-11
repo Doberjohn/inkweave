@@ -1,8 +1,8 @@
-import {useCallback, useMemo} from 'react';
+import {useCallback, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {CardList} from '../features/cards';
 import {searchCardsByName, filterCards, sortBySetThenNumber, type CardFilterOptions} from '../features/cards/loader';
-import {CompactHeader, ErrorBoundary} from '../shared/components';
+import {CompactHeader, ErrorBoundary, FilterModal} from '../shared/components';
 import {COLORS, FONTS, LAYOUT} from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive} from '../shared/hooks';
@@ -15,6 +15,7 @@ export function BrowsePage() {
     useCardDataContext();
   const {searchQuery, setSearchQuery, inkFilter, setInkFilter, filters, setFilters, clearAllFilters} =
     useFilterParams();
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
   const combinedFilters = useMemo<CardFilterOptions>(
     () => (inkFilter !== 'all' ? {...filters, ink: inkFilter} : filters),
@@ -56,6 +57,7 @@ export function BrowsePage() {
         onCardSelect={selectCard}
         isMobile={isMobile}
         onBack={isMobile ? goHome : undefined}
+        onFiltersClick={!isMobile ? () => setShowFilterModal(true) : undefined}
       />
     </ErrorBoundary>
   );
@@ -77,6 +79,18 @@ export function BrowsePage() {
       <div style={{display: 'flex', flex: 1, minHeight: `calc(100vh - ${LAYOUT.compactHeaderHeight}px)`}}>
         {cardList}
       </div>
+      <FilterModal
+        isOpen={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        inkFilter={inkFilter}
+        filters={filters}
+        uniqueKeywords={uniqueKeywords}
+        uniqueClassifications={uniqueClassifications}
+        sets={sets}
+        onInkFilterChange={setInkFilter}
+        onFiltersChange={setFilters}
+        onClearAll={clearAllFilters}
+      />
     </div>
   );
 }
