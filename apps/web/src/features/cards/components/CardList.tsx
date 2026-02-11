@@ -175,7 +175,7 @@ export function CardList({
               }}>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(95px, 1fr))',
+                gridTemplateColumns: 'repeat(3, 1fr)',
                 gap: '6px',
               }}>
                 {displayedCards.map((card) => (

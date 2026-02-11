@@ -77,6 +77,8 @@ test.describe('Mobile Viewport', () => {
     // Should transition to browsing
     await expect(appPage.heroSection).not.toBeVisible();
     await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
+  });
+
   test('should navigate to browsing view via See all cards button', async ({page, appPage}) => {
     // Click "See all cards" button
     await page.getByRole('button', {name: /See all cards/}).click();
