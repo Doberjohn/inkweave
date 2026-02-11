@@ -51,4 +51,31 @@ test.describe('Mobile Viewport', () => {
     // Should return to home state with hero
     await expect(appPage.heroSection).toBeVisible();
   });
+
+  test('should transition to browsing view when pressing Enter in hero search', async ({appPage, page}) => {
+    // Type in the hero search and press Enter to navigate
+    await appPage.heroSearch.fill('Elsa');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(200);
+
+    // Should transition away from home — hero and featured cards disappear
+    await expect(appPage.heroSection).not.toBeVisible();
+    await expect(appPage.featuredCards).not.toBeVisible();
+
+    // CardList sidebar should be visible with search results
+    await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
+  });
+
+  test('should transition to browsing view when clicking Search button', async ({appPage, page}) => {
+    // Type in the hero search
+    await appPage.heroSearch.fill('Elsa');
+
+    // Click the Search button
+    await page.getByRole('button', {name: 'Search'}).click();
+    await page.waitForTimeout(200);
+
+    // Should transition to browsing
+    await expect(appPage.heroSection).not.toBeVisible();
+    await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
+  });
 });
