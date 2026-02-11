@@ -14,6 +14,9 @@ export function HeroSection({
   onSearchSubmit,
   isMobile,
 }: HeroSectionProps) {
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const isSearchEmpty = searchQuery.trim().length === 0;
+
   return (
     <div
       data-testid="hero-section"
@@ -150,16 +153,17 @@ export function HeroSection({
         </div>
         <motion.button
           onClick={onSearchSubmit}
+          disabled={isSearchEmpty}
           aria-label="Search"
-          whileHover={{
-            scale: 1.03,
-            boxShadow: `0 0 20px ${COLORS.primary}40, 0 4px 12px rgba(0,0,0,0.3)`,
-          }}
-          whileTap={{scale: 0.97}}
-          transition={{
-            default: {type: 'spring', stiffness: 400, damping: 25},
-            boxShadow: {type: 'tween', duration: 0.15},
-          }}
+          whileHover={
+            isSearchEmpty
+              ? {}
+              : {
+                  background: 'linear-gradient(90deg, #ffb020, #fe9a00)',
+                }
+          }
+          whileTap={isSearchEmpty ? {} : {scale: 0.97}}
+          transition={{type: 'tween', duration: 0.25}}
           style={{
             height: 56,
             padding: '0 24px',
@@ -171,13 +175,15 @@ export function HeroSection({
             color: COLORS.filterText,
             fontSize: `${FONT_SIZES.xl}px`,
             fontWeight: 400,
-            cursor: 'pointer',
+            cursor: isSearchEmpty ? 'not-allowed' : 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '8px',
             flexShrink: 0,
             boxShadow: COLORS.filterShadow,
+            opacity: isSearchEmpty ? 0.5 : 1,
+            transition: 'opacity 0.2s ease',
           }}>
           {/* Search icon */}
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
