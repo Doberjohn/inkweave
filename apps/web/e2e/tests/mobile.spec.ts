@@ -77,5 +77,32 @@ test.describe('Mobile Viewport', () => {
     // Should transition to browsing
     await expect(appPage.heroSection).not.toBeVisible();
     await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
+  test('should navigate to browsing view via See all cards button', async ({page, appPage}) => {
+    // Click "See all cards" button
+    await page.getByRole('button', {name: /See all cards/}).click();
+    await page.waitForTimeout(200);
+
+    // Should transition to browsing — hero gone, search visible
+    await expect(appPage.heroSection).not.toBeVisible();
+    await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
+  });
+
+  test('should open filter drawer in mobile browsing view', async ({page}) => {
+    // Navigate to browsing view
+    await page.getByRole('button', {name: /See all cards/}).click();
+    await page.waitForTimeout(200);
+
+    // Click filter button in mobile browsing header
+    const filterButton = page.getByRole('button', {name: /Filters/});
+    await filterButton.click();
+    await page.waitForTimeout(200);
+
+    // Filter drawer should be visible with title
+    await expect(page.getByText('Filters', {exact: true})).toBeVisible();
+    
+    // Should show ink filter options
+    await expect(page.getByRole('button', {name: 'Amber', exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Sapphire', exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Steel', exact: true})).toBeVisible();
   });
 });
