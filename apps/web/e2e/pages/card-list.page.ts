@@ -20,19 +20,16 @@ export class CardListPage {
   }
 
   getInkFilterButton(ink: string): Locator {
-    if (ink.toLowerCase() === 'all') {
-      // First "All" button is for ink filter
-      return this.page.getByRole('button', {name: 'All'}).first();
-    }
     return this.page.getByRole('button', {name: ink, exact: true});
   }
 
   getTypeFilterButton(type: string): Locator {
-    if (type.toLowerCase() === 'all') {
-      // Second "All" button is for type filter
-      return this.page.getByRole('button', {name: 'All'}).nth(1);
-    }
     return this.page.getByRole('button', {name: type, exact: true});
+  }
+
+  getCostFilterButton(cost: number): Locator {
+    const label = cost >= 9 ? '9+' : String(cost);
+    return this.page.getByRole('button', {name: label, exact: true});
   }
 
   async searchFor(query: string) {
@@ -53,6 +50,11 @@ export class CardListPage {
 
   async filterByType(type: string) {
     await this.getTypeFilterButton(type).click();
+    await this.page.waitForTimeout(100);
+  }
+
+  async filterByCost(cost: number) {
+    await this.getCostFilterButton(cost).click();
     await this.page.waitForTimeout(100);
   }
 

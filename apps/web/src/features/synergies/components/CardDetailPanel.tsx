@@ -8,7 +8,7 @@ import {
   SPACING,
   LAYOUT,
 } from '../../../shared/constants';
-import {CardImage} from '../../../shared/components';
+import {CardImage, InkIcon} from '../../../shared/components';
 
 interface CardDetailPanelProps {
   card: LorcanaCard;
@@ -80,7 +80,10 @@ export const CardDetailPanel = memo(function CardDetailPanel({card, onClear}: Ca
           flexWrap: 'wrap',
         }}>
         <StatBadge bg={inkColors.bg} color={inkColors.text}>
-          {card.ink}
+          <span style={{display: 'inline-flex', alignItems: 'center', gap: '4px'}}>
+            <InkIcon ink={card.ink} size={14} />
+            {card.ink}
+          </span>
         </StatBadge>
         <StatBadge bg={COLORS.surfaceAlt} color={COLORS.textMuted}>
           Cost {card.cost}

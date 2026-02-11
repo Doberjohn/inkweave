@@ -1,6 +1,6 @@
 import {useEffect, useCallback} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
-import type {Ink, SetInfo} from '../../features/cards';
+import type {Ink, CardType, SetInfo} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards';
 import {
   COLORS,
@@ -8,27 +8,24 @@ import {
   RADIUS,
   SPACING,
   Z_INDEX,
-  INK_COLORS,
-  ALL_INKS,
-  CARD_TYPES,
-  COST_OPTIONS,
-  SELECT_STYLE_MD,
   CTA_BUTTON_STYLE,
 } from '../constants';
-// FONT_SIZES and RADIUS are still used for header/drawer styling
-import {isCardType} from '../../features/cards';
-import {FilterButton} from './FilterButton';
-import {FilterSection} from './FilterSection';
+import {FilterContent} from './FilterContent';
 
 interface FilterDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  inkFilter: Ink | 'all';
+  inkFilters: Ink[];
+  typeFilters: CardType[];
+  costFilters: number[];
   filters: CardFilterOptions;
+  activeFilterCount: number;
   uniqueKeywords: string[];
   uniqueClassifications: string[];
   sets: SetInfo[];
-  onInkFilterChange: (ink: Ink | 'all') => void;
+  onToggleInk: (ink: Ink) => void;
+  onToggleType: (type: CardType) => void;
+  onToggleCost: (cost: number) => void;
   onFiltersChange: (filters: CardFilterOptions) => void;
   onClearAll: () => void;
 }
@@ -36,12 +33,17 @@ interface FilterDrawerProps {
 export function FilterDrawer({
   isOpen,
   onClose,
-  inkFilter,
+  inkFilters,
+  typeFilters,
+  costFilters,
   filters,
+  activeFilterCount,
   uniqueKeywords,
   uniqueClassifications,
   sets,
-  onInkFilterChange,
+  onToggleInk,
+  onToggleType,
+  onToggleCost,
   onFiltersChange,
   onClearAll,
 }: FilterDrawerProps) {
@@ -61,28 +63,6 @@ export function FilterDrawer({
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
   }, [isOpen, handleKeyDown]);
-
-  const selectedType = isCardType(filters.type) ? filters.type : undefined;
-
-  const updateFilter = <K extends keyof CardFilterOptions>(key: K, value: CardFilterOptions[K]) => {
-    const newFilters = {...filters};
-    if (value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
-      delete newFilters[key];
-    } else {
-      newFilters[key] = value;
-    }
-    onFiltersChange(newFilters);
-  };
-
-  const activeFilterCount = [
-    inkFilter !== 'all',
-    filters.type,
-    filters.minCost !== undefined,
-    filters.maxCost !== undefined,
-    filters.keywords?.length,
-    filters.classifications?.length,
-    filters.setCode,
-  ].filter(Boolean).length;
 
   return (
     <AnimatePresence>
@@ -199,132 +179,20 @@ export function FilterDrawer({
                 overflowY: 'auto',
                 padding: `${SPACING.lg}px`,
               }}>
-              {/* Ink Filter */}
-              <FilterSection label="Ink">
-                <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
-                  <FilterButton
-                    size="md"
-                    active={inkFilter === 'all'}
-                    onClick={() => onInkFilterChange('all')}>
-                    All
-                  </FilterButton>
-                  {ALL_INKS.map((ink) => (
-                    <FilterButton
-                      key={ink}
-                      size="md"
-                      active={inkFilter === ink}
-                      onClick={() => onInkFilterChange(ink)}
-                      activeColor={INK_COLORS[ink].border}
-                      inactiveColor={INK_COLORS[ink].bg}
-                      inactiveTextColor={INK_COLORS[ink].text}>
-                      {ink}
-                    </FilterButton>
-                  ))}
-                </div>
-              </FilterSection>
-
-              {/* Card Type Filter */}
-              <FilterSection label="Type">
-                <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
-                  <FilterButton
-                    size="md"
-                    active={!selectedType}
-                    onClick={() => updateFilter('type', undefined)}>
-                    All
-                  </FilterButton>
-                  {CARD_TYPES.map((type) => (
-                    <FilterButton
-                      key={type}
-                      size="md"
-                      active={selectedType === type}
-                      onClick={() => updateFilter('type', type)}>
-                      {type}
-                    </FilterButton>
-                  ))}
-                </div>
-              </FilterSection>
-
-              {/* Cost Range */}
-              <FilterSection label="Cost Range">
-                <div style={{display: 'flex', gap: `${SPACING.md}px`, alignItems: 'center'}}>
-                  <select
-                    value={filters.minCost ?? ''}
-                    onChange={(e) =>
-                      updateFilter('minCost', e.target.value ? Number(e.target.value) : undefined)
-                    }
-                    style={SELECT_STYLE_MD}>
-                    <option value="">Min</option>
-                    {COST_OPTIONS.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                  <span style={{color: COLORS.gray400}}>to</span>
-                  <select
-                    value={filters.maxCost ?? ''}
-                    onChange={(e) =>
-                      updateFilter('maxCost', e.target.value ? Number(e.target.value) : undefined)
-                    }
-                    style={SELECT_STYLE_MD}>
-                    <option value="">Max</option>
-                    {COST_OPTIONS.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </FilterSection>
-
-              {/* Keyword */}
-              <FilterSection label="Keyword">
-                <select
-                  value={filters.keywords?.[0] ?? ''}
-                  onChange={(e) =>
-                    updateFilter('keywords', e.target.value ? [e.target.value] : undefined)
-                  }
-                  style={{...SELECT_STYLE_MD, width: '100%'}}>
-                  <option value="">Any keyword</option>
-                  {uniqueKeywords.map((kw) => (
-                    <option key={kw} value={kw}>
-                      {kw}
-                    </option>
-                  ))}
-                </select>
-              </FilterSection>
-
-              {/* Classification */}
-              <FilterSection label="Classification">
-                <select
-                  value={filters.classifications?.[0] ?? ''}
-                  onChange={(e) =>
-                    updateFilter('classifications', e.target.value ? [e.target.value] : undefined)
-                  }
-                  style={{...SELECT_STYLE_MD, width: '100%'}}>
-                  <option value="">Any classification</option>
-                  {uniqueClassifications.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </FilterSection>
-
-              {/* Set */}
-              <FilterSection label="Set">
-                <select
-                  value={filters.setCode ?? ''}
-                  onChange={(e) => updateFilter('setCode', e.target.value || undefined)}
-                  style={{...SELECT_STYLE_MD, width: '100%'}}>
-                  <option value="">Any set</option>
-                  {sets.map((s) => (
-                    <option key={s.code} value={s.code}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </FilterSection>
+              <FilterContent
+                inkFilters={inkFilters}
+                typeFilters={typeFilters}
+                costFilters={costFilters}
+                filters={filters}
+                uniqueKeywords={uniqueKeywords}
+                uniqueClassifications={uniqueClassifications}
+                sets={sets}
+                onToggleInk={onToggleInk}
+                onToggleType={onToggleType}
+                onToggleCost={onToggleCost}
+                onFiltersChange={onFiltersChange}
+                variant="mobile"
+              />
             </div>
           </motion.div>
         </>

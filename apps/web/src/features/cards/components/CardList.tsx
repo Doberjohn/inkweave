@@ -1,5 +1,5 @@
 import {useState, useMemo} from 'react';
-import type {LorcanaCard, Ink} from '../types';
+import type {LorcanaCard, Ink, CardType} from '../types';
 import type {CardFilterOptions, SetInfo} from '../loader';
 import {CardTile} from './CardTile';
 import {LoadingSpinner, FilterDrawer} from '../../../shared/components';
@@ -10,15 +10,21 @@ interface CardListProps {
   isLoading: boolean;
   selectedCard: LorcanaCard | null;
   searchQuery: string;
-  inkFilter: Ink | 'all';
+  inkFilters: Ink[];
+  typeFilters: CardType[];
+  costFilters: number[];
   filters: CardFilterOptions;
   uniqueKeywords: string[];
   uniqueClassifications: string[];
   sets: SetInfo[];
   onSearchChange: (query: string) => void;
-  onInkFilterChange: (ink: Ink | 'all') => void;
+  onToggleInk: (ink: Ink) => void;
+  onToggleType: (type: CardType) => void;
+  onToggleCost: (cost: number) => void;
   onFiltersChange: (filters: CardFilterOptions) => void;
   onCardSelect: (card: LorcanaCard) => void;
+  onClearAll: () => void;
+  activeFilterCount: number;
   isMobile?: boolean;
   /** Back button handler for mobile linear flow */
   onBack?: () => void;
@@ -31,15 +37,21 @@ export function CardList({
   isLoading,
   selectedCard,
   searchQuery,
-  inkFilter,
+  inkFilters,
+  typeFilters,
+  costFilters,
   filters,
   uniqueKeywords,
   uniqueClassifications,
   sets,
   onSearchChange,
-  onInkFilterChange,
+  onToggleInk,
+  onToggleType,
+  onToggleCost,
   onFiltersChange,
   onCardSelect,
+  onClearAll,
+  activeFilterCount,
   isMobile = false,
   onBack,
   onFiltersClick,
@@ -48,22 +60,6 @@ export function CardList({
 
   // Memoize the sliced array to avoid creating new array on every render
   const displayedCards = useMemo(() => cards.slice(0, LAYOUT.maxDisplayedCards), [cards]);
-
-  const activeFilterCount = [
-    inkFilter !== 'all',
-    filters.type,
-    filters.minCost !== undefined,
-    filters.maxCost !== undefined,
-    filters.keywords?.length,
-    filters.classifications?.length,
-    filters.setCode,
-  ].filter(Boolean).length;
-
-  const clearAllFilters = () => {
-    onFiltersChange({});
-    onInkFilterChange('all');
-    onSearchChange('');
-  };
 
   // Mobile layout
   if (isMobile) {
@@ -194,14 +190,19 @@ export function CardList({
             <FilterDrawer
               isOpen={showFilterDrawer}
               onClose={() => setShowFilterDrawer(false)}
-              inkFilter={inkFilter}
+              inkFilters={inkFilters}
+              typeFilters={typeFilters}
+              costFilters={costFilters}
               filters={filters}
+              activeFilterCount={activeFilterCount}
               uniqueKeywords={uniqueKeywords}
               uniqueClassifications={uniqueClassifications}
               sets={sets}
-              onInkFilterChange={onInkFilterChange}
+              onToggleInk={onToggleInk}
+              onToggleType={onToggleType}
+              onToggleCost={onToggleCost}
               onFiltersChange={onFiltersChange}
-              onClearAll={clearAllFilters}
+              onClearAll={onClearAll}
             />
           </>
         )}

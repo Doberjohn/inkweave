@@ -249,8 +249,7 @@ export function searchCardsByName(cards: LorcanaCard[], query: string): LorcanaC
 export interface CardFilterOptions {
   ink?: Ink | Ink[];
   type?: CardType | CardType[];
-  minCost?: number;
-  maxCost?: number;
+  costs?: number[];
   keywords?: string[];
   classifications?: string[];
   textSearch?: string;
@@ -274,9 +273,11 @@ export function filterCards(cards: LorcanaCard[], options: CardFilterOptions): L
       if (!types.includes(card.type)) return false;
     }
 
-    // Cost range
-    if (options.minCost !== undefined && card.cost < options.minCost) return false;
-    if (options.maxCost !== undefined && card.cost > options.maxCost) return false;
+    // Cost filter (discrete selection; 9 means 9+)
+    if (options.costs && options.costs.length > 0) {
+      if (card.cost >= 9 ? !options.costs.includes(9) : !options.costs.includes(card.cost))
+        return false;
+    }
 
     // Set filter
     if (options.setCode && card.setCode !== options.setCode) return false;

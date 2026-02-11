@@ -13,14 +13,17 @@ export function BrowsePage() {
   const {isMobile} = useResponsive();
   const {cards, isLoading, totalCards, uniqueKeywords, uniqueClassifications, sets} =
     useCardDataContext();
-  const {searchQuery, setSearchQuery, inkFilter, setInkFilter, filters, setFilters, clearAllFilters} =
+  const {searchQuery, setSearchQuery, inkFilters, toggleInk, typeFilters, toggleType, costFilters, toggleCost, filters, setFilters, clearAllFilters, activeFilterCount} =
     useFilterParams();
   const [showFilterModal, setShowFilterModal] = useState(false);
 
-  const combinedFilters = useMemo<CardFilterOptions>(
-    () => (inkFilter !== 'all' ? {...filters, ink: inkFilter} : filters),
-    [filters, inkFilter],
-  );
+  const combinedFilters = useMemo<CardFilterOptions>(() => {
+    const combined = {...filters};
+    if (inkFilters.length > 0) combined.ink = inkFilters;
+    if (typeFilters.length > 0) combined.type = typeFilters;
+    if (costFilters.length > 0) combined.costs = costFilters;
+    return combined;
+  }, [filters, inkFilters, typeFilters, costFilters]);
 
   const filteredCards = useMemo(() => {
     let result = cards;
@@ -46,15 +49,21 @@ export function BrowsePage() {
         isLoading={isLoading}
         selectedCard={null}
         searchQuery={searchQuery}
-        inkFilter={inkFilter}
+        inkFilters={inkFilters}
+        typeFilters={typeFilters}
+        costFilters={costFilters}
         filters={filters}
         uniqueKeywords={uniqueKeywords}
         uniqueClassifications={uniqueClassifications}
         sets={sets}
         onSearchChange={setSearchQuery}
-        onInkFilterChange={setInkFilter}
+        onToggleInk={toggleInk}
+        onToggleType={toggleType}
+        onToggleCost={toggleCost}
         onFiltersChange={setFilters}
         onCardSelect={selectCard}
+        onClearAll={clearAllFilters}
+        activeFilterCount={activeFilterCount}
         isMobile={isMobile}
         onBack={isMobile ? goHome : undefined}
         onFiltersClick={!isMobile ? () => setShowFilterModal(true) : undefined}
@@ -82,12 +91,17 @@ export function BrowsePage() {
       <FilterModal
         isOpen={showFilterModal}
         onClose={() => setShowFilterModal(false)}
-        inkFilter={inkFilter}
+        inkFilters={inkFilters}
+        typeFilters={typeFilters}
+        costFilters={costFilters}
         filters={filters}
+        activeFilterCount={activeFilterCount}
         uniqueKeywords={uniqueKeywords}
         uniqueClassifications={uniqueClassifications}
         sets={sets}
-        onInkFilterChange={setInkFilter}
+        onToggleInk={toggleInk}
+        onToggleType={toggleType}
+        onToggleCost={toggleCost}
         onFiltersChange={setFilters}
         onClearAll={clearAllFilters}
       />
