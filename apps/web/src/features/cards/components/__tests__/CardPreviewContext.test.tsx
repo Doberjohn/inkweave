@@ -1,9 +1,26 @@
-import {describe, it, expect, vi} from 'vitest';
+import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {render, screen, act} from '@testing-library/react';
 import {CardPreviewProvider, CardPreviewContext} from '../CardPreviewContext';
 import {useCardPreview} from '../useCardPreview';
 import {useContext} from 'react';
 import {createCard} from '../../../../shared/test-utils';
+
+// Mock requestAnimationFrame to execute synchronously in tests
+const originalRAF = globalThis.requestAnimationFrame;
+const originalCancelRAF = globalThis.cancelAnimationFrame;
+
+beforeEach(() => {
+  globalThis.requestAnimationFrame = (cb: FrameRequestCallback) => {
+    cb(performance.now());
+    return 1;
+  };
+  globalThis.cancelAnimationFrame = vi.fn();
+});
+
+afterEach(() => {
+  globalThis.requestAnimationFrame = originalRAF;
+  globalThis.cancelAnimationFrame = originalCancelRAF;
+});
 
 // Test component that displays preview state
 function PreviewStateDisplay() {

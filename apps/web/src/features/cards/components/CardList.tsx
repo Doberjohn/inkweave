@@ -182,7 +182,7 @@ export function CardList({
                   <CardTile
                     key={card.id}
                     card={card}
-                    onClick={() => onCardSelect(card)}
+                    onSelect={onCardSelect}
                     isSelected={selectedCard?.id === card.id}
                     disablePreview
                   />
@@ -308,7 +308,7 @@ export function CardList({
                 <CardTile
                   key={card.id}
                   card={card}
-                  onClick={() => onCardSelect(card)}
+                  onSelect={onCardSelect}
                   isSelected={selectedCard?.id === card.id}
                 />
               ))}

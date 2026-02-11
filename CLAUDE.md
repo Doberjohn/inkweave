@@ -165,3 +165,4 @@ After pushing, always confirm with clear output (e.g., git log showing commit on
 - Skip trivial edge cases unless they're critical paths
 - Prefer readability over coverage percentage
 - Aim for 5-15 tests per component/hook, not 30+
+- **E2E test inventory**: `apps/web/e2e/E2E_TESTS.md` — update this file whenever E2E tests are added, removed, or edited

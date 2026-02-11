@@ -1,4 +1,4 @@
-import {useMemo} from 'react';
+import {useMemo, memo} from 'react';
 import type {LorcanaCard} from '../types';
 import type {Ink} from 'lorcana-synergy-engine';
 import {CardTile} from './CardTile';
@@ -43,7 +43,7 @@ function DividerLine() {
   );
 }
 
-export function FeaturedCards({cards, onCardSelect, isMobile}: FeaturedCardsProps) {
+export const FeaturedCards = memo(function FeaturedCards({cards, onCardSelect, isMobile}: FeaturedCardsProps) {
   const featured = useMemo(() => {
     return pickFeatured(cards);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -97,7 +97,7 @@ export function FeaturedCards({cards, onCardSelect, isMobile}: FeaturedCardsProp
           <CardTile
             key={card.id}
             card={card}
-            onClick={() => onCardSelect(card)}
+            onSelect={onCardSelect}
             isSelected={false}
             variant="minimal"
             useThumbnail
@@ -108,4 +108,4 @@ export function FeaturedCards({cards, onCardSelect, isMobile}: FeaturedCardsProp
       </div>
     </div>
   );
-}
+});

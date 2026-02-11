@@ -20,7 +20,7 @@ interface SynergyGroupProps {
   defaultExpanded?: boolean;
 }
 
-export function SynergyGroup({group, defaultExpanded = true}: SynergyGroupProps) {
+export const SynergyGroup = memo(function SynergyGroup({group, defaultExpanded = true}: SynergyGroupProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const dominantStrength = getDominantStrength(group.synergies);
   const strengthStyle = STRENGTH_STYLES[dominantStrength];
@@ -102,7 +102,7 @@ export function SynergyGroup({group, defaultExpanded = true}: SynergyGroupProps)
       {expanded && <SynergyCardList synergies={group.synergies} />}
     </div>
   );
-}
+});
 
 // Memoized card list to prevent re-renders when parent toggles expansion
 interface SynergyCardListProps {

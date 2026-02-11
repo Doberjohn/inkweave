@@ -100,7 +100,7 @@ export function HeroSection({
         </p>
       </div>
 
-      {/* Search Bar + Filters */}
+      {/* Search Bar + Search Button */}
       <div
         style={{
           display: 'flex',
