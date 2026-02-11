@@ -1,3 +1,4 @@
+import {motion} from 'framer-motion';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../constants';
 
 interface HeroSectionProps {
@@ -147,9 +148,18 @@ export function HeroSection({
             }}
           />
         </div>
-        <button
+        <motion.button
           onClick={onSearchSubmit}
           aria-label="Search"
+          whileHover={{
+            scale: 1.03,
+            boxShadow: `0 0 20px ${COLORS.primary}40, 0 4px 12px rgba(0,0,0,0.3)`,
+          }}
+          whileTap={{scale: 0.97}}
+          transition={{
+            default: {type: 'spring', stiffness: 400, damping: 25},
+            boxShadow: {type: 'tween', duration: 0.15},
+          }}
           style={{
             height: 56,
             padding: '0 24px',
@@ -175,7 +185,7 @@ export function HeroSection({
             <line x1="13.5" y1="13.5" x2="17" y2="17" stroke={COLORS.filterText} strokeWidth="2" strokeLinecap="round" />
           </svg>
           Search
-        </button>
+        </motion.button>
       </div>
     </div>
   );
