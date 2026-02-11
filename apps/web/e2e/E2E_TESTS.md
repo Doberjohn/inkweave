@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-20 active tests across 4 spec files. Each file runs on both `chromium` (desktop) and `mobile-chrome` projects but skips the irrelevant viewport, so 20 unique tests execute per run.
+23 active tests across 4 spec files. Each file runs on both `chromium` (desktop) and `mobile-chrome` projects but skips the irrelevant viewport, so 23 unique tests execute per run.
 
 ## `app-load.spec.ts` — 4 tests (desktop only)
 
@@ -19,7 +19,7 @@
 |---|---|
 | should navigate to browse when searching from hero | Typing in hero search navigates to `/browse?q=Elsa`, hides hero, shows CardList |
 | should show inline filters on browse page | "See all cards" navigates to `/browse`, ink filter buttons are visible |
-| should filter cards by ink on browse page | Clicking "Sapphire" on browse updates URL to include `ink=Sapphire` |
+| should deep link to browse with ink filter in URL | Direct navigation to `/browse?ink=Sapphire` shows filtered browse page |
 | should navigate to browse via See all cards | "See all cards" button navigates to `/browse`, hero gone, CardList visible |
 | should preserve search query in URL on browse page | Hero search for "Ariel" puts `q=Ariel` in URL, browse search input shows "Ariel" |
 | should deep link to browse with filters | Direct navigation to `/browse?q=Elsa&ink=Sapphire` populates the search input |
@@ -34,7 +34,7 @@
 | should clear selection and return to home | Back button navigates to `/`, hero reappears |
 | should return to home when clicking logo | Logo click navigates to `/`, hero reappears |
 
-## `mobile.spec.ts` — 5 tests (mobile only)
+## `mobile.spec.ts` — 8 tests (mobile only)
 
 | Test | What it verifies |
 |---|---|
@@ -43,6 +43,9 @@
 | should navigate to card page when selecting a featured card | Card click navigates to `/card/:id`, shows synergy results or "no synergies" |
 | should show filter drawer on mobile browse | Navigate to `/browse`, tap filter icon, drawer shows Amber/Sapphire ink buttons |
 | should return to home when clearing selection on mobile | Clear selection navigates back to `/`, hero reappears |
+| should navigate to browse when typing in hero search | Typing "Elsa" in hero search navigates to `/browse?q=Elsa`, hero hidden, CardList visible |
+| should navigate to browsing view via See all cards button | "See all cards" navigates away from hero, shows browse search input |
+| should open filter drawer in mobile browsing view | From browsing view, tap Filters button, drawer shows Amber/Sapphire/Steel ink buttons |
 
 ## Patterns
 
