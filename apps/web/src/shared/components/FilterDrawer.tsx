@@ -19,6 +19,7 @@ import {
 import {isCardType} from '../../features/cards';
 import {FilterButton} from './FilterButton';
 import {FilterSection} from './FilterSection';
+import {InkIcon} from './InkIcon';
 
 interface FilterDrawerProps {
   isOpen: boolean;
@@ -201,9 +202,9 @@ export function FilterDrawer({
               }}>
               {/* Ink Filter */}
               <FilterSection label="Ink">
-                <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
+                <div style={{display: 'flex', gap: '6px', flexWrap: 'nowrap'}}>
                   <FilterButton
-                    size="md"
+                    size="sm"
                     active={inkFilter === 'all'}
                     onClick={() => onInkFilterChange('all')}>
                     All
@@ -211,13 +212,13 @@ export function FilterDrawer({
                   {ALL_INKS.map((ink) => (
                     <FilterButton
                       key={ink}
-                      size="md"
+                      size="sm"
                       active={inkFilter === ink}
                       onClick={() => onInkFilterChange(ink)}
                       activeColor={INK_COLORS[ink].border}
-                      inactiveColor={INK_COLORS[ink].bg}
-                      inactiveTextColor={INK_COLORS[ink].text}>
-                      {ink}
+                      inactiveColor="transparent"
+                      inactiveTextColor="transparent">
+                      <InkIcon ink={ink} size={30} decorative={false} />
                     </FilterButton>
                   ))}
                 </div>

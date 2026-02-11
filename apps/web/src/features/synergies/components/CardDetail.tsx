@@ -1,6 +1,6 @@
 import type {LorcanaCard} from '../../cards';
 import {INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT} from '../../../shared/constants';
-import {CardImage} from '../../../shared/components';
+import {CardImage, InkIcon} from '../../../shared/components';
 
 interface CardDetailProps {
   card: LorcanaCard;
@@ -58,7 +58,11 @@ export function CardDetail({card, onClear}: CardDetailProps) {
                   borderRadius: `${RADIUS.md}px`,
                   fontSize: `${FONT_SIZES.base}px`,
                   fontWeight: 500,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
                 }}>
+                <InkIcon ink={card.ink} size={16} />
                 {card.ink}
               </span>
               <span

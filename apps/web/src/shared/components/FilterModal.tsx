@@ -18,6 +18,7 @@ import {
 import {isCardType} from '../../features/cards';
 import {FilterButton} from './FilterButton';
 import {FilterSection} from './FilterSection';
+import {InkIcon} from './InkIcon';
 
 interface FilterModalProps {
   isOpen: boolean;
@@ -173,8 +174,8 @@ export function FilterModal({
             data-testid="filter-modal"
             onKeyDown={handleModalKeyDown}
             style={{
-              width: '90%',
-              maxWidth: 520,
+              width: 'fit-content',
+              minWidth: 320,
               maxHeight: '80vh',
               background: COLORS.surface,
               borderRadius: `${RADIUS.xl}px`,
@@ -261,9 +262,9 @@ export function FilterModal({
                       active={inkFilter === ink}
                       onClick={() => onInkFilterChange(ink)}
                       activeColor={INK_COLORS[ink].border}
-                      inactiveColor={INK_COLORS[ink].bg}
-                      inactiveTextColor={INK_COLORS[ink].text}>
-                      {ink}
+                      inactiveColor="transparent"
+                      inactiveTextColor="transparent">
+                      <InkIcon ink={ink} size={36} decorative={false} />
                     </FilterButton>
                   ))}
                 </div>

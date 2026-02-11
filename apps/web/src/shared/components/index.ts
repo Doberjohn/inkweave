@@ -7,6 +7,7 @@ export {FilterModal} from './FilterModal';
 export {FilterSection} from './FilterSection';
 export {Header} from './Header';
 export {HeroSection} from './HeroSection';
+export {InkIcon} from './InkIcon';
 export {MobileHeader} from './MobileHeader';
 export {MobileNav} from './MobileNav';
 export {FilterDrawer} from './FilterDrawer';
