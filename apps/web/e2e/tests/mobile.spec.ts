@@ -38,16 +38,6 @@ test.describe('Mobile Viewport', () => {
     expect(synergiesVisible || noSynergiesVisible).toBe(true);
   });
 
-  test('should show filter bottom sheet on mobile', async ({page}) => {
-    // Click filter button on hero
-    const filterButton = page.getByRole('button', {name: /Filters/});
-    await filterButton.click();
-
-    // Filter drawer should show ink options
-    await expect(page.getByRole('button', {name: 'Amber', exact: true})).toBeVisible();
-    await expect(page.getByRole('button', {name: 'Sapphire', exact: true})).toBeVisible();
-  });
-
   test('should return to home when clearing selection on mobile', async ({
     appPage,
     synergyResultsPage,

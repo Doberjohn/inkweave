@@ -4,8 +4,6 @@ interface HeroSectionProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onSearchSubmit?: () => void;
-  onFiltersClick: () => void;
-  activeFilterCount: number;
   isMobile?: boolean;
 }
 
@@ -13,8 +11,6 @@ export function HeroSection({
   searchQuery,
   onSearchChange,
   onSearchSubmit,
-  onFiltersClick,
-  activeFilterCount,
   isMobile,
 }: HeroSectionProps) {
   return (
@@ -152,8 +148,8 @@ export function HeroSection({
           />
         </div>
         <button
-          onClick={onFiltersClick}
-          aria-label={`Filters${activeFilterCount > 0 ? ` (${activeFilterCount} active)` : ''}`}
+          onClick={onSearchSubmit}
+          aria-label="Search"
           style={{
             height: 56,
             padding: '0 24px',
@@ -173,28 +169,12 @@ export function HeroSection({
             flexShrink: 0,
             boxShadow: COLORS.filterShadow,
           }}>
-          {/* Filter icon */}
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M2 4h12M4 8h8M6 12h4" stroke={COLORS.filterText} strokeWidth="1.5" strokeLinecap="round" />
+          {/* Search icon */}
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <circle cx="9" cy="9" r="6" stroke={COLORS.filterText} strokeWidth="2" />
+            <line x1="13.5" y1="13.5" x2="17" y2="17" stroke={COLORS.filterText} strokeWidth="2" strokeLinecap="round" />
           </svg>
-          Filters
-          {activeFilterCount > 0 && (
-            <span
-              style={{
-                background: COLORS.filterText,
-                color: '#fe9a00',
-                width: 20,
-                height: 20,
-                borderRadius: '50%',
-                fontSize: `${FONT_SIZES.xs}px`,
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              {activeFilterCount}
-            </span>
-          )}
+          Search
         </button>
       </div>
     </div>
