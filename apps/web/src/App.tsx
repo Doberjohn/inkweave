@@ -13,7 +13,6 @@ import {
   HeroSection,
   EtherealBackground,
   FilterModal,
-  FilterDrawer,
   ErrorBoundary,
 } from './shared/components';
 import {COLORS, FONTS, FONT_SIZES, LAYOUT} from './shared/constants';
@@ -49,16 +48,6 @@ function SynergyFinderApp() {
 
   // Mobile linear flow: 'home' → 'cards' (browsing) → 'synergies' (card selected)
   const [mobileView, setMobileView] = useState<'home' | 'cards' | 'synergies'>('home');
-
-  const activeFilterCount = [
-    inkFilter !== 'all',
-    filters.type,
-    filters.minCost !== undefined,
-    filters.maxCost !== undefined,
-    filters.keywords?.length,
-    filters.classifications?.length,
-    filters.setCode,
-  ].filter(Boolean).length;
 
   const clearAllFilters = () => {
     setInkFilter('all');
@@ -118,14 +107,12 @@ function SynergyFinderApp() {
             <EtherealBackground isMobile />
             <HeroSection
               searchQuery={searchQuery}
-              onSearchChange={(query) => {
-                setSearchQuery(query);
-                if (query.length > 0) {
+              onSearchChange={setSearchQuery}
+              onSearchSubmit={() => {
+                if (searchQuery.trim().length > 0) {
                   setMobileView('cards');
                 }
               }}
-              onFiltersClick={() => setShowFilterModal(true)}
-              activeFilterCount={activeFilterCount}
               isMobile
             />
             <FeaturedCards
@@ -201,12 +188,6 @@ function SynergyFinderApp() {
           </ErrorBoundary>
         )}
 
-        {/* Mobile filter bottom sheet */}
-        <FilterDrawer
-          isOpen={showFilterModal}
-          onClose={() => setShowFilterModal(false)}
-          {...filterProps}
-        />
       </div>
     );
   }
@@ -228,14 +209,12 @@ function SynergyFinderApp() {
 
         <HeroSection
           searchQuery={searchQuery}
-          onSearchChange={(query) => {
-            setSearchQuery(query);
-            if (query.length > 0) {
+          onSearchChange={setSearchQuery}
+          onSearchSubmit={() => {
+            if (searchQuery.trim().length > 0) {
               setBrowsing(true);
             }
           }}
-          onFiltersClick={() => setShowFilterModal(true)}
-          activeFilterCount={activeFilterCount}
         />
 
         <FeaturedCards cards={cards} onCardSelect={selectCard} />
@@ -257,11 +236,6 @@ function SynergyFinderApp() {
           See all cards →
         </button>
 
-        <FilterModal
-          isOpen={showFilterModal}
-          onClose={() => setShowFilterModal(false)}
-          {...filterProps}
-        />
       </div>
     );
   }
@@ -307,6 +281,7 @@ function SynergyFinderApp() {
               onInkFilterChange={setInkFilter}
               onFiltersChange={setFilters}
               onCardSelect={selectCard}
+              onFiltersClick={() => setShowFilterModal(true)}
             />
           </ErrorBoundary>
         </div>

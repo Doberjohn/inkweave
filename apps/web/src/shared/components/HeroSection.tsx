@@ -1,20 +1,23 @@
+import {useState} from 'react';
+import {motion} from 'framer-motion';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../constants';
 
 interface HeroSectionProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  onFiltersClick: () => void;
-  activeFilterCount: number;
+  onSearchSubmit?: () => void;
   isMobile?: boolean;
 }
 
 export function HeroSection({
   searchQuery,
   onSearchChange,
-  onFiltersClick,
-  activeFilterCount,
+  onSearchSubmit,
   isMobile,
 }: HeroSectionProps) {
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const isSearchEmpty = searchQuery.trim().length === 0;
+
   return (
     <div
       data-testid="hero-section"
@@ -128,6 +131,11 @@ export function HeroSection({
             placeholder="Search for a card..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') onSearchSubmit?.();
+            }}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
             data-testid="hero-search"
             style={{
               width: '100%',
@@ -136,19 +144,33 @@ export function HeroSection({
               borderRadius: isMobile
                 ? `${RADIUS.lg}px`
                 : `${RADIUS.lg}px 0 0 ${RADIUS.lg}px`,
-              border: `1px solid ${COLORS.searchBorder}`,
+              border: `1px solid ${isSearchFocused ? 'rgba(212, 175, 55, 0.5)' : COLORS.searchBorder}`,
               borderRight: isMobile ? undefined : 'none',
               background: COLORS.searchBg,
               color: COLORS.text,
               fontSize: `${FONT_SIZES.xl}px`,
               boxSizing: 'border-box',
               outline: 'none',
+              boxShadow: isSearchFocused
+                ? '0 0 0 3px rgba(212, 175, 55, 0.15), 0 0 20px rgba(212, 175, 55, 0.1)'
+                : 'none',
+              transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
             }}
           />
         </div>
-        <button
-          onClick={onFiltersClick}
-          aria-label={`Filters${activeFilterCount > 0 ? ` (${activeFilterCount} active)` : ''}`}
+        <motion.button
+          onClick={onSearchSubmit}
+          disabled={isSearchEmpty}
+          aria-label="Search"
+          whileHover={
+            isSearchEmpty
+              ? {}
+              : {
+                  background: 'linear-gradient(90deg, #ffb020, #fe9a00)',
+                }
+          }
+          whileTap={isSearchEmpty ? {} : {scale: 0.97}}
+          transition={{type: 'tween', duration: 0.25}}
           style={{
             height: 56,
             padding: '0 24px',
@@ -160,37 +182,23 @@ export function HeroSection({
             color: COLORS.filterText,
             fontSize: `${FONT_SIZES.xl}px`,
             fontWeight: 400,
-            cursor: 'pointer',
+            cursor: isSearchEmpty ? 'not-allowed' : 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '8px',
             flexShrink: 0,
             boxShadow: COLORS.filterShadow,
+            opacity: isSearchEmpty ? 0.5 : 1,
+            transition: 'opacity 0.2s ease',
           }}>
-          {/* Filter icon */}
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M2 4h12M4 8h8M6 12h4" stroke={COLORS.filterText} strokeWidth="1.5" strokeLinecap="round" />
+          {/* Search icon */}
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <circle cx="9" cy="9" r="6" stroke={COLORS.filterText} strokeWidth="2" />
+            <line x1="13.5" y1="13.5" x2="17" y2="17" stroke={COLORS.filterText} strokeWidth="2" strokeLinecap="round" />
           </svg>
-          Filters
-          {activeFilterCount > 0 && (
-            <span
-              style={{
-                background: COLORS.filterText,
-                color: '#fe9a00',
-                width: 20,
-                height: 20,
-                borderRadius: '50%',
-                fontSize: `${FONT_SIZES.xs}px`,
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
+          Search
+        </motion.button>
       </div>
     </div>
   );

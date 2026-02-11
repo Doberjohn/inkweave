@@ -1,7 +1,7 @@
 import {test, expect} from '../fixtures';
 
 test.describe('Card Search and Filtering', () => {
-  // Desktop-only: tests hero search and FilterModal on home page
+  // Desktop-only: tests hero search on home page
   test.beforeEach(async ({appPage}, testInfo) => {
     if (testInfo.project.name === 'mobile-chrome') {
       test.skip();
@@ -9,9 +9,10 @@ test.describe('Card Search and Filtering', () => {
     await appPage.goto();
   });
 
-  test('should transition to browsing view when searching from hero', async ({appPage, page}) => {
-    // Type in the hero search
+  test('should transition to browsing view when pressing Enter in hero search', async ({appPage, page}) => {
+    // Type in the hero search and press Enter to navigate
     await appPage.heroSearch.fill('Elsa');
+    await page.keyboard.press('Enter');
     await page.waitForTimeout(200);
 
     // Should transition away from home — hero and featured cards disappear
@@ -22,100 +23,26 @@ test.describe('Card Search and Filtering', () => {
     await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
   });
 
-  test('should open filter modal when clicking Filters button', async ({page}) => {
-    // Click the Filters button on hero
-    await page.getByRole('button', {name: /Filters/}).click();
+  test('should stay on home when typing without pressing Enter', async ({appPage}) => {
+    // Type in the hero search without pressing Enter
+    await appPage.heroSearch.fill('Elsa');
 
-    // FilterModal should appear
-    const modal = page.getByTestId('filter-modal');
-    await expect(modal).toBeVisible();
-
-    // Should show ink filter options
-    await expect(page.getByRole('button', {name: 'Amber', exact: true})).toBeVisible();
-    await expect(page.getByRole('button', {name: 'Sapphire', exact: true})).toBeVisible();
+    // Should remain on home — hero and featured cards still visible
+    await expect(appPage.heroSection).toBeVisible();
+    await expect(appPage.featuredCards).toBeVisible();
   });
 
-  test('should close filter modal with Apply Filters', async ({page}) => {
-    // Open modal
-    await page.getByRole('button', {name: /Filters/}).click();
-    await expect(page.getByTestId('filter-modal')).toBeVisible();
+  test('should transition to browsing view when clicking Search button', async ({appPage, page}) => {
+    // Type in the hero search
+    await appPage.heroSearch.fill('Elsa');
 
-    // Click Apply Filters
-    await page.getByRole('button', {name: 'Apply Filters'}).click();
-
-    // Modal should be closed
-    await expect(page.getByTestId('filter-modal')).not.toBeVisible();
-  });
-
-  test('should not filter featured cards when applying ink filter via modal', async ({page, appPage}) => {
-    // Count initial featured tiles
-    const initialCount = await appPage.featuredCards.getByTestId('card-tile').count();
-
-    // Open filter modal and select Sapphire
-    await page.getByRole('button', {name: /^Filters/}).click();
-    await page.getByRole('button', {name: 'Sapphire', exact: true}).click();
-    await page.getByRole('button', {name: 'Apply Filters'}).click();
-
-    // Wait for modal to close
-    await expect(page.getByTestId('filter-modal')).not.toBeVisible();
+    // Click the Search button
+    await page.getByRole('button', {name: 'Search'}).click();
     await page.waitForTimeout(200);
 
-    // Featured cards should remain unchanged (decoupled from filters)
-    const afterCount = await appPage.featuredCards.getByTestId('card-tile').count();
-    expect(afterCount).toBe(initialCount);
-  });
-
-  test('should filter by card type via modal', async ({page}) => {
-    // Open filter modal and select Action
-    await page.getByRole('button', {name: /^Filters/}).click();
-    await page.getByRole('button', {name: 'Action', exact: true}).click();
-    await page.getByRole('button', {name: 'Apply Filters'}).click();
-
-    // Wait for modal to close
-    await expect(page.getByTestId('filter-modal')).not.toBeVisible();
-
-    // Filter button on hero should show active count
-    await expect(page.getByRole('button', {name: /^Filters/})).toBeVisible();
-  });
-
-  test('should clear all filters via modal', async ({page}) => {
-    // Apply some filters first
-    await page.getByRole('button', {name: /^Filters/}).click();
-    await page.getByRole('button', {name: 'Sapphire', exact: true}).click();
-    await page.getByRole('button', {name: 'Apply Filters'}).click();
-    await expect(page.getByTestId('filter-modal')).not.toBeVisible();
-
-    // Reopen and clear
-    await page.getByRole('button', {name: /^Filters/}).click();
-    await page.getByRole('button', {name: 'Clear all'}).click();
-    await page.getByRole('button', {name: 'Apply Filters'}).click();
-
-    // Should be back to unfiltered state
-    await expect(page.getByTestId('filter-modal')).not.toBeVisible();
-  });
-
-  test('should close filter modal with Escape key', async ({page}) => {
-    // Open modal
-    await page.getByRole('button', {name: /Filters/}).click();
-    await expect(page.getByTestId('filter-modal')).toBeVisible();
-
-    // Press Escape
-    await page.keyboard.press('Escape');
-
-    // Modal should be closed
-    await expect(page.getByTestId('filter-modal')).not.toBeVisible();
-  });
-
-  test('should close filter modal by clicking backdrop', async ({page}) => {
-    // Open modal
-    await page.getByRole('button', {name: /Filters/}).click();
-    await expect(page.getByTestId('filter-modal')).toBeVisible();
-
-    // Click backdrop
-    await page.getByTestId('filter-modal-backdrop').click({position: {x: 5, y: 5}});
-
-    // Modal should be closed
-    await expect(page.getByTestId('filter-modal')).not.toBeVisible();
+    // Should transition to browsing
+    await expect(appPage.heroSection).not.toBeVisible();
+    await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
   });
 
   test('should navigate to browsing view via See all cards', async ({appPage, page}) => {
