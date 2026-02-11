@@ -1,4 +1,3 @@
-import {useState} from 'react';
 import {motion} from 'framer-motion';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../constants';
 
@@ -15,8 +14,6 @@ export function HeroSection({
   onSearchSubmit,
   isMobile,
 }: HeroSectionProps) {
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-
   return (
     <div
       data-testid="hero-section"
@@ -133,8 +130,6 @@ export function HeroSection({
             onKeyDown={(e) => {
               if (e.key === 'Enter') onSearchSubmit?.();
             }}
-            onFocus={() => setIsSearchFocused(true)}
-            onBlur={() => setIsSearchFocused(false)}
             data-testid="hero-search"
             style={{
               width: '100%',
@@ -143,17 +138,13 @@ export function HeroSection({
               borderRadius: isMobile
                 ? `${RADIUS.lg}px`
                 : `${RADIUS.lg}px 0 0 ${RADIUS.lg}px`,
-              border: `1px solid ${isSearchFocused ? 'rgba(212, 175, 55, 0.5)' : COLORS.searchBorder}`,
+              border: `1px solid ${COLORS.searchBorder}`,
               borderRight: isMobile ? undefined : 'none',
               background: COLORS.searchBg,
               color: COLORS.text,
               fontSize: `${FONT_SIZES.xl}px`,
               boxSizing: 'border-box',
               outline: 'none',
-              boxShadow: isSearchFocused
-                ? '0 0 0 3px rgba(212, 175, 55, 0.15), 0 0 20px rgba(212, 175, 55, 0.1)'
-                : 'none',
-              transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
             }}
           />
         </div>
@@ -161,10 +152,14 @@ export function HeroSection({
           onClick={onSearchSubmit}
           aria-label="Search"
           whileHover={{
-            background: 'linear-gradient(90deg, #ffb020, #fe9a00)',
+            scale: 1.03,
+            boxShadow: `0 0 20px ${COLORS.primary}40, 0 4px 12px rgba(0,0,0,0.3)`,
           }}
           whileTap={{scale: 0.97}}
-          transition={{type: 'tween', duration: 0.25}}
+          transition={{
+            default: {type: 'spring', stiffness: 400, damping: 25},
+            boxShadow: {type: 'tween', duration: 0.15},
+          }}
           style={{
             height: 56,
             padding: '0 24px',

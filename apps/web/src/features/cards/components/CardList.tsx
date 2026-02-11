@@ -2,8 +2,25 @@ import {useState, useMemo} from 'react';
 import type {LorcanaCard, Ink} from '../types';
 import type {CardFilterOptions, SetInfo} from '../loader';
 import {CardTile} from './CardTile';
-import {LoadingSpinner, FilterDrawer} from '../../../shared/components';
-import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT} from '../../../shared/constants';
+import {
+  LoadingSpinner,
+  FilterDrawer,
+  FilterButton,
+  FilterSection,
+} from '../../../shared/components';
+import {
+  INK_COLORS,
+  ALL_INKS,
+  COLORS,
+  FONT_SIZES,
+  RADIUS,
+  SPACING,
+  LAYOUT,
+  CARD_TYPES,
+  COST_OPTIONS,
+  SELECT_STYLE_SM,
+} from '../../../shared/constants';
+import {isCardType} from '../utils';
 
 interface CardListProps {
   cards: LorcanaCard[];
@@ -22,8 +39,6 @@ interface CardListProps {
   isMobile?: boolean;
   /** Back button handler for mobile linear flow */
   onBack?: () => void;
-  /** Opens the filter modal (desktop browsing state) */
-  onFiltersClick?: () => void;
 }
 
 export function CardList({
@@ -42,13 +57,14 @@ export function CardList({
   onCardSelect,
   isMobile = false,
   onBack,
-  onFiltersClick,
 }: CardListProps) {
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
 
   // Memoize the sliced array to avoid creating new array on every render
   const displayedCards = useMemo(() => cards.slice(0, LAYOUT.maxDisplayedCards), [cards]);
 
+  const selectedType = isCardType(filters.type) ? filters.type : undefined;
   const activeFilterCount = [
     inkFilter !== 'all',
     filters.type,
@@ -58,6 +74,16 @@ export function CardList({
     filters.classifications?.length,
     filters.setCode,
   ].filter(Boolean).length;
+
+  const updateFilter = <K extends keyof CardFilterOptions>(key: K, value: CardFilterOptions[K]) => {
+    const newFilters = {...filters};
+    if (value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
+      delete newFilters[key];
+    } else {
+      newFilters[key] = value;
+    }
+    onFiltersChange(newFilters);
+  };
 
   const clearAllFilters = () => {
     onFiltersChange({});
@@ -164,6 +190,15 @@ export function CardList({
                   )}
                 </button>
               </div>
+              <p
+                style={{
+                  fontSize: `${FONT_SIZES.sm}px`,
+                  color: COLORS.gray400,
+                  marginTop: `${SPACING.sm}px`,
+                  marginBottom: 0,
+                }}>
+                {displayedCards.length} of {cards.length} cards
+              </p>
             </div>
 
             {/* Card Grid */}
@@ -175,7 +210,7 @@ export function CardList({
               }}>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(95px, 1fr))',
                 gap: '6px',
               }}>
                 {displayedCards.map((card) => (
@@ -229,67 +264,203 @@ export function CardList({
           {/* Filter Panel - Fixed */}
           <div
             style={{padding: `${SPACING.lg}px`, paddingBottom: `${SPACING.sm}px`, flexShrink: 0}}>
-            {/* Search + Filters */}
-            <div style={{display: 'flex', gap: `${SPACING.sm}px`, marginBottom: `${SPACING.md}px`}}>
-              <input
-                type="text"
-                placeholder="Search cards..."
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                style={{
-                  flex: 1,
-                  padding: '10px 12px',
-                  borderRadius: `${RADIUS.lg}px`,
-                  border: `1px solid ${COLORS.surfaceBorder}`,
-                  background: COLORS.surfaceAlt,
-                  color: COLORS.text,
-                  fontSize: `${FONT_SIZES.lg}px`,
-                  boxSizing: 'border-box',
-                  outline: 'none',
-                }}
-              />
-              {onFiltersClick && (
-                <button
-                  onClick={onFiltersClick}
-                  aria-label={`Filters${activeFilterCount > 0 ? ` (${activeFilterCount} active)` : ''}`}
-                  style={{
-                    width: '42px',
-                    height: '42px',
-                    borderRadius: `${RADIUS.lg}px`,
-                    border: `1px solid ${COLORS.gray200}`,
-                    background: activeFilterCount > 0 ? COLORS.primary100 : COLORS.surface,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    flexShrink: 0,
-                  }}>
-                  <FilterIcon color={activeFilterCount > 0 ? COLORS.primary600 : COLORS.gray600} />
-                  {activeFilterCount > 0 && (
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: '-4px',
-                        right: '-4px',
-                        background: COLORS.primary600,
-                        color: COLORS.white,
-                        width: '18px',
-                        height: '18px',
-                        borderRadius: '50%',
-                        fontSize: `${FONT_SIZES.xs}px`,
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </button>
-              )}
-            </div>
+            {/* Search */}
+            <input
+              type="text"
+              placeholder="Search cards..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: `${RADIUS.lg}px`,
+                border: `1px solid ${COLORS.surfaceBorder}`,
+                background: COLORS.surfaceAlt,
+                color: COLORS.text,
+                fontSize: `${FONT_SIZES.lg}px`,
+                marginBottom: `${SPACING.md}px`,
+                boxSizing: 'border-box',
+              }}
+            />
 
+            {/* Ink Filter */}
+            <FilterSection label="Ink" compact>
+              <div style={{display: 'flex', gap: '4px', flexWrap: 'wrap'}}>
+                <FilterButton active={inkFilter === 'all'} onClick={() => onInkFilterChange('all')}>
+                  All
+                </FilterButton>
+                {ALL_INKS.map((ink) => (
+                  <FilterButton
+                    key={ink}
+                    active={inkFilter === ink}
+                    onClick={() => onInkFilterChange(ink)}
+                    activeColor={INK_COLORS[ink].border}
+                    inactiveColor={INK_COLORS[ink].bg}
+                    inactiveTextColor={INK_COLORS[ink].text}>
+                    {ink}
+                  </FilterButton>
+                ))}
+              </div>
+            </FilterSection>
+
+            {/* Card Type Filter */}
+            <FilterSection label="Type" compact>
+              <div style={{display: 'flex', gap: '4px', flexWrap: 'wrap'}}>
+                <FilterButton
+                  active={!selectedType}
+                  onClick={() => updateFilter('type', undefined)}>
+                  All
+                </FilterButton>
+                {CARD_TYPES.map((type) => (
+                  <FilterButton
+                    key={type}
+                    active={selectedType === type}
+                    onClick={() => updateFilter('type', type)}>
+                    {type}
+                  </FilterButton>
+                ))}
+              </div>
+            </FilterSection>
+
+            {/* More Filters Toggle */}
+            <button
+              onClick={() => setShowMoreFilters(!showMoreFilters)}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                color: COLORS.primary600,
+                fontSize: `${FONT_SIZES.sm}px`,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}>
+              <span
+                style={{
+                  transform: showMoreFilters ? 'rotate(90deg)' : 'rotate(0)',
+                  transition: 'transform 0.2s',
+                }}>
+                &#9654;
+              </span>
+              More filters {activeFilterCount > 0 && `(${activeFilterCount} active)`}
+            </button>
+
+            {/* Expanded Filters */}
+            {showMoreFilters && (
+              <div style={{marginTop: `${SPACING.md}px`}}>
+                {/* Cost Range */}
+                <FilterSection label="Cost" compact>
+                  <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
+                    <select
+                      value={filters.minCost ?? ''}
+                      onChange={(e) =>
+                        updateFilter('minCost', e.target.value ? Number(e.target.value) : undefined)
+                      }
+                      style={SELECT_STYLE_SM}>
+                      <option value="">Min</option>
+                      {COST_OPTIONS.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                    <span style={{color: COLORS.gray400}}>-</span>
+                    <select
+                      value={filters.maxCost ?? ''}
+                      onChange={(e) =>
+                        updateFilter('maxCost', e.target.value ? Number(e.target.value) : undefined)
+                      }
+                      style={SELECT_STYLE_SM}>
+                      <option value="">Max</option>
+                      {COST_OPTIONS.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </FilterSection>
+
+                {/* Keywords */}
+                <FilterSection label="Keyword" compact>
+                  <select
+                    value={filters.keywords?.[0] ?? ''}
+                    onChange={(e) =>
+                      updateFilter('keywords', e.target.value ? [e.target.value] : undefined)
+                    }
+                    style={{...SELECT_STYLE_SM, width: '100%'}}>
+                    <option value="">Any keyword</option>
+                    {uniqueKeywords.map((kw) => (
+                      <option key={kw} value={kw}>
+                        {kw}
+                      </option>
+                    ))}
+                  </select>
+                </FilterSection>
+
+                {/* Classifications */}
+                <FilterSection label="Classification" compact>
+                  <select
+                    value={filters.classifications?.[0] ?? ''}
+                    onChange={(e) =>
+                      updateFilter('classifications', e.target.value ? [e.target.value] : undefined)
+                    }
+                    style={{...SELECT_STYLE_SM, width: '100%'}}>
+                    <option value="">Any classification</option>
+                    {uniqueClassifications.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </FilterSection>
+
+                {/* Set */}
+                <FilterSection label="Set" compact>
+                  <select
+                    value={filters.setCode ?? ''}
+                    onChange={(e) => updateFilter('setCode', e.target.value || undefined)}
+                    style={{...SELECT_STYLE_SM, width: '100%'}}>
+                    <option value="">Any set</option>
+                    {sets.map((s) => (
+                      <option key={s.code} value={s.code}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </FilterSection>
+              </div>
+            )}
+
+            {/* Clear Filters */}
+            {(searchQuery || inkFilter !== 'all' || activeFilterCount > 0) && (
+              <button
+                onClick={clearAllFilters}
+                style={{
+                  marginTop: `${SPACING.sm}px`,
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  color: COLORS.gray500,
+                  fontSize: `${FONT_SIZES.sm}px`,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}>
+                Clear all filters
+              </button>
+            )}
+
+            {/* Card Count */}
+            <p
+              style={{
+                fontSize: `${FONT_SIZES.md}px`,
+                color: COLORS.gray400,
+                marginTop: `${SPACING.md}px`,
+                marginBottom: 0,
+              }}>
+              Showing {displayedCards.length} of {cards.length} cards
+            </p>
           </div>
 
           {/* Card Grid - Scrollable */}
