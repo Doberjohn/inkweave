@@ -1,4 +1,5 @@
 export {CardImage} from './CardImage';
+export {CardLightbox} from './CardLightbox';
 export {CollapsibleSection} from './CollapsibleSection';
 export {CompactHeader} from './CompactHeader';
 export {CostIcon} from './CostIcon';

@@ -1,6 +1,6 @@
 import {useCallback, useMemo} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
-import {SynergyResults, SynergyBreakdown, CardDetailPanel} from '../features/synergies';
+import {SynergyResults, SynergyBreakdown, CardDetailPanel, MobileCardDetail} from '../features/synergies';
 import {sharedEngine} from '../features/synergies/engine';
 import {CompactHeader, ErrorBoundary, LoadingSpinner} from '../shared/components';
 import {COLORS, FONTS, LAYOUT} from '../shared/constants';
@@ -75,17 +75,14 @@ export function CardPage() {
 
   if (isMobile) {
     return (
-      <div style={{minHeight: '100vh', fontFamily: FONTS.body}}>
-        <ErrorBoundary>
-          <SynergyResults
-            selectedCard={selectedCard}
-            synergies={synergies}
-            totalSynergyCount={totalSynergyCount}
-            onClearSelection={goHome}
-            isMobile
-          />
-        </ErrorBoundary>
-      </div>
+      <ErrorBoundary>
+        <MobileCardDetail
+          card={selectedCard}
+          synergies={synergies}
+          totalSynergyCount={totalSynergyCount}
+          onBack={goHome}
+        />
+      </ErrorBoundary>
     );
   }
 
