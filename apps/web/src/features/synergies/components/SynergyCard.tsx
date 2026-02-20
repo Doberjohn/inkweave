@@ -9,6 +9,7 @@ import {
   FONT_SIZES,
   RADIUS,
 } from '../../../shared/constants';
+import {CardLightbox} from '../../../shared/components';
 import {useCardPreviewHandlers} from '../../cards';
 import {useResponsive} from '../../../shared/hooks';
 
@@ -21,11 +22,11 @@ interface SynergyCardProps {
 /**
  * Extract a short reason tag from the full explanation.
  * e.g. "Singer keyword reduces Song cost" → "Singer"
- *      "Can Shift onto this character" → "Shift Target"
+ *      "Can Shift onto this character" → "Shift"
  *      "Evasive + quest synergy" → "Evasive"
  */
 function extractReasonTag(explanation: string): string {
-  // Match common patterns
+  // Ordered by priority — first match wins
   const patterns: [RegExp, string][] = [
     [/\bSinger\b/i, 'Singer'],
     [/\bShift\b/i, 'Shift'],
@@ -70,6 +71,7 @@ export const SynergyCard = memo(function SynergyCard({
   const {isMobile} = useResponsive();
   const {previewHandlers} = useCardPreviewHandlers({card});
   const [imgError, setImgError] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const imgSrc = card.thumbnailUrl || card.imageUrl;
   const reasonTag = useMemo(() => extractReasonTag(explanation), [explanation]);
 
@@ -78,6 +80,7 @@ export const SynergyCard = memo(function SynergyCard({
       {/* Card image tile */}
       <motion.div
         {...(isMobile ? {} : previewHandlers)}
+        onClick={isMobile && card.imageUrl ? () => setLightboxOpen(true) : undefined}
         whileHover={{scale: 1.04, y: -3}}
         whileTap={{scale: 0.97}}
         transition={{type: 'spring', stiffness: 400, damping: 25}}
@@ -138,8 +141,6 @@ export const SynergyCard = memo(function SynergyCard({
           }}>
           {strength}
         </span>
-
-
       </motion.div>
 
       {/* Reason tag pill */}
@@ -167,6 +168,10 @@ export const SynergyCard = memo(function SynergyCard({
           {reasonTag}
         </span>
       </div>
+
+      {lightboxOpen && card.imageUrl && (
+        <CardLightbox src={card.imageUrl} alt={card.fullName} onClose={() => setLightboxOpen(false)} />
+      )}
     </div>
   );
 });

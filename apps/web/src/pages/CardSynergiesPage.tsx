@@ -1,0 +1,140 @@
+import {useCallback, useMemo} from 'react';
+import {useParams, useNavigate, Navigate} from 'react-router-dom';
+import {SynergyResults} from '../features/synergies';
+import {sharedEngine} from '../features/synergies/engine';
+import {ErrorBoundary, LoadingSpinner} from '../shared/components';
+import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
+import {useResponsive} from '../shared/hooks';
+import {useCardDataContext} from '../shared/contexts/CardDataContext';
+
+const centeredPage = {
+  minHeight: '100vh',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontFamily: FONTS.body,
+} as const;
+
+/**
+ * Mobile-only synergies view, accessed via /card/:cardId/synergies.
+ * Shows the full synergy grid with a back header pointing to the card detail.
+ * On desktop, redirects to the main card page (which shows synergies inline).
+ */
+export function CardSynergiesPage() {
+  const {cardId} = useParams<{cardId: string}>();
+  const navigate = useNavigate();
+  const {isMobile} = useResponsive();
+  const {cards, isLoading, getCardById} = useCardDataContext();
+
+  const selectedCard = cardId ? getCardById(cardId) ?? null : null;
+
+  const synergies = useMemo(() => {
+    if (!selectedCard || cards.length === 0) return [];
+    try {
+      return sharedEngine.findSynergies(selectedCard, cards);
+    } catch (err) {
+      console.error(`Synergy computation failed for card ${selectedCard.id}:`, err);
+      return [];
+    }
+  }, [selectedCard, cards]);
+
+  const totalSynergyCount = useMemo(
+    () => synergies.reduce((sum, group) => sum + group.synergies.length, 0),
+    [synergies],
+  );
+
+  const goBack = useCallback(() => {
+    if (cardId) navigate(`/card/${cardId}`);
+    else navigate('/');
+  }, [cardId, navigate]);
+
+  // On desktop, this route isn't needed — redirect to card page
+  if (!isMobile && !isLoading && selectedCard) {
+    return <Navigate to={`/card/${cardId}`} replace />;
+  }
+
+  if (isLoading) {
+    return (
+      <div style={centeredPage}>
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!selectedCard) {
+    return (
+      <div style={{...centeredPage, flexDirection: 'column', gap: '16px'}}>
+        <h2 style={{color: COLORS.text, margin: 0}}>Card not found</h2>
+        <button
+          onClick={() => navigate('/')}
+          style={{
+            padding: '10px 20px',
+            background: COLORS.primary500,
+            color: COLORS.white,
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: 500,
+          }}>
+          Go Home
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        background: COLORS.background,
+        fontFamily: FONTS.body,
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+      {/* Header: ← Card Name */}
+      <div
+        style={{
+          height: 48,
+          background: 'rgba(26, 26, 46, 0.9)',
+          display: 'flex',
+          alignItems: 'center',
+          paddingLeft: SPACING.lg,
+          borderBottom: '1px solid rgba(51, 51, 85, 0.5)',
+          flexShrink: 0,
+        }}>
+        <button
+          onClick={goBack}
+          aria-label={`Back to ${selectedCard.fullName}`}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: COLORS.primary500,
+            fontSize: FONT_SIZES.md,
+            fontWeight: 700,
+            letterSpacing: '0.96px',
+            cursor: 'pointer',
+            padding: `${SPACING.sm}px 0`,
+            fontFamily: FONTS.body,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}>
+          &larr; {selectedCard.fullName}
+        </button>
+      </div>
+
+      {/* Synergy results */}
+      <ErrorBoundary>
+        <SynergyResults
+          selectedCard={selectedCard}
+          synergies={synergies}
+          totalSynergyCount={totalSynergyCount}
+          onClearSelection={goBack}
+          isMobile
+          showCardDetail={false}
+        />
+      </ErrorBoundary>
+    </div>
+  );
+}

@@ -25,6 +25,7 @@ function lazyWithRetry(
 const HomePage = lazyWithRetry(() => import('./pages/HomePage'), 'HomePage');
 const BrowsePage = lazyWithRetry(() => import('./pages/BrowsePage'), 'BrowsePage');
 const CardPage = lazyWithRetry(() => import('./pages/CardPage'), 'CardPage');
+const CardSynergiesPage = lazyWithRetry(() => import('./pages/CardSynergiesPage'), 'CardSynergiesPage');
 const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'), 'NotFoundPage');
 
 function SuspenseWrapper({children}: {children: React.ReactNode}) {
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
       {index: true, element: <SuspenseWrapper><HomePage /></SuspenseWrapper>},
       {path: 'browse', element: <SuspenseWrapper><BrowsePage /></SuspenseWrapper>},
       {path: 'card/:cardId', element: <SuspenseWrapper><CardPage /></SuspenseWrapper>},
+      {path: 'card/:cardId/synergies', element: <SuspenseWrapper><CardSynergiesPage /></SuspenseWrapper>},
       {path: '*', element: <SuspenseWrapper><NotFoundPage /></SuspenseWrapper>},
     ],
   },

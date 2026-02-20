@@ -31,8 +31,8 @@ test.describe('Mobile Viewport', () => {
     // Should navigate to /card/:id
     await expect(page).toHaveURL(/\/card\/\d+/);
 
-    // Should show synergy results (card detail + synergies)
-    const hasSynergies = page.getByText(/Found \d+ synergistic cards/);
+    // Should show synergy results or CTA (mobile shows MobileCardDetail with different text)
+    const hasSynergies = page.getByText(/Found \d+ synergistic cards|View All \d+ Synergies/);
     const noSynergies = page.getByText('No synergies found for this card');
 
     const synergiesVisible = await hasSynergies.isVisible().catch(() => false);
