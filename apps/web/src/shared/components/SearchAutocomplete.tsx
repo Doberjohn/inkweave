@@ -130,12 +130,15 @@ export function SearchAutocomplete({
                 <span
                   title={setName}
                   style={{
+                    display: 'flex',
+                    alignItems: 'center',
                     fontSize: FONT_SIZES.md,
                     color: COLORS.text,
                     fontWeight: 500,
                     flexShrink: 0,
                     minWidth: 32,
                     letterSpacing: '0.3px',
+                    lineHeight: 1,
                   }}>
                   {setAbbr}
                 </span>
@@ -148,6 +151,7 @@ export function SearchAutocomplete({
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
+                    lineHeight: 1,
                   }}>
                   <HighlightedName fullName={card.fullName} query={query} />
                 </span>
