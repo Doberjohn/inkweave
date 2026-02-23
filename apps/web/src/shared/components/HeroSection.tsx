@@ -1,7 +1,7 @@
 import {useCallback, useState} from 'react';
 import {motion} from 'framer-motion';
 import type {LorcanaCard} from 'lorcana-synergy-engine';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, Z_INDEX} from '../constants';
 import {useAutocomplete} from '../hooks/useAutocomplete';
 import {SearchAutocomplete} from './SearchAutocomplete';
 
@@ -48,7 +48,7 @@ export function HeroSection({
           ? {padding: `64px ${SPACING.lg}px 48px`}
           : {paddingBottom: 80}),
         position: 'relative',
-        zIndex: 1,
+        zIndex: 2,
         width: isMobile ? '100%' : undefined,
         boxSizing: 'border-box',
       }}>
@@ -128,7 +128,7 @@ export function HeroSection({
           width: '100%',
           maxWidth: isMobile ? undefined : 768,
         }}>
-        <div style={{flex: 1, position: 'relative'}}>
+        <div style={{flex: 1, position: 'relative', zIndex: Z_INDEX.autocomplete}}>
           {/* Search icon */}
           <svg
             aria-hidden="true"
