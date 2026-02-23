@@ -6,8 +6,8 @@ import {
   ALL_INKS,
   CARD_TYPE_FILTERS,
   COST_BUTTONS,
+  COLORS,
   SELECT_STYLE_MD,
-  hexRgba,
 } from '../constants';
 import {CostIcon} from './CostIcon';
 import {FilterButton} from './FilterButton';
@@ -73,7 +73,8 @@ export function FilterContent({
               size={inkSize}
               active={inkFilters.includes(ink)}
               onClick={() => onToggleInk(ink)}
-              activeColor={hexRgba(INK_COLORS[ink].border, 0.3)}
+              activeColor={INK_COLORS[ink].border}
+              activeBgColor={INK_COLORS[ink].bg}
               inactiveColor="transparent"
               inactiveTextColor="transparent"
               aria-label={`Filter by ${ink}`}>
@@ -92,7 +93,8 @@ export function FilterContent({
               size="sm"
               active={costFilters.includes(cost)}
               onClick={() => onToggleCost(cost)}
-              activeColor="rgba(212, 175, 55, 0.3)"
+              activeColor={COLORS.primary}
+              activeBgColor={COLORS.primary200}
               inactiveColor="transparent"
               inactiveTextColor="transparent"
               aria-label={`Cost ${cost}${cost === 10 ? '+' : ''}`}>
