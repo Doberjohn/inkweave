@@ -58,26 +58,28 @@ describe('SynergyEngine', () => {
         keywords: ['Shift 5'],
       });
 
-      const elsaCheap = createCard({
-        id: 'elsa-cheap',
+      const elsaOnCurve = createCard({
+        id: 'elsa-oncurve',
         name: 'Elsa',
         fullName: 'Elsa - Snow Queen',
-        cost: 2,
+        cost: 4,
+        inkwell: true,
       });
 
-      const elsaMid = createCard({
-        id: 'elsa-mid',
+      const elsaOffCurve = createCard({
+        id: 'elsa-offcurve',
         name: 'Elsa',
         fullName: 'Elsa - Frost Mage',
         cost: 5,
+        inkwell: true,
       });
 
-      const synergies = engine.findSynergies(elsaShift, [elsaCheap, elsaMid]);
+      const synergies = engine.findSynergies(elsaShift, [elsaOnCurve, elsaOffCurve]);
       const shiftGroup = synergies.find((g) => g.type === 'shift');
 
       expect(shiftGroup).toBeDefined();
       expect(shiftGroup?.synergies).toHaveLength(2);
-      // Strong (cost diff 5) should come before moderate (cost diff 2)
+      // Strong (curveGap 1, inkable) should come before moderate (curveGap 0)
       expect(shiftGroup?.synergies[0].strength).toBe('strong');
       expect(shiftGroup?.synergies[1].strength).toBe('moderate');
     });
