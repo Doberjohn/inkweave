@@ -27,7 +27,7 @@ export function MobileCardDetail({card, synergies, totalSynergyCount, onBack}: M
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   return (
-    <div
+    <main
       style={{
         minHeight: '100vh',
         background: COLORS.background,
@@ -87,18 +87,17 @@ export function MobileCardDetail({card, synergies, totalSynergyCount, onBack}: M
             justifyContent: 'center',
             paddingTop: SPACING.md,
           }}>
-          <div
-            role="button"
-            tabIndex={0}
+          <button
             aria-label="Enlarge card image"
             onClick={() => card.imageUrl && setLightboxOpen(true)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && card.imageUrl) setLightboxOpen(true); }}
             style={{
               border: `2px solid ${COLORS.primary500}`,
               borderRadius: RADIUS.xl - 4,
               boxShadow: `0 0 14px rgba(212, 175, 55, 0.25)`,
               overflow: 'hidden',
               cursor: 'pointer',
+              padding: 0,
+              background: 'none',
             }}>
             <CardImage
               src={card.imageUrl}
@@ -110,10 +109,10 @@ export function MobileCardDetail({card, synergies, totalSynergyCount, onBack}: M
               lazy={false}
               borderRadius={RADIUS.xl - 6}
             />
-          </div>
+          </button>
         </div>
 
-        <h1
+        <h2
           style={{
             textAlign: 'center',
             fontSize: 17,
@@ -122,7 +121,7 @@ export function MobileCardDetail({card, synergies, totalSynergyCount, onBack}: M
             margin: `${SPACING.md}px 0 0`,
           }}>
           {card.fullName}
-        </h1>
+        </h2>
 
         {/* Keyword badges */}
         {card.keywords && card.keywords.length > 0 && (
@@ -286,6 +285,6 @@ export function MobileCardDetail({card, synergies, totalSynergyCount, onBack}: M
       {lightboxOpen && card.imageUrl && (
         <CardLightbox src={card.imageUrl} alt={card.fullName} onClose={() => setLightboxOpen(false)} />
       )}
-    </div>
+    </main>
   );
 }

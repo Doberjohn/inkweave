@@ -111,20 +111,24 @@ interface SynergyCardListProps {
 
 const SynergyCardList = memo(function SynergyCardList({synergies}: SynergyCardListProps) {
   return (
-    <div
+    <ul
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(105px, 1fr))',
         gap: '10px',
+        listStyle: 'none',
+        padding: 0,
+        margin: 0,
       }}>
       {synergies.map((synergy) => (
-        <SynergyCard
-          key={synergy.card.id}
-          card={synergy.card}
-          strength={synergy.strength}
-          explanation={synergy.explanation}
-        />
+        <li key={synergy.card.id}>
+          <SynergyCard
+            card={synergy.card}
+            strength={synergy.strength}
+            explanation={synergy.explanation}
+          />
+        </li>
       ))}
-    </div>
+    </ul>
   );
 });

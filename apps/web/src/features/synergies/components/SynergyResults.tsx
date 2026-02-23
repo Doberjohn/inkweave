@@ -48,6 +48,8 @@ export const SynergyResults = memo(function SynergyResults({
 
           {synergies.length === 0 ? (
             <div
+              role="status"
+              aria-live="polite"
               style={{
                 textAlign: 'center',
                 padding: `${SPACING.xxl * 2}px`,
@@ -60,7 +62,7 @@ export const SynergyResults = memo(function SynergyResults({
             </div>
           ) : (
             <>
-              <div style={{marginBottom: `${SPACING.lg}px`}}>
+              <div aria-live="polite" aria-atomic="true" style={{marginBottom: `${SPACING.lg}px`}}>
                 <span style={{fontSize: `${FONT_SIZES.lg}px`, color: COLORS.gray500}}>
                   Found <strong style={{color: COLORS.primary600}}>{totalSynergyCount}</strong>{' '}
                   synergistic cards

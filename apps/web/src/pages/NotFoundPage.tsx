@@ -5,7 +5,7 @@ export function NotFoundPage() {
   const navigate = useNavigate();
 
   return (
-    <div
+    <main
       style={{
         minHeight: '100vh',
         display: 'flex',
@@ -33,6 +33,6 @@ export function NotFoundPage() {
         }}>
         Go Home
       </button>
-    </div>
+    </main>
   );
 }

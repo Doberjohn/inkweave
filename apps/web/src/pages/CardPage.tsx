@@ -87,7 +87,7 @@ export function CardPage() {
   }
 
   return (
-    <div
+    <main
       style={{
         minHeight: '100vh',
         background: COLORS.background,
@@ -108,6 +108,6 @@ export function CardPage() {
           <SynergyBreakdown synergies={synergies} totalCount={totalSynergyCount} />
         </ErrorBoundary>
       </div>
-    </div>
+    </main>
   );
 }

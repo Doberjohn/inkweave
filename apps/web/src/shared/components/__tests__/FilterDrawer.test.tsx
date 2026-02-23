@@ -1,8 +1,12 @@
-import {describe, it, expect, vi} from 'vitest';
-import {render, screen, fireEvent} from '@testing-library/react';
+import {describe, it, expect, vi, beforeEach} from 'vitest';
+import {render, screen, fireEvent, waitFor} from '@testing-library/react';
 import {FilterDrawer} from '../FilterDrawer';
 
 describe('FilterDrawer', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   const defaultProps = {
     isOpen: true,
     onClose: vi.fn(),
@@ -79,7 +83,7 @@ describe('FilterDrawer', () => {
     const onClose = vi.fn();
     render(<FilterDrawer {...defaultProps} onClose={onClose} />);
 
-    fireEvent.click(screen.getByRole('button', {name: /close filters/i}));
+    fireEvent.click(screen.getByTestId('filter-drawer-backdrop'));
 
     expect(onClose).toHaveBeenCalled();
   });
@@ -134,19 +138,6 @@ describe('FilterDrawer', () => {
     fireEvent.click(screen.getByRole('button', {name: /character/i}));
 
     expect(onToggleType).toHaveBeenCalledWith('Character');
-  });
-
-  it('should close on Enter or Space key on backdrop', () => {
-    const onClose = vi.fn();
-    render(<FilterDrawer {...defaultProps} onClose={onClose} />);
-
-    const backdrop = screen.getByRole('button', {name: /close filters/i});
-
-    fireEvent.keyDown(backdrop, {key: 'Enter'});
-    expect(onClose).toHaveBeenCalledTimes(1);
-
-    fireEvent.keyDown(backdrop, {key: ' '});
-    expect(onClose).toHaveBeenCalledTimes(2);
   });
 
   it('should call onToggleCost when clicking cost button', () => {
@@ -255,5 +246,95 @@ describe('FilterDrawer', () => {
 
     // 7 filters: 1 ink + 1 type + 2 costs + keywords, classifications, setCode
     expect(screen.getByText(/filters \(7\)/i)).toBeInTheDocument();
+  });
+
+  describe('Focus management', () => {
+    it('should focus the Apply button when drawer opens', async () => {
+      const {rerender} = render(<FilterDrawer {...defaultProps} isOpen={false} />);
+
+      rerender(<FilterDrawer {...defaultProps} isOpen={true} />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', {name: /apply/i})).toHaveFocus();
+      });
+    });
+
+    it('should restore focus to previous element when drawer closes', async () => {
+      const button = document.createElement('button');
+      button.textContent = 'Open Filters';
+      document.body.appendChild(button);
+      button.focus();
+
+      const {rerender} = render(<FilterDrawer {...defaultProps} isOpen={true} />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', {name: /apply/i})).toHaveFocus();
+      });
+
+      rerender(<FilterDrawer {...defaultProps} isOpen={false} />);
+
+      await waitFor(() => {
+        expect(button).toHaveFocus();
+      });
+
+      document.body.removeChild(button);
+    });
+  });
+
+  describe('Focus trap', () => {
+    it('should trap focus within drawer on Tab', () => {
+      render(<FilterDrawer {...defaultProps} />);
+
+      const drawer = screen.getByRole('dialog');
+      const focusableElements = drawer.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+
+      expect(focusableElements.length).toBeGreaterThan(0);
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      lastElement.focus();
+      fireEvent.keyDown(drawer, {key: 'Tab', shiftKey: false});
+
+      expect(firstElement).toHaveFocus();
+    });
+
+    it('should trap focus within drawer on Shift+Tab', () => {
+      render(<FilterDrawer {...defaultProps} />);
+
+      const drawer = screen.getByRole('dialog');
+      const focusableElements = drawer.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+
+      expect(focusableElements.length).toBeGreaterThan(0);
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      firstElement.focus();
+      fireEvent.keyDown(drawer, {key: 'Tab', shiftKey: true});
+
+      expect(lastElement).toHaveFocus();
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('should have correct ARIA attributes', () => {
+      render(<FilterDrawer {...defaultProps} />);
+
+      const drawer = screen.getByRole('dialog');
+      expect(drawer).toHaveAttribute('aria-modal', 'true');
+      expect(drawer).toHaveAttribute('aria-labelledby', 'filter-drawer-title');
+    });
+
+    it('should have aria-hidden backdrop', () => {
+      render(<FilterDrawer {...defaultProps} />);
+
+      const backdrop = screen.getByTestId('filter-drawer-backdrop');
+      expect(backdrop).toHaveAttribute('aria-hidden', 'true');
+    });
   });
 });

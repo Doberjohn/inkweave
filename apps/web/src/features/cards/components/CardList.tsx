@@ -108,6 +108,7 @@ export function CardList({
                 )}
                 <input
                   type="text"
+                  aria-label="Search cards"
                   placeholder="Search cards..."
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
@@ -170,21 +171,25 @@ export function CardList({
                 overflowY: 'auto',
                 padding: `${SPACING.md}px`,
               }}>
-              <div style={{
+              <ul style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
                 gap: '6px',
+                listStyle: 'none',
+                padding: 0,
+                margin: 0,
               }}>
                 {displayedCards.map((card) => (
-                  <CardTile
-                    key={card.id}
-                    card={card}
-                    onSelect={onCardSelect}
-                    isSelected={selectedCard?.id === card.id}
-                    disablePreview
-                  />
+                  <li key={card.id}>
+                    <CardTile
+                      card={card}
+                      onSelect={onCardSelect}
+                      isSelected={selectedCard?.id === card.id}
+                      disablePreview
+                    />
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
 
             {/* Filter Drawer */}
@@ -235,6 +240,7 @@ export function CardList({
             <div style={{display: 'flex', gap: `${SPACING.sm}px`, marginBottom: `${SPACING.md}px`}}>
               <input
                 type="text"
+                aria-label="Search cards"
                 placeholder="Search cards..."
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
@@ -247,7 +253,6 @@ export function CardList({
                   color: COLORS.text,
                   fontSize: `${FONT_SIZES.lg}px`,
                   boxSizing: 'border-box',
-                  outline: 'none',
                 }}
               />
               {onFiltersClick && (
@@ -301,20 +306,24 @@ export function CardList({
               overflowY: 'auto',
               padding: `${SPACING.sm}px ${SPACING.lg}px ${SPACING.lg}px`,
             }}>
-            <div style={{
+            <ul style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(105px, 1fr))',
               gap: '6px',
+              listStyle: 'none',
+              padding: 0,
+              margin: 0,
             }}>
               {displayedCards.map((card) => (
-                <CardTile
-                  key={card.id}
-                  card={card}
-                  onSelect={onCardSelect}
-                  isSelected={selectedCard?.id === card.id}
-                />
+                <li key={card.id}>
+                  <CardTile
+                    card={card}
+                    onSelect={onCardSelect}
+                    isSelected={selectedCard?.id === card.id}
+                  />
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         </>
       )}
@@ -325,6 +334,7 @@ export function CardList({
 function FilterIcon({color}: {color: string}) {
   return (
     <svg
+      aria-hidden="true"
       width="20"
       height="20"
       viewBox="0 0 24 24"

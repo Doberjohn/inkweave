@@ -1,4 +1,4 @@
-import {useEffect, useCallback} from 'react';
+import {useEffect, useCallback, useRef} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
 import type {Ink, SetInfo} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards';
@@ -48,6 +48,10 @@ export function FilterDrawer({
   onFiltersChange,
   onClearAll,
 }: FilterDrawerProps) {
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const applyButtonRef = useRef<HTMLButtonElement>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
+
   // Handle Escape key to close
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -58,6 +62,25 @@ export function FilterDrawer({
     [onClose],
   );
 
+  // Focus management: save previous focus, set initial focus, restore on close
+  useEffect(() => {
+    if (isOpen) {
+      previousActiveElement.current = document.activeElement as HTMLElement;
+      // Small delay ensures drawer animation has started and element is focusable
+      const timerId = setTimeout(() => {
+        applyButtonRef.current?.focus();
+      }, 100);
+      return () => {
+        clearTimeout(timerId);
+        const prev = previousActiveElement.current;
+        if (prev && prev.isConnected) {
+          prev.focus();
+        }
+      };
+    }
+  }, [isOpen]);
+
+  // Escape key listener (separate effect to avoid spurious focus restore)
   useEffect(() => {
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
@@ -65,26 +88,44 @@ export function FilterDrawer({
     }
   }, [isOpen, handleKeyDown]);
 
+  // Focus trap: keep focus within drawer
+  const handleDrawerKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab' || !drawerRef.current) return;
+
+    const focusableElements = drawerRef.current.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    );
+
+    if (focusableElements.length === 0) {
+      e.preventDefault();
+      return;
+    }
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (e.shiftKey && document.activeElement === firstElement) {
+      e.preventDefault();
+      lastElement.focus();
+    } else if (!e.shiftKey && document.activeElement === lastElement) {
+      e.preventDefault();
+      firstElement.focus();
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop - accessible button for keyboard users */}
+          {/* Backdrop overlay - click to dismiss (keyboard users use Escape) */}
           <motion.div
             initial={{opacity: 0}}
             animate={{opacity: 1}}
             exit={{opacity: 0}}
             transition={{duration: 0.2}}
-            role="button"
-            tabIndex={0}
+            aria-hidden="true"
             onClick={onClose}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onClose();
-              }
-            }}
-            aria-label="Close filters"
+            data-testid="filter-drawer-backdrop"
             style={{
               position: 'fixed',
               inset: 0,
@@ -96,6 +137,7 @@ export function FilterDrawer({
 
           {/* Drawer */}
           <motion.div
+            ref={drawerRef}
             initial={{y: '100%'}}
             animate={{y: 0}}
             exit={{y: '100%'}}
@@ -103,6 +145,7 @@ export function FilterDrawer({
             role="dialog"
             aria-modal="true"
             aria-labelledby="filter-drawer-title"
+            onKeyDown={handleDrawerKeyDown}
             style={{
               position: 'fixed',
               bottom: 0,
@@ -166,6 +209,7 @@ export function FilterDrawer({
                   </button>
                 )}
                 <button
+                  ref={applyButtonRef}
                   onClick={onClose}
                   style={CTA_BUTTON_STYLE}>
                   Apply
