@@ -132,6 +132,8 @@ Dark fantasy theme inspired by Lorcana:
 - Feature branches: `feature/<issue-number>-<description>` (e.g., `feature/5-deck-builder-tests`)
 - Commit messages: Use semantic commit notation with issue reference (e.g., `test(deck): add tests (#5)`)
 - PRs should include `Closes #<issue>` to auto-close issues on merge
+- **Worktrees**: Never attempt to delete or remove a worktree directory you are currently inside. Remind the user to clean it up after exiting, or switch directories first.
+- **Issues**: When creating issues, always add appropriate labels. When listing issues, check for unlabeled ones proactively.
 
 ### Pre-Commit Checks (REQUIRED)
 Before EVERY commit, run these checks and fix any issues:
@@ -152,6 +154,12 @@ After pushing, always confirm with clear output (e.g., git log showing commit on
 ### Code Quality
 - After writing or modifying significant code (new features, refactors, bug fixes), run the `code-simplifier` agent to polish for clarity and consistency
 - Use `/refactor-code` for periodic comprehensive codebase audits
+- When reviewing code or doing a re-review, always re-read the current file contents first — never assume you know what's already been changed. Diff against the actual working tree, not your memory of previous edits.
+- When editing theme or config files, re-read the full file after edits to ensure no constants or exports were accidentally removed by the edit tool
+
+### Implementation Approach
+- Before editing code or implementing changes, validate assumptions against real data first (e.g., test regex against actual card data, verify existing state)
+- Do not jump to implementation until the user confirms the approach
 
 ### Testing Style
 - Write focused, minimal tests - not exhaustive coverage
