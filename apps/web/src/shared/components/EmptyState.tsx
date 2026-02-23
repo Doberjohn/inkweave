@@ -8,6 +8,7 @@ interface EmptyStateProps {
 
 const defaultIcon = (
   <svg
+    aria-hidden="true"
     width="64"
     height="64"
     viewBox="0 0 24 24"
@@ -21,6 +22,8 @@ const defaultIcon = (
 export function EmptyState({icon = defaultIcon, title, subtitle}: EmptyStateProps) {
   return (
     <div
+      role="status"
+      aria-live="polite"
       style={{
         display: 'flex',
         flexDirection: 'column',

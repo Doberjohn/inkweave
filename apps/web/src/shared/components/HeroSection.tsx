@@ -112,6 +112,7 @@ export function HeroSection({
         <div style={{flex: 1, position: 'relative'}}>
           {/* Search icon */}
           <svg
+            aria-hidden="true"
             style={{
               position: 'absolute',
               left: 16,
@@ -128,6 +129,7 @@ export function HeroSection({
           </svg>
           <input
             type="text"
+            aria-label="Search for a card"
             placeholder="Search for a card..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
@@ -150,7 +152,6 @@ export function HeroSection({
               color: COLORS.text,
               fontSize: `${FONT_SIZES.xl}px`,
               boxSizing: 'border-box',
-              outline: 'none',
               boxShadow: isSearchFocused
                 ? '0 0 0 3px rgba(212, 175, 55, 0.15), 0 0 20px rgba(212, 175, 55, 0.1)'
                 : 'none',
@@ -178,8 +179,8 @@ export function HeroSection({
               ? `${RADIUS.lg}px`
               : `0 ${RADIUS.lg}px ${RADIUS.lg}px 0`,
             border: 'none',
-            background: COLORS.filterGradient,
-            color: COLORS.filterText,
+            background: isSearchEmpty ? COLORS.gray200 : COLORS.filterGradient,
+            color: isSearchEmpty ? COLORS.gray500 : COLORS.filterText,
             fontSize: `${FONT_SIZES.xl}px`,
             fontWeight: 400,
             cursor: isSearchEmpty ? 'not-allowed' : 'pointer',
@@ -188,14 +189,13 @@ export function HeroSection({
             justifyContent: 'center',
             gap: '8px',
             flexShrink: 0,
-            boxShadow: COLORS.filterShadow,
-            opacity: isSearchEmpty ? 0.5 : 1,
-            transition: 'opacity 0.2s ease',
+            boxShadow: isSearchEmpty ? 'none' : COLORS.filterShadow,
+            transition: 'background 0.2s ease, color 0.2s ease',
           }}>
           {/* Search icon */}
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-            <circle cx="9" cy="9" r="6" stroke={COLORS.filterText} strokeWidth="2" />
-            <line x1="13.5" y1="13.5" x2="17" y2="17" stroke={COLORS.filterText} strokeWidth="2" strokeLinecap="round" />
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <circle cx="9" cy="9" r="6" stroke={isSearchEmpty ? COLORS.gray500 : COLORS.filterText} strokeWidth="2" />
+            <line x1="13.5" y1="13.5" x2="17" y2="17" stroke={isSearchEmpty ? COLORS.gray500 : COLORS.filterText} strokeWidth="2" strokeLinecap="round" />
           </svg>
           Search
         </motion.button>

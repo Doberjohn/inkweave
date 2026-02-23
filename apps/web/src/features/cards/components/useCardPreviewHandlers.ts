@@ -9,8 +9,9 @@ interface UseCardPreviewHandlersOptions {
 }
 
 /**
- * Reusable hook for card preview hover/touch handlers.
- * Consolidates the repeated mouse enter/move/leave pattern used across components.
+ * Reusable hook for card preview hover, touch, and keyboard focus handlers.
+ * Consolidates the repeated mouse enter/move/leave and focus/blur pattern
+ * used across components.
  */
 export function useCardPreviewHandlers({card, onTap}: UseCardPreviewHandlersOptions) {
   const {showPreview, updatePosition, hidePreview} = useCardPreview();
@@ -33,6 +34,21 @@ export function useCardPreviewHandlers({card, onTap}: UseCardPreviewHandlersOpti
     hidePreview();
   }, [hidePreview]);
 
+  // Keyboard focus support for accessibility
+  const handleFocus = useCallback(
+    (e: React.FocusEvent) => {
+      const rect = (e.target as HTMLElement).getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        showPreview(card, rect.x + rect.width / 2, rect.y);
+      }
+    },
+    [card, showPreview],
+  );
+
+  const handleBlur = useCallback(() => {
+    hidePreview();
+  }, [hidePreview]);
+
   // Touch support for mobile
   const {touchHandlers} = useTouchPreview({
     onLongPress: () => {
@@ -48,9 +64,11 @@ export function useCardPreviewHandlers({card, onTap}: UseCardPreviewHandlersOpti
       onMouseEnter: handleMouseEnter,
       onMouseMove: handleMouseMove,
       onMouseLeave: handleMouseLeave,
+      onFocus: handleFocus,
+      onBlur: handleBlur,
       ...touchHandlers,
     }),
-    [handleMouseEnter, handleMouseMove, handleMouseLeave, touchHandlers],
+    [handleMouseEnter, handleMouseMove, handleMouseLeave, handleFocus, handleBlur, touchHandlers],
   );
 
   return {

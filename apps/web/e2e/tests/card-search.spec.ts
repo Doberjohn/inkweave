@@ -39,8 +39,8 @@ test.describe('Card Search and Filtering', () => {
 
     // Filter modal should be visible with ink options
     await expect(page.getByTestId('filter-modal')).toBeVisible();
-    await expect(page.getByRole('button', {name: 'Amber', exact: true})).toBeVisible();
-    await expect(page.getByRole('button', {name: 'Sapphire', exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Filter by Amber'})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Filter by Sapphire'})).toBeVisible();
   });
 
   test('should deep link to browse with ink filter in URL', async ({page}) => {

@@ -87,25 +87,29 @@ export const FeaturedCards = memo(function FeaturedCards({cards, onCardSelect, i
       </div>
 
       {/* Responsive grid: 3-col mobile (2 rows), 6-col desktop */}
-      <div
+      <ul
         style={{
           display: 'grid',
           gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : `repeat(${FEATURED_COUNT}, 1fr)`,
           gap: isMobile ? `${SPACING.sm}px` : `${SPACING.xxl}px`,
+          listStyle: 'none',
+          padding: 0,
+          margin: 0,
         }}>
         {featured.map((card) => (
-          <CardTile
-            key={card.id}
-            card={card}
-            onSelect={onCardSelect}
-            isSelected={false}
-            variant="minimal"
-            useThumbnail
-            borderRadius={isMobile ? 10 : undefined}
-            disablePreview={isMobile}
-          />
+          <li key={card.id}>
+            <CardTile
+              card={card}
+              onSelect={onCardSelect}
+              isSelected={false}
+              variant="minimal"
+              useThumbnail
+              borderRadius={isMobile ? 10 : undefined}
+              disablePreview={isMobile}
+            />
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 });

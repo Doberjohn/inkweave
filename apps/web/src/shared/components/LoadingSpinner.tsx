@@ -9,6 +9,8 @@ export function LoadingSpinner({
 }: LoadingSpinnerProps) {
   return (
     <div
+      role="status"
+      aria-live="polite"
       style={{
         display: 'flex',
         flexDirection: 'column',

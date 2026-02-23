@@ -23,7 +23,7 @@ export function CardDetail({card, onClear}: CardDetailProps) {
       }}>
       <CardImage
         src={card.imageUrl}
-        alt=""
+        alt={card.fullName}
         width={LAYOUT.selectedCardImageWidth}
         height={Math.round(LAYOUT.selectedCardImageWidth * 1.4)}
         inkColor={card.ink}

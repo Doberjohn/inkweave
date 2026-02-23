@@ -78,9 +78,10 @@ export const SynergyCard = memo(function SynergyCard({
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
       {/* Card image tile */}
-      <motion.div
+      <motion.button
         {...(isMobile ? {} : previewHandlers)}
         onClick={isMobile && card.imageUrl ? () => setLightboxOpen(true) : undefined}
+        aria-label={card.fullName || ''}
         whileHover={{scale: 1.04, y: -3}}
         whileTap={{scale: 0.97}}
         transition={{type: 'spring', stiffness: 400, damping: 25}}
@@ -92,6 +93,8 @@ export const SynergyCard = memo(function SynergyCard({
           cursor: 'pointer',
           overflow: 'hidden',
           aspectRatio: '0.72',
+          padding: 0,
+          width: '100%',
         }}>
         {/* Card image or fallback */}
         {imgSrc && !imgError ? (
@@ -141,7 +144,7 @@ export const SynergyCard = memo(function SynergyCard({
           }}>
           {strength}
         </span>
-      </motion.div>
+      </motion.button>
 
       {/* Reason tag pill */}
       <div

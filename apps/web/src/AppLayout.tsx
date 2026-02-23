@@ -12,7 +12,7 @@ function AppContent() {
 
   if (error) {
     return (
-      <div style={{padding: '40px', textAlign: 'center'}}>
+      <div role="alert" style={{padding: '40px', textAlign: 'center'}}>
         <h2 style={{color: COLORS.error}}>Error loading cards</h2>
         <p style={{color: COLORS.gray600, marginBottom: '20px'}}>{error.message}</p>
         <button

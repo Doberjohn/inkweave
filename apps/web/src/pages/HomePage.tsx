@@ -23,7 +23,7 @@ export function HomePage() {
   const handleSeeAll = useCallback(() => navigate('/browse'), [navigate]);
 
   return (
-    <div
+    <main
       style={{
         minHeight: '100vh',
         position: 'relative',
@@ -63,6 +63,6 @@ export function HomePage() {
         }}>
         See all cards →
       </button>
-    </div>
+    </main>
   );
 }

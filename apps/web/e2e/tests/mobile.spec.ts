@@ -51,8 +51,8 @@ test.describe('Mobile Viewport', () => {
     await filterButton.click();
 
     // Filter drawer should show ink options
-    await expect(page.getByRole('button', {name: 'Amber', exact: true})).toBeVisible();
-    await expect(page.getByRole('button', {name: 'Sapphire', exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Filter by Amber'})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Filter by Sapphire'})).toBeVisible();
   });
 
   test('should return to home when clearing selection on mobile', async ({
@@ -108,8 +108,8 @@ test.describe('Mobile Viewport', () => {
     await expect(page.getByText('Filters', {exact: true})).toBeVisible();
     
     // Should show ink filter options
-    await expect(page.getByRole('button', {name: 'Amber', exact: true})).toBeVisible();
-    await expect(page.getByRole('button', {name: 'Sapphire', exact: true})).toBeVisible();
-    await expect(page.getByRole('button', {name: 'Steel', exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Filter by Amber'})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Filter by Sapphire'})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Filter by Steel'})).toBeVisible();
   });
 });

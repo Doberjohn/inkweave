@@ -66,7 +66,7 @@ export function FilterContent({
     <>
       {/* Ink Filter */}
       <FilterSection label={isDesktop ? 'Ink Color' : 'Ink'}>
-        <div style={{display: 'flex', flexWrap: isDesktop ? 'wrap' : 'nowrap', justifyContent: 'space-evenly'}}>
+        <div role="group" aria-label="Ink color filters" style={{display: 'flex', flexWrap: isDesktop ? 'wrap' : 'nowrap', justifyContent: 'space-evenly'}}>
           {ALL_INKS.map((ink) => (
             <FilterButton
               key={ink}
@@ -75,7 +75,8 @@ export function FilterContent({
               onClick={() => onToggleInk(ink)}
               activeColor={hexRgba(INK_COLORS[ink].border, 0.3)}
               inactiveColor="transparent"
-              inactiveTextColor="transparent">
+              inactiveTextColor="transparent"
+              aria-label={`Filter by ${ink}`}>
               <InkIcon ink={ink} size={inkIconSize} decorative={false} />
             </FilterButton>
           ))}
@@ -84,7 +85,7 @@ export function FilterContent({
 
       {/* Ink Cost */}
       <FilterSection label="Ink Cost">
-        <div style={{display: 'flex', gap: '6px', flexWrap: 'wrap', ...(isDesktop ? {} : {justifyContent: 'center'})}}>
+        <div role="group" aria-label="Ink cost filters" style={{display: 'flex', gap: '6px', flexWrap: 'wrap', ...(isDesktop ? {} : {justifyContent: 'center'})}}>
           {COST_BUTTONS.map((cost) => (
             <FilterButton
               key={cost}
@@ -93,7 +94,8 @@ export function FilterContent({
               onClick={() => onToggleCost(cost)}
               activeColor="rgba(212, 175, 55, 0.3)"
               inactiveColor="transparent"
-              inactiveTextColor="transparent">
+              inactiveTextColor="transparent"
+              aria-label={`Cost ${cost}${cost === 10 ? '+' : ''}`}>
               <CostIcon cost={cost} size={34} />
             </FilterButton>
           ))}
@@ -102,7 +104,7 @@ export function FilterContent({
 
       {/* Card Type Filter */}
       <FilterSection label={isDesktop ? 'Card Type' : 'Type'}>
-        <div style={{display: 'flex', gap: isDesktop ? '8px' : undefined, flexWrap: 'wrap', justifyContent: isDesktop ? undefined : 'space-evenly'}}>
+        <div role="group" aria-label="Card type filters" style={{display: 'flex', gap: isDesktop ? '8px' : undefined, flexWrap: 'wrap', justifyContent: isDesktop ? undefined : 'space-evenly'}}>
           {CARD_TYPE_FILTERS.map((type) => (
             <FilterButton
               key={type}
@@ -118,6 +120,7 @@ export function FilterContent({
       {/* Keywords */}
       <FilterSection label={isDesktop ? 'Keywords' : 'Keyword'}>
         <select
+          aria-label="Filter by keyword"
           value={filters.keywords?.[0] ?? ''}
           onChange={(e) =>
             updateFilter('keywords', e.target.value ? [e.target.value] : undefined)
@@ -135,6 +138,7 @@ export function FilterContent({
       {/* Classification */}
       <FilterSection label="Classification">
         <select
+          aria-label="Filter by classification"
           value={filters.classifications?.[0] ?? ''}
           onChange={(e) =>
             updateFilter('classifications', e.target.value ? [e.target.value] : undefined)
@@ -152,6 +156,7 @@ export function FilterContent({
       {/* Set */}
       <FilterSection label="Set">
         <select
+          aria-label="Filter by set"
           value={filters.setCode ?? ''}
           onChange={(e) => updateFilter('setCode', e.target.value || undefined)}
           style={{...SELECT_STYLE_MD, width: '100%'}}>

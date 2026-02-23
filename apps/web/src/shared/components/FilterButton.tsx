@@ -10,6 +10,7 @@ interface FilterButtonProps {
   inactiveColor?: string;
   inactiveTextColor?: string;
   size?: FilterButtonSize;
+  'aria-label'?: string;
 }
 
 const SIZE_STYLES: Record<FilterButtonSize, React.CSSProperties> = {
@@ -34,6 +35,7 @@ export function FilterButton({
   inactiveColor = COLORS.gray100,
   inactiveTextColor = COLORS.gray700,
   size = 'sm',
+  'aria-label': ariaLabel,
 }: FilterButtonProps) {
   const sizeStyle = SIZE_STYLES[size];
 
@@ -41,6 +43,7 @@ export function FilterButton({
     <button
       onClick={onClick}
       aria-pressed={active}
+      aria-label={ariaLabel}
       style={{
         ...sizeStyle,
         border: active ? `1px solid ${activeColor}80` : `1px solid transparent`,

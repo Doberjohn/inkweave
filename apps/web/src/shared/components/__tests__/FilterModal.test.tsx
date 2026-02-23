@@ -141,19 +141,6 @@ describe('FilterModal', () => {
     expect(onToggleType).toHaveBeenCalledWith('Character');
   });
 
-  it('should close on Enter or Space key on backdrop', () => {
-    const onClose = vi.fn();
-    render(<FilterModal {...defaultProps} onClose={onClose} />);
-
-    const backdrop = screen.getByTestId('filter-modal-backdrop');
-
-    fireEvent.keyDown(backdrop, {key: 'Enter'});
-    expect(onClose).toHaveBeenCalledTimes(1);
-
-    fireEvent.keyDown(backdrop, {key: ' '});
-    expect(onClose).toHaveBeenCalledTimes(2);
-  });
-
   it('should call onToggleCost when clicking cost button', () => {
     const onToggleCost = vi.fn();
     render(<FilterModal {...defaultProps} onToggleCost={onToggleCost} />);
@@ -271,10 +258,8 @@ describe('FilterModal', () => {
       rerender(<FilterModal {...defaultProps} isOpen={true} />);
 
       await waitFor(() => {
-        // Get all buttons with close filters label, find the actual button (not backdrop)
-        const closeButtons = screen.getAllByRole('button', {name: /close filters/i});
-        const actualCloseButton = closeButtons.find((btn) => btn.tagName === 'BUTTON');
-        expect(actualCloseButton).toHaveFocus();
+        // Verify close button receives focus
+        expect(screen.getByRole('button', {name: /close filters/i})).toHaveFocus();
       });
     });
 
@@ -288,9 +273,7 @@ describe('FilterModal', () => {
 
       // Wait for focus to move to close button
       await waitFor(() => {
-        const closeButtons = screen.getAllByRole('button', {name: /close filters/i});
-        const actualCloseButton = closeButtons.find((btn) => btn.tagName === 'BUTTON');
-        expect(actualCloseButton).toHaveFocus();
+        expect(screen.getByRole('button', {name: /close filters/i})).toHaveFocus();
       });
 
       rerender(<FilterModal {...defaultProps} isOpen={false} />);
@@ -359,10 +342,7 @@ describe('FilterModal', () => {
     it('should have accessible close button', () => {
       render(<FilterModal {...defaultProps} />);
 
-      // Get all buttons with close filters label, verify at least one is the actual button
-      const closeButtons = screen.getAllByRole('button', {name: /close filters/i});
-      const actualCloseButton = closeButtons.find((btn) => btn.tagName === 'BUTTON');
-      expect(actualCloseButton).toBeInTheDocument();
+      expect(screen.getByRole('button', {name: /close filters/i})).toBeInTheDocument();
     });
   });
 });

@@ -62,21 +62,26 @@ export function FilterModal({
   // Focus management: save previous focus, set initial focus, restore on close
   useEffect(() => {
     if (isOpen) {
-      // Save the currently focused element
       previousActiveElement.current = document.activeElement as HTMLElement;
-
-      // Set focus to close button when modal opens
       // Small delay ensures modal animation has started and element is focusable
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
         closeButtonRef.current?.focus();
       }, 100);
-
-      document.addEventListener('keydown', handleKeyDown);
       return () => {
-        document.removeEventListener('keydown', handleKeyDown);
-        // Restore focus when modal closes
-        previousActiveElement.current?.focus();
+        clearTimeout(timerId);
+        const prev = previousActiveElement.current;
+        if (prev && prev.isConnected) {
+          prev.focus();
+        }
       };
+    }
+  }, [isOpen]);
+
+  // Escape key listener (separate effect to avoid spurious focus restore)
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
     }
   }, [isOpen, handleKeyDown]);
 
@@ -87,17 +92,23 @@ export function FilterModal({
     const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
       'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
     );
+
+    if (focusableElements.length === 0) {
+      e.preventDefault();
+      return;
+    }
+
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
 
     if (e.shiftKey && document.activeElement === firstElement) {
       // Shift+Tab on first element: go to last
       e.preventDefault();
-      lastElement?.focus();
+      lastElement.focus();
     } else if (!e.shiftKey && document.activeElement === lastElement) {
       // Tab on last element: go to first
       e.preventDefault();
-      firstElement?.focus();
+      firstElement.focus();
     }
   };
 
@@ -111,16 +122,8 @@ export function FilterModal({
             animate={{opacity: 1}}
             exit={{opacity: 0}}
             transition={{duration: 0.2}}
-            role="button"
-            tabIndex={0}
+            aria-hidden="true"
             onClick={onClose}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onClose();
-              }
-            }}
-            aria-label="Close filters"
             data-testid="filter-modal-backdrop"
             style={{
               position: 'fixed',

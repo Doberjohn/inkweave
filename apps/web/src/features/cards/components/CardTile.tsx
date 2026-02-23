@@ -72,7 +72,7 @@ export const CardTile = memo(function CardTile({card, onClick, onSelect, isSelec
       {imgSrc && !imgError ? (
         <img
           src={imgSrc}
-          alt=""
+          alt={card.fullName || card.name || ''}
           loading="lazy"
           decoding="async"
           onError={() => setImgError(true)}

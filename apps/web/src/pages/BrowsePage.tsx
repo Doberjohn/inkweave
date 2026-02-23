@@ -72,11 +72,11 @@ export function BrowsePage() {
   );
 
   if (isMobile) {
-    return <div style={{minHeight: '100vh', fontFamily: FONTS.body}}>{cardList}</div>;
+    return <main style={{minHeight: '100vh', fontFamily: FONTS.body}}>{cardList}</main>;
   }
 
   return (
-    <div
+    <main
       style={{
         minHeight: '100vh',
         background: COLORS.background,
@@ -105,6 +105,6 @@ export function BrowsePage() {
         onFiltersChange={setFilters}
         onClearAll={clearAllFilters}
       />
-    </div>
+    </main>
   );
 }

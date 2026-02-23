@@ -84,7 +84,7 @@ export function CardSynergiesPage() {
   }
 
   return (
-    <div
+    <main
       style={{
         minHeight: '100vh',
         background: COLORS.background,
@@ -135,6 +135,6 @@ export function CardSynergiesPage() {
           showCardDetail={false}
         />
       </ErrorBoundary>
-    </div>
+    </main>
   );
 }
