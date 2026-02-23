@@ -159,22 +159,23 @@ export const BREAKPOINTS = {
 
 // Mobile-specific layout constants
 export const LAYOUT_MOBILE = {
-  headerHeight: 56,
-  bottomNavHeight: 56,
   cardTileImageWidth: 48,
   cardTileImageHeight: 67,
 } as const;
 
 // Z-index scale for layering
 export const Z_INDEX = {
-  mobileNav: 900,
   modalBackdrop: 999,
   modal: 1000,
   popoverBackdrop: 1099,
   popover: 1100,
 } as const;
 
-// Card types for filtering
+// Card type filter options (includes "Song" pseudo-type for UI filtering)
+export type CardTypeFilter = CardType | 'Song';
+export const CARD_TYPE_FILTERS: CardTypeFilter[] = ['Character', 'Action', 'Song', 'Item', 'Location'];
+
+/** @deprecated Use CARD_TYPE_FILTERS for filter UI */
 export const CARD_TYPES: CardType[] = ['Character', 'Action', 'Item', 'Location'];
 
 // Shared select styles (dark theme)
