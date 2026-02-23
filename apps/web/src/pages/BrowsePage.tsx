@@ -67,6 +67,7 @@ export function BrowsePage() {
         isMobile={isMobile}
         onBack={isMobile ? goHome : undefined}
         onFiltersClick={!isMobile ? () => setShowFilterModal(true) : undefined}
+        allCards={cards}
       />
     </ErrorBoundary>
   );

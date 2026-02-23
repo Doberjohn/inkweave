@@ -150,6 +150,39 @@ export const COLORS = {
 // All inks for iteration
 export const ALL_INKS: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
 
+// Known set codes
+export type SetCode = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11';
+
+// Set abbreviations (keyed by setCode)
+export const SET_ABBREVIATIONS: Record<SetCode, string> = {
+  '1': '1TFC',
+  '2': '2ROF',
+  '3': '3INK',
+  '4': '4URS',
+  '5': '5SSK',
+  '6': '6ARI',
+  '7': '7AZS',
+  '8': '8JAF',
+  '9': '9FAB',
+  '10': '10WHI',
+  '11': '11WSP',
+} as const;
+
+// Set full names (keyed by setCode)
+export const SET_NAMES: Record<SetCode, string> = {
+  '1': 'The First Chapter',
+  '2': 'Rise of the Floodborn',
+  '3': 'Into the Inklands',
+  '4': "Ursula's Return",
+  '5': 'Shimmering Skies',
+  '6': "Archazia's Island",
+  '7': 'Azurite Sea',
+  '8': 'The Reign of Jafar',
+  '9': 'Fabled',
+  '10': 'Whispers in the Well',
+  '11': 'Winterspell',
+} as const;
+
 // Breakpoints for responsive design
 export const BREAKPOINTS = {
   mobile: 480,
@@ -165,6 +198,7 @@ export const LAYOUT_MOBILE = {
 
 // Z-index scale for layering
 export const Z_INDEX = {
+  autocomplete: 900,
   modalBackdrop: 999,
   modal: 1000,
   popoverBackdrop: 1099,

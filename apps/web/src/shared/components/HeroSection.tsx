@@ -1,11 +1,16 @@
-import {useState} from 'react';
+import {useCallback, useState} from 'react';
 import {motion} from 'framer-motion';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../constants';
+import type {LorcanaCard} from 'lorcana-synergy-engine';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, Z_INDEX} from '../constants';
+import {useAutocomplete} from '../hooks/useAutocomplete';
+import {SearchAutocomplete} from './SearchAutocomplete';
 
 interface HeroSectionProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onSearchSubmit?: () => void;
+  cards?: LorcanaCard[];
+  onCardSelect?: (card: LorcanaCard) => void;
   isMobile?: boolean;
 }
 
@@ -13,10 +18,24 @@ export function HeroSection({
   searchQuery,
   onSearchChange,
   onSearchSubmit,
+  cards = [],
+  onCardSelect,
   isMobile,
 }: HeroSectionProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const isSearchEmpty = searchQuery.trim().length === 0;
+
+  const handleAutoSelect = useCallback(
+    (card: LorcanaCard) => onCardSelect?.(card),
+    [onCardSelect],
+  );
+
+  const autocomplete = useAutocomplete({
+    cards,
+    query: searchQuery,
+    onQueryChange: onSearchChange,
+    onSelect: handleAutoSelect,
+  });
 
   return (
     <div
@@ -29,7 +48,7 @@ export function HeroSection({
           ? {padding: `64px ${SPACING.lg}px 48px`}
           : {paddingBottom: 80}),
         position: 'relative',
-        zIndex: 1,
+        zIndex: 2,
         width: isMobile ? '100%' : undefined,
         boxSizing: 'border-box',
       }}>
@@ -109,18 +128,19 @@ export function HeroSection({
           width: '100%',
           maxWidth: isMobile ? undefined : 768,
         }}>
-        <div style={{flex: 1, position: 'relative'}}>
+        <div style={{flex: 1, position: 'relative', zIndex: Z_INDEX.autocomplete}}>
           {/* Search icon */}
           <svg
             aria-hidden="true"
             style={{
               position: 'absolute',
               left: 16,
-              top: '50%',
+              top: 28, // Vertically centered in 56px input
               transform: 'translateY(-50%)',
               width: 20,
               height: 20,
               pointerEvents: 'none',
+              zIndex: 1,
             }}
             viewBox="0 0 20 20"
             fill="none">
@@ -131,13 +151,25 @@ export function HeroSection({
             type="text"
             aria-label="Search for a card"
             placeholder="Search for a card..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
+            {...autocomplete.inputProps}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') onSearchSubmit?.();
+              // Let autocomplete handle keyboard nav first
+              autocomplete.inputProps.onKeyDown(e);
+              // If autocomplete didn't prevent default (no highlight + Enter), trigger search submit
+              if (!e.defaultPrevented && e.key === 'Enter') {
+                onSearchSubmit?.();
+              }
             }}
-            onFocus={() => setIsSearchFocused(true)}
-            onBlur={() => setIsSearchFocused(false)}
+            onFocus={() => {
+              autocomplete.inputProps.onFocus();
+              setIsSearchFocused(true);
+            }}
+            onBlur={() => {
+              autocomplete.inputProps.onBlur();
+              // Delay to match autocomplete's 150ms blur timeout so focus ring persists
+              // while user clicks a suggestion
+              setTimeout(() => setIsSearchFocused(false), 150);
+            }}
             data-testid="hero-search"
             style={{
               width: '100%',
@@ -157,6 +189,14 @@ export function HeroSection({
                 : 'none',
               transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
             }}
+          />
+          <SearchAutocomplete
+            suggestions={autocomplete.suggestions}
+            isOpen={autocomplete.isOpen}
+            highlightedIndex={autocomplete.highlightedIndex}
+            query={searchQuery}
+            listboxProps={autocomplete.listboxProps}
+            getOptionProps={autocomplete.getOptionProps}
           />
         </div>
         <motion.button

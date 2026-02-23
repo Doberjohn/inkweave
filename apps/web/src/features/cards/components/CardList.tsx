@@ -3,8 +3,9 @@ import type {LorcanaCard, Ink} from '../types';
 import type {CardFilterOptions, SetInfo} from '../loader';
 import type {CardTypeFilter} from '../../../shared/constants/theme';
 import {CardTile} from './CardTile';
-import {LoadingSpinner, FilterDrawer} from '../../../shared/components';
-import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT} from '../../../shared/constants';
+import {LoadingSpinner, FilterDrawer, SearchAutocomplete} from '../../../shared/components';
+import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, Z_INDEX} from '../../../shared/constants';
+import {useAutocomplete} from '../../../shared/hooks/useAutocomplete';
 
 interface CardListProps {
   cards: LorcanaCard[];
@@ -31,6 +32,8 @@ interface CardListProps {
   onBack?: () => void;
   /** Opens the filter modal (desktop browsing state) */
   onFiltersClick?: () => void;
+  /** Full unfiltered card list for autocomplete; falls back to the filtered `cards` prop if not provided */
+  allCards?: LorcanaCard[];
 }
 
 export function CardList({
@@ -56,11 +59,19 @@ export function CardList({
   isMobile = false,
   onBack,
   onFiltersClick,
+  allCards,
 }: CardListProps) {
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
 
   // Memoize the sliced array to avoid creating new array on every render
   const displayedCards = useMemo(() => cards.slice(0, LAYOUT.maxDisplayedCards), [cards]);
+
+  const autocomplete = useAutocomplete({
+    cards: allCards ?? cards,
+    query: searchQuery,
+    onQueryChange: onSearchChange,
+    onSelect: onCardSelect,
+  });
 
   // Mobile layout
   if (isMobile) {
@@ -106,23 +117,32 @@ export function CardList({
                     ←
                   </button>
                 )}
-                <input
-                  type="text"
-                  aria-label="Search cards"
-                  placeholder="Search cards..."
-                  value={searchQuery}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  style={{
-                    flex: 1,
-                    padding: '12px 16px',
-                    borderRadius: `${RADIUS.lg}px`,
-                    border: `1px solid ${COLORS.surfaceBorder}`,
-                    background: COLORS.surfaceAlt,
-                    color: COLORS.text,
-                    fontSize: '16px', // Prevent iOS zoom
-                    boxSizing: 'border-box',
-                  }}
-                />
+                <div style={{flex: 1, position: 'relative', zIndex: Z_INDEX.autocomplete}}>
+                  <input
+                    type="text"
+                    aria-label="Search cards"
+                    placeholder="Search cards..."
+                    {...autocomplete.inputProps}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: `${RADIUS.lg}px`,
+                      border: `1px solid ${COLORS.surfaceBorder}`,
+                      background: COLORS.surfaceAlt,
+                      color: COLORS.text,
+                      fontSize: '16px', // Prevent iOS zoom
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <SearchAutocomplete
+                    suggestions={autocomplete.suggestions}
+                    isOpen={autocomplete.isOpen}
+                    highlightedIndex={autocomplete.highlightedIndex}
+                    query={searchQuery}
+                    listboxProps={autocomplete.listboxProps}
+                    getOptionProps={autocomplete.getOptionProps}
+                  />
+                </div>
                 <button
                   onClick={() => setShowFilterDrawer(true)}
                   style={{
@@ -238,23 +258,33 @@ export function CardList({
             style={{padding: `${SPACING.lg}px`, paddingBottom: `${SPACING.sm}px`, flexShrink: 0}}>
             {/* Search + Filters */}
             <div style={{display: 'flex', gap: `${SPACING.sm}px`, marginBottom: `${SPACING.md}px`}}>
-              <input
-                type="text"
-                aria-label="Search cards"
-                placeholder="Search cards..."
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                style={{
-                  flex: 1,
-                  padding: '10px 12px',
-                  borderRadius: `${RADIUS.lg}px`,
-                  border: `1px solid ${COLORS.surfaceBorder}`,
-                  background: COLORS.surfaceAlt,
-                  color: COLORS.text,
-                  fontSize: `${FONT_SIZES.lg}px`,
-                  boxSizing: 'border-box',
-                }}
-              />
+              <div style={{flex: 1, position: 'relative', zIndex: Z_INDEX.autocomplete}}>
+                <input
+                  type="text"
+                  aria-label="Search cards"
+                  placeholder="Search cards..."
+                  {...autocomplete.inputProps}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: `${RADIUS.lg}px`,
+                    border: `1px solid ${COLORS.surfaceBorder}`,
+                    background: COLORS.surfaceAlt,
+                    color: COLORS.text,
+                    fontSize: `${FONT_SIZES.lg}px`,
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+                <SearchAutocomplete
+                  suggestions={autocomplete.suggestions}
+                  isOpen={autocomplete.isOpen}
+                  highlightedIndex={autocomplete.highlightedIndex}
+                  query={searchQuery}
+                  listboxProps={autocomplete.listboxProps}
+                  getOptionProps={autocomplete.getOptionProps}
+                />
+              </div>
               {onFiltersClick && (
                 <button
                   onClick={onFiltersClick}

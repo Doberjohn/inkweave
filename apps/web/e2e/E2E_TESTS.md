@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-23 active tests across 4 spec files. Each file runs on both `chromium` (desktop) and `mobile-chrome` projects but skips the irrelevant viewport, so 23 unique tests execute per run.
+28 active tests across 5 spec files. Each file runs on both `chromium` (desktop) and `mobile-chrome` projects but skips the irrelevant viewport, so 28 unique tests execute per run.
 
 ## `app-load.spec.ts` — 4 tests (desktop only)
 
@@ -46,6 +46,16 @@
 | should navigate to browse when searching from hero | Typing "Elsa" + Enter navigates to `/browse?q=Elsa`, hero hidden, CardList visible |
 | should navigate to browsing view via See all cards button | "See all cards" navigates away from hero, shows browse search input |
 | should open filter drawer in mobile browsing view | From browsing view, tap Filters button, drawer shows Amber/Sapphire/Steel ink buttons |
+
+## `search-autocomplete.spec.ts` — 5 tests (desktop only)
+
+| Test | What it verifies |
+|---|---|
+| should show autocomplete dropdown when typing 2+ characters | Typing "El" in hero search shows listbox with options |
+| should navigate to card page when clicking a suggestion | Clicking an autocomplete suggestion navigates to `/card/:id` |
+| should navigate to card via keyboard (ArrowDown + Enter) | ArrowDown + Enter selects suggestion and navigates to card page |
+| should close dropdown on Escape | Escape key dismisses autocomplete dropdown |
+| should show autocomplete on browse page search | Typing in browse page search shows autocomplete dropdown |
 
 ## Patterns
 
