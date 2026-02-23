@@ -81,10 +81,12 @@ export function useAutocomplete({
     [onQueryChange, minChars, debounceMs],
   );
 
-  // Compute suggestions from debounced query
+  // Compute suggestions from debounced query, sorted newest set first
   const suggestions = useMemo(() => {
     if (!debouncedQuery || debouncedQuery.length < minChars) return [];
-    return searchCardsByName(cards, debouncedQuery).slice(0, maxResults);
+    return searchCardsByName(cards, debouncedQuery)
+      .sort((a, b) => Number(b.setCode ?? 0) - Number(a.setCode ?? 0))
+      .slice(0, maxResults);
   }, [cards, debouncedQuery, minChars, maxResults]);
 
   const isOpen = isFocused && suggestions.length > 0 && query.length >= minChars;
