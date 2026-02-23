@@ -42,7 +42,7 @@ function HighlightedName({fullName, query}: {fullName: string; query: string}) {
   );
 }
 
-/** Camera icon SVG for card preview trigger. */
+/** Photo icon SVG for card preview trigger. */
 function PhotoIcon() {
   return (
     <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -89,8 +89,8 @@ export function SearchAutocomplete({
           {suggestions.map((card, index) => {
             const optionProps = getOptionProps(index);
             const isHighlighted = index === highlightedIndex;
-            const setAbbr = SET_ABBREVIATIONS[card.setCode ?? ''] ?? '';
-            const setName = SET_NAMES[card.setCode ?? ''] ?? '';
+            const setAbbr = SET_ABBREVIATIONS[card.setCode as keyof typeof SET_ABBREVIATIONS] ?? card.setCode ?? '';
+            const setName = SET_NAMES[card.setCode as keyof typeof SET_NAMES] ?? `Set ${card.setCode ?? 'Unknown'}`;
 
             return (
               <div

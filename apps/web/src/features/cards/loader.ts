@@ -150,7 +150,7 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
  * Parse set code to a numeric value for comparison
  * Regular sets (1-11) get their number, Q sets get a lower priority
  */
-function parseSetOrder(setCode: string | undefined): number {
+export function parseSetOrder(setCode: string | undefined): number {
   if (!setCode) return -1;
   const num = parseInt(setCode, 10);
   if (!isNaN(num)) return num;

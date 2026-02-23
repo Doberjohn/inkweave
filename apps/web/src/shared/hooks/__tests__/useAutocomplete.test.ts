@@ -235,6 +235,43 @@ describe('useAutocomplete', () => {
     expect(result.current.isOpen).toBe(false);
   });
 
+  it('mouseEnter on option updates highlightedIndex', () => {
+    const {result} = renderHook(() => useAutocomplete({...defaultOptions(), query: 'Elsa'}));
+    act(() => {
+      result.current.inputProps.onFocus();
+    });
+    expect(result.current.highlightedIndex).toBe(-1);
+    act(() => {
+      result.current.getOptionProps(1).onMouseEnter();
+    });
+    expect(result.current.highlightedIndex).toBe(1);
+  });
+
+  it('clears suggestions when query drops below minChars via onChange', () => {
+    const onQueryChange = vi.fn();
+    const {result, rerender} = renderHook(
+      ({query}) => useAutocomplete({...defaultOptions(), query, onQueryChange}),
+      {initialProps: {query: 'Elsa'}},
+    );
+
+    // Open with valid query
+    act(() => {
+      result.current.inputProps.onFocus();
+    });
+    expect(result.current.suggestions.length).toBeGreaterThan(0);
+
+    // Simulate backspacing to a single character
+    act(() => {
+      result.current.inputProps.onChange({
+        target: {value: 'E'},
+      } as React.ChangeEvent<HTMLInputElement>);
+    });
+    rerender({query: 'E'});
+
+    // Suggestions should clear immediately (no debounce needed)
+    expect(result.current.suggestions).toHaveLength(0);
+  });
+
   it('selection resets query and closes dropdown', () => {
     const onQueryChange = vi.fn();
     const onSelect = vi.fn();

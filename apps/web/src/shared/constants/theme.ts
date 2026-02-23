@@ -150,8 +150,11 @@ export const COLORS = {
 // All inks for iteration
 export const ALL_INKS: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
 
+// Known set codes
+export type SetCode = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11';
+
 // Set abbreviations (keyed by setCode)
-export const SET_ABBREVIATIONS: Record<string, string> = {
+export const SET_ABBREVIATIONS: Record<SetCode, string> = {
   '1': '1TFC',
   '2': '2ROF',
   '3': '3INK',
@@ -163,10 +166,10 @@ export const SET_ABBREVIATIONS: Record<string, string> = {
   '9': '9FAB',
   '10': '10WHI',
   '11': '11WSP',
-};
+} as const;
 
 // Set full names (keyed by setCode)
-export const SET_NAMES: Record<string, string> = {
+export const SET_NAMES: Record<SetCode, string> = {
   '1': 'The First Chapter',
   '2': 'Rise of the Floodborn',
   '3': 'Into the Inklands',
@@ -178,7 +181,7 @@ export const SET_NAMES: Record<string, string> = {
   '9': 'Fabled',
   '10': 'Whispers in the Well',
   '11': 'Winterspell',
-};
+} as const;
 
 // Breakpoints for responsive design
 export const BREAKPOINTS = {

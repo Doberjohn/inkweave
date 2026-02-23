@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useId, useMemo, useRef, useState} from 'react';
 import type {LorcanaCard} from 'lorcana-synergy-engine';
-import {searchCardsByName} from '../../features/cards/loader';
+import {searchCardsByName, parseSetOrder} from '../../features/cards/loader';
 
 interface UseAutocompleteOptions {
   cards: LorcanaCard[];
@@ -22,7 +22,7 @@ export interface UseAutocompleteReturn {
     onKeyDown: (e: React.KeyboardEvent) => void;
     onFocus: () => void;
     onBlur: () => void;
-    role: string;
+    role: 'combobox';
     'aria-expanded': boolean;
     'aria-autocomplete': 'list';
     'aria-controls': string;
@@ -30,11 +30,11 @@ export interface UseAutocompleteReturn {
   };
   listboxProps: {
     id: string;
-    role: string;
+    role: 'listbox';
   };
   getOptionProps: (index: number) => {
     id: string;
-    role: string;
+    role: 'option';
     'aria-selected': boolean;
     onMouseDown: (e: React.MouseEvent) => void;
     onMouseEnter: () => void;
@@ -81,11 +81,11 @@ export function useAutocomplete({
     [onQueryChange, minChars, debounceMs],
   );
 
-  // Compute suggestions from debounced query, sorted newest set first
+  // Compute suggestions from debounced query, sorted by descending set code
   const suggestions = useMemo(() => {
     if (!debouncedQuery || debouncedQuery.length < minChars) return [];
     return searchCardsByName(cards, debouncedQuery)
-      .sort((a, b) => Number(b.setCode ?? 0) - Number(a.setCode ?? 0))
+      .sort((a, b) => parseSetOrder(b.setCode) - parseSetOrder(a.setCode))
       .slice(0, maxResults);
   }, [cards, debouncedQuery, minChars, maxResults]);
 
@@ -97,7 +97,8 @@ export function useAutocomplete({
   }, []);
 
   const selectItem = useCallback(
-    (card: LorcanaCard) => {
+    (card: LorcanaCard | undefined) => {
+      if (!card) return; // Guard against stale closure race
       onSelect(card);
       onQueryChange('');
       close();
@@ -137,14 +138,14 @@ export function useAutocomplete({
   const handleFocus = useCallback(() => {
     clearTimeout(blurTimeoutRef.current);
     setIsFocused(true);
-    // Re-trigger debounce if query is valid (e.g., re-focusing after blur)
+    // Restore suggestions immediately if query is already valid (e.g., re-focusing after blur)
     if (query.length >= minChars) {
       setDebouncedQuery(query);
     }
   }, [query, minChars]);
 
   const handleBlur = useCallback(() => {
-    // Delay to allow mousedown on suggestions to fire
+    // Delay blur to allow mousedown on suggestion items to fire before dropdown closes
     blurTimeoutRef.current = setTimeout(() => {
       setIsFocused(false);
       setHighlightedIndex(-1);

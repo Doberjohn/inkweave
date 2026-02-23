@@ -166,7 +166,9 @@ export function HeroSection({
             }}
             onBlur={() => {
               autocomplete.inputProps.onBlur();
-              setIsSearchFocused(false);
+              // Delay to match autocomplete's 150ms blur timeout so focus ring persists
+              // while user clicks a suggestion
+              setTimeout(() => setIsSearchFocused(false), 150);
             }}
             data-testid="hero-search"
             style={{

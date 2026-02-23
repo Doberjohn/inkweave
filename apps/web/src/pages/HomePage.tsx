@@ -1,7 +1,7 @@
 import {useCallback, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {FeaturedCards} from '../features/cards';
-import {HeroSection, EtherealBackground} from '../shared/components';
+import {HeroSection, EtherealBackground, ErrorBoundary} from '../shared/components';
 import {COLORS, FONT_SIZES} from '../shared/constants';
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
@@ -34,14 +34,16 @@ export function HomePage() {
       }}>
       <EtherealBackground isMobile={isMobile} />
 
-      <HeroSection
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onSearchSubmit={handleSearchSubmit}
-        cards={cards}
-        onCardSelect={handleCardSelect}
-        isMobile={isMobile}
-      />
+      <ErrorBoundary>
+        <HeroSection
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onSearchSubmit={handleSearchSubmit}
+          cards={cards}
+          onCardSelect={handleCardSelect}
+          isMobile={isMobile}
+        />
+      </ErrorBoundary>
 
       <FeaturedCards
         cards={cards}

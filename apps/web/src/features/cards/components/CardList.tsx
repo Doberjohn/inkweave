@@ -4,7 +4,7 @@ import type {CardFilterOptions, SetInfo} from '../loader';
 import type {CardTypeFilter} from '../../../shared/constants/theme';
 import {CardTile} from './CardTile';
 import {LoadingSpinner, FilterDrawer, SearchAutocomplete} from '../../../shared/components';
-import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, Z_INDEX} from '../../../shared/constants';
 import {useAutocomplete} from '../../../shared/hooks/useAutocomplete';
 
 interface CardListProps {
@@ -117,7 +117,7 @@ export function CardList({
                     ←
                   </button>
                 )}
-                <div style={{flex: 1, position: 'relative'}}>
+                <div style={{flex: 1, position: 'relative', zIndex: Z_INDEX.autocomplete}}>
                   <input
                     type="text"
                     aria-label="Search cards"
@@ -258,7 +258,7 @@ export function CardList({
             style={{padding: `${SPACING.lg}px`, paddingBottom: `${SPACING.sm}px`, flexShrink: 0}}>
             {/* Search + Filters */}
             <div style={{display: 'flex', gap: `${SPACING.sm}px`, marginBottom: `${SPACING.md}px`}}>
-              <div style={{flex: 1, position: 'relative'}}>
+              <div style={{flex: 1, position: 'relative', zIndex: Z_INDEX.autocomplete}}>
                 <input
                   type="text"
                   aria-label="Search cards"
