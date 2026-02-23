@@ -174,7 +174,9 @@ export const Z_INDEX = {
   popover: 1100,
 } as const;
 
-// Card types for filtering
+// Card type filter options (includes "Song" pseudo-type for UI filtering)
+export type CardTypeFilter = CardType | 'Song';
+export const CARD_TYPE_FILTERS: CardTypeFilter[] = ['Character', 'Action', 'Song', 'Item', 'Location'];
 export const CARD_TYPES: CardType[] = ['Character', 'Action', 'Item', 'Location'];
 
 // Shared select styles (dark theme)

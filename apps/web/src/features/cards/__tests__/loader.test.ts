@@ -560,3 +560,36 @@ describe('Card Filtering - Additional Cases', () => {
     expect(results).toHaveLength(2);
   });
 });
+
+describe('Song Type Filtering', () => {
+  const cards: LorcanaCard[] = [
+    createCard({id: '1', type: 'Character', name: 'Elsa'}),
+    createCard({id: '2', type: 'Action', name: 'Dragon Fire'}),
+    createCard({id: '3', type: 'Action', isSong: true, name: 'Let It Go'}),
+    createCard({id: '4', type: 'Action', isSong: true, name: 'Be Our Guest'}),
+    createCard({id: '5', type: 'Item', name: 'Magic Broom'}),
+  ];
+
+  it('should filter Song to only song cards', () => {
+    const results = filterCards(cards, {type: 'Song'});
+    expect(results).toHaveLength(2);
+    expect(results.every((c) => c.isSong)).toBe(true);
+  });
+
+  it('should filter Action to only non-song actions', () => {
+    const results = filterCards(cards, {type: 'Action'});
+    expect(results).toHaveLength(1);
+    expect(results[0].name).toBe('Dragon Fire');
+  });
+
+  it('should filter Action + Song to all action cards', () => {
+    const results = filterCards(cards, {type: ['Action', 'Song']});
+    expect(results).toHaveLength(3);
+    expect(results.every((c) => c.type === 'Action')).toBe(true);
+  });
+
+  it('should combine Song with other types', () => {
+    const results = filterCards(cards, {type: ['Character', 'Song']});
+    expect(results).toHaveLength(3);
+  });
+});

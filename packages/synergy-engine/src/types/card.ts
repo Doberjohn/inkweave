@@ -23,6 +23,7 @@ export interface LorcanaCard {
   willpower?: number;
   lore?: number;
   keywords?: string[]; // Shift, Evasive, Singer, Challenger, etc.
+  isSong?: boolean; // True for Action cards with Song subtype
   imageUrl?: string;
   thumbnailUrl?: string;
   setCode?: string;

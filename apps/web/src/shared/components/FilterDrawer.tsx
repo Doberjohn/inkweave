@@ -1,7 +1,8 @@
 import {useEffect, useCallback} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
-import type {Ink, CardType, SetInfo} from '../../features/cards';
+import type {Ink, SetInfo} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards';
+import type {CardTypeFilter} from '../constants/theme';
 import {
   COLORS,
   FONT_SIZES,
@@ -16,7 +17,7 @@ interface FilterDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   inkFilters: Ink[];
-  typeFilters: CardType[];
+  typeFilters: CardTypeFilter[];
   costFilters: number[];
   filters: CardFilterOptions;
   activeFilterCount: number;
@@ -24,7 +25,7 @@ interface FilterDrawerProps {
   uniqueClassifications: string[];
   sets: SetInfo[];
   onToggleInk: (ink: Ink) => void;
-  onToggleType: (type: CardType) => void;
+  onToggleType: (type: CardTypeFilter) => void;
   onToggleCost: (cost: number) => void;
   onFiltersChange: (filters: CardFilterOptions) => void;
   onClearAll: () => void;

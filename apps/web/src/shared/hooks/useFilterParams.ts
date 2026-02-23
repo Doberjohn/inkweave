@@ -1,16 +1,17 @@
 import {useMemo, useCallback} from 'react';
 import {useSearchParams} from 'react-router-dom';
-import type {Ink, CardType} from '../../features/cards';
+import type {Ink} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards/loader';
+import type {CardTypeFilter} from '../constants/theme';
 
 const VALID_INKS = new Set<string>(['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel']);
-const VALID_TYPES = new Set<string>(['Character', 'Action', 'Item', 'Location']);
+const VALID_TYPES = new Set<string>(['Character', 'Action', 'Song', 'Item', 'Location']);
 
 function isValidInk(value: string): value is Ink {
   return VALID_INKS.has(value);
 }
 
-function isValidType(value: string): value is CardType {
+function isValidType(value: string): value is CardTypeFilter {
   return VALID_TYPES.has(value);
 }
 
@@ -43,8 +44,8 @@ export interface UseFilterParamsReturn {
   setSearchQuery: (query: string) => void;
   inkFilters: Ink[];
   toggleInk: (ink: Ink) => void;
-  typeFilters: CardType[];
-  toggleType: (type: CardType) => void;
+  typeFilters: CardTypeFilter[];
+  toggleType: (type: CardTypeFilter) => void;
   costFilters: number[];
   toggleCost: (cost: number) => void;
   filters: CardFilterOptions;
@@ -64,7 +65,7 @@ export function useFilterParams(): UseFilterParamsReturn {
     [searchParams],
   );
 
-  const typeFilters: CardType[] = useMemo(
+  const typeFilters: CardTypeFilter[] = useMemo(
     () => parseCommaSeparated(searchParams.get('type'), isValidType),
     [searchParams],
   );
@@ -133,7 +134,7 @@ export function useFilterParams(): UseFilterParamsReturn {
   );
 
   const toggleType = useCallback(
-    (type: CardType) => {
+    (type: CardTypeFilter) => {
       updateParams((p) => {
         const current = parseCommaSeparated(p.get('type'), isValidType);
         const next = current.includes(type)
