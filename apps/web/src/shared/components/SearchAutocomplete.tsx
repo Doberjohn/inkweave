@@ -97,7 +97,7 @@ export function SearchAutocomplete({
                 key={card.id}
                 {...optionProps}
                 style={{
-                  padding: `${SPACING.md}px ${SPACING.lg}px`,
+                  padding: `${SPACING.lg}px ${SPACING.xl}px`,
                   cursor: 'pointer',
                   fontSize: FONT_SIZES.lg,
                   color: COLORS.text,
@@ -108,7 +108,7 @@ export function SearchAutocomplete({
                       : undefined,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: SPACING.sm,
+                  gap: SPACING.lg,
                   transition: 'background 0.1s ease',
                 }}>
                 {/* Photo icon — hover to preview card */}
