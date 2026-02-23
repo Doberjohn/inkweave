@@ -12,6 +12,7 @@ export {FilterSection} from './FilterSection';
 export {Header} from './Header';
 export {HeroSection} from './HeroSection';
 export {InkIcon} from './InkIcon';
+export {SearchAutocomplete} from './SearchAutocomplete';
 export {FilterDrawer} from './FilterDrawer';
 export {LoadingSpinner} from './LoadingSpinner';
 export {EmptyState} from './EmptyState';

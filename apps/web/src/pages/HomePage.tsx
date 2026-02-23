@@ -38,6 +38,8 @@ export function HomePage() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onSearchSubmit={handleSearchSubmit}
+        cards={cards}
+        onCardSelect={handleCardSelect}
         isMobile={isMobile}
       />
 

@@ -241,7 +241,7 @@ export async function fetchCardsFromLocal(
 }
 
 /**
- * Search cards by name (fuzzy match)
+ * Search cards by name (case-insensitive substring match)
  */
 export function searchCardsByName(cards: LorcanaCard[], query: string): LorcanaCard[] {
   const lowerQuery = query.toLowerCase();

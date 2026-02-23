@@ -165,6 +165,7 @@ export const LAYOUT_MOBILE = {
 
 // Z-index scale for layering
 export const Z_INDEX = {
+  autocomplete: 900,
   modalBackdrop: 999,
   modal: 1000,
   popoverBackdrop: 1099,
