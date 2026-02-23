@@ -1,6 +1,6 @@
 import type {LorcanaCard} from '../../cards';
 import {INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT} from '../../../shared/constants';
-import {CardImage, InkIcon} from '../../../shared/components';
+import {CardImage, CardTextBlock, InkIcon} from '../../../shared/components';
 
 interface CardDetailProps {
   card: LorcanaCard;
@@ -104,19 +104,16 @@ export function CardDetail({card, onClear}: CardDetailProps) {
             Clear
           </button>
         </div>
-        {card.text && (
-          <p
+        {(card.textSections?.length || card.text) && (
+          <div
             style={{
               marginTop: '12px',
-              fontSize: `${FONT_SIZES.lg}px`,
-              color: COLORS.gray600,
-              lineHeight: 1.5,
               padding: '12px',
               background: COLORS.gray50,
               borderRadius: `${RADIUS.md}px`,
             }}>
-            {card.text}
-          </p>
+            <CardTextBlock card={card} />
+          </div>
         )}
       </div>
     </div>

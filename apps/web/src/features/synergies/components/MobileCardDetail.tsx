@@ -3,7 +3,7 @@ import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from '../../cards';
 import type {GroupedSynergies} from '../types';
 import {getDominantStrength} from '../utils';
-import {CardImage, CardLightbox} from '../../../shared/components';
+import {CardImage, CardLightbox, CardTextBlock} from '../../../shared/components';
 import {
   COLORS,
   FONT_SIZES,
@@ -152,7 +152,7 @@ export function MobileCardDetail({card, synergies, totalSynergyCount, onBack}: M
         )}
 
         {/* Ability text */}
-        {card.text && (
+        {(card.textSections?.length || card.text) && (
           <div
             style={{
               margin: `${SPACING.md}px ${SPACING.xxl}px 0`,
@@ -161,15 +161,7 @@ export function MobileCardDetail({card, synergies, totalSynergyCount, onBack}: M
               borderRadius: RADIUS.lg,
               padding: `${SPACING.sm}px ${SPACING.md}px`,
             }}>
-            <p
-              style={{
-                fontSize: FONT_SIZES.sm,
-                color: COLORS.text,
-                lineHeight: '16px',
-                margin: 0,
-              }}>
-              {card.text}
-            </p>
+            <CardTextBlock card={card} />
           </div>
         )}
 

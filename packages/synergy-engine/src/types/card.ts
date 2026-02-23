@@ -18,7 +18,8 @@ export interface LorcanaCard {
   inkwell: boolean;
   type: CardType; // Character, Action, Item, or Location
   classifications?: string[]; // Floodborn, Hero, Villain, Princess, etc.
-  text?: string; // abilities/rules text
+  text?: string; // full card text as a single string, used by synergy engine
+  textSections?: string[]; // same text split into ability blocks; prefer over text for display
   strength?: number;
   willpower?: number;
   lore?: number;

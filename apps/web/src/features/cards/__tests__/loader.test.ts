@@ -396,6 +396,107 @@ describe('loadCardsFromJSON', () => {
     expect(cards[0].setCode).toBeUndefined();
   });
 
+  it('should populate textSections from fullTextSections', () => {
+    const data = {
+      metadata: {formatVersion: '1.0', generatedOn: '2024-01-01', language: 'en'},
+      cards: [
+        {
+          id: 1,
+          name: 'Cinderella',
+          fullName: 'Cinderella - Gentle and Kind',
+          simpleName: 'cinderella',
+          cost: 5,
+          color: 'Sapphire',
+          inkwell: true,
+          type: 'Character',
+          fullText: 'Singer 5 (reminder)\nA WONDERFUL DREAM — effect',
+          fullTextSections: [
+            'Singer 5 (reminder)',
+            'A WONDERFUL DREAM — effect',
+          ],
+        },
+      ],
+    };
+
+    const cards = loadCardsFromJSON(data);
+
+    expect(cards[0].textSections).toEqual([
+      'Singer 5 (reminder)',
+      'A WONDERFUL DREAM — effect',
+    ]);
+  });
+
+  it('should filter empty/whitespace entries from fullTextSections', () => {
+    const data = {
+      metadata: {formatVersion: '1.0', generatedOn: '2024-01-01', language: 'en'},
+      cards: [
+        {
+          id: 1,
+          name: 'Test',
+          fullName: 'Test Card',
+          simpleName: 'test',
+          cost: 3,
+          color: 'Amber',
+          inkwell: true,
+          type: 'Character',
+          fullText: 'Ability one\nAbility two',
+          fullTextSections: ['Ability one', '', '  ', 'Ability two'],
+        },
+      ],
+    };
+
+    const cards = loadCardsFromJSON(data);
+
+    expect(cards[0].textSections).toEqual(['Ability one', 'Ability two']);
+  });
+
+  it('should set textSections to undefined when all entries are empty', () => {
+    const data = {
+      metadata: {formatVersion: '1.0', generatedOn: '2024-01-01', language: 'en'},
+      cards: [
+        {
+          id: 1,
+          name: 'Test',
+          fullName: 'Test Card',
+          simpleName: 'test',
+          cost: 3,
+          color: 'Amber',
+          inkwell: true,
+          type: 'Character',
+          fullText: 'Some text',
+          fullTextSections: ['', '  '],
+        },
+      ],
+    };
+
+    const cards = loadCardsFromJSON(data);
+
+    expect(cards[0].textSections).toBeUndefined();
+  });
+
+  it('should omit textSections when fullTextSections is absent', () => {
+    const data = {
+      metadata: {formatVersion: '1.0', generatedOn: '2024-01-01', language: 'en'},
+      cards: [
+        {
+          id: 1,
+          name: 'Test',
+          fullName: 'Test Card',
+          simpleName: 'test',
+          cost: 3,
+          color: 'Amber',
+          inkwell: true,
+          type: 'Character',
+          fullText: 'Some text',
+        },
+      ],
+    };
+
+    const cards = loadCardsFromJSON(data);
+
+    expect(cards[0].textSections).toBeUndefined();
+  });
+
   it('should handle cards without abilities', () => {
     const data = {
       metadata: {formatVersion: '1.0', generatedOn: '2024-01-01', language: 'en'},
