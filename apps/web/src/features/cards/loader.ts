@@ -21,6 +21,7 @@ interface LorcanaJSONCard {
     effect?: string;
   }>;
   fullText?: string;
+  fullTextSections?: string[];
   strength?: number;
   willpower?: number;
   lore?: number;
@@ -77,6 +78,12 @@ function parseInk(colorStr: string): Ink | null {
   return null;
 }
 
+/** Filter to non-empty text sections, returning undefined if none remain. */
+function nonEmptySections(sections?: string[]): string[] | undefined {
+  const filtered = sections?.filter((s) => s.trim() !== '');
+  return filtered?.length ? filtered : undefined;
+}
+
 /**
  * Transform a LorcanaJSON card to our LorcanaCard format
  */
@@ -127,6 +134,7 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
     isSong: isSong || undefined,
     classifications: classifications.length > 0 ? classifications : undefined,
     text: raw.fullText,
+    textSections: nonEmptySections(raw.fullTextSections),
     strength: raw.strength,
     willpower: raw.willpower,
     lore: raw.lore,

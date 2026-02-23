@@ -8,7 +8,7 @@ import {
   SPACING,
   LAYOUT,
 } from '../../../shared/constants';
-import {CardImage, InkIcon} from '../../../shared/components';
+import {CardImage, CardTextBlock, InkIcon} from '../../../shared/components';
 
 interface CardDetailPanelProps {
   card: LorcanaCard;
@@ -147,18 +147,15 @@ export const CardDetailPanel = memo(function CardDetailPanel({card, onClear}: Ca
       )}
 
       {/* Card text */}
-      {card.text && (
+      {(card.textSections?.length || card.text) && (
         <div
           style={{
-            fontSize: `${FONT_SIZES.sm}px`,
-            color: COLORS.gray600,
-            lineHeight: 1.5,
             padding: `${SPACING.sm}px`,
             background: COLORS.surfaceAlt,
             borderRadius: `${RADIUS.md}px`,
             border: `1px solid ${COLORS.surfaceBorder}`,
           }}>
-          {card.text}
+          <CardTextBlock card={card} />
         </div>
       )}
 
