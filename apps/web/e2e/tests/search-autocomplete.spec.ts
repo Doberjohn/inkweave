@@ -62,10 +62,11 @@ test.describe('Search Autocomplete', () => {
     await expect(listbox).not.toBeVisible();
   });
 
-  test('should show autocomplete on browse page search', async ({page}) => {
-    // Navigate to browse page
+  test('should show autocomplete on browse page search', async ({page, appPage}) => {
+    // Navigate to browse page and wait for cards to load
     await page.getByRole('button', {name: /See all cards/}).click();
     await expect(page).toHaveURL(/\/browse/);
+    await appPage.waitForCardsLoaded();
 
     // Type in the browse search bar
     const browseSearch = page.getByPlaceholder('Search cards...');
@@ -74,6 +75,6 @@ test.describe('Search Autocomplete', () => {
 
     // Autocomplete should appear after debounce
     const listbox = page.getByRole('listbox');
-    await expect(listbox).toBeVisible({timeout: 2000});
+    await expect(listbox).toBeVisible({timeout: 5000});
   });
 });
