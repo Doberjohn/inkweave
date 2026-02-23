@@ -43,13 +43,12 @@ function HighlightedName({fullName, query}: {fullName: string; query: string}) {
 }
 
 /** Camera icon SVG for card preview trigger. */
-function PhotoIcon({muted}: {muted?: boolean}) {
-  const color = muted ? COLORS.textDim : COLORS.textMuted;
+function PhotoIcon() {
   return (
-    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none">
-      <rect x="2" y="6" width="20" height="15" rx="3" stroke={color} strokeWidth="1.5" />
-      <circle cx="12" cy="14" r="4" stroke={color} strokeWidth="1.5" />
-      <path d="M8.5 6V5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1" stroke={color} strokeWidth="1.5" />
+    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="6" width="20" height="15" rx="3" stroke={COLORS.text} strokeWidth="1.5" />
+      <circle cx="12" cy="14" r="4" stroke={COLORS.text} strokeWidth="1.5" />
+      <path d="M8.5 6V5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1" stroke={COLORS.text} strokeWidth="1.5" />
     </svg>
   );
 }
@@ -100,7 +99,7 @@ export function SearchAutocomplete({
                 style={{
                   padding: `${SPACING.md}px ${SPACING.lg}px`,
                   cursor: 'pointer',
-                  fontSize: FONT_SIZES.md,
+                  fontSize: FONT_SIZES.lg,
                   color: COLORS.text,
                   background: isHighlighted ? COLORS.surfaceHover : 'transparent',
                   borderBottom:
@@ -124,15 +123,15 @@ export function SearchAutocomplete({
                   onMouseEnter={(e) => showPreview(card, e.clientX, e.clientY)}
                   onMouseMove={(e) => updatePosition(e.clientX, e.clientY)}
                   onMouseLeave={() => hidePreview()}>
-                  <PhotoIcon muted={!isHighlighted} />
+                  <PhotoIcon />
                 </span>
 
                 {/* Set abbreviation with tooltip */}
                 <span
                   title={setName}
                   style={{
-                    fontSize: FONT_SIZES.xs,
-                    color: COLORS.textDim,
+                    fontSize: FONT_SIZES.md,
+                    color: COLORS.text,
                     fontWeight: 500,
                     flexShrink: 0,
                     minWidth: 32,
