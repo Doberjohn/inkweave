@@ -8,117 +8,78 @@ describe('SynergyEngine', () => {
     it('should find synergies based on registered rules', () => {
       const engine = new SynergyEngine();
 
-      // Singer card
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Ariel',
-        fullName: 'Ariel - Spectacular Singer',
-        keywords: ['Singer 5'],
+      const elsaShift = createCard({
+        id: 'elsa-shift',
+        name: 'Elsa',
+        fullName: 'Elsa - Ice Maker',
+        cost: 7,
+        keywords: ['Shift 5'],
       });
 
-      // Song card
-      const song = createCard({
-        id: 'song-1',
-        name: 'Part of Your World',
-        type: 'Action',
+      const elsaBase = createCard({
+        id: 'elsa-base',
+        name: 'Elsa',
+        fullName: 'Elsa - Snow Queen',
         cost: 3,
-        classifications: ['Song'],
       });
 
-      const allCards = [singer, song];
-      const synergies = engine.findSynergies(singer, allCards);
+      const allCards = [elsaShift, elsaBase];
+      const synergies = engine.findSynergies(elsaShift, allCards);
 
       expect(synergies.length).toBeGreaterThan(0);
-      const keywordGroup = synergies.find((g) => g.type === 'keyword');
-      expect(keywordGroup).toBeDefined();
-      expect(keywordGroup?.synergies.some((s) => s.card.id === 'song-1')).toBe(true);
+      const shiftGroup = synergies.find((g) => g.type === 'shift');
+      expect(shiftGroup).toBeDefined();
+      expect(shiftGroup?.synergies.some((s) => s.card.id === 'elsa-base')).toBe(true);
     });
 
     it('should not include the source card in results', () => {
       const engine = new SynergyEngine();
 
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Ariel',
-        keywords: ['Singer 5'],
+      const elsaShift = createCard({
+        id: 'elsa-shift',
+        name: 'Elsa',
+        keywords: ['Shift 5'],
       });
 
-      const synergies = engine.findSynergies(singer, [singer]);
+      const synergies = engine.findSynergies(elsaShift, [elsaShift]);
 
       const allCards = synergies.flatMap((g) => g.synergies.map((s) => s.card.id));
-      expect(allCards).not.toContain('singer-1');
-    });
-
-    it('should group synergies by type', () => {
-      const engine = new SynergyEngine();
-
-      // Card with both Singer and Princess classification
-      const ariel = createCard({
-        id: 'ariel-1',
-        name: 'Ariel',
-        fullName: 'Ariel - Spectacular Singer',
-        keywords: ['Singer 5'],
-        classifications: ['Princess'],
-      });
-
-      const song = createCard({
-        id: 'song-1',
-        name: 'Part of Your World',
-        type: 'Action',
-        cost: 3,
-        classifications: ['Song'],
-      });
-
-      const princessCard = createCard({
-        id: 'princess-buff',
-        name: 'Royal Decree',
-        type: 'Action',
-        text: 'Your Princess characters get +1 strength.',
-      });
-
-      const synergies = engine.findSynergies(ariel, [ariel, song, princessCard]);
-
-      // Should have keyword synergy (singer+song)
-      const keywordGroup = synergies.find((g) => g.type === 'keyword');
-      expect(keywordGroup).toBeDefined();
-
-      // Should have classification synergy (princess tribal)
-      const classGroup = synergies.find((g) => g.type === 'classification');
-      expect(classGroup).toBeDefined();
+      expect(allCards).not.toContain('elsa-shift');
     });
 
     it('should sort synergies by strength (strong first)', () => {
       const engine = new SynergyEngine();
 
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Ariel',
-        keywords: ['Singer 7'],
+      const elsaShift = createCard({
+        id: 'elsa-shift',
+        name: 'Elsa',
+        fullName: 'Elsa - Ice Maker',
+        cost: 7,
+        keywords: ['Shift 5'],
       });
 
-      // Multiple songs with different costs
-      const cheapSong = createCard({
-        id: 'song-cheap',
-        name: 'A Song',
-        type: 'Action',
+      const elsaCheap = createCard({
+        id: 'elsa-cheap',
+        name: 'Elsa',
+        fullName: 'Elsa - Snow Queen',
         cost: 2,
-        classifications: ['Song'],
       });
 
-      const expensiveSong = createCard({
-        id: 'song-expensive',
-        name: 'Z Song',
-        type: 'Action',
-        cost: 6,
-        classifications: ['Song'],
+      const elsaMid = createCard({
+        id: 'elsa-mid',
+        name: 'Elsa',
+        fullName: 'Elsa - Frost Mage',
+        cost: 5,
       });
 
-      const synergies = engine.findSynergies(singer, [cheapSong, expensiveSong]);
-      const keywordGroup = synergies.find((g) => g.type === 'keyword');
+      const synergies = engine.findSynergies(elsaShift, [elsaCheap, elsaMid]);
+      const shiftGroup = synergies.find((g) => g.type === 'shift');
 
-      expect(keywordGroup).toBeDefined();
-      // Both should be found
-      expect(keywordGroup?.synergies).toHaveLength(2);
+      expect(shiftGroup).toBeDefined();
+      expect(shiftGroup?.synergies).toHaveLength(2);
+      // Strong (cost diff 5) should come before moderate (cost diff 2)
+      expect(shiftGroup?.synergies[0].strength).toBe('strong');
+      expect(shiftGroup?.synergies[1].strength).toBe('moderate');
     });
   });
 
@@ -126,25 +87,26 @@ describe('SynergyEngine', () => {
     it('should return true when cards have synergy', () => {
       const engine = new SynergyEngine();
 
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Ariel',
-        keywords: ['Singer 5'],
+      const elsaShift = createCard({
+        id: 'elsa-shift',
+        name: 'Elsa',
+        fullName: 'Elsa - Ice Maker',
+        cost: 7,
+        keywords: ['Shift 5'],
       });
 
-      const song = createCard({
-        id: 'song-1',
-        name: 'Part of Your World',
-        type: 'Action',
+      const elsaBase = createCard({
+        id: 'elsa-base',
+        name: 'Elsa',
+        fullName: 'Elsa - Snow Queen',
         cost: 3,
-        classifications: ['Song'],
       });
 
-      const result = engine.checkSynergy(singer, song);
+      const result = engine.checkSynergy(elsaShift, elsaBase);
 
       expect(result.hasSynergy).toBe(true);
       expect(result.synergies.length).toBeGreaterThan(0);
-      expect(result.synergies[0].type).toBe('keyword');
+      expect(result.synergies[0].type).toBe('shift');
     });
 
     it('should return false when cards have no synergy', () => {
@@ -173,25 +135,24 @@ describe('SynergyEngine', () => {
     it('should return a flat deduplicated list', () => {
       const engine = new SynergyEngine();
 
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Ariel',
-        keywords: ['Singer 5'],
+      const elsaShift = createCard({
+        id: 'elsa-shift',
+        name: 'Elsa',
+        fullName: 'Elsa - Ice Maker',
+        cost: 7,
+        keywords: ['Shift 5'],
       });
 
-      const song = createCard({
-        id: 'song-1',
-        name: 'Part of Your World',
-        type: 'Action',
+      const elsaBase = createCard({
+        id: 'elsa-base',
+        name: 'Elsa',
+        fullName: 'Elsa - Snow Queen',
         cost: 3,
-        classifications: ['Song'],
       });
 
-      const results = engine.findSynergiesFlat(singer, [singer, song]);
+      const results = engine.findSynergiesFlat(elsaShift, [elsaShift, elsaBase]);
 
-      // Should be flat array
       expect(Array.isArray(results)).toBe(true);
-      // Each result should have type property
       results.forEach((r) => {
         expect(r.type).toBeDefined();
         expect(r.card).toBeDefined();
