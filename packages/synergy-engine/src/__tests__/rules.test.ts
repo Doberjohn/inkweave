@@ -110,6 +110,91 @@ describe('Synergy Rules', () => {
       expect(shiftRule.matches(shiftAction)).toBe(false);
     });
   });
+
+  describe('Lore Loss', () => {
+    const loreLossRule = getRuleById('lore-loss')!;
+
+    const thievery = createCard({
+      id: 'thievery',
+      name: 'Thievery',
+      fullName: 'Thievery',
+      type: 'Action',
+      ink: 'Ruby',
+      cost: 1,
+      text: 'Chosen opponent loses 1 lore. Gain 1 lore.',
+    });
+
+    const jasmine = createCard({
+      id: 'jasmine-rebellious',
+      name: 'Jasmine',
+      fullName: 'Jasmine - Rebellious Princess',
+      ink: 'Ruby',
+      cost: 3,
+      text: "YOU'LL NEVER MISS IT Whenever this character quests, each opponent loses 1 lore.",
+    });
+
+    const flotilla = createCard({
+      id: 'flotilla',
+      name: 'Flotilla',
+      fullName: 'Flotilla - Coconut Armada',
+      type: 'Location',
+      ink: 'Ruby',
+      cost: 2,
+      text: 'TINY THIEVES At the start of your turn, if you have a character here, all opponents lose 1 lore and you gain lore equal to the lore lost this way.',
+    });
+
+    const unrelatedCard = createCard({
+      id: 'anna-1',
+      name: 'Anna',
+      fullName: 'Anna - Heir to Arendelle',
+      cost: 3,
+      text: 'When you play this character, draw a card.',
+    });
+
+    it('should match cards with lore loss text', () => {
+      expect(loreLossRule.matches(thievery)).toBe(true);
+      expect(loreLossRule.matches(jasmine)).toBe(true);
+      expect(loreLossRule.matches(flotilla)).toBe(true);
+    });
+
+    it('should not match cards without lore loss text', () => {
+      expect(loreLossRule.matches(unrelatedCard)).toBe(false);
+      expect(loreLossRule.matches(createCard({}))).toBe(false);
+    });
+
+    it('should match lore loss without numeric amount', () => {
+      const nanisPayback = createCard({
+        id: 'nanis-payback',
+        name: "Nani's Payback",
+        text: 'Each opponent loses lore equal to the damage on chosen character of yours, to a maximum of 4 lore each.',
+      });
+      expect(loreLossRule.matches(nanisPayback)).toBe(true);
+    });
+
+    it('should find other lore removers as strong synergies', () => {
+      const allCards = [thievery, jasmine, flotilla, unrelatedCard];
+      const synergies = loreLossRule.findSynergies(thievery, allCards);
+
+      expect(synergies).toHaveLength(2);
+      expect(synergies.every((s) => s.strength === 'strong')).toBe(true);
+      expect(synergies.find((s) => s.card.id === 'jasmine-rebellious')).toBeDefined();
+      expect(synergies.find((s) => s.card.id === 'flotilla')).toBeDefined();
+    });
+
+    it('should not include the selected card itself', () => {
+      const allCards = [thievery, jasmine];
+      const synergies = loreLossRule.findSynergies(thievery, allCards);
+
+      expect(synergies.find((s) => s.card.id === 'thievery')).toBeUndefined();
+    });
+
+    it('should mark synergies as bidirectional', () => {
+      const allCards = [thievery, jasmine];
+      const synergies = loreLossRule.findSynergies(thievery, allCards);
+
+      expect(synergies[0].bidirectional).toBe(true);
+    });
+  });
 });
 
 describe('Card Helper Functions', () => {

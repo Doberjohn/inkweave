@@ -1,5 +1,8 @@
 import type {SynergyRule, SynergyMatch, SynergyStrength} from '../types/synergy.js';
-import {hasKeyword, getBaseName, isCharacter} from '../utils/cardHelpers.js';
+import {hasKeyword, getBaseName, isCharacter, textContains} from '../utils/cardHelpers.js';
+
+/** Cards that directly make the opponent lose lore */
+const LORE_LOSS_PATTERN = /(?:each |chosen |all )?opponents? loses? (?:\d+ )?lore/i;
 
 // ============================================
 // SYNERGY RULES
@@ -61,6 +64,29 @@ export const synergyRules: SynergyRule[] = [
             bidirectional: true,
           };
         });
+    },
+  },
+
+  // --------------------------------------------
+  // LORE LOSS
+  // --------------------------------------------
+  {
+    id: 'lore-loss',
+    name: 'Lore Loss',
+    type: 'mechanic',
+    description: 'Cards that make the opponent lose lore reinforce the same denial strategy',
+
+    matches: (card) => textContains(card, LORE_LOSS_PATTERN),
+
+    findSynergies: (card, allCards) => {
+      return allCards
+        .filter((other) => other.id !== card.id && textContains(other, LORE_LOSS_PATTERN))
+        .map((other): SynergyMatch => ({
+          card: other,
+          strength: 'strong',
+          explanation: `Both ${card.name} and ${other.name} make the opponent lose lore`,
+          bidirectional: true,
+        }));
     },
   },
 ];
