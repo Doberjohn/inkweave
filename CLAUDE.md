@@ -87,15 +87,9 @@ React web application that consumes the synergy engine package.
 
 Built-in rules in the engine package:
 
-1. Singer + Songs - Singer keyword plays Songs at reduced cost
-2. Evasive + Quest - Evasive characters trigger quest abilities safely
-3. Shift Targets - Floodborn cards shift onto same-named characters
-4. Princess/Villain/Hero Tribal - Classification-based synergies
-5. Challenger + Buffs - Challengers benefit from strength boosts
-6. Exert Synergies - Exert effects + exerted-enemy benefits
-7. Draw Engine - Draw triggers + "when you draw" effects
-8. Ink Ramp - Ink acceleration + high-cost cards
-9. Ward + Aggression - Ward protects against removal
+1. Shift Targets (bidirectional) - Shift cards find same-named targets; base characters find Shift cards that can shift onto them
+
+See `packages/synergy-engine/REMOVED_RULES.md` for archived rules (Singer, Evasive, Tribal, Challenger, Exert, Draw, Ink Ramp, Ward).
 
 ## Commands
 
