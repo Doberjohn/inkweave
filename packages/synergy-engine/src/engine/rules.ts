@@ -13,8 +13,9 @@ export const synergyRules: SynergyRule[] = [
     id: 'shift-targets',
     name: 'Shift Targets',
     type: 'shift',
-    description: 'Floodborn characters can Shift onto same-named characters',
+    description: 'Characters with Shift and their same-named targets (bidirectional)',
 
+    // Matches all characters: Shift cards find targets (forward), base characters find Shift cards (reverse)
     matches: (card) => isCharacter(card),
 
     findSynergies: (card, allCards) => {

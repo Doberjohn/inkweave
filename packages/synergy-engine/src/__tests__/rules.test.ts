@@ -99,6 +99,16 @@ describe('Synergy Rules', () => {
       expect(synergies.find((s) => s.card.id === 'elsa-base')).toBeDefined();
       expect(synergies.find((s) => s.card.id === 'elsa-shift-2')).toBeUndefined();
     });
+
+    it('should not match non-Character cards', () => {
+      const shiftAction = createCard({
+        id: 'action-1',
+        type: 'Action',
+        keywords: ['Shift 3'],
+      });
+
+      expect(shiftRule.matches(shiftAction)).toBe(false);
+    });
   });
 });
 
