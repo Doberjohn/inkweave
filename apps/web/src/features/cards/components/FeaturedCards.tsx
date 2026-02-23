@@ -86,12 +86,12 @@ export const FeaturedCards = memo(function FeaturedCards({cards, onCardSelect, i
         <DividerLine />
       </div>
 
-      {/* Responsive grid: 2-col mobile (3 rows), 6-col desktop */}
+      {/* Responsive grid: 3-col mobile (2 rows), 6-col desktop */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : `repeat(${FEATURED_COUNT}, 1fr)`,
-          gap: isMobile ? `${SPACING.lg}px` : '24px',
+          gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : `repeat(${FEATURED_COUNT}, 1fr)`,
+          gap: isMobile ? `${SPACING.sm}px` : `${SPACING.xxl}px`,
         }}>
         {featured.map((card) => (
           <CardTile
