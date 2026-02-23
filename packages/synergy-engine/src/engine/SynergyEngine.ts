@@ -14,6 +14,7 @@ const TYPE_LABELS: Record<SynergyType, string> = {
   shift: 'Shift Targets',
   named: 'Named References',
   mechanic: 'Mechanical Synergies',
+  location: 'Location Synergies',
   ink: 'Ink Synergies',
   'cost-curve': 'Cost Curve',
 };
@@ -31,6 +32,7 @@ const TYPE_ORDER: SynergyType[] = [
   'keyword',
   'classification',
   'mechanic',
+  'location',
   'named',
   'ink',
   'cost-curve',

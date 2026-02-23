@@ -96,6 +96,68 @@ export function isLocation(card: LorcanaCard): boolean {
   return card.type === 'Location';
 }
 
+// ============================================
+// LOCATION SUPPORT DETECTION
+// ============================================
+
+/** Text patterns for each location-support role */
+export const LOCATION_PATTERNS = {
+  'at-payoff': /while.*at a location|if.*at a location|is at a location/i,
+  move: /move.*to.*location|moves to a location|move.*character.*location/i,
+  'move-exclude': /move.*damage/i,
+  'play-trigger': /when(?:ever)? you play a location|whenever.*play a location/i,
+  'in-play-check': /if you have a location|while you have a.*(location)|for each location/i,
+  tutor: /search.*location card|reveal.*location card|return a location|location card from/i,
+  buff: /your locations|locations gain|locations get|at a location.*gets?\s\+/i,
+} as const;
+
+export type LocationRole =
+  | 'at-payoff'
+  | 'move'
+  | 'play-trigger'
+  | 'in-play-check'
+  | 'tutor'
+  | 'buff';
+
+/**
+ * Get all location roles a card fulfills.
+ * Returns empty array for cards with no location interaction.
+ */
+export function getLocationRoles(card: LorcanaCard): LocationRole[] {
+  if (isLocation(card)) return [];
+  if (!card.text) return [];
+
+  const roles: LocationRole[] = [];
+
+  if (LOCATION_PATTERNS['at-payoff'].test(card.text))
+    roles.push('at-payoff');
+
+  if (
+    LOCATION_PATTERNS.move.test(card.text) &&
+    !LOCATION_PATTERNS['move-exclude'].test(card.text)
+  )
+    roles.push('move');
+
+  if (LOCATION_PATTERNS['play-trigger'].test(card.text))
+    roles.push('play-trigger');
+
+  if (LOCATION_PATTERNS['in-play-check'].test(card.text))
+    roles.push('in-play-check');
+
+  if (LOCATION_PATTERNS.tutor.test(card.text)) roles.push('tutor');
+
+  if (LOCATION_PATTERNS.buff.test(card.text)) roles.push('buff');
+
+  return roles;
+}
+
+/**
+ * Check if a card is a location-support card (matches any location pattern).
+ */
+export function isLocationSupportCard(card: LorcanaCard): boolean {
+  return getLocationRoles(card).length > 0;
+}
+
 /**
  * Check if card text contains a NEGATIVE effect targeting a classification
  * e.g., "exert chosen Princess", "banish target Villain"

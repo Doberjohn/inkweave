@@ -41,5 +41,9 @@ export {
   isLocation,
   hasNegativeTargeting,
   hasPositiveClassificationEffect,
+  isLocationSupportCard,
+  getLocationRoles,
+  LOCATION_PATTERNS,
   isCardType,
 } from './utils/index.js';
+export type {LocationRole} from './utils/cardHelpers.js';

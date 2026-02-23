@@ -1,6 +1,7 @@
 import {describe, it, expect} from 'vitest';
-import {getRuleById} from '../engine/rules.js';
-import {hasNegativeTargeting, hasPositiveClassificationEffect} from '../utils/cardHelpers.js';
+import {getRuleById, getCrossSynergyStrength} from '../engine/rules.js';
+import {hasNegativeTargeting, hasPositiveClassificationEffect, getLocationRoles, isLocationSupportCard} from '../utils/cardHelpers.js';
+import {SynergyEngine} from '../engine/SynergyEngine.js';
 import {createCard} from './fixtures.js';
 
 describe('Synergy Rules', () => {
@@ -372,6 +373,207 @@ describe('Synergy Rules', () => {
       const synergies = loreLossRule.findSynergies(thievery, allCards);
 
       expect(synergies[0].bidirectional).toBe(true);
+    });
+  });
+});
+
+describe('Location Synergy Rules', () => {
+  // --- Fixtures based on real Lorcana cards ---
+  const elsaIceArtisan = createCard({
+    id: 'elsa-ice-artisan',
+    name: 'Elsa',
+    fullName: 'Elsa - Ice Artisan',
+    cost: 6,
+    ink: 'Ruby',
+    keywords: ['Shift 4'],
+    text: 'Shift 4 ENDLESS WINTER When you play this character and whenever you play a location, you may exert chosen character with 3 or less. DISTANT CALL While this character is at a location, she gets +3 lore.',
+  });
+
+  const transportPod = createCard({
+    id: 'transport-pod',
+    name: 'Transport Pod',
+    fullName: 'Transport Pod',
+    type: 'Item',
+    cost: 1,
+    ink: 'Emerald',
+    text: "GIVE 'EM A SHOW At the start of your turn, you may move a character of yours to a location for free.",
+  });
+
+  const johnSilver = createCard({
+    id: 'john-silver-treasure',
+    name: 'John Silver',
+    fullName: 'John Silver - Greedy Treasure Seeker',
+    cost: 3,
+    ink: 'Ruby',
+    text: 'CHART YOUR OWN COURSE For each location you have in play, this character gains Resist +1 and gets +1 lore.',
+  });
+
+  const islandsPulled = createCard({
+    id: 'islands-pulled',
+    name: 'The Islands I Pulled from the Sea',
+    fullName: 'The Islands I Pulled from the Sea',
+    type: 'Action',
+    cost: 3,
+    ink: 'Ruby',
+    text: 'Search your deck for a location card, reveal that card to all players, and put it into your hand. Then, shuffle your deck.',
+  });
+
+  const felixSteward = createCard({
+    id: 'felix-steward',
+    name: 'Fix-It Felix, Jr.',
+    fullName: 'Fix-It Felix, Jr. - Niceland Steward',
+    cost: 5,
+    ink: 'Amber',
+    keywords: ['Shift 3'],
+    text: 'Shift 3 BUILDING TOGETHER Your locations get +2 willpower.',
+  });
+
+  const agrabah = createCard({
+    id: 'agrabah',
+    name: 'Agrabah',
+    fullName: 'Agrabah - Marketplace',
+    type: 'Location',
+    cost: 3,
+    ink: 'Ruby',
+  });
+
+  const unrelatedCard = createCard({
+    id: 'anna-plain',
+    name: 'Anna',
+    fullName: 'Anna - Heir to Arendelle',
+    cost: 3,
+    text: 'When you play this character, draw a card.',
+  });
+
+  const anotherLocation = createCard({
+    id: 'motunui',
+    name: 'Motunui',
+    fullName: 'Motunui - Island Paradise',
+    type: 'Location',
+    cost: 2,
+    ink: 'Emerald',
+  });
+
+  describe('Location role detection', () => {
+    it('should detect at-payoff and play-trigger on Elsa - Ice Artisan', () => {
+      const roles = getLocationRoles(elsaIceArtisan);
+      expect(roles).toContain('at-payoff');
+      expect(roles).toContain('play-trigger');
+    });
+
+    it('should detect move role on Transport Pod', () => {
+      expect(getLocationRoles(transportPod)).toEqual(['move']);
+    });
+
+    it('should detect in-play-check on John Silver', () => {
+      expect(getLocationRoles(johnSilver)).toContain('in-play-check');
+    });
+
+    it('should detect tutor on The Islands I Pulled from the Sea', () => {
+      expect(getLocationRoles(islandsPulled)).toEqual(['tutor']);
+    });
+
+    it('should detect buff on Felix Steward', () => {
+      expect(getLocationRoles(felixSteward)).toContain('buff');
+    });
+
+    it('should return empty for Location cards', () => {
+      expect(getLocationRoles(agrabah)).toEqual([]);
+      expect(isLocationSupportCard(agrabah)).toBe(false);
+    });
+
+    it('should return empty for unrelated cards', () => {
+      expect(getLocationRoles(unrelatedCard)).toEqual([]);
+      expect(isLocationSupportCard(unrelatedCard)).toBe(false);
+    });
+  });
+
+  describe('Location ↔ support card synergies', () => {
+    const engine = new SynergyEngine();
+    const allCards = [elsaIceArtisan, transportPod, johnSilver, islandsPulled, felixSteward, agrabah, anotherLocation, unrelatedCard];
+
+    it('should find location-support cards when a Location is selected', () => {
+      const groups = engine.findSynergies(agrabah, allCards);
+      const locationGroup = groups.find((g) => g.type === 'location');
+
+      expect(locationGroup).toBeDefined();
+      const cardIds = locationGroup!.synergies.map((s) => s.card.id);
+      expect(cardIds).toContain('elsa-ice-artisan');
+      expect(cardIds).toContain('transport-pod');
+      expect(cardIds).toContain('john-silver-treasure');
+      expect(cardIds).toContain('islands-pulled');
+      expect(cardIds).toContain('felix-steward');
+      // Should NOT include other locations or unrelated cards
+      expect(cardIds).not.toContain('motunui');
+      expect(cardIds).not.toContain('anna-plain');
+    });
+
+    it('should find Locations when a support card is selected', () => {
+      const groups = engine.findSynergies(elsaIceArtisan, allCards);
+      const locationGroup = groups.find((g) => g.type === 'location');
+
+      expect(locationGroup).toBeDefined();
+      const cardIds = locationGroup!.synergies.map((s) => s.card.id);
+      expect(cardIds).toContain('agrabah');
+      expect(cardIds).toContain('motunui');
+    });
+
+    it('should assign strong strength for at-payoff cards with Locations', () => {
+      const groups = engine.findSynergies(agrabah, allCards);
+      const locationGroup = groups.find((g) => g.type === 'location')!;
+      const elsaSynergy = locationGroup.synergies.find((s) => s.card.id === 'elsa-ice-artisan');
+
+      expect(elsaSynergy!.strength).toBe('strong');
+    });
+
+    it('should assign moderate strength for move/tutor cards with Locations', () => {
+      const groups = engine.findSynergies(agrabah, allCards);
+      const locationGroup = groups.find((g) => g.type === 'location')!;
+      const podSynergy = locationGroup.synergies.find((s) => s.card.id === 'transport-pod');
+      const tutorSynergy = locationGroup.synergies.find((s) => s.card.id === 'islands-pulled');
+
+      expect(podSynergy!.strength).toBe('moderate');
+      expect(tutorSynergy!.strength).toBe('moderate');
+    });
+
+    it('should not produce location synergies for unrelated cards', () => {
+      const groups = engine.findSynergies(unrelatedCard, allCards);
+      const locationGroup = groups.find((g) => g.type === 'location');
+
+      expect(locationGroup).toBeUndefined();
+    });
+  });
+
+  describe('Cross-synergy between support cards', () => {
+    it('should return moderate when both have high-value roles', () => {
+      // at-payoff + play-trigger vs buff
+      expect(getCrossSynergyStrength(['at-payoff', 'play-trigger'], ['buff'])).toBe('moderate');
+    });
+
+    it('should return weak when one has high-value and other has support role', () => {
+      expect(getCrossSynergyStrength(['at-payoff'], ['move'])).toBe('weak');
+      expect(getCrossSynergyStrength(['tutor'], ['buff'])).toBe('weak');
+    });
+
+    it('should return null for cards with only the same roles', () => {
+      expect(getCrossSynergyStrength(['at-payoff'], ['at-payoff'])).toBe(null);
+      expect(getCrossSynergyStrength(['move', 'tutor'], ['move', 'tutor'])).toBe(null);
+    });
+
+    it('should return null when only support roles on both sides', () => {
+      expect(getCrossSynergyStrength(['move'], ['tutor'])).toBe(null);
+    });
+
+    it('should show cross-synergy between Elsa and Felix in engine results', () => {
+      const engine = new SynergyEngine();
+      const allCards = [elsaIceArtisan, felixSteward, agrabah];
+      const groups = engine.findSynergies(elsaIceArtisan, allCards);
+      const locationGroup = groups.find((g) => g.type === 'location');
+
+      expect(locationGroup).toBeDefined();
+      const felixMatch = locationGroup!.synergies.find((s) => s.card.id === 'felix-steward');
+      expect(felixMatch).toBeDefined();
+      expect(felixMatch!.strength).toBe('moderate');
     });
   });
 });
