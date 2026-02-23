@@ -1,7 +1,8 @@
 import {AnimatePresence, motion} from 'framer-motion';
 import type {LorcanaCard} from 'lorcana-synergy-engine';
+import {useCardPreview} from '../../features/cards/components/useCardPreview';
 import type {UseAutocompleteReturn} from '../hooks/useAutocomplete';
-import {COLORS, FONT_SIZES, INK_COLORS, RADIUS, SPACING, Z_INDEX} from '../constants';
+import {COLORS, FONT_SIZES, RADIUS, SET_ABBREVIATIONS, SET_NAMES, SPACING, Z_INDEX} from '../constants';
 
 interface SearchAutocompleteProps {
   suggestions: LorcanaCard[];
@@ -41,6 +42,18 @@ function HighlightedName({fullName, query}: {fullName: string; query: string}) {
   );
 }
 
+/** Camera icon SVG for card preview trigger. */
+function PhotoIcon({muted}: {muted?: boolean}) {
+  const color = muted ? COLORS.textDim : COLORS.textMuted;
+  return (
+    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="6" width="20" height="15" rx="3" stroke={color} strokeWidth="1.5" />
+      <circle cx="12" cy="14" r="4" stroke={color} strokeWidth="1.5" />
+      <path d="M8.5 6V5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1" stroke={color} strokeWidth="1.5" />
+    </svg>
+  );
+}
+
 export function SearchAutocomplete({
   suggestions,
   isOpen,
@@ -49,6 +62,8 @@ export function SearchAutocomplete({
   listboxProps,
   getOptionProps,
 }: SearchAutocompleteProps) {
+  const {showPreview, updatePosition, hidePreview} = useCardPreview();
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -75,7 +90,8 @@ export function SearchAutocomplete({
           {suggestions.map((card, index) => {
             const optionProps = getOptionProps(index);
             const isHighlighted = index === highlightedIndex;
-            const inkColor = INK_COLORS[card.ink] ?? {bg: '#252530', text: '#a0a0b0', border: '#6b7280'};
+            const setAbbr = SET_ABBREVIATIONS[card.setCode ?? ''] ?? '';
+            const setName = SET_NAMES[card.setCode ?? ''] ?? '';
 
             return (
               <div
@@ -93,41 +109,48 @@ export function SearchAutocomplete({
                       : undefined,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
                   gap: SPACING.sm,
                   transition: 'background 0.1s ease',
                 }}>
-                <span style={{flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
-                  <HighlightedName fullName={card.fullName} query={query} />
-                </span>
+                {/* Photo icon — hover to preview card */}
                 <span
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: SPACING.xs,
                     flexShrink: 0,
+                    cursor: 'pointer',
+                    padding: 2,
+                  }}
+                  onMouseEnter={(e) => showPreview(card, e.clientX, e.clientY)}
+                  onMouseMove={(e) => updatePosition(e.clientX, e.clientY)}
+                  onMouseLeave={() => hidePreview()}>
+                  <PhotoIcon muted={!isHighlighted} />
+                </span>
+
+                {/* Set abbreviation with tooltip */}
+                <span
+                  title={setName}
+                  style={{
+                    fontSize: FONT_SIZES.xs,
+                    color: COLORS.textDim,
+                    fontWeight: 500,
+                    flexShrink: 0,
+                    minWidth: 32,
+                    letterSpacing: '0.3px',
                   }}>
-                  {/* Ink color dot */}
-                  <span
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: inkColor.border,
-                    }}
-                    title={card.ink}
-                  />
-                  {/* Cost badge */}
-                  <span
-                    style={{
-                      fontSize: FONT_SIZES.xs,
-                      color: COLORS.muted,
-                      fontWeight: 500,
-                      minWidth: 14,
-                      textAlign: 'right',
-                    }}>
-                    {card.cost}⬡
-                  </span>
+                  {setAbbr}
+                </span>
+
+                {/* Card name with query highlight */}
+                <span
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                  <HighlightedName fullName={card.fullName} query={query} />
                 </span>
               </div>
             );

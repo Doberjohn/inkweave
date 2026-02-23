@@ -1,14 +1,15 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen} from '@testing-library/react';
 import {SearchAutocomplete} from '../SearchAutocomplete';
+import {CardPreviewProvider} from '../../../features/cards/components/CardPreviewContext';
 import type {LorcanaCard} from 'lorcana-synergy-engine';
 
-const makeCard = (id: string, fullName: string, ink = 'Amethyst' as const, cost = 3): LorcanaCard =>
-  ({id, name: fullName.split(' - ')[0], fullName, cost, ink, inkwell: true, type: 'Character'}) as LorcanaCard;
+const makeCard = (id: string, fullName: string, ink = 'Amethyst' as const, cost = 3, setCode = '5'): LorcanaCard =>
+  ({id, name: fullName.split(' - ')[0], fullName, cost, ink, inkwell: true, type: 'Character', setCode}) as LorcanaCard;
 
 const suggestions = [
-  makeCard('1', 'Elsa - Snow Queen', 'Sapphire', 5),
-  makeCard('2', 'Elsa - Ice Surfer', 'Amethyst', 3),
+  makeCard('1', 'Elsa - Snow Queen', 'Sapphire', 5, '9'),
+  makeCard('2', 'Elsa - Ice Surfer', 'Amethyst', 3, '5'),
 ];
 
 const defaultProps = {
@@ -26,40 +27,40 @@ const defaultProps = {
   }),
 };
 
+function renderWithProvider(ui: React.ReactElement) {
+  return render(<CardPreviewProvider>{ui}</CardPreviewProvider>);
+}
+
 describe('SearchAutocomplete', () => {
   it('does not render when isOpen is false', () => {
-    const {container} = render(<SearchAutocomplete {...defaultProps} isOpen={false} />);
+    const {container} = renderWithProvider(<SearchAutocomplete {...defaultProps} isOpen={false} />);
     expect(container.querySelector('[role="listbox"]')).toBeNull();
   });
 
   it('renders suggestion items when open', () => {
-    render(<SearchAutocomplete {...defaultProps} />);
+    renderWithProvider(<SearchAutocomplete {...defaultProps} />);
     expect(screen.getByText(/Snow Queen/)).toBeInTheDocument();
     expect(screen.getByText(/Ice Surfer/)).toBeInTheDocument();
   });
 
   it('highlights matching text in gold', () => {
-    render(<SearchAutocomplete {...defaultProps} />);
+    renderWithProvider(<SearchAutocomplete {...defaultProps} />);
     const marks = document.querySelectorAll('mark');
-    expect(marks).toHaveLength(2); // One per suggestion
+    expect(marks).toHaveLength(2);
     expect(marks[0].textContent).toBe('Elsa');
   });
 
-  it('shows ink color dot for each suggestion', () => {
-    render(<SearchAutocomplete {...defaultProps} />);
-    const dots = document.querySelectorAll('[title]');
-    expect(dots[0].getAttribute('title')).toBe('Sapphire');
-    expect(dots[1].getAttribute('title')).toBe('Amethyst');
-  });
-
-  it('shows cost for each suggestion', () => {
-    render(<SearchAutocomplete {...defaultProps} />);
-    expect(screen.getByText('5⬡')).toBeInTheDocument();
-    expect(screen.getByText('3⬡')).toBeInTheDocument();
+  it('shows set abbreviation with tooltip for each suggestion', () => {
+    renderWithProvider(<SearchAutocomplete {...defaultProps} />);
+    expect(screen.getByText('9FAB')).toBeInTheDocument();
+    expect(screen.getByText('5SSK')).toBeInTheDocument();
+    // Tooltip shows full set name
+    expect(screen.getByText('9FAB').getAttribute('title')).toBe('Fabled');
+    expect(screen.getByText('5SSK').getAttribute('title')).toBe('Shimmering Skies');
   });
 
   it('has correct ARIA attributes', () => {
-    render(<SearchAutocomplete {...defaultProps} />);
+    renderWithProvider(<SearchAutocomplete {...defaultProps} />);
     const listbox = document.getElementById('test-listbox');
     expect(listbox).toBeInTheDocument();
     expect(listbox?.getAttribute('role')).toBe('listbox');
