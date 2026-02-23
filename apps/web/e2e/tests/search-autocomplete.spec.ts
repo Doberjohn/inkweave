@@ -62,14 +62,17 @@ test.describe('Search Autocomplete', () => {
     await expect(listbox).not.toBeVisible();
   });
 
-  test('should show autocomplete on browse page search', async ({page, appPage}) => {
-    // Navigate to browse page and wait for cards to load
+  test('should show autocomplete on browse page search', async ({page}) => {
+    // Navigate to browse page
     await page.getByRole('button', {name: /See all cards/}).click();
     await expect(page).toHaveURL(/\/browse/);
-    await appPage.waitForCardsLoaded();
+
+    // Wait for browse page cards to load (heroSearch doesn't exist here)
+    const browseSearch = page.getByPlaceholder('Search cards...');
+    await expect(browseSearch).toBeVisible({timeout: 10000});
+    await expect(page.getByTestId('card-tile').first()).toBeVisible({timeout: 10000});
 
     // Type in the browse search bar
-    const browseSearch = page.getByPlaceholder('Search cards...');
     await browseSearch.click();
     await browseSearch.pressSequentially('Ariel', {delay: 50});
 
