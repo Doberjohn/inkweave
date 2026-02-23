@@ -175,9 +175,6 @@ export const Z_INDEX = {
 export type CardTypeFilter = CardType | 'Song';
 export const CARD_TYPE_FILTERS: CardTypeFilter[] = ['Character', 'Action', 'Song', 'Item', 'Location'];
 
-/** @deprecated Use CARD_TYPE_FILTERS for filter UI */
-export const CARD_TYPES: CardType[] = ['Character', 'Action', 'Item', 'Location'];
-
 // Shared select styles (dark theme)
 export const SELECT_STYLE_SM: React.CSSProperties = {
   padding: '6px 8px',

@@ -1,9 +1,10 @@
-import type {Ink, CardType, SetInfo} from '../../features/cards';
+import type {Ink, SetInfo} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards';
+import type {CardTypeFilter} from '../constants/theme';
 import {
   INK_COLORS,
   ALL_INKS,
-  CARD_TYPES,
+  CARD_TYPE_FILTERS,
   COST_BUTTONS,
   SELECT_STYLE_MD,
   hexRgba,
@@ -15,14 +16,14 @@ import {InkIcon} from './InkIcon';
 
 interface FilterContentProps {
   inkFilters: Ink[];
-  typeFilters: CardType[];
+  typeFilters: CardTypeFilter[];
   costFilters: number[];
   filters: CardFilterOptions;
   uniqueKeywords: string[];
   uniqueClassifications: string[];
   sets: SetInfo[];
   onToggleInk: (ink: Ink) => void;
-  onToggleType: (type: CardType) => void;
+  onToggleType: (type: CardTypeFilter) => void;
   onToggleCost: (cost: number) => void;
   onFiltersChange: (filters: CardFilterOptions) => void;
   /** Layout variant controls icon sizing and flex layout per section */
@@ -102,7 +103,7 @@ export function FilterContent({
       {/* Card Type Filter */}
       <FilterSection label={isDesktop ? 'Card Type' : 'Type'}>
         <div style={{display: 'flex', gap: isDesktop ? '8px' : undefined, flexWrap: 'wrap', justifyContent: isDesktop ? undefined : 'space-evenly'}}>
-          {CARD_TYPES.map((type) => (
+          {CARD_TYPE_FILTERS.map((type) => (
             <FilterButton
               key={type}
               size="md"

@@ -111,7 +111,8 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
 
   // Extract classifications from subtypes
   // Subtypes include things like "Floodborn", "Hero", "Princess", "Song"
-  // We filter out "Song" since that's more of a card type indicator
+  // "Song" is tracked via isSong flag for filtering
+  const isSong = raw.subtypes?.includes('Song') ?? false;
   const classifications = raw.subtypes?.filter((s) => s !== 'Song') ?? [];
 
   return {
@@ -123,6 +124,7 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
     ink,
     inkwell: raw.inkwell,
     type,
+    isSong: isSong || undefined,
     classifications: classifications.length > 0 ? classifications : undefined,
     text: raw.fullText,
     strength: raw.strength,
@@ -248,7 +250,7 @@ export function searchCardsByName(cards: LorcanaCard[], query: string): LorcanaC
  */
 export interface CardFilterOptions {
   ink?: Ink | Ink[];
-  type?: CardType | CardType[];
+  type?: (CardType | 'Song') | (CardType | 'Song')[];
   costs?: number[];
   keywords?: string[];
   classifications?: string[];
@@ -267,10 +269,19 @@ export function filterCards(cards: LorcanaCard[], options: CardFilterOptions): L
       if (!inks.includes(card.ink)) return false;
     }
 
-    // Type filter
+    // Type filter (Song is a pseudo-type: card.type is 'Action' but card.isSong is true)
     if (options.type) {
       const types = Array.isArray(options.type) ? options.type : [options.type];
-      if (!types.includes(card.type)) return false;
+      const hasSong = types.includes('Song');
+      const hasAction = types.includes('Action');
+      const match = types.some((t) => {
+        if (t === 'Song') return card.isSong;
+        if (t === 'Action') return card.type === 'Action' && !card.isSong;
+        return card.type === t;
+      });
+      // Both Action + Song selected → accept any Action card
+      if (!match && hasSong && hasAction && card.type === 'Action') return true;
+      if (!match) return false;
     }
 
     // Cost filter (discrete selection; 9 means 9+)

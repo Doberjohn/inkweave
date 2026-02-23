@@ -1,6 +1,7 @@
 import {useState, useMemo} from 'react';
-import type {LorcanaCard, Ink, CardType} from '../types';
+import type {LorcanaCard, Ink} from '../types';
 import type {CardFilterOptions, SetInfo} from '../loader';
+import type {CardTypeFilter} from '../../../shared/constants/theme';
 import {CardTile} from './CardTile';
 import {LoadingSpinner, FilterDrawer} from '../../../shared/components';
 import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT} from '../../../shared/constants';
@@ -11,7 +12,7 @@ interface CardListProps {
   selectedCard: LorcanaCard | null;
   searchQuery: string;
   inkFilters: Ink[];
-  typeFilters: CardType[];
+  typeFilters: CardTypeFilter[];
   costFilters: number[];
   filters: CardFilterOptions;
   uniqueKeywords: string[];
@@ -19,7 +20,7 @@ interface CardListProps {
   sets: SetInfo[];
   onSearchChange: (query: string) => void;
   onToggleInk: (ink: Ink) => void;
-  onToggleType: (type: CardType) => void;
+  onToggleType: (type: CardTypeFilter) => void;
   onToggleCost: (cost: number) => void;
   onFiltersChange: (filters: CardFilterOptions) => void;
   onCardSelect: (card: LorcanaCard) => void;
