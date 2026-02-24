@@ -10,6 +10,7 @@ After pre-commit checks pass:
 3. ADD all modified and new files to git. If you think there are files that should not be in version control, ask the user. If you see files that you think should be bundled into separate commits, ask the user.
 4. COMMIT with a clear and concise one-line commit message, using semantic commit notation.
 5. PUSH the commit to origin.
+6. Create a PR if one does not already exist for the branch, using the commit message as the PR title and a brief description of the changes in the PR body.
 
 After push:
 Monitor the CI pipeline for its PR. If any checks fail: 
