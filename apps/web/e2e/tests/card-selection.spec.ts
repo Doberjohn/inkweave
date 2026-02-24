@@ -34,7 +34,7 @@ test.describe('Card Selection and Synergies', () => {
     await appPage.selectFeaturedCard();
 
     // Either synergy count or "no synergies" message should be visible
-    const hasSynergies = page.getByText(/Found \d+ synergistic cards/);
+    const hasSynergies = page.getByTestId('synergy-header');
     const noSynergies = page.getByText('No synergies found for this card');
 
     const synergiesVisible = await hasSynergies.isVisible().catch(() => false);
@@ -43,11 +43,7 @@ test.describe('Card Selection and Synergies', () => {
     expect(synergiesVisible || noSynergiesVisible).toBe(true);
   });
 
-  test('should clear selection and return to home', async ({
-    appPage,
-    synergyResultsPage,
-    page,
-  }) => {
+  test('should clear selection and return to home', async ({appPage, synergyResultsPage, page}) => {
     await appPage.selectFeaturedCard();
 
     // Clear selection via back button

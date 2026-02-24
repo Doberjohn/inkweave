@@ -47,7 +47,11 @@ describe('FilterButton', () => {
   describe('Active state styling', () => {
     it('should use activeBgColor for background when active', () => {
       render(
-        <FilterButton active={true} onClick={() => {}} activeColor="#f59e0b" activeBgColor="#3d2e10">
+        <FilterButton
+          active={true}
+          onClick={() => {}}
+          activeColor="#f59e0b"
+          activeBgColor="#3d2e10">
           Test
         </FilterButton>,
       );
@@ -71,7 +75,11 @@ describe('FilterButton', () => {
 
     it('should use activeColor for border when active', () => {
       render(
-        <FilterButton active={true} onClick={() => {}} activeColor="#f59e0b" activeBgColor="#3d2e10">
+        <FilterButton
+          active={true}
+          onClick={() => {}}
+          activeColor="#f59e0b"
+          activeBgColor="#3d2e10">
           Test
         </FilterButton>,
       );

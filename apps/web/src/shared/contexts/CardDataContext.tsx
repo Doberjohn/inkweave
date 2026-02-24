@@ -10,8 +10,17 @@ interface CardDataContextValue extends UseCardDataReturn {
 const CardDataContext = createContext<CardDataContextValue | null>(null);
 
 export function CardDataProvider({children}: {children: ReactNode}) {
-  const {cards, isLoading, error, totalCards, uniqueKeywords, uniqueClassifications, uniqueSets, sets, retryLoad} =
-    useCardData();
+  const {
+    cards,
+    isLoading,
+    error,
+    totalCards,
+    uniqueKeywords,
+    uniqueClassifications,
+    uniqueSets,
+    sets,
+    retryLoad,
+  } = useCardData();
 
   const cardMap = useMemo(() => {
     const map = new Map<string, LorcanaCard>();
@@ -36,7 +45,18 @@ export function CardDataProvider({children}: {children: ReactNode}) {
       retryLoad,
       getCardById,
     }),
-    [cards, isLoading, error, totalCards, uniqueKeywords, uniqueClassifications, uniqueSets, sets, retryLoad, getCardById],
+    [
+      cards,
+      isLoading,
+      error,
+      totalCards,
+      uniqueKeywords,
+      uniqueClassifications,
+      uniqueSets,
+      sets,
+      retryLoad,
+      getCardById,
+    ],
   );
 
   return <CardDataContext.Provider value={value}>{children}</CardDataContext.Provider>;

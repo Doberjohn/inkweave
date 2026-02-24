@@ -25,14 +25,23 @@ function lazyWithRetry(
 const HomePage = lazyWithRetry(() => import('./pages/HomePage'), 'HomePage');
 const BrowsePage = lazyWithRetry(() => import('./pages/BrowsePage'), 'BrowsePage');
 const CardPage = lazyWithRetry(() => import('./pages/CardPage'), 'CardPage');
-const CardSynergiesPage = lazyWithRetry(() => import('./pages/CardSynergiesPage'), 'CardSynergiesPage');
+const CardSynergiesPage = lazyWithRetry(
+  () => import('./pages/CardSynergiesPage'),
+  'CardSynergiesPage',
+);
 const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'), 'NotFoundPage');
 
 function SuspenseWrapper({children}: {children: React.ReactNode}) {
   return (
     <Suspense
       fallback={
-        <div style={{minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <div
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
           <LoadingSpinner />
         </div>
       }>
@@ -46,11 +55,46 @@ export const router = createBrowserRouter([
     path: '/',
     element: <AppLayout />,
     children: [
-      {index: true, element: <SuspenseWrapper><HomePage /></SuspenseWrapper>},
-      {path: 'browse', element: <SuspenseWrapper><BrowsePage /></SuspenseWrapper>},
-      {path: 'card/:cardId', element: <SuspenseWrapper><CardPage /></SuspenseWrapper>},
-      {path: 'card/:cardId/synergies', element: <SuspenseWrapper><CardSynergiesPage /></SuspenseWrapper>},
-      {path: '*', element: <SuspenseWrapper><NotFoundPage /></SuspenseWrapper>},
+      {
+        index: true,
+        element: (
+          <SuspenseWrapper>
+            <HomePage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'browse',
+        element: (
+          <SuspenseWrapper>
+            <BrowsePage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'card/:cardId',
+        element: (
+          <SuspenseWrapper>
+            <CardPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'card/:cardId/synergies',
+        element: (
+          <SuspenseWrapper>
+            <CardSynergiesPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: '*',
+        element: (
+          <SuspenseWrapper>
+            <NotFoundPage />
+          </SuspenseWrapper>
+        ),
+      },
     ],
   },
 ]);

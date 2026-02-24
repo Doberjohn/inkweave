@@ -4,8 +4,23 @@ import {SearchAutocomplete} from '../SearchAutocomplete';
 import {CardPreviewProvider} from '../../../features/cards/components/CardPreviewContext';
 import type {LorcanaCard} from 'lorcana-synergy-engine';
 
-const makeCard = (id: string, fullName: string, ink = 'Amethyst' as const, cost = 3, setCode = '5'): LorcanaCard =>
-  ({id, name: fullName.split(' - ')[0], fullName, cost, ink, inkwell: true, type: 'Character', setCode}) as LorcanaCard;
+const makeCard = (
+  id: string,
+  fullName: string,
+  ink = 'Amethyst' as const,
+  cost = 3,
+  setCode = '5',
+): LorcanaCard =>
+  ({
+    id,
+    name: fullName.split(' - ')[0],
+    fullName,
+    cost,
+    ink,
+    inkwell: true,
+    type: 'Character',
+    setCode,
+  }) as LorcanaCard;
 
 const suggestions = [
   makeCard('1', 'Elsa - Snow Queen', 'Sapphire', 5, '9'),

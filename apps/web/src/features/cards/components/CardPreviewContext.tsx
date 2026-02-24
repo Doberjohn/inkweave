@@ -49,9 +49,5 @@ export function CardPreviewProvider({children}: {children: ReactNode}) {
     [previewState, showPreview, updatePosition, hidePreview],
   );
 
-  return (
-    <CardPreviewContext.Provider value={value}>
-      {children}
-    </CardPreviewContext.Provider>
-  );
+  return <CardPreviewContext.Provider value={value}>{children}</CardPreviewContext.Provider>;
 }

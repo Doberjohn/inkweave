@@ -108,7 +108,12 @@ describe('CardList', () => {
 
     it('should show active filter count badge', () => {
       renderWithProvider(
-        <CardList {...defaultProps} inkFilters={['Sapphire']} activeFilterCount={1} onFiltersClick={vi.fn()} />,
+        <CardList
+          {...defaultProps}
+          inkFilters={['Sapphire']}
+          activeFilterCount={1}
+          onFiltersClick={vi.fn()}
+        />,
       );
 
       expect(screen.getByRole('button', {name: /Filters \(1 active\)/i})).toBeInTheDocument();
@@ -124,7 +129,14 @@ describe('CardList', () => {
     });
 
     it('should show filter badge count when filters are active', () => {
-      renderWithProvider(<CardList {...defaultProps} isMobile={true} inkFilters={['Sapphire']} activeFilterCount={1} />);
+      renderWithProvider(
+        <CardList
+          {...defaultProps}
+          isMobile={true}
+          inkFilters={['Sapphire']}
+          activeFilterCount={1}
+        />,
+      );
 
       expect(screen.getByRole('button', {name: /Filters \(1 active\)/i})).toBeInTheDocument();
     });

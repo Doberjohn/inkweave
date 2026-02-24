@@ -410,20 +410,14 @@ describe('loadCardsFromJSON', () => {
           inkwell: true,
           type: 'Character',
           fullText: 'Singer 5 (reminder)\nA WONDERFUL DREAM — effect',
-          fullTextSections: [
-            'Singer 5 (reminder)',
-            'A WONDERFUL DREAM — effect',
-          ],
+          fullTextSections: ['Singer 5 (reminder)', 'A WONDERFUL DREAM — effect'],
         },
       ],
     };
 
     const cards = loadCardsFromJSON(data);
 
-    expect(cards[0].textSections).toEqual([
-      'Singer 5 (reminder)',
-      'A WONDERFUL DREAM — effect',
-    ]);
+    expect(cards[0].textSections).toEqual(['Singer 5 (reminder)', 'A WONDERFUL DREAM — effect']);
   });
 
   it('should filter empty/whitespace entries from fullTextSections', () => {

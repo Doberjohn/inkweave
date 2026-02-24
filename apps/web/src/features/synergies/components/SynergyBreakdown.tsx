@@ -8,7 +8,10 @@ interface SynergyBreakdownProps {
   totalCount: number;
 }
 
-export const SynergyBreakdown = memo(function SynergyBreakdown({synergies, totalCount}: SynergyBreakdownProps) {
+export const SynergyBreakdown = memo(function SynergyBreakdown({
+  synergies,
+  totalCount,
+}: SynergyBreakdownProps) {
   if (synergies.length === 0) return null;
 
   return (
@@ -65,7 +68,9 @@ export const SynergyBreakdown = memo(function SynergyBreakdown({synergies, total
         const strength = getDominantStrength(group.synergies);
         const style = STRENGTH_STYLES[strength];
         return (
-          <div key={group.type} style={{display: 'flex', alignItems: 'center', gap: `${SPACING.sm}px`}}>
+          <div
+            key={group.type}
+            style={{display: 'flex', alignItems: 'center', gap: `${SPACING.sm}px`}}>
             {/* Count circle */}
             <div
               style={{

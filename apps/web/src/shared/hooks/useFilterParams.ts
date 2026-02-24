@@ -24,10 +24,7 @@ function isValidCost(value: string): boolean {
 
 function parseCostParam(raw: string | null): number[] {
   if (!raw) return [];
-  return raw
-    .split(',')
-    .filter(isValidCost)
-    .map(Number);
+  return raw.split(',').filter(isValidCost).map(Number);
 }
 
 /** Parse comma-separated values from a URL param, filtering by validator */
@@ -151,7 +148,9 @@ export function useFilterParams(): UseFilterParamsReturn {
     (cost: number) => {
       updateParams((p) => {
         const current = parseCostParam(p.get('cost'));
-        const next = current.includes(cost) ? current.filter((c) => c !== cost) : [...current, cost];
+        const next = current.includes(cost)
+          ? current.filter((c) => c !== cost)
+          : [...current, cost];
         if (next.length > 0) p.set('cost', next.join(','));
         else p.delete('cost');
       });
@@ -168,7 +167,8 @@ export function useFilterParams(): UseFilterParamsReturn {
         p.delete('set');
         // Set new values
         if (newFilters.keywords?.length) p.set('keyword', newFilters.keywords[0]);
-        if (newFilters.classifications?.length) p.set('classification', newFilters.classifications[0]);
+        if (newFilters.classifications?.length)
+          p.set('classification', newFilters.classifications[0]);
         if (newFilters.setCode) p.set('set', newFilters.setCode);
       });
     },

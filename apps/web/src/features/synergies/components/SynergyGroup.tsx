@@ -1,8 +1,7 @@
 import {useState, memo} from 'react';
 import type {GroupedSynergies, SynergyMatchDisplay, SynergyType} from '../types';
 import {SynergyCard} from './SynergyCard';
-import {COLORS, FONT_SIZES, SPACING, RADIUS, STRENGTH_STYLES} from '../../../shared/constants';
-import {getDominantStrength} from '../utils';
+import {COLORS, FONT_SIZES, LAYOUT, SPACING, RADIUS} from '../../../shared/constants';
 
 /** Short explanation for each synergy group type */
 const GROUP_EXPLANATIONS: Record<SynergyType, string> = {
@@ -21,10 +20,11 @@ interface SynergyGroupProps {
   defaultExpanded?: boolean;
 }
 
-export const SynergyGroup = memo(function SynergyGroup({group, defaultExpanded = true}: SynergyGroupProps) {
+export const SynergyGroup = memo(function SynergyGroup({
+  group,
+  defaultExpanded = true,
+}: SynergyGroupProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
-  const dominantStrength = getDominantStrength(group.synergies);
-  const strengthStyle = STRENGTH_STYLES[dominantStrength];
 
   return (
     <div style={{marginBottom: `${SPACING.xl}px`}}>
@@ -57,20 +57,6 @@ export const SynergyGroup = memo(function SynergyGroup({group, defaultExpanded =
           &#9654;
         </span>
         {group.label}
-        {/* Strength badge */}
-        <span
-          style={{
-            background: strengthStyle.bg,
-            color: strengthStyle.text,
-            padding: '2px 8px',
-            borderRadius: `${RADIUS.sm}px`,
-            fontSize: `${FONT_SIZES.xs}px`,
-            fontWeight: 600,
-            textTransform: 'capitalize',
-            letterSpacing: 0,
-          }}>
-          {dominantStrength}
-        </span>
         {/* Count */}
         <span
           style={{
@@ -87,16 +73,24 @@ export const SynergyGroup = memo(function SynergyGroup({group, defaultExpanded =
 
       {/* Group explanation */}
       {expanded && (
-        <p
+        <div
           style={{
-            margin: `0 0 ${SPACING.md}px 0`,
-            fontSize: `${FONT_SIZES.sm}px`,
-            color: COLORS.textMuted,
-            lineHeight: 1.4,
-            paddingLeft: `${SPACING.xl}px`,
+            margin: `${SPACING.sm}px 0 ${SPACING.md}px 0`,
+            padding: `${SPACING.sm}px ${SPACING.md}px`,
+            background: COLORS.primary100,
+            borderLeft: `3px solid ${COLORS.primary}`,
+            borderRadius: `0 ${RADIUS.sm}px ${RADIUS.sm}px 0`,
           }}>
-          {GROUP_EXPLANATIONS[group.type]}
-        </p>
+          <p
+            style={{
+              margin: 0,
+              fontSize: `${FONT_SIZES.base}px`,
+              color: COLORS.text,
+              lineHeight: 1.5,
+            }}>
+            {GROUP_EXPLANATIONS[group.type]}
+          </p>
+        </div>
       )}
 
       {/* Card grid */}
@@ -115,7 +109,7 @@ const SynergyCardList = memo(function SynergyCardList({synergies}: SynergyCardLi
     <ul
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(105px, 1fr))',
+        gridTemplateColumns: `repeat(auto-fill, minmax(${LAYOUT.synergyCardMinWidth}px, 1fr))`,
         gap: '10px',
         listStyle: 'none',
         padding: 0,

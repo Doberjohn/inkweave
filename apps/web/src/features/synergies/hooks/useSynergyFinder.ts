@@ -79,4 +79,3 @@ export function useCardData(): UseCardDataReturn {
     retryLoad,
   };
 }
-

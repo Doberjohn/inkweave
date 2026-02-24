@@ -45,11 +45,7 @@ export function HomePage() {
         />
       </ErrorBoundary>
 
-      <FeaturedCards
-        cards={cards}
-        onCardSelect={handleCardSelect}
-        isMobile={isMobile}
-      />
+      <FeaturedCards cards={cards} onCardSelect={handleCardSelect} isMobile={isMobile} />
 
       {/* See all cards link */}
       <button

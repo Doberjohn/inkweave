@@ -32,7 +32,7 @@ test.describe('Mobile Viewport', () => {
     await expect(page).toHaveURL(/\/card\/\d+/);
 
     // Should show synergy results or CTA (mobile shows MobileCardDetail with different text)
-    const hasSynergies = page.getByText(/Found \d+ synergistic cards|View All \d+ Synergies/);
+    const hasSynergies = page.getByText(/View All \d+ Synergies/);
     const noSynergies = page.getByText('No synergies found for this card');
 
     const synergiesVisible = await hasSynergies.isVisible().catch(() => false);
@@ -106,7 +106,7 @@ test.describe('Mobile Viewport', () => {
 
     // Filter drawer should be visible with title
     await expect(page.getByText('Filters', {exact: true})).toBeVisible();
-    
+
     // Should show ink filter options
     await expect(page.getByRole('button', {name: 'Filter by Amber'})).toBeVisible();
     await expect(page.getByRole('button', {name: 'Filter by Sapphire'})).toBeVisible();

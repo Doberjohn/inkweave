@@ -17,7 +17,16 @@ interface CardTileProps {
   disablePreview?: boolean;
 }
 
-export const CardTile = memo(function CardTile({card, onClick, onSelect, isSelected, variant = 'full', useThumbnail, borderRadius, disablePreview}: CardTileProps) {
+export const CardTile = memo(function CardTile({
+  card,
+  onClick,
+  onSelect,
+  isSelected,
+  variant = 'full',
+  useThumbnail,
+  borderRadius,
+  disablePreview,
+}: CardTileProps) {
   const handleClick = useCallback(() => {
     onClick?.();
     onSelect?.(card);
@@ -26,13 +35,16 @@ export const CardTile = memo(function CardTile({card, onClick, onSelect, isSelec
   const {previewHandlers, hidePreview} = useCardPreviewHandlers({card, onTap: handleClick});
   const [imgError, setImgError] = useState(false);
   const imgSrc = useThumbnail
-    ? (card.thumbnailUrl || card.imageUrl)
-    : (card.imageUrl || card.thumbnailUrl);
+    ? card.thumbnailUrl || card.imageUrl
+    : card.imageUrl || card.thumbnailUrl;
 
   return (
     <motion.button
       data-testid="card-tile"
-      onClick={() => { hidePreview(); handleClick(); }}
+      onClick={() => {
+        hidePreview();
+        handleClick();
+      }}
       {...(disablePreview ? {} : previewHandlers)}
       aria-pressed={isSelected}
       aria-label={card.fullName || card.name || 'View card details'}
@@ -40,10 +52,10 @@ export const CardTile = memo(function CardTile({card, onClick, onSelect, isSelec
         scale: 1.04,
         y: -3,
         boxShadow: isSelected
-          ? `0 0 12px ${colors.border}80`
+          ? `0 0 16px ${colors.border}80`
           : variant === 'minimal'
-            ? `0 0 14px ${COLORS.primary}30, 0 25px 50px -12px rgba(0,0,0,0.5)`
-            : `0 4px 16px ${colors.border}40`,
+            ? `0 0 20px rgba(212,175,55,0.15), 0 0 40px rgba(212,175,55,0.05), 0 25px 50px -12px rgba(0,0,0,0.5)`
+            : `0 0 16px ${colors.border}40, 0 4px 16px rgba(0,0,0,0.3)`,
       }}
       whileTap={{scale: 0.97}}
       transition={{
@@ -53,15 +65,17 @@ export const CardTile = memo(function CardTile({card, onClick, onSelect, isSelec
       style={{
         position: 'relative',
         borderRadius: `${borderRadius ?? RADIUS.xl}px`,
-        border: variant === 'minimal'
-          ? 'none'
-          : `2px solid ${isSelected ? colors.border : 'transparent'}`,
+        border:
+          variant === 'minimal'
+            ? 'none'
+            : `2px solid ${isSelected ? colors.border : 'transparent'}`,
         background: COLORS.surface,
-        boxShadow: variant === 'minimal'
-          ? '0 0 0 1px rgba(255,255,255,0.1), 0 25px 50px -12px rgba(0,0,0,0.5)'
-          : isSelected
-            ? `0 0 8px ${colors.border}60`
-            : '0 2px 6px rgba(0,0,0,0.3)',
+        boxShadow:
+          variant === 'minimal'
+            ? '0 0 0 1px rgba(255,255,255,0.1), 0 25px 50px -12px rgba(0,0,0,0.5)'
+            : isSelected
+              ? `0 0 8px ${colors.border}60`
+              : '0 2px 6px rgba(0,0,0,0.3)',
         cursor: 'pointer',
         padding: 0,
         overflow: 'hidden',
@@ -98,7 +112,6 @@ export const CardTile = memo(function CardTile({card, onClick, onSelect, isSelec
           </span>
         </div>
       )}
-
     </motion.button>
   );
 });

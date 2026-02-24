@@ -129,20 +129,14 @@ export function getLocationRoles(card: LorcanaCard): LocationRole[] {
 
   const roles: LocationRole[] = [];
 
-  if (LOCATION_PATTERNS['at-payoff'].test(card.text))
-    roles.push('at-payoff');
+  if (LOCATION_PATTERNS['at-payoff'].test(card.text)) roles.push('at-payoff');
 
-  if (
-    LOCATION_PATTERNS.move.test(card.text) &&
-    !LOCATION_PATTERNS['move-exclude'].test(card.text)
-  )
+  if (LOCATION_PATTERNS.move.test(card.text) && !LOCATION_PATTERNS['move-exclude'].test(card.text))
     roles.push('move');
 
-  if (LOCATION_PATTERNS['play-trigger'].test(card.text))
-    roles.push('play-trigger');
+  if (LOCATION_PATTERNS['play-trigger'].test(card.text)) roles.push('play-trigger');
 
-  if (LOCATION_PATTERNS['in-play-check'].test(card.text))
-    roles.push('in-play-check');
+  if (LOCATION_PATTERNS['in-play-check'].test(card.text)) roles.push('in-play-check');
 
   if (LOCATION_PATTERNS.tutor.test(card.text)) roles.push('tutor');
 

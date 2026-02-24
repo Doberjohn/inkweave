@@ -112,7 +112,14 @@ describe('FilterModal', () => {
 
   it('should call onClearAll when clicking Clear all', () => {
     const onClearAll = vi.fn();
-    render(<FilterModal {...defaultProps} inkFilters={['Amber']} activeFilterCount={1} onClearAll={onClearAll} />);
+    render(
+      <FilterModal
+        {...defaultProps}
+        inkFilters={['Amber']}
+        activeFilterCount={1}
+        onClearAll={onClearAll}
+      />,
+    );
 
     fireEvent.click(screen.getByRole('button', {name: /clear all/i}));
 
@@ -120,7 +127,14 @@ describe('FilterModal', () => {
   });
 
   it('should show active filter count in title', () => {
-    render(<FilterModal {...defaultProps} inkFilters={['Amber']} typeFilters={['Character']} activeFilterCount={2} />);
+    render(
+      <FilterModal
+        {...defaultProps}
+        inkFilters={['Amber']}
+        typeFilters={['Character']}
+        activeFilterCount={2}
+      />,
+    );
 
     expect(screen.getByText(/filters \(2\)/i)).toBeInTheDocument();
   });
@@ -148,7 +162,9 @@ describe('FilterModal', () => {
     // Cost buttons are rendered as FilterButtons with CostIcon children
     const buttons = screen.getAllByRole('button');
     // Find button containing the cost "3" text
-    const cost3Button = buttons.find((b) => b.textContent?.includes('3') && !b.textContent?.includes('Filter'));
+    const cost3Button = buttons.find(
+      (b) => b.textContent?.includes('3') && !b.textContent?.includes('Filter'),
+    );
     fireEvent.click(cost3Button!);
 
     expect(onToggleCost).toHaveBeenCalledWith(3);

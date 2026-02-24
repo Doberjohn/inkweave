@@ -66,7 +66,14 @@ export function FilterContent({
     <>
       {/* Ink Filter */}
       <FilterSection label={isDesktop ? 'Ink Color' : 'Ink'}>
-        <div role="group" aria-label="Ink color filters" style={{display: 'flex', flexWrap: isDesktop ? 'wrap' : 'nowrap', justifyContent: 'space-evenly'}}>
+        <div
+          role="group"
+          aria-label="Ink color filters"
+          style={{
+            display: 'flex',
+            flexWrap: isDesktop ? 'wrap' : 'nowrap',
+            justifyContent: 'space-evenly',
+          }}>
           {ALL_INKS.map((ink) => (
             <FilterButton
               key={ink}
@@ -86,7 +93,15 @@ export function FilterContent({
 
       {/* Ink Cost */}
       <FilterSection label="Ink Cost">
-        <div role="group" aria-label="Ink cost filters" style={{display: 'flex', gap: '6px', flexWrap: 'wrap', ...(isDesktop ? {} : {justifyContent: 'center'})}}>
+        <div
+          role="group"
+          aria-label="Ink cost filters"
+          style={{
+            display: 'flex',
+            gap: '6px',
+            flexWrap: 'wrap',
+            ...(isDesktop ? {} : {justifyContent: 'center'}),
+          }}>
           {COST_BUTTONS.map((cost) => (
             <FilterButton
               key={cost}
@@ -106,7 +121,15 @@ export function FilterContent({
 
       {/* Card Type Filter */}
       <FilterSection label={isDesktop ? 'Card Type' : 'Type'}>
-        <div role="group" aria-label="Card type filters" style={{display: 'flex', gap: isDesktop ? '8px' : undefined, flexWrap: 'wrap', justifyContent: isDesktop ? undefined : 'space-evenly'}}>
+        <div
+          role="group"
+          aria-label="Card type filters"
+          style={{
+            display: 'flex',
+            gap: isDesktop ? '8px' : undefined,
+            flexWrap: 'wrap',
+            justifyContent: isDesktop ? undefined : 'space-evenly',
+          }}>
           {CARD_TYPE_FILTERS.map((type) => (
             <FilterButton
               key={type}
@@ -126,9 +149,7 @@ export function FilterContent({
         <select
           aria-label="Filter by keyword"
           value={filters.keywords?.[0] ?? ''}
-          onChange={(e) =>
-            updateFilter('keywords', e.target.value ? [e.target.value] : undefined)
-          }
+          onChange={(e) => updateFilter('keywords', e.target.value ? [e.target.value] : undefined)}
           style={{...SELECT_STYLE_MD, width: '100%'}}>
           <option value="">Any keyword</option>
           {uniqueKeywords.map((kw) => (

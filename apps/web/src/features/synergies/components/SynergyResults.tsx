@@ -3,7 +3,7 @@ import type {LorcanaCard} from '../../cards';
 import type {GroupedSynergies} from '../types';
 import {CardDetail, SynergyGroup} from '.';
 import {EmptyState} from '../../../shared/components';
-import {COLORS, FONT_SIZES, SPACING, LAYOUT} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, SPACING, RADIUS, LAYOUT} from '../../../shared/constants';
 
 interface SynergyResultsProps {
   selectedCard: LorcanaCard | null;
@@ -42,9 +42,7 @@ export const SynergyResults = memo(function SynergyResults({
         />
       ) : (
         <>
-          {renderCardDetail && (
-            <CardDetail card={selectedCard} onClear={onClearSelection} />
-          )}
+          {renderCardDetail && <CardDetail card={selectedCard} onClear={onClearSelection} />}
 
           {synergies.length === 0 ? (
             <div
@@ -62,12 +60,47 @@ export const SynergyResults = memo(function SynergyResults({
             </div>
           ) : (
             <>
-              <div aria-live="polite" aria-atomic="true" style={{marginBottom: `${SPACING.lg}px`}}>
-                <span style={{fontSize: `${FONT_SIZES.lg}px`, color: COLORS.gray500}}>
-                  Found <strong style={{color: COLORS.primary600}}>{totalSynergyCount}</strong>{' '}
-                  synergistic cards
+              <div
+                aria-live="polite"
+                aria-atomic="true"
+                data-testid="synergy-header"
+                style={{
+                  marginBottom: `${SPACING.md}px`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: `${SPACING.sm}px`,
+                }}>
+                <span
+                  style={{
+                    fontSize: `${FONT_SIZES.xl}px`,
+                    fontWeight: 700,
+                    color: COLORS.text,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                  }}>
+                  Synergies
+                </span>
+                <span
+                  style={{
+                    background: COLORS.primary100,
+                    color: COLORS.primary,
+                    padding: '2px 8px',
+                    borderRadius: `${RADIUS.sm}px`,
+                    fontSize: `${FONT_SIZES.sm}px`,
+                    fontWeight: 700,
+                    minWidth: 20,
+                    textAlign: 'center',
+                  }}>
+                  {totalSynergyCount}
                 </span>
               </div>
+              <div
+                style={{
+                  height: 1,
+                  background: COLORS.surfaceBorder,
+                  marginBottom: `${SPACING.lg}px`,
+                }}
+              />
               {synergies.map((group) => (
                 <SynergyGroup key={group.type} group={group} />
               ))}

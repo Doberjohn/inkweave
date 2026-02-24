@@ -67,7 +67,11 @@ export function CardTextBlock({card}: CardTextBlockProps) {
             lineHeight: 1.5,
             color: COLORS.text,
             ...(i < textBlocks.length - 1
-              ? {marginBottom: SPACING.sm, paddingBottom: SPACING.sm, borderBottom: `1px solid ${COLORS.surfaceBorder}`}
+              ? {
+                  marginBottom: SPACING.sm,
+                  paddingBottom: SPACING.sm,
+                  borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+                }
               : {}),
           }}>
           {formatSection(section)}

@@ -98,6 +98,19 @@
       "Bash(git worktree:*)"
     ]
   },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"D:\\johnn\\Projects\\inkweave\" && npx tsc --noEmit --pretty 2>&1 | head -20"
+          }
+        ]
+      }
+    ]
+  },
   "enabledPlugins": {},
   "outputStyle": "Learning"
 }

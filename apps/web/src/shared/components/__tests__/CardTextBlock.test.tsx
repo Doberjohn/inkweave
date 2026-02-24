@@ -47,15 +47,17 @@ describe('CardTextBlock', () => {
     });
     render(<CardTextBlock card={card} />);
 
-    const italic = screen.getByTestId('card-text-block').querySelector('span[style*="font-style: italic"]');
+    const italic = screen
+      .getByTestId('card-text-block')
+      .querySelector('span[style*="font-style: italic"]');
     expect(italic).toBeTruthy();
     expect(italic!.textContent).toContain('This character counts as cost 5');
   });
 
   it('should bold ability name and italicize reminder in the same section', () => {
     const card = createCard({
-      textSections: ['DEEP FREEZE ↷ — Exert chosen character. (They can\'t ready next turn.)'],
-      text: 'DEEP FREEZE ↷ — Exert chosen character. (They can\'t ready next turn.)',
+      textSections: ["DEEP FREEZE ↷ — Exert chosen character. (They can't ready next turn.)"],
+      text: "DEEP FREEZE ↷ — Exert chosen character. (They can't ready next turn.)",
     });
     render(<CardTextBlock card={card} />);
 
