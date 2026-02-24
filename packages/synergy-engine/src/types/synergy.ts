@@ -7,6 +7,7 @@ export type SynergyType =
   | 'shift' // Shift onto same-named characters
   | 'named' // Card explicitly references another by name
   | 'mechanic' // Exert synergies, draw engines, ramp
+  | 'location' // Location card interactions
   | 'ink' // Same ink color benefits
   | 'cost-curve'; // Good mana curve progression
 

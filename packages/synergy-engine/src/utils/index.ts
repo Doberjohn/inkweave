@@ -12,6 +12,9 @@ export {
   isLocation,
   hasNegativeTargeting,
   hasPositiveClassificationEffect,
+  isLocationSupportCard,
+  getLocationRoles,
+  LOCATION_PATTERNS,
 } from './cardHelpers.js';
 
 export {isCardType} from './typeGuards.js';
