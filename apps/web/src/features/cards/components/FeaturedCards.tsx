@@ -30,6 +30,43 @@ function pickFeatured(cards: LorcanaCard[]): LorcanaCard[] {
   return result;
 }
 
+function getStyles(isMobile: boolean) {
+  return {
+    container: {
+      width: isMobile ? '100%' : 1280,
+      maxWidth: '100%',
+      margin: '0 auto',
+      padding: isMobile ? `0 ${SPACING.lg}px 48px` : undefined,
+      position: 'relative',
+      zIndex: 1,
+      boxSizing: 'border-box',
+    } as React.CSSProperties,
+    label: {
+      fontSize: isMobile ? `${FONT_SIZES.md}px` : `${FONT_SIZES.lg}px`,
+      letterSpacing: isMobile ? '2.4px' : '2.8px',
+      color: COLORS.featuredLabel,
+      fontWeight: 400,
+      textTransform: 'uppercase',
+      flexShrink: 0,
+    } as React.CSSProperties,
+    grid: {
+      display: 'grid',
+      gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : `repeat(${FEATURED_COUNT}, 1fr)`,
+      gap: isMobile ? `${SPACING.sm}px` : `${SPACING.xxl}px`,
+      listStyle: 'none',
+      padding: 0,
+      margin: 0,
+    } as React.CSSProperties,
+  };
+}
+
+const sectionLabelRow: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: `${SPACING.md}px`,
+  marginBottom: 32,
+};
+
 /** Gradient divider line that fades from transparent to center color and back. */
 function DividerLine() {
   return (
@@ -48,58 +85,28 @@ export const FeaturedCards = memo(function FeaturedCards({
   onCardSelect,
   isMobile,
 }: FeaturedCardsProps) {
+  // Intentionally depend on cards.length (not the full array reference) so featured
+  // cards are only re-picked when the card pool size changes, not on every render.
   const featured = useMemo(() => {
     return pickFeatured(cards);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cards.length]);
 
+  const styles = getStyles(!!isMobile);
+
   if (featured.length === 0) return null;
 
   return (
-    <div
-      data-testid="featured-cards"
-      style={{
-        width: isMobile ? '100%' : 1280,
-        maxWidth: '100%',
-        margin: '0 auto',
-        padding: isMobile ? `0 ${SPACING.lg}px 48px` : undefined,
-        position: 'relative',
-        zIndex: 1,
-        boxSizing: 'border-box',
-      }}>
+    <div data-testid="featured-cards" style={styles.container}>
       {/* Section label with divider lines */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: `${SPACING.md}px`,
-          marginBottom: 32,
-        }}>
+      <div style={sectionLabelRow}>
         <DividerLine />
-        <span
-          style={{
-            fontSize: isMobile ? `${FONT_SIZES.md}px` : `${FONT_SIZES.lg}px`,
-            letterSpacing: isMobile ? '2.4px' : '2.8px',
-            color: COLORS.featuredLabel,
-            fontWeight: 400,
-            textTransform: 'uppercase',
-            flexShrink: 0,
-          }}>
-          Featured Cards
-        </span>
+        <span style={styles.label}>Featured Cards</span>
         <DividerLine />
       </div>
 
       {/* Responsive grid: 3-col mobile (2 rows), 6-col desktop */}
-      <ul
-        style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : `repeat(${FEATURED_COUNT}, 1fr)`,
-          gap: isMobile ? `${SPACING.sm}px` : `${SPACING.xxl}px`,
-          listStyle: 'none',
-          padding: 0,
-          margin: 0,
-        }}>
+      <ul style={styles.grid}>
         {featured.map((card) => (
           <li key={card.id}>
             <CardTile
