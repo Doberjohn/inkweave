@@ -109,6 +109,185 @@ describe('Synergy Rules', () => {
 
       expect(shiftRule.matches(shiftAction)).toBe(false);
     });
+
+    describe('strength calculation', () => {
+      it('should rate on-curve inkable base as strong (curveGap 1)', () => {
+        const shiftCard = createCard({
+          id: 'elsa-shift',
+          name: 'Elsa',
+          fullName: 'Elsa - Ice Maker',
+          cost: 7,
+          keywords: ['Shift 5'],
+        });
+        const base = createCard({
+          id: 'elsa-base',
+          name: 'Elsa',
+          fullName: 'Elsa - Snow Queen',
+          cost: 4,
+          inkwell: true,
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].strength).toBe('strong');
+      });
+
+      it('should rate on-curve non-inkable base as moderate (curveGap 1)', () => {
+        const shiftCard = createCard({
+          id: 'elsa-shift',
+          name: 'Elsa',
+          fullName: 'Elsa - Ice Maker',
+          cost: 7,
+          keywords: ['Shift 5'],
+        });
+        const base = createCard({
+          id: 'elsa-base',
+          name: 'Elsa',
+          fullName: 'Elsa - Snow Queen',
+          cost: 4,
+          inkwell: false,
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].strength).toBe('moderate');
+      });
+
+      it('should rate curveGap 2 with inkable base as strong', () => {
+        const shiftCard = createCard({
+          id: 'elsa-shift',
+          name: 'Elsa',
+          fullName: 'Elsa - Ice Maker',
+          cost: 8,
+          keywords: ['Shift 6'],
+        });
+        const base = createCard({
+          id: 'elsa-base',
+          name: 'Elsa',
+          fullName: 'Elsa - Snow Queen',
+          cost: 4,
+          inkwell: true,
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].strength).toBe('strong');
+      });
+
+      it('should rate slightly off-curve base as moderate (curveGap 3)', () => {
+        const shiftCard = createCard({
+          id: 'elsa-shift',
+          name: 'Elsa',
+          fullName: 'Elsa - Ice Maker',
+          cost: 7,
+          keywords: ['Shift 5'],
+        });
+        const base = createCard({
+          id: 'elsa-base',
+          name: 'Elsa',
+          fullName: 'Elsa - Snow Queen',
+          cost: 2,
+          inkwell: true,
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].strength).toBe('moderate');
+      });
+
+      it('should rate far off-curve base as weak (curveGap >= 4)', () => {
+        const shiftCard = createCard({
+          id: 'elsa-shift',
+          name: 'Elsa',
+          fullName: 'Elsa - Ice Maker',
+          cost: 7,
+          keywords: ['Shift 5'],
+        });
+        const base = createCard({
+          id: 'elsa-base',
+          name: 'Elsa',
+          fullName: 'Elsa - Snow Queen',
+          cost: 1,
+          inkwell: true,
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].strength).toBe('weak');
+      });
+
+      it('should rate same-cost-as-shift base as moderate (curveGap 0)', () => {
+        const shiftCard = createCard({
+          id: 'elsa-shift',
+          name: 'Elsa',
+          fullName: 'Elsa - Ice Maker',
+          cost: 7,
+          keywords: ['Shift 5'],
+        });
+        const base = createCard({
+          id: 'elsa-base',
+          name: 'Elsa',
+          fullName: 'Elsa - Snow Queen',
+          cost: 5,
+          inkwell: true,
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].strength).toBe('moderate');
+      });
+
+      it('should produce consistent strength in reverse direction', () => {
+        const shiftCard = createCard({
+          id: 'elsa-shift',
+          name: 'Elsa',
+          fullName: 'Elsa - Ice Maker',
+          cost: 7,
+          keywords: ['Shift 5'],
+        });
+        const base = createCard({
+          id: 'elsa-base',
+          name: 'Elsa',
+          fullName: 'Elsa - Snow Queen',
+          cost: 4,
+          inkwell: true,
+        });
+        const forward = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        const reverse = shiftRule.findSynergies(base, [shiftCard, base]);
+        expect(forward[0].strength).toBe('strong');
+        expect(reverse[0].strength).toBe(forward[0].strength);
+      });
+
+      it('regression: small shift onto cheap base should not be weak', () => {
+        // Issue #108: Shift 3 onto cost 2 was rated weak (costDiff 1)
+        // but curveGap 1 is an ideal play pattern
+        const shiftCard = createCard({
+          id: 'simba-shift',
+          name: 'Simba',
+          fullName: 'Simba - Returned King',
+          cost: 4,
+          keywords: ['Shift 3'],
+        });
+        const base = createCard({
+          id: 'simba-base',
+          name: 'Simba',
+          fullName: 'Simba - Young Prince',
+          cost: 2,
+          inkwell: true,
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].strength).toBe('strong');
+      });
+
+      it('regression: huge shift onto tiny base should not be strong', () => {
+        // Issue #108: Shift 8 onto cost 2 was rated strong (costDiff 6)
+        // but curveGap 6 is an unrealistic play pattern
+        const shiftCard = createCard({
+          id: 'ursula-shift',
+          name: 'Ursula',
+          fullName: 'Ursula - Sea Witch Queen',
+          cost: 10,
+          keywords: ['Shift 8'],
+        });
+        const base = createCard({
+          id: 'ursula-base',
+          name: 'Ursula',
+          fullName: 'Ursula - Cauldron Keeper',
+          cost: 2,
+          inkwell: true,
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].strength).toBe('weak');
+      });
+    });
   });
 
   describe('Lore Loss', () => {
