@@ -68,6 +68,14 @@ export function HomePage() {
       <button onClick={handleSeeAll} style={styles.seeAllButton}>
         See all cards →
       </button>
+
+      {/* TEMPORARY: Sentry source map test — remove after verifying */}
+      <button
+        onClick={() => { throw new Error('Sentry source map test from HomePage'); }}
+        style={{position: 'fixed', bottom: 8, right: 8, zIndex: 9999, fontSize: '10px', opacity: 0.3}}
+      >
+        Test Sentry
+      </button>
     </main>
   );
 }
