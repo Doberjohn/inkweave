@@ -1,7 +1,14 @@
 import {useState, memo} from 'react';
 import type {GroupedSynergies, SynergyMatchDisplay, SynergyType} from '../types';
 import {SynergyCard} from './SynergyCard';
-import {COLORS, FONT_SIZES, SPACING, RADIUS, STRENGTH_STYLES} from '../../../shared/constants';
+import {
+  COLORS,
+  FONT_SIZES,
+  LAYOUT,
+  SPACING,
+  RADIUS,
+  STRENGTH_STYLES,
+} from '../../../shared/constants';
 import {getDominantStrength} from '../utils';
 
 /** Short explanation for each synergy group type */
@@ -21,7 +28,10 @@ interface SynergyGroupProps {
   defaultExpanded?: boolean;
 }
 
-export const SynergyGroup = memo(function SynergyGroup({group, defaultExpanded = true}: SynergyGroupProps) {
+export const SynergyGroup = memo(function SynergyGroup({
+  group,
+  defaultExpanded = true,
+}: SynergyGroupProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const dominantStrength = getDominantStrength(group.synergies);
   const strengthStyle = STRENGTH_STYLES[dominantStrength];
@@ -115,7 +125,7 @@ const SynergyCardList = memo(function SynergyCardList({synergies}: SynergyCardLi
     <ul
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(105px, 1fr))',
+        gridTemplateColumns: `repeat(auto-fill, minmax(${LAYOUT.synergyCardMinWidth}px, 1fr))`,
         gap: '10px',
         listStyle: 'none',
         padding: 0,

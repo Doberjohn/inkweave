@@ -43,7 +43,11 @@ function DividerLine() {
   );
 }
 
-export const FeaturedCards = memo(function FeaturedCards({cards, onCardSelect, isMobile}: FeaturedCardsProps) {
+export const FeaturedCards = memo(function FeaturedCards({
+  cards,
+  onCardSelect,
+  isMobile,
+}: FeaturedCardsProps) {
   const featured = useMemo(() => {
     return pickFeatured(cards);
     // eslint-disable-next-line react-hooks/exhaustive-deps

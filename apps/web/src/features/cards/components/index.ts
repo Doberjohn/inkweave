@@ -1,3 +1,4 @@
+export {BrowseCardGrid} from './BrowseCardGrid';
 export {CardList} from './CardList';
 export {CardTile} from './CardTile';
 export {FeaturedCards} from './FeaturedCards';

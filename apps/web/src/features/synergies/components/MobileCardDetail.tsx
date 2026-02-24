@@ -22,7 +22,12 @@ interface MobileCardDetailProps {
 }
 
 /** Mobile-only card detail view with synergy breakdown summary and CTA. */
-export function MobileCardDetail({card, synergies, totalSynergyCount, onBack}: MobileCardDetailProps) {
+export function MobileCardDetail({
+  card,
+  synergies,
+  totalSynergyCount,
+  onBack,
+}: MobileCardDetailProps) {
   const navigate = useNavigate();
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -283,7 +288,11 @@ export function MobileCardDetail({card, synergies, totalSynergyCount, onBack}: M
       </div>
 
       {lightboxOpen && card.imageUrl && (
-        <CardLightbox src={card.imageUrl} alt={card.fullName} onClose={() => setLightboxOpen(false)} />
+        <CardLightbox
+          src={card.imageUrl}
+          alt={card.fullName}
+          onClose={() => setLightboxOpen(false)}
+        />
       )}
     </main>
   );

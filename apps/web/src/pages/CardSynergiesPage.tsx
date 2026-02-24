@@ -26,7 +26,7 @@ export function CardSynergiesPage() {
   const {isMobile} = useResponsive();
   const {cards, isLoading, getCardById} = useCardDataContext();
 
-  const selectedCard = cardId ? getCardById(cardId) ?? null : null;
+  const selectedCard = cardId ? (getCardById(cardId) ?? null) : null;
 
   const synergies = useMemo(() => {
     if (!selectedCard || cards.length === 0) return [];

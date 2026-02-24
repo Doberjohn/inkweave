@@ -1,17 +1,7 @@
 import {COLORS} from '../constants';
 
 /** Blurred glow orb positioned absolutely within the background. */
-function GlowOrb({
-  size,
-  x,
-  y,
-  color,
-}: {
-  size: number;
-  x: string;
-  y: string;
-  color: string;
-}) {
+function GlowOrb({size, x, y, color}: {size: number; x: string; y: string; color: string}) {
   return (
     <div
       style={{

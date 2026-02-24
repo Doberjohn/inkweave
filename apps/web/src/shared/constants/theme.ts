@@ -34,6 +34,9 @@ export const LAYOUT = {
   cardDetailWidth: 290,
   selectedCardImageWidth: 120,
   maxDisplayedCards: 200,
+  browseCardMinWidth: 140,
+  synergyCardMinWidth: 160,
+  browseMaxWidth: 1280,
 } as const;
 
 // Spacing scale
@@ -207,7 +210,13 @@ export const Z_INDEX = {
 
 // Card type filter options (includes "Song" pseudo-type for UI filtering)
 export type CardTypeFilter = CardType | 'Song';
-export const CARD_TYPE_FILTERS: CardTypeFilter[] = ['Character', 'Action', 'Song', 'Item', 'Location'];
+export const CARD_TYPE_FILTERS: CardTypeFilter[] = [
+  'Character',
+  'Action',
+  'Song',
+  'Item',
+  'Location',
+];
 
 // Shared select styles (dark theme)
 export const SELECT_STYLE_SM: React.CSSProperties = {

@@ -191,14 +191,15 @@ export function CardList({
                 overflowY: 'auto',
                 padding: `${SPACING.md}px`,
               }}>
-              <ul style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '6px',
-                listStyle: 'none',
-                padding: 0,
-                margin: 0,
-              }}>
+              <ul
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: '6px',
+                  listStyle: 'none',
+                  padding: 0,
+                  margin: 0,
+                }}>
                 {displayedCards.map((card) => (
                   <li key={card.id}>
                     <CardTile
@@ -326,7 +327,6 @@ export function CardList({
                 </button>
               )}
             </div>
-
           </div>
 
           {/* Card Grid - Scrollable */}
@@ -336,14 +336,15 @@ export function CardList({
               overflowY: 'auto',
               padding: `${SPACING.sm}px ${SPACING.lg}px ${SPACING.lg}px`,
             }}>
-            <ul style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(105px, 1fr))',
-              gap: '6px',
-              listStyle: 'none',
-              padding: 0,
-              margin: 0,
-            }}>
+            <ul
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(105px, 1fr))',
+                gap: '6px',
+                listStyle: 'none',
+                padding: 0,
+                margin: 0,
+              }}>
               {displayedCards.map((card) => (
                 <li key={card.id}>
                   <CardTile

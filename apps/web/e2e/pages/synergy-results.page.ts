@@ -10,8 +10,8 @@ export class SynergyResultsPage {
   constructor(page: Page) {
     this.page = page;
     this.emptyState = page.getByText('Select a card to see synergies');
-    this.clearSelectionButton = page.getByRole('button', {name: /×|clear|back to home|inkweave/i});
-    this.synergyCountText = page.getByText(/Found \d+ synergistic cards/);
+    this.clearSelectionButton = page.getByLabel(/return to home|back to home/i);
+    this.synergyCountText = page.getByTestId('synergy-header');
     this.noSynergiesMessage = page.getByText('No synergies found for this card');
   }
 
@@ -25,7 +25,8 @@ export class SynergyResultsPage {
 
   async getSynergyCount(): Promise<number> {
     const text = await this.synergyCountText.textContent();
-    const match = text?.match(/Found (\d+)/);
+    // Header renders "Synergies" + count as adjacent spans, text is "SynergiesN"
+    const match = text?.match(/(\d+)/);
     return match ? parseInt(match[1], 10) : 0;
   }
 
@@ -35,11 +36,8 @@ export class SynergyResultsPage {
   }
 
   getSelectedCardDetail(): Locator {
-    // The card detail section shows the selected card's info
-    return this.page
-      .locator('div')
-      .filter({hasText: /Clear selection|×|INKWEAVE/})
-      .first();
+    // The card detail panel shows the selected card's info
+    return this.page.getByTestId('card-detail-panel');
   }
 
   getSynergyGroup(type: string): Locator {

@@ -25,10 +25,7 @@ export function HeroSection({
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const isSearchEmpty = searchQuery.trim().length === 0;
 
-  const handleAutoSelect = useCallback(
-    (card: LorcanaCard) => onCardSelect?.(card),
-    [onCardSelect],
-  );
+  const handleAutoSelect = useCallback((card: LorcanaCard) => onCardSelect?.(card), [onCardSelect]);
 
   const autocomplete = useAutocomplete({
     cards,
@@ -44,9 +41,7 @@ export function HeroSection({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        ...(isMobile
-          ? {padding: `64px ${SPACING.lg}px 48px`}
-          : {paddingBottom: 80}),
+        ...(isMobile ? {padding: `64px ${SPACING.lg}px 48px`} : {paddingBottom: 80}),
         position: 'relative',
         zIndex: 2,
         width: isMobile ? '100%' : undefined,
@@ -145,7 +140,15 @@ export function HeroSection({
             viewBox="0 0 20 20"
             fill="none">
             <circle cx="9" cy="9" r="6" stroke={COLORS.searchPlaceholder} strokeWidth="1.5" />
-            <line x1="13.5" y1="13.5" x2="17" y2="17" stroke={COLORS.searchPlaceholder} strokeWidth="1.5" strokeLinecap="round" />
+            <line
+              x1="13.5"
+              y1="13.5"
+              x2="17"
+              y2="17"
+              stroke={COLORS.searchPlaceholder}
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
           </svg>
           <input
             type="text"
@@ -175,9 +178,7 @@ export function HeroSection({
               width: '100%',
               height: 56,
               padding: '0 12px 0 48px',
-              borderRadius: isMobile
-                ? `${RADIUS.lg}px`
-                : `${RADIUS.lg}px 0 0 ${RADIUS.lg}px`,
+              borderRadius: isMobile ? `${RADIUS.lg}px` : `${RADIUS.lg}px 0 0 ${RADIUS.lg}px`,
               border: `1px solid ${isSearchFocused ? 'rgba(212, 175, 55, 0.5)' : COLORS.searchBorder}`,
               borderRight: isMobile ? undefined : 'none',
               background: COLORS.searchBg,
@@ -215,9 +216,7 @@ export function HeroSection({
           style={{
             height: 56,
             padding: '0 24px',
-            borderRadius: isMobile
-              ? `${RADIUS.lg}px`
-              : `0 ${RADIUS.lg}px ${RADIUS.lg}px 0`,
+            borderRadius: isMobile ? `${RADIUS.lg}px` : `0 ${RADIUS.lg}px ${RADIUS.lg}px 0`,
             border: 'none',
             background: isSearchEmpty ? COLORS.gray200 : COLORS.filterGradient,
             color: isSearchEmpty ? COLORS.gray500 : COLORS.filterText,
@@ -234,8 +233,22 @@ export function HeroSection({
           }}>
           {/* Search icon */}
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20" fill="none">
-            <circle cx="9" cy="9" r="6" stroke={isSearchEmpty ? COLORS.gray500 : COLORS.filterText} strokeWidth="2" />
-            <line x1="13.5" y1="13.5" x2="17" y2="17" stroke={isSearchEmpty ? COLORS.gray500 : COLORS.filterText} strokeWidth="2" strokeLinecap="round" />
+            <circle
+              cx="9"
+              cy="9"
+              r="6"
+              stroke={isSearchEmpty ? COLORS.gray500 : COLORS.filterText}
+              strokeWidth="2"
+            />
+            <line
+              x1="13.5"
+              y1="13.5"
+              x2="17"
+              y2="17"
+              stroke={isSearchEmpty ? COLORS.gray500 : COLORS.filterText}
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
           </svg>
           Search
         </motion.button>

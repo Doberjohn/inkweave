@@ -126,7 +126,9 @@ export class CardListPage {
   }
 
   async isCardTileVisible(index: number): Promise<boolean> {
-    return await this.getCardTileByIndex(index).isVisible().catch(() => false);
+    return await this.getCardTileByIndex(index)
+      .isVisible()
+      .catch(() => false);
   }
 
   /**

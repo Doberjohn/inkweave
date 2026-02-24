@@ -2,13 +2,7 @@ import {useState, useMemo, memo} from 'react';
 import {motion} from 'framer-motion';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyStrength} from '../types';
-import {
-  INK_COLORS,
-  STRENGTH_STYLES,
-  COLORS,
-  FONT_SIZES,
-  RADIUS,
-} from '../../../shared/constants';
+import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {CardLightbox} from '../../../shared/components';
 import {useCardPreviewHandlers} from '../../cards';
 import {useResponsive} from '../../../shared/hooks';
@@ -68,13 +62,8 @@ function extractReasonTag(explanation: string): string {
   return words.slice(0, 2).join(' ');
 }
 
-export const SynergyCard = memo(function SynergyCard({
-  card,
-  strength,
-  explanation,
-}: SynergyCardProps) {
+export const SynergyCard = memo(function SynergyCard({card, explanation}: SynergyCardProps) {
   const colors = INK_COLORS[card.ink];
-  const strengthStyle = STRENGTH_STYLES[strength];
   const {isMobile} = useResponsive();
   const {previewHandlers} = useCardPreviewHandlers({card});
   const [imgError, setImgError] = useState(false);
@@ -83,8 +72,8 @@ export const SynergyCard = memo(function SynergyCard({
   const reasonTag = useMemo(() => extractReasonTag(explanation), [explanation]);
 
   return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-      {/* Card image tile */}
+    <div>
+      {/* Card tile with integrated name + reason overlay */}
       <motion.button
         {...(isMobile ? {} : previewHandlers)}
         onClick={isMobile && card.imageUrl ? () => setLightboxOpen(true) : undefined}
@@ -134,53 +123,54 @@ export const SynergyCard = memo(function SynergyCard({
           </div>
         )}
 
-        {/* Strength badge - top right */}
-        <span
+        {/* Bottom overlay: card name + reason tag */}
+        <div
           style={{
             position: 'absolute',
-            top: '4px',
-            right: '4px',
-            background: strengthStyle.bg,
-            color: strengthStyle.text,
-            padding: '2px 6px',
-            borderRadius: '10px',
-            fontSize: `${FONT_SIZES.xs}px`,
-            fontWeight: 600,
-            textTransform: 'capitalize',
-            border: `1px solid ${strengthStyle.text}40`,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: '16px 8px 6px',
+            background:
+              'linear-gradient(transparent, rgba(13, 13, 20, 0.85) 30%, rgba(13, 13, 20, 0.95))',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1px',
           }}>
-          {strength}
-        </span>
+          <span
+            style={{
+              fontSize: `${FONT_SIZES.base}px`,
+              fontWeight: 600,
+              color: COLORS.text,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              lineHeight: 1.2,
+            }}>
+            {card.name}
+          </span>
+          <span
+            data-testid="reason-tag"
+            title={explanation}
+            style={{
+              fontSize: `${FONT_SIZES.xs}px`,
+              color: COLORS.textMuted,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              lineHeight: 1.3,
+            }}>
+            {reasonTag}
+          </span>
+        </div>
       </motion.button>
 
-      {/* Reason tag pill */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-        }}>
-        <span
-          data-testid="reason-tag"
-          title={explanation}
-          style={{
-            background: COLORS.surfaceAlt,
-            color: COLORS.textMuted,
-            border: `1px solid ${COLORS.surfaceBorder}`,
-            padding: '2px 8px',
-            borderRadius: `${RADIUS.sm}px`,
-            fontSize: `${FONT_SIZES.xs}px`,
-            fontWeight: 500,
-            maxWidth: '100%',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}>
-          {reasonTag}
-        </span>
-      </div>
-
       {lightboxOpen && card.imageUrl && (
-        <CardLightbox src={card.imageUrl} alt={card.fullName} onClose={() => setLightboxOpen(false)} />
+        <CardLightbox
+          src={card.imageUrl}
+          alt={card.fullName}
+          onClose={() => setLightboxOpen(false)}
+        />
       )}
     </div>
   );

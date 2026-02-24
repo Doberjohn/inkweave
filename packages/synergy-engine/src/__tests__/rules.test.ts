@@ -1,6 +1,11 @@
 import {describe, it, expect} from 'vitest';
 import {getRuleById, getCrossSynergyStrength} from '../engine/rules.js';
-import {hasNegativeTargeting, hasPositiveClassificationEffect, getLocationRoles, isLocationSupportCard} from '../utils/cardHelpers.js';
+import {
+  hasNegativeTargeting,
+  hasPositiveClassificationEffect,
+  getLocationRoles,
+  isLocationSupportCard,
+} from '../utils/cardHelpers.js';
 import {SynergyEngine} from '../engine/SynergyEngine.js';
 import {createCard} from './fixtures.js';
 
@@ -490,7 +495,16 @@ describe('Location Synergy Rules', () => {
 
   describe('Location ↔ support card synergies', () => {
     const engine = new SynergyEngine();
-    const allCards = [elsaIceArtisan, transportPod, johnSilver, islandsPulled, felixSteward, agrabah, anotherLocation, unrelatedCard];
+    const allCards = [
+      elsaIceArtisan,
+      transportPod,
+      johnSilver,
+      islandsPulled,
+      felixSteward,
+      agrabah,
+      anotherLocation,
+      unrelatedCard,
+    ];
 
     it('should find location-support cards when a Location is selected', () => {
       const groups = engine.findSynergies(agrabah, allCards);

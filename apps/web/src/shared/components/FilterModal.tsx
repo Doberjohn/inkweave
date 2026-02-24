@@ -3,14 +3,7 @@ import {motion, AnimatePresence} from 'framer-motion';
 import type {Ink, SetInfo} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards';
 import type {CardTypeFilter} from '../constants/theme';
-import {
-  COLORS,
-  FONT_SIZES,
-  SPACING,
-  RADIUS,
-  Z_INDEX,
-  CTA_BUTTON_STYLE,
-} from '../constants';
+import {COLORS, FONT_SIZES, SPACING, RADIUS, Z_INDEX, CTA_BUTTON_STYLE} from '../constants';
 import {FilterContent} from './FilterContent';
 
 interface FilterModalProps {
@@ -146,122 +139,120 @@ export function FilterModal({
               zIndex: Z_INDEX.modal,
               pointerEvents: 'none',
             }}>
-          <motion.div
-            ref={modalRef}
-            initial={{opacity: 0, scale: 0.95}}
-            animate={{opacity: 1, scale: 1}}
-            exit={{opacity: 0, scale: 0.95}}
-            transition={{duration: 0.2, ease: 'easeOut'}}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="filter-modal-title"
-            data-testid="filter-modal"
-            onKeyDown={handleModalKeyDown}
-            style={{
-              width: 'fit-content',
-              minWidth: 320,
-              maxHeight: '80vh',
-              background: COLORS.surface,
-              borderRadius: `${RADIUS.xl}px`,
-              border: `1px solid ${COLORS.surfaceBorder}`,
-              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.5), 0 0 1px rgba(212, 175, 55, 0.2)',
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-              pointerEvents: 'auto',
-            }}>
-            {/* Header */}
-            <div
+            <motion.div
+              ref={modalRef}
+              initial={{opacity: 0, scale: 0.95}}
+              animate={{opacity: 1, scale: 1}}
+              exit={{opacity: 0, scale: 0.95}}
+              transition={{duration: 0.2, ease: 'easeOut'}}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="filter-modal-title"
+              data-testid="filter-modal"
+              onKeyDown={handleModalKeyDown}
               style={{
-                padding: `${SPACING.lg}px ${SPACING.xl}px`,
-                borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+                width: 'fit-content',
+                minWidth: 320,
+                maxHeight: '80vh',
+                background: COLORS.surface,
+                borderRadius: `${RADIUS.xl}px`,
+                border: `1px solid ${COLORS.surfaceBorder}`,
+                boxShadow: '0 24px 64px rgba(0, 0, 0, 0.5), 0 0 1px rgba(212, 175, 55, 0.2)',
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexShrink: 0,
+                flexDirection: 'column',
+                overflow: 'hidden',
+                pointerEvents: 'auto',
               }}>
-              <h2
-                id="filter-modal-title"
+              {/* Header */}
+              <div
                 style={{
-                  margin: 0,
-                  fontSize: `${FONT_SIZES.xl}px`,
-                  fontWeight: 600,
-                  color: COLORS.text,
+                  padding: `${SPACING.lg}px ${SPACING.xl}px`,
+                  borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexShrink: 0,
                 }}>
-                Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-              </h2>
-              <div style={{display: 'flex', gap: `${SPACING.md}px`, alignItems: 'center'}}>
-                {activeFilterCount > 0 && (
+                <h2
+                  id="filter-modal-title"
+                  style={{
+                    margin: 0,
+                    fontSize: `${FONT_SIZES.xl}px`,
+                    fontWeight: 600,
+                    color: COLORS.text,
+                  }}>
+                  Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+                </h2>
+                <div style={{display: 'flex', gap: `${SPACING.md}px`, alignItems: 'center'}}>
+                  {activeFilterCount > 0 && (
+                    <button
+                      onClick={onClearAll}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: COLORS.primary,
+                        fontSize: `${FONT_SIZES.base}px`,
+                        cursor: 'pointer',
+                        padding: `${SPACING.sm}px`,
+                      }}>
+                      Clear all
+                    </button>
+                  )}
                   <button
-                    onClick={onClearAll}
+                    ref={closeButtonRef}
+                    onClick={onClose}
+                    aria-label="Close filters"
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: COLORS.primary,
-                      fontSize: `${FONT_SIZES.base}px`,
+                      color: COLORS.textMuted,
+                      fontSize: `${FONT_SIZES.xxl}px`,
                       cursor: 'pointer',
-                      padding: `${SPACING.sm}px`,
+                      padding: `${SPACING.xs}px`,
+                      lineHeight: 1,
                     }}>
-                    Clear all
+                    ×
                   </button>
-                )}
-                <button
-                  ref={closeButtonRef}
-                  onClick={onClose}
-                  aria-label="Close filters"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: COLORS.textMuted,
-                    fontSize: `${FONT_SIZES.xxl}px`,
-                    cursor: 'pointer',
-                    padding: `${SPACING.xs}px`,
-                    lineHeight: 1,
-                  }}>
-                  ×
+                </div>
+              </div>
+
+              {/* Content */}
+              <div
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  padding: `${SPACING.xl}px`,
+                }}>
+                <FilterContent
+                  inkFilters={inkFilters}
+                  typeFilters={typeFilters}
+                  costFilters={costFilters}
+                  filters={filters}
+                  uniqueKeywords={uniqueKeywords}
+                  uniqueClassifications={uniqueClassifications}
+                  sets={sets}
+                  onToggleInk={onToggleInk}
+                  onToggleType={onToggleType}
+                  onToggleCost={onToggleCost}
+                  onFiltersChange={onFiltersChange}
+                  variant="desktop"
+                />
+              </div>
+
+              {/* Footer */}
+              <div
+                style={{
+                  padding: `${SPACING.lg}px ${SPACING.xl}px`,
+                  borderTop: `1px solid ${COLORS.surfaceBorder}`,
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  flexShrink: 0,
+                }}>
+                <button onClick={onClose} style={CTA_BUTTON_STYLE}>
+                  Apply Filters
                 </button>
               </div>
-            </div>
-
-            {/* Content */}
-            <div
-              style={{
-                flex: 1,
-                overflowY: 'auto',
-                padding: `${SPACING.xl}px`,
-              }}>
-              <FilterContent
-                inkFilters={inkFilters}
-                typeFilters={typeFilters}
-                costFilters={costFilters}
-                filters={filters}
-                uniqueKeywords={uniqueKeywords}
-                uniqueClassifications={uniqueClassifications}
-                sets={sets}
-                onToggleInk={onToggleInk}
-                onToggleType={onToggleType}
-                onToggleCost={onToggleCost}
-                onFiltersChange={onFiltersChange}
-                variant="desktop"
-              />
-            </div>
-
-            {/* Footer */}
-            <div
-              style={{
-                padding: `${SPACING.lg}px ${SPACING.xl}px`,
-                borderTop: `1px solid ${COLORS.surfaceBorder}`,
-                display: 'flex',
-                justifyContent: 'flex-end',
-                flexShrink: 0,
-              }}>
-              <button
-                onClick={onClose}
-                style={CTA_BUTTON_STYLE}>
-                Apply Filters
-              </button>
-            </div>
-          </motion.div>
+            </motion.div>
           </div>
         </>
       )}

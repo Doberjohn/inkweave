@@ -1,10 +1,17 @@
-import {useCallback, useMemo} from 'react';
+import {useCallback, useMemo, useState} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
-import {SynergyResults, SynergyBreakdown, CardDetailPanel, MobileCardDetail} from '../features/synergies';
+import {SynergyResults, CardDetailPanel, MobileCardDetail} from '../features/synergies';
 import {sharedEngine} from '../features/synergies/engine';
-import {CompactHeader, ErrorBoundary, LoadingSpinner} from '../shared/components';
+import {
+  CompactHeader,
+  ErrorBoundary,
+  EtherealBackground,
+  FilterModal,
+  LoadingSpinner,
+} from '../shared/components';
 import {COLORS, FONTS, LAYOUT} from '../shared/constants';
 import {useResponsive} from '../shared/hooks';
+import {useFilterParams} from '../shared/hooks/useFilterParams';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 
 const centeredPage = {
@@ -19,9 +26,25 @@ export function CardPage() {
   const {cardId} = useParams<{cardId: string}>();
   const navigate = useNavigate();
   const {isMobile} = useResponsive();
-  const {cards, isLoading, totalCards, getCardById} = useCardDataContext();
+  const {cards, isLoading, totalCards, getCardById, uniqueKeywords, uniqueClassifications, sets} =
+    useCardDataContext();
+  const {
+    searchQuery,
+    setSearchQuery,
+    inkFilters,
+    toggleInk,
+    typeFilters,
+    toggleType,
+    costFilters,
+    toggleCost,
+    filters,
+    setFilters,
+    clearAllFilters,
+    activeFilterCount,
+  } = useFilterParams();
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
-  const selectedCard = cardId ? getCardById(cardId) ?? null : null;
+  const selectedCard = cardId ? (getCardById(cardId) ?? null) : null;
 
   const synergies = useMemo(() => {
     if (!selectedCard || cards.length === 0) return [];
@@ -39,6 +62,7 @@ export function CardPage() {
   );
 
   const goHome = useCallback(() => navigate('/'), [navigate]);
+  const selectCard = useCallback((card: {id: string}) => navigate(`/card/${card.id}`), [navigate]);
 
   if (isLoading) {
     return (
@@ -86,6 +110,7 @@ export function CardPage() {
     );
   }
 
+  // Desktop: 2-column layout (CardDetail+Breakdown | SynergyResults)
   return (
     <main
       style={{
@@ -94,10 +119,33 @@ export function CardPage() {
         fontFamily: FONTS.body,
         display: 'flex',
         flexDirection: 'column',
+        position: 'relative',
       }}>
-      <CompactHeader totalCards={totalCards} onLogoClick={goHome} />
-      <div style={{display: 'flex', flex: 1, minHeight: `calc(100vh - ${LAYOUT.compactHeaderHeight}px)`}}>
-        <CardDetailPanel card={selectedCard} onClear={goHome} />
+      <EtherealBackground />
+      <CompactHeader
+        totalCards={totalCards}
+        onLogoClick={goHome}
+        showBackArrow
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        cards={cards}
+        onCardSelect={selectCard}
+        onFiltersClick={() => setShowFilterModal(true)}
+        activeFilterCount={activeFilterCount}
+      />
+      <div
+        style={{
+          display: 'flex',
+          flex: 1,
+          minHeight: `calc(100vh - ${LAYOUT.compactHeaderHeight}px)`,
+          position: 'relative',
+          zIndex: 1,
+        }}>
+        <CardDetailPanel
+          card={selectedCard}
+          synergies={synergies}
+          totalSynergyCount={totalSynergyCount}
+        />
         <ErrorBoundary>
           <SynergyResults
             selectedCard={selectedCard}
@@ -105,9 +153,25 @@ export function CardPage() {
             totalSynergyCount={totalSynergyCount}
             onClearSelection={goHome}
           />
-          <SynergyBreakdown synergies={synergies} totalCount={totalSynergyCount} />
         </ErrorBoundary>
       </div>
+      <FilterModal
+        isOpen={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        inkFilters={inkFilters}
+        typeFilters={typeFilters}
+        costFilters={costFilters}
+        filters={filters}
+        activeFilterCount={activeFilterCount}
+        uniqueKeywords={uniqueKeywords}
+        uniqueClassifications={uniqueClassifications}
+        sets={sets}
+        onToggleInk={toggleInk}
+        onToggleType={toggleType}
+        onToggleCost={toggleCost}
+        onFiltersChange={setFilters}
+        onClearAll={clearAllFilters}
+      />
     </main>
   );
 }

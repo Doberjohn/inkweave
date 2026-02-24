@@ -2,7 +2,15 @@ import {AnimatePresence, motion} from 'framer-motion';
 import type {LorcanaCard} from 'lorcana-synergy-engine';
 import {useCardPreview} from '../../features/cards/components/useCardPreview';
 import type {UseAutocompleteReturn} from '../hooks/useAutocomplete';
-import {COLORS, FONT_SIZES, RADIUS, SET_ABBREVIATIONS, SET_NAMES, SPACING, Z_INDEX} from '../constants';
+import {
+  COLORS,
+  FONT_SIZES,
+  RADIUS,
+  SET_ABBREVIATIONS,
+  SET_NAMES,
+  SPACING,
+  Z_INDEX,
+} from '../constants';
 
 interface SearchAutocompleteProps {
   suggestions: LorcanaCard[];
@@ -89,8 +97,13 @@ export function SearchAutocomplete({
           {suggestions.map((card, index) => {
             const optionProps = getOptionProps(index);
             const isHighlighted = index === highlightedIndex;
-            const setAbbr = SET_ABBREVIATIONS[card.setCode as keyof typeof SET_ABBREVIATIONS] ?? card.setCode ?? '';
-            const setName = SET_NAMES[card.setCode as keyof typeof SET_NAMES] ?? `Set ${card.setCode ?? 'Unknown'}`;
+            const setAbbr =
+              SET_ABBREVIATIONS[card.setCode as keyof typeof SET_ABBREVIATIONS] ??
+              card.setCode ??
+              '';
+            const setName =
+              SET_NAMES[card.setCode as keyof typeof SET_NAMES] ??
+              `Set ${card.setCode ?? 'Unknown'}`;
 
             return (
               <div

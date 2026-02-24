@@ -116,9 +116,7 @@ describe('MobileCardDetail', () => {
   });
 
   it('should show "no synergies" message when count is 0', () => {
-    renderWithRouter(
-      <MobileCardDetail {...defaultProps} synergies={[]} totalSynergyCount={0} />,
-    );
+    renderWithRouter(<MobileCardDetail {...defaultProps} synergies={[]} totalSynergyCount={0} />);
     expect(screen.getByText(/no synergies found/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', {name: /view all/i})).not.toBeInTheDocument();
   });
