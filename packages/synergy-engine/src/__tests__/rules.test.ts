@@ -555,13 +555,13 @@ describe('Location Synergy Rules', () => {
       expect(getCrossSynergyStrength(['tutor'], ['buff'])).toBe('weak');
     });
 
-    it('should return null for cards with only the same roles', () => {
-      expect(getCrossSynergyStrength(['at-payoff'], ['at-payoff'])).toBe(null);
-      expect(getCrossSynergyStrength(['move', 'tutor'], ['move', 'tutor'])).toBe(null);
+    it('should return weak for cards with only the same roles', () => {
+      expect(getCrossSynergyStrength(['at-payoff'], ['at-payoff'])).toBe('weak');
+      expect(getCrossSynergyStrength(['move', 'tutor'], ['move', 'tutor'])).toBe('weak');
     });
 
-    it('should return null when only support roles on both sides', () => {
-      expect(getCrossSynergyStrength(['move'], ['tutor'])).toBe(null);
+    it('should return weak when only support roles on both sides', () => {
+      expect(getCrossSynergyStrength(['move'], ['tutor'])).toBe('weak');
     });
 
     it('should show cross-synergy between Elsa and Felix in engine results', () => {

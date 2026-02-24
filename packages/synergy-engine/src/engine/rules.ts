@@ -72,7 +72,8 @@ const HIGH_VALUE_ROLES: Set<LocationRole> = new Set([
 
 /**
  * Determine cross-synergy strength between two location-support cards.
- * Returns null if the cards only share the same roles (redundant, not synergistic).
+ * All location-support cards share a strategy (wanting locations in play),
+ * so any pair gets at least weak. Complementary roles get stronger ratings.
  */
 export function getCrossSynergyStrength(
   rolesA: LocationRole[],
@@ -81,19 +82,16 @@ export function getCrossSynergyStrength(
   // No cross-synergy if either has no roles
   if (rolesA.length === 0 || rolesB.length === 0) return null;
 
-  // Check if they share ONLY the same roles — redundant, not synergistic
-  const setA = new Set(rolesA);
-  const setB = new Set(rolesB);
-  const hasUniqueRole = rolesA.some((r) => !setB.has(r)) || rolesB.some((r) => !setA.has(r));
-  if (!hasUniqueRole) return null;
-
-  // Count high-value roles on each side
   const aHighValue = rolesA.some((r) => HIGH_VALUE_ROLES.has(r));
   const bHighValue = rolesB.some((r) => HIGH_VALUE_ROLES.has(r));
 
-  if (aHighValue && bHighValue) return 'moderate';
-  if (aHighValue || bHighValue) return 'weak';
-  return null;
+  // Check if they have complementary (different) roles
+  const setA = new Set(rolesA);
+  const setB = new Set(rolesB);
+  const hasUniqueRole = rolesA.some((r) => !setB.has(r)) || rolesB.some((r) => !setA.has(r));
+
+  if (hasUniqueRole && aHighValue && bHighValue) return 'moderate';
+  return 'weak';
 }
 
 /** Build synergies for a location-support card: find Locations + cross-synergies */
