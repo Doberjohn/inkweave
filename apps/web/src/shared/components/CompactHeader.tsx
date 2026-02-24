@@ -5,7 +5,6 @@ import {useAutocomplete} from '../hooks/useAutocomplete';
 import {SearchAutocomplete} from './SearchAutocomplete';
 
 interface CompactHeaderProps {
-  totalCards: number;
   onLogoClick: () => void;
   /** When true, renders "← INKWEAVE" as a back button instead of just "✦ INKWEAVE" */
   showBackArrow?: boolean;
@@ -22,7 +21,6 @@ interface CompactHeaderProps {
 }
 
 export function CompactHeader({
-  totalCards,
   onLogoClick,
   showBackArrow,
   searchQuery,
@@ -75,34 +73,26 @@ export function CompactHeader({
           gap: '6px',
           flexShrink: 0,
         }}>
-        {showBackArrow ? (
+        {showBackArrow && (
           <span
             style={{
-              fontFamily: FONTS.hero,
-              fontSize: `${FONT_SIZES.xl}px`,
-              fontWeight: 700,
+              fontSize: `${FONT_SIZES.lg}px`,
+              fontWeight: 500,
               color: COLORS.primary,
-              letterSpacing: '0.06em',
             }}>
-            ← INKWEAVE
+            ←
           </span>
-        ) : (
-          <>
-            <span style={{color: COLORS.primary, fontSize: `${FONT_SIZES.sm}px`, fontWeight: 600}}>
-              ✦
-            </span>
-            <span
-              style={{
-                fontFamily: FONTS.hero,
-                fontSize: `${FONT_SIZES.xl}px`,
-                fontWeight: 700,
-                color: COLORS.primary,
-                letterSpacing: '0.06em',
-              }}>
-              INKWEAVE
-            </span>
-          </>
         )}
+        <span
+          style={{
+            fontFamily: FONTS.body,
+            fontSize: `${FONT_SIZES.lg}px`,
+            fontWeight: 700,
+            color: COLORS.primary,
+            letterSpacing: '0.18em',
+          }}>
+          INKWEAVE
+        </span>
       </button>
 
       {/* Center: Search bar (when browse mode) */}
@@ -227,31 +217,6 @@ export function CompactHeader({
             </span>
           )}
         </button>
-      )}
-
-      {/* Right: Card count (when no search bar, show on the right) */}
-      {!hasSearch && (
-        <span
-          style={{
-            fontSize: `${FONT_SIZES.sm}px`,
-            color: COLORS.textMuted,
-            marginLeft: 'auto',
-          }}>
-          {totalCards} cards
-        </span>
-      )}
-
-      {/* Right: Card count (when search bar exists, push to right) */}
-      {hasSearch && (
-        <span
-          style={{
-            fontSize: `${FONT_SIZES.sm}px`,
-            color: COLORS.textMuted,
-            marginLeft: 'auto',
-            flexShrink: 0,
-          }}>
-          {totalCards} cards
-        </span>
       )}
     </header>
   );

@@ -26,7 +26,7 @@ export function CardPage() {
   const {cardId} = useParams<{cardId: string}>();
   const navigate = useNavigate();
   const {isMobile} = useResponsive();
-  const {cards, isLoading, totalCards, getCardById, uniqueKeywords, uniqueClassifications, sets} =
+  const {cards, isLoading, getCardById, uniqueKeywords, uniqueClassifications, sets} =
     useCardDataContext();
   const {
     searchQuery,
@@ -123,7 +123,6 @@ export function CardPage() {
       }}>
       <EtherealBackground />
       <CompactHeader
-        totalCards={totalCards}
         onLogoClick={goHome}
         showBackArrow
         searchQuery={searchQuery}

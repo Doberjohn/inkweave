@@ -31,7 +31,7 @@ export const LAYOUT = {
   sidebarWidth: 480,
   headerHeight: 56,
   compactHeaderHeight: 52,
-  cardDetailWidth: 290,
+  cardDetailWidth: 330,
   selectedCardImageWidth: 120,
   maxDisplayedCards: 200,
   browseCardMinWidth: 140,
@@ -85,7 +85,7 @@ export const COLORS = {
 
   // Text
   text: '#e8e8e8',
-  textMuted: '#8888aa',
+  textMuted: '#e8e8e8',
   textDim: '#666680',
 
   // Semantic

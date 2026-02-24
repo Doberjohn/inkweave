@@ -103,7 +103,6 @@ export function BrowsePage() {
       }}>
       <EtherealBackground />
       <CompactHeader
-        totalCards={totalCards}
         onLogoClick={goHome}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
