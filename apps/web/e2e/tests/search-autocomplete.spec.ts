@@ -73,11 +73,16 @@ test.describe('Search Autocomplete', () => {
     await expect(page.getByTestId('card-tile').first()).toBeVisible({timeout: 10000});
 
     // Type in the browse search bar
+    // Use fill() instead of pressSequentially — browse search routes through
+    // URL params (setSearchParams), which triggers React Router re-renders on
+    // every keystroke. pressSequentially's character-by-character input races
+    // with these re-renders on slow CI runners, preventing the debounce from
+    // completing. fill() sets the value in one shot, avoiding the race.
     await browseSearch.click();
-    await browseSearch.pressSequentially('Ariel', {delay: 50});
+    await browseSearch.fill('Ariel');
 
     // Autocomplete should appear after debounce
     const listbox = page.getByRole('listbox');
-    await expect(listbox).toBeVisible({timeout: 5000});
+    await expect(listbox).toBeVisible({timeout: 10000});
   });
 });

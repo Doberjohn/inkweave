@@ -7,6 +7,8 @@ interface FilterButtonProps {
   onClick: () => void;
   children: React.ReactNode;
   activeColor?: string;
+  /** Solid background color for active state. Falls back to activeColor. */
+  activeBgColor?: string;
   inactiveColor?: string;
   inactiveTextColor?: string;
   size?: FilterButtonSize;
@@ -32,12 +34,14 @@ export function FilterButton({
   onClick,
   children,
   activeColor = COLORS.primary600,
+  activeBgColor,
   inactiveColor = COLORS.gray100,
   inactiveTextColor = COLORS.gray700,
   size = 'sm',
   'aria-label': ariaLabel,
 }: FilterButtonProps) {
   const sizeStyle = SIZE_STYLES[size];
+  const bgColor = activeBgColor ?? activeColor;
 
   return (
     <button
@@ -47,11 +51,11 @@ export function FilterButton({
       style={{
         ...sizeStyle,
         border: active ? `1px solid ${activeColor}80` : `1px solid transparent`,
-        background: active ? activeColor : inactiveColor,
+        background: active ? bgColor : inactiveColor,
         color: active ? COLORS.white : inactiveTextColor,
         fontWeight: 500,
         cursor: 'pointer',
-        boxShadow: active ? `0 0 6px ${activeColor}40` : 'none',
+        boxShadow: active ? `0 0 8px ${activeColor}50` : 'none',
         transition: 'box-shadow 0.2s, background 0.2s',
       }}>
       {children}
