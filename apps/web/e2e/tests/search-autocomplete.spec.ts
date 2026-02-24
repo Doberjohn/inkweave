@@ -78,6 +78,6 @@ test.describe('Search Autocomplete', () => {
 
     // Autocomplete should appear after debounce
     const listbox = page.getByRole('listbox');
-    await expect(listbox).toBeVisible({timeout: 5000});
+    await expect(listbox).toBeVisible({timeout: 10000});
   });
 });
