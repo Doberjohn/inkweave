@@ -263,6 +263,8 @@ See [GitHub Issues](https://github.com/Doberjohn/lorcana-synergy-finder/issues) 
 
 ## Recently Completed
 
+- [x] Refactor landing page (#112, PR #117) - Extract 24 isMobile ternaries into getStyles() functions, create SearchIcon component, add 16 unit tests
+- [x] Desktop browse layout redesign (#86, PR #116) - Two-column browse layout, card detail panel, synergy breakdown
 - [x] Dark Fantasy Design System Foundation (#35, PR #69) - Complete color palette overhaul, dark theme tokens, 12 files updated
 - [x] Import type cleanup and e2e tsconfig fix (#68)
 - [x] Remove Deck Builder for MVP (#33, PR #67) - Removed DeckPanel, useDeckBuilder, deck analysis components
