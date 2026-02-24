@@ -168,3 +168,12 @@ After pushing, always confirm with clear output (e.g., git log showing commit on
 - Prefer readability over coverage percentage
 - Aim for 5-15 tests per component/hook, not 30+
 - **E2E test inventory**: `apps/web/e2e/E2E_TESTS.md` — update this file whenever E2E tests are added, removed, or edited
+
+### Worktree & Agent Workflow
+- **Default: sequential, one agent at a time.** Use parallel agents only for read-only research/exploration or trivially independent tasks with clear specs.
+- **Prefer feature branches over worktrees.** Only use worktrees when you need to pause mid-task and switch context, or run concurrent dev servers.
+- **Max 2 active worktrees.** Port assignments: main=5173, worktree-1=5174, worktree-2=5175.
+- **Same-session cleanup.** Every worktree created in a session must be cleaned up in that session (or explicitly flagged for next session in MEMORY.md).
+- **Never leave orphan branches.** After merging a PR, delete the local branch and worktree immediately.
+- **Pre-commit timeout.** Always use `timeout: 600000` for git commit (pre-commit hooks run lint + test + E2E, ~2-3 min).
+- **Port conflicts.** Before starting a dev server or running E2E tests, check ports 5173-5175 and kill stale processes.
