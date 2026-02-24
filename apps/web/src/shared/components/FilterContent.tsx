@@ -112,7 +112,9 @@ export function FilterContent({
               key={type}
               size="md"
               active={typeFilters.includes(type)}
-              onClick={() => onToggleType(type)}>
+              onClick={() => onToggleType(type)}
+              activeColor={COLORS.primary500}
+              activeBgColor={COLORS.primary200}>
               {type}
             </FilterButton>
           ))}
