@@ -104,7 +104,7 @@ pnpm dev              # Start web dev server
 pnpm build:engine     # Build synergy-engine package
 pnpm test:engine      # Run engine tests (49 tests)
 pnpm build:web        # Build web app
-pnpm test:web         # Run web tests (284 tests)
+pnpm test:web         # Run web tests (290 tests)
 ```
 
 ## Architecture Notes
