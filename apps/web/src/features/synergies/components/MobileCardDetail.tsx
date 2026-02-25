@@ -2,17 +2,9 @@ import {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup} from '../types';
-import {getDominantStrength} from '../utils';
+import {getDominantScore, getStrengthTier} from '../utils';
 import {CardImage, CardLightbox, CardTextBlock} from '../../../shared/components';
-import {
-  COLORS,
-  FONT_SIZES,
-  FONTS,
-  INK_COLORS,
-  RADIUS,
-  SPACING,
-  STRENGTH_STYLES,
-} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, FONTS, INK_COLORS, RADIUS, SPACING} from '../../../shared/constants';
 
 interface MobileCardDetailProps {
   card: LorcanaCard;
@@ -185,8 +177,7 @@ export function MobileCardDetail({
 
             <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm - 2}}>
               {synergies.map((group) => {
-                const strength = getDominantStrength(group.synergies);
-                const strengthStyle = STRENGTH_STYLES[strength];
+                const tier = getStrengthTier(getDominantScore(group.synergies));
                 return (
                   <div
                     key={group.groupKey}
@@ -204,7 +195,7 @@ export function MobileCardDetail({
                         width: 22,
                         height: 22,
                         borderRadius: '50%',
-                        background: strengthStyle.bg,
+                        background: tier.bg,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -214,7 +205,7 @@ export function MobileCardDetail({
                         style={{
                           fontSize: FONT_SIZES.sm,
                           fontWeight: 700,
-                          color: strengthStyle.text,
+                          color: tier.color,
                         }}>
                         {group.synergies.length}
                       </span>
@@ -235,15 +226,14 @@ export function MobileCardDetail({
                     {/* Strength badge */}
                     <span
                       style={{
-                        background: strengthStyle.bg,
-                        color: strengthStyle.text,
+                        background: tier.bg,
+                        color: tier.color,
                         fontSize: FONT_SIZES.xs,
                         fontWeight: 500,
                         padding: '2px 8px',
                         borderRadius: RADIUS.sm,
-                        textTransform: 'capitalize',
                       }}>
-                      {strength}
+                      {tier.label}
                     </span>
                   </div>
                 );

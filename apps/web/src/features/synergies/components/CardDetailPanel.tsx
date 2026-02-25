@@ -1,15 +1,8 @@
 import {memo} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup} from '../types';
-import {getDominantStrength} from '../utils';
-import {
-  COLORS,
-  FONT_SIZES,
-  RADIUS,
-  SPACING,
-  LAYOUT,
-  STRENGTH_STYLES,
-} from '../../../shared/constants';
+import {getDominantScore, getStrengthTier} from '../utils';
+import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT} from '../../../shared/constants';
 import {CardImage, CardTextBlock} from '../../../shared/components';
 
 interface CardDetailPanelProps {
@@ -115,8 +108,7 @@ export const CardDetailPanel = memo(function CardDetailPanel({
           {/* Groups */}
           <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
             {synergies.map((group) => {
-              const strength = getDominantStrength(group.synergies);
-              const strengthStyle = STRENGTH_STYLES[strength];
+              const tier = getStrengthTier(getDominantScore(group.synergies));
               return (
                 <div
                   key={group.groupKey}
@@ -131,8 +123,8 @@ export const CardDetailPanel = memo(function CardDetailPanel({
                       width: 24,
                       height: 24,
                       borderRadius: '50%',
-                      background: strengthStyle.bg,
-                      color: strengthStyle.text,
+                      background: tier.bg,
+                      color: tier.color,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -162,15 +154,14 @@ export const CardDetailPanel = memo(function CardDetailPanel({
                   <span
                     style={{
                       fontSize: `${FONT_SIZES.xs}px`,
-                      color: strengthStyle.text,
-                      background: strengthStyle.bg,
+                      color: tier.color,
+                      background: tier.bg,
                       padding: '1px 6px',
                       borderRadius: `${RADIUS.sm}px`,
                       fontWeight: 500,
-                      textTransform: 'capitalize',
                       flexShrink: 0,
                     }}>
-                    {strength}
+                    {tier.label}
                   </span>
                 </div>
               );

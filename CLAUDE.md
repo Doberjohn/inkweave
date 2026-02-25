@@ -81,7 +81,7 @@ React web application that consumes the synergy engine package.
 - Ramp - ink acceleration + high-cost cards
 - Damage/Removal - deal damage, banish + payoffs
 
-**Synergy Strength**: weak, moderate, strong
+**Synergy Score**: 1-10 numeric scale (anchors: 1, 3, 5, 7, 9). Display tiers: Strong (7+), Moderate (4-6), Weak (1-3)
 
 ## Synergy Rules
 

@@ -1,37 +1,41 @@
-import type {LorcanaCard} from '../types/card.js';
-import type {SynergyRule, SynergyMatch, SynergyStrength} from '../types/synergy.js';
-import type {PlaystyleId} from '../types/playstyle.js';
+import type {LorcanaCard, PlaystyleId, SynergyMatch, SynergyRule} from '../types';
+import type {LocationRole} from '../utils/cardHelpers.js';
 import {
-  hasKeyword,
   getBaseName,
   getKeywordValue,
+  getLocationRoles,
+  hasKeyword,
   isCharacter,
-  textContains,
   isLocation,
   isLocationSupportCard,
-  getLocationRoles,
   LOCATION_PATTERNS,
+  textContains,
 } from '../utils/cardHelpers.js';
-import type {LocationRole} from '../utils/cardHelpers.js';
 
 /**
- * Calculate Shift synergy strength based on curve alignment and base flexibility.
+ * Calculate Shift synergy score based on curve alignment and base flexibility.
  *
  * Uses the Shift keyword cost (not the card's hard-cast cost) to determine how
  * naturally the base curves into the shift play. Inkable bases get a bump because
  * they provide fallback utility when drawn late.
+ *
+ * See SCORING_DESIGN.md "Rule 1: Shift Targets" for the full score table.
  */
-function calculateShiftStrength(shiftCard: LorcanaCard, baseCard: LorcanaCard): SynergyStrength {
+function calculateShiftScore(shiftCard: LorcanaCard, baseCard: LorcanaCard): number {
   const shiftCost = getKeywordValue(shiftCard, 'Shift') ?? shiftCard.cost;
   const curveGap = shiftCost - baseCard.cost;
 
-  if (curveGap >= 1 && curveGap <= 2) {
-    return baseCard.inkwell ? 'strong' : 'moderate';
-  }
-  if (curveGap === 0 || curveGap === 3) {
-    return 'moderate';
-  }
-  return 'weak';
+  // Best case: gap=1 with inkable base — perfect curve AND fallback utility
+  if (curveGap === 1 && baseCard.inkwell) return 9;
+
+  // Good curve (gap 1-2) but base lacks inkwell flexibility
+  if (curveGap >= 1 && curveGap <= 2) return 7;
+
+  // Same cost (no ink savings) or wide 3-turn gap
+  if (curveGap === 0 || curveGap === 3) return 5;
+
+  // Poor alignment: 4+ turn gap or negative (shift costs less than base)
+  return 3;
 }
 
 /** Cards that directly make the opponent lose lore */
@@ -41,14 +45,14 @@ const LORE_LOSS_PATTERN = /(?:each |chosen |all )?opponents? loses? (?:\d+ )?lor
 // LOCATION SYNERGY HELPERS
 // ============================================
 
-/** Strength mapping for each location role when matched against a Location card */
-const LOCATION_ROLE_STRENGTH: Record<LocationRole, SynergyStrength> = {
-  'at-payoff': 'strong',
-  'play-trigger': 'strong',
-  buff: 'strong',
-  move: 'moderate',
-  'in-play-check': 'moderate',
-  tutor: 'moderate',
+/** Score mapping for each location role when matched against a Location card */
+const LOCATION_ROLE_SCORE: Record<LocationRole, number> = {
+  'at-payoff': 7,
+  'play-trigger': 7,
+  buff: 7,
+  move: 5,
+  'in-play-check': 5,
+  tutor: 5,
 };
 
 /** Human-readable labels for each location role */
@@ -65,14 +69,14 @@ const ROLE_LABELS: Record<LocationRole, string> = {
 const HIGH_VALUE_ROLES: Set<LocationRole> = new Set(['at-payoff', 'play-trigger', 'buff']);
 
 /**
- * Determine cross-synergy strength between two location-support cards.
+ * Determine cross-synergy score between two location-support cards.
  * All location-support cards share a strategy (wanting locations in play),
- * so any pair gets at least weak. Complementary roles get stronger ratings.
+ * so any pair gets at least 3. Complementary high-value roles get 5.
  */
-export function getCrossSynergyStrength(
+export function getCrossSynergyScore(
   rolesA: LocationRole[],
   rolesB: LocationRole[],
-): SynergyStrength | null {
+): number | null {
   // No cross-synergy if either has no roles
   if (rolesA.length === 0 || rolesB.length === 0) return null;
 
@@ -84,8 +88,8 @@ export function getCrossSynergyStrength(
   const setB = new Set(rolesB);
   const hasUniqueRole = rolesA.some((r) => !setB.has(r)) || rolesB.some((r) => !setA.has(r));
 
-  if (hasUniqueRole && aHighValue && bHighValue) return 'moderate';
-  return 'weak';
+  if (hasUniqueRole && aHighValue && bHighValue) return 5;
+  return 3;
 }
 
 /** Build synergies for a location-support card: find Locations + cross-synergies */
@@ -104,19 +108,19 @@ function findLocationSupportSynergies(
       // Location-support card ↔ Location = direct synergy
       matches.push({
         card: other,
-        strength: LOCATION_ROLE_STRENGTH[role],
+        score: LOCATION_ROLE_SCORE[role],
         explanation: `${card.name} has ${ROLE_LABELS[role]} — works with locations`,
         bidirectional: true,
       });
     } else if (isLocationSupportCard(other)) {
       // Cross-synergy with other location-support cards
       const otherRoles = getLocationRoles(other);
-      const strength = getCrossSynergyStrength(cardRoles, otherRoles);
-      if (strength) {
+      const score = getCrossSynergyScore(cardRoles, otherRoles);
+      if (score !== null) {
         const otherLabel = otherRoles.map((r) => ROLE_LABELS[r]).join(' + ');
         matches.push({
           card: other,
-          strength,
+          score,
           explanation: `Both support location-based gameplay (${ROLE_LABELS[role]} + ${otherLabel})`,
           bidirectional: true,
         });
@@ -138,18 +142,13 @@ function findLocationCardSynergies(card: LorcanaCard, allCards: LorcanaCard[]): 
     const roles = getLocationRoles(other);
     if (roles.length === 0) continue;
 
-    // Use the strongest role for the strength rating
-    const strength = roles.reduce<SynergyStrength>((best, r) => {
-      const s = LOCATION_ROLE_STRENGTH[r];
-      if (s === 'strong') return 'strong';
-      if (s === 'moderate' && best !== 'strong') return 'moderate';
-      return best;
-    }, 'weak');
+    // Use the highest-scoring role
+    const score = Math.max(...roles.map((r) => LOCATION_ROLE_SCORE[r]));
 
     const roleDesc = roles.map((r) => ROLE_LABELS[r]).join(' and ');
     matches.push({
       card: other,
-      strength,
+      score,
       explanation: `${other.name} has ${roleDesc}`,
       bidirectional: true,
     });
@@ -256,7 +255,7 @@ export const synergyRules: SynergyRule[] = [
           .map(
             (target): SynergyMatch => ({
               card: target,
-              strength: calculateShiftStrength(card, target),
+              score: calculateShiftScore(card, target),
               explanation: `${card.name} can Shift onto ${target.fullName} (cost ${target.cost})`,
               bidirectional: true,
             }),
@@ -274,7 +273,7 @@ export const synergyRules: SynergyRule[] = [
         .map(
           (shiftCard): SynergyMatch => ({
             card: shiftCard,
-            strength: calculateShiftStrength(shiftCard, card),
+            score: calculateShiftScore(shiftCard, card),
             explanation: `${shiftCard.fullName} (Shift, cost ${shiftCard.cost}) can Shift onto this card`,
             bidirectional: true,
           }),
@@ -300,7 +299,7 @@ export const synergyRules: SynergyRule[] = [
         .map(
           (other): SynergyMatch => ({
             card: other,
-            strength: 'strong',
+            score: 7,
             explanation: `Both ${card.name} and ${other.name} make the opponent lose lore`,
             bidirectional: true,
           }),

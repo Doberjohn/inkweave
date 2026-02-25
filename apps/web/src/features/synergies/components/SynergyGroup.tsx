@@ -107,7 +107,7 @@ const SynergyCardList = memo(function SynergyCardList({synergies}: SynergyCardLi
         <li key={synergy.card.id}>
           <SynergyCard
             card={synergy.card}
-            strength={synergy.strength}
+            score={synergy.score}
             explanation={synergy.explanation}
           />
         </li>

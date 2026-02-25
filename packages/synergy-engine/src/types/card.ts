@@ -25,6 +25,7 @@ export interface LorcanaCard {
   lore?: number;
   keywords?: string[]; // Shift, Evasive, Singer, Challenger, etc.
   isSong?: boolean; // True for Action cards with Song subtype
+  moveCost?: number; // Location move cost
   imageUrl?: string;
   thumbnailUrl?: string;
   setCode?: string;

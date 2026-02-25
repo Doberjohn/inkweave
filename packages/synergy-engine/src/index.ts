@@ -7,7 +7,6 @@ export type {
   SynergyCategory,
   PlaystyleId,
   Playstyle,
-  SynergyStrength,
   DirectSynergyRule,
   PlaystyleSynergyRule,
   SynergyRule,

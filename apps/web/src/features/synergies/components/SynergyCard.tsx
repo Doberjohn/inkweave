@@ -1,23 +1,20 @@
 import {useState, memo} from 'react';
 import {motion} from 'framer-motion';
 import type {LorcanaCard} from '../../cards';
-import type {SynergyStrength} from '../types';
-import {INK_COLORS, COLORS, FONT_SIZES, RADIUS, STRENGTH_STYLES} from '../../../shared/constants';
+import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {CardLightbox} from '../../../shared/components';
 import {useCardPreviewHandlers} from '../../cards';
 import {useResponsive} from '../../../shared/hooks';
+import {getStrengthTier} from '../utils';
 
 interface SynergyCardProps {
   card: LorcanaCard;
-  strength: SynergyStrength;
+  score: number;
   explanation: string;
 }
 
-export const SynergyCard = memo(function SynergyCard({
-  card,
-  strength,
-  explanation,
-}: SynergyCardProps) {
+export const SynergyCard = memo(function SynergyCard({card, score, explanation}: SynergyCardProps) {
+  const tier = getStrengthTier(score);
   const colors = INK_COLORS[card.ink];
   const {isMobile} = useResponsive();
   const {previewHandlers} = useCardPreviewHandlers({card});
@@ -94,16 +91,15 @@ export const SynergyCard = memo(function SynergyCard({
             data-testid="reason-tag"
             title={explanation}
             style={{
-              background: STRENGTH_STYLES[strength].bg,
-              color: STRENGTH_STYLES[strength].text,
+              background: tier.bg,
+              color: tier.color,
               padding: '1px 6px',
               borderRadius: `${RADIUS.sm}px`,
               fontSize: `${FONT_SIZES.xs}px`,
               fontWeight: 600,
-              textTransform: 'capitalize',
               lineHeight: 1.4,
             }}>
-            {strength}
+            {tier.label}
           </span>
         </div>
       </motion.button>

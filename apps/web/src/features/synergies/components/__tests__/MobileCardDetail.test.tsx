@@ -40,7 +40,7 @@ const mockSynergies: SynergyGroup[] = [
     description: 'Cards that work together through exert mechanics',
     synergies: Array.from({length: 8}, (_, i) => ({
       card: {...mockCard, id: `exert-${i}`},
-      strength: 'strong' as const,
+      score: 7,
       explanation: 'Exert synergy',
     })),
   },
@@ -51,7 +51,7 @@ const mockSynergies: SynergyGroup[] = [
     description: 'Singer keyword plays Songs at reduced cost',
     synergies: Array.from({length: 4}, (_, i) => ({
       card: {...mockCard, id: `singer-${i}`},
-      strength: 'moderate' as const,
+      score: 5,
       explanation: 'Singer synergy',
     })),
   },
@@ -98,8 +98,8 @@ describe('MobileCardDetail', () => {
 
   it('should render strength badges with correct labels', () => {
     renderWithRouter(<MobileCardDetail {...defaultProps} />);
-    expect(screen.getByText('strong')).toBeInTheDocument();
-    expect(screen.getByText('moderate')).toBeInTheDocument();
+    expect(screen.getByText('Strong')).toBeInTheDocument();
+    expect(screen.getByText('Moderate')).toBeInTheDocument();
   });
 
   it('should render synergy count circles', () => {

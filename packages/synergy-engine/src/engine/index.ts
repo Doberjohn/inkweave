@@ -6,7 +6,7 @@ export {
   getRulesByCategory,
   getRulesByPlaystyle,
   getRuleById,
-  getCrossSynergyStrength,
+  getCrossSynergyScore,
 } from './rules.js';
 export {getAllPlaystyles, getPlaystyleById} from './playstyles.js';
 export {SynergyCache, synergyCache} from './SynergyCache.js';

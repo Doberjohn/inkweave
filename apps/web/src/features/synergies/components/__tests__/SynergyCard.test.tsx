@@ -42,7 +42,7 @@ const mockCard: LorcanaCard = {
 
 describe('SynergyCard', () => {
   it('should render card image with descriptive alt text', () => {
-    render(<SynergyCard card={mockCard} strength="strong" explanation="Test synergy" />);
+    render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
 
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute('alt', 'Elsa - Snow Queen');

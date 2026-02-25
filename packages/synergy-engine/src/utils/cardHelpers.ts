@@ -1,4 +1,4 @@
-import type {LorcanaCard} from '../types/card.js';
+import type {LorcanaCard} from '../types';
 
 /**
  * Check if card text contains a pattern (case-insensitive)

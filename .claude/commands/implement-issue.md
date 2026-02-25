@@ -1,4 +1,4 @@
-# Start Session
+# Implement Issue Command
 
     When starting a new session, follow this systematic approach:
 
@@ -15,7 +15,7 @@
     After hygiene is done, help the user pick what to work on:
 
     1. Make sure we're on `master` and up to date: `git checkout master && git pull origin master`
-    2. List open issues: `gh issue list --state open --limit 20`
+    2. List open issues: `gh issue list --state open --limit 40`
     3. **ASK the user**: "Which issue number do you want to work on? (or 'skip' to stay on master)"
     4. **WAIT** for the user's response. Do NOT proceed until they answer.
     5. If the user provides an issue number:

@@ -22,6 +22,7 @@ interface LorcanaJSONCard {
   }>;
   fullText?: string;
   fullTextSections?: string[];
+  moveCost?: number;
   strength?: number;
   willpower?: number;
   lore?: number;
@@ -135,6 +136,7 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
     classifications: classifications.length > 0 ? classifications : undefined,
     text: raw.fullText,
     textSections: nonEmptySections(raw.fullTextSections),
+    moveCost: raw.moveCost,
     strength: raw.strength,
     willpower: raw.willpower,
     lore: raw.lore,

@@ -48,7 +48,7 @@ describe('SynergyEngine', () => {
       expect(allCards).not.toContain('elsa-shift');
     });
 
-    it('should sort synergies by strength (strong first)', () => {
+    it('should sort synergies by score (highest first)', () => {
       const engine = new SynergyEngine();
 
       const elsaShift = createCard({
@@ -80,9 +80,10 @@ describe('SynergyEngine', () => {
 
       expect(shiftGroup).toBeDefined();
       expect(shiftGroup?.synergies).toHaveLength(2);
-      // Strong (curveGap 1, inkable) should come before moderate (curveGap 0)
-      expect(shiftGroup?.synergies[0].strength).toBe('strong');
-      expect(shiftGroup?.synergies[1].strength).toBe('moderate');
+      // Higher score should come first
+      expect(shiftGroup?.synergies[0].score).toBeGreaterThanOrEqual(
+        shiftGroup?.synergies[1].score ?? 0,
+      );
     });
 
     it('should group direct rules individually and playstyle rules by playstyleId', () => {
@@ -269,7 +270,7 @@ describe('SynergyEngine', () => {
         expect(r.category).toBeDefined();
         expect(r.groupKey).toBeDefined();
         expect(r.card).toBeDefined();
-        expect(r.strength).toBeDefined();
+        expect(typeof r.score).toBe('number');
       });
     });
   });
@@ -289,7 +290,7 @@ describe('SynergyEngine', () => {
             .filter((c) => c.id !== card.id && c.name === 'Synergy Target')
             .map((c) => ({
               card: c,
-              strength: 'strong' as const,
+              score: 7,
               explanation: 'Custom synergy',
             })),
       };
@@ -312,7 +313,7 @@ describe('SynergyEngine', () => {
             .filter((c) => c.id !== card.id && c.name === 'Target')
             .map((c) => ({
               card: c,
-              strength: 'strong' as const,
+              score: 7,
               explanation: 'Custom synergy found',
             })),
       };
@@ -345,7 +346,7 @@ describe('SynergyEngine', () => {
             .filter((c) => c.id !== card.id)
             .map((c) => ({
               card: c,
-              strength: 'moderate' as const,
+              score: 5,
               explanation: 'Match',
             })),
       };

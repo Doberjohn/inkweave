@@ -1,7 +1,7 @@
 import {memo} from 'react';
 import type {SynergyGroup} from '../types';
-import {COLORS, FONT_SIZES, RADIUS, SPACING, STRENGTH_STYLES} from '../../../shared/constants';
-import {getDominantStrength} from '../utils';
+import {COLORS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {getDominantScore, getStrengthTier} from '../utils';
 
 interface SynergyBreakdownProps {
   synergies: SynergyGroup[];
@@ -65,8 +65,7 @@ export const SynergyBreakdown = memo(function SynergyBreakdown({
 
       {/* Groups */}
       {synergies.map((group) => {
-        const strength = getDominantStrength(group.synergies);
-        const style = STRENGTH_STYLES[strength];
+        const tier = getStrengthTier(getDominantScore(group.synergies));
         return (
           <div
             key={group.groupKey}
@@ -77,8 +76,8 @@ export const SynergyBreakdown = memo(function SynergyBreakdown({
                 width: 28,
                 height: 28,
                 borderRadius: '50%',
-                background: style.bg,
-                color: style.text,
+                background: tier.bg,
+                color: tier.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -106,14 +105,13 @@ export const SynergyBreakdown = memo(function SynergyBreakdown({
               <span
                 style={{
                   fontSize: `${FONT_SIZES.xs}px`,
-                  color: style.text,
-                  background: style.bg,
+                  color: tier.color,
+                  background: tier.bg,
                   padding: '1px 6px',
                   borderRadius: `${RADIUS.sm}px`,
                   fontWeight: 500,
-                  textTransform: 'capitalize',
                 }}>
-                {strength}
+                {tier.label}
               </span>
             </div>
           </div>

@@ -1,1 +1,1 @@
-export {STRENGTH_ORDER, getDominantStrength} from './strengthUtils';
+export {getStrengthTier, getDominantScore} from './scoreUtils';
