@@ -1,15 +1,6 @@
-import type {LorcanaCard} from '../types/card.js';
-import type {SynergyRule, SynergyGroup, SynergyStrength} from '../types/synergy.js';
-import type {SynergyCategory} from '../types/playstyle.js';
+import type {LorcanaCard, SynergyCategory, SynergyGroup, SynergyRule} from '../types';
 import {getAllRules} from './rules.js';
 import {getPlaystyleById} from './playstyles.js';
-
-// Sort order for synergy strength
-const STRENGTH_ORDER: Record<SynergyStrength, number> = {
-  strong: 0,
-  moderate: 1,
-  weak: 2,
-};
 
 // Categories display order: direct first, then playstyle
 const CATEGORY_ORDER: Record<SynergyCategory, number> = {
@@ -94,7 +85,7 @@ export class SynergyEngine {
         if (!exists) {
           group.synergies.push({
             card: match.card,
-            strength: match.strength,
+            score: match.score,
             explanation: match.explanation,
             ruleId: rule.id,
             ruleName: rule.name,
@@ -106,8 +97,8 @@ export class SynergyEngine {
     // Sort and limit results within each group
     for (const group of results.values()) {
       group.synergies.sort((a, b) => {
-        const strengthDiff = STRENGTH_ORDER[a.strength] - STRENGTH_ORDER[b.strength];
-        if (strengthDiff !== 0) return strengthDiff;
+        const scoreDiff = b.score - a.score;
+        if (scoreDiff !== 0) return scoreDiff;
         return a.card.name.localeCompare(b.card.name);
       });
 
@@ -130,7 +121,7 @@ export class SynergyEngine {
     allCards: LorcanaCard[],
   ): Array<{
     card: LorcanaCard;
-    strength: SynergyStrength;
+    score: number;
     explanation: string;
     category: SynergyCategory;
     groupKey: string;
@@ -139,7 +130,7 @@ export class SynergyEngine {
     const seen = new Set<string>();
     const results: Array<{
       card: LorcanaCard;
-      strength: SynergyStrength;
+      score: number;
       explanation: string;
       category: SynergyCategory;
       groupKey: string;
@@ -172,14 +163,14 @@ export class SynergyEngine {
     synergies: Array<{
       category: SynergyCategory;
       groupKey: string;
-      strength: SynergyStrength;
+      score: number;
       explanation: string;
     }>;
   } {
     const synergies: Array<{
       category: SynergyCategory;
       groupKey: string;
-      strength: SynergyStrength;
+      score: number;
       explanation: string;
     }> = [];
 
@@ -191,7 +182,7 @@ export class SynergyEngine {
         synergies.push({
           category: rule.category,
           groupKey: this.getGroupKey(rule),
-          strength: match.strength,
+          score: match.score,
           explanation: match.explanation,
         });
       }

@@ -1,9 +1,6 @@
 import type {LorcanaCard} from './card.js';
 import type {SynergyCategory, PlaystyleId} from './playstyle.js';
 
-// How strong is this synergy
-export type SynergyStrength = 'weak' | 'moderate' | 'strong';
-
 // Common fields shared by all synergy rules
 interface SynergyRuleBase {
   id: string;
@@ -34,7 +31,7 @@ export type SynergyRule = DirectSynergyRule | PlaystyleSynergyRule;
 // Result from a synergy rule evaluation
 export interface SynergyMatch {
   card: LorcanaCard;
-  strength: SynergyStrength;
+  score: number;
   explanation: string;
   bidirectional?: boolean;
 }
@@ -42,7 +39,7 @@ export interface SynergyMatch {
 // Single synergy match for display
 export interface SynergyMatchDisplay {
   card: LorcanaCard;
-  strength: SynergyStrength;
+  score: number;
   explanation: string;
   ruleId?: string;
   ruleName?: string;

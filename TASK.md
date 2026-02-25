@@ -53,7 +53,7 @@ See [GitHub Issues](https://github.com/Doberjohn/lorcana-synergy-finder/issues) 
 ## Backlog (Post-MVP)
 
 ### Synergy Evolution
-- [ ] Numeric scoring (1-10 scale) — #132
+- [x] Numeric scoring (1-10 scale) — #132
 - [ ] Community voting for synergies — #9
 - [ ] User-created synergies + sharing — #8
 - [ ] Embeddable Synergy Widget — #58

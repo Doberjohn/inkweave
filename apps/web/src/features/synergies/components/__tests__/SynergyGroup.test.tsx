@@ -22,7 +22,7 @@ const mockGroup: SynergyGroupData = {
         fullName: 'Elsa - Snow Queen',
         name: 'Elsa',
       } as SynergyGroupData['synergies'][0]['card'],
-      strength: 'strong',
+      score: 7,
       explanation: 'Shift synergy',
     },
   ],

@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {getRuleById, getCrossSynergyStrength} from '../engine/rules.js';
+import {getRuleById, getCrossSynergyScore} from '../engine/rules.js';
 import {
   hasNegativeTargeting,
   hasPositiveClassificationEffect,
@@ -116,8 +116,8 @@ describe('Synergy Rules', () => {
       expect(shiftRule.matches(shiftAction)).toBe(false);
     });
 
-    describe('strength calculation', () => {
-      it('should rate on-curve inkable base as strong (curveGap 1)', () => {
+    describe('score calculation', () => {
+      it('should rate on-curve inkable base as 9 (curveGap 1)', () => {
         const shiftCard = createCard({
           id: 'elsa-shift',
           name: 'Elsa',
@@ -133,10 +133,10 @@ describe('Synergy Rules', () => {
           inkwell: true,
         });
         const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
-        expect(synergies[0].strength).toBe('strong');
+        expect(synergies[0].score).toBe(9);
       });
 
-      it('should rate on-curve non-inkable base as moderate (curveGap 1)', () => {
+      it('should rate on-curve non-inkable base as 7 (curveGap 1)', () => {
         const shiftCard = createCard({
           id: 'elsa-shift',
           name: 'Elsa',
@@ -152,10 +152,10 @@ describe('Synergy Rules', () => {
           inkwell: false,
         });
         const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
-        expect(synergies[0].strength).toBe('moderate');
+        expect(synergies[0].score).toBe(7);
       });
 
-      it('should rate curveGap 2 with inkable base as strong', () => {
+      it('should rate curveGap 2 with inkable base as 7', () => {
         const shiftCard = createCard({
           id: 'elsa-shift',
           name: 'Elsa',
@@ -171,10 +171,10 @@ describe('Synergy Rules', () => {
           inkwell: true,
         });
         const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
-        expect(synergies[0].strength).toBe('strong');
+        expect(synergies[0].score).toBe(7);
       });
 
-      it('should rate slightly off-curve base as moderate (curveGap 3)', () => {
+      it('should rate slightly off-curve base as 5 (curveGap 3)', () => {
         const shiftCard = createCard({
           id: 'elsa-shift',
           name: 'Elsa',
@@ -190,10 +190,10 @@ describe('Synergy Rules', () => {
           inkwell: true,
         });
         const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
-        expect(synergies[0].strength).toBe('moderate');
+        expect(synergies[0].score).toBe(5);
       });
 
-      it('should rate far off-curve base as weak (curveGap >= 4)', () => {
+      it('should rate far off-curve base as 3 (curveGap >= 4)', () => {
         const shiftCard = createCard({
           id: 'elsa-shift',
           name: 'Elsa',
@@ -209,10 +209,10 @@ describe('Synergy Rules', () => {
           inkwell: true,
         });
         const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
-        expect(synergies[0].strength).toBe('weak');
+        expect(synergies[0].score).toBe(3);
       });
 
-      it('should rate same-cost-as-shift base as moderate (curveGap 0)', () => {
+      it('should rate same-cost-as-shift base as 5 (curveGap 0)', () => {
         const shiftCard = createCard({
           id: 'elsa-shift',
           name: 'Elsa',
@@ -228,10 +228,10 @@ describe('Synergy Rules', () => {
           inkwell: true,
         });
         const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
-        expect(synergies[0].strength).toBe('moderate');
+        expect(synergies[0].score).toBe(5);
       });
 
-      it('should produce consistent strength in reverse direction', () => {
+      it('should produce consistent score in reverse direction', () => {
         const shiftCard = createCard({
           id: 'elsa-shift',
           name: 'Elsa',
@@ -248,11 +248,11 @@ describe('Synergy Rules', () => {
         });
         const forward = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
         const reverse = shiftRule.findSynergies(base, [shiftCard, base]);
-        expect(forward[0].strength).toBe('strong');
-        expect(reverse[0].strength).toBe(forward[0].strength);
+        expect(forward[0].score).toBe(9);
+        expect(reverse[0].score).toBe(forward[0].score);
       });
 
-      it('regression: small shift onto cheap base should not be weak', () => {
+      it('regression: small shift onto cheap base should not score 3', () => {
         // Issue #108: Shift 3 onto cost 2 was rated weak (costDiff 1)
         // but curveGap 1 is an ideal play pattern
         const shiftCard = createCard({
@@ -270,10 +270,10 @@ describe('Synergy Rules', () => {
           inkwell: true,
         });
         const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
-        expect(synergies[0].strength).toBe('strong');
+        expect(synergies[0].score).toBe(9);
       });
 
-      it('regression: huge shift onto tiny base should not be strong', () => {
+      it('regression: huge shift onto tiny base should not score high', () => {
         // Issue #108: Shift 8 onto cost 2 was rated strong (costDiff 6)
         // but curveGap 6 is an unrealistic play pattern
         const shiftCard = createCard({
@@ -291,7 +291,7 @@ describe('Synergy Rules', () => {
           inkwell: true,
         });
         const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
-        expect(synergies[0].strength).toBe('weak');
+        expect(synergies[0].score).toBe(3);
       });
     });
   });
@@ -361,7 +361,7 @@ describe('Synergy Rules', () => {
       const synergies = loreLossRule.findSynergies(thievery, allCards);
 
       expect(synergies).toHaveLength(2);
-      expect(synergies.every((s) => s.strength === 'strong')).toBe(true);
+      expect(synergies.every((s) => s.score === 7)).toBe(true);
       expect(synergies.find((s) => s.card.id === 'jasmine-rebellious')).toBeDefined();
       expect(synergies.find((s) => s.card.id === 'flotilla')).toBeDefined();
     });
@@ -532,22 +532,22 @@ describe('Location Synergy Rules', () => {
       expect(cardIds).toContain('motunui');
     });
 
-    it('should assign strong strength for at-payoff cards with Locations', () => {
+    it('should assign score 7 for at-payoff cards with Locations', () => {
       const groups = engine.findSynergies(agrabah, allCards);
       const locationGroup = groups.find((g) => g.groupKey === 'location-control')!;
       const elsaSynergy = locationGroup.synergies.find((s) => s.card.id === 'elsa-ice-artisan');
 
-      expect(elsaSynergy!.strength).toBe('strong');
+      expect(elsaSynergy!.score).toBe(7);
     });
 
-    it('should assign moderate strength for move/tutor cards with Locations', () => {
+    it('should assign score 5 for move/tutor cards with Locations', () => {
       const groups = engine.findSynergies(agrabah, allCards);
       const locationGroup = groups.find((g) => g.groupKey === 'location-control')!;
       const podSynergy = locationGroup.synergies.find((s) => s.card.id === 'transport-pod');
       const tutorSynergy = locationGroup.synergies.find((s) => s.card.id === 'islands-pulled');
 
-      expect(podSynergy!.strength).toBe('moderate');
-      expect(tutorSynergy!.strength).toBe('moderate');
+      expect(podSynergy!.score).toBe(5);
+      expect(tutorSynergy!.score).toBe(5);
     });
 
     it('should not produce location synergies for unrelated cards', () => {
@@ -559,23 +559,23 @@ describe('Location Synergy Rules', () => {
   });
 
   describe('Cross-synergy between support cards', () => {
-    it('should return moderate when both have high-value roles', () => {
+    it('should return 5 when both have high-value complementary roles', () => {
       // at-payoff + play-trigger vs buff
-      expect(getCrossSynergyStrength(['at-payoff', 'play-trigger'], ['buff'])).toBe('moderate');
+      expect(getCrossSynergyScore(['at-payoff', 'play-trigger'], ['buff'])).toBe(5);
     });
 
-    it('should return weak when one has high-value and other has support role', () => {
-      expect(getCrossSynergyStrength(['at-payoff'], ['move'])).toBe('weak');
-      expect(getCrossSynergyStrength(['tutor'], ['buff'])).toBe('weak');
+    it('should return 3 when one has high-value and other has support role', () => {
+      expect(getCrossSynergyScore(['at-payoff'], ['move'])).toBe(3);
+      expect(getCrossSynergyScore(['tutor'], ['buff'])).toBe(3);
     });
 
-    it('should return weak for cards with only the same roles', () => {
-      expect(getCrossSynergyStrength(['at-payoff'], ['at-payoff'])).toBe('weak');
-      expect(getCrossSynergyStrength(['move', 'tutor'], ['move', 'tutor'])).toBe('weak');
+    it('should return 3 for cards with only the same roles', () => {
+      expect(getCrossSynergyScore(['at-payoff'], ['at-payoff'])).toBe(3);
+      expect(getCrossSynergyScore(['move', 'tutor'], ['move', 'tutor'])).toBe(3);
     });
 
-    it('should return weak when only support roles on both sides', () => {
-      expect(getCrossSynergyStrength(['move'], ['tutor'])).toBe('weak');
+    it('should return 3 when only support roles on both sides', () => {
+      expect(getCrossSynergyScore(['move'], ['tutor'])).toBe(3);
     });
 
     it('should show cross-synergy between Elsa and Felix in engine results', () => {
@@ -587,7 +587,7 @@ describe('Location Synergy Rules', () => {
       expect(locationGroup).toBeDefined();
       const felixMatch = locationGroup!.synergies.find((s) => s.card.id === 'felix-steward');
       expect(felixMatch).toBeDefined();
-      expect(felixMatch!.strength).toBe('moderate');
+      expect(felixMatch!.score).toBe(5);
     });
   });
 });

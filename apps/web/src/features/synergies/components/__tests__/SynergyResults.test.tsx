@@ -42,7 +42,7 @@ const mockSynergies: SynergyGroupData[] = [
     category: 'direct',
     label: 'Shift Targets',
     description: 'Characters with Shift and their same-named targets',
-    synergies: [{card: mockCard, strength: 'strong', explanation: 'Shift'}],
+    synergies: [{card: mockCard, score: 7, explanation: 'Shift'}],
   },
 ];
 

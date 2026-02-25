@@ -1,4 +1,4 @@
-import type {CardType} from '../types/card.js';
+import type {CardType} from '../types';
 
 const CARD_TYPES: CardType[] = ['Character', 'Action', 'Item', 'Location'];
 

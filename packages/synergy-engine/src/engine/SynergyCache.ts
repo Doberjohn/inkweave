@@ -1,14 +1,14 @@
-import type {LorcanaCard} from '../types/card.js';
-import type {SynergyStrength} from '../types/synergy.js';
-import type {SynergyCategory} from '../types/playstyle.js';
+import type {LorcanaCard, SynergyCategory} from '../types';
 import type {SynergyEngine} from './SynergyEngine.js';
+// Create default cache with default engine
+import {synergyEngine} from './SynergyEngine.js';
 
 export interface CachedSynergyResult {
   hasSynergy: boolean;
   synergies: Array<{
     category: SynergyCategory;
     groupKey: string;
-    strength: SynergyStrength;
+    score: number;
     explanation: string;
   }>;
 }
@@ -52,7 +52,7 @@ export class SynergyCache {
       synergies: result.synergies.map((s) => ({
         category: s.category,
         groupKey: s.groupKey,
-        strength: s.strength,
+        score: s.score,
         explanation: s.explanation,
       })),
     };
@@ -81,22 +81,20 @@ export class SynergyCache {
     hasSynergy: boolean;
     forward: CachedSynergyResult;
     reverse: CachedSynergyResult;
-    bestSynergy: {strength: SynergyStrength; explanation: string} | null;
+    bestSynergy: {score: number; explanation: string} | null;
   } {
     const forward = this.checkSynergy(cardA, cardB);
     const reverse = this.checkSynergy(cardB, cardA);
     const hasSynergy = forward.hasSynergy || reverse.hasSynergy;
 
-    let bestSynergy: {strength: SynergyStrength; explanation: string} | null = null;
+    let bestSynergy: {score: number; explanation: string} | null = null;
     if (hasSynergy) {
       const allSynergies = [...forward.synergies, ...reverse.synergies];
       bestSynergy = allSynergies.reduce(
         (best, syn) => {
-          const currentWeight = strengthWeight(syn.strength);
-          const bestWeight = best ? strengthWeight(best.strength) : 0;
-          return currentWeight > bestWeight ? syn : best;
+          return !best || syn.score > best.score ? syn : best;
         },
-        null as {strength: SynergyStrength; explanation: string} | null,
+        null as {score: number; explanation: string} | null,
       );
     }
 
@@ -118,17 +116,4 @@ export class SynergyCache {
   }
 }
 
-function strengthWeight(strength: SynergyStrength): number {
-  switch (strength) {
-    case 'strong':
-      return 3;
-    case 'moderate':
-      return 2;
-    case 'weak':
-      return 1;
-  }
-}
-
-// Create default cache with default engine
-import {synergyEngine} from './SynergyEngine.js';
 export const synergyCache = new SynergyCache(synergyEngine);

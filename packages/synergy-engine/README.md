@@ -111,7 +111,7 @@ const directRule: SynergyRule = {
       .filter(other => /* your logic */)
       .map(other => ({
         card: other,
-        strength: "strong",
+        score: 7,
         explanation: "Custom synergy explanation",
       }));
   },
@@ -170,6 +170,7 @@ interface LorcanaCard {
   type: CardType;
   classifications?: string[];
   text?: string;
+  moveCost?: number;
   strength?: number;
   willpower?: number;
   lore?: number;
@@ -183,7 +184,10 @@ type Ink = "Amber" | "Amethyst" | "Emerald" | "Ruby" | "Sapphire" | "Steel";
 type CardType = "Character" | "Action" | "Item" | "Location";
 type SynergyCategory = "direct" | "playstyle";
 type PlaystyleId = "lore-denial" | "location-control";
-type SynergyStrength = "weak" | "moderate" | "strong";
+
+// Synergy scores use a 1-10 numeric scale (see SCORING_DESIGN.md)
+// Engine assigns anchor points: 1, 3, 5, 7, 9
+// Community voting (#9) can nudge with decimals (e.g., 7.3)
 
 // Rules use a discriminated union — category determines whether playstyleId is present
 type SynergyRule = DirectSynergyRule | PlaystyleSynergyRule;

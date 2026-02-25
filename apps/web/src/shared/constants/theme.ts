@@ -13,13 +13,6 @@ export const INK_COLORS: Record<Ink, {bg: string; text: string; border: string}>
   Steel: {bg: '#252530', text: '#a0a0b0', border: '#6b7280'},
 };
 
-// Synergy strength styling (dark mode)
-export const STRENGTH_STYLES: Record<'strong' | 'moderate' | 'weak', {bg: string; text: string}> = {
-  strong: {bg: '#1a3d1a', text: '#6ee7a0'},
-  moderate: {bg: '#3d3010', text: '#f5d560'},
-  weak: {bg: '#3d1a1a', text: '#f59090'},
-};
-
 // Font families
 export const FONTS = {
   body: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",

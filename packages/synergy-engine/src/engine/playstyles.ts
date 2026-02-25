@@ -1,4 +1,4 @@
-import type {PlaystyleId, Playstyle} from '../types/playstyle.js';
+import type {Playstyle, PlaystyleId} from '../types';
 
 const playstyles: Playstyle[] = [
   {
