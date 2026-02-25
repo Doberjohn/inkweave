@@ -1,14 +1,21 @@
 import {memo} from 'react';
 import type {LorcanaCard} from '../../cards';
-import type {GroupedSynergies} from '../types';
+import type {SynergyGroup} from '../types';
 import {getDominantStrength} from '../utils';
-import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, STRENGTH_STYLES} from '../../../shared/constants';
+import {
+  COLORS,
+  FONT_SIZES,
+  RADIUS,
+  SPACING,
+  LAYOUT,
+  STRENGTH_STYLES,
+} from '../../../shared/constants';
 import {CardImage, CardTextBlock} from '../../../shared/components';
 
 interface CardDetailPanelProps {
   card: LorcanaCard;
   /** Synergy groups — when provided, renders the breakdown inline */
-  synergies?: GroupedSynergies[];
+  synergies?: SynergyGroup[];
   totalSynergyCount?: number;
 }
 
@@ -112,7 +119,7 @@ export const CardDetailPanel = memo(function CardDetailPanel({
               const strengthStyle = STRENGTH_STYLES[strength];
               return (
                 <div
-                  key={group.type}
+                  key={group.groupKey}
                   style={{
                     display: 'flex',
                     alignItems: 'center',

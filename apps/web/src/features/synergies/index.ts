@@ -1,12 +1,15 @@
 // Types
 export type {
-  SynergyType,
+  SynergyCategory,
+  PlaystyleId,
+  Playstyle,
   SynergyStrength,
-  Synergy,
+  DirectSynergyRule,
+  PlaystyleSynergyRule,
   SynergyRule,
   SynergyMatch,
   SynergyMatchDisplay,
-  GroupedSynergies,
+  SynergyGroup,
 } from './types';
 
 // Engine

@@ -1,10 +1,10 @@
 import {memo} from 'react';
-import type {GroupedSynergies} from '../types';
+import type {SynergyGroup} from '../types';
 import {COLORS, FONT_SIZES, RADIUS, SPACING, STRENGTH_STYLES} from '../../../shared/constants';
 import {getDominantStrength} from '../utils';
 
 interface SynergyBreakdownProps {
-  synergies: GroupedSynergies[];
+  synergies: SynergyGroup[];
   totalCount: number;
 }
 
@@ -69,7 +69,7 @@ export const SynergyBreakdown = memo(function SynergyBreakdown({
         const style = STRENGTH_STYLES[strength];
         return (
           <div
-            key={group.type}
+            key={group.groupKey}
             style={{display: 'flex', alignItems: 'center', gap: `${SPACING.sm}px`}}>
             {/* Count circle */}
             <div

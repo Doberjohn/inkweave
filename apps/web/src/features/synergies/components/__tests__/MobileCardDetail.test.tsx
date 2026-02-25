@@ -3,7 +3,7 @@ import {render, screen, fireEvent} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import {MobileCardDetail} from '../MobileCardDetail';
 import type {LorcanaCard} from '../../../cards';
-import type {GroupedSynergies} from '../../types';
+import type {SynergyGroup} from '../../types';
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -32,10 +32,12 @@ const mockCard: LorcanaCard = {
   number: 42,
 };
 
-const mockSynergies: GroupedSynergies[] = [
+const mockSynergies: SynergyGroup[] = [
   {
-    type: 'mechanic',
+    groupKey: 'exert-synergies',
+    category: 'playstyle',
     label: 'Exert Synergies',
+    description: 'Cards that work together through exert mechanics',
     synergies: Array.from({length: 8}, (_, i) => ({
       card: {...mockCard, id: `exert-${i}`},
       strength: 'strong' as const,
@@ -43,8 +45,10 @@ const mockSynergies: GroupedSynergies[] = [
     })),
   },
   {
-    type: 'keyword',
+    groupKey: 'singer-songs',
+    category: 'direct',
     label: 'Singer + Songs',
+    description: 'Singer keyword plays Songs at reduced cost',
     synergies: Array.from({length: 4}, (_, i) => ({
       card: {...mockCard, id: `singer-${i}`},
       strength: 'moderate' as const,

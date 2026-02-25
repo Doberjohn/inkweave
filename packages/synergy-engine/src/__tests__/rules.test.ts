@@ -508,7 +508,7 @@ describe('Location Synergy Rules', () => {
 
     it('should find location-support cards when a Location is selected', () => {
       const groups = engine.findSynergies(agrabah, allCards);
-      const locationGroup = groups.find((g) => g.type === 'location');
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control');
 
       expect(locationGroup).toBeDefined();
       const cardIds = locationGroup!.synergies.map((s) => s.card.id);
@@ -524,7 +524,7 @@ describe('Location Synergy Rules', () => {
 
     it('should find Locations when a support card is selected', () => {
       const groups = engine.findSynergies(elsaIceArtisan, allCards);
-      const locationGroup = groups.find((g) => g.type === 'location');
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control');
 
       expect(locationGroup).toBeDefined();
       const cardIds = locationGroup!.synergies.map((s) => s.card.id);
@@ -534,7 +534,7 @@ describe('Location Synergy Rules', () => {
 
     it('should assign strong strength for at-payoff cards with Locations', () => {
       const groups = engine.findSynergies(agrabah, allCards);
-      const locationGroup = groups.find((g) => g.type === 'location')!;
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control')!;
       const elsaSynergy = locationGroup.synergies.find((s) => s.card.id === 'elsa-ice-artisan');
 
       expect(elsaSynergy!.strength).toBe('strong');
@@ -542,7 +542,7 @@ describe('Location Synergy Rules', () => {
 
     it('should assign moderate strength for move/tutor cards with Locations', () => {
       const groups = engine.findSynergies(agrabah, allCards);
-      const locationGroup = groups.find((g) => g.type === 'location')!;
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control')!;
       const podSynergy = locationGroup.synergies.find((s) => s.card.id === 'transport-pod');
       const tutorSynergy = locationGroup.synergies.find((s) => s.card.id === 'islands-pulled');
 
@@ -552,7 +552,7 @@ describe('Location Synergy Rules', () => {
 
     it('should not produce location synergies for unrelated cards', () => {
       const groups = engine.findSynergies(unrelatedCard, allCards);
-      const locationGroup = groups.find((g) => g.type === 'location');
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control');
 
       expect(locationGroup).toBeUndefined();
     });
@@ -582,7 +582,7 @@ describe('Location Synergy Rules', () => {
       const engine = new SynergyEngine();
       const allCards = [elsaIceArtisan, felixSteward, agrabah];
       const groups = engine.findSynergies(elsaIceArtisan, allCards);
-      const locationGroup = groups.find((g) => g.type === 'location');
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control');
 
       expect(locationGroup).toBeDefined();
       const felixMatch = locationGroup!.synergies.find((s) => s.card.id === 'felix-steward');

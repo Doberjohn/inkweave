@@ -1,13 +1,13 @@
 import {memo} from 'react';
 import type {LorcanaCard} from '../../cards';
-import type {GroupedSynergies} from '../types';
+import type {SynergyGroup as SynergyGroupData} from '../types';
 import {CardDetail, SynergyGroup} from '.';
 import {EmptyState} from '../../../shared/components';
 import {COLORS, FONT_SIZES, SPACING, RADIUS, LAYOUT} from '../../../shared/constants';
 
 interface SynergyResultsProps {
   selectedCard: LorcanaCard | null;
-  synergies: GroupedSynergies[];
+  synergies: SynergyGroupData[];
   totalSynergyCount: number;
   onClearSelection: () => void;
   isMobile?: boolean;
@@ -104,7 +104,7 @@ export const SynergyResults = memo(function SynergyResults({
                 }}
               />
               {synergies.map((group) => (
-                <SynergyGroup key={group.type} group={group} />
+                <SynergyGroup key={group.groupKey} group={group} />
               ))}
             </>
           )}

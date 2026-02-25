@@ -1,11 +1,13 @@
 import type {LorcanaCard} from '../types/card.js';
 import type {SynergyStrength} from '../types/synergy.js';
+import type {SynergyCategory} from '../types/playstyle.js';
 import type {SynergyEngine} from './SynergyEngine.js';
 
 export interface CachedSynergyResult {
   hasSynergy: boolean;
   synergies: Array<{
-    type: string;
+    category: SynergyCategory;
+    groupKey: string;
     strength: SynergyStrength;
     explanation: string;
   }>;
@@ -48,7 +50,8 @@ export class SynergyCache {
     const cachedResult: CachedSynergyResult = {
       hasSynergy: result.hasSynergy,
       synergies: result.synergies.map((s) => ({
-        type: s.type,
+        category: s.category,
+        groupKey: s.groupKey,
         strength: s.strength,
         explanation: s.explanation,
       })),

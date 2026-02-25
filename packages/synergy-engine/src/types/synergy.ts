@@ -1,35 +1,13 @@
 import type {LorcanaCard} from './card.js';
-
-// Synergy types - what kind of connection exists between cards
-export type SynergyType =
-  | 'keyword' // Evasive + quest triggers, Singer + Songs
-  | 'classification' // Floodborn synergies, Princess tribal
-  | 'shift' // Shift onto same-named characters
-  | 'named' // Card explicitly references another by name
-  | 'mechanic' // Exert synergies, draw engines, ramp
-  | 'location' // Location card interactions
-  | 'ink' // Same ink color benefits
-  | 'cost-curve'; // Good mana curve progression
+import type {SynergyCategory, PlaystyleId} from './playstyle.js';
 
 // How strong is this synergy
 export type SynergyStrength = 'weak' | 'moderate' | 'strong';
 
-// A detected synergy between two cards
-export interface Synergy {
-  cardA: string; // card ID
-  cardB: string; // card ID
-  type: SynergyType;
-  strength: SynergyStrength;
-  explanation: string; // human-readable explanation
-  bidirectional: boolean; // does B also synergize with A the same way?
-  tags?: string[]; // optional tags for filtering
-}
-
-// A synergy rule that can detect connections
-export interface SynergyRule {
+// Common fields shared by all synergy rules
+interface SynergyRuleBase {
   id: string;
   name: string;
-  type: SynergyType;
   description: string;
 
   // Does this rule apply to this card?
@@ -38,6 +16,20 @@ export interface SynergyRule {
   // Given a matching card, find cards that synergize with it
   findSynergies: (card: LorcanaCard, allCards: LorcanaCard[]) => SynergyMatch[];
 }
+
+// A rule where the synergy comes from the specific pair of cards
+export interface DirectSynergyRule extends SynergyRuleBase {
+  category: 'direct';
+}
+
+// A rule where the synergy comes from density of cards sharing a playstyle
+export interface PlaystyleSynergyRule extends SynergyRuleBase {
+  category: 'playstyle';
+  playstyleId: PlaystyleId;
+}
+
+// Discriminated union — category narrows whether playstyleId is present
+export type SynergyRule = DirectSynergyRule | PlaystyleSynergyRule;
 
 // Result from a synergy rule evaluation
 export interface SynergyMatch {
@@ -57,8 +49,10 @@ export interface SynergyMatchDisplay {
 }
 
 // Grouped synergies for display
-export interface GroupedSynergies {
-  type: SynergyType;
-  label: string;
+export interface SynergyGroup {
+  groupKey: string; // rule.id for direct, playstyleId for playstyle
+  category: SynergyCategory;
+  label: string; // rule.name for direct, playstyle.name for playstyle
+  description: string; // rule.description for direct, playstyle.description for playstyle
   synergies: SynergyMatchDisplay[];
 }

@@ -4,13 +4,16 @@ export type {
   GameMode,
   CardType,
   LorcanaCard,
-  SynergyType,
+  SynergyCategory,
+  PlaystyleId,
+  Playstyle,
   SynergyStrength,
-  Synergy,
+  DirectSynergyRule,
+  PlaystyleSynergyRule,
   SynergyRule,
   SynergyMatch,
   SynergyMatchDisplay,
-  GroupedSynergies,
+  SynergyGroup,
 } from './types/index.js';
 
 // Engine
@@ -21,8 +24,11 @@ export {
   synergyCache,
   synergyRules,
   getAllRules,
-  getRulesByType,
+  getRulesByCategory,
+  getRulesByPlaystyle,
   getRuleById,
+  getAllPlaystyles,
+  getPlaystyleById,
 } from './engine/index.js';
 export type {SynergyEngineOptions, CachedSynergyResult} from './engine/index.js';
 

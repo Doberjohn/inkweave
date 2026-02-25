@@ -27,8 +27,9 @@ describe('SynergyEngine', () => {
       const synergies = engine.findSynergies(elsaShift, allCards);
 
       expect(synergies.length).toBeGreaterThan(0);
-      const shiftGroup = synergies.find((g) => g.type === 'shift');
+      const shiftGroup = synergies.find((g) => g.groupKey === 'shift-targets');
       expect(shiftGroup).toBeDefined();
+      expect(shiftGroup?.category).toBe('direct');
       expect(shiftGroup?.synergies.some((s) => s.card.id === 'elsa-base')).toBe(true);
     });
 
@@ -75,13 +76,121 @@ describe('SynergyEngine', () => {
       });
 
       const synergies = engine.findSynergies(elsaShift, [elsaOnCurve, elsaOffCurve]);
-      const shiftGroup = synergies.find((g) => g.type === 'shift');
+      const shiftGroup = synergies.find((g) => g.groupKey === 'shift-targets');
 
       expect(shiftGroup).toBeDefined();
       expect(shiftGroup?.synergies).toHaveLength(2);
       // Strong (curveGap 1, inkable) should come before moderate (curveGap 0)
       expect(shiftGroup?.synergies[0].strength).toBe('strong');
       expect(shiftGroup?.synergies[1].strength).toBe('moderate');
+    });
+
+    it('should group direct rules individually and playstyle rules by playstyleId', () => {
+      const engine = new SynergyEngine();
+
+      // Card that triggers both shift (direct) and lore-loss (playstyle)
+      const elsaShift = createCard({
+        id: 'elsa-shift',
+        name: 'Elsa',
+        fullName: 'Elsa - Ice Maker',
+        cost: 7,
+        keywords: ['Shift 5'],
+        text: 'opponent loses 1 lore',
+      });
+
+      const elsaBase = createCard({
+        id: 'elsa-base',
+        name: 'Elsa',
+        fullName: 'Elsa - Snow Queen',
+        cost: 3,
+      });
+
+      const loreDrain = createCard({
+        id: 'lore-drain',
+        name: 'Lore Drain',
+        fullName: 'Lore Drain - Spell',
+        type: 'Action',
+        text: 'opponent loses 2 lore',
+      });
+
+      const synergies = engine.findSynergies(elsaShift, [elsaBase, loreDrain]);
+
+      // Should have two groups: shift-targets (direct) and lore-denial (playstyle)
+      const directGroups = synergies.filter((g) => g.category === 'direct');
+      const playstyleGroups = synergies.filter((g) => g.category === 'playstyle');
+
+      expect(directGroups).toHaveLength(1);
+      expect(directGroups[0].groupKey).toBe('shift-targets');
+
+      expect(playstyleGroups).toHaveLength(1);
+      expect(playstyleGroups[0].groupKey).toBe('lore-denial');
+    });
+
+    it('should sort direct groups before playstyle groups', () => {
+      const engine = new SynergyEngine();
+
+      const elsaShift = createCard({
+        id: 'elsa-shift',
+        name: 'Elsa',
+        fullName: 'Elsa - Ice Maker',
+        cost: 7,
+        keywords: ['Shift 5'],
+        text: 'opponent loses 1 lore',
+      });
+
+      const elsaBase = createCard({
+        id: 'elsa-base',
+        name: 'Elsa',
+        fullName: 'Elsa - Snow Queen',
+        cost: 3,
+      });
+
+      const loreDrain = createCard({
+        id: 'lore-drain',
+        name: 'Lore Drain',
+        fullName: 'Lore Drain - Spell',
+        type: 'Action',
+        text: 'opponent loses 2 lore',
+      });
+
+      const synergies = engine.findSynergies(elsaShift, [elsaBase, loreDrain]);
+
+      expect(synergies[0].category).toBe('direct');
+      expect(synergies[1].category).toBe('playstyle');
+    });
+
+    it('should merge multiple playstyle rules with same playstyleId into one group', () => {
+      const engine = new SynergyEngine();
+
+      // A location card should trigger multiple location-* rules, all merging into 'location-control'
+      const location = createCard({
+        id: 'loc-1',
+        name: 'Castle',
+        fullName: 'Castle - Fortress',
+        type: 'Location',
+      });
+
+      const atPayoff = createCard({
+        id: 'at-payoff',
+        name: 'Guard',
+        fullName: 'Guard - Sentry',
+        text: 'Whenever one of your characters is at a location, they get +1.',
+      });
+
+      const moveTo = createCard({
+        id: 'mover',
+        name: 'Scout',
+        fullName: 'Scout - Explorer',
+        text: 'Move one of your characters to a location.',
+      });
+
+      const synergies = engine.findSynergies(location, [atPayoff, moveTo]);
+
+      // All location rules should merge into a single 'location-control' group
+      const locationGroups = synergies.filter((g) => g.groupKey === 'location-control');
+      expect(locationGroups).toHaveLength(1);
+      expect(locationGroups[0].category).toBe('playstyle');
+      expect(locationGroups[0].label).toBe('Location Control');
     });
   });
 
@@ -108,7 +217,8 @@ describe('SynergyEngine', () => {
 
       expect(result.hasSynergy).toBe(true);
       expect(result.synergies.length).toBeGreaterThan(0);
-      expect(result.synergies[0].type).toBe('shift');
+      expect(result.synergies[0].category).toBe('direct');
+      expect(result.synergies[0].groupKey).toBe('shift-targets');
     });
 
     it('should return false when cards have no synergy', () => {
@@ -134,7 +244,7 @@ describe('SynergyEngine', () => {
   });
 
   describe('findSynergiesFlat', () => {
-    it('should return a flat deduplicated list', () => {
+    it('should return a flat deduplicated list with category info', () => {
       const engine = new SynergyEngine();
 
       const elsaShift = createCard({
@@ -156,7 +266,8 @@ describe('SynergyEngine', () => {
 
       expect(Array.isArray(results)).toBe(true);
       results.forEach((r) => {
-        expect(r.type).toBeDefined();
+        expect(r.category).toBeDefined();
+        expect(r.groupKey).toBeDefined();
         expect(r.card).toBeDefined();
         expect(r.strength).toBeDefined();
       });
@@ -170,7 +281,7 @@ describe('SynergyEngine', () => {
       const customRule: SynergyRule = {
         id: 'custom-test',
         name: 'Custom Test Rule',
-        type: 'mechanic',
+        category: 'direct',
         description: 'Test rule',
         matches: (card) => card.name === 'Test',
         findSynergies: (card, allCards) =>
@@ -193,7 +304,7 @@ describe('SynergyEngine', () => {
       const customRule: SynergyRule = {
         id: 'custom-test',
         name: 'Custom Test Rule',
-        type: 'mechanic',
+        category: 'direct',
         description: 'Test rule',
         matches: (card) => card.name === 'Source',
         findSynergies: (card, allCards) =>
@@ -221,12 +332,12 @@ describe('SynergyEngine', () => {
     });
   });
 
-  describe('maxResultsPerType', () => {
-    it('should limit results per type', () => {
+  describe('maxResultsPerGroup', () => {
+    it('should limit results per group', () => {
       const customRule: SynergyRule = {
         id: 'many-matches',
         name: 'Many Matches',
-        type: 'mechanic',
+        category: 'direct',
         description: 'Matches everything',
         matches: () => true,
         findSynergies: (card, allCards) =>
@@ -239,7 +350,7 @@ describe('SynergyEngine', () => {
             })),
       };
 
-      const engine = new SynergyEngine({rules: [customRule], maxResultsPerType: 3});
+      const engine = new SynergyEngine({rules: [customRule], maxResultsPerGroup: 3});
 
       const source = createCard({id: '0', name: 'Source'});
       const cards = [
