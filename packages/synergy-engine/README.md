@@ -50,13 +50,13 @@ const engine = new SynergyEngine(options?: SynergyEngineOptions);
 
 **Options:**
 - `rules?: SynergyRule[]` - Custom rules (defaults to built-in rules)
-- `maxResultsPerType?: number` - Max results per synergy type (default: 20)
+- `maxResultsPerGroup?: number` - Max results per synergy group (default: 20)
 
 **Methods:**
-- `findSynergies(card, allCards)` - Find all synergies grouped by type
+- `findSynergies(card, allCards)` - Find all synergies grouped by category/playstyle
 - `findSynergiesFlat(card, allCards)` - Find synergies as flat list
 - `checkSynergy(cardA, cardB)` - Check synergy between two cards
-- `addRule(rule)` - Add a custom rule
+- `addRule(rule)` - Add a custom rule (validates playstyle references)
 - `getRules()` - Get all registered rules
 
 ### SynergyCache
@@ -78,19 +78,19 @@ const biResult = cache.checkBidirectionalSynergy(cardA, cardB);
 
 ### Built-in Rules
 
-The engine includes 10 built-in synergy rules:
+The engine includes 8 built-in synergy rules across two categories:
 
-1. **Singer + Songs** - Singer keyword plays Songs at reduced cost
-2. **Evasive + Quest** - Evasive characters trigger quest abilities safely
-3. **Shift Targets** - Floodborn cards shift onto same-named characters
-4. **Princess Tribal** - Princess classification synergies
-5. **Villain Tribal** - Villain classification synergies
-6. **Hero Tribal** - Hero classification synergies
-7. **Challenger + Buffs** - Challengers benefit from strength boosts
-8. **Exert Synergies** - Exert effects + exerted-enemy benefits
-9. **Draw Engine** - Draw triggers + "when you draw" effects
-10. **Ink Ramp** - Ink acceleration + high-cost cards
-11. **Ward + Aggression** - Ward protects against removal
+**Direct** (pair-specific synergies):
+1. **Shift Targets** - Shift cards + same-named base characters (bidirectional)
+
+**Playstyle** (strategy-reinforcing synergies):
+2. **Lore Loss** (`lore-denial`) - Cards that make opponents lose lore
+3. **At Location Payoff** (`location-control`) - "At location" payoff effects + Locations
+4. **Location Play Trigger** (`location-control`) - "When you play at location" triggers
+5. **Location Buff** (`location-control`) - Cards that buff characters at locations
+6. **Move to Location** (`location-control`) - Move-to-location effects
+7. **Location In-Play Check** (`location-control`) - "If you have a location" checks
+8. **Location Tutor** (`location-control`) - Location search/tutor effects
 
 ### Custom Rules
 
@@ -99,11 +99,12 @@ Create custom synergy rules:
 ```typescript
 import { SynergyEngine, type SynergyRule, hasKeyword } from "lorcana-synergy-engine";
 
-const customRule: SynergyRule = {
-  id: "my-rule",
-  name: "My Custom Rule",
-  type: "mechanic",
-  description: "Detects custom synergies",
+// Direct rule — synergy comes from the specific card pair
+const directRule: SynergyRule = {
+  id: "my-direct-rule",
+  name: "My Direct Rule",
+  category: "direct",
+  description: "Detects pair-specific synergies",
   matches: (card) => hasKeyword(card, "MyKeyword"),
   findSynergies: (card, allCards) => {
     return allCards
@@ -116,8 +117,21 @@ const customRule: SynergyRule = {
   },
 };
 
+// Playstyle rule — synergy comes from card density in a strategy
+// playstyleId must reference a registered playstyle
+const playstyleRule: SynergyRule = {
+  id: "my-playstyle-rule",
+  name: "My Playstyle Rule",
+  category: "playstyle",
+  playstyleId: "lore-denial",
+  description: "Cards that support the lore denial strategy",
+  matches: (card) => /* your logic */,
+  findSynergies: (card, allCards) => /* your logic */,
+};
+
 const engine = new SynergyEngine();
-engine.addRule(customRule);
+engine.addRule(directRule);
+engine.addRule(playstyleRule);
 ```
 
 ### Utility Functions
@@ -167,8 +181,12 @@ interface LorcanaCard {
 
 type Ink = "Amber" | "Amethyst" | "Emerald" | "Ruby" | "Sapphire" | "Steel";
 type CardType = "Character" | "Action" | "Item" | "Location";
-type SynergyType = "keyword" | "classification" | "shift" | "named" | "mechanic" | "ink" | "cost-curve";
+type SynergyCategory = "direct" | "playstyle";
+type PlaystyleId = "lore-denial" | "location-control";
 type SynergyStrength = "weak" | "moderate" | "strong";
+
+// Rules use a discriminated union — category determines whether playstyleId is present
+type SynergyRule = DirectSynergyRule | PlaystyleSynergyRule;
 ```
 
 ## License

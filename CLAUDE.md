@@ -73,7 +73,7 @@ React web application that consumes the synergy engine package.
 
 **Game Mode**: Core only (sets 5+) - Infinity mode removed for MVP
 
-**Synergy Types**: keyword, classification, shift, named, mechanic, ink, cost-curve, archetype
+**Synergy Categories**: direct (pair-specific, e.g. Shift), playstyle (strategy-reinforcing, e.g. Lore Denial)
 
 **Archetypes** (MVP):
 - Discard - opponent discard + payoffs
@@ -102,7 +102,7 @@ pnpm dev              # Start web dev server
 
 # Package-specific
 pnpm build:engine     # Build synergy-engine package
-pnpm test:engine      # Run engine tests (49 tests)
+pnpm test:engine      # Run engine tests (52 tests)
 pnpm build:web        # Build web app
 pnpm test:web         # Run web tests (290 tests)
 ```
@@ -156,6 +156,10 @@ After pushing, always confirm with clear output (e.g., git log showing commit on
 - Use `/refactor-code` for periodic comprehensive codebase audits
 - When reviewing code or doing a re-review, always re-read the current file contents first — never assume you know what's already been changed. Diff against the actual working tree, not your memory of previous edits.
 - When editing theme or config files, re-read the full file after edits to ensure no constants or exports were accidentally removed by the edit tool
+
+### Data Integrity
+- **Never override tool output with memory.** When presenting data from tool results (gh issue list, git log, API responses, etc.), use the actual tool output verbatim. Do not "correct" or reformat it based on memory or prior context — memory can be stale or wrong.
+- **Never take action on assumptions.** If the user states a fact (e.g., "X doesn't have label Y"), do not assume they want it changed. Ask before modifying.
 
 ### Implementation Approach
 - Before editing code or implementing changes, validate assumptions against real data first (e.g., test regex against actual card data, verify existing state)

@@ -6,8 +6,11 @@ export {
   synergyCache,
   synergyRules,
   getAllRules,
-  getRulesByType,
+  getRulesByCategory,
+  getRulesByPlaystyle,
   getRuleById,
+  getAllPlaystyles,
+  getPlaystyleById,
 } from 'lorcana-synergy-engine';
 export type {SynergyEngineOptions, CachedSynergyResult} from 'lorcana-synergy-engine';
 

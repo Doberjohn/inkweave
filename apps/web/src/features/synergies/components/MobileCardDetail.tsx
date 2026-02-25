@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from '../../cards';
-import type {GroupedSynergies} from '../types';
+import type {SynergyGroup} from '../types';
 import {getDominantStrength} from '../utils';
 import {CardImage, CardLightbox, CardTextBlock} from '../../../shared/components';
 import {
@@ -16,7 +16,7 @@ import {
 
 interface MobileCardDetailProps {
   card: LorcanaCard;
-  synergies: GroupedSynergies[];
+  synergies: SynergyGroup[];
   totalSynergyCount: number;
   onBack: () => void;
 }
@@ -189,7 +189,7 @@ export function MobileCardDetail({
                 const strengthStyle = STRENGTH_STYLES[strength];
                 return (
                   <div
-                    key={group.type}
+                    key={group.groupKey}
                     style={{
                       background: COLORS.surfaceAlt,
                       borderRadius: RADIUS.md,

@@ -1,5 +1,6 @@
 import type {LorcanaCard} from '../types/card.js';
 import type {SynergyRule, SynergyMatch, SynergyStrength} from '../types/synergy.js';
+import type {PlaystyleId} from '../types/playstyle.js';
 import {
   hasKeyword,
   getBaseName,
@@ -168,7 +169,8 @@ function createLocationRule(
   return {
     id: `location-${id}`,
     name,
-    type: 'location',
+    category: 'playstyle',
+    playstyleId: 'location-control',
     description: `Location synergy: ${name}`,
 
     matches: (card) => {
@@ -232,7 +234,7 @@ export const synergyRules: SynergyRule[] = [
   {
     id: 'shift-targets',
     name: 'Shift Targets',
-    type: 'shift',
+    category: 'direct',
     description: 'Characters with Shift and their same-named targets (bidirectional)',
 
     // Matches all characters: Shift cards find targets (forward), base characters find Shift cards (reverse)
@@ -286,7 +288,8 @@ export const synergyRules: SynergyRule[] = [
   {
     id: 'lore-loss',
     name: 'Lore Loss',
-    type: 'mechanic',
+    category: 'playstyle',
+    playstyleId: 'lore-denial',
     description: 'Cards that make the opponent lose lore reinforce the same denial strategy',
 
     matches: (card) => textContains(card, LORE_LOSS_PATTERN),
@@ -314,9 +317,16 @@ export const synergyRules: SynergyRule[] = [
 // Get all rules
 export const getAllRules = (): SynergyRule[] => synergyRules;
 
-// Get rules by type
-export const getRulesByType = (type: SynergyRule['type']): SynergyRule[] => {
-  return synergyRules.filter((rule) => rule.type === type);
+// Get rules by category
+export const getRulesByCategory = (category: SynergyRule['category']): SynergyRule[] => {
+  return synergyRules.filter((rule) => rule.category === category);
+};
+
+// Get rules by playstyle
+export const getRulesByPlaystyle = (playstyleId: PlaystyleId): SynergyRule[] => {
+  return synergyRules.filter(
+    (rule) => rule.category === 'playstyle' && rule.playstyleId === playstyleId,
+  );
 };
 
 // Get a specific rule by ID

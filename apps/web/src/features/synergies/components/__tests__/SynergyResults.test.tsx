@@ -1,19 +1,19 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen} from '@testing-library/react';
 import {SynergyResults} from '../SynergyResults';
-import type {GroupedSynergies} from '../../types';
+import type {SynergyGroup as SynergyGroupData} from '../../types';
 import type {LorcanaCard} from '../../../cards';
 
 // Mock child components
 vi.mock('../SynergyGroup', () => ({
-  SynergyGroup: ({group}: {group: GroupedSynergies}) => (
+  SynergyGroup: ({group}: {group: SynergyGroupData}) => (
     <div data-testid="synergy-group">{group.label}</div>
   ),
 }));
 
 vi.mock('.', () => ({
   CardDetail: ({card}: {card: LorcanaCard}) => <div data-testid="card-detail">{card.name}</div>,
-  SynergyGroup: ({group}: {group: GroupedSynergies}) => (
+  SynergyGroup: ({group}: {group: SynergyGroupData}) => (
     <div data-testid="synergy-group">{group.label}</div>
   ),
 }));
@@ -36,11 +36,13 @@ const mockCard: LorcanaCard = {
   classifications: [],
 } as LorcanaCard;
 
-const mockSynergies: GroupedSynergies[] = [
+const mockSynergies: SynergyGroupData[] = [
   {
-    type: 'shift',
-    label: 'Shift',
-    synergies: [{card: mockCard, strength: 'strong', explanation: 'Shift', type: 'shift'}],
+    groupKey: 'shift-targets',
+    category: 'direct',
+    label: 'Shift Targets',
+    description: 'Characters with Shift and their same-named targets',
+    synergies: [{card: mockCard, strength: 'strong', explanation: 'Shift'}],
   },
 ];
 

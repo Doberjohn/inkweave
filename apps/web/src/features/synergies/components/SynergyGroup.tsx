@@ -1,22 +1,10 @@
 import {useState, memo} from 'react';
-import type {GroupedSynergies, SynergyMatchDisplay, SynergyType} from '../types';
+import type {SynergyGroup as SynergyGroupData, SynergyMatchDisplay} from '../types';
 import {SynergyCard} from './SynergyCard';
 import {COLORS, FONT_SIZES, LAYOUT, SPACING, RADIUS} from '../../../shared/constants';
 
-/** Short explanation for each synergy group type */
-const GROUP_EXPLANATIONS: Record<SynergyType, string> = {
-  keyword: 'Cards that share or benefit from the same keyword abilities',
-  classification: 'Cards that synergize through shared character types',
-  shift: 'Floodborn cards that can shift onto these characters',
-  named: 'Cards that specifically reference each other by name',
-  mechanic: 'Cards that work together through game mechanics',
-  location: 'Cards that synergize through location-based gameplay',
-  ink: 'Cards that share ink color for deck-building synergy',
-  'cost-curve': 'Cards that complement the mana curve progression',
-};
-
 interface SynergyGroupProps {
-  group: GroupedSynergies;
+  group: SynergyGroupData;
   defaultExpanded?: boolean;
 }
 
@@ -71,7 +59,7 @@ export const SynergyGroup = memo(function SynergyGroup({
         </span>
       </button>
 
-      {/* Group explanation */}
+      {/* Group description */}
       {expanded && (
         <div
           style={{
@@ -88,7 +76,7 @@ export const SynergyGroup = memo(function SynergyGroup({
               color: COLORS.text,
               lineHeight: 1.5,
             }}>
-            {GROUP_EXPLANATIONS[group.type]}
+            {group.description}
           </p>
         </div>
       )}

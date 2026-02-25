@@ -1,10 +1,13 @@
 // Re-export synergy types from the synergy-engine package
 export type {
-  SynergyType,
+  SynergyCategory,
+  PlaystyleId,
+  Playstyle,
   SynergyStrength,
-  Synergy,
+  DirectSynergyRule,
+  PlaystyleSynergyRule,
   SynergyRule,
   SynergyMatch,
   SynergyMatchDisplay,
-  GroupedSynergies,
+  SynergyGroup,
 } from 'lorcana-synergy-engine';
