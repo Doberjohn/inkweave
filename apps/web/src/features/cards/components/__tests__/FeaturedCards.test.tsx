@@ -12,7 +12,10 @@ vi.mock('../CardTile', () => ({
 
 // Mock CardPreviewContext to avoid provider requirement
 vi.mock('../CardPreviewContext', () => ({
-  useCardPreview: () => ({previewState: {card: null, position: {x: 0, y: 0}}, hidePreview: vi.fn()}),
+  useCardPreview: () => ({
+    previewState: {card: null, position: {x: 0, y: 0}},
+    hidePreview: vi.fn(),
+  }),
   useCardPreviewHandlers: () => ({previewHandlers: {}}),
 }));
 
@@ -58,10 +61,12 @@ describe('FeaturedCards', () => {
   });
 
   it('should return null when no cards have images', () => {
-    const cardsWithoutImages = mockCards.map((c) => ({...c, imageUrl: undefined, thumbnailUrl: undefined}));
-    const {container} = render(
-      <FeaturedCards cards={cardsWithoutImages} onCardSelect={vi.fn()} />,
-    );
+    const cardsWithoutImages = mockCards.map((c) => ({
+      ...c,
+      imageUrl: undefined,
+      thumbnailUrl: undefined,
+    }));
+    const {container} = render(<FeaturedCards cards={cardsWithoutImages} onCardSelect={vi.fn()} />);
 
     expect(container.innerHTML).toBe('');
   });
@@ -74,9 +79,7 @@ describe('FeaturedCards', () => {
 
   it('should exclude Location cards from featured selection', () => {
     const locationCards = mockCards.map((c) => ({...c, type: 'Location' as const}));
-    const {container} = render(
-      <FeaturedCards cards={locationCards} onCardSelect={vi.fn()} />,
-    );
+    const {container} = render(<FeaturedCards cards={locationCards} onCardSelect={vi.fn()} />);
 
     expect(container.innerHTML).toBe('');
   });

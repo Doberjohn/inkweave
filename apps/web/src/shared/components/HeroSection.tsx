@@ -71,12 +71,8 @@ function getStyles(isMobile: boolean) {
       width: '100%',
       maxWidth: isMobile ? undefined : 768,
     } as React.CSSProperties,
-    inputBorderRadius: isMobile
-      ? `${RADIUS.lg}px`
-      : `${RADIUS.lg}px 0 0 ${RADIUS.lg}px`,
-    buttonBorderRadius: isMobile
-      ? `${RADIUS.lg}px`
-      : `0 ${RADIUS.lg}px ${RADIUS.lg}px 0`,
+    inputBorderRadius: isMobile ? `${RADIUS.lg}px` : `${RADIUS.lg}px 0 0 ${RADIUS.lg}px`,
+    buttonBorderRadius: isMobile ? `${RADIUS.lg}px` : `0 ${RADIUS.lg}px ${RADIUS.lg}px 0`,
   };
 }
 
@@ -199,11 +195,7 @@ export function HeroSection({
           onClick={onSearchSubmit}
           disabled={isSearchEmpty}
           aria-label="Search"
-          whileHover={
-            isSearchEmpty
-              ? {}
-              : {background: 'linear-gradient(90deg, #ffb020, #fe9a00)'}
-          }
+          whileHover={isSearchEmpty ? {} : {background: 'linear-gradient(90deg, #ffb020, #fe9a00)'}}
           whileTap={isSearchEmpty ? {} : {scale: 0.97}}
           transition={{type: 'tween', duration: 0.25}}
           style={{
