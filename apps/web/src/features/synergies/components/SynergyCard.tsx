@@ -50,7 +50,7 @@ export const SynergyCard = memo(function SynergyCard({
         {imgSrc && !imgError ? (
           <img
             src={imgSrc}
-            alt=""
+            alt={card.fullName}
             loading="lazy"
             decoding="async"
             onError={() => setImgError(true)}

@@ -11,7 +11,7 @@ export function CardDetail({card, onClear}: CardDetailProps) {
   const inkColors = INK_COLORS[card.ink];
 
   return (
-    <div
+    <article
       style={{
         background: COLORS.surface,
         borderRadius: `${RADIUS.xl}px`,
@@ -116,6 +116,6 @@ export function CardDetail({card, onClear}: CardDetailProps) {
           </div>
         )}
       </div>
-    </div>
+    </article>
   );
 }

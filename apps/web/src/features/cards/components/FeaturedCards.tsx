@@ -97,7 +97,7 @@ export const FeaturedCards = memo(function FeaturedCards({
   if (featured.length === 0) return null;
 
   return (
-    <div data-testid="featured-cards" style={styles.container}>
+    <section data-testid="featured-cards" aria-label="Featured Cards" style={styles.container}>
       {/* Section label with divider lines */}
       <div style={sectionLabelRow}>
         <DividerLine />
@@ -121,6 +121,6 @@ export const FeaturedCards = memo(function FeaturedCards({
           </li>
         ))}
       </ul>
-    </div>
+    </section>
   );
 });

@@ -121,7 +121,7 @@ export function HeroSection({
   const buttonColor = isSearchEmpty ? COLORS.gray500 : COLORS.filterText;
 
   return (
-    <div data-testid="hero-section" style={styles.container}>
+    <section data-testid="hero-section" aria-label="Hero" style={styles.container}>
       {/* Sparkle + Title */}
       <div style={styles.sparkle}>✦ INKWEAVE ✦</div>
 
@@ -228,6 +228,6 @@ export function HeroSection({
           Search
         </motion.button>
       </div>
-    </div>
+    </section>
   );
 }

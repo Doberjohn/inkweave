@@ -80,4 +80,11 @@ describe('FeaturedCards', () => {
 
     expect(container.innerHTML).toBe('');
   });
+
+  it('should render as a semantic section element', () => {
+    render(<FeaturedCards cards={mockCards} onCardSelect={vi.fn()} />);
+
+    const section = screen.getByTestId('featured-cards');
+    expect(section.tagName).toBe('SECTION');
+  });
 });
