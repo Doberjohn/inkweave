@@ -27,7 +27,8 @@ export const SynergyResults = memo(function SynergyResults({
   const renderCardDetail = showCardDetail ?? isMobile;
 
   return (
-    <div
+    <section
+      aria-label="Synergy results"
       style={{
         flex: 1,
         padding: isMobile ? `${SPACING.md}px` : `${SPACING.xl}px`,
@@ -70,16 +71,17 @@ export const SynergyResults = memo(function SynergyResults({
                   alignItems: 'center',
                   gap: `${SPACING.sm}px`,
                 }}>
-                <span
+                <h2
                   style={{
                     fontSize: `${FONT_SIZES.xl}px`,
                     fontWeight: 700,
                     color: COLORS.text,
                     letterSpacing: '0.08em',
                     textTransform: 'uppercase',
+                    margin: 0,
                   }}>
                   Synergies
-                </span>
+                </h2>
                 <span
                   style={{
                     background: COLORS.primary100,
@@ -108,6 +110,6 @@ export const SynergyResults = memo(function SynergyResults({
           )}
         </>
       )}
-    </div>
+    </section>
   );
 });

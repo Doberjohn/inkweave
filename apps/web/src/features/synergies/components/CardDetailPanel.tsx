@@ -20,7 +20,7 @@ export const CardDetailPanel = memo(function CardDetailPanel({
   const hasSynergies = synergies && synergies.length > 0;
 
   return (
-    <div
+    <article
       data-testid="card-detail-panel"
       style={{
         width: `${LAYOUT.cardDetailWidth}px`,
@@ -186,6 +186,6 @@ export const CardDetailPanel = memo(function CardDetailPanel({
           </div>
         </div>
       )}
-    </div>
+    </article>
   );
 });

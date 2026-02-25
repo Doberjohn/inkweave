@@ -56,7 +56,7 @@ export const SynergyGroup = memo(function SynergyGroup({
           }}>
           &#9654;
         </span>
-        {group.label}
+        <h3 style={{margin: 0, fontSize: 'inherit', fontWeight: 'inherit'}}>{group.label}</h3>
         {/* Count */}
         <span
           style={{

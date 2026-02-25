@@ -64,4 +64,11 @@ describe('HeroSection', () => {
     fireEvent.keyDown(screen.getByTestId('hero-search'), {key: 'Enter'});
     expect(onSearchSubmit).toHaveBeenCalledOnce();
   });
+
+  it('should render as a semantic section element', () => {
+    render(<HeroSection {...defaultProps} />);
+
+    const section = screen.getByTestId('hero-section');
+    expect(section.tagName).toBe('SECTION');
+  });
 });
