@@ -2,7 +2,7 @@ import {useMemo, useCallback} from 'react';
 import {useSearchParams} from 'react-router-dom';
 import type {Ink} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards/loader';
-import type {CardTypeFilter} from '../constants/theme';
+import type {CardTypeFilter} from '../constants';
 
 const VALID_INKS = new Set<string>(['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel']);
 const VALID_TYPES = new Set<string>(['Character', 'Action', 'Song', 'Item', 'Location']);

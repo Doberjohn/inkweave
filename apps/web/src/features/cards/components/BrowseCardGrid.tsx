@@ -2,7 +2,7 @@ import {useMemo, useCallback} from 'react';
 import type {LorcanaCard} from 'lorcana-synergy-engine';
 import {CardTile} from './CardTile';
 import {COLORS, FONT_SIZES, LAYOUT, SPACING} from '../../../shared/constants';
-import {LoadingSpinner} from '../../../shared/components/LoadingSpinner';
+import {LoadingSpinner} from '../../../shared/components';
 
 interface BrowseCardGridProps {
   cards: LorcanaCard[];

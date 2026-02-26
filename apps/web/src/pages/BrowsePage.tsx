@@ -11,7 +11,7 @@ import {CompactHeader, ErrorBoundary, EtherealBackground, FilterModal} from '../
 import {COLORS, FONTS, LAYOUT} from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive} from '../shared/hooks';
-import {useFilterParams} from '../shared/hooks/useFilterParams';
+import {useFilterParams} from '../shared/hooks';
 
 export function BrowsePage() {
   const navigate = useNavigate();

@@ -11,7 +11,7 @@ import {
 } from '../shared/components';
 import {COLORS, FONTS, LAYOUT} from '../shared/constants';
 import {useResponsive} from '../shared/hooks';
-import {useFilterParams} from '../shared/hooks/useFilterParams';
+import {useFilterParams} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 
 const centeredPage = {

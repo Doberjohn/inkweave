@@ -1,7 +1,7 @@
 import {AnimatePresence, motion} from 'framer-motion';
 import type {LorcanaCard} from 'lorcana-synergy-engine';
 import {useCardPreview} from '../../features/cards/components/useCardPreview';
-import type {UseAutocompleteReturn} from '../hooks/useAutocomplete';
+import type {UseAutocompleteReturn} from '../hooks';
 import {
   COLORS,
   FONT_SIZES,

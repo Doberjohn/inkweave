@@ -1,6 +1,6 @@
 import type {Ink, SetInfo} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards';
-import type {CardTypeFilter} from '../constants/theme';
+import type {CardTypeFilter} from '../constants';
 import {
   INK_COLORS,
   ALL_INKS,

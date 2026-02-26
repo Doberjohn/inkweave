@@ -133,7 +133,7 @@ Dark fantasy theme inspired by Lorcana:
 - Commit messages: Use semantic commit notation with issue reference (e.g., `test(deck): add tests (#5)`)
 - PRs should include `Closes #<issue>` to auto-close issues on merge
 - **Worktrees**: Never attempt to delete or remove a worktree directory you are currently inside. Remind the user to clean it up after exiting, or switch directories first.
-- **Issues**: When creating issues, always add appropriate labels. When listing issues, check for unlabeled ones proactively.
+- **Issues**: When creating issues, always add appropriate labels. When listing issues, check for unlabeled ones proactively. When adding/removing an issue from MVP, always update BOTH the `mvp` label AND the `MVP v1.0` milestone together.
 
 ### Pre-Commit Checks (REQUIRED)
 Before EVERY commit, run these checks and fix any issues:

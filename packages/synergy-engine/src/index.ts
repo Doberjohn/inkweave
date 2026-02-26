@@ -13,7 +13,7 @@ export type {
   SynergyMatch,
   SynergyMatchDisplay,
   SynergyGroup,
-} from './types/index.js';
+} from './types';
 
 // Engine
 export {
@@ -28,8 +28,8 @@ export {
   getRuleById,
   getAllPlaystyles,
   getPlaystyleById,
-} from './engine/index.js';
-export type {SynergyEngineOptions, CachedSynergyResult} from './engine/index.js';
+} from './engine';
+export type {SynergyEngineOptions, CachedSynergyResult} from './engine';
 
 // Utilities (for custom rule authors)
 export {
@@ -50,5 +50,5 @@ export {
   getLocationRoles,
   LOCATION_PATTERNS,
   isCardType,
-} from './utils/index.js';
-export type {LocationRole} from './utils/cardHelpers.js';
+} from './utils';
+export type {LocationRole} from './utils';

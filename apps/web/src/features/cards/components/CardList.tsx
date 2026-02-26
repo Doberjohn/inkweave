@@ -1,11 +1,11 @@
 import {useState, useMemo} from 'react';
 import type {LorcanaCard, Ink} from '../types';
 import type {CardFilterOptions, SetInfo} from '../loader';
-import type {CardTypeFilter} from '../../../shared/constants/theme';
+import type {CardTypeFilter} from '../../../shared/constants';
 import {CardTile} from './CardTile';
 import {LoadingSpinner, FilterDrawer, SearchAutocomplete} from '../../../shared/components';
 import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, Z_INDEX} from '../../../shared/constants';
-import {useAutocomplete} from '../../../shared/hooks/useAutocomplete';
+import {useAutocomplete} from '../../../shared/hooks';
 
 interface CardListProps {
   cards: LorcanaCard[];

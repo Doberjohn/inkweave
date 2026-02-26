@@ -1,7 +1,7 @@
 import {useCallback, useState} from 'react';
 import type {LorcanaCard} from 'lorcana-synergy-engine';
 import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING, Z_INDEX} from '../constants';
-import {useAutocomplete} from '../hooks/useAutocomplete';
+import {useAutocomplete} from '../hooks';
 import {SearchAutocomplete} from './SearchAutocomplete';
 
 interface CompactHeaderProps {

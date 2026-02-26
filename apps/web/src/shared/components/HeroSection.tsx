@@ -2,7 +2,7 @@ import {useCallback, useState} from 'react';
 import {motion} from 'framer-motion';
 import type {LorcanaCard} from 'lorcana-synergy-engine';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, Z_INDEX} from '../constants';
-import {useAutocomplete} from '../hooks/useAutocomplete';
+import {useAutocomplete} from '../hooks';
 import {SearchAutocomplete} from './SearchAutocomplete';
 import {SearchIcon} from './SearchIcon';
 

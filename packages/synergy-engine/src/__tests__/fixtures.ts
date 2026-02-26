@@ -1,4 +1,4 @@
-import type {LorcanaCard} from '../types/card.js';
+import type {LorcanaCard} from '../types';
 
 /**
  * Factory function to create mock LorcanaCard objects for testing.

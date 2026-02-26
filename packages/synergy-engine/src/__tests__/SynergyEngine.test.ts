@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest';
-import {SynergyEngine} from '../engine/SynergyEngine.js';
-import type {SynergyRule} from '../types/synergy.js';
+import {SynergyEngine} from '../engine';
+import type {SynergyRule} from '../types';
 import {createCard} from './fixtures.js';
 
 describe('SynergyEngine', () => {

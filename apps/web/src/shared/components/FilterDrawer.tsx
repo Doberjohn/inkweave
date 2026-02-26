@@ -2,7 +2,7 @@ import {useEffect, useCallback, useRef} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
 import type {Ink, SetInfo} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards';
-import type {CardTypeFilter} from '../constants/theme';
+import type {CardTypeFilter} from '../constants';
 import {COLORS, FONT_SIZES, RADIUS, SPACING, Z_INDEX, CTA_BUTTON_STYLE} from '../constants';
 import {FilterContent} from './FilterContent';
 
