@@ -1,12 +1,11 @@
 import {describe, it, expect} from 'vitest';
-import {getRuleById, getCrossSynergyScore} from '../engine/rules.js';
+import {getRuleById, getCrossSynergyScore, SynergyEngine} from '../engine';
 import {
   hasNegativeTargeting,
   hasPositiveClassificationEffect,
   getLocationRoles,
   isLocationSupportCard,
-} from '../utils/cardHelpers.js';
-import {SynergyEngine} from '../engine/SynergyEngine.js';
+} from '../utils';
 import {createCard} from './fixtures.js';
 
 describe('Synergy Rules', () => {
@@ -75,7 +74,7 @@ describe('Synergy Rules', () => {
       expect(synergies.find((s) => s.card.id === 'anna-1')).toBeUndefined();
     });
 
-    it('should not show other Shift cards in forward direction', () => {
+    it('should show other Shift cards with same base name', () => {
       const elsaShift1 = createCard({
         id: 'elsa-shift-1',
         name: 'Elsa',
@@ -103,7 +102,7 @@ describe('Synergy Rules', () => {
       const synergies = shiftRule.findSynergies(elsaShift1, allCards);
 
       expect(synergies.find((s) => s.card.id === 'elsa-base')).toBeDefined();
-      expect(synergies.find((s) => s.card.id === 'elsa-shift-2')).toBeUndefined();
+      expect(synergies.find((s) => s.card.id === 'elsa-shift-2')).toBeDefined();
     });
 
     it('should not match non-Character cards', () => {

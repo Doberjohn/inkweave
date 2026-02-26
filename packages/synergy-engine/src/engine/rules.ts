@@ -1,5 +1,5 @@
 import type {LorcanaCard, PlaystyleId, SynergyMatch, SynergyRule} from '../types';
-import type {LocationRole} from '../utils/cardHelpers.js';
+import type {LocationRole} from '../utils';
 import {
   getBaseName,
   getKeywordValue,
@@ -10,7 +10,7 @@ import {
   isLocationSupportCard,
   LOCATION_PATTERNS,
   textContains,
-} from '../utils/cardHelpers.js';
+} from '../utils';
 
 /**
  * Calculate Shift synergy score based on curve alignment and base flexibility.
@@ -234,7 +234,7 @@ export const synergyRules: SynergyRule[] = [
     id: 'shift-targets',
     name: 'Shift Targets',
     category: 'direct',
-    description: 'Characters with Shift and their same-named targets (bidirectional)',
+    description: 'Characters with Shift and their same-named targets',
 
     // Matches all characters: Shift cards find targets (forward), base characters find Shift cards (reverse)
     matches: (card) => isCharacter(card),
@@ -244,13 +244,11 @@ export const synergyRules: SynergyRule[] = [
       const cardHasShift = hasKeyword(card, 'Shift');
 
       if (cardHasShift) {
-        // Forward: Shift card finds non-Shift same-name characters to land on
+        // Forward: Shift card finds same-name characters to shift onto
         return allCards
           .filter((other) => {
             if (other.id === card.id) return false;
-            return (
-              getBaseName(other) === baseName && isCharacter(other) && !hasKeyword(other, 'Shift')
-            );
+            return getBaseName(other) === baseName && isCharacter(other);
           })
           .map(
             (target): SynergyMatch => ({
