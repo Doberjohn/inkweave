@@ -4,10 +4,11 @@
 
 Application is functional with card browsing, search/filter, and synergy detection. Deck builder was removed for MVP scope reduction. Dark fantasy design system foundation is in place. Mobile responsive layout complete.
 
-- **Engine**: 8 synergy rules (Shift, Lore Loss, 6 Location rules) in standalone `lorcana-synergy-engine` package
+- **Engine**: 8 synergy rules (Shift, Lore Loss, 6 Location rules) in standalone `lorcana-synergy-engine` package. Numeric 1-10 scoring.
 - **Web**: Two-column desktop layout, tab-based mobile navigation
-- **Tests**: 52 engine + 290 web = 342 unit tests; 31 E2E tests passing
-- **Infrastructure**: Vercel hosting, Sentry error tracking (EU/DE), Vercel Analytics, Ahrefs, SEO (JSON-LD, semantic HTML, sitemap)
+- **Design**: 7 desktop HTML/CSS mockups (6 approved, 1 in progress) in `apps/web/public/mockups/`
+- **Tests**: 52 engine + 289 web = 341 unit tests; 34 E2E tests passing
+- **Infrastructure**: Vercel hosting, Sentry error tracking (EU/DE), Vercel Analytics, Ahrefs, SEO (JSON-LD, semantic HTML, sitemap), Lighthouse CI
 
 ---
 
@@ -26,14 +27,14 @@ See [GitHub Issues](https://github.com/Doberjohn/lorcana-synergy-finder/issues) 
 - [ ] Header, Filters, and Polish — #38
 
 ### Epic 3: Synergy Categories (#30)
-- [ ] Synergy Category Infrastructure (Direct + Playstyle) — #39
+- [x] Synergy Category Infrastructure (Direct + Playstyle) — #39 (PR #134)
 - [ ] Discard Archetype — #40 (mvp)
 - [ ] Bounce Archetype — #41 (post-mvp)
 - [ ] Ramp Archetype — #42 (post-mvp)
 - [ ] Damage/Removal Archetype — #43 (post-mvp)
 
 ### Epic 4: Synergy Panel Redesign (#31)
-- [ ] SynergyCard Restyle — #44
+- [x] SynergyCard Restyle — #44
 - [ ] Archetype Grouping — #45
 - [ ] Archetype Filtering — #46
 
@@ -53,7 +54,7 @@ See [GitHub Issues](https://github.com/Doberjohn/lorcana-synergy-finder/issues) 
 ## Backlog (Post-MVP)
 
 ### Synergy Evolution
-- [x] Numeric scoring (1-10 scale) — #132
+- [x] Numeric scoring (1-10 scale) — #132 (PR #137)
 - [ ] Community voting for synergies — #9
 - [ ] User-created synergies + sharing — #8
 - [ ] Embeddable Synergy Widget — #58
@@ -81,6 +82,10 @@ None currently tracked.
 
 ## Recently Completed
 
+- [x] UX mockups: 7 desktop HTML/CSS mockups with multi-pass audits (spacing, consistency, a11y, navigation)
+- [x] Design workflow framework: CLAUDE.md design token reference, audit methodology, consistency checklist
+- [x] Numeric scoring migration: 1-10 scale (#132, PR #137)
+- [x] Synergy categories: Direct + Playstyle with playstyle registry (#39, PR #134)
 - [x] SEO: JSON-LD, semantic HTML, alt text, font preloading (#130, PR #131)
 - [x] Sentry integration: error tracking, source maps, console logs
 - [x] Refactor landing page (#112, PR #117)
