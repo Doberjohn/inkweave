@@ -14,6 +14,9 @@ export default defineConfig({
         authToken: process.env.SENTRY_AUTH_TOKEN,
       }),
   ],
+  server: {
+    host: true,
+  },
   build: {
     sourcemap: true,
   },

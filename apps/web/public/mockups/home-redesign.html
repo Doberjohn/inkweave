@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Redesign</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Tinos:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* TYPE SCALE: Major third (~1.25) — 10 → 13 → 16 → 20 + 14px form exception
+       Display: 20px | Section: 16px | Body: 13px | Micro: 10px | Form: 14px
+       Hero exception: 72px heading (brand display, outside body scale) */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0d0d14;
+      color: #e8e8e8;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Ethereal Background (matches EtherealBackground.tsx desktop) ── */
+    .bg-container {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      background: linear-gradient(180deg, #0d0d14 0%, #1a1a2e 50%, #0d0d14 100%);
+      pointer-events: none;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(64px);
+      pointer-events: none;
+    }
+    .glow-blue {
+      width: 384px; height: 384px;
+      background: rgba(43, 127, 255, 0.1);
+      left: 28.5%; top: 0;
+    }
+    .glow-purple {
+      width: 384px; height: 384px;
+      background: rgba(173, 70, 255, 0.1);
+      left: 65.5%; top: 77.5%;
+    }
+    .glow-teal {
+      width: 384px; height: 384px;
+      background: rgba(0, 187, 167, 0.05);
+      left: 57%; top: 56.5%;
+    }
+
+    /* ── Main layout (matches HomePage.tsx desktop) ── */
+    .content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    /* ── Hero Section (matches HeroSection.tsx desktop) ── */
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 0 80px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .sparkle-title {
+      font-size: 13px; /* body — uppercase + letter-spacing + gold distinguishes */
+      letter-spacing: 4.2px;
+      color: #ffb900;
+      font-weight: 400;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .hero-heading {
+      font-family: 'Tinos', 'Cinzel', 'Georgia', serif;
+      font-size: 72px;
+      font-weight: 400;
+      color: #ffffff;
+      margin: 0 0 8px;
+      text-align: center;
+      line-height: 90px;
+    }
+    .hero-heading .gradient {
+      background: linear-gradient(90deg, #bedbff 0%, #e9d4ff 50%, #fccee8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle-container {
+      text-align: center;
+      margin-bottom: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .subtitle-primary {
+      font-size: 20px; /* display — 1.25× step from secondary (16px) */
+      color: #cad5e2;
+      line-height: 28px;
+    }
+    .subtitle-secondary {
+      font-size: 16px;
+      color: #90a1b9;
+      line-height: 20px;
+    }
+
+    /* ── Search Bar (matches HeroSection.tsx desktop, WITHOUT the Search button) ── */
+    /* DESIGN CHANGE: Search button removed (UX Audit #1) */
+    .search-row {
+      display: flex;
+      width: 100%;
+      max-width: 768px;
+    }
+    .search-wrapper {
+      flex: 1;
+      position: relative;
+    }
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 28px;
+      transform: translateY(-50%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .search-input {
+      width: 100%;
+      height: 56px;
+      padding: 0 12px 0 48px;
+      border-radius: 8px;
+      border: 1px solid rgba(49, 65, 88, 0.5);
+      background: rgba(15, 23, 43, 0.5);
+      color: #e8e8e8;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 16px;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .search-input::placeholder { color: #90a1b9; }
+    .search-input:focus {
+      border-color: rgba(212, 175, 55, 0.5);
+      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15), 0 0 20px rgba(212, 175, 55, 0.1);
+    }
+
+    /* ── DESIGN CHANGE: CTA Buttons (UX Audit #3 — adds secondary nav paths) ── */
+    .cta-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .cta-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 44px;
+      padding: 0 20px;
+      border-radius: 8px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13px; /* body */
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .cta-browse {
+      /* Matches existing CTA_BUTTON_STYLE / filterGradient */
+      background: linear-gradient(90deg, #fe9a00, #e17100);
+      color: #0f172b;
+      border: none;
+      box-shadow: 0px 10px 15px 0px rgba(254,154,0,0.2), 0px 4px 6px 0px rgba(254,154,0,0.2);
+    }
+    .cta-browse:hover {
+      background: linear-gradient(90deg, #ffb020, #fe9a00);
+    }
+    .cta-playstyles {
+      background: transparent;
+      color: #ffb900;
+      border: 1px solid rgba(255, 185, 0, 0.4);
+    }
+    .cta-playstyles:hover {
+      border-color: rgba(255, 185, 0, 0.6);
+      background: rgba(255, 185, 0, 0.05);
+    }
+
+    /* ── Featured Section (matches FeaturedCards.tsx desktop) ── */
+    /* DESIGN CHANGE: Label text changed + subtitle added (UX Audit #2) */
+    .featured-section {
+      width: 1280px;
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 0 32px;
+      position: relative;
+      z-index: 1;
+    }
+    .featured-label-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .featured-label-text {
+      flex-shrink: 0;
+      text-align: center;
+    }
+    .featured-label {
+      font-size: 13px; /* body — uppercase + letter-spacing distinguishes */
+      letter-spacing: 2.8px;
+      color: #90a1b9;
+      font-weight: 400;
+      text-transform: uppercase;
+    }
+    /* DESIGN CHANGE: subtitle added below label */
+    .featured-subtitle {
+      font-size: 10px; /* micro — supplementary, muted color */
+      color: #90a1b9;
+      margin-top: 4px;
+    }
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, #314158 50%, transparent 100%);
+    }
+
+    /* Card grid (matches FeaturedCards.tsx desktop) */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 24px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .card-tile {
+      aspect-ratio: 0.72;
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+    }
+    .card-tile img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    /* Placeholder cards (will be real images in implementation) */
+    .card-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 10px; /* micro — placeholder */
+      color: #aaaaaa;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .card-ink-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: block;
+    }
+
+    /* DESIGN CHANGE: "See all cards" link removed — redundant with "Browse all cards" CTA */
+
+    /* ── Design change annotations (visual guides, remove before implementation) ── */
+    .design-change-marker {
+      position: absolute;
+      right: -10px;
+      top: -8px;
+      width: 20px;
+      height: 20px;
+      background: #fe9a00;
+      color: #0d0d14;
+      border-radius: 50%;
+      font-size: 10px; /* micro — annotation marker */
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <!-- Ethereal Background -->
+  <div class="bg-container">
+    <div class="glow-orb glow-blue"></div>
+    <div class="glow-orb glow-purple"></div>
+    <div class="glow-orb glow-teal"></div>
+  </div>
+
+  <main class="content">
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="sparkle-title">✦ INKWEAVE ✦</div>
+
+      <h1 class="hero-heading">
+        MASTER<br>
+        <span class="gradient">LORCANA SYNERGIES</span>
+      </h1>
+
+      <div class="subtitle-container">
+        <p class="subtitle-primary">Select any Lorcana card and instantly discover powerful combinations.</p>
+        <p class="subtitle-secondary">Build stronger decks with intelligent synergy detection.</p>
+      </div>
+
+      <!-- Search Bar — CHANGE: Search button removed -->
+      <div class="search-row">
+        <div class="search-wrapper">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#90a1b9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input class="search-input" type="text" placeholder="Search for a card..." aria-label="Search for a card">
+        </div>
+      </div>
+
+      <!-- CHANGE: Two CTA buttons for secondary navigation -->
+      <div class="cta-row" style="position: relative;">
+        <a class="cta-button cta-browse" href="browse-redesign.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Browse all cards
+        </a>
+        <a class="cta-button cta-playstyles" href="playstyle-gallery.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+          Explore playstyles
+        </a>
+      </div>
+    </section>
+
+    <!-- Featured Cards Section -->
+    <section class="featured-section">
+      <!-- CHANGE: Label text + subtitle -->
+      <div class="featured-label-row">
+        <div class="divider-line"></div>
+        <div class="featured-label-text">
+          <div class="featured-label">Popular Synergy Starters</div>
+          <div class="featured-subtitle">Cards with the most powerful connections</div>
+        </div>
+        <div class="divider-line"></div>
+      </div>
+
+      <!-- Card grid — placeholder tiles (real images in implementation) -->
+      <ul class="card-grid">
+        <li class="card-tile" style="background: linear-gradient(145deg, #f59e0b33, #f59e0b11); border: 1px solid #f59e0b44;" onclick="location.href='card-detail-redesign.html'">
+          <div class="card-placeholder"><span class="card-ink-dot" style="background:#f59e0b"></span>Amber</div>
+        </li>
+        <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
+          <div class="card-placeholder"><span class="card-ink-dot" style="background:#8b5cf6"></span>Amethyst</div>
+        </li>
+        <li class="card-tile" style="background: linear-gradient(145deg, #10b98133, #10b98111); border: 1px solid #10b98144;">
+          <div class="card-placeholder"><span class="card-ink-dot" style="background:#10b981"></span>Emerald</div>
+        </li>
+        <li class="card-tile" style="background: linear-gradient(145deg, #ef444433, #ef444411); border: 1px solid #ef444444;">
+          <div class="card-placeholder"><span class="card-ink-dot" style="background:#ef4444"></span>Ruby</div>
+        </li>
+        <li class="card-tile" style="background: linear-gradient(145deg, #3b82f633, #3b82f611); border: 1px solid #3b82f644;">
+          <div class="card-placeholder"><span class="card-ink-dot" style="background:#3b82f6"></span>Sapphire</div>
+        </li>
+        <li class="card-tile" style="background: linear-gradient(145deg, #71717a33, #71717a11); border: 1px solid #71717a44;">
+          <div class="card-placeholder"><span class="card-ink-dot" style="background:#71717a"></span>Steel</div>
+        </li>
+      </ul>
+    </section>
+    <!-- CHANGE: "See all cards" removed — redundant with "Browse all cards" CTA -->
+  </main>
+</body>
+</html>
