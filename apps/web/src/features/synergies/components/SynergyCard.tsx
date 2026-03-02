@@ -4,30 +4,37 @@ import type {LorcanaCard} from '../../cards';
 import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {CardLightbox} from '../../../shared/components';
 import {useCardPreviewHandlers} from '../../cards';
-import {useResponsive} from '../../../shared/hooks';
 import {getStrengthTier} from '../utils';
 
 interface SynergyCardProps {
   card: LorcanaCard;
   score: number;
   explanation: string;
+  isMobile?: boolean;
 }
 
-export const SynergyCard = memo(function SynergyCard({card, score, explanation}: SynergyCardProps) {
+export const SynergyCard = memo(function SynergyCard({
+  card,
+  score,
+  explanation,
+  isMobile = false,
+}: SynergyCardProps) {
   const tier = getStrengthTier(score);
   const colors = INK_COLORS[card.ink];
-  const {isMobile} = useResponsive();
   const {previewHandlers} = useCardPreviewHandlers({card});
   const [imgError, setImgError] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const imgSrc = card.thumbnailUrl || card.imageUrl;
 
   return (
     <div>
-      {/* Card tile with integrated name + reason overlay */}
+      {/* Card tile with strength badge overlay */}
       <motion.button
         {...(isMobile ? {} : previewHandlers)}
         onClick={isMobile && card.imageUrl ? () => setLightboxOpen(true) : undefined}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         aria-label={card.fullName || ''}
         whileHover={{scale: 1.04, y: -3}}
         whileTap={{scale: 0.97}}
@@ -43,6 +50,28 @@ export const SynergyCard = memo(function SynergyCard({card, score, explanation}:
           padding: 0,
           width: '100%',
         }}>
+        {/* "View details" hover cue — desktop only */}
+        {!isMobile && (
+          <span
+            style={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              background: 'rgba(13, 13, 20, 0.8)',
+              color: COLORS.primary,
+              fontSize: `${FONT_SIZES.xs}px`,
+              fontWeight: 600,
+              padding: '3px 8px',
+              borderRadius: `${RADIUS.sm}px`,
+              opacity: hovered ? 1 : 0,
+              transition: 'opacity 0.2s',
+              zIndex: 2,
+              pointerEvents: 'none',
+            }}>
+            View details
+          </span>
+        )}
+
         {/* Card image or fallback */}
         {imgSrc && !imgError ? (
           <img
@@ -74,14 +103,14 @@ export const SynergyCard = memo(function SynergyCard({card, score, explanation}:
           </div>
         )}
 
-        {/* Bottom overlay: strength badge only */}
+        {/* Bottom overlay: strength badge */}
         <div
           style={{
             position: 'absolute',
             bottom: 0,
             left: 0,
             right: 0,
-            padding: '12px 6px 5px',
+            padding: isMobile ? '10px 4px 4px' : '12px 6px 5px',
             background:
               'linear-gradient(transparent, rgba(13, 13, 20, 0.85) 30%, rgba(13, 13, 20, 0.95))',
             display: 'flex',
@@ -93,13 +122,13 @@ export const SynergyCard = memo(function SynergyCard({card, score, explanation}:
             style={{
               background: tier.bg,
               color: tier.color,
-              padding: '1px 6px',
+              padding: isMobile ? '2px 6px' : '2px 7px',
               borderRadius: `${RADIUS.sm}px`,
               fontSize: `${FONT_SIZES.xs}px`,
               fontWeight: 600,
               lineHeight: 1.4,
             }}>
-            {tier.label}
+            {isMobile ? tier.shortLabel : tier.label} {score}
           </span>
         </div>
       </motion.button>

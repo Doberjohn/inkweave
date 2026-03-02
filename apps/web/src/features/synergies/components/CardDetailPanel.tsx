@@ -1,4 +1,4 @@
-import {memo} from 'react';
+import {useState, memo} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup} from '../types';
 import {getDominantScore, getStrengthTier} from '../utils';
@@ -9,15 +9,19 @@ interface CardDetailPanelProps {
   card: LorcanaCard;
   /** Synergy groups — when provided, renders the breakdown inline */
   synergies?: SynergyGroup[];
-  totalSynergyCount?: number;
+  onGroupClick?: (groupKey: string) => void;
+  /** Currently active group filter — highlights the matching row */
+  activeGroupKey?: string | null;
 }
 
 export const CardDetailPanel = memo(function CardDetailPanel({
   card,
   synergies,
-  totalSynergyCount,
+  onGroupClick,
+  activeGroupKey,
 }: CardDetailPanelProps) {
   const hasSynergies = synergies && synergies.length > 0;
+  const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
 
   return (
     <article
@@ -32,7 +36,7 @@ export const CardDetailPanel = memo(function CardDetailPanel({
         display: 'flex',
         flexDirection: 'column',
         padding: `${SPACING.lg}px`,
-        gap: `${SPACING.md}px`,
+        gap: `${SPACING.lg}px`,
         boxSizing: 'border-box',
       }}>
       {/* Card image */}
@@ -64,7 +68,7 @@ export const CardDetailPanel = memo(function CardDetailPanel({
         {card.version && (
           <div
             style={{
-              fontSize: `${FONT_SIZES.lg}px`,
+              fontSize: `${FONT_SIZES.base}px`,
               color: COLORS.textMuted,
               marginTop: 3,
             }}>
@@ -77,7 +81,7 @@ export const CardDetailPanel = memo(function CardDetailPanel({
       {(card.textSections?.length || card.text) && (
         <div
           style={{
-            padding: `${SPACING.sm}px`,
+            padding: `${SPACING.md}px`,
             background: COLORS.surfaceAlt,
             borderRadius: `${RADIUS.md}px`,
             border: `1px solid ${COLORS.surfaceBorder}`,
@@ -86,12 +90,16 @@ export const CardDetailPanel = memo(function CardDetailPanel({
         </div>
       )}
 
-      {/* Synergy Breakdown (inline, replaces standalone SynergyBreakdown column) */}
+      {/* Synergy Breakdown */}
       {hasSynergies && (
-        <div data-testid="synergy-breakdown">
-          {/* Divider */}
-          <div style={{height: 1, background: COLORS.surfaceBorder, marginBottom: SPACING.md}} />
-
+        <div
+          data-testid="synergy-breakdown"
+          style={{
+            padding: `${SPACING.md}px`,
+            background: COLORS.surfaceAlt,
+            borderRadius: `${RADIUS.md}px`,
+            border: `1px solid ${COLORS.surfaceBorder}`,
+          }}>
           {/* Header */}
           <div
             style={{
@@ -100,28 +108,53 @@ export const CardDetailPanel = memo(function CardDetailPanel({
               color: COLORS.textMuted,
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              marginBottom: SPACING.sm,
+              marginBottom: 10,
             }}>
             Synergy Breakdown
           </div>
 
-          {/* Groups */}
-          <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
+          {/* Rows */}
+          <div style={{display: 'flex', flexDirection: 'column', gap: '2px'}}>
             {synergies.map((group) => {
               const tier = getStrengthTier(getDominantScore(group.synergies));
+              const isHovered = hoveredGroup === group.groupKey;
+              const isActive = activeGroupKey === group.groupKey;
               return (
                 <div
                   key={group.groupKey}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onGroupClick?.(group.groupKey)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onGroupClick?.(group.groupKey);
+                    }
+                  }}
+                  onMouseEnter={() => setHoveredGroup(group.groupKey)}
+                  onMouseLeave={() => setHoveredGroup(null)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: SPACING.sm,
+                    gap: '10px',
+                    padding: '6px 8px',
+                    borderRadius: `${RADIUS.sm}px`,
+                    cursor: 'pointer',
+                    transition: 'background 0.15s',
+                    background: isActive
+                      ? 'rgba(212, 175, 55, 0.12)'
+                      : isHovered
+                        ? 'rgba(212, 175, 55, 0.08)'
+                        : 'transparent',
+                    border: isActive
+                      ? '1px solid rgba(212, 175, 55, 0.3)'
+                      : '1px solid transparent',
                   }}>
                   {/* Count circle */}
                   <div
                     style={{
-                      width: 24,
-                      height: 24,
+                      width: 22,
+                      height: 22,
                       borderRadius: '50%',
                       background: tier.bg,
                       color: tier.color,
@@ -140,7 +173,7 @@ export const CardDetailPanel = memo(function CardDetailPanel({
                     style={{
                       flex: 1,
                       minWidth: 0,
-                      fontSize: `${FONT_SIZES.sm}px`,
+                      fontSize: `${FONT_SIZES.base}px`,
                       color: COLORS.text,
                       fontWeight: 500,
                       overflow: 'hidden',
@@ -150,37 +183,18 @@ export const CardDetailPanel = memo(function CardDetailPanel({
                     {group.label}
                   </div>
 
-                  {/* Strength badge */}
+                  {/* Arrow */}
                   <span
                     style={{
                       fontSize: `${FONT_SIZES.xs}px`,
-                      color: tier.color,
-                      background: tier.bg,
-                      padding: '1px 6px',
-                      borderRadius: `${RADIUS.sm}px`,
-                      fontWeight: 500,
-                      flexShrink: 0,
+                      color: isHovered ? COLORS.primary500 : COLORS.textMuted,
+                      transition: 'color 0.15s',
                     }}>
-                    {tier.label}
+                    &rarr;
                   </span>
                 </div>
               );
             })}
-          </div>
-
-          {/* Total */}
-          <div
-            style={{
-              marginTop: SPACING.md,
-              padding: `${SPACING.sm}px`,
-              background: COLORS.surfaceAlt,
-              borderRadius: `${RADIUS.md}px`,
-              textAlign: 'center',
-              fontSize: `${FONT_SIZES.sm}px`,
-              color: COLORS.textMuted,
-            }}>
-            <span style={{color: COLORS.primary, fontWeight: 700}}>{totalSynergyCount}</span>{' '}
-            synergies found
           </div>
         </div>
       )}

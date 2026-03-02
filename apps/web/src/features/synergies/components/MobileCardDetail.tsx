@@ -1,27 +1,55 @@
-import {useState} from 'react';
-import {useNavigate} from 'react-router-dom';
+import {useState, useMemo} from 'react';
 import type {LorcanaCard} from '../../cards';
-import type {SynergyGroup} from '../types';
+import type {SynergyGroup as SynergyGroupData} from '../types';
 import {getDominantScore, getStrengthTier} from '../utils';
+import {SynergyGroup} from './SynergyGroup';
 import {CardImage, CardLightbox, CardTextBlock} from '../../../shared/components';
-import {COLORS, FONT_SIZES, FONTS, INK_COLORS, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
 
 interface MobileCardDetailProps {
   card: LorcanaCard;
-  synergies: SynergyGroup[];
+  synergies: SynergyGroupData[];
   totalSynergyCount: number;
   onBack: () => void;
 }
 
-/** Mobile-only card detail view with synergy breakdown summary and CTA. */
+function chipStyle(active: boolean): React.CSSProperties {
+  return {
+    padding: '8px 14px',
+    borderRadius: '20px',
+    fontSize: `${FONT_SIZES.base}px`,
+    fontWeight: 500,
+    cursor: 'pointer',
+    border: active ? '1px solid rgba(212, 175, 55, 0.4)' : `1px solid ${COLORS.surfaceBorder}`,
+    background: active ? 'rgba(212, 175, 55, 0.12)' : 'transparent',
+    color: active ? COLORS.primary500 : COLORS.textMuted,
+    boxShadow: active
+      ? '0 0 12px rgba(212, 175, 55, 0.15), inset 0 0 8px rgba(212, 175, 55, 0.05)'
+      : 'none',
+    transition: 'all 0.2s',
+    fontFamily: FONTS.body,
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
+    minHeight: '44px',
+    display: 'flex',
+    alignItems: 'center',
+  };
+}
+
+/** Mobile-only card detail view with inline synergy groups. */
 export function MobileCardDetail({
   card,
   synergies,
   totalSynergyCount,
   onBack,
 }: MobileCardDetailProps) {
-  const navigate = useNavigate();
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
+
+  const filteredGroups = useMemo(() => {
+    if (!activeGroupFilter) return synergies;
+    return synergies.filter((g) => g.groupKey === activeGroupFilter);
+  }, [synergies, activeGroupFilter]);
 
   return (
     <main
@@ -50,13 +78,14 @@ export function MobileCardDetail({
       <div
         style={{
           height: 48,
-          background: 'rgba(26, 26, 46, 0.9)',
+          background: 'linear-gradient(180deg, #0d0d14 0%, #1a1a2e 100%)',
           display: 'flex',
           alignItems: 'center',
           paddingLeft: SPACING.lg,
-          borderBottom: `1px solid rgba(51, 51, 85, 0.5)`,
-          position: 'relative',
-          zIndex: 1,
+          borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+          position: 'sticky',
+          top: 0,
+          zIndex: 902,
         }}>
         <button
           onClick={onBack}
@@ -72,25 +101,19 @@ export function MobileCardDetail({
             padding: `${SPACING.sm}px 0`,
             fontFamily: FONTS.body,
           }}>
-          &larr; INKWEAVE
+          INKWEAVE
         </button>
       </div>
 
-      <div style={{position: 'relative', zIndex: 1}}>
+      <div style={{position: 'relative', zIndex: 1, padding: `${SPACING.lg}px`}}>
         {/* Card image — centered with gold glow border */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            paddingTop: SPACING.md,
-          }}>
+        <div style={{display: 'flex', justifyContent: 'center', marginBottom: SPACING.lg}}>
           <button
             aria-label="Enlarge card image"
             onClick={() => card.imageUrl && setLightboxOpen(true)}
             style={{
-              border: `2px solid ${COLORS.primary500}`,
-              borderRadius: RADIUS.xl - 4,
-              boxShadow: `0 0 14px rgba(212, 175, 55, 0.25)`,
+              border: 'none',
+              borderRadius: 12,
               overflow: 'hidden',
               cursor: 'pointer',
               padding: 0,
@@ -99,51 +122,37 @@ export function MobileCardDetail({
             <CardImage
               src={card.imageUrl}
               alt={card.fullName}
-              width={200}
-              height={280}
+              width={220}
+              height={308}
               inkColor={card.ink}
               cost={card.cost}
               lazy={false}
-              borderRadius={RADIUS.xl - 6}
+              borderRadius={10}
             />
           </button>
         </div>
 
-        <h2
+        {/* Card name + version */}
+        <h1
           style={{
             textAlign: 'center',
-            fontSize: 17,
+            fontSize: `${FONT_SIZES.xxl}px`,
             fontWeight: 700,
             color: COLORS.text,
-            margin: `${SPACING.md}px 0 0`,
+            margin: 0,
+            lineHeight: 1.2,
           }}>
-          {card.fullName}
-        </h2>
-
-        {/* Keyword badges */}
-        {card.keywords && card.keywords.length > 0 && (
+          {card.name}
+        </h1>
+        {card.version && (
           <div
             style={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: SPACING.sm,
-              marginTop: SPACING.sm,
+              textAlign: 'center',
+              fontSize: `${FONT_SIZES.base}px`,
+              color: COLORS.textMuted,
+              marginTop: 3,
             }}>
-            {card.keywords.map((kw) => (
-              <span
-                key={kw}
-                style={{
-                  background: COLORS.surfaceAlt,
-                  border: `1px solid ${COLORS.surfaceBorder}`,
-                  borderRadius: RADIUS.sm + 1,
-                  padding: '4px 10px',
-                  fontSize: FONT_SIZES.xs,
-                  fontWeight: 500,
-                  color: INK_COLORS.Sapphire.text,
-                }}>
-                {kw}
-              </span>
-            ))}
+            {card.version}
           </div>
         )}
 
@@ -151,11 +160,11 @@ export function MobileCardDetail({
         {(card.textSections?.length || card.text) && (
           <div
             style={{
-              margin: `${SPACING.md}px ${SPACING.xxl}px 0`,
+              marginTop: SPACING.md,
               background: COLORS.surfaceAlt,
               border: `1px solid ${COLORS.surfaceBorder}`,
-              borderRadius: RADIUS.lg,
-              padding: `${SPACING.sm}px ${SPACING.md}px`,
+              borderRadius: RADIUS.md,
+              padding: `${SPACING.md}px`,
             }}>
             <CardTextBlock card={card} />
           </div>
@@ -163,37 +172,45 @@ export function MobileCardDetail({
 
         {/* Synergy breakdown */}
         {synergies.length > 0 && (
-          <div style={{margin: `${SPACING.lg}px ${SPACING.xxl}px 0`}}>
-            <p
+          <div
+            style={{
+              marginTop: SPACING.lg,
+              padding: `${SPACING.md}px`,
+              background: COLORS.surfaceAlt,
+              borderRadius: `${RADIUS.md}px`,
+              border: `1px solid ${COLORS.surfaceBorder}`,
+            }}>
+            <div
               style={{
                 fontSize: FONT_SIZES.xs,
-                fontWeight: 700,
-                color: COLORS.primary500,
-                letterSpacing: '1.5px',
-                margin: `0 0 ${SPACING.sm}px`,
+                fontWeight: 600,
+                color: COLORS.textMuted,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                marginBottom: 10,
               }}>
-              SYNERGY BREAKDOWN
-            </p>
+              Synergy Breakdown
+            </div>
 
-            <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm - 2}}>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '2px'}}>
               {synergies.map((group) => {
                 const tier = getStrengthTier(getDominantScore(group.synergies));
                 return (
                   <div
                     key={group.groupKey}
                     style={{
-                      background: COLORS.surfaceAlt,
-                      borderRadius: RADIUS.md,
-                      height: 34,
                       display: 'flex',
                       alignItems: 'center',
-                      padding: `0 ${SPACING.sm}px`,
+                      gap: '10px',
+                      padding: '8px',
+                      borderRadius: RADIUS.sm,
+                      minHeight: 44,
                     }}>
                     {/* Count circle */}
                     <div
                       style={{
-                        width: 22,
-                        height: 22,
+                        width: 24,
+                        height: 24,
                         borderRadius: '50%',
                         background: tier.bg,
                         display: 'flex',
@@ -203,7 +220,7 @@ export function MobileCardDetail({
                       }}>
                       <span
                         style={{
-                          fontSize: FONT_SIZES.sm,
+                          fontSize: FONT_SIZES.xs,
                           fontWeight: 700,
                           color: tier.color,
                         }}>
@@ -215,26 +232,15 @@ export function MobileCardDetail({
                     <span
                       style={{
                         flex: 1,
-                        fontSize: FONT_SIZES.md,
+                        fontSize: FONT_SIZES.base,
                         fontWeight: 500,
                         color: COLORS.text,
-                        marginLeft: SPACING.sm,
                       }}>
                       {group.label}
                     </span>
 
-                    {/* Strength badge */}
-                    <span
-                      style={{
-                        background: tier.bg,
-                        color: tier.color,
-                        fontSize: FONT_SIZES.xs,
-                        fontWeight: 500,
-                        padding: '2px 8px',
-                        borderRadius: RADIUS.sm,
-                      }}>
-                      {tier.label}
-                    </span>
+                    {/* Arrow */}
+                    <span style={{fontSize: FONT_SIZES.xs, color: COLORS.textMuted}}>&rarr;</span>
                   </div>
                 );
               })}
@@ -242,39 +248,87 @@ export function MobileCardDetail({
           </div>
         )}
 
-        {/* Gold CTA button */}
-        <div style={{padding: `${SPACING.lg}px ${SPACING.xxl}px`}}>
-          {totalSynergyCount > 0 ? (
-            <button
-              onClick={() => navigate(`/card/${card.id}/synergies`)}
+        {/* Synergy section divider */}
+        {synergies.length > 0 && (
+          <>
+            <div
               style={{
-                width: '100%',
-                height: 44,
-                background: COLORS.primary500,
-                borderRadius: RADIUS.xl - 4,
-                border: 'none',
-                boxShadow: '0 2px 12px rgba(212, 175, 55, 0.3)',
-                cursor: 'pointer',
-                fontSize: 15,
-                fontWeight: 700,
-                color: COLORS.background,
-                fontFamily: FONTS.body,
-                WebkitTapHighlightColor: 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: `${SPACING.lg}px 0 ${SPACING.sm}px`,
               }}>
-              {`View All ${totalSynergyCount} Synergies \u2192`}
-            </button>
-          ) : (
-            <p
+              <div style={{flex: 1, height: 1, background: COLORS.surfaceBorder}} />
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: `${FONT_SIZES.xl}px`,
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: COLORS.text,
+                }}>
+                Synergies
+              </h2>
+              <span
+                style={{
+                  background: COLORS.calloutBg,
+                  color: COLORS.primary,
+                  padding: '2px 8px',
+                  borderRadius: `${RADIUS.sm}px`,
+                  fontSize: `${FONT_SIZES.xs}px`,
+                  fontWeight: 700,
+                }}>
+                {totalSynergyCount}
+              </span>
+              <div style={{flex: 1, height: 1, background: COLORS.surfaceBorder}} />
+            </div>
+
+            {/* Group chips — horizontal scroll */}
+            <div
               style={{
-                textAlign: 'center',
-                fontSize: FONT_SIZES.base,
-                color: COLORS.textMuted,
-                margin: 0,
+                display: 'flex',
+                gap: '8px',
+                overflowX: 'auto',
+                paddingBottom: '4px',
+                marginBottom: SPACING.lg,
+                WebkitOverflowScrolling: 'touch',
+                scrollbarWidth: 'none',
               }}>
-              No synergies found for this card.
-            </p>
-          )}
-        </div>
+              <button
+                onClick={() => setActiveGroupFilter(null)}
+                style={chipStyle(activeGroupFilter === null)}>
+                All
+              </button>
+              {synergies.map((g) => (
+                <button
+                  key={g.groupKey}
+                  onClick={() => setActiveGroupFilter(g.groupKey)}
+                  style={chipStyle(activeGroupFilter === g.groupKey)}>
+                  {g.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Synergy groups */}
+            {filteredGroups.map((group) => (
+              <SynergyGroup key={group.groupKey} group={group} isMobile maxVisibleCards={5} />
+            ))}
+          </>
+        )}
+
+        {/* Empty state */}
+        {synergies.length === 0 && (
+          <p
+            style={{
+              textAlign: 'center',
+              fontSize: FONT_SIZES.base,
+              color: COLORS.textMuted,
+              margin: `${SPACING.xxl}px 0`,
+            }}>
+            No synergies found for this card.
+          </p>
+        )}
       </div>
 
       {lightboxOpen && card.imageUrl && (

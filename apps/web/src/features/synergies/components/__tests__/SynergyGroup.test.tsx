@@ -10,28 +10,49 @@ vi.mock('../SynergyCard', () => ({
   ),
 }));
 
+function makeSynergy(id: string, name: string) {
+  return {
+    card: {id, fullName: name, name} as SynergyGroupData['synergies'][0]['card'],
+    score: 7,
+    explanation: 'Test synergy',
+  };
+}
+
 const mockGroup: SynergyGroupData = {
   groupKey: 'shift-targets',
   category: 'direct',
   label: 'Shift Targets',
   description: 'Characters with Shift and their same-named targets',
-  synergies: [
-    {
-      card: {
-        id: '1',
-        fullName: 'Elsa - Snow Queen',
-        name: 'Elsa',
-      } as SynergyGroupData['synergies'][0]['card'],
-      score: 7,
-      explanation: 'Shift synergy',
-    },
-  ],
+  synergies: [makeSynergy('1', 'Elsa - Snow Queen')],
 };
 
 describe('SynergyGroup', () => {
   it('should render group name as an h3 heading', () => {
     render(<SynergyGroup group={mockGroup} />);
-
     expect(screen.getByRole('heading', {level: 3})).toHaveTextContent('Shift Targets');
+  });
+
+  it('should always render description', () => {
+    render(<SynergyGroup group={mockGroup} />);
+    expect(screen.getByText('Characters with Shift and their same-named targets')).toBeTruthy();
+  });
+
+  it('should render card count', () => {
+    render(<SynergyGroup group={mockGroup} />);
+    expect(screen.getByText('1 card')).toBeTruthy();
+  });
+
+  it('should render MoreTile when cards exceed maxVisibleCards', () => {
+    const bigGroup = {
+      ...mockGroup,
+      synergies: Array.from({length: 8}, (_, i) => makeSynergy(String(i), `Card ${i}`)),
+    };
+    render(<SynergyGroup group={bigGroup} maxVisibleCards={6} />);
+    expect(screen.getByLabelText('Show 2 more cards')).toBeTruthy();
+  });
+
+  it('should not render MoreTile when all cards fit', () => {
+    render(<SynergyGroup group={mockGroup} maxVisibleCards={6} />);
+    expect(screen.queryByText('more cards')).toBeNull();
   });
 });
