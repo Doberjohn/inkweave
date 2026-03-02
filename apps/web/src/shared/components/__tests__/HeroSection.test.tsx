@@ -31,38 +31,37 @@ describe('HeroSection', () => {
     expect(screen.getByPlaceholderText('Search for a card...')).toBeInTheDocument();
   });
 
-  it('should render search button', () => {
-    render(<HeroSection {...defaultProps} />);
-
-    expect(screen.getByRole('button', {name: 'Search'})).toBeInTheDocument();
-  });
-
-  it('should disable search button when query is empty', () => {
-    render(<HeroSection {...defaultProps} searchQuery="" />);
-
-    expect(screen.getByRole('button', {name: 'Search'})).toBeDisabled();
-  });
-
-  it('should enable search button when query has text', () => {
-    render(<HeroSection {...defaultProps} searchQuery="Elsa" />);
-
-    expect(screen.getByRole('button', {name: 'Search'})).not.toBeDisabled();
-  });
-
-  it('should call onSearchSubmit when search button is clicked', () => {
-    const onSearchSubmit = vi.fn();
-    render(<HeroSection {...defaultProps} searchQuery="Elsa" onSearchSubmit={onSearchSubmit} />);
-
-    fireEvent.click(screen.getByRole('button', {name: 'Search'}));
-    expect(onSearchSubmit).toHaveBeenCalledOnce();
-  });
-
   it('should call onSearchSubmit on Enter key in input', () => {
     const onSearchSubmit = vi.fn();
     render(<HeroSection {...defaultProps} searchQuery="Elsa" onSearchSubmit={onSearchSubmit} />);
 
     fireEvent.keyDown(screen.getByTestId('hero-search'), {key: 'Enter'});
     expect(onSearchSubmit).toHaveBeenCalledOnce();
+  });
+
+  it('should render CTA buttons', () => {
+    render(<HeroSection {...defaultProps} />);
+
+    expect(screen.getByTestId('cta-browse')).toBeInTheDocument();
+    expect(screen.getByText('Browse all cards')).toBeInTheDocument();
+    expect(screen.getByTestId('cta-playstyles')).toBeInTheDocument();
+    expect(screen.getByText('Explore playstyles')).toBeInTheDocument();
+  });
+
+  it('should call onBrowse when Browse CTA is clicked', () => {
+    const onBrowse = vi.fn();
+    render(<HeroSection {...defaultProps} onBrowse={onBrowse} />);
+
+    fireEvent.click(screen.getByTestId('cta-browse'));
+    expect(onBrowse).toHaveBeenCalledOnce();
+  });
+
+  it('should call onPlaystyles when Playstyles CTA is clicked', () => {
+    const onPlaystyles = vi.fn();
+    render(<HeroSection {...defaultProps} onPlaystyles={onPlaystyles} />);
+
+    fireEvent.click(screen.getByTestId('cta-playstyles'));
+    expect(onPlaystyles).toHaveBeenCalledOnce();
   });
 
   it('should render as a semantic section element', () => {

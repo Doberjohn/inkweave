@@ -22,9 +22,9 @@ See [GitHub Issues](https://github.com/Doberjohn/lorcana-synergy-finder/issues) 
 
 ### Epic 2: Dark Fantasy UI Theme (#29)
 - [x] Design System Foundation — #35 (PR #69)
-- [ ] Card Grid Transformation — #36
-- [ ] Synergy Panel Redesign — #37
-- [ ] Header, Filters, and Polish — #38
+- [x] Card Grid Transformation — #36 (PR #138)
+- [x] Synergy Panel Redesign — #37 (PR #139)
+- [x] Header, Filters, and Polish — #38
 
 ### Epic 3: Synergy Categories (#30)
 - [x] Synergy Category Infrastructure (Direct + Playstyle) — #39 (PR #134)

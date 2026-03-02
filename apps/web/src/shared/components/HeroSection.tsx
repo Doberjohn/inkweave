@@ -1,5 +1,4 @@
 import {useCallback, useState} from 'react';
-import {motion} from 'framer-motion';
 import type {LorcanaCard} from 'lorcana-synergy-engine';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, Z_INDEX} from '../constants';
 import {useAutocomplete} from '../hooks';
@@ -12,6 +11,8 @@ interface HeroSectionProps {
   onSearchSubmit?: () => void;
   cards?: LorcanaCard[];
   onCardSelect?: (card: LorcanaCard) => void;
+  onBrowse?: () => void;
+  onPlaystyles?: () => void;
   isMobile?: boolean;
 }
 
@@ -21,14 +22,14 @@ function getStyles(isMobile: boolean) {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      padding: isMobile ? `64px ${SPACING.lg}px 48px` : `0 0 80px`,
+      padding: isMobile ? `48px ${SPACING.lg}px 40px` : '0 0 80px',
       position: 'relative',
       zIndex: 2,
       width: isMobile ? '100%' : undefined,
       boxSizing: 'border-box',
     } as React.CSSProperties,
     sparkle: {
-      fontSize: `${isMobile ? FONT_SIZES.md : FONT_SIZES.lg}px`,
+      fontSize: `${isMobile ? FONT_SIZES.xs : FONT_SIZES.base}px`,
       letterSpacing: isMobile ? '3.6px' : '4.2px',
       color: COLORS.primary,
       fontWeight: 400,
@@ -37,42 +38,54 @@ function getStyles(isMobile: boolean) {
     } as React.CSSProperties,
     heading: {
       fontFamily: FONTS.hero,
-      fontSize: isMobile ? 48 : 72,
+      fontSize: isMobile ? 40 : 72,
       fontWeight: 400,
       color: COLORS.heroTitle,
       margin: 0,
       marginBottom: SPACING.sm,
       textAlign: 'center',
-      lineHeight: isMobile ? '60px' : '90px',
+      lineHeight: isMobile ? '48px' : '90px',
     } as React.CSSProperties,
     subtitleContainer: {
       textAlign: 'center',
       marginBottom: isMobile ? 24 : 32,
       display: 'flex',
       flexDirection: 'column',
-      gap: '8px',
+      gap: isMobile ? '6px' : '8px',
+      padding: isMobile ? '0 8px' : undefined,
     } as React.CSSProperties,
     subtitlePrimary: {
-      fontSize: `${isMobile ? 16 : 18}px`,
+      fontSize: `${isMobile ? 16 : 20}px`,
       color: COLORS.heroSubtitle,
       margin: 0,
-      lineHeight: '24px',
+      lineHeight: isMobile ? '22px' : '28px',
     } as React.CSSProperties,
     subtitleSecondary: {
-      fontSize: `${isMobile ? 14 : 16}px`,
+      fontSize: `${isMobile ? FONT_SIZES.base : FONT_SIZES.xl}px`,
       color: COLORS.heroSubtitleSecondary,
       margin: 0,
-      lineHeight: '20px',
+      lineHeight: isMobile ? '18px' : '20px',
     } as React.CSSProperties,
     searchRow: {
       display: 'flex',
-      flexDirection: isMobile ? 'column' : 'row',
-      gap: isMobile ? 12 : 0,
       width: '100%',
       maxWidth: isMobile ? undefined : 768,
     } as React.CSSProperties,
-    inputBorderRadius: isMobile ? `${RADIUS.lg}px` : `${RADIUS.lg}px 0 0 ${RADIUS.lg}px`,
-    buttonBorderRadius: isMobile ? `${RADIUS.lg}px` : `0 ${RADIUS.lg}px ${RADIUS.lg}px 0`,
+    searchIconPosition: {
+      position: 'absolute',
+      left: isMobile ? 14 : 16,
+      top: isMobile ? 24 : 28,
+      transform: 'translateY(-50%)',
+      pointerEvents: 'none',
+      zIndex: 1,
+    } as React.CSSProperties,
+    ctaRow: {
+      display: 'flex',
+      flexDirection: isMobile ? 'column' : 'row',
+      gap: isMobile ? 10 : 12,
+      marginTop: isMobile ? 16 : 20,
+      width: isMobile ? '100%' : undefined,
+    } as React.CSSProperties,
   };
 }
 
@@ -84,14 +97,35 @@ const gradientSpan: React.CSSProperties = {
   backgroundClip: 'text',
 };
 
-const searchIconPosition: React.CSSProperties = {
-  position: 'absolute',
-  left: 16,
-  top: 28,
-  transform: 'translateY(-50%)',
-  pointerEvents: 'none',
-  zIndex: 1,
-};
+/** Grid icon for "Browse all cards" CTA. */
+function GridIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="3" width="7" height="7" />
+      <rect x="14" y="3" width="7" height="7" />
+      <rect x="3" y="14" width="7" height="7" />
+      <rect x="14" y="14" width="7" height="7" />
+    </svg>
+  );
+}
+
+/** Compass icon for "Explore playstyles" CTA. */
+function CompassIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+    </svg>
+  );
+}
 
 export function HeroSection({
   searchQuery,
@@ -99,10 +133,11 @@ export function HeroSection({
   onSearchSubmit,
   cards = [],
   onCardSelect,
+  onBrowse,
+  onPlaystyles,
   isMobile,
 }: HeroSectionProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const isSearchEmpty = searchQuery.trim().length === 0;
   const styles = getStyles(!!isMobile);
 
   const handleAutoSelect = useCallback((card: LorcanaCard) => onCardSelect?.(card), [onCardSelect]);
@@ -114,7 +149,8 @@ export function HeroSection({
     onSelect: handleAutoSelect,
   });
 
-  const buttonColor = isSearchEmpty ? COLORS.gray500 : COLORS.filterText;
+  const mobile = !!isMobile;
+  const ctaHeight = mobile ? 48 : 44;
 
   return (
     <section data-testid="hero-section" aria-label="Hero" style={styles.container}>
@@ -138,11 +174,10 @@ export function HeroSection({
         </p>
       </div>
 
-      {/* Search Bar + Search Button */}
+      {/* Search Bar */}
       <div style={styles.searchRow}>
         <div style={{flex: 1, position: 'relative', zIndex: Z_INDEX.autocomplete}}>
-          {/* Search icon */}
-          <div style={searchIconPosition}>
+          <div style={styles.searchIconPosition}>
             <SearchIcon color={COLORS.searchPlaceholder} />
           </div>
           <input
@@ -167,19 +202,20 @@ export function HeroSection({
             data-testid="hero-search"
             style={{
               width: '100%',
-              height: 56,
-              padding: '0 12px 0 48px',
-              borderRadius: styles.inputBorderRadius,
+              height: mobile ? 48 : 56,
+              padding: mobile ? '0 12px 0 44px' : '0 12px 0 48px',
+              borderRadius: `${RADIUS.lg}px`,
               border: `1px solid ${isSearchFocused ? 'rgba(212, 175, 55, 0.5)' : COLORS.searchBorder}`,
-              borderRight: isMobile ? undefined : 'none',
               background: COLORS.searchBg,
               color: COLORS.text,
+              fontFamily: FONTS.body,
               fontSize: `${FONT_SIZES.xl}px`,
               boxSizing: 'border-box',
               boxShadow: isSearchFocused
                 ? '0 0 0 3px rgba(212, 175, 55, 0.15), 0 0 20px rgba(212, 175, 55, 0.1)'
                 : 'none',
               transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
+              outline: 'none',
             }}
           />
           <SearchAutocomplete
@@ -191,34 +227,61 @@ export function HeroSection({
             getOptionProps={autocomplete.getOptionProps}
           />
         </div>
-        <motion.button
-          onClick={onSearchSubmit}
-          disabled={isSearchEmpty}
-          aria-label="Search"
-          whileHover={isSearchEmpty ? {} : {background: 'linear-gradient(90deg, #ffb020, #fe9a00)'}}
-          whileTap={isSearchEmpty ? {} : {scale: 0.97}}
-          transition={{type: 'tween', duration: 0.25}}
+      </div>
+
+      {/* CTA Buttons */}
+      <div style={styles.ctaRow}>
+        <button
+          data-testid="cta-browse"
+          onClick={onBrowse}
           style={{
-            height: 56,
-            padding: '0 24px',
-            borderRadius: styles.buttonBorderRadius,
-            border: 'none',
-            background: isSearchEmpty ? COLORS.gray200 : COLORS.filterGradient,
-            color: buttonColor,
-            fontSize: `${FONT_SIZES.xl}px`,
-            fontWeight: 400,
-            cursor: isSearchEmpty ? 'not-allowed' : 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '8px',
-            flexShrink: 0,
-            boxShadow: isSearchEmpty ? 'none' : COLORS.filterShadow,
-            transition: 'background 0.2s ease, color 0.2s ease',
+            gap: 8,
+            height: ctaHeight,
+            padding: '0 20px',
+            borderRadius: `${RADIUS.lg}px`,
+            border: 'none',
+            background: COLORS.filterGradient,
+            color: COLORS.filterText,
+            fontFamily: FONTS.body,
+            fontSize: `${FONT_SIZES.base}px`,
+            fontWeight: 500,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            textDecoration: 'none',
+            boxShadow: '0px 10px 15px 0px rgba(254, 154, 0, 0.2), 0px 4px 6px 0px rgba(254, 154, 0, 0.2)',
+            width: mobile ? '100%' : undefined,
           }}>
-          <SearchIcon size={18} color={buttonColor} strokeWidth={2} />
-          Search
-        </motion.button>
+          <GridIcon />
+          Browse all cards
+        </button>
+        <button
+          data-testid="cta-playstyles"
+          onClick={onPlaystyles}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            height: ctaHeight,
+            padding: '0 20px',
+            borderRadius: `${RADIUS.lg}px`,
+            background: 'transparent',
+            color: COLORS.primary,
+            border: '1px solid rgba(255, 185, 0, 0.4)',
+            fontFamily: FONTS.body,
+            fontSize: `${FONT_SIZES.base}px`,
+            fontWeight: 500,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            textDecoration: 'none',
+            width: mobile ? '100%' : undefined,
+          }}>
+          <CompassIcon />
+          Explore playstyles
+        </button>
       </div>
     </section>
   );
