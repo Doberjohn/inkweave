@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playstyle Gallery — Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* TYPE SCALE: Major third (~1.25) — 10 → 13 → 16 → 20 + 14px form exception
+       Display: 20px | Section: 16px | Body: 13px | Micro: 10px | Form: 14px */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0d0d14;
+      color: #e8e8e8;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      max-width: 430px;
+      margin: 0 auto;
+    }
+
+    /* ── Ethereal Background ── */
+    .bg-container {
+      position: fixed; inset: 0; z-index: 0; overflow: hidden;
+      background: linear-gradient(180deg, #0d0d14 0%, #1a1a2e 50%, #0d0d14 100%);
+      pointer-events: none;
+    }
+    .glow-orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }
+    .glow-1 { width: 280px; height: 280px; background: rgba(139,92,246,0.08); left: -10%; top: 10%; }
+    .glow-2 { width: 250px; height: 250px; background: rgba(16,185,129,0.06); right: -10%; top: 40%; }
+    .glow-3 { width: 220px; height: 220px; background: rgba(212,175,55,0.05); left: 40%; bottom: 10%; }
+
+    /* ── Mobile Header ── */
+    .mobile-header {
+      height: 48px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(180deg, #0d0d14 0%, #1a1a2e 100%);
+      border-bottom: 1px solid #333355;
+      position: sticky;
+      top: 0;
+      z-index: 902;
+    }
+    .logo-btn {
+      background: none; border: none; cursor: pointer; padding: 0;
+      display: flex; align-items: center; flex-shrink: 0; text-decoration: none;
+    }
+    .logo-text { font-size: 13px; font-weight: 700; color: #ffb900; letter-spacing: 0.18em; }
+    .header-search { flex: 1; position: relative; }
+    .header-search-icon {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      pointer-events: none; z-index: 1;
+    }
+    .header-search-input {
+      width: 100%; height: 34px; padding: 0 10px 0 32px; border-radius: 8px;
+      border: 1px solid rgba(49,65,88,0.5); background: rgba(15,23,43,0.5);
+      color: #e8e8e8; font-family: 'Inter', sans-serif; font-size: 14px; outline: none;
+    }
+    .header-search-input::placeholder { color: #90a1b9; }
+
+    /* ── Page Intro ── */
+    .page-intro {
+      padding: 20px 16px 0;
+      position: relative;
+      z-index: 1;
+    }
+    .page-title {
+      font-size: 20px; /* display */
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .page-subtitle {
+      font-size: 13px; /* body */
+      color: #c8c8d8;
+      line-height: 1.5;
+    }
+
+    /* ── Playstyle Grid (mobile — single column) ── */
+    .playstyle-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 20px 16px 48px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Accent Colors ── */
+    .accent-purple   { --accent: #8b5cf6; --accent-rgb: 139, 92, 246; }
+    .accent-emerald  { --accent: #10b981; --accent-rgb: 16, 185, 129; }
+    .accent-ruby     { --accent: #ef4444; --accent-rgb: 239, 68, 68; }
+    .accent-sapphire { --accent: #3b82f6; --accent-rgb: 59, 130, 246; }
+    .accent-amber    { --accent: #f59e0b; --accent-rgb: 245, 158, 11; }
+    .accent-steel    { --accent: #71717a; --accent-rgb: 113, 113, 122; }
+
+    /* ── Playstyle Card ── */
+    .playstyle-card {
+      background: #1a1a2e;
+      border: 1px solid #333355;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .playstyle-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+      border-radius: 12px 0 0 12px;
+      background: var(--accent);
+      z-index: 3;
+    }
+
+    /* ── Cinematic Background Art ── */
+    .art-bg {
+      position: absolute;
+      inset: -20px;
+      border-radius: 12px;
+      z-index: 1;
+      background-size: cover;
+      background-position: center;
+      opacity: 0.35;
+      filter: saturate(0.2) brightness(0.7);
+    }
+    .art-scrim {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      z-index: 1;
+      background: linear-gradient(180deg, rgba(26,26,46,0.5) 0%, rgba(26,26,46,0.25) 40%, rgba(26,26,46,0.5) 100%);
+      pointer-events: none;
+    }
+
+    /* Card header */
+    .playstyle-header {
+      display: flex; align-items: center; gap: 10px;
+      position: relative; z-index: 2;
+    }
+    .playstyle-accent-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent); flex-shrink: 0;
+    }
+    .playstyle-name {
+      font-size: 16px; /* section */
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    /* Description */
+    .playstyle-description {
+      font-size: 13px; line-height: 1.6; color: #c8c8d8;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      position: relative; z-index: 2;
+    }
+
+    /* Preview cards row */
+    .playstyle-preview {
+      display: flex; gap: 8px;
+      position: relative; z-index: 2;
+    }
+    .preview-card {
+      width: 48px; height: 67px;
+      border-radius: 6px; flex-shrink: 0;
+    }
+    .preview-more {
+      width: 48px; height: 67px;
+      border-radius: 6px;
+      border: 1px dashed #444466;
+      background: #151525;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; color: #d4af37; font-weight: 700; flex-shrink: 0;
+    }
+
+    /* Footer */
+    .playstyle-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      margin: 0 -20px -20px;
+      border-radius: 0 0 11px 11px;
+      background: rgba(var(--accent-rgb), 0.20);
+      border-top: 1px solid rgba(var(--accent-rgb), 0.18);
+      position: relative; z-index: 2;
+    }
+    .playstyle-stats { font-size: 13px; color: #c8c8d8; }
+    .playstyle-stats strong { color: #e8e8e8; font-weight: 600; }
+    .playstyle-explore {
+      font-size: 13px; font-weight: 600; color: #e8e8e8;
+      display: flex; align-items: center; gap: 4px;
+    }
+
+    /* ── Section Divider ── */
+    .section-divider {
+      display: flex; align-items: center; gap: 16px; padding: 8px 0 0;
+    }
+    .section-divider::before,
+    .section-divider::after {
+      content: ''; flex: 1; height: 1px; background: #333355;
+    }
+    .section-divider-label {
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: #90a1b9; white-space: nowrap;
+    }
+
+    /* ── Coming Soon ── */
+    .playstyle-card.coming-soon {
+      opacity: 0.45; cursor: default;
+    }
+  </style>
+</head>
+<body>
+  <!-- Ethereal Background -->
+  <div class="bg-container">
+    <div class="glow-orb glow-1"></div>
+    <div class="glow-orb glow-2"></div>
+    <div class="glow-orb glow-3"></div>
+  </div>
+
+  <!-- Mobile Header -->
+  <header class="mobile-header">
+    <a class="logo-btn" href="home-mobile.html" aria-label="Go to home page">
+      <span class="logo-text">INKWEAVE</span>
+    </a>
+    <div class="header-search">
+      <svg class="header-search-icon" width="14" height="14" viewBox="0 0 20 20" fill="none">
+        <circle cx="9" cy="9" r="6" stroke="#90a1b9" stroke-width="1.5"/>
+        <line x1="13.5" y1="13.5" x2="17" y2="17" stroke="#90a1b9" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <input class="header-search-input" type="text" placeholder="Search cards..." aria-label="Search cards">
+    </div>
+  </header>
+
+  <main>
+    <!-- Page Intro -->
+    <div class="page-intro">
+      <h1 class="page-title">Synergy Playstyles</h1>
+      <p class="page-subtitle">
+        Strategic archetypes that emerge when cards share a common gameplay pattern.
+        Explore each playstyle to find cards that reinforce your strategy.
+      </p>
+    </div>
+
+    <!-- Playstyle Cards -->
+    <div class="playstyle-grid">
+
+      <!-- Lore Steal — ACTIVE -->
+      <article class="playstyle-card accent-ruby" onclick="location.href='playstyle-detail-mobile.html'">
+        <div class="art-bg" style="background-image: url(art/lore-denial-cover.png);"></div>
+        <div class="art-scrim"></div>
+        <div class="playstyle-header">
+          <span class="playstyle-accent-dot"></span>
+          <h2 class="playstyle-name">Lore Steal</h2>
+        </div>
+        <p class="playstyle-description">
+          Cards that make your opponent lose lore. Stacking these creates a consistent denial
+          strategy that pressures your opponent while you gain lore.
+        </p>
+        <div class="playstyle-preview">
+          <div class="preview-card" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;"></div>
+          <div class="preview-card" style="background: linear-gradient(145deg, #3d1515, #3d151511); border: 1px solid #ef444444;"></div>
+          <div class="preview-card" style="background: linear-gradient(145deg, #0f2e1f, #0f2e1f11); border: 1px solid #10b98144;"></div>
+          <div class="preview-card" style="background: linear-gradient(145deg, #0f1e3d, #0f1e3d11); border: 1px solid #3b82f644;"></div>
+          <div class="preview-more">+38</div>
+        </div>
+        <div class="playstyle-footer">
+          <span class="playstyle-stats"><strong>42</strong> cards &middot; <strong>1</strong> rule</span>
+          <span class="playstyle-explore">Explore &rarr;</span>
+        </div>
+      </article>
+
+      <!-- Location Control — ACTIVE -->
+      <article class="playstyle-card accent-steel" onclick="location.href='playstyle-detail-mobile.html'">
+        <div class="art-bg" style="background-image: url(art/location-control-cover.png);"></div>
+        <div class="art-scrim"></div>
+        <div class="playstyle-header">
+          <span class="playstyle-accent-dot"></span>
+          <h2 class="playstyle-name">Location Control</h2>
+        </div>
+        <p class="playstyle-description">
+          Cards that synergize through location-based gameplay. Moving characters to locations,
+          buffing them there, and triggering location payoffs.
+        </p>
+        <div class="playstyle-preview">
+          <div class="preview-card" style="background: linear-gradient(145deg, #3d2e10, #3d2e1011); border: 1px solid #f59e0b44;"></div>
+          <div class="preview-card" style="background: linear-gradient(145deg, #0f2e1f, #0f2e1f11); border: 1px solid #10b98144;"></div>
+          <div class="preview-card" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;"></div>
+          <div class="preview-card" style="background: linear-gradient(145deg, #252530, #25253011); border: 1px solid #6b728044;"></div>
+          <div class="preview-more">+24</div>
+        </div>
+        <div class="playstyle-footer">
+          <span class="playstyle-stats"><strong>28</strong> cards &middot; <strong>6</strong> rules</span>
+          <span class="playstyle-explore">Explore &rarr;</span>
+        </div>
+      </article>
+
+      <!-- Section Divider -->
+      <div class="section-divider">
+        <span class="section-divider-label">Coming Soon</span>
+      </div>
+
+      <!-- Discard — COMING SOON -->
+      <article class="playstyle-card accent-emerald coming-soon">
+        <div class="art-bg" style="background-image: url(art/discard.png);"></div>
+        <div class="art-scrim"></div>
+        <div class="playstyle-header">
+          <span class="playstyle-accent-dot"></span>
+          <h2 class="playstyle-name">Discard</h2>
+        </div>
+        <p class="playstyle-description">
+          Force opponents to discard cards while benefiting from discard triggers and payoffs.
+          Control the hand advantage to dominate the game.
+        </p>
+      </article>
+
+      <!-- Bounce — COMING SOON -->
+      <article class="playstyle-card accent-purple coming-soon">
+        <div class="art-bg" style="background-image: url(art/bounce.png);"></div>
+        <div class="art-scrim"></div>
+        <div class="playstyle-header">
+          <span class="playstyle-accent-dot"></span>
+          <h2 class="playstyle-name">Bounce</h2>
+        </div>
+        <p class="playstyle-description">
+          Return characters to hand to retrigger enter-the-battlefield effects.
+          Tempo advantage through repeated value generation.
+        </p>
+      </article>
+
+      <!-- Ramp — COMING SOON -->
+      <article class="playstyle-card accent-sapphire coming-soon">
+        <div class="art-bg" style="background-image: url(art/ramp.png);"></div>
+        <div class="art-scrim"></div>
+        <div class="playstyle-header">
+          <span class="playstyle-accent-dot"></span>
+          <h2 class="playstyle-name">Ramp</h2>
+        </div>
+        <p class="playstyle-description">
+          Accelerate ink production to play high-cost threats ahead of curve.
+          Ink ramp enablers paired with powerful late-game finishers.
+        </p>
+      </article>
+
+      <!-- Zombies — COMING SOON -->
+      <article class="playstyle-card accent-amber coming-soon">
+        <div class="art-bg" style="background-image: url(art/zombies.png);"></div>
+        <div class="art-scrim"></div>
+        <div class="playstyle-header">
+          <span class="playstyle-accent-dot"></span>
+          <h2 class="playstyle-name">Zombies</h2>
+        </div>
+        <p class="playstyle-description">
+          Return characters from the discard pile back to your hand or play them for free.
+          Outlast opponents by recycling your best threats over and over.
+        </p>
+      </article>
+
+      <!-- Exert — COMING SOON -->
+      <article class="playstyle-card accent-purple coming-soon">
+        <div class="art-bg" style="background-image: url(art/exert.png);"></div>
+        <div class="art-scrim"></div>
+        <div class="playstyle-header">
+          <span class="playstyle-accent-dot"></span>
+          <h2 class="playstyle-name">Exert</h2>
+        </div>
+        <p class="playstyle-description">
+          Force opponent characters into exerted position through abilities and actions.
+          Lock down threats by keeping them tapped and vulnerable.
+        </p>
+      </article>
+    </div>
+  </main>
+</body>
+</html>
