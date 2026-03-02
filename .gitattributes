@@ -1,0 +1,7 @@
+# Force LF line endings for shell scripts and husky internals
+# Prevents CRLF drift on Windows (Git auto-converts LF→CRLF on checkout)
+.husky/_/* text eol=lf
+*.sh text eol=lf
+
+# Keep lockfile consistent across platforms
+pnpm-lock.yaml text eol=lf
