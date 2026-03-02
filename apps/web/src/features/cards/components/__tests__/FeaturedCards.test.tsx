@@ -50,7 +50,7 @@ describe('FeaturedCards', () => {
     render(<FeaturedCards cards={mockCards} onCardSelect={vi.fn()} />);
 
     expect(screen.getByTestId('featured-cards')).toBeInTheDocument();
-    expect(screen.getByText('Featured Cards')).toBeInTheDocument();
+    expect(screen.getByText('Popular Synergy Starters')).toBeInTheDocument();
   });
 
   it('should render one card per ink color', () => {

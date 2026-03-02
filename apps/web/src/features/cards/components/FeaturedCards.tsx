@@ -42,7 +42,7 @@ function getStyles(isMobile: boolean) {
       boxSizing: 'border-box',
     } as React.CSSProperties,
     label: {
-      fontSize: isMobile ? `${FONT_SIZES.md}px` : `${FONT_SIZES.lg}px`,
+      fontSize: `${FONT_SIZES.base}px`,
       letterSpacing: isMobile ? '2.4px' : '2.8px',
       color: COLORS.featuredLabel,
       fontWeight: 400,
@@ -97,11 +97,24 @@ export const FeaturedCards = memo(function FeaturedCards({
   if (featured.length === 0) return null;
 
   return (
-    <section data-testid="featured-cards" aria-label="Featured Cards" style={styles.container}>
+    <section
+      data-testid="featured-cards"
+      aria-label="Popular Synergy Starters"
+      style={styles.container}>
       {/* Section label with divider lines */}
       <div style={sectionLabelRow}>
         <DividerLine />
-        <span style={styles.label}>Featured Cards</span>
+        <div style={{flexShrink: 0, textAlign: 'center'}}>
+          <div style={styles.label}>Popular Synergy Starters</div>
+          <div
+            style={{
+              fontSize: `${FONT_SIZES.xs}px`,
+              color: COLORS.featuredLabel,
+              marginTop: 4,
+            }}>
+            Cards with the most powerful connections
+          </div>
+        </div>
         <DividerLine />
       </div>
 

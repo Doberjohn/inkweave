@@ -1,621 +1,714 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Card Detail Redesign</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    /* TYPE SCALE: Major third (~1.25) — 10 → 13 → 16 → 20 + 14px form exception
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Card Detail Redesign</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet" />
+    <style>
+      /* TYPE SCALE: Major third (~1.25) — 10 → 13 → 16 → 20 + 14px form exception
        Display: 20px | Section: 16px | Body: 13px | Micro: 10px | Form: 14px */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-    body {
-      background: #0d0d14;
-      color: #e8e8e8;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      min-height: 100vh;
-      overflow: hidden;
-    }
+      body {
+        background: #0d0d14;
+        color: #e8e8e8;
+        font-family:
+          'Inter',
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        min-height: 100vh;
+        overflow: hidden;
+      }
 
-    /* ── Ethereal Background (matches EtherealBackground.tsx desktop) ── */
-    .bg-container {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      overflow: hidden;
-      background: linear-gradient(180deg, #0d0d14 0%, #1a1a2e 50%, #0d0d14 100%);
-      pointer-events: none;
-    }
-    .glow-orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(64px);
-      pointer-events: none;
-    }
-    .glow-blue { width: 384px; height: 384px; background: rgba(43,127,255,0.1); left: 28.5%; top: 0; }
-    .glow-purple { width: 384px; height: 384px; background: rgba(173,70,255,0.1); left: 65.5%; top: 77.5%; }
-    .glow-teal { width: 384px; height: 384px; background: rgba(0,187,167,0.05); left: 57%; top: 56.5%; }
+      /* ── Ethereal Background (matches EtherealBackground.tsx desktop) ── */
+      .bg-container {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        background: linear-gradient(180deg, #0d0d14 0%, #1a1a2e 50%, #0d0d14 100%);
+        pointer-events: none;
+      }
+      .glow-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(64px);
+        pointer-events: none;
+      }
+      .glow-blue {
+        width: 384px;
+        height: 384px;
+        background: rgba(43, 127, 255, 0.1);
+        left: 28.5%;
+        top: 0;
+      }
+      .glow-purple {
+        width: 384px;
+        height: 384px;
+        background: rgba(173, 70, 255, 0.1);
+        left: 65.5%;
+        top: 77.5%;
+      }
+      .glow-teal {
+        width: 384px;
+        height: 384px;
+        background: rgba(0, 187, 167, 0.05);
+        left: 57%;
+        top: 56.5%;
+      }
 
-    /* ── Compact Header (matches CompactHeader.tsx) ── */
-    /* CHANGE: Filters button REMOVED (UX Audit #1) */
-    .compact-header {
-      height: 52px;
-      min-height: 52px;
-      padding: 0 20px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      background: linear-gradient(180deg, #0d0d14 0%, #1a1a2e 100%);
-      border-bottom: 1px solid #333355;
-      position: relative;
-      z-index: 901;
-    }
-    .logo-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-      text-decoration: none;
-    }
-    .logo-text {
-      font-size: 13px; /* body — uppercase + 700 + gold + letter-spacing distinguishes */
-      font-weight: 700;
-      color: #ffb900;
-      letter-spacing: 0.18em;
-    }
-    .header-search {
-      flex: 1;
-      max-width: 480px;
-      position: relative;
-    }
-    .header-search-icon {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      pointer-events: none;
-      z-index: 1;
-    }
-    .header-search-input {
-      width: 100%;
-      height: 36px;
-      padding: 0 12px 0 36px;
-      border-radius: 8px;
-      border: 1px solid rgba(49,65,88,0.5);
-      background: rgba(15,23,43,0.5);
-      color: #e8e8e8;
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.25s ease, box-shadow 0.25s ease;
-    }
-    .header-search-input::placeholder { color: #90a1b9; }
-    /* CHANGE: No Filters button here — was confusing (filtered full DB, not synergy results) */
+      /* ── Compact Header (matches CompactHeader.tsx) ── */
+      /* CHANGE: Filters button REMOVED (UX Audit #1) */
+      .compact-header {
+        height: 52px;
+        min-height: 52px;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: linear-gradient(180deg, #0d0d14 0%, #1a1a2e 100%);
+        border-bottom: 1px solid #333355;
+        position: relative;
+        z-index: 901;
+      }
+      .logo-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+        text-decoration: none;
+      }
+      .logo-text {
+        font-size: 13px; /* body — uppercase + 700 + gold + letter-spacing distinguishes */
+        font-weight: 700;
+        color: #ffb900;
+        letter-spacing: 0.18em;
+      }
+      .header-search {
+        flex: 1;
+        max-width: 480px;
+        position: relative;
+      }
+      .header-search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        z-index: 1;
+      }
+      .header-search-input {
+        width: 100%;
+        height: 36px;
+        padding: 0 12px 0 36px;
+        border-radius: 8px;
+        border: 1px solid rgba(49, 65, 88, 0.5);
+        background: rgba(15, 23, 43, 0.5);
+        color: #e8e8e8;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        outline: none;
+        transition:
+          border-color 0.25s ease,
+          box-shadow 0.25s ease;
+      }
+      .header-search-input::placeholder {
+        color: #90a1b9;
+      }
+      /* CHANGE: No Filters button here — was confusing (filtered full DB, not synergy results) */
 
-    /* ── Page Layout (matches CardPage.tsx desktop) ── */
-    .page-layout {
-      display: flex;
-      flex: 1;
-      min-height: calc(100vh - 52px);
-      position: relative;
-      z-index: 1;
-    }
+      /* ── Page Layout (matches CardPage.tsx desktop) ── */
+      .page-layout {
+        display: flex;
+        flex: 1;
+        min-height: calc(100vh - 52px);
+        position: relative;
+        z-index: 1;
+      }
 
-    /* ── Left Panel: Card Detail (matches CardDetailPanel.tsx) ── */
-    .card-detail-panel {
-      width: 330px;
-      min-width: 330px;
-      border-right: 1px solid #333355;
-      background: #1a1a2e;
-      overflow-y: auto;
-      max-height: calc(100vh - 52px);
-      display: flex;
-      flex-direction: column;
-      padding: 16px;
-      gap: 16px;
-    }
-    .card-image-container {
-      display: flex;
-      justify-content: center;
-    }
-    .card-image-placeholder {
-      width: 298px;
-      height: 417px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px; /* body */
-      color: #aaaaaa;
-      letter-spacing: 1px;
-    }
-    .card-name { font-size: 20px; font-weight: 700; line-height: 1.2; } /* display */
-    .card-version { font-size: 13px; color: #90a1b9; margin-top: 3px; } /* body — muted, secondary to card name */
-    .card-text-box {
-      padding: 12px;
-      background: #151525;
-      border-radius: 6px;
-      border: 1px solid #333355;
-      font-size: 13px;
-      line-height: 1.5;
-      color: #e8e8e8;
-    }
+      /* ── Left Panel: Card Detail (matches CardDetailPanel.tsx) ── */
+      .card-detail-panel {
+        width: 330px;
+        min-width: 330px;
+        border-right: 1px solid #333355;
+        background: #1a1a2e;
+        overflow-y: auto;
+        max-height: calc(100vh - 52px);
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        gap: 16px;
+      }
+      .card-image-container {
+        display: flex;
+        justify-content: center;
+      }
+      .card-image-placeholder {
+        width: 298px;
+        height: 417px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px; /* body */
+        color: #aaaaaa;
+        letter-spacing: 1px;
+      }
+      .card-name {
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.2;
+      } /* display */
+      .card-version {
+        font-size: 13px;
+        color: #90a1b9;
+        margin-top: 3px;
+      } /* body — muted, secondary to card name */
+      .card-text-box {
+        padding: 12px;
+        background: #151525;
+        border-radius: 6px;
+        border: 1px solid #333355;
+        font-size: 13px;
+        line-height: 1.5;
+        color: #e8e8e8;
+      }
 
-    /* Synergy Breakdown — contained card, interactive rows */
-    .breakdown-container {
-      padding: 12px;
-      background: #151525;
-      border-radius: 6px;
-      border: 1px solid #333355;
-    }
-    .breakdown-header {
-      font-size: 10px; /* micro — label above content */
-      font-weight: 600;
-      color: #90a1b9;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-    .breakdown-groups { display: flex; flex-direction: column; gap: 2px; }
-    .breakdown-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 6px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .breakdown-row:hover {
-      background: rgba(212, 175, 55, 0.08);
-    }
-    .count-circle {
-      width: 22px; height: 22px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      font-size: 10px; /* micro */
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .breakdown-label {
-      flex: 1;
-      min-width: 0;
-      font-size: 13px; /* body */
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .breakdown-arrow {
-      font-size: 10px;
-      color: #90a1b9;
-      transition: color 0.15s;
-    }
-    .breakdown-row:hover .breakdown-arrow {
-      color: #d4af37;
-    }
-    .strength-badge {
-      padding: 2px 7px;
-      border-radius: 4px;
-      font-size: 10px; /* micro — colored pill bg compensates */
-      font-weight: 600;
-      flex-shrink: 0;
-      line-height: 1.4;
-    }
-    .tier-strong { background: #1a3d1a; color: #6ee7a0; }
-    .tier-moderate { background: #3d3010; color: #f5d560; }
-    .tier-weak { background: #3d1a1a; color: #f59090; }
+      /* Synergy Breakdown — contained card, interactive rows */
+      .breakdown-container {
+        padding: 12px;
+        background: #151525;
+        border-radius: 6px;
+        border: 1px solid #333355;
+      }
+      .breakdown-header {
+        font-size: 10px; /* micro — label above content */
+        font-weight: 600;
+        color: #90a1b9;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .breakdown-groups {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .breakdown-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .breakdown-row:hover {
+        background: rgba(212, 175, 55, 0.08);
+      }
+      .count-circle {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        font-size: 10px; /* micro */
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .breakdown-label {
+        flex: 1;
+        min-width: 0;
+        font-size: 13px; /* body */
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .breakdown-arrow {
+        font-size: 10px;
+        color: #90a1b9;
+        transition: color 0.15s;
+      }
+      .breakdown-row:hover .breakdown-arrow {
+        color: #d4af37;
+      }
+      .strength-badge {
+        padding: 2px 7px;
+        border-radius: 4px;
+        font-size: 10px; /* micro — colored pill bg compensates */
+        font-weight: 600;
+        flex-shrink: 0;
+        line-height: 1.4;
+      }
+      .tier-strong {
+        background: #1a3d1a;
+        color: #6ee7a0;
+      }
+      .tier-moderate {
+        background: #3d3010;
+        color: #f5d560;
+      }
+      .tier-weak {
+        background: #3d1a1a;
+        color: #f59090;
+      }
 
-    /* breakdown-total REMOVED — count shown in synergy badge + count circles */
-    /* breakdown-divider REMOVED — container box provides visual separation */
+      /* breakdown-total REMOVED — count shown in synergy badge + count circles */
+      /* breakdown-divider REMOVED — container box provides visual separation */
 
-    /* ── Right Panel: Synergy Results (matches SynergyResults.tsx) ── */
-    .synergy-results {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-      max-height: calc(100vh - 52px);
-    }
-    .synergy-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-    .synergy-title {
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    .synergy-count-badge {
-      background: #2a2515;
-      color: #ffb900;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: 700;
-    }
+      /* ── Right Panel: Synergy Results (matches SynergyResults.tsx) ── */
+      .synergy-results {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        max-height: calc(100vh - 52px);
+      }
+      .synergy-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .synergy-title {
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .synergy-count-badge {
+        background: #2a2515;
+        color: #ffb900;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 700;
+      }
 
-    /* ── Toolbar: group chips + sort (matches browse/playstyle-detail toolbar pattern) ── */
-    .synergy-toolbar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-    /* CHANGE: Filter chips — floating pills with gold glow (Phase 2 — #46) */
-    .filter-chip {
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 13px; /* body */
-      font-weight: 500;
-      cursor: pointer;
-      border: 1px solid #333355;
-      background: transparent;
-      color: #90a1b9;
-      transition: all 0.2s;
-    }
-    .filter-chip:hover {
-      background: rgba(21, 21, 37, 0.8);
-      border-color: #444466;
-      color: #e8e8e8;
-    }
-    .filter-chip.active {
-      background: rgba(212, 175, 55, 0.12);
-      border-color: rgba(212, 175, 55, 0.4);
-      color: #d4af37;
-      box-shadow: 0 0 12px rgba(212, 175, 55, 0.15), inset 0 0 8px rgba(212, 175, 55, 0.05);
-    }
-    .synergy-sort {
-      margin-left: auto;
-      padding: 5px 10px;
-      border-radius: 6px;
-      border: 1px solid #333355;
-      background: #1e1e35;
-      color: #e8e8e8;
-      font-family: 'Inter', sans-serif;
-      font-size: 13px; /* body */
-      cursor: pointer;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .synergy-sort:hover { border-color: #444466; }
-    .synergy-sort:focus { border-color: rgba(212, 175, 55, 0.4); }
+      /* ── Toolbar: group chips + sort (matches browse/playstyle-detail toolbar pattern) ── */
+      .synergy-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+      /* CHANGE: Filter chips — floating pills with gold glow (Phase 2 — #46) */
+      .filter-chip {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px; /* body */
+        font-weight: 500;
+        cursor: pointer;
+        border: 1px solid #333355;
+        background: transparent;
+        color: #90a1b9;
+        transition: all 0.2s;
+      }
+      .filter-chip:hover {
+        background: rgba(21, 21, 37, 0.8);
+        border-color: #444466;
+        color: #e8e8e8;
+      }
+      .filter-chip.active {
+        background: rgba(212, 175, 55, 0.12);
+        border-color: rgba(212, 175, 55, 0.4);
+        color: #d4af37;
+        box-shadow:
+          0 0 12px rgba(212, 175, 55, 0.15),
+          inset 0 0 8px rgba(212, 175, 55, 0.05);
+      }
+      .synergy-sort {
+        margin-left: auto;
+        padding: 5px 10px;
+        border-radius: 6px;
+        border: 1px solid #333355;
+        background: #1e1e35;
+        color: #e8e8e8;
+        font-family: 'Inter', sans-serif;
+        font-size: 13px; /* body */
+        cursor: pointer;
+        outline: none;
+        transition: border-color 0.15s;
+      }
+      .synergy-sort:hover {
+        border-color: #444466;
+      }
+      .synergy-sort:focus {
+        border-color: rgba(212, 175, 55, 0.4);
+      }
 
-    /* Category dividers REMOVED — groups sorted implicitly (direct first, playstyle second) */
+      /* Category dividers REMOVED — groups sorted implicitly (direct first, playstyle second) */
 
-    /* Synergy Group — SIMPLIFIED: no collapse, no strength badge, static sections */
-    .synergy-group { margin-bottom: 20px; }
-    .group-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #e8e8e8;
-      padding: 0;
-      margin-bottom: 8px;
-    }
-    .group-count {
-      margin-left: auto;
-      font-size: 13px; /* body — muted color makes it secondary */
-      color: #90a1b9;
-      font-weight: 400;
-    }
-    .group-description {
-      margin: 8px 0 16px;
-      padding: 8px 12px;
-      background: #2a2515;
-      border-left: 3px solid #ffb900;
-      border-radius: 0 4px 4px 0;
-      font-size: 13px;
-      line-height: 1.5;
-      color: #c8c8d8; /* slightly muted — supplementary/educational text */
-    }
+      /* Synergy Group — SIMPLIFIED: no collapse, no strength badge, static sections */
+      .synergy-group {
+        margin-bottom: 20px;
+      }
+      .group-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #e8e8e8;
+        padding: 0;
+        margin-bottom: 8px;
+      }
+      .group-count {
+        margin-left: auto;
+        font-size: 13px; /* body — muted color makes it secondary */
+        color: #90a1b9;
+        font-weight: 400;
+      }
+      .group-description {
+        margin: 8px 0 16px;
+        padding: 8px 12px;
+        background: #2a2515;
+        border-left: 3px solid #ffb900;
+        border-radius: 0 4px 4px 0;
+        font-size: 13px;
+        line-height: 1.5;
+        color: #c8c8d8; /* slightly muted — supplementary/educational text */
+      }
 
-    /* Card Grid (matches SynergyGroup.tsx card grid) */
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 10px;
-      list-style: none;
-    }
+      /* Card Grid (matches SynergyGroup.tsx card grid) */
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 10px;
+        list-style: none;
+      }
 
-    /* Synergy Card (matches SynergyCard.tsx) */
-    .synergy-card {
-      position: relative;
-      border-radius: 8px;
-      overflow: hidden;
-      aspect-ratio: 0.72;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .synergy-card:hover {
-      transform: scale(1.04) translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-    }
-    /* CHANGE: Click affordance cue (UX Audit #5) */
-    .synergy-card:hover .card-hover-cue {
-      opacity: 1;
-    }
-    .card-hover-cue {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: rgba(13,13,20,0.8);
-      color: #ffb900;
-      font-size: 10px;
-      font-weight: 600;
-      padding: 3px 8px;
-      border-radius: 4px;
-      opacity: 0;
-      transition: opacity 0.2s;
-      z-index: 2;
-    }
-    .synergy-card-inner {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px; /* micro — placeholder text, will be card images */
-      color: #aaaaaa;
-      letter-spacing: 1px;
-    }
-    .card-bottom-overlay {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 12px 6px 5px;
-      background: linear-gradient(transparent, rgba(13,13,20,0.85) 30%, rgba(13,13,20,0.95));
-      display: flex;
-      align-items: center;
-    }
+      /* Synergy Card (matches SynergyCard.tsx) */
+      .synergy-card {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        aspect-ratio: 0.72;
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+      }
+      .synergy-card:hover {
+        transform: scale(1.04) translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      }
+      /* CHANGE: Click affordance cue (UX Audit #5) */
+      .synergy-card:hover .card-hover-cue {
+        opacity: 1;
+      }
+      .card-hover-cue {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(13, 13, 20, 0.8);
+        color: #ffb900;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 4px;
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 2;
+      }
+      .synergy-card-inner {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px; /* micro — placeholder text, will be card images */
+        color: #aaaaaa;
+        letter-spacing: 1px;
+      }
+      .card-bottom-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 12px 6px 5px;
+        background: linear-gradient(
+          transparent,
+          rgba(13, 13, 20, 0.85) 30%,
+          rgba(13, 13, 20, 0.95)
+        );
+        display: flex;
+        align-items: center;
+      }
 
-    /* CHANGE: "+N more" card tile at end of grid (Phase 3 — #113) */
-    .more-tile {
-      position: relative;
-      border-radius: 8px;
-      overflow: hidden;
-      aspect-ratio: 0.72;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      background: #151525;
-      border: 1px dashed #444466;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    .more-tile:hover {
-      transform: scale(1.04) translateY(-3px);
-      box-shadow: 0 0 16px rgba(212,175,55,0.15);
-      border-color: rgba(212,175,55,0.35);
-    }
-    .more-tile-count {
-      font-size: 20px; /* display */
-      font-weight: 700;
-      color: #d4af37;
-    }
-    .more-tile-label {
-      font-size: 10px; /* micro */
-      font-weight: 500;
-      color: #90a1b9;
-    }
+      /* CHANGE: "+N more" card tile at end of grid (Phase 3 — #113) */
+      .more-tile {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        aspect-ratio: 0.72;
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+        background: #151525;
+        border: 1px dashed #444466;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+      .more-tile:hover {
+        transform: scale(1.04) translateY(-3px);
+        box-shadow: 0 0 16px rgba(212, 175, 55, 0.15);
+        border-color: rgba(212, 175, 55, 0.35);
+      }
+      .more-tile-count {
+        font-size: 20px; /* display */
+        font-weight: 700;
+        color: #d4af37;
+      }
+      .more-tile-label {
+        font-size: 10px; /* micro */
+        font-weight: 500;
+        color: #90a1b9;
+      }
 
-    /* Playstyle badge REMOVED — jargon for new users, clutters group header */
-  </style>
-</head>
-<body>
-  <!-- Ethereal Background -->
-  <div class="bg-container">
-    <div class="glow-orb glow-blue"></div>
-    <div class="glow-orb glow-purple"></div>
-    <div class="glow-orb glow-teal"></div>
-  </div>
-
-  <!-- CHANGE: CompactHeader — Filters button removed (UX Audit #1) -->
-  <header class="compact-header">
-    <a class="logo-btn" href="home-redesign.html" aria-label="Go to home page">
-      <span class="logo-text">INKWEAVE</span>
-    </a>
-    <div class="header-search">
-      <svg class="header-search-icon" width="16" height="16" viewBox="0 0 20 20" fill="none">
-        <circle cx="9" cy="9" r="6" stroke="#90a1b9" stroke-width="1.5"/>
-        <line x1="13.5" y1="13.5" x2="17" y2="17" stroke="#90a1b9" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-      <input class="header-search-input" type="text" placeholder="Search cards..." aria-label="Search cards">
+      /* Playstyle badge REMOVED — jargon for new users, clutters group header */
+    </style>
+  </head>
+  <body>
+    <!-- Ethereal Background -->
+    <div class="bg-container">
+      <div class="glow-orb glow-blue"></div>
+      <div class="glow-orb glow-purple"></div>
+      <div class="glow-orb glow-teal"></div>
     </div>
-    <!-- Filters button intentionally removed -->
-  </header>
 
-  <main class="page-layout">
-    <!-- Left Panel: Card Detail -->
-    <article class="card-detail-panel">
-      <div class="card-image-container">
-        <div class="card-image-placeholder" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-          Card Image<br>(Amethyst)
-        </div>
+    <!-- CHANGE: CompactHeader — Filters button removed (UX Audit #1) -->
+    <header class="compact-header">
+      <a class="logo-btn" href="home-redesign.html" aria-label="Go to home page">
+        <span class="logo-text">INKWEAVE</span>
+      </a>
+      <div class="header-search">
+        <svg class="header-search-icon" width="16" height="16" viewBox="0 0 20 20" fill="none">
+          <circle cx="9" cy="9" r="6" stroke="#90a1b9" stroke-width="1.5" />
+          <line
+            x1="13.5"
+            y1="13.5"
+            x2="17"
+            y2="17"
+            stroke="#90a1b9"
+            stroke-width="1.5"
+            stroke-linecap="round" />
+        </svg>
+        <input
+          class="header-search-input"
+          type="text"
+          placeholder="Search cards..."
+          aria-label="Search cards" />
       </div>
-      <div>
-        <h1 class="card-name">Elsa</h1>
-        <div class="card-version">Ice Artisan</div>
-      </div>
-      <div class="card-text-box">
-        <strong>Shift</strong> 5 (You may pay 5 ⬡ to play this on top of one of your characters named Elsa.)<br><br>
-        <strong>ICE PALACE</strong> — When you play this character, each opponent chooses one of their characters and returns that card to their hand.
-      </div>
+      <!-- Filters button intentionally removed -->
+    </header>
 
-      <!-- Synergy Breakdown — contained card with clickable rows -->
-      <div class="breakdown-container">
-        <div class="breakdown-header">Synergy Breakdown</div>
-        <div class="breakdown-groups">
-          <div class="breakdown-row">
-            <div class="count-circle tier-strong">3</div>
-            <span class="breakdown-label">Shift Targets</span>
-            <span class="breakdown-arrow">→</span>
+    <main class="page-layout">
+      <!-- Left Panel: Card Detail -->
+      <article class="card-detail-panel">
+        <div class="card-image-container">
+          <div
+            class="card-image-placeholder"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            Card Image<br />(Amethyst)
           </div>
-          <div class="breakdown-row">
-            <div class="count-circle tier-moderate">4</div>
-            <span class="breakdown-label">Lore Steal</span>
-            <span class="breakdown-arrow">→</span>
+        </div>
+        <div>
+          <h1 class="card-name">Elsa</h1>
+          <div class="card-version">Ice Artisan</div>
+        </div>
+        <div class="card-text-box">
+          <strong>Shift</strong> 5 (You may pay 5 ⬡ to play this on top of one of your characters
+          named Elsa.)<br /><br />
+          <strong>ICE PALACE</strong> — When you play this character, each opponent chooses one of
+          their characters and returns that card to their hand.
+        </div>
+
+        <!-- Synergy Breakdown — contained card with clickable rows -->
+        <div class="breakdown-container">
+          <div class="breakdown-header">Synergy Breakdown</div>
+          <div class="breakdown-groups">
+            <div class="breakdown-row">
+              <div class="count-circle tier-strong">3</div>
+              <span class="breakdown-label">Shift Targets</span>
+              <span class="breakdown-arrow">→</span>
+            </div>
+            <div class="breakdown-row">
+              <div class="count-circle tier-moderate">4</div>
+              <span class="breakdown-label">Lore Steal</span>
+              <span class="breakdown-arrow">→</span>
+            </div>
+            <div class="breakdown-row">
+              <div class="count-circle tier-weak">2</div>
+              <span class="breakdown-label">Location Control</span>
+              <span class="breakdown-arrow">→</span>
+            </div>
           </div>
-          <div class="breakdown-row">
-            <div class="count-circle tier-weak">2</div>
-            <span class="breakdown-label">Location Control</span>
-            <span class="breakdown-arrow">→</span>
+        </div>
+      </article>
+
+      <!-- Right Panel: Synergy Results -->
+      <section class="synergy-results">
+        <div class="synergy-header">
+          <h2 class="synergy-title">Synergies</h2>
+          <span class="synergy-count-badge">9</span>
+        </div>
+
+        <!-- Toolbar: group chips + sort (consistent with browse/playstyle-detail toolbar layout) -->
+        <div class="synergy-toolbar">
+          <button class="filter-chip active">All</button>
+          <button class="filter-chip">Shift Targets</button>
+          <button class="filter-chip">Lore Steal</button>
+          <button class="filter-chip">Location Control</button>
+          <select class="synergy-sort" aria-label="Sort synergies">
+            <option>Strength: High → Low</option>
+            <option>Strength: Low → High</option>
+            <option>Name A–Z</option>
+            <option>Name Z–A</option>
+            <option>Cost: Low → High</option>
+            <option>Cost: High → Low</option>
+          </select>
+        </div>
+
+        <!-- Groups sorted: direct synergies first, then playstyle (no section dividers) -->
+
+        <!-- Synergy Group: Shift Targets (direct) — no arrows, no badges -->
+        <div class="synergy-group">
+          <div class="group-header">
+            <h3 style="margin: 0; font: inherit">Shift Targets</h3>
+            <span class="group-count">3 cards</span>
           </div>
+          <div class="group-description">
+            Characters named Elsa that this card can Shift onto, or that can Shift onto this card.
+          </div>
+          <ul class="card-grid">
+            <li
+              class="synergy-card"
+              style="background: #2a1a45; border: 1px solid #8b5cf666"
+              onclick="location.href = 'synergy-detail-modal.html'">
+              <span class="card-hover-cue">View details</span>
+              <div class="synergy-card-inner">Elsa - Snow Queen</div>
+              <div class="card-bottom-overlay">
+                <span class="strength-badge tier-strong">Strong 8</span>
+              </div>
+            </li>
+            <li class="synergy-card" style="background: #2a1a45; border: 1px solid #8b5cf666">
+              <span class="card-hover-cue">View details</span>
+              <div class="synergy-card-inner">Elsa - Spirit of Winter</div>
+              <div class="card-bottom-overlay">
+                <span class="strength-badge tier-strong">Strong 7</span>
+              </div>
+            </li>
+            <li class="synergy-card" style="background: #2a1a45; border: 1px solid #8b5cf666">
+              <span class="card-hover-cue">View details</span>
+              <div class="synergy-card-inner">Elsa - Gloves Off</div>
+              <div class="card-bottom-overlay">
+                <span class="strength-badge tier-strong">Strong 7</span>
+              </div>
+            </li>
+          </ul>
         </div>
-      </div>
-    </article>
 
-    <!-- Right Panel: Synergy Results -->
-    <section class="synergy-results">
-      <div class="synergy-header">
-        <h2 class="synergy-title">Synergies</h2>
-        <span class="synergy-count-badge">9</span>
-      </div>
+        <!-- Synergy Group: Lore Steal (playstyle) -->
+        <div class="synergy-group">
+          <div class="group-header">
+            <h3 style="margin: 0; font: inherit">Lore Steal</h3>
+            <span class="group-count">4 of 12 cards</span>
+          </div>
+          <div class="group-description">
+            Cards that prevent opponents from gaining lore through challenges, abilities, or
+            location control.
+          </div>
+          <ul class="card-grid">
+            <li class="synergy-card" style="background: #0f2e1f; border: 1px solid #10b98166">
+              <span class="card-hover-cue">View details</span>
+              <div class="synergy-card-inner">Maui - Hero</div>
+              <div class="card-bottom-overlay">
+                <span class="strength-badge tier-moderate">Moderate 5</span>
+              </div>
+            </li>
+            <li class="synergy-card" style="background: #3d1515; border: 1px solid #ef444466">
+              <span class="card-hover-cue">View details</span>
+              <div class="synergy-card-inner">Scar - Fiery King</div>
+              <div class="card-bottom-overlay">
+                <span class="strength-badge tier-moderate">Moderate 4</span>
+              </div>
+            </li>
+            <li class="synergy-card" style="background: #0f1e3d; border: 1px solid #3b82f666">
+              <span class="card-hover-cue">View details</span>
+              <div class="synergy-card-inner">Merlin - Goat</div>
+              <div class="card-bottom-overlay">
+                <span class="strength-badge tier-moderate">Moderate 5</span>
+              </div>
+            </li>
+            <li class="synergy-card" style="background: #252530; border: 1px solid #6b728066">
+              <span class="card-hover-cue">View details</span>
+              <div class="synergy-card-inner">Cogsworth - Clock</div>
+              <div class="card-bottom-overlay">
+                <span class="strength-badge tier-moderate">Moderate 4</span>
+              </div>
+            </li>
+            <!-- CHANGE: +N more tile (Phase 3 — #113) -->
+            <li class="more-tile" onclick="location.href = 'show-all-redesign.html'">
+              <span class="more-tile-count">+8</span>
+              <span class="more-tile-label">more cards</span>
+            </li>
+          </ul>
+        </div>
 
-      <!-- Toolbar: group chips + sort (consistent with browse/playstyle-detail toolbar layout) -->
-      <div class="synergy-toolbar">
-        <button class="filter-chip active">All</button>
-        <button class="filter-chip">Shift Targets</button>
-        <button class="filter-chip">Lore Steal</button>
-        <button class="filter-chip">Location Control</button>
-        <select class="synergy-sort" aria-label="Sort synergies">
-          <option>Strength: High → Low</option>
-          <option>Strength: Low → High</option>
-          <option>Name A–Z</option>
-          <option>Name Z–A</option>
-          <option>Cost: Low → High</option>
-          <option>Cost: High → Low</option>
-        </select>
-      </div>
-
-      <!-- Groups sorted: direct synergies first, then playstyle (no section dividers) -->
-
-      <!-- Synergy Group: Shift Targets (direct) — no arrows, no badges -->
-      <div class="synergy-group">
-        <div class="group-header">
-          <h3 style="margin:0; font:inherit;">Shift Targets</h3>
-          <span class="group-count">3 cards</span>
+        <!-- Synergy Group: Location Control (playstyle) -->
+        <div class="synergy-group">
+          <div class="group-header">
+            <h3 style="margin: 0; font: inherit">Location Control</h3>
+            <span class="group-count">2 cards</span>
+          </div>
+          <div class="group-description">
+            Cards that interact with locations — moving characters, controlling access, or
+            benefiting from location presence.
+          </div>
+          <ul class="card-grid">
+            <li class="synergy-card" style="background: #3d2e10; border: 1px solid #f59e0b66">
+              <span class="card-hover-cue">View details</span>
+              <div class="synergy-card-inner">Rapunzel - Dreamer</div>
+              <div class="card-bottom-overlay">
+                <span class="strength-badge tier-weak">Weak 3</span>
+              </div>
+            </li>
+            <li class="synergy-card" style="background: #0f2e1f; border: 1px solid #10b98166">
+              <span class="card-hover-cue">View details</span>
+              <div class="synergy-card-inner">Robin Hood - Outlaw</div>
+              <div class="card-bottom-overlay">
+                <span class="strength-badge tier-weak">Weak 2</span>
+              </div>
+            </li>
+          </ul>
         </div>
-        <div class="group-description">
-          Characters named Elsa that this card can Shift onto, or that can Shift onto this card.
-        </div>
-        <ul class="card-grid">
-          <li class="synergy-card" style="background: #2a1a45; border: 1px solid #8b5cf666;" onclick="location.href='synergy-detail-modal.html'">
-            <span class="card-hover-cue">View details</span>
-            <div class="synergy-card-inner">Elsa - Snow Queen</div>
-            <div class="card-bottom-overlay">
-              <span class="strength-badge tier-strong">Strong 8</span>
-            </div>
-          </li>
-          <li class="synergy-card" style="background: #2a1a45; border: 1px solid #8b5cf666;">
-            <span class="card-hover-cue">View details</span>
-            <div class="synergy-card-inner">Elsa - Spirit of Winter</div>
-            <div class="card-bottom-overlay">
-              <span class="strength-badge tier-strong">Strong 7</span>
-            </div>
-          </li>
-          <li class="synergy-card" style="background: #2a1a45; border: 1px solid #8b5cf666;">
-            <span class="card-hover-cue">View details</span>
-            <div class="synergy-card-inner">Elsa - Gloves Off</div>
-            <div class="card-bottom-overlay">
-              <span class="strength-badge tier-strong">Strong 7</span>
-            </div>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Synergy Group: Lore Steal (playstyle) -->
-      <div class="synergy-group">
-        <div class="group-header">
-          <h3 style="margin:0; font:inherit;">Lore Steal</h3>
-          <span class="group-count">4 of 12 cards</span>
-        </div>
-        <div class="group-description">
-          Cards that prevent opponents from gaining lore through challenges, abilities, or location control.
-        </div>
-        <ul class="card-grid">
-          <li class="synergy-card" style="background: #0f2e1f; border: 1px solid #10b98166;">
-            <span class="card-hover-cue">View details</span>
-            <div class="synergy-card-inner">Maui - Hero</div>
-            <div class="card-bottom-overlay">
-              <span class="strength-badge tier-moderate">Moderate 5</span>
-            </div>
-          </li>
-          <li class="synergy-card" style="background: #3d1515; border: 1px solid #ef444466;">
-            <span class="card-hover-cue">View details</span>
-            <div class="synergy-card-inner">Scar - Fiery King</div>
-            <div class="card-bottom-overlay">
-              <span class="strength-badge tier-moderate">Moderate 4</span>
-            </div>
-          </li>
-          <li class="synergy-card" style="background: #0f1e3d; border: 1px solid #3b82f666;">
-            <span class="card-hover-cue">View details</span>
-            <div class="synergy-card-inner">Merlin - Goat</div>
-            <div class="card-bottom-overlay">
-              <span class="strength-badge tier-moderate">Moderate 5</span>
-            </div>
-          </li>
-          <li class="synergy-card" style="background: #252530; border: 1px solid #6b728066;">
-            <span class="card-hover-cue">View details</span>
-            <div class="synergy-card-inner">Cogsworth - Clock</div>
-            <div class="card-bottom-overlay">
-              <span class="strength-badge tier-moderate">Moderate 4</span>
-            </div>
-          </li>
-          <!-- CHANGE: +N more tile (Phase 3 — #113) -->
-          <li class="more-tile" onclick="location.href='show-all-redesign.html'">
-            <span class="more-tile-count">+8</span>
-            <span class="more-tile-label">more cards</span>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Synergy Group: Location Control (playstyle) -->
-      <div class="synergy-group">
-        <div class="group-header">
-          <h3 style="margin:0; font:inherit;">Location Control</h3>
-          <span class="group-count">2 cards</span>
-        </div>
-        <div class="group-description">
-          Cards that interact with locations — moving characters, controlling access, or benefiting from location presence.
-        </div>
-        <ul class="card-grid">
-          <li class="synergy-card" style="background: #3d2e10; border: 1px solid #f59e0b66;">
-            <span class="card-hover-cue">View details</span>
-            <div class="synergy-card-inner">Rapunzel - Dreamer</div>
-            <div class="card-bottom-overlay">
-              <span class="strength-badge tier-weak">Weak 3</span>
-            </div>
-          </li>
-          <li class="synergy-card" style="background: #0f2e1f; border: 1px solid #10b98166;">
-            <span class="card-hover-cue">View details</span>
-            <div class="synergy-card-inner">Robin Hood - Outlaw</div>
-            <div class="card-bottom-overlay">
-              <span class="strength-badge tier-weak">Weak 2</span>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </section>
-  </main>
-</body>
+      </section>
+    </main>
+  </body>
 </html>
