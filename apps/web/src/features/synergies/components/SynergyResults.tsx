@@ -13,6 +13,10 @@ interface SynergyResultsProps {
   isMobile?: boolean;
   /** When false, CardDetail is rendered externally (e.g. CardDetailPanel). Default: true for mobile. */
   showCardDetail?: boolean;
+  /** Controlled group filter — when provided, overrides internal state */
+  activeGroupFilter?: string | null;
+  /** Callback when group filter changes — required when activeGroupFilter is controlled */
+  onGroupFilterChange?: (groupKey: string | null) => void;
 }
 
 type SortOrder =
@@ -57,11 +61,17 @@ export const SynergyResults = memo(function SynergyResults({
   onClearSelection,
   isMobile = false,
   showCardDetail,
+  activeGroupFilter: controlledFilter,
+  onGroupFilterChange,
 }: SynergyResultsProps) {
   // Default: show card detail on mobile, hide on desktop (it's in its own panel)
   const renderCardDetail = showCardDetail ?? isMobile;
-  const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
+  const [internalFilter, setInternalFilter] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('strength-desc');
+
+  // Support both controlled (from CardPage) and uncontrolled (standalone) modes
+  const activeGroupFilter = controlledFilter !== undefined ? controlledFilter : internalFilter;
+  const setActiveGroupFilter = onGroupFilterChange ?? setInternalFilter;
 
   const sortedGroups = useMemo(() => {
     const filtered = activeGroupFilter

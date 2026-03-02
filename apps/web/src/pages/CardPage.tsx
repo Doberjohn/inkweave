@@ -43,6 +43,7 @@ export function CardPage() {
     activeFilterCount,
   } = useFilterParams();
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
 
   const selectedCard = cardId ? (getCardById(cardId) ?? null) : null;
 
@@ -63,11 +64,23 @@ export function CardPage() {
 
   const goHome = useCallback(() => navigate('/'), [navigate]);
   const selectCard = useCallback((card: {id: string}) => navigate(`/card/${card.id}`), [navigate]);
-  const scrollToGroup = useCallback((groupKey: string) => {
-    document
-      .querySelector(`[data-group-key="${groupKey}"]`)
-      ?.scrollIntoView({behavior: 'smooth', block: 'start'});
-  }, []);
+  const handleGroupClick = useCallback(
+    (groupKey: string) => {
+      // Toggle: clicking the active group clears the filter (same as chips)
+      const newFilter = activeGroupFilter === groupKey ? null : groupKey;
+      setActiveGroupFilter(newFilter);
+
+      // Scroll to the group after filter applies
+      if (newFilter) {
+        requestAnimationFrame(() => {
+          document
+            .querySelector(`[data-group-key="${newFilter}"]`)
+            ?.scrollIntoView({behavior: 'smooth', block: 'start'});
+        });
+      }
+    },
+    [activeGroupFilter],
+  );
 
   if (isLoading) {
     return (
@@ -145,13 +158,20 @@ export function CardPage() {
           position: 'relative',
           zIndex: 1,
         }}>
-        <CardDetailPanel card={selectedCard} synergies={synergies} onGroupClick={scrollToGroup} />
+        <CardDetailPanel
+          card={selectedCard}
+          synergies={synergies}
+          onGroupClick={handleGroupClick}
+          activeGroupKey={activeGroupFilter}
+        />
         <ErrorBoundary>
           <SynergyResults
             selectedCard={selectedCard}
             synergies={synergies}
             totalSynergyCount={totalSynergyCount}
             onClearSelection={goHome}
+            activeGroupFilter={activeGroupFilter}
+            onGroupFilterChange={setActiveGroupFilter}
           />
         </ErrorBoundary>
       </div>

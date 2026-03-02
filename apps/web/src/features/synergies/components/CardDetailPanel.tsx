@@ -10,12 +10,15 @@ interface CardDetailPanelProps {
   /** Synergy groups — when provided, renders the breakdown inline */
   synergies?: SynergyGroup[];
   onGroupClick?: (groupKey: string) => void;
+  /** Currently active group filter — highlights the matching row */
+  activeGroupKey?: string | null;
 }
 
 export const CardDetailPanel = memo(function CardDetailPanel({
   card,
   synergies,
   onGroupClick,
+  activeGroupKey,
 }: CardDetailPanelProps) {
   const hasSynergies = synergies && synergies.length > 0;
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
@@ -115,6 +118,7 @@ export const CardDetailPanel = memo(function CardDetailPanel({
             {synergies.map((group) => {
               const tier = getStrengthTier(getDominantScore(group.synergies));
               const isHovered = hoveredGroup === group.groupKey;
+              const isActive = activeGroupKey === group.groupKey;
               return (
                 <div
                   key={group.groupKey}
@@ -137,7 +141,14 @@ export const CardDetailPanel = memo(function CardDetailPanel({
                     borderRadius: `${RADIUS.sm}px`,
                     cursor: 'pointer',
                     transition: 'background 0.15s',
-                    background: isHovered ? 'rgba(212, 175, 55, 0.08)' : 'transparent',
+                    background: isActive
+                      ? 'rgba(212, 175, 55, 0.12)'
+                      : isHovered
+                        ? 'rgba(212, 175, 55, 0.08)'
+                        : 'transparent',
+                    border: isActive
+                      ? '1px solid rgba(212, 175, 55, 0.3)'
+                      : '1px solid transparent',
                   }}>
                   {/* Count circle */}
                   <div
