@@ -27,7 +27,7 @@ export const LAYOUT = {
   cardDetailWidth: 330,
   selectedCardImageWidth: 120,
   maxDisplayedCards: 200,
-  browseCardMinWidth: 140,
+  browseCardMinWidth: 180,
   synergyCardMinWidth: 160,
   browseMaxWidth: 1280,
 } as const;

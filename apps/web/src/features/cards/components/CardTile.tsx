@@ -54,7 +54,7 @@ export const CardTile = memo(function CardTile({
         boxShadow: isSelected
           ? `0 0 16px ${colors.border}80`
           : variant === 'minimal'
-            ? `0 0 20px rgba(212,175,55,0.15), 0 0 40px rgba(212,175,55,0.05), 0 25px 50px -12px rgba(0,0,0,0.5)`
+            ? `0 0 0 1px rgba(212,175,55,0.3), 0 0 20px rgba(212,175,55,0.12), 0 25px 50px -12px rgba(0,0,0,0.5)`
             : `0 0 16px ${colors.border}40, 0 4px 16px rgba(0,0,0,0.3)`,
       }}
       whileTap={{scale: 0.97}}

@@ -28,22 +28,20 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect, totalCards}: Bro
   return (
     <div
       style={{
-        maxWidth: `${LAYOUT.browseMaxWidth}px`,
-        margin: '0 auto',
-        padding: `${SPACING.xl}px ${SPACING.xxl}px`,
+        padding: `${SPACING.lg}px 32px 32px`,
       }}>
       {/* Result count */}
       <div
         style={{
-          fontSize: `${FONT_SIZES.sm}px`,
-          color: COLORS.textMuted,
+          fontSize: `${FONT_SIZES.base}px`,
+          fontWeight: 600,
+          color: '#90a1b9',
           marginBottom: SPACING.lg,
           letterSpacing: '0.5px',
           textTransform: 'uppercase',
         }}>
-        {cards.length === totalCards
-          ? `${cards.length} cards`
-          : `${cards.length} of ${totalCards ?? cards.length} cards`}
+        <strong style={{color: COLORS.text, fontWeight: 700}}>{cards.length}</strong>{' '}
+        {cards.length === totalCards ? 'cards' : `of ${totalCards ?? cards.length} cards`}
         {cards.length > LAYOUT.maxDisplayedCards && (
           <span style={{color: COLORS.textDim}}> · showing first {LAYOUT.maxDisplayedCards}</span>
         )}

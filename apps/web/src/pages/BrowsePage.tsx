@@ -8,7 +8,7 @@ import {
   type CardFilterOptions,
 } from '../features/cards/loader';
 import {CompactHeader, ErrorBoundary, EtherealBackground, FilterModal} from '../shared/components';
-import {COLORS, FONTS, LAYOUT} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, LAYOUT, SPACING} from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive} from '../shared/hooks';
 import {useFilterParams} from '../shared/hooks';
@@ -118,6 +118,18 @@ export function BrowsePage() {
           position: 'relative',
           zIndex: 1,
         }}>
+        {/* Page title */}
+        <h1
+          style={{
+            padding: `${SPACING.xxl}px 32px 0`,
+            fontSize: `${FONT_SIZES.xl}px`,
+            fontWeight: 700,
+            color: COLORS.text,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+          }}>
+          Browse Cards
+        </h1>
         <ErrorBoundary>
           <BrowseCardGrid
             cards={filteredCards}
