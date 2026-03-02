@@ -100,7 +100,13 @@ const gradientSpan: React.CSSProperties = {
 /** Grid icon for "Browse all cards" CTA. */
 function GridIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2">
       <rect x="3" y="3" width="7" height="7" />
       <rect x="14" y="3" width="7" height="7" />
       <rect x="3" y="14" width="7" height="7" />
@@ -257,7 +263,8 @@ export function HeroSection({
             cursor: 'pointer',
             transition: 'all 0.2s',
             textDecoration: 'none',
-            boxShadow: '0px 10px 15px 0px rgba(254, 154, 0, 0.2), 0px 4px 6px 0px rgba(254, 154, 0, 0.2)',
+            boxShadow:
+              '0px 10px 15px 0px rgba(254, 154, 0, 0.2), 0px 4px 6px 0px rgba(254, 154, 0, 0.2)',
             width: mobile ? '100%' : undefined,
           }}>
           <GridIcon />

@@ -58,7 +58,7 @@ test.describe('Card Selection and Synergies', () => {
     await appPage.selectFeaturedCard();
 
     // Click the logo in compact header
-    const logoButton = page.getByLabel('Return to home');
+    const logoButton = page.getByLabel('Go to home page');
     await logoButton.click();
     await page.waitForTimeout(100);
 

@@ -8,11 +8,9 @@ interface BrowseCardGridProps {
   cards: LorcanaCard[];
   isLoading: boolean;
   onCardSelect: (card: LorcanaCard) => void;
-  /** Total number of unfiltered cards (for the result count) */
-  totalCards?: number;
 }
 
-export function BrowseCardGrid({cards, isLoading, onCardSelect, totalCards}: BrowseCardGridProps) {
+export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridProps) {
   const displayedCards = useMemo(() => cards.slice(0, LAYOUT.maxDisplayedCards), [cards]);
 
   const handleSelect = useCallback((card: LorcanaCard) => onCardSelect(card), [onCardSelect]);
@@ -26,28 +24,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect, totalCards}: Bro
   }
 
   return (
-    <div
-      style={{
-        padding: `${SPACING.lg}px 32px 32px`,
-      }}>
-      {/* Result count */}
-      <div
-        style={{
-          fontSize: `${FONT_SIZES.base}px`,
-          fontWeight: 600,
-          color: '#90a1b9',
-          marginBottom: SPACING.lg,
-          letterSpacing: '0.5px',
-          textTransform: 'uppercase',
-        }}>
-        <strong style={{color: COLORS.text, fontWeight: 700}}>{cards.length}</strong>{' '}
-        {cards.length === totalCards ? 'cards' : `of ${totalCards ?? cards.length} cards`}
-        {cards.length > LAYOUT.maxDisplayedCards && (
-          <span style={{color: COLORS.textDim}}> · showing first {LAYOUT.maxDisplayedCards}</span>
-        )}
-      </div>
-
-      {/* Card grid */}
+    <div style={{padding: `${SPACING.lg}px 32px 32px`}}>
       {displayedCards.length === 0 ? (
         <div
           style={{

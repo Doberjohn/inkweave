@@ -1,4 +1,4 @@
-import {useCallback, useState} from 'react';
+import {useCallback, useState, type ReactNode} from 'react';
 import type {LorcanaCard} from 'lorcana-synergy-engine';
 import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING, Z_INDEX} from '../constants';
 import {useAutocomplete} from '../hooks';
@@ -6,7 +6,7 @@ import {SearchAutocomplete} from './SearchAutocomplete';
 
 interface CompactHeaderProps {
   onLogoClick: () => void;
-  /** When true, renders "← INKWEAVE" as a back button instead of just "✦ INKWEAVE" */
+  /** When true, renders "← INKWEAVE" as a back button instead of just "INKWEAVE" */
   showBackArrow?: boolean;
   /** Search bar props — when provided, renders an inline search bar in the header */
   searchQuery?: string;
@@ -15,9 +15,10 @@ interface CompactHeaderProps {
   /** Cards for autocomplete suggestions */
   cards?: LorcanaCard[];
   onCardSelect?: (card: LorcanaCard) => void;
-  /** Filters button — when onFiltersClick is provided, renders a Filters button */
-  onFiltersClick?: () => void;
-  activeFilterCount?: number;
+  /** Optional actions rendered after the search bar (e.g. filters button on CardPage) */
+  headerActions?: ReactNode;
+  /** Responsive mobile flag */
+  isMobile?: boolean;
 }
 
 export function CompactHeader({
@@ -28,11 +29,17 @@ export function CompactHeader({
   onSearchSubmit,
   cards = [],
   onCardSelect,
-  onFiltersClick,
-  activeFilterCount = 0,
+  headerActions,
+  isMobile,
 }: CompactHeaderProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const hasSearch = searchQuery !== undefined && onSearchChange !== undefined;
+  const mobile = !!isMobile;
+
+  const headerHeight = mobile ? LAYOUT.compactHeaderHeightMobile : LAYOUT.compactHeaderHeight;
+  const iconSize = mobile ? 14 : 16;
+  const inputHeight = mobile ? 34 : 36;
+  const inputPadding = mobile ? '0 10px 0 32px' : '0 12px 0 36px';
 
   const handleAutoSelect = useCallback((card: LorcanaCard) => onCardSelect?.(card), [onCardSelect]);
 
@@ -43,26 +50,36 @@ export function CompactHeader({
     onSelect: handleAutoSelect,
   });
 
+  const handleLogoClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      onLogoClick();
+    },
+    [onLogoClick],
+  );
+
   return (
     <header
       data-testid="compact-header"
       style={{
-        height: `${LAYOUT.compactHeaderHeight}px`,
-        minHeight: `${LAYOUT.compactHeaderHeight}px`,
-        padding: `0 ${SPACING.xl}px`,
+        height: headerHeight,
+        minHeight: headerHeight,
+        padding: mobile ? `0 ${SPACING.lg}px` : '0 32px',
         display: 'flex',
         alignItems: 'center',
-        gap: SPACING.lg,
+        gap: mobile ? SPACING.md : SPACING.lg,
         background: `linear-gradient(180deg, ${COLORS.headerGradientStart} 0%, ${COLORS.headerGradientEnd} 100%)`,
         borderBottom: `1px solid ${COLORS.surfaceBorder}`,
         boxSizing: 'border-box',
-        position: 'relative',
+        position: 'sticky',
+        top: 0,
         zIndex: Z_INDEX.autocomplete + 1,
       }}>
-      {/* Logo / Back button */}
-      <button
-        onClick={onLogoClick}
-        aria-label="Return to home"
+      {/* Logo / Back link */}
+      <a
+        href="/"
+        onClick={handleLogoClick}
+        aria-label="Go to home page"
         style={{
           background: 'none',
           border: 'none',
@@ -72,11 +89,12 @@ export function CompactHeader({
           alignItems: 'center',
           gap: '6px',
           flexShrink: 0,
+          textDecoration: 'none',
         }}>
         {showBackArrow && (
           <span
             style={{
-              fontSize: `${FONT_SIZES.lg}px`,
+              fontSize: `${FONT_SIZES.base}px`,
               fontWeight: 500,
               color: COLORS.primary,
             }}>
@@ -86,21 +104,21 @@ export function CompactHeader({
         <span
           style={{
             fontFamily: FONTS.body,
-            fontSize: `${FONT_SIZES.lg}px`,
+            fontSize: `${FONT_SIZES.base}px`,
             fontWeight: 700,
             color: COLORS.primary,
             letterSpacing: '0.18em',
           }}>
           INKWEAVE
         </span>
-      </button>
+      </a>
 
-      {/* Center: Search bar (when browse mode) */}
+      {/* Center: Search bar */}
       {hasSearch && (
         <div
           style={{
             flex: 1,
-            maxWidth: 480,
+            maxWidth: mobile ? undefined : 480,
             position: 'relative',
             zIndex: Z_INDEX.autocomplete,
           }}>
@@ -109,11 +127,11 @@ export function CompactHeader({
             aria-hidden="true"
             style={{
               position: 'absolute',
-              left: 12,
+              left: mobile ? 10 : 12,
               top: '50%',
               transform: 'translateY(-50%)',
-              width: 16,
-              height: 16,
+              width: iconSize,
+              height: iconSize,
               pointerEvents: 'none',
               zIndex: 1,
             }}
@@ -132,7 +150,7 @@ export function CompactHeader({
           </svg>
           <input
             type="text"
-            aria-label="Search for a card"
+            aria-label="Search cards"
             placeholder="Search cards..."
             {...autocomplete.inputProps}
             onKeyDown={(e) => {
@@ -152,8 +170,8 @@ export function CompactHeader({
             data-testid="browse-search"
             style={{
               width: '100%',
-              height: 36,
-              padding: '0 12px 0 36px',
+              height: inputHeight,
+              padding: inputPadding,
               borderRadius: `${RADIUS.lg}px`,
               border: `1px solid ${isSearchFocused ? 'rgba(212, 175, 55, 0.5)' : COLORS.searchBorder}`,
               background: COLORS.searchBg,
@@ -161,6 +179,7 @@ export function CompactHeader({
               fontSize: `${FONT_SIZES.lg}px`,
               fontFamily: FONTS.body,
               boxSizing: 'border-box',
+              outline: 'none',
               boxShadow: isSearchFocused
                 ? '0 0 0 2px rgba(212, 175, 55, 0.15), 0 0 12px rgba(212, 175, 55, 0.08)'
                 : 'none',
@@ -178,46 +197,8 @@ export function CompactHeader({
         </div>
       )}
 
-      {/* Filters button */}
-      {onFiltersClick && (
-        <button
-          onClick={onFiltersClick}
-          aria-label="Filters"
-          style={{
-            height: 36,
-            padding: `0 ${SPACING.lg}px`,
-            borderRadius: `${RADIUS.lg}px`,
-            border: 'none',
-            background: COLORS.filterGradient,
-            color: COLORS.filterText,
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 500,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: SPACING.sm,
-            flexShrink: 0,
-            boxShadow: COLORS.filterShadow,
-          }}>
-          Filters
-          {activeFilterCount > 0 && (
-            <span
-              style={{
-                background: 'rgba(0,0,0,0.2)',
-                borderRadius: '50%',
-                width: 20,
-                height: 20,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: FONT_SIZES.sm,
-                fontWeight: 600,
-              }}>
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
-      )}
+      {/* Optional header actions (e.g. filters button on CardPage) */}
+      {headerActions}
     </header>
   );
 }

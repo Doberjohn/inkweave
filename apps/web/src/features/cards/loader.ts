@@ -399,3 +399,25 @@ export function sortBySetThenNumber(cards: LorcanaCard[]): LorcanaCard[] {
     return (a.setNumber ?? 0) - (b.setNumber ?? 0);
   });
 }
+
+/**
+ * Sort cards alphabetically by fullName.
+ * Returns a new array — does not mutate the input.
+ */
+export function sortCardsByName(cards: LorcanaCard[], direction: 'asc' | 'desc'): LorcanaCard[] {
+  const dir = direction === 'asc' ? 1 : -1;
+  return [...cards].sort((a, b) => dir * a.fullName.localeCompare(b.fullName));
+}
+
+/**
+ * Sort cards by ink cost, with fullName as tiebreaker.
+ * Returns a new array — does not mutate the input.
+ */
+export function sortCardsByCost(cards: LorcanaCard[], direction: 'asc' | 'desc'): LorcanaCard[] {
+  const dir = direction === 'asc' ? 1 : -1;
+  return [...cards].sort((a, b) => {
+    const costDiff = (a.cost ?? 0) - (b.cost ?? 0);
+    if (costDiff !== 0) return dir * costDiff;
+    return a.fullName.localeCompare(b.fullName);
+  });
+}

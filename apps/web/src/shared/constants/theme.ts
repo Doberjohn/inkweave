@@ -24,6 +24,7 @@ export const LAYOUT = {
   sidebarWidth: 480,
   headerHeight: 56,
   compactHeaderHeight: 52,
+  compactHeaderHeightMobile: 48,
   cardDetailWidth: 330,
   selectedCardImageWidth: 120,
   maxDisplayedCards: 200,
@@ -260,3 +261,6 @@ export const CTA_BUTTON_STYLE: React.CSSProperties = {
   minHeight: '44px',
   boxShadow: COLORS.filterShadow,
 };
+
+// Browse sort order
+export type BrowseSortOrder = 'newest' | 'name-asc' | 'name-desc' | 'cost-asc' | 'cost-desc';

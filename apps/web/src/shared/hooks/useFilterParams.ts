@@ -2,7 +2,7 @@ import {useMemo, useCallback} from 'react';
 import {useSearchParams} from 'react-router-dom';
 import type {Ink} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards/loader';
-import type {CardTypeFilter} from '../constants';
+import type {CardTypeFilter, BrowseSortOrder} from '../constants';
 
 const VALID_INKS = new Set<string>(['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel']);
 const VALID_TYPES = new Set<string>(['Character', 'Action', 'Song', 'Item', 'Location']);
@@ -16,6 +16,7 @@ function isValidType(value: string): value is CardTypeFilter {
 }
 
 const VALID_COSTS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+const VALID_SORTS = new Set<string>(['newest', 'name-asc', 'name-desc', 'cost-asc', 'cost-desc']);
 
 function isValidCost(value: string): boolean {
   const n = Number(value);
@@ -49,6 +50,8 @@ export interface UseFilterParamsReturn {
   setFilters: (filters: CardFilterOptions) => void;
   clearAllFilters: () => void;
   activeFilterCount: number;
+  sortOrder: BrowseSortOrder;
+  setSortOrder: (order: BrowseSortOrder) => void;
 }
 
 export function useFilterParams(): UseFilterParamsReturn {
@@ -81,6 +84,11 @@ export function useFilterParams(): UseFilterParamsReturn {
     const set = searchParams.get('set');
     if (set) f.setCode = set;
     return f;
+  }, [searchParams]);
+
+  const sortOrder: BrowseSortOrder = useMemo(() => {
+    const raw = searchParams.get('sort');
+    return raw && VALID_SORTS.has(raw) ? (raw as BrowseSortOrder) : 'newest';
   }, [searchParams]);
 
   const activeFilterCount = useMemo(
@@ -175,6 +183,16 @@ export function useFilterParams(): UseFilterParamsReturn {
     [updateParams],
   );
 
+  const setSortOrder = useCallback(
+    (order: BrowseSortOrder) => {
+      updateParams((p) => {
+        if (order === 'newest') p.delete('sort');
+        else p.set('sort', order);
+      });
+    },
+    [updateParams],
+  );
+
   const clearAllFilters = useCallback(() => {
     setSearchParams({}, {replace: true});
   }, [setSearchParams]);
@@ -192,5 +210,7 @@ export function useFilterParams(): UseFilterParamsReturn {
     setFilters,
     clearAllFilters,
     activeFilterCount,
+    sortOrder,
+    setSortOrder,
   };
 }
