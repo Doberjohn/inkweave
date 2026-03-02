@@ -31,8 +31,8 @@ test.describe('Mobile Viewport', () => {
     // Should navigate to /card/:id
     await expect(page).toHaveURL(/\/card\/\d+/);
 
-    // Should show synergy results or CTA (mobile shows MobileCardDetail with different text)
-    const hasSynergies = page.getByText(/View All \d+ Synergies/);
+    // Should show synergy groups inline or "No synergies found" empty state
+    const hasSynergies = page.getByText('Synergy Breakdown');
     const noSynergies = page.getByText('No synergies found for this card');
 
     const synergiesVisible = await hasSynergies.isVisible().catch(() => false);
@@ -84,9 +84,9 @@ test.describe('Mobile Viewport', () => {
     await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
   });
 
-  test('should navigate to browsing view via See all cards button', async ({page, appPage}) => {
-    // Click "See all cards" button
-    await page.getByRole('button', {name: /See all cards/}).click();
+  test('should navigate to browsing view via Browse all cards CTA', async ({page, appPage}) => {
+    // Click "Browse all cards" CTA button
+    await page.getByTestId('cta-browse').click();
     await page.waitForTimeout(200);
 
     // Should transition to browsing — hero gone, search visible
@@ -95,8 +95,8 @@ test.describe('Mobile Viewport', () => {
   });
 
   test('should open filter drawer in mobile browsing view', async ({page}) => {
-    // Navigate to browsing view
-    await page.getByRole('button', {name: /See all cards/}).click();
+    // Navigate to browsing view via Browse CTA
+    await page.getByTestId('cta-browse').click();
     await page.waitForTimeout(200);
 
     // Click filter button in mobile browsing header

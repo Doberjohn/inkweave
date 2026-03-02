@@ -18,9 +18,9 @@
 | Test | What it verifies |
 |---|---|
 | should navigate to browse when searching from hero | Typing in hero search navigates to `/browse?q=Elsa`, hides hero, shows CardList |
-| should open filter modal on browse page | "See all cards" navigates to `/browse`, clicking Filters opens modal with Amber/Sapphire ink buttons |
+| should open filter modal on browse page | "Browse all cards" CTA navigates to `/browse`, clicking Filters opens modal with Amber/Sapphire ink buttons |
 | should deep link to browse with ink filter in URL | Direct navigation to `/browse?ink=Sapphire` shows filtered browse page |
-| should navigate to browse via See all cards | "See all cards" button navigates to `/browse`, hero gone, CardList visible |
+| should navigate to browse via Browse all cards CTA | "Browse all cards" CTA navigates to `/browse`, hero gone, CardList visible |
 | should preserve search query in URL on browse page | Hero search for "Ariel" puts `q=Ariel` in URL, browse search input shows "Ariel" |
 | should deep link to browse with filters | Direct navigation to `/browse?q=Elsa&ink=Sapphire` populates the search input |
 
@@ -40,11 +40,11 @@
 |---|---|
 | should display hero home page on mobile | Hero, search input, and featured cards render on mobile viewport |
 | should show search input on home | "Search for a card..." placeholder is visible |
-| should navigate to card page when selecting a featured card | Card click navigates to `/card/:id`, shows synergy results or "no synergies" |
+| should navigate to card page when selecting a featured card | Card click navigates to `/card/:id`, shows synergy breakdown or "no synergies" |
 | should show filter drawer on mobile browse | Navigate to `/browse`, tap filter icon, drawer shows Amber/Sapphire ink buttons |
 | should return to home when clearing selection on mobile | Clear selection navigates back to `/`, hero reappears |
 | should navigate to browse when searching from hero | Typing "Elsa" + Enter navigates to `/browse?q=Elsa`, hero hidden, CardList visible |
-| should navigate to browsing view via See all cards button | "See all cards" navigates away from hero, shows browse search input |
+| should navigate to browsing view via Browse all cards CTA | "Browse all cards" CTA navigates away from hero, shows browse search input |
 | should open filter drawer in mobile browsing view | From browsing view, tap Filters button, drawer shows Amber/Sapphire/Steel ink buttons |
 
 ## `search-autocomplete.spec.ts` — 5 tests (desktop only)

@@ -22,10 +22,20 @@ vi.mock('../../shared/components', async () => {
   const actual = await vi.importActual('../../shared/components');
   return {
     ...actual,
-    HeroSection: (props: {onSearchSubmit?: () => void}) => (
+    HeroSection: (props: {
+      onSearchSubmit?: () => void;
+      onBrowse?: () => void;
+      onPlaystyles?: () => void;
+    }) => (
       <div data-testid="hero-section">
         <button data-testid="mock-search-submit" onClick={props.onSearchSubmit}>
           Search
+        </button>
+        <button data-testid="mock-browse" onClick={props.onBrowse}>
+          Browse
+        </button>
+        <button data-testid="mock-playstyles" onClick={props.onPlaystyles}>
+          Playstyles
         </button>
       </div>
     ),
@@ -54,27 +64,6 @@ describe('HomePage', () => {
     expect(screen.getByTestId('ethereal-bg')).toBeInTheDocument();
   });
 
-  it('should render See all cards button', () => {
-    render(
-      <MemoryRouter>
-        <HomePage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText('See all cards →')).toBeInTheDocument();
-  });
-
-  it('should navigate to /browse when See all cards is clicked', () => {
-    render(
-      <MemoryRouter>
-        <HomePage />
-      </MemoryRouter>,
-    );
-
-    fireEvent.click(screen.getByText('See all cards →'));
-    expect(mockNavigate).toHaveBeenCalledWith('/browse');
-  });
-
   it('should navigate to /browse when search is submitted with empty query', () => {
     render(
       <MemoryRouter>
@@ -83,6 +72,28 @@ describe('HomePage', () => {
     );
 
     fireEvent.click(screen.getByTestId('mock-search-submit'));
+    expect(mockNavigate).toHaveBeenCalledWith('/browse');
+  });
+
+  it('should navigate to /browse when Browse CTA is clicked', () => {
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByTestId('mock-browse'));
+    expect(mockNavigate).toHaveBeenCalledWith('/browse');
+  });
+
+  it('should navigate to /browse when Playstyles CTA is clicked', () => {
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByTestId('mock-playstyles'));
     expect(mockNavigate).toHaveBeenCalledWith('/browse');
   });
 });

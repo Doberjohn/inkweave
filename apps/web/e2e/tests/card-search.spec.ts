@@ -26,8 +26,8 @@ test.describe('Card Search and Filtering', () => {
   });
 
   test('should open filter modal on browse page', async ({page}) => {
-    // Navigate to browse page via "See all cards"
-    await page.getByRole('button', {name: /See all cards/}).click();
+    // Navigate to browse page via "Browse all cards" CTA
+    await page.getByTestId('cta-browse').click();
     await page.waitForTimeout(200);
 
     // Should be on /browse
@@ -55,9 +55,9 @@ test.describe('Card Search and Filtering', () => {
     await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
   });
 
-  test('should navigate to browse via See all cards', async ({appPage, page}) => {
-    // Click "See all cards" button
-    await page.getByRole('button', {name: /See all cards/}).click();
+  test('should navigate to browse via Browse all cards CTA', async ({appPage, page}) => {
+    // Click "Browse all cards" CTA button
+    await page.getByTestId('cta-browse').click();
     await page.waitForTimeout(200);
 
     // Should navigate to /browse

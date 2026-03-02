@@ -64,7 +64,7 @@ test.describe('Search Autocomplete', () => {
 
   test('should show autocomplete on browse page search', async ({page}) => {
     // Navigate to browse page
-    await page.getByRole('button', {name: /See all cards/}).click();
+    await page.getByTestId('cta-browse').click();
     await expect(page).toHaveURL(/\/browse/);
 
     // Wait for browse page cards to load (heroSearch doesn't exist here)

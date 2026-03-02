@@ -36,14 +36,14 @@ function getStyles(isMobile: boolean) {
       width: isMobile ? '100%' : 1280,
       maxWidth: '100%',
       margin: '0 auto',
-      padding: isMobile ? `0 ${SPACING.lg}px 48px` : undefined,
+      padding: isMobile ? `0 ${SPACING.lg}px 48px` : '0 32px',
       position: 'relative',
       zIndex: 1,
       boxSizing: 'border-box',
     } as React.CSSProperties,
     label: {
-      fontSize: `${FONT_SIZES.base}px`,
-      letterSpacing: isMobile ? '2.4px' : '2.8px',
+      fontSize: `${isMobile ? FONT_SIZES.xs : FONT_SIZES.base}px`,
+      letterSpacing: isMobile ? '2px' : '2.8px',
       color: COLORS.featuredLabel,
       fontWeight: 400,
       textTransform: 'uppercase',
@@ -52,7 +52,7 @@ function getStyles(isMobile: boolean) {
     grid: {
       display: 'grid',
       gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : `repeat(${FEATURED_COUNT}, 1fr)`,
-      gap: isMobile ? `${SPACING.sm}px` : `${SPACING.xxl}px`,
+      gap: isMobile ? `${SPACING.md}px` : `${SPACING.xxl}px`,
       listStyle: 'none',
       padding: 0,
       margin: 0,
@@ -60,12 +60,14 @@ function getStyles(isMobile: boolean) {
   };
 }
 
-const sectionLabelRow: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: `${SPACING.md}px`,
-  marginBottom: 32,
-};
+function getSectionLabelRow(isMobile: boolean): React.CSSProperties {
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    gap: `${SPACING.md}px`,
+    marginBottom: isMobile ? 20 : 32,
+  };
+}
 
 /** Gradient divider line that fades from transparent to center color and back. */
 function DividerLine() {
@@ -102,7 +104,7 @@ export const FeaturedCards = memo(function FeaturedCards({
       aria-label="Popular Synergy Starters"
       style={styles.container}>
       {/* Section label with divider lines */}
-      <div style={sectionLabelRow}>
+      <div style={getSectionLabelRow(!!isMobile)}>
         <DividerLine />
         <div style={{flexShrink: 0, textAlign: 'center'}}>
           <div style={styles.label}>Popular Synergy Starters</div>
