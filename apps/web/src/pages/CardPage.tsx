@@ -63,6 +63,11 @@ export function CardPage() {
 
   const goHome = useCallback(() => navigate('/'), [navigate]);
   const selectCard = useCallback((card: {id: string}) => navigate(`/card/${card.id}`), [navigate]);
+  const scrollToGroup = useCallback((groupKey: string) => {
+    document
+      .querySelector(`[data-group-key="${groupKey}"]`)
+      ?.scrollIntoView({behavior: 'smooth', block: 'start'});
+  }, []);
 
   if (isLoading) {
     return (
@@ -140,11 +145,7 @@ export function CardPage() {
           position: 'relative',
           zIndex: 1,
         }}>
-        <CardDetailPanel
-          card={selectedCard}
-          synergies={synergies}
-          totalSynergyCount={totalSynergyCount}
-        />
+        <CardDetailPanel card={selectedCard} synergies={synergies} onGroupClick={scrollToGroup} />
         <ErrorBoundary>
           <SynergyResults
             selectedCard={selectedCard}

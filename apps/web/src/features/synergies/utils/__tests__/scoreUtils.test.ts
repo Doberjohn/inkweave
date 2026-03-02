@@ -50,6 +50,13 @@ describe('scoreUtils', () => {
       expect(weak.color).toBe('#f59090');
       expect(weak.bg).toBe('#3d1a1a');
     });
+
+    it('should return abbreviated shortLabels for each tier', () => {
+      expect(getStrengthTier(10).shortLabel).toBe('Build');
+      expect(getStrengthTier(8).shortLabel).toBe('Strong');
+      expect(getStrengthTier(5).shortLabel).toBe('Mod');
+      expect(getStrengthTier(2).shortLabel).toBe('Weak');
+    });
   });
 
   describe('getDominantScore', () => {

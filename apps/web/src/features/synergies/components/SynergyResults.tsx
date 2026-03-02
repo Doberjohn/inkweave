@@ -1,9 +1,9 @@
-import {memo} from 'react';
+import {useState, useMemo, memo} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {CardDetail, SynergyGroup} from '.';
 import {EmptyState} from '../../../shared/components';
-import {COLORS, FONT_SIZES, SPACING, RADIUS, LAYOUT} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, SPACING, RADIUS, LAYOUT} from '../../../shared/constants';
 
 interface SynergyResultsProps {
   selectedCard: LorcanaCard | null;
@@ -13,6 +13,41 @@ interface SynergyResultsProps {
   isMobile?: boolean;
   /** When false, CardDetail is rendered externally (e.g. CardDetailPanel). Default: true for mobile. */
   showCardDetail?: boolean;
+}
+
+type SortOrder =
+  | 'strength-desc'
+  | 'strength-asc'
+  | 'name-asc'
+  | 'name-desc'
+  | 'cost-asc'
+  | 'cost-desc';
+
+function chipStyle(active: boolean, isMobile: boolean): React.CSSProperties {
+  return {
+    padding: isMobile ? '8px 14px' : '6px 14px',
+    borderRadius: '20px',
+    fontSize: `${FONT_SIZES.base}px`,
+    fontWeight: 500,
+    cursor: 'pointer',
+    border: active ? '1px solid rgba(212, 175, 55, 0.4)' : `1px solid ${COLORS.surfaceBorder}`,
+    background: active ? 'rgba(212, 175, 55, 0.12)' : 'transparent',
+    color: active ? COLORS.primary500 : COLORS.textMuted,
+    boxShadow: active
+      ? '0 0 12px rgba(212, 175, 55, 0.15), inset 0 0 8px rgba(212, 175, 55, 0.05)'
+      : 'none',
+    transition: 'all 0.2s',
+    fontFamily: FONTS.body,
+    ...(isMobile
+      ? {
+          flexShrink: 0,
+          whiteSpace: 'nowrap',
+          minHeight: '44px',
+          display: 'flex',
+          alignItems: 'center',
+        }
+      : {}),
+  };
 }
 
 export const SynergyResults = memo(function SynergyResults({
@@ -25,6 +60,36 @@ export const SynergyResults = memo(function SynergyResults({
 }: SynergyResultsProps) {
   // Default: show card detail on mobile, hide on desktop (it's in its own panel)
   const renderCardDetail = showCardDetail ?? isMobile;
+  const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('strength-desc');
+
+  const sortedGroups = useMemo(() => {
+    const filtered = activeGroupFilter
+      ? synergies.filter((g) => g.groupKey === activeGroupFilter)
+      : synergies;
+
+    return filtered.map((group) => ({
+      ...group,
+      synergies: [...group.synergies].sort((a, b) => {
+        switch (sortOrder) {
+          case 'strength-desc':
+            return b.score - a.score;
+          case 'strength-asc':
+            return a.score - b.score;
+          case 'name-asc':
+            return a.card.fullName.localeCompare(b.card.fullName);
+          case 'name-desc':
+            return b.card.fullName.localeCompare(a.card.fullName);
+          case 'cost-asc':
+            return a.card.cost - b.card.cost;
+          case 'cost-desc':
+            return b.card.cost - a.card.cost;
+          default:
+            return 0;
+        }
+      }),
+    }));
+  }, [synergies, activeGroupFilter, sortOrder]);
 
   return (
     <section
@@ -61,12 +126,13 @@ export const SynergyResults = memo(function SynergyResults({
             </div>
           ) : (
             <>
+              {/* Header */}
               <div
                 aria-live="polite"
                 aria-atomic="true"
                 data-testid="synergy-header"
                 style={{
-                  marginBottom: `${SPACING.md}px`,
+                  marginBottom: `${SPACING.lg}px`,
                   display: 'flex',
                   alignItems: 'center',
                   gap: `${SPACING.sm}px`,
@@ -84,11 +150,11 @@ export const SynergyResults = memo(function SynergyResults({
                 </h2>
                 <span
                   style={{
-                    background: COLORS.primary100,
+                    background: COLORS.calloutBg,
                     color: COLORS.primary,
                     padding: '2px 8px',
                     borderRadius: `${RADIUS.sm}px`,
-                    fontSize: `${FONT_SIZES.sm}px`,
+                    fontSize: `${FONT_SIZES.xs}px`,
                     fontWeight: 700,
                     minWidth: 20,
                     textAlign: 'center',
@@ -96,15 +162,72 @@ export const SynergyResults = memo(function SynergyResults({
                   {totalSynergyCount}
                 </span>
               </div>
+
+              {/* Toolbar: group chips + sort */}
               <div
                 style={{
-                  height: 1,
-                  background: COLORS.surfaceBorder,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
                   marginBottom: `${SPACING.lg}px`,
-                }}
-              />
-              {synergies.map((group) => (
-                <SynergyGroup key={group.groupKey} group={group} />
+                  ...(isMobile
+                    ? {
+                        overflowX: 'auto',
+                        flexWrap: 'nowrap',
+                        paddingBottom: '4px',
+                        WebkitOverflowScrolling: 'touch',
+                        scrollbarWidth: 'none',
+                      }
+                    : {flexWrap: 'wrap'}),
+                }}>
+                <button
+                  onClick={() => setActiveGroupFilter(null)}
+                  style={chipStyle(activeGroupFilter === null, isMobile)}>
+                  All
+                </button>
+                {synergies.map((group) => (
+                  <button
+                    key={group.groupKey}
+                    onClick={() => setActiveGroupFilter(group.groupKey)}
+                    style={chipStyle(activeGroupFilter === group.groupKey, isMobile)}>
+                    {group.label}
+                  </button>
+                ))}
+                {!isMobile && (
+                  <select
+                    aria-label="Sort synergies"
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+                    style={{
+                      marginLeft: 'auto',
+                      padding: '5px 10px',
+                      borderRadius: `${RADIUS.md}px`,
+                      border: `1px solid ${COLORS.surfaceBorder}`,
+                      background: COLORS.sortBg,
+                      color: COLORS.text,
+                      fontFamily: FONTS.body,
+                      fontSize: `${FONT_SIZES.base}px`,
+                      cursor: 'pointer',
+                      outline: 'none',
+                    }}>
+                    <option value="strength-desc">Strength: High → Low</option>
+                    <option value="strength-asc">Strength: Low → High</option>
+                    <option value="name-asc">Name A–Z</option>
+                    <option value="name-desc">Name Z–A</option>
+                    <option value="cost-asc">Cost: Low → High</option>
+                    <option value="cost-desc">Cost: High → Low</option>
+                  </select>
+                )}
+              </div>
+
+              {/* Groups */}
+              {sortedGroups.map((group) => (
+                <SynergyGroup
+                  key={group.groupKey}
+                  group={group}
+                  isMobile={isMobile}
+                  maxVisibleCards={isMobile ? 5 : 6}
+                />
               ))}
             </>
           )}

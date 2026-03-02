@@ -78,7 +78,7 @@ export const COLORS = {
 
   // Text
   text: '#e8e8e8',
-  textMuted: '#e8e8e8',
+  textMuted: '#90a1b9',
   textDim: '#666680',
 
   // Semantic
@@ -133,6 +133,11 @@ export const COLORS = {
   // Featured section
   featuredLabel: '#90a1b9',
   featuredDivider: '#314158',
+
+  // Synergy panel
+  calloutBg: '#2a2515',
+  descriptionText: '#c8c8d8',
+  sortBg: '#1e1e35',
 
   // Ethereal glow orbs
   etherealBlue: 'rgba(43, 127, 255, 0.1)',

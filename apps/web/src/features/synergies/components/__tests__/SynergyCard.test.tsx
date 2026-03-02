@@ -1,5 +1,5 @@
 import {describe, it, expect, vi} from 'vitest';
-import {render, screen} from '@testing-library/react';
+import {render, screen, fireEvent} from '@testing-library/react';
 import {SynergyCard} from '../SynergyCard';
 import type {LorcanaCard} from '../../../cards';
 
@@ -18,10 +18,6 @@ vi.mock('../../../shared/components', () => ({
 
 vi.mock('../../../cards', () => ({
   useCardPreviewHandlers: () => ({previewHandlers: {}}),
-}));
-
-vi.mock('../../../shared/hooks', () => ({
-  useResponsive: () => ({isMobile: false}),
 }));
 
 const mockCard: LorcanaCard = {
@@ -43,8 +39,29 @@ const mockCard: LorcanaCard = {
 describe('SynergyCard', () => {
   it('should render card image with descriptive alt text', () => {
     render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
-
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute('alt', 'Elsa - Snow Queen');
+  });
+
+  it('should include score in strength badge', () => {
+    render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
+    expect(screen.getByTestId('reason-tag')).toHaveTextContent('Strong 7');
+  });
+
+  it('should show abbreviated label on mobile', () => {
+    render(<SynergyCard card={mockCard} score={5} explanation="Test synergy" isMobile />);
+    expect(screen.getByTestId('reason-tag')).toHaveTextContent('Mod 5');
+  });
+
+  it('should show View details cue on hover (desktop)', () => {
+    render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
+    const button = screen.getByRole('button', {name: 'Elsa - Snow Queen'});
+    fireEvent.mouseEnter(button);
+    expect(screen.getByText('View details')).toBeTruthy();
+  });
+
+  it('should not render View details cue on mobile', () => {
+    render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" isMobile />);
+    expect(screen.queryByText('View details')).toBeNull();
   });
 });
