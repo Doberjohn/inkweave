@@ -36,7 +36,7 @@ export const CardDetailPanel = memo(function CardDetailPanel({
         display: 'flex',
         flexDirection: 'column',
         padding: `${SPACING.lg}px`,
-        gap: `${SPACING.md}px`,
+        gap: `${SPACING.lg}px`,
         boxSizing: 'border-box',
       }}>
       {/* Card image */}
@@ -182,20 +182,6 @@ export const CardDetailPanel = memo(function CardDetailPanel({
                     }}>
                     {group.label}
                   </div>
-
-                  {/* Strength badge */}
-                  <span
-                    style={{
-                      fontSize: `${FONT_SIZES.xs}px`,
-                      color: tier.color,
-                      background: tier.bg,
-                      padding: '2px 7px',
-                      borderRadius: `${RADIUS.sm}px`,
-                      fontWeight: 600,
-                      flexShrink: 0,
-                    }}>
-                    {tier.label}
-                  </span>
 
                   {/* Arrow */}
                   <span

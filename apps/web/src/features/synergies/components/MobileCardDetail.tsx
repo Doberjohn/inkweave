@@ -78,11 +78,11 @@ export function MobileCardDetail({
       <div
         style={{
           height: 48,
-          background: 'rgba(26, 26, 46, 0.9)',
+          background: 'linear-gradient(180deg, #0d0d14 0%, #1a1a2e 100%)',
           display: 'flex',
           alignItems: 'center',
           paddingLeft: SPACING.lg,
-          borderBottom: `1px solid rgba(51, 51, 85, 0.5)`,
+          borderBottom: `1px solid ${COLORS.surfaceBorder}`,
           position: 'sticky',
           top: 0,
           zIndex: 902,
@@ -101,7 +101,7 @@ export function MobileCardDetail({
             padding: `${SPACING.sm}px 0`,
             fontFamily: FONTS.body,
           }}>
-          &larr; INKWEAVE
+          INKWEAVE
         </button>
       </div>
 
@@ -112,9 +112,8 @@ export function MobileCardDetail({
             aria-label="Enlarge card image"
             onClick={() => card.imageUrl && setLightboxOpen(true)}
             style={{
-              border: `2px solid ${COLORS.primary500}`,
+              border: 'none',
               borderRadius: 12,
-              boxShadow: `0 0 14px rgba(212, 175, 55, 0.25)`,
               overflow: 'hidden',
               cursor: 'pointer',
               padding: 0,
@@ -238,19 +237,6 @@ export function MobileCardDetail({
                         color: COLORS.text,
                       }}>
                       {group.label}
-                    </span>
-
-                    {/* Strength badge */}
-                    <span
-                      style={{
-                        background: tier.bg,
-                        color: tier.color,
-                        fontSize: FONT_SIZES.xs,
-                        fontWeight: 600,
-                        padding: '2px 7px',
-                        borderRadius: RADIUS.sm,
-                      }}>
-                      {tier.label}
                     </span>
 
                     {/* Arrow */}

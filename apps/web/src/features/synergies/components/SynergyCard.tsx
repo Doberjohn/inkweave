@@ -114,7 +114,7 @@ export const SynergyCard = memo(function SynergyCard({
             background:
               'linear-gradient(transparent, rgba(13, 13, 20, 0.85) 30%, rgba(13, 13, 20, 0.95))',
             display: 'flex',
-            justifyContent: 'center',
+            alignItems: 'center',
           }}>
           <span
             data-testid="reason-tag"
@@ -122,7 +122,7 @@ export const SynergyCard = memo(function SynergyCard({
             style={{
               background: tier.bg,
               color: tier.color,
-              padding: '2px 7px',
+              padding: isMobile ? '2px 6px' : '2px 7px',
               borderRadius: `${RADIUS.sm}px`,
               fontSize: `${FONT_SIZES.xs}px`,
               fontWeight: 600,
