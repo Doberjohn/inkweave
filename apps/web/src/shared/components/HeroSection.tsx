@@ -138,6 +138,8 @@ export function HeroSection({
   isMobile,
 }: HeroSectionProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [browseHover, setBrowseHover] = useState(false);
+  const [playstylesHover, setPlaystylesHover] = useState(false);
   const styles = getStyles(!!isMobile);
 
   const handleAutoSelect = useCallback((card: LorcanaCard) => onCardSelect?.(card), [onCardSelect]);
@@ -234,6 +236,8 @@ export function HeroSection({
         <button
           data-testid="cta-browse"
           onClick={onBrowse}
+          onMouseEnter={() => setBrowseHover(true)}
+          onMouseLeave={() => setBrowseHover(false)}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -243,7 +247,9 @@ export function HeroSection({
             padding: '0 20px',
             borderRadius: `${RADIUS.lg}px`,
             border: 'none',
-            background: COLORS.filterGradient,
+            background: browseHover
+              ? 'linear-gradient(90deg, #ffb020, #fe9a00)'
+              : COLORS.filterGradient,
             color: COLORS.filterText,
             fontFamily: FONTS.body,
             fontSize: `${FONT_SIZES.base}px`,
@@ -260,6 +266,8 @@ export function HeroSection({
         <button
           data-testid="cta-playstyles"
           onClick={onPlaystyles}
+          onMouseEnter={() => setPlaystylesHover(true)}
+          onMouseLeave={() => setPlaystylesHover(false)}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -268,9 +276,11 @@ export function HeroSection({
             height: ctaHeight,
             padding: '0 20px',
             borderRadius: `${RADIUS.lg}px`,
-            background: 'transparent',
+            background: playstylesHover ? 'rgba(255, 185, 0, 0.05)' : 'transparent',
             color: COLORS.primary,
-            border: '1px solid rgba(255, 185, 0, 0.4)',
+            border: playstylesHover
+              ? '1px solid rgba(255, 185, 0, 0.6)'
+              : '1px solid rgba(255, 185, 0, 0.4)',
             fontFamily: FONTS.body,
             fontSize: `${FONT_SIZES.base}px`,
             fontWeight: 500,
