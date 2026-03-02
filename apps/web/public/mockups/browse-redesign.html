@@ -1,428 +1,615 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Browse Page Redesign</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    /* TYPE SCALE: Major third (~1.25) — 10 → 13 → 16 → 20 + 14px form exception
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Browse Page Redesign</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet" />
+    <style>
+      /* TYPE SCALE: Major third (~1.25) — 10 → 13 → 16 → 20 + 14px form exception
        Display: 20px | Section: 16px | Body: 13px | Micro: 10px | Form: 14px */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-    body {
-      background: #0d0d14;
-      color: #e8e8e8;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
+      body {
+        background: #0d0d14;
+        color: #e8e8e8;
+        font-family:
+          'Inter',
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
 
-    /* ── Ethereal Background ── */
-    .bg-container {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      overflow: hidden;
-      background: linear-gradient(180deg, #0d0d14 0%, #1a1a2e 50%, #0d0d14 100%);
-      pointer-events: none;
-    }
-    .glow-orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(64px);
-      pointer-events: none;
-    }
-    .glow-blue { width: 384px; height: 384px; background: rgba(43,127,255,0.1); left: 28.5%; top: 0; }
-    .glow-purple { width: 384px; height: 384px; background: rgba(173,70,255,0.1); left: 65.5%; top: 77.5%; }
-    .glow-teal { width: 384px; height: 384px; background: rgba(0,187,167,0.05); left: 57%; top: 56.5%; }
+      /* ── Ethereal Background ── */
+      .bg-container {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        background: linear-gradient(180deg, #0d0d14 0%, #1a1a2e 50%, #0d0d14 100%);
+        pointer-events: none;
+      }
+      .glow-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(64px);
+        pointer-events: none;
+      }
+      .glow-blue {
+        width: 384px;
+        height: 384px;
+        background: rgba(43, 127, 255, 0.1);
+        left: 28.5%;
+        top: 0;
+      }
+      .glow-purple {
+        width: 384px;
+        height: 384px;
+        background: rgba(173, 70, 255, 0.1);
+        left: 65.5%;
+        top: 77.5%;
+      }
+      .glow-teal {
+        width: 384px;
+        height: 384px;
+        background: rgba(0, 187, 167, 0.05);
+        left: 57%;
+        top: 56.5%;
+      }
 
-    /* ── Compact Header (search only — Filters moved to toolbar, closer to cards) ── */
-    .compact-header {
-      height: 52px;
-      min-height: 52px;
-      padding: 0 32px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      background: linear-gradient(180deg, #0d0d14 0%, #1a1a2e 100%);
-      border-bottom: 1px solid #333355;
-      position: sticky;
-      top: 0;
-      z-index: 902;
-    }
-    .logo-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-      text-decoration: none;
-    }
-    .logo-text {
-      font-size: 13px; /* body — uppercase + 700 + gold + letter-spacing */
-      font-weight: 700;
-      color: #ffb900;
-      letter-spacing: 0.18em;
-    }
-    .header-search {
-      flex: 1;
-      max-width: 480px;
-      position: relative;
-    }
-    .header-search-icon {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      pointer-events: none;
-      z-index: 1;
-    }
-    .header-search-input {
-      width: 100%;
-      height: 36px;
-      padding: 0 12px 0 36px;
-      border-radius: 8px;
-      border: 1px solid rgba(49,65,88,0.5);
-      background: rgba(15,23,43,0.5);
-      color: #e8e8e8;
-      font-family: 'Inter', sans-serif;
-      font-size: 14px; /* form exception */
-      outline: none;
-      transition: border-color 0.25s ease, box-shadow 0.25s ease;
-    }
-    .header-search-input::placeholder { color: #90a1b9; }
-    .header-search-input:focus {
-      border-color: rgba(212, 175, 55, 0.5);
-      box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15), 0 0 12px rgba(212, 175, 55, 0.08);
-    }
+      /* ── Compact Header (search only — Filters moved to toolbar, closer to cards) ── */
+      .compact-header {
+        height: 52px;
+        min-height: 52px;
+        padding: 0 32px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: linear-gradient(180deg, #0d0d14 0%, #1a1a2e 100%);
+        border-bottom: 1px solid #333355;
+        position: sticky;
+        top: 0;
+        z-index: 902;
+      }
+      .logo-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+        text-decoration: none;
+      }
+      .logo-text {
+        font-size: 13px; /* body — uppercase + 700 + gold + letter-spacing */
+        font-weight: 700;
+        color: #ffb900;
+        letter-spacing: 0.18em;
+      }
+      .header-search {
+        flex: 1;
+        max-width: 480px;
+        position: relative;
+      }
+      .header-search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        z-index: 1;
+      }
+      .header-search-input {
+        width: 100%;
+        height: 36px;
+        padding: 0 12px 0 36px;
+        border-radius: 8px;
+        border: 1px solid rgba(49, 65, 88, 0.5);
+        background: rgba(15, 23, 43, 0.5);
+        color: #e8e8e8;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px; /* form exception */
+        outline: none;
+        transition:
+          border-color 0.25s ease,
+          box-shadow 0.25s ease;
+      }
+      .header-search-input::placeholder {
+        color: #90a1b9;
+      }
+      .header-search-input:focus {
+        border-color: rgba(212, 175, 55, 0.5);
+        box-shadow:
+          0 0 0 2px rgba(212, 175, 55, 0.15),
+          0 0 12px rgba(212, 175, 55, 0.08);
+      }
 
-    /* Page title — lightweight context (UX Audit #11) */
-    .page-title {
-      padding: 24px 32px 0;
-      font-size: 16px; /* section */
-      font-weight: 700;
-      color: #e8e8e8;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      position: relative;
-      z-index: 1;
-    }
+      /* Page title — lightweight context (UX Audit #11) */
+      .page-title {
+        padding: 24px 32px 0;
+        font-size: 16px; /* section */
+        font-weight: 700;
+        color: #e8e8e8;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        position: relative;
+        z-index: 1;
+      }
 
-    /* ── Toolbar: Filters button + result count + active filters + sort ── */
-    /* Filters button moved from header to toolbar — closer to the cards it controls */
-    .filters-btn {
-      height: 34px;
-      padding: 0 14px;
-      border: none;
-      background: linear-gradient(90deg, #fe9a00, #e17100);
-      color: #0f172b;
-      font-family: 'Inter', sans-serif;
-      font-size: 13px; /* body */
-      font-weight: 500;
-      border-radius: 8px;
-      cursor: pointer;
-      flex-shrink: 0;
-      box-shadow: 0px 8px 12px 0px rgba(254,154,0,0.15), 0px 3px 5px 0px rgba(254,154,0,0.15);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: opacity 0.15s;
-    }
-    .filters-btn:hover { opacity: 0.9; }
-    .filter-count-badge {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: rgba(0,0,0,0.3);
-      color: #ffffff;
-      font-size: 10px; /* micro */
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .toolbar-divider {
-      width: 1px;
-      height: 20px;
-      background: #333355;
-      flex-shrink: 0;
-    }
-    .toolbar {
-      padding: 12px 32px 0;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      position: relative;
-      z-index: 1;
-    }
-    .result-count {
-      font-size: 13px; /* body — matches chip size */
-      font-weight: 600;
-      color: #90a1b9;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-    .result-count strong {
-      color: #e8e8e8;
-      font-weight: 700;
-    }
+      /* ── Toolbar: Filters button + result count + active filters + sort ── */
+      /* Filters button moved from header to toolbar — closer to the cards it controls */
+      .filters-btn {
+        height: 34px;
+        padding: 0 14px;
+        border: none;
+        background: linear-gradient(90deg, #fe9a00, #e17100);
+        color: #0f172b;
+        font-family: 'Inter', sans-serif;
+        font-size: 13px; /* body */
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        flex-shrink: 0;
+        box-shadow:
+          0px 8px 12px 0px rgba(254, 154, 0, 0.15),
+          0px 3px 5px 0px rgba(254, 154, 0, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: opacity 0.15s;
+      }
+      .filters-btn:hover {
+        opacity: 0.9;
+      }
+      .filter-count-badge {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.3);
+        color: #ffffff;
+        font-size: 10px; /* micro */
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .toolbar-divider {
+        width: 1px;
+        height: 20px;
+        background: #333355;
+        flex-shrink: 0;
+      }
+      .toolbar {
+        padding: 12px 32px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 1;
+      }
+      .result-count {
+        font-size: 13px; /* body — matches chip size */
+        font-weight: 600;
+        color: #90a1b9;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      .result-count strong {
+        color: #e8e8e8;
+        font-weight: 700;
+      }
 
-    /* Active filter chips — dismissible pills showing what's currently filtered */
-    /* CHANGE: Filter state now visible at all times (UX Audit #9) */
-    .active-filters {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      flex: 1;
-    }
-    .active-filter-chip {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 10px 5px 12px;
-      border-radius: 20px;
-      background: rgba(212, 175, 55, 0.10);
-      border: 1px solid rgba(212, 175, 55, 0.25);
-      color: #d4af37;
-      font-size: 13px; /* body — matches card detail filter chips */
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s;
-    }
-    .active-filter-chip:hover {
-      background: rgba(212, 175, 55, 0.18);
-      border-color: rgba(212, 175, 55, 0.4);
-    }
-    .active-filter-x {
-      font-size: 13px;
-      color: #90a1b9;
-      font-weight: 600;
-      line-height: 1;
-    }
-    .active-filter-chip:hover .active-filter-x {
-      color: #e8e8e8;
-    }
-    .clear-all {
-      background: none;
-      border: none;
-      color: #90a1b9;
-      font-family: 'Inter', sans-serif;
-      font-size: 13px; /* body */
-      cursor: pointer;
-      padding: 0;
-      text-decoration: none;
-      transition: color 0.15s;
-    }
-    .clear-all:hover {
-      color: #e8e8e8;
-      text-decoration: underline;
-    }
+      /* Active filter chips — dismissible pills showing what's currently filtered */
+      /* CHANGE: Filter state now visible at all times (UX Audit #9) */
+      .active-filters {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        flex: 1;
+      }
+      .active-filter-chip {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px 5px 12px;
+        border-radius: 20px;
+        background: rgba(212, 175, 55, 0.1);
+        border: 1px solid rgba(212, 175, 55, 0.25);
+        color: #d4af37;
+        font-size: 13px; /* body — matches card detail filter chips */
+        font-weight: 500;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+      }
+      .active-filter-chip:hover {
+        background: rgba(212, 175, 55, 0.18);
+        border-color: rgba(212, 175, 55, 0.4);
+      }
+      .active-filter-x {
+        font-size: 13px;
+        color: #90a1b9;
+        font-weight: 600;
+        line-height: 1;
+      }
+      .active-filter-chip:hover .active-filter-x {
+        color: #e8e8e8;
+      }
+      .clear-all {
+        background: none;
+        border: none;
+        color: #90a1b9;
+        font-family: 'Inter', sans-serif;
+        font-size: 13px; /* body */
+        cursor: pointer;
+        padding: 0;
+        text-decoration: none;
+        transition: color 0.15s;
+      }
+      .clear-all:hover {
+        color: #e8e8e8;
+        text-decoration: underline;
+      }
 
-    /* Sort dropdown */
-    /* CHANGE: New sort control (UX Audit #8) */
-    .sort-select {
-      margin-left: auto;
-      padding: 5px 10px;
-      border-radius: 6px;
-      border: 1px solid #333355;
-      background: #1e1e35;
-      color: #e8e8e8;
-      font-family: 'Inter', sans-serif;
-      font-size: 13px; /* body */
-      cursor: pointer;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .sort-select:hover { border-color: #444466; }
-    .sort-select:focus { border-color: rgba(212, 175, 55, 0.4); }
+      /* Sort dropdown */
+      /* CHANGE: New sort control (UX Audit #8) */
+      .sort-select {
+        margin-left: auto;
+        padding: 5px 10px;
+        border-radius: 6px;
+        border: 1px solid #333355;
+        background: #1e1e35;
+        color: #e8e8e8;
+        font-family: 'Inter', sans-serif;
+        font-size: 13px; /* body */
+        cursor: pointer;
+        outline: none;
+        transition: border-color 0.15s;
+      }
+      .sort-select:hover {
+        border-color: #444466;
+      }
+      .sort-select:focus {
+        border-color: rgba(212, 175, 55, 0.4);
+      }
 
-    /* ── Card Grid (matches BrowseCardGrid.tsx) ── */
-    /* CHANGE: No max-width — full viewport width for catalog density */
-    .card-grid-container {
-      padding: 16px 32px 32px;
-      position: relative;
-      z-index: 1;
-    }
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 12px;
-      list-style: none;
-    }
+      /* ── Card Grid (matches BrowseCardGrid.tsx) ── */
+      /* CHANGE: No max-width — full viewport width for catalog density */
+      .card-grid-container {
+        padding: 16px 32px 32px;
+        position: relative;
+        z-index: 1;
+      }
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 12px;
+        list-style: none;
+      }
 
-    /* Card Tile (matches CardTile.tsx — minimal variant) */
-    .card-tile {
-      position: relative;
-      border-radius: 14px;
-      overflow: hidden;
-      aspect-ratio: 0.72;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 25px 50px -12px rgba(0,0,0,0.5);
-    }
-    .card-tile:hover {
-      transform: scale(1.04) translateY(-3px);
-      box-shadow: 0 0 0 1px rgba(212,175,55,0.3), 0 0 20px rgba(212,175,55,0.12), 0 25px 50px -12px rgba(0,0,0,0.5);
-    }
-    .card-tile-inner {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px; /* micro — placeholder */
-      color: #aaaaaa;
-      letter-spacing: 1px;
-    }
-  </style>
-</head>
-<body>
-  <!-- Ethereal Background -->
-  <div class="bg-container">
-    <div class="glow-orb glow-blue"></div>
-    <div class="glow-orb glow-purple"></div>
-    <div class="glow-orb glow-teal"></div>
-  </div>
-
-  <!-- Compact Header — search only (Filters moved to toolbar) -->
-  <header class="compact-header">
-    <a class="logo-btn" href="home-redesign.html" aria-label="Go to home page">
-      <span class="logo-text">INKWEAVE</span>
-    </a>
-    <div class="header-search">
-      <svg class="header-search-icon" width="16" height="16" viewBox="0 0 20 20" fill="none">
-        <circle cx="9" cy="9" r="6" stroke="#90a1b9" stroke-width="1.5"/>
-        <line x1="13.5" y1="13.5" x2="17" y2="17" stroke="#90a1b9" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-      <input class="header-search-input" type="text" placeholder="Search cards..." aria-label="Search cards">
+      /* Card Tile (matches CardTile.tsx — minimal variant) */
+      .card-tile {
+        position: relative;
+        border-radius: 14px;
+        overflow: hidden;
+        aspect-ratio: 0.72;
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.1),
+          0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      }
+      .card-tile:hover {
+        transform: scale(1.04) translateY(-3px);
+        box-shadow:
+          0 0 0 1px rgba(212, 175, 55, 0.3),
+          0 0 20px rgba(212, 175, 55, 0.12),
+          0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      }
+      .card-tile-inner {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px; /* micro — placeholder */
+        color: #aaaaaa;
+        letter-spacing: 1px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Ethereal Background -->
+    <div class="bg-container">
+      <div class="glow-orb glow-blue"></div>
+      <div class="glow-orb glow-purple"></div>
+      <div class="glow-orb glow-teal"></div>
     </div>
-  </header>
 
-  <main>
-  <!-- Page title (UX Audit #11) -->
-  <h1 class="page-title">Browse Cards</h1>
+    <!-- Compact Header — search only (Filters moved to toolbar) -->
+    <header class="compact-header">
+      <a class="logo-btn" href="home-redesign.html" aria-label="Go to home page">
+        <span class="logo-text">INKWEAVE</span>
+      </a>
+      <div class="header-search">
+        <svg class="header-search-icon" width="16" height="16" viewBox="0 0 20 20" fill="none">
+          <circle cx="9" cy="9" r="6" stroke="#90a1b9" stroke-width="1.5" />
+          <line
+            x1="13.5"
+            y1="13.5"
+            x2="17"
+            y2="17"
+            stroke="#90a1b9"
+            stroke-width="1.5"
+            stroke-linecap="round" />
+        </svg>
+        <input
+          class="header-search-input"
+          type="text"
+          placeholder="Search cards..."
+          aria-label="Search cards" />
+      </div>
+    </header>
 
-  <!-- Toolbar: Filters + count + active chips + sort -->
-  <div class="toolbar">
-    <button class="filters-btn">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-        <path d="M2 4h12M4 8h8M6 12h4" stroke="#0f172b" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-      Filters
-      <span class="filter-count-badge">2</span>
-    </button>
-    <span class="toolbar-divider"></span>
-    <span class="result-count"><strong>142</strong> cards</span>
+    <main>
+      <!-- Page title (UX Audit #11) -->
+      <h1 class="page-title">Browse Cards</h1>
 
-    <div class="active-filters">
-      <button class="active-filter-chip">
-        Amethyst <span class="active-filter-x">×</span>
-      </button>
-      <button class="active-filter-chip">
-        Character <span class="active-filter-x">×</span>
-      </button>
-      <button class="clear-all">Clear all</button>
-    </div>
+      <!-- Toolbar: Filters + count + active chips + sort -->
+      <div class="toolbar">
+        <button class="filters-btn">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M2 4h12M4 8h8M6 12h4"
+              stroke="#0f172b"
+              stroke-width="1.5"
+              stroke-linecap="round" />
+          </svg>
+          Filters
+          <span class="filter-count-badge">2</span>
+        </button>
+        <span class="toolbar-divider"></span>
+        <span class="result-count"><strong>142</strong> cards</span>
 
-    <!-- CHANGE: Sort control (UX Audit #8) -->
-    <select class="sort-select" aria-label="Sort cards">
-      <option>Newest first</option>
-      <option>Name A–Z</option>
-      <option>Name Z–A</option>
-      <option>Cost: Low → High</option>
-      <option>Cost: High → Low</option>
-    </select>
-  </div>
+        <div class="active-filters">
+          <button class="active-filter-chip">
+            Amethyst <span class="active-filter-x">×</span>
+          </button>
+          <button class="active-filter-chip">
+            Character <span class="active-filter-x">×</span>
+          </button>
+          <button class="clear-all">Clear all</button>
+        </div>
 
-  <!-- Card Grid -->
-  <div class="card-grid-container">
-    <ul class="card-grid">
-      <!-- Row 1 — Amethyst characters (filtered) -->
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;" onclick="location.href='card-detail-redesign.html'">
-        <div class="card-tile-inner">Elsa<br>Ice Artisan</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Elsa<br>Snow Queen</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Rapunzel<br>Gifted Artist</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Mirabel<br>Gift or Curse</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Merlin<br>Goat</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Madam Mim<br>Fox</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Ursula<br>Sea Witch</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Genie<br>On the Job</div>
-      </li>
+        <!-- CHANGE: Sort control (UX Audit #8) -->
+        <select class="sort-select" aria-label="Sort cards">
+          <option>Newest first</option>
+          <option>Name A–Z</option>
+          <option>Name Z–A</option>
+          <option>Cost: Low → High</option>
+          <option>Cost: High → Low</option>
+        </select>
+      </div>
 
-      <!-- Row 2 -->
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Maleficent<br>Biding Time</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Jafar<br>Royal Vizier</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Dr. Facilier<br>Charlatan</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Hades<br>Lord of Dead</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Belle<br>Strange Girl</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Pascal<br>Rapunzel's Companion</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Aurora<br>Dreaming Guardian</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Yzma<br>Scary Beyond</div>
-      </li>
+      <!-- Card Grid -->
+      <div class="card-grid-container">
+        <ul class="card-grid">
+          <!-- Row 1 — Amethyst characters (filtered) -->
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            "
+            onclick="location.href = 'card-detail-redesign.html'">
+            <div class="card-tile-inner">Elsa<br />Ice Artisan</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Elsa<br />Snow Queen</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Rapunzel<br />Gifted Artist</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Mirabel<br />Gift or Curse</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Merlin<br />Goat</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Madam Mim<br />Fox</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Ursula<br />Sea Witch</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Genie<br />On the Job</div>
+          </li>
 
-      <!-- Row 3 -->
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Tinker Bell<br>Tiny Tactician</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Fairy Godmother<br>Mystic Armorer</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Mother Gothel<br>Selfish Manipulator</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Cinderella<br>Ballroom Sensation</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Kronk<br>Head Chef</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Cheshire Cat<br>Not All There</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Sisu<br>Divine Water Dragon</div>
-      </li>
-      <li class="card-tile" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;">
-        <div class="card-tile-inner">Meg<br>Pulling the Strings</div>
-      </li>
-    </ul>
-  </div>
-  </main>
-</body>
+          <!-- Row 2 -->
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Maleficent<br />Biding Time</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Jafar<br />Royal Vizier</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Dr. Facilier<br />Charlatan</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Hades<br />Lord of Dead</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Belle<br />Strange Girl</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Pascal<br />Rapunzel's Companion</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Aurora<br />Dreaming Guardian</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Yzma<br />Scary Beyond</div>
+          </li>
+
+          <!-- Row 3 -->
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Tinker Bell<br />Tiny Tactician</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Fairy Godmother<br />Mystic Armorer</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Mother Gothel<br />Selfish Manipulator</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Cinderella<br />Ballroom Sensation</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Kronk<br />Head Chef</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Cheshire Cat<br />Not All There</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Sisu<br />Divine Water Dragon</div>
+          </li>
+          <li
+            class="card-tile"
+            style="
+              background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+              border: 1px solid #8b5cf644;
+            ">
+            <div class="card-tile-inner">Meg<br />Pulling the Strings</div>
+          </li>
+        </ul>
+      </div>
+    </main>
+  </body>
 </html>

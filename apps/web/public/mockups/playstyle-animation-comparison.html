@@ -1,457 +1,527 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Playstyle Card — Animation Comparison</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    /* TYPE SCALE: Major third (~1.25) — 10 → 13 → 16 → 20 + 14px form exception
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Playstyle Card — Animation Comparison</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet" />
+    <style>
+      /* TYPE SCALE: Major third (~1.25) — 10 → 13 → 16 → 20 + 14px form exception
        Display: 20px | Section: 16px | Body: 13px | Micro: 10px | Form: 14px */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-    body {
-      background: #0d0d14;
-      color: #e8e8e8;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
+      body {
+        background: #0d0d14;
+        color: #e8e8e8;
+        font-family:
+          'Inter',
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
 
-    /* ── Comparison Layout ── */
-    .comparison {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 40px 32px 64px;
-    }
-    .comparison-title {
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-align: center;
-      margin-bottom: 8px;
-    }
-    .comparison-subtitle {
-      font-size: 13px;
-      color: #90a1b9;
-      text-align: center;
-      margin-bottom: 40px;
-    }
+      /* ── Comparison Layout ── */
+      .comparison {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 40px 32px 64px;
+      }
+      .comparison-title {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-align: center;
+        margin-bottom: 8px;
+      }
+      .comparison-subtitle {
+        font-size: 13px;
+        color: #90a1b9;
+        text-align: center;
+        margin-bottom: 40px;
+      }
 
-    .comparison-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 40px;
-    }
+      .comparison-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+      }
 
-    .option-column {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
+      .option-column {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
 
-    .option-label {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #d4af37;
-      text-align: center;
-    }
-    .option-desc {
-      font-size: 13px;
-      color: #90a1b9;
-      text-align: center;
-      line-height: 1.5;
-      min-height: 40px;
-    }
+      .option-label {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #d4af37;
+        text-align: center;
+      }
+      .option-desc {
+        font-size: 13px;
+        color: #90a1b9;
+        text-align: center;
+        line-height: 1.5;
+        min-height: 40px;
+      }
 
-    /* ══════════════════════════════════════════════════════
+      /* ══════════════════════════════════════════════════════
        SHARED BASE STYLES (same as playstyle-gallery.html)
        ══════════════════════════════════════════════════════ */
 
-    .playstyle-card {
-      background: #1a1a2e;
-      border: 1px solid #333355;
-      border-radius: 12px;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.3s, border-color 0.3s;
-      position: relative;
-      overflow: hidden;
-    }
-    .playstyle-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 3px;
-      height: 100%;
-      border-radius: 12px 0 0 12px;
-      background: #8b5cf6;
-      z-index: 3;
-    }
+      .playstyle-card {
+        background: #1a1a2e;
+        border: 1px solid #333355;
+        border-radius: 12px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          box-shadow 0.3s,
+          border-color 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+      .playstyle-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 3px;
+        height: 100%;
+        border-radius: 12px 0 0 12px;
+        background: #8b5cf6;
+        z-index: 3;
+      }
 
-    .playstyle-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      position: relative;
-      z-index: 2;
-    }
-    .playstyle-accent-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #8b5cf6;
-      flex-shrink: 0;
-    }
-    .playstyle-name {
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
+      .playstyle-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+        z-index: 2;
+      }
+      .playstyle-accent-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #8b5cf6;
+        flex-shrink: 0;
+      }
+      .playstyle-name {
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
 
-    .playstyle-description {
-      font-size: 13px;
-      line-height: 1.6;
-      color: #c8c8d8;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      flex: 1;
-      position: relative;
-      z-index: 2;
-    }
+      .playstyle-description {
+        font-size: 13px;
+        line-height: 1.6;
+        color: #c8c8d8;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex: 1;
+        position: relative;
+        z-index: 2;
+      }
 
-    .playstyle-preview {
-      display: flex;
-      gap: 8px;
-      position: relative;
-      z-index: 2;
-    }
-    .preview-card {
-      width: 56px;
-      height: 78px;
-      border-radius: 6px;
-      flex-shrink: 0;
-      transition: transform 0.15s;
-    }
-    .preview-card:hover { transform: scale(1.06); }
-    .preview-more {
-      width: 56px;
-      height: 78px;
-      border-radius: 6px;
-      border: 1px dashed #333355;
-      background: transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      color: #90a1b9;
-      font-weight: 600;
-      flex-shrink: 0;
-    }
+      .playstyle-preview {
+        display: flex;
+        gap: 8px;
+        position: relative;
+        z-index: 2;
+      }
+      .preview-card {
+        width: 56px;
+        height: 78px;
+        border-radius: 6px;
+        flex-shrink: 0;
+        transition: transform 0.15s;
+      }
+      .preview-card:hover {
+        transform: scale(1.06);
+      }
+      .preview-more {
+        width: 56px;
+        height: 78px;
+        border-radius: 6px;
+        border: 1px dashed #333355;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: #90a1b9;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
 
-    .playstyle-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-top: 4px;
-      border-top: 1px solid rgba(51, 51, 85, 0.5);
-      position: relative;
-      z-index: 2;
-    }
-    .playstyle-stats {
-      font-size: 13px;
-      color: #90a1b9;
-    }
-    .playstyle-stats strong {
-      color: #e8e8e8;
-      font-weight: 600;
-    }
-    .playstyle-explore {
-      font-size: 13px;
-      font-weight: 600;
-      color: #8b5cf6;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      transition: gap 0.2s;
-    }
-    .playstyle-card:hover .playstyle-explore { gap: 8px; }
+      .playstyle-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 4px;
+        border-top: 1px solid rgba(51, 51, 85, 0.5);
+        position: relative;
+        z-index: 2;
+      }
+      .playstyle-stats {
+        font-size: 13px;
+        color: #90a1b9;
+      }
+      .playstyle-stats strong {
+        color: #e8e8e8;
+        font-weight: 600;
+      }
+      .playstyle-explore {
+        font-size: 13px;
+        font-weight: 600;
+        color: #8b5cf6;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: gap 0.2s;
+      }
+      .playstyle-card:hover .playstyle-explore {
+        gap: 8px;
+      }
 
-
-    /* ══════════════════════════════════════════════════════
+      /* ══════════════════════════════════════════════════════
        OPTION A: CINEMATIC BACKGROUND
        Art as full-card ambient background, Ken Burns on hover
        ══════════════════════════════════════════════════════ */
 
-    /* Art background layer — uses a separate element so we can
+      /* Art background layer — uses a separate element so we can
        transform/filter it independently of card content */
-    .card-option-a .art-bg {
-      position: absolute;
-      /* Oversized so the Ken Burns zoom doesn't reveal edges */
-      inset: -20px;
-      border-radius: 12px;
-      z-index: 1;
+      .card-option-a .art-bg {
+        position: absolute;
+        /* Oversized so the Ken Burns zoom doesn't reveal edges */
+        inset: -20px;
+        border-radius: 12px;
+        z-index: 1;
 
-      background-image: url(art/full.png);
-      background-size: cover;
-      background-position: center;
+        background-image: url(art/full.png);
+        background-size: cover;
+        background-position: center;
 
-      /* Default state: muted, desaturated, dim */
-      opacity: 0.25;
-      filter: saturate(0.2) brightness(0.7);
-      transform: scale(1.0);
-      transition:
-        opacity 0.5s ease,
-        filter 0.6s ease,
-        transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
-    }
+        /* Default state: muted, desaturated, dim */
+        opacity: 0.25;
+        filter: saturate(0.2) brightness(0.7);
+        transform: scale(1);
+        transition:
+          opacity 0.5s ease,
+          filter 0.6s ease,
+          transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
+      }
 
-    .card-option-a:hover .art-bg {
-      opacity: 0.45;
-      filter: saturate(0.7) brightness(0.85);
-      transform: scale(1.1);
-    }
+      .card-option-a:hover .art-bg {
+        opacity: 0.45;
+        filter: saturate(0.7) brightness(0.85);
+        transform: scale(1.1);
+      }
 
-    /* Dark scrim between art and text — guarantees readability
+      /* Dark scrim between art and text — guarantees readability
        even over bright image regions (snow, sky, light clothing) */
-    .card-option-a .art-scrim {
-      position: absolute;
-      inset: 0;
-      border-radius: 12px;
-      z-index: 1;
-      background: linear-gradient(
-        180deg,
-        rgba(26, 26, 46, 0.5) 0%,
-        rgba(26, 26, 46, 0.25) 40%,
-        rgba(26, 26, 46, 0.5) 100%
-      );
-      pointer-events: none;
-    }
+      .card-option-a .art-scrim {
+        position: absolute;
+        inset: 0;
+        border-radius: 12px;
+        z-index: 1;
+        background: linear-gradient(
+          180deg,
+          rgba(26, 26, 46, 0.5) 0%,
+          rgba(26, 26, 46, 0.25) 40%,
+          rgba(26, 26, 46, 0.5) 100%
+        );
+        pointer-events: none;
+      }
 
-    .card-option-a:hover {
-      transform: translateY(-4px);
-      border-color: rgba(139, 92, 246, 0.45);
-      box-shadow:
-        0 16px 40px rgba(0, 0, 0, 0.5),
-        0 0 30px rgba(139, 92, 246, 0.1);
-    }
+      .card-option-a:hover {
+        transform: translateY(-4px);
+        border-color: rgba(139, 92, 246, 0.45);
+        box-shadow:
+          0 16px 40px rgba(0, 0, 0, 0.5),
+          0 0 30px rgba(139, 92, 246, 0.1);
+      }
 
-
-    /* ══════════════════════════════════════════════════════
+      /* ══════════════════════════════════════════════════════
        OPTION B: HERO STRIP WITH SHIMMER
        Art strip between description and preview, light sweep on hover
        ══════════════════════════════════════════════════════ */
 
-    .card-option-b:hover {
-      transform: translateY(-4px);
-      border-color: rgba(139, 92, 246, 0.45);
-      box-shadow:
-        0 16px 40px rgba(0, 0, 0, 0.5),
-        0 0 30px rgba(139, 92, 246, 0.1);
-    }
+      .card-option-b:hover {
+        transform: translateY(-4px);
+        border-color: rgba(139, 92, 246, 0.45);
+        box-shadow:
+          0 16px 40px rgba(0, 0, 0, 0.5),
+          0 0 30px rgba(139, 92, 246, 0.1);
+      }
 
-    .hero-strip {
-      height: 80px;
-      border-radius: 0;
-      position: relative;
-      overflow: hidden;
+      .hero-strip {
+        height: 80px;
+        border-radius: 0;
+        position: relative;
+        overflow: hidden;
 
-      /* Break out of the card's 24px padding to span full width */
-      margin-left: -24px;
-      margin-right: -24px;
+        /* Break out of the card's 24px padding to span full width */
+        margin-left: -24px;
+        margin-right: -24px;
 
-      background-image: url(art/strip.png);
-      background-size: cover;
-      background-position: center;
+        background-image: url(art/strip.png);
+        background-size: cover;
+        background-position: center;
 
-      /* Subtle brightness shift on hover */
-      filter: brightness(0.8);
-      transition: filter 0.4s ease;
-    }
-    .card-option-b:hover .hero-strip {
-      filter: brightness(1.1);
-    }
+        /* Subtle brightness shift on hover */
+        filter: brightness(0.8);
+        transition: filter 0.4s ease;
+      }
+      .card-option-b:hover .hero-strip {
+        filter: brightness(1.1);
+      }
 
-    /* Shimmer sweep — uses JS class toggle to reset animation on each hover */
-    .hero-strip .shimmer-band {
-      position: absolute;
-      top: 0;
-      left: -70%;
-      width: 50%;
-      height: 100%;
-      background: linear-gradient(
-        105deg,
-        transparent 20%,
-        rgba(255, 255, 255, 0.03) 35%,
-        rgba(255, 255, 255, 0.08) 45%,
-        rgba(255, 255, 255, 0.12) 50%,
-        rgba(255, 255, 255, 0.08) 55%,
-        rgba(255, 255, 255, 0.03) 65%,
-        transparent 80%
-      );
-      transform: skewX(-12deg);
-      pointer-events: none;
-    }
-    .hero-strip .shimmer-band.animating {
-      animation: shimmer-sweep 0.7s ease-out forwards;
-    }
+      /* Shimmer sweep — uses JS class toggle to reset animation on each hover */
+      .hero-strip .shimmer-band {
+        position: absolute;
+        top: 0;
+        left: -70%;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(
+          105deg,
+          transparent 20%,
+          rgba(255, 255, 255, 0.03) 35%,
+          rgba(255, 255, 255, 0.08) 45%,
+          rgba(255, 255, 255, 0.12) 50%,
+          rgba(255, 255, 255, 0.08) 55%,
+          rgba(255, 255, 255, 0.03) 65%,
+          transparent 80%
+        );
+        transform: skewX(-12deg);
+        pointer-events: none;
+      }
+      .hero-strip .shimmer-band.animating {
+        animation: shimmer-sweep 0.7s ease-out forwards;
+      }
 
-    @keyframes shimmer-sweep {
-      0% { left: -70%; }
-      100% { left: 160%; }
-    }
+      @keyframes shimmer-sweep {
+        0% {
+          left: -70%;
+        }
+        100% {
+          left: 160%;
+        }
+      }
 
-    /* Subtle inner glow on hover */
-    .hero-strip::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 8px;
-      border: 1px solid rgba(139, 92, 246, 0);
-      box-shadow: inset 0 0 20px rgba(139, 92, 246, 0);
-      transition: border-color 0.4s ease, box-shadow 0.4s ease;
-      z-index: 1;
-      pointer-events: none;
-    }
-    .card-option-b:hover .hero-strip::before {
-      border-color: rgba(139, 92, 246, 0.25);
-      box-shadow: inset 0 0 20px rgba(139, 92, 246, 0.06);
-    }
+      /* Subtle inner glow on hover */
+      .hero-strip::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 8px;
+        border: 1px solid rgba(139, 92, 246, 0);
+        box-shadow: inset 0 0 20px rgba(139, 92, 246, 0);
+        transition:
+          border-color 0.4s ease,
+          box-shadow 0.4s ease;
+        z-index: 1;
+        pointer-events: none;
+      }
+      .card-option-b:hover .hero-strip::before {
+        border-color: rgba(139, 92, 246, 0.25);
+        box-shadow: inset 0 0 20px rgba(139, 92, 246, 0.06);
+      }
 
-
-    /* ══════════════════════════════════════════════════════
+      /* ══════════════════════════════════════════════════════
        ANNOTATIONS
        ══════════════════════════════════════════════════════ */
 
-    .annotation {
-      font-size: 10px;
-      color: #90a1b9;
-      text-align: center;
-      margin-top: 12px;
-      font-style: italic;
-      line-height: 1.5;
-    }
-    .annotation code {
-      background: rgba(139, 92, 246, 0.15);
-      color: #c8c8d8;
-      padding: 1px 5px;
-      border-radius: 3px;
-      font-size: 10px;
-      font-family: 'SF Mono', 'Fira Code', monospace;
-    }
-  </style>
-</head>
-<body>
-  <div class="comparison">
-    <h1 class="comparison-title">Playstyle Card — Animation Comparison</h1>
-    <p class="comparison-subtitle">Hover each card to see the effect. Gradients simulate where real card art would go.</p>
+      .annotation {
+        font-size: 10px;
+        color: #90a1b9;
+        text-align: center;
+        margin-top: 12px;
+        font-style: italic;
+        line-height: 1.5;
+      }
+      .annotation code {
+        background: rgba(139, 92, 246, 0.15);
+        color: #c8c8d8;
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-family: 'SF Mono', 'Fira Code', monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="comparison">
+      <h1 class="comparison-title">Playstyle Card — Animation Comparison</h1>
+      <p class="comparison-subtitle">
+        Hover each card to see the effect. Gradients simulate where real card art would go.
+      </p>
 
-    <div class="comparison-grid">
-
-      <!-- ═══════════ OPTION A: Cinematic Background ═══════════ -->
-      <div class="option-column">
-        <div class="option-label">Option A — Cinematic Background</div>
-        <p class="option-desc">Card art fills entire background. Brightens, saturates, and slow-zooms on hover.</p>
-
-        <article class="playstyle-card card-option-a">
-          <!-- Art background layer (real image in production) -->
-          <div class="art-bg"></div>
-          <!-- Dark scrim to protect text readability over bright art -->
-          <div class="art-scrim"></div>
-
-          <div class="playstyle-header">
-            <span class="playstyle-accent-dot"></span>
-            <h2 class="playstyle-name">Lore Steal</h2>
-          </div>
-          <p class="playstyle-description">
-            Cards that make your opponent lose lore. Stacking these creates a consistent denial
-            strategy that pressures your opponent while you gain lore.
+      <div class="comparison-grid">
+        <!-- ═══════════ OPTION A: Cinematic Background ═══════════ -->
+        <div class="option-column">
+          <div class="option-label">Option A — Cinematic Background</div>
+          <p class="option-desc">
+            Card art fills entire background. Brightens, saturates, and slow-zooms on hover.
           </p>
-          <div class="playstyle-preview">
-            <div class="preview-card" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;"></div>
-            <div class="preview-card" style="background: linear-gradient(145deg, #3d1515, #3d151511); border: 1px solid #ef444444;"></div>
-            <div class="preview-card" style="background: linear-gradient(145deg, #0f2e1f, #0f2e1f11); border: 1px solid #10b98144;"></div>
-            <div class="preview-card" style="background: linear-gradient(145deg, #0f1e3d, #0f1e3d11); border: 1px solid #3b82f644;"></div>
-            <div class="preview-more">+38</div>
-          </div>
-          <div class="playstyle-footer">
-            <span class="playstyle-stats"><strong>42</strong> cards · <strong>1</strong> rule</span>
-            <span class="playstyle-explore">Explore →</span>
-          </div>
-        </article>
 
-        <p class="annotation">
-          In production: <code>background-image: url(art/lore-steal.jpg)</code> on <code>.art-bg</code><br>
-          Hover: opacity 0.25→0.6, saturate 0.2→0.9, scale 1.0→1.1 over 4s
-        </p>
-      </div>
+          <article class="playstyle-card card-option-a">
+            <!-- Art background layer (real image in production) -->
+            <div class="art-bg"></div>
+            <!-- Dark scrim to protect text readability over bright art -->
+            <div class="art-scrim"></div>
 
-      <!-- ═══════════ OPTION B: Hero Strip with Shimmer ═══════════ -->
-      <div class="option-column">
-        <div class="option-label">Option B — Hero Strip + Shimmer</div>
-        <p class="option-desc">Art strip below preview cards, above footer. Shimmer sweeps on every hover.</p>
+            <div class="playstyle-header">
+              <span class="playstyle-accent-dot"></span>
+              <h2 class="playstyle-name">Lore Steal</h2>
+            </div>
+            <p class="playstyle-description">
+              Cards that make your opponent lose lore. Stacking these creates a consistent denial
+              strategy that pressures your opponent while you gain lore.
+            </p>
+            <div class="playstyle-preview">
+              <div
+                class="preview-card"
+                style="
+                  background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+                  border: 1px solid #8b5cf644;
+                "></div>
+              <div
+                class="preview-card"
+                style="
+                  background: linear-gradient(145deg, #3d1515, #3d151511);
+                  border: 1px solid #ef444444;
+                "></div>
+              <div
+                class="preview-card"
+                style="
+                  background: linear-gradient(145deg, #0f2e1f, #0f2e1f11);
+                  border: 1px solid #10b98144;
+                "></div>
+              <div
+                class="preview-card"
+                style="
+                  background: linear-gradient(145deg, #0f1e3d, #0f1e3d11);
+                  border: 1px solid #3b82f644;
+                "></div>
+              <div class="preview-more">+38</div>
+            </div>
+            <div class="playstyle-footer">
+              <span class="playstyle-stats"
+                ><strong>42</strong> cards · <strong>1</strong> rule</span
+              >
+              <span class="playstyle-explore">Explore →</span>
+            </div>
+          </article>
 
-        <article class="playstyle-card card-option-b">
-          <div class="playstyle-header">
-            <span class="playstyle-accent-dot"></span>
-            <h2 class="playstyle-name">Lore Steal</h2>
-          </div>
-          <p class="playstyle-description">
-            Cards that make your opponent lose lore. Stacking these creates a consistent denial
-            strategy that pressures your opponent while you gain lore.
+          <p class="annotation">
+            In production: <code>background-image: url(art/lore-steal.jpg)</code> on
+            <code>.art-bg</code><br />
+            Hover: opacity 0.25→0.6, saturate 0.2→0.9, scale 1.0→1.1 over 4s
           </p>
-          <div class="playstyle-preview">
-            <div class="preview-card" style="background: linear-gradient(145deg, #8b5cf633, #8b5cf611); border: 1px solid #8b5cf644;"></div>
-            <div class="preview-card" style="background: linear-gradient(145deg, #3d1515, #3d151511); border: 1px solid #ef444444;"></div>
-            <div class="preview-card" style="background: linear-gradient(145deg, #0f2e1f, #0f2e1f11); border: 1px solid #10b98144;"></div>
-            <div class="preview-card" style="background: linear-gradient(145deg, #0f1e3d, #0f1e3d11); border: 1px solid #3b82f644;"></div>
-            <div class="preview-more">+38</div>
-          </div>
+        </div>
 
-          <!-- Hero art strip — sits between preview cards and footer -->
-          <div class="hero-strip">
-            <div class="shimmer-band"></div>
-          </div>
+        <!-- ═══════════ OPTION B: Hero Strip with Shimmer ═══════════ -->
+        <div class="option-column">
+          <div class="option-label">Option B — Hero Strip + Shimmer</div>
+          <p class="option-desc">
+            Art strip below preview cards, above footer. Shimmer sweeps on every hover.
+          </p>
 
-          <div class="playstyle-footer">
-            <span class="playstyle-stats"><strong>42</strong> cards · <strong>1</strong> rule</span>
-            <span class="playstyle-explore">Explore →</span>
-          </div>
-        </article>
+          <article class="playstyle-card card-option-b">
+            <div class="playstyle-header">
+              <span class="playstyle-accent-dot"></span>
+              <h2 class="playstyle-name">Lore Steal</h2>
+            </div>
+            <p class="playstyle-description">
+              Cards that make your opponent lose lore. Stacking these creates a consistent denial
+              strategy that pressures your opponent while you gain lore.
+            </p>
+            <div class="playstyle-preview">
+              <div
+                class="preview-card"
+                style="
+                  background: linear-gradient(145deg, #8b5cf633, #8b5cf611);
+                  border: 1px solid #8b5cf644;
+                "></div>
+              <div
+                class="preview-card"
+                style="
+                  background: linear-gradient(145deg, #3d1515, #3d151511);
+                  border: 1px solid #ef444444;
+                "></div>
+              <div
+                class="preview-card"
+                style="
+                  background: linear-gradient(145deg, #0f2e1f, #0f2e1f11);
+                  border: 1px solid #10b98144;
+                "></div>
+              <div
+                class="preview-card"
+                style="
+                  background: linear-gradient(145deg, #0f1e3d, #0f1e3d11);
+                  border: 1px solid #3b82f644;
+                "></div>
+              <div class="preview-more">+38</div>
+            </div>
 
-        <p class="annotation">
-          In production: <code>background-image: url(art/lore-steal-crop.jpg)</code> on <code>.hero-strip</code><br>
-          Hover: brightness 0.8→1.1, shimmer sweeps left→right (0.7s), replays each hover
-        </p>
+            <!-- Hero art strip — sits between preview cards and footer -->
+            <div class="hero-strip">
+              <div class="shimmer-band"></div>
+            </div>
+
+            <div class="playstyle-footer">
+              <span class="playstyle-stats"
+                ><strong>42</strong> cards · <strong>1</strong> rule</span
+              >
+              <span class="playstyle-explore">Explore →</span>
+            </div>
+          </article>
+
+          <p class="annotation">
+            In production: <code>background-image: url(art/lore-steal-crop.jpg)</code> on
+            <code>.hero-strip</code><br />
+            Hover: brightness 0.8→1.1, shimmer sweeps left→right (0.7s), replays each hover
+          </p>
+        </div>
       </div>
-
     </div>
-  </div>
 
-  <script>
-    // Shimmer replay: CSS animations don't restart on re-hover.
-    // Toggle the class off/on to force a fresh animation each time.
-    document.querySelector('.card-option-b').addEventListener('mouseenter', () => {
-      const band = document.querySelector('.shimmer-band');
-      band.classList.remove('animating');
-      // Force reflow so the browser registers the class removal
-      void band.offsetWidth;
-      band.classList.add('animating');
-    });
-    document.querySelector('.card-option-b').addEventListener('mouseleave', () => {
-      document.querySelector('.shimmer-band').classList.remove('animating');
-    });
-  </script>
-</body>
+    <script>
+      // Shimmer replay: CSS animations don't restart on re-hover.
+      // Toggle the class off/on to force a fresh animation each time.
+      document.querySelector('.card-option-b').addEventListener('mouseenter', () => {
+        const band = document.querySelector('.shimmer-band');
+        band.classList.remove('animating');
+        // Force reflow so the browser registers the class removal
+        void band.offsetWidth;
+        band.classList.add('animating');
+      });
+      document.querySelector('.card-option-b').addEventListener('mouseleave', () => {
+        document.querySelector('.shimmer-band').classList.remove('animating');
+      });
+    </script>
+  </body>
 </html>
