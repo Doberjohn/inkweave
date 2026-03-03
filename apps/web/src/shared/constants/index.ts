@@ -1,4 +1,4 @@
-export type {SetCode, CardTypeFilter} from './theme';
+export type {SetCode, CardTypeFilter, BrowseSortOrder} from './theme';
 export {
   APP_NAME,
   INK_COLORS,

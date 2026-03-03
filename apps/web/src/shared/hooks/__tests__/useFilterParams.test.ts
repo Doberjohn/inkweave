@@ -173,6 +173,44 @@ describe('useFilterParams', () => {
     });
   });
 
+  describe('replaceFilters', () => {
+    it('should set all filter params atomically', () => {
+      const {result} = renderHook(() => useFilterParams(), {
+        wrapper: createWrapper(['/']),
+      });
+      act(() =>
+        result.current.replaceFilters(['Amber', 'Ruby'], ['Character'], [3, 5], {
+          keywords: ['Singer'],
+        }),
+      );
+      expect(result.current.inkFilters).toEqual(['Amber', 'Ruby']);
+      expect(result.current.typeFilters).toEqual(['Character']);
+      expect(result.current.costFilters).toEqual([3, 5]);
+      expect(result.current.filters).toEqual({keywords: ['Singer']});
+    });
+
+    it('should clear stale params when replacing with empty values', () => {
+      const {result} = renderHook(() => useFilterParams(), {
+        wrapper: createWrapper(['/?ink=Amber&type=Character&cost=3&keyword=Singer']),
+      });
+      act(() => result.current.replaceFilters([], [], [], {}));
+      expect(result.current.inkFilters).toEqual([]);
+      expect(result.current.typeFilters).toEqual([]);
+      expect(result.current.costFilters).toEqual([]);
+      expect(result.current.filters).toEqual({});
+    });
+
+    it('should preserve search query and sort order', () => {
+      const {result} = renderHook(() => useFilterParams(), {
+        wrapper: createWrapper(['/?q=elsa&sort=name-asc&ink=Ruby']),
+      });
+      act(() => result.current.replaceFilters(['Amber'], [], [], {}));
+      expect(result.current.searchQuery).toBe('elsa');
+      expect(result.current.sortOrder).toBe('name-asc');
+      expect(result.current.inkFilters).toEqual(['Amber']);
+    });
+  });
+
   describe('setFilters', () => {
     it('should set keyword, classification, and set params', () => {
       const {result} = renderHook(() => useFilterParams(), {

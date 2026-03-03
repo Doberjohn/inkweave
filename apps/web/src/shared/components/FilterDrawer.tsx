@@ -1,110 +1,39 @@
-import {useEffect, useCallback, useRef} from 'react';
+import {useCallback, useRef} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
-import type {Ink, SetInfo} from '../../features/cards';
-import type {CardFilterOptions} from '../../features/cards';
-import type {CardTypeFilter} from '../constants';
 import {COLORS, FONT_SIZES, RADIUS, SPACING, Z_INDEX, CTA_BUTTON_STYLE} from '../constants';
+import {useDraftFilters} from '../hooks/useDraftFilters';
+import {useDialogFocus} from '../hooks/useDialogFocus';
 import {FilterContent} from './FilterContent';
-
-interface FilterDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-  inkFilters: Ink[];
-  typeFilters: CardTypeFilter[];
-  costFilters: number[];
-  filters: CardFilterOptions;
-  activeFilterCount: number;
-  uniqueKeywords: string[];
-  uniqueClassifications: string[];
-  sets: SetInfo[];
-  onToggleInk: (ink: Ink) => void;
-  onToggleType: (type: CardTypeFilter) => void;
-  onToggleCost: (cost: number) => void;
-  onFiltersChange: (filters: CardFilterOptions) => void;
-  onClearAll: () => void;
-}
+import type {FilterPanelProps} from './FilterContent';
 
 export function FilterDrawer({
   isOpen,
   onClose,
+  onApply,
   inkFilters,
   typeFilters,
   costFilters,
   filters,
-  activeFilterCount,
   uniqueKeywords,
   uniqueClassifications,
   sets,
-  onToggleInk,
-  onToggleType,
-  onToggleCost,
-  onFiltersChange,
-  onClearAll,
-}: FilterDrawerProps) {
+}: FilterPanelProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const applyButtonRef = useRef<HTMLButtonElement>(null);
-  const previousActiveElement = useRef<HTMLElement | null>(null);
 
-  // Handle Escape key to close
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    },
-    [onClose],
-  );
+  const draft = useDraftFilters({isOpen, inkFilters, typeFilters, costFilters, filters});
 
-  // Focus management: save previous focus, set initial focus, restore on close
-  useEffect(() => {
-    if (isOpen) {
-      previousActiveElement.current = document.activeElement as HTMLElement;
-      // Small delay ensures drawer animation has started and element is focusable
-      const timerId = setTimeout(() => {
-        applyButtonRef.current?.focus();
-      }, 100);
-      return () => {
-        clearTimeout(timerId);
-        const prev = previousActiveElement.current;
-        if (prev && prev.isConnected) {
-          prev.focus();
-        }
-      };
-    }
-  }, [isOpen]);
+  const {handleKeyDown} = useDialogFocus({
+    isOpen,
+    containerRef: drawerRef,
+    initialFocusRef: applyButtonRef,
+    onClose,
+  });
 
-  // Escape key listener (separate effect to avoid spurious focus restore)
-  useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [isOpen, handleKeyDown]);
-
-  // Focus trap: keep focus within drawer
-  const handleDrawerKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key !== 'Tab' || !drawerRef.current) return;
-
-    const focusableElements = drawerRef.current.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-    );
-
-    if (focusableElements.length === 0) {
-      e.preventDefault();
-      return;
-    }
-
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-
-    if (e.shiftKey && document.activeElement === firstElement) {
-      e.preventDefault();
-      lastElement.focus();
-    } else if (!e.shiftKey && document.activeElement === lastElement) {
-      e.preventDefault();
-      firstElement.focus();
-    }
-  };
+  const handleApply = useCallback(() => {
+    onApply(draft.draftInks, draft.draftTypes, draft.draftCosts, draft.draftFilters);
+    onClose();
+  }, [draft.draftInks, draft.draftTypes, draft.draftCosts, draft.draftFilters, onApply, onClose]);
 
   return (
     <AnimatePresence>
@@ -138,7 +67,7 @@ export function FilterDrawer({
             role="dialog"
             aria-modal="true"
             aria-labelledby="filter-drawer-title"
-            onKeyDown={handleDrawerKeyDown}
+            onKeyDown={handleKeyDown}
             style={{
               position: 'fixed',
               bottom: 0,
@@ -182,14 +111,12 @@ export function FilterDrawer({
               <h2
                 id="filter-drawer-title"
                 style={{margin: 0, fontSize: `${FONT_SIZES.xl}px`, fontWeight: 600}}>
-                Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
+                Filters {draft.activeFilterCount > 0 && `(${draft.activeFilterCount})`}
               </h2>
               <div style={{display: 'flex', gap: `${SPACING.md}px`}}>
-                {activeFilterCount > 0 && (
+                {draft.activeFilterCount > 0 && (
                   <button
-                    onClick={() => {
-                      onClearAll();
-                    }}
+                    onClick={draft.clearAll}
                     style={{
                       background: 'none',
                       border: 'none',
@@ -201,7 +128,7 @@ export function FilterDrawer({
                     Clear all
                   </button>
                 )}
-                <button ref={applyButtonRef} onClick={onClose} style={CTA_BUTTON_STYLE}>
+                <button ref={applyButtonRef} onClick={handleApply} style={CTA_BUTTON_STYLE}>
                   Apply
                 </button>
               </div>
@@ -215,17 +142,17 @@ export function FilterDrawer({
                 padding: `${SPACING.lg}px`,
               }}>
               <FilterContent
-                inkFilters={inkFilters}
-                typeFilters={typeFilters}
-                costFilters={costFilters}
-                filters={filters}
+                inkFilters={draft.draftInks}
+                typeFilters={draft.draftTypes}
+                costFilters={draft.draftCosts}
+                filters={draft.draftFilters}
                 uniqueKeywords={uniqueKeywords}
                 uniqueClassifications={uniqueClassifications}
                 sets={sets}
-                onToggleInk={onToggleInk}
-                onToggleType={onToggleType}
-                onToggleCost={onToggleCost}
-                onFiltersChange={onFiltersChange}
+                onToggleInk={draft.toggleInk}
+                onToggleType={draft.toggleType}
+                onToggleCost={draft.toggleCost}
+                onFiltersChange={draft.updateFilters}
                 variant="mobile"
               />
             </div>

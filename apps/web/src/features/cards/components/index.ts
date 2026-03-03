@@ -1,4 +1,5 @@
 export {BrowseCardGrid} from './BrowseCardGrid';
+export {BrowseToolbar} from './BrowseToolbar';
 export {CardList} from './CardList';
 export {CardTile} from './CardTile';
 export {FeaturedCards} from './FeaturedCards';

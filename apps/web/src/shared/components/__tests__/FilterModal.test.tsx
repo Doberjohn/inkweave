@@ -6,11 +6,11 @@ describe('FilterModal', () => {
   const defaultProps = {
     isOpen: true,
     onClose: vi.fn(),
+    onApply: vi.fn(),
     inkFilters: [] as string[],
     typeFilters: [] as string[],
     costFilters: [] as number[],
     filters: {},
-    activeFilterCount: 0,
     uniqueKeywords: ['Singer', 'Evasive', 'Ward'],
     uniqueClassifications: ['Princess', 'Hero', 'Villain'],
     sets: [
@@ -18,11 +18,6 @@ describe('FilterModal', () => {
       {code: '5', name: 'Shimmering Skies', number: 5},
       {code: '10', name: 'Set Ten', number: 10},
     ],
-    onToggleInk: vi.fn(),
-    onToggleType: vi.fn(),
-    onToggleCost: vi.fn(),
-    onFiltersChange: vi.fn(),
-    onClearAll: vi.fn(),
   };
 
   beforeEach(() => {
@@ -61,13 +56,29 @@ describe('FilterModal', () => {
     expect(screen.getByRole('button', {name: /location/i})).toBeInTheDocument();
   });
 
-  it('should call onToggleInk when clicking ink button', () => {
-    const onToggleInk = vi.fn();
-    render(<FilterModal {...defaultProps} onToggleInk={onToggleInk} />);
+  it('should toggle ink in draft state without calling onApply', () => {
+    render(<FilterModal {...defaultProps} />);
 
     fireEvent.click(screen.getByRole('button', {name: /amber/i}));
 
-    expect(onToggleInk).toHaveBeenCalledWith('Amber');
+    // Draft state changes locally — onApply NOT called yet
+    expect(defaultProps.onApply).not.toHaveBeenCalled();
+    // Amber should now be visually active
+    expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('should call onApply with draft state when clicking Apply button', () => {
+    const onApply = vi.fn();
+    render(<FilterModal {...defaultProps} onApply={onApply} />);
+
+    // Toggle some draft filters
+    fireEvent.click(screen.getByRole('button', {name: /amber/i}));
+    fireEvent.click(screen.getByRole('button', {name: /character/i}));
+
+    // Click Apply
+    fireEvent.click(screen.getByRole('button', {name: /apply/i}));
+
+    expect(onApply).toHaveBeenCalledWith(['Amber'], ['Character'], [], {});
   });
 
   it('should call onClose when clicking Apply button', () => {
@@ -79,27 +90,31 @@ describe('FilterModal', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('should call onClose when clicking backdrop', () => {
+  it('should call onClose when clicking backdrop (discards draft)', () => {
     const onClose = vi.fn();
-    render(<FilterModal {...defaultProps} onClose={onClose} />);
+    const onApply = vi.fn();
+    render(<FilterModal {...defaultProps} onClose={onClose} onApply={onApply} />);
 
     const backdrop = screen.getByTestId('filter-modal-backdrop');
     fireEvent.click(backdrop);
 
     expect(onClose).toHaveBeenCalled();
+    expect(onApply).not.toHaveBeenCalled();
   });
 
-  it('should close on Escape key', () => {
+  it('should close on Escape key (discards draft)', () => {
     const onClose = vi.fn();
-    render(<FilterModal {...defaultProps} onClose={onClose} />);
+    const onApply = vi.fn();
+    render(<FilterModal {...defaultProps} onClose={onClose} onApply={onApply} />);
 
     fireEvent.keyDown(document, {key: 'Escape'});
 
     expect(onClose).toHaveBeenCalled();
+    expect(onApply).not.toHaveBeenCalled();
   });
 
-  it('should show Clear all button when filters are active', () => {
-    render(<FilterModal {...defaultProps} inkFilters={['Amber']} activeFilterCount={1} />);
+  it('should show Clear all button when draft filters are active', () => {
+    render(<FilterModal {...defaultProps} inkFilters={['Amber']} />);
 
     expect(screen.getByRole('button', {name: /clear all/i})).toBeInTheDocument();
   });
@@ -110,132 +125,82 @@ describe('FilterModal', () => {
     expect(screen.queryByRole('button', {name: /clear all/i})).not.toBeInTheDocument();
   });
 
-  it('should call onClearAll when clicking Clear all', () => {
-    const onClearAll = vi.fn();
-    render(
-      <FilterModal
-        {...defaultProps}
-        inkFilters={['Amber']}
-        activeFilterCount={1}
-        onClearAll={onClearAll}
-      />,
-    );
+  it('should clear draft state when clicking Clear all', () => {
+    render(<FilterModal {...defaultProps} inkFilters={['Amber']} />);
+
+    // Amber should start as active (from initial props)
+    expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'true');
 
     fireEvent.click(screen.getByRole('button', {name: /clear all/i}));
 
-    expect(onClearAll).toHaveBeenCalled();
+    // After clear, all should be inactive
+    expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('should show active filter count in title', () => {
-    render(
-      <FilterModal
-        {...defaultProps}
-        inkFilters={['Amber']}
-        typeFilters={['Character']}
-        activeFilterCount={2}
-      />,
-    );
+  it('should show active filter count in title from draft state', () => {
+    render(<FilterModal {...defaultProps} inkFilters={['Amber']} typeFilters={['Character']} />);
 
+    // Draft initializes from props: 1 ink + 1 type = 2
     expect(screen.getByText(/filters \(2\)/i)).toBeInTheDocument();
   });
 
-  it('should mark current ink as active', () => {
-    render(<FilterModal {...defaultProps} inkFilters={['Ruby']} activeFilterCount={1} />);
+  it('should mark current ink as active from draft state', () => {
+    render(<FilterModal {...defaultProps} inkFilters={['Ruby']} />);
 
     expect(screen.getByRole('button', {name: /ruby/i})).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('should call onToggleType when selecting card type', () => {
-    const onToggleType = vi.fn();
-    render(<FilterModal {...defaultProps} onToggleType={onToggleType} />);
+  it('should toggle type in draft state', () => {
+    render(<FilterModal {...defaultProps} />);
 
     fireEvent.click(screen.getByRole('button', {name: /character/i}));
 
-    expect(onToggleType).toHaveBeenCalledWith('Character');
-  });
-
-  it('should call onToggleCost when clicking cost button', () => {
-    const onToggleCost = vi.fn();
-    render(<FilterModal {...defaultProps} onToggleCost={onToggleCost} />);
-
-    // Cost buttons are rendered as FilterButtons with CostIcon children
-    const buttons = screen.getAllByRole('button');
-    // Find button containing the cost "3" text
-    const cost3Button = buttons.find(
-      (b) => b.textContent?.includes('3') && !b.textContent?.includes('Filter'),
+    expect(screen.getByRole('button', {name: /character/i})).toHaveAttribute(
+      'aria-pressed',
+      'true',
     );
-    fireEvent.click(cost3Button!);
-
-    expect(onToggleCost).toHaveBeenCalledWith(3);
+    expect(defaultProps.onApply).not.toHaveBeenCalled();
   });
 
-  it('should call onFiltersChange when selecting keyword', () => {
-    const onFiltersChange = vi.fn();
-    render(<FilterModal {...defaultProps} onFiltersChange={onFiltersChange} />);
-
-    const selects = screen.getAllByRole('combobox');
-    const keywordSelect = selects[0]; // First select is keyword
-
-    fireEvent.change(keywordSelect, {target: {value: 'Singer'}});
-
-    expect(onFiltersChange).toHaveBeenCalledWith({keywords: ['Singer']});
-  });
-
-  it('should clear keywords when selecting empty option', () => {
-    const onFiltersChange = vi.fn();
-    render(
-      <FilterModal
-        {...defaultProps}
-        filters={{keywords: ['Singer']}}
-        onFiltersChange={onFiltersChange}
-      />,
-    );
+  it('should update draft keyword via dropdown', () => {
+    const onApply = vi.fn();
+    render(<FilterModal {...defaultProps} onApply={onApply} />);
 
     const selects = screen.getAllByRole('combobox');
     const keywordSelect = selects[0];
+    fireEvent.change(keywordSelect, {target: {value: 'Singer'}});
 
-    fireEvent.change(keywordSelect, {target: {value: ''}});
+    // Apply to capture the draft
+    fireEvent.click(screen.getByRole('button', {name: /apply/i}));
 
-    expect(onFiltersChange).toHaveBeenCalledWith({});
+    expect(onApply).toHaveBeenCalledWith([], [], [], {keywords: ['Singer']});
   });
 
-  it('should call onFiltersChange when selecting classification', () => {
-    const onFiltersChange = vi.fn();
-    render(<FilterModal {...defaultProps} onFiltersChange={onFiltersChange} />);
+  it('should update draft classification via dropdown', () => {
+    const onApply = vi.fn();
+    render(<FilterModal {...defaultProps} onApply={onApply} />);
 
     const selects = screen.getAllByRole('combobox');
-    const classificationSelect = selects[1]; // Second select is classification
-
+    const classificationSelect = selects[1];
     fireEvent.change(classificationSelect, {target: {value: 'Princess'}});
 
-    expect(onFiltersChange).toHaveBeenCalledWith({classifications: ['Princess']});
+    fireEvent.click(screen.getByRole('button', {name: /apply/i}));
+
+    expect(onApply).toHaveBeenCalledWith([], [], [], {classifications: ['Princess']});
   });
 
-  it('should call onFiltersChange when selecting set', () => {
-    const onFiltersChange = vi.fn();
-    render(<FilterModal {...defaultProps} onFiltersChange={onFiltersChange} />);
-
-    const selects = screen.getAllByRole('combobox');
-    const setSelect = selects[2]; // Third select is set
-
-    fireEvent.change(setSelect, {target: {value: '5'}});
-
-    expect(onFiltersChange).toHaveBeenCalledWith({setCode: '5'});
-  });
-
-  it('should clear setCode when selecting empty option', () => {
-    const onFiltersChange = vi.fn();
-    render(
-      <FilterModal {...defaultProps} filters={{setCode: '5'}} onFiltersChange={onFiltersChange} />,
-    );
+  it('should update draft set via dropdown', () => {
+    const onApply = vi.fn();
+    render(<FilterModal {...defaultProps} onApply={onApply} />);
 
     const selects = screen.getAllByRole('combobox');
     const setSelect = selects[2];
+    fireEvent.change(setSelect, {target: {value: '5'}});
 
-    fireEvent.change(setSelect, {target: {value: ''}});
+    fireEvent.click(screen.getByRole('button', {name: /apply/i}));
 
-    expect(onFiltersChange).toHaveBeenCalledWith({});
+    expect(onApply).toHaveBeenCalledWith([], [], [], {setCode: '5'});
   });
 
   it('should show selected keyword value in dropdown', () => {
@@ -247,14 +212,13 @@ describe('FilterModal', () => {
     expect(keywordSelect.value).toBe('Evasive');
   });
 
-  it('should count all active filters correctly', () => {
+  it('should count all active draft filters correctly', () => {
     render(
       <FilterModal
         {...defaultProps}
         inkFilters={['Amber']}
         typeFilters={['Character']}
         costFilters={[2, 5]}
-        activeFilterCount={7}
         filters={{
           keywords: ['Singer'],
           classifications: ['Princess'],
@@ -265,6 +229,40 @@ describe('FilterModal', () => {
 
     // 7 filters: 1 ink + 1 type + 2 costs + keywords, classifications, setCode
     expect(screen.getByText(/filters \(7\)/i)).toBeInTheDocument();
+  });
+
+  describe('Draft reset on reopen', () => {
+    it('should discard draft and reset to committed state when reopened', () => {
+      const {rerender} = render(<FilterModal {...defaultProps} />);
+
+      // Toggle Amber in draft
+      fireEvent.click(screen.getByRole('button', {name: /amber/i}));
+      expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'true');
+
+      // Close without applying (discard)
+      rerender(<FilterModal {...defaultProps} isOpen={false} />);
+
+      // Reopen — draft should reset to committed (empty) state
+      rerender(<FilterModal {...defaultProps} isOpen={true} />);
+      expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'false');
+    });
+
+    it('should preserve committed filters when reopened after apply', () => {
+      const onApply = vi.fn();
+      const {rerender} = render(<FilterModal {...defaultProps} onApply={onApply} />);
+
+      // Toggle Ruby and apply
+      fireEvent.click(screen.getByRole('button', {name: /ruby/i}));
+      fireEvent.click(screen.getByRole('button', {name: /apply/i}));
+
+      // Reopen with committed state reflecting the applied filter
+      rerender(<FilterModal {...defaultProps} isOpen={false} onApply={onApply} />);
+      rerender(
+        <FilterModal {...defaultProps} isOpen={true} inkFilters={['Ruby']} onApply={onApply} />,
+      );
+
+      expect(screen.getByRole('button', {name: /ruby/i})).toHaveAttribute('aria-pressed', 'true');
+    });
   });
 
   describe('Focus management', () => {

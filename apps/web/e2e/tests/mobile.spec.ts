@@ -104,8 +104,8 @@ test.describe('Mobile Viewport', () => {
     await filterButton.click();
     await page.waitForTimeout(200);
 
-    // Filter drawer should be visible with title
-    await expect(page.getByText('Filters', {exact: true})).toBeVisible();
+    // Filter drawer should be visible
+    await expect(page.getByRole('dialog', {name: 'Filters'})).toBeVisible();
 
     // Should show ink filter options
     await expect(page.getByRole('button', {name: 'Filter by Amber'})).toBeVisible();

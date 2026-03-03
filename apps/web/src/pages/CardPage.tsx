@@ -9,7 +9,7 @@ import {
   FilterModal,
   LoadingSpinner,
 } from '../shared/components';
-import {COLORS, FONTS, LAYOUT} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../shared/constants';
 import {useResponsive} from '../shared/hooks';
 import {useFilterParams} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
@@ -32,14 +32,10 @@ export function CardPage() {
     searchQuery,
     setSearchQuery,
     inkFilters,
-    toggleInk,
     typeFilters,
-    toggleType,
     costFilters,
-    toggleCost,
     filters,
-    setFilters,
-    clearAllFilters,
+    replaceFilters,
     activeFilterCount,
   } = useFilterParams();
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -147,8 +143,46 @@ export function CardPage() {
         onSearchChange={setSearchQuery}
         cards={cards}
         onCardSelect={selectCard}
-        onFiltersClick={() => setShowFilterModal(true)}
-        activeFilterCount={activeFilterCount}
+        headerActions={
+          <button
+            onClick={() => setShowFilterModal(true)}
+            aria-label="Filters"
+            style={{
+              height: 36,
+              padding: `0 ${SPACING.lg}px`,
+              borderRadius: `${RADIUS.lg}px`,
+              border: 'none',
+              background: COLORS.filterGradient,
+              color: COLORS.filterText,
+              fontSize: `${FONT_SIZES.base}px`,
+              fontFamily: FONTS.body,
+              fontWeight: 500,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: SPACING.sm,
+              flexShrink: 0,
+              boxShadow: COLORS.filterShadow,
+            }}>
+            Filters
+            {activeFilterCount > 0 && (
+              <span
+                style={{
+                  background: 'rgba(0,0,0,0.2)',
+                  borderRadius: '50%',
+                  width: 20,
+                  height: 20,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: FONT_SIZES.sm,
+                  fontWeight: 600,
+                }}>
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+        }
       />
       <div
         style={{
@@ -178,19 +212,14 @@ export function CardPage() {
       <FilterModal
         isOpen={showFilterModal}
         onClose={() => setShowFilterModal(false)}
+        onApply={replaceFilters}
         inkFilters={inkFilters}
         typeFilters={typeFilters}
         costFilters={costFilters}
         filters={filters}
-        activeFilterCount={activeFilterCount}
         uniqueKeywords={uniqueKeywords}
         uniqueClassifications={uniqueClassifications}
         sets={sets}
-        onToggleInk={toggleInk}
-        onToggleType={toggleType}
-        onToggleCost={toggleCost}
-        onFiltersChange={setFilters}
-        onClearAll={clearAllFilters}
       />
     </main>
   );

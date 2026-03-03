@@ -20,12 +20,13 @@ interface CardListProps {
   uniqueClassifications: string[];
   sets: SetInfo[];
   onSearchChange: (query: string) => void;
-  onToggleInk: (ink: Ink) => void;
-  onToggleType: (type: CardTypeFilter) => void;
-  onToggleCost: (cost: number) => void;
-  onFiltersChange: (filters: CardFilterOptions) => void;
+  onApply: (
+    inks: Ink[],
+    types: CardTypeFilter[],
+    costs: number[],
+    filters: CardFilterOptions,
+  ) => void;
   onCardSelect: (card: LorcanaCard) => void;
-  onClearAll: () => void;
   activeFilterCount: number;
   isMobile?: boolean;
   /** Back button handler for mobile linear flow */
@@ -49,12 +50,8 @@ export function CardList({
   uniqueClassifications,
   sets,
   onSearchChange,
-  onToggleInk,
-  onToggleType,
-  onToggleCost,
-  onFiltersChange,
+  onApply,
   onCardSelect,
-  onClearAll,
   activeFilterCount,
   isMobile = false,
   onBack,
@@ -217,19 +214,14 @@ export function CardList({
             <FilterDrawer
               isOpen={showFilterDrawer}
               onClose={() => setShowFilterDrawer(false)}
+              onApply={onApply}
               inkFilters={inkFilters}
               typeFilters={typeFilters}
               costFilters={costFilters}
               filters={filters}
-              activeFilterCount={activeFilterCount}
               uniqueKeywords={uniqueKeywords}
               uniqueClassifications={uniqueClassifications}
               sets={sets}
-              onToggleInk={onToggleInk}
-              onToggleType={onToggleType}
-              onToggleCost={onToggleCost}
-              onFiltersChange={onFiltersChange}
-              onClearAll={onClearAll}
             />
           </>
         )}
