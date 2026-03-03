@@ -78,12 +78,7 @@ describe('FilterModal', () => {
     // Click Apply
     fireEvent.click(screen.getByRole('button', {name: /apply/i}));
 
-    expect(onApply).toHaveBeenCalledWith(
-      ['Amber'],
-      ['Character'],
-      [],
-      {},
-    );
+    expect(onApply).toHaveBeenCalledWith(['Amber'], ['Character'], [], {});
   });
 
   it('should call onClose when clicking Apply button', () => {
@@ -143,13 +138,7 @@ describe('FilterModal', () => {
   });
 
   it('should show active filter count in title from draft state', () => {
-    render(
-      <FilterModal
-        {...defaultProps}
-        inkFilters={['Amber']}
-        typeFilters={['Character']}
-      />,
-    );
+    render(<FilterModal {...defaultProps} inkFilters={['Amber']} typeFilters={['Character']} />);
 
     // Draft initializes from props: 1 ink + 1 type = 2
     expect(screen.getByText(/filters \(2\)/i)).toBeInTheDocument();
@@ -248,20 +237,14 @@ describe('FilterModal', () => {
 
       // Toggle Amber in draft
       fireEvent.click(screen.getByRole('button', {name: /amber/i}));
-      expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute(
-        'aria-pressed',
-        'true',
-      );
+      expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'true');
 
       // Close without applying (discard)
       rerender(<FilterModal {...defaultProps} isOpen={false} />);
 
       // Reopen — draft should reset to committed (empty) state
       rerender(<FilterModal {...defaultProps} isOpen={true} />);
-      expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute(
-        'aria-pressed',
-        'false',
-      );
+      expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'false');
     });
 
     it('should preserve committed filters when reopened after apply', () => {
@@ -278,10 +261,7 @@ describe('FilterModal', () => {
         <FilterModal {...defaultProps} isOpen={true} inkFilters={['Ruby']} onApply={onApply} />,
       );
 
-      expect(screen.getByRole('button', {name: /ruby/i})).toHaveAttribute(
-        'aria-pressed',
-        'true',
-      );
+      expect(screen.getByRole('button', {name: /ruby/i})).toHaveAttribute('aria-pressed', 'true');
     });
   });
 

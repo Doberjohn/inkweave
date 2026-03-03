@@ -71,8 +71,11 @@ export function useDraftFilters({
       draftInks.length +
       draftTypes.length +
       draftCosts.length +
-      [draftFilters.keywords?.length, draftFilters.classifications?.length, draftFilters.setCode]
-        .filter(Boolean).length,
+      [
+        draftFilters.keywords?.length,
+        draftFilters.classifications?.length,
+        draftFilters.setCode,
+      ].filter(Boolean).length,
     [draftInks, draftTypes, draftCosts, draftFilters],
   );
 

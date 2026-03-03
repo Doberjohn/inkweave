@@ -131,13 +131,7 @@ describe('FilterDrawer', () => {
   });
 
   it('should show active filter count in title from draft state', () => {
-    render(
-      <FilterDrawer
-        {...defaultProps}
-        inkFilters={['Amber']}
-        typeFilters={['Character']}
-      />,
-    );
+    render(<FilterDrawer {...defaultProps} inkFilters={['Amber']} typeFilters={['Character']} />);
 
     expect(screen.getByText(/filters \(2\)/i)).toBeInTheDocument();
   });

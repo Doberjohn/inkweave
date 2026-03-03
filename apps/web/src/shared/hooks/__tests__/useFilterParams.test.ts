@@ -179,12 +179,9 @@ describe('useFilterParams', () => {
         wrapper: createWrapper(['/']),
       });
       act(() =>
-        result.current.replaceFilters(
-          ['Amber', 'Ruby'],
-          ['Character'],
-          [3, 5],
-          {keywords: ['Singer']},
-        ),
+        result.current.replaceFilters(['Amber', 'Ruby'], ['Character'], [3, 5], {
+          keywords: ['Singer'],
+        }),
       );
       expect(result.current.inkFilters).toEqual(['Amber', 'Ruby']);
       expect(result.current.typeFilters).toEqual(['Character']);
