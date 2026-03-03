@@ -33,8 +33,14 @@ export const SynergyCard = memo(function SynergyCard({
       <motion.button
         {...(isMobile ? {} : previewHandlers)}
         onClick={isMobile && card.imageUrl ? () => setLightboxOpen(true) : undefined}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        onMouseEnter={(e) => {
+          setHovered(true);
+          if (!isMobile) previewHandlers.onMouseEnter?.(e);
+        }}
+        onMouseLeave={() => {
+          setHovered(false);
+          if (!isMobile) previewHandlers.onMouseLeave?.();
+        }}
         aria-label={card.fullName || ''}
         whileHover={{scale: 1.04, y: -3}}
         whileTap={{scale: 0.97}}
