@@ -42,12 +42,8 @@ describe('CardList', () => {
       {code: '3', name: 'Into the Inklands', number: 3},
     ],
     onSearchChange: vi.fn(),
-    onToggleInk: vi.fn(),
-    onToggleType: vi.fn(),
-    onToggleCost: vi.fn(),
-    onFiltersChange: vi.fn(),
+    onApply: vi.fn(),
     onCardSelect: vi.fn(),
-    onClearAll: vi.fn(),
     activeFilterCount: 0,
   };
 

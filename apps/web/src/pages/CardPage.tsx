@@ -32,14 +32,10 @@ export function CardPage() {
     searchQuery,
     setSearchQuery,
     inkFilters,
-    toggleInk,
     typeFilters,
-    toggleType,
     costFilters,
-    toggleCost,
     filters,
-    setFilters,
-    clearAllFilters,
+    replaceFilters,
     activeFilterCount,
   } = useFilterParams();
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -216,19 +212,14 @@ export function CardPage() {
       <FilterModal
         isOpen={showFilterModal}
         onClose={() => setShowFilterModal(false)}
+        onApply={replaceFilters}
         inkFilters={inkFilters}
         typeFilters={typeFilters}
         costFilters={costFilters}
         filters={filters}
-        activeFilterCount={activeFilterCount}
         uniqueKeywords={uniqueKeywords}
         uniqueClassifications={uniqueClassifications}
         sets={sets}
-        onToggleInk={toggleInk}
-        onToggleType={toggleType}
-        onToggleCost={toggleCost}
-        onFiltersChange={setFilters}
-        onClearAll={clearAllFilters}
       />
     </main>
   );

@@ -28,6 +28,22 @@ function parseCostParam(raw: string | null): number[] {
   return raw.split(',').filter(isValidCost).map(Number);
 }
 
+/** Set a URL param if the value is non-empty, otherwise delete it. */
+function setOrDelete(params: URLSearchParams, key: string, value: string): void {
+  if (value) params.set(key, value);
+  else params.delete(key);
+}
+
+/** Serialize CardFilterOptions into URL params (keyword, classification, set). */
+function serializeFilterOptions(params: URLSearchParams, opts: CardFilterOptions): void {
+  params.delete('keyword');
+  params.delete('classification');
+  params.delete('set');
+  if (opts.keywords?.length) params.set('keyword', opts.keywords[0]);
+  if (opts.classifications?.length) params.set('classification', opts.classifications[0]);
+  if (opts.setCode) params.set('set', opts.setCode);
+}
+
 /** Parse comma-separated values from a URL param, filtering by validator */
 function parseCommaSeparated<T extends string>(
   raw: string | null,
@@ -48,6 +64,12 @@ export interface UseFilterParamsReturn {
   toggleCost: (cost: number) => void;
   filters: CardFilterOptions;
   setFilters: (filters: CardFilterOptions) => void;
+  replaceFilters: (
+    inks: Ink[],
+    types: CardTypeFilter[],
+    costs: number[],
+    opts: CardFilterOptions,
+  ) => void;
   clearAllFilters: () => void;
   activeFilterCount: number;
   sortOrder: BrowseSortOrder;
@@ -168,16 +190,18 @@ export function useFilterParams(): UseFilterParamsReturn {
 
   const setFilters = useCallback(
     (newFilters: CardFilterOptions) => {
+      updateParams((p) => serializeFilterOptions(p, newFilters));
+    },
+    [updateParams],
+  );
+
+  const replaceFilters = useCallback(
+    (inks: Ink[], types: CardTypeFilter[], costs: number[], opts: CardFilterOptions) => {
       updateParams((p) => {
-        // Clear non-ink/type/cost filter params
-        p.delete('keyword');
-        p.delete('classification');
-        p.delete('set');
-        // Set new values
-        if (newFilters.keywords?.length) p.set('keyword', newFilters.keywords[0]);
-        if (newFilters.classifications?.length)
-          p.set('classification', newFilters.classifications[0]);
-        if (newFilters.setCode) p.set('set', newFilters.setCode);
+        setOrDelete(p, 'ink', inks.join(','));
+        setOrDelete(p, 'type', types.join(','));
+        setOrDelete(p, 'cost', costs.join(','));
+        serializeFilterOptions(p, opts);
       });
     },
     [updateParams],
@@ -208,6 +232,7 @@ export function useFilterParams(): UseFilterParamsReturn {
     toggleCost,
     filters,
     setFilters,
+    replaceFilters,
     clearAllFilters,
     activeFilterCount,
     sortOrder,

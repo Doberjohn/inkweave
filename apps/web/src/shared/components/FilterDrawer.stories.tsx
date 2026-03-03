@@ -11,11 +11,7 @@ const meta: Meta<typeof FilterDrawer> = {
   tags: ['autodocs'],
   args: {
     onClose: fn(),
-    onToggleInk: fn(),
-    onToggleType: fn(),
-    onToggleCost: fn(),
-    onFiltersChange: fn(),
-    onClearAll: fn(),
+    onApply: fn(),
   },
 };
 
@@ -28,7 +24,7 @@ export const Default: Story = {
     inkFilters: [],
     typeFilters: [],
     costFilters: [],
-    activeFilterCount: 0,
+    /* activeFilterCount now computed by useDraftFilters */
     filters: {},
     uniqueKeywords: ['Singer', 'Evasive', 'Ward', 'Bodyguard', 'Challenger', 'Rush'],
     uniqueClassifications: ['Princess', 'Hero', 'Villain', 'Floodborn', 'Storyborn'],
@@ -49,7 +45,7 @@ export const WithActiveFilters: Story = {
     inkFilters: ['Sapphire'],
     typeFilters: ['Character'],
     costFilters: [3, 4, 5, 6],
-    activeFilterCount: 7,
+    /* activeFilterCount now computed by useDraftFilters */
     filters: {
       keywords: ['Singer'],
     },
@@ -69,7 +65,7 @@ export const Closed: Story = {
     inkFilters: [],
     typeFilters: [],
     costFilters: [],
-    activeFilterCount: 0,
+    /* activeFilterCount now computed by useDraftFilters */
     filters: {},
     uniqueKeywords: [],
     uniqueClassifications: [],

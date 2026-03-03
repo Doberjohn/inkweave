@@ -14,6 +14,25 @@ import {FilterButton} from './FilterButton';
 import {FilterSection} from './FilterSection';
 import {InkIcon} from './InkIcon';
 
+/** Shared props for FilterModal (desktop) and FilterDrawer (mobile). */
+export interface FilterPanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onApply: (
+    inks: Ink[],
+    types: CardTypeFilter[],
+    costs: number[],
+    filters: CardFilterOptions,
+  ) => void;
+  inkFilters: Ink[];
+  typeFilters: CardTypeFilter[];
+  costFilters: number[];
+  filters: CardFilterOptions;
+  uniqueKeywords: string[];
+  uniqueClassifications: string[];
+  sets: SetInfo[];
+}
+
 interface FilterContentProps {
   inkFilters: Ink[];
   typeFilters: CardTypeFilter[];
