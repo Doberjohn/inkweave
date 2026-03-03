@@ -39,14 +39,9 @@ jobs:
       - name: Run Lighthouse CI
         id: lhci
         run: |
-          OUTPUT=$(pnpm exec lhci autorun 2>&1) || true
-          echo "$OUTPUT"
+          pnpm exec lhci autorun 2>&1 | tee /tmp/lhci-output.txt || true
           LHCI_DIR=$(find "$GITHUB_WORKSPACE" -type d -name .lighthouseci | head -1)
           echo "lhci_dir=$LHCI_DIR" >> "$GITHUB_OUTPUT"
-          # Extract uploaded report URLs from LHCI output
-          echo "report_urls<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$OUTPUT" | grep -oP 'https://storage\.googleapis\.com/\S+' || true
-          echo "EOF" >> "$GITHUB_OUTPUT"
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
@@ -63,8 +58,16 @@ jobs:
             const files = fs.readdirSync(lhciDir).filter(f => f.startsWith('lhr-') && f.endsWith('.json'));
             const runs = files.map(f => JSON.parse(fs.readFileSync(path.join(lhciDir, f), 'utf8')));
 
-            // Parse uploaded report URLs from LHCI output
-            const reportUrls = `${{ steps.lhci.outputs.report_urls }}`.trim().split('\n').filter(Boolean);
+            // Parse report URL mapping from LHCI output
+            // Format: "Uploading median LHR of http://...success!" then "Open the report at https://..."
+            const lhciOutput = fs.readFileSync('/tmp/lhci-output.txt', 'utf8');
+            const reportMap = {};
+            const re = /Uploading median LHR of (http\S+?)\.{3}[\s\S]*?Open the report at (\S+)/g;
+            let match;
+            while ((match = re.exec(lhciOutput)) !== null) {
+              const p = new URL(match[1]).pathname;
+              reportMap[p === '/' ? '/' : p] = match[2];
+            }
 
             // Group runs by URL path
             const urlMap = new Map();
@@ -83,7 +86,6 @@ jobs:
             const pct = (score) => Math.round(score * 100);
 
             let rows = '';
-            let urlIndex = 0;
             for (const [urlPath, lhrs] of urlMap) {
               // Pick median by performance score
               const sorted = lhrs.sort((a, b) =>
@@ -96,8 +98,7 @@ jobs:
               const bp = lhr.categories['best-practices'].score;
               const seo = lhr.categories.seo.score;
 
-              const reportUrl = reportUrls[urlIndex] || '';
-              urlIndex++;
+              const reportUrl = reportMap[urlPath] || '';
               const urlCell = reportUrl ? `[${urlPath}](${reportUrl})` : `\`${urlPath}\``;
 
               rows += `| ${urlCell} | ${emoji(perf)} ${pct(perf)} | ${emoji(a11y)} ${pct(a11y)} | ${emoji(bp)} ${pct(bp)} | ${emoji(seo)} ${pct(seo)} |\n`;
