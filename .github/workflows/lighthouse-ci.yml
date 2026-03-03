@@ -34,9 +34,14 @@ jobs:
       - name: Run Lighthouse CI
         id: lhci
         run: |
-          pnpm exec lhci autorun
+          OUTPUT=$(pnpm exec lhci autorun 2>&1) || true
+          echo "$OUTPUT"
           LHCI_DIR=$(find "$GITHUB_WORKSPACE" -type d -name .lighthouseci | head -1)
           echo "lhci_dir=$LHCI_DIR" >> "$GITHUB_OUTPUT"
+          # Extract uploaded report URLs from LHCI output
+          echo "report_urls<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$OUTPUT" | grep -oP 'https://storage\.googleapis\.com/\S+' || true
+          echo "EOF" >> "$GITHUB_OUTPUT"
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
@@ -46,22 +51,23 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const path = require('path');
             const lhciDir = '${{ steps.lhci.outputs.lhci_dir }}';
-            const manifest = JSON.parse(fs.readFileSync(`${lhciDir}/manifest.json`, 'utf8'));
 
-            // Load uploaded report links (URL -> storage URL)
-            let links = {};
-            try {
-              links = JSON.parse(fs.readFileSync(`${lhciDir}/links.json`, 'utf8'));
-            } catch {}
+            // Read all LHR JSON files from .lighthouseci/
+            const files = fs.readdirSync(lhciDir).filter(f => f.startsWith('lhr-') && f.endsWith('.json'));
+            const runs = files.map(f => JSON.parse(fs.readFileSync(path.join(lhciDir, f), 'utf8')));
+
+            // Parse uploaded report URLs from LHCI output
+            const reportUrls = `${{ steps.lhci.outputs.report_urls }}`.trim().split('\n').filter(Boolean);
 
             // Group runs by URL path
             const urlMap = new Map();
-            for (const entry of manifest) {
-              const url = new URL(entry.url);
-              const path = url.pathname === '/' ? '/' : url.pathname;
-              if (!urlMap.has(path)) urlMap.set(path, []);
-              urlMap.get(path).push(entry);
+            for (const lhr of runs) {
+              const url = new URL(lhr.requestedUrl || lhr.finalUrl);
+              const p = url.pathname === '/' ? '/' : url.pathname;
+              if (!urlMap.has(p)) urlMap.set(p, []);
+              urlMap.get(p).push(lhr);
             }
 
             const emoji = (score) => {
@@ -72,29 +78,27 @@ jobs:
             const pct = (score) => Math.round(score * 100);
 
             let rows = '';
-            for (const [path, entries] of urlMap) {
-              // Pick the median run by performance score
-              const sorted = entries.sort((a, b) => {
-                const sa = JSON.parse(fs.readFileSync(a.jsonPath, 'utf8'));
-                const sb = JSON.parse(fs.readFileSync(b.jsonPath, 'utf8'));
-                return sa.categories.performance.score - sb.categories.performance.score;
-              });
-              const entry = sorted[Math.floor(sorted.length / 2)];
-              const lhr = JSON.parse(fs.readFileSync(entry.jsonPath, 'utf8'));
+            let urlIndex = 0;
+            for (const [urlPath, lhrs] of urlMap) {
+              // Pick median by performance score
+              const sorted = lhrs.sort((a, b) =>
+                a.categories.performance.score - b.categories.performance.score
+              );
+              const lhr = sorted[Math.floor(sorted.length / 2)];
 
               const perf = lhr.categories.performance.score;
               const a11y = lhr.categories.accessibility.score;
               const bp = lhr.categories['best-practices'].score;
               const seo = lhr.categories.seo.score;
 
-              // Find uploaded report URL from links.json
-              const reportUrl = links[entry.url] || '';
-              const urlCell = reportUrl ? `[${path}](${reportUrl})` : `\`${path}\``;
+              const reportUrl = reportUrls[urlIndex] || '';
+              urlIndex++;
+              const urlCell = reportUrl ? `[${urlPath}](${reportUrl})` : `\`${urlPath}\``;
 
               rows += `| ${urlCell} | ${emoji(perf)} ${pct(perf)} | ${emoji(a11y)} ${pct(a11y)} | ${emoji(bp)} ${pct(bp)} | ${emoji(seo)} ${pct(seo)} |\n`;
             }
 
-            const runsPerUrl = manifest.length / urlMap.size;
+            const runsPerUrl = runs.length / urlMap.size;
             const body = [
               '### ⚡ Lighthouse Results',
               '',
