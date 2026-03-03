@@ -17,6 +17,12 @@ interface SynergyResultsProps {
   activeGroupFilter?: string | null;
   /** Callback when group filter changes — required when activeGroupFilter is controlled */
   onGroupFilterChange?: (groupKey: string | null) => void;
+  /** When set, render single-group expanded view instead of multi-group list */
+  expandedGroup?: string | null;
+  /** Called when user clicks "+N more" tile on a group */
+  onShowAll?: (groupKey: string) => void;
+  /** Called when user clicks "← Back to all synergies" in expanded view */
+  onBackToAll?: () => void;
 }
 
 type SortOrder =
@@ -63,11 +69,19 @@ export const SynergyResults = memo(function SynergyResults({
   showCardDetail,
   activeGroupFilter: controlledFilter,
   onGroupFilterChange,
+  expandedGroup,
+  onShowAll,
+  onBackToAll,
 }: SynergyResultsProps) {
   // Default: show card detail on mobile, hide on desktop (it's in its own panel)
   const renderCardDetail = showCardDetail ?? isMobile;
   const [internalFilter, setInternalFilter] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('strength-desc');
+
+  // Find the expanded group data when in show-all mode
+  const expandedGroupData = expandedGroup
+    ? synergies.find((g) => g.groupKey === expandedGroup)
+    : null;
 
   // Support both controlled (from CardPage) and uncontrolled (standalone) modes
   const activeGroupFilter = controlledFilter !== undefined ? controlledFilter : internalFilter;
@@ -116,6 +130,80 @@ export const SynergyResults = memo(function SynergyResults({
           title="Select a card to see synergies"
           subtitle='Try "Elsa" or filter by Amethyst'
         />
+      ) : expandedGroupData ? (
+        <div>
+          {/* Back navigation */}
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              onBackToAll?.();
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: COLORS.textMuted,
+              textDecoration: 'none',
+              fontFamily: FONTS.body,
+              fontSize: `${FONT_SIZES.base}px`,
+              fontWeight: 500,
+              padding: 0,
+              marginBottom: `${SPACING.lg}px`,
+              transition: 'color 0.15s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = COLORS.primary500)}
+            onMouseLeave={(e) => (e.currentTarget.style.color = COLORS.textMuted)}>
+            <span style={{fontSize: `${FONT_SIZES.base}px`}}>&larr;</span>
+            Back to all synergies
+          </a>
+
+          {/* Group title */}
+          <h2
+            style={{
+              fontSize: `${FONT_SIZES.xl}px`,
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              margin: 0,
+              marginBottom: `${SPACING.sm}px`,
+              color: COLORS.text,
+            }}>
+            {expandedGroupData.label}
+          </h2>
+
+          {/* Description callout */}
+          <div
+            style={{
+              margin: `${SPACING.sm}px 0 ${SPACING.lg}px`,
+              padding: `${SPACING.sm}px ${SPACING.md}px`,
+              background: COLORS.calloutBg,
+              borderLeft: `3px solid ${COLORS.primary}`,
+              borderRadius: `0 ${RADIUS.sm}px ${RADIUS.sm}px 0`,
+            }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: `${FONT_SIZES.base}px`,
+                color: COLORS.descriptionText,
+                lineHeight: 1.5,
+              }}>
+              {expandedGroupData.description}
+            </p>
+          </div>
+
+          {/* Full card grid — no truncation, header hidden (rendered above) */}
+          <SynergyGroup
+            group={expandedGroupData}
+            isMobile={isMobile}
+            maxVisibleCards={Infinity}
+            showHeader={false}
+            cardMinWidth={180}
+          />
+        </div>
       ) : (
         <>
           {renderCardDetail && <CardDetail card={selectedCard} onClear={onClearSelection} />}
@@ -237,6 +325,7 @@ export const SynergyResults = memo(function SynergyResults({
                   group={group}
                   isMobile={isMobile}
                   maxVisibleCards={isMobile ? 5 : 6}
+                  onShowAll={onShowAll}
                 />
               ))}
             </>

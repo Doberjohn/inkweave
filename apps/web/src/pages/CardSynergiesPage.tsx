@@ -1,5 +1,5 @@
 import {useCallback, useMemo} from 'react';
-import {useParams, useNavigate, Navigate} from 'react-router-dom';
+import {useParams, useNavigate, useSearchParams, Navigate} from 'react-router-dom';
 import {SynergyResults} from '../features/synergies';
 import {sharedEngine} from '../features/synergies/engine';
 import {ErrorBoundary, LoadingSpinner} from '../shared/components';
@@ -23,8 +23,11 @@ const centeredPage = {
 export function CardSynergiesPage() {
   const {cardId} = useParams<{cardId: string}>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const {isMobile} = useResponsive();
   const {cards, isLoading, getCardById} = useCardDataContext();
+
+  const expandedGroup = searchParams.get('group');
 
   const selectedCard = cardId ? (getCardById(cardId) ?? null) : null;
 
@@ -47,6 +50,17 @@ export function CardSynergiesPage() {
     if (cardId) navigate(`/card/${cardId}`);
     else navigate('/');
   }, [cardId, navigate]);
+
+  const handleShowAll = useCallback(
+    (groupKey: string) => {
+      setSearchParams({group: groupKey}, {replace: true});
+    },
+    [setSearchParams],
+  );
+
+  const handleBackToAll = useCallback(() => {
+    setSearchParams({}, {replace: true});
+  }, [setSearchParams]);
 
   // On desktop, this route isn't needed — redirect to card page
   if (!isMobile && !isLoading && selectedCard) {
@@ -133,6 +147,9 @@ export function CardSynergiesPage() {
           onClearSelection={goBack}
           isMobile
           showCardDetail={false}
+          expandedGroup={expandedGroup}
+          onShowAll={handleShowAll}
+          onBackToAll={handleBackToAll}
         />
       </ErrorBoundary>
     </main>

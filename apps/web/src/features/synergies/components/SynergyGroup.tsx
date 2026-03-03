@@ -8,6 +8,10 @@ interface SynergyGroupProps {
   isMobile?: boolean;
   maxVisibleCards?: number;
   onShowAll?: (groupKey: string) => void;
+  /** When false, hides the group header and description (used in show-all expanded view). Default: true */
+  showHeader?: boolean;
+  /** Minimum card width for desktop grid. Default: LAYOUT.synergyCardMinWidth (160px) */
+  cardMinWidth?: number;
 }
 
 export const SynergyGroup = memo(function SynergyGroup({
@@ -15,55 +19,67 @@ export const SynergyGroup = memo(function SynergyGroup({
   isMobile = false,
   maxVisibleCards = 6,
   onShowAll,
+  showHeader = true,
+  cardMinWidth,
 }: SynergyGroupProps) {
+  const totalCount = group.synergies.length;
+  const visibleCount = Math.min(maxVisibleCards, totalCount);
+  const isTruncated = visibleCount < totalCount;
+
   return (
     <div data-group-key={group.groupKey} style={{marginBottom: `${SPACING.xl}px`}}>
-      {/* Group header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          fontSize: `${FONT_SIZES.base}px`,
-          fontWeight: 600,
-          color: COLORS.text,
-          marginBottom: `${SPACING.sm}px`,
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-        }}>
-        <h3 style={{margin: 0, fontSize: 'inherit', fontWeight: 'inherit'}}>{group.label}</h3>
-        <span
-          style={{
-            marginLeft: 'auto',
-            fontSize: `${FONT_SIZES.base}px`,
-            color: COLORS.textMuted,
-            fontWeight: 400,
-            textTransform: 'none',
-            letterSpacing: 0,
-          }}>
-          {group.synergies.length} card{group.synergies.length !== 1 ? 's' : ''}
-        </span>
-      </div>
+      {showHeader && (
+        <>
+          {/* Group header */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: `${FONT_SIZES.base}px`,
+              fontWeight: 600,
+              color: COLORS.text,
+              marginBottom: `${SPACING.sm}px`,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}>
+            <h3 style={{margin: 0, fontSize: 'inherit', fontWeight: 'inherit'}}>{group.label}</h3>
+            <span
+              style={{
+                marginLeft: 'auto',
+                fontSize: `${FONT_SIZES.base}px`,
+                color: COLORS.textMuted,
+                fontWeight: 400,
+                textTransform: 'none',
+                letterSpacing: 0,
+              }}>
+              {isTruncated
+                ? `${visibleCount} of ${totalCount} cards`
+                : `${totalCount} card${totalCount !== 1 ? 's' : ''}`}
+            </span>
+          </div>
 
-      {/* Group description callout */}
-      <div
-        style={{
-          margin: `${SPACING.sm}px 0 ${SPACING.lg}px`,
-          padding: `${SPACING.sm}px ${SPACING.md}px`,
-          background: COLORS.calloutBg,
-          borderLeft: `3px solid ${COLORS.primary}`,
-          borderRadius: `0 ${RADIUS.sm}px ${RADIUS.sm}px 0`,
-        }}>
-        <p
-          style={{
-            margin: 0,
-            fontSize: `${FONT_SIZES.base}px`,
-            color: COLORS.descriptionText,
-            lineHeight: 1.5,
-          }}>
-          {group.description}
-        </p>
-      </div>
+          {/* Group description callout */}
+          <div
+            style={{
+              margin: `${SPACING.sm}px 0 ${SPACING.lg}px`,
+              padding: `${SPACING.sm}px ${SPACING.md}px`,
+              background: COLORS.calloutBg,
+              borderLeft: `3px solid ${COLORS.primary}`,
+              borderRadius: `0 ${RADIUS.sm}px ${RADIUS.sm}px 0`,
+            }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: `${FONT_SIZES.base}px`,
+                color: COLORS.descriptionText,
+                lineHeight: 1.5,
+              }}>
+              {group.description}
+            </p>
+          </div>
+        </>
+      )}
 
       {/* Card grid */}
       <SynergyCardList
@@ -72,6 +88,7 @@ export const SynergyGroup = memo(function SynergyGroup({
         maxVisibleCards={maxVisibleCards}
         groupKey={group.groupKey}
         onShowAll={onShowAll}
+        cardMinWidth={cardMinWidth}
       />
     </div>
   );
@@ -132,6 +149,7 @@ interface SynergyCardListProps {
   maxVisibleCards: number;
   groupKey: string;
   onShowAll?: (groupKey: string) => void;
+  cardMinWidth?: number;
 }
 
 const SynergyCardList = memo(function SynergyCardList({
@@ -140,6 +158,7 @@ const SynergyCardList = memo(function SynergyCardList({
   maxVisibleCards,
   groupKey,
   onShowAll,
+  cardMinWidth = LAYOUT.synergyCardMinWidth,
 }: SynergyCardListProps) {
   const visible = synergies.slice(0, maxVisibleCards);
   const remaining = synergies.length - visible.length;
@@ -150,7 +169,7 @@ const SynergyCardList = memo(function SynergyCardList({
         display: 'grid',
         gridTemplateColumns: isMobile
           ? 'repeat(3, 1fr)'
-          : `repeat(auto-fill, minmax(${LAYOUT.synergyCardMinWidth}px, 1fr))`,
+          : `repeat(auto-fill, minmax(${cardMinWidth}px, 1fr))`,
         gap: '10px',
         listStyle: 'none',
         padding: 0,

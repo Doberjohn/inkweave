@@ -1,4 +1,4 @@
-import {useState, useMemo} from 'react';
+import {useCallback, useState, useMemo} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {getDominantScore, getStrengthTier} from '../utils';
@@ -45,11 +45,26 @@ export function MobileCardDetail({
 }: MobileCardDetailProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
   const filteredGroups = useMemo(() => {
     if (!activeGroupFilter) return synergies;
     return synergies.filter((g) => g.groupKey === activeGroupFilter);
   }, [synergies, activeGroupFilter]);
+
+  const expandedGroupData = expandedGroup
+    ? synergies.find((g) => g.groupKey === expandedGroup)
+    : null;
+
+  const handleShowAll = useCallback((groupKey: string) => {
+    setExpandedGroup(groupKey);
+    setActiveGroupFilter(groupKey);
+  }, []);
+
+  const handleBackToAll = useCallback(() => {
+    setExpandedGroup(null);
+    setActiveGroupFilter(null);
+  }, []);
 
   return (
     <main
@@ -248,8 +263,83 @@ export function MobileCardDetail({
           </div>
         )}
 
-        {/* Synergy section divider */}
-        {synergies.length > 0 && (
+        {/* Synergy section */}
+        {synergies.length > 0 && expandedGroupData ? (
+          /* Show-all expanded view for a single group */
+          <div style={{marginTop: SPACING.lg}}>
+            {/* Back navigation */}
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                handleBackToAll();
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: COLORS.textMuted,
+                textDecoration: 'none',
+                fontFamily: FONTS.body,
+                fontSize: `${FONT_SIZES.base}px`,
+                fontWeight: 500,
+                padding: 0,
+                marginBottom: `${SPACING.lg}px`,
+                transition: 'color 0.15s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = COLORS.primary500)}
+              onMouseLeave={(e) => (e.currentTarget.style.color = COLORS.textMuted)}>
+              <span style={{fontSize: `${FONT_SIZES.base}px`}}>&larr;</span>
+              Back to all synergies
+            </a>
+
+            {/* Group title */}
+            <h2
+              style={{
+                fontSize: `${FONT_SIZES.xl}px`,
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                margin: 0,
+                marginBottom: `${SPACING.sm}px`,
+                color: COLORS.text,
+              }}>
+              {expandedGroupData.label}
+            </h2>
+
+            {/* Description callout */}
+            <div
+              style={{
+                margin: `${SPACING.sm}px 0 ${SPACING.lg}px`,
+                padding: `${SPACING.sm}px ${SPACING.md}px`,
+                background: COLORS.calloutBg,
+                borderLeft: `3px solid ${COLORS.primary}`,
+                borderRadius: `0 ${RADIUS.sm}px ${RADIUS.sm}px 0`,
+              }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: `${FONT_SIZES.base}px`,
+                  color: COLORS.descriptionText,
+                  lineHeight: 1.5,
+                }}>
+                {expandedGroupData.description}
+              </p>
+            </div>
+
+            {/* Full card grid — no truncation, header hidden (rendered above) */}
+            <SynergyGroup
+              group={expandedGroupData}
+              isMobile
+              maxVisibleCards={Infinity}
+              showHeader={false}
+              cardMinWidth={180}
+            />
+          </div>
+        ) : synergies.length > 0 ? (
           <>
             <div
               style={{
@@ -312,10 +402,16 @@ export function MobileCardDetail({
 
             {/* Synergy groups */}
             {filteredGroups.map((group) => (
-              <SynergyGroup key={group.groupKey} group={group} isMobile maxVisibleCards={5} />
+              <SynergyGroup
+                key={group.groupKey}
+                group={group}
+                isMobile
+                maxVisibleCards={5}
+                onShowAll={handleShowAll}
+              />
             ))}
           </>
-        )}
+        ) : null}
 
         {/* Empty state */}
         {synergies.length === 0 && (

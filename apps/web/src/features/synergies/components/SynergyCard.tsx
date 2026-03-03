@@ -44,7 +44,7 @@ export const SynergyCard = memo(function SynergyCard({
           borderRadius: `${RADIUS.lg}px`,
           border: `1px solid ${colors.border}40`,
           background: COLORS.surface,
-          cursor: 'default',
+          cursor: 'pointer',
           overflow: 'hidden',
           aspectRatio: '0.72',
           padding: 0,

@@ -142,13 +142,10 @@ export const CardDetailPanel = memo(function CardDetailPanel({
                     cursor: 'pointer',
                     transition: 'background 0.15s',
                     background: isActive
-                      ? 'rgba(212, 175, 55, 0.12)'
+                      ? 'rgba(212, 175, 55, 0.1)'
                       : isHovered
                         ? 'rgba(212, 175, 55, 0.08)'
                         : 'transparent',
-                    border: isActive
-                      ? '1px solid rgba(212, 175, 55, 0.3)'
-                      : '1px solid transparent',
                   }}>
                   {/* Count circle */}
                   <div
@@ -187,7 +184,7 @@ export const CardDetailPanel = memo(function CardDetailPanel({
                   <span
                     style={{
                       fontSize: `${FONT_SIZES.xs}px`,
-                      color: isHovered ? COLORS.primary500 : COLORS.textMuted,
+                      color: isActive || isHovered ? COLORS.primary500 : COLORS.textMuted,
                       transition: 'color 0.15s',
                     }}>
                     &rarr;

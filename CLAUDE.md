@@ -161,6 +161,9 @@ After pushing, always confirm with clear output (e.g., git log showing commit on
 - **Never override tool output with memory.** When presenting data from tool results (gh issue list, git log, API responses, etc.), use the actual tool output verbatim. Do not "correct" or reformat it based on memory or prior context — memory can be stale or wrong.
 - **Never take action on assumptions.** If the user states a fact (e.g., "X doesn't have label Y"), do not assume they want it changed. Ask before modifying.
 
+### Communication
+- **Never silently skip work.** If you decide not to implement something the user asked for (e.g., because the plan marks it as out of scope, or it belongs to a different issue), explicitly tell the user what you're skipping and why. Do not silently ignore mockup elements, requested features, or differences the user asked you to find.
+
 ### Implementation Approach
 - Before editing code or implementing changes, validate assumptions against real data first (e.g., test regex against actual card data, verify existing state)
 - Do not jump to implementation until the user confirms the approach

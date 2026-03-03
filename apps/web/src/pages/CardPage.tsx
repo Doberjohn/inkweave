@@ -6,12 +6,10 @@ import {
   CompactHeader,
   ErrorBoundary,
   EtherealBackground,
-  FilterModal,
   LoadingSpinner,
 } from '../shared/components';
-import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../shared/constants';
+import {COLORS, FONTS, LAYOUT} from '../shared/constants';
 import {useResponsive} from '../shared/hooks';
-import {useFilterParams} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 
 const centeredPage = {
@@ -26,20 +24,10 @@ export function CardPage() {
   const {cardId} = useParams<{cardId: string}>();
   const navigate = useNavigate();
   const {isMobile} = useResponsive();
-  const {cards, isLoading, getCardById, uniqueKeywords, uniqueClassifications, sets} =
-    useCardDataContext();
-  const {
-    searchQuery,
-    setSearchQuery,
-    inkFilters,
-    typeFilters,
-    costFilters,
-    filters,
-    replaceFilters,
-    activeFilterCount,
-  } = useFilterParams();
-  const [showFilterModal, setShowFilterModal] = useState(false);
+  const {cards, isLoading, getCardById} = useCardDataContext();
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
   const selectedCard = cardId ? (getCardById(cardId) ?? null) : null;
 
@@ -62,21 +50,37 @@ export function CardPage() {
   const selectCard = useCallback((card: {id: string}) => navigate(`/card/${card.id}`), [navigate]);
   const handleGroupClick = useCallback(
     (groupKey: string) => {
-      // Toggle: clicking the active group clears the filter (same as chips)
-      const newFilter = activeGroupFilter === groupKey ? null : groupKey;
-      setActiveGroupFilter(newFilter);
+      if (expandedGroup) {
+        // In show-all mode: clicking a breakdown row switches to that group
+        setExpandedGroup(groupKey);
+        setActiveGroupFilter(groupKey);
+      } else {
+        // Normal mode: toggle filter (same as chips)
+        const newFilter = activeGroupFilter === groupKey ? null : groupKey;
+        setActiveGroupFilter(newFilter);
 
-      // Scroll to the group after filter applies
-      if (newFilter) {
-        requestAnimationFrame(() => {
-          document
-            .querySelector(`[data-group-key="${newFilter}"]`)
-            ?.scrollIntoView({behavior: 'smooth', block: 'start'});
-        });
+        // Scroll to the group after filter applies
+        if (newFilter) {
+          requestAnimationFrame(() => {
+            document
+              .querySelector(`[data-group-key="${newFilter}"]`)
+              ?.scrollIntoView({behavior: 'smooth', block: 'start'});
+          });
+        }
       }
     },
-    [activeGroupFilter],
+    [activeGroupFilter, expandedGroup],
   );
+
+  const handleShowAll = useCallback((groupKey: string) => {
+    setExpandedGroup(groupKey);
+    setActiveGroupFilter(groupKey);
+  }, []);
+
+  const handleBackToAll = useCallback(() => {
+    setExpandedGroup(null);
+    setActiveGroupFilter(null);
+  }, []);
 
   if (isLoading) {
     return (
@@ -143,46 +147,6 @@ export function CardPage() {
         onSearchChange={setSearchQuery}
         cards={cards}
         onCardSelect={selectCard}
-        headerActions={
-          <button
-            onClick={() => setShowFilterModal(true)}
-            aria-label="Filters"
-            style={{
-              height: 36,
-              padding: `0 ${SPACING.lg}px`,
-              borderRadius: `${RADIUS.lg}px`,
-              border: 'none',
-              background: COLORS.filterGradient,
-              color: COLORS.filterText,
-              fontSize: `${FONT_SIZES.base}px`,
-              fontFamily: FONTS.body,
-              fontWeight: 500,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: SPACING.sm,
-              flexShrink: 0,
-              boxShadow: COLORS.filterShadow,
-            }}>
-            Filters
-            {activeFilterCount > 0 && (
-              <span
-                style={{
-                  background: 'rgba(0,0,0,0.2)',
-                  borderRadius: '50%',
-                  width: 20,
-                  height: 20,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: FONT_SIZES.sm,
-                  fontWeight: 600,
-                }}>
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-        }
       />
       <div
         style={{
@@ -206,21 +170,12 @@ export function CardPage() {
             onClearSelection={goHome}
             activeGroupFilter={activeGroupFilter}
             onGroupFilterChange={setActiveGroupFilter}
+            expandedGroup={expandedGroup}
+            onShowAll={handleShowAll}
+            onBackToAll={handleBackToAll}
           />
         </ErrorBoundary>
       </div>
-      <FilterModal
-        isOpen={showFilterModal}
-        onClose={() => setShowFilterModal(false)}
-        onApply={replaceFilters}
-        inkFilters={inkFilters}
-        typeFilters={typeFilters}
-        costFilters={costFilters}
-        filters={filters}
-        uniqueKeywords={uniqueKeywords}
-        uniqueClassifications={uniqueClassifications}
-        sets={sets}
-      />
     </main>
   );
 }
