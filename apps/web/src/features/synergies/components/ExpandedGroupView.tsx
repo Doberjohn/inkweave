@@ -128,13 +128,29 @@ export function ExpandedGroupView({group, isMobile = false, onBackToAll}: Expand
       />
 
       {/* Full card grid — no truncation */}
-      <SynergyGroup
-        group={filteredGroup}
-        isMobile={isMobile}
-        maxVisibleCards={Infinity}
-        showHeader={false}
-        cardMinWidth={180}
-      />
+      {filteredSynergies.length === 0 && filterState !== EMPTY_SYNERGY_FILTERS ? (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            textAlign: 'center',
+            padding: `${SPACING.xxl * 2}px`,
+            color: COLORS.gray400,
+          }}>
+          <p style={{fontSize: `${FONT_SIZES.lg}px`}}>No cards match your filters.</p>
+          <p style={{fontSize: `${FONT_SIZES.base}px`, marginTop: `${SPACING.sm}px`}}>
+            Try adjusting or clearing your filters.
+          </p>
+        </div>
+      ) : (
+        <SynergyGroup
+          group={filteredGroup}
+          isMobile={isMobile}
+          maxVisibleCards={Infinity}
+          showHeader={false}
+          cardMinWidth={180}
+        />
+      )}
     </div>
   );
 }

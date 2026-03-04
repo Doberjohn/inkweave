@@ -5,8 +5,8 @@ import type {SynergyMatchDisplay} from '../types';
 import {getStrengthTier} from './scoreUtils';
 import type {StrengthTierLabel} from './scoreUtils';
 
-/** Strength tier labels used for filtering synergy results. */
-export type StrengthTierFilter = 'Strong' | 'Moderate' | 'Weak';
+/** Strength tier labels used for filtering synergy results (Build-around folds into Strong). */
+export type StrengthTierFilter = Exclude<StrengthTierLabel, 'Build-around'>;
 
 /** Exhaustive mapping from display tier to filter tier. Compiler-checked — adding a new tier forces an update. */
 const TIER_TO_FILTER: Record<StrengthTierLabel, StrengthTierFilter> = {
@@ -25,13 +25,14 @@ export interface SynergyFilterState {
   strengthFilters: StrengthTierFilter[];
 }
 
-export const EMPTY_SYNERGY_FILTERS: SynergyFilterState = {
-  inkFilters: [],
-  typeFilters: [],
-  costFilters: [],
-  filters: {},
-  strengthFilters: [],
-};
+/** Default empty filter state. Frozen to prevent accidental mutation of the shared reference. */
+export const EMPTY_SYNERGY_FILTERS: SynergyFilterState = Object.freeze({
+  inkFilters: [] as Ink[],
+  typeFilters: [] as CardTypeFilter[],
+  costFilters: [] as number[],
+  filters: {} as CardFilterOptions,
+  strengthFilters: [] as StrengthTierFilter[],
+});
 
 /**
  * Check whether a synergy score falls into any of the selected strength tiers.
@@ -88,17 +89,17 @@ export function filterSynergyCards(
     // Strength tier
     if (strengthFilters.length > 0 && !matchesStrengthFilter(score, strengthFilters)) return false;
 
-    // Keyword: first selected only (case-insensitive substring)
+    // Keyword: single-select (filter modal provides at most one keyword)
     if (filters.keywords?.length) {
       const kw = filters.keywords[0].toLowerCase();
-      const hasKeyword = card.keywords?.some((k) => k.toLowerCase().includes(kw));
+      const hasKeyword = card.keywords?.some((k) => k?.toLowerCase().includes(kw));
       if (!hasKeyword) return false;
     }
 
-    // Classification: first selected only (case-insensitive exact match)
+    // Classification: single-select (filter modal provides at most one classification)
     if (filters.classifications?.length) {
       const cls = filters.classifications[0].toLowerCase();
-      const hasClass = card.classifications?.some((c) => c.toLowerCase() === cls);
+      const hasClass = card.classifications?.some((c) => c?.toLowerCase() === cls);
       if (!hasClass) return false;
     }
 

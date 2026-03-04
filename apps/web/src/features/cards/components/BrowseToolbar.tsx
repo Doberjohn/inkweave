@@ -4,7 +4,7 @@ import type {CardFilterOptions} from '../loader';
 import type {CardTypeFilter, BrowseSortOrder} from '../../../shared/constants';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
 import {FilterIcon} from '../../../shared/components/FilterIcon';
-import type {ChipData} from '../../../shared/types/chip';
+import type {ChipData} from '../../../shared/types';
 
 interface BrowseToolbarProps {
   resultCount: number;
@@ -51,22 +51,27 @@ export function BrowseToolbar({
 
   // Build active filter chips from all filter sources
   const chips: ChipData[] = [];
-  for (const ink of inkFilters) chips.push({label: ink, onDismiss: () => onToggleInk(ink)});
-  for (const type of typeFilters) chips.push({label: type, onDismiss: () => onToggleType(type)});
+  for (const ink of inkFilters)
+    chips.push({id: `ink:${ink}`, label: ink, onDismiss: () => onToggleInk(ink)});
+  for (const type of typeFilters)
+    chips.push({id: `type:${type}`, label: type, onDismiss: () => onToggleType(type)});
   for (const cost of costFilters)
-    chips.push({label: `Cost ${cost}`, onDismiss: () => onToggleCost(cost)});
+    chips.push({id: `cost:${cost}`, label: `Cost ${cost}`, onDismiss: () => onToggleCost(cost)});
   if (filters.keywords?.length)
     chips.push({
+      id: `keyword:${filters.keywords[0]}`,
       label: filters.keywords[0],
       onDismiss: () => onFiltersChange({...filters, keywords: undefined}),
     });
   if (filters.classifications?.length)
     chips.push({
+      id: `classification:${filters.classifications[0]}`,
       label: filters.classifications[0],
       onDismiss: () => onFiltersChange({...filters, classifications: undefined}),
     });
   if (filters.setCode)
     chips.push({
+      id: `set:${filters.setCode}`,
       label: `Set ${filters.setCode}`,
       onDismiss: () => onFiltersChange({...filters, setCode: undefined}),
     });
@@ -180,12 +185,12 @@ export function BrowseToolbar({
             ...(isMobile ? {flexBasis: '100%'} : {flex: 1}),
           }}>
           {chips.map((chip) => {
-            const isHovered = hoveredChip === chip.label;
+            const isHovered = hoveredChip === chip.id;
             return (
               <button
-                key={chip.label}
+                key={chip.id}
                 onClick={chip.onDismiss}
-                onMouseEnter={() => setHoveredChip(chip.label)}
+                onMouseEnter={() => setHoveredChip(chip.id)}
                 onMouseLeave={() => setHoveredChip(null)}
                 style={{
                   display: 'flex',

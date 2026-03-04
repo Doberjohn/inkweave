@@ -1,4 +1,5 @@
 import {useState, useCallback, useMemo} from 'react';
+import type {SetStateAction} from 'react';
 import type {Ink} from 'lorcana-synergy-engine';
 import type {SetInfo} from '../../cards';
 import type {CardFilterOptions} from '../../cards/loader';
@@ -9,17 +10,17 @@ import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/consta
 import {FilterModal} from '../../../shared/components/FilterModal';
 import {FilterDrawer} from '../../../shared/components/FilterDrawer';
 import {FilterIcon} from '../../../shared/components/FilterIcon';
-import type {ChipData} from '../../../shared/types/chip';
+import type {ChipData} from '../../../shared/types';
 
 /** Sort orders for synergy cards in expanded view. */
 export type SynergySortOrder = 'strength-desc' | 'strength-asc' | 'name-asc' | 'name-desc';
 
-const SORT_OPTIONS: {value: SynergySortOrder; label: string}[] = [
+const SORT_OPTIONS = [
   {value: 'strength-desc', label: 'Score: High \u2192 Low'},
   {value: 'strength-asc', label: 'Score: Low \u2192 High'},
   {value: 'name-asc', label: 'Name A\u2013Z'},
   {value: 'name-desc', label: 'Name Z\u2013A'},
-];
+] satisfies {value: SynergySortOrder; label: string}[];
 
 interface SynergyToolbarProps {
   /** Current filter state */
@@ -28,8 +29,8 @@ interface SynergyToolbarProps {
   resultCount: number;
   /** Total cards in the group (before filtering) */
   totalCount: number;
-  /** Callbacks for filter changes */
-  onFilterChange: (state: SynergyFilterState) => void;
+  /** Callbacks for filter changes — supports functional updater to avoid stale closures */
+  onFilterChange: (update: SetStateAction<SynergyFilterState>) => void;
   /** Sort state */
   sortOrder: SynergySortOrder;
   onSortChange: (order: SynergySortOrder) => void;
@@ -76,66 +77,85 @@ export function SynergyToolbar({
   );
 
   // Build chip list from active filters (strength excluded — it has its own toggle row)
+  // Uses functional updaters in onDismiss to avoid stale closure bugs under rapid interaction.
   const chips: ChipData[] = useMemo(() => {
     const result: ChipData[] = [];
     for (const ink of inkFilters) {
       result.push({
+        id: `ink:${ink}`,
         label: ink,
         onDismiss: () =>
-          onFilterChange({...filterState, inkFilters: inkFilters.filter((i) => i !== ink)}),
+          onFilterChange((prev) => ({
+            ...prev,
+            inkFilters: prev.inkFilters.filter((i) => i !== ink),
+          })),
       });
     }
     for (const type of typeFilters) {
       result.push({
+        id: `type:${type}`,
         label: type,
         onDismiss: () =>
-          onFilterChange({...filterState, typeFilters: typeFilters.filter((t) => t !== type)}),
+          onFilterChange((prev) => ({
+            ...prev,
+            typeFilters: prev.typeFilters.filter((t) => t !== type),
+          })),
       });
     }
     for (const cost of costFilters) {
       result.push({
+        id: `cost:${cost}`,
         label: `Cost ${cost}`,
         onDismiss: () =>
-          onFilterChange({...filterState, costFilters: costFilters.filter((c) => c !== cost)}),
+          onFilterChange((prev) => ({
+            ...prev,
+            costFilters: prev.costFilters.filter((c) => c !== cost),
+          })),
       });
     }
     if (filters.keywords?.length) {
       result.push({
+        id: `keyword:${filters.keywords[0]}`,
         label: filters.keywords[0],
         onDismiss: () =>
-          onFilterChange({...filterState, filters: {...filters, keywords: undefined}}),
+          onFilterChange((prev) => ({...prev, filters: {...prev.filters, keywords: undefined}})),
       });
     }
     if (filters.classifications?.length) {
       result.push({
+        id: `classification:${filters.classifications[0]}`,
         label: filters.classifications[0],
         onDismiss: () =>
-          onFilterChange({...filterState, filters: {...filters, classifications: undefined}}),
+          onFilterChange((prev) => ({
+            ...prev,
+            filters: {...prev.filters, classifications: undefined},
+          })),
       });
     }
     if (filters.setCode) {
       result.push({
+        id: `set:${filters.setCode}`,
         label: `Set ${filters.setCode}`,
         onDismiss: () =>
-          onFilterChange({...filterState, filters: {...filters, setCode: undefined}}),
+          onFilterChange((prev) => ({...prev, filters: {...prev.filters, setCode: undefined}})),
       });
     }
     return result;
-  }, [filterState, inkFilters, typeFilters, costFilters, filters, onFilterChange]);
+  }, [inkFilters, typeFilters, costFilters, filters, onFilterChange]);
 
   const hasChips = chips.length > 0;
 
   const handleApplyFilters = useCallback(
     (inks: Ink[], types: CardTypeFilter[], costs: number[], opts: CardFilterOptions) => {
-      onFilterChange({
-        ...filterState,
+      onFilterChange((prev) => ({
+        ...prev,
         inkFilters: inks,
         typeFilters: types,
         costFilters: costs,
         filters: opts,
-      });
+      }));
     },
-    [filterState, onFilterChange],
+    [onFilterChange],
   );
 
   const handleClearAll = useCallback(() => {
@@ -152,10 +172,12 @@ export function SynergyToolbar({
   const toggleStrength = useCallback(
     (tier: StrengthTierFilter) => {
       // Single-select: clicking the active tier deselects, clicking another switches
-      const next = strengthFilters.includes(tier) ? [] : [tier];
-      onFilterChange({...filterState, strengthFilters: next});
+      onFilterChange((prev) => ({
+        ...prev,
+        strengthFilters: prev.strengthFilters.includes(tier) ? [] : [tier],
+      }));
     },
-    [filterState, strengthFilters, onFilterChange],
+    [onFilterChange],
   );
 
   const sortBorderColor = sortFocus
@@ -291,12 +313,12 @@ export function SynergyToolbar({
               ...(isMobile ? {flexBasis: '100%'} : {flex: 1}),
             }}>
             {chips.map((chip) => {
-              const isHovered = hoveredChip === chip.label;
+              const isHovered = hoveredChip === chip.id;
               return (
                 <button
-                  key={chip.label}
+                  key={chip.id}
                   onClick={chip.onDismiss}
-                  onMouseEnter={() => setHoveredChip(chip.label)}
+                  onMouseEnter={() => setHoveredChip(chip.id)}
                   onMouseLeave={() => setHoveredChip(null)}
                   style={{
                     display: 'flex',

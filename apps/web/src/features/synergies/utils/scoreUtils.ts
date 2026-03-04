@@ -27,5 +27,6 @@ export function getStrengthTier(score: number): StrengthTier {
  * Used to assign a single score to groups containing mixed scores.
  */
 export function getDominantScore(synergies: SynergyMatchDisplay[]): number {
+  if (synergies.length === 0) return 0;
   return Math.max(...synergies.map((s) => s.score));
 }
