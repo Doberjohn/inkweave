@@ -11,6 +11,7 @@ interface SynergyCardProps {
   score: number;
   explanation: string;
   isMobile?: boolean;
+  onCardClick?: (card: LorcanaCard) => void;
 }
 
 export const SynergyCard = memo(function SynergyCard({
@@ -18,6 +19,7 @@ export const SynergyCard = memo(function SynergyCard({
   score,
   explanation,
   isMobile = false,
+  onCardClick,
 }: SynergyCardProps) {
   const tier = getStrengthTier(score);
   const colors = INK_COLORS[card.ink];
@@ -32,7 +34,13 @@ export const SynergyCard = memo(function SynergyCard({
     <div>
       {/* Card tile with strength badge overlay */}
       <motion.button
-        onClick={isMobile && card.imageUrl ? () => setLightboxOpen(true) : undefined}
+        onClick={() => {
+          if (onCardClick) {
+            onCardClick(card);
+          } else if (isMobile && card.imageUrl) {
+            setLightboxOpen(true);
+          }
+        }}
         onMouseEnter={(e) => {
           setHovered(true);
           if (!isMobile) handleMouseEnter(e);

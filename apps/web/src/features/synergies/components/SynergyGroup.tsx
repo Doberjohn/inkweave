@@ -1,4 +1,5 @@
 import {useState, memo} from 'react';
+import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData, SynergyMatchDisplay} from '../types';
 import {SynergyCard} from './SynergyCard';
 import {COLORS, FONT_SIZES, LAYOUT, SPACING, RADIUS} from '../../../shared/constants';
@@ -12,6 +13,7 @@ interface SynergyGroupProps {
   showHeader?: boolean;
   /** Minimum card width for desktop grid. Default: LAYOUT.synergyCardMinWidth (160px) */
   cardMinWidth?: number;
+  onCardClick?: (card: LorcanaCard) => void;
 }
 
 export const SynergyGroup = memo(function SynergyGroup({
@@ -21,6 +23,7 @@ export const SynergyGroup = memo(function SynergyGroup({
   onShowAll,
   showHeader = true,
   cardMinWidth,
+  onCardClick,
 }: SynergyGroupProps) {
   const totalCount = group.synergies.length;
   const visibleCount = Math.min(maxVisibleCards, totalCount);
@@ -89,6 +92,7 @@ export const SynergyGroup = memo(function SynergyGroup({
         groupKey={group.groupKey}
         onShowAll={onShowAll}
         cardMinWidth={cardMinWidth}
+        onCardClick={onCardClick}
       />
     </div>
   );
@@ -150,6 +154,7 @@ interface SynergyCardListProps {
   groupKey: string;
   onShowAll?: (groupKey: string) => void;
   cardMinWidth?: number;
+  onCardClick?: (card: LorcanaCard) => void;
 }
 
 const SynergyCardList = memo(function SynergyCardList({
@@ -159,6 +164,7 @@ const SynergyCardList = memo(function SynergyCardList({
   groupKey,
   onShowAll,
   cardMinWidth = LAYOUT.synergyCardMinWidth,
+  onCardClick,
 }: SynergyCardListProps) {
   const visible = synergies.slice(0, maxVisibleCards);
   const remaining = synergies.length - visible.length;
@@ -182,6 +188,7 @@ const SynergyCardList = memo(function SynergyCardList({
             score={synergy.score}
             explanation={synergy.explanation}
             isMobile={isMobile}
+            onCardClick={onCardClick}
           />
         </li>
       ))}

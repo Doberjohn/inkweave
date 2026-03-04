@@ -12,6 +12,7 @@ interface MobileCardDetailProps {
   synergies: SynergyGroupData[];
   totalSynergyCount: number;
   onBack: () => void;
+  onSynergyCardClick?: (card: LorcanaCard) => void;
 }
 
 /** Mobile-only card detail view with inline synergy groups. */
@@ -20,6 +21,7 @@ export function MobileCardDetail({
   synergies,
   totalSynergyCount,
   onBack,
+  onSynergyCardClick,
 }: MobileCardDetailProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
@@ -244,7 +246,12 @@ export function MobileCardDetail({
         {/* Synergy section */}
         {synergies.length > 0 && expandedGroupData ? (
           <div style={{marginTop: SPACING.lg}}>
-            <ExpandedGroupView group={expandedGroupData} isMobile onBackToAll={handleBackToAll} />
+            <ExpandedGroupView
+              group={expandedGroupData}
+              isMobile
+              onBackToAll={handleBackToAll}
+              onCardClick={onSynergyCardClick}
+            />
           </div>
         ) : synergies.length > 0 ? (
           <>
@@ -315,6 +322,7 @@ export function MobileCardDetail({
                 isMobile
                 maxVisibleCards={5}
                 onShowAll={handleShowAll}
+                onCardClick={onSynergyCardClick}
               />
             ))}
           </>

@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
 import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
@@ -7,10 +8,16 @@ interface ExpandedGroupViewProps {
   group: SynergyGroupData;
   isMobile?: boolean;
   onBackToAll: () => void;
+  onCardClick?: (card: LorcanaCard) => void;
 }
 
 /** Shared expanded view for a single synergy group — back link, title, description, full card grid. */
-export function ExpandedGroupView({group, isMobile = false, onBackToAll}: ExpandedGroupViewProps) {
+export function ExpandedGroupView({
+  group,
+  isMobile = false,
+  onBackToAll,
+  onCardClick,
+}: ExpandedGroupViewProps) {
   const [backHovered, setBackHovered] = useState(false);
 
   return (
@@ -80,6 +87,7 @@ export function ExpandedGroupView({group, isMobile = false, onBackToAll}: Expand
         maxVisibleCards={Infinity}
         showHeader={false}
         cardMinWidth={180}
+        onCardClick={onCardClick}
       />
     </div>
   );

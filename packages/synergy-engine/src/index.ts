@@ -13,6 +13,8 @@ export type {
   SynergyMatch,
   SynergyMatchDisplay,
   SynergyGroup,
+  PairSynergyConnection,
+  DetailedPairSynergy,
 } from './types';
 
 // Engine

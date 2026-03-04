@@ -1,4 +1,11 @@
-import type {LorcanaCard, SynergyCategory, SynergyGroup, SynergyRule} from '../types';
+import type {
+  LorcanaCard,
+  SynergyCategory,
+  SynergyGroup,
+  SynergyRule,
+  PairSynergyConnection,
+  DetailedPairSynergy,
+} from '../types';
 import {getAllRules} from './rules.js';
 import {getPlaystyleById} from './playstyles.js';
 
@@ -7,6 +14,12 @@ const CATEGORY_ORDER: Record<SynergyCategory, number> = {
   direct: 0,
   playstyle: 1,
 };
+
+/** Aggregate pair score: max of all connection scores (avoids inflation). */
+function computeAggregateScore(connections: PairSynergyConnection[]): number {
+  if (connections.length === 0) return 0;
+  return Math.max(...connections.map((c) => c.score));
+}
 
 export interface SynergyEngineOptions {
   rules?: SynergyRule[];
@@ -192,6 +205,46 @@ export class SynergyEngine {
       hasSynergy: synergies.length > 0,
       synergies,
     };
+  }
+
+  /**
+   * Get a detailed breakdown of all synergy connections between two specific cards.
+   * Runs rules bidirectionally and deduplicates by ruleId (keeps highest score).
+   */
+  getPairSynergies(cardA: LorcanaCard, cardB: LorcanaCard): DetailedPairSynergy {
+    const connectionMap = new Map<string, PairSynergyConnection>();
+
+    const collectConnections = (source: LorcanaCard, target: LorcanaCard) => {
+      for (const rule of this.rules) {
+        if (!rule.matches(source)) continue;
+        const matches = rule.findSynergies(source, [target]);
+        for (const match of matches) {
+          const existing = connectionMap.get(rule.id);
+          if (!existing || match.score > existing.score) {
+            const base = {
+              ruleId: rule.id,
+              ruleName: rule.name,
+              score: match.score,
+              explanation: match.explanation,
+            };
+            connectionMap.set(
+              rule.id,
+              rule.category === 'playstyle'
+                ? {...base, category: 'playstyle' as const, playstyleId: rule.playstyleId}
+                : {...base, category: 'direct' as const},
+            );
+          }
+        }
+      }
+    };
+
+    collectConnections(cardA, cardB);
+    collectConnections(cardB, cardA);
+
+    const connections = Array.from(connectionMap.values()).sort((a, b) => b.score - a.score);
+    const aggregateScore = computeAggregateScore(connections);
+
+    return {cardA, cardB, connections, aggregateScore};
   }
 
   /**

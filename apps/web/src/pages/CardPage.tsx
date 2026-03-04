@@ -1,7 +1,13 @@
 import {useCallback, useMemo, useState} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
-import {SynergyResults, CardDetailPanel, MobileCardDetail} from '../features/synergies';
+import {
+  SynergyResults,
+  CardDetailPanel,
+  MobileCardDetail,
+  SynergyDetailModal,
+} from '../features/synergies';
 import {sharedEngine} from '../features/synergies/engine';
+import type {DetailedPairSynergy, LorcanaCard} from 'lorcana-synergy-engine';
 import {
   CompactHeader,
   ErrorBoundary,
@@ -28,6 +34,9 @@ export function CardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [detailPair, setDetailPair] = useState<DetailedPairSynergy | null>(null);
+  // Keeps last non-null pair so exit animation can render stale data while fading out
+  const [lastPair, setLastPair] = useState<DetailedPairSynergy | null>(null);
   const [prevCardId, setPrevCardId] = useState(cardId);
 
   const selectedCard = cardId ? (getCardById(cardId) ?? null) : null;
@@ -37,6 +46,7 @@ export function CardPage() {
     setPrevCardId(cardId);
     setActiveGroupFilter(null);
     setExpandedGroup(null);
+    setDetailPair(null);
   }
 
   const synergies = useMemo(() => {
@@ -90,6 +100,33 @@ export function CardPage() {
     setActiveGroupFilter(null);
   }, []);
 
+  const handleSynergyCardClick = useCallback(
+    (clickedCard: LorcanaCard) => {
+      if (!selectedCard) return;
+      try {
+        const pair = sharedEngine.getPairSynergies(selectedCard, clickedCard);
+        if (pair.connections.length === 0) return;
+        setDetailPair(pair);
+        setLastPair(pair);
+      } catch (err) {
+        console.error(
+          `Pair synergy computation failed for ${selectedCard.id} + ${clickedCard.id}:`,
+          err,
+        );
+      }
+    },
+    [selectedCard],
+  );
+
+  const handleCloseDetail = useCallback(() => setDetailPair(null), []);
+  const handleViewSynergies = useCallback(
+    (id: string) => {
+      setDetailPair(null);
+      navigate(`/card/${id}`);
+    },
+    [navigate],
+  );
+
   if (isLoading) {
     return (
       <div style={centeredPage}>
@@ -131,7 +168,16 @@ export function CardPage() {
           synergies={synergies}
           totalSynergyCount={totalSynergyCount}
           onBack={goHome}
+          onSynergyCardClick={handleSynergyCardClick}
         />
+        {lastPair && (
+          <SynergyDetailModal
+            isOpen={!!detailPair}
+            onClose={handleCloseDetail}
+            pair={lastPair}
+            onViewSynergies={handleViewSynergies}
+          />
+        )}
       </ErrorBoundary>
     );
   }
@@ -181,9 +227,20 @@ export function CardPage() {
             expandedGroup={expandedGroup}
             onShowAll={handleShowAll}
             onBackToAll={handleBackToAll}
+            onSynergyCardClick={handleSynergyCardClick}
           />
         </ErrorBoundary>
       </div>
+      {lastPair && (
+        <ErrorBoundary>
+          <SynergyDetailModal
+            isOpen={!!detailPair}
+            onClose={handleCloseDetail}
+            pair={lastPair}
+            onViewSynergies={handleViewSynergies}
+          />
+        </ErrorBoundary>
+      )}
     </main>
   );
 }
