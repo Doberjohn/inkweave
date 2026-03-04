@@ -1,8 +1,9 @@
 import {useCallback, useState, useMemo} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
-import {getDominantScore, getStrengthTier} from '../utils';
+import {getDominantScore, getStrengthTier, chipStyle} from '../utils';
 import {SynergyGroup} from './SynergyGroup';
+import {ExpandedGroupView} from './ExpandedGroupView';
 import {CardImage, CardLightbox, CardTextBlock} from '../../../shared/components';
 import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
 
@@ -11,29 +12,6 @@ interface MobileCardDetailProps {
   synergies: SynergyGroupData[];
   totalSynergyCount: number;
   onBack: () => void;
-}
-
-function chipStyle(active: boolean): React.CSSProperties {
-  return {
-    padding: '8px 14px',
-    borderRadius: '20px',
-    fontSize: `${FONT_SIZES.base}px`,
-    fontWeight: 500,
-    cursor: 'pointer',
-    border: active ? '1px solid rgba(212, 175, 55, 0.4)' : `1px solid ${COLORS.surfaceBorder}`,
-    background: active ? 'rgba(212, 175, 55, 0.12)' : 'transparent',
-    color: active ? COLORS.primary500 : COLORS.textMuted,
-    boxShadow: active
-      ? '0 0 12px rgba(212, 175, 55, 0.15), inset 0 0 8px rgba(212, 175, 55, 0.05)'
-      : 'none',
-    transition: 'all 0.2s',
-    fontFamily: FONTS.body,
-    whiteSpace: 'nowrap',
-    flexShrink: 0,
-    minHeight: '44px',
-    display: 'flex',
-    alignItems: 'center',
-  };
 }
 
 /** Mobile-only card detail view with inline synergy groups. */
@@ -265,79 +243,8 @@ export function MobileCardDetail({
 
         {/* Synergy section */}
         {synergies.length > 0 && expandedGroupData ? (
-          /* Show-all expanded view for a single group */
           <div style={{marginTop: SPACING.lg}}>
-            {/* Back navigation */}
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                handleBackToAll();
-              }}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: COLORS.textMuted,
-                textDecoration: 'none',
-                fontFamily: FONTS.body,
-                fontSize: `${FONT_SIZES.base}px`,
-                fontWeight: 500,
-                padding: 0,
-                marginBottom: `${SPACING.lg}px`,
-                transition: 'color 0.15s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = COLORS.primary500)}
-              onMouseLeave={(e) => (e.currentTarget.style.color = COLORS.textMuted)}>
-              <span style={{fontSize: `${FONT_SIZES.base}px`}}>&larr;</span>
-              Back to all synergies
-            </a>
-
-            {/* Group title */}
-            <h2
-              style={{
-                fontSize: `${FONT_SIZES.xl}px`,
-                fontWeight: 700,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                margin: 0,
-                marginBottom: `${SPACING.sm}px`,
-                color: COLORS.text,
-              }}>
-              {expandedGroupData.label}
-            </h2>
-
-            {/* Description callout */}
-            <div
-              style={{
-                margin: `${SPACING.sm}px 0 ${SPACING.lg}px`,
-                padding: `${SPACING.sm}px ${SPACING.md}px`,
-                background: COLORS.calloutBg,
-                borderLeft: `3px solid ${COLORS.primary}`,
-                borderRadius: `0 ${RADIUS.sm}px ${RADIUS.sm}px 0`,
-              }}>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: `${FONT_SIZES.base}px`,
-                  color: COLORS.descriptionText,
-                  lineHeight: 1.5,
-                }}>
-                {expandedGroupData.description}
-              </p>
-            </div>
-
-            {/* Full card grid — no truncation, header hidden (rendered above) */}
-            <SynergyGroup
-              group={expandedGroupData}
-              isMobile
-              maxVisibleCards={Infinity}
-              showHeader={false}
-              cardMinWidth={180}
-            />
+            <ExpandedGroupView group={expandedGroupData} isMobile onBackToAll={handleBackToAll} />
           </div>
         ) : synergies.length > 0 ? (
           <>
@@ -387,14 +294,14 @@ export function MobileCardDetail({
               }}>
               <button
                 onClick={() => setActiveGroupFilter(null)}
-                style={chipStyle(activeGroupFilter === null)}>
+                style={chipStyle(activeGroupFilter === null, true)}>
                 All
               </button>
               {synergies.map((g) => (
                 <button
                   key={g.groupKey}
                   onClick={() => setActiveGroupFilter(g.groupKey)}
-                  style={chipStyle(activeGroupFilter === g.groupKey)}>
+                  style={chipStyle(activeGroupFilter === g.groupKey, true)}>
                   {g.label}
                 </button>
               ))}

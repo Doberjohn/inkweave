@@ -2,6 +2,8 @@ import {useState, useMemo, memo} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {CardDetail, SynergyGroup} from '.';
+import {ExpandedGroupView} from './ExpandedGroupView';
+import {chipStyle} from '../utils';
 import {EmptyState} from '../../../shared/components';
 import {COLORS, FONTS, FONT_SIZES, SPACING, RADIUS, LAYOUT} from '../../../shared/constants';
 
@@ -32,33 +34,6 @@ type SortOrder =
   | 'name-desc'
   | 'cost-asc'
   | 'cost-desc';
-
-function chipStyle(active: boolean, isMobile: boolean): React.CSSProperties {
-  return {
-    padding: isMobile ? '8px 14px' : '6px 14px',
-    borderRadius: '20px',
-    fontSize: `${FONT_SIZES.base}px`,
-    fontWeight: 500,
-    cursor: 'pointer',
-    border: active ? '1px solid rgba(212, 175, 55, 0.4)' : `1px solid ${COLORS.surfaceBorder}`,
-    background: active ? 'rgba(212, 175, 55, 0.12)' : 'transparent',
-    color: active ? COLORS.primary500 : COLORS.textMuted,
-    boxShadow: active
-      ? '0 0 12px rgba(212, 175, 55, 0.15), inset 0 0 8px rgba(212, 175, 55, 0.05)'
-      : 'none',
-    transition: 'all 0.2s',
-    fontFamily: FONTS.body,
-    ...(isMobile
-      ? {
-          flexShrink: 0,
-          whiteSpace: 'nowrap',
-          minHeight: '44px',
-          display: 'flex',
-          alignItems: 'center',
-        }
-      : {}),
-  };
-}
 
 export const SynergyResults = memo(function SynergyResults({
   selectedCard,
@@ -131,79 +106,11 @@ export const SynergyResults = memo(function SynergyResults({
           subtitle='Try "Elsa" or filter by Amethyst'
         />
       ) : expandedGroupData ? (
-        <div>
-          {/* Back navigation */}
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              onBackToAll?.();
-            }}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: COLORS.textMuted,
-              textDecoration: 'none',
-              fontFamily: FONTS.body,
-              fontSize: `${FONT_SIZES.base}px`,
-              fontWeight: 500,
-              padding: 0,
-              marginBottom: `${SPACING.lg}px`,
-              transition: 'color 0.15s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = COLORS.primary500)}
-            onMouseLeave={(e) => (e.currentTarget.style.color = COLORS.textMuted)}>
-            <span style={{fontSize: `${FONT_SIZES.base}px`}}>&larr;</span>
-            Back to all synergies
-          </a>
-
-          {/* Group title */}
-          <h2
-            style={{
-              fontSize: `${FONT_SIZES.xl}px`,
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              margin: 0,
-              marginBottom: `${SPACING.sm}px`,
-              color: COLORS.text,
-            }}>
-            {expandedGroupData.label}
-          </h2>
-
-          {/* Description callout */}
-          <div
-            style={{
-              margin: `${SPACING.sm}px 0 ${SPACING.lg}px`,
-              padding: `${SPACING.sm}px ${SPACING.md}px`,
-              background: COLORS.calloutBg,
-              borderLeft: `3px solid ${COLORS.primary}`,
-              borderRadius: `0 ${RADIUS.sm}px ${RADIUS.sm}px 0`,
-            }}>
-            <p
-              style={{
-                margin: 0,
-                fontSize: `${FONT_SIZES.base}px`,
-                color: COLORS.descriptionText,
-                lineHeight: 1.5,
-              }}>
-              {expandedGroupData.description}
-            </p>
-          </div>
-
-          {/* Full card grid — no truncation, header hidden (rendered above) */}
-          <SynergyGroup
-            group={expandedGroupData}
-            isMobile={isMobile}
-            maxVisibleCards={Infinity}
-            showHeader={false}
-            cardMinWidth={180}
-          />
-        </div>
+        <ExpandedGroupView
+          group={expandedGroupData}
+          isMobile={isMobile}
+          onBackToAll={onBackToAll!}
+        />
       ) : (
         <>
           {renderCardDetail && <CardDetail card={selectedCard} onClear={onClearSelection} />}

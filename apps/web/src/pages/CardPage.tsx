@@ -28,8 +28,16 @@ export function CardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [prevCardId, setPrevCardId] = useState(cardId);
 
   const selectedCard = cardId ? (getCardById(cardId) ?? null) : null;
+
+  // Reset synergy view state when navigating between cards
+  if (cardId !== prevCardId) {
+    setPrevCardId(cardId);
+    setActiveGroupFilter(null);
+    setExpandedGroup(null);
+  }
 
   const synergies = useMemo(() => {
     if (!selectedCard || cards.length === 0) return [];
