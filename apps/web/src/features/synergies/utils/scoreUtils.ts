@@ -1,7 +1,9 @@
 import type {SynergyMatchDisplay} from '../types';
 
+export type StrengthTierLabel = 'Build-around' | 'Strong' | 'Moderate' | 'Weak';
+
 export interface StrengthTier {
-  label: string;
+  label: StrengthTierLabel;
   /** Abbreviated label for compact displays (e.g. mobile badges). */
   shortLabel: string;
   color: string;

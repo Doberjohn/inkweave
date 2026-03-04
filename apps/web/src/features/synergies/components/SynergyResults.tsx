@@ -107,6 +107,7 @@ export const SynergyResults = memo(function SynergyResults({
         />
       ) : expandedGroupData ? (
         <ExpandedGroupView
+          key={expandedGroupData.groupKey}
           group={expandedGroupData}
           isMobile={isMobile}
           onBackToAll={onBackToAll!}

@@ -3,6 +3,8 @@ import type {Ink} from 'lorcana-synergy-engine';
 import type {CardFilterOptions} from '../loader';
 import type {CardTypeFilter, BrowseSortOrder} from '../../../shared/constants';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {FilterIcon} from '../../../shared/components/FilterIcon';
+import type {ChipData} from '../../../shared/types/chip';
 
 interface BrowseToolbarProps {
   resultCount: number;
@@ -21,20 +23,6 @@ interface BrowseToolbarProps {
   sortOrder: BrowseSortOrder;
   onSortChange: (order: BrowseSortOrder) => void;
   isMobile: boolean;
-}
-
-/** Filter icon SVG — 3 horizontal lines of decreasing width */
-function FilterIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-      <path d="M2 4h12M4 8h8M6 12h4" stroke="#0f172b" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-interface ChipData {
-  label: string;
-  onDismiss: () => void;
 }
 
 export function BrowseToolbar({

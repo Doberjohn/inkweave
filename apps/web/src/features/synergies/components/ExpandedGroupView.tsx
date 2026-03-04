@@ -1,6 +1,11 @@
-import {useState} from 'react';
+import {useState, useMemo, useCallback} from 'react';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
+import {SynergyToolbar} from './SynergyToolbar';
+import type {SynergySortOrder} from './SynergyToolbar';
+import {filterSynergyCards, EMPTY_SYNERGY_FILTERS} from '../utils/filterSynergyCards';
+import type {SynergyFilterState} from '../utils/filterSynergyCards';
+import {useCardDataContext} from '../../../shared/contexts/CardDataContext';
 import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
 
 interface ExpandedGroupViewProps {
@@ -9,15 +14,50 @@ interface ExpandedGroupViewProps {
   onBackToAll: () => void;
 }
 
-/** Shared expanded view for a single synergy group — back link, title, description, full card grid. */
+/** Shared expanded view for a single synergy group — back link, title, description, toolbar, full card grid. */
 export function ExpandedGroupView({group, isMobile = false, onBackToAll}: ExpandedGroupViewProps) {
   const [backHovered, setBackHovered] = useState(false);
+  const [filterState, setFilterState] = useState<SynergyFilterState>(EMPTY_SYNERGY_FILTERS);
+  const [sortOrder, setSortOrder] = useState<SynergySortOrder>('strength-desc');
+  const {uniqueKeywords, uniqueClassifications, sets} = useCardDataContext();
+
+  // Filter then sort synergies
+  const filteredSynergies = useMemo(() => {
+    const filtered = filterSynergyCards(group.synergies, filterState);
+    return [...filtered].sort((a, b) => {
+      switch (sortOrder) {
+        case 'strength-desc':
+          return b.score - a.score;
+        case 'strength-asc':
+          return a.score - b.score;
+        case 'name-asc':
+          return a.card.fullName.localeCompare(b.card.fullName);
+        case 'name-desc':
+          return b.card.fullName.localeCompare(a.card.fullName);
+        default:
+          return 0;
+      }
+    });
+  }, [group.synergies, filterState, sortOrder]);
+
+  // Build a virtual group with filtered synergies for the SynergyGroup component
+  const filteredGroup = useMemo(
+    () => ({...group, synergies: filteredSynergies}),
+    [group, filteredSynergies],
+  );
+
+  // Reset filters and sort order before navigating back
+  const handleBackToAll = useCallback(() => {
+    setFilterState(EMPTY_SYNERGY_FILTERS);
+    setSortOrder('strength-desc');
+    onBackToAll();
+  }, [onBackToAll]);
 
   return (
     <div>
       {/* Back navigation */}
       <button
-        onClick={onBackToAll}
+        onClick={handleBackToAll}
         onMouseEnter={() => setBackHovered(true)}
         onMouseLeave={() => setBackHovered(false)}
         style={{
@@ -73,9 +113,23 @@ export function ExpandedGroupView({group, isMobile = false, onBackToAll}: Expand
         </p>
       </div>
 
+      {/* Toolbar with filters + sort */}
+      <SynergyToolbar
+        filterState={filterState}
+        resultCount={filteredSynergies.length}
+        totalCount={group.synergies.length}
+        onFilterChange={setFilterState}
+        sortOrder={sortOrder}
+        onSortChange={setSortOrder}
+        isMobile={isMobile}
+        uniqueKeywords={uniqueKeywords}
+        uniqueClassifications={uniqueClassifications}
+        sets={sets}
+      />
+
       {/* Full card grid — no truncation */}
       <SynergyGroup
-        group={group}
+        group={filteredGroup}
         isMobile={isMobile}
         maxVisibleCards={Infinity}
         showHeader={false}
