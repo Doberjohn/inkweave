@@ -21,7 +21,8 @@ export const SynergyCard = memo(function SynergyCard({
 }: SynergyCardProps) {
   const tier = getStrengthTier(score);
   const colors = INK_COLORS[card.ink];
-  const {previewHandlers} = useCardPreviewHandlers({card});
+  const {handleMouseEnter, handleMouseMove, handleMouseLeave, previewHandlers} =
+    useCardPreviewHandlers({card});
   const [imgError, setImgError] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -31,10 +32,18 @@ export const SynergyCard = memo(function SynergyCard({
     <div>
       {/* Card tile with strength badge overlay */}
       <motion.button
-        {...(isMobile ? {} : previewHandlers)}
         onClick={isMobile && card.imageUrl ? () => setLightboxOpen(true) : undefined}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        onMouseEnter={(e) => {
+          setHovered(true);
+          if (!isMobile) handleMouseEnter(e);
+        }}
+        onMouseMove={isMobile ? undefined : handleMouseMove}
+        onMouseLeave={() => {
+          setHovered(false);
+          if (!isMobile) handleMouseLeave();
+        }}
+        onFocus={isMobile ? undefined : previewHandlers.onFocus}
+        onBlur={isMobile ? undefined : previewHandlers.onBlur}
         aria-label={card.fullName || ''}
         whileHover={{scale: 1.04, y: -3}}
         whileTap={{scale: 0.97}}
@@ -44,7 +53,7 @@ export const SynergyCard = memo(function SynergyCard({
           borderRadius: `${RADIUS.lg}px`,
           border: `1px solid ${colors.border}40`,
           background: COLORS.surface,
-          cursor: 'default',
+          cursor: 'pointer',
           overflow: 'hidden',
           aspectRatio: '0.72',
           padding: 0,

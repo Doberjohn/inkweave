@@ -17,7 +17,12 @@ vi.mock('../../../shared/components', () => ({
 }));
 
 vi.mock('../../../cards', () => ({
-  useCardPreviewHandlers: () => ({previewHandlers: {}}),
+  useCardPreviewHandlers: () => ({
+    handleMouseEnter: vi.fn(),
+    handleMouseMove: vi.fn(),
+    handleMouseLeave: vi.fn(),
+    previewHandlers: {},
+  }),
 }));
 
 const mockCard: LorcanaCard = {

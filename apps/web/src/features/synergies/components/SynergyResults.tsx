@@ -2,6 +2,8 @@ import {useState, useMemo, memo} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {CardDetail, SynergyGroup} from '.';
+import {ExpandedGroupView} from './ExpandedGroupView';
+import {chipStyle} from '../utils';
 import {EmptyState} from '../../../shared/components';
 import {COLORS, FONTS, FONT_SIZES, SPACING, RADIUS, LAYOUT} from '../../../shared/constants';
 
@@ -17,6 +19,12 @@ interface SynergyResultsProps {
   activeGroupFilter?: string | null;
   /** Callback when group filter changes — required when activeGroupFilter is controlled */
   onGroupFilterChange?: (groupKey: string | null) => void;
+  /** When set, render single-group expanded view instead of multi-group list */
+  expandedGroup?: string | null;
+  /** Called when user clicks "+N more" tile on a group */
+  onShowAll?: (groupKey: string) => void;
+  /** Called when user clicks "← Back to all synergies" in expanded view */
+  onBackToAll?: () => void;
 }
 
 type SortOrder =
@@ -27,33 +35,6 @@ type SortOrder =
   | 'cost-asc'
   | 'cost-desc';
 
-function chipStyle(active: boolean, isMobile: boolean): React.CSSProperties {
-  return {
-    padding: isMobile ? '8px 14px' : '6px 14px',
-    borderRadius: '20px',
-    fontSize: `${FONT_SIZES.base}px`,
-    fontWeight: 500,
-    cursor: 'pointer',
-    border: active ? '1px solid rgba(212, 175, 55, 0.4)' : `1px solid ${COLORS.surfaceBorder}`,
-    background: active ? 'rgba(212, 175, 55, 0.12)' : 'transparent',
-    color: active ? COLORS.primary500 : COLORS.textMuted,
-    boxShadow: active
-      ? '0 0 12px rgba(212, 175, 55, 0.15), inset 0 0 8px rgba(212, 175, 55, 0.05)'
-      : 'none',
-    transition: 'all 0.2s',
-    fontFamily: FONTS.body,
-    ...(isMobile
-      ? {
-          flexShrink: 0,
-          whiteSpace: 'nowrap',
-          minHeight: '44px',
-          display: 'flex',
-          alignItems: 'center',
-        }
-      : {}),
-  };
-}
-
 export const SynergyResults = memo(function SynergyResults({
   selectedCard,
   synergies,
@@ -63,11 +44,19 @@ export const SynergyResults = memo(function SynergyResults({
   showCardDetail,
   activeGroupFilter: controlledFilter,
   onGroupFilterChange,
+  expandedGroup,
+  onShowAll,
+  onBackToAll,
 }: SynergyResultsProps) {
   // Default: show card detail on mobile, hide on desktop (it's in its own panel)
   const renderCardDetail = showCardDetail ?? isMobile;
   const [internalFilter, setInternalFilter] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('strength-desc');
+
+  // Find the expanded group data when in show-all mode
+  const expandedGroupData = expandedGroup
+    ? synergies.find((g) => g.groupKey === expandedGroup)
+    : null;
 
   // Support both controlled (from CardPage) and uncontrolled (standalone) modes
   const activeGroupFilter = controlledFilter !== undefined ? controlledFilter : internalFilter;
@@ -115,6 +104,12 @@ export const SynergyResults = memo(function SynergyResults({
         <EmptyState
           title="Select a card to see synergies"
           subtitle='Try "Elsa" or filter by Amethyst'
+        />
+      ) : expandedGroupData ? (
+        <ExpandedGroupView
+          group={expandedGroupData}
+          isMobile={isMobile}
+          onBackToAll={onBackToAll!}
         />
       ) : (
         <>
@@ -237,6 +232,7 @@ export const SynergyResults = memo(function SynergyResults({
                   group={group}
                   isMobile={isMobile}
                   maxVisibleCards={isMobile ? 5 : 6}
+                  onShowAll={onShowAll}
                 />
               ))}
             </>

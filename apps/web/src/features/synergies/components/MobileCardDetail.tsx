@@ -1,8 +1,9 @@
-import {useState, useMemo} from 'react';
+import {useCallback, useState, useMemo} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
-import {getDominantScore, getStrengthTier} from '../utils';
+import {getDominantScore, getStrengthTier, chipStyle} from '../utils';
 import {SynergyGroup} from './SynergyGroup';
+import {ExpandedGroupView} from './ExpandedGroupView';
 import {CardImage, CardLightbox, CardTextBlock} from '../../../shared/components';
 import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
 
@@ -11,29 +12,6 @@ interface MobileCardDetailProps {
   synergies: SynergyGroupData[];
   totalSynergyCount: number;
   onBack: () => void;
-}
-
-function chipStyle(active: boolean): React.CSSProperties {
-  return {
-    padding: '8px 14px',
-    borderRadius: '20px',
-    fontSize: `${FONT_SIZES.base}px`,
-    fontWeight: 500,
-    cursor: 'pointer',
-    border: active ? '1px solid rgba(212, 175, 55, 0.4)' : `1px solid ${COLORS.surfaceBorder}`,
-    background: active ? 'rgba(212, 175, 55, 0.12)' : 'transparent',
-    color: active ? COLORS.primary500 : COLORS.textMuted,
-    boxShadow: active
-      ? '0 0 12px rgba(212, 175, 55, 0.15), inset 0 0 8px rgba(212, 175, 55, 0.05)'
-      : 'none',
-    transition: 'all 0.2s',
-    fontFamily: FONTS.body,
-    whiteSpace: 'nowrap',
-    flexShrink: 0,
-    minHeight: '44px',
-    display: 'flex',
-    alignItems: 'center',
-  };
 }
 
 /** Mobile-only card detail view with inline synergy groups. */
@@ -45,11 +23,26 @@ export function MobileCardDetail({
 }: MobileCardDetailProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
   const filteredGroups = useMemo(() => {
     if (!activeGroupFilter) return synergies;
     return synergies.filter((g) => g.groupKey === activeGroupFilter);
   }, [synergies, activeGroupFilter]);
+
+  const expandedGroupData = expandedGroup
+    ? synergies.find((g) => g.groupKey === expandedGroup)
+    : null;
+
+  const handleShowAll = useCallback((groupKey: string) => {
+    setExpandedGroup(groupKey);
+    setActiveGroupFilter(groupKey);
+  }, []);
+
+  const handleBackToAll = useCallback(() => {
+    setExpandedGroup(null);
+    setActiveGroupFilter(null);
+  }, []);
 
   return (
     <main
@@ -248,8 +241,12 @@ export function MobileCardDetail({
           </div>
         )}
 
-        {/* Synergy section divider */}
-        {synergies.length > 0 && (
+        {/* Synergy section */}
+        {synergies.length > 0 && expandedGroupData ? (
+          <div style={{marginTop: SPACING.lg}}>
+            <ExpandedGroupView group={expandedGroupData} isMobile onBackToAll={handleBackToAll} />
+          </div>
+        ) : synergies.length > 0 ? (
           <>
             <div
               style={{
@@ -297,14 +294,14 @@ export function MobileCardDetail({
               }}>
               <button
                 onClick={() => setActiveGroupFilter(null)}
-                style={chipStyle(activeGroupFilter === null)}>
+                style={chipStyle(activeGroupFilter === null, true)}>
                 All
               </button>
               {synergies.map((g) => (
                 <button
                   key={g.groupKey}
                   onClick={() => setActiveGroupFilter(g.groupKey)}
-                  style={chipStyle(activeGroupFilter === g.groupKey)}>
+                  style={chipStyle(activeGroupFilter === g.groupKey, true)}>
                   {g.label}
                 </button>
               ))}
@@ -312,10 +309,16 @@ export function MobileCardDetail({
 
             {/* Synergy groups */}
             {filteredGroups.map((group) => (
-              <SynergyGroup key={group.groupKey} group={group} isMobile maxVisibleCards={5} />
+              <SynergyGroup
+                key={group.groupKey}
+                group={group}
+                isMobile
+                maxVisibleCards={5}
+                onShowAll={handleShowAll}
+              />
             ))}
           </>
-        )}
+        ) : null}
 
         {/* Empty state */}
         {synergies.length === 0 && (
