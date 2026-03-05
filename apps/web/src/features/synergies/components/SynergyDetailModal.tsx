@@ -1,4 +1,4 @@
-import {useRef, useState, useMemo, forwardRef} from 'react';
+import {useRef, useState, useMemo, useEffect, forwardRef} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
 import type {LorcanaCard} from '../../cards';
 import {useCardPreviewHandlers} from '../../cards';
@@ -205,7 +205,10 @@ const CloseButton = forwardRef<HTMLButtonElement, {onClick: () => void}>(functio
 });
 
 function PairCard({card}: {card: LorcanaCard}) {
-  const {previewHandlers} = useCardPreviewHandlers({card});
+  const {previewHandlers, hidePreview} = useCardPreviewHandlers({card});
+
+  // Hide popover on unmount (modal close removes DOM before mouseLeave fires)
+  useEffect(() => hidePreview, [hidePreview]);
 
   return (
     <div
