@@ -30,11 +30,16 @@ export {
   getRuleById,
   getAllPlaystyles,
   getPlaystyleById,
+  LOCATION_ROLE_CHIP_LABELS,
+  LOCATION_ROLE_DESCRIPTIONS,
 } from './engine';
 export type {SynergyEngineOptions, CachedSynergyResult} from './engine';
 
 // Utilities (for custom rule authors)
 export {
+  isDualInk,
+  getInks,
+  canShareDeck,
   textContains,
   hasKeyword,
   hasKeywordExact,
@@ -52,5 +57,7 @@ export {
   getLocationRoles,
   LOCATION_PATTERNS,
   isCardType,
+  getShiftType,
+  hasAnyShift,
 } from './utils';
-export type {LocationRole} from './utils';
+export type {LocationRole, ShiftType} from './utils';

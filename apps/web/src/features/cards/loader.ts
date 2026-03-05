@@ -67,16 +67,21 @@ const VALID_INKS: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', '
 const VALID_TYPES: CardType[] = ['Character', 'Action', 'Item', 'Location'];
 
 /**
- * Parse ink color from raw color string (handles dual-ink cards like "Amethyst-Sapphire")
- * Returns the primary ink (first one) for filtering purposes
+ * Parse ink colors from raw color string (handles dual-ink cards like "Amethyst-Sapphire")
+ * Returns primary ink and optional second ink for dual-ink cards.
  */
-function parseInk(colorStr: string): Ink | null {
-  // Handle dual-ink cards by taking the first ink
-  const primaryColor = colorStr.split('-')[0] as Ink;
-  if (VALID_INKS.includes(primaryColor)) {
-    return primaryColor;
+function parseInks(colorStr: string): {ink: Ink; ink2?: Ink} | null {
+  const parts = colorStr.split('-');
+  const primary = parts[0] as Ink;
+  if (!VALID_INKS.includes(primary)) return null;
+
+  if (parts.length > 1) {
+    const secondary = parts[1] as Ink;
+    if (VALID_INKS.includes(secondary)) {
+      return {ink: primary, ink2: secondary};
+    }
   }
-  return null;
+  return {ink: primary};
 }
 
 /** Filter to non-empty text sections, returning undefined if none remain. */
@@ -89,9 +94,9 @@ function nonEmptySections(sections?: string[]): string[] | undefined {
  * Transform a LorcanaJSON card to our LorcanaCard format
  */
 function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
-  // Parse ink color (handles dual-ink cards)
-  const ink = parseInk(raw.color);
-  if (!ink) {
+  // Parse ink color(s) — dual-ink cards get both inks preserved
+  const inks = parseInks(raw.color);
+  if (!inks) {
     return null;
   }
 
@@ -114,6 +119,17 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
           keywords.push(ability.keyword);
         }
       }
+
+      // Detect conditional keywords granted in ability text (e.g. "gains Shift 0")
+      // If a native Shift keyword already exists, skip the conditional one (native takes priority)
+      const text = ability.effect || ability.fullText || '';
+      const shiftMatch = text.match(/gains?\s+Shift\s+(\d+)/i);
+      if (shiftMatch) {
+        const hasNativeShift = keywords.some((k) => k.startsWith('Shift'));
+        if (!hasNativeShift) {
+          keywords.push(`Shift ${shiftMatch[1]}`);
+        }
+      }
     }
   }
 
@@ -129,7 +145,8 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
     version: raw.version,
     fullName: raw.fullName,
     cost: raw.cost,
-    ink,
+    ink: inks.ink,
+    ink2: inks.ink2,
     inkwell: raw.inkwell,
     type,
     isSong: isSong || undefined,
@@ -273,10 +290,11 @@ export interface CardFilterOptions {
  */
 export function filterCards(cards: LorcanaCard[], options: CardFilterOptions): LorcanaCard[] {
   return cards.filter((card) => {
-    // Ink filter
+    // Ink filter — dual-ink cards match if either ink is selected
     if (options.ink) {
-      const inks = Array.isArray(options.ink) ? options.ink : [options.ink];
-      if (!inks.includes(card.ink)) return false;
+      const selectedInks = Array.isArray(options.ink) ? options.ink : [options.ink];
+      if (!selectedInks.includes(card.ink) && (!card.ink2 || !selectedInks.includes(card.ink2)))
+        return false;
     }
 
     // Type filter (Song is a pseudo-type: card.type is 'Action' but card.isSong is true)

@@ -135,13 +135,34 @@ describe('Synergy Rules', () => {
         expect(synergies[0].score).toBe(9);
       });
 
-      it('should rate on-curve non-inkable base as 7 (curveGap 1)', () => {
+      it('should rate on-curve with one inkable as 8 (curveGap 1)', () => {
         const shiftCard = createCard({
           id: 'elsa-shift',
           name: 'Elsa',
           fullName: 'Elsa - Ice Maker',
           cost: 7,
           keywords: ['Shift 5'],
+          inkwell: true,
+        });
+        const base = createCard({
+          id: 'elsa-base',
+          name: 'Elsa',
+          fullName: 'Elsa - Snow Queen',
+          cost: 4,
+          inkwell: false,
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].score).toBe(8);
+      });
+
+      it('should rate on-curve with neither inkable as 7 (curveGap 1)', () => {
+        const shiftCard = createCard({
+          id: 'elsa-shift',
+          name: 'Elsa',
+          fullName: 'Elsa - Ice Maker',
+          cost: 7,
+          keywords: ['Shift 5'],
+          inkwell: false,
         });
         const base = createCard({
           id: 'elsa-base',
@@ -292,6 +313,204 @@ describe('Synergy Rules', () => {
         const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
         expect(synergies[0].score).toBe(3);
       });
+
+      it('should rate free Shift as 10 when base activates the condition', () => {
+        const shiftCard = createCard({
+          id: 'anna-shift',
+          name: 'Anna',
+          fullName: 'Anna - Soothing Sister',
+          cost: 5,
+          keywords: ['Shift 0'],
+          text: "If a card left a player's discard this turn, this card gains Shift 0.",
+        });
+        const base = createCard({
+          id: 'anna-base',
+          name: 'Anna',
+          fullName: 'Anna - Little Sister',
+          cost: 2,
+          inkwell: true,
+          text: "When you play this character, you may put a card from chosen player's discard on the bottom of their deck.",
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].score).toBe(10);
+      });
+
+      it('should rate free Shift onto cheap base as 9 (Shift 0, base cost <= 3)', () => {
+        const shiftCard = createCard({
+          id: 'anna-shift',
+          name: 'Anna',
+          fullName: 'Anna - Soothing Sister',
+          cost: 5,
+          keywords: ['Shift 0'],
+        });
+        const base = createCard({
+          id: 'anna-base',
+          name: 'Anna',
+          fullName: 'Anna - Heir to Arendelle',
+          cost: 2,
+          inkwell: true,
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].score).toBe(9);
+      });
+
+      it('should rate free Shift onto mid-cost base as 7 (Shift 0, base cost 4-5)', () => {
+        const shiftCard = createCard({
+          id: 'anna-shift',
+          name: 'Anna',
+          fullName: 'Anna - Soothing Sister',
+          cost: 5,
+          keywords: ['Shift 0'],
+        });
+        const base = createCard({
+          id: 'anna-base',
+          name: 'Anna',
+          fullName: 'Anna - Noble Princess',
+          cost: 4,
+          inkwell: true,
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].score).toBe(7);
+      });
+
+      it('should rate free Shift onto expensive base as 5 (Shift 0, base cost 6+)', () => {
+        const shiftCard = createCard({
+          id: 'anna-shift',
+          name: 'Anna',
+          fullName: 'Anna - Soothing Sister',
+          cost: 5,
+          keywords: ['Shift 0'],
+        });
+        const base = createCard({
+          id: 'anna-base',
+          name: 'Anna',
+          fullName: 'Anna - Royal Heir',
+          cost: 7,
+          inkwell: true,
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].score).toBe(5);
+      });
+    });
+  });
+
+  describe('Puppy Shift', () => {
+    const shiftRule = getRuleById('shift-targets')!;
+
+    it('should find Puppy characters as targets for Puppy Shift', () => {
+      const thunderbolt = createCard({
+        id: 'thunderbolt',
+        name: 'Thunderbolt',
+        fullName: 'Thunderbolt - Wonder Dog',
+        cost: 5,
+        ink: 'Amber',
+        ink2: 'Sapphire',
+        keywords: ['Puppy Shift 3', 'Bodyguard'],
+        classifications: ['Floodborn', 'Hero'],
+      });
+
+      const puppy = createCard({
+        id: 'dalmatian',
+        name: 'Dalmatian Puppy',
+        fullName: 'Dalmatian Puppy - Tail Wagger',
+        cost: 2,
+        ink: 'Amber',
+        classifications: ['Storyborn', 'Puppy'],
+      });
+
+      const nonPuppy = createCard({
+        id: 'elsa-base',
+        name: 'Elsa',
+        fullName: 'Elsa - Snow Queen',
+        cost: 3,
+        ink: 'Sapphire',
+      });
+
+      const synergies = shiftRule.findSynergies(thunderbolt, [puppy, nonPuppy]);
+
+      expect(synergies.find((s) => s.card.id === 'dalmatian')).toBeDefined();
+      expect(synergies.find((s) => s.card.id === 'elsa-base')).toBeUndefined();
+    });
+
+    it('should show Puppy Shift card when selecting a Puppy character (reverse)', () => {
+      const thunderbolt = createCard({
+        id: 'thunderbolt',
+        name: 'Thunderbolt',
+        fullName: 'Thunderbolt - Wonder Dog',
+        cost: 5,
+        ink: 'Amber',
+        ink2: 'Sapphire',
+        keywords: ['Puppy Shift 3', 'Bodyguard'],
+      });
+
+      const puppy = createCard({
+        id: 'dalmatian',
+        name: 'Dalmatian Puppy',
+        fullName: 'Dalmatian Puppy - Tail Wagger',
+        cost: 2,
+        ink: 'Amber',
+        classifications: ['Storyborn', 'Puppy'],
+      });
+
+      const synergies = shiftRule.findSynergies(puppy, [thunderbolt]);
+
+      expect(synergies).toHaveLength(1);
+      expect(synergies[0].card.id).toBe('thunderbolt');
+    });
+  });
+
+  describe('Universal Shift', () => {
+    const shiftRule = getRuleById('shift-targets')!;
+
+    it('should find any character as target for Universal Shift', () => {
+      const baymax = createCard({
+        id: 'baymax-giant',
+        name: 'Baymax',
+        fullName: 'Baymax - Giant Robot',
+        cost: 6,
+        ink: 'Emerald',
+        ink2: 'Sapphire',
+        keywords: ['Universal Shift 4'],
+        classifications: ['Floodborn', 'Hero', 'Robot'],
+      });
+
+      const anyChar = createCard({
+        id: 'random-char',
+        name: 'Some Character',
+        fullName: 'Some Character - Version',
+        cost: 3,
+        ink: 'Emerald',
+      });
+
+      const synergies = shiftRule.findSynergies(baymax, [anyChar]);
+
+      expect(synergies).toHaveLength(1);
+      expect(synergies[0].card.id).toBe('random-char');
+    });
+
+    it('should show Universal Shift card when selecting any character (reverse)', () => {
+      const baymax = createCard({
+        id: 'baymax-giant',
+        name: 'Baymax',
+        fullName: 'Baymax - Giant Robot',
+        cost: 6,
+        ink: 'Emerald',
+        ink2: 'Sapphire',
+        keywords: ['Universal Shift 4'],
+      });
+
+      const anyChar = createCard({
+        id: 'random-char',
+        name: 'Some Character',
+        fullName: 'Some Character - Version',
+        cost: 3,
+        ink: 'Sapphire',
+      });
+
+      const synergies = shiftRule.findSynergies(anyChar, [baymax]);
+
+      expect(synergies).toHaveLength(1);
+      expect(synergies[0].card.id).toBe('baymax-giant');
     });
   });
 
@@ -559,21 +778,30 @@ describe('Location Synergy Rules', () => {
 
   describe('Cross-synergy between support cards', () => {
     it('should return 5 when both have high-value complementary roles', () => {
-      // at-payoff + play-trigger vs buff
+      // at-payoff complements buff (buff keeps locations alive for payoff)
       expect(getCrossSynergyScore(['at-payoff', 'play-trigger'], ['buff'])).toBe(5);
     });
 
-    it('should return 3 when one has high-value and other has support role', () => {
+    it('should return 3 when complementary but not both high-value', () => {
+      // at-payoff complements move (move enables payoff)
       expect(getCrossSynergyScore(['at-payoff'], ['move'])).toBe(3);
+      // tutor complements buff (tutor finds locations for buff to protect)
       expect(getCrossSynergyScore(['tutor'], ['buff'])).toBe(3);
     });
 
-    it('should return 3 for cards with only the same roles', () => {
-      expect(getCrossSynergyScore(['at-payoff'], ['at-payoff'])).toBe(3);
-      expect(getCrossSynergyScore(['move', 'tutor'], ['move', 'tutor'])).toBe(3);
+    it('should return null for cards with only the same roles (no complement)', () => {
+      expect(getCrossSynergyScore(['at-payoff'], ['at-payoff'])).toBeNull();
+      expect(getCrossSynergyScore(['boost'], ['boost'])).toBeNull();
     });
 
-    it('should return 3 when only support roles on both sides', () => {
+    it('should return null for non-complementary role pairs', () => {
+      // at-payoff and in-play-check don't directly enable each other
+      expect(getCrossSynergyScore(['at-payoff'], ['in-play-check'])).toBeNull();
+      // boost and move have no direct interaction
+      expect(getCrossSynergyScore(['boost'], ['move'])).toBeNull();
+    });
+
+    it('should return 3 for tutor + move (enabler + positioning)', () => {
       expect(getCrossSynergyScore(['move'], ['tutor'])).toBe(3);
     });
 
@@ -586,7 +814,86 @@ describe('Location Synergy Rules', () => {
       expect(locationGroup).toBeDefined();
       const felixMatch = locationGroup!.synergies.find((s) => s.card.id === 'felix-steward');
       expect(felixMatch).toBeDefined();
+      // Both high-value: at-payoff complements buff
       expect(felixMatch!.score).toBe(5);
+    });
+  });
+
+  describe('Boost role detection', () => {
+    const webbysDiary = createCard({
+      id: 'webbys-diary',
+      name: "Webby's Diary",
+      fullName: "Webby's Diary",
+      type: 'Item',
+      cost: 2,
+      ink: 'Amber',
+      text: 'LATEST ENTRY Whenever you put a card under one of your characters or locations, you may pay 1 to draw a card.',
+    });
+
+    it('should detect boost role', () => {
+      expect(getLocationRoles(webbysDiary)).toContain('boost');
+    });
+
+    it('should find Locations as synergies for boost cards', () => {
+      const engine = new SynergyEngine();
+      const groups = engine.findSynergies(webbysDiary, [webbysDiary, agrabah, unrelatedCard]);
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control');
+      expect(locationGroup).toBeDefined();
+      expect(locationGroup!.synergies.map((s) => s.card.id)).toContain('agrabah');
+    });
+
+    it('should assign score 5 for boost cards with Locations', () => {
+      const engine = new SynergyEngine();
+      const groups = engine.findSynergies(agrabah, [agrabah, webbysDiary]);
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control')!;
+      const diaryMatch = locationGroup.synergies.find((s) => s.card.id === 'webbys-diary');
+      expect(diaryMatch!.score).toBe(5);
+    });
+  });
+
+  describe('Location-ramp role detection', () => {
+    const elsaConcerned = createCard({
+      id: 'elsa-concerned',
+      name: 'Elsa',
+      fullName: 'Elsa - Concerned Sister',
+      cost: 4,
+      ink: 'Ruby',
+      text: 'CLEAR THE WAY When you play this character, you pay 2 less for the next location you play this turn.',
+    });
+
+    it('should detect location-ramp role', () => {
+      expect(getLocationRoles(elsaConcerned)).toContain('location-ramp');
+    });
+
+    it('should assign score 7 for location-ramp cards with Locations', () => {
+      const engine = new SynergyEngine();
+      const groups = engine.findSynergies(agrabah, [agrabah, elsaConcerned]);
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control')!;
+      const elsaMatch = locationGroup.synergies.find((s) => s.card.id === 'elsa-concerned');
+      expect(elsaMatch!.score).toBe(7);
+    });
+  });
+
+  describe('Anti-location exclusion', () => {
+    const launchpadPilot = createCard({
+      id: 'launchpad-pilot',
+      name: 'Launchpad',
+      fullName: 'Launchpad - Exceptional Pilot',
+      cost: 4,
+      ink: 'Emerald',
+      text: 'OFF THE MAP When you play this character, you may banish chosen location.',
+    });
+
+    it('should exclude anti-location cards from all roles', () => {
+      expect(getLocationRoles(launchpadPilot)).toEqual([]);
+      expect(isLocationSupportCard(launchpadPilot)).toBe(false);
+    });
+
+    it('should not show anti-location cards in location synergies', () => {
+      const engine = new SynergyEngine();
+      const groups = engine.findSynergies(agrabah, [agrabah, launchpadPilot, unrelatedCard]);
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control');
+      expect(locationGroup).toBeUndefined();
     });
   });
 });

@@ -7,6 +7,8 @@ export {
   getRulesByPlaystyle,
   getRuleById,
   getCrossSynergyScore,
+  LOCATION_ROLE_CHIP_LABELS,
+  LOCATION_ROLE_DESCRIPTIONS,
 } from './rules.js';
 export {getAllPlaystyles, getPlaystyleById} from './playstyles.js';
 export {SynergyCache, synergyCache} from './SynergyCache.js';

@@ -3,6 +3,7 @@
   "outputDirectory": "apps/web/dist",
   "installCommand": "pnpm install",
   "framework": "vite",
+  "redirects": [{"source": "/mockups/:path*", "statusCode": 308, "destination": "/"}],
   "rewrites": [{"source": "/((?!.*\\.).*)", "destination": "/index.html"}],
   "headers": [
     {

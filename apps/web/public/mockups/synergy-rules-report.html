@@ -1,0 +1,1240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Synergy Rules Report — Inkweave</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cinzel:wght@500;700&display=swap"
+      rel="stylesheet" />
+    <style>
+      /* TYPE SCALE: Major third (~1.25) — 10 → 13 → 16 → 20 + 14px form exception
+       Display: 20px | Section: 16px | Body: 13px | Micro: 10px | Form: 14px */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: #0d0d14;
+        color: #e8e8e8;
+        font-family:
+          'Inter',
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        min-height: 100vh;
+        line-height: 1.6;
+      }
+
+      /* -- Ethereal Background -- */
+      .bg-container {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        background: linear-gradient(180deg, #0d0d14 0%, #1a1a2e 50%, #0d0d14 100%);
+        pointer-events: none;
+      }
+      .glow-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        pointer-events: none;
+      }
+      .glow-blue {
+        width: 420px;
+        height: 420px;
+        background: rgba(43, 127, 255, 0.08);
+        left: 10%;
+        top: 5%;
+      }
+      .glow-purple {
+        width: 380px;
+        height: 380px;
+        background: rgba(173, 70, 255, 0.08);
+        right: 5%;
+        top: 60%;
+      }
+      .glow-teal {
+        width: 340px;
+        height: 340px;
+        background: rgba(0, 187, 167, 0.04);
+        left: 50%;
+        top: 40%;
+      }
+
+      /* -- Page Container -- */
+      main {
+        position: relative;
+        z-index: 1;
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 48px 24px 80px;
+      }
+
+      /* -- Header -- */
+      .report-header {
+        text-align: center;
+        margin-bottom: 48px;
+      }
+      .report-brand {
+        font-family: 'Cinzel', serif;
+        font-size: 13px;
+        font-weight: 700;
+        color: #ffb900;
+        letter-spacing: 0.25em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .report-subtitle {
+        font-size: 13px;
+        color: #90a1b9;
+        max-width: 540px;
+        margin: 0 auto;
+      }
+
+      /* -- Section Headings -- */
+      h2 {
+        font-size: 16px;
+        font-weight: 700;
+        margin: 40px 0 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #333355;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      h2 .section-icon {
+        font-size: 16px;
+        opacity: 0.7;
+      }
+      h3 {
+        font-size: 13px;
+        font-weight: 600;
+        color: #d4af37;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin: 24px 0 12px;
+      }
+
+      /* -- Paragraphs & Text -- */
+      p {
+        font-size: 13px;
+        color: #c8c8d8;
+        margin-bottom: 12px;
+        max-width: 720px;
+      }
+      .highlight {
+        color: #e8e8e8;
+        font-weight: 600;
+      }
+      .gold {
+        color: #d4af37;
+      }
+
+      /* -- Display Tiers -- */
+      .tier-bar {
+        display: flex;
+        gap: 8px;
+        margin: 16px 0 24px;
+        flex-wrap: wrap;
+      }
+      .tier-chip {
+        padding: 5px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .tier-chip .tier-range {
+        font-weight: 400;
+        opacity: 0.7;
+        font-size: 10px;
+      }
+      .tier-perfect {
+        background: #3d3010;
+        color: #fbbf24;
+      }
+      .tier-strong {
+        background: #1a3d1a;
+        color: #6ee7a0;
+      }
+      .tier-moderate {
+        background: #10253d;
+        color: #60b5f5;
+      }
+      .tier-weak {
+        background: #3d1a1a;
+        color: #f59090;
+      }
+
+      /* -- Score Tables -- */
+      .score-table-wrapper {
+        overflow-x: auto;
+        margin: 16px 0 24px;
+        border-radius: 8px;
+        border: 1px solid #333355;
+        background: #151525;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      thead {
+        background: rgba(212, 175, 55, 0.06);
+      }
+      th {
+        padding: 10px 14px;
+        text-align: left;
+        font-size: 10px;
+        font-weight: 600;
+        color: #90a1b9;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        border-bottom: 1px solid #333355;
+      }
+      td {
+        padding: 10px 14px;
+        border-bottom: 1px solid rgba(51, 51, 85, 0.4);
+        vertical-align: top;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      td.score-cell {
+        font-weight: 700;
+        font-size: 16px;
+        width: 48px;
+        text-align: center;
+      }
+      td.tier-cell {
+        width: 80px;
+      }
+      .inline-badge {
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      td.explanation-cell {
+        color: #c8c8d8;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      td.condition-cell {
+        font-size: 13px;
+        color: #90a1b9;
+      }
+
+      /* -- Flow Diagram -- */
+      .flow-diagram {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+        margin: 24px 0;
+        flex-wrap: wrap;
+      }
+      .flow-step {
+        flex: 1;
+        min-width: 180px;
+        padding: 16px;
+        background: #151525;
+        border: 1px solid #333355;
+        border-radius: 8px;
+        position: relative;
+      }
+      .flow-step + .flow-arrow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        flex-shrink: 0;
+        font-size: 16px;
+        color: #d4af37;
+      }
+      .flow-step-label {
+        font-size: 10px;
+        font-weight: 600;
+        color: #d4af37;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+      }
+      .flow-step-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #e8e8e8;
+        margin-bottom: 4px;
+      }
+      .flow-step-desc {
+        font-size: 13px;
+        color: #90a1b9;
+        line-height: 1.4;
+      }
+
+      /* -- Example Cards -- */
+      .example-box {
+        background: #151525;
+        border: 1px solid #333355;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 16px 0;
+      }
+      .example-label {
+        font-size: 10px;
+        font-weight: 600;
+        color: #d4af37;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 10px;
+      }
+      .example-pair {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .example-card {
+        flex: 1;
+        min-width: 200px;
+        padding: 12px;
+        background: #1a1a2e;
+        border-radius: 6px;
+        border: 1px solid rgba(51, 51, 85, 0.6);
+      }
+      .example-card-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #e8e8e8;
+        margin-bottom: 2px;
+      }
+      .example-card-meta {
+        font-size: 10px;
+        color: #90a1b9;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .example-card-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .example-connector {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+      }
+      .example-connector-arrow {
+        font-size: 20px;
+        color: #d4af37;
+      }
+      .example-result {
+        margin-top: 12px;
+        padding: 10px 14px;
+        background: rgba(212, 175, 55, 0.04);
+        border: 1px solid rgba(212, 175, 55, 0.15);
+        border-radius: 6px;
+        font-size: 13px;
+        color: #c8c8d8;
+        line-height: 1.5;
+      }
+      .example-result .result-score {
+        font-weight: 700;
+        margin-right: 4px;
+      }
+
+      /* -- Condition Matcher Section -- */
+      .matcher-card {
+        background: #151525;
+        border: 1px solid #333355;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 12px 0;
+      }
+      .matcher-header {
+        font-size: 13px;
+        font-weight: 600;
+        color: #e8e8e8;
+        margin-bottom: 10px;
+      }
+      .matcher-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 8px;
+        align-items: flex-start;
+      }
+      .matcher-label {
+        font-size: 10px;
+        font-weight: 600;
+        color: #90a1b9;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        width: 80px;
+        flex-shrink: 0;
+        padding-top: 3px;
+      }
+      .matcher-pattern {
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        color: #60b5f5;
+        background: rgba(96, 181, 245, 0.06);
+        padding: 4px 8px;
+        border-radius: 4px;
+        word-break: break-all;
+      }
+
+      /* -- Info Callout -- */
+      .callout {
+        background: rgba(212, 175, 55, 0.04);
+        border-left: 3px solid #d4af37;
+        padding: 12px 16px;
+        border-radius: 0 6px 6px 0;
+        margin: 16px 0;
+      }
+      .callout p {
+        margin-bottom: 0;
+        color: #c8c8d8;
+      }
+      .callout-blue {
+        background: rgba(96, 181, 245, 0.04);
+        border-left-color: #60b5f5;
+      }
+
+      /* -- Bidirectional Arrows -- */
+      .bidir-diagram {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin: 20px 0;
+        padding: 16px;
+        background: #151525;
+        border: 1px solid #333355;
+        border-radius: 8px;
+      }
+      .bidir-box {
+        padding: 10px 16px;
+        background: #1a1a2e;
+        border-radius: 6px;
+        border: 1px solid rgba(51, 51, 85, 0.6);
+        font-size: 13px;
+        font-weight: 500;
+        text-align: center;
+        min-width: 140px;
+      }
+      .bidir-arrows {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        color: #d4af37;
+        font-size: 16px;
+        line-height: 1;
+      }
+
+      /* -- Rule Navigation -- */
+      .rule-nav {
+        display: flex;
+        gap: 8px;
+        margin: 24px 0 8px;
+        flex-wrap: wrap;
+      }
+      .rule-nav-chip {
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        background: #1a1a2e;
+        border: 1px solid #333355;
+        color: #90a1b9;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.15s;
+      }
+      .rule-nav-chip:hover,
+      .rule-nav-chip.active {
+        border-color: #d4af37;
+        color: #d4af37;
+        background: rgba(212, 175, 55, 0.06);
+      }
+
+      /* -- Footer -- */
+      .report-footer {
+        margin-top: 48px;
+        padding-top: 20px;
+        border-top: 1px solid #333355;
+        text-align: center;
+      }
+      .report-footer p {
+        color: #90a1b9;
+        font-size: 10px;
+        margin: 0 auto;
+      }
+
+      /* -- Responsive -- */
+      @media (max-width: 640px) {
+        main {
+          padding: 24px 16px 60px;
+        }
+        .flow-diagram {
+          flex-direction: column;
+        }
+        .flow-step + .flow-arrow {
+          width: auto;
+          height: 32px;
+          transform: rotate(90deg);
+        }
+        .example-pair {
+          flex-direction: column;
+        }
+        .example-connector {
+          transform: rotate(90deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Ethereal Background -->
+    <div class="bg-container">
+      <div class="glow-orb glow-blue"></div>
+      <div class="glow-orb glow-purple"></div>
+      <div class="glow-orb glow-teal"></div>
+    </div>
+
+    <main>
+      <!-- ============ HEADER ============ -->
+      <header class="report-header">
+        <div class="report-brand">Inkweave</div>
+        <h1>Synergy Rules Report</h1>
+        <p class="report-subtitle">
+          How the engine detects and scores card synergies. Each rule defines what cards match, how
+          pairs are scored, and what explanation is shown to the user.
+        </p>
+      </header>
+
+      <!-- ============ DISPLAY TIERS ============ -->
+      <h2><span class="section-icon">&#9670;</span> Display Tiers</h2>
+      <p>
+        Every synergy score maps to a visual tier. Tiers determine badge color and label in the UI.
+        <span class="highlight">Perfect</span> folds into Strong when filtering &mdash; selecting
+        "Strong" also includes Perfect results.
+      </p>
+      <div class="tier-bar">
+        <div class="tier-chip tier-perfect">Perfect <span class="tier-range">&ge; 9.5</span></div>
+        <div class="tier-chip tier-strong">
+          Strong <span class="tier-range">7 &ndash; 9.4</span>
+        </div>
+        <div class="tier-chip tier-moderate">
+          Moderate <span class="tier-range">4 &ndash; 6.9</span>
+        </div>
+        <div class="tier-chip tier-weak">Weak <span class="tier-range">&lt; 4</span></div>
+      </div>
+
+      <!-- ============ RULE NAVIGATION ============ -->
+      <h2><span class="section-icon">&#9671;</span> Rules</h2>
+      <div class="rule-nav">
+        <a href="#shift-targets" class="rule-nav-chip active">Shift Targets</a>
+        <a href="#lore-loss" class="rule-nav-chip">Lore Loss</a>
+        <a href="#location-control" class="rule-nav-chip">Location Control</a>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- RULE 1: SHIFT TARGETS                                        -->
+      <!-- ============================================================ -->
+      <section id="shift-targets">
+        <h2><span class="section-icon">&#9650;</span> Rule 1: Shift Targets</h2>
+        <p>
+          <span class="highlight">Category:</span> Direct (pair-specific) &nbsp;&bull;&nbsp;
+          <span class="highlight">Direction:</span> Bidirectional &nbsp;&bull;&nbsp;
+          <span class="highlight">Score range:</span> 3 &ndash; 10
+        </p>
+        <p>
+          In Lorcana, <span class="gold">Shift</span> lets you play a character on top of another
+          character, paying the Shift cost instead of the full ink cost. The shifted character skips
+          the <span class="highlight">drying phase</span> (it can act immediately), making Shift one
+          of the strongest tempo plays in the game. Three variants exist:
+          <span class="highlight">Standard</span> (same name),
+          <span class="highlight">Classification</span> (e.g., Puppy Shift targets Puppy
+          characters), and <span class="highlight">Universal</span> (targets any character).
+        </p>
+
+        <!-- Bidirectional diagram -->
+        <div class="bidir-diagram">
+          <div class="bidir-box">
+            Shift Card<br /><span style="font-size: 10px; color: #90a1b9"
+              >finds base characters</span
+            >
+          </div>
+          <div class="bidir-arrows">
+            <span>&rarr;</span>
+            <span>&larr;</span>
+          </div>
+          <div class="bidir-box">
+            Base Character<br /><span style="font-size: 10px; color: #90a1b9"
+              >finds Shift cards</span
+            >
+          </div>
+        </div>
+        <p style="color: #90a1b9; font-size: 13px">
+          Both directions use the same scoring function, so scores are always consistent regardless
+          of which card you select first.
+        </p>
+
+        <!-- Scoring Architecture Flow -->
+        <h3>Scoring Architecture</h3>
+        <div class="flow-diagram">
+          <div class="flow-step">
+            <div class="flow-step-label">Phase 1</div>
+            <div class="flow-step-title">Base Score</div>
+            <div class="flow-step-desc">
+              Curve gap analysis, inkwell flexibility, or cost-tier scoring for Shift 0
+            </div>
+          </div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-step">
+            <div class="flow-step-label">Phase 2</div>
+            <div class="flow-step-title">Condition Check</div>
+            <div class="flow-step-desc">
+              Does the base card satisfy the Shift card's conditional requirement?
+            </div>
+          </div>
+          <div class="flow-arrow">&rarr;</div>
+          <div class="flow-step">
+            <div class="flow-step-label">Result</div>
+            <div class="flow-step-title">Final Score</div>
+            <div class="flow-step-desc">Base score + 1 if condition activates (capped at 10)</div>
+          </div>
+        </div>
+
+        <!-- Standard Shift Score Table -->
+        <h3>Standard Shift (Gap-Based Scoring)</h3>
+        <p>
+          The key metric is <span class="highlight">curve gap</span>:
+          <code>shiftCost &minus; baseCost</code>. A gap of 1 means "play base on turn N, Shift next
+          turn" &mdash; the ideal pattern.
+        </p>
+        <div class="score-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Score</th>
+                <th>Tier</th>
+                <th>Gap</th>
+                <th>Inkwell</th>
+                <th>Explanation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="score-cell" style="color: #6ee7a0">9</td>
+                <td class="tier-cell"><span class="inline-badge tier-strong">Strong</span></td>
+                <td>1</td>
+                <td class="condition-cell">Both inkable</td>
+                <td class="explanation-cell">
+                  Perfect curve: play base on turn N, Shift next turn. Both cards are inkable as
+                  fallback.
+                </td>
+              </tr>
+              <tr>
+                <td class="score-cell" style="color: #6ee7a0">8</td>
+                <td class="tier-cell"><span class="inline-badge tier-strong">Strong</span></td>
+                <td>1</td>
+                <td class="condition-cell">One inkable</td>
+                <td class="explanation-cell">
+                  Perfect curve: play base on turn N, Shift next turn. One card is inkable as
+                  fallback.
+                </td>
+              </tr>
+              <tr>
+                <td class="score-cell" style="color: #6ee7a0">7</td>
+                <td class="tier-cell"><span class="inline-badge tier-strong">Strong</span></td>
+                <td>1</td>
+                <td class="condition-cell">Neither</td>
+                <td class="explanation-cell">
+                  On curve but neither card is inkable &mdash; less flexible if drawn off-curve.
+                </td>
+              </tr>
+              <tr>
+                <td class="score-cell" style="color: #6ee7a0">7</td>
+                <td class="tier-cell"><span class="inline-badge tier-strong">Strong</span></td>
+                <td>2</td>
+                <td class="condition-cell">Any</td>
+                <td class="explanation-cell">
+                  Smooth curve: base flows naturally into Shift within a couple of turns.
+                </td>
+              </tr>
+              <tr>
+                <td class="score-cell" style="color: #60b5f5">5</td>
+                <td class="tier-cell"><span class="inline-badge tier-moderate">Moderate</span></td>
+                <td>0</td>
+                <td class="condition-cell">Any</td>
+                <td class="explanation-cell">
+                  Same cost &mdash; no ink savings from Shifting, but skips the drying phase.
+                </td>
+              </tr>
+              <tr>
+                <td class="score-cell" style="color: #60b5f5">5</td>
+                <td class="tier-cell"><span class="inline-badge tier-moderate">Moderate</span></td>
+                <td>3</td>
+                <td class="condition-cell">Any</td>
+                <td class="explanation-cell">
+                  Wide 3-turn gap &mdash; playable but slow to set up.
+                </td>
+              </tr>
+              <tr>
+                <td class="score-cell" style="color: #f59090">3</td>
+                <td class="tier-cell"><span class="inline-badge tier-weak">Weak</span></td>
+                <td>4+</td>
+                <td class="condition-cell">Any</td>
+                <td class="explanation-cell">
+                  Poor alignment &mdash; the cost gap makes it hard to shift on tempo.
+                </td>
+              </tr>
+              <tr>
+                <td class="score-cell" style="color: #f59090">3</td>
+                <td class="tier-cell"><span class="inline-badge tier-weak">Weak</span></td>
+                <td>&lt; 0</td>
+                <td class="condition-cell">Any</td>
+                <td class="explanation-cell">
+                  Base costs more than Shift &mdash; no practical reason to shift "down".
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Inkwell Callout -->
+        <div class="callout">
+          <p>
+            <span class="highlight">Why does inkwell only matter for gap=1?</span>
+            At the ideal curve, the difference between "good" and "great" is draw flexibility.
+            <span class="gold">Inkable</span> cards can be placed face-down as ink &mdash; they're
+            never dead draws. At wider gaps, the curve itself is the limiting factor, not draw
+            flexibility.
+          </p>
+        </div>
+
+        <!-- Example: Standard Shift -->
+        <div class="example-box">
+          <div class="example-label">Example &mdash; Score 9 (On-Curve, Both Inkable)</div>
+          <div class="example-pair">
+            <div class="example-card">
+              <div class="example-card-name">Elsa - Snow Queen</div>
+              <div class="example-card-meta">
+                <span>Cost: 4</span>
+                <span>Inkable: Yes</span>
+                <span style="color: #60b5f5">Base Character</span>
+              </div>
+            </div>
+            <div class="example-connector">
+              <div class="example-connector-arrow">&harr;</div>
+              <span class="inline-badge tier-strong" style="font-size: 10px">9</span>
+            </div>
+            <div class="example-card">
+              <div class="example-card-name">Elsa - Ice Maker</div>
+              <div class="example-card-meta">
+                <span>Cost: 7</span>
+                <span>Shift: 5</span>
+                <span>Inkable: Yes</span>
+                <span style="color: #d4af37">Shift Card</span>
+              </div>
+            </div>
+          </div>
+          <div class="example-result">
+            <span class="result-score" style="color: #6ee7a0">Score 9</span>
+            &mdash; Perfect curve: play Elsa - Snow Queen on turn 4, Shift next turn. Both cards are
+            inkable as fallback.
+          </div>
+        </div>
+
+        <!-- Free Shift Score Table -->
+        <h3>Free Shift (Shift 0, Cost-Based Scoring)</h3>
+        <p>
+          Free Shift uses a completely different scoring path because the normal gap math breaks
+          down &mdash; every gap would be negative. Instead, scoring is based on
+          <span class="highlight">how easy it is to get the base card into play first</span>.
+        </p>
+        <div class="score-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Score</th>
+                <th>Tier</th>
+                <th>Base Cost</th>
+                <th>Condition?</th>
+                <th>Explanation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="score-cell" style="color: #fbbf24">10</td>
+                <td class="tier-cell"><span class="inline-badge tier-perfect">Perfect</span></td>
+                <td>&le; 3</td>
+                <td class="condition-cell" style="color: #6ee7a0">Yes</td>
+                <td class="explanation-cell">
+                  Free Shift onto cheap base + base enables the Shift condition. The dream combo.
+                </td>
+              </tr>
+              <tr>
+                <td class="score-cell" style="color: #6ee7a0">9</td>
+                <td class="tier-cell"><span class="inline-badge tier-strong">Strong</span></td>
+                <td>&le; 3</td>
+                <td class="condition-cell">No</td>
+                <td class="explanation-cell">
+                  Free Shift: Play base early, Shift for 0 ink. Extremely powerful.
+                </td>
+              </tr>
+              <tr>
+                <td class="score-cell" style="color: #6ee7a0">8</td>
+                <td class="tier-cell"><span class="inline-badge tier-strong">Strong</span></td>
+                <td>4 &ndash; 5</td>
+                <td class="condition-cell" style="color: #6ee7a0">Yes</td>
+                <td class="explanation-cell">
+                  Free Shift onto mid-cost base + condition enabler in one card.
+                </td>
+              </tr>
+              <tr>
+                <td class="score-cell" style="color: #6ee7a0">7</td>
+                <td class="tier-cell"><span class="inline-badge tier-strong">Strong</span></td>
+                <td>4 &ndash; 5</td>
+                <td class="condition-cell">No</td>
+                <td class="explanation-cell">
+                  Free Shift but the base takes until mid-game to deploy.
+                </td>
+              </tr>
+              <tr>
+                <td class="score-cell" style="color: #60b5f5">6</td>
+                <td class="tier-cell"><span class="inline-badge tier-moderate">Moderate</span></td>
+                <td>6+</td>
+                <td class="condition-cell" style="color: #6ee7a0">Yes</td>
+                <td class="explanation-cell">
+                  Free Shift but expensive base &mdash; hard to deploy. Condition helps.
+                </td>
+              </tr>
+              <tr>
+                <td class="score-cell" style="color: #60b5f5">5</td>
+                <td class="tier-cell"><span class="inline-badge tier-moderate">Moderate</span></td>
+                <td>6+</td>
+                <td class="condition-cell">No</td>
+                <td class="explanation-cell">
+                  Free Shift but expensive base &mdash; hard to get into play first.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Example: Free Shift + Condition -->
+        <div class="example-box">
+          <div class="example-label">
+            Example &mdash; Score 10 (Free Shift + Condition Activation)
+          </div>
+          <div class="example-pair">
+            <div class="example-card">
+              <div class="example-card-name">Anna - Little Sister</div>
+              <div class="example-card-meta">
+                <span>Cost: 2</span>
+                <span>Inkable: Yes</span>
+                <span style="color: #60b5f5">Base Character</span>
+              </div>
+              <div style="margin-top: 6px; font-size: 13px; color: #90a1b9; line-height: 1.4">
+                "When you play this character, you may put a card from chosen player's discard on
+                the bottom of their deck."
+              </div>
+            </div>
+            <div class="example-connector">
+              <div class="example-connector-arrow">&harr;</div>
+              <span class="inline-badge tier-perfect" style="font-size: 10px">10</span>
+            </div>
+            <div class="example-card">
+              <div class="example-card-name">Anna - Soothing Sister</div>
+              <div class="example-card-meta">
+                <span>Cost: 5</span>
+                <span>Shift: 0</span>
+                <span style="color: #d4af37">Shift Card</span>
+              </div>
+              <div style="margin-top: 6px; font-size: 13px; color: #90a1b9; line-height: 1.4">
+                "If a card left a player's discard this turn, this card gains Shift 0."
+              </div>
+            </div>
+          </div>
+          <div class="example-result">
+            <span class="result-score" style="color: #fbbf24">Score 10</span>
+            &mdash; Free Shift: Play Anna - Little Sister early, then shift into Anna - Soothing
+            Sister for 0 ink. Anna - Little Sister is both a Shift target and enables the free Shift
+            condition.
+          </div>
+        </div>
+
+        <!-- Condition Matcher System -->
+        <h3>Condition Matcher System</h3>
+        <p>
+          Some cards have <span class="highlight">conditional Shift</span> &mdash; they only gain
+          the Shift keyword when a specific game condition is met. The condition matcher system
+          detects whether a base card's abilities can satisfy that condition, adding a
+          <span class="gold">+1 bonus</span> (capped at 10).
+        </p>
+
+        <div class="matcher-card">
+          <div class="matcher-header">Discard Condition</div>
+          <div class="matcher-row">
+            <div class="matcher-label">Looks for</div>
+            <div class="matcher-pattern">card left a player's discard</div>
+          </div>
+          <div class="matcher-row">
+            <div class="matcher-label">Satisfied by</div>
+            <div class="matcher-pattern">put/return/move/play/banish/shuffle ... from discard</div>
+          </div>
+        </div>
+
+        <div class="callout callout-blue">
+          <p>
+            <span class="highlight">Extending the system:</span> New matchers can be added to
+            <code>SHIFT_CONDITION_MATCHERS</code> in <code>rules.ts</code>. Each matcher pairs a
+            <code>condition</code> regex (checked against the Shift card) with a
+            <code>satisfiedBy</code>
+            regex (checked against the base card).
+          </p>
+        </div>
+        <!-- Shift Variants -->
+        <h3>Shift Variants</h3>
+        <p>
+          Beyond the standard same-name Shift, two additional variants change which characters are
+          valid targets. All variants use the <span class="highlight">same scoring function</span>
+          (curve gap, inkwell flexibility, free Shift tiers).
+        </p>
+        <div class="score-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Variant</th>
+                <th>Keyword</th>
+                <th>Valid Targets</th>
+                <th>Example Card</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight: 600; color: #e8e8e8">Standard</td>
+                <td class="condition-cell">Shift N</td>
+                <td class="explanation-cell">Characters with the same base name</td>
+                <td class="condition-cell">Elsa - Ice Maker (Shift 4)</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 600; color: #d4af37">Classification</td>
+                <td class="condition-cell">X Shift N</td>
+                <td class="explanation-cell">
+                  Characters with the specified classification (e.g., Puppy)
+                </td>
+                <td class="condition-cell">Thunderbolt - Wonder Dog (Puppy Shift 3)</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 600; color: #d4af37">Universal</td>
+                <td class="condition-cell">Universal Shift N</td>
+                <td class="explanation-cell">Any character</td>
+                <td class="condition-cell">Baymax - Giant Robot (Universal Shift 4)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout">
+          <p>
+            <span class="highlight">Ink compatibility:</span> Dual-ink cards (like Thunderbolt
+            &mdash; Amber/Sapphire) lock the deck to exactly those two ink colors. The engine
+            pre-filters all synergy results to only show ink-compatible cards. So Puppy Shift on
+            Thunderbolt only shows Amber and Sapphire Puppy characters, and Universal Shift on
+            Baymax (Emerald/Sapphire) only shows Emerald and Sapphire characters.
+          </p>
+        </div>
+
+        <!-- Example: Puppy Shift -->
+        <div class="example-box">
+          <div class="example-label">Example &mdash; Classification Shift (Puppy Shift 3)</div>
+          <div class="example-pair">
+            <div class="example-card">
+              <div class="example-card-name">Dalmatian Puppy - Tail Wagger</div>
+              <div class="example-card-meta">
+                <span>Cost: 2</span>
+                <span>Inkable: Yes</span>
+                <span style="color: #f59e0b">Amber</span>
+                <span style="color: #60b5f5">Classification: Puppy</span>
+              </div>
+            </div>
+            <div class="example-connector">
+              <div class="example-connector-arrow">&harr;</div>
+              <span class="inline-badge tier-strong" style="font-size: 10px">8</span>
+            </div>
+            <div class="example-card">
+              <div class="example-card-name">Thunderbolt - Wonder Dog</div>
+              <div class="example-card-meta">
+                <span>Cost: 5</span>
+                <span>Puppy Shift: 3</span>
+                <span style="color: #f59e0b">Amber</span>/<span style="color: #3b82f6"
+                  >Sapphire</span
+                >
+                <span style="color: #d4af37">Shift Card</span>
+              </div>
+            </div>
+          </div>
+          <div class="example-result">
+            <span class="result-score" style="color: #6ee7a0">Score 8</span>
+            &mdash; Perfect curve: play Dalmatian Puppy on turn 2, Puppy Shift next turn. One card
+            is inkable as fallback.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- RULE 2: LORE LOSS                                            -->
+      <!-- ============================================================ -->
+      <section id="lore-loss">
+        <h2><span class="section-icon">&#9670;</span> Rule 2: Lore Loss</h2>
+        <p>
+          <span class="highlight">Category:</span> Playstyle (density-based) &nbsp;&bull;&nbsp;
+          <span class="highlight">Playstyle:</span> Lore Steal &nbsp;&bull;&nbsp;
+          <span class="highlight">Direction:</span> Bidirectional &nbsp;&bull;&nbsp;
+          <span class="highlight">Uniform score:</span> 7
+        </p>
+        <p>
+          Cards that make the opponent lose lore all reinforce the same denial strategy. Value comes
+          from <span class="highlight">density</span> &mdash; having 6-8 lore-loss cards in a deck
+          makes the strategy consistent. No individual pair is a core combo; it's the accumulation
+          that makes the archetype.
+        </p>
+
+        <div class="score-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Score</th>
+                <th>Tier</th>
+                <th>Pairing</th>
+                <th>Explanation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="score-cell" style="color: #6ee7a0">7</td>
+                <td class="tier-cell"><span class="inline-badge tier-strong">Strong</span></td>
+                <td>Any two lore-loss cards</td>
+                <td class="explanation-cell">
+                  Both cards make the opponent lose lore &mdash; they reinforce the same denial
+                  strategy.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p style="color: #90a1b9">
+          Matches any card with text matching:
+          <code style="color: #60b5f5">opponents? loses? (\d+ )?lore</code>
+        </p>
+
+        <!-- Example -->
+        <div class="example-box">
+          <div class="example-label">Example &mdash; Lore Steal Pair</div>
+          <div class="example-pair">
+            <div class="example-card">
+              <div class="example-card-name">Thievery</div>
+              <div class="example-card-meta">
+                <span>Cost: 1</span>
+                <span>Action</span>
+                <span style="color: #ef4444">Ruby</span>
+              </div>
+              <div style="margin-top: 6px; font-size: 13px; color: #90a1b9; line-height: 1.4">
+                "Chosen opponent loses 1 lore. Gain 1 lore."
+              </div>
+            </div>
+            <div class="example-connector">
+              <div class="example-connector-arrow">&harr;</div>
+              <span class="inline-badge tier-strong" style="font-size: 10px">7</span>
+            </div>
+            <div class="example-card">
+              <div class="example-card-name">Jasmine - Rebellious Princess</div>
+              <div class="example-card-meta">
+                <span>Cost: 3</span>
+                <span>Character</span>
+                <span style="color: #ef4444">Ruby</span>
+              </div>
+              <div style="margin-top: 6px; font-size: 13px; color: #90a1b9; line-height: 1.4">
+                "Whenever this character quests, each opponent loses 1 lore."
+              </div>
+            </div>
+          </div>
+          <div class="example-result">
+            <span class="result-score" style="color: #6ee7a0">Score 7</span>
+            &mdash; Both Thievery and Jasmine - Rebellious Princess make the opponent lose lore.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- RULE 3: LOCATION CONTROL                                     -->
+      <!-- ============================================================ -->
+      <section id="location-control">
+        <h2><span class="section-icon">&#9632;</span> Rule 3: Location Control</h2>
+        <p>
+          <span class="highlight">Category:</span> Playstyle (density-based) &nbsp;&bull;&nbsp;
+          <span class="highlight">Playstyle:</span> Location Control &nbsp;&bull;&nbsp;
+          <span class="highlight">Direction:</span> Bidirectional &nbsp;&bull;&nbsp;
+          <span class="highlight">Score range:</span> 3 &ndash; 7
+        </p>
+        <p>
+          Location synergies are built around 8 roles that cards can play in a location strategy.
+          The engine detects each role via text pattern matching, then scores pairs based on how the
+          roles interact.
+        </p>
+
+        <!-- Role Table -->
+        <h3>Location Roles</h3>
+        <div class="score-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Role</th>
+                <th>Score</th>
+                <th>Tier</th>
+                <th>What it does</th>
+                <th>Example</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight: 600; color: #d4af37">At-Payoff</td>
+                <td class="score-cell" style="color: #6ee7a0">7</td>
+                <td class="tier-cell"><span class="inline-badge tier-strong">Strong</span></td>
+                <td class="explanation-cell">Gets bonuses when characters are at a location</td>
+                <td class="condition-cell">Elsa - Ice Artisan</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 600; color: #d4af37">Play Trigger</td>
+                <td class="score-cell" style="color: #6ee7a0">7</td>
+                <td class="tier-cell"><span class="inline-badge tier-strong">Strong</span></td>
+                <td class="explanation-cell">Activates effects whenever you play a location</td>
+                <td class="condition-cell">Elsa - Ice Artisan</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 600; color: #d4af37">Buff</td>
+                <td class="score-cell" style="color: #6ee7a0">7</td>
+                <td class="tier-cell"><span class="inline-badge tier-strong">Strong</span></td>
+                <td class="explanation-cell">
+                  Strengthens locations with resist, protection, or stat boosts
+                </td>
+                <td class="condition-cell">Fix-It Felix Jr.</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 600; color: #d4af37">Location Ramp</td>
+                <td class="score-cell" style="color: #6ee7a0">7</td>
+                <td class="tier-cell"><span class="inline-badge tier-strong">Strong</span></td>
+                <td class="explanation-cell">Reduces the cost of playing or moving to locations</td>
+                <td class="condition-cell">Elsa - Concerned Sister</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 600">Move</td>
+                <td class="score-cell" style="color: #60b5f5">5</td>
+                <td class="tier-cell"><span class="inline-badge tier-moderate">Moderate</span></td>
+                <td class="explanation-cell">Moves characters to locations for positioning</td>
+                <td class="condition-cell">Transport Pod</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 600">In-Play Check</td>
+                <td class="score-cell" style="color: #60b5f5">5</td>
+                <td class="tier-cell"><span class="inline-badge tier-moderate">Moderate</span></td>
+                <td class="explanation-cell">Gains benefits when you have locations in play</td>
+                <td class="condition-cell">John Silver</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 600">Tutor</td>
+                <td class="score-cell" style="color: #60b5f5">5</td>
+                <td class="tier-cell"><span class="inline-badge tier-moderate">Moderate</span></td>
+                <td class="explanation-cell">Searches your deck or discard for location cards</td>
+                <td class="condition-cell">The Islands I Pulled from the Sea</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 600">Boost</td>
+                <td class="score-cell" style="color: #60b5f5">5</td>
+                <td class="tier-cell"><span class="inline-badge tier-moderate">Moderate</span></td>
+                <td class="explanation-cell">Works with the Boost keyword to power up locations</td>
+                <td class="condition-cell">Webby's Diary</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Cross-Synergy -->
+        <h3>Cross-Synergy (Support + Support)</h3>
+        <p>
+          When two location-support cards have <span class="highlight">complementary roles</span>
+          (one enables what the other needs), they get a cross-synergy score. Same-role pairs and
+          non-complementary pairs get no synergy.
+        </p>
+        <div class="score-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Score</th>
+                <th>Tier</th>
+                <th>Condition</th>
+                <th>Example</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="score-cell" style="color: #60b5f5">5</td>
+                <td class="tier-cell"><span class="inline-badge tier-moderate">Moderate</span></td>
+                <td class="explanation-cell">Both have high-value complementary roles</td>
+                <td class="condition-cell">Elsa (at-payoff) + Felix (buff)</td>
+              </tr>
+              <tr>
+                <td class="score-cell" style="color: #f59090">3</td>
+                <td class="tier-cell"><span class="inline-badge tier-weak">Weak</span></td>
+                <td class="explanation-cell">Complementary but not both high-value</td>
+                <td class="condition-cell">Transport Pod (move) + Islands (tutor)</td>
+              </tr>
+              <tr>
+                <td class="score-cell" style="color: #90a1b9">&mdash;</td>
+                <td class="tier-cell"><span style="color: #90a1b9; font-size: 10px">None</span></td>
+                <td class="explanation-cell">Same role or non-complementary pair</td>
+                <td class="condition-cell">Two at-payoff cards</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout">
+          <p>
+            <span class="highlight">Anti-location exclusion:</span> Cards that banish or remove
+            locations (e.g., "banish chosen location") are automatically excluded from all location
+            roles, even if their text otherwise matches a role pattern.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============ FOOTER ============ -->
+      <footer class="report-footer">
+        <p>
+          Generated from the Inkweave synergy engine &bull; Source:
+          packages/synergy-engine/src/engine/rules.ts
+        </p>
+      </footer>
+    </main>
+  </body>
+</html>

@@ -7,7 +7,7 @@ Application is functional with card browsing, search/filter, and synergy detecti
 - **Engine**: 8 synergy rules (Shift, Lore Loss, 6 Location rules) in standalone `lorcana-synergy-engine` package. Numeric 1-10 scoring.
 - **Web**: Two-column desktop layout, tab-based mobile navigation
 - **Design**: 7 desktop HTML/CSS mockups (6 approved, 1 in progress) in `apps/web/public/mockups/`
-- **Tests**: 52 engine + 289 web = 341 unit tests; 34 E2E tests passing
+- **Tests**: 93 engine + 338 web = 431 unit tests; 34 E2E tests passing
 - **Infrastructure**: Vercel hosting, Sentry error tracking (EU/DE), Vercel Analytics, Ahrefs, SEO (JSON-LD, semantic HTML, sitemap), Lighthouse CI
 
 ---

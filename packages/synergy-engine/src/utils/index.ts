@@ -1,4 +1,7 @@
 export {
+  isDualInk,
+  getInks,
+  canShareDeck,
   textContains,
   hasKeyword,
   hasKeywordExact,
@@ -15,7 +18,9 @@ export {
   isLocationSupportCard,
   getLocationRoles,
   LOCATION_PATTERNS,
+  getShiftType,
+  hasAnyShift,
 } from './cardHelpers.js';
-export type {LocationRole} from './cardHelpers.js';
+export type {LocationRole, ShiftType} from './cardHelpers.js';
 
 export {isCardType} from './typeGuards.js';

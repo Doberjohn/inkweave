@@ -67,13 +67,13 @@ React web application that consumes the synergy engine package.
 ## Key Concepts
 
 **Ink Colors**: Amber, Amethyst, Emerald, Ruby, Sapphire, Steel
-- Dual-ink cards (e.g., "Amethyst-Sapphire") use primary ink for filtering
+- Dual-ink cards (e.g., "Amethyst-Sapphire") match if either ink is selected; deck compatibility checks both inks
 
 **Card Types**: Character, Action, Item, Location
 
 **Game Mode**: Core only (sets 5+) - Infinity mode removed for MVP
 
-**Synergy Categories**: direct (pair-specific, e.g. Shift), playstyle (strategy-reinforcing, e.g. Lore Denial)
+**Synergy Categories**: direct (pair-specific, e.g. Shift), playstyle (strategy-reinforcing, e.g. Lore Steal)
 
 **Archetypes** (MVP):
 - Discard - opponent discard + payoffs
@@ -81,15 +81,19 @@ React web application that consumes the synergy engine package.
 - Ramp - ink acceleration + high-cost cards
 - Damage/Removal - deal damage, banish + payoffs
 
-**Synergy Score**: 1-10 numeric scale (anchors: 1, 3, 5, 7, 9). Display tiers: Strong (7+), Moderate (4-6), Weak (1-3)
+**Synergy Score**: 1-10 numeric scale (all integers valid). Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4)
 
 ## Synergy Rules
 
-Built-in rules in the engine package:
-
-1. Shift Targets (bidirectional) - Shift cards find same-named targets; base characters find Shift cards that can shift onto them
+Built-in rules in the engine package. **Keep this section up to date when modifying rule logic, scoring, or explanations.**
 
 See `packages/synergy-engine/REMOVED_RULES.md` for archived rules (Singer, Evasive, Tribal, Challenger, Exert, Draw, Ink Ramp, Ward).
+
+### Rule 1: Shift Targets (bidirectional)
+
+Shift cards find same-named base characters; base characters find Shift cards. Both directions use the same scoring. Scores 3-10 based on curve gap, inkwell flexibility, free Shift cost tiers, and condition activation.
+
+**Full documentation**: See [`SHIFT_TARGET_RULE.md`](SHIFT_TARGET_RULE.md) for detailed score tables, examples, condition matchers, and design rationale.
 
 ## Commands
 
@@ -102,9 +106,9 @@ pnpm dev              # Start web dev server
 
 # Package-specific
 pnpm build:engine     # Build synergy-engine package
-pnpm test:engine      # Run engine tests (52 tests)
+pnpm test:engine      # Run engine tests
 pnpm build:web        # Build web app
-pnpm test:web         # Run web tests (290 tests)
+pnpm test:web         # Run web tests
 ```
 
 ## Architecture Notes
@@ -150,6 +154,12 @@ After pushing, always confirm with clear output (e.g., git log showing commit on
 - `fix/` - Bug fixes
 - `docs/` - Documentation only
 - `test/` - Test additions/improvements
+
+### Engine Rebuilds
+- **IMMEDIATELY** after modifying any file in `packages/synergy-engine/src/`, run `pnpm build:engine`. Do not wait — rebuild right after the edit, before doing anything else (unit tests, browser testing, E2E, or further code changes). Vite and the web app resolve the workspace package from its built `dist/`, so changes are invisible until rebuilt.
+
+### Synergy Rule Documentation
+- When modifying rule logic, scoring, or explanations in the engine, always update the **Synergy Rules** section in this file to match. This includes score tables, condition matchers, explanation templates, and display tier definitions.
 
 ### Code Quality
 - After writing or modifying significant code (new features, refactors, bug fixes), run the `code-simplifier` agent to polish for clarity and consistency

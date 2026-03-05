@@ -1,4 +1,46 @@
-import type {LorcanaCard} from '../types';
+import type {Ink, LorcanaCard} from '../types';
+
+// ============================================
+// INK COMPATIBILITY
+// ============================================
+
+/** Returns true if the card is dual-ink (has two ink colors). */
+export function isDualInk(card: LorcanaCard): boolean {
+  return card.ink2 != null;
+}
+
+/** Returns all ink colors on a card (1 for single-ink, 2 for dual-ink). */
+export function getInks(card: LorcanaCard): Ink[] {
+  return card.ink2 ? [card.ink, card.ink2] : [card.ink];
+}
+
+/**
+ * Check if two cards could exist in the same Lorcana deck.
+ *
+ * A deck has exactly 2 ink colors. Dual-ink cards lock the deck to those 2 inks.
+ * - If either card is dual-ink, the other card's ink(s) must be a subset of those 2.
+ * - If both are single-ink, they can always share a deck (the deck's 2 inks include both).
+ */
+export function canShareDeck(cardA: LorcanaCard, cardB: LorcanaCard): boolean {
+  const aDual = isDualInk(cardA);
+  const bDual = isDualInk(cardB);
+
+  // Both single-ink: any two single-ink cards can share a deck
+  if (!aDual && !bDual) return true;
+
+  const dualCard = aDual ? cardA : cardB;
+  const otherCard = aDual ? cardB : cardA;
+  const dualInks = getInks(dualCard);
+
+  if (aDual && bDual) {
+    // Both dual-ink: must have the exact same ink pair
+    const otherInks = getInks(otherCard);
+    return dualInks.every((i) => otherInks.includes(i));
+  }
+
+  // One dual, one single: the single card's ink must be in the dual's pair
+  return dualInks.includes(otherCard.ink);
+}
 
 /**
  * Check if card text contains a pattern (case-insensitive)
@@ -43,6 +85,56 @@ export function hasClassification(card: LorcanaCard, classification: string): bo
  */
 export function getBaseName(card: LorcanaCard): string {
   return card.name.split(',')[0].trim();
+}
+
+/**
+ * Shift variant type. Each variant carries its cost (parsed from the keyword).
+ * - 'standard': targets same-name characters (e.g., "Shift 5")
+ * - 'classification': targets characters with a specific classification (e.g., "Puppy Shift 3")
+ * - 'universal': targets any character (e.g., "Universal Shift 4")
+ */
+export type ShiftType =
+  | {kind: 'standard'; cost: number}
+  | {kind: 'classification'; classification: string; cost: number}
+  | {kind: 'universal'; cost: number};
+
+/** Parse the numeric cost from a Shift keyword string like "Shift 5" or "Puppy Shift 3". */
+function parseShiftCost(keyword: string): number {
+  const match = keyword.match(/(\d+)\s*$/);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+/**
+ * Determine the Shift variant and cost for a card, or null if it has no Shift keyword.
+ * Handles "Shift N", "X Shift N" (classification), and "Universal Shift N".
+ */
+export function getShiftType(card: LorcanaCard): ShiftType | null {
+  if (!card.keywords) return null;
+
+  for (const kw of card.keywords) {
+    const lower = kw.toLowerCase();
+    if (lower.startsWith('universal shift')) {
+      return {kind: 'universal', cost: parseShiftCost(kw)};
+    }
+    // "Puppy Shift 3" or "Puppy Shift" → classification variant
+    if (lower.endsWith(' shift') || lower.match(/^\w+ shift \d+$/)) {
+      const prefix = kw.split(/\s+shift\s*/i)[0];
+      if (prefix && prefix.toLowerCase() !== kw.toLowerCase()) {
+        return {kind: 'classification', classification: prefix, cost: parseShiftCost(kw)};
+      }
+    }
+    if (lower.startsWith('shift')) {
+      return {kind: 'standard', cost: parseShiftCost(kw)};
+    }
+  }
+  return null;
+}
+
+/**
+ * Check if a card has any kind of Shift keyword (standard, classification, or universal).
+ */
+export function hasAnyShift(card: LorcanaCard): boolean {
+  return getShiftType(card) !== null;
 }
 
 /**
@@ -102,13 +194,19 @@ export function isLocation(card: LorcanaCard): boolean {
 
 /** Text patterns for each location-support role */
 export const LOCATION_PATTERNS = {
-  'at-payoff': /while.*at a location|if.*at a location|is at a location/i,
-  move: /move.*to.*location|moves to a location|move.*character.*location/i,
+  'at-payoff': /while\b.{0,60}at a location|if\b.{0,60}at a location|is at a location/i,
+  move: /move.*to.*location|moves to a location|move.*character.*location|to the same location/i,
   'move-exclude': /move.*damage/i,
   'play-trigger': /when(?:ever)? you play a location|whenever.*play a location/i,
   'in-play-check': /if you have a location|while you have a.*(location)|for each location/i,
   tutor: /search.*location card|reveal.*location card|return a location|location card from/i,
-  buff: /your locations|locations gain|locations get|at a location.*gets?\s\+/i,
+  buff: /your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
+  boost:
+    /under.*(?:characters|character) or locations|under.*locations|locations with boost|play a character or location with boost/i,
+  'location-ramp':
+    /\bless\b.*(?:to )?(?:play|move).*location|\bless\b for.*location|play a location.*(?:from|for free)/i,
+  /** Anti-location cards: banish/remove/shuffle locations. Excluded from location-control. */
+  'anti-location': /banish (?:chosen |all )(?:item or )?location|shuffle.*location into/i,
 } as const;
 
 export type LocationRole =
@@ -117,7 +215,9 @@ export type LocationRole =
   | 'play-trigger'
   | 'in-play-check'
   | 'tutor'
-  | 'buff';
+  | 'buff'
+  | 'boost'
+  | 'location-ramp';
 
 /**
  * Get all location roles a card fulfills.
@@ -126,6 +226,9 @@ export type LocationRole =
 export function getLocationRoles(card: LorcanaCard): LocationRole[] {
   if (isLocation(card)) return [];
   if (!card.text) return [];
+
+  // Anti-location cards (banish/remove locations) are excluded entirely
+  if (LOCATION_PATTERNS['anti-location'].test(card.text)) return [];
 
   const roles: LocationRole[] = [];
 
@@ -141,6 +244,10 @@ export function getLocationRoles(card: LorcanaCard): LocationRole[] {
   if (LOCATION_PATTERNS.tutor.test(card.text)) roles.push('tutor');
 
   if (LOCATION_PATTERNS.buff.test(card.text)) roles.push('buff');
+
+  if (LOCATION_PATTERNS.boost.test(card.text)) roles.push('boost');
+
+  if (LOCATION_PATTERNS['location-ramp'].test(card.text)) roles.push('location-ramp');
 
   return roles;
 }

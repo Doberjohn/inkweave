@@ -80,14 +80,14 @@ describe('filterSynergyCards', () => {
 
   it('should filter by strength tier', () => {
     const result = filterSynergyCards(synergies, withFilters({strengthFilters: ['Strong']}));
-    // Score 8 = Strong, Score 10 = Build-around (folds into Strong)
+    // Score 8 = Strong, Score 10 = Perfect (folds into Strong)
     expect(result.map((s) => s.card.fullName)).toEqual(['Amber Char', 'Amber Location']);
   });
 
-  it('should fold Build-around into Strong tier filter', () => {
+  it('should fold Perfect into Strong tier filter', () => {
     const result = filterSynergyCards(synergies, withFilters({strengthFilters: ['Strong']}));
     const scores = result.map((s) => s.score);
-    expect(scores).toContain(10); // Build-around included
+    expect(scores).toContain(10); // Perfect included
     expect(scores).toContain(8); // Strong included
   });
 

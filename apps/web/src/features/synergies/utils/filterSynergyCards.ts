@@ -5,12 +5,12 @@ import type {SynergyMatchDisplay} from '../types';
 import {getStrengthTier} from './scoreUtils';
 import type {StrengthTierLabel} from './scoreUtils';
 
-/** Strength tier labels used for filtering synergy results (Build-around folds into Strong). */
-export type StrengthTierFilter = Exclude<StrengthTierLabel, 'Build-around'>;
+/** Strength tier labels used for filtering synergy results (Perfect folds into Strong). */
+export type StrengthTierFilter = Exclude<StrengthTierLabel, 'Perfect'>;
 
 /** Exhaustive mapping from display tier to filter tier. Compiler-checked — adding a new tier forces an update. */
 const TIER_TO_FILTER: Record<StrengthTierLabel, StrengthTierFilter> = {
-  'Build-around': 'Strong',
+  Perfect: 'Strong',
   Strong: 'Strong',
   Moderate: 'Moderate',
   Weak: 'Weak',
@@ -36,8 +36,8 @@ export const EMPTY_SYNERGY_FILTERS: SynergyFilterState = Object.freeze({
 
 /**
  * Check whether a synergy score falls into any of the selected strength tiers.
- * Build-around (≥9.5) is folded into the Strong tier for filtering —
- * selecting "Strong" also includes Build-around results.
+ * Perfect (≥9.5) is folded into the Strong tier for filtering —
+ * selecting "Strong" also includes Perfect results.
  */
 function matchesStrengthFilter(score: number, strengthFilters: StrengthTierFilter[]): boolean {
   const tier = getStrengthTier(score);

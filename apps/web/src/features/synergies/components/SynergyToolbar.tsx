@@ -13,9 +13,17 @@ import {FilterIcon} from '../../../shared/components/FilterIcon';
 import type {ChipData} from '../../../shared/types';
 
 /** Sort orders for synergy cards in expanded view. */
-export type SynergySortOrder = 'strength-desc' | 'strength-asc' | 'name-asc' | 'name-desc';
+export type SynergySortOrder =
+  | 'cost-asc'
+  | 'cost-desc'
+  | 'strength-desc'
+  | 'strength-asc'
+  | 'name-asc'
+  | 'name-desc';
 
 const SORT_OPTIONS = [
+  {value: 'cost-asc', label: 'Cost: Low \u2192 High'},
+  {value: 'cost-desc', label: 'Cost: High \u2192 Low'},
   {value: 'strength-desc', label: 'Score: High \u2192 Low'},
   {value: 'strength-asc', label: 'Score: Low \u2192 High'},
   {value: 'name-asc', label: 'Name A\u2013Z'},

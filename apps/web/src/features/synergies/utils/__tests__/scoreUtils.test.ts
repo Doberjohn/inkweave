@@ -5,9 +5,9 @@ import type {LorcanaCard} from 'lorcana-synergy-engine';
 
 describe('scoreUtils', () => {
   describe('getStrengthTier', () => {
-    it('should return Build-around for scores >= 9.5', () => {
-      expect(getStrengthTier(9.5).label).toBe('Build-around');
-      expect(getStrengthTier(10).label).toBe('Build-around');
+    it('should return Perfect for scores >= 9.5', () => {
+      expect(getStrengthTier(9.5).label).toBe('Perfect');
+      expect(getStrengthTier(10).label).toBe('Perfect');
     });
 
     it('should return Strong for scores 7-9.4', () => {
@@ -34,17 +34,17 @@ describe('scoreUtils', () => {
     });
 
     it('should return correct colors for each tier', () => {
-      const buildAround = getStrengthTier(10);
-      expect(buildAround.color).toBe('#fbbf24');
-      expect(buildAround.bg).toBe('#3d3010');
+      const perfect = getStrengthTier(10);
+      expect(perfect.color).toBe('#fbbf24');
+      expect(perfect.bg).toBe('#3d3010');
 
       const strong = getStrengthTier(9);
       expect(strong.color).toBe('#6ee7a0');
       expect(strong.bg).toBe('#1a3d1a');
 
       const moderate = getStrengthTier(5);
-      expect(moderate.color).toBe('#f5d560');
-      expect(moderate.bg).toBe('#3d3010');
+      expect(moderate.color).toBe('#60b5f5');
+      expect(moderate.bg).toBe('#10253d');
 
       const weak = getStrengthTier(1);
       expect(weak.color).toBe('#f59090');
@@ -52,7 +52,7 @@ describe('scoreUtils', () => {
     });
 
     it('should return abbreviated shortLabels for each tier', () => {
-      expect(getStrengthTier(10).shortLabel).toBe('Build');
+      expect(getStrengthTier(10).shortLabel).toBe('Perf');
       expect(getStrengthTier(8).shortLabel).toBe('Strong');
       expect(getStrengthTier(5).shortLabel).toBe('Mod');
       expect(getStrengthTier(2).shortLabel).toBe('Weak');

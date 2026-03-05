@@ -25,7 +25,7 @@ export function ExpandedGroupView({
 }: ExpandedGroupViewProps) {
   const [backHovered, setBackHovered] = useState(false);
   const [filterState, setFilterState] = useState<SynergyFilterState>(EMPTY_SYNERGY_FILTERS);
-  const [sortOrder, setSortOrder] = useState<SynergySortOrder>('strength-desc');
+  const [sortOrder, setSortOrder] = useState<SynergySortOrder>('cost-asc');
   const {uniqueKeywords, uniqueClassifications, sets} = useCardDataContext();
 
   // Filter then sort synergies
@@ -33,6 +33,10 @@ export function ExpandedGroupView({
     const filtered = filterSynergyCards(group.synergies, filterState);
     return [...filtered].sort((a, b) => {
       switch (sortOrder) {
+        case 'cost-asc':
+          return a.card.cost - b.card.cost;
+        case 'cost-desc':
+          return b.card.cost - a.card.cost;
         case 'strength-desc':
           return b.score - a.score;
         case 'strength-asc':
@@ -56,7 +60,7 @@ export function ExpandedGroupView({
   // Reset filters and sort order before navigating back
   const handleBackToAll = useCallback(() => {
     setFilterState(EMPTY_SYNERGY_FILTERS);
-    setSortOrder('strength-desc');
+    setSortOrder('cost-asc');
     onBackToAll();
   }, [onBackToAll]);
 

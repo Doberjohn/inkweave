@@ -15,6 +15,7 @@ export interface LorcanaCard {
   fullName: string; // "name - version" combined
   cost: number;
   ink: Ink;
+  ink2?: Ink; // Second ink for dual-ink cards (e.g., "Amethyst-Sapphire" → ink2: "Sapphire")
   inkwell: boolean;
   type: CardType; // Character, Action, Item, or Location
   classifications?: string[]; // Floodborn, Hero, Villain, Princess, etc.
