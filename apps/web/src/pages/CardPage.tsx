@@ -65,6 +65,10 @@ export function CardPage() {
   );
 
   const goHome = useCallback(() => navigate('/'), [navigate]);
+  const handleSearchSubmit = useCallback(() => {
+    const q = searchQuery.trim();
+    navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
+  }, [navigate, searchQuery]);
   const selectCard = useCallback((card: {id: string}) => navigate(`/card/${card.id}`), [navigate]);
   const handleGroupClick = useCallback(
     (groupKey: string) => {
@@ -199,6 +203,7 @@ export function CardPage() {
         showBackArrow
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onSearchSubmit={handleSearchSubmit}
         cards={cards}
         onCardSelect={selectCard}
       />
