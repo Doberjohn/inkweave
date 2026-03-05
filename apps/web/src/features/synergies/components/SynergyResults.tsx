@@ -25,6 +25,8 @@ interface SynergyResultsProps {
   onShowAll?: (groupKey: string) => void;
   /** Called when user clicks "← Back to all synergies" in expanded view */
   onBackToAll?: () => void;
+  /** Called when a synergy card tile is clicked (opens detail modal) */
+  onSynergyCardClick?: (card: LorcanaCard) => void;
 }
 
 type SortOrder =
@@ -47,6 +49,7 @@ export const SynergyResults = memo(function SynergyResults({
   expandedGroup,
   onShowAll,
   onBackToAll,
+  onSynergyCardClick,
 }: SynergyResultsProps) {
   // Default: show card detail on mobile, hide on desktop (it's in its own panel)
   const renderCardDetail = showCardDetail ?? isMobile;
@@ -111,6 +114,7 @@ export const SynergyResults = memo(function SynergyResults({
           group={expandedGroupData}
           isMobile={isMobile}
           onBackToAll={onBackToAll}
+          onCardClick={onSynergyCardClick}
         />
       ) : (
         <>
@@ -234,6 +238,7 @@ export const SynergyResults = memo(function SynergyResults({
                   isMobile={isMobile}
                   maxVisibleCards={isMobile ? 5 : 6}
                   onShowAll={onShowAll}
+                  onCardClick={onSynergyCardClick}
                 />
               ))}
             </>

@@ -333,6 +333,105 @@ describe('SynergyEngine', () => {
     });
   });
 
+  describe('getPairSynergies', () => {
+    it('should return one connection for a Shift pair', () => {
+      const engine = new SynergyEngine();
+
+      const elsaShift = createCard({
+        id: 'elsa-shift',
+        name: 'Elsa',
+        fullName: 'Elsa - Ice Maker',
+        cost: 7,
+        keywords: ['Shift 5'],
+      });
+
+      const elsaBase = createCard({
+        id: 'elsa-base',
+        name: 'Elsa',
+        fullName: 'Elsa - Snow Queen',
+        cost: 3,
+      });
+
+      const result = engine.getPairSynergies(elsaShift, elsaBase);
+
+      expect(result.cardA.id).toBe('elsa-shift');
+      expect(result.cardB.id).toBe('elsa-base');
+      expect(result.connections.length).toBeGreaterThan(0);
+
+      const shiftConn = result.connections.find((c) => c.ruleId === 'shift-targets');
+      expect(shiftConn).toBeDefined();
+      expect(shiftConn!.category).toBe('direct');
+      expect(shiftConn!.score).toBeGreaterThan(0);
+      expect(shiftConn!.explanation).toBeTruthy();
+    });
+
+    it('should return multiple connections when cards match multiple rules', () => {
+      const engine = new SynergyEngine();
+
+      const shiftLoreDrain = createCard({
+        id: 'shift-drain',
+        name: 'Elsa',
+        fullName: 'Elsa - Ice Maker',
+        cost: 7,
+        keywords: ['Shift 5'],
+        text: 'opponent loses 1 lore',
+      });
+
+      const elsaBase = createCard({
+        id: 'elsa-base',
+        name: 'Elsa',
+        fullName: 'Elsa - Snow Queen',
+        cost: 3,
+        text: 'opponent loses 2 lore',
+      });
+
+      const result = engine.getPairSynergies(shiftLoreDrain, elsaBase);
+
+      // Should have at least shift + lore-denial connections
+      expect(result.connections.length).toBeGreaterThanOrEqual(2);
+      expect(result.connections.some((c) => c.ruleId === 'shift-targets')).toBe(true);
+      expect(result.connections.some((c) => c.category === 'playstyle')).toBe(true);
+    });
+
+    it('should return empty connections and score 0 for unrelated cards', () => {
+      const engine = new SynergyEngine();
+
+      const card1 = createCard({id: 'card-1', name: 'Random Card 1', cost: 3});
+      const card2 = createCard({id: 'card-2', name: 'Random Card 2', cost: 5});
+
+      const result = engine.getPairSynergies(card1, card2);
+
+      expect(result.connections).toHaveLength(0);
+      expect(result.aggregateScore).toBe(0);
+    });
+
+    it('should deduplicate bidirectional matches by ruleId, keeping highest score', () => {
+      const engine = new SynergyEngine();
+
+      // Both directions should find the Shift rule, but only one connection entry
+      const elsaShift = createCard({
+        id: 'elsa-shift',
+        name: 'Elsa',
+        fullName: 'Elsa - Ice Maker',
+        cost: 7,
+        keywords: ['Shift 5'],
+      });
+
+      const elsaBase = createCard({
+        id: 'elsa-base',
+        name: 'Elsa',
+        fullName: 'Elsa - Snow Queen',
+        cost: 3,
+      });
+
+      const result = engine.getPairSynergies(elsaShift, elsaBase);
+      const shiftConnections = result.connections.filter((c) => c.ruleId === 'shift-targets');
+
+      // Deduped — only one entry per ruleId
+      expect(shiftConnections).toHaveLength(1);
+    });
+  });
+
   describe('maxResultsPerGroup', () => {
     it('should limit results per group', () => {
       const customRule: SynergyRule = {

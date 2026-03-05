@@ -45,6 +45,34 @@ export interface SynergyMatchDisplay {
   ruleName?: string;
 }
 
+// A single connection between two cards from a specific rule
+interface PairConnectionBase {
+  ruleId: string;
+  ruleName: string;
+  score: number;
+  explanation: string;
+}
+
+interface DirectPairConnection extends PairConnectionBase {
+  category: 'direct';
+}
+
+interface PlaystylePairConnection extends PairConnectionBase {
+  category: 'playstyle';
+  playstyleId: PlaystyleId;
+}
+
+// Discriminated union — mirrors SynergyRule's category narrowing
+export type PairSynergyConnection = DirectPairConnection | PlaystylePairConnection;
+
+// Full detailed breakdown of why two cards synergize
+export interface DetailedPairSynergy {
+  cardA: LorcanaCard;
+  cardB: LorcanaCard;
+  connections: PairSynergyConnection[];
+  aggregateScore: number;
+}
+
 // Grouped synergies for display
 export interface SynergyGroup {
   groupKey: string; // rule.id for direct, playstyleId for playstyle

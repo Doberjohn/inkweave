@@ -7,4 +7,6 @@ export type {
   SynergyMatch,
   SynergyMatchDisplay,
   SynergyGroup,
+  PairSynergyConnection,
+  DetailedPairSynergy,
 } from './synergy.js';
