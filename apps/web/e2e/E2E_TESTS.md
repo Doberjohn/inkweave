@@ -55,7 +55,7 @@
 | should navigate to card page when clicking a suggestion | Clicking an autocomplete suggestion navigates to `/card/:id` |
 | should navigate to card via keyboard (ArrowDown + Enter) | ArrowDown + Enter selects suggestion and navigates to card page |
 | should close dropdown on Escape | Escape key dismisses autocomplete dropdown |
-| should show autocomplete on browse page search | Typing in browse page search shows autocomplete dropdown |
+| should NOT show autocomplete on browse page search | Typing in browse page search does NOT show autocomplete (browse filters inline) |
 
 ## Patterns
 

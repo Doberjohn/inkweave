@@ -62,27 +62,22 @@ test.describe('Search Autocomplete', () => {
     await expect(listbox).not.toBeVisible();
   });
 
-  test('should show autocomplete on browse page search', async ({page}) => {
+  test('should NOT show autocomplete on browse page search', async ({page}) => {
     // Navigate to browse page
     await page.getByTestId('cta-browse').click();
     await expect(page).toHaveURL(/\/browse/);
 
-    // Wait for browse page cards to load (heroSearch doesn't exist here)
+    // Wait for browse page cards to load
     const browseSearch = page.getByPlaceholder('Search cards...');
     await expect(browseSearch).toBeVisible({timeout: 10000});
     await expect(page.getByTestId('card-tile').first()).toBeVisible({timeout: 10000});
 
-    // Type in the browse search bar
-    // Use fill() instead of pressSequentially — browse search routes through
-    // URL params (setSearchParams), which triggers React Router re-renders on
-    // every keystroke. pressSequentially's character-by-character input races
-    // with these re-renders on slow CI runners, preventing the debounce from
-    // completing. fill() sets the value in one shot, avoiding the race.
+    // Type in the browse search bar — browse filters inline, no autocomplete
     await browseSearch.click();
     await browseSearch.fill('Ariel');
 
-    // Autocomplete should appear after debounce
+    // Autocomplete should NOT appear — browse page uses inline filtering
     const listbox = page.getByRole('listbox');
-    await expect(listbox).toBeVisible({timeout: 10000});
+    await expect(listbox).not.toBeVisible({timeout: 2000});
   });
 });

@@ -120,8 +120,6 @@ export function BrowsePage() {
           onLogoClick={goHome}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          cards={cards}
-          onCardSelect={selectCard}
           isMobile
         />
         <div style={{position: 'relative', zIndex: 1}}>
@@ -245,8 +243,6 @@ export function BrowsePage() {
         onLogoClick={goHome}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        cards={cards}
-        onCardSelect={selectCard}
       />
       <div
         style={{
