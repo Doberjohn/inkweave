@@ -108,7 +108,7 @@ export const LOCATION_PATTERNS = {
   'play-trigger': /when(?:ever)? you play a location|whenever.*play a location/i,
   'in-play-check': /if you have a location|while you have a.*(location)|for each location/i,
   tutor: /search.*location card|reveal.*location card|return a location|location card from/i,
-  buff: /your locations|locations gain|locations get|at a location.*gets?\s\+|location.*can't be challenged|location gains? resist|for each location.*resist/i,
+  buff: /your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
   boost: /under.*(?:characters|character) or locations|under.*locations|locations with boost|play a character or location with boost/i,
   'location-ramp': /\bless\b.*(?:to )?(?:play|move).*location|\bless\b for.*location|play a location.*(?:from|for free)/i,
   /** Anti-location cards: banish/remove/shuffle locations. Excluded from location-control. */
