@@ -589,6 +589,84 @@ describe('Location Synergy Rules', () => {
       expect(felixMatch!.score).toBe(5);
     });
   });
+
+  describe('Boost role detection', () => {
+    const webbysDiary = createCard({
+      id: 'webbys-diary',
+      name: "Webby's Diary",
+      fullName: "Webby's Diary",
+      type: 'Item',
+      cost: 2,
+      ink: 'Amber',
+      text: 'LATEST ENTRY Whenever you put a card under one of your characters or locations, you may pay 1 to draw a card.',
+    });
+
+    it('should detect boost role', () => {
+      expect(getLocationRoles(webbysDiary)).toContain('boost');
+    });
+
+    it('should find Locations as synergies for boost cards', () => {
+      const engine = new SynergyEngine();
+      const groups = engine.findSynergies(webbysDiary, [webbysDiary, agrabah, unrelatedCard]);
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control');
+      expect(locationGroup).toBeDefined();
+      expect(locationGroup!.synergies.map((s) => s.card.id)).toContain('agrabah');
+    });
+
+    it('should assign score 5 for boost cards with Locations', () => {
+      const engine = new SynergyEngine();
+      const groups = engine.findSynergies(agrabah, [agrabah, webbysDiary]);
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control')!;
+      const diaryMatch = locationGroup.synergies.find((s) => s.card.id === 'webbys-diary');
+      expect(diaryMatch!.score).toBe(5);
+    });
+  });
+
+  describe('Location-ramp role detection', () => {
+    const elsaConcerned = createCard({
+      id: 'elsa-concerned',
+      name: 'Elsa',
+      fullName: 'Elsa - Concerned Sister',
+      cost: 4,
+      ink: 'Ruby',
+      text: 'CLEAR THE WAY When you play this character, you pay 2 less for the next location you play this turn.',
+    });
+
+    it('should detect location-ramp role', () => {
+      expect(getLocationRoles(elsaConcerned)).toContain('location-ramp');
+    });
+
+    it('should assign score 7 for location-ramp cards with Locations', () => {
+      const engine = new SynergyEngine();
+      const groups = engine.findSynergies(agrabah, [agrabah, elsaConcerned]);
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control')!;
+      const elsaMatch = locationGroup.synergies.find((s) => s.card.id === 'elsa-concerned');
+      expect(elsaMatch!.score).toBe(7);
+    });
+  });
+
+  describe('Anti-location exclusion', () => {
+    const launchpadPilot = createCard({
+      id: 'launchpad-pilot',
+      name: 'Launchpad',
+      fullName: 'Launchpad - Exceptional Pilot',
+      cost: 4,
+      ink: 'Emerald',
+      text: 'OFF THE MAP When you play this character, you may banish chosen location.',
+    });
+
+    it('should exclude anti-location cards from all roles', () => {
+      expect(getLocationRoles(launchpadPilot)).toEqual([]);
+      expect(isLocationSupportCard(launchpadPilot)).toBe(false);
+    });
+
+    it('should not show anti-location cards in location synergies', () => {
+      const engine = new SynergyEngine();
+      const groups = engine.findSynergies(agrabah, [agrabah, launchpadPilot, unrelatedCard]);
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control');
+      expect(locationGroup).toBeUndefined();
+    });
+  });
 });
 
 describe('Card Helper Functions', () => {

@@ -103,12 +103,16 @@ export function isLocation(card: LorcanaCard): boolean {
 /** Text patterns for each location-support role */
 export const LOCATION_PATTERNS = {
   'at-payoff': /while.*at a location|if.*at a location|is at a location/i,
-  move: /move.*to.*location|moves to a location|move.*character.*location/i,
+  move: /move.*to.*location|moves to a location|move.*character.*location|to the same location/i,
   'move-exclude': /move.*damage/i,
   'play-trigger': /when(?:ever)? you play a location|whenever.*play a location/i,
   'in-play-check': /if you have a location|while you have a.*(location)|for each location/i,
   tutor: /search.*location card|reveal.*location card|return a location|location card from/i,
-  buff: /your locations|locations gain|locations get|at a location.*gets?\s\+/i,
+  buff: /your locations|locations gain|locations get|at a location.*gets?\s\+|location.*can't be challenged|location gains? resist|for each location.*resist/i,
+  boost: /under.*(?:characters|character) or locations|under.*locations|locations with boost|play a character or location with boost/i,
+  'location-ramp': /less.*(?:to )?(?:play|move).*location|less for.*location|play a location.*(?:from|for free)/i,
+  /** Anti-location cards: banish/remove/shuffle locations. Excluded from location-control. */
+  'anti-location': /banish (?:chosen |all )(?:item or )?location|shuffle.*location into/i,
 } as const;
 
 export type LocationRole =
@@ -117,7 +121,9 @@ export type LocationRole =
   | 'play-trigger'
   | 'in-play-check'
   | 'tutor'
-  | 'buff';
+  | 'buff'
+  | 'boost'
+  | 'location-ramp';
 
 /**
  * Get all location roles a card fulfills.
@@ -126,6 +132,9 @@ export type LocationRole =
 export function getLocationRoles(card: LorcanaCard): LocationRole[] {
   if (isLocation(card)) return [];
   if (!card.text) return [];
+
+  // Anti-location cards (banish/remove locations) are excluded entirely
+  if (LOCATION_PATTERNS['anti-location'].test(card.text)) return [];
 
   const roles: LocationRole[] = [];
 
@@ -141,6 +150,10 @@ export function getLocationRoles(card: LorcanaCard): LocationRole[] {
   if (LOCATION_PATTERNS.tutor.test(card.text)) roles.push('tutor');
 
   if (LOCATION_PATTERNS.buff.test(card.text)) roles.push('buff');
+
+  if (LOCATION_PATTERNS.boost.test(card.text)) roles.push('boost');
+
+  if (LOCATION_PATTERNS['location-ramp'].test(card.text)) roles.push('location-ramp');
 
   return roles;
 }

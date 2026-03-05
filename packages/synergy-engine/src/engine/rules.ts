@@ -50,9 +50,11 @@ const LOCATION_ROLE_SCORE: Record<LocationRole, number> = {
   'at-payoff': 7,
   'play-trigger': 7,
   buff: 7,
+  'location-ramp': 7,
   move: 5,
   'in-play-check': 5,
   tutor: 5,
+  boost: 5,
 };
 
 /** Human-readable labels for each location role */
@@ -60,13 +62,20 @@ const ROLE_LABELS: Record<LocationRole, string> = {
   'at-payoff': 'at location payoff',
   'play-trigger': 'play trigger',
   buff: 'location buff',
+  'location-ramp': 'location ramp',
   move: 'move to location',
   'in-play-check': 'location check',
   tutor: 'location tutor',
+  boost: 'location boost',
 };
 
 /** Roles that represent high-value location strategy pieces */
-const HIGH_VALUE_ROLES: Set<LocationRole> = new Set(['at-payoff', 'play-trigger', 'buff']);
+const HIGH_VALUE_ROLES: Set<LocationRole> = new Set([
+  'at-payoff',
+  'play-trigger',
+  'buff',
+  'location-ramp',
+]);
 
 /**
  * Determine cross-synergy score between two location-support cards.
@@ -176,6 +185,8 @@ function createLocationRule(
       if (isLocation(card)) return true;
       if (!card.text) return false;
       const normalizedText = card.text.replace(/\n/g, ' ');
+      // Exclude anti-location cards (banish/remove locations)
+      if (LOCATION_PATTERNS['anti-location'].test(normalizedText)) return false;
       if (excludePattern && excludePattern.test(normalizedText)) return false;
       return pattern.test(normalizedText);
     },
@@ -189,7 +200,7 @@ function createLocationRule(
   };
 }
 
-/** Create all 6 location synergy rules (order matters for deduplication) */
+/** Create all 8 location synergy rules (order matters for deduplication) */
 function createLocationRules(): SynergyRule[] {
   return [
     createLocationRule(
@@ -206,6 +217,12 @@ function createLocationRules(): SynergyRule[] {
     ),
     createLocationRule('buff', 'Location Buff', 'buff', LOCATION_PATTERNS.buff),
     createLocationRule(
+      'location-ramp',
+      'Location Ramp',
+      'location-ramp',
+      LOCATION_PATTERNS['location-ramp'],
+    ),
+    createLocationRule(
       'move',
       'Move to Location',
       'move',
@@ -219,6 +236,7 @@ function createLocationRules(): SynergyRule[] {
       LOCATION_PATTERNS['in-play-check'],
     ),
     createLocationRule('tutor', 'Location Tutor', 'tutor', LOCATION_PATTERNS.tutor),
+    createLocationRule('boost', 'Location Boost', 'boost', LOCATION_PATTERNS.boost),
   ];
 }
 
