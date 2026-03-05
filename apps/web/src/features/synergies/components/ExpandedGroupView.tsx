@@ -1,7 +1,12 @@
-import {useState} from 'react';
+import {useState, useMemo, useCallback} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
+import {SynergyToolbar} from './SynergyToolbar';
+import type {SynergySortOrder} from './SynergyToolbar';
+import {filterSynergyCards, EMPTY_SYNERGY_FILTERS} from '../utils/filterSynergyCards';
+import type {SynergyFilterState} from '../utils/filterSynergyCards';
+import {useCardDataContext} from '../../../shared/contexts/CardDataContext';
 import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
 
 interface ExpandedGroupViewProps {
@@ -11,7 +16,7 @@ interface ExpandedGroupViewProps {
   onCardClick?: (card: LorcanaCard) => void;
 }
 
-/** Shared expanded view for a single synergy group — back link, title, description, full card grid. */
+/** Shared expanded view for a single synergy group — back link, title, description, toolbar, full card grid. */
 export function ExpandedGroupView({
   group,
   isMobile = false,
@@ -19,12 +24,47 @@ export function ExpandedGroupView({
   onCardClick,
 }: ExpandedGroupViewProps) {
   const [backHovered, setBackHovered] = useState(false);
+  const [filterState, setFilterState] = useState<SynergyFilterState>(EMPTY_SYNERGY_FILTERS);
+  const [sortOrder, setSortOrder] = useState<SynergySortOrder>('strength-desc');
+  const {uniqueKeywords, uniqueClassifications, sets} = useCardDataContext();
+
+  // Filter then sort synergies
+  const filteredSynergies = useMemo(() => {
+    const filtered = filterSynergyCards(group.synergies, filterState);
+    return [...filtered].sort((a, b) => {
+      switch (sortOrder) {
+        case 'strength-desc':
+          return b.score - a.score;
+        case 'strength-asc':
+          return a.score - b.score;
+        case 'name-asc':
+          return a.card.fullName.localeCompare(b.card.fullName);
+        case 'name-desc':
+          return b.card.fullName.localeCompare(a.card.fullName);
+        default:
+          return 0;
+      }
+    });
+  }, [group.synergies, filterState, sortOrder]);
+
+  // Build a virtual group with filtered synergies for the SynergyGroup component
+  const filteredGroup = useMemo(
+    () => ({...group, synergies: filteredSynergies}),
+    [group, filteredSynergies],
+  );
+
+  // Reset filters and sort order before navigating back
+  const handleBackToAll = useCallback(() => {
+    setFilterState(EMPTY_SYNERGY_FILTERS);
+    setSortOrder('strength-desc');
+    onBackToAll();
+  }, [onBackToAll]);
 
   return (
     <div>
       {/* Back navigation */}
       <button
-        onClick={onBackToAll}
+        onClick={handleBackToAll}
         onMouseEnter={() => setBackHovered(true)}
         onMouseLeave={() => setBackHovered(false)}
         style={{
@@ -80,15 +120,45 @@ export function ExpandedGroupView({
         </p>
       </div>
 
-      {/* Full card grid — no truncation */}
-      <SynergyGroup
-        group={group}
+      {/* Toolbar with filters + sort */}
+      <SynergyToolbar
+        filterState={filterState}
+        resultCount={filteredSynergies.length}
+        totalCount={group.synergies.length}
+        onFilterChange={setFilterState}
+        sortOrder={sortOrder}
+        onSortChange={setSortOrder}
         isMobile={isMobile}
-        maxVisibleCards={Infinity}
-        showHeader={false}
-        cardMinWidth={180}
-        onCardClick={onCardClick}
+        uniqueKeywords={uniqueKeywords}
+        uniqueClassifications={uniqueClassifications}
+        sets={sets}
       />
+
+      {/* Full card grid — no truncation */}
+      {filteredSynergies.length === 0 && filterState !== EMPTY_SYNERGY_FILTERS ? (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            textAlign: 'center',
+            padding: `${SPACING.xxl * 2}px`,
+            color: COLORS.gray400,
+          }}>
+          <p style={{fontSize: `${FONT_SIZES.lg}px`}}>No cards match your filters.</p>
+          <p style={{fontSize: `${FONT_SIZES.base}px`, marginTop: `${SPACING.sm}px`}}>
+            Try adjusting or clearing your filters.
+          </p>
+        </div>
+      ) : (
+        <SynergyGroup
+          group={filteredGroup}
+          isMobile={isMobile}
+          maxVisibleCards={Infinity}
+          showHeader={false}
+          cardMinWidth={180}
+          onCardClick={onCardClick}
+        />
+      )}
     </div>
   );
 }

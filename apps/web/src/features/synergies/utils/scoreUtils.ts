@@ -1,7 +1,9 @@
 import type {SynergyMatchDisplay} from '../types';
 
+export type StrengthTierLabel = 'Build-around' | 'Strong' | 'Moderate' | 'Weak';
+
 export interface StrengthTier {
-  label: string;
+  label: StrengthTierLabel;
   /** Abbreviated label for compact displays (e.g. mobile badges). */
   shortLabel: string;
   color: string;
@@ -25,5 +27,6 @@ export function getStrengthTier(score: number): StrengthTier {
  * Used to assign a single score to groups containing mixed scores.
  */
 export function getDominantScore(synergies: SynergyMatchDisplay[]): number {
+  if (synergies.length === 0) return 0;
   return Math.max(...synergies.map((s) => s.score));
 }

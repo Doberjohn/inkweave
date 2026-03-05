@@ -7,3 +7,5 @@ export {CardDetail} from './CardDetail';
 export {CardDetailPanel} from './CardDetailPanel';
 export {MobileCardDetail} from './MobileCardDetail';
 export {SynergyDetailModal} from './SynergyDetailModal';
+export {SynergyToolbar} from './SynergyToolbar';
+export type {SynergySortOrder} from './SynergyToolbar';

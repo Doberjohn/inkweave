@@ -6,6 +6,7 @@ export {CompactHeader} from './CompactHeader';
 export {CostIcon} from './CostIcon';
 export {EtherealBackground} from './EtherealBackground';
 export {FilterButton} from './FilterButton';
+export {FilterIcon} from './FilterIcon';
 export {FilterContent} from './FilterContent';
 export type {FilterPanelProps} from './FilterContent';
 export {FilterModal} from './FilterModal';

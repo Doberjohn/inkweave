@@ -108,11 +108,12 @@ export const SynergyResults = memo(function SynergyResults({
           title="Select a card to see synergies"
           subtitle='Try "Elsa" or filter by Amethyst'
         />
-      ) : expandedGroupData ? (
+      ) : expandedGroupData && onBackToAll ? (
         <ExpandedGroupView
+          key={expandedGroupData.groupKey}
           group={expandedGroupData}
           isMobile={isMobile}
-          onBackToAll={onBackToAll!}
+          onBackToAll={onBackToAll}
           onCardClick={onSynergyCardClick}
         />
       ) : (

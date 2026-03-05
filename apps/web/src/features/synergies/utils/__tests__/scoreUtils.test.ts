@@ -80,5 +80,9 @@ describe('scoreUtils', () => {
       const synergies = [createMockSynergy(7), createMockSynergy(7)];
       expect(getDominantScore(synergies)).toBe(7);
     });
+
+    it('should return 0 for an empty synergy list', () => {
+      expect(getDominantScore([])).toBe(0);
+    });
   });
 });
