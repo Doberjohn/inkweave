@@ -1,8 +1,12 @@
 import {useRef, useState, useMemo, useEffect, forwardRef} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
 import type {LorcanaCard} from '../../cards';
-import {useCardPreviewHandlers} from '../../cards';
-import type {DetailedPairSynergy, PairSynergyConnection, LocationRole} from 'lorcana-synergy-engine';
+import {useCardPreviewHandlers, useCardPreview} from '../../cards';
+import type {
+  DetailedPairSynergy,
+  PairSynergyConnection,
+  LocationRole,
+} from 'lorcana-synergy-engine';
 import {
   getPlaystyleById,
   LOCATION_ROLE_CHIP_LABELS,
@@ -36,6 +40,12 @@ export function SynergyDetailModal({
     initialFocusRef: closeButtonRef,
     onClose,
   });
+
+  // Hide any card popover immediately when modal starts closing (before exit animation)
+  const {hidePreview} = useCardPreview();
+  useEffect(() => {
+    if (!isOpen) hidePreview();
+  }, [isOpen, hidePreview]);
 
   const {cardA, cardB, connections, aggregateScore} = pair;
   const tier = getStrengthTier(aggregateScore);
@@ -109,9 +119,9 @@ export function SynergyDetailModal({
                   justifyContent: 'center',
                   padding: '24px 24px 0',
                 }}>
-                <PairCard card={cardA} />
+                <PairCard card={cardA} showVersion={cardA.name === cardB.name} />
                 <Connector score={aggregateScore} tier={tier} />
-                <PairCard card={cardB} />
+                <PairCard card={cardB} showVersion={cardA.name === cardB.name} />
               </div>
 
               {/* Aggregate tier label */}
@@ -131,7 +141,7 @@ export function SynergyDetailModal({
 
               {/* Connections list */}
               {connections.length > 0 && (
-                <ConnectionsSection connections={connections} />
+                <ConnectionsSection connections={connections} cardA={cardA} cardB={cardB} />
               )}
 
               {/* CTA button */}
@@ -204,11 +214,8 @@ const CloseButton = forwardRef<HTMLButtonElement, {onClick: () => void}>(functio
   );
 });
 
-function PairCard({card}: {card: LorcanaCard}) {
-  const {previewHandlers, hidePreview} = useCardPreviewHandlers({card});
-
-  // Hide popover on unmount (modal close removes DOM before mouseLeave fires)
-  useEffect(() => hidePreview, [hidePreview]);
+function PairCard({card, showVersion}: {card: LorcanaCard; showVersion?: boolean}) {
+  const {previewHandlers} = useCardPreviewHandlers({card});
 
   return (
     <div
@@ -239,7 +246,7 @@ function PairCard({card}: {card: LorcanaCard}) {
         }}>
         {card.name}
       </div>
-      {card.version && (
+      {showVersion && card.version && (
         <div
           style={{
             fontSize: `${FONT_SIZES.base}px`,
@@ -347,7 +354,33 @@ function extractLocationRole(ruleId: string): LocationRole | null {
   return ruleId.slice(prefix.length) as LocationRole;
 }
 
-function ConnectionsSection({connections}: {connections: PairSynergyConnection[]}) {
+/** Determine which card contributes a location role in a pair connection */
+function getRoleSourceName(
+  conn: PairSynergyConnection,
+  cardA: LorcanaCard,
+  cardB: LorcanaCard,
+): string {
+  // Use fullName when both cards share the same base name to disambiguate
+  const nameOf = (card: LorcanaCard) => (cardA.name === cardB.name ? card.fullName : card.name);
+
+  // Location ↔ support: the non-Location card has the role
+  if (cardA.type === 'Location' && cardB.type !== 'Location') return nameOf(cardB);
+  if (cardB.type === 'Location' && cardA.type !== 'Location') return nameOf(cardA);
+  // Cross-synergy: source card name starts the explanation
+  if (conn.explanation.startsWith(cardA.name)) return nameOf(cardA);
+  if (conn.explanation.startsWith(cardB.name)) return nameOf(cardB);
+  return nameOf(cardA);
+}
+
+function ConnectionsSection({
+  connections,
+  cardA,
+  cardB,
+}: {
+  connections: PairSynergyConnection[];
+  cardA: LorcanaCard;
+  cardB: LorcanaCard;
+}) {
   const groups = useMemo(() => groupConnections(connections), [connections]);
 
   return (
@@ -372,14 +405,22 @@ function ConnectionsSection({connections}: {connections: PairSynergyConnection[]
       </div>
       <div style={{display: 'flex', flexDirection: 'column', gap: `${SPACING.sm}px`}}>
         {groups.map((group) => (
-          <ConnectionGroupRow key={group.key} group={group} />
+          <ConnectionGroupRow key={group.key} group={group} cardA={cardA} cardB={cardB} />
         ))}
       </div>
     </div>
   );
 }
 
-function ConnectionGroupRow({group}: {group: ConnectionGroupData}) {
+function ConnectionGroupRow({
+  group,
+  cardA,
+  cardB,
+}: {
+  group: ConnectionGroupData;
+  cardA: LorcanaCard;
+  cardB: LorcanaCard;
+}) {
   const [expanded, setExpanded] = useState(false);
   const [hovered, setHovered] = useState(false);
   const tier = getStrengthTier(group.score);
@@ -477,7 +518,9 @@ function ConnectionGroupRow({group}: {group: ConnectionGroupData}) {
           {group.connections.map((conn) => {
             const role = extractLocationRole(conn.ruleId);
             const chipLabel = role ? LOCATION_ROLE_CHIP_LABELS[role] : null;
-            const description = role ? LOCATION_ROLE_DESCRIPTIONS[role] : conn.explanation;
+            const description = role
+              ? LOCATION_ROLE_DESCRIPTIONS[role](getRoleSourceName(conn, cardA, cardB))
+              : conn.explanation;
 
             return (
               <div

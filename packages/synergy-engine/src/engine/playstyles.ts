@@ -3,7 +3,7 @@ import type {Playstyle, PlaystyleId} from '../types';
 const playstyles: Playstyle[] = [
   {
     id: 'lore-denial',
-    name: 'Lore Denial',
+    name: 'Lore Steal',
     description:
       'Cards that make your opponent lose lore. Stacking these creates a consistent denial strategy that pressures your opponent while you gain lore.',
   },

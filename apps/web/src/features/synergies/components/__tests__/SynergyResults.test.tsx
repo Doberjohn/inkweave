@@ -47,7 +47,7 @@ const mockSynergies: SynergyGroupData[] = [
   {
     groupKey: 'lore-denial',
     category: 'playstyle',
-    label: 'Lore Denial',
+    label: 'Lore Steal',
     description: 'Cards that prevent opponents from gaining lore',
     synergies: [{card: {...mockCard, id: '2'}, score: 5, explanation: 'Lore denial'}],
   },
@@ -90,7 +90,7 @@ describe('SynergyResults', () => {
     );
     expect(screen.getByRole('button', {name: 'All'})).toBeTruthy();
     expect(screen.getByRole('button', {name: 'Shift Targets'})).toBeTruthy();
-    expect(screen.getByRole('button', {name: 'Lore Denial'})).toBeTruthy();
+    expect(screen.getByRole('button', {name: 'Lore Steal'})).toBeTruthy();
   });
 
   it('should render sort select', () => {

@@ -71,6 +71,22 @@ describe('Card Filtering', () => {
     expect(results).toHaveLength(3);
   });
 
+  it('should match dual-ink cards on either ink', () => {
+    const dualInkCards = [
+      ...cards,
+      createCard({id: 'dual-1', ink: 'Amethyst', ink2: 'Sapphire', cost: 5}),
+    ];
+    // Should match on secondary ink
+    const bySapphire = filterCards(dualInkCards, {ink: 'Sapphire'});
+    expect(bySapphire.some((c) => c.id === 'dual-1')).toBe(true);
+    // Should match on primary ink
+    const byAmethyst = filterCards(dualInkCards, {ink: 'Amethyst'});
+    expect(byAmethyst.some((c) => c.id === 'dual-1')).toBe(true);
+    // Should NOT match on unrelated ink
+    const byRuby = filterCards(dualInkCards, {ink: 'Ruby'});
+    expect(byRuby.some((c) => c.id === 'dual-1')).toBe(false);
+  });
+
   it('should filter by card type', () => {
     const results = filterCards(cards, {type: 'Character'});
     expect(results).toHaveLength(4);
@@ -211,7 +227,7 @@ describe('loadCardsFromJSON', () => {
     });
   });
 
-  it('should handle dual-ink cards by using primary ink', () => {
+  it('should preserve both inks for dual-ink cards', () => {
     const data = {
       metadata: {formatVersion: '1.0', generatedOn: '2024-01-01', language: 'en'},
       cards: [
@@ -232,6 +248,7 @@ describe('loadCardsFromJSON', () => {
 
     expect(cards).toHaveLength(1);
     expect(cards[0].ink).toBe('Amethyst');
+    expect(cards[0].ink2).toBe('Sapphire');
   });
 
   it('should filter out Song from subtypes (classifications)', () => {
@@ -512,6 +529,40 @@ describe('loadCardsFromJSON', () => {
 
     expect(cards).toHaveLength(1);
     expect(cards[0].keywords).toBeUndefined();
+  });
+
+  it('should extract conditional Shift from ability effect text', () => {
+    const data = {
+      metadata: {formatVersion: '1.0', generatedOn: '2024-01-01', language: 'en'},
+      cards: [
+        {
+          id: 100,
+          name: 'Anna',
+          version: 'Soothing Sister',
+          fullName: 'Anna - Soothing Sister',
+          simpleName: 'anna',
+          cost: 5,
+          color: 'Amber',
+          inkwell: true,
+          type: 'Character',
+          abilities: [
+            {
+              type: 'static',
+              name: 'UNUSUAL TRANSFORMATION',
+              effect: "If a card left a player's discard this turn, this card gains Shift 0.",
+              fullText:
+                "UNUSUAL TRANSFORMATION If a card left a player's discard this turn, this card gains Shift 0.",
+            },
+          ],
+          setCode: '9',
+        },
+      ],
+    };
+
+    const cards = loadCardsFromJSON(data);
+
+    expect(cards).toHaveLength(1);
+    expect(cards[0].keywords).toContain('Shift 0');
   });
 });
 

@@ -1,5 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import {SynergyEngine} from '../engine';
+
 import type {SynergyRule} from '../types';
 import {createCard} from './fixtures.js';
 
@@ -429,6 +430,104 @@ describe('SynergyEngine', () => {
 
       // Deduped — only one entry per ruleId
       expect(shiftConnections).toHaveLength(1);
+    });
+  });
+
+  describe('ink compatibility filtering', () => {
+    it('should filter out ink-incompatible cards when source is dual-ink', () => {
+      const engine = new SynergyEngine();
+
+      // Dual-ink Shift card: locks deck to Amethyst + Sapphire
+      const dualInkShift = createCard({
+        id: 'dual-shift',
+        name: 'Elsa',
+        fullName: 'Elsa - Ice Maker',
+        cost: 7,
+        ink: 'Amethyst',
+        ink2: 'Sapphire',
+        keywords: ['Shift 5'],
+      });
+
+      // Compatible base (Amethyst — in the dual pair)
+      const compatBase = createCard({
+        id: 'compat-base',
+        name: 'Elsa',
+        fullName: 'Elsa - Snow Queen',
+        cost: 3,
+        ink: 'Amethyst',
+      });
+
+      // Incompatible base (Ruby — not in the dual pair)
+      const incompatBase = createCard({
+        id: 'incompat-base',
+        name: 'Elsa',
+        fullName: 'Elsa - Fire Queen',
+        cost: 3,
+        ink: 'Ruby',
+      });
+
+      const synergies = engine.findSynergies(dualInkShift, [compatBase, incompatBase]);
+
+      const allCardIds = synergies.flatMap((g) => g.synergies.map((s) => s.card.id));
+
+      expect(allCardIds).toContain('compat-base');
+      expect(allCardIds).not.toContain('incompat-base');
+    });
+
+    it('should allow any single-ink pair (deck inks unknown)', () => {
+      const engine = new SynergyEngine();
+
+      const singleInkShift = createCard({
+        id: 'single-shift',
+        name: 'Elsa',
+        fullName: 'Elsa - Ice Maker',
+        cost: 7,
+        ink: 'Amethyst',
+        keywords: ['Shift 5'],
+      });
+
+      // Different single-ink — can still share a deck
+      const rubyBase = createCard({
+        id: 'ruby-base',
+        name: 'Elsa',
+        fullName: 'Elsa - Fire Queen',
+        cost: 3,
+        ink: 'Ruby',
+      });
+
+      const synergies = engine.findSynergies(singleInkShift, [rubyBase]);
+
+      const allCardIds = synergies.flatMap((g) => g.synergies.map((s) => s.card.id));
+      expect(allCardIds).toContain('ruby-base');
+    });
+
+    it('should filter out dual-ink results incompatible with single-ink source', () => {
+      const engine = new SynergyEngine();
+
+      // Single-ink source (Ruby)
+      const rubyElsa = createCard({
+        id: 'ruby-elsa',
+        name: 'Elsa',
+        fullName: 'Elsa - Concerned Sister',
+        cost: 3,
+        ink: 'Ruby',
+      });
+
+      // Dual-ink result (Amethyst/Sapphire) — Ruby is not in that pair
+      const dualElsa = createCard({
+        id: 'dual-elsa',
+        name: 'Elsa',
+        fullName: 'Elsa - Ice Maker',
+        cost: 7,
+        ink: 'Amethyst',
+        ink2: 'Sapphire',
+        keywords: ['Shift 5'],
+      });
+
+      const synergies = engine.findSynergies(rubyElsa, [dualElsa]);
+
+      const allCardIds = synergies.flatMap((g) => g.synergies.map((s) => s.card.id));
+      expect(allCardIds).not.toContain('dual-elsa');
     });
   });
 

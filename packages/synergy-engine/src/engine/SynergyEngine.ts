@@ -6,6 +6,7 @@ import type {
   PairSynergyConnection,
   DetailedPairSynergy,
 } from '../types';
+import {canShareDeck} from '../utils/cardHelpers.js';
 import {getAllRules} from './rules.js';
 import {getPlaystyleById} from './playstyles.js';
 
@@ -67,12 +68,16 @@ export class SynergyEngine {
   findSynergies(card: LorcanaCard, allCards: LorcanaCard[]): SynergyGroup[] {
     const results = new Map<string, SynergyGroup>();
 
+    // Ink compatibility filter: exclude cards that can't share a deck.
+    // canShareDeck handles all cases (single+single always true, dual checks ink overlap).
+    const compatibleCards = allCards.filter((other) => canShareDeck(card, other));
+
     for (const rule of this.rules) {
       // Check if this rule applies to the card
       if (!rule.matches(card)) continue;
 
       // Find synergistic cards
-      const matches = rule.findSynergies(card, allCards);
+      const matches = rule.findSynergies(card, compatibleCards);
 
       if (matches.length === 0) continue;
 

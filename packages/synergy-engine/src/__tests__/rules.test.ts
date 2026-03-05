@@ -135,13 +135,34 @@ describe('Synergy Rules', () => {
         expect(synergies[0].score).toBe(9);
       });
 
-      it('should rate on-curve non-inkable base as 7 (curveGap 1)', () => {
+      it('should rate on-curve with one inkable as 8 (curveGap 1)', () => {
         const shiftCard = createCard({
           id: 'elsa-shift',
           name: 'Elsa',
           fullName: 'Elsa - Ice Maker',
           cost: 7,
           keywords: ['Shift 5'],
+          inkwell: true,
+        });
+        const base = createCard({
+          id: 'elsa-base',
+          name: 'Elsa',
+          fullName: 'Elsa - Snow Queen',
+          cost: 4,
+          inkwell: false,
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].score).toBe(8);
+      });
+
+      it('should rate on-curve with neither inkable as 7 (curveGap 1)', () => {
+        const shiftCard = createCard({
+          id: 'elsa-shift',
+          name: 'Elsa',
+          fullName: 'Elsa - Ice Maker',
+          cost: 7,
+          keywords: ['Shift 5'],
+          inkwell: false,
         });
         const base = createCard({
           id: 'elsa-base',
@@ -292,6 +313,204 @@ describe('Synergy Rules', () => {
         const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
         expect(synergies[0].score).toBe(3);
       });
+
+      it('should rate free Shift as 10 when base activates the condition', () => {
+        const shiftCard = createCard({
+          id: 'anna-shift',
+          name: 'Anna',
+          fullName: 'Anna - Soothing Sister',
+          cost: 5,
+          keywords: ['Shift 0'],
+          text: "If a card left a player's discard this turn, this card gains Shift 0.",
+        });
+        const base = createCard({
+          id: 'anna-base',
+          name: 'Anna',
+          fullName: 'Anna - Little Sister',
+          cost: 2,
+          inkwell: true,
+          text: "When you play this character, you may put a card from chosen player's discard on the bottom of their deck.",
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].score).toBe(10);
+      });
+
+      it('should rate free Shift onto cheap base as 9 (Shift 0, base cost <= 3)', () => {
+        const shiftCard = createCard({
+          id: 'anna-shift',
+          name: 'Anna',
+          fullName: 'Anna - Soothing Sister',
+          cost: 5,
+          keywords: ['Shift 0'],
+        });
+        const base = createCard({
+          id: 'anna-base',
+          name: 'Anna',
+          fullName: 'Anna - Heir to Arendelle',
+          cost: 2,
+          inkwell: true,
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].score).toBe(9);
+      });
+
+      it('should rate free Shift onto mid-cost base as 7 (Shift 0, base cost 4-5)', () => {
+        const shiftCard = createCard({
+          id: 'anna-shift',
+          name: 'Anna',
+          fullName: 'Anna - Soothing Sister',
+          cost: 5,
+          keywords: ['Shift 0'],
+        });
+        const base = createCard({
+          id: 'anna-base',
+          name: 'Anna',
+          fullName: 'Anna - Noble Princess',
+          cost: 4,
+          inkwell: true,
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].score).toBe(7);
+      });
+
+      it('should rate free Shift onto expensive base as 5 (Shift 0, base cost 6+)', () => {
+        const shiftCard = createCard({
+          id: 'anna-shift',
+          name: 'Anna',
+          fullName: 'Anna - Soothing Sister',
+          cost: 5,
+          keywords: ['Shift 0'],
+        });
+        const base = createCard({
+          id: 'anna-base',
+          name: 'Anna',
+          fullName: 'Anna - Royal Heir',
+          cost: 7,
+          inkwell: true,
+        });
+        const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
+        expect(synergies[0].score).toBe(5);
+      });
+    });
+  });
+
+  describe('Puppy Shift', () => {
+    const shiftRule = getRuleById('shift-targets')!;
+
+    it('should find Puppy characters as targets for Puppy Shift', () => {
+      const thunderbolt = createCard({
+        id: 'thunderbolt',
+        name: 'Thunderbolt',
+        fullName: 'Thunderbolt - Wonder Dog',
+        cost: 5,
+        ink: 'Amber',
+        ink2: 'Sapphire',
+        keywords: ['Puppy Shift 3', 'Bodyguard'],
+        classifications: ['Floodborn', 'Hero'],
+      });
+
+      const puppy = createCard({
+        id: 'dalmatian',
+        name: 'Dalmatian Puppy',
+        fullName: 'Dalmatian Puppy - Tail Wagger',
+        cost: 2,
+        ink: 'Amber',
+        classifications: ['Storyborn', 'Puppy'],
+      });
+
+      const nonPuppy = createCard({
+        id: 'elsa-base',
+        name: 'Elsa',
+        fullName: 'Elsa - Snow Queen',
+        cost: 3,
+        ink: 'Sapphire',
+      });
+
+      const synergies = shiftRule.findSynergies(thunderbolt, [puppy, nonPuppy]);
+
+      expect(synergies.find((s) => s.card.id === 'dalmatian')).toBeDefined();
+      expect(synergies.find((s) => s.card.id === 'elsa-base')).toBeUndefined();
+    });
+
+    it('should show Puppy Shift card when selecting a Puppy character (reverse)', () => {
+      const thunderbolt = createCard({
+        id: 'thunderbolt',
+        name: 'Thunderbolt',
+        fullName: 'Thunderbolt - Wonder Dog',
+        cost: 5,
+        ink: 'Amber',
+        ink2: 'Sapphire',
+        keywords: ['Puppy Shift 3', 'Bodyguard'],
+      });
+
+      const puppy = createCard({
+        id: 'dalmatian',
+        name: 'Dalmatian Puppy',
+        fullName: 'Dalmatian Puppy - Tail Wagger',
+        cost: 2,
+        ink: 'Amber',
+        classifications: ['Storyborn', 'Puppy'],
+      });
+
+      const synergies = shiftRule.findSynergies(puppy, [thunderbolt]);
+
+      expect(synergies).toHaveLength(1);
+      expect(synergies[0].card.id).toBe('thunderbolt');
+    });
+  });
+
+  describe('Universal Shift', () => {
+    const shiftRule = getRuleById('shift-targets')!;
+
+    it('should find any character as target for Universal Shift', () => {
+      const baymax = createCard({
+        id: 'baymax-giant',
+        name: 'Baymax',
+        fullName: 'Baymax - Giant Robot',
+        cost: 6,
+        ink: 'Emerald',
+        ink2: 'Sapphire',
+        keywords: ['Universal Shift 4'],
+        classifications: ['Floodborn', 'Hero', 'Robot'],
+      });
+
+      const anyChar = createCard({
+        id: 'random-char',
+        name: 'Some Character',
+        fullName: 'Some Character - Version',
+        cost: 3,
+        ink: 'Emerald',
+      });
+
+      const synergies = shiftRule.findSynergies(baymax, [anyChar]);
+
+      expect(synergies).toHaveLength(1);
+      expect(synergies[0].card.id).toBe('random-char');
+    });
+
+    it('should show Universal Shift card when selecting any character (reverse)', () => {
+      const baymax = createCard({
+        id: 'baymax-giant',
+        name: 'Baymax',
+        fullName: 'Baymax - Giant Robot',
+        cost: 6,
+        ink: 'Emerald',
+        ink2: 'Sapphire',
+        keywords: ['Universal Shift 4'],
+      });
+
+      const anyChar = createCard({
+        id: 'random-char',
+        name: 'Some Character',
+        fullName: 'Some Character - Version',
+        cost: 3,
+        ink: 'Sapphire',
+      });
+
+      const synergies = shiftRule.findSynergies(anyChar, [baymax]);
+
+      expect(synergies).toHaveLength(1);
+      expect(synergies[0].card.id).toBe('baymax-giant');
     });
   });
 

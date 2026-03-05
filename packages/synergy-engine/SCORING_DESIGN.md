@@ -5,8 +5,10 @@ It records decisions made during brainstorming so future contributors understand
 
 ## Anchor-Based Scoring
 
-Scores use fixed **anchor points** (odd numbers) with clear definitions. Even numbers are reserved
-for community voting (#9) to fill in — the engine never assigns them.
+Scores use fixed **anchor points** (odd numbers) with clear definitions. Even numbers were originally
+reserved for community voting (#9), but the engine now assigns them for nuanced scoring (e.g., 8 for
+gap=1 with one inkable card, 6 for free Shift onto expensive base with condition activation, 10 for
+free Shift with condition bonus).
 
 | Score | Label        | Meaning                                                                   |
 |-------|--------------|---------------------------------------------------------------------------|
@@ -14,9 +16,9 @@ for community voting (#9) to fill in — the engine never assigns them.
 | 3     | Weak         | Mild situational benefit. You wouldn't pick one because of the other.     |
 | 5     | Moderate     | Solid synergy. Worth considering when choosing between similar cards.     |
 | 7     | Strong       | Actively want both in the same deck. One improves the other's value.      |
-| 9     | Build-around | Core synergy pair or strategy pillar. Main reason to play these together. |
+| 9     | Perfect      | Core synergy pair or strategy pillar. Main reason to play these together. |
 
-**10 is never assigned by the engine** — reserved for community consensus on the most iconic synergies.
+**10 can be assigned by the engine** when a condition bonus pushes a score 9 pair higher (e.g., free Shift + condition activation). Community voting (#9) can also nudge scores to 10.
 
 ## Score Type: `number`
 
@@ -64,8 +66,8 @@ the engine consumer-agnostic — the embeddable widget (#58) or deck builder may
 
 ## Display Precision
 
-- **Grid badge**: Shows tier label only ("Strong", "Moderate", "Weak") derived from score range.
-  No raw number displayed. Clean and scannable.
+- **Grid badge**: Shows tier label only ("Perfect", "Strong", "Moderate", "Weak") derived from score range.
+  No raw number displayed. Clean and scannable. Perfect (>=9.5) folds into Strong for filtering.
 - **Detail view (#115)**: Shows the actual numeric score alongside the tier badge. Format TBD
   (e.g., "7", "7/10", "7.3") — to be decided when implementing the detail view.
 
@@ -86,26 +88,41 @@ JSON but wasn't extracted), but it does not influence synergy scores.
 
 ### Rule 1: Shift Targets (Direct)
 
-Scores based on **curve gap** (shift cost − base cost) and **inkwell** (base card fallback utility).
+Scores based on **curve gap** (shift cost - base cost), **inkwell** (fallback utility), and **condition activation** (+1 bonus).
 
-| Curve Gap | Inkable | Score | Tier         | Why                                                                 |
-|-----------|---------|-------|--------------|---------------------------------------------------------------------|
-| 1         | Yes     | **9** | Build-around | Perfect on-curve play, base can be inked if drawn late              |
-| 2         | Yes     | **7** | Strong       | Good curve with one-turn gap, flexible base                         |
-| 1         | No      | **7** | Strong       | Perfect curve, but base is a dead draw without shift in hand        |
-| 2         | No      | **7** | Strong       | Good curve, same flexibility concern                                |
-| 0         | Either  | **5** | Moderate     | Same cost — no ink savings, only benefit is superior shift stats    |
-| 3         | Either  | **5** | Moderate     | Wide gap — 3 turns between base and shift, opponent may remove base |
-| 4+        | Either  | **3** | Weak         | Poor alignment, rarely worth holding a base this long               |
-| Negative  | Either  | **3** | Weak         | Base costs more than shift — no practical reason to shift "down"    |
+For the full rule documentation with examples, condition matchers, and design rationale, see [`SHIFT_TARGET_RULE.md`](../../SHIFT_TARGET_RULE.md).
 
-### Rule 2: Lore Loss (Playstyle: Lore Denial)
+**Standard Shift (gap-based):**
+
+| Curve Gap | Inkable       | Score  | Tier     | Why                                                                |
+|-----------|---------------|--------|----------|--------------------------------------------------------------------|
+| 1         | Both          | **9**  | Strong   | Perfect on-curve play, both can be inked as fallback               |
+| 1         | One           | **8**  | Strong   | Perfect curve, one card is inkable as fallback                     |
+| 1         | Neither       | **7**  | Strong   | Perfect curve, but neither is inkable — less flexible off-curve    |
+| 2         | Any           | **7**  | Strong   | Smooth curve, one-turn gap                                        |
+| 0         | Any           | **5**  | Moderate | Same cost — no ink savings, only skips drying phase                |
+| 3         | Any           | **5**  | Moderate | Wide gap — 3 turns between base and shift                         |
+| 4+        | Any           | **3**  | Weak     | Poor alignment, rarely worth holding a base this long              |
+| Negative  | Any           | **3**  | Weak     | Base costs more than shift — no practical reason to shift "down"   |
+
+**Free Shift (Shift 0, cost-based):**
+
+| Base Cost | Condition? | Score  | Tier     | Why                                                 |
+|-----------|-----------|--------|----------|-----------------------------------------------------|
+| <= 3      | Yes       | **10** | Perfect  | Free Shift + cheap base + condition enabler         |
+| <= 3      | No        | **9**  | Strong   | Free Shift onto early base — extremely powerful     |
+| 4-5       | Yes       | **8**  | Strong   | Free Shift + mid base + condition enabler           |
+| 4-5       | No        | **7**  | Strong   | Free Shift but base takes until mid-game to deploy  |
+| 6+        | Yes       | **6**  | Moderate | Free Shift + expensive base, condition helps        |
+| 6+        | No        | **5**  | Moderate | Free Shift but expensive base limits the advantage  |
+
+### Rule 2: Lore Loss (Playstyle: Lore Steal)
 
 Uniform scoring — value comes from density of denial cards, not specific pairs.
 
 | Pairing                 | Score | Tier   | Why                                                                                                                                                                         |
 |-------------------------|-------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Any two lore-loss cards | **7** | Strong | Each additional denial card increases strategy consistency. Not 9 because no individual pair is build-around — it's the accumulation of 6-8 cards that makes the archetype. |
+| Any two lore-loss cards | **7** | Strong | Each additional denial card increases strategy consistency. Not 9 because no individual pair is a core combo — it's the accumulation of 6-8 cards that makes the archetype. |
 
 ### Rule 3: Location Control (Playstyle: Location Control)
 

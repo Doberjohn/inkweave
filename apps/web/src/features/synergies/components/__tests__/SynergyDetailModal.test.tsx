@@ -21,6 +21,7 @@ vi.mock('../../../shared/hooks/useDialogFocus', () => ({
 
 vi.mock('../../../cards', () => ({
   useCardPreviewHandlers: () => ({previewHandlers: {}}),
+  useCardPreview: () => ({hidePreview: vi.fn()}),
 }));
 
 const cardA: LorcanaCard = {
@@ -89,8 +90,8 @@ describe('SynergyDetailModal', () => {
     );
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('Shift Targets')).toBeInTheDocument();
-    // Playstyle connections are grouped by playstyleId — "Lore Denial" is the group label
-    expect(screen.getByText('Lore Denial')).toBeInTheDocument();
+    // Playstyle connections are grouped by playstyleId — "Lore Steal" is the group label
+    expect(screen.getByText('Lore Steal')).toBeInTheDocument();
   });
 
   it('should call onClose when backdrop is clicked', () => {
@@ -109,6 +110,31 @@ describe('SynergyDetailModal', () => {
     );
     fireEvent.click(screen.getByLabelText('Close'));
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('should show version when both cards share the same name', () => {
+    render(
+      <SynergyDetailModal isOpen onClose={vi.fn()} pair={mockPair} onViewSynergies={vi.fn()} />,
+    );
+    expect(screen.getByText('Ice Artisan')).toBeInTheDocument();
+    expect(screen.getByText('Snow Queen')).toBeInTheDocument();
+  });
+
+  it('should hide version when cards have different names', () => {
+    const differentPair: DetailedPairSynergy = {
+      ...mockPair,
+      cardB: {...cardB, name: 'Olaf', version: 'Friendly Snowman'},
+    };
+    render(
+      <SynergyDetailModal
+        isOpen
+        onClose={vi.fn()}
+        pair={differentPair}
+        onViewSynergies={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText('Ice Artisan')).not.toBeInTheDocument();
+    expect(screen.queryByText('Friendly Snowman')).not.toBeInTheDocument();
   });
 
   it('should call onViewSynergies with cardB id when CTA is clicked', () => {

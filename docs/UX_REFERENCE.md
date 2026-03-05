@@ -51,7 +51,7 @@ confident clicks. Weak scent = hesitation, wrong turns, abandonment. Labels, ico
 design all contribute to scent.
 
 **In Inkweave**: "Search for a card..." has strong scent for users with a specific card in mind. "Browse all cards"
-clearly communicates the filtering/exploration experience. A playstyle banner showing "Lore Denial — 24 cards" has
+clearly communicates the filtering/exploration experience. A playstyle banner showing "Lore Steal — 24 cards" has
 stronger scent than a generic "Playstyle #2" label.
 
 **Rule of thumb**: For every button or link, ask "would a first-time user know what they'll get when they click this?"
