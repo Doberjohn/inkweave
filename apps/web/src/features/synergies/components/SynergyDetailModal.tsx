@@ -1,7 +1,13 @@
-import {useRef, useState, forwardRef} from 'react';
+import {useRef, useState, useMemo, forwardRef} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
 import type {LorcanaCard} from '../../cards';
-import type {DetailedPairSynergy, PairSynergyConnection} from 'lorcana-synergy-engine';
+import {useCardPreviewHandlers} from '../../cards';
+import type {DetailedPairSynergy, PairSynergyConnection, LocationRole} from 'lorcana-synergy-engine';
+import {
+  getPlaystyleById,
+  LOCATION_ROLE_CHIP_LABELS,
+  LOCATION_ROLE_DESCRIPTIONS,
+} from 'lorcana-synergy-engine';
 import {getStrengthTier} from '../utils';
 import {CardImage} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
@@ -125,31 +131,7 @@ export function SynergyDetailModal({
 
               {/* Connections list */}
               {connections.length > 0 && (
-                <div
-                  style={{
-                    margin: '0 24px 20px',
-                    padding: `${SPACING.lg}px`,
-                    background: COLORS.surfaceAlt,
-                    borderRadius: `${RADIUS.md}px`,
-                    border: `1px solid ${COLORS.surfaceBorder}`,
-                  }}>
-                  <div
-                    style={{
-                      fontSize: `${FONT_SIZES.xs}px`,
-                      fontWeight: 600,
-                      color: COLORS.textMuted,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      marginBottom: `${SPACING.md}px`,
-                    }}>
-                    Connections
-                  </div>
-                  <div style={{display: 'flex', flexDirection: 'column'}}>
-                    {connections.map((conn, i) => (
-                      <ConnectionItem key={conn.ruleId} connection={conn} isFirst={i === 0} />
-                    ))}
-                  </div>
-                </div>
+                <ConnectionsSection connections={connections} />
               )}
 
               {/* CTA button */}
@@ -223,6 +205,8 @@ const CloseButton = forwardRef<HTMLButtonElement, {onClick: () => void}>(functio
 });
 
 function PairCard({card}: {card: LorcanaCard}) {
+  const {previewHandlers} = useCardPreviewHandlers({card});
+
   return (
     <div
       style={{
@@ -231,15 +215,17 @@ function PairCard({card}: {card: LorcanaCard}) {
         alignItems: 'center',
         width: 160,
       }}>
-      <CardImage
-        src={card.imageUrl}
-        alt={card.fullName}
-        width={140}
-        height={196}
-        inkColor={card.ink}
-        cost={card.cost}
-        borderRadius={10}
-      />
+      <div {...previewHandlers}>
+        <CardImage
+          src={card.imageUrl}
+          alt={card.fullName}
+          width={140}
+          height={196}
+          inkColor={card.ink}
+          cost={card.cost}
+          borderRadius={10}
+        />
+      </div>
       <div
         style={{
           fontSize: `${FONT_SIZES.base}px`,
@@ -303,33 +289,130 @@ function Connector({score, tier}: {score: number; tier: ReturnType<typeof getStr
   );
 }
 
-function ConnectionItem({
-  connection,
-  isFirst,
-}: {
-  connection: PairSynergyConnection;
-  isFirst: boolean;
-}) {
-  const tier = getStrengthTier(connection.score);
+/** A grouped connection: either a single direct rule or multiple playstyle rules merged by playstyleId */
+interface ConnectionGroupData {
+  key: string;
+  label: string;
+  score: number;
+  connections: PairSynergyConnection[];
+  category: 'direct' | 'playstyle';
+}
+
+/** Group connections: playstyle rules merge by playstyleId, direct rules stay individual */
+function groupConnections(connections: PairSynergyConnection[]): ConnectionGroupData[] {
+  const playstyleGroups = new Map<string, PairSynergyConnection[]>();
+  const result: ConnectionGroupData[] = [];
+
+  for (const conn of connections) {
+    if (conn.category === 'playstyle') {
+      const existing = playstyleGroups.get(conn.playstyleId);
+      if (existing) {
+        existing.push(conn);
+      } else {
+        playstyleGroups.set(conn.playstyleId, [conn]);
+      }
+    } else {
+      result.push({
+        key: conn.ruleId,
+        label: conn.ruleName,
+        score: conn.score,
+        connections: [conn],
+        category: 'direct',
+      });
+    }
+  }
+
+  for (const [playstyleId, conns] of playstyleGroups) {
+    const playstyle = getPlaystyleById(playstyleId);
+    const maxScore = Math.max(...conns.map((c) => c.score));
+    result.push({
+      key: playstyleId,
+      label: playstyle?.name ?? playstyleId,
+      score: maxScore,
+      connections: conns,
+      category: 'playstyle',
+    });
+  }
+
+  return result.sort((a, b) => b.score - a.score);
+}
+
+/** Extract LocationRole from a location rule ID (e.g. "location-at-payoff" → "at-payoff") */
+function extractLocationRole(ruleId: string): LocationRole | null {
+  const prefix = 'location-';
+  if (!ruleId.startsWith(prefix)) return null;
+  return ruleId.slice(prefix.length) as LocationRole;
+}
+
+function ConnectionsSection({connections}: {connections: PairSynergyConnection[]}) {
+  const groups = useMemo(() => groupConnections(connections), [connections]);
 
   return (
     <div
       style={{
-        padding: '12px 0',
-        borderTop: isFirst ? 'none' : '1px solid rgba(51, 51, 85, 0.5)',
-        ...(isFirst ? {paddingTop: 0} : {}),
+        margin: '0 24px 20px',
+        padding: `${SPACING.lg}px`,
+        background: COLORS.surfaceAlt,
+        borderRadius: `${RADIUS.md}px`,
+        border: `1px solid ${COLORS.surfaceBorder}`,
       }}>
       <div
+        style={{
+          fontSize: `${FONT_SIZES.xs}px`,
+          fontWeight: 600,
+          color: COLORS.textMuted,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          marginBottom: `${SPACING.md}px`,
+        }}>
+        Connections
+      </div>
+      <div style={{display: 'flex', flexDirection: 'column', gap: `${SPACING.sm}px`}}>
+        {groups.map((group) => (
+          <ConnectionGroupRow key={group.key} group={group} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ConnectionGroupRow({group}: {group: ConnectionGroupData}) {
+  const [expanded, setExpanded] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const tier = getStrengthTier(group.score);
+  const hasMultipleRoles = group.connections.length > 1;
+
+  return (
+    <div
+      style={{
+        background: COLORS.surface,
+        borderRadius: `${RADIUS.md}px`,
+        border: `1px solid ${expanded ? 'rgba(212, 175, 55, 0.2)' : COLORS.surfaceBorder}`,
+        overflow: 'hidden',
+        transition: 'border-color 0.15s',
+      }}>
+      {/* Collapsed header row */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        aria-expanded={expanded}
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: `${SPACING.sm}px`,
-          marginBottom: `${SPACING.sm}px`,
+          width: '100%',
+          padding: '10px 12px',
+          background: hovered ? 'rgba(255, 255, 255, 0.02)' : 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          transition: 'background 0.15s',
         }}>
         <span
           style={{
-            width: 6,
-            height: 6,
+            width: 8,
+            height: 8,
             borderRadius: '50%',
             background: tier.color,
             flexShrink: 0,
@@ -341,33 +424,105 @@ function ConnectionItem({
             fontWeight: 600,
             color: COLORS.text,
           }}>
-          {connection.ruleName}
+          {group.label}
         </span>
         <span
           style={{
-            marginLeft: 'auto',
-            padding: '2px 7px',
+            padding: '2px 6px',
             borderRadius: `${RADIUS.xs}px`,
             fontSize: `${FONT_SIZES.xs}px`,
-            fontWeight: 600,
-            lineHeight: 1.4,
+            fontWeight: 700,
             background: tier.bg,
             color: tier.color,
             flexShrink: 0,
           }}>
-          {tier.label} {connection.score}
+          {group.score}
         </span>
-      </div>
-      <p
-        style={{
-          margin: 0,
-          fontSize: `${FONT_SIZES.base}px`,
-          lineHeight: 1.5,
-          color: COLORS.descriptionText,
-          paddingLeft: 14,
-        }}>
-        {connection.explanation}
-      </p>
+        {hasMultipleRoles && (
+          <span
+            style={{
+              fontSize: `${FONT_SIZES.xs}px`,
+              fontWeight: 500,
+              color: COLORS.textMuted,
+            }}>
+            {group.connections.length} roles
+          </span>
+        )}
+        <span
+          style={{
+            marginLeft: 'auto',
+            fontSize: `${FONT_SIZES.base}px`,
+            color: expanded ? COLORS.primary : COLORS.textMuted,
+            transition: 'color 0.15s, transform 0.15s',
+            transform: expanded ? 'rotate(90deg)' : 'none',
+            lineHeight: 1,
+          }}>
+          ▸
+        </span>
+      </button>
+
+      {/* Expanded detail */}
+      {expanded && (
+        <div
+          style={{
+            borderTop: `1px solid ${COLORS.surfaceBorder}`,
+            padding: '10px 12px 12px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: `${SPACING.sm}px`,
+          }}>
+          {group.connections.map((conn) => {
+            const role = extractLocationRole(conn.ruleId);
+            const chipLabel = role ? LOCATION_ROLE_CHIP_LABELS[role] : null;
+            const description = role ? LOCATION_ROLE_DESCRIPTIONS[role] : conn.explanation;
+
+            return (
+              <div
+                key={conn.ruleId}
+                style={{
+                  display: 'flex',
+                  alignItems: 'start',
+                  gap: `${SPACING.sm}px`,
+                }}>
+                {chipLabel ? (
+                  <span
+                    style={{
+                      padding: '2px 8px',
+                      borderRadius: 8,
+                      background: 'rgba(212, 175, 55, 0.1)',
+                      color: COLORS.primary,
+                      fontSize: `${FONT_SIZES.xs}px`,
+                      fontWeight: 600,
+                      flexShrink: 0,
+                      marginTop: 1,
+                    }}>
+                    {chipLabel}
+                  </span>
+                ) : (
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: getStrengthTier(conn.score).color,
+                      flexShrink: 0,
+                      marginTop: 5,
+                    }}
+                  />
+                )}
+                <span
+                  style={{
+                    fontSize: `${FONT_SIZES.base}px`,
+                    lineHeight: 1.4,
+                    color: COLORS.descriptionText,
+                  }}>
+                  {description}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

@@ -559,21 +559,30 @@ describe('Location Synergy Rules', () => {
 
   describe('Cross-synergy between support cards', () => {
     it('should return 5 when both have high-value complementary roles', () => {
-      // at-payoff + play-trigger vs buff
+      // at-payoff complements buff (buff keeps locations alive for payoff)
       expect(getCrossSynergyScore(['at-payoff', 'play-trigger'], ['buff'])).toBe(5);
     });
 
-    it('should return 3 when one has high-value and other has support role', () => {
+    it('should return 3 when complementary but not both high-value', () => {
+      // at-payoff complements move (move enables payoff)
       expect(getCrossSynergyScore(['at-payoff'], ['move'])).toBe(3);
+      // tutor complements buff (tutor finds locations for buff to protect)
       expect(getCrossSynergyScore(['tutor'], ['buff'])).toBe(3);
     });
 
-    it('should return 3 for cards with only the same roles', () => {
-      expect(getCrossSynergyScore(['at-payoff'], ['at-payoff'])).toBe(3);
-      expect(getCrossSynergyScore(['move', 'tutor'], ['move', 'tutor'])).toBe(3);
+    it('should return null for cards with only the same roles (no complement)', () => {
+      expect(getCrossSynergyScore(['at-payoff'], ['at-payoff'])).toBeNull();
+      expect(getCrossSynergyScore(['boost'], ['boost'])).toBeNull();
     });
 
-    it('should return 3 when only support roles on both sides', () => {
+    it('should return null for non-complementary role pairs', () => {
+      // at-payoff and in-play-check don't directly enable each other
+      expect(getCrossSynergyScore(['at-payoff'], ['in-play-check'])).toBeNull();
+      // boost and move have no direct interaction
+      expect(getCrossSynergyScore(['boost'], ['move'])).toBeNull();
+    });
+
+    it('should return 3 for tutor + move (enabler + positioning)', () => {
       expect(getCrossSynergyScore(['move'], ['tutor'])).toBe(3);
     });
 
@@ -586,6 +595,7 @@ describe('Location Synergy Rules', () => {
       expect(locationGroup).toBeDefined();
       const felixMatch = locationGroup!.synergies.find((s) => s.card.id === 'felix-steward');
       expect(felixMatch).toBeDefined();
+      // Both high-value: at-payoff complements buff
       expect(felixMatch!.score).toBe(5);
     });
   });

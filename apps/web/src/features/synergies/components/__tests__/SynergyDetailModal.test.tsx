@@ -19,6 +19,10 @@ vi.mock('../../../shared/hooks/useDialogFocus', () => ({
   useDialogFocus: () => ({handleKeyDown: vi.fn()}),
 }));
 
+vi.mock('../../../cards', () => ({
+  useCardPreviewHandlers: () => ({previewHandlers: {}}),
+}));
+
 const cardA: LorcanaCard = {
   id: 'elsa-shift',
   fullName: 'Elsa - Ice Artisan',
@@ -85,7 +89,8 @@ describe('SynergyDetailModal', () => {
     );
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('Shift Targets')).toBeInTheDocument();
-    expect(screen.getByText('Lore Steal')).toBeInTheDocument();
+    // Playstyle connections are grouped by playstyleId — "Lore Denial" is the group label
+    expect(screen.getByText('Lore Denial')).toBeInTheDocument();
   });
 
   it('should call onClose when backdrop is clicked', () => {

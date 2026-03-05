@@ -69,6 +69,49 @@ const ROLE_LABELS: Record<LocationRole, string> = {
   boost: 'location boost',
 };
 
+/** Short chip labels for each location role (used in UI) */
+export const LOCATION_ROLE_CHIP_LABELS: Record<LocationRole, string> = {
+  'at-payoff': 'Payoff',
+  'play-trigger': 'Trigger',
+  buff: 'Buff',
+  'location-ramp': 'Ramp',
+  move: 'Move',
+  'in-play-check': 'Check',
+  tutor: 'Tutor',
+  boost: 'Boost',
+};
+
+/** Educational descriptions explaining what each location role means */
+export const LOCATION_ROLE_DESCRIPTIONS: Record<LocationRole, string> = {
+  'at-payoff': 'Gets bonuses when your characters are at a location',
+  'play-trigger': 'Activates effects whenever you play a location card',
+  buff: 'Strengthens your locations with resist, protection, or stat boosts',
+  'location-ramp': 'Reduces the cost of playing or moving to locations',
+  move: 'Moves characters to locations for positioning advantage',
+  'in-play-check': 'Gains benefits when you have locations in play',
+  tutor: 'Searches your deck or discard for location cards',
+  boost: 'Works with the Boost keyword to power up locations',
+};
+
+/**
+ * Complementary role pairs — roles that mechanically interact.
+ * Each key lists roles that it directly enables or benefits from.
+ * Only pairs with at least one complementary interaction get cross-synergy.
+ */
+const COMPLEMENTARY_ROLES: Partial<Record<LocationRole, LocationRole[]>> = {
+  // Enablers: these roles help get locations into play or onto the board
+  tutor: ['at-payoff', 'play-trigger', 'buff', 'move', 'in-play-check', 'boost'],
+  'location-ramp': ['at-payoff', 'play-trigger', 'buff', 'move', 'in-play-check', 'boost'],
+  // Positioning: move enables payoffs and benefits from buffs
+  move: ['at-payoff', 'buff'],
+  // Consumers: these need locations/positioning that enablers provide
+  'at-payoff': ['move', 'tutor', 'location-ramp', 'buff'],
+  'play-trigger': ['tutor', 'location-ramp'],
+  buff: ['move', 'tutor', 'location-ramp', 'at-payoff', 'in-play-check'],
+  'in-play-check': ['tutor', 'location-ramp'],
+  boost: ['tutor', 'location-ramp'],
+};
+
 /** Roles that represent high-value location strategy pieces */
 const HIGH_VALUE_ROLES: Set<LocationRole> = new Set([
   'at-payoff',
@@ -79,25 +122,42 @@ const HIGH_VALUE_ROLES: Set<LocationRole> = new Set([
 
 /**
  * Determine cross-synergy score between two location-support cards.
- * All location-support cards share a strategy (wanting locations in play),
- * so any pair gets at least 3. Complementary high-value roles get 5.
+ * Only cards with complementary roles get cross-synergy — same-role or
+ * unrelated-role pairs return null (no synergy).
+ * Complementary high-value pairs score 5, others score 3.
  */
 export function getCrossSynergyScore(
   rolesA: LocationRole[],
   rolesB: LocationRole[],
 ): number | null {
-  // No cross-synergy if either has no roles
   if (rolesA.length === 0 || rolesB.length === 0) return null;
+
+  // Check if any role pair is complementary (A enables/benefits B or vice versa)
+  let hasComplementary = false;
+  for (const roleA of rolesA) {
+    const complements = COMPLEMENTARY_ROLES[roleA];
+    if (complements && rolesB.some((roleB) => complements.includes(roleB))) {
+      hasComplementary = true;
+      break;
+    }
+  }
+  if (!hasComplementary) {
+    // Check reverse direction
+    for (const roleB of rolesB) {
+      const complements = COMPLEMENTARY_ROLES[roleB];
+      if (complements && rolesA.some((roleA) => complements.includes(roleA))) {
+        hasComplementary = true;
+        break;
+      }
+    }
+  }
+
+  if (!hasComplementary) return null;
 
   const aHighValue = rolesA.some((r) => HIGH_VALUE_ROLES.has(r));
   const bHighValue = rolesB.some((r) => HIGH_VALUE_ROLES.has(r));
 
-  // Check if they have complementary (different) roles
-  const setA = new Set(rolesA);
-  const setB = new Set(rolesB);
-  const hasUniqueRole = rolesA.some((r) => !setB.has(r)) || rolesB.some((r) => !setA.has(r));
-
-  if (hasUniqueRole && aHighValue && bHighValue) return 5;
+  if (aHighValue && bHighValue) return 5;
   return 3;
 }
 
@@ -140,8 +200,12 @@ function findLocationSupportSynergies(
   return matches;
 }
 
-/** Build synergies for a Location card: find all location-support cards */
-function findLocationCardSynergies(card: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+/** Build synergies for a Location card: find support cards with a specific role */
+function findLocationCardSynergiesForRole(
+  card: LorcanaCard,
+  allCards: LorcanaCard[],
+  role: LocationRole,
+): SynergyMatch[] {
   const matches: SynergyMatch[] = [];
 
   for (const other of allCards) {
@@ -149,16 +213,12 @@ function findLocationCardSynergies(card: LorcanaCard, allCards: LorcanaCard[]): 
     if (isLocation(other)) continue; // Locations don't synergize with each other
 
     const roles = getLocationRoles(other);
-    if (roles.length === 0) continue;
+    if (!roles.includes(role)) continue;
 
-    // Use the highest-scoring role
-    const score = Math.max(...roles.map((r) => LOCATION_ROLE_SCORE[r]));
-
-    const roleDesc = roles.map((r) => ROLE_LABELS[r]).join(' and ');
     matches.push({
       card: other,
-      score,
-      explanation: `${other.name} has ${roleDesc}`,
+      score: LOCATION_ROLE_SCORE[role],
+      explanation: `${other.name} has ${ROLE_LABELS[role]}`,
       bidirectional: true,
     });
   }
@@ -193,7 +253,7 @@ function createLocationRule(
 
     findSynergies: (card, allCards) => {
       if (isLocation(card)) {
-        return findLocationCardSynergies(card, allCards);
+        return findLocationCardSynergiesForRole(card, allCards, role);
       }
       return findLocationSupportSynergies(card, allCards, role);
     },

@@ -102,7 +102,7 @@ export function isLocation(card: LorcanaCard): boolean {
 
 /** Text patterns for each location-support role */
 export const LOCATION_PATTERNS = {
-  'at-payoff': /while.*at a location|if.*at a location|is at a location/i,
+  'at-payoff': /while\b.{0,60}at a location|if\b.{0,60}at a location|is at a location/i,
   move: /move.*to.*location|moves to a location|move.*character.*location|to the same location/i,
   'move-exclude': /move.*damage/i,
   'play-trigger': /when(?:ever)? you play a location|whenever.*play a location/i,
@@ -110,7 +110,7 @@ export const LOCATION_PATTERNS = {
   tutor: /search.*location card|reveal.*location card|return a location|location card from/i,
   buff: /your locations|locations gain|locations get|at a location.*gets?\s\+|location.*can't be challenged|location gains? resist|for each location.*resist/i,
   boost: /under.*(?:characters|character) or locations|under.*locations|locations with boost|play a character or location with boost/i,
-  'location-ramp': /less.*(?:to )?(?:play|move).*location|less for.*location|play a location.*(?:from|for free)/i,
+  'location-ramp': /\bless\b.*(?:to )?(?:play|move).*location|\bless\b for.*location|play a location.*(?:from|for free)/i,
   /** Anti-location cards: banish/remove/shuffle locations. Excluded from location-control. */
   'anti-location': /banish (?:chosen |all )(?:item or )?location|shuffle.*location into/i,
 } as const;
