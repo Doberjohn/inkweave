@@ -32,7 +32,7 @@ export class SynergyEngine {
 
   constructor(options: SynergyEngineOptions = {}) {
     this.rules = options.rules ?? getAllRules();
-    this.maxResultsPerGroup = options.maxResultsPerGroup ?? 20;
+    this.maxResultsPerGroup = options.maxResultsPerGroup ?? 100;
   }
 
   /**
