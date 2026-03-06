@@ -174,6 +174,12 @@ After pushing, always confirm with clear output (e.g., git log showing commit on
 ### Communication
 - **Never silently skip work.** If you decide not to implement something the user asked for (e.g., because the plan marks it as out of scope, or it belongs to a different issue), explicitly tell the user what you're skipping and why. Do not silently ignore mockup elements, requested features, or differences the user asked you to find.
 
+### Critical Thinking (IMPORTANT)
+- **Challenge decisions proactively.** When the user proposes an approach, or when you're about to implement something, pause and consider: is there a simpler way? A hidden downside? An assumption worth questioning?
+- **Flag problems you notice.** If you spot issues with current implementations while working (dead code, unnecessary complexity, stale patterns, security concerns), call them out — even if they're outside the current task scope.
+- **Challenge your own suggestions too.** Before recommending an approach, consider the tradeoffs and present them honestly. Don't just validate — pressure-test.
+- **Tone: collaborative, not adversarial.** Frame challenges as "have you considered..." or "one concern with this is..." — the goal is better outcomes, not debate.
+
 ### Implementation Approach
 - Before editing code or implementing changes, validate assumptions against real data first (e.g., test regex against actual card data, verify existing state)
 - Do not jump to implementation until the user confirms the approach
