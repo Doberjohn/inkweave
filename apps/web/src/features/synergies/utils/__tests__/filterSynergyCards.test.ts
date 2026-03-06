@@ -2,7 +2,7 @@ import {describe, it, expect} from 'vitest';
 import {filterSynergyCards, EMPTY_SYNERGY_FILTERS} from '../filterSynergyCards';
 import type {SynergyFilterState} from '../filterSynergyCards';
 import type {SynergyMatchDisplay} from '../../types';
-import type {LorcanaCard} from 'lorcana-synergy-engine';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 
 /** Create a mock synergy match for testing. Partial card overrides supported. */
 function mockSynergy(overrides: Partial<LorcanaCard> & {score?: number} = {}): SynergyMatchDisplay {

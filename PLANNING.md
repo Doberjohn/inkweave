@@ -5,7 +5,7 @@
 ### Overview
 
 pnpm workspaces monorepo with two packages:
-- **lorcana-synergy-engine** (`packages/synergy-engine/`) — Standalone synergy detection package. Zero React dependencies.
+- **inkweave-synergy-engine** (`packages/synergy-engine/`) — Standalone synergy detection package. Zero React dependencies.
 - **inkweave-web** (`apps/web/`) — React web application that consumes the synergy engine.
 
 Desktop: two-column SPA (CardList + SynergyResults). Mobile: tab-based navigation with bottom nav.

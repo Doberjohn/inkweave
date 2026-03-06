@@ -1,5 +1,5 @@
 import {useMemo, useCallback} from 'react';
-import type {LorcanaCard} from 'lorcana-synergy-engine';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from './CardTile';
 import {COLORS, FONT_SIZES, LAYOUT, SPACING} from '../../../shared/constants';
 import {LoadingSpinner} from '../../../shared/components';

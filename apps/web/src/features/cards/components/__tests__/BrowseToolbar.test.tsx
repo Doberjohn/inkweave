@@ -2,7 +2,7 @@ import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {BrowseToolbar} from '../BrowseToolbar';
 import type {CardFilterOptions} from '../../loader';
-import type {Ink} from 'lorcana-synergy-engine';
+import type {Ink} from 'inkweave-synergy-engine';
 import type {CardTypeFilter, BrowseSortOrder} from '../../../../shared/constants';
 
 function defaultProps(overrides: Partial<Parameters<typeof BrowseToolbar>[0]> = {}) {

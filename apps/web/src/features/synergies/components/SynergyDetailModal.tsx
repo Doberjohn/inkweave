@@ -6,12 +6,12 @@ import type {
   DetailedPairSynergy,
   PairSynergyConnection,
   LocationRole,
-} from 'lorcana-synergy-engine';
+} from 'inkweave-synergy-engine';
 import {
   getPlaystyleById,
   LOCATION_ROLE_CHIP_LABELS,
   LOCATION_ROLE_DESCRIPTIONS,
-} from 'lorcana-synergy-engine';
+} from 'inkweave-synergy-engine';
 import {getStrengthTier} from '../utils';
 import {CardImage} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';

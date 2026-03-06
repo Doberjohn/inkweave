@@ -1,7 +1,7 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {SynergyDetailModal} from '../SynergyDetailModal';
-import type {DetailedPairSynergy, LorcanaCard, PairSynergyConnection} from 'lorcana-synergy-engine';
+import type {DetailedPairSynergy, LorcanaCard, PairSynergyConnection} from 'inkweave-synergy-engine';
 
 // Mock framer-motion — pass through children with AnimatePresence
 vi.mock('framer-motion', () => ({

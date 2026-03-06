@@ -1,5 +1,5 @@
 {
-  "name": "lorcana-synergy-engine",
+  "name": "inkweave-synergy-engine",
   "version": "0.1.0",
   "description": "Synergy detection engine for Disney Lorcana TCG cards",
   "type": "module",

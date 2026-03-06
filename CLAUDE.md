@@ -27,7 +27,7 @@ inkweave/
 ├── pnpm-workspace.yaml
 ├── packages/
 │   └── synergy-engine/       # Standalone synergy detection package
-│       ├── package.json      # lorcana-synergy-engine
+│       ├── package.json      # inkweave-synergy-engine
 │       ├── tsup.config.ts    # Build config
 │       └── src/
 │           ├── index.ts      # Public API exports
@@ -48,12 +48,12 @@ inkweave/
 
 ## Packages
 
-### lorcana-synergy-engine
+### inkweave-synergy-engine
 
 Standalone npm package for synergy detection. Zero React dependencies.
 
 ```typescript
-import { SynergyEngine, type LorcanaCard } from "lorcana-synergy-engine";
+import { SynergyEngine, type LorcanaCard } from "inkweave-synergy-engine";
 
 const engine = new SynergyEngine();
 const synergies = engine.findSynergies(card, allCards);

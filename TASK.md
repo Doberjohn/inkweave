@@ -4,7 +4,7 @@
 
 Application is functional with card browsing, search/filter, and synergy detection. Deck builder was removed for MVP scope reduction. Dark fantasy design system foundation is in place. Mobile responsive layout complete.
 
-- **Engine**: 8 synergy rules (Shift, Lore Loss, 6 Location rules) in standalone `lorcana-synergy-engine` package. Numeric 1-10 scoring.
+- **Engine**: 8 synergy rules (Shift, Lore Loss, 6 Location rules) in standalone `inkweave-synergy-engine` package. Numeric 1-10 scoring.
 - **Web**: Two-column desktop layout, tab-based mobile navigation
 - **Design**: 7 desktop HTML/CSS mockups (6 approved, 1 in progress) in `apps/web/public/mockups/`
 - **Tests**: 93 engine + 338 web = 431 unit tests; 34 E2E tests passing

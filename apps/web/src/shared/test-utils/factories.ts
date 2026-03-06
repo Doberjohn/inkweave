@@ -1,4 +1,4 @@
-import type {LorcanaCard} from 'lorcana-synergy-engine';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 
 /**
  * Factory function to create mock LorcanaCard objects for testing.

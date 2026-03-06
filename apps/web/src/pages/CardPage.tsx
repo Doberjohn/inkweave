@@ -7,7 +7,7 @@ import {
   SynergyDetailModal,
 } from '../features/synergies';
 import {sharedEngine} from '../features/synergies/engine';
-import type {DetailedPairSynergy, LorcanaCard} from 'lorcana-synergy-engine';
+import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import {
   CompactHeader,
   ErrorBoundary,

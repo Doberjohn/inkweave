@@ -1,6 +1,6 @@
 import {useMemo, memo} from 'react';
 import type {LorcanaCard} from '../types';
-import type {Ink} from 'lorcana-synergy-engine';
+import type {Ink} from 'inkweave-synergy-engine';
 import {CardTile} from './CardTile';
 import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
 

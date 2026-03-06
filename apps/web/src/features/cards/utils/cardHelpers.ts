@@ -13,4 +13,4 @@ export {
   isLocation,
   hasNegativeTargeting,
   hasPositiveClassificationEffect,
-} from 'lorcana-synergy-engine';
+} from 'inkweave-synergy-engine';

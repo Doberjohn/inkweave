@@ -1,17 +1,17 @@
-# lorcana-synergy-engine
+# inkweave-synergy-engine
 
 Synergy detection engine for Disney Lorcana TCG cards.
 
 ## Installation
 
 ```bash
-npm install lorcana-synergy-engine
+npm install inkweave-synergy-engine
 ```
 
 ## Usage
 
 ```typescript
-import { SynergyEngine, type LorcanaCard } from "lorcana-synergy-engine";
+import { SynergyEngine, type LorcanaCard } from "inkweave-synergy-engine";
 
 // Create an engine instance
 const engine = new SynergyEngine();
@@ -64,7 +64,7 @@ const engine = new SynergyEngine(options?: SynergyEngineOptions);
 Cache for expensive synergy calculations.
 
 ```typescript
-import { SynergyCache, SynergyEngine } from "lorcana-synergy-engine";
+import { SynergyCache, SynergyEngine } from "inkweave-synergy-engine";
 
 const engine = new SynergyEngine();
 const cache = new SynergyCache(engine);
@@ -97,7 +97,7 @@ The engine includes 8 built-in synergy rules across two categories:
 Create custom synergy rules:
 
 ```typescript
-import { SynergyEngine, type SynergyRule, hasKeyword } from "lorcana-synergy-engine";
+import { SynergyEngine, type SynergyRule, hasKeyword } from "inkweave-synergy-engine";
 
 // Direct rule — synergy comes from the specific card pair
 const directRule: SynergyRule = {
@@ -153,7 +153,7 @@ import {
   isLocation,        // Check if card is a Location
   hasNegativeTargeting,
   hasPositiveClassificationEffect,
-} from "lorcana-synergy-engine";
+} from "inkweave-synergy-engine";
 ```
 
 ## Types

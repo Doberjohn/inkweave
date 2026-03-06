@@ -1,4 +1,4 @@
-import type {Ink} from 'lorcana-synergy-engine';
+import type {Ink} from 'inkweave-synergy-engine';
 import type {CardFilterOptions} from '../../cards/loader';
 import type {CardTypeFilter} from '../../../shared/constants';
 import type {SynergyMatchDisplay} from '../types';

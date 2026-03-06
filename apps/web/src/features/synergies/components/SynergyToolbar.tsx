@@ -1,6 +1,6 @@
 import {useState, useCallback, useMemo} from 'react';
 import type {SetStateAction} from 'react';
-import type {Ink} from 'lorcana-synergy-engine';
+import type {Ink} from 'inkweave-synergy-engine';
 import type {SetInfo} from '../../cards';
 import type {CardFilterOptions} from '../../cards/loader';
 import type {CardTypeFilter} from '../../../shared/constants';

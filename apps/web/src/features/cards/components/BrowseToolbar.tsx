@@ -1,5 +1,5 @@
 import {useState, useCallback} from 'react';
-import type {Ink} from 'lorcana-synergy-engine';
+import type {Ink} from 'inkweave-synergy-engine';
 import type {CardFilterOptions} from '../loader';
 import type {CardTypeFilter, BrowseSortOrder} from '../../../shared/constants';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';

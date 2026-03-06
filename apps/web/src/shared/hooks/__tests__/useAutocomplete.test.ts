@@ -1,7 +1,7 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {renderHook, act} from '@testing-library/react';
 import {useAutocomplete} from '../useAutocomplete';
-import type {LorcanaCard} from 'lorcana-synergy-engine';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 
 // Minimal card fixtures
 const makeCard = (id: string, name: string, fullName: string, cost = 3): LorcanaCard =>

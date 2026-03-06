@@ -22,7 +22,7 @@ import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
 
 function applySortOrder(
-  cards: import('lorcana-synergy-engine').LorcanaCard[],
+  cards: import('inkweave-synergy-engine').LorcanaCard[],
   order: BrowseSortOrder,
 ) {
   switch (order) {

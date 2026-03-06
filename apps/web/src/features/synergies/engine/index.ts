@@ -11,8 +11,8 @@ export {
   getRuleById,
   getAllPlaystyles,
   getPlaystyleById,
-} from 'lorcana-synergy-engine';
-export type {SynergyEngineOptions, CachedSynergyResult} from 'lorcana-synergy-engine';
+} from 'inkweave-synergy-engine';
+export type {SynergyEngineOptions, CachedSynergyResult} from 'inkweave-synergy-engine';
 
 // Re-export sharedEngine as an alias to synergyEngine for backwards compatibility
-export {synergyEngine as sharedEngine} from 'lorcana-synergy-engine';
+export {synergyEngine as sharedEngine} from 'inkweave-synergy-engine';

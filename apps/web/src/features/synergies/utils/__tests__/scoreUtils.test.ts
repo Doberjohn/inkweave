@@ -1,7 +1,7 @@
 import {describe, it, expect} from 'vitest';
 import {getDominantScore, getStrengthTier} from '../scoreUtils';
 import type {SynergyMatchDisplay} from '../../types';
-import type {LorcanaCard} from 'lorcana-synergy-engine';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 
 describe('scoreUtils', () => {
   describe('getStrengthTier', () => {

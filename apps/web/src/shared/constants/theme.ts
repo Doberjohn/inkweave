@@ -1,4 +1,4 @@
-import type {Ink, CardType} from 'lorcana-synergy-engine';
+import type {Ink, CardType} from 'inkweave-synergy-engine';
 
 // App branding
 export const APP_NAME = 'Inkweave';

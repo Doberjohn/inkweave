@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useId, useMemo, useRef, useState} from 'react';
-import type {LorcanaCard} from 'lorcana-synergy-engine';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {searchCardsByName, parseSetOrder} from '../../features/cards/loader';
 
 interface UseAutocompleteOptions {

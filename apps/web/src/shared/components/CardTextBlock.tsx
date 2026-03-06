@@ -1,4 +1,4 @@
-import type {LorcanaCard} from 'lorcana-synergy-engine';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONT_SIZES, SPACING} from '../constants';
 
 interface CardTextBlockProps {

@@ -9,4 +9,4 @@ export type {
   SynergyMatch,
   SynergyMatchDisplay,
   SynergyGroup,
-} from 'lorcana-synergy-engine';
+} from 'inkweave-synergy-engine';
