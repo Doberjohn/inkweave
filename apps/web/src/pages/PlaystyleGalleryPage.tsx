@@ -476,7 +476,7 @@ export function PlaystyleGalleryPage() {
               textTransform: 'uppercase',
               marginBottom: SPACING.sm,
             }}>
-            Synergy Playstyles
+            Lorcana Playstyles
           </h1>
           <p
             style={{
