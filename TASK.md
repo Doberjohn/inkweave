@@ -14,7 +14,7 @@ Application is functional with card browsing, search/filter, and synergy detecti
 
 ## MVP Roadmap
 
-See [GitHub Issues](https://github.com/Doberjohn/lorcana-synergy-finder/issues) for full backlog.
+See [GitHub Issues](https://github.com/Doberjohn/inkweave/issues) for full backlog.
 
 ### Epic 1: MVP Scope Reduction (#28)
 - [x] Remove Deck Builder — #33 (PR #67)

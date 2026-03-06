@@ -1,6 +1,6 @@
 # Inkweave
 
-[![CI](https://github.com/Doberjohn/lorcana-synergy-finder/actions/workflows/ci.yml/badge.svg)](https://github.com/Doberjohn/lorcana-synergy-finder/actions/workflows/ci.yml)
+[![CI](https://github.com/Doberjohn/inkweave/actions/workflows/ci.yml/badge.svg)](https://github.com/Doberjohn/inkweave/actions/workflows/ci.yml)
 
 A React web application for discovering synergistic card combinations in Disney Lorcana TCG. Select a card to find cards that synergize with it through archetype detection and pattern-based rules.
 
