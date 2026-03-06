@@ -19,5 +19,8 @@ export {
   SELECT_STYLE_MD,
   CTA_BUTTON_STYLE,
   COST_BUTTONS,
+  hexToRgb,
   hexRgba,
 } from './theme';
+export type {PlaystyleUiMeta, ComingSoonPlaystyle} from './playstyleUi';
+export {PLAYSTYLE_UI, COMING_SOON_PLAYSTYLES} from './playstyleUi';

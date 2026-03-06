@@ -1,5 +1,6 @@
 import type {
   LorcanaCard,
+  PlaystyleId,
   SynergyCategory,
   SynergyGroup,
   SynergyRule,
@@ -250,6 +251,30 @@ export class SynergyEngine {
     const aggregateScore = computeAggregateScore(connections);
 
     return {cardA, cardB, connections, aggregateScore};
+  }
+
+  /**
+   * Get all cards that match any rule in a given playstyle.
+   * Returns deduplicated cards sorted by name.
+   */
+  getPlaystyleCards(playstyleId: PlaystyleId, allCards: LorcanaCard[]): LorcanaCard[] {
+    const playstyleRules = this.rules.filter(
+      (r) => r.category === 'playstyle' && r.playstyleId === playstyleId,
+    );
+    if (playstyleRules.length === 0) return [];
+
+    const seen = new Set<string>();
+    const result: LorcanaCard[] = [];
+
+    for (const card of allCards) {
+      if (seen.has(card.id)) continue;
+      if (playstyleRules.some((rule) => rule.matches(card))) {
+        seen.add(card.id);
+        result.push(card);
+      }
+    }
+
+    return result.sort((a, b) => a.name.localeCompare(b.name));
   }
 
   /**

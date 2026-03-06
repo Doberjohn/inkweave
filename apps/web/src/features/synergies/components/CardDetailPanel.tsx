@@ -55,7 +55,7 @@ export const CardDetailPanel = memo(function CardDetailPanel({
 
       {/* Card name + version */}
       <div>
-        <h2
+        <h1
           style={{
             fontSize: `${FONT_SIZES.xxl}px`,
             fontWeight: 700,
@@ -64,7 +64,7 @@ export const CardDetailPanel = memo(function CardDetailPanel({
             lineHeight: 1.2,
           }}>
           {card.name}
-        </h2>
+        </h1>
         {card.version && (
           <div
             style={{

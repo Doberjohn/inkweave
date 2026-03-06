@@ -15,7 +15,7 @@ export function NotFoundPage() {
         gap: '16px',
         fontFamily: FONTS.body,
       }}>
-      <h2 style={{color: COLORS.text, margin: 0}}>Page not found</h2>
+      <h1 style={{color: COLORS.text, margin: 0}}>Page not found</h1>
       <p style={{color: COLORS.textMuted, margin: 0}}>
         The page you&apos;re looking for doesn&apos;t exist.
       </p>

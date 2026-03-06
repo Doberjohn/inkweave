@@ -78,7 +78,7 @@ export function CardSynergiesPage() {
   if (!selectedCard) {
     return (
       <div style={{...centeredPage, flexDirection: 'column', gap: '16px'}}>
-        <h2 style={{color: COLORS.text, margin: 0}}>Card not found</h2>
+        <h1 style={{color: COLORS.text, margin: 0}}>Card not found</h1>
         <button
           onClick={() => navigate('/')}
           style={{
@@ -117,25 +117,27 @@ export function CardSynergiesPage() {
           borderBottom: '1px solid rgba(51, 51, 85, 0.5)',
           flexShrink: 0,
         }}>
-        <button
-          onClick={goBack}
-          aria-label={`Back to ${selectedCard.fullName}`}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: COLORS.primary500,
-            fontSize: FONT_SIZES.md,
-            fontWeight: 700,
-            letterSpacing: '0.96px',
-            cursor: 'pointer',
-            padding: `${SPACING.sm}px 0`,
-            fontFamily: FONTS.body,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}>
-          &larr; {selectedCard.fullName}
-        </button>
+        <h1 style={{margin: 0, fontSize: 'inherit', fontWeight: 'inherit'}}>
+          <button
+            onClick={goBack}
+            aria-label={`Back to ${selectedCard.fullName}`}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: COLORS.primary500,
+              fontSize: FONT_SIZES.md,
+              fontWeight: 700,
+              letterSpacing: '0.96px',
+              cursor: 'pointer',
+              padding: `${SPACING.sm}px 0`,
+              fontFamily: FONTS.body,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
+            &larr; {selectedCard.fullName}
+          </button>
+        </h1>
       </div>
 
       {/* Synergy results */}

@@ -48,6 +48,7 @@ export const RADIUS = {
   sm: 4,
   md: 6,
   lg: 8,
+  card: 12,
   xl: 14,
 } as const;
 
@@ -244,9 +245,13 @@ export const SELECT_STYLE_MD: React.CSSProperties = {
 // Ink cost values for filter buttons
 export const COST_BUTTONS = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
+/** Convert a hex color (#rrggbb) to "r, g, b" string for use in rgba() */
+export const hexToRgb = (hex: string) =>
+  `${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}`;
+
 /** Convert a hex color (#rrggbb) to rgba with the given alpha */
 export const hexRgba = (hex: string, a: number) =>
-  `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${a})`;
+  `rgba(${hexToRgb(hex)}, ${a})`;
 
 // CTA button style (orange gradient, matching Figma Filters button)
 export const CTA_BUTTON_STYLE: React.CSSProperties = {
