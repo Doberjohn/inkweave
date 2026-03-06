@@ -3,7 +3,7 @@ import {createBrowserRouter} from 'react-router-dom';
 import {AppLayout} from './AppLayout';
 import {LoadingSpinner} from './shared/components';
 
-/** Retry a dynamic import up to `retries` times before giving up. Handles stale chunk hashes after deploys. */
+/** Retry a dynamic import up to `retries` times, then force-reload on stale chunks (e.g. iOS home screen cache). */
 function lazyWithRetry(
   importFn: () => Promise<{[key: string]: React.ComponentType}>,
   exportName: string,
@@ -15,6 +15,14 @@ function lazyWithRetry(
         .then((m) => ({default: m[exportName]}))
         .catch((err) => {
           if (attempt < retries) return load(attempt + 1);
+          // All retries exhausted — likely stale chunks after deploy.
+          // Force reload to fetch new index.html with current chunk hashes.
+          // Guard against reload loops with a sessionStorage flag.
+          const reloadKey = 'chunk-reload';
+          if (!sessionStorage.getItem(reloadKey)) {
+            sessionStorage.setItem(reloadKey, '1');
+            window.location.reload();
+          }
           throw err;
         });
     return load(0);
@@ -32,6 +40,10 @@ const CardSynergiesPage = lazyWithRetry(
 const PlaystyleGalleryPage = lazyWithRetry(
   () => import('./pages/PlaystyleGalleryPage'),
   'PlaystyleGalleryPage',
+);
+const PlaystyleDetailPage = lazyWithRetry(
+  () => import('./pages/PlaystyleDetailPage'),
+  'PlaystyleDetailPage',
 );
 const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'), 'NotFoundPage');
 
@@ -96,6 +108,14 @@ export const router = createBrowserRouter([
         element: (
           <SuspenseWrapper>
             <PlaystyleGalleryPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'playstyles/:playstyleId',
+        element: (
+          <SuspenseWrapper>
+            <PlaystyleDetailPage />
           </SuspenseWrapper>
         ),
       },

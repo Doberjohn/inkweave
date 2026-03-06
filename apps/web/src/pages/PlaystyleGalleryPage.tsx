@@ -433,8 +433,13 @@ export function PlaystyleGalleryPage() {
 
   const goHome = useCallback(() => navigate('/'), [navigate]);
 
+  const handleSearchSubmit = useCallback(() => {
+    const q = searchQuery.trim();
+    navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
+  }, [navigate, searchQuery]);
+
   const handleCardSelect = useCallback(
-    (card: {fullName: string}) => navigate(`/card/${encodeURIComponent(card.fullName)}`),
+    (card: {id: string}) => navigate(`/card/${card.id}`),
     [navigate],
   );
 
@@ -460,6 +465,7 @@ export function PlaystyleGalleryPage() {
         onLogoClick={goHome}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onSearchSubmit={handleSearchSubmit}
         cards={cards}
         onCardSelect={handleCardSelect}
         isMobile={isMobile}
