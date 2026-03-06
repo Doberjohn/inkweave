@@ -28,7 +28,7 @@ export function HomePage() {
     [navigate],
   );
   const handleBrowse = useCallback(() => navigate('/browse'), [navigate]);
-  const handlePlaystyles = useCallback(() => navigate('/browse'), [navigate]);
+  const handlePlaystyles = useCallback(() => navigate('/playstyles'), [navigate]);
 
   return (
     <main style={{...mainStyle, justifyContent: isMobile ? undefined : 'center'}}>

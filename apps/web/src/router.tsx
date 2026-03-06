@@ -29,6 +29,10 @@ const CardSynergiesPage = lazyWithRetry(
   () => import('./pages/CardSynergiesPage'),
   'CardSynergiesPage',
 );
+const PlaystyleGalleryPage = lazyWithRetry(
+  () => import('./pages/PlaystyleGalleryPage'),
+  'PlaystyleGalleryPage',
+);
 const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'), 'NotFoundPage');
 
 function SuspenseWrapper({children}: {children: React.ReactNode}) {
@@ -84,6 +88,14 @@ export const router = createBrowserRouter([
         element: (
           <SuspenseWrapper>
             <CardSynergiesPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'playstyles',
+        element: (
+          <SuspenseWrapper>
+            <PlaystyleGalleryPage />
           </SuspenseWrapper>
         ),
       },

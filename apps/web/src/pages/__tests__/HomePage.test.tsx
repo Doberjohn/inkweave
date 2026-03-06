@@ -94,6 +94,6 @@ describe('HomePage', () => {
     );
 
     fireEvent.click(screen.getByTestId('mock-playstyles'));
-    expect(mockNavigate).toHaveBeenCalledWith('/browse');
+    expect(mockNavigate).toHaveBeenCalledWith('/playstyles');
   });
 });

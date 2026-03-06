@@ -142,7 +142,7 @@ export function CardPage() {
   if (!selectedCard) {
     return (
       <div style={{...centeredPage, flexDirection: 'column', gap: '16px'}}>
-        <h2 style={{color: COLORS.text, margin: 0}}>Card not found</h2>
+        <h1 style={{color: COLORS.text, margin: 0}}>Card not found</h1>
         <p style={{color: COLORS.textMuted, margin: 0}}>
           The card you&apos;re looking for doesn&apos;t exist.
         </p>
