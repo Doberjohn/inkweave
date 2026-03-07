@@ -27,7 +27,7 @@ export const LAYOUT = {
   compactHeaderHeightMobile: 48,
   cardDetailWidth: 330,
   selectedCardImageWidth: 120,
-  maxDisplayedCards: 210,
+  maxDisplayedCards: 204,
   browseCardMinWidth: 180,
   synergyCardMinWidth: 160,
   browseMaxWidth: 1280,

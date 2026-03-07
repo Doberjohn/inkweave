@@ -1,3 +1,4 @@
+import {useMemo} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from './CardTile';
 import {COLORS, FONT_SIZES, LAYOUT, SPACING} from '../../../shared/constants';
@@ -10,6 +11,11 @@ interface BrowseCardGridProps {
 }
 
 export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridProps) {
+  const displayedCards = useMemo(
+    () => cards.slice(0, LAYOUT.maxDisplayedCards),
+    [cards],
+  );
+
   if (isLoading) {
     return (
       <div style={{display: 'flex', justifyContent: 'center', padding: 64}}>
@@ -20,7 +26,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
 
   return (
     <div style={{padding: `${SPACING.lg}px 32px 32px`}}>
-      {cards.length === 0 ? (
+      {displayedCards.length === 0 ? (
         <div
           style={{
             textAlign: 'center',
@@ -37,7 +43,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
             gridTemplateColumns: `repeat(auto-fill, minmax(${LAYOUT.browseCardMinWidth}px, 1fr))`,
             gap: SPACING.md,
           }}>
-          {cards.map((card) => (
+          {displayedCards.map((card) => (
             <CardTile
               key={card.id}
               card={card}
