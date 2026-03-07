@@ -1,5 +1,4 @@
 import {useState, memo} from 'react';
-import {motion} from 'framer-motion';
 import type {LorcanaCard} from '../../cards';
 import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {CardLightbox} from '../../../shared/components';
@@ -33,7 +32,8 @@ export const SynergyCard = memo(function SynergyCard({
   return (
     <div>
       {/* Card tile with strength badge overlay */}
-      <motion.button
+      <button
+        className="card-tile"
         onClick={() => {
           if (onCardClick) {
             onCardClick(card);
@@ -53,9 +53,6 @@ export const SynergyCard = memo(function SynergyCard({
         onFocus={isMobile ? undefined : previewHandlers.onFocus}
         onBlur={isMobile ? undefined : previewHandlers.onBlur}
         aria-label={card.fullName || ''}
-        whileHover={{scale: 1.04, y: -3}}
-        whileTap={{scale: 0.97}}
-        transition={{type: 'spring', stiffness: 400, damping: 25}}
         style={{
           position: 'relative',
           borderRadius: `${RADIUS.lg}px`,
@@ -148,7 +145,7 @@ export const SynergyCard = memo(function SynergyCard({
             {isMobile ? tier.shortLabel : tier.label} {score}
           </span>
         </div>
-      </motion.button>
+      </button>
 
       {lightboxOpen && card.imageUrl && (
         <CardLightbox

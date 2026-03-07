@@ -3,15 +3,6 @@ import {render, screen, fireEvent} from '@testing-library/react';
 import {SynergyCard} from '../SynergyCard';
 import type {LorcanaCard} from '../../../cards';
 
-// Mock framer-motion to avoid animation complexity
-vi.mock('framer-motion', () => ({
-  motion: {
-    button: ({children, ...props}: React.ComponentProps<'button'>) => (
-      <button {...props}>{children}</button>
-    ),
-  },
-}));
-
 vi.mock('../../../shared/components', () => ({
   CardLightbox: () => null,
 }));

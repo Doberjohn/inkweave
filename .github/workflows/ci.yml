@@ -35,6 +35,9 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      - name: Check bundle size budgets
+        run: pnpm size
+
       - name: Run tests with coverage (web)
         run: pnpm --filter inkweave-web test:coverage
 
