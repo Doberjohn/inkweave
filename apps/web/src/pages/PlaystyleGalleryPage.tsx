@@ -293,6 +293,7 @@ function ActivePlaystyleCard({
                 alt={card.fullName}
                 loading="lazy"
                 onError={(e) => {
+                  console.warn(`Failed to load preview image: ${e.currentTarget.src}`);
                   e.currentTarget.style.display = 'none';
                 }}
                 style={{width: '100%', height: '100%', objectFit: 'cover'}}
@@ -441,7 +442,7 @@ const gridStyleMobile: React.CSSProperties = {
 
 export function PlaystyleGalleryPage() {
   const navigate = useNavigate();
-  const {cards, isLoading} = useCardDataContext();
+  const {cards, isLoading, error, retryLoad} = useCardDataContext();
   const [searchQuery, setSearchQuery] = useState('');
   const {isMobile} = useResponsive();
 
@@ -461,13 +462,55 @@ export function PlaystyleGalleryPage() {
   );
 
   const activePlaystyles = useMemo(() => {
-    return getAllPlaystyles().map((ps) => {
-      const ui = PLAYSTYLE_UI[ps.id];
-      const ruleCount = getRulesByPlaystyle(ps.id).length;
-      const playstyleCards = synergyEngine.getPlaystyleCards(ps.id, cards);
-      return {playstyle: ps, ui, ruleCount, cards: playstyleCards};
-    });
+    return getAllPlaystyles()
+      .filter((ps) => {
+        if (!PLAYSTYLE_UI[ps.id]) {
+          console.error(`Missing PLAYSTYLE_UI entry for playstyle "${ps.id}"`);
+          return false;
+        }
+        return true;
+      })
+      .map((ps) => {
+        const ui = PLAYSTYLE_UI[ps.id];
+        const ruleCount = getRulesByPlaystyle(ps.id).length;
+        const playstyleCards = synergyEngine.getPlaystyleCards(ps.id, cards);
+        return {playstyle: ps, ui, ruleCount, cards: playstyleCards};
+      });
   }, [cards]);
+
+  if (error) {
+    return (
+      <main
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: 16,
+          fontFamily: FONTS.body,
+          background: COLORS.background,
+        }}>
+        <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
+          Failed to load card data.
+        </p>
+        <button
+          onClick={retryLoad}
+          style={{
+            padding: '8px 20px',
+            background: COLORS.primary,
+            color: COLORS.background,
+            border: 'none',
+            borderRadius: 6,
+            cursor: 'pointer',
+            fontFamily: FONTS.body,
+            fontWeight: 600,
+          }}>
+          Retry
+        </button>
+      </main>
+    );
+  }
 
   return (
     <main

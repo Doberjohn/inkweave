@@ -1,4 +1,3 @@
-import {useCallback} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from './CardTile';
 import {COLORS, FONT_SIZES, LAYOUT, SPACING} from '../../../shared/constants';
@@ -11,8 +10,6 @@ interface BrowseCardGridProps {
 }
 
 export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridProps) {
-  const handleSelect = useCallback((card: LorcanaCard) => onCardSelect(card), [onCardSelect]);
-
   if (isLoading) {
     return (
       <div style={{display: 'flex', justifyContent: 'center', padding: 64}}>
@@ -45,7 +42,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
               key={card.id}
               card={card}
               isSelected={false}
-              onSelect={handleSelect}
+              onSelect={onCardSelect}
               variant="minimal"
               useThumbnail
             />

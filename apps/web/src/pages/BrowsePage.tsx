@@ -4,9 +4,7 @@ import {BrowseCardGrid, BrowseToolbar, CardTile} from '../features/cards';
 import {
   searchCardsByName,
   filterCards,
-  sortBySetThenNumber,
-  sortCardsByName,
-  sortCardsByCost,
+  applySortOrder,
   type CardFilterOptions,
 } from '../features/cards/loader';
 import {
@@ -21,29 +19,20 @@ import type {BrowseSortOrder} from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
 
-function applySortOrder(
-  cards: import('inkweave-synergy-engine').LorcanaCard[],
-  order: BrowseSortOrder,
-) {
-  switch (order) {
-    case 'newest':
-      return sortBySetThenNumber(cards);
-    case 'name-asc':
-      return sortCardsByName(cards, 'asc');
-    case 'name-desc':
-      return sortCardsByName(cards, 'desc');
-    case 'cost-asc':
-      return sortCardsByCost(cards, 'asc');
-    case 'cost-desc':
-      return sortCardsByCost(cards, 'desc');
-  }
-}
-
 export function BrowsePage() {
   const navigate = useNavigate();
   const {isMobile} = useResponsive();
-  const {cards, isLoading, totalCards, uniqueKeywords, uniqueClassifications, uniqueSets, sets} =
-    useCardDataContext();
+  const {
+    cards,
+    isLoading,
+    error,
+    retryLoad,
+    totalCards,
+    uniqueKeywords,
+    uniqueClassifications,
+    uniqueSets,
+    sets,
+  } = useCardDataContext();
   const {
     searchQuery,
     setSearchQuery,
@@ -101,6 +90,40 @@ export function BrowsePage() {
   }, [clearAllFilters, navigate]);
 
   const selectCard = useCallback((card: {id: string}) => navigate(`/card/${card.id}`), [navigate]);
+
+  if (error) {
+    return (
+      <main
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: 16,
+          fontFamily: FONTS.body,
+          background: COLORS.background,
+        }}>
+        <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
+          Failed to load card data.
+        </p>
+        <button
+          onClick={retryLoad}
+          style={{
+            padding: '8px 20px',
+            background: COLORS.primary,
+            color: COLORS.background,
+            border: 'none',
+            borderRadius: 6,
+            cursor: 'pointer',
+            fontFamily: FONTS.body,
+            fontWeight: 600,
+          }}>
+          Retry
+        </button>
+      </main>
+    );
+  }
 
   const toolbarProps = {
     resultCount: sortedCards.length,

@@ -1,4 +1,5 @@
 import type {LorcanaCard, Ink, CardType} from './types';
+import type {BrowseSortOrder} from '../../shared/constants';
 
 // LorcanaJSON data structure (partial - only fields we need)
 interface LorcanaJSONCard {
@@ -423,4 +424,25 @@ export function sortCardsByCost(cards: LorcanaCard[], direction: 'asc' | 'desc')
     if (costDiff !== 0) return dir * costDiff;
     return a.fullName.localeCompare(b.fullName);
   });
+}
+
+/**
+ * Apply a named sort order to a card array.
+ * Returns a new array — does not mutate the input.
+ */
+export function applySortOrder(cards: LorcanaCard[], order: BrowseSortOrder): LorcanaCard[] {
+  switch (order) {
+    case 'newest':
+      return sortBySetThenNumber(cards);
+    case 'name-asc':
+      return sortCardsByName(cards, 'asc');
+    case 'name-desc':
+      return sortCardsByName(cards, 'desc');
+    case 'cost-asc':
+      return sortCardsByCost(cards, 'asc');
+    case 'cost-desc':
+      return sortCardsByCost(cards, 'desc');
+    default:
+      return cards;
+  }
 }

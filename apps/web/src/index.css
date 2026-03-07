@@ -94,6 +94,21 @@ option {
   }
 }
 
+@keyframes heroKenBurns {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-ken-burns {
+    animation: none !important;
+  }
+}
+
 /* Mobile-specific styles */
 @media (max-width: 767px) {
   /* Prevent pull-to-refresh on mobile */

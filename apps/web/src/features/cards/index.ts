@@ -9,6 +9,7 @@ export {
   searchCardsByName,
   filterCards,
   sortBySetThenNumber,
+  applySortOrder,
   getUniqueKeywords,
   getUniqueClassifications,
   getUniqueSets,

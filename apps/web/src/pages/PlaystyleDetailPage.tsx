@@ -1,19 +1,8 @@
 import {useCallback, useEffect, useMemo, useState} from 'react';
 import {useParams, useNavigate, useSearchParams, Navigate} from 'react-router-dom';
-import {
-  getPlaystyleById,
-  synergyEngine,
-  type LorcanaCard,
-  type PlaystyleId,
-} from 'inkweave-synergy-engine';
+import {getPlaystyleById, synergyEngine, type PlaystyleId} from 'inkweave-synergy-engine';
 import {BrowseToolbar, CardTile} from '../features/cards';
-import {
-  filterCards,
-  sortBySetThenNumber,
-  sortCardsByName,
-  sortCardsByCost,
-  type CardFilterOptions,
-} from '../features/cards/loader';
+import {filterCards, applySortOrder, type CardFilterOptions} from '../features/cards/loader';
 import {
   CompactHeader,
   ErrorBoundary,
@@ -34,23 +23,6 @@ import {
 import type {BrowseSortOrder} from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
-
-// ── Sort helper (same as BrowsePage) ──
-
-function applySortOrder(cards: LorcanaCard[], order: BrowseSortOrder) {
-  switch (order) {
-    case 'newest':
-      return sortBySetThenNumber(cards);
-    case 'name-asc':
-      return sortCardsByName(cards, 'asc');
-    case 'name-desc':
-      return sortCardsByName(cards, 'desc');
-    case 'cost-asc':
-      return sortCardsByCost(cards, 'asc');
-    case 'cost-desc':
-      return sortCardsByCost(cards, 'desc');
-  }
-}
 
 // ── Placeholder tips (will be replaced with per-playstyle data later) ──
 
@@ -93,19 +65,6 @@ const HERO_MOBILE: HeroLayout = {
 
 const HERO_SCRIM =
   'linear-gradient(180deg, rgba(13,13,20,0.6) 0%, rgba(13,13,20,0.4) 50%, rgba(13,13,20,0.6) 100%)';
-
-// ── Ken Burns keyframes (injected once) ──
-
-const kenBurnsId = 'inkweave-hero-ken-burns';
-if (typeof document !== 'undefined' && !document.getElementById(kenBurnsId)) {
-  const style = document.createElement('style');
-  style.id = kenBurnsId;
-  style.textContent = `
-    @keyframes heroKenBurns { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
-    @media (prefers-reduced-motion: reduce) { .hero-ken-burns { animation: none !important; } }
-  `;
-  document.head.appendChild(style);
-}
 
 // ── Hero Section ──
 
@@ -335,7 +294,8 @@ export function PlaystyleDetailPage() {
   const {playstyleId} = useParams<{playstyleId: string}>();
   const navigate = useNavigate();
   const {isMobile} = useResponsive();
-  const {cards, isLoading, uniqueKeywords, uniqueClassifications, sets} = useCardDataContext();
+  const {cards, isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, sets} =
+    useCardDataContext();
   const [headerSearchQuery, setHeaderSearchQuery] = useState('');
   const {
     inkFilters,
@@ -388,23 +348,21 @@ export function PlaystyleDetailPage() {
 
   const goHome = useCallback(() => navigate('/'), [navigate]);
   const goPlaystyles = useCallback(() => navigate('/playstyles'), [navigate]);
-  const selectCard = useCallback((card: {id: string}) => navigate(`/card/${card.id}`), [navigate]);
-  const handleSearchSubmit = useCallback(() => {
-    const q = headerSearchQuery.trim();
-    navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
-  }, [navigate, headerSearchQuery]);
-
   const handleCardSelect = useCallback(
     (card: {id: string}) => navigate(`/card/${card.id}`),
     [navigate],
   );
+  const handleSearchSubmit = useCallback(() => {
+    const q = headerSearchQuery.trim();
+    navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
+  }, [navigate, headerSearchQuery]);
 
   // Invalid playstyle ID — redirect to gallery
   if (!isLoading && (!playstyle || !ui)) {
     return <Navigate to="/playstyles" replace />;
   }
 
-  if (isLoading) {
+  if (isLoading || !playstyle || !ui) {
     return (
       <div style={centeredPage}>
         <LoadingSpinner />
@@ -412,7 +370,31 @@ export function PlaystyleDetailPage() {
     );
   }
 
-  // At this point playstyle and ui are guaranteed non-null
+  if (error) {
+    return (
+      <div style={centeredPage}>
+        <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
+          Failed to load card data.
+        </p>
+        <button
+          onClick={retryLoad}
+          style={{
+            padding: '8px 20px',
+            background: COLORS.primary,
+            color: COLORS.background,
+            border: 'none',
+            borderRadius: 6,
+            cursor: 'pointer',
+            fontFamily: FONTS.body,
+            fontWeight: 600,
+          }}>
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  // TypeScript now knows playstyle and ui are defined
   const heroLayout = isMobile ? HERO_MOBILE : HERO_DESKTOP;
 
   const toolbarProps = {
@@ -455,11 +437,11 @@ export function PlaystyleDetailPage() {
         />
         <div style={{position: 'relative', zIndex: 1}}>
           <PlaystyleHero
-            name={playstyle!.name}
-            description={playstyle!.description}
-            accentColor={ui!.accentColor}
-            accentRgb={ui!.accentRgb}
-            coverArt={ui!.coverArt}
+            name={playstyle.name}
+            description={playstyle.description}
+            accentColor={ui.accentColor}
+            accentRgb={ui.accentRgb}
+            coverArt={ui.coverArt}
             layout={heroLayout}
             onPlaystylesBreadcrumb={goPlaystyles}
           />
@@ -520,7 +502,7 @@ export function PlaystyleDetailPage() {
                       key={card.id}
                       card={card}
                       isSelected={false}
-                      onSelect={selectCard}
+                      onSelect={handleCardSelect}
                       variant="minimal"
                       useThumbnail
                       borderRadius={10}
@@ -575,11 +557,11 @@ export function PlaystyleDetailPage() {
           zIndex: 1,
         }}>
         <PlaystyleHero
-          name={playstyle!.name}
-          description={playstyle!.description}
-          accentColor={ui!.accentColor}
-          accentRgb={ui!.accentRgb}
-          coverArt={ui!.coverArt}
+          name={playstyle.name}
+          description={playstyle.description}
+          accentColor={ui.accentColor}
+          accentRgb={ui.accentRgb}
+          coverArt={ui.coverArt}
           layout={heroLayout}
           onPlaystylesBreadcrumb={goPlaystyles}
         />
@@ -608,7 +590,7 @@ export function PlaystyleDetailPage() {
                     key={card.id}
                     card={card}
                     isSelected={false}
-                    onSelect={selectCard}
+                    onSelect={handleCardSelect}
                     variant="minimal"
                     useThumbnail
                   />
