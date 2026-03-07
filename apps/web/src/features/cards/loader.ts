@@ -1,4 +1,5 @@
 import type {LorcanaCard, Ink, CardType} from './types';
+import type {BrowseSortOrder} from '../../shared/constants';
 
 // LorcanaJSON data structure (partial - only fields we need)
 interface LorcanaJSONCard {
@@ -199,31 +200,16 @@ export function loadSetsFromJSON(data: LorcanaJSONData): SetInfo[] {
 }
 
 /**
- * Load cards from a LorcanaJSON data object
- * Deduplicates by fullName (keeps latest printing - highest set number)
+ * Load cards from a LorcanaJSON data object.
+ * Expects pre-deduplicated data (see cleanup script).
  */
 export function loadCardsFromJSON(data: LorcanaJSONData): LorcanaCard[] {
-  const cardMap = new Map<string, LorcanaCard>();
-
+  const cards: LorcanaCard[] = [];
   for (const raw of data.cards) {
     const card = transformCard(raw);
-    if (card) {
-      const existing = cardMap.get(card.fullName);
-      if (!existing) {
-        // First time seeing this card
-        cardMap.set(card.fullName, card);
-      } else {
-        // Keep the one from the latest set
-        const existingSetOrder = parseSetOrder(existing.setCode);
-        const newSetOrder = parseSetOrder(card.setCode);
-        if (newSetOrder > existingSetOrder) {
-          cardMap.set(card.fullName, card);
-        }
-      }
-    }
+    if (card) cards.push(card);
   }
-
-  return Array.from(cardMap.values());
+  return cards;
 }
 
 export interface CardDataResult {
@@ -438,4 +424,25 @@ export function sortCardsByCost(cards: LorcanaCard[], direction: 'asc' | 'desc')
     if (costDiff !== 0) return dir * costDiff;
     return a.fullName.localeCompare(b.fullName);
   });
+}
+
+/**
+ * Apply a named sort order to a card array.
+ * Returns a new array — does not mutate the input.
+ */
+export function applySortOrder(cards: LorcanaCard[], order: BrowseSortOrder): LorcanaCard[] {
+  switch (order) {
+    case 'newest':
+      return sortBySetThenNumber(cards);
+    case 'name-asc':
+      return sortCardsByName(cards, 'asc');
+    case 'name-desc':
+      return sortCardsByName(cards, 'desc');
+    case 'cost-asc':
+      return sortCardsByCost(cards, 'asc');
+    case 'cost-desc':
+      return sortCardsByCost(cards, 'desc');
+    default:
+      return cards;
+  }
 }

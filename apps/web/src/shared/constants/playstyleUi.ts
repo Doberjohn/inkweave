@@ -23,7 +23,12 @@ export interface ComingSoonPlaystyle extends PlaystyleUiMeta {
   description: string;
 }
 
-function makeComingSoon(name: string, description: string, accentColor: string, coverArt: string): ComingSoonPlaystyle {
+function makeComingSoon(
+  name: string,
+  description: string,
+  accentColor: string,
+  coverArt: string,
+): ComingSoonPlaystyle {
   return {name, description, ...makeUiMeta(accentColor, coverArt)};
 }
 

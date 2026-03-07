@@ -116,7 +116,7 @@ pnpm test:web         # Run web tests
 - SynergyEngine uses pluggable rules pattern - add rules via `SynergyRule` interface
 - Synergies memoized - only recompute on card selection or game mode change
 - Card data loaded once on init, all operations in-memory
-- Cards deduplicated by `fullName` (same card in multiple sets appears once)
+- Card data pre-deduplicated in `allCards.json` (same card in multiple sets appears once); loader expects clean data
 - Two-column UI: CardList (340px) | SynergyResults (flex) - deck builder removed for MVP
 - Floating card preview popover on hover (CardPreviewContext + CardPreviewPopover)
 - Core format only (sets 5+)

@@ -8,6 +8,8 @@ module.exports = {
         'http://localhost:8080/browse',
         'http://localhost:8080/card/957',
         'http://localhost:8080/card/957/synergies',
+        'http://localhost:8080/playstyles',
+        'http://localhost:8080/playstyles/lore-denial',
       ],
       numberOfRuns: 3,
       settings: {

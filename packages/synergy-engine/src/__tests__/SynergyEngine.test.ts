@@ -1,7 +1,7 @@
 import {describe, it, expect} from 'vitest';
 import {SynergyEngine} from '../engine';
 
-import type {SynergyRule} from '../types';
+import type {LorcanaCard, SynergyRule} from '../types';
 import {createCard} from './fixtures.js';
 
 describe('SynergyEngine', () => {
@@ -562,6 +562,74 @@ describe('SynergyEngine', () => {
       const synergies = engine.findSynergies(source, cards);
 
       expect(synergies[0].synergies.length).toBeLessThanOrEqual(3);
+    });
+  });
+
+  describe('getPlaystyleCards', () => {
+    const mockPlaystyleRule = (
+      playstyleId: 'lore-denial' | 'location-control',
+      matchFn: (card: LorcanaCard) => boolean,
+    ): SynergyRule => ({
+      id: `mock-${playstyleId}`,
+      name: `Mock ${playstyleId}`,
+      description: 'test rule',
+      category: 'playstyle' as const,
+      playstyleId,
+      matches: matchFn,
+      findSynergies: () => [],
+    });
+
+    it('returns cards matching a playstyle rule', () => {
+      const rule = mockPlaystyleRule('lore-denial', (c) => c.cost >= 5);
+      const engine = new SynergyEngine({rules: [rule]});
+      const cards = [
+        createCard({id: '1', name: 'Cheap', cost: 2}),
+        createCard({id: '2', name: 'Expensive', cost: 6}),
+        createCard({id: '3', name: 'Also Expensive', cost: 5}),
+      ];
+
+      const result = engine.getPlaystyleCards('lore-denial', cards);
+
+      expect(result.map((c) => c.name)).toEqual(['Also Expensive', 'Expensive']);
+    });
+
+    it('returns empty array for a playstyle with no rules', () => {
+      const rule = mockPlaystyleRule('lore-denial', () => true);
+      const engine = new SynergyEngine({rules: [rule]});
+      const cards = [createCard({id: '1', name: 'Card A'})];
+
+      const result = engine.getPlaystyleCards('location-control', cards);
+
+      expect(result).toEqual([]);
+    });
+
+    it('deduplicates cards matching multiple rules in the same playstyle', () => {
+      const rule1 = mockPlaystyleRule('lore-denial', (c) => c.cost >= 5);
+      const rule2 = mockPlaystyleRule('lore-denial', (c) => c.ink === 'Amethyst');
+      const engine = new SynergyEngine({rules: [rule1, rule2]});
+      const cards = [
+        createCard({id: '1', name: 'Both Match', cost: 7, ink: 'Amethyst'}),
+        createCard({id: '2', name: 'Cost Only', cost: 6, ink: 'Ruby'}),
+      ];
+
+      const result = engine.getPlaystyleCards('lore-denial', cards);
+
+      expect(result).toHaveLength(2);
+      expect(result.map((c) => c.name)).toEqual(['Both Match', 'Cost Only']);
+    });
+
+    it('returns results sorted by name', () => {
+      const rule = mockPlaystyleRule('lore-denial', () => true);
+      const engine = new SynergyEngine({rules: [rule]});
+      const cards = [
+        createCard({id: '1', name: 'Zebra'}),
+        createCard({id: '2', name: 'Alpha'}),
+        createCard({id: '3', name: 'Middle'}),
+      ];
+
+      const result = engine.getPlaystyleCards('lore-denial', cards);
+
+      expect(result.map((c) => c.name)).toEqual(['Alpha', 'Middle', 'Zebra']);
     });
   });
 });

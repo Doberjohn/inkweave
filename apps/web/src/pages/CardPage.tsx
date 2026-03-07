@@ -200,7 +200,6 @@ export function CardPage() {
       <EtherealBackground />
       <CompactHeader
         onLogoClick={goHome}
-        showBackArrow
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onSearchSubmit={handleSearchSubmit}

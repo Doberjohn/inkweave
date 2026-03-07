@@ -16,7 +16,7 @@ export const INK_COLORS: Record<Ink, {bg: string; text: string; border: string}>
 // Font families
 export const FONTS = {
   body: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-  hero: "'Tinos', 'Cinzel', 'Georgia', serif",
+  hero: "'Tinos', 'Georgia', serif",
 } as const;
 
 // Layout constants
@@ -250,8 +250,7 @@ export const hexToRgb = (hex: string) =>
   `${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}`;
 
 /** Convert a hex color (#rrggbb) to rgba with the given alpha */
-export const hexRgba = (hex: string, a: number) =>
-  `rgba(${hexToRgb(hex)}, ${a})`;
+export const hexRgba = (hex: string, a: number) => `rgba(${hexToRgb(hex)}, ${a})`;
 
 // CTA button style (orange gradient, matching Figma Filters button)
 export const CTA_BUTTON_STYLE: React.CSSProperties = {
