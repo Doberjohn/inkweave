@@ -1,5 +1,4 @@
 import {useState, useCallback, memo} from 'react';
-import {motion} from 'framer-motion';
 import type {LorcanaCard} from '../types';
 import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {useCardPreviewHandlers} from './useCardPreviewHandlers';
@@ -39,7 +38,8 @@ export const CardTile = memo(function CardTile({
     : card.imageUrl || card.thumbnailUrl;
 
   return (
-    <motion.button
+    <button
+      className="card-tile"
       data-testid="card-tile"
       onClick={() => {
         hidePreview();
@@ -48,20 +48,6 @@ export const CardTile = memo(function CardTile({
       {...(disablePreview ? {} : previewHandlers)}
       aria-pressed={isSelected}
       aria-label={card.fullName || card.name || 'View card details'}
-      whileHover={{
-        scale: 1.04,
-        y: -3,
-        boxShadow: isSelected
-          ? `0 0 16px ${colors.border}80`
-          : variant === 'minimal'
-            ? `0 0 0 1px rgba(212,175,55,0.3), 0 0 20px rgba(212,175,55,0.12), 0 25px 50px -12px rgba(0,0,0,0.5)`
-            : `0 0 16px ${colors.border}40, 0 4px 16px rgba(0,0,0,0.3)`,
-      }}
-      whileTap={{scale: 0.97}}
-      transition={{
-        default: {type: 'spring', stiffness: 400, damping: 25},
-        boxShadow: {type: 'tween', duration: 0.15},
-      }}
       style={{
         position: 'relative',
         borderRadius: `${borderRadius ?? RADIUS.xl}px`,
@@ -112,6 +98,6 @@ export const CardTile = memo(function CardTile({
           </span>
         </div>
       )}
-    </motion.button>
+    </button>
   );
 });

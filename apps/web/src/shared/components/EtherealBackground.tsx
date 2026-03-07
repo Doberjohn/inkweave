@@ -12,7 +12,7 @@ function GlowOrb({size, x, y, color}: {size: number; x: string; y: string; color
         top: y,
         borderRadius: '50%',
         background: color,
-        filter: 'blur(64px)',
+        filter: 'blur(40px)',
         pointerEvents: 'none',
       }}
     />

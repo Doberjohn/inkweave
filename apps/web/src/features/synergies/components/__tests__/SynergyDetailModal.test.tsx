@@ -7,20 +7,20 @@ import type {
   PairSynergyConnection,
 } from 'inkweave-synergy-engine';
 
-// Mock framer-motion — pass through children with AnimatePresence
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({children, ...props}: React.ComponentProps<'div'>) => <div {...props}>{children}</div>,
-  },
-  AnimatePresence: ({children}: {children: React.ReactNode}) => <>{children}</>,
-}));
-
 vi.mock('../../../shared/components', () => ({
   CardImage: ({alt}: {alt: string}) => <div data-testid="card-image">{alt}</div>,
 }));
 
 vi.mock('../../../shared/hooks/useDialogFocus', () => ({
   useDialogFocus: () => ({handleKeyDown: vi.fn()}),
+}));
+
+vi.mock('../../../shared/hooks', () => ({
+  useTransitionPresence: (isOpen: boolean) => ({
+    mounted: isOpen,
+    visible: isOpen,
+    onTransitionEnd: vi.fn(),
+  }),
 }));
 
 vi.mock('../../../cards', () => ({

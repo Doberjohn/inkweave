@@ -1,5 +1,4 @@
 import {useRef, useState, useMemo, useEffect, forwardRef} from 'react';
-import {motion, AnimatePresence} from 'framer-motion';
 import type {LorcanaCard} from '../../cards';
 import {useCardPreviewHandlers, useCardPreview} from '../../cards';
 import type {
@@ -15,6 +14,7 @@ import {
 import {getStrengthTier} from '../utils';
 import {CardImage} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
+import {useTransitionPresence} from '../../../shared/hooks';
 import {COLORS, FONT_SIZES, SPACING, RADIUS, Z_INDEX} from '../../../shared/constants';
 
 interface SynergyDetailModalProps {
@@ -34,6 +34,8 @@ export function SynergyDetailModal({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [ctaHovered, setCtaHovered] = useState(false);
 
+  const {mounted, visible, onTransitionEnd} = useTransitionPresence(isOpen);
+
   const {handleKeyDown} = useDialogFocus({
     isOpen,
     containerRef: modalRef,
@@ -50,130 +52,124 @@ export function SynergyDetailModal({
   const {cardA, cardB, connections, aggregateScore} = pair;
   const tier = getStrengthTier(aggregateScore);
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{opacity: 0}}
-            animate={{opacity: 1}}
-            exit={{opacity: 0}}
-            transition={{duration: 0.2}}
-            aria-hidden="true"
-            onClick={onClose}
-            data-testid="synergy-detail-backdrop"
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0, 0, 0, 0.6)',
-              zIndex: Z_INDEX.modalBackdrop,
-              cursor: 'pointer',
-              backdropFilter: 'blur(4px)',
-            }}
-          />
+  if (!mounted) return null;
 
-          {/* Centering wrapper */}
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className={`overlay-transition overlay-enter ${visible ? 'overlay-visible' : ''}`}
+        aria-hidden="true"
+        onClick={onClose}
+        data-testid="synergy-detail-backdrop"
+        onTransitionEnd={onTransitionEnd}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.6)',
+          zIndex: Z_INDEX.modalBackdrop,
+          cursor: 'pointer',
+          backdropFilter: 'blur(4px)',
+        }}
+      />
+
+      {/* Centering wrapper */}
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: Z_INDEX.modal,
+          pointerEvents: 'none',
+          padding: 24,
+        }}>
+        <div
+          ref={modalRef}
+          className={`overlay-transition overlay-scale overlay-enter ${visible ? 'overlay-visible' : ''}`}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Synergy detail"
+          data-testid="synergy-detail-modal"
+          onKeyDown={handleKeyDown}
+          onTransitionEnd={onTransitionEnd}
+          style={{
+            width: '100%',
+            maxWidth: 580,
+            maxHeight: 'calc(100vh - 48px)',
+            overflowY: 'auto',
+            background: COLORS.surface,
+            borderRadius: `${RADIUS.xl}px`,
+            border: `1px solid ${COLORS.surfaceBorder}`,
+            boxShadow: '0 24px 64px rgba(0, 0, 0, 0.5), 0 0 1px rgba(51, 51, 85, 0.8)',
+            position: 'relative',
+            pointerEvents: 'auto',
+          }}>
+          {/* Close button */}
+          <CloseButton ref={closeButtonRef} onClick={onClose} />
+
+          {/* Card pair + connector */}
           <div
             style={{
-              position: 'fixed',
-              inset: 0,
               display: 'flex',
-              alignItems: 'center',
+              alignItems: 'flex-start',
               justifyContent: 'center',
-              zIndex: Z_INDEX.modal,
-              pointerEvents: 'none',
-              padding: 24,
+              padding: '24px 24px 0',
             }}>
-            <motion.div
-              ref={modalRef}
-              initial={{opacity: 0, scale: 0.95}}
-              animate={{opacity: 1, scale: 1}}
-              exit={{opacity: 0, scale: 0.95}}
-              transition={{duration: 0.2, ease: 'easeOut'}}
-              role="dialog"
-              aria-modal="true"
-              aria-label="Synergy detail"
-              data-testid="synergy-detail-modal"
-              onKeyDown={handleKeyDown}
-              style={{
-                width: '100%',
-                maxWidth: 580,
-                maxHeight: 'calc(100vh - 48px)',
-                overflowY: 'auto',
-                background: COLORS.surface,
-                borderRadius: `${RADIUS.xl}px`,
-                border: `1px solid ${COLORS.surfaceBorder}`,
-                boxShadow: '0 24px 64px rgba(0, 0, 0, 0.5), 0 0 1px rgba(51, 51, 85, 0.8)',
-                position: 'relative',
-                pointerEvents: 'auto',
-              }}>
-              {/* Close button */}
-              <CloseButton ref={closeButtonRef} onClick={onClose} />
-
-              {/* Card pair + connector */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'center',
-                  padding: '24px 24px 0',
-                }}>
-                <PairCard card={cardA} showVersion={cardA.name === cardB.name} />
-                <Connector score={aggregateScore} tier={tier} />
-                <PairCard card={cardB} showVersion={cardA.name === cardB.name} />
-              </div>
-
-              {/* Aggregate tier label */}
-              <div style={{textAlign: 'center', padding: '14px 24px 20px'}}>
-                <h2
-                  style={{
-                    fontSize: `${FONT_SIZES.base}px`,
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    color: COLORS.textMuted,
-                    margin: 0,
-                  }}>
-                  <span style={{color: tier.color}}>{tier.label}</span> Synergy
-                </h2>
-              </div>
-
-              {/* Connections list */}
-              {connections.length > 0 && (
-                <ConnectionsSection connections={connections} cardA={cardA} cardB={cardB} />
-              )}
-
-              {/* CTA button */}
-              <button
-                onClick={() => onViewSynergies(cardB.id)}
-                onMouseEnter={() => setCtaHovered(true)}
-                onMouseLeave={() => setCtaHovered(false)}
-                data-testid="synergy-detail-cta"
-                style={{
-                  display: 'block',
-                  width: 'calc(100% - 48px)',
-                  margin: '0 24px 24px',
-                  padding: '10px 20px',
-                  borderRadius: `${RADIUS.md}px`,
-                  border: `1px solid rgba(212, 175, 55, ${ctaHovered ? 0.5 : 0.3})`,
-                  background: `rgba(212, 175, 55, ${ctaHovered ? 0.12 : 0.06})`,
-                  color: COLORS.primary,
-                  fontSize: `${FONT_SIZES.base}px`,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  textAlign: 'center',
-                  fontFamily: 'inherit',
-                  transition: 'all 0.2s',
-                  boxShadow: ctaHovered ? '0 0 16px rgba(212, 175, 55, 0.1)' : 'none',
-                }}>
-                View {cardB.fullName} synergies →
-              </button>
-            </motion.div>
+            <PairCard card={cardA} showVersion={cardA.name === cardB.name} />
+            <Connector score={aggregateScore} tier={tier} />
+            <PairCard card={cardB} showVersion={cardA.name === cardB.name} />
           </div>
-        </>
-      )}
-    </AnimatePresence>
+
+          {/* Aggregate tier label */}
+          <div style={{textAlign: 'center', padding: '14px 24px 20px'}}>
+            <h2
+              style={{
+                fontSize: `${FONT_SIZES.base}px`,
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                color: COLORS.textMuted,
+                margin: 0,
+              }}>
+              <span style={{color: tier.color}}>{tier.label}</span> Synergy
+            </h2>
+          </div>
+
+          {/* Connections list */}
+          {connections.length > 0 && (
+            <ConnectionsSection connections={connections} cardA={cardA} cardB={cardB} />
+          )}
+
+          {/* CTA button */}
+          <button
+            onClick={() => onViewSynergies(cardB.id)}
+            onMouseEnter={() => setCtaHovered(true)}
+            onMouseLeave={() => setCtaHovered(false)}
+            data-testid="synergy-detail-cta"
+            style={{
+              display: 'block',
+              width: 'calc(100% - 48px)',
+              margin: '0 24px 24px',
+              padding: '10px 20px',
+              borderRadius: `${RADIUS.md}px`,
+              border: `1px solid rgba(212, 175, 55, ${ctaHovered ? 0.5 : 0.3})`,
+              background: `rgba(212, 175, 55, ${ctaHovered ? 0.12 : 0.06})`,
+              color: COLORS.primary,
+              fontSize: `${FONT_SIZES.base}px`,
+              fontWeight: 600,
+              cursor: 'pointer',
+              textAlign: 'center',
+              fontFamily: 'inherit',
+              transition: 'all 0.2s',
+              boxShadow: ctaHovered ? '0 0 16px rgba(212, 175, 55, 0.1)' : 'none',
+            }}>
+            View {cardB.fullName} synergies →
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 

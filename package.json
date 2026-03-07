@@ -18,12 +18,29 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lighthouse": "lhci autorun",
+    "size": "size-limit",
     "prepare": "husky"
   },
+  "size-limit": [
+    {
+      "name": "Total JS bundle",
+      "path": "apps/web/dist/assets/*.js",
+      "limit": "280 kB",
+      "gzip": true
+    },
+    {
+      "name": "Card data JSON",
+      "path": "apps/web/dist/data/allCards.json",
+      "limit": "300 kB",
+      "gzip": true
+    }
+  ],
   "devDependencies": {
     "@lhci/cli": "^0.15.1",
+    "@size-limit/file": "^12.0.1",
     "husky": "^9.1.7",
     "prettier": "^3.8.1",
+    "size-limit": "^12.0.1",
     "typescript": "^5.3.0"
   },
   "packageManager": "pnpm@9.0.0"

@@ -109,6 +109,78 @@ option {
   }
 }
 
+/* Card tile hover/tap animations */
+.card-tile {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.card-tile:hover {
+  transform: scale(1.04) translateY(-3px);
+}
+.card-tile:active {
+  transform: scale(0.97);
+}
+
+/* Overlay transitions (modals, drawers, popovers, autocomplete) */
+.overlay-transition {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    visibility 0.2s ease;
+}
+.overlay-enter {
+  opacity: 0;
+  visibility: hidden;
+}
+.overlay-enter.overlay-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Modal/popover scale variant */
+.overlay-scale {
+  transform: scale(0.95);
+}
+.overlay-scale.overlay-visible {
+  transform: scale(1);
+}
+
+/* Drawer slide-up variant */
+.overlay-slide-up {
+  transform: translateY(100%);
+}
+.overlay-slide-up.overlay-visible {
+  transform: translateY(0);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Autocomplete slide variant */
+.overlay-slide-down {
+  transform: translateY(-4px);
+}
+.overlay-slide-down.overlay-visible {
+  transform: translateY(0);
+}
+
+/* Popover quick transition */
+.overlay-fast {
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    visibility 0.15s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-tile,
+  .overlay-transition {
+    transition: none !important;
+  }
+  .card-tile:hover {
+    transform: none;
+  }
+}
+
 /* Mobile-specific styles */
 @media (max-width: 767px) {
   /* Prevent pull-to-refresh on mobile */

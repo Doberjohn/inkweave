@@ -1,6 +1,6 @@
-import {AnimatePresence, motion} from 'framer-motion';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {useCardPreview} from '../../features/cards/components/useCardPreview';
+import {useTransitionPresence} from '../hooks';
 import type {UseAutocompleteReturn} from '../hooks';
 import {
   COLORS,
@@ -70,109 +70,101 @@ export function SearchAutocomplete({
   getOptionProps,
 }: SearchAutocompleteProps) {
   const {showPreview, updatePosition, hidePreview} = useCardPreview();
+  const {mounted, visible, onTransitionEnd} = useTransitionPresence(isOpen);
+
+  if (!mounted) return null;
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{opacity: 0, y: -4}}
-          animate={{opacity: 1, y: 0}}
-          exit={{opacity: 0, y: -4}}
-          transition={{duration: 0.15}}
-          {...listboxProps}
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            marginTop: SPACING.xs,
-            background: COLORS.surface,
-            border: `1px solid ${COLORS.surfaceBorder}`,
-            borderRadius: RADIUS.lg,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.4), 0 0 1px rgba(212,175,55,0.15)',
-            maxHeight: 360,
-            overflowY: 'auto',
-            zIndex: Z_INDEX.autocomplete,
-          }}>
-          {suggestions.map((card, index) => {
-            const optionProps = getOptionProps(index);
-            const isHighlighted = index === highlightedIndex;
-            const setAbbr =
-              SET_ABBREVIATIONS[card.setCode as keyof typeof SET_ABBREVIATIONS] ??
-              card.setCode ??
-              '';
-            const setName =
-              SET_NAMES[card.setCode as keyof typeof SET_NAMES] ??
-              `Set ${card.setCode ?? 'Unknown'}`;
+    <div
+      className={`overlay-transition overlay-fast overlay-slide-down overlay-enter ${visible ? 'overlay-visible' : ''}`}
+      onTransitionEnd={onTransitionEnd}
+      {...listboxProps}
+      style={{
+        position: 'absolute',
+        top: '100%',
+        left: 0,
+        right: 0,
+        marginTop: SPACING.xs,
+        background: COLORS.surface,
+        border: `1px solid ${COLORS.surfaceBorder}`,
+        borderRadius: RADIUS.lg,
+        boxShadow: '0 8px 24px rgba(0,0,0,0.4), 0 0 1px rgba(212,175,55,0.15)',
+        maxHeight: 360,
+        overflowY: 'auto',
+        zIndex: Z_INDEX.autocomplete,
+      }}>
+      {suggestions.map((card, index) => {
+        const optionProps = getOptionProps(index);
+        const isHighlighted = index === highlightedIndex;
+        const setAbbr =
+          SET_ABBREVIATIONS[card.setCode as keyof typeof SET_ABBREVIATIONS] ?? card.setCode ?? '';
+        const setName =
+          SET_NAMES[card.setCode as keyof typeof SET_NAMES] ?? `Set ${card.setCode ?? 'Unknown'}`;
 
-            return (
-              <div
-                key={card.id}
-                {...optionProps}
-                style={{
-                  padding: `${SPACING.lg}px ${SPACING.xl}px`,
-                  cursor: 'pointer',
-                  fontSize: FONT_SIZES.lg,
-                  color: COLORS.text,
-                  background: isHighlighted ? COLORS.surfaceHover : 'transparent',
-                  borderBottom:
-                    index < suggestions.length - 1
-                      ? `1px solid ${COLORS.surfaceBorder}`
-                      : undefined,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: SPACING.lg,
-                  transition: 'background 0.1s ease',
-                }}>
-                {/* Photo icon — hover to preview card */}
-                <span
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    flexShrink: 0,
-                    cursor: 'pointer',
-                    padding: 2,
-                  }}
-                  onMouseEnter={(e) => showPreview(card, e.clientX, e.clientY)}
-                  onMouseMove={(e) => updatePosition(e.clientX, e.clientY)}
-                  onMouseLeave={() => hidePreview()}>
-                  <PhotoIcon />
-                </span>
+        return (
+          <div
+            key={card.id}
+            {...optionProps}
+            style={{
+              padding: `${SPACING.lg}px ${SPACING.xl}px`,
+              cursor: 'pointer',
+              fontSize: FONT_SIZES.lg,
+              color: COLORS.text,
+              background: isHighlighted ? COLORS.surfaceHover : 'transparent',
+              borderBottom:
+                index < suggestions.length - 1 ? `1px solid ${COLORS.surfaceBorder}` : undefined,
+              display: 'flex',
+              alignItems: 'center',
+              gap: SPACING.lg,
+              transition: 'background 0.1s ease',
+            }}>
+            {/* Photo icon — hover to preview card */}
+            <span
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                flexShrink: 0,
+                cursor: 'pointer',
+                padding: 2,
+              }}
+              onMouseEnter={(e) => showPreview(card, e.clientX, e.clientY)}
+              onMouseMove={(e) => updatePosition(e.clientX, e.clientY)}
+              onMouseLeave={() => hidePreview()}>
+              <PhotoIcon />
+            </span>
 
-                {/* Set abbreviation with tooltip */}
-                <span
-                  title={setName}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    fontSize: FONT_SIZES.md,
-                    color: COLORS.text,
-                    fontWeight: 500,
-                    flexShrink: 0,
-                    minWidth: 32,
-                    letterSpacing: '0.3px',
-                    lineHeight: 1,
-                  }}>
-                  {setAbbr}
-                </span>
+            {/* Set abbreviation with tooltip */}
+            <span
+              title={setName}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: FONT_SIZES.md,
+                color: COLORS.text,
+                fontWeight: 500,
+                flexShrink: 0,
+                minWidth: 32,
+                letterSpacing: '0.3px',
+                lineHeight: 1,
+              }}>
+              {setAbbr}
+            </span>
 
-                {/* Card name with query highlight */}
-                <span
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    lineHeight: 1,
-                  }}>
-                  <HighlightedName fullName={card.fullName} query={query} />
-                </span>
-              </div>
-            );
-          })}
-        </motion.div>
-      )}
-    </AnimatePresence>
+            {/* Card name with query highlight */}
+            <span
+              style={{
+                flex: 1,
+                minWidth: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                lineHeight: 1,
+              }}>
+              <HighlightedName fullName={card.fullName} query={query} />
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }

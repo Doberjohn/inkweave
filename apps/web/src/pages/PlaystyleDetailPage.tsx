@@ -346,6 +346,11 @@ export function PlaystyleDetailPage() {
     return applySortOrder(result, sortOrder);
   }, [playstyleCards, combinedFilters, sortOrder]);
 
+  const displayedCards = useMemo(
+    () => sortedCards.slice(0, LAYOUT.maxDisplayedCards),
+    [sortedCards],
+  );
+
   const goHome = useCallback(() => navigate('/'), [navigate]);
   const goPlaystyles = useCallback(() => navigate('/playstyles'), [navigate]);
   const handleCardSelect = useCallback(
@@ -497,7 +502,7 @@ export function PlaystyleDetailPage() {
                     gridTemplateColumns: 'repeat(3, 1fr)',
                     gap: 10,
                   }}>
-                  {sortedCards.map((card) => (
+                  {displayedCards.map((card) => (
                     <CardTile
                       key={card.id}
                       card={card}
@@ -585,7 +590,7 @@ export function PlaystyleDetailPage() {
                   gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
                   gap: 12,
                 }}>
-                {sortedCards.map((card) => (
+                {displayedCards.map((card) => (
                   <CardTile
                     key={card.id}
                     card={card}

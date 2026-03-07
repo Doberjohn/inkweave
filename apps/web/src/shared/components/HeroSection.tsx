@@ -273,7 +273,10 @@ export function HeroSection({
         <button
           data-testid="cta-playstyles"
           onClick={onPlaystyles}
-          onMouseEnter={() => setPlaystylesHover(true)}
+          onMouseEnter={() => {
+            setPlaystylesHover(true);
+            import('../../pages/PlaystyleGalleryPage');
+          }}
           onMouseLeave={() => setPlaystylesHover(false)}
           style={{
             display: 'flex',

@@ -1,7 +1,6 @@
 import {useMemo, useState} from 'react';
-import {motion, AnimatePresence} from 'framer-motion';
 import {useCardPreview} from './useCardPreview';
-import {useResponsive} from '../../../shared/hooks';
+import {useResponsive, useTransitionPresence} from '../../../shared/hooks';
 import {INK_COLORS, RADIUS, Z_INDEX, COLORS} from '../../../shared/constants';
 import type {LorcanaCard} from '../types';
 
@@ -122,8 +121,10 @@ export function CardPreviewPopover() {
   const {card, position, isTouchMode} = previewState;
   const {windowWidth} = useResponsive();
 
+  const isOpen = !!card;
+  const {mounted, visible, onTransitionEnd} = useTransitionPresence(isOpen);
+
   // Memoize viewport height to avoid reading on every render
-  // We use windowWidth from the hook, and compute height similarly
   const viewportDimensions = useMemo(() => {
     if (typeof window === 'undefined') {
       return {width: 1024, height: 768};
@@ -141,84 +142,79 @@ export function CardPreviewPopover() {
   const containerWidth = isLocation ? previewHeight : previewWidth;
   const containerHeight = isLocation ? previewWidth : previewHeight;
 
+  if (!mounted || !card) return null;
+
   // On touch mode, show centered modal with backdrop
   if (isTouchMode) {
     return (
-      <AnimatePresence>
-        {card && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{opacity: 0}}
-              animate={{opacity: 1}}
-              exit={{opacity: 0}}
-              transition={{duration: 0.2}}
-              onClick={hidePreview}
-              style={{
-                position: 'fixed',
-                inset: 0,
-                background: 'rgba(0, 0, 0, 0.5)',
-                zIndex: Z_INDEX.popoverBackdrop,
-              }}
-            />
-            {/* Centered card */}
-            <motion.div
-              initial={{opacity: 0, scale: 0.8}}
-              animate={{opacity: 1, scale: 1}}
-              exit={{opacity: 0, scale: 0.8}}
-              transition={{type: 'spring', stiffness: 400, damping: 25}}
-              onClick={hidePreview}
-              style={{
-                position: 'fixed',
-                left: '50%',
-                top: '50%',
-                x: '-50%',
-                y: '-50%',
-                width: `${containerWidth}px`,
-                height: `${containerHeight}px`,
-                borderRadius: `${RADIUS.xl}px`,
-                boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-                zIndex: Z_INDEX.popover,
-                overflow: 'hidden',
-              }}>
-              <PreviewCardImage
-                card={card}
-                isLocation={isLocation}
-                previewWidth={previewWidth}
-                previewHeight={previewHeight}
-              />
-            </motion.div>
-            {/* Tap to dismiss hint - accessible */}
-            <motion.div
-              initial={{opacity: 0, y: 10}}
-              animate={{opacity: 1, y: 0}}
-              exit={{opacity: 0}}
-              transition={{delay: 0.1}}
-              role="status"
-              aria-live="polite"
-              style={{
-                position: 'fixed',
-                bottom: '20%',
-                left: '50%',
-                x: '-50%',
-                background: COLORS.gray800,
-                color: COLORS.white,
-                padding: '8px 16px',
-                borderRadius: `${RADIUS.lg}px`,
-                fontSize: '14px',
-                zIndex: Z_INDEX.popover,
-                pointerEvents: 'none',
-              }}>
-              Tap anywhere to dismiss
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      <>
+        {/* Backdrop */}
+        <div
+          className="overlay-transition overlay-enter"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: Z_INDEX.popoverBackdrop,
+            ...(visible ? {opacity: 1} : {}),
+          }}
+          onClick={hidePreview}
+          onTransitionEnd={onTransitionEnd}
+        />
+        {/* Centered card */}
+        <div
+          className={`overlay-transition overlay-fast overlay-scale overlay-enter ${visible ? 'overlay-visible' : ''}`}
+          onClick={hidePreview}
+          onTransitionEnd={onTransitionEnd}
+          style={{
+            position: 'fixed',
+            left: '50%',
+            top: '50%',
+            transform: visible
+              ? 'translate(-50%, -50%) scale(1)'
+              : 'translate(-50%, -50%) scale(0.8)',
+            width: `${containerWidth}px`,
+            height: `${containerHeight}px`,
+            borderRadius: `${RADIUS.xl}px`,
+            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+            zIndex: Z_INDEX.popover,
+            overflow: 'hidden',
+            opacity: visible ? 1 : 0,
+            transition: 'opacity 0.2s ease, transform 0.2s ease',
+          }}>
+          <PreviewCardImage
+            card={card}
+            isLocation={isLocation}
+            previewWidth={previewWidth}
+            previewHeight={previewHeight}
+          />
+        </div>
+        {/* Tap to dismiss hint */}
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            bottom: '20%',
+            left: '50%',
+            transform: visible ? 'translate(-50%, 0)' : 'translate(-50%, 10px)',
+            background: COLORS.gray800,
+            color: COLORS.white,
+            padding: '8px 16px',
+            borderRadius: `${RADIUS.lg}px`,
+            fontSize: '14px',
+            zIndex: Z_INDEX.popover,
+            pointerEvents: 'none',
+            opacity: visible ? 1 : 0,
+            transition: 'opacity 0.2s ease 0.1s, transform 0.2s ease 0.1s',
+          }}>
+          Tap anywhere to dismiss
+        </div>
+      </>
     );
   }
 
   // Desktop hover mode - position relative to cursor
-  // Use cached viewport dimensions instead of reading window on every render
   const {width: viewportWidth, height: viewportHeight} = viewportDimensions;
 
   let left = position.x + OFFSET_X;
@@ -240,33 +236,27 @@ export function CardPreviewPopover() {
   }
 
   return (
-    <AnimatePresence>
-      {card && (
-        <motion.div
-          initial={{opacity: 0, scale: 0.95}}
-          animate={{opacity: 1, scale: 1}}
-          exit={{opacity: 0, scale: 0.95}}
-          transition={{duration: 0.15}}
-          style={{
-            position: 'fixed',
-            left: `${left}px`,
-            top: `${top}px`,
-            width: `${containerWidth}px`,
-            height: `${containerHeight}px`,
-            borderRadius: `${RADIUS.xl}px`,
-            boxShadow: '0 20px 40px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05)',
-            zIndex: Z_INDEX.popover,
-            pointerEvents: 'none',
-            overflow: 'hidden',
-          }}>
-          <PreviewCardImage
-            card={card}
-            isLocation={isLocation}
-            previewWidth={previewWidth}
-            previewHeight={previewHeight}
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div
+      className={`overlay-transition overlay-fast overlay-scale overlay-enter ${visible ? 'overlay-visible' : ''}`}
+      onTransitionEnd={onTransitionEnd}
+      style={{
+        position: 'fixed',
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${containerWidth}px`,
+        height: `${containerHeight}px`,
+        borderRadius: `${RADIUS.xl}px`,
+        boxShadow: '0 20px 40px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05)',
+        zIndex: Z_INDEX.popover,
+        pointerEvents: 'none',
+        overflow: 'hidden',
+      }}>
+      <PreviewCardImage
+        card={card}
+        isLocation={isLocation}
+        previewWidth={previewWidth}
+        previewHeight={previewHeight}
+      />
+    </div>
   );
 }

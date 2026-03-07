@@ -11,10 +11,7 @@ interface BrowseCardGridProps {
 }
 
 export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridProps) {
-  const displayedCards = useMemo(
-    () => cards.slice(0, LAYOUT.maxDisplayedCards),
-    [cards],
-  );
+  const displayedCards = useMemo(() => cards.slice(0, LAYOUT.maxDisplayedCards), [cards]);
 
   if (isLoading) {
     return (
