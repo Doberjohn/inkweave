@@ -8,7 +8,6 @@ import {
 } from 'inkweave-synergy-engine';
 import {BrowseToolbar, CardTile} from '../features/cards';
 import {
-  searchCardsByName,
   filterCards,
   sortBySetThenNumber,
   sortCardsByName,
@@ -337,9 +336,8 @@ export function PlaystyleDetailPage() {
   const {isMobile} = useResponsive();
   const {cards, isLoading, uniqueKeywords, uniqueClassifications, sets} =
     useCardDataContext();
+  const [headerSearchQuery, setHeaderSearchQuery] = useState('');
   const {
-    searchQuery,
-    setSearchQuery,
     inkFilters,
     toggleInk,
     typeFilters,
@@ -384,18 +382,17 @@ export function PlaystyleDetailPage() {
 
   const sortedCards = useMemo(() => {
     let result = playstyleCards;
-    if (searchQuery.trim()) result = searchCardsByName(result, searchQuery);
     if (Object.keys(combinedFilters).length > 0) result = filterCards(result, combinedFilters);
     return applySortOrder(result, sortOrder);
-  }, [playstyleCards, searchQuery, combinedFilters, sortOrder]);
+  }, [playstyleCards, combinedFilters, sortOrder]);
 
   const goHome = useCallback(() => navigate('/'), [navigate]);
   const goPlaystyles = useCallback(() => navigate('/playstyles'), [navigate]);
   const selectCard = useCallback((card: {id: string}) => navigate(`/card/${card.id}`), [navigate]);
   const handleSearchSubmit = useCallback(() => {
-    const q = searchQuery.trim();
+    const q = headerSearchQuery.trim();
     navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
-  }, [navigate, searchQuery]);
+  }, [navigate, headerSearchQuery]);
 
   const handleCardSelect = useCallback(
     (card: {id: string}) => navigate(`/card/${card.id}`),
@@ -451,8 +448,8 @@ export function PlaystyleDetailPage() {
         <EtherealBackground />
         <CompactHeader
           onLogoClick={goHome}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          searchQuery={headerSearchQuery}
+          onSearchChange={setHeaderSearchQuery}
           onSearchSubmit={handleSearchSubmit}
           cards={cards}
           onCardSelect={handleCardSelect}
