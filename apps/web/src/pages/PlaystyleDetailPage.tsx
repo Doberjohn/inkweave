@@ -91,7 +91,8 @@ const HERO_MOBILE: HeroLayout = {
 
 // ── Hero scrim ──
 
-const HERO_SCRIM = 'linear-gradient(180deg, rgba(13,13,20,0.6) 0%, rgba(13,13,20,0.4) 50%, rgba(13,13,20,0.6) 100%)';
+const HERO_SCRIM =
+  'linear-gradient(180deg, rgba(13,13,20,0.6) 0%, rgba(13,13,20,0.4) 50%, rgba(13,13,20,0.6) 100%)';
 
 // ── Ken Burns keyframes (injected once) ──
 
@@ -334,8 +335,7 @@ export function PlaystyleDetailPage() {
   const {playstyleId} = useParams<{playstyleId: string}>();
   const navigate = useNavigate();
   const {isMobile} = useResponsive();
-  const {cards, isLoading, uniqueKeywords, uniqueClassifications, sets} =
-    useCardDataContext();
+  const {cards, isLoading, uniqueKeywords, uniqueClassifications, sets} = useCardDataContext();
   const [headerSearchQuery, setHeaderSearchQuery] = useState('');
   const {
     inkFilters,
@@ -433,8 +433,6 @@ export function PlaystyleDetailPage() {
     onSortChange: setSortOrder,
   } as const;
 
-  const displayedCards = sortedCards.slice(0, LAYOUT.maxDisplayedCards);
-
   // Mobile layout
   if (isMobile) {
     return (
@@ -499,7 +497,7 @@ export function PlaystyleDetailPage() {
           </div>
           {/* Card grid */}
           <ErrorBoundary>
-            {displayedCards.length === 0 ? (
+            {sortedCards.length === 0 ? (
               <div
                 style={{
                   textAlign: 'center',
@@ -517,7 +515,7 @@ export function PlaystyleDetailPage() {
                     gridTemplateColumns: 'repeat(3, 1fr)',
                     gap: 10,
                   }}>
-                  {displayedCards.map((card) => (
+                  {sortedCards.map((card) => (
                     <CardTile
                       key={card.id}
                       card={card}
@@ -563,8 +561,8 @@ export function PlaystyleDetailPage() {
       <EtherealBackground />
       <CompactHeader
         onLogoClick={goHome}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        searchQuery={headerSearchQuery}
+        onSearchChange={setHeaderSearchQuery}
         onSearchSubmit={handleSearchSubmit}
         cards={cards}
         onCardSelect={handleCardSelect}
@@ -587,7 +585,7 @@ export function PlaystyleDetailPage() {
         />
         <BrowseToolbar {...toolbarProps} isMobile={false} />
         <ErrorBoundary>
-          {displayedCards.length === 0 ? (
+          {sortedCards.length === 0 ? (
             <div
               style={{
                 textAlign: 'center',
@@ -605,7 +603,7 @@ export function PlaystyleDetailPage() {
                   gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
                   gap: 12,
                 }}>
-                {displayedCards.map((card) => (
+                {sortedCards.map((card) => (
                   <CardTile
                     key={card.id}
                     card={card}

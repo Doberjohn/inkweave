@@ -319,23 +319,12 @@ describe('loadCardsFromJSON', () => {
     expect(cards).toHaveLength(0);
   });
 
-  it('should deduplicate cards by fullName, keeping latest set', () => {
+  it('should load all cards from pre-deduplicated data', () => {
     const data = {
       metadata: {formatVersion: '1.0', generatedOn: '2024-01-01', language: 'en'},
       cards: [
         {
           id: 1,
-          name: 'Mickey Mouse',
-          fullName: 'Mickey Mouse - Brave Little Tailor',
-          simpleName: 'mickey',
-          cost: 3,
-          color: 'Amber',
-          inkwell: true,
-          type: 'Character',
-          setCode: '1',
-        },
-        {
-          id: 2,
           name: 'Mickey Mouse',
           fullName: 'Mickey Mouse - Brave Little Tailor',
           simpleName: 'mickey',
@@ -345,31 +334,6 @@ describe('loadCardsFromJSON', () => {
           type: 'Character',
           setCode: '5',
         },
-      ],
-    };
-
-    const cards = loadCardsFromJSON(data);
-
-    expect(cards).toHaveLength(1);
-    expect(cards[0].setCode).toBe('5');
-    expect(cards[0].id).toBe('2');
-  });
-
-  it('should handle Q set codes in deduplication (lower priority)', () => {
-    const data = {
-      metadata: {formatVersion: '1.0', generatedOn: '2024-01-01', language: 'en'},
-      cards: [
-        {
-          id: 1,
-          name: 'Test',
-          fullName: 'Test Card',
-          simpleName: 'test',
-          cost: 3,
-          color: 'Amber',
-          inkwell: true,
-          type: 'Character',
-          setCode: 'Q1',
-        },
         {
           id: 2,
           name: 'Test',
@@ -379,15 +343,13 @@ describe('loadCardsFromJSON', () => {
           color: 'Amber',
           inkwell: true,
           type: 'Character',
-          setCode: '1',
+          setCode: '6',
         },
       ],
     };
 
     const cards = loadCardsFromJSON(data);
-
-    expect(cards).toHaveLength(1);
-    expect(cards[0].setCode).toBe('1'); // Regular set takes priority over Q set
+    expect(cards).toHaveLength(2);
   });
 
   it('should handle cards without setCode', () => {

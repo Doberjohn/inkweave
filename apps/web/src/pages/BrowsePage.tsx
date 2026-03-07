@@ -1,5 +1,5 @@
-import {useCallback, useMemo, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
+import {useCallback, useEffect, useMemo, useState} from 'react';
+import {useNavigate, useSearchParams} from 'react-router-dom';
 import {BrowseCardGrid, BrowseToolbar, CardTile} from '../features/cards';
 import {
   searchCardsByName,
@@ -42,7 +42,7 @@ function applySortOrder(
 export function BrowsePage() {
   const navigate = useNavigate();
   const {isMobile} = useResponsive();
-  const {cards, isLoading, totalCards, uniqueKeywords, uniqueClassifications, sets} =
+  const {cards, isLoading, totalCards, uniqueKeywords, uniqueClassifications, uniqueSets, sets} =
     useCardDataContext();
   const {
     searchQuery,
@@ -61,8 +61,24 @@ export function BrowsePage() {
     sortOrder,
     setSortOrder,
   } = useFilterParams();
+  const [searchParams] = useSearchParams();
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
+
+  // Default to latest set when no filters are in the URL
+  useEffect(() => {
+    if (uniqueSets.length === 0) return;
+    const hasAnyParam =
+      searchParams.has('set') ||
+      searchParams.has('ink') ||
+      searchParams.has('type') ||
+      searchParams.has('cost') ||
+      searchParams.has('q');
+    if (!hasAnyParam) {
+      const latestSet = uniqueSets[uniqueSets.length - 1];
+      setFilters({setCode: latestSet});
+    }
+  }, [uniqueSets.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const combinedFilters = useMemo<CardFilterOptions>(() => {
     const combined = {...filters};
@@ -106,7 +122,6 @@ export function BrowsePage() {
 
   // Mobile layout
   if (isMobile) {
-    const displayedCards = sortedCards.slice(0, LAYOUT.maxDisplayedCards);
     return (
       <main
         style={{
@@ -174,7 +189,7 @@ export function BrowsePage() {
               <div style={{display: 'flex', justifyContent: 'center', padding: 64}}>
                 <div style={{color: COLORS.textMuted}}>Loading...</div>
               </div>
-            ) : displayedCards.length === 0 ? (
+            ) : sortedCards.length === 0 ? (
               <div
                 style={{
                   textAlign: 'center',
@@ -195,7 +210,7 @@ export function BrowsePage() {
                     padding: 0,
                     margin: 0,
                   }}>
-                  {displayedCards.map((card) => (
+                  {sortedCards.map((card) => (
                     <CardTile
                       key={card.id}
                       card={card}

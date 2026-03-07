@@ -67,9 +67,14 @@ const MOBILE_LAYOUT: LayoutConfig = {
 
 // ── Scrim constants ──
 
-const SCRIM_GRADIENT = 'linear-gradient(180deg, rgba(26,26,46,0.75) 0%, rgba(26,26,46,0.55) 40%, rgba(26,26,46,0.8) 100%)';
+const SCRIM_GRADIENT =
+  'linear-gradient(180deg, rgba(26,26,46,0.75) 0%, rgba(26,26,46,0.55) 40%, rgba(26,26,46,0.8) 100%)';
 const ART_IDLE = {opacity: 0.35, filter: 'saturate(0.2) brightness(0.7)', transform: 'scale(1)'};
-const ART_HOVER = {opacity: 0.45, filter: 'saturate(0.7) brightness(0.85)', transform: 'scale(1.1)'};
+const ART_HOVER = {
+  opacity: 0.45,
+  filter: 'saturate(0.7) brightness(0.85)',
+  transform: 'scale(1.1)',
+};
 
 // ── Shared Card Shell ──
 
@@ -112,12 +117,16 @@ function PlaystyleCardShell({
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
       onClick={onClick}
-      onKeyDown={isClickable ? (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick?.();
-        }
-      } : undefined}
+      onKeyDown={
+        isClickable
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick?.();
+              }
+            }
+          : undefined
+      }
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       style={{
@@ -164,7 +173,8 @@ function PlaystyleCardShell({
           opacity: art.opacity,
           filter: art.filter,
           transform: art.transform,
-          transition: 'opacity 0.5s ease, filter 0.6s ease, transform 4s cubic-bezier(0.25,0.1,0.25,1)',
+          transition:
+            'opacity 0.5s ease, filter 0.6s ease, transform 4s cubic-bezier(0.25,0.1,0.25,1)',
         }}
       />
       {/* Scrim */}
@@ -180,7 +190,8 @@ function PlaystyleCardShell({
       />
 
       {/* Header */}
-      <div style={{display: 'flex', alignItems: 'center', gap: 10, position: 'relative', zIndex: 2}}>
+      <div
+        style={{display: 'flex', alignItems: 'center', gap: 10, position: 'relative', zIndex: 2}}>
         <span
           style={{
             width: 10,
@@ -281,7 +292,9 @@ function ActivePlaystyleCard({
                 src={card.thumbnailUrl || card.imageUrl}
                 alt={card.fullName}
                 loading="lazy"
-                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
                 style={{width: '100%', height: '100%', objectFit: 'cover'}}
               />
             )}
@@ -377,7 +390,11 @@ function ComingSoonCard({
 
 // ── Section Divider ──
 
-const dividerLineStyle: React.CSSProperties = {flex: 1, height: 1, background: COLORS.surfaceBorder};
+const dividerLineStyle: React.CSSProperties = {
+  flex: 1,
+  height: 1,
+  background: COLORS.surfaceBorder,
+};
 
 function SectionDivider({label, layout}: {label: string; layout: LayoutConfig}) {
   return (
@@ -492,8 +509,8 @@ export function PlaystyleGalleryPage() {
               maxWidth: layout.maxSubtitleWidth,
               margin: 0,
             }}>
-            Strategic archetypes that emerge when cards share a common gameplay pattern. Explore each
-            playstyle to find cards that reinforce your strategy.
+            Strategic archetypes that emerge when cards share a common gameplay pattern. Explore
+            each playstyle to find cards that reinforce your strategy.
           </p>
         </div>
 
@@ -525,7 +542,12 @@ export function PlaystyleGalleryPage() {
                 <>
                   <SectionDivider label="Coming Soon" layout={layout} />
                   {COMING_SOON_PLAYSTYLES.map((ps) => (
-                    <ComingSoonCard key={ps.name} playstyle={ps} layout={layout} enableHover={enableHover} />
+                    <ComingSoonCard
+                      key={ps.name}
+                      playstyle={ps}
+                      layout={layout}
+                      enableHover={enableHover}
+                    />
                   ))}
                 </>
               )}
