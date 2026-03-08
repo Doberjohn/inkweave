@@ -19,6 +19,7 @@
     "format:check": "prettier --check .",
     "lighthouse": "lhci autorun",
     "size": "size-limit",
+    "analyze": "ANALYZE=true pnpm build:web",
     "prepare": "husky"
   },
   "size-limit": [

@@ -2,6 +2,7 @@
 import {sentryVitePlugin} from '@sentry/vite-plugin';
 import {defineConfig} from 'vite';
 import react from '@vitejs/plugin-react';
+import {visualizer} from 'rollup-plugin-visualizer';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -12,6 +13,13 @@ export default defineConfig({
         org: process.env.SENTRY_ORG,
         project: process.env.SENTRY_PROJECT,
         authToken: process.env.SENTRY_AUTH_TOKEN,
+      }),
+    process.env.ANALYZE &&
+      visualizer({
+        filename: 'dist/stats.html',
+        open: true,
+        gzipSize: true,
+        brotliSize: true,
       }),
   ],
   server: {
