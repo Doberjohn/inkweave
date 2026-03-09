@@ -43,6 +43,10 @@ export function useCardData(): UseCardDataReturn {
         setError(null);
         const data = await fetchCardsFromLocal();
         if (!cancelled) {
+          // Inject <link rel="preload"> for first N thumbnail images immediately,
+          // before React re-renders. This lets the browser start fetching LCP images
+          // while React is still computing renders.
+          preloadFirstThumbnails(data.cards, 6);
           setCards(data.cards);
           setSets(data.sets);
         }
@@ -78,4 +82,17 @@ export function useCardData(): UseCardDataReturn {
     sets,
     retryLoad,
   };
+}
+
+/** Inject preload link tags for the first N card thumbnails to jumpstart image loading. */
+function preloadFirstThumbnails(cards: LorcanaCard[], count: number) {
+  for (let i = 0; i < Math.min(count, cards.length); i++) {
+    const url = cards[i].thumbnailUrl || cards[i].imageUrl;
+    if (!url) continue;
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = url;
+    document.head.appendChild(link);
+  }
 }

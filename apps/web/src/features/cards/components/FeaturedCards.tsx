@@ -122,7 +122,7 @@ export const FeaturedCards = memo(function FeaturedCards({
 
       {/* Responsive grid: 3-col mobile (2 rows), 6-col desktop */}
       <ul style={styles.grid}>
-        {featured.map((card) => (
+        {featured.map((card, i) => (
           <li key={card.id}>
             <CardTile
               card={card}
@@ -133,6 +133,7 @@ export const FeaturedCards = memo(function FeaturedCards({
               borderRadius={isMobile ? 10 : undefined}
               disablePreview={isMobile}
               displayWidth={isMobile ? '33vw' : '180px'}
+              priority={i < (isMobile ? 3 : 6)}
             />
           </li>
         ))}

@@ -25,7 +25,7 @@ import {
   type ComingSoonPlaystyle,
 } from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
-import {useResponsive} from '../shared/hooks';
+import {useResponsive, usePreloadImages} from '../shared/hooks';
 
 // ── Layout config (computed once, passed as concrete values) ──
 
@@ -448,6 +448,16 @@ export function PlaystyleGalleryPage() {
 
   const layout = isMobile ? MOBILE_LAYOUT : DESKTOP_LAYOUT;
   const enableHover = !isMobile;
+
+  // Preload cover art images so CSS backgroundImage doesn't wait for render
+  const coverArtUrls = useMemo(
+    () => [
+      ...Object.values(PLAYSTYLE_UI).map((ui) => ui.coverArt),
+      ...COMING_SOON_PLAYSTYLES.map((ps) => ps.coverArt),
+    ],
+    [],
+  );
+  usePreloadImages(coverArtUrls);
 
   const goHome = useCallback(() => navigate('/'), [navigate]);
 

@@ -16,6 +16,8 @@ interface CardTileProps {
   disablePreview?: boolean;
   /** Rendered width hint for srcset/sizes (e.g., "180px"). Helps browser pick the right image. */
   displayWidth?: string;
+  /** Set to true for above-fold LCP-candidate images to disable lazy loading and boost priority. */
+  priority?: boolean;
 }
 
 export const CardTile = memo(function CardTile({
@@ -28,6 +30,7 @@ export const CardTile = memo(function CardTile({
   borderRadius,
   disablePreview,
   displayWidth,
+  priority,
 }: CardTileProps) {
   const handleClick = useCallback(() => {
     onClick?.();
@@ -85,8 +88,9 @@ export const CardTile = memo(function CardTile({
           srcSet={srcSet}
           sizes={sizes}
           alt={card.fullName || card.name || ''}
-          loading="lazy"
-          decoding="async"
+          loading={priority ? 'eager' : 'lazy'}
+          decoding={priority ? 'sync' : 'async'}
+          fetchPriority={priority ? 'high' : undefined}
           onError={() => setImgError(true)}
           style={{
             width: '100%',

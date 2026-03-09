@@ -113,6 +113,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
                 variant="minimal"
                 useThumbnail
                 displayWidth={displayWidth}
+                priority={virtualRow.index === 0}
               />
             ))}
           </div>
