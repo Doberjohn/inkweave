@@ -26,13 +26,15 @@ jobs:
           node-version: 20
           cache: 'pnpm'
 
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Check bundle size
         uses: andresz1/size-limit-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           skip_step: install
           build_script: 'build'
-          package_manager: 'pnpm'
 
   engine-benchmarks:
     name: Engine Benchmarks
@@ -62,11 +64,18 @@ jobs:
           cd packages/synergy-engine
           npx vitest bench --run --outputJson /tmp/bench-pr.json
 
+      # Save bench files so they're available even if base branch lacks them
+      - name: Preserve benchmark files
+        run: cp -r packages/synergy-engine/src/__tests__ /tmp/bench-tests
+
       - name: Checkout base branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           clean: false
+
+      - name: Restore benchmark files into base
+        run: cp /tmp/bench-tests/*.bench.* packages/synergy-engine/src/__tests__/ 2>/dev/null || true
 
       - name: Install dependencies (base)
         run: pnpm install
@@ -77,13 +86,7 @@ jobs:
       - name: Run benchmarks (base)
         run: |
           cd packages/synergy-engine
-          npx vitest bench --run --outputJson /tmp/bench-base.json
-
-      # Restore PR branch so the workflow ref is consistent
-      - name: Checkout PR branch (restore)
-        uses: actions/checkout@v4
-        with:
-          clean: false
+          npx vitest bench --run --outputJson /tmp/bench-base.json || true
 
       - name: Post benchmark results to PR
         if: always()
