@@ -27,6 +27,9 @@ const IMAGE_HEIGHT = 470;
 const MAX_RETRIES = 2;
 const FORCE = process.argv.includes('--force');
 
+// Bump this to invalidate the entire cache and force re-download.
+const CACHE_VERSION = '2';
+
 async function downloadWithRetry(url, retries = MAX_RETRIES) {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
@@ -71,17 +74,19 @@ async function processTask(task) {
 async function main() {
   const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
 
-  fs.mkdirSync(CACHE_DIR, {recursive: true});
-
-  // Remove old-format cache files ({id}-thumb.avif / {id}-full.avif) so the
-  // script re-downloads from full-size source under the new {id}.avif naming.
-  for (const file of fs.readdirSync(CACHE_DIR)) {
-    if (/^\d+-(thumb|full)\.avif$/.test(file)) {
-      fs.unlinkSync(path.join(CACHE_DIR, file));
-    }
+  // Invalidate cache when CACHE_VERSION changes (e.g., switching image source or quality)
+  const versionFile = path.join(CACHE_DIR, '.version');
+  const currentVersion = fs.existsSync(versionFile) ? fs.readFileSync(versionFile, 'utf8') : '';
+  if (currentVersion !== CACHE_VERSION) {
+    console.log(
+      `  Cache version changed (${currentVersion || 'none'} → ${CACHE_VERSION}), clearing cache...`,
+    );
+    fs.rmSync(CACHE_DIR, {recursive: true, force: true});
   }
+  fs.mkdirSync(CACHE_DIR, {recursive: true});
+  fs.writeFileSync(versionFile, CACHE_VERSION);
 
-  // Clean output dir to remove stale files
+  // Clean output dir
   fs.rmSync(OUTPUT_DIR, {recursive: true, force: true});
   fs.mkdirSync(OUTPUT_DIR, {recursive: true});
 
