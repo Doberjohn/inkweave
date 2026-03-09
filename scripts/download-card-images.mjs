@@ -49,16 +49,17 @@ async function downloadWithRetry(url, retries = MAX_RETRIES) {
 }
 
 async function processTask(task) {
-  const firstFile = `${task.id}.avif`;
-  const firstCachePath = path.join(CACHE_DIR, firstFile);
+  // Check cache — only trust it if ALL size variants exist (prevents partial-write poisoning)
+  const allCached =
+    !FORCE &&
+    SIZES.every((size) => fs.existsSync(path.join(CACHE_DIR, `${task.id}${size.suffix}.avif`)));
 
-  // Check cache — if the primary file exists, all sizes were generated together
-  if (!FORCE && fs.existsSync(firstCachePath)) {
+  if (allCached) {
     for (const size of SIZES) {
       const filename = `${task.id}${size.suffix}.avif`;
       const cachePath = path.join(CACHE_DIR, filename);
       const outPath = path.join(OUTPUT_DIR, filename);
-      if (fs.existsSync(cachePath) && !fs.existsSync(outPath)) {
+      if (!fs.existsSync(outPath)) {
         fs.copyFileSync(cachePath, outPath);
       }
     }
@@ -73,10 +74,14 @@ async function processTask(task) {
     const filename = `${task.id}${size.suffix}.avif`;
     const cachePath = path.join(CACHE_DIR, filename);
     const outPath = path.join(OUTPUT_DIR, filename);
-    await sharp(buffer)
-      .resize(size.width, size.height, {fit: 'cover'})
-      .avif({quality: IMAGE_QUALITY})
-      .toFile(cachePath);
+    try {
+      await sharp(buffer)
+        .resize(size.width, size.height, {fit: 'cover'})
+        .avif({quality: IMAGE_QUALITY})
+        .toFile(cachePath);
+    } catch (err) {
+      throw new Error(`Failed to generate ${filename}: ${err.message}`);
+    }
     fs.copyFileSync(cachePath, outPath);
   }
   return 'downloaded';

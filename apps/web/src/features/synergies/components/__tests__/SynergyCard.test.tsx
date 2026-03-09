@@ -14,7 +14,8 @@ vi.mock('../../../cards', () => ({
     handleMouseLeave: vi.fn(),
     previewHandlers: {},
   }),
-  smallImageUrl: (url: string | undefined) => (url ? url.replace(/\.(\w+)$/, '-sm.$1') : undefined),
+  smallImageUrl: (url: string | undefined) =>
+    url?.endsWith('.avif') ? `${url.slice(0, -5)}-sm.avif` : url,
 }));
 
 const mockCard: LorcanaCard = {
@@ -26,7 +27,7 @@ const mockCard: LorcanaCard = {
   ink: 'Amethyst',
   cost: 4,
   inkwell: true,
-  imageUrl: 'https://example.com/elsa.png',
+  imageUrl: 'https://example.com/elsa.avif',
   set: {code: '5', name: 'Shimmering Skies', number: 5},
   rarity: 'Rare',
   number: 42,
@@ -38,6 +39,12 @@ describe('SynergyCard', () => {
     render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute('alt', 'Elsa - Snow Queen');
+  });
+
+  it('should use small image URL for the card image', () => {
+    render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
+    const img = screen.getByRole('img');
+    expect(img).toHaveAttribute('src', 'https://example.com/elsa-sm.avif');
   });
 
   it('should include score in strength badge', () => {

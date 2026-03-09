@@ -78,13 +78,13 @@ function resolveImageUrl(rawUrl: string | undefined, cardId: number): string | u
 /**
  * Derive the small-size image URL from a full-size imageUrl.
  * `/card-images/123.avif` → `/card-images/123-sm.avif`
- * Proxy URLs: `/card-images/foo.jpg` → `/card-images/foo-sm.jpg` (still works for fallback)
+ * Only transforms `.avif` URLs (self-hosted production images).
+ * Non-AVIF URLs (dev proxy) are returned unchanged since `-sm` variants don't exist for those.
  */
 export function smallImageUrl(imageUrl: string | undefined): string | undefined {
   if (!imageUrl) return undefined;
-  const dotIdx = imageUrl.lastIndexOf('.');
-  if (dotIdx === -1) return imageUrl;
-  return `${imageUrl.slice(0, dotIdx)}-sm${imageUrl.slice(dotIdx)}`;
+  if (!imageUrl.endsWith('.avif')) return imageUrl;
+  return `${imageUrl.slice(0, -5)}-sm.avif`;
 }
 
 // Valid ink colors
