@@ -29,7 +29,6 @@ interface LorcanaJSONCard {
   lore?: number;
   keywordAbilities?: string[];
   images?: {
-    full?: string;
     thumbnail?: string;
   };
   setCode?: string;
@@ -173,7 +172,7 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
     willpower: raw.willpower,
     lore: raw.lore,
     keywords: keywords.length > 0 ? keywords : undefined,
-    imageUrl: resolveImageUrl(raw.images?.thumbnail ?? raw.images?.full, raw.id),
+    imageUrl: resolveImageUrl(raw.images?.thumbnail, raw.id),
     setCode: raw.setCode,
     setNumber: raw.number,
   };
