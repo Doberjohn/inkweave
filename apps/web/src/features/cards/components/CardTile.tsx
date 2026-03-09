@@ -11,11 +11,8 @@ interface CardTileProps {
   onSelect?: (card: LorcanaCard) => void;
   isSelected: boolean;
   variant?: 'full' | 'minimal';
-  useThumbnail?: boolean;
   borderRadius?: number;
   disablePreview?: boolean;
-  /** Rendered width hint for srcset/sizes (e.g., "180px"). Helps browser pick the right image. */
-  displayWidth?: string;
   /** Set to true for above-fold LCP-candidate images to disable lazy loading and boost priority. */
   priority?: boolean;
 }
@@ -26,10 +23,8 @@ export const CardTile = memo(function CardTile({
   onSelect,
   isSelected,
   variant = 'full',
-  useThumbnail,
   borderRadius,
   disablePreview,
-  displayWidth,
   priority,
 }: CardTileProps) {
   const handleClick = useCallback(() => {
@@ -39,16 +34,7 @@ export const CardTile = memo(function CardTile({
   const colors = INK_COLORS[card.ink];
   const {previewHandlers, hidePreview} = useCardPreviewHandlers({card, onTap: handleClick});
   const [imgError, setImgError] = useState(false);
-  const imgSrc = useThumbnail
-    ? card.thumbnailUrl || card.imageUrl
-    : card.imageUrl || card.thumbnailUrl;
-
-  // Build srcset when both image sizes are available (thumbnail: 367w, full: 1468w)
-  const srcSet =
-    card.thumbnailUrl && card.imageUrl
-      ? `${card.thumbnailUrl} 367w, ${card.imageUrl} 1468w`
-      : undefined;
-  const sizes = srcSet && displayWidth ? displayWidth : undefined;
+  const imgSrc = card.imageUrl;
 
   return (
     <button
@@ -85,8 +71,6 @@ export const CardTile = memo(function CardTile({
       {imgSrc && !imgError ? (
         <img
           src={imgSrc}
-          srcSet={srcSet}
-          sizes={sizes}
           alt={card.fullName || card.name || ''}
           loading={priority ? 'eager' : 'lazy'}
           decoding={priority ? 'sync' : 'async'}

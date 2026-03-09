@@ -84,10 +84,10 @@ export function useCardData(): UseCardDataReturn {
   };
 }
 
-/** Inject preload link tags for the first N card thumbnails to jumpstart image loading. */
+/** Inject preload link tags for the first N card images to jumpstart image loading. */
 function preloadFirstThumbnails(cards: LorcanaCard[], count: number) {
   for (let i = 0; i < Math.min(count, cards.length); i++) {
-    const url = cards[i].thumbnailUrl || cards[i].imageUrl;
+    const url = cards[i].imageUrl;
     if (!url) continue;
     const link = document.createElement('link');
     link.rel = 'preload';

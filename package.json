@@ -20,6 +20,7 @@
     "format:check": "prettier --check .",
     "lighthouse": "lhci autorun",
     "size": "size-limit",
+    "download-images": "node scripts/download-card-images.mjs",
     "analyze": "ANALYZE=true pnpm build:web",
     "prepare": "husky"
   },
@@ -42,6 +43,7 @@
     "@size-limit/file": "^12.0.1",
     "husky": "^9.1.7",
     "prettier": "^3.8.1",
+    "sharp": "^0.34.5",
     "size-limit": "^12.0.1",
     "typescript": "^5.3.0"
   },

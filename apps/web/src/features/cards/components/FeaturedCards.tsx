@@ -17,7 +17,7 @@ interface FeaturedCardsProps {
 
 /** Pick one random card per ink in display order. */
 function pickFeatured(cards: LorcanaCard[]): LorcanaCard[] {
-  const withImages = cards.filter((c) => (c.imageUrl || c.thumbnailUrl) && c.type !== 'Location');
+  const withImages = cards.filter((c) => c.imageUrl && c.type !== 'Location');
   const result: LorcanaCard[] = [];
 
   for (const ink of INK_ORDER) {
@@ -129,10 +129,8 @@ export const FeaturedCards = memo(function FeaturedCards({
               onSelect={onCardSelect}
               isSelected={false}
               variant="minimal"
-              useThumbnail
               borderRadius={isMobile ? 10 : undefined}
               disablePreview={isMobile}
-              displayWidth={isMobile ? '33vw' : '180px'}
               priority={i < (isMobile ? 3 : 6)}
             />
           </li>

@@ -196,7 +196,7 @@ describe('loadCardsFromJSON', () => {
           strength: 3,
           willpower: 4,
           lore: 2,
-          images: {full: 'https://example.com/elsa.jpg'},
+          images: {thumbnail: 'https://example.com/elsa.jpg'},
           setCode: '5',
           number: 42,
         },

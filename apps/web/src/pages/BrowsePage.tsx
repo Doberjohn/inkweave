@@ -223,9 +223,7 @@ export function BrowsePage() {
                       isSelected={false}
                       onSelect={selectCard}
                       variant="minimal"
-                      useThumbnail
                       borderRadius={10}
-                      displayWidth="33vw"
                     />
                   ))}
                 </div>

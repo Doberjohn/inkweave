@@ -64,7 +64,6 @@ describe('FeaturedCards', () => {
     const cardsWithoutImages = mockCards.map((c) => ({
       ...c,
       imageUrl: undefined,
-      thumbnailUrl: undefined,
     }));
     const {container} = render(<FeaturedCards cards={cardsWithoutImages} onCardSelect={vi.fn()} />);
 

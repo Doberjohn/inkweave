@@ -28,7 +28,6 @@ export interface LorcanaCard {
   isSong?: boolean; // True for Action cards with Song subtype
   moveCost?: number; // Location move cost
   imageUrl?: string;
-  thumbnailUrl?: string;
   setCode?: string;
   setNumber?: number;
 }

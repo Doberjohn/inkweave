@@ -252,7 +252,7 @@ function ActivePlaystyleCard({
   ui: PlaystyleUiMeta;
   cardCount: number;
   ruleCount: number;
-  previewCards: Pick<LorcanaCard, 'imageUrl' | 'thumbnailUrl' | 'fullName'>[];
+  previewCards: Pick<LorcanaCard, 'imageUrl' | 'fullName'>[];
   onClick: () => void;
   layout: LayoutConfig;
   enableHover: boolean;
@@ -287,9 +287,9 @@ function ActivePlaystyleCard({
               background: COLORS.surfaceAlt,
               border: `1px solid ${COLORS.surfaceBorder}`,
             }}>
-            {(card.thumbnailUrl || card.imageUrl) && (
+            {card.imageUrl && (
               <img
-                src={card.thumbnailUrl || card.imageUrl}
+                src={card.imageUrl}
                 alt={card.fullName}
                 loading="lazy"
                 onError={(e) => {
