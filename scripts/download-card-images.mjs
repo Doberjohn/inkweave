@@ -1,0 +1,135 @@
+#!/usr/bin/env node
+/**
+ * Downloads all card images from Ravensburger and converts to AVIF.
+ *
+ * Uses node_modules/.cache/card-images/ for persistence across Vercel builds
+ * (pnpm cache preserves node_modules between deploys).
+ *
+ * Usage:
+ *   pnpm download-images          # Download all missing images
+ *   pnpm download-images --force  # Re-download everything
+ */
+import sharp from 'sharp';
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, '..');
+const DATA_FILE = path.join(ROOT, 'apps/web/public/data/allCards.json');
+const CACHE_DIR = path.join(ROOT, 'node_modules/.cache/card-images');
+const OUTPUT_DIR = path.join(ROOT, 'apps/web/public/card-images');
+
+const CONCURRENCY = 20;
+const THUMB_QUALITY = 50;
+const FULL_QUALITY = 60;
+const MAX_RETRIES = 2;
+const FORCE = process.argv.includes('--force');
+
+async function downloadWithRetry(url, retries = MAX_RETRIES) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return Buffer.from(await res.arrayBuffer());
+    } catch (err) {
+      if (attempt === retries) throw err;
+      // Brief backoff before retry
+      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+    }
+  }
+}
+
+async function processTask(task) {
+  const filename = `${task.id}-${task.suffix}.avif`;
+  const cachePath = path.join(CACHE_DIR, filename);
+  const outPath = path.join(OUTPUT_DIR, filename);
+
+  // Check cache (skip if already converted)
+  if (!FORCE && fs.existsSync(cachePath)) {
+    if (!fs.existsSync(outPath)) {
+      fs.copyFileSync(cachePath, outPath);
+    }
+    return 'cached';
+  }
+
+  // Download JPEG from Ravensburger
+  const buffer = await downloadWithRetry(task.url);
+
+  // Convert to AVIF
+  await sharp(buffer).avif({quality: task.quality}).toFile(cachePath);
+
+  // Copy to output
+  fs.copyFileSync(cachePath, outPath);
+  return 'downloaded';
+}
+
+async function main() {
+  const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+
+  fs.mkdirSync(CACHE_DIR, {recursive: true});
+  fs.mkdirSync(OUTPUT_DIR, {recursive: true});
+
+  // Build task list from all cards with images
+  const tasks = [];
+  for (const card of data.cards) {
+    if (card.images?.full) {
+      tasks.push({id: card.id, url: card.images.full, suffix: 'full', quality: FULL_QUALITY});
+    }
+    if (card.images?.thumbnail) {
+      tasks.push({
+        id: card.id,
+        url: card.images.thumbnail,
+        suffix: 'thumb',
+        quality: THUMB_QUALITY,
+      });
+    }
+  }
+
+  console.log(
+    `\n  ${tasks.length} images (${data.cards.length} cards)${FORCE ? ' [force re-download]' : ''}`,
+  );
+
+  let cached = 0;
+  let downloaded = 0;
+  let failed = 0;
+  const startTime = Date.now();
+
+  // Process in batches with concurrency limit
+  for (let i = 0; i < tasks.length; i += CONCURRENCY) {
+    const batch = tasks.slice(i, i + CONCURRENCY);
+    const results = await Promise.allSettled(batch.map((task) => processTask(task)));
+
+    for (const [idx, result] of results.entries()) {
+      if (result.status === 'fulfilled') {
+        if (result.value === 'cached') cached++;
+        else downloaded++;
+      } else {
+        failed++;
+        console.error(`  x ${batch[idx].id}-${batch[idx].suffix}: ${result.reason.message}`);
+      }
+    }
+
+    const total = cached + downloaded + failed;
+    if (total % 200 === 0 || i + CONCURRENCY >= tasks.length) {
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log(
+        `  ${total}/${tasks.length} (${cached} cached, ${downloaded} new, ${failed} failed) [${elapsed}s]`,
+      );
+    }
+  }
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(
+    `\n  Done in ${elapsed}s: ${downloaded} downloaded, ${cached} from cache, ${failed} failed\n`,
+  );
+
+  if (failed > 0) {
+    console.error(`  Warning: ${failed} images failed to download. Cards will show fallback UI.\n`);
+  }
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
