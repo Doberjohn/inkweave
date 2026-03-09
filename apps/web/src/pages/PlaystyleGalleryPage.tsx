@@ -24,6 +24,7 @@ import {
   type PlaystyleUiMeta,
   type ComingSoonPlaystyle,
 } from '../shared/constants';
+import {smallImageUrl} from '../features/cards';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive, usePreloadImages} from '../shared/hooks';
 
@@ -289,7 +290,7 @@ function ActivePlaystyleCard({
             }}>
             {card.imageUrl && (
               <img
-                src={card.imageUrl}
+                src={smallImageUrl(card.imageUrl)}
                 alt={card.fullName}
                 loading="lazy"
                 onError={(e) => {

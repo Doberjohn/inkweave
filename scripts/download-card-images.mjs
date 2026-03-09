@@ -22,13 +22,17 @@ const OUTPUT_DIR = path.join(ROOT, 'apps/web/public/card-images');
 
 const CONCURRENCY = 20;
 const IMAGE_QUALITY = 50;
-const IMAGE_WIDTH = 337;
-const IMAGE_HEIGHT = 470;
 const MAX_RETRIES = 2;
 const FORCE = process.argv.includes('--force');
 
 // Bump this to invalidate the entire cache and force re-download.
-const CACHE_VERSION = '2';
+const CACHE_VERSION = '3';
+
+// Output sizes: full (popover/detail) and small (grid tiles)
+const SIZES = [
+  {suffix: '', width: 337, height: 470},
+  {suffix: '-sm', width: 191, height: 266},
+];
 
 async function downloadWithRetry(url, retries = MAX_RETRIES) {
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -45,14 +49,18 @@ async function downloadWithRetry(url, retries = MAX_RETRIES) {
 }
 
 async function processTask(task) {
-  const filename = `${task.id}.avif`;
-  const cachePath = path.join(CACHE_DIR, filename);
-  const outPath = path.join(OUTPUT_DIR, filename);
+  const firstFile = `${task.id}.avif`;
+  const firstCachePath = path.join(CACHE_DIR, firstFile);
 
-  // Check cache (skip if already converted)
-  if (!FORCE && fs.existsSync(cachePath)) {
-    if (!fs.existsSync(outPath)) {
-      fs.copyFileSync(cachePath, outPath);
+  // Check cache — if the primary file exists, all sizes were generated together
+  if (!FORCE && fs.existsSync(firstCachePath)) {
+    for (const size of SIZES) {
+      const filename = `${task.id}${size.suffix}.avif`;
+      const cachePath = path.join(CACHE_DIR, filename);
+      const outPath = path.join(OUTPUT_DIR, filename);
+      if (fs.existsSync(cachePath) && !fs.existsSync(outPath)) {
+        fs.copyFileSync(cachePath, outPath);
+      }
     }
     return 'cached';
   }
@@ -60,14 +68,17 @@ async function processTask(task) {
   // Download JPEG from Ravensburger
   const buffer = await downloadWithRetry(task.url);
 
-  // Resize to 337×470 and convert to AVIF
-  await sharp(buffer)
-    .resize(IMAGE_WIDTH, IMAGE_HEIGHT, {fit: 'cover'})
-    .avif({quality: IMAGE_QUALITY})
-    .toFile(cachePath);
-
-  // Copy to output
-  fs.copyFileSync(cachePath, outPath);
+  // Generate all sizes
+  for (const size of SIZES) {
+    const filename = `${task.id}${size.suffix}.avif`;
+    const cachePath = path.join(CACHE_DIR, filename);
+    const outPath = path.join(OUTPUT_DIR, filename);
+    await sharp(buffer)
+      .resize(size.width, size.height, {fit: 'cover'})
+      .avif({quality: IMAGE_QUALITY})
+      .toFile(cachePath);
+    fs.copyFileSync(cachePath, outPath);
+  }
   return 'downloaded';
 }
 

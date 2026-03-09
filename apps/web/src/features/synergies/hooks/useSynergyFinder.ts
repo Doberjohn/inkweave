@@ -84,15 +84,18 @@ export function useCardData(): UseCardDataReturn {
   };
 }
 
-/** Inject preload link tags for the first N card images to jumpstart image loading. */
+/** Inject preload link tags for the first N card images (small grid size) to jumpstart loading. */
 function preloadFirstThumbnails(cards: LorcanaCard[], count: number) {
   for (let i = 0; i < Math.min(count, cards.length); i++) {
     const url = cards[i].imageUrl;
     if (!url) continue;
+    // Preload small grid images — they're what FeaturedCards renders above the fold
+    const dotIdx = url.lastIndexOf('.');
+    const smallUrl = dotIdx !== -1 ? `${url.slice(0, dotIdx)}-sm${url.slice(dotIdx)}` : url;
     const link = document.createElement('link');
     link.rel = 'preload';
     link.as = 'image';
-    link.href = url;
+    link.href = smallUrl;
     document.head.appendChild(link);
   }
 }

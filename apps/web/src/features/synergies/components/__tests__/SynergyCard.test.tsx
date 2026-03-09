@@ -14,6 +14,7 @@ vi.mock('../../../cards', () => ({
     handleMouseLeave: vi.fn(),
     previewHandlers: {},
   }),
+  smallImageUrl: (url: string | undefined) => (url ? url.replace(/\.(\w+)$/, '-sm.$1') : undefined),
 }));
 
 const mockCard: LorcanaCard = {

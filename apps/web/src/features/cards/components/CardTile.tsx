@@ -2,6 +2,7 @@ import {useState, useCallback, memo} from 'react';
 import type {LorcanaCard} from '../types';
 import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {useCardPreviewHandlers} from './useCardPreviewHandlers';
+import {smallImageUrl} from '../loader';
 
 interface CardTileProps {
   card: LorcanaCard;
@@ -15,6 +16,8 @@ interface CardTileProps {
   disablePreview?: boolean;
   /** Set to true for above-fold LCP-candidate images to disable lazy loading and boost priority. */
   priority?: boolean;
+  /** Use the smaller grid-optimized image (191×266) instead of full-size (337×470). */
+  useSmallImage?: boolean;
 }
 
 export const CardTile = memo(function CardTile({
@@ -26,6 +29,7 @@ export const CardTile = memo(function CardTile({
   borderRadius,
   disablePreview,
   priority,
+  useSmallImage: useSmall,
 }: CardTileProps) {
   const handleClick = useCallback(() => {
     onClick?.();
@@ -34,7 +38,7 @@ export const CardTile = memo(function CardTile({
   const colors = INK_COLORS[card.ink];
   const {previewHandlers, hidePreview} = useCardPreviewHandlers({card, onTap: handleClick});
   const [imgError, setImgError] = useState(false);
-  const imgSrc = card.imageUrl;
+  const imgSrc = useSmall ? smallImageUrl(card.imageUrl) : card.imageUrl;
 
   return (
     <button

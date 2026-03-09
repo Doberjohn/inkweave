@@ -7,6 +7,7 @@ import {
   getUniqueSets,
   loadCardsFromJSON,
   fetchCardsFromLocal,
+  smallImageUrl,
 } from '../loader';
 import type {LorcanaCard} from '../types';
 import {createCard} from '../../../shared/test-utils';
@@ -699,5 +700,19 @@ describe('Song Type Filtering', () => {
   it('should combine Song with other types', () => {
     const results = filterCards(cards, {type: ['Character', 'Song']});
     expect(results).toHaveLength(3);
+  });
+});
+
+describe('smallImageUrl', () => {
+  it('should insert -sm before the file extension', () => {
+    expect(smallImageUrl('/card-images/123.avif')).toBe('/card-images/123-sm.avif');
+  });
+
+  it('should handle proxy URLs', () => {
+    expect(smallImageUrl('/card-images/elsa.jpg')).toBe('/card-images/elsa-sm.jpg');
+  });
+
+  it('should return undefined for undefined input', () => {
+    expect(smallImageUrl(undefined)).toBeUndefined();
   });
 });
