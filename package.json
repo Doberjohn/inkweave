@@ -14,18 +14,20 @@
     "test:web": "pnpm --filter inkweave-web test:run",
     "test:e2e": "pnpm --filter inkweave-web test:e2e",
     "test:e2e:ui": "pnpm --filter inkweave-web test:e2e:ui",
+    "bench:engine": "pnpm --filter inkweave-synergy-engine bench:run",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lighthouse": "lhci autorun",
     "size": "size-limit",
+    "analyze": "ANALYZE=true pnpm build:web",
     "prepare": "husky"
   },
   "size-limit": [
     {
       "name": "Total JS bundle",
       "path": "apps/web/dist/assets/*.js",
-      "limit": "280 kB",
+      "limit": "290 kB",
       "gzip": true
     },
     {

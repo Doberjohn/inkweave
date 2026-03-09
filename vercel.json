@@ -4,7 +4,13 @@
   "installCommand": "pnpm install",
   "framework": "vite",
   "redirects": [{"source": "/mockups/:path*", "statusCode": 308, "destination": "/"}],
-  "rewrites": [{"source": "/((?!.*\\.).*)", "destination": "/index.html"}],
+  "rewrites": [
+    {
+      "source": "/card-images/:path*",
+      "destination": "https://api.lorcana.ravensburger.com/images/:path*"
+    },
+    {"source": "/((?!.*\\.).*)", "destination": "/index.html"}
+  ],
   "headers": [
     {
       "source": "/(.*)",

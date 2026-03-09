@@ -22,7 +22,7 @@ import {
 } from '../shared/constants';
 import type {BrowseSortOrder} from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
-import {useResponsive, useFilterParams} from '../shared/hooks';
+import {useResponsive, useFilterParams, usePreloadImages} from '../shared/hooks';
 
 // ── Placeholder tips (will be replaced with per-playstyle data later) ──
 
@@ -325,6 +325,9 @@ export function PlaystyleDetailPage() {
   const playstyle = playstyleId ? getPlaystyleById(playstyleId as PlaystyleId) : undefined;
   const ui = playstyleId ? PLAYSTYLE_UI[playstyleId as PlaystyleId] : undefined;
 
+  // Preload hero cover art so CSS backgroundImage doesn't wait for render
+  usePreloadImages(useMemo(() => (ui ? [ui.coverArt] : []), [ui]));
+
   // Get all cards matching this playstyle
   const playstyleCards = useMemo(() => {
     if (!playstyle || cards.length === 0) return [];
@@ -511,6 +514,7 @@ export function PlaystyleDetailPage() {
                       variant="minimal"
                       useThumbnail
                       borderRadius={10}
+                      displayWidth="33vw"
                     />
                   ))}
                 </div>
@@ -598,6 +602,7 @@ export function PlaystyleDetailPage() {
                     onSelect={handleCardSelect}
                     variant="minimal"
                     useThumbnail
+                    displayWidth="200px"
                   />
                 ))}
               </div>

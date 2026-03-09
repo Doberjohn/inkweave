@@ -49,6 +49,7 @@ export const CardDetailPanel = memo(function CardDetailPanel({
           inkColor={card.ink}
           cost={card.cost}
           lazy={false}
+          priority
           borderRadius={RADIUS.xl}
         />
       </div>

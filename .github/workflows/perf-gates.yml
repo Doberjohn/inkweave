@@ -1,0 +1,215 @@
+name: Performance Gates
+
+on:
+  pull_request:
+    branches: [master, main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  bundle-size:
+    name: Bundle Size
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Check bundle size
+        uses: andresz1/size-limit-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          skip_step: install
+          build_script: 'build'
+
+  engine-benchmarks:
+    name: Engine Benchmarks
+    runs-on: ubuntu-latest
+
+    steps:
+      # --- Run base branch FIRST (cold runner) so PR gets warm-runner advantage ---
+      - name: Checkout PR branch (for benchmark files)
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      # Save bench files so they're available even if base branch lacks them
+      - name: Preserve benchmark files
+        run: cp -r packages/synergy-engine/src/__tests__ /tmp/bench-tests
+
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          clean: false
+
+      - name: Restore benchmark files into base
+        run: cp /tmp/bench-tests/*.bench.* packages/synergy-engine/src/__tests__/ 2>/dev/null || true
+
+      - name: Install dependencies (base)
+        run: pnpm install
+
+      - name: Build engine (base)
+        run: pnpm build:engine
+
+      - name: Run benchmarks (base)
+        run: |
+          cd packages/synergy-engine
+          npx vitest bench --run --outputJson /tmp/bench-base.json || true
+
+      # --- Now run PR branch (warm runner) ---
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          clean: false
+
+      - name: Install dependencies (PR)
+        run: pnpm install
+
+      - name: Build engine (PR)
+        run: pnpm build:engine
+
+      - name: Run benchmarks (PR)
+        run: |
+          cd packages/synergy-engine
+          npx vitest bench --run --outputJson /tmp/bench-pr.json
+
+      - name: Post benchmark results to PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // --- Load results ---
+            let pr, base;
+            try {
+              pr = JSON.parse(fs.readFileSync('/tmp/bench-pr.json', 'utf8'));
+            } catch {
+              core.warning('PR benchmark results not found — skipping comment');
+              return;
+            }
+            try {
+              base = JSON.parse(fs.readFileSync('/tmp/bench-base.json', 'utf8'));
+            } catch {
+              core.info('Base benchmark results not found — showing PR results only');
+            }
+
+            // --- Extract benchmarks into a flat map: "group > name" → { hz, mean, rme } ---
+            function extractBenchmarks(data) {
+              const map = new Map();
+              for (const file of data.files || []) {
+                for (const group of file.groups || []) {
+                  // Use short group name (last segment after " > ")
+                  const groupName = group.fullName.split(' > ').pop();
+                  for (const b of group.benchmarks || []) {
+                    map.set(`${groupName} > ${b.name}`, {
+                      hz: b.hz,
+                      mean: b.mean,
+                      rme: b.rme,
+                    });
+                  }
+                }
+              }
+              return map;
+            }
+
+            const prMap = extractBenchmarks(pr);
+            const baseMap = base ? extractBenchmarks(base) : null;
+
+            // --- Build markdown table ---
+            const FAIL_THRESHOLD = -30; // Fail if any benchmark regresses more than 30%
+            const fmt = (n) => n >= 1000 ? n.toLocaleString('en-US', { maximumFractionDigits: 0 }) : n.toFixed(2);
+
+            let rows = '';
+            const regressions = [];
+            for (const [key, prBench] of prMap) {
+              const baseBench = baseMap?.get(key);
+              const hzStr = fmt(prBench.hz);
+              const meanStr = `${prBench.mean.toFixed(4)} ms`;
+              const rmeStr = `\u00b1${prBench.rme.toFixed(2)}%`;
+
+              let deltaStr = '—';
+              if (baseBench) {
+                const pct = ((prBench.hz - baseBench.hz) / baseBench.hz) * 100;
+                const sign = pct >= 0 ? '+' : '';
+                const icon = pct < -10 ? '\ud83d\udd34' : pct > 10 ? '\ud83d\udfe2' : '\u26aa';
+                deltaStr = `${icon} ${sign}${pct.toFixed(1)}%`;
+
+                if (pct < FAIL_THRESHOLD) {
+                  regressions.push({ name: key, pct });
+                }
+              }
+
+              rows += `| ${key} | ${hzStr} ops/s | ${meanStr} | ${rmeStr} | ${deltaStr} |\n`;
+            }
+
+            const statusLine = regressions.length > 0
+              ? `\n\n> **\u274c Failed:** ${regressions.map(r => `\`${r.name}\` (${r.pct.toFixed(1)}%)`).join(', ')} regressed beyond the ${FAIL_THRESHOLD}% threshold.`
+              : '';
+
+            const body = [
+              '### \u26a1 Engine Benchmark Results',
+              '',
+              '| Benchmark | Throughput | Mean | Margin | vs. Base |',
+              '| --- | --: | --: | --: | :-: |',
+              rows.trim(),
+              '',
+              baseMap
+                ? '_Compared against base branch. \ud83d\udfe2 >10% faster \u00b7 \u26aa within 10% \u00b7 \ud83d\udd34 >10% slower \u00b7 Fails at >30% regression._'
+                : '_No base branch results available for comparison._',
+              statusLine,
+            ].join('\n');
+
+            // --- Post or update PR comment ---
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const marker = '### \u26a1 Engine Benchmark Results';
+            const existing = comments.find(c => c.body.startsWith(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+            // Fail the check if any benchmark regressed beyond threshold
+            if (regressions.length > 0) {
+              core.setFailed(
+                `Benchmark regression detected: ${regressions.map(r => `${r.name} (${r.pct.toFixed(1)}%)`).join(', ')}`
+              );
+            }

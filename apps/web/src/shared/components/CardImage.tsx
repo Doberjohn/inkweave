@@ -11,6 +11,8 @@ interface CardImageProps {
   cost: number;
   lazy?: boolean;
   borderRadius?: number;
+  /** Set to true for LCP-candidate images to boost fetch priority. */
+  priority?: boolean;
 }
 
 /**
@@ -29,6 +31,7 @@ export function CardImage({
   cost,
   lazy = true,
   borderRadius = RADIUS.sm,
+  priority,
 }: CardImageProps) {
   const [imgError, setImgError] = useState(false);
   const colors = INK_COLORS[inkColor];
@@ -42,7 +45,8 @@ export function CardImage({
         src={src}
         alt={alt}
         loading={lazy ? 'lazy' : undefined}
-        decoding="async"
+        decoding={priority ? 'sync' : 'async'}
+        fetchPriority={priority ? 'high' : undefined}
         onError={() => setImgError(true)}
         style={{
           width: `${width}px`,

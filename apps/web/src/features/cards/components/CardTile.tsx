@@ -14,6 +14,10 @@ interface CardTileProps {
   useThumbnail?: boolean;
   borderRadius?: number;
   disablePreview?: boolean;
+  /** Rendered width hint for srcset/sizes (e.g., "180px"). Helps browser pick the right image. */
+  displayWidth?: string;
+  /** Set to true for above-fold LCP-candidate images to disable lazy loading and boost priority. */
+  priority?: boolean;
 }
 
 export const CardTile = memo(function CardTile({
@@ -25,6 +29,8 @@ export const CardTile = memo(function CardTile({
   useThumbnail,
   borderRadius,
   disablePreview,
+  displayWidth,
+  priority,
 }: CardTileProps) {
   const handleClick = useCallback(() => {
     onClick?.();
@@ -36,6 +42,13 @@ export const CardTile = memo(function CardTile({
   const imgSrc = useThumbnail
     ? card.thumbnailUrl || card.imageUrl
     : card.imageUrl || card.thumbnailUrl;
+
+  // Build srcset when both image sizes are available (thumbnail: 367w, full: 1468w)
+  const srcSet =
+    card.thumbnailUrl && card.imageUrl
+      ? `${card.thumbnailUrl} 367w, ${card.imageUrl} 1468w`
+      : undefined;
+  const sizes = srcSet && displayWidth ? displayWidth : undefined;
 
   return (
     <button
@@ -72,9 +85,12 @@ export const CardTile = memo(function CardTile({
       {imgSrc && !imgError ? (
         <img
           src={imgSrc}
+          srcSet={srcSet}
+          sizes={sizes}
           alt={card.fullName || card.name || ''}
-          loading="lazy"
-          decoding="async"
+          loading={priority ? 'eager' : 'lazy'}
+          decoding={priority ? 'sync' : 'async'}
+          fetchPriority={priority ? 'high' : undefined}
           onError={() => setImgError(true)}
           style={{
             width: '100%',
