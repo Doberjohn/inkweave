@@ -43,8 +43,6 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
     overscan: 3,
   });
 
-  const displayWidth = `${Math.round(colWidth)}px`;
-
   if (isLoading) {
     return (
       <div style={{display: 'flex', justifyContent: 'center', padding: 64}}>
@@ -111,8 +109,6 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
                 isSelected={false}
                 onSelect={onCardSelect}
                 variant="minimal"
-                useThumbnail
-                displayWidth={displayWidth}
                 priority={virtualRow.index === 0}
               />
             ))}

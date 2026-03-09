@@ -21,8 +21,9 @@ const CACHE_DIR = path.join(ROOT, 'node_modules/.cache/card-images');
 const OUTPUT_DIR = path.join(ROOT, 'apps/web/public/card-images');
 
 const CONCURRENCY = 20;
-const THUMB_QUALITY = 50;
-const FULL_QUALITY = 60;
+const IMAGE_QUALITY = 50;
+const IMAGE_WIDTH = 337;
+const IMAGE_HEIGHT = 470;
 const MAX_RETRIES = 2;
 const FORCE = process.argv.includes('--force');
 
@@ -41,7 +42,7 @@ async function downloadWithRetry(url, retries = MAX_RETRIES) {
 }
 
 async function processTask(task) {
-  const filename = `${task.id}-${task.suffix}.avif`;
+  const filename = `${task.id}.avif`;
   const cachePath = path.join(CACHE_DIR, filename);
   const outPath = path.join(OUTPUT_DIR, filename);
 
@@ -56,8 +57,11 @@ async function processTask(task) {
   // Download JPEG from Ravensburger
   const buffer = await downloadWithRetry(task.url);
 
-  // Convert to AVIF
-  await sharp(buffer).avif({quality: task.quality}).toFile(cachePath);
+  // Resize to 337×470 and convert to AVIF
+  await sharp(buffer)
+    .resize(IMAGE_WIDTH, IMAGE_HEIGHT, {fit: 'cover'})
+    .avif({quality: IMAGE_QUALITY})
+    .toFile(cachePath);
 
   // Copy to output
   fs.copyFileSync(cachePath, outPath);
@@ -70,19 +74,12 @@ async function main() {
   fs.mkdirSync(CACHE_DIR, {recursive: true});
   fs.mkdirSync(OUTPUT_DIR, {recursive: true});
 
-  // Build task list from all cards with images
+  // Build task list — one image per card (prefer thumbnail as it's smaller to download)
   const tasks = [];
   for (const card of data.cards) {
-    if (card.images?.full) {
-      tasks.push({id: card.id, url: card.images.full, suffix: 'full', quality: FULL_QUALITY});
-    }
-    if (card.images?.thumbnail) {
-      tasks.push({
-        id: card.id,
-        url: card.images.thumbnail,
-        suffix: 'thumb',
-        quality: THUMB_QUALITY,
-      });
+    const url = card.images?.thumbnail ?? card.images?.full;
+    if (url) {
+      tasks.push({id: card.id, url});
     }
   }
 
@@ -106,7 +103,7 @@ async function main() {
         else downloaded++;
       } else {
         failed++;
-        console.error(`  x ${batch[idx].id}-${batch[idx].suffix}: ${result.reason.message}`);
+        console.error(`  x ${batch[idx].id}: ${result.reason.message}`);
       }
     }
 

@@ -27,7 +27,7 @@ export const SynergyCard = memo(function SynergyCard({
   const [imgError, setImgError] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const imgSrc = card.thumbnailUrl || card.imageUrl;
+  const imgSrc = card.imageUrl;
 
   return (
     <div>

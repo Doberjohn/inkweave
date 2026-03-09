@@ -512,9 +512,7 @@ export function PlaystyleDetailPage() {
                       isSelected={false}
                       onSelect={handleCardSelect}
                       variant="minimal"
-                      useThumbnail
                       borderRadius={10}
-                      displayWidth="33vw"
                     />
                   ))}
                 </div>
@@ -601,8 +599,6 @@ export function PlaystyleDetailPage() {
                     isSelected={false}
                     onSelect={handleCardSelect}
                     variant="minimal"
-                    useThumbnail
-                    displayWidth="200px"
                   />
                 ))}
               </div>

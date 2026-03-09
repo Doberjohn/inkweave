@@ -68,13 +68,9 @@ export interface SetInfo {
 const USE_LOCAL_IMAGES = import.meta.env.VITE_LOCAL_IMAGES === 'true';
 const IMAGE_CDN_ORIGIN = 'https://api.lorcana.ravensburger.com/images/';
 
-function resolveImageUrl(
-  rawUrl: string | undefined,
-  cardId: number,
-  suffix: 'full' | 'thumb',
-): string | undefined {
+function resolveImageUrl(rawUrl: string | undefined, cardId: number): string | undefined {
   if (!rawUrl) return undefined;
-  if (USE_LOCAL_IMAGES) return `/card-images/${cardId}-${suffix}.avif`;
+  if (USE_LOCAL_IMAGES) return `/card-images/${cardId}.avif`;
   // Fallback: proxy through same-origin Vercel rewrite
   return rawUrl.replace(IMAGE_CDN_ORIGIN, '/card-images/');
 }
@@ -177,8 +173,7 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
     willpower: raw.willpower,
     lore: raw.lore,
     keywords: keywords.length > 0 ? keywords : undefined,
-    imageUrl: resolveImageUrl(raw.images?.full, raw.id, 'full'),
-    thumbnailUrl: resolveImageUrl(raw.images?.thumbnail, raw.id, 'thumb'),
+    imageUrl: resolveImageUrl(raw.images?.thumbnail ?? raw.images?.full, raw.id),
     setCode: raw.setCode,
     setNumber: raw.number,
   };

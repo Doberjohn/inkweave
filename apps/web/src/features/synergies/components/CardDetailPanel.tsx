@@ -42,7 +42,7 @@ export const CardDetailPanel = memo(function CardDetailPanel({
       {/* Card image */}
       <div style={{display: 'flex', justifyContent: 'center'}}>
         <CardImage
-          src={card.imageUrl ?? card.thumbnailUrl}
+          src={card.imageUrl}
           alt={card.fullName}
           width={298}
           height={417}
