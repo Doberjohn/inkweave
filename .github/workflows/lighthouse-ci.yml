@@ -78,12 +78,25 @@ jobs:
               urlMap.get(p).push(lhr);
             }
 
-            const emoji = (score) => {
-              if (score >= 0.9) return '🟢';
-              if (score >= 0.5) return '🟠';
+            // Thresholds from lighthouserc.cjs (error = hard gate, warn = informational)
+            const thresholds = {
+              'total-blocking-time':      { max: 500,  unit: 'ms',  label: 'TBT',  level: 'error' },
+              'largest-contentful-paint':  { max: 3000, unit: 'ms',  label: 'LCP',  level: 'warn'  },
+              'cumulative-layout-shift':   { max: 0.1,  unit: '',    label: 'CLS',  level: 'error' },
+              'first-contentful-paint':    { max: 2200, unit: 'ms',  label: 'FCP',  level: 'warn'  },
+              'speed-index':              { max: 4000, unit: 'ms',  label: 'SI',   level: 'warn'  },
+            };
+            const metricKeys = Object.keys(thresholds);
+
+            const emoji = (val, t) => {
+              if (val <= t.max * 0.75) return '🟢';
+              if (val <= t.max) return '🟠';
               return '🔴';
             };
-            const pct = (score) => Math.round(score * 100);
+            const fmt = (val, t) => {
+              if (t.unit === 'ms') return `${Math.round(val)}${t.unit}`;
+              return val.toFixed(3);
+            };
 
             let rows = '';
             for (const [urlPath, lhrs] of urlMap) {
@@ -93,26 +106,39 @@ jobs:
               );
               const lhr = sorted[Math.floor(sorted.length / 2)];
 
-              const perf = lhr.categories.performance.score;
-              const a11y = lhr.categories.accessibility.score;
-              const bp = lhr.categories['best-practices'].score;
-              const seo = lhr.categories.seo.score;
-
               const reportUrl = reportMap[urlPath] || '';
               const urlCell = reportUrl ? `[${urlPath}](${reportUrl})` : `\`${urlPath}\``;
 
-              rows += `| ${urlCell} | ${emoji(perf)} ${pct(perf)} | ${emoji(a11y)} ${pct(a11y)} | ${emoji(bp)} ${pct(bp)} | ${emoji(seo)} ${pct(seo)} |\n`;
+              const cells = metricKeys.map(key => {
+                const audit = lhr.audits[key];
+                const t = thresholds[key];
+                if (!audit || audit.numericValue == null) return '—';
+                const val = audit.numericValue;
+                return `${emoji(val, t)} ${fmt(val, t)}`;
+              });
+
+              rows += `| ${urlCell} | ${cells.join(' | ')} |\n`;
             }
 
+            // Threshold legend row
+            const limitCells = metricKeys.map(k => {
+              const t = thresholds[k];
+              const icon = t.level === 'error' ? '🚫' : '⚠️';
+              return `${icon} ${t.unit === 'ms' ? t.max + t.unit : t.max}`;
+            });
+            const limitRow = `| _Threshold_ | ${limitCells.join(' | ')} |`;
+
+            const headerLabels = metricKeys.map(k => thresholds[k].label);
             const runsPerUrl = runs.length / urlMap.size;
             const body = [
               '### ⚡ Lighthouse Results',
               '',
-              '| URL | Performance | Accessibility | Best Practices | SEO |',
-              '| --- | :-: | :-: | :-: | :-: |',
+              `| URL | ${headerLabels.join(' | ')} |`,
+              `| --- | ${headerLabels.map(() => ':-:').join(' | ')} |`,
               rows.trim(),
+              limitRow,
               '',
-              `_Median of ${runsPerUrl} runs per URL. 🟢 90+ · 🟠 50-89 · 🔴 0-49_`,
+              `_Median of ${runsPerUrl} runs. 🟢 ≤75% of limit · 🟠 within limit · 🔴 over limit · 🚫 merge-blocking · ⚠️ warning_`,
             ].join('\n');
 
             // Update existing comment or create new one
