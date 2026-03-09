@@ -41,7 +41,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout PR branch
+      # --- Run base branch FIRST (cold runner) so PR gets warm-runner advantage ---
+      - name: Checkout PR branch (for benchmark files)
         uses: actions/checkout@v4
 
       - name: Setup pnpm
@@ -52,17 +53,6 @@ jobs:
         with:
           node-version: 20
           cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build engine
-        run: pnpm build:engine
-
-      - name: Run benchmarks (PR)
-        run: |
-          cd packages/synergy-engine
-          npx vitest bench --run --outputJson /tmp/bench-pr.json
 
       # Save bench files so they're available even if base branch lacks them
       - name: Preserve benchmark files
@@ -87,6 +77,23 @@ jobs:
         run: |
           cd packages/synergy-engine
           npx vitest bench --run --outputJson /tmp/bench-base.json || true
+
+      # --- Now run PR branch (warm runner) ---
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          clean: false
+
+      - name: Install dependencies (PR)
+        run: pnpm install
+
+      - name: Build engine (PR)
+        run: pnpm build:engine
+
+      - name: Run benchmarks (PR)
+        run: |
+          cd packages/synergy-engine
+          npx vitest bench --run --outputJson /tmp/bench-pr.json
 
       - name: Post benchmark results to PR
         if: always()
