@@ -132,6 +132,7 @@ export const FeaturedCards = memo(function FeaturedCards({
               useThumbnail
               borderRadius={isMobile ? 10 : undefined}
               disablePreview={isMobile}
+              displayWidth={isMobile ? '33vw' : '180px'}
             />
           </li>
         ))}

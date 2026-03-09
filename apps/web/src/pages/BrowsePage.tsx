@@ -225,6 +225,7 @@ export function BrowsePage() {
                       variant="minimal"
                       useThumbnail
                       borderRadius={10}
+                      displayWidth="33vw"
                     />
                   ))}
                 </div>

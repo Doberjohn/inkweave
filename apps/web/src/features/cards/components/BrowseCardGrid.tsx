@@ -48,6 +48,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
               onSelect={onCardSelect}
               variant="minimal"
               useThumbnail
+              displayWidth="200px"
             />
           ))}
         </div>
