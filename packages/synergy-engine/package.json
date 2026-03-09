@@ -21,6 +21,8 @@
     "dev": "tsup --watch",
     "test": "vitest",
     "test:run": "vitest run",
+    "bench": "vitest bench",
+    "bench:run": "vitest bench --run",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit"
   },

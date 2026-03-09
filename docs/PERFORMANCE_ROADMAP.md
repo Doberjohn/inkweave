@@ -29,79 +29,28 @@ Bundle: 233 KB JS gzip (budget: 280 KB) · 262 KB card data gzip (budget: 300 KB
 - [x] Search debounced (150ms), resize debounced, preview throttled (RAF)
 - [x] Components memoized (`memo()`, `useMemo`, `useCallback` on hot paths)
 - [x] Bundle budgets enforced in CI (`size-limit`)
-
----
-
-## Priority 1 — High Impact, Medium Effort
-
-### Use thumbnail images in card grids
-**Issue**: #126 · **Labels**: performance, feature
-
-Card tiles render at 120–160px width but load full-resolution images. The raw card data has `images.thumbnail` but the loader only extracts `images.full`.
-
-**Work**:
-1. Update `packages/synergy-engine/src/types/` to include `thumbnailUrl` on `LorcanaCard`
-2. Update `apps/web/src/features/cards/loader.ts` to extract `images.thumbnail`
-3. Use `thumbnailUrl` in `CardTile`, `SynergyCard`, `FeaturedCards`
-4. Keep `fullUrl` for `CardPage` detail view and `CardLightbox`
-
-**Impact**: Major LCP improvement on `/browse` and `/playstyles` — the two worst-scoring pages.
-
-### Add Vitest benchmarks for synergy engine
-**Issue**: #25 (partial) · **Labels**: performance, testing
-
-No performance regression tests exist. If `findSynergies()` gets slower, nothing catches it until users notice.
-
-**Work**:
-1. Add `packages/synergy-engine/src/__tests__/engine.bench.ts`
-2. Benchmark `findSynergies()` with 500, 1000, 2000 cards
-3. Benchmark `checkSynergy()` for each rule type
-4. Add `pnpm bench:engine` script
-5. Optionally add to CI as a non-blocking step
-
-**Impact**: Prevents silent engine regressions. Vitest `bench` is built-in — zero new dependencies.
-
-### Add performance marks for critical user flows
-**Issue**: #25 (partial) · **Labels**: performance
-
-No app-specific performance traces. Can't answer "how long from card click to synergies rendered?"
-
-**Work**:
-1. Add `performance.mark('card-selected')` in card click handler
-2. Add `performance.mark('synergies-rendered')` after synergy results paint
-3. Add `performance.measure('card-to-synergies', 'card-selected', 'synergies-rendered')`
-4. Pipe to Sentry or Vercel Speed Insights for RUM visibility
-5. Consider marks for: initial load → first card visible, search → results displayed
-
-**Impact**: Real user flow timing — bridges the gap between Lighthouse (synthetic) and actual UX.
+- [x] Thumbnail images used in card grids (loader extracts both `images.full` and `images.thumbnail`)
+- [x] Vitest benchmarks for synergy engine (`pnpm bench:engine`) — findSynergies, checkSynergy, getPairSynergies
+- [x] Performance marks for synergy computation (`performance.measure('synergy-computation')`)
+- [x] Playstyle cover images converted PNG → WebP (~75% size reduction)
+- [x] CSS inlined into HTML via custom Vite plugin (eliminates render-blocking CSS request)
+- [x] Playstyle image references updated `.png` → `.webp`
 
 ---
 
 ## Priority 2 — Medium Impact, Low-Medium Effort
 
-### Optimize static images
+### Optimize remaining static images
 **Issue**: #126 (partial) · **Labels**: performance
 
-7 playstyle PNGs (~130 KB each), OG image (182 KB), and icons are unoptimized.
+OG image (182 KB) and icons are unoptimized.
 
 **Work**:
-- Convert playstyle PNGs to WebP (one-time manual conversion or `sharp` script)
 - Optimize favicon/apple-touch-icon
 - Add `srcset`/`sizes` to card images for responsive loading
 - Consider AVIF for browsers that support it
 
-**Impact**: Reduces image weight ~30-50%. Most visible on `/playstyles`.
-
-### Inline critical CSS
-**Labels**: performance
-
-CSS is only 2.2 KB but still an external file blocking first paint.
-
-**Work**:
-- Inline the full CSS in a `<style>` tag in `index.html` (at this size, manual is fine)
-- Or use `vite-plugin-css-injected-by-js`
-
-**Impact**: Eliminates one render-blocking round-trip. Small but free improvement.
+**Impact**: Further image weight reduction.
 
 ### Update #25 acceptance criteria
 **Issue**: #25 · **Labels**: performance
@@ -139,6 +88,7 @@ Vercel already serves Brotli on the fly, but pre-compression (`vite-plugin-compr
 | Command | Purpose |
 |---------|---------|
 | `pnpm analyze` | Interactive bundle treemap (gzip + brotli sizes) |
+| `pnpm bench:engine` | Run synergy engine benchmarks (ops/sec) |
 | `pnpm size` | Check bundle budgets (runs in CI) |
 | `pnpm lighthouse` | Run Lighthouse CI locally (auto-detects Chrome) |
 | Chrome DevTools → Lighthouse | Manual per-page audit |

@@ -52,7 +52,11 @@ export function CardPage() {
   const synergies = useMemo(() => {
     if (!selectedCard || cards.length === 0) return [];
     try {
-      return sharedEngine.findSynergies(selectedCard, cards);
+      performance.mark('synergy-compute-start');
+      const result = sharedEngine.findSynergies(selectedCard, cards);
+      performance.mark('synergy-compute-end');
+      performance.measure('synergy-computation', 'synergy-compute-start', 'synergy-compute-end');
+      return result;
     } catch (err) {
       console.error(`Synergy computation failed for card ${selectedCard.id}:`, err);
       return [];
