@@ -61,6 +61,14 @@ export interface SetInfo {
   number: number;
 }
 
+const IMAGE_CDN_ORIGIN = 'https://api.lorcana.ravensburger.com/images/';
+
+/** Rewrite external CDN URLs to same-origin proxy path (Vercel edge rewrite). */
+function proxyImageUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  return url.replace(IMAGE_CDN_ORIGIN, '/card-images/');
+}
+
 // Valid ink colors
 const VALID_INKS: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
 
@@ -159,8 +167,8 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
     willpower: raw.willpower,
     lore: raw.lore,
     keywords: keywords.length > 0 ? keywords : undefined,
-    imageUrl: raw.images?.full,
-    thumbnailUrl: raw.images?.thumbnail,
+    imageUrl: proxyImageUrl(raw.images?.full),
+    thumbnailUrl: proxyImageUrl(raw.images?.thumbnail),
     setCode: raw.setCode,
     setNumber: raw.number,
   };

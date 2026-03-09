@@ -59,6 +59,14 @@ export default defineConfig({
   ],
   server: {
     host: true,
+    proxy: {
+      // Mirror Vercel rewrite: proxy card images to Ravensburger CDN in dev
+      '/card-images': {
+        target: 'https://api.lorcana.ravensburger.com/images',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/card-images/, ''),
+      },
+    },
   },
   build: {
     sourcemap: true,
