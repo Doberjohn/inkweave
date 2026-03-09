@@ -224,6 +224,7 @@ export function BrowsePage() {
                       onSelect={selectCard}
                       variant="minimal"
                       borderRadius={10}
+                      useSmallImage
                     />
                   ))}
                 </div>

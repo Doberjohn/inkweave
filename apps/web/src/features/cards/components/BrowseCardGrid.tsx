@@ -110,6 +110,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
                 onSelect={onCardSelect}
                 variant="minimal"
                 priority={virtualRow.index === 0}
+                useSmallImage
               />
             ))}
           </div>

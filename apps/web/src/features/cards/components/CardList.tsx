@@ -204,6 +204,7 @@ export function CardList({
                       onSelect={onCardSelect}
                       isSelected={selectedCard?.id === card.id}
                       disablePreview
+                      useSmallImage
                     />
                   </li>
                 ))}
@@ -343,6 +344,7 @@ export function CardList({
                     card={card}
                     onSelect={onCardSelect}
                     isSelected={selectedCard?.id === card.id}
+                    useSmallImage
                   />
                 </li>
               ))}

@@ -13,6 +13,7 @@ export {
   getUniqueKeywords,
   getUniqueClassifications,
   getUniqueSets,
+  smallImageUrl,
 } from './loader';
 export type {CardFilterOptions, SetInfo, CardDataResult} from './loader';
 

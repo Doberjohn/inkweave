@@ -75,6 +75,18 @@ function resolveImageUrl(rawUrl: string | undefined, cardId: number): string | u
   return rawUrl.replace(IMAGE_CDN_ORIGIN, '/card-images/');
 }
 
+/**
+ * Derive the small-size image URL from a full-size imageUrl.
+ * `/card-images/123.avif` → `/card-images/123-sm.avif`
+ * Proxy URLs: `/card-images/foo.jpg` → `/card-images/foo-sm.jpg` (still works for fallback)
+ */
+export function smallImageUrl(imageUrl: string | undefined): string | undefined {
+  if (!imageUrl) return undefined;
+  const dotIdx = imageUrl.lastIndexOf('.');
+  if (dotIdx === -1) return imageUrl;
+  return `${imageUrl.slice(0, dotIdx)}-sm${imageUrl.slice(dotIdx)}`;
+}
+
 // Valid ink colors
 const VALID_INKS: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
 

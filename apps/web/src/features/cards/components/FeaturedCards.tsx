@@ -132,6 +132,7 @@ export const FeaturedCards = memo(function FeaturedCards({
               borderRadius={isMobile ? 10 : undefined}
               disablePreview={isMobile}
               priority={i < (isMobile ? 3 : 6)}
+              useSmallImage
             />
           </li>
         ))}

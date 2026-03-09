@@ -513,6 +513,7 @@ export function PlaystyleDetailPage() {
                       onSelect={handleCardSelect}
                       variant="minimal"
                       borderRadius={10}
+                      useSmallImage
                     />
                   ))}
                 </div>
@@ -599,6 +600,7 @@ export function PlaystyleDetailPage() {
                     isSelected={false}
                     onSelect={handleCardSelect}
                     variant="minimal"
+                    useSmallImage
                   />
                 ))}
               </div>

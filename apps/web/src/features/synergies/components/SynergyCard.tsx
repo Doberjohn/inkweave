@@ -1,5 +1,6 @@
 import {useState, memo} from 'react';
 import type {LorcanaCard} from '../../cards';
+import {smallImageUrl} from '../../cards';
 import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {CardLightbox} from '../../../shared/components';
 import {useCardPreviewHandlers} from '../../cards';
@@ -27,7 +28,7 @@ export const SynergyCard = memo(function SynergyCard({
   const [imgError, setImgError] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const imgSrc = card.imageUrl;
+  const imgSrc = smallImageUrl(card.imageUrl);
 
   return (
     <div>
