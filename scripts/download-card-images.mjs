@@ -74,11 +74,12 @@ async function main() {
   fs.mkdirSync(CACHE_DIR, {recursive: true});
   fs.mkdirSync(OUTPUT_DIR, {recursive: true});
 
-  // Build task list — one image per card
+  // Build task list — one image per card (use full-size source for best quality when resizing)
   const tasks = [];
   for (const card of data.cards) {
-    if (card.images?.thumbnail) {
-      tasks.push({id: card.id, url: card.images.thumbnail});
+    const url = card.images?.full ?? card.images?.thumbnail;
+    if (url) {
+      tasks.push({id: card.id, url});
     }
   }
 

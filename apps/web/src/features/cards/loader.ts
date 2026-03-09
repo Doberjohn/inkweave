@@ -29,6 +29,7 @@ interface LorcanaJSONCard {
   lore?: number;
   keywordAbilities?: string[];
   images?: {
+    full?: string;
     thumbnail?: string;
   };
   setCode?: string;

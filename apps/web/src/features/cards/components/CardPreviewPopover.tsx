@@ -4,8 +4,8 @@ import {useResponsive, useTransitionPresence} from '../../../shared/hooks';
 import {INK_COLORS, RADIUS, Z_INDEX, COLORS} from '../../../shared/constants';
 import type {LorcanaCard} from '../types';
 
-const PREVIEW_WIDTH = 280;
-const PREVIEW_HEIGHT = 390;
+const PREVIEW_WIDTH = 337;
+const PREVIEW_HEIGHT = 470;
 const OFFSET_X = 20;
 const OFFSET_Y = 10;
 
