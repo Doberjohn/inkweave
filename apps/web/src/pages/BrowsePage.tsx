@@ -14,7 +14,7 @@ import {
   FilterDrawer,
   FilterModal,
 } from '../shared/components';
-import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../shared/constants';
 import type {BrowseSortOrder} from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
@@ -253,12 +253,13 @@ export function BrowsePage() {
   return (
     <main
       style={{
-        minHeight: '100vh',
+        height: '100vh',
         background: COLORS.background,
         fontFamily: FONTS.body,
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
+        overflow: 'hidden',
       }}>
       <EtherealBackground />
       <CompactHeader
@@ -269,7 +270,9 @@ export function BrowsePage() {
       <div
         style={{
           flex: 1,
-          minHeight: `calc(100vh - ${LAYOUT.compactHeaderHeight}px)`,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
           position: 'relative',
           zIndex: 1,
         }}>
@@ -282,6 +285,7 @@ export function BrowsePage() {
             color: COLORS.text,
             letterSpacing: '0.06em',
             textTransform: 'uppercase',
+            flexShrink: 0,
           }}>
           Browse Cards
         </h1>
