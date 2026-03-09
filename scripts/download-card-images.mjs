@@ -73,20 +73,15 @@ async function main() {
 
   fs.mkdirSync(CACHE_DIR, {recursive: true});
 
-  // Migrate old cache naming ({id}-thumb.avif / {id}-full.avif → {id}.avif)
-  // so existing Vercel cache produces hits instead of re-downloading everything.
+  // Remove old-format cache files ({id}-thumb.avif / {id}-full.avif) so the
+  // script re-downloads from full-size source under the new {id}.avif naming.
   for (const file of fs.readdirSync(CACHE_DIR)) {
-    const match = file.match(/^(\d+)-(thumb|full)\.avif$/);
-    if (match) {
-      const newName = `${match[1]}.avif`;
-      const newPath = path.join(CACHE_DIR, newName);
-      if (!fs.existsSync(newPath)) {
-        fs.renameSync(path.join(CACHE_DIR, file), newPath);
-      }
+    if (/^\d+-(thumb|full)\.avif$/.test(file)) {
+      fs.unlinkSync(path.join(CACHE_DIR, file));
     }
   }
 
-  // Clean output dir to remove stale files from previous naming schemes
+  // Clean output dir to remove stale files
   fs.rmSync(OUTPUT_DIR, {recursive: true, force: true});
   fs.mkdirSync(OUTPUT_DIR, {recursive: true});
 
