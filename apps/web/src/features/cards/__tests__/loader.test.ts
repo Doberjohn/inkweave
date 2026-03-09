@@ -704,12 +704,16 @@ describe('Song Type Filtering', () => {
 });
 
 describe('smallImageUrl', () => {
-  it('should insert -sm before the file extension', () => {
+  it('should insert -sm before the .avif extension', () => {
     expect(smallImageUrl('/card-images/123.avif')).toBe('/card-images/123-sm.avif');
   });
 
-  it('should handle proxy URLs', () => {
-    expect(smallImageUrl('/card-images/elsa.jpg')).toBe('/card-images/elsa-sm.jpg');
+  it('should return non-AVIF URLs unchanged (dev proxy)', () => {
+    expect(smallImageUrl('/card-images/elsa.jpg')).toBe('/card-images/elsa.jpg');
+  });
+
+  it('should return URL unchanged when there is no extension', () => {
+    expect(smallImageUrl('/card-images/123')).toBe('/card-images/123');
   });
 
   it('should return undefined for undefined input', () => {

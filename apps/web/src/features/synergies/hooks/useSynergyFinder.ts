@@ -2,6 +2,7 @@ import {useState, useEffect, useMemo, useCallback} from 'react';
 import type {LorcanaCard, SetInfo} from '../../cards';
 import {
   fetchCardsFromLocal,
+  smallImageUrl,
   getUniqueKeywords,
   getUniqueClassifications,
   getUniqueSets,
@@ -43,9 +44,6 @@ export function useCardData(): UseCardDataReturn {
         setError(null);
         const data = await fetchCardsFromLocal();
         if (!cancelled) {
-          // Inject <link rel="preload"> for first N thumbnail images immediately,
-          // before React re-renders. This lets the browser start fetching LCP images
-          // while React is still computing renders.
           preloadFirstThumbnails(data.cards, 6);
           setCards(data.cards);
           setSets(data.sets);
@@ -89,13 +87,12 @@ function preloadFirstThumbnails(cards: LorcanaCard[], count: number) {
   for (let i = 0; i < Math.min(count, cards.length); i++) {
     const url = cards[i].imageUrl;
     if (!url) continue;
-    // Preload small grid images — they're what FeaturedCards renders above the fold
-    const dotIdx = url.lastIndexOf('.');
-    const smallUrl = dotIdx !== -1 ? `${url.slice(0, dotIdx)}-sm${url.slice(dotIdx)}` : url;
+    const href = smallImageUrl(url);
+    if (!href) continue;
     const link = document.createElement('link');
     link.rel = 'preload';
     link.as = 'image';
-    link.href = smallUrl;
+    link.href = href;
     document.head.appendChild(link);
   }
 }

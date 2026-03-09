@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-28 active tests across 5 spec files. Each file runs on both `chromium` (desktop) and `mobile-chrome` projects but skips the irrelevant viewport, so 28 unique tests execute per run.
+47 active tests across 9 spec files. Each file runs on both `chromium` (desktop) and `mobile-chrome` projects but skips the irrelevant viewport.
 
 ## `app-load.spec.ts` — 4 tests (desktop only)
 
@@ -12,6 +12,15 @@
 | should display search input on home page | Hero search input is visible |
 | should show featured cards after loading | Featured cards grid has 1-12 card tiles |
 | should transition to card page when card is selected | Clicking a featured card navigates to `/card/:id`, shows compact header, hides hero |
+
+## `card-detail.spec.ts` — 4 tests (desktop only)
+
+| Test | What it verifies |
+|---|---|
+| should render card name and image in detail panel | Card detail panel shows image, h1 heading with card name |
+| should render synergy breakdown when synergies exist | Either synergy breakdown or "no synergies" message is visible |
+| should deep link directly to a card page | Direct navigation to `/card/957` renders card detail panel + compact header |
+| should show card not found for invalid card ID | `/card/99999999` shows "Card not found" + Go Home button |
 
 ## `card-search.spec.ts` — 6 tests (desktop only)
 
@@ -47,6 +56,25 @@
 | should navigate to browsing view via Browse all cards CTA | "Browse all cards" CTA navigates away from hero, shows browse search input |
 | should open filter drawer in mobile browsing view | From browsing view, tap Filters button, drawer shows Amber/Sapphire/Steel ink buttons |
 
+## `playstyle-pages.spec.ts` — 5 tests (desktop only)
+
+| Test | What it verifies |
+|---|---|
+| should navigate to playstyle gallery via CTA | "Explore playstyles" CTA navigates to `/playstyles`, renders page heading |
+| should render playstyle gallery with playstyle cards | `/playstyles` shows h1 + at least 2 playstyle cards (article elements) |
+| should navigate to playstyle detail page | Clicking a playstyle card navigates to `/playstyles/:id`, shows heading |
+| should deep link to playstyle detail page | Direct navigation to `/playstyles/lore-denial` shows heading + card tiles |
+| should navigate back from playstyle detail to gallery | Back link from detail returns to `/playstyles` (or logo to `/`) |
+
+## `responsive-images.spec.ts` — 4 tests (desktop only)
+
+| Test | What it verifies |
+|---|---|
+| should use eager loading for above-fold featured cards | Featured card images have `loading="eager"` + `fetchpriority="high"` |
+| should render images in featured cards grid | Featured grid has images with valid `src` attributes |
+| should render image in card detail panel | Detail panel image is visible, not lazy-loaded, has valid src |
+| should use lazy loading for synergy card images | Synergy card images (below fold) use `loading="lazy"` |
+
 ## `search-autocomplete.spec.ts` — 5 tests (desktop only)
 
 | Test | What it verifies |
@@ -57,9 +85,18 @@
 | should close dropdown on Escape | Escape key dismisses autocomplete dropdown |
 | should NOT show autocomplete on browse page search | Typing in browse page search does NOT show autocomplete (browse filters inline) |
 
+## `seo.spec.ts` — 3 tests (both viewports)
+
+| Test | What it verifies |
+|---|---|
+| should have valid JSON-LD structured data on home page | JSON-LD script tag with WebApplication type |
+| should have correct heading hierarchy on home page | h1 exists, h2 headings present |
+| should have font preconnect hints | Preconnect links for Google Fonts |
+
 ## Patterns
 
 - **URL assertions** (`toHaveURL`) verify route-based navigation on every transition
 - **Hero visibility** is the marker for "home state" vs other pages
-- **Deep linking** is tested via direct navigation to `/browse?q=...&ink=...`
+- **Deep linking** is tested via direct navigation to `/browse?q=...&ink=...`, `/card/:id`, `/playstyles/:id`
 - **Navigation back** is tested via both clear/back button and logo click
+- **Image loading** is verified via `loading` and `fetchpriority` attributes (not `src` URLs, which differ between dev proxy and production AVIF)

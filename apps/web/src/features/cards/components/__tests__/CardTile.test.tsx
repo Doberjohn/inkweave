@@ -38,6 +38,19 @@ describe('CardTile', () => {
     expect(img).toHaveAttribute('src', 'https://example.com/elsa.avif');
   });
 
+  it('should use small image URL when useSmallImage is true', () => {
+    const cardWithImage = createCard({
+      ...mockCard,
+      imageUrl: '/card-images/123.avif',
+    });
+    const {container} = renderWithProvider(
+      <CardTile {...defaultProps} card={cardWithImage} useSmallImage />,
+    );
+
+    const img = container.querySelector('img');
+    expect(img).toHaveAttribute('src', '/card-images/123-sm.avif');
+  });
+
   it('should show cost fallback when no image available', () => {
     const cardNoImage = createCard({...mockCard, imageUrl: undefined});
     renderWithProvider(<CardTile {...defaultProps} card={cardNoImage} />);
