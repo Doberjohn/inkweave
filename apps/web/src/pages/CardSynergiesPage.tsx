@@ -1,7 +1,7 @@
 import {useCallback, useMemo} from 'react';
 import {useParams, useNavigate, useSearchParams, Navigate} from 'react-router-dom';
 import {SynergyResults} from '../features/synergies';
-import {sharedEngine} from '../features/synergies/engine';
+import {usePrecomputedSynergies} from '../features/synergies/hooks';
 import {ErrorBoundary, LoadingSpinner} from '../shared/components';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 import {useResponsive} from '../shared/hooks';
@@ -25,25 +25,13 @@ export function CardSynergiesPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const {isMobile} = useResponsive();
-  const {cards, isLoading, getCardById} = useCardDataContext();
+  const {isLoading, getCardById} = useCardDataContext();
 
   const expandedGroup = searchParams.get('group');
 
   const selectedCard = cardId ? (getCardById(cardId) ?? null) : null;
 
-  const synergies = useMemo(() => {
-    if (!selectedCard || cards.length === 0) return [];
-    try {
-      performance.mark('synergy-compute-start');
-      const result = sharedEngine.findSynergies(selectedCard, cards);
-      performance.mark('synergy-compute-end');
-      performance.measure('synergy-computation', 'synergy-compute-start', 'synergy-compute-end');
-      return result;
-    } catch (err) {
-      console.error(`Synergy computation failed for card ${selectedCard.id}:`, err);
-      return [];
-    }
-  }, [selectedCard, cards]);
+  const {synergies, error: synergiesError} = usePrecomputedSynergies(selectedCard);
 
   const totalSynergyCount = useMemo(
     () => synergies.reduce((sum, group) => sum + group.synergies.length, 0),
@@ -145,6 +133,21 @@ export function CardSynergiesPage() {
       </div>
 
       {/* Synergy results */}
+      {synergiesError && (
+        <div
+          role="alert"
+          style={{
+            padding: '12px 16px',
+            margin: '16px',
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: '8px',
+            color: '#f59090',
+            fontSize: '13px',
+          }}>
+          Failed to load synergies: {synergiesError.message}
+        </div>
+      )}
       <ErrorBoundary>
         <SynergyResults
           selectedCard={selectedCard}

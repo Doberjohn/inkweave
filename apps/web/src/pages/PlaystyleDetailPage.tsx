@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useMemo, useState} from 'react';
 import {useParams, useNavigate, useSearchParams, Navigate} from 'react-router-dom';
-import {getPlaystyleById, synergyEngine, type PlaystyleId} from 'inkweave-synergy-engine';
+import {getPlaystyleById, type PlaystyleId} from 'inkweave-synergy-engine';
+import {usePrecomputedPlaystyleCards} from '../features/synergies/hooks';
 import {BrowseToolbar, CardTile} from '../features/cards';
 import {filterCards, applySortOrder, type CardFilterOptions} from '../features/cards/loader';
 import {
@@ -328,11 +329,8 @@ export function PlaystyleDetailPage() {
   // Preload hero cover art so CSS backgroundImage doesn't wait for render
   usePreloadImages(useMemo(() => (ui ? [ui.coverArt] : []), [ui]));
 
-  // Get all cards matching this playstyle
-  const playstyleCards = useMemo(() => {
-    if (!playstyle || cards.length === 0) return [];
-    return synergyEngine.getPlaystyleCards(playstyle.id, cards);
-  }, [playstyle, cards]);
+  // Get all cards matching this playstyle (pre-computed)
+  const {cards: playstyleCards} = usePrecomputedPlaystyleCards(playstyle?.id);
 
   // Apply filters and sort
   const combinedFilters = useMemo<CardFilterOptions>(() => {

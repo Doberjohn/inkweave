@@ -1,41 +1,6 @@
+import {transformCard as baseTransformCard, type LorcanaJSONCard} from 'inkweave-synergy-engine';
 import type {LorcanaCard, Ink, CardType} from './types';
 import type {BrowseSortOrder} from '../../shared/constants';
-
-// LorcanaJSON data structure (partial - only fields we need)
-interface LorcanaJSONCard {
-  id: number;
-  name: string;
-  version?: string;
-  fullName: string;
-  simpleName: string;
-  cost: number;
-  color: string;
-  inkwell: boolean;
-  type: string;
-  subtypes?: string[];
-  abilities?: Array<{
-    fullText: string;
-    type: string;
-    keyword?: string;
-    keywordValue?: string;
-    name?: string;
-    effect?: string;
-  }>;
-  fullText?: string;
-  fullTextSections?: string[];
-  moveCost?: number;
-  strength?: number;
-  willpower?: number;
-  lore?: number;
-  keywordAbilities?: string[];
-  images?: {
-    full?: string;
-    thumbnail?: string;
-  };
-  setCode?: string;
-  number?: number;
-  rarity?: string;
-}
 
 interface LorcanaJSONSet {
   name: string;
@@ -87,108 +52,15 @@ export function smallImageUrl(imageUrl: string | undefined): string | undefined 
   return `${imageUrl.slice(0, -5)}-sm.avif`;
 }
 
-// Valid ink colors
-const VALID_INKS: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
-
-// Valid card types
-const VALID_TYPES: CardType[] = ['Character', 'Action', 'Item', 'Location'];
-
 /**
- * Parse ink colors from raw color string (handles dual-ink cards like "Amethyst-Sapphire")
- * Returns primary ink and optional second ink for dual-ink cards.
- */
-function parseInks(colorStr: string): {ink: Ink; ink2?: Ink} | null {
-  const parts = colorStr.split('-');
-  const primary = parts[0] as Ink;
-  if (!VALID_INKS.includes(primary)) return null;
-
-  if (parts.length > 1) {
-    const secondary = parts[1] as Ink;
-    if (VALID_INKS.includes(secondary)) {
-      return {ink: primary, ink2: secondary};
-    }
-  }
-  return {ink: primary};
-}
-
-/** Filter to non-empty text sections, returning undefined if none remain. */
-function nonEmptySections(sections?: string[]): string[] | undefined {
-  const filtered = sections?.filter((s) => s.trim() !== '');
-  return filtered?.length ? filtered : undefined;
-}
-
-/**
- * Transform a LorcanaJSON card to our LorcanaCard format
+ * Transform a LorcanaJSON card to our LorcanaCard format.
+ * Uses the shared transformer from the engine package, then adds imageUrl (web-specific).
  */
 function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
-  // Parse ink color(s) — dual-ink cards get both inks preserved
-  const inks = parseInks(raw.color);
-  if (!inks) {
-    return null;
-  }
-
-  // Map card type
-  const type = raw.type as CardType;
-  if (!VALID_TYPES.includes(type)) {
-    return null;
-  }
-
-  // Extract keywords from abilities
-  // LorcanaJSON gives us keywords like "Shift 6" from the abilities array
-  const keywords: string[] = [];
-
-  if (raw.abilities) {
-    for (const ability of raw.abilities) {
-      if (ability.type === 'keyword' && ability.keyword) {
-        if (ability.keywordValue) {
-          keywords.push(`${ability.keyword} ${ability.keywordValue}`);
-        } else {
-          keywords.push(ability.keyword);
-        }
-      }
-
-      // Detect conditional keywords granted in ability text (e.g. "gains Shift 0")
-      // If a native Shift keyword already exists, skip the conditional one (native takes priority)
-      const text = ability.effect || ability.fullText || '';
-      const shiftMatch = text.match(/gains?\s+Shift\s+(\d+)/i);
-      if (shiftMatch) {
-        const hasNativeShift = keywords.some((k) => k.startsWith('Shift'));
-        if (!hasNativeShift) {
-          keywords.push(`Shift ${shiftMatch[1]}`);
-        }
-      }
-    }
-  }
-
-  // Extract classifications from subtypes
-  // Subtypes include things like "Floodborn", "Hero", "Princess", "Song"
-  // "Song" is tracked via isSong flag for filtering
-  const isSong = raw.subtypes?.includes('Song') ?? false;
-  const classifications = raw.subtypes?.filter((s) => s !== 'Song') ?? [];
-
-  return {
-    id: String(raw.id),
-    name: raw.name,
-    version: raw.version,
-    fullName: raw.fullName,
-    cost: raw.cost,
-    ink: inks.ink,
-    ink2: inks.ink2,
-    inkwell: raw.inkwell,
-    type,
-    isSong: isSong || undefined,
-    classifications: classifications.length > 0 ? classifications : undefined,
-    text: raw.fullText,
-    textSections: nonEmptySections(raw.fullTextSections),
-    moveCost: raw.moveCost,
-    strength: raw.strength,
-    willpower: raw.willpower,
-    lore: raw.lore,
-    keywords: keywords.length > 0 ? keywords : undefined,
-    imageUrl: resolveImageUrl(raw.images?.thumbnail, raw.id),
-    setCode: raw.setCode,
-    setNumber: raw.number,
-  };
+  const card = baseTransformCard(raw);
+  if (!card) return null;
+  card.imageUrl = resolveImageUrl(raw.images?.thumbnail, raw.id);
+  return card;
 }
 
 /**

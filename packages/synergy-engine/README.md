@@ -61,7 +61,9 @@ const engine = new SynergyEngine(options?: SynergyEngineOptions);
 
 ### SynergyCache
 
-Cache for expensive synergy calculations.
+Cache for expensive synergy calculations. Useful for CLI tools or build scripts that make repeated engine calls.
+
+> **Note**: The Inkweave web app does not use `SynergyCache` at runtime — synergies are pre-computed at build time via `scripts/precompute-synergies.mjs`.
 
 ```typescript
 import { SynergyCache, SynergyEngine } from "inkweave-synergy-engine";

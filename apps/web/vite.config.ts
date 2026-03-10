@@ -3,6 +3,77 @@ import {sentryVitePlugin} from '@sentry/vite-plugin';
 import {defineConfig, type Plugin} from 'vite';
 import react from '@vitejs/plugin-react';
 import {visualizer} from 'rollup-plugin-visualizer';
+import {spawnSync} from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const ROOT = path.resolve(__dirname, '../..');
+const SYNERGY_DIR = path.resolve(__dirname, 'public/data/synergies');
+const MANIFEST = path.join(SYNERGY_DIR, '_manifest.json');
+const ENGINE_SRC = path.join(ROOT, 'packages/synergy-engine/src');
+const CARD_DATA = path.resolve(__dirname, 'public/data/allCards.json');
+
+/**
+ * Rebuilds the engine and regenerates pre-computed synergies on dev server start
+ * when missing or stale. Compares engine source and card data mtime against
+ * _manifest.json to detect staleness.
+ */
+function ensureSynergiesPlugin(): Plugin {
+  return {
+    name: 'ensure-synergies',
+    apply: 'serve',
+    configureServer() {
+      const missing = !fs.existsSync(MANIFEST);
+      let stale = false;
+
+      if (!missing) {
+        const manifestMtime = fs.statSync(MANIFEST).mtimeMs;
+        stale =
+          isNewerRecursive(ENGINE_SRC, manifestMtime) ||
+          (fs.existsSync(CARD_DATA) && fs.statSync(CARD_DATA).mtimeMs > manifestMtime);
+      }
+
+      if (missing || stale) {
+        const reason = missing ? 'missing' : 'stale (engine source or card data changed)';
+        console.log(`\n⚙ Synergy data ${reason} — regenerating...`);
+        try {
+          // shell: true needed for pnpm (Windows .cmd shim); args are hardcoded constants
+          const build = spawnSync('pnpm', ['build:engine'], {
+            cwd: ROOT,
+            stdio: 'inherit',
+            shell: true,
+          });
+          if (build.error) throw build.error;
+          if (build.status !== 0) throw new Error(`Engine build failed (exit ${build.status})`);
+          const precompute = spawnSync('node', ['scripts/precompute-synergies.mjs'], {
+            cwd: ROOT,
+            stdio: 'inherit',
+            shell: true,
+          });
+          if (precompute.error) throw precompute.error;
+          if (precompute.status !== 0)
+            throw new Error(`Precompute failed (exit ${precompute.status})`);
+        } catch (err) {
+          console.error('⚠ Failed to pre-compute synergies:', err);
+          console.error('  Run manually: pnpm build:engine && pnpm precompute-synergies\n');
+        }
+      }
+    },
+  };
+}
+
+/** Check if any file under `dir` has mtime newer than `threshold`. */
+function isNewerRecursive(dir: string, threshold: number): boolean {
+  for (const entry of fs.readdirSync(dir, {withFileTypes: true})) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (isNewerRecursive(full, threshold)) return true;
+    } else if (fs.statSync(full).mtimeMs > threshold) {
+      return true;
+    }
+  }
+  return false;
+}
 
 /**
  * Inline all CSS into <style> tags in the HTML output.
@@ -41,6 +112,7 @@ function inlineCssPlugin(): Plugin {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
+    ensureSynergiesPlugin(),
     react(),
     inlineCssPlugin(),
     process.env.SENTRY_AUTH_TOKEN &&

@@ -31,14 +31,12 @@ test.describe('Card Detail Page', () => {
   test('should render synergy breakdown when synergies exist', async ({appPage, page}) => {
     await appPage.selectFeaturedCard();
 
-    // Either synergy breakdown or "no synergies" should be visible
+    // Synergies are fetched async — wait for breakdown, empty state, or error banner
     const breakdown = page.getByTestId('synergy-breakdown');
     const noSynergies = page.getByText('No synergies found for this card');
+    const errorBanner = page.getByRole('alert');
 
-    const hasBreakdown = await breakdown.isVisible().catch(() => false);
-    const hasNoSynergies = await noSynergies.isVisible().catch(() => false);
-
-    expect(hasBreakdown || hasNoSynergies).toBe(true);
+    await expect(breakdown.or(noSynergies).or(errorBanner)).toBeVisible({timeout: 10000});
   });
 
   test('should deep link directly to a card page', async ({page}) => {

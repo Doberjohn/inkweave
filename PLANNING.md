@@ -43,19 +43,20 @@ inkweave/
 - Shared code in `shared/` directory
 - Barrel files (index.ts) for clean imports
 
-**Synergy Engine**
+**Synergy Engine** (build-time only)
 - Pluggable rules pattern via `SynergyRule` interface
-- Each rule defines `matches()` (does this card apply?) and `findSynergies()` (find related cards)
-- Rules return strength and human-readable explanations
-- Results grouped by synergy type for display
+- Engine runs at build time (`scripts/precompute-synergies.mjs`), not in the browser
+- Pre-computed JSON files per card: `/data/synergies/{cardId}.json`
+- Web app fetches and resolves card IDs to full objects via `usePrecomputedSynergies`
 
 **State Management**
-- `useSynergyFinder` hook manages card data, filters, selection, and synergy calculation
-- Synergies memoized and only recompute on card selection or game mode change
+- `useCardData` hook manages card data loading and metadata extraction
+- `usePrecomputedSynergies` hook fetches pre-computed synergy JSON per card
+- Synergy data pre-computed at build time, fetched on demand per card selection
 
 **Data Loading**
-- Cards loaded once on init from static JSON
-- All operations in-memory after initial load
+- Cards loaded once on init from `/data/allCards.json` (in-memory after load)
+- Synergy data fetched on demand per card selection (module-level cache prevents re-fetches)
 - Cards deduplicated by `fullName`
 
 **Responsive Design**
@@ -76,7 +77,7 @@ inkweave/
 | State | React hooks (no external library) |
 | Hosting | Vercel |
 | Error Tracking | Sentry (EU/DE region) |
-| Analytics | Vercel Analytics + Ahrefs |
+| Analytics | Vercel Analytics |
 
 ## Synergy Rules (Current)
 

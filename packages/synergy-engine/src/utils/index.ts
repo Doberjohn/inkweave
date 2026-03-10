@@ -24,3 +24,6 @@ export {
 export type {LocationRole, ShiftType} from './cardHelpers.js';
 
 export {isCardType} from './typeGuards.js';
+
+export {transformCard, transformCards} from './cardTransformer.js';
+export type {LorcanaJSONCard} from './cardTransformer.js';
