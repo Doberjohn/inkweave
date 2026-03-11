@@ -8,6 +8,7 @@ import {
   loadCardsFromJSON,
   fetchCardsFromLocal,
   smallImageUrl,
+  applySortOrder,
 } from '../loader';
 import type {LorcanaCard} from '../types';
 import {createCard} from '../../../shared/test-utils';
@@ -718,5 +719,27 @@ describe('smallImageUrl', () => {
 
   it('should return undefined for undefined input', () => {
     expect(smallImageUrl(undefined)).toBeUndefined();
+  });
+});
+
+describe('applySortOrder - ink-cost', () => {
+  const cards: LorcanaCard[] = [
+    createCard({id: '1', ink: 'Sapphire', cost: 3, fullName: 'Zephyr'}),
+    createCard({id: '2', ink: 'Amber', cost: 5, fullName: 'Alpha'}),
+    createCard({id: '3', ink: 'Amber', cost: 2, fullName: 'Beta'}),
+    createCard({id: '4', ink: 'Emerald', cost: 4, fullName: 'Gamma'}),
+  ];
+
+  it('should sort by ink color then cost ascending', () => {
+    const sorted = applySortOrder(cards, 'ink-cost');
+    expect(sorted.map((c) => c.ink)).toEqual(['Amber', 'Amber', 'Emerald', 'Sapphire']);
+    expect(sorted[0].cost).toBe(2);
+    expect(sorted[1].cost).toBe(5);
+  });
+
+  it('should not mutate the input array', () => {
+    const original = [...cards];
+    applySortOrder(cards, 'ink-cost');
+    expect(cards).toEqual(original);
   });
 });

@@ -6,7 +6,11 @@ export const MOBILE_NAV_HEIGHT = 100;
 
 const SEARCH_BUTTON_SIZE = 64;
 
-export function MobileBottomNav() {
+interface MobileBottomNavProps {
+  onSearchClick?: () => void;
+}
+
+export function MobileBottomNav({onSearchClick}: MobileBottomNavProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -58,15 +62,7 @@ export function MobileBottomNav() {
       {/* Search button (center, elevated) */}
       <button
         aria-label="Search cards"
-        onClick={() => {
-          if (location.pathname.startsWith('/browse')) {
-            // Already on browse — focus the search input directly
-            const input = document.querySelector<HTMLInputElement>('[data-testid="browse-search"]');
-            input?.focus();
-          } else {
-            navigate('/browse?focus=search');
-          }
-        }}
+        onClick={() => onSearchClick?.()}
         style={{
           position: 'absolute',
           left: '50%',
@@ -158,7 +154,7 @@ export function MobileBottomNav() {
         <span
           style={{
             fontFamily: FONTS.body,
-            fontSize: '11px',
+            fontSize: '10px',
             fontWeight: isBrowseActive ? 600 : 500,
             color: isBrowseActive ? COLORS.primary : COLORS.textMuted,
           }}>
@@ -202,7 +198,7 @@ export function MobileBottomNav() {
         <span
           style={{
             fontFamily: FONTS.body,
-            fontSize: '11px',
+            fontSize: '10px',
             fontWeight: isPlaystylesActive ? 600 : 500,
             color: isPlaystylesActive ? COLORS.primary : COLORS.textMuted,
           }}>

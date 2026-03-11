@@ -14,8 +14,8 @@ import {
   FilterDrawer,
   FilterModal,
 } from '../shared/components';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../shared/constants';
-import type {BrowseSortOrder} from '../shared/constants';
+import {BROWSE_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
+import {SortSelect} from '../shared/components/SortSelect';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
 
@@ -53,9 +53,9 @@ export function BrowsePage() {
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Auto-focus search when navigating with ?focus=search (e.g. from mobile bottom nav)
+  // Auto-focus search when navigating with ?focus=search (desktop only; mobile uses bottom sheet)
   useEffect(() => {
-    if (searchParams.get('focus') === 'search') {
+    if (!isMobile && searchParams.get('focus') === 'search') {
       requestAnimationFrame(() => {
         const input = document.querySelector<HTMLInputElement>('[data-testid="browse-search"]');
         input?.focus();
@@ -63,7 +63,7 @@ export function BrowsePage() {
       searchParams.delete('focus');
       setSearchParams(searchParams, {replace: true});
     }
-  }, [searchParams, setSearchParams]);
+  }, [isMobile, searchParams, setSearchParams]);
 
   const combinedFilters = useMemo<CardFilterOptions>(() => {
     const combined = {...filters};
@@ -150,12 +150,7 @@ export function BrowsePage() {
           position: 'relative',
         }}>
         <EtherealBackground />
-        <CompactHeader
-          onLogoClick={goHome}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          isMobile
-        />
+        <CompactHeader onLogoClick={goHome} isMobile />
         <div style={{position: 'relative', zIndex: 1}}>
           {/* Page title */}
           <h1
@@ -179,28 +174,13 @@ export function BrowsePage() {
               position: 'relative',
               zIndex: 1,
             }}>
-            <select
-              aria-label="Sort cards"
+            <SortSelect
+              options={BROWSE_SORT_OPTIONS}
               value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as BrowseSortOrder)}
-              style={{
-                width: '100%',
-                padding: '8px 10px',
-                borderRadius: `${RADIUS.md}px`,
-                border: `1px solid ${COLORS.surfaceBorder}`,
-                background: COLORS.sortBg,
-                color: COLORS.text,
-                fontFamily: FONTS.body,
-                fontSize: `${FONT_SIZES.base}px`,
-                cursor: 'pointer',
-                outline: 'none',
-              }}>
-              <option value="newest">Newest first</option>
-              <option value="name-asc">Name A–Z</option>
-              <option value="name-desc">Name Z–A</option>
-              <option value="cost-asc">Cost: Low → High</option>
-              <option value="cost-desc">Cost: High → Low</option>
-            </select>
+              onChange={setSortOrder}
+              ariaLabel="Sort cards"
+              style={{width: '100%', padding: '8px 10px'}}
+            />
           </div>
           {/* Card grid */}
           <ErrorBoundary>

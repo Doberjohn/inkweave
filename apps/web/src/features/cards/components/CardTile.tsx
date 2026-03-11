@@ -46,7 +46,9 @@ export const CardTile = memo(function CardTile({
       className="card-tile"
       data-testid="card-tile"
       onClick={() => {
-        if (isSyntheticMouseEvent()) return;
+        // Only guard synthetic mouse events when touch preview is active —
+        // when disabled, touch handlers aren't attached so onClick is the only path
+        if (!disablePreview && isSyntheticMouseEvent()) return;
         hidePreview();
         handleClick();
       }}
@@ -80,7 +82,6 @@ export const CardTile = memo(function CardTile({
           alt={card.fullName || card.name || ''}
           loading={priority ? 'eager' : 'lazy'}
           decoding={priority ? 'sync' : 'async'}
-          fetchPriority={priority ? 'high' : undefined}
           onError={() => setImgError(true)}
           style={{
             width: '100%',

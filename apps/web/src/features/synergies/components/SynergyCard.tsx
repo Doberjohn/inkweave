@@ -24,8 +24,7 @@ export const SynergyCard = memo(function SynergyCard({
 }: SynergyCardProps) {
   const tier = getStrengthTier(score);
   const colors = INK_COLORS[card.ink];
-  const {handleMouseEnter, handleMouseMove, handleMouseLeave, previewHandlers} =
-    useCardPreviewHandlers({card});
+  const {previewHandlers} = useCardPreviewHandlers({card});
   const [imgError, setImgError] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -37,24 +36,31 @@ export const SynergyCard = memo(function SynergyCard({
       <button
         className="card-tile"
         onClick={() => {
-          if (isSyntheticMouseEvent()) return;
+          if (!isMobile && isSyntheticMouseEvent()) return;
           if (onCardClick) {
             onCardClick(card);
           } else if (isMobile && card.imageUrl) {
             setLightboxOpen(true);
           }
         }}
-        onMouseEnter={(e) => {
-          setHovered(true);
-          if (!isMobile) handleMouseEnter(e);
-        }}
-        onMouseMove={isMobile ? undefined : handleMouseMove}
-        onMouseLeave={() => {
-          setHovered(false);
-          if (!isMobile) handleMouseLeave();
-        }}
-        onFocus={isMobile ? undefined : previewHandlers.onFocus}
-        onBlur={isMobile ? undefined : previewHandlers.onBlur}
+        {...(isMobile
+          ? {
+              onMouseEnter: () => setHovered(true),
+              onMouseLeave: () => setHovered(false),
+            }
+          : {
+              onMouseEnter: (e: React.MouseEvent) => {
+                setHovered(true);
+                previewHandlers.onMouseEnter?.(e);
+              },
+              onMouseLeave: (e: React.MouseEvent) => {
+                setHovered(false);
+                previewHandlers.onMouseLeave?.(e);
+              },
+              onMouseMove: previewHandlers.onMouseMove,
+              onFocus: previewHandlers.onFocus,
+              onBlur: previewHandlers.onBlur,
+            })}
         aria-label={card.fullName || ''}
         style={{
           position: 'relative',

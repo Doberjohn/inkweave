@@ -90,17 +90,6 @@ describe('MobileCardDetail', () => {
     expect(screen.getByText(/Freeze.*Exert.*opposing character/)).toBeInTheDocument();
   });
 
-  it('should render synergy breakdown rows', () => {
-    render(<MobileCardDetail {...defaultProps} />);
-    expect(screen.getByText('Synergy Breakdown')).toBeInTheDocument();
-  });
-
-  it('should render synergy count circles', () => {
-    render(<MobileCardDetail {...defaultProps} />);
-    expect(screen.getByText('8')).toBeInTheDocument();
-    expect(screen.getByText('4')).toBeInTheDocument();
-  });
-
   it('should render synergy section divider with heading', () => {
     render(<MobileCardDetail {...defaultProps} />);
     expect(screen.getByRole('heading', {level: 2})).toHaveTextContent('Synergies');

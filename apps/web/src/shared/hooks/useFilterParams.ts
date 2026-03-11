@@ -3,6 +3,7 @@ import {useSearchParams} from 'react-router-dom';
 import type {Ink} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards/loader';
 import type {CardTypeFilter, BrowseSortOrder} from '../constants';
+import {BROWSE_SORT_OPTIONS} from '../constants';
 
 const VALID_INKS = new Set<string>(['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel']);
 const VALID_TYPES = new Set<string>(['Character', 'Action', 'Song', 'Item', 'Location']);
@@ -16,7 +17,7 @@ function isValidType(value: string): value is CardTypeFilter {
 }
 
 const VALID_COSTS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-const VALID_SORTS = new Set<string>(['newest', 'name-asc', 'name-desc', 'cost-asc', 'cost-desc']);
+const VALID_SORTS = new Set<string>(BROWSE_SORT_OPTIONS.map((o) => o.value));
 
 function isValidCost(value: string): boolean {
   const n = Number(value);

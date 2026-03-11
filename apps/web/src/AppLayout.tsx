@@ -1,8 +1,14 @@
+import {useCallback, useEffect, useState} from 'react';
 import {Outlet, useLocation} from 'react-router-dom';
 import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
 import {CardPreviewProvider, CardPreviewPopover} from './features/cards';
-import {ErrorBoundary, MobileBottomNav, MOBILE_NAV_HEIGHT} from './shared/components';
+import {
+  ErrorBoundary,
+  MobileBottomNav,
+  MOBILE_NAV_HEIGHT,
+  SearchBottomSheet,
+} from './shared/components';
 import {CardDataProvider} from './shared/contexts/CardDataContext';
 import {COLORS} from './shared/constants';
 import {useCardDataContext} from './shared/contexts/CardDataContext';
@@ -14,6 +20,15 @@ function AppContent() {
   const {pathname} = useLocation();
   const isHome = pathname === '/';
   const showBottomNav = isMobile && !isHome;
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  const openSearch = useCallback(() => setIsSearchOpen(true), []);
+  const closeSearch = useCallback(() => setIsSearchOpen(false), []);
 
   if (error) {
     return (
@@ -43,7 +58,8 @@ function AppContent() {
       <div style={showBottomNav ? {paddingBottom: MOBILE_NAV_HEIGHT} : undefined}>
         <Outlet />
       </div>
-      {showBottomNav && <MobileBottomNav />}
+      {showBottomNav && <MobileBottomNav onSearchClick={openSearch} />}
+      {isMobile && <SearchBottomSheet isOpen={isSearchOpen} onClose={closeSearch} />}
     </>
   );
 }

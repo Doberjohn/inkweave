@@ -1,6 +1,6 @@
 import {transformCard as baseTransformCard, type LorcanaJSONCard} from 'inkweave-synergy-engine';
 import type {LorcanaCard, Ink, CardType} from './types';
-import type {BrowseSortOrder} from '../../shared/constants';
+import {ALL_INKS, type BrowseSortOrder} from '../../shared/constants';
 
 interface LorcanaJSONSet {
   name: string;
@@ -329,6 +329,12 @@ export function sortCardsByCost(cards: LorcanaCard[], direction: 'asc' | 'desc')
  */
 export function applySortOrder(cards: LorcanaCard[], order: BrowseSortOrder): LorcanaCard[] {
   switch (order) {
+    case 'ink-cost':
+      return [...cards].sort((a, b) => {
+        const inkA = ALL_INKS.indexOf(a.ink);
+        const inkB = ALL_INKS.indexOf(b.ink);
+        return inkA !== inkB ? inkA - inkB : a.cost - b.cost;
+      });
     case 'newest':
       return sortBySetThenNumber(cards);
     case 'name-asc':

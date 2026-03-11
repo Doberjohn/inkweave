@@ -3,32 +3,17 @@ import type {SetStateAction} from 'react';
 import type {Ink} from 'inkweave-synergy-engine';
 import type {SetInfo} from '../../cards';
 import type {CardFilterOptions} from '../../cards/loader';
-import type {CardTypeFilter} from '../../../shared/constants';
+import type {CardTypeFilter, SynergySortOrder} from '../../../shared/constants';
 import type {SynergyFilterState, StrengthTierFilter} from '../utils/filterSynergyCards';
 import {EMPTY_SYNERGY_FILTERS} from '../utils/filterSynergyCards';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {SYNERGY_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
 import {FilterModal} from '../../../shared/components/FilterModal';
 import {FilterDrawer} from '../../../shared/components/FilterDrawer';
-import {FilterIcon} from '../../../shared/components/FilterIcon';
+import {FilterChip} from '../../../shared/components/FilterChip';
+import {FiltersButton} from '../../../shared/components/FiltersButton';
+import {ResultCount} from '../../../shared/components/ResultCount';
+import {SortSelect} from '../../../shared/components/SortSelect';
 import type {ChipData} from '../../../shared/types';
-
-/** Sort orders for synergy cards in expanded view. */
-export type SynergySortOrder =
-  | 'cost-asc'
-  | 'cost-desc'
-  | 'strength-desc'
-  | 'strength-asc'
-  | 'name-asc'
-  | 'name-desc';
-
-const SORT_OPTIONS = [
-  {value: 'cost-asc', label: 'Cost: Low \u2192 High'},
-  {value: 'cost-desc', label: 'Cost: High \u2192 Low'},
-  {value: 'strength-desc', label: 'Score: High \u2192 Low'},
-  {value: 'strength-asc', label: 'Score: Low \u2192 High'},
-  {value: 'name-asc', label: 'Name A\u2013Z'},
-  {value: 'name-desc', label: 'Name Z\u2013A'},
-] satisfies {value: SynergySortOrder; label: string}[];
 
 interface SynergyToolbarProps {
   /** Current filter state */
@@ -65,11 +50,8 @@ export function SynergyToolbar({
   sets,
 }: SynergyToolbarProps) {
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filtersHover, setFiltersHover] = useState(false);
   const [clearHover, setClearHover] = useState(false);
-  const [sortHover, setSortHover] = useState(false);
-  const [sortFocus, setSortFocus] = useState(false);
-  const [hoveredChip, setHoveredChip] = useState<string | null>(null);
+  const [hoveredTier, setHoveredTier] = useState<string | null>(null);
 
   const {inkFilters, typeFilters, costFilters, filters, strengthFilters} = filterState;
 
@@ -170,13 +152,6 @@ export function SynergyToolbar({
     onFilterChange(EMPTY_SYNERGY_FILTERS);
   }, [onFilterChange]);
 
-  const handleSortChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      onSortChange(e.target.value as SynergySortOrder);
-    },
-    [onSortChange],
-  );
-
   const toggleStrength = useCallback(
     (tier: StrengthTierFilter) => {
       // Single-select: clicking the active tier deselects, clicking another switches
@@ -187,12 +162,6 @@ export function SynergyToolbar({
     },
     [onFilterChange],
   );
-
-  const sortBorderColor = sortFocus
-    ? 'rgba(212, 175, 55, 0.4)'
-    : sortHover
-      ? COLORS.gray300
-      : COLORS.surfaceBorder;
 
   const FilterPanel = isMobile ? FilterDrawer : FilterModal;
 
@@ -207,82 +176,32 @@ export function SynergyToolbar({
           flexWrap: 'wrap',
           marginBottom: `${SPACING.lg}px`,
         }}>
-        {/* Filters button */}
-        <button
+        <FiltersButton
           onClick={() => setFilterOpen(true)}
-          onMouseEnter={() => setFiltersHover(true)}
-          onMouseLeave={() => setFiltersHover(false)}
-          aria-label="Filters"
-          style={{
-            height: 34,
-            padding: isMobile ? '0 12px' : '0 14px',
-            border: 'none',
-            background: COLORS.filterGradient,
-            color: COLORS.filterText,
-            fontFamily: FONTS.body,
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 500,
-            borderRadius: `${RADIUS.lg}px`,
-            cursor: 'pointer',
-            flexShrink: 0,
-            boxShadow: isMobile
-              ? '0px 6px 10px 0px rgba(254, 154, 0, 0.15)'
-              : '0px 8px 12px 0px rgba(254, 154, 0, 0.15), 0px 3px 5px 0px rgba(254, 154, 0, 0.15)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            opacity: filtersHover ? 0.9 : 1,
-            transition: 'opacity 0.15s',
-          }}>
-          <FilterIcon />
-          Filters
-          {activeFilterCount > 0 && (
-            <span
-              style={{
-                width: 18,
-                height: 18,
-                borderRadius: '50%',
-                background: 'rgba(0, 0, 0, 0.3)',
-                color: '#ffffff',
-                fontSize: `${FONT_SIZES.xs}px`,
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
+          activeCount={activeFilterCount}
+          isMobile={isMobile}
+        />
 
         {/* Divider */}
         <span style={{width: 1, height: 20, background: COLORS.surfaceBorder, flexShrink: 0}} />
 
-        {/* Result count */}
-        <span
+        <ResultCount
+          resultCount={resultCount}
+          totalCount={totalCount}
           data-testid="synergy-result-count"
-          style={{
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 600,
-            color: COLORS.textMuted,
-            letterSpacing: '0.5px',
-            textTransform: 'uppercase',
-          }}>
-          <strong style={{color: COLORS.text, fontWeight: 700}}>{resultCount}</strong>{' '}
-          {resultCount === totalCount ? 'cards' : `of ${totalCount} cards`}
-        </span>
+        />
 
         {/* Strength tier toggle chips */}
         <div style={{display: 'flex', gap: 6, ...(isMobile ? {flexShrink: 0} : {})}}>
           {STRENGTH_TIERS.map((tier) => {
             const active = strengthFilters.includes(tier);
-            const isHovered = hoveredChip === `strength-${tier}`;
+            const isHovered = hoveredTier === `strength-${tier}`;
             return (
               <button
                 key={tier}
                 onClick={() => toggleStrength(tier)}
-                onMouseEnter={() => setHoveredChip(`strength-${tier}`)}
-                onMouseLeave={() => setHoveredChip(null)}
+                onMouseEnter={() => setHoveredTier(`strength-${tier}`)}
+                onMouseLeave={() => setHoveredTier(null)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -320,42 +239,14 @@ export function SynergyToolbar({
               flexWrap: 'wrap',
               ...(isMobile ? {flexBasis: '100%'} : {flex: 1}),
             }}>
-            {chips.map((chip) => {
-              const isHovered = hoveredChip === chip.id;
-              return (
-                <button
-                  key={chip.id}
-                  onClick={chip.onDismiss}
-                  onMouseEnter={() => setHoveredChip(chip.id)}
-                  onMouseLeave={() => setHoveredChip(null)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: isMobile ? 5 : 6,
-                    padding: isMobile ? '5px 8px 5px 10px' : '5px 10px 5px 12px',
-                    borderRadius: 20,
-                    background: isHovered ? 'rgba(212, 175, 55, 0.18)' : 'rgba(212, 175, 55, 0.1)',
-                    border: `1px solid ${isHovered ? 'rgba(212, 175, 55, 0.4)' : 'rgba(212, 175, 55, 0.25)'}`,
-                    color: COLORS.primary500,
-                    fontFamily: FONTS.body,
-                    fontSize: `${FONT_SIZES.base}px`,
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    transition: 'background 0.15s, border-color 0.15s',
-                  }}>
-                  {chip.label}
-                  <span
-                    style={{
-                      fontSize: `${FONT_SIZES.base}px`,
-                      color: isHovered ? COLORS.text : COLORS.textMuted,
-                      fontWeight: 600,
-                      lineHeight: 1,
-                    }}>
-                    ×
-                  </span>
-                </button>
-              );
-            })}
+            {chips.map((chip) => (
+              <FilterChip
+                key={chip.id}
+                label={chip.label}
+                onDismiss={chip.onDismiss}
+                isMobile={isMobile}
+              />
+            ))}
             <button
               onClick={handleClearAll}
               onMouseEnter={() => setClearHover(true)}
@@ -378,33 +269,13 @@ export function SynergyToolbar({
 
         {/* Sort — desktop only */}
         {!isMobile && (
-          <select
-            aria-label="Sort synergies"
+          <SortSelect
+            options={SYNERGY_SORT_OPTIONS}
             value={sortOrder}
-            onChange={handleSortChange}
-            onMouseEnter={() => setSortHover(true)}
-            onMouseLeave={() => setSortHover(false)}
-            onFocus={() => setSortFocus(true)}
-            onBlur={() => setSortFocus(false)}
-            style={{
-              marginLeft: hasChips ? undefined : 'auto',
-              padding: '5px 10px',
-              borderRadius: `${RADIUS.md}px`,
-              border: `1px solid ${sortBorderColor}`,
-              background: COLORS.sortBg,
-              color: COLORS.text,
-              fontFamily: FONTS.body,
-              fontSize: `${FONT_SIZES.base}px`,
-              cursor: 'pointer',
-              outline: 'none',
-              transition: 'border-color 0.15s',
-            }}>
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            onChange={onSortChange}
+            ariaLabel="Sort synergies"
+            style={{marginLeft: hasChips ? undefined : 'auto'}}
+          />
         )}
       </div>
 

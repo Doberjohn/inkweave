@@ -8,4 +8,4 @@ export {CardDetailPanel} from './CardDetailPanel';
 export {MobileCardDetail} from './MobileCardDetail';
 export {SynergyDetailModal} from './SynergyDetailModal';
 export {SynergyToolbar} from './SynergyToolbar';
-export type {SynergySortOrder} from './SynergyToolbar';
+export type {SynergySortOrder} from '../../../shared/constants';
