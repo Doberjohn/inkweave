@@ -4,13 +4,12 @@ import type {SynergyGroup as SynergyGroupData} from '../types';
 import {chipStyle} from '../utils';
 import {SynergyGroup} from './SynergyGroup';
 import {ExpandedGroupView} from './ExpandedGroupView';
-import {CardImage, CardLightbox, CardTextBlock} from '../../../shared/components';
-import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
+import {CardImage, CardLightbox} from '../../../shared/components';
+import {COLORS, FONT_SIZES, FONTS, SPACING} from '../../../shared/constants';
 
 interface MobileCardDetailProps {
   card: LorcanaCard;
   synergies: SynergyGroupData[];
-  totalSynergyCount: number;
   onBack: () => void;
   onSynergyCardClick?: (card: LorcanaCard) => void;
 }
@@ -19,7 +18,6 @@ interface MobileCardDetailProps {
 export function MobileCardDetail({
   card,
   synergies,
-  totalSynergyCount,
   onBack,
   onSynergyCardClick,
 }: MobileCardDetailProps) {
@@ -151,20 +149,6 @@ export function MobileCardDetail({
           </div>
         )}
 
-        {/* Ability text */}
-        {(card.textSections?.length || card.text) && (
-          <div
-            style={{
-              marginTop: SPACING.md,
-              background: COLORS.surfaceAlt,
-              border: `1px solid ${COLORS.surfaceBorder}`,
-              borderRadius: RADIUS.md,
-              padding: `${SPACING.md}px`,
-            }}>
-            <CardTextBlock card={card} />
-          </div>
-        )}
-
         {/* Synergy breakdown removed on mobile — cards grid below is sufficient */}
 
         {/* Synergy section */}
@@ -198,17 +182,6 @@ export function MobileCardDetail({
                 }}>
                 Synergies
               </h2>
-              <span
-                style={{
-                  background: COLORS.calloutBg,
-                  color: COLORS.primary,
-                  padding: '2px 8px',
-                  borderRadius: `${RADIUS.sm}px`,
-                  fontSize: `${FONT_SIZES.xs}px`,
-                  fontWeight: 700,
-                }}>
-                {totalSynergyCount}
-              </span>
               <div style={{flex: 1, height: 1, background: COLORS.surfaceBorder}} />
             </div>
 

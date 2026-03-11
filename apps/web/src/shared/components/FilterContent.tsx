@@ -1,18 +1,11 @@
 import type {Ink, SetInfo} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards';
 import type {CardTypeFilter} from '../constants';
-import {
-  INK_COLORS,
-  ALL_INKS,
-  CARD_TYPE_FILTERS,
-  COST_BUTTONS,
-  COLORS,
-  SELECT_STYLE_MD,
-} from '../constants';
+import {CARD_TYPE_FILTERS, COST_BUTTONS, COLORS, SELECT_STYLE_MD} from '../constants';
 import {CostIcon} from './CostIcon';
 import {FilterButton} from './FilterButton';
 import {FilterSection} from './FilterSection';
-import {InkIcon} from './InkIcon';
+import {InkFilterGroup} from './InkFilterGroup';
 
 /** Shared props for FilterModal (desktop) and FilterDrawer (mobile). */
 export interface FilterPanelProps {
@@ -78,36 +71,21 @@ export function FilterContent({
   };
 
   const isDesktop = variant === 'desktop';
-  const inkSize = isDesktop ? 'md' : 'sm';
-  const inkIconSize = isDesktop ? 36 : 30;
 
   return (
     <>
       {/* Ink Filter */}
       <FilterSection label={isDesktop ? 'Ink Color' : 'Ink'}>
-        <div
-          role="group"
-          aria-label="Ink color filters"
+        <InkFilterGroup
+          inkFilters={inkFilters}
+          onToggleInk={onToggleInk}
+          size={isDesktop ? 'md' : 'sm'}
+          iconSize={isDesktop ? 36 : 30}
           style={{
-            display: 'flex',
             flexWrap: isDesktop ? 'wrap' : 'nowrap',
             justifyContent: 'space-evenly',
-          }}>
-          {ALL_INKS.map((ink) => (
-            <FilterButton
-              key={ink}
-              size={inkSize}
-              active={inkFilters.includes(ink)}
-              onClick={() => onToggleInk(ink)}
-              activeColor={INK_COLORS[ink].border}
-              activeBgColor={INK_COLORS[ink].bg}
-              inactiveColor="transparent"
-              inactiveTextColor="transparent"
-              aria-label={`Filter by ${ink}`}>
-              <InkIcon ink={ink} size={inkIconSize} decorative={false} />
-            </FilterButton>
-          ))}
-        </div>
+          }}
+        />
       </FilterSection>
 
       {/* Ink Cost */}

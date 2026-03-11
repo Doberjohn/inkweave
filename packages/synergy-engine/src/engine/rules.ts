@@ -98,11 +98,11 @@ function calculateShiftBaseScore(
     if (baseCard.cost <= 5)
       return {
         score: 7,
-        reason: `Free Shift: shift ${baseCard.fullName} into ${shiftCard.fullName} for 0 ink, but the base takes longer to set up.`,
+        reason: `Free Shift: Shift ${baseCard.fullName} into ${shiftCard.fullName} for 0 ink, but the base takes longer to set up.`,
       };
     return {
       score: 5,
-      reason: `Free Shift but expensive base — hard to get ${baseCard.fullName} into play first.`,
+      reason: `Free Shift but expensive base — Hard to get ${baseCard.fullName} into play first.`,
     };
   }
 
@@ -112,21 +112,21 @@ function calculateShiftBaseScore(
   if (curveGap === 1 && baseCard.inkwell && shiftCard.inkwell)
     return {
       score: 9,
-      reason: `Perfect curve: play ${baseCard.fullName} on turn ${baseCard.cost}, Shift next turn. Both cards are inkable as fallback.`,
+      reason: `Perfect curve: Play ${baseCard.fullName} on turn ${baseCard.cost}, Shift next turn. Both cards are inkable as fallback.`,
     };
 
   // Great curve: gap=1, one card inkable — still perfect tempo, slightly less flexible
   if (curveGap === 1 && (baseCard.inkwell || shiftCard.inkwell))
     return {
       score: 8,
-      reason: `Perfect curve: play ${baseCard.fullName} on turn ${baseCard.cost}, Shift next turn. One card is inkable as fallback.`,
+      reason: `Perfect curve: Play ${baseCard.fullName} on turn ${baseCard.cost}, Shift next turn. One card is inkable as fallback.`,
     };
 
   // On curve but neither inkable — perfect tempo, no fallback flexibility
   if (curveGap === 1)
     return {
       score: 7,
-      reason: `On curve: play ${baseCard.fullName} on turn ${baseCard.cost}, Shift next turn. Neither card is inkable — less flexible if drawn off-curve.`,
+      reason: `On curve: Play ${baseCard.fullName} on turn ${baseCard.cost}, Shift next turn. Neither card is inkable — Less flexible if drawn off-curve.`,
     };
 
   // 2-turn gap — still smooth but slightly slower
@@ -140,12 +140,12 @@ function calculateShiftBaseScore(
   if (curveGap === 0)
     return {
       score: 5,
-      reason: `Same cost — no ink savings from Shifting, but skips the drying phase.`,
+      reason: `Same cost — No ink savings from Shifting, but skips the drying phase.`,
     };
   if (curveGap === 3)
     return {
       score: 5,
-      reason: `Wide 3-turn gap — playable but slow to set up.`,
+      reason: `Wide 3-turn gap — Playable but slow to set up.`,
     };
 
   // Poor alignment: 4+ turn gap or negative (shift costs less than base)
@@ -305,7 +305,7 @@ function findLocationSupportSynergies(
       matches.push({
         card: other,
         score: LOCATION_ROLE_SCORE[role],
-        explanation: `${card.name} has ${ROLE_LABELS[role]} — works with locations`,
+        explanation: `${card.name} has ${ROLE_LABELS[role]} — Works with locations`,
         bidirectional: true,
       });
     } else if (isLocationSupportCard(other)) {
@@ -317,7 +317,7 @@ function findLocationSupportSynergies(
         matches.push({
           card: other,
           score,
-          explanation: `${card.name} (${ROLE_LABELS[role]}) and ${other.name} (${otherLabel}) — complementary location strategy`,
+          explanation: `${card.name} (${ROLE_LABELS[role]}) and ${other.name} (${otherLabel}) — Complementary location strategy`,
           bidirectional: true,
         });
       }

@@ -92,6 +92,69 @@ test.describe('Mobile Viewport', () => {
     await expect(page.getByRole('heading', {name: 'Browse Cards'})).toBeVisible();
   });
 
+  test('should open search bottom sheet and focus input when tapping search icon', async ({
+    page,
+  }) => {
+    // Navigate away from home so the bottom nav appears
+    await page.getByTestId('cta-browse').click();
+    await page.waitForTimeout(200);
+
+    // Tap the search icon in the bottom nav
+    const searchButton = page.getByRole('button', {name: 'Search cards'});
+    await searchButton.click();
+
+    // Search bottom sheet should open
+    const searchDialog = page.getByRole('dialog', {name: 'Search cards'});
+    await expect(searchDialog).toBeVisible();
+
+    // Input should be focused
+    const searchInput = searchDialog.getByPlaceholder('Search cards...');
+    await expect(searchInput).toBeVisible();
+    await expect(searchInput).toBeFocused();
+  });
+
+  test('should close search bottom sheet on backdrop click', async ({page}) => {
+    // Navigate to browse so bottom nav appears
+    await page.getByTestId('cta-browse').click();
+    await page.waitForTimeout(200);
+
+    // Open search sheet
+    await page.getByRole('button', {name: 'Search cards'}).click();
+    await expect(page.getByRole('dialog', {name: 'Search cards'})).toBeVisible();
+
+    // Click backdrop to dismiss
+    await page.mouse.click(10, 10);
+    await page.waitForTimeout(400);
+
+    // Sheet should be gone
+    await expect(page.getByRole('dialog', {name: 'Search cards'})).not.toBeVisible();
+  });
+
+  test('should show sort dropdown in browse toolbar', async ({page}) => {
+    // Navigate to browse
+    await page.getByTestId('cta-browse').click();
+    await page.waitForTimeout(200);
+
+    // Sort select and Filters button should be in the same toolbar
+    const toolbar = page.getByTestId('browse-toolbar');
+    await expect(toolbar.getByRole('button', {name: /Filters/})).toBeVisible();
+    await expect(toolbar.getByLabel('Sort cards')).toBeVisible();
+  });
+
+  test('should lock background scroll when filter drawer is open', async ({page}) => {
+    // Navigate to browse
+    await page.goto('/browse');
+    await page.waitForTimeout(500);
+
+    // Open filter drawer
+    await page.getByRole('button', {name: /Filters/}).click();
+    await page.waitForTimeout(200);
+
+    // Body should have overflow hidden
+    const overflow = await page.evaluate(() => document.body.style.overflow);
+    expect(overflow).toBe('hidden');
+  });
+
   test('should open filter drawer in mobile browsing view', async ({page}) => {
     // Navigate to browsing view via Browse CTA
     await page.getByTestId('cta-browse').click();

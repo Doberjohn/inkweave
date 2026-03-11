@@ -7,4 +7,5 @@ export {useDraftFilters} from './useDraftFilters';
 export {useFilterParams} from './useFilterParams';
 export {useResponsive} from './useResponsive';
 export {useTouchPreview} from './useTouchPreview';
+export {useScrollLock} from './useScrollLock';
 export {useTransitionPresence} from './useTransitionPresence';

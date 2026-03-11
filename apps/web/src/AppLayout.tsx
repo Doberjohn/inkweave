@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {Outlet, useLocation} from 'react-router-dom';
 import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
@@ -9,6 +9,7 @@ import {
   MOBILE_NAV_HEIGHT,
   SearchBottomSheet,
 } from './shared/components';
+import type {SearchBottomSheetHandle} from './shared/components/SearchBottomSheet';
 import {CardDataProvider} from './shared/contexts/CardDataContext';
 import {COLORS} from './shared/constants';
 import {useCardDataContext} from './shared/contexts/CardDataContext';
@@ -21,13 +22,18 @@ function AppContent() {
   const isHome = pathname === '/';
   const showBottomNav = isMobile && !isHome;
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchRef = useRef<SearchBottomSheetHandle>(null);
 
   // Scroll to top on route change
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
-  const openSearch = useCallback(() => setIsSearchOpen(true), []);
+  const openSearch = useCallback(() => {
+    // Focus the proxy input synchronously in the tap call stack so iOS shows the keyboard
+    searchRef.current?.focusProxy();
+    setIsSearchOpen(true);
+  }, []);
   const closeSearch = useCallback(() => setIsSearchOpen(false), []);
 
   if (error) {
@@ -59,7 +65,9 @@ function AppContent() {
         <Outlet />
       </div>
       {showBottomNav && <MobileBottomNav onSearchClick={openSearch} />}
-      {isMobile && <SearchBottomSheet isOpen={isSearchOpen} onClose={closeSearch} />}
+      {isMobile && (
+        <SearchBottomSheet ref={searchRef} isOpen={isSearchOpen} onClose={closeSearch} />
+      )}
     </>
   );
 }

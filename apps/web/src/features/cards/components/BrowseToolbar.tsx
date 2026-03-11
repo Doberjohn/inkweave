@@ -5,13 +5,11 @@ import type {CardTypeFilter, BrowseSortOrder} from '../../../shared/constants';
 import {BROWSE_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
 import {FilterChip} from '../../../shared/components/FilterChip';
 import {FiltersButton} from '../../../shared/components/FiltersButton';
-import {ResultCount} from '../../../shared/components/ResultCount';
+import {InkFilterGroup} from '../../../shared/components/InkFilterGroup';
 import {SortSelect} from '../../../shared/components/SortSelect';
 import type {ChipData} from '../../../shared/types';
 
 interface BrowseToolbarProps {
-  resultCount: number;
-  totalCount: number;
   onFiltersClick: () => void;
   activeFilterCount: number;
   inkFilters: Ink[];
@@ -29,8 +27,6 @@ interface BrowseToolbarProps {
 }
 
 export function BrowseToolbar({
-  resultCount,
-  totalCount,
   onFiltersClick,
   activeFilterCount,
   inkFilters,
@@ -49,9 +45,12 @@ export function BrowseToolbar({
   const [clearHover, setClearHover] = useState(false);
 
   // Build active filter chips from all filter sources
+  // Desktop shows ink icons inline, so skip ink chips there
   const chips: ChipData[] = [];
-  for (const ink of inkFilters)
-    chips.push({id: `ink:${ink}`, label: ink, onDismiss: () => onToggleInk(ink)});
+  if (isMobile) {
+    for (const ink of inkFilters)
+      chips.push({id: `ink:${ink}`, label: ink, onDismiss: () => onToggleInk(ink)});
+  }
   for (const type of typeFilters)
     chips.push({id: `type:${type}`, label: type, onDismiss: () => onToggleType(type)});
   for (const cost of costFilters)
@@ -91,18 +90,6 @@ export function BrowseToolbar({
       }}>
       <FiltersButton onClick={onFiltersClick} activeCount={activeFilterCount} isMobile={isMobile} />
 
-      {/* Divider */}
-      <span
-        style={{
-          width: 1,
-          height: 20,
-          background: COLORS.surfaceBorder,
-          flexShrink: 0,
-        }}
-      />
-
-      <ResultCount resultCount={resultCount} totalCount={totalCount} data-testid="result-count" />
-
       {/* Active filter chips */}
       {hasChips && (
         <div
@@ -140,16 +127,16 @@ export function BrowseToolbar({
         </div>
       )}
 
-      {/* Sort — desktop only (mobile renders its own full-width sort row) */}
-      {!isMobile && (
+      {/* Right side: ink filters (desktop) + sort */}
+      <div style={{marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10}}>
+        {!isMobile && <InkFilterGroup inkFilters={inkFilters} onToggleInk={onToggleInk} />}
         <SortSelect
           options={BROWSE_SORT_OPTIONS}
           value={sortOrder}
           onChange={onSortChange}
           ariaLabel="Sort cards"
-          style={{marginLeft: hasChips ? undefined : 'auto'}}
         />
-      )}
+      </div>
     </div>
   );
 }

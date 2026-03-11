@@ -29,7 +29,10 @@ export function FilterChip({label, onDismiss, isMobile}: FilterChipProps) {
         fontSize: `${FONT_SIZES.base}px`,
         fontWeight: 500,
         cursor: 'pointer',
-        transition: 'background 0.15s, border-color 0.15s',
+        transition: 'all 0.2s',
+        boxShadow: hovered
+          ? '0 0 12px rgba(255, 185, 0, 0.15), inset 0 0 8px rgba(255, 185, 0, 0.05)'
+          : 'none',
       }}>
       {label}
       <span

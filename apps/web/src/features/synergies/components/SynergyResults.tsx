@@ -56,6 +56,7 @@ export const SynergyResults = memo(function SynergyResults({
   const renderCardDetail = showCardDetail ?? isMobile;
   const [internalFilter, setInternalFilter] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SynergySortOrder>('ink-cost');
+  const [hoveredChip, setHoveredChip] = useState<string | null>(null);
 
   // Find the expanded group data when in show-all mode
   const expandedGroupData = expandedGroup
@@ -176,14 +177,22 @@ export const SynergyResults = memo(function SynergyResults({
                 }}>
                 <button
                   onClick={() => setActiveGroupFilter(null)}
-                  style={chipStyle(activeGroupFilter === null, isMobile)}>
+                  onMouseEnter={() => setHoveredChip('all')}
+                  onMouseLeave={() => setHoveredChip(null)}
+                  style={chipStyle(activeGroupFilter === null, isMobile, hoveredChip === 'all')}>
                   All
                 </button>
                 {synergies.map((group) => (
                   <button
                     key={group.groupKey}
                     onClick={() => setActiveGroupFilter(group.groupKey)}
-                    style={chipStyle(activeGroupFilter === group.groupKey, isMobile)}>
+                    onMouseEnter={() => setHoveredChip(group.groupKey)}
+                    onMouseLeave={() => setHoveredChip(null)}
+                    style={chipStyle(
+                      activeGroupFilter === group.groupKey,
+                      isMobile,
+                      hoveredChip === group.groupKey,
+                    )}>
                     {group.label}
                   </button>
                 ))}

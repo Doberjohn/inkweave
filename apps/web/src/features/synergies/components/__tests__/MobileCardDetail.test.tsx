@@ -67,7 +67,6 @@ describe('MobileCardDetail', () => {
   const defaultProps = {
     card: mockCard,
     synergies: mockSynergies,
-    totalSynergyCount: 12,
     onBack: vi.fn(),
   };
 
@@ -83,11 +82,6 @@ describe('MobileCardDetail', () => {
   it('should render card version', () => {
     render(<MobileCardDetail {...defaultProps} />);
     expect(screen.getByText('Snow Queen')).toBeInTheDocument();
-  });
-
-  it('should render ability text', () => {
-    render(<MobileCardDetail {...defaultProps} />);
-    expect(screen.getByText(/Freeze.*Exert.*opposing character/)).toBeInTheDocument();
   });
 
   it('should render synergy section divider with heading', () => {
@@ -117,7 +111,7 @@ describe('MobileCardDetail', () => {
   });
 
   it('should show "no synergies" message when count is 0', () => {
-    render(<MobileCardDetail {...defaultProps} synergies={[]} totalSynergyCount={0} />);
+    render(<MobileCardDetail {...defaultProps} synergies={[]} />);
     expect(screen.getByText(/no synergies found/i)).toBeInTheDocument();
   });
 

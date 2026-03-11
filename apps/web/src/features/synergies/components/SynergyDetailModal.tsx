@@ -1,4 +1,4 @@
-import {useRef, useState, useMemo, useEffect} from 'react';
+import {Fragment, useRef, useState, useMemo, useEffect} from 'react';
 import type {LorcanaCard} from '../../cards';
 import {useCardPreviewHandlers, useCardPreview} from '../../cards';
 import type {
@@ -14,7 +14,7 @@ import {
 import {getStrengthTier} from '../utils';
 import {CardImage, CardLightbox} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
-import {useTransitionPresence, useResponsive} from '../../../shared/hooks';
+import {useScrollLock, useTransitionPresence, useResponsive} from '../../../shared/hooks';
 import {COLORS, FONT_SIZES, SPACING, RADIUS, Z_INDEX} from '../../../shared/constants';
 
 interface SynergyDetailModalProps {
@@ -35,6 +35,7 @@ export function SynergyDetailModal({
   const {isMobile} = useResponsive();
 
   const {mounted, visible, onTransitionEnd} = useTransitionPresence(isOpen);
+  useScrollLock(isOpen);
 
   const {handleKeyDown} = useDialogFocus({
     isOpen,
@@ -114,7 +115,7 @@ export function SynergyDetailModal({
               padding: '24px 12px 0',
             }}>
             <PairCardImage card={cardA} isMobile={isMobile} />
-            <Connector score={aggregateScore} tier={tier} />
+            <Connector score={aggregateScore} tier={tier} isMobile={isMobile} />
             <PairCardImage card={cardB} isMobile={isMobile} />
           </div>
 
@@ -253,30 +254,55 @@ function PairCardName({card, showVersion}: {card: LorcanaCard; showVersion?: boo
   );
 }
 
-function Connector({score, tier}: {score: number; tier: ReturnType<typeof getStrengthTier>}) {
+function Connector({
+  score,
+  tier,
+  isMobile,
+}: {
+  score: number;
+  tier: ReturnType<typeof getStrengthTier>;
+  isMobile: boolean;
+}) {
   const lineColor = `${tier.color}59`; // ~35% opacity
   const circleBorderColor = `${tier.color}80`; // ~50% opacity
   const circleGlow = `${tier.color}1a`; // ~10% opacity
+  const size = isMobile ? 32 : 44;
+  const fontSize = isMobile ? FONT_SIZES.base : FONT_SIZES.xl;
 
   return (
     <div
       style={{
         display: 'flex',
         alignItems: 'center',
-        flexShrink: 1,
-        minWidth: 0,
-        margin: '0 6px',
+        flexShrink: 0,
+        minWidth: isMobile ? 44 : 140,
+        margin: isMobile ? '0 6px' : '0 2px',
       }}>
-      <div style={{flex: '1 1 6px', maxWidth: 14, borderTop: `1px dashed ${lineColor}`}} />
+      {!isMobile && <div style={{width: 3}} />}
+      <svg
+        style={{flex: '1 1 6px', maxWidth: isMobile ? 14 : 44, overflow: 'visible'}}
+        height="2"
+        preserveAspectRatio="none">
+        <line
+          x1="0"
+          y1="1"
+          x2="100%"
+          y2="1"
+          stroke={lineColor}
+          strokeWidth="1.5"
+          strokeDasharray={isMobile ? '3 3' : '6 6'}
+        />
+      </svg>
+      {!isMobile && <div style={{width: 3}} />}
       <div
         style={{
-          width: 32,
-          height: 32,
+          width: size,
+          height: size,
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: `${FONT_SIZES.base}px`,
+          fontSize: `${fontSize}px`,
           fontWeight: 700,
           flexShrink: 0,
           border: `2px solid ${circleBorderColor}`,
@@ -286,7 +312,22 @@ function Connector({score, tier}: {score: number; tier: ReturnType<typeof getStr
         }}>
         {score}
       </div>
-      <div style={{flex: '1 1 6px', maxWidth: 14, borderTop: `1px dashed ${lineColor}`}} />
+      {!isMobile && <div style={{width: 3}} />}
+      <svg
+        style={{flex: '1 1 6px', maxWidth: isMobile ? 14 : 44, overflow: 'visible'}}
+        height="2"
+        preserveAspectRatio="none">
+        <line
+          x1="0"
+          y1="1"
+          x2="100%"
+          y2="1"
+          stroke={lineColor}
+          strokeWidth="1.5"
+          strokeDasharray={isMobile ? '3 3' : '6 6'}
+        />
+      </svg>
+      {!isMobile && <div style={{width: 3}} />}
     </div>
   );
 }
@@ -379,27 +420,13 @@ function ConnectionsSection({
     <div
       style={{
         margin: '0 24px 20px',
-        padding: `${SPACING.lg}px`,
-        background: COLORS.surfaceAlt,
-        borderRadius: `${RADIUS.md}px`,
-        border: `1px solid ${COLORS.surfaceBorder}`,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: `${SPACING.sm}px`,
       }}>
-      <div
-        style={{
-          fontSize: `${FONT_SIZES.xs}px`,
-          fontWeight: 600,
-          color: COLORS.textMuted,
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-          marginBottom: `${SPACING.md}px`,
-        }}>
-        Connections
-      </div>
-      <div style={{display: 'flex', flexDirection: 'column', gap: `${SPACING.sm}px`}}>
-        {groups.map((group) => (
-          <ConnectionGroupRow key={group.key} group={group} cardA={cardA} cardB={cardB} />
-        ))}
-      </div>
+      {groups.map((group) => (
+        <ConnectionGroupRow key={group.key} group={group} cardA={cardA} cardB={cardB} />
+      ))}
     </div>
   );
 }
@@ -413,7 +440,7 @@ function ConnectionGroupRow({
   cardA: LorcanaCard;
   cardB: LorcanaCard;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [hovered, setHovered] = useState(false);
   const tier = getStrengthTier(group.score);
   const hasMultipleRoles = group.connections.length > 1;
@@ -447,13 +474,18 @@ function ConnectionGroupRow({
         }}>
         <span
           style={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            background: tier.color,
+            padding: '3px 8px',
+            borderRadius: `${RADIUS.xs}px`,
+            fontSize: `${FONT_SIZES.base}px`,
+            fontWeight: 700,
+            background: tier.bg,
+            color: tier.color,
             flexShrink: 0,
-          }}
-        />
+            minWidth: 28,
+            textAlign: 'center',
+          }}>
+          {group.score}
+        </span>
         <span
           style={{
             fontSize: `${FONT_SIZES.base}px`,
@@ -461,18 +493,6 @@ function ConnectionGroupRow({
             color: COLORS.text,
           }}>
           {group.label}
-        </span>
-        <span
-          style={{
-            padding: '2px 6px',
-            borderRadius: `${RADIUS.xs}px`,
-            fontSize: `${FONT_SIZES.xs}px`,
-            fontWeight: 700,
-            background: tier.bg,
-            color: tier.color,
-            flexShrink: 0,
-          }}>
-          {group.score}
         </span>
         {hasMultipleRoles && (
           <span
@@ -503,51 +523,45 @@ function ConnectionGroupRow({
           style={{
             borderTop: `1px solid ${COLORS.surfaceBorder}`,
             padding: '10px 12px 12px',
-            display: 'flex',
-            flexDirection: 'column',
+            display: 'grid',
+            gridTemplateColumns: hasMultipleRoles ? 'auto 1fr' : '1fr',
             gap: `${SPACING.sm}px`,
+            alignItems: 'start',
           }}>
-          {group.connections.map((conn) => {
+          {group.connections.map((conn, i) => {
             const role = extractLocationRole(conn.ruleId);
             const chipLabel = role ? LOCATION_ROLE_CHIP_LABELS[role] : null;
             const description = role
               ? LOCATION_ROLE_DESCRIPTIONS[role](getRoleSourceName(conn, cardA, cardB))
               : conn.explanation;
-
-            return (
+            const divider = i > 0 && (
               <div
-                key={conn.ruleId}
+                key={`${conn.ruleId}-divider`}
                 style={{
-                  display: 'flex',
-                  alignItems: 'start',
-                  gap: `${SPACING.sm}px`,
-                }}>
-                {chipLabel ? (
-                  <span
-                    style={{
-                      padding: '2px 8px',
-                      borderRadius: 8,
-                      background: 'rgba(212, 175, 55, 0.1)',
-                      color: COLORS.primary,
-                      fontSize: `${FONT_SIZES.xs}px`,
-                      fontWeight: 600,
-                      flexShrink: 0,
-                      marginTop: 1,
-                    }}>
-                    {chipLabel}
-                  </span>
-                ) : (
-                  <span
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      background: getStrengthTier(conn.score).color,
-                      flexShrink: 0,
-                      marginTop: 5,
-                    }}
-                  />
-                )}
+                  gridColumn: '1 / -1',
+                  height: 1,
+                  background: COLORS.surfaceBorder,
+                }}
+              />
+            );
+
+            return hasMultipleRoles ? (
+              <Fragment key={conn.ruleId}>
+                {divider}
+                <span
+                  style={{
+                    padding: '2px 8px',
+                    borderRadius: 8,
+                    background: chipLabel ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
+                    color: COLORS.primary,
+                    fontSize: `${FONT_SIZES.xs}px`,
+                    fontWeight: 600,
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap',
+                    marginTop: 1,
+                  }}>
+                  {chipLabel ?? ''}
+                </span>
                 <span
                   style={{
                     fontSize: `${FONT_SIZES.base}px`,
@@ -556,7 +570,19 @@ function ConnectionGroupRow({
                   }}>
                   {description}
                 </span>
-              </div>
+              </Fragment>
+            ) : (
+              <Fragment key={conn.ruleId}>
+                {divider}
+                <span
+                  style={{
+                    fontSize: `${FONT_SIZES.base}px`,
+                    lineHeight: 1.4,
+                    color: COLORS.descriptionText,
+                  }}>
+                  {description}
+                </span>
+              </Fragment>
             );
           })}
         </div>
