@@ -298,7 +298,6 @@ function ActivePlaystyleCard({
                 alt={card.fullName}
                 loading="lazy"
                 onError={(e) => {
-                  console.warn(`Failed to load preview image: ${e.currentTarget.src}`);
                   e.currentTarget.style.display = 'none';
                 }}
                 style={{width: '100%', height: '100%', objectFit: 'cover'}}

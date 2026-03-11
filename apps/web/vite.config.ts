@@ -120,6 +120,9 @@ export default defineConfig({
         org: process.env.SENTRY_ORG,
         project: process.env.SENTRY_PROJECT,
         authToken: process.env.SENTRY_AUTH_TOKEN,
+        sourcemaps: {
+          filesToDeleteAfterUpload: ['dist/**/*.map'],
+        },
       }),
     process.env.ANALYZE &&
       visualizer({
@@ -141,7 +144,7 @@ export default defineConfig({
     },
   },
   build: {
-    sourcemap: true,
+    sourcemap: 'hidden',
   },
   test: {
     environment: 'jsdom',

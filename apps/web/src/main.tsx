@@ -11,7 +11,6 @@ if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
       dsn: import.meta.env.VITE_SENTRY_DSN,
       environment: 'production',
       tracesSampleRate: 0.1,
-      enableLogs: true,
     });
   });
 }
