@@ -40,6 +40,7 @@ export interface UseAutocompleteReturn {
     onMouseEnter: () => void;
   };
   close: () => void;
+  searchImmediate: (term: string) => void;
 }
 
 export function useAutocomplete({
@@ -95,6 +96,17 @@ export function useAutocomplete({
     setHighlightedIndex(-1);
     setDebouncedQuery('');
   }, []);
+
+  /** Immediately search for a term, bypassing the debounce delay. */
+  const searchImmediate = useCallback(
+    (term: string) => {
+      onQueryChange(term);
+      setDebouncedQuery(term.length >= minChars ? term : '');
+      setHighlightedIndex(-1);
+      setIsFocused(true);
+    },
+    [onQueryChange, minChars],
+  );
 
   const selectItem = useCallback(
     (card: LorcanaCard | undefined) => {
@@ -197,5 +209,6 @@ export function useAutocomplete({
     },
     getOptionProps,
     close,
+    searchImmediate,
   };
 }

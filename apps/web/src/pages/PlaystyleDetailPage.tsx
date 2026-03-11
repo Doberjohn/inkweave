@@ -13,6 +13,7 @@ import {
   LoadingSpinner,
 } from '../shared/components';
 import {
+  BROWSE_SORT_OPTIONS,
   COLORS,
   FONTS,
   FONT_SIZES,
@@ -21,7 +22,7 @@ import {
   SPACING,
   PLAYSTYLE_UI,
 } from '../shared/constants';
-import type {BrowseSortOrder} from '../shared/constants';
+import {SortSelect} from '../shared/components/SortSelect';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive, useFilterParams, usePreloadImages} from '../shared/hooks';
 
@@ -319,7 +320,7 @@ export function PlaystyleDetailPage() {
 
   // Default sort to cost-asc for playstyle detail (most useful for deckbuilding)
   useEffect(() => {
-    if (!searchParams.has('sort')) setSortOrder('cost-asc');
+    if (!searchParams.has('sort')) setSortOrder('ink-cost');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Resolve playstyle from engine
@@ -432,15 +433,7 @@ export function PlaystyleDetailPage() {
           position: 'relative',
         }}>
         <EtherealBackground />
-        <CompactHeader
-          onLogoClick={goHome}
-          searchQuery={headerSearchQuery}
-          onSearchChange={setHeaderSearchQuery}
-          onSearchSubmit={handleSearchSubmit}
-          cards={cards}
-          onCardSelect={handleCardSelect}
-          isMobile
-        />
+        <CompactHeader onLogoClick={goHome} isMobile />
         <div style={{position: 'relative', zIndex: 1}}>
           <PlaystyleHero
             name={playstyle.name}
@@ -460,28 +453,13 @@ export function PlaystyleDetailPage() {
               position: 'relative',
               zIndex: 1,
             }}>
-            <select
-              aria-label="Sort cards"
+            <SortSelect
+              options={BROWSE_SORT_OPTIONS}
               value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as BrowseSortOrder)}
-              style={{
-                width: '100%',
-                padding: '8px 10px',
-                borderRadius: `${RADIUS.md}px`,
-                border: `1px solid ${COLORS.surfaceBorder}`,
-                background: COLORS.sortBg,
-                color: COLORS.text,
-                fontFamily: FONTS.body,
-                fontSize: `${FONT_SIZES.base}px`,
-                cursor: 'pointer',
-                outline: 'none',
-              }}>
-              <option value="newest">Newest first</option>
-              <option value="name-asc">Name A–Z</option>
-              <option value="name-desc">Name Z–A</option>
-              <option value="cost-asc">Cost: Low → High</option>
-              <option value="cost-desc">Cost: High → Low</option>
-            </select>
+              onChange={setSortOrder}
+              ariaLabel="Sort cards"
+              style={{width: '100%', padding: '8px 10px'}}
+            />
           </div>
           {/* Card grid */}
           <ErrorBoundary>

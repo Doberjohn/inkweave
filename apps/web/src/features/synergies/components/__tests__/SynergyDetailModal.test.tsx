@@ -107,15 +107,6 @@ describe('SynergyDetailModal', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('should call onClose when close button is clicked', () => {
-    const onClose = vi.fn();
-    render(
-      <SynergyDetailModal isOpen onClose={onClose} pair={mockPair} onViewSynergies={vi.fn()} />,
-    );
-    fireEvent.click(screen.getByLabelText('Close'));
-    expect(onClose).toHaveBeenCalledOnce();
-  });
-
   it('should show version when both cards share the same name', () => {
     render(
       <SynergyDetailModal isOpen onClose={vi.fn()} pair={mockPair} onViewSynergies={vi.fn()} />,

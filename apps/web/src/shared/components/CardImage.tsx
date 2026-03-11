@@ -13,6 +13,8 @@ interface CardImageProps {
   borderRadius?: number;
   /** Set to true for LCP-candidate images to boost fetch priority. */
   priority?: boolean;
+  /** Additional styles merged onto the root element (img or fallback div). */
+  style?: React.CSSProperties;
 }
 
 /**
@@ -32,6 +34,7 @@ export function CardImage({
   lazy = true,
   borderRadius = RADIUS.sm,
   priority,
+  style: styleProp,
 }: CardImageProps) {
   const [imgError, setImgError] = useState(false);
   const colors = INK_COLORS[inkColor];
@@ -46,7 +49,6 @@ export function CardImage({
         alt={alt}
         loading={lazy ? 'lazy' : undefined}
         decoding={priority ? 'sync' : 'async'}
-        fetchPriority={priority ? 'high' : undefined}
         onError={() => setImgError(true)}
         style={{
           width: `${width}px`,
@@ -54,6 +56,7 @@ export function CardImage({
           borderRadius: `${borderRadius}px`,
           objectFit: 'cover',
           flexShrink: 0,
+          ...styleProp,
         }}
       />
     );
@@ -71,6 +74,7 @@ export function CardImage({
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
+        ...styleProp,
       }}>
       <span
         style={{

@@ -1,7 +1,7 @@
 import {useCallback, useState, useMemo} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
-import {getDominantScore, getStrengthTier, chipStyle} from '../utils';
+import {chipStyle} from '../utils';
 import {SynergyGroup} from './SynergyGroup';
 import {ExpandedGroupView} from './ExpandedGroupView';
 import {CardImage, CardLightbox, CardTextBlock} from '../../../shared/components';
@@ -165,83 +165,7 @@ export function MobileCardDetail({
           </div>
         )}
 
-        {/* Synergy breakdown */}
-        {synergies.length > 0 && (
-          <div
-            style={{
-              marginTop: SPACING.lg,
-              padding: `${SPACING.md}px`,
-              background: COLORS.surfaceAlt,
-              borderRadius: `${RADIUS.md}px`,
-              border: `1px solid ${COLORS.surfaceBorder}`,
-            }}>
-            <div
-              style={{
-                fontSize: FONT_SIZES.xs,
-                fontWeight: 600,
-                color: COLORS.textMuted,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                marginBottom: 10,
-              }}>
-              Synergy Breakdown
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '2px'}}>
-              {synergies.map((group) => {
-                const tier = getStrengthTier(getDominantScore(group.synergies));
-                return (
-                  <div
-                    key={group.groupKey}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '8px',
-                      borderRadius: RADIUS.sm,
-                      minHeight: 44,
-                    }}>
-                    {/* Count circle */}
-                    <div
-                      style={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: '50%',
-                        background: tier.bg,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}>
-                      <span
-                        style={{
-                          fontSize: FONT_SIZES.xs,
-                          fontWeight: 700,
-                          color: tier.color,
-                        }}>
-                        {group.synergies.length}
-                      </span>
-                    </div>
-
-                    {/* Group label */}
-                    <span
-                      style={{
-                        flex: 1,
-                        fontSize: FONT_SIZES.base,
-                        fontWeight: 500,
-                        color: COLORS.text,
-                      }}>
-                      {group.label}
-                    </span>
-
-                    {/* Arrow */}
-                    <span style={{fontSize: FONT_SIZES.xs, color: COLORS.textMuted}}>&rarr;</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* Synergy breakdown removed on mobile — cards grid below is sufficient */}
 
         {/* Synergy section */}
         {synergies.length > 0 && expandedGroupData ? (

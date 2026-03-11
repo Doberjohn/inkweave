@@ -31,8 +31,8 @@ test.describe('Mobile Viewport', () => {
     // Should navigate to /card/:id
     await expect(page).toHaveURL(/\/card\/\d+/);
 
-    // Synergies are fetched async — wait for breakdown, empty state, or error banner
-    const hasSynergies = page.getByText('Synergy Breakdown');
+    // Synergies are fetched async — wait for synergies heading, empty state, or error banner
+    const hasSynergies = page.getByRole('heading', {name: 'Synergies'});
     const noSynergies = page.getByText('No synergies found for this card');
     const errorBanner = page.getByRole('alert');
 
@@ -77,9 +77,9 @@ test.describe('Mobile Viewport', () => {
     // Should navigate to browse with query param
     await expect(page).toHaveURL(/\/browse\?q=Elsa/);
 
-    // Hero should be gone, card list visible
+    // Hero should be gone, browse heading visible
     await expect(appPage.heroSection).not.toBeVisible();
-    await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
+    await expect(page.getByRole('heading', {name: 'Browse Cards'})).toBeVisible();
   });
 
   test('should navigate to browsing view via Browse all cards CTA', async ({page, appPage}) => {
@@ -87,9 +87,9 @@ test.describe('Mobile Viewport', () => {
     await page.getByTestId('cta-browse').click();
     await page.waitForTimeout(200);
 
-    // Should transition to browsing — hero gone, search visible
+    // Should transition to browsing — hero gone, browse heading visible
     await expect(appPage.heroSection).not.toBeVisible();
-    await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
+    await expect(page.getByRole('heading', {name: 'Browse Cards'})).toBeVisible();
   });
 
   test('should open filter drawer in mobile browsing view', async ({page}) => {

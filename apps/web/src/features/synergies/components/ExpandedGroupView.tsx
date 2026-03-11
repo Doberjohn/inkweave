@@ -3,8 +3,8 @@ import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
 import {SynergyToolbar} from './SynergyToolbar';
-import type {SynergySortOrder} from './SynergyToolbar';
-import {filterSynergyCards, EMPTY_SYNERGY_FILTERS} from '../utils/filterSynergyCards';
+import type {SynergySortOrder} from '../../../shared/constants';
+import {filterSynergyCards, EMPTY_SYNERGY_FILTERS, applySynergySortOrder} from '../utils';
 import type {SynergyFilterState} from '../utils/filterSynergyCards';
 import {useCardDataContext} from '../../../shared/contexts/CardDataContext';
 import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
@@ -25,30 +25,13 @@ export function ExpandedGroupView({
 }: ExpandedGroupViewProps) {
   const [backHovered, setBackHovered] = useState(false);
   const [filterState, setFilterState] = useState<SynergyFilterState>(EMPTY_SYNERGY_FILTERS);
-  const [sortOrder, setSortOrder] = useState<SynergySortOrder>('cost-asc');
+  const [sortOrder, setSortOrder] = useState<SynergySortOrder>('ink-cost');
   const {uniqueKeywords, uniqueClassifications, sets} = useCardDataContext();
 
   // Filter then sort synergies
   const filteredSynergies = useMemo(() => {
     const filtered = filterSynergyCards(group.synergies, filterState);
-    return [...filtered].sort((a, b) => {
-      switch (sortOrder) {
-        case 'cost-asc':
-          return a.card.cost - b.card.cost;
-        case 'cost-desc':
-          return b.card.cost - a.card.cost;
-        case 'strength-desc':
-          return b.score - a.score;
-        case 'strength-asc':
-          return a.score - b.score;
-        case 'name-asc':
-          return a.card.fullName.localeCompare(b.card.fullName);
-        case 'name-desc':
-          return b.card.fullName.localeCompare(a.card.fullName);
-        default:
-          return 0;
-      }
-    });
+    return applySynergySortOrder(filtered, sortOrder);
   }, [group.synergies, filterState, sortOrder]);
 
   // Build a virtual group with filtered synergies for the SynergyGroup component
@@ -60,7 +43,7 @@ export function ExpandedGroupView({
   // Reset filters and sort order before navigating back
   const handleBackToAll = useCallback(() => {
     setFilterState(EMPTY_SYNERGY_FILTERS);
-    setSortOrder('cost-asc');
+    setSortOrder('ink-cost');
     onBackToAll();
   }, [onBackToAll]);
 

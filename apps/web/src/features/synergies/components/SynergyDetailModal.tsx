@@ -1,4 +1,4 @@
-import {useRef, useState, useMemo, useEffect, forwardRef} from 'react';
+import {useRef, useState, useMemo, useEffect} from 'react';
 import type {LorcanaCard} from '../../cards';
 import {useCardPreviewHandlers, useCardPreview} from '../../cards';
 import type {
@@ -12,9 +12,9 @@ import {
   LOCATION_ROLE_DESCRIPTIONS,
 } from 'inkweave-synergy-engine';
 import {getStrengthTier} from '../utils';
-import {CardImage} from '../../../shared/components';
+import {CardImage, CardLightbox} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
-import {useTransitionPresence} from '../../../shared/hooks';
+import {useTransitionPresence, useResponsive} from '../../../shared/hooks';
 import {COLORS, FONT_SIZES, SPACING, RADIUS, Z_INDEX} from '../../../shared/constants';
 
 interface SynergyDetailModalProps {
@@ -31,15 +31,14 @@ export function SynergyDetailModal({
   onViewSynergies,
 }: SynergyDetailModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [ctaHovered, setCtaHovered] = useState(false);
+  const {isMobile} = useResponsive();
 
   const {mounted, visible, onTransitionEnd} = useTransitionPresence(isOpen);
 
   const {handleKeyDown} = useDialogFocus({
     isOpen,
     containerRef: modalRef,
-    initialFocusRef: closeButtonRef,
     onClose,
   });
 
@@ -106,20 +105,29 @@ export function SynergyDetailModal({
             position: 'relative',
             pointerEvents: 'auto',
           }}>
-          {/* Close button */}
-          <CloseButton ref={closeButtonRef} onClick={onClose} />
-
-          {/* Card pair + connector */}
+          {/* Card images + connector (centered) */}
           <div
             style={{
               display: 'flex',
-              alignItems: 'flex-start',
+              alignItems: 'center',
               justifyContent: 'center',
-              padding: '24px 24px 0',
+              padding: '24px 12px 0',
             }}>
-            <PairCard card={cardA} showVersion={cardA.name === cardB.name} />
+            <PairCardImage card={cardA} isMobile={isMobile} />
             <Connector score={aggregateScore} tier={tier} />
-            <PairCard card={cardB} showVersion={cardA.name === cardB.name} />
+            <PairCardImage card={cardB} isMobile={isMobile} />
+          </div>
+
+          {/* Card names row */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              padding: '12px 12px 0',
+              gap: 60,
+            }}>
+            <PairCardName card={cardA} showVersion={cardA.name === cardB.name} />
+            <PairCardName card={cardB} showVersion={cardA.name === cardB.name} />
           </div>
 
           {/* Aggregate tier label */}
@@ -165,7 +173,7 @@ export function SynergyDetailModal({
               transition: 'all 0.2s',
               boxShadow: ctaHovered ? '0 0 16px rgba(212, 175, 55, 0.1)' : 'none',
             }}>
-            View {cardB.fullName} synergies →
+            View {cardB.fullName} synergies
           </button>
         </div>
       </div>
@@ -175,53 +183,23 @@ export function SynergyDetailModal({
 
 // ── Subcomponents ──
 
-const CloseButton = forwardRef<HTMLButtonElement, {onClick: () => void}>(function CloseButton(
-  {onClick},
-  ref,
-) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <button
-      ref={ref}
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      aria-label="Close"
-      style={{
-        position: 'absolute',
-        top: 12,
-        right: 12,
-        width: 32,
-        height: 32,
-        borderRadius: `${RADIUS.sm}px`,
-        border: 'none',
-        background: hovered ? 'rgba(212, 175, 55, 0.12)' : 'rgba(21, 21, 37, 0.8)',
-        color: hovered ? COLORS.primary : COLORS.textMuted,
-        fontSize: `${FONT_SIZES.md}px`,
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'background 0.15s, color 0.15s',
-        zIndex: 2,
-      }}>
-      ×
-    </button>
-  );
-});
-
-function PairCard({card, showVersion}: {card: LorcanaCard; showVersion?: boolean}) {
+function PairCardImage({card, isMobile}: {card: LorcanaCard; isMobile?: boolean}) {
   const {previewHandlers} = useCardPreviewHandlers({card});
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   return (
     <div
       style={{
+        flex: '1 1 0',
+        minWidth: 0,
+        maxWidth: 140,
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        width: 160,
+        justifyContent: 'center',
       }}>
-      <div {...previewHandlers}>
+      <div
+        {...(isMobile ? {} : previewHandlers)}
+        onClick={isMobile && card.imageUrl ? () => setLightboxOpen(true) : undefined}
+        style={{cursor: isMobile ? 'pointer' : undefined, width: '100%'}}>
         <CardImage
           src={card.imageUrl}
           alt={card.fullName}
@@ -230,15 +208,34 @@ function PairCard({card, showVersion}: {card: LorcanaCard; showVersion?: boolean
           inkColor={card.ink}
           cost={card.cost}
           borderRadius={10}
+          style={{width: '100%', height: 'auto', maxWidth: 140}}
         />
       </div>
+      {lightboxOpen && card.imageUrl && (
+        <CardLightbox
+          src={card.imageUrl}
+          alt={card.fullName}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function PairCardName({card, showVersion}: {card: LorcanaCard; showVersion?: boolean}) {
+  return (
+    <div
+      style={{
+        flex: '1 1 0',
+        minWidth: 0,
+        maxWidth: 140,
+        textAlign: 'center',
+      }}>
       <div
         style={{
           fontSize: `${FONT_SIZES.base}px`,
           fontWeight: 700,
           color: COLORS.text,
-          marginTop: 12,
-          textAlign: 'center',
         }}>
         {card.name}
       </div>
@@ -247,7 +244,6 @@ function PairCard({card, showVersion}: {card: LorcanaCard; showVersion?: boolean
           style={{
             fontSize: `${FONT_SIZES.base}px`,
             color: COLORS.textMuted,
-            textAlign: 'center',
             marginTop: 2,
           }}>
           {card.version}
@@ -267,20 +263,20 @@ function Connector({score, tier}: {score: number; tier: ReturnType<typeof getStr
       style={{
         display: 'flex',
         alignItems: 'center',
-        // Center on card images: (196px image - 48px circle) / 2 = 74px
-        marginTop: 74,
-        flexShrink: 0,
+        flexShrink: 1,
+        minWidth: 0,
+        margin: '0 6px',
       }}>
-      <div style={{width: 20, borderTop: `1px dashed ${lineColor}`}} />
+      <div style={{flex: '1 1 6px', maxWidth: 14, borderTop: `1px dashed ${lineColor}`}} />
       <div
         style={{
-          width: 48,
-          height: 48,
+          width: 32,
+          height: 32,
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: `${FONT_SIZES.xxl}px`,
+          fontSize: `${FONT_SIZES.base}px`,
           fontWeight: 700,
           flexShrink: 0,
           border: `2px solid ${circleBorderColor}`,
@@ -290,7 +286,7 @@ function Connector({score, tier}: {score: number; tier: ReturnType<typeof getStr
         }}>
         {score}
       </div>
-      <div style={{width: 20, borderTop: `1px dashed ${lineColor}`}} />
+      <div style={{flex: '1 1 6px', maxWidth: 14, borderTop: `1px dashed ${lineColor}`}} />
     </div>
   );
 }

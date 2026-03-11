@@ -1,7 +1,8 @@
-import {useState, memo} from 'react';
+import {useState, useMemo, memo} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData, SynergyMatchDisplay} from '../types';
 import {SynergyCard} from './SynergyCard';
+import {applySynergySortOrder} from '../utils';
 import {COLORS, FONT_SIZES, LAYOUT, SPACING, RADIUS} from '../../../shared/constants';
 
 interface SynergyGroupProps {
@@ -25,7 +26,13 @@ export const SynergyGroup = memo(function SynergyGroup({
   cardMinWidth,
   onCardClick,
 }: SynergyGroupProps) {
-  const totalCount = group.synergies.length;
+  // Default sort: ink alphabetical, then cost ascending within each ink
+  const sortedSynergies = useMemo(
+    () => applySynergySortOrder(group.synergies, 'ink-cost'),
+    [group.synergies],
+  );
+
+  const totalCount = sortedSynergies.length;
   const visibleCount = Math.min(maxVisibleCards, totalCount);
   const isTruncated = visibleCount < totalCount;
 
@@ -86,7 +93,7 @@ export const SynergyGroup = memo(function SynergyGroup({
 
       {/* Card grid */}
       <SynergyCardList
-        synergies={group.synergies}
+        synergies={sortedSynergies}
         isMobile={isMobile}
         maxVisibleCards={maxVisibleCards}
         groupKey={group.groupKey}

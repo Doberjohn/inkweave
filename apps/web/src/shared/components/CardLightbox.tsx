@@ -1,4 +1,5 @@
 import {useState, useEffect, useCallback} from 'react';
+import {createPortal} from 'react-dom';
 import {COLORS, FONT_SIZES, RADIUS, Z_INDEX} from '../constants';
 
 interface CardLightboxProps {
@@ -7,7 +8,8 @@ interface CardLightboxProps {
   onClose: () => void;
 }
 
-/** Fullscreen lightbox overlay for enlarged card images. Dismiss via backdrop click or Escape. Locks body scroll while open. */
+/** Fullscreen lightbox overlay for enlarged card images. Dismiss via backdrop click or Escape. Locks body scroll while open.
+ *  Renders via portal to document.body to escape transform-based stacking contexts (e.g. animated modals). */
 export function CardLightbox({src, alt, onClose}: CardLightboxProps) {
   const [imgError, setImgError] = useState(false);
 
@@ -28,7 +30,7 @@ export function CardLightbox({src, alt, onClose}: CardLightboxProps) {
     };
   }, [handleKeyDown]);
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -70,7 +72,7 @@ export function CardLightbox({src, alt, onClose}: CardLightboxProps) {
           onError={() => setImgError(true)}
           onClick={(e) => e.stopPropagation()}
           style={{
-            maxWidth: '90vw',
+            maxWidth: 'calc(100vw - 80px)',
             maxHeight: '85vh',
             borderRadius: `${RADIUS.xl}px`,
             border: `2px solid ${COLORS.primary500}`,
@@ -80,6 +82,7 @@ export function CardLightbox({src, alt, onClose}: CardLightboxProps) {
           }}
         />
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }

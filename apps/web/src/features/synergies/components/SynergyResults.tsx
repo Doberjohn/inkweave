@@ -3,9 +3,18 @@ import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {CardDetail, SynergyGroup} from '.';
 import {ExpandedGroupView} from './ExpandedGroupView';
-import {chipStyle} from '../utils';
+import {chipStyle, applySynergySortOrder} from '../utils';
 import {EmptyState} from '../../../shared/components';
-import {COLORS, FONTS, FONT_SIZES, SPACING, RADIUS, LAYOUT} from '../../../shared/constants';
+import {SortSelect} from '../../../shared/components/SortSelect';
+import type {SynergySortOrder} from '../../../shared/constants';
+import {
+  COLORS,
+  FONT_SIZES,
+  SPACING,
+  RADIUS,
+  LAYOUT,
+  SYNERGY_SORT_OPTIONS,
+} from '../../../shared/constants';
 
 interface SynergyResultsProps {
   selectedCard: LorcanaCard | null;
@@ -29,14 +38,6 @@ interface SynergyResultsProps {
   onSynergyCardClick?: (card: LorcanaCard) => void;
 }
 
-type SortOrder =
-  | 'strength-desc'
-  | 'strength-asc'
-  | 'name-asc'
-  | 'name-desc'
-  | 'cost-asc'
-  | 'cost-desc';
-
 export const SynergyResults = memo(function SynergyResults({
   selectedCard,
   synergies,
@@ -54,7 +55,7 @@ export const SynergyResults = memo(function SynergyResults({
   // Default: show card detail on mobile, hide on desktop (it's in its own panel)
   const renderCardDetail = showCardDetail ?? isMobile;
   const [internalFilter, setInternalFilter] = useState<string | null>(null);
-  const [sortOrder, setSortOrder] = useState<SortOrder>('strength-desc');
+  const [sortOrder, setSortOrder] = useState<SynergySortOrder>('ink-cost');
 
   // Find the expanded group data when in show-all mode
   const expandedGroupData = expandedGroup
@@ -72,24 +73,7 @@ export const SynergyResults = memo(function SynergyResults({
 
     return filtered.map((group) => ({
       ...group,
-      synergies: [...group.synergies].sort((a, b) => {
-        switch (sortOrder) {
-          case 'strength-desc':
-            return b.score - a.score;
-          case 'strength-asc':
-            return a.score - b.score;
-          case 'name-asc':
-            return a.card.fullName.localeCompare(b.card.fullName);
-          case 'name-desc':
-            return b.card.fullName.localeCompare(a.card.fullName);
-          case 'cost-asc':
-            return a.card.cost - b.card.cost;
-          case 'cost-desc':
-            return b.card.cost - a.card.cost;
-          default:
-            return 0;
-        }
-      }),
+      synergies: applySynergySortOrder(group.synergies, sortOrder),
     }));
   }, [synergies, activeGroupFilter, sortOrder]);
 
@@ -204,29 +188,13 @@ export const SynergyResults = memo(function SynergyResults({
                   </button>
                 ))}
                 {!isMobile && (
-                  <select
-                    aria-label="Sort synergies"
+                  <SortSelect
+                    options={SYNERGY_SORT_OPTIONS}
                     value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-                    style={{
-                      marginLeft: 'auto',
-                      padding: '5px 10px',
-                      borderRadius: `${RADIUS.md}px`,
-                      border: `1px solid ${COLORS.surfaceBorder}`,
-                      background: COLORS.sortBg,
-                      color: COLORS.text,
-                      fontFamily: FONTS.body,
-                      fontSize: `${FONT_SIZES.base}px`,
-                      cursor: 'pointer',
-                      outline: 'none',
-                    }}>
-                    <option value="strength-desc">Strength: High → Low</option>
-                    <option value="strength-asc">Strength: Low → High</option>
-                    <option value="name-asc">Name A–Z</option>
-                    <option value="name-desc">Name Z–A</option>
-                    <option value="cost-asc">Cost: Low → High</option>
-                    <option value="cost-desc">Cost: High → Low</option>
-                  </select>
+                    onChange={setSortOrder}
+                    ariaLabel="Sort synergies"
+                    style={{marginLeft: 'auto'}}
+                  />
                 )}
               </div>
 

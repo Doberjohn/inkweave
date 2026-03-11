@@ -267,4 +267,40 @@ export const CTA_BUTTON_STYLE: React.CSSProperties = {
 };
 
 // Browse sort order
-export type BrowseSortOrder = 'newest' | 'name-asc' | 'name-desc' | 'cost-asc' | 'cost-desc';
+// ── Sort orders ──
+
+export type BrowseSortOrder =
+  | 'ink-cost'
+  | 'newest'
+  | 'name-asc'
+  | 'name-desc'
+  | 'cost-asc'
+  | 'cost-desc';
+
+export type SynergySortOrder =
+  | 'ink-cost'
+  | 'cost-asc'
+  | 'cost-desc'
+  | 'strength-desc'
+  | 'strength-asc'
+  | 'name-asc'
+  | 'name-desc';
+
+export const BROWSE_SORT_OPTIONS: {value: BrowseSortOrder; label: string}[] = [
+  {value: 'ink-cost', label: 'Color \u2192 Cost'},
+  {value: 'newest', label: 'Newest first'},
+  {value: 'name-asc', label: 'Name A\u2013Z'},
+  {value: 'name-desc', label: 'Name Z\u2013A'},
+  {value: 'cost-asc', label: 'Cost: Low \u2192 High'},
+  {value: 'cost-desc', label: 'Cost: High \u2192 Low'},
+];
+
+export const SYNERGY_SORT_OPTIONS: {value: SynergySortOrder; label: string}[] = [
+  {value: 'ink-cost', label: 'Color \u2192 Cost'},
+  {value: 'cost-asc', label: 'Cost: Low \u2192 High'},
+  {value: 'cost-desc', label: 'Cost: High \u2192 Low'},
+  {value: 'strength-desc', label: 'Score: High \u2192 Low'},
+  {value: 'strength-asc', label: 'Score: Low \u2192 High'},
+  {value: 'name-asc', label: 'Name A\u2013Z'},
+  {value: 'name-desc', label: 'Name Z\u2013A'},
+];

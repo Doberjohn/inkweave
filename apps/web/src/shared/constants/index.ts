@@ -1,4 +1,4 @@
-export type {SetCode, CardTypeFilter, BrowseSortOrder} from './theme';
+export type {SetCode, CardTypeFilter, BrowseSortOrder, SynergySortOrder} from './theme';
 export {
   APP_NAME,
   INK_COLORS,
@@ -19,6 +19,8 @@ export {
   SELECT_STYLE_MD,
   CTA_BUTTON_STYLE,
   COST_BUTTONS,
+  BROWSE_SORT_OPTIONS,
+  SYNERGY_SORT_OPTIONS,
   hexToRgb,
   hexRgba,
 } from './theme';
