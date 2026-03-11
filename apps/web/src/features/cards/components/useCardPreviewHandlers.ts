@@ -1,6 +1,7 @@
 import {useCallback, useMemo} from 'react';
 import {useCardPreview} from './useCardPreview';
 import {useTouchPreview} from '../../../shared/hooks';
+import {isSyntheticMouseEvent} from '../../../shared/utils/touchGuard';
 import type {LorcanaCard} from '../types';
 
 interface UseCardPreviewHandlersOptions {
@@ -18,6 +19,7 @@ export function useCardPreviewHandlers({card, onTap}: UseCardPreviewHandlersOpti
 
   const handleMouseEnter = useCallback(
     (e: React.MouseEvent) => {
+      if (isSyntheticMouseEvent()) return;
       showPreview(card, e.clientX, e.clientY);
     },
     [card, showPreview],
@@ -25,6 +27,7 @@ export function useCardPreviewHandlers({card, onTap}: UseCardPreviewHandlersOpti
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
+      if (isSyntheticMouseEvent()) return;
       updatePosition(e.clientX, e.clientY);
     },
     [updatePosition],

@@ -132,7 +132,11 @@ async function main() {
   fs.writeFileSync(path.join(OUTPUT_DIR, '_manifest.json'), JSON.stringify(manifest));
 
   // Clean up stale files from previous runs (safe: new files already written)
-  const newFiles = new Set([...manifest.map((id) => `${id}.json`), '_playstyles.json', '_manifest.json']);
+  const newFiles = new Set([
+    ...manifest.map((id) => `${id}.json`),
+    '_playstyles.json',
+    '_manifest.json',
+  ]);
   for (const file of existingFiles) {
     if (!newFiles.has(file)) {
       fs.unlinkSync(path.join(OUTPUT_DIR, file));

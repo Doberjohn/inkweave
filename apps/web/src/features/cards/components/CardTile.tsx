@@ -2,6 +2,7 @@ import {useState, useCallback, memo} from 'react';
 import type {LorcanaCard} from '../types';
 import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {useCardPreviewHandlers} from './useCardPreviewHandlers';
+import {isSyntheticMouseEvent} from '../../../shared/utils/touchGuard';
 import {smallImageUrl} from '../loader';
 
 interface CardTileProps {
@@ -45,6 +46,7 @@ export const CardTile = memo(function CardTile({
       className="card-tile"
       data-testid="card-tile"
       onClick={() => {
+        if (isSyntheticMouseEvent()) return;
         hidePreview();
         handleClick();
       }}
