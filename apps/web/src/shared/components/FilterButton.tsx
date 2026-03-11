@@ -1,3 +1,4 @@
+import {useState} from 'react';
 import {COLORS, RADIUS, FONT_SIZES} from '../constants';
 
 type FilterButtonSize = 'sm' | 'md';
@@ -40,23 +41,46 @@ export function FilterButton({
   size = 'sm',
   'aria-label': ariaLabel,
 }: FilterButtonProps) {
+  const [hovered, setHovered] = useState(false);
   const sizeStyle = SIZE_STYLES[size];
   const bgColor = activeBgColor ?? activeColor;
+
+  const hoverStyles = active
+    ? {
+        border: `1px solid ${activeColor}80`,
+        background: bgColor,
+        boxShadow: hovered
+          ? `0 0 12px ${activeColor}70, inset 0 0 6px ${activeColor}20`
+          : `0 0 8px ${activeColor}50`,
+      }
+    : hovered
+      ? {
+          border: `1px solid ${activeColor}40`,
+          background: inactiveColor,
+          boxShadow: `0 0 8px ${activeColor}30`,
+        }
+      : {
+          border: '1px solid transparent',
+          background: inactiveColor,
+          boxShadow: 'none',
+        };
 
   return (
     <button
       onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       aria-pressed={active}
       aria-label={ariaLabel}
       style={{
         ...sizeStyle,
-        border: active ? `1px solid ${activeColor}80` : `1px solid transparent`,
-        background: active ? bgColor : inactiveColor,
+        border: hoverStyles.border,
+        background: hoverStyles.background,
         color: active ? COLORS.white : inactiveTextColor,
         fontWeight: 500,
         cursor: 'pointer',
-        boxShadow: active ? `0 0 8px ${activeColor}50` : 'none',
-        transition: 'box-shadow 0.2s, background 0.2s',
+        boxShadow: hoverStyles.boxShadow,
+        transition: 'box-shadow 0.2s, background 0.2s, border-color 0.2s',
       }}>
       {children}
     </button>

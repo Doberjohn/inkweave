@@ -14,8 +14,7 @@ test.describe('Responsive Images', () => {
 
     // Above-fold featured cards should load eagerly for LCP
     expect(await firstImg.getAttribute('loading')).toBe('eager');
-    // Note: fetchpriority requires React 19+; React 18 relies on loading="eager" + decoding="sync"
-    expect(await firstImg.getAttribute('decoding')).toBe('sync');
+    expect(await firstImg.getAttribute('fetchpriority')).toBe('high');
   });
 
   test('should render images in featured cards grid', async ({appPage}) => {

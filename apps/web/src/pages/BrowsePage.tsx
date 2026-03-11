@@ -14,8 +14,7 @@ import {
   FilterDrawer,
   FilterModal,
 } from '../shared/components';
-import {BROWSE_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
-import {SortSelect} from '../shared/components/SortSelect';
+import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
 
@@ -27,7 +26,6 @@ export function BrowsePage() {
     isLoading,
     error,
     retryLoad,
-    totalCards,
     uniqueKeywords,
     uniqueClassifications,
     sets,
@@ -122,8 +120,6 @@ export function BrowsePage() {
   }
 
   const toolbarProps = {
-    resultCount: sortedCards.length,
-    totalCount: totalCards,
     onFiltersClick: isMobile ? () => setShowFilterDrawer(true) : () => setShowFilterModal(true),
     activeFilterCount,
     inkFilters,
@@ -166,22 +162,6 @@ export function BrowsePage() {
           </h1>
           {/* Toolbar */}
           <BrowseToolbar {...toolbarProps} isMobile />
-          {/* Sort row — full-width on mobile */}
-          <div
-            style={{
-              width: '100%',
-              padding: `${SPACING.sm}px ${SPACING.lg}px 0`,
-              position: 'relative',
-              zIndex: 1,
-            }}>
-            <SortSelect
-              options={BROWSE_SORT_OPTIONS}
-              value={sortOrder}
-              onChange={setSortOrder}
-              ariaLabel="Sort cards"
-              style={{width: '100%', padding: '8px 10px'}}
-            />
-          </div>
           {/* Card grid */}
           <ErrorBoundary>
             {isLoading ? (

@@ -14,7 +14,7 @@ See `TASK.md` for MVP roadmap and GitHub issues #28-49.
 ## Tech Stack
 
 - pnpm workspaces monorepo
-- React 18 + TypeScript 5
+- React 19 + TypeScript 5
 - Vite bundler
 - Inline CSS with design tokens (no UI framework)
 - Static JSON card database

@@ -13,7 +13,6 @@ import {
   LoadingSpinner,
 } from '../shared/components';
 import {
-  BROWSE_SORT_OPTIONS,
   COLORS,
   FONTS,
   FONT_SIZES,
@@ -22,7 +21,6 @@ import {
   SPACING,
   PLAYSTYLE_UI,
 } from '../shared/constants';
-import {SortSelect} from '../shared/components/SortSelect';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive, useFilterParams, usePreloadImages} from '../shared/hooks';
 
@@ -405,8 +403,6 @@ export function PlaystyleDetailPage() {
   const heroLayout = isMobile ? HERO_MOBILE : HERO_DESKTOP;
 
   const toolbarProps = {
-    resultCount: sortedCards.length,
-    totalCount: playstyleCards.length,
     onFiltersClick: isMobile ? () => setShowFilterDrawer(true) : () => setShowFilterModal(true),
     activeFilterCount,
     inkFilters,
@@ -445,22 +441,6 @@ export function PlaystyleDetailPage() {
             onPlaystylesBreadcrumb={goPlaystyles}
           />
           <BrowseToolbar {...toolbarProps} isMobile />
-          {/* Sort row — full-width on mobile */}
-          <div
-            style={{
-              width: '100%',
-              padding: `${SPACING.sm}px ${SPACING.lg}px 0`,
-              position: 'relative',
-              zIndex: 1,
-            }}>
-            <SortSelect
-              options={BROWSE_SORT_OPTIONS}
-              value={sortOrder}
-              onChange={setSortOrder}
-              ariaLabel="Sort cards"
-              style={{width: '100%', padding: '8px 10px'}}
-            />
-          </div>
           {/* Card grid */}
           <ErrorBoundary>
             {sortedCards.length === 0 ? (

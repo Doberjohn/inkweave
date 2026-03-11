@@ -11,17 +11,13 @@ import {FilterModal} from '../../../shared/components/FilterModal';
 import {FilterDrawer} from '../../../shared/components/FilterDrawer';
 import {FilterChip} from '../../../shared/components/FilterChip';
 import {FiltersButton} from '../../../shared/components/FiltersButton';
-import {ResultCount} from '../../../shared/components/ResultCount';
+import {InkFilterGroup} from '../../../shared/components/InkFilterGroup';
 import {SortSelect} from '../../../shared/components/SortSelect';
 import type {ChipData} from '../../../shared/types';
 
 interface SynergyToolbarProps {
   /** Current filter state */
   filterState: SynergyFilterState;
-  /** Number of cards after filtering */
-  resultCount: number;
-  /** Total cards in the group (before filtering) */
-  totalCount: number;
   /** Callbacks for filter changes — supports functional updater to avoid stale closures */
   onFilterChange: (update: SetStateAction<SynergyFilterState>) => void;
   /** Sort state */
@@ -39,8 +35,6 @@ const STRENGTH_TIERS: StrengthTierFilter[] = ['Strong', 'Moderate', 'Weak'];
 
 export function SynergyToolbar({
   filterState,
-  resultCount,
-  totalCount,
   onFilterChange,
   sortOrder,
   onSortChange,
@@ -67,19 +61,22 @@ export function SynergyToolbar({
   );
 
   // Build chip list from active filters (strength excluded — it has its own toggle row)
+  // Desktop shows ink icons inline, so skip ink chips there
   // Uses functional updaters in onDismiss to avoid stale closure bugs under rapid interaction.
   const chips: ChipData[] = useMemo(() => {
     const result: ChipData[] = [];
-    for (const ink of inkFilters) {
-      result.push({
-        id: `ink:${ink}`,
-        label: ink,
-        onDismiss: () =>
-          onFilterChange((prev) => ({
-            ...prev,
-            inkFilters: prev.inkFilters.filter((i) => i !== ink),
-          })),
-      });
+    if (isMobile) {
+      for (const ink of inkFilters) {
+        result.push({
+          id: `ink:${ink}`,
+          label: ink,
+          onDismiss: () =>
+            onFilterChange((prev) => ({
+              ...prev,
+              inkFilters: prev.inkFilters.filter((i) => i !== ink),
+            })),
+        });
+      }
     }
     for (const type of typeFilters) {
       result.push({
@@ -131,7 +128,7 @@ export function SynergyToolbar({
       });
     }
     return result;
-  }, [inkFilters, typeFilters, costFilters, filters, onFilterChange]);
+  }, [isMobile, inkFilters, typeFilters, costFilters, filters, onFilterChange]);
 
   const hasChips = chips.length > 0;
 
@@ -151,6 +148,18 @@ export function SynergyToolbar({
   const handleClearAll = useCallback(() => {
     onFilterChange(EMPTY_SYNERGY_FILTERS);
   }, [onFilterChange]);
+
+  const toggleInk = useCallback(
+    (ink: Ink) => {
+      onFilterChange((prev) => ({
+        ...prev,
+        inkFilters: prev.inkFilters.includes(ink)
+          ? prev.inkFilters.filter((i) => i !== ink)
+          : [...prev.inkFilters, ink],
+      }));
+    },
+    [onFilterChange],
+  );
 
   const toggleStrength = useCallback(
     (tier: StrengthTierFilter) => {
@@ -182,15 +191,6 @@ export function SynergyToolbar({
           isMobile={isMobile}
         />
 
-        {/* Divider */}
-        <span style={{width: 1, height: 20, background: COLORS.surfaceBorder, flexShrink: 0}} />
-
-        <ResultCount
-          resultCount={resultCount}
-          totalCount={totalCount}
-          data-testid="synergy-result-count"
-        />
-
         {/* Strength tier toggle chips */}
         <div style={{display: 'flex', gap: 6, ...(isMobile ? {flexShrink: 0} : {})}}>
           {STRENGTH_TIERS.map((tier) => {
@@ -213,15 +213,25 @@ export function SynergyToolbar({
                       ? 'rgba(212, 175, 55, 0.18)'
                       : 'rgba(212, 175, 55, 0.1)'
                     : isHovered
-                      ? 'rgba(255, 255, 255, 0.05)'
+                      ? 'rgba(255, 185, 0, 0.06)'
                       : 'transparent',
-                  border: `1px solid ${active ? 'rgba(212, 175, 55, 0.25)' : COLORS.surfaceBorder}`,
-                  color: active ? COLORS.primary500 : COLORS.textMuted,
+                  border: `1px solid ${
+                    active
+                      ? 'rgba(212, 175, 55, 0.25)'
+                      : isHovered
+                        ? 'rgba(255, 185, 0, 0.25)'
+                        : COLORS.surfaceBorder
+                  }`,
+                  color: active || isHovered ? COLORS.primary500 : COLORS.textMuted,
                   fontFamily: FONTS.body,
                   fontSize: `${FONT_SIZES.base}px`,
                   fontWeight: 500,
                   cursor: 'pointer',
-                  transition: 'all 0.15s',
+                  transition: 'all 0.2s',
+                  boxShadow:
+                    active || isHovered
+                      ? '0 0 12px rgba(255, 185, 0, 0.15), inset 0 0 8px rgba(255, 185, 0, 0.05)'
+                      : 'none',
                   ...(isMobile ? {minHeight: 44} : {}),
                 }}>
                 {tier}
@@ -267,15 +277,23 @@ export function SynergyToolbar({
           </div>
         )}
 
-        {/* Sort — desktop only */}
+        {/* Right side: ink filters (desktop) + sort */}
         {!isMobile && (
-          <SortSelect
-            options={SYNERGY_SORT_OPTIONS}
-            value={sortOrder}
-            onChange={onSortChange}
-            ariaLabel="Sort synergies"
-            style={{marginLeft: hasChips ? undefined : 'auto'}}
-          />
+          <div
+            style={{
+              marginLeft: hasChips ? undefined : 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}>
+            <InkFilterGroup inkFilters={inkFilters} onToggleInk={toggleInk} />
+            <SortSelect
+              options={SYNERGY_SORT_OPTIONS}
+              value={sortOrder}
+              onChange={onSortChange}
+              ariaLabel="Sort synergies"
+            />
+          </div>
         )}
       </div>
 

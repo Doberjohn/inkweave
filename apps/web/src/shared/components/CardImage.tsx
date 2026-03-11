@@ -49,6 +49,7 @@ export function CardImage({
         alt={alt}
         loading={lazy ? 'lazy' : undefined}
         decoding={priority ? 'sync' : 'async'}
+        fetchPriority={priority ? 'high' : undefined}
         onError={() => setImgError(true)}
         style={{
           width: `${width}px`,

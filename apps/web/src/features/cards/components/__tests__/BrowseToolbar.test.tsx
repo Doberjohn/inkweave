@@ -7,8 +7,6 @@ import type {CardTypeFilter, BrowseSortOrder} from '../../../../shared/constants
 
 function defaultProps(overrides: Partial<Parameters<typeof BrowseToolbar>[0]> = {}) {
   return {
-    resultCount: 100,
-    totalCount: 1432,
     onFiltersClick: vi.fn(),
     activeFilterCount: 0,
     inkFilters: [] as Ink[],
@@ -28,20 +26,10 @@ function defaultProps(overrides: Partial<Parameters<typeof BrowseToolbar>[0]> = 
 }
 
 describe('BrowseToolbar', () => {
-  it('renders filters button and result count', () => {
+  it('renders filters button', () => {
     render(<BrowseToolbar {...defaultProps()} />);
 
     expect(screen.getByRole('button', {name: 'Filters'})).toBeInTheDocument();
-    expect(screen.getByTestId('result-count')).toHaveTextContent('100');
-    expect(screen.getByTestId('result-count')).toHaveTextContent('of 1432 cards');
-  });
-
-  it('shows "cards" without total when all match', () => {
-    render(<BrowseToolbar {...defaultProps({resultCount: 1432, totalCount: 1432})} />);
-
-    expect(screen.getByTestId('result-count')).toHaveTextContent('1432');
-    expect(screen.getByTestId('result-count')).toHaveTextContent('cards');
-    expect(screen.getByTestId('result-count')).not.toHaveTextContent('of');
   });
 
   it('calls onFiltersClick when Filters button clicked', () => {
@@ -59,10 +47,12 @@ describe('BrowseToolbar', () => {
     expect(screen.getByText('3')).toBeInTheDocument();
   });
 
-  it('renders ink filter chips that dismiss on click', () => {
+  it('renders ink filter chips on mobile that dismiss on click', () => {
     const onToggleInk = vi.fn();
     render(
-      <BrowseToolbar {...defaultProps({inkFilters: ['Amethyst', 'Ruby'] as Ink[], onToggleInk})} />,
+      <BrowseToolbar
+        {...defaultProps({inkFilters: ['Amethyst', 'Ruby'] as Ink[], onToggleInk, isMobile: true})}
+      />,
     );
 
     expect(screen.getByText('Amethyst')).toBeInTheDocument();
@@ -70,6 +60,16 @@ describe('BrowseToolbar', () => {
 
     fireEvent.click(screen.getByText('Amethyst'));
     expect(onToggleInk).toHaveBeenCalledWith('Amethyst');
+  });
+
+  it('shows ink icon buttons on desktop instead of chips', () => {
+    render(
+      <BrowseToolbar {...defaultProps({inkFilters: ['Amethyst'] as Ink[]})} />,
+    );
+
+    expect(screen.getByRole('button', {name: 'Filter by Amethyst'})).toBeInTheDocument();
+    // Ink chip text should not appear on desktop
+    expect(screen.queryByText('Amethyst')).not.toBeInTheDocument();
   });
 
   it('renders type filter chips that dismiss on click', () => {
@@ -99,7 +99,11 @@ describe('BrowseToolbar', () => {
 
   it('shows Clear all button when chips are present', () => {
     const onClearAll = vi.fn();
-    render(<BrowseToolbar {...defaultProps({inkFilters: ['Sapphire'] as Ink[], onClearAll})} />);
+    render(
+      <BrowseToolbar
+        {...defaultProps({typeFilters: ['Character'] as CardTypeFilter[], onClearAll})}
+      />,
+    );
 
     const clearBtn = screen.getByText('Clear all');
     expect(clearBtn).toBeInTheDocument();
@@ -108,18 +112,13 @@ describe('BrowseToolbar', () => {
     expect(onClearAll).toHaveBeenCalledOnce();
   });
 
-  it('renders sort select on desktop', () => {
-    render(<BrowseToolbar {...defaultProps({isMobile: false})} />);
+  it('renders sort select on both desktop and mobile', () => {
+    const {unmount} = render(<BrowseToolbar {...defaultProps({isMobile: false})} />);
+    expect(screen.getByRole('combobox', {name: 'Sort cards'})).toBeInTheDocument();
+    unmount();
 
-    const select = screen.getByRole('combobox', {name: 'Sort cards'});
-    expect(select).toBeInTheDocument();
-    expect(select).toHaveValue('newest');
-  });
-
-  it('hides sort select on mobile', () => {
     render(<BrowseToolbar {...defaultProps({isMobile: true})} />);
-
-    expect(screen.queryByRole('combobox', {name: 'Sort cards'})).not.toBeInTheDocument();
+    expect(screen.getByRole('combobox', {name: 'Sort cards'})).toBeInTheDocument();
   });
 
   it('fires onSortChange when sort is changed', () => {

@@ -2,7 +2,7 @@ import {useCallback, useRef} from 'react';
 import {COLORS, FONT_SIZES, RADIUS, SPACING, Z_INDEX, CTA_BUTTON_STYLE} from '../constants';
 import {useDraftFilters} from '../hooks/useDraftFilters';
 import {useDialogFocus} from '../hooks/useDialogFocus';
-import {useTransitionPresence} from '../hooks';
+import {useScrollLock, useTransitionPresence} from '../hooks';
 import {FilterContent} from './FilterContent';
 import type {FilterPanelProps} from './FilterContent';
 
@@ -22,6 +22,7 @@ export function FilterDrawer({
   const applyButtonRef = useRef<HTMLButtonElement>(null);
 
   const {mounted, visible, onTransitionEnd} = useTransitionPresence(isOpen);
+  useScrollLock(isOpen);
 
   const draft = useDraftFilters({isOpen, inkFilters, typeFilters, costFilters, filters});
 

@@ -177,7 +177,6 @@ export function CardPage() {
         <MobileCardDetail
           card={selectedCard}
           synergies={synergies}
-          totalSynergyCount={totalSynergyCount}
           onBack={goHome}
           onSynergyCardClick={handleSynergyCardClick}
         />

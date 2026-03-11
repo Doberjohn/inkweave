@@ -82,6 +82,7 @@ export const CardTile = memo(function CardTile({
           alt={card.fullName || card.name || ''}
           loading={priority ? 'eager' : 'lazy'}
           decoding={priority ? 'sync' : 'async'}
+          fetchPriority={priority ? 'high' : undefined}
           onError={() => setImgError(true)}
           style={{
             width: '100%',

@@ -110,8 +110,6 @@ export function ExpandedGroupView({
       {/* Toolbar with filters + sort */}
       <SynergyToolbar
         filterState={filterState}
-        resultCount={filteredSynergies.length}
-        totalCount={group.synergies.length}
         onFilterChange={setFilterState}
         sortOrder={sortOrder}
         onSortChange={setSortOrder}

@@ -1,6 +1,7 @@
 import {useState, useEffect, useCallback} from 'react';
 import {createPortal} from 'react-dom';
 import {COLORS, FONT_SIZES, RADIUS, Z_INDEX} from '../constants';
+import {useScrollLock} from '../hooks';
 
 interface CardLightboxProps {
   src: string;
@@ -20,13 +21,12 @@ export function CardLightbox({src, alt, onClose}: CardLightboxProps) {
     [onClose],
   );
 
+  useScrollLock(true);
+
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = prev;
     };
   }, [handleKeyDown]);
 
