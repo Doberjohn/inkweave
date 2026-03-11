@@ -1,5 +1,6 @@
 import {useCallback, useMemo, useState, type ReactNode} from 'react';
 import {useNavigate} from 'react-router-dom';
+import {isSyntheticMouseEvent} from '../shared/utils/touchGuard';
 import {
   getAllPlaystyles,
   getRulesByPlaystyle,
@@ -117,7 +118,10 @@ function PlaystyleCardShell({
     <article
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
-      onClick={onClick}
+      onClick={() => {
+        if (isSyntheticMouseEvent()) return;
+        onClick?.();
+      }}
       onKeyDown={
         isClickable
           ? (e) => {

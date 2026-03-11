@@ -4,6 +4,7 @@ import {smallImageUrl} from '../../cards';
 import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {CardLightbox} from '../../../shared/components';
 import {useCardPreviewHandlers} from '../../cards';
+import {isSyntheticMouseEvent} from '../../../shared/utils/touchGuard';
 import {getStrengthTier} from '../utils';
 
 interface SynergyCardProps {
@@ -36,6 +37,7 @@ export const SynergyCard = memo(function SynergyCard({
       <button
         className="card-tile"
         onClick={() => {
+          if (isSyntheticMouseEvent()) return;
           if (onCardClick) {
             onCardClick(card);
           } else if (isMobile && card.imageUrl) {

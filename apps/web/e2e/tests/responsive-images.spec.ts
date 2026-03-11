@@ -54,9 +54,14 @@ test.describe('Responsive Images', () => {
     const errorBanner = page.getByRole('alert');
 
     // Wait for any synergy state to appear
-    await expect(synergyCards.first().or(noSynergies).or(errorBanner)).toBeVisible({timeout: 10000});
+    await expect(synergyCards.first().or(noSynergies).or(errorBanner)).toBeVisible({
+      timeout: 10000,
+    });
 
-    const hasSynergies = await synergyCards.first().isVisible().catch(() => false);
+    const hasSynergies = await synergyCards
+      .first()
+      .isVisible()
+      .catch(() => false);
     if (!hasSynergies) {
       return; // No synergy images to test
     }
