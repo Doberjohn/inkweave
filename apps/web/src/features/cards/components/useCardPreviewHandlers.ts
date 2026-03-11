@@ -40,6 +40,7 @@ export function useCardPreviewHandlers({card, onTap}: UseCardPreviewHandlersOpti
   // Keyboard focus support for accessibility
   const handleFocus = useCallback(
     (e: React.FocusEvent) => {
+      if (isSyntheticMouseEvent()) return;
       const rect = (e.target as HTMLElement).getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0) {
         showPreview(card, rect.x + rect.width / 2, rect.y);
