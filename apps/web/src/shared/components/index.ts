@@ -18,5 +18,6 @@ export {SearchAutocomplete} from './SearchAutocomplete';
 export {SearchIcon} from './SearchIcon';
 export {FilterDrawer} from './FilterDrawer';
 export {LoadingSpinner} from './LoadingSpinner';
+export {MobileBottomNav, MOBILE_NAV_HEIGHT} from './MobileBottomNav';
 export {EmptyState} from './EmptyState';
 export {ErrorBoundary} from './ErrorBoundary';

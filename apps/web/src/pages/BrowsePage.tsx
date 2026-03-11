@@ -1,5 +1,5 @@
-import {useCallback, useMemo, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
+import {useCallback, useEffect, useMemo, useState} from 'react';
+import {useNavigate, useSearchParams} from 'react-router-dom';
 import {BrowseCardGrid, BrowseToolbar, CardTile} from '../features/cards';
 import {
   searchCardsByName,
@@ -51,6 +51,19 @@ export function BrowsePage() {
   } = useFilterParams();
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Auto-focus search when navigating with ?focus=search (e.g. from mobile bottom nav)
+  useEffect(() => {
+    if (searchParams.get('focus') === 'search') {
+      requestAnimationFrame(() => {
+        const input = document.querySelector<HTMLInputElement>('[data-testid="browse-search"]');
+        input?.focus();
+      });
+      searchParams.delete('focus');
+      setSearchParams(searchParams, {replace: true});
+    }
+  }, [searchParams, setSearchParams]);
 
   const combinedFilters = useMemo<CardFilterOptions>(() => {
     const combined = {...filters};

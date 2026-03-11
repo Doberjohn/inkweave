@@ -1,14 +1,19 @@
-import {Outlet} from 'react-router-dom';
+import {Outlet, useLocation} from 'react-router-dom';
 import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
 import {CardPreviewProvider, CardPreviewPopover} from './features/cards';
-import {ErrorBoundary} from './shared/components';
+import {ErrorBoundary, MobileBottomNav, MOBILE_NAV_HEIGHT} from './shared/components';
 import {CardDataProvider} from './shared/contexts/CardDataContext';
 import {COLORS} from './shared/constants';
 import {useCardDataContext} from './shared/contexts/CardDataContext';
+import {useResponsive} from './shared/hooks';
 
 function AppContent() {
   const {error, retryLoad} = useCardDataContext();
+  const {isMobile} = useResponsive();
+  const {pathname} = useLocation();
+  const isHome = pathname === '/';
+  const showBottomNav = isMobile && !isHome;
 
   if (error) {
     return (
@@ -33,7 +38,14 @@ function AppContent() {
     );
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <div style={showBottomNav ? {paddingBottom: MOBILE_NAV_HEIGHT} : undefined}>
+        <Outlet />
+      </div>
+      {showBottomNav && <MobileBottomNav />}
+    </>
+  );
 }
 
 export function AppLayout() {

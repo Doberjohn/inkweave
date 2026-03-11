@@ -1,4 +1,5 @@
 import {useCallback, useState, type ReactNode} from 'react';
+import {useLocation, useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING, Z_INDEX} from '../constants';
 import {useAutocomplete} from '../hooks';
@@ -21,6 +22,11 @@ interface CompactHeaderProps {
   isMobile?: boolean;
 }
 
+const NAV_ITEMS = [
+  {path: '/browse', label: 'Browse'},
+  {path: '/playstyles', label: 'Playstyles'},
+] as const;
+
 export function CompactHeader({
   onLogoClick,
   showBackArrow,
@@ -33,6 +39,9 @@ export function CompactHeader({
   isMobile,
 }: CompactHeaderProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [hoveredNav, setHoveredNav] = useState<string | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
   const hasSearch = searchQuery !== undefined && onSearchChange !== undefined;
   const mobile = !!isMobile;
 
@@ -195,6 +204,66 @@ export function CompactHeader({
             getOptionProps={autocomplete.getOptionProps}
           />
         </div>
+      )}
+
+      {/* Nav strip (desktop only, centered absolutely) */}
+      {!mobile && (
+        <nav
+          aria-label="Main navigation"
+          style={{
+            position: 'absolute',
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+            display: 'flex',
+            alignItems: 'center',
+            height: 38,
+            borderRadius: RADIUS.lg,
+            border: `1px solid ${COLORS.surfaceBorder}`,
+            background: '#10101c',
+            overflow: 'hidden',
+          }}>
+          {NAV_ITEMS.map(({path, label}) => {
+            const isActive = location.pathname.startsWith(path);
+            const isHovered = hoveredNav === path;
+            return (
+              <a
+                key={path}
+                href={path}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(path);
+                }}
+                onMouseEnter={() => setHoveredNav(path)}
+                onMouseLeave={() => setHoveredNav(null)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 20px',
+                  height: '100%',
+                  background: isActive
+                    ? COLORS.surfaceHover
+                    : isHovered
+                      ? 'rgba(255, 185, 0, 0.06)'
+                      : 'transparent',
+                  color: isActive || isHovered ? COLORS.primary : COLORS.textMuted,
+                  fontFamily: FONTS.body,
+                  fontSize: `${FONT_SIZES.base}px`,
+                  fontWeight: isActive ? 600 : 500,
+                  textDecoration: 'none',
+                  transition: 'background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease',
+                  boxShadow:
+                    isHovered && !isActive
+                      ? '0 0 12px rgba(255, 185, 0, 0.15), inset 0 0 8px rgba(255, 185, 0, 0.05)'
+                      : 'none',
+                  cursor: 'pointer',
+                }}>
+                {label}
+              </a>
+            );
+          })}
+        </nav>
       )}
 
       {/* Optional header actions (e.g. filters button on CardPage) */}
