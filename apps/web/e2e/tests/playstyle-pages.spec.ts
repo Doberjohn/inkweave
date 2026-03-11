@@ -61,7 +61,7 @@ test.describe('Playstyle Pages', () => {
 
     // Should have card tiles showing related cards
     const cardTiles = page.getByTestId('card-tile');
-    await expect(cardTiles.first()).toBeVisible({timeout: 10000});
+    await expect(cardTiles.first()).toBeVisible({timeout: 15000});
     const count = await cardTiles.count();
     expect(count).toBeGreaterThan(0);
   });

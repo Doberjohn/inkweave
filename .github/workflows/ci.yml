@@ -71,6 +71,9 @@ jobs:
       - name: Build packages
         run: pnpm build
 
+      - name: Pre-compute synergy data
+        run: pnpm precompute-synergies
+
       - name: Install Playwright browsers
         run: pnpm --filter inkweave-web exec playwright install --with-deps chromium
 
