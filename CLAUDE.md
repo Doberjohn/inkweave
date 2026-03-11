@@ -113,9 +113,9 @@ pnpm test:web         # Run web tests
 
 ## Architecture Notes
 
-- SynergyEngine uses pluggable rules pattern - add rules via `SynergyRule` interface
-- Synergies memoized - only recompute on card selection or game mode change
-- Card data loaded once on init, all operations in-memory
+- SynergyEngine uses pluggable rules pattern - add rules via `SynergyRule` interface (runs at build time only; web app fetches pre-computed JSON)
+- Synergies pre-computed at build time via `scripts/precompute-synergies.mjs`, fetched on demand per card selection
+- Card data loaded once on init from `allCards.json`; synergy data lazy-loaded per card from `/data/synergies/{cardId}.json`
 - Card data pre-deduplicated in `allCards.json` (same card in multiple sets appears once); loader expects clean data
 - Two-column UI: CardList (340px) | SynergyResults (flex) - deck builder removed for MVP
 - Floating card preview popover on hover (CardPreviewContext + CardPreviewPopover)
@@ -157,6 +157,7 @@ After pushing, always confirm with clear output (e.g., git log showing commit on
 
 ### Engine Rebuilds
 - **IMMEDIATELY** after modifying any file in `packages/synergy-engine/src/`, run `pnpm build:engine`. Do not wait — rebuild right after the edit, before doing anything else (unit tests, browser testing, E2E, or further code changes). Vite and the web app resolve the workspace package from its built `dist/`, so changes are invisible until rebuilt.
+- After engine rebuilds that affect synergy rules/scoring, also run `pnpm precompute-synergies` to regenerate the static synergy JSON files. The Vite dev server auto-detects stale data on startup (via `ensureSynergiesPlugin`), but mid-session changes require a manual re-run.
 
 ### Synergy Rule Documentation
 - When modifying rule logic, scoring, or explanations in the engine, always update the **Synergy Rules** section in this file to match. This includes score tables, condition matchers, explanation templates, and display tier definitions.

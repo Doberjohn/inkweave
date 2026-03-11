@@ -31,7 +31,7 @@ Bundle: 233 KB JS gzip (budget: 280 KB) · 262 KB card data gzip (budget: 300 KB
 - [x] Bundle budgets enforced in CI (`size-limit`)
 - [x] Thumbnail images used in card grids (loader extracts both `images.full` and `images.thumbnail`)
 - [x] Vitest benchmarks for synergy engine (`pnpm bench:engine`) — findSynergies, checkSynergy, getPairSynergies
-- [x] Performance marks for synergy computation (`performance.measure('synergy-computation')`)
+- [x] ~~Performance marks for synergy computation~~ (removed — synergies now pre-computed at build time, not measured at runtime)
 - [x] Playstyle cover images converted PNG → WebP (~75% size reduction)
 - [x] CSS inlined into HTML via custom Vite plugin (eliminates render-blocking CSS request)
 - [x] Playstyle image references updated `.png` → `.webp`
@@ -71,10 +71,8 @@ Currently rendering up to 204 DOM nodes in `CardList`. Fine now, but add `@tanst
 
 All consumers re-render on any context change. Split into `CardMetadataContext` (loading/error) and `CardListContext` (card data) for fine-grained subscriptions.
 
-### Move synergy engine to Web Worker
-**Trigger**: When rule complexity or card pool grows significantly
-
-`findSynergies()` runs on the main thread (memoized). Use `comlink` to offload to a Worker if it starts blocking UI (>50ms).
+### ~~Move synergy engine to Web Worker~~ (Resolved)
+Synergies are now pre-computed at build time and served as static JSON. The engine no longer runs in the browser, so Web Worker offloading is unnecessary.
 
 ### Add Brotli pre-compression
 **Trigger**: When bundle nears budget limits

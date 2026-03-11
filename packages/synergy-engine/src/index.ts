@@ -59,5 +59,7 @@ export {
   isCardType,
   getShiftType,
   hasAnyShift,
+  transformCard,
+  transformCards,
 } from './utils';
-export type {LocationRole, ShiftType} from './utils';
+export type {LocationRole, ShiftType, LorcanaJSONCard} from './utils';

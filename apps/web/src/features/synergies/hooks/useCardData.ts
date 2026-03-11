@@ -22,7 +22,7 @@ export interface UseCardDataReturn {
 }
 
 /**
- * Hook to load and manage card data from LorcanaJSON
+ * Hook to load card data and extract filter metadata (keywords, classifications, sets).
  */
 export function useCardData(): UseCardDataReturn {
   const [cards, setCards] = useState<LorcanaCard[]>([]);

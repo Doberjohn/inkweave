@@ -1,2 +1,8 @@
-export {useCardData} from './useSynergyFinder';
-export type {UseCardDataReturn} from './useSynergyFinder';
+export {useCardData} from './useCardData';
+export type {UseCardDataReturn} from './useCardData';
+export {
+  usePrecomputedSynergies,
+  usePrecomputedPlaystyleCards,
+  useAllPlaystyleCards,
+} from './usePrecomputedSynergies';
+export type {UsePrecomputedSynergiesReturn} from './usePrecomputedSynergies';

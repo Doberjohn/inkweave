@@ -3,10 +3,10 @@ import {useNavigate} from 'react-router-dom';
 import {
   getAllPlaystyles,
   getRulesByPlaystyle,
-  synergyEngine,
   type LorcanaCard,
   type Playstyle,
 } from 'inkweave-synergy-engine';
+import {useAllPlaystyleCards} from '../features/synergies/hooks';
 import {
   CompactHeader,
   ErrorBoundary,
@@ -472,6 +472,8 @@ export function PlaystyleGalleryPage() {
     [navigate],
   );
 
+  const {data: playstyleCardData} = useAllPlaystyleCards();
+
   const activePlaystyles = useMemo(() => {
     return getAllPlaystyles()
       .filter((ps) => {
@@ -484,10 +486,16 @@ export function PlaystyleGalleryPage() {
       .map((ps) => {
         const ui = PLAYSTYLE_UI[ps.id];
         const ruleCount = getRulesByPlaystyle(ps.id).length;
-        const playstyleCards = synergyEngine.getPlaystyleCards(ps.id, cards);
-        return {playstyle: ps, ui, ruleCount, cards: playstyleCards};
+        const psData = playstyleCardData.get(ps.id);
+        return {
+          playstyle: ps,
+          ui,
+          ruleCount,
+          cardCount: psData?.count ?? 0,
+          previewCards: psData?.previewCards ?? [],
+        };
       });
-  }, [cards]);
+  }, [playstyleCardData]);
 
   if (error) {
     return (
@@ -577,14 +585,14 @@ export function PlaystyleGalleryPage() {
           ) : (
             <div style={isMobile ? gridStyleMobile : gridStyleDesktop}>
               {/* Active playstyles */}
-              {activePlaystyles.map(({playstyle, ui, ruleCount, cards: psCards}) => (
+              {activePlaystyles.map(({playstyle, ui, ruleCount, cardCount, previewCards}) => (
                 <ActivePlaystyleCard
                   key={playstyle.id}
                   playstyle={playstyle}
                   ui={ui}
-                  cardCount={psCards.length}
+                  cardCount={cardCount}
                   ruleCount={ruleCount}
-                  previewCards={psCards.slice(0, 4)}
+                  previewCards={previewCards}
                   onClick={() => navigate(`/playstyles/${playstyle.id}`)}
                   layout={layout}
                   enableHover={enableHover}

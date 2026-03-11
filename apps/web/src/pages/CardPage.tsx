@@ -1,4 +1,4 @@
-import {useCallback, useMemo, useState} from 'react';
+import {useCallback, useState, useMemo} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
 import {
   SynergyResults,
@@ -6,7 +6,7 @@ import {
   MobileCardDetail,
   SynergyDetailModal,
 } from '../features/synergies';
-import {sharedEngine} from '../features/synergies/engine';
+import {usePrecomputedSynergies} from '../features/synergies/hooks';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import {
   CompactHeader,
@@ -25,6 +25,24 @@ const centeredPage = {
   justifyContent: 'center',
   fontFamily: FONTS.body,
 } as const;
+
+function SynergyErrorBanner({error}: {error: Error}) {
+  return (
+    <div
+      role="alert"
+      style={{
+        padding: '12px 16px',
+        margin: '16px',
+        background: 'rgba(239, 68, 68, 0.1)',
+        border: '1px solid rgba(239, 68, 68, 0.3)',
+        borderRadius: '8px',
+        color: '#f59090',
+        fontSize: '13px',
+      }}>
+      Failed to load synergies: {error.message}
+    </div>
+  );
+}
 
 export function CardPage() {
   const {cardId} = useParams<{cardId: string}>();
@@ -49,19 +67,11 @@ export function CardPage() {
     setDetailPair(null);
   }
 
-  const synergies = useMemo(() => {
-    if (!selectedCard || cards.length === 0) return [];
-    try {
-      performance.mark('synergy-compute-start');
-      const result = sharedEngine.findSynergies(selectedCard, cards);
-      performance.mark('synergy-compute-end');
-      performance.measure('synergy-computation', 'synergy-compute-start', 'synergy-compute-end');
-      return result;
-    } catch (err) {
-      console.error(`Synergy computation failed for card ${selectedCard.id}:`, err);
-      return [];
-    }
-  }, [selectedCard, cards]);
+  const {
+    synergies,
+    error: synergiesError,
+    getPairSynergies: getPrecomputedPair,
+  } = usePrecomputedSynergies(selectedCard);
 
   const totalSynergyCount = useMemo(
     () => synergies.reduce((sum, group) => sum + group.synergies.length, 0),
@@ -110,20 +120,12 @@ export function CardPage() {
 
   const handleSynergyCardClick = useCallback(
     (clickedCard: LorcanaCard) => {
-      if (!selectedCard) return;
-      try {
-        const pair = sharedEngine.getPairSynergies(selectedCard, clickedCard);
-        if (pair.connections.length === 0) return;
-        setDetailPair(pair);
-        setLastPair(pair);
-      } catch (err) {
-        console.error(
-          `Pair synergy computation failed for ${selectedCard.id} + ${clickedCard.id}:`,
-          err,
-        );
-      }
+      const pair = getPrecomputedPair(clickedCard);
+      if (!pair || pair.connections.length === 0) return;
+      setDetailPair(pair);
+      setLastPair(pair);
     },
-    [selectedCard],
+    [getPrecomputedPair],
   );
 
   const handleCloseDetail = useCallback(() => setDetailPair(null), []);
@@ -171,6 +173,7 @@ export function CardPage() {
   if (isMobile) {
     return (
       <ErrorBoundary>
+        {synergiesError && <SynergyErrorBanner error={synergiesError} />}
         <MobileCardDetail
           card={selectedCard}
           synergies={synergies}
@@ -225,18 +228,22 @@ export function CardPage() {
           activeGroupKey={activeGroupFilter}
         />
         <ErrorBoundary>
-          <SynergyResults
-            selectedCard={selectedCard}
-            synergies={synergies}
-            totalSynergyCount={totalSynergyCount}
-            onClearSelection={goHome}
-            activeGroupFilter={activeGroupFilter}
-            onGroupFilterChange={setActiveGroupFilter}
-            expandedGroup={expandedGroup}
-            onShowAll={handleShowAll}
-            onBackToAll={handleBackToAll}
-            onSynergyCardClick={handleSynergyCardClick}
-          />
+          {synergiesError ? (
+            <SynergyErrorBanner error={synergiesError} />
+          ) : (
+            <SynergyResults
+              selectedCard={selectedCard}
+              synergies={synergies}
+              totalSynergyCount={totalSynergyCount}
+              onClearSelection={goHome}
+              activeGroupFilter={activeGroupFilter}
+              onGroupFilterChange={setActiveGroupFilter}
+              expandedGroup={expandedGroup}
+              onShowAll={handleShowAll}
+              onBackToAll={handleBackToAll}
+              onSynergyCardClick={handleSynergyCardClick}
+            />
+          )}
         </ErrorBoundary>
       </div>
       {lastPair && (

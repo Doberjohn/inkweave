@@ -1,6 +1,6 @@
 import {createContext, useCallback, useContext, useMemo, type ReactNode} from 'react';
 import type {LorcanaCard} from '../../features/cards';
-import {useCardData, type UseCardDataReturn} from '../../features/synergies/hooks/useSynergyFinder';
+import {useCardData, type UseCardDataReturn} from '../../features/synergies/hooks/useCardData';
 
 interface CardDataContextValue extends UseCardDataReturn {
   /** O(1) card lookup by string ID */
