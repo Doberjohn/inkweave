@@ -161,7 +161,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
     render(<FilterDialog {...defaultProps} variant={variant} />);
 
     const dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveAttribute('aria-labelledby', 'filter-dialog-title');
+    expect(dialog).toHaveAttribute('aria-labelledby');
   });
 
   it('should have the correct data-testid', () => {

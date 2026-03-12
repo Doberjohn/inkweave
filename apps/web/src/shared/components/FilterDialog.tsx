@@ -97,7 +97,6 @@ export function FilterDialog({
         />
         <Dialog.Content
           data-testid={variant === 'modal' ? 'filter-modal' : 'filter-drawer'}
-          aria-labelledby="filter-dialog-title"
           aria-describedby={undefined}
           style={styles.content}>
           {/* Drag handle (drawer only) */}
@@ -125,7 +124,6 @@ export function FilterDialog({
               flexShrink: 0,
             }}>
             <Dialog.Title
-              id="filter-dialog-title"
               style={{
                 margin: 0,
                 fontSize: `${FONT_SIZES.xl}px`,

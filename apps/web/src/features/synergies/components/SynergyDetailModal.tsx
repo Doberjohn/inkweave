@@ -37,9 +37,11 @@ export function SynergyDetailModal({
   const {mounted, visible, onTransitionEnd} = useTransitionPresence(isOpen);
   useScrollLock(isOpen);
 
+  const initialFocusRef = useRef<HTMLElement>(null);
   const {handleKeyDown} = useDialogFocus({
     isOpen,
     containerRef: modalRef,
+    initialFocusRef,
     onClose,
   });
 
