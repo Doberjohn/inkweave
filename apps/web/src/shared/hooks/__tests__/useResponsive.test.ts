@@ -39,7 +39,7 @@ describe('useResponsive', () => {
   });
 
   it('should detect mobile viewport', () => {
-    vi.stubGlobal('innerWidth', BREAKPOINTS.mobile - 1);
+    vi.stubGlobal('innerWidth', BREAKPOINTS.tablet - 1);
 
     const {result} = renderHook(() => useResponsive());
 
@@ -67,7 +67,7 @@ describe('useResponsive', () => {
 
     // Simulate resize to mobile
     act(() => {
-      vi.stubGlobal('innerWidth', BREAKPOINTS.mobile - 1);
+      vi.stubGlobal('innerWidth', BREAKPOINTS.tablet - 1);
       window.dispatchEvent(new Event('resize'));
     });
 

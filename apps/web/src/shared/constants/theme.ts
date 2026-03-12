@@ -30,7 +30,6 @@ export const LAYOUT = {
   maxDisplayedCards: 204,
   browseCardMinWidth: 180,
   synergyCardMinWidth: 160,
-  browseMaxWidth: 1280,
 } as const;
 
 // Spacing scale
@@ -45,6 +44,7 @@ export const SPACING = {
 
 // Border radius scale
 export const RADIUS = {
+  xs: 2,
   sm: 4,
   md: 6,
   lg: 8,
@@ -103,18 +103,13 @@ export const COLORS = {
   gray900: '#f0f0f5',
 
   // Primary shades (gold-based for dark theme)
-  primary50: '#1a1810',
   primary100: '#2a2515',
   primary200: '#3d3520',
   primary500: '#d4af37',
   primary600: '#d4af37',
   primary700: '#b8962e',
-  primary800: '#8a7022',
-  primary900: '#5c4a16',
 
   // Backgrounds
-  bgGradientStart: '#0d0d14',
-  bgGradientEnd: '#12121f',
   headerGradientStart: '#0d0d14',
   headerGradientEnd: '#1a1a2e',
 
@@ -145,9 +140,6 @@ export const COLORS = {
   etherealBlue: 'rgba(43, 127, 255, 0.1)',
   etherealPurple: 'rgba(173, 70, 255, 0.1)',
   etherealTeal: 'rgba(0, 187, 167, 0.05)',
-  // Legacy orb aliases (keep for backward compat)
-  etherealGold: 'rgba(212, 175, 55, 0.10)',
-  etherealEmerald: 'rgba(16, 185, 129, 0.12)',
 } as const;
 
 // All inks for iteration
@@ -188,15 +180,8 @@ export const SET_NAMES: Record<SetCode, string> = {
 
 // Breakpoints for responsive design
 export const BREAKPOINTS = {
-  mobile: 480,
   tablet: 768,
   desktop: 1024,
-} as const;
-
-// Mobile-specific layout constants
-export const LAYOUT_MOBILE = {
-  cardTileImageWidth: 48,
-  cardTileImageHeight: 67,
 } as const;
 
 // Z-index scale for layering

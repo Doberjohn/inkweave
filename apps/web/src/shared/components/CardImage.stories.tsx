@@ -69,7 +69,7 @@ export const AllInkColors: Story = {
       {(['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'] as const).map((ink) => (
         <div key={ink} style={{textAlign: 'center'}}>
           <CardImage src={undefined} alt={ink} width={80} height={112} inkColor={ink} cost={4} />
-          <div style={{marginTop: '8px', fontSize: '12px'}}>{ink}</div>
+          <div style={{marginTop: '8px', fontSize: '12px', color: '#e8e8e8'}}>{ink}</div>
         </div>
       ))}
     </div>
