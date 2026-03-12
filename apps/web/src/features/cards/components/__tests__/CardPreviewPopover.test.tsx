@@ -62,7 +62,6 @@ describe('CardPreviewPopover', () => {
   });
 
   beforeEach(() => {
-    // Mock window dimensions
     vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(800);
     vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1024);
   });
@@ -77,18 +76,14 @@ describe('CardPreviewPopover', () => {
         <CardPreviewPopover />
       </CardPreviewProvider>,
     );
-
-    // No image should be rendered
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 
   it('should render card image when card is shown', () => {
     renderWithProvider(mockCard);
-
     act(() => {
       screen.getByText('Show Preview').click();
     });
-
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute('src', mockCard.imageUrl);
     expect(img).toHaveAttribute('alt', mockCard.fullName);
@@ -96,53 +91,37 @@ describe('CardPreviewPopover', () => {
 
   it('should hide preview when hidePreview is called', async () => {
     renderWithProvider(mockCard);
-
     act(() => {
       screen.getByText('Show Preview').click();
     });
-
     expect(screen.getByRole('img')).toBeInTheDocument();
-
     act(() => {
       screen.getByText('Hide Preview').click();
     });
-
-    // Wait for exit animation to complete
     await waitFor(() => {
       expect(screen.queryByRole('img')).not.toBeInTheDocument();
     });
   });
 
   describe('Touch mode', () => {
-    it('should render centered modal with backdrop and dismiss hint in touch mode', () => {
+    it('should render centered modal with dismiss hint in touch mode', () => {
       renderWithProvider(mockCard, {isTouchMode: true});
-
       act(() => {
         screen.getByText('Show Preview').click();
       });
-
-      // Should have dismiss hint with accessible role
       const hint = screen.getByRole('status');
       expect(hint).toHaveTextContent('Tap anywhere to dismiss');
     });
 
-    it('should hide preview when backdrop clicked', async () => {
+    it('should hide preview when dismissed', async () => {
       renderWithProvider(mockCard, {isTouchMode: true});
-
       act(() => {
         screen.getByText('Show Preview').click();
       });
-
-      // Find and click the backdrop (the fixed overlay)
-      const hint = screen.getByText('Tap anywhere to dismiss');
-      expect(hint).toBeInTheDocument();
-
-      // Click hide preview to dismiss
+      expect(screen.getByText('Tap anywhere to dismiss')).toBeInTheDocument();
       act(() => {
         screen.getByText('Hide Preview').click();
       });
-
-      // Wait for exit animation to complete
       await waitFor(() => {
         expect(screen.queryByRole('img')).not.toBeInTheDocument();
       });
@@ -150,115 +129,57 @@ describe('CardPreviewPopover', () => {
   });
 
   describe('Desktop hover mode', () => {
-    it('should position relative to cursor', () => {
-      renderWithProvider(mockCard, {x: 200, y: 300});
-
+    it.each([
+      ['normal position', {x: 200, y: 300}],
+      ['near right edge', {x: 900, y: 200}],
+      ['near bottom', {x: 200, y: 700}],
+      ['above viewport', {x: 200, y: -100}],
+    ])('should use fixed positioning at %s', (_label, pos) => {
+      renderWithProvider(mockCard, pos);
       act(() => {
         screen.getByText('Show Preview').click();
       });
-
-      const img = screen.getByRole('img');
-      const container = img.parentElement;
+      const container = screen.getByRole('img').parentElement;
       expect(container).toHaveStyle({position: 'fixed'});
     });
 
     it('should not be interactive in hover mode (pointerEvents: none)', () => {
       renderWithProvider(mockCard);
-
       act(() => {
         screen.getByText('Show Preview').click();
       });
-
-      const img = screen.getByRole('img');
-      const container = img.parentElement;
+      const container = screen.getByRole('img').parentElement;
       expect(container).toHaveStyle({pointerEvents: 'none'});
-    });
-
-    it('should flip to left side when too close to right edge', () => {
-      // Position near right edge of viewport (1024 wide)
-      renderWithProvider(mockCard, {x: 900, y: 200});
-
-      act(() => {
-        screen.getByText('Show Preview').click();
-      });
-
-      const img = screen.getByRole('img');
-      const container = img.parentElement;
-      // When flipped, left should be less than position.x
-      expect(container).toHaveStyle({position: 'fixed'});
-    });
-
-    it('should adjust vertical position when too close to bottom', () => {
-      // Position near bottom of viewport (800 high)
-      renderWithProvider(mockCard, {x: 200, y: 700});
-
-      act(() => {
-        screen.getByText('Show Preview').click();
-      });
-
-      const img = screen.getByRole('img');
-      const container = img.parentElement;
-      expect(container).toHaveStyle({position: 'fixed'});
-    });
-
-    it('should ensure preview is not above viewport', () => {
-      // Position near top of viewport
-      renderWithProvider(mockCard, {x: 200, y: -100});
-
-      act(() => {
-        screen.getByText('Show Preview').click();
-      });
-
-      const img = screen.getByRole('img');
-      const container = img.parentElement;
-      expect(container).toHaveStyle({position: 'fixed'});
     });
   });
 
   describe('Location cards', () => {
     it('should render location card with rotation', () => {
       renderWithProvider(locationCard);
-
       act(() => {
         screen.getByText('Show Preview').click();
       });
-
-      const img = screen.getByRole('img');
-      // The image is inside a rotated container
-      const rotatedContainer = img.parentElement;
+      const rotatedContainer = screen.getByRole('img').parentElement;
       expect(rotatedContainer).toHaveStyle({transform: 'rotate(90deg)'});
     });
   });
 
   describe('Fallback placeholder', () => {
     it('should render fallback when image has no URL', () => {
-      const cardWithoutImage = createCard({
-        ...mockCard,
-        imageUrl: undefined,
-      });
-
-      renderWithProvider(cardWithoutImage);
-
+      renderWithProvider(createCard({...mockCard, imageUrl: undefined}));
       act(() => {
         screen.getByText('Show Preview').click();
       });
-
-      // Should show cost as fallback
-      expect(screen.getByText(cardWithoutImage.cost.toString())).toBeInTheDocument();
+      expect(screen.getByText(mockCard.cost.toString())).toBeInTheDocument();
       expect(screen.queryByRole('img')).not.toBeInTheDocument();
     });
 
     it('should render fallback when image fails to load', () => {
       renderWithProvider(mockCard);
-
       act(() => {
         screen.getByText('Show Preview').click();
       });
-
-      const img = screen.getByRole('img');
-      fireEvent.error(img);
-
-      // Should now show cost as fallback
+      fireEvent.error(screen.getByRole('img'));
       expect(screen.getByText(mockCard.cost.toString())).toBeInTheDocument();
       expect(screen.queryByRole('img')).not.toBeInTheDocument();
     });

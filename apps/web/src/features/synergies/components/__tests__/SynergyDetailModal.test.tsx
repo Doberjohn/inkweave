@@ -1,11 +1,7 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {SynergyDetailModal} from '../SynergyDetailModal';
-import type {
-  DetailedPairSynergy,
-  LorcanaCard,
-  PairSynergyConnection,
-} from 'inkweave-synergy-engine';
+import {createCard, createConnection, createPairSynergy} from '../../../../shared/test-utils';
 
 vi.mock('../../../shared/components', () => ({
   CardImage: ({alt}: {alt: string}) => <div data-testid="card-image">{alt}</div>,
@@ -28,52 +24,46 @@ vi.mock('../../../cards', () => ({
   useCardPreview: () => ({hidePreview: vi.fn()}),
 }));
 
-const cardA: LorcanaCard = {
+const cardA = createCard({
   id: 'elsa-shift',
   fullName: 'Elsa - Ice Artisan',
   name: 'Elsa',
   version: 'Ice Artisan',
-  type: 'Character',
   ink: 'Amethyst',
   cost: 5,
-  inkwell: true,
-} as LorcanaCard;
+});
 
-const cardB: LorcanaCard = {
+const cardB = createCard({
   id: 'elsa-base',
   fullName: 'Elsa - Snow Queen',
   name: 'Elsa',
   version: 'Snow Queen',
-  type: 'Character',
   ink: 'Amethyst',
   cost: 3,
-  inkwell: true,
-} as LorcanaCard;
+});
 
-const connections: PairSynergyConnection[] = [
-  {
-    ruleId: 'shift-targets',
-    ruleName: 'Shift Targets',
-    category: 'direct',
-    score: 8,
-    explanation: 'Elsa - Snow Queen can Shift onto Elsa - Ice Artisan.',
-  },
-  {
-    ruleId: 'lore-steal',
-    ruleName: 'Lore Steal',
-    category: 'playstyle',
-    playstyleId: 'lore-denial',
-    score: 7,
-    explanation: 'Both make the opponent lose lore.',
-  },
-];
-
-const mockPair: DetailedPairSynergy = {
+const mockPair = createPairSynergy({
   cardA,
   cardB,
-  connections,
+  connections: [
+    createConnection({
+      ruleId: 'shift-targets',
+      ruleName: 'Shift Targets',
+      category: 'direct',
+      score: 8,
+      explanation: 'Elsa - Snow Queen can Shift onto Elsa - Ice Artisan.',
+    }),
+    createConnection({
+      ruleId: 'lore-steal',
+      ruleName: 'Lore Steal',
+      category: 'playstyle',
+      playstyleId: 'lore-denial',
+      score: 7,
+      explanation: 'Both make the opponent lose lore.',
+    }),
+  ],
   aggregateScore: 8,
-};
+});
 
 describe('SynergyDetailModal', () => {
   it('should not render when closed', () => {
@@ -116,10 +106,10 @@ describe('SynergyDetailModal', () => {
   });
 
   it('should hide version when cards have different names', () => {
-    const differentPair: DetailedPairSynergy = {
+    const differentPair = createPairSynergy({
       ...mockPair,
-      cardB: {...cardB, name: 'Olaf', version: 'Friendly Snowman'},
-    };
+      cardB: createCard({...cardB, name: 'Olaf', version: 'Friendly Snowman'}),
+    });
     render(
       <SynergyDetailModal
         isOpen

@@ -3,6 +3,7 @@ import {render, screen, fireEvent} from '@testing-library/react';
 import {MobileCardDetail} from '../MobileCardDetail';
 import type {LorcanaCard} from '../../../cards';
 import type {SynergyGroup} from '../../types';
+import {createCard, createSynergyGroup} from '../../../../shared/test-utils';
 
 // Mock SynergyGroup to avoid deep render
 vi.mock('../SynergyGroup', () => ({
@@ -17,18 +18,16 @@ vi.mock('../../../shared/components', () => ({
   CardTextBlock: ({card}: {card: LorcanaCard}) => <span>{card.text}</span>,
 }));
 
-const mockCard: LorcanaCard = {
+const mockCard = createCard({
   id: 'elsa-snow-queen',
   fullName: 'Elsa — Snow Queen',
   name: 'Elsa',
   version: 'Snow Queen',
-  type: 'Character',
   ink: 'Sapphire',
   cost: 5,
   strength: 3,
   willpower: 5,
   lore: 5,
-  inkwell: true,
   keywords: ['Evasive', 'Singer 4'],
   text: "Freeze — Exert: Chosen opposing character can't ready next turn.",
   imageUrl: 'https://example.com/elsa.png',
@@ -36,31 +35,23 @@ const mockCard: LorcanaCard = {
   rarity: 'Super Rare',
   classifications: ['Queen', 'Sorcerer'],
   number: 42,
-} as LorcanaCard;
+} as Partial<LorcanaCard>);
 
 const mockSynergies: SynergyGroup[] = [
-  {
+  createSynergyGroup({
     groupKey: 'exert-synergies',
     category: 'playstyle',
     label: 'Exert Synergies',
     description: 'Cards that work together through exert mechanics',
-    synergies: Array.from({length: 8}, (_, i) => ({
-      card: {...mockCard, id: `exert-${i}`},
-      score: 7,
-      explanation: 'Exert synergy',
-    })),
-  },
-  {
+    matchCount: 8,
+  }),
+  createSynergyGroup({
     groupKey: 'singer-songs',
     category: 'direct',
     label: 'Singer + Songs',
     description: 'Singer keyword plays Songs at reduced cost',
-    synergies: Array.from({length: 4}, (_, i) => ({
-      card: {...mockCard, id: `singer-${i}`},
-      score: 5,
-      explanation: 'Singer synergy',
-    })),
-  },
+    matchCount: 4,
+  }),
 ];
 
 describe('MobileCardDetail', () => {
