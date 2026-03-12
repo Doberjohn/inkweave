@@ -4,6 +4,7 @@ import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, Z_INDEX} from '../constants'
 import {useAutocomplete} from '../hooks';
 import {SearchAutocomplete} from './SearchAutocomplete';
 import {SearchIcon} from './SearchIcon';
+import {CtaButton} from './CtaButton';
 
 interface HeroSectionProps {
   searchQuery: string;
@@ -144,8 +145,6 @@ export function HeroSection({
   isMobile,
 }: HeroSectionProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [browseHover, setBrowseHover] = useState(false);
-  const [playstylesHover, setPlaystylesHover] = useState(false);
   const styles = getStyles(!!isMobile);
 
   const handleAutoSelect = useCallback((card: LorcanaCard) => onCardSelect?.(card), [onCardSelect]);
@@ -239,69 +238,22 @@ export function HeroSection({
 
       {/* CTA Buttons */}
       <div style={styles.ctaRow}>
-        <button
+        <CtaButton
           data-testid="cta-browse"
           onClick={onBrowse}
-          onMouseEnter={() => setBrowseHover(true)}
-          onMouseLeave={() => setBrowseHover(false)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            height: ctaHeight,
-            padding: '0 20px',
-            borderRadius: `${RADIUS.lg}px`,
-            border: 'none',
-            background: browseHover
-              ? 'linear-gradient(90deg, #ffb020, #fe9a00)'
-              : COLORS.filterGradient,
-            color: COLORS.filterText,
-            fontFamily: FONTS.body,
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 500,
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            textDecoration: 'none',
-            boxShadow:
-              '0px 10px 15px 0px rgba(254, 154, 0, 0.2), 0px 4px 6px 0px rgba(254, 154, 0, 0.2)',
-            width: mobile ? '100%' : undefined,
-          }}>
+          style={{height: ctaHeight, width: mobile ? '100%' : undefined}}>
           <GridIcon />
           Browse all cards
-        </button>
-        <button
+        </CtaButton>
+        <CtaButton
+          variant="ghost"
           data-testid="cta-playstyles"
           onClick={onPlaystyles}
-          onMouseEnter={() => {
-            setPlaystylesHover(true);
-            import('../../pages/PlaystyleGalleryPage');
-          }}
-          onMouseLeave={() => setPlaystylesHover(false)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            height: ctaHeight,
-            padding: '0 20px',
-            borderRadius: `${RADIUS.lg}px`,
-            background: playstylesHover ? 'rgba(255, 185, 0, 0.05)' : 'transparent',
-            color: COLORS.primary,
-            border: playstylesHover
-              ? '1px solid rgba(255, 185, 0, 0.6)'
-              : '1px solid rgba(255, 185, 0, 0.4)',
-            fontFamily: FONTS.body,
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 500,
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            textDecoration: 'none',
-            width: mobile ? '100%' : undefined,
-          }}>
+          onMouseEnter={() => import('../../pages/PlaystyleGalleryPage')}
+          style={{height: ctaHeight, width: mobile ? '100%' : undefined}}>
           <CompassIcon />
           Explore playstyles
-        </button>
+        </CtaButton>
       </div>
     </section>
   );
