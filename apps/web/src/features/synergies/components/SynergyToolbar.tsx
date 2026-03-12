@@ -7,8 +7,7 @@ import type {CardTypeFilter, SynergySortOrder} from '../../../shared/constants';
 import type {SynergyFilterState, StrengthTierFilter} from '../utils/filterSynergyCards';
 import {EMPTY_SYNERGY_FILTERS} from '../utils/filterSynergyCards';
 import {SYNERGY_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
-import {FilterModal} from '../../../shared/components/FilterModal';
-import {FilterDrawer} from '../../../shared/components/FilterDrawer';
+import {FilterDialog} from '../../../shared/components/FilterDialog';
 import {FilterChip} from '../../../shared/components/FilterChip';
 import {FiltersButton} from '../../../shared/components/FiltersButton';
 import {InkFilterGroup} from '../../../shared/components/InkFilterGroup';
@@ -172,8 +171,6 @@ export function SynergyToolbar({
     [onFilterChange],
   );
 
-  const FilterPanel = isMobile ? FilterDrawer : FilterModal;
-
   return (
     <>
       <div
@@ -297,11 +294,12 @@ export function SynergyToolbar({
         )}
       </div>
 
-      {/* Filter modal/drawer */}
-      <FilterPanel
+      {/* Filter dialog (modal on desktop, drawer on mobile) */}
+      <FilterDialog
         isOpen={filterOpen}
         onClose={() => setFilterOpen(false)}
         onApply={handleApplyFilters}
+        variant={isMobile ? 'drawer' : 'modal'}
         inkFilters={inkFilters}
         typeFilters={typeFilters}
         costFilters={costFilters}

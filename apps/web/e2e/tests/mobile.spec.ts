@@ -150,9 +150,13 @@ test.describe('Mobile Viewport', () => {
     await page.getByRole('button', {name: /Filters/}).click();
     await page.waitForTimeout(200);
 
-    // Body should have overflow hidden
-    const overflow = await page.evaluate(() => document.body.style.overflow);
-    expect(overflow).toBe('hidden');
+    // Background scroll should be locked (Radix uses html overflow, custom uses body overflow)
+    const isScrollLocked = await page.evaluate(() => {
+      const bodyOverflow = getComputedStyle(document.body).overflow;
+      const htmlOverflow = getComputedStyle(document.documentElement).overflow;
+      return bodyOverflow === 'hidden' || htmlOverflow === 'hidden';
+    });
+    expect(isScrollLocked).toBe(true);
   });
 
   test('should open filter drawer in mobile browsing view', async ({page}) => {

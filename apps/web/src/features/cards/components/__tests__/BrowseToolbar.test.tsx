@@ -63,9 +63,7 @@ describe('BrowseToolbar', () => {
   });
 
   it('shows ink icon buttons on desktop instead of chips', () => {
-    render(
-      <BrowseToolbar {...defaultProps({inkFilters: ['Amethyst'] as Ink[]})} />,
-    );
+    render(<BrowseToolbar {...defaultProps({inkFilters: ['Amethyst'] as Ink[]})} />);
 
     expect(screen.getByRole('button', {name: 'Filter by Amethyst'})).toBeInTheDocument();
     // Ink chip text should not appear on desktop
