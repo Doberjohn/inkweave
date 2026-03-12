@@ -5,6 +5,7 @@ export {CollapsibleSection} from './CollapsibleSection';
 export {CompactHeader} from './CompactHeader';
 export {CostIcon} from './CostIcon';
 export {CountBadge} from './CountBadge';
+export {CtaButton} from './CtaButton';
 export {EtherealBackground} from './EtherealBackground';
 export {FilterButton} from './FilterButton';
 export {FilterChip} from './FilterChip';

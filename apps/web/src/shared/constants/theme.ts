@@ -237,20 +237,6 @@ export const hexToRgb = (hex: string) =>
 /** Convert a hex color (#rrggbb) to rgba with the given alpha */
 export const hexRgba = (hex: string, a: number) => `rgba(${hexToRgb(hex)}, ${a})`;
 
-// CTA button style (orange gradient, matching Figma Filters button)
-export const CTA_BUTTON_STYLE: React.CSSProperties = {
-  background: COLORS.filterGradient,
-  color: COLORS.filterText,
-  border: 'none',
-  borderRadius: `${RADIUS.lg}px`,
-  padding: `${SPACING.sm}px ${SPACING.xl}px`,
-  fontSize: `${FONT_SIZES.lg}px`,
-  fontWeight: 500,
-  cursor: 'pointer',
-  minHeight: '44px',
-  boxShadow: COLORS.filterShadow,
-};
-
 // Browse sort order
 // ── Sort orders ──
 

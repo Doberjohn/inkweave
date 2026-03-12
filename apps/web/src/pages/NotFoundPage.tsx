@@ -1,10 +1,9 @@
-import {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
+import {CtaButton} from '../shared/components/CtaButton';
 
 export function NotFoundPage() {
   const navigate = useNavigate();
-  const [btnHover, setBtnHover] = useState(false);
 
   return (
     <main
@@ -144,41 +143,25 @@ export function NotFoundPage() {
         </p>
 
         {/* CTA Button */}
-        <button
-          onClick={() => navigate('/')}
-          onMouseEnter={() => setBtnHover(true)}
-          onMouseLeave={() => setBtnHover(false)}
-          style={{
-            marginTop: 36,
-            padding: `${SPACING.md}px ${SPACING.xxl + 8}px`,
-            background: btnHover ? COLORS.primaryHover : COLORS.primary500,
-            color: COLORS.background,
-            border: 'none',
-            borderRadius: `${RADIUS.lg}px`,
-            cursor: 'pointer',
-            fontSize: `${FONT_SIZES.lg + 1}px`,
-            fontWeight: 600,
-            fontFamily: FONTS.body,
-            display: 'flex',
-            alignItems: 'center',
-            gap: SPACING.sm + 2,
-            transition: 'background 0.2s, box-shadow 0.2s',
-            boxShadow: btnHover
-              ? '0 0 24px rgba(212, 175, 55, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3)'
-              : '0 0 12px rgba(212, 175, 55, 0.15), 0 4px 8px rgba(0, 0, 0, 0.2)',
-          }}>
+        <CtaButton onClick={() => navigate('/')} style={{marginTop: 36}}>
           {/* Sparkle icon */}
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <svg
+            width="16"
+            height="16"
+            viewBox="3.5 2 17 16"
+            fill="none"
+            aria-hidden="true"
+            style={{flexShrink: 0}}>
             <path
               d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z"
-              fill={COLORS.background}
-              stroke={COLORS.background}
+              fill={COLORS.filterText}
+              stroke={COLORS.filterText}
               strokeWidth="1.5"
               strokeLinejoin="round"
             />
           </svg>
           Return to Inkweave
-        </button>
+        </CtaButton>
       </div>
 
       {/* Brand watermark */}

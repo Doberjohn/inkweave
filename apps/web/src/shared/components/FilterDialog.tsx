@@ -1,6 +1,7 @@
 import {useCallback} from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import {COLORS, FONT_SIZES, SPACING, RADIUS, Z_INDEX, CTA_BUTTON_STYLE} from '../constants';
+import {COLORS, FONT_SIZES, SPACING, RADIUS, Z_INDEX} from '../constants';
+import {CtaButton} from './CtaButton';
 import {useDraftFilters} from '../hooks/useDraftFilters';
 import {FilterContent} from './FilterContent';
 import type {FilterPanelProps} from './FilterContent';
@@ -165,9 +166,7 @@ export function FilterDialog({
                   </button>
                 </Dialog.Close>
               ) : (
-                <button onClick={handleApply} style={CTA_BUTTON_STYLE}>
-                  Apply
-                </button>
+                <CtaButton onClick={handleApply}>Apply</CtaButton>
               )}
             </div>
           </div>
@@ -205,9 +204,7 @@ export function FilterDialog({
                 justifyContent: 'flex-end',
                 flexShrink: 0,
               }}>
-              <button onClick={handleApply} style={CTA_BUTTON_STYLE}>
-                Apply Filters
-              </button>
+              <CtaButton onClick={handleApply}>Apply Filters</CtaButton>
             </div>
           )}
         </Dialog.Content>
