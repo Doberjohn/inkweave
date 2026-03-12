@@ -8,8 +8,7 @@ import {
   CompactHeader,
   ErrorBoundary,
   EtherealBackground,
-  FilterDrawer,
-  FilterModal,
+  FilterDialog,
   LoadingSpinner,
 } from '../shared/components';
 import {
@@ -312,8 +311,7 @@ export function PlaystyleDetailPage() {
     sortOrder,
     setSortOrder,
   } = useFilterParams();
-  const [showFilterModal, setShowFilterModal] = useState(false);
-  const [showFilterDrawer, setShowFilterDrawer] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [searchParams] = useSearchParams();
 
   // Default sort to cost-asc for playstyle detail (most useful for deckbuilding)
@@ -403,7 +401,7 @@ export function PlaystyleDetailPage() {
   const heroLayout = isMobile ? HERO_MOBILE : HERO_DESKTOP;
 
   const toolbarProps = {
-    onFiltersClick: isMobile ? () => setShowFilterDrawer(true) : () => setShowFilterModal(true),
+    onFiltersClick: () => setShowFilters(true),
     activeFilterCount,
     inkFilters,
     typeFilters,
@@ -477,10 +475,11 @@ export function PlaystyleDetailPage() {
             )}
           </ErrorBoundary>
         </div>
-        <FilterDrawer
-          isOpen={showFilterDrawer}
-          onClose={() => setShowFilterDrawer(false)}
+        <FilterDialog
+          isOpen={showFilters}
+          onClose={() => setShowFilters(false)}
           onApply={replaceFilters}
+          variant="drawer"
           inkFilters={inkFilters}
           typeFilters={typeFilters}
           costFilters={costFilters}
@@ -564,10 +563,11 @@ export function PlaystyleDetailPage() {
           )}
         </ErrorBoundary>
       </div>
-      <FilterModal
-        isOpen={showFilterModal}
-        onClose={() => setShowFilterModal(false)}
+      <FilterDialog
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
         onApply={replaceFilters}
+        variant="modal"
         inkFilters={inkFilters}
         typeFilters={typeFilters}
         costFilters={costFilters}

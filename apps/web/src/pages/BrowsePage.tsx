@@ -7,13 +7,7 @@ import {
   applySortOrder,
   type CardFilterOptions,
 } from '../features/cards/loader';
-import {
-  CompactHeader,
-  ErrorBoundary,
-  EtherealBackground,
-  FilterDrawer,
-  FilterModal,
-} from '../shared/components';
+import {CompactHeader, ErrorBoundary, EtherealBackground, FilterDialog} from '../shared/components';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
@@ -21,15 +15,8 @@ import {useResponsive, useFilterParams} from '../shared/hooks';
 export function BrowsePage() {
   const navigate = useNavigate();
   const {isMobile} = useResponsive();
-  const {
-    cards,
-    isLoading,
-    error,
-    retryLoad,
-    uniqueKeywords,
-    uniqueClassifications,
-    sets,
-  } = useCardDataContext();
+  const {cards, isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, sets} =
+    useCardDataContext();
   const {
     searchQuery,
     setSearchQuery,
@@ -47,8 +34,7 @@ export function BrowsePage() {
     sortOrder,
     setSortOrder,
   } = useFilterParams();
-  const [showFilterModal, setShowFilterModal] = useState(false);
-  const [showFilterDrawer, setShowFilterDrawer] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Auto-focus search when navigating with ?focus=search (desktop only; mobile uses bottom sheet)
@@ -120,7 +106,7 @@ export function BrowsePage() {
   }
 
   const toolbarProps = {
-    onFiltersClick: isMobile ? () => setShowFilterDrawer(true) : () => setShowFilterModal(true),
+    onFiltersClick: () => setShowFilters(true),
     activeFilterCount,
     inkFilters,
     typeFilters,
@@ -205,10 +191,11 @@ export function BrowsePage() {
             )}
           </ErrorBoundary>
         </div>
-        <FilterDrawer
-          isOpen={showFilterDrawer}
-          onClose={() => setShowFilterDrawer(false)}
+        <FilterDialog
+          isOpen={showFilters}
+          onClose={() => setShowFilters(false)}
           onApply={replaceFilters}
+          variant="drawer"
           inkFilters={inkFilters}
           typeFilters={typeFilters}
           costFilters={costFilters}
@@ -267,10 +254,11 @@ export function BrowsePage() {
           <BrowseCardGrid cards={sortedCards} isLoading={isLoading} onCardSelect={selectCard} />
         </ErrorBoundary>
       </div>
-      <FilterModal
-        isOpen={showFilterModal}
-        onClose={() => setShowFilterModal(false)}
+      <FilterDialog
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
         onApply={replaceFilters}
+        variant="modal"
         inkFilters={inkFilters}
         typeFilters={typeFilters}
         costFilters={costFilters}

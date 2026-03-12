@@ -3,7 +3,7 @@ import type {LorcanaCard, Ink} from '../types';
 import type {CardFilterOptions, SetInfo} from '../loader';
 import type {CardTypeFilter} from '../../../shared/constants';
 import {CardTile} from './CardTile';
-import {LoadingSpinner, FilterDrawer, SearchAutocomplete} from '../../../shared/components';
+import {LoadingSpinner, FilterDialog, SearchAutocomplete} from '../../../shared/components';
 import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, Z_INDEX} from '../../../shared/constants';
 import {useAutocomplete} from '../../../shared/hooks';
 
@@ -211,11 +211,12 @@ export function CardList({
               </ul>
             </div>
 
-            {/* Filter Drawer */}
-            <FilterDrawer
+            {/* Filter Dialog (drawer variant for mobile) */}
+            <FilterDialog
               isOpen={showFilterDrawer}
               onClose={() => setShowFilterDrawer(false)}
               onApply={onApply}
+              variant="drawer"
               inkFilters={inkFilters}
               typeFilters={typeFilters}
               costFilters={costFilters}

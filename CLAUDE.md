@@ -16,7 +16,7 @@ See `TASK.md` for MVP roadmap and GitHub issues #28-49.
 - pnpm workspaces monorepo
 - React 19 + TypeScript 5
 - Vite bundler
-- Inline CSS with design tokens (no UI framework)
+- Radix UI Primitives (headless behavior) + inline CSS with design tokens
 - Static JSON card database
 
 ## Project Structure

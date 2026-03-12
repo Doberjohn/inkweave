@@ -122,12 +122,13 @@ test.describe('Mobile Viewport', () => {
     await page.getByRole('button', {name: 'Search cards'}).click();
     await expect(page.getByRole('dialog', {name: 'Search cards'})).toBeVisible();
 
-    // Click backdrop to dismiss
+    // Click backdrop to dismiss (top-left corner, outside the sheet)
+    // Wait for the sheet's enter transition to complete before clicking
+    await page.waitForTimeout(500);
     await page.mouse.click(10, 10);
-    await page.waitForTimeout(400);
 
     // Sheet should be gone
-    await expect(page.getByRole('dialog', {name: 'Search cards'})).not.toBeVisible();
+    await expect(page.getByRole('dialog', {name: 'Search cards'})).not.toBeVisible({timeout: 5000});
   });
 
   test('should show sort dropdown in browse toolbar', async ({page}) => {
@@ -150,9 +151,13 @@ test.describe('Mobile Viewport', () => {
     await page.getByRole('button', {name: /Filters/}).click();
     await page.waitForTimeout(200);
 
-    // Body should have overflow hidden
-    const overflow = await page.evaluate(() => document.body.style.overflow);
-    expect(overflow).toBe('hidden');
+    // Background scroll should be locked (Radix uses html overflow, custom uses body overflow)
+    const isScrollLocked = await page.evaluate(() => {
+      const bodyOverflow = getComputedStyle(document.body).overflow;
+      const htmlOverflow = getComputedStyle(document.documentElement).overflow;
+      return bodyOverflow === 'hidden' || htmlOverflow === 'hidden';
+    });
+    expect(isScrollLocked).toBe(true);
   });
 
   test('should open filter drawer in mobile browsing view', async ({page}) => {

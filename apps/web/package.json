@@ -23,6 +23,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
     "@sentry/react": "^10.39.0",
     "@tanstack/react-virtual": "^3.13.21",
     "@vercel/analytics": "^1.6.1",
