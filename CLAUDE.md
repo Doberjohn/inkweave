@@ -185,6 +185,16 @@ After pushing, always confirm with clear output (e.g., git log showing commit on
 - Before editing code or implementing changes, validate assumptions against real data first (e.g., test regex against actual card data, verify existing state)
 - Do not jump to implementation until the user confirms the approach
 
+### Storybook
+- **Every new visual component needs a `.stories.tsx` file.** CI runs `check:stories` which fails if a new component is added without stories.
+- Stories go next to the component: `ComponentName.stories.tsx` alongside `ComponentName.tsx`
+- Import Meta/StoryObj from `@storybook/react-vite` (NOT `@storybook/react` — Storybook 10 lint rule catches this)
+- Components using React Router need a `MemoryRouter` decorator
+- Components using `useCardPreview` (or rendering `SearchAutocomplete`) need a `CardPreviewProvider` decorator
+- Mock data: use the actual `LorcanaCard` type shape — `textSections` is `string[]`, not `{type, text}[]`
+- Excluded components (icons, context providers, ErrorBoundary) are listed in `apps/web/scripts/check-story-coverage.mjs`
+- Chromatic runs on every push; UI snapshots catch visual regressions automatically
+
 ### Testing Style
 - Write focused, minimal tests - not exhaustive coverage
 - One test per distinct behavior, no redundant variations

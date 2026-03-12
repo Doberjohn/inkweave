@@ -28,6 +28,9 @@ jobs:
       - name: Build engine
         run: pnpm build:engine
 
+      - name: Check story coverage
+        run: pnpm --filter inkweave-web check:stories
+
       - name: Run Chromatic
         uses: chromaui/action@latest
         with:
