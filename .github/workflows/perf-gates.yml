@@ -9,6 +9,20 @@ permissions:
   pull-requests: write
 
 jobs:
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      engine: ${{ steps.filter.outputs.engine }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            engine:
+              - 'packages/synergy-engine/**'
+
   bundle-size:
     name: Bundle Size
     runs-on: ubuntu-latest
@@ -38,6 +52,8 @@ jobs:
 
   engine-benchmarks:
     name: Engine Benchmarks
+    needs: detect-changes
+    if: needs.detect-changes.outputs.engine == 'true'
     runs-on: ubuntu-latest
 
     steps:

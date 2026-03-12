@@ -32,13 +32,10 @@ jobs:
       - name: Run linting
         run: pnpm lint
 
-      - name: Run tests
-        run: pnpm test
+      - name: Run engine tests
+        run: pnpm --filter inkweave-synergy-engine test:run
 
-      - name: Check bundle size budgets
-        run: pnpm size
-
-      - name: Run tests with coverage (web)
+      - name: Run web tests with coverage
         run: pnpm --filter inkweave-web test:coverage
 
       - name: Upload coverage report
@@ -47,6 +44,15 @@ jobs:
           name: coverage-report
           path: apps/web/coverage/
           retention-days: 7
+
+      - name: Upload build artifacts for E2E
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: |
+            packages/synergy-engine/dist/
+            apps/web/dist/
+          retention-days: 1
 
   e2e-tests:
     runs-on: ubuntu-latest
@@ -68,8 +74,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build packages
-        run: pnpm build
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: .
 
       - name: Pre-compute synergy data
         run: pnpm precompute-synergies
