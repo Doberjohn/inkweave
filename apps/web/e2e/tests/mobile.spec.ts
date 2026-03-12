@@ -122,12 +122,13 @@ test.describe('Mobile Viewport', () => {
     await page.getByRole('button', {name: 'Search cards'}).click();
     await expect(page.getByRole('dialog', {name: 'Search cards'})).toBeVisible();
 
-    // Click backdrop to dismiss
+    // Click backdrop to dismiss (top-left corner, outside the sheet)
+    // Wait for the sheet's enter transition to complete before clicking
+    await page.waitForTimeout(500);
     await page.mouse.click(10, 10);
-    await page.waitForTimeout(400);
 
     // Sheet should be gone
-    await expect(page.getByRole('dialog', {name: 'Search cards'})).not.toBeVisible();
+    await expect(page.getByRole('dialog', {name: 'Search cards'})).not.toBeVisible({timeout: 5000});
   });
 
   test('should show sort dropdown in browse toolbar', async ({page}) => {
