@@ -15,7 +15,7 @@ const createCard = (overrides: Partial<LorcanaCard> = {}): LorcanaCard => ({
   classifications: ['Floodborn', 'Princess'],
   keywords: ['Singer 5', 'Evasive'],
   text: 'When you play this character, draw 2 cards.',
-  textSections: [{type: 'ability', text: 'When you play this character, draw 2 cards.'}],
+  textSections: ['When you play this character, draw 2 cards.'],
   strength: 3,
   willpower: 4,
   lore: 2,
@@ -60,7 +60,7 @@ export const Action: Story = {
       willpower: undefined,
       lore: undefined,
       text: "Return chosen character to their player's hand.",
-      textSections: [{type: 'ability', text: "Return chosen character to their player's hand."}],
+      textSections: ["Return chosen character to their player's hand."],
     }),
   },
 };
