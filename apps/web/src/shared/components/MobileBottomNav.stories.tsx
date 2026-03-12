@@ -8,15 +8,6 @@ const meta: Meta<typeof MobileBottomNav> = {
   component: MobileBottomNav,
   parameters: {layout: 'fullscreen'},
   tags: ['autodocs'],
-  decorators: [
-    (Story) => (
-      <MemoryRouter initialEntries={['/browse']}>
-        <div style={{height: '200px', position: 'relative'}}>
-          <Story />
-        </div>
-      </MemoryRouter>
-    ),
-  ],
 };
 export default meta;
 type Story = StoryObj<typeof meta>;
