@@ -36,12 +36,6 @@ const KNOWN_MISSING = new Set([
   '/src/features/synergies/components/MobileCardDetail.tsx',
   '/src/features/synergies/components/SynergyDetailModal.tsx',
   '/src/features/synergies/components/SynergyResults.tsx',
-  '/src/features/synergies/components/SynergyToolbar.tsx',
-  '/src/shared/components/CardTextBlock.tsx',
-  '/src/shared/components/FilterContent.tsx',
-  '/src/shared/components/FilterDialog.tsx',
-  '/src/shared/components/FilterSection.tsx',
-  '/src/shared/components/SearchAutocomplete.tsx',
   '/src/shared/components/SearchBottomSheet.tsx',
 ]);
 
