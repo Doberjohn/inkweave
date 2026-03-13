@@ -46,6 +46,11 @@ export function CardSynergiesPage() {
   const handleShowAll = useCallback(
     (groupKey: string) => {
       setSearchParams({group: groupKey}, {replace: true});
+      requestAnimationFrame(() => {
+        document
+          .querySelector(`[data-expanded-group="${groupKey}"]`)
+          ?.scrollIntoView({behavior: 'smooth', block: 'start'});
+      });
     },
     [setSearchParams],
   );

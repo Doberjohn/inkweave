@@ -37,6 +37,11 @@ export function MobileCardDetail({
   const handleShowAll = useCallback((groupKey: string) => {
     setExpandedGroup(groupKey);
     setActiveGroupFilter(groupKey);
+    requestAnimationFrame(() => {
+      document
+        .querySelector(`[data-expanded-group="${groupKey}"]`)
+        ?.scrollIntoView({behavior: 'smooth', block: 'start'});
+    });
   }, []);
 
   const handleBackToAll = useCallback(() => {
@@ -217,7 +222,7 @@ export function MobileCardDetail({
                 key={group.groupKey}
                 group={group}
                 isMobile
-                maxVisibleCards={5}
+                maxVisibleCards={group.category === 'direct' ? Infinity : 5}
                 onShowAll={handleShowAll}
                 onCardClick={onSynergyCardClick}
               />

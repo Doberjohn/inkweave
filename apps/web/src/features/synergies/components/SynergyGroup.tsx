@@ -119,6 +119,7 @@ function MoreTile({
 
   return (
     <button
+      data-testid="more-tile"
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
