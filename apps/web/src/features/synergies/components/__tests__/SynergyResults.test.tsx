@@ -3,6 +3,7 @@ import {render, screen, fireEvent} from '@testing-library/react';
 import {SynergyResults} from '../SynergyResults';
 import type {SynergyGroup as SynergyGroupData} from '../../types';
 import type {LorcanaCard} from '../../../cards';
+import {createCard, createSynergyGroup} from '../../../../shared/test-utils';
 
 // Mock child components
 vi.mock('../SynergyGroup', () => ({
@@ -22,35 +23,28 @@ vi.mock('../../../shared/components', () => ({
   EmptyState: () => <div data-testid="empty-state" />,
 }));
 
-const mockCard: LorcanaCard = {
+const mockCard = createCard({
   id: '1',
   fullName: 'Elsa - Snow Queen',
   name: 'Elsa',
-  type: 'Character',
   ink: 'Amethyst',
   cost: 4,
-  inkwell: true,
-  set: {code: '5', name: 'Shimmering Skies', number: 5},
-  rarity: 'Rare',
-  number: 42,
-  classifications: [],
-} as LorcanaCard;
+});
 
 const mockSynergies: SynergyGroupData[] = [
-  {
+  createSynergyGroup({
     groupKey: 'shift-targets',
     category: 'direct',
     label: 'Shift Targets',
-    description: 'Characters with Shift and their same-named targets',
     synergies: [{card: mockCard, score: 7, explanation: 'Shift'}],
-  },
-  {
+  }),
+  createSynergyGroup({
     groupKey: 'lore-denial',
     category: 'playstyle',
     label: 'Lore Steal',
     description: 'Cards that prevent opponents from gaining lore',
     synergies: [{card: {...mockCard, id: '2'}, score: 5, explanation: 'Lore denial'}],
-  },
+  }),
 ];
 
 describe('SynergyResults', () => {
