@@ -111,6 +111,11 @@ export function CardPage() {
   const handleShowAll = useCallback((groupKey: string) => {
     setExpandedGroup(groupKey);
     setActiveGroupFilter(groupKey);
+    requestAnimationFrame(() => {
+      document
+        .querySelector(`[data-expanded-group="${groupKey}"]`)
+        ?.scrollIntoView({behavior: 'smooth', block: 'start'});
+    });
   }, []);
 
   const handleBackToAll = useCallback(() => {

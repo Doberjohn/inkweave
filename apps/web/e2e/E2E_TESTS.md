@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-51 active tests across 9 spec files. Each file runs on both `chromium` (desktop) and `mobile-chrome` projects but skips the irrelevant viewport.
+52 active tests across 10 spec files. Each file runs on both `chromium` (desktop) and `mobile-chrome` projects but skips the irrelevant viewport.
 
 ## `app-load.spec.ts` — 4 tests (desktop only)
 
@@ -96,6 +96,15 @@
 | should have valid JSON-LD structured data on home page | JSON-LD script tag with WebApplication type |
 | should have correct heading hierarchy on home page | h1 exists, h2 headings present |
 | should have font preconnect hints | Preconnect links for Google Fonts |
+
+## `show-all-ux.spec.ts` — 4 tests (2 desktop, 2 mobile)
+
+| Test | What it verifies |
+|---|---|
+| should expand playstyle group and scroll to expanded view | Clicking "+N more" tile renders `ExpandedGroupView`, "Back to all synergies" is in viewport after smooth scroll |
+| should show all direct group cards inline without truncation | Direct (Shift Targets) group has no "+N more" tile — all cards shown inline |
+| should expand playstyle group and scroll to expanded view on mobile | Same expand + scroll check on mobile viewport |
+| should show all direct group cards inline without truncation on mobile | Same no-truncation check on mobile viewport |
 
 ## Patterns
 

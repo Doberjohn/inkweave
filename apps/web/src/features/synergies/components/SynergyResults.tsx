@@ -213,7 +213,7 @@ export const SynergyResults = memo(function SynergyResults({
                   key={group.groupKey}
                   group={group}
                   isMobile={isMobile}
-                  maxVisibleCards={isMobile ? 5 : 10}
+                  maxVisibleCards={group.category === 'direct' ? Infinity : isMobile ? 5 : 10}
                   onShowAll={onShowAll}
                   onCardClick={onSynergyCardClick}
                 />

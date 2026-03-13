@@ -48,7 +48,7 @@ export function ExpandedGroupView({
   }, [onBackToAll]);
 
   return (
-    <div>
+    <div data-expanded-group={group.groupKey}>
       {/* Back navigation */}
       <button
         onClick={handleBackToAll}
