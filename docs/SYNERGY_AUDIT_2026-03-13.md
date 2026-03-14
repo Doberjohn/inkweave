@@ -1,0 +1,116 @@
+# Synergy Data Audit — 2026-03-13
+
+Automated audit of all precomputed synergy JSON files in `apps/web/public/data/synergies/`.
+
+**Updated** after adding Named Companions rule (issue #170).
+
+## Issues Found
+
+- [WARN] Rule "Lore Loss" has identical score (7) for all 342 matches — scoring logic not differentiating
+- [OK] Card 1537 (Baymax - Giant Robot) has 100 Shift Targets — correct, has Universal Shift for all characters
+- [OK] Coverage at 53.1% (up from 50.6% — Named Companions added 36 new cards with synergies)
+- [OK] 2 cards mention "Shift" in text but have no synergies — these are Shift-payoff items (Baymax's Charging Station, Chem Purse), not Shift cards themselves. Not a gap.
+
+## Score Distribution Per Rule
+
+| Rule | Category | Total Matches | Min | Max | Mean | Median | Spread | Flag |
+|------|----------|--------------|-----|-----|------|--------|--------|------|
+| Shift Targets | direct | 1,385 | 3 | 10 | 5.9 | 5 | 7 | |
+| Location Boost | playstyle | 1,112 | 3 | 5 | 4.9 | 5 | 2 | |
+| At Location Payoff | playstyle | 688 | 3 | 7 | 6.6 | 7 | 4 | |
+| Move to Location | playstyle | 586 | 3 | 5 | 4.7 | 5 | 2 | |
+| Named Companions | direct | 547 | 4 | 8 | 5.8 | 5 | 4 | |
+| Location In-Play Check | playstyle | 546 | 3 | 5 | 4.9 | 5 | 2 | |
+| Location Buff | playstyle | 458 | 3 | 7 | 6.4 | 7 | 4 | |
+| Location Ramp | playstyle | 418 | 3 | 7 | 6.3 | 7 | 4 | |
+| Location Tutor | playstyle | 412 | 3 | 5 | 4.6 | 5 | 2 | |
+| Lore Loss | playstyle | 342 | 7 | 7 | 7.0 | 7 | 0 | SAME_SCORE |
+
+### Named Companions Score Histogram
+
+| Score | Count | Tier | % |
+|-------|-------|------|---|
+| 8 | 49 | Game-winning | 9.0% |
+| 7 | 93 | Strong | 17.0% |
+| 6 | 98 | Moderate | 17.9% |
+| 5 | 289 | Minor | 52.8% |
+| 4 | 18 | Hostile | 3.3% |
+
+Good distribution — the majority are Minor (conditional/situational effects), with meaningful spread across all 5 tiers. The 18 Hostile matches are cards that banish/exert the referenced companion.
+
+## Group Sizes (cards per group, per card page)
+
+| Group | Category | Occurrences | Min Size | Max Size | Mean | Median | P95 | P99 |
+|-------|----------|-------------|----------|----------|------|--------|-----|-----|
+| Location Control | playstyle | 92 | 34 | 79 | 45.9 | 46 | 76 | 79 |
+| Lore Loss | playstyle | 19 | 18 | 18 | 18.0 | 18 | 18 | 18 |
+| Shift Targets | direct | 644 | 1 | 100 | 2.2 | 1 | 6 | 10 |
+| Named Companions | direct | 106 | 1 | 12 | 5.2 | 5 | 10 | 12 |
+
+### Named Companions Size Distribution (direct rule)
+
+106 cards have Named Companion synergies. Size breakdown:
+
+| Group Size | Cards | % |
+|------------|-------|---|
+| 1-4 | 48 | 45% |
+| 5-9 | 42 | 40% |
+| 10-14 | 16 | 15% |
+
+**Key takeaway**: Named Companions groups are moderately sized. No extreme outliers — the largest groups (~12) are cards referencing popular names like Elsa or Darkwing Duck that have many versions.
+
+### Shift Targets Size Distribution (direct rule)
+
+644 cards have Shift Target synergies. Size breakdown:
+
+| Group Size | Cards | % |
+|------------|-------|---|
+| 1-4 | 599 | 93% |
+| 5-9 | 34 | 5% |
+| 10-14 | 8 | 1% |
+| 15-19 | 2 | <1% |
+| 100 | 1 | <1% (Baymax — Universal Shift) |
+
+## Top 5 Cards by Total Matches
+
+| Card | Groups | Total Matches |
+|------|--------|---------------|
+| Baymax - Giant Robot | 1 | 100 |
+| Get to Safety! | 2 | 80 |
+| Raksha - Fearless Mother | 1 | 79 |
+| Elsa - Concerned Sister | 2 | 78 |
+| Minnie Mouse - Pirate Lookout | 2 | 77 |
+
+## Coverage
+
+| Metric | Value | Change |
+|--------|-------|--------|
+| Total cards | 1,429 | — |
+| Cards with synergies | 759 | +36 |
+| Coverage | 53.1% | +2.5% |
+| Cards without synergies | 670 | -36 |
+
+## Playstyle Balance
+
+| Playstyle | Cards | % of Total |
+|-----------|-------|------------|
+| lore-denial | 19 | 1.3% |
+| location-control | 92 | 6.4% |
+
+Only 2 playstyles implemented (MVP). Lore Denial is small (19 cards) but intentionally niche. Location Control is the largest group overall.
+
+## Implications for "Show All" Navigation
+
+**Direct groups (Shift Targets)**:
+- 93% have ≤4 cards → no "Show All" button ever appears
+- 5% have 5-9 cards → "Show All" appears on mobile only
+- ~1% have 10-14 → "Show All" appears on both mobile and desktop
+
+**Direct groups (Named Companions)**:
+- 45% have ≤4 cards → no "Show All" needed
+- 40% have 5-9 cards → "Show All" on mobile
+- 15% have 10-14 → "Show All" on both platforms
+
+**Playstyle groups**:
+- Location Control: 34-79 cards per card page → always truncated, always needs "Show All"
+- Lore Loss: exactly 18 cards → truncated on both mobile and desktop

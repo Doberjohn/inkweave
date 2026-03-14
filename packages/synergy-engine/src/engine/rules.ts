@@ -1,13 +1,16 @@
 import type {LorcanaCard, PlaystyleId, SynergyMatch, SynergyRule} from '../types';
 import {
+  classifyNamedEffect,
   getBaseName,
   getLocationRoles,
+  getNamedReferences,
   getShiftType,
   hasClassification,
   isCharacter,
   isLocation,
   isLocationSupportCard,
   LOCATION_PATTERNS,
+  NAMED_EFFECT_SCORES,
   textContains,
   type LocationRole,
   type ShiftType,
@@ -484,6 +487,48 @@ export const synergyRules: SynergyRule[] = [
             bidirectional: true,
           };
         });
+    },
+  },
+
+  // --------------------------------------------
+  // NAMED COMPANIONS
+  // --------------------------------------------
+  {
+    id: 'named-companions',
+    name: 'Named Companions',
+    category: 'direct',
+    description: 'Cards that reference specific named characters, items, locations, or actions',
+
+    matches: (card) => {
+      // Forward: card references other named entities
+      if (getNamedReferences(card).length > 0) return true;
+      // Reverse: any card could be a target of a named reference (handled in findSynergies)
+      return false;
+    },
+
+    findSynergies: (card, allCards) => {
+      const refs = getNamedReferences(card);
+      if (refs.length === 0) return [];
+
+      const effectTier = classifyNamedEffect(card);
+      const score = NAMED_EFFECT_SCORES[effectTier];
+      const matches: SynergyMatch[] = [];
+
+      for (const refName of refs) {
+        // Find all cards whose base name matches the referenced name
+        const targets = allCards.filter((other) => other.id !== card.id && other.name === refName);
+
+        for (const target of targets) {
+          matches.push({
+            card: target,
+            score,
+            explanation: `${card.fullName} benefits from having ${refName} — ${effectTier} synergy when companion is in play`,
+            bidirectional: true,
+          });
+        }
+      }
+
+      return matches;
     },
   },
 

@@ -329,6 +329,138 @@ describe('Synergy Rules', () => {
   });
 });
 
+describe('Named Companions', () => {
+  const namedRule = getRuleById('named-companions')!;
+
+  const elsaBuff = createCard({
+    id: 'elsa-buff',
+    name: 'Elsa',
+    fullName: 'Elsa - Ice Artisan',
+    cost: 5,
+    text: 'Your characters named Elsa get +2 strength.',
+  });
+
+  const elsaBase = createCard({
+    id: 'elsa-base',
+    name: 'Elsa',
+    fullName: 'Elsa - Snow Queen',
+    cost: 3,
+  });
+
+  const elsaShift = createCard({
+    id: 'elsa-shift',
+    name: 'Elsa',
+    fullName: 'Elsa - Ice Maker',
+    cost: 7,
+  });
+
+  const anna = createCard({
+    id: 'anna-1',
+    name: 'Anna',
+    fullName: 'Anna - Trusting Sister',
+    cost: 3,
+    text: 'While you have a character named Elsa in play, this character gains Evasive.',
+  });
+
+  const unrelatedCard = createCard({
+    id: 'mickey-1',
+    name: 'Mickey Mouse',
+    fullName: 'Mickey Mouse - Brave',
+    cost: 2,
+  });
+
+  it('should match cards that reference named entities', () => {
+    expect(namedRule.matches(anna)).toBe(true);
+    expect(namedRule.matches(elsaBuff)).toBe(true);
+  });
+
+  it('should not match cards without named references', () => {
+    expect(namedRule.matches(unrelatedCard)).toBe(false);
+    expect(namedRule.matches(elsaBase)).toBe(false);
+  });
+
+  it('should find all cards with the referenced name', () => {
+    const allCards = [anna, elsaBase, elsaShift, elsaBuff, unrelatedCard];
+    const synergies = namedRule.findSynergies(anna, allCards);
+
+    const targetIds = synergies.map((s) => s.card.id);
+    expect(targetIds).toContain('elsa-base');
+    expect(targetIds).toContain('elsa-shift');
+    expect(targetIds).toContain('elsa-buff');
+    expect(targetIds).not.toContain('mickey-1');
+  });
+
+  it('should not include the source card itself', () => {
+    const allCards = [elsaBuff, elsaBase];
+    const synergies = namedRule.findSynergies(elsaBuff, allCards);
+    expect(synergies.find((s) => s.card.id === 'elsa-buff')).toBeUndefined();
+  });
+
+  it('should score based on effect tier', () => {
+    // anna grants Evasive → "strong" tier → score 7
+    const synergies = namedRule.findSynergies(anna, [anna, elsaBase]);
+    expect(synergies[0].score).toBe(7);
+
+    // elsaBuff grants +2 strength → "moderate" tier → score 6
+    const synergies2 = namedRule.findSynergies(elsaBuff, [elsaBuff, elsaBase]);
+    expect(synergies2[0].score).toBe(6);
+  });
+
+  it('should mark synergies as bidirectional', () => {
+    const synergies = namedRule.findSynergies(anna, [anna, elsaBase]);
+    expect(synergies[0].bidirectional).toBe(true);
+  });
+
+  it('should return empty for cards without named references', () => {
+    const synergies = namedRule.findSynergies(unrelatedCard, [anna, elsaBase]);
+    expect(synergies).toEqual([]);
+  });
+
+  it('should handle cards referencing multiple names', () => {
+    const multiRef = createCard({
+      id: 'multi-ref',
+      name: 'Orville',
+      fullName: 'Orville - Albatross Air',
+      cost: 4,
+      text: 'While you have a character named Miss Bianca or Bernard in play, this character gains Evasive.',
+    });
+    const bianca = createCard({id: 'bianca', name: 'Miss Bianca', cost: 3});
+    const bernard = createCard({id: 'bernard', name: 'Bernard', cost: 2});
+
+    const synergies = namedRule.findSynergies(multiRef, [multiRef, bianca, bernard, unrelatedCard]);
+    expect(synergies).toHaveLength(2);
+    expect(synergies.map((s) => s.card.id)).toContain('bianca');
+    expect(synergies.map((s) => s.card.id)).toContain('bernard');
+  });
+
+  it('should find synergies for cards with exclamation-mark names', () => {
+    const yzma = createCard({
+      id: 'yzma',
+      name: 'Yzma',
+      fullName: 'Yzma - On Edge',
+      cost: 5,
+      text: 'If you have a card named Pull the Lever! in your discard, you may search your deck for a card named Wrong Lever! and reveal that card.',
+    });
+    const pullLever = createCard({
+      id: 'pull-lever',
+      name: 'Pull the Lever!',
+      type: 'Action',
+      cost: 2,
+    });
+    const wrongLever = createCard({
+      id: 'wrong-lever',
+      name: 'Wrong Lever!',
+      type: 'Action',
+      cost: 1,
+    });
+
+    const synergies = namedRule.findSynergies(yzma, [yzma, pullLever, wrongLever]);
+    expect(synergies).toHaveLength(2);
+    expect(synergies.map((s) => s.card.id)).toContain('pull-lever');
+    expect(synergies.map((s) => s.card.id)).toContain('wrong-lever');
+  });
+});
+
 describe('Location Synergy Rules', () => {
   const elsaIceArtisan = createCard({
     id: 'elsa-ice-artisan',

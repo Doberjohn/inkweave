@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inkweave Synergy Audit — 2026-03-13</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tinos:wght@400;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #0d0d14;
+        --surface: #1a1a2e;
+        --surface-alt: #151525;
+        --border: #333355;
+        --gold: #d4af37;
+        --gold-bright: #ffb900;
+        --text: #e8e8e8;
+        --text-muted: #90a1b9;
+        --text-desc: #c8c8d8;
+        --red: #f59090;
+        --red-bg: rgba(239, 68, 68, 0.08);
+        --red-border: rgba(239, 68, 68, 0.25);
+        --green: #6ee7a0;
+        --green-bg: rgba(110, 231, 160, 0.08);
+        --green-border: rgba(110, 231, 160, 0.25);
+        --blue: #60b5f5;
+        --blue-bg: rgba(96, 181, 245, 0.08);
+        --blue-border: rgba(96, 181, 245, 0.25);
+        --amber: #fbbf24;
+        --amber-bg: rgba(251, 191, 36, 0.08);
+        --amber-border: rgba(251, 191, 36, 0.25);
+        --callout-bg: rgba(212, 175, 55, 0.06);
+        --radius: 10px;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          'Inter',
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        font-size: 13px;
+        line-height: 1.6;
+        min-height: 100vh;
+      }
+
+      /* Ethereal background */
+      .ethereal {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        overflow: hidden;
+      }
+      .orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(120px);
+      }
+      .orb-1 {
+        width: 500px;
+        height: 500px;
+        top: -100px;
+        left: 10%;
+        background: rgba(43, 127, 255, 0.07);
+      }
+      .orb-2 {
+        width: 400px;
+        height: 400px;
+        bottom: 10%;
+        right: 5%;
+        background: rgba(173, 70, 255, 0.06);
+      }
+      .orb-3 {
+        width: 350px;
+        height: 350px;
+        top: 40%;
+        left: 55%;
+        background: rgba(0, 187, 167, 0.04);
+      }
+
+      .container {
+        position: relative;
+        z-index: 1;
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 48px 32px 80px;
+      }
+
+      /* Hero */
+      .hero {
+        text-align: center;
+        margin-bottom: 48px;
+        padding-bottom: 32px;
+        border-bottom: 1px solid var(--border);
+      }
+      .hero-brand {
+        font-family: 'Inter', sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        color: var(--gold);
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+      .hero h1 {
+        font-family: 'Tinos', Georgia, serif;
+        font-size: 28px;
+        font-weight: 700;
+        background: linear-gradient(90deg, #bedbff 0%, #e9d4ff 50%, #fccee8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+      }
+      .hero-date {
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+      .hero-update {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 4px;
+        font-style: italic;
+      }
+
+      /* Section headings */
+      h2 {
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text);
+        margin: 40px 0 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      h2::before {
+        content: '';
+        width: 3px;
+        height: 18px;
+        background: var(--gold);
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+      h3 {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin: 24px 0 12px;
+      }
+
+      /* Issue cards */
+      .issues {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .issue {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 16px;
+        border-radius: var(--radius);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .issue-warn {
+        background: var(--amber-bg);
+        border: 1px solid var(--amber-border);
+      }
+      .issue-info {
+        background: var(--blue-bg);
+        border: 1px solid var(--blue-border);
+      }
+      .issue-ok {
+        background: var(--green-bg);
+        border: 1px solid var(--green-border);
+      }
+      .issue-tag {
+        font-weight: 700;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        padding: 2px 8px;
+        border-radius: 4px;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .issue-warn .issue-tag {
+        background: rgba(251, 191, 36, 0.15);
+        color: var(--amber);
+      }
+      .issue-info .issue-tag {
+        background: rgba(96, 181, 245, 0.15);
+        color: var(--blue);
+      }
+      .issue-ok .issue-tag {
+        background: rgba(110, 231, 160, 0.15);
+        color: var(--green);
+      }
+      .issue-text {
+        color: var(--text-desc);
+      }
+      .issue-text strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      /* Tables */
+      .table-wrap {
+        overflow-x: auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        margin: 12px 0 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      thead {
+        background: var(--surface);
+      }
+      th {
+        padding: 10px 14px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+      }
+      th:not(:first-child) {
+        text-align: right;
+      }
+      td {
+        padding: 8px 14px;
+        border-bottom: 1px solid rgba(51, 51, 85, 0.4);
+        color: var(--text-desc);
+      }
+      td:not(:first-child) {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tr:hover td {
+        background: rgba(212, 175, 55, 0.03);
+      }
+
+      /* Flag badges in tables */
+      .flag {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        padding: 2px 7px;
+        border-radius: 4px;
+      }
+      .flag-warn {
+        background: rgba(251, 191, 36, 0.15);
+        color: var(--amber);
+      }
+      .flag-ok {
+        background: rgba(110, 231, 160, 0.12);
+        color: var(--green);
+      }
+
+      /* Category badges */
+      .cat {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        padding: 2px 8px;
+        border-radius: 4px;
+      }
+      .cat-direct {
+        background: rgba(96, 181, 245, 0.12);
+        color: var(--blue);
+      }
+      .cat-playstyle {
+        background: rgba(173, 70, 255, 0.12);
+        color: #c084fc;
+      }
+
+      /* Stat cards */
+      .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin: 16px 0 24px;
+      }
+      .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px 20px;
+        text-align: center;
+      }
+      .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--gold-bright);
+        font-variant-numeric: tabular-nums;
+        line-height: 1.2;
+      }
+      .stat-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-top: 4px;
+      }
+      .stat-delta {
+        font-size: 10px;
+        color: var(--green);
+        margin-top: 2px;
+      }
+
+      /* Bar chart */
+      .bar-chart {
+        margin: 12px 0 20px;
+      }
+      .bar-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+      .bar-label {
+        width: 80px;
+        font-size: 12px;
+        color: var(--text-muted);
+        text-align: right;
+        flex-shrink: 0;
+      }
+      .bar-track {
+        flex: 1;
+        height: 24px;
+        background: var(--surface);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+      }
+      .bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.6s ease;
+        position: relative;
+      }
+      .bar-fill-direct {
+        background: linear-gradient(90deg, rgba(96, 181, 245, 0.4), rgba(96, 181, 245, 0.7));
+      }
+      .bar-fill-gold {
+        background: linear-gradient(90deg, rgba(212, 175, 55, 0.4), rgba(212, 175, 55, 0.7));
+      }
+      .bar-fill-green {
+        background: linear-gradient(90deg, rgba(110, 231, 160, 0.4), rgba(110, 231, 160, 0.7));
+      }
+      .bar-fill-amber {
+        background: linear-gradient(90deg, rgba(251, 191, 36, 0.4), rgba(251, 191, 36, 0.7));
+      }
+      .bar-fill-red {
+        background: linear-gradient(90deg, rgba(245, 144, 144, 0.4), rgba(245, 144, 144, 0.7));
+      }
+      .bar-pct {
+        width: 50px;
+        font-size: 12px;
+        color: var(--text-muted);
+        font-variant-numeric: tabular-nums;
+        flex-shrink: 0;
+      }
+
+      /* Callout */
+      .callout {
+        margin: 20px 0;
+        padding: 14px 18px;
+        background: var(--callout-bg);
+        border-left: 3px solid var(--gold);
+        border-radius: 0 var(--radius) var(--radius) 0;
+        color: var(--text-desc);
+        line-height: 1.6;
+      }
+      .callout strong {
+        color: var(--text);
+      }
+
+      /* Divider */
+      .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 40px 0;
+      }
+
+      /* Footer */
+      .footer {
+        text-align: center;
+        margin-top: 48px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+        font-size: 11px;
+        color: #555570;
+      }
+      .footer a {
+        color: var(--gold);
+        text-decoration: none;
+      }
+      .footer a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="ethereal">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+
+    <div class="container">
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-brand">&#10022; INKWEAVE &#10022;</div>
+        <h1>Synergy Data Audit</h1>
+        <div class="hero-date">March 13, 2026</div>
+        <div class="hero-update">Updated after Named Companions rule (issue #170)</div>
+      </div>
+
+      <!-- Coverage Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value">1,429</div>
+          <div class="stat-label">Total Cards</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">759</div>
+          <div class="stat-label">With Synergies</div>
+          <div class="stat-delta">+36</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">53.1%</div>
+          <div class="stat-label">Coverage</div>
+          <div class="stat-delta">+2.5%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">6,494</div>
+          <div class="stat-label">Total Matches</div>
+          <div class="stat-delta">+547</div>
+        </div>
+      </div>
+
+      <!-- Issues -->
+      <h2>Issues Found</h2>
+      <div class="issues">
+        <div class="issue issue-warn">
+          <span class="issue-tag">WARN</span>
+          <span class="issue-text"
+            >Rule <strong>"Lore Loss"</strong> has identical score (7) for all 342 matches &mdash;
+            scoring logic not differentiating</span
+          >
+        </div>
+        <div class="issue issue-ok">
+          <span class="issue-tag">OK</span>
+          <span class="issue-text"
+            >Card 1537 <strong>(Baymax - Giant Robot)</strong> has 100 Shift Targets &mdash;
+            correct, has Universal Shift for all characters</span
+          >
+        </div>
+        <div class="issue issue-ok">
+          <span class="issue-tag">OK</span>
+          <span class="issue-text"
+            >Coverage at 53.1% &mdash; up from 50.6% after Named Companions added 36 new cards with
+            synergies</span
+          >
+        </div>
+        <div class="issue issue-ok">
+          <span class="issue-tag">OK</span>
+          <span class="issue-text"
+            >2 cards mention "Shift" in text but have no synergies &mdash; these are Shift-payoff
+            items (Baymax's Charging Station, Chem Purse), not Shift cards. Not a gap.</span
+          >
+        </div>
+      </div>
+
+      <!-- Score Distribution -->
+      <h2>Score Distribution</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: left">Rule</th>
+              <th>Category</th>
+              <th>Matches</th>
+              <th>Min</th>
+              <th>Max</th>
+              <th>Mean</th>
+              <th>Median</th>
+              <th>Spread</th>
+              <th>Flag</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Shift Targets</td>
+              <td><span class="cat cat-direct">direct</span></td>
+              <td>1,385</td>
+              <td>3</td>
+              <td>10</td>
+              <td>5.9</td>
+              <td>5</td>
+              <td>7</td>
+              <td><span class="flag flag-ok">OK</span></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Location Boost</td>
+              <td><span class="cat cat-playstyle">playstyle</span></td>
+              <td>1,112</td>
+              <td>3</td>
+              <td>5</td>
+              <td>4.9</td>
+              <td>5</td>
+              <td>2</td>
+              <td><span class="flag flag-ok">OK</span></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">At Location Payoff</td>
+              <td><span class="cat cat-playstyle">playstyle</span></td>
+              <td>688</td>
+              <td>3</td>
+              <td>7</td>
+              <td>6.6</td>
+              <td>7</td>
+              <td>4</td>
+              <td><span class="flag flag-ok">OK</span></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Move to Location</td>
+              <td><span class="cat cat-playstyle">playstyle</span></td>
+              <td>586</td>
+              <td>3</td>
+              <td>5</td>
+              <td>4.7</td>
+              <td>5</td>
+              <td>2</td>
+              <td><span class="flag flag-ok">OK</span></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Named Companions</td>
+              <td><span class="cat cat-direct">direct</span></td>
+              <td>547</td>
+              <td>4</td>
+              <td>8</td>
+              <td>5.8</td>
+              <td>5</td>
+              <td>4</td>
+              <td><span class="flag flag-ok">OK</span></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Location In-Play Check</td>
+              <td><span class="cat cat-playstyle">playstyle</span></td>
+              <td>546</td>
+              <td>3</td>
+              <td>5</td>
+              <td>4.9</td>
+              <td>5</td>
+              <td>2</td>
+              <td><span class="flag flag-ok">OK</span></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Location Buff</td>
+              <td><span class="cat cat-playstyle">playstyle</span></td>
+              <td>458</td>
+              <td>3</td>
+              <td>7</td>
+              <td>6.4</td>
+              <td>7</td>
+              <td>4</td>
+              <td><span class="flag flag-ok">OK</span></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Location Ramp</td>
+              <td><span class="cat cat-playstyle">playstyle</span></td>
+              <td>418</td>
+              <td>3</td>
+              <td>7</td>
+              <td>6.3</td>
+              <td>7</td>
+              <td>4</td>
+              <td><span class="flag flag-ok">OK</span></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Location Tutor</td>
+              <td><span class="cat cat-playstyle">playstyle</span></td>
+              <td>412</td>
+              <td>3</td>
+              <td>5</td>
+              <td>4.6</td>
+              <td>5</td>
+              <td>2</td>
+              <td><span class="flag flag-ok">OK</span></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Lore Loss</td>
+              <td><span class="cat cat-playstyle">playstyle</span></td>
+              <td>342</td>
+              <td>7</td>
+              <td>7</td>
+              <td>7.0</td>
+              <td>7</td>
+              <td>0</td>
+              <td><span class="flag flag-warn">SAME SCORE</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Named Companions Histogram -->
+      <h3>Named Companions &mdash; Score Distribution</h3>
+      <p style="color: var(--text-muted); margin-bottom: 16px">
+        547 matches across 106 cards. Scores spread across all 5 effect tiers:
+      </p>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <div class="bar-label">8 &middot; G-Win</div>
+          <div class="bar-track">
+            <div class="bar-fill bar-fill-amber" style="width: 9%"></div>
+          </div>
+          <div class="bar-pct">49 (9%)</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">7 &middot; Strong</div>
+          <div class="bar-track">
+            <div class="bar-fill bar-fill-green" style="width: 17%"></div>
+          </div>
+          <div class="bar-pct">93 (17%)</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">6 &middot; Mod</div>
+          <div class="bar-track">
+            <div class="bar-fill bar-fill-direct" style="width: 17.9%"></div>
+          </div>
+          <div class="bar-pct">98 (18%)</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">5 &middot; Minor</div>
+          <div class="bar-track">
+            <div class="bar-fill bar-fill-direct" style="width: 52.8%"></div>
+          </div>
+          <div class="bar-pct">289 (53%)</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">4 &middot; Hostile</div>
+          <div class="bar-track">
+            <div class="bar-fill bar-fill-red" style="width: 3.3%"></div>
+          </div>
+          <div class="bar-pct">18 (3%)</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Good distribution.</strong> The majority are Minor (conditional/situational
+        effects), with meaningful spread across all 5 tiers. The 18 Hostile matches are cards that
+        banish/exert the referenced companion &mdash; they still show as synergies but score lower
+        to reflect the adversarial relationship.
+      </div>
+
+      <!-- Group Sizes -->
+      <h2>Group Sizes Per Card Page</h2>
+      <p style="color: var(--text-muted); margin-bottom: 12px">
+        How many synergy cards appear in each group when viewing a specific card's detail page.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: left">Group</th>
+              <th>Category</th>
+              <th>Occurrences</th>
+              <th>Min</th>
+              <th>Max</th>
+              <th>Mean</th>
+              <th>Median</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Location Control</td>
+              <td><span class="cat cat-playstyle">playstyle</span></td>
+              <td>92</td>
+              <td>34</td>
+              <td>79</td>
+              <td>45.9</td>
+              <td>46</td>
+            </tr>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Shift Targets</td>
+              <td><span class="cat cat-direct">direct</span></td>
+              <td>644</td>
+              <td>1</td>
+              <td>100</td>
+              <td>2.2</td>
+              <td>1</td>
+            </tr>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Named Companions</td>
+              <td><span class="cat cat-direct">direct</span></td>
+              <td>106</td>
+              <td>1</td>
+              <td>12</td>
+              <td>5.2</td>
+              <td>5</td>
+            </tr>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Lore Loss</td>
+              <td><span class="cat cat-playstyle">playstyle</span></td>
+              <td>19</td>
+              <td>18</td>
+              <td>18</td>
+              <td>18.0</td>
+              <td>18</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Named Companions Size Breakdown -->
+      <h3>Named Companions &mdash; Size Distribution</h3>
+      <p style="color: var(--text-muted); margin-bottom: 16px">
+        106 cards have Named Companion synergies. Group sizes per card:
+      </p>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <div class="bar-label">1&ndash;4</div>
+          <div class="bar-track">
+            <div class="bar-fill bar-fill-direct" style="width: 45%"></div>
+          </div>
+          <div class="bar-pct">45%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">5&ndash;9</div>
+          <div class="bar-track">
+            <div class="bar-fill bar-fill-direct" style="width: 40%"></div>
+          </div>
+          <div class="bar-pct">40%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">10&ndash;14</div>
+          <div class="bar-track">
+            <div class="bar-fill bar-fill-direct" style="width: 15%"></div>
+          </div>
+          <div class="bar-pct">15%</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Key takeaway:</strong> Named Companions groups are moderately sized (max 12). No
+        extreme outliers. The largest groups are cards referencing popular names like Elsa or
+        Darkwing Duck that have many printed versions.
+      </div>
+
+      <!-- Shift Targets Breakdown -->
+      <h3>Shift Targets &mdash; Size Distribution</h3>
+      <p style="color: var(--text-muted); margin-bottom: 16px">
+        644 cards have Shift Target synergies. How many cards appear per group:
+      </p>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <div class="bar-label">1&ndash;4</div>
+          <div class="bar-track">
+            <div class="bar-fill bar-fill-direct" style="width: 93%"></div>
+          </div>
+          <div class="bar-pct">93%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">5&ndash;9</div>
+          <div class="bar-track">
+            <div class="bar-fill bar-fill-direct" style="width: 5%"></div>
+          </div>
+          <div class="bar-pct">5%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">10&ndash;14</div>
+          <div class="bar-track">
+            <div class="bar-fill bar-fill-direct" style="width: 1.2%"></div>
+          </div>
+          <div class="bar-pct">1%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">15&ndash;19</div>
+          <div class="bar-track">
+            <div class="bar-fill bar-fill-direct" style="width: 0.3%"></div>
+          </div>
+          <div class="bar-pct">&lt;1%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">100</div>
+          <div class="bar-track">
+            <div class="bar-fill bar-fill-gold" style="width: 0.15%"></div>
+          </div>
+          <div class="bar-pct" style="color: var(--green)">valid</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Top Cards -->
+      <h2>Top 5 Cards by Total Matches</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: left">Card</th>
+              <th>Groups</th>
+              <th>Total Matches</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Baymax - Giant Robot</td>
+              <td>1</td>
+              <td style="color: var(--amber)">100</td>
+            </tr>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Get to Safety!</td>
+              <td>2</td>
+              <td>80</td>
+            </tr>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Raksha - Fearless Mother</td>
+              <td>1</td>
+              <td>79</td>
+            </tr>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Elsa - Concerned Sister</td>
+              <td>2</td>
+              <td>78</td>
+            </tr>
+            <tr>
+              <td style="color: var(--text); font-weight: 500">Minnie Mouse - Pirate Lookout</td>
+              <td>2</td>
+              <td>77</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Playstyle Balance -->
+      <h2>Playstyle Balance</h2>
+      <p style="color: var(--text-muted); margin-bottom: 12px">
+        Only 2 playstyles implemented for MVP. More archetypes planned (Discard, Bounce, Ramp,
+        Damage/Removal).
+      </p>
+      <div class="stats-row" style="grid-template-columns: repeat(2, 1fr)">
+        <div class="stat-card">
+          <div class="stat-value" style="color: #c084fc">92</div>
+          <div class="stat-label">Location Control</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px">
+            6.4% of all cards
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color: #c084fc">19</div>
+          <div class="stat-label">Lore Denial</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px">
+            1.3% of all cards
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Implications -->
+      <h2>Implications for Navigation</h2>
+      <div class="callout">
+        <strong>Direct groups (Shift Targets):</strong><br />
+        93% have &le;4 cards &rarr; "Show All" button never appears.<br />
+        98% have &le;9 cards &rarr; only appears on mobile.<br />
+        <br />
+        <strong>Direct groups (Named Companions):</strong><br />
+        45% have &le;4 cards &rarr; no "Show All" needed.<br />
+        85% have &le;9 cards &rarr; "Show All" only on mobile for the rest.<br />
+        15% have 10&ndash;14 &rarr; "Show All" on both platforms.<br />
+        <br />
+        <strong>Playstyle groups:</strong><br />
+        Location Control: 34&ndash;79 cards per page &rarr; always heavily truncated.<br />
+        Lore Loss: always 18 cards &rarr; truncated on both platforms.<br />
+        <br />
+        <strong style="color: var(--gold)">Verdict:</strong>
+        Direct group truncation is already removed (PR #169). Named Companions groups fit
+        comfortably inline for most cards. Playstyle "Show All" navigates to the dedicated playstyle
+        detail page.
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        Generated by <a href="https://github.com/Doberjohn/inkweave">Inkweave</a> synergy audit
+        &middot;
+        <code style="color: #555570">pnpm audit:synergies</code>
+      </div>
+    </div>
+  </body>
+</html>
