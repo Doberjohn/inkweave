@@ -62,7 +62,9 @@ export {
   getNamedReferences,
   classifyNamedEffect,
   NAMED_EFFECT_SCORES,
+  getDiscardRoles,
+  isDiscardCard,
   transformCard,
   transformCards,
 } from './utils';
-export type {LocationRole, ShiftType, NamedEffectTier, LorcanaJSONCard} from './utils';
+export type {LocationRole, ShiftType, NamedEffectTier, DiscardRole, LorcanaJSONCard} from './utils';

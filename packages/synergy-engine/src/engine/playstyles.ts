@@ -9,9 +9,15 @@ const playstyles: Playstyle[] = [
   },
   {
     id: 'location-control',
-    name: 'Location Control',
+    name: 'Locations',
     description:
       'Cards that synergize through location-based gameplay. Moving characters to locations, buffing them there, and triggering location payoffs.',
+  },
+  {
+    id: 'discard',
+    name: 'Discard',
+    description:
+      'Force opponents to discard cards while leveraging hand-size advantage. Stack discard enablers to empty their hand, then capitalize with cards that reward having more cards than your opponent.',
   },
 ];
 

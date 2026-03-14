@@ -2,11 +2,13 @@ import type {LorcanaCard, PlaystyleId, SynergyMatch, SynergyRule} from '../types
 import {
   classifyNamedEffect,
   getBaseName,
+  getDiscardRoles,
   getLocationRoles,
   getNamedReferences,
   getShiftType,
   hasClassification,
   isCharacter,
+  isDiscardCard,
   isLocation,
   isLocationSupportCard,
   LOCATION_PATTERNS,
@@ -562,6 +564,61 @@ export const synergyRules: SynergyRule[] = [
   // LOCATION SYNERGIES
   // --------------------------------------------
   ...createLocationRules(),
+
+  // --------------------------------------------
+  // DISCARD CONTROL
+  // --------------------------------------------
+  {
+    id: 'discard',
+    name: 'Discard',
+    category: 'playstyle',
+    playstyleId: 'discard',
+    description:
+      'Cards that force opponents to discard synergize with each other and with hand-size payoffs',
+
+    matches: isDiscardCard,
+
+    findSynergies: (card, allCards) => {
+      const cardRoles = getDiscardRoles(card);
+      if (cardRoles.length === 0) return [];
+
+      const matches: SynergyMatch[] = [];
+
+      for (const other of allCards) {
+        if (other.id === card.id) continue;
+
+        const otherRoles = getDiscardRoles(other);
+        if (otherRoles.length === 0) continue;
+
+        const hasEnablerPayoff =
+          (cardRoles.includes('enabler') && otherRoles.includes('payoff')) ||
+          (cardRoles.includes('payoff') && otherRoles.includes('enabler'));
+
+        if (hasEnablerPayoff) {
+          const enabler = cardRoles.includes('enabler') ? card : other;
+          const payoff = cardRoles.includes('payoff') ? card : other;
+          matches.push({
+            card: other,
+            score: 8,
+            explanation: `${enabler.fullName} depletes the opponent's hand, powering up ${payoff.fullName}'s hand-size advantage`,
+            bidirectional: true,
+          });
+        } else {
+          const bothPayoff = cardRoles.includes('payoff') && otherRoles.includes('payoff');
+          matches.push({
+            card: other,
+            score: 7,
+            explanation: bothPayoff
+              ? `Both ${card.fullName} and ${other.fullName} reward hand-size advantage over opponents`
+              : `Both ${card.fullName} and ${other.fullName} disrupt the opponent's hand`,
+            bidirectional: true,
+          });
+        }
+      }
+
+      return matches;
+    },
+  },
 ];
 
 // Get all rules

@@ -76,7 +76,7 @@ React web application that consumes the synergy engine package.
 **Synergy Categories**: direct (pair-specific, e.g. Shift), playstyle (strategy-reinforcing, e.g. Lore Steal)
 
 **Archetypes** (MVP):
-- Discard - opponent discard + payoffs
+- Discard - opponent discard + hand-size payoffs (IMPLEMENTED)
 - Bounce - return to hand + ETB effects
 - Ramp - ink acceleration + high-cost cards
 - Damage/Removal - deal damage, banish + payoffs
@@ -114,6 +114,33 @@ Cards that reference specific named entities via "named X" patterns (e.g., "char
 **Coverage**: ~106 cards with named references, 78 unique referenced names, 100% match rate against card database.
 
 **Full documentation**: See [`NAMED_COMPANIONS_RULE.md`](NAMED_COMPANIONS_RULE.md) for extraction details, scoring rationale, and test coverage.
+
+### Rule 3: Discard (playstyle, two roles)
+
+Cards that force opponents to discard from hand (enablers) synergize with each other and with cards that reward hand-size advantage (payoffs). Single rule with role-based scoring.
+
+**Enabler detection** (7 pattern families):
+- `(each|chosen) opponent (chooses and discards|reveals their hand and discards|discards)` — forced/targeted/random discard
+- `have (each|chosen) opponent choose and discard` — alternate wording
+- `(each|challenging) player [may] chooses and discards` — symmetric/challenge-triggered
+- `that player discards a card at random` — indirect
+- `more than \d+ cards in their hand.*discard` — hand-cap effects
+- `most cards in their hands choose and discard` — comparative (targets player with most cards)
+- `each player draws \d+ cards.*discards \d+ cards at random` — symmetric chaos
+
+**Payoff detection**: `more cards in your hand than (each) opponent` — rewards hand-size asymmetry
+
+**Excluded**: Self-discard (you discard as cost), mill (deck→discard), catch-up draw (opponent has more cards than you), discard pile recursion (Zombies playstyle)
+
+**Scoring**:
+
+| Pair | Score | Explanation |
+|------|-------|-------------|
+| Enabler ↔ Enabler | 7 | Both disrupt the opponent's hand |
+| Enabler ↔ Payoff | 8 | Enabler depletes hand, payoff capitalizes |
+| Payoff ↔ Payoff | 7 | Both reward hand-size advantage |
+
+**Coverage**: ~34 enablers, 2 payoffs, 36 total cards.
 
 ## Commands
 

@@ -102,7 +102,33 @@ describe('SynergyEngine', () => {
 
       expect(locationGroups).toHaveLength(1);
       expect(locationGroups[0].category).toBe('playstyle');
-      expect(locationGroups[0].label).toBe('Location Control');
+      expect(locationGroups[0].label).toBe('Locations');
+    });
+
+    it('should group discard enablers and payoffs under the discard playstyle', () => {
+      const enabler = createCard({
+        id: 'discard-enabler',
+        name: 'Sudden Chill',
+        fullName: 'Sudden Chill',
+        type: 'Action',
+        text: 'Each opponent chooses and discards a card.',
+      });
+      const payoff = createCard({
+        id: 'discard-payoff',
+        name: 'Pacha',
+        fullName: 'Pacha - Trekmate',
+        text: 'While you have more cards in your hand than each opponent, this character gets +2 lore.',
+      });
+
+      const groups = new SynergyEngine().findSynergies(enabler, [enabler, payoff]);
+      const discardGroup = groups.find((g) => g.groupKey === 'discard');
+
+      expect(discardGroup).toBeDefined();
+      expect(discardGroup!.category).toBe('playstyle');
+      expect(discardGroup!.label).toBe('Discard');
+      expect(discardGroup!.synergies).toHaveLength(1);
+      expect(discardGroup!.synergies[0].card.id).toBe('discard-payoff');
+      expect(discardGroup!.synergies[0].score).toBe(8);
     });
   });
 
