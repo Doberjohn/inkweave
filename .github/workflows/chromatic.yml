@@ -42,3 +42,4 @@ jobs:
           workingDir: apps/web
           storybookBaseDir: apps/web
           exitOnceUploaded: true
+          autoAcceptChanges: master
