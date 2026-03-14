@@ -59,7 +59,10 @@ export {
   isCardType,
   getShiftType,
   hasAnyShift,
+  getNamedReferences,
+  classifyNamedEffect,
+  NAMED_EFFECT_SCORES,
   transformCard,
   transformCards,
 } from './utils';
-export type {LocationRole, ShiftType, LorcanaJSONCard} from './utils';
+export type {LocationRole, ShiftType, NamedEffectTier, LorcanaJSONCard} from './utils';

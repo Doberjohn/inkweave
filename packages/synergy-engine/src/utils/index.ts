@@ -20,8 +20,11 @@ export {
   LOCATION_PATTERNS,
   getShiftType,
   hasAnyShift,
+  getNamedReferences,
+  classifyNamedEffect,
+  NAMED_EFFECT_SCORES,
 } from './cardHelpers.js';
-export type {LocationRole, ShiftType} from './cardHelpers.js';
+export type {LocationRole, ShiftType, NamedEffectTier} from './cardHelpers.js';
 
 export {isCardType} from './typeGuards.js';
 

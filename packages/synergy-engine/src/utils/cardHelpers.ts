@@ -259,6 +259,140 @@ export function isLocationSupportCard(card: LorcanaCard): boolean {
   return getLocationRoles(card).length > 0;
 }
 
+// ============================================
+// NAMED COMPANION DETECTION
+// ============================================
+
+/** Regex to strip Shift parentheticals from card text before scanning for named references */
+const SHIFT_PARENTHETICAL = /Shift \d+\s*\([^)]*\)/gi;
+
+/**
+ * Game-mechanic terminator pattern (as regex source string) that signals the
+ * end of a card name. Names can contain lowercase articles ("the", "of"),
+ * periods ("Mr."), hyphens ("Fix-It"), and exclamation marks ("Pull the
+ * Lever!"), so we stop at words that clearly belong to game rules text.
+ *
+ * Also terminates on comma (handles "named Pete, you may...") and on
+ * "and/or" followed by a non-capitalized word (game text continuation).
+ */
+const NAME_TERMINATOR_SOURCE = [
+  // Game-mechanic verbs and prepositions
+  "\\s+(?:in\\b|can\\b|can't\\b|may\\b|gets?\\b|gains?\\b|here\\b|for\\b|from\\b|at\\b|on\\b",
+  '|you\\b|your\\b|their\\b|this\\b|that\\b|challenges?\\b|has\\b|have\\b|is\\b|are\\b|moves?\\b|costs?\\b)',
+  // "and/or" followed by a verb (not a proper name continuation)
+  '|\\s+(?:and|or)\\s+(?:reveal|put|return|play|exert|banish|deal|draw|give|pay|reduce|shuffle|the\\s+[a-z])',
+  // Comma boundary (e.g., "named Pete, you may")
+  '|,',
+].join('');
+
+/** Words that should never be treated as card names (generic game text) */
+const GENERIC_WORDS = new Set(['card', 'character', 'item', 'location', 'action']);
+
+/** Fast check for "named" keyword — avoids regex compilation for cards without it */
+const HAS_NAMED = /\bnamed\b/i;
+
+/** Pre-compiled regex: captures everything after "named" until a terminator, sentence boundary, close-paren, or end */
+const NAMED_PATTERN = new RegExp(
+  `\\bnamed\\s+(.+?)(?=(?:\\.\\s(?![A-Z])|\\)|$)|${NAME_TERMINATOR_SOURCE})`,
+  'gi',
+);
+
+/**
+ * Extract all entity names referenced by "named X" patterns in a card's text.
+ * Strips Shift text first (handled by Shift Targets rule).
+ * Uses a terminator-based approach: captures everything after "named" until
+ * hitting a game-mechanic word (in, can, may, etc.), sentence boundary, or end of text.
+ * Returns an array of unique referenced names, or empty if none found.
+ */
+export function getNamedReferences(card: LorcanaCard): string[] {
+  if (!card.text || !HAS_NAMED.test(card.text)) return [];
+
+  // Strip Shift parentheticals and normalize newlines
+  const cleanText = card.text.replace(SHIFT_PARENTHETICAL, '').replace(/\n/g, ' ');
+
+  const names = new Set<string>();
+
+  // Reset lastIndex for global regex reuse
+  NAMED_PATTERN.lastIndex = 0;
+
+  for (const match of cleanText.matchAll(NAMED_PATTERN)) {
+    let name = match[1].trim();
+
+    // Strip trailing punctuation (sentence-end periods, commas) but keep internal ones like "Mr."
+    name = name.replace(/[.,]+$/, '');
+
+    if (!name) continue;
+
+    // Skip generic game terms (e.g., "the named card, put it into your hand")
+    if (GENERIC_WORDS.has(name.toLowerCase())) continue;
+
+    // Handle "both X and Y" pattern (e.g., "named both Chip and Dale")
+    if (name.toLowerCase().startsWith('both ')) {
+      const bothMatch = name.match(/^both\s+(.+?)\s+and\s+(.+)$/i);
+      if (bothMatch) {
+        names.add(bothMatch[1].trim());
+        names.add(bothMatch[2].trim());
+        continue;
+      }
+    }
+
+    // Handle "X and Y" or "X or Y" where both parts start with uppercase
+    const conjMatch = name.match(/^(.+?)\s+(?:and|or)\s+([A-Z].+)$/);
+    if (conjMatch && /^[A-Z]/.test(conjMatch[1])) {
+      names.add(conjMatch[1].trim());
+      names.add(conjMatch[2].trim());
+      continue;
+    }
+
+    names.add(name);
+  }
+
+  return [...names];
+}
+
+/**
+ * Classify the effect of a named reference for scoring purposes.
+ * Returns a tier based on the game effect described in the card text.
+ */
+export type NamedEffectTier = 'game-winning' | 'strong' | 'moderate' | 'minor' | 'hostile';
+
+export function classifyNamedEffect(card: LorcanaCard): NamedEffectTier {
+  if (!card.text) return 'minor';
+  const text = card.text.toLowerCase().replace(/\n/g, ' ');
+
+  // Hostile: banish/exert/damage the named character (limit distance to same clause)
+  if (/banish.{0,40}named|named.{0,40}banish/.test(text)) return 'hostile';
+
+  // Game-winning: free play, draw multiple, tutor from deck
+  if (/play.*for free|for free|play.*without paying/.test(text)) return 'game-winning';
+  if (/draw \d+ card|draw cards/.test(text)) return 'game-winning';
+  if (/search your deck/.test(text)) return 'game-winning';
+
+  // Strong: cost reduction, keyword grants (Bodyguard, Challenger, Rush, Evasive, Singer)
+  if (/costs? \d+ less|cost.*less|cost reduction|pay \d+ .*less/.test(text)) return 'strong';
+  if (/gains? (?:bodyguard|challenger|rush|evasive|singer)/.test(text)) return 'strong';
+  if (/challenger \+\d/.test(text)) return 'strong';
+
+  // Moderate: stat boosts, lore, Resist, Support
+  if (/\+\d+\s*(?:strength|willpower|lore)/.test(text)) return 'moderate';
+  if (/gains?\s+\d+ lore/.test(text)) return 'moderate';
+  if (/resist \+\d/.test(text)) return 'moderate';
+  if (/gains? support/.test(text)) return 'moderate';
+  if (/can't be challenged/.test(text)) return 'moderate';
+
+  // Minor: everything else
+  return 'minor';
+}
+
+/** Map effect tier to numeric score */
+export const NAMED_EFFECT_SCORES: Record<NamedEffectTier, number> = {
+  'game-winning': 8,
+  strong: 7,
+  moderate: 6,
+  minor: 5,
+  hostile: 4,
+};
+
 /**
  * Check if card text contains a NEGATIVE effect targeting a classification
  * e.g., "exert chosen Princess", "banish target Villain"

@@ -46,7 +46,6 @@ score distribution, and coverage gaps. Fully automated — no interaction needed
    Display results as a structured summary with clear sections. Use tables where helpful.
    Lead with flags/issues at the top, then detailed breakdowns below.
    Example format:
-
    ```
    ## Issues Found
    - [WARN] Rule "Lore Loss" has identical score (7) for all 19 matches
@@ -70,3 +69,5 @@ score distribution, and coverage gaps. Fully automated — no interaction needed
    ## Coverage
    Total: X/Y cards (Z%)
    ```
+7. **HTML report**
+   Generate a standalone HTML report with all results.

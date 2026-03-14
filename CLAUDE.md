@@ -95,6 +95,26 @@ Shift cards find same-named base characters; base characters find Shift cards. B
 
 **Full documentation**: See [`SHIFT_TARGET_RULE.md`](SHIFT_TARGET_RULE.md) for detailed score tables, examples, condition matchers, and design rationale.
 
+### Rule 2: Named Companions (direct, forward-only matching)
+
+Cards that reference specific named entities via "named X" patterns (e.g., "characters named Anna", "item named Microbots") find all cards sharing that base name. Only the referencing card triggers matching — targets are found via `findSynergies`.
+
+**Name extraction**: Terminator-based regex captures everything after "named" until hitting a game-mechanic word (in, can, may, etc.). Handles periods ("Mr. Smee"), lowercase articles ("Queen of Hearts"), exclamation marks ("Pull the Lever!"), hyphens ("Fix-It Felix"), possessives ("Maurice's Machine"), and conjunctions ("both Chip and Dale", "Miss Bianca or Bernard"). Shift parentheticals are stripped first (handled by Rule 1).
+
+**Scoring by effect tier** (based on what the card does with the named companion):
+
+| Tier | Score | Triggers |
+|------|-------|----------|
+| Game-winning | 8 | Free play, draw multiple cards, deck search |
+| Strong | 7 | Cost reduction ("cost X less" / "pay X less"), keyword grants (Rush, Evasive, etc.) |
+| Moderate | 6 | Stat boosts (+strength/willpower/lore), Resist, Support, can't be challenged |
+| Minor | 5 | Everything else |
+| Hostile | 4 | Banish/exert the named target (within same clause, 40-char window) |
+
+**Coverage**: ~106 cards with named references, 78 unique referenced names, 100% match rate against card database.
+
+**Full documentation**: See [`NAMED_COMPANIONS_RULE.md`](NAMED_COMPANIONS_RULE.md) for extraction details, scoring rationale, and test coverage.
+
 ## Commands
 
 ```bash
