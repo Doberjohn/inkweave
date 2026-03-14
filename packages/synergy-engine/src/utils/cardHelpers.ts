@@ -288,6 +288,15 @@ const NAME_TERMINATOR_SOURCE = [
 /** Words that should never be treated as card names (generic game text) */
 const GENERIC_WORDS = new Set(['card', 'character', 'item', 'location', 'action']);
 
+/** Fast check for "named" keyword — avoids regex compilation for cards without it */
+const HAS_NAMED = /\bnamed\b/i;
+
+/** Pre-compiled regex: captures everything after "named" until a terminator, sentence boundary, close-paren, or end */
+const NAMED_PATTERN = new RegExp(
+  `\\bnamed\\s+(.+?)(?=(?:\\.\\s(?![A-Z])|\\)|$)|${NAME_TERMINATOR_SOURCE})`,
+  'gi',
+);
+
 /**
  * Extract all entity names referenced by "named X" patterns in a card's text.
  * Strips Shift text first (handled by Shift Targets rule).
@@ -296,20 +305,17 @@ const GENERIC_WORDS = new Set(['card', 'character', 'item', 'location', 'action'
  * Returns an array of unique referenced names, or empty if none found.
  */
 export function getNamedReferences(card: LorcanaCard): string[] {
-  if (!card.text) return [];
+  if (!card.text || !HAS_NAMED.test(card.text)) return [];
 
   // Strip Shift parentheticals and normalize newlines
   const cleanText = card.text.replace(SHIFT_PARENTHETICAL, '').replace(/\n/g, ' ');
 
   const names = new Set<string>();
 
-  // Capture everything after "named" until a terminator, sentence boundary, close-paren, or end
-  const namedPattern = new RegExp(
-    `\\bnamed\\s+(.+?)(?=(?:\\.\\s(?![A-Z])|\\)|$)|${NAME_TERMINATOR_SOURCE})`,
-    'gi',
-  );
+  // Reset lastIndex for global regex reuse
+  NAMED_PATTERN.lastIndex = 0;
 
-  for (const match of cleanText.matchAll(namedPattern)) {
+  for (const match of cleanText.matchAll(NAMED_PATTERN)) {
     let name = match[1].trim();
 
     // Strip trailing punctuation (sentence-end periods, commas) but keep internal ones like "Mr."
