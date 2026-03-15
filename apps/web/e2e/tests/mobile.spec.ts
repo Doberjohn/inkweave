@@ -131,6 +131,26 @@ test.describe('Mobile Viewport', () => {
     await expect(page.getByRole('dialog', {name: 'Search cards'})).not.toBeVisible({timeout: 5000});
   });
 
+  test('should navigate to browse when pressing Enter in search bottom sheet', async ({page}) => {
+    // Navigate away from home so the bottom nav appears
+    await page.getByTestId('cta-browse').click();
+    await page.waitForTimeout(200);
+
+    // Open search sheet
+    await page.getByRole('button', {name: 'Search cards'}).click();
+    const searchDialog = page.getByRole('dialog', {name: 'Search cards'});
+    await expect(searchDialog).toBeVisible();
+
+    // Type a query and press Enter
+    const searchInput = searchDialog.getByPlaceholder('Search cards...');
+    await searchInput.fill('Elsa');
+    await searchInput.press('Enter');
+
+    // Should navigate to browse with query param
+    await expect(page).toHaveURL(/\/browse\?q=Elsa/);
+    await expect(page.getByRole('heading', {name: 'Browse Cards'})).toBeVisible();
+  });
+
   test('should show sort dropdown in browse toolbar', async ({page}) => {
     // Navigate to browse
     await page.getByTestId('cta-browse').click();

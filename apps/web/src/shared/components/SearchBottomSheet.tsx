@@ -291,6 +291,9 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
                   if (e.key === 'Escape') {
                     e.preventDefault();
                     onClose();
+                  } else if (!e.defaultPrevented && e.key === 'Enter' && query.trim()) {
+                    onClose();
+                    navigate(`/browse?q=${encodeURIComponent(query.trim())}`);
                   }
                 }}
                 data-testid="search-sheet-input"

@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-52 active tests across 10 spec files. Each file runs on both `chromium` (desktop) and `mobile-chrome` projects but skips the irrelevant viewport.
+53 active tests across 10 spec files. Each file runs on both `chromium` (desktop) and `mobile-chrome` projects but skips the irrelevant viewport.
 
 ## `app-load.spec.ts` — 4 tests (desktop only)
 
@@ -43,7 +43,7 @@
 | should clear selection and return to home | Back button navigates to `/`, hero reappears |
 | should return to home when clicking logo | Logo click navigates to `/`, hero reappears |
 
-## `mobile.spec.ts` — 12 tests (mobile only)
+## `mobile.spec.ts` — 13 tests (mobile only)
 
 | Test | What it verifies |
 |---|---|
@@ -56,6 +56,7 @@
 | should navigate to browsing view via Browse all cards CTA | "Browse all cards" CTA navigates away from hero, shows browse heading |
 | should open search bottom sheet and focus input when tapping search icon | Tap search icon in bottom nav, sheet opens with focused input |
 | should close search bottom sheet on backdrop click | Open search sheet, click backdrop, sheet dismisses |
+| should navigate to browse when pressing Enter in search bottom sheet | Type query in search sheet, press Enter, navigates to `/browse?q=Elsa` |
 | should show sort dropdown in browse toolbar | Sort select and Filters button both visible in browse toolbar |
 | should lock background scroll when filter drawer is open | Opening filter drawer sets body overflow to hidden |
 | should open filter drawer in mobile browsing view | From browsing view, tap Filters button, drawer shows Amber/Sapphire/Steel ink buttons |
