@@ -11849,8 +11849,8 @@
       "number": 163,
       "rarity": "Common",
       "images": {
-        "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set6/163_803e2200075d49ab677e98a6c8085d0b07881c2a.jpg",
-        "full": "https://api.lorcana.ravensburger.com/images/en/set6/163_d07389f98aa8a20a36f7dda2ef316f3ad8d0b988.jpg"
+        "thumbnail": "https://lorcana-api.com/images/sail_the_azurite_sea/sail_the_azurite_sea-large.png",
+        "full": "https://lorcana-api.com/images/sail_the_azurite_sea/sail_the_azurite_sea-large.png"
       }
     },
     {
