@@ -160,6 +160,7 @@ export const SynergyCard = memo(function SynergyCard({
         <CardLightbox
           src={card.imageUrl}
           alt={card.fullName}
+          isLocation={card.type === 'Location'}
           onClose={() => setLightboxOpen(false)}
         />
       )}
