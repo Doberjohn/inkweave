@@ -16,6 +16,7 @@ function makeUiMeta(accentColor: string, coverArt: string): PlaystyleUiMeta {
 export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
   'lore-denial': makeUiMeta('#ef4444', '/art/playstyles/lore-denial-cover.webp'),
   'location-control': makeUiMeta('#71717a', '/art/playstyles/location-control-cover.webp'),
+  discard: makeUiMeta('#10b981', '/art/playstyles/discard.webp'),
 };
 
 export interface ComingSoonPlaystyle extends PlaystyleUiMeta {
@@ -34,12 +35,6 @@ function makeComingSoon(
 
 /** Playstyles that are planned but not yet implemented in the engine. */
 export const COMING_SOON_PLAYSTYLES: ComingSoonPlaystyle[] = [
-  makeComingSoon(
-    'Discard',
-    'Force opponents to discard cards while benefiting from discard triggers and payoffs. Control the hand advantage to dominate the game.',
-    '#10b981',
-    '/art/playstyles/discard.webp',
-  ),
   makeComingSoon(
     'Bounce',
     'Return characters to hand to retrigger enter-the-battlefield effects. Tempo advantage through repeated value generation.',

@@ -1,6 +1,6 @@
 import {test, expect} from '../fixtures';
 
-// Elsa - Ice Artisan (2586) has both direct (Shift Targets) and playstyle (Location Control) groups
+// Elsa - Ice Artisan (2586) has both direct (Shift Targets) and playstyle (Locations) groups
 const CARD_WITH_BOTH_GROUPS = '/card/2586';
 
 test.describe('Show All UX — Desktop', () => {
