@@ -155,7 +155,10 @@ jobs:
             const baseMap = base ? extractBenchmarks(base) : null;
 
             // --- Build markdown table ---
-            const FAIL_THRESHOLD = -30; // Fail if any benchmark regresses more than 30%
+            // Each new synergy rule adds an O(n) scan to findSynergies for matching cards.
+            // With 4 MVP archetypes planned (Discard, Bounce, Ramp, Damage/Removal),
+            // expect ~4-6x overhead vs a 1-rule baseline. Threshold accommodates rule growth.
+            const FAIL_THRESHOLD = -70;
             const fmt = (n) => n >= 1000 ? n.toLocaleString('en-US', { maximumFractionDigits: 0 }) : n.toFixed(2);
 
             let rows = '';
@@ -193,7 +196,7 @@ jobs:
               rows.trim(),
               '',
               baseMap
-                ? '_Compared against base branch. \ud83d\udfe2 >10% faster \u00b7 \u26aa within 10% \u00b7 \ud83d\udd34 >10% slower \u00b7 Fails at >30% regression._'
+                ? '_Compared against base branch. \ud83d\udfe2 >10% faster \u00b7 \u26aa within 10% \u00b7 \ud83d\udd34 >10% slower \u00b7 Fails at >70% regression._'
                 : '_No base branch results available for comparison._',
               statusLine,
             ].join('\n');
