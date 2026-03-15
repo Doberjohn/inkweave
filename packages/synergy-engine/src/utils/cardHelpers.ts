@@ -288,12 +288,16 @@ const DISCARD_ENABLER_PATTERNS: RegExp[] = [
 /** Payoff pattern — cards that reward having more cards in hand than opponent */
 const DISCARD_PAYOFF_PATTERN = /more\s+cards\s+in\s+your\s+hand\s+than\s+(?:each\s+)?opponents?/i;
 
+/** Fast pre-filter: all enabler patterns contain "discard", payoff contains "hand" */
+const HAS_DISCARD_KEYWORD = /discard|more cards in your hand/i;
+
 /**
  * Determine the discard role(s) a card fulfills.
  * Returns an array of roles (a card could theoretically be both).
  */
 export function getDiscardRoles(card: LorcanaCard): DiscardRole[] {
   if (!card.text) return [];
+  if (!HAS_DISCARD_KEYWORD.test(card.text)) return [];
   const normalizedText = card.text.replace(/\n/g, ' ');
 
   const roles: DiscardRole[] = [];
