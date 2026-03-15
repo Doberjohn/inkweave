@@ -218,6 +218,7 @@ function PairCardImage({card, isMobile}: {card: LorcanaCard; isMobile?: boolean}
         <CardLightbox
           src={card.imageUrl}
           alt={card.fullName}
+          isLocation={card.type === 'Location'}
           onClose={() => setLightboxOpen(false)}
         />
       )}

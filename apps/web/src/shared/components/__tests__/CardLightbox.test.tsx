@@ -52,6 +52,18 @@ describe('CardLightbox', () => {
     expect(screen.getByText('Image could not be loaded')).toBeInTheDocument();
   });
 
+  it('should rotate location card images 90 degrees', () => {
+    render(<CardLightbox {...defaultProps} isLocation />);
+    const img = screen.getByRole('img');
+    expect(img.style.transform).toBe('rotate(90deg)');
+  });
+
+  it('should not rotate non-location card images', () => {
+    render(<CardLightbox {...defaultProps} />);
+    const img = screen.getByRole('img');
+    expect(img.style.transform).toBe('');
+  });
+
   it('should lock body scroll when open', () => {
     const {unmount} = render(<CardLightbox {...defaultProps} />);
     expect(document.body.style.overflow).toBe('hidden');

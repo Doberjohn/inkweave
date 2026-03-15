@@ -6,12 +6,13 @@ import {useScrollLock} from '../hooks';
 interface CardLightboxProps {
   src: string;
   alt: string;
+  isLocation?: boolean;
   onClose: () => void;
 }
 
 /** Fullscreen lightbox overlay for enlarged card images. Dismiss via backdrop click or Escape. Locks body scroll while open.
  *  Renders via portal to document.body to escape transform-based stacking contexts (e.g. animated modals). */
-export function CardLightbox({src, alt, onClose}: CardLightboxProps) {
+export function CardLightbox({src, alt, isLocation, onClose}: CardLightboxProps) {
   const [imgError, setImgError] = useState(false);
 
   const handleKeyDown = useCallback(
@@ -72,13 +73,14 @@ export function CardLightbox({src, alt, onClose}: CardLightboxProps) {
           onError={() => setImgError(true)}
           onClick={(e) => e.stopPropagation()}
           style={{
-            maxWidth: 'calc(100vw - 80px)',
-            maxHeight: '85vh',
+            maxWidth: isLocation ? '85vh' : 'calc(100vw - 80px)',
+            maxHeight: isLocation ? 'calc(100vw - 80px)' : '85vh',
             borderRadius: `${RADIUS.xl}px`,
             border: `2px solid ${COLORS.primary500}`,
             boxShadow: '0 0 30px rgba(212, 175, 55, 0.3)',
             cursor: 'default',
             objectFit: 'contain',
+            transform: isLocation ? 'rotate(90deg)' : undefined,
           }}
         />
       )}
