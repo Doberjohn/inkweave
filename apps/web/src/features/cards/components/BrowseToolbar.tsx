@@ -3,7 +3,7 @@ import type {Ink} from 'inkweave-synergy-engine';
 import type {CardFilterOptions} from '../loader';
 import type {CardTypeFilter, BrowseSortOrder} from '../../../shared/constants';
 import {BROWSE_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
-import {FilterChip} from '../../../shared/components/FilterChip';
+import {Chip} from '../../../shared/components/Chip';
 import {FiltersButton} from '../../../shared/components/FiltersButton';
 import {InkFilterGroup} from '../../../shared/components/InkFilterGroup';
 import {SortSelect} from '../../../shared/components/SortSelect';
@@ -24,6 +24,8 @@ interface BrowseToolbarProps {
   sortOrder: BrowseSortOrder;
   onSortChange: (order: BrowseSortOrder) => void;
   isMobile: boolean;
+  /** Optional slot rendered after the filters button (e.g., role filter chips) */
+  extraChips?: React.ReactNode;
 }
 
 export function BrowseToolbar({
@@ -41,6 +43,7 @@ export function BrowseToolbar({
   sortOrder,
   onSortChange,
   isMobile,
+  extraChips,
 }: BrowseToolbarProps) {
   const [clearHover, setClearHover] = useState(false);
 
@@ -89,6 +92,7 @@ export function BrowseToolbar({
         zIndex: 1,
       }}>
       <FiltersButton onClick={onFiltersClick} activeCount={activeFilterCount} isMobile={isMobile} />
+      {extraChips}
 
       {/* Active filter chips */}
       {hasChips && (
@@ -100,8 +104,9 @@ export function BrowseToolbar({
             ...(isMobile ? {flexBasis: '100%'} : {flex: 1}),
           }}>
           {chips.map((chip) => (
-            <FilterChip
+            <Chip
               key={chip.id}
+              variant="dismiss"
               label={chip.label}
               onDismiss={chip.onDismiss}
               isMobile={isMobile}

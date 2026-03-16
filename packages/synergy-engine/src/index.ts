@@ -32,6 +32,9 @@ export {
   getPlaystyleById,
   LOCATION_ROLE_CHIP_LABELS,
   LOCATION_ROLE_DESCRIPTIONS,
+  LOCATION_ROLE_TOOLTIP,
+  DISCARD_ROLE_CHIP_LABELS,
+  DISCARD_ROLE_DESCRIPTIONS,
 } from './engine';
 export type {SynergyEngineOptions, CachedSynergyResult} from './engine';
 

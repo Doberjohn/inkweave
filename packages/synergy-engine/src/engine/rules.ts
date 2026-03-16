@@ -14,6 +14,7 @@ import {
   LOCATION_PATTERNS,
   NAMED_EFFECT_SCORES,
   textContains,
+  type DiscardRole,
   type LocationRole,
   type ShiftType,
 } from '../utils';
@@ -431,6 +432,34 @@ function createLocationRules(): SynergyRule[] {
     createLocationRule('boost', 'Location Boost', 'boost', LOCATION_PATTERNS.boost),
   ];
 }
+
+// ============================================
+// DISCARD ROLE UI LABELS
+// ============================================
+
+/** Short chip labels for each discard role (used in UI) */
+export const DISCARD_ROLE_CHIP_LABELS: Record<DiscardRole, string> = {
+  enabler: 'Enabler',
+  payoff: 'Payoff',
+};
+
+/** Educational descriptions explaining what each discard role means */
+export const DISCARD_ROLE_DESCRIPTIONS: Record<DiscardRole, string> = {
+  enabler: 'Forces opponents to discard cards from their hand',
+  payoff: 'Rewards you for having more cards than your opponent',
+};
+
+/** Standalone educational descriptions for location roles (no card name needed) */
+export const LOCATION_ROLE_TOOLTIP: Record<LocationRole, string> = {
+  'at-payoff': 'Gets bonuses when characters are at a location',
+  'play-trigger': 'Activates effects whenever you play a location',
+  buff: 'Strengthens locations with resist, protection, or stat boosts',
+  'location-ramp': 'Reduces the cost of playing or moving to locations',
+  move: 'Moves characters to locations for positioning advantage',
+  'in-play-check': 'Gains benefits when you have locations in play',
+  tutor: 'Searches your deck or discard for location cards',
+  boost: 'Works with the Boost keyword to power up locations',
+};
 
 // ============================================
 // SYNERGY RULES

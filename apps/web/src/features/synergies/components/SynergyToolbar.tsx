@@ -8,7 +8,7 @@ import type {SynergyFilterState, StrengthTierFilter} from '../utils/filterSynerg
 import {EMPTY_SYNERGY_FILTERS} from '../utils/filterSynergyCards';
 import {SYNERGY_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
 import {FilterDialog} from '../../../shared/components/FilterDialog';
-import {FilterChip} from '../../../shared/components/FilterChip';
+import {Chip} from '../../../shared/components/Chip';
 import {FiltersButton} from '../../../shared/components/FiltersButton';
 import {InkFilterGroup} from '../../../shared/components/InkFilterGroup';
 import {SortSelect} from '../../../shared/components/SortSelect';
@@ -247,8 +247,9 @@ export function SynergyToolbar({
               ...(isMobile ? {flexBasis: '100%'} : {flex: 1}),
             }}>
             {chips.map((chip) => (
-              <FilterChip
+              <Chip
                 key={chip.id}
+                variant="dismiss"
                 label={chip.label}
                 onDismiss={chip.onDismiss}
                 isMobile={isMobile}

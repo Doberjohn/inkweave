@@ -1,10 +1,23 @@
 import {useCallback, useEffect, useMemo, useState} from 'react';
 import {useParams, useNavigate, useSearchParams, Navigate} from 'react-router-dom';
-import {getPlaystyleById, type PlaystyleId} from 'inkweave-synergy-engine';
+import {
+  getPlaystyleById,
+  getLocationRoles,
+  getDiscardRoles,
+  LOCATION_ROLE_CHIP_LABELS,
+  LOCATION_ROLE_TOOLTIP,
+  DISCARD_ROLE_CHIP_LABELS,
+  DISCARD_ROLE_DESCRIPTIONS,
+  type PlaystyleId,
+  type LorcanaCard,
+  type LocationRole,
+  type DiscardRole,
+} from 'inkweave-synergy-engine';
 import {usePrecomputedPlaystyleCards} from '../features/synergies/hooks';
 import {BrowseToolbar, CardTile} from '../features/cards';
 import {filterCards, applySortOrder, type CardFilterOptions} from '../features/cards/loader';
 import {
+  Chip,
   CompactHeader,
   ErrorBoundary,
   EtherealBackground,
@@ -22,14 +35,6 @@ import {
 } from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive, useFilterParams, usePreloadImages} from '../shared/hooks';
-
-// ── Placeholder tips (will be replaced with per-playstyle data later) ──
-
-const PLACEHOLDER_TIPS = [
-  'Stack multiple cards with this effect to create consistent pressure each turn.',
-  'Pair with card draw to refill your hand after committing to the board.',
-  'Look for cards that advance your own game plan while disrupting your opponent.',
-];
 
 // ── Hero layout configs ──
 
@@ -70,6 +75,7 @@ const HERO_SCRIM =
 function PlaystyleHero({
   name,
   description,
+  tips,
   accentColor,
   accentRgb,
   coverArt,
@@ -78,6 +84,7 @@ function PlaystyleHero({
 }: {
   name: string;
   description: string;
+  tips: string[];
   accentColor: string;
   accentRgb: string;
   coverArt: string;
@@ -206,76 +213,159 @@ function PlaystyleHero({
           {description}
         </p>
 
-        {/* Strategy Tips — collapsible section */}
-        <button
-          onClick={() => setTipsOpen(!tipsOpen)}
-          style={{
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 500,
-            color: COLORS.primary,
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-            fontFamily: FONTS.body,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 5,
-            minHeight: layout.tipsMinHeight,
-            transition: 'opacity 0.15s',
-          }}>
-          <span
-            style={{
-              fontSize: `${FONT_SIZES.xs}px`,
-              display: 'inline-block',
-              transform: tipsOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-              transition: 'transform 0.2s',
-            }}>
-            &#9654;
-          </span>
-          Strategy Tips
-        </button>
-        {tipsOpen && (
-          <ul
-            style={{
-              listStyle: 'none',
-              padding: `${SPACING.md}px ${SPACING.lg}px`,
-              background: `rgba(${accentRgb}, 0.08)`,
-              borderRadius: `${RADIUS.lg}px`,
-              border: `1px solid rgba(${accentRgb}, 0.15)`,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-              maxWidth: layout.maxDescriptionWidth,
-            }}>
-            {PLACEHOLDER_TIPS.map((tip, i) => (
-              <li
-                key={i}
+        {/* Strategy Tips — collapsible section (hidden when no tips) */}
+        {tips.length > 0 && (
+          <>
+            <button
+              onClick={() => setTipsOpen(!tipsOpen)}
+              style={{
+                fontSize: `${FONT_SIZES.base}px`,
+                fontWeight: 500,
+                color: COLORS.primary,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                fontFamily: FONTS.body,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                minHeight: layout.tipsMinHeight,
+                transition: 'opacity 0.15s',
+              }}>
+              <span
                 style={{
-                  fontSize: `${FONT_SIZES.base}px`,
-                  lineHeight: 1.6,
-                  color: COLORS.descriptionText,
-                  paddingLeft: 16,
-                  position: 'relative',
+                  fontSize: `${FONT_SIZES.xs}px`,
+                  display: 'inline-block',
+                  transform: tipsOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s',
                 }}>
-                <span
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    color: accentColor,
-                    fontWeight: 700,
-                  }}>
-                  ·
-                </span>
-                {tip}
-              </li>
-            ))}
-          </ul>
+                &#9654;
+              </span>
+              Strategy Tips
+            </button>
+            {tipsOpen && (
+              <ul
+                style={{
+                  listStyle: 'none',
+                  padding: `${SPACING.md}px ${SPACING.lg}px`,
+                  background: `rgba(${accentRgb}, 0.08)`,
+                  borderRadius: `${RADIUS.lg}px`,
+                  border: `1px solid rgba(${accentRgb}, 0.15)`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                  maxWidth: layout.maxDescriptionWidth,
+                }}>
+                {tips.map((tip, i) => (
+                  <li
+                    key={i}
+                    style={{
+                      fontSize: `${FONT_SIZES.base}px`,
+                      lineHeight: 1.6,
+                      color: COLORS.descriptionText,
+                      paddingLeft: 16,
+                      position: 'relative',
+                    }}>
+                    <span
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        color: accentColor,
+                        fontWeight: 700,
+                      }}>
+                      ·
+                    </span>
+                    {tip}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         )}
       </div>
     </section>
   );
 }
+
+// ── Role filter helpers ──
+
+interface RoleChip {
+  role: string;
+  label: string;
+  tooltip: string;
+  count: number;
+}
+
+/** Synthetic role for Location card type (not a real engine role) */
+const LOCATION_CARD_ROLE = 'location' as const;
+
+/** Get role chip definitions for playstyles that have roles */
+function getRoleChips(playstyleId: PlaystyleId, cards: LorcanaCard[]): RoleChip[] {
+  if (playstyleId === 'location-control') {
+    const roleCounts = new Map<LocationRole, number>();
+    for (const card of cards) {
+      for (const role of getLocationRoles(card)) {
+        roleCounts.set(role, (roleCounts.get(role) ?? 0) + 1);
+      }
+    }
+    // Location cards don't have roles — count them separately
+    const locationCount = cards.filter((c) => c.type === 'Location').length;
+    const chips: RoleChip[] = [];
+    if (locationCount > 0) {
+      chips.push({
+        role: LOCATION_CARD_ROLE,
+        label: 'Location',
+        tooltip: 'Location cards',
+        count: locationCount,
+      });
+    }
+    for (const [role, count] of roleCounts) {
+      chips.push({
+        role,
+        label: LOCATION_ROLE_CHIP_LABELS[role],
+        tooltip: LOCATION_ROLE_TOOLTIP[role],
+        count,
+      });
+    }
+    return chips;
+  }
+
+  if (playstyleId === 'discard') {
+    const roleCounts = new Map<DiscardRole, number>();
+    for (const card of cards) {
+      for (const role of getDiscardRoles(card)) {
+        roleCounts.set(role, (roleCounts.get(role) ?? 0) + 1);
+      }
+    }
+    return [...roleCounts].map(([role, count]) => ({
+      role,
+      label: DISCARD_ROLE_CHIP_LABELS[role],
+      tooltip: DISCARD_ROLE_DESCRIPTIONS[role],
+      count,
+    }));
+  }
+
+  // lore-denial: no roles
+  return [];
+}
+
+/** Check if a card has a specific role within its playstyle */
+function cardHasRole(playstyleId: PlaystyleId, card: LorcanaCard, role: string): boolean {
+  if (playstyleId === 'location-control') {
+    if (role === LOCATION_CARD_ROLE) return card.type === 'Location';
+    return getLocationRoles(card).includes(role as LocationRole);
+  }
+  if (playstyleId === 'discard') {
+    return getDiscardRoles(card).includes(role as DiscardRole);
+  }
+  return false;
+}
+
+/** Small count badge rendered inside a Chip */
+const countBadge = (n: number) => (
+  <span style={{fontSize: `${FONT_SIZES.xs}px`, opacity: 0.7}}>{n}</span>
+);
 
 // ── Centered page style ──
 
@@ -312,7 +402,15 @@ export function PlaystyleDetailPage() {
     setSortOrder,
   } = useFilterParams();
   const [showFilters, setShowFilters] = useState(false);
+  const [activeRole, setActiveRole] = useState<string | null>(null);
+  const [rolePlaystyleId, setRolePlaystyleId] = useState(playstyleId);
   const [searchParams] = useSearchParams();
+
+  // Reset role filter when navigating between playstyles (no useEffect needed)
+  if (playstyleId !== rolePlaystyleId) {
+    setRolePlaystyleId(playstyleId);
+    setActiveRole(null);
+  }
 
   // Default sort to cost-asc for playstyle detail (most useful for deckbuilding)
   useEffect(() => {
@@ -344,9 +442,21 @@ export function PlaystyleDetailPage() {
     return applySortOrder(result, sortOrder);
   }, [playstyleCards, combinedFilters, sortOrder]);
 
+  // Role filter chips (desktop only) — compute which roles exist and their card counts
+  const roleChips = useMemo(() => {
+    if (!playstyle) return [];
+    return getRoleChips(playstyle.id, sortedCards);
+  }, [playstyle, sortedCards]);
+
+  // Apply role filter to sorted cards
+  const roleFilteredCards = useMemo(() => {
+    if (!activeRole || !playstyle) return sortedCards;
+    return sortedCards.filter((card) => cardHasRole(playstyle.id, card, activeRole));
+  }, [sortedCards, activeRole, playstyle]);
+
   const displayedCards = useMemo(
-    () => sortedCards.slice(0, LAYOUT.maxDisplayedCards),
-    [sortedCards],
+    () => roleFilteredCards.slice(0, LAYOUT.maxDisplayedCards),
+    [roleFilteredCards],
   );
 
   const goHome = useCallback(() => navigate('/'), [navigate]);
@@ -416,6 +526,34 @@ export function PlaystyleDetailPage() {
     onSortChange: setSortOrder,
   } as const;
 
+  // Role filter chips (desktop only, playstyles with multiple roles)
+  const roleChipsElement =
+    !isMobile && roleChips.length > 1 ? (
+      <>
+        <span
+          style={{
+            width: 1,
+            height: 20,
+            background: COLORS.surfaceBorder,
+            flexShrink: 0,
+          }}
+        />
+        <Chip label="All" active={activeRole === null} onClick={() => setActiveRole(null)}>
+          {countBadge(sortedCards.length)}
+        </Chip>
+        {roleChips.map((chip) => (
+          <Chip
+            key={chip.role}
+            label={chip.label}
+            title={chip.tooltip}
+            active={activeRole === chip.role}
+            onClick={() => setActiveRole(activeRole === chip.role ? null : chip.role)}>
+            {countBadge(chip.count)}
+          </Chip>
+        ))}
+      </>
+    ) : undefined;
+
   // Mobile layout
   if (isMobile) {
     return (
@@ -432,6 +570,7 @@ export function PlaystyleDetailPage() {
           <PlaystyleHero
             name={playstyle.name}
             description={playstyle.description}
+            tips={playstyle.strategyTips}
             accentColor={ui.accentColor}
             accentRgb={ui.accentRgb}
             coverArt={ui.coverArt}
@@ -441,7 +580,7 @@ export function PlaystyleDetailPage() {
           <BrowseToolbar {...toolbarProps} isMobile />
           {/* Card grid */}
           <ErrorBoundary>
-            {sortedCards.length === 0 ? (
+            {roleFilteredCards.length === 0 ? (
               <div
                 style={{
                   textAlign: 'center',
@@ -522,15 +661,16 @@ export function PlaystyleDetailPage() {
         <PlaystyleHero
           name={playstyle.name}
           description={playstyle.description}
+          tips={playstyle.strategyTips}
           accentColor={ui.accentColor}
           accentRgb={ui.accentRgb}
           coverArt={ui.coverArt}
           layout={heroLayout}
           onPlaystylesBreadcrumb={goPlaystyles}
         />
-        <BrowseToolbar {...toolbarProps} isMobile={false} />
+        <BrowseToolbar {...toolbarProps} isMobile={false} extraChips={roleChipsElement} />
         <ErrorBoundary>
-          {sortedCards.length === 0 ? (
+          {roleFilteredCards.length === 0 ? (
             <div
               style={{
                 textAlign: 'center',
