@@ -129,4 +129,18 @@ describe('BrowseToolbar', () => {
 
     expect(onSortChange).toHaveBeenCalledWith('name-asc');
   });
+
+  it('renders extraChips content when provided', () => {
+    render(
+      <BrowseToolbar
+        {...defaultProps({extraChips: <span data-testid="role-chip">Enabler</span>})}
+      />,
+    );
+    expect(screen.getByTestId('role-chip')).toHaveTextContent('Enabler');
+  });
+
+  it('does not render extra content when extraChips is undefined', () => {
+    render(<BrowseToolbar {...defaultProps()} />);
+    expect(screen.queryByTestId('role-chip')).not.toBeInTheDocument();
+  });
 });

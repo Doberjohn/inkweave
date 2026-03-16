@@ -12,11 +12,15 @@ vi.mock('../SynergyGroup', () => ({
   ),
 }));
 
-vi.mock('../../../shared/components', () => ({
-  CardImage: ({alt}: {alt: string}) => <img alt={alt} />,
-  CardLightbox: () => null,
-  CardTextBlock: ({card}: {card: LorcanaCard}) => <span>{card.text}</span>,
-}));
+vi.mock('../../../shared/components', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../shared/components')>();
+  return {
+    ...actual,
+    CardImage: ({alt}: {alt: string}) => <img alt={alt} />,
+    CardLightbox: () => null,
+    CardTextBlock: ({card}: {card: LorcanaCard}) => <span>{card.text}</span>,
+  };
+});
 
 const mockCard = createCard({
   id: 'elsa-snow-queen',
@@ -116,5 +120,12 @@ describe('MobileCardDetail', () => {
   it('should render header with INKWEAVE text', () => {
     render(<MobileCardDetail {...defaultProps} />);
     expect(screen.getByRole('button', {name: /back to home/i})).toHaveTextContent(/INKWEAVE/);
+  });
+
+  it('should hide group chips when only 1 synergy group', () => {
+    const singleGroup = [mockSynergies[0]];
+    render(<MobileCardDetail {...defaultProps} synergies={singleGroup} />);
+    expect(screen.queryByRole('button', {name: 'All'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Exert Synergies'})).not.toBeInTheDocument();
   });
 });

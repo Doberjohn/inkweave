@@ -1,10 +1,9 @@
 import {useCallback, useState, useMemo} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
-import {chipStyle} from '../utils';
 import {SynergyGroup} from './SynergyGroup';
 import {ExpandedGroupView} from './ExpandedGroupView';
-import {CardImage, CardLightbox} from '../../../shared/components';
+import {CardImage, CardLightbox, Chip} from '../../../shared/components';
 import {COLORS, FONT_SIZES, FONTS, SPACING} from '../../../shared/constants';
 
 interface MobileCardDetailProps {
@@ -190,31 +189,35 @@ export function MobileCardDetail({
               <div style={{flex: 1, height: 1, background: COLORS.surfaceBorder}} />
             </div>
 
-            {/* Group chips — horizontal scroll */}
-            <div
-              style={{
-                display: 'flex',
-                gap: '8px',
-                overflowX: 'auto',
-                paddingBottom: '4px',
-                marginBottom: SPACING.lg,
-                WebkitOverflowScrolling: 'touch',
-                scrollbarWidth: 'none',
-              }}>
-              <button
-                onClick={() => setActiveGroupFilter(null)}
-                style={chipStyle(activeGroupFilter === null, true)}>
-                All
-              </button>
-              {synergies.map((g) => (
-                <button
-                  key={g.groupKey}
-                  onClick={() => setActiveGroupFilter(g.groupKey)}
-                  style={chipStyle(activeGroupFilter === g.groupKey, true)}>
-                  {g.label}
-                </button>
-              ))}
-            </div>
+            {/* Group chips — horizontal scroll (hidden when only 1 group) */}
+            {synergies.length > 1 && (
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '8px',
+                  overflowX: 'auto',
+                  paddingBottom: '4px',
+                  marginBottom: SPACING.lg,
+                  WebkitOverflowScrolling: 'touch',
+                  scrollbarWidth: 'none',
+                }}>
+                <Chip
+                  label="All"
+                  active={activeGroupFilter === null}
+                  onClick={() => setActiveGroupFilter(null)}
+                  isMobile
+                />
+                {synergies.map((g) => (
+                  <Chip
+                    key={g.groupKey}
+                    label={g.label}
+                    active={activeGroupFilter === g.groupKey}
+                    onClick={() => setActiveGroupFilter(g.groupKey)}
+                    isMobile
+                  />
+                ))}
+              </div>
+            )}
 
             {/* Synergy groups */}
             {filteredGroups.map((group) => (

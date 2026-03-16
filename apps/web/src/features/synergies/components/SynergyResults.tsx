@@ -3,8 +3,8 @@ import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {CardDetail, SynergyGroup} from '.';
 import {ExpandedGroupView} from './ExpandedGroupView';
-import {chipStyle, applySynergySortOrder} from '../utils';
-import {EmptyState} from '../../../shared/components';
+import {applySynergySortOrder} from '../utils';
+import {Chip, EmptyState} from '../../../shared/components';
 import {SortSelect} from '../../../shared/components/SortSelect';
 import type {SynergySortOrder} from '../../../shared/constants';
 import {
@@ -56,7 +56,6 @@ export const SynergyResults = memo(function SynergyResults({
   const renderCardDetail = showCardDetail ?? isMobile;
   const [internalFilter, setInternalFilter] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SynergySortOrder>('ink-cost');
-  const [hoveredChip, setHoveredChip] = useState<string | null>(null);
 
   // Find the expanded group data when in show-all mode
   const expandedGroupData = expandedGroup
@@ -158,7 +157,7 @@ export const SynergyResults = memo(function SynergyResults({
                 </span>
               </div>
 
-              {/* Toolbar: group chips + sort */}
+              {/* Toolbar: group chips (when >1 group) + sort */}
               <div
                 style={{
                   display: 'flex',
@@ -175,27 +174,25 @@ export const SynergyResults = memo(function SynergyResults({
                       }
                     : {flexWrap: 'wrap'}),
                 }}>
-                <button
-                  onClick={() => setActiveGroupFilter(null)}
-                  onMouseEnter={() => setHoveredChip('all')}
-                  onMouseLeave={() => setHoveredChip(null)}
-                  style={chipStyle(activeGroupFilter === null, isMobile, hoveredChip === 'all')}>
-                  All
-                </button>
-                {synergies.map((group) => (
-                  <button
-                    key={group.groupKey}
-                    onClick={() => setActiveGroupFilter(group.groupKey)}
-                    onMouseEnter={() => setHoveredChip(group.groupKey)}
-                    onMouseLeave={() => setHoveredChip(null)}
-                    style={chipStyle(
-                      activeGroupFilter === group.groupKey,
-                      isMobile,
-                      hoveredChip === group.groupKey,
-                    )}>
-                    {group.label}
-                  </button>
-                ))}
+                {synergies.length > 1 && (
+                  <>
+                    <Chip
+                      label="All"
+                      active={activeGroupFilter === null}
+                      onClick={() => setActiveGroupFilter(null)}
+                      isMobile={isMobile}
+                    />
+                    {synergies.map((group) => (
+                      <Chip
+                        key={group.groupKey}
+                        label={group.label}
+                        active={activeGroupFilter === group.groupKey}
+                        onClick={() => setActiveGroupFilter(group.groupKey)}
+                        isMobile={isMobile}
+                      />
+                    ))}
+                  </>
+                )}
                 {!isMobile && (
                   <SortSelect
                     options={SYNERGY_SORT_OPTIONS}

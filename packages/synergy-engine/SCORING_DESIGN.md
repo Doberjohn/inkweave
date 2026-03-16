@@ -90,7 +90,7 @@ JSON but wasn't extracted), but it does not influence synergy scores.
 
 Scores based on **curve gap** (shift cost - base cost), **inkwell** (fallback utility), and **condition activation** (+1 bonus).
 
-For the full rule documentation with examples, condition matchers, and design rationale, see [`SHIFT_TARGET_RULE.md`](../../SHIFT_TARGET_RULE.md).
+For the full rule documentation with examples, condition matchers, and design rationale, see [`SHIFT_TARGET_RULE.md`](SHIFT_TARGET_RULE.md).
 
 **Standard Shift (gap-based):**
 

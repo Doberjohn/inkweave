@@ -9,7 +9,7 @@ Currently implementing MVP with:
 - **UI**: Dark fantasy theme (deep purple, gold accents)
 - **Synergies**: 4 archetypes (Discard, Bounce, Ramp, Damage/Removal) + existing rules
 
-See `TASK.md` for MVP roadmap and GitHub issues #28-49.
+See [GitHub Issues](https://github.com/Doberjohn/inkweave/issues) for full backlog.
 
 ## Tech Stack
 
@@ -93,7 +93,7 @@ See `packages/synergy-engine/REMOVED_RULES.md` for archived rules (Singer, Evasi
 
 Shift cards find same-named base characters; base characters find Shift cards. Both directions use the same scoring. Scores 3-10 based on curve gap, inkwell flexibility, free Shift cost tiers, and condition activation.
 
-**Full documentation**: See [`SHIFT_TARGET_RULE.md`](SHIFT_TARGET_RULE.md) for detailed score tables, examples, condition matchers, and design rationale.
+**Full documentation**: See [`packages/synergy-engine/SHIFT_TARGET_RULE.md`](packages/synergy-engine/SHIFT_TARGET_RULE.md) for detailed score tables, examples, condition matchers, and design rationale.
 
 ### Rule 2: Named Companions (direct, forward-only matching)
 
@@ -113,7 +113,7 @@ Cards that reference specific named entities via "named X" patterns (e.g., "char
 
 **Coverage**: ~106 cards with named references, 78 unique referenced names, 100% match rate against card database.
 
-**Full documentation**: See [`NAMED_COMPANIONS_RULE.md`](NAMED_COMPANIONS_RULE.md) for extraction details, scoring rationale, and test coverage.
+**Full documentation**: See [`packages/synergy-engine/NAMED_COMPANIONS_RULE.md`](packages/synergy-engine/NAMED_COMPANIONS_RULE.md) for extraction details, scoring rationale, and test coverage.
 
 ### Rule 3: Discard (playstyle, two roles)
 
@@ -141,6 +141,14 @@ Cards that force opponents to discard from hand (enablers) synergize with each o
 | Payoff ↔ Payoff | 7 | Both reward hand-size advantage |
 
 **Coverage**: ~34 enablers, 2 payoffs, 36 total cards.
+
+**Full documentation**: See [`packages/synergy-engine/DISCARD_RULE.md`](packages/synergy-engine/DISCARD_RULE.md) for pattern details, role detection, scoring rationale, and test coverage.
+
+### Location Control (playstyle, 8 sub-rules)
+
+8 specialized rules detecting location-support roles: at-payoff, play-trigger, buff, location-ramp, move, in-play-check, tutor, boost. All merge into a single `location-control` playstyle group. Factory pattern (`createLocationRule`) generates each rule. Anti-location cards (banish/remove locations) are excluded.
+
+**Full documentation**: See [`packages/synergy-engine/LOCATION_CONTROL_RULE.md`](packages/synergy-engine/LOCATION_CONTROL_RULE.md) for role taxonomy, detection patterns, cross-synergy matrix, and test coverage.
 
 ## Commands
 

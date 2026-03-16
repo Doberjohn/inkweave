@@ -10,4 +10,5 @@ export interface Playstyle {
   id: PlaystyleId;
   name: string;
   description: string; // Shown in UI as group explanation
+  strategyTips: string[]; // Deck-building advice specific to this archetype
 }

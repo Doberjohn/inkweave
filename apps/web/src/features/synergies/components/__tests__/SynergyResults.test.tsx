@@ -19,9 +19,13 @@ vi.mock('.', () => ({
   ),
 }));
 
-vi.mock('../../../shared/components', () => ({
-  EmptyState: () => <div data-testid="empty-state" />,
-}));
+vi.mock('../../../shared/components', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../shared/components')>();
+  return {
+    ...actual,
+    EmptyState: () => <div data-testid="empty-state" />,
+  };
+});
 
 const mockCard = createCard({
   id: '1',
@@ -113,5 +117,32 @@ describe('SynergyResults', () => {
     const groups = screen.getAllByTestId('synergy-group');
     expect(groups).toHaveLength(1);
     expect(groups[0]).toHaveTextContent('Shift Targets');
+  });
+
+  it('should hide group chips when only 1 synergy group', () => {
+    const singleGroup = [mockSynergies[0]];
+    render(
+      <SynergyResults
+        selectedCard={mockCard}
+        synergies={singleGroup}
+        totalSynergyCount={1}
+        onClearSelection={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole('button', {name: 'All'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Shift Targets'})).not.toBeInTheDocument();
+  });
+
+  it('should still show sort select when only 1 synergy group', () => {
+    const singleGroup = [mockSynergies[0]];
+    render(
+      <SynergyResults
+        selectedCard={mockCard}
+        synergies={singleGroup}
+        totalSynergyCount={1}
+        onClearSelection={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('combobox', {name: 'Sort synergies'})).toBeInTheDocument();
   });
 });
