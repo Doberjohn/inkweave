@@ -36,8 +36,9 @@ const IMAGE_CDN_ORIGIN = 'https://api.lorcana.ravensburger.com/images/';
 function resolveImageUrl(rawUrl: string | undefined, cardId: number): string | undefined {
   if (!rawUrl) return undefined;
   if (USE_LOCAL_IMAGES) return `/card-images/${cardId}.avif`;
-  // Fallback: proxy through same-origin Vercel rewrite
-  return rawUrl.replace(IMAGE_CDN_ORIGIN, '/card-images/');
+  // Proxy Ravensburger URLs through same-origin Vercel rewrite; pass others through directly
+  if (rawUrl.startsWith(IMAGE_CDN_ORIGIN)) return rawUrl.replace(IMAGE_CDN_ORIGIN, '/card-images/');
+  return rawUrl;
 }
 
 /**
