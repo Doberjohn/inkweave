@@ -13,6 +13,8 @@ interface SynergyCardProps {
   explanation: string;
   isMobile?: boolean;
   onCardClick?: (card: LorcanaCard) => void;
+  /** Override tabIndex for roving tabindex grid navigation */
+  tabIndex?: number;
 }
 
 export const SynergyCard = memo(function SynergyCard({
@@ -21,6 +23,7 @@ export const SynergyCard = memo(function SynergyCard({
   explanation,
   isMobile = false,
   onCardClick,
+  tabIndex,
 }: SynergyCardProps) {
   const tier = getStrengthTier(score);
   const colors = INK_COLORS[card.ink];
@@ -35,6 +38,8 @@ export const SynergyCard = memo(function SynergyCard({
       {/* Card tile with strength badge overlay */}
       <button
         className="card-tile"
+        data-roving-item
+        tabIndex={tabIndex}
         onClick={() => {
           if (!isMobile && isSyntheticMouseEvent()) return;
           if (onCardClick) {

@@ -1,10 +1,11 @@
-import {useState, useMemo, memo} from 'react';
+import {useState, useMemo, useRef, memo} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData, SynergyMatchDisplay} from '../types';
 import {SynergyCard} from './SynergyCard';
 import {applySynergySortOrder} from '../utils';
 import {COLORS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
 import {Callout} from '../../../shared/components';
+import {useContainerWidth, useRovingTabIndex} from '../../../shared/hooks';
 
 interface SynergyGroupProps {
   group: SynergyGroupData;
@@ -94,16 +95,20 @@ function MoreTile({
   count,
   onClick,
   isMobile,
+  tabIndex,
 }: {
   count: number;
   onClick?: () => void;
   isMobile?: boolean;
+  tabIndex?: number;
 }) {
   const [hovered, setHovered] = useState(false);
 
   return (
     <button
       data-testid="more-tile"
+      data-roving-item
+      tabIndex={tabIndex}
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -160,9 +165,25 @@ const SynergyCardList = memo(function SynergyCardList({
 }: SynergyCardListProps) {
   const visible = synergies.slice(0, maxVisibleCards);
   const remaining = synergies.length - visible.length;
+  const listRef = useRef<HTMLUListElement>(null);
+  const containerWidth = useContainerWidth(listRef);
+  const GAP = 10;
+  const columns = isMobile
+    ? 3
+    : containerWidth > 0
+      ? Math.max(1, Math.floor((containerWidth + GAP) / (cardMinWidth + GAP)))
+      : 3; // fallback before measurement
+  const {handleKeyDown, getTabIndex} = useRovingTabIndex({
+    itemCount: visible.length + (remaining > 0 ? 1 : 0),
+    columns,
+    containerRef: listRef,
+  });
 
   return (
     <ul
+      ref={listRef}
+      aria-label="Synergy cards"
+      onKeyDown={handleKeyDown}
       style={{
         display: 'grid',
         gridTemplateColumns: isMobile
@@ -173,7 +194,7 @@ const SynergyCardList = memo(function SynergyCardList({
         padding: 0,
         margin: 0,
       }}>
-      {visible.map((synergy) => (
+      {visible.map((synergy, i) => (
         <li key={synergy.card.id}>
           <SynergyCard
             card={synergy.card}
@@ -181,12 +202,18 @@ const SynergyCardList = memo(function SynergyCardList({
             explanation={synergy.explanation}
             isMobile={isMobile}
             onCardClick={onCardClick}
+            tabIndex={getTabIndex(i)}
           />
         </li>
       ))}
       {remaining > 0 && (
         <li>
-          <MoreTile count={remaining} onClick={() => onShowAll?.(groupKey)} isMobile={isMobile} />
+          <MoreTile
+            count={remaining}
+            onClick={() => onShowAll?.(groupKey)}
+            isMobile={isMobile}
+            tabIndex={getTabIndex(visible.length)}
+          />
         </li>
       )}
     </ul>

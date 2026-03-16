@@ -42,6 +42,7 @@ export function Chip(props: ChipProps) {
       onClick={handleClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      aria-pressed={isDismiss ? undefined : active}
       title={title}
       style={{
         display: 'flex',
