@@ -19,6 +19,8 @@ interface CardTileProps {
   priority?: boolean;
   /** Use the smaller grid-optimized image (191×266) instead of full-size (337×470). */
   useSmallImage?: boolean;
+  /** Override tabIndex for roving tabindex grid navigation */
+  tabIndex?: number;
 }
 
 export const CardTile = memo(function CardTile({
@@ -31,6 +33,7 @@ export const CardTile = memo(function CardTile({
   disablePreview,
   priority,
   useSmallImage: useSmall,
+  tabIndex,
 }: CardTileProps) {
   const handleClick = useCallback(() => {
     onClick?.();
@@ -45,6 +48,8 @@ export const CardTile = memo(function CardTile({
     <button
       className="card-tile"
       data-testid="card-tile"
+      data-roving-item
+      tabIndex={tabIndex}
       onClick={() => {
         // Only guard synthetic mouse events when touch preview is active —
         // when disabled, touch handlers aren't attached so onClick is the only path

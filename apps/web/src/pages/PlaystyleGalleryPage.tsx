@@ -117,6 +117,7 @@ function PlaystyleCardShell({
     <article
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
+      aria-label={isClickable ? `View ${name} playstyle` : undefined}
       onClick={() => onClick?.()}
       onKeyDown={
         isClickable

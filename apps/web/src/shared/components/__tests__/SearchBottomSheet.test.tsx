@@ -70,8 +70,8 @@ describe('SearchBottomSheet', () => {
   it('should close on Escape key', () => {
     const {onClose} = renderSheet();
 
-    const input = screen.getByTestId('search-sheet-input');
-    fireEvent.keyDown(input, {key: 'Escape'});
+    // useDialogFocus listens on document, so fire Escape there
+    fireEvent.keyDown(document, {key: 'Escape'});
 
     expect(onClose).toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();

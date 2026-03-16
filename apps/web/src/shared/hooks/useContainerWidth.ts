@@ -9,7 +9,7 @@ export function useContainerWidth(ref: RefObject<HTMLElement | null>): number {
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || typeof ResizeObserver === 'undefined') return;
 
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];

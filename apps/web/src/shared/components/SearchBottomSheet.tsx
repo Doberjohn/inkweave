@@ -4,7 +4,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SET_ABBREVIATIONS, SPACING, Z_INDEX} from '../constants';
 import {useCardDataContext} from '../contexts/CardDataContext';
 import {smallImageUrl} from '../../features/cards/loader';
-import {useAutocomplete, useScrollLock, useTransitionPresence} from '../hooks';
+import {useAutocomplete, useDialogFocus, useScrollLock, useTransitionPresence} from '../hooks';
 
 // --- Highlighted name (reused from SearchAutocomplete) ---
 
@@ -56,8 +56,11 @@ const MAX_RECENT = 6;
 function getRecentSearches(): string[] {
   try {
     const raw = localStorage.getItem(RECENT_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('Failed to read recent searches:', e);
     return [];
   }
 }
@@ -69,16 +72,16 @@ function addRecentSearch(query: string) {
     const recent = getRecentSearches().filter((q) => q.toLowerCase() !== trimmed.toLowerCase());
     recent.unshift(trimmed);
     localStorage.setItem(RECENT_KEY, JSON.stringify(recent.slice(0, MAX_RECENT)));
-  } catch {
-    // Storage unavailable (private browsing, quota exceeded)
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('Failed to save recent search:', e);
   }
 }
 
 function clearRecentSearches() {
   try {
     localStorage.removeItem(RECENT_KEY);
-  } catch {
-    // Storage unavailable
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('Failed to clear recent searches:', e);
   }
 }
 
@@ -100,6 +103,7 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
     const {cards} = useCardDataContext();
     const inputRef = useRef<HTMLInputElement>(null);
     const proxyRef = useRef<HTMLInputElement>(null);
+    const sheetRef = useRef<HTMLDivElement>(null);
 
     useImperativeHandle(ref, () => ({
       focusProxy: () => proxyRef.current?.focus(),
@@ -137,15 +141,6 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen]);
 
-    // Focus the input once the sheet is visible (not just mounted).
-    // The sheet starts with `visibility: hidden` during its enter transition,
-    // and browsers silently ignore .focus() on hidden elements.
-    useEffect(() => {
-      if (visible) {
-        inputRef.current?.focus();
-      }
-    }, [visible]);
-
     useScrollLock(isOpen);
 
     const handleRecentClick = useCallback(
@@ -165,15 +160,15 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
       onClose();
     }, [onClose]);
 
-    // Handle Escape key
-    useEffect(() => {
-      if (!isOpen) return;
-      const handler = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') onClose();
-      };
-      document.addEventListener('keydown', handler);
-      return () => document.removeEventListener('keydown', handler);
-    }, [isOpen, onClose]);
+    // Focus trap + Escape key handling.
+    // useDialogFocus focuses inputRef after 100ms (isOpen=true), which fires after
+    // useTransitionPresence's rAF sets visible=true, so the element is focusable.
+    const {handleKeyDown: handleDialogKeyDown} = useDialogFocus({
+      isOpen,
+      containerRef: sheetRef,
+      initialFocusRef: inputRef,
+      onClose,
+    });
 
     // Proxy input: always in the DOM so iOS can focus it synchronously on tap,
     // keeping the keyboard activation "ticket" alive until the real input mounts.
@@ -211,9 +206,11 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
 
         {/* Sheet */}
         <div
+          ref={sheetRef}
           role="dialog"
           aria-modal="true"
           aria-label="Search cards"
+          onKeyDown={handleDialogKeyDown}
           className={`overlay-transition overlay-slide-up overlay-enter ${visible ? 'overlay-visible' : ''}`}
           onTransitionEnd={onTransitionEnd}
           style={{
@@ -288,10 +285,8 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
                 {...autocomplete.inputProps}
                 onKeyDown={(e) => {
                   autocomplete.inputProps.onKeyDown(e);
-                  if (e.key === 'Escape') {
-                    e.preventDefault();
-                    onClose();
-                  } else if (!e.defaultPrevented && e.key === 'Enter' && query.trim()) {
+                  // Escape is handled by useDialogFocus — don't duplicate
+                  if (!e.defaultPrevented && e.key === 'Enter' && query.trim()) {
                     onClose();
                     navigate(`/browse?q=${encodeURIComponent(query.trim())}`);
                   }

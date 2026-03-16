@@ -57,5 +57,22 @@ describe('Chip', () => {
       );
       expect(screen.getByRole('button')).toHaveAttribute('title', 'Searches for locations');
     });
+
+    it('should set aria-pressed=true when active', () => {
+      render(<Chip label="All" active={true} onClick={vi.fn()} />);
+      expect(screen.getByRole('button')).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('should set aria-pressed=false when inactive', () => {
+      render(<Chip label="All" active={false} onClick={vi.fn()} />);
+      expect(screen.getByRole('button')).toHaveAttribute('aria-pressed', 'false');
+    });
+  });
+
+  describe('dismiss variant accessibility', () => {
+    it('should not have aria-pressed', () => {
+      render(<Chip variant="dismiss" label="Amber" onDismiss={vi.fn()} />);
+      expect(screen.getByRole('button')).not.toHaveAttribute('aria-pressed');
+    });
   });
 });
