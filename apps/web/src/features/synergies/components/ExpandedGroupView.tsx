@@ -7,7 +7,8 @@ import type {SynergySortOrder} from '../../../shared/constants';
 import {filterSynergyCards, EMPTY_SYNERGY_FILTERS, applySynergySortOrder} from '../utils';
 import type {SynergyFilterState} from '../utils/filterSynergyCards';
 import {useCardDataContext} from '../../../shared/contexts/CardDataContext';
-import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
+import {BackLink, Callout} from '../../../shared/components';
 
 interface ExpandedGroupViewProps {
   group: SynergyGroupData;
@@ -23,7 +24,6 @@ export function ExpandedGroupView({
   onBackToAll,
   onCardClick,
 }: ExpandedGroupViewProps) {
-  const [backHovered, setBackHovered] = useState(false);
   const [filterState, setFilterState] = useState<SynergyFilterState>(EMPTY_SYNERGY_FILTERS);
   const [sortOrder, setSortOrder] = useState<SynergySortOrder>('ink-cost');
   const {uniqueKeywords, uniqueClassifications, sets} = useCardDataContext();
@@ -50,28 +50,7 @@ export function ExpandedGroupView({
   return (
     <div data-expanded-group={group.groupKey}>
       {/* Back navigation */}
-      <button
-        onClick={handleBackToAll}
-        onMouseEnter={() => setBackHovered(true)}
-        onMouseLeave={() => setBackHovered(false)}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '6px',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          color: backHovered ? COLORS.primary500 : COLORS.textMuted,
-          fontFamily: FONTS.body,
-          fontSize: `${FONT_SIZES.base}px`,
-          fontWeight: 500,
-          padding: 0,
-          marginBottom: `${SPACING.lg}px`,
-          transition: 'color 0.15s',
-        }}>
-        <span style={{fontSize: `${FONT_SIZES.base}px`}}>&larr;</span>
-        Back to all synergies
-      </button>
+      <BackLink onClick={handleBackToAll} label="Back to all synergies" />
 
       {/* Group title */}
       <h2
@@ -88,24 +67,7 @@ export function ExpandedGroupView({
       </h2>
 
       {/* Description callout */}
-      <div
-        style={{
-          margin: `${SPACING.sm}px 0 ${SPACING.lg}px`,
-          padding: `${SPACING.sm}px ${SPACING.md}px`,
-          background: COLORS.calloutBg,
-          borderLeft: `3px solid ${COLORS.primary}`,
-          borderRadius: `0 ${RADIUS.sm}px ${RADIUS.sm}px 0`,
-        }}>
-        <p
-          style={{
-            margin: 0,
-            fontSize: `${FONT_SIZES.base}px`,
-            color: COLORS.descriptionText,
-            lineHeight: 1.5,
-          }}>
-          {group.description}
-        </p>
-      </div>
+      <Callout>{group.description}</Callout>
 
       {/* Toolbar with filters + sort */}
       <SynergyToolbar

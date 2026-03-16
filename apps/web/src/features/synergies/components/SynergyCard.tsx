@@ -2,7 +2,7 @@ import {useState, memo} from 'react';
 import type {LorcanaCard} from '../../cards';
 import {smallImageUrl} from '../../cards';
 import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
-import {CardLightbox} from '../../../shared/components';
+import {CardLightbox, StrengthBadge} from '../../../shared/components';
 import {useCardPreviewHandlers} from '../../cards';
 import {isSyntheticMouseEvent} from '../../../shared/utils/touchGuard';
 import {getStrengthTier} from '../utils';
@@ -139,20 +139,9 @@ export const SynergyCard = memo(function SynergyCard({
             display: 'flex',
             alignItems: 'center',
           }}>
-          <span
-            data-testid="reason-tag"
-            title={explanation}
-            style={{
-              background: tier.bg,
-              color: tier.color,
-              padding: isMobile ? '2px 6px' : '2px 7px',
-              borderRadius: `${RADIUS.sm}px`,
-              fontSize: `${FONT_SIZES.xs}px`,
-              fontWeight: 600,
-              lineHeight: 1.4,
-            }}>
+          <StrengthBadge tier={tier} size="sm" testId="reason-tag" title={explanation}>
             {isMobile ? tier.shortLabel : tier.label} {score}
-          </span>
+          </StrengthBadge>
         </div>
       </button>
 

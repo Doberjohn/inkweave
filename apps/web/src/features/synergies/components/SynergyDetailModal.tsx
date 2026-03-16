@@ -16,6 +16,7 @@ import {CardImage, CardLightbox} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence, useResponsive} from '../../../shared/hooks';
 import {COLORS, FONT_SIZES, SPACING, RADIUS, Z_INDEX} from '../../../shared/constants';
+import {StrengthBadge} from '../../../shared/components';
 
 interface SynergyDetailModalProps {
   isOpen: boolean;
@@ -282,20 +283,7 @@ function Connector({
         margin: isMobile ? '0 6px' : '0 2px',
       }}>
       {!isMobile && <div style={{width: 3}} />}
-      <svg
-        style={{flex: '1 1 6px', maxWidth: isMobile ? 14 : 44, overflow: 'visible'}}
-        height="2"
-        preserveAspectRatio="none">
-        <line
-          x1="0"
-          y1="1"
-          x2="100%"
-          y2="1"
-          stroke={lineColor}
-          strokeWidth="1.5"
-          strokeDasharray={isMobile ? '3 3' : '6 6'}
-        />
-      </svg>
+      <DashedLine color={lineColor} isMobile={isMobile} />
       {!isMobile && <div style={{width: 3}} />}
       <div
         style={{
@@ -316,20 +304,7 @@ function Connector({
         {score}
       </div>
       {!isMobile && <div style={{width: 3}} />}
-      <svg
-        style={{flex: '1 1 6px', maxWidth: isMobile ? 14 : 44, overflow: 'visible'}}
-        height="2"
-        preserveAspectRatio="none">
-        <line
-          x1="0"
-          y1="1"
-          x2="100%"
-          y2="1"
-          stroke={lineColor}
-          strokeWidth="1.5"
-          strokeDasharray={isMobile ? '3 3' : '6 6'}
-        />
-      </svg>
+      <DashedLine color={lineColor} isMobile={isMobile} />
       {!isMobile && <div style={{width: 3}} />}
     </div>
   );
@@ -475,20 +450,9 @@ function ConnectionGroupRow({
           fontFamily: 'inherit',
           transition: 'background 0.15s',
         }}>
-        <span
-          style={{
-            padding: '3px 8px',
-            borderRadius: `${RADIUS.xs}px`,
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 700,
-            background: tier.bg,
-            color: tier.color,
-            flexShrink: 0,
-            minWidth: 28,
-            textAlign: 'center',
-          }}>
+        <StrengthBadge tier={tier} size="lg">
           {group.score}
-        </span>
+        </StrengthBadge>
         <span
           style={{
             fontSize: `${FONT_SIZES.base}px`,
@@ -591,5 +555,24 @@ function ConnectionGroupRow({
         </div>
       )}
     </div>
+  );
+}
+
+function DashedLine({color, isMobile}: {color: string; isMobile: boolean}) {
+  return (
+    <svg
+      style={{flex: '1 1 6px', maxWidth: isMobile ? 14 : 44, overflow: 'visible'}}
+      height="2"
+      preserveAspectRatio="none">
+      <line
+        x1="0"
+        y1="1"
+        x2="100%"
+        y2="1"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeDasharray={isMobile ? '3 3' : '6 6'}
+      />
+    </svg>
   );
 }
