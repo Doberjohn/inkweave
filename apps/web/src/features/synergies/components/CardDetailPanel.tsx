@@ -3,7 +3,7 @@ import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup} from '../types';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT} from '../../../shared/constants';
-import {CardImage, CardTextBlock} from '../../../shared/components';
+import {CardImage, CardTextBlock, TierCircle} from '../../../shared/components';
 
 interface CardDetailPanelProps {
   card: LorcanaCard;
@@ -149,22 +149,9 @@ export const CardDetailPanel = memo(function CardDetailPanel({
                         : 'transparent',
                   }}>
                   {/* Count circle */}
-                  <div
-                    style={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: '50%',
-                      background: tier.bg,
-                      color: tier.color,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: `${FONT_SIZES.xs}px`,
-                      fontWeight: 700,
-                      flexShrink: 0,
-                    }}>
+                  <TierCircle tier={tier} size="sm">
                     {group.synergies.length}
-                  </div>
+                  </TierCircle>
 
                   {/* Label */}
                   <div

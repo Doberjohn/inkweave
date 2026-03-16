@@ -1,7 +1,8 @@
 import {memo} from 'react';
 import type {SynergyGroup} from '../types';
-import {COLORS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
 import {getDominantScore, getStrengthTier} from '../utils';
+import {StrengthBadge, TierCircle} from '../../../shared/components';
 
 interface SynergyBreakdownProps {
   synergies: SynergyGroup[];
@@ -71,22 +72,9 @@ export const SynergyBreakdown = memo(function SynergyBreakdown({
             key={group.groupKey}
             style={{display: 'flex', alignItems: 'center', gap: `${SPACING.sm}px`}}>
             {/* Count circle */}
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                background: tier.bg,
-                color: tier.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: `${FONT_SIZES.sm}px`,
-                fontWeight: 700,
-                flexShrink: 0,
-              }}>
+            <TierCircle tier={tier} size="md">
               {group.synergies.length}
-            </div>
+            </TierCircle>
 
             {/* Label + strength badge */}
             <div style={{flex: 1, minWidth: 0}}>
@@ -102,17 +90,9 @@ export const SynergyBreakdown = memo(function SynergyBreakdown({
                 }}>
                 {group.label}
               </div>
-              <span
-                style={{
-                  fontSize: `${FONT_SIZES.xs}px`,
-                  color: tier.color,
-                  background: tier.bg,
-                  padding: '1px 6px',
-                  borderRadius: `${RADIUS.sm}px`,
-                  fontWeight: 500,
-                }}>
+              <StrengthBadge tier={tier} size="md">
                 {tier.label}
-              </span>
+              </StrengthBadge>
             </div>
           </div>
         );

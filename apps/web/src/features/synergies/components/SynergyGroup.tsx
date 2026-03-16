@@ -3,7 +3,8 @@ import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData, SynergyMatchDisplay} from '../types';
 import {SynergyCard} from './SynergyCard';
 import {applySynergySortOrder} from '../utils';
-import {COLORS, FONT_SIZES, LAYOUT, SPACING, RADIUS} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
+import {Callout} from '../../../shared/components';
 
 interface SynergyGroupProps {
   group: SynergyGroupData;
@@ -70,24 +71,7 @@ export const SynergyGroup = memo(function SynergyGroup({
           </div>
 
           {/* Group description callout */}
-          <div
-            style={{
-              margin: `${SPACING.sm}px 0 ${SPACING.lg}px`,
-              padding: `${SPACING.sm}px ${SPACING.md}px`,
-              background: COLORS.calloutBg,
-              borderLeft: `3px solid ${COLORS.primary}`,
-              borderRadius: `0 ${RADIUS.sm}px ${RADIUS.sm}px 0`,
-            }}>
-            <p
-              style={{
-                margin: 0,
-                fontSize: `${FONT_SIZES.base}px`,
-                color: COLORS.descriptionText,
-                lineHeight: 1.5,
-              }}>
-              {group.description}
-            </p>
-          </div>
+          <Callout>{group.description}</Callout>
         </>
       )}
 
