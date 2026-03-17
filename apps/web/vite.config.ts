@@ -2,6 +2,7 @@
 import {sentryVitePlugin} from '@sentry/vite-plugin';
 import {defineConfig, type Plugin} from 'vite';
 import react from '@vitejs/plugin-react';
+import {VitePWA} from 'vite-plugin-pwa';
 import {visualizer} from 'rollup-plugin-visualizer';
 import {spawnSync} from 'node:child_process';
 import fs from 'node:fs';
@@ -114,6 +115,69 @@ export default defineConfig({
   plugins: [
     ensureSynergiesPlugin(),
     react(),
+    VitePWA({
+      registerType: 'prompt',
+      includeAssets: ['favicon.png', 'apple-touch-icon.png'],
+      manifest: {
+        name: 'Inkweave — Master Lorcana Synergies',
+        short_name: 'Inkweave',
+        description:
+          'Discover powerful card synergies for Disney Lorcana. Build stronger decks in Core format.',
+        theme_color: '#0d0d14',
+        background_color: '#0d0d14',
+        display: 'standalone',
+        start_url: '/',
+        icons: [
+          {src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png'},
+          {src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png'},
+          {src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable'},
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,woff2}'],
+        runtimeCaching: [
+          {
+            urlPattern: /\/data\/allCards\.json$/,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'card-data',
+              expiration: {maxEntries: 1, maxAgeSeconds: 60 * 60 * 24},
+            },
+          },
+          {
+            urlPattern: /\/data\/synergies\/.+\.json$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'synergy-data',
+              expiration: {maxEntries: 500, maxAgeSeconds: 60 * 60 * 24},
+            },
+          },
+          {
+            urlPattern: /\/card-images\/.+\.avif$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'card-images',
+              expiration: {maxEntries: 600, maxAgeSeconds: 60 * 60 * 24 * 30},
+            },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'google-fonts-stylesheets',
+            },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-webfonts',
+              expiration: {maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365},
+            },
+          },
+        ],
+      },
+    }),
     inlineCssPlugin(),
     process.env.SENTRY_AUTH_TOKEN &&
       sentryVitePlugin({

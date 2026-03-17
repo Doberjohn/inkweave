@@ -11,9 +11,11 @@ const config: StorybookConfig = {
   ],
   framework: '@storybook/react-vite',
   viteFinal(config) {
-    config.plugins = config.plugins?.filter(
-      (p) => !(p && 'name' in p && String(p.name).startsWith('vite-plugin-pwa')),
-    );
+    config.plugins = config.plugins
+      ?.flat()
+      .filter(
+        (p) => !(p && typeof p === 'object' && 'name' in p && String(p.name).startsWith('vite-plugin-pwa')),
+      );
     return config;
   },
 };
