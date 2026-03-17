@@ -15,7 +15,7 @@ jobs:
     outputs:
       engine: ${{ steps.filter.outputs.engine }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v4
         id: filter
         with:
@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -59,7 +59,7 @@ jobs:
     steps:
       # --- Run base branch FIRST (cold runner) so PR gets warm-runner advantage ---
       - name: Checkout PR branch (for benchmark files)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -75,7 +75,7 @@ jobs:
         run: cp -r packages/synergy-engine/src/__tests__ /tmp/bench-tests
 
       - name: Checkout base branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           clean: false
@@ -96,7 +96,7 @@ jobs:
 
       # --- Now run PR branch (warm runner) ---
       - name: Checkout PR branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           clean: false
 
