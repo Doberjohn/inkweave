@@ -10,5 +10,11 @@ const config: StorybookConfig = {
     '@storybook/addon-onboarding',
   ],
   framework: '@storybook/react-vite',
+  viteFinal(config) {
+    config.plugins = config.plugins?.filter(
+      (p) => !(p && 'name' in p && String(p.name).startsWith('vite-plugin-pwa')),
+    );
+    return config;
+  },
 };
 export default config;
