@@ -134,6 +134,7 @@ export async function fetchCardsFromLocal(
   } catch (parseError) {
     throw new Error(
       `Failed to parse card data: ${parseError instanceof Error ? parseError.message : 'Invalid JSON'}`,
+      {cause: parseError},
     );
   }
 
