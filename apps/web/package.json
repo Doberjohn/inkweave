@@ -27,7 +27,7 @@
     "@radix-ui/react-dialog": "^1.1.15",
     "@sentry/react": "^10.43.0",
     "@tanstack/react-virtual": "^3.13.23",
-    "@vercel/analytics": "^1.6.1",
+    "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "inkweave-synergy-engine": "workspace:*",
     "react": "^19.2.4",
