@@ -2,23 +2,27 @@
 
 [![CI](https://github.com/Doberjohn/inkweave/actions/workflows/ci.yml/badge.svg)](https://github.com/Doberjohn/inkweave/actions/workflows/ci.yml)
 
-A React web application for discovering synergistic card combinations in Disney Lorcana TCG. Select a card to find cards that synergize with it through archetype detection and pattern-based rules.
+A synergy finder for [Disney Lorcana TCG](https://www.disneylorcana.com/) focused on Core format. Select any card to discover what synergizes with it through pattern-based rules and archetype detection.
+
+**Live at [inkweave.ink](https://www.inkweave.ink/)**
 
 ## Features
 
-- **Card Browser**: Search and filter cards by name, ink color, type, keyword, classification, or set
-- **Synergy Detection**: Multiple synergy rules detect connections like Singer+Songs, Shift targets, tribal synergies
-- **Archetype Synergies**: Detects archetype patterns (Discard, Bounce, Ramp, Damage/Removal)
-- **Core Format**: Focused on Core format cards (sets 5+)
-- **Deep Linking**: URL-based navigation — share links to specific cards (`/card/123`) or filtered views (`/browse?q=Elsa&ink=Sapphire`)
-- **Responsive Design**: Full mobile support with touch-friendly interface and card preview on long-press
+- **Card Browser** — Search and filter by name, ink color, type, ink cost, keyword, classification, or set
+- **Synergy Detection** — Rules detect Shift targets, named companions, and more
+- **Playstyle Archetypes** — Discovers cards that share strategic patterns: Discard, Location Control, Lore Denial
+- **Synergy Scoring** — 1-10 numeric scale with strength tiers (Perfect, Strong, Moderate, Weak)
+- **Core Format** — Cards from sets 5+ only
+- **Deep Linking** — Shareable URLs for cards (`/card/123`), synergies (`/card/123/synergies`), and filtered views (`/browse?q=Elsa&ink=Sapphire`)
+- **PWA** — Installable on mobile, offline card browsing after first visit
+- **Responsive** — Full mobile support with bottom navigation, touch-friendly card preview on long-press
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 20+
-- pnpm
+- pnpm 10+
 
 ### Installation
 
@@ -43,17 +47,19 @@ pnpm preview
 
 ## Usage
 
-1. **Home** (`/`): Search from the hero or click a featured card
-2. **Browse** (`/browse`): Search, filter by ink/type/cost/keyword, and browse all cards
-3. **Card Detail** (`/card/:id`): View a card and its synergies — share the URL to link directly
+1. **Home** (`/`) — Search from the hero or click a featured card
+2. **Browse** (`/browse`) — Search, filter, and browse all Core format cards
+3. **Card Detail** (`/card/:id`) — View a card's details and synergy breakdown
+4. **Synergies** (`/card/:id/synergies`) — Explore all synergy groups for a card
+5. **Playstyles** (`/playstyles`) — Browse archetype strategies and their key cards
 
 ## Tech Stack
 
 - pnpm workspaces monorepo
-- React 18 + TypeScript 5
-- React Router v7 (URL-based navigation)
-- Vite bundler
-- Vitest + Playwright for testing
+- React 19 + TypeScript 5
+- React Router v7
+- Vite + Vitest + Playwright
+- Radix UI Primitives (headless accessible components)
 - Inline CSS with design tokens
 
 ## Project Structure
@@ -65,19 +71,20 @@ inkweave/
 │       └── src/
 │           ├── types/        # LorcanaCard, Synergy types
 │           ├── utils/        # Card helpers
-│           └── engine/       # SynergyEngine class + rules
+│           └── engine/       # SynergyEngine class, rules, playstyles
 └── apps/
     └── web/                  # React web application
+        ├── e2e/              # Playwright E2E tests
         └── src/
-            ├── pages/        # Route pages (Home, Browse, Card, NotFound)
+            ├── pages/        # Route pages (Home, Browse, Card, Playstyles, etc.)
             ├── router.tsx    # React Router config
             ├── features/
-            │   ├── cards/    # Card browsing, filtering, preview
-            │   └── synergies/# Synergy display components
+            │   ├── cards/    # Card loading, browsing, filtering, preview
+            │   └── synergies/# Synergy display, grouping, detail modal
             └── shared/
-                ├── components/# UI components (HeroSection, FilterModal, etc.)
-                ├── contexts/  # CardDataContext (shared card state)
-                ├── hooks/     # useResponsive, useFilterParams (URL sync)
+                ├── components/# Shared UI (Chip, FilterDialog, SearchAutocomplete, etc.)
+                ├── contexts/  # CardDataContext, CardPreviewContext
+                ├── hooks/     # useResponsive, useFilterParams, useScrollLock
                 └── constants/ # Design tokens, layout values
 ```
 
@@ -88,12 +95,28 @@ inkweave/
 | `pnpm dev` | Start development server |
 | `pnpm build` | Build all packages |
 | `pnpm test` | Run unit tests |
-| `pnpm test:e2e` | Run E2E tests (web) |
+| `pnpm test:e2e` | Run Playwright E2E tests |
 | `pnpm lint` | Run ESLint |
+| `pnpm build:engine` | Build synergy engine package |
+| `pnpm precompute-synergies` | Regenerate static synergy JSON |
+
+## Synergy Engine
+
+The synergy engine is a standalone package (`inkweave-synergy-engine`) with zero React dependencies. It runs at build time to pre-compute synergy data, which the web app fetches as static JSON.
+
+### Rules
+
+| Rule | Type | What it detects |
+|------|------|-----------------|
+| **Shift Targets** | Direct | Shift cards paired with same-named base characters |
+| **Named Companions** | Direct | Cards referencing specific named entities |
+| **Discard** | Playstyle | Opponent discard enablers + hand-size payoffs |
+| **Location Control** | Playstyle | 8 sub-roles: at-payoff, play-trigger, buff, ramp, move, in-play-check, tutor, boost |
+| **Lore Denial** | Playstyle | Lore steal, lore reduction, and lore prevention |
 
 ## Card Data
 
-Card data is sourced from LorcanaJSON format and stored in `public/data/allCards.json`. Cards are deduplicated by `fullName` so the same card appearing in multiple sets only shows once.
+Card data is sourced from [LorcanaJSON](https://lorcanajson.org/) and stored in `public/data/allCards.json`. Cards are deduplicated by `fullName` so the same card across sets appears once. Card images are single 337x470 AVIF files.
 
 ## License
 
