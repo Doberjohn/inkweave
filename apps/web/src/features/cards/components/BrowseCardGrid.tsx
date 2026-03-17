@@ -91,7 +91,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
   const handleGridKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       const current = activeIndexRef.current;
-      let nextIndex: number | null = null;
+      let nextIndex: number;
       switch (e.key) {
         case 'ArrowRight':
           nextIndex = current + 1;
@@ -114,7 +114,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
         default:
           return;
       }
-      if (nextIndex !== null && nextIndex >= 0 && nextIndex < displayedCards.length) {
+      if (nextIndex >= 0 && nextIndex < displayedCards.length) {
         e.preventDefault();
         focusCard(nextIndex);
       }
