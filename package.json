@@ -22,6 +22,7 @@
     "size": "size-limit",
     "download-images": "node scripts/download-card-images.mjs",
     "precompute-synergies": "node scripts/precompute-synergies.mjs",
+    "docs": "node scripts/generate-docs.mjs",
     "analyze": "ANALYZE=true pnpm build:web",
     "prepare": "husky"
   },
