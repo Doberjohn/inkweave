@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-53 active tests across 10 spec files. Each file runs on both `chromium` (desktop) and `mobile-chrome` projects but skips the irrelevant viewport.
+73 active tests across 14 spec files. Each file runs on both `chromium` (desktop) and `mobile-chrome` projects but skips the irrelevant viewport.
 
 ## `app-load.spec.ts` — 4 tests (desktop only)
 
@@ -97,6 +97,46 @@
 | should have valid JSON-LD structured data on home page | JSON-LD script tag with WebApplication type |
 | should have correct heading hierarchy on home page | h1 exists, h2 headings present |
 | should have font preconnect hints | Preconnect links for Google Fonts |
+
+## `synergy-groups.spec.ts` — 6 tests (desktop only)
+
+| Test | What it verifies |
+|---|---|
+| should render both direct and playstyle synergy groups | Card 1041 shows both `shift-targets` (direct) and `discard` (playstyle) groups |
+| should show synergy breakdown sidebar with group labels | Breakdown sidebar contains "Shift Targets" and "Discard" labels |
+| should filter synergy groups when clicking a group chip | Clicking "Discard" chip hides shift-targets group; "All" chip resets |
+| should show all direct group cards inline without more tile | Shift-targets group shows all 3 cards, no "+N more" tile |
+| should truncate playstyle group and show more tile | Discard group truncates at 10 cards with "+24 more" tile |
+| should display group description callout text | Both groups render description callout text |
+
+## `synergy-detail-modal.spec.ts` — 5 tests (4 desktop, 1 mobile)
+
+| Test | What it verifies |
+|---|---|
+| should open modal when clicking a synergy card | Clicking a synergy card tile opens `role="dialog"` modal |
+| should display connection explanations in modal | Modal contains explanation text about the synergy connection |
+| should close modal on backdrop click | Clicking backdrop dismisses the modal |
+| should navigate to card page via CTA button | CTA button navigates to the synergy card's detail page |
+| should open modal on mobile | Tapping a synergy card on mobile viewport opens the modal |
+
+## `synergy-expanded-view.spec.ts` — 4 tests (3 desktop, 1 mobile)
+
+| Test | What it verifies |
+|---|---|
+| should show toolbar in expanded view | Expanded discard group shows sort select |
+| should show all cards without truncation in expanded view | Expanded view shows all 34 discard cards, no more tile |
+| should navigate back from expanded view | "Back to all synergies" returns to multi-group view |
+| should expand playstyle group on mobile | Mobile expand shows all 34 discard cards |
+
+## `playstyle-detail.spec.ts` — 5 tests (desktop only)
+
+| Test | What it verifies |
+|---|---|
+| should render hero with name, description, and breadcrumb | `/playstyles/discard` shows h1 "Discard", description, breadcrumb nav with "Playstyles" link |
+| should toggle strategy tips section | Strategy Tips button toggles tip list visibility |
+| should show and use role filter chips | "Enabler" chip filters to subset; "All" chip resets |
+| should render card tiles in grid | `/playstyles/location-control` renders 5+ card tiles |
+| should navigate to card page from playstyle detail | Clicking a card tile navigates to `/card/:id` |
 
 ## `show-all-ux.spec.ts` — 4 tests (2 desktop, 2 mobile)
 

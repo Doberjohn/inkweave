@@ -1,4 +1,4 @@
-import {Page, Locator} from '@playwright/test';
+import {Page, Locator, expect} from '@playwright/test';
 
 export class SynergyResultsPage {
   readonly page: Page;
@@ -42,5 +42,47 @@ export class SynergyResultsPage {
 
   getSynergyGroup(type: string): Locator {
     return this.page.locator('div').filter({hasText: new RegExp(type, 'i')});
+  }
+
+  /** Wait for synergy data to finish loading (synergies loaded, empty, or error).
+   *  Uses the "Synergies" heading which exists on both desktop and mobile layouts. */
+  async waitForSynergiesLoaded(): Promise<void> {
+    await expect(
+      this.page
+        .getByRole('heading', {name: 'Synergies'})
+        .or(this.noSynergiesMessage)
+        .or(this.page.getByRole('alert')),
+    ).toBeVisible({timeout: 10000});
+  }
+
+  /** Get a synergy group container by its group key (e.g. "shift-targets", "discard") */
+  getSynergyGroupByKey(groupKey: string): Locator {
+    return this.page.locator(`[data-group-key="${groupKey}"]`);
+  }
+
+  /** Get all synergy card tiles within a specific synergy group */
+  getGroupCardTiles(groupKey: string): Locator {
+    return this.getSynergyGroupByKey(groupKey).locator('button.card-tile');
+  }
+
+  /** Get the "+N more" tile within a specific synergy group */
+  getMoreTile(groupKey: string): Locator {
+    return this.getSynergyGroupByKey(groupKey).getByTestId('more-tile');
+  }
+
+  /** Get the synergy detail modal */
+  getDetailModal(): Locator {
+    return this.page.getByTestId('synergy-detail-modal');
+  }
+
+  /** Get the CTA button inside the synergy detail modal */
+  getDetailModalCTA(): Locator {
+    return this.page.getByTestId('synergy-detail-cta');
+  }
+
+  /** Close the synergy detail modal by clicking the backdrop */
+  async closeDetailModalBackdrop(): Promise<void> {
+    await this.page.getByTestId('synergy-detail-backdrop').click({position: {x: 5, y: 5}});
+    await this.page.waitForTimeout(200);
   }
 }
