@@ -51,8 +51,8 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.2.0",
-    "@vitest/browser-playwright": "4.1.0",
-    "@vitest/coverage-v8": "^4.1.0",
+    "@vitest/browser-playwright": "~4.0.18",
+    "@vitest/coverage-v8": "~4.0.18",
     "axe-core": "^4.11.1",
     "eslint": "^10.0.3",
     "eslint-plugin-jsx-a11y": "^6.10.2",
@@ -68,7 +68,7 @@
     "typescript-eslint": "^8.57.1",
     "vite": "^5.0.0",
     "vite-plugin-pwa": "^1.2.0",
-    "vitest": "^4.1.0",
+    "vitest": "~4.0.18",
     "vitest-axe": "^0.1.0",
     "workbox-window": "^7.4.0"
   }
