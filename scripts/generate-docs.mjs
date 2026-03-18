@@ -9,8 +9,8 @@
  * Output: reports/*.html (gitignored)
  */
 
-import { readFileSync, writeFileSync, mkdirSync } from 'fs';
-import { resolve, basename } from 'path';
+import {readFileSync, writeFileSync, mkdirSync} from 'fs';
+import {resolve, basename} from 'path';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const OUT = resolve(ROOT, 'reports');
@@ -18,23 +18,23 @@ const OUT = resolve(ROOT, 'reports');
 /** Markdown files to convert, with output filenames */
 const DOCS = [
   // Synergy Rules
-  { src: 'packages/synergy-engine/SHIFT_TARGET_RULE.md', out: 'SHIFT_TARGET_RULE.html' },
-  { src: 'packages/synergy-engine/NAMED_COMPANIONS_RULE.md', out: 'NAMED_COMPANIONS_RULE.html' },
-  { src: 'packages/synergy-engine/DISCARD_RULE.md', out: 'DISCARD_RULE.html' },
-  { src: 'packages/synergy-engine/LOCATION_CONTROL_RULE.md', out: 'LOCATION_CONTROL_RULE.html' },
-  { src: 'packages/synergy-engine/REMOVED_RULES.md', out: 'REMOVED_RULES.html' },
+  {src: 'packages/synergy-engine/SHIFT_TARGET_RULE.md', out: 'SHIFT_TARGET_RULE.html'},
+  {src: 'packages/synergy-engine/NAMED_COMPANIONS_RULE.md', out: 'NAMED_COMPANIONS_RULE.html'},
+  {src: 'packages/synergy-engine/DISCARD_RULE.md', out: 'DISCARD_RULE.html'},
+  {src: 'packages/synergy-engine/LOCATION_CONTROL_RULE.md', out: 'LOCATION_CONTROL_RULE.html'},
+  {src: 'packages/synergy-engine/REMOVED_RULES.md', out: 'REMOVED_RULES.html'},
   // Architecture
-  { src: 'packages/synergy-engine/SCORING_DESIGN.md', out: 'SCORING_DESIGN.html' },
-  { src: 'packages/synergy-engine/README.md', out: 'synergy-engine-README.html' },
-  { src: 'TECH_STACK.md', out: 'TECH_STACK.html' },
+  {src: 'packages/synergy-engine/SCORING_DESIGN.md', out: 'SCORING_DESIGN.html'},
+  {src: 'packages/synergy-engine/README.md', out: 'synergy-engine-README.html'},
+  {src: 'TECH_STACK.md', out: 'TECH_STACK.html'},
   // Quality & Research
-  { src: 'docs/SYNERGY_AUDIT.md', out: 'SYNERGY_AUDIT.html' },
-  { src: 'docs/UX_AUDIT.md', out: 'UX_AUDIT.html' },
-  { src: 'docs/UX_REFERENCE.md', out: 'UX_REFERENCE.html' },
-  { src: 'apps/web/e2e/E2E_TESTS.md', out: 'E2E_TESTS.html' },
+  {src: 'docs/SYNERGY_AUDIT.md', out: 'SYNERGY_AUDIT.html'},
+  {src: 'docs/UX_AUDIT.md', out: 'UX_AUDIT.html'},
+  {src: 'docs/UX_REFERENCE.md', out: 'UX_REFERENCE.html'},
+  {src: 'apps/web/e2e/E2E_TESTS.md', out: 'E2E_TESTS.html'},
   // Project
-  { src: 'README.md', out: 'README.html' },
-  { src: 'CLAUDE.md', out: 'CLAUDE.html' },
+  {src: 'README.md', out: 'README.html'},
+  {src: 'CLAUDE.md', out: 'CLAUDE.html'},
 ];
 
 const TEMPLATE = (title, body) => `<!DOCTYPE html>
@@ -121,7 +121,7 @@ async function renderMarkdown(md) {
         'Content-Type': 'application/json',
         Accept: 'application/vnd.github+json',
       },
-      body: JSON.stringify({ text: md, mode: 'gfm' }),
+      body: JSON.stringify({text: md, mode: 'gfm'}),
     });
     if (!res.ok) throw new Error(`GitHub API ${res.status}`);
     return await res.text();
@@ -133,7 +133,7 @@ async function renderMarkdown(md) {
 }
 
 async function main() {
-  mkdirSync(OUT, { recursive: true });
+  mkdirSync(OUT, {recursive: true});
 
   console.log(`Generating ${DOCS.length} HTML reports into reports/\n`);
 
