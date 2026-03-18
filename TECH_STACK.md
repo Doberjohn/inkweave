@@ -20,7 +20,7 @@
 | Tool           | Why                                                                                                             |
 |----------------|-----------------------------------------------------------------------------------------------------------------|
 | **TypeScript** | Catches bugs at compile time, better IDE autocomplete, self-documenting code with types, refactoring confidence |
-| **React 18**   | Industry standard, huge ecosystem, hooks simplify state management, concurrent features for better UX           |
+| **React 19**   | Industry standard, huge ecosystem, hooks simplify state management, concurrent features for better UX           |
 
 ### Testing
 
@@ -63,7 +63,7 @@
 |------------|---------|
 | pnpm       | 9.0.0   |
 | TypeScript | 5.3+    |
-| React      | 18.2+   |
+| React      | 19.2+   |
 | Vite       | 5.0+    |
 | Vitest     | 4.0+    |
 | ESLint     | 9.39+   |
@@ -87,7 +87,7 @@ inkweave/
 ├── apps/
 │   └── web/                   # React web app (Vite)
 │       ├── src/
-│       │   ├── features/      # Feature modules (cards, deck, synergies)
+│       │   ├── features/      # Feature modules (cards, synergies)
 │       │   └── shared/        # Shared components, hooks, constants
 │       └── vite.config.ts
 ├── packages/

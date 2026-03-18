@@ -14,7 +14,13 @@ const config: StorybookConfig = {
     config.plugins = config.plugins
       ?.flat()
       .filter(
-        (p) => !(p && typeof p === 'object' && 'name' in p && String(p.name).startsWith('vite-plugin-pwa')),
+        (p) =>
+          !(
+            p &&
+            typeof p === 'object' &&
+            'name' in p &&
+            String(p.name).startsWith('vite-plugin-pwa')
+          ),
       );
     return config;
   },

@@ -75,11 +75,10 @@ React web application that consumes the synergy engine package.
 
 **Synergy Categories**: direct (pair-specific, e.g. Shift), playstyle (strategy-reinforcing, e.g. Lore Steal)
 
-**Archetypes** (MVP):
-- Discard - opponent discard + hand-size payoffs (IMPLEMENTED)
-- Bounce - return to hand + ETB effects
-- Ramp - ink acceleration + high-cost cards
-- Damage/Removal - deal damage, banish + payoffs
+**Playstyles** (implemented):
+- Lore Denial (`lore-denial`) - cards that make opponents lose lore
+- Location Control (`location-control`) - location-support roles (8 sub-rules)
+- Discard (`discard`) - opponent discard enablers + hand-size payoffs
 
 **Synergy Score**: 1-10 numeric scale (all integers valid). Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4)
 
@@ -115,7 +114,17 @@ Cards that reference specific named entities via "named X" patterns (e.g., "char
 
 **Full documentation**: See [`packages/synergy-engine/NAMED_COMPANIONS_RULE.md`](packages/synergy-engine/NAMED_COMPANIONS_RULE.md) for extraction details, scoring rationale, and test coverage.
 
-### Rule 3: Discard (playstyle, two roles)
+### Rule 3: Lore Loss (playstyle: Lore Denial)
+
+Cards that make the opponent lose lore reinforce the same denial strategy. Uniform scoring — value comes from density of denial cards, not specific pairs.
+
+**Detection pattern**: `/(?:each |chosen |all )?opponents? loses? (?:\d+ )?lore/i`
+
+**Scoring**: All pairs score **7** (Strong). Each additional denial card increases strategy consistency.
+
+**Explanation template**: "Both {card} and {other} make the opponent lose lore"
+
+### Rule 4: Discard (playstyle, two roles)
 
 Cards that force opponents to discard from hand (enablers) synergize with each other and with cards that reward hand-size advantage (payoffs). Single rule with role-based scoring.
 
@@ -198,7 +207,8 @@ Dark fantasy theme inspired by Lorcana:
 Before EVERY commit, run these checks and fix any issues:
 1. `pnpm run lint` - Fix all errors (warnings OK)
 2. `pnpm run test` - All unit tests must pass
-3. `pnpm run test:e2e` - All E2E tests must pass
+
+E2E tests run in CI only (too slow for local pre-commit).
 
 Do NOT commit or push if any check fails.
 
@@ -216,7 +226,6 @@ After pushing, always confirm with clear output (e.g., git log showing commit on
 
 ### Synergy Rule Documentation
 - When modifying rule logic, scoring, or explanations in the engine, always update the **Synergy Rules** section in this file to match. This includes score tables, condition matchers, explanation templates, and display tier definitions.
-
 ### Code Quality
 - After writing or modifying significant code (new features, refactors, bug fixes), run the `code-simplifier` agent to polish for clarity and consistency
 - Use `/refactor-code` for periodic comprehensive codebase audits
