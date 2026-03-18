@@ -9,32 +9,31 @@
  * Output: reports/*.html (gitignored)
  */
 
-import {readFileSync, writeFileSync, mkdirSync} from 'fs';
-import {resolve, basename} from 'path';
+import {execFileSync} from 'child_process';
+import {mkdirSync, readFileSync, writeFileSync} from 'fs';
+import {basename, resolve} from 'path';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const OUT = resolve(ROOT, 'reports');
 
-/** Markdown files to convert, with output filenames */
+/** Markdown files to convert, with output filenames and categories */
 const DOCS = [
   // Synergy Rules
-  {src: 'packages/synergy-engine/SHIFT_TARGET_RULE.md', out: 'SHIFT_TARGET_RULE.html'},
-  {src: 'packages/synergy-engine/NAMED_COMPANIONS_RULE.md', out: 'NAMED_COMPANIONS_RULE.html'},
-  {src: 'packages/synergy-engine/DISCARD_RULE.md', out: 'DISCARD_RULE.html'},
-  {src: 'packages/synergy-engine/LOCATION_CONTROL_RULE.md', out: 'LOCATION_CONTROL_RULE.html'},
-  {src: 'packages/synergy-engine/REMOVED_RULES.md', out: 'REMOVED_RULES.html'},
+  {src: 'packages/synergy-engine/SHIFT_TARGET_RULE.md', out: 'SHIFT_TARGET_RULE.html', category: 'Synergy Rules', label: 'Shift Targets'},
+  {src: 'packages/synergy-engine/NAMED_COMPANIONS_RULE.md', out: 'NAMED_COMPANIONS_RULE.html', category: 'Synergy Rules', label: 'Named Companions'},
+  {src: 'packages/synergy-engine/DISCARD_RULE.md', out: 'DISCARD_RULE.html', category: 'Synergy Rules', label: 'Discard'},
+  {src: 'packages/synergy-engine/LOCATION_CONTROL_RULE.md', out: 'LOCATION_CONTROL_RULE.html', category: 'Synergy Rules', label: 'Location Control'},
+  {src: 'packages/synergy-engine/REMOVED_RULES.md', out: 'REMOVED_RULES.html', category: 'Synergy Rules', label: 'Removed Rules'},
   // Architecture
-  {src: 'packages/synergy-engine/SCORING_DESIGN.md', out: 'SCORING_DESIGN.html'},
-  {src: 'packages/synergy-engine/README.md', out: 'synergy-engine-README.html'},
-  {src: 'TECH_STACK.md', out: 'TECH_STACK.html'},
+  {src: 'packages/synergy-engine/SCORING_DESIGN.md', out: 'SCORING_DESIGN.html', category: 'Architecture', label: 'Scoring Design'},
+  {src: 'packages/synergy-engine/README.md', out: 'synergy-engine-README.html', category: 'Architecture', label: 'Synergy Engine'},
   // Quality & Research
-  {src: 'docs/SYNERGY_AUDIT.md', out: 'SYNERGY_AUDIT.html'},
-  {src: 'docs/UX_AUDIT.md', out: 'UX_AUDIT.html'},
-  {src: 'docs/UX_REFERENCE.md', out: 'UX_REFERENCE.html'},
-  {src: 'apps/web/e2e/E2E_TESTS.md', out: 'E2E_TESTS.html'},
+  {src: 'docs/SYNERGY_AUDIT.md', out: 'SYNERGY_AUDIT.html', category: 'Quality & Research', label: 'Synergy Audit'},
+  {src: 'docs/UX_AUDIT.md', out: 'UX_AUDIT.html', category: 'Quality & Research', label: 'UX Audit'},
+  {src: 'docs/UX_REFERENCE.md', out: 'UX_REFERENCE.html', category: 'Quality & Research', label: 'UX Reference'},
   // Project
-  {src: 'README.md', out: 'README.html'},
-  {src: 'CLAUDE.md', out: 'CLAUDE.html'},
+  {src: 'docs/TECH_STACK.md', out: 'TECH_STACK.html', category: 'Project', label: 'Tech Stack'},
+  {src: 'docs/V1_LAUNCH_PLAN.md', out: 'V1_LAUNCH_PLAN.html', category: 'Project', label: 'v1.0 Launch Plan'},
 ];
 
 const TEMPLATE = (title, body) => `<!DOCTYPE html>
@@ -280,6 +279,149 @@ async function renderMarkdown(md) {
   }
 }
 
+/** Generate the index hub page linking all docs by category */
+function generateIndex() {
+  const categories = new Map();
+  for (const doc of DOCS) {
+    const cat = doc.category || 'Other';
+    if (!categories.has(cat)) categories.set(cat, []);
+    categories.get(cat).push(doc);
+  }
+
+  const categoryIcons = {
+    'Synergy Rules': '\u2728',
+    Architecture: '\u2699\uFE0F',
+    'Quality & Research': '\uD83D\uDD0D',
+    Project: '\uD83D\uDCCB',
+  };
+
+  let cardsHtml = '';
+  for (const [cat, docs] of categories) {
+    const icon = categoryIcons[cat] || '\uD83D\uDCC4';
+    cardsHtml += `
+      <div class="category">
+        <h2>${icon} ${cat}</h2>
+        <div class="card-grid">
+          ${docs.map((d) => `<a class="card" href="${d.out}"><span class="card-label">${d.label}</span><span class="card-src">${d.src}</span></a>`).join('\n          ')}
+        </div>
+      </div>`;
+  }
+
+  const indexHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inkweave Docs Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #0d0d14;
+      color: #e8e8e8;
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+      line-height: 1.65;
+    }
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .hero h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 36px;
+      color: #d4af37;
+      margin: 0 0 8px;
+      letter-spacing: 2px;
+    }
+    .hero p {
+      color: #90a1b9;
+      font-size: 14px;
+      margin: 0;
+    }
+    .category { margin-bottom: 36px; }
+    .category h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #e8e8e8;
+      margin: 0 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #1a1a2e;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 16px 20px;
+      background: #151525;
+      border: 1px solid #2a2a44;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    }
+    .card:hover {
+      border-color: #d4af37;
+      background: #1a1a2e;
+      transform: translateY(-1px);
+    }
+    .card-label {
+      font-weight: 600;
+      font-size: 14px;
+      color: #e8e8e8;
+    }
+    .card:hover .card-label { color: #d4af37; }
+    .card-src {
+      font-size: 11px;
+      color: #555;
+      font-family: 'Fira Code', monospace;
+    }
+    .doc-footer {
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 1px solid #1a1a2e;
+      font-size: 12px;
+      color: #555;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <h1>INKWEAVE</h1>
+    <p>Documentation Hub &mdash; ${DOCS.length} reports</p>
+  </div>
+  ${cardsHtml}
+  <div class="doc-footer">Generated by Inkweave docs &mdash; local dev reference</div>
+</body>
+</html>`;
+
+  writeFileSync(resolve(OUT, 'index.html'), indexHtml);
+}
+
+/** Open a file in the default browser (cross-platform) */
+function openInBrowser(filePath) {
+  try {
+    if (process.platform === 'win32') {
+      execFileSync('cmd', ['/c', 'start', '', filePath], {stdio: 'ignore'});
+    } else if (process.platform === 'darwin') {
+      execFileSync('open', [filePath], {stdio: 'ignore'});
+    } else {
+      execFileSync('xdg-open', [filePath], {stdio: 'ignore'});
+    }
+  } catch {
+    // Silently fail — user can open manually
+  }
+}
+
 async function main() {
   mkdirSync(OUT, {recursive: true});
 
@@ -288,7 +430,7 @@ async function main() {
   for (const doc of DOCS) {
     const srcPath = resolve(ROOT, doc.src);
     const outPath = resolve(OUT, doc.out);
-    const title = basename(doc.src, '.md');
+    const title = doc.label || basename(doc.src, '.md');
 
     process.stdout.write(`  ${doc.src} → ${doc.out} ... `);
 
@@ -299,7 +441,13 @@ async function main() {
     console.log('done');
   }
 
-  console.log(`\nOpen reports/index.html in your browser.`);
+  process.stdout.write('\n  Generating index.html hub ... ');
+  generateIndex();
+  console.log('done');
+
+  const indexPath = resolve(OUT, 'index.html');
+  console.log(`\nOpening ${indexPath}`);
+  openInBrowser(indexPath);
 }
 
 main().catch((err) => {
