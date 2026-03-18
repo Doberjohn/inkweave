@@ -18,14 +18,14 @@ const engine = new SynergyEngine();
 
 // Find synergies for a card
 const card: LorcanaCard = {
-  id: "ariel-1",
-  name: "Ariel",
-  fullName: "Ariel - Spectacular Singer",
-  cost: 5,
+  id: "elsa-1",
+  name: "Elsa",
+  fullName: "Elsa - Snow Queen",
+  cost: 4,
   ink: "Amethyst",
   inkwell: true,
   type: "Character",
-  keywords: ["Singer 5"],
+  keywords: ["Shift 5"],
 };
 
 const allCards: LorcanaCard[] = [/* your card database */];
@@ -50,12 +50,14 @@ const engine = new SynergyEngine(options?: SynergyEngineOptions);
 
 **Options:**
 - `rules?: SynergyRule[]` - Custom rules (defaults to built-in rules)
-- `maxResultsPerGroup?: number` - Max results per synergy group (default: 20)
+- `maxResultsPerGroup?: number` - Max results per synergy group (default: 100)
 
 **Methods:**
 - `findSynergies(card, allCards)` - Find all synergies grouped by category/playstyle
 - `findSynergiesFlat(card, allCards)` - Find synergies as flat list
 - `checkSynergy(cardA, cardB)` - Check synergy between two cards
+- `getPairSynergies(cardA, cardB)` - Detailed bidirectional breakdown of all synergy connections between two cards
+- `getPlaystyleCards(playstyleId, allCards)` - Get all cards matching any rule in a playstyle
 - `addRule(rule)` - Add a custom rule (validates playstyle references)
 - `getRules()` - Get all registered rules
 
@@ -80,19 +82,25 @@ const biResult = cache.checkBidirectionalSynergy(cardA, cardB);
 
 ### Built-in Rules
 
-The engine includes 8 built-in synergy rules across two categories:
+The engine includes 12 built-in synergy rules across two categories:
 
 **Direct** (pair-specific synergies):
-1. **Shift Targets** - Shift cards + same-named base characters (bidirectional)
+
+- **Shift Targets** — Shift cards + same-named base characters (bidirectional)
+- **Named Companions** — Cards referencing specific named entities, scored by effect tier
 
 **Playstyle** (strategy-reinforcing synergies):
-2. **Lore Loss** (`lore-denial`) - Cards that make opponents lose lore
-3. **At Location Payoff** (`location-control`) - "At location" payoff effects + Locations
-4. **Location Play Trigger** (`location-control`) - "When you play at location" triggers
-5. **Location Buff** (`location-control`) - Cards that buff characters at locations
-6. **Move to Location** (`location-control`) - Move-to-location effects
-7. **Location In-Play Check** (`location-control`) - "If you have a location" checks
-8. **Location Tutor** (`location-control`) - Location search/tutor effects
+
+- **Lore Loss** (`lore-denial`) — Cards that make opponents lose lore
+- **At Location Payoff** (`location-control`) — "At location" payoff effects + Locations
+- **Location Play Trigger** (`location-control`) — "When you play a location" triggers
+- **Location Buff** (`location-control`) — Cards that buff locations
+- **Location Ramp** (`location-control`) — Reduces location play cost
+- **Move to Location** (`location-control`) — Move-to-location effects
+- **Location In-Play Check** (`location-control`) — "If you have a location" checks
+- **Location Tutor** (`location-control`) — Location search/tutor effects
+- **Location Boost** (`location-control`) — Boost mechanic on characters/locations
+- **Discard** (`discard`) — Opponent discard enablers + hand-size payoffs
 
 ### Custom Rules
 
@@ -155,6 +163,28 @@ import {
   isLocation,        // Check if card is a Location
   hasNegativeTargeting,
   hasPositiveClassificationEffect,
+  isDualInk,         // Check if card has two inks
+  getInks,           // Get array of card's inks
+  canShareDeck,      // Check if two cards can be in the same deck
+  isCardType,        // Type-safe card type check
+  getShiftType,      // Get Shift type (standard/named/any)
+  hasAnyShift,       // Check if card has any Shift ability
+  getNamedReferences, // Extract named entity references from card text
+  classifyNamedEffect, // Classify effect tier for named companions
+  NAMED_EFFECT_SCORES, // Score lookup by effect tier
+  isLocationSupportCard, // Check if card supports locations
+  getLocationRoles,  // Get location support roles for a card
+  LOCATION_PATTERNS, // Regex patterns for location detection
+  getDiscardRoles,   // Get discard roles (enabler/payoff)
+  isDiscardCard,     // Check if card is a discard card
+  transformCard,     // Transform JSON card data to LorcanaCard
+  transformCards,    // Transform array of JSON cards
+  // UI label/description constants:
+  LOCATION_ROLE_CHIP_LABELS,
+  LOCATION_ROLE_DESCRIPTIONS,
+  LOCATION_ROLE_TOOLTIP,
+  DISCARD_ROLE_CHIP_LABELS,
+  DISCARD_ROLE_DESCRIPTIONS,
 } from "inkweave-synergy-engine";
 ```
 
@@ -168,10 +198,13 @@ interface LorcanaCard {
   fullName: string;
   cost: number;
   ink: Ink;
+  ink2?: Ink;                // Second ink for dual-ink cards
   inkwell: boolean;
   type: CardType;
   classifications?: string[];
-  text?: string;
+  text?: string;             // Full card text (used by synergy engine)
+  textSections?: string[];   // Text split into ability blocks (for display)
+  isSong?: boolean;          // True for Action cards with Song subtype
   moveCost?: number;
   strength?: number;
   willpower?: number;
@@ -185,7 +218,7 @@ interface LorcanaCard {
 type Ink = "Amber" | "Amethyst" | "Emerald" | "Ruby" | "Sapphire" | "Steel";
 type CardType = "Character" | "Action" | "Item" | "Location";
 type SynergyCategory = "direct" | "playstyle";
-type PlaystyleId = "lore-denial" | "location-control";
+type PlaystyleId = "lore-denial" | "location-control" | "discard";
 
 // Synergy scores use a 1-10 numeric scale (see SCORING_DESIGN.md)
 // Engine assigns anchor points: 1, 3, 5, 7, 9

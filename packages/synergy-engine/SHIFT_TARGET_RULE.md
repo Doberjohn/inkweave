@@ -76,12 +76,12 @@ calculateShiftSynergy(shiftCard, baseCard)
 |-------|-----------|---------|---------------------|---------|
 | **9** | 1 | Both inkable | "Perfect curve: play {base} on turn {N}, Shift next turn. Both cards are inkable as fallback." | Elsa - Snow Queen (cost 4, inkable) + Elsa - Ice Maker (Shift 5, inkable) |
 | **8** | 1 | One inkable | "Perfect curve: play {base} on turn {N}, Shift next turn. One card is inkable as fallback." | Elsa - Snow Queen (cost 4, not inkable) + Elsa - Ice Maker (Shift 5, inkable) |
-| **7** | 1 | Neither inkable | "On curve: play {base} on turn {N}, Shift next turn. Neither card is inkable -- less flexible if drawn off-curve." | Elsa - Snow Queen (cost 4, not inkable) + Elsa - Ice Maker (Shift 5, not inkable) |
+| **7** | 1 | Neither inkable | "On curve: Play {base} on turn {N}, Shift next turn. Neither card is inkable — Less flexible if drawn off-curve." | Elsa - Snow Queen (cost 4, not inkable) + Elsa - Ice Maker (Shift 5, not inkable) |
 | **7** | 2 | Any | "Smooth curve: {base} flows naturally into Shift within a couple of turns." | Elsa - Snow Queen (cost 4) + Ursula - Sea Witch (Shift 6) |
-| **5** | 0 | Any | "Same cost -- no ink savings from Shifting, but skips the drying phase." | Elsa - Snow Queen (cost 5) + Elsa - Ice Maker (Shift 5) |
-| **5** | 3 | Any | "Wide 3-turn gap -- playable but slow to set up." | Simba - Young Prince (cost 2) + Simba - King (Shift 5) |
-| **3** | 4+ | Any | "The cost gap makes it hard to shift {shiftCard} into {baseCard} on tempo." | Ursula - Cauldron Keeper (cost 2) + Ursula - Sea Witch Queen (Shift 8) |
-| **3** | Negative | Any | "The cost gap makes it hard to shift {shiftCard} into {baseCard} on tempo." | Base costs more than Shift cost |
+| **5** | 0 | Any | "Same cost — No ink savings from Shifting, but skips the drying phase." | Elsa - Snow Queen (cost 5) + Elsa - Ice Maker (Shift 5) |
+| **5** | 3 | Any | "Wide 3-turn gap — Playable but slow to set up." | Simba - Young Prince (cost 2) + Simba - King (Shift 5) |
+| **3** | 4+ | Any | "The cost gap makes it hard to set up {base} in time to shift {shiftCard} onto it." | Ursula - Cauldron Keeper (cost 2) + Ursula - Sea Witch Queen (Shift 8) |
+| **3** | Negative | Any | "The cost gap makes it hard to set up {base} in time to shift {shiftCard} onto it." | Base costs more than Shift cost |
 
 #### Why inkwell matters for gap=1
 
@@ -103,10 +103,10 @@ Instead, scoring is based on **how easy it is to get the base card into play fir
 |-------|-----------|---------------------|---------------------|
 | **10** | <= 3 | Yes | "Free Shift: Play {base} early, then shift into {shift} for 0 ink. {base} is both a Shift target and enables the free Shift condition." |
 | **9** | <= 3 | No | "Free Shift: Play {base} early, then shift into {shift} for 0 ink." |
-| **8** | 4-5 | Yes | "Free Shift: shift {base} into {shift} for 0 ink, but the base takes longer to set up. {base} is both a Shift target and enables the free Shift condition." |
-| **7** | 4-5 | No | "Free Shift: shift {base} into {shift} for 0 ink, but the base takes longer to set up." |
-| **6** | 6+ | Yes | "Free Shift but expensive base -- hard to get {base} into play first. {base} is both a Shift target and enables the free Shift condition." |
-| **5** | 6+ | No | "Free Shift but expensive base -- hard to get {base} into play first." |
+| **8** | 4-5 | Yes | "Free Shift: Shift {base} into {shift} for 0 ink, but the base takes longer to set up. {base} is both a Shift target and enables the free Shift condition." |
+| **7** | 4-5 | No | "Free Shift: Shift {base} into {shift} for 0 ink, but the base takes longer to set up." |
+| **6** | 6+ | Yes | "Free Shift but expensive base — Hard to get {base} into play first. {base} is both a Shift target and enables the free Shift condition." |
+| **5** | 6+ | No | "Free Shift but expensive base — Hard to get {base} into play first." |
 
 #### Why base cost matters for Shift 0
 

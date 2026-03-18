@@ -79,7 +79,7 @@ Returns all roles a card fulfills (cards can have multiple roles). Location card
 
 Two exclusion mechanisms prevent false positives:
 
-1. **Anti-location exclusion** (`LOCATION_PATTERNS['anti-location']`): Cards that banish or remove locations are excluded from ALL roles. Pattern: `banish (?:chosen|all)(?:item or )?location|shuffle.*location into`
+1. **Anti-location exclusion** (`LOCATION_PATTERNS['anti-location']`): Cards that banish or remove locations are excluded from ALL roles. Pattern: `banish (?:chosen |all )(?:item or )?location|shuffle.*location into`
 
 2. **Move-specific exclusion** (`LOCATION_PATTERNS['move-exclude']`): Cards mentioning "move" in a damage context (e.g., "move damage") are excluded from the move role. Pattern: `move.*damage`
 

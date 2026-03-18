@@ -133,9 +133,11 @@ Uniform scoring — value comes from density of denial cards, not specific pairs
 | at-payoff     | **7** | Strong   | Vanellope Von Schweetz               | Direct payoff for being at a location (draw, lore, stat boosts)                |
 | play-trigger  | **7** | Strong   | Elsa - Ice Artisan                   | Triggers on playing a location — repeatable control                            |
 | buff          | **7** | Strong   | Fix-It Felix Jr. - Niceland Steward  | Protects or buffs locations, keeps the strategy alive                          |
+| location-ramp | **7** | Strong   | Elsa - Concerned                     | Reduces location play cost — accelerates the strategy                          |
 | move          | **5** | Moderate | Transport Pod                        | Enables moving characters for free — useful utility but no value on its own    |
 | in-play-check | **5** | Moderate | John Silver - Greedy Treasure Seeker | Conditional bonus when a location exists — good when active, nothing otherwise |
 | tutor         | **5** | Moderate | The Islands I Pulled From the Sea    | Finds locations for consistency — no direct benefit from them being in play    |
+| boost         | **5** | Moderate | Webby's Diary                        | Supports boost mechanic on characters or locations                             |
 
 **3b. Cross-Synergy (Support Card paired with another Support Card)**
 
@@ -143,6 +145,16 @@ Uniform scoring — value comes from density of denial cards, not specific pairs
 |---------------------------------------|-------|----------|------------------------------------------|--------------------------------------------------------------------|
 | Both high-value roles + complementary | **5** | Moderate | Vanellope (at-payoff) + Launchpad (buff) | Different strategy angles, both want locations in play             |
 | Otherwise                             | **3** | Weak     | Transport Pod (move) + Minnie (tutor)    | Loose thematic overlap, minimal benefit without a location present |
+
+### Rule 4: Discard (Playstyle: Discard)
+
+Role-based scoring — enablers that empty the opponent's hand pair with payoffs that capitalize on hand-size advantage.
+
+| Pairing            | Score | Tier   | Why                                                                                    |
+|--------------------|-------|--------|----------------------------------------------------------------------------------------|
+| Enabler ↔ Payoff   | **8** | Strong | Direct synergy: enabler depletes hand, payoff converts that into advantage              |
+| Enabler ↔ Enabler  | **7** | Strong | Both disrupt the opponent's hand, increasing consistency of the denial strategy         |
+| Payoff ↔ Payoff    | **7** | Strong | Both reward hand-size advantage, but need enablers to unlock their potential            |
 
 ---
 
