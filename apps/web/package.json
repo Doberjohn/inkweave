@@ -6,7 +6,7 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "dev": "vite",
+    "dev": "pnpm dlx @react-grab/claude-code@latest && vite",
     "build": "tsc && vite build",
     "build:storybook": "storybook build -o dist/storybook",
     "preview": "vite preview",
