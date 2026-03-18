@@ -38,6 +38,19 @@
       color: #90a1b9;
     }
 
+    .hint {
+      font-size: 12px;
+      color: #555;
+      margin-top: 12px;
+    }
+
+    .hint code {
+      background: #1a1a2e;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+
     .category {
       margin-bottom: 36px;
     }
@@ -127,6 +140,7 @@
     <header>
       <h1>INKWEAVE</h1>
       <p class="subtitle">Documentation Hub &mdash; local dev reference</p>
+      <p class="hint">Generate reports: <code>pnpm run docs</code></p>
     </header>
 
     <section class="category">
@@ -136,25 +150,25 @@
       </div>
       <p class="category-desc">How the engine detects card synergies &mdash; pattern matching, scoring, and role detection.</p>
       <ul class="doc-list">
-        <li><a class="doc-link" href="../packages/synergy-engine/SHIFT_TARGET_RULE.md">
+        <li><a class="doc-link" href="../reports/SHIFT_TARGET_RULE.html">
           <span class="doc-title">Shift Target Rule</span>
-          <span class="doc-path">synergy-engine/SHIFT_TARGET_RULE.md</span>
+          <span class="doc-path">SHIFT_TARGET_RULE.html</span>
         </a></li>
-        <li><a class="doc-link" href="../packages/synergy-engine/NAMED_COMPANIONS_RULE.md">
+        <li><a class="doc-link" href="../reports/NAMED_COMPANIONS_RULE.html">
           <span class="doc-title">Named Companions Rule</span>
-          <span class="doc-path">synergy-engine/NAMED_COMPANIONS_RULE.md</span>
+          <span class="doc-path">NAMED_COMPANIONS_RULE.html</span>
         </a></li>
-        <li><a class="doc-link" href="../packages/synergy-engine/DISCARD_RULE.md">
+        <li><a class="doc-link" href="../reports/DISCARD_RULE.html">
           <span class="doc-title">Discard Rule</span>
-          <span class="doc-path">synergy-engine/DISCARD_RULE.md</span>
+          <span class="doc-path">DISCARD_RULE.html</span>
         </a></li>
-        <li><a class="doc-link" href="../packages/synergy-engine/LOCATION_CONTROL_RULE.md">
+        <li><a class="doc-link" href="../reports/LOCATION_CONTROL_RULE.html">
           <span class="doc-title">Location Control Rule</span>
-          <span class="doc-path">synergy-engine/LOCATION_CONTROL_RULE.md</span>
+          <span class="doc-path">LOCATION_CONTROL_RULE.html</span>
         </a></li>
-        <li><a class="doc-link" href="../packages/synergy-engine/REMOVED_RULES.md">
+        <li><a class="doc-link" href="../reports/REMOVED_RULES.html">
           <span class="doc-title">Removed Rules Archive</span>
-          <span class="doc-path">synergy-engine/REMOVED_RULES.md</span>
+          <span class="doc-path">REMOVED_RULES.html</span>
         </a></li>
       </ul>
     </section>
@@ -166,17 +180,17 @@
       </div>
       <p class="category-desc">Scoring philosophy, tech stack, and engine API reference.</p>
       <ul class="doc-list">
-        <li><a class="doc-link" href="../packages/synergy-engine/SCORING_DESIGN.md">
+        <li><a class="doc-link" href="../reports/SCORING_DESIGN.html">
           <span class="doc-title">Scoring System Design</span>
-          <span class="doc-path">synergy-engine/SCORING_DESIGN.md</span>
+          <span class="doc-path">SCORING_DESIGN.html</span>
         </a></li>
-        <li><a class="doc-link" href="../packages/synergy-engine/README.md">
+        <li><a class="doc-link" href="../reports/synergy-engine-README.html">
           <span class="doc-title">Engine API Reference</span>
-          <span class="doc-path">synergy-engine/README.md</span>
+          <span class="doc-path">synergy-engine-README.html</span>
         </a></li>
-        <li><a class="doc-link" href="../TECH_STACK.md">
+        <li><a class="doc-link" href="../reports/TECH_STACK.html">
           <span class="doc-title">Tech Stack</span>
-          <span class="doc-path">TECH_STACK.md</span>
+          <span class="doc-path">TECH_STACK.html</span>
         </a></li>
       </ul>
     </section>
@@ -188,21 +202,21 @@
       </div>
       <p class="category-desc">Data audits, UX analysis, and test coverage.</p>
       <ul class="doc-list">
-        <li><a class="doc-link" href="SYNERGY_AUDIT.md">
+        <li><a class="doc-link" href="../reports/SYNERGY_AUDIT.html">
           <span class="doc-title">Synergy Data Audit</span>
-          <span class="doc-path">docs/SYNERGY_AUDIT.md</span>
+          <span class="doc-path">SYNERGY_AUDIT.html</span>
         </a></li>
-        <li><a class="doc-link" href="UX_AUDIT.md">
+        <li><a class="doc-link" href="../reports/UX_AUDIT.html">
           <span class="doc-title">UX Audit</span>
-          <span class="doc-path">docs/UX_AUDIT.md</span>
+          <span class="doc-path">UX_AUDIT.html</span>
         </a></li>
-        <li><a class="doc-link" href="UX_REFERENCE.md">
+        <li><a class="doc-link" href="../reports/UX_REFERENCE.html">
           <span class="doc-title">UX Reference</span>
-          <span class="doc-path">docs/UX_REFERENCE.md</span>
+          <span class="doc-path">UX_REFERENCE.html</span>
         </a></li>
-        <li><a class="doc-link" href="../apps/web/e2e/E2E_TESTS.md">
+        <li><a class="doc-link" href="../reports/E2E_TESTS.html">
           <span class="doc-title">E2E Test Inventory</span>
-          <span class="doc-path">apps/web/e2e/E2E_TESTS.md</span>
+          <span class="doc-path">E2E_TESTS.html</span>
         </a></li>
       </ul>
     </section>
@@ -214,13 +228,13 @@
       </div>
       <p class="category-desc">Top-level project docs and contribution guide.</p>
       <ul class="doc-list">
-        <li><a class="doc-link" href="../README.md">
+        <li><a class="doc-link" href="../reports/README.html">
           <span class="doc-title">README</span>
-          <span class="doc-path">README.md</span>
+          <span class="doc-path">README.html</span>
         </a></li>
-        <li><a class="doc-link" href="../CLAUDE.md">
+        <li><a class="doc-link" href="../reports/CLAUDE.html">
           <span class="doc-title">Claude Code Instructions</span>
-          <span class="doc-path">CLAUDE.md</span>
+          <span class="doc-path">CLAUDE.html</span>
         </a></li>
       </ul>
     </section>
