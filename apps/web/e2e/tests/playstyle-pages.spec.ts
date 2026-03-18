@@ -3,7 +3,7 @@ import {test, expect} from '../fixtures';
 test.describe('Playstyle Pages', () => {
   // Desktop only
   test.beforeEach(async ({appPage}, testInfo) => {
-    if (testInfo.project.name === 'mobile-chrome') {
+    if (testInfo.project.name.startsWith('mobile-')) {
       test.skip();
     }
     await appPage.goto();
@@ -28,8 +28,8 @@ test.describe('Playstyle Pages', () => {
     const heading = page.getByRole('heading', {level: 1});
     await expect(heading).toBeVisible({timeout: 10000});
 
-    // Should have at least one playstyle card (article elements)
-    const playstyleCards = page.locator('article');
+    // Should have at least one playstyle card (role="button" when clickable)
+    const playstyleCards = page.getByRole('button', {name: /View .+ playstyle/});
     await expect(playstyleCards.first()).toBeVisible();
     const count = await playstyleCards.count();
     expect(count).toBeGreaterThanOrEqual(2); // lore-denial + location-control
@@ -40,7 +40,7 @@ test.describe('Playstyle Pages', () => {
     await page.waitForTimeout(500);
 
     // Click the first playstyle card
-    const firstCard = page.locator('article').first();
+    const firstCard = page.getByRole('button', {name: /View .+ playstyle/}).first();
     await expect(firstCard).toBeVisible({timeout: 10000});
     await firstCard.click();
 

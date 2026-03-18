@@ -2,7 +2,18 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-73 active tests across 14 spec files. Each file runs on both `chromium` (desktop) and `mobile-chrome` projects but skips the irrelevant viewport.
+79 active tests across 15 spec files. Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+
+## `accessibility.spec.ts` — 6 tests (desktop only)
+
+| Test | What it verifies |
+|---|---|
+| home page should have no axe violations | `/` passes axe-core audit with zero violations |
+| browse page should have no axe violations | `/browse` passes axe-core audit |
+| card detail page should have no axe violations | `/card/1041` passes axe-core audit |
+| card synergies page should have no axe violations | `/card/1041/synergies` passes axe-core audit |
+| playstyle gallery should have no axe violations | `/playstyles` passes axe-core audit |
+| playstyle detail should have no axe violations | `/playstyles/discard` passes axe-core audit |
 
 ## `app-load.spec.ts` — 4 tests (desktop only)
 
@@ -66,7 +77,7 @@
 | Test | What it verifies |
 |---|---|
 | should navigate to playstyle gallery via CTA | "Explore playstyles" CTA navigates to `/playstyles`, renders page heading |
-| should render playstyle gallery with playstyle cards | `/playstyles` shows h1 + at least 2 playstyle cards (article elements) |
+| should render playstyle gallery with playstyle cards | `/playstyles` shows h1 + at least 2 playstyle cards (role="button" elements) |
 | should navigate to playstyle detail page | Clicking a playstyle card navigates to `/playstyles/:id`, shows heading |
 | should deep link to playstyle detail page | Direct navigation to `/playstyles/lore-denial` shows heading + card tiles |
 | should navigate back from playstyle detail to gallery | Back link from detail returns to `/playstyles` (or logo to `/`) |

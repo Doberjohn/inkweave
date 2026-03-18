@@ -36,7 +36,7 @@ module.exports = {
       assertions: {
         // Aggregate scores — error blocks merge, warn is informational
         'categories:performance': ['error', {minScore: 0.55}],
-        'categories:accessibility': ['warn', {minScore: 0.9}],
+        'categories:accessibility': ['error', {minScore: 0.9}],
         'categories:seo': ['warn', {minScore: 0.9}],
         'categories:best-practices': ['warn', {minScore: 0.9}],
 

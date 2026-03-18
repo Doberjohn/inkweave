@@ -3,7 +3,7 @@ import {test, expect} from '../fixtures';
 test.describe('Card Selection and Synergies', () => {
   // Skip on mobile - synergy panel requires navigation
   test.beforeEach(async ({appPage}, testInfo) => {
-    if (testInfo.project.name === 'mobile-chrome') {
+    if (testInfo.project.name.startsWith('mobile-')) {
       test.skip();
     }
     await appPage.goto();

@@ -4,7 +4,7 @@ test.describe('App Loading', () => {
   // Skip on mobile - UI layout is different
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   test.beforeEach(async ({appPage: _}, testInfo) => {
-    if (testInfo.project.name === 'mobile-chrome') {
+    if (testInfo.project.name.startsWith('mobile-')) {
       test.skip();
     }
   });

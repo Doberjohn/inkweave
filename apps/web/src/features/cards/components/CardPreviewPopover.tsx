@@ -148,7 +148,8 @@ export function CardPreviewPopover() {
   if (isTouchMode) {
     return (
       <>
-        {/* Backdrop */}
+        {/* Touch-only dismiss overlay; no keyboard interaction expected on touch devices */}
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div
           className="overlay-transition overlay-enter"
           style={{
@@ -161,7 +162,8 @@ export function CardPreviewPopover() {
           onClick={hidePreview}
           onTransitionEnd={onTransitionEnd}
         />
-        {/* Centered card */}
+        {/* Touch-only tap-to-dismiss; this branch only renders on touch devices */}
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div
           className={`overlay-transition overlay-fast overlay-scale overlay-enter ${visible ? 'overlay-visible' : ''}`}
           onClick={hidePreview}

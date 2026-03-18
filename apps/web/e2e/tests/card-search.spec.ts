@@ -3,7 +3,7 @@ import {test, expect} from '../fixtures';
 test.describe('Card Search and Filtering', () => {
   // Desktop-only: tests hero search and browse page routing
   test.beforeEach(async ({appPage}, testInfo) => {
-    if (testInfo.project.name === 'mobile-chrome') {
+    if (testInfo.project.name.startsWith('mobile-')) {
       test.skip();
     }
     await appPage.goto();

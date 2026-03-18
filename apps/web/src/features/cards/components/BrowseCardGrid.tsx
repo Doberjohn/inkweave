@@ -162,6 +162,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
       }}>
       <div
         role="grid"
+        tabIndex={0}
         aria-label="Card grid"
         onKeyDown={handleGridKeyDown}
         style={{

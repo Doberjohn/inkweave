@@ -32,6 +32,7 @@ export function CardLightbox({src, alt, isLocation, onClose}: CardLightboxProps)
   }, [handleKeyDown]);
 
   return createPortal(
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- backdrop dismiss; Escape key handled via document listener
     <div
       role="dialog"
       aria-modal="true"
@@ -49,6 +50,7 @@ export function CardLightbox({src, alt, isLocation, onClose}: CardLightboxProps)
         WebkitTapHighlightColor: 'transparent',
       }}>
       {imgError ? (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- click interception to prevent backdrop dismiss; not interactive, just event boundary
         <div
           onClick={(e) => e.stopPropagation()}
           style={{
@@ -67,6 +69,7 @@ export function CardLightbox({src, alt, isLocation, onClose}: CardLightboxProps)
           </p>
         </div>
       ) : (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- click interception to prevent backdrop dismiss; not interactive, just event boundary
         <img
           src={src}
           alt={alt}
