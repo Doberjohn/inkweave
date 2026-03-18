@@ -207,7 +207,8 @@ Dark fantasy theme inspired by Lorcana:
 Before EVERY commit, run these checks and fix any issues:
 1. `pnpm run lint` - Fix all errors (warnings OK)
 2. `pnpm run test` - All unit tests must pass
-3. `pnpm run test:e2e` - All E2E tests must pass
+
+E2E tests run in CI only (too slow for local pre-commit).
 
 Do NOT commit or push if any check fails.
 
