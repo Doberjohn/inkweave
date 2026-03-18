@@ -106,7 +106,7 @@ jobs:
         run: pnpm precompute-synergies
 
       - name: Install Playwright browsers
-        run: pnpm --filter inkweave-web exec playwright install --with-deps chromium
+        run: pnpm --filter inkweave-web exec playwright install --with-deps
 
       - name: Run E2E tests
         run: pnpm --filter inkweave-web test:e2e

@@ -114,8 +114,8 @@ function PlaystyleCardShell({
   const isClickable = !!onClick;
 
   return (
-    <article
-      role={isClickable ? 'button' : undefined}
+    <div
+      role={isClickable ? 'button' : 'article'}
       tabIndex={isClickable ? 0 : undefined}
       aria-label={isClickable ? `View ${name} playstyle` : undefined}
       onClick={() => onClick?.()}
@@ -234,7 +234,7 @@ function PlaystyleCardShell({
       </p>
 
       {children}
-    </article>
+    </div>
   );
 }
 

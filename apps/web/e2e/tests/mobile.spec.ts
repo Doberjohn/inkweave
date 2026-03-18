@@ -1,10 +1,10 @@
 import {test, expect} from '../fixtures';
 
 test.describe('Mobile Viewport', () => {
-  // This test file should only run on mobile-chrome project
+  // This test file should only run on mobile projects
   test.beforeEach(async ({page, appPage}, testInfo) => {
     // Skip on non-mobile projects
-    if (testInfo.project.name !== 'mobile-chrome') {
+    if (!testInfo.project.name.startsWith('mobile-')) {
       test.skip();
     }
 

@@ -3,7 +3,7 @@ import {test, expect} from '../fixtures';
 test.describe('Search Autocomplete', () => {
   // Desktop-only: tests autocomplete dropdown on hero and browse pages
   test.beforeEach(async ({appPage}, testInfo) => {
-    if (testInfo.project.name === 'mobile-chrome') {
+    if (testInfo.project.name.startsWith('mobile-')) {
       test.skip();
     }
     await appPage.goto();

@@ -180,6 +180,7 @@ const SynergyCardList = memo(function SynergyCardList({
   });
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- roving tabindex container for keyboard grid navigation
     <ul
       ref={listRef}
       aria-label="Synergy cards"

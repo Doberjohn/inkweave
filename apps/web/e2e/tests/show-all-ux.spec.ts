@@ -5,7 +5,7 @@ const CARD_WITH_BOTH_GROUPS = '/card/2586';
 
 test.describe('Show All UX — Desktop', () => {
   test.beforeEach(async ({page}, testInfo) => {
-    if (testInfo.project.name === 'mobile-chrome') test.skip();
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
     await page.goto(CARD_WITH_BOTH_GROUPS);
     // Wait for synergies to load
     await expect(
@@ -44,7 +44,7 @@ test.describe('Show All UX — Desktop', () => {
 
 test.describe('Show All UX — Mobile', () => {
   test.beforeEach(async ({page}, testInfo) => {
-    if (testInfo.project.name !== 'mobile-chrome') test.skip();
+    if (!testInfo.project.name.startsWith('mobile-')) test.skip();
     await page.goto(CARD_WITH_BOTH_GROUPS);
     await expect(
       page

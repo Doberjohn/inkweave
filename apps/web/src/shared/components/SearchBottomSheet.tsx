@@ -205,6 +205,7 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
         />
 
         {/* Sheet */}
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog keyboard handling (Escape to close) */}
         <div
           ref={sheetRef}
           role="dialog"

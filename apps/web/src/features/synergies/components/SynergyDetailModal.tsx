@@ -88,6 +88,7 @@ export function SynergyDetailModal({
           pointerEvents: 'none',
           padding: 24,
         }}>
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog keyboard handling (Escape to close) */}
         <div
           ref={modalRef}
           className={`overlay-transition overlay-scale overlay-enter ${visible ? 'overlay-visible' : ''}`}
@@ -200,6 +201,7 @@ function PairCardImage({card, isMobile}: {card: LorcanaCard; isMobile?: boolean}
         display: 'flex',
         justifyContent: 'center',
       }}>
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- mobile-only tap-to-enlarge; lightbox is supplementary, not a primary action */}
       <div
         {...(isMobile ? {} : previewHandlers)}
         onClick={isMobile && card.imageUrl ? () => setLightboxOpen(true) : undefined}

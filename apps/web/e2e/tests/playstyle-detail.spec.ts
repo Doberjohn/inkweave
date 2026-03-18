@@ -2,7 +2,7 @@ import {test, expect} from '../fixtures';
 
 test.describe('Playstyle Detail — Desktop', () => {
   test.beforeEach(async ({page}, testInfo) => {
-    if (testInfo.project.name === 'mobile-chrome') test.skip();
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
     await page.goto('/playstyles/discard');
     await page.waitForTimeout(500);
   });

@@ -5,7 +5,7 @@ const CARD_URL = '/card/1041';
 
 test.describe('Synergy Detail Modal — Desktop', () => {
   test.beforeEach(async ({page, synergyResultsPage}, testInfo) => {
-    if (testInfo.project.name === 'mobile-chrome') test.skip();
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
     await page.goto(CARD_URL);
     await synergyResultsPage.waitForSynergiesLoaded();
   });
@@ -71,7 +71,7 @@ test.describe('Synergy Detail Modal — Desktop', () => {
 
 test.describe('Synergy Detail Modal — Mobile', () => {
   test.beforeEach(async ({page, synergyResultsPage}, testInfo) => {
-    if (testInfo.project.name !== 'mobile-chrome') test.skip();
+    if (!testInfo.project.name.startsWith('mobile-')) test.skip();
     await page.goto(CARD_URL);
     await synergyResultsPage.waitForSynergiesLoaded();
   });
