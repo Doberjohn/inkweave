@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useRef, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {useParams, useNavigate, useSearchParams, Navigate} from 'react-router-dom';
 import {
   getPlaystyleById,
@@ -436,10 +436,8 @@ export function PlaystyleDetailPage() {
   const playstyle = playstyleId ? getPlaystyleById(playstyleId as PlaystyleId) : undefined;
   const ui = playstyleId ? PLAYSTYLE_UI[playstyleId as PlaystyleId] : undefined;
 
-  // Preload hero cover art so CSS backgroundImage doesn't wait for render.
-  // useMemo required: usePreloadImages has [urls] in its effect deps.
-  const preloadUrls = useMemo(() => (ui ? [ui.coverArt] : []), [ui]);
-  usePreloadImages(preloadUrls);
+  // Preload hero cover art so CSS backgroundImage doesn't wait for render
+  usePreloadImages(ui ? [ui.coverArt] : []);
 
   // Get all cards matching this playstyle (pre-computed)
   const {cards: playstyleCards} = usePrecomputedPlaystyleCards(playstyle?.id);

@@ -1,4 +1,4 @@
-import {useMemo, useState, type ReactNode} from 'react';
+import {useState, type ReactNode} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {
   getAllPlaystyles,
@@ -450,16 +450,11 @@ export function PlaystyleGalleryPage() {
   const layout = isMobile ? MOBILE_LAYOUT : DESKTOP_LAYOUT;
   const enableHover = !isMobile;
 
-  // Preload cover art images so CSS backgroundImage doesn't wait for render.
-  // useMemo required: usePreloadImages has [urls] in its effect deps — a new array
-  // ref every render would cause DOM thrash (preload links torn down + re-added).
-  const coverArtUrls = useMemo(
-    () => [
-      ...Object.values(PLAYSTYLE_UI).map((ui) => ui.coverArt),
-      ...COMING_SOON_PLAYSTYLES.map((ps) => ps.coverArt),
-    ],
-    [],
-  );
+  // Preload cover art images so CSS backgroundImage doesn't wait for render
+  const coverArtUrls = [
+    ...Object.values(PLAYSTYLE_UI).map((ui) => ui.coverArt),
+    ...COMING_SOON_PLAYSTYLES.map((ps) => ps.coverArt),
+  ];
   usePreloadImages(coverArtUrls);
 
   const goHome = () => navigate('/');
