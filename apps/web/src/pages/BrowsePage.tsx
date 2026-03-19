@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {useNavigate, useSearchParams} from 'react-router-dom';
-import {BrowseCardGrid, BrowseToolbar, CardTile} from '../features/cards';
+import {BrowseCardGrid, BrowseToolbar} from '../features/cards';
 import {
   searchCardsByName,
   filterCards,
@@ -150,45 +150,16 @@ export function BrowsePage() {
           <BrowseToolbar {...toolbarProps} isMobile />
           {/* Card grid */}
           <ErrorBoundary>
-            {isLoading ? (
-              <div style={{display: 'flex', justifyContent: 'center', padding: 64}}>
-                <div style={{color: COLORS.textMuted}}>Loading...</div>
-              </div>
-            ) : sortedCards.length === 0 ? (
-              <div
-                style={{
-                  textAlign: 'center',
-                  padding: 64,
-                  color: COLORS.textMuted,
-                  fontSize: `${FONT_SIZES.xl}px`,
-                }}>
-                No cards match your filters.
-              </div>
-            ) : (
-              <div style={{padding: `${SPACING.md}px ${SPACING.lg}px 48px`}}>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: 10,
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: 0,
-                  }}>
-                  {sortedCards.map((card) => (
-                    <CardTile
-                      key={card.id}
-                      card={card}
-                      isSelected={false}
-                      onSelect={selectCard}
-                      variant="minimal"
-                      borderRadius={10}
-                      useSmallImage
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+            <BrowseCardGrid
+              cards={sortedCards}
+              isLoading={isLoading}
+              onCardSelect={selectCard}
+              usePageScroll
+              columns={3}
+              gap={10}
+              borderRadius={10}
+              padding={`${SPACING.md}px ${SPACING.lg}px 48px`}
+            />
           </ErrorBoundary>
         </div>
         <FilterDialog
