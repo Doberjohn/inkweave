@@ -184,6 +184,8 @@ pnpm test:web         # Run web tests
 - Two-column UI: CardList (340px) | SynergyResults (flex) - deck builder removed for MVP
 - Floating card preview popover on hover (CardPreviewContext + CardPreviewPopover)
 - Core format only (sets 5+)
+- **react-grab**: Dev-only inspection tool. The `dev` script runs `pnpm dlx @react-grab/claude-code@latest && vite`. This hangs in headless CI (no TTY), so Playwright config uses `process.env.CI ? 'npx vite' : 'pnpm run dev'` for its webServer command.
+- **useContainerWidth**: ResizeObserver hook guards against 0-width observations from detached elements (`if (w > 0)`) — required for React Strict Mode double-mount resilience
 
 ## UI Theme (MVP)
 
@@ -209,9 +211,14 @@ Before EVERY commit, run these checks and fix any issues:
 1. `pnpm run lint` - Fix all errors (warnings OK)
 2. `pnpm run test` - All unit tests must pass
 
-E2E tests run in CI only (too slow for local pre-commit).
-
 Do NOT commit or push if any check fails.
+
+### Pre-Push E2E Check
+Before pushing, run E2E locally to catch rendering regressions that unit tests miss:
+```bash
+pnpm --filter inkweave-web test:e2e --project chromium  # ~30s, catches most issues
+```
+Full 5-browser suite runs in CI as safety net. This is especially important after removing `useMemo`/`useCallback` or changing hooks that use async DOM APIs (ResizeObserver, IntersectionObserver) — React Strict Mode's double-mount can expose latent bugs.
 
 After pushing, always confirm with clear output (e.g., git log showing commit on origin/master).
 
