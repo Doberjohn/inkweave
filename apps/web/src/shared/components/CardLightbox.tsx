@@ -1,4 +1,4 @@
-import {useState, useEffect, useCallback} from 'react';
+import {useState, useEffect} from 'react';
 import {createPortal} from 'react-dom';
 import {COLORS, FONT_SIZES, RADIUS, Z_INDEX} from '../constants';
 import {useScrollLock} from '../hooks';
@@ -15,21 +15,15 @@ interface CardLightboxProps {
 export function CardLightbox({src, alt, isLocation, onClose}: CardLightboxProps) {
   const [imgError, setImgError] = useState(false);
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    },
-    [onClose],
-  );
-
   useScrollLock(true);
 
   useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
     };
-  }, [handleKeyDown]);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   return createPortal(
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- backdrop dismiss; Escape key handled via document listener

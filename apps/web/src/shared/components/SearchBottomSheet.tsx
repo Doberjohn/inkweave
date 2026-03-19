@@ -1,4 +1,4 @@
-import {forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState} from 'react';
+import {forwardRef, useImperativeHandle, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SET_ABBREVIATIONS, SPACING, Z_INDEX} from '../constants';
@@ -113,15 +113,12 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
     const [recentSearches, setRecentSearches] = useState<string[]>([]);
     const {mounted, visible, onTransitionEnd} = useTransitionPresence(isOpen);
 
-    const handleSelect = useCallback(
-      (card: LorcanaCard) => {
-        addRecentSearch(card.fullName);
-        onClose();
-        // Small delay so close animation starts before navigation
-        setTimeout(() => navigate(`/card/${card.id}`), 50);
-      },
-      [navigate, onClose],
-    );
+    const handleSelect = (card: LorcanaCard) => {
+      addRecentSearch(card.fullName);
+      onClose();
+      // Small delay so close animation starts before navigation
+      setTimeout(() => navigate(`/card/${card.id}`), 50);
+    };
 
     const autocomplete = useAutocomplete({
       cards,
@@ -130,35 +127,32 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
       onSelect: handleSelect,
     });
 
-    // Track open/close state changes
-    useEffect(() => {
-      if (isOpen) {
-        setRecentSearches(getRecentSearches());
-      } else {
-        setQuery('');
-        autocomplete.close();
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen]);
+    // Adjust state when isOpen prop changes (previous-value pattern per React docs).
+    // On close: setQuery('') triggers useAutocomplete's auto-reset of debouncedQuery
+    // in a follow-up render — this 2-render cascade is the cost of clean separation.
+    // getRecentSearches() is a read-only localStorage call — safe during render.
+    const [prevIsOpen, setPrevIsOpen] = useState(false);
+    if (isOpen && !prevIsOpen) {
+      setPrevIsOpen(true);
+      setRecentSearches(getRecentSearches());
+    } else if (!isOpen && prevIsOpen) {
+      setPrevIsOpen(false);
+      setQuery('');
+    }
 
     useScrollLock(isOpen);
 
-    const handleRecentClick = useCallback(
-      (term: string) => {
-        autocomplete.searchImmediate(term);
-        inputRef.current?.focus();
-      },
-      [autocomplete],
-    );
+    const handleRecentClick = (term: string) => {
+      autocomplete.searchImmediate(term);
+      inputRef.current?.focus();
+    };
 
-    const handleClearRecent = useCallback(() => {
+    const handleClearRecent = () => {
       clearRecentSearches();
       setRecentSearches([]);
-    }, []);
+    };
 
-    const handleBackdropClick = useCallback(() => {
-      onClose();
-    }, [onClose]);
+    const handleBackdropClick = onClose;
 
     // Focus trap + Escape key handling.
     // useDialogFocus focuses inputRef after 100ms (isOpen=true), which fires after

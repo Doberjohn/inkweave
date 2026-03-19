@@ -1,4 +1,4 @@
-import {useCallback, useMemo, useState, type ReactNode} from 'react';
+import {useState, type ReactNode} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {
   getAllPlaystyles,
@@ -451,51 +451,43 @@ export function PlaystyleGalleryPage() {
   const enableHover = !isMobile;
 
   // Preload cover art images so CSS backgroundImage doesn't wait for render
-  const coverArtUrls = useMemo(
-    () => [
-      ...Object.values(PLAYSTYLE_UI).map((ui) => ui.coverArt),
-      ...COMING_SOON_PLAYSTYLES.map((ps) => ps.coverArt),
-    ],
-    [],
-  );
+  const coverArtUrls = [
+    ...Object.values(PLAYSTYLE_UI).map((ui) => ui.coverArt),
+    ...COMING_SOON_PLAYSTYLES.map((ps) => ps.coverArt),
+  ];
   usePreloadImages(coverArtUrls);
 
-  const goHome = useCallback(() => navigate('/'), [navigate]);
+  const goHome = () => navigate('/');
 
-  const handleSearchSubmit = useCallback(() => {
+  const handleSearchSubmit = () => {
     const q = searchQuery.trim();
     navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
-  }, [navigate, searchQuery]);
+  };
 
-  const handleCardSelect = useCallback(
-    (card: {id: string}) => navigate(`/card/${card.id}`),
-    [navigate],
-  );
+  const handleCardSelect = (card: {id: string}) => navigate(`/card/${card.id}`);
 
   const {data: playstyleCardData} = useAllPlaystyleCards();
 
-  const activePlaystyles = useMemo(() => {
-    return getAllPlaystyles()
-      .filter((ps) => {
-        if (!PLAYSTYLE_UI[ps.id]) {
-          console.error(`Missing PLAYSTYLE_UI entry for playstyle "${ps.id}"`);
-          return false;
-        }
-        return true;
-      })
-      .map((ps) => {
-        const ui = PLAYSTYLE_UI[ps.id];
-        const ruleCount = getRulesByPlaystyle(ps.id).length;
-        const psData = playstyleCardData.get(ps.id);
-        return {
-          playstyle: ps,
-          ui,
-          ruleCount,
-          cardCount: psData?.count ?? 0,
-          previewCards: psData?.previewCards ?? [],
-        };
-      });
-  }, [playstyleCardData]);
+  const activePlaystyles = getAllPlaystyles()
+    .filter((ps) => {
+      if (!PLAYSTYLE_UI[ps.id]) {
+        console.error(`Missing PLAYSTYLE_UI entry for playstyle "${ps.id}"`);
+        return false;
+      }
+      return true;
+    })
+    .map((ps) => {
+      const ui = PLAYSTYLE_UI[ps.id];
+      const ruleCount = getRulesByPlaystyle(ps.id).length;
+      const psData = playstyleCardData.get(ps.id);
+      return {
+        playstyle: ps,
+        ui,
+        ruleCount,
+        cardCount: psData?.count ?? 0,
+        previewCards: psData?.previewCards ?? [],
+      };
+    });
 
   if (error) {
     return (

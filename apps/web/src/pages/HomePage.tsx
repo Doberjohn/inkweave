@@ -1,4 +1,4 @@
-import {useCallback, useState} from 'react';
+import {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {FeaturedCards} from '../features/cards';
 import {HeroSection, EtherealBackground, ErrorBoundary} from '../shared/components';
@@ -19,16 +19,13 @@ export function HomePage() {
   const {cards} = useCardDataContext();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleSearchSubmit = useCallback(() => {
+  const handleSearchSubmit = () => {
     const q = searchQuery.trim();
     navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
-  }, [navigate, searchQuery]);
-  const handleCardSelect = useCallback(
-    (card: {id: string}) => navigate(`/card/${card.id}`),
-    [navigate],
-  );
-  const handleBrowse = useCallback(() => navigate('/browse'), [navigate]);
-  const handlePlaystyles = useCallback(() => navigate('/playstyles'), [navigate]);
+  };
+  const handleCardSelect = (card: {id: string}) => navigate(`/card/${card.id}`);
+  const handleBrowse = () => navigate('/browse');
+  const handlePlaystyles = () => navigate('/playstyles');
 
   return (
     <main style={{...mainStyle, justifyContent: isMobile ? undefined : 'center'}}>

@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {useParams, useNavigate, useSearchParams, Navigate} from 'react-router-dom';
 import {
   getPlaystyleById,
@@ -404,7 +404,7 @@ export function PlaystyleDetailPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [activeRole, setActiveRole] = useState<string | null>(null);
   const [rolePlaystyleId, setRolePlaystyleId] = useState(playstyleId);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Reset role filter when navigating between playstyles (no useEffect needed)
   if (playstyleId !== rolePlaystyleId) {
@@ -412,63 +412,72 @@ export function PlaystyleDetailPage() {
     setActiveRole(null);
   }
 
-  // Default sort to cost-asc for playstyle detail (most useful for deckbuilding)
+  // Default sort to ink-cost on mount (skipped if URL already has a sort param).
+  // Uses useEffect + ref guard because setSearchParams is a side effect (URL mutation),
+  // not a setState — calling it during render violates React's purity model.
+  const sortAppliedRef = useRef(false);
   useEffect(() => {
-    if (!searchParams.has('sort')) setSortOrder('ink-cost');
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!sortAppliedRef.current) {
+      sortAppliedRef.current = true;
+      if (!searchParams.has('sort')) {
+        setSearchParams(
+          (prev) => {
+            const next = new URLSearchParams(prev);
+            next.set('sort', 'ink-cost');
+            return next;
+          },
+          {replace: true},
+        );
+      }
+    }
+  }, [searchParams, setSearchParams]);
 
   // Resolve playstyle from engine
   const playstyle = playstyleId ? getPlaystyleById(playstyleId as PlaystyleId) : undefined;
   const ui = playstyleId ? PLAYSTYLE_UI[playstyleId as PlaystyleId] : undefined;
 
   // Preload hero cover art so CSS backgroundImage doesn't wait for render
-  usePreloadImages(useMemo(() => (ui ? [ui.coverArt] : []), [ui]));
+  usePreloadImages(ui ? [ui.coverArt] : []);
 
   // Get all cards matching this playstyle (pre-computed)
   const {cards: playstyleCards} = usePrecomputedPlaystyleCards(playstyle?.id);
 
   // Apply filters and sort
-  const combinedFilters = useMemo<CardFilterOptions>(() => {
+  const combinedFilters: CardFilterOptions = (() => {
     const combined = {...filters};
     if (inkFilters.length > 0) combined.ink = inkFilters;
     if (typeFilters.length > 0) combined.type = typeFilters;
     if (costFilters.length > 0) combined.costs = costFilters;
     return combined;
-  }, [filters, inkFilters, typeFilters, costFilters]);
+  })();
 
-  const sortedCards = useMemo(() => {
+  const sortedCards = (() => {
     let result = playstyleCards;
     if (Object.keys(combinedFilters).length > 0) result = filterCards(result, combinedFilters);
     return applySortOrder(result, sortOrder);
-  }, [playstyleCards, combinedFilters, sortOrder]);
+  })();
 
   // Role filter chips (desktop only) — compute which roles exist and their card counts
-  const roleChips = useMemo(() => {
+  const roleChips = (() => {
     if (!playstyle) return [];
     return getRoleChips(playstyle.id, sortedCards);
-  }, [playstyle, sortedCards]);
+  })();
 
   // Apply role filter to sorted cards
-  const roleFilteredCards = useMemo(() => {
+  const roleFilteredCards = (() => {
     if (!activeRole || !playstyle) return sortedCards;
     return sortedCards.filter((card) => cardHasRole(playstyle.id, card, activeRole));
-  }, [sortedCards, activeRole, playstyle]);
+  })();
 
-  const displayedCards = useMemo(
-    () => roleFilteredCards.slice(0, LAYOUT.maxDisplayedCards),
-    [roleFilteredCards],
-  );
+  const displayedCards = roleFilteredCards.slice(0, LAYOUT.maxDisplayedCards);
 
-  const goHome = useCallback(() => navigate('/'), [navigate]);
-  const goPlaystyles = useCallback(() => navigate('/playstyles'), [navigate]);
-  const handleCardSelect = useCallback(
-    (card: {id: string}) => navigate(`/card/${card.id}`),
-    [navigate],
-  );
-  const handleSearchSubmit = useCallback(() => {
+  const goHome = () => navigate('/');
+  const goPlaystyles = () => navigate('/playstyles');
+  const handleCardSelect = (card: {id: string}) => navigate(`/card/${card.id}`);
+  const handleSearchSubmit = () => {
     const q = headerSearchQuery.trim();
     navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
-  }, [navigate, headerSearchQuery]);
+  };
 
   // Invalid playstyle ID — redirect to gallery
   if (!isLoading && (!playstyle || !ui)) {

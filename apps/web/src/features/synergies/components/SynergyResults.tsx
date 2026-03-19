@@ -1,10 +1,10 @@
-import {useState, useMemo, memo} from 'react';
+import {useState} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {CardDetail, SynergyGroup} from '.';
 import {ExpandedGroupView} from './ExpandedGroupView';
 import {applySynergySortOrder} from '../utils';
-import {Chip, EmptyState} from '../../../shared/components';
+import {Chip, EmptyState, RenderProfiler} from '../../../shared/components';
 import {SortSelect} from '../../../shared/components/SortSelect';
 import type {SynergySortOrder} from '../../../shared/constants';
 import {
@@ -38,7 +38,7 @@ interface SynergyResultsProps {
   onSynergyCardClick?: (card: LorcanaCard) => void;
 }
 
-export const SynergyResults = memo(function SynergyResults({
+export function SynergyResults({
   selectedCard,
   synergies,
   totalSynergyCount,
@@ -66,7 +66,7 @@ export const SynergyResults = memo(function SynergyResults({
   const activeGroupFilter = controlledFilter !== undefined ? controlledFilter : internalFilter;
   const setActiveGroupFilter = onGroupFilterChange ?? setInternalFilter;
 
-  const sortedGroups = useMemo(() => {
+  const sortedGroups = (() => {
     const filtered = activeGroupFilter
       ? synergies.filter((g) => g.groupKey === activeGroupFilter)
       : synergies;
@@ -75,9 +75,10 @@ export const SynergyResults = memo(function SynergyResults({
       ...group,
       synergies: applySynergySortOrder(group.synergies, sortOrder),
     }));
-  }, [synergies, activeGroupFilter, sortOrder]);
+  })();
 
   return (
+    <RenderProfiler id="SynergyResults">
     <section
       aria-label="Synergy results"
       style={{
@@ -220,5 +221,6 @@ export const SynergyResults = memo(function SynergyResults({
         </>
       )}
     </section>
+    </RenderProfiler>
   );
-});
+}

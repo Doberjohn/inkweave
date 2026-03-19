@@ -1,4 +1,4 @@
-import {useMemo, useState} from 'react';
+import {useState} from 'react';
 import {useCardPreview} from './useCardPreview';
 import {useResponsive, useTransitionPresence} from '../../../shared/hooks';
 import {INK_COLORS, RADIUS, Z_INDEX, COLORS} from '../../../shared/constants';
@@ -124,13 +124,12 @@ export function CardPreviewPopover() {
   const isOpen = !!card;
   const {mounted, visible, onTransitionEnd} = useTransitionPresence(isOpen);
 
-  // Memoize viewport height to avoid reading on every render
-  const viewportDimensions = useMemo(() => {
+  const viewportDimensions = (() => {
     if (typeof window === 'undefined') {
       return {width: 1024, height: 768};
     }
     return {width: windowWidth, height: window.innerHeight};
-  }, [windowWidth]);
+  })();
 
   const isLocation = card?.type === 'Location';
 

@@ -14,7 +14,10 @@ export function useContainerWidth(ref: RefObject<HTMLElement | null>): number {
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (entry) {
-        setWidth(entry.contentRect.width);
+        const w = entry.contentRect.width;
+        // Ignore 0-width observations from detached elements (React Strict Mode
+        // double-mounts can leave observers watching unmounted placeholders)
+        if (w > 0) setWidth(w);
       }
     });
 

@@ -14,7 +14,7 @@ test.describe('Accessibility — axe audits', () => {
     await appPage.goto();
     await expect(appPage.heroSection).toBeVisible();
 
-    const results = await new AxeBuilder({page}).analyze();
+    const results = await new AxeBuilder({page}).exclude('[data-react-grab]').analyze();
     expect(results.violations).toEqual([]);
   });
 
@@ -22,7 +22,7 @@ test.describe('Accessibility — axe audits', () => {
     await page.goto('/browse');
     await page.getByRole('heading', {name: /browse cards/i}).waitFor();
 
-    const results = await new AxeBuilder({page}).analyze();
+    const results = await new AxeBuilder({page}).exclude('[data-react-grab]').analyze();
     expect(results.violations).toEqual([]);
   });
 
@@ -30,7 +30,7 @@ test.describe('Accessibility — axe audits', () => {
     await page.goto('/card/1041');
     await page.waitForSelector('h1');
 
-    const results = await new AxeBuilder({page}).analyze();
+    const results = await new AxeBuilder({page}).exclude('[data-react-grab]').analyze();
     expect(results.violations).toEqual([]);
   });
 
@@ -38,7 +38,7 @@ test.describe('Accessibility — axe audits', () => {
     await page.goto('/card/1041/synergies');
     await page.waitForSelector('h1');
 
-    const results = await new AxeBuilder({page}).analyze();
+    const results = await new AxeBuilder({page}).exclude('[data-react-grab]').analyze();
     expect(results.violations).toEqual([]);
   });
 
@@ -46,7 +46,7 @@ test.describe('Accessibility — axe audits', () => {
     await page.goto('/playstyles');
     await page.waitForSelector('h1');
 
-    const results = await new AxeBuilder({page}).analyze();
+    const results = await new AxeBuilder({page}).exclude('[data-react-grab]').analyze();
     expect(results.violations).toEqual([]);
   });
 
@@ -54,7 +54,7 @@ test.describe('Accessibility — axe audits', () => {
     await page.goto('/playstyles/discard');
     await page.waitForSelector('h1');
 
-    const results = await new AxeBuilder({page}).analyze();
+    const results = await new AxeBuilder({page}).exclude('[data-react-grab]').analyze();
     expect(results.violations).toEqual([]);
   });
 });

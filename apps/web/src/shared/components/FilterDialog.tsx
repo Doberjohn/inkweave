@@ -1,4 +1,3 @@
-import {useCallback} from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import {COLORS, FONT_SIZES, SPACING, RADIUS, Z_INDEX} from '../constants';
 import {CtaButton} from './CtaButton';
@@ -26,10 +25,10 @@ export function FilterDialog({
 }: FilterDialogProps) {
   const draft = useDraftFilters({isOpen, inkFilters, typeFilters, costFilters, filters});
 
-  const handleApply = useCallback(() => {
+  const handleApply = () => {
     onApply(draft.draftInks, draft.draftTypes, draft.draftCosts, draft.draftFilters);
     onClose();
-  }, [draft.draftInks, draft.draftTypes, draft.draftCosts, draft.draftFilters, onApply, onClose]);
+  };
 
   const getVariantStyles = (): {
     overlay: React.CSSProperties;

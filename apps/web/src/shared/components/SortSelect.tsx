@@ -1,4 +1,4 @@
-import {useState, useCallback} from 'react';
+import {useState} from 'react';
 import {COLORS, FONTS, FONT_SIZES, RADIUS} from '../constants';
 
 interface SortSelectProps<T extends string> {
@@ -25,12 +25,9 @@ export function SortSelect<T extends string>({
       ? COLORS.gray300
       : COLORS.surfaceBorder;
 
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      onChange(e.target.value as T);
-    },
-    [onChange],
-  );
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onChange(e.target.value as T);
+  };
 
   return (
     <select

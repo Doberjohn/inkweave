@@ -1,4 +1,4 @@
-import {useCallback, useState, useMemo} from 'react';
+import {useState} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
 import {
   SynergyResults,
@@ -73,42 +73,36 @@ export function CardPage() {
     getPairSynergies: getPrecomputedPair,
   } = usePrecomputedSynergies(selectedCard);
 
-  const totalSynergyCount = useMemo(
-    () => synergies.reduce((sum, group) => sum + group.synergies.length, 0),
-    [synergies],
-  );
+  const totalSynergyCount = synergies.reduce((sum, group) => sum + group.synergies.length, 0);
 
-  const goHome = useCallback(() => navigate('/'), [navigate]);
-  const handleSearchSubmit = useCallback(() => {
+  const goHome = () => navigate('/');
+  const handleSearchSubmit = () => {
     const q = searchQuery.trim();
     navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
-  }, [navigate, searchQuery]);
-  const selectCard = useCallback((card: {id: string}) => navigate(`/card/${card.id}`), [navigate]);
-  const handleGroupClick = useCallback(
-    (groupKey: string) => {
-      if (expandedGroup) {
-        // In show-all mode: clicking a breakdown row switches to that group
-        setExpandedGroup(groupKey);
-        setActiveGroupFilter(groupKey);
-      } else {
-        // Normal mode: toggle filter (same as chips)
-        const newFilter = activeGroupFilter === groupKey ? null : groupKey;
-        setActiveGroupFilter(newFilter);
+  };
+  const selectCard = (card: {id: string}) => navigate(`/card/${card.id}`);
+  const handleGroupClick = (groupKey: string) => {
+    if (expandedGroup) {
+      // In show-all mode: clicking a breakdown row switches to that group
+      setExpandedGroup(groupKey);
+      setActiveGroupFilter(groupKey);
+    } else {
+      // Normal mode: toggle filter (same as chips)
+      const newFilter = activeGroupFilter === groupKey ? null : groupKey;
+      setActiveGroupFilter(newFilter);
 
-        // Scroll to the group after filter applies
-        if (newFilter) {
-          requestAnimationFrame(() => {
-            document
-              .querySelector(`[data-group-key="${newFilter}"]`)
-              ?.scrollIntoView({behavior: 'smooth', block: 'start'});
-          });
-        }
+      // Scroll to the group after filter applies
+      if (newFilter) {
+        requestAnimationFrame(() => {
+          document
+            .querySelector(`[data-group-key="${newFilter}"]`)
+            ?.scrollIntoView({behavior: 'smooth', block: 'start'});
+        });
       }
-    },
-    [activeGroupFilter, expandedGroup],
-  );
+    }
+  };
 
-  const handleShowAll = useCallback((groupKey: string) => {
+  const handleShowAll = (groupKey: string) => {
     setExpandedGroup(groupKey);
     setActiveGroupFilter(groupKey);
     requestAnimationFrame(() => {
@@ -116,31 +110,25 @@ export function CardPage() {
         .querySelector(`[data-expanded-group="${groupKey}"]`)
         ?.scrollIntoView({behavior: 'smooth', block: 'start'});
     });
-  }, []);
+  };
 
-  const handleBackToAll = useCallback(() => {
+  const handleBackToAll = () => {
     setExpandedGroup(null);
     setActiveGroupFilter(null);
-  }, []);
+  };
 
-  const handleSynergyCardClick = useCallback(
-    (clickedCard: LorcanaCard) => {
-      const pair = getPrecomputedPair(clickedCard);
-      if (!pair || pair.connections.length === 0) return;
-      setDetailPair(pair);
-      setLastPair(pair);
-    },
-    [getPrecomputedPair],
-  );
+  const handleSynergyCardClick = (clickedCard: LorcanaCard) => {
+    const pair = getPrecomputedPair(clickedCard);
+    if (!pair || pair.connections.length === 0) return;
+    setDetailPair(pair);
+    setLastPair(pair);
+  };
 
-  const handleCloseDetail = useCallback(() => setDetailPair(null), []);
-  const handleViewSynergies = useCallback(
-    (id: string) => {
-      setDetailPair(null);
-      navigate(`/card/${id}`);
-    },
-    [navigate],
-  );
+  const handleCloseDetail = () => setDetailPair(null);
+  const handleViewSynergies = (id: string) => {
+    setDetailPair(null);
+    navigate(`/card/${id}`);
+  };
 
   if (isLoading) {
     return (

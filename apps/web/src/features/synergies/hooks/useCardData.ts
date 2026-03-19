@@ -1,4 +1,4 @@
-import {useState, useEffect, useMemo, useCallback} from 'react';
+import {useState, useEffect} from 'react';
 import type {LorcanaCard, SetInfo} from '../../cards';
 import {
   fetchCardsFromLocal,
@@ -31,9 +31,9 @@ export function useCardData(): UseCardDataReturn {
   const [error, setError] = useState<Error | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  const retryLoad = useCallback(() => {
+  const retryLoad = () => {
     setRetryCount((c) => c + 1);
-  }, []);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -65,9 +65,9 @@ export function useCardData(): UseCardDataReturn {
     };
   }, [retryCount]);
 
-  const uniqueKeywords = useMemo(() => getUniqueKeywords(cards), [cards]);
-  const uniqueClassifications = useMemo(() => getUniqueClassifications(cards), [cards]);
-  const uniqueSets = useMemo(() => getUniqueSets(cards), [cards]);
+  const uniqueKeywords = getUniqueKeywords(cards);
+  const uniqueClassifications = getUniqueClassifications(cards);
+  const uniqueSets = getUniqueSets(cards);
 
   return {
     cards,

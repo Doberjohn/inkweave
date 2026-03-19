@@ -1,4 +1,4 @@
-import {useCallback, useState} from 'react';
+import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, Z_INDEX} from '../constants';
 import {useAutocomplete} from '../hooks';
@@ -147,7 +147,7 @@ export function HeroSection({
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const styles = getStyles(!!isMobile);
 
-  const handleAutoSelect = useCallback((card: LorcanaCard) => onCardSelect?.(card), [onCardSelect]);
+  const handleAutoSelect = (card: LorcanaCard) => onCardSelect?.(card);
 
   const autocomplete = useAutocomplete({
     cards,

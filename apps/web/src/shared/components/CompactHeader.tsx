@@ -1,4 +1,4 @@
-import {useCallback, useState, type ReactNode} from 'react';
+import {useState, type ReactNode} from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING, Z_INDEX} from '../constants';
@@ -50,7 +50,7 @@ export function CompactHeader({
   const inputHeight = mobile ? 34 : 36;
   const inputPadding = mobile ? '0 10px 0 32px' : '0 12px 0 36px';
 
-  const handleAutoSelect = useCallback((card: LorcanaCard) => onCardSelect?.(card), [onCardSelect]);
+  const handleAutoSelect = (card: LorcanaCard) => onCardSelect?.(card);
 
   const autocomplete = useAutocomplete({
     cards,
@@ -59,13 +59,10 @@ export function CompactHeader({
     onSelect: handleAutoSelect,
   });
 
-  const handleLogoClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      onLogoClick();
-    },
-    [onLogoClick],
-  );
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onLogoClick();
+  };
 
   return (
     <header

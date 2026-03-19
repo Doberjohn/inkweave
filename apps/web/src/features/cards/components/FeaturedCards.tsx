@@ -1,8 +1,9 @@
-import {useMemo, memo} from 'react';
+import {useState} from 'react';
 import type {LorcanaCard} from '../types';
 import type {Ink} from 'inkweave-synergy-engine';
 import {CardTile} from './CardTile';
 import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
+import {RenderProfiler} from '../../../shared/components';
 
 const FEATURED_COUNT = 6;
 
@@ -82,23 +83,26 @@ function DividerLine() {
   );
 }
 
-export const FeaturedCards = memo(function FeaturedCards({
+export function FeaturedCards({
   cards,
   onCardSelect,
   isMobile,
 }: FeaturedCardsProps) {
-  // Intentionally depend on cards.length (not the full array reference) so featured
-  // cards are only re-picked when the card pool size changes, not on every render.
-  const featured = useMemo(() => {
-    return pickFeatured(cards);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cards.length]);
+  // Re-pick featured cards only when the card pool size changes (not on array ref changes),
+  // because pickFeatured uses randomness and re-running it causes visible reshuffling.
+  const [prevCardsLength, setPrevCardsLength] = useState(cards.length);
+  const [featured, setFeatured] = useState(() => pickFeatured(cards));
+  if (cards.length !== prevCardsLength) {
+    setPrevCardsLength(cards.length);
+    setFeatured(pickFeatured(cards));
+  }
 
   const styles = getStyles(!!isMobile);
 
   if (featured.length === 0) return null;
 
   return (
+    <RenderProfiler id="FeaturedCards">
     <section
       data-testid="featured-cards"
       aria-label="Popular Synergy Starters"
@@ -138,5 +142,6 @@ export const FeaturedCards = memo(function FeaturedCards({
         ))}
       </ul>
     </section>
+    </RenderProfiler>
   );
-});
+}

@@ -1,4 +1,4 @@
-import {Fragment, useRef, useState, useMemo, useEffect} from 'react';
+import {Fragment, useRef, useState, useEffect} from 'react';
 import type {LorcanaCard} from '../../cards';
 import {useCardPreviewHandlers, useCardPreview} from '../../cards';
 import type {
@@ -12,7 +12,7 @@ import {
   LOCATION_ROLE_DESCRIPTIONS,
 } from 'inkweave-synergy-engine';
 import {getStrengthTier} from '../utils';
-import {CardImage, CardLightbox} from '../../../shared/components';
+import {CardImage, CardLightbox, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence, useResponsive} from '../../../shared/hooks';
 import {COLORS, FONT_SIZES, SPACING, RADIUS, Z_INDEX} from '../../../shared/constants';
@@ -58,6 +58,7 @@ export function SynergyDetailModal({
   if (!mounted) return null;
 
   return (
+    <RenderProfiler id="SynergyDetailModal">
     <>
       {/* Backdrop */}
       <div
@@ -183,6 +184,7 @@ export function SynergyDetailModal({
         </div>
       </div>
     </>
+    </RenderProfiler>
   );
 }
 
@@ -394,7 +396,7 @@ function ConnectionsSection({
   cardA: LorcanaCard;
   cardB: LorcanaCard;
 }) {
-  const groups = useMemo(() => groupConnections(connections), [connections]);
+  const groups = groupConnections(connections);
 
   return (
     <div

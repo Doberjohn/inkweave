@@ -1,9 +1,9 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {useVirtualizer} from '@tanstack/react-virtual';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from './CardTile';
 import {COLORS, FONT_SIZES, LAYOUT, SPACING} from '../../../shared/constants';
-import {LoadingSpinner} from '../../../shared/components';
+import {LoadingSpinner, RenderProfiler} from '../../../shared/components';
 import {useContainerWidth} from '../../../shared/hooks/useContainerWidth';
 
 interface BrowseCardGridProps {
@@ -18,7 +18,7 @@ const MIN_COL_WIDTH = LAYOUT.browseCardMinWidth;
 const CARD_ASPECT = 0.72;
 
 export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridProps) {
-  const displayedCards = useMemo(() => cards.slice(0, LAYOUT.maxDisplayedCards), [cards]);
+  const displayedCards = cards.slice(0, LAYOUT.maxDisplayedCards);
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerWidth = useContainerWidth(scrollRef);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -39,13 +39,13 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
   const rowHeight = colWidth / CARD_ASPECT + GAP;
 
   // Chunk cards into rows
-  const rows = useMemo(() => {
+  const rows = (() => {
     const result: LorcanaCard[][] = [];
     for (let i = 0; i < displayedCards.length; i += columns) {
       result.push(displayedCards.slice(i, i + columns));
     }
     return result;
-  }, [displayedCards, columns]);
+  })();
 
   const virtualizer = useVirtualizer({
     count: rows.length,
@@ -54,73 +54,67 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
     overscan: 3,
   });
 
-  const focusCard = useCallback(
-    (index: number) => {
-      if (index < 0 || index >= displayedCards.length) return;
-      activeIndexRef.current = index;
-      setActiveIndex(index);
-      const targetRow = Math.floor(index / columns);
-      virtualizer.scrollToIndex(targetRow, {align: 'auto'});
+  const focusCard = (index: number) => {
+    if (index < 0 || index >= displayedCards.length) return;
+    activeIndexRef.current = index;
+    setActiveIndex(index);
+    const targetRow = Math.floor(index / columns);
+    virtualizer.scrollToIndex(targetRow, {align: 'auto'});
 
-      // Retry focus until the virtualized target row is rendered (max 3 frames)
-      let attempts = 0;
-      const tryFocus = () => {
-        const colInRow = index % columns;
-        const renderedRows = scrollRef.current?.querySelectorAll<HTMLElement>('[data-row-index]');
-        let focused = false;
-        renderedRows?.forEach((row) => {
-          if (Number(row.dataset.rowIndex) === targetRow) {
-            const buttons = row.querySelectorAll<HTMLElement>('[data-roving-item]');
-            const target = buttons[colInRow];
-            if (target) {
-              target.focus();
-              focused = true;
-            }
+    // Retry focus until the virtualized target row is rendered (max 3 frames)
+    let attempts = 0;
+    const tryFocus = () => {
+      const colInRow = index % columns;
+      const renderedRows = scrollRef.current?.querySelectorAll<HTMLElement>('[data-row-index]');
+      let focused = false;
+      renderedRows?.forEach((row) => {
+        if (Number(row.dataset.rowIndex) === targetRow) {
+          const buttons = row.querySelectorAll<HTMLElement>('[data-roving-item]');
+          const target = buttons[colInRow];
+          if (target) {
+            target.focus();
+            focused = true;
           }
-        });
-        if (!focused && attempts < 3) {
-          attempts++;
-          requestAnimationFrame(tryFocus);
         }
-      };
-      requestAnimationFrame(tryFocus);
-    },
-    [displayedCards.length, columns, virtualizer],
-  );
+      });
+      if (!focused && attempts < 3) {
+        attempts++;
+        requestAnimationFrame(tryFocus);
+      }
+    };
+    requestAnimationFrame(tryFocus);
+  };
 
-  const handleGridKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      const current = activeIndexRef.current;
-      let nextIndex: number;
-      switch (e.key) {
-        case 'ArrowRight':
-          nextIndex = current + 1;
-          break;
-        case 'ArrowLeft':
-          nextIndex = current - 1;
-          break;
-        case 'ArrowDown':
-          nextIndex = current + columns;
-          break;
-        case 'ArrowUp':
-          nextIndex = current - columns;
-          break;
-        case 'Home':
-          nextIndex = 0;
-          break;
-        case 'End':
-          nextIndex = displayedCards.length - 1;
-          break;
-        default:
-          return;
-      }
-      if (nextIndex >= 0 && nextIndex < displayedCards.length) {
-        e.preventDefault();
-        focusCard(nextIndex);
-      }
-    },
-    [columns, displayedCards.length, focusCard],
-  );
+  const handleGridKeyDown = (e: React.KeyboardEvent) => {
+    const current = activeIndexRef.current;
+    let nextIndex: number;
+    switch (e.key) {
+      case 'ArrowRight':
+        nextIndex = current + 1;
+        break;
+      case 'ArrowLeft':
+        nextIndex = current - 1;
+        break;
+      case 'ArrowDown':
+        nextIndex = current + columns;
+        break;
+      case 'ArrowUp':
+        nextIndex = current - columns;
+        break;
+      case 'Home':
+        nextIndex = 0;
+        break;
+      case 'End':
+        nextIndex = displayedCards.length - 1;
+        break;
+      default:
+        return;
+    }
+    if (nextIndex >= 0 && nextIndex < displayedCards.length) {
+      e.preventDefault();
+      focusCard(nextIndex);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -152,6 +146,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
   }
 
   return (
+    <RenderProfiler id="BrowseCardGrid">
     <div
       ref={scrollRef}
       style={{
@@ -204,5 +199,6 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
         ))}
       </div>
     </div>
+    </RenderProfiler>
   );
 }
