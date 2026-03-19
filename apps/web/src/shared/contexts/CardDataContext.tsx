@@ -1,4 +1,4 @@
-import {createContext, useCallback, useContext, useMemo, type ReactNode} from 'react';
+import {createContext, useContext, type ReactNode} from 'react';
 import type {LorcanaCard} from '../../features/cards';
 import {useCardData, type UseCardDataReturn} from '../../features/synergies/hooks/useCardData';
 
@@ -10,56 +10,23 @@ interface CardDataContextValue extends UseCardDataReturn {
 const CardDataContext = createContext<CardDataContextValue | null>(null);
 
 export function CardDataProvider({children}: {children: ReactNode}) {
-  const {
-    cards,
-    isLoading,
-    error,
-    totalCards,
-    uniqueKeywords,
-    uniqueClassifications,
-    uniqueSets,
-    sets,
-    retryLoad,
-  } = useCardData();
+  const cardData = useCardData();
 
-  const cardMap = useMemo(() => {
+  const cardMap = (() => {
     const map = new Map<string, LorcanaCard>();
-    for (const card of cards) {
+    for (const card of cardData.cards) {
       map.set(card.id, card);
     }
     return map;
-  }, [cards]);
+  })();
 
-  const getCardById = useCallback((id: string) => cardMap.get(id), [cardMap]);
+  const getCardById = (id: string) => cardMap.get(id);
 
-  const value = useMemo(
-    () => ({
-      cards,
-      isLoading,
-      error,
-      totalCards,
-      uniqueKeywords,
-      uniqueClassifications,
-      uniqueSets,
-      sets,
-      retryLoad,
-      getCardById,
-    }),
-    [
-      cards,
-      isLoading,
-      error,
-      totalCards,
-      uniqueKeywords,
-      uniqueClassifications,
-      uniqueSets,
-      sets,
-      retryLoad,
-      getCardById,
-    ],
+  return (
+    <CardDataContext.Provider value={{...cardData, getCardById}}>
+      {children}
+    </CardDataContext.Provider>
   );
-
-  return <CardDataContext.Provider value={value}>{children}</CardDataContext.Provider>;
 }
 
 export function useCardDataContext(): CardDataContextValue {

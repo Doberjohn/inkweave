@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useNavigate, useSearchParams} from 'react-router-dom';
 import {BrowseCardGrid, BrowseToolbar, CardTile} from '../features/cards';
 import {
@@ -49,27 +49,27 @@ export function BrowsePage() {
     }
   }, [isMobile, searchParams, setSearchParams]);
 
-  const combinedFilters = useMemo<CardFilterOptions>(() => {
+  const combinedFilters: CardFilterOptions = (() => {
     const combined = {...filters};
     if (inkFilters.length > 0) combined.ink = inkFilters;
     if (typeFilters.length > 0) combined.type = typeFilters;
     if (costFilters.length > 0) combined.costs = costFilters;
     return combined;
-  }, [filters, inkFilters, typeFilters, costFilters]);
+  })();
 
-  const sortedCards = useMemo(() => {
+  const sortedCards = (() => {
     let result = cards;
     if (searchQuery.trim()) result = searchCardsByName(result, searchQuery);
     if (Object.keys(combinedFilters).length > 0) result = filterCards(result, combinedFilters);
     return applySortOrder(result, sortOrder);
-  }, [cards, searchQuery, combinedFilters, sortOrder]);
+  })();
 
-  const goHome = useCallback(() => {
+  const goHome = () => {
     clearAllFilters();
     navigate('/');
-  }, [clearAllFilters, navigate]);
+  };
 
-  const selectCard = useCallback((card: {id: string}) => navigate(`/card/${card.id}`), [navigate]);
+  const selectCard = (card: {id: string}) => navigate(`/card/${card.id}`);
 
   if (error) {
     return (

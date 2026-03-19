@@ -1,4 +1,4 @@
-import {useState, memo} from 'react';
+import {useState} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup} from '../types';
 import {getDominantScore, getStrengthTier} from '../utils';
@@ -14,7 +14,7 @@ interface CardDetailPanelProps {
   activeGroupKey?: string | null;
 }
 
-export const CardDetailPanel = memo(function CardDetailPanel({
+export function CardDetailPanel({
   card,
   synergies,
   onGroupClick,
@@ -185,4 +185,4 @@ export const CardDetailPanel = memo(function CardDetailPanel({
       )}
     </article>
   );
-});
+}

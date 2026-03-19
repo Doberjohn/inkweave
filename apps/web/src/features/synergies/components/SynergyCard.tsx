@@ -1,4 +1,4 @@
-import {useState, memo} from 'react';
+import {useState} from 'react';
 import type {LorcanaCard} from '../../cards';
 import {smallImageUrl} from '../../cards';
 import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
@@ -17,7 +17,7 @@ interface SynergyCardProps {
   tabIndex?: number;
 }
 
-export const SynergyCard = memo(function SynergyCard({
+export function SynergyCard({
   card,
   score,
   explanation,
@@ -160,4 +160,4 @@ export const SynergyCard = memo(function SynergyCard({
       )}
     </div>
   );
-});
+}

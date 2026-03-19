@@ -1,4 +1,4 @@
-import {useState, useMemo, useRef, memo} from 'react';
+import {useState, useRef} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData, SynergyMatchDisplay} from '../types';
 import {SynergyCard} from './SynergyCard';
@@ -19,7 +19,7 @@ interface SynergyGroupProps {
   onCardClick?: (card: LorcanaCard) => void;
 }
 
-export const SynergyGroup = memo(function SynergyGroup({
+export function SynergyGroup({
   group,
   isMobile = false,
   maxVisibleCards = 6,
@@ -29,10 +29,7 @@ export const SynergyGroup = memo(function SynergyGroup({
   onCardClick,
 }: SynergyGroupProps) {
   // Default sort: ink alphabetical, then cost ascending within each ink
-  const sortedSynergies = useMemo(
-    () => applySynergySortOrder(group.synergies, 'ink-cost'),
-    [group.synergies],
-  );
+  const sortedSynergies = applySynergySortOrder(group.synergies, 'ink-cost');
 
   const totalCount = sortedSynergies.length;
   const visibleCount = Math.min(maxVisibleCards, totalCount);
@@ -88,7 +85,7 @@ export const SynergyGroup = memo(function SynergyGroup({
       />
     </div>
   );
-});
+}
 
 // MoreTile — dashed tile for overflowed cards
 function MoreTile({
@@ -143,7 +140,7 @@ function MoreTile({
   );
 }
 
-// Memoized card list with overflow handling
+// Card list with overflow handling
 interface SynergyCardListProps {
   synergies: SynergyMatchDisplay[];
   isMobile: boolean;
@@ -154,7 +151,7 @@ interface SynergyCardListProps {
   onCardClick?: (card: LorcanaCard) => void;
 }
 
-const SynergyCardList = memo(function SynergyCardList({
+function SynergyCardList({
   synergies,
   isMobile,
   maxVisibleCards,
@@ -219,4 +216,4 @@ const SynergyCardList = memo(function SynergyCardList({
       )}
     </ul>
   );
-});
+}

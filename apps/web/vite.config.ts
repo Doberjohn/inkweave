@@ -114,7 +114,11 @@ function inlineCssPlugin(): Plugin {
 export default defineConfig({
   plugins: [
     ensureSynergiesPlugin(),
-    react(),
+    react({
+      babel: {
+        plugins: [['babel-plugin-react-compiler', {target: '19'}]],
+      },
+    }),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['favicon.png', 'apple-touch-icon.png'],

@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {Outlet, useLocation} from 'react-router-dom';
 import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
@@ -29,12 +29,12 @@ function AppContent() {
     window.scrollTo(0, 0);
   }, [pathname]);
 
-  const openSearch = useCallback(() => {
+  const openSearch = () => {
     // Focus the proxy input synchronously in the tap call stack so iOS shows the keyboard
     searchRef.current?.focusProxy();
     setIsSearchOpen(true);
-  }, []);
-  const closeSearch = useCallback(() => setIsSearchOpen(false), []);
+  };
+  const closeSearch = () => setIsSearchOpen(false);
 
   if (error) {
     return (

@@ -1,4 +1,4 @@
-import {useState, useCallback, useMemo} from 'react';
+import {useState} from 'react';
 import type {SetStateAction} from 'react';
 import type {Ink} from 'inkweave-synergy-engine';
 import type {SetInfo} from '../../cards';
@@ -49,20 +49,17 @@ export function SynergyToolbar({
   const {inkFilters, typeFilters, costFilters, filters, strengthFilters} = filterState;
 
   // Count active modal filters only (strength is controlled via inline toggles, not the modal)
-  const activeFilterCount = useMemo(
-    () =>
-      inkFilters.length +
-      typeFilters.length +
-      costFilters.length +
-      [filters.keywords?.length, filters.classifications?.length, filters.setCode].filter(Boolean)
-        .length,
-    [inkFilters, typeFilters, costFilters, filters],
-  );
+  const activeFilterCount =
+    inkFilters.length +
+    typeFilters.length +
+    costFilters.length +
+    [filters.keywords?.length, filters.classifications?.length, filters.setCode].filter(Boolean)
+      .length;
 
   // Build chip list from active filters (strength excluded — it has its own toggle row)
   // Desktop shows ink icons inline, so skip ink chips there
   // Uses functional updaters in onDismiss to avoid stale closure bugs under rapid interaction.
-  const chips: ChipData[] = useMemo(() => {
+  const chips: ChipData[] = (() => {
     const result: ChipData[] = [];
     if (isMobile) {
       for (const ink of inkFilters) {
@@ -127,49 +124,45 @@ export function SynergyToolbar({
       });
     }
     return result;
-  }, [isMobile, inkFilters, typeFilters, costFilters, filters, onFilterChange]);
+  })();
 
   const hasChips = chips.length > 0;
 
-  const handleApplyFilters = useCallback(
-    (inks: Ink[], types: CardTypeFilter[], costs: number[], opts: CardFilterOptions) => {
-      onFilterChange((prev) => ({
-        ...prev,
-        inkFilters: inks,
-        typeFilters: types,
-        costFilters: costs,
-        filters: opts,
-      }));
-    },
-    [onFilterChange],
-  );
+  const handleApplyFilters = (
+    inks: Ink[],
+    types: CardTypeFilter[],
+    costs: number[],
+    opts: CardFilterOptions,
+  ) => {
+    onFilterChange((prev) => ({
+      ...prev,
+      inkFilters: inks,
+      typeFilters: types,
+      costFilters: costs,
+      filters: opts,
+    }));
+  };
 
-  const handleClearAll = useCallback(() => {
+  const handleClearAll = () => {
     onFilterChange(EMPTY_SYNERGY_FILTERS);
-  }, [onFilterChange]);
+  };
 
-  const toggleInk = useCallback(
-    (ink: Ink) => {
-      onFilterChange((prev) => ({
-        ...prev,
-        inkFilters: prev.inkFilters.includes(ink)
-          ? prev.inkFilters.filter((i) => i !== ink)
-          : [...prev.inkFilters, ink],
-      }));
-    },
-    [onFilterChange],
-  );
+  const toggleInk = (ink: Ink) => {
+    onFilterChange((prev) => ({
+      ...prev,
+      inkFilters: prev.inkFilters.includes(ink)
+        ? prev.inkFilters.filter((i) => i !== ink)
+        : [...prev.inkFilters, ink],
+    }));
+  };
 
-  const toggleStrength = useCallback(
-    (tier: StrengthTierFilter) => {
-      // Single-select: clicking the active tier deselects, clicking another switches
-      onFilterChange((prev) => ({
-        ...prev,
-        strengthFilters: prev.strengthFilters.includes(tier) ? [] : [tier],
-      }));
-    },
-    [onFilterChange],
-  );
+  const toggleStrength = (tier: StrengthTierFilter) => {
+    // Single-select: clicking the active tier deselects, clicking another switches
+    onFilterChange((prev) => ({
+      ...prev,
+      strengthFilters: prev.strengthFilters.includes(tier) ? [] : [tier],
+    }));
+  };
 
   return (
     <>

@@ -24,6 +24,7 @@ const EXCLUDED = new Set([
   'CostIcon.tsx', // tiny SVG icon
   'InkIcon.tsx', // tiny SVG icon
   'EtherealBackground.tsx', // canvas animation, no props
+  'RenderProfiler.tsx', // performance utility wrapper, not visual
 ]);
 
 // Pre-existing components without stories (tracked debt — remove as stories are added)

@@ -1,4 +1,4 @@
-import {useCallback, useState} from 'react';
+import {useEffect, useState} from 'react';
 
 /**
  * Lightweight AnimatePresence replacement.
@@ -26,21 +26,22 @@ export function useTransitionPresence(isOpen: boolean) {
   // We use a second state to delay visibility by one render.
   const [visibleDeferred, setVisibleDeferred] = useState(false);
 
-  if (isOpen && mounted && !visibleDeferred) {
-    // Schedule visibility for next render via microtask
-    // This is safe because it's in render phase and will batch
-    requestAnimationFrame(() => setVisibleDeferred(true));
-  }
+  useEffect(() => {
+    if (isOpen && mounted && !visibleDeferred) {
+      const id = requestAnimationFrame(() => setVisibleDeferred(true));
+      return () => cancelAnimationFrame(id);
+    }
+  }, [isOpen, mounted, visibleDeferred]);
 
   if (!isOpen && visibleDeferred) {
     setVisibleDeferred(false);
   }
 
-  const onTransitionEnd = useCallback(() => {
+  const onTransitionEnd = () => {
     if (!isOpen) {
       setMounted(false);
     }
-  }, [isOpen]);
+  };
 
   return {mounted, visible: visibleDeferred && isOpen, onTransitionEnd};
 }

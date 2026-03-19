@@ -1,4 +1,4 @@
-import {useState, useMemo, useCallback} from 'react';
+import {useState} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
@@ -29,23 +29,20 @@ export function ExpandedGroupView({
   const {uniqueKeywords, uniqueClassifications, sets} = useCardDataContext();
 
   // Filter then sort synergies
-  const filteredSynergies = useMemo(() => {
+  const filteredSynergies = (() => {
     const filtered = filterSynergyCards(group.synergies, filterState);
     return applySynergySortOrder(filtered, sortOrder);
-  }, [group.synergies, filterState, sortOrder]);
+  })();
 
   // Build a virtual group with filtered synergies for the SynergyGroup component
-  const filteredGroup = useMemo(
-    () => ({...group, synergies: filteredSynergies}),
-    [group, filteredSynergies],
-  );
+  const filteredGroup = {...group, synergies: filteredSynergies};
 
   // Reset filters and sort order before navigating back
-  const handleBackToAll = useCallback(() => {
+  const handleBackToAll = () => {
     setFilterState(EMPTY_SYNERGY_FILTERS);
     setSortOrder('ink-cost');
     onBackToAll();
-  }, [onBackToAll]);
+  };
 
   return (
     <div data-expanded-group={group.groupKey}>

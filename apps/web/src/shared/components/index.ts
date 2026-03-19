@@ -32,3 +32,4 @@ export {MobileBottomNav, MOBILE_NAV_HEIGHT} from './MobileBottomNav';
 export {EmptyState} from './EmptyState';
 export {ResultCount} from './ResultCount';
 export {ErrorBoundary} from './ErrorBoundary';
+export {RenderProfiler} from './RenderProfiler';

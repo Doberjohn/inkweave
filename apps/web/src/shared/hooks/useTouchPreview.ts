@@ -1,4 +1,4 @@
-import {useRef, useCallback} from 'react';
+import {useRef} from 'react';
 
 const LONG_PRESS_DURATION = 400; // milliseconds
 
@@ -27,72 +27,63 @@ export function useTouchPreview({
   const isScrollingRef = useRef(false);
   const startPosRef = useRef<{x: number; y: number} | null>(null);
 
-  const clearLongPressTimer = useCallback(() => {
+  const clearLongPressTimer = () => {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
-  }, []);
+  };
 
-  const handleTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      isLongPressRef.current = false;
-      isScrollingRef.current = false;
-      const touch = e.touches[0];
-      startPosRef.current = {x: touch.clientX, y: touch.clientY};
+  const handleTouchStart = (e: React.TouchEvent) => {
+    isLongPressRef.current = false;
+    isScrollingRef.current = false;
+    const touch = e.touches[0];
+    startPosRef.current = {x: touch.clientX, y: touch.clientY};
 
-      longPressTimerRef.current = setTimeout(() => {
-        isLongPressRef.current = true;
-        onLongPress();
-      }, LONG_PRESS_DURATION);
-    },
-    [onLongPress],
-  );
+    longPressTimerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      onLongPress();
+    }, LONG_PRESS_DURATION);
+  };
 
-  const handleTouchEnd = useCallback(
-    (e: React.TouchEvent) => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    clearLongPressTimer();
+
+    if (isLongPressRef.current) {
+      // Long press was triggered, call onTouchEnd for cleanup
+      onTouchEnd?.();
+      e.preventDefault();
+    } else if (!isScrollingRef.current) {
+      // It was a tap (not a scroll or long press)
+      onTap?.();
+    }
+    // If scrolling, do nothing - let the scroll complete naturally
+
+    isLongPressRef.current = false;
+    isScrollingRef.current = false;
+    startPosRef.current = null;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!startPosRef.current) return;
+
+    const touch = e.touches[0];
+    const deltaX = Math.abs(touch.clientX - startPosRef.current.x);
+    const deltaY = Math.abs(touch.clientY - startPosRef.current.y);
+
+    // If finger moved more than 10px, this is a scroll, not a tap
+    if (deltaX > 10 || deltaY > 10) {
       clearLongPressTimer();
+      isScrollingRef.current = true;
+    }
+  };
 
-      if (isLongPressRef.current) {
-        // Long press was triggered, call onTouchEnd for cleanup
-        onTouchEnd?.();
-        e.preventDefault();
-      } else if (!isScrollingRef.current) {
-        // It was a tap (not a scroll or long press)
-        onTap?.();
-      }
-      // If scrolling, do nothing - let the scroll complete naturally
-
-      isLongPressRef.current = false;
-      isScrollingRef.current = false;
-      startPosRef.current = null;
-    },
-    [clearLongPressTimer, onTap, onTouchEnd],
-  );
-
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      if (!startPosRef.current) return;
-
-      const touch = e.touches[0];
-      const deltaX = Math.abs(touch.clientX - startPosRef.current.x);
-      const deltaY = Math.abs(touch.clientY - startPosRef.current.y);
-
-      // If finger moved more than 10px, this is a scroll, not a tap
-      if (deltaX > 10 || deltaY > 10) {
-        clearLongPressTimer();
-        isScrollingRef.current = true;
-      }
-    },
-    [clearLongPressTimer],
-  );
-
-  const handleTouchCancel = useCallback(() => {
+  const handleTouchCancel = () => {
     clearLongPressTimer();
     isLongPressRef.current = false;
     isScrollingRef.current = false;
     startPosRef.current = null;
-  }, [clearLongPressTimer]);
+  };
 
   return {
     touchHandlers: {

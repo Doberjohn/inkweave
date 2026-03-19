@@ -1,4 +1,4 @@
-import {useReducer, useState, useEffect, useCallback, useMemo} from 'react';
+import {useReducer, useState, useEffect} from 'react';
 import type {
   LorcanaCard,
   SynergyGroup,
@@ -220,20 +220,17 @@ export function usePrecomputedSynergies(
     };
   }, [cardId, getCardById]);
 
-  const getPairSynergies = useCallback(
-    (clickedCard: LorcanaCard): DetailedPairSynergy | null => {
-      if (!selectedCard) return null;
-      const pairData = state.pairs[clickedCard.id];
-      if (!pairData) return null;
-      return {
-        cardA: selectedCard,
-        cardB: clickedCard,
-        connections: pairData.connections,
-        aggregateScore: pairData.aggregateScore,
-      };
-    },
-    [selectedCard, state.pairs],
-  );
+  const getPairSynergies = (clickedCard: LorcanaCard): DetailedPairSynergy | null => {
+    if (!selectedCard) return null;
+    const pairData = state.pairs[clickedCard.id];
+    if (!pairData) return null;
+    return {
+      cardA: selectedCard,
+      cardB: clickedCard,
+      connections: pairData.connections,
+      aggregateScore: pairData.aggregateScore,
+    };
+  };
 
   return {
     synergies: state.synergies,
@@ -256,11 +253,11 @@ export function usePrecomputedPlaystyleCards(playstyleId: string | undefined): {
 } {
   const {data, isLoading: allLoading, error} = useAllPlaystyleCards();
 
-  const cards = useMemo(() => {
+  const cards = (() => {
     if (!playstyleId) return [];
     const psData = data.get(playstyleId);
     return psData?.allCards ?? [];
-  }, [playstyleId, data]);
+  })();
 
   return {cards, isLoading: allLoading, error};
 }
@@ -303,7 +300,7 @@ export function useAllPlaystyleCards(): {
     };
   }, []);
 
-  const data = useMemo(() => {
+  const data = (() => {
     const result = new Map<
       string,
       {count: number; previewCards: LorcanaCard[]; allCards: LorcanaCard[]}
@@ -321,7 +318,7 @@ export function useAllPlaystyleCards(): {
       });
     }
     return result;
-  }, [rawData, getCardById]);
+  })();
 
   return {data, isLoading, error};
 }

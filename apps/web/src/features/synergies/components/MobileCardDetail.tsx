@@ -1,4 +1,4 @@
-import {useCallback, useState, useMemo} from 'react';
+import {useState} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
@@ -24,16 +24,16 @@ export function MobileCardDetail({
   const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
-  const filteredGroups = useMemo(() => {
+  const filteredGroups = (() => {
     if (!activeGroupFilter) return synergies;
     return synergies.filter((g) => g.groupKey === activeGroupFilter);
-  }, [synergies, activeGroupFilter]);
+  })();
 
   const expandedGroupData = expandedGroup
     ? synergies.find((g) => g.groupKey === expandedGroup)
     : null;
 
-  const handleShowAll = useCallback((groupKey: string) => {
+  const handleShowAll = (groupKey: string) => {
     setExpandedGroup(groupKey);
     setActiveGroupFilter(groupKey);
     requestAnimationFrame(() => {
@@ -41,12 +41,12 @@ export function MobileCardDetail({
         .querySelector(`[data-expanded-group="${groupKey}"]`)
         ?.scrollIntoView({behavior: 'smooth', block: 'start'});
     });
-  }, []);
+  };
 
-  const handleBackToAll = useCallback(() => {
+  const handleBackToAll = () => {
     setExpandedGroup(null);
     setActiveGroupFilter(null);
-  }, []);
+  };
 
   return (
     <main

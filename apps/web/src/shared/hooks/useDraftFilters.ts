@@ -1,4 +1,4 @@
-import {useState, useCallback, useMemo, useEffect} from 'react';
+import {useState} from 'react';
 import type {Ink} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards/loader';
 import type {CardTypeFilter} from '../constants';
@@ -35,49 +35,46 @@ export function useDraftFilters({
   const [draftCosts, setDraftCosts] = useState<number[]>(costFilters);
   const [draftFilters, setDraftFilters] = useState<CardFilterOptions>(filters);
 
-  // Snapshot committed state when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setDraftInks(inkFilters);
-      setDraftTypes(typeFilters);
-      setDraftCosts(costFilters);
-      setDraftFilters(filters);
-    }
-    // Only reset when isOpen transitions — not when committed props change mid-edit
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  // Snapshot committed state on the open transition (previous-value pattern per React docs)
+  const [prevIsOpen, setPrevIsOpen] = useState(false);
+  if (isOpen && !prevIsOpen) {
+    setPrevIsOpen(true);
+    setDraftInks(inkFilters);
+    setDraftTypes(typeFilters);
+    setDraftCosts(costFilters);
+    setDraftFilters(filters);
+  } else if (!isOpen && prevIsOpen) {
+    setPrevIsOpen(false);
+  }
 
-  const toggleInk = useCallback((ink: Ink) => {
+  const toggleInk = (ink: Ink) => {
     setDraftInks((prev) => toggleItem(prev, ink));
-  }, []);
+  };
 
-  const toggleType = useCallback((type: CardTypeFilter) => {
+  const toggleType = (type: CardTypeFilter) => {
     setDraftTypes((prev) => toggleItem(prev, type));
-  }, []);
+  };
 
-  const toggleCost = useCallback((cost: number) => {
+  const toggleCost = (cost: number) => {
     setDraftCosts((prev) => toggleItem(prev, cost));
-  }, []);
+  };
 
-  const clearAll = useCallback(() => {
+  const clearAll = () => {
     setDraftInks([]);
     setDraftTypes([]);
     setDraftCosts([]);
     setDraftFilters({});
-  }, []);
+  };
 
-  const activeFilterCount = useMemo(
-    () =>
-      draftInks.length +
-      draftTypes.length +
-      draftCosts.length +
-      [
-        draftFilters.keywords?.length,
-        draftFilters.classifications?.length,
-        draftFilters.setCode,
-      ].filter(Boolean).length,
-    [draftInks, draftTypes, draftCosts, draftFilters],
-  );
+  const activeFilterCount =
+    draftInks.length +
+    draftTypes.length +
+    draftCosts.length +
+    [
+      draftFilters.keywords?.length,
+      draftFilters.classifications?.length,
+      draftFilters.setCode,
+    ].filter(Boolean).length;
 
   return {
     draftInks,

@@ -197,10 +197,11 @@ Dark fantasy theme inspired by Lorcana:
 ## Workflow Preferences
 
 ### Git Workflow
+- **NEVER commit, push, or run destructive git operations (`checkout --`, `restore`, `reset`) without explicit user permission.** Always present a summary of changes and ASK before running any git write commands. This is the highest-priority rule — no exceptions.
 - Feature branches: `feature/<issue-number>-<description>` (e.g., `feature/5-deck-builder-tests`)
 - Commit messages: Use semantic commit notation with issue reference (e.g., `test(deck): add tests (#5)`)
 - PRs should include `Closes #<issue>` to auto-close issues on merge
-- **Worktrees**: Never attempt to delete or remove a worktree directory you are currently inside. Remind the user to clean it up after exiting, or switch directories first.
+- **Worktrees**: **NEVER prune, remove, or delete worktrees without explicit user confirmation.** Worktrees may be actively used in other CLI windows or sessions. A "prunable" status does NOT mean safe to delete. Always ask before running `git worktree remove`, `git worktree prune`, or deleting worktree directories. Never attempt to delete a worktree directory you are currently inside.
 - **Issues**: When creating issues, always add appropriate labels. When listing issues, check for unlabeled ones proactively. When adding/removing an issue from MVP, always update BOTH the `mvp` label AND the `MVP v1.0` milestone together.
 
 ### Pre-Commit Checks (REQUIRED)

@@ -1,4 +1,4 @@
-import {useMemo, useCallback} from 'react';
+import {useTransition} from 'react';
 import {useSearchParams} from 'react-router-dom';
 import type {Ink} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards/loader';
@@ -83,22 +83,13 @@ export function useFilterParams(): UseFilterParamsReturn {
   // Read filter state from URL params
   const searchQuery = searchParams.get('q') ?? '';
 
-  const inkFilters: Ink[] = useMemo(
-    () => parseCommaSeparated(searchParams.get('ink'), isValidInk),
-    [searchParams],
-  );
+  const inkFilters: Ink[] = parseCommaSeparated(searchParams.get('ink'), isValidInk);
 
-  const typeFilters: CardTypeFilter[] = useMemo(
-    () => parseCommaSeparated(searchParams.get('type'), isValidType),
-    [searchParams],
-  );
+  const typeFilters: CardTypeFilter[] = parseCommaSeparated(searchParams.get('type'), isValidType);
 
-  const costFilters: number[] = useMemo(
-    () => parseCostParam(searchParams.get('cost')),
-    [searchParams],
-  );
+  const costFilters: number[] = parseCostParam(searchParams.get('cost'));
 
-  const filters: CardFilterOptions = useMemo(() => {
+  const filters: CardFilterOptions = (() => {
     const f: CardFilterOptions = {};
     const keyword = searchParams.get('keyword');
     if (keyword) f.keywords = [keyword];
@@ -107,26 +98,27 @@ export function useFilterParams(): UseFilterParamsReturn {
     const set = searchParams.get('set');
     if (set) f.setCode = set;
     return f;
-  }, [searchParams]);
+  })();
 
-  const sortOrder: BrowseSortOrder = useMemo(() => {
+  const sortOrder: BrowseSortOrder = (() => {
     const raw = searchParams.get('sort');
     return raw && VALID_SORTS.has(raw) ? (raw as BrowseSortOrder) : 'newest';
-  }, [searchParams]);
+  })();
 
-  const activeFilterCount = useMemo(
-    () =>
-      inkFilters.length +
-      typeFilters.length +
-      costFilters.length +
-      [filters.keywords?.length, filters.classifications?.length, filters.setCode].filter(Boolean)
-        .length,
-    [inkFilters, typeFilters, costFilters, filters],
-  );
+  const activeFilterCount =
+    inkFilters.length +
+    typeFilters.length +
+    costFilters.length +
+    [filters.keywords?.length, filters.classifications?.length, filters.setCode].filter(Boolean)
+      .length;
+
+  // Mark all filter/sort updates as non-urgent so filter buttons stay responsive
+  // while the card grid re-renders with the new filters in the background.
+  const [, startTransition] = useTransition();
 
   // Write helpers — all use replace to avoid history pollution
-  const updateParams = useCallback(
-    (updater: (params: URLSearchParams) => void) => {
+  const updateParams = (updater: (params: URLSearchParams) => void) => {
+    startTransition(() => {
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
@@ -135,92 +127,77 @@ export function useFilterParams(): UseFilterParamsReturn {
         },
         {replace: true},
       );
-    },
-    [setSearchParams],
-  );
+    });
+  };
 
-  const setSearchQuery = useCallback(
-    (query: string) => {
-      updateParams((p) => {
-        if (query) p.set('q', query);
-        else p.delete('q');
-      });
-    },
-    [updateParams],
-  );
+  const setSearchQuery = (query: string) => {
+    updateParams((p) => {
+      if (query) p.set('q', query);
+      else p.delete('q');
+    });
+  };
 
-  const toggleInk = useCallback(
-    (ink: Ink) => {
-      updateParams((p) => {
-        const current = parseCommaSeparated(p.get('ink'), isValidInk);
-        const next = current.includes(ink) ? current.filter((i) => i !== ink) : [...current, ink];
-        if (next.length > 0) p.set('ink', next.join(','));
-        else p.delete('ink');
-      });
-    },
-    [updateParams],
-  );
+  const toggleInk = (ink: Ink) => {
+    updateParams((p) => {
+      const current = parseCommaSeparated(p.get('ink'), isValidInk);
+      const next = current.includes(ink) ? current.filter((i) => i !== ink) : [...current, ink];
+      if (next.length > 0) p.set('ink', next.join(','));
+      else p.delete('ink');
+    });
+  };
 
-  const toggleType = useCallback(
-    (type: CardTypeFilter) => {
-      updateParams((p) => {
-        const current = parseCommaSeparated(p.get('type'), isValidType);
-        const next = current.includes(type)
-          ? current.filter((t) => t !== type)
-          : [...current, type];
-        if (next.length > 0) p.set('type', next.join(','));
-        else p.delete('type');
-      });
-    },
-    [updateParams],
-  );
+  const toggleType = (type: CardTypeFilter) => {
+    updateParams((p) => {
+      const current = parseCommaSeparated(p.get('type'), isValidType);
+      const next = current.includes(type)
+        ? current.filter((t) => t !== type)
+        : [...current, type];
+      if (next.length > 0) p.set('type', next.join(','));
+      else p.delete('type');
+    });
+  };
 
-  const toggleCost = useCallback(
-    (cost: number) => {
-      updateParams((p) => {
-        const current = parseCostParam(p.get('cost'));
-        const next = current.includes(cost)
-          ? current.filter((c) => c !== cost)
-          : [...current, cost];
-        if (next.length > 0) p.set('cost', next.join(','));
-        else p.delete('cost');
-      });
-    },
-    [updateParams],
-  );
+  const toggleCost = (cost: number) => {
+    updateParams((p) => {
+      const current = parseCostParam(p.get('cost'));
+      const next = current.includes(cost)
+        ? current.filter((c) => c !== cost)
+        : [...current, cost];
+      if (next.length > 0) p.set('cost', next.join(','));
+      else p.delete('cost');
+    });
+  };
 
-  const setFilters = useCallback(
-    (newFilters: CardFilterOptions) => {
-      updateParams((p) => serializeFilterOptions(p, newFilters));
-    },
-    [updateParams],
-  );
+  const setFilters = (newFilters: CardFilterOptions) => {
+    updateParams((p) => serializeFilterOptions(p, newFilters));
+  };
 
-  const replaceFilters = useCallback(
-    (inks: Ink[], types: CardTypeFilter[], costs: number[], opts: CardFilterOptions) => {
-      updateParams((p) => {
-        setOrDelete(p, 'ink', inks.join(','));
-        setOrDelete(p, 'type', types.join(','));
-        setOrDelete(p, 'cost', costs.join(','));
-        serializeFilterOptions(p, opts);
-      });
-    },
-    [updateParams],
-  );
+  const replaceFilters = (
+    inks: Ink[],
+    types: CardTypeFilter[],
+    costs: number[],
+    opts: CardFilterOptions,
+  ) => {
+    updateParams((p) => {
+      setOrDelete(p, 'ink', inks.join(','));
+      setOrDelete(p, 'type', types.join(','));
+      setOrDelete(p, 'cost', costs.join(','));
+      serializeFilterOptions(p, opts);
+    });
+  };
 
-  const setSortOrder = useCallback(
-    (order: BrowseSortOrder) => {
-      updateParams((p) => {
-        if (order === 'newest') p.delete('sort');
-        else p.set('sort', order);
-      });
-    },
-    [updateParams],
-  );
+  const setSortOrder = (order: BrowseSortOrder) => {
+    updateParams((p) => {
+      if (order === 'newest') p.delete('sort');
+      else p.set('sort', order);
+    });
+  };
 
-  const clearAllFilters = useCallback(() => {
-    setSearchParams({}, {replace: true});
-  }, [setSearchParams]);
+  const clearAllFilters = () => {
+    startTransition(() => {
+      setSearchParams({}, {replace: true});
+    });
+  };
 
   return {
     searchQuery,

@@ -1,4 +1,4 @@
-import {useState, useCallback, memo} from 'react';
+import {useState} from 'react';
 import type {LorcanaCard} from '../types';
 import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {useCardPreviewHandlers} from './useCardPreviewHandlers';
@@ -7,7 +7,7 @@ import {smallImageUrl} from '../loader';
 
 interface CardTileProps {
   card: LorcanaCard;
-  /** @deprecated Use onSelect instead for stable references with React.memo */
+  /** @deprecated Use onSelect instead — accepts the card directly, avoiding per-item closures */
   onClick?: () => void;
   /** Stable callback — receives the card, so parent doesn't need per-item closures */
   onSelect?: (card: LorcanaCard) => void;
@@ -23,7 +23,7 @@ interface CardTileProps {
   tabIndex?: number;
 }
 
-export const CardTile = memo(function CardTile({
+export function CardTile({
   card,
   onClick,
   onSelect,
@@ -35,10 +35,10 @@ export const CardTile = memo(function CardTile({
   useSmallImage: useSmall,
   tabIndex,
 }: CardTileProps) {
-  const handleClick = useCallback(() => {
+  const handleClick = () => {
     onClick?.();
     onSelect?.(card);
-  }, [onClick, onSelect, card]);
+  };
   const colors = INK_COLORS[card.ink];
   const {previewHandlers, hidePreview} = useCardPreviewHandlers({card, onTap: handleClick});
   const [imgError, setImgError] = useState(false);
@@ -112,4 +112,4 @@ export const CardTile = memo(function CardTile({
       )}
     </button>
   );
-});
+}

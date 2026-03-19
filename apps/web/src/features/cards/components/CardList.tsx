@@ -1,4 +1,4 @@
-import {useState, useMemo} from 'react';
+import {useState} from 'react';
 import type {LorcanaCard, Ink} from '../types';
 import type {CardFilterOptions, SetInfo} from '../loader';
 import type {CardTypeFilter} from '../../../shared/constants';
@@ -60,8 +60,7 @@ export function CardList({
 }: CardListProps) {
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
 
-  // Memoize the sliced array to avoid creating new array on every render
-  const displayedCards = useMemo(() => cards.slice(0, LAYOUT.maxDisplayedCards), [cards]);
+  const displayedCards = cards.slice(0, LAYOUT.maxDisplayedCards);
 
   const autocomplete = useAutocomplete({
     cards: allCards ?? cards,

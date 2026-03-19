@@ -1,4 +1,4 @@
-import {useEffect, useCallback, useRef, type RefObject} from 'react';
+import {useEffect, useRef, type RefObject} from 'react';
 
 interface UseDialogFocusParams {
   isOpen: boolean;
@@ -45,46 +45,39 @@ export function useDialogFocus({
   }, [isOpen, initialFocusRef]);
 
   // Escape key listener (separate effect to avoid spurious focus restore)
-  const handleEscape = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    },
-    [onClose],
-  );
-
   useEffect(() => {
     if (isOpen) {
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') onClose();
+      };
       document.addEventListener('keydown', handleEscape);
       return () => document.removeEventListener('keydown', handleEscape);
     }
-  }, [isOpen, handleEscape]);
+  }, [isOpen, onClose]);
 
   // Focus trap: keep Tab/Shift+Tab within the container
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key !== 'Tab' || !containerRef.current) return;
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab' || !containerRef.current) return;
 
-      const focusableElements =
-        containerRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+    const focusableElements =
+      containerRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
 
-      if (focusableElements.length === 0) {
-        e.preventDefault();
-        return;
-      }
+    if (focusableElements.length === 0) {
+      e.preventDefault();
+      return;
+    }
 
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
 
-      if (e.shiftKey && document.activeElement === firstElement) {
-        e.preventDefault();
-        lastElement.focus();
-      } else if (!e.shiftKey && document.activeElement === lastElement) {
-        e.preventDefault();
-        firstElement.focus();
-      }
-    },
-    [containerRef],
-  );
+    if (e.shiftKey && document.activeElement === firstElement) {
+      e.preventDefault();
+      lastElement.focus();
+    } else if (!e.shiftKey && document.activeElement === lastElement) {
+      e.preventDefault();
+      firstElement.focus();
+    }
+  };
 
   return {handleKeyDown};
 }

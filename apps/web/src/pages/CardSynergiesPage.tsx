@@ -1,4 +1,3 @@
-import {useCallback, useMemo} from 'react';
 import {useParams, useNavigate, useSearchParams, Navigate} from 'react-router-dom';
 import {SynergyResults} from '../features/synergies';
 import {usePrecomputedSynergies} from '../features/synergies/hooks';
@@ -33,31 +32,25 @@ export function CardSynergiesPage() {
 
   const {synergies, error: synergiesError} = usePrecomputedSynergies(selectedCard);
 
-  const totalSynergyCount = useMemo(
-    () => synergies.reduce((sum, group) => sum + group.synergies.length, 0),
-    [synergies],
-  );
+  const totalSynergyCount = synergies.reduce((sum, group) => sum + group.synergies.length, 0);
 
-  const goBack = useCallback(() => {
+  const goBack = () => {
     if (cardId) navigate(`/card/${cardId}`);
     else navigate('/');
-  }, [cardId, navigate]);
+  };
 
-  const handleShowAll = useCallback(
-    (groupKey: string) => {
-      setSearchParams({group: groupKey}, {replace: true});
-      requestAnimationFrame(() => {
-        document
-          .querySelector(`[data-expanded-group="${groupKey}"]`)
-          ?.scrollIntoView({behavior: 'smooth', block: 'start'});
-      });
-    },
-    [setSearchParams],
-  );
+  const handleShowAll = (groupKey: string) => {
+    setSearchParams({group: groupKey}, {replace: true});
+    requestAnimationFrame(() => {
+      document
+        .querySelector(`[data-expanded-group="${groupKey}"]`)
+        ?.scrollIntoView({behavior: 'smooth', block: 'start'});
+    });
+  };
 
-  const handleBackToAll = useCallback(() => {
+  const handleBackToAll = () => {
     setSearchParams({}, {replace: true});
-  }, [setSearchParams]);
+  };
 
   // On desktop, this route isn't needed — redirect to card page
   if (!isMobile && !isLoading && selectedCard) {

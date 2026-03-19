@@ -1,4 +1,4 @@
-import {useState, useEffect, useRef, useMemo} from 'react';
+import {useState, useEffect, useRef} from 'react';
 import {BREAKPOINTS} from '../constants';
 
 interface ResponsiveState {
@@ -26,7 +26,7 @@ const RESIZE_DEBOUNCE_MS = 150;
 
 export function useResponsive(): ResponsiveState {
   // Touch capability is constant - compute once on mount
-  const isTouchDevice = useMemo(() => detectTouchDevice(), []);
+  const isTouchDevice = detectTouchDevice();
 
   const [widthState, setWidthState] = useState(() => {
     const width = typeof window !== 'undefined' ? window.innerWidth : BREAKPOINTS.desktop;
