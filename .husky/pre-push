@@ -1,0 +1,2 @@
+#!/bin/sh
+pnpm --filter inkweave-web test:e2e --project chromium
