@@ -9,6 +9,10 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(gh:*), Bash(netstat:*), Bash(
 
 Set up a working branch for a GitHub issue and gather implementation context.
 
+## Step 0: Session hygiene
+
+Launch the `session-start` agent to check for stale worktrees, branches, stashes, port conflicts, and open PRs. Present the report before proceeding.
+
 ## Step 1: Resolve the issue
 
 If `$ARGUMENTS` is provided, use it as the issue number.
