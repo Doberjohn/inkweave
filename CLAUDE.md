@@ -184,7 +184,7 @@ pnpm test:web         # Run web tests
 - Two-column UI: CardList (340px) | SynergyResults (flex) - deck builder removed for MVP
 - Floating card preview popover on hover (CardPreviewContext + CardPreviewPopover)
 - Core format only (sets 5+)
-- **react-grab**: Dev-only inspection tool. The `dev` script runs `pnpm dlx @react-grab/claude-code@latest && vite`. This hangs in headless CI (no TTY), so Playwright config uses `process.env.CI ? 'npx vite' : 'pnpm run dev'` for its webServer command.
+- **react-grab**: Dev-only inspection tool. The `dev` script runs `pnpm dlx @react-grab/claude-code@latest && vite`. Playwright always uses `npx vite` for its webServer (react-grab is irrelevant during E2E). If a dev server is already running, Playwright reuses it (`reuseExistingServer: true` locally).
 - **useContainerWidth**: ResizeObserver hook guards against 0-width observations from detached elements (`if (w > 0)`) — required for React Strict Mode double-mount resilience
 
 ## UI Theme (MVP)
