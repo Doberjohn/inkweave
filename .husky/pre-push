@@ -1,2 +1,3 @@
 #!/bin/sh
-pnpm --filter inkweave-web test:e2e --project chromium
+# CI=true skips react-grab (hangs without TTY) — Playwright uses plain `npx vite` instead
+CI=true pnpm --filter inkweave-web test:e2e --project chromium

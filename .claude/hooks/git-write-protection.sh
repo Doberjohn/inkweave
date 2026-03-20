@@ -2,11 +2,11 @@
 # Hook: Block destructive git operations without explicit user approval
 # Type: PreToolUse (Bash)
 #
-# Blocks: git commit, push, checkout --, restore, reset --hard, clean -f
-# Allows: git status, diff, log, branch, stash list, fetch, worktree list, add
+# Soft block (commit, push): blocked by default, allowed with USER_APPROVED=1 prefix
+#   Workflow: hook blocks → Claude presents summary → user says "go ahead" → retry with prefix
+# Hard block (checkout --, restore, reset --hard, clean -f, worktree remove/prune): always blocked
 #
-# When blocked, Claude Code shows the reason and the user can approve/deny
-# via the tool approval prompt — keeping the human always in the loop.
+# Exit 2 = block (stderr shown to user), Exit 0 = allow
 
 INPUT=$(cat)
 
@@ -17,26 +17,46 @@ COMMAND=$(echo "$INPUT" | node -e "
   process.stdin.on('end', () => {
     try {
       const j = JSON.parse(d);
-      console.log(j.command || '');
+      console.log(j.tool_input?.command || '');
     } catch { console.log(''); }
   });
 ")
 
-# Check for destructive git operations
+# --- Soft blocks: bypassable with USER_APPROVED=1 ---
+
 if echo "$COMMAND" | grep -qE "git commit( |$|\")"; then
-  echo "BLOCK: Git commit detected. Present a summary of changes and get explicit user approval first."
-elif echo "$COMMAND" | grep -qE "git push( |$|\")"; then
-  echo "BLOCK: Git push detected. Get explicit user approval first. (E2E runs automatically via pre-push hook.)"
-elif echo "$COMMAND" | grep -qE "git checkout -- "; then
-  echo "BLOCK: Destructive git checkout detected. This discards uncommitted changes. Get explicit user approval first."
-elif echo "$COMMAND" | grep -qE "git restore "; then
-  echo "BLOCK: git restore detected. This can discard changes. Get explicit user approval first."
-elif echo "$COMMAND" | grep -qE "git reset --(hard|mixed)"; then
-  echo "BLOCK: Destructive git reset detected. This can lose commits/changes. Get explicit user approval first."
-elif echo "$COMMAND" | grep -qE "git clean -[a-zA-Z]*f"; then
-  echo "BLOCK: git clean -f detected. This permanently deletes untracked files. Get explicit user approval first."
-elif echo "$COMMAND" | grep -qE "git worktree (remove|prune)"; then
-  echo "BLOCK: Worktree deletion detected. Worktrees may be active in other CLI sessions. Get explicit user confirmation first."
+  if echo "$COMMAND" | grep -qE "^USER_APPROVED=1 "; then
+    exit 0
+  fi
+  echo "Git commit detected. Present a summary of changes and get explicit user approval first." >&2
+  exit 2
 fi
 
-# No output = allow the command to proceed
+if echo "$COMMAND" | grep -qE "git push( |$|\")"; then
+  if echo "$COMMAND" | grep -qE "^USER_APPROVED=1 "; then
+    exit 0
+  fi
+  echo "Git push detected. Get explicit user approval first. (E2E runs automatically via pre-push hook.)" >&2
+  exit 2
+fi
+
+# --- Hard blocks: never bypassable ---
+
+if echo "$COMMAND" | grep -qE "git checkout -- "; then
+  echo "Destructive git checkout detected. This discards uncommitted changes. Run this manually." >&2
+  exit 2
+elif echo "$COMMAND" | grep -qE "git restore "; then
+  echo "git restore detected. This can discard changes. Run this manually." >&2
+  exit 2
+elif echo "$COMMAND" | grep -qE "git reset --(hard|mixed)"; then
+  echo "Destructive git reset detected. This can lose commits/changes. Run this manually." >&2
+  exit 2
+elif echo "$COMMAND" | grep -qE "git clean -[a-zA-Z]*f"; then
+  echo "git clean -f detected. This permanently deletes untracked files. Run this manually." >&2
+  exit 2
+elif echo "$COMMAND" | grep -qE "git worktree (remove|prune)"; then
+  echo "Worktree deletion detected. Worktrees may be active in other sessions. Run this manually." >&2
+  exit 2
+fi
+
+# No match = allow (exit 0)
