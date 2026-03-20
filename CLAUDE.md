@@ -82,6 +82,33 @@ React web application that consumes the synergy engine package.
 
 **Synergy Score**: 1-10 numeric scale (all integers valid). Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4)
 
+## Automation
+
+Claude Code hooks, skills, and agents enforce workflow rules automatically. Check these before adding redundant instructions to CLAUDE.md.
+
+### Hooks (`.claude/hooks/`)
+| Hook | Event | What it does |
+|------|-------|-------------|
+| `git-write-protection.sh` | PreToolUse/Bash | Soft-blocks commit/push (`USER_APPROVED=1` bypass), hard-blocks destructive ops |
+| `branch-verification.sh` | PreToolUse/Edit\|Write | Blocks source file edits on master/main |
+| `engine-auto-rebuild.sh` | PostToolUse/Edit\|Write | Auto `pnpm build:engine` after engine file edits |
+| Husky pre-push | git push | Runs E2E chromium before push |
+
+### Skills (`.claude/skills/`)
+| Skill | Arg | What it does |
+|-------|-----|-------------|
+| `/implement-issue <num>` | issue number | Session hygiene → fetch issue → create branch → summary |
+| `/commit-and-push "msg"` | commit message | PR readiness → review → commit → push → PR → CI |
+| `/close-session [summary]` | work summary | Cleanup → docs update → MEMORY.md → summary |
+| `/inkweave-add-rule <name>` | mechanic name | Discovery → design → implement → validate |
+
+### Agents (`.claude/agents/`)
+| Agent | Model | Triggered by | What it does |
+|-------|-------|-------------|-------------|
+| `session-start` | Haiku | `/implement-issue` Step 0 | Worktrees, branches, stashes, ports, PRs |
+| `pr-ready` | Sonnet | `/commit-and-push` Step 0 | Lint, tests, E2E, branch naming, diff size |
+| `engine-validator` | Sonnet | `/commit-and-push` when engine files in diff | Build, test, precompute, audit scores |
+
 ## Synergy Rules
 
 Built-in rules in the engine package. **Keep this section up to date when modifying rule logic, scoring, or explanations.**
@@ -199,28 +226,18 @@ Dark fantasy theme inspired by Lorcana:
 ## Workflow Preferences
 
 ### Git Workflow
-- **NEVER commit, push, or run destructive git operations (`checkout --`, `restore`, `reset`) without explicit user permission.** Always present a summary of changes and ASK before running any git write commands. This is the highest-priority rule — no exceptions.
+- **Git safety enforced by hooks** — `git-write-protection` hook blocks commit, push, and destructive ops (checkout --, restore, reset --hard, clean -f, worktree remove/prune). Commit/push use `USER_APPROVED=1` prefix after explicit user approval. Destructive ops are hard-blocked — run manually.
+- **Branch verification enforced by hook** — `branch-verification` hook blocks source file edits on master/main.
 - Feature branches: `feature/<issue-number>-<description>` (e.g., `feature/5-deck-builder-tests`)
 - Commit messages: Use semantic commit notation with issue reference (e.g., `test(deck): add tests (#5)`)
 - PRs should include `Closes #<issue>` to auto-close issues on merge
-- **Worktrees**: **NEVER prune, remove, or delete worktrees without explicit user confirmation.** Worktrees may be actively used in other CLI windows or sessions. A "prunable" status does NOT mean safe to delete. Always ask before running `git worktree remove`, `git worktree prune`, or deleting worktree directories. Never attempt to delete a worktree directory you are currently inside.
 - **Issues**: When creating issues, always add appropriate labels. When listing issues, check for unlabeled ones proactively. When adding/removing an issue from MVP, always update BOTH the `mvp` label AND the `MVP v1.0` milestone together.
 
-### Pre-Commit Checks (REQUIRED)
-Before EVERY commit, run these checks and fix any issues:
-1. `pnpm run lint` - Fix all errors (warnings OK)
-2. `pnpm run test` - All unit tests must pass
-
-Do NOT commit or push if any check fails.
-
-### Pre-Push E2E Check
-Before pushing, run E2E locally to catch rendering regressions that unit tests miss:
-```bash
-pnpm --filter inkweave-web test:e2e --project chromium  # ~30s, catches most issues
-```
-Full 5-browser suite runs in CI as safety net. This is especially important after removing `useMemo`/`useCallback` or changing hooks that use async DOM APIs (ResizeObserver, IntersectionObserver) — React Strict Mode's double-mount can expose latent bugs.
-
-After pushing, always confirm with clear output (e.g., git log showing commit on origin/master).
+### Pre-Commit & Pre-Push (automated)
+- **Pre-commit hook** runs lint + tests on every `git commit`. Do not skip.
+- **Pre-push hook** (husky) runs E2E chromium on every `git push`. Do not skip.
+- Full 5-browser E2E suite runs in CI as safety net.
+- After pushing, always confirm with clear output (e.g., git log showing commit on origin/master).
 
 ### Branch Naming
 - `feature/` - New features or enhancements
@@ -228,9 +245,10 @@ After pushing, always confirm with clear output (e.g., git log showing commit on
 - `docs/` - Documentation only
 - `test/` - Test additions/improvements
 
-### Engine Rebuilds
-- **IMMEDIATELY** after modifying any file in `packages/synergy-engine/src/`, run `pnpm build:engine`. Do not wait — rebuild right after the edit, before doing anything else (unit tests, browser testing, E2E, or further code changes). Vite and the web app resolve the workspace package from its built `dist/`, so changes are invisible until rebuilt.
-- After engine rebuilds that affect synergy rules/scoring, also run `pnpm precompute-synergies` to regenerate the static synergy JSON files. The Vite dev server auto-detects stale data on startup (via `ensureSynergiesPlugin`), but mid-session changes require a manual re-run.
+### Engine Rebuilds (automated)
+- **`engine-auto-rebuild` hook** automatically runs `pnpm build:engine` after editing any file in `packages/synergy-engine/src/`. No manual rebuild needed.
+- After rule/scoring changes, also run `pnpm precompute-synergies` to regenerate static synergy JSON. The `engine-validator` agent handles this as part of `/commit-and-push` when engine files are in the diff.
+- The Vite dev server auto-detects stale data on startup (via `ensureSynergiesPlugin`), but mid-session changes require a manual re-run.
 
 ### Synergy Rule Documentation
 - When modifying rule logic, scoring, or explanations in the engine, always update the **Synergy Rules** section in this file to match. This includes score tables, condition matchers, explanation templates, and display tier definitions.
