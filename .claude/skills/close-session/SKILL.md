@@ -25,6 +25,8 @@ Check each and report findings:
 - **Dev servers**: Check ports 5173-5175 for running processes. On Windows: `netstat -ano | findstr ":5173 "`. Kill stale processes.
 - **Worktrees**: `git worktree list`. If worktrees exist beyond main, remind user to clean up (NEVER remove without explicit confirmation).
 - **Stashes**: `git stash list`. Warn about unlabeled or stale stashes.
+- **Merged branches**: Run `git branch --merged master | grep -v '^\*'` to find branches already merged. If any exist, list them and ask whether to delete. On confirmation, run `git branch -d <branch>` for each. If no merged branches found, skip silently.
+- **Stale remote refs**: Run `git remote prune origin` unconditionally. Report if any refs were pruned, otherwise skip silently.
 - **Uncommitted work**: If changes exist, ask whether to commit (via `/commit-and-push`), stash with a label, or leave.
 
 ## Step 3: Update documentation

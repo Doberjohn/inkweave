@@ -1,4 +1,4 @@
-import {createContext, useState, useRef, type ReactNode} from 'react';
+import {createContext, useEffect, useState, useRef, type ReactNode} from 'react';
 import type {LorcanaCard} from '../types';
 
 interface CardPreviewState {
@@ -40,6 +40,16 @@ export function CardPreviewProvider({children}: {children: ReactNode}) {
     cancelAnimationFrame(rafId.current);
     setPreviewState({card: null, position: {x: 0, y: 0}, isTouchMode: false});
   };
+
+  // Close preview on browser back/forward navigation
+  useEffect(() => {
+    const onPopState = () => {
+      cancelAnimationFrame(rafId.current);
+      setPreviewState({card: null, position: {x: 0, y: 0}, isTouchMode: false});
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
   return (
     <CardPreviewContext.Provider value={{previewState, showPreview, updatePosition, hidePreview}}>
