@@ -137,6 +137,28 @@ describe('CardPreviewContext', () => {
     expect(screen.getByTestId('position-y')).toHaveTextContent('0');
   });
 
+  it('should hide preview on popstate (browser back/forward)', () => {
+    render(
+      <CardPreviewProvider>
+        <PreviewStateDisplay />
+      </CardPreviewProvider>,
+    );
+
+    act(() => {
+      screen.getByText('Show Preview').click();
+    });
+
+    expect(screen.getByTestId('card-name')).toHaveTextContent('Test Card');
+
+    act(() => {
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    expect(screen.getByTestId('card-name')).toHaveTextContent('none');
+    expect(screen.getByTestId('position-x')).toHaveTextContent('0');
+    expect(screen.getByTestId('position-y')).toHaveTextContent('0');
+  });
+
   it('should return null context when not wrapped in provider', () => {
     render(<ContextWithoutProvider />);
 
