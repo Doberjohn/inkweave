@@ -1,14 +1,19 @@
-import {useState} from 'react';
 import type {LorcanaCard} from '../types';
-import type {Ink} from 'inkweave-synergy-engine';
 import {CardTile} from './CardTile';
 import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
 import {RenderProfiler} from '../../../shared/components';
 
-const FEATURED_COUNT = 6;
+/** Curated card IDs — one per ink, chosen for visual appeal and synergy variety. */
+const FEATURED_IDS = [
+  '1219', // Amber    — Simba - Pride Protector
+  '1492', // Amethyst — Yzma - Transformed Kitten
+  '2010', // Emerald  — Goofy - Set for Adventure
+  '1319', // Ruby     — Minnie Mouse - Pirate Lookout
+  '1100', // Sapphire — The Queen - Fairest of All
+  '2128', // Steel    — John Silver - Greedy Treasure Seeker
+];
 
-/** Ink display order for featured cards. */
-const INK_ORDER: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
+const FEATURED_COUNT = FEATURED_IDS.length;
 
 interface FeaturedCardsProps {
   cards: LorcanaCard[];
@@ -16,19 +21,12 @@ interface FeaturedCardsProps {
   isMobile?: boolean;
 }
 
-/** Pick one random card per ink in display order. */
+/** Look up curated featured cards by ID, preserving display order. */
 function pickFeatured(cards: LorcanaCard[]): LorcanaCard[] {
-  const withImages = cards.filter((c) => c.imageUrl && c.type !== 'Location');
-  const result: LorcanaCard[] = [];
-
-  for (const ink of INK_ORDER) {
-    const pool = withImages.filter((c) => c.ink === ink);
-    if (pool.length > 0) {
-      result.push(pool[Math.floor(Math.random() * pool.length)]);
-    }
-  }
-
-  return result;
+  const byId = new Map(cards.map((c) => [c.id, c]));
+  return FEATURED_IDS.map((id) => byId.get(id)).filter(
+    (c): c is LorcanaCard => c != null && !!c.imageUrl,
+  );
 }
 
 function getStyles(isMobile: boolean) {
@@ -88,14 +86,7 @@ export function FeaturedCards({
   onCardSelect,
   isMobile,
 }: FeaturedCardsProps) {
-  // Re-pick featured cards only when the card pool size changes (not on array ref changes),
-  // because pickFeatured uses randomness and re-running it causes visible reshuffling.
-  const [prevCardsLength, setPrevCardsLength] = useState(cards.length);
-  const [featured, setFeatured] = useState(() => pickFeatured(cards));
-  if (cards.length !== prevCardsLength) {
-    setPrevCardsLength(cards.length);
-    setFeatured(pickFeatured(cards));
-  }
+  const featured = pickFeatured(cards);
 
   const styles = getStyles(!!isMobile);
 

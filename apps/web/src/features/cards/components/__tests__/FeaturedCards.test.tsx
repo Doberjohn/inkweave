@@ -36,13 +36,14 @@ function makeCard(ink: string, id: string, name: string): LorcanaCard {
   } as LorcanaCard;
 }
 
+// IDs must match FEATURED_IDS in FeaturedCards.tsx
 const mockCards: LorcanaCard[] = [
-  makeCard('Amber', 'amber-1', 'Amber Card'),
-  makeCard('Amethyst', 'amethyst-1', 'Amethyst Card'),
-  makeCard('Emerald', 'emerald-1', 'Emerald Card'),
-  makeCard('Ruby', 'ruby-1', 'Ruby Card'),
-  makeCard('Sapphire', 'sapphire-1', 'Sapphire Card'),
-  makeCard('Steel', 'steel-1', 'Steel Card'),
+  makeCard('Amber', '1219', 'Simba'),
+  makeCard('Amethyst', '1492', 'Yzma'),
+  makeCard('Emerald', '2010', 'Goofy'),
+  makeCard('Ruby', '1319', 'Minnie Mouse'),
+  makeCard('Sapphire', '1100', 'The Queen'),
+  makeCard('Steel', '2128', 'John Silver'),
 ];
 
 describe('FeaturedCards', () => {
@@ -76,11 +77,22 @@ describe('FeaturedCards', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('should exclude Location cards from featured selection', () => {
-    const locationCards = mockCards.map((c) => ({...c, type: 'Location' as const}));
-    const {container} = render(<FeaturedCards cards={locationCards} onCardSelect={vi.fn()} />);
+  it('should preserve curated display order regardless of input order', () => {
+    const shuffled = [...mockCards].reverse();
+    render(<FeaturedCards cards={shuffled} onCardSelect={vi.fn()} />);
 
-    expect(container.innerHTML).toBe('');
+    const listItems = screen.getAllByRole('listitem');
+    expect(listItems[0]).toHaveTextContent('Simba');
+    expect(listItems[5]).toHaveTextContent('John Silver');
+  });
+
+  it('should gracefully handle missing featured cards', () => {
+    // Only provide 3 of the 6 curated cards
+    const partial = mockCards.slice(0, 3);
+    render(<FeaturedCards cards={partial} onCardSelect={vi.fn()} />);
+
+    const listItems = screen.getAllByRole('listitem');
+    expect(listItems).toHaveLength(3);
   });
 
   it('should render as a semantic section element', () => {
