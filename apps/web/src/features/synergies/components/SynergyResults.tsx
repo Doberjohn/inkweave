@@ -211,7 +211,7 @@ export function SynergyResults({
                   key={group.groupKey}
                   group={group}
                   isMobile={isMobile}
-                  maxVisibleCards={group.category === 'direct' ? Infinity : isMobile ? 5 : 10}
+                  maxVisibleCards={isMobile ? 5 : 12}
                   onShowAll={onShowAll}
                   onCardClick={onSynergyCardClick}
                 />

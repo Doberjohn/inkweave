@@ -113,7 +113,7 @@ Claude Code hooks, skills, and agents enforce workflow rules automatically. Chec
 
 Built-in rules in the engine package. **Keep this section up to date when modifying rule logic, scoring, or explanations.**
 
-See `packages/synergy-engine/REMOVED_RULES.md` for archived rules (Singer, Evasive, Tribal, Challenger, Exert, Draw, Ink Ramp, Ward).
+See `packages/synergy-engine/REMOVED_RULES.md` for archived rules (Evasive, Tribal, Challenger, Exert, Draw, Ink Ramp, Ward).
 
 ### Rule 1: Shift Targets (bidirectional)
 
@@ -179,6 +179,25 @@ Cards that force opponents to discard from hand (enablers) synergize with each o
 **Coverage**: ~34 enablers, 2 payoffs, 36 total cards.
 
 **Full documentation**: See [`packages/synergy-engine/DISCARD_RULE.md`](packages/synergy-engine/DISCARD_RULE.md) for pattern details, role detection, scoring rationale, and test coverage.
+
+### Rule 5: Singer + Songs (direct, bidirectional)
+
+Characters with the Singer keyword can exert to play Song action cards for free, provided the Song's cost is within the Singer's threshold. Both directions matched: Singers find compatible Songs, Songs find Singers that can play them.
+
+**Detection**: Singers via `hasKeyword(card, 'Singer')`, Songs via `isSong(card)` (Action type + Song subtype/text). Cost gate: `song.cost <= singerValue`.
+
+**Scoring** (based on threshold utilization):
+
+| Scenario | Score | Rationale |
+|----------|-------|-----------|
+| Song cost = Singer value | 8 | Perfect fit, maximum value extraction |
+| Song cost = Singer value - 1 | 7 | Near-perfect, 1 point wasted |
+| Song cost = Singer value - 2 | 6 | Good savings, slight waste |
+| Song cost ≤ Singer value - 3 | 5 | Functional but inefficient |
+
+**Explanation template**: "{singerName} (Singer {value}) can play {songName} (cost {songCost}) for free"
+
+**Coverage**: 16 Singers (mostly Amber/Ruby), 72 Songs (all inks), 872 valid pairs.
 
 ### Location Control (playstyle, 8 sub-rules)
 

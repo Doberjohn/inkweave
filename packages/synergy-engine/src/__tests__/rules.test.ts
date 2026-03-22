@@ -945,6 +945,214 @@ describe('Card Helper Functions', () => {
     });
   });
 
+  describe('Singer + Songs', () => {
+    const singerRule = getRuleById('singer-songs')!;
+
+    it('should match characters with Singer keyword', () => {
+      const singer = createCard({
+        id: 'singer-1',
+        name: 'Ariel',
+        fullName: 'Ariel - Singing Mermaid',
+        keywords: ['Singer 5'],
+      });
+      expect(singerRule.matches(singer)).toBe(true);
+    });
+
+    it('should not match non-Singer characters', () => {
+      const regular = createCard({id: 'char-1', name: 'Elsa'});
+      expect(singerRule.matches(regular)).toBe(false);
+    });
+
+    it('should match Song cards for reverse lookup', () => {
+      const song = createCard({
+        id: 'song-1',
+        name: 'Let It Go',
+        type: 'Action',
+        text: 'A song card',
+      });
+      expect(singerRule.matches(song)).toBe(true);
+    });
+
+    it('should find songs that cost <= Singer value', () => {
+      const singer = createCard({
+        id: 'singer-1',
+        name: 'Ariel',
+        fullName: 'Ariel - Singing Mermaid',
+        cost: 4,
+        keywords: ['Singer 5'],
+      });
+      const cheapSong = createCard({
+        id: 'song-cheap',
+        name: 'Be Our Guest',
+        fullName: 'Be Our Guest',
+        type: 'Action',
+        cost: 2,
+        text: 'A song card',
+      });
+      const expensiveSong = createCard({
+        id: 'song-expensive',
+        name: 'Circle of Life',
+        fullName: 'Circle of Life',
+        type: 'Action',
+        cost: 8,
+        text: 'A song card',
+      });
+
+      const synergies = singerRule.findSynergies(singer, [singer, cheapSong, expensiveSong]);
+      expect(synergies.find((s) => s.card.id === 'song-cheap')).toBeDefined();
+      expect(synergies.find((s) => s.card.id === 'song-expensive')).toBeUndefined();
+    });
+
+    it('should score 8 when song cost equals Singer value (perfect fit)', () => {
+      const singer = createCard({
+        id: 'singer-1',
+        name: 'Gazelle',
+        fullName: 'Gazelle - Pop Star',
+        cost: 3,
+        keywords: ['Singer 5'],
+      });
+      const song = createCard({
+        id: 'song-1',
+        name: 'All Is Found',
+        fullName: 'All Is Found',
+        type: 'Action',
+        cost: 5,
+        text: 'A song card',
+      });
+
+      const synergies = singerRule.findSynergies(singer, [singer, song]);
+      expect(synergies[0].score).toBe(8);
+    });
+
+    it('should score 7 when song cost is Singer value - 1', () => {
+      const singer = createCard({
+        id: 'singer-1',
+        name: 'Gazelle',
+        fullName: 'Gazelle - Pop Star',
+        keywords: ['Singer 5'],
+      });
+      const song = createCard({
+        id: 'song-1',
+        name: 'Try Everything',
+        fullName: 'Try Everything',
+        type: 'Action',
+        cost: 4,
+        text: 'A song card',
+      });
+
+      const synergies = singerRule.findSynergies(singer, [singer, song]);
+      expect(synergies[0].score).toBe(7);
+    });
+
+    it('should score 6 when song cost is Singer value - 2', () => {
+      const singer = createCard({
+        id: 'singer-1',
+        name: 'Gazelle',
+        fullName: 'Gazelle - Pop Star',
+        keywords: ['Singer 5'],
+      });
+      const song = createCard({
+        id: 'song-1',
+        name: 'We Know the Way',
+        fullName: 'We Know the Way',
+        type: 'Action',
+        cost: 3,
+        text: 'A song card',
+      });
+
+      const synergies = singerRule.findSynergies(singer, [singer, song]);
+      expect(synergies[0].score).toBe(6);
+    });
+
+    it('should score 5 when song cost is Singer value - 3 or more', () => {
+      const singer = createCard({
+        id: 'singer-1',
+        name: 'Powerline',
+        fullName: 'Powerline - World\'s Greatest Rock Star',
+        keywords: ['Singer 9'],
+      });
+      const song = createCard({
+        id: 'song-1',
+        name: 'A Very Merry Unbirthday',
+        fullName: 'A Very Merry Unbirthday',
+        type: 'Action',
+        cost: 1,
+        text: 'A song card',
+      });
+
+      const synergies = singerRule.findSynergies(singer, [singer, song]);
+      expect(synergies[0].score).toBe(5);
+    });
+
+    it('should mark synergies as bidirectional', () => {
+      const singer = createCard({
+        id: 'singer-1',
+        name: 'Ariel',
+        fullName: 'Ariel - Singing Mermaid',
+        keywords: ['Singer 5'],
+      });
+      const song = createCard({
+        id: 'song-1',
+        name: 'Be Our Guest',
+        fullName: 'Be Our Guest',
+        type: 'Action',
+        cost: 2,
+        text: 'A song card',
+      });
+
+      const synergies = singerRule.findSynergies(singer, [singer, song]);
+      expect(synergies[0].bidirectional).toBe(true);
+    });
+
+    it('should find Singers from Song perspective (reverse)', () => {
+      const singer = createCard({
+        id: 'singer-1',
+        name: 'Gazelle',
+        fullName: 'Gazelle - Pop Star',
+        keywords: ['Singer 5'],
+      });
+      const weakSinger = createCard({
+        id: 'singer-2',
+        name: 'Angel',
+        fullName: 'Angel - Siren Singer',
+        keywords: ['Singer 3'],
+      });
+      const song = createCard({
+        id: 'song-1',
+        name: 'Try Everything',
+        fullName: 'Try Everything',
+        type: 'Action',
+        cost: 4,
+        text: 'A song card',
+      });
+
+      const synergies = singerRule.findSynergies(song, [song, singer, weakSinger]);
+      // Gazelle (Singer 5) can play cost-4 song, Angel (Singer 3) cannot
+      expect(synergies.find((s) => s.card.id === 'singer-1')).toBeDefined();
+      expect(synergies.find((s) => s.card.id === 'singer-2')).toBeUndefined();
+    });
+
+    it('should not match non-Action cards even if text contains song', () => {
+      const singer = createCard({
+        id: 'singer-1',
+        name: 'Ariel',
+        fullName: 'Ariel - Singing Mermaid',
+        keywords: ['Singer 5'],
+      });
+      const notASong = createCard({
+        id: 'char-1',
+        name: 'Some Character',
+        fullName: 'Some Character',
+        type: 'Character',
+        cost: 3,
+        text: 'When you play a song, draw a card',
+      });
+
+      const synergies = singerRule.findSynergies(singer, [singer, notASong]);
+      expect(synergies).toHaveLength(0);
+    });
+  });
+
   describe('hasPositiveClassificationEffect', () => {
     it('should detect positive buff effects', () => {
       const card = createCard({text: 'Your Princess characters get +2 strength.'});
