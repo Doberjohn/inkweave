@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import {Link} from 'react-router-dom';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
@@ -139,7 +140,11 @@ export function MobileCardDetail({
             margin: 0,
             lineHeight: 1.2,
           }}>
-          {card.name}
+          <Link
+            to={`/browse?q=${encodeURIComponent(card.name)}`}
+            style={{color: 'inherit', textDecoration: 'underline', textDecorationColor: COLORS.surfaceBorder, textUnderlineOffset: '3px'}}>
+            {card.name}
+          </Link>
         </h1>
         {card.version && (
           <div

@@ -1,5 +1,6 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
+import {MemoryRouter} from 'react-router-dom';
 import {MobileCardDetail} from '../MobileCardDetail';
 import type {LorcanaCard} from '../../../cards';
 import type {SynergyGroup} from '../../types';
@@ -65,40 +66,43 @@ describe('MobileCardDetail', () => {
     onBack: vi.fn(),
   };
 
+  const renderWithRouter = (ui: React.ReactElement) =>
+    render(ui, {wrapper: MemoryRouter});
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('should render the card name as h1', () => {
-    render(<MobileCardDetail {...defaultProps} />);
+    renderWithRouter(<MobileCardDetail {...defaultProps} />);
     expect(screen.getByRole('heading', {level: 1})).toHaveTextContent('Elsa');
   });
 
   it('should render card version', () => {
-    render(<MobileCardDetail {...defaultProps} />);
+    renderWithRouter(<MobileCardDetail {...defaultProps} />);
     expect(screen.getByText('Snow Queen')).toBeInTheDocument();
   });
 
   it('should render synergy section divider with heading', () => {
-    render(<MobileCardDetail {...defaultProps} />);
+    renderWithRouter(<MobileCardDetail {...defaultProps} />);
     expect(screen.getByRole('heading', {level: 2})).toHaveTextContent('Synergies');
   });
 
   it('should render group filter chips', () => {
-    render(<MobileCardDetail {...defaultProps} />);
+    renderWithRouter(<MobileCardDetail {...defaultProps} />);
     expect(screen.getByRole('button', {name: 'All'})).toBeTruthy();
     expect(screen.getByRole('button', {name: 'Exert Synergies'})).toBeTruthy();
     expect(screen.getByRole('button', {name: 'Singer + Songs'})).toBeTruthy();
   });
 
   it('should render inline synergy groups', () => {
-    render(<MobileCardDetail {...defaultProps} />);
+    renderWithRouter(<MobileCardDetail {...defaultProps} />);
     const groups = screen.getAllByTestId('synergy-group');
     expect(groups).toHaveLength(2);
   });
 
   it('should filter groups when chip is clicked', () => {
-    render(<MobileCardDetail {...defaultProps} />);
+    renderWithRouter(<MobileCardDetail {...defaultProps} />);
     fireEvent.click(screen.getByRole('button', {name: 'Exert Synergies'}));
     const groups = screen.getAllByTestId('synergy-group');
     expect(groups).toHaveLength(1);
@@ -106,25 +110,25 @@ describe('MobileCardDetail', () => {
   });
 
   it('should show "no synergies" message when count is 0', () => {
-    render(<MobileCardDetail {...defaultProps} synergies={[]} />);
+    renderWithRouter(<MobileCardDetail {...defaultProps} synergies={[]} />);
     expect(screen.getByText(/no synergies found/i)).toBeInTheDocument();
   });
 
   it('should call onBack when header button is clicked', () => {
     const onBack = vi.fn();
-    render(<MobileCardDetail {...defaultProps} onBack={onBack} />);
+    renderWithRouter(<MobileCardDetail {...defaultProps} onBack={onBack} />);
     fireEvent.click(screen.getByRole('button', {name: /back to home/i}));
     expect(onBack).toHaveBeenCalled();
   });
 
   it('should render header with INKWEAVE text', () => {
-    render(<MobileCardDetail {...defaultProps} />);
+    renderWithRouter(<MobileCardDetail {...defaultProps} />);
     expect(screen.getByRole('button', {name: /back to home/i})).toHaveTextContent(/INKWEAVE/);
   });
 
   it('should hide group chips when only 1 synergy group', () => {
     const singleGroup = [mockSynergies[0]];
-    render(<MobileCardDetail {...defaultProps} synergies={singleGroup} />);
+    renderWithRouter(<MobileCardDetail {...defaultProps} synergies={singleGroup} />);
     expect(screen.queryByRole('button', {name: 'All'})).not.toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Exert Synergies'})).not.toBeInTheDocument();
   });
