@@ -3,14 +3,17 @@ import {
   classifyNamedEffect,
   getBaseName,
   getDiscardRoles,
+  getKeywordValue,
   getLocationRoles,
   getNamedReferences,
   getShiftType,
   hasClassification,
+  hasKeyword,
   isCharacter,
   isDiscardCard,
   isLocation,
   isLocationSupportCard,
+  isSong,
   LOCATION_PATTERNS,
   NAMED_EFFECT_SCORES,
   textContains,
@@ -646,6 +649,60 @@ export const synergyRules: SynergyRule[] = [
       }
 
       return matches;
+    },
+  },
+
+  // --------------------------------------------
+  // SINGER + SONGS
+  // --------------------------------------------
+  {
+    id: 'singer-songs',
+    name: 'Singer + Songs',
+    category: 'direct',
+    description: 'Characters with Singer can exert to sing Song cards for free',
+
+    matches: (card) => hasKeyword(card, 'Singer') || isSong(card),
+
+    findSynergies: (card, allCards) => {
+      if (hasKeyword(card, 'Singer')) {
+        // Forward: Singer finds compatible Songs
+        const singerValue = getKeywordValue(card, 'Singer') ?? card.cost;
+
+        return allCards
+          .filter((other) => other.id !== card.id && isSong(other) && other.cost <= singerValue)
+          .map((song): SynergyMatch => {
+            const diff = singerValue - song.cost;
+            const score = diff === 0 ? 8 : diff === 1 ? 7 : diff === 2 ? 6 : 5;
+
+            return {
+              card: song,
+              score,
+              explanation: `${card.fullName} (Singer ${singerValue}) can sing ${song.fullName} (cost ${song.cost}) for free`,
+              bidirectional: true,
+            };
+          });
+      }
+
+      // Reverse: Song finds Singers that can sing it
+      return allCards
+        .filter((other) => {
+          if (other.id === card.id) return false;
+          if (!hasKeyword(other, 'Singer')) return false;
+          const singerValue = getKeywordValue(other, 'Singer') ?? other.cost;
+          return card.cost <= singerValue;
+        })
+        .map((singer): SynergyMatch => {
+          const singerValue = getKeywordValue(singer, 'Singer') ?? singer.cost;
+          const diff = singerValue - card.cost;
+          const score = diff === 0 ? 8 : diff === 1 ? 7 : diff === 2 ? 6 : 5;
+
+          return {
+            card: singer,
+            score,
+            explanation: `${singer.fullName} (Singer ${singerValue}) can sing ${card.fullName} (cost ${card.cost}) for free`,
+            bidirectional: true,
+          };
+        });
     },
   },
 ];

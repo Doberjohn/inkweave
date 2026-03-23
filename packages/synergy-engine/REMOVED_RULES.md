@@ -6,7 +6,7 @@ Rules removed to simplify the engine. Full implementations preserved here for fu
 
 | ID               | Name                        | Type           | Description                                                        |
 |------------------|-----------------------------|----------------|--------------------------------------------------------------------|
-| singer-songs     | Singer + Songs              | keyword        | Singer characters play Songs for free when cost fits Singer value  |
+| ~~singer-songs~~ | ~~Singer + Songs~~          | ~~keyword~~    | **Re-implemented** in `rules.ts` as Rule 5 with numeric scoring and bidirectional matching |
 | evasive-quest    | Evasive + Quest Triggers    | keyword        | Evasive characters safely trigger "when quests" abilities          |
 | princess-tribal  | Princess Synergies          | classification | Princess characters + cards referencing "Princess character"       |
 | villain-tribal   | Villain Synergies           | classification | Villain characters + cards referencing "Villain character"         |

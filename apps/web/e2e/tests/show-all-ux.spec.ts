@@ -69,12 +69,14 @@ test.describe('Show All UX — Mobile', () => {
     await expect(backButton).toBeInViewport({timeout: 3000});
   });
 
-  test('should show all direct group cards inline without truncation on mobile', async ({page}) => {
+  test('should truncate direct group at mobile cap and show more tile', async ({page}) => {
+    // Card 2586 has 8 shift-targets — mobile cap is 5, so truncation applies
     const shiftGroup = page.locator('[data-group-key="shift-targets"]');
     await expect(shiftGroup).toBeVisible();
 
-    // No "+N more" tile in direct groups
+    // "+N more" tile should appear since 8 > 5 mobile cap
     const moreTile = shiftGroup.locator('[data-testid="more-tile"]');
-    await expect(moreTile).toHaveCount(0);
+    await expect(moreTile).toBeVisible();
+    await expect(moreTile).toContainText('3');
   });
 });

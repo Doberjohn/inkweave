@@ -225,7 +225,7 @@ export function MobileCardDetail({
                 key={group.groupKey}
                 group={group}
                 isMobile
-                maxVisibleCards={group.category === 'direct' ? Infinity : 5}
+                maxVisibleCards={5}
                 onShowAll={handleShowAll}
                 onCardClick={onSynergyCardClick}
               />
