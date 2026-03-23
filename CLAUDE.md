@@ -91,7 +91,7 @@ Claude Code hooks, skills, and agents enforce workflow rules automatically. Chec
 |------|-------|-------------|
 | `git-write-protection.sh` | PreToolUse/Bash | Soft-blocks commit/push (`USER_APPROVED=1` bypass), hard-blocks destructive ops |
 | `branch-verification.sh` | PreToolUse/Edit\|Write | Blocks source file edits on master/main |
-| `engine-auto-rebuild.sh` | PostToolUse/Edit\|Write | Auto `pnpm build:engine` after engine file edits |
+| `engine-auto-rebuild.sh` | PostToolUse/Edit\|Write | Auto `pnpm build:engine` + `pnpm precompute-synergies` after engine file edits |
 | Husky pre-push | git push | Runs E2E chromium before push |
 
 ### Skills (`.claude/skills/`)
@@ -182,7 +182,7 @@ Cards that force opponents to discard from hand (enablers) synergize with each o
 
 ### Rule 5: Singer + Songs (direct, bidirectional)
 
-Characters with the Singer keyword can exert to play Song action cards for free, provided the Song's cost is within the Singer's threshold. Both directions matched: Singers find compatible Songs, Songs find Singers that can play them.
+Characters with the Singer keyword can exert to sing Song action cards for free, provided the Song's cost is within the Singer's threshold. Both directions matched: Singers find compatible Songs, Songs find Singers that can sing them.
 
 **Detection**: Singers via `hasKeyword(card, 'Singer')`, Songs via `isSong(card)` (Action type + Song subtype/text). Cost gate: `song.cost <= singerValue`.
 
@@ -195,9 +195,11 @@ Characters with the Singer keyword can exert to play Song action cards for free,
 | Song cost = Singer value - 2 | 6 | Good savings, slight waste |
 | Song cost ≤ Singer value - 3 | 5 | Functional but inefficient |
 
-**Explanation template**: "{singerName} (Singer {value}) can play {songName} (cost {songCost}) for free"
+**Explanation template**: "{singerName} (Singer {value}) can sing {songName} (cost {songCost}) for free"
 
 **Coverage**: 16 Singers (mostly Amber/Ruby), 72 Songs (all inks), 872 valid pairs.
+
+**Full documentation**: See [`packages/synergy-engine/SINGER_SONGS_RULE.md`](packages/synergy-engine/SINGER_SONGS_RULE.md) for detection details, bidirectional matching, scoring logic, and test coverage.
 
 ### Location Control (playstyle, 8 sub-rules)
 
@@ -265,9 +267,9 @@ Dark fantasy theme inspired by Lorcana:
 - `test/` - Test additions/improvements
 
 ### Engine Rebuilds (automated)
-- **`engine-auto-rebuild` hook** automatically runs `pnpm build:engine` after editing any file in `packages/synergy-engine/src/`. No manual rebuild needed.
-- After rule/scoring changes, also run `pnpm precompute-synergies` to regenerate static synergy JSON. The `engine-validator` agent handles this as part of `/commit-and-push` when engine files are in the diff.
-- The Vite dev server auto-detects stale data on startup (via `ensureSynergiesPlugin`), but mid-session changes require a manual re-run.
+- **`engine-auto-rebuild` hook** automatically runs `pnpm build:engine` + `pnpm precompute-synergies` after editing any file in `packages/synergy-engine/src/`. No manual rebuild or precompute needed — the web app sees fresh data automatically.
+- The `engine-validator` agent also runs build + precompute + audit as part of `/commit-and-push` when engine files are in the diff.
+- The Vite dev server auto-detects stale data on startup (via `ensureSynergiesPlugin`).
 
 ### Synergy Rule Documentation
 - When modifying rule logic, scoring, or explanations in the engine, always update the **Synergy Rules** section in this file to match. This includes score tables, condition matchers, explanation templates, and display tier definitions.

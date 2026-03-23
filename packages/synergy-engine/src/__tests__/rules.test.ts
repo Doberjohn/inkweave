@@ -999,8 +999,8 @@ describe('Card Helper Functions', () => {
       });
 
       const synergies = singerRule.findSynergies(singer, [singer, cheapSong, expensiveSong]);
-      expect(synergies.find((s) => s.card.id === 'song-cheap')).toBeDefined();
-      expect(synergies.find((s) => s.card.id === 'song-expensive')).toBeUndefined();
+      expect(synergies).toHaveLength(1);
+      expect(synergies[0].card.id).toBe('song-cheap');
     });
 
     it('should score 8 when song cost equals Singer value (perfect fit)', () => {
@@ -1127,9 +1127,9 @@ describe('Card Helper Functions', () => {
       });
 
       const synergies = singerRule.findSynergies(song, [song, singer, weakSinger]);
-      // Gazelle (Singer 5) can play cost-4 song, Angel (Singer 3) cannot
-      expect(synergies.find((s) => s.card.id === 'singer-1')).toBeDefined();
-      expect(synergies.find((s) => s.card.id === 'singer-2')).toBeUndefined();
+      // Gazelle (Singer 5) can sing cost-4 song, Angel (Singer 3) cannot
+      expect(synergies).toHaveLength(1);
+      expect(synergies[0].card.id).toBe('singer-1');
     });
 
     it('should not match non-Action cards even if text contains song', () => {
@@ -1150,6 +1150,98 @@ describe('Card Helper Functions', () => {
 
       const synergies = singerRule.findSynergies(singer, [singer, notASong]);
       expect(synergies).toHaveLength(0);
+    });
+
+    it('should score identically in both directions (reverse scoring symmetry)', () => {
+      const singer = createCard({
+        id: 'singer-1',
+        name: 'Gazelle',
+        fullName: 'Gazelle - Pop Star',
+        keywords: ['Singer 5'],
+      });
+      const song = createCard({
+        id: 'song-1',
+        name: 'Try Everything',
+        fullName: 'Try Everything',
+        type: 'Action',
+        cost: 3,
+        text: 'A song card',
+      });
+
+      const forwardSynergies = singerRule.findSynergies(singer, [singer, song]);
+      const reverseSynergies = singerRule.findSynergies(song, [song, singer]);
+
+      expect(forwardSynergies).toHaveLength(1);
+      expect(reverseSynergies).toHaveLength(1);
+      expect(forwardSynergies[0].score).toBe(reverseSynergies[0].score);
+      expect(forwardSynergies[0].score).toBe(6); // diff of 2
+    });
+
+    it('should detect Songs via classifications (not just text)', () => {
+      const singer = createCard({
+        id: 'singer-1',
+        name: 'Ariel',
+        fullName: 'Ariel - Singing Mermaid',
+        keywords: ['Singer 5'],
+      });
+      const song = createCard({
+        id: 'song-1',
+        name: 'Be Our Guest',
+        fullName: 'Be Our Guest',
+        type: 'Action',
+        cost: 5,
+        classifications: ['Song'],
+        text: 'Deal 2 damage to chosen character.',
+      });
+
+      const synergies = singerRule.findSynergies(singer, [singer, song]);
+      expect(synergies).toHaveLength(1);
+      expect(synergies[0].score).toBe(8);
+    });
+
+    it('should fall back to card cost when Singer keyword has no numeric value', () => {
+      const singer = createCard({
+        id: 'singer-1',
+        name: 'Ariel',
+        fullName: 'Ariel - Singing Mermaid',
+        cost: 4,
+        keywords: ['Singer'],
+      });
+      const song = createCard({
+        id: 'song-1',
+        name: 'Be Our Guest',
+        fullName: 'Be Our Guest',
+        type: 'Action',
+        cost: 4,
+        text: 'A song card',
+      });
+
+      const synergies = singerRule.findSynergies(singer, [singer, song]);
+      expect(synergies).toHaveLength(1);
+      expect(synergies[0].score).toBe(8); // falls back to card.cost=4, diff=0
+    });
+
+    it('should include singer name, cost, and "can sing" in explanation', () => {
+      const singer = createCard({
+        id: 'singer-1',
+        name: 'Gazelle',
+        fullName: 'Gazelle - Pop Star',
+        keywords: ['Singer 5'],
+      });
+      const song = createCard({
+        id: 'song-1',
+        name: 'Try Everything',
+        fullName: 'Try Everything',
+        type: 'Action',
+        cost: 4,
+        text: 'A song card',
+      });
+
+      const synergies = singerRule.findSynergies(singer, [singer, song]);
+      expect(synergies[0].explanation).toContain('Gazelle - Pop Star');
+      expect(synergies[0].explanation).toContain('can sing');
+      expect(synergies[0].explanation).toContain('Try Everything');
+      expect(synergies[0].explanation).toContain('cost 4');
     });
   });
 

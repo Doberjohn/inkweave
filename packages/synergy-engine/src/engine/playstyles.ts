@@ -36,7 +36,7 @@ const playstyles: Playstyle[] = [
       'Repeatable enablers (quest triggers) outperform one-shot effects since they pressure every turn.',
       'Maintain your own hand size with card draw so you stay ahead on cards while forcing discards.',
       'Hand-cap effects shine in the late game when opponents naturally have fewer cards to work with.',
-      'Timing matters — discard effects are strongest in the early game before your opponent can deploy their hand.',
+      'Timing matters — discard effects are most punishing when your opponent is down to their last 1-2 cards, which are usually the ones they fought hardest to keep.',
     ],
   },
 ];

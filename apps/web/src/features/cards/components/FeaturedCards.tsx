@@ -5,12 +5,12 @@ import {RenderProfiler} from '../../../shared/components';
 
 /** Curated card IDs — one per ink, chosen for visual appeal and synergy variety. */
 const FEATURED_IDS = [
-  '1219', // Amber    — Simba - Pride Protector
-  '1492', // Amethyst — Yzma - Transformed Kitten
-  '2010', // Emerald  — Goofy - Set for Adventure
-  '1319', // Ruby     — Minnie Mouse - Pirate Lookout
-  '1100', // Sapphire — The Queen - Fairest of All
-  '2128', // Steel    — John Silver - Greedy Treasure Seeker
+  '2208', // Amber    — Mowgli - Man Cub
+  '1004', // Amethyst — Elsa - The Fifth Spirit
+  '1543', // Emerald  — Tramp - Enterprising Dog
+  '2046', // Ruby     — Powerline - World's Greatest Rock Star
+  '2626', // Sapphire — Let It Go
+  '2363', // Steel    — The Headless Horseman - Cursed Rider
 ];
 
 const FEATURED_COUNT = FEATURED_IDS.length;

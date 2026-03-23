@@ -38,12 +38,12 @@ function makeCard(ink: string, id: string, name: string): LorcanaCard {
 
 // IDs must match FEATURED_IDS in FeaturedCards.tsx
 const mockCards: LorcanaCard[] = [
-  makeCard('Amber', '1219', 'Simba'),
-  makeCard('Amethyst', '1492', 'Yzma'),
-  makeCard('Emerald', '2010', 'Goofy'),
-  makeCard('Ruby', '1319', 'Minnie Mouse'),
-  makeCard('Sapphire', '1100', 'The Queen'),
-  makeCard('Steel', '2128', 'John Silver'),
+  makeCard('Amber', '2208', 'Mowgli'),
+  makeCard('Amethyst', '1004', 'Elsa'),
+  makeCard('Emerald', '1543', 'Tramp'),
+  makeCard('Ruby', '2046', 'Powerline'),
+  makeCard('Sapphire', '2626', 'Let It Go'),
+  makeCard('Steel', '2363', 'The Headless Horseman'),
 ];
 
 describe('FeaturedCards', () => {
@@ -82,8 +82,8 @@ describe('FeaturedCards', () => {
     render(<FeaturedCards cards={shuffled} onCardSelect={vi.fn()} />);
 
     const listItems = screen.getAllByRole('listitem');
-    expect(listItems[0]).toHaveTextContent('Simba');
-    expect(listItems[5]).toHaveTextContent('John Silver');
+    expect(listItems[0]).toHaveTextContent('Mowgli');
+    expect(listItems[5]).toHaveTextContent('The Headless Horseman');
   });
 
   it('should gracefully handle missing featured cards', () => {

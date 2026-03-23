@@ -70,7 +70,7 @@ test.describe('Synergy Groups — Desktop', () => {
   });
 
   test('should truncate playstyle group and show more tile', async ({synergyResultsPage}) => {
-    // Playstyle group (discard) has 34 cards — desktop truncates at 10
+    // Playstyle group (discard) has 34 cards — desktop truncates at 12
     const discardGroup = synergyResultsPage.getSynergyGroupByKey('discard');
     await expect(discardGroup).toBeVisible();
 
@@ -78,12 +78,12 @@ test.describe('Synergy Groups — Desktop', () => {
     const tiles = synergyResultsPage.getGroupCardTiles('discard');
     await expect(tiles.first()).toBeVisible({timeout: 5000});
     const count = await tiles.count();
-    expect(count).toBe(10);
+    expect(count).toBe(12);
 
     // "+N more" tile should be visible with remaining count
     const moreTile = synergyResultsPage.getMoreTile('discard');
     await expect(moreTile).toBeVisible();
-    await expect(moreTile).toContainText('24');
+    await expect(moreTile).toContainText('22');
   });
 
   test('should display group description callout text', async ({synergyResultsPage}) => {

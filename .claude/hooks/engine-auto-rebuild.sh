@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Hook: Auto-rebuild synergy engine after editing source files
+# Hook: Auto-rebuild synergy engine + precompute synergies after editing source files
 # Type: PostToolUse (Edit|Write)
 #
 # Reads the tool input JSON from stdin, checks if the edited file
-# is inside packages/synergy-engine/src/, and triggers pnpm build:engine.
+# is inside packages/synergy-engine/src/, and triggers pnpm build:engine
+# followed by pnpm precompute-synergies so the web app sees fresh data.
 # Always exits 0 (PostToolUse hooks are informational).
 
 INPUT=$(cat)
@@ -25,6 +26,6 @@ FILE_PATH=$(echo "$FILE_PATH" | sed 's|\\|/|g')
 
 # Check if the file is in the synergy engine source directory
 if echo "$FILE_PATH" | grep -q "packages/synergy-engine/src/"; then
-  echo "Engine source changed — rebuilding..." >&2
-  cd "D:/johnn/Projects/inkweave" && pnpm build:engine 2>&1 | tail -3
+  echo "Engine source changed — rebuilding + precomputing..." >&2
+  cd "D:/johnn/Projects/inkweave" && pnpm build:engine 2>&1 | tail -3 && pnpm precompute-synergies 2>&1 | tail -3
 fi

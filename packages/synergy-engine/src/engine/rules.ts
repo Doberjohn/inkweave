@@ -659,7 +659,7 @@ export const synergyRules: SynergyRule[] = [
     id: 'singer-songs',
     name: 'Singer + Songs',
     category: 'direct',
-    description: 'Characters with Singer can exert to play Song cards for free',
+    description: 'Characters with Singer can exert to sing Song cards for free',
 
     matches: (card) => hasKeyword(card, 'Singer') || isSong(card),
 
@@ -677,13 +677,13 @@ export const synergyRules: SynergyRule[] = [
             return {
               card: song,
               score,
-              explanation: `${card.fullName} (Singer ${singerValue}) can play ${song.fullName} (cost ${song.cost}) for free`,
+              explanation: `${card.fullName} (Singer ${singerValue}) can sing ${song.fullName} (cost ${song.cost}) for free`,
               bidirectional: true,
             };
           });
       }
 
-      // Reverse: Song finds Singers that can play it
+      // Reverse: Song finds Singers that can sing it
       return allCards
         .filter((other) => {
           if (other.id === card.id) return false;
@@ -699,7 +699,7 @@ export const synergyRules: SynergyRule[] = [
           return {
             card: singer,
             score,
-            explanation: `${singer.fullName} (Singer ${singerValue}) can play ${card.fullName} (cost ${card.cost}) for free`,
+            explanation: `${singer.fullName} (Singer ${singerValue}) can sing ${card.fullName} (cost ${card.cost}) for free`,
             bidirectional: true,
           };
         });
