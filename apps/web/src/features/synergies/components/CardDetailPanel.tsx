@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import {Link} from 'react-router-dom';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup} from '../types';
 import {getDominantScore, getStrengthTier} from '../utils';
@@ -22,6 +23,7 @@ export function CardDetailPanel({
 }: CardDetailPanelProps) {
   const hasSynergies = synergies && synergies.length > 0;
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
+  const [nameHovered, setNameHovered] = useState(false);
 
   return (
     <article
@@ -64,7 +66,19 @@ export function CardDetailPanel({
             margin: 0,
             lineHeight: 1.2,
           }}>
-          {card.name}
+          <Link
+            to={`/browse?q=${encodeURIComponent(card.name)}`}
+            style={{
+              color: nameHovered ? COLORS.primary500 : 'inherit',
+              textDecoration: nameHovered ? 'underline' : 'none',
+              textDecorationColor: nameHovered ? COLORS.primary500 : undefined,
+              textUnderlineOffset: '3px',
+              transition: 'color 0.15s',
+            }}
+            onMouseEnter={() => setNameHovered(true)}
+            onMouseLeave={() => setNameHovered(false)}>
+            {card.name}
+          </Link>
         </h1>
         {card.version && (
           <div
