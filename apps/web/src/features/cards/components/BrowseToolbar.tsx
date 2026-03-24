@@ -6,6 +6,7 @@ import {BROWSE_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, SPACING} from '../../../
 import {Chip} from '../../../shared/components/Chip';
 import {FiltersButton} from '../../../shared/components/FiltersButton';
 import {InkFilterGroup} from '../../../shared/components/InkFilterGroup';
+import {InkwellFilterGroup} from '../../../shared/components/InkwellFilterGroup';
 import {SortSelect} from '../../../shared/components/SortSelect';
 import type {ChipData} from '../../../shared/types';
 
@@ -76,6 +77,12 @@ export function BrowseToolbar({
       label: `Set ${filters.setCode}`,
       onDismiss: () => onFiltersChange({...filters, setCode: undefined}),
     });
+  if (filters.inkwell)
+    chips.push({
+      id: `inkwell:${filters.inkwell}`,
+      label: filters.inkwell === 'inkable' ? 'Inkable' : 'Uninkable',
+      onDismiss: () => onFiltersChange({...filters, inkwell: undefined}),
+    });
 
   const hasChips = chips.length > 0;
 
@@ -134,6 +141,12 @@ export function BrowseToolbar({
 
       {/* Right side: ink filters (desktop) + sort */}
       <div style={{marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10}}>
+        {!isMobile && (
+          <InkwellFilterGroup
+            activeValue={filters.inkwell}
+            onToggle={(v) => onFiltersChange({...filters, inkwell: v})}
+          />
+        )}
         {!isMobile && <InkFilterGroup inkFilters={inkFilters} onToggleInk={onToggleInk} />}
         <SortSelect
           options={BROWSE_SORT_OPTIONS}

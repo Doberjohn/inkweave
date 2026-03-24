@@ -10,7 +10,7 @@ const INKWELL_OPTIONS: {value: InkwellValue; label: string}[] = [
 
 interface InkwellFilterGroupProps {
   activeValue: InkwellValue | undefined;
-  onToggle: (value: InkwellValue) => void;
+  onToggle: (value: InkwellValue | undefined) => void;
   size?: 'sm' | 'md';
   iconSize?: number;
   style?: React.CSSProperties;
@@ -24,11 +24,8 @@ export function InkwellFilterGroup({
   iconSize = 32,
   style,
 }: InkwellFilterGroupProps) {
-  // TODO(human): Implement the handleClick function
-  // This determines what happens when a user clicks an inkwell filter button.
-  // The `activeValue` can be undefined (no filter), 'inkable', or 'uninkable'.
   const handleClick = (value: InkwellValue) => {
-    onToggle(value);
+    onToggle(activeValue === value ? undefined : value);
   };
 
   return (

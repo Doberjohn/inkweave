@@ -6,6 +6,7 @@ import {CostIcon} from './CostIcon';
 import {FilterButton} from './FilterButton';
 import {FilterSection} from './FilterSection';
 import {InkFilterGroup} from './InkFilterGroup';
+import {InkwellFilterGroup} from './InkwellFilterGroup';
 
 /** Shared props for FilterModal (desktop) and FilterDrawer (mobile). */
 export interface FilterPanelProps {
@@ -74,6 +75,20 @@ export function FilterContent({
 
   return (
     <>
+      {/* Inkwell Filter */}
+      <FilterSection label="Inkwell">
+        <InkwellFilterGroup
+          activeValue={filters.inkwell}
+          onToggle={(v) => onFiltersChange({...filters, inkwell: v})}
+          size={isDesktop ? 'md' : 'sm'}
+          iconSize={isDesktop ? 36 : 30}
+          style={{
+            flexWrap: isDesktop ? 'wrap' : 'nowrap',
+            justifyContent: 'space-evenly',
+          }}
+        />
+      </FilterSection>
+
       {/* Ink Filter */}
       <FilterSection label={isDesktop ? 'Ink Color' : 'Ink'}>
         <InkFilterGroup
