@@ -168,6 +168,7 @@ export interface CardFilterOptions {
   classifications?: string[];
   textSearch?: string;
   setCode?: string;
+  inkwell?: 'inkable' | 'uninkable';
 }
 
 /**
@@ -222,6 +223,12 @@ export function filterCards(cards: LorcanaCard[], options: CardFilterOptions): L
         card.classifications!.some((cc) => cc.toLowerCase() === c.toLowerCase()),
       );
       if (!hasClass) return false;
+    }
+
+    // Inkwell filter
+    if (options.inkwell) {
+      if (options.inkwell === 'inkable' && !card.inkwell) return false;
+      if (options.inkwell === 'uninkable' && card.inkwell) return false;
     }
 
     // Text search

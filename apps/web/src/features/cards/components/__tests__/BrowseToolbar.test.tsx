@@ -1,5 +1,5 @@
 import {describe, it, expect, vi} from 'vitest';
-import {render, screen, fireEvent} from '@testing-library/react';
+import {render, screen, fireEvent, within} from '@testing-library/react';
 import {BrowseToolbar} from '../BrowseToolbar';
 import type {CardFilterOptions} from '../../loader';
 import type {Ink} from 'inkweave-synergy-engine';
@@ -44,7 +44,8 @@ describe('BrowseToolbar', () => {
   it('shows filter count badge when activeFilterCount > 0', () => {
     render(<BrowseToolbar {...defaultProps({activeFilterCount: 3})} />);
 
-    expect(screen.getByText('3')).toBeInTheDocument();
+    const filtersBtn = screen.getByLabelText('Filters');
+    expect(within(filtersBtn).getByText('3')).toBeInTheDocument();
   });
 
   it('renders ink filter chips on mobile that dismiss on click', () => {
@@ -84,15 +85,31 @@ describe('BrowseToolbar', () => {
     expect(onToggleType).toHaveBeenCalledWith('Character');
   });
 
-  it('renders cost filter chips that dismiss on click', () => {
+  it('renders cost filter chips on mobile that dismiss on click', () => {
     const onToggleCost = vi.fn();
-    render(<BrowseToolbar {...defaultProps({costFilters: [3, 5], onToggleCost})} />);
+    render(
+      <BrowseToolbar {...defaultProps({costFilters: [3, 5], onToggleCost, isMobile: true})} />,
+    );
 
     expect(screen.getByText('Cost 3')).toBeInTheDocument();
     expect(screen.getByText('Cost 5')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Cost 3'));
     expect(onToggleCost).toHaveBeenCalledWith(3);
+  });
+
+  it('does not render cost/inkwell chips on desktop (inline icons instead)', () => {
+    render(
+      <BrowseToolbar
+        {...defaultProps({
+          costFilters: [3],
+          filters: {inkwell: 'inkable'} as CardFilterOptions,
+        })}
+      />,
+    );
+
+    expect(screen.queryByText('Cost 3')).not.toBeInTheDocument();
+    expect(screen.queryByText('Inkable')).not.toBeInTheDocument();
   });
 
   it('shows Clear all button when chips are present', () => {

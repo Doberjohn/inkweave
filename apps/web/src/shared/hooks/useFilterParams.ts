@@ -4,6 +4,7 @@ import type {Ink} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards/loader';
 import type {CardTypeFilter, BrowseSortOrder} from '../constants';
 import {BROWSE_SORT_OPTIONS} from '../constants';
+import type {InkwellValue} from '../components/InkwellIcon';
 
 const VALID_INKS = new Set<string>(['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel']);
 const VALID_TYPES = new Set<string>(['Character', 'Action', 'Song', 'Item', 'Location']);
@@ -14,6 +15,12 @@ function isValidInk(value: string): value is Ink {
 
 function isValidType(value: string): value is CardTypeFilter {
   return VALID_TYPES.has(value);
+}
+
+const VALID_INKWELL = new Set<string>(['inkable', 'uninkable']);
+
+function isValidInkwell(value: string): value is InkwellValue {
+  return VALID_INKWELL.has(value);
 }
 
 const VALID_COSTS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]);
@@ -35,14 +42,16 @@ function setOrDelete(params: URLSearchParams, key: string, value: string): void 
   else params.delete(key);
 }
 
-/** Serialize CardFilterOptions into URL params (keyword, classification, set). */
+/** Serialize CardFilterOptions into URL params (keyword, classification, set, inkwell). */
 function serializeFilterOptions(params: URLSearchParams, opts: CardFilterOptions): void {
   params.delete('keyword');
   params.delete('classification');
   params.delete('set');
+  params.delete('inkwell');
   if (opts.keywords?.length) params.set('keyword', opts.keywords[0]);
   if (opts.classifications?.length) params.set('classification', opts.classifications[0]);
   if (opts.setCode) params.set('set', opts.setCode);
+  if (opts.inkwell) params.set('inkwell', opts.inkwell);
 }
 
 /** Parse comma-separated values from a URL param, filtering by validator */
@@ -97,6 +106,8 @@ export function useFilterParams(): UseFilterParamsReturn {
     if (classification) f.classifications = [classification];
     const set = searchParams.get('set');
     if (set) f.setCode = set;
+    const inkwell = searchParams.get('inkwell');
+    if (inkwell && isValidInkwell(inkwell)) f.inkwell = inkwell;
     return f;
   })();
 
@@ -109,7 +120,7 @@ export function useFilterParams(): UseFilterParamsReturn {
     inkFilters.length +
     typeFilters.length +
     costFilters.length +
-    [filters.keywords?.length, filters.classifications?.length, filters.setCode].filter(Boolean)
+    [filters.keywords?.length, filters.classifications?.length, filters.setCode, filters.inkwell].filter(Boolean)
       .length;
 
   // Mark all filter/sort updates as non-urgent so filter buttons stay responsive

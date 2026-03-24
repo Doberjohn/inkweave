@@ -5,6 +5,7 @@ export {CardTextBlock} from './CardTextBlock';
 export {CardLightbox} from './CardLightbox';
 export {CollapsibleSection} from './CollapsibleSection';
 export {CompactHeader} from './CompactHeader';
+export {CostFilterGroup} from './CostFilterGroup';
 export {CostIcon} from './CostIcon';
 export {CountBadge} from './CountBadge';
 export {CtaButton} from './CtaButton';
