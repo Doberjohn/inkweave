@@ -36,7 +36,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
     expect(screen.getByRole('heading', {name: /filters/i})).toBeInTheDocument();
   });
 
-  it('should render all ink filter buttons', () => {
+  it.skipIf(variant === 'modal')('should render all ink filter buttons', () => {
     render(<FilterDialog {...defaultProps} variant={variant} />);
 
     for (const ink of ['amber', 'amethyst', 'emerald', 'ruby', 'sapphire', 'steel']) {
@@ -52,7 +52,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
     }
   });
 
-  it('should toggle ink in draft state without calling onApply', () => {
+  it.skipIf(variant === 'modal')('should toggle ink in draft state without calling onApply', () => {
     render(<FilterDialog {...defaultProps} variant={variant} />);
 
     fireEvent.click(screen.getByRole('button', {name: /amber/i}));
@@ -65,11 +65,18 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
     const onApply = vi.fn();
     render(<FilterDialog {...defaultProps} variant={variant} onApply={onApply} />);
 
-    fireEvent.click(screen.getByRole('button', {name: /amber/i}));
+    // Modal doesn't show ink buttons (they're inline in toolbar), so only toggle type
+    if (variant === 'drawer') {
+      fireEvent.click(screen.getByRole('button', {name: /amber/i}));
+    }
     fireEvent.click(screen.getByRole('button', {name: /character/i}));
     fireEvent.click(screen.getByRole('button', {name: /apply/i}));
 
-    expect(onApply).toHaveBeenCalledWith(['Amber'], ['Character'], [], {});
+    if (variant === 'drawer') {
+      expect(onApply).toHaveBeenCalledWith(['Amber'], ['Character'], [], {});
+    } else {
+      expect(onApply).toHaveBeenCalledWith([], ['Character'], [], {});
+    }
   });
 
   it('should call onClose when clicking Apply button', () => {
@@ -105,13 +112,36 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
   });
 
   it('should clear draft state when clicking Clear all', () => {
-    render(<FilterDialog {...defaultProps} variant={variant} inkFilters={['Amber']} />);
+    render(
+      <FilterDialog
+        {...defaultProps}
+        variant={variant}
+        inkFilters={['Amber']}
+        typeFilters={['Character']}
+      />,
+    );
 
-    expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'true');
+    // Modal doesn't show ink buttons; verify via type button instead
+    if (variant === 'drawer') {
+      expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'true');
+    }
+    expect(screen.getByRole('button', {name: /character/i})).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
 
     fireEvent.click(screen.getByRole('button', {name: /clear all/i}));
 
-    expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'false');
+    if (variant === 'drawer') {
+      expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute(
+        'aria-pressed',
+        'false',
+      );
+    }
+    expect(screen.getByRole('button', {name: /character/i})).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
   });
 
   it('should show active filter count in title', () => {
@@ -127,7 +157,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
     expect(screen.getByText(/filters \(2\)/i)).toBeInTheDocument();
   });
 
-  it('should mark current ink as active from draft state', () => {
+  it.skipIf(variant === 'modal')('should mark current ink as active from draft state', () => {
     render(<FilterDialog {...defaultProps} variant={variant} inkFilters={['Ruby']} />);
 
     expect(screen.getByRole('button', {name: /ruby/i})).toHaveAttribute('aria-pressed', 'true');

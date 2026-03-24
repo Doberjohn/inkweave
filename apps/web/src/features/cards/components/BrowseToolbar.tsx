@@ -142,9 +142,20 @@ export function BrowseToolbar({
 
       {/* Right side: ink filters (desktop) + sort */}
       <div style={{marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10}}>
-        {!isMobile && <InkFilterGroup inkFilters={inkFilters} onToggleInk={onToggleInk} />}
         {!isMobile && (
           <>
+            <InkFilterGroup inkFilters={inkFilters} onToggleInk={onToggleInk} />
+            <div
+              aria-hidden="true"
+              style={{
+                width: 1,
+                height: 24,
+                backgroundColor: COLORS.primary500,
+                opacity: 0.2,
+                flexShrink: 0,
+              }}
+            />
+            <CostFilterGroup costFilters={costFilters} onToggleCost={onToggleCost} />
             <div
               aria-hidden="true"
               style={{
@@ -159,17 +170,6 @@ export function BrowseToolbar({
               activeValue={filters.inkwell}
               onToggle={(v) => onFiltersChange({...filters, inkwell: v})}
             />
-            <div
-              aria-hidden="true"
-              style={{
-                width: 1,
-                height: 24,
-                backgroundColor: COLORS.primary500,
-                opacity: 0.2,
-                flexShrink: 0,
-              }}
-            />
-            <CostFilterGroup costFilters={costFilters} onToggleCost={onToggleCost} />
           </>
         )}
         <SortSelect
