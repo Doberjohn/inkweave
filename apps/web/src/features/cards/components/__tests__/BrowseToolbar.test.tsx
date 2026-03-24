@@ -85,15 +85,31 @@ describe('BrowseToolbar', () => {
     expect(onToggleType).toHaveBeenCalledWith('Character');
   });
 
-  it('renders cost filter chips that dismiss on click', () => {
+  it('renders cost filter chips on mobile that dismiss on click', () => {
     const onToggleCost = vi.fn();
-    render(<BrowseToolbar {...defaultProps({costFilters: [3, 5], onToggleCost})} />);
+    render(
+      <BrowseToolbar {...defaultProps({costFilters: [3, 5], onToggleCost, isMobile: true})} />,
+    );
 
     expect(screen.getByText('Cost 3')).toBeInTheDocument();
     expect(screen.getByText('Cost 5')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Cost 3'));
     expect(onToggleCost).toHaveBeenCalledWith(3);
+  });
+
+  it('does not render cost/inkwell chips on desktop (inline icons instead)', () => {
+    render(
+      <BrowseToolbar
+        {...defaultProps({
+          costFilters: [3],
+          filters: {inkwell: 'inkable'} as CardFilterOptions,
+        })}
+      />,
+    );
+
+    expect(screen.queryByText('Cost 3')).not.toBeInTheDocument();
+    expect(screen.queryByText('Inkable')).not.toBeInTheDocument();
   });
 
   it('shows Clear all button when chips are present', () => {

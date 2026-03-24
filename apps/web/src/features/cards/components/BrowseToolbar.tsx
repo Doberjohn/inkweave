@@ -50,16 +50,22 @@ export function BrowseToolbar({
   const [clearHover, setClearHover] = useState(false);
 
   // Build active filter chips from all filter sources
-  // Desktop shows ink icons inline, so skip ink chips there
+  // Desktop shows ink/cost/inkwell icons inline in toolbar, so skip chips for those
   const chips: ChipData[] = [];
   if (isMobile) {
     for (const ink of inkFilters)
       chips.push({id: `ink:${ink}`, label: ink, onDismiss: () => onToggleInk(ink)});
+    for (const cost of costFilters)
+      chips.push({id: `cost:${cost}`, label: `Cost ${cost}`, onDismiss: () => onToggleCost(cost)});
+    if (filters.inkwell)
+      chips.push({
+        id: `inkwell:${filters.inkwell}`,
+        label: filters.inkwell === 'inkable' ? 'Inkable' : 'Uninkable',
+        onDismiss: () => onFiltersChange({...filters, inkwell: undefined}),
+      });
   }
   for (const type of typeFilters)
     chips.push({id: `type:${type}`, label: type, onDismiss: () => onToggleType(type)});
-  for (const cost of costFilters)
-    chips.push({id: `cost:${cost}`, label: `Cost ${cost}`, onDismiss: () => onToggleCost(cost)});
   if (filters.keywords?.length)
     chips.push({
       id: `keyword:${filters.keywords[0]}`,
@@ -77,12 +83,6 @@ export function BrowseToolbar({
       id: `set:${filters.setCode}`,
       label: `Set ${filters.setCode}`,
       onDismiss: () => onFiltersChange({...filters, setCode: undefined}),
-    });
-  if (filters.inkwell)
-    chips.push({
-      id: `inkwell:${filters.inkwell}`,
-      label: filters.inkwell === 'inkable' ? 'Inkable' : 'Uninkable',
-      onDismiss: () => onFiltersChange({...filters, inkwell: undefined}),
     });
 
   const hasChips = chips.length > 0;
