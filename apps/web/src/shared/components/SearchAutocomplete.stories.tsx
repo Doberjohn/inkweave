@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {CardPreviewProvider} from '../../features/cards/components/CardPreviewContext';
+import {CardPreviewProvider} from '../../features/cards/components/CardPreviewProvider';
 import {SearchAutocomplete} from './SearchAutocomplete';
 
 const card = (id: string, name: string, setCode: string): LorcanaCard =>

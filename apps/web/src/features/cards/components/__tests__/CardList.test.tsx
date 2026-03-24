@@ -1,7 +1,7 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {CardList} from '../CardList';
-import {CardPreviewProvider} from '../CardPreviewContext';
+import {CardPreviewProvider} from '../CardPreviewProvider';
 import {createCard} from '../../../../shared/test-utils';
 import type {LorcanaCard} from '../../types';
 import type {CardFilterOptions} from '../../loader';

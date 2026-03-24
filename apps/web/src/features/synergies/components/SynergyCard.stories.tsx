@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
 import type {LorcanaCard} from '../../cards';
-import {CardPreviewProvider} from '../../cards/components/CardPreviewContext';
+import {CardPreviewProvider} from '../../cards/components/CardPreviewProvider';
 import {SynergyCard} from './SynergyCard';
 
 const mockCard = (ink: string, overrides: Partial<LorcanaCard> = {}): LorcanaCard => ({
