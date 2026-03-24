@@ -17,12 +17,12 @@ interface InkFilterGroupProps {
 export function InkFilterGroup({
   inkFilters,
   onToggleInk,
-  size = 'md',
-  iconSize = 32,
+  size = 'sm',
+  iconSize = 28,
   style,
 }: InkFilterGroupProps) {
   return (
-    <div role="group" aria-label="Ink color filters" style={{display: 'flex', gap: 6, ...style}}>
+    <div role="group" aria-label="Ink color filters" style={{display: 'flex', gap: 4, ...style}}>
       {ALL_INKS.map((ink) => (
         <FilterButton
           key={ink}

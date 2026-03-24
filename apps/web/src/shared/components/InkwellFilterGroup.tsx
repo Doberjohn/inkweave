@@ -20,8 +20,8 @@ interface InkwellFilterGroupProps {
 export function InkwellFilterGroup({
   activeValue,
   onToggle,
-  size = 'md',
-  iconSize = 32,
+  size = 'sm',
+  iconSize = 28,
   style,
 }: InkwellFilterGroupProps) {
   const handleClick = (value: InkwellValue) => {
@@ -29,7 +29,7 @@ export function InkwellFilterGroup({
   };
 
   return (
-    <div role="group" aria-label="Inkwell filters" style={{display: 'flex', gap: 6, ...style}}>
+    <div role="group" aria-label="Inkwell filters" style={{display: 'flex', gap: 4, ...style}}>
       {INKWELL_OPTIONS.map(({value, label}) => (
         <FilterButton
           key={value}
