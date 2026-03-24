@@ -2,13 +2,12 @@ import type {Ink, SetInfo} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards';
 import type {CardTypeFilter} from '../constants';
 import type {InkwellValue} from './InkwellIcon';
-import {ALL_INKS, INK_COLORS, CARD_TYPE_FILTERS, COST_BUTTONS, COLORS, SELECT_STYLE_MD} from '../constants';
+import {CARD_TYPE_FILTERS, COST_BUTTONS, COLORS, SELECT_STYLE_MD} from '../constants';
 import {CostIcon} from './CostIcon';
 import {FilterButton} from './FilterButton';
 import {FilterSection} from './FilterSection';
 import {InkFilterGroup} from './InkFilterGroup';
-import {InkIcon} from './InkIcon';
-import {InkwellFilterGroup} from './InkwellFilterGroup';
+import {InkwellIcon} from './InkwellIcon';
 
 /** Shared props for FilterModal (desktop) and FilterDrawer (mobile). */
 export interface FilterPanelProps {
@@ -77,55 +76,8 @@ export function FilterContent({
 
   return (
     <>
-      {/* === OPTION A: Ink colors + inkwell icons merged in one row === */}
-      <FilterSection label="Option A — Merged row">
-        <div
-          role="group"
-          aria-label="Option A ink and inkwell filters"
-          style={{
-            display: 'flex',
-            gap: 6,
-            alignItems: 'center',
-            flexWrap: isDesktop ? 'wrap' : 'nowrap',
-            justifyContent: 'space-evenly',
-          }}>
-          {ALL_INKS.map((ink) => (
-            <FilterButton
-              key={ink}
-              size={isDesktop ? 'md' : 'sm'}
-              active={inkFilters.includes(ink)}
-              onClick={() => onToggleInk(ink)}
-              activeColor={INK_COLORS[ink].border}
-              activeBgColor={INK_COLORS[ink].bg}
-              inactiveColor="transparent"
-              inactiveTextColor="transparent"
-              aria-label={`Preview ink ${ALL_INKS.indexOf(ink) + 1}`}>
-              <InkIcon ink={ink} size={isDesktop ? 36 : 30} decorative />
-            </FilterButton>
-          ))}
-          {/* Vertical divider */}
-          <div
-            aria-hidden="true"
-            style={{
-              width: 1,
-              height: 28,
-              backgroundColor: COLORS.surfaceBorder,
-              opacity: 0.6,
-              flexShrink: 0,
-              margin: '0 4px',
-            }}
-          />
-          <InkwellFilterGroup
-            activeValue={filters.inkwell}
-            onToggle={(v) => onFiltersChange({...filters, inkwell: v})}
-            size={isDesktop ? 'md' : 'sm'}
-            iconSize={isDesktop ? 36 : 30}
-          />
-        </div>
-      </FilterSection>
-
-      {/* === OPTION B: Text toggle buttons for inkwell === */}
-      <FilterSection label="Option B — Text buttons">
+      {/* Inkwell Filter */}
+      <FilterSection label="Inkwell">
         <div
           role="group"
           aria-label="Inkwell filters"
@@ -148,13 +100,16 @@ export function FilterContent({
               }
               activeColor={COLORS.primary500}
               activeBgColor={COLORS.primary200}>
-              {value === 'inkable' ? 'Inkable' : 'Uninkable'}
+              <span style={{display: 'flex', alignItems: 'center', gap: 6}}>
+                <InkwellIcon value={value} size={18} />
+                {value === 'inkable' ? 'Inkable' : 'Uninkable'}
+              </span>
             </FilterButton>
           ))}
         </div>
       </FilterSection>
 
-      {/* Ink Color (used by Option B — Option A has its own inline) */}
+      {/* Ink Color */}
       <FilterSection label={isDesktop ? 'Ink Color' : 'Ink'}>
         <InkFilterGroup
           inkFilters={inkFilters}
