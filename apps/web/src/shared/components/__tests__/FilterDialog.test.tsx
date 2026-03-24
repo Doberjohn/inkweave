@@ -39,8 +39,10 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
   it('should render all ink filter buttons', () => {
     render(<FilterDialog {...defaultProps} variant={variant} />);
 
+    // Ink buttons appear in both Option A (merged) and standalone Ink Color section
     for (const ink of ['amber', 'amethyst', 'emerald', 'ruby', 'sapphire', 'steel']) {
-      expect(screen.getByRole('button', {name: new RegExp(ink, 'i')})).toBeInTheDocument();
+      const buttons = screen.getAllByRole('button', {name: new RegExp(ink, 'i')});
+      expect(buttons.length).toBeGreaterThanOrEqual(1);
     }
   });
 
@@ -55,17 +57,21 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
   it('should toggle ink in draft state without calling onApply', () => {
     render(<FilterDialog {...defaultProps} variant={variant} />);
 
-    fireEvent.click(screen.getByRole('button', {name: /amber/i}));
+    // Use last Amber button (standalone Ink Color section)
+    const amberButtons = screen.getAllByRole('button', {name: /amber/i});
+    const amber = amberButtons[amberButtons.length - 1];
+    fireEvent.click(amber);
 
     expect(defaultProps.onApply).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'true');
+    expect(amber).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('should call onApply with draft state when clicking Apply button', () => {
     const onApply = vi.fn();
     render(<FilterDialog {...defaultProps} variant={variant} onApply={onApply} />);
 
-    fireEvent.click(screen.getByRole('button', {name: /amber/i}));
+    const amberButtons = screen.getAllByRole('button', {name: /amber/i});
+    fireEvent.click(amberButtons[amberButtons.length - 1]);
     fireEvent.click(screen.getByRole('button', {name: /character/i}));
     fireEvent.click(screen.getByRole('button', {name: /apply/i}));
 
@@ -107,11 +113,13 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
   it('should clear draft state when clicking Clear all', () => {
     render(<FilterDialog {...defaultProps} variant={variant} inkFilters={['Amber']} />);
 
-    expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'true');
+    const amberButtons = screen.getAllByRole('button', {name: /amber/i});
+    const amber = amberButtons[amberButtons.length - 1];
+    expect(amber).toHaveAttribute('aria-pressed', 'true');
 
     fireEvent.click(screen.getByRole('button', {name: /clear all/i}));
 
-    expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'false');
+    expect(amber).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('should show active filter count in title', () => {
@@ -130,8 +138,10 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
   it('should mark current ink as active from draft state', () => {
     render(<FilterDialog {...defaultProps} variant={variant} inkFilters={['Ruby']} />);
 
-    expect(screen.getByRole('button', {name: /ruby/i})).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'false');
+    const rubyButtons = screen.getAllByRole('button', {name: /ruby/i});
+    const amberButtons = screen.getAllByRole('button', {name: /amber/i});
+    expect(rubyButtons[rubyButtons.length - 1]).toHaveAttribute('aria-pressed', 'true');
+    expect(amberButtons[amberButtons.length - 1]).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('should toggle type in draft state', () => {
