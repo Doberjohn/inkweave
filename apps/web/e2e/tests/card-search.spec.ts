@@ -37,11 +37,11 @@ test.describe('Card Search and Filtering', () => {
     await page.getByRole('button', {name: /Filters/}).click();
     await page.waitForTimeout(200);
 
-    // Filter modal should be visible with ink options (scoped to modal to avoid toolbar duplicates)
+    // Filter modal should be visible with card type options (ink/cost/inkwell are inline on desktop)
     const modal = page.getByTestId('filter-modal');
     await expect(modal).toBeVisible();
-    await expect(modal.getByRole('button', {name: 'Filter by Amber'})).toBeVisible();
-    await expect(modal.getByRole('button', {name: 'Filter by Sapphire'})).toBeVisible();
+    await expect(modal.getByRole('button', {name: 'Character'})).toBeVisible();
+    await expect(modal.getByRole('button', {name: 'Action'})).toBeVisible();
   });
 
   test('should deep link to browse with ink filter in URL', async ({page}) => {
