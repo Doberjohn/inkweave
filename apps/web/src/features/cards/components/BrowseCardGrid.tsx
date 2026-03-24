@@ -3,7 +3,8 @@ import {useVirtualizer, useWindowVirtualizer} from '@tanstack/react-virtual';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from './CardTile';
 import {COLORS, FONT_SIZES, LAYOUT, SPACING} from '../../../shared/constants';
-import {LoadingSpinner, RenderProfiler} from '../../../shared/components';
+import {RenderProfiler} from '../../../shared/components';
+import {CardGridSkeleton} from './CardGridSkeleton';
 import {useContainerWidth} from '../../../shared/hooks/useContainerWidth';
 
 interface BrowseCardGridProps {
@@ -160,11 +161,7 @@ export function BrowseCardGrid({
   };
 
   if (isLoading) {
-    return (
-      <div style={{display: 'flex', justifyContent: 'center', padding: 64}}>
-        <LoadingSpinner />
-      </div>
-    );
+    return <CardGridSkeleton gap={gap} padding={containerPadding} columns={columnsProp} />;
   }
 
   // Wait for container measurement before rendering virtual rows
