@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from '../../cards';
 import {smallImageUrl} from '../../cards';
 import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
@@ -29,6 +30,7 @@ export function SynergyCard({
   const colors = INK_COLORS[card.ink];
   const {previewHandlers} = useCardPreviewHandlers({card});
   const [imgError, setImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const imgSrc = smallImageUrl(card.imageUrl);
@@ -102,19 +104,34 @@ export function SynergyCard({
 
         {/* Card image or fallback */}
         {imgSrc && !imgError ? (
-          <img
-            src={imgSrc}
-            alt={card.fullName}
-            loading="lazy"
-            decoding="async"
-            onError={() => setImgError(true)}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block',
-            }}
-          />
+          <>
+            {!imgLoaded && (
+              <Skeleton
+                width="100%"
+                height="100%"
+                borderRadius={0}
+                baseColor={COLORS.surfaceAlt}
+                highlightColor={COLORS.surfaceHover}
+                style={{position: 'absolute', inset: 0, display: 'block'}}
+              />
+            )}
+            <img
+              src={imgSrc}
+              alt={card.fullName}
+              loading="lazy"
+              decoding="async"
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgError(true)}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block',
+                opacity: imgLoaded ? 1 : 0,
+                transition: 'opacity 0.2s ease',
+              }}
+            />
+          </>
         ) : (
           <div
             style={{

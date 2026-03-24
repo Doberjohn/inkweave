@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from '../types';
 import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {useCardPreviewHandlers} from './useCardPreviewHandlers';
@@ -42,6 +43,7 @@ export function CardTile({
   const colors = INK_COLORS[card.ink];
   const {previewHandlers, hidePreview} = useCardPreviewHandlers({card, onTap: handleClick});
   const [imgError, setImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const imgSrc = useSmall ? smallImageUrl(card.imageUrl) : card.imageUrl;
 
   return (
@@ -82,19 +84,34 @@ export function CardTile({
       }}>
       {/* Card image or fallback */}
       {imgSrc && !imgError ? (
-        <img
-          src={imgSrc}
-          alt={card.fullName || card.name || ''}
-          loading={priority ? 'eager' : 'lazy'}
-          decoding={priority ? 'sync' : 'async'}
-          onError={() => setImgError(true)}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            display: 'block',
-          }}
-        />
+        <>
+          {!imgLoaded && (
+            <Skeleton
+              width="100%"
+              height="100%"
+              borderRadius={0}
+              baseColor={COLORS.surfaceAlt}
+              highlightColor={COLORS.surfaceHover}
+              style={{position: 'absolute', inset: 0, display: 'block'}}
+            />
+          )}
+          <img
+            src={imgSrc}
+            alt={card.fullName || card.name || ''}
+            loading={priority ? 'eager' : 'lazy'}
+            decoding={priority ? 'sync' : 'async'}
+            onLoad={() => setImgLoaded(true)}
+            onError={() => setImgError(true)}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+              opacity: imgLoaded ? 1 : 0,
+              transition: 'opacity 0.2s ease',
+            }}
+          />
+        </>
       ) : (
         <div
           style={{
