@@ -76,138 +76,80 @@ export function FilterContent({
 
   return (
     <>
-      {isDesktop ? (
-        /* Desktop: compound Ink section with Color, Cost, and Inkwell grouped */
-        <FilterSection label="Ink">
-          {/* Color */}
-          <InkFilterGroup
-            inkFilters={inkFilters}
-            onToggleInk={onToggleInk}
-            size="md"
-            iconSize={36}
-            style={{flexWrap: 'wrap'}}
-          />
+      {/* Ink Color */}
+      <FilterSection label={isDesktop ? 'Ink Color' : 'Ink'}>
+        <InkFilterGroup
+          inkFilters={inkFilters}
+          onToggleInk={onToggleInk}
+          size={isDesktop ? 'md' : 'sm'}
+          iconSize={isDesktop ? 36 : 30}
+          style={{
+            flexWrap: isDesktop ? 'wrap' : 'nowrap',
+            justifyContent: 'space-evenly',
+          }}
+        />
+      </FilterSection>
 
-          {/* Cost + Inkwell in one row */}
-          <div style={{display: 'flex', alignItems: 'center', gap: '16px', marginTop: '12px'}}>
-            <div
-              role="group"
-              aria-label="Ink cost filters"
-              style={{display: 'flex', gap: '6px', flexWrap: 'wrap'}}>
-              {COST_BUTTONS.map((cost) => (
-                <FilterButton
-                  key={cost}
-                  size="sm"
-                  active={costFilters.includes(cost)}
-                  onClick={() => onToggleCost(cost)}
-                  activeColor={COLORS.primary}
-                  activeBgColor={COLORS.primary200}
-                  inactiveColor="transparent"
-                  inactiveTextColor="transparent"
-                  aria-label={`Cost ${cost}${cost === 10 ? '+' : ''}`}>
-                  <CostIcon cost={cost} size={34} />
-                </FilterButton>
-              ))}
-            </div>
-
-            <div
-              style={{
-                width: '1px',
-                height: '28px',
-                background: 'rgba(212, 175, 55, 0.15)',
-                flexShrink: 0,
-              }}
-            />
-
-            <div
-              role="group"
-              aria-label="Inkwell filters"
-              style={{display: 'flex', gap: '8px', flexShrink: 0}}>
-              {(['inkable', 'uninkable'] as InkwellValue[]).map((value) => (
-                <FilterButton
-                  key={value}
-                  size="md"
-                  active={filters.inkwell === value}
-                  onClick={() =>
-                    onFiltersChange({
-                      ...filters,
-                      inkwell: filters.inkwell === value ? undefined : value,
-                    })
-                  }
-                  activeColor={COLORS.primary500}
-                  activeBgColor={COLORS.primary200}>
-                  <span style={{display: 'flex', alignItems: 'center', gap: 6}}>
-                    <InkwellIcon value={value} size={18} />
-                    {value === 'inkable' ? 'Inkable' : 'Uninkable'}
-                  </span>
-                </FilterButton>
-              ))}
-            </div>
-          </div>
-        </FilterSection>
-      ) : (
-        /* Mobile: separate sections */
-        <>
-          <FilterSection label="Ink">
-            <InkFilterGroup
-              inkFilters={inkFilters}
-              onToggleInk={onToggleInk}
+      {/* Ink Cost */}
+      <FilterSection label="Ink Cost">
+        <div
+          role="group"
+          aria-label="Ink cost filters"
+          style={{
+            display: 'flex',
+            gap: '6px',
+            flexWrap: 'wrap',
+            ...(isDesktop ? {} : {justifyContent: 'center'}),
+          }}>
+          {COST_BUTTONS.map((cost) => (
+            <FilterButton
+              key={cost}
               size="sm"
-              iconSize={30}
-              style={{flexWrap: 'nowrap', justifyContent: 'space-evenly'}}
-            />
-          </FilterSection>
+              active={costFilters.includes(cost)}
+              onClick={() => onToggleCost(cost)}
+              activeColor={COLORS.primary}
+              activeBgColor={COLORS.primary200}
+              inactiveColor="transparent"
+              inactiveTextColor="transparent"
+              aria-label={`Cost ${cost}${cost === 10 ? '+' : ''}`}>
+              <CostIcon cost={cost} size={34} />
+            </FilterButton>
+          ))}
+        </div>
+      </FilterSection>
 
-          <FilterSection label="Ink Cost">
-            <div
-              role="group"
-              aria-label="Ink cost filters"
-              style={{display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center'}}>
-              {COST_BUTTONS.map((cost) => (
-                <FilterButton
-                  key={cost}
-                  size="sm"
-                  active={costFilters.includes(cost)}
-                  onClick={() => onToggleCost(cost)}
-                  activeColor={COLORS.primary}
-                  activeBgColor={COLORS.primary200}
-                  inactiveColor="transparent"
-                  inactiveTextColor="transparent"
-                  aria-label={`Cost ${cost}${cost === 10 ? '+' : ''}`}>
-                  <CostIcon cost={cost} size={34} />
-                </FilterButton>
-              ))}
-            </div>
-          </FilterSection>
-
-          <FilterSection label="Inkwell">
-            <div
-              role="group"
-              aria-label="Inkwell filters"
-              style={{display: 'flex', flexWrap: 'wrap', justifyContent: 'space-evenly'}}>
-              {(['inkable', 'uninkable'] as InkwellValue[]).map((value) => (
-                <FilterButton
-                  key={value}
-                  size="md"
-                  active={filters.inkwell === value}
-                  onClick={() =>
-                    onFiltersChange({
-                      ...filters,
-                      inkwell: filters.inkwell === value ? undefined : value,
-                    })
-                  }
-                  activeColor={COLORS.primary500}
-                  activeBgColor={COLORS.primary200}>
-                  <span style={{display: 'flex', alignItems: 'center', gap: 6}}>
-                    <InkwellIcon value={value} size={18} />
-                    {value === 'inkable' ? 'Inkable' : 'Uninkable'}
-                  </span>
-                </FilterButton>
-              ))}
-            </div>
-          </FilterSection>
-        </>
-      )}
+      {/* Inkwell Filter */}
+      <FilterSection label="Inkwell">
+        <div
+          role="group"
+          aria-label="Inkwell filters"
+          style={{
+            display: 'flex',
+            gap: isDesktop ? '8px' : undefined,
+            flexWrap: 'wrap',
+            justifyContent: isDesktop ? undefined : 'space-evenly',
+          }}>
+          {(['inkable', 'uninkable'] as InkwellValue[]).map((value) => (
+            <FilterButton
+              key={value}
+              size="md"
+              active={filters.inkwell === value}
+              onClick={() =>
+                onFiltersChange({
+                  ...filters,
+                  inkwell: filters.inkwell === value ? undefined : value,
+                })
+              }
+              activeColor={COLORS.primary500}
+              activeBgColor={COLORS.primary200}>
+              <span style={{display: 'flex', alignItems: 'center', gap: 6}}>
+                <InkwellIcon value={value} size={18} />
+                {value === 'inkable' ? 'Inkable' : 'Uninkable'}
+              </span>
+            </FilterButton>
+          ))}
+        </div>
+      </FilterSection>
 
       {/* Card Type Filter */}
       <FilterSection label={isDesktop ? 'Card Type' : 'Type'}>
@@ -269,7 +211,7 @@ export function FilterContent({
       </FilterSection>
 
       {/* Set */}
-      <FilterSection label="Set" noDivider>
+      <FilterSection label="Set">
         <select
           aria-label="Filter by set"
           value={filters.setCode ?? ''}
