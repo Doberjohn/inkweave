@@ -76,47 +76,22 @@ export function FilterContent({
 
   return (
     <>
-      {/* === OPTION A: Merged into Ink Color section === */}
-      <FilterSection label="Option A — Ink (merged)">
-        <div
-          role="group"
-          aria-label="Ink color and inkwell filters"
+      {/* === OPTION A: Inkwell icons (current style, would merge into Ink row) === */}
+      <FilterSection label="Option A — Inkwell icons">
+        <InkwellFilterGroup
+          activeValue={filters.inkwell}
+          onToggle={(v) => onFiltersChange({...filters, inkwell: v})}
+          size={isDesktop ? 'md' : 'sm'}
+          iconSize={isDesktop ? 36 : 30}
           style={{
-            display: 'flex',
-            gap: 6,
-            alignItems: 'center',
             flexWrap: isDesktop ? 'wrap' : 'nowrap',
             justifyContent: 'space-evenly',
-          }}>
-          <InkFilterGroup
-            inkFilters={inkFilters}
-            onToggleInk={onToggleInk}
-            size={isDesktop ? 'md' : 'sm'}
-            iconSize={isDesktop ? 36 : 30}
-          />
-          {/* Vertical divider */}
-          <div
-            aria-hidden="true"
-            style={{
-              width: 1,
-              height: 28,
-              backgroundColor: COLORS.surfaceBorder,
-              opacity: 0.6,
-              flexShrink: 0,
-              margin: '0 4px',
-            }}
-          />
-          <InkwellFilterGroup
-            activeValue={filters.inkwell}
-            onToggle={(v) => onFiltersChange({...filters, inkwell: v})}
-            size={isDesktop ? 'md' : 'sm'}
-            iconSize={isDesktop ? 36 : 30}
-          />
-        </div>
+          }}
+        />
       </FilterSection>
 
       {/* === OPTION B: Text toggle buttons === */}
-      <FilterSection label="Option B — Inkwell (text buttons)">
+      <FilterSection label="Option B — Text buttons">
         <div
           role="group"
           aria-label="Inkwell filters"
@@ -145,7 +120,7 @@ export function FilterContent({
         </div>
       </FilterSection>
 
-      {/* Ink Filter (standalone — used by Option B) */}
+      {/* Ink Color */}
       <FilterSection label={isDesktop ? 'Ink Color' : 'Ink'}>
         <InkFilterGroup
           inkFilters={inkFilters}
