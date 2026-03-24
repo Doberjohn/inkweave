@@ -1,5 +1,5 @@
 import {describe, it, expect, vi} from 'vitest';
-import {render, screen, fireEvent} from '@testing-library/react';
+import {render, screen, fireEvent, within} from '@testing-library/react';
 import {BrowseToolbar} from '../BrowseToolbar';
 import type {CardFilterOptions} from '../../loader';
 import type {Ink} from 'inkweave-synergy-engine';
@@ -44,7 +44,8 @@ describe('BrowseToolbar', () => {
   it('shows filter count badge when activeFilterCount > 0', () => {
     render(<BrowseToolbar {...defaultProps({activeFilterCount: 3})} />);
 
-    expect(screen.getByText('3')).toBeInTheDocument();
+    const filtersBtn = screen.getByLabelText('Filters');
+    expect(within(filtersBtn).getByText('3')).toBeInTheDocument();
   });
 
   it('renders ink filter chips on mobile that dismiss on click', () => {

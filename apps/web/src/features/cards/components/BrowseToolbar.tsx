@@ -5,6 +5,7 @@ import type {CardTypeFilter, BrowseSortOrder} from '../../../shared/constants';
 import {BROWSE_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
 import {FiltersButton} from '../../../shared/components/FiltersButton';
+import {CostFilterGroup} from '../../../shared/components/CostFilterGroup';
 import {InkFilterGroup} from '../../../shared/components/InkFilterGroup';
 import {InkwellFilterGroup} from '../../../shared/components/InkwellFilterGroup';
 import {SortSelect} from '../../../shared/components/SortSelect';
@@ -149,8 +150,8 @@ export function BrowseToolbar({
               style={{
                 width: 1,
                 height: 24,
-                backgroundColor: COLORS.surfaceBorder,
-                opacity: 0.5,
+                backgroundColor: COLORS.primary500,
+                opacity: 0.2,
                 flexShrink: 0,
               }}
             />
@@ -158,6 +159,17 @@ export function BrowseToolbar({
               activeValue={filters.inkwell}
               onToggle={(v) => onFiltersChange({...filters, inkwell: v})}
             />
+            <div
+              aria-hidden="true"
+              style={{
+                width: 1,
+                height: 24,
+                backgroundColor: COLORS.primary500,
+                opacity: 0.2,
+                flexShrink: 0,
+              }}
+            />
+            <CostFilterGroup costFilters={costFilters} onToggleCost={onToggleCost} />
           </>
         )}
         <SortSelect
