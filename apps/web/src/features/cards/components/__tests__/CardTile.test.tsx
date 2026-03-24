@@ -1,7 +1,7 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {CardTile} from '../CardTile';
-import {CardPreviewProvider} from '../CardPreviewContext';
+import {CardPreviewProvider} from '../CardPreviewProvider';
 import {createCard} from '../../../../shared/test-utils';
 
 // Wrapper to provide required context

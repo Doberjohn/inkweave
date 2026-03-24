@@ -1,24 +1,10 @@
-import {createContext, useEffect, useState, useRef, type ReactNode} from 'react';
+import {useEffect, useState, useRef, type ReactNode} from 'react';
 import type {LorcanaCard} from '../types';
-
-interface CardPreviewState {
-  card: LorcanaCard | null;
-  position: {x: number; y: number};
-  isTouchMode: boolean;
-}
-
-export interface CardPreviewContextValue {
-  previewState: CardPreviewState;
-  showPreview: (card: LorcanaCard, x: number, y: number, isTouchMode?: boolean) => void;
-  updatePosition: (x: number, y: number) => void;
-  hidePreview: () => void;
-}
-
-export const CardPreviewContext = createContext<CardPreviewContextValue | null>(null);
+import {CardPreviewContext} from './CardPreviewContext';
 
 export function CardPreviewProvider({children}: {children: ReactNode}) {
-  const [previewState, setPreviewState] = useState<CardPreviewState>({
-    card: null,
+  const [previewState, setPreviewState] = useState({
+    card: null as LorcanaCard | null,
     position: {x: 0, y: 0},
     isTouchMode: false,
   });

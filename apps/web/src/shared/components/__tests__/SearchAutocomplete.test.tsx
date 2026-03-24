@@ -1,7 +1,7 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen} from '@testing-library/react';
 import {SearchAutocomplete} from '../SearchAutocomplete';
-import {CardPreviewProvider} from '../../../features/cards/components/CardPreviewContext';
+import {CardPreviewProvider} from '../../../features/cards/components/CardPreviewProvider';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 
 const makeCard = (

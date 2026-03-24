@@ -1,6 +1,7 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {render, screen, act} from '@testing-library/react';
-import {CardPreviewProvider, CardPreviewContext} from '../CardPreviewContext';
+import {CardPreviewContext} from '../CardPreviewContext';
+import {CardPreviewProvider} from '../CardPreviewProvider';
 import {useCardPreview} from '../useCardPreview';
 import {useContext} from 'react';
 import {createCard} from '../../../../shared/test-utils';

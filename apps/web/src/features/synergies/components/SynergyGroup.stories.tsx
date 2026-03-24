@@ -2,7 +2,7 @@ import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
 import type {SynergyGroup as SynergyGroupData, SynergyMatchDisplay} from '../types';
 import type {LorcanaCard} from '../../cards';
-import {CardPreviewProvider} from '../../cards/components/CardPreviewContext';
+import {CardPreviewProvider} from '../../cards/components/CardPreviewProvider';
 import {SynergyGroup} from './SynergyGroup';
 
 const inks = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];

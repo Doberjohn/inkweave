@@ -1,7 +1,7 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {render, screen, fireEvent, act, waitFor} from '@testing-library/react';
 import {CardPreviewPopover} from '../CardPreviewPopover';
-import {CardPreviewProvider} from '../CardPreviewContext';
+import {CardPreviewProvider} from '../CardPreviewProvider';
 import {useCardPreview} from '../useCardPreview';
 import {createCard} from '../../../../shared/test-utils';
 import type {LorcanaCard} from '../../types';

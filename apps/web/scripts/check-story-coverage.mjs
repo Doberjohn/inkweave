@@ -16,7 +16,7 @@ const srcDir = join(__dirname, '..', 'src');
 
 // Components that intentionally don't need stories
 const EXCLUDED = new Set([
-  'CardPreviewContext.tsx', // context provider, not visual
+  'CardPreviewProvider.tsx', // context provider, not visual
   'CardPreviewPopover.tsx', // rendered by context, not standalone
   'ErrorBoundary.tsx', // error boundaries need runtime errors to demo
   'SearchIcon.tsx', // tiny SVG icon
