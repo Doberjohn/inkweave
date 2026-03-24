@@ -1,5 +1,4 @@
 import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
-import 'react-loading-skeleton/dist/skeleton.css';
 import {COLORS, LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
 import {useContainerWidth} from '../../../shared/hooks/useContainerWidth';
 import {useRef} from 'react';
