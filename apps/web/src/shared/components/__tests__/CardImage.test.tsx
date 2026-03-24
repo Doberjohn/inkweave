@@ -50,10 +50,11 @@ describe('CardImage', () => {
     expect(screen.getByText('3')).toBeInTheDocument();
   });
 
-  it('should apply custom border radius', () => {
+  it('should apply custom border radius to wrapper', () => {
     render(<CardImage {...defaultProps} borderRadius={12} />);
 
     const img = screen.getByRole('img');
-    expect(img).toHaveStyle({borderRadius: '12px'});
+    // borderRadius is on the wrapper div (clips via overflow:hidden), not the img itself
+    expect(img.parentElement).toHaveStyle({borderRadius: '12px'});
   });
 });
