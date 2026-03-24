@@ -76,39 +76,6 @@ export function FilterContent({
 
   return (
     <>
-      {/* Inkwell Filter */}
-      <FilterSection label="Inkwell">
-        <div
-          role="group"
-          aria-label="Inkwell filters"
-          style={{
-            display: 'flex',
-            gap: isDesktop ? '8px' : undefined,
-            flexWrap: 'wrap',
-            justifyContent: isDesktop ? undefined : 'space-evenly',
-          }}>
-          {(['inkable', 'uninkable'] as InkwellValue[]).map((value) => (
-            <FilterButton
-              key={value}
-              size="md"
-              active={filters.inkwell === value}
-              onClick={() =>
-                onFiltersChange({
-                  ...filters,
-                  inkwell: filters.inkwell === value ? undefined : value,
-                })
-              }
-              activeColor={COLORS.primary500}
-              activeBgColor={COLORS.primary200}>
-              <span style={{display: 'flex', alignItems: 'center', gap: 6}}>
-                <InkwellIcon value={value} size={18} />
-                {value === 'inkable' ? 'Inkable' : 'Uninkable'}
-              </span>
-            </FilterButton>
-          ))}
-        </div>
-      </FilterSection>
-
       {/* Ink Color */}
       <FilterSection label={isDesktop ? 'Ink Color' : 'Ink'}>
         <InkFilterGroup
@@ -146,6 +113,39 @@ export function FilterContent({
               inactiveTextColor="transparent"
               aria-label={`Cost ${cost}${cost === 10 ? '+' : ''}`}>
               <CostIcon cost={cost} size={34} />
+            </FilterButton>
+          ))}
+        </div>
+      </FilterSection>
+
+      {/* Inkwell Filter */}
+      <FilterSection label="Inkwell">
+        <div
+          role="group"
+          aria-label="Inkwell filters"
+          style={{
+            display: 'flex',
+            gap: isDesktop ? '8px' : undefined,
+            flexWrap: 'wrap',
+            justifyContent: isDesktop ? undefined : 'space-evenly',
+          }}>
+          {(['inkable', 'uninkable'] as InkwellValue[]).map((value) => (
+            <FilterButton
+              key={value}
+              size="md"
+              active={filters.inkwell === value}
+              onClick={() =>
+                onFiltersChange({
+                  ...filters,
+                  inkwell: filters.inkwell === value ? undefined : value,
+                })
+              }
+              activeColor={COLORS.primary500}
+              activeBgColor={COLORS.primary200}>
+              <span style={{display: 'flex', alignItems: 'center', gap: 6}}>
+                <InkwellIcon value={value} size={18} />
+                {value === 'inkable' ? 'Inkable' : 'Uninkable'}
+              </span>
             </FilterButton>
           ))}
         </div>
