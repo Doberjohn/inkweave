@@ -74,6 +74,7 @@ export function useDraftFilters({
       draftFilters.keywords?.length,
       draftFilters.classifications?.length,
       draftFilters.setCode,
+      draftFilters.inkwell,
     ].filter(Boolean).length;
 
   return {
