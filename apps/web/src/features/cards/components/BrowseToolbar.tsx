@@ -141,13 +141,25 @@ export function BrowseToolbar({
 
       {/* Right side: ink filters (desktop) + sort */}
       <div style={{marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10}}>
-        {!isMobile && (
-          <InkwellFilterGroup
-            activeValue={filters.inkwell}
-            onToggle={(v) => onFiltersChange({...filters, inkwell: v})}
-          />
-        )}
         {!isMobile && <InkFilterGroup inkFilters={inkFilters} onToggleInk={onToggleInk} />}
+        {!isMobile && (
+          <>
+            <div
+              aria-hidden="true"
+              style={{
+                width: 1,
+                height: 24,
+                backgroundColor: COLORS.surfaceBorder,
+                opacity: 0.5,
+                flexShrink: 0,
+              }}
+            />
+            <InkwellFilterGroup
+              activeValue={filters.inkwell}
+              onToggle={(v) => onFiltersChange({...filters, inkwell: v})}
+            />
+          </>
+        )}
         <SortSelect
           options={BROWSE_SORT_OPTIONS}
           value={sortOrder}
