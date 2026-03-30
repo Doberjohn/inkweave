@@ -26,6 +26,7 @@
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
     "@sentry/react": "^10.46.0",
+    "@supabase/supabase-js": "^2.100.1",
     "@tanstack/react-virtual": "^3.13.23",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
