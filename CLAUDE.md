@@ -108,6 +108,7 @@ Claude Code hooks, skills, and agents enforce workflow rules automatically. Chec
 | `session-start` | Haiku | `/implement-issue` Step 0 | Worktrees, branches, stashes, ports, PRs |
 | `pr-ready` | Sonnet | `/commit-and-push` Step 0 | Lint, tests, E2E, branch naming, diff size |
 | `engine-validator` | Sonnet | `/commit-and-push` when engine files in diff | Build, test, precompute, audit scores |
+| `supabase-validator` | Sonnet | `/commit-and-push` when migration files in diff | Integration tests, security advisor, type freshness, schema drift |
 
 ## Synergy Rules
 
@@ -221,6 +222,7 @@ pnpm build:engine     # Build synergy-engine package
 pnpm test:engine      # Run engine tests
 pnpm build:web        # Build web app
 pnpm test:web         # Run web tests
+pnpm test:supabase    # Run Supabase integration tests (requires .env.local)
 ```
 
 ## Architecture Notes
@@ -234,6 +236,7 @@ pnpm test:web         # Run web tests
 - Core format only (sets 5+)
 - **react-grab**: Dev-only inspection tool. The `dev` script runs `pnpm dlx @react-grab/claude-code@latest && vite`. Playwright always uses `npx vite` for its webServer (react-grab is irrelevant during E2E). If a dev server is already running, Playwright reuses it (`reuseExistingServer: true` locally).
 - **useContainerWidth**: ResizeObserver hook guards against 0-width observations from detached elements (`if (w > 0)`) — required for React Strict Mode double-mount resilience
+- **Supabase**: Community voting backend (project: `ttyidjyaxnycbpxwngqr`, eu-central-1). Use Supabase MCP tools (`apply_migration`, `execute_sql`, `generate_typescript_types`, `get_advisors`, `list_tables`) for all database operations — do not use local Supabase CLI. After schema changes: apply migration via MCP → verify with `list_tables`/`execute_sql` → regenerate types → run `get_advisors` (security). Client SDK in `apps/web/src/shared/lib/supabase.ts`; migrations in `supabase/migrations/`.
 
 ## UI Theme (MVP)
 
