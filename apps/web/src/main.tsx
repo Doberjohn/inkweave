@@ -9,10 +9,22 @@ import {router} from './router';
 // Lazy-load Sentry to keep it off the critical path (~150 KB gzip)
 if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
   import('@sentry/react').then((Sentry) => {
+    const integrations = [Sentry.browserTracingIntegration()];
+
+    // Add Supabase monitoring when configured
+    if (import.meta.env.VITE_SUPABASE_URL) {
+      integrations.push(
+        Sentry.supabaseIntegration({
+          breadcrumbs: true,
+          tracing: true,
+        }),
+      );
+    }
+
     Sentry.init({
       dsn: import.meta.env.VITE_SENTRY_DSN,
       environment: 'production',
-      integrations: [Sentry.browserTracingIntegration()],
+      integrations,
       tracesSampleRate: 0.1,
     });
   });
