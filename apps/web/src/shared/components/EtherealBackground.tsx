@@ -1,7 +1,7 @@
 import {COLORS} from '../constants';
 
 /** Blurred glow orb positioned absolutely within the background. */
-function GlowOrb({size, x, y, color}: {size: number; x: string; y: string; color: string}) {
+function GlowOrb({size, x, y, color, blur}: {size: number; x: string; y: string; color: string; blur: number}) {
   return (
     <div
       style={{
@@ -12,18 +12,30 @@ function GlowOrb({size, x, y, color}: {size: number; x: string; y: string; color
         top: y,
         borderRadius: '50%',
         background: color,
-        filter: 'blur(40px)',
+        filter: `blur(${blur}px)`,
         pointerEvents: 'none',
       }}
     />
   );
 }
 
+/** Vivid orb colors — higher opacity for pages that need more atmosphere */
+const VIVID_COLORS = {
+  blue: 'rgba(43, 127, 255, 0.22)',
+  purple: 'rgba(173, 70, 255, 0.2)',
+  amber: 'rgba(212, 175, 55, 0.12)',
+  teal: 'rgba(0, 187, 167, 0.1)',
+};
+
 interface EtherealBackgroundProps {
   isMobile?: boolean;
+  /** Higher opacity orbs with additional colors for immersive pages */
+  vivid?: boolean;
 }
 
-export function EtherealBackground({isMobile}: EtherealBackgroundProps) {
+export function EtherealBackground({isMobile, vivid}: EtherealBackgroundProps) {
+  const blur = vivid ? 60 : 40;
+
   return (
     <div
       data-testid="ethereal-background"
@@ -39,17 +51,18 @@ export function EtherealBackground({isMobile}: EtherealBackgroundProps) {
       }}>
       {isMobile ? (
         <>
-          {/* Mobile orbs — from Figma positions */}
-          <GlowOrb size={300} x="24%" y="0px" color={COLORS.etherealBlue} />
-          <GlowOrb size={300} x="-4%" y="64%" color={COLORS.etherealPurple} />
-          <GlowOrb size={250} x="48%" y="50%" color={COLORS.etherealTeal} />
+          <GlowOrb size={300} x="24%" y="0px" color={vivid ? VIVID_COLORS.blue : COLORS.etherealBlue} blur={blur} />
+          <GlowOrb size={300} x="-4%" y="64%" color={vivid ? VIVID_COLORS.purple : COLORS.etherealPurple} blur={blur} />
+          <GlowOrb size={250} x="48%" y="50%" color={vivid ? VIVID_COLORS.teal : COLORS.etherealTeal} blur={blur} />
         </>
       ) : (
         <>
-          {/* Desktop orbs */}
-          <GlowOrb size={384} x="28.5%" y="0px" color={COLORS.etherealBlue} />
-          <GlowOrb size={384} x="65.5%" y="77.5%" color={COLORS.etherealPurple} />
-          <GlowOrb size={384} x="57%" y="56.5%" color={COLORS.etherealTeal} />
+          <GlowOrb size={vivid ? 450 : 384} x="28.5%" y="0px" color={vivid ? VIVID_COLORS.blue : COLORS.etherealBlue} blur={blur} />
+          <GlowOrb size={vivid ? 450 : 384} x="65.5%" y="77.5%" color={vivid ? VIVID_COLORS.purple : COLORS.etherealPurple} blur={blur} />
+          <GlowOrb size={vivid ? 400 : 384} x="57%" y="56.5%" color={vivid ? VIVID_COLORS.teal : COLORS.etherealTeal} blur={blur} />
+          {vivid && (
+            <GlowOrb size={350} x="10%" y="60%" color={VIVID_COLORS.amber} blur={70} />
+          )}
         </>
       )}
     </div>

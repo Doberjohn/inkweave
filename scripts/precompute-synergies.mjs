@@ -131,11 +131,29 @@ async function main() {
   // Write manifest (last — used as staleness marker by Vite plugin)
   fs.writeFileSync(path.join(OUTPUT_DIR, '_manifest.json'), JSON.stringify(manifest));
 
+  // Generate pairs index for voting page (unique pairs with aggregate scores)
+  const pairsIndex = [];
+  const seenPairs = new Set();
+  for (const cardId of manifest) {
+    const data = JSON.parse(fs.readFileSync(path.join(OUTPUT_DIR, `${cardId}.json`), 'utf-8'));
+    for (const [targetId, pairData] of Object.entries(data.pairs)) {
+      const [a, b] = [cardId, targetId].sort();
+      const key = `${a}:${b}`;
+      if (!seenPairs.has(key)) {
+        seenPairs.add(key);
+        pairsIndex.push([a, b, pairData.aggregateScore]);
+      }
+    }
+  }
+  pairsIndex.sort((a, b) => b[2] - a[2]);
+  fs.writeFileSync(path.join(OUTPUT_DIR, '_pairs_index.json'), JSON.stringify(pairsIndex));
+
   // Clean up stale files from previous runs (safe: new files already written)
   const newFiles = new Set([
     ...manifest.map((id) => `${id}.json`),
     '_playstyles.json',
     '_manifest.json',
+    '_pairs_index.json',
   ]);
   for (const file of existingFiles) {
     if (!newFiles.has(file)) {
@@ -148,6 +166,7 @@ async function main() {
   console.log(`  ${manifest.length}/${cards.length} cards with synergies`);
   console.log(`  ${totalGroups} groups, ${totalMatches} total matches`);
   console.log(`  ${Object.keys(playstyles).length} playstyles`);
+  console.log(`  ${pairsIndex.length} unique pairs indexed`);
   console.log(`  Output: ${OUTPUT_DIR}`);
 }
 

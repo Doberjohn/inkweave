@@ -3,12 +3,14 @@ import {test as base} from '@playwright/test';
 import {AppPage} from '../pages/app.page';
 import {CardListPage} from '../pages/card-list.page';
 import {SynergyResultsPage} from '../pages/synergy-results.page';
+import {VotePage} from '../pages/vote.page';
 
 // Define fixture types
 type TestFixtures = {
   appPage: AppPage;
   cardListPage: CardListPage;
   synergyResultsPage: SynergyResultsPage;
+  votePage: VotePage;
 };
 
 // Extend base test with custom fixtures
@@ -25,6 +27,10 @@ export const test = base.extend<TestFixtures>({
   synergyResultsPage: async ({page}, use) => {
     const synergyResultsPage = new SynergyResultsPage(page);
     await use(synergyResultsPage);
+  },
+  votePage: async ({page}, use) => {
+    const votePage = new VotePage(page);
+    await use(votePage);
   },
 });
 

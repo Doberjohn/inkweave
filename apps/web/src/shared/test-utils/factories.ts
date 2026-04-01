@@ -5,6 +5,7 @@ import type {
   PairSynergyConnection,
   DetailedPairSynergy,
 } from 'inkweave-synergy-engine';
+import type {VotingPair} from '../../features/voting/types';
 
 /** Create a mock LorcanaCard with sensible defaults. */
 export function createCard(overrides: Partial<LorcanaCard> = {}): LorcanaCard {
@@ -62,6 +63,20 @@ export function createConnection(
     explanation: 'Shift synergy',
     ...overrides,
   } as PairSynergyConnection;
+}
+
+/** Create a mock VotingPair for voting feature tests. */
+export function createVotingPair(
+  overrides: Partial<VotingPair> & {cardA?: Partial<LorcanaCard>; cardB?: Partial<LorcanaCard>} = {},
+): VotingPair {
+  const {cardA: cardAOverrides, cardB: cardBOverrides, ...rest} = overrides;
+  return {
+    cardA: createCard({id: 'card-a', name: 'Card A', fullName: 'Card A - Hero', ...cardAOverrides}),
+    cardB: createCard({id: 'card-b', name: 'Card B', fullName: 'Card B - Villain', ...cardBOverrides}),
+    connections: [createConnection()],
+    aggregateScore: 7,
+    ...rest,
+  };
 }
 
 /** Create a mock DetailedPairSynergy. */

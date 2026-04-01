@@ -26,7 +26,7 @@ interface PrecomputedSynergyGroup {
   synergies: PrecomputedSynergyMatch[];
 }
 
-interface PrecomputedPairData {
+export interface PrecomputedPairData {
   connections: PairSynergyConnection[];
   aggregateScore: number;
 }
@@ -41,7 +41,7 @@ interface PrecomputedCardData {
 const synergyFetchCache = new Map<string, PrecomputedCardData>();
 let playstyleFetchCache: Record<string, string[]> | null = null;
 
-async function fetchCardSynergies(cardId: string): Promise<PrecomputedCardData> {
+export async function fetchCardSynergies(cardId: string): Promise<PrecomputedCardData> {
   const cached = synergyFetchCache.get(cardId);
   if (cached) return cached;
 

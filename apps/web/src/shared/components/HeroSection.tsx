@@ -14,6 +14,7 @@ interface HeroSectionProps {
   onCardSelect?: (card: LorcanaCard) => void;
   onBrowse?: () => void;
   onPlaystyles?: () => void;
+  onVote?: () => void;
   isMobile?: boolean;
 }
 
@@ -142,6 +143,7 @@ export function HeroSection({
   onCardSelect,
   onBrowse,
   onPlaystyles,
+  onVote,
   isMobile,
 }: HeroSectionProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -254,6 +256,16 @@ export function HeroSection({
           <CompassIcon />
           Explore playstyles
         </CtaButton>
+        {onVote && (
+          <CtaButton
+            variant="ghost"
+            data-testid="cta-vote"
+            onClick={onVote}
+            onMouseEnter={() => import('../../pages/VotePage')}
+            style={{height: ctaHeight, width: mobile ? '100%' : undefined}}>
+            Rate synergies
+          </CtaButton>
+        )}
       </div>
     </section>
   );
