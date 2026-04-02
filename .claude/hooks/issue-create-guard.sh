@@ -21,7 +21,7 @@ COMMAND=$(echo "$INPUT" | node -e "
   });
 ")
 
-if echo "$COMMAND" | grep -qE "gh issue create"; then
+if echo "$COMMAND" | grep -qE "(^|[ ;|&])gh issue create"; then
   if echo "$COMMAND" | grep -qE "^SKILL_APPROVED=1 "; then
     exit 0
   fi
