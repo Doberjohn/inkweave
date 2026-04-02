@@ -82,12 +82,13 @@ const biResult = cache.checkBidirectionalSynergy(cardA, cardB);
 
 ### Built-in Rules
 
-The engine includes 12 built-in synergy rules across two categories:
+The engine includes 13 built-in synergy rules across two categories:
 
 **Direct** (pair-specific synergies):
 
 - **Shift Targets** — Shift cards + same-named base characters (bidirectional)
 - **Named Companions** — Cards referencing specific named entities, scored by effect tier
+- **Singer + Songs** — Singer characters + cost-compatible Song action cards (bidirectional)
 
 **Playstyle** (strategy-reinforcing synergies):
 

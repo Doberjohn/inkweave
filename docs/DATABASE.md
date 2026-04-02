@@ -24,6 +24,17 @@ internal (hidden from PostgREST API)
 
 The `internal` schema is **not accessible** via the REST API. It contains implementation details that anonymous users should never interact with directly.
 
+```chart
+{
+  "type": "doughnut",
+  "title": "Database Objects by Schema",
+  "data": {
+    "labels": ["public — tables", "public — views", "public — functions", "internal — tables", "internal — functions"],
+    "values": [1, 1, 1, 1, 2]
+  }
+}
+```
+
 ---
 
 ## Votes Table
@@ -335,6 +346,21 @@ export async function getPairScore(cardA: string, cardB: string): Promise<PairSc
 
 ---
 
+## Vote Dimensions
+
+The database captures 6 independent vote dimensions per card pair, each targeting a different aspect of synergy quality. Dimensions vary in granularity — from binary yes/no to a full 1-10 scale:
+
+```chart
+{
+  "type": "bar",
+  "title": "Granularity per Vote Dimension (possible values)",
+  "data": {
+    "labels": ["Score", "Who Carries", "Accuracy", "Difficulty", "Is Real", "Would Play"],
+    "values": [10, 4, 3, 3, 2, 2]
+  }
+}
+```
+
 ## Vote Types
 
 The SDK supports two vote shapes for different UI flows:
@@ -400,6 +426,20 @@ end;
 | 3+ | Drops `floor(n * 0.1)` from each end, averages the rest |
 | 10 | Drops 1 lowest + 1 highest, averages middle 8 |
 | 100 | Drops 10 lowest + 10 highest, averages middle 80 |
+
+```chart
+{
+  "type": "bar",
+  "title": "Trimmed Mean — Votes Kept vs Dropped",
+  "data": {
+    "labels": ["3 votes", "5 votes", "10 votes", "20 votes", "50 votes", "100 votes"],
+    "datasets": [
+      {"label": "Kept (averaged)", "data": [3, 5, 8, 16, 40, 80], "backgroundColor": "#10b981"},
+      {"label": "Dropped (outliers)", "data": [0, 0, 2, 4, 10, 20], "backgroundColor": "#ef4444"}
+    ]
+  }
+}
+```
 
 ---
 
@@ -490,6 +530,20 @@ Uses `vi.mock('@supabase/supabase-js')` and `vi.stubEnv()` for isolated testing 
 | RLS: DELETE blocked | Direct DELETE has no effect (no policy) |
 
 Uses test-data prefix (`inttest_*`) for isolation. Requires `apps/web/.env.local` with live credentials.
+
+```chart
+{
+  "type": "bar",
+  "title": "Test Coverage by Category",
+  "data": {
+    "labels": ["getSupabase()", "submitVote()", "getPairScore()", "RPC & Upsert", "RLS Security"],
+    "datasets": [
+      {"label": "Unit (Vitest)", "data": [3, 6, 3, 0, 0], "backgroundColor": "#8b5cf6"},
+      {"label": "Integration (Live DB)", "data": [0, 0, 0, 5, 3], "backgroundColor": "#10b981"}
+    ]
+  }
+}
+```
 
 ---
 

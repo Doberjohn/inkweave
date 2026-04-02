@@ -115,6 +115,21 @@ The classifier doesn't try to isolate which effect applies to the named companio
 
 Scores are mapped via `NAMED_EFFECT_SCORES` in `cardHelpers.ts`.
 
+```chart
+{
+  "type": "bar",
+  "title": "Named Companions — Effect Tier Distribution (330 matches)",
+  "data": {
+    "labels": ["Hostile (4)", "Minor (5)", "Moderate (6)", "Strong (7)", "Game-winning (8)"],
+    "datasets": [{
+      "label": "Matches",
+      "data": [18, 130, 83, 64, 35],
+      "backgroundColor": ["#f59090", "#60b5f5", "#60b5f5", "#6ee7a0", "#6ee7a0"]
+    }]
+  }
+}
+```
+
 ### Why Not Higher Scores?
 
 Named companion synergies cap at 8 (not 9-10) because they're **one-sided dependencies**. Card A needs Card B, but Card B doesn't necessarily need Card A. Compare with Shift, where both cards participate in the combo equally. A Shift pair where both cards are dedicated to each other (gap=1, both inkable) earns 9; a named companion where one card passively benefits deserves less.
@@ -126,6 +141,17 @@ Named companion synergies cap at 8 (not 9-10) because they're **one-sided depend
 - ~106 cards with named references in the Core format database
 - 78 unique referenced names
 - 100% match rate (every referenced name exists as at least one card in the database)
+
+```chart
+{
+  "type": "doughnut",
+  "title": "Group Sizes — Cards by Number of Targets",
+  "data": {
+    "labels": ["1-4 targets (56.1%)", "5-9 targets (28.8%)", "10-14 targets (12.1%)", "15+ targets (3.0%)"],
+    "values": [37, 19, 8, 2]
+  }
+}
+```
 
 ---
 

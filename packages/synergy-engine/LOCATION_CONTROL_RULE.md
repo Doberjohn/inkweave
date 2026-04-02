@@ -36,6 +36,110 @@ Each role has a distinct detection pattern and a distinct score when paired with
 | `tutor` | **5** | Utility | Searches deck/discard for location cards |
 | `boost` | **5** | Utility | Works with the Boost keyword to power up locations |
 
+```chart
+{
+  "type": "bar",
+  "title": "Matches per Sub-Rule (4,220 total)",
+  "data": {
+    "labels": ["Boost", "At Payoff", "Move", "In-Play Check", "Buff", "Ramp", "Tutor"],
+    "datasets": [{
+      "label": "Matches",
+      "data": [1112, 688, 586, 546, 458, 418, 412],
+      "backgroundColor": ["#60b5f5", "#6ee7a0", "#60b5f5", "#60b5f5", "#6ee7a0", "#6ee7a0", "#60b5f5"]
+    }]
+  }
+}
+```
+
+```chart
+{
+  "type": "doughnut",
+  "title": "Combined Score Distribution",
+  "data": {
+    "labels": ["Score 5 — Utility (59.5%)", "Score 7 — High-value (30.5%)", "Score 3 — Cross-synergy (10.0%)"],
+    "values": [2512, 1288, 420]
+  }
+}
+```
+
+### Role Examples
+
+Each role paired with a Location card, using real synergy data:
+
+#### At Location Payoff (Score 7)
+
+| Support | Location |
+|:-------:|:--------:|
+| ![Beast - Snowfield Troublemaker](https://api.lorcana.ravensburger.com/images/en/set11/118_69e8ce2687419dd03bbb0378c04f9509175b0de8.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
+| **Beast - Snowfield Troublemaker** | **Elsa's Ice Palace** |
+
+Gets bonuses when characters are at a location.
+
+#### Play Trigger (Score 7)
+
+| Support | Location |
+|:-------:|:--------:|
+| ![Elsa - Ice Artisan](https://api.lorcana.ravensburger.com/images/en/set11/123_c4e62c081171f16d197d27b8167524141478bdda.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
+| **Elsa - Ice Artisan** | **Elsa's Ice Palace** |
+
+Triggers effects whenever you play a location. Only 1 card currently has this role (also has at-payoff).
+
+#### Buff (Score 7)
+
+| Support | Location |
+|:-------:|:--------:|
+| ![Fix-It Felix, Jr. - Niceland Steward](https://api.lorcana.ravensburger.com/images/en/set5/12_b4f3630d62cfa2c8b1d3c7fc41449757d7681489.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
+| **Fix-It Felix, Jr.** | **Elsa's Ice Palace** |
+
+Strengthens locations (resist, willpower, protection).
+
+#### Location Ramp (Score 7)
+
+| Support | Location |
+|:-------:|:--------:|
+| ![Elsa - Concerned Sister](https://api.lorcana.ravensburger.com/images/en/set11/125_e23d60bfee19877c41f0b62e96e8d6cfb0d6c071.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
+| **Elsa - Concerned Sister** | **Elsa's Ice Palace** |
+
+Reduces cost of playing or moving to locations.
+
+#### Move (Score 5)
+
+| Support | Location |
+|:-------:|:--------:|
+| ![Goofy - Set for Adventure](https://api.lorcana.ravensburger.com/images/en/set9/74_80ca7805f07696a52675afc79ecec56b7e104fac.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
+| **Goofy - Set for Adventure** | **Elsa's Ice Palace** |
+
+Moves characters to locations for positioning.
+
+#### In-Play Check (Score 5)
+
+| Support | Location |
+|:-------:|:--------:|
+| ![Flintheart Glomgold - Scheming Billionaire](https://api.lorcana.ravensburger.com/images/en/set10/76_2aed0e5a593164b41c3f301621b079977eab7427.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
+| **Flintheart Glomgold** | **Elsa's Ice Palace** |
+
+Gains benefits when you have locations in play.
+
+#### Tutor (Score 5)
+
+| Support | Location |
+|:-------:|:--------:|
+| ![Goldie O'Gilt - Cunning Prospector](https://api.lorcana.ravensburger.com/images/en/set10/87_90807268acf6a0f1017fcbee24b8c19361430e5c.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
+| **Goldie O'Gilt** | **Elsa's Ice Palace** |
+
+Searches deck or discard for location cards.
+
+#### Boost (Score 5)
+
+| Support | Location |
+|:-------:|:--------:|
+| ![Blessed Bagpipes](https://api.lorcana.ravensburger.com/images/en/set10/101_a15dbc3a94a5db5246656007dc448fcf18c9c09b.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
+| **Blessed Bagpipes** | **Elsa's Ice Palace** |
+
+Works with the Boost keyword to power up locations.
+
+---
+
 ### Why the Score Split?
 
 **High-value roles (score 7)** provide direct, repeatable value when paired with a Location:

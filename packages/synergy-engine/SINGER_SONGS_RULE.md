@@ -67,6 +67,21 @@ Score is based on **threshold utilization** — how efficiently the Singer's cap
 | 2 | **6** | Moderate | Good savings, slight inefficiency |
 | 3+ | **5** | Moderate | Functional but the Singer could do better |
 
+```chart
+{
+  "type": "bar",
+  "title": "Threshold Utilization — Score Distribution (1,588 matches)",
+  "data": {
+    "labels": ["Score 5 — Functional (diff 3+)", "Score 6 — Good (diff 2)", "Score 7 — Near-perfect (diff 1)", "Score 8 — Perfect fit (diff 0)"],
+    "datasets": [{
+      "label": "Matches",
+      "data": [678, 368, 338, 204],
+      "backgroundColor": ["#60b5f5", "#60b5f5", "#6ee7a0", "#6ee7a0"]
+    }]
+  }
+}
+```
+
 ### Why Not Higher Than 8?
 
 Scores 9-10 are reserved for irreplaceable, game-defining synergies (like perfect Shift curves with free cost). Singer + Songs is powerful but fungible — any Singer 5 works equally well with any cost-5 Song. The synergy is about cost efficiency, not unique card interactions.
@@ -91,6 +106,28 @@ Based on the current Core format card pool:
 - **16 Singers** (mostly Amber/Ruby)
 - **72 Songs** (distributed across all inks)
 - **872 valid pairs** (after cost gating)
+
+```chart
+{
+  "type": "doughnut",
+  "title": "Card Pool — Singers vs Songs (88 cards)",
+  "data": {
+    "labels": ["Songs (72)", "Singers (16)"],
+    "values": [72, 16]
+  }
+}
+```
+
+```chart
+{
+  "type": "doughnut",
+  "title": "Group Sizes — Matches per Card (85 participating)",
+  "data": {
+    "labels": ["15+ matches (47.1%)", "10-14 matches (32.9%)", "1-4 matches (12.9%)", "5-9 matches (7.1%)"],
+    "values": [40, 28, 11, 6]
+  }
+}
+```
 
 ---
 
