@@ -2,7 +2,19 @@
 
 **Target Date**: May 15, 2026
 **Milestone**: [Version 1.0.0](https://github.com/Doberjohn/inkweave/milestone/2)
-**Total Issues**: 20
+**Total Issues**: 20 (7 closed, 11 open, 2 epics)
+**Last Updated**: 2026-04-02
+
+```chart
+{
+  "type": "doughnut",
+  "title": "v1.0.0 Progress (20 issues)",
+  "data": {
+    "labels": ["Closed (7)", "Open (11)", "Epics (2)"],
+    "values": [7, 11, 2]
+  }
+}
+```
 
 ---
 
@@ -88,39 +100,39 @@ INDEPENDENT (no dependencies)
 
 **Goal**: Unblock the critical path, ship quick wins, land engine rules.
 
-| Priority | Issue | Effort | Notes |
-|----------|-------|--------|-------|
-| **P0** | #210 Supabase Setup | 2–3 days | Critical path blocker. Schema, RLS, rate limiting, client SDK, CSP update. |
-| **P0** | #220 Back button bug | 15 min | Add popstate listener in CardPreviewContext. |
-| **P0** | #221 Featured cards | 30 min | Replace random selection with 6 curated card IDs. |
-| **P1** | #215 Singers Rule | 1–2 days | Singer keyword + Song subtype detection, cost threshold matching. Rebuild engine + precompute. |
-| **P1** | #42 Ramp Archetype | 1–2 days | Ink ramp enablers + high-cost payoffs. Rebuild engine + precompute. |
-| **P1** | #216 Browse Performance | 1–2 days | Profile, lazy load images, add skeleton, possibly virtualize. |
-| **P1** | #217 Inkable/Uninkable Filter | Half day | Add to filter panel, integrate with filter chips. Supports deck builder. |
+| Priority | Issue | Effort | Status |
+|----------|-------|--------|--------|
+| **P0** | #210 Supabase Setup | 2–3 days | **Done** (PR #253) |
+| **P0** | #220 Back button bug | 15 min | **Done** (PR #237) |
+| **P0** | #221 Featured cards | 30 min | **Done** (PR #238) |
+| **P1** | #215 Singers Rule | 1–2 days | **Done** (PR #248) |
+| **P1** | #42 Ramp Archetype | 1–2 days | Open |
+| **P1** | #216 Browse Performance | 1–2 days | **Done** (PR #241) |
+| **P1** | #217 Inkable/Uninkable Filter | Half day | **Done** (PR #249) |
 
 ### Phase 2 — Core Features (Weeks 3–4)
 
 **Goal**: Build both major features in parallel.
 
-| Priority | Issue | Effort | Notes |
-|----------|-------|--------|-------|
-| **P0** | #211 Random Pair Voting | 2–3 days | Voting page, two-bucket algorithm, Supabase writes, session dedup. |
-| **P0** | #206 Deck Builder UI | 3–4 days | Card add/remove, quantity controls, 4-copy/2-color rules, cost curve. |
-| **P1** | #212 Quick Vote Modal | 1 day | Three-button vote in synergy detail modal. Parallel with #211. |
-| **P1** | #207 Deck Persistence | 1–2 days | localStorage auto-save, multi-deck support. Parallel with #206. |
-| **P1** | #208 Import/Export | 1–2 days | Dreamborn text format parser + clipboard export. Parallel with #206. |
-| **P2** | #218 Score Audit | 1–2 days | Audit 2–3 weakest-scored rules. Benefits from #215/#42 being done. |
+| Priority | Issue | Effort | Status |
+|----------|-------|--------|--------|
+| **P0** | #211 Random Pair Voting | 2–3 days | **Done** (PR #255) |
+| **P0** | #206 Deck Builder UI | 3–4 days | Open |
+| **P1** | #212 Quick Vote Modal | 1 day | Open |
+| **P1** | #207 Deck Persistence | 1–2 days | Open |
+| **P1** | #208 Import/Export | 1–2 days | Open |
+| **P2** | #218 Score Audit | 1–2 days | Open |
 
 ### Phase 3 — Polish & Launch Prep (Weeks 5–6)
 
 **Goal**: Complete remaining features, finalize legal, prepare for launch.
 
-| Priority | Issue | Effort | Notes |
-|----------|-------|--------|-------|
-| **P0** | #209 Deck Synergy Analysis | 2–3 days | Weighted sum scoring, cross-reference pre-computed data. Needs #206. |
-| **P0** | #213 In-Depth Voting | 1–2 days | 6-dimension voting, extends voting page. Needs #211. |
-| **P0** | #214 Player Rating Display | 1–2 days | Aggregated scores from Supabase, 5-vote threshold, dual score display. |
-| **P0** | #219 Legal Pages | 1 day | Privacy policy, terms, IP disclaimer, about page. Hard launch blocker. |
+| Priority | Issue | Effort | Status |
+|----------|-------|--------|--------|
+| **P0** | #209 Deck Synergy Analysis | 2–3 days | Open |
+| **P0** | #213 In-Depth Voting | 1–2 days | Open |
+| **P0** | #214 Player Rating Display | 1–2 days | Open |
+| **P0** | #219 Legal Pages | 1 day | Open (hard launch blocker) |
 
 ### Weeks 7–8 — Buffer
 

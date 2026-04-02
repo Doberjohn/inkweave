@@ -89,6 +89,17 @@ This skips the full pattern battery for the ~95% of cards that don't mention dis
 | Enabler ↔ Enabler | **7** | Strong | Both disrupt the opponent's hand — density makes the strategy consistent |
 | Payoff ↔ Payoff | **7** | Strong | Both reward hand-size advantage — running multiple payoffs amplifies the reward |
 
+```chart
+{
+  "type": "doughnut",
+  "title": "Score Distribution (1,136 matches)",
+  "data": {
+    "labels": ["Score 7 — Enabler↔Enabler / Payoff↔Payoff (88.6%)", "Score 8 — Enabler↔Payoff (11.4%)"],
+    "values": [1006, 130]
+  }
+}
+```
+
 ### Why Enabler ↔ Payoff is 8
 
 This is the **highest score in any playstyle rule** (most playstyle pairs are 7). The extra point reflects the mechanical dependency: enablers alone just annoy the opponent; payoffs alone never activate. Together they form a complete strategy loop. This asymmetric pairing is the *reason* you build a Discard deck — it deserves a higher score than two enablers that merely stack.
@@ -102,7 +113,7 @@ Score 9 is reserved for direct synergies where two specific cards have a unique,
 The rule generates role-aware explanations:
 
 - **Enabler ↔ Payoff**: `"{enabler.fullName} depletes the opponent's hand, powering up {payoff.fullName}'s hand-size advantage"`
-- **Enabler ↔ Enabler**: `"Both {card.fullName} and {other.fullName} disrupt the opponent's hand"`
+- **Enabler ↔ Enabler**: `"Both {card.fullName} and {other.fullName} make the opponent discard"`
 - **Payoff ↔ Payoff**: `"Both {card.fullName} and {other.fullName} reward hand-size advantage over opponents"`
 
 ---
@@ -114,6 +125,17 @@ The rule generates role-aware explanations:
 - 36 total discard cards
 
 The low payoff count is accurate to the current card pool — hand-size-advantage is a rare condition in Lorcana. Future sets may add more payoffs, which would automatically be detected by the existing pattern.
+
+```chart
+{
+  "type": "doughnut",
+  "title": "Role Composition (36 cards)",
+  "data": {
+    "labels": ["Enablers (34)", "Payoffs (2)"],
+    "values": [34, 2]
+  }
+}
+```
 
 ---
 

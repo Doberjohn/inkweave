@@ -23,6 +23,17 @@ The rule works in both directions:
 
 Both directions use the same scoring function (`calculateShiftSynergy`), so scores are always consistent regardless of which card you select first.
 
+```chart
+{
+  "type": "doughnut",
+  "title": "Shift Group Sizes (644 cards)",
+  "data": {
+    "labels": ["1-4 targets (93.0%)", "5-9 targets (5.3%)", "10-14 targets (1.2%)", "15+ targets (0.5%)"],
+    "values": [599, 34, 8, 3]
+  }
+}
+```
+
 ### Example
 
 Selecting **Elsa - Ice Maker** (cost 7, Shift 5) finds:
@@ -48,6 +59,27 @@ The key metric is **curve gap**: `shiftCost - baseCost`
 - **Gap 0** = no savings: Shift costs the same as the base
 - **Gap 3+** = slow: opponent has too many turns to remove the base
 - **Negative** = nonsensical: base costs more than the Shift
+
+```chart
+{
+  "type": "line",
+  "title": "Scoring Curve — Curve Gap vs Score",
+  "data": {
+    "labels": ["Negative", "Gap 0", "Gap 1 (no ink)", "Gap 1 (one ink)", "Gap 1 (both ink)", "Gap 2", "Gap 3", "Gap 4+"],
+    "datasets": [{
+      "label": "Score",
+      "data": [3, 5, 7, 8, 9, 7, 5, 3],
+      "borderColor": "#d4af37",
+      "backgroundColor": "rgba(212, 175, 55, 0.15)",
+      "pointBackgroundColor": ["#f59090", "#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#60b5f5", "#f59090"],
+      "pointRadius": 6,
+      "pointHoverRadius": 8,
+      "fill": true,
+      "tension": 0.3
+    }]
+  }
+}
+```
 
 ### Phase 2: Condition Bonus (`baseActivatesShiftCondition`)
 
@@ -83,6 +115,21 @@ calculateShiftSynergy(shiftCard, baseCard)
 | **3** | 4+ | Any | "The cost gap makes it hard to set up {base} in time to shift {shiftCard} onto it." | Ursula - Cauldron Keeper (cost 2) + Ursula - Sea Witch Queen (Shift 8) |
 | **3** | Negative | Any | "The cost gap makes it hard to set up {base} in time to shift {shiftCard} onto it." | Base costs more than Shift cost |
 
+```chart
+{
+  "type": "bar",
+  "title": "Shift Target Score Distribution (1,385 matches)",
+  "data": {
+    "labels": ["3", "5", "7", "8", "9", "10"],
+    "datasets": [{
+      "label": "Matches",
+      "data": [347, 359, 298, 211, 168, 2],
+      "backgroundColor": ["#f59090", "#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#fbbf24"]
+    }]
+  }
+}
+```
+
 #### Why inkwell matters for gap=1
 
 A gap of 1 is the ideal curve play. But what happens when you draw these cards at the wrong time? **Inkable** cards can be placed face-down as ink — they're never dead draws. This is why:
@@ -107,6 +154,20 @@ Instead, scoring is based on **how easy it is to get the base card into play fir
 | **7** | 4-5 | No | "Free Shift: Shift {base} into {shift} for 0 ink, but the base takes longer to set up." |
 | **6** | 6+ | Yes | "Free Shift but expensive base — Hard to get {base} into play first. {base} is both a Shift target and enables the free Shift condition." |
 | **5** | 6+ | No | "Free Shift but expensive base — Hard to get {base} into play first." |
+
+```chart
+{
+  "type": "bar",
+  "title": "Free Shift Scoring — Cost Tier × Condition Bonus",
+  "data": {
+    "labels": ["Cost 1-3 (cheap)", "Cost 4-5 (mid)", "Cost 6+ (expensive)"],
+    "datasets": [
+      {"label": "Without condition", "data": [9, 7, 5], "backgroundColor": "#60b5f5"},
+      {"label": "With condition (+1)", "data": [10, 8, 6], "backgroundColor": "#fbbf24"}
+    ]
+  }
+}
+```
 
 #### Why base cost matters for Shift 0
 

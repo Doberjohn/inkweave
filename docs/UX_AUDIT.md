@@ -1,4 +1,4 @@
-# UX Audit — February 2026
+# UX Audit — February 2026 (last updated March 2026)
 
 Current state assessment of Inkweave's user experience across all pages. Scored per area with specific findings, UX
 principles violated/applied, and recommended fixes.

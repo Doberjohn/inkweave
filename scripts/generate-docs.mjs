@@ -22,6 +22,8 @@ const DOCS = [
   {src: 'packages/synergy-engine/SHIFT_TARGET_RULE.md', out: 'SHIFT_TARGET_RULE.html', category: 'Synergy Rules', label: 'Shift Targets'},
   {src: 'packages/synergy-engine/NAMED_COMPANIONS_RULE.md', out: 'NAMED_COMPANIONS_RULE.html', category: 'Synergy Rules', label: 'Named Companions'},
   {src: 'packages/synergy-engine/DISCARD_RULE.md', out: 'DISCARD_RULE.html', category: 'Synergy Rules', label: 'Discard'},
+  {src: 'packages/synergy-engine/LORE_LOSS_RULE.md', out: 'LORE_LOSS_RULE.html', category: 'Synergy Rules', label: 'Lore Loss'},
+  {src: 'packages/synergy-engine/SINGER_SONGS_RULE.md', out: 'SINGER_SONGS_RULE.html', category: 'Synergy Rules', label: 'Singer + Songs'},
   {src: 'packages/synergy-engine/LOCATION_CONTROL_RULE.md', out: 'LOCATION_CONTROL_RULE.html', category: 'Synergy Rules', label: 'Location Control'},
   {src: 'packages/synergy-engine/REMOVED_RULES.md', out: 'REMOVED_RULES.html', category: 'Synergy Rules', label: 'Removed Rules'},
   // Architecture
@@ -46,6 +48,7 @@ const TEMPLATE = (title, body) => `<!DOCTYPE html>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
 
@@ -248,6 +251,26 @@ const TEMPLATE = (title, body) => `<!DOCTYPE html>
       color: #555;
       text-align: center;
     }
+
+    /* Chart containers */
+    .chart-container {
+      background: #151525;
+      border: 1px solid #2a2a44;
+      border-radius: 8px;
+      padding: 24px;
+      margin: 20px 0;
+      position: relative;
+    }
+    .chart-container canvas {
+      max-height: 360px;
+    }
+    .chart-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #d4af37;
+      margin: 0 0 16px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -257,18 +280,188 @@ const TEMPLATE = (title, body) => `<!DOCTYPE html>
 </body>
 </html>`;
 
+/** Inkweave dark theme palette for Chart.js */
+const CHART_COLORS = [
+  '#d4af37', // gold
+  '#8b5cf6', // amethyst
+  '#10b981', // emerald
+  '#ef4444', // ruby
+  '#3b82f6', // sapphire
+  '#71717a', // steel
+  '#f59e0b', // amber
+  '#6ee7a0', // strong green
+  '#60b5f5', // moderate blue
+  '#f59090', // weak red
+];
+
+/**
+ * Transform ```chart code blocks into Chart.js canvas elements.
+ *
+ * GitHub API renders ```chart blocks as:
+ *   <pre><code class="language-chart">...JSON...</code></pre>
+ * or sometimes with <div> wrappers. We find these and replace them.
+ *
+ * Chart JSON format:
+ * {
+ *   "type": "doughnut" | "bar" | "line" | "pie" | "polarArea",
+ *   "title": "Chart Title",
+ *   "data": {
+ *     "labels": ["A", "B", "C"],
+ *     "values": [10, 20, 30]
+ *   },
+ *   "options": { ... }  // optional Chart.js overrides
+ * }
+ */
+let chartCounter = 0;
+
+function transformChartBlocks(html) {
+  // GitHub API renders ```chart as <pre lang="chart" ...><code ...>JSON</code></pre>
+  // We match both GitHub's format and the standard language-chart format
+  return html.replace(
+    /<pre[^>]*lang="chart"[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>|<pre><code class="language-chart">([\s\S]*?)<\/code><\/pre>/g,
+    (_, jsonStr1, jsonStr2) => {
+      const unescaped = (jsonStr1 || jsonStr2)
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .trim();
+
+      let config;
+      try {
+        config = JSON.parse(unescaped);
+      } catch (err) {
+        console.warn(`  Warning: invalid chart JSON — ${err.message}`);
+        return `<pre><code>Invalid chart: ${err.message}</code></pre>`;
+      }
+
+      const id = `chart-${chartCounter++}`;
+      const title = config.title ? `<p class="chart-title">${config.title}</p>` : '';
+      const labels = JSON.stringify(config.data.labels);
+      const values = JSON.stringify(config.data.values);
+      const type = config.type || 'bar';
+
+      // Support multiple datasets
+      const datasets = config.data.datasets
+        ? JSON.stringify(config.data.datasets)
+        : null;
+
+      // Build Chart.js config
+      const chartConfig = datasets
+        ? `{
+            type: '${type}',
+            data: {
+              labels: ${labels},
+              datasets: ${datasets}
+            },
+            options: ${JSON.stringify(buildChartOptions(config))}
+          }`
+        : `{
+            type: '${type}',
+            data: {
+              labels: ${labels},
+              datasets: [{
+                data: ${values},
+                backgroundColor: ${JSON.stringify(CHART_COLORS.slice(0, config.data.labels.length))},
+                borderColor: 'transparent',
+                borderWidth: 0
+              }]
+            },
+            options: ${JSON.stringify(buildChartOptions(config))}
+          }`;
+
+      return `
+        <div class="chart-container">
+          ${title}
+          <canvas id="${id}"></canvas>
+        </div>
+        <script>
+          new Chart(document.getElementById('${id}'), ${chartConfig});
+        </script>`;
+    }
+  );
+}
+
+function buildChartOptions(config) {
+  const base = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        labels: {
+          color: '#e8e8e8',
+          font: {family: 'Inter', size: 12},
+          padding: 16,
+        },
+        position: 'bottom',
+      },
+      tooltip: {
+        backgroundColor: '#1a1a2e',
+        titleColor: '#d4af37',
+        bodyColor: '#e8e8e8',
+        borderColor: '#333355',
+        borderWidth: 1,
+        padding: 12,
+        titleFont: {family: 'Inter', weight: '600'},
+        bodyFont: {family: 'Inter'},
+      },
+    },
+    scales: {},
+  };
+
+  // Add axes styling for bar/line charts
+  if (config.type === 'bar' || config.type === 'line') {
+    base.scales = {
+      x: {
+        ticks: {color: '#90a1b9', font: {family: 'Inter', size: 11}},
+        grid: {color: 'rgba(51, 51, 85, 0.4)'},
+      },
+      y: {
+        ticks: {color: '#90a1b9', font: {family: 'Inter', size: 11}},
+        grid: {color: 'rgba(51, 51, 85, 0.4)'},
+        beginAtZero: true,
+      },
+    };
+    // Hide legend for single-dataset bar charts
+    if (!config.data.datasets) {
+      base.plugins.legend.display = false;
+    }
+  }
+
+  // Merge user overrides
+  if (config.options) {
+    Object.assign(base, config.options);
+  }
+
+  return base;
+}
+
 /**
  * Render markdown to HTML via GitHub API.
  * Falls back to wrapping in <pre> if the request fails.
  */
+async function getGitHubToken() {
+  try {
+    const {execFileSync} = await import('child_process');
+    return execFileSync('gh', ['auth', 'token'], {encoding: 'utf-8'}).trim();
+  } catch {
+    return null;
+  }
+}
+
+let _ghToken;
 async function renderMarkdown(md) {
   try {
+    if (_ghToken === undefined) _ghToken = await getGitHubToken();
+    const headers = {
+      'Content-Type': 'application/json',
+      Accept: 'application/vnd.github+json',
+    };
+    if (_ghToken) headers.Authorization = `Bearer ${_ghToken}`;
     const res = await fetch('https://api.github.com/markdown', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/vnd.github+json',
-      },
+      headers,
       body: JSON.stringify({text: md, mode: 'gfm'}),
     });
     if (!res.ok) throw new Error(`GitHub API ${res.status}`);
@@ -436,7 +629,8 @@ async function main() {
     process.stdout.write(`  ${doc.src} → ${doc.out} ... `);
 
     const md = readFileSync(srcPath, 'utf-8');
-    const html = await renderMarkdown(md);
+    const rawHtml = await renderMarkdown(md);
+    const html = transformChartBlocks(rawHtml);
     writeFileSync(outPath, TEMPLATE(title, html));
 
     console.log('done');

@@ -4,10 +4,10 @@ Lorcana synergy finder for Core format with archetype-based synergy detection.
 
 ## MVP Status
 
-Currently implementing MVP with:
-- **Scope**: Core format only (sets 5+), no deck builder
+Currently implementing v1.0.0 with:
+- **Scope**: Core format only (sets 5+), community voting, deck builder
 - **UI**: Dark fantasy theme (deep purple, gold accents)
-- **Synergies**: 4 archetypes (Discard, Bounce, Ramp, Damage/Removal) + existing rules
+- **Synergies**: 6 rules (Shift, Named Companions, Lore Loss, Discard, Singer + Songs, Location Control)
 
 See [GitHub Issues](https://github.com/Doberjohn/inkweave/issues) for full backlog.
 
@@ -153,6 +153,8 @@ Cards that make the opponent lose lore reinforce the same denial strategy. Unifo
 **Scoring**: All pairs score **7** (Strong). Each additional denial card increases strategy consistency.
 
 **Explanation template**: "Both {card} and {other} make the opponent lose lore"
+
+**Full documentation**: See [`packages/synergy-engine/LORE_LOSS_RULE.md`](packages/synergy-engine/LORE_LOSS_RULE.md) for detection details, scoring rationale, and card list.
 
 ### Rule 4: Discard (playstyle, two roles)
 
