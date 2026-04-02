@@ -96,6 +96,10 @@
           {
             "type": "command",
             "command": "bash D:/johnn/Projects/inkweave/.claude/hooks/git-write-protection.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash D:/johnn/Projects/inkweave/.claude/hooks/issue-create-guard.sh"
           }
         ]
       },

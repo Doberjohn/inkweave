@@ -92,11 +92,13 @@ Claude Code hooks, skills, and agents enforce workflow rules automatically. Chec
 | `git-write-protection.sh` | PreToolUse/Bash | Soft-blocks commit/push (`USER_APPROVED=1` bypass), hard-blocks destructive ops |
 | `branch-verification.sh` | PreToolUse/Edit\|Write | Blocks source file edits on master/main |
 | `engine-auto-rebuild.sh` | PostToolUse/Edit\|Write | Auto `pnpm build:engine` + `pnpm precompute-synergies` after engine file edits |
+| `issue-create-guard.sh` | PreToolUse/Bash | Redirects direct `gh issue create` to `/create-issue` skill (`SKILL_APPROVED=1` bypass) |
 | Husky pre-push | git push | Runs E2E chromium before push |
 
 ### Skills (`.claude/skills/`)
 | Skill | Arg | What it does |
 |-------|-----|-------------|
+| `/create-issue <desc>` | brief description | Clarifying questions → refine spec → create issue → offer `/implement-issue` |
 | `/implement-issue <num>` | issue number | Session hygiene → fetch issue → create branch → summary |
 | `/commit-and-push "msg"` | commit message | PR readiness → review → commit → push → PR → CI |
 | `/close-session [summary]` | work summary | Cleanup → docs update → MEMORY.md → summary |
@@ -294,6 +296,10 @@ Dark fantasy theme inspired by Lorcana:
 - **Flag problems you notice.** If you spot issues with current implementations while working (dead code, unnecessary complexity, stale patterns, security concerns), call them out — even if they're outside the current task scope.
 - **Challenge your own suggestions too.** Before recommending an approach, consider the tradeoffs and present them honestly. Don't just validate — pressure-test.
 - **Tone: collaborative, not adversarial.** Frame challenges as "have you considered..." or "one concern with this is..." — the goal is better outcomes, not debate.
+
+### Visual Self-Verification (CRITICAL)
+- **NEVER ask the user to verify visual changes.** After any UI change, use Chrome DevTools MCP (screenshot tool) to verify the result yourself. Analyze the screenshot for overlapping elements, misalignment, missing content, broken layouts, and sizing issues. If something is wrong, fix it and screenshot again. Repeat until correct. Only then present the result.
+- **Do the math before positioning.** When using absolute positioning or calc(), calculate the actual pixel values first (card widths, gaps, badge sizes) instead of guessing and iterating. One correct calculation beats five trial-and-error rounds.
 
 ### Implementation Approach
 - Before editing code or implementing changes, validate assumptions against real data first (e.g., test regex against actual card data, verify existing state)

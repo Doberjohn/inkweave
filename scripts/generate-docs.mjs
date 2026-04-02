@@ -32,6 +32,7 @@ const DOCS = [
   {src: 'docs/UX_AUDIT.md', out: 'UX_AUDIT.html', category: 'Quality & Research', label: 'UX Audit'},
   {src: 'docs/UX_REFERENCE.md', out: 'UX_REFERENCE.html', category: 'Quality & Research', label: 'UX Reference'},
   // Project
+  {src: 'docs/DATABASE.md', out: 'DATABASE.html', category: 'Architecture', label: 'Database Architecture'},
   {src: 'docs/TECH_STACK.md', out: 'TECH_STACK.html', category: 'Project', label: 'Tech Stack'},
   {src: 'docs/V1_LAUNCH_PLAN.md', out: 'V1_LAUNCH_PLAN.html', category: 'Project', label: 'v1.0 Launch Plan'},
 ];
