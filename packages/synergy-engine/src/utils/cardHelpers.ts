@@ -449,6 +449,44 @@ export function isRepeatingTrigger(card: LorcanaCard): boolean {
   return !/once\s+during\s+your\s+turn/i.test(t);
 }
 
+/**
+ * Broad card type that a cost reduction card targets.
+ * Used to determine if two cost-reduction cards can stack on the same play.
+ */
+export type CostReductionTarget = 'character' | 'location' | 'action' | 'item';
+
+/**
+ * Detect what card type a cost reduction grant discounts.
+ * Returns the broad target type. Tribe-specific discounts (Pirate, Puppy, Princess)
+ * map to 'character' since they're subtypes of character.
+ * Returns null if card is not a cost reduction grant.
+ */
+export function getCostReductionTarget(card: LorcanaCard): CostReductionTarget | null {
+  if (!card.text) return null;
+  const t = card.text.replace(/\n/g, ' ');
+  if (!COST_REDUCTION_GRANT_PATTERN.test(t) || COST_REDUCTION_SELF_PATTERN.test(t)) return null;
+
+  // Extract the text after "you pay X less"
+  const match = t.match(/you\s+pay\s+\d+\s+⬡?\s*less\s+(?:for\s+the\s+(?:next|first)\s+|to\s+play\s+)(.{0,60})/i);
+  const snippet = match?.[1] ?? '';
+
+  if (/location/i.test(snippet)) return 'location';
+  if (/action/i.test(snippet)) return 'action';
+  if (/item/i.test(snippet)) return 'item';
+  // Everything else is a character variant (generic, Princess, Pirate, Puppy, Inventor, Shift, named)
+  return 'character';
+}
+
+/**
+ * Check if two cost reduction cards target overlapping types (can stack on the same play).
+ */
+export function costReductionTargetsOverlap(cardA: LorcanaCard, cardB: LorcanaCard): boolean {
+  const targetA = getCostReductionTarget(cardA);
+  const targetB = getCostReductionTarget(cardB);
+  if (targetA == null || targetB == null) return false;
+  return targetA === targetB;
+}
+
 // ============================================
 // NAMED COMPANION DETECTION
 // ============================================

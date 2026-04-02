@@ -41,7 +41,7 @@ const playstyles: Playstyle[] = [
   },
   {
     id: 'ramp',
-    name: 'Ink Ramp',
+    name: 'Ramp',
     description:
       'Accelerate your ink economy to play powerful cards ahead of curve. Inkwell ramp adds extra ink each turn, inkwell triggers convert each ink event into bonus effects, and cost reduction lets you cheat on mana without needing more ink.',
     strategyTips: [

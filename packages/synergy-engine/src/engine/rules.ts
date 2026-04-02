@@ -17,6 +17,7 @@ import {
   isLocationSupportCard,
   isRampCard,
   isRepeatingTrigger,
+  costReductionTargetsOverlap,
   isSong,
   LOCATION_PATTERNS,
   NAMED_EFFECT_SCORES,
@@ -716,7 +717,7 @@ export const synergyRules: SynergyRule[] = [
   // --------------------------------------------
   {
     id: 'ramp',
-    name: 'Ink Ramp',
+    name: 'Ramp',
     category: 'playstyle',
     playstyleId: 'ramp',
     description:
@@ -737,6 +738,8 @@ export const synergyRules: SynergyRule[] = [
         if (otherRoles.length === 0) continue;
 
         const score = getRampPairScore(card, cardRoles, other, otherRoles);
+        if (score === 0) continue; // Skip non-overlapping cost↔cost pairs
+
         const explanation = getRampExplanation(card, cardRoles, other, otherRoles);
 
         matches.push({
@@ -822,8 +825,10 @@ function getRampPairScore(
   // Trigger ↔ Trigger (density)
   if (aHasTrigger && bHasTrigger) return 7;
 
-  // Cost reduction ↔ Cost reduction (stacking)
-  if (aHasCost && bHasCost) return 6;
+  // Cost reduction ↔ Cost reduction (stacking — only if they discount the same card type)
+  if (aHasCost && bHasCost) {
+    return costReductionTargetsOverlap(cardA, cardB) ? 6 : 0;
+  }
 
   // Trigger ↔ Cost reduction (weak indirect)
   if ((aHasTrigger && bHasCost) || (aHasCost && bHasTrigger)) return 5;

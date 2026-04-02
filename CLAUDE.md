@@ -7,7 +7,7 @@ Lorcana synergy finder for Core format with archetype-based synergy detection.
 Currently implementing v1.0.0 with:
 - **Scope**: Core format only (sets 5+), community voting, deck builder
 - **UI**: Dark fantasy theme (deep purple, gold accents)
-- **Synergies**: 7 rules (Shift, Named Companions, Lore Loss, Discard, Singer + Songs, Location Control, Ink Ramp)
+- **Synergies**: 7 rules (Shift, Named Companions, Lore Loss, Discard, Singer + Songs, Location Control, Ramp)
 
 See [GitHub Issues](https://github.com/Doberjohn/inkweave/issues) for full backlog.
 
@@ -79,7 +79,7 @@ React web application that consumes the synergy engine package.
 - Lore Denial (`lore-denial`) - cards that make opponents lose lore
 - Location Control (`location-control`) - location-support roles (8 sub-rules)
 - Discard (`discard`) - opponent discard enablers + hand-size payoffs
-- Ink Ramp (`ramp`) - inkwell ramp + inkwell triggers + cost reduction grants
+- Ramp (`ramp`) - inkwell ramp + inkwell triggers + cost reduction grants
 
 **Synergy Score**: 1-10 numeric scale (all integers valid). Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4)
 
@@ -213,7 +213,7 @@ Characters with the Singer keyword can exert to sing Song action cards for free,
 
 **Full documentation**: See [`packages/synergy-engine/LOCATION_CONTROL_RULE.md`](packages/synergy-engine/LOCATION_CONTROL_RULE.md) for role taxonomy, detection patterns, cross-synergy matrix, and test coverage.
 
-### Ink Ramp (playstyle, 3 roles)
+### Ramp (playstyle, 3 roles)
 
 Three-role mana acceleration strategy: **inkwell ramp** (34 cards, ~80% Sapphire) puts extra cards into your inkwell, **inkwell triggers** (28 cards, even spread) fire effects on each ink event, and **cost reduction grants** (18 cards, ~50% Amber) discount other cards you play.
 

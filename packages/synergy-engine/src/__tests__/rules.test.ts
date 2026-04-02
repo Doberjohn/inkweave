@@ -11,6 +11,7 @@ import {
   isRampCard,
   isDeckRamp,
   isRepeatingTrigger,
+  getCostReductionTarget,
 } from '../utils';
 import {createCard} from './fixtures.js';
 
@@ -1249,7 +1250,7 @@ describe('Card Helper Functions', () => {
     });
   });
 
-  describe('Ink Ramp', () => {
+  describe('Ramp', () => {
     const rampRule = getRuleById('ramp')!;
 
     // ── Inkwell Ramp (deck ramp) ──
@@ -1363,6 +1364,16 @@ describe('Card Helper Functions', () => {
       text: 'SONG OF THE HERD For each song card in your\ndiscard, you pay 1 ⬡ less to play this character.',
     });
 
+    // ── Cost Reduction (location — different target type) ──
+    const elsaConcerned = createCard({
+      id: 'elsa-concerned',
+      name: 'Elsa',
+      fullName: 'Elsa - Concerned Sister',
+      ink: 'Ruby',
+      cost: 3,
+      text: 'CLEAR THE WAY When you play this character, you pay 2 ⬡ less for the next location you play this turn.',
+    });
+
     // ── Unrelated card ──
     const unrelated = createCard({
       id: 'unrelated',
@@ -1418,6 +1429,12 @@ describe('Card Helper Functions', () => {
       expect(getRampRoles(lantern)).toContain('cost-reduction');
     });
 
+    it('should detect cost reduction target types', () => {
+      expect(getCostReductionTarget(pluto)).toBe('character');
+      expect(getCostReductionTarget(lantern)).toBe('character');
+      expect(getCostReductionTarget(elsaConcerned)).toBe('location');
+    });
+
     it('should exclude opponent-ink cards', () => {
       expect(isRampCard(hideAway)).toBe(false);
       expect(isRampCard(wipeOut)).toBe(false);
@@ -1468,9 +1485,15 @@ describe('Card Helper Functions', () => {
       expect(synergies[0].score).toBe(7);
     });
 
-    it('should score cost reduction + cost reduction at 6', () => {
+    it('should score cost reduction + cost reduction at 6 when same target type', () => {
       const synergies = rampRule.findSynergies(pluto, [pluto, lantern]);
       expect(synergies[0].score).toBe(6);
+    });
+
+    it('should not pair cost reduction cards that discount different types', () => {
+      // Pluto discounts characters, Elsa discounts locations — no synergy
+      const synergies = rampRule.findSynergies(pluto, [pluto, elsaConcerned]);
+      expect(synergies).toHaveLength(0);
     });
 
     it('should score trigger + cost reduction at 5', () => {

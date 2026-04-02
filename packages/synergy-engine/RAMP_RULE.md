@@ -1,6 +1,6 @@
-# Ink Ramp Synergy Rule
+# Ramp Synergy Rule
 
-Detailed documentation for the Ink Ramp rule — a playstyle synergy that detects mana acceleration strategies.
+Detailed documentation for the Ramp rule — a playstyle synergy that detects mana acceleration strategies.
 
 **Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/cardHelpers.ts`
 **Rule ID**: `ramp`
