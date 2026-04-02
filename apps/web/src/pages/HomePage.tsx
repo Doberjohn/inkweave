@@ -26,6 +26,7 @@ export function HomePage() {
   const handleCardSelect = (card: {id: string}) => navigate(`/card/${card.id}`);
   const handleBrowse = () => navigate('/browse');
   const handlePlaystyles = () => navigate('/playstyles');
+  const handleVote = () => navigate('/vote');
 
   return (
     <main style={{...mainStyle, justifyContent: isMobile ? undefined : 'center'}}>
@@ -40,6 +41,7 @@ export function HomePage() {
           onCardSelect={handleCardSelect}
           onBrowse={handleBrowse}
           onPlaystyles={handlePlaystyles}
+          onVote={handleVote}
           isMobile={isMobile}
         />
       </ErrorBoundary>

@@ -25,6 +25,7 @@ interface CompactHeaderProps {
 const NAV_ITEMS = [
   {path: '/browse', label: 'Browse'},
   {path: '/playstyles', label: 'Playstyles'},
+  {path: '/vote', label: 'Vote'},
 ] as const;
 
 export function CompactHeader({

@@ -45,7 +45,7 @@ export type QuickVote = {
 };
 
 // Fix #6: Constrain score to 1-10
-type Score = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+export type Score = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 export type InDepthVote = {
   cardA: string;

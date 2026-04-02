@@ -138,7 +138,7 @@ export function BrowsePage() {
           <h1
             style={{
               padding: `${SPACING.lg}px ${SPACING.lg}px 0`,
-              fontSize: `${FONT_SIZES.xl}px`,
+              fontSize: `${FONT_SIZES.xxl}px`,
               fontWeight: 700,
               color: COLORS.text,
               letterSpacing: '0.06em',
@@ -210,7 +210,7 @@ export function BrowsePage() {
         <h1
           style={{
             padding: `${SPACING.xxl}px 32px 0`,
-            fontSize: `${FONT_SIZES.xl}px`,
+            fontSize: `${FONT_SIZES.xxl}px`,
             fontWeight: 700,
             color: COLORS.text,
             letterSpacing: '0.06em',

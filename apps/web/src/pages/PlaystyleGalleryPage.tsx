@@ -551,7 +551,7 @@ export function PlaystyleGalleryPage() {
             style={{
               fontSize: `${FONT_SIZES.xxl}px`,
               fontWeight: 700,
-              letterSpacing: '0.08em',
+              letterSpacing: '0.06em',
               textTransform: 'uppercase',
               marginBottom: SPACING.sm,
             }}>

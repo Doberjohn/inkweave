@@ -45,6 +45,7 @@ const PlaystyleDetailPage = lazyWithRetry(
   () => import('./pages/PlaystyleDetailPage'),
   'PlaystyleDetailPage',
 );
+const VotePage = lazyWithRetry(() => import('./pages/VotePage'), 'VotePage');
 const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'), 'NotFoundPage');
 
 function SuspenseWrapper({children}: {children: React.ReactNode}) {
@@ -116,6 +117,14 @@ export const router = createBrowserRouter([
         element: (
           <SuspenseWrapper>
             <PlaystyleDetailPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'vote',
+        element: (
+          <SuspenseWrapper>
+            <VotePage />
           </SuspenseWrapper>
         ),
       },

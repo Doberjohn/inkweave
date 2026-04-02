@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-79 active tests across 15 spec files. Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+96 active tests across 16 spec files. Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 ## `accessibility.spec.ts` — 6 tests (desktop only)
 
@@ -157,6 +157,28 @@
 | should show all direct group cards inline without truncation | Direct (Shift Targets) group has no "+N more" tile — all cards shown inline |
 | should expand playstyle group and scroll to expanded view on mobile | Same expand + scroll check on mobile viewport |
 | should show all direct group cards inline without truncation on mobile | Same no-truncation check on mobile viewport |
+
+## `voting.spec.ts` — 17 tests (12 desktop, 5 mobile)
+
+| Test | What it verifies |
+|---|---|
+| should navigate to /vote and display a card pair | Page loads, URL correct, 2+ card images visible |
+| should display score picker with 10 buttons | All 10 score buttons (1-10) rendered |
+| should display synergy description | "How strong is this synergy?" prompt visible |
+| should show skip button with keyboard hint | Skip button shows "(S)" on desktop |
+| should advance to next pair when score is clicked | Click score → pair changes |
+| should advance to next pair when skip is clicked | Skip → pair changes |
+| should show toast after voting | Toast with "Vote recorded" appears |
+| should support keyboard shortcut for scoring (1-9) | Key '5' → pair advances |
+| should support keyboard shortcut 0 for score 10 | Key '0' → pair advances |
+| should support keyboard shortcut S for skip | Key 's' → pair advances |
+| should navigate to /vote from desktop nav | Nav link click → /vote |
+| should show compact header with nav strip | Header + Browse/Vote links visible |
+| should display compact card layout on mobile | Cards + score picker visible on mobile |
+| should show skip button without keyboard hint on mobile | No "(S)" on mobile |
+| should advance to next pair on score click (mobile) | Mobile score click → pair changes |
+| should advance on skip (mobile) | Mobile skip → pair changes |
+| should show mobile bottom navigation | Mobile nav with Browse/Playstyles visible |
 
 ## Patterns
 
