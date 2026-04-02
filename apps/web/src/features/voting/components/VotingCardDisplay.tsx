@@ -2,7 +2,6 @@ import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardImage, CardLightbox} from '../../../shared/components';
 import {COLORS, FONTS, FONT_SIZES} from '../../../shared/constants';
-import {useCardPreviewHandlers} from '../../cards/components/useCardPreviewHandlers';
 
 interface VotingCardDisplayProps {
   card: LorcanaCard;
@@ -20,7 +19,6 @@ function splitCardName(fullName: string): {name: string; version: string | null}
 }
 
 export function VotingCardDisplay({card, isMobile, highlighted}: VotingCardDisplayProps) {
-  const {previewHandlers} = useCardPreviewHandlers({card});
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const imageWidth = isMobile ? 130 : 340;
   const imageHeight = Math.round(imageWidth / CARD_ASPECT);
@@ -82,10 +80,8 @@ export function VotingCardDisplay({card, isMobile, highlighted}: VotingCardDispl
 
   return (
     <div
-      {...previewHandlers}
       style={{
         width: imageWidth,
-        cursor: 'pointer',
         boxSizing: 'border-box',
         borderRadius: 12,
         display: 'flex',

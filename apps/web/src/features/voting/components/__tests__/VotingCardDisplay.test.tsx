@@ -8,10 +8,6 @@ vi.mock('../../../../shared/components', () => ({
   CardLightbox: ({alt, onClose}: {alt: string; onClose: () => void}) => <div data-testid="card-lightbox" data-alt={alt}><button onClick={onClose}>Close</button></div>,
 }));
 
-vi.mock('../../../cards/components/useCardPreviewHandlers', () => ({
-  useCardPreviewHandlers: () => ({previewHandlers: {'data-testid': 'preview-handlers'}}),
-}));
-
 const cardWithVersion = createCard({
   id: 'elsa-1',
   fullName: 'Elsa - Ice Queen',
