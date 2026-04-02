@@ -17,6 +17,7 @@ export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
   'lore-denial': makeUiMeta('#ef4444', '/art/playstyles/lore-denial-cover.webp'),
   'location-control': makeUiMeta('#71717a', '/art/playstyles/location-control-cover.webp'),
   discard: makeUiMeta('#10b981', '/art/playstyles/discard.webp'),
+  ramp: makeUiMeta('#3b82f6', '/art/playstyles/ramp.webp'),
 };
 
 export interface ComingSoonPlaystyle extends PlaystyleUiMeta {
@@ -40,12 +41,6 @@ export const COMING_SOON_PLAYSTYLES: ComingSoonPlaystyle[] = [
     'Return characters to hand to retrigger enter-the-battlefield effects. Tempo advantage through repeated value generation.',
     '#8b5cf6',
     '/art/playstyles/bounce.webp',
-  ),
-  makeComingSoon(
-    'Ramp',
-    'Accelerate ink production to play high-cost threats ahead of curve. Ink ramp enablers paired with powerful late-game finishers.',
-    '#3b82f6',
-    '/art/playstyles/ramp.webp',
   ),
   makeComingSoon(
     'Zombies',

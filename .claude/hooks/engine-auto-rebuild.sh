@@ -26,6 +26,21 @@ FILE_PATH=$(echo "$FILE_PATH" | sed 's|\\|/|g')
 
 # Check if the file is in the synergy engine source directory
 if echo "$FILE_PATH" | grep -q "packages/synergy-engine/src/"; then
-  echo "Engine source changed — rebuilding + precomputing..." >&2
-  cd "D:/johnn/Projects/inkweave" && pnpm build:engine 2>&1 | tail -3 && pnpm precompute-synergies 2>&1 | tail -3
+  cd "D:/johnn/Projects/inkweave" || exit 0
+
+  # Build engine (capture success/failure)
+  BUILD_OUT=$(pnpm build:engine 2>&1)
+  BUILD_OK=$?
+
+  if [ $BUILD_OK -ne 0 ]; then
+    echo "[engine-auto-rebuild] BUILD FAILED"
+    echo "$BUILD_OUT" | tail -5
+    exit 0
+  fi
+
+  # Precompute synergies (capture summary line)
+  PRECOMPUTE_OUT=$(pnpm precompute-synergies 2>&1)
+  SUMMARY=$(echo "$PRECOMPUTE_OUT" | grep -E "playstyles|groups|matches|cards with")
+
+  echo "[engine-auto-rebuild] OK — $SUMMARY"
 fi

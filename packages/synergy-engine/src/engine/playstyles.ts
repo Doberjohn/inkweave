@@ -39,6 +39,19 @@ const playstyles: Playstyle[] = [
       'Timing matters — discard effects are most punishing when your opponent is down to their last 1-2 cards, which are usually the ones they fought hardest to keep.',
     ],
   },
+  {
+    id: 'ramp',
+    name: 'Ink Ramp',
+    description:
+      'Accelerate your ink economy to play powerful cards ahead of curve. Inkwell ramp adds extra ink each turn, inkwell triggers convert each ink event into bonus effects, and cost reduction lets you cheat on mana without needing more ink.',
+    strategyTips: [
+      'Pair inkwell ramp with inkwell triggers for the strongest synergy — each extra ink fires every trigger on board.',
+      'Deck-top ramp (Sapphire) is free mana with no card cost. Hand-to-inkwell ramp trades a card for speed — run card draw to compensate.',
+      'Cost reduction cards (Amber) stack with inkwell ramp — Lantern discount + extra ink means you can deploy two threats in one turn.',
+      'Repeating triggers (Coils, Jafar) scale with the number of inks per turn. Once-per-turn triggers (Raya, Lyle) are strong but cap at one activation.',
+      'Ramp is strongest in turns 2-5 when the extra ink lets you play 5-6 cost cards while opponents are still at 3-4.',
+    ],
+  },
 ];
 
 const playstyleMap = new Map(playstyles.map((p) => [p.id, p]));

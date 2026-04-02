@@ -7,6 +7,10 @@ import {
   isLocationSupportCard,
   getDiscardRoles,
   isDiscardCard,
+  getRampRoles,
+  isRampCard,
+  isDeckRamp,
+  isRepeatingTrigger,
 } from '../utils';
 import {createCard} from './fixtures.js';
 
@@ -1242,6 +1246,259 @@ describe('Card Helper Functions', () => {
       expect(synergies[0].explanation).toContain('can sing');
       expect(synergies[0].explanation).toContain('Try Everything');
       expect(synergies[0].explanation).toContain('cost 4');
+    });
+  });
+
+  describe('Ink Ramp', () => {
+    const rampRule = getRuleById('ramp')!;
+
+    // ── Inkwell Ramp (deck ramp) ──
+    const mamaOdie = createCard({
+      id: 'mama-odie',
+      name: 'Mama Odie',
+      fullName: 'Mama Odie - Mystical Maven',
+      ink: 'Sapphire',
+      cost: 3,
+      text: 'THIS GOING TO BE GOOD Whenever you play a song,\nyou may put the top card of your deck into your inkwell\nfacedown and exerted.',
+    });
+
+    const oneJumpAhead = createCard({
+      id: 'one-jump',
+      name: 'One Jump Ahead',
+      fullName: 'One Jump Ahead',
+      type: 'Action',
+      ink: 'Sapphire',
+      cost: 2,
+      text: '(A character with cost 2 or more can ⟳ to sing this song\nfor free.)\nPut the top card of your deck into your inkwell facedown\nand exerted.',
+    });
+
+    // ── Inkwell Ramp (self-sacrifice) ──
+    const winniePooh = createCard({
+      id: 'winnie',
+      name: 'Winnie the Pooh',
+      fullName: 'Winnie the Pooh - Having a Think',
+      ink: 'Sapphire',
+      cost: 3,
+      text: 'HUNNY POT Whenever this character quests, you may put a card from your hand into your inkwell facedown.',
+    });
+
+    // ── Inkwell Triggers (repeating) ──
+    const jafar = createCard({
+      id: 'jafar',
+      name: 'Jafar',
+      fullName: 'Jafar - Power-Hungry Vizier',
+      ink: 'Steel',
+      cost: 5,
+      text: "YOU'LL GET WHAT'S COMING TO YOU During your turn,\nwhenever a card is put into your inkwell, deal 1 damage\nto chosen character.",
+    });
+
+    const amberCoil = createCard({
+      id: 'amber-coil',
+      name: 'Amber Coil',
+      fullName: 'Amber Coil',
+      type: 'Item',
+      ink: 'Amber',
+      cost: 1,
+      text: 'HEALING AURA During your turn, whenever a card is\nput into your inkwell, you may remove up to 2 damage\nfrom chosen character.',
+    });
+
+    // ── Inkwell Triggers (once per turn) ──
+    const rayaKumandran = createCard({
+      id: 'raya',
+      name: 'Raya',
+      fullName: 'Raya - Kumandran Rider',
+      ink: 'Ruby',
+      cost: 4,
+      text: "COME ON, LET'S DO THIS Once during your turn,\nwhenever a card is put into your inkwell, you may\nready another chosen character of yours.",
+    });
+
+    // ── Cost Reduction Grants ──
+    const pluto = createCard({
+      id: 'pluto',
+      name: 'Pluto',
+      fullName: 'Pluto - Friendly Pooch',
+      ink: 'Amber',
+      cost: 1,
+      text: 'GOOD DOG ⟳ — You pay 1 ⬡ less for the next\ncharacter you play this turn.',
+    });
+
+    const lantern = createCard({
+      id: 'lantern',
+      name: 'Lantern',
+      fullName: 'Lantern',
+      type: 'Item',
+      ink: 'Amber',
+      cost: 2,
+      text: 'BIRTHDAY LIGHTS ⟳ — You pay 1 ⬡ less for the next\ncharacter you play this turn.',
+    });
+
+    // ── Opponent Ink (should be EXCLUDED) ──
+    const hideAway = createCard({
+      id: 'hide-away',
+      name: 'Hide Away',
+      fullName: 'Hide Away',
+      type: 'Action',
+      ink: 'Sapphire',
+      cost: 2,
+      text: "Put chosen item or location into its player's inkwell\nfacedown and exerted.",
+    });
+
+    const wipeOut = createCard({
+      id: 'wipe-out',
+      name: 'Wipe Out!',
+      fullName: 'Wipe Out!',
+      type: 'Action',
+      ink: 'Sapphire',
+      cost: 2,
+      text: "Put chosen character with Bodyguard or item into their player's inkwell facedown and exerted.",
+    });
+
+    // ── Self-discount (should be EXCLUDED) ──
+    const kristoff = createCard({
+      id: 'kristoff',
+      name: 'Kristoff',
+      fullName: 'Kristoff - Reindeer Keeper',
+      ink: 'Amber',
+      cost: 9,
+      text: 'SONG OF THE HERD For each song card in your\ndiscard, you pay 1 ⬡ less to play this character.',
+    });
+
+    // ── Unrelated card ──
+    const unrelated = createCard({
+      id: 'unrelated',
+      name: 'Generic',
+      fullName: 'Generic Card',
+      cost: 3,
+      text: 'Draw a card.',
+    });
+
+    // ── Variant wording triggers ──
+    const fgWand = createCard({
+      id: 'fg-wand',
+      name: "Fairy Godmother's Wand",
+      fullName: "Fairy Godmother's Wand",
+      type: 'Item',
+      ink: 'Sapphire',
+      cost: 2,
+      text: 'ONLY TILL MIDNIGHT During your turn, whenever you\nput a card into your inkwell, chosen Princess character\nof yours gains Ward until the start of your next turn.',
+    });
+
+    // ── Role Detection ──
+
+    it('should detect deck ramp cards', () => {
+      expect(getRampRoles(mamaOdie)).toContain('inkwell-ramp');
+      expect(getRampRoles(oneJumpAhead)).toContain('inkwell-ramp');
+      expect(isDeckRamp(mamaOdie)).toBe(true);
+      expect(isDeckRamp(oneJumpAhead)).toBe(true);
+    });
+
+    it('should detect self-sacrifice ramp cards', () => {
+      expect(getRampRoles(winniePooh)).toContain('inkwell-ramp');
+      expect(isDeckRamp(winniePooh)).toBe(false);
+    });
+
+    it('should detect repeating inkwell triggers', () => {
+      expect(getRampRoles(jafar)).toContain('inkwell-trigger');
+      expect(getRampRoles(amberCoil)).toContain('inkwell-trigger');
+      expect(isRepeatingTrigger(jafar)).toBe(true);
+      expect(isRepeatingTrigger(amberCoil)).toBe(true);
+    });
+
+    it('should detect once-per-turn inkwell triggers', () => {
+      expect(getRampRoles(rayaKumandran)).toContain('inkwell-trigger');
+      expect(isRepeatingTrigger(rayaKumandran)).toBe(false);
+    });
+
+    it('should detect variant wording triggers', () => {
+      expect(getRampRoles(fgWand)).toContain('inkwell-trigger');
+    });
+
+    it('should detect cost reduction grants', () => {
+      expect(getRampRoles(pluto)).toContain('cost-reduction');
+      expect(getRampRoles(lantern)).toContain('cost-reduction');
+    });
+
+    it('should exclude opponent-ink cards', () => {
+      expect(isRampCard(hideAway)).toBe(false);
+      expect(isRampCard(wipeOut)).toBe(false);
+    });
+
+    it('should exclude self-discount payoffs', () => {
+      expect(isRampCard(kristoff)).toBe(false);
+    });
+
+    it('should not match unrelated cards', () => {
+      expect(isRampCard(unrelated)).toBe(false);
+    });
+
+    // ── Scoring ──
+
+    it('should score deck ramp + repeating trigger at 9', () => {
+      const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, jafar]);
+      expect(synergies[0].score).toBe(9);
+    });
+
+    it('should score deck ramp + once-per-turn trigger at 8', () => {
+      const synergies = rampRule.findSynergies(oneJumpAhead, [oneJumpAhead, rayaKumandran]);
+      expect(synergies[0].score).toBe(8);
+    });
+
+    it('should score self-sacrifice + repeating trigger at 8', () => {
+      const synergies = rampRule.findSynergies(winniePooh, [winniePooh, jafar]);
+      expect(synergies[0].score).toBe(8);
+    });
+
+    it('should score self-sacrifice + once-per-turn trigger at 7', () => {
+      const synergies = rampRule.findSynergies(winniePooh, [winniePooh, rayaKumandran]);
+      expect(synergies[0].score).toBe(7);
+    });
+
+    it('should score ramp + ramp at 7', () => {
+      const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, oneJumpAhead]);
+      expect(synergies[0].score).toBe(7);
+    });
+
+    it('should score ramp + cost reduction at 7', () => {
+      const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, pluto]);
+      expect(synergies[0].score).toBe(7);
+    });
+
+    it('should score trigger + trigger at 7', () => {
+      const synergies = rampRule.findSynergies(jafar, [jafar, amberCoil]);
+      expect(synergies[0].score).toBe(7);
+    });
+
+    it('should score cost reduction + cost reduction at 6', () => {
+      const synergies = rampRule.findSynergies(pluto, [pluto, lantern]);
+      expect(synergies[0].score).toBe(6);
+    });
+
+    it('should score trigger + cost reduction at 5', () => {
+      const synergies = rampRule.findSynergies(amberCoil, [amberCoil, pluto]);
+      expect(synergies[0].score).toBe(5);
+    });
+
+    // ── Integration ──
+
+    it('should not find synergies with unrelated cards', () => {
+      const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, unrelated]);
+      expect(synergies).toHaveLength(0);
+    });
+
+    it('should not find synergies for opponent-ink cards', () => {
+      const synergies = rampRule.findSynergies(hideAway, [hideAway, jafar, pluto]);
+      expect(synergies).toHaveLength(0);
+    });
+
+    it('should generate explanations mentioning both card names', () => {
+      const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, jafar]);
+      expect(synergies[0].explanation).toContain('Mama Odie');
+      expect(synergies[0].explanation).toContain('Jafar');
+    });
+
+    it('should mark all matches as bidirectional', () => {
+      const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, jafar, pluto]);
+      synergies.forEach((s) => expect(s.bidirectional).toBe(true));
     });
   });
 

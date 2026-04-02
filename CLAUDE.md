@@ -7,7 +7,7 @@ Lorcana synergy finder for Core format with archetype-based synergy detection.
 Currently implementing v1.0.0 with:
 - **Scope**: Core format only (sets 5+), community voting, deck builder
 - **UI**: Dark fantasy theme (deep purple, gold accents)
-- **Synergies**: 6 rules (Shift, Named Companions, Lore Loss, Discard, Singer + Songs, Location Control)
+- **Synergies**: 7 rules (Shift, Named Companions, Lore Loss, Discard, Singer + Songs, Location Control, Ink Ramp)
 
 See [GitHub Issues](https://github.com/Doberjohn/inkweave/issues) for full backlog.
 
@@ -79,6 +79,7 @@ React web application that consumes the synergy engine package.
 - Lore Denial (`lore-denial`) - cards that make opponents lose lore
 - Location Control (`location-control`) - location-support roles (8 sub-rules)
 - Discard (`discard`) - opponent discard enablers + hand-size payoffs
+- Ink Ramp (`ramp`) - inkwell ramp + inkwell triggers + cost reduction grants
 
 **Synergy Score**: 1-10 numeric scale (all integers valid). Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4)
 
@@ -116,7 +117,7 @@ Claude Code hooks, skills, and agents enforce workflow rules automatically. Chec
 
 Built-in rules in the engine package. **Keep this section up to date when modifying rule logic, scoring, or explanations.**
 
-See `packages/synergy-engine/REMOVED_RULES.md` for archived rules (Evasive, Tribal, Challenger, Exert, Draw, Ink Ramp, Ward).
+See `packages/synergy-engine/REMOVED_RULES.md` for archived rules (Evasive, Tribal, Challenger, Exert, Draw, Ward).
 
 ### Rule 1: Shift Targets (bidirectional)
 
@@ -211,6 +212,16 @@ Characters with the Singer keyword can exert to sing Song action cards for free,
 8 specialized rules detecting location-support roles: at-payoff, play-trigger, buff, location-ramp, move, in-play-check, tutor, boost. All merge into a single `location-control` playstyle group. Factory pattern (`createLocationRule`) generates each rule. Anti-location cards (banish/remove locations) are excluded.
 
 **Full documentation**: See [`packages/synergy-engine/LOCATION_CONTROL_RULE.md`](packages/synergy-engine/LOCATION_CONTROL_RULE.md) for role taxonomy, detection patterns, cross-synergy matrix, and test coverage.
+
+### Ink Ramp (playstyle, 3 roles)
+
+Three-role mana acceleration strategy: **inkwell ramp** (34 cards, ~80% Sapphire) puts extra cards into your inkwell, **inkwell triggers** (28 cards, even spread) fire effects on each ink event, and **cost reduction grants** (18 cards, ~50% Amber) discount other cards you play.
+
+**Sub-pattern scoring**: Deck ramp (free mana from deck) + repeating trigger scores **9**; self-sacrifice ramp (hand→ink) + once-per-turn trigger scores **7**. Full range: 5-9.
+
+**Excluded**: Opponent-ink cards (removal, not ramp), self-discount payoffs, free play effects, generic high-cost cards.
+
+**Full documentation**: See [`packages/synergy-engine/RAMP_RULE.md`](packages/synergy-engine/RAMP_RULE.md) for role detection, scoring matrix, coverage, and design decisions.
 
 ## Commands
 
