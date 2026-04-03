@@ -9,6 +9,9 @@ import {PairStack} from './PairStack';
 
 const TRANSITION_MS = 450;
 
+/** Half-width offset from center where the previous/upcoming stacks begin (px) */
+const STACK_OFFSET_PX = 440;
+
 /** Inject carousel keyframes at module load */
 (function injectPairKeyframes() {
   const STYLE_ID = 'pair-transition-keyframes';
@@ -365,13 +368,21 @@ export function PairDisplay({pair, selectedScore, previousPairs, upcomingPairs, 
 
         {/* Previous pairs stack + ghost silhouettes (only when stacks are enabled) */}
         {previousPairs && (
-          <div style={{position: 'absolute', top: '50%', left: 0, right: 'calc(50% + 410px)', transform: 'translateY(-50%)', display: 'flex', justifyContent: 'center'}}>
+          <div style={{
+            position: 'absolute', top: '50%', transform: 'translateY(-50%)',
+            left: 0, right: `calc(50% + ${STACK_OFFSET_PX}px)`,
+            display: 'flex', justifyContent: 'flex-end', overflow: 'hidden',
+          }}>
             <PreviousStack pairs={previousPairs} />
           </div>
         )}
         {/* Upcoming pairs stack */}
         {upcomingPairs && upcomingPairs.length > 0 && (
-          <div style={{position: 'absolute', top: '50%', left: 'calc(50% + 410px)', right: 0, transform: 'translateY(-50%)', display: 'flex', justifyContent: 'center'}}>
+          <div style={{
+            position: 'absolute', top: '50%', transform: 'translateY(-50%)',
+            left: `calc(50% + ${STACK_OFFSET_PX}px)`, right: 0,
+            display: 'flex', justifyContent: 'flex-start', overflow: 'hidden',
+          }}>
             <PairStack pairs={upcomingPairs} side="right" />
           </div>
         )}

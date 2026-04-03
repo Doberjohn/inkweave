@@ -82,6 +82,7 @@ export function VotingCardDisplay({card, isMobile, highlighted}: VotingCardDispl
     <div
       style={{
         width: imageWidth,
+        flexShrink: 0,
         boxSizing: 'border-box',
         borderRadius: 12,
         display: 'flex',
