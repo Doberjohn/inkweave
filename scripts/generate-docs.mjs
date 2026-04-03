@@ -25,6 +25,7 @@ const DOCS = [
   {src: 'packages/synergy-engine/LORE_LOSS_RULE.md', out: 'LORE_LOSS_RULE.html', category: 'Synergy Rules', label: 'Lore Loss'},
   {src: 'packages/synergy-engine/SINGER_SONGS_RULE.md', out: 'SINGER_SONGS_RULE.html', category: 'Synergy Rules', label: 'Singer + Songs'},
   {src: 'packages/synergy-engine/LOCATION_CONTROL_RULE.md', out: 'LOCATION_CONTROL_RULE.html', category: 'Synergy Rules', label: 'Location Control'},
+  {src: 'packages/synergy-engine/RAMP_RULE.md', out: 'RAMP_RULE.html', category: 'Synergy Rules', label: 'Ramp'},
   {src: 'packages/synergy-engine/REMOVED_RULES.md', out: 'REMOVED_RULES.html', category: 'Synergy Rules', label: 'Removed Rules'},
   // Architecture
   {src: 'packages/synergy-engine/SCORING_DESIGN.md', out: 'SCORING_DESIGN.html', category: 'Architecture', label: 'Scoring Design'},

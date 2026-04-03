@@ -6,19 +6,25 @@ import {
   getKeywordValue,
   getLocationRoles,
   getNamedReferences,
+  getRampRoles,
   getShiftType,
   hasClassification,
   hasKeyword,
   isCharacter,
+  isDeckRamp,
   isDiscardCard,
   isLocation,
   isLocationSupportCard,
+  isRampCard,
+  isRepeatingTrigger,
+  costReductionTargetsOverlap,
   isSong,
   LOCATION_PATTERNS,
   NAMED_EFFECT_SCORES,
   textContains,
   type DiscardRole,
   type LocationRole,
+  type RampRole,
   type ShiftType,
 } from '../utils';
 
@@ -705,7 +711,184 @@ export const synergyRules: SynergyRule[] = [
         });
     },
   },
+
+  // --------------------------------------------
+  // INK RAMP (playstyle: ramp)
+  // --------------------------------------------
+  {
+    id: 'ramp',
+    name: 'Ramp',
+    category: 'playstyle',
+    playstyleId: 'ramp',
+    description:
+      'Inkwell ramp, inkwell triggers, and cost reduction cards accelerate your ink economy',
+
+    matches: isRampCard,
+
+    findSynergies: (card, allCards) => {
+      const cardRoles = getRampRoles(card);
+      if (cardRoles.length === 0) return [];
+
+      const matches: SynergyMatch[] = [];
+
+      for (const other of allCards) {
+        if (other.id === card.id) continue;
+
+        const otherRoles = getRampRoles(other);
+        if (otherRoles.length === 0) continue;
+
+        const score = getRampPairScore(card, cardRoles, other, otherRoles);
+        if (score === 0) continue; // Skip non-overlapping cost↔cost pairs
+
+        const explanation = getRampExplanation(card, cardRoles, other, otherRoles);
+
+        matches.push({
+          card: other,
+          score,
+          explanation,
+          bidirectional: true,
+        });
+      }
+
+      return matches;
+    },
+  },
 ];
+
+// ============================================
+// RAMP ROLE LABELS & DESCRIPTIONS
+// ============================================
+
+/** Short chip labels for each ramp role (used in UI) */
+export const RAMP_ROLE_CHIP_LABELS: Record<RampRole, string> = {
+  'inkwell-ramp': 'Ramp',
+  'inkwell-trigger': 'Trigger',
+  'cost-reduction': 'Discount',
+};
+
+/** Educational descriptions explaining what each ramp role means */
+export const RAMP_ROLE_DESCRIPTIONS: Record<RampRole, string> = {
+  'inkwell-ramp': 'Puts extra cards into your inkwell, accelerating your ink count',
+  'inkwell-trigger': 'Fires an effect whenever a card is put into your inkwell',
+  'cost-reduction': 'Reduces the cost of other cards you play',
+};
+
+// ============================================
+// RAMP SCORING
+// ============================================
+
+/**
+ * Score a ramp pair based on their roles and sub-patterns.
+ *
+ * Scoring priority (highest to lowest):
+ * - Deck ramp ↔ Repeating trigger: 9 (direct mechanic chain, scales with ramp)
+ * - Deck ramp ↔ Once/turn trigger: 8 (strong but capped)
+ * - Self-sacrifice ↔ Repeating trigger: 8 (fires trigger but costs a card)
+ * - Self-sacrifice ↔ Once/turn trigger: 7 (card cost + capped)
+ * - Ramp ↔ Ramp: 7 (density)
+ * - Ramp ↔ Cost reduction: 7 (parallel acceleration)
+ * - Trigger ↔ Trigger: 7 (density — multiple triggers compound)
+ * - Cost reduction ↔ Cost reduction: 6 (stacking discounts)
+ * - Trigger ↔ Cost reduction: 5 (weak indirect link)
+ */
+function getRampPairScore(
+  cardA: LorcanaCard,
+  rolesA: RampRole[],
+  cardB: LorcanaCard,
+  rolesB: RampRole[],
+): number {
+  const aHasRamp = rolesA.includes('inkwell-ramp');
+  const bHasRamp = rolesB.includes('inkwell-ramp');
+  const aHasTrigger = rolesA.includes('inkwell-trigger');
+  const bHasTrigger = rolesB.includes('inkwell-trigger');
+  const aHasCost = rolesA.includes('cost-reduction');
+  const bHasCost = rolesB.includes('cost-reduction');
+
+  // Ramp ↔ Trigger (highest — direct mechanic chain)
+  if ((aHasRamp && bHasTrigger) || (aHasTrigger && bHasRamp)) {
+    const rampCard = aHasRamp ? cardA : cardB;
+    const triggerCard = aHasTrigger ? cardA : cardB;
+    const deckRampBonus = isDeckRamp(rampCard);
+    const repeatingBonus = isRepeatingTrigger(triggerCard);
+
+    if (deckRampBonus && repeatingBonus) return 9;
+    if (deckRampBonus || repeatingBonus) return 8;
+    return 7;
+  }
+
+  // Ramp ↔ Ramp (density)
+  if (aHasRamp && bHasRamp) return 7;
+
+  // Ramp ↔ Cost reduction (parallel acceleration)
+  if ((aHasRamp && bHasCost) || (aHasCost && bHasRamp)) return 7;
+
+  // Trigger ↔ Trigger (density)
+  if (aHasTrigger && bHasTrigger) return 7;
+
+  // Cost reduction ↔ Cost reduction (stacking — only if they discount the same card type)
+  if (aHasCost && bHasCost) {
+    return costReductionTargetsOverlap(cardA, cardB) ? 6 : 0;
+  }
+
+  // Trigger ↔ Cost reduction (weak indirect)
+  if ((aHasTrigger && bHasCost) || (aHasCost && bHasTrigger)) return 5;
+
+  // Fallback (shouldn't reach here if roles are correct)
+  return 6;
+}
+
+/**
+ * Generate a human-readable explanation for a ramp synergy pair.
+ */
+function getRampExplanation(
+  cardA: LorcanaCard,
+  rolesA: RampRole[],
+  cardB: LorcanaCard,
+  rolesB: RampRole[],
+): string {
+  const aHasRamp = rolesA.includes('inkwell-ramp');
+  const bHasRamp = rolesB.includes('inkwell-ramp');
+  const aHasTrigger = rolesA.includes('inkwell-trigger');
+  const bHasTrigger = rolesB.includes('inkwell-trigger');
+  const aHasCost = rolesA.includes('cost-reduction');
+  const bHasCost = rolesB.includes('cost-reduction');
+
+  // Ramp ↔ Trigger
+  if ((aHasRamp && bHasTrigger) || (aHasTrigger && bHasRamp)) {
+    const ramp = aHasRamp ? cardA : cardB;
+    const trigger = aHasTrigger ? cardA : cardB;
+    return `${ramp.fullName} adds ink to your inkwell, triggering ${trigger.fullName}'s inkwell effect`;
+  }
+
+  // Ramp ↔ Ramp
+  if (aHasRamp && bHasRamp) {
+    return `Both ${cardA.fullName} and ${cardB.fullName} accelerate your ink, getting you ahead on mana faster`;
+  }
+
+  // Ramp ↔ Cost reduction
+  if ((aHasRamp && bHasCost) || (aHasCost && bHasRamp)) {
+    const ramp = aHasRamp ? cardA : cardB;
+    const cost = aHasCost ? cardA : cardB;
+    return `${ramp.fullName} adds extra ink while ${cost.fullName} discounts your plays — double acceleration`;
+  }
+
+  // Trigger ↔ Trigger
+  if (aHasTrigger && bHasTrigger) {
+    return `Both ${cardA.fullName} and ${cardB.fullName} fire on inkwell events — each ink triggers both effects`;
+  }
+
+  // Cost reduction ↔ Cost reduction
+  if (aHasCost && bHasCost) {
+    return `Both ${cardA.fullName} and ${cardB.fullName} reduce costs — stacking discounts lets you deploy faster`;
+  }
+
+  // Trigger ↔ Cost reduction
+  if ((aHasTrigger && bHasCost) || (aHasCost && bHasTrigger)) {
+    return `${cardA.fullName} and ${cardB.fullName} both support an accelerated game plan`;
+  }
+
+  return `${cardA.fullName} and ${cardB.fullName} reinforce the ramp strategy`;
+}
 
 // Get all rules
 export const getAllRules = (): SynergyRule[] => synergyRules;

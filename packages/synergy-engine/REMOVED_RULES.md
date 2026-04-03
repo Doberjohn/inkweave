@@ -14,7 +14,7 @@ Rules removed to simplify the engine. Full implementations preserved here for fu
 | challenger-buffs | Challenger + Strength Buffs | keyword        | Challenger characters paired with strength buff cards              |
 | exert-synergies  | Exert Synergies             | mechanic       | Cards that exert opponents + cards that benefit from exerted state |
 | draw-engine      | Card Draw Synergies         | mechanic       | Draw effects + "when you draw" payoffs                             |
-| ink-ramp         | Ink Ramp                    | mechanic       | Ink acceleration + expensive cards (cost 6+)                       |
+| ~~ink-ramp~~     | ~~Ink Ramp~~                | ~~mechanic~~   | **Re-implemented** in `rules.ts` as Ramp playstyle (#42). See [`RAMP_RULE.md`](RAMP_RULE.md) |
 | ward-aggro       | Ward + Aggression           | keyword        | Ward characters paired with challenge/ready effects                |
 
 ## Helper Functions Used

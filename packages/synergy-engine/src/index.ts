@@ -35,6 +35,8 @@ export {
   LOCATION_ROLE_TOOLTIP,
   DISCARD_ROLE_CHIP_LABELS,
   DISCARD_ROLE_DESCRIPTIONS,
+  RAMP_ROLE_CHIP_LABELS,
+  RAMP_ROLE_DESCRIPTIONS,
 } from './engine';
 export type {SynergyEngineOptions, CachedSynergyResult} from './engine';
 
@@ -67,7 +69,11 @@ export {
   NAMED_EFFECT_SCORES,
   getDiscardRoles,
   isDiscardCard,
+  getRampRoles,
+  isRampCard,
+  isDeckRamp,
+  isRepeatingTrigger,
   transformCard,
   transformCards,
 } from './utils';
-export type {LocationRole, ShiftType, NamedEffectTier, DiscardRole, LorcanaJSONCard} from './utils';
+export type {LocationRole, ShiftType, NamedEffectTier, DiscardRole, RampRole, LorcanaJSONCard} from './utils';

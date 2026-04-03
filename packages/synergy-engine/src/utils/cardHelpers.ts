@@ -321,6 +321,173 @@ export function isDiscardCard(card: LorcanaCard): boolean {
 }
 
 // ============================================
+// RAMP DETECTION
+// ============================================
+
+/**
+ * Ramp roles:
+ * - inkwell-ramp: cards that put extra cards into your inkwell (deck→ink or hand/board→ink)
+ * - inkwell-trigger: cards that fire "whenever a card is put into your inkwell"
+ * - cost-reduction: cards that reduce cost of OTHER cards you play
+ */
+export type RampRole = 'inkwell-ramp' | 'inkwell-trigger' | 'cost-reduction';
+
+/**
+ * Inkwell ramp patterns — cards that put cards into YOUR inkwell.
+ * Covers: deck-top ramp, hand-to-inkwell, board-to-inkwell, discard-to-inkwell.
+ */
+const INKWELL_RAMP_PATTERNS: RegExp[] = [
+  // "put the top card of your deck into your inkwell"
+  /put\s+the\s+top\s+card\s+of\s+your\s+deck\s+into\s+your\s+inkwell/i,
+  // "look at the top X cards...put...into your inkwell"
+  /look\s+at\s+the\s+top.*?put.*?into\s+your\s+inkwell/i,
+  // "put up to X cards from your discard into your inkwell"
+  /put\s+up\s+to\s+\d+\s+cards?\s+from\s+your\s+discard\s+into\s+your\s+inkwell/i,
+  // "put a card from your hand into your inkwell"
+  /put\s+a\s+card\s+from\s+your\s+hand\s+into\s+your\s+inkwell/i,
+  // "you may put an additional card from your hand into your inkwell"
+  /additional\s+card.*?into\s+your\s+inkwell/i,
+  // "put chosen character of yours into your inkwell"
+  /put\s+chosen\s+(?:character|item|location)\s+(?:of\s+yours\s+)?into\s+your\s+inkwell/i,
+  // "put this card into your inkwell"
+  /put\s+this\s+card\s+into\s+your\s+inkwell/i,
+  // "put that card into your inkwell" (e.g. banished characters going to your inkwell)
+  /put\s+that\s+card\s+(?:from\s+your\s+discard\s+)?into\s+your\s+inkwell/i,
+  // "put any number of cards from under your characters...into your inkwell"
+  /put\s+any\s+number\s+of\s+cards.*?into\s+your\s+inkwell/i,
+  // "put cards from under...into your inkwell" (boosted cards)
+  /put\s+the\s+top\s+card\s+of\s+your\s+deck\s+facedown\s+under/i,
+];
+
+/**
+ * Opponent-ink exclusion — cards that put stuff into the OPPONENT'S inkwell.
+ * These are removal, not ramp: they don't fire YOUR triggers or give YOU more ink.
+ */
+const OPPONENT_INK_PATTERN =
+  /into\s+(?:its|their)\s+player'?s?\s+inkwell|into\s+their\s+inkwell|opponent.*?puts?\s+the\s+top\s+card\s+of\s+their\s+deck\s+into\s+their\s+inkwell/i;
+
+/**
+ * Inkwell trigger patterns — "whenever a card is put into your inkwell".
+ * Includes variant wordings: "whenever you put a card into your inkwell",
+ * "when you put a card into your inkwell".
+ */
+const INKWELL_TRIGGER_PATTERNS: RegExp[] = [
+  /whenever\s+a\s+card\s+is\s+put\s+into\s+your\s+inkwell/i,
+  /whenever\s+you\s+put\s+a\s+card\s+into\s+your\s+inkwell/i,
+  /when\s+you\s+put\s+a\s+card\s+into\s+your\s+inkwell/i,
+];
+
+/**
+ * Cost reduction grant patterns — cards that reduce cost of OTHER cards.
+ * Must match "you pay X less" but NOT "you pay X less to play this" (self-discount).
+ */
+const COST_REDUCTION_GRANT_PATTERN = /you\s+pay\s+\d+\s+⬡?\s*less/i;
+const COST_REDUCTION_SELF_PATTERN = /you\s+pay\s+\d+\s+⬡?\s*less\s+to\s+play\s+this/i;
+
+/** Fast pre-filter: skip cards without any ramp-related keywords */
+const HAS_RAMP_KEYWORD = /inkwell|you pay \d+.*less/i;
+
+/**
+ * Determine the ramp role(s) a card fulfills.
+ * A card can have multiple roles (e.g., a card that both ramps and triggers).
+ */
+export function getRampRoles(card: LorcanaCard): RampRole[] {
+  if (!card.text) return [];
+  if (!HAS_RAMP_KEYWORD.test(card.text)) return [];
+  const t = card.text.replace(/\n/g, ' ');
+
+  const roles: RampRole[] = [];
+
+  // Check inkwell ramp (must put cards into YOUR inkwell, not opponent's)
+  const isRamp = INKWELL_RAMP_PATTERNS.some((p) => p.test(t));
+  const isOpponentInk = OPPONENT_INK_PATTERN.test(t);
+  const alsoSelfRamps = /into\s+your\s+inkwell/i.test(t);
+  if (isRamp && (!isOpponentInk || alsoSelfRamps)) {
+    roles.push('inkwell-ramp');
+  }
+
+  // Check inkwell trigger
+  if (INKWELL_TRIGGER_PATTERNS.some((p) => p.test(t))) {
+    roles.push('inkwell-trigger');
+  }
+
+  // Check cost reduction grant (reduces cost of OTHER cards, not self)
+  if (COST_REDUCTION_GRANT_PATTERN.test(t) && !COST_REDUCTION_SELF_PATTERN.test(t)) {
+    roles.push('cost-reduction');
+  }
+
+  return roles;
+}
+
+/**
+ * Check if a card is a ramp card (any ramp role).
+ */
+export function isRampCard(card: LorcanaCard): boolean {
+  return getRampRoles(card).length > 0;
+}
+
+/**
+ * Sub-pattern detection for scoring nuance.
+ * Returns whether an inkwell ramp card uses deck ramp (free) vs self-sacrifice (card cost).
+ */
+export function isDeckRamp(card: LorcanaCard): boolean {
+  if (!card.text) return false;
+  const t = card.text.replace(/\n/g, ' ');
+  return /put\s+the\s+top\s+card\s+of\s+your\s+deck\s+into\s+your\s+inkwell/i.test(t) ||
+    /look\s+at\s+the\s+top.*?put.*?into\s+your\s+inkwell/i.test(t) ||
+    /put\s+up\s+to\s+\d+\s+cards?\s+from\s+your\s+discard\s+into\s+your\s+inkwell/i.test(t);
+}
+
+/**
+ * Sub-pattern detection: returns whether a trigger fires every ink event (true)
+ * or is capped at once per turn (false).
+ */
+export function isRepeatingTrigger(card: LorcanaCard): boolean {
+  if (!card.text) return false;
+  const t = card.text.replace(/\n/g, ' ');
+  if (!INKWELL_TRIGGER_PATTERNS.some((p) => p.test(t))) return false;
+  return !/once\s+during\s+your\s+turn/i.test(t);
+}
+
+/**
+ * Broad card type that a cost reduction card targets.
+ * Used to determine if two cost-reduction cards can stack on the same play.
+ */
+export type CostReductionTarget = 'character' | 'location' | 'action' | 'item';
+
+/**
+ * Detect what card type a cost reduction grant discounts.
+ * Returns the broad target type. Tribe-specific discounts (Pirate, Puppy, Princess)
+ * map to 'character' since they're subtypes of character.
+ * Returns null if card is not a cost reduction grant.
+ */
+export function getCostReductionTarget(card: LorcanaCard): CostReductionTarget | null {
+  if (!card.text) return null;
+  const t = card.text.replace(/\n/g, ' ');
+  if (!COST_REDUCTION_GRANT_PATTERN.test(t) || COST_REDUCTION_SELF_PATTERN.test(t)) return null;
+
+  // Extract the text after "you pay X less"
+  const match = t.match(/you\s+pay\s+\d+\s+⬡?\s*less\s+(?:for\s+the\s+(?:next|first)\s+|to\s+play\s+)(.{0,60})/i);
+  const snippet = match?.[1] ?? '';
+
+  if (/location/i.test(snippet)) return 'location';
+  if (/action/i.test(snippet)) return 'action';
+  if (/item/i.test(snippet)) return 'item';
+  // Everything else is a character variant (generic, Princess, Pirate, Puppy, Inventor, Shift, named)
+  return 'character';
+}
+
+/**
+ * Check if two cost reduction cards target overlapping types (can stack on the same play).
+ */
+export function costReductionTargetsOverlap(cardA: LorcanaCard, cardB: LorcanaCard): boolean {
+  const targetA = getCostReductionTarget(cardA);
+  const targetB = getCostReductionTarget(cardB);
+  if (targetA == null || targetB == null) return false;
+  return targetA === targetB;
+}
+
+// ============================================
 // NAMED COMPANION DETECTION
 // ============================================
 
