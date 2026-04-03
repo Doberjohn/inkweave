@@ -85,6 +85,7 @@ export function VotingCardDisplay({card, isMobile, highlighted}: VotingCardDispl
       {...previewHandlers}
       style={{
         width: imageWidth,
+        flexShrink: 0,
         cursor: 'pointer',
         boxSizing: 'border-box',
         borderRadius: 12,
