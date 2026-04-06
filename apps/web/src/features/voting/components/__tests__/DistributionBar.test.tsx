@@ -1,0 +1,28 @@
+import {describe, it, expect} from 'vitest';
+import {render, screen} from '@testing-library/react';
+import {DistributionBar} from '../DistributionBar';
+
+describe('DistributionBar', () => {
+  it('renders three segments with percentages', () => {
+    render(<DistributionBar lower={3} right={14} higher={3} animate={false} />);
+    expect(screen.getAllByText('15%')).toHaveLength(2);
+    expect(screen.getByText('70%')).toBeInTheDocument();
+  });
+
+  it('renders labels below the bar', () => {
+    render(<DistributionBar lower={1} right={1} higher={1} animate={false} />);
+    expect(screen.getByText('Should be lower')).toBeInTheDocument();
+    expect(screen.getByText('About right')).toBeInTheDocument();
+    expect(screen.getByText('Should be higher')).toBeInTheDocument();
+  });
+
+  it('handles all votes in one bucket', () => {
+    render(<DistributionBar lower={0} right={10} higher={0} animate={false} />);
+    expect(screen.getByText('100%')).toBeInTheDocument();
+  });
+
+  it('handles single vote', () => {
+    render(<DistributionBar lower={1} right={0} higher={0} animate={false} />);
+    expect(screen.getByText('100%')).toBeInTheDocument();
+  });
+});
