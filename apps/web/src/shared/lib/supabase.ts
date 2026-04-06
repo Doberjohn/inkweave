@@ -140,3 +140,50 @@ export async function getPairScore(
     return null;
   }
 }
+
+// --- Accuracy distribution ---
+
+export type AccuracyDistribution = {
+  lower: number;
+  right: number;
+  higher: number;
+  total: number;
+};
+
+export async function getAccuracyDistribution(
+  cardA: string,
+  cardB: string,
+): Promise<AccuracyDistribution | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+
+  const [a, b] = [cardA, cardB].sort();
+
+  try {
+    const { data, error } = await supabase
+      .from('pair_scores')
+      .select('accuracy_lower, accuracy_right, accuracy_higher')
+      .eq('card_a_id', a)
+      .eq('card_b_id', b)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      console.error('[getAccuracyDistribution] Supabase query failed:', {
+        code: error.code,
+        message: error.message,
+        pair: `${a} / ${b}`,
+      });
+      return null;
+    }
+
+    const lower = data.accuracy_lower ?? 0;
+    const right = data.accuracy_right ?? 0;
+    const higher = data.accuracy_higher ?? 0;
+
+    return { lower, right, higher, total: lower + right + higher };
+  } catch (e) {
+    console.error('[getAccuracyDistribution] Network error:', e);
+    return null;
+  }
+}
