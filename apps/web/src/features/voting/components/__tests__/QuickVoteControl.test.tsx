@@ -82,6 +82,24 @@ describe('QuickVoteControl', () => {
     expect(screen.getByRole('button', {name: 'Should be lower'})).not.toBeDisabled();
   });
 
+  it('disables vote buttons when rate limited', () => {
+    render(
+      <QuickVoteControl state="error" onVote={mockVote} distribution={null} userChoice={null} error="rate_limited" />,
+    );
+    expect(screen.getByRole('button', {name: 'Should be lower'})).toBeDisabled();
+    expect(screen.getByRole('button', {name: 'About right'})).toBeDisabled();
+    expect(screen.getByRole('button', {name: 'Should be higher'})).toBeDisabled();
+  });
+
+  it('shows confirmation without distribution bar when distribution is null', () => {
+    render(
+      <QuickVoteControl state="result" onVote={mockVote} distribution={null} userChoice={0} error={null} />,
+    );
+    expect(screen.getByText(/You voted:/)).toBeInTheDocument();
+    expect(screen.getByText('About right')).toBeInTheDocument();
+    expect(screen.queryByText(/votes on this pair/)).not.toBeInTheDocument();
+  });
+
   it('shows rate limit message on rate_limited error', () => {
     render(
       <QuickVoteControl state="error" onVote={mockVote} distribution={null} userChoice={null} error="rate_limited" />,

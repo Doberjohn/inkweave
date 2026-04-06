@@ -89,6 +89,45 @@ describe('useQuickVote', () => {
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 
+  it('retries successfully from error state', async () => {
+    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(submitVote).mockResolvedValueOnce({error: 'Network error'});
+    vi.mocked(submitVote).mockResolvedValueOnce({error: null});
+    vi.mocked(getAccuracyDistribution).mockResolvedValue({
+      lower: 0, right: 3, higher: 1, total: 4,
+    });
+
+    const {result} = renderHook(() => useQuickVote(CARD_A, CARD_B));
+
+    // First attempt fails
+    await act(async () => {
+      await result.current.vote(0);
+    });
+    expect(result.current.state).toBe('error');
+
+    // Retry succeeds
+    await act(async () => {
+      await result.current.vote(0);
+    });
+    expect(result.current.state).toBe('result');
+    expect(submitVote).toHaveBeenCalledTimes(2);
+    expect(localStorage.getItem(STORAGE_KEY)).toBeTruthy();
+  });
+
+  it('finds stored vote regardless of card argument order', () => {
+    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(getAccuracyDistribution).mockResolvedValue({
+      lower: 1, right: 5, higher: 0, total: 6,
+    });
+    // Store under canonical key (card-aaa comes first alphabetically)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({accuracy: 1, timestamp: Date.now()}));
+
+    // Pass cards in REVERSED order
+    const {result} = renderHook(() => useQuickVote(CARD_B, CARD_A));
+    expect(result.current.state).toBe('result');
+    expect(result.current.userChoice).toBe(1);
+  });
+
   it('transitions to rate-limited state', async () => {
     vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
     vi.mocked(submitVote).mockResolvedValue({error: 'rate_limited'});

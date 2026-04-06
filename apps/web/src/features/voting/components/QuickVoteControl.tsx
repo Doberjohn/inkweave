@@ -1,14 +1,14 @@
 import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
 import {useResponsive} from '../../../shared/hooks';
 import type {AccuracyDistribution} from '../../../shared/lib/supabase';
-import type {QuickVoteError, QuickVoteState} from '../hooks/useQuickVote';
+import type {QuickVoteError, QuickVoteState, Accuracy} from '../hooks/useQuickVote';
 import {DistributionBar} from './DistributionBar';
 
 interface QuickVoteControlProps {
   state: QuickVoteState;
-  onVote: (accuracy: -1 | 0 | 1) => void;
+  onVote: (accuracy: Accuracy) => void;
   distribution: AccuracyDistribution | null;
-  userChoice: -1 | 0 | 1 | null;
+  userChoice: Accuracy | null;
   error: QuickVoteError;
 }
 
@@ -38,7 +38,7 @@ const CONTAINER_STYLE: React.CSSProperties = {
 };
 
 const QUESTION_STYLE: React.CSSProperties = {
-  fontSize: FONT_SIZES.base,
+  fontSize: `${FONT_SIZES.base}px`,
   color: COLORS.textMuted,
   margin: 0,
 };
@@ -50,7 +50,7 @@ const BASE_BUTTON_STYLE: React.CSSProperties = {
   minHeight: 44,
   cursor: 'pointer',
   fontFamily: 'inherit',
-  fontSize: FONT_SIZES.base,
+  fontSize: `${FONT_SIZES.base}px`,
   color: COLORS.text,
   padding: `${SPACING.xs}px ${SPACING.md}px`,
   transition: 'all 0.2s',
@@ -58,7 +58,7 @@ const BASE_BUTTON_STYLE: React.CSSProperties = {
 };
 
 const TEASER_STYLE: React.CSSProperties = {
-  fontSize: FONT_SIZES.sm,
+  fontSize: `${FONT_SIZES.sm}px`,
   color: COLORS.textDim,
   background: 'none',
   border: 'none',
@@ -77,8 +77,8 @@ function VoteButtons({
 }: {
   disabled: boolean;
   submitting: boolean;
-  selectedChoice: -1 | 0 | 1 | null;
-  onVote: (accuracy: -1 | 0 | 1) => void;
+  selectedChoice: Accuracy | null;
+  onVote: (accuracy: Accuracy) => void;
   isMobile: boolean;
 }) {
   return (
@@ -99,7 +99,7 @@ function VoteButtons({
             type="button"
             disabled={disabled}
             onClick={() => onVote(vote)}
-            aria-pressed={isSelected}
+            aria-pressed={isSelected || undefined}
             style={{
               ...BASE_BUTTON_STYLE,
               opacity: isDimmed ? 0.3 : 1,
@@ -163,7 +163,7 @@ export function QuickVoteControl({
           )
         )}
         {distribution && (
-          <p style={{...QUESTION_STYLE, fontSize: FONT_SIZES.sm, margin: 0}}>
+          <p style={{...QUESTION_STYLE, fontSize: `${FONT_SIZES.sm}px`, margin: 0}}>
             {distribution.total} votes on this pair
           </p>
         )}
@@ -190,7 +190,7 @@ export function QuickVoteControl({
         <p
           role="alert"
           style={{
-            fontSize: FONT_SIZES.sm,
+            fontSize: `${FONT_SIZES.sm}px`,
             color: COLORS.error,
             margin: 0,
             padding: `${SPACING.xs}px 0`,

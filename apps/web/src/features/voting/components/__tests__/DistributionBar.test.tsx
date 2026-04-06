@@ -21,6 +21,13 @@ describe('DistributionBar', () => {
     expect(screen.getByText('100%')).toBeInTheDocument();
   });
 
+  it('rounds percentages to sum to exactly 100', () => {
+    // 1/3 each = 33.33% → rounds to 33+33+33=99, correction bumps one to 34
+    render(<DistributionBar lower={1} right={1} higher={1} animate={false} />);
+    expect(screen.getAllByText('33%')).toHaveLength(2);
+    expect(screen.getByText('34%')).toBeInTheDocument();
+  });
+
   it('handles single vote', () => {
     render(<DistributionBar lower={1} right={0} higher={0} animate={false} />);
     expect(screen.getByText('100%')).toBeInTheDocument();
