@@ -60,6 +60,9 @@ export type Database = {
     Views: {
       pair_scores: {
         Row: {
+          accuracy_higher: number | null
+          accuracy_lower: number | null
+          accuracy_right: number | null
           accuracy_sentiment: number | null
           accuracy_votes: number | null
           avg_difficulty: number | null
