@@ -24,6 +24,15 @@ git diff --name-only HEAD | grep "packages/synergy-engine/src/"
 
 If engine files were changed, launch the `engine-validator` agent to run the full engine pipeline (build → test → precompute → audit scores). Wait for its report before proceeding.
 
+## Step 0c: Supabase validation (conditional)
+
+Check if any files in `supabase/migrations/` are in the diff:
+```bash
+git diff --name-only HEAD | grep "supabase/migrations/"
+```
+
+If migration files were changed, launch the `supabase-validator` agent to run the full Supabase pipeline (integration tests → security advisor → type freshness → schema drift). Wait for its report before proceeding.
+
 ## Step 1: Review changes
 
 ```bash

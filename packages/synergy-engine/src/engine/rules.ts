@@ -862,24 +862,24 @@ function getRampExplanation(
 
   // Ramp ↔ Ramp
   if (aHasRamp && bHasRamp) {
-    return `Both ${cardA.fullName} and ${cardB.fullName} accelerate your ink, getting you ahead on mana faster`;
+    return `Both ${cardA.fullName} and ${cardB.fullName} accelerate your ink, getting you ahead faster`;
   }
 
   // Ramp ↔ Cost reduction
   if ((aHasRamp && bHasCost) || (aHasCost && bHasRamp)) {
     const ramp = aHasRamp ? cardA : cardB;
     const cost = aHasCost ? cardA : cardB;
-    return `${ramp.fullName} adds extra ink while ${cost.fullName} discounts your plays — double acceleration`;
+    return `${ramp.fullName} adds extra ink while ${cost.fullName} discounts your plays`;
   }
 
   // Trigger ↔ Trigger
   if (aHasTrigger && bHasTrigger) {
-    return `Both ${cardA.fullName} and ${cardB.fullName} fire on inkwell events — each ink triggers both effects`;
+    return `Both ${cardA.fullName} and ${cardB.fullName} effects activate on inkwell events`;
   }
 
   // Cost reduction ↔ Cost reduction
   if (aHasCost && bHasCost) {
-    return `Both ${cardA.fullName} and ${cardB.fullName} reduce costs — stacking discounts lets you deploy faster`;
+    return `Both ${cardA.fullName} and ${cardB.fullName} reduce costs — stacking discounts lets you play cards faster`;
   }
 
   // Trigger ↔ Cost reduction

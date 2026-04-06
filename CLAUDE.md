@@ -64,6 +64,10 @@ const result = engine.checkSynergy(cardA, cardB);
 
 React web application that consumes the synergy engine package.
 
+## Domain Knowledge
+
+`.knowledge/` contains local-only (git-ignored) Lorcana reference material: rulebooks, player guides, errata, and meta analysis. Check `.knowledge/INDEX.md` for what's available. When designing synergy rules or making game-mechanic decisions, grep this folder first to verify mechanics against official sources rather than relying on training data.
+
 ## Key Concepts
 
 **Ink Colors**: Amber, Amethyst, Emerald, Ruby, Sapphire, Steel

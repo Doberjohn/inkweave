@@ -2,16 +2,16 @@
 
 **Target Date**: May 15, 2026
 **Milestone**: [Version 1.0.0](https://github.com/Doberjohn/inkweave/milestone/2)
-**Total Issues**: 20 (7 closed, 11 open, 2 epics)
-**Last Updated**: 2026-04-02
+**Total Issues**: 21 (8 closed, 11 open, 2 epics)
+**Last Updated**: 2026-04-06
 
 ```chart
 {
   "type": "doughnut",
-  "title": "v1.0.0 Progress (20 issues)",
+  "title": "v1.0.0 Progress (21 issues)",
   "data": {
-    "labels": ["Closed (7)", "Open (11)", "Epics (2)"],
-    "values": [7, 11, 2]
+    "labels": ["Closed (8)", "Open (11)", "Epics (2)"],
+    "values": [8, 11, 2]
   }
 }
 ```
@@ -20,7 +20,7 @@
 
 ## Epics
 
-### Epic: Community Voting (#205) — 5 issues
+### Epic: Community Voting (#205) — 6 issues
 Allow users to vote on synergy pairs, building a community-driven scoring layer ("Player Rating") alongside the algorithmic "Inkweave Score."
 
 | # | Title | Phase | Depends On |
@@ -30,6 +30,7 @@ Allow users to vote on synergy pairs, building a community-driven scoring layer 
 | #212 | Synergy Modal Quick Vote | 2 | #210 |
 | #213 | In-Depth Voting Flow | 3 | #211 |
 | #214 | Player Rating Display | 3 | #211, #212 |
+| #254 | Add 'Neither' option with feedback text | 2 | #211 |
 
 ### Epic: Deck Builder (#204) — 4 issues
 Full deck building experience with synergy analysis — Inkweave's core differentiator.
@@ -106,7 +107,7 @@ INDEPENDENT (no dependencies)
 | **P0** | #220 Back button bug | 15 min | **Done** (PR #237) |
 | **P0** | #221 Featured cards | 30 min | **Done** (PR #238) |
 | **P1** | #215 Singers Rule | 1–2 days | **Done** (PR #248) |
-| **P1** | #42 Ramp Archetype | 1–2 days | Open |
+| **P1** | #42 Ramp Archetype | 1–2 days | **Done** (PR #258) |
 | **P1** | #216 Browse Performance | 1–2 days | **Done** (PR #241) |
 | **P1** | #217 Inkable/Uninkable Filter | Half day | **Done** (PR #249) |
 
@@ -122,6 +123,7 @@ INDEPENDENT (no dependencies)
 | **P1** | #207 Deck Persistence | 1–2 days | Open |
 | **P1** | #208 Import/Export | 1–2 days | Open |
 | **P2** | #218 Score Audit | 1–2 days | Open |
+| **P2** | #254 'Neither' voting option | 1 day | Open |
 
 ### Phase 3 — Polish & Launch Prep (Weeks 5–6)
 
@@ -193,4 +195,4 @@ These remain open but are explicitly post-launch:
 
 ---
 
-*Last updated: 2026-03-18*
+*Last updated: 2026-04-06*

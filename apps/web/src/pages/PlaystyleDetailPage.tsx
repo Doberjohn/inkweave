@@ -4,14 +4,18 @@ import {
   getPlaystyleById,
   getLocationRoles,
   getDiscardRoles,
+  getRampRoles,
   LOCATION_ROLE_CHIP_LABELS,
   LOCATION_ROLE_TOOLTIP,
   DISCARD_ROLE_CHIP_LABELS,
   DISCARD_ROLE_DESCRIPTIONS,
+  RAMP_ROLE_CHIP_LABELS,
+  RAMP_ROLE_DESCRIPTIONS,
   type PlaystyleId,
   type LorcanaCard,
   type LocationRole,
   type DiscardRole,
+  type RampRole,
 } from 'inkweave-synergy-engine';
 import {usePrecomputedPlaystyleCards} from '../features/synergies/hooks';
 import {BrowseToolbar, CardTile} from '../features/cards';
@@ -346,6 +350,21 @@ function getRoleChips(playstyleId: PlaystyleId, cards: LorcanaCard[]): RoleChip[
     }));
   }
 
+  if (playstyleId === 'ramp') {
+    const roleCounts = new Map<RampRole, number>();
+    for (const card of cards) {
+      for (const role of getRampRoles(card)) {
+        roleCounts.set(role, (roleCounts.get(role) ?? 0) + 1);
+      }
+    }
+    return [...roleCounts].map(([role, count]) => ({
+      role,
+      label: RAMP_ROLE_CHIP_LABELS[role],
+      tooltip: RAMP_ROLE_DESCRIPTIONS[role],
+      count,
+    }));
+  }
+
   // lore-denial: no roles
   return [];
 }
@@ -358,6 +377,9 @@ function cardHasRole(playstyleId: PlaystyleId, card: LorcanaCard, role: string):
   }
   if (playstyleId === 'discard') {
     return getDiscardRoles(card).includes(role as DiscardRole);
+  }
+  if (playstyleId === 'ramp') {
+    return getRampRoles(card).includes(role as RampRole);
   }
   return false;
 }
