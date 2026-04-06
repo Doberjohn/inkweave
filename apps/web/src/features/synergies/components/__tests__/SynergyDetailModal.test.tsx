@@ -3,6 +3,16 @@ import {render, screen, fireEvent} from '@testing-library/react';
 import {SynergyDetailModal} from '../SynergyDetailModal';
 import {createCard, createConnection, createPairSynergy} from '../../../../shared/test-utils';
 
+vi.mock('../../voting/hooks', () => ({
+  useQuickVote: vi.fn().mockReturnValue({
+    state: 'ready',
+    vote: vi.fn(),
+    distribution: null,
+    userChoice: null,
+    error: null,
+  }),
+}));
+
 vi.mock('../../../shared/components', () => ({
   CardImage: ({alt}: {alt: string}) => <div data-testid="card-image">{alt}</div>,
 }));
@@ -134,5 +144,17 @@ describe('SynergyDetailModal', () => {
     );
     fireEvent.click(screen.getByTestId('synergy-detail-cta'));
     expect(onViewSynergies).toHaveBeenCalledWith('elsa-base');
+  });
+
+  it('renders quick vote control below tier label', () => {
+    render(
+      <SynergyDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        pair={mockPair}
+        onViewSynergies={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('Do you agree with this score?')).toBeInTheDocument();
   });
 });

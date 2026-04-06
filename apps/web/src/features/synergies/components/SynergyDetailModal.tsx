@@ -12,6 +12,8 @@ import {
   LOCATION_ROLE_DESCRIPTIONS,
 } from 'inkweave-synergy-engine';
 import {getStrengthTier} from '../utils';
+import {QuickVoteControl} from '../../voting/components';
+import {useQuickVote} from '../../voting/hooks';
 import {CardImage, CardLightbox, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence, useResponsive} from '../../../shared/hooks';
@@ -54,6 +56,7 @@ export function SynergyDetailModal({
 
   const {cardA, cardB, connections, aggregateScore} = pair;
   const tier = getStrengthTier(aggregateScore);
+  const quickVote = useQuickVote(cardA.id, cardB.id);
 
   if (!mounted) return null;
 
@@ -149,6 +152,17 @@ export function SynergyDetailModal({
               }}>
               <span style={{color: tier.color}}>{tier.label}</span> Synergy
             </h2>
+          </div>
+
+          {/* Quick vote */}
+          <div style={{padding: '0 24px 16px'}}>
+            <QuickVoteControl
+              state={quickVote.state}
+              onVote={quickVote.vote}
+              distribution={quickVote.distribution}
+              userChoice={quickVote.userChoice}
+              error={quickVote.error}
+            />
           </div>
 
           {/* Connections list */}
