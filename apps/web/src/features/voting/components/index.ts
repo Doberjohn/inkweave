@@ -7,3 +7,5 @@ export type {VoteToastData} from './VoteToast';
 export {VoteStatusBanner} from './VoteStatusBanner';
 export {VoteProgress} from './VoteProgress';
 export {PairStack} from './PairStack';
+export {QuickVoteControl} from './QuickVoteControl';
+export {DistributionBar} from './DistributionBar';

@@ -5,6 +5,7 @@ interface DistributionBarProps {
   right: number;
   higher: number;
   animate: boolean;
+  showLabels?: boolean;
 }
 
 const SEGMENT_COLORS = {
@@ -19,7 +20,7 @@ const LABELS = {
   higher: 'Should be higher',
 } as const;
 
-export function DistributionBar({lower, right, higher, animate}: DistributionBarProps) {
+export function DistributionBar({lower, right, higher, animate, showLabels = true}: DistributionBarProps) {
   const total = lower + right + higher;
   if (total === 0) return null;
 
@@ -76,18 +77,20 @@ export function DistributionBar({lower, right, higher, animate}: DistributionBar
           </div>
         ))}
       </div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          marginTop: 4,
-          fontSize: `${FONT_SIZES.xs}px`,
-          color: COLORS.textMuted,
-        }}>
-        <span>{LABELS.lower}</span>
-        <span>{LABELS.right}</span>
-        <span>{LABELS.higher}</span>
-      </div>
+      {showLabels && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginTop: 4,
+            fontSize: `${FONT_SIZES.xs}px`,
+            color: COLORS.textMuted,
+          }}>
+          <span>{LABELS.lower}</span>
+          <span>{LABELS.right}</span>
+          <span>{LABELS.higher}</span>
+        </div>
+      )}
     </div>
   );
 }
