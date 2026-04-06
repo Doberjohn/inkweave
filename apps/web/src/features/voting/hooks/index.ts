@@ -2,3 +2,5 @@ export {usePairQueue} from './usePairQueue';
 export type {UsePairQueueReturn, PairPreview} from './usePairQueue';
 export {useVoteSession} from './useVoteSession';
 export type {UseVoteSessionReturn} from './useVoteSession';
+export {useQuickVote} from './useQuickVote';
+export type {UseQuickVoteReturn, QuickVoteState, QuickVoteError} from './useQuickVote';
