@@ -3,7 +3,7 @@ import {render, screen, fireEvent} from '@testing-library/react';
 import {SynergyDetailModal} from '../SynergyDetailModal';
 import {createCard, createConnection, createPairSynergy} from '../../../../shared/test-utils';
 
-vi.mock('../../voting/hooks', () => ({
+vi.mock('../../../voting/hooks', () => ({
   useQuickVote: vi.fn().mockReturnValue({
     state: 'ready',
     vote: vi.fn(),
@@ -13,15 +13,18 @@ vi.mock('../../voting/hooks', () => ({
   }),
 }));
 
-vi.mock('../../../shared/components', () => ({
+vi.mock('../../../../shared/components', () => ({
   CardImage: ({alt}: {alt: string}) => <div data-testid="card-image">{alt}</div>,
+  CardLightbox: () => null,
+  RenderProfiler: ({children}: {children: React.ReactNode}) => <>{children}</>,
+  StrengthBadge: ({score}: {score: number}) => <span data-testid="strength-badge">{score}</span>,
 }));
 
-vi.mock('../../../shared/hooks/useDialogFocus', () => ({
+vi.mock('../../../../shared/hooks/useDialogFocus', () => ({
   useDialogFocus: () => ({handleKeyDown: vi.fn()}),
 }));
 
-vi.mock('../../../shared/hooks', () => ({
+vi.mock('../../../../shared/hooks', () => ({
   useTransitionPresence: (isOpen: boolean) => ({
     mounted: isOpen,
     visible: isOpen,
