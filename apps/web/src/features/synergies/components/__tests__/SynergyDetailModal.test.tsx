@@ -27,6 +27,8 @@ vi.mock('../../../shared/hooks', () => ({
     visible: isOpen,
     onTransitionEnd: vi.fn(),
   }),
+  useScrollLock: vi.fn(),
+  useResponsive: () => ({isMobile: false}),
 }));
 
 vi.mock('../../../cards', () => ({
