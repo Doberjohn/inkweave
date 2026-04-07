@@ -1,6 +1,6 @@
 drop view if exists pair_scores;
 
-create view pair_scores as
+create view pair_scores with (security_invoker = true) as
 select
   card_a_id,
   card_b_id,

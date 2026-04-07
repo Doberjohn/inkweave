@@ -85,7 +85,8 @@ describe('useQuickVote', () => {
     });
 
     expect(result.current.state).toBe('error');
-    expect(result.current.error).toBe('error');
+    expect(result.current.error).toBe('submission_failed');
+    expect(result.current.userChoice).toBeNull();
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 
@@ -140,5 +141,41 @@ describe('useQuickVote', () => {
 
     expect(result.current.state).toBe('error');
     expect(result.current.error).toBe('rate_limited');
+    expect(result.current.userChoice).toBeNull();
+  });
+
+  it('sets userChoice optimistically during submitting', async () => {
+    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    let resolveVote: (v: {error: null}) => void;
+    vi.mocked(submitVote).mockReturnValue(new Promise((r) => { resolveVote = r; }));
+
+    const {result} = renderHook(() => useQuickVote(CARD_A, CARD_B));
+
+    // Start voting but don't resolve yet
+    act(() => { result.current.vote(1); });
+    expect(result.current.state).toBe('submitting');
+    expect(result.current.userChoice).toBe(1);
+
+    // Resolve and clean up
+    vi.mocked(getAccuracyDistribution).mockResolvedValue({lower: 0, right: 0, higher: 1, total: 1});
+    await act(async () => { resolveVote!({error: null}); });
+    expect(result.current.state).toBe('result');
+  });
+
+  it('ignores vote() calls from result state (double-submit guard)', async () => {
+    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(submitVote).mockResolvedValue({error: null});
+    vi.mocked(getAccuracyDistribution).mockResolvedValue({lower: 0, right: 1, higher: 0, total: 1});
+
+    const {result} = renderHook(() => useQuickVote(CARD_A, CARD_B));
+
+    await act(async () => { await result.current.vote(0); });
+    expect(result.current.state).toBe('result');
+
+    // Try voting again from result state — should be a no-op
+    await act(async () => { await result.current.vote(-1); });
+    expect(submitVote).toHaveBeenCalledTimes(1);
+    expect(result.current.state).toBe('result');
+    expect(result.current.userChoice).toBe(0);
   });
 });

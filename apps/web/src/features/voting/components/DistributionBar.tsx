@@ -1,3 +1,4 @@
+import {useState, useEffect} from 'react';
 import {COLORS, FONT_SIZES} from '../../../shared/constants';
 
 interface DistributionBarProps {
@@ -22,6 +23,14 @@ const LABELS = {
 
 export function DistributionBar({lower, right, higher, animate, showLabels = true}: DistributionBarProps) {
   const total = lower + right + higher;
+  const [mounted, setMounted] = useState(!animate);
+
+  useEffect(() => {
+    if (!animate) return;
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, [animate]);
+
   if (total === 0) return null;
 
   const pct = {
@@ -54,7 +63,7 @@ export function DistributionBar({lower, right, higher, animate, showLabels = tru
             key={key}
             style={{
               flex: animate ? undefined : pct[key],
-              width: animate ? `${pct[key]}%` : undefined,
+              width: animate ? (mounted ? `${pct[key]}%` : '0%') : undefined,
               background: SEGMENT_COLORS[key].bg,
               display: 'flex',
               alignItems: 'center',

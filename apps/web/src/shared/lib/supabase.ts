@@ -38,10 +38,12 @@ export function _resetClient(): void {
 
 // --- Vote types ---
 
+export type Accuracy = -1 | 0 | 1;
+
 export type QuickVote = {
   cardA: string;
   cardB: string;
-  accuracy: -1 | 0 | 1;
+  accuracy: Accuracy;
 };
 
 // Fix #6: Constrain score to 1-10
@@ -50,7 +52,7 @@ export type Score = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export type InDepthVote = {
   cardA: string;
   cardB: string;
-  accuracy?: -1 | 0 | 1;
+  accuracy?: Accuracy;
   isReal?: boolean;
   score?: Score;
   wouldPlay?: boolean;

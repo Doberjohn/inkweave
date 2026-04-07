@@ -5,6 +5,10 @@ import type {AccuracyDistribution} from '../../../../shared/lib/supabase';
 
 const mockVote = vi.fn();
 
+beforeEach(() => {
+  mockVote.mockClear();
+});
+
 describe('QuickVoteControl', () => {
   it('renders nothing when state is hidden', () => {
     const {container} = render(
@@ -75,7 +79,7 @@ describe('QuickVoteControl', () => {
 
   it('shows error message and re-enables buttons on error', () => {
     render(
-      <QuickVoteControl state="error" onVote={mockVote} distribution={null} userChoice={null} error="error" />,
+      <QuickVoteControl state="error" onVote={mockVote} distribution={null} userChoice={null} error="submission_failed" />,
     );
     expect(screen.getByText('Something went wrong, try again')).toBeInTheDocument();
     // Vote buttons should be enabled (not the teaser)
@@ -91,12 +95,13 @@ describe('QuickVoteControl', () => {
     expect(screen.getByRole('button', {name: 'Should be higher'})).toBeDisabled();
   });
 
-  it('shows confirmation without distribution bar when distribution is null', () => {
+  it('shows loading text when distribution is null in result state', () => {
     render(
       <QuickVoteControl state="result" onVote={mockVote} distribution={null} userChoice={0} error={null} />,
     );
     expect(screen.getByText(/You voted:/)).toBeInTheDocument();
     expect(screen.getByText('About right')).toBeInTheDocument();
+    expect(screen.getByText('Loading community votes…')).toBeInTheDocument();
     expect(screen.queryByText(/votes on this pair/)).not.toBeInTheDocument();
   });
 

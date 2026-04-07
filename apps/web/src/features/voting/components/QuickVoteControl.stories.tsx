@@ -47,7 +47,7 @@ export const ResultFirstVoter: Story = {
 };
 
 export const Error: Story = {
-  args: {state: 'error', distribution: null, userChoice: null, error: 'error'},
+  args: {state: 'error', distribution: null, userChoice: null, error: 'submission_failed'},
 };
 
 export const RateLimited: Story = {

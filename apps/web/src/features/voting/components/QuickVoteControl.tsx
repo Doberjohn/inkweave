@@ -12,13 +12,13 @@ interface QuickVoteControlProps {
   error: QuickVoteError;
 }
 
-const CHOICE_LABELS: Record<-1 | 0 | 1, string> = {
+const CHOICE_LABELS: Record<Accuracy, string> = {
   [-1]: 'Should be lower',
   [0]: 'About right',
   [1]: 'Should be higher',
 };
 
-const CHOICE_COLORS: Record<-1 | 0 | 1, {border: string; glow: string}> = {
+const CHOICE_COLORS: Record<Accuracy, {border: string; glow: string}> = {
   [-1]: {border: '#f59090', glow: 'rgba(245, 144, 144, 0.15)'},
   [0]: {border: '#6ee7a0', glow: 'rgba(110, 231, 160, 0.15)'},
   [1]: {border: '#60b5f5', glow: 'rgba(96, 181, 245, 0.15)'},
@@ -151,16 +151,18 @@ export function QuickVoteControl({
             <span aria-hidden="true">✦ </span>
             <span>First to rate this pair!</span>
           </p>
+        ) : distribution ? (
+          <DistributionBar
+            lower={distribution.lower}
+            right={distribution.right}
+            higher={distribution.higher}
+            animate
+            showLabels={false}
+          />
         ) : (
-          distribution && (
-            <DistributionBar
-              lower={distribution.lower}
-              right={distribution.right}
-              higher={distribution.higher}
-              animate
-              showLabels={false}
-            />
-          )
+          <p style={{...QUESTION_STYLE, fontSize: `${FONT_SIZES.sm}px`, margin: 0}}>
+            Loading community votes…
+          </p>
         )}
         {distribution && (
           <p style={{...QUESTION_STYLE, fontSize: `${FONT_SIZES.sm}px`, margin: 0}}>
