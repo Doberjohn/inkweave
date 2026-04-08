@@ -1,3 +1,4 @@
+import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {Accuracy, Score} from '../../../shared/lib/supabase';
 import type {InDepthFormState} from '../types';
@@ -6,6 +7,8 @@ import {OptionPicker} from './OptionPicker';
 import {ScorePicker} from './ScorePicker';
 import {CarriesPicker} from './CarriesPicker';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+
+export type FormLayout = 'stacked' | 'three-col' | 'two-plus-one' | 'tabbed';
 
 interface InDepthVoteFormProps {
   formState: InDepthFormState;
@@ -18,22 +21,21 @@ interface InDepthVoteFormProps {
   onSetWhoCarries: (value: 'a' | 'b' | 'both') => void;
   onSetDifficulty: (value: 1 | 2 | 3) => void;
   isMobile?: boolean;
-  /** Whether to play entrance animations */
   animate?: boolean;
+  layout?: FormLayout;
 }
 
 // ── Group accent colors ──
 
 const GROUP_ACCENTS = {
-  assessment: '#60b5f5',  // blue — analytical
-  rating: '#fbbf24',      // gold — scoring
-  practical: '#6ee7a0',   // green — gameplay
+  assessment: '#60b5f5',
+  rating: '#fbbf24',
+  practical: '#6ee7a0',
 } as const;
 
-// ── Dimension color schemes (semantic per-option colors) ──
+// ── Dimension color schemes ──
 
 function makeColor(hex: string): OptionColor {
-  // Extract RGB from hex and build rgba variants
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
@@ -84,15 +86,15 @@ const DIFFICULTY_OPTIONS = [
 
 // ── Sub-components ──
 
-function CategoryHeader({stepRange, label, accent, isMobile}: {stepRange: string; label: string; accent: string; isMobile?: boolean}) {
+function CategoryHeader({stepRange, label, accent, compact}: {stepRange: string; label: string; accent: string; compact?: boolean}) {
   return (
-    <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm, marginBottom: isMobile ? SPACING.xs : SPACING.md}}>
+    <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm, marginBottom: compact ? SPACING.xs : SPACING.md}}>
       <span
         style={{
           fontSize: FONT_SIZES.xs,
           fontWeight: 700,
           color: accent,
-          background: `${accent}1a`, // 10% opacity
+          background: `${accent}1a`,
           padding: '2px 8px',
           borderRadius: 10,
           fontFamily: FONTS.body,
@@ -151,7 +153,6 @@ function DimensionSection({label, stepNumber, accentColor, isAnswered, animation
         transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
         animation: animate ? `idv-fade-up 0.35s ease-out ${animationDelay}ms both` : 'none',
       }}>
-      {/* Label row with step number and completion check */}
       <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
         <span
           style={{
@@ -188,6 +189,71 @@ function DimensionSection({label, stepNumber, accentColor, isAnswered, animation
   );
 }
 
+// ── Tab bar for tabbed layout ──
+
+const TAB_GROUPS = [
+  {key: 'assessment', label: 'Assessment', accent: GROUP_ACCENTS.assessment, stepRange: '1-2'},
+  {key: 'rating', label: 'Rating', accent: GROUP_ACCENTS.rating, stepRange: '3-4'},
+  {key: 'practical', label: 'Practical', accent: GROUP_ACCENTS.practical, stepRange: '5-6'},
+] as const;
+
+type TabKey = typeof TAB_GROUPS[number]['key'];
+
+function TabBar({activeTab, onTabChange, answeredByGroup}: {
+  activeTab: TabKey;
+  onTabChange: (tab: TabKey) => void;
+  answeredByGroup: Record<TabKey, number>;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label="Vote dimension groups"
+      style={{
+        display: 'flex',
+        gap: SPACING.xs,
+        width: '100%',
+        marginBottom: SPACING.lg,
+      }}>
+      {TAB_GROUPS.map(({key, label, accent}) => {
+        const isActive = activeTab === key;
+        const groupAnswered = answeredByGroup[key];
+        const groupTotal = 2;
+        return (
+          <button
+            key={key}
+            role="tab"
+            aria-selected={isActive}
+            aria-controls={`panel-${key}`}
+            onClick={() => onTabChange(key)}
+            style={{
+              flex: 1,
+              minHeight: 44,
+              borderRadius: RADIUS.lg,
+              border: isActive ? `2px solid ${accent}` : '1px solid rgba(255,255,255,0.08)',
+              background: isActive ? `${accent}0f` : 'rgba(255,255,255,0.02)',
+              color: isActive ? accent : COLORS.textMuted,
+              fontSize: FONT_SIZES.base,
+              fontWeight: isActive ? 700 : 500,
+              fontFamily: FONTS.body,
+              cursor: 'pointer',
+              padding: '8px 4px',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 2,
+            }}>
+            <span>{label}</span>
+            <span style={{fontSize: FONT_SIZES.xs, opacity: 0.7}}>
+              {groupAnswered === groupTotal ? '✓' : `${groupAnswered}/${groupTotal}`}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Main form ──
 
 export function InDepthVoteForm({
@@ -202,90 +268,168 @@ export function InDepthVoteForm({
   onSetDifficulty,
   isMobile,
   animate,
+  layout = 'stacked',
 }: InDepthVoteFormProps) {
-  const baseDelay = animate ? 200 : 0; // Start after pair + progress bar
+  const [activeTab, setActiveTab] = useState<TabKey>('assessment');
+  const baseDelay = animate ? 200 : 0;
 
+  // Use compact pickers in column layouts where space is tight
+  const compactPickers = layout === 'three-col' || layout === 'two-plus-one';
+
+  const answeredByGroup: Record<TabKey, number> = {
+    assessment: (formState.isReal !== null ? 1 : 0) + (formState.accuracy !== null ? 1 : 0),
+    rating: (formState.score !== null ? 1 : 0) + (formState.whoCarries !== null ? 1 : 0),
+    practical: (formState.wouldPlay !== null ? 1 : 0) + (formState.difficulty !== null ? 1 : 0),
+  };
+
+  // ── Group content builders ──
+
+  const groupA = (delay: number) => (
+    <>
+      <CategoryHeader stepRange="1-2" label="Assessment" accent={GROUP_ACCENTS.assessment} compact={isMobile || compactPickers} />
+      <DimensionSection label="Is this synergy real?" stepNumber={1} accentColor={GROUP_ACCENTS.assessment} isAnswered={formState.isReal !== null} animationDelay={delay} animate={animate}>
+        <OptionPicker ariaLabel="Is this synergy real" options={IS_REAL_OPTIONS} value={formState.isReal} onChange={onSetIsReal} isMobile={isMobile || compactPickers} colorScheme={IS_REAL_COLORS} />
+      </DimensionSection>
+      <DimensionSection label="Is our score accurate?" stepNumber={2} accentColor={GROUP_ACCENTS.assessment} isAnswered={formState.accuracy !== null} animationDelay={delay + 60} animate={animate}>
+        <OptionPicker ariaLabel="Is our score accurate" options={ACCURACY_OPTIONS} value={formState.accuracy} onChange={onSetAccuracy} isMobile={isMobile || compactPickers} colorScheme={ACCURACY_COLORS} />
+      </DimensionSection>
+    </>
+  );
+
+  const groupB = (delay: number) => (
+    <>
+      <CategoryHeader stepRange="3-4" label="Rating" accent={GROUP_ACCENTS.rating} compact={isMobile || compactPickers} />
+      <DimensionSection label="Rate this synergy" stepNumber={3} accentColor={GROUP_ACCENTS.rating} isAnswered={formState.score !== null} animationDelay={delay} animate={animate}>
+        <ScorePicker value={formState.score} onChange={onSetScore} isMobile={compactPickers || isMobile} />
+      </DimensionSection>
+      <DimensionSection label="Which card carries it?" stepNumber={4} accentColor={GROUP_ACCENTS.rating} isAnswered={formState.whoCarries !== null} animationDelay={delay + 60} animate={animate}>
+        <CarriesPicker cardA={cardA} cardB={cardB} value={formState.whoCarries} onChange={onSetWhoCarries} isMobile={isMobile || compactPickers} />
+      </DimensionSection>
+    </>
+  );
+
+  const groupC = (delay: number) => (
+    <>
+      <CategoryHeader stepRange="5-6" label="Practical" accent={GROUP_ACCENTS.practical} compact={isMobile || compactPickers} />
+      <DimensionSection label="Would you play these together?" stepNumber={5} accentColor={GROUP_ACCENTS.practical} isAnswered={formState.wouldPlay !== null} animationDelay={delay} animate={animate}>
+        <OptionPicker ariaLabel="Would you play these together" options={WOULD_PLAY_OPTIONS} value={formState.wouldPlay} onChange={onSetWouldPlay} isMobile={isMobile || compactPickers} colorScheme={WOULD_PLAY_COLORS} />
+      </DimensionSection>
+      <DimensionSection label="How easy to pull off?" stepNumber={6} accentColor={GROUP_ACCENTS.practical} isAnswered={formState.difficulty !== null} animationDelay={delay + 60} animate={animate}>
+        <OptionPicker ariaLabel="How easy to pull off" options={DIFFICULTY_OPTIONS} value={formState.difficulty} onChange={onSetDifficulty} isMobile={isMobile || compactPickers} colorScheme={DIFFICULTY_COLORS} />
+      </DimensionSection>
+    </>
+  );
+
+  // ── Layout: Stacked (default) ──
+  if (layout === 'stacked') {
+    return (
+      <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md, width: '100%'}}>
+        {groupA(baseDelay)}
+        <GroupSeparator />
+        {groupB(baseDelay + 120)}
+        <GroupSeparator />
+        {groupC(baseDelay + 240)}
+      </div>
+    );
+  }
+
+  // ── Layout: 3-column grid ──
+  if (layout === 'three-col') {
+    return (
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr',
+          gap: SPACING.xl,
+          width: '100%',
+          alignItems: 'start',
+        }}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
+          {groupA(baseDelay)}
+        </div>
+        <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
+          {groupB(baseDelay + 80)}
+        </div>
+        <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
+          {groupC(baseDelay + 160)}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Layout: 2+1 ──
+  if (layout === 'two-plus-one') {
+    return (
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1.2fr 1fr',
+          gap: SPACING.xl,
+          width: '100%',
+          alignItems: 'start',
+        }}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
+          {groupA(baseDelay)}
+          <GroupSeparator />
+          {groupB(baseDelay + 120)}
+        </div>
+        <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
+          {groupC(baseDelay + 80)}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Layout: Tabbed ──
   return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md, width: '100%'}}>
+    <div style={{width: '100%'}}>
+      <TabBar activeTab={activeTab} onTabChange={setActiveTab} answeredByGroup={answeredByGroup} />
 
-      {/* ── Group A: Assessment ── */}
-      <CategoryHeader stepRange="1-2" label="Assessment" accent={GROUP_ACCENTS.assessment} isMobile={isMobile} />
+      <div role="tabpanel" id={`panel-${activeTab}`} aria-label={`${activeTab} questions`}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
+          {activeTab === 'assessment' && groupA(0)}
+          {activeTab === 'rating' && groupB(0)}
+          {activeTab === 'practical' && groupC(0)}
+        </div>
+      </div>
 
-      <DimensionSection label="Is this synergy real?" stepNumber={1} accentColor={GROUP_ACCENTS.assessment} isAnswered={formState.isReal !== null} animationDelay={baseDelay} animate={animate}>
-        <OptionPicker
-          ariaLabel="Is this synergy real"
-          options={IS_REAL_OPTIONS}
-          value={formState.isReal}
-          onChange={onSetIsReal}
-          isMobile={isMobile}
-          colorScheme={IS_REAL_COLORS}
-          animationDelayBase={animate ? baseDelay + 50 : 0}
-        />
-      </DimensionSection>
-
-      <DimensionSection label="Is our score accurate?" stepNumber={2} accentColor={GROUP_ACCENTS.assessment} isAnswered={formState.accuracy !== null} animationDelay={baseDelay + 60} animate={animate}>
-        <OptionPicker
-          ariaLabel="Is our score accurate"
-          options={ACCURACY_OPTIONS}
-          value={formState.accuracy}
-          onChange={onSetAccuracy}
-          isMobile={isMobile}
-          colorScheme={ACCURACY_COLORS}
-          animationDelayBase={animate ? baseDelay + 110 : 0}
-        />
-      </DimensionSection>
-
-      <GroupSeparator />
-
-      {/* ── Group B: Rating ── */}
-      <CategoryHeader stepRange="3-4" label="Rating" accent={GROUP_ACCENTS.rating} isMobile={isMobile} />
-
-      <DimensionSection label="Rate this synergy" stepNumber={3} accentColor={GROUP_ACCENTS.rating} isAnswered={formState.score !== null} animationDelay={baseDelay + 120} animate={animate}>
-        <ScorePicker
-          value={formState.score}
-          onChange={onSetScore}
-          isMobile={isMobile}
-        />
-      </DimensionSection>
-
-      <DimensionSection label="Which card carries it?" stepNumber={4} accentColor={GROUP_ACCENTS.rating} isAnswered={formState.whoCarries !== null} animationDelay={baseDelay + 180} animate={animate}>
-        <CarriesPicker
-          cardA={cardA}
-          cardB={cardB}
-          value={formState.whoCarries}
-          onChange={onSetWhoCarries}
-          isMobile={isMobile}
-        />
-      </DimensionSection>
-
-      <GroupSeparator />
-
-      {/* ── Group C: Practical ── */}
-      <CategoryHeader stepRange="5-6" label="Practical" accent={GROUP_ACCENTS.practical} isMobile={isMobile} />
-
-      <DimensionSection label="Would you play these together?" stepNumber={5} accentColor={GROUP_ACCENTS.practical} isAnswered={formState.wouldPlay !== null} animationDelay={baseDelay + 240} animate={animate}>
-        <OptionPicker
-          ariaLabel="Would you play these together"
-          options={WOULD_PLAY_OPTIONS}
-          value={formState.wouldPlay}
-          onChange={onSetWouldPlay}
-          isMobile={isMobile}
-          colorScheme={WOULD_PLAY_COLORS}
-          animationDelayBase={animate ? baseDelay + 290 : 0}
-        />
-      </DimensionSection>
-
-      <DimensionSection label="How easy to pull off?" stepNumber={6} accentColor={GROUP_ACCENTS.practical} isAnswered={formState.difficulty !== null} animationDelay={baseDelay + 300} animate={animate}>
-        <OptionPicker
-          ariaLabel="How easy to pull off"
-          options={DIFFICULTY_OPTIONS}
-          value={formState.difficulty}
-          onChange={onSetDifficulty}
-          isMobile={isMobile}
-          colorScheme={DIFFICULTY_COLORS}
-          animationDelayBase={animate ? baseDelay + 350 : 0}
-        />
-      </DimensionSection>
+      {/* Tab navigation buttons */}
+      <div style={{display: 'flex', justifyContent: 'space-between', marginTop: SPACING.lg}}>
+        <button
+          onClick={() => setActiveTab(activeTab === 'rating' ? 'assessment' : 'rating')}
+          disabled={activeTab === 'assessment'}
+          style={{
+            background: 'none',
+            border: `1px solid ${activeTab === 'assessment' ? COLORS.surfaceBorder : COLORS.primary}33`,
+            borderRadius: RADIUS.lg,
+            color: activeTab === 'assessment' ? COLORS.textDim : COLORS.textMuted,
+            fontSize: FONT_SIZES.base,
+            fontFamily: FONTS.body,
+            padding: '8px 20px',
+            cursor: activeTab === 'assessment' ? 'default' : 'pointer',
+            opacity: activeTab === 'assessment' ? 0.4 : 1,
+            transition: 'all 0.2s',
+          }}>
+          &larr; Previous
+        </button>
+        <button
+          onClick={() => setActiveTab(activeTab === 'assessment' ? 'rating' : 'practical')}
+          disabled={activeTab === 'practical'}
+          style={{
+            background: 'none',
+            border: `1px solid ${activeTab === 'practical' ? COLORS.surfaceBorder : COLORS.primary}33`,
+            borderRadius: RADIUS.lg,
+            color: activeTab === 'practical' ? COLORS.textDim : COLORS.textMuted,
+            fontSize: FONT_SIZES.base,
+            fontFamily: FONTS.body,
+            padding: '8px 20px',
+            cursor: activeTab === 'practical' ? 'default' : 'pointer',
+            opacity: activeTab === 'practical' ? 0.4 : 1,
+            transition: 'all 0.2s',
+          }}>
+          Next &rarr;
+        </button>
+      </div>
     </div>
   );
 }

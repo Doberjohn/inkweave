@@ -2,10 +2,19 @@ import {useNavigate, useParams} from 'react-router-dom';
 import {CompactHeader, CtaButton, BackLink, LoadingSpinner, EtherealBackground} from '../shared/components';
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
+import {useState} from 'react';
 import {PairDisplay, VoteStatusBanner, InDepthVoteForm} from '../features/voting';
+import type {FormLayout} from '../features/voting/components/InDepthVoteForm';
 import {useSpecificPair} from '../features/voting/hooks/useSpecificPair';
 import {useInDepthVoteSession} from '../features/voting/hooks/useInDepthVoteSession';
 import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../shared/constants';
+
+const LAYOUT_MAX_WIDTHS: Record<FormLayout, number> = {
+  stacked: 560,
+  'three-col': 1020,
+  'two-plus-one': 860,
+  tabbed: 560,
+};
 
 /** Inject keyframes once at module load */
 (function injectKeyframes() {
@@ -28,10 +37,9 @@ import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../shared/cons
   document.head.appendChild(style);
 })();
 
-const MAX_WIDTH = 560;
 const TOTAL_DIMENSIONS = 6;
 
-function ProgressBar({answeredCount, animate}: {answeredCount: number; animate?: boolean}) {
+function ProgressBar({answeredCount, animate, maxWidth}: {answeredCount: number; animate?: boolean; maxWidth: number}) {
   const pct = (answeredCount / TOTAL_DIMENSIONS) * 100;
   const isComplete = answeredCount === TOTAL_DIMENSIONS;
 
@@ -42,7 +50,7 @@ function ProgressBar({answeredCount, animate}: {answeredCount: number; animate?:
         alignItems: 'center',
         gap: SPACING.sm,
         width: '100%',
-        maxWidth: MAX_WIDTH,
+        maxWidth,
         animation: animate ? 'idv-fade-up 0.35s ease-out 100ms both' : 'none',
       }}>
       <div
@@ -85,7 +93,7 @@ function ProgressBar({answeredCount, animate}: {answeredCount: number; animate?:
   );
 }
 
-function SuccessCard({answeredCount, onBack, onVoteMore}: {answeredCount: number; onBack: () => void; onVoteMore: () => void}) {
+function SuccessCard({answeredCount, onBack, onVoteMore, maxWidth}: {answeredCount: number; onBack: () => void; onVoteMore: () => void; maxWidth: number}) {
   return (
     <div
       style={{
@@ -100,7 +108,7 @@ function SuccessCard({answeredCount, onBack, onVoteMore}: {answeredCount: number
         alignItems: 'center',
         gap: 16,
         width: '100%',
-        maxWidth: MAX_WIDTH,
+        maxWidth,
         animation: 'idv-fade-up 0.4s ease-out',
       }}>
       {/* Animated checkmark circle */}
@@ -146,6 +154,45 @@ function SuccessCard({answeredCount, onBack, onVoteMore}: {answeredCount: number
   );
 }
 
+const LAYOUT_OPTIONS: FormLayout[] = ['stacked', 'three-col', 'two-plus-one', 'tabbed'];
+
+/** Dev-only layout switcher — renders floating toggle buttons */
+function LayoutSwitcher({current, onChange}: {current: FormLayout; onChange: (l: FormLayout) => void}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: 4,
+        padding: '6px 10px',
+        background: 'rgba(0,0,0,0.7)',
+        borderRadius: RADIUS.lg,
+        border: `1px solid ${COLORS.surfaceBorder}`,
+        backdropFilter: 'blur(8px)',
+      }}>
+      <span style={{fontSize: FONT_SIZES.xs, color: COLORS.textDim, fontFamily: FONTS.body, alignSelf: 'center', marginRight: 4}}>Layout:</span>
+      {LAYOUT_OPTIONS.map((l) => (
+        <button
+          key={l}
+          onClick={() => onChange(l)}
+          style={{
+            fontSize: FONT_SIZES.xs,
+            fontFamily: FONTS.body,
+            padding: '3px 8px',
+            borderRadius: RADIUS.md,
+            border: current === l ? `1px solid ${COLORS.primary}` : '1px solid transparent',
+            background: current === l ? 'rgba(255,185,0,0.12)' : 'transparent',
+            color: current === l ? COLORS.primary : COLORS.textMuted,
+            fontWeight: current === l ? 700 : 500,
+            cursor: 'pointer',
+            transition: 'all 0.15s',
+          }}>
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function InDepthVotePage() {
   const navigate = useNavigate();
   const {cardAId, cardBId} = useParams<{cardAId: string; cardBId: string}>();
@@ -155,6 +202,8 @@ export function InDepthVotePage() {
   const {pair, isLoading, error} = useSpecificPair(cardAId, cardBId);
   const session = useInDepthVoteSession(pair);
 
+  const [formLayout, setFormLayout] = useState<FormLayout>('stacked');
+  const maxWidth = LAYOUT_MAX_WIDTHS[formLayout];
   const stickyPair = !isMobile && windowWidth >= 1024;
 
   const answeredCount = [
@@ -238,7 +287,7 @@ export function InDepthVotePage() {
           zIndex: 1,
         }}>
         {/* Back navigation */}
-        <div style={{width: '100%', maxWidth: MAX_WIDTH}}>
+        <div style={{width: '100%', maxWidth}}>
           <BackLink onClick={handleBack} label="Back to synergy" />
         </div>
 
@@ -261,8 +310,11 @@ export function InDepthVotePage() {
           />
         </div>
 
+        {/* Dev layout switcher */}
+        <LayoutSwitcher current={formLayout} onChange={setFormLayout} />
+
         {/* Progress bar */}
-        <ProgressBar answeredCount={answeredCount} animate />
+        <ProgressBar answeredCount={answeredCount} animate maxWidth={maxWidth} />
 
         {/* Page subtitle */}
         <span
@@ -278,12 +330,12 @@ export function InDepthVotePage() {
 
         {/* Status banners */}
         {session.isRateLimited && (
-          <div style={{width: '100%', maxWidth: MAX_WIDTH}}>
+          <div style={{width: '100%', maxWidth}}>
             <VoteStatusBanner type="rate_limited" />
           </div>
         )}
         {session.lastResult === 'error' && (
-          <div style={{width: '100%', maxWidth: MAX_WIDTH}}>
+          <div style={{width: '100%', maxWidth}}>
             <VoteStatusBanner type="error" />
           </div>
         )}
@@ -294,10 +346,11 @@ export function InDepthVotePage() {
             answeredCount={answeredCount}
             onBack={handleBack}
             onVoteMore={() => navigate('/vote')}
+            maxWidth={maxWidth}
           />
         ) : (
           /* Vote form + submit button */
-          <div style={{width: '100%', maxWidth: MAX_WIDTH, display: 'flex', flexDirection: 'column', gap: SPACING.xl, alignItems: 'center'}}>
+          <div style={{width: '100%', maxWidth, display: 'flex', flexDirection: 'column', gap: SPACING.xl, alignItems: 'center'}}>
             <InDepthVoteForm
               formState={session.formState}
               cardA={pair.cardA}
@@ -310,6 +363,7 @@ export function InDepthVotePage() {
               onSetDifficulty={session.setDifficulty}
               isMobile={isMobile}
               animate
+              layout={formLayout}
             />
 
             <CtaButton
@@ -317,7 +371,7 @@ export function InDepthVotePage() {
               disabled={!session.hasAnyAnswer || session.isSubmitting || session.isRateLimited}
               style={{
                 width: '100%',
-                maxWidth: MAX_WIDTH,
+                maxWidth,
                 opacity: session.hasAnyAnswer ? 1 : 0.5,
                 boxShadow: session.hasAnyAnswer ? '0 0 12px rgba(255,185,0,0.15)' : 'none',
                 animation: session.isSubmitting
