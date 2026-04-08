@@ -280,11 +280,11 @@ The engine exports labels and descriptions for UI display:
 LOCATION_ROLE_CHIP_LABELS: Record<LocationRole, string>
 // { 'at-payoff': 'Payoff', 'play-trigger': 'Trigger', buff: 'Buff', ... }
 
-LOCATION_ROLE_DESCRIPTIONS: Record<LocationRole, (cardName: string) => string>
-// { 'at-payoff': (name) => `${name} gets bonuses when characters are at a location`, ... }
+LOCATION_ROLE_DESCRIPTIONS: Record<LocationRole, (cardName: string, locationName: string) => string>
+// { 'at-payoff': (name, loc) => `${name} gets bonuses when characters are at ${loc}`, ... }
 ```
 
-These are used in the synergy detail modal to explain *why* a card is in the Location Control group.
+These are used in the synergy detail modal and vote screen to explain *why* a card is in the Location Control group. The `locationName` parameter is the name of the Location card in the pair (or "locations" if neither card is a Location).
 
 ---
 

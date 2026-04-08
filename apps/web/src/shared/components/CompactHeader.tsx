@@ -125,7 +125,7 @@ export function CompactHeader({
         <div
           style={{
             flex: 1,
-            maxWidth: mobile ? undefined : 480,
+            maxWidth: mobile ? undefined : 320,
             position: 'relative',
             zIndex: Z_INDEX.autocomplete,
           }}>
@@ -204,7 +204,7 @@ export function CompactHeader({
         </div>
       )}
 
-      {/* Nav strip (desktop only, centered absolutely) */}
+      {/* Nav strip (desktop only, centered across full header) */}
       {!mobile && (
         <nav
           aria-label="Main navigation"

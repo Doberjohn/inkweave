@@ -1,11 +1,12 @@
 import {useEffect, useRef, useState} from 'react';
-import {COLORS, FONTS, RADIUS, SPACING, FONT_SIZES} from '../../../shared/constants';
+import {COLORS, FONTS, SPACING} from '../../../shared/constants';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';
 import type {Score} from '../../../shared/lib/supabase';
 import type {VotingPair} from '../types';
 import type {PairPreview} from '../hooks/usePairQueue';
 import {VotingCardDisplay} from './VotingCardDisplay';
 import {PairStack} from './PairStack';
+import {ConnectionGroup, groupConnections} from '../../../shared/components';
 
 const TRANSITION_MS = 450;
 
@@ -110,7 +111,7 @@ function PairRow({pair, selectedScore, size, highlightedCard}: {pair: VotingPair
   if (isMobile) {
     return (
       <div style={{display: 'flex', alignItems: 'start', justifyContent: 'center', width: '100%', gap: 0}}>
-        <VotingCardDisplay card={pair.cardA} isMobile highlighted={highlightedCard === 'a'} />
+        <VotingCardDisplay card={pair.cardA} isMobile highlighted={highlightedCard === 'a'} dimmed={highlightedCard === 'b'} />
         <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 72, flexShrink: 0}}>
           <div style={{display: 'flex', alignItems: 'center', gap: 4}}>
             <DashedLine width={16} muted />
@@ -118,139 +119,37 @@ function PairRow({pair, selectedScore, size, highlightedCard}: {pair: VotingPair
             <DashedLine width={16} muted />
           </div>
         </div>
-        <VotingCardDisplay card={pair.cardB} isMobile highlighted={highlightedCard === 'b'} />
+        <VotingCardDisplay card={pair.cardB} isMobile highlighted={highlightedCard === 'b'} dimmed={highlightedCard === 'a'} />
       </div>
     );
   }
   return (
     <>
-      <VotingCardDisplay card={pair.cardA} highlighted={highlightedCard === 'a'} />
+      <VotingCardDisplay card={pair.cardA} highlighted={highlightedCard === 'a'} dimmed={highlightedCard === 'b'} />
       <DashedLine width={40} />
       <MysteryBadge selectedScore={selectedScore} size={48} />
       <DashedLine width={40} />
-      <VotingCardDisplay card={pair.cardB} highlighted={highlightedCard === 'b'} />
+      <VotingCardDisplay card={pair.cardB} highlighted={highlightedCard === 'b'} dimmed={highlightedCard === 'a'} />
     </>
   );
 }
 
-/** Find the best matching name for a card in the explanation text — tries full name, then base name */
-function findCardInText(text: string, fullName: string): {index: number; match: string} {
-  const idx = text.indexOf(fullName);
-  if (idx >= 0) return {index: idx, match: fullName};
-  // Try base name (before " - ")
-  const dashIdx = fullName.indexOf(' - ');
-  if (dashIdx > 0) {
-    const baseName = fullName.slice(0, dashIdx);
-    const baseIdx = text.indexOf(baseName);
-    if (baseIdx >= 0) return {index: baseIdx, match: baseName};
-  }
-  return {index: -1, match: ''};
-}
-
-/** Renders explanation text with card names as interactive golden-underlined spans */
-function ExplanationWithHighlights({
-  text,
-  cardAName,
-  cardBName,
-  onHighlight,
-}: {
-  text: string;
-  cardAName: string;
-  cardBName: string;
-  onHighlight: (card: 'a' | 'b' | null) => void;
-}) {
-  // Build segments: split text by card name occurrences
-  const segments: {text: string; card: 'a' | 'b' | null}[] = [];
-  let remaining = text;
-
-  while (remaining.length > 0) {
-    const hitA = findCardInText(remaining, cardAName);
-    const hitB = findCardInText(remaining, cardBName);
-
-    // Find earliest match
-    let matchIdx = -1;
-    let matchName = '';
-    let matchCard: 'a' | 'b' = 'a';
-
-    if (hitA.index >= 0 && (hitB.index < 0 || hitA.index <= hitB.index)) {
-      matchIdx = hitA.index;
-      matchName = hitA.match;
-      matchCard = 'a';
-    } else if (hitB.index >= 0) {
-      matchIdx = hitB.index;
-      matchName = hitB.match;
-      matchCard = 'b';
-    }
-
-    if (matchIdx < 0) {
-      segments.push({text: remaining, card: null});
-      break;
-    }
-
-    if (matchIdx > 0) segments.push({text: remaining.slice(0, matchIdx), card: null});
-    segments.push({text: matchName, card: matchCard});
-    remaining = remaining.slice(matchIdx + matchName.length);
-  }
+/** Renders grouped connections using the shared ConnectionGroup component */
+function SynergyDescriptionGroups({pair, onHighlight}: {pair: VotingPair; onHighlight: (card: 'a' | 'b' | null) => void}) {
+  const groups = groupConnections(pair.connections);
+  if (groups.length === 0) return null;
 
   return (
-    <span style={{fontSize: `${FONT_SIZES.base}px`, lineHeight: 1.4, color: COLORS.descriptionText}}>
-      {segments.map((seg, i) =>
-        seg.card ? (
-          <span
-            key={i}
-            onMouseEnter={() => onHighlight(seg.card)}
-            onMouseLeave={() => onHighlight(null)}
-            style={{
-              color: COLORS.primary500,
-              borderBottom: '1px dashed rgba(212, 175, 55, 0.4)',
-              transition: 'border-color 0.2s ease',
-            }}>
-            {seg.text}
-          </span>
-        ) : (
-          <span key={i}>{seg.text}</span>
-        ),
-      )}
-    </span>
-  );
-}
-
-/** Synergy description — matches ConnectionGroupRow style from SynergyDetailModal */
-function SynergyDescription({pair, onHighlight}: {pair: VotingPair; onHighlight: (card: 'a' | 'b' | null) => void}) {
-  if (pair.connections.length === 0) return null;
-
-  return (
-    <div
-      style={{
-        width: '100%',
-        maxWidth: 760,
-        background: COLORS.surface,
-        borderRadius: `${RADIUS.md}px`,
-        border: `1px solid rgba(212, 175, 55, 0.2)`,
-        overflow: 'hidden',
-      }}>
-      {pair.connections.map((connection, i) => (
-        <div key={i} style={i > 0 ? {borderTop: `1px solid rgba(212, 175, 55, 0.15)`} : undefined}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: `${SPACING.sm}px`,
-              padding: '10px 12px',
-            }}>
-            <span style={{fontSize: `${FONT_SIZES.base}px`, fontWeight: 600, color: COLORS.text}}>
-              {connection.ruleName}
-            </span>
-          </div>
-          <div style={{borderTop: `1px solid ${COLORS.surfaceBorder}`, padding: '10px 12px 12px'}}>
-            <ExplanationWithHighlights
-              text={connection.explanation}
-              cardAName={pair.cardA.fullName}
-              cardBName={pair.cardB.fullName}
-              onHighlight={onHighlight}
-            />
-          </div>
-        </div>
+    <div style={{width: '100%', maxWidth: 760, display: 'flex', flexDirection: 'column', gap: `${SPACING.sm}px`}}>
+      {groups.map((group) => (
+        <ConnectionGroup
+          key={group.key}
+          group={group}
+          cardA={pair.cardA}
+          cardB={pair.cardB}
+          showScoreBadge={false}
+          onHighlight={onHighlight}
+        />
       ))}
     </div>
   );
@@ -316,7 +215,7 @@ export function PairDisplay({pair, selectedScore, previousPairs, upcomingPairs, 
             animation: 'pair-slide-in 400ms ease-out',
           }}>
           <PairRow pair={pair} selectedScore={selectedScore} size="mobile" />
-          <SynergyDescription pair={pair} onHighlight={() => {}} />
+          <SynergyDescriptionGroups pair={pair} onHighlight={() => {}} />
         </div>
       </div>
     );
@@ -388,7 +287,7 @@ export function PairDisplay({pair, selectedScore, previousPairs, upcomingPairs, 
         )}
       </div>
 
-      <SynergyDescription pair={pair} onHighlight={setHighlightedCard} />
+      <SynergyDescriptionGroups pair={pair} onHighlight={setHighlightedCard} />
     </div>
   );
 }

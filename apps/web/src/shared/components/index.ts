@@ -4,6 +4,8 @@ export {CardImage} from './CardImage';
 export {CardTextBlock} from './CardTextBlock';
 export {CardLightbox} from './CardLightbox';
 export {CollapsibleSection} from './CollapsibleSection';
+export {ConnectionGroup, groupConnections} from './ConnectionGroup';
+export type {ConnectionGroupData} from './ConnectionGroup';
 export {CompactHeader} from './CompactHeader';
 export {CostFilterGroup} from './CostFilterGroup';
 export {CostIcon} from './CostIcon';

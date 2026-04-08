@@ -16,7 +16,7 @@ export function getSupabase(): SupabaseClient<Database> | null {
   const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
-    // Fix #8: Log once in dev so missing config is visible
+    // Log once in dev so missing config is visible
     if (import.meta.env.DEV && !envWarningLogged) {
       envWarningLogged = true;
       console.info(
@@ -38,19 +38,21 @@ export function _resetClient(): void {
 
 // --- Vote types ---
 
+export type Accuracy = -1 | 0 | 1;
+
 export type QuickVote = {
   cardA: string;
   cardB: string;
-  accuracy: -1 | 0 | 1;
+  accuracy: Accuracy;
 };
 
-// Fix #6: Constrain score to 1-10
+// Constrain score to 1-10
 export type Score = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 export type InDepthVote = {
   cardA: string;
   cardB: string;
-  accuracy?: -1 | 0 | 1;
+  accuracy?: Accuracy;
   isReal?: boolean;
   score?: Score;
   wouldPlay?: boolean;
@@ -68,7 +70,7 @@ export async function submitVote(
   const supabase = getSupabase();
   if (!supabase) return { error: 'Supabase not configured' };
 
-  // Fix #3: Catch network-level exceptions (fetch rejects, DNS failures)
+  // Catch network-level exceptions (fetch rejects, DNS failures)
   try {
     const { error } = await supabase.rpc('submit_vote', {
       p_card_a: vote.cardA,
@@ -86,7 +88,7 @@ export async function submitVote(
 
     if (error?.code === 'P0429') return { error: 'rate_limited' };
 
-    // Fix #4: Log RPC errors with context for production debugging
+    // Log RPC errors with context for production debugging
     if (error) {
       console.error('[submitVote] RPC error:', {
         code: error.code,
@@ -137,6 +139,53 @@ export async function getPairScore(
     return data;
   } catch (e) {
     console.error('[getPairScore] Network error:', e);
+    return null;
+  }
+}
+
+// --- Accuracy distribution ---
+
+export type AccuracyDistribution = {
+  lower: number;
+  right: number;
+  higher: number;
+  total: number;
+};
+
+export async function getAccuracyDistribution(
+  cardA: string,
+  cardB: string,
+): Promise<AccuracyDistribution | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+
+  const [a, b] = [cardA, cardB].sort();
+
+  try {
+    const { data, error } = await supabase
+      .from('pair_scores')
+      .select('accuracy_lower, accuracy_right, accuracy_higher')
+      .eq('card_a_id', a)
+      .eq('card_b_id', b)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      console.error('[getAccuracyDistribution] Supabase query failed:', {
+        code: error.code,
+        message: error.message,
+        pair: `${a} / ${b}`,
+      });
+      return null;
+    }
+
+    const lower = data.accuracy_lower ?? 0;
+    const right = data.accuracy_right ?? 0;
+    const higher = data.accuracy_higher ?? 0;
+
+    return { lower, right, higher, total: lower + right + higher };
+  } catch (e) {
+    console.error('[getAccuracyDistribution] Network error:', e);
     return null;
   }
 }
