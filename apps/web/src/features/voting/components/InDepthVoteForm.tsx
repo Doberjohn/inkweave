@@ -4,7 +4,7 @@ import type {InDepthFormState} from '../types';
 import {OptionPicker} from './OptionPicker';
 import {ScorePicker} from './ScorePicker';
 import {CarriesPicker} from './CarriesPicker';
-import {COLORS, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
 
 interface InDepthVoteFormProps {
   formState: InDepthFormState;
@@ -19,8 +19,6 @@ interface InDepthVoteFormProps {
   isMobile?: boolean;
 }
 
-// TODO(human): Implement the DimensionSection wrapper component below.
-// See the Learn by Doing request for guidance.
 function DimensionSection({label, children}: {label: string; children: React.ReactNode}) {
   return (
     <div
@@ -28,6 +26,10 @@ function DimensionSection({label, children}: {label: string; children: React.Rea
         display: 'flex',
         flexDirection: 'column',
         gap: SPACING.sm,
+        padding: SPACING.lg,
+        borderRadius: RADIUS.lg,
+        borderLeft: `3px solid ${COLORS.primary}33`,
+        background: '#12121f',
       }}>
       <span
         style={{

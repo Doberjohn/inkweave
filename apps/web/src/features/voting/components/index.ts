@@ -9,3 +9,6 @@ export {VoteProgress} from './VoteProgress';
 export {PairStack} from './PairStack';
 export {QuickVoteControl} from './QuickVoteControl';
 export {DistributionBar} from './DistributionBar';
+export {OptionPicker} from './OptionPicker';
+export type {OptionPickerOption} from './OptionPicker';
+export {InDepthVoteForm} from './InDepthVoteForm';

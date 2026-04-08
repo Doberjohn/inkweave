@@ -3,6 +3,11 @@ import {render, screen, fireEvent} from '@testing-library/react';
 import {SynergyDetailModal} from '../SynergyDetailModal';
 import {createCard, createConnection, createPairSynergy} from '../../../../shared/test-utils';
 
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => mockNavigate,
+}));
+
 vi.mock('../../../voting/hooks', () => ({
   useQuickVote: vi.fn().mockReturnValue({
     state: 'ready',
