@@ -31,11 +31,11 @@ function getStoredVote(cardA: string, cardB: string): Accuracy | null {
     const accuracy = parsed?.accuracy;
     if (accuracy === -1 || accuracy === 0 || accuracy === 1) return accuracy;
     console.error('[getStoredVote] Stored value has unexpected shape, clearing:', parsed);
-    try { localStorage.removeItem(key); } catch { /* storage cleanup failed */ }
+    try { localStorage.removeItem(key); } catch (cleanupErr) { console.warn('[getStoredVote] localStorage cleanup failed:', cleanupErr); }
     return null;
   } catch (e) {
     console.error('[getStoredVote] Corrupted JSON in storage, clearing key:', key, e);
-    try { localStorage.removeItem(key); } catch { /* storage cleanup failed */ }
+    try { localStorage.removeItem(key); } catch (cleanupErr) { console.warn('[getStoredVote] localStorage cleanup failed:', cleanupErr); }
     return null;
   }
 }
@@ -55,6 +55,7 @@ export interface UseQuickVoteReturn {
   state: QuickVoteState;
   vote: (accuracy: Accuracy) => Promise<void>;
   distribution: AccuracyDistribution | null;
+  distributionFailed: boolean;
   userChoice: Accuracy | null;
   error: QuickVoteError;
 }
@@ -71,11 +72,30 @@ export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
   const [userChoice, setUserChoice] = useState<Accuracy | null>(storedChoice);
   const [distribution, setDistribution] = useState<AccuracyDistribution | null>(null);
   const [error, setError] = useState<QuickVoteError>(null);
+  const [distributionFailed, setDistributionFailed] = useState(false);
   const submittingRef = useRef(false);
+
+  // Reset state when the pair changes (modal stays mounted across pairs)
+  useEffect(() => {
+    submittingRef.current = false;
+    setDistribution(null);
+    setDistributionFailed(false);
+    setError(null);
+    if (!isAvailable) {
+      setState('hidden');
+      setUserChoice(null);
+    } else if (storedChoice !== null) {
+      setState('result');
+      setUserChoice(storedChoice);
+    } else {
+      setState('ready');
+      setUserChoice(null);
+    }
+  }, [cardA, cardB, isAvailable, storedChoice]);
 
   // Fetch distribution for returning voters
   useEffect(() => {
-    if (state !== 'result' || distribution) return;
+    if (state !== 'result' || distribution || distributionFailed) return;
     let cancelled = false;
     getAccuracyDistribution(cardA, cardB)
       .then((dist) => {
@@ -84,10 +104,11 @@ export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
       .catch((err) => {
         if (!cancelled) {
           console.error('[useQuickVote] Failed to fetch accuracy distribution:', err);
+          setDistributionFailed(true);
         }
       });
     return () => { cancelled = true; };
-  }, [state, distribution, cardA, cardB]);
+  }, [state, distribution, distributionFailed, cardA, cardB]);
 
   // Auto-recover from rate limit after 30s
   useEffect(() => {
@@ -112,14 +133,19 @@ export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
       try {
         const result = await submitVote({cardA, cardB, accuracy});
 
+        // Bail if pair changed during the await (reset effect sets ref to false)
+        if (!submittingRef.current) return;
+
         if (result.error === null) {
           storeVote(cardA, cardB, accuracy);
           setState('result');
           try {
             const dist = await getAccuracyDistribution(cardA, cardB);
+            if (!submittingRef.current) return;
             if (dist) setDistribution(dist);
           } catch (distErr) {
             console.error('[useQuickVote] Failed to fetch distribution after vote:', distErr);
+            setDistributionFailed(true);
           }
         } else if (result.error === 'rate_limited') {
           setUserChoice(null);
@@ -132,6 +158,7 @@ export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
           setState('error');
         }
       } catch (err) {
+        if (!submittingRef.current) return;
         console.error('[useQuickVote] Unexpected error during vote submission:', err);
         setUserChoice(null);
         setError('submission_failed');
@@ -143,5 +170,5 @@ export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
     [cardA, cardB, state],
   );
 
-  return {state, vote, distribution, userChoice, error};
+  return {state, vote, distribution, distributionFailed, userChoice, error};
 }

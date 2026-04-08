@@ -1,40 +1,27 @@
-import {Fragment, useRef, useState, useEffect} from 'react';
+import {useRef, useState, useEffect} from 'react';
 import type {LorcanaCard} from '../../cards';
 import {useCardPreviewHandlers, useCardPreview} from '../../cards';
-import type {
-  DetailedPairSynergy,
-  PairSynergyConnection,
-  LocationRole,
-} from 'inkweave-synergy-engine';
-import {
-  getPlaystyleById,
-  LOCATION_ROLE_CHIP_LABELS,
-  LOCATION_ROLE_DESCRIPTIONS,
-} from 'inkweave-synergy-engine';
+import type {DetailedPairSynergy} from 'inkweave-synergy-engine';
 import {getStrengthTier} from '../utils';
 import {QuickVoteControl} from '../../voting/components';
 import {useQuickVote} from '../../voting/hooks';
-import {CardImage, CardLightbox, RenderProfiler} from '../../../shared/components';
+import {CardImage, CardLightbox, RenderProfiler, ConnectionGroup, groupConnections} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence, useResponsive} from '../../../shared/hooks';
 import {COLORS, FONT_SIZES, SPACING, RADIUS, Z_INDEX} from '../../../shared/constants';
-import {StrengthBadge} from '../../../shared/components';
 
 interface SynergyDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   pair: DetailedPairSynergy;
-  onViewSynergies: (cardId: string) => void;
 }
 
 export function SynergyDetailModal({
   isOpen,
   onClose,
   pair,
-  onViewSynergies,
 }: SynergyDetailModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
-  const [ctaHovered, setCtaHovered] = useState(false);
   const {isMobile} = useResponsive();
 
   const {mounted, visible, onTransitionEnd} = useTransitionPresence(isOpen);
@@ -57,6 +44,8 @@ export function SynergyDetailModal({
   const {cardA, cardB, connections, aggregateScore} = pair;
   const tier = getStrengthTier(aggregateScore);
   const quickVote = useQuickVote(cardA.id, cardB.id);
+  const [highlightedCard, setHighlightedCard] = useState<'a' | 'b' | null>(null);
+  const connectionGroups = groupConnections(connections);
 
   if (!mounted) return null;
 
@@ -122,20 +111,20 @@ export function SynergyDetailModal({
               justifyContent: 'center',
               padding: '24px 12px 0',
             }}>
-            <PairCardImage card={cardA} isMobile={isMobile} />
+            <PairCardImage card={cardA} isMobile={isMobile} dimmed={highlightedCard === 'b'} highlighted={highlightedCard === 'a'} />
             <Connector score={aggregateScore} tier={tier} isMobile={isMobile} />
-            <PairCardImage card={cardB} isMobile={isMobile} />
+            <PairCardImage card={cardB} isMobile={isMobile} dimmed={highlightedCard === 'a'} highlighted={highlightedCard === 'b'} />
           </div>
 
-          {/* Card names row */}
+          {/* Card names row — spacer matches Connector width */}
           <div
             style={{
               display: 'flex',
               justifyContent: 'center',
               padding: '12px 12px 0',
-              gap: 60,
             }}>
             <PairCardName card={cardA} showVersion={cardA.name === cardB.name} />
+            <div style={{flexShrink: 0, minWidth: isMobile ? 44 : 140, margin: isMobile ? '0 6px' : '0 2px'}} />
             <PairCardName card={cardB} showVersion={cardA.name === cardB.name} />
           </div>
 
@@ -154,47 +143,34 @@ export function SynergyDetailModal({
             </h2>
           </div>
 
-          {/* Quick vote */}
-          <div style={{padding: '0 24px 16px'}}>
+          {/* Connections list — shown before vote so users read the reasoning first */}
+          {connectionGroups.length > 0 && (
+            <div style={{margin: '0 24px 20px', display: 'flex', flexDirection: 'column', gap: `${SPACING.sm}px`}}>
+              {connectionGroups.map((group) => (
+                <ConnectionGroup
+                  key={group.key}
+                  group={group}
+                  cardA={cardA}
+                  cardB={cardB}
+                  showScoreBadge
+                  onHighlight={setHighlightedCard}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Quick vote — after explanation, users can make an informed judgment */}
+          <div key={`vote-${cardA.id}-${cardB.id}`} style={{padding: '0 24px 24px'}}>
             <QuickVoteControl
               state={quickVote.state}
               onVote={quickVote.vote}
               distribution={quickVote.distribution}
+              distributionFailed={quickVote.distributionFailed}
               userChoice={quickVote.userChoice}
               error={quickVote.error}
             />
           </div>
 
-          {/* Connections list */}
-          {connections.length > 0 && (
-            <ConnectionsSection connections={connections} cardA={cardA} cardB={cardB} />
-          )}
-
-          {/* CTA button */}
-          <button
-            onClick={() => onViewSynergies(cardB.id)}
-            onMouseEnter={() => setCtaHovered(true)}
-            onMouseLeave={() => setCtaHovered(false)}
-            data-testid="synergy-detail-cta"
-            style={{
-              display: 'block',
-              width: 'calc(100% - 48px)',
-              margin: '0 24px 24px',
-              padding: '10px 20px',
-              borderRadius: `${RADIUS.md}px`,
-              border: `1px solid rgba(212, 175, 55, ${ctaHovered ? 0.5 : 0.3})`,
-              background: `rgba(212, 175, 55, ${ctaHovered ? 0.12 : 0.06})`,
-              color: COLORS.primary,
-              fontSize: `${FONT_SIZES.base}px`,
-              fontWeight: 600,
-              cursor: 'pointer',
-              textAlign: 'center',
-              fontFamily: 'inherit',
-              transition: 'all 0.2s',
-              boxShadow: ctaHovered ? '0 0 16px rgba(212, 175, 55, 0.1)' : 'none',
-            }}>
-            View {cardB.fullName} synergies
-          </button>
         </div>
       </div>
     </>
@@ -204,7 +180,7 @@ export function SynergyDetailModal({
 
 // ── Subcomponents ──
 
-function PairCardImage({card, isMobile}: {card: LorcanaCard; isMobile?: boolean}) {
+function PairCardImage({card, isMobile, dimmed, highlighted}: {card: LorcanaCard; isMobile?: boolean; dimmed?: boolean; highlighted?: boolean}) {
   const {previewHandlers} = useCardPreviewHandlers({card});
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -216,6 +192,10 @@ function PairCardImage({card, isMobile}: {card: LorcanaCard; isMobile?: boolean}
         maxWidth: 140,
         display: 'flex',
         justifyContent: 'center',
+        opacity: dimmed ? 0.4 : 1,
+        transition: 'opacity 0.2s ease, filter 0.2s ease, transform 0.2s ease',
+        filter: highlighted ? 'drop-shadow(0 0 8px rgba(212, 175, 55, 0.6))' : undefined,
+        transform: highlighted ? 'scale(1.03)' : undefined,
       }}>
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- mobile-only tap-to-enlarge; lightbox is supplementary, not a primary action */}
       <div
@@ -328,253 +308,6 @@ function Connector({
   );
 }
 
-/** A grouped connection: either a single direct rule or multiple playstyle rules merged by playstyleId */
-interface ConnectionGroupData {
-  key: string;
-  label: string;
-  score: number;
-  connections: PairSynergyConnection[];
-  category: 'direct' | 'playstyle';
-}
-
-/** Group connections: playstyle rules merge by playstyleId, direct rules stay individual */
-function groupConnections(connections: PairSynergyConnection[]): ConnectionGroupData[] {
-  const playstyleGroups = new Map<string, PairSynergyConnection[]>();
-  const result: ConnectionGroupData[] = [];
-
-  for (const conn of connections) {
-    if (conn.category === 'playstyle') {
-      const existing = playstyleGroups.get(conn.playstyleId);
-      if (existing) {
-        existing.push(conn);
-      } else {
-        playstyleGroups.set(conn.playstyleId, [conn]);
-      }
-    } else {
-      result.push({
-        key: conn.ruleId,
-        label: conn.ruleName,
-        score: conn.score,
-        connections: [conn],
-        category: 'direct',
-      });
-    }
-  }
-
-  for (const [playstyleId, conns] of playstyleGroups) {
-    const playstyle = getPlaystyleById(playstyleId);
-    const maxScore = Math.max(...conns.map((c) => c.score));
-    result.push({
-      key: playstyleId,
-      label: playstyle?.name ?? playstyleId,
-      score: maxScore,
-      connections: conns,
-      category: 'playstyle',
-    });
-  }
-
-  return result.sort((a, b) => b.score - a.score);
-}
-
-/** Extract LocationRole from a location rule ID (e.g. "location-at-payoff" → "at-payoff") */
-function extractLocationRole(ruleId: string): LocationRole | null {
-  const prefix = 'location-';
-  if (!ruleId.startsWith(prefix)) return null;
-  return ruleId.slice(prefix.length) as LocationRole;
-}
-
-/** Determine which card contributes a location role in a pair connection */
-function getRoleSourceName(
-  conn: PairSynergyConnection,
-  cardA: LorcanaCard,
-  cardB: LorcanaCard,
-): string {
-  // Use fullName when both cards share the same base name to disambiguate
-  const nameOf = (card: LorcanaCard) => (cardA.name === cardB.name ? card.fullName : card.name);
-
-  // Location ↔ support: the non-Location card has the role
-  if (cardA.type === 'Location' && cardB.type !== 'Location') return nameOf(cardB);
-  if (cardB.type === 'Location' && cardA.type !== 'Location') return nameOf(cardA);
-  // Cross-synergy: source card name starts the explanation
-  if (conn.explanation.startsWith(cardA.name)) return nameOf(cardA);
-  if (conn.explanation.startsWith(cardB.name)) return nameOf(cardB);
-  return nameOf(cardA);
-}
-
-function ConnectionsSection({
-  connections,
-  cardA,
-  cardB,
-}: {
-  connections: PairSynergyConnection[];
-  cardA: LorcanaCard;
-  cardB: LorcanaCard;
-}) {
-  const groups = groupConnections(connections);
-
-  return (
-    <div
-      style={{
-        margin: '0 24px 20px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: `${SPACING.sm}px`,
-      }}>
-      {groups.map((group) => (
-        <ConnectionGroupRow key={group.key} group={group} cardA={cardA} cardB={cardB} />
-      ))}
-    </div>
-  );
-}
-
-function ConnectionGroupRow({
-  group,
-  cardA,
-  cardB,
-}: {
-  group: ConnectionGroupData;
-  cardA: LorcanaCard;
-  cardB: LorcanaCard;
-}) {
-  const [expanded, setExpanded] = useState(true);
-  const [hovered, setHovered] = useState(false);
-  const tier = getStrengthTier(group.score);
-  const hasMultipleRoles = group.connections.length > 1;
-
-  return (
-    <div
-      style={{
-        background: COLORS.surface,
-        borderRadius: `${RADIUS.md}px`,
-        border: `1px solid ${expanded ? 'rgba(212, 175, 55, 0.2)' : COLORS.surfaceBorder}`,
-        overflow: 'hidden',
-        transition: 'border-color 0.15s',
-      }}>
-      {/* Collapsed header row */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        aria-expanded={expanded}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: `${SPACING.sm}px`,
-          width: '100%',
-          padding: '10px 12px',
-          background: hovered ? 'rgba(255, 255, 255, 0.02)' : 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          transition: 'background 0.15s',
-        }}>
-        <StrengthBadge tier={tier} size="lg">
-          {group.score}
-        </StrengthBadge>
-        <span
-          style={{
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 600,
-            color: COLORS.text,
-          }}>
-          {group.label}
-        </span>
-        {hasMultipleRoles && (
-          <span
-            style={{
-              fontSize: `${FONT_SIZES.xs}px`,
-              fontWeight: 500,
-              color: COLORS.textMuted,
-            }}>
-            {group.connections.length} roles
-          </span>
-        )}
-        <span
-          style={{
-            marginLeft: 'auto',
-            fontSize: `${FONT_SIZES.base}px`,
-            color: expanded ? COLORS.primary : COLORS.textMuted,
-            transition: 'color 0.15s, transform 0.15s',
-            transform: expanded ? 'rotate(90deg)' : 'none',
-            lineHeight: 1,
-          }}>
-          ▸
-        </span>
-      </button>
-
-      {/* Expanded detail */}
-      {expanded && (
-        <div
-          style={{
-            borderTop: `1px solid ${COLORS.surfaceBorder}`,
-            padding: '10px 12px 12px',
-            display: 'grid',
-            gridTemplateColumns: hasMultipleRoles ? 'auto 1fr' : '1fr',
-            gap: `${SPACING.sm}px`,
-            alignItems: 'start',
-          }}>
-          {group.connections.map((conn, i) => {
-            const role = extractLocationRole(conn.ruleId);
-            const chipLabel = role ? LOCATION_ROLE_CHIP_LABELS[role] : null;
-            const description = role
-              ? LOCATION_ROLE_DESCRIPTIONS[role](getRoleSourceName(conn, cardA, cardB))
-              : conn.explanation;
-            const divider = i > 0 && (
-              <div
-                key={`${conn.ruleId}-divider`}
-                style={{
-                  gridColumn: '1 / -1',
-                  height: 1,
-                  background: COLORS.surfaceBorder,
-                }}
-              />
-            );
-
-            return hasMultipleRoles ? (
-              <Fragment key={conn.ruleId}>
-                {divider}
-                <span
-                  style={{
-                    padding: '2px 8px',
-                    borderRadius: 8,
-                    background: chipLabel ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
-                    color: COLORS.primary,
-                    fontSize: `${FONT_SIZES.xs}px`,
-                    fontWeight: 600,
-                    textAlign: 'center',
-                    whiteSpace: 'nowrap',
-                    marginTop: 1,
-                  }}>
-                  {chipLabel ?? ''}
-                </span>
-                <span
-                  style={{
-                    fontSize: `${FONT_SIZES.base}px`,
-                    lineHeight: 1.4,
-                    color: COLORS.descriptionText,
-                  }}>
-                  {description}
-                </span>
-              </Fragment>
-            ) : (
-              <Fragment key={conn.ruleId}>
-                {divider}
-                <span
-                  style={{
-                    fontSize: `${FONT_SIZES.base}px`,
-                    lineHeight: 1.4,
-                    color: COLORS.descriptionText,
-                  }}>
-                  {description}
-                </span>
-              </Fragment>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function DashedLine({color, isMobile}: {color: string; isMobile: boolean}) {
   return (

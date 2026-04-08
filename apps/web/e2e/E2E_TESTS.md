@@ -120,14 +120,13 @@
 | should truncate playstyle group and show more tile | Discard group truncates at 10 cards with "+24 more" tile |
 | should display group description callout text | Both groups render description callout text |
 
-## `synergy-detail-modal.spec.ts` — 5 tests (4 desktop, 1 mobile)
+## `synergy-detail-modal.spec.ts` — 4 tests (3 desktop, 1 mobile)
 
 | Test | What it verifies |
 |---|---|
 | should open modal when clicking a synergy card | Clicking a synergy card tile opens `role="dialog"` modal |
 | should display connection explanations in modal | Modal contains explanation text about the synergy connection |
 | should close modal on backdrop click | Clicking backdrop dismisses the modal |
-| should navigate to card page via CTA button | CTA button navigates to the synergy card's detail page |
 | should open modal on mobile | Tapping a synergy card on mobile viewport opens the modal |
 
 ## `synergy-expanded-view.spec.ts` — 4 tests (3 desktop, 1 mobile)

@@ -234,16 +234,16 @@ export const LOCATION_ROLE_CHIP_LABELS: Record<LocationRole, string> = {
   boost: 'Boost',
 };
 
-/** Educational descriptions explaining what each location role means, templated with card name */
-export const LOCATION_ROLE_DESCRIPTIONS: Record<LocationRole, (cardName: string) => string> = {
-  'at-payoff': (name) => `${name} gets bonuses when characters are at a location`,
-  'play-trigger': (name) => `${name} activates effects whenever you play a location`,
-  buff: (name) => `${name} strengthens locations with resist, protection, or stat boosts`,
-  'location-ramp': (name) => `${name} reduces the cost of playing or moving to locations`,
-  move: (name) => `${name} moves characters to locations for positioning advantage`,
-  'in-play-check': (name) => `${name} gains benefits when you have locations in play`,
-  tutor: (name) => `${name} searches your deck or discard for location cards`,
-  boost: (name) => `${name} works with the Boost keyword to power up locations`,
+/** Educational descriptions explaining what each location role means, templated with card name and location name */
+export const LOCATION_ROLE_DESCRIPTIONS: Record<LocationRole, (cardName: string, locationName: string) => string> = {
+  'at-payoff': (name, loc) => `${name} gets bonuses when characters are at ${loc}`,
+  'play-trigger': (name, loc) => `${name} activates effects whenever you play ${loc}`,
+  buff: (name, loc) => `${name} strengthens ${loc} with resist, protection, or stat boosts`,
+  'location-ramp': (name, loc) => `${name} reduces the cost of playing or moving characters to ${loc}`,
+  move: (name, loc) => `${name} moves characters to ${loc} to create an advantage`,
+  'in-play-check': (name, loc) => `${name} gains benefits when you have ${loc} in play`,
+  tutor: (name, loc) => `${name} searches your deck or discard for ${loc}`,
+  boost: (name, loc) => `${name} can power up ${loc} through the Boost keyword`,
 };
 
 /**

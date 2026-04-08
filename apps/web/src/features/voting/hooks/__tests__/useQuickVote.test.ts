@@ -162,6 +162,69 @@ describe('useQuickVote', () => {
     expect(result.current.state).toBe('result');
   });
 
+  it('resets state when card pair changes', async () => {
+    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(submitVote).mockResolvedValue({error: null});
+    vi.mocked(getAccuracyDistribution).mockResolvedValue({lower: 0, right: 1, higher: 0, total: 1});
+
+    let pairA = CARD_A;
+    let pairB = CARD_B;
+    const {result, rerender} = renderHook(() => useQuickVote(pairA, pairB));
+
+    // Vote on first pair
+    await act(async () => { await result.current.vote(0); });
+    expect(result.current.state).toBe('result');
+    expect(result.current.userChoice).toBe(0);
+
+    // Switch to a different pair
+    pairA = 'card-ccc';
+    pairB = 'card-ddd';
+    rerender();
+
+    expect(result.current.state).toBe('ready');
+    expect(result.current.userChoice).toBeNull();
+    expect(result.current.distribution).toBeNull();
+  });
+
+  it('auto-recovers from rate-limited state after 30 seconds', async () => {
+    vi.useFakeTimers();
+    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(submitVote).mockResolvedValue({error: 'rate_limited'});
+
+    const {result} = renderHook(() => useQuickVote(CARD_A, CARD_B));
+
+    await act(async () => {
+      await result.current.vote(-1);
+    });
+    expect(result.current.state).toBe('error');
+    expect(result.current.error).toBe('rate_limited');
+
+    // Advance 30 seconds — should auto-recover
+    act(() => { vi.advanceTimersByTime(30_000); });
+    expect(result.current.state).toBe('ready');
+    expect(result.current.error).toBeNull();
+
+    vi.useRealTimers();
+  });
+
+  it('prevents concurrent double-submission via ref guard', async () => {
+    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    let resolveVote!: (v: {error: null}) => void;
+    vi.mocked(submitVote).mockReturnValue(new Promise((r) => { resolveVote = r; }));
+
+    const {result} = renderHook(() => useQuickVote(CARD_A, CARD_B));
+
+    // Fire two votes without awaiting — second should be blocked by ref guard
+    act(() => { result.current.vote(1); });
+    act(() => { result.current.vote(-1); });
+
+    expect(submitVote).toHaveBeenCalledTimes(1);
+
+    // Clean up the pending promise
+    vi.mocked(getAccuracyDistribution).mockResolvedValue({lower: 0, right: 0, higher: 1, total: 1});
+    await act(async () => { resolveVote({error: null}); });
+  });
+
   it('ignores vote() calls from result state (double-submit guard)', async () => {
     vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
     vi.mocked(submitVote).mockResolvedValue({error: null});
@@ -177,5 +240,20 @@ describe('useQuickVote', () => {
     expect(submitVote).toHaveBeenCalledTimes(1);
     expect(result.current.state).toBe('result');
     expect(result.current.userChoice).toBe(0);
+  });
+
+  it('sets distributionFailed when distribution fetch fails for returning voter', async () => {
+    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(getAccuracyDistribution).mockRejectedValue(new Error('Network error'));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({accuracy: 0, timestamp: Date.now()}));
+
+    const {result} = renderHook(() => useQuickVote(CARD_A, CARD_B));
+
+    // Wait for the distribution fetch to fail
+    await act(async () => {});
+
+    expect(result.current.state).toBe('result');
+    expect(result.current.distribution).toBeNull();
+    expect(result.current.distributionFailed).toBe(true);
   });
 });

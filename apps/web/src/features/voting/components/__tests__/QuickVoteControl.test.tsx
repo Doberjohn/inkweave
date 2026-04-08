@@ -51,12 +51,13 @@ describe('QuickVoteControl', () => {
     expect(mockVote).toHaveBeenCalledWith(1);
   });
 
-  it('disables buttons during submitting state', () => {
+  it('shows optimistic confirmation during submitting state', () => {
     render(
       <QuickVoteControl state="submitting" onVote={mockVote} distribution={null} userChoice={0} error={null} />,
     );
-    const buttons = screen.getAllByRole('button');
-    buttons.forEach((btn) => expect(btn).toBeDisabled());
+    expect(screen.getByText(/You voted:/)).toBeInTheDocument();
+    expect(screen.getByText('About right')).toBeInTheDocument();
+    expect(screen.getByText('Loading community votes…')).toBeInTheDocument();
   });
 
   it('shows distribution bar and confirmation in result state', () => {
@@ -69,12 +70,13 @@ describe('QuickVoteControl', () => {
     expect(screen.getByText('20 votes on this pair')).toBeInTheDocument();
   });
 
-  it('shows first voter badge when total is 1', () => {
+  it('shows first voter badge without vote count when total is 1', () => {
     const dist: AccuracyDistribution = {lower: 0, right: 1, higher: 0, total: 1};
     render(
       <QuickVoteControl state="result" onVote={mockVote} distribution={dist} userChoice={0} error={null} />,
     );
     expect(screen.getByText('First to rate this pair!')).toBeInTheDocument();
+    expect(screen.queryByText(/votes? on this pair/)).not.toBeInTheDocument();
   });
 
   it('shows error message and re-enables buttons on error', () => {
@@ -82,7 +84,6 @@ describe('QuickVoteControl', () => {
       <QuickVoteControl state="error" onVote={mockVote} distribution={null} userChoice={null} error="submission_failed" />,
     );
     expect(screen.getByText('Something went wrong, try again')).toBeInTheDocument();
-    // Vote buttons should be enabled (not the teaser)
     expect(screen.getByRole('button', {name: 'Should be lower'})).not.toBeDisabled();
   });
 
@@ -112,11 +113,12 @@ describe('QuickVoteControl', () => {
     expect(screen.getByText("You're voting fast! Try again in a bit.")).toBeInTheDocument();
   });
 
-  it('shows disabled "Rate in detail" teaser', () => {
+  it('shows unavailable text when distribution fetch failed', () => {
     render(
-      <QuickVoteControl state="ready" onVote={mockVote} distribution={null} userChoice={null} error={null} />,
+      <QuickVoteControl state="result" onVote={mockVote} distribution={null} distributionFailed userChoice={0} error={null} />,
     );
-    const teaser = screen.getByText(/Rate in detail/);
-    expect(teaser).toBeInTheDocument();
+    expect(screen.getByText('Community votes unavailable')).toBeInTheDocument();
+    expect(screen.queryByText('Loading community votes…')).not.toBeInTheDocument();
   });
+
 });

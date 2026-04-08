@@ -125,10 +125,6 @@ export function CardPage() {
   };
 
   const handleCloseDetail = () => setDetailPair(null);
-  const handleViewSynergies = (id: string) => {
-    setDetailPair(null);
-    navigate(`/card/${id}`);
-  };
 
   if (isLoading) {
     return (
@@ -178,7 +174,6 @@ export function CardPage() {
             isOpen={!!detailPair}
             onClose={handleCloseDetail}
             pair={lastPair}
-            onViewSynergies={handleViewSynergies}
           />
         )}
       </ErrorBoundary>
@@ -244,7 +239,6 @@ export function CardPage() {
             isOpen={!!detailPair}
             onClose={handleCloseDetail}
             pair={lastPair}
-            onViewSynergies={handleViewSynergies}
           />
         </ErrorBoundary>
       )}

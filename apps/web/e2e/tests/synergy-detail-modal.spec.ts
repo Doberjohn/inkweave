@@ -50,23 +50,6 @@ test.describe('Synergy Detail Modal — Desktop', () => {
     await expect(modal).not.toBeVisible();
   });
 
-  test('should navigate to card page via CTA button', async ({page, synergyResultsPage}) => {
-    // Open the modal
-    const firstTile = synergyResultsPage.getGroupCardTiles('shift-targets').first();
-    await firstTile.click();
-
-    const modal = synergyResultsPage.getDetailModal();
-    await expect(modal).toBeVisible({timeout: 3000});
-
-    // Click the CTA button ("View X synergies")
-    const cta = synergyResultsPage.getDetailModalCTA();
-    await expect(cta).toBeVisible();
-    await cta.click();
-
-    // Should navigate away from the original card page
-    await expect(page).not.toHaveURL(CARD_URL);
-    await expect(page).toHaveURL(/\/card\/\d+/);
-  });
 });
 
 test.describe('Synergy Detail Modal — Mobile', () => {

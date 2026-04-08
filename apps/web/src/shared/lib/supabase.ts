@@ -16,7 +16,7 @@ export function getSupabase(): SupabaseClient<Database> | null {
   const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
-    // Fix #8: Log once in dev so missing config is visible
+    // Log once in dev so missing config is visible
     if (import.meta.env.DEV && !envWarningLogged) {
       envWarningLogged = true;
       console.info(
@@ -46,7 +46,7 @@ export type QuickVote = {
   accuracy: Accuracy;
 };
 
-// Fix #6: Constrain score to 1-10
+// Constrain score to 1-10
 export type Score = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 export type InDepthVote = {
@@ -70,7 +70,7 @@ export async function submitVote(
   const supabase = getSupabase();
   if (!supabase) return { error: 'Supabase not configured' };
 
-  // Fix #3: Catch network-level exceptions (fetch rejects, DNS failures)
+  // Catch network-level exceptions (fetch rejects, DNS failures)
   try {
     const { error } = await supabase.rpc('submit_vote', {
       p_card_a: vote.cardA,
@@ -88,7 +88,7 @@ export async function submitVote(
 
     if (error?.code === 'P0429') return { error: 'rate_limited' };
 
-    // Fix #4: Log RPC errors with context for production debugging
+    // Log RPC errors with context for production debugging
     if (error) {
       console.error('[submitVote] RPC error:', {
         code: error.code,

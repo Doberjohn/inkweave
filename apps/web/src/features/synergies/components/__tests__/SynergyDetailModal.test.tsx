@@ -18,6 +18,8 @@ vi.mock('../../../../shared/components', () => ({
   CardLightbox: () => null,
   RenderProfiler: ({children}: {children: React.ReactNode}) => <>{children}</>,
   StrengthBadge: ({score}: {score: number}) => <span data-testid="strength-badge">{score}</span>,
+  ConnectionGroup: ({group}: {group: {label: string}}) => <div data-testid="connection-group">{group.label}</div>,
+  groupConnections: (conns: unknown[]) => conns.map((c: Record<string, unknown>) => ({key: c.ruleId, label: c.ruleName, score: c.score, connections: [c], category: c.category})),
 }));
 
 vi.mock('../../../../shared/hooks/useDialogFocus', () => ({
@@ -87,7 +89,6 @@ describe('SynergyDetailModal', () => {
         isOpen={false}
         onClose={vi.fn()}
         pair={mockPair}
-        onViewSynergies={vi.fn()}
       />,
     );
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -95,7 +96,7 @@ describe('SynergyDetailModal', () => {
 
   it('should render dialog with card names and connections when open', () => {
     render(
-      <SynergyDetailModal isOpen onClose={vi.fn()} pair={mockPair} onViewSynergies={vi.fn()} />,
+      <SynergyDetailModal isOpen onClose={vi.fn()} pair={mockPair} />,
     );
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('Shift Targets')).toBeInTheDocument();
@@ -106,7 +107,7 @@ describe('SynergyDetailModal', () => {
   it('should call onClose when backdrop is clicked', () => {
     const onClose = vi.fn();
     render(
-      <SynergyDetailModal isOpen onClose={onClose} pair={mockPair} onViewSynergies={vi.fn()} />,
+      <SynergyDetailModal isOpen onClose={onClose} pair={mockPair} />,
     );
     fireEvent.click(screen.getByTestId('synergy-detail-backdrop'));
     expect(onClose).toHaveBeenCalledOnce();
@@ -114,7 +115,7 @@ describe('SynergyDetailModal', () => {
 
   it('should show version when both cards share the same name', () => {
     render(
-      <SynergyDetailModal isOpen onClose={vi.fn()} pair={mockPair} onViewSynergies={vi.fn()} />,
+      <SynergyDetailModal isOpen onClose={vi.fn()} pair={mockPair} />,
     );
     expect(screen.getByText('Ice Artisan')).toBeInTheDocument();
     expect(screen.getByText('Snow Queen')).toBeInTheDocument();
@@ -130,25 +131,10 @@ describe('SynergyDetailModal', () => {
         isOpen
         onClose={vi.fn()}
         pair={differentPair}
-        onViewSynergies={vi.fn()}
       />,
     );
     expect(screen.queryByText('Ice Artisan')).not.toBeInTheDocument();
     expect(screen.queryByText('Friendly Snowman')).not.toBeInTheDocument();
-  });
-
-  it('should call onViewSynergies with cardB id when CTA is clicked', () => {
-    const onViewSynergies = vi.fn();
-    render(
-      <SynergyDetailModal
-        isOpen
-        onClose={vi.fn()}
-        pair={mockPair}
-        onViewSynergies={onViewSynergies}
-      />,
-    );
-    fireEvent.click(screen.getByTestId('synergy-detail-cta'));
-    expect(onViewSynergies).toHaveBeenCalledWith('elsa-base');
   });
 
   it('renders quick vote control below tier label', () => {
@@ -157,8 +143,7 @@ describe('SynergyDetailModal', () => {
         isOpen={true}
         onClose={vi.fn()}
         pair={mockPair}
-        onViewSynergies={vi.fn()}
-      />,
+             />,
     );
     expect(screen.getByText('Do you agree with this score?')).toBeInTheDocument();
   });

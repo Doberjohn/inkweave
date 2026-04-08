@@ -23,6 +23,16 @@ vi.mock('../PairStack', () => ({
   PairStack: ({pairs, side}: {pairs: unknown[]; side: string}) => <div data-testid="pair-stack" data-side={side} data-count={pairs.length} />,
 }));
 
+vi.mock('../../../../shared/components', () => ({
+  ConnectionGroup: ({group}: {group: {label: string; connections: {explanation: string}[]}}) => (
+    <div data-testid="connection-group">
+      <span>{group.label}</span>
+      {group.connections.map((c: {explanation: string}, i: number) => <span key={i}>{c.explanation}</span>)}
+    </div>
+  ),
+  groupConnections: (conns: unknown[]) => conns.map((c: Record<string, unknown>) => ({key: c.ruleId, label: c.ruleName, score: c.score, connections: [c], category: c.category})),
+}));
+
 const pair = createVotingPair({
   cardA: {id: 'elsa-1', fullName: 'Elsa - Ice Queen'},
   cardB: {id: 'anna-1', fullName: 'Anna - Brave Princess'},

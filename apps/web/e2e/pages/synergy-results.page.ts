@@ -75,11 +75,6 @@ export class SynergyResultsPage {
     return this.page.getByTestId('synergy-detail-modal');
   }
 
-  /** Get the CTA button inside the synergy detail modal */
-  getDetailModalCTA(): Locator {
-    return this.page.getByTestId('synergy-detail-cta');
-  }
-
   /** Close the synergy detail modal by clicking the backdrop */
   async closeDetailModalBackdrop(): Promise<void> {
     await this.page.getByTestId('synergy-detail-backdrop').click({position: {x: 5, y: 5}});

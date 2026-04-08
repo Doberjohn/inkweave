@@ -7,8 +7,7 @@ const playstyles: Playstyle[] = [
     description:
       'Cards that make your opponent lose lore. Stacking these creates a consistent denial strategy that pressures your opponent while you gain lore.',
     strategyTips: [
-      'Density is everything — aim for 6-8 lore-loss cards so you reliably draw them each game.',
-      'Pair with your own lore generation. Denying 1 lore per turn only works if you are also questing.',
+      'Aim for 6 to 8 lore stealing cards so you reliably draw them each game.',
       'Prioritize repeatable effects (quest triggers, location abilities) over one-shot actions.',
       'Early game matters most — removing lore on turns 2-4 can set your opponent behind for the rest of the game.',
     ],
