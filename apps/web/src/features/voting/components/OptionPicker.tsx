@@ -49,6 +49,10 @@ const DEFAULT_OPTION_COLOR: OptionColor = {
       from { opacity: 0; transform: translateY(8px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+    .idv-option-btn:focus-visible {
+      outline: 2px solid #d4af37;
+      outline-offset: 2px;
+    }
   `;
   document.head.appendChild(style);
 })();
@@ -59,6 +63,7 @@ const DEFAULT_OPTION_COLOR: OptionColor = {
  */
 export function OptionPicker<T>({ariaLabel, options, value, onChange, isMobile, colorScheme, animationDelayBase = 0}: OptionPickerProps<T>) {
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+  const [pressedKey, setPressedKey] = useState<string | null>(null);
   const [pulsingKey, setPulsingKey] = useState<string | null>(null);
 
   const hasSelection = value !== null;
@@ -77,6 +82,7 @@ export function OptionPicker<T>({ariaLabel, options, value, onChange, isMobile, 
     const colors = getColors(key);
     const isSelected = value === optValue;
     const isHovered = hoveredKey === key;
+    const isPressed = pressedKey === key;
     const isPulsing = pulsingKey === key;
     const isDimmed = hasSelection && !isSelected;
 
@@ -92,6 +98,7 @@ export function OptionPicker<T>({ariaLabel, options, value, onChange, isMobile, 
       fontFamily: FONTS.body,
       padding: '0 12px',
       transition: 'all 0.2s ease',
+      transform: isPressed ? 'scale(0.97)' : undefined,
       animation: isPulsing
         ? 'idv-pulse 0.3s ease-out'
         : animationDelayBase > 0
@@ -127,11 +134,14 @@ export function OptionPicker<T>({ariaLabel, options, value, onChange, isMobile, 
     return (
       <button
         key={key}
+        className="idv-option-btn"
         role="radio"
         aria-checked={isSelected}
         onClick={() => handleClick(key, optValue)}
         onMouseEnter={() => setHoveredKey(key)}
-        onMouseLeave={() => setHoveredKey(null)}
+        onMouseLeave={() => { setHoveredKey(null); setPressedKey(null); }}
+        onMouseDown={() => setPressedKey(key)}
+        onMouseUp={() => setPressedKey(null)}
         style={style}>
         {label}
       </button>

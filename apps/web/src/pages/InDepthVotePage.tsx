@@ -13,11 +13,8 @@ import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../shared/cons
   if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return;
   const style = document.createElement('style');
   style.id = STYLE_ID;
+  // idv-fade-up and idv-pulse are injected by OptionPicker — only page-specific keyframes here
   style.textContent = `
-    @keyframes idv-fade-up {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
     @keyframes idv-submit-glow {
       0%   { box-shadow: 0 0 0 0 rgba(212,175,55,0.4); }
       50%  { box-shadow: 0 0 20px 6px rgba(212,175,55,0.15); }
@@ -49,6 +46,11 @@ function ProgressBar({answeredCount, animate}: {answeredCount: number; animate?:
         animation: animate ? 'idv-fade-up 0.35s ease-out 100ms both' : 'none',
       }}>
       <div
+        role="progressbar"
+        aria-valuenow={answeredCount}
+        aria-valuemin={0}
+        aria-valuemax={TOTAL_DIMENSIONS}
+        aria-label={`Voting progress: ${answeredCount} of ${TOTAL_DIMENSIONS} dimensions answered`}
         style={{
           flex: 1,
           height: 3,

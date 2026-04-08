@@ -85,9 +85,8 @@ const DIFFICULTY_OPTIONS = [
 // ── Sub-components ──
 
 function CategoryHeader({stepRange, label, accent, isMobile}: {stepRange: string; label: string; accent: string; isMobile?: boolean}) {
-  if (isMobile) return null; // Save vertical space on mobile
   return (
-    <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.md}}>
+    <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm, marginBottom: isMobile ? SPACING.xs : SPACING.md}}>
       <span
         style={{
           fontSize: FONT_SIZES.xs,
