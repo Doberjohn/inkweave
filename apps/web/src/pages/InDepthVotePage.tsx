@@ -89,18 +89,39 @@ function ProgressBar({answeredCount, maxWidth}: {answeredCount: number; maxWidth
 import type {InDepthFormState} from '../features/voting/types';
 import type {Accuracy} from '../shared/lib/supabase';
 
-/** Pick the most "interesting" insight from the user's votes */
+/** Collect all applicable insight messages, then pick one at random */
 function getResponseInsight(formState: InDepthFormState): string {
-  // Disagreement with engine is the most interesting signal
-  if (formState.isReal === false) return "Your skepticism sharpens our detection.";
-  if (formState.accuracy === (-1 as Accuracy)) return "Noted \u2014 this score may need to come down.";
-  if (formState.accuracy === (1 as Accuracy)) return "Noted \u2014 this pair might deserve a higher score.";
-  if (formState.difficulty === 3) return "Hard to pull off \u2014 good to know for deckbuilders.";
-  if (formState.wouldPlay === false) return "Not every synergy belongs in a deck \u2014 that\u2019s useful data.";
-  if (formState.score !== null && formState.score >= 9) return "A perfect synergy \u2014 high praise!";
-  if (formState.score !== null && formState.score <= 3) return "A weak link \u2014 honest ratings make the engine smarter.";
-  if (formState.whoCarries === 'a' || formState.whoCarries === 'b') return "Knowing which card drives it helps players prioritize.";
-  return "Your perspective makes the scores more accurate.";
+  const insights: string[] = [];
+
+  // isReal
+  if (formState.isReal === false) insights.push("Your skepticism sharpens our detection.");
+  if (formState.isReal === true) insights.push("Confirmed \u2014 this synergy is the real deal.");
+
+  // accuracy
+  if (formState.accuracy === (-1 as Accuracy)) insights.push("Noted \u2014 this score may need to come down.");
+  if (formState.accuracy === (0 as Accuracy)) insights.push("Good to know the engine got this one right.");
+  if (formState.accuracy === (1 as Accuracy)) insights.push("Noted \u2014 this pair might deserve a higher score.");
+
+  // score
+  if (formState.score !== null && formState.score >= 9) insights.push("A perfect synergy \u2014 high praise!");
+  if (formState.score !== null && formState.score <= 3) insights.push("A weak link \u2014 honest ratings make the engine smarter.");
+  if (formState.score !== null && formState.score >= 4 && formState.score <= 8) insights.push("A solid rating \u2014 the middle range is where precision matters most.");
+
+  // wouldPlay
+  if (formState.wouldPlay === false) insights.push("Not every synergy belongs in a deck \u2014 that\u2019s useful data.");
+  if (formState.wouldPlay === true) insights.push("A pair worth building around \u2014 noted!");
+
+  // whoCarries
+  if (formState.whoCarries === 'a' || formState.whoCarries === 'b') insights.push("Knowing which card drives it helps players prioritize.");
+  if (formState.whoCarries === 'both') insights.push("Equal partners \u2014 both cards pull their weight here.");
+
+  // difficulty
+  if (formState.difficulty === 3) insights.push("Hard to pull off \u2014 good to know for deckbuilders.");
+  if (formState.difficulty === 2) insights.push("Situational synergies are the trickiest to score \u2014 thanks for the clarity.");
+  if (formState.difficulty === 1) insights.push("Easy to execute \u2014 a reliable combo.");
+
+  if (insights.length === 0) return "Your perspective makes the scores more accurate.";
+  return insights[Math.floor(Math.random() * insights.length)];
 }
 
 const CLOSERS = [
@@ -326,7 +347,7 @@ export function InDepthVotePage() {
             </div>
 
             {/* Right column: progress + form + submit (center-aligned) */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center', minWidth: 0}}>
+            <div style={{display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center', alignSelf: 'center', minWidth: 0}}>
               <ProgressBar answeredCount={answeredCount} />
 
               <span style={{fontSize: FONT_SIZES.lg, color: COLORS.primary, fontFamily: FONTS.body, textAlign: 'center', fontWeight: 500, fontStyle: 'italic'}}>
