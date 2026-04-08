@@ -359,7 +359,7 @@ export function InDepthVoteForm({
     <>
       {showCategoryHeaders && <CategoryHeader stepRange="3-4" label="Rating" accent={GROUP_ACCENTS.rating} compact={useCompact} />}
       <DimensionSection label="Rate this synergy" stepNumber={3} accentColor={GROUP_ACCENTS.rating} isAnswered={formState.score !== null} animationDelay={delay} animate={animate}>
-        <ScorePicker value={formState.score} onChange={onSetScore} isMobile={useCompact} responsive />
+        <ScorePicker value={formState.score} onChange={onSetScore} isMobile={useCompact} responsive={!useCompact} />
       </DimensionSection>
       <DimensionSection label="Which card drives the synergy?" stepNumber={4} accentColor={GROUP_ACCENTS.rating} isAnswered={formState.whoCarries !== null} animationDelay={delay + 60} animate={animate}>
         <CarriesPicker cardA={cardA} cardB={cardB} value={formState.whoCarries} onChange={onSetWhoCarries} isMobile={useCompact} />
