@@ -16,7 +16,7 @@ interface QuickVoteControlProps {
 
 const CHOICE_LABELS: Record<Accuracy, string> = {
   [-1]: 'Should be lower',
-  [0]: 'About right',
+  [0]: 'Score is fair',
   [1]: 'Should be higher',
 };
 

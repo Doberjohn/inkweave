@@ -6,7 +6,7 @@
 
 ## Overview
 
-Add a lightweight three-button voting control to the `SynergyDetailModal`. Users give directional feedback on the algorithm's synergy score — "Should be lower" / "About right" / "Should be higher". After voting, an animated distribution bar reveals how the community voted, creating a social feedback loop.
+Add a lightweight three-button voting control to the `SynergyDetailModal`. Users give directional feedback on the algorithm's synergy score — "Should be lower" / "Score is fair" / "Should be higher". After voting, an animated distribution bar reveals how the community voted, creating a social feedback loop.
 
 **Scope**: Modal UI component, new hook, Supabase migration (distribution columns), localStorage persistence for voted pairs.
 
@@ -22,7 +22,7 @@ Below the tier label ("Strong Synergy"), above the connections list. Wrapped in 
 
 Three buttons in a horizontal row. Full labels:
 - "Should be lower" → `accuracy: -1`
-- "About right" → `accuracy: 0`
+- "Score is fair" → `accuracy: 0`
 - "Should be higher" → `accuracy: 1`
 
 Question text above: "Do you agree with this score?"
@@ -84,7 +84,7 @@ After voting, the three buttons collapse and are replaced by:
 1. **Confirmation**: "Thanks! You voted: {choice}" with gold star `✦`
 2. **Distribution bar**: Three colored segments showing community vote percentages
    - Lower: `#f59090` (red, 25% opacity background)
-   - About right: `#6ee7a0` (green, 20% opacity background)
+   - Score is fair: `#6ee7a0` (green, 20% opacity background)
    - Higher: `#60b5f5` (blue, 20% opacity background)
 3. **Vote count**: "{N} votes on this pair"
 4. **Disabled "Rate in detail →"** teaser
