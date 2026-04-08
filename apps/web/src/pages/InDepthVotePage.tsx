@@ -222,10 +222,7 @@ export function InDepthVotePage() {
           <BackLink onClick={handleBack} label="Back to synergy" />
         </div>
 
-        {/* Success state */}
-        {session.lastResult === 'success' ? (
-          <SuccessCard answeredCount={answeredCount} onBack={handleBack} onVoteMore={() => navigate('/vote')} />
-        ) : isMobile ? (
+        {isMobile ? (
           /* ══ Mobile: stacked tabbed layout ══ */
           <>
             <PairDisplay
@@ -237,26 +234,30 @@ export function InDepthVotePage() {
 
             <ProgressBar answeredCount={answeredCount} maxWidth={560} />
 
-            <span style={{fontSize: FONT_SIZES.base, color: COLORS.textMuted, fontFamily: FONTS.body, textAlign: 'center'}}>
-              Answer all 6 to submit — every response helps calibrate synergy scores.
+            <span style={{fontSize: FONT_SIZES.lg, color: COLORS.primary, fontFamily: FONTS.body, textAlign: 'center', fontWeight: 500, fontStyle: 'italic'}}>
+              Every response helps calibrate synergy scores.
             </span>
 
             {statusBanners}
 
             <div style={{width: '100%', maxWidth: 560, display: 'flex', flexDirection: 'column', gap: SPACING.xl, alignItems: 'center'}}>
-              <InDepthVoteForm {...formProps} isMobile animate layout="tabbed" />
-
-              {/* Submit appears only when all 6 are answered */}
-              {allAnswered && (
-                <CtaButton
-                  onClick={session.submit}
-                  disabled={session.isSubmitting || session.isRateLimited}
-                  style={{
-                    width: '100%',
-                    animation: session.isSubmitting ? 'idv-submit-glow 1.5s ease-in-out infinite' : 'idv-fade-up 0.35s ease-out',
-                  }}>
-                  {session.isSubmitting ? 'Submitting...' : 'Submit All 6 Votes'}
-                </CtaButton>
+              {session.lastResult === 'success' ? (
+                <SuccessCard answeredCount={answeredCount} onBack={handleBack} onVoteMore={() => navigate('/vote')} />
+              ) : (
+                <>
+                  <InDepthVoteForm {...formProps} isMobile animate layout="tabbed" />
+                  {allAnswered && (
+                    <CtaButton
+                      onClick={session.submit}
+                      disabled={session.isSubmitting || session.isRateLimited}
+                      style={{
+                        width: '100%',
+                        animation: session.isSubmitting ? 'idv-submit-glow 1.5s ease-in-out infinite' : 'idv-fade-up 0.35s ease-out',
+                      }}>
+                      {session.isSubmitting ? 'Submitting...' : 'Submit your vote'}
+                    </CtaButton>
+                  )}
+                </>
               )}
             </div>
           </>
@@ -291,28 +292,34 @@ export function InDepthVotePage() {
             <div style={{display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center', minWidth: 0}}>
               <ProgressBar answeredCount={answeredCount} />
 
-              <span style={{fontSize: FONT_SIZES.base, color: COLORS.textMuted, fontFamily: FONTS.body, textAlign: 'center'}}>
-                Answer all 6 to submit — every response helps calibrate synergy scores.
+              <span style={{fontSize: FONT_SIZES.lg, color: COLORS.primary, fontFamily: FONTS.body, textAlign: 'center', fontWeight: 500, fontStyle: 'italic'}}>
+                Every response helps calibrate synergy scores.
               </span>
 
               {statusBanners}
 
-              <div style={{width: '100%', maxWidth: 560}}>
-                <InDepthVoteForm {...formProps} animate layout="tabbed" />
-              </div>
+              {/* Form or success card — success replaces only the voting segment */}
+              {session.lastResult === 'success' ? (
+                <SuccessCard answeredCount={answeredCount} onBack={handleBack} onVoteMore={() => navigate('/vote')} />
+              ) : (
+                <>
+                  <div style={{width: '100%', maxWidth: 560}}>
+                    <InDepthVoteForm {...formProps} animate layout="tabbed" />
+                  </div>
 
-              {/* Submit appears only when all 6 are answered */}
-              {allAnswered && (
-                <CtaButton
-                  onClick={session.submit}
-                  disabled={session.isSubmitting || session.isRateLimited}
-                  style={{
-                    width: '100%',
-                    maxWidth: 560,
-                    animation: session.isSubmitting ? 'idv-submit-glow 1.5s ease-in-out infinite' : 'idv-fade-up 0.35s ease-out',
-                  }}>
-                  {session.isSubmitting ? 'Submitting...' : 'Submit All 6 Votes'}
-                </CtaButton>
+                  {allAnswered && (
+                    <CtaButton
+                      onClick={session.submit}
+                      disabled={session.isSubmitting || session.isRateLimited}
+                      style={{
+                        width: '100%',
+                        maxWidth: 560,
+                        animation: session.isSubmitting ? 'idv-submit-glow 1.5s ease-in-out infinite' : 'idv-fade-up 0.35s ease-out',
+                      }}>
+                      {session.isSubmitting ? 'Submitting...' : 'Submit your vote'}
+                    </CtaButton>
+                  )}
+                </>
               )}
             </div>
           </div>

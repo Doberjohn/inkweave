@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, useEffect, useRef, useMemo} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {Accuracy, Score} from '../../../shared/lib/supabase';
 import type {InDepthFormState} from '../types';
@@ -23,7 +23,6 @@ interface InDepthVoteFormProps {
   isMobile?: boolean;
   animate?: boolean;
   layout?: FormLayout;
-  /** Force compact pickers (stacked vertical buttons) regardless of isMobile */
   compact?: boolean;
 }
 
@@ -52,12 +51,10 @@ function makeColor(hex: string): OptionColor {
 const GREEN = makeColor('#6ee7a0');
 const RED = makeColor('#f59090');
 const BLUE = makeColor('#60b5f5');
-const AMBER = makeColor('#d4af37');
-const GOLD_BRIGHT = makeColor('#fbbf24');
 
-const IS_REAL_COLORS: Record<string, OptionColor> = {yes: GREEN, no: RED, unsure: AMBER};
+const IS_REAL_COLORS: Record<string, OptionColor> = {yes: GREEN, no: RED};
 const ACCURACY_COLORS: Record<string, OptionColor> = {low: RED, right: GREEN, high: BLUE};
-const WOULD_PLAY_COLORS: Record<string, OptionColor> = {yes: GREEN, no: RED, already: GOLD_BRIGHT};
+const WOULD_PLAY_COLORS: Record<string, OptionColor> = {yes: GREEN, no: RED};
 const DIFFICULTY_COLORS: Record<string, OptionColor> = {easy: GREEN, situational: BLUE, hard: RED};
 
 // ── Option definitions ──
@@ -65,19 +62,17 @@ const DIFFICULTY_COLORS: Record<string, OptionColor> = {easy: GREEN, situational
 const IS_REAL_OPTIONS = [
   {key: 'yes', label: 'Yes', value: true as boolean | null},
   {key: 'no', label: 'No', value: false as boolean | null},
-  {key: 'unsure', label: 'Unsure', value: null as boolean | null},
 ];
 
 const ACCURACY_OPTIONS = [
-  {key: 'low', label: 'Too Low', value: -1 as Accuracy},
-  {key: 'right', label: 'About Right', value: 0 as Accuracy},
-  {key: 'high', label: 'Too High', value: 1 as Accuracy},
+  {key: 'low', label: 'Should be lower', value: -1 as Accuracy},
+  {key: 'right', label: 'Score is fair', value: 0 as Accuracy},
+  {key: 'high', label: 'Should be higher', value: 1 as Accuracy},
 ];
 
 const WOULD_PLAY_OPTIONS = [
   {key: 'yes', label: 'Yes', value: true as boolean | null},
   {key: 'no', label: 'No', value: false as boolean | null},
-  {key: 'already', label: 'Already do', value: true as boolean | null},
 ];
 
 const DIFFICULTY_OPTIONS = [
@@ -191,7 +186,7 @@ function DimensionSection({label, stepNumber, accentColor, isAnswered, animation
   );
 }
 
-// ── Tab bar for tabbed layout ──
+// ── Tab bar with hover effects ──
 
 const TAB_GROUPS = [
   {key: 'assessment', label: 'Assessment', accent: GROUP_ACCENTS.assessment, stepRange: '1-2'},
@@ -200,12 +195,15 @@ const TAB_GROUPS = [
 ] as const;
 
 type TabKey = typeof TAB_GROUPS[number]['key'];
+const TAB_ORDER: TabKey[] = ['assessment', 'rating', 'practical'];
 
 function TabBar({activeTab, onTabChange, answeredByGroup}: {
   activeTab: TabKey;
   onTabChange: (tab: TabKey) => void;
   answeredByGroup: Record<TabKey, number>;
 }) {
+  const [hoveredTab, setHoveredTab] = useState<TabKey | null>(null);
+
   return (
     <div
       role="tablist"
@@ -218,6 +216,7 @@ function TabBar({activeTab, onTabChange, answeredByGroup}: {
       }}>
       {TAB_GROUPS.map(({key, label, accent}) => {
         const isActive = activeTab === key;
+        const isHovered = hoveredTab === key && !isActive;
         const groupAnswered = answeredByGroup[key];
         const groupTotal = 2;
         return (
@@ -227,13 +226,23 @@ function TabBar({activeTab, onTabChange, answeredByGroup}: {
             aria-selected={isActive}
             aria-controls={`panel-${key}`}
             onClick={() => onTabChange(key)}
+            onMouseEnter={() => setHoveredTab(key)}
+            onMouseLeave={() => setHoveredTab(null)}
             style={{
               flex: 1,
               minHeight: 44,
               borderRadius: RADIUS.lg,
-              border: isActive ? `2px solid ${accent}` : '1px solid rgba(255,255,255,0.08)',
-              background: isActive ? `${accent}0f` : 'rgba(255,255,255,0.02)',
-              color: isActive ? accent : COLORS.textMuted,
+              border: isActive
+                ? `2px solid ${accent}`
+                : isHovered
+                  ? `1px solid ${accent}66`
+                  : '1px solid rgba(255,255,255,0.08)',
+              background: isActive
+                ? `${accent}0f`
+                : isHovered
+                  ? `${accent}08`
+                  : 'rgba(255,255,255,0.02)',
+              color: isActive ? accent : isHovered ? COLORS.text : COLORS.textMuted,
               fontSize: FONT_SIZES.base,
               fontWeight: isActive ? 700 : 500,
               fontFamily: FONTS.body,
@@ -244,6 +253,7 @@ function TabBar({activeTab, onTabChange, answeredByGroup}: {
               flexDirection: 'column',
               alignItems: 'center',
               gap: 2,
+              boxShadow: isHovered ? `0 0 12px ${accent}15` : 'none',
             }}>
             <span>{label}</span>
             <span style={{fontSize: FONT_SIZES.xs, opacity: 0.7}}>
@@ -253,6 +263,35 @@ function TabBar({activeTab, onTabChange, answeredByGroup}: {
         );
       })}
     </div>
+  );
+}
+
+// ── Nav button with hover effects ──
+
+function NavButton({label, disabled, onClick}: {label: string; disabled: boolean; onClick: () => void}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: !disabled && hovered ? 'rgba(255,185,0,0.05)' : 'none',
+        border: `1px solid ${disabled ? COLORS.surfaceBorder : hovered ? 'rgba(255,185,0,0.5)' : `${COLORS.primary}33`}`,
+        borderRadius: RADIUS.lg,
+        color: disabled ? COLORS.textDim : hovered ? COLORS.primary : COLORS.textMuted,
+        fontSize: FONT_SIZES.base,
+        fontFamily: FONTS.body,
+        fontWeight: hovered && !disabled ? 600 : 500,
+        padding: '8px 20px',
+        cursor: disabled ? 'default' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
+        transition: 'all 0.2s',
+        boxShadow: !disabled && hovered ? '0 0 10px rgba(255,185,0,0.1)' : 'none',
+      }}>
+      {label}
+    </button>
   );
 }
 
@@ -277,11 +316,28 @@ export function InDepthVoteForm({
   const baseDelay = animate ? 200 : 0;
   const useCompact = compact || isMobile;
 
-  const answeredByGroup: Record<TabKey, number> = {
+  const answeredByGroup = useMemo<Record<TabKey, number>>(() => ({
     assessment: (formState.isReal !== null ? 1 : 0) + (formState.accuracy !== null ? 1 : 0),
     rating: (formState.score !== null ? 1 : 0) + (formState.whoCarries !== null ? 1 : 0),
     practical: (formState.wouldPlay !== null ? 1 : 0) + (formState.difficulty !== null ? 1 : 0),
-  };
+  }), [formState.isReal, formState.accuracy, formState.score, formState.whoCarries, formState.wouldPlay, formState.difficulty]);
+
+  // Auto-advance to next tab when current group is complete
+  const prevAnsweredRef = useRef(answeredByGroup);
+  useEffect(() => {
+    const prev = prevAnsweredRef.current;
+    prevAnsweredRef.current = answeredByGroup;
+
+    // Only auto-advance if the current tab just became complete (2/2)
+    if (answeredByGroup[activeTab] === 2 && prev[activeTab] < 2) {
+      const currentIdx = TAB_ORDER.indexOf(activeTab);
+      const nextTab = TAB_ORDER[currentIdx + 1];
+      if (nextTab) {
+        const timer = setTimeout(() => setActiveTab(nextTab), 400);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [answeredByGroup, activeTab]);
 
   // ── Group content builders ──
 
@@ -293,8 +349,8 @@ export function InDepthVoteForm({
       <DimensionSection label="Is this synergy real?" stepNumber={1} accentColor={GROUP_ACCENTS.assessment} isAnswered={formState.isReal !== null} animationDelay={delay} animate={animate}>
         <OptionPicker ariaLabel="Is this synergy real" options={IS_REAL_OPTIONS} value={formState.isReal} onChange={onSetIsReal} isMobile={useCompact} colorScheme={IS_REAL_COLORS} />
       </DimensionSection>
-      <DimensionSection label="Is our score accurate?" stepNumber={2} accentColor={GROUP_ACCENTS.assessment} isAnswered={formState.accuracy !== null} animationDelay={delay + 60} animate={animate}>
-        <OptionPicker ariaLabel="Is our score accurate" options={ACCURACY_OPTIONS} value={formState.accuracy} onChange={onSetAccuracy} isMobile={useCompact} colorScheme={ACCURACY_COLORS} />
+      <DimensionSection label="Is current Inkweave score accurate?" stepNumber={2} accentColor={GROUP_ACCENTS.assessment} isAnswered={formState.accuracy !== null} animationDelay={delay + 60} animate={animate}>
+        <OptionPicker ariaLabel="Is current Inkweave score accurate" options={ACCURACY_OPTIONS} value={formState.accuracy} onChange={onSetAccuracy} isMobile={useCompact} colorScheme={ACCURACY_COLORS} />
       </DimensionSection>
     </>
   );
@@ -305,7 +361,7 @@ export function InDepthVoteForm({
       <DimensionSection label="Rate this synergy" stepNumber={3} accentColor={GROUP_ACCENTS.rating} isAnswered={formState.score !== null} animationDelay={delay} animate={animate}>
         <ScorePicker value={formState.score} onChange={onSetScore} isMobile={useCompact} responsive />
       </DimensionSection>
-      <DimensionSection label="Which card carries it?" stepNumber={4} accentColor={GROUP_ACCENTS.rating} isAnswered={formState.whoCarries !== null} animationDelay={delay + 60} animate={animate}>
+      <DimensionSection label="Which card drives the synergy?" stepNumber={4} accentColor={GROUP_ACCENTS.rating} isAnswered={formState.whoCarries !== null} animationDelay={delay + 60} animate={animate}>
         <CarriesPicker cardA={cardA} cardB={cardB} value={formState.whoCarries} onChange={onSetWhoCarries} isMobile={useCompact} />
       </DimensionSection>
     </>
@@ -351,40 +407,16 @@ export function InDepthVoteForm({
 
       {/* Tab navigation buttons */}
       <div style={{display: 'flex', justifyContent: 'space-between', marginTop: SPACING.lg}}>
-        <button
-          onClick={() => setActiveTab(activeTab === 'rating' ? 'assessment' : 'rating')}
+        <NavButton
+          label="← Previous"
           disabled={activeTab === 'assessment'}
-          style={{
-            background: 'none',
-            border: `1px solid ${activeTab === 'assessment' ? COLORS.surfaceBorder : COLORS.primary}33`,
-            borderRadius: RADIUS.lg,
-            color: activeTab === 'assessment' ? COLORS.textDim : COLORS.textMuted,
-            fontSize: FONT_SIZES.base,
-            fontFamily: FONTS.body,
-            padding: '8px 20px',
-            cursor: activeTab === 'assessment' ? 'default' : 'pointer',
-            opacity: activeTab === 'assessment' ? 0.4 : 1,
-            transition: 'all 0.2s',
-          }}>
-          &larr; Previous
-        </button>
-        <button
-          onClick={() => setActiveTab(activeTab === 'assessment' ? 'rating' : 'practical')}
+          onClick={() => setActiveTab(activeTab === 'rating' ? 'assessment' : 'rating')}
+        />
+        <NavButton
+          label="Next →"
           disabled={activeTab === 'practical'}
-          style={{
-            background: 'none',
-            border: `1px solid ${activeTab === 'practical' ? COLORS.surfaceBorder : COLORS.primary}33`,
-            borderRadius: RADIUS.lg,
-            color: activeTab === 'practical' ? COLORS.textDim : COLORS.textMuted,
-            fontSize: FONT_SIZES.base,
-            fontFamily: FONTS.body,
-            padding: '8px 20px',
-            cursor: activeTab === 'practical' ? 'default' : 'pointer',
-            opacity: activeTab === 'practical' ? 0.4 : 1,
-            transition: 'all 0.2s',
-          }}>
-          Next &rarr;
-        </button>
+          onClick={() => setActiveTab(activeTab === 'assessment' ? 'rating' : 'practical')}
+        />
       </div>
     </div>
   );

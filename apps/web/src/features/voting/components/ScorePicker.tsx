@@ -116,7 +116,7 @@ export function ScorePicker({value, onChange, isMobile, responsive}: ScorePicker
         <div style={{display: 'flex', gap: 4}}>
           {group.scores.map(renderButton)}
         </div>
-        <span style={{fontSize: 10, color: tier.color, fontFamily: FONTS.body, letterSpacing: '0.04em'}}>
+        <span style={{fontSize: 10, color: tier.color, fontFamily: FONTS.body, letterSpacing: '0.04em', textAlign: 'center'}}>
           {group.label}
         </span>
       </div>
