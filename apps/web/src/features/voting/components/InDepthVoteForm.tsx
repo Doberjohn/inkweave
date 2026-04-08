@@ -349,8 +349,8 @@ export function InDepthVoteForm({
       <DimensionSection label="Is this synergy real?" stepNumber={1} accentColor={GROUP_ACCENTS.assessment} isAnswered={formState.isReal !== null} animationDelay={delay} animate={animate}>
         <OptionPicker ariaLabel="Is this synergy real" options={IS_REAL_OPTIONS} value={formState.isReal} onChange={onSetIsReal} isMobile={useCompact} colorScheme={IS_REAL_COLORS} />
       </DimensionSection>
-      <DimensionSection label="Is current Inkweave score accurate?" stepNumber={2} accentColor={GROUP_ACCENTS.assessment} isAnswered={formState.accuracy !== null} animationDelay={delay + 60} animate={animate}>
-        <OptionPicker ariaLabel="Is current Inkweave score accurate" options={ACCURACY_OPTIONS} value={formState.accuracy} onChange={onSetAccuracy} isMobile={useCompact} colorScheme={ACCURACY_COLORS} />
+      <DimensionSection label="Is Inkweave score accurate?" stepNumber={2} accentColor={GROUP_ACCENTS.assessment} isAnswered={formState.accuracy !== null} animationDelay={delay + 60} animate={animate}>
+        <OptionPicker ariaLabel="Is Inkweave score accurate" options={ACCURACY_OPTIONS} value={formState.accuracy} onChange={onSetAccuracy} isMobile={useCompact} colorScheme={ACCURACY_COLORS} />
       </DimensionSection>
     </>
   );

@@ -84,7 +84,41 @@ function ProgressBar({answeredCount, maxWidth}: {answeredCount: number; maxWidth
   );
 }
 
-function SuccessCard({answeredCount, onBack, onVoteMore}: {answeredCount: number; onBack: () => void; onVoteMore: () => void}) {
+// ── Response-aware success messages ──
+
+import type {InDepthFormState} from '../features/voting/types';
+import type {Accuracy} from '../shared/lib/supabase';
+
+/** Pick the most "interesting" insight from the user's votes */
+function getResponseInsight(formState: InDepthFormState): string {
+  // Disagreement with engine is the most interesting signal
+  if (formState.isReal === false) return "Your skepticism sharpens our detection.";
+  if (formState.accuracy === (-1 as Accuracy)) return "Noted \u2014 this score may need to come down.";
+  if (formState.accuracy === (1 as Accuracy)) return "Noted \u2014 this pair might deserve a higher score.";
+  if (formState.difficulty === 3) return "Hard to pull off \u2014 good to know for deckbuilders.";
+  if (formState.wouldPlay === false) return "Not every synergy belongs in a deck \u2014 that\u2019s useful data.";
+  if (formState.score !== null && formState.score >= 9) return "A perfect synergy \u2014 high praise!";
+  if (formState.score !== null && formState.score <= 3) return "A weak link \u2014 honest ratings make the engine smarter.";
+  if (formState.whoCarries === 'a' || formState.whoCarries === 'b') return "Knowing which card drives it helps players prioritize.";
+  return "Your perspective makes the scores more accurate.";
+}
+
+const CLOSERS = [
+  "The community scores get sharper with every vote.",
+  "Lorcana players everywhere benefit from this.",
+  "This pair\u2019s accuracy just improved.",
+  "One vote closer to perfect synergy scores.",
+  "Your input shapes what other players see.",
+];
+
+function getRandomCloser(): string {
+  return CLOSERS[Math.floor(Math.random() * CLOSERS.length)];
+}
+
+function SuccessCard({formState, onBack, onVoteMore}: {formState: InDepthFormState; onBack: () => void; onVoteMore: () => void}) {
+  const insight = getResponseInsight(formState);
+  const closer = getRandomCloser();
+
   return (
     <div
       style={{
@@ -114,8 +148,11 @@ function SuccessCard({answeredCount, onBack, onVoteMore}: {answeredCount: number
       <span style={{fontSize: FONT_SIZES.xxl, fontWeight: 700, color: COLORS.primary, fontFamily: FONTS.body}}>
         Thanks for your feedback!
       </span>
-      <span style={{fontSize: FONT_SIZES.base, color: COLORS.textMuted, fontFamily: FONTS.body}}>
-        You rated {answeredCount} of {TOTAL_DIMENSIONS} dimensions — every answer helps calibrate synergy scores.
+      <span style={{fontSize: FONT_SIZES.base, color: COLORS.text, fontFamily: FONTS.body}}>
+        {insight}
+      </span>
+      <span style={{fontSize: FONT_SIZES.base, color: COLORS.textMuted, fontFamily: FONTS.body, fontStyle: 'italic'}}>
+        {closer}
       </span>
       <div style={{display: 'flex', gap: 12, marginTop: SPACING.sm}}>
         <CtaButton onClick={onBack}>Back to synergy</CtaButton>
@@ -242,7 +279,7 @@ export function InDepthVotePage() {
 
             <div style={{width: '100%', maxWidth: 560, display: 'flex', flexDirection: 'column', gap: SPACING.xl, alignItems: 'center'}}>
               {session.lastResult === 'success' ? (
-                <SuccessCard answeredCount={answeredCount} onBack={handleBack} onVoteMore={() => navigate('/vote')} />
+                <SuccessCard formState={session.formState} onBack={handleBack} onVoteMore={() => navigate('/vote')} />
               ) : (
                 <>
                   <InDepthVoteForm {...formProps} isMobile animate layout="tabbed" />
@@ -269,7 +306,7 @@ export function InDepthVotePage() {
               gridTemplateColumns: 'auto 1fr',
               gap: 60,
               width: '100%',
-              maxWidth: 1300,
+              maxWidth: 1320,
               alignItems: 'start',
             }}>
             {/* Left column: pair + synergy descriptions (sticky) */}
@@ -300,7 +337,7 @@ export function InDepthVotePage() {
 
               {/* Form or success card — success replaces only the voting segment */}
               {session.lastResult === 'success' ? (
-                <SuccessCard answeredCount={answeredCount} onBack={handleBack} onVoteMore={() => navigate('/vote')} />
+                <SuccessCard formState={session.formState} onBack={handleBack} onVoteMore={() => navigate('/vote')} />
               ) : (
                 <>
                   <div style={{width: '100%', maxWidth: 560}}>
