@@ -79,7 +79,8 @@ export function ScorePicker({value, onChange, isMobile, responsive}: ScorePicker
         onMouseLeave={() => setHoveredScore(null)}
         style={{
           width: responsive ? 'auto' : size,
-          height: size,
+          height: responsive ? 'auto' : size,
+          aspectRatio: responsive ? '1' : undefined,
           flex: responsive ? 1 : undefined,
           minWidth: responsive ? 0 : undefined,
           borderRadius: 8,
