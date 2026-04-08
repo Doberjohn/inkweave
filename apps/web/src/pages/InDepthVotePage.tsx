@@ -1,4 +1,3 @@
-import {useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {CompactHeader, CtaButton, BackLink, LoadingSpinner, EtherealBackground} from '../shared/components';
 import {useResponsive} from '../shared/hooks';
@@ -8,22 +7,12 @@ import {useSpecificPair} from '../features/voting/hooks/useSpecificPair';
 import {useInDepthVoteSession} from '../features/voting/hooks/useInDepthVoteSession';
 import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../shared/constants';
 
-/** Page-level layout — controls how pair and form are arranged */
-type PageLayout = 'tabbed' | 'side-by-side' | 'side-by-side-compact';
-
-const PAGE_LAYOUT_OPTIONS: {key: PageLayout; label: string}[] = [
-  {key: 'tabbed', label: 'Tabbed'},
-  {key: 'side-by-side', label: 'Side-by-side'},
-  {key: 'side-by-side-compact', label: 'SbS compact'},
-];
-
 /** Inject keyframes once at module load */
 (function injectKeyframes() {
   const STYLE_ID = 'indepth-page-keyframes';
   if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return;
   const style = document.createElement('style');
   style.id = STYLE_ID;
-  // idv-fade-up and idv-pulse are injected by OptionPicker — only page-specific keyframes here
   style.textContent = `
     @keyframes idv-submit-glow {
       0%   { box-shadow: 0 0 0 0 rgba(212,175,55,0.4); }
@@ -40,7 +29,7 @@ const PAGE_LAYOUT_OPTIONS: {key: PageLayout; label: string}[] = [
 
 const TOTAL_DIMENSIONS = 6;
 
-// ── Shared sub-components ──
+// ── Sub-components ──
 
 function ProgressBar({answeredCount, maxWidth}: {answeredCount: number; maxWidth?: number}) {
   const pct = (answeredCount / TOTAL_DIMENSIONS) * 100;
@@ -114,25 +103,12 @@ function SuccessCard({answeredCount, onBack, onVoteMore}: {answeredCount: number
       }}>
       <div
         style={{
-          width: 56,
-          height: 56,
-          borderRadius: '50%',
-          background: '#1a3d1a',
-          border: '2px solid #6ee7a0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          width: 56, height: 56, borderRadius: '50%',
+          background: '#1a3d1a', border: '2px solid #6ee7a0',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M5 13l4 4L19 7"
-            stroke="#6ee7a0"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeDasharray="24"
-            style={{animation: 'idv-check-draw 0.5s ease-out 0.2s both'}}
-          />
+          <path d="M5 13l4 4L19 7" stroke="#6ee7a0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="24" style={{animation: 'idv-check-draw 0.5s ease-out 0.2s both'}} />
         </svg>
       </div>
       <span style={{fontSize: FONT_SIZES.xxl, fontWeight: 700, color: COLORS.primary, fontFamily: FONTS.body}}>
@@ -149,63 +125,6 @@ function SuccessCard({answeredCount, onBack, onVoteMore}: {answeredCount: number
   );
 }
 
-function LayoutSwitcher({current, onChange}: {current: PageLayout; onChange: (l: PageLayout) => void}) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 4,
-        padding: '6px 10px',
-        background: 'rgba(0,0,0,0.7)',
-        borderRadius: RADIUS.lg,
-        border: `1px solid ${COLORS.surfaceBorder}`,
-        backdropFilter: 'blur(8px)',
-      }}>
-      <span style={{fontSize: FONT_SIZES.xs, color: COLORS.textDim, fontFamily: FONTS.body, alignSelf: 'center', marginRight: 4}}>Layout:</span>
-      {PAGE_LAYOUT_OPTIONS.map(({key, label}) => (
-        <button
-          key={key}
-          onClick={() => onChange(key)}
-          style={{
-            fontSize: FONT_SIZES.xs,
-            fontFamily: FONTS.body,
-            padding: '3px 8px',
-            borderRadius: RADIUS.md,
-            border: current === key ? `1px solid ${COLORS.primary}` : '1px solid transparent',
-            background: current === key ? 'rgba(255,185,0,0.12)' : 'transparent',
-            color: current === key ? COLORS.primary : COLORS.textMuted,
-            fontWeight: current === key ? 700 : 500,
-            cursor: 'pointer',
-            transition: 'all 0.15s',
-          }}>
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// ── Submit button (shared across layouts) ──
-
-function SubmitButton({hasAnyAnswer, allAnswered, isSubmitting, isRateLimited, onSubmit}: {
-  hasAnyAnswer: boolean; allAnswered: boolean; isSubmitting: boolean; isRateLimited: boolean; onSubmit: () => void;
-}) {
-  return (
-    <CtaButton
-      onClick={onSubmit}
-      disabled={!hasAnyAnswer || isSubmitting || isRateLimited}
-      style={{
-        width: '100%',
-        opacity: hasAnyAnswer ? 1 : 0.5,
-        boxShadow: hasAnyAnswer ? '0 0 12px rgba(255,185,0,0.15)' : 'none',
-        animation: isSubmitting ? 'idv-submit-glow 1.5s ease-in-out infinite' : undefined,
-        transition: 'opacity 0.3s ease, box-shadow 0.3s ease',
-      }}>
-      {isSubmitting ? 'Submitting...' : allAnswered ? 'Submit All 6 Votes' : 'Submit Votes'}
-    </CtaButton>
-  );
-}
-
 // ── Main page ──
 
 export function InDepthVotePage() {
@@ -216,10 +135,6 @@ export function InDepthVotePage() {
 
   const {pair, isLoading, error} = useSpecificPair(cardAId, cardBId);
   const session = useInDepthVoteSession(pair);
-  const [pageLayout, setPageLayout] = useState<PageLayout>('tabbed');
-
-  const isSideBySide = pageLayout === 'side-by-side' || pageLayout === 'side-by-side-compact';
-  const useMobileCards = pageLayout === 'side-by-side-compact' || isMobile;
 
   const answeredCount = [
     session.formState.isReal,
@@ -277,15 +192,7 @@ export function InDepthVotePage() {
     onSetDifficulty: session.setDifficulty,
   };
 
-  const submitProps = {
-    hasAnyAnswer: session.hasAnyAnswer,
-    allAnswered,
-    isSubmitting: session.isSubmitting,
-    isRateLimited: session.isRateLimited,
-    onSubmit: session.submit,
-  };
-
-  // Status banners (shared)
+  // Status banners
   const statusBanners = (
     <>
       {session.isRateLimited && <VoteStatusBanner type="rate_limited" />}
@@ -304,33 +211,67 @@ export function InDepthVotePage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          padding: isMobile ? '16px 16px 120px' : '16px 24px 60px',
+          padding: isMobile ? '16px 16px 120px' : '16px 32px 60px',
           gap: 16,
           position: 'relative',
           zIndex: 1,
         }}>
 
-        {/* Top bar: back link + layout switcher */}
-        <div style={{width: '100%', maxWidth: isSideBySide ? 1300 : 560, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+        {/* Back link */}
+        <div style={{width: '100%', maxWidth: isMobile ? 560 : 1300}}>
           <BackLink onClick={handleBack} label="Back to synergy" />
-          <LayoutSwitcher current={pageLayout} onChange={setPageLayout} />
         </div>
 
         {/* Success state */}
         {session.lastResult === 'success' ? (
           <SuccessCard answeredCount={answeredCount} onBack={handleBack} onVoteMore={() => navigate('/vote')} />
-        ) : isSideBySide ? (
-          /* ══ Side-by-side layout ══ */
+        ) : isMobile ? (
+          /* ══ Mobile: stacked tabbed layout ══ */
+          <>
+            <PairDisplay
+              pair={pair}
+              selectedScore={null}
+              isMobile
+              showEngineScore
+            />
+
+            <ProgressBar answeredCount={answeredCount} maxWidth={560} />
+
+            <span style={{fontSize: FONT_SIZES.base, color: COLORS.textMuted, fontFamily: FONTS.body, textAlign: 'center'}}>
+              Answer all 6 to submit — every response helps calibrate synergy scores.
+            </span>
+
+            {statusBanners}
+
+            <div style={{width: '100%', maxWidth: 560, display: 'flex', flexDirection: 'column', gap: SPACING.xl, alignItems: 'center'}}>
+              <InDepthVoteForm {...formProps} isMobile animate layout="tabbed" />
+
+              {/* Submit appears only when all 6 are answered */}
+              {allAnswered && (
+                <CtaButton
+                  onClick={session.submit}
+                  disabled={session.isSubmitting || session.isRateLimited}
+                  style={{
+                    width: '100%',
+                    animation: session.isSubmitting ? 'idv-submit-glow 1.5s ease-in-out infinite' : 'idv-fade-up 0.35s ease-out',
+                  }}>
+                  {session.isSubmitting ? 'Submitting...' : 'Submit All 6 Votes'}
+                </CtaButton>
+              )}
+            </div>
+          </>
+        ) : (
+          /* ══ Desktop: side-by-side layout ══ */
           <div
             style={{
               display: 'grid',
               gridTemplateColumns: 'auto 1fr',
-              gap: SPACING.xxl,
+              gap: 60,
               width: '100%',
-              maxWidth: pageLayout === 'side-by-side' ? 1300 : 960,
+              maxWidth: 1300,
               alignItems: 'start',
             }}>
-            {/* Left column: pair + synergy descriptions */}
+            {/* Left column: pair + synergy descriptions (sticky) */}
             <div style={{
               position: 'sticky',
               top: LAYOUT.compactHeaderHeight + 16,
@@ -341,59 +282,40 @@ export function InDepthVotePage() {
             }}>
               <PairDisplay
                 pair={pair}
-                selectedScore={session.formState.score}
-                isMobile={useMobileCards}
+                selectedScore={null}
+                showEngineScore
               />
             </div>
 
-            {/* Right column: progress + form + submit */}
-            <div style={{display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0}}>
+            {/* Right column: progress + form + submit (center-aligned) */}
+            <div style={{display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center', minWidth: 0}}>
               <ProgressBar answeredCount={answeredCount} />
 
-              <span style={{fontSize: FONT_SIZES.base, color: COLORS.textMuted, fontFamily: FONTS.body}}>
-                Answer any or all — every response helps calibrate synergy scores.
+              <span style={{fontSize: FONT_SIZES.base, color: COLORS.textMuted, fontFamily: FONTS.body, textAlign: 'center'}}>
+                Answer all 6 to submit — every response helps calibrate synergy scores.
               </span>
 
               {statusBanners}
 
-              <InDepthVoteForm
-                {...formProps}
-                isMobile={isMobile}
-                animate
-                layout="tabbed"
-                compact={useMobileCards}
-              />
+              <div style={{width: '100%', maxWidth: 560}}>
+                <InDepthVoteForm {...formProps} animate layout="tabbed" />
+              </div>
 
-              <SubmitButton {...submitProps} />
+              {/* Submit appears only when all 6 are answered */}
+              {allAnswered && (
+                <CtaButton
+                  onClick={session.submit}
+                  disabled={session.isSubmitting || session.isRateLimited}
+                  style={{
+                    width: '100%',
+                    maxWidth: 560,
+                    animation: session.isSubmitting ? 'idv-submit-glow 1.5s ease-in-out infinite' : 'idv-fade-up 0.35s ease-out',
+                  }}>
+                  {session.isSubmitting ? 'Submitting...' : 'Submit All 6 Votes'}
+                </CtaButton>
+              )}
             </div>
           </div>
-        ) : (
-          /* ══ Tabbed single-column layout ══ */
-          <>
-            <PairDisplay
-              pair={pair}
-              selectedScore={session.formState.score}
-              isMobile={isMobile}
-            />
-
-            <ProgressBar answeredCount={answeredCount} maxWidth={560} />
-
-            <span style={{fontSize: FONT_SIZES.base, color: COLORS.textMuted, fontFamily: FONTS.body, textAlign: 'center'}}>
-              Answer any or all — every response helps calibrate synergy scores.
-            </span>
-
-            {statusBanners}
-
-            <div style={{width: '100%', maxWidth: 560, display: 'flex', flexDirection: 'column', gap: SPACING.xl, alignItems: 'center'}}>
-              <InDepthVoteForm
-                {...formProps}
-                isMobile={isMobile}
-                animate
-                layout="tabbed"
-              />
-              <SubmitButton {...submitProps} />
-            </div>
-          </>
         )}
       </main>
     </div>

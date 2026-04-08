@@ -7,6 +7,8 @@ interface ScorePickerProps {
   value: Score | null;
   onChange: (score: Score) => void;
   isMobile?: boolean;
+  /** Buttons flex to fill container width instead of using fixed sizes */
+  responsive?: boolean;
 }
 
 /** Map a discrete 1-10 score to its strength tier visuals */
@@ -49,7 +51,7 @@ const MOBILE_ROWS = [
   [TIER_GROUPS[2], TIER_GROUPS[3]], // Strong + Perfect
 ];
 
-export function ScorePicker({value, onChange, isMobile}: ScorePickerProps) {
+export function ScorePicker({value, onChange, isMobile, responsive}: ScorePickerProps) {
   const size = isMobile ? 42 : 52;
   const fontSize = isMobile ? 14 : 16;
   const [hoveredScore, setHoveredScore] = useState<Score | null>(null);
@@ -76,8 +78,10 @@ export function ScorePicker({value, onChange, isMobile}: ScorePickerProps) {
         onMouseEnter={() => setHoveredScore(score)}
         onMouseLeave={() => setHoveredScore(null)}
         style={{
-          width: size,
+          width: responsive ? 'auto' : size,
           height: size,
+          flex: responsive ? 1 : undefined,
+          minWidth: responsive ? 0 : undefined,
           borderRadius: 8,
           border: `${isSelected ? 2 : 1}px solid ${tier.color}`,
           background: tier.bg,
@@ -107,7 +111,7 @@ export function ScorePicker({value, onChange, isMobile}: ScorePickerProps) {
   const renderGroup = (group: typeof TIER_GROUPS[number]) => {
     const tier = getTierForScore(group.scores[0]);
     return (
-      <div key={group.label} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4}}>
+      <div key={group.label} style={{display: 'flex', flexDirection: 'column', alignItems: responsive ? 'stretch' : 'center', gap: 4, flex: responsive ? 1 : undefined, minWidth: responsive ? 0 : undefined}}>
         <div style={{display: 'flex', gap: 4}}>
           {group.scores.map(renderButton)}
         </div>

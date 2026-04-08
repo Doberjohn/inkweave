@@ -285,9 +285,11 @@ export function InDepthVoteForm({
 
   // ── Group content builders ──
 
+  const showCategoryHeaders = layout === 'stacked';
+
   const groupA = (delay: number) => (
     <>
-      <CategoryHeader stepRange="1-2" label="Assessment" accent={GROUP_ACCENTS.assessment} compact={useCompact} />
+      {showCategoryHeaders && <CategoryHeader stepRange="1-2" label="Assessment" accent={GROUP_ACCENTS.assessment} compact={useCompact} />}
       <DimensionSection label="Is this synergy real?" stepNumber={1} accentColor={GROUP_ACCENTS.assessment} isAnswered={formState.isReal !== null} animationDelay={delay} animate={animate}>
         <OptionPicker ariaLabel="Is this synergy real" options={IS_REAL_OPTIONS} value={formState.isReal} onChange={onSetIsReal} isMobile={useCompact} colorScheme={IS_REAL_COLORS} />
       </DimensionSection>
@@ -299,9 +301,9 @@ export function InDepthVoteForm({
 
   const groupB = (delay: number) => (
     <>
-      <CategoryHeader stepRange="3-4" label="Rating" accent={GROUP_ACCENTS.rating} compact={useCompact} />
+      {showCategoryHeaders && <CategoryHeader stepRange="3-4" label="Rating" accent={GROUP_ACCENTS.rating} compact={useCompact} />}
       <DimensionSection label="Rate this synergy" stepNumber={3} accentColor={GROUP_ACCENTS.rating} isAnswered={formState.score !== null} animationDelay={delay} animate={animate}>
-        <ScorePicker value={formState.score} onChange={onSetScore} isMobile={useCompact} />
+        <ScorePicker value={formState.score} onChange={onSetScore} isMobile={useCompact} responsive />
       </DimensionSection>
       <DimensionSection label="Which card carries it?" stepNumber={4} accentColor={GROUP_ACCENTS.rating} isAnswered={formState.whoCarries !== null} animationDelay={delay + 60} animate={animate}>
         <CarriesPicker cardA={cardA} cardB={cardB} value={formState.whoCarries} onChange={onSetWhoCarries} isMobile={useCompact} />
@@ -311,7 +313,7 @@ export function InDepthVoteForm({
 
   const groupC = (delay: number) => (
     <>
-      <CategoryHeader stepRange="5-6" label="Practical" accent={GROUP_ACCENTS.practical} compact={useCompact} />
+      {showCategoryHeaders && <CategoryHeader stepRange="5-6" label="Practical" accent={GROUP_ACCENTS.practical} compact={useCompact} />}
       <DimensionSection label="Would you play these together?" stepNumber={5} accentColor={GROUP_ACCENTS.practical} isAnswered={formState.wouldPlay !== null} animationDelay={delay} animate={animate}>
         <OptionPicker ariaLabel="Would you play these together" options={WOULD_PLAY_OPTIONS} value={formState.wouldPlay} onChange={onSetWouldPlay} isMobile={useCompact} colorScheme={WOULD_PLAY_COLORS} />
       </DimensionSection>

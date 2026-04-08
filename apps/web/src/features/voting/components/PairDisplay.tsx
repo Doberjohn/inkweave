@@ -46,6 +46,8 @@ interface PairDisplayProps {
   previousPairs?: PairPreview[];
   upcomingPairs?: PairPreview[];
   isMobile?: boolean;
+  /** Show the engine's aggregate score in the badge instead of "?" */
+  showEngineScore?: boolean;
 }
 
 /** Dashed SVG line between card and score badge */
@@ -181,7 +183,9 @@ function PreviousStack({pairs}: {pairs: PairPreview[]}) {
   );
 }
 
-export function PairDisplay({pair, selectedScore, previousPairs, upcomingPairs, isMobile}: PairDisplayProps) {
+export function PairDisplay({pair, selectedScore, previousPairs, upcomingPairs, isMobile, showEngineScore}: PairDisplayProps) {
+  // In in-depth mode, show the engine's aggregate score instead of "?"
+  const badgeScore = selectedScore ?? (showEngineScore ? Math.round(pair.aggregateScore) as Score : null);
   const pairId = `${pair.cardA.id}:${pair.cardB.id}`;
   const prevPairRef = useRef<VotingPair | null>(null);
   const prevPairIdRef = useRef(pairId);
@@ -214,7 +218,7 @@ export function PairDisplay({pair, selectedScore, previousPairs, upcomingPairs, 
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%',
             animation: 'pair-slide-in 400ms ease-out',
           }}>
-          <PairRow pair={pair} selectedScore={selectedScore} size="mobile" />
+          <PairRow pair={pair} selectedScore={badgeScore} size="mobile" />
           <SynergyDescriptionGroups pair={pair} onHighlight={() => {}} />
         </div>
       </div>
@@ -262,7 +266,7 @@ export function PairDisplay({pair, selectedScore, previousPairs, upcomingPairs, 
               ? `pair-enter-right ${TRANSITION_MS}ms ease-out`
               : 'none',
           }}>
-          <PairRow pair={pair} selectedScore={selectedScore} size="desktop" highlightedCard={highlightedCard} />
+          <PairRow pair={pair} selectedScore={badgeScore} size="desktop" highlightedCard={highlightedCard} />
         </div>
 
         {/* Previous pairs stack + ghost silhouettes (only when stacks are enabled) */}
