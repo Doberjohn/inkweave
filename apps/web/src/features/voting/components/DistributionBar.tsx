@@ -17,7 +17,7 @@ const SEGMENT_COLORS = {
 
 const LABELS = {
   lower: 'Should be lower',
-  right: 'About right',
+  right: 'Score is fair',
   higher: 'Should be higher',
 } as const;
 

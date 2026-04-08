@@ -12,7 +12,7 @@ describe('DistributionBar', () => {
   it('renders labels below the bar', () => {
     render(<DistributionBar lower={1} right={1} higher={1} animate={false} />);
     expect(screen.getByText('Should be lower')).toBeInTheDocument();
-    expect(screen.getByText('About right')).toBeInTheDocument();
+    expect(screen.getByText('Score is fair')).toBeInTheDocument();
     expect(screen.getByText('Should be higher')).toBeInTheDocument();
   });
 
@@ -41,7 +41,7 @@ describe('DistributionBar', () => {
   it('hides labels when showLabels is false', () => {
     render(<DistributionBar lower={1} right={1} higher={1} animate={false} showLabels={false} />);
     expect(screen.queryByText('Should be lower')).not.toBeInTheDocument();
-    expect(screen.queryByText('About right')).not.toBeInTheDocument();
+    expect(screen.queryByText('Score is fair')).not.toBeInTheDocument();
     expect(screen.queryByText('Should be higher')).not.toBeInTheDocument();
   });
 });

@@ -23,7 +23,7 @@ describe('QuickVoteControl', () => {
     );
     expect(screen.getByText('Do you agree with this score?')).toBeInTheDocument();
     expect(screen.getByRole('button', {name: 'Should be lower'})).toBeInTheDocument();
-    expect(screen.getByRole('button', {name: 'About right'})).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Score is fair'})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: 'Should be higher'})).toBeInTheDocument();
   });
 
@@ -35,11 +35,11 @@ describe('QuickVoteControl', () => {
     expect(mockVote).toHaveBeenCalledWith(-1);
   });
 
-  it('calls onVote with 0 when "About right" is clicked', () => {
+  it('calls onVote with 0 when "Score is fair" is clicked', () => {
     render(
       <QuickVoteControl state="ready" onVote={mockVote} distribution={null} userChoice={null} error={null} />,
     );
-    fireEvent.click(screen.getByRole('button', {name: 'About right'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Score is fair'}));
     expect(mockVote).toHaveBeenCalledWith(0);
   });
 
@@ -56,7 +56,7 @@ describe('QuickVoteControl', () => {
       <QuickVoteControl state="submitting" onVote={mockVote} distribution={null} userChoice={0} error={null} />,
     );
     expect(screen.getByText(/You voted:/)).toBeInTheDocument();
-    expect(screen.getByText('About right')).toBeInTheDocument();
+    expect(screen.getByText('Score is fair')).toBeInTheDocument();
     expect(screen.getByText('Loading community votes…')).toBeInTheDocument();
   });
 
@@ -66,7 +66,7 @@ describe('QuickVoteControl', () => {
       <QuickVoteControl state="result" onVote={mockVote} distribution={dist} userChoice={0} error={null} />,
     );
     expect(screen.getByText(/You voted:/)).toBeInTheDocument();
-    expect(screen.getByText('About right')).toBeInTheDocument();
+    expect(screen.getByText('Score is fair')).toBeInTheDocument();
     expect(screen.getByText('20 votes on this pair')).toBeInTheDocument();
   });
 
@@ -92,7 +92,7 @@ describe('QuickVoteControl', () => {
       <QuickVoteControl state="error" onVote={mockVote} distribution={null} userChoice={null} error="rate_limited" />,
     );
     expect(screen.getByRole('button', {name: 'Should be lower'})).toBeDisabled();
-    expect(screen.getByRole('button', {name: 'About right'})).toBeDisabled();
+    expect(screen.getByRole('button', {name: 'Score is fair'})).toBeDisabled();
     expect(screen.getByRole('button', {name: 'Should be higher'})).toBeDisabled();
   });
 
@@ -101,7 +101,7 @@ describe('QuickVoteControl', () => {
       <QuickVoteControl state="result" onVote={mockVote} distribution={null} userChoice={0} error={null} />,
     );
     expect(screen.getByText(/You voted:/)).toBeInTheDocument();
-    expect(screen.getByText('About right')).toBeInTheDocument();
+    expect(screen.getByText('Score is fair')).toBeInTheDocument();
     expect(screen.getByText('Loading community votes…')).toBeInTheDocument();
     expect(screen.queryByText(/votes on this pair/)).not.toBeInTheDocument();
   });

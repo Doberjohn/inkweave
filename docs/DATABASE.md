@@ -49,7 +49,7 @@ create table votes (
   ip_hash       text not null,        -- SHA-256 of IP + salt (non-reversible)
 
   -- Vote dimensions (all nullable — partial votes allowed)
-  accuracy      smallint,             -- -1 (too high), 0 (about right), 1 (too low)
+  accuracy      smallint,             -- -1 (too high), 0 (Score is fair), 1 (too low)
   is_real       boolean,              -- "would this work in a real game?"
   score         smallint,             -- 1-10 user rating
   would_play    boolean,              -- "would you play these together?"
