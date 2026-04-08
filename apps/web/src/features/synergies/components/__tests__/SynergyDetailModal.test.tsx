@@ -113,29 +113,6 @@ describe('SynergyDetailModal', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('should show version when both cards share the same name', () => {
-    render(
-      <SynergyDetailModal isOpen onClose={vi.fn()} pair={mockPair} />,
-    );
-    expect(screen.getByText('Ice Artisan')).toBeInTheDocument();
-    expect(screen.getByText('Snow Queen')).toBeInTheDocument();
-  });
-
-  it('should hide version when cards have different names', () => {
-    const differentPair = createPairSynergy({
-      ...mockPair,
-      cardB: createCard({...cardB, name: 'Olaf', version: 'Friendly Snowman'}),
-    });
-    render(
-      <SynergyDetailModal
-        isOpen
-        onClose={vi.fn()}
-        pair={differentPair}
-      />,
-    );
-    expect(screen.queryByText('Ice Artisan')).not.toBeInTheDocument();
-    expect(screen.queryByText('Friendly Snowman')).not.toBeInTheDocument();
-  });
 
   it('renders quick vote control below tier label', () => {
     render(

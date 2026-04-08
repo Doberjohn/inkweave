@@ -116,18 +116,6 @@ export function SynergyDetailModal({
             <PairCardImage card={cardB} isMobile={isMobile} dimmed={highlightedCard === 'a'} highlighted={highlightedCard === 'b'} />
           </div>
 
-          {/* Card names row — spacer matches Connector width */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              padding: '12px 12px 0',
-            }}>
-            <PairCardName card={cardA} showVersion={cardA.name === cardB.name} />
-            <div style={{flexShrink: 0, minWidth: isMobile ? 44 : 140, margin: isMobile ? '0 6px' : '0 2px'}} />
-            <PairCardName card={cardB} showVersion={cardA.name === cardB.name} />
-          </div>
-
           {/* Aggregate tier label */}
           <div style={{textAlign: 'center', padding: '14px 24px 20px'}}>
             <h2
@@ -189,7 +177,7 @@ function PairCardImage({card, isMobile, dimmed, highlighted}: {card: LorcanaCard
       style={{
         flex: '1 1 0',
         minWidth: 0,
-        maxWidth: 140,
+        maxWidth: 160,
         display: 'flex',
         justifyContent: 'center',
         opacity: dimmed ? 0.4 : 1,
@@ -205,12 +193,12 @@ function PairCardImage({card, isMobile, dimmed, highlighted}: {card: LorcanaCard
         <CardImage
           src={card.imageUrl}
           alt={card.fullName}
-          width={140}
-          height={196}
+          width={160}
+          height={224}
           inkColor={card.ink}
           cost={card.cost}
           borderRadius={10}
-          style={{width: '100%', height: 'auto', maxWidth: 140}}
+          style={{width: '100%', height: 'auto', maxWidth: 160}}
         />
       </div>
       {lightboxOpen && card.imageUrl && (
@@ -220,37 +208,6 @@ function PairCardImage({card, isMobile, dimmed, highlighted}: {card: LorcanaCard
           isLocation={card.type === 'Location'}
           onClose={() => setLightboxOpen(false)}
         />
-      )}
-    </div>
-  );
-}
-
-function PairCardName({card, showVersion}: {card: LorcanaCard; showVersion?: boolean}) {
-  return (
-    <div
-      style={{
-        flex: '1 1 0',
-        minWidth: 0,
-        maxWidth: 140,
-        textAlign: 'center',
-      }}>
-      <div
-        style={{
-          fontSize: `${FONT_SIZES.base}px`,
-          fontWeight: 700,
-          color: COLORS.text,
-        }}>
-        {card.name}
-      </div>
-      {showVersion && card.version && (
-        <div
-          style={{
-            fontSize: `${FONT_SIZES.base}px`,
-            color: COLORS.textMuted,
-            marginTop: 2,
-          }}>
-          {card.version}
-        </div>
       )}
     </div>
   );
