@@ -8,7 +8,7 @@ import {ScorePicker} from './ScorePicker';
 import {CarriesPicker} from './CarriesPicker';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
 
-export type FormLayout = 'stacked' | 'three-col' | 'two-plus-one' | 'tabbed';
+export type FormLayout = 'stacked' | 'tabbed';
 
 interface InDepthVoteFormProps {
   formState: InDepthFormState;
@@ -23,6 +23,8 @@ interface InDepthVoteFormProps {
   isMobile?: boolean;
   animate?: boolean;
   layout?: FormLayout;
+  /** Force compact pickers (stacked vertical buttons) regardless of isMobile */
+  compact?: boolean;
 }
 
 // ── Group accent colors ──
@@ -245,7 +247,7 @@ function TabBar({activeTab, onTabChange, answeredByGroup}: {
             }}>
             <span>{label}</span>
             <span style={{fontSize: FONT_SIZES.xs, opacity: 0.7}}>
-              {groupAnswered === groupTotal ? '✓' : `${groupAnswered}/${groupTotal}`}
+              {groupAnswered === groupTotal ? '\u2713' : `${groupAnswered}/${groupTotal}`}
             </span>
           </button>
         );
@@ -269,12 +271,11 @@ export function InDepthVoteForm({
   isMobile,
   animate,
   layout = 'stacked',
+  compact,
 }: InDepthVoteFormProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('assessment');
   const baseDelay = animate ? 200 : 0;
-
-  // Use compact pickers in column layouts where space is tight
-  const compactPickers = layout === 'three-col' || layout === 'two-plus-one';
+  const useCompact = compact || isMobile;
 
   const answeredByGroup: Record<TabKey, number> = {
     assessment: (formState.isReal !== null ? 1 : 0) + (formState.accuracy !== null ? 1 : 0),
@@ -286,41 +287,41 @@ export function InDepthVoteForm({
 
   const groupA = (delay: number) => (
     <>
-      <CategoryHeader stepRange="1-2" label="Assessment" accent={GROUP_ACCENTS.assessment} compact={isMobile || compactPickers} />
+      <CategoryHeader stepRange="1-2" label="Assessment" accent={GROUP_ACCENTS.assessment} compact={useCompact} />
       <DimensionSection label="Is this synergy real?" stepNumber={1} accentColor={GROUP_ACCENTS.assessment} isAnswered={formState.isReal !== null} animationDelay={delay} animate={animate}>
-        <OptionPicker ariaLabel="Is this synergy real" options={IS_REAL_OPTIONS} value={formState.isReal} onChange={onSetIsReal} isMobile={isMobile || compactPickers} colorScheme={IS_REAL_COLORS} />
+        <OptionPicker ariaLabel="Is this synergy real" options={IS_REAL_OPTIONS} value={formState.isReal} onChange={onSetIsReal} isMobile={useCompact} colorScheme={IS_REAL_COLORS} />
       </DimensionSection>
       <DimensionSection label="Is our score accurate?" stepNumber={2} accentColor={GROUP_ACCENTS.assessment} isAnswered={formState.accuracy !== null} animationDelay={delay + 60} animate={animate}>
-        <OptionPicker ariaLabel="Is our score accurate" options={ACCURACY_OPTIONS} value={formState.accuracy} onChange={onSetAccuracy} isMobile={isMobile || compactPickers} colorScheme={ACCURACY_COLORS} />
+        <OptionPicker ariaLabel="Is our score accurate" options={ACCURACY_OPTIONS} value={formState.accuracy} onChange={onSetAccuracy} isMobile={useCompact} colorScheme={ACCURACY_COLORS} />
       </DimensionSection>
     </>
   );
 
   const groupB = (delay: number) => (
     <>
-      <CategoryHeader stepRange="3-4" label="Rating" accent={GROUP_ACCENTS.rating} compact={isMobile || compactPickers} />
+      <CategoryHeader stepRange="3-4" label="Rating" accent={GROUP_ACCENTS.rating} compact={useCompact} />
       <DimensionSection label="Rate this synergy" stepNumber={3} accentColor={GROUP_ACCENTS.rating} isAnswered={formState.score !== null} animationDelay={delay} animate={animate}>
-        <ScorePicker value={formState.score} onChange={onSetScore} isMobile={compactPickers || isMobile} />
+        <ScorePicker value={formState.score} onChange={onSetScore} isMobile={useCompact} />
       </DimensionSection>
       <DimensionSection label="Which card carries it?" stepNumber={4} accentColor={GROUP_ACCENTS.rating} isAnswered={formState.whoCarries !== null} animationDelay={delay + 60} animate={animate}>
-        <CarriesPicker cardA={cardA} cardB={cardB} value={formState.whoCarries} onChange={onSetWhoCarries} isMobile={isMobile || compactPickers} />
+        <CarriesPicker cardA={cardA} cardB={cardB} value={formState.whoCarries} onChange={onSetWhoCarries} isMobile={useCompact} />
       </DimensionSection>
     </>
   );
 
   const groupC = (delay: number) => (
     <>
-      <CategoryHeader stepRange="5-6" label="Practical" accent={GROUP_ACCENTS.practical} compact={isMobile || compactPickers} />
+      <CategoryHeader stepRange="5-6" label="Practical" accent={GROUP_ACCENTS.practical} compact={useCompact} />
       <DimensionSection label="Would you play these together?" stepNumber={5} accentColor={GROUP_ACCENTS.practical} isAnswered={formState.wouldPlay !== null} animationDelay={delay} animate={animate}>
-        <OptionPicker ariaLabel="Would you play these together" options={WOULD_PLAY_OPTIONS} value={formState.wouldPlay} onChange={onSetWouldPlay} isMobile={isMobile || compactPickers} colorScheme={WOULD_PLAY_COLORS} />
+        <OptionPicker ariaLabel="Would you play these together" options={WOULD_PLAY_OPTIONS} value={formState.wouldPlay} onChange={onSetWouldPlay} isMobile={useCompact} colorScheme={WOULD_PLAY_COLORS} />
       </DimensionSection>
       <DimensionSection label="How easy to pull off?" stepNumber={6} accentColor={GROUP_ACCENTS.practical} isAnswered={formState.difficulty !== null} animationDelay={delay + 60} animate={animate}>
-        <OptionPicker ariaLabel="How easy to pull off" options={DIFFICULTY_OPTIONS} value={formState.difficulty} onChange={onSetDifficulty} isMobile={isMobile || compactPickers} colorScheme={DIFFICULTY_COLORS} />
+        <OptionPicker ariaLabel="How easy to pull off" options={DIFFICULTY_OPTIONS} value={formState.difficulty} onChange={onSetDifficulty} isMobile={useCompact} colorScheme={DIFFICULTY_COLORS} />
       </DimensionSection>
     </>
   );
 
-  // ── Layout: Stacked (default) ──
+  // ── Layout: Stacked ──
   if (layout === 'stacked') {
     return (
       <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md, width: '100%'}}>
@@ -329,53 +330,6 @@ export function InDepthVoteForm({
         {groupB(baseDelay + 120)}
         <GroupSeparator />
         {groupC(baseDelay + 240)}
-      </div>
-    );
-  }
-
-  // ── Layout: 3-column grid ──
-  if (layout === 'three-col') {
-    return (
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
-          gap: SPACING.xl,
-          width: '100%',
-          alignItems: 'start',
-        }}>
-        <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
-          {groupA(baseDelay)}
-        </div>
-        <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
-          {groupB(baseDelay + 80)}
-        </div>
-        <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
-          {groupC(baseDelay + 160)}
-        </div>
-      </div>
-    );
-  }
-
-  // ── Layout: 2+1 ──
-  if (layout === 'two-plus-one') {
-    return (
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1.2fr 1fr',
-          gap: SPACING.xl,
-          width: '100%',
-          alignItems: 'start',
-        }}>
-        <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
-          {groupA(baseDelay)}
-          <GroupSeparator />
-          {groupB(baseDelay + 120)}
-        </div>
-        <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
-          {groupC(baseDelay + 80)}
-        </div>
       </div>
     );
   }
