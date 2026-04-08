@@ -111,7 +111,7 @@ export function ScorePicker({value, onChange, isMobile, responsive}: ScorePicker
   const renderGroup = (group: typeof TIER_GROUPS[number]) => {
     const tier = getTierForScore(group.scores[0]);
     return (
-      <div key={group.label} style={{display: 'flex', flexDirection: 'column', alignItems: responsive ? 'stretch' : 'center', gap: 4, flex: responsive ? 1 : undefined, minWidth: responsive ? 0 : undefined}}>
+      <div key={group.label} style={{display: 'flex', flexDirection: 'column', alignItems: responsive ? 'stretch' : 'center', gap: 4, flex: responsive ? group.scores.length : undefined, minWidth: responsive ? 0 : undefined}}>
         <div style={{display: 'flex', gap: 4}}>
           {group.scores.map(renderButton)}
         </div>
