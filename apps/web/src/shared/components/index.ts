@@ -36,3 +36,4 @@ export {EmptyState} from './EmptyState';
 export {ResultCount} from './ResultCount';
 export {ErrorBoundary} from './ErrorBoundary';
 export {RenderProfiler} from './RenderProfiler';
+export {Sparkles} from './Sparkles';

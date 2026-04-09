@@ -1,5 +1,5 @@
 import {useNavigate, useParams} from 'react-router-dom';
-import {CompactHeader, CtaButton, BackLink, LoadingSpinner, EtherealBackground} from '../shared/components';
+import {CompactHeader, CtaButton, BackLink, LoadingSpinner, EtherealBackground, Sparkles} from '../shared/components';
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {PairDisplay, VoteStatusBanner, InDepthVoteForm} from '../features/voting';
@@ -26,12 +26,6 @@ import {COLORS, EASING, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../sha
     @keyframes idv-shimmer {
       0%   { transform: translateX(-100%); }
       100% { transform: translateX(200%); }
-    }
-    @keyframes idv-sparkle {
-      0%, 100% { opacity: 0; transform: translateY(50%) scale(0); }
-      15%      { opacity: 1; transform: translateY(-50%) scale(1.2); }
-      50%      { opacity: 0.8; transform: translateY(-150%) scale(0.9); }
-      85%      { opacity: 0.3; transform: translateY(-250%) scale(0.5); }
     }
     @keyframes idv-complete-pulse {
       0%   { box-shadow: 0 0 4px 1px rgba(110,231,160,0.3); }
@@ -60,80 +54,54 @@ function ProgressBar({answeredCount, maxWidth}: {answeredCount: number; maxWidth
         width: '100%',
         maxWidth,
       }}>
-      {/* Track */}
-      <div
-        role="progressbar"
-        aria-valuenow={answeredCount}
-        aria-valuemin={0}
-        aria-valuemax={TOTAL_DIMENSIONS}
-        aria-label={`Voting progress: ${answeredCount} of ${TOTAL_DIMENSIONS} dimensions answered`}
-        style={{
-          flex: 1,
-          height: 8,
-          background: 'rgba(255,255,255,0.04)',
-          borderRadius: 4,
-          overflow: 'hidden',
-          position: 'relative',
-          border: '1px solid rgba(255,255,255,0.06)',
-        }}>
-        {/* Fill with golden gradient + glow */}
+      {/* Track with sparkles */}
+      <Sparkles color={isComplete ? '#6ee7a0' : '#ffd700'} minSize={3} maxSize={8} rate={answeredCount > 0 ? 500 : 99999}>
         <div
+          role="progressbar"
+          aria-valuenow={answeredCount}
+          aria-valuemin={0}
+          aria-valuemax={TOTAL_DIMENSIONS}
+          aria-label={`Voting progress: ${answeredCount} of ${TOTAL_DIMENSIONS} dimensions answered`}
           style={{
-            height: '100%',
-            width: `${pct}%`,
-            background: isComplete
-              ? 'linear-gradient(90deg, #4ade80, #6ee7a0, #4ade80)'
-              : 'linear-gradient(90deg, #b8860b, #d4af37, #ffb900, #ffd700)',
+            width: '100%',
+            height: 8,
+            background: 'rgba(255,255,255,0.04)',
             borderRadius: 4,
-            transition: `width 0.5s ${EASING.bounce}, box-shadow 0.5s ${EASING.smooth}`,
-            position: 'relative',
             overflow: 'hidden',
-            boxShadow: isComplete
-              ? '0 0 12px 2px rgba(110,231,160,0.4)'
-              : `0 0 ${8 + glowIntensity * 12}px ${1 + glowIntensity * 2}px rgba(255,185,0,${0.15 + glowIntensity * 0.25})`,
-            animation: isComplete ? 'idv-complete-pulse 2s ease-in-out infinite' : undefined,
+            position: 'relative',
+            border: '1px solid rgba(255,255,255,0.06)',
           }}>
-          {/* Shimmer sweep */}
-          {answeredCount > 0 && (
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
-                animation: 'idv-shimmer 2.5s ease-in-out infinite',
-              }}
-            />
-          )}
-        </div>
-
-        {/* Sparkles along the fill — SVG stars that float up and fade */}
-        {answeredCount > 0 && answeredCount < TOTAL_DIMENSIONS && (
-          <>
-            {[0, 1, 2, 3].map((i) => (
-              <svg
-                key={i}
-                width="7"
-                height="7"
-                viewBox="0 0 10 10"
+          {/* Fill with golden gradient + glow */}
+          <div
+            style={{
+              height: '100%',
+              width: `${pct}%`,
+              background: isComplete
+                ? 'linear-gradient(90deg, #4ade80, #6ee7a0, #4ade80)'
+                : 'linear-gradient(90deg, #b8860b, #d4af37, #ffb900, #ffd700)',
+              borderRadius: 4,
+              transition: `width 0.5s ${EASING.bounce}, box-shadow 0.5s ${EASING.smooth}`,
+              boxShadow: isComplete
+                ? '0 0 12px 2px rgba(110,231,160,0.4)'
+                : `0 0 ${8 + glowIntensity * 12}px ${1 + glowIntensity * 2}px rgba(255,185,0,${0.15 + glowIntensity * 0.25})`,
+              animation: isComplete ? 'idv-complete-pulse 2s ease-in-out infinite' : undefined,
+              position: 'relative',
+              overflow: 'hidden',
+            }}>
+            {/* Shimmer sweep */}
+            {answeredCount > 0 && (
+              <div
                 style={{
                   position: 'absolute',
-                  left: `calc(${pct}% - ${6 + i * 8}px)`,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  animation: `idv-sparkle ${1.5 + i * 0.5}s ease-in-out ${i * 0.4}s infinite`,
-                  pointerEvents: 'none',
-                  overflow: 'visible',
-                }}>
-                <path
-                  d="M5 0 L6 4 L10 5 L6 6 L5 10 L4 6 L0 5 L4 4 Z"
-                  fill="#ffd700"
-                  style={{filter: 'drop-shadow(0 0 2px rgba(255,215,0,0.8))'}}
-                />
-              </svg>
-            ))}
-          </>
-        )}
-      </div>
+                  inset: 0,
+                  background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+                  animation: 'idv-shimmer 2.5s ease-in-out infinite',
+                }}
+              />
+            )}
+          </div>
+        </div>
+      </Sparkles>
 
       {/* Label */}
       <span
