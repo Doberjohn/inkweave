@@ -28,9 +28,10 @@ import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../shared/cons
       100% { transform: translateX(200%); }
     }
     @keyframes idv-sparkle {
-      0%, 100% { opacity: 0; transform: scale(0) translateY(0); }
-      20%      { opacity: 1; transform: scale(1) translateY(-2px); }
-      80%      { opacity: 0.6; transform: scale(0.8) translateY(-6px); }
+      0%, 100% { opacity: 0; transform: translateY(50%) scale(0); }
+      15%      { opacity: 1; transform: translateY(-50%) scale(1.2); }
+      50%      { opacity: 0.8; transform: translateY(-150%) scale(0.9); }
+      85%      { opacity: 0.3; transform: translateY(-250%) scale(0.5); }
     }
     @keyframes idv-complete-pulse {
       0%   { box-shadow: 0 0 4px 1px rgba(110,231,160,0.3); }
@@ -105,25 +106,30 @@ function ProgressBar({answeredCount, maxWidth}: {answeredCount: number; maxWidth
           )}
         </div>
 
-        {/* Sparkle particles along the fill edge */}
+        {/* Sparkles along the fill — SVG stars that float up and fade */}
         {answeredCount > 0 && answeredCount < TOTAL_DIMENSIONS && (
           <>
-            {[0, 1, 2].map((i) => (
-              <div
+            {[0, 1, 2, 3].map((i) => (
+              <svg
                 key={i}
+                width="7"
+                height="7"
+                viewBox="0 0 10 10"
                 style={{
                   position: 'absolute',
-                  left: `calc(${pct}% - ${4 + i * 3}px)`,
-                  top: -1 + i * 2,
-                  width: 3,
-                  height: 3,
-                  borderRadius: '50%',
-                  background: '#ffd700',
-                  boxShadow: '0 0 4px 1px rgba(255,215,0,0.6)',
-                  animation: `idv-sparkle ${1.2 + i * 0.4}s ease-in-out ${i * 0.3}s infinite`,
+                  left: `calc(${pct}% - ${6 + i * 8}px)`,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  animation: `idv-sparkle ${1.5 + i * 0.5}s ease-in-out ${i * 0.4}s infinite`,
                   pointerEvents: 'none',
-                }}
-              />
+                  overflow: 'visible',
+                }}>
+                <path
+                  d="M5 0 L6 4 L10 5 L6 6 L5 10 L4 6 L0 5 L4 4 Z"
+                  fill="#ffd700"
+                  style={{filter: 'drop-shadow(0 0 2px rgba(255,215,0,0.8))'}}
+                />
+              </svg>
             ))}
           </>
         )}
@@ -322,6 +328,8 @@ export function InDepthVotePage() {
     </>
   );
 
+  const isSuccess = session.lastResult === 'success';
+
   return (
     <div style={{minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', overflowY: 'auto'}}>
       <EtherealBackground isMobile={isMobile} vivid />
@@ -340,7 +348,7 @@ export function InDepthVotePage() {
         }}>
 
         {/* Back link */}
-        <div style={{width: '100%', maxWidth: isMobile ? 560 : 1300}}>
+        <div style={{width: '100%', maxWidth: isMobile ? 560 : 1320}}>
           <BackLink onClick={handleBack} label="Back to synergy" />
         </div>
 
@@ -354,16 +362,19 @@ export function InDepthVotePage() {
               showEngineScore
             />
 
-            <ProgressBar answeredCount={answeredCount} maxWidth={560} />
-
-            <span style={{fontSize: FONT_SIZES.lg, color: COLORS.primary, fontFamily: FONTS.body, textAlign: 'center', fontWeight: 500, fontStyle: 'italic'}}>
-              Every response helps calibrate synergy scores.
-            </span>
+            {!isSuccess && (
+              <>
+                <ProgressBar answeredCount={answeredCount} maxWidth={560} />
+                <span style={{fontSize: FONT_SIZES.lg, color: COLORS.primary, fontFamily: FONTS.body, textAlign: 'center', fontWeight: 500, fontStyle: 'italic'}}>
+                  Every response helps calibrate synergy scores.
+                </span>
+              </>
+            )}
 
             {statusBanners}
 
             <div style={{width: '100%', maxWidth: 560, display: 'flex', flexDirection: 'column', gap: SPACING.xl, alignItems: 'center'}}>
-              {session.lastResult === 'success' ? (
+              {isSuccess ? (
                 <SuccessCard formState={session.formState} onBack={handleBack} onVoteMore={() => navigate('/vote')} />
               ) : (
                 <>
@@ -412,16 +423,18 @@ export function InDepthVotePage() {
 
             {/* Right column: progress + form + submit (center-aligned) */}
             <div style={{display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center', alignSelf: 'center', minWidth: 0}}>
-              <ProgressBar answeredCount={answeredCount} />
-
-              <span style={{fontSize: FONT_SIZES.lg, color: COLORS.primary, fontFamily: FONTS.body, textAlign: 'center', fontWeight: 500, fontStyle: 'italic'}}>
-                Every response helps calibrate synergy scores.
-              </span>
+              {!isSuccess && (
+                <>
+                  <ProgressBar answeredCount={answeredCount} />
+                  <span style={{fontSize: FONT_SIZES.lg, color: COLORS.primary, fontFamily: FONTS.body, textAlign: 'center', fontWeight: 500, fontStyle: 'italic'}}>
+                    Every response helps calibrate synergy scores.
+                  </span>
+                </>
+              )}
 
               {statusBanners}
 
-              {/* Form or success card — success replaces only the voting segment */}
-              {session.lastResult === 'success' ? (
+              {isSuccess ? (
                 <SuccessCard formState={session.formState} onBack={handleBack} onVoteMore={() => navigate('/vote')} />
               ) : (
                 <>
