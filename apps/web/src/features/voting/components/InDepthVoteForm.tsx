@@ -6,7 +6,7 @@ import type {OptionColor} from './OptionPicker';
 import {OptionPicker} from './OptionPicker';
 import {ScorePicker} from './ScorePicker';
 import {CarriesPicker} from './CarriesPicker';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
 
 export type FormLayout = 'stacked' | 'tabbed';
 
@@ -147,7 +147,7 @@ function DimensionSection({label, stepNumber, accentColor, isAnswered, animation
         borderLeft: `3px solid ${accentColor}`,
         background: 'rgba(255,255,255,0.02)',
         boxShadow: isAnswered ? `-4px 0 12px ${accentColor}26` : 'none',
-        transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
+        transition: `border-color 0.3s ${EASING.smooth}, box-shadow 0.3s ${EASING.smooth}`,
         animation: animate ? `idv-fade-up 0.35s ease-out ${animationDelay}ms both` : 'none',
       }}>
       <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
@@ -166,7 +166,7 @@ function DimensionSection({label, stepNumber, accentColor, isAnswered, animation
             background: isAnswered ? accentColor : 'transparent',
             fontFamily: FONTS.body,
             flexShrink: 0,
-            transition: 'all 0.3s ease',
+            transition: `all 0.3s ${EASING.bounce}`,
           }}>
           {isAnswered ? '\u2713' : stepNumber}
         </span>
@@ -248,7 +248,7 @@ function TabBar({activeTab, onTabChange, answeredByGroup}: {
               fontFamily: FONTS.body,
               cursor: 'pointer',
               padding: '8px 4px',
-              transition: 'all 0.2s ease',
+              transition: `all 0.25s ${EASING.snappy}`,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -287,7 +287,7 @@ function NavButton({label, disabled, onClick}: {label: string; disabled: boolean
         padding: '8px 20px',
         cursor: disabled ? 'default' : 'pointer',
         opacity: disabled ? 0.4 : 1,
-        transition: 'all 0.2s',
+        transition: `all 0.25s ${EASING.snappy}`,
         boxShadow: !disabled && hovered ? '0 0 10px rgba(255,185,0,0.1)' : 'none',
       }}>
       {label}

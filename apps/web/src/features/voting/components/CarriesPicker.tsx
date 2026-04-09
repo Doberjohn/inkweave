@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, RADIUS, SPACING} from '../../../shared/constants';
 
 type CarriesValue = 'a' | 'b' | 'both';
 
@@ -63,7 +63,7 @@ export function CarriesPicker({cardA, cardB, value, onChange, isMobile}: Carries
           fontSize: 13,
           fontFamily: FONTS.body,
           padding: '0 12px',
-          transition: 'all 0.2s ease',
+          transition: `all 0.3s ${EASING.bounce}`,
           animation: isPulsing ? 'idv-pulse 0.3s ease-out' : 'none',
           ...(isSelected
             ? {

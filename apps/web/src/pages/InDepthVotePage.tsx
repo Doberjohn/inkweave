@@ -5,7 +5,7 @@ import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {PairDisplay, VoteStatusBanner, InDepthVoteForm} from '../features/voting';
 import {useSpecificPair} from '../features/voting/hooks/useSpecificPair';
 import {useInDepthVoteSession} from '../features/voting/hooks/useInDepthVoteSession';
-import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../shared/constants';
 
 /** Inject keyframes once at module load */
 (function injectKeyframes() {
@@ -85,7 +85,7 @@ function ProgressBar({answeredCount, maxWidth}: {answeredCount: number; maxWidth
               ? 'linear-gradient(90deg, #4ade80, #6ee7a0, #4ade80)'
               : 'linear-gradient(90deg, #b8860b, #d4af37, #ffb900, #ffd700)',
             borderRadius: 4,
-            transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s ease',
+            transition: `width 0.5s ${EASING.bounce}, box-shadow 0.5s ${EASING.smooth}`,
             position: 'relative',
             overflow: 'hidden',
             boxShadow: isComplete
@@ -143,7 +143,7 @@ function ProgressBar({answeredCount, maxWidth}: {answeredCount: number; maxWidth
           color: isComplete ? '#6ee7a0' : COLORS.primary,
           fontFamily: FONTS.body,
           whiteSpace: 'nowrap',
-          transition: 'color 0.3s ease',
+          transition: `color 0.3s ${EASING.smooth}`,
           textShadow: isComplete
             ? '0 0 8px rgba(110,231,160,0.4)'
             : `0 0 ${4 + glowIntensity * 6}px rgba(255,185,0,${0.1 + glowIntensity * 0.2})`,

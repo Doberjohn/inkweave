@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, FONTS, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, RADIUS, SPACING} from '../../../shared/constants';
 
 export interface OptionPickerOption<T> {
   key: string;
@@ -97,7 +97,7 @@ export function OptionPicker<T>({ariaLabel, options, value, onChange, isMobile, 
       fontSize: 13,
       fontFamily: FONTS.body,
       padding: '0 12px',
-      transition: 'all 0.2s ease',
+      transition: `all 0.3s ${EASING.bounce}`,
       transform: isPressed ? 'scale(0.97)' : undefined,
       animation: isPulsing
         ? 'idv-pulse 0.3s ease-out'
