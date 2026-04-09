@@ -13,6 +13,8 @@ interface QuickVoteControlProps {
   distributionFailed?: boolean;
   userChoice: Accuracy | null;
   error: QuickVoteError;
+  /** Optional callback for "Rate in detail" link in the thank-you state */
+  onRateInDetail?: () => void;
 }
 
 const CHOICE_LABELS: Record<Accuracy, string> = {
@@ -181,6 +183,7 @@ export function QuickVoteControl({
   distributionFailed,
   userChoice,
   error,
+  onRateInDetail,
 }: QuickVoteControlProps) {
   const {isMobile} = useResponsive();
   const questionId = useId();
@@ -228,6 +231,28 @@ export function QuickVoteControl({
         {distribution && !isFirstVoter && (
           <p style={{...QUESTION_STYLE, fontSize: `${FONT_SIZES.sm}px`, margin: 0, animation: 'qv-fade-up 0.3s ease-out 0.2s both'}}>
             {distribution.total === 1 ? '1 vote' : `${distribution.total} votes`} on this pair
+            {onRateInDetail && (
+              <>
+                {' · '}
+                <button
+                  onClick={onRateInDetail}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: COLORS.primary,
+                    fontSize: 'inherit',
+                    fontFamily: 'inherit',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    padding: 0,
+                    transition: `opacity 0.15s ${EASING.snappy}`,
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}>
+                  Rate in detail &rarr;
+                </button>
+              </>
+            )}
           </p>
         )}
       </div>

@@ -9,7 +9,7 @@ import {useQuickVote} from '../../voting/hooks';
 import {CardImage, CardLightbox, RenderProfiler, ConnectionGroup, groupConnections} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence, useResponsive} from '../../../shared/hooks';
-import {COLORS, FONTS, FONT_SIZES, SPACING, RADIUS, Z_INDEX} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, SPACING, RADIUS, Z_INDEX} from '../../../shared/constants';
 
 interface SynergyDetailModalProps {
   isOpen: boolean;
@@ -158,35 +158,8 @@ export function SynergyDetailModal({
               distributionFailed={quickVote.distributionFailed}
               userChoice={quickVote.userChoice}
               error={quickVote.error}
+              onRateInDetail={() => navigate(`/vote/${cardA.id}/${cardB.id}`)}
             />
-          </div>
-
-          {/* Rate in Detail — navigates to full in-depth voting page */}
-          <div style={{padding: '0 24px 24px', display: 'flex', justifyContent: 'center'}}>
-            <button
-              onClick={() => navigate(`/vote/${cardA.id}/${cardB.id}`)}
-              style={{
-                background: 'none',
-                border: `1px solid rgba(255, 185, 0, 0.4)`,
-                borderRadius: 8,
-                color: COLORS.primary,
-                fontSize: FONT_SIZES.base,
-                fontWeight: 500,
-                fontFamily: FONTS.body,
-                cursor: 'pointer',
-                padding: '8px 20px',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 185, 0, 0.6)';
-                e.currentTarget.style.background = 'rgba(255, 185, 0, 0.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 185, 0, 0.4)';
-                e.currentTarget.style.background = 'none';
-              }}>
-              Rate in Detail &rarr;
-            </button>
           </div>
 
         </div>
