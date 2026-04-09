@@ -119,7 +119,7 @@ export function Sparkles({
   }, [addSparkle, rate, prefersReducedMotion]);
 
   return (
-    <span style={{position: 'relative', display: 'inline-block'}}>
+    <span style={{position: 'relative', display: 'block', flex: 1, minWidth: 0}}>
       {sparkles.map((sparkle) => (
         <span
           key={sparkle.id}
