@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, FONTS, FONT_SIZES, SPACING} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, SPACING} from '../constants';
 
 interface BackLinkProps {
   onClick: () => void;
@@ -28,7 +28,7 @@ export function BackLink({onClick, label}: BackLinkProps) {
         fontWeight: 500,
         padding: 0,
         marginBottom: `${SPACING.lg}px`,
-        transition: 'color 0.15s',
+        transition: `color 0.15s ${EASING.snappy}`,
       }}>
       <span style={{fontSize: `${FONT_SIZES.base}px`}}>&larr;</span>
       {label}

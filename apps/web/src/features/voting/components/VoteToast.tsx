@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {COLORS, FONTS} from '../../../shared/constants';
+import {COLORS, EASING, FONTS} from '../../../shared/constants';
 import type {Score} from '../../../shared/lib/supabase';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';
 
@@ -157,7 +157,7 @@ export function VoteToast({data, onDismiss, onUndo, isMobile}: VoteToastProps) {
                 cursor: 'pointer',
                 padding: '2px 6px',
                 borderRadius: 4,
-                transition: 'color 0.2s ease',
+                transition: `color 0.2s ${EASING.snappy}`,
               }}
               onMouseEnter={(e) => { e.currentTarget.style.color = COLORS.primary; }}
               onMouseLeave={(e) => { e.currentTarget.style.color = COLORS.primary500; }}>

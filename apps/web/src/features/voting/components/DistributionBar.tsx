@@ -1,5 +1,5 @@
 import {useState, useEffect} from 'react';
-import {COLORS, FONT_SIZES} from '../../../shared/constants';
+import {COLORS, EASING, FONT_SIZES} from '../../../shared/constants';
 
 interface DistributionBarProps {
   lower: number;
@@ -79,7 +79,7 @@ export function DistributionBar({lower, right, higher, animate, showLabels = tru
                     : segments.length === 1
                       ? '6px'
                       : undefined,
-              transition: animate ? 'width 500ms ease-out' : undefined,
+              transition: animate ? `width 500ms ${EASING.smooth}` : undefined,
               transitionDelay: animate ? `${i * 50}ms` : undefined,
             }}>
             {pct[key]}%

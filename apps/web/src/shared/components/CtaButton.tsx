@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, FONTS, FONT_SIZES, RADIUS} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS} from '../constants';
 
 interface CtaButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Visual variant: filled (orange gradient) or ghost (gold outline) */
@@ -29,7 +29,7 @@ export function CtaButton({
     fontSize: `${FONT_SIZES.base}px`,
     fontWeight: 500,
     cursor: 'pointer',
-    transition: 'all 0.2s',
+    transition: `all 0.25s ${EASING.snappy}`,
     textDecoration: 'none',
   };
 

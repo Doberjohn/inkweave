@@ -4,6 +4,7 @@ import {useTransitionPresence} from '../hooks';
 import type {UseAutocompleteReturn} from '../hooks';
 import {
   COLORS,
+  EASING,
   FONT_SIZES,
   RADIUS,
   SET_ABBREVIATIONS,
@@ -116,7 +117,7 @@ export function SearchAutocomplete({
               display: 'flex',
               alignItems: 'center',
               gap: SPACING.lg,
-              transition: 'background 0.1s ease',
+              transition: `background 0.1s ${EASING.snappy}`,
             }}>
             {/* Photo icon — hover to preview card */}
             <span
