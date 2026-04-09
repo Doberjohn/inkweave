@@ -7,6 +7,7 @@ import {OptionPicker} from './OptionPicker';
 import {ScorePicker} from './ScorePicker';
 import {CarriesPicker} from './CarriesPicker';
 import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {useBoop} from '../../../shared/hooks';
 
 export type FormLayout = 'stacked' | 'tabbed';
 
@@ -270,13 +271,15 @@ function TabBar({activeTab, onTabChange, answeredByGroup}: {
 
 function NavButton({label, disabled, onClick}: {label: string; disabled: boolean; onClick: () => void}) {
   const [hovered, setHovered] = useState(false);
+  const boop = useBoop({scale: 1.05, rotation: label.includes('Next') ? 2 : -2, timing: 250});
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      onMouseEnter={() => setHovered(true)}
+      onMouseEnter={() => { setHovered(true); if (!disabled) boop.trigger(); }}
       onMouseLeave={() => setHovered(false)}
       style={{
+        ...(!disabled ? boop.style : {}),
         background: !disabled && hovered ? 'rgba(255,185,0,0.05)' : 'none',
         border: `1px solid ${disabled ? COLORS.surfaceBorder : hovered ? 'rgba(255,185,0,0.5)' : `${COLORS.primary}33`}`,
         borderRadius: RADIUS.lg,
@@ -287,7 +290,6 @@ function NavButton({label, disabled, onClick}: {label: string; disabled: boolean
         padding: '8px 20px',
         cursor: disabled ? 'default' : 'pointer',
         opacity: disabled ? 0.4 : 1,
-        transition: `all 0.25s ${EASING.snappy}`,
         boxShadow: !disabled && hovered ? '0 0 10px rgba(255,185,0,0.1)' : 'none',
       }}>
       {label}
