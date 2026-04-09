@@ -23,6 +23,20 @@ import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../shared/cons
       from { stroke-dashoffset: 24; }
       to   { stroke-dashoffset: 0; }
     }
+    @keyframes idv-shimmer {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(200%); }
+    }
+    @keyframes idv-sparkle {
+      0%, 100% { opacity: 0; transform: scale(0) translateY(0); }
+      20%      { opacity: 1; transform: scale(1) translateY(-2px); }
+      80%      { opacity: 0.6; transform: scale(0.8) translateY(-6px); }
+    }
+    @keyframes idv-complete-pulse {
+      0%   { box-shadow: 0 0 4px 1px rgba(110,231,160,0.3); }
+      50%  { box-shadow: 0 0 12px 3px rgba(110,231,160,0.5); }
+      100% { box-shadow: 0 0 4px 1px rgba(110,231,160,0.3); }
+    }
   `;
   document.head.appendChild(style);
 })();
@@ -34,16 +48,18 @@ const TOTAL_DIMENSIONS = 6;
 function ProgressBar({answeredCount, maxWidth}: {answeredCount: number; maxWidth?: number}) {
   const pct = (answeredCount / TOTAL_DIMENSIONS) * 100;
   const isComplete = answeredCount === TOTAL_DIMENSIONS;
+  const glowIntensity = answeredCount / TOTAL_DIMENSIONS; // 0 to 1
 
   return (
     <div
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: SPACING.sm,
+        gap: SPACING.md,
         width: '100%',
         maxWidth,
       }}>
+      {/* Track */}
       <div
         role="progressbar"
         aria-valuenow={answeredCount}
@@ -52,31 +68,79 @@ function ProgressBar({answeredCount, maxWidth}: {answeredCount: number; maxWidth
         aria-label={`Voting progress: ${answeredCount} of ${TOTAL_DIMENSIONS} dimensions answered`}
         style={{
           flex: 1,
-          height: 3,
-          background: COLORS.surfaceBorder,
-          borderRadius: 2,
+          height: 8,
+          background: 'rgba(255,255,255,0.04)',
+          borderRadius: 4,
           overflow: 'hidden',
+          position: 'relative',
+          border: '1px solid rgba(255,255,255,0.06)',
         }}>
+        {/* Fill with golden gradient + glow */}
         <div
           style={{
             height: '100%',
             width: `${pct}%`,
             background: isComplete
-              ? 'linear-gradient(90deg, #6ee7a0, #4ade80)'
-              : 'linear-gradient(90deg, #d4af37, #ffb900)',
-            borderRadius: 2,
-            transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        />
+              ? 'linear-gradient(90deg, #4ade80, #6ee7a0, #4ade80)'
+              : 'linear-gradient(90deg, #b8860b, #d4af37, #ffb900, #ffd700)',
+            borderRadius: 4,
+            transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s ease',
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: isComplete
+              ? '0 0 12px 2px rgba(110,231,160,0.4)'
+              : `0 0 ${8 + glowIntensity * 12}px ${1 + glowIntensity * 2}px rgba(255,185,0,${0.15 + glowIntensity * 0.25})`,
+            animation: isComplete ? 'idv-complete-pulse 2s ease-in-out infinite' : undefined,
+          }}>
+          {/* Shimmer sweep */}
+          {answeredCount > 0 && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+                animation: 'idv-shimmer 2.5s ease-in-out infinite',
+              }}
+            />
+          )}
+        </div>
+
+        {/* Sparkle particles along the fill edge */}
+        {answeredCount > 0 && answeredCount < TOTAL_DIMENSIONS && (
+          <>
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                style={{
+                  position: 'absolute',
+                  left: `calc(${pct}% - ${4 + i * 3}px)`,
+                  top: -1 + i * 2,
+                  width: 3,
+                  height: 3,
+                  borderRadius: '50%',
+                  background: '#ffd700',
+                  boxShadow: '0 0 4px 1px rgba(255,215,0,0.6)',
+                  animation: `idv-sparkle ${1.2 + i * 0.4}s ease-in-out ${i * 0.3}s infinite`,
+                  pointerEvents: 'none',
+                }}
+              />
+            ))}
+          </>
+        )}
       </div>
+
+      {/* Label */}
       <span
         style={{
-          fontSize: FONT_SIZES.xs,
-          fontWeight: isComplete ? 700 : 500,
-          color: isComplete ? '#6ee7a0' : COLORS.textMuted,
+          fontSize: FONT_SIZES.sm,
+          fontWeight: isComplete ? 700 : 600,
+          color: isComplete ? '#6ee7a0' : COLORS.primary,
           fontFamily: FONTS.body,
           whiteSpace: 'nowrap',
           transition: 'color 0.3s ease',
+          textShadow: isComplete
+            ? '0 0 8px rgba(110,231,160,0.4)'
+            : `0 0 ${4 + glowIntensity * 6}px rgba(255,185,0,${0.1 + glowIntensity * 0.2})`,
         }}>
         {isComplete ? '\u2713 Complete' : `${answeredCount} / ${TOTAL_DIMENSIONS}`}
       </span>
