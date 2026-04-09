@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {EASING, FONTS} from '../../../shared/constants';
+import {FONTS} from '../../../shared/constants';
 import type {Score} from '../../../shared/lib/supabase';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';
 
@@ -100,7 +100,7 @@ export function ScorePicker({value, onChange, isMobile, responsive}: ScorePicker
               ? `0 0 10px ${tier.color}33`
               : 'none',
           transform: isHovered && !isPulsing ? 'scale(1.1)' : 'scale(1)',
-          transition: `box-shadow 0.3s ${EASING.bounce}, border-width 0.2s ${EASING.snappy}, transform 0.3s ${EASING.bounce}`,
+          transition: 'box-shadow 0.2s ease, border-width 0.2s ease, transform 0.15s ease',
           animation: isPulsing ? 'score-pulse 0.3s ease-out' : 'none',
           padding: 0,
         }}>
