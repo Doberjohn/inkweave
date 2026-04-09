@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {FONTS} from '../../../shared/constants';
+import {EASING, FONTS} from '../../../shared/constants';
 import type {Score} from '../../../shared/lib/supabase';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';
 
@@ -7,6 +7,8 @@ interface ScorePickerProps {
   value: Score | null;
   onChange: (score: Score) => void;
   isMobile?: boolean;
+  /** Buttons flex to fill container width instead of using fixed sizes */
+  responsive?: boolean;
 }
 
 /** Map a discrete 1-10 score to its strength tier visuals */
@@ -49,7 +51,7 @@ const MOBILE_ROWS = [
   [TIER_GROUPS[2], TIER_GROUPS[3]], // Strong + Perfect
 ];
 
-export function ScorePicker({value, onChange, isMobile}: ScorePickerProps) {
+export function ScorePicker({value, onChange, isMobile, responsive}: ScorePickerProps) {
   const size = isMobile ? 42 : 52;
   const fontSize = isMobile ? 14 : 16;
   const [hoveredScore, setHoveredScore] = useState<Score | null>(null);
@@ -76,8 +78,11 @@ export function ScorePicker({value, onChange, isMobile}: ScorePickerProps) {
         onMouseEnter={() => setHoveredScore(score)}
         onMouseLeave={() => setHoveredScore(null)}
         style={{
-          width: size,
-          height: size,
+          width: responsive ? 'auto' : size,
+          height: responsive ? 'auto' : size,
+          aspectRatio: responsive ? '1' : undefined,
+          flex: responsive ? 1 : undefined,
+          minWidth: responsive ? 0 : undefined,
           borderRadius: 8,
           border: `${isSelected ? 2 : 1}px solid ${tier.color}`,
           background: tier.bg,
@@ -95,7 +100,7 @@ export function ScorePicker({value, onChange, isMobile}: ScorePickerProps) {
               ? `0 0 10px ${tier.color}33`
               : 'none',
           transform: isHovered && !isPulsing ? 'scale(1.1)' : 'scale(1)',
-          transition: 'box-shadow 0.2s ease, border-width 0.2s ease, transform 0.15s ease',
+          transition: `box-shadow 0.3s ${EASING.bounce}, border-width 0.2s ${EASING.snappy}, transform 0.3s ${EASING.bounce}`,
           animation: isPulsing ? 'score-pulse 0.3s ease-out' : 'none',
           padding: 0,
         }}>
@@ -107,11 +112,11 @@ export function ScorePicker({value, onChange, isMobile}: ScorePickerProps) {
   const renderGroup = (group: typeof TIER_GROUPS[number]) => {
     const tier = getTierForScore(group.scores[0]);
     return (
-      <div key={group.label} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4}}>
+      <div key={group.label} style={{display: 'flex', flexDirection: 'column', alignItems: responsive ? 'stretch' : 'center', gap: 4, flex: responsive ? group.scores.length : undefined, minWidth: responsive ? 0 : undefined}}>
         <div style={{display: 'flex', gap: 4}}>
           {group.scores.map(renderButton)}
         </div>
-        <span style={{fontSize: 10, color: tier.color, fontFamily: FONTS.body, letterSpacing: '0.04em'}}>
+        <span style={{fontSize: 10, color: tier.color, fontFamily: FONTS.body, letterSpacing: '0.04em', textAlign: 'center'}}>
           {group.label}
         </span>
       </div>

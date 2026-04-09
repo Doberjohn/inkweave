@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, FONTS, FONT_SIZES, RADIUS} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS} from '../constants';
 import {FilterIcon} from './FilterIcon';
 import {CountBadge} from './CountBadge';
 
@@ -38,7 +38,7 @@ export function FiltersButton({onClick, activeCount, isMobile}: FiltersButtonPro
         alignItems: 'center',
         gap: 6,
         opacity: hovered ? 0.9 : 1,
-        transition: 'opacity 0.15s',
+        transition: `opacity 0.15s ${EASING.snappy}`,
       }}>
       <FilterIcon />
       Filters

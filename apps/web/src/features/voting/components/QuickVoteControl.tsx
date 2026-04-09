@@ -1,6 +1,7 @@
 import {useState, useEffect, useId} from 'react';
-import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, EASING, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
 import {useResponsive} from '../../../shared/hooks';
+import {Sparkles} from '../../../shared/components/Sparkles';
 import type {AccuracyDistribution} from '../../../shared/lib/supabase';
 import type {QuickVoteError, QuickVoteState, Accuracy} from '../hooks/useQuickVote';
 import {DistributionBar} from './DistributionBar';
@@ -12,6 +13,8 @@ interface QuickVoteControlProps {
   distributionFailed?: boolean;
   userChoice: Accuracy | null;
   error: QuickVoteError;
+  /** Optional callback for "Rate in detail" link in the thank-you state */
+  onRateInDetail?: () => void;
 }
 
 const CHOICE_LABELS: Record<Accuracy, string> = {
@@ -55,7 +58,7 @@ const BASE_BUTTON_STYLE: React.CSSProperties = {
   fontSize: `${FONT_SIZES.base}px`,
   color: COLORS.text,
   padding: `${SPACING.xs}px ${SPACING.md}px`,
-  transition: 'all 0.2s',
+  transition: `all 0.25s ${EASING.snappy}`,
   flex: 1,
 };
 
@@ -180,6 +183,7 @@ export function QuickVoteControl({
   distributionFailed,
   userChoice,
   error,
+  onRateInDetail,
 }: QuickVoteControlProps) {
   const {isMobile} = useResponsive();
   const questionId = useId();
@@ -201,10 +205,12 @@ export function QuickVoteControl({
           </span>
         </p>
         {isFirstVoter ? (
-          <p style={{...QUESTION_STYLE, color: '#6ee7a0', margin: 0, animation: 'qv-fade-up 0.4s ease-out 0.1s both, qv-pulse-glow 2s ease-in-out 0.5s infinite'}}>
-            <span aria-hidden="true">✦ </span>
-            <span>First to rate this pair!</span>
-          </p>
+          <Sparkles color="#6ee7a0" minSize={3} maxSize={8} rate={300}>
+            <p style={{...QUESTION_STYLE, color: '#6ee7a0', margin: 0, animation: 'qv-fade-up 0.4s ease-out 0.1s both, qv-pulse-glow 2s ease-in-out 0.5s infinite'}}>
+              <span aria-hidden="true">✦ </span>
+              <span>First to rate this pair!</span>
+            </p>
+          </Sparkles>
         ) : distribution ? (
           <DistributionBar
             lower={distribution.lower}
@@ -225,6 +231,28 @@ export function QuickVoteControl({
         {distribution && !isFirstVoter && (
           <p style={{...QUESTION_STYLE, fontSize: `${FONT_SIZES.sm}px`, margin: 0, animation: 'qv-fade-up 0.3s ease-out 0.2s both'}}>
             {distribution.total === 1 ? '1 vote' : `${distribution.total} votes`} on this pair
+            {onRateInDetail && (
+              <>
+                {' · '}
+                <button
+                  onClick={onRateInDetail}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: COLORS.primary,
+                    fontSize: 'inherit',
+                    fontFamily: 'inherit',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    padding: 0,
+                    transition: `opacity 0.15s ${EASING.snappy}`,
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}>
+                  Rate in detail &rarr;
+                </button>
+              </>
+            )}
           </p>
         )}
       </div>

@@ -124,8 +124,10 @@ test.describe('Mobile Viewport', () => {
 
     // Click backdrop to dismiss (top-left corner, outside the sheet)
     // Wait for the sheet's enter transition to complete before clicking
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(600);
     await page.mouse.click(10, 10);
+    // Wait for exit transition (mobile-safari animation scheduling is slower)
+    await page.waitForTimeout(500);
 
     // Sheet should be gone
     await expect(page.getByRole('dialog', {name: 'Search cards'})).not.toBeVisible({timeout: 5000});
@@ -146,9 +148,12 @@ test.describe('Mobile Viewport', () => {
     await searchInput.fill('Elsa');
     await searchInput.press('Enter');
 
+    // Wait for sheet dismiss + navigation (mobile-safari can be slow)
+    await page.waitForTimeout(300);
+
     // Should navigate to browse with query param
-    await expect(page).toHaveURL(/\/browse\?q=Elsa/);
-    await expect(page.getByRole('heading', {name: 'Browse Cards'})).toBeVisible();
+    await expect(page).toHaveURL(/\/browse\?q=Elsa/, {timeout: 10000});
+    await expect(page.getByRole('heading', {name: 'Browse Cards'})).toBeVisible({timeout: 10000});
   });
 
   test('should show sort dropdown in browse toolbar', async ({page}) => {

@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, RADIUS, FONT_SIZES} from '../constants';
+import {COLORS, EASING, RADIUS, FONT_SIZES} from '../constants';
 
 type FilterButtonSize = 'sm' | 'md';
 
@@ -80,7 +80,7 @@ export function FilterButton({
         fontWeight: 500,
         cursor: 'pointer',
         boxShadow: hoverStyles.boxShadow,
-        transition: 'box-shadow 0.2s, background 0.2s, border-color 0.2s',
+        transition: `box-shadow 0.2s ${EASING.snappy}, background 0.2s ${EASING.snappy}, border-color 0.2s ${EASING.snappy}`,
       }}>
       {children}
     </button>

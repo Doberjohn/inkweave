@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
-import {FONTS} from '../../../shared/constants';
+import {EASING, FONTS} from '../../../shared/constants';
+import {Sparkles} from '../../../shared/components/Sparkles';
 import type {Score} from '../../../shared/lib/supabase';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';
 
@@ -65,7 +66,7 @@ export function VoteConfirmation({
         background: 'rgba(13, 13, 20, 0.85)',
         zIndex: 1000,
         opacity: visible ? 1 : 0,
-        transition: 'opacity 0.3s ease',
+        transition: `opacity 0.3s ${EASING.smooth}`,
       }}>
       <div
         style={{
@@ -79,24 +80,26 @@ export function VoteConfirmation({
           border: '1px solid #333355',
           boxShadow: '0 8px 32px rgba(212, 175, 55, 0.15)',
           transform: visible ? 'scale(1)' : 'scale(0.95)',
-          transition: 'transform 0.3s ease',
+          transition: `transform 0.3s ${EASING.bounce}`,
           maxWidth: 360,
         }}>
-        {/* Checkmark */}
-        <div
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 32,
-            background: '#1a3d1a',
-            border: '2px solid #6ee7a0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 28,
-          }}>
-          <span style={{color: '#6ee7a0'}}>✓</span>
-        </div>
+        {/* Checkmark with sparkles */}
+        <Sparkles color="#6ee7a0" minSize={3} maxSize={8} rate={350}>
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              background: '#1a3d1a',
+              border: '2px solid #6ee7a0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 28,
+            }}>
+            <span style={{color: '#6ee7a0'}}>✓</span>
+          </div>
+        </Sparkles>
 
         <span style={{fontSize: 20, fontWeight: 700, color: '#e8e8e8', fontFamily: FONTS.body}}>
           Vote recorded!

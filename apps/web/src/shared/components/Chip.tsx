@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, FONTS, FONT_SIZES} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES} from '../constants';
 
 interface ChipBaseProps {
   label: string;
@@ -60,7 +60,7 @@ export function Chip(props: ChipProps) {
         fontWeight: 500,
         cursor: 'pointer',
         fontFamily: FONTS.body,
-        transition: 'all 0.2s',
+        transition: `all 0.25s ${EASING.snappy}`,
         border: active
           ? '1px solid rgba(212, 175, 55, 0.4)'
           : hovered

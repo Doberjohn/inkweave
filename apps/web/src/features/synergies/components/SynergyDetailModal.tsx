@@ -1,4 +1,5 @@
 import {useRef, useState, useEffect} from 'react';
+import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from '../../cards';
 import {useCardPreviewHandlers, useCardPreview} from '../../cards';
 import type {DetailedPairSynergy} from 'inkweave-synergy-engine';
@@ -41,6 +42,7 @@ export function SynergyDetailModal({
     if (!isOpen) hidePreview();
   }, [isOpen, hidePreview]);
 
+  const navigate = useNavigate();
   const {cardA, cardB, connections, aggregateScore} = pair;
   const tier = getStrengthTier(aggregateScore);
   const quickVote = useQuickVote(cardA.id, cardB.id);
@@ -156,6 +158,7 @@ export function SynergyDetailModal({
               distributionFailed={quickVote.distributionFailed}
               userChoice={quickVote.userChoice}
               error={quickVote.error}
+              onRateInDetail={() => navigate(`/vote/${cardA.id}/${cardB.id}`)}
             />
           </div>
 

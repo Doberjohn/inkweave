@@ -10,3 +10,4 @@ export {useRovingTabIndex} from './useRovingTabIndex';
 export {useTouchPreview} from './useTouchPreview';
 export {useScrollLock} from './useScrollLock';
 export {useTransitionPresence} from './useTransitionPresence';
+export {useBoop} from './useBoop';

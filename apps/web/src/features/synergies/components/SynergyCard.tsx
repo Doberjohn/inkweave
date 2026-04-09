@@ -2,7 +2,7 @@ import {useState} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from '../../cards';
 import {smallImageUrl} from '../../cards';
-import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
+import {INK_COLORS, COLORS, EASING, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {CardLightbox, StrengthBadge} from '../../../shared/components';
 import {useCardPreviewHandlers} from '../../cards';
 import {isSyntheticMouseEvent} from '../../../shared/utils/touchGuard';
@@ -94,7 +94,7 @@ export function SynergyCard({
               padding: '3px 8px',
               borderRadius: `${RADIUS.sm}px`,
               opacity: hovered ? 1 : 0,
-              transition: 'opacity 0.2s',
+              transition: `opacity 0.2s ${EASING.snappy}`,
               zIndex: 2,
               pointerEvents: 'none',
             }}>

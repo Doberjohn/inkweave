@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, FONTS, FONT_SIZES, RADIUS} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS} from '../constants';
 
 interface SortSelectProps<T extends string> {
   options: {value: T; label: string}[];
@@ -48,7 +48,7 @@ export function SortSelect<T extends string>({
         fontSize: `${FONT_SIZES.base}px`,
         cursor: 'pointer',
         outline: 'none',
-        transition: 'border-color 0.15s',
+        transition: `border-color 0.15s ${EASING.snappy}`,
         ...style,
       }}>
       {options.map((opt) => (

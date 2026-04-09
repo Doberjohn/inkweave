@@ -78,6 +78,7 @@ export class SynergyResultsPage {
   /** Close the synergy detail modal by clicking the backdrop */
   async closeDetailModalBackdrop(): Promise<void> {
     await this.page.getByTestId('synergy-detail-backdrop').click({position: {x: 5, y: 5}});
-    await this.page.waitForTimeout(200);
+    // Wait for exit transition to complete (300ms animation + buffer for slow browsers)
+    await this.page.waitForTimeout(500);
   }
 }
