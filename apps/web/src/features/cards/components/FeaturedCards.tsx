@@ -3,14 +3,14 @@ import {CardTile} from './CardTile';
 import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
 import {RenderProfiler} from '../../../shared/components';
 
-/** Curated card IDs — one per ink, chosen for visual appeal and synergy variety. */
+/** Curated card IDs, one per ink, chosen for visual appeal and synergy variety. */
 const FEATURED_IDS = [
-  '2208', // Amber    — Mowgli - Man Cub
-  '1004', // Amethyst — Elsa - The Fifth Spirit
-  '1543', // Emerald  — Tramp - Enterprising Dog
-  '2046', // Ruby     — Powerline - World's Greatest Rock Star
-  '2626', // Sapphire — Let It Go
-  '2363', // Steel    — The Headless Horseman - Cursed Rider
+  '2208', // Amber:    Mowgli - Man Cub
+  '1004', // Amethyst: Elsa - The Fifth Spirit
+  '1543', // Emerald:  Tramp - Enterprising Dog
+  '2046', // Ruby:     Powerline - World's Greatest Rock Star
+  '2626', // Sapphire: Let It Go
+  '2363', // Steel:    The Headless Horseman - Cursed Rider
 ];
 
 const FEATURED_COUNT = FEATURED_IDS.length;

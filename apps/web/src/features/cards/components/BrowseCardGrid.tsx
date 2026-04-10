@@ -11,7 +11,7 @@ interface BrowseCardGridProps {
   cards: LorcanaCard[];
   isLoading: boolean;
   onCardSelect: (card: LorcanaCard) => void;
-  /** Use window scroll instead of container scroll (no internal scrollbar — the page itself scrolls) */
+  /** Use window scroll instead of container scroll (no internal scrollbar; the page itself scrolls) */
   usePageScroll?: boolean;
   /** Override gap between cards (default: SPACING.md) */
   gap?: number;

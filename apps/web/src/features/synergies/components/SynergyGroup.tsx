@@ -87,7 +87,7 @@ export function SynergyGroup({
   );
 }
 
-// MoreTile — dashed tile for overflowed cards
+// MoreTile: dashed tile for overflowed cards
 function MoreTile({
   count,
   onClick,

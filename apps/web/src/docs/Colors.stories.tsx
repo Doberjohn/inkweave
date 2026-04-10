@@ -15,7 +15,7 @@ function ColorSwatch({name, value, large}: {name: string; value: string; large?:
         border: '1px solid rgba(255, 255, 255, 0.08)',
         background: '#1a1a2e',
       }}>
-      {/* Color preview — fills the top of the card */}
+      {/* Color preview: fills the top of the card */}
       <div
         style={{
           height,
@@ -182,7 +182,7 @@ function ColorPalette() {
           margin: '0 0 32px',
         }}>
         All color tokens from <code style={{color: '#c8c8d8'}}>shared/constants/theme.ts</code>.
-        These render live from the actual COLORS object — if a token changes, this page updates
+        These render live from the actual COLORS object. If a token changes, this page updates
         automatically.
       </p>
 
@@ -190,7 +190,7 @@ function ColorPalette() {
         <ColorGroup key={g.title} title={g.title} colors={g.colors} large={g.large} />
       ))}
 
-      {/* Ink colors get special treatment — 3 values per ink */}
+      {/* Ink colors get special treatment (3 values per ink) */}
       <section style={{marginBottom: 32}}>
         <h2
           style={{

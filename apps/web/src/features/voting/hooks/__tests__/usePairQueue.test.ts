@@ -81,7 +81,7 @@ describe('usePairQueue', () => {
     localStorage.clear();
     vi.clearAllMocks();
     setupMocks();
-    // Seed Math.random to make shuffle deterministic — identity shuffle
+    // Seed Math.random to make shuffle deterministic (identity shuffle)
     vi.spyOn(Math, 'random').mockReturnValue(0);
   });
 
@@ -221,7 +221,7 @@ describe('usePairQueue', () => {
       expect(result.current.currentPair).not.toBeNull();
       expect(result.current.currentPair!.aggregateScore).toBeGreaterThanOrEqual(7);
 
-      // Advance — should also get interesting (no other bucket to alternate to)
+      // Advance: should also get interesting (no other bucket to alternate to)
       await act(async () => {
         result.current.advance();
       });
@@ -428,7 +428,7 @@ describe('usePairQueue', () => {
         expect(result.current.canUndo).toBe(true);
       });
 
-      // Then skip — should disable undo
+      // Then skip; should disable undo
       await act(async () => {
         result.current.skip();
       });
@@ -557,7 +557,7 @@ describe('usePairQueue', () => {
       const pairBefore = result.current.currentPair;
       const statsBefore = result.current.stats;
 
-      // Undo without prior advance — should be a no-op
+      // Undo without prior advance; should be a no-op
       act(() => {
         result.current.undo();
       });

@@ -8,9 +8,9 @@ import {smallImageUrl} from '../loader';
 
 interface CardTileProps {
   card: LorcanaCard;
-  /** @deprecated Use onSelect instead — accepts the card directly, avoiding per-item closures */
+  /** @deprecated Use onSelect instead. Accepts the card directly, avoiding per-item closures. */
   onClick?: () => void;
-  /** Stable callback — receives the card, so parent doesn't need per-item closures */
+  /** Stable callback. Receives the card, so parent doesn't need per-item closures. */
   onSelect?: (card: LorcanaCard) => void;
   isSelected: boolean;
   variant?: 'full' | 'minimal';
@@ -53,8 +53,8 @@ export function CardTile({
       data-roving-item
       tabIndex={tabIndex}
       onClick={() => {
-        // Only guard synthetic mouse events when touch preview is active —
-        // when disabled, touch handlers aren't attached so onClick is the only path
+        // Only guard synthetic mouse events when touch preview is active.
+        // When disabled, touch handlers aren't attached so onClick is the only path.
         if (!disablePreview && isSyntheticMouseEvent()) return;
         hidePreview();
         handleClick();

@@ -24,9 +24,9 @@ interface SynergyResultsProps {
   isMobile?: boolean;
   /** When false, CardDetail is rendered externally (e.g. CardDetailPanel). Default: true for mobile. */
   showCardDetail?: boolean;
-  /** Controlled group filter — when provided, overrides internal state */
+  /** Controlled group filter. When provided, overrides internal state. */
   activeGroupFilter?: string | null;
-  /** Callback when group filter changes — required when activeGroupFilter is controlled */
+  /** Callback when group filter changes. Required when activeGroupFilter is controlled. */
   onGroupFilterChange?: (groupKey: string | null) => void;
   /** When set, render single-group expanded view instead of multi-group list */
   expandedGroup?: string | null;

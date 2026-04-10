@@ -199,7 +199,7 @@ describe('useQuickVote', () => {
     expect(result.current.state).toBe('error');
     expect(result.current.error).toBe('rate_limited');
 
-    // Advance 30 seconds — should auto-recover
+    // Advance 30 seconds; should auto-recover
     act(() => { vi.advanceTimersByTime(30_000); });
     expect(result.current.state).toBe('ready');
     expect(result.current.error).toBeNull();
@@ -214,7 +214,7 @@ describe('useQuickVote', () => {
 
     const {result} = renderHook(() => useQuickVote(CARD_A, CARD_B));
 
-    // Fire two votes without awaiting — second should be blocked by ref guard
+    // Fire two votes without awaiting; second should be blocked by ref guard
     act(() => { result.current.vote(1); });
     act(() => { result.current.vote(-1); });
 
@@ -235,7 +235,7 @@ describe('useQuickVote', () => {
     await act(async () => { await result.current.vote(0); });
     expect(result.current.state).toBe('result');
 
-    // Try voting again from result state — should be a no-op
+    // Try voting again from result state; should be a no-op
     await act(async () => { await result.current.vote(-1); });
     expect(submitVote).toHaveBeenCalledTimes(1);
     expect(result.current.state).toBe('result');

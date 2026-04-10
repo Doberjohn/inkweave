@@ -52,7 +52,7 @@ export function CardSynergiesPage() {
     setSearchParams({}, {replace: true});
   };
 
-  // On desktop, this route isn't needed — redirect to card page
+  // On desktop, this route isn't needed; redirect to card page
   if (!isMobile && !isLoading && selectedCard) {
     return <Navigate to={`/card/${cardId}`} replace />;
   }

@@ -177,7 +177,7 @@ describe('getPairScore', () => {
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
     mockSingle.mockResolvedValue({data: {avg_score: 7.5}});
 
-    // Pass in reverse order — should sort to (aaa, zzz)
+    // Pass in reverse order; should sort to (aaa, zzz)
     await getPairScore('zzz', 'aaa');
 
     expect(mockFrom).toHaveBeenCalledWith('pair_scores');
@@ -255,7 +255,7 @@ describe('getAccuracyDistribution', () => {
       data: {accuracy_lower: 2, accuracy_right: 8, accuracy_higher: 1},
     });
 
-    // Pass in reverse order — should sort to (aaa, zzz)
+    // Pass in reverse order; should sort to (aaa, zzz)
     await getAccuracyDistribution('zzz', 'aaa');
 
     expect(mockFrom).toHaveBeenCalledWith('pair_scores');

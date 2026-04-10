@@ -45,7 +45,7 @@ function removeSeenPair(key: string): void {
   }
 }
 
-/** Fisher-Yates in-place shuffle — O(n), unbiased. */
+/** Fisher-Yates in-place shuffle. O(n), unbiased. */
 function shuffleArray<T>(array: T[]): T[] {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -129,7 +129,7 @@ export function usePairQueue(): UsePairQueueReturn {
     return entry ?? null;
   }, []);
 
-  /** Peek at the next N entries without consuming — simulates alternating draw order. */
+  /** Peek at the next N entries without consuming. Simulates alternating draw order. */
   const peekUpcoming = useCallback(
     (count: number): PairPreview[] => {
       const q = queueRef.current;
@@ -181,7 +181,7 @@ export function usePairQueue(): UsePairQueueReturn {
 
       try {
         const pair = await resolvePair(entry, getCardById);
-        if (!pair) continue; // Card not found — try next entry
+        if (!pair) continue; // Card not found, try next entry
         setCurrentPair(pair);
         setUpcomingPreviews(peekUpcoming(3));
         setIsLoading(false);
@@ -193,8 +193,8 @@ export function usePairQueue(): UsePairQueueReturn {
       }
     }
 
-    // Exhausted retries — treat as empty
-    console.warn('[usePairQueue] 10 consecutive pairs failed to resolve — treating queue as empty');
+    // Exhausted retries. Treat as empty.
+    console.warn('[usePairQueue] 10 consecutive pairs failed to resolve. Treating queue as empty');
     setCurrentPair(null);
     setIsEmpty(true);
     setIsLoading(false);
@@ -293,7 +293,7 @@ export function usePairQueue(): UsePairQueueReturn {
     setStats((prev) => ({...prev, voted: Math.max(0, prev.voted - 1)}));
     setUpcomingPreviews(peekUpcoming(3));
 
-    // Clear — only one undo allowed
+    // Clear: only one undo allowed
     lastVotedPairRef.current = null;
     setCanUndo(false);
   }, [currentPair, peekUpcoming]);

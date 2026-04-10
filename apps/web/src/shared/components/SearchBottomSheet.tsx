@@ -88,7 +88,7 @@ function clearRecentSearches() {
 // --- Component ---
 
 export interface SearchBottomSheetHandle {
-  /** Focus the proxy input synchronously — call from the tap handler to preserve iOS keyboard activation. */
+  /** Focus the proxy input synchronously. Call from the tap handler to preserve iOS keyboard activation. */
   focusProxy: () => void;
 }
 
@@ -129,8 +129,8 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
 
     // Adjust state when isOpen prop changes (previous-value pattern per React docs).
     // On close: setQuery('') triggers useAutocomplete's auto-reset of debouncedQuery
-    // in a follow-up render — this 2-render cascade is the cost of clean separation.
-    // getRecentSearches() is a read-only localStorage call — safe during render.
+    // in a follow-up render. This 2-render cascade is the cost of clean separation.
+    // getRecentSearches() is a read-only localStorage call, safe during render.
     const [prevIsOpen, setPrevIsOpen] = useState(false);
     if (isOpen && !prevIsOpen) {
       setPrevIsOpen(true);
@@ -280,7 +280,7 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
                 {...autocomplete.inputProps}
                 onKeyDown={(e) => {
                   autocomplete.inputProps.onKeyDown(e);
-                  // Escape is handled by useDialogFocus — don't duplicate
+                  // Escape is handled by useDialogFocus; don't duplicate
                   if (!e.defaultPrevented && e.key === 'Enter' && query.trim()) {
                     onClose();
                     navigate(`/browse?q=${encodeURIComponent(query.trim())}`);

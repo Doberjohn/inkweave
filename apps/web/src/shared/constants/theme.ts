@@ -59,11 +59,11 @@ export const RADIUS = {
  * Browser support: 88%+ (all major browsers since Dec 2023).
  */
 export const EASING = {
-  /** Gentle overshoot then settle — for selections, hover effects, button presses */
+  /** Gentle overshoot then settle. For selections, hover effects, button presses. */
   bounce: 'linear(0, 0.004, 0.016, 0.035, 0.063, 0.098, 0.141, 0.191, 0.25, 0.316, 0.391, 0.472, 0.562, 0.66, 0.765, 0.878, 1, 1.029, 1.049, 1.061, 1.066, 1.064, 1.055, 1.042, 1.026, 1.008, 0.99, 0.974, 0.96, 0.95, 0.943, 0.94, 0.941, 0.946, 0.953, 0.963, 0.975, 0.987, 1)',
-  /** Quick, minimal overshoot — for fast transitions, tab switching */
+  /** Quick, minimal overshoot. For fast transitions, tab switching. */
   snappy: 'linear(0, 0.11, 0.342, 0.562, 0.733, 0.858, 0.942, 0.992, 1.018, 1.026, 1.022, 1.012, 1.004, 0.998, 0.997, 0.999, 1)',
-  /** Smooth deceleration, no overshoot — for fades, progress bars, subtle shifts */
+  /** Smooth deceleration, no overshoot. For fades, progress bars, subtle shifts. */
   smooth: 'linear(0, 0.064, 0.178, 0.324, 0.478, 0.621, 0.74, 0.833, 0.902, 0.95, 0.979, 0.995, 1)',
 } as const;
 

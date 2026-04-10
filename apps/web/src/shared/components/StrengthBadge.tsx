@@ -5,7 +5,7 @@ type BadgeSize = 'sm' | 'md' | 'lg';
 
 interface StrengthBadgeProps {
   tier: StrengthTier;
-  /** Content to display — typically a label, score, or both */
+  /** Content to display (typically a label, score, or both) */
   children: React.ReactNode;
   /** sm = card overlays (xs font), md = breakdowns (xs font, lighter weight), lg = modal headers (base font) */
   size?: BadgeSize;

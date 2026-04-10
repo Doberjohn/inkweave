@@ -76,7 +76,7 @@ export function FilterContent({
 
   return (
     <>
-      {/* Ink Color — desktop has these inline in the toolbar */}
+      {/* Ink Color (desktop has these inline in the toolbar) */}
       {!isDesktop && (
         <FilterSection label="Ink">
           <InkFilterGroup
@@ -92,7 +92,7 @@ export function FilterContent({
         </FilterSection>
       )}
 
-      {/* Ink Cost — desktop has these inline in the toolbar */}
+      {/* Ink Cost (desktop has these inline in the toolbar) */}
       {!isDesktop && (
         <FilterSection label="Ink Cost">
           <div
@@ -122,7 +122,7 @@ export function FilterContent({
         </FilterSection>
       )}
 
-      {/* Inkwell — desktop has these inline in the toolbar */}
+      {/* Inkwell (desktop has these inline in the toolbar) */}
       {!isDesktop && (
         <FilterSection label="Inkwell">
           <div

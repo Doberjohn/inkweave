@@ -109,7 +109,7 @@ option {
   }
 }
 
-/* Card tile hover/tap animations — spring bounce easing */
+/* Card tile hover/tap animations: spring bounce easing */
 .card-tile {
   transition:
     transform 0.3s linear(0, 0.004, 0.016, 0.035, 0.063, 0.098, 0.141, 0.191, 0.25, 0.316, 0.391, 0.472, 0.562, 0.66, 0.765, 0.878, 1, 1.029, 1.049, 1.061, 1.066, 1.064, 1.055, 1.042, 1.026, 1.008, 0.99, 0.974, 0.96, 0.95, 0.943, 0.94, 0.941, 0.946, 0.953, 0.963, 0.975, 0.987, 1),

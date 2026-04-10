@@ -119,7 +119,7 @@ export function SearchAutocomplete({
               gap: SPACING.lg,
               transition: `background 0.1s ${EASING.snappy}`,
             }}>
-            {/* Photo icon — hover to preview card */}
+            {/* Photo icon: hover to preview card */}
             <span
               style={{
                 display: 'flex',

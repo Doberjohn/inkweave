@@ -15,7 +15,7 @@ function lazyWithRetry(
         .then((m) => ({default: m[exportName]}))
         .catch((err) => {
           if (attempt < retries) return load(attempt + 1);
-          // All retries exhausted — likely stale chunks after deploy.
+          // All retries exhausted. Likely stale chunks after deploy.
           // Force reload to fetch new index.html with current chunk hashes.
           // Guard against reload loops with a sessionStorage flag.
           const reloadKey = 'chunk-reload';

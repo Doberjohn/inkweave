@@ -217,7 +217,7 @@ function PlaystyleHero({
           {description}
         </p>
 
-        {/* Strategy Tips — collapsible section (hidden when no tips) */}
+        {/* Strategy Tips: collapsible section (hidden when no tips) */}
         {tips.length > 0 && (
           <>
             <button
@@ -313,7 +313,7 @@ function getRoleChips(playstyleId: PlaystyleId, cards: LorcanaCard[]): RoleChip[
         roleCounts.set(role, (roleCounts.get(role) ?? 0) + 1);
       }
     }
-    // Location cards don't have roles — count them separately
+    // Location cards don't have roles, so count them separately
     const locationCount = cards.filter((c) => c.type === 'Location').length;
     const chips: RoleChip[] = [];
     if (locationCount > 0) {
@@ -436,7 +436,7 @@ export function PlaystyleDetailPage() {
 
   // Default sort to ink-cost on mount (skipped if URL already has a sort param).
   // Uses useEffect + ref guard because setSearchParams is a side effect (URL mutation),
-  // not a setState — calling it during render violates React's purity model.
+  // not a setState. Calling it during render violates React's purity model.
   const sortAppliedRef = useRef(false);
   useEffect(() => {
     if (!sortAppliedRef.current) {
@@ -479,7 +479,7 @@ export function PlaystyleDetailPage() {
     return applySortOrder(result, sortOrder);
   })();
 
-  // Role filter chips (desktop only) — compute which roles exist and their card counts
+  // Role filter chips (desktop only): compute which roles exist and their card counts
   const roleChips = (() => {
     if (!playstyle) return [];
     return getRoleChips(playstyle.id, sortedCards);
@@ -501,7 +501,7 @@ export function PlaystyleDetailPage() {
     navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
   };
 
-  // Invalid playstyle ID — redirect to gallery
+  // Invalid playstyle ID. Redirect to gallery
   if (!isLoading && (!playstyle || !ui)) {
     return <Navigate to="/playstyles" replace />;
   }

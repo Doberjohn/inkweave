@@ -1,4 +1,4 @@
-/** Toolbar filter icon — 3 horizontal lines of decreasing width. */
+/** Toolbar filter icon: 3 horizontal lines of decreasing width. */
 export function FilterIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">

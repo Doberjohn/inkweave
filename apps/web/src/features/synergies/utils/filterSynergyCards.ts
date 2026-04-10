@@ -8,7 +8,7 @@ import type {StrengthTierLabel} from './scoreUtils';
 /** Strength tier labels used for filtering synergy results (Perfect folds into Strong). */
 export type StrengthTierFilter = Exclude<StrengthTierLabel, 'Perfect'>;
 
-/** Exhaustive mapping from display tier to filter tier. Compiler-checked — adding a new tier forces an update. */
+/** Exhaustive mapping from display tier to filter tier. Compiler-checked: adding a new tier forces an update. */
 const TIER_TO_FILTER: Record<StrengthTierLabel, StrengthTierFilter> = {
   Perfect: 'Strong',
   Strong: 'Strong',
@@ -36,8 +36,8 @@ export const EMPTY_SYNERGY_FILTERS: SynergyFilterState = Object.freeze({
 
 /**
  * Check whether a synergy score falls into any of the selected strength tiers.
- * Perfect (≥9.5) is folded into the Strong tier for filtering —
- * selecting "Strong" also includes Perfect results.
+ * Perfect (≥9.5) is folded into the Strong tier for filtering,
+ * so selecting "Strong" also includes Perfect results.
  */
 function matchesStrengthFilter(score: number, strengthFilters: StrengthTierFilter[]): boolean {
   const tier = getStrengthTier(score);

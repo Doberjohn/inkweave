@@ -6,7 +6,7 @@ import {FilterContent} from './FilterContent';
 import type {FilterPanelProps} from './FilterContent';
 
 interface FilterDialogProps extends FilterPanelProps {
-  /** Responsive variant — controls layout and animation */
+  /** Responsive variant. Controls layout and animation. */
   variant: 'modal' | 'drawer';
 }
 
@@ -193,7 +193,7 @@ export function FilterDialog({
             />
           </div>
 
-          {/* Footer (modal only — drawer has Apply in header) */}
+          {/* Footer (modal only; drawer has Apply in header) */}
           {variant === 'modal' && (
             <div
               style={{

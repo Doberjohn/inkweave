@@ -52,7 +52,7 @@ function TypeScale() {
                 fontFamily: FONTS.body,
                 marginBottom: 8,
               }}>
-              <code style={{color: COLORS.descriptionText}}>FONTS.body</code> — Inter
+              <code style={{color: COLORS.descriptionText}}>FONTS.body</code>: Inter
             </div>
             <div style={{fontSize: 20, fontFamily: FONTS.body, color: COLORS.text}}>
               The quick brown fox jumps over the lazy dog
@@ -66,7 +66,7 @@ function TypeScale() {
                 fontFamily: FONTS.body,
                 marginBottom: 8,
               }}>
-              <code style={{color: COLORS.descriptionText}}>FONTS.hero</code> — Tinos (serif)
+              <code style={{color: COLORS.descriptionText}}>FONTS.hero</code>: Tinos (serif)
             </div>
             <div style={{fontSize: 20, fontFamily: FONTS.hero, color: COLORS.text}}>
               The quick brown fox jumps over the lazy dog
@@ -106,7 +106,7 @@ function TypeScale() {
                 {size}px
               </span>
               <span style={{fontSize: size, fontFamily: FONTS.body, color: COLORS.text}}>
-                Inkweave — Master Lorcana Synergies
+                Inkweave: Master Lorcana Synergies
               </span>
             </div>
           ))}
@@ -126,7 +126,7 @@ function TypeScale() {
             fontFamily: FONTS.body,
           }}>
           <code style={{color: COLORS.primary500}}>xxxl (22)</code>
-          <span style={{color: COLORS.textMuted}}>Reserved — rarely used</span>
+          <span style={{color: COLORS.textMuted}}>Reserved, rarely used</span>
           <code style={{color: COLORS.primary500}}>xxl (20)</code>
           <span style={{color: COLORS.textMuted}}>Page titles, card names, hero names</span>
           <code style={{color: COLORS.primary500}}>xl (16)</code>
@@ -134,7 +134,7 @@ function TypeScale() {
           <code style={{color: COLORS.primary500}}>lg (14)</code>
           <span style={{color: COLORS.textMuted}}>Search inputs only (form exception)</span>
           <code style={{color: COLORS.primary500}}>base (13)</code>
-          <span style={{color: COLORS.textMuted}}>Most UI text — chips, labels, descriptions</span>
+          <span style={{color: COLORS.textMuted}}>Most UI text: chips, labels, descriptions</span>
           <code style={{color: COLORS.primary500}}>md (12)</code>
           <span style={{color: COLORS.textMuted}}>Compact labels, secondary info</span>
           <code style={{color: COLORS.primary500}}>sm (11)</code>
@@ -161,22 +161,22 @@ function TypeScale() {
           {[
             {
               color: COLORS.text,
-              label: '#e8e8e8 — Primary',
+              label: '#e8e8e8: Primary',
               desc: 'Card names, headings, active UI',
             },
             {
               color: COLORS.textMuted,
-              label: '#90a1b9 — Muted',
+              label: '#90a1b9: Muted',
               desc: 'Labels, counts, secondary info',
             },
             {
               color: COLORS.primary500,
-              label: '#d4af37 — Gold',
+              label: '#d4af37: Gold',
               desc: 'Brand, accents, active states, CTAs',
             },
             {
               color: COLORS.descriptionText,
-              label: '#c8c8d8 — Description',
+              label: '#c8c8d8: Description',
               desc: 'Supplementary/educational content',
             },
           ].map((t) => (

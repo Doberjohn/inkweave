@@ -176,7 +176,7 @@ export interface CardFilterOptions {
  */
 export function filterCards(cards: LorcanaCard[], options: CardFilterOptions): LorcanaCard[] {
   return cards.filter((card) => {
-    // Ink filter — dual-ink cards match if either ink is selected
+    // Ink filter: dual-ink cards match if either ink is selected
     if (options.ink) {
       const selectedInks = Array.isArray(options.ink) ? options.ink : [options.ink];
       if (!selectedInks.includes(card.ink) && (!card.ink2 || !selectedInks.includes(card.ink2)))
@@ -292,7 +292,7 @@ export function getUniqueSets(cards: LorcanaCard[]): string[] {
 
 /**
  * Sort cards by set (latest first), then by card number within set.
- * Returns a new array — does not mutate the input.
+ * Returns a new array. Does not mutate the input.
  */
 export function sortBySetThenNumber(cards: LorcanaCard[]): LorcanaCard[] {
   return [...cards].sort((a, b) => {
@@ -312,7 +312,7 @@ export function sortBySetThenNumber(cards: LorcanaCard[]): LorcanaCard[] {
 
 /**
  * Sort cards alphabetically by fullName.
- * Returns a new array — does not mutate the input.
+ * Returns a new array. Does not mutate the input.
  */
 export function sortCardsByName(cards: LorcanaCard[], direction: 'asc' | 'desc'): LorcanaCard[] {
   const dir = direction === 'asc' ? 1 : -1;
@@ -321,7 +321,7 @@ export function sortCardsByName(cards: LorcanaCard[], direction: 'asc' | 'desc')
 
 /**
  * Sort cards by ink cost, with fullName as tiebreaker.
- * Returns a new array — does not mutate the input.
+ * Returns a new array. Does not mutate the input.
  */
 export function sortCardsByCost(cards: LorcanaCard[], direction: 'asc' | 'desc'): LorcanaCard[] {
   const dir = direction === 'asc' ? 1 : -1;
@@ -334,7 +334,7 @@ export function sortCardsByCost(cards: LorcanaCard[], direction: 'asc' | 'desc')
 
 /**
  * Apply a named sort order to a card array.
- * Returns a new array — does not mutate the input.
+ * Returns a new array. Does not mutate the input.
  */
 export function applySortOrder(cards: LorcanaCard[], order: BrowseSortOrder): LorcanaCard[] {
   switch (order) {

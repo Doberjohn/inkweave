@@ -8,10 +8,10 @@ import {CardImage, CardTextBlock, TierCircle} from '../../../shared/components';
 
 interface CardDetailPanelProps {
   card: LorcanaCard;
-  /** Synergy groups — when provided, renders the breakdown inline */
+  /** Synergy groups. When provided, renders the breakdown inline. */
   synergies?: SynergyGroup[];
   onGroupClick?: (groupKey: string) => void;
-  /** Currently active group filter — highlights the matching row */
+  /** Currently active group filter. Highlights the matching row. */
   activeGroupKey?: string | null;
 }
 

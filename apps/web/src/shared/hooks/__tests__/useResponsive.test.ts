@@ -71,7 +71,7 @@ describe('useResponsive', () => {
       window.dispatchEvent(new Event('resize'));
     });
 
-    // Still desktop — debounce hasn't fired yet
+    // Still desktop; debounce hasn't fired yet
     expect(result.current.isDesktop).toBe(true);
 
     // Advance past debounce delay

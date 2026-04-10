@@ -4,7 +4,7 @@ interface CostIconProps {
 }
 
 /**
- * Renders an ink cost pip — the Lorcana inkable icon with a number overlaid
+ * Renders an ink cost pip: the Lorcana inkable icon with a number overlaid
  * on the black hexagonal center. Cost 9 displays as "9+".
  */
 export function CostIcon({cost, size = 32}: CostIconProps) {

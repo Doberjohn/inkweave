@@ -183,7 +183,7 @@ export function VotePage() {
               isMobile={compactLayout}
             />
 
-            {/* Score picker — click = instant vote + advance */}
+            {/* Score picker: click = instant vote + advance */}
             <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10}}>
               <span style={{fontSize: FONT_SIZES.base, color: COLORS.mutedText, fontFamily: FONTS.body}}>
                 How strong is this synergy?

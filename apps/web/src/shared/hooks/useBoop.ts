@@ -25,7 +25,7 @@ interface BoopReturn {
 
 /**
  * A hook that applies a brief transform burst (the "boop") and auto-resets.
- * Inspired by Josh Comeau's useBoop — implemented with CSS transitions, no deps.
+ * Inspired by Josh Comeau's useBoop. Implemented with CSS transitions, no deps.
  *
  * Usage:
  *   const {style, handlers} = useBoop({scale: 1.1, rotation: 3});
