@@ -67,7 +67,7 @@ describe('QuickVoteControl', () => {
     );
     expect(screen.getByText(/You voted:/)).toBeInTheDocument();
     expect(screen.getByText('Score is fair')).toBeInTheDocument();
-    expect(screen.getByText('20 votes on this pair')).toBeInTheDocument();
+    expect(screen.getByText('20 votes')).toBeInTheDocument();
   });
 
   it('shows first voter badge without vote count when total is 1', () => {
@@ -76,7 +76,7 @@ describe('QuickVoteControl', () => {
       <QuickVoteControl state="result" onVote={mockVote} distribution={dist} userChoice={0} error={null} />,
     );
     expect(screen.getByText('First to rate this pair!')).toBeInTheDocument();
-    expect(screen.queryByText(/votes? on this pair/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^\d+ votes?$/)).not.toBeInTheDocument();
   });
 
   it('shows error message and re-enables buttons on error', () => {
