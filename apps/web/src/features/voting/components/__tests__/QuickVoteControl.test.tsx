@@ -75,7 +75,7 @@ describe('QuickVoteControl', () => {
     render(
       <QuickVoteControl state="result" onVote={mockVote} distribution={dist} userChoice={0} error={null} />,
     );
-    expect(screen.getByText(/First to rate!/)).toBeInTheDocument();
+    expect(screen.getByText('First to rate this pair!')).toBeInTheDocument();
     expect(screen.queryByText(/^\d+ ratings?$/)).not.toBeInTheDocument();
   });
 
