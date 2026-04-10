@@ -196,32 +196,32 @@ export function QuickVoteControl({
   // Show confirmation immediately on submit (optimistic) and on result
   if (state === 'submitting' || state === 'result') {
     const isFirstVoter = distribution?.total === 1;
-    const voteCountText = distribution ? (distribution.total === 1 ? '1 vote' : `${distribution.total} votes`) : null;
+    const ratingCountText = distribution && !isFirstVoter ? (distribution.total === 1 ? '1 rating' : `${distribution.total} ratings`) : null;
+    const choiceColor = userChoice !== null ? CHOICE_COLORS[userChoice].border : COLORS.primary;
 
     return (
       <div key="qv-result" style={{...CONTAINER_STYLE, animation: 'qv-fade-in 0.3s ease-out'}}>
         {/* Compact confirmation row */}
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', animation: 'qv-fade-up 0.3s ease-out'}}>
           <p style={{...QUESTION_STYLE, fontSize: `${FONT_SIZES.sm}px`, margin: 0}}>
-            ✦ You voted:{' '}
-            <span style={{color: COLORS.primary}}>
+            Your rating:{' '}
+            <span style={{color: choiceColor}}>
               {userChoice !== null ? CHOICE_LABELS[userChoice] : ''}
             </span>
           </p>
-          {voteCountText && !isFirstVoter && (
+          {isFirstVoter ? (
+            <Sparkles color="#6ee7a0" minSize={3} maxSize={8} rate={300}>
+              <span style={{fontSize: `${FONT_SIZES.sm}px`, color: '#6ee7a0', fontFamily: FONTS.body, animation: 'qv-pulse-glow 2s ease-in-out 0.5s infinite'}}>
+                ✦ First to rate!
+              </span>
+            </Sparkles>
+          ) : ratingCountText ? (
             <span style={{fontSize: `${FONT_SIZES.sm}px`, color: COLORS.textMuted, fontFamily: FONTS.body}}>
-              {voteCountText}
+              {ratingCountText}
             </span>
-          )}
+          ) : null}
         </div>
-        {isFirstVoter ? (
-          <Sparkles color="#6ee7a0" minSize={3} maxSize={8} rate={300}>
-            <p style={{...QUESTION_STYLE, color: '#6ee7a0', margin: 0, animation: 'qv-fade-up 0.4s ease-out 0.1s both, qv-pulse-glow 2s ease-in-out 0.5s infinite'}}>
-              <span aria-hidden="true">✦ </span>
-              <span>First to rate this pair!</span>
-            </p>
-          </Sparkles>
-        ) : distribution ? (
+        {distribution && !isFirstVoter ? (
           <DistributionBar
             lower={distribution.lower}
             right={distribution.right}
@@ -231,19 +231,24 @@ export function QuickVoteControl({
           />
         ) : distributionFailed ? (
           <p style={{...QUESTION_STYLE, fontSize: `${FONT_SIZES.sm}px`, margin: 0, color: COLORS.textMuted, animation: 'qv-fade-in 0.3s ease-out'}}>
-            Community votes unavailable
+            Community ratings unavailable
           </p>
-        ) : (
+        ) : !distribution ? (
           <p style={{...QUESTION_STYLE, fontSize: `${FONT_SIZES.sm}px`, margin: 0, animation: 'qv-fade-in 0.3s ease-out'}}>
-            Loading community votes…
+            Loading community ratings…
           </p>
-        )}
+        ) : null}
         {onRateInDetail && distribution && (
-          <CtaButton
-            onClick={onRateInDetail}
-            style={{width: '100%', minHeight: 40, animation: 'qv-fade-up 0.3s ease-out 0.2s both'}}>
-            Rate in detail &rarr;
-          </CtaButton>
+          <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.xs, animation: 'qv-fade-up 0.3s ease-out 0.2s both'}}>
+            <p style={{...QUESTION_STYLE, fontSize: `${FONT_SIZES.sm}px`, margin: 0, textAlign: 'center'}}>
+              Want to help fine-tune this score?
+            </p>
+            <CtaButton
+              onClick={onRateInDetail}
+              style={{width: '100%', minHeight: 40}}>
+              Rate this pair in depth &rarr;
+            </CtaButton>
+          </div>
         )}
       </div>
     );
@@ -274,7 +279,7 @@ export function QuickVoteControl({
             animation: 'qv-fade-up 0.2s ease-out',
           }}>
           {error === 'rate_limited'
-            ? "You're voting fast! Try again in a bit."
+            ? "You're rating fast! Try again in a bit."
             : 'Something went wrong, try again'}
         </p>
       )}
