@@ -133,7 +133,7 @@ export function SynergyDetailModal({
             </h2>
           </div>
 
-          {/* Connections list — shown before vote so users read the reasoning first */}
+          {/* Connections list: shown before vote so users read the reasoning first */}
           {connectionGroups.length > 0 && (
             <div style={{margin: '0 24px 20px', display: 'flex', flexDirection: 'column', gap: `${SPACING.sm}px`}}>
               {connectionGroups.map((group) => (
@@ -149,7 +149,7 @@ export function SynergyDetailModal({
             </div>
           )}
 
-          {/* Quick vote — after explanation, users can make an informed judgment */}
+          {/* Quick vote: after explanation, users can make an informed judgment */}
           <div key={`vote-${cardA.id}-${cardB.id}`} style={{padding: '0 24px 24px'}}>
             <QuickVoteControl
               state={quickVote.state}

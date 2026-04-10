@@ -74,7 +74,7 @@ describe('useRovingTabIndex', () => {
     );
     act(() => result.current.focusItem(7));
     expect(result.current.getTabIndex(7)).toBe(0);
-    // Shrink to 4 items — index 7 should clamp to 3
+    // Shrink to 4 items; index 7 should clamp to 3
     rerender({count: 4});
     expect(result.current.getTabIndex(3)).toBe(0);
   });

@@ -9,7 +9,7 @@ interface CompactHeaderProps {
   onLogoClick: () => void;
   /** When true, renders "← INKWEAVE" as a back button instead of just "INKWEAVE" */
   showBackArrow?: boolean;
-  /** Search bar props — when provided, renders an inline search bar in the header */
+  /** Search bar props. When provided, renders an inline search bar in the header. */
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
   onSearchSubmit?: () => void;

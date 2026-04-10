@@ -20,7 +20,7 @@ export function getSupabase(): SupabaseClient<Database> | null {
     if (import.meta.env.DEV && !envWarningLogged) {
       envWarningLogged = true;
       console.info(
-        '[Supabase] VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY not set — voting features disabled',
+        '[Supabase] VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY not set. Voting features disabled',
       );
     }
     return null;
@@ -126,7 +126,7 @@ export async function getPairScore(
       .single();
 
     if (error) {
-      // PGRST116 = no rows found — expected for pairs with no votes
+      // PGRST116 = no rows found, expected for pairs with no votes
       if (error.code === 'PGRST116') return null;
       console.error('[getPairScore] Supabase query failed:', {
         code: error.code,

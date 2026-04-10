@@ -137,7 +137,7 @@ function ExplanationWithHighlights({
     let matchCard: 'a' | 'b' = 'a';
 
     if (hitA.index >= 0 && hitB.index >= 0 && hitA.index === hitB.index) {
-      // Same position — prefer the longer match to avoid partial name splits
+      // Same position; prefer the longer match to avoid partial name splits
       if (hitA.match.length >= hitB.match.length) {
         matchIdx = hitA.index; matchName = hitA.match; matchCard = 'a';
       } else {

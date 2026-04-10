@@ -127,7 +127,7 @@ export function useFilterParams(): UseFilterParamsReturn {
   // while the card grid re-renders with the new filters in the background.
   const [, startTransition] = useTransition();
 
-  // Write helpers — all use replace to avoid history pollution
+  // Write helpers (all use replace to avoid history pollution)
   const updateParams = (updater: (params: URLSearchParams) => void) => {
     startTransition(() => {
       setSearchParams(

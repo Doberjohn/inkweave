@@ -4,7 +4,7 @@ import {ALL_INKS} from '../../../shared/constants';
 
 /**
  * Sort synergy matches by the given order.
- * Returns a new array — does not mutate the input.
+ * Returns a new array. Does not mutate the input.
  */
 export function applySynergySortOrder(
   synergies: SynergyMatchDisplay[],

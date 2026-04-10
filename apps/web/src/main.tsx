@@ -37,7 +37,7 @@ if (import.meta.env.PROD) {
       const banner = document.createElement('div');
       banner.setAttribute('role', 'alert');
       banner.style.cssText =
-        'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#e8e8e8;padding:12px 20px;border-radius:8px;border:1px solid #333355;display:flex;align-items:center;gap:12px;z-index:9999;font-family:Inter,sans-serif;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,0.5)';
+        'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#e8e8e8;padding:12px 20px;border-radius:8px;border:1px solid #333355;display:flex;align-items:center;gap:12px;z-index:9999;font-family:Barlow,sans-serif;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,0.5)';
 
       const label = document.createElement('span');
       label.textContent = 'New version available';

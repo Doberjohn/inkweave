@@ -21,7 +21,7 @@ interface VoteToastProps {
 const DISMISS_MS = 3000;
 const ENTER_MS = 300;
 
-/** Inject keyframes once at module load — must exist before first render */
+/** Inject keyframes once at module load. Must exist before first render. */
 (function injectKeyframes() {
   const STYLE_ID = 'vote-toast-keyframes';
   if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return;

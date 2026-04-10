@@ -4,7 +4,7 @@ import {useEffect} from 'react';
  * Injects <link rel="preload" as="image"> into <head> for the given URLs.
  * Cleans up on unmount. Skips duplicates and empty strings.
  *
- * Callers can pass a fresh array each render — the hook serializes URLs
+ * Callers can pass a fresh array each render. The hook serializes URLs
  * internally so the effect only re-runs when actual contents change.
  */
 export function usePreloadImages(urls: string[]) {

@@ -105,7 +105,7 @@ describe('SynergyDetailModal', () => {
     );
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('Shift Targets')).toBeInTheDocument();
-    // Playstyle connections are grouped by playstyleId — "Lore Steal" is the group label
+    // Playstyle connections are grouped by playstyleId. "Lore Steal" is the group label.
     expect(screen.getByText('Lore Steal')).toBeInTheDocument();
   });
 

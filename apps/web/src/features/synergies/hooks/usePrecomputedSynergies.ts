@@ -47,7 +47,7 @@ export async function fetchCardSynergies(cardId: string): Promise<PrecomputedCar
 
   const response = await fetch(`/data/synergies/${cardId}.json`);
   if (!response.ok) {
-    // Card has no synergies (not in manifest) — cache the empty result
+    // Card has no synergies (not in manifest). Cache the empty result.
     const empty: PrecomputedCardData = {groups: [], pairs: {}};
     synergyFetchCache.set(cardId, empty);
     return empty;

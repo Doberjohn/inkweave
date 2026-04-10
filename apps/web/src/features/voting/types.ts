@@ -12,13 +12,13 @@ export interface VotingPair {
   connections: PairSynergyConnection[];
 }
 
-/** Vote form state (random vote — score + whoCarries only) */
+/** Vote form state (random vote: score + whoCarries only) */
 export interface VoteFormState {
   score: Score | null;
   whoCarries: 'a' | 'b' | 'both' | null;
 }
 
-/** In-depth vote form state — all 6 dimensions, null = unanswered */
+/** In-depth vote form state: all 6 dimensions, null = unanswered */
 export interface InDepthFormState {
   isReal: boolean | null;
   accuracy: Accuracy | null;

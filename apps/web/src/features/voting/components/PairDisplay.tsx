@@ -68,7 +68,7 @@ function DashedLine({width, muted}: {width: number; muted?: boolean}) {
   );
 }
 
-/** Gold mystery badge (?) — shows pulsing "?" when no score, tier-colored score when selected */
+/** Gold mystery badge (?). Shows pulsing "?" when no score, tier-colored score when selected. */
 function MysteryBadge({selectedScore, size}: {selectedScore: Score | null; size: number}) {
   const tier = selectedScore !== null ? getStrengthTier(selectedScore) : null;
 
@@ -229,7 +229,7 @@ export function PairDisplay({pair, selectedScore, previousPairs, upcomingPairs, 
     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: '100%'}}>
       {/* Cards row with carousel transition */}
       <div style={{position: 'relative', width: '100%', overflow: 'hidden', padding: '20px 0'}}>
-        {/* Exiting pair — slides left and shrinks toward previous stack */}
+        {/* Exiting pair: slides left and shrinks toward previous stack */}
         {exitingPair && (
           <div
             style={{
@@ -253,7 +253,7 @@ export function PairDisplay({pair, selectedScore, previousPairs, upcomingPairs, 
           </div>
         )}
 
-        {/* Active pair — slides in from right stack position */}
+        {/* Active pair: slides in from right stack position */}
         <div
           key={pairId}
           style={{

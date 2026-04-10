@@ -15,7 +15,7 @@ function ColorSwatch({name, value, large}: {name: string; value: string; large?:
         border: '1px solid rgba(255, 255, 255, 0.08)',
         background: '#1a1a2e',
       }}>
-      {/* Color preview — fills the top of the card */}
+      {/* Color preview: fills the top of the card */}
       <div
         style={{
           height,
@@ -36,7 +36,7 @@ function ColorSwatch({name, value, large}: {name: string; value: string; large?:
             color: '#e8e8e8',
             fontSize: 13,
             fontWeight: 500,
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'Barlow, sans-serif',
             marginBottom: 2,
           }}>
           {name}
@@ -72,7 +72,7 @@ function ColorGroup({
           fontSize: 16,
           fontWeight: 600,
           color: '#e8e8e8',
-          fontFamily: 'Inter, sans-serif',
+          fontFamily: 'Barlow, sans-serif',
           margin: '0 0 16px',
           borderBottom: '1px solid #333355',
           paddingBottom: 8,
@@ -169,7 +169,7 @@ function ColorPalette() {
           fontSize: 20,
           fontWeight: 700,
           color: '#d4af37',
-          fontFamily: 'Inter, sans-serif',
+          fontFamily: 'Barlow, sans-serif',
           margin: '0 0 8px',
         }}>
         Color Palette
@@ -178,11 +178,11 @@ function ColorPalette() {
         style={{
           color: '#90a1b9',
           fontSize: 13,
-          fontFamily: 'Inter, sans-serif',
+          fontFamily: 'Barlow, sans-serif',
           margin: '0 0 32px',
         }}>
         All color tokens from <code style={{color: '#c8c8d8'}}>shared/constants/theme.ts</code>.
-        These render live from the actual COLORS object — if a token changes, this page updates
+        These render live from the actual COLORS object. If a token changes, this page updates
         automatically.
       </p>
 
@@ -190,14 +190,14 @@ function ColorPalette() {
         <ColorGroup key={g.title} title={g.title} colors={g.colors} large={g.large} />
       ))}
 
-      {/* Ink colors get special treatment — 3 values per ink */}
+      {/* Ink colors get special treatment (3 values per ink) */}
       <section style={{marginBottom: 32}}>
         <h2
           style={{
             fontSize: 16,
             fontWeight: 600,
             color: '#e8e8e8',
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'Barlow, sans-serif',
             margin: '0 0 16px',
             borderBottom: '1px solid #333355',
             paddingBottom: 8,
@@ -224,19 +224,19 @@ function ColorPalette() {
                   color: ink.text,
                   fontSize: 14,
                   fontWeight: 600,
-                  fontFamily: 'Inter, sans-serif',
+                  fontFamily: 'Barlow, sans-serif',
                   marginBottom: 8,
                 }}>
                 {ink.name}
               </div>
               <div style={{display: 'flex', flexDirection: 'column', gap: 4}}>
-                <span style={{color: '#90a1b9', fontSize: 11, fontFamily: 'Inter, sans-serif'}}>
+                <span style={{color: '#90a1b9', fontSize: 11, fontFamily: 'Barlow, sans-serif'}}>
                   bg: {ink.bg}
                 </span>
-                <span style={{color: '#90a1b9', fontSize: 11, fontFamily: 'Inter, sans-serif'}}>
+                <span style={{color: '#90a1b9', fontSize: 11, fontFamily: 'Barlow, sans-serif'}}>
                   text: {ink.text}
                 </span>
-                <span style={{color: '#90a1b9', fontSize: 11, fontFamily: 'Inter, sans-serif'}}>
+                <span style={{color: '#90a1b9', fontSize: 11, fontFamily: 'Barlow, sans-serif'}}>
                   border: {ink.border}
                 </span>
               </div>

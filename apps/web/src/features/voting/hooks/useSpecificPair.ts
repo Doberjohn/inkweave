@@ -38,7 +38,7 @@ export function useSpecificPair(
 ): {pair: VotingPair | null; isLoading: boolean; error: string | null} {
   const {getCardById} = useCardDataContext();
 
-  // Derive card objects synchronously — no effect needed for lookups
+  // Derive card objects synchronously (no effect needed for lookups)
   const resolved = useMemo(() => {
     if (!cardAId || !cardBId) return {cardA: null, cardB: null, error: 'Missing card IDs'};
     const cardA = getCardById(cardAId);

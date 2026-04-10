@@ -18,7 +18,7 @@ function getTierForScore(score: Score) {
   return getStrengthTier(score >= 10 ? 9.5 : score);
 }
 
-/** Inject keyframes once at module load — must exist before first render */
+/** Inject keyframes once at module load. Must exist before first render. */
 (function injectKeyframes() {
   const STYLE_ID = 'score-picker-keyframes';
   if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return;

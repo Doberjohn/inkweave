@@ -17,7 +17,7 @@ import type {ChipData} from '../../../shared/types';
 interface SynergyToolbarProps {
   /** Current filter state */
   filterState: SynergyFilterState;
-  /** Callbacks for filter changes — supports functional updater to avoid stale closures */
+  /** Callbacks for filter changes. Supports functional updater to avoid stale closures. */
   onFilterChange: (update: SetStateAction<SynergyFilterState>) => void;
   /** Sort state */
   sortOrder: SynergySortOrder;
@@ -56,7 +56,7 @@ export function SynergyToolbar({
     [filters.keywords?.length, filters.classifications?.length, filters.setCode].filter(Boolean)
       .length;
 
-  // Build chip list from active filters (strength excluded — it has its own toggle row)
+  // Build chip list from active filters (strength excluded; it has its own toggle row)
   // Desktop shows ink icons inline, so skip ink chips there
   // Uses functional updaters in onDismiss to avoid stale closure bugs under rapid interaction.
   const chips: ChipData[] = (() => {

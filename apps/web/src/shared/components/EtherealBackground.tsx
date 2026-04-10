@@ -19,7 +19,7 @@ function GlowOrb({size, x, y, color, blur}: {size: number; x: string; y: string;
   );
 }
 
-/** Vivid orb colors — higher opacity for pages that need more atmosphere */
+/** Vivid orb colors: higher opacity for pages that need more atmosphere */
 const VIVID_COLORS = {
   blue: 'rgba(43, 127, 255, 0.22)',
   purple: 'rgba(173, 70, 255, 0.2)',

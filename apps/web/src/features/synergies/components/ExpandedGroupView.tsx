@@ -17,7 +17,7 @@ interface ExpandedGroupViewProps {
   onCardClick?: (card: LorcanaCard) => void;
 }
 
-/** Shared expanded view for a single synergy group — back link, title, description, toolbar, full card grid. */
+/** Shared expanded view for a single synergy group: back link, title, description, toolbar, full card grid. */
 export function ExpandedGroupView({
   group,
   isMobile = false,
@@ -78,7 +78,7 @@ export function ExpandedGroupView({
         sets={sets}
       />
 
-      {/* Full card grid — no truncation */}
+      {/* Full card grid (no truncation) */}
       {filteredSynergies.length === 0 && filterState !== EMPTY_SYNERGY_FILTERS ? (
         <div
           role="status"

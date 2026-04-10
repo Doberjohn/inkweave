@@ -55,9 +55,9 @@ describe('QuickVoteControl', () => {
     render(
       <QuickVoteControl state="submitting" onVote={mockVote} distribution={null} userChoice={0} error={null} />,
     );
-    expect(screen.getByText(/You voted:/)).toBeInTheDocument();
+    expect(screen.getByText(/Your rating:/)).toBeInTheDocument();
     expect(screen.getByText('Score is fair')).toBeInTheDocument();
-    expect(screen.getByText('Loading community votes…')).toBeInTheDocument();
+    expect(screen.getByText('Loading community ratings…')).toBeInTheDocument();
   });
 
   it('shows distribution bar and confirmation in result state', () => {
@@ -65,18 +65,18 @@ describe('QuickVoteControl', () => {
     render(
       <QuickVoteControl state="result" onVote={mockVote} distribution={dist} userChoice={0} error={null} />,
     );
-    expect(screen.getByText(/You voted:/)).toBeInTheDocument();
+    expect(screen.getByText(/Your rating:/)).toBeInTheDocument();
     expect(screen.getByText('Score is fair')).toBeInTheDocument();
-    expect(screen.getByText('20 votes on this pair')).toBeInTheDocument();
+    expect(screen.getByText('20 ratings')).toBeInTheDocument();
   });
 
-  it('shows first voter badge without vote count when total is 1', () => {
+  it('shows first voter badge without rating count when total is 1', () => {
     const dist: AccuracyDistribution = {lower: 0, right: 1, higher: 0, total: 1};
     render(
       <QuickVoteControl state="result" onVote={mockVote} distribution={dist} userChoice={0} error={null} />,
     );
     expect(screen.getByText('First to rate this pair!')).toBeInTheDocument();
-    expect(screen.queryByText(/votes? on this pair/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^\d+ ratings?$/)).not.toBeInTheDocument();
   });
 
   it('shows error message and re-enables buttons on error', () => {
@@ -100,25 +100,25 @@ describe('QuickVoteControl', () => {
     render(
       <QuickVoteControl state="result" onVote={mockVote} distribution={null} userChoice={0} error={null} />,
     );
-    expect(screen.getByText(/You voted:/)).toBeInTheDocument();
+    expect(screen.getByText(/Your rating:/)).toBeInTheDocument();
     expect(screen.getByText('Score is fair')).toBeInTheDocument();
-    expect(screen.getByText('Loading community votes…')).toBeInTheDocument();
-    expect(screen.queryByText(/votes on this pair/)).not.toBeInTheDocument();
+    expect(screen.getByText('Loading community ratings…')).toBeInTheDocument();
+    expect(screen.queryByText(/^\d+ ratings?$/)).not.toBeInTheDocument();
   });
 
   it('shows rate limit message on rate_limited error', () => {
     render(
       <QuickVoteControl state="error" onVote={mockVote} distribution={null} userChoice={null} error="rate_limited" />,
     );
-    expect(screen.getByText("You're voting fast! Try again in a bit.")).toBeInTheDocument();
+    expect(screen.getByText("You're rating fast! Try again in a bit.")).toBeInTheDocument();
   });
 
   it('shows unavailable text when distribution fetch failed', () => {
     render(
       <QuickVoteControl state="result" onVote={mockVote} distribution={null} distributionFailed userChoice={0} error={null} />,
     );
-    expect(screen.getByText('Community votes unavailable')).toBeInTheDocument();
-    expect(screen.queryByText('Loading community votes…')).not.toBeInTheDocument();
+    expect(screen.getByText('Community ratings unavailable')).toBeInTheDocument();
+    expect(screen.queryByText('Loading community ratings…')).not.toBeInTheDocument();
   });
 
 });

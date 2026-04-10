@@ -104,7 +104,7 @@ export function MobileCardDetail({
       </div>
 
       <div style={{position: 'relative', zIndex: 1, padding: `${SPACING.lg}px`}}>
-        {/* Card image — centered with gold glow border */}
+        {/* Card image: centered with gold glow border */}
         <div style={{display: 'flex', justifyContent: 'center', marginBottom: SPACING.lg}}>
           <button
             aria-label="Enlarge card image"
@@ -158,7 +158,7 @@ export function MobileCardDetail({
           </div>
         )}
 
-        {/* Synergy breakdown removed on mobile — cards grid below is sufficient */}
+        {/* Synergy breakdown removed on mobile. Cards grid below is sufficient. */}
 
         {/* Synergy section */}
         {synergies.length > 0 && expandedGroupData ? (
@@ -194,7 +194,7 @@ export function MobileCardDetail({
               <div style={{flex: 1, height: 1, background: COLORS.surfaceBorder}} />
             </div>
 
-            {/* Group chips — horizontal scroll (hidden when only 1 group) */}
+            {/* Group chips: horizontal scroll (hidden when only 1 group) */}
             {synergies.length > 1 && (
               <div
                 style={{

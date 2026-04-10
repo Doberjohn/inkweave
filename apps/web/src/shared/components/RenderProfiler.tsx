@@ -25,7 +25,7 @@ function reportToSentry(id: string, phase: string, actualDurationMs: number) {
       );
     })
     .catch(() => {
-      // Sentry unavailable (blocked, failed to load, etc.) — silently skip
+      // Sentry unavailable (blocked, failed to load, etc.). Silently skip.
     });
 }
 
@@ -43,13 +43,13 @@ function reportToSentry(id: string, phase: string, actualDurationMs: number) {
  * </RenderProfiler>
  * ```
  */
-// Module-level callback — uses only compile-time constants (import.meta.env),
+// Module-level callback. Uses only compile-time constants (import.meta.env),
 // so it's guaranteed stable without React Compiler memoization.
 const onRender: ProfilerOnRenderCallback = (profileId, phase, actualDuration) => {
   if (import.meta.env.DEV) {
     if (actualDuration > SLOW_RENDER_MS) {
       console.warn(
-        `[RenderProfiler] ${profileId} (${phase}): ${actualDuration.toFixed(1)}ms — exceeds ${SLOW_RENDER_MS}ms frame budget`,
+        `[RenderProfiler] ${profileId} (${phase}): ${actualDuration.toFixed(1)}ms, exceeds ${SLOW_RENDER_MS}ms frame budget`,
       );
     }
   } else if (import.meta.env.VITE_SENTRY_DSN) {

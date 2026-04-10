@@ -80,7 +80,7 @@ export function SynergyCard({
           padding: 0,
           width: '100%',
         }}>
-        {/* "View details" hover cue — desktop only */}
+        {/* "View details" hover cue (desktop only) */}
         {!isMobile && (
           <span
             style={{

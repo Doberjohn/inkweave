@@ -21,7 +21,7 @@ export function useTransitionPresence(isOpen: boolean) {
   }
 
   // visible drives the CSS class. On first mount frame, visible=false because
-  // mounted just became true but isOpen was already true — the browser needs
+  // mounted just became true but isOpen was already true. The browser needs
   // one paint with the "enter" state before we apply "visible".
   // We use a second state to delay visibility by one render.
   const [visibleDeferred, setVisibleDeferred] = useState(false);
