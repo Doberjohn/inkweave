@@ -211,8 +211,8 @@ export function QuickVoteControl({
           </p>
           {isFirstVoter ? (
             <Sparkles color="#6ee7a0" minSize={3} maxSize={8} rate={300}>
-              <span style={{fontSize: `${FONT_SIZES.sm}px`, color: '#6ee7a0', fontFamily: FONTS.body, animation: 'qv-pulse-glow 2s ease-in-out 0.5s infinite'}}>
-                ✦ First to rate!
+              <span style={{fontSize: `${FONT_SIZES.sm}px`, color: '#6ee7a0', fontFamily: FONTS.body, fontWeight: 600, animation: 'qv-fade-up 0.4s ease-out 0.1s both, qv-pulse-glow 2s ease-in-out 0.5s infinite'}}>
+                First to rate!
               </span>
             </Sparkles>
           ) : ratingCountText ? (
