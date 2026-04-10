@@ -240,7 +240,6 @@ export function QuickVoteControl({
         )}
         {onRateInDetail && distribution && !isFirstVoter && (
           <CtaButton
-            variant="ghost"
             onClick={onRateInDetail}
             style={{width: '100%', minHeight: 40, animation: 'qv-fade-up 0.3s ease-out 0.2s both'}}>
             Rate in detail &rarr;
