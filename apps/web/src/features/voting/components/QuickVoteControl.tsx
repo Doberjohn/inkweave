@@ -238,7 +238,7 @@ export function QuickVoteControl({
             Loading community votes…
           </p>
         )}
-        {onRateInDetail && distribution && !isFirstVoter && (
+        {onRateInDetail && distribution && (
           <CtaButton
             onClick={onRateInDetail}
             style={{width: '100%', minHeight: 40, animation: 'qv-fade-up 0.3s ease-out 0.2s both'}}>
