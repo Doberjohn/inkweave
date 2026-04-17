@@ -1,0 +1,71 @@
+{
+  "metadata": {
+    "formatVersion": "2.3.2",
+    "generatedOn": "2026-04-17T00:00:00",
+    "language": "en"
+  },
+  "sets": {
+    "12": {
+      "name": "The Wilds Unknown",
+      "number": 12,
+      "type": "expansion",
+      "releaseDate": "2026-08-01",
+      "hasAllCards": false,
+      "allowedInFormats": {
+        "Core": {"allowed": true, "rotationGroup": 2}
+      }
+    }
+  },
+  "cards": [
+    {
+      "id": 1215204,
+      "name": "Woody",
+      "version": "Jungle Guide",
+      "fullName": "Woody - Jungle Guide",
+      "cost": 5,
+      "color": "Amber",
+      "inkwell": false,
+      "type": "Character",
+      "subtypes": ["Floodborn", "Hero", "Toy"],
+      "fullText": "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Woody.) LET'S GET MOVIN' Whenever this character quests, draw a card. Then, you may play a character with cost 2 or less for free. EVERYONE GATHER 'ROUND Your other Toy characters get +1 ⛉.",
+      "fullTextSections": [
+        "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Woody.)",
+        "LET'S GET MOVIN' Whenever this character quests, draw a card. Then, you may play a character with cost 2 or less for free.",
+        "EVERYONE GATHER 'ROUND Your other Toy characters get +1 ⛉."
+      ],
+      "strength": 1,
+      "willpower": 5,
+      "lore": 2,
+      "abilities": [
+        {
+          "fullText": "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Woody.)",
+          "keyword": "Shift",
+          "keywordValue": "3",
+          "keywordValueNumber": 3,
+          "reminderText": "You may pay 3 ⬡ to play this on top of one of your characters named Woody.",
+          "type": "keyword"
+        },
+        {
+          "effect": "Whenever this character quests, draw a card. Then, you may play a character with cost 2 or less for free.",
+          "fullText": "LET'S GET MOVIN' Whenever this character quests, draw a card. Then, you may play a character with cost 2 or less for free.",
+          "name": "LET'S GET MOVIN'",
+          "type": "triggered"
+        },
+        {
+          "effect": "Your other Toy characters get +1 ⛉.",
+          "fullText": "EVERYONE GATHER 'ROUND Your other Toy characters get +1 ⛉.",
+          "name": "EVERYONE GATHER 'ROUND",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 15,
+      "rarity": "Legendary",
+      "franchise": "Toy Story",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/15-204-EN-12-Woody-Jungle-Guide-Lorcana-Player-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/15-204-EN-12-Woody-Jungle-Guide-Lorcana-Player.jpg"
+      }
+    }
+  ]
+}
