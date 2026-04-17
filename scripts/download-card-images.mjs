@@ -106,9 +106,19 @@ async function main() {
   fs.rmSync(OUTPUT_DIR, {recursive: true, force: true});
   fs.mkdirSync(OUTPUT_DIR, {recursive: true});
 
-  // Build task list — one image per card (use full-size source for best quality when resizing)
+  // Build task list — one image per card (main + optional preview cards)
+  const PREVIEW_DATA_FILE = path.join(ROOT, 'apps/web/public/data/previewCards.json');
+  const allCards = [...data.cards];
+  if (fs.existsSync(PREVIEW_DATA_FILE)) {
+    const previewData = JSON.parse(fs.readFileSync(PREVIEW_DATA_FILE, 'utf8'));
+    const mainIds = new Set(data.cards.map((c) => c.id));
+    for (const card of previewData.cards) {
+      if (!mainIds.has(card.id)) allCards.push(card);
+    }
+  }
+
   const tasks = [];
-  for (const card of data.cards) {
+  for (const card of allCards) {
     const url = card.images?.full ?? card.images?.thumbnail;
     if (url) {
       tasks.push({id: card.id, url});
@@ -116,7 +126,7 @@ async function main() {
   }
 
   console.log(
-    `\n  ${tasks.length} images (${data.cards.length} cards)${FORCE ? ' [force re-download]' : ''}`,
+    `\n  ${tasks.length} images (${allCards.length} cards)${FORCE ? ' [force re-download]' : ''}`,
   );
 
   let cached = 0;
