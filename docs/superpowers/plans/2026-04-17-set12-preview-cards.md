@@ -706,6 +706,284 @@ USER_APPROVED=1 git commit -m "feat(scripts): merge previewCards.json in downloa
 
 ---
 
+## Task 5.5: Preview-AVIF override for cards with unreachable source URLs
+
+**Why**: Some preview card sources (e.g., `lorcanaplayer.com` for Woody) return HTTP 403 to Node fetches (user-agent / hotlinking protection). Rather than fight each CDN, we pre-generate AVIFs locally from a manually downloaded source JPG, commit them to a tracked `card-images-preview/` folder, and teach the download script to use those instead of attempting the URL fetch.
+
+**Files:**
+- Modify: `scripts/download-card-images.mjs` (add preview-AVIF override logic)
+- Already present in working tree (from a manual conversion pass):
+  - `apps/web/public/card-images-preview/1215204.avif` (27 KB, 337×470 Woody)
+  - `apps/web/public/card-images-preview/1215204-sm.avif` (12 KB, 191×266 Woody)
+  - `.gitignore` — added entry for `apps/web/public/card-images-raw/` (scratch folder)
+
+- [ ] **Step 1: Modify the download script to skip URL fetch when preview AVIFs exist**
+
+In `scripts/download-card-images.mjs`, find the `Build task list` section (after `fs.mkdirSync(OUTPUT_DIR, {recursive: true})` around line 107). Insert a helper to detect pre-generated AVIFs and change the task-list builder to skip them while copying them to the output dir:
+
+```javascript
+  // Preview AVIFs for cards whose source URLs are unreachable at build time
+  // (e.g., hotlink-protected CDNs returning 403 to Node fetches).
+  const PREVIEW_AVIFS_DIR = path.join(ROOT, 'apps/web/public/card-images-preview');
+  const hasPreviewAvifs = (id) => {
+    if (!fs.existsSync(PREVIEW_AVIFS_DIR)) return false;
+    return SIZES.every((s) =>
+      fs.existsSync(path.join(PREVIEW_AVIFS_DIR, `${id}${s.suffix}.avif`)),
+    );
+  };
+  let previewCopied = 0;
+
+  // Build task list — main + optional preview cards, skipping cards that already
+  // have pre-generated AVIFs in card-images-preview/
+  const PREVIEW_DATA_FILE = path.join(ROOT, 'apps/web/public/data/previewCards.json');
+  const allCards = [...data.cards];
+  if (fs.existsSync(PREVIEW_DATA_FILE)) {
+    const previewData = JSON.parse(fs.readFileSync(PREVIEW_DATA_FILE, 'utf8'));
+    const mainIds = new Set(data.cards.map((c) => c.id));
+    for (const card of previewData.cards) {
+      if (!mainIds.has(card.id)) allCards.push(card);
+    }
+  }
+
+  const tasks = [];
+  for (const card of allCards) {
+    if (hasPreviewAvifs(card.id)) {
+      for (const size of SIZES) {
+        const file = `${card.id}${size.suffix}.avif`;
+        fs.copyFileSync(
+          path.join(PREVIEW_AVIFS_DIR, file),
+          path.join(OUTPUT_DIR, file),
+        );
+      }
+      previewCopied++;
+      continue;
+    }
+    const url = card.images?.full ?? card.images?.thumbnail;
+    if (url) {
+      tasks.push({id: card.id, url});
+    }
+  }
+```
+
+Important: this REPLACES the existing block from Task 5 that reads `PREVIEW_DATA_FILE` and builds the task list. Remove the previous version entirely — don't leave two overlapping versions. Verify by running the script and confirming the card counts are consistent.
+
+Then update the summary log immediately after:
+
+```javascript
+  console.log(
+    `\n  ${tasks.length} images (${allCards.length} cards, ${previewCopied} from preview AVIFs)${FORCE ? ' [force re-download]' : ''}`,
+  );
+```
+
+- [ ] **Step 2: Run the image download script**
+
+Run: `node scripts/download-card-images.mjs`
+
+Expected:
+- Log line: `<N> images (1430 cards, 1 from preview AVIFs)` where N is 1429 (1430 total minus Woody).
+- Final summary should NOT show a 403 failure for id 1215204. The two pre-existing unrelated failures (ids `1536`, `2632` with 404 from Ravensburger) may still appear — they're unrelated to this task.
+
+- [ ] **Step 3: Verify Woody's AVIFs landed in output**
+
+Run: `ls apps/web/public/card-images/1215204*`
+
+Expected: two files — `1215204.avif` and `1215204-sm.avif`.
+
+- [ ] **Step 4: Commit script + preview AVIFs + gitignore**
+
+```
+git add scripts/download-card-images.mjs apps/web/public/card-images-preview/ .gitignore
+```
+Then on a separate command:
+```
+USER_APPROVED=1 git commit -m "feat(images): support preview AVIFs for unreachable source URLs (#278)"
+```
+
+Use `git -C "D:/johnn/Projects/inkweave" ...` patterns to avoid `cd &&` chain issues with the git-write-protection hook. Use `timeout: 600000` for git commit (pre-commit runs lint + tests).
+
+---
+
+## Task 5.75: Batch helper + convert 98 Set 12 preview images
+
+**Why**: Manual `sharp` one-offs don't scale past a couple cards. This task introduces a reusable helper (`scripts/convert-preview-images.mjs`) and uses it to process the 98 raw JPGs already sitting in `apps/web/public/card-images-raw/` (gitignored scratch folder). Output is 196 AVIF files (full + small variants × 98 cards) committed to `apps/web/public/card-images-preview/`. The corresponding card JSON arrives later — the AVIFs are orphan-tolerant and will be picked up automatically once those card entries exist in `previewCards.json`.
+
+**Files:**
+- Create: `scripts/convert-preview-images.mjs`
+- Modify: `package.json` (root) — add `convert-preview-images` npm script
+- Staged (by the script execution): 196 AVIF files under `apps/web/public/card-images-preview/`
+
+**Working tree precondition**: 98 raw JPGs exist under `apps/web/public/card-images-raw/`, named by card id (e.g., `1215204.jpg`, `12115204.jpg`, `1210204.jpg`). The folder is gitignored.
+
+- [ ] **Step 1: Write the helper script**
+
+Create `scripts/convert-preview-images.mjs`:
+
+```javascript
+#!/usr/bin/env node
+/**
+ * Convert raw preview card images to AVIF variants.
+ *
+ * Reads files from apps/web/public/card-images-raw/ named by card id
+ * (e.g., 1215204.jpg). For each file, generates two AVIFs into
+ * apps/web/public/card-images-preview/:
+ *   {id}.avif      — 337x470 (grid / detail)
+ *   {id}-sm.avif   — 191x266 (browse grid tiles)
+ *
+ * Idempotent — skips cards whose AVIFs already exist unless --force.
+ *
+ * Usage:
+ *   pnpm convert-preview-images           # Convert all missing
+ *   pnpm convert-preview-images --force   # Re-convert everything
+ */
+import sharp from 'sharp';
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, '..');
+const RAW_DIR = path.join(ROOT, 'apps/web/public/card-images-raw');
+const OUT_DIR = path.join(ROOT, 'apps/web/public/card-images-preview');
+const FORCE = process.argv.includes('--force');
+
+const SIZES = [
+  {suffix: '', width: 337, height: 470},
+  {suffix: '-sm', width: 191, height: 266},
+];
+const QUALITY = 50;
+const ACCEPTED_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp']);
+
+async function convert(id, srcPath) {
+  for (const s of SIZES) {
+    const outPath = path.join(OUT_DIR, `${id}${s.suffix}.avif`);
+    await sharp(srcPath)
+      .resize(s.width, s.height, {fit: 'cover'})
+      .avif({quality: QUALITY})
+      .toFile(outPath);
+  }
+}
+
+function allVariantsExist(id) {
+  return SIZES.every((s) => fs.existsSync(path.join(OUT_DIR, `${id}${s.suffix}.avif`)));
+}
+
+async function main() {
+  if (!fs.existsSync(RAW_DIR)) {
+    console.log(`  No raw directory at ${RAW_DIR}. Nothing to do.`);
+    return;
+  }
+  fs.mkdirSync(OUT_DIR, {recursive: true});
+
+  const files = fs.readdirSync(RAW_DIR).filter((f) => {
+    const ext = path.extname(f).toLowerCase();
+    return ACCEPTED_EXT.has(ext);
+  });
+
+  if (files.length === 0) {
+    console.log(`  No image files in ${RAW_DIR}. Nothing to do.`);
+    return;
+  }
+
+  console.log(`\n  Converting ${files.length} raw image(s)${FORCE ? ' [force]' : ''}`);
+
+  let converted = 0;
+  let skipped = 0;
+  let failed = 0;
+  const startTime = Date.now();
+
+  for (const file of files) {
+    const stem = path.basename(file, path.extname(file));
+    if (!/^\d+$/.test(stem)) {
+      console.error(`  x ${file}: filename stem must be numeric card id (got "${stem}")`);
+      failed++;
+      continue;
+    }
+    const id = stem;
+
+    if (!FORCE && allVariantsExist(id)) {
+      skipped++;
+      continue;
+    }
+
+    try {
+      await convert(id, path.join(RAW_DIR, file));
+      converted++;
+    } catch (err) {
+      console.error(`  x ${file}: ${err.message}`);
+      failed++;
+    }
+  }
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(
+    `\n  Done in ${elapsed}s: ${converted} converted, ${skipped} skipped (exists), ${failed} failed\n`,
+  );
+
+  if (failed > 0) process.exit(1);
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
+```
+
+- [ ] **Step 2: Add npm script alias**
+
+In root `package.json`, in the `scripts` section, add:
+
+```json
+"convert-preview-images": "node scripts/convert-preview-images.mjs",
+```
+
+Put it near related image/data scripts (e.g., after `download-images` if present, otherwise alphabetically). Do NOT change any other scripts.
+
+- [ ] **Step 3: Run the helper against the 98 raws**
+
+Run: `pnpm convert-preview-images`
+
+Expected output:
+```
+  Converting 98 raw image(s)
+
+  Done in Ns: 97 converted, 1 skipped (exists), 0 failed
+```
+(The "1 skipped" is Woody — `1215204.avif` was generated in Task 5.5 and is already present.)
+
+If any `failed` count is non-zero, investigate — the filename pattern `{id}.ext` must be strict. Report back before continuing.
+
+- [ ] **Step 4: Verify output**
+
+Run:
+```
+ls apps/web/public/card-images-preview/ | wc -l
+```
+
+Expected: 196 files (98 cards × 2 variants), or if Woody was pre-existing, 196 (since Task 5.5 wrote 2 for Woody, and this step wrote 194 for the other 97 cards).
+
+Run a spot check on file sizes:
+```
+du -sh apps/web/public/card-images-preview/
+```
+
+Expected: roughly 3.5–4.5 MB total.
+
+- [ ] **Step 5: Commit**
+
+```
+git add scripts/convert-preview-images.mjs package.json apps/web/public/card-images-preview/
+```
+Then on a separate command:
+```
+USER_APPROVED=1 git -C "D:/johnn/Projects/inkweave" commit -m "feat(images): add batch AVIF helper + 97 Set 12 preview AVIFs (#278)"
+```
+
+Use `timeout: 600000` for the commit (pre-commit hook runs lint + full test suite).
+
+Commit message notes "97" rather than "98" because Woody's AVIFs were already committed in Task 5.5 — this commit adds the other 97 plus the helper script.
+
+---
+
 ## Task 6: Manifest hook
 
 **Why**: The reveals page needs to know which cards have precomputed synergies to render them as clickable links. `_manifest.json` already exists (written by `precompute-synergies.mjs:132`); we need a React hook to fetch and cache it.
@@ -1091,7 +1369,167 @@ USER_APPROVED=1 git commit -m "feat(reveals): add RevealsPage component (#278)"
 
 ---
 
-## Task 8: Storybook stories for RevealsPage
+## Task 7b: Extract franchise logic + gut RevealsPage to a stub
+
+**Why**: The RevealsPage UI will be redesigned in Pencil before final implementation. To avoid committing disposable UI work, we gut the page body down to a minimal stub (keeping the codebase-consistent scaffolding) and extract the franchise filtering logic into a standalone module so it survives the redesign.
+
+**Files:**
+- Create: `apps/web/src/features/reveals/franchise.ts`
+- Create: `apps/web/src/features/reveals/__tests__/franchise.test.ts`
+- Modify: `apps/web/src/features/reveals/index.ts` (re-export franchise module)
+- Modify: `apps/web/src/pages/RevealsPage.tsx` (reduce to ~20-line stub)
+
+- [ ] **Step 1: Create the franchise module**
+
+Create `apps/web/src/features/reveals/franchise.ts`:
+
+```typescript
+import type {LorcanaCard} from 'inkweave-synergy-engine';
+
+export type FranchiseId = 'toy-story' | 'incredibles' | 'brave';
+
+export interface FranchiseConfig {
+  id: FranchiseId;
+  label: string;
+  /** Value to match against `card.franchise`. */
+  match: string;
+}
+
+export const FRANCHISES: readonly FranchiseConfig[] = [
+  {id: 'toy-story', label: 'Toy Story', match: 'Toy Story'},
+  {id: 'incredibles', label: 'The Incredibles', match: 'The Incredibles'},
+  {id: 'brave', label: 'Brave', match: 'Brave'},
+];
+
+/**
+ * Filter cards by franchise using the explicit `franchise` field on preview cards.
+ * Only preview cards have this field set; main-pool cards are filtered out when
+ * a franchise filter is active.
+ *
+ * Pass `null` to disable filtering (returns true for all cards).
+ */
+export function matchesFranchise(card: LorcanaCard, franchise: FranchiseId | null): boolean {
+  if (!franchise) return true;
+  const config = FRANCHISES.find((f) => f.id === franchise);
+  if (!config) return true;
+  return card.franchise === config.match;
+}
+```
+
+- [ ] **Step 2: Write tests for the franchise module**
+
+Create `apps/web/src/features/reveals/__tests__/franchise.test.ts`:
+
+```typescript
+import {describe, it, expect} from 'vitest';
+import {matchesFranchise, FRANCHISES} from '../franchise';
+import {createCard} from '../../../shared/test-utils';
+
+describe('matchesFranchise', () => {
+  it('returns true for any card when franchise is null', () => {
+    const card = createCard({id: '1'});
+    expect(matchesFranchise(card, null)).toBe(true);
+  });
+
+  it('returns true when card.franchise matches the config label', () => {
+    const card = createCard({id: '1', franchise: 'Toy Story'});
+    expect(matchesFranchise(card, 'toy-story')).toBe(true);
+  });
+
+  it('returns false when card.franchise differs', () => {
+    const card = createCard({id: '1', franchise: 'The Incredibles'});
+    expect(matchesFranchise(card, 'toy-story')).toBe(false);
+  });
+
+  it('returns false when card has no franchise and a filter is active', () => {
+    const card = createCard({id: '1'});
+    expect(matchesFranchise(card, 'brave')).toBe(false);
+  });
+});
+
+describe('FRANCHISES', () => {
+  it('exposes three franchises covering Set 12 IPs', () => {
+    expect(FRANCHISES.map((f) => f.id).sort()).toEqual(['brave', 'incredibles', 'toy-story']);
+  });
+
+  it('maps each id to a human label and a card.franchise match value', () => {
+    for (const f of FRANCHISES) {
+      expect(f.label.length).toBeGreaterThan(0);
+      expect(f.match.length).toBeGreaterThan(0);
+    }
+  });
+});
+```
+
+Note: if `createCard` in `shared/test-utils` doesn't support a `franchise` override, you may need to add `franchise: overrides.franchise` to the factory. Check first — most likely it already spreads `...overrides` and this just works without any change.
+
+- [ ] **Step 3: Update the feature index**
+
+In `apps/web/src/features/reveals/index.ts`, append:
+
+```typescript
+export {matchesFranchise, FRANCHISES} from './franchise';
+export type {FranchiseId, FranchiseConfig} from './franchise';
+```
+
+- [ ] **Step 4: Gut RevealsPage.tsx**
+
+Replace the entire contents of `apps/web/src/pages/RevealsPage.tsx` with:
+
+```typescript
+import {CompactHeader, ErrorBoundary, EtherealBackground} from '../shared/components';
+
+/**
+ * Set 12 Reveals page. Stub pending Pencil design — see issue #278.
+ *
+ * When implementing the final UI:
+ * - `useCardDataContext()` provides the card pool (already merges previewCards.json)
+ * - Filter preview cards with `cards.filter(c => c.setCode === '12')`
+ * - Use `useManifest()` + `hasSynergies(card.id)` to decide which tiles are clickable
+ * - Use `FRANCHISES` + `matchesFranchise(card, activeFranchise)` for IP filtering
+ */
+export function RevealsPage() {
+  return (
+    <ErrorBoundary>
+      <EtherealBackground />
+      <CompactHeader />
+      <main style={{minHeight: '100vh', paddingTop: 80}} />
+    </ErrorBoundary>
+  );
+}
+```
+
+- [ ] **Step 5: Run tests**
+
+Run: `pnpm --filter inkweave-web test:run`
+
+Expected: All tests pass. Tests count becomes 594 + 6 new franchise tests = **600 passing** (3 skipped unchanged).
+
+Run: `pnpm --filter inkweave-web typecheck`
+
+Expected: zero errors on the new/modified files.
+
+- [ ] **Step 6: Commit**
+
+```
+git -C "D:/johnn/Projects/inkweave" add apps/web/src/features/reveals/ apps/web/src/pages/RevealsPage.tsx
+```
+Then separately:
+```
+USER_APPROVED=1 git -C "D:/johnn/Projects/inkweave" commit -m "refactor(reveals): extract franchise logic and stub page for Pencil redesign (#278)"
+```
+
+Use `timeout: 600000` for the commit.
+
+---
+
+## Task 8: ~~Storybook stories for RevealsPage~~ (DEFERRED)
+
+**Deferred**: Stories would be written against disposable UI. Will be addressed in the follow-up issue that implements the Pencil design. Storybook `check:stories` CI will pass because `RevealsPage.tsx` is a page component — page components are not in the set-coverage ratchet (verify in `apps/web/scripts/check-story-coverage.mjs` if the build fails).
+
+Skip directly to Task 9.
+
+## Task 8 (original): Storybook stories for RevealsPage
 
 **Why**: The `check:stories` CI guard fails if a new visual component ships without a `.stories.tsx` file. This also gives us an isolated view for reviewing the page in Chromatic.
 
@@ -1292,7 +1730,15 @@ USER_APPROVED=1 git commit -m "feat(router): add /reveals route (#278)"
 
 ---
 
-## Task 10: Navigation updates
+## Task 10: ~~Navigation updates~~ (DEFERRED — see follow-up note below)
+
+**Deferred**: Navigation changes depend on the Pencil redesign. Adding a third mobile bottom tab is tight layout guesswork that should be a design decision, not an implementation guess. Desktop nav could safely fit another tab, but keeping desktop + mobile in sync is simpler when both land together in the follow-up issue.
+
+For now, `/reveals` is reachable only via direct URL. This is acceptable because the page is currently a stub (Pencil design pending); there's no discoverable UI to link to yet.
+
+Skip directly to Task 12.
+
+## Task 10 (original): Navigation updates
 
 **Why**: Users need to discover the page. Add a "Reveals" entry to both the desktop nav strip and the mobile bottom nav.
 
@@ -1411,7 +1857,11 @@ USER_APPROVED=1 git commit -m "feat(nav): add Reveals link to desktop and mobile
 
 ---
 
-## Task 11: E2E test
+## Task 11: ~~E2E test~~ (DEFERRED — see follow-up note below)
+
+**Deferred**: Full E2E coverage targets UI that will be replaced after Pencil design. Only keep the minimal "route loads and nav link works" check, which Task 12's smoke test already covers manually. Skip directly to Task 12. The full E2E suite for the reveals page will be written in the follow-up issue.
+
+## Task 11 (original): E2E test
 
 **Why**: Verifies the page loads without errors, franchise filter toggles work, and clickable cards navigate. Catches regressions that unit tests miss.
 
