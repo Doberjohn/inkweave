@@ -1,7 +1,39 @@
 import {test, expect} from '../fixtures';
+import fs from 'node:fs';
+import path from 'node:path';
 
-// Anna - Diplomatic Queen: shift-targets (direct, 3 cards) + discard (playstyle, 34 cards)
+// Anna - Diplomatic Queen: shift-targets (direct) + discard (playstyle);
+// discard count read from synergy data at test time.
 const CARD_URL = '/card/1041';
+const CARD_ID = '1041';
+
+// Read the precomputed synergy data for the fixture card to derive expected
+// group sizes at test time. This avoids hardcoding counts that drift as
+// Set 12+ preview cards are added/removed from the pool.
+interface SynergyGroup {
+  groupKey: string;
+  synergies: unknown[];
+}
+interface SynergyFile {
+  groups: SynergyGroup[];
+}
+
+const synergyDataPath = path.resolve(
+  process.cwd(),
+  'public/data/synergies',
+  `${CARD_ID}.json`,
+);
+const synergyData: SynergyFile = JSON.parse(fs.readFileSync(synergyDataPath, 'utf8'));
+const DISCARD_TOTAL =
+  synergyData.groups.find((g) => g.groupKey === 'discard')?.synergies.length ?? 0;
+if (DISCARD_TOTAL === 0) {
+  throw new Error(
+    `No 'discard' group found for card ${CARD_ID} in ${synergyDataPath}. ` +
+      `Fixture is broken — is the card still in the pool?`,
+  );
+}
+const DESKTOP_TRUNCATION_LIMIT = 12;
+const DESKTOP_OVERFLOW = DISCARD_TOTAL - DESKTOP_TRUNCATION_LIMIT;
 
 test.describe('Synergy Groups — Desktop', () => {
   test.beforeEach(async ({page, synergyResultsPage}, testInfo) => {
@@ -70,7 +102,7 @@ test.describe('Synergy Groups — Desktop', () => {
   });
 
   test('should truncate playstyle group and show more tile', async ({synergyResultsPage}) => {
-    // Playstyle group (discard) has 34 cards — desktop truncates at 12
+    // Discard group exceeds the 12-card truncation threshold on desktop
     const discardGroup = synergyResultsPage.getSynergyGroupByKey('discard');
     await expect(discardGroup).toBeVisible();
 
@@ -83,7 +115,7 @@ test.describe('Synergy Groups — Desktop', () => {
     // "+N more" tile should be visible with remaining count
     const moreTile = synergyResultsPage.getMoreTile('discard');
     await expect(moreTile).toBeVisible();
-    await expect(moreTile).toContainText('22');
+    await expect(moreTile).toContainText(String(DESKTOP_OVERFLOW));
   });
 
   test('should display group description callout text', async ({synergyResultsPage}) => {
