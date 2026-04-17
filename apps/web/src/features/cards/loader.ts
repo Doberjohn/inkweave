@@ -115,22 +115,25 @@ export interface CardDataResult {
   sets: SetInfo[];
 }
 
+const PREVIEW_PATH = '/data/previewCards.json';
+
 /**
- * Fetch cards from a local file (for offline use)
- * Place allCards.json in your public folder
+ * Fetch cards from a local file, merged with optional preview cards.
+ * Preview cards are loaded from /data/previewCards.json if present (graceful 404).
+ * Deduplication: allCards.json wins on id conflict.
  */
 export async function fetchCardsFromLocal(
   path: string = '/data/allCards.json',
 ): Promise<CardDataResult> {
-  const response = await fetch(path);
+  const primaryResponse = await fetch(path);
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch local cards: ${response.status}`);
+  if (!primaryResponse.ok) {
+    throw new Error(`Failed to fetch local cards: ${primaryResponse.status}`);
   }
 
-  let data: LorcanaJSONData;
+  let primary: LorcanaJSONData;
   try {
-    data = await response.json();
+    primary = await primaryResponse.json();
   } catch (parseError) {
     throw new Error(
       `Failed to parse card data: ${parseError instanceof Error ? parseError.message : 'Invalid JSON'}`,
@@ -138,9 +141,34 @@ export async function fetchCardsFromLocal(
     );
   }
 
+  const previewResponse = await fetch(PREVIEW_PATH);
+  let preview: LorcanaJSONData | null = null;
+  if (previewResponse.ok) {
+    try {
+      preview = await previewResponse.json();
+    } catch {
+      preview = null;
+    }
+  }
+
+  const primaryIds = new Set(primary.cards.map((c) => c.id));
+  const previewCards = preview?.cards.filter((c) => !primaryIds.has(c.id)) ?? [];
+  const mergedCards = [...primary.cards, ...previewCards];
+
+  const mergedSets: Record<string, LorcanaJSONSet> = {
+    ...(primary.sets ?? {}),
+    ...(preview?.sets ?? {}),
+  };
+
+  const merged: LorcanaJSONData = {
+    metadata: primary.metadata,
+    sets: mergedSets,
+    cards: mergedCards,
+  };
+
   return {
-    cards: loadCardsFromJSON(data),
-    sets: loadSetsFromJSON(data),
+    cards: loadCardsFromJSON(merged),
+    sets: loadSetsFromJSON(merged),
   };
 }
 

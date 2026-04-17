@@ -343,11 +343,13 @@ describe('fetchCardsFromLocal', () => {
     mockFetch.mockReset();
   });
 
-  it('should fetch and parse cards from local JSON', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(makeJsonData({})),
-    });
+  it('should fetch and parse cards from local JSON (single file, legacy path)', async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(makeJsonData({})),
+      })
+      .mockResolvedValueOnce({ok: false, status: 404});
 
     const result = await fetchCardsFromLocal('/data/test.json');
     expect(mockFetch).toHaveBeenCalledWith('/data/test.json');
@@ -355,7 +357,7 @@ describe('fetchCardsFromLocal', () => {
     expect(result.sets).toEqual([]);
   });
 
-  it('should throw error when fetch fails', async () => {
+  it('should throw error when primary fetch fails', async () => {
     mockFetch.mockResolvedValueOnce({ok: false, status: 404});
     await expect(fetchCardsFromLocal('/data/missing.json')).rejects.toThrow(
       'Failed to fetch local cards: 404',
@@ -370,6 +372,104 @@ describe('fetchCardsFromLocal', () => {
     await expect(fetchCardsFromLocal('/data/invalid.json')).rejects.toThrow(
       'Failed to parse card data: Invalid JSON',
     );
+  });
+
+  it('should merge previewCards.json when present', async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve(makeJsonData({id: 1, name: 'MainCard', fullName: 'Main Card'})),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve(makeJsonData({id: 2, name: 'PreviewCard', fullName: 'Preview Card'})),
+      });
+
+    const result = await fetchCardsFromLocal();
+
+    expect(mockFetch).toHaveBeenCalledWith('/data/allCards.json');
+    expect(mockFetch).toHaveBeenCalledWith('/data/previewCards.json');
+    expect(result.cards).toHaveLength(2);
+    expect(result.cards.map((c) => c.fullName).sort()).toEqual(['Main Card', 'Preview Card']);
+  });
+
+  it('should gracefully handle missing previewCards.json (404)', async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(makeJsonData({id: 1, name: 'Only', fullName: 'Only Card'})),
+      })
+      .mockResolvedValueOnce({ok: false, status: 404});
+
+    const result = await fetchCardsFromLocal();
+
+    expect(result.cards).toHaveLength(1);
+    expect(result.cards[0].fullName).toBe('Only Card');
+  });
+
+  it('should handle empty previewCards.json cards array', async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(makeJsonData({id: 1, name: 'Main', fullName: 'Main Card'})),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            metadata: {formatVersion: '1.0', generatedOn: '2026-04-17', language: 'en'},
+            sets: {},
+            cards: [],
+          }),
+      });
+
+    const result = await fetchCardsFromLocal();
+    expect(result.cards).toHaveLength(1);
+  });
+
+  it('should dedupe by card id (allCards.json wins)', async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve(makeJsonData({id: 1, name: 'Canonical', fullName: 'Canonical Card'})),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve(makeJsonData({id: 1, name: 'Preview', fullName: 'Stale Preview'})),
+      });
+
+    const result = await fetchCardsFromLocal();
+    expect(result.cards).toHaveLength(1);
+    expect(result.cards[0].fullName).toBe('Canonical Card');
+  });
+
+  it('should merge sets from both files', async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            metadata: {formatVersion: '1.0', generatedOn: '2026-04-17', language: 'en'},
+            sets: {'11': {name: 'Reign of Jafar', number: 11, type: 'expansion'}},
+            cards: [],
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            metadata: {formatVersion: '1.0', generatedOn: '2026-04-17', language: 'en'},
+            sets: {'12': {name: 'The Wilds Unknown', number: 12, type: 'expansion'}},
+            cards: [],
+          }),
+      });
+
+    const result = await fetchCardsFromLocal();
+    expect(result.sets.map((s) => s.code).sort()).toEqual(['11', '12']);
   });
 });
 
