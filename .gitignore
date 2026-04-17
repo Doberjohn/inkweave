@@ -63,3 +63,6 @@ apps/web/public/data/synergies/
 
 # Local domain knowledge base (rulebooks, guides — not committed)
 .knowledge/
+
+# Per-card source files for preview sets (scratch; previewCards.json is the runtime source of truth)
+apps/web/public/data/set12/
