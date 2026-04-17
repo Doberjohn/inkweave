@@ -20,7 +20,8 @@ import {fileURLToPath} from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const DATA_FILE = path.join(ROOT, 'apps/web/public/data/allCards.json');
+const MAIN_DATA_FILE = path.join(ROOT, 'apps/web/public/data/allCards.json');
+const PREVIEW_DATA_FILE = path.join(ROOT, 'apps/web/public/data/previewCards.json');
 const OUTPUT_DIR = path.join(ROOT, 'apps/web/public/data/synergies');
 const VERBOSE = process.argv.includes('--verbose');
 
@@ -37,11 +38,26 @@ async function main() {
   const engineUrl = new URL(`file:///${enginePath.replace(/\\/g, '/')}`);
   const {synergyEngine, getAllPlaystyles, transformCards} = await import(engineUrl.href);
 
-  // Load and transform card data using the engine's shared transformer
-  const rawData = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
-  const rawCount = rawData.cards.length;
-  const cards = transformCards(rawData.cards);
-  console.log(`  ${cards.length}/${rawCount} cards loaded`);
+  // Load and transform card data (main + optional preview) using the engine's shared transformer
+  const mainData = JSON.parse(fs.readFileSync(MAIN_DATA_FILE, 'utf-8'));
+  const mainIds = new Set(mainData.cards.map((c) => c.id));
+
+  let previewCount = 0;
+  let mergedRaw = mainData.cards;
+  if (fs.existsSync(PREVIEW_DATA_FILE)) {
+    const previewData = JSON.parse(fs.readFileSync(PREVIEW_DATA_FILE, 'utf-8'));
+    // Dedup: main wins on id conflict
+    const previewFiltered = previewData.cards.filter((c) => !mainIds.has(c.id));
+    previewCount = previewFiltered.length;
+    mergedRaw = [...mainData.cards, ...previewFiltered];
+  }
+
+  const rawCount = mergedRaw.length;
+  const cards = transformCards(mergedRaw);
+  console.log(
+    `  ${cards.length}/${rawCount} cards loaded` +
+      (previewCount > 0 ? ` (${previewCount} from previewCards.json)` : ''),
+  );
   if (cards.length < rawCount) {
     console.warn(`  ⚠ ${rawCount - cards.length} cards skipped (invalid ink/type)`);
   }
