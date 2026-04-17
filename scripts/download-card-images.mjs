@@ -106,7 +106,19 @@ async function main() {
   fs.rmSync(OUTPUT_DIR, {recursive: true, force: true});
   fs.mkdirSync(OUTPUT_DIR, {recursive: true});
 
-  // Build task list — one image per card (main + optional preview cards)
+  // Preview AVIFs for cards whose source URLs are unreachable at build time
+  // (e.g., hotlink-protected CDNs returning 403 to Node fetches).
+  const PREVIEW_AVIFS_DIR = path.join(ROOT, 'apps/web/public/card-images-preview');
+  const hasPreviewAvifs = (id) => {
+    if (!fs.existsSync(PREVIEW_AVIFS_DIR)) return false;
+    return SIZES.every((s) =>
+      fs.existsSync(path.join(PREVIEW_AVIFS_DIR, `${id}${s.suffix}.avif`)),
+    );
+  };
+  let previewCopied = 0;
+
+  // Build task list — main + optional preview cards, skipping cards that already
+  // have pre-generated AVIFs in card-images-preview/
   const PREVIEW_DATA_FILE = path.join(ROOT, 'apps/web/public/data/previewCards.json');
   const allCards = [...data.cards];
   if (fs.existsSync(PREVIEW_DATA_FILE)) {
@@ -119,6 +131,17 @@ async function main() {
 
   const tasks = [];
   for (const card of allCards) {
+    if (hasPreviewAvifs(card.id)) {
+      for (const size of SIZES) {
+        const file = `${card.id}${size.suffix}.avif`;
+        fs.copyFileSync(
+          path.join(PREVIEW_AVIFS_DIR, file),
+          path.join(OUTPUT_DIR, file),
+        );
+      }
+      previewCopied++;
+      continue;
+    }
     const url = card.images?.full ?? card.images?.thumbnail;
     if (url) {
       tasks.push({id: card.id, url});
@@ -126,7 +149,7 @@ async function main() {
   }
 
   console.log(
-    `\n  ${tasks.length} images (${allCards.length} cards)${FORCE ? ' [force re-download]' : ''}`,
+    `\n  ${tasks.length} images (${allCards.length} cards, ${previewCopied} from preview AVIFs)${FORCE ? ' [force re-download]' : ''}`,
   );
 
   let cached = 0;
