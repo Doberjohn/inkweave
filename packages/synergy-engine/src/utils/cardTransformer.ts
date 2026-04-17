@@ -9,7 +9,6 @@ export interface LorcanaJSONCard {
   name: string;
   version?: string;
   fullName: string;
-  simpleName: string;
   cost: number;
   color: string;
   inkwell: boolean;

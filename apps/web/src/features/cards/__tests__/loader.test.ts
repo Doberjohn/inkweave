@@ -21,7 +21,6 @@ function makeJsonData(...cardOverrides: Record<string, unknown>[]) {
       id: i + 1,
       name: 'Test',
       fullName: 'Test Card',
-      simpleName: 'test',
       cost: 3,
       color: 'Amber',
       inkwell: true,
