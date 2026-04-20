@@ -97,13 +97,13 @@ Claude Code hooks, skills, and agents enforce workflow rules automatically. Chec
 | `git-write-protection.sh` | PreToolUse/Bash | Soft-blocks commit/push (`USER_APPROVED=1` bypass), hard-blocks destructive ops |
 | `branch-verification.sh` | PreToolUse/Edit\|Write | Blocks source file edits on master/main |
 | `engine-auto-rebuild.sh` | PostToolUse/Edit\|Write | Auto `pnpm build:engine` + `pnpm precompute-synergies` after engine file edits |
-| `issue-create-guard.sh` | PreToolUse/Bash | Redirects direct `gh issue create` to `/create-issue` skill (`SKILL_APPROVED=1` bypass) |
+| `issue-create-guard.sh` | PreToolUse/Bash | Redirects direct `gh issue create` to `/draft-issue` skill (`SKILL_APPROVED=1` bypass) |
 | Husky pre-push | git push | Runs E2E chromium before push |
 
 ### Skills (`.claude/skills/`)
 | Skill | Arg | What it does |
 |-------|-----|-------------|
-| `/create-issue <desc>` | brief description | Clarifying questions → refine spec → create issue → offer `/implement-issue` |
+| `/draft-issue [title hint]` | optional title hint | Extract scope from conversation → clarifying questions if gaps → 8-section rubric draft → score → publish on approval |
 | `/implement-issue <num>` | issue number | Session hygiene → fetch issue → create branch → summary |
 | `/commit-and-push "msg"` | commit message | PR readiness → review → commit → push → PR → CI |
 | `/close-session [summary]` | work summary | Cleanup → docs update → MEMORY.md → summary |
@@ -275,6 +275,7 @@ Dark fantasy theme inspired by Lorcana:
 - Commit messages: Use semantic commit notation with issue reference (e.g., `test(deck): add tests (#5)`)
 - PRs should include `Closes #<issue>` to auto-close issues on merge
 - **Issues**: When creating issues, always add appropriate labels. When listing issues, check for unlabeled ones proactively. When adding/removing an issue from MVP, always update BOTH the `mvp` label AND the `MVP v1.0` milestone together.
+- **Drafting issues**: The moment scope is agreed for a new GitHub issue, invoke `/draft-issue` — do not draft issue markdown in a message. The skill scores against an 8-section rubric and publishes on approval. Publishing bypass: `SKILL_APPROVED=1 gh issue create ...`.
 
 ### Pre-Commit & Pre-Push (automated)
 - **Pre-commit hook** runs lint + tests on every `git commit`. Do not skip.
