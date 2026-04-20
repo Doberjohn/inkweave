@@ -23,6 +23,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const RAW_DIR = path.join(ROOT, 'apps/web/public/card-images-raw');
 const OUT_DIR = path.join(ROOT, 'apps/web/public/card-images-preview');
+const PREVIEW_JSON = path.join(ROOT, 'apps/web/public/data/previewCards.json');
 const FORCE = process.argv.includes('--force');
 
 const SIZES = [
@@ -32,10 +33,27 @@ const SIZES = [
 const QUALITY = 50;
 const ACCEPTED_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 
-async function convert(id, srcPath) {
+// Location cards are stored as 337x470 portrait AVIFs with content pre-rotated
+// 90deg, because the app unconditionally CSS-rotates them 90deg at render time.
+// Source JPGs for Set 12 Locations are landscape (natural reading orientation),
+// so we rotate 90deg before resize to match the stored convention.
+function loadLocationIds() {
+  if (!fs.existsSync(PREVIEW_JSON)) return new Set();
+  const data = JSON.parse(fs.readFileSync(PREVIEW_JSON, 'utf8'));
+  return new Set(
+    (data.cards || []).filter((c) => c.type === 'Location').map((c) => String(c.id)),
+  );
+}
+
+async function convert(id, srcPath, isLocation) {
   for (const s of SIZES) {
     const outPath = path.join(OUT_DIR, `${id}${s.suffix}.avif`);
-    await sharp(srcPath)
+    let pipeline = sharp(srcPath);
+    // Rotate 90deg CCW so the stored file is "sideways" — CSS rotate(90deg) CW
+    // at render time then displays the card upright. Matches convention used
+    // by existing Location AVIFs from the Ravensburger pipeline.
+    if (isLocation) pipeline = pipeline.rotate(-90);
+    await pipeline
       .resize(s.width, s.height, {fit: 'cover'})
       .avif({quality: QUALITY})
       .toFile(outPath);
@@ -63,7 +81,12 @@ async function main() {
     return;
   }
 
-  console.log(`\n  Converting ${files.length} raw image(s)${FORCE ? ' [force]' : ''}`);
+  const locationIds = loadLocationIds();
+
+  console.log(
+    `\n  Converting ${files.length} raw image(s)${FORCE ? ' [force]' : ''}` +
+      ` (${locationIds.size} Location-type cards will be pre-rotated)`,
+  );
 
   let converted = 0;
   let skipped = 0;
@@ -85,7 +108,7 @@ async function main() {
     }
 
     try {
-      await convert(id, path.join(RAW_DIR, file));
+      await convert(id, path.join(RAW_DIR, file), locationIds.has(id));
       converted++;
     } catch (err) {
       console.error(`  x ${file}: ${err.message}`);
