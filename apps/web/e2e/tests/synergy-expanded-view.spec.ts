@@ -1,7 +1,37 @@
 import {test, expect} from '../fixtures';
+import fs from 'node:fs';
+import path from 'node:path';
 
-// Anna - Diplomatic Queen: discard group has 34 cards (truncated on both viewports)
+// Anna - Diplomatic Queen: shift-targets (direct) + discard (playstyle);
+// discard count read from synergy data at test time.
 const CARD_URL = '/card/1041';
+const CARD_ID = '1041';
+
+// Read the precomputed synergy data for the fixture card to derive expected
+// group sizes at test time. This avoids hardcoding counts that drift as
+// Set 12+ preview cards are added/removed from the pool.
+interface SynergyGroup {
+  groupKey: string;
+  synergies: unknown[];
+}
+interface SynergyFile {
+  groups: SynergyGroup[];
+}
+
+const synergyDataPath = path.resolve(
+  process.cwd(),
+  'public/data/synergies',
+  `${CARD_ID}.json`,
+);
+const synergyData: SynergyFile = JSON.parse(fs.readFileSync(synergyDataPath, 'utf8'));
+const DISCARD_TOTAL =
+  synergyData.groups.find((g) => g.groupKey === 'discard')?.synergies.length ?? 0;
+if (DISCARD_TOTAL === 0) {
+  throw new Error(
+    `No 'discard' group found for card ${CARD_ID} in ${synergyDataPath}. ` +
+      `Fixture is broken — is the card still in the pool?`,
+  );
+}
 
 test.describe('Synergy Expanded View — Desktop', () => {
   test.beforeEach(async ({page, synergyResultsPage}, testInfo) => {
@@ -36,10 +66,10 @@ test.describe('Synergy Expanded View — Desktop', () => {
     const expandedView = page.locator('[data-expanded-group="discard"]');
     await expect(expandedView).toBeVisible();
 
-    // All 34 cards should be visible (no truncation, no more tile)
+    // All cards should be visible (no truncation, no more tile)
     const tiles = expandedView.locator('button.card-tile');
     const count = await tiles.count();
-    expect(count).toBe(34);
+    expect(count).toBe(DISCARD_TOTAL);
 
     // No more tile in expanded view
     const expandedMoreTile = expandedView.locator('[data-testid="more-tile"]');
@@ -83,9 +113,9 @@ test.describe('Synergy Expanded View — Mobile', () => {
     const expandedView = page.locator('[data-expanded-group="discard"]');
     await expect(expandedView).toBeVisible();
 
-    // All 34 cards should be shown
+    // All cards should be shown
     const tiles = expandedView.locator('button.card-tile');
     const count = await tiles.count();
-    expect(count).toBe(34);
+    expect(count).toBe(DISCARD_TOTAL);
   });
 });

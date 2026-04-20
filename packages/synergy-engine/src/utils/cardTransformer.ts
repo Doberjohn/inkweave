@@ -9,7 +9,6 @@ export interface LorcanaJSONCard {
   name: string;
   version?: string;
   fullName: string;
-  simpleName: string;
   cost: number;
   color: string;
   inkwell: boolean;
@@ -37,6 +36,7 @@ export interface LorcanaJSONCard {
   setCode?: string;
   number?: number;
   rarity?: string;
+  franchise?: string; // Set only on preview cards (e.g., "Toy Story", "The Incredibles", "Brave")
 }
 
 const VALID_INKS: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
@@ -124,6 +124,7 @@ export function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
     keywords: keywords.length > 0 ? keywords : undefined,
     setCode: raw.setCode,
     setNumber: raw.number,
+    franchise: raw.franchise,
   };
 }
 

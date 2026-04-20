@@ -117,7 +117,7 @@
 | should show synergy breakdown sidebar with group labels | Breakdown sidebar contains "Shift Targets" and "Discard" labels |
 | should filter synergy groups when clicking a group chip | Clicking "Discard" chip hides shift-targets group; "All" chip resets |
 | should show all direct group cards inline without more tile | Shift-targets group shows all 3 cards, no "+N more" tile |
-| should truncate playstyle group and show more tile | Discard group truncates at 10 cards with "+24 more" tile |
+| should truncate playstyle group and show more tile | Discard group truncates at 12 cards with dynamic "+N more" tile (count read from `_manifest.json` at test-load time to survive pool drift) |
 | should display group description callout text | Both groups render description callout text |
 
 ## `synergy-detail-modal.spec.ts` — 4 tests (3 desktop, 1 mobile)
@@ -134,9 +134,9 @@
 | Test | What it verifies |
 |---|---|
 | should show toolbar in expanded view | Expanded discard group shows sort select |
-| should show all cards without truncation in expanded view | Expanded view shows all 34 discard cards, no more tile |
+| should show all cards without truncation in expanded view | Expanded view shows all discard cards (count read from `_manifest.json` at test-load time), no more tile |
 | should navigate back from expanded view | "Back to all synergies" returns to multi-group view |
-| should expand playstyle group on mobile | Mobile expand shows all 34 discard cards |
+| should expand playstyle group on mobile | Mobile expand shows all discard cards (count derived from `_manifest.json`) |
 
 ## `playstyle-detail.spec.ts` — 5 tests (desktop only)
 

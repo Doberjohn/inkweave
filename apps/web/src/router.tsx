@@ -51,6 +51,7 @@ const InDepthVotePage = lazyWithRetry(
   'InDepthVotePage',
 );
 const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'), 'NotFoundPage');
+const RevealsPage = lazyWithRetry(() => import('./pages/RevealsPage'), 'RevealsPage');
 
 function SuspenseWrapper({children}: {children: React.ReactNode}) {
   return (
@@ -137,6 +138,14 @@ export const router = createBrowserRouter([
         element: (
           <SuspenseWrapper>
             <InDepthVotePage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'reveals',
+        element: (
+          <SuspenseWrapper>
+            <RevealsPage />
           </SuspenseWrapper>
         ),
       },

@@ -30,4 +30,5 @@ export interface LorcanaCard {
   imageUrl?: string;
   setCode?: string;
   setNumber?: number;
+  franchise?: string; // Set only on preview cards (e.g., "Toy Story", "The Incredibles", "Brave")
 }
