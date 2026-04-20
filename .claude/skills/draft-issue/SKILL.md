@@ -1,11 +1,11 @@
 ---
-name: write-issue
-description: Draft, evaluate, and publish a GitHub implementation plan issue from the current conversation context. Use when you have agreed on scope and are ready to write an issue.
+name: draft-issue
+description: Draft, evaluate, and publish a GitHub implementation plan issue from the current conversation context. Use when you have agreed on scope and are ready to draft an issue.
 argument-hint: [optional: brief title hint]
 allowed-tools: Read, Bash(gh:*)
 ---
 
-# Write Issue
+# Draft Issue
 
 Turn the current conversation's agreed action points into a scored, publication-ready
 GitHub implementation plan issue. Follows the eight-section rubric used by the issue
@@ -13,7 +13,7 @@ evaluator.
 
 ## Step 1: Extract context from conversation
 
-Read the current conversation history and extract everything needed to write the issue.
+Read the current conversation history and extract everything needed to draft the issue.
 Do not ask the user to repeat themselves — pull it directly from what has been discussed.
 
 Extract:
@@ -56,7 +56,7 @@ Before I draft, I need to clarify a few things:
 
 ## Step 3: Draft the issue
 
-Write the complete issue body using the eight-section structure below. Apply the quality
+Draft the complete issue body using the eight-section structure below. Apply the quality
 criteria for each section — do not produce acceptable when strong is achievable from the
 available context.
 
