@@ -1,7 +1,7 @@
 {
   "metadata": {
     "formatVersion": "2.3.2",
-    "generatedOn": "2026-04-17T00:00:00",
+    "generatedOn": "2026-04-21T12:58:41",
     "language": "en"
   },
   "sets": {
@@ -3818,6 +3818,2544 @@
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/202-204-EN-12-Club-Door-Lorcana-Player-430x600.jpg",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/202-204-EN-12-Club-Door-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 124204,
+      "name": "Dale",
+      "version": "Excited Friend",
+      "fullName": "Dale - Excited Friend",
+      "cost": 3,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero"
+      ],
+      "fullText": "LOOK WHAT I FOUND While you have a character named Chip in play, this character gets +1 ◆.",
+      "fullTextSections": [
+        "LOOK WHAT I FOUND While you have a character named Chip in play, this character gets +1 ◆."
+      ],
+      "strength": 1,
+      "willpower": 6,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "While you have a character named Chip in play, this character gets +1 ◆.",
+          "fullText": "LOOK WHAT I FOUND While you have a character named Chip in play, this character gets +1 ◆.",
+          "name": "LOOK WHAT I FOUND",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 4,
+      "rarity": "Common",
+      "franchise": "Chip 'n' Dale: Rescue Rangers",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/4-204-EN-12-Dale-Excited-Friend-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/4-204-EN-12-Dale-Excited-Friend-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 125204,
+      "name": "Pedro Madrigal",
+      "version": "Family Patriarch",
+      "fullName": "Pedro Madrigal - Family Patriarch",
+      "cost": 2,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Madrigal"
+      ],
+      "fullText": "DIFFICULT JOURNEY This character enters play with 1 damage. DEVOTED FAMILY When you play this character, if you have another Madrigal character in play, you may remove up to 1 damage from him.",
+      "fullTextSections": [
+        "DIFFICULT JOURNEY This character enters play with 1 damage.",
+        "DEVOTED FAMILY When you play this character, if you have another Madrigal character in play, you may remove up to 1 damage from him."
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "This character enters play with 1 damage.",
+          "fullText": "DIFFICULT JOURNEY This character enters play with 1 damage.",
+          "name": "DIFFICULT JOURNEY",
+          "type": "static"
+        },
+        {
+          "effect": "When you play this character, if you have another Madrigal character in play, you may remove up to 1 damage from him.",
+          "fullText": "DEVOTED FAMILY When you play this character, if you have another Madrigal character in play, you may remove up to 1 damage from him.",
+          "name": "DEVOTED FAMILY",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 5,
+      "rarity": "Uncommon",
+      "franchise": "Encanto",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/5-204-EN-12-Pedro-Madrigal-Family-Patriarch-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/5-204-EN-12-Pedro-Madrigal-Family-Patriarch-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 127204,
+      "name": "Alan-A-Dale",
+      "version": "Loyal Bard",
+      "fullName": "Alan-A-Dale - Loyal Bard",
+      "cost": 2,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "Singer 4 (This character counts as cost 4 to sing songs.)",
+      "fullTextSections": [
+        "Singer 4 (This character counts as cost 4 to sing songs.)"
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1,
+      "abilities": [
+        {
+          "fullText": "Singer 4 (This character counts as cost 4 to sing songs.)",
+          "keyword": "Singer",
+          "type": "keyword",
+          "keywordValue": "4",
+          "keywordValueNumber": 4,
+          "reminderText": "This character counts as cost 4 to sing songs."
+        }
+      ],
+      "setCode": "12",
+      "number": 7,
+      "rarity": "Common",
+      "franchise": "Robin Hood",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/7-204-EN-12-Alan-a-Dale-Loyal-Bard-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/7-204-EN-12-Alan-a-Dale-Loyal-Bard-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 128204,
+      "name": "Prince Eric",
+      "version": "Noble Swordsman",
+      "fullName": "Prince Eric - Noble Swordsman",
+      "cost": 5,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Hero",
+        "Prince"
+      ],
+      "fullText": "",
+      "fullTextSections": [],
+      "strength": 6,
+      "willpower": 7,
+      "lore": 1,
+      "setCode": "12",
+      "number": 8,
+      "rarity": "Common",
+      "franchise": "The Little Mermaid",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/8-204-EN-12-Prince-Eric-Noble-Swordsman-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/8-204-EN-12-Prince-Eric-Noble-Swordsman-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 129204,
+      "name": "Dolores Madrigal",
+      "version": "Hears Everything",
+      "fullName": "Dolores Madrigal - Hears Everything",
+      "cost": 5,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Madrigal"
+      ],
+      "fullText": "NO SECRETS When you play this character, look at chosen opponent’s hand.",
+      "fullTextSections": [
+        "NO SECRETS When you play this character, look at chosen opponent’s hand."
+      ],
+      "strength": 5,
+      "willpower": 5,
+      "lore": 2,
+      "abilities": [
+        {
+          "effect": "When you play this character, look at chosen opponent’s hand.",
+          "fullText": "NO SECRETS When you play this character, look at chosen opponent’s hand.",
+          "name": "NO SECRETS",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 9,
+      "rarity": "Common",
+      "franchise": "Encanto",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/9-204-EN-12-Dolores-Madrigal-Hears-Everything-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/9-204-EN-12-Dolores-Madrigal-Hears-Everything-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1224204,
+      "name": "Julieta Madrigal",
+      "version": "Caring Baker",
+      "fullName": "Julieta Madrigal - Caring Baker",
+      "cost": 1,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Madrigal",
+        "Mentor"
+      ],
+      "fullText": "RESTORING RECIPE When you play this character and whenever you quest with her, you may remove up to 1 damage from chosen character or location.",
+      "fullTextSections": [
+        "RESTORING RECIPE When you play this character and whenever you quest with her, you may remove up to 1 damage from chosen character or location."
+      ],
+      "strength": 1,
+      "willpower": 2,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "When you play this character and whenever you quest with her, you may remove up to 1 damage from chosen character or location.",
+          "fullText": "RESTORING RECIPE When you play this character and whenever you quest with her, you may remove up to 1 damage from chosen character or location.",
+          "name": "RESTORING RECIPE",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 24,
+      "rarity": "Common",
+      "franchise": "Encanto",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/24-204-EN-12-Julieta-Madrigal-Caring-Baker-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/24-204-EN-12-Julieta-Madrigal-Caring-Baker-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1227204,
+      "name": "Chip",
+      "version": "Team Player",
+      "fullName": "Chip - Team Player",
+      "cost": 6,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Hero"
+      ],
+      "fullText": "RANGER RESOURCEFULNESS When you play this character, if you have another character with 4 ⛉ or more in play, you may draw a card.",
+      "fullTextSections": [
+        "RANGER RESOURCEFULNESS When you play this character, if you have another character with 4 ⛉ or more in play, you may draw a card."
+      ],
+      "strength": 2,
+      "willpower": 7,
+      "lore": 2,
+      "abilities": [
+        {
+          "effect": "When you play this character, if you have another character with 4 ⛉ or more in play, you may draw a card.",
+          "fullText": "RANGER RESOURCEFULNESS When you play this character, if you have another character with 4 ⛉ or more in play, you may draw a card.",
+          "name": "RANGER RESOURCEFULNESS",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 27,
+      "rarity": "Common",
+      "franchise": "Chip 'n' Dale: Rescue Rangers",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/27-204-EN-12-Chip-Team-Player-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/27-204-EN-12-Chip-Team-Player-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1236204,
+      "name": "Alma Madrigal",
+      "version": "Leading the Way",
+      "fullName": "Alma Madrigal - Leading the Way",
+      "cost": 2,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Madrigal",
+        "Mentor"
+      ],
+      "fullText": "PROTECTING THE FAMILY When you play this character, if you have another Madrigal character in play, you may exert chosen opposing character.",
+      "fullTextSections": [
+        "PROTECTING THE FAMILY When you play this character, if you have another Madrigal character in play, you may exert chosen opposing character."
+      ],
+      "strength": 1,
+      "willpower": 2,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "When you play this character, if you have another Madrigal character in play, you may exert chosen opposing character.",
+          "fullText": "PROTECTING THE FAMILY When you play this character, if you have another Madrigal character in play, you may exert chosen opposing character.",
+          "name": "PROTECTING THE FAMILY",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 36,
+      "rarity": "Uncommon",
+      "franchise": "Encanto",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/36-204-EN-12-Alma-Madrigal-Leading-the-Way-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/36-204-EN-12-Alma-Madrigal-Leading-the-Way-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1237204,
+      "name": "Snow White",
+      "version": "Merry as the Morning",
+      "fullName": "Snow White - Merry as the Morning",
+      "cost": 3,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Hero",
+        "Princess"
+      ],
+      "fullText": "CLARION CALL Whenever this character quests, you may return chosen Seven Dwarfs character of yours to your hand to draw a card. NEVER FORGOTTEN During an opponent’s turn, when this character is banished in a challenge, return this card to your hand.",
+      "fullTextSections": [
+        "CLARION CALL Whenever this character quests, you may return chosen Seven Dwarfs character of yours to your hand to draw a card.",
+        "NEVER FORGOTTEN During an opponent’s turn, when this character is banished in a challenge, return this card to your hand."
+      ],
+      "strength": 2,
+      "willpower": 3,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "Whenever this character quests, you may return chosen Seven Dwarfs character of yours to your hand to draw a card.",
+          "fullText": "CLARION CALL Whenever this character quests, you may return chosen Seven Dwarfs character of yours to your hand to draw a card.",
+          "name": "CLARION CALL",
+          "type": "triggered"
+        },
+        {
+          "effect": "During an opponent’s turn, when this character is banished in a challenge, return this card to your hand.",
+          "fullText": "NEVER FORGOTTEN During an opponent’s turn, when this character is banished in a challenge, return this card to your hand.",
+          "name": "NEVER FORGOTTEN",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 37,
+      "rarity": "Legendary",
+      "franchise": "Snow White and the Seven Dwarfs",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/37-204-EN-12-Snow-White-Merry-as-the-Morning-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/37-204-EN-12-Snow-White-Merry-as-the-Morning-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1238204,
+      "name": "Dopey",
+      "version": "Drawn to Music",
+      "fullName": "Dopey - Drawn to Music",
+      "cost": 6,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Seven Dwarfs"
+      ],
+      "fullText": "TONGUE-TIED This character can’t ⟳ to sing songs. DISTANT MELODY Once during your turn, whenever you play a song, this character gets +1 ◆ this turn.",
+      "fullTextSections": [
+        "TONGUE-TIED This character can’t ⟳ to sing songs.",
+        "DISTANT MELODY Once during your turn, whenever you play a song, this character gets +1 ◆ this turn."
+      ],
+      "strength": 3,
+      "willpower": 8,
+      "lore": 2,
+      "abilities": [
+        {
+          "effect": "This character can’t ⟳ to sing songs.",
+          "fullText": "TONGUE-TIED This character can’t ⟳ to sing songs.",
+          "name": "TONGUE-TIED",
+          "type": "static"
+        },
+        {
+          "effect": "Once during your turn, whenever you play a song, this character gets +1 ◆ this turn.",
+          "fullText": "DISTANT MELODY Once during your turn, whenever you play a song, this character gets +1 ◆ this turn.",
+          "name": "DISTANT MELODY",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 38,
+      "rarity": "Uncommon",
+      "franchise": "Snow White and the Seven Dwarfs",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/38-204-EN-12-Dopey-Drawn-to-Music-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/38-204-EN-12-Dopey-Drawn-to-Music-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1239204,
+      "name": "Bashful",
+      "version": "Riding the Rails",
+      "fullName": "Bashful - Riding the Rails",
+      "cost": 5,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Seven Dwarfs"
+      ],
+      "fullText": "Evasive (Only characters with Evasive can challenge this character.)",
+      "fullTextSections": [
+        "Evasive (Only characters with Evasive can challenge this character.)"
+      ],
+      "strength": 3,
+      "willpower": 6,
+      "lore": 2,
+      "abilities": [
+        {
+          "fullText": "Evasive (Only characters with Evasive can challenge this character.)",
+          "keyword": "Evasive",
+          "type": "keyword",
+          "reminderText": "Only characters with Evasive can challenge this character."
+        }
+      ],
+      "setCode": "12",
+      "number": 39,
+      "rarity": "Common",
+      "franchise": "Snow White and the Seven Dwarfs",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/39-204-EN-12-Bashful-Riding-the-Rails-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/39-204-EN-12-Bashful-Riding-the-Rails-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1240204,
+      "name": "Doc",
+      "version": "Taking Notes",
+      "fullName": "Doc - Taking Notes",
+      "cost": 4,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Seven Dwarfs"
+      ],
+      "fullText": "SHARE KNOWLEDGE When you play this character, if you have another Seven Dwarfs character or a Princess character in play, draw a card.",
+      "fullTextSections": [
+        "SHARE KNOWLEDGE When you play this character, if you have another Seven Dwarfs character or a Princess character in play, draw a card."
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "When you play this character, if you have another Seven Dwarfs character or a Princess character in play, draw a card.",
+          "fullText": "SHARE KNOWLEDGE When you play this character, if you have another Seven Dwarfs character or a Princess character in play, draw a card.",
+          "name": "SHARE KNOWLEDGE",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 40,
+      "rarity": "Uncommon",
+      "franchise": "Snow White and the Seven Dwarfs",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/40-204-EN-12-Doc-Taking-Notes-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/40-204-EN-12-Doc-Taking-Notes-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1241204,
+      "name": "Grumpy",
+      "version": "Soreheaded Miner",
+      "fullName": "Grumpy - Soreheaded Miner",
+      "cost": 7,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Seven Dwarfs"
+      ],
+      "fullText": "",
+      "fullTextSections": [],
+      "strength": 7,
+      "willpower": 7,
+      "lore": 2,
+      "setCode": "12",
+      "number": 41,
+      "rarity": "Common",
+      "franchise": "Snow White and the Seven Dwarfs",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/41-204-EN-12-Grumpy-Soreheaded-Miner-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/41-204-EN-12-Grumpy-Soreheaded-Miner-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1242204,
+      "name": "Sneezy",
+      "version": "Startlingly Loud",
+      "fullName": "Sneezy - Startlingly Loud",
+      "cost": 3,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Seven Dwarfs"
+      ],
+      "fullText": "GESUNDHEIT When you play this character, chosen character gets +1 ◆ this turn.",
+      "fullTextSections": [
+        "GESUNDHEIT When you play this character, chosen character gets +1 ◆ this turn."
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "When you play this character, chosen character gets +1 ◆ this turn.",
+          "fullText": "GESUNDHEIT When you play this character, chosen character gets +1 ◆ this turn.",
+          "name": "GESUNDHEIT",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 42,
+      "rarity": "Common",
+      "franchise": "Snow White and the Seven Dwarfs",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/42-204-EN-12-Sneezy-Startlingly-Loud-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/42-204-EN-12-Sneezy-Startlingly-Loud-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1243204,
+      "name": "Happy",
+      "version": "Joyful Adventurer",
+      "fullName": "Happy - Joyful Adventurer",
+      "cost": 2,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Seven Dwarfs"
+      ],
+      "fullText": "",
+      "fullTextSections": [],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 1,
+      "setCode": "12",
+      "number": 43,
+      "rarity": "Common",
+      "franchise": "Snow White and the Seven Dwarfs",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/43-204-EN-12-Happy-Joyful-Adventurer-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/43-204-EN-12-Happy-Joyful-Adventurer-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1244204,
+      "name": "Sleepy",
+      "version": "Deep Sleeper",
+      "fullName": "Sleepy - Deep Sleeper",
+      "cost": 1,
+      "color": "Amethyst",
+      "inkwell": false,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Seven Dwarfs"
+      ],
+      "fullText": "PLEASANT DREAMS When this character is banished, if you have a Seven Dwarfs or Princess character in play, you may draw a card.",
+      "fullTextSections": [
+        "PLEASANT DREAMS When this character is banished, if you have a Seven Dwarfs or Princess character in play, you may draw a card."
+      ],
+      "strength": 1,
+      "willpower": 2,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "When this character is banished, if you have a Seven Dwarfs or Princess character in play, you may draw a card.",
+          "fullText": "PLEASANT DREAMS When this character is banished, if you have a Seven Dwarfs or Princess character in play, you may draw a card.",
+          "name": "PLEASANT DREAMS",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 44,
+      "rarity": "Common",
+      "franchise": "Snow White and the Seven Dwarfs",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/44-204-EN-12-Sleepy-Deep-Sleeper-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/44-204-EN-12-Sleepy-Deep-Sleeper-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1245204,
+      "name": "Alma Madrigal",
+      "version": "Heart of the Family",
+      "fullName": "Alma Madrigal - Heart of the Family",
+      "cost": 3,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Madrigal",
+        "Mentor"
+      ],
+      "fullText": "FIND A WAY Whenever this character quests, move up to 1 damage from chosen character of yours to chosen opposing character.",
+      "fullTextSections": [
+        "FIND A WAY Whenever this character quests, move up to 1 damage from chosen character of yours to chosen opposing character."
+      ],
+      "strength": 2,
+      "willpower": 4,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "Whenever this character quests, move up to 1 damage from chosen character of yours to chosen opposing character.",
+          "fullText": "FIND A WAY Whenever this character quests, move up to 1 damage from chosen character of yours to chosen opposing character.",
+          "name": "FIND A WAY",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 45,
+      "rarity": "Common",
+      "franchise": "Encanto",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/45-204-EN-12-Alma-Madrigal-Heart-of-the-Family-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/45-204-EN-12-Alma-Madrigal-Heart-of-the-Family-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1246204,
+      "name": "Frozone",
+      "version": "Super Slick",
+      "fullName": "Frozone - Super Slick",
+      "cost": 2,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Super"
+      ],
+      "fullText": "Evasive (Only characters with Evasive can challenge this character.)",
+      "fullTextSections": [
+        "Evasive (Only characters with Evasive can challenge this character.)"
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1,
+      "abilities": [
+        {
+          "fullText": "Evasive (Only characters with Evasive can challenge this character.)",
+          "keyword": "Evasive",
+          "type": "keyword",
+          "reminderText": "Only characters with Evasive can challenge this character."
+        }
+      ],
+      "setCode": "12",
+      "number": 46,
+      "rarity": "Common",
+      "franchise": "The Incredibles",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/46-204-EN-12-Frozone-Super-Slick-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/46-204-EN-12-Frozone-Super-Slick-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1251204,
+      "name": "Elinor",
+      "version": "Spellbound Queen",
+      "fullName": "Elinor - Spellbound Queen",
+      "cost": 4,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Queen"
+      ],
+      "fullText": "Challenger +2 (When challenging, this character gets +2 ¤.)",
+      "fullTextSections": [
+        "Challenger +2 (When challenging, this character gets +2 ¤.)"
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 2,
+      "abilities": [
+        {
+          "fullText": "Challenger +2 (When challenging, this character gets +2 ¤.)",
+          "keyword": "Challenger",
+          "type": "keyword",
+          "keywordValue": "+2",
+          "keywordValueNumber": 2,
+          "reminderText": "When challenging, this character gets +2 ¤."
+        }
+      ],
+      "setCode": "12",
+      "number": 51,
+      "rarity": "Uncommon",
+      "franchise": "Brave",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/51-204-EN-12-Elinor-Spellbound-Queen-Italian-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/51-204-EN-12-Elinor-Spellbound-Queen-Italian-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1254204,
+      "name": "Edna Mode",
+      "version": "Fashion Designer",
+      "fullName": "Edna Mode - Fashion Designer",
+      "cost": 3,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Inventor"
+      ],
+      "fullText": "NO CAPES! When you play this character, you may return chosen item with cost 2 or less to its player’s hand. If you do, its player draws a card. MAKING SUPERS FABULOUS Whenever this character quests, your Super characters get +1 ◆ this turn.",
+      "fullTextSections": [
+        "NO CAPES! When you play this character, you may return chosen item with cost 2 or less to its player’s hand. If you do, its player draws a card.",
+        "MAKING SUPERS FABULOUS Whenever this character quests, your Super characters get +1 ◆ this turn."
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 2,
+      "abilities": [
+        {
+          "effect": "When you play this character, you may return chosen item with cost 2 or less to its player’s hand. If you do, its player draws a card.",
+          "fullText": "NO CAPES! When you play this character, you may return chosen item with cost 2 or less to its player’s hand. If you do, its player draws a card.",
+          "name": "NO CAPES!",
+          "type": "triggered"
+        },
+        {
+          "effect": "Whenever this character quests, your Super characters get +1 ◆ this turn.",
+          "fullText": "MAKING SUPERS FABULOUS Whenever this character quests, your Super characters get +1 ◆ this turn.",
+          "name": "MAKING SUPERS FABULOUS",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 54,
+      "rarity": "Rare",
+      "franchise": "The Incredibles",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/54-204-EN-12-Edna-Mode-Fashion-Designer-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/54-204-EN-12-Edna-Mode-Fashion-Designer-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1257204,
+      "name": "Mor'du",
+      "version": "Savage Cursed Prince",
+      "fullName": "Mor'du - Savage Cursed Prince",
+      "cost": 5,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Prince",
+        "Villain"
+      ],
+      "fullText": "FEROCIOUS ROAR When you play this character, exert all your characters not named Mor’du. ROOTED BY FEAR Your characters not named Mor’du can’t ready at the start of your turn.",
+      "fullTextSections": [
+        "FEROCIOUS ROAR When you play this character, exert all your characters not named Mor’du.",
+        "ROOTED BY FEAR Your characters not named Mor’du can’t ready at the start of your turn."
+      ],
+      "strength": 8,
+      "willpower": 8,
+      "lore": 3,
+      "abilities": [
+        {
+          "effect": "When you play this character, exert all your characters not named Mor’du.",
+          "fullText": "FEROCIOUS ROAR When you play this character, exert all your characters not named Mor’du.",
+          "name": "FEROCIOUS ROAR",
+          "type": "triggered"
+        },
+        {
+          "effect": "Your characters not named Mor’du can’t ready at the start of your turn.",
+          "fullText": "ROOTED BY FEAR Your characters not named Mor’du can’t ready at the start of your turn.",
+          "name": "ROOTED BY FEAR",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 57,
+      "rarity": "Super Rare",
+      "franchise": "Brave",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/57-204-EN-12-Mordu-Savage-Cursed-Prince-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/57-204-EN-12-Mordu-Savage-Cursed-Prince-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1258204,
+      "name": "Alma Madrigal",
+      "version": "Keeper of the Flame",
+      "fullName": "Alma Madrigal - Keeper of the Flame",
+      "cost": 5,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Floodborn",
+        "Madrigal",
+        "Mentor"
+      ],
+      "fullText": "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Alma Madrigal.) THAT’S ENOUGH Whenever you remove 1 or more damage from one of your characters, you may exert chosen opposing character.",
+      "fullTextSections": [
+        "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Alma Madrigal.)",
+        "THAT’S ENOUGH Whenever you remove 1 or more damage from one of your characters, you may exert chosen opposing character."
+      ],
+      "strength": 2,
+      "willpower": 6,
+      "lore": 2,
+      "abilities": [
+        {
+          "fullText": "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Alma Madrigal.)",
+          "keyword": "Shift",
+          "type": "keyword",
+          "keywordValue": "3",
+          "keywordValueNumber": 3,
+          "reminderText": "You may pay 3 ⬡ to play this on top of one of your characters named Alma Madrigal."
+        },
+        {
+          "effect": "Whenever you remove 1 or more damage from one of your characters, you may exert chosen opposing character.",
+          "fullText": "THAT’S ENOUGH Whenever you remove 1 or more damage from one of your characters, you may exert chosen opposing character.",
+          "name": "THAT’S ENOUGH",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 58,
+      "rarity": "Rare",
+      "franchise": "Encanto",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/58-204-EN-12-Alma-Madrigal-Keeper-of-the-Flame-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/58-204-EN-12-Alma-Madrigal-Keeper-of-the-Flame-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1262204,
+      "name": "Luisa Madrigal",
+      "version": "Pushing Through",
+      "fullName": "Luisa Madrigal - Pushing Through",
+      "cost": 1,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Madrigal"
+      ],
+      "fullText": "Challenger +2 (While challenging, this character gets +2 ¤.)",
+      "fullTextSections": [
+        "Challenger +2 (While challenging, this character gets +2 ¤.)"
+      ],
+      "willpower": 3,
+      "lore": 1,
+      "abilities": [
+        {
+          "fullText": "Challenger +2 (While challenging, this character gets +2 ¤.)",
+          "keyword": "Challenger",
+          "type": "keyword",
+          "keywordValue": "+2",
+          "keywordValueNumber": 2,
+          "reminderText": "While challenging, this character gets +2 ¤."
+        }
+      ],
+      "setCode": "12",
+      "number": 62,
+      "rarity": "Common",
+      "franchise": "Encanto",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/62-204-EN-12-Luisa-Madrigal-Pushing-Through-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/62-204-EN-12-Luisa-Madrigal-Pushing-Through-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1263204,
+      "name": "Superhero Protection Program",
+      "fullName": "Superhero Protection Program",
+      "cost": 4,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Action",
+      "fullText": "Return one of your characters to your hand. If you returned a Hero character this way, draw 2 cards.",
+      "fullTextSections": [
+        "Return one of your characters to your hand. If you returned a Hero character this way, draw 2 cards."
+      ],
+      "abilities": [
+        {
+          "effect": "Return one of your characters to your hand. If you returned a Hero character this way, draw 2 cards.",
+          "fullText": "Return one of your characters to your hand. If you returned a Hero character this way, draw 2 cards.",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 63,
+      "rarity": "Uncommon",
+      "franchise": "The Incredibles",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/63-204-EN-12-Superhero-Protection-Program-Japanese-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/63-204-EN-12-Superhero-Protection-Program-Japanese-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1273204,
+      "name": "Helga Sinclair",
+      "version": "No Backup Needed",
+      "fullName": "Helga Sinclair - No Backup Needed",
+      "cost": 4,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Villain"
+      ],
+      "fullText": "CRISIS MANAGEMENT If 2 or more cards were put into your discard this turn, you pay 2 ⬡ less to play this character.",
+      "fullTextSections": [
+        "CRISIS MANAGEMENT If 2 or more cards were put into your discard this turn, you pay 2 ⬡ less to play this character."
+      ],
+      "strength": 5,
+      "willpower": 4,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "If 2 or more cards were put into your discard this turn, you pay 2 ⬡ less to play this character.",
+          "fullText": "CRISIS MANAGEMENT If 2 or more cards were put into your discard this turn, you pay 2 ⬡ less to play this character.",
+          "name": "CRISIS MANAGEMENT",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 73,
+      "rarity": "Common",
+      "franchise": "Atlantis: The Lost Empire",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/73-204-EN-12-Helga-Sinclair-No-Backup-Needed-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/73-204-EN-12-Helga-Sinclair-No-Backup-Needed-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1277204,
+      "name": "RC",
+      "version": "Remote-Controlled Car",
+      "fullName": "RC - Remote-Controlled Car",
+      "cost": 1,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Racer",
+        "Toy"
+      ],
+      "fullText": "LOW BATTERIES This character can’t quest or challenge unless you pay 1 ⬡. (You pay this cost each time.)",
+      "fullTextSections": [
+        "LOW BATTERIES This character can’t quest or challenge unless you pay 1 ⬡. (You pay this cost each time.)"
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 2,
+      "abilities": [
+        {
+          "effect": "This character can’t quest or challenge unless you pay 1 ⬡. (You pay this cost each time.)",
+          "fullText": "LOW BATTERIES This character can’t quest or challenge unless you pay 1 ⬡. (You pay this cost each time.)",
+          "name": "LOW BATTERIES",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 77,
+      "rarity": "Common",
+      "franchise": "Toy Story",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/77-204-EN-12-RC-Remote-Controlled-Car-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/77-204-EN-12-RC-Remote-Controlled-Car-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1278204,
+      "name": "Lord MacGuffin",
+      "version": "Clever Swordsman",
+      "fullName": "Lord MacGuffin - Clever Swordsman",
+      "cost": 5,
+      "color": "Emerald",
+      "inkwell": false,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "WAIT FOR IT… This character may enter play exerted to deal 3 damage to chosen damaged character.",
+      "fullTextSections": [
+        "WAIT FOR IT… This character may enter play exerted to deal 3 damage to chosen damaged character."
+      ],
+      "strength": 6,
+      "willpower": 4,
+      "lore": 2,
+      "abilities": [
+        {
+          "effect": "IT… This character may enter play exerted to deal 3 damage to chosen damaged character.",
+          "fullText": "WAIT FOR IT… This character may enter play exerted to deal 3 damage to chosen damaged character.",
+          "name": "WAIT FOR",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 78,
+      "rarity": "Uncommon",
+      "franchise": "Brave",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/78-204-EN-12-Lord-MacGuffin-Clever-Swordsman-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/78-204-EN-12-Lord-MacGuffin-Clever-Swordsman-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1281204,
+      "name": "Peter Pan",
+      "version": "Searching Far and Wide",
+      "fullName": "Peter Pan - Searching Far and Wide",
+      "cost": 3,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Hero"
+      ],
+      "fullText": "",
+      "fullTextSections": [],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 2,
+      "setCode": "12",
+      "number": 81,
+      "rarity": "Uncommon",
+      "franchise": "Peter Pan",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/81-204-EN-12-Peter-Pan-Searching-Far-and-Wide-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/81-204-EN-12-Peter-Pan-Searching-Far-and-Wide-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1286204,
+      "name": "Elinor",
+      "version": "Renowned Diplomat",
+      "fullName": "Elinor - Renowned Diplomat",
+      "cost": 4,
+      "color": "Emerald",
+      "inkwell": false,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Mentor",
+        "Queen"
+      ],
+      "fullText": "COORDINATED EFFORTS At the end of your turn, if you have 3 or more exerted characters in play, deal 1 damage to chosen opposing character, gain 1 lore, and draw a card.",
+      "fullTextSections": [
+        "COORDINATED EFFORTS At the end of your turn, if you have 3 or more exerted characters in play, deal 1 damage to chosen opposing character, gain 1 lore, and draw a card."
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "At the end of your turn, if you have 3 or more exerted characters in play, deal 1 damage to chosen opposing character, gain 1 lore, and draw a card.",
+          "fullText": "COORDINATED EFFORTS At the end of your turn, if you have 3 or more exerted characters in play, deal 1 damage to chosen opposing character, gain 1 lore, and draw a card.",
+          "name": "COORDINATED EFFORTS",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 86,
+      "rarity": "Super Rare",
+      "franchise": "Brave",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/86-204-EN-12-Elinor-Renowned-Diplomat-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/86-204-EN-12-Elinor-Renowned-Diplomat-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1287204,
+      "name": "Lyle Tiberius Rourke",
+      "version": "Adventurer for Hire",
+      "fullName": "Lyle Tiberius Rourke - Adventurer for Hire",
+      "cost": 2,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Villain"
+      ],
+      "fullText": "EYE FOR VALUE When you play this character, you may draw a card, then choose and discard a card. DIRTY TRICKS At the end of your turn, if 2 or more cards were put into your discard this turn, each opponent loses 1 lore.",
+      "fullTextSections": [
+        "EYE FOR VALUE When you play this character, you may draw a card, then choose and discard a card.",
+        "DIRTY TRICKS At the end of your turn, if 2 or more cards were put into your discard this turn, each opponent loses 1 lore."
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "When you play this character, you may draw a card, then choose and discard a card.",
+          "fullText": "EYE FOR VALUE When you play this character, you may draw a card, then choose and discard a card.",
+          "name": "EYE FOR VALUE",
+          "type": "triggered"
+        },
+        {
+          "effect": "At the end of your turn, if 2 or more cards were put into your discard this turn, each opponent loses 1 lore.",
+          "fullText": "DIRTY TRICKS At the end of your turn, if 2 or more cards were put into your discard this turn, each opponent loses 1 lore.",
+          "name": "DIRTY TRICKS",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 87,
+      "rarity": "Uncommon",
+      "franchise": "Atlantis: The Lost Empire",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/87-204-EN-12-Lyle-Tiberius-Rourke-Adventurer-for-Hire-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/87-204-EN-12-Lyle-Tiberius-Rourke-Adventurer-for-Hire-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1290204,
+      "name": "The Queen",
+      "version": "Devious Disguise",
+      "fullName": "The Queen - Devious Disguise",
+      "cost": 4,
+      "color": "Emerald",
+      "inkwell": false,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Queen",
+        "Sorcerer",
+        "Villain"
+      ],
+      "fullText": "EVIL SCHEME When you play this character, you may draw a card. If you do, each opponent gains 2 lore. JEALOUS HEART While an opponent has more lore than you, this character gets +2 ◆.",
+      "fullTextSections": [
+        "EVIL SCHEME When you play this character, you may draw a card. If you do, each opponent gains 2 lore.",
+        "JEALOUS HEART While an opponent has more lore than you, this character gets +2 ◆."
+      ],
+      "strength": 5,
+      "willpower": 3,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "When you play this character, you may draw a card. If you do, each opponent gains 2 lore.",
+          "fullText": "EVIL SCHEME When you play this character, you may draw a card. If you do, each opponent gains 2 lore.",
+          "name": "EVIL SCHEME",
+          "type": "triggered"
+        },
+        {
+          "effect": "While an opponent has more lore than you, this character gets +2 ◆.",
+          "fullText": "JEALOUS HEART While an opponent has more lore than you, this character gets +2 ◆.",
+          "name": "JEALOUS HEART",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 90,
+      "rarity": "Legendary",
+      "franchise": "Snow White and the Seven Dwarfs",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/90-204-EN-12-The-Queen-Devious-Disguise-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/90-204-EN-12-The-Queen-Devious-Disguise-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1293204,
+      "name": "Helga Sinclair",
+      "version": "Prepared for Anything",
+      "fullName": "Helga Sinclair - Prepared for Anything",
+      "cost": 6,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Villain"
+      ],
+      "fullText": "COMBAT TRAINING Whenever this character quests, deal 1 damage to chosen opposing character. If 2 or more cards were put into your discard this turn, deal 2 damage instead.",
+      "fullTextSections": [
+        "COMBAT TRAINING Whenever this character quests, deal 1 damage to chosen opposing character. If 2 or more cards were put into your discard this turn, deal 2 damage instead."
+      ],
+      "strength": 5,
+      "willpower": 5,
+      "lore": 2,
+      "abilities": [
+        {
+          "effect": "Whenever this character quests, deal 1 damage to chosen opposing character. If 2 or more cards were put into your discard this turn, deal 2 damage instead.",
+          "fullText": "COMBAT TRAINING Whenever this character quests, deal 1 damage to chosen opposing character. If 2 or more cards were put into your discard this turn, deal 2 damage instead.",
+          "name": "COMBAT TRAINING",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 93,
+      "rarity": "Rare",
+      "franchise": "Atlantis: The Lost Empire",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/93-204-EN-12-Helga-Sinclair-Prepared-for-Anything-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/93-204-EN-12-Helga-Sinclair-Prepared-for-Anything-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1294204,
+      "name": "The Huntsman",
+      "version": "On the Queen's Orders",
+      "fullName": "The Huntsman - On the Queen's Orders",
+      "cost": 3,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "Ward (Opponents can’t choose this character except to challenge.)",
+      "fullTextSections": [
+        "Ward (Opponents can’t choose this character except to challenge.)"
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 1,
+      "abilities": [
+        {
+          "fullText": "Ward (Opponents can’t choose this character except to challenge.)",
+          "keyword": "Ward",
+          "type": "keyword",
+          "reminderText": "Opponents can’t choose this character except to challenge."
+        }
+      ],
+      "setCode": "12",
+      "number": 94,
+      "rarity": "Uncommon",
+      "franchise": "Snow White and the Seven Dwarfs",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/94-204-EN-12-The-Huntsman-On-the-Queens-Orders-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/94-204-EN-12-The-Huntsman-On-the-Queens-Orders-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1295204,
+      "name": "Strange Things",
+      "fullName": "Strange Things",
+      "cost": 4,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Action",
+      "subtypes": [
+        "Song"
+      ],
+      "fullText": "(A character with cost 4 or more can ⟳ to sing this song for free.) Up to 2 chosen characters can’t quest until the start of your next turn. Draw a card.",
+      "fullTextSections": [
+        "(A character with cost 4 or more can ⟳ to sing this song for free.)",
+        "Up to 2 chosen characters can’t quest until the start of your next turn. Draw a card."
+      ],
+      "abilities": [
+        {
+          "effect": "A character with cost 4 or more can ⟳ to sing this song for free.",
+          "fullText": "(A character with cost 4 or more can ⟳ to sing this song for free.)",
+          "type": "static"
+        },
+        {
+          "effect": "Up to 2 chosen characters can’t quest until the start of your next turn. Draw a card.",
+          "fullText": "Up to 2 chosen characters can’t quest until the start of your next turn. Draw a card.",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 95,
+      "rarity": "Uncommon",
+      "franchise": "Toy Story",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/95-204-EN-12-Strange-Things-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/95-204-EN-12-Strange-Things-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1297204,
+      "name": "The Family Scattered",
+      "fullName": "The Family Scattered",
+      "cost": 8,
+      "color": "Emerald",
+      "inkwell": false,
+      "type": "Action",
+      "fullText": "Chosen opponent chooses 3 of their characters and returns one of those cards to their hand, puts one on the bottom of their deck, and puts one on the top of their deck.",
+      "fullTextSections": [
+        "Chosen opponent chooses 3 of their characters and returns one of those cards to their hand, puts one on the bottom of their deck, and puts one on the top of their deck."
+      ],
+      "abilities": [
+        {
+          "effect": "Chosen opponent chooses 3 of their characters and returns one of those cards to their hand, puts one on the bottom of their deck, and puts one on the top of their deck.",
+          "fullText": "Chosen opponent chooses 3 of their characters and returns one of those cards to their hand, puts one on the bottom of their deck, and puts one on the top of their deck.",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 97,
+      "rarity": "Super Rare",
+      "franchise": "Encanto",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/97-204-EN-12-The-Family-Scattered-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/97-204-EN-12-The-Family-Scattered-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12104204,
+      "name": "Mr. Incredible",
+      "version": "Bob Parr",
+      "fullName": "Mr. Incredible - Bob Parr",
+      "cost": 1,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Super"
+      ],
+      "fullText": "",
+      "fullTextSections": [],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1,
+      "setCode": "12",
+      "number": 104,
+      "rarity": "Common",
+      "franchise": "The Incredibles",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/104-204-EN-12-Mr.-Incredible-Bob-Parr-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/104-204-EN-12-Mr.-Incredible-Bob-Parr-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12105204,
+      "name": "Lyle Tiberius Rourke",
+      "version": "Looking for His Moment",
+      "fullName": "Lyle Tiberius Rourke - Looking for His Moment",
+      "cost": 3,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Villain"
+      ],
+      "fullText": "",
+      "fullTextSections": [],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 1,
+      "setCode": "12",
+      "number": 105,
+      "rarity": "Common",
+      "franchise": "Atlantis: The Lost Empire",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/105-204-EN-12-Lyle-Tiberius-Rourke-Looking-for-His-Moment-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/105-204-EN-12-Lyle-Tiberius-Rourke-Looking-for-His-Moment-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12106204,
+      "name": "Pegasus",
+      "version": "Searching High and Low",
+      "fullName": "Pegasus - Searching High and Low",
+      "cost": 6,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Ally"
+      ],
+      "fullText": "Evasive (Only characters with Evasive can challenge this character.)",
+      "fullTextSections": [
+        "Evasive (Only characters with Evasive can challenge this character.)"
+      ],
+      "strength": 6,
+      "willpower": 7,
+      "lore": 1,
+      "abilities": [
+        {
+          "fullText": "Evasive (Only characters with Evasive can challenge this character.)",
+          "keyword": "Evasive",
+          "type": "keyword",
+          "reminderText": "Only characters with Evasive can challenge this character."
+        }
+      ],
+      "setCode": "12",
+      "number": 106,
+      "rarity": "Common",
+      "franchise": "Hercules",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/106-204-EN-12-Pegasus-Searching-High-and-Low-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/106-204-EN-12-Pegasus-Searching-High-and-Low-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12108204,
+      "name": "Milo Thatch",
+      "version": "Courageous Explorer",
+      "fullName": "Milo Thatch - Courageous Explorer",
+      "cost": 3,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Hero"
+      ],
+      "fullText": "FASCINATING DISCOVERY During your turn, if 2 or more cards were put into your discard this turn, this character gets +1 ◆.",
+      "fullTextSections": [
+        "FASCINATING DISCOVERY During your turn, if 2 or more cards were put into your discard this turn, this character gets +1 ◆."
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "During your turn, if 2 or more cards were put into your discard this turn, this character gets +1 ◆.",
+          "fullText": "FASCINATING DISCOVERY During your turn, if 2 or more cards were put into your discard this turn, this character gets +1 ◆.",
+          "name": "FASCINATING DISCOVERY",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 108,
+      "rarity": "Common",
+      "franchise": "Atlantis: The Lost Empire",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/108-204-EN-12-Milo-Thatch-Courageous-Explorer-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/108-204-EN-12-Milo-Thatch-Courageous-Explorer-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12109204,
+      "name": "Zeus",
+      "version": "Defiant God",
+      "fullName": "Zeus - Defiant God",
+      "cost": 5,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Deity",
+        "King"
+      ],
+      "fullText": "IMMORTAL WOUND This character enters play with 4 damage.",
+      "fullTextSections": [
+        "IMMORTAL WOUND This character enters play with 4 damage."
+      ],
+      "strength": 5,
+      "willpower": 5,
+      "lore": 3,
+      "abilities": [
+        {
+          "effect": "This character enters play with 4 damage.",
+          "fullText": "IMMORTAL WOUND This character enters play with 4 damage.",
+          "name": "IMMORTAL WOUND",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 109,
+      "rarity": "Uncommon",
+      "franchise": "Hercules",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/109-204-EN-12-Zeus-Defiant-God-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/109-204-EN-12-Zeus-Defiant-God-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12113204,
+      "name": "Roller Bob",
+      "version": "Sid's Toy",
+      "fullName": "Roller Bob - Sid's Toy",
+      "cost": 3,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Toy"
+      ],
+      "fullText": "TIME TO MOVE When you play this character, you may put 2 character cards from your discard on the bottom of your deck to give this character Rush this turn. (They can challenge the turn they’re played.)",
+      "fullTextSections": [
+        "TIME TO MOVE When you play this character, you may put 2 character cards from your discard on the bottom of your deck to give this character Rush this turn. (They can challenge the turn they’re played.)"
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "When you play this character, you may put 2 character cards from your discard on the bottom of your deck to give this character Rush this turn. (They can challenge the turn they’re played.)",
+          "fullText": "TIME TO MOVE When you play this character, you may put 2 character cards from your discard on the bottom of your deck to give this character Rush this turn. (They can challenge the turn they’re played.)",
+          "name": "TIME TO MOVE",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 113,
+      "rarity": "Uncommon",
+      "franchise": "Toy Story",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/113-204-EN-12-Roller-Bob-Sids-Toy-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/113-204-EN-12-Roller-Bob-Sids-Toy-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12116204,
+      "name": "Copper",
+      "version": "Big Dog",
+      "fullName": "Copper - Big Dog",
+      "cost": 6,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero"
+      ],
+      "fullText": "",
+      "fullTextSections": [],
+      "strength": 7,
+      "willpower": 6,
+      "lore": 2,
+      "setCode": "12",
+      "number": 116,
+      "rarity": "Uncommon",
+      "franchise": "The Fox and the Hound",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/116-204-EN-12-Copper-Big-Dog-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/116-204-EN-12-Copper-Big-Dog-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12132204,
+      "name": "Hero Work",
+      "fullName": "Hero Work",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Action",
+      "fullText": "Your characters get +1 ¤ this turn. Your Hero characters gain “Whenever this character challenges another character, each opponent loses 1 lore and you gain 1 lore” this turn.",
+      "fullTextSections": [
+        "Your characters get +1 ¤ this turn. Your Hero characters gain “Whenever this character challenges another character, each opponent loses 1 lore and you gain 1 lore” this turn."
+      ],
+      "abilities": [
+        {
+          "effect": "Your characters get +1 ¤ this turn. Your Hero characters gain “Whenever this character challenges another character, each opponent loses 1 lore and you gain 1 lore” this turn.",
+          "fullText": "Your characters get +1 ¤ this turn. Your Hero characters gain “Whenever this character challenges another character, each opponent loses 1 lore and you gain 1 lore” this turn.",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 132,
+      "rarity": "Rare",
+      "franchise": "The Incredibles",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/132-204-EN-12-Hero-Work-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/132-204-EN-12-Hero-Work-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12133204,
+      "name": "Dangerous Plan",
+      "fullName": "Dangerous Plan",
+      "cost": 1,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Action",
+      "fullText": "Draw 2 cards. Then, discard a card at random.",
+      "fullTextSections": [
+        "Draw 2 cards. Then, discard a card at random."
+      ],
+      "abilities": [
+        {
+          "effect": "Draw 2 cards. Then, discard a card at random.",
+          "fullText": "Draw 2 cards. Then, discard a card at random.",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 133,
+      "rarity": "Common",
+      "franchise": "Atlantis: The Lost Empire",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/133-204-EN-12-Dangerous-Plan-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/133-204-EN-12-Dangerous-Plan-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12134204,
+      "name": "Amazu's Inkcaster",
+      "fullName": "Amazu's Inkcaster",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": false,
+      "type": "Item",
+      "subtypes": [
+        "Item"
+      ],
+      "fullText": "ON THE HORIZON ⟳, 1 ⬡ – Look at the top 4 cards of your deck. You may reveal a location card and put it into your hand. Put the rest on the bottom of your deck in any order.",
+      "fullTextSections": [
+        "ON THE HORIZON ⟳, 1 ⬡ – Look at the top 4 cards of your deck. You may reveal a location card and put it into your hand. Put the rest on the bottom of your deck in any order."
+      ],
+      "abilities": [
+        {
+          "effect": "Look at the top 4 cards of your deck. You may reveal a location card and put it into your hand. Put the rest on the bottom of your deck in any order.",
+          "fullText": "ON THE HORIZON ⟳, 1 ⬡ – Look at the top 4 cards of your deck. You may reveal a location card and put it into your hand. Put the rest on the bottom of your deck in any order.",
+          "name": "ON THE HORIZON ⟳, 1 ⬡ –",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 134,
+      "rarity": "Uncommon",
+      "franchise": "Lorcana",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/134-204-EN-12-Amazus-Inkcaster-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/134-204-EN-12-Amazus-Inkcaster-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12136204,
+      "name": "Leviathan's Lair",
+      "version": "Dangerous Ground",
+      "fullName": "Leviathan's Lair - Dangerous Ground",
+      "cost": 4,
+      "color": "Ruby",
+      "inkwell": false,
+      "type": "Location",
+      "fullText": "LOST TO THE DUNES When this location is banished, each opponent chooses and banishes one of their characters.",
+      "fullTextSections": [
+        "LOST TO THE DUNES When this location is banished, each opponent chooses and banishes one of their characters."
+      ],
+      "willpower": 4,
+      "lore": 2,
+      "moveCost": 1,
+      "abilities": [
+        {
+          "effect": "When this location is banished, each opponent chooses and banishes one of their characters.",
+          "fullText": "LOST TO THE DUNES When this location is banished, each opponent chooses and banishes one of their characters.",
+          "name": "LOST TO THE DUNES",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 136,
+      "rarity": "Rare",
+      "franchise": "Lorcana",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/136-204-EN-12-Leviathans-Lair-Dangerous-Ground-LQ-Lorcana-Player-600x430.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/136-204-EN-12-Leviathans-Lair-Dangerous-Ground-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12137204,
+      "name": "Robin Hood",
+      "version": "Desert Wanderer",
+      "fullName": "Robin Hood - Desert Wanderer",
+      "cost": 1,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Hero"
+      ],
+      "fullText": "",
+      "fullTextSections": [],
+      "strength": 1,
+      "willpower": 3,
+      "lore": 1,
+      "setCode": "12",
+      "number": 137,
+      "rarity": "Common",
+      "franchise": "Robin Hood",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/137-204-EN-12-Robin-Hood-Desert-Wanderer-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/137-204-EN-12-Robin-Hood-Desert-Wanderer-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12140204,
+      "name": "Fauna",
+      "version": "Good-Natured Fairy",
+      "fullName": "Fauna - Good-Natured Fairy",
+      "cost": 1,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Fairy"
+      ],
+      "fullText": "Support (Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn.)",
+      "fullTextSections": [
+        "Support (Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn.)"
+      ],
+      "strength": 2,
+      "willpower": 1,
+      "lore": 1,
+      "abilities": [
+        {
+          "fullText": "Support (Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn.)",
+          "keyword": "Support",
+          "type": "keyword",
+          "reminderText": "Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn."
+        }
+      ],
+      "setCode": "12",
+      "number": 140,
+      "rarity": "Common",
+      "franchise": "Sleeping Beauty",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/140-204-EN-12-Fauna-Good-Natured-Fairy-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/140-204-EN-12-Fauna-Good-Natured-Fairy-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12141204,
+      "name": "Flora",
+      "version": "Strong-Willed Fairy",
+      "fullName": "Flora - Strong-Willed Fairy",
+      "cost": 5,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Fairy"
+      ],
+      "fullText": "LUMINOUS SHELTER When you play this character, your other characters gain Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1.)",
+      "fullTextSections": [
+        "LUMINOUS SHELTER When you play this character, your other characters gain Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1.)"
+      ],
+      "strength": 4,
+      "willpower": 5,
+      "lore": 2,
+      "abilities": [
+        {
+          "effect": "When you play this character, your other characters gain Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1.)",
+          "fullText": "LUMINOUS SHELTER When you play this character, your other characters gain Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1.)",
+          "name": "LUMINOUS SHELTER",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 141,
+      "rarity": "Rare",
+      "franchise": "Sleeping Beauty",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/141-204-EN-12-Flora-Strong-Willed-Fairy-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/141-204-EN-12-Flora-Strong-Willed-Fairy-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12142204,
+      "name": "Mirabel Madrigal",
+      "version": "Resourceful Daughter",
+      "fullName": "Mirabel Madrigal - Resourceful Daughter",
+      "cost": 4,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Madrigal"
+      ],
+      "fullText": "THIS WILL HELP When you play this character, remove up to 2 damage from chosen character.",
+      "fullTextSections": [
+        "THIS WILL HELP When you play this character, remove up to 2 damage from chosen character."
+      ],
+      "strength": 3,
+      "willpower": 6,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "When you play this character, remove up to 2 damage from chosen character.",
+          "fullText": "THIS WILL HELP When you play this character, remove up to 2 damage from chosen character.",
+          "name": "THIS WILL HELP",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 142,
+      "rarity": "Common",
+      "franchise": "Encanto",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/142-204-EN-12-Mirabel-Madrigal-Resourceful-Daughter-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/142-204-EN-12-Mirabel-Madrigal-Resourceful-Daughter-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12143204,
+      "name": "Syndrome",
+      "version": "Evil Inventor",
+      "fullName": "Syndrome - Evil Inventor",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Inventor",
+        "Super",
+        "Villain"
+      ],
+      "fullText": "Alert (This character can challenge as if they had Evasive.)",
+      "fullTextSections": [
+        "Alert (This character can challenge as if they had Evasive.)"
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "Alert (This character can challenge as if they had Evasive.)",
+          "fullText": "Alert (This character can challenge as if they had Evasive.)",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 143,
+      "rarity": "Common",
+      "franchise": "The Incredibles",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/143-204-EN-12-Syndrome-Evil-Inventor-German-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/143-204-EN-12-Syndrome-Evil-Inventor-German-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12146204,
+      "name": "Norton Nimnul",
+      "version": "Misanthropic Genius",
+      "fullName": "Norton Nimnul - Misanthropic Genius",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": false,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Inventor",
+        "Villain"
+      ],
+      "fullText": "DEVITALIZER RAY Once during your turn, whenever you play an item, chosen opposing character gets -2 ⛉ this turn.",
+      "fullTextSections": [
+        "DEVITALIZER RAY Once during your turn, whenever you play an item, chosen opposing character gets -2 ⛉ this turn."
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 2,
+      "abilities": [
+        {
+          "effect": "Once during your turn, whenever you play an item, chosen opposing character gets -2 ⛉ this turn.",
+          "fullText": "DEVITALIZER RAY Once during your turn, whenever you play an item, chosen opposing character gets -2 ⛉ this turn.",
+          "name": "DEVITALIZER RAY",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 146,
+      "rarity": "Uncommon",
+      "franchise": "Chip 'n' Dale: Rescue Rangers",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/146-204-EN-12-Norton-Nimnul-Misanthropic-Genius-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/146-204-EN-12-Norton-Nimnul-Misanthropic-Genius-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12152204,
+      "name": "Dr. Sara Bellum",
+      "version": "Head of Research",
+      "fullName": "Dr. Sara Bellum - Head of Research",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Inventor"
+      ],
+      "fullText": "SCIENTIFIC SCRUTINY When you play this character, look at the top card of your deck. Put it on either the top or the bottom of your deck.",
+      "fullTextSections": [
+        "SCIENTIFIC SCRUTINY When you play this character, look at the top card of your deck. Put it on either the top or the bottom of your deck."
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "When you play this character, look at the top card of your deck. Put it on either the top or the bottom of your deck.",
+          "fullText": "SCIENTIFIC SCRUTINY When you play this character, look at the top card of your deck. Put it on either the top or the bottom of your deck.",
+          "name": "SCIENTIFIC SCRUTINY",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 152,
+      "rarity": "Common",
+      "franchise": "Darkwing Duck",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/152-204-EN-12-Dr.-Sara-Bellum-Head-of-Research-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/152-204-EN-12-Dr.-Sara-Bellum-Head-of-Research-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12157204,
+      "name": "Kida",
+      "version": "Discovering the Unknown",
+      "fullName": "Kida - Discovering the Unknown",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Princess"
+      ],
+      "fullText": "READ THE RUNES Whenever this character quests, if 2 or more cards were put into your discard this turn, you may put the top card of your deck into your inkwell facedown and exerted.",
+      "fullTextSections": [
+        "READ THE RUNES Whenever this character quests, if 2 or more cards were put into your discard this turn, you may put the top card of your deck into your inkwell facedown and exerted."
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "Whenever this character quests, if 2 or more cards were put into your discard this turn, you may put the top card of your deck into your inkwell facedown and exerted.",
+          "fullText": "READ THE RUNES Whenever this character quests, if 2 or more cards were put into your discard this turn, you may put the top card of your deck into your inkwell facedown and exerted.",
+          "name": "READ THE RUNES",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 157,
+      "rarity": "Rare",
+      "franchise": "Atlantis: The Lost Empire",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/157-204-EN-12-Kida-Discovering-the-Unknown-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/157-204-EN-12-Kida-Discovering-the-Unknown-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12158204,
+      "name": "Kashekim",
+      "version": "Wise King",
+      "fullName": "Kashekim - Wise King",
+      "cost": 5,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "King"
+      ],
+      "fullText": "STRENGTH IN MEMORY At the end of your turn, if 2 or more cards were put into your discard this turn, you may put the top card of your deck into your inkwell facedown.",
+      "fullTextSections": [
+        "STRENGTH IN MEMORY At the end of your turn, if 2 or more cards were put into your discard this turn, you may put the top card of your deck into your inkwell facedown."
+      ],
+      "strength": 4,
+      "willpower": 6,
+      "lore": 2,
+      "abilities": [
+        {
+          "effect": "At the end of your turn, if 2 or more cards were put into your discard this turn, you may put the top card of your deck into your inkwell facedown.",
+          "fullText": "STRENGTH IN MEMORY At the end of your turn, if 2 or more cards were put into your discard this turn, you may put the top card of your deck into your inkwell facedown.",
+          "name": "STRENGTH IN MEMORY",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 158,
+      "rarity": "Uncommon",
+      "franchise": "Atlantis: The Lost Empire",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/158-204-EN-12-Kashekim-Wise-King-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/158-204-EN-12-Kashekim-Wise-King-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12159204,
+      "name": "Minnie Mouse",
+      "version": "Practical Traveler",
+      "fullName": "Minnie Mouse - Practical Traveler",
+      "cost": 1,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Hero"
+      ],
+      "fullText": "DISCERNING EYE Whenever this character quests, if you played another character this turn, gain 1 ◆.",
+      "fullTextSections": [
+        "DISCERNING EYE Whenever this character quests, if you played another character this turn, gain 1 ◆."
+      ],
+      "strength": 1,
+      "willpower": 1,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "Whenever this character quests, if you played another character this turn, gain 1 ◆.",
+          "fullText": "DISCERNING EYE Whenever this character quests, if you played another character this turn, gain 1 ◆.",
+          "name": "DISCERNING EYE",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 159,
+      "rarity": "Uncommon",
+      "franchise": "Mickey Mouse & Friends",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/159-204-EN-12-Minnie-Mouse-Practical-Traveler-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/159-204-EN-12-Minnie-Mouse-Practical-Traveler-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12162204,
+      "name": "Someone Will Lose His Head",
+      "fullName": "Someone Will Lose His Head",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Action",
+      "subtypes": [
+        "Song"
+      ],
+      "fullText": "(A character with cost 3 or more can ⟳ to sing this song for free.) Each opposing character gets -2 ¤ this turn.",
+      "fullTextSections": [
+        "(A character with cost 3 or more can ⟳ to sing this song for free.)",
+        "Each opposing character gets -2 ¤ this turn."
+      ],
+      "abilities": [
+        {
+          "effect": "A character with cost 3 or more can ⟳ to sing this song for free.",
+          "fullText": "(A character with cost 3 or more can ⟳ to sing this song for free.)",
+          "type": "static"
+        },
+        {
+          "effect": "Each opposing character gets -2 ¤ this turn.",
+          "fullText": "Each opposing character gets -2 ¤ this turn.",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 162,
+      "rarity": "Uncommon",
+      "franchise": "Alice in Wonderland",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/162-204-EN-12-Someone-Will-Lose-His-Head-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/162-204-EN-12-Someone-Will-Lose-His-Head-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12164204,
+      "name": "Escape Plan",
+      "fullName": "Escape Plan",
+      "cost": 5,
+      "color": "Sapphire",
+      "inkwell": false,
+      "type": "Action",
+      "fullText": "You can’t play this action unless 2 or more cards were put into your discard this turn. Each player chooses 2 of their characters and puts them into their inkwell facedown and exerted.",
+      "fullTextSections": [
+        "You can’t play this action unless 2 or more cards were put into your discard this turn.",
+        "Each player chooses 2 of their characters and puts them into their inkwell facedown and exerted."
+      ],
+      "abilities": [
+        {
+          "effect": "You can’t play this action unless 2 or more cards were put into your discard this turn.",
+          "fullText": "You can’t play this action unless 2 or more cards were put into your discard this turn.",
+          "type": "static"
+        },
+        {
+          "effect": "Each player chooses 2 of their characters and puts them into their inkwell facedown and exerted.",
+          "fullText": "Each player chooses 2 of their characters and puts them into their inkwell facedown and exerted.",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 164,
+      "rarity": "Rare",
+      "franchise": "Lorcana",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/164-204-EN-12-Escape-Plan-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/164-204-EN-12-Escape-Plan-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12166204,
+      "name": "Julieta's Arepas",
+      "fullName": "Julieta's Arepas",
+      "cost": 1,
+      "color": "Sapphire",
+      "inkwell": false,
+      "type": "Item",
+      "subtypes": [
+        "Item"
+      ],
+      "fullText": "FLAVORFUL CURE At the start of your turn, if you have a Madrigal character in play, remove up to 2 damage from chosen character. THAT DID THE TRICK ⟳ – If you removed damage from a character this turn, gain 1 ◆.",
+      "fullTextSections": [
+        "FLAVORFUL CURE At the start of your turn, if you have a Madrigal character in play, remove up to 2 damage from chosen character.",
+        "THAT DID THE TRICK ⟳ – If you removed damage from a character this turn, gain 1 ◆."
+      ],
+      "abilities": [
+        {
+          "effect": "At the start of your turn, if you have a Madrigal character in play, remove up to 2 damage from chosen character.",
+          "fullText": "FLAVORFUL CURE At the start of your turn, if you have a Madrigal character in play, remove up to 2 damage from chosen character.",
+          "name": "FLAVORFUL CURE",
+          "type": "triggered"
+        },
+        {
+          "effect": "If you removed damage from a character this turn, gain 1 ◆.",
+          "fullText": "THAT DID THE TRICK ⟳ – If you removed damage from a character this turn, gain 1 ◆.",
+          "name": "THAT DID THE TRICK ⟳ –",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 166,
+      "rarity": "Common",
+      "franchise": "Encanto",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/166-204-EN-12-Julietas-Arepas-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/166-204-EN-12-Julietas-Arepas-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12168204,
+      "name": "Gadget's Goggles",
+      "fullName": "Gadget's Goggles",
+      "cost": 2,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Item",
+      "subtypes": [
+        "Item"
+      ],
+      "fullText": "ENHANCED VISION ⟳, 1 ⬡ – Look at the top 2 cards of your deck. Put one on the top of your deck and the other on the bottom.",
+      "fullTextSections": [
+        "ENHANCED VISION ⟳, 1 ⬡ – Look at the top 2 cards of your deck. Put one on the top of your deck and the other on the bottom."
+      ],
+      "abilities": [
+        {
+          "effect": "Look at the top 2 cards of your deck. Put one on the top of your deck and the other on the bottom.",
+          "fullText": "ENHANCED VISION ⟳, 1 ⬡ – Look at the top 2 cards of your deck. Put one on the top of your deck and the other on the bottom.",
+          "name": "ENHANCED VISION ⟳, 1 ⬡ –",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 168,
+      "rarity": "Uncommon",
+      "franchise": "Chip 'n' Dale: Rescue Rangers",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/168-204-EN-12-Gadgets-Goggles-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/168-204-EN-12-Gadgets-Goggles-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12178204,
+      "name": "Violet Parr",
+      "version": "At Wits' End",
+      "fullName": "Violet Parr - At Wits' End",
+      "cost": 1,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Super"
+      ],
+      "fullText": "Alert (This character can challenge as if they had Evasive.)",
+      "fullTextSections": [
+        "Alert (This character can challenge as if they had Evasive.)"
+      ],
+      "strength": 2,
+      "willpower": 1,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "Alert (This character can challenge as if they had Evasive.)",
+          "fullText": "Alert (This character can challenge as if they had Evasive.)",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 178,
+      "rarity": "Common",
+      "franchise": "The Incredibles",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/178-204-EN-12-Violet-Parr-At-Wits-End-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/178-204-EN-12-Violet-Parr-At-Wits-End-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12179204,
+      "name": "Mrs. Incredible",
+      "version": "Helen Parr",
+      "fullName": "Mrs. Incredible - Helen Parr",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Super"
+      ],
+      "fullText": "PEP TALK When you play this character, chosen character gains Challenger +2 this turn. (They get +2 ¤ while challenging.)",
+      "fullTextSections": [
+        "PEP TALK When you play this character, chosen character gains Challenger +2 this turn. (They get +2 ¤ while challenging.)"
+      ],
+      "strength": 1,
+      "willpower": 1,
+      "lore": 2,
+      "abilities": [
+        {
+          "effect": "When you play this character, chosen character gains Challenger +2 this turn. (They get +2 ¤ while challenging.)",
+          "fullText": "PEP TALK When you play this character, chosen character gains Challenger +2 this turn. (They get +2 ¤ while challenging.)",
+          "name": "PEP TALK",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "12",
+      "number": 179,
+      "rarity": "Common",
+      "franchise": "The Incredibles",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/179-204-EN-12-Mrs.-Incredible-Helen-Parr-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/179-204-EN-12-Mrs.-Incredible-Helen-Parr-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12180204,
+      "name": "Young Macintosh",
+      "version": "Proud Son",
+      "fullName": "Young Macintosh - Proud Son",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "",
+      "fullTextSections": [],
+      "strength": 4,
+      "willpower": 2,
+      "lore": 2,
+      "setCode": "12",
+      "number": 180,
+      "rarity": "Common",
+      "franchise": "Brave",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/180-204-EN-12-Young-Macintosh-Proud-Son-Italian-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/180-204-EN-12-Young-Macintosh-Proud-Son-Italian-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12181204,
+      "name": "Lord Macintosh",
+      "version": "Wiry and High-Strung",
+      "fullName": "Lord Macintosh - Wiry and High-Strung",
+      "cost": 4,
+      "color": "Steel",
+      "inkwell": false,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "TOUGH IT OUT This character may enter play exerted to give chosen character Resist +2 until the start of your next turn. (Damage dealt to them is reduced by 2.)",
+      "fullTextSections": [
+        "TOUGH IT OUT This character may enter play exerted to give chosen character Resist +2 until the start of your next turn. (Damage dealt to them is reduced by 2.)"
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 2,
+      "abilities": [
+        {
+          "effect": "This character may enter play exerted to give chosen character Resist +2 until the start of your next turn. (Damage dealt to them is reduced by 2.)",
+          "fullText": "TOUGH IT OUT This character may enter play exerted to give chosen character Resist +2 until the start of your next turn. (Damage dealt to them is reduced by 2.)",
+          "name": "TOUGH IT OUT",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 181,
+      "rarity": "Uncommon",
+      "franchise": "Brave",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/181-204-EN-12-Lord-Macintosh-Wiry-and-High-Strung-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/181-204-EN-12-Lord-Macintosh-Wiry-and-High-Strung-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12182204,
+      "name": "Fat Cat",
+      "version": "Felonious Feline",
+      "fullName": "Fat Cat - Felonious Feline",
+      "cost": 6,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Villain"
+      ],
+      "fullText": "Resist +1 (Damage dealt to this character is reduced by 1.)",
+      "fullTextSections": [
+        "Resist +1 (Damage dealt to this character is reduced by 1.)"
+      ],
+      "strength": 6,
+      "willpower": 6,
+      "lore": 2,
+      "abilities": [
+        {
+          "fullText": "Resist +1 (Damage dealt to this character is reduced by 1.)",
+          "keyword": "Resist",
+          "type": "keyword",
+          "keywordValue": "+1",
+          "keywordValueNumber": 1,
+          "reminderText": "Damage dealt to this character is reduced by 1."
+        }
+      ],
+      "setCode": "12",
+      "number": 182,
+      "rarity": "Common",
+      "franchise": "Chip 'n' Dale: Rescue Rangers",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/182-204-EN-12-Fat-Cat-Felonious-Feline-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/182-204-EN-12-Fat-Cat-Felonious-Feline-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12186204,
+      "name": "Lord Dingwall",
+      "version": "Bullheaded",
+      "fullName": "Lord Dingwall - Bullheaded",
+      "cost": 5,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "FIGHTIN’ TALK This character may enter play exerted to give chosen character Challenger +3 this turn. (They get +3 ¤ while challenging.)",
+      "fullTextSections": [
+        "FIGHTIN’ TALK This character may enter play exerted to give chosen character Challenger +3 this turn. (They get +3 ¤ while challenging.)"
+      ],
+      "strength": 5,
+      "willpower": 6,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "This character may enter play exerted to give chosen character Challenger +3 this turn. (They get +3 ¤ while challenging.)",
+          "fullText": "FIGHTIN’ TALK This character may enter play exerted to give chosen character Challenger +3 this turn. (They get +3 ¤ while challenging.)",
+          "name": "FIGHTIN’ TALK",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 186,
+      "rarity": "Uncommon",
+      "franchise": "Brave",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/186-204-EN-12-Lord-Dingwall-Bullheaded-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/186-204-EN-12-Lord-Dingwall-Bullheaded-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12193204,
+      "name": "Gizmoduck",
+      "version": "Duckburg Defender",
+      "fullName": "Gizmoduck - Duckburg Defender",
+      "cost": 5,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Hero",
+        "Inventor",
+        "Super"
+      ],
+      "fullText": "Resist +1 (Damage dealt to this character is reduced by 1.) FAIL-SAFE While you have no cards in your hand, opponents can’t play actions with cost 4 or more.",
+      "fullTextSections": [
+        "Resist +1 (Damage dealt to this character is reduced by 1.)",
+        "FAIL-SAFE While you have no cards in your hand, opponents can’t play actions with cost 4 or more."
+      ],
+      "strength": 5,
+      "willpower": 4,
+      "lore": 2,
+      "abilities": [
+        {
+          "fullText": "Resist +1 (Damage dealt to this character is reduced by 1.)",
+          "keyword": "Resist",
+          "type": "keyword",
+          "keywordValue": "+1",
+          "keywordValueNumber": 1,
+          "reminderText": "Damage dealt to this character is reduced by 1."
+        },
+        {
+          "effect": "While you have no cards in your hand, opponents can’t play actions with cost 4 or more.",
+          "fullText": "FAIL-SAFE While you have no cards in your hand, opponents can’t play actions with cost 4 or more.",
+          "name": "FAIL-SAFE",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 193,
+      "rarity": "Rare",
+      "franchise": "DuckTales",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/193-204-EN-12-Gizmoduck-Duckburg-Defender-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/193-204-EN-12-Gizmoduck-Duckburg-Defender-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12194204,
+      "name": "Fergus",
+      "version": "Fort Builder",
+      "fullName": "Fergus - Fort Builder",
+      "cost": 6,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "King",
+        "Mentor"
+      ],
+      "fullText": "THAT’S THE SPOT! During your turn, whenever this character exerts, you may play a Location with cost 4 or less from your hand or discard for free. MY ROCK! While this character is at a Location, whenever a Location is banished in a challenge, you may choose a character and deal 4 damage to them.",
+      "fullTextSections": [
+        "THAT’S THE SPOT! During your turn, whenever this character exerts, you may play a Location with cost 4 or less from your hand or discard for free.",
+        "MY ROCK! While this character is at a Location, whenever a Location is banished in a challenge, you may choose a character and deal 4 damage to them."
+      ],
+      "strength": 4,
+      "willpower": 6,
+      "lore": 2,
+      "abilities": [
+        {
+          "effect": "During your turn, whenever this character exerts, you may play a Location with cost 4 or less from your hand or discard for free.",
+          "fullText": "THAT’S THE SPOT! During your turn, whenever this character exerts, you may play a Location with cost 4 or less from your hand or discard for free.",
+          "name": "THAT’S THE SPOT!",
+          "type": "static"
+        },
+        {
+          "effect": "While this character is at a Location, whenever a Location is banished in a challenge, you may choose a character and deal 4 damage to them.",
+          "fullText": "MY ROCK! While this character is at a Location, whenever a Location is banished in a challenge, you may choose a character and deal 4 damage to them.",
+          "name": "MY ROCK!",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 194,
+      "rarity": "Super Rare",
+      "franchise": "Brave",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/194-204-EN-12-Fergus-Fort-Builder-Japanese-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/194-204-EN-12-Fergus-Fort-Builder-Japanese-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12196204,
+      "name": "Diablo",
+      "version": "Stone Servant",
+      "fullName": "Diablo - Stone Servant",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Ally"
+      ],
+      "fullText": "CRUEL INTENT While you have a Villain character in play, this character gets +2 ¤ and +1 ◆. VILLAINOUS BOND While this character is exerted, your Villain characters can’t be challenged.",
+      "fullTextSections": [
+        "CRUEL INTENT While you have a Villain character in play, this character gets +2 ¤ and +1 ◆.",
+        "VILLAINOUS BOND While this character is exerted, your Villain characters can’t be challenged."
+      ],
+      "strength": 1,
+      "willpower": 3,
+      "lore": 1,
+      "abilities": [
+        {
+          "effect": "While you have a Villain character in play, this character gets +2 ¤ and +1 ◆.",
+          "fullText": "CRUEL INTENT While you have a Villain character in play, this character gets +2 ¤ and +1 ◆.",
+          "name": "CRUEL INTENT",
+          "type": "static"
+        },
+        {
+          "effect": "While this character is exerted, your Villain characters can’t be challenged.",
+          "fullText": "VILLAINOUS BOND While this character is exerted, your Villain characters can’t be challenged.",
+          "name": "VILLAINOUS BOND",
+          "type": "static"
+        }
+      ],
+      "setCode": "12",
+      "number": 196,
+      "rarity": "Super Rare",
+      "franchise": "Sleeping Beauty",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/196-204-EN-12-Diablo-Stone-Servant-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/196-204-EN-12-Diablo-Stone-Servant-Lorcana-Player.jpg"
       }
     }
   ]

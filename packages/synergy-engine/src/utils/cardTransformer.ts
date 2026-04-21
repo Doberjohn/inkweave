@@ -118,7 +118,9 @@ export function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
     text: raw.fullText,
     textSections: nonEmptySections(raw.fullTextSections),
     moveCost: raw.moveCost,
-    strength: raw.strength,
+    // Characters with missing strength (data-entry gaps in preview sets) default to 0.
+    // Non-character types keep undefined because strength doesn't apply to them.
+    strength: type === 'Character' ? (raw.strength ?? 0) : raw.strength,
     willpower: raw.willpower,
     lore: raw.lore,
     keywords: keywords.length > 0 ? keywords : undefined,
