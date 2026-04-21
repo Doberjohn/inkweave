@@ -203,8 +203,10 @@ export default defineConfig({
   server: {
     host: true,
     proxy: {
-      // Mirror Vercel rewrite: proxy card images to Ravensburger CDN in dev
-      '/card-images': {
+      // Mirror Vercel rewrite: proxy card images to Ravensburger CDN in dev.
+      // Trailing slash is load-bearing — without it, Vite's prefix matcher also
+      // grabs /card-images-preview/* (local AVIFs for Set 12 previews).
+      '/card-images/': {
         target: 'https://api.lorcana.ravensburger.com/images',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/card-images/, ''),
