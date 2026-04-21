@@ -124,6 +124,14 @@
           {
             "type": "command",
             "command": "bash D:/johnn/Projects/inkweave/.claude/hooks/engine-auto-rebuild.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash D:/johnn/Projects/inkweave/.claude/hooks/preview-images-auto-convert.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash D:/johnn/Projects/inkweave/.claude/hooks/preview-data-auto-precompute.sh"
           }
         ]
       }
