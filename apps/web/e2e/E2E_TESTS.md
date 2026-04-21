@@ -2,7 +2,9 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-96 active tests across 16 spec files. Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+101 active tests across 17 spec files. Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+
+The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
 
 ## `accessibility.spec.ts` — 6 tests (desktop only)
 
@@ -178,6 +180,16 @@
 | should advance to next pair on score click (mobile) | Mobile score click → pair changes |
 | should advance on skip (mobile) | Mobile skip → pair changes |
 | should show mobile bottom navigation | Mobile nav with Browse/Playstyles visible |
+
+## `reveals-page.spec.ts` — 5 tests (4 desktop, 1 mobile)
+
+| Test | What it verifies |
+|---|---|
+| renders hero and franchise tiers at /reveals | All 4 tier headings (Toy Story, Incredibles, Brave, Returning) render |
+| desktop nav shows Reveals entry with NEW badge | `/` has a Reveals link with a "NEW" badge child |
+| mobile nav shows elevated Reveals button | On mobile, `/browse` shows a Reveals button in the bottom nav |
+| promo modal appears on landing page and not on /reveals | `role="dialog" name="Set 12 reveals"` visible on `/`, absent on `/reveals` |
+| tier card click navigates to /card/:id | Clicking a card tile on `/reveals` navigates to a `/card/<id>` URL |
 
 ## Patterns
 

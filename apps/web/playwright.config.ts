@@ -39,5 +39,9 @@ export default defineConfig({
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
+    env: {
+      // Exercise the reveal-season active code paths in E2E.
+      VITE_IS_REVEAL_SEASON: 'true',
+    },
   },
 });

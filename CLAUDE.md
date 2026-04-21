@@ -97,6 +97,8 @@ Claude Code hooks, skills, and agents enforce workflow rules automatically. Chec
 | `git-write-protection.sh` | PreToolUse/Bash | Soft-blocks commit/push (`USER_APPROVED=1` bypass), hard-blocks destructive ops |
 | `branch-verification.sh` | PreToolUse/Edit\|Write | Blocks source file edits on master/main |
 | `engine-auto-rebuild.sh` | PostToolUse/Edit\|Write | Auto `pnpm build:engine` + `pnpm precompute-synergies` after engine file edits |
+| `preview-images-auto-convert.sh` | PostToolUse/Edit\|Write | Auto `pnpm convert-preview-images` after writes inside `apps/web/public/card-images-raw/` (raw → AVIF pipeline) |
+| `preview-data-auto-precompute.sh` | PostToolUse/Edit\|Write | Auto `pnpm precompute-synergies` after `apps/web/public/data/previewCards.json` writes (engine hook already covers engine-src changes) |
 | `issue-create-guard.sh` | PreToolUse/Bash | Redirects direct `gh issue create` to `/draft-issue` skill (`SKILL_APPROVED=1` bypass) |
 | Husky pre-push | git push | Runs E2E chromium before push |
 
@@ -253,9 +255,12 @@ pnpm test:supabase    # Run Supabase integration tests (requires .env.local)
 - Two-column UI: CardList (340px) | SynergyResults (flex) - deck builder removed for MVP
 - Floating card preview popover on hover (CardPreviewContext + CardPreviewPopover)
 - Core format only (sets 5+)
-- **react-grab**: Dev-only inspection tool. The `dev` script runs `pnpm dlx @react-grab/claude-code@latest && vite`. Playwright always uses `npx vite` for its webServer (react-grab is irrelevant during E2E). If a dev server is already running, Playwright reuses it (`reuseExistingServer: true` locally).
+- **react-grab**: Dev-only inspection tool. The `dev` script runs `pnpm dlx @react-grab/claude-code@latest && vite`. Playwright always uses `npx vite` for its webServer (react-grab is irrelevant during E2E). If a dev server is already running, Playwright reuses it (`reuseExistingServer: true` locally) — which means `playwright.config.ts`'s `webServer.env` only applies when Playwright launches its own Vite. Set branch-specific env vars in `apps/web/.env.local` for determinism; see **Feature Flags & Local Dev**.
 - **useContainerWidth**: ResizeObserver hook guards against 0-width observations from detached elements (`if (w > 0)`) — required for React Strict Mode double-mount resilience
 - **Supabase**: Community voting backend (project: `ttyidjyaxnycbpxwngqr`, eu-central-1). Use Supabase MCP tools (`apply_migration`, `execute_sql`, `generate_typescript_types`, `get_advisors`, `list_tables`) for all database operations — do not use local Supabase CLI. After schema changes: apply migration via MCP → verify with `list_tables`/`execute_sql` → regenerate types → run `get_advisors` (security). Client SDK in `apps/web/src/shared/lib/supabase.ts`; migrations in `supabase/migrations/`.
+- **Card images** — two pipelines, both routed through `resolveImageUrl` in `apps/web/src/features/cards/loader.ts`:
+  - **Main pool (sets 1-11)**: URLs point to `api.lorcana.ravensburger.com/images/...` and are rewritten to `/card-images/...` (same-origin). Vite dev proxy at `vite.config.ts` and Vercel rewrite at `vercel.json` forward those to Ravensburger. Proxy key uses the trailing slash form `'/card-images/'` — without it the prefix matcher also grabs `/card-images-preview/*`.
+  - **Set 12 previews**: URLs point to `lorcanaplayer.com/wp-content/uploads/...`. That host sits behind Cloudflare Bot Management, so server-to-server proxying fails. Raw images are downloaded manually into `apps/web/public/card-images-raw/` (gitignored), converted to AVIFs at two sizes by `scripts/convert-preview-images.mjs`, and committed to `apps/web/public/card-images-preview/{id}.avif` (198 files tracked). `resolveImageUrl` swaps lorcanaplayer URLs to `/card-images-preview/{id}.avif` at load time — the app never actually fetches from lorcanaplayer.com. When debugging image-loading issues, check `apps/web/public/card-images*` for existing assets before theorizing about CDNs.
 
 ## UI Theme (MVP)
 
@@ -282,6 +287,7 @@ Dark fantasy theme inspired by Lorcana:
 - **Pre-push hook** (husky) runs E2E chromium on every `git push`. Do not skip.
 - Full 5-browser E2E suite runs in CI as safety net.
 - After pushing, always confirm with clear output (e.g., git log showing commit on origin/master).
+- **When pre-push fails on tests unrelated to your change:** (1) confirm it's pre-existing by checking whether the same test was accepted on `origin/HEAD` — if yes, something drifted since then; (2) surface scope options to the user (fix in scope / fix separately / defer / `--no-verify` with explicit approval) before digging into root-cause; (3) do NOT silently investigate the unrelated breakage — that's scope drift. Pause and ask.
 
 ### Branch Naming
 - `feature/` - New features or enhancements
@@ -294,6 +300,11 @@ Dark fantasy theme inspired by Lorcana:
 - The `engine-validator` agent also runs build + precompute + audit as part of `/commit-and-push` when engine files are in the diff.
 - The Vite dev server auto-detects stale data on startup (via `ensureSynergiesPlugin`).
 
+### Feature Flags & Local Dev
+- Before `pnpm dev` on a feature branch, check `apps/web/.env.example` for flags that gate the feature being built. If the branch needs a flag on, add it to `apps/web/.env.local` (git-ignored, per-developer).
+- **Do not rely on `playwright.config.ts`'s `webServer.env`.** With `reuseExistingServer: !process.env.CI` (true locally), Playwright grabs any existing Vite on port 5173 without re-injecting env vars — so a dev server started without the flag silently fails feature-gated tests in pre-push. `.env.local` is loaded by Vite at boot regardless of who started it, making flag state deterministic across `pnpm dev`, `pnpm test:e2e`, and husky pre-push.
+- Example: on `feature/285-reveals-page`, `VITE_IS_REVEAL_SEASON=true` must be in `.env.local` or the `/reveals` route redirects to `/` and the nav omits the Reveals entry.
+
 ### Synergy Rule Documentation
 - When modifying rule logic, scoring, or explanations in the engine, always update the **Synergy Rules** section in this file to match. This includes score tables, condition matchers, explanation templates, and display tier definitions.
 ### Code Quality
@@ -301,6 +312,11 @@ Dark fantasy theme inspired by Lorcana:
 - Use `/refactor-code` for periodic comprehensive codebase audits
 - When reviewing code or doing a re-review, always re-read the current file contents first — never assume you know what's already been changed. Diff against the actual working tree, not your memory of previous edits.
 - When editing theme or config files, re-read the full file after edits to ensure no constants or exports were accidentally removed by the edit tool
+
+### Design Token Changes
+- **Grep the token value, not just declaration sites.** When swapping a font, color, or spacing value, the declaration lives in `theme.ts` / `index.css` / `index.html` — but inline styles, Storybook stories, and dynamic CSS strings (`cssText`, concatenated styles) bypass the token and must be found by searching the literal value across `apps/web/src/`.
+- After the swap, grep **both** the old and new value to confirm zero stragglers. Short-form references (`font-family:Barlow,sans-serif` jammed into one string) won't match a `font-family` search — only the token name itself will.
+- Long-term fix: refactor repeated tokens to CSS custom properties (`--font-body`) so one `:root` edit propagates everywhere instead of requiring an N-file hunt per swap.
 
 ### Data Integrity
 - **Never override tool output with memory.** When presenting data from tool results (gh issue list, git log, API responses, etc.), use the actual tool output verbatim. Do not "correct" or reformat it based on memory or prior context — memory can be stale or wrong.
@@ -316,7 +332,8 @@ Dark fantasy theme inspired by Lorcana:
 - **Tone: collaborative, not adversarial.** Frame challenges as "have you considered..." or "one concern with this is..." — the goal is better outcomes, not debate.
 
 ### Visual Self-Verification (CRITICAL)
-- **NEVER ask the user to verify visual changes.** After any UI change, use Chrome DevTools MCP (screenshot tool) to verify the result yourself. Analyze the screenshot for overlapping elements, misalignment, missing content, broken layouts, and sizing issues. If something is wrong, fix it and screenshot again. Repeat until correct. Only then present the result.
+- **NEVER ask the user to verify pixel alignment or regression catches.** After any UI change, use Chrome DevTools MCP (screenshot tool) to verify the result yourself. Analyze the screenshot for overlapping elements, misalignment, missing content, broken layouts, and sizing issues. If something is wrong, fix it and screenshot again. Repeat until correct. Only then present the result. **This rule is about catching your own mistakes — not about working alone on design.**
+- **Self-verification ≠ skipping design check-ins.** Design alignment and regression catching are different problems. After completing each new visual component (hero, tier, modal, nav variant, etc.) during feature work, take a screenshot and show the user before committing and moving on. Wait for their approval or change requests. This is the "Visual Iteration Protocol" — see `.claude/skills/implement-issue/SKILL.md` Step 7 for the full loop. Skipping it is the failure mode that produces a 9-phase PR built on design decisions the user never got to weigh in on.
 - **Do the math before positioning.** When using absolute positioning or calc(), calculate the actual pixel values first (card widths, gaps, badge sizes) instead of guessing and iterating. One correct calculation beats five trial-and-error rounds.
 
 ### Implementation Approach
@@ -340,6 +357,13 @@ Dark fantasy theme inspired by Lorcana:
 - Prefer readability over coverage percentage
 - Aim for 5-15 tests per component/hook, not 30+
 - **E2E test inventory**: `apps/web/e2e/E2E_TESTS.md` — update this file whenever E2E tests are added, removed, or edited
+
+### Debugging E2E Failures
+- **Read the failure screenshot before theorizing.** Playwright writes one per failed test to `apps/web/test-results/{test-name}-chromium/test-failed-1.png`. It shows the rendered DOM at the moment of failure — the fastest way to distinguish "test is stale" / "UI refactored" / "route gate fired" / "feature flag off."
+- Common patterns visible in the screenshot:
+  - **Unexpected page** (e.g., home rendered when test navigated to `/reveals`) → a route gate redirected; check the corresponding phase/flag hook.
+  - **Correct page but expected text missing** → UI may have been refactored (element moved to `<img alt>`, or hidden via `position: absolute; left: -10000` for screen readers — `toBeVisible()` excludes those). Query the `<section>` by role/name instead, or use `.toHaveCount(1)`.
+  - **Flash of initial state** → async state (fetch, localStorage) hadn't resolved; check what the page is waiting for before asserting.
 
 ### Design Session Workflow (HTML/CSS Mockups)
 

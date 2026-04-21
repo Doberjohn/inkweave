@@ -32,12 +32,17 @@ export interface SetInfo {
  */
 const USE_LOCAL_IMAGES = import.meta.env.VITE_LOCAL_IMAGES === 'true';
 const IMAGE_CDN_ORIGIN = 'https://api.lorcana.ravensburger.com/images/';
+const PREVIEW_IMAGE_CDN_ORIGIN = 'https://lorcanaplayer.com/wp-content/uploads/';
 
 function resolveImageUrl(rawUrl: string | undefined, cardId: number): string | undefined {
   if (!rawUrl) return undefined;
   if (USE_LOCAL_IMAGES) return `/card-images/${cardId}.avif`;
-  // Proxy Ravensburger URLs through same-origin Vercel rewrite; pass others through directly
+  // Ravensburger: proxy through same-origin rewrite (dev Vite proxy + Vercel rewrite).
   if (rawUrl.startsWith(IMAGE_CDN_ORIGIN)) return rawUrl.replace(IMAGE_CDN_ORIGIN, '/card-images/');
+  // Set 12 previews: lorcanaplayer.com is behind Cloudflare bot protection so we can't
+  // proxy directly. Pre-converted AVIFs live at /card-images-preview/{id}.avif (see
+  // scripts/convert-preview-images.mjs and the tracked card-images-preview/ directory).
+  if (rawUrl.startsWith(PREVIEW_IMAGE_CDN_ORIGIN)) return `/card-images-preview/${cardId}.avif`;
   return rawUrl;
 }
 

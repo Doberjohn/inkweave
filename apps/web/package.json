@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "pnpm dlx @react-grab/claude-code@latest && vite",
     "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
     "build:storybook": "storybook build -o dist/storybook",
     "preview": "vite preview",
     "lint": "eslint .",

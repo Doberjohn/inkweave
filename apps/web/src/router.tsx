@@ -1,6 +1,7 @@
 import {lazy, Suspense} from 'react';
 import {createBrowserRouter} from 'react-router-dom';
 import {AppLayout} from './AppLayout';
+import {RevealsGate} from './features/reveals';
 import {LoadingSpinner} from './shared/components';
 
 /** Retry a dynamic import up to `retries` times, then force-reload on stale chunks (e.g. iOS home screen cache). */
@@ -144,9 +145,11 @@ export const router = createBrowserRouter([
       {
         path: 'reveals',
         element: (
-          <SuspenseWrapper>
-            <RevealsPage />
-          </SuspenseWrapper>
+          <RevealsGate>
+            <SuspenseWrapper>
+              <RevealsPage />
+            </SuspenseWrapper>
+          </RevealsGate>
         ),
       },
       {
