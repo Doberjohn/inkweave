@@ -52,7 +52,7 @@ function TypeScale() {
                 fontFamily: FONTS.body,
                 marginBottom: 8,
               }}>
-              <code style={{color: COLORS.descriptionText}}>FONTS.body</code>: Barlow
+              <code style={{color: COLORS.descriptionText}}>FONTS.body</code>: Plus Jakarta Sans
             </div>
             <div style={{fontSize: 20, fontFamily: FONTS.body, color: COLORS.text}}>
               The quick brown fox jumps over the lazy dog
