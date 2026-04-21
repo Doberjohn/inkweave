@@ -245,3 +245,26 @@ Present the full brief:
 ```
 
 Then ask: "Ready to start, or do you want to discuss the approach first?"
+
+## Step 7: Visual Iteration Protocol (implementation phase)
+
+**This step is guidance that applies throughout implementation, not a one-time action at kickoff.**
+
+If the issue touches UI (the issue has the `ui` label, OR the body's "Files Affected" section includes `.tsx`/`.stories.tsx` visual components, OR the Implementation Steps mention hero/layout/component/modal/nav/styling work), follow this loop for every new or significantly-modified visual component:
+
+1. **Implement the component to a reviewable state** (compiles, typechecks, renders).
+2. **Start the dev server** (if not already running) with any flags the feature needs.
+3. **Take a Chrome DevTools MCP screenshot** at the desktop breakpoint and, for responsive surfaces, at least one mobile breakpoint (360 or 390 wide).
+4. **Present the screenshot to the user with a one-line summary** of what they're seeing and any specific decisions you made that could go another way (colors, spacing, copy, icon choice, placement).
+5. **Wait for user feedback.** Do NOT move on to the next component or commit the current one until the user says "looks good" or gives change requests.
+6. **Iterate on feedback**, screenshot again, and loop until approved.
+7. **Only then commit and proceed to the next component.**
+
+**Why this exists:** The "Visual Self-Verification" rule in CLAUDE.md prevents you from asking the user to verify pixel alignment — but it does NOT mean "work alone until the whole PR is done." Design alignment is different from regression catching. Self-verification catches bugs; iteration catches design misalignment. Both are required for visual work.
+
+**Exceptions (may batch multiple components before check-in):**
+- Pure refactors with no visible change
+- Components that are deliberate 1:1 matches of a pre-agreed design artifact (mockup, Figma file) — but note: HTML mockups were deprecated for this project. Absence of an artifact means iteration with the user is the design process.
+- Internal utilities, hooks, tests, stories (not user-facing renders).
+
+**When in doubt, pause and ask.** The cost of a 30-second screenshot + question is far lower than the cost of a 9-phase PR built on a design the user wouldn't have approved.

@@ -319,7 +319,8 @@ Dark fantasy theme inspired by Lorcana:
 - **Tone: collaborative, not adversarial.** Frame challenges as "have you considered..." or "one concern with this is..." — the goal is better outcomes, not debate.
 
 ### Visual Self-Verification (CRITICAL)
-- **NEVER ask the user to verify visual changes.** After any UI change, use Chrome DevTools MCP (screenshot tool) to verify the result yourself. Analyze the screenshot for overlapping elements, misalignment, missing content, broken layouts, and sizing issues. If something is wrong, fix it and screenshot again. Repeat until correct. Only then present the result.
+- **NEVER ask the user to verify pixel alignment or regression catches.** After any UI change, use Chrome DevTools MCP (screenshot tool) to verify the result yourself. Analyze the screenshot for overlapping elements, misalignment, missing content, broken layouts, and sizing issues. If something is wrong, fix it and screenshot again. Repeat until correct. Only then present the result. **This rule is about catching your own mistakes — not about working alone on design.**
+- **Self-verification ≠ skipping design check-ins.** Design alignment and regression catching are different problems. After completing each new visual component (hero, tier, modal, nav variant, etc.) during feature work, take a screenshot and show the user before committing and moving on. Wait for their approval or change requests. This is the "Visual Iteration Protocol" — see `.claude/skills/implement-issue/SKILL.md` Step 7 for the full loop. Skipping it is the failure mode that produces a 9-phase PR built on design decisions the user never got to weigh in on.
 - **Do the math before positioning.** When using absolute positioning or calc(), calculate the actual pixel values first (card widths, gaps, badge sizes) instead of guessing and iterating. One correct calculation beats five trial-and-error rounds.
 
 ### Implementation Approach
