@@ -12,41 +12,35 @@ const meta: Meta<typeof MobileBottomNav> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const BrowseActive: Story = {
-  args: {onSearchClick: fn()},
-  decorators: [
-    (Story) => (
-      <MemoryRouter initialEntries={['/browse']}>
-        <div style={{height: '200px', position: 'relative'}}>
-          <Story />
-        </div>
-      </MemoryRouter>
-    ),
-  ],
+const withRouter = (path: string) => (Story: () => React.ReactNode) => (
+  <MemoryRouter initialEntries={[path]}>
+    <div style={{height: 200, position: 'relative'}}>
+      <Story />
+    </div>
+  </MemoryRouter>
+);
+
+export const FlatBrowseActive: Story = {
+  args: {onSearchClick: fn(), phaseOverride: 'hidden'},
+  decorators: [withRouter('/browse')],
 };
 
-export const PlaystylesActive: Story = {
-  args: {onSearchClick: fn()},
-  decorators: [
-    (Story) => (
-      <MemoryRouter initialEntries={['/playstyles']}>
-        <div style={{height: '200px', position: 'relative'}}>
-          <Story />
-        </div>
-      </MemoryRouter>
-    ),
-  ],
+export const FlatPlaystylesActive: Story = {
+  args: {onSearchClick: fn(), phaseOverride: 'hidden'},
+  decorators: [withRouter('/playstyles')],
 };
 
-export const HomeActive: Story = {
-  args: {onSearchClick: fn()},
-  decorators: [
-    (Story) => (
-      <MemoryRouter initialEntries={['/']}>
-        <div style={{height: '200px', position: 'relative'}}>
-          <Story />
-        </div>
-      </MemoryRouter>
-    ),
-  ],
+export const FlatVoteActive: Story = {
+  args: {onSearchClick: fn(), phaseOverride: 'hidden'},
+  decorators: [withRouter('/vote')],
+};
+
+export const RevealSeasonBrowseActive: Story = {
+  args: {onSearchClick: fn(), phaseOverride: 'pre-release'},
+  decorators: [withRouter('/browse')],
+};
+
+export const RevealSeasonRevealsActive: Story = {
+  args: {onSearchClick: fn(), phaseOverride: 'pre-release-live'},
+  decorators: [withRouter('/reveals')],
 };

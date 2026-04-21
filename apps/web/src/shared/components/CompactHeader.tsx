@@ -3,6 +3,7 @@ import {useLocation, useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING, Z_INDEX} from '../constants';
 import {useAutocomplete} from '../hooks';
+import {useRevealPhase} from '../../features/reveals';
 import {SearchAutocomplete} from './SearchAutocomplete';
 
 interface CompactHeaderProps {
@@ -22,11 +23,20 @@ interface CompactHeaderProps {
   isMobile?: boolean;
 }
 
-const NAV_ITEMS = [
+interface NavItem {
+  path: string;
+  label: string;
+  badge?: string;
+  /** When true, the entry is only rendered during reveal season. */
+  revealOnly?: boolean;
+}
+
+const NAV_ITEMS: readonly NavItem[] = [
   {path: '/browse', label: 'Browse'},
   {path: '/playstyles', label: 'Playstyles'},
   {path: '/vote', label: 'Vote'},
-] as const;
+  {path: '/reveals', label: 'Reveals', badge: 'NEW', revealOnly: true},
+];
 
 export function CompactHeader({
   onLogoClick,
@@ -43,6 +53,9 @@ export function CompactHeader({
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const revealPhase = useRevealPhase();
+  const isRevealSeason = revealPhase === 'pre-release' || revealPhase === 'pre-release-live';
+  const visibleNavItems = NAV_ITEMS.filter((item) => !item.revealOnly || isRevealSeason);
   const hasSearch = searchQuery !== undefined && onSearchChange !== undefined;
   const mobile = !!isMobile;
 
@@ -221,7 +234,7 @@ export function CompactHeader({
             background: '#10101c',
             overflow: 'hidden',
           }}>
-          {NAV_ITEMS.map(({path, label}) => {
+          {visibleNavItems.map(({path, label, badge}) => {
             const isActive = location.pathname.startsWith(path);
             const isHovered = hoveredNav === path;
             return (
@@ -238,6 +251,7 @@ export function CompactHeader({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  gap: 6,
                   padding: '0 20px',
                   height: '100%',
                   background: isActive
@@ -258,6 +272,21 @@ export function CompactHeader({
                   cursor: 'pointer',
                 }}>
                 {label}
+                {badge && (
+                  <span
+                    style={{
+                      fontSize: FONT_SIZES.xs,
+                      fontWeight: 700,
+                      padding: '2px 6px',
+                      borderRadius: 999,
+                      background: COLORS.primary500,
+                      color: COLORS.background,
+                      letterSpacing: 0.4,
+                      lineHeight: 1,
+                    }}>
+                    {badge}
+                  </span>
+                )}
               </a>
             );
           })}

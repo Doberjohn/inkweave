@@ -9,7 +9,8 @@
       "name": "The Wilds Unknown",
       "number": 12,
       "type": "expansion",
-      "releaseDate": "2026-08-01",
+      "prereleaseDate": "2026-05-08",
+      "releaseDate": "2026-05-15",
       "hasAllCards": false,
       "allowedInFormats": {
         "Core": {
