@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../../shared/constants';
+import {useResponsive} from '../../shared/hooks';
 import type {RevealPhase} from './useRevealPhase';
 
 const WILDS_UNKNOWN_LOGO = '/art/sets/wilds-unknown.png';
@@ -33,6 +34,7 @@ function countdownLabel(phase: RevealPhase, days: number): string | null {
 
 export function Hero({phase, days}: HeroProps) {
   const reduced = prefersReducedMotion();
+  const {isMobile} = useResponsive();
   const [mounted, setMounted] = useState(reduced);
 
   useEffect(() => {
@@ -42,6 +44,14 @@ export function Hero({phase, days}: HeroProps) {
   }, [reduced]);
 
   const label = countdownLabel(phase, days);
+
+  const countdownStyle: React.CSSProperties = {
+    fontFamily: FONTS.hero,
+    fontSize: FONT_SIZES.xxl,
+    color: COLORS.primary,
+    textShadow: `0 0 12px ${COLORS.primary}80, 0 0 24px ${COLORS.primary}40`,
+    letterSpacing: 0.5,
+  };
 
   return (
     <header
@@ -54,29 +64,35 @@ export function Hero({phase, days}: HeroProps) {
         padding: `${SPACING.xxl}px ${SPACING.lg}px ${SPACING.lg}px`,
         textAlign: 'center',
       }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: SPACING.xxl,
-          flexWrap: 'wrap',
-        }}>
+      <div style={{position: 'relative', width: '100%'}}>
         <img
           src={WILDS_UNKNOWN_LOGO}
           alt="The Wilds Unknown"
-          style={{maxWidth: 320, width: '100%', height: 'auto', display: 'block'}}
+          style={{
+            maxWidth: 320,
+            width: '100%',
+            height: 'auto',
+            display: 'block',
+            margin: '0 auto',
+          }}
         />
-        {label && (
+        {label && !isMobile && (
           <div
             aria-live="polite"
             style={{
-              fontFamily: FONTS.hero,
-              fontSize: FONT_SIZES.xxl,
-              color: COLORS.primary,
-              textShadow: `0 0 12px ${COLORS.primary}80, 0 0 24px ${COLORS.primary}40`,
-              letterSpacing: 0.5,
+              ...countdownStyle,
+              position: 'absolute',
+              right: SPACING.xl,
+              top: '50%',
+              transform: 'translateY(-50%)',
             }}>
+            {label}
+          </div>
+        )}
+        {label && isMobile && (
+          <div
+            aria-live="polite"
+            style={{...countdownStyle, marginTop: SPACING.md, textAlign: 'center'}}>
             {label}
           </div>
         )}

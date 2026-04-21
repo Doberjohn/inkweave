@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from '../cards/components/CardTile';
-import {COLORS, FONTS, FONT_SIZES, LAYOUT, SPACING} from '../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, SPACING} from '../../shared/constants';
 import type {RevealTier} from './useRevealCards';
 
 const ANIMATE_IN_MS = 240;
@@ -20,10 +20,6 @@ function prefersReducedMotion(): boolean {
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
-}
-
-function formatCount(count: number): string {
-  return count === 1 ? '1 card' : `${count} cards`;
 }
 
 export function FranchiseTier({tier, priorityCount = 0}: FranchiseTierProps) {
@@ -53,57 +49,43 @@ export function FranchiseTier({tier, priorityCount = 0}: FranchiseTierProps) {
       }}>
       <header
         style={{
-          position: 'sticky',
-          top: LAYOUT.compactHeaderHeight,
-          zIndex: 10,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          gap: SPACING.md,
-          padding: `${SPACING.md}px 0`,
-          background: `linear-gradient(180deg, ${COLORS.background} 0%, ${COLORS.background}e6 100%)`,
-          backdropFilter: 'blur(8px)',
-          borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+          padding: `${SPACING.xxl}px 0 ${SPACING.lg}px`,
         }}>
-        {tier.logoUrl && (
+        {tier.logoUrl ? (
           <img
             src={tier.logoUrl}
-            alt=""
-            aria-hidden="true"
-            style={{height: 32, width: 'auto', objectFit: 'contain'}}
+            alt={tier.label}
+            style={{height: 80, width: 'auto', maxWidth: '80%', objectFit: 'contain'}}
           />
+        ) : (
+          <h2
+            id={`tier-${tier.id}`}
+            style={{
+              margin: 0,
+              fontFamily: FONTS.hero,
+              fontSize: FONT_SIZES.xxl,
+              color: COLORS.text,
+              fontWeight: 600,
+              textAlign: 'center',
+              letterSpacing: 0.5,
+            }}>
+            {tier.label}
+          </h2>
         )}
-        <h2
-          id={`tier-${tier.id}`}
-          style={{
-            margin: 0,
-            fontFamily: FONTS.body,
-            fontSize: FONT_SIZES.xl,
-            color: COLORS.text,
-            fontWeight: 600,
-            flex: 1,
-          }}>
-          {tier.label}
-        </h2>
-        <span
-          aria-label={formatCount(tier.cards.length)}
-          style={{
-            fontFamily: FONTS.body,
-            fontSize: FONT_SIZES.xs,
-            color: COLORS.textMuted,
-            padding: '4px 10px',
-            borderRadius: 999,
-            border: `1px solid ${COLORS.surfaceBorder}`,
-            background: COLORS.surfaceAlt,
-          }}>
-          {formatCount(tier.cards.length)}
-        </span>
+        {tier.logoUrl && (
+          <h2 id={`tier-${tier.id}`} style={{position: 'absolute', left: -10000, top: 'auto'}}>
+            {tier.label}
+          </h2>
+        )}
       </header>
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
           gap: SPACING.sm + 2,
-          paddingTop: SPACING.md,
         }}>
         {tier.cards.map((card, index) => (
           <CardTile
