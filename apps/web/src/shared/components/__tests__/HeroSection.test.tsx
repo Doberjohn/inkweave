@@ -13,12 +13,14 @@ describe('HeroSection', () => {
     onSearchChange: vi.fn(),
   };
 
-  it('should render the hero section with title and subtitles', () => {
+  it('should render the hero section with logo heading and subtitle', () => {
     render(<HeroSection {...defaultProps} />);
 
     expect(screen.getByTestId('hero-section')).toBeInTheDocument();
-    expect(screen.getByText('✦ INKWEAVE ✦')).toBeInTheDocument();
-    expect(screen.getByText('LORCANA SYNERGIES')).toBeInTheDocument();
+    // h1 wraps the animated logo; its accessible name comes from the img's alt.
+    const heading = screen.getByRole('heading', {level: 1, name: 'Inkweave'});
+    expect(heading).toBeInTheDocument();
+    expect(heading.querySelector('img')).toHaveAttribute('src', '/brand/logo-animated.svg');
     expect(
       screen.getByText('Select any Lorcana card and instantly discover powerful combinations.'),
     ).toBeInTheDocument();

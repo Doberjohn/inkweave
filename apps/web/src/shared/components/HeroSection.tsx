@@ -30,30 +30,21 @@ function getStyles(isMobile: boolean) {
       width: isMobile ? '100%' : undefined,
       boxSizing: 'border-box',
     } as React.CSSProperties,
-    sparkle: {
-      fontSize: `${isMobile ? FONT_SIZES.xs : FONT_SIZES.base}px`,
-      letterSpacing: isMobile ? '3.6px' : '4.2px',
-      color: COLORS.primary,
-      fontWeight: 400,
-      marginBottom: SPACING.sm,
-      textTransform: 'uppercase',
-    } as React.CSSProperties,
     heading: {
-      fontFamily: FONTS.hero,
-      fontSize: isMobile ? 40 : 72,
-      fontWeight: 400,
-      color: COLORS.heroTitle,
       margin: 0,
-      marginBottom: SPACING.sm,
-      textAlign: 'center',
-      lineHeight: isMobile ? '48px' : '90px',
+      marginBottom: isMobile ? 16 : 20,
+      lineHeight: 0,
+    } as React.CSSProperties,
+    logo: {
+      display: 'block',
+      width: '100%',
+      maxWidth: isMobile ? 380 : 600,
+      height: 'auto',
+      userSelect: 'none',
     } as React.CSSProperties,
     subtitleContainer: {
       textAlign: 'center',
       marginBottom: isMobile ? 24 : 32,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: isMobile ? '6px' : '8px',
       padding: isMobile ? '0 8px' : undefined,
     } as React.CSSProperties,
     subtitlePrimary: {
@@ -61,12 +52,6 @@ function getStyles(isMobile: boolean) {
       color: COLORS.heroSubtitle,
       margin: 0,
       lineHeight: isMobile ? '22px' : '28px',
-    } as React.CSSProperties,
-    subtitleSecondary: {
-      fontSize: `${isMobile ? FONT_SIZES.base : FONT_SIZES.xl}px`,
-      color: COLORS.heroSubtitleSecondary,
-      margin: 0,
-      lineHeight: isMobile ? '18px' : '20px',
     } as React.CSSProperties,
     searchRow: {
       display: 'flex',
@@ -90,14 +75,6 @@ function getStyles(isMobile: boolean) {
     } as React.CSSProperties,
   };
 }
-
-// Static styles that don't depend on responsive state
-const gradientSpan: React.CSSProperties = {
-  background: COLORS.heroGradient,
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  backgroundClip: 'text',
-};
 
 /** Grid icon for "Browse all cards" CTA. */
 function GridIcon() {
@@ -180,23 +157,20 @@ export function HeroSection({
 
   return (
     <section data-testid="hero-section" aria-label="Hero" style={styles.container}>
-      {/* Sparkle + Title */}
-      <div style={styles.sparkle}>✦ INKWEAVE ✦</div>
-
-      {/* Hero Heading */}
+      {/* Logo — animated SVG with self-contained CSS animations (honors prefers-reduced-motion).
+          Wrapping in h1 preserves a single top-level heading for a11y; alt provides the name. */}
       <h1 style={styles.heading}>
-        MASTER
-        <br />
-        <span style={gradientSpan}>LORCANA SYNERGIES</span>
+        <img
+          src="/brand/logo-animated.svg"
+          alt="Inkweave"
+          style={styles.logo}
+        />
       </h1>
 
       {/* Subtitle */}
       <div style={styles.subtitleContainer}>
         <p style={styles.subtitlePrimary}>
           Select any Lorcana card and instantly discover powerful combinations.
-        </p>
-        <p style={styles.subtitleSecondary}>
-          Build stronger decks with intelligent synergy detection.
         </p>
       </div>
 

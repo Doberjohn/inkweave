@@ -26,17 +26,15 @@ interface CompactHeaderProps {
 interface NavItem {
   path: string;
   label: string;
-  badge?: string;
-  /** When true, the entry is only rendered during reveal season. */
-  revealOnly?: boolean;
 }
 
 const NAV_ITEMS: readonly NavItem[] = [
   {path: '/browse', label: 'Browse'},
   {path: '/playstyles', label: 'Playstyles'},
   {path: '/vote', label: 'Vote'},
-  {path: '/reveals', label: 'Reveals', badge: 'NEW', revealOnly: true},
 ];
+
+const REVEALS_PATH = '/reveals';
 
 export function CompactHeader({
   onLogoClick,
@@ -55,7 +53,8 @@ export function CompactHeader({
   const navigate = useNavigate();
   const revealPhase = useRevealPhase();
   const isRevealSeason = revealPhase === 'pre-release' || revealPhase === 'pre-release-live';
-  const visibleNavItems = NAV_ITEMS.filter((item) => !item.revealOnly || isRevealSeason);
+  const isRevealsActive = location.pathname.startsWith(REVEALS_PATH);
+  const isRevealsHovered = hoveredNav === REVEALS_PATH;
   const hasSearch = searchQuery !== undefined && onSearchChange !== undefined;
   const mobile = !!isMobile;
 
@@ -121,16 +120,17 @@ export function CompactHeader({
             ←
           </span>
         )}
-        <span
+        <img
+          src="/brand/logo.svg"
+          alt="Inkweave"
+          draggable={false}
           style={{
-            fontFamily: FONTS.body,
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 700,
-            color: COLORS.primary,
-            letterSpacing: '0.18em',
-          }}>
-          INKWEAVE
-        </span>
+            display: 'block',
+            height: mobile ? 22 : 24,
+            width: 'auto',
+            userSelect: 'none',
+          }}
+        />
       </a>
 
       {/* Center: Search bar */}
@@ -217,7 +217,9 @@ export function CompactHeader({
         </div>
       )}
 
-      {/* Nav strip (desktop only, centered across full header) */}
+      {/* Nav (desktop only, centered across full header).
+          During reveal season, Reveals breaks out of the strip as a standalone
+          gold-outlined pill that visually reads as a promotion, not a menu item. */}
       {!mobile && (
         <nav
           aria-label="Main navigation"
@@ -228,68 +230,109 @@ export function CompactHeader({
             transform: 'translate(-50%, -50%)',
             display: 'flex',
             alignItems: 'center',
-            height: 38,
-            borderRadius: RADIUS.lg,
-            border: `1px solid ${COLORS.surfaceBorder}`,
-            background: '#10101c',
-            overflow: 'hidden',
+            gap: 12,
           }}>
-          {visibleNavItems.map(({path, label, badge}) => {
-            const isActive = location.pathname.startsWith(path);
-            const isHovered = hoveredNav === path;
-            return (
-              <a
-                key={path}
-                href={path}
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate(path);
-                }}
-                onMouseEnter={() => setHoveredNav(path)}
-                onMouseLeave={() => setHoveredNav(null)}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              height: 38,
+              borderRadius: RADIUS.lg,
+              border: `1px solid ${COLORS.surfaceBorder}`,
+              background: '#10101c',
+              overflow: 'hidden',
+            }}>
+            {NAV_ITEMS.map(({path, label}) => {
+              const isActive = location.pathname.startsWith(path);
+              const isHovered = hoveredNav === path;
+              return (
+                <a
+                  key={path}
+                  href={path}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(path);
+                  }}
+                  onMouseEnter={() => setHoveredNav(path)}
+                  onMouseLeave={() => setHoveredNav(null)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 20px',
+                    height: '100%',
+                    background: isActive
+                      ? COLORS.surfaceHover
+                      : isHovered
+                        ? 'rgba(255, 185, 0, 0.06)'
+                        : 'transparent',
+                    color: isActive || isHovered ? COLORS.primary : COLORS.textMuted,
+                    fontFamily: FONTS.body,
+                    fontSize: `${FONT_SIZES.base}px`,
+                    fontWeight: isActive ? 600 : 500,
+                    textDecoration: 'none',
+                    transition: 'background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease',
+                    boxShadow:
+                      isHovered && !isActive
+                        ? '0 0 12px rgba(255, 185, 0, 0.15), inset 0 0 8px rgba(255, 185, 0, 0.05)'
+                        : 'none',
+                    cursor: 'pointer',
+                  }}>
+                  {label}
+                </a>
+              );
+            })}
+          </div>
+          {isRevealSeason && (
+            <a
+              href={REVEALS_PATH}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(REVEALS_PATH);
+              }}
+              onMouseEnter={() => setHoveredNav(REVEALS_PATH)}
+              onMouseLeave={() => setHoveredNav(null)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '0 14px',
+                height: 38,
+                borderRadius: 999,
+                background: isRevealsActive
+                  ? 'linear-gradient(180deg, rgba(255, 185, 0, 0.28) 0%, rgba(255, 185, 0, 0.14) 100%)'
+                  : 'linear-gradient(180deg, rgba(255, 185, 0, 0.14) 0%, rgba(255, 185, 0, 0.06) 100%)',
+                border: `1px solid ${COLORS.primary500}`,
+                color: COLORS.primary,
+                fontFamily: FONTS.body,
+                fontSize: `${FONT_SIZES.base}px`,
+                fontWeight: 600,
+                textDecoration: 'none',
+                boxShadow:
+                  isRevealsHovered || isRevealsActive
+                    ? '0 0 20px rgba(255, 185, 0, 0.35)'
+                    : '0 0 12px rgba(255, 185, 0, 0.2)',
+                transform: isRevealsHovered ? 'translateY(-1px)' : 'translateY(0)',
+                transition:
+                  'transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 200ms cubic-bezier(0.2, 0.8, 0.2, 1), background 200ms ease',
+                cursor: 'pointer',
+              }}>
+              Reveals
+              <span
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  padding: '0 20px',
-                  height: '100%',
-                  background: isActive
-                    ? COLORS.surfaceHover
-                    : isHovered
-                      ? 'rgba(255, 185, 0, 0.06)'
-                      : 'transparent',
-                  color: isActive || isHovered ? COLORS.primary : COLORS.textMuted,
-                  fontFamily: FONTS.body,
-                  fontSize: `${FONT_SIZES.base}px`,
-                  fontWeight: isActive ? 600 : 500,
-                  textDecoration: 'none',
-                  transition: 'background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease',
-                  boxShadow:
-                    isHovered && !isActive
-                      ? '0 0 12px rgba(255, 185, 0, 0.15), inset 0 0 8px rgba(255, 185, 0, 0.05)'
-                      : 'none',
-                  cursor: 'pointer',
+                  fontSize: FONT_SIZES.xs,
+                  fontWeight: 700,
+                  padding: '2px 6px',
+                  borderRadius: 999,
+                  background: COLORS.primary500,
+                  color: COLORS.background,
+                  letterSpacing: 0.4,
+                  lineHeight: 1,
                 }}>
-                {label}
-                {badge && (
-                  <span
-                    style={{
-                      fontSize: FONT_SIZES.xs,
-                      fontWeight: 700,
-                      padding: '2px 6px',
-                      borderRadius: 999,
-                      background: COLORS.primary500,
-                      color: COLORS.background,
-                      letterSpacing: 0.4,
-                      lineHeight: 1,
-                    }}>
-                    {badge}
-                  </span>
-                )}
-              </a>
-            );
-          })}
+                NEW
+              </span>
+            </a>
+          )}
         </nav>
       )}
 
