@@ -36,12 +36,13 @@ test.describe('Reveals page (flag on)', () => {
     await expect(revealsLink.getByText('NEW')).toBeVisible();
   });
 
-  test('mobile nav shows elevated Reveals button', async ({page}, testInfo) => {
+  test('mobile nav shows Reveals tab', async ({page}, testInfo) => {
     if (!testInfo.project.name.startsWith('mobile-')) test.skip();
 
     await page.goto('/browse');
     const mobileNav = page.getByRole('navigation', {name: 'Mobile navigation'});
-    const revealsLink = mobileNav.getByRole('link', {name: 'Reveals', exact: true});
+    // aria-label is the descriptive form after the Option B accessible-name refactor.
+    const revealsLink = mobileNav.getByRole('link', {name: 'Set 12 reveals', exact: true});
     await expect(revealsLink).toBeVisible();
   });
 

@@ -185,6 +185,7 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
         {proxyInput}
         {/* Backdrop */}
         <div
+          data-testid="search-sheet-backdrop"
           className={`overlay-transition overlay-enter ${visible ? 'overlay-visible' : ''}`}
           onTransitionEnd={onTransitionEnd}
           onClick={handleBackdropClick}
