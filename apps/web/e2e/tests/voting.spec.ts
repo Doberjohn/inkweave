@@ -14,9 +14,11 @@ test.describe('Voting Page — Desktop', () => {
     await votePage.goto();
     await expect(page).toHaveURL('/vote');
 
-    // Two card images visible
+    // Two card images visible — wait for the SECOND image to mount before counting.
+    // `count()` is a snapshot without auto-wait, so on slower browsers (webkit)
+    // the first image can render before the second and the count races to 1.
     const images = votePage.getCardImages();
-    await expect(images.first()).toBeVisible();
+    await expect(images.nth(1)).toBeVisible();
     const count = await images.count();
     expect(count).toBeGreaterThanOrEqual(2);
   });
