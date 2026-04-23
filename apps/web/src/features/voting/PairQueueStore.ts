@@ -65,7 +65,8 @@ export class PairQueueStore {
     let bucket = this.nextBucket;
     const result: PairIndexEntry[] = [];
 
-    while (result.length < count && (readPos.interesting >= 0 || readPos.other >= 0)) {
+    while (result.length < count) {
+      if (readPos.interesting < 0 && readPos.other < 0) break;
       const alt: Bucket = bucket === 'interesting' ? 'other' : 'interesting';
       let entry: PairIndexEntry | undefined;
       if (readPos[bucket] >= 0) {
