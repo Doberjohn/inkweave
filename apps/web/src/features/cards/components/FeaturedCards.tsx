@@ -103,14 +103,6 @@ export function FeaturedCards({
         <DividerLine />
         <div style={{flexShrink: 0, textAlign: 'center'}}>
           <div style={styles.label}>Popular Synergy Starters</div>
-          <div
-            style={{
-              fontSize: `${FONT_SIZES.xs}px`,
-              color: COLORS.featuredLabel,
-              marginTop: 4,
-            }}>
-            Cards with the most powerful connections
-          </div>
         </div>
         <DividerLine />
       </div>

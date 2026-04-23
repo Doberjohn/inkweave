@@ -22,7 +22,7 @@ describe('HeroSection', () => {
     expect(heading).toBeInTheDocument();
     expect(heading.querySelector('img')).toHaveAttribute('src', '/brand/logo-animated.svg');
     expect(
-      screen.getByText('Select any Lorcana card and instantly discover powerful combinations.'),
+      screen.getByText('Select any Lorcana card and instantly discover powerful synergies.'),
     ).toBeInTheDocument();
   });
 

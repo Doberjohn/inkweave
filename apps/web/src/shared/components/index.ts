@@ -1,4 +1,5 @@
 export {BackLink} from './BackLink';
+export {BetaNotice} from './BetaNotice';
 export {Callout} from './Callout';
 export {CardImage} from './CardImage';
 export {CardTextBlock} from './CardTextBlock';

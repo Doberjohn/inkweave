@@ -40,6 +40,10 @@ import {
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive, useFilterParams, usePreloadImages} from '../shared/hooks';
 
+// Feature flag: gates the "Strategy Tips" collapsible section on the hero.
+// Off by default in production (set `VITE_SHOW_STRATEGY_TIPS=true` in .env.local for dev).
+const SHOW_STRATEGY_TIPS = import.meta.env.VITE_SHOW_STRATEGY_TIPS === 'true';
+
 // ── Hero layout configs ──
 
 interface HeroLayout {
@@ -217,8 +221,8 @@ function PlaystyleHero({
           {description}
         </p>
 
-        {/* Strategy Tips: collapsible section (hidden when no tips) */}
-        {tips.length > 0 && (
+        {/* Strategy Tips: collapsible section (hidden when no tips or when flag is off) */}
+        {SHOW_STRATEGY_TIPS && tips.length > 0 && (
           <>
             <button
               onClick={() => setTipsOpen(!tipsOpen)}
