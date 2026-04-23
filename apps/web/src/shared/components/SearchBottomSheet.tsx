@@ -6,7 +6,9 @@ import {useCardDataContext} from '../contexts/CardDataContext';
 import {smallImageUrl} from '../../features/cards/loader';
 import {useAutocomplete, useDialogFocus, useScrollLock, useTransitionPresence} from '../hooks';
 
-// --- Highlighted name (reused from SearchAutocomplete) ---
+// =====================================================================
+// Highlighted name (reused from SearchAutocomplete).
+// =====================================================================
 
 function HighlightedName({fullName, query}: {fullName: string; query: string}) {
   if (!query || query.length < 2) return <>{fullName}</>;
@@ -32,7 +34,9 @@ function HighlightedName({fullName, query}: {fullName: string; query: string}) {
   );
 }
 
-// --- Ink color for thumbnail fallback ---
+// =====================================================================
+// Ink color / set abbreviation helpers.
+// =====================================================================
 
 const INK_COLORS: Record<string, string> = {
   Amber: '#f59e0b',
@@ -45,10 +49,34 @@ const INK_COLORS: Record<string, string> = {
 
 function inkColor(card: LorcanaCard): string {
   const ink = Array.isArray(card.inkColor) ? card.inkColor[0] : card.inkColor;
-  return INK_COLORS[ink ?? ''] ?? COLORS.surfaceBorder;
+  if (!ink) return COLORS.surfaceBorder;
+  return INK_COLORS[ink] ?? COLORS.surfaceBorder;
 }
 
-// --- Recent searches (localStorage) ---
+/** Set abbreviation for a card. Split guard form keeps each conditional simple. */
+function getSetAbbr(card: LorcanaCard): string {
+  const abbr = SET_ABBREVIATIONS[card.setCode as keyof typeof SET_ABBREVIATIONS];
+  if (abbr) return abbr;
+  if (card.setCode) return card.setCode;
+  return '';
+}
+
+/** Ink display label like " · Amber" or " · Amethyst-Sapphire". Empty if no ink. */
+function getInkLabel(card: LorcanaCard): string {
+  if (!card.inkColor) return '';
+  if (Array.isArray(card.inkColor)) return ` · ${card.inkColor.join('-')}`;
+  return ` · ${card.inkColor}`;
+}
+
+/** Singular/plural results label. */
+function getResultsCountLabel(count: number): string {
+  if (count === 1) return '1 result';
+  return `${count} results`;
+}
+
+// =====================================================================
+// Recent searches (localStorage).
+// =====================================================================
 
 const RECENT_KEY = 'inkweave-recent-searches';
 const MAX_RECENT = 6;
@@ -85,7 +113,356 @@ function clearRecentSearches() {
   }
 }
 
-// --- Component ---
+/** Focus an input ref if mounted. Module-level so its `if` doesn't roll up to callers. */
+function focusInput(ref: React.RefObject<HTMLInputElement | null>): void {
+  if (ref.current) ref.current.focus();
+}
+
+// =====================================================================
+// Lifecycle hook — encapsulates the previous-value pattern so its
+// compound conditionals don't roll up to the main component's CC.
+// =====================================================================
+
+interface SheetLifecycleInput {
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+}
+
+function useSheetLifecycle({isOpen, onOpen, onClose}: SheetLifecycleInput): void {
+  const [prevIsOpen, setPrevIsOpen] = useState(false);
+  if (isOpen && !prevIsOpen) {
+    setPrevIsOpen(true);
+    onOpen();
+  } else if (!isOpen && prevIsOpen) {
+    setPrevIsOpen(false);
+    onClose();
+  }
+}
+
+// =====================================================================
+// Subcomponents — internal, not exported.
+// =====================================================================
+
+interface SearchSheetInputProps {
+  query: string;
+  autocomplete: ReturnType<typeof useAutocomplete>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  onSubmit: () => void;
+  onClear: () => void;
+}
+
+function SearchSheetInput({query, autocomplete, inputRef, onSubmit, onClear}: SearchSheetInputProps) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    autocomplete.inputProps.onKeyDown(e);
+    if (e.defaultPrevented) return;
+    if (e.key !== 'Enter') return;
+    if (!query.trim()) return;
+    onSubmit();
+  };
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: SPACING.md,
+        padding: `0 ${SPACING.lg}px ${SPACING.md}px`,
+        flexShrink: 0,
+      }}>
+      {/* Search icon */}
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20" fill="none" style={{flexShrink: 0}}>
+        <circle cx="9" cy="9" r="6" stroke={COLORS.primary} strokeWidth="1.5" />
+        <line x1="13.5" y1="13.5" x2="17" y2="17" stroke={COLORS.primary} strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+
+      {/* Input */}
+      <div style={{flex: 1, position: 'relative'}}>
+        <input
+          ref={inputRef}
+          type="text"
+          aria-label="Search cards"
+          placeholder="Search cards..."
+          {...autocomplete.inputProps}
+          onKeyDown={handleKeyDown}
+          data-testid="search-sheet-input"
+          style={{
+            width: '100%',
+            height: 40,
+            padding: '0 36px 0 12px',
+            borderRadius: RADIUS.lg,
+            border: `1px solid ${COLORS.primary}`,
+            background: 'rgba(15, 23, 43, 0.8)',
+            color: COLORS.text,
+            fontSize: `${FONT_SIZES.lg}px`,
+            fontFamily: FONTS.body,
+            boxSizing: 'border-box',
+            outline: 'none',
+            boxShadow: '0 0 8px rgba(212, 175, 55, 0.2)',
+          }}
+        />
+        {query && <ClearButton onClear={onClear} />}
+      </div>
+    </div>
+  );
+}
+
+function ClearButton({onClear}: {onClear: () => void}) {
+  return (
+    <button
+      aria-label="Clear search"
+      onClick={onClear}
+      style={{
+        position: 'absolute',
+        right: 8,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        border: 'none',
+        background: COLORS.surfaceBorder,
+        color: COLORS.textMuted,
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 14,
+        lineHeight: 1,
+        padding: 0,
+      }}>
+      ×
+    </button>
+  );
+}
+
+interface SearchResultRowProps {
+  card: LorcanaCard;
+  isHighlighted: boolean;
+  isLast: boolean;
+  query: string;
+  optionProps: React.HTMLAttributes<HTMLDivElement>;
+}
+
+function SearchResultRow({card, isHighlighted, isLast, query, optionProps}: SearchResultRowProps) {
+  const setAbbr = getSetAbbr(card);
+  const inkLabel = getInkLabel(card);
+  return (
+    <div>
+      <div
+        {...optionProps}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: SPACING.md,
+          padding: `${SPACING.sm}px ${SPACING.lg}px`,
+          minHeight: 60,
+          cursor: 'pointer',
+          background: isHighlighted ? COLORS.surfaceHover : 'transparent',
+          transition: 'background 0.1s ease',
+        }}>
+        {/* Thumbnail */}
+        <div
+          style={{
+            width: 38,
+            height: 53,
+            borderRadius: 4,
+            background: inkColor(card),
+            flexShrink: 0,
+            overflow: 'hidden',
+          }}>
+          {card.imageUrl && (
+            <img
+              src={smallImageUrl(card.imageUrl) ?? card.imageUrl}
+              alt=""
+              loading="lazy"
+              style={{width: '100%', height: '100%', objectFit: 'cover'}}
+            />
+          )}
+        </div>
+
+        {/* Card info */}
+        <div style={{flex: 1, minWidth: 0}}>
+          <div
+            style={{
+              fontSize: `${FONT_SIZES.lg}px`,
+              fontWeight: 500,
+              color: COLORS.text,
+              fontFamily: FONTS.body,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
+            <HighlightedName fullName={card.fullName} query={query} />
+          </div>
+          <div
+            style={{
+              fontSize: `${FONT_SIZES.sm}px`,
+              color: COLORS.textMuted,
+              fontFamily: FONTS.body,
+              marginTop: 2,
+            }}>
+            {setAbbr}
+            {inkLabel}
+          </div>
+        </div>
+
+        {/* Chevron */}
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" style={{flexShrink: 0}}>
+          <path d="M9 18l6-6-6-6" stroke="#444466" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+
+      {!isLast && (
+        <div style={{height: 1, background: '#222244', marginLeft: SPACING.lg, marginRight: SPACING.lg}} />
+      )}
+    </div>
+  );
+}
+
+interface SearchResultsListProps {
+  suggestions: LorcanaCard[];
+  highlightedIndex: number;
+  query: string;
+  getOptionProps: (index: number) => React.HTMLAttributes<HTMLDivElement>;
+}
+
+function SearchResultsList({suggestions, highlightedIndex, query, getOptionProps}: SearchResultsListProps) {
+  return (
+    <div>
+      <div
+        style={{
+          padding: `${SPACING.sm}px ${SPACING.lg}px`,
+          fontSize: `${FONT_SIZES.sm}px`,
+          color: COLORS.textMuted,
+          fontFamily: FONTS.body,
+          fontWeight: 500,
+        }}>
+        {getResultsCountLabel(suggestions.length)}
+      </div>
+      {suggestions.map((card, index) => (
+        <SearchResultRow
+          key={card.id}
+          card={card}
+          isHighlighted={index === highlightedIndex}
+          isLast={index === suggestions.length - 1}
+          query={query}
+          optionProps={getOptionProps(index)}
+        />
+      ))}
+    </div>
+  );
+}
+
+interface RecentSearchChipProps {
+  term: string;
+  onClick: (term: string) => void;
+}
+
+function RecentSearchChip({term, onClick}: RecentSearchChipProps) {
+  return (
+    <button
+      onClick={() => onClick(term)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        height: 32,
+        padding: '0 12px',
+        borderRadius: 16,
+        border: `1px solid ${COLORS.surfaceBorder}`,
+        background: COLORS.surfaceAlt,
+        color: COLORS.text,
+        fontSize: `${FONT_SIZES.xs}px`,
+        fontWeight: 500,
+        fontFamily: FONTS.body,
+        cursor: 'pointer',
+      }}>
+      <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="#444466" strokeWidth="2" />
+        <path d="M12 6v6l4 2" stroke="#444466" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+      {term}
+    </button>
+  );
+}
+
+interface SearchEmptyStateProps {
+  recentSearches: string[];
+  onRecentClick: (term: string) => void;
+  onClearRecent: () => void;
+}
+
+function SearchEmptyState({recentSearches, onRecentClick, onClearRecent}: SearchEmptyStateProps) {
+  const hasRecent = recentSearches.length > 0;
+  return (
+    <div style={{padding: `${SPACING.md}px ${SPACING.lg}px`}}>
+      {hasRecent ? (
+        <RecentSection recentSearches={recentSearches} onRecentClick={onRecentClick} onClearRecent={onClearRecent} />
+      ) : (
+        <EmptyPrompt />
+      )}
+    </div>
+  );
+}
+
+function RecentSection({recentSearches, onRecentClick, onClearRecent}: SearchEmptyStateProps) {
+  return (
+    <div style={{marginBottom: SPACING.xl}}>
+      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.md}}>
+        <span
+          style={{
+            fontSize: `${FONT_SIZES.xs}px`,
+            fontWeight: 600,
+            color: COLORS.textMuted,
+            fontFamily: FONTS.body,
+            letterSpacing: '0.5px',
+            textTransform: 'uppercase',
+          }}>
+          Recent
+        </span>
+        <button
+          onClick={onClearRecent}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: COLORS.primary,
+            fontSize: `${FONT_SIZES.xs}px`,
+            fontWeight: 500,
+            fontFamily: FONTS.body,
+            cursor: 'pointer',
+            padding: 0,
+          }}>
+          Clear
+        </button>
+      </div>
+      <div style={{display: 'flex', flexWrap: 'wrap', gap: SPACING.sm}}>
+        {recentSearches.map((term) => (
+          <RecentSearchChip key={term} term={term} onClick={onRecentClick} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EmptyPrompt() {
+  return (
+    <div
+      style={{
+        textAlign: 'center',
+        padding: `${SPACING.xxl}px 0`,
+        color: COLORS.textMuted,
+        fontSize: `${FONT_SIZES.base}px`,
+        fontFamily: FONTS.body,
+      }}>
+      Search for a card to see its synergies
+    </div>
+  );
+}
+
+// =====================================================================
+// Public component.
+// =====================================================================
 
 export interface SearchBottomSheetHandle {
   /** Focus the proxy input synchronously. Call from the tap handler to preserve iOS keyboard activation. */
@@ -106,7 +483,7 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
     const sheetRef = useRef<HTMLDivElement>(null);
 
     useImperativeHandle(ref, () => ({
-      focusProxy: () => proxyRef.current?.focus(),
+      focusProxy: () => focusInput(proxyRef),
     }));
 
     const [query, setQuery] = useState('');
@@ -127,29 +504,35 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
       onSelect: handleSelect,
     });
 
-    // Adjust state when isOpen prop changes (previous-value pattern per React docs).
-    // On close: setQuery('') triggers useAutocomplete's auto-reset of debouncedQuery
-    // in a follow-up render. This 2-render cascade is the cost of clean separation.
+    // Reset state when isOpen changes (previous-value pattern per React docs).
     // getRecentSearches() is a read-only localStorage call, safe during render.
-    const [prevIsOpen, setPrevIsOpen] = useState(false);
-    if (isOpen && !prevIsOpen) {
-      setPrevIsOpen(true);
-      setRecentSearches(getRecentSearches());
-    } else if (!isOpen && prevIsOpen) {
-      setPrevIsOpen(false);
-      setQuery('');
-    }
+    useSheetLifecycle({
+      isOpen,
+      onOpen: () => setRecentSearches(getRecentSearches()),
+      onClose: () => setQuery(''),
+    });
 
     useScrollLock(isOpen);
 
     const handleRecentClick = (term: string) => {
       autocomplete.searchImmediate(term);
-      inputRef.current?.focus();
+      focusInput(inputRef);
     };
 
     const handleClearRecent = () => {
       clearRecentSearches();
       setRecentSearches([]);
+    };
+
+    const handleInputClear = () => {
+      setQuery('');
+      autocomplete.close();
+      focusInput(inputRef);
+    };
+
+    const handleSubmit = () => {
+      onClose();
+      navigate(`/browse?q=${encodeURIComponent(query.trim())}`);
     };
 
     // Focus trap + Escape key handling.
@@ -223,117 +606,17 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
             transition: 'top 0.25s ease, opacity 0.25s ease, transform 0.25s ease',
           }}>
           {/* Drag handle */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              padding: `${SPACING.md}px 0 ${SPACING.sm}px`,
-              flexShrink: 0,
-            }}>
-            <div
-              style={{
-                width: 36,
-                height: 4,
-                borderRadius: 2,
-                background: '#444466',
-              }}
-            />
+          <div style={{display: 'flex', justifyContent: 'center', padding: `${SPACING.md}px 0 ${SPACING.sm}px`, flexShrink: 0}}>
+            <div style={{width: 36, height: 4, borderRadius: 2, background: '#444466'}} />
           </div>
 
-          {/* Search input row */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: SPACING.md,
-              padding: `0 ${SPACING.lg}px ${SPACING.md}px`,
-              flexShrink: 0,
-            }}>
-            {/* Search icon */}
-            <svg
-              aria-hidden="true"
-              width="18"
-              height="18"
-              viewBox="0 0 20 20"
-              fill="none"
-              style={{flexShrink: 0}}>
-              <circle cx="9" cy="9" r="6" stroke={COLORS.primary} strokeWidth="1.5" />
-              <line
-                x1="13.5"
-                y1="13.5"
-                x2="17"
-                y2="17"
-                stroke={COLORS.primary}
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-
-            {/* Input */}
-            <div style={{flex: 1, position: 'relative'}}>
-              <input
-                ref={inputRef}
-                type="text"
-                aria-label="Search cards"
-                placeholder="Search cards..."
-                {...autocomplete.inputProps}
-                onKeyDown={(e) => {
-                  autocomplete.inputProps.onKeyDown(e);
-                  // Escape is handled by useDialogFocus; don't duplicate
-                  if (!e.defaultPrevented && e.key === 'Enter' && query.trim()) {
-                    onClose();
-                    navigate(`/browse?q=${encodeURIComponent(query.trim())}`);
-                  }
-                }}
-                data-testid="search-sheet-input"
-                style={{
-                  width: '100%',
-                  height: 40,
-                  padding: '0 36px 0 12px',
-                  borderRadius: RADIUS.lg,
-                  border: `1px solid ${COLORS.primary}`,
-                  background: 'rgba(15, 23, 43, 0.8)',
-                  color: COLORS.text,
-                  fontSize: `${FONT_SIZES.lg}px`,
-                  fontFamily: FONTS.body,
-                  boxSizing: 'border-box',
-                  outline: 'none',
-                  boxShadow: '0 0 8px rgba(212, 175, 55, 0.2)',
-                }}
-              />
-              {/* Clear button */}
-              {query && (
-                <button
-                  aria-label="Clear search"
-                  onClick={() => {
-                    setQuery('');
-                    autocomplete.close();
-                    inputRef.current?.focus();
-                  }}
-                  style={{
-                    position: 'absolute',
-                    right: 8,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: 24,
-                    height: 24,
-                    borderRadius: 12,
-                    border: 'none',
-                    background: COLORS.surfaceBorder,
-                    color: COLORS.textMuted,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 14,
-                    lineHeight: 1,
-                    padding: 0,
-                  }}>
-                  ×
-                </button>
-              )}
-            </div>
-          </div>
+          <SearchSheetInput
+            query={query}
+            autocomplete={autocomplete}
+            inputRef={inputRef}
+            onSubmit={handleSubmit}
+            onClear={handleInputClear}
+          />
 
           {/* Divider */}
           <div style={{height: 1, background: COLORS.surfaceBorder, flexShrink: 0}} />
@@ -341,215 +624,18 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
           {/* Content area */}
           <div style={{flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch'}}>
             {hasResults ? (
-              /* Results list */
-              <div>
-                <div
-                  style={{
-                    padding: `${SPACING.sm}px ${SPACING.lg}px`,
-                    fontSize: `${FONT_SIZES.sm}px`,
-                    color: COLORS.textMuted,
-                    fontFamily: FONTS.body,
-                    fontWeight: 500,
-                  }}>
-                  {autocomplete.suggestions.length} result
-                  {autocomplete.suggestions.length !== 1 ? 's' : ''}
-                </div>
-                {autocomplete.suggestions.map((card, index) => {
-                  const optionProps = autocomplete.getOptionProps(index);
-                  const isHighlighted = index === autocomplete.highlightedIndex;
-                  const setAbbr =
-                    SET_ABBREVIATIONS[card.setCode as keyof typeof SET_ABBREVIATIONS] ??
-                    card.setCode ??
-                    '';
-
-                  return (
-                    <div key={card.id}>
-                      <div
-                        {...optionProps}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: SPACING.md,
-                          padding: `${SPACING.sm}px ${SPACING.lg}px`,
-                          minHeight: 60,
-                          cursor: 'pointer',
-                          background: isHighlighted ? COLORS.surfaceHover : 'transparent',
-                          transition: 'background 0.1s ease',
-                        }}>
-                        {/* Card thumbnail */}
-                        <div
-                          style={{
-                            width: 38,
-                            height: 53,
-                            borderRadius: 4,
-                            background: inkColor(card),
-                            flexShrink: 0,
-                            overflow: 'hidden',
-                          }}>
-                          {card.imageUrl && (
-                            <img
-                              src={smallImageUrl(card.imageUrl) ?? card.imageUrl}
-                              alt=""
-                              loading="lazy"
-                              style={{width: '100%', height: '100%', objectFit: 'cover'}}
-                            />
-                          )}
-                        </div>
-
-                        {/* Card info */}
-                        <div style={{flex: 1, minWidth: 0}}>
-                          <div
-                            style={{
-                              fontSize: `${FONT_SIZES.lg}px`,
-                              fontWeight: 500,
-                              color: COLORS.text,
-                              fontFamily: FONTS.body,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}>
-                            <HighlightedName fullName={card.fullName} query={query} />
-                          </div>
-                          <div
-                            style={{
-                              fontSize: `${FONT_SIZES.sm}px`,
-                              color: COLORS.textMuted,
-                              fontFamily: FONTS.body,
-                              marginTop: 2,
-                            }}>
-                            {setAbbr}
-                            {card.inkColor
-                              ? ` · ${Array.isArray(card.inkColor) ? card.inkColor.join('-') : card.inkColor}`
-                              : ''}
-                          </div>
-                        </div>
-
-                        {/* Chevron */}
-                        <svg
-                          aria-hidden="true"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          style={{flexShrink: 0}}>
-                          <path
-                            d="M9 18l6-6-6-6"
-                            stroke="#444466"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </div>
-
-                      {/* Separator */}
-                      {index < autocomplete.suggestions.length - 1 && (
-                        <div
-                          style={{
-                            height: 1,
-                            background: '#222244',
-                            marginLeft: SPACING.lg,
-                            marginRight: SPACING.lg,
-                          }}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+              <SearchResultsList
+                suggestions={autocomplete.suggestions}
+                highlightedIndex={autocomplete.highlightedIndex}
+                query={query}
+                getOptionProps={autocomplete.getOptionProps}
+              />
             ) : (
-              /* Empty state: recent searches */
-              <div style={{padding: `${SPACING.md}px ${SPACING.lg}px`}}>
-                {recentSearches.length > 0 && (
-                  <div style={{marginBottom: SPACING.xl}}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: SPACING.md,
-                      }}>
-                      <span
-                        style={{
-                          fontSize: `${FONT_SIZES.xs}px`,
-                          fontWeight: 600,
-                          color: COLORS.textMuted,
-                          fontFamily: FONTS.body,
-                          letterSpacing: '0.5px',
-                          textTransform: 'uppercase',
-                        }}>
-                        Recent
-                      </span>
-                      <button
-                        onClick={handleClearRecent}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: COLORS.primary,
-                          fontSize: `${FONT_SIZES.xs}px`,
-                          fontWeight: 500,
-                          fontFamily: FONTS.body,
-                          cursor: 'pointer',
-                          padding: 0,
-                        }}>
-                        Clear
-                      </button>
-                    </div>
-                    <div style={{display: 'flex', flexWrap: 'wrap', gap: SPACING.sm}}>
-                      {recentSearches.map((term) => (
-                        <button
-                          key={term}
-                          onClick={() => handleRecentClick(term)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 6,
-                            height: 32,
-                            padding: '0 12px',
-                            borderRadius: 16,
-                            border: `1px solid ${COLORS.surfaceBorder}`,
-                            background: COLORS.surfaceAlt,
-                            color: COLORS.text,
-                            fontSize: `${FONT_SIZES.xs}px`,
-                            fontWeight: 500,
-                            fontFamily: FONTS.body,
-                            cursor: 'pointer',
-                          }}>
-                          <svg
-                            aria-hidden="true"
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none">
-                            <circle cx="12" cy="12" r="10" stroke="#444466" strokeWidth="2" />
-                            <path
-                              d="M12 6v6l4 2"
-                              stroke="#444466"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                          {term}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Prompt text when no recent searches */}
-                {recentSearches.length === 0 && (
-                  <div
-                    style={{
-                      textAlign: 'center',
-                      padding: `${SPACING.xxl}px 0`,
-                      color: COLORS.textMuted,
-                      fontSize: `${FONT_SIZES.base}px`,
-                      fontFamily: FONTS.body,
-                    }}>
-                    Search for a card to see its synergies
-                  </div>
-                )}
-              </div>
+              <SearchEmptyState
+                recentSearches={recentSearches}
+                onRecentClick={handleRecentClick}
+                onClearRecent={handleClearRecent}
+              />
             )}
           </div>
         </div>
