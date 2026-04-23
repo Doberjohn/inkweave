@@ -22,8 +22,8 @@ test.describe('SEO', () => {
     const h1Count = await page.locator('h1').count();
     expect(h1Count).toBe(1);
 
-    // h1 contains the hero title
-    await expect(page.locator('h1')).toContainText('LORCANA SYNERGIES');
+    // h1 wraps the animated Inkweave logo; accessible name comes from the img's alt.
+    await expect(page.locator('h1 img')).toHaveAttribute('alt', 'Inkweave');
   });
 
   test('should have font preconnect hints', async ({page, appPage}) => {

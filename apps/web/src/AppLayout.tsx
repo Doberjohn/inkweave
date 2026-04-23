@@ -3,7 +3,7 @@ import {Outlet, useLocation} from 'react-router-dom';
 import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
 import {CardPreviewProvider, CardPreviewPopover} from './features/cards';
-import {RevealsPromoModal, useRevealPhase} from './features/reveals';
+import {RevealsPromoCard, useRevealPhase} from './features/reveals';
 import {
   ErrorBoundary,
   MobileBottomNav,
@@ -21,11 +21,10 @@ function AppContent() {
   const {isMobile} = useResponsive();
   const {pathname} = useLocation();
   const isHome = pathname === '/';
-  const isReveals = pathname.startsWith('/reveals');
   const showBottomNav = isMobile && !isHome;
   const phase = useRevealPhase();
   const showRevealsPromo =
-    !isReveals && (phase === 'pre-release' || phase === 'pre-release-live');
+    isHome && (phase === 'pre-release' || phase === 'pre-release-live');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchRef = useRef<SearchBottomSheetHandle>(null);
 
@@ -74,7 +73,7 @@ function AppContent() {
         <SearchBottomSheet ref={searchRef} isOpen={isSearchOpen} onClose={closeSearch} />
       )}
       {showRevealsPromo && (
-        <RevealsPromoModal bottomOffset={showBottomNav ? MOBILE_NAV_HEIGHT + 16 : 16} />
+        <RevealsPromoCard />
       )}
     </>
   );

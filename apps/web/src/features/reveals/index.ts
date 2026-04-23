@@ -13,4 +13,4 @@ export {useRevealCards} from './useRevealCards';
 export type {RevealTier, UseRevealCardsReturn} from './useRevealCards';
 export {Hero} from './Hero';
 export {FranchiseTier} from './FranchiseTier';
-export {RevealsPromoModal} from './RevealsPromoModal';
+export {RevealsPromoCard} from './RevealsPromoCard';

@@ -26,17 +26,461 @@ interface CompactHeaderProps {
 interface NavItem {
   path: string;
   label: string;
-  badge?: string;
-  /** When true, the entry is only rendered during reveal season. */
-  revealOnly?: boolean;
 }
 
 const NAV_ITEMS: readonly NavItem[] = [
   {path: '/browse', label: 'Browse'},
   {path: '/playstyles', label: 'Playstyles'},
   {path: '/vote', label: 'Vote'},
-  {path: '/reveals', label: 'Reveals', badge: 'NEW', revealOnly: true},
 ];
+
+const REVEALS_PATH = '/reveals';
+
+// =====================================================================
+// Domain types — encapsulate related flags so function signatures carry
+// semantics, not bare primitives. Also prevents arg-order swaps between
+// same-type booleans (e.g. `(isActive, isHovered)` vs `(isHovered, isActive)`).
+// =====================================================================
+
+/** The interactive state of a nav-style element. */
+interface InteractionState {
+  isActive: boolean;
+  isHovered: boolean;
+}
+
+/** Responsive viewport config. Derived from the parent's `isMobile` prop. */
+interface ViewportConfig {
+  isMobile: boolean;
+}
+
+/** All knobs needed to compute the search-input wrapper style. */
+interface SearchInputStyleConfig {
+  focused: boolean;
+  height: number;
+  padding: string;
+}
+
+// =====================================================================
+// Style helpers — module-level so their branches don't roll up to JSX.
+// =====================================================================
+
+function getHeaderStyle(viewport: ViewportConfig): React.CSSProperties {
+  const base: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    background: `linear-gradient(180deg, ${COLORS.headerGradientStart} 0%, ${COLORS.headerGradientEnd} 100%)`,
+    borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+    boxSizing: 'border-box',
+    position: 'sticky',
+    top: 0,
+    zIndex: Z_INDEX.autocomplete + 1,
+  };
+  if (viewport.isMobile) {
+    return {
+      ...base,
+      height: LAYOUT.compactHeaderHeightMobile,
+      minHeight: LAYOUT.compactHeaderHeightMobile,
+      padding: `0 ${SPACING.lg}px`,
+      gap: SPACING.md,
+    };
+  }
+  return {
+    ...base,
+    height: LAYOUT.compactHeaderHeight,
+    minHeight: LAYOUT.compactHeaderHeight,
+    padding: '0 32px',
+    gap: SPACING.lg,
+  };
+}
+
+function getNavItemBackground(state: InteractionState): string {
+  if (state.isActive) return COLORS.surfaceHover;
+  if (state.isHovered) return 'rgba(255, 185, 0, 0.06)';
+  return 'transparent';
+}
+
+function getNavItemColor(state: InteractionState): string {
+  if (state.isActive) return COLORS.primary;
+  if (state.isHovered) return COLORS.primary;
+  return COLORS.textMuted;
+}
+
+function getNavItemBoxShadow(state: InteractionState): string {
+  if (!state.isHovered) return 'none';
+  if (state.isActive) return 'none';
+  return '0 0 12px rgba(255, 185, 0, 0.15), inset 0 0 8px rgba(255, 185, 0, 0.05)';
+}
+
+function getRevealsPillBg(state: InteractionState): string {
+  if (state.isActive) {
+    return 'linear-gradient(180deg, rgba(255, 185, 0, 0.28) 0%, rgba(255, 185, 0, 0.14) 100%)';
+  }
+  return 'linear-gradient(180deg, rgba(255, 185, 0, 0.14) 0%, rgba(255, 185, 0, 0.06) 100%)';
+}
+
+function getRevealsPillShadow(state: InteractionState): string {
+  if (state.isActive) return '0 0 20px rgba(255, 185, 0, 0.35)';
+  if (state.isHovered) return '0 0 20px rgba(255, 185, 0, 0.35)';
+  return '0 0 12px rgba(255, 185, 0, 0.2)';
+}
+
+interface SearchSizing {
+  iconSize: number;
+  iconLeft: number;
+  inputHeight: number;
+  inputPadding: string;
+  maxWidth: number | undefined;
+}
+
+function getSearchSizing(viewport: ViewportConfig): SearchSizing {
+  if (viewport.isMobile) {
+    return {iconSize: 14, iconLeft: 10, inputHeight: 34, inputPadding: '0 10px 0 32px', maxWidth: undefined};
+  }
+  return {iconSize: 16, iconLeft: 12, inputHeight: 36, inputPadding: '0 12px 0 36px', maxWidth: 320};
+}
+
+function getSearchInputStyle(config: SearchInputStyleConfig): React.CSSProperties {
+  const borderColor = config.focused ? 'rgba(212, 175, 55, 0.5)' : COLORS.searchBorder;
+  const boxShadow = config.focused
+    ? '0 0 0 2px rgba(212, 175, 55, 0.15), 0 0 12px rgba(212, 175, 55, 0.08)'
+    : 'none';
+  return {
+    width: '100%',
+    height: config.height,
+    padding: config.padding,
+    borderRadius: `${RADIUS.lg}px`,
+    border: `1px solid ${borderColor}`,
+    background: COLORS.searchBg,
+    color: COLORS.text,
+    fontSize: `${FONT_SIZES.lg}px`,
+    fontFamily: FONTS.body,
+    boxSizing: 'border-box',
+    outline: 'none',
+    boxShadow,
+    transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
+  };
+}
+
+// =====================================================================
+// Subcomponents — internal, not exported. Each owns a small concern.
+// =====================================================================
+
+interface HeaderLogoProps {
+  showBackArrow?: boolean;
+  viewport: ViewportConfig;
+  onClick: () => void;
+}
+
+function HeaderLogo({showBackArrow, viewport, onClick}: HeaderLogoProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onClick();
+  };
+  return (
+    <a
+      href="/"
+      onClick={handleClick}
+      aria-label="Go to home page"
+      style={{
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        padding: 0,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        flexShrink: 0,
+        textDecoration: 'none',
+      }}>
+      {showBackArrow && (
+        <span style={{fontSize: `${FONT_SIZES.base}px`, fontWeight: 500, color: COLORS.primary}}>
+          ←
+        </span>
+      )}
+      <img
+        src="/brand/logo.svg"
+        alt="Inkweave"
+        draggable={false}
+        style={{
+          display: 'block',
+          height: viewport.isMobile ? 22 : 24,
+          width: 'auto',
+          userSelect: 'none',
+        }}
+      />
+    </a>
+  );
+}
+
+interface HeaderSearchProps {
+  cards: LorcanaCard[];
+  query: string;
+  onChange: (q: string) => void;
+  onSubmit?: () => void;
+  onCardSelect?: (card: LorcanaCard) => void;
+  viewport: ViewportConfig;
+}
+
+function HeaderSearch({cards, query, onChange, onSubmit, onCardSelect, viewport}: HeaderSearchProps) {
+  const [focused, setFocused] = useState(false);
+  const sizing = getSearchSizing(viewport);
+
+  const handleSelect = (card: LorcanaCard) => {
+    if (onCardSelect) onCardSelect(card);
+  };
+
+  const autocomplete = useAutocomplete({
+    cards,
+    query,
+    onQueryChange: onChange,
+    onSelect: handleSelect,
+  });
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    autocomplete.inputProps.onKeyDown(e);
+    if (e.defaultPrevented) return;
+    if (e.key !== 'Enter') return;
+    if (onSubmit) onSubmit();
+  };
+
+  const handleFocus = () => {
+    autocomplete.inputProps.onFocus();
+    setFocused(true);
+  };
+
+  const handleBlur = () => {
+    autocomplete.inputProps.onBlur();
+    setTimeout(() => setFocused(false), 150);
+  };
+
+  return (
+    <div
+      style={{
+        flex: 1,
+        maxWidth: sizing.maxWidth,
+        position: 'relative',
+        zIndex: Z_INDEX.autocomplete,
+      }}>
+      <svg
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          left: sizing.iconLeft,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: sizing.iconSize,
+          height: sizing.iconSize,
+          pointerEvents: 'none',
+          zIndex: 1,
+        }}
+        viewBox="0 0 20 20"
+        fill="none">
+        <circle cx="9" cy="9" r="6" stroke={COLORS.searchPlaceholder} strokeWidth="1.5" />
+        <line
+          x1="13.5"
+          y1="13.5"
+          x2="17"
+          y2="17"
+          stroke={COLORS.searchPlaceholder}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </svg>
+      <input
+        type="text"
+        aria-label="Search cards"
+        placeholder="Search cards..."
+        {...autocomplete.inputProps}
+        onKeyDown={handleKeyDown}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        data-testid="browse-search"
+        style={getSearchInputStyle({focused, height: sizing.inputHeight, padding: sizing.inputPadding})}
+      />
+      <SearchAutocomplete
+        suggestions={autocomplete.suggestions}
+        isOpen={autocomplete.isOpen}
+        highlightedIndex={autocomplete.highlightedIndex}
+        query={query}
+        listboxProps={autocomplete.listboxProps}
+        getOptionProps={autocomplete.getOptionProps}
+      />
+    </div>
+  );
+}
+
+interface NavItemLinkProps {
+  path: string;
+  label: string;
+  state: InteractionState;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  onNavigate: (path: string) => void;
+}
+
+function NavItemLink({
+  path,
+  label,
+  state,
+  onMouseEnter,
+  onMouseLeave,
+  onNavigate,
+}: NavItemLinkProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onNavigate(path);
+  };
+  return (
+    <a
+      href={path}
+      onClick={handleClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '0 20px',
+        height: '100%',
+        background: getNavItemBackground(state),
+        color: getNavItemColor(state),
+        fontFamily: FONTS.body,
+        fontSize: `${FONT_SIZES.base}px`,
+        fontWeight: state.isActive ? 600 : 500,
+        textDecoration: 'none',
+        transition: 'background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease',
+        boxShadow: getNavItemBoxShadow(state),
+        cursor: 'pointer',
+      }}>
+      {label}
+    </a>
+  );
+}
+
+interface RevealsPillProps {
+  state: InteractionState;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  onNavigate: () => void;
+}
+
+function RevealsPill({state, onMouseEnter, onMouseLeave, onNavigate}: RevealsPillProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onNavigate();
+  };
+  return (
+    <a
+      href={REVEALS_PATH}
+      onClick={handleClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      aria-current={state.isActive ? 'page' : undefined}
+      aria-label="Reveals"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '0 14px',
+        height: 38,
+        borderRadius: 999,
+        background: getRevealsPillBg(state),
+        border: `1px solid ${COLORS.primary500}`,
+        color: COLORS.primary,
+        fontFamily: FONTS.body,
+        fontSize: `${FONT_SIZES.base}px`,
+        fontWeight: 600,
+        textDecoration: 'none',
+        boxShadow: getRevealsPillShadow(state),
+        transform: state.isHovered ? 'translateY(-1px)' : 'translateY(0)',
+        transition:
+          'transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 200ms cubic-bezier(0.2, 0.8, 0.2, 1), background 200ms ease',
+        cursor: 'pointer',
+      }}>
+      Reveals
+      <span
+        style={{
+          fontSize: FONT_SIZES.xs,
+          fontWeight: 700,
+          padding: '2px 6px',
+          borderRadius: 999,
+          background: COLORS.primary500,
+          color: COLORS.background,
+          letterSpacing: 0.4,
+          lineHeight: 1,
+        }}>
+        NEW
+      </span>
+    </a>
+  );
+}
+
+interface DesktopNavProps {
+  isRevealSeason: boolean;
+}
+
+function DesktopNav({isRevealSeason}: DesktopNavProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [hoveredNav, setHoveredNav] = useState<string | null>(null);
+
+  const revealsState: InteractionState = {
+    isActive: location.pathname.startsWith(REVEALS_PATH),
+    isHovered: hoveredNav === REVEALS_PATH,
+  };
+
+  return (
+    <nav
+      aria-label="Main navigation"
+      style={{
+        position: 'absolute',
+        left: '50%',
+        top: '50%',
+        transform: 'translate(-50%, -50%)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+      }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          height: 38,
+          borderRadius: RADIUS.lg,
+          border: `1px solid ${COLORS.surfaceBorder}`,
+          background: '#10101c',
+          overflow: 'hidden',
+        }}>
+        {NAV_ITEMS.map(({path, label}) => (
+          <NavItemLink
+            key={path}
+            path={path}
+            label={label}
+            state={{
+              isActive: location.pathname.startsWith(path),
+              isHovered: hoveredNav === path,
+            }}
+            onMouseEnter={() => setHoveredNav(path)}
+            onMouseLeave={() => setHoveredNav(null)}
+            onNavigate={navigate}
+          />
+        ))}
+      </div>
+      {isRevealSeason && (
+        <RevealsPill
+          state={revealsState}
+          onMouseEnter={() => setHoveredNav(REVEALS_PATH)}
+          onMouseLeave={() => setHoveredNav(null)}
+          onNavigate={() => navigate(REVEALS_PATH)}
+        />
+      )}
+    </nav>
+  );
+}
+
+// =====================================================================
+// Public component — layout shell that delegates to subcomponents above.
+// =====================================================================
 
 export function CompactHeader({
   onLogoClick,
@@ -49,251 +493,25 @@ export function CompactHeader({
   headerActions,
   isMobile,
 }: CompactHeaderProps) {
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [hoveredNav, setHoveredNav] = useState<string | null>(null);
-  const location = useLocation();
-  const navigate = useNavigate();
   const revealPhase = useRevealPhase();
   const isRevealSeason = revealPhase === 'pre-release' || revealPhase === 'pre-release-live';
-  const visibleNavItems = NAV_ITEMS.filter((item) => !item.revealOnly || isRevealSeason);
+  const viewport: ViewportConfig = {isMobile: !!isMobile};
   const hasSearch = searchQuery !== undefined && onSearchChange !== undefined;
-  const mobile = !!isMobile;
-
-  const headerHeight = mobile ? LAYOUT.compactHeaderHeightMobile : LAYOUT.compactHeaderHeight;
-  const iconSize = mobile ? 14 : 16;
-  const inputHeight = mobile ? 34 : 36;
-  const inputPadding = mobile ? '0 10px 0 32px' : '0 12px 0 36px';
-
-  const handleAutoSelect = (card: LorcanaCard) => onCardSelect?.(card);
-
-  const autocomplete = useAutocomplete({
-    cards,
-    query: searchQuery ?? '',
-    onQueryChange: onSearchChange ?? (() => {}),
-    onSelect: handleAutoSelect,
-  });
-
-  const handleLogoClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    onLogoClick();
-  };
 
   return (
-    <header
-      data-testid="compact-header"
-      style={{
-        height: headerHeight,
-        minHeight: headerHeight,
-        padding: mobile ? `0 ${SPACING.lg}px` : '0 32px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: mobile ? SPACING.md : SPACING.lg,
-        background: `linear-gradient(180deg, ${COLORS.headerGradientStart} 0%, ${COLORS.headerGradientEnd} 100%)`,
-        borderBottom: `1px solid ${COLORS.surfaceBorder}`,
-        boxSizing: 'border-box',
-        position: 'sticky',
-        top: 0,
-        zIndex: Z_INDEX.autocomplete + 1,
-      }}>
-      {/* Logo / Back link */}
-      <a
-        href="/"
-        onClick={handleLogoClick}
-        aria-label="Go to home page"
-        style={{
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: 0,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          flexShrink: 0,
-          textDecoration: 'none',
-        }}>
-        {showBackArrow && (
-          <span
-            style={{
-              fontSize: `${FONT_SIZES.base}px`,
-              fontWeight: 500,
-              color: COLORS.primary,
-            }}>
-            ←
-          </span>
-        )}
-        <span
-          style={{
-            fontFamily: FONTS.body,
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 700,
-            color: COLORS.primary,
-            letterSpacing: '0.18em',
-          }}>
-          INKWEAVE
-        </span>
-      </a>
-
-      {/* Center: Search bar */}
+    <header data-testid="compact-header" style={getHeaderStyle(viewport)}>
+      <HeaderLogo viewport={viewport} showBackArrow={showBackArrow} onClick={onLogoClick} />
       {hasSearch && (
-        <div
-          style={{
-            flex: 1,
-            maxWidth: mobile ? undefined : 320,
-            position: 'relative',
-            zIndex: Z_INDEX.autocomplete,
-          }}>
-          {/* Search icon */}
-          <svg
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              left: mobile ? 10 : 12,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: iconSize,
-              height: iconSize,
-              pointerEvents: 'none',
-              zIndex: 1,
-            }}
-            viewBox="0 0 20 20"
-            fill="none">
-            <circle cx="9" cy="9" r="6" stroke={COLORS.searchPlaceholder} strokeWidth="1.5" />
-            <line
-              x1="13.5"
-              y1="13.5"
-              x2="17"
-              y2="17"
-              stroke={COLORS.searchPlaceholder}
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
-          <input
-            type="text"
-            aria-label="Search cards"
-            placeholder="Search cards..."
-            {...autocomplete.inputProps}
-            onKeyDown={(e) => {
-              autocomplete.inputProps.onKeyDown(e);
-              if (!e.defaultPrevented && e.key === 'Enter') {
-                onSearchSubmit?.();
-              }
-            }}
-            onFocus={() => {
-              autocomplete.inputProps.onFocus();
-              setIsSearchFocused(true);
-            }}
-            onBlur={() => {
-              autocomplete.inputProps.onBlur();
-              setTimeout(() => setIsSearchFocused(false), 150);
-            }}
-            data-testid="browse-search"
-            style={{
-              width: '100%',
-              height: inputHeight,
-              padding: inputPadding,
-              borderRadius: `${RADIUS.lg}px`,
-              border: `1px solid ${isSearchFocused ? 'rgba(212, 175, 55, 0.5)' : COLORS.searchBorder}`,
-              background: COLORS.searchBg,
-              color: COLORS.text,
-              fontSize: `${FONT_SIZES.lg}px`,
-              fontFamily: FONTS.body,
-              boxSizing: 'border-box',
-              outline: 'none',
-              boxShadow: isSearchFocused
-                ? '0 0 0 2px rgba(212, 175, 55, 0.15), 0 0 12px rgba(212, 175, 55, 0.08)'
-                : 'none',
-              transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
-            }}
-          />
-          <SearchAutocomplete
-            suggestions={autocomplete.suggestions}
-            isOpen={autocomplete.isOpen}
-            highlightedIndex={autocomplete.highlightedIndex}
-            query={searchQuery ?? ''}
-            listboxProps={autocomplete.listboxProps}
-            getOptionProps={autocomplete.getOptionProps}
-          />
-        </div>
+        <HeaderSearch
+          cards={cards}
+          query={searchQuery}
+          onChange={onSearchChange}
+          onSubmit={onSearchSubmit}
+          onCardSelect={onCardSelect}
+          viewport={viewport}
+        />
       )}
-
-      {/* Nav strip (desktop only, centered across full header) */}
-      {!mobile && (
-        <nav
-          aria-label="Main navigation"
-          style={{
-            position: 'absolute',
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
-            display: 'flex',
-            alignItems: 'center',
-            height: 38,
-            borderRadius: RADIUS.lg,
-            border: `1px solid ${COLORS.surfaceBorder}`,
-            background: '#10101c',
-            overflow: 'hidden',
-          }}>
-          {visibleNavItems.map(({path, label, badge}) => {
-            const isActive = location.pathname.startsWith(path);
-            const isHovered = hoveredNav === path;
-            return (
-              <a
-                key={path}
-                href={path}
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate(path);
-                }}
-                onMouseEnter={() => setHoveredNav(path)}
-                onMouseLeave={() => setHoveredNav(null)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  padding: '0 20px',
-                  height: '100%',
-                  background: isActive
-                    ? COLORS.surfaceHover
-                    : isHovered
-                      ? 'rgba(255, 185, 0, 0.06)'
-                      : 'transparent',
-                  color: isActive || isHovered ? COLORS.primary : COLORS.textMuted,
-                  fontFamily: FONTS.body,
-                  fontSize: `${FONT_SIZES.base}px`,
-                  fontWeight: isActive ? 600 : 500,
-                  textDecoration: 'none',
-                  transition: 'background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease',
-                  boxShadow:
-                    isHovered && !isActive
-                      ? '0 0 12px rgba(255, 185, 0, 0.15), inset 0 0 8px rgba(255, 185, 0, 0.05)'
-                      : 'none',
-                  cursor: 'pointer',
-                }}>
-                {label}
-                {badge && (
-                  <span
-                    style={{
-                      fontSize: FONT_SIZES.xs,
-                      fontWeight: 700,
-                      padding: '2px 6px',
-                      borderRadius: 999,
-                      background: COLORS.primary500,
-                      color: COLORS.background,
-                      letterSpacing: 0.4,
-                      lineHeight: 1,
-                    }}>
-                    {badge}
-                  </span>
-                )}
-              </a>
-            );
-          })}
-        </nav>
-      )}
-
-      {/* Optional header actions (e.g. filters button on CardPage) */}
+      {!viewport.isMobile && <DesktopNav isRevealSeason={isRevealSeason} />}
       {headerActions}
     </header>
   );

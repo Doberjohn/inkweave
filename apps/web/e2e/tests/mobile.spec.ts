@@ -122,14 +122,16 @@ test.describe('Mobile Viewport', () => {
     await page.getByRole('button', {name: 'Search cards'}).click();
     await expect(page.getByRole('dialog', {name: 'Search cards'})).toBeVisible();
 
-    // Click backdrop to dismiss (top-left corner, outside the sheet)
-    // Wait for the sheet's enter transition to complete before clicking
-    await page.waitForTimeout(600);
-    await page.mouse.click(10, 10);
-    // Wait for exit transition (mobile-safari animation scheduling is slower)
-    await page.waitForTimeout(500);
+    // Dispatch click directly on the backdrop element — bypasses hit-testing.
+    // Coord clicks are fragile on mobile-safari: `position: sticky` on the
+    // CompactHeader puts the header above the backdrop at top-left coords, so
+    // `page.mouse.click(x, y)` would hit the logo. Locator `.click()` defaults
+    // to the element's center, which the sheet covers. dispatchEvent fires the
+    // onClick handler directly without any DOM hit-testing.
+    await page.waitForTimeout(600); // let enter transition finish
+    await page.getByTestId('search-sheet-backdrop').dispatchEvent('click');
 
-    // Sheet should be gone
+    // Sheet should be gone after exit transition
     await expect(page.getByRole('dialog', {name: 'Search cards'})).not.toBeVisible({timeout: 5000});
   });
 
