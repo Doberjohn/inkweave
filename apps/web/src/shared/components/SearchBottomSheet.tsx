@@ -152,8 +152,6 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
       setRecentSearches([]);
     };
 
-    const handleBackdropClick = onClose;
-
     // Focus trap + Escape key handling.
     // useDialogFocus focuses inputRef after 100ms (isOpen=true), which fires after
     // useTransitionPresence's rAF sets visible=true, so the element is focusable.
@@ -188,7 +186,7 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
           data-testid="search-sheet-backdrop"
           className={`overlay-transition overlay-enter ${visible ? 'overlay-visible' : ''}`}
           onTransitionEnd={onTransitionEnd}
-          onClick={handleBackdropClick}
+          onClick={onClose}
           aria-hidden="true"
           style={{
             position: 'fixed',
