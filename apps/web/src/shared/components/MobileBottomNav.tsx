@@ -15,10 +15,8 @@ type TabKind = 'browse' | 'search' | 'reveals' | 'playstyles' | 'vote';
 
 interface TabDef {
   kind: TabKind;
-  /** Short name used for aria-label (and matched by E2E tests). */
+  /** Accessible name — rendered as aria-label and shown in the active-tab label strip. */
   label: string;
-  /** Longer descriptive label shown in the bottom band when this tab is active. */
-  activeLabel: string;
   /** Navigation path. Mutually exclusive with `action`. */
   href?: string;
   /** Action tab (renders as a button). */
@@ -27,24 +25,18 @@ interface TabDef {
 }
 
 const TABS_REVEAL_SEASON: readonly TabDef[] = [
-  {kind: 'browse', label: 'Browse', activeLabel: 'Browse collection', href: '/browse'},
-  {kind: 'search', label: 'Search', activeLabel: 'Search cards', action: 'search'},
-  {
-    kind: 'reveals',
-    label: 'Reveals',
-    activeLabel: 'Set 12 reveals',
-    href: '/reveals',
-    hasNewDot: true,
-  },
-  {kind: 'playstyles', label: 'Playstyles', activeLabel: 'Explore playstyles', href: '/playstyles'},
-  {kind: 'vote', label: 'Vote', activeLabel: 'Rate synergies', href: '/vote'},
+  {kind: 'browse', label: 'Browse collection', href: '/browse'},
+  {kind: 'search', label: 'Search cards', action: 'search'},
+  {kind: 'reveals', label: 'Set 12 reveals', href: '/reveals', hasNewDot: true},
+  {kind: 'playstyles', label: 'Explore playstyles', href: '/playstyles'},
+  {kind: 'vote', label: 'Rate synergies', href: '/vote'},
 ];
 
 const TABS_OFF_SEASON: readonly TabDef[] = [
-  {kind: 'browse', label: 'Browse', activeLabel: 'Browse collection', href: '/browse'},
-  {kind: 'search', label: 'Search', activeLabel: 'Search cards', action: 'search'},
-  {kind: 'playstyles', label: 'Playstyles', activeLabel: 'Explore playstyles', href: '/playstyles'},
-  {kind: 'vote', label: 'Vote', activeLabel: 'Rate synergies', href: '/vote'},
+  {kind: 'browse', label: 'Browse collection', href: '/browse'},
+  {kind: 'search', label: 'Search cards', action: 'search'},
+  {kind: 'playstyles', label: 'Explore playstyles', href: '/playstyles'},
+  {kind: 'vote', label: 'Rate synergies', href: '/vote'},
 ];
 
 /**
@@ -156,7 +148,7 @@ export function MobileBottomNav({onSearchClick, phaseOverride}: MobileBottomNavP
   const activeIdx = tabs.findIndex((t) => t.href && pathname.startsWith(t.href));
   const hasActive = activeIdx >= 0;
   const dashOffset = hasActive ? pos.dashOffset[activeIdx] : pos.dashOffset[0];
-  const activeLabel = hasActive ? tabs[activeIdx].activeLabel : '';
+  const activeLabel = hasActive ? tabs[activeIdx].label : '';
 
   return (
     <nav
