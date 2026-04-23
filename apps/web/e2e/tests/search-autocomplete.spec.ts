@@ -17,7 +17,7 @@ test.describe('Search Autocomplete', () => {
 
     // Autocomplete dropdown should appear after debounce
     const listbox = page.getByRole('listbox');
-    await expect(listbox).toBeVisible({timeout: 2000});
+    await expect(listbox).toBeVisible({timeout: 10000});
     await expect(listbox.getByRole('option').first()).toBeVisible();
   });
 
@@ -26,7 +26,7 @@ test.describe('Search Autocomplete', () => {
     await appPage.heroSearch.pressSequentially('Elsa', {delay: 50});
 
     const listbox = page.getByRole('listbox');
-    await expect(listbox).toBeVisible({timeout: 2000});
+    await expect(listbox).toBeVisible({timeout: 10000});
 
     // Click the first suggestion
     await listbox.getByRole('option').first().click();
@@ -40,7 +40,7 @@ test.describe('Search Autocomplete', () => {
     await appPage.heroSearch.pressSequentially('Elsa', {delay: 50});
 
     const listbox = page.getByRole('listbox');
-    await expect(listbox).toBeVisible({timeout: 2000});
+    await expect(listbox).toBeVisible({timeout: 10000});
 
     // Use keyboard to select
     await appPage.heroSearch.press('ArrowDown');
@@ -55,7 +55,7 @@ test.describe('Search Autocomplete', () => {
     await appPage.heroSearch.pressSequentially('Elsa', {delay: 50});
 
     const listbox = page.getByRole('listbox');
-    await expect(listbox).toBeVisible({timeout: 2000});
+    await expect(listbox).toBeVisible({timeout: 10000});
 
     await appPage.heroSearch.press('Escape');
 

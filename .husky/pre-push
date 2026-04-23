@@ -1,2 +1,5 @@
 #!/bin/sh
-pnpm --filter inkweave-web test:e2e --project chromium
+# Run chromium + webkit pre-push. Chromium alone misses WebKit-specific
+# stacking-context bugs, timing sensitivities, and Safari focus quirks.
+# Mobile variants + firefox still run in CI only (pre-push time budget).
+pnpm --filter inkweave-web test:e2e --project chromium --project webkit
