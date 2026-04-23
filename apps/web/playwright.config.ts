@@ -42,6 +42,13 @@ export default defineConfig({
     env: {
       // Exercise the reveal-season active code paths in E2E.
       VITE_IS_REVEAL_SEASON: 'true',
+      // Show Strategy Tips block so the `playstyle-detail.spec.ts` toggle test has
+      // a rendered button to interact with. Production default stays off via .env.example.
+      VITE_SHOW_STRATEGY_TIPS: 'true',
+      // Suppress the beta notice in E2E so existing home-page tests don't see an
+      // unexpected floating card. If a future test covers the notice itself, flip
+      // to 'true' and clear localStorage in beforeEach.
+      VITE_SHOW_BETA_NOTICE: 'false',
     },
   },
 });

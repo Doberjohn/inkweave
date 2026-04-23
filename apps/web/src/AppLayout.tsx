@@ -5,6 +5,7 @@ import {SpeedInsights} from '@vercel/speed-insights/react';
 import {CardPreviewProvider, CardPreviewPopover} from './features/cards';
 import {RevealsPromoCard, useRevealPhase} from './features/reveals';
 import {
+  BetaNotice,
   ErrorBoundary,
   MobileBottomNav,
   MOBILE_NAV_HEIGHT,
@@ -15,6 +16,10 @@ import {CardDataProvider} from './shared/contexts/CardDataContext';
 import {COLORS} from './shared/constants';
 import {useCardDataContext} from './shared/contexts/CardDataContext';
 import {useResponsive} from './shared/hooks';
+
+// Feature flag: gates the desktop-only beta notice card on the landing page.
+// Off at v1.0.0 launch via Vercel env. Default on locally via .env.local.
+const SHOW_BETA_NOTICE = import.meta.env.VITE_SHOW_BETA_NOTICE === 'true';
 
 function AppContent() {
   const {error, retryLoad} = useCardDataContext();
@@ -75,6 +80,7 @@ function AppContent() {
       {showRevealsPromo && (
         <RevealsPromoCard />
       )}
+      {SHOW_BETA_NOTICE && isHome && !isMobile && <BetaNotice />}
     </>
   );
 }

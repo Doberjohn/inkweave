@@ -170,7 +170,7 @@ export function HeroSection({
       {/* Subtitle */}
       <div style={styles.subtitleContainer}>
         <p style={styles.subtitlePrimary}>
-          Select any Lorcana card and instantly discover powerful combinations.
+          Select any Lorcana card and instantly discover powerful synergies.
         </p>
       </div>
 
