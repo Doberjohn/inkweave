@@ -461,6 +461,141 @@ function EmptyPrompt() {
 }
 
 // =====================================================================
+// Sheet chrome — backdrop + dialog shell. Extracted so the main
+// component's function body stays under the line-length threshold.
+// =====================================================================
+
+interface SheetBackdropProps {
+  visible: boolean;
+  onClose: () => void;
+  onTransitionEnd: React.TransitionEventHandler<HTMLDivElement>;
+}
+
+function SheetBackdrop({visible, onClose, onTransitionEnd}: SheetBackdropProps) {
+  return (
+    <div
+      data-testid="search-sheet-backdrop"
+      className={`overlay-transition overlay-enter ${visible ? 'overlay-visible' : ''}`}
+      onTransitionEnd={onTransitionEnd}
+      onClick={onClose}
+      aria-hidden="true"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0, 0, 0, 0.6)',
+        backdropFilter: 'blur(4px)',
+        zIndex: Z_INDEX.modalBackdrop,
+      }}
+    />
+  );
+}
+
+function DragHandle() {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        padding: `${SPACING.md}px 0 ${SPACING.sm}px`,
+        flexShrink: 0,
+      }}>
+      <div style={{width: 36, height: 4, borderRadius: 2, background: '#444466'}} />
+    </div>
+  );
+}
+
+function Divider() {
+  return <div style={{height: 1, background: COLORS.surfaceBorder, flexShrink: 0}} />;
+}
+
+interface SearchSheetProps {
+  sheetRef: React.RefObject<HTMLDivElement | null>;
+  visible: boolean;
+  sheetTop: number;
+  hasResults: boolean;
+  onKeyDown: React.KeyboardEventHandler<HTMLDivElement>;
+  onTransitionEnd: React.TransitionEventHandler<HTMLDivElement>;
+  query: string;
+  autocomplete: ReturnType<typeof useAutocomplete>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  onSubmit: () => void;
+  onClear: () => void;
+  recentSearches: string[];
+  onRecentClick: (term: string) => void;
+  onClearRecent: () => void;
+}
+
+function SearchSheet({
+  sheetRef,
+  visible,
+  sheetTop,
+  hasResults,
+  onKeyDown,
+  onTransitionEnd,
+  query,
+  autocomplete,
+  inputRef,
+  onSubmit,
+  onClear,
+  recentSearches,
+  onRecentClick,
+  onClearRecent,
+}: SearchSheetProps) {
+  return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog keyboard handling (Escape to close)
+    <div
+      ref={sheetRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Search cards"
+      onKeyDown={onKeyDown}
+      className={`overlay-transition overlay-slide-up overlay-enter ${visible ? 'overlay-visible' : ''}`}
+      onTransitionEnd={onTransitionEnd}
+      style={{
+        position: 'fixed',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        top: sheetTop,
+        background: COLORS.surface,
+        borderRadius: '24px 24px 0 0',
+        boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.6)',
+        zIndex: Z_INDEX.modal,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        transition: 'top 0.25s ease, opacity 0.25s ease, transform 0.25s ease',
+      }}>
+      <DragHandle />
+      <SearchSheetInput
+        query={query}
+        autocomplete={autocomplete}
+        inputRef={inputRef}
+        onSubmit={onSubmit}
+        onClear={onClear}
+      />
+      <Divider />
+      <div style={{flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch'}}>
+        {hasResults ? (
+          <SearchResultsList
+            suggestions={autocomplete.suggestions}
+            highlightedIndex={autocomplete.highlightedIndex}
+            query={query}
+            getOptionProps={autocomplete.getOptionProps}
+          />
+        ) : (
+          <SearchEmptyState
+            recentSearches={recentSearches}
+            onRecentClick={onRecentClick}
+            onClearRecent={onClearRecent}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
 // Public component.
 // =====================================================================
 
@@ -564,81 +699,23 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
     return (
       <>
         {proxyInput}
-        {/* Backdrop */}
-        <div
-          data-testid="search-sheet-backdrop"
-          className={`overlay-transition overlay-enter ${visible ? 'overlay-visible' : ''}`}
-          onTransitionEnd={onTransitionEnd}
-          onClick={onClose}
-          aria-hidden="true"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.6)',
-            backdropFilter: 'blur(4px)',
-            zIndex: Z_INDEX.modalBackdrop,
-          }}
-        />
-
-        {/* Sheet */}
-        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog keyboard handling (Escape to close) */}
-        <div
-          ref={sheetRef}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Search cards"
+        <SheetBackdrop visible={visible} onClose={onClose} onTransitionEnd={onTransitionEnd} />
+        <SearchSheet
+          sheetRef={sheetRef}
+          visible={visible}
+          sheetTop={sheetTop}
+          hasResults={hasResults}
           onKeyDown={handleDialogKeyDown}
-          className={`overlay-transition overlay-slide-up overlay-enter ${visible ? 'overlay-visible' : ''}`}
           onTransitionEnd={onTransitionEnd}
-          style={{
-            position: 'fixed',
-            left: 0,
-            right: 0,
-            bottom: 0,
-            top: sheetTop,
-            background: COLORS.surface,
-            borderRadius: '24px 24px 0 0',
-            boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.6)',
-            zIndex: Z_INDEX.modal,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            transition: 'top 0.25s ease, opacity 0.25s ease, transform 0.25s ease',
-          }}>
-          {/* Drag handle */}
-          <div style={{display: 'flex', justifyContent: 'center', padding: `${SPACING.md}px 0 ${SPACING.sm}px`, flexShrink: 0}}>
-            <div style={{width: 36, height: 4, borderRadius: 2, background: '#444466'}} />
-          </div>
-
-          <SearchSheetInput
-            query={query}
-            autocomplete={autocomplete}
-            inputRef={inputRef}
-            onSubmit={handleSubmit}
-            onClear={handleInputClear}
-          />
-
-          {/* Divider */}
-          <div style={{height: 1, background: COLORS.surfaceBorder, flexShrink: 0}} />
-
-          {/* Content area */}
-          <div style={{flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch'}}>
-            {hasResults ? (
-              <SearchResultsList
-                suggestions={autocomplete.suggestions}
-                highlightedIndex={autocomplete.highlightedIndex}
-                query={query}
-                getOptionProps={autocomplete.getOptionProps}
-              />
-            ) : (
-              <SearchEmptyState
-                recentSearches={recentSearches}
-                onRecentClick={handleRecentClick}
-                onClearRecent={handleClearRecent}
-              />
-            )}
-          </div>
-        </div>
+          query={query}
+          autocomplete={autocomplete}
+          inputRef={inputRef}
+          onSubmit={handleSubmit}
+          onClear={handleInputClear}
+          recentSearches={recentSearches}
+          onRecentClick={handleRecentClick}
+          onClearRecent={handleClearRecent}
+        />
       </>
     );
   },
