@@ -99,7 +99,7 @@ export interface UsePairQueueReturn {
 }
 
 export function usePairQueue(): UsePairQueueReturn {
-  const {getCardById} = useCardDataContext();
+  const {getCardById, isLoading: cardsLoading} = useCardDataContext();
   const [currentPair, setCurrentPair] = useState<VotingPair | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -200,9 +200,13 @@ export function usePairQueue(): UsePairQueueReturn {
     setIsLoading(false);
   }, [drawNext, getCardById, peekUpcoming]);
 
-  // Initialize: fetch pairs index, partition, shuffle, load first pair
+  // Initialize: fetch pairs index, partition, shuffle, load first pair.
+  // Gated on card data being ready so resolvePair/getCardById can actually resolve entries —
+  // otherwise the first 10 attempts all fail on empty cards, the queue is marked empty, and the
+  // `initialized` latch blocks any retry once cards arrive.
   useEffect(() => {
     if (queueRef.current.initialized) return;
+    if (cardsLoading) return;
     queueRef.current.initialized = true;
 
     (async () => {
@@ -241,7 +245,7 @@ export function usePairQueue(): UsePairQueueReturn {
         setIsLoading(false);
       }
     })();
-  }, [loadNext]);
+  }, [loadNext, cardsLoading]);
 
   // Track last voted pair for undo (single-level)
   const lastVotedPairRef = useRef<VotingPair | null>(null);
