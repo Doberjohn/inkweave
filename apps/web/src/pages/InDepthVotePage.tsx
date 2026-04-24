@@ -1,8 +1,9 @@
 import {useNavigate, useParams} from 'react-router-dom';
-import {CompactHeader, CtaButton, BackLink, LoadingSpinner, EtherealBackground, Sparkles} from '../shared/components';
+import {CompactHeader, CtaButton, BackLink, EtherealBackground, Sparkles} from '../shared/components';
+import {CardDetailSkeleton} from '../features/cards';
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
-import {PairDisplay, VoteStatusBanner, InDepthVoteForm} from '../features/voting';
+import {PairDisplay, VoteStatusBanner, InDepthVoteForm, VoteFormSkeleton} from '../features/voting';
 import {useSpecificPair} from '../features/voting/hooks/useSpecificPair';
 import {useInDepthVoteSession} from '../features/voting/hooks/useInDepthVoteSession';
 import {COLORS, EASING, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../shared/constants';
@@ -251,11 +252,88 @@ export function InDepthVotePage() {
     }
   };
 
-  // Loading state
+  // Loading state: render the full page shell with pair + form skeletons
   if (isLoading) {
+    const pairImageWidth = isMobile ? 150 : 298;
+    const pairCardWidth = isMobile ? 170 : 340;
     return (
-      <div style={{minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <LoadingSpinner />
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+          overflow: 'hidden',
+          overflowY: 'auto',
+        }}>
+        <EtherealBackground isMobile={isMobile} vivid />
+        <CompactHeader
+          onLogoClick={() => navigate('/')}
+          isMobile={isMobile}
+          cards={cards}
+          onCardSelect={(card) => navigate(`/card/${card.id}`)}
+        />
+        <main
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: isMobile ? '16px 16px 120px' : '16px 32px 60px',
+            gap: 16,
+            position: 'relative',
+            zIndex: 1,
+          }}
+          aria-busy="true"
+          aria-label="Loading vote pair and form">
+          {isMobile ? (
+            <>
+              <div style={{display: 'flex', gap: SPACING.md, justifyContent: 'center'}}>
+                <CardDetailSkeleton
+                  imageWidth={pairImageWidth}
+                  textLines={0}
+                  width={pairCardWidth}
+                  padding={0}
+                />
+                <CardDetailSkeleton
+                  imageWidth={pairImageWidth}
+                  textLines={0}
+                  width={pairCardWidth}
+                  padding={0}
+                />
+              </div>
+              <div style={{width: '100%', maxWidth: 560}}>
+                <VoteFormSkeleton rows={6} />
+              </div>
+            </>
+          ) : (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'auto 1fr',
+                gap: 60,
+                width: '100%',
+                maxWidth: 1320,
+                alignItems: 'start',
+              }}>
+              <div style={{display: 'flex', gap: SPACING.md}}>
+                <CardDetailSkeleton
+                  imageWidth={pairImageWidth}
+                  textLines={0}
+                  width={pairCardWidth}
+                  padding={0}
+                />
+                <CardDetailSkeleton
+                  imageWidth={pairImageWidth}
+                  textLines={0}
+                  width={pairCardWidth}
+                  padding={0}
+                />
+              </div>
+              <VoteFormSkeleton rows={6} />
+            </div>
+          )}
+        </main>
       </div>
     );
   }
