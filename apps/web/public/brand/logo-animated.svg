@@ -40,6 +40,13 @@
     animation: twinkle 2.3s ease-in-out var(--twinkle-delay, 0s) infinite;
   }
 
+  /* Strip the fractalNoise grain on small screens.
+     At low render sizes the discrete-step noise turns into blurry blobs
+     instead of paper texture. Letters read much cleaner without it. */
+  @media (max-width: 600px) {
+    g[filter*="_n_11_33"] { filter: none; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .halo, .ring-spin, .orbit--a, .orbit--b, .mote {
       animation: none;
