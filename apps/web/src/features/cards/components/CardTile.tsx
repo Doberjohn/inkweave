@@ -2,7 +2,6 @@ import {useState} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from '../types';
 import {INK_COLORS, COLORS, EASING, FONT_SIZES, RADIUS} from '../../../shared/constants';
-import {isSyntheticMouseEvent} from '../../../shared/utils/touchGuard';
 import {smallImageUrl} from '../loader';
 
 interface CardTileProps {
@@ -48,11 +47,7 @@ export function CardTile({
       data-testid="card-tile"
       data-roving-item
       tabIndex={tabIndex}
-      onClick={() => {
-        // Guard against iOS synthetic mouse events that fire after SPA navigation.
-        if (isSyntheticMouseEvent()) return;
-        handleClick();
-      }}
+      onClick={handleClick}
       aria-pressed={isSelected}
       aria-label={card.fullName || card.name || 'View card details'}
       style={{

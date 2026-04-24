@@ -61,6 +61,21 @@ describe('CardTile', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
+  // Regression guard: mobile browsers fire touchstart → synthesized click.
+  // A previous version of CardTile's onClick gated on isSyntheticMouseEvent(),
+  // which returned true for <1000ms after any touchstart — blocking every
+  // mobile tap. This test ensures tapping still triggers navigation.
+  it('should call onClick even when a touchstart preceded it (mobile tap sequence)', () => {
+    const onClick = vi.fn();
+    render(<CardTile {...defaultProps} onClick={onClick} />);
+
+    // Simulate the iOS tap sequence: touchstart on document, then click on the button.
+    fireEvent.touchStart(document, {touches: [{clientX: 100, clientY: 200}]});
+    fireEvent.click(screen.getByRole('button'));
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
   it('should show selected state with aria-pressed', () => {
     const {rerender} = render(<CardTile {...defaultProps} isSelected={false} />);
 
