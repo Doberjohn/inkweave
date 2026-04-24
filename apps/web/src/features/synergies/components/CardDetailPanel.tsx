@@ -4,7 +4,7 @@ import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup} from '../types';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT} from '../../../shared/constants';
-import {CardImage, CardTextBlock, TierCircle} from '../../../shared/components';
+import {CardImage, CardLightbox, CardTextBlock, TierCircle} from '../../../shared/components';
 
 interface CardDetailPanelProps {
   card: LorcanaCard;
@@ -24,6 +24,7 @@ export function CardDetailPanel({
   const hasSynergies = synergies && synergies.length > 0;
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   const [nameHovered, setNameHovered] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   return (
     <article
@@ -41,20 +42,42 @@ export function CardDetailPanel({
         gap: `${SPACING.lg}px`,
         boxSizing: 'border-box',
       }}>
-      {/* Card image */}
+      {/* Card image — click to open lightbox (parity with mobile) */}
       <div style={{display: 'flex', justifyContent: 'center'}}>
-        <CardImage
+        <button
+          type="button"
+          aria-label="Enlarge card image"
+          onClick={() => card.imageUrl && setLightboxOpen(true)}
+          style={{
+            border: 'none',
+            background: 'none',
+            padding: 0,
+            borderRadius: RADIUS.xl,
+            overflow: 'hidden',
+            cursor: card.imageUrl ? 'pointer' : 'default',
+          }}>
+          <CardImage
+            src={card.imageUrl}
+            alt={card.fullName}
+            width={298}
+            height={417}
+            inkColor={card.ink}
+            cost={card.cost}
+            lazy={false}
+            priority
+            borderRadius={RADIUS.xl}
+          />
+        </button>
+      </div>
+
+      {lightboxOpen && card.imageUrl && (
+        <CardLightbox
           src={card.imageUrl}
           alt={card.fullName}
-          width={298}
-          height={417}
-          inkColor={card.ink}
-          cost={card.cost}
-          lazy={false}
-          priority
-          borderRadius={RADIUS.xl}
+          isLocation={card.type === 'Location'}
+          onClose={() => setLightboxOpen(false)}
         />
-      </div>
+      )}
 
       {/* Card name + version */}
       <div>
