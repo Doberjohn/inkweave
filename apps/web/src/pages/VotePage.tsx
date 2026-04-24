@@ -1,6 +1,8 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {CompactHeader, CtaButton, LoadingSpinner, EtherealBackground} from '../shared/components';
+import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
+import {CompactHeader, CtaButton, EtherealBackground} from '../shared/components';
+import {CardDetailSkeleton} from '../features/cards';
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {PairDisplay, ScorePicker, VoteToast, VoteStatusBanner} from '../features/voting';
@@ -8,7 +10,7 @@ import type {VoteToastData} from '../features/voting';
 import {usePairQueue} from '../features/voting/hooks/usePairQueue';
 import {useVoteSession} from '../features/voting/hooks/useVoteSession';
 import type {Score} from '../shared/lib/supabase';
-import {COLORS, FONTS, FONT_SIZES} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../shared/constants';
 
 export function VotePage() {
   const navigate = useNavigate();
@@ -83,11 +85,73 @@ export function VotePage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleScoreClick, handleSkip, currentPair, voteSession.isRateLimited]);
 
-  // Loading state
+  // Loading state: keep shell mounted, swap pair/picker for skeletons
   if (isLoading && !currentPair) {
+    const skelImageWidth = compactLayout ? 220 : 298;
+    const skelCardWidth = compactLayout ? 260 : 340;
     return (
-      <div style={{minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <LoadingSpinner />
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+          overflow: 'hidden',
+          overflowY: 'auto',
+        }}>
+        <EtherealBackground isMobile={isMobile} vivid />
+        <CompactHeader
+          onLogoClick={() => navigate('/')}
+          isMobile={isMobile}
+          cards={cards}
+          onCardSelect={(card) => navigate(`/card/${card.id}`)}
+        />
+        <main
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: compactLayout ? 'flex-start' : 'center',
+            padding: isMobile ? '16px 16px 120px' : compactLayout ? '16px 16px 60px' : '0 0 60px',
+            gap: 24,
+            position: 'relative',
+            zIndex: 1,
+          }}
+          aria-busy="true"
+          aria-label="Loading vote pair">
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: compactLayout ? 'column' : 'row',
+              gap: compactLayout ? SPACING.lg : SPACING.xl,
+              alignItems: 'center',
+            }}>
+            <CardDetailSkeleton
+              imageWidth={skelImageWidth}
+              textLines={0}
+              width={skelCardWidth}
+              padding={0}
+            />
+            <CardDetailSkeleton
+              imageWidth={skelImageWidth}
+              textLines={0}
+              width={skelCardWidth}
+              padding={0}
+            />
+          </div>
+          <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+            <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10}}>
+              <Skeleton width={220} height={14} borderRadius={RADIUS.sm} />
+              <div style={{display: 'flex', gap: 6}}>
+                {Array.from({length: 10}, (_, i) => (
+                  <Skeleton key={i} width={32} height={32} borderRadius={RADIUS.md} />
+                ))}
+              </div>
+              <Skeleton width={140} height={32} borderRadius={RADIUS.lg} />
+            </div>
+          </SkeletonTheme>
+        </main>
       </div>
     );
   }
