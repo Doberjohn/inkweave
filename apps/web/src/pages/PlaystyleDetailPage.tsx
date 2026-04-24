@@ -509,10 +509,8 @@ export function PlaystyleDetailPage() {
   const handleCardSelect = (card: {id: string}) => navigate(`/card/${card.id}`);
   const handleSearchSubmit = () => navigate(buildSearchTarget(headerSearchQuery));
 
-  // Invalid playstyle ID or still loading — early return narrows
-  // playstyle+ui to defined for the rest of the function.
-  if (!playstyle || !ui) {
-    if (!isLoading) return <Navigate to="/playstyles" replace />;
+  // Still loading card data — show skeleton regardless of playstyle resolution.
+  if (isLoading) {
     return (
       <PlaystyleDetailLoadingView
         isMobile={isMobile}
@@ -525,6 +523,9 @@ export function PlaystyleDetailPage() {
       />
     );
   }
+
+  // Not loading, but playstyle ID is invalid — redirect to gallery.
+  if (!playstyle || !ui) return <Navigate to="/playstyles" replace />;
 
   if (error) return <PlaystyleDetailError onRetry={retryLoad} />;
 
