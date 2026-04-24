@@ -308,84 +308,65 @@ interface RoleChip {
 /** Synthetic role for Location card type (not a real engine role) */
 const LOCATION_CARD_ROLE = 'location' as const;
 
+interface RoleConfig {
+  getRoles: (card: LorcanaCard) => readonly string[];
+  getLabel: (role: string) => string;
+  getTooltip: (role: string) => string;
+  extraChips?: (cards: LorcanaCard[]) => RoleChip[];
+}
+
+const ROLE_CONFIGS: Partial<Record<PlaystyleId, RoleConfig>> = {
+  'location-control': {
+    getRoles: (card) => getLocationRoles(card),
+    getLabel: (role) => LOCATION_ROLE_CHIP_LABELS[role as LocationRole],
+    getTooltip: (role) => LOCATION_ROLE_TOOLTIP[role as LocationRole],
+    extraChips: (cards) => {
+      const count = cards.filter((c) => c.type === 'Location').length;
+      return count > 0
+        ? [{role: LOCATION_CARD_ROLE, label: 'Location', tooltip: 'Location cards', count}]
+        : [];
+    },
+  },
+  discard: {
+    getRoles: (card) => getDiscardRoles(card),
+    getLabel: (role) => DISCARD_ROLE_CHIP_LABELS[role as DiscardRole],
+    getTooltip: (role) => DISCARD_ROLE_DESCRIPTIONS[role as DiscardRole],
+  },
+  ramp: {
+    getRoles: (card) => getRampRoles(card),
+    getLabel: (role) => RAMP_ROLE_CHIP_LABELS[role as RampRole],
+    getTooltip: (role) => RAMP_ROLE_DESCRIPTIONS[role as RampRole],
+  },
+};
+
 /** Get role chip definitions for playstyles that have roles */
-function getRoleChips(playstyleId: PlaystyleId, cards: LorcanaCard[]): RoleChip[] {
-  if (playstyleId === 'location-control') {
-    const roleCounts = new Map<LocationRole, number>();
-    for (const card of cards) {
-      for (const role of getLocationRoles(card)) {
-        roleCounts.set(role, (roleCounts.get(role) ?? 0) + 1);
-      }
+function getRoleChips(playstyleId: PlaystyleId | undefined, cards: LorcanaCard[]): RoleChip[] {
+  if (!playstyleId) return [];
+  const config = ROLE_CONFIGS[playstyleId];
+  if (!config) return [];
+  const roleCounts = new Map<string, number>();
+  for (const card of cards) {
+    for (const role of config.getRoles(card)) {
+      roleCounts.set(role, (roleCounts.get(role) ?? 0) + 1);
     }
-    // Location cards don't have roles, so count them separately
-    const locationCount = cards.filter((c) => c.type === 'Location').length;
-    const chips: RoleChip[] = [];
-    if (locationCount > 0) {
-      chips.push({
-        role: LOCATION_CARD_ROLE,
-        label: 'Location',
-        tooltip: 'Location cards',
-        count: locationCount,
-      });
-    }
-    for (const [role, count] of roleCounts) {
-      chips.push({
-        role,
-        label: LOCATION_ROLE_CHIP_LABELS[role],
-        tooltip: LOCATION_ROLE_TOOLTIP[role],
-        count,
-      });
-    }
-    return chips;
   }
-
-  if (playstyleId === 'discard') {
-    const roleCounts = new Map<DiscardRole, number>();
-    for (const card of cards) {
-      for (const role of getDiscardRoles(card)) {
-        roleCounts.set(role, (roleCounts.get(role) ?? 0) + 1);
-      }
-    }
-    return [...roleCounts].map(([role, count]) => ({
-      role,
-      label: DISCARD_ROLE_CHIP_LABELS[role],
-      tooltip: DISCARD_ROLE_DESCRIPTIONS[role],
-      count,
-    }));
-  }
-
-  if (playstyleId === 'ramp') {
-    const roleCounts = new Map<RampRole, number>();
-    for (const card of cards) {
-      for (const role of getRampRoles(card)) {
-        roleCounts.set(role, (roleCounts.get(role) ?? 0) + 1);
-      }
-    }
-    return [...roleCounts].map(([role, count]) => ({
-      role,
-      label: RAMP_ROLE_CHIP_LABELS[role],
-      tooltip: RAMP_ROLE_DESCRIPTIONS[role],
-      count,
-    }));
-  }
-
-  // lore-denial: no roles
-  return [];
+  const extras = config.extraChips?.(cards) ?? [];
+  const chips = [...roleCounts].map(([role, count]) => ({
+    role,
+    label: config.getLabel(role),
+    tooltip: config.getTooltip(role),
+    count,
+  }));
+  return [...extras, ...chips];
 }
 
 /** Check if a card has a specific role within its playstyle */
 function cardHasRole(playstyleId: PlaystyleId, card: LorcanaCard, role: string): boolean {
-  if (playstyleId === 'location-control') {
-    if (role === LOCATION_CARD_ROLE) return card.type === 'Location';
-    return getLocationRoles(card).includes(role as LocationRole);
+  if (playstyleId === 'location-control' && role === LOCATION_CARD_ROLE) {
+    return card.type === 'Location';
   }
-  if (playstyleId === 'discard') {
-    return getDiscardRoles(card).includes(role as DiscardRole);
-  }
-  if (playstyleId === 'ramp') {
-    return getRampRoles(card).includes(role as RampRole);
-  }
-  return false;
+  const config = ROLE_CONFIGS[playstyleId];
+  return config ? config.getRoles(card).includes(role) : false;
 }
 
 /** Small count badge rendered inside a Chip */
@@ -402,6 +383,88 @@ const centeredPage = {
   justifyContent: 'center',
   fontFamily: FONTS.body,
 } as const;
+
+// ── Derived-state helpers (extracted to keep page CC under threshold) ──
+
+function buildCombinedFilters(
+  filters: CardFilterOptions,
+  inkFilters: CardFilterOptions['ink'] extends readonly (infer U)[] ? U[] : never,
+  typeFilters: CardFilterOptions['type'] extends readonly (infer U)[] ? U[] : never,
+  costFilters: NonNullable<CardFilterOptions['costs']>,
+): CardFilterOptions {
+  const combined: CardFilterOptions = {...filters};
+  if (inkFilters.length > 0) combined.ink = inkFilters;
+  if (typeFilters.length > 0) combined.type = typeFilters;
+  if (costFilters.length > 0) combined.costs = costFilters;
+  return combined;
+}
+
+function applyFilterAndSort(
+  cards: LorcanaCard[],
+  combinedFilters: CardFilterOptions,
+  sortOrder: Parameters<typeof applySortOrder>[1],
+): LorcanaCard[] {
+  const filtered =
+    Object.keys(combinedFilters).length > 0 ? filterCards(cards, combinedFilters) : cards;
+  return applySortOrder(filtered, sortOrder);
+}
+
+function applyRoleFilter(
+  cards: LorcanaCard[],
+  activeRole: string | null,
+  playstyleId: PlaystyleId | undefined,
+): LorcanaCard[] {
+  if (!activeRole || !playstyleId) return cards;
+  return cards.filter((card) => cardHasRole(playstyleId, card, activeRole));
+}
+
+function getHeroLayout(isMobile: boolean): HeroLayout {
+  return isMobile ? HERO_MOBILE : HERO_DESKTOP;
+}
+
+function buildSearchTarget(query: string): string {
+  const q = query.trim();
+  return q ? `/browse?q=${encodeURIComponent(q)}` : '/browse';
+}
+
+function useResolvedPlaystyle(playstyleId: string | undefined) {
+  const playstyle = playstyleId ? getPlaystyleById(playstyleId as PlaystyleId) : undefined;
+  const ui = playstyleId ? PLAYSTYLE_UI[playstyleId as PlaystyleId] : undefined;
+  usePreloadImages(ui ? [ui.coverArt] : []);
+  return {playstyle, ui};
+}
+
+function usePlaystyleNavReset(
+  playstyleId: string | undefined,
+  setActiveRole: (r: string | null) => void,
+) {
+  const [prev, setPrev] = useState(playstyleId);
+  if (playstyleId !== prev) {
+    setPrev(playstyleId);
+    setActiveRole(null);
+  }
+}
+
+/** Default sort to ink-cost on mount (skipped if URL already has a sort param).
+ * useEffect + ref guard: setSearchParams mutates URL (side effect), not state —
+ * calling it during render violates React's purity model. */
+function useDefaultSortParam() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const applied = useRef(false);
+  useEffect(() => {
+    if (applied.current) return;
+    applied.current = true;
+    if (searchParams.has('sort')) return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('sort', 'ink-cost');
+        return next;
+      },
+      {replace: true},
+    );
+  }, [searchParams, setSearchParams]);
+}
 
 // ── Page ──
 
@@ -429,166 +492,43 @@ export function PlaystyleDetailPage() {
   } = useFilterParams();
   const [showFilters, setShowFilters] = useState(false);
   const [activeRole, setActiveRole] = useState<string | null>(null);
-  const [rolePlaystyleId, setRolePlaystyleId] = useState(playstyleId);
-  const [searchParams, setSearchParams] = useSearchParams();
+  usePlaystyleNavReset(playstyleId, setActiveRole);
+  useDefaultSortParam();
 
-  // Reset role filter when navigating between playstyles (no useEffect needed)
-  if (playstyleId !== rolePlaystyleId) {
-    setRolePlaystyleId(playstyleId);
-    setActiveRole(null);
-  }
-
-  // Default sort to ink-cost on mount (skipped if URL already has a sort param).
-  // Uses useEffect + ref guard because setSearchParams is a side effect (URL mutation),
-  // not a setState. Calling it during render violates React's purity model.
-  const sortAppliedRef = useRef(false);
-  useEffect(() => {
-    if (!sortAppliedRef.current) {
-      sortAppliedRef.current = true;
-      if (!searchParams.has('sort')) {
-        setSearchParams(
-          (prev) => {
-            const next = new URLSearchParams(prev);
-            next.set('sort', 'ink-cost');
-            return next;
-          },
-          {replace: true},
-        );
-      }
-    }
-  }, [searchParams, setSearchParams]);
-
-  // Resolve playstyle from engine
-  const playstyle = playstyleId ? getPlaystyleById(playstyleId as PlaystyleId) : undefined;
-  const ui = playstyleId ? PLAYSTYLE_UI[playstyleId as PlaystyleId] : undefined;
-
-  // Preload hero cover art so CSS backgroundImage doesn't wait for render
-  usePreloadImages(ui ? [ui.coverArt] : []);
-
-  // Get all cards matching this playstyle (pre-computed)
+  const {playstyle, ui} = useResolvedPlaystyle(playstyleId);
   const {cards: playstyleCards} = usePrecomputedPlaystyleCards(playstyle?.id);
 
-  // Apply filters and sort
-  const combinedFilters: CardFilterOptions = (() => {
-    const combined = {...filters};
-    if (inkFilters.length > 0) combined.ink = inkFilters;
-    if (typeFilters.length > 0) combined.type = typeFilters;
-    if (costFilters.length > 0) combined.costs = costFilters;
-    return combined;
-  })();
-
-  const sortedCards = (() => {
-    let result = playstyleCards;
-    if (Object.keys(combinedFilters).length > 0) result = filterCards(result, combinedFilters);
-    return applySortOrder(result, sortOrder);
-  })();
-
-  // Role filter chips (desktop only): compute which roles exist and their card counts
-  const roleChips = (() => {
-    if (!playstyle) return [];
-    return getRoleChips(playstyle.id, sortedCards);
-  })();
-
-  // Apply role filter to sorted cards
-  const roleFilteredCards = (() => {
-    if (!activeRole || !playstyle) return sortedCards;
-    return sortedCards.filter((card) => cardHasRole(playstyle.id, card, activeRole));
-  })();
-
+  const combinedFilters = buildCombinedFilters(filters, inkFilters, typeFilters, costFilters);
+  const sortedCards = applyFilterAndSort(playstyleCards, combinedFilters, sortOrder);
+  const roleChips = getRoleChips(playstyle?.id, sortedCards);
+  const roleFilteredCards = applyRoleFilter(sortedCards, activeRole, playstyle?.id);
   const displayedCards = roleFilteredCards.slice(0, LAYOUT.maxDisplayedCards);
 
   const goHome = () => navigate('/');
   const goPlaystyles = () => navigate('/playstyles');
   const handleCardSelect = (card: {id: string}) => navigate(`/card/${card.id}`);
-  const handleSearchSubmit = () => {
-    const q = headerSearchQuery.trim();
-    navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
-  };
+  const handleSearchSubmit = () => navigate(buildSearchTarget(headerSearchQuery));
 
-  // Invalid playstyle ID. Redirect to gallery
-  if (!isLoading && (!playstyle || !ui)) {
-    return <Navigate to="/playstyles" replace />;
-  }
-
-  if (isLoading || !playstyle || !ui) {
+  // Invalid playstyle ID or still loading — early return narrows
+  // playstyle+ui to defined for the rest of the function.
+  if (!playstyle || !ui) {
+    if (!isLoading) return <Navigate to="/playstyles" replace />;
     return (
-      <main
-        style={{
-          minHeight: '100vh',
-          background: COLORS.background,
-          fontFamily: FONTS.body,
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'relative',
-        }}>
-        <EtherealBackground />
-        <CompactHeader
-          onLogoClick={goHome}
-          searchQuery={headerSearchQuery}
-          onSearchChange={setHeaderSearchQuery}
-          onSearchSubmit={handleSearchSubmit}
-          cards={cards}
-          onCardSelect={handleCardSelect}
-          isMobile={isMobile}
-        />
-        <div style={{flex: 1, position: 'relative', zIndex: 1}}>
-          <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
-            <div
-              style={{
-                padding: isMobile ? SPACING.lg : '20px 32px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: SPACING.md,
-              }}
-              aria-busy="true"
-              aria-label="Loading playstyle detail">
-              <Skeleton width={140} height={14} borderRadius={RADIUS.sm} />
-              <Skeleton width="45%" height={32} borderRadius={RADIUS.sm} />
-              <div style={{display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 640}}>
-                <Skeleton height={12} width="95%" borderRadius={RADIUS.sm} />
-                <Skeleton height={12} width="88%" borderRadius={RADIUS.sm} />
-                <Skeleton height={12} width="60%" borderRadius={RADIUS.sm} />
-              </div>
-            </div>
-          </SkeletonTheme>
-          <CardGridSkeleton
-            rows={3}
-            columns={isMobile ? 3 : undefined}
-            gap={isMobile ? 10 : 12}
-            padding={isMobile ? `${SPACING.lg}px` : '16px 32px 48px'}
-            ariaLabel="Loading playstyle cards"
-          />
-        </div>
-      </main>
+      <PlaystyleDetailLoadingView
+        isMobile={isMobile}
+        cards={cards}
+        goHome={goHome}
+        headerSearchQuery={headerSearchQuery}
+        setHeaderSearchQuery={setHeaderSearchQuery}
+        handleSearchSubmit={handleSearchSubmit}
+        handleCardSelect={handleCardSelect}
+      />
     );
   }
 
-  if (error) {
-    return (
-      <div style={centeredPage}>
-        <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
-          Failed to load card data.
-        </p>
-        <button
-          onClick={retryLoad}
-          style={{
-            padding: '8px 20px',
-            background: COLORS.primary,
-            color: COLORS.background,
-            border: 'none',
-            borderRadius: 6,
-            cursor: 'pointer',
-            fontFamily: FONTS.body,
-            fontWeight: 600,
-          }}>
-          Retry
-        </button>
-      </div>
-    );
-  }
+  if (error) return <PlaystyleDetailError onRetry={retryLoad} />;
 
-  // TypeScript now knows playstyle and ui are defined
-  const heroLayout = isMobile ? HERO_MOBILE : HERO_DESKTOP;
+  const heroLayout = getHeroLayout(isMobile);
 
   const toolbarProps = {
     onFiltersClick: () => setShowFilters(true),
@@ -606,112 +546,376 @@ export function PlaystyleDetailPage() {
     onSortChange: setSortOrder,
   } as const;
 
-  // Role filter chips (desktop only, playstyles with multiple roles)
-  const roleChipsElement =
-    !isMobile && roleChips.length > 1 ? (
-      <>
-        <span
-          style={{
-            width: 1,
-            height: 20,
-            background: COLORS.surfaceBorder,
-            flexShrink: 0,
-          }}
-        />
-        <Chip label="All" active={activeRole === null} onClick={() => setActiveRole(null)}>
-          {countBadge(sortedCards.length)}
-        </Chip>
-        {roleChips.map((chip) => (
-          <Chip
-            key={chip.role}
-            label={chip.label}
-            title={chip.tooltip}
-            active={activeRole === chip.role}
-            onClick={() => setActiveRole(activeRole === chip.role ? null : chip.role)}>
-            {countBadge(chip.count)}
-          </Chip>
-        ))}
-      </>
-    ) : undefined;
+  const filterDialogProps = {
+    isOpen: showFilters,
+    onClose: () => setShowFilters(false),
+    onApply: replaceFilters,
+    inkFilters,
+    typeFilters,
+    costFilters,
+    filters,
+    uniqueKeywords,
+    uniqueClassifications,
+    sets,
+  };
 
-  // Mobile layout
   if (isMobile) {
     return (
-      <main
-        style={{
-          minHeight: '100vh',
-          background: COLORS.background,
-          fontFamily: FONTS.body,
-          position: 'relative',
-        }}>
-        <EtherealBackground />
-        <CompactHeader onLogoClick={goHome} isMobile />
-        <div style={{position: 'relative', zIndex: 1}}>
-          <PlaystyleHero
-            name={playstyle.name}
-            description={playstyle.description}
-            tips={playstyle.strategyTips}
-            accentColor={ui.accentColor}
-            accentRgb={ui.accentRgb}
-            coverArt={ui.coverArt}
-            layout={heroLayout}
-            onPlaystylesBreadcrumb={goPlaystyles}
-          />
-          <BrowseToolbar {...toolbarProps} isMobile />
-          {/* Card grid */}
-          <ErrorBoundary>
-            {roleFilteredCards.length === 0 ? (
-              <div
-                style={{
-                  textAlign: 'center',
-                  padding: 64,
-                  color: COLORS.textMuted,
-                  fontSize: `${FONT_SIZES.xl}px`,
-                }}>
-                No cards match your filters.
-              </div>
-            ) : (
-              <div style={{padding: `${SPACING.md}px ${SPACING.lg}px 48px`}}>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: 10,
-                  }}>
-                  {displayedCards.map((card) => (
-                    <CardTile
-                      key={card.id}
-                      card={card}
-                      isSelected={false}
-                      onSelect={handleCardSelect}
-                      variant="minimal"
-                      borderRadius={10}
-                      useSmallImage
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </ErrorBoundary>
-        </div>
-        <FilterDialog
-          isOpen={showFilters}
-          onClose={() => setShowFilters(false)}
-          onApply={replaceFilters}
-          variant="drawer"
-          inkFilters={inkFilters}
-          typeFilters={typeFilters}
-          costFilters={costFilters}
-          filters={filters}
-          uniqueKeywords={uniqueKeywords}
-          uniqueClassifications={uniqueClassifications}
-          sets={sets}
-        />
-      </main>
+      <PlaystyleDetailMobileView
+        playstyle={playstyle}
+        ui={ui}
+        heroLayout={heroLayout}
+        goHome={goHome}
+        goPlaystyles={goPlaystyles}
+        handleCardSelect={handleCardSelect}
+        roleFilteredCards={roleFilteredCards}
+        displayedCards={displayedCards}
+        toolbarProps={toolbarProps}
+        filterDialogProps={filterDialogProps}
+      />
     );
   }
 
-  // Desktop layout
+  return (
+    <PlaystyleDetailDesktopView
+      playstyle={playstyle}
+      ui={ui}
+      heroLayout={heroLayout}
+      goHome={goHome}
+      goPlaystyles={goPlaystyles}
+      handleCardSelect={handleCardSelect}
+      cards={cards}
+      headerSearchQuery={headerSearchQuery}
+      setHeaderSearchQuery={setHeaderSearchQuery}
+      handleSearchSubmit={handleSearchSubmit}
+      roleChips={roleChips}
+      activeRole={activeRole}
+      setActiveRole={setActiveRole}
+      sortedCardsCount={sortedCards.length}
+      roleFilteredCards={roleFilteredCards}
+      displayedCards={displayedCards}
+      toolbarProps={toolbarProps}
+      filterDialogProps={filterDialogProps}
+    />
+  );
+}
+
+// ── Page sub-views (extracted to keep PlaystyleDetailPage under CC 10) ──
+
+type ResolvedPlaystyle = NonNullable<ReturnType<typeof getPlaystyleById>>;
+type PlaystyleUIValue = (typeof PLAYSTYLE_UI)[PlaystyleId];
+
+interface ToolbarProps {
+  onFiltersClick: () => void;
+  activeFilterCount: number;
+  inkFilters: Parameters<typeof BrowseToolbar>[0]['inkFilters'];
+  typeFilters: Parameters<typeof BrowseToolbar>[0]['typeFilters'];
+  costFilters: Parameters<typeof BrowseToolbar>[0]['costFilters'];
+  filters: Parameters<typeof BrowseToolbar>[0]['filters'];
+  onToggleInk: Parameters<typeof BrowseToolbar>[0]['onToggleInk'];
+  onToggleType: Parameters<typeof BrowseToolbar>[0]['onToggleType'];
+  onToggleCost: Parameters<typeof BrowseToolbar>[0]['onToggleCost'];
+  onFiltersChange: Parameters<typeof BrowseToolbar>[0]['onFiltersChange'];
+  onClearAll: () => void;
+  sortOrder: Parameters<typeof BrowseToolbar>[0]['sortOrder'];
+  onSortChange: Parameters<typeof BrowseToolbar>[0]['onSortChange'];
+}
+
+interface FilterDialogSharedProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onApply: Parameters<typeof FilterDialog>[0]['onApply'];
+  inkFilters: Parameters<typeof FilterDialog>[0]['inkFilters'];
+  typeFilters: Parameters<typeof FilterDialog>[0]['typeFilters'];
+  costFilters: Parameters<typeof FilterDialog>[0]['costFilters'];
+  filters: Parameters<typeof FilterDialog>[0]['filters'];
+  uniqueKeywords: string[];
+  uniqueClassifications: string[];
+  sets: Parameters<typeof FilterDialog>[0]['sets'];
+}
+
+function PlaystyleDetailLoadingView({
+  isMobile,
+  cards,
+  goHome,
+  headerSearchQuery,
+  setHeaderSearchQuery,
+  handleSearchSubmit,
+  handleCardSelect,
+}: {
+  isMobile: boolean;
+  cards: LorcanaCard[];
+  goHome: () => void;
+  headerSearchQuery: string;
+  setHeaderSearchQuery: (q: string) => void;
+  handleSearchSubmit: () => void;
+  handleCardSelect: (card: {id: string}) => void;
+}) {
+  return (
+    <main
+      style={{
+        minHeight: '100vh',
+        background: COLORS.background,
+        fontFamily: FONTS.body,
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+      }}>
+      <EtherealBackground />
+      <CompactHeader
+        onLogoClick={goHome}
+        searchQuery={headerSearchQuery}
+        onSearchChange={setHeaderSearchQuery}
+        onSearchSubmit={handleSearchSubmit}
+        cards={cards}
+        onCardSelect={handleCardSelect}
+        isMobile={isMobile}
+      />
+      <div style={{flex: 1, position: 'relative', zIndex: 1}}>
+        <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+          <div
+            style={{
+              padding: isMobile ? SPACING.lg : '20px 32px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: SPACING.md,
+            }}
+            aria-busy="true"
+            aria-label="Loading playstyle detail">
+            <Skeleton width={140} height={14} borderRadius={RADIUS.sm} />
+            <Skeleton width="45%" height={32} borderRadius={RADIUS.sm} />
+            <div style={{display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 640}}>
+              <Skeleton height={12} width="95%" borderRadius={RADIUS.sm} />
+              <Skeleton height={12} width="88%" borderRadius={RADIUS.sm} />
+              <Skeleton height={12} width="60%" borderRadius={RADIUS.sm} />
+            </div>
+          </div>
+        </SkeletonTheme>
+        <CardGridSkeleton
+          rows={3}
+          columns={isMobile ? 3 : undefined}
+          gap={isMobile ? 10 : 12}
+          padding={isMobile ? `${SPACING.lg}px` : '16px 32px 48px'}
+          ariaLabel="Loading playstyle cards"
+        />
+      </div>
+    </main>
+  );
+}
+
+function PlaystyleDetailError({onRetry}: {onRetry: () => void}) {
+  return (
+    <div style={centeredPage}>
+      <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
+        Failed to load card data.
+      </p>
+      <button
+        onClick={onRetry}
+        style={{
+          padding: '8px 20px',
+          background: COLORS.primary,
+          color: COLORS.background,
+          border: 'none',
+          borderRadius: 6,
+          cursor: 'pointer',
+          fontFamily: FONTS.body,
+          fontWeight: 600,
+        }}>
+        Retry
+      </button>
+    </div>
+  );
+}
+
+function CardGridOrEmpty({
+  cards,
+  displayedCards,
+  handleCardSelect,
+  gridTemplateColumns,
+  gap,
+  padding,
+  useSmallImageBorderRadius,
+}: {
+  cards: LorcanaCard[];
+  displayedCards: LorcanaCard[];
+  handleCardSelect: (card: {id: string}) => void;
+  gridTemplateColumns: string;
+  gap: number;
+  padding: string;
+  useSmallImageBorderRadius?: number;
+}) {
+  if (cards.length === 0) {
+    return (
+      <div
+        style={{
+          textAlign: 'center',
+          padding: 64,
+          color: COLORS.textMuted,
+          fontSize: `${FONT_SIZES.xl}px`,
+        }}>
+        No cards match your filters.
+      </div>
+    );
+  }
+  return (
+    <div style={{padding}}>
+      <div style={{display: 'grid', gridTemplateColumns, gap}}>
+        {displayedCards.map((card) => (
+          <CardTile
+            key={card.id}
+            card={card}
+            isSelected={false}
+            onSelect={handleCardSelect}
+            variant="minimal"
+            borderRadius={useSmallImageBorderRadius}
+            useSmallImage
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PlaystyleDetailMobileView({
+  playstyle,
+  ui,
+  heroLayout,
+  goHome,
+  goPlaystyles,
+  handleCardSelect,
+  roleFilteredCards,
+  displayedCards,
+  toolbarProps,
+  filterDialogProps,
+}: {
+  playstyle: ResolvedPlaystyle;
+  ui: PlaystyleUIValue;
+  heroLayout: HeroLayout;
+  goHome: () => void;
+  goPlaystyles: () => void;
+  handleCardSelect: (card: {id: string}) => void;
+  roleFilteredCards: LorcanaCard[];
+  displayedCards: LorcanaCard[];
+  toolbarProps: ToolbarProps;
+  filterDialogProps: FilterDialogSharedProps;
+}) {
+  return (
+    <main
+      style={{
+        minHeight: '100vh',
+        background: COLORS.background,
+        fontFamily: FONTS.body,
+        position: 'relative',
+      }}>
+      <EtherealBackground />
+      <CompactHeader onLogoClick={goHome} isMobile />
+      <div style={{position: 'relative', zIndex: 1}}>
+        <PlaystyleHero
+          name={playstyle.name}
+          description={playstyle.description}
+          tips={playstyle.strategyTips}
+          accentColor={ui.accentColor}
+          accentRgb={ui.accentRgb}
+          coverArt={ui.coverArt}
+          layout={heroLayout}
+          onPlaystylesBreadcrumb={goPlaystyles}
+        />
+        <BrowseToolbar {...toolbarProps} isMobile />
+        <ErrorBoundary>
+          <CardGridOrEmpty
+            cards={roleFilteredCards}
+            displayedCards={displayedCards}
+            handleCardSelect={handleCardSelect}
+            gridTemplateColumns="repeat(3, 1fr)"
+            gap={10}
+            padding={`${SPACING.md}px ${SPACING.lg}px 48px`}
+            useSmallImageBorderRadius={10}
+          />
+        </ErrorBoundary>
+      </div>
+      <FilterDialog {...filterDialogProps} variant="drawer" />
+    </main>
+  );
+}
+
+function DesktopRoleChips({
+  roleChips,
+  activeRole,
+  setActiveRole,
+  sortedCardsCount,
+}: {
+  roleChips: RoleChip[];
+  activeRole: string | null;
+  setActiveRole: (r: string | null) => void;
+  sortedCardsCount: number;
+}) {
+  if (roleChips.length <= 1) return null;
+  return (
+    <>
+      <span
+        style={{
+          width: 1,
+          height: 20,
+          background: COLORS.surfaceBorder,
+          flexShrink: 0,
+        }}
+      />
+      <Chip label="All" active={activeRole === null} onClick={() => setActiveRole(null)}>
+        {countBadge(sortedCardsCount)}
+      </Chip>
+      {roleChips.map((chip) => (
+        <Chip
+          key={chip.role}
+          label={chip.label}
+          title={chip.tooltip}
+          active={activeRole === chip.role}
+          onClick={() => setActiveRole(activeRole === chip.role ? null : chip.role)}>
+          {countBadge(chip.count)}
+        </Chip>
+      ))}
+    </>
+  );
+}
+
+function PlaystyleDetailDesktopView({
+  playstyle,
+  ui,
+  heroLayout,
+  goHome,
+  goPlaystyles,
+  handleCardSelect,
+  cards,
+  headerSearchQuery,
+  setHeaderSearchQuery,
+  handleSearchSubmit,
+  roleChips,
+  activeRole,
+  setActiveRole,
+  sortedCardsCount,
+  roleFilteredCards,
+  displayedCards,
+  toolbarProps,
+  filterDialogProps,
+}: {
+  playstyle: ResolvedPlaystyle;
+  ui: PlaystyleUIValue;
+  heroLayout: HeroLayout;
+  goHome: () => void;
+  goPlaystyles: () => void;
+  handleCardSelect: (card: {id: string}) => void;
+  cards: LorcanaCard[];
+  headerSearchQuery: string;
+  setHeaderSearchQuery: (q: string) => void;
+  handleSearchSubmit: () => void;
+  roleChips: RoleChip[];
+  activeRole: string | null;
+  setActiveRole: (r: string | null) => void;
+  sortedCardsCount: number;
+  roleFilteredCards: LorcanaCard[];
+  displayedCards: LorcanaCard[];
+  toolbarProps: ToolbarProps;
+  filterDialogProps: FilterDialogSharedProps;
+}) {
   return (
     <main
       style={{
@@ -748,54 +952,30 @@ export function PlaystyleDetailPage() {
           layout={heroLayout}
           onPlaystylesBreadcrumb={goPlaystyles}
         />
-        <BrowseToolbar {...toolbarProps} isMobile={false} extraChips={roleChipsElement} />
+        <BrowseToolbar
+          {...toolbarProps}
+          isMobile={false}
+          extraChips={
+            <DesktopRoleChips
+              roleChips={roleChips}
+              activeRole={activeRole}
+              setActiveRole={setActiveRole}
+              sortedCardsCount={sortedCardsCount}
+            />
+          }
+        />
         <ErrorBoundary>
-          {roleFilteredCards.length === 0 ? (
-            <div
-              style={{
-                textAlign: 'center',
-                padding: 64,
-                color: COLORS.textMuted,
-                fontSize: `${FONT_SIZES.xl}px`,
-              }}>
-              No cards match your filters.
-            </div>
-          ) : (
-            <div style={{padding: '16px 32px 48px'}}>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                  gap: 12,
-                }}>
-                {displayedCards.map((card) => (
-                  <CardTile
-                    key={card.id}
-                    card={card}
-                    isSelected={false}
-                    onSelect={handleCardSelect}
-                    variant="minimal"
-                    useSmallImage
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+          <CardGridOrEmpty
+            cards={roleFilteredCards}
+            displayedCards={displayedCards}
+            handleCardSelect={handleCardSelect}
+            gridTemplateColumns="repeat(auto-fill, minmax(180px, 1fr))"
+            gap={12}
+            padding="16px 32px 48px"
+          />
         </ErrorBoundary>
       </div>
-      <FilterDialog
-        isOpen={showFilters}
-        onClose={() => setShowFilters(false)}
-        onApply={replaceFilters}
-        variant="modal"
-        inkFilters={inkFilters}
-        typeFilters={typeFilters}
-        costFilters={costFilters}
-        filters={filters}
-        uniqueKeywords={uniqueKeywords}
-        uniqueClassifications={uniqueClassifications}
-        sets={sets}
-      />
+      <FilterDialog {...filterDialogProps} variant="modal" />
     </main>
   );
 }
