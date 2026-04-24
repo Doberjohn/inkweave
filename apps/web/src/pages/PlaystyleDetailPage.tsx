@@ -18,7 +18,8 @@ import {
   type RampRole,
 } from 'inkweave-synergy-engine';
 import {usePrecomputedPlaystyleCards} from '../features/synergies/hooks';
-import {BrowseToolbar, CardTile} from '../features/cards';
+import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
+import {BrowseToolbar, CardGridSkeleton, CardTile} from '../features/cards';
 import {filterCards, applySortOrder, type CardFilterOptions} from '../features/cards/loader';
 import {
   Chip,
@@ -26,7 +27,6 @@ import {
   ErrorBoundary,
   EtherealBackground,
   FilterDialog,
-  LoadingSpinner,
 } from '../shared/components';
 import {
   COLORS,
@@ -512,9 +512,54 @@ export function PlaystyleDetailPage() {
 
   if (isLoading || !playstyle || !ui) {
     return (
-      <div style={centeredPage}>
-        <LoadingSpinner />
-      </div>
+      <main
+        style={{
+          minHeight: '100vh',
+          background: COLORS.background,
+          fontFamily: FONTS.body,
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+        }}>
+        <EtherealBackground />
+        <CompactHeader
+          onLogoClick={goHome}
+          searchQuery={headerSearchQuery}
+          onSearchChange={setHeaderSearchQuery}
+          onSearchSubmit={handleSearchSubmit}
+          cards={cards}
+          onCardSelect={handleCardSelect}
+          isMobile={isMobile}
+        />
+        <div style={{flex: 1, position: 'relative', zIndex: 1}}>
+          <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+            <div
+              style={{
+                padding: isMobile ? SPACING.lg : '20px 32px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: SPACING.md,
+              }}
+              aria-busy="true"
+              aria-label="Loading playstyle detail">
+              <Skeleton width={140} height={14} borderRadius={RADIUS.sm} />
+              <Skeleton width="45%" height={32} borderRadius={RADIUS.sm} />
+              <div style={{display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 640}}>
+                <Skeleton height={12} width="95%" borderRadius={RADIUS.sm} />
+                <Skeleton height={12} width="88%" borderRadius={RADIUS.sm} />
+                <Skeleton height={12} width="60%" borderRadius={RADIUS.sm} />
+              </div>
+            </div>
+          </SkeletonTheme>
+          <CardGridSkeleton
+            rows={3}
+            columns={isMobile ? 3 : undefined}
+            gap={isMobile ? 10 : 12}
+            padding={isMobile ? `${SPACING.lg}px` : '16px 32px 48px'}
+            ariaLabel="Loading playstyle cards"
+          />
+        </div>
+      </main>
     );
   }
 
