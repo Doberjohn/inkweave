@@ -33,6 +33,18 @@ git diff --name-only HEAD | grep "supabase/migrations/"
 
 If migration files were changed, launch the `supabase-validator` agent to run the full Supabase pipeline (integration tests → security advisor → type freshness → schema drift). Wait for its report before proceeding.
 
+## Step 0d: Code complexity validation (always)
+
+Launch the `codescene-validator` agent to analyze the current branch's change set against master using CodeScene MCP. Wait for its report before proceeding.
+
+Handling the verdict:
+
+- **PASSED**: continue to Step 1.
+- **NEEDS REVIEW**: inspect the degraded list.
+  - If any finding has `change-type = "introduced"` (a **net-new** complexity violation in this branch), treat as BLOCKING. Surface the table to the user and ask whether to refactor before pushing or accept the regression with explicit approval (`CODESCENE_APPROVED=1` in the user's response).
+  - If all degraded files are pre-existing hotspots that CI's CodeScene gate will flag regardless of this branch, surface the table, note "pre-existing debt — not introduced by this change set", and proceed.
+  - Never silently proceed past a failed gate — the user must see the degraded list before commit.
+
 ## Step 1: Review changes
 
 ```bash
