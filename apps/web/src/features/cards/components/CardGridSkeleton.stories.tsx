@@ -28,3 +28,19 @@ export const ForcedColumns: Story = {
     rows: 2,
   },
 };
+
+export const WideTiles: Story = {
+  args: {
+    columns: 3,
+    rows: 2,
+    aspectRatio: 1.4,
+    ariaLabel: 'Loading playstyles',
+  },
+};
+
+export const SingleColumn: Story = {
+  args: {
+    columns: 1,
+    rows: 4,
+  },
+};
