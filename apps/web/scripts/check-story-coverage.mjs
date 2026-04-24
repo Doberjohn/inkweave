@@ -30,7 +30,6 @@ const EXCLUDED = new Set([
 // Pre-existing components without stories (tracked debt — remove as stories are added)
 const KNOWN_MISSING = new Set([
   '/src/features/cards/components/BrowseCardGrid.tsx',
-  '/src/features/cards/components/CardList.tsx',
   '/src/features/cards/components/FeaturedCards.tsx',
   '/src/features/synergies/components/CardDetailPanel.tsx',
   '/src/features/synergies/components/ExpandedGroupView.tsx',
