@@ -7,12 +7,8 @@ import {
   type Playstyle,
 } from 'inkweave-synergy-engine';
 import {useAllPlaystyleCards} from '../features/synergies/hooks';
-import {
-  CompactHeader,
-  ErrorBoundary,
-  EtherealBackground,
-  LoadingSpinner,
-} from '../shared/components';
+import {CardGridSkeleton} from '../features/cards';
+import {CompactHeader, ErrorBoundary, EtherealBackground} from '../shared/components';
 import {
   COLORS,
   FONTS,
@@ -573,9 +569,14 @@ export function PlaystyleGalleryPage() {
         {/* Grid */}
         <ErrorBoundary>
           {isLoading ? (
-            <div style={{display: 'flex', justifyContent: 'center', padding: 64}}>
-              <LoadingSpinner />
-            </div>
+            <CardGridSkeleton
+              rows={2}
+              columns={isMobile ? 1 : 3}
+              gap={16}
+              padding={isMobile ? MOBILE_LAYOUT.gridPadding : DESKTOP_LAYOUT.gridPadding}
+              aspectRatio={isMobile ? 1.8 : 2.4}
+              ariaLabel="Loading playstyles"
+            />
           ) : (
             <div style={isMobile ? gridStyleMobile : gridStyleDesktop}>
               {/* Active playstyles */}
