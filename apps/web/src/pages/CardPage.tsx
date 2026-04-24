@@ -8,13 +8,9 @@ import {
 } from '../features/synergies';
 import {usePrecomputedSynergies} from '../features/synergies/hooks';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
-import {
-  CompactHeader,
-  ErrorBoundary,
-  EtherealBackground,
-  LoadingSpinner,
-} from '../shared/components';
-import {COLORS, FONTS, LAYOUT} from '../shared/constants';
+import {CardDetailSkeleton, CardGridSkeleton} from '../features/cards';
+import {CompactHeader, ErrorBoundary, EtherealBackground} from '../shared/components';
+import {COLORS, FONTS, LAYOUT, SPACING} from '../shared/constants';
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 
@@ -126,15 +122,8 @@ export function CardPage() {
 
   const handleCloseDetail = () => setDetailPair(null);
 
-  if (isLoading) {
-    return (
-      <div style={centeredPage}>
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (!selectedCard) {
+  // Card-not-found only fires after loading completes
+  if (!isLoading && !selectedCard) {
     return (
       <div style={{...centeredPage, flexDirection: 'column', gap: '16px'}}>
         <h1 style={{color: COLORS.text, margin: 0}}>Card not found</h1>
@@ -162,8 +151,9 @@ export function CardPage() {
   if (isMobile) {
     return (
       <ErrorBoundary>
-        {synergiesError && <SynergyErrorBanner error={synergiesError} />}
+        {synergiesError && !isLoading && <SynergyErrorBanner error={synergiesError} />}
         <MobileCardDetail
+          isLoading={isLoading}
           card={selectedCard}
           synergies={synergies}
           onBack={goHome}
@@ -208,30 +198,56 @@ export function CardPage() {
           position: 'relative',
           zIndex: 1,
         }}>
-        <CardDetailPanel
-          card={selectedCard}
-          synergies={synergies}
-          onGroupClick={handleGroupClick}
-          activeGroupKey={activeGroupFilter}
-        />
-        <ErrorBoundary>
-          {synergiesError ? (
-            <SynergyErrorBanner error={synergiesError} />
-          ) : (
-            <SynergyResults
-              selectedCard={selectedCard}
+        {isLoading || !selectedCard ? (
+          <>
+            <aside
+              style={{
+                width: `${LAYOUT.cardDetailWidth}px`,
+                minWidth: `${LAYOUT.cardDetailWidth}px`,
+                borderRight: `1px solid ${COLORS.surfaceBorder}`,
+                background: COLORS.surface,
+                boxSizing: 'border-box',
+              }}
+              aria-label="Loading card detail panel">
+              <CardDetailSkeleton />
+            </aside>
+            <div style={{flex: 1, padding: `${SPACING.lg}px`}}>
+              <CardGridSkeleton
+                columns={2}
+                rows={3}
+                padding="0"
+                ariaLabel="Loading synergies"
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <CardDetailPanel
+              card={selectedCard}
               synergies={synergies}
-              totalSynergyCount={totalSynergyCount}
-              onClearSelection={goHome}
-              activeGroupFilter={activeGroupFilter}
-              onGroupFilterChange={setActiveGroupFilter}
-              expandedGroup={expandedGroup}
-              onShowAll={handleShowAll}
-              onBackToAll={handleBackToAll}
-              onSynergyCardClick={handleSynergyCardClick}
+              onGroupClick={handleGroupClick}
+              activeGroupKey={activeGroupFilter}
             />
-          )}
-        </ErrorBoundary>
+            <ErrorBoundary>
+              {synergiesError ? (
+                <SynergyErrorBanner error={synergiesError} />
+              ) : (
+                <SynergyResults
+                  selectedCard={selectedCard}
+                  synergies={synergies}
+                  totalSynergyCount={totalSynergyCount}
+                  onClearSelection={goHome}
+                  activeGroupFilter={activeGroupFilter}
+                  onGroupFilterChange={setActiveGroupFilter}
+                  expandedGroup={expandedGroup}
+                  onShowAll={handleShowAll}
+                  onBackToAll={handleBackToAll}
+                  onSynergyCardClick={handleSynergyCardClick}
+                />
+              )}
+            </ErrorBoundary>
+          </>
+        )}
       </div>
       {lastPair && (
         <ErrorBoundary>

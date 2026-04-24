@@ -10,6 +10,8 @@ interface CardDetailSkeletonProps {
   textLines?: number;
   /** Container width (default: '100%' — stretches to parent). Pass a number for a fixed width. */
   width?: number | string;
+  /** Padding on the skeleton's root container. Pass 0 when the caller already provides edge padding. */
+  padding?: number | string;
   /** aria-label for the loading region (default: "Loading card detail") */
   ariaLabel?: string;
 }
@@ -19,6 +21,7 @@ export function CardDetailSkeleton({
   aspectRatio = 0.72,
   textLines = 5,
   width = '100%',
+  padding = SPACING.lg,
   ariaLabel = 'Loading card detail',
 }: CardDetailSkeletonProps) {
   const imageHeight = imageWidth / aspectRatio;
@@ -27,7 +30,7 @@ export function CardDetailSkeleton({
     <div
       style={{
         width,
-        padding: SPACING.lg,
+        padding,
         display: 'flex',
         flexDirection: 'column',
         gap: SPACING.lg,

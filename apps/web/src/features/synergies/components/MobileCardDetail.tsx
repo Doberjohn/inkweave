@@ -1,25 +1,30 @@
 import {useState} from 'react';
 import {Link} from 'react-router-dom';
+import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
 import type {LorcanaCard} from '../../cards';
+import {CardDetailSkeleton, CardGridSkeleton} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
 import {ExpandedGroupView} from './ExpandedGroupView';
 import {CardImage, CardLightbox, Chip} from '../../../shared/components';
-import {COLORS, FONT_SIZES, FONTS, SPACING} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
 
 interface MobileCardDetailProps {
-  card: LorcanaCard;
-  synergies: SynergyGroupData[];
+  card?: LorcanaCard | null;
+  synergies?: SynergyGroupData[];
   onBack: () => void;
   onSynergyCardClick?: (card: LorcanaCard) => void;
+  /** When true, renders the mobile shell with skeleton placeholders instead of real card data. */
+  isLoading?: boolean;
 }
 
 /** Mobile-only card detail view with inline synergy groups. */
 export function MobileCardDetail({
   card,
-  synergies,
+  synergies = [],
   onBack,
   onSynergyCardClick,
+  isLoading = false,
 }: MobileCardDetailProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
@@ -104,155 +109,189 @@ export function MobileCardDetail({
       </div>
 
       <div style={{position: 'relative', zIndex: 1, padding: `${SPACING.lg}px`}}>
-        {/* Card image: centered with gold glow border */}
-        <div style={{display: 'flex', justifyContent: 'center', marginBottom: SPACING.lg}}>
-          <button
-            aria-label="Enlarge card image"
-            onClick={() => card.imageUrl && setLightboxOpen(true)}
-            style={{
-              border: 'none',
-              borderRadius: 12,
-              overflow: 'hidden',
-              cursor: 'pointer',
-              padding: 0,
-              background: 'none',
-            }}>
-            <CardImage
-              src={card.imageUrl}
-              alt={card.fullName}
-              width={220}
-              height={308}
-              inkColor={card.ink}
-              cost={card.cost}
-              lazy={false}
-              borderRadius={10}
-            />
-          </button>
-        </div>
-
-        {/* Card name + version */}
-        <h1
-          style={{
-            textAlign: 'center',
-            fontSize: `${FONT_SIZES.xxl}px`,
-            fontWeight: 700,
-            color: COLORS.text,
-            margin: 0,
-            lineHeight: 1.2,
-          }}>
-          <Link
-            to={`/browse?q=${encodeURIComponent(card.name)}`}
-            style={{color: 'inherit', textDecoration: 'underline', textDecorationColor: COLORS.surfaceBorder, textUnderlineOffset: '3px'}}>
-            {card.name}
-          </Link>
-        </h1>
-        {card.version && (
-          <div
-            style={{
-              textAlign: 'center',
-              fontSize: `${FONT_SIZES.base}px`,
-              color: COLORS.textMuted,
-              marginTop: 3,
-            }}>
-            {card.version}
-          </div>
-        )}
-
-        {/* Synergy breakdown removed on mobile. Cards grid below is sufficient. */}
-
-        {/* Synergy section */}
-        {synergies.length > 0 && expandedGroupData ? (
-          <div style={{marginTop: SPACING.lg}}>
-            <ExpandedGroupView
-              group={expandedGroupData}
-              isMobile
-              onBackToAll={handleBackToAll}
-              onCardClick={onSynergyCardClick}
-            />
-          </div>
-        ) : synergies.length > 0 ? (
+        {isLoading || !card ? (
           <>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: `${SPACING.lg}px 0 ${SPACING.sm}px`,
-              }}>
-              <div style={{flex: 1, height: 1, background: COLORS.surfaceBorder}} />
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: `${FONT_SIZES.xl}px`,
-                  fontWeight: 700,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: COLORS.text,
-                }}>
-                Synergies
-              </h2>
-              <div style={{flex: 1, height: 1, background: COLORS.surfaceBorder}} />
-            </div>
-
-            {/* Group chips: horizontal scroll (hidden when only 1 group) */}
-            {synergies.length > 1 && (
+            <CardDetailSkeleton
+              imageWidth={220}
+              textLines={2}
+              padding={0}
+              ariaLabel="Loading card detail"
+            />
+            <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
               <div
                 style={{
                   display: 'flex',
-                  gap: '8px',
-                  overflowX: 'auto',
-                  paddingBottom: '4px',
-                  marginBottom: SPACING.lg,
-                  WebkitOverflowScrolling: 'touch',
-                  scrollbarWidth: 'none',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: `${SPACING.lg}px 0 ${SPACING.sm}px`,
                 }}>
-                <Chip
-                  label="All"
-                  active={activeGroupFilter === null}
-                  onClick={() => setActiveGroupFilter(null)}
-                  isMobile
+                <div style={{flex: 1, height: 1, background: COLORS.surfaceBorder}} />
+                <Skeleton width={90} height={20} borderRadius={RADIUS.sm} />
+                <div style={{flex: 1, height: 1, background: COLORS.surfaceBorder}} />
+              </div>
+              {[0, 1].map((i) => (
+                <div key={i} style={{marginBottom: SPACING.lg}}>
+                  <Skeleton width="45%" height={16} borderRadius={RADIUS.sm} />
+                  <div style={{marginTop: SPACING.sm}}>
+                    <CardGridSkeleton columns={3} rows={1} padding="0" gap={SPACING.sm} />
+                  </div>
+                </div>
+              ))}
+            </SkeletonTheme>
+          </>
+        ) : (
+          <>
+            {/* Card image: centered with gold glow border */}
+            <div style={{display: 'flex', justifyContent: 'center', marginBottom: SPACING.lg}}>
+              <button
+                aria-label="Enlarge card image"
+                onClick={() => card.imageUrl && setLightboxOpen(true)}
+                style={{
+                  border: 'none',
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  padding: 0,
+                  background: 'none',
+                }}>
+                <CardImage
+                  src={card.imageUrl}
+                  alt={card.fullName}
+                  width={220}
+                  height={308}
+                  inkColor={card.ink}
+                  cost={card.cost}
+                  lazy={false}
+                  borderRadius={10}
                 />
-                {synergies.map((g) => (
-                  <Chip
-                    key={g.groupKey}
-                    label={g.label}
-                    active={activeGroupFilter === g.groupKey}
-                    onClick={() => setActiveGroupFilter(g.groupKey)}
-                    isMobile
-                  />
-                ))}
+              </button>
+            </div>
+
+            {/* Card name + version */}
+            <h1
+              style={{
+                textAlign: 'center',
+                fontSize: `${FONT_SIZES.xxl}px`,
+                fontWeight: 700,
+                color: COLORS.text,
+                margin: 0,
+                lineHeight: 1.2,
+              }}>
+              <Link
+                to={`/browse?q=${encodeURIComponent(card.name)}`}
+                style={{color: 'inherit', textDecoration: 'underline', textDecorationColor: COLORS.surfaceBorder, textUnderlineOffset: '3px'}}>
+                {card.name}
+              </Link>
+            </h1>
+            {card.version && (
+              <div
+                style={{
+                  textAlign: 'center',
+                  fontSize: `${FONT_SIZES.base}px`,
+                  color: COLORS.textMuted,
+                  marginTop: 3,
+                }}>
+                {card.version}
               </div>
             )}
 
-            {/* Synergy groups */}
-            {filteredGroups.map((group) => (
-              <SynergyGroup
-                key={group.groupKey}
-                group={group}
-                isMobile
-                maxVisibleCards={5}
-                onShowAll={handleShowAll}
-                onCardClick={onSynergyCardClick}
-              />
-            ))}
-          </>
-        ) : null}
+            {/* Synergy breakdown removed on mobile. Cards grid below is sufficient. */}
 
-        {/* Empty state */}
-        {synergies.length === 0 && (
-          <p
-            style={{
-              textAlign: 'center',
-              fontSize: FONT_SIZES.base,
-              color: COLORS.textMuted,
-              margin: `${SPACING.xxl}px 0`,
-            }}>
-            No synergies found for this card.
-          </p>
+            {/* Synergy section */}
+            {synergies.length > 0 && expandedGroupData ? (
+              <div style={{marginTop: SPACING.lg}}>
+                <ExpandedGroupView
+                  group={expandedGroupData}
+                  isMobile
+                  onBackToAll={handleBackToAll}
+                  onCardClick={onSynergyCardClick}
+                />
+              </div>
+            ) : synergies.length > 0 ? (
+              <>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: `${SPACING.lg}px 0 ${SPACING.sm}px`,
+                  }}>
+                  <div style={{flex: 1, height: 1, background: COLORS.surfaceBorder}} />
+                  <h2
+                    style={{
+                      margin: 0,
+                      fontSize: `${FONT_SIZES.xl}px`,
+                      fontWeight: 700,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: COLORS.text,
+                    }}>
+                    Synergies
+                  </h2>
+                  <div style={{flex: 1, height: 1, background: COLORS.surfaceBorder}} />
+                </div>
+
+                {/* Group chips: horizontal scroll (hidden when only 1 group) */}
+                {synergies.length > 1 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '8px',
+                      overflowX: 'auto',
+                      paddingBottom: '4px',
+                      marginBottom: SPACING.lg,
+                      WebkitOverflowScrolling: 'touch',
+                      scrollbarWidth: 'none',
+                    }}>
+                    <Chip
+                      label="All"
+                      active={activeGroupFilter === null}
+                      onClick={() => setActiveGroupFilter(null)}
+                      isMobile
+                    />
+                    {synergies.map((g) => (
+                      <Chip
+                        key={g.groupKey}
+                        label={g.label}
+                        active={activeGroupFilter === g.groupKey}
+                        onClick={() => setActiveGroupFilter(g.groupKey)}
+                        isMobile
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Synergy groups */}
+                {filteredGroups.map((group) => (
+                  <SynergyGroup
+                    key={group.groupKey}
+                    group={group}
+                    isMobile
+                    maxVisibleCards={5}
+                    onShowAll={handleShowAll}
+                    onCardClick={onSynergyCardClick}
+                  />
+                ))}
+              </>
+            ) : null}
+
+            {/* Empty state */}
+            {synergies.length === 0 && (
+              <p
+                style={{
+                  textAlign: 'center',
+                  fontSize: FONT_SIZES.base,
+                  color: COLORS.textMuted,
+                  margin: `${SPACING.xxl}px 0`,
+                }}>
+                No synergies found for this card.
+              </p>
+            )}
+          </>
         )}
       </div>
 
-      {lightboxOpen && card.imageUrl && (
+      {!isLoading && card?.imageUrl && lightboxOpen && (
         <CardLightbox
           src={card.imageUrl}
           alt={card.fullName}
