@@ -1,6 +1,5 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
-import {CardPreviewProvider} from '../../features/cards/components/CardPreviewProvider';
 import {HeroSection} from './HeroSection';
 
 const meta: Meta<typeof HeroSection> = {
@@ -8,13 +7,6 @@ const meta: Meta<typeof HeroSection> = {
   component: HeroSection,
   parameters: {layout: 'fullscreen'},
   tags: ['autodocs'],
-  decorators: [
-    (Story) => (
-      <CardPreviewProvider>
-        <Story />
-      </CardPreviewProvider>
-    ),
-  ],
   args: {
     searchQuery: '',
     onSearchChange: fn(),

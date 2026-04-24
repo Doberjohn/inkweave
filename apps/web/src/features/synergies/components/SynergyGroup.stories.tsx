@@ -2,7 +2,6 @@ import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
 import type {SynergyGroup as SynergyGroupData, SynergyMatchDisplay} from '../types';
 import type {LorcanaCard} from '../../cards';
-import {CardPreviewProvider} from '../../cards/components/CardPreviewProvider';
 import {SynergyGroup} from './SynergyGroup';
 
 const inks = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
@@ -48,11 +47,9 @@ const meta: Meta<typeof SynergyGroup> = {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <CardPreviewProvider>
-        <div style={{padding: 24, maxWidth: 800}}>
-          <Story />
-        </div>
-      </CardPreviewProvider>
+      <div style={{padding: 24, maxWidth: 800}}>
+        <Story />
+      </div>
     ),
   ],
 };
@@ -85,11 +82,9 @@ export const Mobile: Story = {
   },
   decorators: [
     (Story) => (
-      <CardPreviewProvider>
-        <div style={{padding: 16, maxWidth: 390}}>
-          <Story />
-        </div>
-      </CardPreviewProvider>
+      <div style={{padding: 16, maxWidth: 390}}>
+        <Story />
+      </div>
     ),
   ],
 };

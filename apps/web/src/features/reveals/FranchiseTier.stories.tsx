@@ -1,7 +1,6 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {MemoryRouter} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {CardPreviewProvider} from '../cards';
 import {FranchiseTier} from './FranchiseTier';
 import type {RevealTier} from './useRevealCards';
 
@@ -55,9 +54,7 @@ const meta: Meta<typeof FranchiseTier> = {
   decorators: [
     (Story) => (
       <MemoryRouter>
-        <CardPreviewProvider>
-          <Story />
-        </CardPreviewProvider>
+        <Story />
       </MemoryRouter>
     ),
   ],

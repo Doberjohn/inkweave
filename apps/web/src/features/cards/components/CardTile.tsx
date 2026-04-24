@@ -2,7 +2,6 @@ import {useState} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from '../types';
 import {INK_COLORS, COLORS, EASING, FONT_SIZES, RADIUS} from '../../../shared/constants';
-import {useCardPreviewHandlers} from './useCardPreviewHandlers';
 import {isSyntheticMouseEvent} from '../../../shared/utils/touchGuard';
 import {smallImageUrl} from '../loader';
 
@@ -15,7 +14,6 @@ interface CardTileProps {
   isSelected: boolean;
   variant?: 'full' | 'minimal';
   borderRadius?: number;
-  disablePreview?: boolean;
   /** Set to true for above-fold LCP-candidate images to disable lazy loading and boost priority. */
   priority?: boolean;
   /** Use the smaller grid-optimized image (191×266) instead of full-size (337×470). */
@@ -31,7 +29,6 @@ export function CardTile({
   isSelected,
   variant = 'full',
   borderRadius,
-  disablePreview,
   priority,
   useSmallImage: useSmall,
   tabIndex,
@@ -41,7 +38,6 @@ export function CardTile({
     onSelect?.(card);
   };
   const colors = INK_COLORS[card.ink];
-  const {previewHandlers, hidePreview} = useCardPreviewHandlers({card, onTap: handleClick});
   const [imgError, setImgError] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
   const imgSrc = useSmall ? smallImageUrl(card.imageUrl) : card.imageUrl;
@@ -53,13 +49,10 @@ export function CardTile({
       data-roving-item
       tabIndex={tabIndex}
       onClick={() => {
-        // Only guard synthetic mouse events when touch preview is active.
-        // When disabled, touch handlers aren't attached so onClick is the only path.
-        if (!disablePreview && isSyntheticMouseEvent()) return;
-        hidePreview();
+        // Guard against iOS synthetic mouse events that fire after SPA navigation.
+        if (isSyntheticMouseEvent()) return;
         handleClick();
       }}
-      {...(disablePreview ? {} : previewHandlers)}
       aria-pressed={isSelected}
       aria-label={card.fullName || card.name || 'View card details'}
       style={{

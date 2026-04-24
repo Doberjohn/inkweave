@@ -1,7 +1,6 @@
-import {useRef, useState, useEffect} from 'react';
+import {useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from '../../cards';
-import {useCardPreviewHandlers, useCardPreview} from '../../cards';
 import type {DetailedPairSynergy} from 'inkweave-synergy-engine';
 import {getStrengthTier} from '../utils';
 import {QuickVoteControl} from '../../voting/components';
@@ -35,12 +34,6 @@ export function SynergyDetailModal({
     initialFocusRef,
     onClose,
   });
-
-  // Hide any card popover immediately when modal starts closing (before exit animation)
-  const {hidePreview} = useCardPreview();
-  useEffect(() => {
-    if (!isOpen) hidePreview();
-  }, [isOpen, hidePreview]);
 
   const navigate = useNavigate();
   const {cardA, cardB, connections, aggregateScore} = pair;
@@ -171,9 +164,9 @@ export function SynergyDetailModal({
 
 // ── Subcomponents ──
 
-function PairCardImage({card, isMobile, dimmed, highlighted}: {card: LorcanaCard; isMobile?: boolean; dimmed?: boolean; highlighted?: boolean}) {
-  const {previewHandlers} = useCardPreviewHandlers({card});
+function PairCardImage({card, dimmed, highlighted}: {card: LorcanaCard; isMobile?: boolean; dimmed?: boolean; highlighted?: boolean}) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const canEnlarge = !!card.imageUrl;
 
   return (
     <div
@@ -188,11 +181,18 @@ function PairCardImage({card, isMobile, dimmed, highlighted}: {card: LorcanaCard
         filter: highlighted ? 'drop-shadow(0 0 8px rgba(212, 175, 55, 0.6))' : undefined,
         transform: highlighted ? 'scale(1.03)' : undefined,
       }}>
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- mobile-only tap-to-enlarge; lightbox is supplementary, not a primary action */}
-      <div
-        {...(isMobile ? {} : previewHandlers)}
-        onClick={isMobile && card.imageUrl ? () => setLightboxOpen(true) : undefined}
-        style={{cursor: isMobile ? 'pointer' : undefined, width: '100%'}}>
+      <button
+        type="button"
+        aria-label={canEnlarge ? 'Enlarge card image' : undefined}
+        disabled={!canEnlarge}
+        onClick={canEnlarge ? () => setLightboxOpen(true) : undefined}
+        style={{
+          border: 'none',
+          background: 'none',
+          padding: 0,
+          width: '100%',
+          cursor: canEnlarge ? 'pointer' : 'default',
+        }}>
         <CardImage
           src={card.imageUrl}
           alt={card.fullName}
@@ -203,7 +203,7 @@ function PairCardImage({card, isMobile, dimmed, highlighted}: {card: LorcanaCard
           borderRadius={10}
           style={{width: '100%', height: 'auto', maxWidth: 160}}
         />
-      </div>
+      </button>
       {lightboxOpen && card.imageUrl && (
         <CardLightbox
           src={card.imageUrl}

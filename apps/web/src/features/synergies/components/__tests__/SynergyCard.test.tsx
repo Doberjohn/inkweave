@@ -8,12 +8,6 @@ vi.mock('../../../shared/components', () => ({
 }));
 
 vi.mock('../../../cards', () => ({
-  useCardPreviewHandlers: () => ({
-    handleMouseEnter: vi.fn(),
-    handleMouseMove: vi.fn(),
-    handleMouseLeave: vi.fn(),
-    previewHandlers: {},
-  }),
   smallImageUrl: (url: string | undefined) =>
     url?.endsWith('.avif') ? `${url.slice(0, -5)}-sm.avif` : url,
 }));

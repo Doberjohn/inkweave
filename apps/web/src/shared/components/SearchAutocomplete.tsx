@@ -1,5 +1,4 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {useCardPreview} from '../../features/cards/components/useCardPreview';
 import {useTransitionPresence} from '../hooks';
 import type {UseAutocompleteReturn} from '../hooks';
 import {
@@ -51,17 +50,6 @@ function HighlightedName({fullName, query}: {fullName: string; query: string}) {
   );
 }
 
-/** Photo icon SVG for card preview trigger. */
-function PhotoIcon() {
-  return (
-    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <rect x="2" y="6" width="20" height="15" rx="3" stroke={COLORS.text} strokeWidth="1.5" />
-      <circle cx="12" cy="14" r="4" stroke={COLORS.text} strokeWidth="1.5" />
-      <path d="M8.5 6V5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1" stroke={COLORS.text} strokeWidth="1.5" />
-    </svg>
-  );
-}
-
 export function SearchAutocomplete({
   suggestions,
   isOpen,
@@ -70,7 +58,6 @@ export function SearchAutocomplete({
   listboxProps,
   getOptionProps,
 }: SearchAutocompleteProps) {
-  const {showPreview, updatePosition, hidePreview} = useCardPreview();
   const {mounted, visible, onTransitionEnd} = useTransitionPresence(isOpen);
 
   if (!mounted) return null;
@@ -119,21 +106,6 @@ export function SearchAutocomplete({
               gap: SPACING.lg,
               transition: `background 0.1s ${EASING.snappy}`,
             }}>
-            {/* Photo icon: hover to preview card */}
-            <span
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                flexShrink: 0,
-                cursor: 'pointer',
-                padding: 2,
-              }}
-              onMouseEnter={(e) => showPreview(card, e.clientX, e.clientY)}
-              onMouseMove={(e) => updatePosition(e.clientX, e.clientY)}
-              onMouseLeave={() => hidePreview()}>
-              <PhotoIcon />
-            </span>
-
             {/* Set abbreviation with tooltip */}
             <span
               title={setName}

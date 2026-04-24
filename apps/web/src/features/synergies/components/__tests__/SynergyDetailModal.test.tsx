@@ -41,11 +41,6 @@ vi.mock('../../../../shared/hooks', () => ({
   useResponsive: () => ({isMobile: false}),
 }));
 
-vi.mock('../../../cards', () => ({
-  useCardPreviewHandlers: () => ({previewHandlers: {}}),
-  useCardPreview: () => ({hidePreview: vi.fn()}),
-}));
-
 const cardA = createCard({
   id: 'elsa-shift',
   fullName: 'Elsa - Ice Artisan',

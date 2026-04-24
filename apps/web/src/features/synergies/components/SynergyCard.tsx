@@ -4,7 +4,6 @@ import type {LorcanaCard} from '../../cards';
 import {smallImageUrl} from '../../cards';
 import {INK_COLORS, COLORS, EASING, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {CardLightbox, StrengthBadge} from '../../../shared/components';
-import {useCardPreviewHandlers} from '../../cards';
 import {isSyntheticMouseEvent} from '../../../shared/utils/touchGuard';
 import {getStrengthTier} from '../utils';
 
@@ -28,7 +27,6 @@ export function SynergyCard({
 }: SynergyCardProps) {
   const tier = getStrengthTier(score);
   const colors = INK_COLORS[card.ink];
-  const {previewHandlers} = useCardPreviewHandlers({card});
   const [imgError, setImgError] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -50,24 +48,8 @@ export function SynergyCard({
             setLightboxOpen(true);
           }
         }}
-        {...(isMobile
-          ? {
-              onMouseEnter: () => setHovered(true),
-              onMouseLeave: () => setHovered(false),
-            }
-          : {
-              onMouseEnter: (e: React.MouseEvent) => {
-                setHovered(true);
-                previewHandlers.onMouseEnter?.(e);
-              },
-              onMouseLeave: (e: React.MouseEvent) => {
-                setHovered(false);
-                previewHandlers.onMouseLeave?.(e);
-              },
-              onMouseMove: previewHandlers.onMouseMove,
-              onFocus: previewHandlers.onFocus,
-              onBlur: previewHandlers.onBlur,
-            })}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         aria-label={card.fullName || ''}
         style={{
           position: 'relative',
