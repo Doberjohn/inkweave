@@ -2,7 +2,6 @@ import {useEffect, useRef, useState} from 'react';
 import {Outlet, useLocation} from 'react-router-dom';
 import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
-import {CardPreviewProvider, CardPreviewPopover} from './features/cards';
 import {RevealsPromoCard, useRevealPhase, type RevealPhase} from './features/reveals';
 import {
   BetaNotice,
@@ -115,12 +114,9 @@ function AppContent() {
 export function AppLayout() {
   return (
     <ErrorBoundary>
-      <CardPreviewProvider>
-        <CardDataProvider>
-          <AppContent />
-          <CardPreviewPopover />
-        </CardDataProvider>
-      </CardPreviewProvider>
+      <CardDataProvider>
+        <AppContent />
+      </CardDataProvider>
       <Analytics />
       <SpeedInsights />
     </ErrorBoundary>
