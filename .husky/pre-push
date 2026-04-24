@@ -1,5 +1,9 @@
 #!/bin/sh
-# Run chromium + webkit pre-push. Chromium alone misses WebKit-specific
-# stacking-context bugs, timing sensitivities, and Safari focus quirks.
-# Mobile variants + firefox still run in CI only (pre-push time budget).
-pnpm --filter inkweave-web test:e2e --project chromium --project webkit
+# Run chromium + webkit + mobile-chrome pre-push.
+# - Chromium alone misses WebKit-specific stacking-context bugs and Safari
+#   focus quirks.
+# - Mobile-chrome catches touch-event regressions that desktop browsers don't
+#   see: Playwright's .click() on mobile projects fires touchstart → synthetic
+#   click (the real iOS/Android tap sequence). Desktop .click() is mouse-only.
+# Firefox + mobile-safari still run in CI only (pre-push time budget).
+pnpm --filter inkweave-web test:e2e --project chromium --project webkit --project mobile-chrome
