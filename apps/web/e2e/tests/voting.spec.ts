@@ -14,13 +14,12 @@ test.describe('Voting Page — Desktop', () => {
     await votePage.goto();
     await expect(page).toHaveURL('/vote');
 
-    // Two card images visible — wait for the SECOND image to mount before counting.
-    // `count()` is a snapshot without auto-wait, so on slower browsers (webkit)
-    // the first image can render before the second and the count races to 1.
-    const images = votePage.getCardImages();
-    await expect(images.nth(1)).toBeVisible();
-    const count = await images.count();
-    expect(count).toBeGreaterThanOrEqual(2);
+    // Two card images (with alt) must be visible. toHaveCount auto-waits and
+    // retries until the locator matches the expected count — robust on slower
+    // browsers (webkit) where the second image mounts a tick after the first.
+    // Plain count() is a snapshot and races; explicit timeout gives the slow
+    // browser room to finish mounting.
+    await expect(votePage.getCardImages()).toHaveCount(2, {timeout: 10000});
   });
 
   test('should display score picker with 10 buttons', async ({votePage}) => {
