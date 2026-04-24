@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-101 active tests across 17 spec files. Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+106 active tests across 18 spec files. Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
 
@@ -180,6 +180,18 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should advance to next pair on score click (mobile) | Mobile score click → pair changes |
 | should advance on skip (mobile) | Mobile skip → pair changes |
 | should show mobile bottom navigation | Mobile nav with Browse/Playstyles visible |
+
+## `page-shell-loading.spec.ts` — 5 tests (desktop only)
+
+Regression guard for issue #268 (skeleton-loading UI). Each test intercepts `/data/allCards.json` and `/data/synergies/**` with a 1500 ms delay, navigates to the page, and asserts the chrome landmark + skeleton are both visible during the loading window.
+
+| Test | What it verifies |
+|---|---|
+| CardPage renders skeleton + CompactHeader while card data loads | `[data-testid="compact-header"]` visible within 3s; `[aria-busy="true"]` skeleton visible while loading; `[data-testid="card-detail-panel"]` visible after load |
+| PlaystyleDetailPage renders skeleton + CompactHeader while card data loads | CompactHeader visible; aria-busy skeleton visible; `<h1>` with playstyle display name visible after load |
+| PlaystyleGalleryPage renders skeleton inside preserved shell | `<h1>` "playstyles" title visible (shell was already preserved before #268); `[aria-label="Loading playstyles"]` visible, then hidden after load |
+| VotePage renders pair + score picker skeleton while queue loads | CompactHeader visible; `[aria-label="Loading vote pair"]` visible |
+| InDepthVotePage renders pair + form skeleton while pair data loads | CompactHeader visible; `[aria-label="Loading vote pair and form"]` visible |
 
 ## `reveals-page.spec.ts` — 5 tests (4 desktop, 1 mobile)
 
