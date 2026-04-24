@@ -2,18 +2,17 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-106 active tests across 18 spec files. Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+105 active tests across 18 spec files. Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
 
-## `accessibility.spec.ts` — 6 tests (desktop only)
+## `accessibility.spec.ts` — 5 tests (desktop only)
 
 | Test | What it verifies |
 |---|---|
 | home page should have no axe violations | `/` passes axe-core audit with zero violations |
 | browse page should have no axe violations | `/browse` passes axe-core audit |
 | card detail page should have no axe violations | `/card/1041` passes axe-core audit |
-| card synergies page should have no axe violations | `/card/1041/synergies` passes axe-core audit |
 | playstyle gallery should have no axe violations | `/playstyles` passes axe-core audit |
 | playstyle detail should have no axe violations | `/playstyles/discard` passes axe-core audit |
 

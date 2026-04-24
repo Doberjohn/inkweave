@@ -35,10 +35,6 @@ function lazyWithRetry(
 const HomePage = lazyWithRetry(() => import('./pages/HomePage'), 'HomePage');
 const BrowsePage = lazyWithRetry(() => import('./pages/BrowsePage'), 'BrowsePage');
 const CardPage = lazyWithRetry(() => import('./pages/CardPage'), 'CardPage');
-const CardSynergiesPage = lazyWithRetry(
-  () => import('./pages/CardSynergiesPage'),
-  'CardSynergiesPage',
-);
 const PlaystyleGalleryPage = lazyWithRetry(
   () => import('./pages/PlaystyleGalleryPage'),
   'PlaystyleGalleryPage',
@@ -118,14 +114,6 @@ export const router = createBrowserRouter([
         element: (
           <SuspenseWrapper>
             <CardPage />
-          </SuspenseWrapper>
-        ),
-      },
-      {
-        path: 'card/:cardId/synergies',
-        element: (
-          <SuspenseWrapper>
-            <CardSynergiesPage />
           </SuspenseWrapper>
         ),
       },

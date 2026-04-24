@@ -34,14 +34,6 @@ test.describe('Accessibility — axe audits', () => {
     expect(results.violations).toEqual([]);
   });
 
-  test('card synergies page should have no axe violations', async ({page}) => {
-    await page.goto('/card/1041/synergies');
-    await page.waitForSelector('h1');
-
-    const results = await new AxeBuilder({page}).exclude('[data-react-grab]').analyze();
-    expect(results.violations).toEqual([]);
-  });
-
   test('playstyle gallery should have no axe violations', async ({page}) => {
     await page.goto('/playstyles');
     await page.waitForSelector('h1');
