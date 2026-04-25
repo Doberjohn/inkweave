@@ -1,4 +1,4 @@
-import {useState, type ReactNode} from 'react';
+import {useState, type CSSProperties, type KeyboardEvent, type ReactNode} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {
   getAllPlaystyles,
@@ -62,7 +62,7 @@ const MOBILE_LAYOUT: LayoutConfig = {
   maxSubtitleWidth: undefined,
 };
 
-// ── Scrim constants ──
+// ── Scrim / hover constants ──
 
 const SCRIM_GRADIENT =
   'linear-gradient(180deg, rgba(26,26,46,0.75) 0%, rgba(26,26,46,0.55) 40%, rgba(26,26,46,0.8) 100%)';
@@ -73,78 +73,67 @@ const ART_HOVER = {
   transform: 'scale(1.1)',
 };
 
+// ── Module helpers ──
+
+function activateOnEnterOrSpace(handler: () => void) {
+  return (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    handler();
+  };
+}
+
+type ClickableProps = {
+  role: 'button' | 'article';
+  tabIndex: 0 | undefined;
+  ariaLabel: string | undefined;
+  onKeyDown: ((e: KeyboardEvent<HTMLDivElement>) => void) | undefined;
+};
+
+function buildClickableProps(name: string, onClick: (() => void) | undefined): ClickableProps {
+  if (!onClick) {
+    return {role: 'article', tabIndex: undefined, ariaLabel: undefined, onKeyDown: undefined};
+  }
+  return {
+    role: 'button',
+    tabIndex: 0,
+    ariaLabel: `View ${name} playstyle`,
+    onKeyDown: activateOnEnterOrSpace(onClick),
+  };
+}
+
+type HoverStyles = {
+  borderColor: string;
+  transform: string | undefined;
+  boxShadow: string | undefined;
+};
+
+function buildShellHoverStyles(isHovered: boolean, accentRgb: string): HoverStyles {
+  if (!isHovered) {
+    return {borderColor: COLORS.surfaceBorder, transform: undefined, boxShadow: undefined};
+  }
+  return {
+    borderColor: `rgba(${accentRgb}, 0.4)`,
+    transform: 'translateY(-4px)',
+    boxShadow: `0 12px 32px rgba(0,0,0,0.4), 0 0 24px rgba(${accentRgb}, 0.08)`,
+  };
+}
+
 // ── Shared Card Shell ──
 
-function PlaystyleCardShell({
+type ArtStyle = typeof ART_IDLE;
+
+function ShellOverlays({
   accentColor,
-  accentRgb,
   coverArt,
-  name,
-  description,
-  isHovered,
-  onMouseEnter,
-  onMouseLeave,
-  onClick,
-  layout,
-  opacity,
-  cursor,
-  descriptionFlex,
-  children,
+  art,
 }: {
   accentColor: string;
-  accentRgb: string;
   coverArt: string;
-  name: string;
-  description: string;
-  isHovered: boolean;
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
-  onClick?: () => void;
-  layout: LayoutConfig;
-  opacity?: number;
-  cursor: string;
-  descriptionFlex?: number;
-  children?: ReactNode;
+  art: ArtStyle;
 }) {
-  const art = isHovered ? ART_HOVER : ART_IDLE;
-  const isClickable = !!onClick;
-
   return (
-    <div
-      role={isClickable ? 'button' : 'article'}
-      tabIndex={isClickable ? 0 : undefined}
-      aria-label={isClickable ? `View ${name} playstyle` : undefined}
-      onClick={() => onClick?.()}
-      onKeyDown={
-        isClickable
-          ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onClick?.();
-              }
-            }
-          : undefined
-      }
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      style={{
-        background: COLORS.surface,
-        border: `1px solid ${isHovered ? `rgba(${accentRgb}, 0.4)` : COLORS.surfaceBorder}`,
-        borderRadius: `${RADIUS.card}px`,
-        padding: layout.cardPadding,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: layout.cardGap,
-        cursor,
-        position: 'relative',
-        overflow: 'hidden',
-        opacity,
-        transform: isHovered ? 'translateY(-4px)' : undefined,
-        boxShadow: isHovered
-          ? `0 12px 32px rgba(0,0,0,0.4), 0 0 24px rgba(${accentRgb}, 0.08)`
-          : undefined,
-        transition: 'transform 0.2s, box-shadow 0.2s, border-color 0.2s, opacity 0.3s',
-      }}>
+    <>
       {/* Accent bar */}
       <div
         style={{
@@ -186,49 +175,120 @@ function PlaystyleCardShell({
           pointerEvents: 'none',
         }}
       />
+    </>
+  );
+}
 
-      {/* Header */}
-      <div
-        style={{display: 'flex', alignItems: 'center', gap: 10, position: 'relative', zIndex: 2}}>
-        <span
-          style={{
-            width: 10,
-            height: 10,
-            borderRadius: '50%',
-            background: accentColor,
-            flexShrink: 0,
-          }}
-        />
-        <h2
-          style={{
-            fontSize: `${FONT_SIZES.xl}px`,
-            fontWeight: 700,
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
-            margin: 0,
-          }}>
-          {name}
-        </h2>
-      </div>
-
-      {/* Description */}
-      <p
+function ShellHeader({accentColor, name}: {accentColor: string; name: string}) {
+  return (
+    <div style={{display: 'flex', alignItems: 'center', gap: 10, position: 'relative', zIndex: 2}}>
+      <span
         style={{
-          fontSize: `${FONT_SIZES.base}px`,
-          lineHeight: 1.6,
-          color: COLORS.descriptionText,
-          display: '-webkit-box',
-          WebkitLineClamp: 3,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-          flex: descriptionFlex,
-          position: 'relative',
-          zIndex: 2,
+          width: 10,
+          height: 10,
+          borderRadius: '50%',
+          background: accentColor,
+          flexShrink: 0,
+        }}
+      />
+      <h2
+        style={{
+          fontSize: `${FONT_SIZES.xl}px`,
+          fontWeight: 700,
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
           margin: 0,
         }}>
-        {description}
-      </p>
+        {name}
+      </h2>
+    </div>
+  );
+}
 
+function ShellDescription({text, flex}: {text: string; flex?: number}) {
+  return (
+    <p
+      style={{
+        fontSize: `${FONT_SIZES.base}px`,
+        lineHeight: 1.6,
+        color: COLORS.descriptionText,
+        display: '-webkit-box',
+        WebkitLineClamp: 3,
+        WebkitBoxOrient: 'vertical',
+        overflow: 'hidden',
+        flex,
+        position: 'relative',
+        zIndex: 2,
+        margin: 0,
+      }}>
+      {text}
+    </p>
+  );
+}
+
+function PlaystyleCardShell({
+  accentColor,
+  accentRgb,
+  coverArt,
+  name,
+  description,
+  isHovered,
+  onMouseEnter,
+  onMouseLeave,
+  onClick,
+  layout,
+  opacity,
+  cursor,
+  descriptionFlex,
+  children,
+}: {
+  accentColor: string;
+  accentRgb: string;
+  coverArt: string;
+  name: string;
+  description: string;
+  isHovered: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+  onClick?: () => void;
+  layout: LayoutConfig;
+  opacity?: number;
+  cursor: string;
+  descriptionFlex?: number;
+  children?: ReactNode;
+}) {
+  const art = isHovered ? ART_HOVER : ART_IDLE;
+  const hover = buildShellHoverStyles(isHovered, accentRgb);
+  const clickable = buildClickableProps(name, onClick);
+
+  return (
+    <div
+      role={clickable.role}
+      tabIndex={clickable.tabIndex}
+      aria-label={clickable.ariaLabel}
+      onClick={onClick}
+      onKeyDown={clickable.onKeyDown}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      style={{
+        background: COLORS.surface,
+        border: `1px solid ${hover.borderColor}`,
+        borderRadius: `${RADIUS.card}px`,
+        padding: layout.cardPadding,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: layout.cardGap,
+        cursor,
+        position: 'relative',
+        overflow: 'hidden',
+        opacity,
+        transform: hover.transform,
+        boxShadow: hover.boxShadow,
+        transition: 'transform 0.2s, box-shadow 0.2s, border-color 0.2s, opacity 0.3s',
+      }}>
+      <ShellOverlays accentColor={accentColor} coverArt={coverArt} art={art} />
+      <ShellHeader accentColor={accentColor} name={name} />
+      <ShellDescription text={description} flex={descriptionFlex} />
       {children}
     </div>
   );
@@ -388,7 +448,7 @@ function ComingSoonCard({
 
 // ── Section Divider ──
 
-const dividerLineStyle: React.CSSProperties = {
+const dividerLineStyle: CSSProperties = {
   flex: 1,
   height: 1,
   background: COLORS.surfaceBorder,
@@ -421,56 +481,38 @@ function SectionDivider({label, layout}: {label: string; layout: LayoutConfig}) 
   );
 }
 
-// ── Page ──
+// ── Page sub-components ──
 
-const gridStyleDesktop: React.CSSProperties = {
+const gridStyleDesktop: CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fill, minmax(440px, 1fr))',
   gap: 16,
   padding: DESKTOP_LAYOUT.gridPadding,
 };
 
-const gridStyleMobile: React.CSSProperties = {
+const gridStyleMobile: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 16,
   padding: MOBILE_LAYOUT.gridPadding,
 };
 
-export function PlaystyleGalleryPage() {
-  const navigate = useNavigate();
-  const {cards, isLoading, error, retryLoad} = useCardDataContext();
-  const [searchQuery, setSearchQuery] = useState('');
-  const {isMobile} = useResponsive();
+type ActivePlaystyleEntry = {
+  playstyle: Playstyle;
+  ui: PlaystyleUiMeta;
+  ruleCount: number;
+  cardCount: number;
+  previewCards: Pick<LorcanaCard, 'imageUrl' | 'fullName'>[];
+};
 
-  const layout = isMobile ? MOBILE_LAYOUT : DESKTOP_LAYOUT;
-  const enableHover = !isMobile;
+type PlaystyleCardData = ReturnType<typeof useAllPlaystyleCards>['data'];
 
-  // Preload cover art images so CSS backgroundImage doesn't wait for render
-  const coverArtUrls = [
-    ...Object.values(PLAYSTYLE_UI).map((ui) => ui.coverArt),
-    ...COMING_SOON_PLAYSTYLES.map((ps) => ps.coverArt),
-  ];
-  usePreloadImages(coverArtUrls);
-
-  const goHome = () => navigate('/');
-
-  const handleSearchSubmit = () => {
-    const q = searchQuery.trim();
-    navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
-  };
-
-  const handleCardSelect = (card: {id: string}) => navigate(`/card/${card.id}`);
-
-  const {data: playstyleCardData} = useAllPlaystyleCards();
-
-  const activePlaystyles = getAllPlaystyles()
+function buildActivePlaystyles(playstyleCardData: PlaystyleCardData): ActivePlaystyleEntry[] {
+  return getAllPlaystyles()
     .filter((ps) => {
-      if (!PLAYSTYLE_UI[ps.id]) {
-        console.error(`Missing PLAYSTYLE_UI entry for playstyle "${ps.id}"`);
-        return false;
-      }
-      return true;
+      if (PLAYSTYLE_UI[ps.id]) return true;
+      console.error(`Missing PLAYSTYLE_UI entry for playstyle "${ps.id}"`);
+      return false;
     })
     .map((ps) => {
       const ui = PLAYSTYLE_UI[ps.id];
@@ -484,40 +526,162 @@ export function PlaystyleGalleryPage() {
         previewCards: psData?.previewCards ?? [],
       };
     });
+}
 
-  if (error) {
-    return (
-      <main
+function PageErrorView({onRetry}: {onRetry: () => void}) {
+  return (
+    <main
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        gap: 16,
+        fontFamily: FONTS.body,
+        background: COLORS.background,
+      }}>
+      <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
+        Failed to load card data.
+      </p>
+      <button
+        onClick={onRetry}
         style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          gap: 16,
+          padding: '8px 20px',
+          background: COLORS.primary,
+          color: COLORS.background,
+          border: 'none',
+          borderRadius: 6,
+          cursor: 'pointer',
           fontFamily: FONTS.body,
-          background: COLORS.background,
+          fontWeight: 600,
         }}>
-        <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
-          Failed to load card data.
-        </p>
-        <button
-          onClick={retryLoad}
-          style={{
-            padding: '8px 20px',
-            background: COLORS.primary,
-            color: COLORS.background,
-            border: 'none',
-            borderRadius: 6,
-            cursor: 'pointer',
-            fontFamily: FONTS.body,
-            fontWeight: 600,
-          }}>
-          Retry
-        </button>
-      </main>
-    );
-  }
+        Retry
+      </button>
+    </main>
+  );
+}
+
+function PageIntro({layout}: {layout: LayoutConfig}) {
+  return (
+    <div style={{padding: layout.pagePadding}}>
+      <h1
+        style={{
+          fontSize: `${FONT_SIZES.xxl}px`,
+          fontWeight: 700,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          marginBottom: SPACING.sm,
+        }}>
+        Lorcana Playstyles
+      </h1>
+      <p
+        style={{
+          fontSize: `${FONT_SIZES.base}px`,
+          color: COLORS.descriptionText,
+          lineHeight: 1.5,
+          maxWidth: layout.maxSubtitleWidth,
+          margin: 0,
+        }}>
+        Strategic archetypes that emerge when cards share a common gameplay pattern. Explore each
+        playstyle to find cards that reinforce your strategy.
+      </p>
+    </div>
+  );
+}
+
+function PlaystyleGalleryLoadingGrid({isMobile}: {isMobile: boolean}) {
+  return (
+    <CardGridSkeleton
+      rows={2}
+      columns={isMobile ? 1 : 3}
+      gap={16}
+      padding={isMobile ? MOBILE_LAYOUT.gridPadding : DESKTOP_LAYOUT.gridPadding}
+      aspectRatio={isMobile ? 1.8 : 2.4}
+      ariaLabel="Loading playstyles"
+    />
+  );
+}
+
+function PlaystyleGalleryGrid({
+  isLoading,
+  isMobile,
+  layout,
+  enableHover,
+  activePlaystyles,
+  onPlaystyleClick,
+}: {
+  isLoading: boolean;
+  isMobile: boolean;
+  layout: LayoutConfig;
+  enableHover: boolean;
+  activePlaystyles: ActivePlaystyleEntry[];
+  onPlaystyleClick: (id: string) => void;
+}) {
+  if (isLoading) return <PlaystyleGalleryLoadingGrid isMobile={isMobile} />;
+  return (
+    <div style={isMobile ? gridStyleMobile : gridStyleDesktop}>
+      {activePlaystyles.map(({playstyle, ui, ruleCount, cardCount, previewCards}) => (
+        <ActivePlaystyleCard
+          key={playstyle.id}
+          playstyle={playstyle}
+          ui={ui}
+          cardCount={cardCount}
+          ruleCount={ruleCount}
+          previewCards={previewCards}
+          onClick={() => onPlaystyleClick(playstyle.id)}
+          layout={layout}
+          enableHover={enableHover}
+        />
+      ))}
+      {COMING_SOON_PLAYSTYLES.length > 0 && (
+        <>
+          <SectionDivider label="Coming Soon" layout={layout} />
+          {COMING_SOON_PLAYSTYLES.map((ps) => (
+            <ComingSoonCard
+              key={ps.name}
+              playstyle={ps}
+              layout={layout}
+              enableHover={enableHover}
+            />
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Page ──
+
+const ALL_COVER_ART_URLS = [
+  ...Object.values(PLAYSTYLE_UI).map((ui) => ui.coverArt),
+  ...COMING_SOON_PLAYSTYLES.map((ps) => ps.coverArt),
+];
+
+export function PlaystyleGalleryPage() {
+  const navigate = useNavigate();
+  const {cards, isLoading, error, retryLoad} = useCardDataContext();
+  const [searchQuery, setSearchQuery] = useState('');
+  const {isMobile} = useResponsive();
+
+  const layout = isMobile ? MOBILE_LAYOUT : DESKTOP_LAYOUT;
+  const enableHover = !isMobile;
+
+  // Preload cover art images so CSS backgroundImage doesn't wait for render
+  usePreloadImages(ALL_COVER_ART_URLS);
+
+  const goHome = () => navigate('/');
+  const handleSearchSubmit = () => {
+    const q = searchQuery.trim();
+    navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
+  };
+  const handleCardSelect = (card: {id: string}) => navigate(`/card/${card.id}`);
+  const onPlaystyleClick = (id: string) => navigate(`/playstyles/${id}`);
+
+  const {data: playstyleCardData} = useAllPlaystyleCards();
+  const activePlaystyles = buildActivePlaystyles(playstyleCardData);
+
+  if (error) return <PageErrorView onRetry={retryLoad} />;
 
   return (
     <main
@@ -541,75 +705,16 @@ export function PlaystyleGalleryPage() {
       />
 
       <div style={{position: 'relative', zIndex: 1}}>
-        {/* Page intro */}
-        <div style={{padding: layout.pagePadding}}>
-          <h1
-            style={{
-              fontSize: `${FONT_SIZES.xxl}px`,
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              marginBottom: SPACING.sm,
-            }}>
-            Lorcana Playstyles
-          </h1>
-          <p
-            style={{
-              fontSize: `${FONT_SIZES.base}px`,
-              color: COLORS.descriptionText,
-              lineHeight: 1.5,
-              maxWidth: layout.maxSubtitleWidth,
-              margin: 0,
-            }}>
-            Strategic archetypes that emerge when cards share a common gameplay pattern. Explore
-            each playstyle to find cards that reinforce your strategy.
-          </p>
-        </div>
-
-        {/* Grid */}
+        <PageIntro layout={layout} />
         <ErrorBoundary>
-          {isLoading ? (
-            <CardGridSkeleton
-              rows={2}
-              columns={isMobile ? 1 : 3}
-              gap={16}
-              padding={isMobile ? MOBILE_LAYOUT.gridPadding : DESKTOP_LAYOUT.gridPadding}
-              aspectRatio={isMobile ? 1.8 : 2.4}
-              ariaLabel="Loading playstyles"
-            />
-          ) : (
-            <div style={isMobile ? gridStyleMobile : gridStyleDesktop}>
-              {/* Active playstyles */}
-              {activePlaystyles.map(({playstyle, ui, ruleCount, cardCount, previewCards}) => (
-                <ActivePlaystyleCard
-                  key={playstyle.id}
-                  playstyle={playstyle}
-                  ui={ui}
-                  cardCount={cardCount}
-                  ruleCount={ruleCount}
-                  previewCards={previewCards}
-                  onClick={() => navigate(`/playstyles/${playstyle.id}`)}
-                  layout={layout}
-                  enableHover={enableHover}
-                />
-              ))}
-
-              {/* Coming soon divider + cards */}
-              {COMING_SOON_PLAYSTYLES.length > 0 && (
-                <>
-                  <SectionDivider label="Coming Soon" layout={layout} />
-                  {COMING_SOON_PLAYSTYLES.map((ps) => (
-                    <ComingSoonCard
-                      key={ps.name}
-                      playstyle={ps}
-                      layout={layout}
-                      enableHover={enableHover}
-                    />
-                  ))}
-                </>
-              )}
-            </div>
-          )}
+          <PlaystyleGalleryGrid
+            isLoading={isLoading}
+            isMobile={isMobile}
+            layout={layout}
+            enableHover={enableHover}
+            activePlaystyles={activePlaystyles}
+            onPlaystyleClick={onPlaystyleClick}
+          />
         </ErrorBoundary>
       </div>
     </main>
