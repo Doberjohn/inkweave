@@ -1,6 +1,5 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import type {LorcanaCard, PairSynergyConnection} from 'inkweave-synergy-engine';
-import {CardPreviewProvider} from '../../cards/components/CardPreviewProvider';
 import type {VotingPair} from '../types';
 import {PairDisplay} from './PairDisplay';
 
@@ -62,11 +61,9 @@ const meta = {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <CardPreviewProvider>
-        <div style={{width: 900}}>
-          <Story />
-        </div>
-      </CardPreviewProvider>
+      <div style={{width: 900}}>
+        <Story />
+      </div>
     ),
   ],
 } satisfies Meta<typeof PairDisplay>;

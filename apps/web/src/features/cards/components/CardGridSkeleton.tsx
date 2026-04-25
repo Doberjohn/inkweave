@@ -12,10 +12,14 @@ interface CardGridSkeletonProps {
   columns?: number;
   /** Number of skeleton rows to show (default: 3) */
   rows?: number;
+  /** Width / height ratio of each placeholder (default: 0.72, matches Lorcana card portrait). Use >1 for landscape tiles. */
+  aspectRatio?: number;
+  /** aria-label for the loading region (default: "Loading cards") */
+  ariaLabel?: string;
 }
 
 const MIN_COL_WIDTH = LAYOUT.browseCardMinWidth;
-const CARD_ASPECT = 0.72;
+const DEFAULT_CARD_ASPECT = 0.72;
 const DEFAULT_GAP = SPACING.md;
 
 export function CardGridSkeleton({
@@ -23,6 +27,8 @@ export function CardGridSkeleton({
   padding: paddingProp,
   columns: columnsProp,
   rows: rowCount = 3,
+  aspectRatio = DEFAULT_CARD_ASPECT,
+  ariaLabel = 'Loading cards',
 }: CardGridSkeletonProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const containerWidth = useContainerWidth(containerRef);
@@ -32,7 +38,7 @@ export function CardGridSkeleton({
 
   const columns = columnsProp ?? Math.max(1, Math.floor((containerWidth + gap) / (MIN_COL_WIDTH + gap)));
   const colWidth = containerWidth > 0 ? (containerWidth - gap * (columns - 1)) / columns : MIN_COL_WIDTH;
-  const cardHeight = colWidth / CARD_ASPECT;
+  const cardHeight = colWidth / aspectRatio;
 
   const totalCards = columns * rowCount;
 
@@ -41,7 +47,7 @@ export function CardGridSkeleton({
       ref={containerRef}
       style={{padding: containerPadding}}
       aria-busy="true"
-      aria-label="Loading cards"
+      aria-label={ariaLabel}
     >
       {containerWidth > 0 && (
         <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>

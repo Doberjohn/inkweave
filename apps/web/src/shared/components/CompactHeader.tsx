@@ -493,9 +493,16 @@ export function CompactHeader({
   headerActions,
   isMobile,
 }: CompactHeaderProps) {
+  // Hooks must run unconditionally — call before the early return below.
   const revealPhase = useRevealPhase();
+
+  // Mobile chrome lives in MobileBottomNav + SearchBottomSheet (from AppLayout).
+  // The top header is desktop-only; render nothing on mobile so callers don't
+  // need per-viewport conditionals at every call site.
+  if (isMobile) return null;
+
   const isRevealSeason = revealPhase === 'pre-release' || revealPhase === 'pre-release-live';
-  const viewport: ViewportConfig = {isMobile: !!isMobile};
+  const viewport: ViewportConfig = {isMobile: false};
   const hasSearch = searchQuery !== undefined && onSearchChange !== undefined;
 
   return (

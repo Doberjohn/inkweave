@@ -10,15 +10,6 @@ vi.mock('../CardTile', () => ({
   ),
 }));
 
-// Mock CardPreviewContext to avoid provider requirement
-vi.mock('../CardPreviewContext', () => ({
-  useCardPreview: () => ({
-    previewState: {card: null, position: {x: 0, y: 0}},
-    hidePreview: vi.fn(),
-  }),
-  useCardPreviewHandlers: () => ({previewHandlers: {}}),
-}));
-
 function makeCard(ink: string, id: string, name: string): LorcanaCard {
   return {
     id,

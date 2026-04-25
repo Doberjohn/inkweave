@@ -1,8 +1,9 @@
 import {lazy, Suspense} from 'react';
 import {createBrowserRouter} from 'react-router-dom';
+import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
 import {AppLayout} from './AppLayout';
 import {RevealsGate} from './features/reveals';
-import {LoadingSpinner} from './shared/components';
+import {COLORS, RADIUS, SPACING} from './shared/constants';
 
 /** Retry a dynamic import up to `retries` times, then force-reload on stale chunks (e.g. iOS home screen cache). */
 function lazyWithRetry(
@@ -34,10 +35,6 @@ function lazyWithRetry(
 const HomePage = lazyWithRetry(() => import('./pages/HomePage'), 'HomePage');
 const BrowsePage = lazyWithRetry(() => import('./pages/BrowsePage'), 'BrowsePage');
 const CardPage = lazyWithRetry(() => import('./pages/CardPage'), 'CardPage');
-const CardSynergiesPage = lazyWithRetry(
-  () => import('./pages/CardSynergiesPage'),
-  'CardSynergiesPage',
-);
 const PlaystyleGalleryPage = lazyWithRetry(
   () => import('./pages/PlaystyleGalleryPage'),
   'PlaystyleGalleryPage',
@@ -61,11 +58,29 @@ function SuspenseWrapper({children}: {children: React.ReactNode}) {
         <div
           style={{
             minHeight: '100vh',
+            background: COLORS.background,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-          }}>
-          <LoadingSpinner />
+            padding: SPACING.xl,
+          }}
+          aria-busy="true"
+          aria-label="Loading page">
+          <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: SPACING.md,
+                width: '100%',
+                maxWidth: 320,
+              }}>
+              <Skeleton width="60%" height={24} borderRadius={RADIUS.sm} />
+              <Skeleton height={12} borderRadius={RADIUS.sm} />
+              <Skeleton height={12} width="80%" borderRadius={RADIUS.sm} />
+              <Skeleton height={12} width="40%" borderRadius={RADIUS.sm} />
+            </div>
+          </SkeletonTheme>
         </div>
       }>
       {children}
@@ -99,14 +114,6 @@ export const router = createBrowserRouter([
         element: (
           <SuspenseWrapper>
             <CardPage />
-          </SuspenseWrapper>
-        ),
-      },
-      {
-        path: 'card/:cardId/synergies',
-        element: (
-          <SuspenseWrapper>
-            <CardSynergiesPage />
           </SuspenseWrapper>
         ),
       },

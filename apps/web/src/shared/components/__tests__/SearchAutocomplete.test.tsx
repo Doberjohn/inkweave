@@ -1,7 +1,6 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen} from '@testing-library/react';
 import {SearchAutocomplete} from '../SearchAutocomplete';
-import {CardPreviewProvider} from '../../../features/cards/components/CardPreviewProvider';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 
 const makeCard = (
@@ -42,31 +41,27 @@ const defaultProps = {
   }),
 };
 
-function renderWithProvider(ui: React.ReactElement) {
-  return render(<CardPreviewProvider>{ui}</CardPreviewProvider>);
-}
-
 describe('SearchAutocomplete', () => {
   it('does not render when isOpen is false', () => {
-    const {container} = renderWithProvider(<SearchAutocomplete {...defaultProps} isOpen={false} />);
+    const {container} = render(<SearchAutocomplete {...defaultProps} isOpen={false} />);
     expect(container.querySelector('[role="listbox"]')).toBeNull();
   });
 
   it('renders suggestion items when open', () => {
-    renderWithProvider(<SearchAutocomplete {...defaultProps} />);
+    render(<SearchAutocomplete {...defaultProps} />);
     expect(screen.getByText(/Snow Queen/)).toBeInTheDocument();
     expect(screen.getByText(/Ice Surfer/)).toBeInTheDocument();
   });
 
   it('highlights matching text in gold', () => {
-    renderWithProvider(<SearchAutocomplete {...defaultProps} />);
+    render(<SearchAutocomplete {...defaultProps} />);
     const marks = document.querySelectorAll('mark');
     expect(marks).toHaveLength(2);
     expect(marks[0].textContent).toBe('Elsa');
   });
 
   it('shows set abbreviation with tooltip for each suggestion', () => {
-    renderWithProvider(<SearchAutocomplete {...defaultProps} />);
+    render(<SearchAutocomplete {...defaultProps} />);
     expect(screen.getByText('9FAB')).toBeInTheDocument();
     expect(screen.getByText('5SSK')).toBeInTheDocument();
     // Tooltip shows full set name
@@ -75,7 +70,7 @@ describe('SearchAutocomplete', () => {
   });
 
   it('has correct ARIA attributes', () => {
-    renderWithProvider(<SearchAutocomplete {...defaultProps} />);
+    render(<SearchAutocomplete {...defaultProps} />);
     const listbox = document.getElementById('test-listbox');
     expect(listbox).toBeInTheDocument();
     expect(listbox?.getAttribute('role')).toBe('listbox');

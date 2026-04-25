@@ -1,7 +1,6 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {CardPreviewProvider} from '../../features/cards/components/CardPreviewProvider';
 import {SearchAutocomplete} from './SearchAutocomplete';
 
 const card = (id: string, name: string, setCode: string): LorcanaCard =>
@@ -42,11 +41,9 @@ const meta: Meta<typeof SearchAutocomplete> = {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <CardPreviewProvider>
-        <div style={{width: 420, position: 'relative'}}>
-          <Story />
-        </div>
-      </CardPreviewProvider>
+      <div style={{width: 420, position: 'relative'}}>
+        <Story />
+      </div>
     ),
   ],
   args: {

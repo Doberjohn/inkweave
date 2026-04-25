@@ -1,7 +1,6 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
 import {CardTile} from './CardTile';
-import {CardPreviewProvider} from './CardPreviewProvider';
 import type {LorcanaCard} from '../types';
 
 const createMockCard = (overrides: Partial<LorcanaCard> = {}): LorcanaCard => ({
@@ -30,11 +29,9 @@ const meta: Meta<typeof CardTile> = {
   component: CardTile,
   decorators: [
     (Story) => (
-      <CardPreviewProvider>
-        <div style={{width: '300px'}}>
-          <Story />
-        </div>
-      </CardPreviewProvider>
+      <div style={{width: '300px'}}>
+        <Story />
+      </div>
     ),
   ],
   parameters: {
@@ -98,17 +95,15 @@ export const ItemCard: Story = {
 
 export const AllInkColors: Story = {
   render: () => (
-    <CardPreviewProvider>
-      <div style={{display: 'flex', flexDirection: 'column', gap: '8px', width: '300px'}}>
-        {(['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'] as const).map((ink) => (
-          <CardTile
-            key={ink}
-            card={createMockCard({ink, name: `${ink} Character`})}
-            isSelected={false}
-            onClick={fn()}
-          />
-        ))}
-      </div>
-    </CardPreviewProvider>
+    <div style={{display: 'flex', flexDirection: 'column', gap: '8px', width: '300px'}}>
+      {(['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'] as const).map((ink) => (
+        <CardTile
+          key={ink}
+          card={createMockCard({ink, name: `${ink} Character`})}
+          isSelected={false}
+          onClick={fn()}
+        />
+      ))}
+    </div>
   ),
 };

@@ -1,7 +1,6 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
 import type {LorcanaCard} from '../../cards';
-import {CardPreviewProvider} from '../../cards/components/CardPreviewProvider';
 import {SynergyCard} from './SynergyCard';
 
 const mockCard = (ink: string, overrides: Partial<LorcanaCard> = {}): LorcanaCard => ({
@@ -31,11 +30,9 @@ const meta: Meta<typeof SynergyCard> = {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <CardPreviewProvider>
-        <div style={{width: 160}}>
-          <Story />
-        </div>
-      </CardPreviewProvider>
+      <div style={{width: 160}}>
+        <Story />
+      </div>
     ),
   ],
 };

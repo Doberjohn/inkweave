@@ -1,13 +1,7 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {CardTile} from '../CardTile';
-import {CardPreviewProvider} from '../CardPreviewProvider';
 import {createCard} from '../../../../shared/test-utils';
-
-// Wrapper to provide required context
-function renderWithProvider(ui: React.ReactElement) {
-  return render(<CardPreviewProvider>{ui}</CardPreviewProvider>);
-}
 
 describe('CardTile', () => {
   const mockCard = createCard({
@@ -31,7 +25,7 @@ describe('CardTile', () => {
       ...mockCard,
       imageUrl: 'https://example.com/elsa.avif',
     });
-    const {container} = renderWithProvider(<CardTile {...defaultProps} card={cardWithImage} />);
+    const {container} = render(<CardTile {...defaultProps} card={cardWithImage} />);
 
     const img = container.querySelector('img');
     expect(img).toBeInTheDocument();
@@ -43,7 +37,7 @@ describe('CardTile', () => {
       ...mockCard,
       imageUrl: '/card-images/123.avif',
     });
-    const {container} = renderWithProvider(
+    const {container} = render(
       <CardTile {...defaultProps} card={cardWithImage} useSmallImage />,
     );
 
@@ -53,61 +47,43 @@ describe('CardTile', () => {
 
   it('should show cost fallback when no image available', () => {
     const cardNoImage = createCard({...mockCard, imageUrl: undefined});
-    renderWithProvider(<CardTile {...defaultProps} card={cardNoImage} />);
+    render(<CardTile {...defaultProps} card={cardNoImage} />);
 
     expect(screen.getByText('5')).toBeInTheDocument();
   });
 
   it('should call onClick when clicked', () => {
     const onClick = vi.fn();
-    renderWithProvider(<CardTile {...defaultProps} onClick={onClick} />);
+    render(<CardTile {...defaultProps} onClick={onClick} />);
 
     fireEvent.click(screen.getByRole('button'));
 
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
+  // Regression guard: mobile browsers fire touchstart → synthesized click.
+  // A previous version of CardTile's onClick gated on isSyntheticMouseEvent(),
+  // which returned true for <1000ms after any touchstart — blocking every
+  // mobile tap. This test ensures tapping still triggers navigation.
+  it('should call onClick even when a touchstart preceded it (mobile tap sequence)', () => {
+    const onClick = vi.fn();
+    render(<CardTile {...defaultProps} onClick={onClick} />);
+
+    // Simulate the iOS tap sequence: touchstart on document, then click on the button.
+    fireEvent.touchStart(document, {touches: [{clientX: 100, clientY: 200}]});
+    fireEvent.click(screen.getByRole('button'));
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
   it('should show selected state with aria-pressed', () => {
-    const {rerender} = renderWithProvider(<CardTile {...defaultProps} isSelected={false} />);
+    const {rerender} = render(<CardTile {...defaultProps} isSelected={false} />);
 
     expect(screen.getByRole('button')).toHaveAttribute('aria-pressed', 'false');
 
-    rerender(
-      <CardPreviewProvider>
-        <CardTile {...defaultProps} isSelected={true} />
-      </CardPreviewProvider>,
-    );
+    rerender(<CardTile {...defaultProps} isSelected={true} />);
 
     expect(screen.getByRole('button')).toHaveAttribute('aria-pressed', 'true');
   });
 
-  describe('Mouse preview interactions', () => {
-    it('should show preview on mouse enter', () => {
-      renderWithProvider(<CardTile {...defaultProps} />);
-
-      const button = screen.getByRole('button');
-      fireEvent.mouseEnter(button, {clientX: 100, clientY: 200});
-
-      expect(button).toBeInTheDocument();
-    });
-
-    it('should update preview position on mouse move', () => {
-      renderWithProvider(<CardTile {...defaultProps} />);
-
-      const button = screen.getByRole('button');
-      fireEvent.mouseMove(button, {clientX: 150, clientY: 250});
-
-      expect(button).toBeInTheDocument();
-    });
-
-    it('should hide preview on mouse leave', () => {
-      renderWithProvider(<CardTile {...defaultProps} />);
-
-      const button = screen.getByRole('button');
-      fireEvent.mouseEnter(button, {clientX: 100, clientY: 200});
-      fireEvent.mouseLeave(button);
-
-      expect(button).toBeInTheDocument();
-    });
-  });
 });

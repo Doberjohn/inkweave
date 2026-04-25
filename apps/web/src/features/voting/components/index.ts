@@ -13,3 +13,4 @@ export {OptionPicker} from './OptionPicker';
 export type {OptionPickerOption} from './OptionPicker';
 export {InDepthVoteForm} from './InDepthVoteForm';
 export type {FormLayout} from './InDepthVoteForm';
+export {VoteFormSkeleton} from './VoteFormSkeleton';

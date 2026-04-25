@@ -66,3 +66,8 @@ apps/web/public/data/synergies/
 
 # Per-card source files for preview sets (scratch; previewCards.json is the runtime source of truth)
 apps/web/public/data/set12/
+
+# Local scratch & review notes (not part of the app)
+tmp-*/
+skills-lock.json
+TEXTS_REVIEW.md

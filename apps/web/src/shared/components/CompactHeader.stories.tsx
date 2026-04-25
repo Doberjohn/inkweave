@@ -1,7 +1,6 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {MemoryRouter} from 'react-router-dom';
 import {fn} from 'storybook/test';
-import {CardPreviewProvider} from '../../features/cards/components/CardPreviewProvider';
 import {CompactHeader} from './CompactHeader';
 
 const meta: Meta<typeof CompactHeader> = {
@@ -12,9 +11,7 @@ const meta: Meta<typeof CompactHeader> = {
   decorators: [
     (Story) => (
       <MemoryRouter initialEntries={['/browse']}>
-        <CardPreviewProvider>
-          <Story />
-        </CardPreviewProvider>
+        <Story />
       </MemoryRouter>
     ),
   ],

@@ -1,6 +1,5 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {CardPreviewProvider} from '../../cards/components/CardPreviewProvider';
 import {VotingCardDisplay} from './VotingCardDisplay';
 
 const mockCard: LorcanaCard = {
@@ -26,13 +25,6 @@ const meta = {
   component: VotingCardDisplay,
   parameters: {layout: 'centered'},
   tags: ['autodocs'],
-  decorators: [
-    (Story) => (
-      <CardPreviewProvider>
-        <Story />
-      </CardPreviewProvider>
-    ),
-  ],
 } satisfies Meta<typeof VotingCardDisplay>;
 
 export default meta;
