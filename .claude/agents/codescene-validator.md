@@ -1,7 +1,7 @@
 ---
 name: codescene-validator
 description: Validates code complexity using CodeScene MCP. Analyzes the current branch's change set against a base ref and reports quality gate status, per-file cyclomatic complexity regressions, and priority-sorted debt pressure. Use before pushing to catch complexity violations locally rather than in CI.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, mcp__codescene__analyze_change_set, mcp__codescene__code_health_review
 model: sonnet
 maxTurns: 10
 ---

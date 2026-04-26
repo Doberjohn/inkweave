@@ -42,26 +42,23 @@ export function BrowseCardGrid({
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerWidth = useContainerWidth(scrollRef);
   const [activeIndex, setActiveIndex] = useState(0);
-  const activeIndexRef = useRef(0);
-  const scrollMarginRef = useRef(0);
+  // state (not ref): useWindowVirtualizer reads this during render
+  const [scrollMargin, setScrollMargin] = useState(0);
 
   const gap = gapProp ?? DEFAULT_GAP;
   const containerPadding = paddingProp ?? `${SPACING.lg}px 32px 32px`;
 
-  // Clamp activeIndex when displayed cards change (e.g., after filtering)
   useEffect(() => {
-    setActiveIndex((prev) => {
-      const clamped = displayedCards.length === 0 ? 0 : Math.min(prev, displayedCards.length - 1);
-      activeIndexRef.current = clamped;
-      return clamped;
-    });
+    setActiveIndex((prev) =>
+      displayedCards.length === 0 ? 0 : Math.min(prev, displayedCards.length - 1),
+    );
   }, [displayedCards.length]);
 
-  // Re-measure container offset when layout shifts (toolbar resize, filter chip wrapping, etc.)
+  // bounding rect handles positioned ancestors; offsetTop doesn't
   useLayoutEffect(() => {
-    if (usePageScroll && scrollRef.current) {
-      scrollMarginRef.current = scrollRef.current.offsetTop;
-    }
+    if (!usePageScroll || !scrollRef.current) return;
+    const rect = scrollRef.current.getBoundingClientRect();
+    setScrollMargin(rect.top + window.scrollY);
   }, [usePageScroll, containerWidth]);
 
   // Compute columns and row height from container width
@@ -92,7 +89,7 @@ export function BrowseCardGrid({
     count: rows.length,
     estimateSize: () => rowHeight,
     overscan: 3,
-    scrollMargin: scrollMarginRef.current,
+    scrollMargin,
     enabled: !!usePageScroll,
   });
 
@@ -100,50 +97,34 @@ export function BrowseCardGrid({
 
   const focusCard = (index: number) => {
     if (index < 0 || index >= displayedCards.length) return;
-    activeIndexRef.current = index;
     setActiveIndex(index);
     const targetRow = Math.floor(index / columns);
     virtualizer.scrollToIndex(targetRow, {align: 'auto'});
 
-    // Retry focus until the virtualized target row is rendered (max 3 frames)
-    let attempts = 0;
-    const tryFocus = () => {
+    requestAnimationFrame(() => {
       const colInRow = index % columns;
-      const renderedRows = scrollRef.current?.querySelectorAll<HTMLElement>('[data-row-index]');
-      let focused = false;
-      renderedRows?.forEach((row) => {
-        if (Number(row.dataset.rowIndex) === targetRow) {
-          const buttons = row.querySelectorAll<HTMLElement>('[data-roving-item]');
-          const target = buttons[colInRow];
-          if (target) {
-            target.focus();
-            focused = true;
-          }
-        }
-      });
-      if (!focused && attempts < 3) {
-        attempts++;
-        requestAnimationFrame(tryFocus);
-      }
-    };
-    requestAnimationFrame(tryFocus);
+      const row = scrollRef.current?.querySelector<HTMLElement>(
+        `[data-row-index="${targetRow}"]`,
+      );
+      const target = row?.querySelectorAll<HTMLElement>('[data-roving-item]')[colInRow];
+      target?.focus();
+    });
   };
 
   const handleGridKeyDown = (e: React.KeyboardEvent) => {
-    const current = activeIndexRef.current;
     let nextIndex: number;
     switch (e.key) {
       case 'ArrowRight':
-        nextIndex = current + 1;
+        nextIndex = activeIndex + 1;
         break;
       case 'ArrowLeft':
-        nextIndex = current - 1;
+        nextIndex = activeIndex - 1;
         break;
       case 'ArrowDown':
-        nextIndex = current + columns;
+        nextIndex = activeIndex + columns;
         break;
       case 'ArrowUp':
-        nextIndex = current - columns;
+        nextIndex = activeIndex - columns;
         break;
       case 'Home':
         nextIndex = 0;
@@ -187,8 +168,6 @@ export function BrowseCardGrid({
       </div>
     );
   }
-
-  const scrollMargin = virtualizer.options.scrollMargin ?? 0;
 
   return (
     <RenderProfiler id="BrowseCardGrid">

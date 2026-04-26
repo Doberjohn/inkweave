@@ -1,13 +1,14 @@
-import {useState, type ReactNode} from 'react';
-import {useLocation, useNavigate} from 'react-router-dom';
+import {type ReactNode, useState} from 'react';
+import {Link, NavLink} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING, Z_INDEX} from '../constants';
+import {COLORS, FONT_SIZES, FONTS, LAYOUT, RADIUS, SPACING, Z_INDEX} from '../constants';
 import {useAutocomplete} from '../hooks';
 import {useRevealPhase} from '../../features/reveals';
 import {SearchAutocomplete} from './SearchAutocomplete';
 
 interface CompactHeaderProps {
-  onLogoClick: () => void;
+  /** Optional side-effect callback fired before nav. Link handles the route push. */
+  onLogoClick?: () => void;
   /** When true, renders "← INKWEAVE" as a back button instead of just "INKWEAVE" */
   showBackArrow?: boolean;
   /** Search bar props. When provided, renders an inline search bar in the header. */
@@ -161,6 +162,10 @@ function getSearchInputStyle(config: SearchInputStyleConfig): React.CSSPropertie
   };
 }
 
+function isPlainLeftClick(e: React.MouseEvent): boolean {
+  return e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+}
+
 // =====================================================================
 // Subcomponents — internal, not exported. Each owns a small concern.
 // =====================================================================
@@ -168,17 +173,18 @@ function getSearchInputStyle(config: SearchInputStyleConfig): React.CSSPropertie
 interface HeaderLogoProps {
   showBackArrow?: boolean;
   viewport: ViewportConfig;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 function HeaderLogo({showBackArrow, viewport, onClick}: HeaderLogoProps) {
+  // Side-effect only on regular click. Link handles the navigation + modifier-click semantics.
   const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    onClick();
+    if (!isPlainLeftClick(e)) return;
+    onClick?.();
   };
   return (
-    <a
-      href="/"
+    <Link
+      to="/"
       onClick={handleClick}
       aria-label="Go to home page"
       style={{
@@ -208,7 +214,7 @@ function HeaderLogo({showBackArrow, viewport, onClick}: HeaderLogoProps) {
           userSelect: 'none',
         }}
       />
-    </a>
+    </Link>
   );
 }
 
@@ -312,90 +318,76 @@ function HeaderSearch({cards, query, onChange, onSubmit, onCardSelect, viewport}
 interface NavItemLinkProps {
   path: string;
   label: string;
-  state: InteractionState;
+  isHovered: boolean;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
-  onNavigate: (path: string) => void;
 }
 
-function NavItemLink({
-  path,
-  label,
-  state,
-  onMouseEnter,
-  onMouseLeave,
-  onNavigate,
-}: NavItemLinkProps) {
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    onNavigate(path);
-  };
+function NavItemLink({path, label, isHovered, onMouseEnter, onMouseLeave}: NavItemLinkProps) {
   return (
-    <a
-      href={path}
-      onClick={handleClick}
+    <NavLink
+      to={path}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '0 20px',
-        height: '100%',
-        background: getNavItemBackground(state),
-        color: getNavItemColor(state),
-        fontFamily: FONTS.body,
-        fontSize: `${FONT_SIZES.base}px`,
-        fontWeight: state.isActive ? 600 : 500,
-        textDecoration: 'none',
-        transition: 'background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease',
-        boxShadow: getNavItemBoxShadow(state),
-        cursor: 'pointer',
+      style={({isActive}) => {
+        const state: InteractionState = {isActive, isHovered};
+        return {
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '0 20px',
+          height: '100%',
+          background: getNavItemBackground(state),
+          color: getNavItemColor(state),
+          fontFamily: FONTS.body,
+          fontSize: `${FONT_SIZES.base}px`,
+          fontWeight: isActive ? 600 : 500,
+          textDecoration: 'none',
+          transition: 'background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease',
+          boxShadow: getNavItemBoxShadow(state),
+          cursor: 'pointer',
+        };
       }}>
       {label}
-    </a>
+    </NavLink>
   );
 }
 
 interface RevealsPillProps {
-  state: InteractionState;
+  isHovered: boolean;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
-  onNavigate: () => void;
 }
 
-function RevealsPill({state, onMouseEnter, onMouseLeave, onNavigate}: RevealsPillProps) {
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    onNavigate();
-  };
+function RevealsPill({isHovered, onMouseEnter, onMouseLeave}: RevealsPillProps) {
   return (
-    <a
-      href={REVEALS_PATH}
-      onClick={handleClick}
+    <NavLink
+      to={REVEALS_PATH}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      aria-current={state.isActive ? 'page' : undefined}
       aria-label="Reveals"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '0 14px',
-        height: 38,
-        borderRadius: 999,
-        background: getRevealsPillBg(state),
-        border: `1px solid ${COLORS.primary500}`,
-        color: COLORS.primary,
-        fontFamily: FONTS.body,
-        fontSize: `${FONT_SIZES.base}px`,
-        fontWeight: 600,
-        textDecoration: 'none',
-        boxShadow: getRevealsPillShadow(state),
-        transform: state.isHovered ? 'translateY(-1px)' : 'translateY(0)',
-        transition:
-          'transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 200ms cubic-bezier(0.2, 0.8, 0.2, 1), background 200ms ease',
-        cursor: 'pointer',
+      style={({isActive}) => {
+        const state: InteractionState = {isActive, isHovered};
+        return {
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '0 14px',
+          height: 38,
+          borderRadius: 999,
+          background: getRevealsPillBg(state),
+          border: `1px solid ${COLORS.primary500}`,
+          color: COLORS.primary,
+          fontFamily: FONTS.body,
+          fontSize: `${FONT_SIZES.base}px`,
+          fontWeight: 600,
+          textDecoration: 'none',
+          boxShadow: getRevealsPillShadow(state),
+          transform: isHovered ? 'translateY(-1px)' : 'translateY(0)',
+          transition:
+            'transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 200ms cubic-bezier(0.2, 0.8, 0.2, 1), background 200ms ease',
+          cursor: 'pointer',
+        };
       }}>
       Reveals
       <span
@@ -411,7 +403,7 @@ function RevealsPill({state, onMouseEnter, onMouseLeave, onNavigate}: RevealsPil
         }}>
         NEW
       </span>
-    </a>
+    </NavLink>
   );
 }
 
@@ -420,14 +412,7 @@ interface DesktopNavProps {
 }
 
 function DesktopNav({isRevealSeason}: DesktopNavProps) {
-  const location = useLocation();
-  const navigate = useNavigate();
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
-
-  const revealsState: InteractionState = {
-    isActive: location.pathname.startsWith(REVEALS_PATH),
-    isHovered: hoveredNav === REVEALS_PATH,
-  };
 
   return (
     <nav
@@ -456,22 +441,17 @@ function DesktopNav({isRevealSeason}: DesktopNavProps) {
             key={path}
             path={path}
             label={label}
-            state={{
-              isActive: location.pathname.startsWith(path),
-              isHovered: hoveredNav === path,
-            }}
+            isHovered={hoveredNav === path}
             onMouseEnter={() => setHoveredNav(path)}
             onMouseLeave={() => setHoveredNav(null)}
-            onNavigate={navigate}
           />
         ))}
       </div>
       {isRevealSeason && (
         <RevealsPill
-          state={revealsState}
+          isHovered={hoveredNav === REVEALS_PATH}
           onMouseEnter={() => setHoveredNav(REVEALS_PATH)}
           onMouseLeave={() => setHoveredNav(null)}
-          onNavigate={() => navigate(REVEALS_PATH)}
         />
       )}
     </nav>

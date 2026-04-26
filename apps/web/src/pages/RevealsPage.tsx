@@ -1,5 +1,4 @@
 import {useEffect, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
 import {CompactHeader, ErrorBoundary, EtherealBackground} from '../shared/components';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 import {useResponsive} from '../shared/hooks';
@@ -16,7 +15,6 @@ import {
 const FIRST_TIER_PRIORITY_COUNT = 6;
 
 export function RevealsPage() {
-  const navigate = useNavigate();
   const {isMobile} = useResponsive();
   const phase = useRevealPhase();
   const {tiers, loading, error} = useRevealCards();
@@ -42,7 +40,7 @@ export function RevealsPage() {
   return (
     <ErrorBoundary>
       <EtherealBackground />
-      <CompactHeader onLogoClick={() => navigate('/')} isMobile={isMobile} />
+      <CompactHeader isMobile={isMobile} />
       <main style={{minHeight: '100vh', paddingTop: SPACING.lg, position: 'relative', zIndex: 1}}>
         <Hero phase={phase} days={days} />
         {error && (
