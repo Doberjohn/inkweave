@@ -162,6 +162,10 @@ function getSearchInputStyle(config: SearchInputStyleConfig): React.CSSPropertie
   };
 }
 
+function isPlainLeftClick(e: React.MouseEvent): boolean {
+  return e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+}
+
 // =====================================================================
 // Subcomponents — internal, not exported. Each owns a small concern.
 // =====================================================================
@@ -175,7 +179,7 @@ interface HeaderLogoProps {
 function HeaderLogo({showBackArrow, viewport, onClick}: HeaderLogoProps) {
   // Side-effect only on regular click. Link handles the navigation + modifier-click semantics.
   const handleClick = (e: React.MouseEvent) => {
-    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (!isPlainLeftClick(e)) return;
     onClick?.();
   };
   return (
