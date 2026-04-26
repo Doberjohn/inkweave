@@ -134,6 +134,15 @@
             "command": "bash D:/johnn/Projects/inkweave/.claude/hooks/preview-data-auto-precompute.sh"
           }
         ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash D:/johnn/Projects/inkweave/.claude/hooks/agent-tool-substitution-guard.sh"
+          }
+        ]
       }
     ]
   },
