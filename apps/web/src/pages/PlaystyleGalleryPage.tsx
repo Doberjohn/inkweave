@@ -670,7 +670,6 @@ export function PlaystyleGalleryPage() {
   // Preload cover art images so CSS backgroundImage doesn't wait for render
   usePreloadImages(ALL_COVER_ART_URLS);
 
-  const goHome = () => navigate('/');
   const handleSearchSubmit = () => {
     const q = searchQuery.trim();
     navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
@@ -693,7 +692,6 @@ export function PlaystyleGalleryPage() {
       }}>
       <EtherealBackground />
       <CompactHeader
-        onLogoClick={goHome}
         {...(!isMobile && {
           searchQuery,
           onSearchChange: setSearchQuery,

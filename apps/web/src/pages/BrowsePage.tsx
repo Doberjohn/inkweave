@@ -64,10 +64,8 @@ export function BrowsePage() {
     return applySortOrder(result, sortOrder);
   })();
 
-  const goHome = () => {
-    clearAllFilters();
-    navigate('/');
-  };
+  // Side effect only — Link handles navigation; runs only on regular click (not modifier-click).
+  const goHome = clearAllFilters;
 
   const selectCard = (card: {id: string}) => navigate(`/card/${card.id}`);
 
