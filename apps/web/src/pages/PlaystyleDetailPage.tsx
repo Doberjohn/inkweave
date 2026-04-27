@@ -19,7 +19,7 @@ import {
 } from 'inkweave-synergy-engine';
 import {usePrecomputedPlaystyleCards} from '../features/synergies/hooks';
 import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
-import {BrowseToolbar, CardGridSkeleton, CardTile} from '../features/cards';
+import {BrowseToolbar, CardGrid, CardGridSkeleton} from '../features/cards';
 import {filterCards, applySortOrder, type CardFilterOptions} from '../features/cards/loader';
 import {
   Chip,
@@ -732,47 +732,24 @@ function CardGridOrEmpty({
   cards,
   displayedCards,
   handleCardSelect,
-  gridTemplateColumns,
-  gap,
   padding,
-  useSmallImageBorderRadius,
+  borderRadius,
 }: {
   cards: LorcanaCard[];
   displayedCards: LorcanaCard[];
-  handleCardSelect: (card: {id: string}) => void;
-  gridTemplateColumns: string;
-  gap: number;
+  handleCardSelect: (card: LorcanaCard) => void;
   padding: string;
-  useSmallImageBorderRadius?: number;
+  borderRadius?: number;
 }) {
-  if (cards.length === 0) {
-    return (
-      <div
-        style={{
-          textAlign: 'center',
-          padding: 64,
-          color: COLORS.textMuted,
-          fontSize: `${FONT_SIZES.xl}px`,
-        }}>
-        No cards match your filters.
-      </div>
-    );
-  }
   return (
     <div style={{padding}}>
-      <div style={{display: 'grid', gridTemplateColumns, gap}}>
-        {displayedCards.map((card) => (
-          <CardTile
-            key={card.id}
-            card={card}
-            isSelected={false}
-            onSelect={handleCardSelect}
-            variant="minimal"
-            borderRadius={useSmallImageBorderRadius}
-            useSmallImage
-          />
-        ))}
-      </div>
+      <CardGrid
+        cards={displayedCards}
+        onSelect={handleCardSelect}
+        variant="minimal"
+        borderRadius={borderRadius}
+        emptyMessage={cards.length === 0 ? 'No cards match your filters.' : undefined}
+      />
     </div>
   );
 }
@@ -827,10 +804,8 @@ function PlaystyleDetailMobileView({
             cards={roleFilteredCards}
             displayedCards={displayedCards}
             handleCardSelect={handleCardSelect}
-            gridTemplateColumns="repeat(3, 1fr)"
-            gap={10}
             padding={`${SPACING.md}px ${SPACING.lg}px 48px`}
-            useSmallImageBorderRadius={10}
+            borderRadius={10}
           />
         </ErrorBoundary>
       </div>
@@ -970,8 +945,6 @@ function PlaystyleDetailDesktopView({
             cards={roleFilteredCards}
             displayedCards={displayedCards}
             handleCardSelect={handleCardSelect}
-            gridTemplateColumns="repeat(auto-fill, minmax(180px, 1fr))"
-            gap={12}
             padding="16px 32px 48px"
           />
         </ErrorBoundary>

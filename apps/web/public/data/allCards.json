@@ -1,7 +1,7 @@
 {
   "metadata": {
     "formatVersion": "2.3.2",
-    "generatedOn": "2026-04-23T15:28:27",
+    "generatedOn": "2026-04-27T14:37:12",
     "language": "en"
   },
   "sets": {
@@ -14515,33 +14515,6 @@
       }
     },
     {
-      "id": 1433,
-      "name": "Moana",
-      "version": "Adventurer of Land and Sea",
-      "fullName": "Moana - Adventurer of Land and Sea",
-      "cost": 3,
-      "color": "Sapphire",
-      "inkwell": true,
-      "type": "Character",
-      "subtypes": [
-        "Storyborn",
-        "Hero",
-        "Princess"
-      ],
-      "fullText": "",
-      "fullTextSections": [],
-      "strength": 1,
-      "willpower": 6,
-      "lore": 1,
-      "setCode": "7",
-      "number": 26,
-      "rarity": "Special",
-      "images": {
-        "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/26_c1dc332226a7f1d343be88e156ef85143903f054.jpg",
-        "full": "https://api.lorcana.ravensburger.com/images/en/promo2/26_26ba867eeb259ee4382e9242e692c98a9bf7d7ff.jpg"
-      }
-    },
-    {
       "id": 1434,
       "name": "Rhino",
       "version": "Motivational Speaker",
@@ -15522,6 +15495,33 @@
       "images": {
         "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set7/25_8d1518e744f794c7d24b7493edb6f5a080c5df6e.jpg",
         "full": "https://api.lorcana.ravensburger.com/images/en/set7/25_37712c25245066d7ecce6e26176212b627cfe450.jpg"
+      }
+    },
+    {
+      "id": 1433,
+      "name": "Moana",
+      "version": "Adventurer of Land and Sea",
+      "fullName": "Moana - Adventurer of Land and Sea",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Princess"
+      ],
+      "fullText": "",
+      "fullTextSections": [],
+      "strength": 1,
+      "willpower": 6,
+      "lore": 1,
+      "setCode": "7",
+      "number": 26,
+      "rarity": "Special",
+      "images": {
+        "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/26_c1dc332226a7f1d343be88e156ef85143903f054.jpg",
+        "full": "https://api.lorcana.ravensburger.com/images/en/promo2/26_26ba867eeb259ee4382e9242e692c98a9bf7d7ff.jpg"
       }
     },
     {
@@ -52773,6 +52773,30 @@
       }
     },
     {
+      "id": 1230204,
+      "name": "You've Got a friend in me",
+      "fullName": "You've Got a friend in me",
+      "cost": 3,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Action",
+      "subtypes": [
+        "Song"
+      ],
+      "fullText": "(A character with cost 3 or more can ⟳ to sing this song for free.) Look at the top 4 cards of your deck. You may reveal up to 2 Toy character cards and put them into your hand. Put the rest on the bottom of your deck in any order.",
+      "fullTextSections": [
+        "(A character with cost 3 or more can ⟳ to sing this song for free.) Look at the top 4 cards of your deck. You may reveal up to 2 Toy character cards and put them into your hand. Put the rest on the bottom of your deck in any order."
+      ],
+      "setCode": "12",
+      "number": 30,
+      "rarity": "Super Rare",
+      "franchise": "Toy Story",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/30-204-EN-12-Youve-Got-a-Friend-in-Me-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/30-204-EN-12-Youve-Got-a-Friend-in-Me-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
       "id": 1231204,
       "name": "Metamorphosis",
       "fullName": "Metamorphosis",
@@ -53461,6 +53485,51 @@
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/01/49-204-EN-12-Mrs.-Incredible-Super-Stretchy-Lorcana-Player-429x600.jpg",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/01/49-204-EN-12-Mrs.-Incredible-Super-Stretchy-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 1250204,
+      "name": "Hamish, Hubert & Harris",
+      "version": "Making Mischief",
+      "fullName": "Hamish, Hubert & Harris - Making Mischief",
+      "cost": 3,
+      "color": "Amethyst",
+      "inkwell": false,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Prince"
+      ],
+      "fullText": "STAY QUIET This character may enter play exerted.\nCLEVER TRAP At the end of your turn, if this character is exerted, chosen opposing character can't ready at the start of their next turn.",
+      "fullTextSections": [
+        "STAY QUIET This character may enter play exerted.",
+        "CLEVER TRAP At the end of your turn, if this character is exerted, chosen opposing character can't ready at the start of their next turn."
+      ],
+      "strength": 2,
+      "willpower": 3,
+      "lore": 1,
+      "abilities": [
+        {
+          "fullText": "STAY QUIET This character may enter play exerted.",
+          "type": "static",
+          "name": "STAY QUIET",
+          "effect": "This character may enter play exerted."
+        },
+        {
+          "fullText": "CLEVER TRAP At the end of your turn, if this character is exerted, chosen opposing character can't ready at the start of their next turn.",
+          "type": "triggered",
+          "name": "CLEVER TRAP",
+          "effect": "At the end of your turn, if this character is exerted, chosen opposing character can't ready at the start of their next turn."
+        }
+      ],
+      "setCode": "12",
+      "number": 50,
+      "rarity": "Uncommon",
+      "franchise": "Brave",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/50-204-EN-12-Hamish-Hubert-Harris-Making-Mischief-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/50-204-EN-12-Hamish-Hubert-Harris-Making-Mischief-LQ-Lorcana-Player.jpg"
       }
     },
     {
@@ -56462,6 +56531,27 @@
       }
     },
     {
+      "id": 12129204,
+      "name": "Inner Strength",
+      "fullName": "Inner Strength",
+      "cost": 1,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Action",
+      "fullText": "Chosen character gets +1 ¤ this turn. Draw a card.",
+      "fullTextSections": [
+        "Chosen character gets +1 ¤ this turn. Draw a card."
+      ],
+      "setCode": "12",
+      "number": 129,
+      "rarity": "Common",
+      "franchise": "Atlantis: The Lost Empire",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/129-204-EN-12-Inner-Strength-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/129-204-EN-12-Inner-Strength-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
       "id": 12130204,
       "name": "Firefly Swarm",
       "fullName": "Firefly Swarm",
@@ -58105,6 +58195,45 @@
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/174-204-EN-12-Angus-Mighty-Horse-Lorcana-Player-430x600.jpg",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/174-204-EN-12-Angus-Mighty-Horse-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 12175204,
+      "name": "Fergus",
+      "version": "King of DunBroch",
+      "fullName": "Fergus - King of DunBroch",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "King",
+        "Mentor"
+      ],
+      "fullText": "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
+      "fullTextSections": [
+        "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)"
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1,
+      "abilities": [
+        {
+          "fullText": "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
+          "type": "keyword",
+          "name": "Bodyguard",
+          "effect": "This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able."
+        }
+      ],
+      "flavorText": "“Come on then! I’ll take ye all at once!”",
+      "setCode": "12",
+      "number": 175,
+      "rarity": "Common",
+      "franchise": "Brave",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/04/175-204-EN-12-Fergus-King-of-DunBroch-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/04/175-204-EN-12-Fergus-King-of-DunBroch-LQ-Lorcana-Player.jpg"
       }
     },
     {

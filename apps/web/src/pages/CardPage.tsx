@@ -190,7 +190,6 @@ type MobileCardViewProps = {
   synergiesError: Error | null;
   detailPair: DetailedPairSynergy | null;
   lastPair: DetailedPairSynergy | null;
-  onBack: () => void;
   onSynergyCardClick: (card: LorcanaCard) => void;
   onCloseDetail: () => void;
 };
@@ -202,7 +201,6 @@ function MobileCardView({
   synergiesError,
   detailPair,
   lastPair,
-  onBack,
   onSynergyCardClick,
   onCloseDetail,
 }: MobileCardViewProps) {
@@ -213,7 +211,6 @@ function MobileCardView({
         isLoading={isLoading}
         card={card}
         synergies={synergies}
-        onBack={onBack}
         onSynergyCardClick={onSynergyCardClick}
       />
       {lastPair && (
@@ -415,7 +412,6 @@ export function CardPage() {
         synergiesError={synergiesError}
         detailPair={ctrl.detailPair}
         lastPair={ctrl.lastPair}
-        onBack={ctrl.goHome}
         onSynergyCardClick={ctrl.handleSynergyCardClick}
         onCloseDetail={ctrl.handleCloseDetail}
       />

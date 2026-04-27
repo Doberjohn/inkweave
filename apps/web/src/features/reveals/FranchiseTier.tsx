@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {CardTile} from '../cards/components/CardTile';
+import {CardGrid} from '../cards/components/CardGrid';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../../shared/constants';
 import type {RevealTier} from './useRevealCards';
 
@@ -81,23 +81,11 @@ export function FranchiseTier({tier, priorityCount = 0}: FranchiseTierProps) {
           </h2>
         )}
       </header>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-          gap: SPACING.sm + 2,
-        }}>
-        {tier.cards.map((card, index) => (
-          <CardTile
-            key={card.id}
-            card={card}
-            isSelected={false}
-            onSelect={handleSelect}
-            useSmallImage
-            priority={index < priorityCount}
-          />
-        ))}
-      </div>
+      <CardGrid
+        cards={tier.cards}
+        onSelect={handleSelect}
+        priorityCount={priorityCount}
+      />
     </section>
   );
 }

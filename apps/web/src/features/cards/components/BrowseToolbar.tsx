@@ -30,6 +30,196 @@ interface BrowseToolbarProps {
   extraChips?: React.ReactNode;
 }
 
+// =====================================================================
+// Module-level helpers — each absorbs decision points so the
+// public BrowseToolbar function stays low-CC.
+// =====================================================================
+
+interface ChipBuildArgs {
+  isMobile: boolean;
+  inkFilters: Ink[];
+  typeFilters: CardTypeFilter[];
+  costFilters: number[];
+  filters: CardFilterOptions;
+  onToggleInk: (ink: Ink) => void;
+  onToggleType: (type: CardTypeFilter) => void;
+  onToggleCost: (cost: number) => void;
+  onFiltersChange: (filters: CardFilterOptions) => void;
+}
+
+function buildMobileOnlyChips(args: ChipBuildArgs): ChipData[] {
+  if (!args.isMobile) return [];
+  const chips: ChipData[] = [
+    ...args.inkFilters.map((ink) => ({
+      id: `ink:${ink}`,
+      label: ink,
+      onDismiss: () => args.onToggleInk(ink),
+    })),
+    ...args.costFilters.map((cost) => ({
+      id: `cost:${cost}`,
+      label: `Cost ${cost}`,
+      onDismiss: () => args.onToggleCost(cost),
+    })),
+  ];
+  if (args.filters.inkwell) {
+    chips.push({
+      id: `inkwell:${args.filters.inkwell}`,
+      label: args.filters.inkwell === 'inkable' ? 'Inkable' : 'Uninkable',
+      onDismiss: () => args.onFiltersChange({...args.filters, inkwell: undefined}),
+    });
+  }
+  return chips;
+}
+
+function buildSingleValueChip(
+  filters: CardFilterOptions,
+  onFiltersChange: (f: CardFilterOptions) => void,
+  key: 'keywords' | 'classifications',
+): ChipData | null {
+  const value = filters[key]?.[0];
+  if (!value) return null;
+  return {
+    id: `${key}:${value}`,
+    label: value,
+    onDismiss: () => onFiltersChange({...filters, [key]: undefined}),
+  };
+}
+
+function buildSetChip(
+  filters: CardFilterOptions,
+  onFiltersChange: (f: CardFilterOptions) => void,
+): ChipData | null {
+  if (!filters.setCode) return null;
+  return {
+    id: `set:${filters.setCode}`,
+    label: `Set ${filters.setCode}`,
+    onDismiss: () => onFiltersChange({...filters, setCode: undefined}),
+  };
+}
+
+function buildActiveChips(args: ChipBuildArgs): ChipData[] {
+  const typeChips = args.typeFilters.map((type) => ({
+    id: `type:${type}`,
+    label: type,
+    onDismiss: () => args.onToggleType(type),
+  }));
+  const optionalChips = [
+    buildSingleValueChip(args.filters, args.onFiltersChange, 'keywords'),
+    buildSingleValueChip(args.filters, args.onFiltersChange, 'classifications'),
+    buildSetChip(args.filters, args.onFiltersChange),
+  ].filter((c): c is ChipData => c !== null);
+  return [...buildMobileOnlyChips(args), ...typeChips, ...optionalChips];
+}
+
+function getToolbarStyle(isMobile: boolean): React.CSSProperties {
+  const sidePad = isMobile ? SPACING.lg : 32;
+  return {
+    padding: `${SPACING.md}px ${sidePad}px ${SPACING.md}px`,
+    display: 'flex',
+    alignItems: 'center',
+    gap: isMobile ? SPACING.sm : 10,
+    flexWrap: 'wrap',
+    position: 'relative',
+    zIndex: 1,
+  };
+}
+
+const DIVIDER_STYLE: React.CSSProperties = {
+  width: 1,
+  height: 24,
+  backgroundColor: COLORS.primary500,
+  opacity: 0.2,
+  flexShrink: 0,
+};
+
+// =====================================================================
+// Subcomponents — each owns a small concern.
+// =====================================================================
+
+function ClearAllButton({onClick}: {onClick: () => void}) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        background: 'none',
+        border: 'none',
+        color: hover ? COLORS.text : COLORS.textMuted,
+        fontFamily: FONTS.body,
+        fontSize: `${FONT_SIZES.base}px`,
+        cursor: 'pointer',
+        padding: 0,
+        textDecoration: hover ? 'underline' : 'none',
+        transition: 'color 0.15s',
+      }}>
+      Clear all
+    </button>
+  );
+}
+
+interface ActiveChipsRowProps {
+  chips: ChipData[];
+  isMobile: boolean;
+  onClearAll: () => void;
+}
+
+function ActiveChipsRow({chips, isMobile, onClearAll}: ActiveChipsRowProps) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: 6,
+        flexWrap: 'wrap',
+        ...(isMobile ? {flexBasis: '100%'} : {flex: 1}),
+      }}>
+      {chips.map((chip) => (
+        <Chip
+          key={chip.id}
+          variant="dismiss"
+          label={chip.label}
+          onDismiss={chip.onDismiss}
+          isMobile={isMobile}
+        />
+      ))}
+      <ClearAllButton onClick={onClearAll} />
+    </div>
+  );
+}
+
+interface DesktopFilterIconsProps {
+  inkFilters: Ink[];
+  costFilters: number[];
+  inkwell: CardFilterOptions['inkwell'];
+  onToggleInk: (ink: Ink) => void;
+  onToggleCost: (cost: number) => void;
+  onInkwellChange: (v: CardFilterOptions['inkwell']) => void;
+}
+
+function DesktopFilterIcons({
+  inkFilters,
+  costFilters,
+  inkwell,
+  onToggleInk,
+  onToggleCost,
+  onInkwellChange,
+}: DesktopFilterIconsProps) {
+  return (
+    <>
+      <InkFilterGroup inkFilters={inkFilters} onToggleInk={onToggleInk} />
+      <div aria-hidden="true" style={DIVIDER_STYLE} />
+      <CostFilterGroup costFilters={costFilters} onToggleCost={onToggleCost} />
+      <div aria-hidden="true" style={DIVIDER_STYLE} />
+      <InkwellFilterGroup activeValue={inkwell} onToggle={onInkwellChange} />
+    </>
+  );
+}
+
+// =====================================================================
+// Public component — layout shell that delegates to subcomponents.
+// =====================================================================
+
 export function BrowseToolbar({
   onFiltersClick,
   activeFilterCount,
@@ -47,130 +237,39 @@ export function BrowseToolbar({
   isMobile,
   extraChips,
 }: BrowseToolbarProps) {
-  const [clearHover, setClearHover] = useState(false);
-
-  // Build active filter chips from all filter sources
-  // Desktop shows ink/cost/inkwell icons inline in toolbar, so skip chips for those
-  const chips: ChipData[] = [];
-  if (isMobile) {
-    for (const ink of inkFilters)
-      chips.push({id: `ink:${ink}`, label: ink, onDismiss: () => onToggleInk(ink)});
-    for (const cost of costFilters)
-      chips.push({id: `cost:${cost}`, label: `Cost ${cost}`, onDismiss: () => onToggleCost(cost)});
-    if (filters.inkwell)
-      chips.push({
-        id: `inkwell:${filters.inkwell}`,
-        label: filters.inkwell === 'inkable' ? 'Inkable' : 'Uninkable',
-        onDismiss: () => onFiltersChange({...filters, inkwell: undefined}),
-      });
-  }
-  for (const type of typeFilters)
-    chips.push({id: `type:${type}`, label: type, onDismiss: () => onToggleType(type)});
-  if (filters.keywords?.length)
-    chips.push({
-      id: `keyword:${filters.keywords[0]}`,
-      label: filters.keywords[0],
-      onDismiss: () => onFiltersChange({...filters, keywords: undefined}),
-    });
-  if (filters.classifications?.length)
-    chips.push({
-      id: `classification:${filters.classifications[0]}`,
-      label: filters.classifications[0],
-      onDismiss: () => onFiltersChange({...filters, classifications: undefined}),
-    });
-  if (filters.setCode)
-    chips.push({
-      id: `set:${filters.setCode}`,
-      label: `Set ${filters.setCode}`,
-      onDismiss: () => onFiltersChange({...filters, setCode: undefined}),
-    });
-
-  const hasChips = chips.length > 0;
+  const chips = buildActiveChips({
+    isMobile,
+    inkFilters,
+    typeFilters,
+    costFilters,
+    filters,
+    onToggleInk,
+    onToggleType,
+    onToggleCost,
+    onFiltersChange,
+  });
 
   return (
-    <div
-      data-testid="browse-toolbar"
-      style={{
-        padding: isMobile ? `${SPACING.md}px ${SPACING.lg}px 0` : `${SPACING.md}px 32px 0`,
-        display: 'flex',
-        alignItems: 'center',
-        gap: isMobile ? SPACING.sm : 10,
-        flexWrap: 'wrap',
-        position: 'relative',
-        zIndex: 1,
-      }}>
-      <FiltersButton onClick={onFiltersClick} activeCount={activeFilterCount} isMobile={isMobile} />
+    <div data-testid="browse-toolbar" style={getToolbarStyle(isMobile)}>
+      <FiltersButton
+        onClick={onFiltersClick}
+        activeCount={activeFilterCount}
+        isMobile={isMobile}
+      />
       {extraChips}
-
-      {/* Active filter chips */}
-      {hasChips && (
-        <div
-          style={{
-            display: 'flex',
-            gap: 6,
-            flexWrap: 'wrap',
-            ...(isMobile ? {flexBasis: '100%'} : {flex: 1}),
-          }}>
-          {chips.map((chip) => (
-            <Chip
-              key={chip.id}
-              variant="dismiss"
-              label={chip.label}
-              onDismiss={chip.onDismiss}
-              isMobile={isMobile}
-            />
-          ))}
-          <button
-            onClick={onClearAll}
-            onMouseEnter={() => setClearHover(true)}
-            onMouseLeave={() => setClearHover(false)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: clearHover ? COLORS.text : COLORS.textMuted,
-              fontFamily: FONTS.body,
-              fontSize: `${FONT_SIZES.base}px`,
-              cursor: 'pointer',
-              padding: 0,
-              textDecoration: clearHover ? 'underline' : 'none',
-              transition: 'color 0.15s',
-            }}>
-            Clear all
-          </button>
-        </div>
+      {chips.length > 0 && (
+        <ActiveChipsRow chips={chips} isMobile={isMobile} onClearAll={onClearAll} />
       )}
-
-      {/* Right side: ink filters (desktop) + sort */}
       <div style={{marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10}}>
         {!isMobile && (
-          <>
-            <InkFilterGroup inkFilters={inkFilters} onToggleInk={onToggleInk} />
-            <div
-              aria-hidden="true"
-              style={{
-                width: 1,
-                height: 24,
-                backgroundColor: COLORS.primary500,
-                opacity: 0.2,
-                flexShrink: 0,
-              }}
-            />
-            <CostFilterGroup costFilters={costFilters} onToggleCost={onToggleCost} />
-            <div
-              aria-hidden="true"
-              style={{
-                width: 1,
-                height: 24,
-                backgroundColor: COLORS.primary500,
-                opacity: 0.2,
-                flexShrink: 0,
-              }}
-            />
-            <InkwellFilterGroup
-              activeValue={filters.inkwell}
-              onToggle={(v) => onFiltersChange({...filters, inkwell: v})}
-            />
-          </>
+          <DesktopFilterIcons
+            inkFilters={inkFilters}
+            costFilters={costFilters}
+            inkwell={filters.inkwell}
+            onToggleInk={onToggleInk}
+            onToggleCost={onToggleCost}
+            onInkwellChange={(v) => onFiltersChange({...filters, inkwell: v})}
+          />
         )}
         <SortSelect
           options={BROWSE_SORT_OPTIONS}

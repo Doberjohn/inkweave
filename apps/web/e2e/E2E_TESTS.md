@@ -63,7 +63,6 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should show search input on home | "Search for a card..." placeholder is visible |
 | should navigate to card page when selecting a featured card | Card click navigates to `/card/:id`, shows synergies heading or "no synergies" |
 | should show filter drawer on mobile browse | Navigate to `/browse`, tap filter icon, drawer shows Amber/Sapphire ink buttons |
-| should return to home when clearing selection on mobile | Clear selection navigates back to `/`, hero reappears |
 | should navigate to browse when searching from hero | Typing "Elsa" + Enter navigates to `/browse?q=Elsa`, hero hidden, browse heading visible |
 | should navigate to browsing view via Browse all cards CTA | "Browse all cards" CTA navigates away from hero, shows browse heading |
 | should open search bottom sheet and focus input when tapping search icon | Tap search icon in bottom nav, sheet opens with focused input |

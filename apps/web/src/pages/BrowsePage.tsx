@@ -1,16 +1,149 @@
 import {useEffect, useState} from 'react';
 import {useNavigate, useSearchParams} from 'react-router-dom';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {BrowseCardGrid, BrowseToolbar} from '../features/cards';
 import {
   searchCardsByName,
   filterCards,
   applySortOrder,
   type CardFilterOptions,
+  type SortOrder,
 } from '../features/cards/loader';
-import {CompactHeader, ErrorBoundary, EtherealBackground, FilterDialog} from '../shared/components';
+import {
+  CompactHeader,
+  ErrorBoundary,
+  EtherealBackground,
+  FilterDialog,
+  MOBILE_NAV_HEIGHT,
+} from '../shared/components';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
+
+// =====================================================================
+// Module-level helpers — keep BrowsePage's CC low by hoisting branches.
+// =====================================================================
+
+function buildCombinedFilters(
+  base: CardFilterOptions,
+  inkFilters: string[],
+  typeFilters: string[],
+  costFilters: number[],
+): CardFilterOptions {
+  const combined: CardFilterOptions = {...base};
+  if (inkFilters.length > 0) combined.ink = inkFilters;
+  if (typeFilters.length > 0) combined.type = typeFilters;
+  if (costFilters.length > 0) combined.costs = costFilters;
+  return combined;
+}
+
+function applyFiltersAndSort(
+  cards: LorcanaCard[],
+  searchQuery: string,
+  combinedFilters: CardFilterOptions,
+  sortOrder: SortOrder,
+): LorcanaCard[] {
+  let result = cards;
+  if (searchQuery.trim()) result = searchCardsByName(result, searchQuery);
+  if (Object.keys(combinedFilters).length > 0) result = filterCards(result, combinedFilters);
+  return applySortOrder(result, sortOrder);
+}
+
+// =====================================================================
+// Subcomponents — local to this file. Keep BrowsePage's render small
+// and unduplicated across mobile/desktop branches.
+// =====================================================================
+
+function BrowsePageError({onRetry}: {onRetry: () => void}) {
+  return (
+    <main
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        gap: 16,
+        fontFamily: FONTS.body,
+        background: COLORS.background,
+      }}>
+      <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
+        Failed to load card data.
+      </p>
+      <button
+        onClick={onRetry}
+        style={{
+          padding: '8px 20px',
+          background: COLORS.primary,
+          color: COLORS.background,
+          border: 'none',
+          borderRadius: 6,
+          cursor: 'pointer',
+          fontFamily: FONTS.body,
+          fontWeight: 600,
+        }}>
+        Retry
+      </button>
+    </main>
+  );
+}
+
+interface BrowseContentSectionProps {
+  isMobile: boolean;
+  toolbarProps: React.ComponentProps<typeof BrowseToolbar>;
+  cards: LorcanaCard[];
+  isLoading: boolean;
+  onCardSelect: (card: {id: string}) => void;
+}
+
+function BrowseContentSection({
+  isMobile,
+  toolbarProps,
+  cards,
+  isLoading,
+  onCardSelect,
+}: BrowseContentSectionProps) {
+  const titlePadding = isMobile
+    ? `${SPACING.lg}px ${SPACING.lg}px 0`
+    : `${SPACING.xxl}px 32px 0`;
+  return (
+    <div
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        position: 'relative',
+        zIndex: 1,
+      }}>
+      <h1
+        style={{
+          padding: titlePadding,
+          fontSize: `${FONT_SIZES.xxl}px`,
+          fontWeight: 700,
+          color: COLORS.text,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          flexShrink: 0,
+        }}>
+        Browse Cards
+      </h1>
+      <BrowseToolbar {...toolbarProps} />
+      {/* Card grid — flex-fills remaining space; VirtuosoGrid scrolls inside */}
+      <div style={{flex: 1, minHeight: 0, position: 'relative'}}>
+        <ErrorBoundary>
+          <BrowseCardGrid cards={cards} isLoading={isLoading} onCardSelect={onCardSelect} />
+        </ErrorBoundary>
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// Page component — viewport-bounded shell + shared content section.
+// Mobile subtracts the bottom-nav height so AppLayout's padding-bottom
+// doesn't push us past the viewport (would re-introduce page scroll).
+// =====================================================================
 
 export function BrowsePage() {
   const navigate = useNavigate();
@@ -49,59 +182,12 @@ export function BrowsePage() {
     }
   }, [isMobile, searchParams, setSearchParams]);
 
-  const combinedFilters: CardFilterOptions = (() => {
-    const combined = {...filters};
-    if (inkFilters.length > 0) combined.ink = inkFilters;
-    if (typeFilters.length > 0) combined.type = typeFilters;
-    if (costFilters.length > 0) combined.costs = costFilters;
-    return combined;
-  })();
+  if (error) return <BrowsePageError onRetry={retryLoad} />;
 
-  const sortedCards = (() => {
-    let result = cards;
-    if (searchQuery.trim()) result = searchCardsByName(result, searchQuery);
-    if (Object.keys(combinedFilters).length > 0) result = filterCards(result, combinedFilters);
-    return applySortOrder(result, sortOrder);
-  })();
-
-  // Side effect only — Link handles navigation; runs only on regular click (not modifier-click).
+  const combinedFilters = buildCombinedFilters(filters, inkFilters, typeFilters, costFilters);
+  const sortedCards = applyFiltersAndSort(cards, searchQuery, combinedFilters, sortOrder);
   const goHome = clearAllFilters;
-
   const selectCard = (card: {id: string}) => navigate(`/card/${card.id}`);
-
-  if (error) {
-    return (
-      <main
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          gap: 16,
-          fontFamily: FONTS.body,
-          background: COLORS.background,
-        }}>
-        <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
-          Failed to load card data.
-        </p>
-        <button
-          onClick={retryLoad}
-          style={{
-            padding: '8px 20px',
-            background: COLORS.primary,
-            color: COLORS.background,
-            border: 'none',
-            borderRadius: 6,
-            cursor: 'pointer',
-            fontFamily: FONTS.body,
-            fontWeight: 600,
-          }}>
-          Retry
-        </button>
-      </main>
-    );
-  }
 
   const toolbarProps = {
     onFiltersClick: () => setShowFilters(true),
@@ -117,67 +203,50 @@ export function BrowsePage() {
     onClearAll: clearAllFilters,
     sortOrder,
     onSortChange: setSortOrder,
+    isMobile,
   } as const;
 
-  // Mobile layout
+  const filterDialogProps = {
+    isOpen: showFilters,
+    onClose: () => setShowFilters(false),
+    onApply: replaceFilters,
+    inkFilters,
+    typeFilters,
+    costFilters,
+    filters,
+    uniqueKeywords,
+    uniqueClassifications,
+    sets,
+  };
+
+  const contentProps = {
+    isMobile,
+    toolbarProps,
+    cards: sortedCards,
+    isLoading,
+    onCardSelect: selectCard,
+  };
+
   if (isMobile) {
     return (
       <main
         style={{
-          minHeight: '100vh',
+          height: `calc(100dvh - ${MOBILE_NAV_HEIGHT}px)`,
+          display: 'flex',
+          flexDirection: 'column',
           background: COLORS.background,
           fontFamily: FONTS.body,
           position: 'relative',
+          overflow: 'hidden',
         }}>
         <EtherealBackground />
         <CompactHeader onLogoClick={goHome} isMobile />
-        <div style={{position: 'relative', zIndex: 1}}>
-          {/* Page title */}
-          <h1
-            style={{
-              padding: `${SPACING.lg}px ${SPACING.lg}px 0`,
-              fontSize: `${FONT_SIZES.xxl}px`,
-              fontWeight: 700,
-              color: COLORS.text,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-            }}>
-            Browse Cards
-          </h1>
-          {/* Toolbar */}
-          <BrowseToolbar {...toolbarProps} isMobile />
-          {/* Card grid */}
-          <ErrorBoundary>
-            <BrowseCardGrid
-              cards={sortedCards}
-              isLoading={isLoading}
-              onCardSelect={selectCard}
-              usePageScroll
-              columns={3}
-              gap={10}
-              borderRadius={10}
-              padding={`${SPACING.md}px ${SPACING.lg}px 48px`}
-            />
-          </ErrorBoundary>
-        </div>
-        <FilterDialog
-          isOpen={showFilters}
-          onClose={() => setShowFilters(false)}
-          onApply={replaceFilters}
-          variant="drawer"
-          inkFilters={inkFilters}
-          typeFilters={typeFilters}
-          costFilters={costFilters}
-          filters={filters}
-          uniqueKeywords={uniqueKeywords}
-          uniqueClassifications={uniqueClassifications}
-          sets={sets}
-        />
+        <BrowseContentSection {...contentProps} />
+        <FilterDialog {...filterDialogProps} variant="drawer" />
       </main>
     );
   }
 
-  // Desktop layout
   return (
     <main
       style={{
@@ -195,47 +264,8 @@ export function BrowsePage() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
       />
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-          position: 'relative',
-          zIndex: 1,
-        }}>
-        {/* Page title */}
-        <h1
-          style={{
-            padding: `${SPACING.xxl}px 32px 0`,
-            fontSize: `${FONT_SIZES.xxl}px`,
-            fontWeight: 700,
-            color: COLORS.text,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            flexShrink: 0,
-          }}>
-          Browse Cards
-        </h1>
-        {/* Toolbar */}
-        <BrowseToolbar {...toolbarProps} isMobile={false} />
-        <ErrorBoundary>
-          <BrowseCardGrid cards={sortedCards} isLoading={isLoading} onCardSelect={selectCard} />
-        </ErrorBoundary>
-      </div>
-      <FilterDialog
-        isOpen={showFilters}
-        onClose={() => setShowFilters(false)}
-        onApply={replaceFilters}
-        variant="modal"
-        inkFilters={inkFilters}
-        typeFilters={typeFilters}
-        costFilters={costFilters}
-        filters={filters}
-        uniqueKeywords={uniqueKeywords}
-        uniqueClassifications={uniqueClassifications}
-        sets={sets}
-      />
+      <BrowseContentSection {...contentProps} />
+      <FilterDialog {...filterDialogProps} variant="modal" />
     </main>
   );
 }

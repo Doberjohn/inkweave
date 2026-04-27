@@ -28,7 +28,10 @@ export const LAYOUT = {
   cardDetailWidth: 330,
   selectedCardImageWidth: 120,
   maxDisplayedCards: 204,
-  browseCardMinWidth: 180,
+  /** CardGrid auto-fill minimum column width on desktop. Used by BrowseCardGrid + the shared CardGrid component. */
+  cardGridMinWidth: 180,
+  /** CardGrid auto-fill minimum column width on mobile. Lower so phones ≥360px viewport fit 2 columns. */
+  cardGridMinWidthMobile: 140,
   synergyCardMinWidth: 160,
 } as const;
 
