@@ -23,11 +23,6 @@ interface ListContainerConfig {
   minColWidth: number;
 }
 
-// Mobile MIN must allow 2 columns at typical phone widths (≥360px viewport,
-// ≥328px content after 16px side-padding). 140 fits 2 cols at 326px content,
-// 3 cols on tablets ≥466px content.
-const MOBILE_MIN_COL_WIDTH = 140;
-
 // CSS Grid handles responsive column count via auto-fill + minmax.
 // IMPORTANT: VirtuosoGrid imperatively writes BOTH `paddingTop` (offset for
 // items above the rendered range) and `paddingBottom` (offset below) for its
@@ -59,7 +54,7 @@ const createListContainer = ({paddingX, minColWidth}: ListContainerConfig) =>
 export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridProps) {
   const {isMobile} = useResponsive();
   const paddingX = isMobile ? SPACING.lg : 32;
-  const minColWidth = isMobile ? MOBILE_MIN_COL_WIDTH : LAYOUT.browseCardMinWidth;
+  const minColWidth = isMobile ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth;
   const ListContainer = useMemo(
     () => createListContainer({paddingX, minColWidth}),
     [paddingX, minColWidth],

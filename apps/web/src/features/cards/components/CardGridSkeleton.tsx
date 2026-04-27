@@ -18,7 +18,7 @@ interface CardGridSkeletonProps {
   ariaLabel?: string;
 }
 
-const MIN_COL_WIDTH = LAYOUT.browseCardMinWidth;
+const MIN_COL_WIDTH = LAYOUT.cardGridMinWidth;
 const DEFAULT_CARD_ASPECT = 0.72;
 const DEFAULT_GAP = SPACING.md;
 
