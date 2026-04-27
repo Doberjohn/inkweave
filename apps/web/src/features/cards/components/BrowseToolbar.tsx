@@ -91,7 +91,9 @@ export function BrowseToolbar({
     <div
       data-testid="browse-toolbar"
       style={{
-        padding: isMobile ? `${SPACING.md}px ${SPACING.lg}px 0` : `${SPACING.md}px 32px 0`,
+        padding: isMobile
+          ? `${SPACING.md}px ${SPACING.lg}px ${SPACING.md}px`
+          : `${SPACING.md}px 32px ${SPACING.md}px`,
         display: 'flex',
         alignItems: 'center',
         gap: isMobile ? SPACING.sm : 10,
