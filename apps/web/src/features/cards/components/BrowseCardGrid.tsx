@@ -1,159 +1,61 @@
-import {useEffect, useLayoutEffect, useRef, useState} from 'react';
-import {useVirtualizer, useWindowVirtualizer} from '@tanstack/react-virtual';
+import {forwardRef, useMemo, type CSSProperties, type ReactNode} from 'react';
+import {VirtuosoGrid} from 'react-virtuoso';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from './CardTile';
 import {COLORS, FONT_SIZES, LAYOUT, SPACING} from '../../../shared/constants';
 import {RenderProfiler} from '../../../shared/components';
+import {useResponsive} from '../../../shared/hooks';
 import {CardGridSkeleton} from './CardGridSkeleton';
-import {useContainerWidth} from '../../../shared/hooks/useContainerWidth';
 
 interface BrowseCardGridProps {
   cards: LorcanaCard[];
   isLoading: boolean;
   onCardSelect: (card: LorcanaCard) => void;
-  /** Use window scroll instead of container scroll (no internal scrollbar; the page itself scrolls) */
-  usePageScroll?: boolean;
-  /** Override gap between cards (default: SPACING.md) */
-  gap?: number;
-  /** Override border radius on CardTile */
-  borderRadius?: number;
-  /** Override container padding */
-  padding?: string;
-  /** Force column count (bypasses dynamic calculation from container width) */
-  columns?: number;
 }
 
-const DEFAULT_GAP = SPACING.md;
-const MIN_COL_WIDTH = LAYOUT.browseCardMinWidth;
-// Card aspect ratio: width / height = 0.72, so height = width / 0.72
-const CARD_ASPECT = 0.72;
+interface ListContainerProps {
+  style?: CSSProperties;
+  children?: ReactNode;
+}
 
-export function BrowseCardGrid({
-  cards,
-  isLoading,
-  onCardSelect,
-  usePageScroll,
-  gap: gapProp,
-  borderRadius,
-  padding: paddingProp,
-  columns: columnsProp,
-}: BrowseCardGridProps) {
-  const displayedCards = cards.slice(0, LAYOUT.maxDisplayedCards);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const containerWidth = useContainerWidth(scrollRef);
-  const [activeIndex, setActiveIndex] = useState(0);
-  // state (not ref): useWindowVirtualizer reads this during render
-  const [scrollMargin, setScrollMargin] = useState(0);
+interface ListContainerStyle {
+  padding: string;
+}
 
-  const gap = gapProp ?? DEFAULT_GAP;
-  const containerPadding = paddingProp ?? `${SPACING.lg}px 32px 32px`;
-
-  useEffect(() => {
-    setActiveIndex((prev) =>
-      displayedCards.length === 0 ? 0 : Math.min(prev, displayedCards.length - 1),
+// CSS Grid handles responsive column count natively via auto-fill + minmax.
+// VirtuosoGrid mounts virtual items into this container; off-screen items stay unmounted.
+const createListContainer = ({padding}: ListContainerStyle) =>
+  forwardRef<HTMLDivElement, ListContainerProps>(function ListContainer(
+    {style, children},
+    ref,
+  ) {
+    return (
+      <div
+        ref={ref}
+        style={{
+          ...style,
+          display: 'grid',
+          gridTemplateColumns: `repeat(auto-fill, minmax(${LAYOUT.browseCardMinWidth}px, 1fr))`,
+          gap: SPACING.md,
+          padding,
+        }}>
+        {children}
+      </div>
     );
-  }, [displayedCards.length]);
-
-  // bounding rect handles positioned ancestors; offsetTop doesn't
-  useLayoutEffect(() => {
-    if (!usePageScroll || !scrollRef.current) return;
-    const rect = scrollRef.current.getBoundingClientRect();
-    setScrollMargin(rect.top + window.scrollY);
-  }, [usePageScroll, containerWidth]);
-
-  // Compute columns and row height from container width
-  const columns = columnsProp ?? Math.max(1, Math.floor((containerWidth + gap) / (MIN_COL_WIDTH + gap)));
-  const colWidth = (containerWidth - gap * (columns - 1)) / columns;
-  const rowHeight = colWidth / CARD_ASPECT + gap;
-
-  // Chunk cards into rows
-  const rows = (() => {
-    const result: LorcanaCard[][] = [];
-    for (let i = 0; i < displayedCards.length; i += columns) {
-      result.push(displayedCards.slice(i, i + columns));
-    }
-    return result;
-  })();
-
-  // Dual-hook pattern: both always called unconditionally (React rules of hooks).
-  // TanStack Virtual's `enabled` option disables the inactive one.
-  const containerVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => rowHeight,
-    overscan: 3,
-    enabled: !usePageScroll,
   });
 
-  const windowVirtualizer = useWindowVirtualizer({
-    count: rows.length,
-    estimateSize: () => rowHeight,
-    overscan: 3,
-    scrollMargin,
-    enabled: !!usePageScroll,
-  });
-
-  const virtualizer = usePageScroll ? windowVirtualizer : containerVirtualizer;
-
-  const focusCard = (index: number) => {
-    if (index < 0 || index >= displayedCards.length) return;
-    setActiveIndex(index);
-    const targetRow = Math.floor(index / columns);
-    virtualizer.scrollToIndex(targetRow, {align: 'auto'});
-
-    requestAnimationFrame(() => {
-      const colInRow = index % columns;
-      const row = scrollRef.current?.querySelector<HTMLElement>(
-        `[data-row-index="${targetRow}"]`,
-      );
-      const target = row?.querySelectorAll<HTMLElement>('[data-roving-item]')[colInRow];
-      target?.focus();
-    });
-  };
-
-  const handleGridKeyDown = (e: React.KeyboardEvent) => {
-    let nextIndex: number;
-    switch (e.key) {
-      case 'ArrowRight':
-        nextIndex = activeIndex + 1;
-        break;
-      case 'ArrowLeft':
-        nextIndex = activeIndex - 1;
-        break;
-      case 'ArrowDown':
-        nextIndex = activeIndex + columns;
-        break;
-      case 'ArrowUp':
-        nextIndex = activeIndex - columns;
-        break;
-      case 'Home':
-        nextIndex = 0;
-        break;
-      case 'End':
-        nextIndex = displayedCards.length - 1;
-        break;
-      default:
-        return;
-    }
-    if (nextIndex >= 0 && nextIndex < displayedCards.length) {
-      e.preventDefault();
-      focusCard(nextIndex);
-    }
-  };
+export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridProps) {
+  const {isMobile} = useResponsive();
+  const padding = isMobile
+    ? `${SPACING.md}px ${SPACING.lg}px 48px`
+    : `${SPACING.lg}px 32px 32px`;
+  const ListContainer = useMemo(() => createListContainer({padding}), [padding]);
 
   if (isLoading) {
-    return <CardGridSkeleton gap={gap} padding={containerPadding} columns={columnsProp} />;
+    return <CardGridSkeleton />;
   }
 
-  // Wait for container measurement before rendering virtual rows
-  if (containerWidth === 0) {
-    return (
-      <div ref={scrollRef} style={{
-        ...(!usePageScroll && {flex: 1, minHeight: 0}),
-        padding: containerPadding,
-      }} />
-    );
-  }
+  const displayedCards = cards.slice(0, LAYOUT.maxDisplayedCards);
 
   if (displayedCards.length === 0) {
     return (
@@ -171,57 +73,21 @@ export function BrowseCardGrid({
 
   return (
     <RenderProfiler id="BrowseCardGrid">
-    <div
-      ref={scrollRef}
-      style={{
-        padding: containerPadding,
-        ...(!usePageScroll && {flex: 1, minHeight: 0, overflow: 'auto'}),
-      }}>
-      <div
-        role="grid"
-        tabIndex={0}
-        aria-label="Card grid"
-        onKeyDown={handleGridKeyDown}
-        style={{
-          height: virtualizer.getTotalSize(),
-          width: '100%',
-          position: 'relative',
-        }}>
-        {virtualizer.getVirtualItems().map((virtualRow) => (
-          <div
-            key={virtualRow.key}
-            role="row"
-            data-row-index={virtualRow.index}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: virtualRow.size,
-              transform: `translateY(${virtualRow.start - scrollMargin}px)`,
-              display: 'grid',
-              gridTemplateColumns: `repeat(${columns}, 1fr)`,
-              gap,
-              alignItems: 'start',
-            }}>
-            {rows[virtualRow.index].map((card, colIndex) => (
-              <div key={card.id} role="gridcell">
-                <CardTile
-                  card={card}
-                  isSelected={false}
-                  onSelect={onCardSelect}
-                  variant="minimal"
-                  borderRadius={borderRadius}
-                  priority={virtualRow.index === 0}
-                  useSmallImage
-                  tabIndex={virtualRow.index * columns + colIndex === activeIndex ? 0 : -1}
-                />
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
+      <VirtuosoGrid
+        totalCount={displayedCards.length}
+        components={{List: ListContainer}}
+        itemContent={(index) => (
+          <CardTile
+            card={displayedCards[index]}
+            isSelected={false}
+            onSelect={onCardSelect}
+            variant="minimal"
+            priority={index < 6}
+            useSmallImage
+          />
+        )}
+        style={{height: '100%'}}
+      />
     </RenderProfiler>
   );
 }

@@ -7,7 +7,13 @@ import {
   applySortOrder,
   type CardFilterOptions,
 } from '../features/cards/loader';
-import {CompactHeader, ErrorBoundary, EtherealBackground, FilterDialog} from '../shared/components';
+import {
+  CompactHeader,
+  ErrorBoundary,
+  EtherealBackground,
+  FilterDialog,
+  MOBILE_NAV_HEIGHT,
+} from '../shared/components';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
@@ -119,19 +125,35 @@ export function BrowsePage() {
     onSortChange: setSortOrder,
   } as const;
 
-  // Mobile layout
+  // Mobile layout — container-scroll: <main> is viewport-bounded (100dvh),
+  // grid scrolls inside its bounded flex item; the page itself does not scroll.
   if (isMobile) {
     return (
       <main
         style={{
-          minHeight: '100vh',
+          // Subtract bottom nav height so AppLayout's padding-bottom on the
+          // page wrapper doesn't push us past the viewport (would re-introduce
+          // page scroll). Keeps the grid container-scroll bounded to the
+          // visible area above the nav.
+          height: `calc(100dvh - ${MOBILE_NAV_HEIGHT}px)`,
+          display: 'flex',
+          flexDirection: 'column',
           background: COLORS.background,
           fontFamily: FONTS.body,
           position: 'relative',
+          overflow: 'hidden',
         }}>
         <EtherealBackground />
         <CompactHeader onLogoClick={goHome} isMobile />
-        <div style={{position: 'relative', zIndex: 1}}>
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            position: 'relative',
+            zIndex: 1,
+          }}>
           {/* Page title */}
           <h1
             style={{
@@ -141,24 +163,22 @@ export function BrowsePage() {
               color: COLORS.text,
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
+              flexShrink: 0,
             }}>
             Browse Cards
           </h1>
           {/* Toolbar */}
           <BrowseToolbar {...toolbarProps} isMobile />
-          {/* Card grid */}
-          <ErrorBoundary>
-            <BrowseCardGrid
-              cards={sortedCards}
-              isLoading={isLoading}
-              onCardSelect={selectCard}
-              usePageScroll
-              columns={3}
-              gap={10}
-              borderRadius={10}
-              padding={`${SPACING.md}px ${SPACING.lg}px 48px`}
-            />
-          </ErrorBoundary>
+          {/* Card grid — flex-fills remaining space; VirtuosoGrid scrolls inside */}
+          <div style={{flex: 1, minHeight: 0, position: 'relative'}}>
+            <ErrorBoundary>
+              <BrowseCardGrid
+                cards={sortedCards}
+                isLoading={isLoading}
+                onCardSelect={selectCard}
+              />
+            </ErrorBoundary>
+          </div>
         </div>
         <FilterDialog
           isOpen={showFilters}
@@ -219,9 +239,12 @@ export function BrowsePage() {
         </h1>
         {/* Toolbar */}
         <BrowseToolbar {...toolbarProps} isMobile={false} />
-        <ErrorBoundary>
-          <BrowseCardGrid cards={sortedCards} isLoading={isLoading} onCardSelect={selectCard} />
-        </ErrorBoundary>
+        {/* Card grid — flex-fills remaining space; VirtuosoGrid scrolls inside */}
+        <div style={{flex: 1, minHeight: 0, position: 'relative'}}>
+          <ErrorBoundary>
+            <BrowseCardGrid cards={sortedCards} isLoading={isLoading} onCardSelect={selectCard} />
+          </ErrorBoundary>
+        </div>
       </div>
       <FilterDialog
         isOpen={showFilters}
