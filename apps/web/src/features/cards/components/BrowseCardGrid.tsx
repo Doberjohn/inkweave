@@ -19,7 +19,6 @@ interface ListContainerProps {
 }
 
 interface ListContainerConfig {
-  paddingTop: number;
   paddingX: number;
   minColWidth: number;
 }
@@ -30,11 +29,13 @@ interface ListContainerConfig {
 const MOBILE_MIN_COL_WIDTH = 140;
 
 // CSS Grid handles responsive column count via auto-fill + minmax.
-// IMPORTANT: do NOT set `padding` shorthand or `paddingBottom` on this element —
-// VirtuosoGrid imperatively writes paddingBottom for its virtual scroll spacer
-// (~100,000px when many items below the viewport), and a shorthand here would
-// fight that effect cycle. Top + sides longhand only.
-const createListContainer = ({paddingTop, paddingX, minColWidth}: ListContainerConfig) =>
+// IMPORTANT: VirtuosoGrid imperatively writes BOTH `paddingTop` (offset for
+// items above the rendered range) and `paddingBottom` (offset below) for its
+// virtual scroll positioning. Setting either here would block the effect cycle:
+// hardcoded paddingTop pins items to the top of the List instead of letting
+// them shift to their virtual row. Only horizontal padding is safe to set.
+// Visual top breathing-room comes from the toolbar's bottom padding.
+const createListContainer = ({paddingX, minColWidth}: ListContainerConfig) =>
   forwardRef<HTMLDivElement, ListContainerProps>(function ListContainer(
     {style, children},
     ref,
@@ -47,7 +48,6 @@ const createListContainer = ({paddingTop, paddingX, minColWidth}: ListContainerC
           display: 'grid',
           gridTemplateColumns: `repeat(auto-fill, minmax(${minColWidth}px, 1fr))`,
           gap: SPACING.md,
-          paddingTop,
           paddingLeft: paddingX,
           paddingRight: paddingX,
         }}>
@@ -58,12 +58,11 @@ const createListContainer = ({paddingTop, paddingX, minColWidth}: ListContainerC
 
 export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridProps) {
   const {isMobile} = useResponsive();
-  const paddingTop = isMobile ? SPACING.md : SPACING.lg;
   const paddingX = isMobile ? SPACING.lg : 32;
   const minColWidth = isMobile ? MOBILE_MIN_COL_WIDTH : LAYOUT.browseCardMinWidth;
   const ListContainer = useMemo(
-    () => createListContainer({paddingTop, paddingX, minColWidth}),
-    [paddingTop, paddingX, minColWidth],
+    () => createListContainer({paddingX, minColWidth}),
+    [paddingX, minColWidth],
   );
 
   if (isLoading) {
