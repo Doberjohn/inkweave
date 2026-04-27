@@ -63,7 +63,6 @@ describe('MobileCardDetail', () => {
   const defaultProps = {
     card: mockCard,
     synergies: mockSynergies,
-    onBack: vi.fn(),
   };
 
   const renderWithRouter = (ui: React.ReactElement) =>
@@ -112,18 +111,6 @@ describe('MobileCardDetail', () => {
   it('should show "no synergies" message when count is 0', () => {
     renderWithRouter(<MobileCardDetail {...defaultProps} synergies={[]} />);
     expect(screen.getByText(/no synergies found/i)).toBeInTheDocument();
-  });
-
-  it('should call onBack when header button is clicked', () => {
-    const onBack = vi.fn();
-    renderWithRouter(<MobileCardDetail {...defaultProps} onBack={onBack} />);
-    fireEvent.click(screen.getByRole('button', {name: /back to home/i}));
-    expect(onBack).toHaveBeenCalled();
-  });
-
-  it('should render header with INKWEAVE text', () => {
-    renderWithRouter(<MobileCardDetail {...defaultProps} />);
-    expect(screen.getByRole('button', {name: /back to home/i})).toHaveTextContent(/INKWEAVE/);
   });
 
   it('should hide group chips when only 1 synergy group', () => {

@@ -12,7 +12,6 @@ import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/consta
 interface MobileCardDetailProps {
   card?: LorcanaCard | null;
   synergies?: SynergyGroupData[];
-  onBack: () => void;
   onSynergyCardClick?: (card: LorcanaCard) => void;
   /** When true, renders the mobile shell with skeleton placeholders instead of real card data. */
   isLoading?: boolean;
@@ -52,40 +51,6 @@ function EtherealOrb() {
         pointerEvents: 'none',
       }}
     />
-  );
-}
-
-function MobileTopBar({onBack}: {onBack: () => void}) {
-  return (
-    <div
-      style={{
-        height: 48,
-        background: 'linear-gradient(180deg, #0d0d14 0%, #1a1a2e 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        paddingLeft: SPACING.lg,
-        borderBottom: `1px solid ${COLORS.surfaceBorder}`,
-        position: 'sticky',
-        top: 0,
-        zIndex: 902,
-      }}>
-      <button
-        onClick={onBack}
-        aria-label="Back to home"
-        style={{
-          background: 'none',
-          border: 'none',
-          color: COLORS.primary500,
-          fontSize: FONT_SIZES.md,
-          fontWeight: 700,
-          letterSpacing: '0.96px',
-          cursor: 'pointer',
-          padding: `${SPACING.sm}px 0`,
-          fontFamily: FONTS.body,
-        }}>
-        INKWEAVE
-      </button>
-    </div>
   );
 }
 
@@ -390,7 +355,6 @@ function MobileCardContent({
 export function MobileCardDetail({
   card,
   synergies = [],
-  onBack,
   onSynergyCardClick,
   isLoading = false,
 }: MobileCardDetailProps) {
@@ -429,7 +393,6 @@ export function MobileCardDetail({
         overflowX: 'hidden',
       }}>
       <EtherealOrb />
-      <MobileTopBar onBack={onBack} />
       <div style={{position: 'relative', zIndex: 1, padding: `${SPACING.lg}px`}}>
         {showLoading ? (
           <MobileLoadingView />
