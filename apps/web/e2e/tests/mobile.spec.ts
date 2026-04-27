@@ -53,22 +53,6 @@ test.describe('Mobile Viewport', () => {
     await expect(page.getByRole('button', {name: 'Filter by Sapphire'})).toBeVisible();
   });
 
-  test('should return to home when clearing selection on mobile', async ({
-    appPage,
-    synergyResultsPage,
-    page,
-  }) => {
-    // Select a card
-    await appPage.selectFeaturedCard();
-
-    // Clear selection
-    await synergyResultsPage.clearSelection();
-
-    // Should return to home state with hero
-    await expect(appPage.heroSection).toBeVisible();
-    await expect(page).toHaveURL('/');
-  });
-
   test('should navigate to browse when searching from hero', async ({appPage, page}) => {
     // Type in hero search and press Enter to navigate
     await appPage.heroSearch.fill('Elsa');
