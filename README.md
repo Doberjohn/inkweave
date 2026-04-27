@@ -113,8 +113,9 @@ The synergy engine is a standalone package (`inkweave-synergy-engine`) with zero
 | **Shift Targets** | Direct | Shift cards paired with same-named base characters |
 | **Named Companions** | Direct | Cards referencing specific named entities |
 | **Discard** | Playstyle | Opponent discard enablers + hand-size payoffs |
-| **Location Control** | Playstyle | 8 sub-roles: at-payoff, play-trigger, buff, ramp, move, in-play-check, tutor, boost |
+| **Location Control** | Playstyle | 8 sub-roles: at-payoff, play-trigger, buff, ramp, move, in-play-check, search, boost |
 | **Lore Denial** | Playstyle | Lore steal, lore reduction, and lore prevention |
+| **Toy Tribe** | Playstyle | Toy classification + Toy-payoff cards (search/free-play, cost reduction, banish recursion) |
 
 ## Card Data
 

@@ -99,9 +99,10 @@ The engine includes 13 built-in synergy rules across two categories:
 - **Location Ramp** (`location-control`) — Reduces location play cost
 - **Move to Location** (`location-control`) — Move-to-location effects
 - **Location In-Play Check** (`location-control`) — "If you have a location" checks
-- **Location Tutor** (`location-control`) — Location search/tutor effects
+- **Location Search** (`location-control`) — Location search effects
 - **Location Boost** (`location-control`) — Boost mechanic on characters/locations
 - **Discard** (`discard`) — Opponent discard enablers + hand-size payoffs
+- **Toy** (`toy`) — Toy-classification members + Toy-payoff cards (search effects, free play, cost reduction, banish recursion)
 
 ### Custom Rules
 

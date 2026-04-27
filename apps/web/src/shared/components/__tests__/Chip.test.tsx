@@ -53,7 +53,7 @@ describe('Chip', () => {
 
     it('should render title attribute for tooltips', () => {
       render(
-        <Chip label="Tutor" active={false} onClick={vi.fn()} title="Searches for locations" />,
+        <Chip label="Search" active={false} onClick={vi.fn()} title="Searches for locations" />,
       );
       expect(screen.getByRole('button')).toHaveAttribute('title', 'Searches for locations');
     });

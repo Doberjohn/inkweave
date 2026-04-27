@@ -12,6 +12,8 @@ import {
   isDeckRamp,
   isRepeatingTrigger,
   getCostReductionTarget,
+  getToyRoles,
+  isToyCard,
 } from '../utils';
 import {createCard} from './fixtures.js';
 
@@ -540,7 +542,7 @@ describe('Location Synergy Rules', () => {
     it.each([
       ['at-payoff and play-trigger on Elsa', elsaIceArtisan, ['at-payoff', 'play-trigger']],
       ['move on Transport Pod', transportPod, ['move']],
-      ['tutor on Islands Pulled', islandsPulled, ['tutor']],
+      ['search on Islands Pulled', islandsPulled, ['search']],
     ])('should detect %s', (_label, card, expectedRoles) => {
       const roles = getLocationRoles(card);
       for (const role of expectedRoles) {
@@ -607,7 +609,7 @@ describe('Location Synergy Rules', () => {
 
       // at-payoff → 7
       expect(locationGroup.synergies.find((s) => s.card.id === 'elsa-ice-artisan')!.score).toBe(7);
-      // move/tutor → 5
+      // move/search → 5
       expect(locationGroup.synergies.find((s) => s.card.id === 'transport-pod')!.score).toBe(5);
       expect(locationGroup.synergies.find((s) => s.card.id === 'islands-pulled')!.score).toBe(5);
     });
@@ -622,8 +624,8 @@ describe('Location Synergy Rules', () => {
     it.each([
       ['at-payoff + buff → 5', ['at-payoff', 'play-trigger'], ['buff'], 5],
       ['at-payoff + move → 3', ['at-payoff'], ['move'], 3],
-      ['tutor + buff → 3', ['tutor'], ['buff'], 3],
-      ['move + tutor → 3', ['move'], ['tutor'], 3],
+      ['search + buff → 3', ['search'], ['buff'], 3],
+      ['move + search → 3', ['move'], ['search'], 3],
     ])('%s', (_label, rolesA, rolesB, expected) => {
       expect(getCrossSynergyScore(rolesA, rolesB)).toBe(expected);
     });
@@ -1534,6 +1536,162 @@ describe('Card Helper Functions', () => {
     it('should detect conditional benefits', () => {
       const card = createCard({text: 'If you have a Villain character, draw a card.'});
       expect(hasPositiveClassificationEffect(card, 'Villain')).toBe(true);
+    });
+  });
+});
+
+describe('Toy Tribal', () => {
+  const toyRule = getRuleById('toy')!;
+
+  // Real-card-shaped fixtures
+  const woodyLeader = createCard({
+    id: 'woody-leader',
+    name: 'Woody',
+    fullName: 'Woody - Leader of the Toys',
+    classifications: ['Storyborn', 'Hero', 'Toy'],
+    text: 'When you play this character, look at the top 4 cards of your deck. You may reveal a Toy character and put it into your hand. Put the rest on the bottom of your deck in any order.',
+  });
+
+  const woodyJungleGuide = createCard({
+    id: 'woody-jungle',
+    name: 'Woody',
+    fullName: 'Woody - Jungle Guide',
+    classifications: ['Floodborn', 'Hero', 'Toy'],
+    text: 'Your other Toy characters get +1 willpower.',
+  });
+
+  const sidPhillips = createCard({
+    id: 'sid-phillips',
+    name: 'Sid Phillips',
+    fullName: 'Sid Phillips - Toy Surgeon',
+    classifications: ['Storyborn', 'Villain'],
+    text: 'During your turn, whenever a Toy character is banished, gain 2 lore.',
+  });
+
+  const pizzaPlanet = createCard({
+    id: 'pizza-planet',
+    name: 'Pizza Planet',
+    fullName: 'Pizza Planet - Spaceport',
+    type: 'Location',
+    text: 'Your Toy characters can move here for free.',
+  });
+
+  const buzzMember = createCard({
+    id: 'buzz-member',
+    name: 'Buzz Lightyear',
+    fullName: 'Buzz Lightyear - Space Ranger',
+    classifications: ['Storyborn', 'Hero', 'Toy'],
+    text: '', // member only, no Toy text
+  });
+
+  const buzzAbilityName = createCard({
+    id: 'buzz-ability-name',
+    name: 'Buzz Lightyear',
+    fullName: 'Buzz Lightyear - On the Way',
+    classifications: ['Storyborn', 'Hero', 'Toy'],
+    // Ability NAME contains "TOY" but no actual Toy-tribal effect
+    text: "WORLD'S GREATEST TOY Whenever you pay 2 ⬡ or less to play a character, deal 1 damage to chosen opposing damaged character.",
+  });
+
+  const handInTheBox = createCard({
+    id: 'hand-in-box',
+    name: 'Hand-in-the-Box',
+    fullName: 'Hand-in-the-Box - Sid\'s Toy',
+    classifications: ['Storyborn', 'Ally', 'Toy'],
+    text: 'You may put a Toy character card from your discard on the bottom of your deck to play this character for free.',
+  });
+
+  const mickey = createCard({
+    id: 'mickey-control',
+    name: 'Mickey Mouse',
+    fullName: 'Mickey Mouse - Brave Little Tailor',
+    classifications: ['Storyborn', 'Hero'],
+    text: 'When you play this character, gain 1 lore.',
+  });
+
+  describe('getToyRoles', () => {
+    it('detects member from Toy classification', () => {
+      expect(getToyRoles(buzzMember)).toEqual(['member']);
+    });
+
+    it('detects payoff from text reference to "Toy character"', () => {
+      expect(getToyRoles(sidPhillips)).toEqual(['payoff']);
+    });
+
+    it('detects both roles for member+payoff cards', () => {
+      expect(getToyRoles(woodyLeader)).toEqual(['member', 'payoff']);
+    });
+
+    it('returns ["payoff"] for non-character location with Toy text', () => {
+      expect(getToyRoles(pizzaPlanet)).toEqual(['payoff']);
+    });
+
+    it('skips ability-name false positives (Buzz Lightyear "WORLD\'S GREATEST TOY")', () => {
+      expect(getToyRoles(buzzAbilityName)).toEqual(['member']);
+    });
+
+    it('returns empty for non-Toy cards', () => {
+      expect(getToyRoles(mickey)).toEqual([]);
+      expect(isToyCard(mickey)).toBe(false);
+    });
+  });
+
+  describe('rule scoring', () => {
+    const engine = new SynergyEngine();
+    const allCards = [
+      woodyLeader,
+      woodyJungleGuide,
+      sidPhillips,
+      pizzaPlanet,
+      buzzMember,
+      handInTheBox,
+      mickey,
+    ];
+
+    const findToyScore = (selected: typeof woodyLeader, partnerId: string): number => {
+      const groups = engine.findSynergies(selected, allCards);
+      const toy = groups.find((g) => g.groupKey === 'toy');
+      return toy?.synergies.find((s) => s.card.id === partnerId)?.score ?? -1;
+    };
+
+    it('member ↔ member scores 5 (density only)', () => {
+      expect(findToyScore(buzzMember, 'woody-jungle')).toBe(6);
+      // Note: Woody Jungle Guide is also a payoff (moderate tier), so score is 6 not 5.
+      // True member↔member: a Toy with no payoff text vs another such Toy.
+      const plainMemberA = createCard({id: 'rex', classifications: ['Toy'], text: ''});
+      const plainMemberB = createCard({id: 'jessie-plain', classifications: ['Toy'], text: ''});
+      const groups = engine.findSynergies(plainMemberA, [plainMemberA, plainMemberB]);
+      const toy = groups.find((g) => g.groupKey === 'toy');
+      expect(toy?.synergies[0]?.score).toBe(5);
+    });
+
+    it('member ↔ game-winning payoff (search) scores 8', () => {
+      expect(findToyScore(buzzMember, 'woody-leader')).toBe(8);
+    });
+
+    it('member ↔ game-winning payoff (free play) scores 8', () => {
+      expect(findToyScore(buzzMember, 'hand-in-box')).toBe(8);
+    });
+
+    it('member ↔ moderate payoff (buff) scores 6', () => {
+      expect(findToyScore(buzzMember, 'woody-jungle')).toBe(6);
+    });
+
+    it('member ↔ moderate payoff (banish trigger) scores 6', () => {
+      expect(findToyScore(buzzMember, 'sid-phillips')).toBe(6);
+    });
+
+    it('member ↔ minor payoff (location move) scores 5', () => {
+      expect(findToyScore(buzzMember, 'pizza-planet')).toBe(5);
+    });
+
+    it('payoff ↔ payoff (no member overlap) gets density bonus 7', () => {
+      // Sid Phillips (payoff only) ↔ Pizza Planet (payoff only) — neither is a Toy member
+      expect(findToyScore(sidPhillips, 'pizza-planet')).toBe(7);
+    });
+
+    it('rule does not match non-Toy cards', () => {
+      expect(toyRule.matches(mickey)).toBe(false);
     });
   });
 });

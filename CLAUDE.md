@@ -215,7 +215,7 @@ Characters with the Singer keyword can exert to sing Song action cards for free,
 
 ### Location Control (playstyle, 8 sub-rules)
 
-8 specialized rules detecting location-support roles: at-payoff, play-trigger, buff, location-ramp, move, in-play-check, tutor, boost. All merge into a single `location-control` playstyle group. Factory pattern (`createLocationRule`) generates each rule. Anti-location cards (banish/remove locations) are excluded.
+8 specialized rules detecting location-support roles: at-payoff, play-trigger, buff, location-ramp, move, in-play-check, search, boost. All merge into a single `location-control` playstyle group. Factory pattern (`createLocationRule`) generates each rule. Anti-location cards (banish/remove locations) are excluded.
 
 **Full documentation**: See [`packages/synergy-engine/LOCATION_CONTROL_RULE.md`](packages/synergy-engine/LOCATION_CONTROL_RULE.md) for role taxonomy, detection patterns, cross-synergy matrix, and test coverage.
 
@@ -228,6 +228,27 @@ Three-role mana acceleration strategy: **inkwell ramp** (34 cards, ~80% Sapphire
 **Excluded**: Opponent-ink cards (removal, not ramp), self-discount payoffs, free play effects, generic high-cost cards.
 
 **Full documentation**: See [`packages/synergy-engine/RAMP_RULE.md`](packages/synergy-engine/RAMP_RULE.md) for role detection, scoring matrix, coverage, and design decisions.
+
+### Rule 8: Toy (playstyle, two roles)
+
+Tribal playstyle for Toy-Story decks. **Members** are characters with the `Toy` classification; **payoffs** reference "Toy character[s]" in their text. Cards can be both. The unified rule covers both Andy's Toys (Woody/Buzz/Jessie value-engine) and Sid's Toys (banish-recursion package).
+
+**Scoring** is tier-driven, not uniform — that's the structural difference from the removed Hero/Villain/Princess tribals (`REMOVED_RULES.md`):
+
+| Pair | Score | Trigger |
+|------|-------|---------|
+| Member ↔ game-winning Payoff | **8** | Search effects (Woody Leader, YGAFIM), free play (Hand-in-the-Box) |
+| Member ↔ strong Payoff | **7** | Cost reduction (Bouncing Ducky), per-Toy scaling (Alien) |
+| Payoff ↔ Payoff | **7** | Both reward density even without member overlap |
+| Member ↔ moderate Payoff | **6** | Stat/keyword buffs (Woody Jungle Guide), banish triggers (Sid Phillips) |
+| Member ↔ minor Payoff | **5** | Positioning tech (Pizza Planet) |
+| Member ↔ Member (no payoff role) | **5** | Tribal density only |
+
+**Detection regex**: `/\bToy characters?\b/i` — tighter than `/\bToys?\b/` to avoid the Buzz Lightyear "WORLD'S GREATEST TOY" ability-name false positive.
+
+**Coverage**: 21 members, 11 payoffs, 8 cards in both roles, 24 unique total.
+
+**Full documentation**: See [`packages/synergy-engine/TOY_RULE.md`](packages/synergy-engine/TOY_RULE.md) for tier classification regex, scoring logic, and design decisions.
 
 ## Commands
 

@@ -19,6 +19,8 @@ import {
   isRepeatingTrigger,
   costReductionTargetsOverlap,
   isSong,
+  isToyCard,
+  getToyRoles,
   LOCATION_PATTERNS,
   NAMED_EFFECT_SCORES,
   textContains,
@@ -26,6 +28,7 @@ import {
   type LocationRole,
   type RampRole,
   type ShiftType,
+  type ToyRole,
 } from '../utils';
 
 // ============================================
@@ -206,7 +209,7 @@ const LOCATION_ROLE_SCORE: Record<LocationRole, number> = {
   'location-ramp': 7,
   move: 5,
   'in-play-check': 5,
-  tutor: 5,
+  search: 5,
   boost: 5,
 };
 
@@ -218,7 +221,7 @@ const ROLE_LABELS: Record<LocationRole, string> = {
   'location-ramp': 'location ramp',
   move: 'move to location',
   'in-play-check': 'location check',
-  tutor: 'location tutor',
+  search: 'location search',
   boost: 'location boost',
 };
 
@@ -230,7 +233,7 @@ export const LOCATION_ROLE_CHIP_LABELS: Record<LocationRole, string> = {
   'location-ramp': 'Ramp',
   move: 'Move',
   'in-play-check': 'Check',
-  tutor: 'Tutor',
+  search: 'Search',
   boost: 'Boost',
 };
 
@@ -242,7 +245,7 @@ export const LOCATION_ROLE_DESCRIPTIONS: Record<LocationRole, (cardName: string,
   'location-ramp': (name, loc) => `${name} reduces the cost of playing or moving characters to ${loc}`,
   move: (name, loc) => `${name} moves characters to ${loc} to create an advantage`,
   'in-play-check': (name, loc) => `${name} gains benefits when you have ${loc} in play`,
-  tutor: (name, loc) => `${name} searches your deck or discard for ${loc}`,
+  search: (name, loc) => `${name} searches your deck or discard for ${loc}`,
   boost: (name, loc) => `${name} can power up ${loc} through the Boost keyword`,
 };
 
@@ -253,16 +256,16 @@ export const LOCATION_ROLE_DESCRIPTIONS: Record<LocationRole, (cardName: string,
  */
 const COMPLEMENTARY_ROLES: Partial<Record<LocationRole, LocationRole[]>> = {
   // Enablers: these roles help get locations into play or onto the board
-  tutor: ['at-payoff', 'play-trigger', 'buff', 'move', 'in-play-check', 'boost'],
+  search: ['at-payoff', 'play-trigger', 'buff', 'move', 'in-play-check', 'boost'],
   'location-ramp': ['at-payoff', 'play-trigger', 'buff', 'move', 'in-play-check', 'boost'],
   // Positioning: move enables payoffs and benefits from buffs
   move: ['at-payoff', 'buff'],
   // Consumers: these need locations/positioning that enablers provide
-  'at-payoff': ['move', 'tutor', 'location-ramp', 'buff'],
-  'play-trigger': ['tutor', 'location-ramp'],
-  buff: ['move', 'tutor', 'location-ramp', 'at-payoff', 'in-play-check'],
-  'in-play-check': ['tutor', 'location-ramp'],
-  boost: ['tutor', 'location-ramp'],
+  'at-payoff': ['move', 'search', 'location-ramp', 'buff'],
+  'play-trigger': ['search', 'location-ramp'],
+  buff: ['move', 'search', 'location-ramp', 'at-payoff', 'in-play-check'],
+  'in-play-check': ['search', 'location-ramp'],
+  boost: ['search', 'location-ramp'],
 };
 
 /** Roles that represent high-value location strategy pieces */
@@ -437,7 +440,7 @@ function createLocationRules(): SynergyRule[] {
       'in-play-check',
       LOCATION_PATTERNS['in-play-check'],
     ),
-    createLocationRule('tutor', 'Location Tutor', 'tutor', LOCATION_PATTERNS.tutor),
+    createLocationRule('search', 'Location Search', 'search', LOCATION_PATTERNS.search),
     createLocationRule('boost', 'Location Boost', 'boost', LOCATION_PATTERNS.boost),
   ];
 }
@@ -466,7 +469,7 @@ export const LOCATION_ROLE_TOOLTIP: Record<LocationRole, string> = {
   'location-ramp': 'Reduces the cost of playing or moving to locations',
   move: 'Moves characters to locations for positioning advantage',
   'in-play-check': 'Gains benefits when you have locations in play',
-  tutor: 'Searches your deck or discard for location cards',
+  search: 'Searches your deck or discard for location cards',
   boost: 'Works with the Boost keyword to power up locations',
 };
 
@@ -753,6 +756,38 @@ export const synergyRules: SynergyRule[] = [
       return matches;
     },
   },
+
+  // --------------------------------------------
+  // TOY TRIBAL
+  // --------------------------------------------
+  {
+    id: 'toy',
+    name: 'Toy',
+    category: 'playstyle',
+    playstyleId: 'toy',
+    description:
+      'Toy characters and Toy-payoff cards reinforce a tight tribal strategy with search effects, cost reduction, and banish recursion',
+
+    matches: isToyCard,
+
+    findSynergies: (card, allCards) => {
+      const cardRoles = getToyRoles(card);
+      if (cardRoles.length === 0) return [];
+
+      const matches: SynergyMatch[] = [];
+
+      for (const other of allCards) {
+        if (other.id === card.id) continue;
+        const otherRoles = getToyRoles(other);
+        if (otherRoles.length === 0) continue;
+
+        const {score, explanation} = scoreToyPair(card, cardRoles, other, otherRoles);
+        matches.push({card: other, score, explanation, bidirectional: true});
+      }
+
+      return matches;
+    },
+  },
 ];
 
 // ============================================
@@ -888,6 +923,123 @@ function getRampExplanation(
   }
 
   return `${cardA.fullName} and ${cardB.fullName} reinforce the ramp strategy`;
+}
+
+// ============================================
+// TOY TRIBAL SCORING
+// ============================================
+
+type ToyPayoffTier = 'game-winning' | 'strong' | 'moderate' | 'minor';
+
+const TOY_TIER_TO_MEMBER_SCORE: Record<ToyPayoffTier, number> = {
+  'game-winning': 8,
+  strong: 7,
+  moderate: 6,
+  minor: 5,
+};
+
+const TOY_TIER_DESCRIPTION: Record<ToyPayoffTier, string> = {
+  'game-winning': 'searches for and free-plays Toys',
+  strong: 'reduces cost or scales with Toy density',
+  moderate: 'buffs Toys or rewards their banish',
+  minor: 'enables Toy positioning',
+};
+
+/**
+ * Classify a Toy payoff card into an effect tier. The card has already been
+ * confirmed to match the Toy-payoff regex; this picks which tier its effect lands in.
+ *
+ * Tier definitions:
+ *   - game-winning: search effects that fetch Toys (Woody — Leader of the Toys,
+ *     You've Got a Friend in Me) AND free-play effects (Hand-in-the-Box)
+ *   - strong: cost reduction (Bouncing Ducky, Wind-Up Frog) AND
+ *     stat scaling per Toy (Alien — True Believer, Jessie — Lively Cowgirl)
+ *   - moderate: stat/keyword buffs (Woody — Jungle Guide) AND
+ *     lore/keyword grants on Toy banish (Sid Phillips, Jingle Joe)
+ *   - minor: location-move tech (Pizza Planet — Spaceport)
+ */
+function classifyToyPayoff(card: LorcanaCard): ToyPayoffTier {
+  const text = (card.text ?? '').replace(/\s+/g, ' ');
+
+  // game-winning: search-and-reveal Toys (Woody Leader, YGAFIM) OR free-play involving a Toy (Hand-in-the-Box)
+  if (/look at the top \d+ cards.*?reveal.*?Toy character/i.test(text)) return 'game-winning';
+  if (
+    /Toy character.*?play this character for free|play this character for free.*?Toy character/i.test(
+      text,
+    )
+  )
+    return 'game-winning';
+
+  // strong: Toy-conditional cost reduction (Bouncing Ducky, Wind-Up Frog),
+  //         per-Toy scaling (Alien — True Believer), density gate (Jessie)
+  if (/Toy character.*?pay \d+\s*\W+\s*less|pay \d+\s*\W+\s*less.*?Toy character/i.test(text))
+    return 'strong';
+  if (/for each (?:other )?Toy character/i.test(text)) return 'strong';
+  if (/\d+ or more (?:other )?Toy characters/i.test(text)) return 'strong';
+
+  // moderate: Toy stat/keyword buffs (Woody Jungle Guide), Toy-banish triggers (Sid Phillips, Jingle Joe)
+  if (/Toy characters? (?:get|gain)/i.test(text)) return 'moderate';
+  if (/Toy characters?.*?(?:is|was|are|were).*?banished/i.test(text)) return 'moderate';
+
+  // minor: anything else (currently Pizza Planet — Spaceport's free-move tech)
+  return 'minor';
+}
+
+function scoreDirectedToyPair(
+  payoff: LorcanaCard,
+  member: LorcanaCard,
+): {score: number; explanation: string} {
+  const tier = classifyToyPayoff(payoff);
+  return {
+    score: TOY_TIER_TO_MEMBER_SCORE[tier],
+    explanation: `${payoff.fullName} ${TOY_TIER_DESCRIPTION[tier]} — including ${member.fullName}`,
+  };
+}
+
+function collectToyPairCandidates(
+  card: LorcanaCard,
+  cardRoles: ToyRole[],
+  other: LorcanaCard,
+  otherRoles: ToyRole[],
+): Array<{score: number; explanation: string}> {
+  const candidates: Array<{score: number; explanation: string}> = [];
+
+  // Member ↔ Payoff: tier-driven scoring in each applicable direction
+  if (cardRoles.includes('payoff') && otherRoles.includes('member')) {
+    candidates.push(scoreDirectedToyPair(card, other));
+  }
+  if (otherRoles.includes('payoff') && cardRoles.includes('member')) {
+    candidates.push(scoreDirectedToyPair(other, card));
+  }
+
+  // Payoff ↔ Payoff: density bonus regardless of member overlap
+  if (cardRoles.includes('payoff') && otherRoles.includes('payoff')) {
+    candidates.push({
+      score: 7,
+      explanation: `Both ${card.fullName} and ${other.fullName} reward running a Toy-heavy deck`,
+    });
+  }
+
+  return candidates;
+}
+
+function scoreToyPair(
+  card: LorcanaCard,
+  cardRoles: ToyRole[],
+  other: LorcanaCard,
+  otherRoles: ToyRole[],
+): {score: number; explanation: string} {
+  const candidates = collectToyPairCandidates(card, cardRoles, other, otherRoles);
+
+  // Member ↔ Member fallback — neither side is a payoff, density is the only thread
+  if (candidates.length === 0) {
+    return {
+      score: 5,
+      explanation: `${card.fullName} and ${other.fullName} are both Toys — density makes payoff cards stronger`,
+    };
+  }
+
+  return candidates.reduce((best, candidate) => (candidate.score > best.score ? candidate : best));
 }
 
 // Get all rules

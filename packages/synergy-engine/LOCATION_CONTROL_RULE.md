@@ -3,7 +3,7 @@
 Detailed documentation for the Location Control rules — a playstyle synergy built from 8 sub-rules using a factory pattern.
 
 **Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/cardHelpers.ts`
-**Rule IDs**: `location-at-payoff`, `location-play-trigger`, `location-buff`, `location-location-ramp`, `location-move`, `location-in-play-check`, `location-tutor`, `location-boost`
+**Rule IDs**: `location-at-payoff`, `location-play-trigger`, `location-buff`, `location-location-ramp`, `location-move`, `location-in-play-check`, `location-search`, `location-boost`
 **Category**: `playstyle`
 **Playstyle ID**: `location-control`
 
@@ -33,7 +33,7 @@ Each role has a distinct detection pattern and a distinct score when paired with
 | `location-ramp` | **7** | High-value | Reduces cost of playing/moving to locations |
 | `move` | **5** | Utility | Moves characters to locations for positioning |
 | `in-play-check` | **5** | Utility | Gains benefits when you have locations in play |
-| `tutor` | **5** | Utility | Searches deck/discard for location cards |
+| `search` | **5** | Utility | Searches deck/discard for location cards |
 | `boost` | **5** | Utility | Works with the Boost keyword to power up locations |
 
 ```chart
@@ -41,7 +41,7 @@ Each role has a distinct detection pattern and a distinct score when paired with
   "type": "bar",
   "title": "Matches per Sub-Rule (4,220 total)",
   "data": {
-    "labels": ["Boost", "At Payoff", "Move", "In-Play Check", "Buff", "Ramp", "Tutor"],
+    "labels": ["Boost", "At Payoff", "Move", "In-Play Check", "Buff", "Ramp", "Search"],
     "datasets": [{
       "label": "Matches",
       "data": [1112, 688, 586, 546, 458, 418, 412],
@@ -120,7 +120,7 @@ Moves characters to locations for positioning.
 
 Gains benefits when you have locations in play.
 
-#### Tutor (Score 5)
+#### Search (Score 5)
 
 | Support | Location |
 |:-------:|:--------:|
@@ -151,7 +151,7 @@ Works with the Boost keyword to power up locations.
 **Utility roles (score 5)** provide enabling or conditional value:
 - Move cards help position characters but don't generate value alone
 - In-play-check cards get a passive bonus but don't interact with the Location directly
-- Tutor cards find Locations for consistency but provide no direct board impact
+- Search cards find Locations for consistency but provide no direct board impact
 - Boost cards synergize with a specific mechanic, not Locations broadly
 
 ---
@@ -176,7 +176,7 @@ Returns all roles a card fulfills (cards can have multiple roles). Location card
 | `location-ramp` | `\bless\b.*(?:to )?(?:play\|move).*location\|\bless\b for.*location\|play a location.*(?:from\|for free)` | "you pay 2 less for the next location you play this turn" |
 | `move` | `move.*to.*location\|moves to a location\|move.*character.*location\|to the same location` | "you may move a character of yours to a location for free" |
 | `in-play-check` | `if you have a location\|while you have a.*(location)\|for each location` | "For each location you have in play, this character gains Resist +1" |
-| `tutor` | `search.*location card\|reveal.*location card\|return a location\|location card from` | "Search your deck for a location card" |
+| `search` | `search.*location card\|reveal.*location card\|return a location\|location card from` | "Search your deck for a location card" |
 | `boost` | `under.*(?:characters\|character) or locations\|under.*locations\|locations with boost\|play a character or location with boost` | "Whenever you put a card under one of your characters or locations" |
 
 ### Exclude Patterns
@@ -213,14 +213,14 @@ Two support cards can synergize if their roles are **complementary** — meaning
 ### Complementary Role Matrix
 
 ```
-               at-payoff  play-trigger  buff  ramp  move  in-play  tutor  boost
+               at-payoff  play-trigger  buff  ramp  move  in-play  search  boost
 at-payoff         -            -         ✓     -     ✓       -       ✓      -
 play-trigger      -            -         -     -     -       -       ✓      -
 buff              ✓            -         -     -     ✓       ✓       ✓      -
 ramp              ✓            ✓         ✓     -     ✓       ✓       -      ✓
 move              ✓            -         ✓     -     -       -       -      -
 in-play-check     -            -         -     -     -       -       ✓      -
-tutor             ✓            ✓         ✓     -     ✓       ✓       -      ✓
+search             ✓            ✓         ✓     -     ✓       ✓       -      ✓
 boost             -            -         -     -     -       -       ✓      -
 ```
 
@@ -236,7 +236,7 @@ Relationships are checked **bidirectionally** — if A complements B or B comple
 
 ### Why Low Cross-Synergy Scores?
 
-Two support cards without a Location in play have minimal interaction. The tutor can find a Location, the buff can protect it, but without the Location itself, neither card is doing its job. Score 5 for high-value pairs acknowledges the strategic alignment; score 3 for utility pairs reflects the loose thematic overlap.
+Two support cards without a Location in play have minimal interaction. The search can find a Location, the buff can protect it, but without the Location itself, neither card is doing its job. Score 5 for high-value pairs acknowledges the strategic alignment; score 3 for utility pairs reflects the loose thematic overlap.
 
 ---
 
@@ -263,7 +263,7 @@ Each call produces a complete `SynergyRule` with:
 ```typescript
 createLocationRules(): SynergyRule[]
 // Returns 8 rules in order:
-// at-payoff, play-trigger, buff, location-ramp, move, in-play-check, tutor, boost
+// at-payoff, play-trigger, buff, location-ramp, move, in-play-check, search, boost
 ```
 
 Order matters for deduplication — when the engine merges results from all 8 rules into the `location-control` playstyle group, earlier rules' matches take priority for the same card pair.
@@ -298,7 +298,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 |------|-----------------|
 | Elsa Ice Artisan → at-payoff + play-trigger | Multi-role detection |
 | Transport Pod → move | Move role detection |
-| Islands I Pulled → tutor | Tutor role detection |
+| Islands I Pulled → search | Search role detection |
 | John Silver → in-play-check | "for each location" detection |
 | Felix Steward → buff | "Your locations get" detection |
 | Location and unrelated cards → empty | Locations return no roles; unrelated text returns no roles |
@@ -309,7 +309,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 |------|-----------------|
 | Location selected → finds all support cards | Agrabah finds Elsa, Transport Pod, John Silver, Islands, Felix |
 | Support card selected → finds Locations | Elsa finds Agrabah and Motunui |
-| Correct scores by role | at-payoff=7, move=5, tutor=5 |
+| Correct scores by role | at-payoff=7, move=5, search=5 |
 | Unrelated card → no location synergies | Anna (no location text) produces no location-control group |
 
 ### Cross-Synergy Tests (6 tests)
@@ -318,8 +318,8 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 |------|-------|-------|
 | at-payoff + buff → 5 | Both high-value, complementary |
 | at-payoff + move → 3 | One high-value, complementary |
-| tutor + buff → 3 | One utility, complementary |
-| move + tutor → 3 | Both utility, complementary |
+| search + buff → 3 | One utility, complementary |
+| move + search → 3 | Both utility, complementary |
 | Same roles → null | No cross-synergy for identical roles |
 | Non-complementary → null | e.g., at-payoff + in-play-check |
 
@@ -368,4 +368,4 @@ An alternative design would use one rule that detects all location patterns and 
 
 ### Why Bidirectional Complementary Checks?
 
-The complementary role matrix isn't symmetric by design. "Tutor complements at-payoff" (tutor finds locations that at-payoff needs) but "at-payoff" also "complements tutor" is debatable — at-payoff doesn't help tutor do its job. The bidirectional check (`A→B || B→A`) errs on the side of inclusion: if *either* direction has a meaningful interaction, the pair gets cross-synergy. This matches the user expectation that "these cards work together in a location deck."
+The complementary role matrix isn't symmetric by design. "Search complements at-payoff" (search finds locations that at-payoff needs) but "at-payoff" also "complements search" is debatable — at-payoff doesn't help search do its job. The bidirectional check (`A→B || B→A`) errs on the side of inclusion: if *either* direction has a meaningful interaction, the pair gets cross-synergy. This matches the user expectation that "these cards work together in a location deck."

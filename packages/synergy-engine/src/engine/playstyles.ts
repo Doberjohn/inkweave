@@ -18,9 +18,9 @@ const playstyles: Playstyle[] = [
     description:
       'Cards that synergize through location-based gameplay. Moving characters to locations, buffing them there, and triggering location payoffs.',
     strategyTips: [
-      'Balance your roles — tutors and ramp get locations into play, but you need payoff and buff cards to win with them.',
+      'Balance your roles — search and ramp get locations into play, but you need payoff and buff cards to win with them.',
       'Protect your locations with buff cards (willpower boosts, resist) since opponents will try to banish them.',
-      'Include at least one tutor to find key locations consistently.',
+      'Include at least one search effect to find key locations consistently.',
       'Move effects are strongest when paired with at-location payoffs — free moves let you trigger payoffs without paying ink.',
       'Avoid overloading on locations themselves; 3-4 locations plus strong support cards is more effective than 6+ locations.',
     ],
@@ -36,6 +36,19 @@ const playstyles: Playstyle[] = [
       'Maintain your own hand size with card draw so you stay ahead on cards while forcing discards.',
       'Hand-cap effects shine in the late game when opponents naturally have fewer cards to work with.',
       'Timing matters — discard effects are most punishing when your opponent is down to their last 1-2 cards, which are usually the ones they fought hardest to keep.',
+    ],
+  },
+  {
+    id: 'toy',
+    name: 'Toy Tribe',
+    description:
+      'Toy characters and the cards that reward running them — search effects, cost reduction, banish recursion (Sid\'s Toys), and stat scaling. Density is the lever: each additional Toy or payoff makes every other card in the strategy stronger.',
+    strategyTips: [
+      'Aim for 12 to 16 Toys plus 4 to 6 payoffs so search effects and density triggers reliably hit.',
+      'Search effects (Woody — Leader of the Toys, You\'ve Got a Friend in Me) chain into free plays — keep cheap Toys in the deck for them to fetch.',
+      'The Sid\'s Toys package (Hand-in-the-Box, Wind-Up Frog, Bouncing Ducky, Jingle Joe, Sid Phillips) rewards self-banish loops — pair with sacrifice outlets or trade aggressively.',
+      'Pizza Planet — Spaceport gives free moves for Toys; pair with at-location payoffs (Beast — Snowfield Troublemaker) for cross-archetype value.',
+      'The tribe is mostly Amber and Ruby. Amber+Ruby decks get the deepest pool; mono-Amber leans on Andy\'s Toys, mono-Ruby leans on Sid\'s Toys.',
     ],
   },
   {

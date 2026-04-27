@@ -199,7 +199,7 @@ export const LOCATION_PATTERNS = {
   'move-exclude': /move.*damage/i,
   'play-trigger': /when(?:ever)? you play a location|whenever.*play a location/i,
   'in-play-check': /if you have a location|while you have a.*(location)|for each location/i,
-  tutor: /search.*location card|reveal.*location card|return a location|location card from/i,
+  search: /search.*location card|reveal.*location card|return a location|location card from/i,
   buff: /your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
   boost:
     /under.*(?:characters|character) or locations|under.*locations|locations with boost|play a character or location with boost/i,
@@ -214,7 +214,7 @@ export type LocationRole =
   | 'move'
   | 'play-trigger'
   | 'in-play-check'
-  | 'tutor'
+  | 'search'
   | 'buff'
   | 'boost'
   | 'location-ramp';
@@ -241,7 +241,7 @@ export function getLocationRoles(card: LorcanaCard): LocationRole[] {
 
   if (LOCATION_PATTERNS['in-play-check'].test(card.text)) roles.push('in-play-check');
 
-  if (LOCATION_PATTERNS.tutor.test(card.text)) roles.push('tutor');
+  if (LOCATION_PATTERNS.search.test(card.text)) roles.push('search');
 
   if (LOCATION_PATTERNS.buff.test(card.text)) roles.push('buff');
 
@@ -591,7 +591,7 @@ export function classifyNamedEffect(card: LorcanaCard): NamedEffectTier {
   // Hostile: banish/exert/damage the named character (limit distance to same clause)
   if (/banish.{0,40}named|named.{0,40}banish/.test(text)) return 'hostile';
 
-  // Game-winning: free play, draw multiple, tutor from deck
+  // Game-winning: free play, draw multiple, deck search
   if (/play.*for free|for free|play.*without paying/.test(text)) return 'game-winning';
   if (/draw \d+ card|draw cards/.test(text)) return 'game-winning';
   if (/search your deck/.test(text)) return 'game-winning';
@@ -681,3 +681,31 @@ export function hasPositiveClassificationEffect(
 
   return positivePatterns.some((pattern) => text.includes(pattern));
 }
+
+// ============================================
+// TOY TRIBAL DETECTION
+// ============================================
+
+/**
+ * Detects cards whose text references Toy characters (payoff role).
+ * Uses "Toy character[s]" rather than bare "Toy" to skip ability-name false
+ * positives (e.g., Buzz Lightyear — On the Way's "WORLD'S GREATEST TOY" name).
+ */
+const TOY_PAYOFF_PATTERN = /\bToy characters?\b/i;
+
+/**
+ * Roles in the Toy tribal playstyle:
+ * - 'member': has the Toy classification (e.g., Woody, Buzz Lightyear)
+ * - 'payoff': text rewards or scales with Toys (e.g., Sid Phillips, Pizza Planet)
+ * Cards can be both — Woody — Leader of the Toys is a Toy AND searches for Toys.
+ */
+export type ToyRole = 'member' | 'payoff';
+
+export function getToyRoles(card: LorcanaCard): ToyRole[] {
+  const roles: ToyRole[] = [];
+  if (hasClassification(card, 'Toy')) roles.push('member');
+  if (card.text && TOY_PAYOFF_PATTERN.test(card.text)) roles.push('payoff');
+  return roles;
+}
+
+export const isToyCard = (card: LorcanaCard): boolean => getToyRoles(card).length > 0;

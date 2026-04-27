@@ -31,8 +31,10 @@ export {
   isRepeatingTrigger,
   getCostReductionTarget,
   costReductionTargetsOverlap,
+  getToyRoles,
+  isToyCard,
 } from './cardHelpers.js';
-export type {LocationRole, ShiftType, NamedEffectTier, DiscardRole, RampRole, CostReductionTarget} from './cardHelpers.js';
+export type {LocationRole, ShiftType, NamedEffectTier, DiscardRole, RampRole, CostReductionTarget, ToyRole} from './cardHelpers.js';
 
 export {isCardType} from './typeGuards.js';
 

@@ -38,7 +38,7 @@ export const ToggleWithCount: Story = {
 
 export const ToggleWithTooltip: Story = {
   args: {
-    label: 'Tutor',
+    label: 'Search',
     active: false,
     onClick: fn(),
     title: 'Searches your deck or discard for location cards',
@@ -48,7 +48,7 @@ export const ToggleWithTooltip: Story = {
 export const ToggleGroup: Story = {
   render: function ToggleGroupStory() {
     const [active, setActive] = useState<string | null>(null);
-    const chips = ['All', 'Payoff', 'Trigger', 'Buff', 'Tutor'];
+    const chips = ['All', 'Payoff', 'Trigger', 'Buff', 'Search'];
     return (
       <div style={{display: 'flex', gap: 8, flexWrap: 'wrap'}}>
         {chips.map((label) => (

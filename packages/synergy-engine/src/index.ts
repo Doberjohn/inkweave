@@ -75,5 +75,7 @@ export {
   isRepeatingTrigger,
   transformCard,
   transformCards,
+  getToyRoles,
+  isToyCard,
 } from './utils';
-export type {LocationRole, ShiftType, NamedEffectTier, DiscardRole, RampRole, LorcanaJSONCard} from './utils';
+export type {LocationRole, ShiftType, NamedEffectTier, DiscardRole, RampRole, ToyRole, LorcanaJSONCard} from './utils';

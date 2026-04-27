@@ -18,6 +18,7 @@ export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
   'location-control': makeUiMeta('#71717a', '/art/playstyles/location-control-cover.webp'),
   discard: makeUiMeta('#10b981', '/art/playstyles/discard.webp'),
   ramp: makeUiMeta('#3b82f6', '/art/playstyles/ramp.webp'),
+  toy: makeUiMeta('#f59e0b', '/art/playstyles/toy.webp'),
 };
 
 export interface ComingSoonPlaystyle extends PlaystyleUiMeta {
