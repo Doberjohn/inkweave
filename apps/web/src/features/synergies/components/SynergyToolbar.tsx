@@ -283,7 +283,6 @@ export function SynergyToolbar({
               value={sortOrder}
               onChange={onSortChange}
               ariaLabel="Sort synergies"
-              isMobile={isMobile}
             />
           </div>
         )}
