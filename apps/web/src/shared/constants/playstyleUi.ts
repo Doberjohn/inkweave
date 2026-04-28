@@ -55,4 +55,34 @@ export const COMING_SOON_PLAYSTYLES: ComingSoonPlaystyle[] = [
     '#8b5cf6',
     '/art/playstyles/exert.webp',
   ),
+  makeComingSoon(
+    'Dwarfs',
+    'Seven Dwarfs characters and the cards that reward running them. Search effects and named-companion abilities pull more Dwarfs onto the board, and stat boosts scale with how many you control. Each Dwarf you add makes the rest of the team stronger.',
+    '#8b5cf6',
+    '/art/playstyles/dwarf.webp',
+  ),
+  makeComingSoon(
+    'Villains',
+    'Villain characters and the cards that reward running them. Named-companion plays bring more Villains onto the board, stat-scaling abilities reward filling it, and several Villain-only effects punish opponent plays. The team grows stronger with every Villain you add.',
+    '#3b82f6',
+    '/art/playstyles/villain.webp',
+  ),
+  makeComingSoon(
+    'Princesses',
+    'Princess characters and the cards that reward running them. Princesses scale with team size, gain stat boosts when other Princesses are around, and unlock Princess-only effects that turn a full lineup into consistent lore. Each Princess you add makes the others stronger.',
+    '#f59e0b',
+    '/art/playstyles/princess.webp',
+  ),
+  makeComingSoon(
+    'Madrigals',
+    'Madrigal characters and the cards that reward running them. Each family member brings a different ability, and Madrigal-specific effects link them into a chain of triggers each turn. A full Madrigal lineup turns the family\'s variety into consistent extra value.',
+    '#8b5cf6',
+    '/art/playstyles/madrigal.webp',
+  ),
+  makeComingSoon(
+    'Supers',
+    'Super characters and the cards that reward running them. Each Super gains stat boosts when other Supers are around, search effects pull more onto the board, and team-only abilities reward fielding the whole family at once. A full Super team quests fast and challenges aggressively.',
+    '#ef4444',
+    '/art/playstyles/super.webp',
+  ),
 ];
