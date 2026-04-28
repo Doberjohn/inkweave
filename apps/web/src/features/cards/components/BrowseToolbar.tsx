@@ -276,6 +276,7 @@ export function BrowseToolbar({
           value={sortOrder}
           onChange={onSortChange}
           ariaLabel="Sort cards"
+          isMobile={isMobile}
         />
       </div>
     </div>
