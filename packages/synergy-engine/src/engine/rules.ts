@@ -1058,6 +1058,87 @@ const TOY_TRIBAL_ROLES: readonly ToyRole[] = ['search', 'banish-trigger', 'self-
 const hasTribalRole = (roles: ToyRole[]): boolean =>
   roles.some((r) => TOY_TRIBAL_ROLES.includes(r));
 
+type ToyPairResult = {score: number; explanation: string};
+
+/** Pair context passed to each tier helper — derived flags so the helpers stay shape-agnostic. */
+interface ToyPairCtx {
+  card: LorcanaCard;
+  other: LorcanaCard;
+  aMember: boolean;
+  bMember: boolean;
+  aHasSearch: boolean;
+  bHasSearch: boolean;
+  aHasBanish: boolean;
+  bHasBanish: boolean;
+  aTribal: boolean;
+  bTribal: boolean;
+}
+
+function buildToyPairCtx(
+  card: LorcanaCard,
+  cardRoles: ToyRole[],
+  other: LorcanaCard,
+  otherRoles: ToyRole[],
+): ToyPairCtx {
+  return {
+    card,
+    other,
+    aMember: cardRoles.includes('member'),
+    bMember: otherRoles.includes('member'),
+    aHasSearch: cardRoles.includes('search'),
+    bHasSearch: otherRoles.includes('search'),
+    aHasBanish: cardRoles.includes('banish-trigger'),
+    bHasBanish: otherRoles.includes('banish-trigger'),
+    aTribal: hasTribalRole(cardRoles),
+    bTribal: hasTribalRole(otherRoles),
+  };
+}
+
+/** 8 — search ↔ banish-trigger (peak tribal chain: load board, pay off on banish). */
+function tryToyPeakChain(ctx: ToyPairCtx): ToyPairResult | null {
+  const matched = (ctx.aHasSearch && ctx.bHasBanish) || (ctx.aHasBanish && ctx.bHasSearch);
+  if (!matched) return null;
+  const searcher = ctx.aHasSearch ? ctx.card : ctx.other;
+  const trigger = ctx.aHasBanish ? ctx.card : ctx.other;
+  return {
+    score: 8,
+    explanation: `${searcher.fullName} loads a Toy onto the board, then ${trigger.fullName} pays off when it's banished — peak tribal chain`,
+  };
+}
+
+/** 8 — Member ↔ search (search converts a deck slot to a tribal member). */
+function tryToyMemberSearch(ctx: ToyPairCtx): ToyPairResult | null {
+  const matched = (ctx.aMember && ctx.bHasSearch) || (ctx.aHasSearch && ctx.bMember);
+  if (!matched) return null;
+  const searcher = ctx.aHasSearch ? ctx.card : ctx.other;
+  const memberCard = ctx.aHasSearch ? ctx.other : ctx.card;
+  return {
+    score: 8,
+    explanation: `${searcher.fullName} can fetch ${memberCard.fullName} from the deck — direct tribal access`,
+  };
+}
+
+/** 7 — Tribal ↔ Tribal (multiple density rewards compound). */
+function tryToyTribalCompound(ctx: ToyPairCtx): ToyPairResult | null {
+  if (!(ctx.aTribal && ctx.bTribal)) return null;
+  return {
+    score: 7,
+    explanation: `${ctx.card.fullName} and ${ctx.other.fullName} both reward Toy density — tribal payoffs compound`,
+  };
+}
+
+/** 7 — Member ↔ Tribal (member feeds the tribal payoff). */
+function tryToyMemberTribal(ctx: ToyPairCtx): ToyPairResult | null {
+  const matched = (ctx.aMember && ctx.bTribal) || (ctx.aTribal && ctx.bMember);
+  if (!matched) return null;
+  const tribalCard = ctx.aTribal ? ctx.card : ctx.other;
+  const memberCard = ctx.aTribal ? ctx.other : ctx.card;
+  return {
+    score: 7,
+    explanation: `${memberCard.fullName} contributes to the Toy density that ${tribalCard.fullName} rewards`,
+  };
+}
+
 /**
  * Score a Toy pair using a role-driven matrix.
  *
@@ -1076,61 +1157,17 @@ function scoreToyPair(
   cardRoles: ToyRole[],
   other: LorcanaCard,
   otherRoles: ToyRole[],
-): {score: number; explanation: string} {
-  const aMember = cardRoles.includes('member');
-  const bMember = otherRoles.includes('member');
-  const aHasSearch = cardRoles.includes('search');
-  const bHasSearch = otherRoles.includes('search');
-  const aHasBanish = cardRoles.includes('banish-trigger');
-  const bHasBanish = otherRoles.includes('banish-trigger');
-  const aTribal = hasTribalRole(cardRoles);
-  const bTribal = hasTribalRole(otherRoles);
-
-  // 8 — search ↔ banish-trigger (peak tribal chain)
-  if ((aHasSearch && bHasBanish) || (aHasBanish && bHasSearch)) {
-    const searcher = aHasSearch ? card : other;
-    const trigger = aHasBanish ? card : other;
-    return {
-      score: 8,
-      explanation: `${searcher.fullName} loads a Toy onto the board, then ${trigger.fullName} pays off when it's banished — peak tribal chain`,
-    };
-  }
-
-  // 8 — Member ↔ search (search fetches a tribal member from the deck)
-  if ((aMember && bHasSearch) || (aHasSearch && bMember)) {
-    const searcher = aHasSearch ? card : other;
-    const memberCard = aHasSearch ? other : card;
-    return {
-      score: 8,
-      explanation: `${searcher.fullName} can fetch ${memberCard.fullName} from the deck — direct tribal access`,
-    };
-  }
-
-  // 7 — Tribal ↔ Tribal (other combinations: both reward Toy density)
-  if (aTribal && bTribal) {
-    return {
-      score: 7,
-      explanation: `${card.fullName} and ${other.fullName} both reward Toy density — tribal payoffs compound`,
-    };
-  }
-
-  // 7 — Member ↔ Tribal (member feeds the tribal payoff)
-  if ((aMember && bTribal) || (aTribal && bMember)) {
-    const tribalCard = aTribal ? card : other;
-    const memberCard = aTribal ? other : card;
-    return {
-      score: 7,
-      explanation: `${memberCard.fullName} contributes to the Toy density that ${tribalCard.fullName} rewards`,
-    };
-  }
-
-  // 5 — same-deck baseline (Member↔Member, Member↔generic, Generic↔generic).
-  // Generic-mechanic synergies (draw↔draw, burn↔steal) are owned by their own rules;
-  // Toys gives them only the deck-share floor to avoid double-counting.
-  return {
-    score: 5,
-    explanation: `${card.fullName} and ${other.fullName} share the Toys deck — density baseline`,
-  };
+): ToyPairResult {
+  const ctx = buildToyPairCtx(card, cardRoles, other, otherRoles);
+  return (
+    tryToyPeakChain(ctx) ??
+    tryToyMemberSearch(ctx) ??
+    tryToyTribalCompound(ctx) ??
+    tryToyMemberTribal(ctx) ?? {
+      score: 5,
+      explanation: `${card.fullName} and ${other.fullName} share the Toys deck — density baseline`,
+    }
+  );
 }
 
 // Get all rules

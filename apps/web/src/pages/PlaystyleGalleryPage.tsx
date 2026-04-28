@@ -513,28 +513,30 @@ type ActivePlaystyleEntry = {
 type PlaystyleCardData = ReturnType<typeof useAllPlaystyleCards>['data'];
 
 /**
+ * Per-playstyle role detector — returns the chip-eligible roles for one card.
+ * Toy filters out 'member' since it's the membership signal, not a displayed chip.
+ */
+const ROLE_DETECTORS: Partial<Record<PlaystyleId, (card: LorcanaCard) => readonly string[]>> = {
+  'location-control': getLocationRoles,
+  discard: getDiscardRoles,
+  ramp: getRampRoles,
+  'lore-denial': getLoreDenialRoles,
+  toy: (card) => getToyRoles(card).filter((r) => r !== 'member'),
+};
+
+/**
  * Number of mechanic chips actually populated by ≥1 card in the playstyle.
  * Empirical, not taxonomic — matches what the detail page renders, so the
  * gallery card and the detail page agree on the count. Locations also count
  * the synthetic "Locations" type-filter chip when ≥1 Location is present.
  */
 function getPopulatedRoleCount(playstyleId: PlaystyleId, cards: LorcanaCard[]): number {
+  const detector = ROLE_DETECTORS[playstyleId];
+  if (!detector) return 0;
   const populated = new Set<string>();
-  const collect = (roles: readonly string[]) => {
-    for (const r of roles) populated.add(r);
-  };
-  if (playstyleId === 'location-control') {
-    for (const c of cards) collect(getLocationRoles(c));
-    if (cards.some((c) => c.type === 'Location')) populated.add('__locations-type__');
-  } else if (playstyleId === 'discard') {
-    for (const c of cards) collect(getDiscardRoles(c));
-  } else if (playstyleId === 'ramp') {
-    for (const c of cards) collect(getRampRoles(c));
-  } else if (playstyleId === 'lore-denial') {
-    for (const c of cards) collect(getLoreDenialRoles(c));
-  } else if (playstyleId === 'toy') {
-    // Skip 'member' — it's the membership signal, not a displayed mechanic chip.
-    for (const c of cards) for (const r of getToyRoles(c)) if (r !== 'member') populated.add(r);
+  for (const card of cards) for (const role of detector(card)) populated.add(role);
+  if (playstyleId === 'location-control' && cards.some((c) => c.type === 'Location')) {
+    populated.add('__locations-type__');
   }
   return populated.size;
 }

@@ -55,6 +55,38 @@ export function RoleTileRow({tiles, activeRoles, onToggle}: RoleTileRowProps) {
   );
 }
 
+/** Compute box-shadow for the tile based on active/hover state. */
+function tileBoxShadow(active: boolean, hovered: boolean): string {
+  if (active) return `0 0 0 1px ${COLORS.primaryMuted}, 0 0 18px rgba(212, 175, 55, 0.18)`;
+  if (hovered) return '0 4px 12px rgba(0, 0, 0, 0.4)';
+  return 'none';
+}
+
+/** Compute the full button style for a RoleTile based on its interaction state. */
+function getRoleTileButtonStyle(active: boolean, hovered: boolean): React.CSSProperties {
+  return {
+    position: 'relative',
+    background: active || hovered ? COLORS.surface : COLORS.surfaceAlt,
+    border: `1px solid ${active || hovered ? COLORS.primaryMuted : COLORS.surfaceBorder}`,
+    borderRadius: 8,
+    padding: '14px 12px',
+    cursor: 'pointer',
+    textAlign: 'center',
+    color: COLORS.text,
+    fontFamily: FONTS.body,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    minHeight: 120,
+    transition:
+      'transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.2s ease',
+    transform: hovered && !active ? 'translateY(-1px)' : 'translateY(0)',
+    boxShadow: tileBoxShadow(active, hovered),
+  };
+}
+
 function RoleTileButton({
   tile,
   active,
@@ -66,7 +98,6 @@ function RoleTileButton({
 }) {
   const [hovered, setHovered] = useState(false);
   const accent = active ? COLORS.primaryMuted : undefined;
-  const borderColor = active || hovered ? COLORS.primaryMuted : COLORS.surfaceBorder;
 
   return (
     <button
@@ -76,31 +107,7 @@ function RoleTileButton({
       onMouseLeave={() => setHovered(false)}
       aria-label={tile.label}
       aria-pressed={active}
-      style={{
-        position: 'relative',
-        background: active || hovered ? COLORS.surface : COLORS.surfaceAlt,
-        border: `1px solid ${borderColor}`,
-        borderRadius: 8,
-        padding: '14px 12px',
-        cursor: 'pointer',
-        textAlign: 'center',
-        color: COLORS.text,
-        fontFamily: FONTS.body,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6,
-        minHeight: 120,
-        transition:
-          'transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.2s ease',
-        transform: hovered && !active ? 'translateY(-1px)' : 'translateY(0)',
-        boxShadow: active
-          ? `0 0 0 1px ${COLORS.primaryMuted}, 0 0 18px rgba(212, 175, 55, 0.18)`
-          : hovered
-            ? '0 4px 12px rgba(0, 0, 0, 0.4)'
-            : 'none',
-      }}>
+      style={getRoleTileButtonStyle(active, hovered)}>
       <div
         style={{
           display: 'flex',

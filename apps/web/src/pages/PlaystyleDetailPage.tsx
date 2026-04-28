@@ -455,6 +455,68 @@ function buildSearchTarget(query: string): string {
   return q ? `/browse?q=${encodeURIComponent(q)}` : '/browse';
 }
 
+/** Toggle membership of an item in an immutable Set, returning the new Set. */
+function toggleSetMember<T>(prev: Set<T>, item: T): Set<T> {
+  const next = new Set(prev);
+  if (next.has(item)) next.delete(item);
+  else next.add(item);
+  return next;
+}
+
+/**
+ * Bundle the BrowseToolbar + FilterDialog props for PlaystyleDetailPage.
+ * Extracted so the page component stays under the Large Method threshold.
+ */
+function buildPlaystyleViewProps(args: {
+  showFilters: boolean;
+  setShowFilters: (open: boolean) => void;
+  activeFilterCount: number;
+  inkFilters: ToolbarProps['inkFilters'];
+  typeFilters: ToolbarProps['typeFilters'];
+  costFilters: ToolbarProps['costFilters'];
+  filters: ToolbarProps['filters'];
+  toggleInk: ToolbarProps['onToggleInk'];
+  toggleType: ToolbarProps['onToggleType'];
+  toggleCost: ToolbarProps['onToggleCost'];
+  setFilters: ToolbarProps['onFiltersChange'];
+  replaceFilters: FilterDialogSharedProps['onApply'];
+  clearAllFilters: () => void;
+  sortOrder: ToolbarProps['sortOrder'];
+  setSortOrder: ToolbarProps['onSortChange'];
+  uniqueKeywords: string[];
+  uniqueClassifications: string[];
+  sets: FilterDialogSharedProps['sets'];
+}): {toolbarProps: ToolbarProps; filterDialogProps: FilterDialogSharedProps} {
+  const toolbarProps: ToolbarProps = {
+    onFiltersClick: () => args.setShowFilters(true),
+    activeFilterCount: args.activeFilterCount,
+    inkFilters: args.inkFilters,
+    typeFilters: args.typeFilters,
+    costFilters: args.costFilters,
+    filters: args.filters,
+    onToggleInk: args.toggleInk,
+    onToggleType: args.toggleType,
+    onToggleCost: args.toggleCost,
+    onFiltersChange: args.setFilters,
+    onClearAll: args.clearAllFilters,
+    sortOrder: args.sortOrder,
+    onSortChange: args.setSortOrder,
+  };
+  const filterDialogProps: FilterDialogSharedProps = {
+    isOpen: args.showFilters,
+    onClose: () => args.setShowFilters(false),
+    onApply: args.replaceFilters,
+    inkFilters: args.inkFilters,
+    typeFilters: args.typeFilters,
+    costFilters: args.costFilters,
+    filters: args.filters,
+    uniqueKeywords: args.uniqueKeywords,
+    uniqueClassifications: args.uniqueClassifications,
+    sets: args.sets,
+  };
+  return {toolbarProps, filterDialogProps};
+}
+
 function useResolvedPlaystyle(playstyleId: string | undefined) {
   const playstyle = playstyleId ? getPlaystyleById(playstyleId as PlaystyleId) : undefined;
   const ui = playstyleId ? PLAYSTYLE_UI[playstyleId as PlaystyleId] : undefined;
@@ -521,14 +583,7 @@ export function PlaystyleDetailPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [activeRoles, setActiveRoles] = useState<Set<string>>(() => new Set());
   usePlaystyleNavReset(playstyleId, setActiveRoles);
-  const toggleRole = (role: string) => {
-    setActiveRoles((prev) => {
-      const next = new Set(prev);
-      if (next.has(role)) next.delete(role);
-      else next.add(role);
-      return next;
-    });
-  };
+  const toggleRole = (role: string) => setActiveRoles((prev) => toggleSetMember(prev, role));
   useDefaultSortParam();
 
   const {playstyle, ui} = useResolvedPlaystyle(playstyleId);
@@ -566,35 +621,26 @@ export function PlaystyleDetailPage() {
   if (error) return <PlaystyleDetailError onRetry={retryLoad} />;
 
   const heroLayout = getHeroLayout(isMobile);
-
-  const toolbarProps = {
-    onFiltersClick: () => setShowFilters(true),
+  const {toolbarProps, filterDialogProps} = buildPlaystyleViewProps({
+    showFilters,
+    setShowFilters,
     activeFilterCount,
     inkFilters,
     typeFilters,
     costFilters,
     filters,
-    onToggleInk: toggleInk,
-    onToggleType: toggleType,
-    onToggleCost: toggleCost,
-    onFiltersChange: setFilters,
-    onClearAll: clearAllFilters,
+    toggleInk,
+    toggleType,
+    toggleCost,
+    setFilters,
+    replaceFilters,
+    clearAllFilters,
     sortOrder,
-    onSortChange: setSortOrder,
-  } as const;
-
-  const filterDialogProps = {
-    isOpen: showFilters,
-    onClose: () => setShowFilters(false),
-    onApply: replaceFilters,
-    inkFilters,
-    typeFilters,
-    costFilters,
-    filters,
+    setSortOrder,
     uniqueKeywords,
     uniqueClassifications,
     sets,
-  };
+  });
 
   if (isMobile) {
     return (

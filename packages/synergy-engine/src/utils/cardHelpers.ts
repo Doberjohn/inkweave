@@ -825,43 +825,40 @@ export type ToyRole =
   | Exclude<DiscardRole, 'payoff'>
   | RampRole;
 
+/** Compose roles from other playstyles' detectors (Lore Denial, Discard, Ramp). */
+function composeCrossPlaystyleToyRoles(card: LorcanaCard, roles: ToyRole[]): void {
+  for (const r of getLoreDenialRoles(card)) roles.push(r);
+  for (const r of getDiscardRoles(card)) {
+    if (r !== 'payoff') roles.push(r); // Discard's hand-size payoff is a different concept
+  }
+  for (const r of getRampRoles(card)) roles.push(r);
+}
+
+/** Detect Toy-scoped mechanic roles from card text (search, draw, banish-trigger, self-discount). */
+function detectToyScopedRoles(text: string, roles: ToyRole[]): void {
+  if (TOY_SEARCH_PATTERN.test(text)) roles.push('search');
+  if (DRAW_PATTERN.test(text)) roles.push('draw');
+  const isBanishTrigger =
+    TOY_BANISH_TRIGGER_TRIBAL_PATTERN.test(text) || TOY_BANISH_TRIGGER_SELF_PATTERN.test(text);
+  if (isBanishTrigger) roles.push('banish-trigger');
+  const isSelfDiscount =
+    COST_REDUCTION_SELF_PATTERN.test(text) || SELF_DISCOUNT_FREE_PATTERN.test(text);
+  if (isSelfDiscount) roles.push('self-discount');
+}
+
 export function getToyRoles(card: LorcanaCard): ToyRole[] {
   const isMember = hasClassification(card, 'Toy');
-  const isTribePayoff =
-    card.text != null && TOY_PAYOFF_PATTERN.test(normalizeCardText(card));
+  const text = card.text != null ? normalizeCardText(card) : '';
+  const isTribePayoff = text !== '' && TOY_PAYOFF_PATTERN.test(text);
 
   // Not a Toy at all — no playstyle membership, no role composition
   if (!isMember && !isTribePayoff) return [];
 
   const roles: ToyRole[] = [];
   if (isMember) roles.push('member');
-
-  const text = normalizeCardText(card);
-
-  // Cross-playstyle mechanic composition — reuse existing detectors.
-  // Gated above by Toy membership so this never falsely promotes non-Toy cards.
-  for (const r of getLoreDenialRoles(card)) roles.push(r);
-  for (const r of getDiscardRoles(card)) {
-    if (r === 'payoff') continue; // Discard's hand-size payoff is a different concept
-    roles.push(r);
-  }
-  for (const r of getRampRoles(card)) roles.push(r);
-
-  // Toy-scoped mechanics — Search (top-of-deck → hand), Draw (literal card draw),
-  // Banish trigger (tribal OR self — membership gate makes self-banish a Toy banish),
-  // and Self-discount (this character costs less, including the "for free" limit case).
-  if (TOY_SEARCH_PATTERN.test(text)) roles.push('search');
-  if (DRAW_PATTERN.test(text)) roles.push('draw');
-  if (
-    TOY_BANISH_TRIGGER_TRIBAL_PATTERN.test(text) ||
-    TOY_BANISH_TRIGGER_SELF_PATTERN.test(text)
-  ) {
-    roles.push('banish-trigger');
-  }
-  if (COST_REDUCTION_SELF_PATTERN.test(text) || SELF_DISCOUNT_FREE_PATTERN.test(text)) {
-    roles.push('self-discount');
-  }
-
+  // Gated above by Toy membership/text so cross-playstyle composition can't promote non-Toy cards.
+  composeCrossPlaystyleToyRoles(card, roles);
+  detectToyScopedRoles(text, roles);
   return roles;
 }
 
