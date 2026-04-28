@@ -933,15 +933,15 @@ describe('Discard Control', () => {
   describe('synergy scoring', () => {
     const allCards = [suddenChill, daisyDuck, pacha, yzmaKitten, unrelatedCard];
 
-    it('should score enabler ↔ enabler at 7', () => {
+    it('enabler ↔ enabler scores 5 (parallel pressure baseline)', () => {
       const synergies = discardRule.findSynergies(suddenChill, allCards);
       const daisyMatch = synergies.find((s) => s.card.id === 'daisy-secret-agent');
       expect(daisyMatch).toBeDefined();
-      expect(daisyMatch!.score).toBe(7);
+      expect(daisyMatch!.score).toBe(5);
       expect(daisyMatch!.explanation).toContain('disrupt');
     });
 
-    it('should score enabler ↔ payoff at 8', () => {
+    it('enabler ↔ payoff scores 8 (asymmetric kill combo)', () => {
       const synergies = discardRule.findSynergies(suddenChill, allCards);
       const pachaMatch = synergies.find((s) => s.card.id === 'pacha');
       expect(pachaMatch).toBeDefined();
@@ -949,11 +949,11 @@ describe('Discard Control', () => {
       expect(pachaMatch!.explanation).toContain('hand-size advantage');
     });
 
-    it('should score payoff ↔ payoff at 7', () => {
+    it('payoff ↔ payoff scores 5 (same axis, no compounding)', () => {
       const synergies = discardRule.findSynergies(pacha, allCards);
       const yzmaMatch = synergies.find((s) => s.card.id === 'yzma-kitten');
       expect(yzmaMatch).toBeDefined();
-      expect(yzmaMatch!.score).toBe(7);
+      expect(yzmaMatch!.score).toBe(5);
       expect(yzmaMatch!.explanation).toContain('hand-size advantage');
     });
 

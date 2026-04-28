@@ -665,10 +665,12 @@ export const synergyRules: SynergyRule[] = [
             bidirectional: true,
           });
         } else {
+          // Same-side pair (both disruption or both payoff): density baseline.
+          // Two enablers don't compound — they stack pressure. Two payoffs share an axis without amplifying it.
           const bothPayoff = cardRoles.includes('payoff') && otherRoles.includes('payoff');
           matches.push({
             card: other,
-            score: 7,
+            score: 5,
             explanation: bothPayoff
               ? `Both ${card.fullName} and ${other.fullName} reward hand-size advantage over opponents`
               : `Both ${card.fullName} and ${other.fullName} disrupt the opponent's hand`,
