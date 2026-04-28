@@ -23,6 +23,7 @@ import {
   isToyCard,
   getToyRoles,
   isLoreDenialCard,
+  getLoreDenialRoles,
   LOCATION_PATTERNS,
   NAMED_EFFECT_SCORES,
   normalizeCardText,
@@ -599,16 +600,21 @@ export const synergyRules: SynergyRule[] = [
     matches: isLoreDenialCard,
 
     findSynergies: (card, allCards) => {
-      return allCards
-        .filter((other) => other.id !== card.id && isLoreDenialCard(other))
-        .map(
-          (other): SynergyMatch => ({
-            card: other,
-            score: 7,
-            explanation: `Both ${card.fullName} and ${other.fullName} make the opponent lose lore`,
-            bidirectional: true,
-          }),
-        );
+      const cardRoles = getLoreDenialRoles(card);
+      if (cardRoles.length === 0) return [];
+      const cardRole = cardRoles[0]; // burn and steal are mutually exclusive — exactly one role per card
+
+      const matches: SynergyMatch[] = [];
+      for (const other of allCards) {
+        if (other.id === card.id) continue;
+        const otherRoles = getLoreDenialRoles(other);
+        if (otherRoles.length === 0) continue;
+        const otherRole = otherRoles[0];
+
+        const {score, explanation} = scoreLoreDenialPair(cardRole, otherRole, card, other);
+        matches.push({card: other, score, explanation, bidirectional: true});
+      }
+      return matches;
     },
   },
 
@@ -874,6 +880,49 @@ export const TOY_ROLE_DESCRIPTIONS: Record<ToyRole, string> = {
   'inkwell-trigger': RAMP_ROLE_DESCRIPTIONS['inkwell-trigger'],
   'cost-reduction': RAMP_ROLE_DESCRIPTIONS['cost-reduction'],
 };
+
+// ============================================
+// LORE DENIAL SCORING
+// ============================================
+
+/**
+ * Score a Lore Denial pair based on the role mix.
+ *
+ * Convention: 5 = neutral baseline (same strategy, no compounding interaction).
+ * Bumps above 5 reflect mechanical efficiency: steal swings the lore race in
+ * both directions per point (opponent down + you up), burn only one direction.
+ *
+ * Matrix:
+ *   - burn ↔ burn   = 5 (parallel pressure, no compounding)
+ *   - burn ↔ steal  = 6 (complementary — pressure + race-close)
+ *   - steal ↔ steal = 7 (double swing engine — every trigger advances both axes)
+ */
+function scoreLoreDenialPair(
+  roleA: LoreDenialRole,
+  roleB: LoreDenialRole,
+  cardA: LorcanaCard,
+  cardB: LorcanaCard,
+): {score: number; explanation: string} {
+  if (roleA === 'steal' && roleB === 'steal') {
+    return {
+      score: 7,
+      explanation: `Both ${cardA.fullName} and ${cardB.fullName} steal lore — every trigger swings the race in your favor twice`,
+    };
+  }
+  if (roleA === 'burn' && roleB === 'burn') {
+    return {
+      score: 5,
+      explanation: `Both ${cardA.fullName} and ${cardB.fullName} make the opponent lose lore — stacking denial pressure`,
+    };
+  }
+  // Mixed pair — pick the burn-side and steal-side cards regardless of order
+  const burn = roleA === 'burn' ? cardA : cardB;
+  const steal = roleA === 'steal' ? cardA : cardB;
+  return {
+    score: 6,
+    explanation: `${burn.fullName} pushes the opponent down while ${steal.fullName} pulls you up — pressing both ends of the lore race`,
+  };
+}
 
 // ============================================
 // RAMP SCORING

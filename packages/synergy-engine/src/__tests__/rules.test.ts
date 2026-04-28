@@ -267,6 +267,7 @@ describe('Synergy Rules', () => {
   describe('Lore Loss', () => {
     const loreLossRule = getRuleById('lore-loss')!;
 
+    // Steal: opponent loses lore AND you gain lore (matches LORE_STEAL_PATTERNS)
     const thievery = createCard({
       id: 'thievery',
       name: 'Thievery',
@@ -276,6 +277,16 @@ describe('Synergy Rules', () => {
       text: 'Chosen opponent loses 1 lore. Gain 1 lore.',
     });
 
+    const lorePirate = createCard({
+      id: 'lore-pirate',
+      name: 'Lore Pirate',
+      type: 'Character',
+      ink: 'Amethyst',
+      cost: 4,
+      text: 'When you play this character, chosen opponent loses 2 lore and you gain 2 lore.',
+    });
+
+    // Burn: opponent loses lore only, no transfer
     const jasmine = createCard({
       id: 'jasmine-rebellious',
       name: 'Jasmine',
@@ -313,17 +324,24 @@ describe('Synergy Rules', () => {
       expect(loreLossRule.matches(card)).toBe(true);
     });
 
-    it('should find other lore removers as strong synergies', () => {
-      const synergies = loreLossRule.findSynergies(thievery, [
-        thievery,
-        jasmine,
-        flotilla,
-        unrelatedCard,
-      ]);
+    it('burn ↔ burn pair scores 5 (parallel pressure, no compounding)', () => {
+      const synergies = loreLossRule.findSynergies(jasmine, [jasmine, flotilla, unrelatedCard]);
+      expect(synergies).toHaveLength(1);
+      expect(synergies[0].score).toBe(5);
+      expect(synergies[0].card.id).toBe('flotilla');
+    });
+
+    it('burn ↔ steal pair scores 6 (complementary pressure + race-close)', () => {
+      const synergies = loreLossRule.findSynergies(thievery, [thievery, jasmine, flotilla]);
       expect(synergies).toHaveLength(2);
-      expect(synergies.every((s) => s.score === 7)).toBe(true);
-      expect(synergies.find((s) => s.card.id === 'jasmine-rebellious')).toBeDefined();
-      expect(synergies.find((s) => s.card.id === 'flotilla')).toBeDefined();
+      expect(synergies.every((s) => s.score === 6)).toBe(true);
+    });
+
+    it('steal ↔ steal pair scores 7 (double swing engine)', () => {
+      const synergies = loreLossRule.findSynergies(thievery, [thievery, lorePirate]);
+      expect(synergies).toHaveLength(1);
+      expect(synergies[0].score).toBe(7);
+      expect(synergies[0].card.id).toBe('lore-pirate');
     });
 
     it('should not include the selected card itself', () => {
