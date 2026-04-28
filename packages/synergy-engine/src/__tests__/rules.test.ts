@@ -564,6 +564,20 @@ describe('Location Synergy Rules', () => {
       expect(getLocationRoles(unrelatedCard)).toEqual([]);
       expect(isLocationSupportCard(unrelatedCard)).toBe(false);
     });
+
+    it('normalizes newlines so multi-line phrases still match (regression: Cold Never Bothered Me)', () => {
+      const songWithSplitPhrase = createCard({
+        id: 'cold-never-bothered',
+        name: 'The Cold Never Bothered Me',
+        type: 'Action',
+        cost: 3,
+        ink: 'Ruby',
+        text: 'Look at the top 4 cards of your deck. You may reveal\na location card and put it into your hand. Put the\nrest into your discard. You pay 3 ⬡ less for the next\nlocation you play this turn.',
+      });
+      const roles = getLocationRoles(songWithSplitPhrase);
+      expect(roles).toContain('search');
+      expect(roles).toContain('location-ramp');
+    });
   });
 
   describe('Location ↔ support card synergies', () => {
@@ -659,19 +673,31 @@ describe('Location Synergy Rules', () => {
       text: 'Whenever you put a card under one of your characters or locations, you may pay 1 to draw a card.',
     });
 
-    it('should detect boost role and find Locations as synergies', () => {
+    const scroogesCountingHouse = createCard({
+      id: 'scrooges-counting-house',
+      name: "Scrooge's Counting House",
+      type: 'Location',
+      cost: 3,
+      ink: 'Amber',
+      text: 'Whenever a character of yours moves here, put the top card of your deck facedown under this location. GOOD BUSINESS This location gets +1 ⛉ and +1 ◊ for each card under it.',
+    });
+
+    it('should detect boost role and find boost-beneficiary Locations as synergies', () => {
       expect(getLocationRoles(webbysDiary)).toContain('boost');
 
       const engine = new SynergyEngine();
-      const groups = engine.findSynergies(webbysDiary, [webbysDiary, agrabah, unrelatedCard]);
+      const groups = engine.findSynergies(webbysDiary, [webbysDiary, scroogesCountingHouse, agrabah, unrelatedCard]);
       const locationGroup = groups.find((g) => g.groupKey === 'location-control');
       expect(locationGroup).toBeDefined();
-      expect(locationGroup!.synergies.map((s) => s.card.id)).toContain('agrabah');
+      const ids = locationGroup!.synergies.map((s) => s.card.id);
+      expect(ids).toContain('scrooges-counting-house');
+      // Generic locations without "cards beneath" mechanic should NOT pair with boost cards
+      expect(ids).not.toContain('agrabah');
     });
 
-    it('should assign score 5 for boost cards with Locations', () => {
+    it('should assign score 5 for boost cards with boost-beneficiary Locations', () => {
       const engine = new SynergyEngine();
-      const groups = engine.findSynergies(agrabah, [agrabah, webbysDiary]);
+      const groups = engine.findSynergies(scroogesCountingHouse, [scroogesCountingHouse, webbysDiary]);
       const diaryMatch = groups
         .find((g) => g.groupKey === 'location-control')!
         .synergies.find((s) => s.card.id === 'webbys-diary');
@@ -808,24 +834,24 @@ describe('Discard Control', () => {
   });
 
   describe('role detection', () => {
-    it('should detect forced opponent discard as enabler', () => {
-      expect(getDiscardRoles(suddenChill)).toEqual(['enabler']);
+    it('should detect forced opponent discard as standard role', () => {
+      expect(getDiscardRoles(suddenChill)).toEqual(['standard']);
     });
 
-    it('should detect targeted reveal+discard as enabler', () => {
-      expect(getDiscardRoles(ludwigVonDrake)).toEqual(['enabler']);
+    it('should detect type-specific reveal+discard as targeted role', () => {
+      expect(getDiscardRoles(ludwigVonDrake)).toEqual(['targeted']);
     });
 
-    it('should detect hand-cap as enabler', () => {
-      expect(getDiscardRoles(princeJohnMirror)).toEqual(['enabler']);
+    it('should detect hand-cap as standard role', () => {
+      expect(getDiscardRoles(princeJohnMirror)).toEqual(['standard']);
     });
 
-    it('should detect challenging player discard as enabler', () => {
-      expect(getDiscardRoles(flynnRider)).toEqual(['enabler']);
+    it('should detect challenging player discard as standard role', () => {
+      expect(getDiscardRoles(flynnRider)).toEqual(['standard']);
     });
 
-    it('should detect "that player discards at random" as enabler', () => {
-      expect(getDiscardRoles(yzmaAbove)).toEqual(['enabler']);
+    it('should detect "discards at random" as random role', () => {
+      expect(getDiscardRoles(yzmaAbove)).toEqual(['random']);
     });
 
     it('should detect hand-size advantage as payoff', () => {
@@ -857,19 +883,21 @@ describe('Discard Control', () => {
         'most cards choose and discard',
         'The player or players with the most cards in their hands choose and discard 2 cards.',
       ],
-      [
-        'symmetric chaos draw/discard',
-        'Each player draws 3 cards, then discards 3 cards at random.',
-      ],
-    ])('should detect enabler: %s', (_label, text) => {
-      expect(getDiscardRoles(createCard({text}))).toEqual(['enabler']);
+    ])('should detect standard role: %s', (_label, text) => {
+      expect(getDiscardRoles(createCard({text}))).toEqual(['standard']);
     });
 
-    it('should detect dual-role card (enabler + payoff)', () => {
+    it('should detect symmetric draw/discard chaos as random role', () => {
+      expect(
+        getDiscardRoles(createCard({text: 'Each player draws 3 cards, then discards 3 cards at random.'})),
+      ).toEqual(['random']);
+    });
+
+    it('should detect dual-role card (standard + payoff)', () => {
       const dualRole = createCard({
         text: 'Each opponent chooses and discards a card. While you have more cards in your hand than each opponent, this character gets +2 lore.',
       });
-      expect(getDiscardRoles(dualRole)).toEqual(['enabler', 'payoff']);
+      expect(getDiscardRoles(dualRole)).toEqual(['standard', 'payoff']);
     });
   });
 
@@ -1557,7 +1585,9 @@ describe('Toy Tribal', () => {
     name: 'Woody',
     fullName: 'Woody - Jungle Guide',
     classifications: ['Floodborn', 'Hero', 'Toy'],
-    text: 'Your other Toy characters get +1 willpower.',
+    // Both a tribal buff (matches `classifyToyPayoff` moderate tier regex)
+    // and a draw effect (so the card has a specific role and enters the playstyle).
+    text: 'When you play this character, draw a card. Your other Toy characters get +1 willpower.',
   });
 
   const sidPhillips = createCard({
@@ -1566,14 +1596,6 @@ describe('Toy Tribal', () => {
     fullName: 'Sid Phillips - Toy Surgeon',
     classifications: ['Storyborn', 'Villain'],
     text: 'During your turn, whenever a Toy character is banished, gain 2 lore.',
-  });
-
-  const pizzaPlanet = createCard({
-    id: 'pizza-planet',
-    name: 'Pizza Planet',
-    fullName: 'Pizza Planet - Spaceport',
-    type: 'Location',
-    text: 'Your Toy characters can move here for free.',
   });
 
   const buzzMember = createCard({
@@ -1601,6 +1623,31 @@ describe('Toy Tribal', () => {
     text: 'You may put a Toy character card from your discard on the bottom of your deck to play this character for free.',
   });
 
+  const windUpFrog = createCard({
+    id: 'wind-up-frog',
+    name: 'Wind-Up Frog',
+    fullName: 'Wind-Up Frog - Sid\'s Toy',
+    classifications: ['Storyborn', 'Ally', 'Toy'],
+    text: 'If one of your Toy characters was banished this turn, you pay 2 ⬡ less to play this character.',
+  });
+
+  const bullseye = createCard({
+    id: 'bullseye',
+    name: 'Bullseye',
+    fullName: 'Bullseye - Loyal Horse',
+    classifications: ['Storyborn', 'Ally', 'Toy'],
+    text: 'If you have a character named Woody or Jessie in play, you pay 1 less ⬡ to play this character.',
+  });
+
+  const alien = createCard({
+    id: 'alien',
+    name: 'Alien',
+    fullName: 'Alien - True Believer',
+    classifications: ['Storyborn', 'Alien', 'Ally', 'Toy'],
+    // Self-banish trigger — "when this character is banished" — counted as Toy banish via membership gate.
+    text: 'During your turn, when this character is banished, return another character card named Alien from your discard to your hand.',
+  });
+
   const mickey = createCard({
     id: 'mickey-control',
     name: 'Mickey Mouse',
@@ -1614,16 +1661,36 @@ describe('Toy Tribal', () => {
       expect(getToyRoles(buzzMember)).toEqual(['member']);
     });
 
-    it('detects payoff from text reference to "Toy character"', () => {
-      expect(getToyRoles(sidPhillips)).toEqual(['payoff']);
+    it('detects banish-trigger from "whenever a Toy character is banished"', () => {
+      expect(getToyRoles(sidPhillips)).toEqual(['banish-trigger']);
     });
 
-    it('detects both roles for member+payoff cards', () => {
-      expect(getToyRoles(woodyLeader)).toEqual(['member', 'payoff']);
+    it('detects banish-trigger from self-banish ("when this character is banished") on Toy member', () => {
+      // Membership gate makes self-banish count as a Toy-banish event.
+      // Alien is also a member, so roles include 'member' alongside 'banish-trigger'.
+      expect(getToyRoles(alien)).toEqual(['member', 'banish-trigger']);
     });
 
-    it('returns ["payoff"] for non-character location with Toy text', () => {
-      expect(getToyRoles(pizzaPlanet)).toEqual(['payoff']);
+    it('detects self-discount on Toy member with conditional cost reduction', () => {
+      // Wind-Up Frog: "If one of your Toy characters was banished, you pay 2 less"
+      // Past tense ("was banished") naturally excludes from banish-trigger.
+      expect(getToyRoles(windUpFrog)).toEqual(['member', 'self-discount']);
+    });
+
+    it('detects self-discount even when condition is non-Toy (named gate)', () => {
+      // Bullseye: condition is "named Woody or Jessie" — still self-discount on a Toy member.
+      expect(getToyRoles(bullseye)).toEqual(['member', 'self-discount']);
+    });
+
+    it('Hand-in-the-Box (free-play via discard) is self-discount via the "for free" limit case', () => {
+      // "play this character for free" = max self-discount (cost = 0).
+      // Recursion component (Toy from discard → deck) is a separate mechanic, deferred to Phase 4.
+      expect(getToyRoles(handInTheBox)).toEqual(['member', 'self-discount']);
+    });
+
+    it('detects member + specific mechanic role for hybrid Toy cards', () => {
+      // Woody Leader is a Toy member with a Search effect (look at top 4, reveal a Toy)
+      expect(getToyRoles(woodyLeader)).toEqual(['member', 'search']);
     });
 
     it('skips ability-name false positives (Buzz Lightyear "WORLD\'S GREATEST TOY")', () => {
@@ -1642,7 +1709,7 @@ describe('Toy Tribal', () => {
       woodyLeader,
       woodyJungleGuide,
       sidPhillips,
-      pizzaPlanet,
+      alien,
       buzzMember,
       handInTheBox,
       mickey,
@@ -1654,10 +1721,8 @@ describe('Toy Tribal', () => {
       return toy?.synergies.find((s) => s.card.id === partnerId)?.score ?? -1;
     };
 
-    it('member ↔ member scores 5 (density only)', () => {
-      expect(findToyScore(buzzMember, 'woody-jungle')).toBe(6);
-      // Note: Woody Jungle Guide is also a payoff (moderate tier), so score is 6 not 5.
-      // True member↔member: a Toy with no payoff text vs another such Toy.
+    it('pure member ↔ pure member scores 5 (density only)', () => {
+      // Both cards have only the 'member' role — neither carries a specific mechanic.
       const plainMemberA = createCard({id: 'rex', classifications: ['Toy'], text: ''});
       const plainMemberB = createCard({id: 'jessie-plain', classifications: ['Toy'], text: ''});
       const groups = engine.findSynergies(plainMemberA, [plainMemberA, plainMemberB]);
@@ -1665,29 +1730,33 @@ describe('Toy Tribal', () => {
       expect(toy?.synergies[0]?.score).toBe(5);
     });
 
-    it('member ↔ game-winning payoff (search) scores 8', () => {
+    it('member ↔ search scores 8 (search fetches a tribal member)', () => {
+      // Buzz (pure member) ↔ Woody — Leader of the Toys (member + search)
       expect(findToyScore(buzzMember, 'woody-leader')).toBe(8);
     });
 
-    it('member ↔ game-winning payoff (free play) scores 8', () => {
-      expect(findToyScore(buzzMember, 'hand-in-box')).toBe(8);
+    it('search ↔ banish-trigger scores 8 (peak tribal chain)', () => {
+      // Woody Leader (search) ↔ Sid Phillips (banish-trigger): load board, pay off on banish
+      expect(findToyScore(woodyLeader, 'sid-phillips')).toBe(8);
     });
 
-    it('member ↔ moderate payoff (buff) scores 6', () => {
-      expect(findToyScore(buzzMember, 'woody-jungle')).toBe(6);
+    it('member ↔ banish-trigger scores 7 (member feeds the trigger)', () => {
+      expect(findToyScore(buzzMember, 'sid-phillips')).toBe(7);
     });
 
-    it('member ↔ moderate payoff (banish trigger) scores 6', () => {
-      expect(findToyScore(buzzMember, 'sid-phillips')).toBe(6);
+    it('member ↔ self-discount scores 7 (member activates discount density)', () => {
+      // Hand-in-the-Box has self-discount via "play this character for free"
+      expect(findToyScore(buzzMember, 'hand-in-box')).toBe(7);
     });
 
-    it('member ↔ minor payoff (location move) scores 5', () => {
-      expect(findToyScore(buzzMember, 'pizza-planet')).toBe(5);
+    it('tribal ↔ tribal scores 7 (multiple density rewards compound)', () => {
+      // Sid (banish-trigger) ↔ Alien (member + banish-trigger): both tribal payoffs
+      expect(findToyScore(sidPhillips, 'alien')).toBe(7);
     });
 
-    it('payoff ↔ payoff (no member overlap) gets density bonus 7', () => {
-      // Sid Phillips (payoff only) ↔ Pizza Planet (payoff only) — neither is a Toy member
-      expect(findToyScore(sidPhillips, 'pizza-planet')).toBe(7);
+    it('member ↔ generic mechanic scores 5 (deck-share, no tribal compounding)', () => {
+      // Woody Jungle Guide has 'draw' role only (generic, not tribal-specific)
+      expect(findToyScore(buzzMember, 'woody-jungle')).toBe(5);
     });
 
     it('rule does not match non-Toy cards', () => {

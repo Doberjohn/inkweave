@@ -10,6 +10,7 @@ import {
   getShiftType,
   hasClassification,
   hasKeyword,
+  isBoostBeneficiaryLocation,
   isCharacter,
   isDeckRamp,
   isDiscardCard,
@@ -21,11 +22,13 @@ import {
   isSong,
   isToyCard,
   getToyRoles,
+  isLoreDenialCard,
   LOCATION_PATTERNS,
   NAMED_EFFECT_SCORES,
-  textContains,
+  normalizeCardText,
   type DiscardRole,
   type LocationRole,
+  type LoreDenialRole,
   type RampRole,
   type ShiftType,
   type ToyRole,
@@ -194,9 +197,6 @@ function isValidShiftTarget(
   }
 }
 
-/** Cards that directly make the opponent lose lore */
-const LORE_LOSS_PATTERN = /(?:each |chosen |all )?opponents? loses? (?:\d+ )?lore/i;
-
 // ============================================
 // LOCATION SYNERGY HELPERS
 // ============================================
@@ -319,6 +319,8 @@ function findLocationSupportSynergies(
     if (other.id === card.id) continue;
 
     if (isLocation(other)) {
+      // Boost role only synergizes with locations that actually use cards beneath them
+      if (role === 'boost' && !isBoostBeneficiaryLocation(other)) continue;
       // Location-support card ↔ Location = direct synergy
       matches.push({
         card: other,
@@ -387,9 +389,14 @@ function createLocationRule(
     description: `Location synergy: ${name}`,
 
     matches: (card) => {
-      if (isLocation(card)) return true;
+      if (isLocation(card)) {
+        // Boost role pairs supports with locations that actually use cards beneath them.
+        // Generic locations are not valid boost targets.
+        if (role === 'boost') return isBoostBeneficiaryLocation(card);
+        return true;
+      }
       if (!card.text) return false;
-      const normalizedText = card.text.replace(/\n/g, ' ');
+      const normalizedText = normalizeCardText(card);
       // Exclude anti-location cards (banish/remove locations)
       if (LOCATION_PATTERNS['anti-location'].test(normalizedText)) return false;
       if (excludePattern && excludePattern.test(normalizedText)) return false;
@@ -451,26 +458,30 @@ function createLocationRules(): SynergyRule[] {
 
 /** Short chip labels for each discard role (used in UI) */
 export const DISCARD_ROLE_CHIP_LABELS: Record<DiscardRole, string> = {
-  enabler: 'Enabler',
+  targeted: 'Targeted',
+  random: 'Random',
+  standard: 'Standard',
   payoff: 'Payoff',
 };
 
 /** Educational descriptions explaining what each discard role means */
 export const DISCARD_ROLE_DESCRIPTIONS: Record<DiscardRole, string> = {
-  enabler: 'Forces opponents to discard cards from their hand',
-  payoff: 'Rewards you for having more cards than your opponent',
+  targeted: 'Choose which card opponents discard',
+  random: 'Force opponents to discard at random',
+  standard: 'Force opponents to choose and discard',
+  payoff: 'Get benefits for having more cards than your opponent',
 };
 
 /** Standalone educational descriptions for location roles (no card name needed) */
 export const LOCATION_ROLE_TOOLTIP: Record<LocationRole, string> = {
-  'at-payoff': 'Gets bonuses when characters are at a location',
-  'play-trigger': 'Activates effects whenever you play a location',
-  buff: 'Strengthens locations with resist, protection, or stat boosts',
-  'location-ramp': 'Reduces the cost of playing or moving to locations',
-  move: 'Moves characters to locations for positioning advantage',
-  'in-play-check': 'Gains benefits when you have locations in play',
-  search: 'Searches your deck or discard for location cards',
-  boost: 'Works with the Boost keyword to power up locations',
+  'at-payoff': 'Get benefits when characters are at a location',
+  'play-trigger': 'Trigger effects when you play or move to a location',
+  buff: 'Give locations stat boosts and protection',
+  'location-ramp': 'Reduce the cost of playing or moving to locations',
+  move: 'Move characters to locations',
+  'in-play-check': 'Get benefits when you have locations in play',
+  search: 'Search your deck or discard for locations',
+  boost: 'Put cards under locations to boost their abilities',
 };
 
 // ============================================
@@ -585,11 +596,11 @@ export const synergyRules: SynergyRule[] = [
     playstyleId: 'lore-denial',
     description: 'Cards that make the opponent lose lore reinforce the same denial strategy',
 
-    matches: (card) => textContains(card, LORE_LOSS_PATTERN),
+    matches: isLoreDenialCard,
 
     findSynergies: (card, allCards) => {
       return allCards
-        .filter((other) => other.id !== card.id && textContains(other, LORE_LOSS_PATTERN))
+        .filter((other) => other.id !== card.id && isLoreDenialCard(other))
         .map(
           (other): SynergyMatch => ({
             card: other,
@@ -623,6 +634,9 @@ export const synergyRules: SynergyRule[] = [
       const cardRoles = getDiscardRoles(card);
       if (cardRoles.length === 0) return [];
 
+      const DISRUPTION: DiscardRole[] = ['targeted', 'random', 'standard'];
+      const hasDisruption = (roles: DiscardRole[]) => roles.some((r) => DISRUPTION.includes(r));
+
       const matches: SynergyMatch[] = [];
 
       for (const other of allCards) {
@@ -631,17 +645,17 @@ export const synergyRules: SynergyRule[] = [
         const otherRoles = getDiscardRoles(other);
         if (otherRoles.length === 0) continue;
 
-        const hasEnablerPayoff =
-          (cardRoles.includes('enabler') && otherRoles.includes('payoff')) ||
-          (cardRoles.includes('payoff') && otherRoles.includes('enabler'));
+        const hasDisruptionPayoff =
+          (hasDisruption(cardRoles) && otherRoles.includes('payoff')) ||
+          (cardRoles.includes('payoff') && hasDisruption(otherRoles));
 
-        if (hasEnablerPayoff) {
-          const enabler = cardRoles.includes('enabler') ? card : other;
+        if (hasDisruptionPayoff) {
+          const disruption = hasDisruption(cardRoles) ? card : other;
           const payoff = cardRoles.includes('payoff') ? card : other;
           matches.push({
             card: other,
             score: 8,
-            explanation: `${enabler.fullName} depletes the opponent's hand, powering up ${payoff.fullName}'s hand-size advantage`,
+            explanation: `${disruption.fullName} depletes the opponent's hand, powering up ${payoff.fullName}'s hand-size advantage`,
             bidirectional: true,
           });
         } else {
@@ -803,9 +817,62 @@ export const RAMP_ROLE_CHIP_LABELS: Record<RampRole, string> = {
 
 /** Educational descriptions explaining what each ramp role means */
 export const RAMP_ROLE_DESCRIPTIONS: Record<RampRole, string> = {
-  'inkwell-ramp': 'Puts extra cards into your inkwell, accelerating your ink count',
-  'inkwell-trigger': 'Fires an effect whenever a card is put into your inkwell',
-  'cost-reduction': 'Reduces the cost of other cards you play',
+  'inkwell-ramp': 'Put extra cards into your inkwell',
+  'inkwell-trigger': 'Trigger an effect when a card is put into your inkwell',
+  'cost-reduction': 'Reduce the cost of other cards you play',
+};
+
+/** Short chip labels for each lore-denial role (used in UI) */
+export const LORE_DENIAL_ROLE_CHIP_LABELS: Record<LoreDenialRole, string> = {
+  burn: 'Burn',
+  steal: 'Steal',
+};
+
+/** Educational descriptions explaining what each lore-denial role means */
+export const LORE_DENIAL_ROLE_DESCRIPTIONS: Record<LoreDenialRole, string> = {
+  burn: 'Make your opponents lose lore',
+  steal: 'Steal lore from your opponents to gain your own',
+};
+
+/**
+ * Short chip labels for each Toy role.
+ * Cross-playstyle mechanics get explicit Toy-context labels (Strategy B):
+ * source playstyles keep their short labels (e.g., "Burn" on Lore Denial page),
+ * but Toys disambiguates with the noun (e.g., "Lore Burn" on Toys page) since the
+ * playstyle name no longer provides context. Descriptions stay shared.
+ * 'Ramp' and 'Discount' are universal enough to read clearly in any playstyle.
+ */
+export const TOY_ROLE_CHIP_LABELS: Record<ToyRole, string> = {
+  member: 'Member',
+  search: 'Search',
+  draw: 'Card Draw',
+  'banish-trigger': 'Banish Trigger',
+  'self-discount': 'Self Discount',
+  burn: 'Lore Burn',
+  steal: 'Lore Steal',
+  targeted: 'Targeted Discard',
+  random: 'Random Discard',
+  standard: 'Forced Discard',
+  'inkwell-ramp': 'Ramp',
+  'inkwell-trigger': 'Ink Trigger',
+  'cost-reduction': 'Cost Reduction',
+};
+
+/** Educational descriptions for each Toy role — composed from source playstyles where applicable */
+export const TOY_ROLE_DESCRIPTIONS: Record<ToyRole, string> = {
+  member: 'Toy character — counts toward tribal density',
+  search: 'Search your deck for Toy characters',
+  draw: 'Draw extra cards',
+  'banish-trigger': 'Trigger an effect when a Toy character is banished',
+  'self-discount': 'Pay less to play a character under some condition',
+  burn: LORE_DENIAL_ROLE_DESCRIPTIONS.burn,
+  steal: LORE_DENIAL_ROLE_DESCRIPTIONS.steal,
+  targeted: DISCARD_ROLE_DESCRIPTIONS.targeted,
+  random: DISCARD_ROLE_DESCRIPTIONS.random,
+  standard: DISCARD_ROLE_DESCRIPTIONS.standard,
+  'inkwell-ramp': RAMP_ROLE_DESCRIPTIONS['inkwell-ramp'],
+  'inkwell-trigger': RAMP_ROLE_DESCRIPTIONS['inkwell-trigger'],
+  'cost-reduction': RAMP_ROLE_DESCRIPTIONS['cost-reduction'],
 };
 
 // ============================================
@@ -929,117 +996,89 @@ function getRampExplanation(
 // TOY TRIBAL SCORING
 // ============================================
 
-type ToyPayoffTier = 'game-winning' | 'strong' | 'moderate' | 'minor';
+/**
+ * Tribal payoff roles — these specifically reward Toy density (vs. generic
+ * mechanics inherited via composition like draw, burn, ramp, etc., which
+ * happen to appear on Toy cards but don't compound with tribal mass).
+ */
+const TOY_TRIBAL_ROLES: readonly ToyRole[] = ['search', 'banish-trigger', 'self-discount'];
 
-const TOY_TIER_TO_MEMBER_SCORE: Record<ToyPayoffTier, number> = {
-  'game-winning': 8,
-  strong: 7,
-  moderate: 6,
-  minor: 5,
-};
-
-const TOY_TIER_DESCRIPTION: Record<ToyPayoffTier, string> = {
-  'game-winning': 'searches for and free-plays Toys',
-  strong: 'reduces cost or scales with Toy density',
-  moderate: 'buffs Toys or rewards their banish',
-  minor: 'enables Toy positioning',
-};
+const hasTribalRole = (roles: ToyRole[]): boolean =>
+  roles.some((r) => TOY_TRIBAL_ROLES.includes(r));
 
 /**
- * Classify a Toy payoff card into an effect tier. The card has already been
- * confirmed to match the Toy-payoff regex; this picks which tier its effect lands in.
+ * Score a Toy pair using a role-driven matrix.
  *
- * Tier definitions:
- *   - game-winning: search effects that fetch Toys (Woody — Leader of the Toys,
- *     You've Got a Friend in Me) AND free-play effects (Hand-in-the-Box)
- *   - strong: cost reduction (Bouncing Ducky, Wind-Up Frog) AND
- *     stat scaling per Toy (Alien — True Believer, Jessie — Lively Cowgirl)
- *   - moderate: stat/keyword buffs (Woody — Jungle Guide) AND
- *     lore/keyword grants on Toy banish (Sid Phillips, Jingle Joe)
- *   - minor: location-move tech (Pizza Planet — Spaceport)
+ * Convention: 5 = same-deck baseline, 7+ = mechanical compounding around tribal density.
+ *
+ * Matrix (highest precedence first):
+ *   - search ↔ banish-trigger  = 8 (peak chain — load board, pay off on banish)
+ *   - Member ↔ search          = 8 (search converts deck slot to tribal member)
+ *   - Tribal ↔ Tribal (other)  = 7 (multiple density rewards compound)
+ *   - Member ↔ Tribal          = 7 (member feeds the tribal payoff)
+ *   - Otherwise                = 5 (Member↔Member, Member↔generic, Generic↔generic;
+ *                                   generic mechanic synergies are owned by their own rules)
  */
-function classifyToyPayoff(card: LorcanaCard): ToyPayoffTier {
-  const text = (card.text ?? '').replace(/\s+/g, ' ');
-
-  // game-winning: search-and-reveal Toys (Woody Leader, YGAFIM) OR free-play involving a Toy (Hand-in-the-Box)
-  if (/look at the top \d+ cards.*?reveal.*?Toy character/i.test(text)) return 'game-winning';
-  if (
-    /Toy character.*?play this character for free|play this character for free.*?Toy character/i.test(
-      text,
-    )
-  )
-    return 'game-winning';
-
-  // strong: Toy-conditional cost reduction (Bouncing Ducky, Wind-Up Frog),
-  //         per-Toy scaling (Alien — True Believer), density gate (Jessie)
-  if (/Toy character.*?pay \d+\s*\W+\s*less|pay \d+\s*\W+\s*less.*?Toy character/i.test(text))
-    return 'strong';
-  if (/for each (?:other )?Toy character/i.test(text)) return 'strong';
-  if (/\d+ or more (?:other )?Toy characters/i.test(text)) return 'strong';
-
-  // moderate: Toy stat/keyword buffs (Woody Jungle Guide), Toy-banish triggers (Sid Phillips, Jingle Joe)
-  if (/Toy characters? (?:get|gain)/i.test(text)) return 'moderate';
-  if (/Toy characters?.*?(?:is|was|are|were).*?banished/i.test(text)) return 'moderate';
-
-  // minor: anything else (currently Pizza Planet — Spaceport's free-move tech)
-  return 'minor';
-}
-
-function scoreDirectedToyPair(
-  payoff: LorcanaCard,
-  member: LorcanaCard,
-): {score: number; explanation: string} {
-  const tier = classifyToyPayoff(payoff);
-  return {
-    score: TOY_TIER_TO_MEMBER_SCORE[tier],
-    explanation: `${payoff.fullName} ${TOY_TIER_DESCRIPTION[tier]} — including ${member.fullName}`,
-  };
-}
-
-function collectToyPairCandidates(
-  card: LorcanaCard,
-  cardRoles: ToyRole[],
-  other: LorcanaCard,
-  otherRoles: ToyRole[],
-): Array<{score: number; explanation: string}> {
-  const candidates: Array<{score: number; explanation: string}> = [];
-
-  // Member ↔ Payoff: tier-driven scoring in each applicable direction
-  if (cardRoles.includes('payoff') && otherRoles.includes('member')) {
-    candidates.push(scoreDirectedToyPair(card, other));
-  }
-  if (otherRoles.includes('payoff') && cardRoles.includes('member')) {
-    candidates.push(scoreDirectedToyPair(other, card));
-  }
-
-  // Payoff ↔ Payoff: density bonus regardless of member overlap
-  if (cardRoles.includes('payoff') && otherRoles.includes('payoff')) {
-    candidates.push({
-      score: 7,
-      explanation: `Both ${card.fullName} and ${other.fullName} reward running a Toy-heavy deck`,
-    });
-  }
-
-  return candidates;
-}
-
 function scoreToyPair(
   card: LorcanaCard,
   cardRoles: ToyRole[],
   other: LorcanaCard,
   otherRoles: ToyRole[],
 ): {score: number; explanation: string} {
-  const candidates = collectToyPairCandidates(card, cardRoles, other, otherRoles);
+  const aMember = cardRoles.includes('member');
+  const bMember = otherRoles.includes('member');
+  const aHasSearch = cardRoles.includes('search');
+  const bHasSearch = otherRoles.includes('search');
+  const aHasBanish = cardRoles.includes('banish-trigger');
+  const bHasBanish = otherRoles.includes('banish-trigger');
+  const aTribal = hasTribalRole(cardRoles);
+  const bTribal = hasTribalRole(otherRoles);
 
-  // Member ↔ Member fallback — neither side is a payoff, density is the only thread
-  if (candidates.length === 0) {
+  // 8 — search ↔ banish-trigger (peak tribal chain)
+  if ((aHasSearch && bHasBanish) || (aHasBanish && bHasSearch)) {
+    const searcher = aHasSearch ? card : other;
+    const trigger = aHasBanish ? card : other;
     return {
-      score: 5,
-      explanation: `${card.fullName} and ${other.fullName} are both Toys — density makes payoff cards stronger`,
+      score: 8,
+      explanation: `${searcher.fullName} loads a Toy onto the board, then ${trigger.fullName} pays off when it's banished — peak tribal chain`,
     };
   }
 
-  return candidates.reduce((best, candidate) => (candidate.score > best.score ? candidate : best));
+  // 8 — Member ↔ search (search fetches a tribal member from the deck)
+  if ((aMember && bHasSearch) || (aHasSearch && bMember)) {
+    const searcher = aHasSearch ? card : other;
+    const memberCard = aHasSearch ? other : card;
+    return {
+      score: 8,
+      explanation: `${searcher.fullName} can fetch ${memberCard.fullName} from the deck — direct tribal access`,
+    };
+  }
+
+  // 7 — Tribal ↔ Tribal (other combinations: both reward Toy density)
+  if (aTribal && bTribal) {
+    return {
+      score: 7,
+      explanation: `${card.fullName} and ${other.fullName} both reward Toy density — tribal payoffs compound`,
+    };
+  }
+
+  // 7 — Member ↔ Tribal (member feeds the tribal payoff)
+  if ((aMember && bTribal) || (aTribal && bMember)) {
+    const tribalCard = aTribal ? card : other;
+    const memberCard = aTribal ? other : card;
+    return {
+      score: 7,
+      explanation: `${memberCard.fullName} contributes to the Toy density that ${tribalCard.fullName} rewards`,
+    };
+  }
+
+  // 5 — same-deck baseline (Member↔Member, Member↔generic, Generic↔generic).
+  // Generic-mechanic synergies (draw↔draw, burn↔steal) are owned by their own rules;
+  // Toys gives them only the deck-share floor to avoid double-counting.
+  return {
+    score: 5,
+    explanation: `${card.fullName} and ${other.fullName} share the Toys deck — density baseline`,
+  };
 }
 
 // Get all rules
