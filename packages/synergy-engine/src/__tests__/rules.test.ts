@@ -1518,19 +1518,19 @@ describe('Card Helper Functions', () => {
       expect(synergies[0].score).toBe(7);
     });
 
-    it('should score ramp + ramp at 7', () => {
+    it('ramp ↔ ramp scores 5 (parallel ramp, no compounding)', () => {
       const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, oneJumpAhead]);
-      expect(synergies[0].score).toBe(7);
+      expect(synergies[0].score).toBe(5);
     });
 
-    it('should score ramp + cost reduction at 7', () => {
+    it('ramp ↔ cost reduction scores 5 (parallel curve acceleration)', () => {
       const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, pluto]);
-      expect(synergies[0].score).toBe(7);
+      expect(synergies[0].score).toBe(5);
     });
 
-    it('should score trigger + trigger at 7', () => {
+    it('trigger ↔ trigger scores 5 (parallel triggers, both need ramp to fire)', () => {
       const synergies = rampRule.findSynergies(jafar, [jafar, amberCoil]);
-      expect(synergies[0].score).toBe(7);
+      expect(synergies[0].score).toBe(5);
     });
 
     it('should score cost reduction + cost reduction at 6 when same target type', () => {

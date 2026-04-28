@@ -933,16 +933,21 @@ function scoreLoreDenialPair(
 /**
  * Score a ramp pair based on their roles and sub-patterns.
  *
+ * Convention: 5 = same-strategy density baseline, no compounding interaction.
+ * Bumps above 5 reflect real mechanical chains where one card *enables* or
+ * *amplifies* the other (not just parallel acceleration).
+ *
  * Scoring priority (highest to lowest):
- * - Deck ramp ↔ Repeating trigger: 9 (direct mechanic chain, scales with ramp)
- * - Deck ramp ↔ Once/turn trigger: 8 (strong but capped)
- * - Self-sacrifice ↔ Repeating trigger: 8 (fires trigger but costs a card)
+ * - Deck ramp ↔ Repeating trigger: 9 (snowball chain — every free ink fires a trigger)
+ * - Deck ramp ↔ Once/turn trigger: 8 (free ink but trigger capped)
+ * - Self-sacrifice ↔ Repeating trigger: 8 (fires every event but costs a card)
  * - Self-sacrifice ↔ Once/turn trigger: 7 (card cost + capped)
- * - Ramp ↔ Ramp: 7 (density)
- * - Ramp ↔ Cost reduction: 7 (parallel acceleration)
- * - Trigger ↔ Trigger: 7 (density — multiple triggers compound)
- * - Cost reduction ↔ Cost reduction: 6 (stacking discounts)
+ * - Cost reduction ↔ Cost reduction (overlap): 6 (stacking discounts on same card type)
+ * - Ramp ↔ Ramp: 5 (parallel ramp, doesn't compound)
+ * - Trigger ↔ Trigger: 5 (parallel triggers — needs ramp to fire either)
+ * - Ramp ↔ Cost reduction: 5 (parallel curve acceleration, no per-card combo)
  * - Trigger ↔ Cost reduction: 5 (weak indirect link)
+ * - Cost reduction ↔ Cost reduction (no overlap): 0 (silently dropped)
  */
 function getRampPairScore(
   cardA: LorcanaCard,
@@ -969,25 +974,21 @@ function getRampPairScore(
     return 7;
   }
 
-  // Ramp ↔ Ramp (density)
-  if (aHasRamp && bHasRamp) return 7;
-
-  // Ramp ↔ Cost reduction (parallel acceleration)
-  if ((aHasRamp && bHasCost) || (aHasCost && bHasRamp)) return 7;
-
-  // Trigger ↔ Trigger (density)
-  if (aHasTrigger && bHasTrigger) return 7;
-
-  // Cost reduction ↔ Cost reduction (stacking — only if they discount the same card type)
+  // Cost reduction ↔ Cost reduction (real compounding — only when targets overlap)
   if (aHasCost && bHasCost) {
     return costReductionTargetsOverlap(cardA, cardB) ? 6 : 0;
   }
 
-  // Trigger ↔ Cost reduction (weak indirect)
+  // Same-axis density pairs — neutral baseline (no compounding):
+  //   Ramp ↔ Ramp, Trigger ↔ Trigger, Ramp ↔ Cost-reduction (parallel acceleration),
+  //   Trigger ↔ Cost-reduction (weak indirect)
+  if (aHasRamp && bHasRamp) return 5;
+  if (aHasTrigger && bHasTrigger) return 5;
+  if ((aHasRamp && bHasCost) || (aHasCost && bHasRamp)) return 5;
   if ((aHasTrigger && bHasCost) || (aHasCost && bHasTrigger)) return 5;
 
   // Fallback (shouldn't reach here if roles are correct)
-  return 6;
+  return 5;
 }
 
 /**
