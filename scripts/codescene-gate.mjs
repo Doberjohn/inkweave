@@ -63,8 +63,8 @@ proc.on('error', (err) => {
   process.exit(2);
 });
 
-async function main() {
-  // 1. Initialize handshake
+/** Run the MCP handshake + tools/call, return the analyze_change_set response. */
+async function callAnalyzeChangeSet() {
   send({
     jsonrpc: '2.0',
     id: 1,
@@ -76,12 +76,9 @@ async function main() {
     },
   });
   await waitFor(1);
-  // 2. Notify initialized (notification — no id, no response)
   proc.stdin.write(
     JSON.stringify({jsonrpc: '2.0', method: 'notifications/initialized', params: {}}) + '\n',
   );
-
-  // 3. Call analyze_change_set
   process.stderr.write(`⚙ Running CodeScene analyze_change_set against ${BASE_REF}...\n`);
   send({
     jsonrpc: '2.0',
@@ -92,48 +89,57 @@ async function main() {
       arguments: {base_ref: BASE_REF, git_repository_path: REPO},
     },
   });
-  const result = await waitFor(2);
+  return await waitFor(2);
+}
 
-  // The tool returns content as text — first content item holds the JSON payload
+/**
+ * Parse the MCP tool response into a payload, or null if the response is
+ * unusable (empty, non-JSON auth error, missing content).
+ */
+function parseAnalysisResult(result) {
   const text = result.result?.content?.[0]?.text;
-  if (!text) {
-    fallbackToSoftGate('empty MCP result');
-    return;
-  }
-
-  // CodeScene MCP can return plain-text auth/licensing errors when run
-  // outside Claude Code's MCP integration (e.g. via raw `npx`). Detect that
-  // shape and fall through to the soft-gate path so pre-push isn't blocked
-  // by an environmental issue we can't fix from the hook.
-  let payload;
+  if (!text) return {payload: null, reason: 'empty MCP result'};
   try {
-    payload = JSON.parse(text);
+    return {payload: JSON.parse(text), reason: null};
   } catch {
-    fallbackToSoftGate(`MCP returned non-JSON: ${text.slice(0, 80)}`);
-    return;
+    return {payload: null, reason: `MCP returned non-JSON: ${text.slice(0, 80)}`};
   }
+}
 
-  const gate = payload.quality_gates;
-  if (gate === 'passed') {
-    process.stderr.write('✓ CodeScene quality gate: passed\n');
-    process.exit(0);
-  }
-
-  // Failed — surface the specific findings
-  process.stderr.write(`✗ CodeScene quality gate: ${gate}\n`);
+/** Walk the per-file findings and print introduced/degraded violations to stderr. */
+function reportFailedGate(payload) {
+  process.stderr.write(`✗ CodeScene quality gate: ${payload.quality_gates}\n`);
   for (const file of payload.results ?? []) {
     if (file.verdict !== 'degraded') continue;
     process.stderr.write(`\n  ${file.name} [${file.verdict}]\n`);
     for (const finding of file.findings ?? []) {
-      const introduced = finding['change-details']?.[0]?.['change-type'];
-      if (introduced !== 'introduced' && introduced !== 'degraded') continue;
-      const desc = finding['change-details']?.[0]?.description ?? finding.category;
-      process.stderr.write(`    - ${finding.category}: ${desc}\n`);
+      printFindingIfIntroduced(finding);
     }
   }
   process.stderr.write(
     '\n  Bypass with CODESCENE_OK=1 git push (only when findings are pre-existing/acceptable).\n',
   );
+}
+
+function printFindingIfIntroduced(finding) {
+  const ct = finding['change-details']?.[0]?.['change-type'];
+  if (ct !== 'introduced' && ct !== 'degraded') return;
+  const desc = finding['change-details']?.[0]?.description ?? finding.category;
+  process.stderr.write(`    - ${finding.category}: ${desc}\n`);
+}
+
+async function main() {
+  const result = await callAnalyzeChangeSet();
+  const {payload, reason} = parseAnalysisResult(result);
+  if (!payload) {
+    fallbackToSoftGate(reason);
+    return;
+  }
+  if (payload.quality_gates === 'passed') {
+    process.stderr.write('✓ CodeScene quality gate: passed\n');
+    process.exit(0);
+  }
+  reportFailedGate(payload);
   process.exit(1);
 }
 
