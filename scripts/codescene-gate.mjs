@@ -106,26 +106,31 @@ function parseAnalysisResult(result) {
   }
 }
 
-/** Walk the per-file findings and print introduced/degraded violations to stderr. */
-function reportFailedGate(payload) {
-  process.stderr.write(`✗ CodeScene quality gate: ${payload.quality_gates}\n`);
+/**
+ * Collect findings whose top-level `change-type` is "introduced" or "degraded".
+ * MCP's `quality_gates: passed` only checks for "introduced" verdicts on files,
+ * but CI's "Pay Down Tech Debt" profile rejects ANY degradation to debt-laden
+ * files even when the per-file verdict is "stable" (e.g. SynergyToolbar +1 LoC
+ * pp 4.59 → 4.608). We mirror that stricter rule locally.
+ */
+function collectStrictFindings(payload) {
+  const violations = [];
   for (const file of payload.results ?? []) {
-    if (file.verdict !== 'degraded') continue;
-    process.stderr.write(`\n  ${file.name} [${file.verdict}]\n`);
     for (const finding of file.findings ?? []) {
-      printFindingIfIntroduced(finding);
+      const topLevelChange = finding['change-type'];
+      if (topLevelChange !== 'introduced' && topLevelChange !== 'degraded') continue;
+      violations.push({file: file.name, finding, topLevelChange});
     }
   }
-  process.stderr.write(
-    '\n  Bypass with CODESCENE_OK=1 git push (only when findings are pre-existing/acceptable).\n',
-  );
+  return violations;
 }
 
-function printFindingIfIntroduced(finding) {
-  const ct = finding['change-details']?.[0]?.['change-type'];
-  if (ct !== 'introduced' && ct !== 'degraded') return;
+function printViolation({file, finding, topLevelChange}) {
   const desc = finding['change-details']?.[0]?.description ?? finding.category;
-  process.stderr.write(`    - ${finding.category}: ${desc}\n`);
+  const ppDelta = finding['new-pp'] != null && finding['old-pp'] != null
+    ? ` (pp ${finding['old-pp']} → ${finding['new-pp']})`
+    : '';
+  process.stderr.write(`  [${topLevelChange}] ${file} — ${finding.category}${ppDelta}\n    ${desc}\n`);
 }
 
 async function main() {
@@ -135,11 +140,20 @@ async function main() {
     fallbackToSoftGate(reason);
     return;
   }
-  if (payload.quality_gates === 'passed') {
-    process.stderr.write('✓ CodeScene quality gate: passed\n');
+  // Strict-mode check: collect any introduced/degraded findings, regardless of
+  // the file's verdict or the top-level quality_gates result.
+  const violations = collectStrictFindings(payload);
+  if (payload.quality_gates === 'passed' && violations.length === 0) {
+    process.stderr.write('✓ CodeScene quality gate: passed (strict)\n');
     process.exit(0);
   }
-  reportFailedGate(payload);
+  process.stderr.write(
+    `✗ CodeScene quality gate: ${payload.quality_gates} — ${violations.length} introduced/degraded findings\n\n`,
+  );
+  for (const v of violations) printViolation(v);
+  process.stderr.write(
+    '\n  Bypass with CODESCENE_OK=1 git push (only when findings are pre-existing/acceptable).\n',
+  );
   process.exit(1);
 }
 
