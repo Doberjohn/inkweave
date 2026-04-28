@@ -10,15 +10,35 @@ reserved for community voting (#9), but the engine now assigns them for nuanced 
 gap=1 with one inkable card, 6 for free Shift onto expensive base with condition activation, 10 for
 free Shift with condition bonus).
 
-| Score | Label        | Meaning                                                                   |
-|-------|--------------|---------------------------------------------------------------------------|
-| 1     | Negligible   | Coincidental overlap. Cards share a theme but rarely interact.            |
-| 3     | Weak         | Mild situational benefit. You wouldn't pick one because of the other.     |
-| 5     | Moderate     | Solid synergy. Worth considering when choosing between similar cards.     |
-| 7     | Strong       | Actively want both in the same deck. One improves the other's value.      |
-| 9     | Perfect      | Core synergy pair or strategy pillar. Main reason to play these together. |
+| Score | Label        | Meaning                                                                              |
+|-------|--------------|--------------------------------------------------------------------------------------|
+| 1     | Negligible   | Coincidental overlap. Cards share a theme but rarely interact.                       |
+| 3     | Weak         | Mild situational benefit. You wouldn't pick one because of the other.                |
+| **5** | **Neutral baseline (default)** | Same-axis density / parallel pressure. Cards share a strategy but don't compound. |
+| 6     | Complementary | Different mechanical roles that reinforce each other on the same axis (e.g., burn ↔ steal). |
+| 7     | Strong / compounding | Mechanical interaction that compounds (e.g., steal ↔ steal, member ↔ tribal payoff). |
+| 8     | Win-condition combo | Asymmetric kill / peak chain (e.g., Discard enabler ↔ hand-size payoff, Toy search ↔ banish-trigger). |
+| 9     | Snowball chain | Self-reinforcing combo where each trigger feeds itself (e.g., Ramp deck-ramp ↔ repeating trigger). |
+| 10    | Engine-bonus / Community-tuned | Condition activation pushes a 9 higher (e.g., free Shift + condition). Community voting can also reach here. |
 
-**10 can be assigned by the engine** when a condition bonus pushes a score 9 pair higher (e.g., free Shift + condition activation). Community voting (#9) can also nudge scores to 10.
+### The 5-baseline convention
+
+**5 is the neutral default**, not "Moderate" as in the original draft. Anything above 5 must justify itself with a specific mechanical reason — same-axis density alone is not enough. This convention was adopted across all playstyle rules to fix the "uniform 7 leaks weight to pairs that don't earn it" problem.
+
+**Audit rule**: if you can't articulate why a pair scores above 5 in one sentence ("the load+trigger chain", "the hand-size kill combo", "every steal trigger swings two axes"), it should probably be at 5.
+
+Same-axis density pairs that were re-baselined to 5 in the convention rollout:
+
+| Rule | Pair | Was | Now |
+|------|------|-----|-----|
+| Lore Denial | burn ↔ burn | 7 | 5 |
+| Discard | enabler ↔ enabler | 7 | 5 |
+| Discard | payoff ↔ payoff | 7 | 5 |
+| Ramp | ramp ↔ ramp | 7 | 5 |
+| Ramp | trigger ↔ trigger | 7 | 5 |
+| Ramp | ramp ↔ cost-reduction | 7 | 5 |
+| Toy | member ↔ member | 5 | 5 (already neutral) |
+| Toy | member ↔ generic mechanic | new | 5 |
 
 ## Score Type: `number`
 
@@ -34,11 +54,18 @@ A direct synergy of 7 and a playstyle synergy of 7 are treated as equivalent in 
 If playstyle synergies are systematically over/under-valued compared to direct ones, the fix is
 adjusting anchor assignments — not splitting into separate scales.
 
-## "Everything is 7" — Playstyle Differentiation
+## Playstyle differentiation (post-5-baseline convention)
 
-Most playstyle synergies land at 7 because playstyle pairs all reinforce the same strategy equally.
-Differentiation *within* a playstyle comes from **card potency** (#136) — a separate axis measuring
-how important an individual card is to the strategy, not how well two cards synergize.
+Playstyle pairs are no longer flat-7. Each rule now applies a role-driven matrix anchored at 5:
+
+- **Lore Denial**: 5 / 6 / 7 by burn-vs-steal pair shape
+- **Discard**: 5 / 8 — broad density floor + asymmetric kill combo at the rare hand-size payoff
+- **Ramp**: 5 / 6 / 7 / 8 / 9 — density floor + chain ladder for deck-ramp + repeating-trigger combos
+- **Toy**: 5 / 7 / 8 — same-deck baseline + tribal compounding + peak chains
+- **Location Control**: tiered by role pair (8 sub-rules — see `LOCATION_CONTROL_RULE.md`)
+
+Differentiation *within* a playstyle comes from the role matrix the rule defines, not from card potency.
+Card potency (#136) is still planned as a separate axis measuring individual card importance, but the rule scoring itself encodes mechanical role differences.
 
 Differentiation *across* playstyles (e.g., "Is lore denial stronger than location control?") is
 deliberately excluded from engine scoring. Strategy power depends on the meta and shifts with new

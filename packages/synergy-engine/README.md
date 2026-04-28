@@ -92,7 +92,7 @@ The engine includes 13 built-in synergy rules across two categories:
 
 **Playstyle** (strategy-reinforcing synergies):
 
-- **Lore Loss** (`lore-denial`) — Cards that make opponents lose lore
+- **Lore Loss** (`lore-denial`) — Burn (opponent loses lore) + steal (opponent loses, you gain). Tiered 5/6/7 by role pair.
 - **At Location Payoff** (`location-control`) — "At location" payoff effects + Locations
 - **Location Play Trigger** (`location-control`) — "When you play a location" triggers
 - **Location Buff** (`location-control`) — Cards that buff locations
@@ -101,8 +101,9 @@ The engine includes 13 built-in synergy rules across two categories:
 - **Location In-Play Check** (`location-control`) — "If you have a location" checks
 - **Location Search** (`location-control`) — Location search effects
 - **Location Boost** (`location-control`) — Boost mechanic on characters/locations
-- **Discard** (`discard`) — Opponent discard enablers + hand-size payoffs
-- **Toy** (`toy`) — Toy-classification members + Toy-payoff cards (search effects, free play, cost reduction, banish recursion)
+- **Discard** (`discard`) — Enablers (force opponent discard) + hand-size payoffs. 5-baseline floor, 8 for the asymmetric kill combo.
+- **Ramp** (`ramp`) — Inkwell-ramp + inkwell-trigger + cost-reduction. 5-baseline floor + chain ladder (7–9) for ramp ↔ trigger pairs.
+- **Toy** (`toy`) — Toy-classification members + tribal payoffs (search, banish-trigger, self-discount) + composed generic mechanics. Role-driven 5/7/8 matrix.
 
 ### Custom Rules
 
