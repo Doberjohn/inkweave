@@ -6,4 +6,9 @@
 #   see: Playwright's .click() on mobile projects fires touchstart → synthetic
 #   click (the real iOS/Android tap sequence). Desktop .click() is mouse-only.
 # Firefox + mobile-safari still run in CI only (pre-push time budget).
-pnpm --filter inkweave-web test:e2e --project chromium --project webkit --project mobile-chrome
+pnpm --filter inkweave-web test:e2e --project chromium --project webkit --project mobile-chrome || exit $?
+
+# CodeScene quality gate — mirrors the CI check so failed branches never reach origin.
+# Tries the MCP server first; falls back to requiring CODESCENE_OK=1 when
+# CodeScene MCP isn't reachable from the local environment (auth/license).
+node scripts/codescene-gate.mjs
