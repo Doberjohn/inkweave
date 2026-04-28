@@ -54,22 +54,21 @@ test.describe('Playstyle Detail — Desktop', () => {
     const initialCount = await cardTiles.count();
     expect(initialCount).toBeGreaterThan(0);
 
-    // Discard has "Enabler" and "Payoff" role chips + "All" chip
-    const enablerChip = page.getByRole('button', {name: /Enabler/});
-    await expect(enablerChip).toBeVisible();
+    // Discard playstyle exposes Standard/Targeted/Random/Payoff role tiles.
+    // Standard is the broadest enabler role — its tile is reliably present.
+    const standardChip = page.getByRole('button', {name: /Standard/});
+    await expect(standardChip).toBeVisible();
 
-    // Click "Enabler" to filter
-    await enablerChip.click();
+    // Click to apply the filter — card grid should narrow to Standard-only enablers.
+    await standardChip.click();
     await page.waitForTimeout(200);
 
-    // Card count should change (enablers are a subset of all discard cards)
     const filteredCount = await cardTiles.count();
     expect(filteredCount).toBeGreaterThan(0);
     expect(filteredCount).toBeLessThan(initialCount);
 
-    // Click "All" to reset (chip includes count badge, e.g. "All 36")
-    const allChip = page.getByRole('button', {name: /^All/});
-    await allChip.click();
+    // Click the same chip again to toggle it off — grid restores to full set.
+    await standardChip.click();
     await page.waitForTimeout(200);
 
     const resetCount = await cardTiles.count();
