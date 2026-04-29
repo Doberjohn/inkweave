@@ -7,7 +7,7 @@ Lorcana synergy finder for Core format with archetype-based synergy detection.
 Currently implementing v1.0.0 with:
 - **Scope**: Core format only (sets 5+), community voting, deck builder
 - **UI**: Dark fantasy theme (deep purple, gold accents)
-- **Synergies**: 7 rules (Shift, Named Companions, Lore Loss, Discard, Singer + Songs, Location Control, Ramp)
+- **Synergies**: 8 rules (Shift, Named Companions, Lore Loss, Discard, Singer + Songs, Location Control, Ramp, Toy)
 
 See [GitHub Issues](https://github.com/Doberjohn/inkweave/issues) for full backlog.
 
@@ -77,13 +77,14 @@ React web application that consumes the synergy engine package.
 
 **Game Mode**: Core only (sets 5+) - Infinity mode removed for MVP
 
-**Synergy Categories**: direct (pair-specific, e.g. Shift), playstyle (strategy-reinforcing, e.g. Lore Steal)
+**Synergy Categories**: direct (pair-specific, e.g. Shift), playstyle (strategy-reinforcing, e.g. Lore Denial)
 
 **Playstyles** (implemented):
 - Lore Denial (`lore-denial`) - cards that make opponents lose lore
 - Location Control (`location-control`) - location-support roles (8 sub-rules)
 - Discard (`discard`) - opponent discard enablers + hand-size payoffs
 - Ramp (`ramp`) - inkwell ramp + inkwell triggers + cost reduction grants
+- Toys (`toy`) - Toy-classification members + tribal payoffs (search, banish-trigger, self-discount)
 
 **Synergy Score**: 1-10 numeric scale (all integers valid). Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4)
 
