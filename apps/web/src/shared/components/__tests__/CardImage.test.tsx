@@ -61,7 +61,11 @@ describe('CardImage', () => {
     render(<CardImage {...defaultProps} borderRadius={12} />);
 
     const img = screen.getByRole('img');
-    // borderRadius is on the wrapper div (clips via overflow:hidden), not the img itself
-    expect(img.parentElement).toHaveStyle({borderRadius: '12px'});
+    // Read the inline style attribute directly rather than going through
+    // jest-dom's toHaveStyle → jsdom getComputedStyle → CSS parser. The
+    // shorthand `borderRadius` resolution shifted between jsdom 29.0.x → 29.1.x
+    // (dev-deps PR #310 surfaced this). Direct attribute access is version-
+    // stable: borderRadius is on the wrapper div (clips via overflow:hidden).
+    expect(img.parentElement?.style.borderRadius).toBe('12px');
   });
 });
