@@ -105,76 +105,85 @@ function calculateShiftSynergy(
   return base;
 }
 
-function calculateShiftBaseScore(
+/** Score a free Shift (cost 0) — only the base card's cost matters since the shift itself is free. */
+function freeShiftScore(
   shiftCard: LorcanaCard,
   baseCard: LorcanaCard,
-  shiftCost: number,
 ): {score: number; reason: string} {
-  // Free Shift — scoring based on base cost
-  if (shiftCost === 0) {
-    if (baseCard.cost <= 3)
-      return {
-        score: 9,
-        reason: `Free Shift: Play ${baseCard.fullName} early, then shift into ${shiftCard.fullName} for 0 ink.`,
-      };
-    if (baseCard.cost <= 5)
-      return {
-        score: 7,
-        reason: `Free Shift: Shift ${baseCard.fullName} into ${shiftCard.fullName} for 0 ink, but the base takes longer to set up.`,
-      };
+  if (baseCard.cost <= 3) {
     return {
-      score: 5,
-      reason: `Free Shift but expensive base — Hard to get ${baseCard.fullName} into play first.`,
+      score: 9,
+      reason: `Free Shift: Play ${baseCard.fullName} early, then shift into ${shiftCard.fullName} for 0 ink.`,
     };
   }
+  if (baseCard.cost <= 5) {
+    return {
+      score: 7,
+      reason: `Free Shift: Shift ${baseCard.fullName} into ${shiftCard.fullName} for 0 ink, but the base takes longer to set up.`,
+    };
+  }
+  return {
+    score: 5,
+    reason: `Free Shift but expensive base — Hard to get ${baseCard.fullName} into play first.`,
+  };
+}
 
-  const curveGap = shiftCost - baseCard.cost;
-
-  // Best case: gap=1 with both inkable — perfect curve AND full flexibility
-  if (curveGap === 1 && baseCard.inkwell && shiftCard.inkwell)
+/** Score the gap=1 case based on inkable fallback flexibility (both / one / neither). */
+function onCurveScore(
+  shiftCard: LorcanaCard,
+  baseCard: LorcanaCard,
+): {score: number; reason: string} {
+  if (baseCard.inkwell && shiftCard.inkwell) {
     return {
       score: 9,
       reason: `Perfect curve: Play ${baseCard.fullName} on turn ${baseCard.cost}, Shift next turn. Both cards are inkable as fallback.`,
     };
-
-  // Great curve: gap=1, one card inkable — still perfect tempo, slightly less flexible
-  if (curveGap === 1 && (baseCard.inkwell || shiftCard.inkwell))
+  }
+  if (baseCard.inkwell || shiftCard.inkwell) {
     return {
       score: 8,
       reason: `Perfect curve: Play ${baseCard.fullName} on turn ${baseCard.cost}, Shift next turn. One card is inkable as fallback.`,
     };
+  }
+  return {
+    score: 7,
+    reason: `On curve: Play ${baseCard.fullName} on turn ${baseCard.cost}, Shift next turn. Neither card is inkable — Less flexible if drawn off-curve.`,
+  };
+}
 
-  // On curve but neither inkable — perfect tempo, no fallback flexibility
-  if (curveGap === 1)
-    return {
-      score: 7,
-      reason: `On curve: Play ${baseCard.fullName} on turn ${baseCard.cost}, Shift next turn. Neither card is inkable — Less flexible if drawn off-curve.`,
-    };
-
-  // 2-turn gap — still smooth but slightly slower
-  if (curveGap === 2)
+/** Score a paid Shift based on the curve gap (shiftCost - baseCost). */
+function curveAlignmentScore(
+  shiftCard: LorcanaCard,
+  baseCard: LorcanaCard,
+  curveGap: number,
+): {score: number; reason: string} {
+  if (curveGap === 1) return onCurveScore(shiftCard, baseCard);
+  if (curveGap === 2) {
     return {
       score: 7,
       reason: `Smooth curve: ${baseCard.fullName} flows naturally into Shift within a couple of turns.`,
     };
-
-  // Same cost (no ink savings) or wide 3-turn gap
-  if (curveGap === 0)
-    return {
-      score: 5,
-      reason: `Same cost — No ink savings from Shifting, but skips the drying phase.`,
-    };
-  if (curveGap === 3)
-    return {
-      score: 5,
-      reason: `Wide 3-turn gap — Playable but slow to set up.`,
-    };
-
+  }
+  if (curveGap === 0) {
+    return {score: 5, reason: `Same cost — No ink savings from Shifting, but skips the drying phase.`};
+  }
+  if (curveGap === 3) {
+    return {score: 5, reason: `Wide 3-turn gap — Playable but slow to set up.`};
+  }
   // Poor alignment: 4+ turn gap or negative (shift costs less than base)
   return {
     score: 3,
     reason: `The cost gap makes it hard to set up ${baseCard.fullName} in time to shift ${shiftCard.fullName} onto it.`,
   };
+}
+
+function calculateShiftBaseScore(
+  shiftCard: LorcanaCard,
+  baseCard: LorcanaCard,
+  shiftCost: number,
+): {score: number; reason: string} {
+  if (shiftCost === 0) return freeShiftScore(shiftCard, baseCard);
+  return curveAlignmentScore(shiftCard, baseCard, shiftCost - baseCard.cost);
 }
 
 /**
@@ -307,6 +316,40 @@ export function getCrossSynergyScore(
   return 3;
 }
 
+/** Build a Location ↔ location-support match (or null when role-specific gating excludes the location). */
+function buildLocationDirectMatch(
+  card: LorcanaCard,
+  location: LorcanaCard,
+  role: LocationRole,
+): SynergyMatch | null {
+  if (role === 'boost' && !isBoostBeneficiaryLocation(location)) return null;
+  return {
+    card: location,
+    score: LOCATION_ROLE_SCORE[role],
+    explanation: `${card.name} has ${ROLE_LABELS[role]} — Works with locations`,
+    bidirectional: true,
+  };
+}
+
+/** Build a cross-synergy match between two location-support cards (or null when roles don't complement). */
+function buildLocationCrossMatch(
+  card: LorcanaCard,
+  other: LorcanaCard,
+  cardRoles: LocationRole[],
+  role: LocationRole,
+): SynergyMatch | null {
+  const otherRoles = getLocationRoles(other);
+  const score = getCrossSynergyScore(cardRoles, otherRoles);
+  if (score === null) return null;
+  const otherLabel = otherRoles.map((r) => ROLE_LABELS[r]).join(' + ');
+  return {
+    card: other,
+    score,
+    explanation: `${card.name} (${ROLE_LABELS[role]}) and ${other.name} (${otherLabel}) — Complementary location strategy`,
+    bidirectional: true,
+  };
+}
+
 /** Build synergies for a location-support card: find Locations + cross-synergies */
 function findLocationSupportSynergies(
   card: LorcanaCard,
@@ -318,31 +361,12 @@ function findLocationSupportSynergies(
 
   for (const other of allCards) {
     if (other.id === card.id) continue;
-
-    if (isLocation(other)) {
-      // Boost role only synergizes with locations that actually use cards beneath them
-      if (role === 'boost' && !isBoostBeneficiaryLocation(other)) continue;
-      // Location-support card ↔ Location = direct synergy
-      matches.push({
-        card: other,
-        score: LOCATION_ROLE_SCORE[role],
-        explanation: `${card.name} has ${ROLE_LABELS[role]} — Works with locations`,
-        bidirectional: true,
-      });
-    } else if (isLocationSupportCard(other)) {
-      // Cross-synergy with other location-support cards
-      const otherRoles = getLocationRoles(other);
-      const score = getCrossSynergyScore(cardRoles, otherRoles);
-      if (score !== null) {
-        const otherLabel = otherRoles.map((r) => ROLE_LABELS[r]).join(' + ');
-        matches.push({
-          card: other,
-          score,
-          explanation: `${card.name} (${ROLE_LABELS[role]}) and ${other.name} (${otherLabel}) — Complementary location strategy`,
-          bidirectional: true,
-        });
-      }
-    }
+    const match = isLocation(other)
+      ? buildLocationDirectMatch(card, other, role)
+      : isLocationSupportCard(other)
+        ? buildLocationCrossMatch(card, other, cardRoles, role)
+        : null;
+    if (match) matches.push(match);
   }
 
   return matches;
@@ -374,83 +398,60 @@ function findLocationCardSynergiesForRole(
   return matches;
 }
 
+interface LocationRuleSpec {
+  id: string;
+  name: string;
+  role: LocationRole;
+  pattern: RegExp;
+  excludePattern?: RegExp;
+}
+
+function locationRuleMatches(spec: LocationRuleSpec, card: LorcanaCard): boolean {
+  if (isLocation(card)) {
+    // Boost role pairs supports with locations that actually use cards beneath them.
+    // Generic locations are not valid boost targets.
+    if (spec.role === 'boost') return isBoostBeneficiaryLocation(card);
+    return true;
+  }
+  if (!card.text) return false;
+  const normalizedText = normalizeCardText(card);
+  // Exclude anti-location cards (banish/remove locations)
+  if (LOCATION_PATTERNS['anti-location'].test(normalizedText)) return false;
+  if (spec.excludePattern && spec.excludePattern.test(normalizedText)) return false;
+  return spec.pattern.test(normalizedText);
+}
+
 /** Create a single location rule for a specific pattern */
-function createLocationRule(
-  id: string,
-  name: string,
-  role: LocationRole,
-  pattern: RegExp,
-  excludePattern?: RegExp,
-): SynergyRule {
+function createLocationRule(spec: LocationRuleSpec): SynergyRule {
   return {
-    id: `location-${id}`,
-    name,
+    id: `location-${spec.id}`,
+    name: spec.name,
     category: 'playstyle',
     playstyleId: 'location-control',
-    description: `Location synergy: ${name}`,
-
-    matches: (card) => {
-      if (isLocation(card)) {
-        // Boost role pairs supports with locations that actually use cards beneath them.
-        // Generic locations are not valid boost targets.
-        if (role === 'boost') return isBoostBeneficiaryLocation(card);
-        return true;
-      }
-      if (!card.text) return false;
-      const normalizedText = normalizeCardText(card);
-      // Exclude anti-location cards (banish/remove locations)
-      if (LOCATION_PATTERNS['anti-location'].test(normalizedText)) return false;
-      if (excludePattern && excludePattern.test(normalizedText)) return false;
-      return pattern.test(normalizedText);
-    },
-
-    findSynergies: (card, allCards) => {
-      if (isLocation(card)) {
-        return findLocationCardSynergiesForRole(card, allCards, role);
-      }
-      return findLocationSupportSynergies(card, allCards, role);
-    },
+    description: `Location synergy: ${spec.name}`,
+    matches: (card) => locationRuleMatches(spec, card),
+    findSynergies: (card, allCards) =>
+      isLocation(card)
+        ? findLocationCardSynergiesForRole(card, allCards, spec.role)
+        : findLocationSupportSynergies(card, allCards, spec.role),
   };
 }
 
+/** Specs for all 8 location rules (order matters for deduplication). */
+const LOCATION_RULE_SPECS: readonly LocationRuleSpec[] = [
+  {id: 'at-payoff', name: 'At Location Payoff', role: 'at-payoff', pattern: LOCATION_PATTERNS['at-payoff']},
+  {id: 'play-trigger', name: 'Location Play Trigger', role: 'play-trigger', pattern: LOCATION_PATTERNS['play-trigger']},
+  {id: 'buff', name: 'Location Buff', role: 'buff', pattern: LOCATION_PATTERNS.buff},
+  {id: 'location-ramp', name: 'Location Ramp', role: 'location-ramp', pattern: LOCATION_PATTERNS['location-ramp']},
+  {id: 'move', name: 'Move to Location', role: 'move', pattern: LOCATION_PATTERNS.move, excludePattern: LOCATION_PATTERNS['move-exclude']},
+  {id: 'in-play-check', name: 'Location In-Play Check', role: 'in-play-check', pattern: LOCATION_PATTERNS['in-play-check']},
+  {id: 'search', name: 'Location Search', role: 'search', pattern: LOCATION_PATTERNS.search},
+  {id: 'boost', name: 'Location Boost', role: 'boost', pattern: LOCATION_PATTERNS.boost},
+];
+
 /** Create all 8 location synergy rules (order matters for deduplication) */
 function createLocationRules(): SynergyRule[] {
-  return [
-    createLocationRule(
-      'at-payoff',
-      'At Location Payoff',
-      'at-payoff',
-      LOCATION_PATTERNS['at-payoff'],
-    ),
-    createLocationRule(
-      'play-trigger',
-      'Location Play Trigger',
-      'play-trigger',
-      LOCATION_PATTERNS['play-trigger'],
-    ),
-    createLocationRule('buff', 'Location Buff', 'buff', LOCATION_PATTERNS.buff),
-    createLocationRule(
-      'location-ramp',
-      'Location Ramp',
-      'location-ramp',
-      LOCATION_PATTERNS['location-ramp'],
-    ),
-    createLocationRule(
-      'move',
-      'Move to Location',
-      'move',
-      LOCATION_PATTERNS.move,
-      LOCATION_PATTERNS['move-exclude'],
-    ),
-    createLocationRule(
-      'in-play-check',
-      'Location In-Play Check',
-      'in-play-check',
-      LOCATION_PATTERNS['in-play-check'],
-    ),
-    createLocationRule('search', 'Location Search', 'search', LOCATION_PATTERNS.search),
-    createLocationRule('boost', 'Location Boost', 'boost', LOCATION_PATTERNS.boost),
-  ];
+  return LOCATION_RULE_SPECS.map(createLocationRule);
 }
 
 // ============================================
@@ -486,6 +487,76 @@ export const LOCATION_ROLE_TOOLTIP: Record<LocationRole, string> = {
 };
 
 // ============================================
+// SINGER + SONGS HELPERS
+// ============================================
+
+function singerSongScore(diff: number): number {
+  if (diff === 0) return 8;
+  if (diff === 1) return 7;
+  if (diff === 2) return 6;
+  return 5;
+}
+
+function makeSingerSongMatch(singer: LorcanaCard, song: LorcanaCard, target: LorcanaCard): SynergyMatch {
+  const singerValue = getKeywordValue(singer, 'Singer') ?? singer.cost;
+  return {
+    card: target,
+    score: singerSongScore(singerValue - song.cost),
+    explanation: `${singer.fullName} (Singer ${singerValue}) can sing ${song.fullName} (cost ${song.cost}) for free`,
+    bidirectional: true,
+  };
+}
+
+/** Forward: a Singer card finds Songs it can sing for free. */
+function findSongsForSinger(singer: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+  const singerValue = getKeywordValue(singer, 'Singer') ?? singer.cost;
+  return allCards
+    .filter((other) => other.id !== singer.id && isSong(other) && other.cost <= singerValue)
+    .map((song) => makeSingerSongMatch(singer, song, song));
+}
+
+/** Reverse: a Song card finds Singers that can sing it. */
+function findSingersForSong(song: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+  return allCards
+    .filter((other) => {
+      if (other.id === song.id) return false;
+      if (!hasKeyword(other, 'Singer')) return false;
+      const singerValue = getKeywordValue(other, 'Singer') ?? other.cost;
+      return song.cost <= singerValue;
+    })
+    .map((singer) => makeSingerSongMatch(singer, song, singer));
+}
+
+// ============================================
+// SHIFT TARGETS HELPERS
+// ============================================
+
+function makeShiftMatch(shiftCard: LorcanaCard, baseCard: LorcanaCard, target: LorcanaCard): SynergyMatch {
+  const {score, reason} = calculateShiftSynergy(shiftCard, baseCard);
+  return {card: target, score, explanation: reason, bidirectional: true};
+}
+
+/** Forward: a Shift card finds valid base targets per its variant. */
+function findShiftTargets(shiftCard: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+  const shiftType = getShiftType(shiftCard);
+  if (!shiftType) return [];
+  return allCards
+    .filter((other) => other.id !== shiftCard.id && isCharacter(other) && isValidShiftTarget(shiftType, shiftCard, other))
+    .map((target) => makeShiftMatch(shiftCard, target, target));
+}
+
+/** Reverse: a non-Shift character finds Shift cards that can target it. */
+function findShiftSourcesForBase(baseCard: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+  return allCards
+    .filter((other) => {
+      if (other.id === baseCard.id || !isCharacter(other)) return false;
+      const otherShift = getShiftType(other);
+      return !!otherShift && isValidShiftTarget(otherShift, other, baseCard);
+    })
+    .map((shiftCard) => makeShiftMatch(shiftCard, baseCard, shiftCard));
+}
+
+// ============================================
 // SYNERGY RULES
 // ============================================
 
@@ -503,45 +574,8 @@ export const synergyRules: SynergyRule[] = [
     matches: (card) => isCharacter(card),
 
     findSynergies: (card, allCards) => {
-      const shiftType = getShiftType(card);
-
-      if (shiftType) {
-        // Forward: Shift card finds valid targets based on variant
-        return allCards
-          .filter((other) => {
-            if (other.id === card.id) return false;
-            if (!isCharacter(other)) return false;
-            return isValidShiftTarget(shiftType, card, other);
-          })
-          .map((target): SynergyMatch => {
-            const {score, reason} = calculateShiftSynergy(card, target);
-            return {
-              card: target,
-              score,
-              explanation: reason,
-              bidirectional: true,
-            };
-          });
-      }
-
-      // Reverse: non-Shift character finds Shift cards that can target it
-      return allCards
-        .filter((other) => {
-          if (other.id === card.id) return false;
-          if (!isCharacter(other)) return false;
-          const otherShift = getShiftType(other);
-          if (!otherShift) return false;
-          return isValidShiftTarget(otherShift, other, card);
-        })
-        .map((shiftCard): SynergyMatch => {
-          const {score, reason} = calculateShiftSynergy(shiftCard, card);
-          return {
-            card: shiftCard,
-            score,
-            explanation: reason,
-            bidirectional: true,
-          };
-        });
+      if (getShiftType(card)) return findShiftTargets(card, allCards);
+      return findShiftSourcesForBase(card, allCards);
     },
   },
 
@@ -640,45 +674,13 @@ export const synergyRules: SynergyRule[] = [
       const cardRoles = getDiscardRoles(card);
       if (cardRoles.length === 0) return [];
 
-      const DISRUPTION: DiscardRole[] = ['targeted', 'random', 'standard'];
-      const hasDisruption = (roles: DiscardRole[]) => roles.some((r) => DISRUPTION.includes(r));
-
       const matches: SynergyMatch[] = [];
-
       for (const other of allCards) {
         if (other.id === card.id) continue;
-
         const otherRoles = getDiscardRoles(other);
         if (otherRoles.length === 0) continue;
-
-        const hasDisruptionPayoff =
-          (hasDisruption(cardRoles) && otherRoles.includes('payoff')) ||
-          (cardRoles.includes('payoff') && hasDisruption(otherRoles));
-
-        if (hasDisruptionPayoff) {
-          const disruption = hasDisruption(cardRoles) ? card : other;
-          const payoff = cardRoles.includes('payoff') ? card : other;
-          matches.push({
-            card: other,
-            score: 8,
-            explanation: `${disruption.fullName} depletes the opponent's hand, powering up ${payoff.fullName}'s hand-size advantage`,
-            bidirectional: true,
-          });
-        } else {
-          // Same-side pair (both disruption or both payoff): density baseline.
-          // Two enablers don't compound — they stack pressure. Two payoffs share an axis without amplifying it.
-          const bothPayoff = cardRoles.includes('payoff') && otherRoles.includes('payoff');
-          matches.push({
-            card: other,
-            score: 5,
-            explanation: bothPayoff
-              ? `Both ${card.fullName} and ${other.fullName} reward hand-size advantage over opponents`
-              : `Both ${card.fullName} and ${other.fullName} disrupt the opponent's hand`,
-            bidirectional: true,
-          });
-        }
+        matches.push(scoreDiscardPair(card, cardRoles, other, otherRoles));
       }
-
       return matches;
     },
   },
@@ -695,45 +697,8 @@ export const synergyRules: SynergyRule[] = [
     matches: (card) => hasKeyword(card, 'Singer') || isSong(card),
 
     findSynergies: (card, allCards) => {
-      if (hasKeyword(card, 'Singer')) {
-        // Forward: Singer finds compatible Songs
-        const singerValue = getKeywordValue(card, 'Singer') ?? card.cost;
-
-        return allCards
-          .filter((other) => other.id !== card.id && isSong(other) && other.cost <= singerValue)
-          .map((song): SynergyMatch => {
-            const diff = singerValue - song.cost;
-            const score = diff === 0 ? 8 : diff === 1 ? 7 : diff === 2 ? 6 : 5;
-
-            return {
-              card: song,
-              score,
-              explanation: `${card.fullName} (Singer ${singerValue}) can sing ${song.fullName} (cost ${song.cost}) for free`,
-              bidirectional: true,
-            };
-          });
-      }
-
-      // Reverse: Song finds Singers that can sing it
-      return allCards
-        .filter((other) => {
-          if (other.id === card.id) return false;
-          if (!hasKeyword(other, 'Singer')) return false;
-          const singerValue = getKeywordValue(other, 'Singer') ?? other.cost;
-          return card.cost <= singerValue;
-        })
-        .map((singer): SynergyMatch => {
-          const singerValue = getKeywordValue(singer, 'Singer') ?? singer.cost;
-          const diff = singerValue - card.cost;
-          const score = diff === 0 ? 8 : diff === 1 ? 7 : diff === 2 ? 6 : 5;
-
-          return {
-            card: singer,
-            score,
-            explanation: `${singer.fullName} (Singer ${singerValue}) can sing ${card.fullName} (cost ${card.cost}) for free`,
-            bidirectional: true,
-          };
-        });
+      if (hasKeyword(card, 'Singer')) return findSongsForSinger(card, allCards);
+      return findSingersForSong(card, allCards);
     },
   },
 
@@ -884,6 +849,60 @@ export const TOY_ROLE_DESCRIPTIONS: Record<ToyRole, string> = {
 };
 
 // ============================================
+// DISCARD SCORING
+// ============================================
+
+const DISCARD_DISRUPTION_ROLES: readonly DiscardRole[] = ['targeted', 'random', 'standard'];
+
+function hasDiscardDisruption(roles: DiscardRole[]): boolean {
+  return roles.some((r) => DISCARD_DISRUPTION_ROLES.includes(r));
+}
+
+function isDiscardKillCombo(
+  cardDisruption: boolean,
+  cardPayoff: boolean,
+  otherDisruption: boolean,
+  otherPayoff: boolean,
+): boolean {
+  return (cardDisruption && otherPayoff) || (cardPayoff && otherDisruption);
+}
+
+function scoreDiscardPair(
+  card: LorcanaCard,
+  cardRoles: DiscardRole[],
+  other: LorcanaCard,
+  otherRoles: DiscardRole[],
+): SynergyMatch {
+  const cardDisruption = hasDiscardDisruption(cardRoles);
+  const otherDisruption = hasDiscardDisruption(otherRoles);
+  const cardPayoff = cardRoles.includes('payoff');
+  const otherPayoff = otherRoles.includes('payoff');
+
+  if (isDiscardKillCombo(cardDisruption, cardPayoff, otherDisruption, otherPayoff)) {
+    const disruption = cardDisruption ? card : other;
+    const payoff = cardPayoff ? card : other;
+    return {
+      card: other,
+      score: 8,
+      explanation: `${disruption.fullName} depletes the opponent's hand, powering up ${payoff.fullName}'s hand-size advantage`,
+      bidirectional: true,
+    };
+  }
+
+  // Same-side pair (both disruption or both payoff): density baseline.
+  // Two enablers don't compound — they stack pressure. Two payoffs share an axis without amplifying it.
+  const bothPayoff = cardPayoff && otherPayoff;
+  return {
+    card: other,
+    score: 5,
+    explanation: bothPayoff
+      ? `Both ${card.fullName} and ${other.fullName} reward hand-size advantage over opponents`
+      : `Both ${card.fullName} and ${other.fullName} disrupt the opponent's hand`,
+    bidirectional: true,
+  };
+}
+
+// ============================================
 // LORE DENIAL SCORING
 // ============================================
 
@@ -931,23 +950,96 @@ function scoreLoreDenialPair(
 // ============================================
 
 /**
+ * Tags every ramp pair by role mix. The tag drives both scoring and explanation
+ * generation, replacing the repeated boolean-flag arithmetic that lived in both.
+ */
+type RampPairShape =
+  | 'ramp-trigger'
+  | 'cost-cost'
+  | 'ramp-ramp'
+  | 'trigger-trigger'
+  | 'ramp-cost'
+  | 'trigger-cost';
+
+interface RampPairFlags {
+  shape: RampPairShape;
+  rampCard: LorcanaCard; // valid when shape involves 'inkwell-ramp'
+  triggerCard: LorcanaCard; // valid when shape involves 'inkwell-trigger'
+  costCard: LorcanaCard; // valid when shape involves 'cost-reduction'
+}
+
+interface RampRoleFlags {
+  ramp: boolean;
+  trigger: boolean;
+  cost: boolean;
+}
+
+function rampRoleFlags(roles: RampRole[]): RampRoleFlags {
+  return {
+    ramp: roles.includes('inkwell-ramp'),
+    trigger: roles.includes('inkwell-trigger'),
+    cost: roles.includes('cost-reduction'),
+  };
+}
+
+/** True iff one card has roleX and the other has roleY (regardless of which side). */
+function hasMixedRoles(a: RampRoleFlags, b: RampRoleFlags, x: keyof RampRoleFlags, y: keyof RampRoleFlags): boolean {
+  return (a[x] && b[y]) || (a[y] && b[x]);
+}
+
+function bothHaveRole(a: RampRoleFlags, b: RampRoleFlags, role: keyof RampRoleFlags): boolean {
+  return a[role] && b[role];
+}
+
+function determineRampShape(a: RampRoleFlags, b: RampRoleFlags): RampPairShape {
+  if (hasMixedRoles(a, b, 'ramp', 'trigger')) return 'ramp-trigger';
+  if (bothHaveRole(a, b, 'cost')) return 'cost-cost';
+  if (bothHaveRole(a, b, 'ramp')) return 'ramp-ramp';
+  if (bothHaveRole(a, b, 'trigger')) return 'trigger-trigger';
+  if (hasMixedRoles(a, b, 'ramp', 'cost')) return 'ramp-cost';
+  return 'trigger-cost';
+}
+
+function classifyRampPair(
+  cardA: LorcanaCard,
+  rolesA: RampRole[],
+  cardB: LorcanaCard,
+  rolesB: RampRole[],
+): RampPairFlags {
+  const a = rampRoleFlags(rolesA);
+  const b = rampRoleFlags(rolesB);
+  return {
+    shape: determineRampShape(a, b),
+    rampCard: a.ramp ? cardA : cardB,
+    triggerCard: a.trigger ? cardA : cardB,
+    costCard: a.cost ? cardA : cardB,
+  };
+}
+
+/** Score the ramp ↔ trigger chain (the only pair shape with a tiered ladder). */
+function scoreRampTriggerChain(rampCard: LorcanaCard, triggerCard: LorcanaCard): number {
+  const deckRamp = isDeckRamp(rampCard);
+  const repeatingTrigger = isRepeatingTrigger(triggerCard);
+  if (deckRamp && repeatingTrigger) return 9;
+  if (deckRamp || repeatingTrigger) return 8;
+  return 7;
+}
+
+/**
  * Score a ramp pair based on their roles and sub-patterns.
  *
  * Convention: 5 = same-strategy density baseline, no compounding interaction.
  * Bumps above 5 reflect real mechanical chains where one card *enables* or
  * *amplifies* the other (not just parallel acceleration).
  *
- * Scoring priority (highest to lowest):
+ * Scoring priority:
  * - Deck ramp ↔ Repeating trigger: 9 (snowball chain — every free ink fires a trigger)
  * - Deck ramp ↔ Once/turn trigger: 8 (free ink but trigger capped)
  * - Self-sacrifice ↔ Repeating trigger: 8 (fires every event but costs a card)
  * - Self-sacrifice ↔ Once/turn trigger: 7 (card cost + capped)
  * - Cost reduction ↔ Cost reduction (overlap): 6 (stacking discounts on same card type)
- * - Ramp ↔ Ramp: 5 (parallel ramp, doesn't compound)
- * - Trigger ↔ Trigger: 5 (parallel triggers — needs ramp to fire either)
- * - Ramp ↔ Cost reduction: 5 (parallel curve acceleration, no per-card combo)
- * - Trigger ↔ Cost reduction: 5 (weak indirect link)
  * - Cost reduction ↔ Cost reduction (no overlap): 0 (silently dropped)
+ * - All other same-axis density pairs: 5 (parallel acceleration)
  */
 function getRampPairScore(
   cardA: LorcanaCard,
@@ -955,93 +1047,40 @@ function getRampPairScore(
   cardB: LorcanaCard,
   rolesB: RampRole[],
 ): number {
-  const aHasRamp = rolesA.includes('inkwell-ramp');
-  const bHasRamp = rolesB.includes('inkwell-ramp');
-  const aHasTrigger = rolesA.includes('inkwell-trigger');
-  const bHasTrigger = rolesB.includes('inkwell-trigger');
-  const aHasCost = rolesA.includes('cost-reduction');
-  const bHasCost = rolesB.includes('cost-reduction');
-
-  // Ramp ↔ Trigger (highest — direct mechanic chain)
-  if ((aHasRamp && bHasTrigger) || (aHasTrigger && bHasRamp)) {
-    const rampCard = aHasRamp ? cardA : cardB;
-    const triggerCard = aHasTrigger ? cardA : cardB;
-    const deckRampBonus = isDeckRamp(rampCard);
-    const repeatingBonus = isRepeatingTrigger(triggerCard);
-
-    if (deckRampBonus && repeatingBonus) return 9;
-    if (deckRampBonus || repeatingBonus) return 8;
-    return 7;
-  }
-
-  // Cost reduction ↔ Cost reduction (real compounding — only when targets overlap)
-  if (aHasCost && bHasCost) {
-    return costReductionTargetsOverlap(cardA, cardB) ? 6 : 0;
-  }
-
-  // Same-axis density pairs — neutral baseline (no compounding):
-  //   Ramp ↔ Ramp, Trigger ↔ Trigger, Ramp ↔ Cost-reduction (parallel acceleration),
-  //   Trigger ↔ Cost-reduction (weak indirect)
-  if (aHasRamp && bHasRamp) return 5;
-  if (aHasTrigger && bHasTrigger) return 5;
-  if ((aHasRamp && bHasCost) || (aHasCost && bHasRamp)) return 5;
-  if ((aHasTrigger && bHasCost) || (aHasCost && bHasTrigger)) return 5;
-
-  // Fallback (shouldn't reach here if roles are correct)
+  const flags = classifyRampPair(cardA, rolesA, cardB, rolesB);
+  if (flags.shape === 'ramp-trigger') return scoreRampTriggerChain(flags.rampCard, flags.triggerCard);
+  if (flags.shape === 'cost-cost') return costReductionTargetsOverlap(cardA, cardB) ? 6 : 0;
   return 5;
 }
 
-/**
- * Generate a human-readable explanation for a ramp synergy pair.
- */
+/** Explanation templates keyed by ramp pair shape. */
+const RAMP_EXPLANATIONS: Record<
+  RampPairShape,
+  (cardA: LorcanaCard, cardB: LorcanaCard, flags: RampPairFlags) => string
+> = {
+  'ramp-trigger': (_a, _b, f) =>
+    `${f.rampCard.fullName} adds ink to your inkwell, triggering ${f.triggerCard.fullName}'s inkwell effect`,
+  'ramp-ramp': (a, b) =>
+    `Both ${a.fullName} and ${b.fullName} accelerate your ink, getting you ahead faster`,
+  'ramp-cost': (_a, _b, f) =>
+    `${f.rampCard.fullName} adds extra ink while ${f.costCard.fullName} discounts your plays`,
+  'trigger-trigger': (a, b) =>
+    `Both ${a.fullName} and ${b.fullName} effects activate on inkwell events`,
+  'cost-cost': (a, b) =>
+    `Both ${a.fullName} and ${b.fullName} reduce costs — stacking discounts lets you play cards faster`,
+  'trigger-cost': (a, b) =>
+    `${a.fullName} and ${b.fullName} both support an accelerated game plan`,
+};
+
+/** Generate a human-readable explanation for a ramp synergy pair. */
 function getRampExplanation(
   cardA: LorcanaCard,
   rolesA: RampRole[],
   cardB: LorcanaCard,
   rolesB: RampRole[],
 ): string {
-  const aHasRamp = rolesA.includes('inkwell-ramp');
-  const bHasRamp = rolesB.includes('inkwell-ramp');
-  const aHasTrigger = rolesA.includes('inkwell-trigger');
-  const bHasTrigger = rolesB.includes('inkwell-trigger');
-  const aHasCost = rolesA.includes('cost-reduction');
-  const bHasCost = rolesB.includes('cost-reduction');
-
-  // Ramp ↔ Trigger
-  if ((aHasRamp && bHasTrigger) || (aHasTrigger && bHasRamp)) {
-    const ramp = aHasRamp ? cardA : cardB;
-    const trigger = aHasTrigger ? cardA : cardB;
-    return `${ramp.fullName} adds ink to your inkwell, triggering ${trigger.fullName}'s inkwell effect`;
-  }
-
-  // Ramp ↔ Ramp
-  if (aHasRamp && bHasRamp) {
-    return `Both ${cardA.fullName} and ${cardB.fullName} accelerate your ink, getting you ahead faster`;
-  }
-
-  // Ramp ↔ Cost reduction
-  if ((aHasRamp && bHasCost) || (aHasCost && bHasRamp)) {
-    const ramp = aHasRamp ? cardA : cardB;
-    const cost = aHasCost ? cardA : cardB;
-    return `${ramp.fullName} adds extra ink while ${cost.fullName} discounts your plays`;
-  }
-
-  // Trigger ↔ Trigger
-  if (aHasTrigger && bHasTrigger) {
-    return `Both ${cardA.fullName} and ${cardB.fullName} effects activate on inkwell events`;
-  }
-
-  // Cost reduction ↔ Cost reduction
-  if (aHasCost && bHasCost) {
-    return `Both ${cardA.fullName} and ${cardB.fullName} reduce costs — stacking discounts lets you play cards faster`;
-  }
-
-  // Trigger ↔ Cost reduction
-  if ((aHasTrigger && bHasCost) || (aHasCost && bHasTrigger)) {
-    return `${cardA.fullName} and ${cardB.fullName} both support an accelerated game plan`;
-  }
-
-  return `${cardA.fullName} and ${cardB.fullName} reinforce the ramp strategy`;
+  const flags = classifyRampPair(cardA, rolesA, cardB, rolesB);
+  return RAMP_EXPLANATIONS[flags.shape](cardA, cardB, flags);
 }
 
 // ============================================
