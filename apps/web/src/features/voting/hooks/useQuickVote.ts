@@ -60,38 +60,53 @@ export interface UseQuickVoteReturn {
   error: QuickVoteError;
 }
 
+interface ResolvedQuickVoteState {
+  state: QuickVoteState;
+  userChoice: Accuracy | null;
+}
+
+/**
+ * Compute the initial / pair-reset state for the hook from the two inputs that
+ * decide it: whether Supabase is reachable and whether a prior vote exists in
+ * localStorage. Used both for `useState` lazy init and the prev-value-during-render
+ * reset block, which keeps the conditional fork out of the hook body.
+ */
+function resolveQuickVoteState(
+  isAvailable: boolean,
+  storedChoice: Accuracy | null,
+): ResolvedQuickVoteState {
+  if (!isAvailable) return {state: 'hidden', userChoice: null};
+  if (storedChoice !== null) return {state: 'result', userChoice: storedChoice};
+  return {state: 'ready', userChoice: null};
+}
+
 export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
   const isAvailable = useMemo(() => getSupabase() !== null, []);
   const storedChoice = useMemo(() => getStoredVote(cardA, cardB), [cardA, cardB]);
+  const pairId = `${cardA}:${cardB}`;
 
-  const [state, setState] = useState<QuickVoteState>(() => {
-    if (!isAvailable) return 'hidden';
-    if (storedChoice !== null) return 'result';
-    return 'ready';
-  });
-  const [userChoice, setUserChoice] = useState<Accuracy | null>(storedChoice);
+  const initial = resolveQuickVoteState(isAvailable, storedChoice);
+  const [state, setState] = useState<QuickVoteState>(initial.state);
+  const [userChoice, setUserChoice] = useState<Accuracy | null>(initial.userChoice);
   const [distribution, setDistribution] = useState<AccuracyDistribution | null>(null);
   const [error, setError] = useState<QuickVoteError>(null);
   const [distributionFailed, setDistributionFailed] = useState(false);
+  const [prevPairId, setPrevPairId] = useState(pairId);
   const submittingRef = useRef(false);
 
-  // Reset state when the pair changes (modal stays mounted across pairs)
-  useEffect(() => {
+  // Reset state when the pair changes (modal stays mounted across pairs).
+  // React 19 prev-value-during-render pattern: setState calls during render are
+  // merged into the same render pass — no cascading re-renders, no effect.
+  if (pairId !== prevPairId) {
+    setPrevPairId(pairId);
     submittingRef.current = false;
     setDistribution(null);
     setDistributionFailed(false);
     setError(null);
-    if (!isAvailable) {
-      setState('hidden');
-      setUserChoice(null);
-    } else if (storedChoice !== null) {
-      setState('result');
-      setUserChoice(storedChoice);
-    } else {
-      setState('ready');
-      setUserChoice(null);
-    }
-  }, [cardA, cardB, isAvailable, storedChoice]);
+    const next = resolveQuickVoteState(isAvailable, storedChoice);
+    setState(next.state);
+    setUserChoice(next.userChoice);
+  }
 
   // Fetch distribution for returning voters
   useEffect(() => {
