@@ -204,76 +204,84 @@ export interface CardFilterOptions {
   inkwell?: 'inkable' | 'uninkable';
 }
 
+type CardFilterPredicate = (card: LorcanaCard, options: CardFilterOptions) => boolean;
+
+function matchesInk(card: LorcanaCard, options: CardFilterOptions): boolean {
+  if (!options.ink) return true;
+  const selected = Array.isArray(options.ink) ? options.ink : [options.ink];
+  return selected.includes(card.ink) || (!!card.ink2 && selected.includes(card.ink2));
+}
+
+// Song is a pseudo-type: card.type is 'Action' but card.isSong is true.
+function cardMatchesType(card: LorcanaCard, type: CardType | 'Song'): boolean {
+  if (type === 'Song') return !!card.isSong;
+  if (type === 'Action') return card.type === 'Action' && !card.isSong;
+  return card.type === type;
+}
+
+function matchesType(card: LorcanaCard, options: CardFilterOptions): boolean {
+  if (!options.type) return true;
+  const types = Array.isArray(options.type) ? options.type : [options.type];
+  if (types.some((t) => cardMatchesType(card, t))) return true;
+  // Action + Song both selected → any Action card passes
+  return types.includes('Song') && types.includes('Action') && card.type === 'Action';
+}
+
+// Discrete cost selection; 9 means 9+.
+function matchesCost(card: LorcanaCard, options: CardFilterOptions): boolean {
+  if (!options.costs || options.costs.length === 0) return true;
+  return card.cost >= 9 ? options.costs.includes(9) : options.costs.includes(card.cost);
+}
+
+function matchesSet(card: LorcanaCard, options: CardFilterOptions): boolean {
+  return !options.setCode || card.setCode === options.setCode;
+}
+
+function matchesKeywords(card: LorcanaCard, options: CardFilterOptions): boolean {
+  if (!options.keywords || options.keywords.length === 0) return true;
+  if (!card.keywords) return false;
+  return options.keywords.some((k) => {
+    const lk = k.toLowerCase();
+    return card.keywords!.some((ck) => ck.toLowerCase().includes(lk));
+  });
+}
+
+function matchesClassifications(card: LorcanaCard, options: CardFilterOptions): boolean {
+  if (!options.classifications || options.classifications.length === 0) return true;
+  if (!card.classifications) return false;
+  return options.classifications.some((c) => {
+    const lc = c.toLowerCase();
+    return card.classifications!.some((cc) => cc.toLowerCase() === lc);
+  });
+}
+
+function matchesInkwell(card: LorcanaCard, options: CardFilterOptions): boolean {
+  if (!options.inkwell) return true;
+  return options.inkwell === 'inkable' ? card.inkwell : !card.inkwell;
+}
+
+function matchesTextSearch(card: LorcanaCard, options: CardFilterOptions): boolean {
+  if (!options.textSearch) return true;
+  const q = options.textSearch.toLowerCase();
+  return !!card.text?.toLowerCase().includes(q) || card.fullName.toLowerCase().includes(q);
+}
+
+const CARD_FILTER_PREDICATES: CardFilterPredicate[] = [
+  matchesInk,
+  matchesType,
+  matchesCost,
+  matchesSet,
+  matchesKeywords,
+  matchesClassifications,
+  matchesInkwell,
+  matchesTextSearch,
+];
+
 /**
  * Filter cards by various criteria
  */
 export function filterCards(cards: LorcanaCard[], options: CardFilterOptions): LorcanaCard[] {
-  return cards.filter((card) => {
-    // Ink filter: dual-ink cards match if either ink is selected
-    if (options.ink) {
-      const selectedInks = Array.isArray(options.ink) ? options.ink : [options.ink];
-      if (!selectedInks.includes(card.ink) && (!card.ink2 || !selectedInks.includes(card.ink2)))
-        return false;
-    }
-
-    // Type filter (Song is a pseudo-type: card.type is 'Action' but card.isSong is true)
-    if (options.type) {
-      const types = Array.isArray(options.type) ? options.type : [options.type];
-      const hasSong = types.includes('Song');
-      const hasAction = types.includes('Action');
-      const match = types.some((t) => {
-        if (t === 'Song') return card.isSong;
-        if (t === 'Action') return card.type === 'Action' && !card.isSong;
-        return card.type === t;
-      });
-      // Both Action + Song selected → accept any Action card
-      if (!match && hasSong && hasAction && card.type === 'Action') return true;
-      if (!match) return false;
-    }
-
-    // Cost filter (discrete selection; 9 means 9+)
-    if (options.costs && options.costs.length > 0) {
-      if (card.cost >= 9 ? !options.costs.includes(9) : !options.costs.includes(card.cost))
-        return false;
-    }
-
-    // Set filter
-    if (options.setCode && card.setCode !== options.setCode) return false;
-
-    // Keywords filter (any match)
-    if (options.keywords && options.keywords.length > 0) {
-      if (!card.keywords) return false;
-      const hasKeyword = options.keywords.some((k) =>
-        card.keywords!.some((ck) => ck.toLowerCase().includes(k.toLowerCase())),
-      );
-      if (!hasKeyword) return false;
-    }
-
-    // Classifications filter (any match)
-    if (options.classifications && options.classifications.length > 0) {
-      if (!card.classifications) return false;
-      const hasClass = options.classifications.some((c) =>
-        card.classifications!.some((cc) => cc.toLowerCase() === c.toLowerCase()),
-      );
-      if (!hasClass) return false;
-    }
-
-    // Inkwell filter
-    if (options.inkwell) {
-      if (options.inkwell === 'inkable' && !card.inkwell) return false;
-      if (options.inkwell === 'uninkable' && card.inkwell) return false;
-    }
-
-    // Text search
-    if (options.textSearch) {
-      const searchLower = options.textSearch.toLowerCase();
-      const matchesText = card.text?.toLowerCase().includes(searchLower);
-      const matchesName = card.fullName.toLowerCase().includes(searchLower);
-      if (!matchesText && !matchesName) return false;
-    }
-
-    return true;
-  });
+  return cards.filter((card) => CARD_FILTER_PREDICATES.every((p) => p(card, options)));
 }
 
 /**
