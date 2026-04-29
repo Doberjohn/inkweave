@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {COLORS, FONTS, SPACING} from '../../../shared/constants';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';
 import type {Score} from '../../../shared/lib/supabase';
@@ -187,27 +187,25 @@ export function PairDisplay({pair, selectedScore, previousPairs, upcomingPairs, 
   // In in-depth mode, show the engine's aggregate score instead of "?"
   const badgeScore = selectedScore ?? (showEngineScore ? Math.round(pair.aggregateScore) as Score : null);
   const pairId = `${pair.cardA.id}:${pair.cardB.id}`;
-  const prevPairRef = useRef<VotingPair | null>(null);
-  const prevPairIdRef = useRef(pairId);
+  const [prevPair, setPrevPair] = useState<VotingPair>(pair);
   const [exitingPair, setExitingPair] = useState<VotingPair | null>(null);
   const [highlightedCard, setHighlightedCard] = useState<'a' | 'b' | null>(null);
   const isTransitioning = exitingPair !== null;
 
-  // Detect pair change → trigger carousel transition
-  useEffect(() => {
-    if (pairId !== prevPairIdRef.current && prevPairRef.current) {
-      setExitingPair(prevPairRef.current);
-      prevPairIdRef.current = pairId;
-      const timer = setTimeout(() => setExitingPair(null), TRANSITION_MS);
-      return () => clearTimeout(timer);
-    }
-    prevPairIdRef.current = pairId;
-  }, [pairId]);
+  // Detect pair change → trigger carousel transition (React 19 prev-value-during-render).
+  // Both setState calls below merge into the same render pass: `prevPair` becomes the
+  // new pair and `exitingPair` becomes the outgoing pair (read before setPrevPair fires).
+  if (pairId !== `${prevPair.cardA.id}:${prevPair.cardB.id}`) {
+    setPrevPair(pair);
+    setExitingPair(prevPair);
+  }
 
-  // Always track current pair for next transition
+  // Clear the exiting pair after the carousel transition completes.
   useEffect(() => {
-    prevPairRef.current = pair;
-  });
+    if (!exitingPair) return;
+    const timer = setTimeout(() => setExitingPair(null), TRANSITION_MS);
+    return () => clearTimeout(timer);
+  }, [exitingPair]);
 
   if (isMobile) {
     return (
