@@ -1,4 +1,4 @@
-import {useState, useEffect, useCallback, useMemo, useRef} from 'react';
+import {useState, useEffect, useCallback, useMemo, useRef, type MutableRefObject} from 'react';
 import {
   getSupabase,
   submitVote,
@@ -11,13 +11,42 @@ export type {Accuracy};
 export type QuickVoteState = 'hidden' | 'ready' | 'submitting' | 'result' | 'error';
 export type QuickVoteError = 'submission_failed' | 'rate_limited' | null;
 
-function storageKey(cardA: string, cardB: string): string {
-  const [a, b] = [cardA, cardB].sort();
+interface Pair {
+  cardA: string;
+  cardB: string;
+}
+
+const VALID_ACCURACIES: Accuracy[] = [-1, 0, 1];
+
+// ── Storage helpers ──
+
+function storageKey(pair: Pair): string {
+  const [a, b] = [pair.cardA, pair.cardB].sort();
   return `inkweave:vote:${a}:${b}`;
 }
 
-function getStoredVote(cardA: string, cardB: string): Accuracy | null {
-  const key = storageKey(cardA, cardB);
+function clearStorageKey(key: string): void {
+  try { localStorage.removeItem(key); } catch (cleanupErr) {
+    console.warn('[useQuickVote] localStorage cleanup failed:', cleanupErr);
+  }
+}
+
+/** Parse a previously-stored vote payload. Clears the key on any malformed shape. */
+function parseStoredVote(raw: string, key: string): Accuracy | null {
+  try {
+    const parsed = JSON.parse(raw);
+    const accuracy = parsed?.accuracy;
+    if (VALID_ACCURACIES.includes(accuracy)) return accuracy;
+    console.error('[parseStoredVote] Unexpected shape, clearing:', parsed);
+  } catch (e) {
+    console.error('[parseStoredVote] Corrupted JSON, clearing key:', key, e);
+  }
+  clearStorageKey(key);
+  return null;
+}
+
+function getStoredVote(pair: Pair): Accuracy | null {
+  const key = storageKey(pair);
   let raw: string | null;
   try {
     raw = localStorage.getItem(key);
@@ -25,31 +54,190 @@ function getStoredVote(cardA: string, cardB: string): Accuracy | null {
     console.warn('[getStoredVote] localStorage access denied:', e);
     return null;
   }
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw);
-    const accuracy = parsed?.accuracy;
-    if (accuracy === -1 || accuracy === 0 || accuracy === 1) return accuracy;
-    console.error('[getStoredVote] Stored value has unexpected shape, clearing:', parsed);
-    try { localStorage.removeItem(key); } catch (cleanupErr) { console.warn('[getStoredVote] localStorage cleanup failed:', cleanupErr); }
-    return null;
-  } catch (e) {
-    console.error('[getStoredVote] Corrupted JSON in storage, clearing key:', key, e);
-    try { localStorage.removeItem(key); } catch (cleanupErr) { console.warn('[getStoredVote] localStorage cleanup failed:', cleanupErr); }
-    return null;
-  }
+  return raw ? parseStoredVote(raw, key) : null;
 }
 
-function storeVote(cardA: string, cardB: string, accuracy: Accuracy): void {
+function storeVote(pair: Pair, accuracy: Accuracy): void {
   try {
     localStorage.setItem(
-      storageKey(cardA, cardB),
+      storageKey(pair),
       JSON.stringify({accuracy, timestamp: Date.now()}),
     );
   } catch (e) {
     console.error('[storeVote] Failed to persist vote to localStorage:', e);
   }
 }
+
+// ── State resolution ──
+
+interface ResolvedQuickVoteState {
+  state: QuickVoteState;
+  userChoice: Accuracy | null;
+}
+
+interface ResolveInputs {
+  isAvailable: boolean;
+  storedChoice: Accuracy | null;
+}
+
+/**
+ * Initial / pair-reset state from the two inputs that decide it: whether
+ * Supabase is reachable and whether a prior vote exists in localStorage.
+ */
+function resolveQuickVoteState({isAvailable, storedChoice}: ResolveInputs): ResolvedQuickVoteState {
+  if (!isAvailable) return {state: 'hidden', userChoice: null};
+  if (storedChoice !== null) return {state: 'result', userChoice: storedChoice};
+  return {state: 'ready', userChoice: null};
+}
+
+// ── Vote submission helpers (pure) ──
+
+interface VoteSlots {
+  setState: (s: QuickVoteState) => void;
+  setUserChoice: (c: Accuracy | null) => void;
+  setError: (e: QuickVoteError) => void;
+  setDistribution: (d: AccuracyDistribution | null) => void;
+  setDistributionFailed: (f: boolean) => void;
+  submittingRef: MutableRefObject<boolean>;
+}
+
+async function fetchPostVoteDistribution(slots: VoteSlots, pair: Pair): Promise<void> {
+  try {
+    const dist = await getAccuracyDistribution(pair.cardA, pair.cardB);
+    if (!slots.submittingRef.current) return;
+    if (dist) slots.setDistribution(dist);
+  } catch (err) {
+    console.error('[useQuickVote] Failed to fetch distribution after vote:', err);
+    slots.setDistributionFailed(true);
+  }
+}
+
+function applyVoteFailure(slots: VoteSlots, error: NonNullable<QuickVoteError>): void {
+  slots.setUserChoice(null);
+  slots.setError(error);
+  slots.setState('error');
+}
+
+async function performVote(slots: VoteSlots, pair: Pair, accuracy: Accuracy): Promise<void> {
+  slots.setState('submitting');
+  slots.setUserChoice(accuracy);
+  slots.setError(null);
+  try {
+    const result = await submitVote({cardA: pair.cardA, cardB: pair.cardB, accuracy});
+    if (!slots.submittingRef.current) return;
+    if (result.error === null) {
+      storeVote(pair, accuracy);
+      slots.setState('result');
+      await fetchPostVoteDistribution(slots, pair);
+      return;
+    }
+    if (result.error === 'rate_limited') {
+      applyVoteFailure(slots, 'rate_limited');
+      return;
+    }
+    console.error('[useQuickVote] Vote submission failed:', result.error, pair);
+    applyVoteFailure(slots, 'submission_failed');
+  } catch (err) {
+    if (!slots.submittingRef.current) return;
+    console.error('[useQuickVote] Unexpected error during vote submission:', err);
+    applyVoteFailure(slots, 'submission_failed');
+  } finally {
+    slots.submittingRef.current = false;
+  }
+}
+
+// ── Distribution-fetch predicate ──
+
+interface FetchDistributionInputs {
+  state: QuickVoteState;
+  distribution: AccuracyDistribution | null;
+  distributionFailed: boolean;
+}
+
+function shouldFetchDistribution({state, distribution, distributionFailed}: FetchDistributionInputs): boolean {
+  if (state !== 'result') return false;
+  if (distribution) return false;
+  if (distributionFailed) return false;
+  return true;
+}
+
+// ── Sub-hooks ──
+
+type StateSlots = Omit<VoteSlots, 'submittingRef'>;
+
+interface QuickVoteSlots extends StateSlots {
+  state: QuickVoteState;
+  userChoice: Accuracy | null;
+  distribution: AccuracyDistribution | null;
+  distributionFailed: boolean;
+  error: QuickVoteError;
+}
+
+interface SlotsInputs {
+  pair: Pair;
+  isAvailable: boolean;
+  storedChoice: Accuracy | null;
+}
+
+/**
+ * Owns all useState slots + the prev-value-during-render pair-change reset.
+ * The submission-lock ref is owned by `useQuickVote` itself (refs created via
+ * `useRef` should be mutated only in the hook that created them).
+ */
+function useQuickVoteSlots({pair, isAvailable, storedChoice}: SlotsInputs): QuickVoteSlots {
+  const pairId = `${pair.cardA}:${pair.cardB}`;
+  const initial = resolveQuickVoteState({isAvailable, storedChoice});
+  const [state, setState] = useState<QuickVoteState>(initial.state);
+  const [userChoice, setUserChoice] = useState<Accuracy | null>(initial.userChoice);
+  const [distribution, setDistribution] = useState<AccuracyDistribution | null>(null);
+  const [error, setError] = useState<QuickVoteError>(null);
+  const [distributionFailed, setDistributionFailed] = useState(false);
+  const [prevPairId, setPrevPairId] = useState(pairId);
+
+  if (pairId !== prevPairId) {
+    setPrevPairId(pairId);
+    setDistribution(null);
+    setDistributionFailed(false);
+    setError(null);
+    const next = resolveQuickVoteState({isAvailable, storedChoice});
+    setState(next.state);
+    setUserChoice(next.userChoice);
+  }
+
+  return {
+    state, setState, userChoice, setUserChoice, distribution, setDistribution,
+    error, setError, distributionFailed, setDistributionFailed,
+  };
+}
+
+/** Fetch the accuracy distribution when a returning voter lands on the result state. */
+function useDistributionFetch(slots: QuickVoteSlots, pair: Pair): void {
+  const {state, distribution, distributionFailed, setDistribution, setDistributionFailed} = slots;
+  useEffect(() => {
+    if (!shouldFetchDistribution({state, distribution, distributionFailed})) return;
+    let cancelled = false;
+    getAccuracyDistribution(pair.cardA, pair.cardB)
+      .then((dist) => { if (!cancelled && dist) setDistribution(dist); })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('[useQuickVote] Failed to fetch accuracy distribution:', err);
+        setDistributionFailed(true);
+      });
+    return () => { cancelled = true; };
+  }, [state, distribution, distributionFailed, pair.cardA, pair.cardB, setDistribution, setDistributionFailed]);
+}
+
+/** Auto-recover from a rate-limit error after 30 seconds. */
+function useRateLimitRecovery(slots: QuickVoteSlots): void {
+  const {error, setState, setError} = slots;
+  useEffect(() => {
+    if (error !== 'rate_limited') return;
+    const timer = setTimeout(() => { setState('ready'); setError(null); }, 30_000);
+    return () => clearTimeout(timer);
+  }, [error, setState, setError]);
+}
+
+// ── Public hook ──
 
 export interface UseQuickVoteReturn {
   state: QuickVoteState;
@@ -60,130 +248,39 @@ export interface UseQuickVoteReturn {
   error: QuickVoteError;
 }
 
-interface ResolvedQuickVoteState {
-  state: QuickVoteState;
-  userChoice: Accuracy | null;
-}
-
-/**
- * Compute the initial / pair-reset state for the hook from the two inputs that
- * decide it: whether Supabase is reachable and whether a prior vote exists in
- * localStorage. Used both for `useState` lazy init and the prev-value-during-render
- * reset block, which keeps the conditional fork out of the hook body.
- */
-function resolveQuickVoteState(
-  isAvailable: boolean,
-  storedChoice: Accuracy | null,
-): ResolvedQuickVoteState {
-  if (!isAvailable) return {state: 'hidden', userChoice: null};
-  if (storedChoice !== null) return {state: 'result', userChoice: storedChoice};
-  return {state: 'ready', userChoice: null};
-}
-
 export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
+  const pair = useMemo<Pair>(() => ({cardA, cardB}), [cardA, cardB]);
   const isAvailable = useMemo(() => getSupabase() !== null, []);
-  const storedChoice = useMemo(() => getStoredVote(cardA, cardB), [cardA, cardB]);
-  const pairId = `${cardA}:${cardB}`;
-
-  const initial = resolveQuickVoteState(isAvailable, storedChoice);
-  const [state, setState] = useState<QuickVoteState>(initial.state);
-  const [userChoice, setUserChoice] = useState<Accuracy | null>(initial.userChoice);
-  const [distribution, setDistribution] = useState<AccuracyDistribution | null>(null);
-  const [error, setError] = useState<QuickVoteError>(null);
-  const [distributionFailed, setDistributionFailed] = useState(false);
-  const [prevPairId, setPrevPairId] = useState(pairId);
+  const storedChoice = useMemo(() => getStoredVote(pair), [pair]);
+  const slots = useQuickVoteSlots({pair, isAvailable, storedChoice});
   const submittingRef = useRef(false);
 
-  // Reset state when the pair changes (modal stays mounted across pairs).
-  // React 19 prev-value-during-render pattern: setState calls during render are
-  // merged into the same render pass — no cascading re-renders, no effect.
-  if (pairId !== prevPairId) {
-    setPrevPairId(pairId);
-    submittingRef.current = false;
-    setDistribution(null);
-    setDistributionFailed(false);
-    setError(null);
-    const next = resolveQuickVoteState(isAvailable, storedChoice);
-    setState(next.state);
-    setUserChoice(next.userChoice);
-  }
+  // Reset submission lock after pair-change commit (refs can't be mutated during render).
+  useEffect(() => { submittingRef.current = false; }, [pair]);
 
-  // Fetch distribution for returning voters
-  useEffect(() => {
-    if (state !== 'result' || distribution || distributionFailed) return;
-    let cancelled = false;
-    getAccuracyDistribution(cardA, cardB)
-      .then((dist) => {
-        if (!cancelled && dist) setDistribution(dist);
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          console.error('[useQuickVote] Failed to fetch accuracy distribution:', err);
-          setDistributionFailed(true);
-        }
-      });
-    return () => { cancelled = true; };
-  }, [state, distribution, distributionFailed, cardA, cardB]);
+  useDistributionFetch(slots, pair);
+  useRateLimitRecovery(slots);
 
-  // Auto-recover from rate limit after 30s
-  useEffect(() => {
-    if (error !== 'rate_limited') return;
-    const timer = setTimeout(() => {
-      setState('ready');
-      setError(null);
-    }, 30_000);
-    return () => clearTimeout(timer);
-  }, [error]);
-
+  const {state, setState, setUserChoice, setError, setDistribution, setDistributionFailed} = slots;
   const vote = useCallback(
     async (accuracy: Accuracy) => {
       if (state !== 'ready' && state !== 'error') return;
       if (submittingRef.current) return;
       submittingRef.current = true;
-
-      setState('submitting');
-      setUserChoice(accuracy);
-      setError(null);
-
-      try {
-        const result = await submitVote({cardA, cardB, accuracy});
-
-        // Bail if pair changed during the await (reset effect sets ref to false)
-        if (!submittingRef.current) return;
-
-        if (result.error === null) {
-          storeVote(cardA, cardB, accuracy);
-          setState('result');
-          try {
-            const dist = await getAccuracyDistribution(cardA, cardB);
-            if (!submittingRef.current) return;
-            if (dist) setDistribution(dist);
-          } catch (distErr) {
-            console.error('[useQuickVote] Failed to fetch distribution after vote:', distErr);
-            setDistributionFailed(true);
-          }
-        } else if (result.error === 'rate_limited') {
-          setUserChoice(null);
-          setError('rate_limited');
-          setState('error');
-        } else {
-          console.error('[useQuickVote] Vote submission failed:', result.error, {cardA, cardB});
-          setUserChoice(null);
-          setError('submission_failed');
-          setState('error');
-        }
-      } catch (err) {
-        if (!submittingRef.current) return;
-        console.error('[useQuickVote] Unexpected error during vote submission:', err);
-        setUserChoice(null);
-        setError('submission_failed');
-        setState('error');
-      } finally {
-        submittingRef.current = false;
-      }
+      await performVote(
+        {setState, setUserChoice, setError, setDistribution, setDistributionFailed, submittingRef},
+        pair, accuracy,
+      );
     },
-    [cardA, cardB, state],
+    [pair, state, setState, setUserChoice, setError, setDistribution, setDistributionFailed],
   );
 
-  return {state, vote, distribution, distributionFailed, userChoice, error};
+  return {
+    state: slots.state,
+    vote,
+    distribution: slots.distribution,
+    distributionFailed: slots.distributionFailed,
+    userChoice: slots.userChoice,
+    error: slots.error,
+  };
 }

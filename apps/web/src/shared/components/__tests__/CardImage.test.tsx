@@ -33,20 +33,27 @@ describe('CardImage', () => {
     expect(screen.getByRole('img')).not.toHaveAttribute('loading');
   });
 
-  it('should render fallback when no src provided', () => {
+  it('should render alt-bearing img + fallback overlay when no src provided', () => {
     render(<CardImage {...defaultProps} src={undefined} />);
 
-    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    // img is always rendered for DOM-selector stability (test/screen-reader access)
+    const img = screen.getByRole('img');
+    expect(img).toBeInTheDocument();
+    expect(img).not.toHaveAttribute('src');
+    expect(img).toHaveAttribute('alt', defaultProps.alt);
+    // Fallback overlay shows the cost number
     expect(screen.getByText('3')).toBeInTheDocument();
   });
 
-  it('should render fallback on image error', () => {
+  it('should show fallback overlay on image error (img stays in DOM)', () => {
     render(<CardImage {...defaultProps} />);
 
     const img = screen.getByRole('img');
     fireEvent.error(img);
 
-    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    // img element is still present (alt attribute preserved); only the fallback overlay appears
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveStyle({opacity: '0'});
     expect(screen.getByText('3')).toBeInTheDocument();
   });
 

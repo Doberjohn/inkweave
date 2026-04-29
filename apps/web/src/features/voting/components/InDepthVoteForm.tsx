@@ -27,6 +27,15 @@ interface InDepthVoteFormProps {
   compact?: boolean;
 }
 
+interface FormHandlers {
+  onSetIsReal: (value: boolean | null) => void;
+  onSetAccuracy: (value: Accuracy) => void;
+  onSetScore: (value: Score) => void;
+  onSetWouldPlay: (value: boolean | null) => void;
+  onSetWhoCarries: (value: 'a' | 'b' | 'both') => void;
+  onSetDifficulty: (value: 1 | 2 | 3) => void;
+}
+
 // ── Group accent colors ──
 
 const GROUP_ACCENTS = {
@@ -87,27 +96,10 @@ const DIFFICULTY_OPTIONS = [
 function CategoryHeader({stepRange, label, accent, compact}: {stepRange: string; label: string; accent: string; compact?: boolean}) {
   return (
     <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm, marginBottom: compact ? SPACING.xs : SPACING.md}}>
-      <span
-        style={{
-          fontSize: FONT_SIZES.xs,
-          fontWeight: 700,
-          color: accent,
-          background: `${accent}1a`,
-          padding: '2px 8px',
-          borderRadius: 10,
-          fontFamily: FONTS.body,
-        }}>
+      <span style={{fontSize: FONT_SIZES.xs, fontWeight: 700, color: accent, background: `${accent}1a`, padding: '2px 8px', borderRadius: 10, fontFamily: FONTS.body}}>
         {stepRange}
       </span>
-      <span
-        style={{
-          fontSize: FONT_SIZES.sm,
-          color: COLORS.textDim,
-          fontWeight: 500,
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          fontFamily: FONTS.body,
-        }}>
+      <span style={{fontSize: FONT_SIZES.sm, color: COLORS.textDim, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONTS.body}}>
         {label}
       </span>
     </div>
@@ -116,13 +108,7 @@ function CategoryHeader({stepRange, label, accent, compact}: {stepRange: string;
 
 function GroupSeparator() {
   return (
-    <div
-      style={{
-        height: 1,
-        background: 'linear-gradient(90deg, transparent, #333355, transparent)',
-        margin: `${SPACING.sm}px 0`,
-      }}
-    />
+    <div style={{height: 1, background: 'linear-gradient(90deg, transparent, #333355, transparent)', margin: `${SPACING.sm}px 0`}} />
   );
 }
 
@@ -169,16 +155,9 @@ function DimensionSection({label, stepNumber, accentColor, isAnswered, animation
             flexShrink: 0,
             transition: `all 0.3s ${EASING.bounce}`,
           }}>
-          {isAnswered ? '\u2713' : stepNumber}
+          {isAnswered ? '✓' : stepNumber}
         </span>
-        <span
-          style={{
-            fontSize: FONT_SIZES.base,
-            fontWeight: 600,
-            color: COLORS.text,
-            fontFamily: FONTS.body,
-            flex: 1,
-          }}>
+        <span style={{fontSize: FONT_SIZES.base, fontWeight: 600, color: COLORS.text, fontFamily: FONTS.body, flex: 1}}>
           {label}
         </span>
       </div>
@@ -187,7 +166,7 @@ function DimensionSection({label, stepNumber, accentColor, isAnswered, animation
   );
 }
 
-// ── Tab bar with hover effects ──
+// ── Tab metadata + style helpers ──
 
 const TAB_GROUPS = [
   {key: 'assessment', label: 'Assessment', accent: GROUP_ACCENTS.assessment, stepRange: '1-2'},
@@ -198,28 +177,66 @@ const TAB_GROUPS = [
 type TabKey = typeof TAB_GROUPS[number]['key'];
 const TAB_ORDER: TabKey[] = ['assessment', 'rating', 'practical'];
 
+interface TabStyleInput {
+  isActive: boolean;
+  isHovered: boolean;
+  accent: string;
+}
+
+function getTabBorder({isActive, isHovered, accent}: TabStyleInput): string {
+  if (isActive) return `2px solid ${accent}`;
+  if (isHovered) return `1px solid ${accent}66`;
+  return '1px solid rgba(255,255,255,0.08)';
+}
+
+function getTabBackground({isActive, isHovered, accent}: TabStyleInput): string {
+  if (isActive) return `${accent}0f`;
+  if (isHovered) return `${accent}08`;
+  return 'rgba(255,255,255,0.02)';
+}
+
+function getTabColor({isActive, isHovered, accent}: TabStyleInput): string {
+  if (isActive) return accent;
+  if (isHovered) return COLORS.text;
+  return COLORS.textMuted;
+}
+
+function getTabStyle(input: TabStyleInput): React.CSSProperties {
+  return {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: RADIUS.lg,
+    border: getTabBorder(input),
+    background: getTabBackground(input),
+    color: getTabColor(input),
+    fontSize: FONT_SIZES.base,
+    fontWeight: input.isActive ? 700 : 500,
+    fontFamily: FONTS.body,
+    cursor: 'pointer',
+    padding: '8px 4px',
+    transition: `all 0.25s ${EASING.snappy}`,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 2,
+    boxShadow: input.isHovered ? `0 0 12px ${input.accent}15` : 'none',
+  };
+}
+
 function TabBar({activeTab, onTabChange, answeredByGroup}: {
   activeTab: TabKey;
   onTabChange: (tab: TabKey) => void;
   answeredByGroup: Record<TabKey, number>;
 }) {
   const [hoveredTab, setHoveredTab] = useState<TabKey | null>(null);
+  const groupTotal = 2;
 
   return (
-    <div
-      role="tablist"
-      aria-label="Vote dimension groups"
-      style={{
-        display: 'flex',
-        gap: SPACING.xs,
-        width: '100%',
-        marginBottom: SPACING.lg,
-      }}>
+    <div role="tablist" aria-label="Vote dimension groups" style={{display: 'flex', gap: SPACING.xs, width: '100%', marginBottom: SPACING.lg}}>
       {TAB_GROUPS.map(({key, label, accent}) => {
         const isActive = activeTab === key;
         const isHovered = hoveredTab === key && !isActive;
         const groupAnswered = answeredByGroup[key];
-        const groupTotal = 2;
         return (
           <button
             key={key}
@@ -229,36 +246,10 @@ function TabBar({activeTab, onTabChange, answeredByGroup}: {
             onClick={() => onTabChange(key)}
             onMouseEnter={() => setHoveredTab(key)}
             onMouseLeave={() => setHoveredTab(null)}
-            style={{
-              flex: 1,
-              minHeight: 44,
-              borderRadius: RADIUS.lg,
-              border: isActive
-                ? `2px solid ${accent}`
-                : isHovered
-                  ? `1px solid ${accent}66`
-                  : '1px solid rgba(255,255,255,0.08)',
-              background: isActive
-                ? `${accent}0f`
-                : isHovered
-                  ? `${accent}08`
-                  : 'rgba(255,255,255,0.02)',
-              color: isActive ? accent : isHovered ? COLORS.text : COLORS.textMuted,
-              fontSize: FONT_SIZES.base,
-              fontWeight: isActive ? 700 : 500,
-              fontFamily: FONTS.body,
-              cursor: 'pointer',
-              padding: '8px 4px',
-              transition: `all 0.25s ${EASING.snappy}`,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 2,
-              boxShadow: isHovered ? `0 0 12px ${accent}15` : 'none',
-            }}>
+            style={getTabStyle({isActive, isHovered, accent})}>
             <span>{label}</span>
             <span style={{fontSize: FONT_SIZES.xs, opacity: 0.7}}>
-              {groupAnswered === groupTotal ? '\u2713' : `${groupAnswered}/${groupTotal}`}
+              {groupAnswered === groupTotal ? '✓' : `${groupAnswered}/${groupTotal}`}
             </span>
           </button>
         );
@@ -267,7 +258,43 @@ function TabBar({activeTab, onTabChange, answeredByGroup}: {
   );
 }
 
-// ── Nav button with hover effects ──
+// ── Nav button + style helpers ──
+
+interface NavStyleInput {
+  hovered: boolean;
+  disabled: boolean;
+  boopStyle: React.CSSProperties;
+}
+
+function getNavBorder(disabled: boolean, hovered: boolean): string {
+  if (disabled) return `1px solid ${COLORS.surfaceBorder}`;
+  if (hovered) return '1px solid rgba(255,185,0,0.5)';
+  return `1px solid ${COLORS.primary}33`;
+}
+
+function getNavColor(disabled: boolean, hovered: boolean): string {
+  if (disabled) return COLORS.textDim;
+  if (hovered) return COLORS.primary;
+  return COLORS.textMuted;
+}
+
+function getNavStyle({hovered, disabled, boopStyle}: NavStyleInput): React.CSSProperties {
+  const interactive = hovered && !disabled;
+  return {
+    ...(disabled ? {} : boopStyle),
+    background: interactive ? 'rgba(255,185,0,0.05)' : 'none',
+    border: getNavBorder(disabled, hovered),
+    borderRadius: RADIUS.lg,
+    color: getNavColor(disabled, hovered),
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.body,
+    fontWeight: interactive ? 600 : 500,
+    padding: '8px 20px',
+    cursor: disabled ? 'default' : 'pointer',
+    opacity: disabled ? 0.4 : 1,
+    boxShadow: interactive ? '0 0 10px rgba(255,185,0,0.1)' : 'none',
+  };
+}
 
 function NavButton({label, disabled, onClick}: {label: string; disabled: boolean; onClick: () => void}) {
   const [hovered, setHovered] = useState(false);
@@ -278,136 +305,178 @@ function NavButton({label, disabled, onClick}: {label: string; disabled: boolean
       disabled={disabled}
       onMouseEnter={() => { setHovered(true); if (!disabled) boop.trigger(); }}
       onMouseLeave={() => setHovered(false)}
-      style={{
-        ...(!disabled ? boop.style : {}),
-        background: !disabled && hovered ? 'rgba(255,185,0,0.05)' : 'none',
-        border: `1px solid ${disabled ? COLORS.surfaceBorder : hovered ? 'rgba(255,185,0,0.5)' : `${COLORS.primary}33`}`,
-        borderRadius: RADIUS.lg,
-        color: disabled ? COLORS.textDim : hovered ? COLORS.primary : COLORS.textMuted,
-        fontSize: FONT_SIZES.base,
-        fontFamily: FONTS.body,
-        fontWeight: hovered && !disabled ? 600 : 500,
-        padding: '8px 20px',
-        cursor: disabled ? 'default' : 'pointer',
-        opacity: disabled ? 0.4 : 1,
-        boxShadow: !disabled && hovered ? '0 0 10px rgba(255,185,0,0.1)' : 'none',
-      }}>
+      style={getNavStyle({hovered, disabled, boopStyle: boop.style})}>
       {label}
     </button>
   );
 }
 
-// ── Main form ──
+// ── Group config (kills groupA/B/C duplication) ──
 
-export function InDepthVoteForm({
-  formState,
-  cardA,
-  cardB,
-  onSetIsReal,
-  onSetAccuracy,
-  onSetScore,
-  onSetWouldPlay,
-  onSetWhoCarries,
-  onSetDifficulty,
-  isMobile,
-  animate,
-  layout = 'stacked',
-  compact,
-}: InDepthVoteFormProps) {
-  const [activeTab, setActiveTab] = useState<TabKey>('assessment');
-  const baseDelay = animate ? 200 : 0;
-  const useCompact = compact || isMobile;
+interface SectionContext {
+  formState: InDepthFormState;
+  handlers: FormHandlers;
+  cardA: LorcanaCard;
+  cardB: LorcanaCard;
+  useCompact: boolean;
+}
 
-  const answeredByGroup = useMemo<Record<TabKey, number>>(() => ({
-    assessment: (formState.isReal !== null ? 1 : 0) + (formState.accuracy !== null ? 1 : 0),
-    rating: (formState.score !== null ? 1 : 0) + (formState.whoCarries !== null ? 1 : 0),
-    practical: (formState.wouldPlay !== null ? 1 : 0) + (formState.difficulty !== null ? 1 : 0),
-  }), [formState.isReal, formState.accuracy, formState.score, formState.whoCarries, formState.wouldPlay, formState.difficulty]);
+interface SectionConfig {
+  label: string;
+  stepNumber: number;
+  isAnswered: (s: InDepthFormState) => boolean;
+  renderPicker: (ctx: SectionContext) => React.ReactNode;
+}
 
-  // Auto-advance to next tab when current group is complete
+const ASSESSMENT_SECTIONS: SectionConfig[] = [
+  {
+    label: 'Is this synergy real?',
+    stepNumber: 1,
+    isAnswered: (s) => s.isReal !== null,
+    renderPicker: ({formState, handlers, useCompact}) => (
+      <OptionPicker ariaLabel="Is this synergy real" options={IS_REAL_OPTIONS} value={formState.isReal} onChange={handlers.onSetIsReal} isMobile={useCompact} colorScheme={IS_REAL_COLORS} />
+    ),
+  },
+  {
+    label: 'Is Inkweave score accurate?',
+    stepNumber: 2,
+    isAnswered: (s) => s.accuracy !== null,
+    renderPicker: ({formState, handlers, useCompact}) => (
+      <OptionPicker ariaLabel="Is Inkweave score accurate" options={ACCURACY_OPTIONS} value={formState.accuracy} onChange={handlers.onSetAccuracy} isMobile={useCompact} colorScheme={ACCURACY_COLORS} />
+    ),
+  },
+];
+
+const RATING_SECTIONS: SectionConfig[] = [
+  {
+    label: 'Rate this synergy',
+    stepNumber: 3,
+    isAnswered: (s) => s.score !== null,
+    renderPicker: ({formState, handlers, useCompact}) => (
+      <ScorePicker value={formState.score} onChange={handlers.onSetScore} isMobile={useCompact} responsive={!useCompact} />
+    ),
+  },
+  {
+    label: 'Which card drives the synergy?',
+    stepNumber: 4,
+    isAnswered: (s) => s.whoCarries !== null,
+    renderPicker: ({formState, handlers, useCompact, cardA, cardB}) => (
+      <CarriesPicker cardA={cardA} cardB={cardB} value={formState.whoCarries} onChange={handlers.onSetWhoCarries} isMobile={useCompact} />
+    ),
+  },
+];
+
+const PRACTICAL_SECTIONS: SectionConfig[] = [
+  {
+    label: 'Would you play these together?',
+    stepNumber: 5,
+    isAnswered: (s) => s.wouldPlay !== null,
+    renderPicker: ({formState, handlers, useCompact}) => (
+      <OptionPicker ariaLabel="Would you play these together" options={WOULD_PLAY_OPTIONS} value={formState.wouldPlay} onChange={handlers.onSetWouldPlay} isMobile={useCompact} colorScheme={WOULD_PLAY_COLORS} />
+    ),
+  },
+  {
+    label: 'How easy to pull off?',
+    stepNumber: 6,
+    isAnswered: (s) => s.difficulty !== null,
+    renderPicker: ({formState, handlers, useCompact}) => (
+      <OptionPicker ariaLabel="How easy to pull off" options={DIFFICULTY_OPTIONS} value={formState.difficulty} onChange={handlers.onSetDifficulty} isMobile={useCompact} colorScheme={DIFFICULTY_COLORS} />
+    ),
+  },
+];
+
+const GROUP_SECTIONS: Record<TabKey, SectionConfig[]> = {
+  assessment: ASSESSMENT_SECTIONS,
+  rating: RATING_SECTIONS,
+  practical: PRACTICAL_SECTIONS,
+};
+
+interface DimensionGroupProps {
+  groupKey: TabKey;
+  delay: number;
+  showHeader: boolean;
+  animate: boolean | undefined;
+  ctx: SectionContext;
+}
+
+function DimensionGroup({groupKey, delay, showHeader, animate, ctx}: DimensionGroupProps) {
+  const meta = TAB_GROUPS.find((g) => g.key === groupKey)!;
+  const sections = GROUP_SECTIONS[groupKey];
+  return (
+    <>
+      {showHeader && <CategoryHeader stepRange={meta.stepRange} label={meta.label} accent={meta.accent} compact={ctx.useCompact} />}
+      {sections.map((section, idx) => (
+        <DimensionSection
+          key={section.stepNumber}
+          label={section.label}
+          stepNumber={section.stepNumber}
+          accentColor={meta.accent}
+          isAnswered={section.isAnswered(ctx.formState)}
+          animationDelay={delay + idx * 60}
+          animate={animate}>
+          {section.renderPicker(ctx)}
+        </DimensionSection>
+      ))}
+    </>
+  );
+}
+
+// ── Auto-advance hook ──
+
+function useTabAutoAdvance(answeredByGroup: Record<TabKey, number>, activeTab: TabKey, setActiveTab: (t: TabKey) => void): void {
   const prevAnsweredRef = useRef(answeredByGroup);
   useEffect(() => {
     const prev = prevAnsweredRef.current;
     prevAnsweredRef.current = answeredByGroup;
+    if (answeredByGroup[activeTab] !== 2) return;
+    if (prev[activeTab] >= 2) return;
+    const currentIdx = TAB_ORDER.indexOf(activeTab);
+    const nextTab = TAB_ORDER[currentIdx + 1];
+    if (!nextTab) return;
+    const timer = setTimeout(() => setActiveTab(nextTab), 400);
+    return () => clearTimeout(timer);
+  }, [answeredByGroup, activeTab, setActiveTab]);
+}
 
-    // Only auto-advance if the current tab just became complete (2/2)
-    if (answeredByGroup[activeTab] === 2 && prev[activeTab] < 2) {
-      const currentIdx = TAB_ORDER.indexOf(activeTab);
-      const nextTab = TAB_ORDER[currentIdx + 1];
-      if (nextTab) {
-        const timer = setTimeout(() => setActiveTab(nextTab), 400);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [answeredByGroup, activeTab]);
+// ── Main form ──
 
-  // ── Group content builders ──
+function buildAnsweredByGroup(formState: InDepthFormState): Record<TabKey, number> {
+  return {
+    assessment: (formState.isReal !== null ? 1 : 0) + (formState.accuracy !== null ? 1 : 0),
+    rating: (formState.score !== null ? 1 : 0) + (formState.whoCarries !== null ? 1 : 0),
+    practical: (formState.wouldPlay !== null ? 1 : 0) + (formState.difficulty !== null ? 1 : 0),
+  };
+}
 
-  const showCategoryHeaders = layout === 'stacked';
-
-  const groupA = (delay: number) => (
-    <>
-      {showCategoryHeaders && <CategoryHeader stepRange="1-2" label="Assessment" accent={GROUP_ACCENTS.assessment} compact={useCompact} />}
-      <DimensionSection label="Is this synergy real?" stepNumber={1} accentColor={GROUP_ACCENTS.assessment} isAnswered={formState.isReal !== null} animationDelay={delay} animate={animate}>
-        <OptionPicker ariaLabel="Is this synergy real" options={IS_REAL_OPTIONS} value={formState.isReal} onChange={onSetIsReal} isMobile={useCompact} colorScheme={IS_REAL_COLORS} />
-      </DimensionSection>
-      <DimensionSection label="Is Inkweave score accurate?" stepNumber={2} accentColor={GROUP_ACCENTS.assessment} isAnswered={formState.accuracy !== null} animationDelay={delay + 60} animate={animate}>
-        <OptionPicker ariaLabel="Is Inkweave score accurate" options={ACCURACY_OPTIONS} value={formState.accuracy} onChange={onSetAccuracy} isMobile={useCompact} colorScheme={ACCURACY_COLORS} />
-      </DimensionSection>
-    </>
+function StackedLayout({ctx, animate, baseDelay}: {ctx: SectionContext; animate: boolean | undefined; baseDelay: number}) {
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md, width: '100%'}}>
+      <DimensionGroup groupKey="assessment" delay={baseDelay} showHeader animate={animate} ctx={ctx} />
+      <GroupSeparator />
+      <DimensionGroup groupKey="rating" delay={baseDelay + 120} showHeader animate={animate} ctx={ctx} />
+      <GroupSeparator />
+      <DimensionGroup groupKey="practical" delay={baseDelay + 240} showHeader animate={animate} ctx={ctx} />
+    </div>
   );
+}
 
-  const groupB = (delay: number) => (
-    <>
-      {showCategoryHeaders && <CategoryHeader stepRange="3-4" label="Rating" accent={GROUP_ACCENTS.rating} compact={useCompact} />}
-      <DimensionSection label="Rate this synergy" stepNumber={3} accentColor={GROUP_ACCENTS.rating} isAnswered={formState.score !== null} animationDelay={delay} animate={animate}>
-        <ScorePicker value={formState.score} onChange={onSetScore} isMobile={useCompact} responsive={!useCompact} />
-      </DimensionSection>
-      <DimensionSection label="Which card drives the synergy?" stepNumber={4} accentColor={GROUP_ACCENTS.rating} isAnswered={formState.whoCarries !== null} animationDelay={delay + 60} animate={animate}>
-        <CarriesPicker cardA={cardA} cardB={cardB} value={formState.whoCarries} onChange={onSetWhoCarries} isMobile={useCompact} />
-      </DimensionSection>
-    </>
-  );
+interface TabbedLayoutProps {
+  ctx: SectionContext;
+  animate: boolean | undefined;
+  activeTab: TabKey;
+  setActiveTab: (t: TabKey) => void;
+  answeredByGroup: Record<TabKey, number>;
+}
 
-  const groupC = (delay: number) => (
-    <>
-      {showCategoryHeaders && <CategoryHeader stepRange="5-6" label="Practical" accent={GROUP_ACCENTS.practical} compact={useCompact} />}
-      <DimensionSection label="Would you play these together?" stepNumber={5} accentColor={GROUP_ACCENTS.practical} isAnswered={formState.wouldPlay !== null} animationDelay={delay} animate={animate}>
-        <OptionPicker ariaLabel="Would you play these together" options={WOULD_PLAY_OPTIONS} value={formState.wouldPlay} onChange={onSetWouldPlay} isMobile={useCompact} colorScheme={WOULD_PLAY_COLORS} />
-      </DimensionSection>
-      <DimensionSection label="How easy to pull off?" stepNumber={6} accentColor={GROUP_ACCENTS.practical} isAnswered={formState.difficulty !== null} animationDelay={delay + 60} animate={animate}>
-        <OptionPicker ariaLabel="How easy to pull off" options={DIFFICULTY_OPTIONS} value={formState.difficulty} onChange={onSetDifficulty} isMobile={useCompact} colorScheme={DIFFICULTY_COLORS} />
-      </DimensionSection>
-    </>
-  );
-
-  // ── Layout: Stacked ──
-  if (layout === 'stacked') {
-    return (
-      <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md, width: '100%'}}>
-        {groupA(baseDelay)}
-        <GroupSeparator />
-        {groupB(baseDelay + 120)}
-        <GroupSeparator />
-        {groupC(baseDelay + 240)}
-      </div>
-    );
-  }
-
-  // ── Layout: Tabbed ──
+function TabbedLayout({ctx, animate, activeTab, setActiveTab, answeredByGroup}: TabbedLayoutProps) {
   return (
     <div style={{width: '100%'}}>
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} answeredByGroup={answeredByGroup} />
-
       <div role="tabpanel" id={`panel-${activeTab}`} aria-label={`${activeTab} questions`}>
         <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
-          {activeTab === 'assessment' && groupA(0)}
-          {activeTab === 'rating' && groupB(0)}
-          {activeTab === 'practical' && groupC(0)}
+          <DimensionGroup groupKey={activeTab} delay={0} showHeader={false} animate={animate} ctx={ctx} />
         </div>
       </div>
-
-      {/* Tab navigation buttons */}
       <div style={{display: 'flex', justifyContent: 'space-between', marginTop: SPACING.lg}}>
         <NavButton
           label="← Previous"
@@ -422,4 +491,27 @@ export function InDepthVoteForm({
       </div>
     </div>
   );
+}
+
+export function InDepthVoteForm({
+  formState, cardA, cardB,
+  onSetIsReal, onSetAccuracy, onSetScore, onSetWouldPlay, onSetWhoCarries, onSetDifficulty,
+  isMobile, animate, layout = 'stacked', compact,
+}: InDepthVoteFormProps) {
+  const [activeTab, setActiveTab] = useState<TabKey>('assessment');
+  const useCompact = Boolean(compact || isMobile);
+  const handlers: FormHandlers = {onSetIsReal, onSetAccuracy, onSetScore, onSetWouldPlay, onSetWhoCarries, onSetDifficulty};
+  const ctx: SectionContext = {formState, handlers, cardA, cardB, useCompact};
+
+  const answeredByGroup = useMemo<Record<TabKey, number>>(
+    () => buildAnsweredByGroup(formState),
+    [formState],
+  );
+
+  useTabAutoAdvance(answeredByGroup, activeTab, setActiveTab);
+
+  if (layout === 'stacked') {
+    return <StackedLayout ctx={ctx} animate={animate} baseDelay={animate ? 200 : 0} />;
+  }
+  return <TabbedLayout ctx={ctx} animate={animate} activeTab={activeTab} setActiveTab={setActiveTab} answeredByGroup={answeredByGroup} />;
 }

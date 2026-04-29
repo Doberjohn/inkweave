@@ -18,13 +18,63 @@ interface CardImageProps {
   style?: React.CSSProperties;
 }
 
+function CostFallback({inkColor, cost, height}: {inkColor: Ink; cost: number; height: number}) {
+  const colors = INK_COLORS[inkColor];
+  const fontSize = height >= 80 ? FONT_SIZES.xxl : FONT_SIZES.lg;
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        background: colors.bg,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+      <span style={{fontSize: `${fontSize}px`, fontWeight: 600, color: colors.text}}>{cost}</span>
+    </div>
+  );
+}
+
+interface CardImgProps {
+  src: string | undefined;
+  alt: string;
+  lazy: boolean;
+  priority: boolean | undefined;
+  visible: boolean;
+  onLoad: () => void;
+  onError: () => void;
+}
+
+function CardImg({src, alt, lazy, priority, visible, onLoad, onError}: CardImgProps) {
+  return (
+    <img
+      {...(src ? {src} : {})}
+      alt={alt}
+      loading={lazy ? 'lazy' : undefined}
+      decoding={priority ? 'sync' : 'async'}
+      onLoad={onLoad}
+      onError={onError}
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        display: 'block',
+        opacity: visible ? 1 : 0,
+        transition: 'opacity 0.2s ease',
+      }}
+    />
+  );
+}
+
 /**
  * Shared card image component with lazy loading and error fallback.
  *
- * - Uses native loading="lazy" for deferred loading in scrollable lists
- * - Uses decoding="async" for non-blocking image decode
- * - Shows skeleton shimmer while image loads
- * - Shows ink-colored fallback with cost on error or missing src
+ * Always renders an <img alt={alt}> element so DOM-level selectors and
+ * accessibility tooling have a stable handle even when the image can't
+ * load. The ink-colored fallback (with cost number) is shown as an overlay
+ * when src is missing or the fetch errors.
  */
 export function CardImage({
   src,
@@ -40,75 +90,39 @@ export function CardImage({
 }: CardImageProps) {
   const [imgError, setImgError] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
-  const colors = INK_COLORS[inkColor];
+  const showImg = Boolean(src) && !imgError;
 
-  // Determine font size based on image size
-  const fontSize = height >= 80 ? FONT_SIZES.xxl : FONT_SIZES.lg;
-
-  if (src && !imgError) {
-    return (
-      <div
-        style={{
-          position: 'relative',
-          width: `${width}px`,
-          height: `${height}px`,
-          borderRadius: `${borderRadius}px`,
-          overflow: 'hidden',
-          flexShrink: 0,
-          ...styleProp,
-        }}>
-        {!imgLoaded && (
-          <Skeleton
-            width="100%"
-            height="100%"
-            borderRadius={0}
-            baseColor={COLORS.surfaceAlt}
-            highlightColor={COLORS.surfaceHover}
-            style={{position: 'absolute', inset: 0, display: 'block'}}
-          />
-        )}
-        <img
-          src={src}
-          alt={alt}
-          loading={lazy ? 'lazy' : undefined}
-          decoding={priority ? 'sync' : 'async'}
-          onLoad={() => setImgLoaded(true)}
-          onError={() => setImgError(true)}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            display: 'block',
-            opacity: imgLoaded ? 1 : 0,
-            transition: 'opacity 0.2s ease',
-          }}
-        />
-      </div>
-    );
-  }
-
-  // Fallback: ink-colored div with cost
   return (
     <div
       style={{
+        position: 'relative',
         width: `${width}px`,
         height: `${height}px`,
         borderRadius: `${borderRadius}px`,
-        background: colors.bg,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        overflow: 'hidden',
         flexShrink: 0,
         ...styleProp,
       }}>
-      <span
-        style={{
-          fontSize: `${fontSize}px`,
-          fontWeight: 600,
-          color: colors.text,
-        }}>
-        {cost}
-      </span>
+      {showImg && !imgLoaded && (
+        <Skeleton
+          width="100%"
+          height="100%"
+          borderRadius={0}
+          baseColor={COLORS.surfaceAlt}
+          highlightColor={COLORS.surfaceHover}
+          style={{position: 'absolute', inset: 0, display: 'block'}}
+        />
+      )}
+      <CardImg
+        src={src}
+        alt={alt}
+        lazy={lazy}
+        priority={priority}
+        visible={showImg && imgLoaded}
+        onLoad={() => setImgLoaded(true)}
+        onError={() => setImgError(true)}
+      />
+      {!showImg && <CostFallback inkColor={inkColor} cost={cost} height={height} />}
     </div>
   );
 }
