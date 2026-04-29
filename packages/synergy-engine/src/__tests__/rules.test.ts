@@ -21,54 +21,75 @@ describe('Synergy Rules', () => {
   describe('Shift Targets', () => {
     const shiftRule = getRuleById('shift-targets')!;
 
-    it('should find same-named characters for Shift', () => {
-      const elsaShift = createCard({
-        id: 'elsa-shift',
-        name: 'Elsa',
-        fullName: 'Elsa - Ice Maker',
-        cost: 7,
-        keywords: ['Shift 5'],
-        classifications: ['Floodborn'],
+    type ShiftSetupOpts = {
+      shiftId?: string;
+      shiftName?: string;
+      shiftFullName?: string;
+      shiftCost?: number;
+      shiftKeyword?: string;
+      shiftInkwell?: boolean;
+      shiftClassifications?: string[];
+      shiftText?: string;
+      baseId?: string;
+      baseName?: string;
+      baseFullName?: string;
+      baseCost?: number;
+      baseInkwell?: boolean;
+      baseText?: string;
+    };
+
+    function shiftSetup(opts: ShiftSetupOpts = {}) {
+      const shiftCard = createCard({
+        id: opts.shiftId ?? 'elsa-shift',
+        name: opts.shiftName ?? 'Elsa',
+        fullName: opts.shiftFullName ?? 'Elsa - Ice Maker',
+        cost: opts.shiftCost ?? 7,
+        keywords: [opts.shiftKeyword ?? 'Shift 5'],
+        inkwell: opts.shiftInkwell ?? true,
+        ...(opts.shiftClassifications && {classifications: opts.shiftClassifications}),
+        ...(opts.shiftText !== undefined && {text: opts.shiftText}),
       });
-      const elsaBase = createCard({id: 'elsa-base', name: 'Elsa', cost: 4});
+      const base = createCard({
+        id: opts.baseId ?? 'elsa-base',
+        name: opts.baseName ?? 'Elsa',
+        fullName: opts.baseFullName ?? 'Elsa - Snow Queen',
+        cost: opts.baseCost ?? 4,
+        inkwell: opts.baseInkwell ?? true,
+        ...(opts.baseText !== undefined && {text: opts.baseText}),
+      });
+      return {shiftCard, base};
+    }
+
+    it('should find same-named characters for Shift', () => {
+      const {shiftCard, base} = shiftSetup({shiftClassifications: ['Floodborn']});
       const anna = createCard({id: 'anna-1', name: 'Anna', cost: 3});
 
-      const synergies = shiftRule.findSynergies(elsaShift, [elsaShift, elsaBase, anna]);
+      const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base, anna]);
       expect(synergies.find((s) => s.card.id === 'elsa-base')).toBeDefined();
       expect(synergies.find((s) => s.card.id === 'anna-1')).toBeUndefined();
     });
 
     it('should find Shift cards when selecting a base character (reverse)', () => {
-      const elsaShift = createCard({
-        id: 'elsa-shift',
-        name: 'Elsa',
-        cost: 7,
-        keywords: ['Shift 5'],
-      });
-      const elsaBase = createCard({id: 'elsa-base', name: 'Elsa', cost: 4});
+      const {shiftCard, base} = shiftSetup();
       const anna = createCard({id: 'anna-1', name: 'Anna', cost: 3});
 
-      const synergies = shiftRule.findSynergies(elsaBase, [elsaShift, elsaBase, anna]);
+      const synergies = shiftRule.findSynergies(base, [shiftCard, base, anna]);
       expect(synergies.find((s) => s.card.id === 'elsa-shift')).toBeDefined();
       expect(synergies.find((s) => s.card.id === 'anna-1')).toBeUndefined();
     });
 
     it('should show other Shift cards with same base name', () => {
-      const elsaShift1 = createCard({
-        id: 'elsa-shift-1',
-        name: 'Elsa',
-        cost: 7,
-        keywords: ['Shift 5'],
+      const {shiftCard: shift1, base} = shiftSetup({
+        shiftId: 'elsa-shift-1',
+        baseCost: 3,
       });
-      const elsaShift2 = createCard({
-        id: 'elsa-shift-2',
-        name: 'Elsa',
-        cost: 6,
-        keywords: ['Shift 4'],
+      const {shiftCard: shift2} = shiftSetup({
+        shiftId: 'elsa-shift-2',
+        shiftCost: 6,
+        shiftKeyword: 'Shift 4',
       });
-      const elsaBase = createCard({id: 'elsa-base', name: 'Elsa', cost: 3});
 
-      const synergies = shiftRule.findSynergies(elsaShift1, [elsaShift1, elsaShift2, elsaBase]);
+      const synergies = shiftRule.findSynergies(shift1, [shift1, shift2, base]);
       expect(synergies.find((s) => s.card.id === 'elsa-base')).toBeDefined();
       expect(synergies.find((s) => s.card.id === 'elsa-shift-2')).toBeDefined();
     });
@@ -78,105 +99,94 @@ describe('Synergy Rules', () => {
     });
 
     describe('score calculation', () => {
-      function shiftPair(
-        shiftCost: number,
-        shiftKeyword: string,
-        baseCost: number,
-        baseInkwell: boolean,
-        shiftInkwell = true,
-      ) {
-        const shiftCard = createCard({
-          id: 'elsa-shift',
-          name: 'Elsa',
-          fullName: 'Elsa - Ice Maker',
-          cost: shiftCost,
-          keywords: [shiftKeyword],
-          inkwell: shiftInkwell,
-        });
-        const base = createCard({
-          id: 'elsa-base',
-          name: 'Elsa',
-          fullName: 'Elsa - Snow Queen',
-          cost: baseCost,
-          inkwell: baseInkwell,
+      type ShiftPairOpts = {
+        shiftCost: number;
+        shiftKeyword: string;
+        baseCost: number;
+        baseInkwell: boolean;
+        shiftInkwell?: boolean;
+      };
+
+      function shiftPair(opts: ShiftPairOpts) {
+        const {shiftCard, base} = shiftSetup({
+          shiftCost: opts.shiftCost,
+          shiftKeyword: opts.shiftKeyword,
+          shiftInkwell: opts.shiftInkwell ?? true,
+          baseCost: opts.baseCost,
+          baseInkwell: opts.baseInkwell,
         });
         return shiftRule.findSynergies(shiftCard, [shiftCard, base]);
       }
 
-      // [label, shiftCost, keyword, baseCost, baseInkwell, expected, shiftInkwell?]
-      it.each([
-        ['on-curve both inkable (curveGap 1)', 7, 'Shift 5', 4, true, 9],
-        ['on-curve one inkable (curveGap 1)', 7, 'Shift 5', 4, false, 8],
-        ['on-curve neither inkable (curveGap 1)', 7, 'Shift 5', 4, false, 7, false],
-        ['curveGap 2 with inkable base', 8, 'Shift 6', 4, true, 7],
-        ['slightly off-curve (curveGap 3)', 7, 'Shift 5', 2, true, 5],
-        ['far off-curve (curveGap >= 4)', 7, 'Shift 5', 1, true, 3],
-        ['same-cost-as-shift (curveGap 0)', 7, 'Shift 5', 5, true, 5],
-      ] as const)(
-        '%s → score %d',
-        (_label, shiftCost, keyword, baseCost, inkwell, expected, shiftInkwell?) => {
-          const synergies = shiftPair(shiftCost, keyword, baseCost, inkwell, shiftInkwell);
-          expect(synergies[0].score).toBe(expected);
-        },
-      );
+      it.each<{
+        label: string;
+        shiftCost: number;
+        shiftKeyword: string;
+        baseCost: number;
+        baseInkwell: boolean;
+        expected: number;
+        shiftInkwell?: boolean;
+      }>([
+        {label: 'on-curve both inkable (curveGap 1)', shiftCost: 7, shiftKeyword: 'Shift 5', baseCost: 4, baseInkwell: true, expected: 9},
+        {label: 'on-curve one inkable (curveGap 1)', shiftCost: 7, shiftKeyword: 'Shift 5', baseCost: 4, baseInkwell: false, expected: 8},
+        {label: 'on-curve neither inkable (curveGap 1)', shiftCost: 7, shiftKeyword: 'Shift 5', baseCost: 4, baseInkwell: false, expected: 7, shiftInkwell: false},
+        {label: 'curveGap 2 with inkable base', shiftCost: 8, shiftKeyword: 'Shift 6', baseCost: 4, baseInkwell: true, expected: 7},
+        {label: 'slightly off-curve (curveGap 3)', shiftCost: 7, shiftKeyword: 'Shift 5', baseCost: 2, baseInkwell: true, expected: 5},
+        {label: 'far off-curve (curveGap >= 4)', shiftCost: 7, shiftKeyword: 'Shift 5', baseCost: 1, baseInkwell: true, expected: 3},
+        {label: 'same-cost-as-shift (curveGap 0)', shiftCost: 7, shiftKeyword: 'Shift 5', baseCost: 5, baseInkwell: true, expected: 5},
+      ])('$label → score $expected', ({expected, ...pairOpts}) => {
+        const synergies = shiftPair(pairOpts);
+        expect(synergies[0].score).toBe(expected);
+      });
 
       it('should produce consistent score in reverse direction', () => {
-        const shiftCard = createCard({
-          id: 'elsa-shift',
-          name: 'Elsa',
-          cost: 7,
-          keywords: ['Shift 5'],
-        });
-        const base = createCard({id: 'elsa-base', name: 'Elsa', cost: 4, inkwell: true});
+        const {shiftCard, base} = shiftSetup();
         const forward = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
         const reverse = shiftRule.findSynergies(base, [shiftCard, base]);
         expect(forward[0].score).toBe(reverse[0].score);
       });
 
       it('regression: small shift onto cheap base scores 9, not 3 (#108)', () => {
-        const synergies = shiftPair(4, 'Shift 3', 2, true);
+        const synergies = shiftPair({shiftCost: 4, shiftKeyword: 'Shift 3', baseCost: 2, baseInkwell: true});
         expect(synergies[0].score).toBe(9);
       });
 
       it('regression: huge shift onto tiny base scores 3, not high (#108)', () => {
-        const synergies = shiftPair(10, 'Shift 8', 2, true);
+        const synergies = shiftPair({shiftCost: 10, shiftKeyword: 'Shift 8', baseCost: 2, baseInkwell: true});
         expect(synergies[0].score).toBe(3);
       });
     });
 
     describe('free Shift scoring', () => {
-      it.each([
-        [
-          'base activates condition → 10',
-          2,
-          true,
-          10,
-          {
-            text: "If a card left a player's discard this turn, this card gains Shift 0.",
-            baseText:
-              "When you play this character, you may put a card from chosen player's discard on the bottom of their deck.",
-          },
-        ],
-        ['cheap base (cost <= 3) → 9', 2, true, 9, {}],
-        ['mid-cost base (cost 4-5) → 7', 4, true, 7, {}],
-        ['expensive base (cost 6+) → 5', 7, true, 5, {}],
-      ])('%s', (_label, baseCost, inkwell, expected, opts: Record<string, string>) => {
-        const shiftCard = createCard({
-          id: 'anna-shift',
-          name: 'Anna',
-          fullName: 'Anna - Soothing Sister',
-          cost: 5,
-          keywords: ['Shift 0'],
-          text: opts.text,
+      const conditionText =
+        "If a card left a player's discard this turn, this card gains Shift 0.";
+      const conditionBaseText =
+        "When you play this character, you may put a card from chosen player's discard on the bottom of their deck.";
+
+      function freeShiftSetup(baseCost: number, opts: {shiftText?: string; baseText?: string} = {}) {
+        return shiftSetup({
+          shiftId: 'anna-shift',
+          shiftName: 'Anna',
+          shiftFullName: 'Anna - Soothing Sister',
+          shiftCost: 5,
+          shiftKeyword: 'Shift 0',
+          shiftText: opts.shiftText,
+          baseId: 'anna-base',
+          baseName: 'Anna',
+          baseFullName: 'Anna - Base',
+          baseCost,
+          baseInkwell: true,
+          baseText: opts.baseText,
         });
-        const base = createCard({
-          id: 'anna-base',
-          name: 'Anna',
-          fullName: 'Anna - Base',
-          cost: baseCost,
-          inkwell,
-          text: opts.baseText,
-        });
+      }
+
+      it.each<{label: string; baseCost: number; expected: number; shiftText?: string; baseText?: string}>([
+        {label: 'base activates condition → 10', baseCost: 2, expected: 10, shiftText: conditionText, baseText: conditionBaseText},
+        {label: 'cheap base (cost <= 3) → 9', baseCost: 2, expected: 9},
+        {label: 'mid-cost base (cost 4-5) → 7', baseCost: 4, expected: 7},
+        {label: 'expensive base (cost 6+) → 5', baseCost: 7, expected: 5},
+      ])('$label', ({baseCost, expected, shiftText, baseText}) => {
+        const {shiftCard, base} = freeShiftSetup(baseCost, {shiftText, baseText});
         const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
         expect(synergies[0].score).toBe(expected);
       });
@@ -233,31 +243,27 @@ describe('Synergy Rules', () => {
   describe('Universal Shift', () => {
     const shiftRule = getRuleById('shift-targets')!;
 
-    it('should find any character as target for Universal Shift', () => {
+    function universalShiftPair(extras: Partial<Parameters<typeof createCard>[0]> = {}) {
       const baymax = createCard({
         id: 'baymax-giant',
         name: 'Baymax',
         cost: 6,
-        ink: 'Emerald',
-        ink2: 'Sapphire',
         keywords: ['Universal Shift 4'],
+        ...extras,
       });
       const anyChar = createCard({id: 'random-char', name: 'Some Character', cost: 3});
+      return {baymax, anyChar};
+    }
 
+    it('should find any character as target for Universal Shift', () => {
+      const {baymax, anyChar} = universalShiftPair({ink: 'Emerald', ink2: 'Sapphire'});
       const synergies = shiftRule.findSynergies(baymax, [anyChar]);
       expect(synergies).toHaveLength(1);
       expect(synergies[0].card.id).toBe('random-char');
     });
 
     it('should show Universal Shift card when selecting any character (reverse)', () => {
-      const baymax = createCard({
-        id: 'baymax-giant',
-        name: 'Baymax',
-        cost: 6,
-        keywords: ['Universal Shift 4'],
-      });
-      const anyChar = createCard({id: 'random-char', name: 'Some Character', cost: 3});
-
+      const {baymax, anyChar} = universalShiftPair();
       const synergies = shiftRule.findSynergies(anyChar, [baymax]);
       expect(synergies).toHaveLength(1);
       expect(synergies[0].card.id).toBe('baymax-giant');
@@ -1001,6 +1007,38 @@ describe('Card Helper Functions', () => {
   describe('Singer + Songs', () => {
     const singerRule = getRuleById('singer-songs')!;
 
+    type SingerSongOpts = {
+      singerKeyword?: string;
+      singerName?: string;
+      singerCost?: number;
+      songName?: string;
+      songCost: number;
+      songText?: string;
+      songClassifications?: string[];
+    };
+
+    function makeSingerSongPair(opts: SingerSongOpts) {
+      const singerName = opts.singerName ?? 'Gazelle';
+      const songName = opts.songName ?? 'Try Everything';
+      const singer = createCard({
+        id: 'singer-1',
+        name: singerName,
+        fullName: `${singerName} - Pop Star`,
+        keywords: [opts.singerKeyword ?? 'Singer 5'],
+        ...(opts.singerCost !== undefined && {cost: opts.singerCost}),
+      });
+      const song = createCard({
+        id: 'song-1',
+        name: songName,
+        fullName: songName,
+        type: 'Action',
+        cost: opts.songCost,
+        text: opts.songText ?? 'A song card',
+        ...(opts.songClassifications && {classifications: opts.songClassifications}),
+      });
+      return {singer, song};
+    }
+
     it('should match characters with Singer keyword', () => {
       const singer = createCard({
         id: 'singer-1',
@@ -1027,13 +1065,7 @@ describe('Card Helper Functions', () => {
     });
 
     it('should find songs that cost <= Singer value', () => {
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Ariel',
-        fullName: 'Ariel - Singing Mermaid',
-        cost: 4,
-        keywords: ['Singer 5'],
-      });
+      const {singer} = makeSingerSongPair({songCost: 2});
       const cheapSong = createCard({
         id: 'song-cheap',
         name: 'Be Our Guest',
@@ -1056,127 +1088,30 @@ describe('Card Helper Functions', () => {
       expect(synergies[0].card.id).toBe('song-cheap');
     });
 
-    it('should score 8 when song cost equals Singer value (perfect fit)', () => {
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Gazelle',
-        fullName: 'Gazelle - Pop Star',
-        cost: 3,
-        keywords: ['Singer 5'],
-      });
-      const song = createCard({
-        id: 'song-1',
-        name: 'All Is Found',
-        fullName: 'All Is Found',
-        type: 'Action',
-        cost: 5,
-        text: 'A song card',
-      });
-
+    it.each([
+      ['perfect fit (diff 0) → 8', 'Singer 5', 5, 8],
+      ['near-perfect (diff 1) → 7', 'Singer 5', 4, 7],
+      ['good savings (diff 2) → 6', 'Singer 5', 3, 6],
+      ['inefficient (diff >= 3) → 5', 'Singer 9', 1, 5],
+    ] as const)('should score %s', (_label, singerKeyword, songCost, expected) => {
+      const {singer, song} = makeSingerSongPair({singerKeyword, songCost});
       const synergies = singerRule.findSynergies(singer, [singer, song]);
-      expect(synergies[0].score).toBe(8);
-    });
-
-    it('should score 7 when song cost is Singer value - 1', () => {
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Gazelle',
-        fullName: 'Gazelle - Pop Star',
-        keywords: ['Singer 5'],
-      });
-      const song = createCard({
-        id: 'song-1',
-        name: 'Try Everything',
-        fullName: 'Try Everything',
-        type: 'Action',
-        cost: 4,
-        text: 'A song card',
-      });
-
-      const synergies = singerRule.findSynergies(singer, [singer, song]);
-      expect(synergies[0].score).toBe(7);
-    });
-
-    it('should score 6 when song cost is Singer value - 2', () => {
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Gazelle',
-        fullName: 'Gazelle - Pop Star',
-        keywords: ['Singer 5'],
-      });
-      const song = createCard({
-        id: 'song-1',
-        name: 'We Know the Way',
-        fullName: 'We Know the Way',
-        type: 'Action',
-        cost: 3,
-        text: 'A song card',
-      });
-
-      const synergies = singerRule.findSynergies(singer, [singer, song]);
-      expect(synergies[0].score).toBe(6);
-    });
-
-    it('should score 5 when song cost is Singer value - 3 or more', () => {
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Powerline',
-        fullName: 'Powerline - World\'s Greatest Rock Star',
-        keywords: ['Singer 9'],
-      });
-      const song = createCard({
-        id: 'song-1',
-        name: 'A Very Merry Unbirthday',
-        fullName: 'A Very Merry Unbirthday',
-        type: 'Action',
-        cost: 1,
-        text: 'A song card',
-      });
-
-      const synergies = singerRule.findSynergies(singer, [singer, song]);
-      expect(synergies[0].score).toBe(5);
+      expect(synergies[0].score).toBe(expected);
     });
 
     it('should mark synergies as bidirectional', () => {
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Ariel',
-        fullName: 'Ariel - Singing Mermaid',
-        keywords: ['Singer 5'],
-      });
-      const song = createCard({
-        id: 'song-1',
-        name: 'Be Our Guest',
-        fullName: 'Be Our Guest',
-        type: 'Action',
-        cost: 2,
-        text: 'A song card',
-      });
-
+      const {singer, song} = makeSingerSongPair({songCost: 2});
       const synergies = singerRule.findSynergies(singer, [singer, song]);
       expect(synergies[0].bidirectional).toBe(true);
     });
 
     it('should find Singers from Song perspective (reverse)', () => {
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Gazelle',
-        fullName: 'Gazelle - Pop Star',
-        keywords: ['Singer 5'],
-      });
+      const {singer, song} = makeSingerSongPair({songCost: 4});
       const weakSinger = createCard({
         id: 'singer-2',
         name: 'Angel',
         fullName: 'Angel - Siren Singer',
         keywords: ['Singer 3'],
-      });
-      const song = createCard({
-        id: 'song-1',
-        name: 'Try Everything',
-        fullName: 'Try Everything',
-        type: 'Action',
-        cost: 4,
-        text: 'A song card',
       });
 
       const synergies = singerRule.findSynergies(song, [song, singer, weakSinger]);
@@ -1186,12 +1121,7 @@ describe('Card Helper Functions', () => {
     });
 
     it('should not match non-Action cards even if text contains song', () => {
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Ariel',
-        fullName: 'Ariel - Singing Mermaid',
-        keywords: ['Singer 5'],
-      });
+      const {singer} = makeSingerSongPair({songCost: 3});
       const notASong = createCard({
         id: 'char-1',
         name: 'Some Character',
@@ -1206,21 +1136,7 @@ describe('Card Helper Functions', () => {
     });
 
     it('should score identically in both directions (reverse scoring symmetry)', () => {
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Gazelle',
-        fullName: 'Gazelle - Pop Star',
-        keywords: ['Singer 5'],
-      });
-      const song = createCard({
-        id: 'song-1',
-        name: 'Try Everything',
-        fullName: 'Try Everything',
-        type: 'Action',
-        cost: 3,
-        text: 'A song card',
-      });
-
+      const {singer, song} = makeSingerSongPair({songCost: 3});
       const forwardSynergies = singerRule.findSynergies(singer, [singer, song]);
       const reverseSynergies = singerRule.findSynergies(song, [song, singer]);
 
@@ -1231,65 +1147,30 @@ describe('Card Helper Functions', () => {
     });
 
     it('should detect Songs via classifications (not just text)', () => {
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Ariel',
-        fullName: 'Ariel - Singing Mermaid',
-        keywords: ['Singer 5'],
+      const {singer, song} = makeSingerSongPair({
+        songName: 'Be Our Guest',
+        songCost: 5,
+        songText: 'Deal 2 damage to chosen character.',
+        songClassifications: ['Song'],
       });
-      const song = createCard({
-        id: 'song-1',
-        name: 'Be Our Guest',
-        fullName: 'Be Our Guest',
-        type: 'Action',
-        cost: 5,
-        classifications: ['Song'],
-        text: 'Deal 2 damage to chosen character.',
-      });
-
       const synergies = singerRule.findSynergies(singer, [singer, song]);
       expect(synergies).toHaveLength(1);
       expect(synergies[0].score).toBe(8);
     });
 
     it('should fall back to card cost when Singer keyword has no numeric value', () => {
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Ariel',
-        fullName: 'Ariel - Singing Mermaid',
-        cost: 4,
-        keywords: ['Singer'],
+      const {singer, song} = makeSingerSongPair({
+        singerKeyword: 'Singer',
+        singerCost: 4,
+        songCost: 4,
       });
-      const song = createCard({
-        id: 'song-1',
-        name: 'Be Our Guest',
-        fullName: 'Be Our Guest',
-        type: 'Action',
-        cost: 4,
-        text: 'A song card',
-      });
-
       const synergies = singerRule.findSynergies(singer, [singer, song]);
       expect(synergies).toHaveLength(1);
       expect(synergies[0].score).toBe(8); // falls back to card.cost=4, diff=0
     });
 
     it('should include singer name, cost, and "can sing" in explanation', () => {
-      const singer = createCard({
-        id: 'singer-1',
-        name: 'Gazelle',
-        fullName: 'Gazelle - Pop Star',
-        keywords: ['Singer 5'],
-      });
-      const song = createCard({
-        id: 'song-1',
-        name: 'Try Everything',
-        fullName: 'Try Everything',
-        type: 'Action',
-        cost: 4,
-        text: 'A song card',
-      });
-
+      const {singer, song} = makeSingerSongPair({songCost: 4});
       const synergies = singerRule.findSynergies(singer, [singer, song]);
       expect(synergies[0].explanation).toContain('Gazelle - Pop Star');
       expect(synergies[0].explanation).toContain('can sing');
