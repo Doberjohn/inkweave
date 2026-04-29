@@ -7,19 +7,20 @@
  * exits non-zero when `quality_gates: failed`. Mirrors the CI gate so a
  * failing branch never reaches the remote.
  *
- * Bypass: `CODESCENE_OK=1 git push` (use only when you've verified the
- * findings are pre-existing or otherwise acceptable).
+ * Auth: requires `CS_ACCESS_TOKEN` in the User-scope environment so the
+ * spawned subprocess inherits it. Get a token at
+ * https://codescene.io/users/me/pat — see reference_codescene_auth.md
+ * memory entry for the setup walkthrough.
+ *
+ * No env-var bypass exists. If CodeScene's service is hard-down and a push
+ * is genuinely urgent, use `git push --no-verify` — an explicit, visible
+ * action rather than a config-based escape that becomes routine.
  */
 import {spawn} from 'node:child_process';
 import process from 'node:process';
 
 const BASE_REF = process.env.CODESCENE_BASE_REF || 'origin/master';
 const REPO = process.cwd();
-
-if (process.env.CODESCENE_OK === '1') {
-  console.error('⚠️  CodeScene gate bypassed via CODESCENE_OK=1');
-  process.exit(0);
-}
 
 const proc = spawn('npx', ['-y', '@codescene/codehealth-mcp'], {
   stdio: ['pipe', 'pipe', 'inherit'],
@@ -137,7 +138,7 @@ async function main() {
   const result = await callAnalyzeChangeSet();
   const {payload, reason} = parseAnalysisResult(result);
   if (!payload) {
-    fallbackToSoftGate(reason);
+    failOnAuthOrTransport(reason);
     return;
   }
   // Strict-mode check: collect any introduced/degraded findings, regardless of
@@ -152,21 +153,29 @@ async function main() {
   );
   for (const v of violations) printViolation(v);
   process.stderr.write(
-    '\n  Bypass with CODESCENE_OK=1 git push (only when findings are pre-existing/acceptable).\n',
+    '\n  Refactor before pushing. To override, use git push --no-verify (visible, explicit, audited).\n',
   );
   process.exit(1);
 }
 
 /**
- * Soft-gate fallback: when the MCP client can't reach CodeScene (auth
- * issue, network, etc.), require an explicit `CODESCENE_OK=1` to pass.
- * Forces conscious acknowledgment that the gate didn't run automatically.
+ * Hard-fail when the MCP subprocess can't reach CodeScene (typically an
+ * auth issue: CS_ACCESS_TOKEN is not set in the environment, so the
+ * subprocess can't authenticate to the cloud API).
+ *
+ * No silent bypass. If the user genuinely needs to push without the gate
+ * (e.g. CodeScene service is hard-down), `git push --no-verify` is the
+ * documented escape — visible in shell history, explicit per-push.
  */
-function fallbackToSoftGate(reason) {
-  process.stderr.write(`⚠️  CodeScene MCP unavailable: ${reason}\n`);
+function failOnAuthOrTransport(reason) {
+  process.stderr.write(`✗ CodeScene MCP unavailable: ${reason}\n\n`);
   process.stderr.write(
-    '   Run analyze_change_set via Claude Code (or your IDE plugin) before pushing,\n' +
-      '   then re-push with CODESCENE_OK=1 git push.\n',
+    '  Most likely cause: CS_ACCESS_TOKEN is not set or has expired.\n' +
+      '  Fix:\n' +
+      '    1. Get a token at https://codescene.io/users/me/pat\n' +
+      '    2. setx CS_ACCESS_TOKEN "<paste-token>"   (PowerShell)\n' +
+      '    3. Restart your terminal so the User-scope env var propagates.\n\n' +
+      '  Service-down emergency only: git push --no-verify\n',
   );
   process.exit(1);
 }
