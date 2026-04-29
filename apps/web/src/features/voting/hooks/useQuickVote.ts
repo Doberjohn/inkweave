@@ -99,7 +99,6 @@ export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
   // merged into the same render pass — no cascading re-renders, no effect.
   if (pairId !== prevPairId) {
     setPrevPairId(pairId);
-    submittingRef.current = false;
     setDistribution(null);
     setDistributionFailed(false);
     setError(null);
@@ -107,6 +106,9 @@ export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
     setState(next.state);
     setUserChoice(next.userChoice);
   }
+
+  // Reset submission lock after pair-change commit (refs can't be mutated during render).
+  useEffect(() => { submittingRef.current = false; }, [pairId]);
 
   // Fetch distribution for returning voters
   useEffect(() => {
