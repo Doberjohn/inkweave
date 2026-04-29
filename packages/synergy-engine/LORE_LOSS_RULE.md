@@ -1,122 +1,145 @@
 # Rule 3: Lore Loss (Playstyle: Lore Denial)
 
-Cards that make the opponent lose lore reinforce the same denial strategy. Every lore-denial card synergizes with every other lore-denial card — the more denial cards in a deck, the more consistently the strategy works.
+Cards that make opponents lose lore reinforce the same denial strategy. The rule splits cards into two roles based on whether the lore loss is paired with a corresponding lore *gain* for you, then scores pairs by role-pair shape.
 
 ## Detection
 
-**Pattern**: `/(?:each |chosen |all )?opponents? loses? (?:\d+ )?lore/i`
+### Base lore-loss pattern
 
-Applied against all text sections of a card. The regex handles:
+```regex
+/(?:each |chosen |all )?opponents? loses? (?:\d+ )?lore/i
+```
 
-| Variant | Example text |
-|---------|-------------|
-| Simple | "chosen opponent loses 1 lore" |
-| Each | "each opponent loses 2 lore" |
-| All | "all opponents lose 1 lore" |
-| Plural | "opponents lose lore" |
-| No amount | "opponent loses lore equal to the damage" |
-| Chosen | "chosen opponent loses 1 lore" |
+Applied against normalized card text. Handles `chosen opponent loses 1 lore`, `each opponent loses 2 lore`, `all opponents lose 1 lore`, and the variable-amount variant `opponent loses lore equal to ...`.
+
+### Role split: Burn vs Steal
+
+Three steal-pattern shapes elevate a card from `burn` to `steal`:
+
+```typescript
+const LORE_STEAL_PATTERNS: RegExp[] = [
+  /loses?\s+\d+\s+lore\s+and\s+you\s+gain\s+\d+\s+lore/i,    // "loses 1 lore and you gain 1 lore"
+  /loses?\s+\d+\s+lore\.\s*(?:you\s+)?gain\s+\d+\s+lore/i,   // "loses 1 lore. Gain 1 lore"
+  /gain\s+lore\s+equal\s+to\s+(?:the\s+)?lore\s+lost/i,      // "gain lore equal to the lore lost"
+];
+```
+
+`getLoreDenialRoles(card)` returns `['steal']` if any of these match, else `['burn']` if the base lore-loss pattern matches, else `[]`. Burn and steal are mutually exclusive — a card is one or the other.
 
 ### What's excluded
 
-- **Self lore loss**: Cards where *you* lose lore (not opponent) — the regex requires "opponent"
-- **Conditional prevention**: Cards that *prevent* lore loss — they don't contain "opponent loses"
-- **Lore gain**: Cards that give lore — completely different pattern
+- **Self lore loss**: Cards where *you* lose lore — the regex requires "opponent".
+- **Conditional prevention**: Cards that *prevent* lore loss — no "opponent loses" anywhere.
+- **Lore gain only**: Pure lore-gain effects with no opponent-loss component.
 
-## Scoring
+## Scoring (5/6/7 matrix)
 
-All pairs score **7** (Strong). This is uniform by design.
+The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral default, bumps above 5 reflect mechanical efficiency.
 
-**Rationale**: Lore denial is a density-based strategy. Individual pair interactions don't matter — what matters is *how many* denial cards are in the deck. Having 5 lore-denial cards is better than 3, regardless of which specific cards they are. The score reflects that any two denial cards reinforce the same game plan.
+| Pair | Score | Reasoning |
+|------|-------|-----------|
+| **burn ↔ burn** | **5** | Parallel pressure, no compounding — both push the opponent down on the same axis |
+| **burn ↔ steal** | **6** | Complementary — burn applies pressure, steal closes the lore race by also gaining for you |
+| **steal ↔ steal** | **7** | Double-swing engine — every steal trigger advances both axes (opponent down + you up) |
 
-Future card potency scoring (#136) may differentiate by looking at how much lore each card removes (1 vs 2 vs variable) or how easy it is to trigger.
+**Mechanical efficiency rationale**: every steal point swings the lore race by 2 (opponent -1, you +1) while burn only swings by 1 (opponent -1). Two steal cards compound that efficiency; two burn cards just stack pressure. The matrix encodes that asymmetry.
 
-## Explanation Template
+`scoreLoreDenialPair(roleA, roleB, cardA, cardB)` returns the score and a tailored explanation per pair shape (no longer a generic "both make the opponent lose lore" template).
 
-```
-"Both {cardA} and {cardB} make the opponent lose lore"
-```
+### Explanation templates
 
-All explanations use the same template since the synergy mechanism is identical for every pair.
+| Pair | Template |
+|------|----------|
+| burn ↔ burn | `Both {a} and {b} make the opponent lose lore — stacking denial pressure` |
+| burn ↔ steal | `{burnCard} pushes the opponent down while {stealCard} pulls you up — pressing both ends of the lore race` |
+| steal ↔ steal | `Both {a} and {b} steal lore — every trigger swings the race in your favor twice` |
 
-## Coverage
+## Coverage (Set 12)
 
 | Metric | Value |
 |--------|-------|
-| Cards matching | 19 |
-| Total pairs | 342 (19 × 18 = 342 bidirectional) |
-| Score range | 7–7 |
+| Burn cards | 14 |
+| Steal cards | 10 |
+| Total cards | 24 |
+| Total unique pairs | 276 |
+| Score range | 5–7 |
 | Playstyle ID | `lore-denial` |
 
-### All Lore Denial Cards
+### Pair distribution
+
+| Pair shape | Count | Score | Share |
+|------------|-------|-------|-------|
+| burn ↔ burn | 91 | 5 | 33% |
+| burn ↔ steal | 140 | 6 | 51% |
+| steal ↔ steal | 45 | 7 | 16% |
+
+The 51% mid-tier is structurally meaningful: most decks running lore denial mix burn and steal naturally. Pure-steal builds (16% of pairs) are rare but mechanically the strongest density target. Pure-burn (33%) reads as the deck's broad floor.
+
+### Burn cards (14)
 
 | Card | Set |
 |------|-----|
-| A Pirate's Life | Shimmering Skies |
-| Beast - Aggressive Lord | Shimmering Skies |
 | Brom Bones - Burly Bully | Shimmering Skies |
-| Donald Duck - Pie Slinger | Into the Inklands |
 | Donald Duck - Daisy's Date | Into the Inklands |
-| Flotilla - Coconut Armada | Ursula's Return |
-| Gloyd Orangeboar - Fierce Competitor | Archazia's Island |
+| Donald Duck - Pie Slinger | Into the Inklands |
 | Jasmine - Rebellious Princess | Ursula's Return |
-| LeFou - Cake Thief | Archazia's Island |
+| Lyle Tiberius Rourke - Adventurer for Hire | Archazia's Island |
 | Nani's Payback | Azurite Sea |
-| Negaduck - Public Enemy Number One | Azurite Sea |
 | Olaf - Snowman of Action | Azurite Sea |
+| Pizza Planet - Spaceport | Azurite Sea |
 | Rapunzel - Letting Down Her Hair | Shimmering Skies |
 | Scrooge McDuck - Ebenezer Scrooge | Azurite Sea |
 | Stabbington Brother - With a Patch | Ursula's Return |
 | Taffyta Muttonfudge - Crowd Favorite | Into the Inklands |
 | The Matchmaker - Unforgiving Expert | Ursula's Return |
+| The Witch - Wily Woodcarver | Shimmering Skies |
+
+### Steal cards (10)
+
+| Card | Set |
+|------|-----|
+| A Pirate's Life | Shimmering Skies |
+| Beast - Aggressive Lord | Shimmering Skies |
+| Flotilla - Coconut Armada | Ursula's Return |
+| Gloyd Orangeboar - Fierce Competitor | Archazia's Island |
+| Hero Work | Azurite Sea |
+| LeFou - Cake Thief | Archazia's Island |
+| Negaduck - Public Enemy Number One | Azurite Sea |
+| Pterodactyl Janie Doll - Sid's Toy | Azurite Sea |
 | The Sword Released | Into the Inklands |
 | Thievery | Ursula's Return |
 
-## Group Size
+## Test coverage
 
-All 19 cards have exactly 18 synergy matches each (every other denial card). This creates one large, uniform group per card — there are no sub-groupings or tiers within lore denial.
+Tests in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Lore Loss')`.
 
-```chart
-{
-  "type": "doughnut",
-  "title": "Lore Denial — Score Distribution (342 pairs)",
-  "data": {
-    "labels": ["Score 7 — Strong (100%)"],
-    "values": [342]
-  }
-}
-```
+| Test | Score |
+|------|-------|
+| Match with lore loss text (burn + steal fixtures) | (boolean) |
+| No false positives on cards without lore loss | (boolean) |
+| Match for variable-amount variant | (boolean) |
+| burn ↔ burn pair (parallel pressure baseline) | 5 |
+| burn ↔ steal pair (complementary pressure + race-close) | 6 |
+| steal ↔ steal pair (double-swing engine) | 7 |
+| Selected card excluded from its own synergies | (boolean) |
+| All matches marked as bidirectional | (boolean) |
 
-## Design Rationale
+## Design decisions
 
-### Why uniform scoring?
+### Why a tiered matrix instead of uniform 7?
 
-Most synergy rules differentiate pairs by *how well* two specific cards work together. Lore denial is different — it's a **deck archetype**, not a pair interaction. The synergy isn't "these two cards combo" but "these two cards pursue the same win condition."
+The original rule scored every pair at 7 (uniform "Strong"). That treated burn↔burn and steal↔steal identically despite real mechanical differences. The tiered matrix is more honest about efficiency: every steal trigger swings the lore race by 2 (opponent down + you up), while burn only swings by 1. A pair of steals compounds that efficiency; a pair of burns just stacks pressure.
 
-This mirrors how competitive Lorcana players think about lore denial. When building a denial deck, you want *density* — fill the deck with as many denial effects as possible. The specific pairing doesn't matter; each additional denial card makes the strategy more consistent.
+### Why 5 is the floor (not 6 or 7)
 
-### Why score 7 specifically?
+The project-wide convention anchors **5 = same-axis density**. Anything above 5 must justify itself with a specific mechanical interaction. The old uniform-7 leaked weight to pairs that didn't earn it — burn↔burn doesn't compound, it just stacks, so it sits at the floor.
 
-Score 7 is the lower bound of "Strong" tier. This communicates:
+### Per-pair explanations
 
-- **Strong enough to recommend**: If you're building a denial deck, these cards belong together
-- **Not overstated**: The synergy is strategic, not mechanical — there's no direct card-to-card interaction like Shift or Singer
+The synergy results page now teaches the gameplan instead of repeating "both make the opponent lose lore" generically. A burn↔steal pair reads "X pushes the opponent down while Y pulls you up — pressing both ends of the lore race" — players reading that understand the deck's win condition more clearly than a generic membership confirmation.
 
-### Future improvements
+### Future tuning levers
 
-- **Card potency scoring** (#136): Weight by lore removed (1 vs 2 vs variable), trigger difficulty, and body stats
-- **Cross-archetype synergy**: Some denial cards also fit other archetypes (e.g., Taffyta is also Location Control). Cross-archetype value could boost scores
-- **Ink-aware scoring**: Denial cards in the same ink could score higher (easier to include in the same deck)
-
-## Test Coverage
-
-6 test cases in `rules.test.ts`:
-
-| Test | What it verifies |
-|------|-----------------|
-| Match with lore loss text | Thievery, Jasmine, Flotilla all match |
-| No false positives | Cards without lore loss text don't match |
-| No amount variant | "loses lore equal to..." still matches |
-| Synergy discovery | Finds other denial cards as score-7 synergies |
-| Self-exclusion | Selected card not included in its own synergies |
-| Bidirectional flag | All matches marked as bidirectional |
+- **Magnitude tiering**: differentiate "loses 1 lore" from "loses 3 lore" via regex extraction. Currently flat — community voting may surface this as worth encoding.
+- **Recurrence tiering**: distinguish repeating triggers ("whenever this character quests") from one-shot effects ("when you play this character"). Currently uniform.
+- **Cross-archetype synergy**: some denial cards also fit other archetypes (Taffyta = Location Control + Lore Denial). Cross-archetype value could boost scores in playstyle-aware UI views.

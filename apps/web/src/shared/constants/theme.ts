@@ -275,21 +275,29 @@ export type SynergySortOrder =
   | 'name-asc'
   | 'name-desc';
 
-export const BROWSE_SORT_OPTIONS: {value: BrowseSortOrder; label: string}[] = [
-  {value: 'ink-cost', label: 'Color \u2192 Cost'},
-  {value: 'newest', label: 'Newest first'},
-  {value: 'name-asc', label: 'Name A\u2013Z'},
-  {value: 'name-desc', label: 'Name Z\u2013A'},
-  {value: 'cost-asc', label: 'Cost: Low \u2192 High'},
-  {value: 'cost-desc', label: 'Cost: High \u2192 Low'},
+export const BROWSE_SORT_OPTIONS: {
+  value: BrowseSortOrder;
+  label: string;
+  mobileLabel?: string;
+}[] = [
+  {value: 'ink-cost', label: 'Color \u2192 Cost', mobileLabel: 'Color/Cost'},
+  {value: 'newest', label: 'Newest first', mobileLabel: 'Newest'},
+  {value: 'name-asc', label: 'Name A\u2013Z', mobileLabel: 'A\u2013Z'},
+  {value: 'name-desc', label: 'Name Z\u2013A', mobileLabel: 'Z\u2013A'},
+  {value: 'cost-asc', label: 'Cost: Low \u2192 High', mobileLabel: 'Cost \u2191'},
+  {value: 'cost-desc', label: 'Cost: High \u2192 Low', mobileLabel: 'Cost \u2193'},
 ];
 
-export const SYNERGY_SORT_OPTIONS: {value: SynergySortOrder; label: string}[] = [
-  {value: 'ink-cost', label: 'Color \u2192 Cost'},
-  {value: 'cost-asc', label: 'Cost: Low \u2192 High'},
-  {value: 'cost-desc', label: 'Cost: High \u2192 Low'},
-  {value: 'strength-desc', label: 'Score: High \u2192 Low'},
-  {value: 'strength-asc', label: 'Score: Low \u2192 High'},
-  {value: 'name-asc', label: 'Name A\u2013Z'},
-  {value: 'name-desc', label: 'Name Z\u2013A'},
+export const SYNERGY_SORT_OPTIONS: {
+  value: SynergySortOrder;
+  label: string;
+  mobileLabel?: string;
+}[] = [
+  {value: 'ink-cost', label: 'Color \u2192 Cost', mobileLabel: 'Color/Cost'},
+  {value: 'cost-asc', label: 'Cost: Low \u2192 High', mobileLabel: 'Cost \u2191'},
+  {value: 'cost-desc', label: 'Cost: High \u2192 Low', mobileLabel: 'Cost \u2193'},
+  {value: 'strength-desc', label: 'Score: High \u2192 Low', mobileLabel: 'Score \u2193'},
+  {value: 'strength-asc', label: 'Score: Low \u2192 High', mobileLabel: 'Score \u2191'},
+  {value: 'name-asc', label: 'Name A\u2013Z', mobileLabel: 'A\u2013Z'},
+  {value: 'name-desc', label: 'Name Z\u2013A', mobileLabel: 'Z\u2013A'},
 ];

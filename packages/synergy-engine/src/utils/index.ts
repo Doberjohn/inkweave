@@ -2,6 +2,7 @@ export {
   isDualInk,
   getInks,
   canShareDeck,
+  normalizeCardText,
   textContains,
   hasKeyword,
   hasKeywordExact,
@@ -31,8 +32,14 @@ export {
   isRepeatingTrigger,
   getCostReductionTarget,
   costReductionTargetsOverlap,
+  getToyRoles,
+  isToyCard,
+  isBoostBeneficiaryLocation,
+  getLoreDenialRoles,
+  isLoreDenialCard,
+  LORE_LOSS_PATTERN,
 } from './cardHelpers.js';
-export type {LocationRole, ShiftType, NamedEffectTier, DiscardRole, RampRole, CostReductionTarget} from './cardHelpers.js';
+export type {LocationRole, ShiftType, NamedEffectTier, DiscardRole, RampRole, CostReductionTarget, ToyRole, LoreDenialRole} from './cardHelpers.js';
 
 export {isCardType} from './typeGuards.js';
 

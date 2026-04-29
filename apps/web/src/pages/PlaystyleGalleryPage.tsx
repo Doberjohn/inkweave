@@ -2,9 +2,14 @@ import {useState, type CSSProperties, type KeyboardEvent, type ReactNode} from '
 import {useNavigate} from 'react-router-dom';
 import {
   getAllPlaystyles,
-  getRulesByPlaystyle,
+  getLocationRoles,
+  getDiscardRoles,
+  getRampRoles,
+  getLoreDenialRoles,
+  getToyRoles,
   type LorcanaCard,
   type Playstyle,
+  type PlaystyleId,
 } from 'inkweave-synergy-engine';
 import {useAllPlaystyleCards} from '../features/synergies/hooks';
 import {CardGridSkeleton} from '../features/cards';
@@ -300,7 +305,7 @@ function ActivePlaystyleCard({
   playstyle,
   ui,
   cardCount,
-  ruleCount,
+  mechanicCount,
   previewCards,
   onClick,
   layout,
@@ -309,7 +314,7 @@ function ActivePlaystyleCard({
   playstyle: Playstyle;
   ui: PlaystyleUiMeta;
   cardCount: number;
-  ruleCount: number;
+  mechanicCount: number;
   previewCards: Pick<LorcanaCard, 'imageUrl' | 'fullName'>[];
   onClick: () => void;
   layout: LayoutConfig;
@@ -395,8 +400,8 @@ function ActivePlaystyleCard({
         }}>
         <span style={{fontSize: `${FONT_SIZES.base}px`, color: COLORS.descriptionText}}>
           <strong style={{color: COLORS.text, fontWeight: 600}}>{cardCount}</strong> cards ·{' '}
-          <strong style={{color: COLORS.text, fontWeight: 600}}>{ruleCount}</strong>{' '}
-          {ruleCount === 1 ? 'rule' : 'rules'}
+          <strong style={{color: COLORS.text, fontWeight: 600}}>{mechanicCount}</strong>{' '}
+          {mechanicCount === 1 ? 'mechanic' : 'mechanics'}
         </span>
         <span
           style={{
@@ -500,12 +505,41 @@ const gridStyleMobile: CSSProperties = {
 type ActivePlaystyleEntry = {
   playstyle: Playstyle;
   ui: PlaystyleUiMeta;
-  ruleCount: number;
+  mechanicCount: number;
   cardCount: number;
   previewCards: Pick<LorcanaCard, 'imageUrl' | 'fullName'>[];
 };
 
 type PlaystyleCardData = ReturnType<typeof useAllPlaystyleCards>['data'];
+
+/**
+ * Per-playstyle role detector — returns the chip-eligible roles for one card.
+ * Toy filters out 'member' since it's the membership signal, not a displayed chip.
+ */
+const ROLE_DETECTORS: Partial<Record<PlaystyleId, (card: LorcanaCard) => readonly string[]>> = {
+  'location-control': getLocationRoles,
+  discard: getDiscardRoles,
+  ramp: getRampRoles,
+  'lore-denial': getLoreDenialRoles,
+  toy: (card) => getToyRoles(card).filter((r) => r !== 'member'),
+};
+
+/**
+ * Number of mechanic chips actually populated by ≥1 card in the playstyle.
+ * Empirical, not taxonomic — matches what the detail page renders, so the
+ * gallery card and the detail page agree on the count. Locations also count
+ * the synthetic "Locations" type-filter chip when ≥1 Location is present.
+ */
+function getPopulatedRoleCount(playstyleId: PlaystyleId, cards: LorcanaCard[]): number {
+  const detector = ROLE_DETECTORS[playstyleId];
+  if (!detector) return 0;
+  const populated = new Set<string>();
+  for (const card of cards) for (const role of detector(card)) populated.add(role);
+  if (playstyleId === 'location-control' && cards.some((c) => c.type === 'Location')) {
+    populated.add('__locations-type__');
+  }
+  return populated.size;
+}
 
 function buildActivePlaystyles(playstyleCardData: PlaystyleCardData): ActivePlaystyleEntry[] {
   return getAllPlaystyles()
@@ -516,12 +550,12 @@ function buildActivePlaystyles(playstyleCardData: PlaystyleCardData): ActivePlay
     })
     .map((ps) => {
       const ui = PLAYSTYLE_UI[ps.id];
-      const ruleCount = getRulesByPlaystyle(ps.id).length;
       const psData = playstyleCardData.get(ps.id);
+      const mechanicCount = getPopulatedRoleCount(ps.id, psData?.allCards ?? []);
       return {
         playstyle: ps,
         ui,
-        ruleCount,
+        mechanicCount,
         cardCount: psData?.count ?? 0,
         previewCards: psData?.previewCards ?? [],
       };
@@ -621,13 +655,13 @@ function PlaystyleGalleryGrid({
   if (isLoading) return <PlaystyleGalleryLoadingGrid isMobile={isMobile} />;
   return (
     <div style={isMobile ? gridStyleMobile : gridStyleDesktop}>
-      {activePlaystyles.map(({playstyle, ui, ruleCount, cardCount, previewCards}) => (
+      {activePlaystyles.map(({playstyle, ui, mechanicCount, cardCount, previewCards}) => (
         <ActivePlaystyleCard
           key={playstyle.id}
           playstyle={playstyle}
           ui={ui}
           cardCount={cardCount}
-          ruleCount={ruleCount}
+          mechanicCount={mechanicCount}
           previewCards={previewCards}
           onClick={() => onPlaystyleClick(playstyle.id)}
           layout={layout}

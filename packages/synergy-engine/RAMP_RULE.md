@@ -84,21 +84,24 @@ Three activation patterns (same synergy behavior, affects scoring nuance):
 
 ---
 
-## Scoring
+## Scoring (5–9 chain ladder + density baseline)
 
-Scores are determined by role pair and sub-pattern. The gradient follows mechanic proximity: direct chains score highest, parallel strategies score in the middle, indirect coexistence scores lowest.
+The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral default (parallel acceleration / same-axis density, no compounding), 6+ = specific mechanical interaction. The chain ladder (Ramp↔Trigger, scored 7–9) is the only real mechanical chain in the playstyle and is preserved at full strength.
+
+### Score Table
 
 | # | Pair | Score | Example |
 |---|------|-------|---------|
-| 1 | Deck Ramp ↔ Repeating Trigger | **9** | Mama Odie + Jafar — inks on song → 1 damage per ink |
-| 2 | Deck Ramp ↔ Once/turn Trigger | **8** | One Jump Ahead + Raya Kumandran Rider — ink readies character |
-| 3 | Self-Sacrifice ↔ Repeating Trigger | **8** | Winnie the Pooh + Rafiki — hand→ink → draw card |
-| 4 | Self-Sacrifice ↔ Once/turn Trigger | **7** | Cinderella + Dawson — end-of-turn ink → peek |
-| 5 | Ramp ↔ Ramp | **7** | Rescue Rangers Submarine + Tipo — dual ramp sources |
-| 6 | Ramp ↔ Cost Reduction | **7** | Heart of Te Fiti + Lantern — parallel acceleration |
-| 7 | Trigger ↔ Trigger | **7** | Jim Hawkins + Steel Coil — every ink fires both |
-| 8 | Cost Reduction ↔ Cost Reduction | **6** | Pluto + Huey — stacking discounts |
-| 9 | Trigger ↔ Cost Reduction | **5** | Amber Coil + Grandmother Willow — weak indirect link |
+| 1 | Deck Ramp ↔ Repeating Trigger | **9** | Mama Odie + Jafar — every free ink fires the trigger (snowball) |
+| 2 | Deck Ramp ↔ Once/turn Trigger | **8** | One Jump Ahead + Raya Kumandran — free ink, capped trigger |
+| 3 | Self-Sacrifice ↔ Repeating Trigger | **8** | Winnie the Pooh + Rafiki — hand→ink fires every event |
+| 4 | Self-Sacrifice ↔ Once/turn Trigger | **7** | Cinderella + Dawson — card cost + capped trigger |
+| 5 | Cost Reduction ↔ Cost Reduction (overlap) | **6** | Pluto + Huey — same target type, real stacking discount |
+| 6 | Ramp ↔ Ramp | **5** | Parallel ramp; doesn't compound |
+| 7 | Trigger ↔ Trigger | **5** | Parallel triggers; both need a ramp card to fire |
+| 8 | Ramp ↔ Cost Reduction | **5** | Parallel acceleration on different axes; no per-card combo |
+| 9 | Trigger ↔ Cost Reduction | **5** | Weak indirect link |
+| — | Cost Reduction ↔ Cost Reduction (no overlap) | **0** | Discounts target different card types — silently filtered |
 
 ### Scoring Logic
 
@@ -109,12 +112,30 @@ if ramp ↔ trigger:
   +1 if trigger is repeating (scales with ramp)
   max = 9
 
-if ramp ↔ ramp: 7 (density)
-if ramp ↔ cost-reduction: 7 (parallel)
-if trigger ↔ trigger: 7 (density)
-if cost-reduction ↔ cost-reduction: 6 (stacking)
-if trigger ↔ cost-reduction: 5 (weak)
+if cost-reduction ↔ cost-reduction:
+  6 if discount target types overlap (real stacking on same play)
+  0 silently dropped if disjoint (Pirate-discount + Location-discount won't combo)
+
+# Density baseline — same-axis pairs sit at the floor:
+if ramp ↔ ramp: 5
+if trigger ↔ trigger: 5
+if ramp ↔ cost-reduction: 5
+if trigger ↔ cost-reduction: 5
 ```
+
+### Live distribution (Set 12)
+
+90 total ramp cards across 3,507 unique pairs:
+
+| Score | Pairs | Share | Captures |
+|-------|-------|-------|----------|
+| **5** | 2,598 | 74.1% | Same-axis density (Ramp↔Ramp, Trigger↔Trigger, Ramp↔CR, Trigger↔CR) |
+| **6** | 99 | 2.8% | Cost-reduction with overlapping target types |
+| **7** | 115 | 3.3% | Self-sac ramp + once-per-turn trigger |
+| **8** | 476 | 13.6% | Deck ramp + once-turn, or self-sac + repeating |
+| **9** | 469 | 13.4% | Peak chain (deck ramp + repeating trigger — every free ink fires the trigger) |
+
+The 27% of pairs at 8–9 isn't inflation — it's an honest reflection of Sapphire-heavy ramp design in Lorcana. Most inkwell-ramp cards are deck-ramp (the strongest variant), and most inkwell-triggers are repeating. So most pairs that *can* chain *do*. The 74% baseline + 27% genuine chains is the right curve: rare, mechanically real spikes against a broad density floor.
 
 ### Explanation Templates
 

@@ -79,34 +79,37 @@ This skips the full pattern battery for the ~95% of cards that don't mention dis
 
 ---
 
-## Scoring
+## Scoring (5/8 matrix)
+
+The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral default (same-axis density, no compounding), 6+ = specific mechanical interaction.
 
 ### Score Table
 
 | Pair Type | Score | Display Tier | Explanation |
 |-----------|-------|-------------|-------------|
-| Enabler ↔ Payoff | **8** | Strong | Enabler creates the condition, payoff exploits it — the strongest archetype interaction |
-| Enabler ↔ Enabler | **7** | Strong | Both disrupt the opponent's hand — density makes the strategy consistent |
-| Payoff ↔ Payoff | **7** | Strong | Both reward hand-size advantage — running multiple payoffs amplifies the reward |
+| Enabler ↔ Payoff | **8** | Strong | Asymmetric kill combo — enabler creates the condition, payoff exploits it |
+| Enabler ↔ Enabler | **5** | Weak | Parallel pressure on the opponent's hand; doesn't compound mechanically — they just stack |
+| Payoff ↔ Payoff | **5** | Weak | Same axis (both reward hand-size advantage); having two doesn't multiply the win condition |
 
-```chart
-{
-  "type": "doughnut",
-  "title": "Score Distribution (1,136 matches)",
-  "data": {
-    "labels": ["Score 7 — Enabler↔Enabler / Payoff↔Payoff (88.6%)", "Score 8 — Enabler↔Payoff (11.4%)"],
-    "values": [1006, 130]
-  }
-}
-```
+### Live distribution (Set 12)
 
-### Why Enabler ↔ Payoff is 8
+37 enablers + 2 payoffs = 39 cards across 741 unique pairs:
 
-This is the **highest score in any playstyle rule** (most playstyle pairs are 7). The extra point reflects the mechanical dependency: enablers alone just annoy the opponent; payoffs alone never activate. Together they form a complete strategy loop. This asymmetric pairing is the *reason* you build a Discard deck — it deserves a higher score than two enablers that merely stack.
+| Pair shape | Count | Score | Share |
+|------------|-------|-------|-------|
+| Enabler ↔ Enabler | 666 | 5 | 89.9% |
+| Enabler ↔ Payoff | 74 | 8 | 10.0% |
+| Payoff ↔ Payoff | 1 | 5 | 0.1% |
 
-### Why Not 9?
+The 89.9% baseline isn't noise — it's the deck's identity. Discard is a deck of pressure cards built around finding one of the two genuine win conditions (Yzma — Transformed Kitten, Pacha — Trekmate). The score 8 marks exactly that asymmetric kill combo.
 
-Score 9 is reserved for direct synergies where two specific cards have a unique, irreplaceable interaction (like a perfect Shift curve). Discard enabler-payoff is powerful but *fungible* — any enabler works with any payoff. Sudden Chill + Pacha isn't fundamentally different from Daisy Duck + Pacha. The synergy comes from the roles, not the specific cards.
+### Why Enabler ↔ Payoff is 8 (and not 9)
+
+The combo is fungible — any enabler works with any payoff. Sudden Chill + Pacha isn't fundamentally different from Daisy Duck + Pacha. Score 9 is reserved for direct synergies where two specific cards have a unique, irreplaceable interaction (like a perfect Shift curve). Score 8 captures "game-winning combo" without the specificity.
+
+### Why same-side pairs sit at 5
+
+Two enablers don't *compound* — they just stack pressure. Two payoffs share an axis without amplifying it (you don't "double-win" by having both Yzma and Pacha; one is sufficient when the enablers do their job). Both shapes are deck-share baseline under the convention, not specific mechanical wins. The old uniform-7 leaked weight to pairs that didn't earn it.
 
 ### Explanation Templates
 
@@ -164,9 +167,9 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 
 | Test | What It Verifies |
 |------|-----------------|
-| Enabler ↔ Enabler → 7 | Both disruption cards score 7 |
-| Enabler ↔ Payoff → 8 | Cross-role pair scores 8 |
-| Payoff ↔ Payoff → 7 | Both advantage cards score 7 |
+| Enabler ↔ Enabler → 5 | Same-side pair (parallel pressure baseline) |
+| Enabler ↔ Payoff → 8 | Asymmetric kill combo |
+| Payoff ↔ Payoff → 5 | Same-axis baseline (no compounding) |
 | Unrelated cards excluded | Non-discard cards produce no matches |
 | Self excluded | Card doesn't synergize with itself |
 | Bidirectional consistency | Forward and reverse scores are identical |

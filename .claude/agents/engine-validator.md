@@ -1,7 +1,7 @@
 ---
 name: engine-validator
-description: Validates synergy engine after rule changes. Builds engine, runs tests, precomputes synergies, and audits score distribution. Use after modifying rule logic, scoring, or detection patterns in packages/synergy-engine/src/.
-tools: Read, Grep, Glob, Bash
+description: Validates synergy engine after rule changes. Builds engine, runs tests, precomputes synergies, audits score distribution, and runs the CodeScene quality gate. Use after modifying rule logic, scoring, or detection patterns in packages/synergy-engine/src/.
+tools: Read, Grep, Glob, Bash, mcp__codescene__analyze_change_set, mcp__codescene__code_health_review
 model: sonnet
 maxTurns: 30
 ---
@@ -55,7 +55,20 @@ Analyze all precomputed synergy JSON files (exclude `_manifest.json`, `_playstyl
    - TOO_NICHE: playstyle has <10 cards
 4. **Coverage**: Total cards vs cards with synergies, flag if <40%
 
-## Step 6: Report
+## Step 6: CodeScene Quality Gate
+
+Run `mcp__codescene__analyze_change_set` with `base_ref: "origin/master"` (or `origin/main`)
+and the repo root path. **Mandatory**: any `verdict: "degraded"` result with introduced
+findings (Complex Method, Complex Conditional, Bumpy Road, Large Method) must be flagged.
+
+If the gate fails, list each violating function with its file path, line range, and
+the introduced metric (e.g., `scoreToyPair: CC 21, threshold 9`). The caller can then
+refactor before pushing.
+
+If the MCP tool isn't reachable (auth/network), report that the gate could not run
+and recommend `mcp__codescene__code_health_review` per-file as a fallback.
+
+## Step 7: Report
 
 Present a concise summary:
 
@@ -66,6 +79,7 @@ Present a concise summary:
 **Tests**: X passed, Y failed
 **Precompute**: X cards, Y groups, Z playstyles
 **Validation**: OK/FAIL (issues listed)
+**CodeScene gate**: PASSED / FAILED / UNREACHABLE (introduced violations listed)
 
 ### Score Distribution
 [histogram table]

@@ -43,13 +43,26 @@ export function canShareDeck(cardA: LorcanaCard, cardB: LorcanaCard): boolean {
 }
 
 /**
+ * Normalize card text for regex matching by stripping newlines.
+ *
+ * Lorcana card text spans multiple lines, and JS regex `.*` does not cross
+ * newlines by default — so a phrase like "reveal\na location card" silently
+ * fails to match `reveal.*location card`. Always route card-text patterns
+ * through this helper so detection and rule-`matches` agree.
+ *
+ * Returns an empty string when the card has no text, so callers can chain safely.
+ */
+export function normalizeCardText(card: LorcanaCard): string {
+  return (card.text ?? '').replace(/\n/g, ' ');
+}
+
+/**
  * Check if card text contains a pattern (case-insensitive)
  * Normalizes newlines to spaces for matching across line breaks
  */
 export function textContains(card: LorcanaCard, pattern: string | RegExp): boolean {
   if (!card.text) return false;
-  // Normalize newlines to spaces for matching across line breaks
-  const normalizedText = card.text.replace(/\n/g, ' ');
+  const normalizedText = normalizeCardText(card);
   if (typeof pattern === 'string') {
     return normalizedText.toLowerCase().includes(pattern.toLowerCase());
   }
@@ -193,13 +206,57 @@ export function isLocation(card: LorcanaCard): boolean {
 // ============================================
 
 /** Text patterns for each location-support role */
+/**
+ * Generic Search-mechanic pattern factory.
+ * Detects strict deck → hand shapes:
+ *   1. "look at the top X cards → reveal TARGET" (search-to-hand)
+ *   2. "search your deck/discard/hand for TARGET" (explicit search)
+ *   3. "return TARGET" (return-to-hand)
+ *
+ * Deliberately excludes "TARGET from your discard" because that shape is shared
+ * by recursion mechanics (move TARGET from discard → deck) which are semantically
+ * distinct from Search. Recursion deserves its own role; see Phase 3.
+ *
+ * Used by Locations (target='location card') and Toys (target='Toy character'),
+ * extensible to future tribes. `target` is treated as a regex fragment, not a literal.
+ */
+export function makeSearchPattern(target: string): RegExp {
+  return new RegExp(
+    'look at the top \\d+ cards.{0,80}?reveal.{0,40}?' +
+      target +
+      '|search.{0,80}?(?:deck|discard|hand).{0,40}?' +
+      target +
+      '|return (?:a |an )?' +
+      target,
+    'i',
+  );
+}
+
+/**
+ * Generic Banish-Trigger pattern factory.
+ * Detects reactive on-banish triggers — strict tense: "when(ever) X is/are/gets banished".
+ * Excludes "if X was banished this turn" (turn-state condition, not a reactive trigger);
+ * those cards live under self-discount or other state-check mechanics.
+ *
+ * `target` is treated as a regex fragment, not a literal — pass classification phrases
+ * like 'Toy characters?' or self-references like 'this character'.
+ */
+export function makeBanishTriggerPattern(target: string): RegExp {
+  return new RegExp(
+    'when(?:ever)?\\s+(?:a\\s+|an\\s+|your\\s+other\\s+|one of your other\\s+)?' +
+      target +
+      '\\s+(?:is|are|gets?)\\s+banished',
+    'i',
+  );
+}
+
 export const LOCATION_PATTERNS = {
   'at-payoff': /while\b.{0,60}at a location|if\b.{0,60}at a location|is at a location/i,
-  move: /move.*to.*location|moves to a location|move.*character.*location|to the same location/i,
+  move: /\bmove\b[^.]{0,40}?\bcharacter[^.]{0,40}?\blocation|to the same location/i,
   'move-exclude': /move.*damage/i,
-  'play-trigger': /when(?:ever)? you play a location|whenever.*play a location/i,
+  'play-trigger': /when(?:ever)? you play a location|whenever.*play a location|when(?:ever)?[^.]{0,40}moves? to a location/i,
   'in-play-check': /if you have a location|while you have a.*(location)|for each location/i,
-  tutor: /search.*location card|reveal.*location card|return a location|location card from/i,
+  search: makeSearchPattern('location(?:\\s+cards?)?'),
   buff: /your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
   boost:
     /under.*(?:characters|character) or locations|under.*locations|locations with boost|play a character or location with boost/i,
@@ -207,6 +264,9 @@ export const LOCATION_PATTERNS = {
     /\bless\b.*(?:to )?(?:play|move).*location|\bless\b for.*location|play a location.*(?:from|for free)/i,
   /** Anti-location cards: banish/remove/shuffle locations. Excluded from location-control. */
   'anti-location': /banish (?:chosen |all )(?:item or )?location|shuffle.*location into/i,
+  /** Locations that actually benefit from having cards beneath them — used to scope the boost rule. */
+  'boost-beneficiary':
+    /for each card (?:under|beneath)|cards? (?:from )?(?:under|beneath) (?:this|the) (?:location|card)/i,
 } as const;
 
 export type LocationRole =
@@ -214,7 +274,7 @@ export type LocationRole =
   | 'move'
   | 'play-trigger'
   | 'in-play-check'
-  | 'tutor'
+  | 'search'
   | 'buff'
   | 'boost'
   | 'location-ramp';
@@ -227,27 +287,29 @@ export function getLocationRoles(card: LorcanaCard): LocationRole[] {
   if (isLocation(card)) return [];
   if (!card.text) return [];
 
+  const text = normalizeCardText(card);
+
   // Anti-location cards (banish/remove locations) are excluded entirely
-  if (LOCATION_PATTERNS['anti-location'].test(card.text)) return [];
+  if (LOCATION_PATTERNS['anti-location'].test(text)) return [];
 
   const roles: LocationRole[] = [];
 
-  if (LOCATION_PATTERNS['at-payoff'].test(card.text)) roles.push('at-payoff');
+  if (LOCATION_PATTERNS['at-payoff'].test(text)) roles.push('at-payoff');
 
-  if (LOCATION_PATTERNS.move.test(card.text) && !LOCATION_PATTERNS['move-exclude'].test(card.text))
+  if (LOCATION_PATTERNS.move.test(text) && !LOCATION_PATTERNS['move-exclude'].test(text))
     roles.push('move');
 
-  if (LOCATION_PATTERNS['play-trigger'].test(card.text)) roles.push('play-trigger');
+  if (LOCATION_PATTERNS['play-trigger'].test(text)) roles.push('play-trigger');
 
-  if (LOCATION_PATTERNS['in-play-check'].test(card.text)) roles.push('in-play-check');
+  if (LOCATION_PATTERNS['in-play-check'].test(text)) roles.push('in-play-check');
 
-  if (LOCATION_PATTERNS.tutor.test(card.text)) roles.push('tutor');
+  if (LOCATION_PATTERNS.search.test(text)) roles.push('search');
 
-  if (LOCATION_PATTERNS.buff.test(card.text)) roles.push('buff');
+  if (LOCATION_PATTERNS.buff.test(text)) roles.push('buff');
 
-  if (LOCATION_PATTERNS.boost.test(card.text)) roles.push('boost');
+  if (LOCATION_PATTERNS.boost.test(text)) roles.push('boost');
 
-  if (LOCATION_PATTERNS['location-ramp'].test(card.text)) roles.push('location-ramp');
+  if (LOCATION_PATTERNS['location-ramp'].test(text)) roles.push('location-ramp');
 
   return roles;
 }
@@ -264,25 +326,39 @@ export function isLocationSupportCard(card: LorcanaCard): boolean {
 // ============================================
 
 /** Discard role: enabler (forces opponent to discard) or payoff (rewards hand-size advantage) */
-export type DiscardRole = 'enabler' | 'payoff';
+export type DiscardRole = 'targeted' | 'random' | 'standard' | 'payoff';
 
 /**
  * Enabler patterns — cards that force opponents to lose cards from hand.
  * Covers: forced discard, targeted (reveal+pick), hand-cap, symmetric, and indirect.
  */
-const DISCARD_ENABLER_PATTERNS: RegExp[] = [
+/**
+ * Targeted: opponent reveals their hand and you/they discard a SPECIFIC card type
+ * (song / action / location / non-character). Highest player agency — you pick the type.
+ */
+const DISCARD_TARGETED_PATTERN =
+  /reveals?\s+their\s+hand\s+and\s+discards?\s+(?:a|an)\s+(?:song|action|location|non-character)\s+card\s+of\s+your\s+choice/i;
+
+/**
+ * Random: opponent loses cards without choice (luck-based).
+ * Includes "discards X cards at random" and "that player discards a card at random".
+ */
+const DISCARD_RANDOM_PATTERN = /discards\s+(?:a|an|\d+)\s+cards?\s+at\s+random/i;
+
+/**
+ * Generic discard patterns — choose-and-discard, hand-cap, symmetric, mass.
+ * Match if the card is NOT already classified as targeted or random.
+ */
+const DISCARD_GENERIC_PATTERNS: RegExp[] = [
   // "each/chosen opponent chooses and discards" + "have opponent choose and discard"
   /(each|chosen)\s+opponents?\s+(chooses?\s+and\s+discards?|reveals?\s+their\s+hand\s+and\s+discards?|discards?)/i,
   /have\s+(each|chosen)\s+opponents?\s+choose\s+and\s+discard/i,
-  // Symmetric / indirect: "each/challenging player...discards", "that player discards at random"
+  // Symmetric / indirect: "each/challenging player...discards"
   /(each|challenging)\s+player\s+(?:may\s+)?chooses?\s+and\s+discards?/i,
-  /that\s+player\s+discards?\s+a\s+card\s+at\s+random/i,
   // Hand-cap: "more than X cards in their hand...discard"
   /more\s+than\s+\d+\s+cards\s+in\s+their\s+hand.*discard/i,
   // Comparative: "most cards in their hands choose and discard"
   /most\s+cards\s+in\s+their\s+hands?\s+choose\s+and\s+discard/i,
-  // Symmetric chaos: "each player draws X cards...discards X cards at random"
-  /each\s+player\s+draws\s+\d+\s+cards.*discards\s+\d+\s+cards\s+at\s+random/i,
 ];
 
 /** Payoff pattern — cards that reward having more cards in hand than opponent */
@@ -297,13 +373,18 @@ const HAS_DISCARD_KEYWORD = /discard|more cards in your hand/i;
  */
 export function getDiscardRoles(card: LorcanaCard): DiscardRole[] {
   if (!card.text) return [];
-  if (!HAS_DISCARD_KEYWORD.test(card.text)) return [];
-  const normalizedText = card.text.replace(/\n/g, ' ');
+  const normalizedText = normalizeCardText(card);
+  if (!HAS_DISCARD_KEYWORD.test(normalizedText)) return [];
 
   const roles: DiscardRole[] = [];
 
-  if (DISCARD_ENABLER_PATTERNS.some((p) => p.test(normalizedText))) {
-    roles.push('enabler');
+  // Disruption roles are mutually exclusive — check most specific first.
+  if (DISCARD_TARGETED_PATTERN.test(normalizedText)) {
+    roles.push('targeted');
+  } else if (DISCARD_RANDOM_PATTERN.test(normalizedText)) {
+    roles.push('random');
+  } else if (DISCARD_GENERIC_PATTERNS.some((p) => p.test(normalizedText))) {
+    roles.push('standard');
   }
 
   if (DISCARD_PAYOFF_PATTERN.test(normalizedText)) {
@@ -382,7 +463,16 @@ const INKWELL_TRIGGER_PATTERNS: RegExp[] = [
  * Must match "you pay X less" but NOT "you pay X less to play this" (self-discount).
  */
 const COST_REDUCTION_GRANT_PATTERN = /you\s+pay\s+\d+\s+⬡?\s*less/i;
-const COST_REDUCTION_SELF_PATTERN = /you\s+pay\s+\d+\s+⬡?\s*less\s+to\s+play\s+this/i;
+const COST_REDUCTION_SELF_PATTERN = /you\s+pay\s+\d+\s+⬡?\s*less\s+⬡?\s*to\s+play\s+this/i;
+
+/**
+ * Self-discount via free-play: "play this character for free" — the limit case
+ * of self cost reduction (cost = 0). Distinct shape from "you pay N less", but
+ * the same mechanic: this character's mana cost is reduced when a condition is met.
+ * Strict "this character" qualifier prevents matching grants like
+ * "play your next Toy for free".
+ */
+const SELF_DISCOUNT_FREE_PATTERN = /play\s+this\s+character\s+for\s+free/i;
 
 /** Fast pre-filter: skip cards without any ramp-related keywords */
 const HAS_RAMP_KEYWORD = /inkwell|you pay \d+.*less/i;
@@ -393,8 +483,8 @@ const HAS_RAMP_KEYWORD = /inkwell|you pay \d+.*less/i;
  */
 export function getRampRoles(card: LorcanaCard): RampRole[] {
   if (!card.text) return [];
-  if (!HAS_RAMP_KEYWORD.test(card.text)) return [];
-  const t = card.text.replace(/\n/g, ' ');
+  const t = normalizeCardText(card);
+  if (!HAS_RAMP_KEYWORD.test(t)) return [];
 
   const roles: RampRole[] = [];
 
@@ -432,7 +522,7 @@ export function isRampCard(card: LorcanaCard): boolean {
  */
 export function isDeckRamp(card: LorcanaCard): boolean {
   if (!card.text) return false;
-  const t = card.text.replace(/\n/g, ' ');
+  const t = normalizeCardText(card);
   return /put\s+the\s+top\s+card\s+of\s+your\s+deck\s+into\s+your\s+inkwell/i.test(t) ||
     /look\s+at\s+the\s+top.*?put.*?into\s+your\s+inkwell/i.test(t) ||
     /put\s+up\s+to\s+\d+\s+cards?\s+from\s+your\s+discard\s+into\s+your\s+inkwell/i.test(t);
@@ -444,7 +534,7 @@ export function isDeckRamp(card: LorcanaCard): boolean {
  */
 export function isRepeatingTrigger(card: LorcanaCard): boolean {
   if (!card.text) return false;
-  const t = card.text.replace(/\n/g, ' ');
+  const t = normalizeCardText(card);
   if (!INKWELL_TRIGGER_PATTERNS.some((p) => p.test(t))) return false;
   return !/once\s+during\s+your\s+turn/i.test(t);
 }
@@ -463,7 +553,7 @@ export type CostReductionTarget = 'character' | 'location' | 'action' | 'item';
  */
 export function getCostReductionTarget(card: LorcanaCard): CostReductionTarget | null {
   if (!card.text) return null;
-  const t = card.text.replace(/\n/g, ' ');
+  const t = normalizeCardText(card);
   if (!COST_REDUCTION_GRANT_PATTERN.test(t) || COST_REDUCTION_SELF_PATTERN.test(t)) return null;
 
   // Extract the text after "you pay X less"
@@ -536,7 +626,7 @@ export function getNamedReferences(card: LorcanaCard): string[] {
   if (!card.text || !HAS_NAMED.test(card.text)) return [];
 
   // Strip Shift parentheticals and normalize newlines
-  const cleanText = card.text.replace(SHIFT_PARENTHETICAL, '').replace(/\n/g, ' ');
+  const cleanText = normalizeCardText(card).replace(SHIFT_PARENTHETICAL, '');
 
   const names = new Set<string>();
 
@@ -586,12 +676,12 @@ export type NamedEffectTier = 'game-winning' | 'strong' | 'moderate' | 'minor' |
 
 export function classifyNamedEffect(card: LorcanaCard): NamedEffectTier {
   if (!card.text) return 'minor';
-  const text = card.text.toLowerCase().replace(/\n/g, ' ');
+  const text = normalizeCardText(card).toLowerCase();
 
   // Hostile: banish/exert/damage the named character (limit distance to same clause)
   if (/banish.{0,40}named|named.{0,40}banish/.test(text)) return 'hostile';
 
-  // Game-winning: free play, draw multiple, tutor from deck
+  // Game-winning: free play, draw multiple, deck search
   if (/play.*for free|for free|play.*without paying/.test(text)) return 'game-winning';
   if (/draw \d+ card|draw cards/.test(text)) return 'game-winning';
   if (/search your deck/.test(text)) return 'game-winning';
@@ -681,3 +771,143 @@ export function hasPositiveClassificationEffect(
 
   return positivePatterns.some((pattern) => text.includes(pattern));
 }
+
+// ============================================
+// TOY TRIBAL DETECTION
+// ============================================
+
+/**
+ * Detects cards whose text references Toy characters (payoff role).
+ * Uses "Toy character[s]" rather than bare "Toy" to skip ability-name false
+ * positives (e.g., Buzz Lightyear — On the Way's "WORLD'S GREATEST TOY" name).
+ */
+const TOY_PAYOFF_PATTERN = /\bToy characters?\b/i;
+
+/** Toy-scoped Search — uses the shared helper with Toy character as target */
+const TOY_SEARCH_PATTERN = makeSearchPattern('Toy characters?(?:\\s+cards?)?');
+
+/**
+ * Toy-scoped Banish trigger — fires on a Toy banish event.
+ * Two targets OR'd: tribal ("when a Toy character is banished") and self
+ * ("when this character is banished"). Inside getToyRoles the membership
+ * gate ensures self-banish only counts when the carrying card is itself a
+ * Toy — so "this character" is structurally equivalent to "a Toy character".
+ */
+const TOY_BANISH_TRIGGER_TRIBAL_PATTERN = makeBanishTriggerPattern('Toy characters?');
+const TOY_BANISH_TRIGGER_SELF_PATTERN = makeBanishTriggerPattern('this character');
+
+/** Generic Draw mechanic — literal "draw a card" / "draw N cards". Used by Toys. */
+const DRAW_PATTERN = /(?:you may )?draws? (?:a|\d+) cards?/i;
+
+/**
+ * Roles in the Toy tribal playstyle.
+ *
+ * Composes with other playstyles' role detection:
+ * - 'member' — Toy classification (Toy-specific)
+ * - Toy-scoped mechanics: 'search', 'draw', 'banish-trigger', 'self-discount'
+ * - Lore Denial roles: 'burn', 'steal'
+ * - Discard roles: 'targeted', 'random', 'standard' (Discard's own 'payoff' is excluded —
+ *   hand-size advantage is a Discard-playstyle concept, not a Toy concept)
+ * - Ramp roles: 'inkwell-ramp', 'inkwell-trigger', 'cost-reduction'
+ *
+ * The generic 'payoff' fallback was retired once every Toy in the live database
+ * mapped onto a specific mechanic. A card can still enter the playstyle without
+ * a specific role (via TOY_PAYOFF_PATTERN text reference), but it will only
+ * surface in synergy results if some specific mechanic is also detected.
+ */
+export type ToyRole =
+  | 'member'
+  | 'search'
+  | 'draw'
+  | 'banish-trigger'
+  | 'self-discount'
+  | LoreDenialRole
+  | Exclude<DiscardRole, 'payoff'>
+  | RampRole;
+
+/** Compose roles from other playstyles' detectors (Lore Denial, Discard, Ramp). */
+function composeCrossPlaystyleToyRoles(card: LorcanaCard, roles: ToyRole[]): void {
+  for (const r of getLoreDenialRoles(card)) roles.push(r);
+  for (const r of getDiscardRoles(card)) {
+    if (r !== 'payoff') roles.push(r); // Discard's hand-size payoff is a different concept
+  }
+  for (const r of getRampRoles(card)) roles.push(r);
+}
+
+/** Detect Toy-scoped mechanic roles from card text (search, draw, banish-trigger, self-discount). */
+function detectToyScopedRoles(text: string, roles: ToyRole[]): void {
+  if (TOY_SEARCH_PATTERN.test(text)) roles.push('search');
+  if (DRAW_PATTERN.test(text)) roles.push('draw');
+  const isBanishTrigger =
+    TOY_BANISH_TRIGGER_TRIBAL_PATTERN.test(text) || TOY_BANISH_TRIGGER_SELF_PATTERN.test(text);
+  if (isBanishTrigger) roles.push('banish-trigger');
+  const isSelfDiscount =
+    COST_REDUCTION_SELF_PATTERN.test(text) || SELF_DISCOUNT_FREE_PATTERN.test(text);
+  if (isSelfDiscount) roles.push('self-discount');
+}
+
+export function getToyRoles(card: LorcanaCard): ToyRole[] {
+  const isMember = hasClassification(card, 'Toy');
+  const text = card.text != null ? normalizeCardText(card) : '';
+  const isTribePayoff = text !== '' && TOY_PAYOFF_PATTERN.test(text);
+
+  // Not a Toy at all — no playstyle membership, no role composition
+  if (!isMember && !isTribePayoff) return [];
+
+  const roles: ToyRole[] = [];
+  if (isMember) roles.push('member');
+  // Gated above by Toy membership/text so cross-playstyle composition can't promote non-Toy cards.
+  composeCrossPlaystyleToyRoles(card, roles);
+  detectToyScopedRoles(text, roles);
+  return roles;
+}
+
+export const isToyCard = (card: LorcanaCard): boolean => getToyRoles(card).length > 0;
+
+/**
+ * A Location qualifies as a boost target only if its text references cards beneath it.
+ * Without this gate, every Location pairs with every boost-role support card.
+ */
+export function isBoostBeneficiaryLocation(card: LorcanaCard): boolean {
+  if (!isLocation(card)) return false;
+  if (!card.text) return false;
+  return LOCATION_PATTERNS['boost-beneficiary'].test(normalizeCardText(card));
+}
+
+// ============================================
+// LORE DENIAL DETECTION
+// ============================================
+
+/** Cards that directly make the opponent lose lore (any form — burn or steal) */
+export const LORE_LOSS_PATTERN = /(?:each |chosen |all )?opponents? loses? (?:\d+ )?lore/i;
+
+/**
+ * Lore Steal patterns — opponent loses lore AND you gain lore from the same effect.
+ * Three structural shapes cover the canonical Lorcana phrasings:
+ *   1. "loses X lore and you gain X lore"  (single sentence, conjoined)
+ *   2. "loses X lore. (You )?Gain X lore"  (separate sentences)
+ *   3. "gain lore equal to (the )?lore lost"  (variable transfer)
+ * Cards matching any → Steal role; cards matching only LORE_LOSS_PATTERN → Burn role.
+ */
+const LORE_STEAL_PATTERNS: RegExp[] = [
+  /loses?\s+\d+\s+lore\s+and\s+you\s+gain\s+\d+\s+lore/i,
+  /loses?\s+\d+\s+lore\.\s*(?:you\s+)?gain\s+\d+\s+lore/i,
+  /gain\s+lore\s+equal\s+to\s+(?:the\s+)?lore\s+lost/i,
+];
+
+export type LoreDenialRole = 'burn' | 'steal';
+
+/**
+ * Determine the lore-denial role(s) a card fulfills.
+ * Returns ['steal'] if a transfer pattern matches, ['burn'] if only the bare lore-loss matches, [] otherwise.
+ * Burn and Steal are mutually exclusive — a card is one or the other.
+ */
+export function getLoreDenialRoles(card: LorcanaCard): LoreDenialRole[] {
+  if (!card.text) return [];
+  const text = normalizeCardText(card);
+  if (!LORE_LOSS_PATTERN.test(text)) return [];
+  if (LORE_STEAL_PATTERNS.some((p) => p.test(text))) return ['steal'];
+  return ['burn'];
+}
+
+export const isLoreDenialCard = (card: LorcanaCard): boolean => getLoreDenialRoles(card).length > 0;

@@ -8,4 +8,8 @@ export {CardDetailPanel} from './CardDetailPanel';
 export {MobileCardDetail} from './MobileCardDetail';
 export {SynergyDetailModal} from './SynergyDetailModal';
 export {SynergyToolbar} from './SynergyToolbar';
+export {RoleTileRow} from './RoleTileRow';
+export type {RoleTile} from './RoleTileRow';
+export {MechanicsBottomSheet} from './MechanicsBottomSheet';
+export {MechanicsButton} from './MechanicsButton';
 export type {SynergySortOrder} from '../../../shared/constants';

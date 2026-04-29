@@ -37,6 +37,10 @@ export {
   DISCARD_ROLE_DESCRIPTIONS,
   RAMP_ROLE_CHIP_LABELS,
   RAMP_ROLE_DESCRIPTIONS,
+  LORE_DENIAL_ROLE_CHIP_LABELS,
+  LORE_DENIAL_ROLE_DESCRIPTIONS,
+  TOY_ROLE_CHIP_LABELS,
+  TOY_ROLE_DESCRIPTIONS,
 } from './engine';
 export type {SynergyEngineOptions, CachedSynergyResult} from './engine';
 
@@ -75,5 +79,9 @@ export {
   isRepeatingTrigger,
   transformCard,
   transformCards,
+  getToyRoles,
+  isToyCard,
+  getLoreDenialRoles,
+  isLoreDenialCard,
 } from './utils';
-export type {LocationRole, ShiftType, NamedEffectTier, DiscardRole, RampRole, LorcanaJSONCard} from './utils';
+export type {LocationRole, ShiftType, NamedEffectTier, DiscardRole, RampRole, ToyRole, LoreDenialRole, LorcanaJSONCard} from './utils';

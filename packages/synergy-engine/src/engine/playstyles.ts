@@ -3,9 +3,9 @@ import type {Playstyle, PlaystyleId} from '../types';
 const playstyles: Playstyle[] = [
   {
     id: 'lore-denial',
-    name: 'Lore Steal',
+    name: 'Lore Denial',
     description:
-      'Cards that make your opponent lose lore. Stacking these creates a consistent denial strategy that pressures your opponent while you gain lore.',
+      'Cards that make your opponent lose lore. Songs, character abilities, and location triggers that strip points off their score. Each one you add slows the race in your favor without needing extra quests of your own.',
     strategyTips: [
       'Aim for 6 to 8 lore stealing cards so you reliably draw them each game.',
       'Prioritize repeatable effects (quest triggers, location abilities) over one-shot actions.',
@@ -16,11 +16,11 @@ const playstyles: Playstyle[] = [
     id: 'location-control',
     name: 'Locations',
     description:
-      'Cards that synergize through location-based gameplay. Moving characters to locations, buffing them there, and triggering location payoffs.',
+      'Cards that build their value around locations. Search for the right location, move characters into it for stat boosts, and stack location-quest triggers so each turn a location is in play earns extra lore.',
     strategyTips: [
-      'Balance your roles — tutors and ramp get locations into play, but you need payoff and buff cards to win with them.',
+      'Balance your roles — search and ramp get locations into play, but you need payoff and buff cards to win with them.',
       'Protect your locations with buff cards (willpower boosts, resist) since opponents will try to banish them.',
-      'Include at least one tutor to find key locations consistently.',
+      'Include at least one search effect to find key locations consistently.',
       'Move effects are strongest when paired with at-location payoffs — free moves let you trigger payoffs without paying ink.',
       'Avoid overloading on locations themselves; 3-4 locations plus strong support cards is more effective than 6+ locations.',
     ],
@@ -29,7 +29,7 @@ const playstyles: Playstyle[] = [
     id: 'discard',
     name: 'Discard',
     description:
-      'Force opponents to discard cards while leveraging hand-size advantage. Stack discard enablers to empty their hand, then capitalize with cards that reward having more cards than your opponent.',
+      'Force opponents to discard cards while you keep yours. Stack effects that empty their hand each turn, then follow up with cards that reward having more cards than they do. The fewer cards they hold, the more freely your characters can quest and challenge.',
     strategyTips: [
       'Run a mix of enablers and payoffs — enablers empty their hand, payoffs convert that into lore and stats.',
       'Repeatable enablers (quest triggers) outperform one-shot effects since they pressure every turn.',
@@ -39,10 +39,23 @@ const playstyles: Playstyle[] = [
     ],
   },
   {
+    id: 'toy',
+    name: 'Toys',
+    description:
+      'Toy characters and the cards that reward running them. Andy\'s Toys search the deck for more Toys and grow stronger when others are around; Sid\'s Toys send themselves to the discard pile to trigger their effects again. Each Toy you add makes the rest of the strategy stronger.',
+    strategyTips: [
+      'Aim for 12 to 16 Toys plus 4 to 6 payoffs so search effects and density triggers reliably hit.',
+      'Search effects (Woody — Leader of the Toys, You\'ve Got a Friend in Me) chain into free plays — keep cheap Toys in the deck for them to fetch.',
+      'The Sid\'s Toys package (Hand-in-the-Box, Wind-Up Frog, Bouncing Ducky, Jingle Joe, Sid Phillips) rewards self-banish loops — pair with sacrifice outlets or trade aggressively.',
+      'Pizza Planet — Spaceport gives free moves for Toys; pair with at-location payoffs (Beast — Snowfield Troublemaker) for cross-archetype value.',
+      'The tribe is mostly Amber and Ruby. Amber+Ruby decks get the deepest pool; mono-Amber leans on Andy\'s Toys, mono-Ruby leans on Sid\'s Toys.',
+    ],
+  },
+  {
     id: 'ramp',
     name: 'Ramp',
     description:
-      'Accelerate your ink economy to play powerful cards ahead of curve. Inkwell ramp adds extra ink each turn, inkwell triggers convert each ink event into bonus effects, and cost reduction lets you cheat on mana without needing more ink.',
+      'Speed up your ink so you can play powerful cards earlier than your opponent. Some cards put extra cards into your inkwell each turn, others trigger effects every time you ink a card, and a few discount the cost of what you play. Stack all three for turns where you play far above your ink count.',
     strategyTips: [
       'Pair inkwell ramp with inkwell triggers for the strongest synergy — each extra ink fires every trigger on board.',
       'Deck-top ramp (Sapphire) is free mana with no card cost. Hand-to-inkwell ramp trades a card for speed — run card draw to compensate.',

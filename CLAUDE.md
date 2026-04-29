@@ -123,6 +123,25 @@ Claude Code hooks, skills, and agents enforce workflow rules automatically. Chec
 
 Built-in rules in the engine package. **Keep this section up to date when modifying rule logic, scoring, or explanations.**
 
+### Scoring convention (5-baseline)
+
+All playstyle rules share the same anchor: **5 = neutral default**. Same-axis density / parallel pressure pairs sit at 5. Anything above 5 must justify itself with a specific mechanical interaction (compounding role match, asymmetric kill combo, snowball chain). Audit rule: if you can't articulate why a pair scores above 5 in one sentence, it should probably be at 5.
+
+Scale anchors:
+
+| Score | Meaning |
+|-------|---------|
+| 5 | Same-deck density baseline (parallel pressure, no compounding) |
+| 6 | Complementary roles on the same axis (e.g., burn ↔ steal) |
+| 7 | Mechanical compounding (e.g., steal ↔ steal, member ↔ tribal) |
+| 8 | Win-condition combo / peak chain (Discard enabler ↔ payoff, Toy search ↔ banish-trigger) |
+| 9 | Snowball chain (Ramp deck-ramp ↔ repeating-trigger) |
+| 10 | Engine-bonus / community-tuned |
+
+See `packages/synergy-engine/SCORING_DESIGN.md` for the full design rationale.
+
+### Removed rules
+
 See `packages/synergy-engine/REMOVED_RULES.md` for archived rules (Evasive, Tribal, Challenger, Exert, Draw, Ward).
 
 ### Rule 1: Shift Targets (bidirectional)
@@ -153,15 +172,21 @@ Cards that reference specific named entities via "named X" patterns (e.g., "char
 
 ### Rule 3: Lore Loss (playstyle: Lore Denial)
 
-Cards that make the opponent lose lore reinforce the same denial strategy. Uniform scoring — value comes from density of denial cards, not specific pairs.
+Cards that make opponents lose lore. Two roles: **burn** (opponent loses lore only) and **steal** (opponent loses lore AND you gain lore from the same effect — mutually exclusive with burn).
 
-**Detection pattern**: `/(?:each |chosen |all )?opponents? loses? (?:\d+ )?lore/i`
+**Detection**: base pattern `/(?:each |chosen |all )?opponents? loses? (?:\d+ )?lore/i` matches lore loss; three steal-pattern shapes (`loses N lore and you gain N lore`, `loses N lore. Gain N lore`, `gain lore equal to the lore lost`) elevate to `steal`.
 
-**Scoring**: All pairs score **7** (Strong). Each additional denial card increases strategy consistency.
+**Scoring** (5-baseline convention; matrix reflects mechanical efficiency — every steal point swings the lore race by 2 vs burn's 1):
 
-**Explanation template**: "Both {card} and {other} make the opponent lose lore"
+| Pair | Score | Explanation template |
+|------|-------|----------------------|
+| burn ↔ burn | **5** | Both make the opponent lose lore — stacking denial pressure |
+| burn ↔ steal | **6** | {burn} pushes the opponent down while {steal} pulls you up — pressing both ends of the lore race |
+| steal ↔ steal | **7** | Both steal lore — every trigger swings the race in your favor twice |
 
-**Full documentation**: See [`packages/synergy-engine/LORE_LOSS_RULE.md`](packages/synergy-engine/LORE_LOSS_RULE.md) for detection details, scoring rationale, and card list.
+**Coverage**: 14 burn + 10 steal cards = 276 unique pairs. Distribution: 33% / 51% / 16% across 5 / 6 / 7.
+
+**Full documentation**: See [`packages/synergy-engine/LORE_LOSS_RULE.md`](packages/synergy-engine/LORE_LOSS_RULE.md).
 
 ### Rule 4: Discard (playstyle, two roles)
 
@@ -180,17 +205,17 @@ Cards that force opponents to discard from hand (enablers) synergize with each o
 
 **Excluded**: Self-discard (you discard as cost), mill (deck→discard), catch-up draw (opponent has more cards than you), discard pile recursion (Zombies playstyle)
 
-**Scoring**:
+**Scoring** (5-baseline; same-side density at floor, asymmetric kill combo at peak):
 
 | Pair | Score | Explanation |
 |------|-------|-------------|
-| Enabler ↔ Enabler | 7 | Both disrupt the opponent's hand |
-| Enabler ↔ Payoff | 8 | Enabler depletes hand, payoff capitalizes |
-| Payoff ↔ Payoff | 7 | Both reward hand-size advantage |
+| Enabler ↔ Enabler | **5** | Parallel pressure on the opponent's hand — doesn't compound, just stacks |
+| Enabler ↔ Payoff | **8** | Asymmetric kill combo — enabler creates condition, payoff exploits it |
+| Payoff ↔ Payoff | **5** | Same axis (hand-size advantage) without amplifying it |
 
-**Coverage**: ~34 enablers, 2 payoffs, 36 total cards.
+**Coverage**: 37 enablers + 2 payoffs = 39 cards across 741 pairs. 90% sit at the score-5 floor; 10% are the genuine kill combo (the 2 hand-size payoffs are the deck's win condition).
 
-**Full documentation**: See [`packages/synergy-engine/DISCARD_RULE.md`](packages/synergy-engine/DISCARD_RULE.md) for pattern details, role detection, scoring rationale, and test coverage.
+**Full documentation**: See [`packages/synergy-engine/DISCARD_RULE.md`](packages/synergy-engine/DISCARD_RULE.md).
 
 ### Rule 5: Singer + Songs (direct, bidirectional)
 
@@ -215,19 +240,54 @@ Characters with the Singer keyword can exert to sing Song action cards for free,
 
 ### Location Control (playstyle, 8 sub-rules)
 
-8 specialized rules detecting location-support roles: at-payoff, play-trigger, buff, location-ramp, move, in-play-check, tutor, boost. All merge into a single `location-control` playstyle group. Factory pattern (`createLocationRule`) generates each rule. Anti-location cards (banish/remove locations) are excluded.
+8 specialized rules detecting location-support roles: at-payoff, play-trigger, buff, location-ramp, move, in-play-check, search, boost. All merge into a single `location-control` playstyle group. Factory pattern (`createLocationRule`) generates each rule. Anti-location cards (banish/remove locations) are excluded.
 
 **Full documentation**: See [`packages/synergy-engine/LOCATION_CONTROL_RULE.md`](packages/synergy-engine/LOCATION_CONTROL_RULE.md) for role taxonomy, detection patterns, cross-synergy matrix, and test coverage.
 
 ### Ramp (playstyle, 3 roles)
 
-Three-role mana acceleration strategy: **inkwell ramp** (34 cards, ~80% Sapphire) puts extra cards into your inkwell, **inkwell triggers** (28 cards, even spread) fire effects on each ink event, and **cost reduction grants** (18 cards, ~50% Amber) discount other cards you play.
+Three-role mana acceleration: **inkwell-ramp** (34 cards, ~80% Sapphire), **inkwell-trigger** (28 cards, even ink spread), **cost-reduction** (18 cards, ~50% Amber).
 
-**Sub-pattern scoring**: Deck ramp (free mana from deck) + repeating trigger scores **9**; self-sacrifice ramp (hand→ink) + once-per-turn trigger scores **7**. Full range: 5-9.
+**Scoring** (5-baseline + chain ladder preserved):
+
+| Pair | Score | Notes |
+|------|-------|-------|
+| Deck ramp ↔ Repeating trigger | **9** | Snowball — every free ink fires the trigger |
+| Deck ramp ↔ Once-turn trigger | **8** | Free ink, capped trigger |
+| Self-sac ramp ↔ Repeating trigger | **8** | Card cost + uncapped |
+| Self-sac ramp ↔ Once-turn trigger | **7** | Card cost + capped |
+| Cost-reduction ↔ Cost-reduction (overlap) | **6** | Real stacking on same card type |
+| Ramp ↔ Ramp / Trigger ↔ Trigger / Ramp ↔ CR / Trigger ↔ CR | **5** | Density baseline — parallel acceleration, no per-card combo |
+| Cost-reduction ↔ Cost-reduction (no overlap) | **0** | Silently dropped (Pirate-discount + Location-discount won't combo) |
+
+**Live distribution**: 90 cards / 3,507 pairs. 74% at 5, 27% at 8–9 (chain), 3% mid-tier. The chain is the only real mechanical interaction in the playstyle; everything else is parallel-density floor.
 
 **Excluded**: Opponent-ink cards (removal, not ramp), self-discount payoffs, free play effects, generic high-cost cards.
 
-**Full documentation**: See [`packages/synergy-engine/RAMP_RULE.md`](packages/synergy-engine/RAMP_RULE.md) for role detection, scoring matrix, coverage, and design decisions.
+**Full documentation**: See [`packages/synergy-engine/RAMP_RULE.md`](packages/synergy-engine/RAMP_RULE.md).
+
+### Rule 8: Toy (playstyle, role-driven matrix)
+
+Tribal playstyle for Toy-Story decks. **Membership gate**: `Toy` classification OR text matches `/\bToy characters?\b/i` (tight pattern dodges Buzz Lightyear's "WORLD'S GREATEST TOY" ability-name false positive). The unified rule covers Andy's Toys (Woody/Buzz/Jessie value-engine) and Sid's Toys (banish-recursion).
+
+**Roles**:
+- **Membership**: `member`
+- **Tribal** (specifically reward Toy density): `search` (find Toys), `banish-trigger` (fire on Toy banish — strict-tense regex, both tribal and self targets via `makeBanishTriggerPattern`), `self-discount` (this character costs less; covers `pay N less` and the `play this character for free` limit case)
+- **Generic** (composed from other playstyles): `draw`, `cost-reduction`, `burn`, `steal`, `targeted`, `random`, `standard`, `inkwell-ramp`, `inkwell-trigger`
+
+**Scoring** (5/7/8 matrix; 6 deliberately empty, retired generic `payoff` fallback):
+
+| Pair | Score | Captures |
+|------|-------|----------|
+| search ↔ banish-trigger | **8** | Peak chain: load board, pay off on banish |
+| Member ↔ search | **8** | Search converts deck slot to tribal member (game-winning fetch) |
+| Tribal ↔ Tribal (other) | **7** | Multiple density rewards compound |
+| Member ↔ Tribal | **7** | Member feeds the tribal payoff |
+| Member ↔ Member / Member ↔ generic / Generic ↔ generic | **5** | Same-deck density baseline; generic synergies owned by their own rules |
+
+**Coverage**: 24 Toy-affiliated cards (21 members + 5 banish-trigger + 4 self-discount + 4 draw + 2 search + 1 each of cost-reduction/targeted/burn/steal). Pair distribution: 32% / 52% / 16% across 5 / 7 / 8.
+
+**Full documentation**: See [`packages/synergy-engine/TOY_RULE.md`](packages/synergy-engine/TOY_RULE.md).
 
 ## Commands
 
