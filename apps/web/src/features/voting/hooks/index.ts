@@ -4,6 +4,8 @@ export {useVoteSession} from './useVoteSession';
 export type {UseVoteSessionReturn} from './useVoteSession';
 export {useQuickVote} from './useQuickVote';
 export type {UseQuickVoteReturn, QuickVoteState, QuickVoteError, Accuracy} from './useQuickVote';
+export {usePairScore} from './usePairScore';
+export type {UsePairScoreReturn} from './usePairScore';
 export {useSpecificPair} from './useSpecificPair';
 export {useInDepthVoteSession} from './useInDepthVoteSession';
 export type {UseInDepthVoteSessionReturn} from './useInDepthVoteSession';
