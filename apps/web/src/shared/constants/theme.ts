@@ -158,6 +158,13 @@ export const COLORS = {
   etherealBlue: 'rgba(43, 127, 255, 0.1)',
   etherealPurple: 'rgba(173, 70, 255, 0.1)',
   etherealTeal: 'rgba(0, 187, 167, 0.05)',
+
+  // Lorcana ability box (cream surface + dark name tag — used by AbilityTag, AbilityCallout, ConnectionGroup, SynergyGroup)
+  lorcanaCream: '#f1cd82',
+  lorcanaTagBg: '#59432b',
+  lorcanaTextDark: '#2a1f12',
+  lorcanaTagText: '#f5e6c8',
+  lorcanaCardLink: '#7a4d18',
 } as const;
 
 // All inks for iteration

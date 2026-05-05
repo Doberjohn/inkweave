@@ -1,3 +1,7 @@
+export {AbilityCallout} from './AbilityCallout';
+export type {AbilityCalloutVariant} from './AbilityCallout';
+export {AbilityTag} from './AbilityTag';
+export type {AbilityTagVariant} from './AbilityTag';
 export {BackLink} from './BackLink';
 export {BetaNotice} from './BetaNotice';
 export {Callout} from './Callout';
