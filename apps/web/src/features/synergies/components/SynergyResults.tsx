@@ -35,7 +35,7 @@ interface SynergyResultsProps {
   /** Called when user clicks "← Back to all synergies" in expanded view */
   onBackToAll?: () => void;
   /** Called when a synergy card tile is clicked (opens detail modal) */
-  onSynergyCardClick?: (card: LorcanaCard) => void;
+  onSynergyCardClick?: (card: LorcanaCard, groupKey?: string) => void;
 }
 
 export function SynergyResults({

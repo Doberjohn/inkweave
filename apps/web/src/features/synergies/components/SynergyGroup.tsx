@@ -16,7 +16,7 @@ interface SynergyGroupProps {
   showHeader?: boolean;
   /** Minimum card width for desktop grid. Default: LAYOUT.synergyCardMinWidth (160px) */
   cardMinWidth?: number;
-  onCardClick?: (card: LorcanaCard) => void;
+  onCardClick?: (card: LorcanaCard, groupKey?: string) => void;
 }
 
 export function SynergyGroup({
@@ -28,6 +28,12 @@ export function SynergyGroup({
   cardMinWidth,
   onCardClick,
 }: SynergyGroupProps) {
+  // Wrap onCardClick to inject this group's groupKey before bubbling up.
+  // SynergyCard's onCardClick stays (card) => void; this group is the only place
+  // that knows which group context the click came from (Option A calibration).
+  const onCardClickWithGroupKey = onCardClick
+    ? (card: LorcanaCard) => onCardClick(card, group.groupKey)
+    : undefined;
   // Default sort: ink alphabetical, then cost ascending within each ink
   const sortedSynergies = applySynergySortOrder(group.synergies, 'ink-cost');
 
@@ -81,7 +87,7 @@ export function SynergyGroup({
         groupKey={group.groupKey}
         onShowAll={onShowAll}
         cardMinWidth={cardMinWidth}
-        onCardClick={onCardClick}
+        onCardClick={onCardClickWithGroupKey}
       />
     </div>
   );

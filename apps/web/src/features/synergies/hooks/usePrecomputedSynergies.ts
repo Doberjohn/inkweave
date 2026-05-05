@@ -83,6 +83,33 @@ async function fetchPlaystyleCardIds(): Promise<Record<string, string[]>> {
   return data;
 }
 
+// ── Pure helpers ──
+
+/**
+ * Group-scoped pair filter (Option A calibration).
+ *
+ * When `groupKey` is undefined, returns the pair unchanged. When provided, keeps only
+ * connections that belong to that group — direct rules are their own group (`ruleId`),
+ * playstyle rules merge by `playstyleId` — and recomputes `aggregateScore` from the
+ * filtered set. Returns null if no connections match.
+ */
+export function filterPairByGroup(
+  pairData: PrecomputedPairData,
+  groupKey?: string,
+): {connections: PairSynergyConnection[]; aggregateScore: number} | null {
+  if (!groupKey) {
+    return {connections: pairData.connections, aggregateScore: pairData.aggregateScore};
+  }
+  const filtered = pairData.connections.filter((c) =>
+    c.category === 'playstyle' ? c.playstyleId === groupKey : c.ruleId === groupKey,
+  );
+  if (filtered.length === 0) return null;
+  return {
+    connections: filtered,
+    aggregateScore: Math.max(...filtered.map((c) => c.score)),
+  };
+}
+
 // ── Resolve pre-computed data into full types ──
 
 function resolveGroups(
@@ -116,7 +143,7 @@ export interface UsePrecomputedSynergiesReturn {
   synergies: SynergyGroup[];
   isLoading: boolean;
   error: Error | null;
-  getPairSynergies: (clickedCard: LorcanaCard) => DetailedPairSynergy | null;
+  getPairSynergies: (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null;
 }
 
 type SynergyAction =
@@ -220,15 +247,19 @@ export function usePrecomputedSynergies(
     };
   }, [cardId, getCardById]);
 
-  const getPairSynergies = (clickedCard: LorcanaCard): DetailedPairSynergy | null => {
+  const getPairSynergies = (
+    clickedCard: LorcanaCard,
+    groupKey?: string,
+  ): DetailedPairSynergy | null => {
     if (!selectedCard) return null;
     const pairData = state.pairs[clickedCard.id];
     if (!pairData) return null;
+    const filtered = filterPairByGroup(pairData, groupKey);
+    if (!filtered) return null;
     return {
       cardA: selectedCard,
       cardB: clickedCard,
-      connections: pairData.connections,
-      aggregateScore: pairData.aggregateScore,
+      ...filtered,
     };
   };
 

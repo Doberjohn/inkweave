@@ -12,7 +12,7 @@ import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/consta
 interface MobileCardDetailProps {
   card?: LorcanaCard | null;
   synergies?: SynergyGroupData[];
-  onSynergyCardClick?: (card: LorcanaCard) => void;
+  onSynergyCardClick?: (card: LorcanaCard, groupKey?: string) => void;
   /** When true, renders the mobile shell with skeleton placeholders instead of real card data. */
   isLoading?: boolean;
 }
@@ -223,7 +223,7 @@ function SynergyGroupsList({
   activeGroupFilter: string | null;
   onActiveGroupFilterChange: (key: string | null) => void;
   onShowAll: (key: string) => void;
-  onSynergyCardClick?: (card: LorcanaCard) => void;
+  onSynergyCardClick?: (card: LorcanaCard, groupKey?: string) => void;
 }) {
   return (
     <>
@@ -280,7 +280,7 @@ function MobileSynergiesArea({
   onActiveGroupFilterChange: (key: string | null) => void;
   onShowAll: (key: string) => void;
   onBackToAll: () => void;
-  onSynergyCardClick?: (card: LorcanaCard) => void;
+  onSynergyCardClick?: (card: LorcanaCard, groupKey?: string) => void;
 }) {
   if (synergies.length === 0) return <EmptySynergies />;
   if (expandedGroupData) {
@@ -327,7 +327,7 @@ function MobileCardContent({
   onActiveGroupFilterChange: (key: string | null) => void;
   onShowAll: (key: string) => void;
   onBackToAll: () => void;
-  onSynergyCardClick?: (card: LorcanaCard) => void;
+  onSynergyCardClick?: (card: LorcanaCard, groupKey?: string) => void;
   onLightboxOpen: () => void;
 }) {
   const handleImageOpen = () => {

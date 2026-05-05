@@ -66,7 +66,7 @@ type CardPageController = {
   handleGroupClick: (groupKey: string) => void;
   handleShowAll: (groupKey: string) => void;
   handleBackToAll: () => void;
-  handleSynergyCardClick: (card: LorcanaCard) => void;
+  handleSynergyCardClick: (card: LorcanaCard, groupKey?: string) => void;
   handleCloseDetail: () => void;
 };
 
@@ -77,7 +77,7 @@ function useCardPageController({
 }: {
   cardId: string | undefined;
   navigate: NavigateFunction;
-  getPrecomputedPair: (card: LorcanaCard) => DetailedPairSynergy | null;
+  getPrecomputedPair: (card: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null;
 }): CardPageController {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
@@ -130,8 +130,8 @@ function useCardPageController({
     setActiveGroupFilter(null);
   };
 
-  const handleSynergyCardClick = (clickedCard: LorcanaCard) => {
-    const pair = getPrecomputedPair(clickedCard);
+  const handleSynergyCardClick = (clickedCard: LorcanaCard, groupKey?: string) => {
+    const pair = getPrecomputedPair(clickedCard, groupKey);
     if (!pair || pair.connections.length === 0) return;
     setDetailPair(pair);
     setLastPair(pair);

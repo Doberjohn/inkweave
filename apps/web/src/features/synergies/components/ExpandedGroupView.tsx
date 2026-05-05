@@ -14,7 +14,7 @@ interface ExpandedGroupViewProps {
   group: SynergyGroupData;
   isMobile?: boolean;
   onBackToAll: () => void;
-  onCardClick?: (card: LorcanaCard) => void;
+  onCardClick?: (card: LorcanaCard, groupKey?: string) => void;
 }
 
 /** Shared expanded view for a single synergy group: back link, title, description, toolbar, full card grid. */
