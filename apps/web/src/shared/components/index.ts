@@ -4,7 +4,6 @@ export {AbilityTag} from './AbilityTag';
 export type {AbilityTagVariant} from './AbilityTag';
 export {BackLink} from './BackLink';
 export {BetaNotice} from './BetaNotice';
-export {Callout} from './Callout';
 export {CardImage} from './CardImage';
 export {CardTextBlock} from './CardTextBlock';
 export {CardLightbox} from './CardLightbox';

@@ -4,7 +4,7 @@ import type {SynergyGroup as SynergyGroupData, SynergyMatchDisplay} from '../typ
 import {SynergyCard} from './SynergyCard';
 import {applySynergySortOrder} from '../utils';
 import {COLORS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
-import {Callout} from '../../../shared/components';
+import {AbilityCallout, AbilityTag} from '../../../shared/components';
 import {useContainerWidth, useRovingTabIndex} from '../../../shared/hooks';
 
 interface SynergyGroupProps {
@@ -45,37 +45,35 @@ export function SynergyGroup({
     <div data-group-key={group.groupKey} style={{marginBottom: `${SPACING.xl}px`}}>
       {showHeader && (
         <>
-          {/* Group header */}
+          {/* Lorcana ability box: stacked tag at top-left + cream callout below */}
           <div
             style={{
               display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: `${FONT_SIZES.base}px`,
-              fontWeight: 600,
-              color: COLORS.text,
+              flexDirection: 'column',
+              alignItems: 'flex-start',
               marginBottom: `${SPACING.sm}px`,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
             }}>
-            <h3 style={{margin: 0, fontSize: 'inherit', fontWeight: 'inherit'}}>{group.label}</h3>
-            <span
-              style={{
-                marginLeft: 'auto',
-                fontSize: `${FONT_SIZES.base}px`,
-                color: COLORS.textMuted,
-                fontWeight: 400,
-                textTransform: 'none',
-                letterSpacing: 0,
-              }}>
-              {isTruncated
-                ? `${visibleCount} of ${totalCount} cards`
-                : `${totalCount} card${totalCount !== 1 ? 's' : ''}`}
-            </span>
+            <h3 style={{margin: 0, lineHeight: 1}}>
+              <AbilityTag variant="stacked">{group.label}</AbilityTag>
+            </h3>
+            <div style={{alignSelf: 'stretch'}}>
+              <AbilityCallout variant="stacked-after-tag">{group.description}</AbilityCallout>
+            </div>
           </div>
 
-          {/* Group description callout */}
-          <Callout>{group.description}</Callout>
+          {/* Card-count meta — sits outside the cream box, muted */}
+          <div
+            style={{
+              fontSize: `${FONT_SIZES.xs}px`,
+              color: COLORS.textMuted,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              marginBottom: `${SPACING.sm}px`,
+            }}>
+            {isTruncated
+              ? `${visibleCount} of ${totalCount} cards`
+              : `${totalCount} card${totalCount !== 1 ? 's' : ''}`}
+          </div>
         </>
       )}
 

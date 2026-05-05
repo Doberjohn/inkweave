@@ -5,7 +5,8 @@ import * as matchers from 'vitest-axe/matchers';
 import {Chip} from '../Chip';
 import {StrengthBadge} from '../StrengthBadge';
 import {TierCircle} from '../TierCircle';
-import {Callout} from '../Callout';
+import {AbilityCallout} from '../AbilityCallout';
+import {AbilityTag} from '../AbilityTag';
 import {BackLink} from '../BackLink';
 import {EmptyState} from '../EmptyState';
 import {CtaButton} from '../CtaButton';
@@ -39,8 +40,14 @@ describe('axe accessibility audit', () => {
     expect(results).toHaveNoViolations();
   });
 
-  it('Callout has no violations', async () => {
-    const {container} = render(<Callout>Description text here</Callout>);
+  it('AbilityCallout has no violations', async () => {
+    const {container} = render(<AbilityCallout>Description text here</AbilityCallout>);
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
+  it('AbilityTag has no violations', async () => {
+    const {container} = render(<AbilityTag>Ramp</AbilityTag>);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });

@@ -8,7 +8,7 @@ import {filterSynergyCards, EMPTY_SYNERGY_FILTERS, applySynergySortOrder} from '
 import type {SynergyFilterState} from '../utils/filterSynergyCards';
 import {useCardDataContext} from '../../../shared/contexts/CardDataContext';
 import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
-import {BackLink, Callout} from '../../../shared/components';
+import {AbilityCallout, BackLink} from '../../../shared/components';
 
 interface ExpandedGroupViewProps {
   group: SynergyGroupData;
@@ -64,7 +64,9 @@ export function ExpandedGroupView({
       </h2>
 
       {/* Description callout */}
-      <Callout>{group.description}</Callout>
+      <div style={{margin: `${SPACING.sm}px 0 ${SPACING.lg}px`}}>
+        <AbilityCallout>{group.description}</AbilityCallout>
+      </div>
 
       {/* Toolbar with filters + sort */}
       <SynergyToolbar
