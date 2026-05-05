@@ -36,3 +36,19 @@ export const StackedAfterTag: Story = {
     </div>
   ),
 };
+
+export const PageHeading: Story = {
+  args: {
+    variant: 'stacked-after-tag',
+    children:
+      'Cards that build their value around locations. Search for the right location, move characters into it for stat boosts, and stack location-quest triggers so each turn a location is in play earns extra lore.',
+  },
+  render: (args) => (
+    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', maxWidth: 720}}>
+      <AbilityTag variant="page">Locations</AbilityTag>
+      <div style={{alignSelf: 'stretch'}}>
+        <AbilityCallout {...args} />
+      </div>
+    </div>
+  ),
+};

@@ -30,3 +30,7 @@ export const LongLabelStacked: Story = {
 export const SubRoleRow: Story = {
   args: {variant: 'row', children: 'At-payoff'},
 };
+
+export const Page: Story = {
+  args: {variant: 'page', children: 'Locations'},
+};

@@ -26,4 +26,12 @@ describe('AbilityTag', () => {
     render(<AbilityTag>Default</AbilityTag>);
     expect(screen.getByText('Default').style.clipPath).toContain('polygon');
   });
+
+  it('uses larger font on the page variant with rounded top corners', () => {
+    render(<AbilityTag variant="page">Locations</AbilityTag>);
+    const tag = screen.getByText('Locations');
+    expect(tag.style.fontSize).toBe('16px');
+    expect(tag.style.borderRadius).toBe('4px 4px 0 0');
+    expect(tag.style.clipPath).toBe('');
+  });
 });
