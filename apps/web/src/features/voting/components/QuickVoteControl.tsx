@@ -16,6 +16,8 @@ interface QuickVoteControlProps {
   error: QuickVoteError;
   /** Optional callback for "Rate in detail" link in the thank-you state */
   onRateInDetail?: () => void;
+  /** When true, hides the post-vote "Rate in detail" CTA so a parent surface (e.g. CommunityEmptyState) can render its own. */
+  suppressRateInDetailCta?: boolean;
 }
 
 const CHOICE_LABELS: Record<Accuracy, string> = {
@@ -274,9 +276,10 @@ interface QuickVoteResultProps {
   distribution: AccuracyDistribution | null;
   distributionFailed: boolean;
   onRateInDetail?: () => void;
+  suppressRateInDetailCta?: boolean;
 }
 
-function QuickVoteResult({userChoice, distribution, distributionFailed, onRateInDetail}: QuickVoteResultProps) {
+function QuickVoteResult({userChoice, distribution, distributionFailed, onRateInDetail, suppressRateInDetailCta}: QuickVoteResultProps) {
   const isFirstVoter = distribution?.total === 1;
   const choiceColor = userChoice !== null ? CHOICE_COLORS[userChoice].border : COLORS.primary;
   const choiceLabel = userChoice !== null ? CHOICE_LABELS[userChoice] : '';
@@ -290,7 +293,9 @@ function QuickVoteResult({userChoice, distribution, distributionFailed, onRateIn
         <ConfirmationCallout distribution={distribution} isFirstVoter={isFirstVoter} />
       </div>
       <DistributionContent distribution={distribution} distributionFailed={distributionFailed} isFirstVoter={isFirstVoter} />
-      {onRateInDetail && distribution && <RateInDetailCta onClick={onRateInDetail} />}
+      {onRateInDetail && distribution && !suppressRateInDetailCta && (
+        <RateInDetailCta onClick={onRateInDetail} />
+      )}
     </div>
   );
 }
@@ -347,7 +352,7 @@ function QuickVotePrompt({state, onVote, userChoice, error, isMobile, questionId
 
 // ── Main component ──
 
-export function QuickVoteControl({state, onVote, distribution, distributionFailed, userChoice, error, onRateInDetail}: QuickVoteControlProps) {
+export function QuickVoteControl({state, onVote, distribution, distributionFailed, userChoice, error, onRateInDetail, suppressRateInDetailCta}: QuickVoteControlProps) {
   const {isMobile} = useResponsive();
   const questionId = useId();
 
@@ -362,6 +367,7 @@ export function QuickVoteControl({state, onVote, distribution, distributionFaile
         distribution={distribution}
         distributionFailed={Boolean(distributionFailed)}
         onRateInDetail={onRateInDetail}
+        suppressRateInDetailCta={suppressRateInDetailCta}
       />
     );
   }

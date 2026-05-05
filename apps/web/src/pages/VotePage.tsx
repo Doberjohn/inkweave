@@ -6,6 +6,7 @@ import {CompactHeader, CtaButton, EtherealBackground} from '../shared/components
 import {CardDetailSkeleton} from '../features/cards';
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
+import {useCardModal} from '../shared/contexts/CardModalContext';
 import {PairDisplay, ScorePicker, VoteToast, VoteStatusBanner} from '../features/voting';
 import type {VoteToastData} from '../features/voting';
 import {usePairQueue} from '../features/voting/hooks/usePairQueue';
@@ -499,13 +500,14 @@ export function VotePage() {
   // Side stacks need ~350px each beyond the card pair (first tier = 286px + margin)
   const showStacks = !compactLayout && windowWidth >= 1500;
   const {cards} = useCardDataContext();
+  const {openCardModal} = useCardModal();
   const queue = usePairQueue();
   const voteSession = useVoteSession(queue.currentPair);
 
   const goHome = useCallback(() => navigate('/'), [navigate]);
   const onCardSelect = useCallback(
-    (card: {id: string}) => navigate(`/card/${card.id}`),
-    [navigate],
+    (card: {id: string}) => openCardModal(card.id),
+    [openCardModal],
   );
 
   const handlers = useVoteHandlers({

@@ -4,6 +4,7 @@ const playstyles: Playstyle[] = [
   {
     id: 'lore-denial',
     name: 'Lore Denial',
+    tagline: 'Cards that make your opponent lose lore.',
     description:
       'Cards that make your opponent lose lore. Songs, character abilities, and location triggers that strip points off their score. Each one you add slows the race in your favor without needing extra quests of your own.',
     strategyTips: [
@@ -15,6 +16,7 @@ const playstyles: Playstyle[] = [
   {
     id: 'location-control',
     name: 'Locations',
+    tagline: 'Cards that build their value around locations.',
     description:
       'Cards that build their value around locations. Search for the right location, move characters into it for stat boosts, and stack location-quest triggers so each turn a location is in play earns extra lore.',
     strategyTips: [
@@ -28,6 +30,7 @@ const playstyles: Playstyle[] = [
   {
     id: 'discard',
     name: 'Discard',
+    tagline: 'Force opponents to discard cards while you keep yours.',
     description:
       'Force opponents to discard cards while you keep yours. Stack effects that empty their hand each turn, then follow up with cards that reward having more cards than they do. The fewer cards they hold, the more freely your characters can quest and challenge.',
     strategyTips: [
@@ -41,6 +44,7 @@ const playstyles: Playstyle[] = [
   {
     id: 'toy',
     name: 'Toys',
+    tagline: 'Toy characters and the cards that reward running them.',
     description:
       'Toy characters and the cards that reward running them. Andy\'s Toys search the deck for more Toys and grow stronger when others are around; Sid\'s Toys send themselves to the discard pile to trigger their effects again. Each Toy you add makes the rest of the strategy stronger.',
     strategyTips: [
@@ -54,6 +58,7 @@ const playstyles: Playstyle[] = [
   {
     id: 'ramp',
     name: 'Ramp',
+    tagline: 'Speed up your ink so you can play powerful cards earlier than your opponent.',
     description:
       'Speed up your ink so you can play powerful cards earlier than your opponent. Some cards put extra cards into your inkwell each turn, others trigger effects every time you ink a card, and a few discount the cost of what you play. Stack all three for turns where you play far above your ink count.',
     strategyTips: [

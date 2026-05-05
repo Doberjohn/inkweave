@@ -5,6 +5,7 @@ import {CompactHeader, CtaButton, BackLink, EtherealBackground, Sparkles} from '
 import {CardDetailSkeleton} from '../features/cards';
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
+import {useCardModal} from '../shared/contexts/CardModalContext';
 import {PairDisplay, VoteStatusBanner, InDepthVoteForm, VoteFormSkeleton} from '../features/voting';
 import {useSpecificPair} from '../features/voting/hooks/useSpecificPair';
 import {
@@ -668,18 +669,20 @@ export function InDepthVotePage() {
   const {cardAId, cardBId} = useParams<{cardAId: string; cardBId: string}>();
   const {isMobile} = useResponsive();
   const {cards} = useCardDataContext();
+  const {openCardModal} = useCardModal();
   const {pair, isLoading, error} = useSpecificPair(cardAId, cardBId);
   const session = useInDepthVoteSession(pair);
 
   const goHome = () => navigate('/');
-  const onCardSelect = (card: {id: string}) => navigate(`/card/${card.id}`);
+  const onCardSelect = (card: {id: string}) => openCardModal(card.id);
   const onVoteMore = () => navigate('/vote');
   const onBack = () => {
     if (window.history.length > 1) {
       navigate(-1);
       return;
     }
-    navigate(`/card/${cardAId}`);
+    if (cardAId) openCardModal(cardAId);
+    else navigate('/');
   };
 
   if (isLoading) {

@@ -8,23 +8,29 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-vi.mock('../../../voting/hooks', () => ({
-  useQuickVote: vi.fn().mockReturnValue({
-    state: 'ready',
-    vote: vi.fn(),
-    distribution: null,
-    userChoice: null,
-    error: null,
-  }),
+// EngineColumn + CommunityColumn each own their own hook chain (useQuickVote / usePairScore /
+// CtaButton-with-useBoop). Stubbing them keeps the modal test focused on the modal's direct
+// responsibilities (header, card images, layout) rather than the columns' internals.
+vi.mock('../CommunityColumn', () => ({
+  CommunityColumn: () => <div data-testid="community-column" />,
+}));
+
+vi.mock('../EngineColumn', () => ({
+  EngineColumn: ({pair}: {pair: {connections: {ruleName: string}[]}}) => (
+    <div data-testid="engine-column">
+      {pair.connections.map((c, i) => (
+        <span key={i} data-testid="connection-group">
+          {c.ruleName}
+        </span>
+      ))}
+    </div>
+  ),
 }));
 
 vi.mock('../../../../shared/components', () => ({
   CardImage: ({alt}: {alt: string}) => <div data-testid="card-image">{alt}</div>,
   CardLightbox: () => null,
   RenderProfiler: ({children}: {children: React.ReactNode}) => <>{children}</>,
-  StrengthBadge: ({score}: {score: number}) => <span data-testid="strength-badge">{score}</span>,
-  ConnectionGroup: ({group}: {group: {label: string}}) => <div data-testid="connection-group">{group.label}</div>,
-  groupConnections: (conns: unknown[]) => conns.map((c: Record<string, unknown>) => ({key: c.ruleId, label: c.ruleName, score: c.score, connections: [c], category: c.category})),
 }));
 
 vi.mock('../../../../shared/hooks/useDialogFocus', () => ({
@@ -99,8 +105,8 @@ describe('SynergyDetailModal', () => {
       <SynergyDetailModal isOpen onClose={vi.fn()} pair={mockPair} />,
     );
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+    // EngineColumn renders the connections — stub above turns them into spans
     expect(screen.getByText('Shift Targets')).toBeInTheDocument();
-    // Playstyle connections are grouped by playstyleId. "Lore Steal" is the group label.
     expect(screen.getByText('Lore Steal')).toBeInTheDocument();
   });
 
@@ -114,14 +120,11 @@ describe('SynergyDetailModal', () => {
   });
 
 
-  it('renders quick vote control below tier label', () => {
+  it('mounts engine + community columns side by side', () => {
     render(
-      <SynergyDetailModal
-        isOpen={true}
-        onClose={vi.fn()}
-        pair={mockPair}
-             />,
+      <SynergyDetailModal isOpen onClose={vi.fn()} pair={mockPair} />,
     );
-    expect(screen.getByText('Do you agree with this score?')).toBeInTheDocument();
+    expect(screen.getByTestId('engine-column')).toBeInTheDocument();
+    expect(screen.getByTestId('community-column')).toBeInTheDocument();
   });
 });

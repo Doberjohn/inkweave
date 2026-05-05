@@ -28,6 +28,7 @@ const mockGroup: SynergyGroupData = {
   groupKey: 'shift-targets',
   category: 'direct',
   label: 'Shift Targets',
+  tagline: 'Cards that share a name, enabling the Shift keyword to reduce play cost.',
   description: 'Cards that share a name, enabling the Shift keyword to reduce play cost.',
   synergies: [match('1', 0, 10), match('2', 0, 8), match('3', 1, 7), match('4', 2, 6)],
 };
@@ -36,6 +37,7 @@ const largeGroup: SynergyGroupData = {
   ...mockGroup,
   groupKey: 'bounce',
   label: 'Bounce',
+  tagline: 'Return characters to hand to trigger enter-the-board effects repeatedly.',
   description: 'Return characters to hand to trigger enter-the-board effects repeatedly.',
   synergies: Array.from({length: 12}, (_, i) => match(String(i + 1), i, 10 - Math.floor(i / 2))),
 };

@@ -17,6 +17,7 @@ const mockGroups: SynergyGroup[] = [
     groupKey: 'shift-targets',
     category: 'direct',
     label: 'Shift Targets',
+    tagline: 'Cards that share a name for Shift cost reduction',
     description: 'Cards that share a name for Shift cost reduction',
     synergies: [match('1', 'Sapphire', 10), match('2', 'Sapphire', 8), match('3', 'Sapphire', 7)],
   },
@@ -24,6 +25,7 @@ const mockGroups: SynergyGroup[] = [
     groupKey: 'lore-denial',
     category: 'playstyle',
     label: 'Lore Denial',
+    tagline: 'Cards that prevent opponents from gaining lore',
     description: 'Cards that prevent opponents from gaining lore',
     synergies: [
       match('4', 'Amethyst', 6),
@@ -37,6 +39,7 @@ const mockGroups: SynergyGroup[] = [
     groupKey: 'bounce',
     category: 'playstyle',
     label: 'Bounce',
+    tagline: 'Return cards to hand for ETB triggers',
     description: 'Return cards to hand for ETB triggers',
     synergies: [match('9', 'Emerald', 7), match('10', 'Emerald', 6)],
   },

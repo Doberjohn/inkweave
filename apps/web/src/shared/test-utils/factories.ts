@@ -43,6 +43,7 @@ export function createSynergyGroup(
     groupKey: 'shift-targets',
     category: 'direct',
     label: 'Shift Targets',
+    tagline: 'Characters with Shift and their same-named targets',
     description: 'Characters with Shift and their same-named targets',
     synergies: Array.from({length: matchCount ?? 1}, (_, i) =>
       createSynergyMatch({card: {id: `match-${i}`}}),

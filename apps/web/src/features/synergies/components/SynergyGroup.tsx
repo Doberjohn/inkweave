@@ -16,6 +16,14 @@ interface SynergyGroupProps {
   showHeader?: boolean;
   /** Minimum card width for desktop grid. Default: LAYOUT.synergyCardMinWidth (160px) */
   cardMinWidth?: number;
+  /** When set, forces a fixed column count instead of the responsive auto-fill grid. */
+  gridColumns?: number;
+  /** Override grid gap (px). Default: 10 */
+  gridGap?: number;
+  /** Override the trailing margin between stacked groups. Default: SPACING.xl. Pass 0 when the parent uses flex `gap`. */
+  marginBottom?: number;
+  /** Compact MoreTile sizing for narrow grids (e.g. inside CardOverviewModal). Default false. */
+  compactMoreTile?: boolean;
   onCardClick?: (card: LorcanaCard, groupKey?: string) => void;
 }
 
@@ -26,6 +34,10 @@ export function SynergyGroup({
   onShowAll,
   showHeader = true,
   cardMinWidth,
+  gridColumns,
+  gridGap,
+  marginBottom = SPACING.xl,
+  compactMoreTile = false,
   onCardClick,
 }: SynergyGroupProps) {
   // Wrap onCardClick to inject this group's groupKey before bubbling up.
@@ -42,7 +54,7 @@ export function SynergyGroup({
   const isTruncated = visibleCount < totalCount;
 
   return (
-    <div data-group-key={group.groupKey} style={{marginBottom: `${SPACING.xl}px`}}>
+    <div data-group-key={group.groupKey} style={{marginBottom: `${marginBottom}px`}}>
       {showHeader && (
         <>
           {/* Lorcana ability box: stacked tag at top-left + cream callout below */}
@@ -85,6 +97,9 @@ export function SynergyGroup({
         groupKey={group.groupKey}
         onShowAll={onShowAll}
         cardMinWidth={cardMinWidth}
+        gridColumns={gridColumns}
+        gridGap={gridGap}
+        compactMoreTile={compactMoreTile}
         onCardClick={onCardClickWithGroupKey}
       />
     </div>
@@ -97,13 +112,21 @@ function MoreTile({
   onClick,
   isMobile,
   tabIndex,
+  compact = false,
 }: {
   count: number;
   onClick?: () => void;
   isMobile?: boolean;
   tabIndex?: number;
+  /** Compact sizing for narrow grids (mockup `.mini-tile.more`: 13px / 9px). Default false → standard sizing. */
+  compact?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
+
+  // Mockup `.mini-tile.more` uses 13px/700 for the count and 9px/500 uppercase for the label.
+  const countFontSize = compact ? FONT_SIZES.sm : FONT_SIZES.xxl;
+  const labelFontSize = compact ? 9 : FONT_SIZES.xs;
+  const labelText = compact ? 'more' : 'more cards';
 
   return (
     <button
@@ -116,7 +139,7 @@ function MoreTile({
       aria-label={`Show ${count} more cards`}
       style={{
         position: 'relative',
-        borderRadius: `${RADIUS.lg}px`,
+        borderRadius: `${compact ? RADIUS.sm + 1 : RADIUS.lg}px`,
         overflow: 'hidden',
         aspectRatio: '0.72',
         cursor: 'pointer',
@@ -126,7 +149,7 @@ function MoreTile({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: isMobile ? '4px' : '6px',
+        gap: compact ? '2px' : isMobile ? '4px' : '6px',
         width: '100%',
         padding: 0,
         transition: 'transform 0.2s, box-shadow 0.2s, border-color 0.2s',
@@ -134,11 +157,18 @@ function MoreTile({
         boxShadow: hovered ? '0 0 16px rgba(212, 175, 55, 0.15)' : undefined,
         fontFamily: 'inherit',
       }}>
-      <span style={{fontSize: `${FONT_SIZES.xxl}px`, fontWeight: 700, color: COLORS.primary500}}>
+      <span style={{fontSize: `${countFontSize}px`, fontWeight: 700, color: COLORS.primary500}}>
         +{count}
       </span>
-      <span style={{fontSize: `${FONT_SIZES.xs}px`, fontWeight: 500, color: COLORS.textMuted}}>
-        more cards
+      <span
+        style={{
+          fontSize: `${labelFontSize}px`,
+          fontWeight: 500,
+          color: COLORS.textMuted,
+          textTransform: compact ? 'uppercase' : undefined,
+          letterSpacing: compact ? '0.06em' : undefined,
+        }}>
+        {labelText}
       </span>
     </button>
   );
@@ -152,6 +182,9 @@ interface SynergyCardListProps {
   groupKey: string;
   onShowAll?: (groupKey: string) => void;
   cardMinWidth?: number;
+  gridColumns?: number;
+  gridGap?: number;
+  compactMoreTile?: boolean;
   onCardClick?: (card: LorcanaCard) => void;
 }
 
@@ -162,23 +195,29 @@ function SynergyCardList({
   groupKey,
   onShowAll,
   cardMinWidth = LAYOUT.synergyCardMinWidth,
+  gridColumns,
+  gridGap = 10,
+  compactMoreTile = false,
   onCardClick,
 }: SynergyCardListProps) {
   const visible = synergies.slice(0, maxVisibleCards);
   const remaining = synergies.length - visible.length;
   const listRef = useRef<HTMLUListElement>(null);
   const containerWidth = useContainerWidth(listRef);
-  const GAP = 10;
   const columns = isMobile
     ? 3
-    : containerWidth > 0
-      ? Math.max(1, Math.floor((containerWidth + GAP) / (cardMinWidth + GAP)))
-      : 3; // fallback before measurement
+    : gridColumns ??
+      (containerWidth > 0
+        ? Math.max(1, Math.floor((containerWidth + gridGap) / (cardMinWidth + gridGap)))
+        : 3); // fallback before measurement
   const {handleKeyDown, getTabIndex} = useRovingTabIndex({
     itemCount: visible.length + (remaining > 0 ? 1 : 0),
     columns,
     containerRef: listRef,
   });
+  const desktopTemplate = gridColumns
+    ? `repeat(${gridColumns}, 1fr)`
+    : `repeat(auto-fill, minmax(${cardMinWidth}px, 1fr))`;
 
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- roving tabindex container for keyboard grid navigation
@@ -188,10 +227,8 @@ function SynergyCardList({
       onKeyDown={handleKeyDown}
       style={{
         display: 'grid',
-        gridTemplateColumns: isMobile
-          ? 'repeat(3, 1fr)'
-          : `repeat(auto-fill, minmax(${cardMinWidth}px, 1fr))`,
-        gap: '10px',
+        gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : desktopTemplate,
+        gap: `${gridGap}px`,
         listStyle: 'none',
         padding: 0,
         margin: 0,
@@ -214,6 +251,7 @@ function SynergyCardList({
             count={remaining}
             onClick={() => onShowAll?.(groupKey)}
             isMobile={isMobile}
+            compact={compactMoreTile}
             tabIndex={getTabIndex(visible.length)}
           />
         </li>

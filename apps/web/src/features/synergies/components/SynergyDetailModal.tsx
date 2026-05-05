@@ -1,14 +1,12 @@
 import {useRef, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from '../../cards';
 import type {DetailedPairSynergy} from 'inkweave-synergy-engine';
-import {getStrengthTier} from '../utils';
-import {QuickVoteControl} from '../../voting/components';
-import {useQuickVote} from '../../voting/hooks';
-import {CardImage, CardLightbox, RenderProfiler, ConnectionGroup, groupConnections} from '../../../shared/components';
+import {EngineColumn} from './EngineColumn';
+import {CommunityColumn} from './CommunityColumn';
+import {CardImage, CardLightbox, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence, useResponsive} from '../../../shared/hooks';
-import {COLORS, FONT_SIZES, SPACING, RADIUS, Z_INDEX} from '../../../shared/constants';
+import {COLORS, FONTS, RADIUS, Z_INDEX} from '../../../shared/constants';
 
 interface SynergyDetailModalProps {
   isOpen: boolean;
@@ -16,11 +14,7 @@ interface SynergyDetailModalProps {
   pair: DetailedPairSynergy;
 }
 
-export function SynergyDetailModal({
-  isOpen,
-  onClose,
-  pair,
-}: SynergyDetailModalProps) {
+export function SynergyDetailModal({isOpen, onClose, pair}: SynergyDetailModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const {isMobile} = useResponsive();
 
@@ -35,146 +29,192 @@ export function SynergyDetailModal({
     onClose,
   });
 
-  const navigate = useNavigate();
-  const {cardA, cardB, connections, aggregateScore} = pair;
-  const tier = getStrengthTier(aggregateScore);
-  const quickVote = useQuickVote(cardA.id, cardB.id);
+  const {cardA, cardB, aggregateScore} = pair;
   const [highlightedCard, setHighlightedCard] = useState<'a' | 'b' | null>(null);
-  const connectionGroups = groupConnections(connections);
 
   if (!mounted) return null;
 
+  const cardWidth = isMobile ? 140 : 280;
+  const pairKey = `${cardA.id}-${cardB.id}`;
+
   return (
     <RenderProfiler id="SynergyDetailModal">
-    <>
-      {/* Backdrop */}
-      <div
-        className={`overlay-transition overlay-enter ${visible ? 'overlay-visible' : ''}`}
-        aria-hidden="true"
-        onClick={onClose}
-        data-testid="synergy-detail-backdrop"
-        onTransitionEnd={onTransitionEnd}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0, 0, 0, 0.6)',
-          zIndex: Z_INDEX.modalBackdrop,
-          cursor: 'pointer',
-          backdropFilter: 'blur(4px)',
-        }}
-      />
-
-      {/* Centering wrapper */}
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: Z_INDEX.modal,
-          pointerEvents: 'none',
-          padding: 24,
-        }}>
-        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog keyboard handling (Escape to close) */}
+      <>
+        {/* Backdrop */}
         <div
-          ref={modalRef}
-          className={`overlay-transition overlay-scale overlay-enter ${visible ? 'overlay-visible' : ''}`}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Synergy detail"
-          data-testid="synergy-detail-modal"
-          onKeyDown={handleKeyDown}
+          className={`overlay-transition overlay-enter ${visible ? 'overlay-visible' : ''}`}
+          aria-hidden="true"
+          onClick={onClose}
+          data-testid="synergy-detail-backdrop"
           onTransitionEnd={onTransitionEnd}
           style={{
-            width: '100%',
-            maxWidth: 580,
-            maxHeight: 'calc(100vh - 48px)',
-            overflowY: 'auto',
-            background: COLORS.surface,
-            borderRadius: `${RADIUS.xl}px`,
-            border: `1px solid ${COLORS.surfaceBorder}`,
-            boxShadow: '0 24px 64px rgba(0, 0, 0, 0.5), 0 0 1px rgba(51, 51, 85, 0.8)',
-            position: 'relative',
-            pointerEvents: 'auto',
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.6)',
+            zIndex: Z_INDEX.modalBackdrop,
+            cursor: 'pointer',
+            backdropFilter: 'blur(4px)',
+          }}
+        />
+
+        {/* Centering wrapper */}
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: Z_INDEX.modal,
+            pointerEvents: 'none',
+            padding: 24,
           }}>
-          {/* Card images + connector (centered) */}
+          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog keyboard handling (Escape to close) */}
           <div
+            ref={modalRef}
+            className={`overlay-transition overlay-scale overlay-enter ${visible ? 'overlay-visible' : ''}`}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Synergy detail"
+            data-testid="synergy-detail-modal"
+            onKeyDown={handleKeyDown}
+            onTransitionEnd={onTransitionEnd}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '24px 12px 0',
+              width: '100%',
+              maxWidth: isMobile ? 580 : 1000,
+              maxHeight: 'calc(100vh - 48px)',
+              overflowY: 'auto',
+              background: COLORS.surface,
+              borderRadius: `${RADIUS.xl}px`,
+              border: `1px solid ${COLORS.surfaceBorder}`,
+              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.5), 0 0 1px rgba(51, 51, 85, 0.8)',
+              position: 'relative',
+              pointerEvents: 'auto',
             }}>
-            <PairCardImage card={cardA} isMobile={isMobile} dimmed={highlightedCard === 'b'} highlighted={highlightedCard === 'a'} />
-            <Connector score={aggregateScore} tier={tier} isMobile={isMobile} />
-            <PairCardImage card={cardB} isMobile={isMobile} dimmed={highlightedCard === 'a'} highlighted={highlightedCard === 'b'} />
-          </div>
-
-          {/* Aggregate tier label */}
-          <div style={{textAlign: 'center', padding: '14px 24px 20px'}}>
-            <h2
+            {/* Header — pair title + close */}
+            <header
               style={{
-                fontSize: `${FONT_SIZES.base}px`,
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                color: COLORS.textMuted,
-                margin: 0,
+                padding: '20px 24px 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
               }}>
-              <span style={{color: tier.color}}>{tier.label}</span> Synergy
-            </h2>
-          </div>
+              <h1
+                style={{
+                  margin: 0,
+                  fontFamily: FONTS.body,
+                  fontSize: isMobile ? 15 : 20,
+                  fontWeight: 700,
+                  color: COLORS.text,
+                  lineHeight: 1.2,
+                  flex: 1,
+                  minWidth: 0,
+                }}>
+                {cardA.fullName}
+                <span
+                  aria-hidden="true"
+                  style={{color: COLORS.textMuted, margin: '0 8px', fontWeight: 400}}>
+                  ×
+                </span>
+                {cardB.fullName}
+              </h1>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={onClose}
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  background: 'transparent',
+                  border: `1px solid ${COLORS.surfaceBorder}`,
+                  color: COLORS.textMuted,
+                  fontSize: 18,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  lineHeight: 1,
+                  fontFamily: FONTS.body,
+                }}>
+                ×
+              </button>
+            </header>
 
-          {/* Connections list: shown before vote so users read the reasoning first */}
-          {connectionGroups.length > 0 && (
-            <div style={{margin: '0 24px 20px', display: 'flex', flexDirection: 'column', gap: `${SPACING.sm}px`}}>
-              {connectionGroups.map((group) => (
-                <ConnectionGroup
-                  key={group.key}
-                  group={group}
-                  cardA={cardA}
-                  cardB={cardB}
+            {/* Cards row — large card art with simple dashed connector */}
+            <div
+              style={{
+                padding: '20px 24px 0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: isMobile ? 12 : 28,
+              }}>
+              <PairCardImage
+                card={cardA}
+                width={cardWidth}
+                dimmed={highlightedCard === 'b'}
+                highlighted={highlightedCard === 'a'}
+              />
+              <PairConnector />
+              <PairCardImage
+                card={cardB}
+                width={cardWidth}
+                dimmed={highlightedCard === 'a'}
+                highlighted={highlightedCard === 'b'}
+              />
+            </div>
+
+            {/* Comparison-detail panel — engine column + community column */}
+            <div
+              style={{
+                padding: '20px 24px 24px',
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                gap: 20,
+                alignItems: 'flex-start',
+              }}>
+              <div key={`engine-${pairKey}`}>
+                <EngineColumn
+                  pair={pair}
+                  engineScore={aggregateScore}
                   onHighlight={setHighlightedCard}
                 />
-              ))}
+              </div>
+              <div key={`community-${pairKey}`}>
+                <CommunityColumn pair={pair} engineScore={aggregateScore} />
+              </div>
             </div>
-          )}
-
-          {/* Quick vote: after explanation, users can make an informed judgment */}
-          <div key={`vote-${cardA.id}-${cardB.id}`} style={{padding: '0 24px 24px'}}>
-            <QuickVoteControl
-              state={quickVote.state}
-              onVote={quickVote.vote}
-              distribution={quickVote.distribution}
-              distributionFailed={quickVote.distributionFailed}
-              userChoice={quickVote.userChoice}
-              error={quickVote.error}
-              onRateInDetail={() => navigate(`/vote/${cardA.id}/${cardB.id}`)}
-            />
           </div>
-
         </div>
-      </div>
-    </>
+      </>
     </RenderProfiler>
   );
 }
 
 // ── Subcomponents ──
 
-function PairCardImage({card, dimmed, highlighted}: {card: LorcanaCard; isMobile?: boolean; dimmed?: boolean; highlighted?: boolean}) {
+function PairCardImage({
+  card,
+  width,
+  dimmed,
+  highlighted,
+}: {
+  card: LorcanaCard;
+  width: number;
+  dimmed?: boolean;
+  highlighted?: boolean;
+}) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const canEnlarge = !!card.imageUrl;
+  // 264:368 aspect ratio (Lorcana card proportions)
+  const height = Math.round((width * 368) / 264);
 
   return (
     <div
       style={{
-        flex: '1 1 0',
-        minWidth: 0,
-        maxWidth: 160,
-        display: 'flex',
-        justifyContent: 'center',
+        flex: '0 0 auto',
         opacity: dimmed ? 0.4 : 1,
         transition: 'opacity 0.2s ease, filter 0.2s ease, transform 0.2s ease',
         filter: highlighted ? 'drop-shadow(0 0 8px rgba(212, 175, 55, 0.6))' : undefined,
@@ -189,18 +229,18 @@ function PairCardImage({card, dimmed, highlighted}: {card: LorcanaCard; isMobile
           border: 'none',
           background: 'none',
           padding: 0,
-          width: '100%',
+          width,
           cursor: canEnlarge ? 'pointer' : 'default',
         }}>
         <CardImage
           src={card.imageUrl}
           alt={card.fullName}
-          width={160}
-          height={224}
+          width={width}
+          height={height}
           inkColor={card.ink}
           cost={card.cost}
-          borderRadius={10}
-          style={{width: '100%', height: 'auto', maxWidth: 160}}
+          borderRadius={14}
+          style={{width, height: 'auto'}}
         />
       </button>
       {lightboxOpen && card.imageUrl && (
@@ -215,74 +255,19 @@ function PairCardImage({card, dimmed, highlighted}: {card: LorcanaCard; isMobile
   );
 }
 
-function Connector({
-  score,
-  tier,
-  isMobile,
-}: {
-  score: number;
-  tier: ReturnType<typeof getStrengthTier>;
-  isMobile: boolean;
-}) {
-  const lineColor = `${tier.color}59`; // ~35% opacity
-  const circleBorderColor = `${tier.color}80`; // ~50% opacity
-  const circleGlow = `${tier.color}1a`; // ~10% opacity
-  const size = isMobile ? 32 : 44;
-  const fontSize = isMobile ? FONT_SIZES.base : FONT_SIZES.xl;
-
+function PairConnector() {
   return (
     <div
+      aria-hidden="true"
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        flexShrink: 0,
-        minWidth: isMobile ? 44 : 140,
-        margin: isMobile ? '0 6px' : '0 2px',
-      }}>
-      {!isMobile && <div style={{width: 3}} />}
-      <DashedLine color={lineColor} isMobile={isMobile} />
-      {!isMobile && <div style={{width: 3}} />}
-      <div
-        style={{
-          width: size,
-          height: size,
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: `${fontSize}px`,
-          fontWeight: 700,
-          flexShrink: 0,
-          border: `2px solid ${circleBorderColor}`,
-          background: `${tier.color}0f`,
-          color: tier.color,
-          boxShadow: `0 0 24px ${circleGlow}`,
-        }}>
-        {score}
-      </div>
-      {!isMobile && <div style={{width: 3}} />}
-      <DashedLine color={lineColor} isMobile={isMobile} />
-      {!isMobile && <div style={{width: 3}} />}
-    </div>
-  );
-}
-
-
-function DashedLine({color, isMobile}: {color: string; isMobile: boolean}) {
-  return (
-    <svg
-      style={{flex: '1 1 6px', maxWidth: isMobile ? 14 : 44, overflow: 'visible'}}
-      height="2"
-      preserveAspectRatio="none">
-      <line
-        x1="0"
-        y1="1"
-        x2="100%"
-        y2="1"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeDasharray={isMobile ? '3 3' : '6 6'}
-      />
-    </svg>
+        flex: '0 1 auto',
+        minWidth: 32,
+        maxWidth: 80,
+        height: 2,
+        backgroundImage: `repeating-linear-gradient(to right, ${COLORS.primary500} 0, ${COLORS.primary500} 6px, transparent 6px, transparent 12px)`,
+        backgroundSize: '12px 2px',
+        opacity: 0.7,
+      }}
+    />
   );
 }

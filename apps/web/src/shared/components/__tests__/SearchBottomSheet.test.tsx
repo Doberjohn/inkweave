@@ -15,6 +15,11 @@ vi.mock('../../contexts/CardDataContext', () => ({
   useCardDataContext: () => ({cards: []}),
 }));
 
+// Mock card modal context — SearchBottomSheet now opens cards via openCardModal
+vi.mock('../../contexts/CardModalContext', () => ({
+  useCardModal: () => ({selectedCardId: null, openCardModal: vi.fn(), closeCardModal: vi.fn()}),
+}));
+
 // Mock card loader
 vi.mock('../../../features/cards/loader', () => ({
   smallImageUrl: (id: string) => `/images/${id}.avif`,

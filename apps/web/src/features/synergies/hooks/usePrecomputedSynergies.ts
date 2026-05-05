@@ -22,6 +22,7 @@ interface PrecomputedSynergyGroup {
   groupKey: string;
   category: 'direct' | 'playstyle';
   label: string;
+  tagline: string;
   description: string;
   synergies: PrecomputedSynergyMatch[];
 }
@@ -103,6 +104,7 @@ function resolveGroups(
       groupKey: group.groupKey,
       category: group.category,
       label: group.label,
+      tagline: group.tagline,
       description: group.description,
       synergies: group.synergies
         .map((match): SynergyMatchDisplay | null => {

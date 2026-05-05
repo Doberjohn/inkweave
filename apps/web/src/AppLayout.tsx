@@ -12,6 +12,7 @@ import {
 } from './shared/components';
 import type {SearchBottomSheetHandle} from './shared/components/SearchBottomSheet';
 import {CardDataProvider} from './shared/contexts/CardDataContext';
+import {CardModalProvider} from './shared/contexts/CardModalContext';
 import {COLORS} from './shared/constants';
 import {useCardDataContext} from './shared/contexts/CardDataContext';
 import {useResponsive} from './shared/hooks';
@@ -115,7 +116,9 @@ export function AppLayout() {
   return (
     <ErrorBoundary>
       <CardDataProvider>
-        <AppContent />
+        <CardModalProvider>
+          <AppContent />
+        </CardModalProvider>
       </CardDataProvider>
       <Analytics />
       <SpeedInsights />
