@@ -1,75 +1,21 @@
-import {Fragment, useState} from 'react';
 import type {LorcanaCard} from '../../features/cards';
-import type {PairSynergyConnection, LocationRole} from 'inkweave-synergy-engine';
-import {
-  getPlaystyleById,
-  LOCATION_ROLE_CHIP_LABELS,
-  LOCATION_ROLE_DESCRIPTIONS,
-} from 'inkweave-synergy-engine';
-import {getStrengthTier} from '../../features/synergies/utils';
-import {COLORS, FONT_SIZES, SPACING, RADIUS} from '../constants';
-import {StrengthBadge} from './StrengthBadge';
-
-// --- Types ---
-
-export interface ConnectionGroupData {
-  key: string;
-  label: string;
-  score: number;
-  connections: PairSynergyConnection[];
-  category: 'direct' | 'playstyle';
-}
+import type {LocationRole, PairSynergyConnection} from 'inkweave-synergy-engine';
+import {LOCATION_ROLE_CHIP_LABELS, LOCATION_ROLE_DESCRIPTIONS} from 'inkweave-synergy-engine';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../constants';
+import {AbilityTag} from './AbilityTag';
+import type {ConnectionGroupData} from './groupConnections';
 
 interface ConnectionGroupProps {
   group: ConnectionGroupData;
   cardA: LorcanaCard;
   cardB: LorcanaCard;
-  showScoreBadge?: boolean;
   onHighlight?: (card: 'a' | 'b' | null) => void;
 }
 
-// --- Grouping utility ---
+const ABILITY_BOX_SHADOW =
+  '0 3px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -1px 0 rgba(0, 0, 0, 0.18)';
 
-/** Group connections: playstyle rules merge by playstyleId, direct rules stay individual */
-export function groupConnections(connections: PairSynergyConnection[]): ConnectionGroupData[] {
-  const playstyleGroups = new Map<string, PairSynergyConnection[]>();
-  const result: ConnectionGroupData[] = [];
-
-  for (const conn of connections) {
-    if (conn.category === 'playstyle') {
-      const existing = playstyleGroups.get(conn.playstyleId);
-      if (existing) {
-        existing.push(conn);
-      } else {
-        playstyleGroups.set(conn.playstyleId, [conn]);
-      }
-    } else {
-      result.push({
-        key: conn.ruleId,
-        label: conn.ruleName,
-        score: conn.score,
-        connections: [conn],
-        category: 'direct',
-      });
-    }
-  }
-
-  for (const [playstyleId, conns] of playstyleGroups) {
-    const playstyle = getPlaystyleById(playstyleId);
-    const maxScore = Math.max(...conns.map((c) => c.score));
-    result.push({
-      key: playstyleId,
-      label: playstyle?.name ?? playstyleId,
-      score: maxScore,
-      connections: conns,
-      category: 'playstyle',
-    });
-  }
-
-  return result.sort((a, b) => b.score - a.score);
-}
-
-// --- Internal helpers ---
+// ── Internal helpers ──
 
 function extractLocationRole(ruleId: string): LocationRole | null {
   const prefix = 'location-';
@@ -112,7 +58,7 @@ function findCardInText(text: string, fullName: string): {index: number; match: 
   return {index: -1, match: ''};
 }
 
-// --- Subcomponents ---
+// ── Subcomponents ──
 
 function ExplanationWithHighlights({
   text,
@@ -160,7 +106,7 @@ function ExplanationWithHighlights({
   }
 
   return (
-    <span style={{fontSize: `${FONT_SIZES.base}px`, lineHeight: 1.4, color: COLORS.descriptionText}}>
+    <span>
       {segments.map((seg, i) =>
         seg.card && onHighlight ? (
           <span
@@ -168,15 +114,16 @@ function ExplanationWithHighlights({
             onMouseEnter={() => onHighlight(seg.card)}
             onMouseLeave={() => onHighlight(null)}
             style={{
-              color: COLORS.primary500,
-              borderBottom: '1px dashed rgba(212, 175, 55, 0.4)',
+              color: COLORS.lorcanaCardLink,
+              fontWeight: 700,
+              borderBottom: '1px dashed rgba(122, 77, 24, 0.45)',
               cursor: 'default',
-              transition: 'border-color 0.2s ease',
+              transition: 'border-color 0.15s ease, color 0.15s ease',
             }}>
             {seg.text}
           </span>
         ) : seg.card ? (
-          <span key={i} style={{color: COLORS.primary500}}>
+          <span key={i} style={{color: COLORS.lorcanaCardLink, fontWeight: 700}}>
             {seg.text}
           </span>
         ) : (
@@ -187,149 +134,97 @@ function ExplanationWithHighlights({
   );
 }
 
-// --- Main component ---
-
-export function ConnectionGroup({
-  group,
+function AbilityRow({
+  label,
+  description,
   cardA,
   cardB,
-  showScoreBadge = true,
   onHighlight,
-}: ConnectionGroupProps) {
-  const [expanded, setExpanded] = useState(true);
-  const [hovered, setHovered] = useState(false);
-  const tier = getStrengthTier(group.score);
-  const hasMultipleRoles = group.connections.length > 1;
-
+}: {
+  label: string;
+  description: string;
+  cardA: LorcanaCard;
+  cardB: LorcanaCard;
+  onHighlight?: (card: 'a' | 'b' | null) => void;
+}) {
   return (
     <div
       style={{
-        background: COLORS.surface,
-        borderRadius: `${RADIUS.md}px`,
-        border: `1px solid ${expanded ? 'rgba(212, 175, 55, 0.2)' : COLORS.surfaceBorder}`,
+        display: 'flex',
+        alignItems: 'stretch',
+        background: COLORS.lorcanaCream,
+        borderRadius: `${RADIUS.sm}px`,
         overflow: 'hidden',
-        transition: 'border-color 0.15s',
+        boxShadow: ABILITY_BOX_SHADOW,
       }}>
-      {/* Collapsible header */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        aria-expanded={expanded}
+      <AbilityTag variant="row">{label}</AbilityTag>
+      <p
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: `${SPACING.sm}px`,
-          width: '100%',
-          padding: '10px 12px',
-          background: hovered ? 'rgba(255, 255, 255, 0.02)' : 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          transition: 'background 0.15s',
+          flex: 1,
+          margin: 0,
+          padding: '8px 14px 8px 4px',
+          color: COLORS.lorcanaTextDark,
+          fontFamily: FONTS.body,
+          fontSize: `${FONT_SIZES.base}px`,
+          fontWeight: 600,
+          lineHeight: 1.4,
         }}>
-        {showScoreBadge && (
-          <StrengthBadge tier={tier} size="lg">
-            {group.score}
-          </StrengthBadge>
-        )}
-        <span
-          style={{
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 600,
-            color: COLORS.text,
-          }}>
-          {group.label}
-        </span>
-        {hasMultipleRoles && (
-          <span
-            style={{
-              fontSize: `${FONT_SIZES.xs}px`,
-              fontWeight: 500,
-              color: COLORS.textMuted,
-            }}>
-            {group.connections.length} roles
-          </span>
-        )}
-        <span
-          style={{
-            marginLeft: 'auto',
-            fontSize: `${FONT_SIZES.base}px`,
-            color: expanded ? COLORS.primary : COLORS.textMuted,
-            transition: 'color 0.15s, transform 0.15s',
-            transform: expanded ? 'rotate(90deg)' : 'none',
-            lineHeight: 1,
-          }}>
-          ▸
-        </span>
-      </button>
-
-      {/* Expanded detail */}
-      {expanded && (
-        <div
-          style={{
-            borderTop: `1px solid ${COLORS.surfaceBorder}`,
-            padding: '10px 12px 12px',
-            display: 'grid',
-            gridTemplateColumns: hasMultipleRoles ? 'auto 1fr' : '1fr',
-            gap: `${SPACING.sm}px`,
-            alignItems: 'start',
-          }}>
-          {group.connections.map((conn, i) => {
-            const role = extractLocationRole(conn.ruleId);
-            const chipLabel = role ? LOCATION_ROLE_CHIP_LABELS[role] : null;
-            const description = role
-              ? LOCATION_ROLE_DESCRIPTIONS[role](getRoleSourceName(conn, cardA, cardB), getLocationName(cardA, cardB))
-              : conn.explanation;
-            const divider = i > 0 && (
-              <div
-                key={`${conn.ruleId}-divider`}
-                style={{
-                  gridColumn: '1 / -1',
-                  height: 1,
-                  background: 'rgba(212, 175, 55, 0.15)',
-                }}
-              />
-            );
-
-            return hasMultipleRoles ? (
-              <Fragment key={conn.ruleId}>
-                {divider}
-                <span
-                  style={{
-                    padding: '2px 8px',
-                    borderRadius: 8,
-                    background: chipLabel ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
-                    color: COLORS.primary,
-                    fontSize: `${FONT_SIZES.xs}px`,
-                    fontWeight: 600,
-                    textAlign: 'center',
-                    whiteSpace: 'nowrap',
-                    marginTop: 1,
-                  }}>
-                  {chipLabel ?? ''}
-                </span>
-                <ExplanationWithHighlights
-                  text={description}
-                  cardAName={cardA.fullName}
-                  cardBName={cardB.fullName}
-                  onHighlight={onHighlight}
-                />
-              </Fragment>
-            ) : (
-              <Fragment key={conn.ruleId}>
-                {divider}
-                <ExplanationWithHighlights
-                  text={description}
-                  cardAName={cardA.fullName}
-                  cardBName={cardB.fullName}
-                  onHighlight={onHighlight}
-                />
-              </Fragment>
-            );
-          })}
-        </div>
-      )}
+        <ExplanationWithHighlights
+          text={description}
+          cardAName={cardA.fullName}
+          cardBName={cardB.fullName}
+          onHighlight={onHighlight}
+        />
+      </p>
     </div>
+  );
+}
+
+// ── Main component ──
+
+/**
+ * Lorcana ability-box row variant for a synergy rule (or a multi-role playstyle group).
+ * Single-connection groups render as one ability box. Multi-role groups render as a stack
+ * of one ability box per sub-role (e.g., Locations: At-payoff / Move / Buff).
+ */
+export function ConnectionGroup({group, cardA, cardB, onHighlight}: ConnectionGroupProps) {
+  const hasMultipleRoles = group.connections.length > 1;
+
+  if (hasMultipleRoles) {
+    return (
+      <div style={{display: 'flex', flexDirection: 'column', gap: `${SPACING.sm}px`}}>
+        {group.connections.map((conn) => {
+          const role = extractLocationRole(conn.ruleId);
+          const subLabel = role ? LOCATION_ROLE_CHIP_LABELS[role] : conn.ruleName;
+          const description = role
+            ? LOCATION_ROLE_DESCRIPTIONS[role](
+                getRoleSourceName(conn, cardA, cardB),
+                getLocationName(cardA, cardB),
+              )
+            : conn.explanation;
+          return (
+            <AbilityRow
+              key={conn.ruleId}
+              label={subLabel}
+              description={description}
+              cardA={cardA}
+              cardB={cardB}
+              onHighlight={onHighlight}
+            />
+          );
+        })}
+      </div>
+    );
+  }
+
+  const conn = group.connections[0];
+  return (
+    <AbilityRow
+      label={group.label}
+      description={conn.explanation}
+      cardA={cardA}
+      cardB={cardB}
+      onHighlight={onHighlight}
+    />
   );
 }

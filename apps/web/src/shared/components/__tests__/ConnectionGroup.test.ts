@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {groupConnections} from '../ConnectionGroup';
+import {groupConnections} from '../groupConnections';
 import type {PairSynergyConnection} from 'inkweave-synergy-engine';
 
 const direct = (id: string, score: number): PairSynergyConnection => ({

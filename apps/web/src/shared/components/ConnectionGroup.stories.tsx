@@ -1,6 +1,6 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {ConnectionGroup} from './ConnectionGroup';
-import type {ConnectionGroupData} from './ConnectionGroup';
+import type {ConnectionGroupData} from './groupConnections';
 
 const mockCardA = {
   id: '1004',
@@ -99,16 +99,6 @@ export const DirectRule: Story = {
     group: directGroup,
     cardA: mockCardA,
     cardB: mockCardB,
-    showScoreBadge: true,
-  },
-};
-
-export const WithoutScoreBadge: Story = {
-  args: {
-    group: directGroup,
-    cardA: mockCardA,
-    cardB: mockCardB,
-    showScoreBadge: false,
   },
 };
 
@@ -117,6 +107,5 @@ export const MultipleRoles: Story = {
     group: multiRoleGroup,
     cardA: mockCardA,
     cardB: mockCardB,
-    showScoreBadge: true,
   },
 };

@@ -135,7 +135,6 @@ export function SynergyDetailModal({
                   group={group}
                   cardA={cardA}
                   cardB={cardB}
-                  showScoreBadge
                   onHighlight={setHighlightedCard}
                 />
               ))}
