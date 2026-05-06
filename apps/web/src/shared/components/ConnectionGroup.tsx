@@ -181,6 +181,11 @@ function AbilityRow({
           // block-level box model for vertical padding.
           display: 'inline-block',
           verticalAlign: 'middle',
+          // Reset text-indent so the parent's negative text-indent doesn't cascade
+          // into the label's own inline text and clip the first letter against the
+          // container's overflow:hidden edge. text-indent is an inherited property —
+          // the label has its own block-formatting context but still inherits the value.
+          textIndent: 0,
           marginRight: 8,
           padding: '4px 8px',
           background: COLORS.lorcanaTagBg,
