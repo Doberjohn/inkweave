@@ -59,7 +59,9 @@ export function EngineColumn({pair, engineScore, onHighlight}: EngineColumnProps
         }
       />
       {connectionGroups.length > 0 && (
-        <div style={{display: 'flex', flexDirection: 'column', gap: 14}}>
+        // marginBottom adds breathing room between the last ability row and the QuickVoteControl
+        // below — the EngineColumn's outer gap (14) wasn't enough on its own.
+        <div style={{display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 14}}>
           {connectionGroups.map((group) => (
             <ConnectionGroup
               key={group.key}
