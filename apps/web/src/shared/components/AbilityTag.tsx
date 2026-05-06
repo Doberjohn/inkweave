@@ -1,22 +1,23 @@
 import {COLORS, FONTS, FONT_SIZES, RADIUS} from '../constants';
 
-export type AbilityTagVariant = 'row' | 'stacked' | 'page';
+export type AbilityTagVariant = 'stacked' | 'page';
 
 interface AbilityTagProps {
-  /** Layout variant. Row: banner slope on right edge (sits on the left of a horizontal callout). Stacked: rounded top corners (sits on top-left of a vertical callout). Page: same shape as stacked but larger font for full-page section headings. */
+  /**
+   * Layout variant.
+   * - `stacked`: rounded top corners (sits on top-left of a vertical callout via `<AbilityCallout variant="stacked-after-tag">`).
+   * - `page`: same shape as stacked but larger font for full-page section headings.
+   */
   variant?: AbilityTagVariant;
   children: React.ReactNode;
 }
 
-// Banner slope on the right edge — gives the row variant a flag/tag shape that flows into the cream body
-const ROW_CLIP_PATH = 'polygon(0 0, calc(100% - 9px) 0, 100% 100%, 0 100%)';
-
 /**
  * Lorcana ability-box dark name tag. Pairs with `<AbilityCallout>` for the stacked / page
- * variants, or sits inside a flex-row cream container for the row variant.
+ * variants. (The previous `row` variant was retired when ConnectionGroup moved to an inline
+ * floated label in the cream box itself.)
  */
-export function AbilityTag({variant = 'row', children}: AbilityTagProps) {
-  const isRow = variant === 'row';
+export function AbilityTag({variant = 'stacked', children}: AbilityTagProps) {
   const isPage = variant === 'page';
   return (
     <span
@@ -32,9 +33,8 @@ export function AbilityTag({variant = 'row', children}: AbilityTagProps) {
         fontSize: isPage ? `${FONT_SIZES.xl}px` : `${FONT_SIZES.xs}px`,
         letterSpacing: isPage ? '0.06em' : '0.08em',
         textTransform: 'uppercase',
-        padding: isRow ? '6px 16px 6px 12px' : isPage ? '10px 22px' : '6px 14px',
-        clipPath: isRow ? ROW_CLIP_PATH : undefined,
-        borderRadius: isRow ? 0 : `${RADIUS.sm}px ${RADIUS.sm}px 0 0`,
+        padding: isPage ? '10px 22px' : '6px 14px',
+        borderRadius: `${RADIUS.sm}px ${RADIUS.sm}px 0 0`,
       }}>
       {children}
     </span>

@@ -2,7 +2,6 @@ import type {LorcanaCard} from '../../features/cards';
 import type {LocationRole, PairSynergyConnection} from 'inkweave-synergy-engine';
 import {LOCATION_ROLE_CHIP_LABELS, LOCATION_ROLE_DESCRIPTIONS} from 'inkweave-synergy-engine';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../constants';
-import {AbilityTag} from './AbilityTag';
 import type {ConnectionGroupData} from './groupConnections';
 
 interface ConnectionGroupProps {
@@ -134,6 +133,10 @@ function ExplanationWithHighlights({
   );
 }
 
+// Description's effective line height in pixels — used to size the inline
+// label so it lands exactly on the first line's baseline.
+const DESCRIPTION_LINE_HEIGHT_PX = FONT_SIZES.base * 1.4;
+
 function AbilityRow({
   label,
   description,
@@ -148,34 +151,49 @@ function AbilityRow({
   onHighlight?: (card: 'a' | 'b' | null) => void;
 }) {
   return (
+    // Lorcana ability-text layout: cream container with a small dark label inline at the
+    // start of the text flow. The description wraps around the floated label on line 1
+    // and continues at the full container width on subsequent lines (matches Lorcana's
+    // ability-box typography). overflow: hidden contains the float.
     <div
       style={{
-        display: 'flex',
-        alignItems: 'stretch',
         background: COLORS.lorcanaCream,
         borderRadius: `${RADIUS.sm}px`,
+        padding: '8px 12px',
         overflow: 'hidden',
         boxShadow: ABILITY_BOX_SHADOW,
+        color: COLORS.lorcanaTextDark,
+        fontFamily: FONTS.body,
+        fontSize: `${FONT_SIZES.base}px`,
+        fontWeight: 600,
+        lineHeight: 1.4,
       }}>
-      <AbilityTag variant="row">{label}</AbilityTag>
-      <p
+      <span
         style={{
-          flex: 1,
-          margin: 0,
-          padding: '8px 14px 8px 4px',
-          color: COLORS.lorcanaTextDark,
+          float: 'left',
+          marginRight: 8,
+          padding: '0 8px',
+          background: COLORS.lorcanaTagBg,
+          color: COLORS.lorcanaTagText,
           fontFamily: FONTS.body,
-          fontSize: `${FONT_SIZES.base}px`,
-          fontWeight: 600,
-          lineHeight: 1.4,
+          fontWeight: 700,
+          fontSize: `${FONT_SIZES.xs}px`,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+          // line-height pinned to the description's line so the box aligns vertically
+          // with the first line of the surrounding text.
+          lineHeight: `${DESCRIPTION_LINE_HEIGHT_PX}px`,
+          borderRadius: `${RADIUS.xs}px`,
         }}>
-        <ExplanationWithHighlights
-          text={description}
-          cardAName={cardA.fullName}
-          cardBName={cardB.fullName}
-          onHighlight={onHighlight}
-        />
-      </p>
+        {label}
+      </span>
+      <ExplanationWithHighlights
+        text={description}
+        cardAName={cardA.fullName}
+        cardBName={cardB.fullName}
+        onHighlight={onHighlight}
+      />
     </div>
   );
 }

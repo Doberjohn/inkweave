@@ -11,24 +11,12 @@ const meta: Meta<typeof AbilityTag> = {
 export default meta;
 type Story = StoryObj<typeof AbilityTag>;
 
-export const Row: Story = {
-  args: {variant: 'row', children: 'Ramp'},
-};
-
 export const Stacked: Story = {
   args: {variant: 'stacked', children: 'Ramp'},
 };
 
-export const LongLabelRow: Story = {
-  args: {variant: 'row', children: 'Shift Targets'},
-};
-
 export const LongLabelStacked: Story = {
   args: {variant: 'stacked', children: 'Named Companions'},
-};
-
-export const SubRoleRow: Story = {
-  args: {variant: 'row', children: 'At-payoff'},
 };
 
 export const Page: Story = {
