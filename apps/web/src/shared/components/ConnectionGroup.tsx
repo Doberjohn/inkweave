@@ -1,8 +1,31 @@
 import type {LorcanaCard} from '../../features/cards';
-import type {LocationRole, PairSynergyConnection} from 'inkweave-synergy-engine';
+import type {Ink, LocationRole, PairSynergyConnection} from 'inkweave-synergy-engine';
 import {LOCATION_ROLE_CHIP_LABELS, LOCATION_ROLE_DESCRIPTIONS} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../constants';
 import type {ConnectionGroupData} from './groupConnections';
+
+// ── Chip palette ──
+// Vibrant Lorcana brand ink colors used as the inline-chip background. Distinct from
+// the darker INK_COLORS (which is tuned for card-badge use against dark surfaces);
+// these are the ink-symbol colors the game uses on its physical cards. Text colors
+// chosen per-ink for WCAG-readable contrast against each bg.
+const CHIP_BG_BY_INK: Record<Ink, string> = {
+  Amber: '#F5B202',
+  Amethyst: '#81377B',
+  Emerald: '#2A8934',
+  Ruby: '#D3082F',
+  Sapphire: '#0189C4',
+  Steel: '#9FA8B4',
+};
+
+const CHIP_TEXT_BY_INK: Record<Ink, string> = {
+  Amber: '#000000',
+  Amethyst: '#FFFFFF',
+  Emerald: '#FFFFFF',
+  Ruby: '#FFFFFF',
+  Sapphire: '#FFFFFF',
+  Steel: '#000000',
+};
 
 interface ConnectionGroupProps {
   group: ConnectionGroupData;
@@ -128,12 +151,8 @@ function ExplanationWithHighlights({
   onHighlight?: (card: 'a' | 'b' | null) => void;
 }) {
   const segments = tokenizeExplanation(text, cardA.fullName, cardB.fullName);
-  // Each chip's color matches the corresponding card's ink. Dual-ink cards take
-  // their primary ink (card.ink); secondary ink (card.ink2) is intentionally
-  // ignored for now — keeping the chip palette to one swatch keeps the visual
-  // hierarchy simple.
-  const inkA = INK_COLORS[cardA.ink];
-  const inkB = INK_COLORS[cardB.ink];
+  // Dual-ink cards take their primary ink (card.ink); secondary ink (card.ink2)
+  // is intentionally ignored to keep the chip a single swatch.
 
   return (
     <span>
@@ -142,11 +161,10 @@ function ExplanationWithHighlights({
           return <span key={i}>{seg.text}</span>;
         }
         if (seg.kind === 'token') {
-          const ink = seg.card === 'a' ? inkA : inkB;
-          // Chip-styled inline pill, tinted to the corresponding card's ink color.
-          // Dark `bg` + vibrant `text` from INK_COLORS keeps the chip on-theme
-          // for the dark fantasy palette while signaling which card the token
-          // refers to without requiring a hover.
+          const refCard = seg.card === 'a' ? cardA : cardB;
+          // Chip displays the initial letter of the card's base name (e.g. Yzma → Y,
+          // Kuzco → K) so the user can match chip → card by initial without hover.
+          const initial = refCard.name.charAt(0).toUpperCase();
           return (
             <span
               key={i}
@@ -154,13 +172,13 @@ function ExplanationWithHighlights({
               onMouseLeave={onHighlight ? () => onHighlight(null) : undefined}
               style={{
                 display: 'inline-block',
-                background: ink.bg,
-                color: ink.text,
-                border: `1px solid ${ink.border}`,
+                background: CHIP_BG_BY_INK[refCard.ink],
+                color: CHIP_TEXT_BY_INK[refCard.ink],
+                border: '1px solid #000000',
                 fontWeight: 700,
                 fontSize: 11,
                 lineHeight: 1,
-                padding: '2px 6px',
+                padding: '4px 6px',
                 borderRadius: 3,
                 textAlign: 'center',
                 // Reset textIndent so the parent AbilityRow's text-indent:-12px
@@ -171,7 +189,7 @@ function ExplanationWithHighlights({
                 cursor: onHighlight ? 'default' : 'inherit',
                 userSelect: 'none',
               }}>
-              {seg.card.toUpperCase()}
+              {initial}
             </span>
           );
         }
