@@ -349,13 +349,12 @@ export function CardOverviewModal({
                     justifyContent: isMobile ? 'center' : 'flex-start',
                     alignItems: 'flex-start',
                     flexShrink: 0,
-                    transition: 'opacity 0.2s ease, filter 0.2s ease, transform 0.2s ease',
+                    transition: 'opacity 0.2s ease, filter 0.2s ease',
                     opacity: highlightedCard === 'b' ? 0.4 : 1,
                     filter:
                       highlightedCard === 'a'
                         ? 'drop-shadow(0 0 8px rgba(212, 175, 55, 0.6))'
                         : undefined,
-                    transform: highlightedCard === 'a' ? 'scale(1.03)' : undefined,
                   }}>
                   <button
                     type="button"
