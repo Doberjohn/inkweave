@@ -133,10 +133,11 @@ function ExplanationWithHighlights({
   );
 }
 
-// Description's line-height multiplier. The label's box (lineHeight + vertical
-// padding = 12 + 4 + 4 = 20px) stays comfortably under one description line
-// (13 × 1.7 = 22.1px) with 2px safety so the float reliably clears after one
-// line and wrapped text returns to the container's left edge.
+// Description's line-height multiplier. Sized so one description line (13 × 1.7
+// = 22.1px) is comfortably taller than the inline-block label (font 12 + padding
+// 4+4 = 20px). When label height ≤ description line height, line 1's line-box
+// doesn't grow beyond a normal description line and wrapped lines (2+) follow
+// the standard description rhythm.
 const DESCRIPTION_LINE_HEIGHT = 1.7;
 
 function AbilityRow({
@@ -154,16 +155,17 @@ function AbilityRow({
 }) {
   return (
     // Lorcana ability-text layout: cream container with a small dark label inline at the
-    // start of the text flow. The description wraps around the floated label on line 1
-    // and continues at the full container width on subsequent lines (matches Lorcana's
-    // ability-box typography). overflow: hidden contains the float.
+    // start of the text flow. Line 1 (label + start of description) sits flush against the
+    // container's left border via text-indent; wrapped lines (line 2+) are governed by
+    // padding-left so they have breathing room from the border instead of touching it.
     <div
       style={{
         background: COLORS.lorcanaCream,
         borderRadius: `${RADIUS.sm}px`,
-        // padding-left is 0 so the label box touches the cream container's left
-        // border AND wrapped description lines (line 2+) start at the same edge.
-        padding: '8px 12px 8px 0',
+        padding: '8px 12px',
+        // textIndent pulls only line 1 back by `padding-left` so the label hugs
+        // the container's left edge while wrapped lines stay indented at content-left.
+        textIndent: -12,
         overflow: 'hidden',
         boxShadow: ABILITY_BOX_SHADOW,
         color: COLORS.lorcanaTextDark,
@@ -174,7 +176,11 @@ function AbilityRow({
       }}>
       <span
         style={{
-          float: 'left',
+          // inline-block keeps the label in the inline flow (so text-indent pulls
+          // it back to the container's left edge) while still giving us a proper
+          // block-level box model for vertical padding.
+          display: 'inline-block',
+          verticalAlign: 'middle',
           marginRight: 8,
           padding: '4px 8px',
           background: COLORS.lorcanaTagBg,
@@ -185,10 +191,6 @@ function AbilityRow({
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
-          // lineHeight = font-size keeps the label box exactly tall enough to hold
-          // its text. Total box height = font (12) + padding (4+4) = 20px, which is
-          // less than the description line (22.1px) minus the 2px safety used elsewhere
-          // — the float reliably clears so wrapped lines return to the container's left.
           lineHeight: `${FONT_SIZES.md}px`,
           borderRadius: `${RADIUS.xs}px`,
         }}>
