@@ -179,7 +179,7 @@ function AbilityRow({
           color: COLORS.lorcanaTagText,
           fontFamily: FONTS.body,
           fontWeight: 700,
-          fontSize: `${FONT_SIZES.xs}px`,
+          fontSize: `${FONT_SIZES.md}px`,
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
