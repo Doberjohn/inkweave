@@ -1,5 +1,5 @@
 import {useState, useEffect} from 'react';
-import {COLORS, EASING, FONT_SIZES} from '../../../shared/constants';
+import {COLORS, EASING} from '../../../shared/constants';
 
 interface DistributionBarProps {
   lower: number;
@@ -17,10 +17,13 @@ const SEGMENT_COLORS = {
   higher: {bg: 'rgba(96, 181, 245, 0.2)', text: '#60b5f5'},
 } as const;
 
-const LABELS = {
-  lower: 'Should be lower',
-  right: 'Score is fair',
-  higher: 'Should be higher',
+// Short labels for the fixed legend below the bar. Solution B from the engine
+// column equal-height work — the legend isn't segment-positioned, so labels
+// never wrap regardless of percentage distribution.
+const LEGEND_LABELS = {
+  lower: 'Lower',
+  right: 'Fair',
+  higher: 'Higher',
 } as const;
 
 export function DistributionBar({lower, right, higher, animate, showLabels = true, contextLabel}: DistributionBarProps) {
@@ -77,16 +80,11 @@ export function DistributionBar({lower, right, higher, animate, showLabels = tru
         {segments.map((key, i) => (
           <div
             key={key}
+            aria-label={`${LEGEND_LABELS[key]}: ${pct[key]}%`}
             style={{
               flex: animate ? undefined : pct[key],
               width: animate ? (mounted ? `${pct[key]}%` : '0%') : undefined,
               background: SEGMENT_COLORS[key].bg,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: `${FONT_SIZES.xs}px`,
-              color: SEGMENT_COLORS[key].text,
-              fontWeight: 600,
               borderRadius:
                 i === 0 && segments.length > 1
                   ? '6px 0 0 6px'
@@ -97,18 +95,19 @@ export function DistributionBar({lower, right, higher, animate, showLabels = tru
                       : undefined,
               transition: animate ? `width 500ms ${EASING.smooth}` : undefined,
               transitionDelay: animate ? `${i * 50}ms` : undefined,
-            }}>
-            {pct[key]}%
-          </div>
+            }}
+          />
         ))}
       </div>
       {showLabels && (
         <div
           style={{
-            // Same flex layout + gap as the bar above so each label tracks its segment's width
-            // and stays centered under it (mockup phase 2 dist-labels, with zero-count labels dropped).
+            // Solution B: fixed legend below the bar. NOT segment-positioned, so labels
+            // never wrap regardless of how narrow any segment is. Each entry: color dot
+            // + short label + percentage. Centered as a single horizontal flex.
             display: 'flex',
-            gap: 2,
+            justifyContent: 'center',
+            gap: 14,
             marginTop: 6,
             fontSize: 10,
             fontWeight: 600,
@@ -118,11 +117,22 @@ export function DistributionBar({lower, right, higher, animate, showLabels = tru
             <span
               key={key}
               style={{
-                flex: pct[key],
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
                 color: SEGMENT_COLORS[key].text,
-                textAlign: 'center',
               }}>
-              {LABELS[key]}
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: SEGMENT_COLORS[key].text,
+                  flexShrink: 0,
+                }}
+              />
+              <span>{`${LEGEND_LABELS[key]} ${pct[key]}%`}</span>
             </span>
           ))}
         </div>

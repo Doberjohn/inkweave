@@ -30,6 +30,10 @@ export function ColumnHeader({
         display: 'grid',
         gridTemplateColumns: '1fr auto 1fr',
         alignItems: 'center',
+        // Lock to the engine column's natural max (87px) so engine + community
+        // ColumnHeader heights are deterministic and identical. Engine sits at
+        // ~87 today; community at 81-86 expands to fill.
+        minHeight: 87,
         marginBottom: SPACING.section,
         paddingBottom: SPACING.section,
         position: 'relative',
