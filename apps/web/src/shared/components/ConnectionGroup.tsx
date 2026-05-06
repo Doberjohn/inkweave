@@ -159,7 +159,9 @@ function AbilityRow({
       style={{
         background: COLORS.lorcanaCream,
         borderRadius: `${RADIUS.sm}px`,
-        padding: '8px 12px',
+        // padding-left is 0 so the label box touches the cream container's left
+        // border AND wrapped description lines (line 2+) start at the same edge.
+        padding: '8px 12px 8px 0',
         overflow: 'hidden',
         boxShadow: ABILITY_BOX_SHADOW,
         color: COLORS.lorcanaTextDark,
