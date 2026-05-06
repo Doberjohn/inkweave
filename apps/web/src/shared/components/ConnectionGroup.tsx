@@ -133,9 +133,11 @@ function ExplanationWithHighlights({
   );
 }
 
-// Description's effective line height in pixels — used to size the inline
-// label so it lands exactly on the first line's baseline.
-const DESCRIPTION_LINE_HEIGHT_PX = FONT_SIZES.base * 1.4;
+// Description's line-height multiplier. The label's box (lineHeight + vertical
+// padding = 12 + 4 + 4 = 20px) stays comfortably under one description line
+// (13 × 1.7 = 22.1px) with 2px safety so the float reliably clears after one
+// line and wrapped text returns to the container's left edge.
+const DESCRIPTION_LINE_HEIGHT = 1.7;
 
 function AbilityRow({
   label,
@@ -168,13 +170,13 @@ function AbilityRow({
         fontFamily: FONTS.body,
         fontSize: `${FONT_SIZES.base}px`,
         fontWeight: 600,
-        lineHeight: 1.4,
+        lineHeight: DESCRIPTION_LINE_HEIGHT,
       }}>
       <span
         style={{
           float: 'left',
           marginRight: 8,
-          padding: '0 8px',
+          padding: '4px 8px',
           background: COLORS.lorcanaTagBg,
           color: COLORS.lorcanaTagText,
           fontFamily: FONTS.body,
@@ -183,12 +185,11 @@ function AbilityRow({
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
-          // Set slightly less than the description's line-height so the float reliably
-          // clears after one line. CSS spec doesn't define wrap behavior at the boundary
-          // (when float-bottom == line-2-top): browsers can land line 2 either past the
-          // float or still next to it depending on subpixel rounding. Shaving 2px
-          // guarantees line 2 wraps to the container's left edge.
-          lineHeight: `${DESCRIPTION_LINE_HEIGHT_PX - 2}px`,
+          // lineHeight = font-size keeps the label box exactly tall enough to hold
+          // its text. Total box height = font (12) + padding (4+4) = 20px, which is
+          // less than the description line (22.1px) minus the 2px safety used elsewhere
+          // — the float reliably clears so wrapped lines return to the container's left.
+          lineHeight: `${FONT_SIZES.md}px`,
           borderRadius: `${RADIUS.xs}px`,
         }}>
         {label}
