@@ -68,7 +68,7 @@ export function CommunityEmptyState({variant, current, threshold = 5, onCta, use
         gap: 12,
         padding: '24px 20px',
         background: COLORS.surfaceAlt,
-        border: `1px dashed ${COLORS.surfaceBorder}`,
+        border: `1px solid ${COLORS.surfaceBorder}`,
         borderRadius: `${RADIUS.lg}px`,
         textAlign: 'center',
         fontFamily: FONTS.body,
