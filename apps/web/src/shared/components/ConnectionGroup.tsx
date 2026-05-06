@@ -163,6 +163,10 @@ function ExplanationWithHighlights({
                 padding: '2px 6px',
                 borderRadius: 3,
                 textAlign: 'center',
+                // Reset textIndent so the parent AbilityRow's text-indent:-12px
+                // (used to pull the role label flush left) doesn't cascade into
+                // the chip's own text and shift the letter off-center.
+                textIndent: 0,
                 verticalAlign: 'baseline',
                 cursor: onHighlight ? 'default' : 'inherit',
                 userSelect: 'none',
