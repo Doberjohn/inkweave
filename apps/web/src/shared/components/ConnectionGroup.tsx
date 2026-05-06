@@ -183,9 +183,12 @@ function AbilityRow({
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
-          // line-height pinned to the description's line so the box aligns vertically
-          // with the first line of the surrounding text.
-          lineHeight: `${DESCRIPTION_LINE_HEIGHT_PX}px`,
+          // Set slightly less than the description's line-height so the float reliably
+          // clears after one line. CSS spec doesn't define wrap behavior at the boundary
+          // (when float-bottom == line-2-top): browsers can land line 2 either past the
+          // float or still next to it depending on subpixel rounding. Shaving 2px
+          // guarantees line 2 wraps to the container's left edge.
+          lineHeight: `${DESCRIPTION_LINE_HEIGHT_PX - 2}px`,
           borderRadius: `${RADIUS.xs}px`,
         }}>
         {label}
