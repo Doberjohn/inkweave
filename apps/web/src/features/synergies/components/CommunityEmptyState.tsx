@@ -1,3 +1,4 @@
+import type {ReactNode} from 'react';
 import {COLORS, FONT_SIZES, FONTS, RADIUS} from '../../../shared/constants';
 import {CtaButton} from '../../../shared/components/CtaButton';
 import {VoteAffirmation} from '../../voting/components';
@@ -20,17 +21,25 @@ interface CommunityEmptyStateProps {
   userAlreadyVoted?: boolean;
 }
 
-const COPY: Record<CommunityEmptyVariant, {title: string; descTemplate: (n: number) => string; ctaLabel: string}> = {
+const COPY: Record<CommunityEmptyVariant, {title: string; renderDesc: (n: number) => ReactNode; ctaLabel: string}> = {
   'full-empty': {
     title: 'Not enough votes yet',
-    descTemplate: (remaining) =>
-      `Need ${remaining} more vote${remaining === 1 ? '' : 's'} before community signal becomes meaningful.`,
+    renderDesc: (remaining) => (
+      <>
+        Need <strong style={{color: COMMUNITY_TINT}}>{remaining} more</strong> vote
+        {remaining === 1 ? '' : 's'} before community signal becomes meaningful.
+      </>
+    ),
     ctaLabel: 'Rate in Detail →',
   },
   'half-empty': {
     title: 'Not enough in-depth votes yet',
-    descTemplate: (remaining) =>
-      `Need ${remaining} more in-depth vote${remaining === 1 ? '' : 's'} to fill in the community details.`,
+    renderDesc: (remaining) => (
+      <>
+        Need <strong style={{color: COMMUNITY_TINT}}>{remaining} more</strong> in-depth vote
+        {remaining === 1 ? '' : 's'} to fill in the community details.
+      </>
+    ),
     ctaLabel: 'Help fill in the details →',
   },
 };
@@ -44,7 +53,7 @@ const COPY: Record<CommunityEmptyVariant, {title: string; descTemplate: (n: numb
  */
 export function CommunityEmptyState({variant, current, threshold = 5, onCta, userAlreadyVoted = false}: CommunityEmptyStateProps) {
   const remaining = Math.max(threshold - current, 0);
-  const {title, descTemplate, ctaLabel} = COPY[variant];
+  const {title, renderDesc, ctaLabel} = COPY[variant];
   const progressPct = Math.min((current / threshold) * 100, 100);
 
   return (
@@ -81,7 +90,7 @@ export function CommunityEmptyState({variant, current, threshold = 5, onCta, use
           lineHeight: 1.5,
           color: COLORS.descriptionText,
         }}>
-        {descTemplate(remaining)}
+        {renderDesc(remaining)}
       </p>
       <div
         aria-label={`${current} of ${threshold} votes`}
