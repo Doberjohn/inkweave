@@ -33,6 +33,9 @@ export function VoteAffirmation({accentColor, title, detail}: VoteAffirmationPro
         border: `1px dashed ${hexRgba(accentColor, 0.45)}`,
         background: hexRgba(accentColor, 0.06),
         fontFamily: FONTS.body,
+        // Override inherited textAlign so the tile's text stays left-aligned even when
+        // its container centers text (e.g. CommunityEmptyState's centered empty state).
+        textAlign: 'left',
       }}>
       <span
         aria-hidden="true"
