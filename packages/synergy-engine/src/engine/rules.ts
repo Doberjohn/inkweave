@@ -249,14 +249,14 @@ export const LOCATION_ROLE_CHIP_LABELS: Record<LocationRole, string> = {
 
 /** Educational descriptions explaining what each location role means, templated with card name and location name */
 export const LOCATION_ROLE_DESCRIPTIONS: Record<LocationRole, (cardName: string, locationName: string) => string> = {
-  'at-payoff': (name, loc) => `${name} gets bonuses when characters are at ${loc}`,
-  'play-trigger': (name, loc) => `${name} activates effects whenever you play ${loc}`,
-  buff: (name, loc) => `${name} strengthens ${loc} with resist, protection, or stat boosts`,
-  'location-ramp': (name, loc) => `${name} reduces the cost of playing or moving characters to ${loc}`,
-  move: (name, loc) => `${name} moves characters to ${loc} to create an advantage`,
-  'in-play-check': (name, loc) => `${name} gains benefits when you have ${loc} in play`,
-  search: (name, loc) => `${name} searches your deck or discard for ${loc}`,
-  boost: (name, loc) => `${name} can power up ${loc} through the Boost keyword`,
+  'at-payoff': (_name, loc) => `Gets bonuses when characters are at ${loc}.`,
+  'play-trigger': (_name, loc) => `Activates effects when you play ${loc}.`,
+  buff: (_name, loc) => `Strengthens ${loc} with Resist or stat boosts.`,
+  'location-ramp': (_name, loc) => `Reduces the cost of moving characters to ${loc}.`,
+  move: (_name, loc) => `Moves characters to ${loc} for an advantage.`,
+  'in-play-check': (_name, loc) => `Gains benefits when ${loc} is in play.`,
+  search: (_name, loc) => `Searches your deck or discard for ${loc}.`,
+  boost: (_name, loc) => `Powers up ${loc} via the Boost keyword.`,
 };
 
 /**
@@ -345,7 +345,7 @@ function buildLocationCrossMatch(
   return {
     card: other,
     score,
-    explanation: `${card.name} (${ROLE_LABELS[role]}) and ${other.name} (${otherLabel}) — Complementary location strategy`,
+    explanation: `${ROLE_LABELS[role]} and ${otherLabel} are complementary location roles.`,
     bidirectional: true,
   };
 }
@@ -502,7 +502,7 @@ function makeSingerSongMatch(singer: LorcanaCard, song: LorcanaCard, target: Lor
   return {
     card: target,
     score: singerSongScore(singerValue - song.cost),
-    explanation: `${singer.fullName} (Singer ${singerValue}) can sing ${song.fullName} (cost ${song.cost}) for free`,
+    explanation: `Singer ${singerValue} sings any cost ${song.cost} or lower song for free.`,
     bidirectional: true,
   };
 }
@@ -580,11 +580,11 @@ export const synergyRules: SynergyRule[] = [
   },
 
   // --------------------------------------------
-  // NAMED COMPANIONS
+  // NAMED COMPANIONS (display label: "Companions")
   // --------------------------------------------
   {
     id: 'named-companions',
-    name: 'Named Companions',
+    name: 'Companions',
     category: 'direct',
     description: 'Cards that reference specific named characters, items, locations, or actions',
 
@@ -611,7 +611,7 @@ export const synergyRules: SynergyRule[] = [
           matches.push({
             card: target,
             score,
-            explanation: `${card.fullName} benefits from having ${refName} — ${effectTier} synergy when companion is in play`,
+            explanation: `Has a ${effectTier} effect when ${refName} is in play.`,
             bidirectional: true,
           });
         }
@@ -879,12 +879,10 @@ function scoreDiscardPair(
   const otherPayoff = otherRoles.includes('payoff');
 
   if (isDiscardKillCombo(cardDisruption, cardPayoff, otherDisruption, otherPayoff)) {
-    const disruption = cardDisruption ? card : other;
-    const payoff = cardPayoff ? card : other;
     return {
       card: other,
       score: 8,
-      explanation: `${disruption.fullName} depletes the opponent's hand, powering up ${payoff.fullName}'s hand-size advantage`,
+      explanation: `Empties the opponent's hand and powers up the hand-size advantage.`,
       bidirectional: true,
     };
   }
@@ -896,8 +894,8 @@ function scoreDiscardPair(
     card: other,
     score: 5,
     explanation: bothPayoff
-      ? `Both ${card.fullName} and ${other.fullName} reward hand-size advantage over opponents`
-      : `Both ${card.fullName} and ${other.fullName} disrupt the opponent's hand`,
+      ? `Both reward hand-size advantage over opponents.`
+      : `Both disrupt the opponent's hand.`,
     bidirectional: true,
   };
 }
@@ -927,13 +925,13 @@ function scoreLoreDenialPair(
   if (roleA === 'steal' && roleB === 'steal') {
     return {
       score: 7,
-      explanation: `Both ${cardA.fullName} and ${cardB.fullName} steal lore — every trigger swings the race in your favor twice`,
+      explanation: `Both steal lore. Every trigger swings the race twice in your favor.`,
     };
   }
   if (roleA === 'burn' && roleB === 'burn') {
     return {
       score: 5,
-      explanation: `Both ${cardA.fullName} and ${cardB.fullName} make the opponent lose lore — stacking denial pressure`,
+      explanation: `Both make opponents lose lore. Stacks the denial pressure.`,
     };
   }
   // Mixed pair — pick the burn-side and steal-side cards regardless of order

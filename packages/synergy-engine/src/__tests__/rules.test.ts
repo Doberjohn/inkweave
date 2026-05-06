@@ -1169,13 +1169,15 @@ describe('Card Helper Functions', () => {
       expect(synergies[0].score).toBe(8); // falls back to card.cost=4, diff=0
     });
 
-    it('should include singer name, cost, and "can sing" in explanation', () => {
+    it('should include Singer value, song cost, and "sings" verb in explanation', () => {
       const {singer, song} = makeSingerSongPair({songCost: 4});
       const synergies = singerRule.findSynergies(singer, [singer, song]);
-      expect(synergies[0].explanation).toContain('Gazelle - Pop Star');
-      expect(synergies[0].explanation).toContain('can sing');
-      expect(synergies[0].explanation).toContain('Try Everything');
+      // Explanation no longer interpolates card names (modal context provides
+      // identity via the visible cards). Mechanic-level assertions only.
+      expect(synergies[0].explanation).toContain('Singer 5');
+      expect(synergies[0].explanation).toContain('sings');
       expect(synergies[0].explanation).toContain('cost 4');
+      expect(synergies[0].explanation).toContain('for free');
     });
   });
 
