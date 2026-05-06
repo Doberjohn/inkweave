@@ -98,7 +98,7 @@ function calculateShiftSynergy(
   if (activates) {
     return {
       score: Math.min(base.score + 1, 10),
-      reason: `${base.reason} ${baseCard.fullName} is both a Shift target and enables the free Shift condition.`,
+      reason: `Same target. Also unlocks the free Shift condition.`,
     };
   }
 
@@ -107,24 +107,24 @@ function calculateShiftSynergy(
 
 /** Score a free Shift (cost 0) — only the base card's cost matters since the shift itself is free. */
 function freeShiftScore(
-  shiftCard: LorcanaCard,
+  _shiftCard: LorcanaCard,
   baseCard: LorcanaCard,
 ): {score: number; reason: string} {
   if (baseCard.cost <= 3) {
     return {
       score: 9,
-      reason: `Free Shift: Play ${baseCard.fullName} early, then shift into ${shiftCard.fullName} for 0 ink.`,
+      reason: `Free Shift. Play the base early, then shift in for 0 ink.`,
     };
   }
   if (baseCard.cost <= 5) {
     return {
       score: 7,
-      reason: `Free Shift: Shift ${baseCard.fullName} into ${shiftCard.fullName} for 0 ink, but the base takes longer to set up.`,
+      reason: `Free Shift saves ink, but the base takes longer to set up.`,
     };
   }
   return {
     score: 5,
-    reason: `Free Shift but expensive base — Hard to get ${baseCard.fullName} into play first.`,
+    reason: `Free Shift, but the expensive base is hard to set up first.`,
   };
 }
 
@@ -136,18 +136,18 @@ function onCurveScore(
   if (baseCard.inkwell && shiftCard.inkwell) {
     return {
       score: 9,
-      reason: `Perfect curve: Play ${baseCard.fullName} on turn ${baseCard.cost}, Shift next turn. Both cards are inkable as fallback.`,
+      reason: `Perfect curve. Both cards inkable as fallback.`,
     };
   }
   if (baseCard.inkwell || shiftCard.inkwell) {
     return {
       score: 8,
-      reason: `Perfect curve: Play ${baseCard.fullName} on turn ${baseCard.cost}, Shift next turn. One card is inkable as fallback.`,
+      reason: `Perfect curve. One card inkable as fallback.`,
     };
   }
   return {
     score: 7,
-    reason: `On curve: Play ${baseCard.fullName} on turn ${baseCard.cost}, Shift next turn. Neither card is inkable — Less flexible if drawn off-curve.`,
+    reason: `On curve, but neither card is inkable. Less flexible off-curve.`,
   };
 }
 
@@ -161,19 +161,19 @@ function curveAlignmentScore(
   if (curveGap === 2) {
     return {
       score: 7,
-      reason: `Smooth curve: ${baseCard.fullName} flows naturally into Shift within a couple of turns.`,
+      reason: `Smooth curve. Flows into Shift in a couple of turns.`,
     };
   }
   if (curveGap === 0) {
-    return {score: 5, reason: `Same cost — No ink savings from Shifting, but skips the drying phase.`};
+    return {score: 5, reason: `Same cost. No ink savings from Shifting, but skips the drying phase.`};
   }
   if (curveGap === 3) {
-    return {score: 5, reason: `Wide 3-turn gap — Playable but slow to set up.`};
+    return {score: 5, reason: `Wide 3-turn gap. Playable but slow to set up.`};
   }
   // Poor alignment: 4+ turn gap or negative (shift costs less than base)
   return {
     score: 3,
-    reason: `The cost gap makes it hard to set up ${baseCard.fullName} in time to shift ${shiftCard.fullName} onto it.`,
+    reason: `The cost gap makes it hard to set up the base in time to Shift.`,
   };
 }
 
@@ -919,8 +919,8 @@ function scoreDiscardPair(
 function scoreLoreDenialPair(
   roleA: LoreDenialRole,
   roleB: LoreDenialRole,
-  cardA: LorcanaCard,
-  cardB: LorcanaCard,
+  _cardA: LorcanaCard,
+  _cardB: LorcanaCard,
 ): {score: number; explanation: string} {
   if (roleA === 'steal' && roleB === 'steal') {
     return {
@@ -934,12 +934,10 @@ function scoreLoreDenialPair(
       explanation: `Both make opponents lose lore. Stacks the denial pressure.`,
     };
   }
-  // Mixed pair — pick the burn-side and steal-side cards regardless of order
-  const burn = roleA === 'burn' ? cardA : cardB;
-  const steal = roleA === 'steal' ? cardA : cardB;
+  // Mixed pair — burn-side and steal-side cards (roles known but no longer named in copy).
   return {
     score: 6,
-    explanation: `${burn.fullName} pushes the opponent down while ${steal.fullName} pulls you up — pressing both ends of the lore race`,
+    explanation: `One pushes opponents down. The other pulls you up. Both ends pressed.`,
   };
 }
 
@@ -1056,18 +1054,18 @@ const RAMP_EXPLANATIONS: Record<
   RampPairShape,
   (cardA: LorcanaCard, cardB: LorcanaCard, flags: RampPairFlags) => string
 > = {
-  'ramp-trigger': (_a, _b, f) =>
-    `${f.rampCard.fullName} adds ink to your inkwell, triggering ${f.triggerCard.fullName}'s inkwell effect`,
-  'ramp-ramp': (a, b) =>
-    `Both ${a.fullName} and ${b.fullName} accelerate your ink, getting you ahead faster`,
-  'ramp-cost': (_a, _b, f) =>
-    `${f.rampCard.fullName} adds extra ink while ${f.costCard.fullName} discounts your plays`,
-  'trigger-trigger': (a, b) =>
-    `Both ${a.fullName} and ${b.fullName} effects activate on inkwell events`,
-  'cost-cost': (a, b) =>
-    `Both ${a.fullName} and ${b.fullName} reduce costs — stacking discounts lets you play cards faster`,
-  'trigger-cost': (a, b) =>
-    `${a.fullName} and ${b.fullName} both support an accelerated game plan`,
+  'ramp-trigger': (_a, _b, _f) =>
+    `Adds ink to your inkwell, triggering the partner's inkwell effect.`,
+  'ramp-ramp': (_a, _b) =>
+    `Both accelerate your ink. Gets you ahead faster.`,
+  'ramp-cost': (_a, _b, _f) =>
+    `One adds extra ink, the other discounts your plays.`,
+  'trigger-trigger': (_a, _b) =>
+    `Both effects activate on inkwell events.`,
+  'cost-cost': (_a, _b) =>
+    `Both reduce costs. Stacking discounts plays cards faster.`,
+  'trigger-cost': (_a, _b) =>
+    `Both support an accelerated game plan.`,
 };
 
 /** Generate a human-readable explanation for a ramp synergy pair. */
@@ -1135,11 +1133,9 @@ function buildToyPairCtx(
 function tryToyPeakChain(ctx: ToyPairCtx): ToyPairResult | null {
   const matched = (ctx.aHasSearch && ctx.bHasBanish) || (ctx.aHasBanish && ctx.bHasSearch);
   if (!matched) return null;
-  const searcher = ctx.aHasSearch ? ctx.card : ctx.other;
-  const trigger = ctx.aHasBanish ? ctx.card : ctx.other;
   return {
     score: 8,
-    explanation: `${searcher.fullName} loads a Toy onto the board, then ${trigger.fullName} pays off when it's banished — peak tribal chain`,
+    explanation: `Loads a Toy onto the board, then pays off when it gets banished. Peak tribal chain.`,
   };
 }
 
@@ -1147,11 +1143,9 @@ function tryToyPeakChain(ctx: ToyPairCtx): ToyPairResult | null {
 function tryToyMemberSearch(ctx: ToyPairCtx): ToyPairResult | null {
   const matched = (ctx.aMember && ctx.bHasSearch) || (ctx.aHasSearch && ctx.bMember);
   if (!matched) return null;
-  const searcher = ctx.aHasSearch ? ctx.card : ctx.other;
-  const memberCard = ctx.aHasSearch ? ctx.other : ctx.card;
   return {
     score: 8,
-    explanation: `${searcher.fullName} can fetch ${memberCard.fullName} from the deck — direct tribal access`,
+    explanation: `Fetches this Toy from the deck. Direct tribal access.`,
   };
 }
 
@@ -1160,7 +1154,7 @@ function tryToyTribalCompound(ctx: ToyPairCtx): ToyPairResult | null {
   if (!(ctx.aTribal && ctx.bTribal)) return null;
   return {
     score: 7,
-    explanation: `${ctx.card.fullName} and ${ctx.other.fullName} both reward Toy density — tribal payoffs compound`,
+    explanation: `Both reward Toy density. Tribal payoffs compound.`,
   };
 }
 
@@ -1168,11 +1162,9 @@ function tryToyTribalCompound(ctx: ToyPairCtx): ToyPairResult | null {
 function tryToyMemberTribal(ctx: ToyPairCtx): ToyPairResult | null {
   const matched = (ctx.aMember && ctx.bTribal) || (ctx.aTribal && ctx.bMember);
   if (!matched) return null;
-  const tribalCard = ctx.aTribal ? ctx.card : ctx.other;
-  const memberCard = ctx.aTribal ? ctx.other : ctx.card;
   return {
     score: 7,
-    explanation: `${memberCard.fullName} contributes to the Toy density that ${tribalCard.fullName} rewards`,
+    explanation: `Contributes to the Toy density that gets rewarded.`,
   };
 }
 
@@ -1202,7 +1194,7 @@ function scoreToyPair(
     tryToyTribalCompound(ctx) ??
     tryToyMemberTribal(ctx) ?? {
       score: 5,
-      explanation: `${card.fullName} and ${other.fullName} share the Toys deck — density baseline`,
+      explanation: `Both share the Toys deck. Density baseline.`,
     }
   );
 }

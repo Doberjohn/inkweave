@@ -1444,10 +1444,13 @@ describe('Card Helper Functions', () => {
       expect(synergies).toHaveLength(0);
     });
 
-    it('should generate explanations mentioning both card names', () => {
+    it('should generate non-empty mechanic-level explanations', () => {
+      // Card-name interpolation was removed in favor of mechanic-focused copy
+      // (modal context provides identity via the visible cards). Assert the
+      // explanation is present and references ink/inkwell mechanics.
       const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, jafar]);
-      expect(synergies[0].explanation).toContain('Mama Odie');
-      expect(synergies[0].explanation).toContain('Jafar');
+      expect(synergies[0].explanation.length).toBeGreaterThan(0);
+      expect(synergies[0].explanation).toMatch(/ink|inkwell/i);
     });
 
     it('should mark all matches as bidirectional', () => {
