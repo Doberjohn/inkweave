@@ -1,7 +1,7 @@
 import type {LorcanaCard} from '../../features/cards';
 import type {LocationRole, PairSynergyConnection} from 'inkweave-synergy-engine';
 import {LOCATION_ROLE_CHIP_LABELS, LOCATION_ROLE_DESCRIPTIONS} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../constants';
+import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../constants';
 import type {ConnectionGroupData} from './groupConnections';
 
 interface ConnectionGroupProps {
@@ -118,16 +118,22 @@ function tokenizeExplanation(
 
 function ExplanationWithHighlights({
   text,
-  cardAName,
-  cardBName,
+  cardA,
+  cardB,
   onHighlight,
 }: {
   text: string;
-  cardAName: string;
-  cardBName: string;
+  cardA: LorcanaCard;
+  cardB: LorcanaCard;
   onHighlight?: (card: 'a' | 'b' | null) => void;
 }) {
-  const segments = tokenizeExplanation(text, cardAName, cardBName);
+  const segments = tokenizeExplanation(text, cardA.fullName, cardB.fullName);
+  // Each chip's color matches the corresponding card's ink. Dual-ink cards take
+  // their primary ink (card.ink); secondary ink (card.ink2) is intentionally
+  // ignored for now — keeping the chip palette to one swatch keeps the visual
+  // hierarchy simple.
+  const inkA = INK_COLORS[cardA.ink];
+  const inkB = INK_COLORS[cardB.ink];
 
   return (
     <span>
@@ -136,8 +142,11 @@ function ExplanationWithHighlights({
           return <span key={i}>{seg.text}</span>;
         }
         if (seg.kind === 'token') {
-          // Chip-styled inline pill — dark Lorcana tag bg with cream text, hover-aware
-          // when an onHighlight handler is wired so the user can map A/B to which card.
+          const ink = seg.card === 'a' ? inkA : inkB;
+          // Chip-styled inline pill, tinted to the corresponding card's ink color.
+          // Dark `bg` + vibrant `text` from INK_COLORS keeps the chip on-theme
+          // for the dark fantasy palette while signaling which card the token
+          // refers to without requiring a hover.
           return (
             <span
               key={i}
@@ -145,14 +154,15 @@ function ExplanationWithHighlights({
               onMouseLeave={onHighlight ? () => onHighlight(null) : undefined}
               style={{
                 display: 'inline-block',
-                background: COLORS.lorcanaTagBg,
-                color: COLORS.lorcanaTagText,
+                background: ink.bg,
+                color: ink.text,
+                border: `1px solid ${ink.border}`,
                 fontWeight: 700,
                 fontSize: 11,
                 lineHeight: 1,
                 padding: '2px 6px',
                 borderRadius: 3,
-                letterSpacing: '0.04em',
+                textAlign: 'center',
                 verticalAlign: 'baseline',
                 cursor: onHighlight ? 'default' : 'inherit',
                 userSelect: 'none',
@@ -256,8 +266,8 @@ function AbilityRow({
       </span>
       <ExplanationWithHighlights
         text={description}
-        cardAName={cardA.fullName}
-        cardBName={cardB.fullName}
+        cardA={cardA}
+        cardB={cardB}
         onHighlight={onHighlight}
       />
     </div>
