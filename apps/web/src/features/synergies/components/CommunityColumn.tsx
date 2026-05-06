@@ -56,7 +56,7 @@ export function CommunityColumn({pair, engineScore}: CommunityColumnProps) {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 14,
+        gap: SPACING.section,
         padding: '16px 18px',
         border: `1px solid ${hexRgba(COMMUNITY_TINT, 0.25)}`,
         background: hexRgba(COMMUNITY_TINT, 0.04),
@@ -209,7 +209,7 @@ function MetricRow({
     <div
       style={{
         display: 'flex',
-        gap: 14,
+        gap: SPACING.section,
         alignItems: 'center',
         padding: '12px 14px',
         background: COLORS.surfaceAlt,

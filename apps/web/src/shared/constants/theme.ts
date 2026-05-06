@@ -35,7 +35,12 @@ export const LAYOUT = {
   synergyCardMinWidth: 160,
 } as const;
 
-// Spacing scale
+// Spacing scale.
+// xs..xxl are a 4-multiple size ladder for general-purpose padding/gap.
+// `section` is the panel-rhythm value used for outer column gaps and the
+// breathing room between major sections within a panel (header, content,
+// CTA). It sits between md (12) and lg (16) and is referenced by mockup
+// phase 2 as `.vote-section.combined-vote { gap: 14px }`.
 export const SPACING = {
   xs: 4,
   sm: 8,
@@ -43,6 +48,7 @@ export const SPACING = {
   lg: 16,
   xl: 20,
   xxl: 24,
+  section: 14,
 } as const;
 
 // Border radius scale

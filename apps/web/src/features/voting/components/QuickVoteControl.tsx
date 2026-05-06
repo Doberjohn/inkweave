@@ -289,7 +289,7 @@ function QuickVotePrompt({state, onVote, userChoice, error, isMobile, questionId
         ...CONTAINER_STYLE,
         // When the dist bar is shown above the prompt, give the block more breathing room
         // (mockup phase 2 `.vote-section.combined-vote { gap: 14px }`).
-        gap: hasDistribution ? 14 : SPACING.sm,
+        gap: hasDistribution ? SPACING.section : SPACING.sm,
         animation: 'qv-fade-up 0.35s ease-out',
       }}>
       {hasDistribution && (

@@ -3,7 +3,7 @@ import {ColumnHeader} from './ColumnHeader';
 import {ConnectionGroup, groupConnections} from '../../../shared/components';
 import {QuickVoteControl} from '../../voting/components';
 import {useQuickVote} from '../../voting/hooks';
-import {COLORS, FONTS, hexRgba} from '../../../shared/constants';
+import {COLORS, FONTS, SPACING, hexRgba} from '../../../shared/constants';
 
 const ENGINE_TINT = COLORS.primary500;
 
@@ -27,7 +27,7 @@ export function EngineColumn({pair, engineScore, onHighlight}: EngineColumnProps
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 14,
+        gap: SPACING.section,
         padding: '16px 18px',
         border: `1px solid ${hexRgba(ENGINE_TINT, 0.25)}`,
         background: hexRgba(ENGINE_TINT, 0.04),
@@ -60,8 +60,8 @@ export function EngineColumn({pair, engineScore, onHighlight}: EngineColumnProps
       />
       {connectionGroups.length > 0 && (
         // marginBottom adds breathing room between the last ability row and the QuickVoteControl
-        // below — the EngineColumn's outer gap (14) wasn't enough on its own.
-        <div style={{display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 14}}>
+        // below — the EngineColumn's outer gap (SPACING.section) wasn't enough on its own.
+        <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.section, marginBottom: SPACING.section}}>
           {connectionGroups.map((group) => (
             <ConnectionGroup
               key={group.key}
