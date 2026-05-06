@@ -5,6 +5,7 @@ import {CommunityEmptyState} from './CommunityEmptyState';
 import {ColumnHeader} from './ColumnHeader';
 import {usePairScore} from '../../voting/hooks/usePairScore';
 import {hasInDepthVote} from '../../voting/lib/voteStorage';
+import {useCardModal} from '../../../shared/contexts/CardModalContext';
 import type {PairScore} from '../../../shared/lib/supabase';
 import {
   formatPercent,
@@ -38,6 +39,7 @@ interface CommunityColumnProps {
 export function CommunityColumn({pair, engineScore}: CommunityColumnProps) {
   const {cardA, cardB} = pair;
   const navigate = useNavigate();
+  const {closeCardModal} = useCardModal();
   const {score} = usePairScore(cardA.id, cardB.id);
   const userVotedInDepth = hasInDepthVote(cardA.id, cardB.id);
 
@@ -48,7 +50,10 @@ export function CommunityColumn({pair, engineScore}: CommunityColumnProps) {
   const hasEmptyState = isFullEmpty || isHalfEmpty;
   const communityScore = !hasEmptyState && score ? Number(score.avg_score) : null;
 
-  const goToInDepthVote = () => navigate(`/vote/${cardA.id}/${cardB.id}`);
+  const goToInDepthVote = () => {
+    closeCardModal();
+    navigate(`/vote/${cardA.id}/${cardB.id}`);
+  };
 
   return (
     <section
