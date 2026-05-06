@@ -358,15 +358,17 @@ export function CardOverviewModal({
                   }}>
                   <button
                     type="button"
-                    aria-label={card.imageUrl ? 'Enlarge card image' : undefined}
-                    disabled={!card.imageUrl}
-                    onClick={card.imageUrl ? () => setLightboxOpen(true) : undefined}
+                    // Lightbox click is disabled in focused/comparison mode — the card is part of
+                    // the comparison view, not a clickable preview trigger.
+                    aria-label={card.imageUrl && !inComparison ? 'Enlarge card image' : undefined}
+                    disabled={!card.imageUrl || inComparison}
+                    onClick={card.imageUrl && !inComparison ? () => setLightboxOpen(true) : undefined}
                     style={{
                       border: 'none',
                       background: 'none',
                       padding: 0,
                       width: cardWidth,
-                      cursor: card.imageUrl ? 'pointer' : 'default',
+                      cursor: card.imageUrl && !inComparison ? 'pointer' : 'default',
                     }}>
                     <CardImage
                       src={card.imageUrl}
