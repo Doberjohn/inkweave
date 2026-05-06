@@ -67,7 +67,11 @@ export function CommunityEmptyState({variant, current, threshold = 5, onCta, use
         justifyContent: 'center',
         gap: 12,
         padding: '24px 20px',
-        background: COLORS.surfaceAlt,
+        // Faint amethyst wash over the modal bg, mirroring the QuickVotePrompt's
+        // gold wash pattern (rgba 0.06). Same darkness as before, but the column-accent
+        // hue replaces the cool surfaceAlt blue so the two empty/active panels read as
+        // a visually consistent pair.
+        background: 'rgba(182, 145, 255, 0.06)',
         border: `1px solid ${COLORS.surfaceBorder}`,
         borderRadius: `${RADIUS.lg}px`,
         textAlign: 'center',
