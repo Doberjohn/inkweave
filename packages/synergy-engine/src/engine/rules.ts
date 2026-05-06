@@ -333,7 +333,7 @@ function buildLocationDirectMatch(
 
 /** Build a cross-synergy match between two location-support cards (or null when roles don't complement). */
 function buildLocationCrossMatch(
-  card: LorcanaCard,
+  _card: LorcanaCard,
   other: LorcanaCard,
   cardRoles: LocationRole[],
   role: LocationRole,
@@ -868,7 +868,7 @@ function isDiscardKillCombo(
 }
 
 function scoreDiscardPair(
-  card: LorcanaCard,
+  _card: LorcanaCard,
   cardRoles: DiscardRole[],
   other: LorcanaCard,
   otherRoles: DiscardRole[],
