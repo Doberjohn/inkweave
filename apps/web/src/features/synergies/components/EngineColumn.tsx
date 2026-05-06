@@ -1,10 +1,9 @@
-import {useNavigate} from 'react-router-dom';
 import type {DetailedPairSynergy} from 'inkweave-synergy-engine';
 import {ColumnHeader} from './ColumnHeader';
 import {ConnectionGroup, groupConnections} from '../../../shared/components';
 import {QuickVoteControl} from '../../voting/components';
 import {useQuickVote} from '../../voting/hooks';
-import {COLORS, FONTS, SPACING, hexRgba} from '../../../shared/constants';
+import {COLORS, FONTS, hexRgba} from '../../../shared/constants';
 
 const ENGINE_TINT = COLORS.primary500;
 
@@ -17,7 +16,6 @@ interface EngineColumnProps {
 export function EngineColumn({pair, engineScore, onHighlight}: EngineColumnProps) {
   const {cardA, cardB, connections} = pair;
   const connectionGroups = groupConnections(connections);
-  const navigate = useNavigate();
   const quickVote = useQuickVote(cardA.id, cardB.id);
 
   const ruleCount = connectionGroups.length;
@@ -43,6 +41,7 @@ export function EngineColumn({pair, engineScore, onHighlight}: EngineColumnProps
         scoreColor={ENGINE_TINT}
         scoreFontSize={48}
         showScale
+        scoreTooltip={'Perfect — 9.5 and up\nStrong — 7 to 9.4\nModerate — 4 to 6.9\nWeak — under 4'}
         meta={
           <span style={{display: 'inline-flex', alignItems: 'center', gap: 6}}>
             <span
@@ -60,7 +59,7 @@ export function EngineColumn({pair, engineScore, onHighlight}: EngineColumnProps
         }
       />
       {connectionGroups.length > 0 && (
-        <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: 14}}>
           {connectionGroups.map((group) => (
             <ConnectionGroup
               key={group.key}
@@ -76,10 +75,9 @@ export function EngineColumn({pair, engineScore, onHighlight}: EngineColumnProps
         state={quickVote.state}
         onVote={quickVote.vote}
         distribution={quickVote.distribution}
-        distributionFailed={quickVote.distributionFailed}
         userChoice={quickVote.userChoice}
         error={quickVote.error}
-        onRateInDetail={() => navigate(`/vote/${cardA.id}/${cardB.id}`)}
+        engineScore={engineScore}
       />
     </section>
   );
