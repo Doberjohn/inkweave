@@ -59,6 +59,63 @@ function findCardInText(text: string, fullName: string): {index: number; match: 
 
 // ── Subcomponents ──
 
+type ExplanationSegment =
+  | {kind: 'text'; text: string}
+  | {kind: 'name'; text: string; card: 'a' | 'b'}
+  | {kind: 'token'; card: 'a' | 'b'};
+
+/**
+ * Tokenize an explanation string into renderable segments. Detects:
+ * - `{A}` / `{B}` chip tokens (engine emits these for role-aware references)
+ * - Card-name occurrences (legacy path, preserved for any explanations that still embed names)
+ *
+ * Chip tokens always win over a card-name match at the same index since they are
+ * length-3 sentinels emitted by the engine specifically for this purpose.
+ */
+function tokenizeExplanation(
+  text: string,
+  cardAName: string,
+  cardBName: string,
+): ExplanationSegment[] {
+  const segments: ExplanationSegment[] = [];
+  let remaining = text;
+
+  while (remaining.length > 0) {
+    const tokenA = remaining.indexOf('{A}');
+    const tokenB = remaining.indexOf('{B}');
+    const nameA = findCardInText(remaining, cardAName);
+    const nameB = findCardInText(remaining, cardBName);
+
+    type Candidate =
+      | {kind: 'token'; idx: number; length: number; card: 'a' | 'b'}
+      | {kind: 'name'; idx: number; length: number; card: 'a' | 'b'; match: string};
+    const candidates: Candidate[] = [];
+    if (tokenA >= 0) candidates.push({kind: 'token', idx: tokenA, length: 3, card: 'a'});
+    if (tokenB >= 0) candidates.push({kind: 'token', idx: tokenB, length: 3, card: 'b'});
+    if (nameA.index >= 0) candidates.push({kind: 'name', idx: nameA.index, length: nameA.match.length, card: 'a', match: nameA.match});
+    if (nameB.index >= 0) candidates.push({kind: 'name', idx: nameB.index, length: nameB.match.length, card: 'b', match: nameB.match});
+
+    if (candidates.length === 0) {
+      segments.push({kind: 'text', text: remaining});
+      break;
+    }
+
+    // Earliest index wins; tie-break on longer match (prefer full names over partials)
+    candidates.sort((x, y) => (x.idx - y.idx) || (y.length - x.length));
+    const winner = candidates[0];
+
+    if (winner.idx > 0) segments.push({kind: 'text', text: remaining.slice(0, winner.idx)});
+    if (winner.kind === 'token') {
+      segments.push({kind: 'token', card: winner.card});
+    } else {
+      segments.push({kind: 'name', text: winner.match, card: winner.card});
+    }
+    remaining = remaining.slice(winner.idx + winner.length);
+  }
+
+  return segments;
+}
+
 function ExplanationWithHighlights({
   text,
   cardAName,
@@ -70,44 +127,42 @@ function ExplanationWithHighlights({
   cardBName: string;
   onHighlight?: (card: 'a' | 'b' | null) => void;
 }) {
-  const segments: {text: string; card: 'a' | 'b' | null}[] = [];
-  let remaining = text;
-
-  while (remaining.length > 0) {
-    const hitA = findCardInText(remaining, cardAName);
-    const hitB = findCardInText(remaining, cardBName);
-
-    let matchIdx = -1;
-    let matchName = '';
-    let matchCard: 'a' | 'b' = 'a';
-
-    if (hitA.index >= 0 && hitB.index >= 0 && hitA.index === hitB.index) {
-      // Same position; prefer the longer match to avoid partial name splits
-      if (hitA.match.length >= hitB.match.length) {
-        matchIdx = hitA.index; matchName = hitA.match; matchCard = 'a';
-      } else {
-        matchIdx = hitB.index; matchName = hitB.match; matchCard = 'b';
-      }
-    } else if (hitA.index >= 0 && (hitB.index < 0 || hitA.index < hitB.index)) {
-      matchIdx = hitA.index; matchName = hitA.match; matchCard = 'a';
-    } else if (hitB.index >= 0) {
-      matchIdx = hitB.index; matchName = hitB.match; matchCard = 'b';
-    }
-
-    if (matchIdx < 0) {
-      segments.push({text: remaining, card: null});
-      break;
-    }
-
-    if (matchIdx > 0) segments.push({text: remaining.slice(0, matchIdx), card: null});
-    segments.push({text: matchName, card: matchCard});
-    remaining = remaining.slice(matchIdx + matchName.length);
-  }
+  const segments = tokenizeExplanation(text, cardAName, cardBName);
 
   return (
     <span>
-      {segments.map((seg, i) =>
-        seg.card && onHighlight ? (
+      {segments.map((seg, i) => {
+        if (seg.kind === 'text') {
+          return <span key={i}>{seg.text}</span>;
+        }
+        if (seg.kind === 'token') {
+          // Chip-styled inline pill — dark Lorcana tag bg with cream text, hover-aware
+          // when an onHighlight handler is wired so the user can map A/B to which card.
+          return (
+            <span
+              key={i}
+              onMouseEnter={onHighlight ? () => onHighlight(seg.card) : undefined}
+              onMouseLeave={onHighlight ? () => onHighlight(null) : undefined}
+              style={{
+                display: 'inline-block',
+                background: COLORS.lorcanaTagBg,
+                color: COLORS.lorcanaTagText,
+                fontWeight: 700,
+                fontSize: 11,
+                lineHeight: 1,
+                padding: '2px 6px',
+                borderRadius: 3,
+                letterSpacing: '0.04em',
+                verticalAlign: 'baseline',
+                cursor: onHighlight ? 'default' : 'inherit',
+                userSelect: 'none',
+              }}>
+              {seg.card.toUpperCase()}
+            </span>
+          );
+        }
+        // seg.kind === 'name' — legacy card-name highlight path (still styled the dashed-underline way)
+        return onHighlight ? (
           <span
             key={i}
             onMouseEnter={() => onHighlight(seg.card)}
@@ -121,14 +176,12 @@ function ExplanationWithHighlights({
             }}>
             {seg.text}
           </span>
-        ) : seg.card ? (
+        ) : (
           <span key={i} style={{color: COLORS.lorcanaCardLink, fontWeight: 700}}>
             {seg.text}
           </span>
-        ) : (
-          <span key={i}>{seg.text}</span>
-        ),
-      )}
+        );
+      })}
     </span>
   );
 }

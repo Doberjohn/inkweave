@@ -113,18 +113,18 @@ function freeShiftScore(
   if (baseCard.cost <= 3) {
     return {
       score: 9,
-      reason: `Free Shift. Play the base early, then shift in for 0 ink.`,
+      reason: `Free Shift. Play <BASE> early, then shift <SHIFT> in for 0 ink.`,
     };
   }
   if (baseCard.cost <= 5) {
     return {
       score: 7,
-      reason: `Free Shift saves ink, but the base takes longer to set up.`,
+      reason: `Free Shift saves ink, but <BASE> takes longer to set up.`,
     };
   }
   return {
     score: 5,
-    reason: `Free Shift, but the expensive base is hard to set up first.`,
+    reason: `Free Shift, but <BASE> is expensive and hard to set up first.`,
   };
 }
 
@@ -161,7 +161,7 @@ function curveAlignmentScore(
   if (curveGap === 2) {
     return {
       score: 7,
-      reason: `Smooth curve. Flows into Shift in a couple of turns.`,
+      reason: `Smooth curve. <BASE> flows into Shift in a couple of turns.`,
     };
   }
   if (curveGap === 0) {
@@ -173,7 +173,7 @@ function curveAlignmentScore(
   // Poor alignment: 4+ turn gap or negative (shift costs less than base)
   return {
     score: 3,
-    reason: `The cost gap makes it hard to set up the base in time to Shift.`,
+    reason: `The cost gap makes it hard to set up <BASE> in time to Shift.`,
   };
 }
 
@@ -533,7 +533,16 @@ function findSingersForSong(song: LorcanaCard, allCards: LorcanaCard[]): Synergy
 
 function makeShiftMatch(shiftCard: LorcanaCard, baseCard: LorcanaCard, target: LorcanaCard): SynergyMatch {
   const {score, reason} = calculateShiftSynergy(shiftCard, baseCard);
-  return {card: target, score, explanation: reason, bidirectional: true};
+  // The searcher (modal cardA / left card / token A) is whichever card is NOT the target.
+  // If target === baseCard, searcher = shiftCard → A is the shift card, B is the base.
+  // If target === shiftCard, searcher = baseCard → A is the base, B is the shift card.
+  const searcherIsShift = baseCard.id === target.id;
+  const baseToken = searcherIsShift ? '{B}' : '{A}';
+  const shiftToken = searcherIsShift ? '{A}' : '{B}';
+  const explanation = reason
+    .replace(/<BASE>/g, baseToken)
+    .replace(/<SHIFT>/g, shiftToken);
+  return {card: target, score, explanation, bidirectional: true};
 }
 
 /** Forward: a Shift card finds valid base targets per its variant. */
@@ -879,10 +888,13 @@ function scoreDiscardPair(
   const otherPayoff = otherRoles.includes('payoff');
 
   if (isDiscardKillCombo(cardDisruption, cardPayoff, otherDisruption, otherPayoff)) {
+    // _card is the searcher (modal cardA / left / token A); other is the partner (B).
+    const disruptionToken = cardDisruption ? '{A}' : '{B}';
+    const payoffToken = cardDisruption ? '{B}' : '{A}';
     return {
       card: other,
       score: 8,
-      explanation: `Empties the opponent's hand and powers up the hand-size advantage.`,
+      explanation: `${disruptionToken} empties the opponent's hand, powering up ${payoffToken}'s hand-size edge.`,
       bidirectional: true,
     };
   }
@@ -934,10 +946,14 @@ function scoreLoreDenialPair(
       explanation: `Both make opponents lose lore. Stacks the denial pressure.`,
     };
   }
-  // Mixed pair — burn-side and steal-side cards (roles known but no longer named in copy).
+  // Mixed pair — A is the searcher (modal cardA / left card), B is the partner. Compute
+  // which token corresponds to burn vs steal based on which role the searcher holds.
+  const burnIsA = roleA === 'burn';
+  const burnToken = burnIsA ? '{A}' : '{B}';
+  const stealToken = burnIsA ? '{B}' : '{A}';
   return {
     score: 6,
-    explanation: `One pushes opponents down. The other pulls you up. Both ends pressed.`,
+    explanation: `${burnToken} pushes opponents down. ${stealToken} pulls you up. Both ends pressed.`,
   };
 }
 
@@ -1054,12 +1070,21 @@ const RAMP_EXPLANATIONS: Record<
   RampPairShape,
   (cardA: LorcanaCard, cardB: LorcanaCard, flags: RampPairFlags) => string
 > = {
-  'ramp-trigger': (_a, _b, _f) =>
-    `Adds ink to your inkwell, triggering the partner's inkwell effect.`,
+  'ramp-trigger': (a, _b, f) => {
+    // `a` is the searcher (modal cardA / left / token A); `_b` is the partner (B).
+    const rampIsA = f.rampCard.id === a.id;
+    const rampToken = rampIsA ? '{A}' : '{B}';
+    const triggerToken = rampIsA ? '{B}' : '{A}';
+    return `${rampToken} adds ink to your inkwell, triggering ${triggerToken}'s inkwell effect.`;
+  },
   'ramp-ramp': (_a, _b) =>
     `Both accelerate your ink. Gets you ahead faster.`,
-  'ramp-cost': (_a, _b, _f) =>
-    `One adds extra ink, the other discounts your plays.`,
+  'ramp-cost': (a, _b, f) => {
+    const rampIsA = f.rampCard.id === a.id;
+    const rampToken = rampIsA ? '{A}' : '{B}';
+    const costToken = rampIsA ? '{B}' : '{A}';
+    return `${rampToken} adds extra ink, ${costToken} discounts your plays.`;
+  },
   'trigger-trigger': (_a, _b) =>
     `Both effects activate on inkwell events.`,
   'cost-cost': (_a, _b) =>
@@ -1133,9 +1158,12 @@ function buildToyPairCtx(
 function tryToyPeakChain(ctx: ToyPairCtx): ToyPairResult | null {
   const matched = (ctx.aHasSearch && ctx.bHasBanish) || (ctx.aHasBanish && ctx.bHasSearch);
   if (!matched) return null;
+  // ctx.card is the searcher (modal cardA / left / token A); ctx.other is the partner (B).
+  const searchToken = ctx.aHasSearch ? '{A}' : '{B}';
+  const banishToken = ctx.aHasBanish ? '{A}' : '{B}';
   return {
     score: 8,
-    explanation: `Loads a Toy onto the board, then pays off when it gets banished. Peak tribal chain.`,
+    explanation: `${searchToken} loads a Toy, then ${banishToken} pays off when it gets banished. Peak chain.`,
   };
 }
 
@@ -1143,9 +1171,11 @@ function tryToyPeakChain(ctx: ToyPairCtx): ToyPairResult | null {
 function tryToyMemberSearch(ctx: ToyPairCtx): ToyPairResult | null {
   const matched = (ctx.aMember && ctx.bHasSearch) || (ctx.aHasSearch && ctx.bMember);
   if (!matched) return null;
+  const searchToken = ctx.aHasSearch ? '{A}' : '{B}';
+  const memberToken = ctx.aHasSearch ? '{B}' : '{A}';
   return {
     score: 8,
-    explanation: `Fetches this Toy from the deck. Direct tribal access.`,
+    explanation: `${searchToken} fetches ${memberToken} from the deck. Direct tribal access.`,
   };
 }
 

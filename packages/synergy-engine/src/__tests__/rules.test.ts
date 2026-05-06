@@ -952,7 +952,7 @@ describe('Discard Control', () => {
       const pachaMatch = synergies.find((s) => s.card.id === 'pacha');
       expect(pachaMatch).toBeDefined();
       expect(pachaMatch!.score).toBe(8);
-      expect(pachaMatch!.explanation).toContain('hand-size advantage');
+      expect(pachaMatch!.explanation).toContain('hand-size edge');
     });
 
     it('payoff ↔ payoff scores 5 (same axis, no compounding)', () => {
