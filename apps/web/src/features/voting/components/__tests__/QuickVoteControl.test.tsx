@@ -60,25 +60,27 @@ describe('QuickVoteControl', () => {
     expect(screen.getByRole('button', {name: 'Higher'})).toBeDisabled();
   });
 
-  it('renders dist segment + prompt + buttons (mockup phase 2 unified layout) in result state', () => {
+  it('renders dist segment + affirmation in result state (no prompt or buttons)', () => {
     const dist: AccuracyDistribution = {lower: 3, right: 14, higher: 3, total: 20};
     render(
       <QuickVoteControl state="result" onVote={mockVote} distribution={dist} userChoice={0} error={null} engineScore={9} />,
     );
-    // Dist segment context label (top of vote section)
+    // Dist segment stays visible above the affirmation
     expect(screen.getByText(/How the community rates Inkweave's score/)).toBeInTheDocument();
-    // Prompt + buttons remain visible
-    expect(screen.getByText("How accurate is Inkweave's score of 9?")).toBeInTheDocument();
-    // Buttons stay rendered (and disabled) so user's selection is visible
-    expect(screen.getByRole('button', {name: 'Fair'})).toBeDisabled();
+    // Affirmation replaces the prompt + buttons (which used to dead-end after voting)
+    expect(screen.getByText('Thanks for your quick vote')).toBeInTheDocument();
+    expect(screen.getByText('You picked: Fair')).toBeInTheDocument();
+    expect(screen.queryByText("How accurate is Inkweave's score of 9?")).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Fair'})).not.toBeInTheDocument();
   });
 
-  it('also shows dist segment when total is 1 (first voter)', () => {
+  it('shows dist segment + affirmation when total is 1 (first voter)', () => {
     const dist: AccuracyDistribution = {lower: 0, right: 1, higher: 0, total: 1};
     render(
       <QuickVoteControl state="result" onVote={mockVote} distribution={dist} userChoice={0} error={null} engineScore={9} />,
     );
     expect(screen.getByText(/How the community rates Inkweave's score/)).toBeInTheDocument();
+    expect(screen.getByText('Thanks for your quick vote')).toBeInTheDocument();
   });
 
   it('shows error message and re-enables buttons on error', () => {
@@ -98,14 +100,15 @@ describe('QuickVoteControl', () => {
     expect(screen.getByRole('button', {name: 'Higher'})).toBeDisabled();
   });
 
-  it('hides dist segment when distribution is null in result state', () => {
+  it('hides dist segment when distribution is null in result state — affirmation alone', () => {
     render(
       <QuickVoteControl state="result" onVote={mockVote} distribution={null} userChoice={0} error={null} engineScore={9} />,
     );
-    // No dist segment without data — just prompt + buttons (with selection disabled)
+    // No dist segment without data — just the affirmation tile
     expect(screen.queryByText(/How the community rates Inkweave's score/)).not.toBeInTheDocument();
-    expect(screen.getByText("How accurate is Inkweave's score of 9?")).toBeInTheDocument();
-    expect(screen.getByRole('button', {name: 'Fair'})).toBeDisabled();
+    expect(screen.getByText('Thanks for your quick vote')).toBeInTheDocument();
+    expect(screen.getByText('You picked: Fair')).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Fair'})).not.toBeInTheDocument();
   });
 
   it('shows rate limit message on rate_limited error', () => {
