@@ -1,6 +1,7 @@
 import {useState, useCallback, useMemo} from 'react';
 import {getSupabase, submitVote, type Accuracy, type Score, type InDepthVote} from '../../../shared/lib/supabase';
 import type {InDepthFormState, VotingPair} from '../types';
+import {writeInDepthVote} from '../lib/voteStorage';
 
 const INITIAL_STATE: InDepthFormState = {
   isReal: null,
@@ -95,6 +96,10 @@ export function useInDepthVoteSession(currentPair: VotingPair | null): UseInDept
       const result = await submitVote(vote);
 
       if (result.error === null) {
+        writeInDepthVote(currentPair.cardA.id, currentPair.cardB.id, {
+          accuracy: formState.accuracy ?? undefined,
+          score: formState.score ?? undefined,
+        });
         setLastResult('success');
       } else if (result.error === 'rate_limited') {
         setLastResult('rate_limited');

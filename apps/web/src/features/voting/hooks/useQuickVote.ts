@@ -6,6 +6,7 @@ import {
   type AccuracyDistribution,
   type Accuracy,
 } from '../../../shared/lib/supabase';
+import {readQuickVote, writeQuickVote} from '../lib/voteStorage';
 
 export type {Accuracy};
 export type QuickVoteState = 'hidden' | 'ready' | 'submitting' | 'result' | 'error';
@@ -16,57 +17,7 @@ interface Pair {
   cardB: string;
 }
 
-const VALID_ACCURACIES: Accuracy[] = [-1, 0, 1];
-
-// ── Storage helpers ──
-
-function storageKey(pair: Pair): string {
-  const [a, b] = [pair.cardA, pair.cardB].sort();
-  return `inkweave:vote:${a}:${b}`;
-}
-
-function clearStorageKey(key: string): void {
-  try { localStorage.removeItem(key); } catch (cleanupErr) {
-    console.warn('[useQuickVote] localStorage cleanup failed:', cleanupErr);
-  }
-}
-
-/** Parse a previously-stored vote payload. Clears the key on any malformed shape. */
-function parseStoredVote(raw: string, key: string): Accuracy | null {
-  try {
-    const parsed = JSON.parse(raw);
-    const accuracy = parsed?.accuracy;
-    if (VALID_ACCURACIES.includes(accuracy)) return accuracy;
-    console.error('[parseStoredVote] Unexpected shape, clearing:', parsed);
-  } catch (e) {
-    console.error('[parseStoredVote] Corrupted JSON, clearing key:', key, e);
-  }
-  clearStorageKey(key);
-  return null;
-}
-
-function getStoredVote(pair: Pair): Accuracy | null {
-  const key = storageKey(pair);
-  let raw: string | null;
-  try {
-    raw = localStorage.getItem(key);
-  } catch (e) {
-    console.warn('[getStoredVote] localStorage access denied:', e);
-    return null;
-  }
-  return raw ? parseStoredVote(raw, key) : null;
-}
-
-function storeVote(pair: Pair, accuracy: Accuracy): void {
-  try {
-    localStorage.setItem(
-      storageKey(pair),
-      JSON.stringify({accuracy, timestamp: Date.now()}),
-    );
-  } catch (e) {
-    console.error('[storeVote] Failed to persist vote to localStorage:', e);
-  }
-}
+// Storage parse/write helpers live in ../lib/voteStorage so the in-depth hook can share them.
 
 // ── State resolution ──
 
@@ -126,7 +77,7 @@ async function performVote(slots: VoteSlots, pair: Pair, accuracy: Accuracy): Pr
     const result = await submitVote({cardA: pair.cardA, cardB: pair.cardB, accuracy});
     if (!slots.submittingRef.current) return;
     if (result.error === null) {
-      storeVote(pair, accuracy);
+      writeQuickVote(pair.cardA, pair.cardB, accuracy);
       slots.setState('result');
       await fetchPostVoteDistribution(slots, pair);
       return;
@@ -155,7 +106,8 @@ interface FetchDistributionInputs {
 }
 
 function shouldFetchDistribution({state, distribution, distributionFailed}: FetchDistributionInputs): boolean {
-  if (state !== 'result') return false;
+  // Eager fetch — dist bar is shown alongside the vote prompt (mockup phase 2 combined view).
+  if (state === 'hidden') return false;
   if (distribution) return false;
   if (distributionFailed) return false;
   return true;
@@ -251,7 +203,7 @@ export interface UseQuickVoteReturn {
 export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
   const pair = useMemo<Pair>(() => ({cardA, cardB}), [cardA, cardB]);
   const isAvailable = useMemo(() => getSupabase() !== null, []);
-  const storedChoice = useMemo(() => getStoredVote(pair), [pair]);
+  const storedChoice = useMemo(() => readQuickVote(pair.cardA, pair.cardB), [pair]);
   const slots = useQuickVoteSlots({pair, isAvailable, storedChoice});
   const submittingRef = useRef(false);
 
