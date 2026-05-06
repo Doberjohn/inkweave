@@ -318,7 +318,6 @@ function QuickVotePrompt({state, onVote, userChoice, error, isMobile, questionId
           accentColor={COLORS.primary500}
           title="Thanks for your quick vote"
           detail={userChoice != null ? `You picked: ${CHOICE_LABELS[userChoice]}` : undefined}
-          compact
         />
       ) : (
         <>

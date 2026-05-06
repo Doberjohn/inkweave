@@ -7,8 +7,6 @@ interface VoteAffirmationProps {
   title: string;
   /** Optional second line — echo of what the user submitted. */
   detail?: string;
-  /** Tighter padding for inline placement next to other controls. */
-  compact?: boolean;
 }
 
 /**
@@ -17,16 +15,20 @@ interface VoteAffirmationProps {
  * Mirror-image use: ENGINE side (left) shows it when QuickVote is in `result` state.
  * COMMUNITY side (right) shows it when the in-depth marker exists, replacing the
  * "Rate in detail" CTA so the user isn't pointed at a flow they've already done.
+ *
+ * Icon+text bundle is centered horizontally so the tile reads as a unit regardless
+ * of the tile's surrounding container alignment.
  */
-export function VoteAffirmation({accentColor, title, detail, compact = false}: VoteAffirmationProps) {
+export function VoteAffirmation({accentColor, title, detail}: VoteAffirmationProps) {
   return (
     <div
       role="status"
       style={{
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: 10,
-        padding: compact ? '8px 12px' : '12px 14px',
+        padding: '8px 12px',
         borderRadius: RADIUS.lg,
         border: `1px dashed ${hexRgba(accentColor, 0.45)}`,
         background: hexRgba(accentColor, 0.06),
@@ -51,7 +53,7 @@ export function VoteAffirmation({accentColor, title, detail, compact = false}: V
         ✓
       </span>
       <div style={{display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0}}>
-        <span style={{fontSize: compact ? 12 : 13, fontWeight: 600, color: COLORS.text, lineHeight: 1.3}}>
+        <span style={{fontSize: 12, fontWeight: 600, color: COLORS.text, lineHeight: 1.3}}>
           {title}
         </span>
         {detail && (
