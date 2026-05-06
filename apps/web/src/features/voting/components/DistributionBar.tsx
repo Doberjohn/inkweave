@@ -7,6 +7,8 @@ interface DistributionBarProps {
   higher: number;
   animate: boolean;
   showLabels?: boolean;
+  /** Primary context line above the bar (mockup phase 2: "How the community rates Inkweave's score"). */
+  contextLabel?: string;
 }
 
 const SEGMENT_COLORS = {
@@ -21,7 +23,7 @@ const LABELS = {
   higher: 'Should be higher',
 } as const;
 
-export function DistributionBar({lower, right, higher, animate, showLabels = true}: DistributionBarProps) {
+export function DistributionBar({lower, right, higher, animate, showLabels = true, contextLabel}: DistributionBarProps) {
   const total = lower + right + higher;
   const [mounted, setMounted] = useState(!animate);
 
@@ -50,6 +52,20 @@ export function DistributionBar({lower, right, higher, animate, showLabels = tru
 
   return (
     <div>
+      {contextLabel && (
+        <p
+          style={{
+            margin: '0 0 8px',
+            fontSize: 11,
+            color: COLORS.textMuted,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            fontWeight: 500,
+            textAlign: 'center',
+          }}>
+          {contextLabel}
+        </p>
+      )}
       <div
         style={{
           display: 'flex',
@@ -89,15 +105,26 @@ export function DistributionBar({lower, right, higher, animate, showLabels = tru
       {showLabels && (
         <div
           style={{
+            // Same flex layout + gap as the bar above so each label tracks its segment's width
+            // and stays centered under it (mockup phase 2 dist-labels, with zero-count labels dropped).
             display: 'flex',
-            justifyContent: 'space-between',
-            marginTop: 4,
-            fontSize: `${FONT_SIZES.xs}px`,
-            color: COLORS.textMuted,
+            gap: 2,
+            marginTop: 6,
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: '0.04em',
           }}>
-          <span>{LABELS.lower}</span>
-          <span>{LABELS.right}</span>
-          <span>{LABELS.higher}</span>
+          {segments.map((key) => (
+            <span
+              key={key}
+              style={{
+                flex: pct[key],
+                color: SEGMENT_COLORS[key].text,
+                textAlign: 'center',
+              }}>
+              {LABELS[key]}
+            </span>
+          ))}
         </div>
       )}
     </div>
