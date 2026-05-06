@@ -16,8 +16,9 @@ interface VoteAffirmationProps {
  * COMMUNITY side (right) shows it when the in-depth marker exists, replacing the
  * "Rate in detail" CTA so the user isn't pointed at a flow they've already done.
  *
- * Icon+text bundle is centered horizontally so the tile reads as a unit regardless
- * of the tile's surrounding container alignment.
+ * Icon+text bundle is left-aligned inside the tile (default flex-start). Both columns
+ * use the same dimensions so the tiles read as siblings even though their surrounding
+ * containers have different content alignment.
  */
 export function VoteAffirmation({accentColor, title, detail}: VoteAffirmationProps) {
   return (
@@ -26,7 +27,6 @@ export function VoteAffirmation({accentColor, title, detail}: VoteAffirmationPro
       style={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
         gap: 10,
         padding: '8px 12px',
         borderRadius: RADIUS.lg,
