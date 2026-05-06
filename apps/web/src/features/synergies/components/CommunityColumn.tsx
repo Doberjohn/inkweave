@@ -4,6 +4,7 @@ import {COLORS, FONTS, RADIUS, SPACING, hexRgba} from '../../../shared/constants
 import {CommunityEmptyState} from './CommunityEmptyState';
 import {ColumnHeader} from './ColumnHeader';
 import {usePairScore} from '../../voting/hooks/usePairScore';
+import {hasInDepthVote} from '../../voting/lib/voteStorage';
 import type {PairScore} from '../../../shared/lib/supabase';
 import {
   formatPercent,
@@ -38,6 +39,7 @@ export function CommunityColumn({pair, engineScore}: CommunityColumnProps) {
   const {cardA, cardB} = pair;
   const navigate = useNavigate();
   const {score} = usePairScore(cardA.id, cardB.id);
+  const userVotedInDepth = hasInDepthVote(cardA.id, cardB.id);
 
   const totalVotes = score?.total_votes ?? 0;
   const scoreVotes = score?.score_votes ?? 0;
@@ -89,6 +91,7 @@ export function CommunityColumn({pair, engineScore}: CommunityColumnProps) {
           current={isFullEmpty ? totalVotes : scoreVotes}
           threshold={VOTES_THRESHOLD}
           onCta={goToInDepthVote}
+          userAlreadyVoted={userVotedInDepth}
         />
       ) : score ? (
         <MetricRows score={score} cardA={cardA} cardB={cardB} />
@@ -108,8 +111,14 @@ function CommunityMeta({
 }) {
   const delta = formatDelta(engineScore, communityScore);
   const showDelta = delta.arrow !== null;
+  // Community vs engine delta:
+  //   community lower  (delta < 0) → red
+  //   community higher (delta > 0) → green
+  //   even (delta == 0)            → blue
   const deltaColor =
-    delta.tone === 'lower' ? '#f59090' : delta.tone === 'higher' ? '#60b5f5' : '#6ee7a0';
+    delta.tone === 'lower' ? '#f59090' :
+    delta.tone === 'higher' ? '#6ee7a0' :
+    '#60b5f5';
 
   return (
     <>

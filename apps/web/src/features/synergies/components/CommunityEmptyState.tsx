@@ -1,5 +1,11 @@
-import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, FONTS, RADIUS} from '../../../shared/constants';
 import {CtaButton} from '../../../shared/components/CtaButton';
+import {VoteAffirmation} from '../../voting/components';
+
+// Amethyst is the community-column accent across the modal. Both the progress fill
+// and the CTA below carry that brand identity (gold reads as engine-side).
+const COMMUNITY_TINT = '#b691ff';
+const COMMUNITY_TINT_DARK = '#9b7dd6';
 
 export type CommunityEmptyVariant = 'full-empty' | 'half-empty';
 
@@ -10,6 +16,8 @@ interface CommunityEmptyStateProps {
   /** Threshold above which the corresponding state ends. Defaults to 5. */
   threshold?: number;
   onCta: () => void;
+  /** When true, replace the CTA with an affirmation tile — user has already in-depth-voted from this browser. */
+  userAlreadyVoted?: boolean;
 }
 
 const COPY: Record<CommunityEmptyVariant, {title: string; descTemplate: (n: number) => string; ctaLabel: string}> = {
@@ -34,7 +42,7 @@ const COPY: Record<CommunityEmptyVariant, {title: string; descTemplate: (n: numb
  * `half-empty`: total_votes ≥ threshold but score_votes < threshold — replaces only the metric rows;
  *   parent still renders the dist bar above.
  */
-export function CommunityEmptyState({variant, current, threshold = 5, onCta}: CommunityEmptyStateProps) {
+export function CommunityEmptyState({variant, current, threshold = 5, onCta, userAlreadyVoted = false}: CommunityEmptyStateProps) {
   const remaining = Math.max(threshold - current, 0);
   const {title, descTemplate, ctaLabel} = COPY[variant];
   const progressPct = Math.min((current / threshold) * 100, 100);
@@ -42,20 +50,26 @@ export function CommunityEmptyState({variant, current, threshold = 5, onCta}: Co
   return (
     <div
       style={{
+        // 1:1 with mockup phase 3 `.empty-state`: vertical+horizontal center, dashed border,
+        // 24/20 padding, 12 gap, surface-alt bg.
+        flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        gap: `${SPACING.sm}px`,
-        padding: `${SPACING.lg}px`,
+        justifyContent: 'center',
+        gap: 12,
+        padding: '24px 20px',
         background: COLORS.surfaceAlt,
-        border: `1px solid ${COLORS.surfaceBorder}`,
+        border: `1px dashed ${COLORS.surfaceBorder}`,
         borderRadius: `${RADIUS.lg}px`,
+        textAlign: 'center',
         fontFamily: FONTS.body,
       }}>
       <h4
         style={{
           margin: 0,
           fontSize: `${FONT_SIZES.base}px`,
-          fontWeight: 600,
+          fontWeight: 700,
+          letterSpacing: '0.02em',
           color: COLORS.text,
         }}>
         {title}
@@ -63,46 +77,69 @@ export function CommunityEmptyState({variant, current, threshold = 5, onCta}: Co
       <p
         style={{
           margin: 0,
-          fontSize: `${FONT_SIZES.sm}px`,
-          color: COLORS.textMuted,
-          lineHeight: 1.4,
+          fontSize: 12,
+          lineHeight: 1.5,
+          color: COLORS.descriptionText,
         }}>
         {descTemplate(remaining)}
       </p>
       <div
         aria-label={`${current} of ${threshold} votes`}
-        style={{display: 'flex', alignItems: 'center', gap: `${SPACING.sm}px`, marginTop: 4}}>
+        style={{display: 'flex', alignItems: 'center', gap: 10, marginTop: 4}}>
         <div
           style={{
             flex: 1,
-            height: 4,
-            background: COLORS.surfaceBorder,
-            borderRadius: 2,
+            height: 6,
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: 3,
             overflow: 'hidden',
           }}>
           <div
             style={{
               width: `${progressPct}%`,
               height: '100%',
-              background: COLORS.primary,
-              transition: 'width 0.3s ease',
+              background: COMMUNITY_TINT,
+              transition: 'width 0.4s ease-out',
             }}
           />
         </div>
         <span
           style={{
-            fontSize: `${FONT_SIZES.xs}px`,
+            fontSize: 11,
             color: COLORS.textMuted,
             fontWeight: 600,
+            letterSpacing: '0.04em',
             minWidth: 28,
             textAlign: 'right',
+            flexShrink: 0,
           }}>
           {current} / {threshold}
         </span>
       </div>
-      <CtaButton onClick={onCta} style={{width: '100%', minHeight: 40, marginTop: SPACING.xs}}>
-        {ctaLabel}
-      </CtaButton>
+      {userAlreadyVoted ? (
+        <div style={{marginTop: 6}}>
+          <VoteAffirmation
+            accentColor={COMMUNITY_TINT}
+            title="Thanks for rating this in depth"
+            detail="Early voter — you're helping Inkweave grow!"
+          />
+        </div>
+      ) : (
+        <CtaButton
+          onClick={onCta}
+          style={{
+            width: '100%',
+            minHeight: 40,
+            marginTop: 6,
+            // Override the default gold gradient — the community CTA should read as community brand,
+            // not engine. Dark text remains legible on the amethyst gradient.
+            background: `linear-gradient(180deg, ${COMMUNITY_TINT} 0%, ${COMMUNITY_TINT_DARK} 100%)`,
+            color: COLORS.background,
+            boxShadow: `0 4px 12px rgba(182, 145, 255, 0.3)`,
+          }}>
+          {ctaLabel}
+        </CtaButton>
+      )}
     </div>
   );
 }
