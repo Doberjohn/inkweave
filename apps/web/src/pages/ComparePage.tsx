@@ -1,4 +1,4 @@
-import {useEffect} from 'react';
+import {useEffect, useRef} from 'react';
 import {Navigate, useParams} from 'react-router-dom';
 import type {LorcanaCard} from '../features/cards';
 import type {DetailedPairSynergy} from 'inkweave-synergy-engine';
@@ -43,10 +43,19 @@ export function ComparePage() {
     getPairSynergies,
   });
 
+  // Open the modal once per URL combo, not on every re-render. `verdict` is a fresh object each
+  // render so a naive `[verdict, openComparison]` dependency re-fires the effect even when route
+  // params haven't changed — and on a BACK click that re-firing races against the URL navigation,
+  // restoring `comparisonPartnerId` after the user just cleared it. Tracking the last opened
+  // signature breaks the race: any re-render whose URL didn't actually change is a no-op.
+  const lastOpenedSignatureRef = useRef<string | null>(null);
+  const verdictSignature = verdict.kind === 'valid' ? `${verdict.idA}|${verdict.idB}|${verdict.groupKey}` : null;
   useEffect(() => {
     if (verdict.kind !== 'valid') return;
+    if (lastOpenedSignatureRef.current === verdictSignature) return;
+    lastOpenedSignatureRef.current = verdictSignature;
     openComparison(verdict.idA, verdict.idB, verdict.groupKey);
-  }, [verdict, openComparison]);
+  }, [verdict, verdictSignature, openComparison]);
 
   return renderComparePage(verdict);
 }

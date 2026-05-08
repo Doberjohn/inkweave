@@ -50,14 +50,7 @@ test.describe('Synergy comparison — Desktop', () => {
     await expect(engineSection.getByText(/shift/i).first()).toBeVisible();
   });
 
-  test.fixme('should exit comparison mode via the BACK button', async ({appPage, page}) => {
-    // FIXME(#320): cross-browser flakiness — modal's data-mode attribute doesn't reliably flip
-    // back to "default" within the assertion window after BACK click. The BACK click registers
-    // and exitComparison runs (URL pushes to /card/A → /), but the modal's local comparisonPair
-    // state appears stuck for some renders. Functionality works in dev/manual testing; the
-    // underlying flakiness is around React state-batching + router-navigate interaction.
-    // Tracking under #320 follow-up.
-
+  test('should exit comparison mode via the BACK button', async ({appPage, page}) => {
     const firstTile = appPage.cardOverviewModal
       .locator('[data-group-key="shift-targets"] button.card-tile')
       .first();
@@ -67,8 +60,8 @@ test.describe('Synergy comparison — Desktop', () => {
     await expect(backButton).toBeVisible({timeout: 3000});
     await backButton.click();
 
-    // Modal returns to default state. data-mode attribute is the cleanest signal — exitComparison
-    // also navigates URL to /card/A which CardPage replaces with `/`, so URL settles asynchronously.
+    // Modal returns to default state. data-mode flips synchronously; URL navigates from
+    // /compare/A/B/group → /card/A → / via CardPage's redirect, so it settles a tick later.
     await expect(appPage.cardOverviewModal).toHaveAttribute('data-mode', 'default', {timeout: 5000});
     await expect(page).toHaveURL('/', {timeout: 5000});
   });

@@ -26,14 +26,16 @@ test.describe('Accessibility — axe audits', () => {
     expect(results.violations).toEqual([]);
   });
 
-  test('card detail page should have no axe violations', async ({page}, testInfo) => {
-    // FIXME(#320): webkit's axe run flags color-contrast on #636369/#0e0e17 (3.21:1) which
-    // chromium passes. Likely a webkit-specific text rendering nuance or rounding. Skipping
-    // on webkit until we audit the offending color across light/dark surfaces.
-    if (testInfo.project.name === 'webkit') test.skip();
-
+  test('card detail page should have no axe violations', async ({page}) => {
     await page.goto('/card/1041');
-    await page.waitForSelector('h1');
+    // The CardOverviewModal opens with a 200ms opacity-fade-in transition. If axe runs mid-
+    // transition, it computes effective text colors against a partially-transparent background
+    // (text gold rgb(212,175,55) at opacity 0.05 ≈ #111015 on bg #0d0d14 — fails 4.5:1). Wait
+    // for the modal's opacity to be fully 1 before running axe.
+    await page.waitForFunction(() => {
+      const el = document.querySelector('[data-testid="card-overview-modal"]');
+      return !!el && getComputedStyle(el).opacity === '1';
+    }, {timeout: 5000});
 
     const results = await new AxeBuilder({page}).exclude('[data-react-grab]').analyze();
     expect(results.violations).toEqual([]);
