@@ -274,7 +274,7 @@ function SearchResultRow({card, isHighlighted, isLast, query, optionProps}: Sear
           }}>
           {card.imageUrl && (
             <img
-              src={smallImageUrl(card.imageUrl) ?? card.imageUrl}
+              src={smallImageUrl(card) ?? card.imageUrl}
               alt=""
               loading="lazy"
               style={{width: '100%', height: '100%', objectFit: 'cover'}}

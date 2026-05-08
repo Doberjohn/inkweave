@@ -34,28 +34,44 @@ const USE_LOCAL_IMAGES = import.meta.env.VITE_LOCAL_IMAGES === 'true';
 const IMAGE_CDN_ORIGIN = 'https://api.lorcana.ravensburger.com/images/';
 const PREVIEW_IMAGE_CDN_ORIGIN = 'https://lorcanaplayer.com/wp-content/uploads/';
 
-function resolveImageUrl(rawUrl: string | undefined, cardId: number): string | undefined {
+function resolveImageUrl(raw: LorcanaJSONCard): string | undefined {
+  // Production: content-addressed URL using the hash injected into the data
+  // file by scripts/download-card-images.mjs. Returning undefined when no
+  // hash is present is intentional — surfaces a build mismatch as a broken
+  // image rather than a silently-stale one. See issue #323.
+  if (USE_LOCAL_IMAGES) {
+    return raw.imageHash ? `/card-images/${raw.id}.${raw.imageHash}.avif` : undefined;
+  }
+  const rawUrl = raw.images?.thumbnail;
   if (!rawUrl) return undefined;
-  if (USE_LOCAL_IMAGES) return `/card-images/${cardId}.avif`;
   // Ravensburger: proxy through same-origin rewrite (dev Vite proxy + Vercel rewrite).
   if (rawUrl.startsWith(IMAGE_CDN_ORIGIN)) return rawUrl.replace(IMAGE_CDN_ORIGIN, '/card-images/');
   // Set 12 previews: lorcanaplayer.com is behind Cloudflare bot protection so we can't
   // proxy directly. Pre-converted AVIFs live at /card-images-preview/{id}.avif (see
   // scripts/convert-preview-images.mjs and the tracked card-images-preview/ directory).
-  if (rawUrl.startsWith(PREVIEW_IMAGE_CDN_ORIGIN)) return `/card-images-preview/${cardId}.avif`;
+  if (rawUrl.startsWith(PREVIEW_IMAGE_CDN_ORIGIN)) return `/card-images-preview/${raw.id}.avif`;
   return rawUrl;
 }
 
 /**
- * Derive the small-size image URL from a full-size imageUrl.
- * `/card-images/123.avif` → `/card-images/123-sm.avif`
- * Only transforms `.avif` URLs (self-hosted production images).
- * Non-AVIF URLs (dev proxy) are returned unchanged since `-sm` variants don't exist for those.
+ * Derive the small-size image URL for a card.
+ *
+ * Production (USE_LOCAL_IMAGES): builds `/card-images/{id}.{hashSm}-sm.avif`
+ * from the per-size hash injected into the card data. The small variant has
+ * a different hash than the full variant because the bytes differ.
+ *
+ * Dev/CI: falls back to the legacy string-transform on `card.imageUrl`
+ * (`.avif` → `-sm.avif`) so the existing proxy paths keep working.
  */
-export function smallImageUrl(imageUrl: string | undefined): string | undefined {
-  if (!imageUrl) return undefined;
-  if (!imageUrl.endsWith('.avif')) return imageUrl;
-  return `${imageUrl.slice(0, -5)}-sm.avif`;
+export function smallImageUrl(
+  card: Pick<LorcanaCard, 'id' | 'imageUrl' | 'imageHashSm'>,
+): string | undefined {
+  if (USE_LOCAL_IMAGES && card.imageHashSm) {
+    return `/card-images/${card.id}.${card.imageHashSm}-sm.avif`;
+  }
+  const url = card.imageUrl;
+  if (!url || !url.endsWith('.avif')) return url;
+  return `${url.slice(0, -5)}-sm.avif`;
 }
 
 /**
@@ -65,7 +81,11 @@ export function smallImageUrl(imageUrl: string | undefined): string | undefined 
 function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
   const card = baseTransformCard(raw);
   if (!card) return null;
-  card.imageUrl = resolveImageUrl(raw.images?.thumbnail, raw.id);
+  card.imageUrl = resolveImageUrl(raw);
+  // Hashes injected by scripts/download-card-images.mjs at build time. The
+  // engine deliberately does not set these (image fields are a web concern).
+  card.imageHash = raw.imageHash;
+  card.imageHashSm = raw.imageHashSm;
   return card;
 }
 

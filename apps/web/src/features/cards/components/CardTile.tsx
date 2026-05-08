@@ -39,7 +39,7 @@ export function CardTile({
   const colors = INK_COLORS[card.ink];
   const [imgError, setImgError] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
-  const imgSrc = useSmall ? smallImageUrl(card.imageUrl) : card.imageUrl;
+  const imgSrc = useSmall ? smallImageUrl(card) : card.imageUrl;
 
   return (
     <button

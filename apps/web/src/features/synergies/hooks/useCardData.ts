@@ -85,9 +85,7 @@ export function useCardData(): UseCardDataReturn {
 /** Inject preload link tags for the first N card images (small grid size) to jumpstart loading. */
 function preloadFirstThumbnails(cards: LorcanaCard[], count: number) {
   for (let i = 0; i < Math.min(count, cards.length); i++) {
-    const url = cards[i].imageUrl;
-    if (!url) continue;
-    const href = smallImageUrl(url);
+    const href = smallImageUrl(cards[i]);
     if (!href) continue;
     const link = document.createElement('link');
     link.rel = 'preload';

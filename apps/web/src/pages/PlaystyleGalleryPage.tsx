@@ -353,7 +353,7 @@ function ActivePlaystyleCard({
             }}>
             {card.imageUrl && (
               <img
-                src={smallImageUrl(card.imageUrl)}
+                src={smallImageUrl(card)}
                 alt={card.fullName}
                 loading="lazy"
                 onError={(e) => {

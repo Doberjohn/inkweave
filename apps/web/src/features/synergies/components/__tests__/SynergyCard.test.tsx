@@ -8,8 +8,10 @@ vi.mock('../../../shared/components', () => ({
 }));
 
 vi.mock('../../../cards', () => ({
-  smallImageUrl: (url: string | undefined) =>
-    url?.endsWith('.avif') ? `${url.slice(0, -5)}-sm.avif` : url,
+  smallImageUrl: (card: {imageUrl?: string}) =>
+    card?.imageUrl?.endsWith('.avif')
+      ? `${card.imageUrl.slice(0, -5)}-sm.avif`
+      : card?.imageUrl,
 }));
 
 const mockCard: LorcanaCard = {

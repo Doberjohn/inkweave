@@ -114,7 +114,7 @@ function ViewDetailsHoverCue({isMobile, compact, hovered}: {isMobile: boolean; c
 function CardImageOrFallback({card, colors}: {card: LorcanaCard; colors: typeof INK_COLORS[keyof typeof INK_COLORS]}) {
   const [imgError, setImgError] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
-  const imgSrc = smallImageUrl(card.imageUrl);
+  const imgSrc = smallImageUrl(card);
 
   if (!imgSrc || imgError) {
     return (

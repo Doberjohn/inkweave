@@ -28,6 +28,11 @@ export interface LorcanaCard {
   isSong?: boolean; // True for Action cards with Song subtype
   moveCost?: number; // Location move cost
   imageUrl?: string;
+  // Content-addressed AVIF hash suffixes used to construct production image URLs
+  // (`/card-images/{id}.{imageHash}.avif`, `-sm` variant uses imageHashSm).
+  // Set by the web loader after transform; engine never reads these. See issue #323.
+  imageHash?: string;
+  imageHashSm?: string;
   setCode?: string;
   setNumber?: number;
   franchise?: string; // Set only on preview cards (e.g., "Toy Story", "The Incredibles", "Brave")

@@ -22,7 +22,7 @@ vi.mock('../../contexts/CardModalContext', () => ({
 
 // Mock card loader
 vi.mock('../../../features/cards/loader', () => ({
-  smallImageUrl: (id: string) => `/images/${id}.avif`,
+  smallImageUrl: (card: {id: string}) => `/images/${card.id}.avif`,
   searchCardsByName: () => [],
   parseSetOrder: () => 0,
 }));
