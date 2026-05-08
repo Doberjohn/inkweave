@@ -77,9 +77,18 @@ jobs:
           retention-days: 1
 
   e2e-tests:
+    # Split by Playwright project so all 5 browsers run in parallel jobs instead of serially in
+    # a single job. Previous serial layout sat at an 18m baseline against a 30m wall — variance
+    # alone was timing out runs. Parallel matrix gives each browser its own runner + timeout.
     runs-on: ubuntu-latest
     needs: build-and-test
-    timeout-minutes: 30
+    timeout-minutes: 20
+    strategy:
+      # Don't cancel sibling browsers when one fails — we want the full per-browser report.
+      fail-fast: false
+      matrix:
+        project: [chromium, firefox, webkit, mobile-chrome, mobile-safari]
+    name: e2e-tests (${{ matrix.project }})
 
     steps:
       - name: Checkout code
@@ -126,13 +135,14 @@ jobs:
         run: pnpm --filter inkweave-web exec playwright install-deps
 
       - name: Run E2E tests
-        run: pnpm --filter inkweave-web test:e2e
+        run: pnpm --filter inkweave-web test:e2e --project=${{ matrix.project }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: playwright-report
+          # Per-project artifact names so the 5 parallel jobs don't collide on upload.
+          name: playwright-report-${{ matrix.project }}
           path: apps/web/playwright-report/
           retention-days: 7
 
@@ -140,6 +150,6 @@ jobs:
         uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: test-results
+          name: test-results-${{ matrix.project }}
           path: apps/web/test-results/
           retention-days: 7
