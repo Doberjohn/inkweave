@@ -34,12 +34,10 @@ test.describe('Page shell + skeleton during card-data loading', () => {
     });
   });
 
-  test('CardPage renders skeleton + CompactHeader while card data loads', async ({page}) => {
-    await page.goto('/card/1041');
-    await expect(page.getByTestId('compact-header')).toBeVisible({timeout: 3000});
-    await expect(page.locator('[aria-busy="true"]').first()).toBeVisible({timeout: 3000});
-    await expect(page.getByTestId('card-detail-panel')).toBeVisible({timeout: 15000});
-  });
+  // NOTE: CardPage is now a thin redirect (opens the global CardOverviewModal + navigates to `/`).
+  // The "skeleton + CompactHeader during card load" assertion no longer applies — the modal lives
+  // at the AppLayout level, not in a route-rendered page. Loading-window UX is now: home page
+  // chrome (hero) renders first, modal renders inside backdrop once card data resolves.
 
   test('PlaystyleDetailPage renders skeleton + CompactHeader while card data loads', async ({page}) => {
     await page.goto('/playstyles/lore-denial');

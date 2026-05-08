@@ -1,7 +1,7 @@
 import {test, expect} from '../fixtures';
 
 test.describe('Card Selection and Synergies', () => {
-  // Skip on mobile - synergy panel requires navigation
+  // Skip on mobile - the modal layout is the same shape but the assertions below assume desktop
   test.beforeEach(async ({appPage}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) {
       test.skip();
@@ -15,52 +15,52 @@ test.describe('Card Selection and Synergies', () => {
     await expect(page).toHaveURL('/');
   });
 
-  test('should display card detail panel when card is selected', async ({appPage, page}) => {
+  test('should open the card overview modal when a card is selected', async ({appPage, page}) => {
     await appPage.selectFeaturedCard();
 
-    // Should navigate to /card/:id
-    await expect(page).toHaveURL(/\/card\/\d+/);
+    // Modal opens overlay-style — URL stays `/`, hero remains in the DOM behind the backdrop.
+    await expect(page).toHaveURL('/');
+    await expect(appPage.cardOverviewModal).toBeVisible();
+    await expect(appPage.cardOverviewBackdrop).toBeVisible();
 
-    // Card detail panel should be visible
-    const detailPanel = page.getByTestId('card-detail-panel');
-    await expect(detailPanel).toBeVisible();
-
-    // Compact header should be visible
-    const compactHeader = page.getByTestId('compact-header');
-    await expect(compactHeader).toBeVisible();
+    // Modal contains the card name in an h1
+    await expect(appPage.cardOverviewModal.locator('h1')).toBeVisible();
   });
 
   test('should show synergy results area when card is selected', async ({appPage, page}) => {
     await appPage.selectFeaturedCard();
 
-    // Synergies are fetched async — wait for header, empty state, or error banner
-    const hasSynergies = page.getByTestId('synergy-header');
-    const noSynergies = page.getByText('No synergies found for this card');
+    // Synergies are fetched async — wait for chip filters, empty state, or error banner.
+    // The modal uses chip-based filtering when it has synergies; the empty state shows
+    // "No synergies yet" copy when none.
+    const hasSynergies = appPage.cardOverviewModal.getByRole('button', {name: /\d+ cards/i});
+    const noSynergies = appPage.cardOverviewModal.getByText('No synergies yet');
     const errorBanner = page.getByRole('alert');
 
-    await expect(hasSynergies.or(noSynergies).or(errorBanner)).toBeVisible({timeout: 10000});
+    await expect(hasSynergies.first().or(noSynergies).or(errorBanner)).toBeVisible({
+      timeout: 10000,
+    });
   });
 
-  test('should clear selection and return to home', async ({appPage, synergyResultsPage, page}) => {
+  test('should clear selection by closing the modal', async ({appPage, page}) => {
     await appPage.selectFeaturedCard();
 
-    // Clear selection via back button
-    await synergyResultsPage.clearSelection();
+    // Close via the X button inside the modal header
+    await appPage.cardOverviewModal.getByRole('button', {name: 'Close'}).click();
 
-    // Should return to home
+    // Modal closes; URL stays `/`; hero is reachable
+    await expect(appPage.cardOverviewModal).toBeHidden();
     await expect(appPage.heroSection).toBeVisible();
     await expect(page).toHaveURL('/');
   });
 
-  test('should return to home when clicking logo', async ({appPage, page}) => {
+  test('should close the modal when the backdrop is clicked', async ({appPage, page}) => {
     await appPage.selectFeaturedCard();
 
-    // Click the logo in compact header
-    const logoButton = page.getByLabel('Go to home page');
-    await logoButton.click();
-    await page.waitForTimeout(100);
+    // Click the backdrop directly via dispatchEvent to avoid hit-testing on transparent overlays
+    await appPage.cardOverviewBackdrop.dispatchEvent('click');
 
-    // Should return to home state with correct URL
+    await expect(appPage.cardOverviewModal).toBeHidden();
     await expect(appPage.heroSection).toBeVisible();
     await expect(page).toHaveURL('/');
   });

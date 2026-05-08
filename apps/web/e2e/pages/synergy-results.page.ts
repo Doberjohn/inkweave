@@ -36,23 +36,24 @@ export class SynergyResultsPage {
   }
 
   getSelectedCardDetail(): Locator {
-    // The card detail panel shows the selected card's info
-    return this.page.getByTestId('card-detail-panel');
+    // The card overview modal contains the selected card's info (replaces the old card-detail-panel
+    // after the modal redesign — see #320).
+    return this.page.getByTestId('card-overview-modal');
   }
 
   getSynergyGroup(type: string): Locator {
     return this.page.locator('div').filter({hasText: new RegExp(type, 'i')});
   }
 
-  /** Wait for synergy data to finish loading (synergies loaded, empty, or error).
-   *  Uses the "Synergies" heading which exists on both desktop and mobile layouts. */
+  /** Wait for synergy data to finish loading inside the CardOverviewModal — chips, empty
+   *  state, or error all signal "load done". The modal renders synergies in a
+   *  `<section aria-label="Synergies">` along with chip filter buttons. */
   async waitForSynergiesLoaded(): Promise<void> {
-    await expect(
-      this.page
-        .getByRole('heading', {name: 'Synergies'})
-        .or(this.noSynergiesMessage)
-        .or(this.page.getByRole('alert')),
-    ).toBeVisible({timeout: 10000});
+    const modal = this.page.getByTestId('card-overview-modal');
+    const hasChips = modal.getByRole('button', {name: /\d+ cards/i});
+    const noSynergies = modal.getByText('No synergies yet');
+    const errorBanner = this.page.getByRole('alert');
+    await expect(hasChips.first().or(noSynergies).or(errorBanner)).toBeVisible({timeout: 10000});
   }
 
   /** Get a synergy group container by its group key (e.g. "shift-targets", "discard") */
@@ -68,17 +69,5 @@ export class SynergyResultsPage {
   /** Get the "+N more" tile within a specific synergy group */
   getMoreTile(groupKey: string): Locator {
     return this.getSynergyGroupByKey(groupKey).getByTestId('more-tile');
-  }
-
-  /** Get the synergy detail modal */
-  getDetailModal(): Locator {
-    return this.page.getByTestId('synergy-detail-modal');
-  }
-
-  /** Close the synergy detail modal by clicking the backdrop */
-  async closeDetailModalBackdrop(): Promise<void> {
-    await this.page.getByTestId('synergy-detail-backdrop').click({position: {x: 5, y: 5}});
-    // Wait for exit transition to complete (300ms animation + buffer for slow browsers)
-    await this.page.waitForTimeout(500);
   }
 }

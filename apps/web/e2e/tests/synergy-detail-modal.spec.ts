@@ -1,73 +1,88 @@
 import {test, expect} from '../fixtures';
 
-// Anna - Diplomatic Queen: has both direct and playstyle synergies
+// Anna - Diplomatic Queen: has both direct and playstyle synergies, so shift-targets renders.
 const CARD_URL = '/card/1041';
 
-test.describe('Synergy Detail Modal — Desktop', () => {
-  test.beforeEach(async ({page, synergyResultsPage}, testInfo) => {
+/**
+ * Comparison mode (formerly the separate synergy detail modal). Clicking a synergy card tile
+ * inside CardOverviewModal transitions the modal in-place to comparison view: dimmed chip row,
+ * cardA + cardB side-by-side via FLIP animation, BACK button replacing the title, and the
+ * engine + community columns expanding underneath.
+ */
+
+test.describe('Synergy comparison — Desktop', () => {
+  test.beforeEach(async ({page, appPage}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
     await page.goto(CARD_URL);
-    await synergyResultsPage.waitForSynergiesLoaded();
+    // CardPage redirects to '/' and opens the modal globally — wait for the modal first.
+    await appPage.cardOverviewModal.waitFor({state: 'visible', timeout: 10000});
+    // Then wait for synergies to populate (chip filter buttons or empty state).
+    const hasChips = appPage.cardOverviewModal.getByRole('button', {name: /\d+ cards/i});
+    const noSynergies = appPage.cardOverviewModal.getByText('No synergies yet');
+    await expect(hasChips.first().or(noSynergies)).toBeVisible({timeout: 10000});
   });
 
-  test('should open modal when clicking a synergy card', async ({synergyResultsPage}) => {
-    // Click the first card tile in the shift-targets group
-    const firstTile = synergyResultsPage.getGroupCardTiles('shift-targets').first();
-    await expect(firstTile).toBeVisible();
+  test('should enter comparison mode when clicking a synergy card', async ({page, appPage}) => {
+    // Click the first card tile in the shift-targets group inside the modal
+    const firstTile = appPage.cardOverviewModal
+      .locator('[data-group-key="shift-targets"] button.card-tile')
+      .first();
+    await expect(firstTile).toBeVisible({timeout: 5000});
     await firstTile.click();
 
-    // Modal should appear
-    const modal = synergyResultsPage.getDetailModal();
-    await expect(modal).toBeVisible({timeout: 3000});
-    await expect(modal).toHaveAttribute('role', 'dialog');
+    // Modal switches to comparison mode (BACK button replaces the h1 title slot)
+    await expect(
+      appPage.cardOverviewModal.getByRole('button', {name: /back to synergies/i}),
+    ).toBeVisible({timeout: 3000});
+    // URL updates to /compare/A/B/group (group key from the clicked tile)
+    await expect(page).toHaveURL(/\/compare\/\d+\/\d+\/shift-targets/);
   });
 
-  test('should display connection explanations in modal', async ({synergyResultsPage}) => {
-    // Click a synergy card to open the modal
-    const firstTile = synergyResultsPage.getGroupCardTiles('shift-targets').first();
+  test('should show engine column with rule explanations in comparison mode', async ({appPage}) => {
+    const firstTile = appPage.cardOverviewModal
+      .locator('[data-group-key="shift-targets"] button.card-tile')
+      .first();
     await firstTile.click();
 
-    const modal = synergyResultsPage.getDetailModal();
-    await expect(modal).toBeVisible({timeout: 3000});
-
-    // Modal should contain explanation text about the synergy
-    // Shift target explanations mention "Shift" in their text
-    await expect(modal.getByText(/shift/i).first()).toBeVisible();
+    // Engine column shows; shift-targets explanations mention "Shift"
+    const engineSection = appPage.cardOverviewModal.locator('section[aria-label="Engine score"]');
+    await expect(engineSection).toBeVisible({timeout: 3000});
+    await expect(engineSection.getByText(/shift/i).first()).toBeVisible();
   });
 
-  test('should close modal on backdrop click', async ({synergyResultsPage}) => {
-    // Open the modal
-    const firstTile = synergyResultsPage.getGroupCardTiles('shift-targets').first();
+  test('should exit comparison mode via the BACK button', async ({appPage}) => {
+    const firstTile = appPage.cardOverviewModal
+      .locator('[data-group-key="shift-targets"] button.card-tile')
+      .first();
     await firstTile.click();
 
-    const modal = synergyResultsPage.getDetailModal();
-    await expect(modal).toBeVisible({timeout: 3000});
+    const backButton = appPage.cardOverviewModal.getByRole('button', {name: /back to synergies/i});
+    await expect(backButton).toBeVisible({timeout: 3000});
+    await backButton.click();
 
-    // Click the backdrop to close
-    await synergyResultsPage.closeDetailModalBackdrop();
-
-    // Modal should be gone
-    await expect(modal).not.toBeVisible();
+    // Modal returns to default state — chip filters reappear, BACK button is gone
+    await expect(backButton).toBeHidden();
+    await expect(appPage.cardOverviewModal).toBeVisible();
   });
-
 });
 
-test.describe('Synergy Detail Modal — Mobile', () => {
-  test.beforeEach(async ({page, synergyResultsPage}, testInfo) => {
+test.describe('Synergy comparison — Mobile', () => {
+  test.beforeEach(async ({page, appPage}, testInfo) => {
     if (!testInfo.project.name.startsWith('mobile-')) test.skip();
     await page.goto(CARD_URL);
-    await synergyResultsPage.waitForSynergiesLoaded();
+    await appPage.cardOverviewModal.waitFor({state: 'visible', timeout: 10000});
+    const hasChips = appPage.cardOverviewModal.getByRole('button', {name: /\d+ cards/i});
+    const noSynergies = appPage.cardOverviewModal.getByText('No synergies yet');
+    await expect(hasChips.first().or(noSynergies)).toBeVisible({timeout: 10000});
   });
 
-  test('should open modal on mobile', async ({synergyResultsPage}) => {
-    // Click a synergy card tile (first visible one in any group)
-    const firstTile = synergyResultsPage.page.locator('[data-group-key] button.card-tile').first();
-    await expect(firstTile).toBeVisible();
+  test('should enter comparison mode on mobile', async ({appPage}) => {
+    const firstTile = appPage.cardOverviewModal.locator('[data-group-key] button.card-tile').first();
+    await expect(firstTile).toBeVisible({timeout: 5000});
     await firstTile.click();
 
-    // Modal should appear on mobile too
-    const modal = synergyResultsPage.getDetailModal();
-    await expect(modal).toBeVisible({timeout: 3000});
-    await expect(modal).toHaveAttribute('role', 'dialog');
+    await expect(
+      appPage.cardOverviewModal.getByRole('button', {name: /back to synergies/i}),
+    ).toBeVisible({timeout: 3000});
   });
 });

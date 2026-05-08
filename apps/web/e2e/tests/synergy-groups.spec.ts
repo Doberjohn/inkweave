@@ -35,7 +35,14 @@ if (DISCARD_TOTAL === 0) {
 const DESKTOP_TRUNCATION_LIMIT = 12;
 const DESKTOP_OVERFLOW = DISCARD_TOTAL - DESKTOP_TRUNCATION_LIMIT;
 
-test.describe('Synergy Groups — Desktop', () => {
+// NOTE: This file tested the old card detail page's synergy-breakdown sidebar + chip filter UX,
+// plus a 12-card desktop truncation policy. The CardOverviewModal redesign (#320) replaces:
+//   - The synergy-breakdown sidebar (deleted with CardDetailPanel)
+//   - The "All" chip (modal uses no-active-filter to show all)
+//   - 12-card truncation (modal uses 3 in default state, 11 when filtered)
+// Skipping until rewritten for the new modal-based flow. The new chip-filter behavior is
+// covered in `synergy-detail-modal.spec.ts`.
+test.describe.skip('Synergy Groups — Desktop', () => {
   test.beforeEach(async ({page, synergyResultsPage}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
     await page.goto(CARD_URL);
