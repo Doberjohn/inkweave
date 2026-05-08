@@ -12,6 +12,9 @@ interface SynergyCardProps {
   score: number;
   explanation: string;
   isMobile?: boolean;
+  /** Compact tile styling for narrow grids (e.g. CardOverviewModal mockup): neutral border,
+   *  no "View details" hover cue, smaller corner radius. Default false. */
+  compact?: boolean;
   onCardClick?: (card: LorcanaCard) => void;
   /** Override tabIndex for roving tabindex grid navigation */
   tabIndex?: number;
@@ -22,39 +25,35 @@ export function SynergyCard({
   score,
   explanation,
   isMobile = false,
+  compact = false,
   onCardClick,
   tabIndex,
 }: SynergyCardProps) {
   const tier = getStrengthTier(score);
   const colors = INK_COLORS[card.ink];
-  const [imgError, setImgError] = useState(false);
-  const [imgLoaded, setImgLoaded] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const imgSrc = smallImageUrl(card.imageUrl);
+
+  const handleClick = () => {
+    handleSynergyTileClick({card, isMobile, onCardClick, openLightbox: () => setLightboxOpen(true)});
+  };
 
   return (
     <div>
-      {/* Card tile with strength badge overlay */}
       <button
         className="card-tile"
         data-roving-item
+        data-card-id={card.id}
         tabIndex={tabIndex}
-        onClick={() => {
-          if (!isMobile && isSyntheticMouseEvent()) return;
-          if (onCardClick) {
-            onCardClick(card);
-          } else if (isMobile && card.imageUrl) {
-            setLightboxOpen(true);
-          }
-        }}
+        onClick={handleClick}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         aria-label={card.fullName || ''}
         style={{
           position: 'relative',
-          borderRadius: `${RADIUS.lg}px`,
-          border: `1px solid ${colors.border}40`,
+          // Mockup `.mini-tile`: 5px radius + neutral var(--border). Wider contexts get the inkier 8px tinted border.
+          borderRadius: `${compact ? RADIUS.sm + 1 : RADIUS.lg}px`,
+          border: `1px solid ${compact ? COLORS.surfaceBorder : `${colors.border}40`}`,
           background: COLORS.surface,
           cursor: 'pointer',
           overflow: 'hidden',
@@ -62,101 +61,143 @@ export function SynergyCard({
           padding: 0,
           width: '100%',
         }}>
-        {/* "View details" hover cue (desktop only) */}
-        {!isMobile && (
-          <span
-            style={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              background: 'rgba(13, 13, 20, 0.8)',
-              color: COLORS.primary,
-              fontSize: `${FONT_SIZES.xs}px`,
-              fontWeight: 600,
-              padding: '3px 8px',
-              borderRadius: `${RADIUS.sm}px`,
-              opacity: hovered ? 1 : 0,
-              transition: `opacity 0.2s ${EASING.snappy}`,
-              zIndex: 2,
-              pointerEvents: 'none',
-            }}>
-            View details
-          </span>
-        )}
-
-        {/* Card image or fallback */}
-        {imgSrc && !imgError ? (
-          <>
-            {!imgLoaded && (
-              <Skeleton
-                width="100%"
-                height="100%"
-                borderRadius={0}
-                baseColor={COLORS.surfaceAlt}
-                highlightColor={COLORS.surfaceHover}
-                style={{position: 'absolute', inset: 0, display: 'block'}}
-              />
-            )}
-            <img
-              src={imgSrc}
-              alt={card.fullName}
-              loading="lazy"
-              decoding="async"
-              onLoad={() => setImgLoaded(true)}
-              onError={() => setImgError(true)}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                display: 'block',
-                opacity: imgLoaded ? 1 : 0,
-                transition: 'opacity 0.2s ease',
-              }}
-            />
-          </>
-        ) : (
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              background: colors.bg,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-            <span style={{fontSize: `${FONT_SIZES.xxxl}px`, fontWeight: 600, color: colors.text}}>
-              {card.cost}
-            </span>
-          </div>
-        )}
-
-        {/* Bottom overlay: strength badge */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            padding: isMobile ? '10px 4px 4px' : '12px 6px 5px',
-            background:
-              'linear-gradient(transparent, rgba(13, 13, 20, 0.85) 30%, rgba(13, 13, 20, 0.95))',
-            display: 'flex',
-            alignItems: 'center',
-          }}>
-          <StrengthBadge tier={tier} size="sm" testId="reason-tag" title={explanation}>
-            {isMobile ? tier.shortLabel : tier.label} {score}
-          </StrengthBadge>
-        </div>
+        <ViewDetailsHoverCue isMobile={isMobile} compact={compact} hovered={hovered} />
+        <CardImageOrFallback card={card} colors={colors} />
+        <StrengthBadgeOverlay tier={tier} score={score} explanation={explanation} isMobile={isMobile} />
       </button>
+      <MaybeLightbox card={card} lightboxOpen={lightboxOpen} setLightboxOpen={setLightboxOpen} />
+    </div>
+  );
+}
 
-      {lightboxOpen && card.imageUrl && (
-        <CardLightbox
-          src={card.imageUrl}
-          alt={card.fullName}
-          isLocation={card.type === 'Location'}
-          onClose={() => setLightboxOpen(false)}
+interface SynergyTileClickInput {
+  card: LorcanaCard;
+  isMobile: boolean;
+  onCardClick?: (card: LorcanaCard) => void;
+  openLightbox: () => void;
+}
+
+function handleSynergyTileClick({card, isMobile, onCardClick, openLightbox}: SynergyTileClickInput) {
+  // Touch devices fire a synthetic mouse event after touch — skip the desktop-only path.
+  if (!isMobile && isSyntheticMouseEvent()) return;
+  if (onCardClick) {
+    onCardClick(card);
+    return;
+  }
+  if (isMobile && card.imageUrl) openLightbox();
+}
+
+function ViewDetailsHoverCue({isMobile, compact, hovered}: {isMobile: boolean; compact: boolean; hovered: boolean}) {
+  if (isMobile || compact) return null;
+  return (
+    <span
+      style={{
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        background: 'rgba(13, 13, 20, 0.8)',
+        color: COLORS.primary,
+        fontSize: `${FONT_SIZES.xs}px`,
+        fontWeight: 600,
+        padding: '3px 8px',
+        borderRadius: `${RADIUS.sm}px`,
+        opacity: hovered ? 1 : 0,
+        transition: `opacity 0.2s ${EASING.snappy}`,
+        zIndex: 2,
+        pointerEvents: 'none',
+      }}>
+      View details
+    </span>
+  );
+}
+
+function CardImageOrFallback({card, colors}: {card: LorcanaCard; colors: typeof INK_COLORS[keyof typeof INK_COLORS]}) {
+  const [imgError, setImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const imgSrc = smallImageUrl(card.imageUrl);
+
+  if (!imgSrc || imgError) {
+    return (
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          background: colors.bg,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+        <span style={{fontSize: `${FONT_SIZES.xxxl}px`, fontWeight: 600, color: colors.text}}>{card.cost}</span>
+      </div>
+    );
+  }
+  return (
+    <>
+      {!imgLoaded && (
+        <Skeleton
+          width="100%"
+          height="100%"
+          borderRadius={0}
+          baseColor={COLORS.surfaceAlt}
+          highlightColor={COLORS.surfaceHover}
+          style={{position: 'absolute', inset: 0, display: 'block'}}
         />
       )}
+      <img
+        src={imgSrc}
+        alt={card.fullName}
+        loading="lazy"
+        decoding="async"
+        onLoad={() => setImgLoaded(true)}
+        onError={() => setImgError(true)}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          display: 'block',
+          opacity: imgLoaded ? 1 : 0,
+          transition: 'opacity 0.2s ease',
+        }}
+      />
+    </>
+  );
+}
+
+interface StrengthBadgeOverlayProps {
+  tier: ReturnType<typeof getStrengthTier>;
+  score: number;
+  explanation: string;
+  isMobile: boolean;
+}
+
+function StrengthBadgeOverlay({tier, score, explanation, isMobile}: StrengthBadgeOverlayProps) {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        padding: isMobile ? '10px 4px 4px' : '12px 6px 5px',
+        background: 'linear-gradient(transparent, rgba(13, 13, 20, 0.85) 30%, rgba(13, 13, 20, 0.95))',
+        display: 'flex',
+        alignItems: 'center',
+      }}>
+      <StrengthBadge tier={tier} size="sm" testId="reason-tag" title={explanation}>
+        {isMobile ? tier.shortLabel : tier.label} {score}
+      </StrengthBadge>
     </div>
+  );
+}
+
+function MaybeLightbox({card, lightboxOpen, setLightboxOpen}: {card: LorcanaCard; lightboxOpen: boolean; setLightboxOpen: (open: boolean) => void}) {
+  if (!lightboxOpen || !card.imageUrl) return null;
+  return (
+    <CardLightbox
+      src={card.imageUrl}
+      alt={card.fullName}
+      isLocation={card.type === 'Location'}
+      onClose={() => setLightboxOpen(false)}
+    />
   );
 }

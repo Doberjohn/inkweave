@@ -271,16 +271,9 @@ interface QuickVotePromptProps {
  *   pattern after voting was a dead-end UX — affirmation replaces it with closure on the user's vote.
  */
 function QuickVotePrompt({state, onVote, userChoice, error, isMobile, questionId, engineScore, distribution}: QuickVotePromptProps) {
-  const isError = state === 'error';
-  const isSubmitting = state === 'submitting';
   const isResult = state === 'result';
-  // Disable buttons when the network is in flight, when the user has already voted, or when rate-limited.
-  const buttonsDisabled = isSubmitting || isResult || (isError && error === 'rate_limited');
-  const hasDistribution = distribution && distribution.total > 0;
-  const promptCopy =
-    engineScore !== undefined
-      ? `How accurate is Inkweave's score of ${engineScore}?`
-      : 'Do you agree with this score?';
+  const isSubmitting = state === 'submitting';
+  const hasDistribution = !!distribution && distribution.total > 0;
 
   return (
     <div
@@ -292,51 +285,102 @@ function QuickVotePrompt({state, onVote, userChoice, error, isMobile, questionId
         gap: hasDistribution ? SPACING.section : SPACING.sm,
         animation: 'qv-fade-up 0.35s ease-out',
       }}>
-      {hasDistribution && (
-        <>
-          <DistributionBar
-            lower={distribution.lower}
-            right={distribution.right}
-            higher={distribution.higher}
-            animate={false}
-            contextLabel="How the community rates Inkweave's score"
-          />
-          {!isResult && (
-            <hr
-              aria-hidden="true"
-              style={{
-                border: 'none',
-                borderTop: `1px dashed rgba(212, 175, 55, 0.18)`,
-                margin: 0,
-              }}
-            />
-          )}
-        </>
-      )}
-      {isResult ? (
-        <VoteAffirmation
-          accentColor={COLORS.primary500}
-          title="Thanks for your quick vote"
-          detail={userChoice != null ? `You picked: ${CHOICE_LABELS[userChoice]}` : undefined}
-        />
-      ) : (
-        <>
-          <p id={questionId} style={{...QUESTION_STYLE, fontWeight: 600, color: COLORS.text, animation: 'qv-fade-in 0.3s ease-out'}}>
-            {promptCopy}
-          </p>
-          <VoteButtons
-            disabled={buttonsDisabled}
-            submitting={isSubmitting}
-            selectedChoice={userChoice}
-            onVote={onVote}
-            isMobile={isMobile}
-            questionId={questionId}
-          />
-          {isError && <PromptError error={error} />}
-        </>
-      )}
+      <DistributionBlock distribution={distribution} hasDistribution={hasDistribution} isResult={isResult} />
+      <PromptOrResult
+        state={state}
+        onVote={onVote}
+        userChoice={userChoice}
+        error={error}
+        isMobile={isMobile}
+        isResult={isResult}
+        isSubmitting={isSubmitting}
+        questionId={questionId}
+        engineScore={engineScore}
+      />
     </div>
   );
+}
+
+interface DistributionBlockProps {
+  distribution: AccuracyDistribution | null;
+  hasDistribution: boolean;
+  isResult: boolean;
+}
+
+function DistributionBlock({distribution, hasDistribution, isResult}: DistributionBlockProps) {
+  if (!hasDistribution || !distribution) return null;
+  return (
+    <>
+      <DistributionBar
+        lower={distribution.lower}
+        right={distribution.right}
+        higher={distribution.higher}
+        animate={false}
+        contextLabel="How the community rates Inkweave's score"
+      />
+      {!isResult && (
+        <hr
+          aria-hidden="true"
+          style={{
+            border: 'none',
+            borderTop: `1px dashed rgba(212, 175, 55, 0.18)`,
+            margin: 0,
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+interface PromptOrResultProps {
+  state: QuickVoteState;
+  onVote: (accuracy: Accuracy) => void;
+  userChoice: Accuracy | null;
+  error: QuickVoteError;
+  isMobile: boolean;
+  isResult: boolean;
+  isSubmitting: boolean;
+  questionId: string;
+  engineScore?: number;
+}
+
+function PromptOrResult({state, onVote, userChoice, error, isMobile, isResult, isSubmitting, questionId, engineScore}: PromptOrResultProps) {
+  if (isResult) {
+    return (
+      <VoteAffirmation
+        accentColor={COLORS.primary500}
+        title="Thanks for your quick vote"
+        detail={userChoice != null ? `You picked: ${CHOICE_LABELS[userChoice]}` : undefined}
+      />
+    );
+  }
+  return (
+    <>
+      <p id={questionId} style={{...QUESTION_STYLE, fontWeight: 600, color: COLORS.text, animation: 'qv-fade-in 0.3s ease-out'}}>
+        {pickPromptCopy(engineScore)}
+      </p>
+      <VoteButtons
+        disabled={areButtonsDisabled(state, error)}
+        submitting={isSubmitting}
+        selectedChoice={userChoice}
+        onVote={onVote}
+        isMobile={isMobile}
+        questionId={questionId}
+      />
+      {state === 'error' && <PromptError error={error} />}
+    </>
+  );
+}
+
+function pickPromptCopy(engineScore: number | undefined): string {
+  if (engineScore === undefined) return 'Do you agree with this score?';
+  return `How accurate is Inkweave's score of ${engineScore}?`;
+}
+
+function areButtonsDisabled(state: QuickVoteState, error: QuickVoteError): boolean {
+  if (state === 'submitting' || state === 'result') return true;
+  if (state === 'error' && error === 'rate_limited') return true;
+  return false;
 }
 
 // ── Main component ──

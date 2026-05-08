@@ -77,7 +77,7 @@ async function performVote(slots: VoteSlots, pair: Pair, accuracy: Accuracy): Pr
     const result = await submitVote({cardA: pair.cardA, cardB: pair.cardB, accuracy});
     if (!slots.submittingRef.current) return;
     if (result.error === null) {
-      writeQuickVote(pair.cardA, pair.cardB, accuracy);
+      writeQuickVote(pair, accuracy);
       slots.setState('result');
       await fetchPostVoteDistribution(slots, pair);
       return;
@@ -203,7 +203,7 @@ export interface UseQuickVoteReturn {
 export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
   const pair = useMemo<Pair>(() => ({cardA, cardB}), [cardA, cardB]);
   const isAvailable = useMemo(() => getSupabase() !== null, []);
-  const storedChoice = useMemo(() => readQuickVote(pair.cardA, pair.cardB), [pair]);
+  const storedChoice = useMemo(() => readQuickVote(pair), [pair]);
   const slots = useQuickVoteSlots({pair, isAvailable, storedChoice});
   const submittingRef = useRef(false);
 

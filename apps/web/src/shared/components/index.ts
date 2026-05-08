@@ -35,6 +35,7 @@ export {SearchIcon} from './SearchIcon';
 export {SortSelect} from './SortSelect';
 export {StrengthBadge} from './StrengthBadge';
 export {TierCircle} from './TierCircle';
+export {Tooltip} from './Tooltip';
 export {MobileBottomNav, MOBILE_NAV_HEIGHT} from './MobileBottomNav';
 export {EmptyState} from './EmptyState';
 export {ResultCount} from './ResultCount';

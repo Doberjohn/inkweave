@@ -231,27 +231,33 @@ export function usePrecomputedSynergies(
     };
   }, [cardId, getCardById]);
 
-  const getPairSynergies = (
-    clickedCard: LorcanaCard,
-    groupKey?: string,
-  ): DetailedPairSynergy | null => {
-    if (!selectedCard) return null;
-    const pairData = state.pairs[clickedCard.id];
-    if (!pairData) return null;
-    const filtered = filterPairByGroup(pairData, groupKey);
-    if (!filtered) return null;
-    return {
-      cardA: selectedCard,
-      cardB: clickedCard,
-      ...filtered,
-    };
-  };
+  const getPairSynergies = buildPairResolver(selectedCard, state.pairs);
 
   return {
     synergies: state.synergies,
     isLoading: state.isLoading,
     error: state.error,
     getPairSynergies,
+  };
+}
+
+/**
+ * Closes over the currently-selected card and its loaded pair data, returning a resolver that
+ * looks up a clicked-card → pair synergy. Extracted to keep `usePrecomputedSynergies`'s
+ * cyclomatic complexity under threshold (the hook orchestrates fetch + state, the resolver
+ * handles its own null/filter branches).
+ */
+function buildPairResolver(
+  selectedCard: LorcanaCard | null,
+  pairs: Record<string, PrecomputedPairData>,
+): (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null {
+  return (clickedCard, groupKey) => {
+    if (!selectedCard) return null;
+    const pairData = pairs[clickedCard.id];
+    if (!pairData) return null;
+    const filtered = filterPairByGroup(pairData, groupKey);
+    if (!filtered) return null;
+    return {cardA: selectedCard, cardB: clickedCard, ...filtered};
   };
 }
 

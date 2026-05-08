@@ -1,7 +1,9 @@
+import {useState, useEffect} from 'react';
 import type {LorcanaCard} from '../../features/cards';
 import type {Ink, LocationRole, PairSynergyConnection} from 'inkweave-synergy-engine';
 import {LOCATION_ROLE_CHIP_LABELS, LOCATION_ROLE_DESCRIPTIONS} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS} from '../constants';
+import {useResponsive} from '../hooks';
 import type {ConnectionGroupData} from './groupConnections';
 
 // ── Chip palette ──
@@ -36,6 +38,19 @@ interface ConnectionGroupProps {
 
 const ABILITY_BOX_SHADOW =
   '0 3px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -1px 0 rgba(0, 0, 0, 0.18)';
+
+/**
+ * AbilityRow stacking position. Drives corner radii and box-shadow:
+ * - 'solo':   single isolated row — full radius, full shadow (default; matches single-rule case)
+ * - 'first':  top of a stack — top corners rounded, bottom flat, no shadow
+ * - 'middle': middle of a stack — all corners flat, no shadow
+ * - 'last':   bottom of a stack — top flat, bottom rounded, no shadow
+ *
+ * The visible row in the desktop multi-role expand pattern uses 'last' when collapsed
+ * (square top, rounded bottom — reads as a "tab" hanging from above) and 'middle' when
+ * expanded (square all — joins the hidden rows seamlessly).
+ */
+type AbilityRowPosition = 'solo' | 'first' | 'middle' | 'last';
 
 // ── Internal helpers ──
 
@@ -231,13 +246,18 @@ function AbilityRow({
   cardA,
   cardB,
   onHighlight,
+  position = 'solo',
 }: {
   label: string;
   description: string;
   cardA: LorcanaCard;
   cardB: LorcanaCard;
   onHighlight?: (card: 'a' | 'b' | null) => void;
+  position?: AbilityRowPosition;
 }) {
+  const topRounded = position === 'solo' || position === 'first';
+  const bottomRounded = position === 'solo' || position === 'last';
+  const withShadow = position === 'solo';
   return (
     // Lorcana ability-text layout: cream container with a small dark label inline at the
     // start of the text flow. Line 1 (label + start of description) sits flush against the
@@ -246,13 +266,16 @@ function AbilityRow({
     <div
       style={{
         background: COLORS.lorcanaCream,
-        borderRadius: `${RADIUS.sm}px`,
+        borderTopLeftRadius: topRounded ? `${RADIUS.sm}px` : 0,
+        borderTopRightRadius: topRounded ? `${RADIUS.sm}px` : 0,
+        borderBottomLeftRadius: bottomRounded ? `${RADIUS.sm}px` : 0,
+        borderBottomRightRadius: bottomRounded ? `${RADIUS.sm}px` : 0,
         padding: '8px 12px',
         // textIndent pulls only line 1 back by `padding-left` so the label hugs
         // the container's left edge while wrapped lines stay indented at content-left.
         textIndent: -12,
         overflow: 'hidden',
-        boxShadow: ABILITY_BOX_SHADOW,
+        boxShadow: withShadow ? ABILITY_BOX_SHADOW : 'none',
         color: COLORS.lorcanaTextDark,
         fontFamily: FONTS.body,
         fontSize: `${FONT_SIZES.base}px`,
@@ -296,40 +319,232 @@ function AbilityRow({
   );
 }
 
+// ── Multi-role expand/collapse subcomponents ──
+
+/** Feather chevron-down (https://feathericons.com/) — inline SVG to match project style. */
+function ChevronDownIcon() {
+  return (
+    <svg
+      width={16}
+      height={16}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+function ToggleButton({
+  isOpen,
+  onClick,
+  totalRoles,
+}: {
+  isOpen: boolean;
+  onClick: () => void;
+  totalRoles: number;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={isOpen}
+      aria-label={isOpen ? 'Hide additional roles' : `Show all ${totalRoles} roles`}
+      style={{
+        width: 28,
+        height: 28,
+        borderRadius: '50%',
+        background: COLORS.lorcanaTagBg,
+        color: COLORS.lorcanaTagText,
+        border: `2px solid ${COLORS.lorcanaCream}`,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.6)',
+        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+        transition: 'transform 0.25s ease',
+        padding: 0,
+      }}>
+      <ChevronDownIcon />
+    </button>
+  );
+}
+
+/** Map a row's index within a stack to its corner-radius variant. */
+function pickStackPosition(index: number, total: number): AbilityRowPosition {
+  if (total === 1) return 'solo';
+  if (index === 0) return 'first';
+  if (index === total - 1) return 'last';
+  return 'middle';
+}
+
+/** Resolve a connection's display label + description, using engine role tables. */
+function resolveRoleDisplay(
+  conn: PairSynergyConnection,
+  cardA: LorcanaCard,
+  cardB: LorcanaCard,
+): {key: string; label: string; description: string} {
+  const role = extractLocationRole(conn.ruleId);
+  const label = role ? LOCATION_ROLE_CHIP_LABELS[role] : conn.ruleName;
+  const description = role
+    ? LOCATION_ROLE_DESCRIPTIONS[role](
+        getRoleSourceName(conn, cardA, cardB),
+        getLocationName(cardA, cardB),
+      )
+    : conn.explanation;
+  return {key: conn.ruleId, label, description};
+}
+
+/**
+ * Multi-role display for connection groups with >1 sub-rule (e.g. Location Control's
+ * At-Payoff + Move + Buff).
+ *
+ * Desktop: shows only the highest-scoring role's row + a circular toggle button.
+ * Click expands the rest in an absolute-positioned overlay below the visible row,
+ * so the engine column doesn't grow — the expansion floats over content below.
+ *
+ * Mobile: stacks all roles always-open. No toggle, no overlay (mobile lays the
+ * modal columns vertically, so engine column height isn't constrained).
+ */
+function MultiRoleAbilityList({
+  connections,
+  cardA,
+  cardB,
+  onHighlight,
+}: {
+  connections: PairSynergyConnection[];
+  cardA: LorcanaCard;
+  cardB: LorcanaCard;
+  onHighlight?: (card: 'a' | 'b' | null) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const {isMobile} = useResponsive();
+
+  // Sort by score desc so the highest-scoring role becomes the visible top row on desktop
+  // and the first row on mobile. groupConnections() doesn't sort within a group.
+  const roles = [...connections]
+    .sort((a, b) => b.score - a.score)
+    .map((conn) => resolveRoleDisplay(conn, cardA, cardB));
+
+  // Esc closes the expansion (desktop only — mobile has no toggle).
+  useEffect(() => {
+    if (isMobile || !isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isMobile, isOpen]);
+
+  if (isMobile) {
+    return (
+      <div style={{display: 'flex', flexDirection: 'column', gap: 0}}>
+        {roles.map((r, i) => (
+          <AbilityRow
+            key={r.key}
+            label={r.label}
+            description={r.description}
+            cardA={cardA}
+            cardB={cardB}
+            onHighlight={onHighlight}
+            position={pickStackPosition(i, roles.length)}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // Desktop — visible row + absolute-positioned overlay extension.
+  // Visible row position: 'last' (square top, rounded bottom) when collapsed,
+  // 'middle' (square all) when expanded so it joins the hidden rows seamlessly.
+  const [visibleRole, ...hiddenRoles] = roles;
+  return (
+    <div style={{position: 'relative'}}>
+      <AbilityRow
+        label={visibleRole.label}
+        description={visibleRole.description}
+        cardA={cardA}
+        cardB={cardB}
+        onHighlight={onHighlight}
+        position={isOpen ? 'middle' : 'last'}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          right: 0,
+          zIndex: 5,
+          // Pass clicks through except on the interactive children (the hidden roles
+          // wrapper and the toggle button). Otherwise the absolute container would
+          // intercept clicks targeting content visually below it.
+          pointerEvents: 'none',
+        }}>
+        <div
+          style={{
+            display: 'grid',
+            // CSS Grid 0fr → 1fr trick gives a smooth height-from-zero animation
+            // without measuring content height in JS.
+            gridTemplateRows: isOpen ? '1fr' : '0fr',
+            transition: 'grid-template-rows 0.25s ease-out',
+            pointerEvents: 'auto',
+          }}>
+          <div style={{overflow: 'hidden', minHeight: 0}}>
+            {hiddenRoles.map((r, i) => (
+              <AbilityRow
+                key={r.key}
+                label={r.label}
+                description={r.description}
+                cardA={cardA}
+                cardB={cardB}
+                onHighlight={onHighlight}
+                position={i === hiddenRoles.length - 1 ? 'last' : 'middle'}
+              />
+            ))}
+          </div>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            // Half the button height — straddles the bottom border of whatever
+            // sits above (visible row when collapsed, last hidden row when open).
+            marginTop: -14,
+            pointerEvents: 'auto',
+          }}>
+          <ToggleButton
+            isOpen={isOpen}
+            onClick={() => setIsOpen((o) => !o)}
+            totalRoles={roles.length}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main component ──
 
 /**
  * Lorcana ability-box row variant for a synergy rule (or a multi-role playstyle group).
- * Single-connection groups render as one ability box. Multi-role groups render as a stack
- * of one ability box per sub-role (e.g., Locations: At-payoff / Move / Buff).
+ * Single-rule groups render as one ability box. Multi-role groups (Location Control)
+ * render via {@link MultiRoleAbilityList} — desktop hides extra roles behind a toggle,
+ * mobile stacks them all.
  */
 export function ConnectionGroup({group, cardA, cardB, onHighlight}: ConnectionGroupProps) {
-  const hasMultipleRoles = group.connections.length > 1;
-
-  if (hasMultipleRoles) {
+  if (group.connections.length > 1) {
     return (
-      <div style={{display: 'flex', flexDirection: 'column', gap: `${SPACING.sm}px`}}>
-        {group.connections.map((conn) => {
-          const role = extractLocationRole(conn.ruleId);
-          const subLabel = role ? LOCATION_ROLE_CHIP_LABELS[role] : conn.ruleName;
-          const description = role
-            ? LOCATION_ROLE_DESCRIPTIONS[role](
-                getRoleSourceName(conn, cardA, cardB),
-                getLocationName(cardA, cardB),
-              )
-            : conn.explanation;
-          return (
-            <AbilityRow
-              key={conn.ruleId}
-              label={subLabel}
-              description={description}
-              cardA={cardA}
-              cardB={cardB}
-              onHighlight={onHighlight}
-            />
-          );
-        })}
-      </div>
+      <MultiRoleAbilityList
+        connections={group.connections}
+        cardA={cardA}
+        cardB={cardB}
+        onHighlight={onHighlight}
+      />
     );
   }
 

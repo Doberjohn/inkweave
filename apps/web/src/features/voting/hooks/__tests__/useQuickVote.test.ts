@@ -17,6 +17,8 @@ describe('useQuickVote', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    // Default: no distribution. Tests that need a populated distribution override this with their own mock.
+    vi.mocked(getAccuracyDistribution).mockResolvedValue(null);
   });
 
   afterEach(() => {

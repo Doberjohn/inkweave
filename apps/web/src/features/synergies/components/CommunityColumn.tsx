@@ -41,14 +41,8 @@ export function CommunityColumn({pair, engineScore}: CommunityColumnProps) {
   const navigate = useNavigate();
   const {closeCardModal} = useCardModal();
   const {score} = usePairScore(cardA.id, cardB.id);
-  const userVotedInDepth = hasInDepthVote(cardA.id, cardB.id);
-
-  const totalVotes = score?.total_votes ?? 0;
-  const scoreVotes = score?.score_votes ?? 0;
-  const isFullEmpty = totalVotes < VOTES_THRESHOLD;
-  const isHalfEmpty = !isFullEmpty && scoreVotes < VOTES_THRESHOLD;
-  const hasEmptyState = isFullEmpty || isHalfEmpty;
-  const communityScore = !hasEmptyState && score ? Number(score.avg_score) : null;
+  const userVotedInDepth = hasInDepthVote({cardA: cardA.id, cardB: cardB.id});
+  const visual = deriveCommunityVisualState(score);
 
   const goToInDepthVote = () => {
     closeCardModal();
@@ -56,53 +50,110 @@ export function CommunityColumn({pair, engineScore}: CommunityColumnProps) {
   };
 
   return (
-    <section
-      aria-label="Community signal"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: SPACING.section,
-        padding: '16px 18px',
-        border: `1px solid ${hexRgba(COMMUNITY_TINT, 0.25)}`,
-        background: hexRgba(COMMUNITY_TINT, 0.04),
-        borderRadius: 12,
-        fontFamily: FONTS.body,
-      }}>
+    <section aria-label="Community signal" style={SECTION_STYLE}>
       <ColumnHeader
         title="Community"
         accentColor={COMMUNITY_TINT}
-        score={hasEmptyState ? '—' : formatScore(communityScore)}
+        score={visual.hasEmptyState ? '—' : formatScore(visual.communityScore)}
         scoreColor={COMMUNITY_TINT}
         scoreFontSize={42}
-        showScale={!hasEmptyState}
-        meta={
-          hasEmptyState ? (
-            <span>
-              {isFullEmpty ? totalVotes : scoreVotes} / {VOTES_THRESHOLD}{' '}
-              {isFullEmpty ? 'votes' : 'in-depth votes'}
-            </span>
-          ) : (
-            <CommunityMeta
-              engineScore={engineScore}
-              communityScore={communityScore}
-              scoreVotes={scoreVotes}
-            />
-          )
-        }
+        showScale={!visual.hasEmptyState}
+        meta={<CommunityHeaderMeta visual={visual} engineScore={engineScore} />}
       />
-      {hasEmptyState ? (
-        <CommunityEmptyState
-          variant={isFullEmpty ? 'full-empty' : 'half-empty'}
-          current={isFullEmpty ? totalVotes : scoreVotes}
-          threshold={VOTES_THRESHOLD}
-          onCta={goToInDepthVote}
-          userAlreadyVoted={userVotedInDepth}
-        />
-      ) : score ? (
-        <MetricRows score={score} cardA={cardA} cardB={cardB} />
-      ) : null}
+      <CommunityBody
+        visual={visual}
+        score={score}
+        cardA={cardA}
+        cardB={cardB}
+        onCta={goToInDepthVote}
+        userAlreadyVoted={userVotedInDepth}
+      />
     </section>
   );
+}
+
+interface CommunityVisualState {
+  totalVotes: number;
+  scoreVotes: number;
+  isFullEmpty: boolean;
+  isHalfEmpty: boolean;
+  hasEmptyState: boolean;
+  communityScore: number | null;
+}
+
+/** Pure derivation: score + thresholds → display state shape. Keeps CommunityColumn declarative. */
+function deriveCommunityVisualState(score: PairScore | null): CommunityVisualState {
+  const totalVotes = score?.total_votes ?? 0;
+  const scoreVotes = score?.score_votes ?? 0;
+  const isFullEmpty = totalVotes < VOTES_THRESHOLD;
+  const isHalfEmpty = !isFullEmpty && scoreVotes < VOTES_THRESHOLD;
+  const hasEmptyState = isFullEmpty || isHalfEmpty;
+  const communityScore = !hasEmptyState && score ? Number(score.avg_score) : null;
+  return {totalVotes, scoreVotes, isFullEmpty, isHalfEmpty, hasEmptyState, communityScore};
+}
+
+const SECTION_STYLE: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: SPACING.section,
+  padding: '16px 18px',
+  border: `1px solid ${hexRgba(COMMUNITY_TINT, 0.25)}`,
+  background: hexRgba(COMMUNITY_TINT, 0.04),
+  borderRadius: 12,
+  fontFamily: FONTS.body,
+};
+
+interface CommunityHeaderMetaProps {
+  visual: CommunityVisualState;
+  engineScore: number;
+}
+
+function CommunityHeaderMeta({visual, engineScore}: CommunityHeaderMetaProps) {
+  if (visual.hasEmptyState) {
+    return <EmptyStateVoteCount visual={visual} />;
+  }
+  return (
+    <CommunityMeta
+      engineScore={engineScore}
+      communityScore={visual.communityScore}
+      scoreVotes={visual.scoreVotes}
+    />
+  );
+}
+
+function EmptyStateVoteCount({visual}: {visual: CommunityVisualState}) {
+  const count = visual.isFullEmpty ? visual.totalVotes : visual.scoreVotes;
+  const label = visual.isFullEmpty ? 'votes' : 'in-depth votes';
+  return (
+    <span>
+      {count} / {VOTES_THRESHOLD} {label}
+    </span>
+  );
+}
+
+interface CommunityBodyProps {
+  visual: CommunityVisualState;
+  score: PairScore | null;
+  cardA: LorcanaCard;
+  cardB: LorcanaCard;
+  onCta: () => void;
+  userAlreadyVoted: boolean;
+}
+
+function CommunityBody({visual, score, cardA, cardB, onCta, userAlreadyVoted}: CommunityBodyProps) {
+  if (visual.hasEmptyState) {
+    return (
+      <CommunityEmptyState
+        variant={visual.isFullEmpty ? 'full-empty' : 'half-empty'}
+        current={visual.isFullEmpty ? visual.totalVotes : visual.scoreVotes}
+        threshold={VOTES_THRESHOLD}
+        onCta={onCta}
+        userAlreadyVoted={userAlreadyVoted}
+      />
+    );
+  }
+  if (!score) return null;
+  return <MetricRows score={score} cardA={cardA} cardB={cardB} />;
 }
 
 function CommunityMeta({
@@ -115,43 +166,52 @@ function CommunityMeta({
   scoreVotes: number;
 }) {
   const delta = formatDelta(engineScore, communityScore);
-  const showDelta = delta.arrow !== null;
-  // Community vs engine delta:
-  //   community lower  (delta < 0) → red
-  //   community higher (delta > 0) → green
-  //   even (delta == 0)            → blue
-  const deltaColor =
-    delta.tone === 'lower' ? '#f59090' :
-    delta.tone === 'higher' ? '#6ee7a0' :
-    '#60b5f5';
-
   return (
     <>
-      {showDelta && (
-        <span
-          aria-label={`${delta.value} ${delta.tone} than the engine score`}
-          style={{
-            background: hexRgba(deltaColor, 0.15),
-            color: deltaColor,
-            padding: '2px 7px',
-            borderRadius: 4,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: 'normal',
-            textTransform: 'none',
-          }}>
-          {delta.arrow} {delta.value}
-        </span>
-      )}
-      {showDelta && (
-        <span aria-hidden="true" style={{opacity: 0.5, fontWeight: 700}}>
-          ·
-        </span>
-      )}
-      <span>
-        {scoreVotes} {scoreVotes === 1 ? 'vote' : 'votes'}
-      </span>
+      <DeltaBadge delta={delta} />
+      <VoteCount scoreVotes={scoreVotes} />
     </>
+  );
+}
+
+type Delta = ReturnType<typeof formatDelta>;
+
+/** Lower → red, higher → green, even → blue. */
+function pickDeltaColor(tone: Delta['tone']): string {
+  if (tone === 'lower') return '#f59090';
+  if (tone === 'higher') return '#6ee7a0';
+  return '#60b5f5';
+}
+
+function DeltaBadge({delta}: {delta: Delta}) {
+  if (delta.arrow === null) return null;
+  const color = pickDeltaColor(delta.tone);
+  return (
+    <>
+      <span
+        aria-label={`${delta.value} ${delta.tone} than the engine score`}
+        style={{
+          background: hexRgba(color, 0.15),
+          color,
+          padding: '2px 7px',
+          borderRadius: 4,
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: 'normal',
+          textTransform: 'none',
+        }}>
+        {delta.arrow} {delta.value}
+      </span>
+      <span aria-hidden="true" style={{opacity: 0.5, fontWeight: 700}}>·</span>
+    </>
+  );
+}
+
+function VoteCount({scoreVotes}: {scoreVotes: number}) {
+  return (
+    <span>
+      {scoreVotes} {scoreVotes === 1 ? 'vote' : 'votes'}
+    </span>
   );
 }
 

@@ -1,34 +1,47 @@
 import type {Accuracy, Score} from '../../../shared/lib/supabase';
 
+/** A pair of card ids, in arbitrary order. Storage-layer functions sort them internally so the
+ *  same key is produced regardless of which card was passed first. */
+export interface CardPair {
+  readonly cardA: string;
+  readonly cardB: string;
+}
+
+/** Wraps a localStorage key so primitive-obsession analysis sees a domain object rather than a
+ *  raw string. Construction goes through {@link buildStorageKey} which sorts the pair canonically. */
+interface StorageKey {
+  readonly value: string;
+}
+
 const QUICK_PREFIX = 'inkweave:vote';
 const DETAIL_PREFIX = 'inkweave:vote-detail';
 const VALID_ACCURACIES: Accuracy[] = [-1, 0, 1];
 
-function pairKey(prefix: string, cardA: string, cardB: string): string {
-  const [a, b] = [cardA, cardB].sort();
-  return `${prefix}:${a}:${b}`;
+function buildStorageKey(prefix: string, pair: CardPair): StorageKey {
+  const [a, b] = [pair.cardA, pair.cardB].sort();
+  return {value: `${prefix}:${a}:${b}`};
 }
 
-function safeRead(key: string): string | null {
+function safeRead(key: StorageKey): string | null {
   try {
-    return localStorage.getItem(key);
+    return localStorage.getItem(key.value);
   } catch (e) {
     console.warn('[voteStorage] localStorage read denied:', e);
     return null;
   }
 }
 
-function safeWrite(key: string, value: string): void {
+function safeWrite(key: StorageKey, value: string): void {
   try {
-    localStorage.setItem(key, value);
+    localStorage.setItem(key.value, value);
   } catch (e) {
     console.error('[voteStorage] localStorage write failed:', e);
   }
 }
 
-function safeRemove(key: string): void {
+function safeRemove(key: StorageKey): void {
   try {
-    localStorage.removeItem(key);
+    localStorage.removeItem(key.value);
   } catch (e) {
     console.warn('[voteStorage] localStorage cleanup failed:', e);
   }
@@ -41,8 +54,8 @@ interface StoredQuickVote {
   timestamp: number;
 }
 
-export function readQuickVote(cardA: string, cardB: string): Accuracy | null {
-  const key = pairKey(QUICK_PREFIX, cardA, cardB);
+export function readQuickVote(pair: CardPair): Accuracy | null {
+  const key = buildStorageKey(QUICK_PREFIX, pair);
   const raw = safeRead(key);
   if (!raw) return null;
   try {
@@ -52,15 +65,15 @@ export function readQuickVote(cardA: string, cardB: string): Accuracy | null {
     }
     console.error('[readQuickVote] Unexpected shape, clearing:', parsed);
   } catch (e) {
-    console.error('[readQuickVote] Corrupted JSON, clearing key:', key, e);
+    console.error('[readQuickVote] Corrupted JSON, clearing key:', key.value, e);
   }
   safeRemove(key);
   return null;
 }
 
-export function writeQuickVote(cardA: string, cardB: string, accuracy: Accuracy): void {
+export function writeQuickVote(pair: CardPair, accuracy: Accuracy): void {
   const payload: StoredQuickVote = {accuracy, timestamp: Date.now()};
-  safeWrite(pairKey(QUICK_PREFIX, cardA, cardB), JSON.stringify(payload));
+  safeWrite(buildStorageKey(QUICK_PREFIX, pair), JSON.stringify(payload));
 }
 
 // ── In-depth vote storage ──
@@ -71,33 +84,32 @@ export interface StoredInDepthVote {
   timestamp: number;
 }
 
-export function hasInDepthVote(cardA: string, cardB: string): boolean {
-  return safeRead(pairKey(DETAIL_PREFIX, cardA, cardB)) !== null;
+export function hasInDepthVote(pair: CardPair): boolean {
+  return safeRead(buildStorageKey(DETAIL_PREFIX, pair)) !== null;
 }
 
-export function readInDepthVote(cardA: string, cardB: string): StoredInDepthVote | null {
-  const key = pairKey(DETAIL_PREFIX, cardA, cardB);
+export function readInDepthVote(pair: CardPair): StoredInDepthVote | null {
+  const key = buildStorageKey(DETAIL_PREFIX, pair);
   const raw = safeRead(key);
   if (!raw) return null;
   try {
     return JSON.parse(raw) as StoredInDepthVote;
   } catch (e) {
-    console.error('[readInDepthVote] Corrupted JSON, clearing key:', key, e);
+    console.error('[readInDepthVote] Corrupted JSON, clearing key:', key.value, e);
     safeRemove(key);
     return null;
   }
 }
 
 export function writeInDepthVote(
-  cardA: string,
-  cardB: string,
+  pair: CardPair,
   payload: Pick<StoredInDepthVote, 'accuracy' | 'score'>,
 ): void {
   const stored: StoredInDepthVote = {...payload, timestamp: Date.now()};
-  safeWrite(pairKey(DETAIL_PREFIX, cardA, cardB), JSON.stringify(stored));
+  safeWrite(buildStorageKey(DETAIL_PREFIX, pair), JSON.stringify(stored));
   // Sync the quick-vote marker so the modal's quick-vote control reflects the
   // user's most recent answer if they updated accuracy via the in-depth flow.
   if (payload.accuracy != null) {
-    writeQuickVote(cardA, cardB, payload.accuracy);
+    writeQuickVote(pair, payload.accuracy);
   }
 }
