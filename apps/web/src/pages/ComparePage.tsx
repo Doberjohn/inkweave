@@ -1,5 +1,7 @@
 import {useEffect} from 'react';
 import {Navigate, useParams} from 'react-router-dom';
+import type {LorcanaCard} from '../features/cards';
+import type {DetailedPairSynergy} from 'inkweave-synergy-engine';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {usePrecomputedSynergies} from '../features/synergies/hooks';
@@ -26,34 +28,101 @@ export function ComparePage() {
   const {idA, idB, groupKey} = useParams<{idA: string; idB: string; groupKey?: string}>();
   const {getCardById, isLoading: cardsLoading} = useCardDataContext();
   const {openComparison} = useCardModal();
-
-  const sameId = !!(idA && idB && idA === idB);
   const cardA = idA ? getCardById(idA) : undefined;
   const cardB = idB ? getCardById(idB) : undefined;
-
-  // usePrecomputedSynergies must be called unconditionally (rules of hooks). It no-ops when
-  // passed null. Once the cardA-keyed JSON loads, getPairSynergies can resolve the requested
-  // pair+group.
   const {getPairSynergies, isLoading: synergiesLoading} = usePrecomputedSynergies(cardA ?? null);
 
-  // Resolve the pair only when all preconditions are met. Returns null while loading and when
-  // the pair has no connections for the requested group.
-  const allLoaded = !cardsLoading && !synergiesLoading;
-  const canResolve = !sameId && allLoaded && cardA && cardB && groupKey;
-  const pair = canResolve ? getPairSynergies(cardB, groupKey) : null;
-  const hasValidPair = !!pair && pair.connections.length > 0;
+  const verdict = classifyComparePage({
+    idA,
+    idB,
+    groupKey,
+    cardA,
+    cardB,
+    cardsLoading,
+    synergiesLoading,
+    getPairSynergies,
+  });
 
   useEffect(() => {
-    if (!hasValidPair) return;
-    openComparison(idA!, idB!, groupKey!);
-  }, [hasValidPair, idA, idB, groupKey, openComparison]);
+    if (verdict.kind !== 'valid') return;
+    openComparison(verdict.idA, verdict.idB, verdict.groupKey);
+  }, [verdict, openComparison]);
 
-  if (sameId) return <Navigate to={`/card/${idA}`} replace />;
-  if (!groupKey) return <NotFoundPage />;
-  if (!allLoaded) return null; // wait for both cards + synergies to finish loading
-  if (!cardA || !cardB) return <NotFoundPage />;
-  if (!hasValidPair) return <NotFoundPage />;
-  return null;
+  return renderComparePage(verdict);
 }
 
 export default ComparePage;
+
+type ComparePageVerdict =
+  | {kind: 'same-id'; idA: string}
+  | {kind: 'not-found'}
+  | {kind: 'loading'}
+  | {kind: 'valid'; idA: string; idB: string; groupKey: string};
+
+interface ClassifyInput {
+  idA: string | undefined;
+  idB: string | undefined;
+  groupKey: string | undefined;
+  cardA: LorcanaCard | undefined;
+  cardB: LorcanaCard | undefined;
+  cardsLoading: boolean;
+  synergiesLoading: boolean;
+  getPairSynergies: (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null;
+}
+
+/**
+ * Pure derivation: route params + load state → an enum-shaped verdict the component renders
+ * via a single dispatch. Keeps `ComparePage` itself declarative; all the validation branches
+ * live here.
+ */
+function classifyComparePage(input: ClassifyInput): ComparePageVerdict {
+  const {idA, idB, groupKey, cardA, cardB, cardsLoading, synergiesLoading, getPairSynergies} = input;
+  if (isSameIdRoute(idA, idB)) return {kind: 'same-id', idA: idA as string};
+  if (!groupKey) return {kind: 'not-found'};
+  if (cardsLoading || synergiesLoading) return {kind: 'loading'};
+  if (!areIdsAndCardsResolved({idA, idB, cardA, cardB})) return {kind: 'not-found'};
+  if (!hasMatchingPair({cardB: cardB as LorcanaCard, groupKey, getPairSynergies})) {
+    return {kind: 'not-found'};
+  }
+  return {kind: 'valid', idA: idA as string, idB: idB as string, groupKey};
+}
+
+function isSameIdRoute(idA: string | undefined, idB: string | undefined): boolean {
+  if (!idA) return false;
+  if (!idB) return false;
+  return idA === idB;
+}
+
+function areIdsAndCardsResolved({
+  idA,
+  idB,
+  cardA,
+  cardB,
+}: Pick<ClassifyInput, 'idA' | 'idB' | 'cardA' | 'cardB'>): boolean {
+  if (!idA) return false;
+  if (!idB) return false;
+  if (!cardA) return false;
+  if (!cardB) return false;
+  return true;
+}
+
+function hasMatchingPair({
+  cardB,
+  groupKey,
+  getPairSynergies,
+}: {
+  cardB: LorcanaCard;
+  groupKey: string;
+  getPairSynergies: ClassifyInput['getPairSynergies'];
+}): boolean {
+  const pair = getPairSynergies(cardB, groupKey);
+  if (!pair) return false;
+  return pair.connections.length > 0;
+}
+
+function renderComparePage(verdict: ComparePageVerdict): React.ReactElement | null {
+  if (verdict.kind === 'same-id') return <Navigate to={`/card/${verdict.idA}`} replace />;
+  if (verdict.kind === 'not-found') return <NotFoundPage />;
+  // 'loading' and 'valid' both render null — the modal is mounted globally by CardModalProvider.
+  return null;
+}
