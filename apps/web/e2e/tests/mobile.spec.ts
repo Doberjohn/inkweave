@@ -30,12 +30,12 @@ test.describe('Mobile Viewport', () => {
     await expect(page).toHaveURL('/');
     await expect(appPage.cardOverviewModal).toBeVisible();
 
-    // Synergies fetched async — wait for chips, empty state, or error banner inside the modal.
-    const hasChips = appPage.cardOverviewModal.getByRole('button', {name: /\d+ cards/i});
-    const noSynergies = appPage.cardOverviewModal.getByText('No synergies yet');
+    // Synergies fetched async — wait for groups, empty state, or error banner inside the modal.
+    const groupCount = appPage.cardOverviewModal.locator('[data-group-key]');
+    const noSynergies = appPage.cardOverviewModal.getByTestId('card-overview-empty');
     const errorBanner = page.getByRole('alert');
 
-    await expect(hasChips.first().or(noSynergies).or(errorBanner)).toBeVisible({timeout: 10000});
+    await expect(groupCount.first().or(noSynergies).or(errorBanner)).toBeVisible({timeout: 10000});
   });
 
   test('should show filter drawer on mobile browse', async ({page}) => {
