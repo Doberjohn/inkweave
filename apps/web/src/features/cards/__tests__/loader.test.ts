@@ -473,13 +473,16 @@ describe('fetchCardsFromLocal', () => {
 });
 
 describe('smallImageUrl', () => {
+  // Dev/CI mode (USE_LOCAL_IMAGES=false): falls back to .avif → -sm.avif string
+  // transform on card.imageUrl. Production-mode hashed-URL behavior is covered
+  // by the prod-build smoke test in CI (verifying Network tab + curl results).
   it.each([
     ['/card-images/123.avif', '/card-images/123-sm.avif'],
     ['/card-images/elsa.jpg', '/card-images/elsa.jpg'],
     ['/card-images/123', '/card-images/123'],
     [undefined, undefined],
-  ])('smallImageUrl(%s) → %s', (input, expected) => {
-    expect(smallImageUrl(input)).toBe(expected);
+  ])('dev fallback: imageUrl %s → %s', (imageUrl, expected) => {
+    expect(smallImageUrl({id: '123', imageUrl})).toBe(expected);
   });
 });
 

@@ -33,6 +33,10 @@ export interface LorcanaJSONCard {
     full?: string;
     thumbnail?: string;
   };
+  // Content-addressed hash suffixes injected by scripts/download-card-images.mjs
+  // at build time. Web loader reads these to build immutable image URLs (issue #323).
+  imageHash?: string;
+  imageHashSm?: string;
   setCode?: string;
   number?: number;
   rarity?: string;
