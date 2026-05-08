@@ -67,6 +67,11 @@ test.describe('Page shell + skeleton during card-data loading', () => {
   test('InDepthVotePage renders pair + form skeleton while pair data loads', async ({page}) => {
     await page.goto('/vote/1041/957');
     await expect(page.getByTestId('compact-header')).toBeVisible({timeout: 3000});
-    await expect(page.getByLabel('Loading vote pair and form')).toBeVisible({timeout: 3000});
+    // Use role+name instead of getByLabel: the <main> landmark with aria-label
+    // is more reliably matched via getByRole than getByLabel (Playwright's
+    // getByLabel is primarily for form controls; landmark labels are an edge case).
+    await expect(
+      page.getByRole('main', {name: 'Loading vote pair and form'}),
+    ).toBeVisible({timeout: 5000});
   });
 });
