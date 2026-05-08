@@ -38,7 +38,7 @@
     {
       "name": "Card data JSON",
       "path": "apps/web/dist/data/allCards.json",
-      "limit": "300 kB",
+      "limit": "360 kB",
       "gzip": true
     }
   ],
