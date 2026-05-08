@@ -9,6 +9,9 @@ export type PlaystyleId = 'lore-denial' | 'location-control' | 'discard' | 'ramp
 export interface Playstyle {
   id: PlaystyleId;
   name: string;
-  description: string; // Shown in UI as group explanation
+  /** One-sentence headline shown in narrow contexts (modal, search snippets). */
+  tagline: string;
+  /** Multi-sentence body shown in detail contexts (playstyle gallery, strategy guide). */
+  description: string;
   strategyTips: string[]; // Deck-building advice specific to this archetype
 }

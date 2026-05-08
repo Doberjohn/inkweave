@@ -17,6 +17,10 @@ vi.mock('../../shared/contexts/CardDataContext', () => ({
   useCardDataContext: () => ({cards: []}),
 }));
 
+vi.mock('../../shared/contexts/CardModalContext', () => ({
+  useCardModal: () => ({selectedCardId: null, openCardModal: vi.fn(), closeCardModal: vi.fn()}),
+}));
+
 // Mock child components to isolate HomePage tests
 vi.mock('../../shared/components', async () => {
   const actual = await vi.importActual('../../shared/components');

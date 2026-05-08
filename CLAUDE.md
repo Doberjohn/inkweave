@@ -101,7 +101,7 @@ Claude Code hooks, skills, and agents enforce workflow rules automatically. Chec
 | `preview-images-auto-convert.sh` | PostToolUse/Edit\|Write | Auto `pnpm convert-preview-images` after writes inside `apps/web/public/card-images-raw/` (raw → AVIF pipeline) |
 | `preview-data-auto-precompute.sh` | PostToolUse/Edit\|Write | Auto `pnpm precompute-synergies` after `apps/web/public/data/previewCards.json` writes (engine hook already covers engine-src changes) |
 | `issue-create-guard.sh` | PreToolUse/Bash | Redirects direct `gh issue create` to `/draft-issue` skill (`SKILL_APPROVED=1` bypass) |
-| Husky pre-push | git push | Runs E2E on chromium + webkit + mobile-chrome before push (full 5-browser matrix in CI) |
+| Husky pre-push | git push | Runs `check:stories` (story coverage), E2E on chromium + webkit + mobile-chrome, and CodeScene gate before push (full 5-browser matrix in CI) |
 
 ### Skills (`.claude/skills/`)
 | Skill | Arg | What it does |
@@ -402,7 +402,7 @@ Dark fantasy theme inspired by Lorcana:
 - Do not jump to implementation until the user confirms the approach
 
 ### Storybook
-- **Every new visual component needs a `.stories.tsx` file.** CI runs `check:stories` which fails if a new component is added without stories.
+- **Every new visual component needs a `.stories.tsx` file.** CI runs `check:stories` which fails if a new component is added without stories. The same check runs locally as the first pre-push step (~130ms), so missing stories surface before the Chromatic CI run rejects the push.
 - Stories go next to the component: `ComponentName.stories.tsx` alongside `ComponentName.tsx`
 - Import Meta/StoryObj from `@storybook/react-vite` (NOT `@storybook/react` — Storybook 10 lint rule catches this)
 - Components using React Router need a `MemoryRouter` decorator

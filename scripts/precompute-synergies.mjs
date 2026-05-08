@@ -89,6 +89,7 @@ async function main() {
       groupKey: group.groupKey,
       category: group.category,
       label: group.label,
+      tagline: group.tagline,
       description: group.description,
       synergies: group.synergies.map((match) => {
         // Compute pair data once per unique target card

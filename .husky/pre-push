@@ -1,4 +1,9 @@
 #!/bin/sh
+# Story coverage gate — fails fast (~130ms) if a new visual component shipped
+# without a .stories.tsx file. Mirrors the chromatic.yml CI check so missing
+# stories surface locally before the Chromatic run rejects the push.
+pnpm --filter inkweave-web check:stories || exit $?
+
 # Run chromium + webkit + mobile-chrome pre-push.
 # - Chromium alone misses WebKit-specific stacking-context bugs and Safari
 #   focus quirks.

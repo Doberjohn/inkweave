@@ -1,8 +1,8 @@
 import {useEffect, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardGrid} from '../cards/components/CardGrid';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../../shared/constants';
+import {useCardModal} from '../../shared/contexts/CardModalContext';
 import type {RevealTier} from './useRevealCards';
 
 const ANIMATE_IN_MS = 240;
@@ -23,7 +23,7 @@ function prefersReducedMotion(): boolean {
 }
 
 export function FranchiseTier({tier, priorityCount = 0}: FranchiseTierProps) {
-  const navigate = useNavigate();
+  const {openCardModal} = useCardModal();
   const reduced = prefersReducedMotion();
   const [mounted, setMounted] = useState(reduced);
 
@@ -33,7 +33,7 @@ export function FranchiseTier({tier, priorityCount = 0}: FranchiseTierProps) {
     return () => cancelAnimationFrame(id);
   }, [reduced]);
 
-  const handleSelect = (card: LorcanaCard) => navigate(`/card/${card.id}`);
+  const handleSelect = (card: LorcanaCard) => openCardModal(card.id);
 
   return (
     <section

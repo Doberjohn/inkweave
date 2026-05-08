@@ -49,6 +49,7 @@ import {
   PLAYSTYLE_UI,
 } from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
+import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive, useFilterParams, usePreloadImages} from '../shared/hooks';
 
 // Feature flag: gates the "Strategy Tips" collapsible section on the hero.
@@ -561,6 +562,7 @@ function useDefaultSortParam() {
 export function PlaystyleDetailPage() {
   const {playstyleId} = useParams<{playstyleId: string}>();
   const navigate = useNavigate();
+  const {openCardModal} = useCardModal();
   const {isMobile} = useResponsive();
   const {cards, isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, sets} =
     useCardDataContext();
@@ -597,7 +599,7 @@ export function PlaystyleDetailPage() {
 
   const goHome = () => navigate('/');
   const goPlaystyles = () => navigate('/playstyles');
-  const handleCardSelect = (card: {id: string}) => navigate(`/card/${card.id}`);
+  const handleCardSelect = (card: {id: string}) => openCardModal(card.id);
   const handleSearchSubmit = () => navigate(buildSearchTarget(headerSearchQuery));
 
   // Still loading card data — show skeleton regardless of playstyle resolution.

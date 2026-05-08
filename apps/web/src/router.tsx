@@ -35,6 +35,7 @@ function lazyWithRetry(
 const HomePage = lazyWithRetry(() => import('./pages/HomePage'), 'HomePage');
 const BrowsePage = lazyWithRetry(() => import('./pages/BrowsePage'), 'BrowsePage');
 const CardPage = lazyWithRetry(() => import('./pages/CardPage'), 'CardPage');
+const ComparePage = lazyWithRetry(() => import('./pages/ComparePage'), 'ComparePage');
 const PlaystyleGalleryPage = lazyWithRetry(
   () => import('./pages/PlaystyleGalleryPage'),
   'PlaystyleGalleryPage',
@@ -114,6 +115,22 @@ export const router = createBrowserRouter([
         element: (
           <SuspenseWrapper>
             <CardPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'compare/:idA/:idB',
+        element: (
+          <SuspenseWrapper>
+            <ComparePage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'compare/:idA/:idB/:groupKey',
+        element: (
+          <SuspenseWrapper>
+            <ComparePage />
           </SuspenseWrapper>
         ),
       },

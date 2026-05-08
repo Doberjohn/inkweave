@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {useNavigate, useSearchParams} from 'react-router-dom';
+import {useSearchParams} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {BrowseCardGrid, BrowseToolbar} from '../features/cards';
 import {
@@ -18,6 +18,7 @@ import {
 } from '../shared/components';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
+import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
 
 // =====================================================================
@@ -146,7 +147,7 @@ function BrowseContentSection({
 // =====================================================================
 
 export function BrowsePage() {
-  const navigate = useNavigate();
+  const {openCardModal} = useCardModal();
   const {isMobile} = useResponsive();
   const {cards, isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, sets} =
     useCardDataContext();
@@ -187,7 +188,7 @@ export function BrowsePage() {
   const combinedFilters = buildCombinedFilters(filters, inkFilters, typeFilters, costFilters);
   const sortedCards = applyFiltersAndSort(cards, searchQuery, combinedFilters, sortOrder);
   const goHome = clearAllFilters;
-  const selectCard = (card: {id: string}) => navigate(`/card/${card.id}`);
+  const selectCard = (card: {id: string}) => openCardModal(card.id);
 
   const toolbarProps = {
     onFiltersClick: () => setShowFilters(true),

@@ -27,6 +27,7 @@ import {
 } from '../shared/constants';
 import {smallImageUrl} from '../features/cards';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
+import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive, usePreloadImages} from '../shared/hooks';
 
 // ── Layout config (computed once, passed as concrete values) ──
@@ -694,6 +695,7 @@ const ALL_COVER_ART_URLS = [
 
 export function PlaystyleGalleryPage() {
   const navigate = useNavigate();
+  const {openCardModal} = useCardModal();
   const {cards, isLoading, error, retryLoad} = useCardDataContext();
   const [searchQuery, setSearchQuery] = useState('');
   const {isMobile} = useResponsive();
@@ -708,7 +710,7 @@ export function PlaystyleGalleryPage() {
     const q = searchQuery.trim();
     navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
   };
-  const handleCardSelect = (card: {id: string}) => navigate(`/card/${card.id}`);
+  const handleCardSelect = (card: {id: string}) => openCardModal(card.id);
   const onPlaystyleClick = (id: string) => navigate(`/playstyles/${id}`);
 
   const {data: playstyleCardData} = useAllPlaystyleCards();

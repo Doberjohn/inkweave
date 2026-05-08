@@ -4,6 +4,7 @@ import {FeaturedCards} from '../features/cards';
 import {HeroSection, EtherealBackground, ErrorBoundary} from '../shared/components';
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
+import {useCardModal} from '../shared/contexts/CardModalContext';
 
 const mainStyle: React.CSSProperties = {
   minHeight: '100vh',
@@ -15,6 +16,7 @@ const mainStyle: React.CSSProperties = {
 
 export function HomePage() {
   const navigate = useNavigate();
+  const {openCardModal} = useCardModal();
   const {isMobile} = useResponsive();
   const {cards} = useCardDataContext();
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,7 +25,7 @@ export function HomePage() {
     const q = searchQuery.trim();
     navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
   };
-  const handleCardSelect = (card: {id: string}) => navigate(`/card/${card.id}`);
+  const handleCardSelect = (card: {id: string}) => openCardModal(card.id);
   const handleBrowse = () => navigate('/browse');
   const handlePlaystyles = () => navigate('/playstyles');
   const handleVote = () => navigate('/vote');

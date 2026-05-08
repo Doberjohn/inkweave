@@ -952,7 +952,7 @@ describe('Discard Control', () => {
       const pachaMatch = synergies.find((s) => s.card.id === 'pacha');
       expect(pachaMatch).toBeDefined();
       expect(pachaMatch!.score).toBe(8);
-      expect(pachaMatch!.explanation).toContain('hand-size advantage');
+      expect(pachaMatch!.explanation).toContain('hand-size edge');
     });
 
     it('payoff ↔ payoff scores 5 (same axis, no compounding)', () => {
@@ -1169,13 +1169,15 @@ describe('Card Helper Functions', () => {
       expect(synergies[0].score).toBe(8); // falls back to card.cost=4, diff=0
     });
 
-    it('should include singer name, cost, and "can sing" in explanation', () => {
+    it('should include Singer value, song cost, and "sings" verb in explanation', () => {
       const {singer, song} = makeSingerSongPair({songCost: 4});
       const synergies = singerRule.findSynergies(singer, [singer, song]);
-      expect(synergies[0].explanation).toContain('Gazelle - Pop Star');
-      expect(synergies[0].explanation).toContain('can sing');
-      expect(synergies[0].explanation).toContain('Try Everything');
+      // Explanation no longer interpolates card names (modal context provides
+      // identity via the visible cards). Mechanic-level assertions only.
+      expect(synergies[0].explanation).toContain('Singer 5');
+      expect(synergies[0].explanation).toContain('sings');
       expect(synergies[0].explanation).toContain('cost 4');
+      expect(synergies[0].explanation).toContain('for free');
     });
   });
 
@@ -1442,10 +1444,13 @@ describe('Card Helper Functions', () => {
       expect(synergies).toHaveLength(0);
     });
 
-    it('should generate explanations mentioning both card names', () => {
+    it('should generate non-empty mechanic-level explanations', () => {
+      // Card-name interpolation was removed in favor of mechanic-focused copy
+      // (modal context provides identity via the visible cards). Assert the
+      // explanation is present and references ink/inkwell mechanics.
       const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, jafar]);
-      expect(synergies[0].explanation).toContain('Mama Odie');
-      expect(synergies[0].explanation).toContain('Jafar');
+      expect(synergies[0].explanation.length).toBeGreaterThan(0);
+      expect(synergies[0].explanation).toMatch(/ink|inkwell/i);
     });
 
     it('should mark all matches as bidirectional', () => {

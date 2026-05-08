@@ -34,7 +34,6 @@ const KNOWN_MISSING = new Set([
   '/src/features/synergies/components/CardDetailPanel.tsx',
   '/src/features/synergies/components/ExpandedGroupView.tsx',
   '/src/features/synergies/components/MobileCardDetail.tsx',
-  '/src/features/synergies/components/SynergyDetailModal.tsx',
   '/src/features/synergies/components/SynergyResults.tsx',
   '/src/shared/components/SearchBottomSheet.tsx',
 ]);

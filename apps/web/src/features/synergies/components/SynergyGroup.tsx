@@ -4,7 +4,7 @@ import type {SynergyGroup as SynergyGroupData, SynergyMatchDisplay} from '../typ
 import {SynergyCard} from './SynergyCard';
 import {applySynergySortOrder} from '../utils';
 import {COLORS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
-import {Callout} from '../../../shared/components';
+import {AbilityCallout, AbilityTag} from '../../../shared/components';
 import {useContainerWidth, useRovingTabIndex} from '../../../shared/hooks';
 
 interface SynergyGroupProps {
@@ -14,9 +14,20 @@ interface SynergyGroupProps {
   onShowAll?: (groupKey: string) => void;
   /** When false, hides the group header and description (used in show-all expanded view). Default: true */
   showHeader?: boolean;
+  /** When false, hides the muted "X of Y cards" meta line above the grid. Default: true */
+  showCardCount?: boolean;
   /** Minimum card width for desktop grid. Default: LAYOUT.synergyCardMinWidth (160px) */
   cardMinWidth?: number;
-  onCardClick?: (card: LorcanaCard) => void;
+  /** When set, forces a fixed column count instead of the responsive auto-fill grid. */
+  gridColumns?: number;
+  /** Override grid gap (px). Default: 10 */
+  gridGap?: number;
+  /** Override the trailing margin between stacked groups. Default: SPACING.xl. Pass 0 when the parent uses flex `gap`. */
+  marginBottom?: number;
+  /** Compact tile + MoreTile sizing for narrow grids (e.g. inside CardOverviewModal):
+   *  neutral tile border, no "View details" hover cue, smaller corner radius, smaller MoreTile font. Default false. */
+  compact?: boolean;
+  onCardClick?: (card: LorcanaCard, groupKey?: string) => void;
 }
 
 export function SynergyGroup({
@@ -25,9 +36,20 @@ export function SynergyGroup({
   maxVisibleCards = 6,
   onShowAll,
   showHeader = true,
+  showCardCount = true,
   cardMinWidth,
+  gridColumns,
+  gridGap,
+  marginBottom = SPACING.xl,
+  compact = false,
   onCardClick,
 }: SynergyGroupProps) {
+  // Wrap onCardClick to inject this group's groupKey before bubbling up.
+  // SynergyCard's onCardClick stays (card) => void; this group is the only place
+  // that knows which group context the click came from (Option A calibration).
+  const onCardClickWithGroupKey = onCardClick
+    ? (card: LorcanaCard) => onCardClick(card, group.groupKey)
+    : undefined;
   // Default sort: ink alphabetical, then cost ascending within each ink
   const sortedSynergies = applySynergySortOrder(group.synergies, 'ink-cost');
 
@@ -36,40 +58,40 @@ export function SynergyGroup({
   const isTruncated = visibleCount < totalCount;
 
   return (
-    <div data-group-key={group.groupKey} style={{marginBottom: `${SPACING.xl}px`}}>
+    <div data-group-key={group.groupKey} style={{marginBottom: `${marginBottom}px`}}>
       {showHeader && (
         <>
-          {/* Group header */}
+          {/* Lorcana ability box: stacked tag at top-left + cream callout below */}
           <div
             style={{
               display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: `${FONT_SIZES.base}px`,
-              fontWeight: 600,
-              color: COLORS.text,
+              flexDirection: 'column',
+              alignItems: 'flex-start',
               marginBottom: `${SPACING.sm}px`,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
             }}>
-            <h3 style={{margin: 0, fontSize: 'inherit', fontWeight: 'inherit'}}>{group.label}</h3>
-            <span
+            <h3 style={{margin: 0, lineHeight: 1}}>
+              <AbilityTag variant="stacked">{group.label}</AbilityTag>
+            </h3>
+            <div style={{alignSelf: 'stretch'}}>
+              <AbilityCallout variant="stacked-after-tag">{group.description}</AbilityCallout>
+            </div>
+          </div>
+
+          {/* Card-count meta — sits outside the cream box, muted. Hidden in mockup-fidelity contexts (e.g. CardOverviewModal). */}
+          {showCardCount && (
+            <div
               style={{
-                marginLeft: 'auto',
-                fontSize: `${FONT_SIZES.base}px`,
+                fontSize: `${FONT_SIZES.xs}px`,
                 color: COLORS.textMuted,
-                fontWeight: 400,
-                textTransform: 'none',
-                letterSpacing: 0,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                marginBottom: `${SPACING.sm}px`,
               }}>
               {isTruncated
                 ? `${visibleCount} of ${totalCount} cards`
                 : `${totalCount} card${totalCount !== 1 ? 's' : ''}`}
-            </span>
-          </div>
-
-          {/* Group description callout */}
-          <Callout>{group.description}</Callout>
+            </div>
+          )}
         </>
       )}
 
@@ -81,7 +103,10 @@ export function SynergyGroup({
         groupKey={group.groupKey}
         onShowAll={onShowAll}
         cardMinWidth={cardMinWidth}
-        onCardClick={onCardClick}
+        gridColumns={gridColumns}
+        gridGap={gridGap}
+        compact={compact}
+        onCardClick={onCardClickWithGroupKey}
       />
     </div>
   );
@@ -93,13 +118,17 @@ function MoreTile({
   onClick,
   isMobile,
   tabIndex,
+  compact = false,
 }: {
   count: number;
   onClick?: () => void;
   isMobile?: boolean;
   tabIndex?: number;
+  /** Compact sizing for narrow grids (mockup `.mini-tile.more`: 13px / 9px). Default false → standard sizing. */
+  compact?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
+  const config = pickMoreTileConfig(compact);
 
   return (
     <button
@@ -110,34 +139,89 @@ function MoreTile({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       aria-label={`Show ${count} more cards`}
-      style={{
-        position: 'relative',
-        borderRadius: `${RADIUS.lg}px`,
-        overflow: 'hidden',
-        aspectRatio: '0.72',
-        cursor: 'pointer',
-        background: COLORS.surfaceAlt,
-        border: `1px dashed ${hovered ? 'rgba(212, 175, 55, 0.35)' : '#444466'}`,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: isMobile ? '4px' : '6px',
-        width: '100%',
-        padding: 0,
-        transition: 'transform 0.2s, box-shadow 0.2s, border-color 0.2s',
-        transform: hovered ? 'scale(1.04) translateY(-3px)' : undefined,
-        boxShadow: hovered ? '0 0 16px rgba(212, 175, 55, 0.15)' : undefined,
-        fontFamily: 'inherit',
-      }}>
-      <span style={{fontSize: `${FONT_SIZES.xxl}px`, fontWeight: 700, color: COLORS.primary500}}>
+      style={pickMoreTileButtonStyle({config, hovered, compact, isMobile})}>
+      <span style={{fontSize: `${config.countFontSize}px`, fontWeight: 700, color: COLORS.primary500}}>
         +{count}
       </span>
-      <span style={{fontSize: `${FONT_SIZES.xs}px`, fontWeight: 500, color: COLORS.textMuted}}>
-        more cards
+      <span
+        style={{
+          fontSize: `${config.labelFontSize}px`,
+          fontWeight: 500,
+          color: COLORS.textMuted,
+          textTransform: config.labelTextTransform,
+          letterSpacing: config.labelLetterSpacing,
+        }}>
+        {config.labelText}
       </span>
     </button>
   );
+}
+
+interface MoreTileConfig {
+  countFontSize: number;
+  labelFontSize: number;
+  labelText: string;
+  borderRadius: number;
+  labelTextTransform: 'uppercase' | undefined;
+  labelLetterSpacing: string | undefined;
+}
+
+/** Single switch on `compact` returning the full visual config — replaces ten inline ternaries. */
+function pickMoreTileConfig(compact: boolean): MoreTileConfig {
+  if (compact) {
+    return {
+      countFontSize: FONT_SIZES.sm,
+      labelFontSize: 9,
+      labelText: 'more',
+      borderRadius: RADIUS.sm + 1,
+      labelTextTransform: 'uppercase',
+      labelLetterSpacing: '0.06em',
+    };
+  }
+  return {
+    countFontSize: FONT_SIZES.xxl,
+    labelFontSize: FONT_SIZES.xs,
+    labelText: 'more cards',
+    borderRadius: RADIUS.lg,
+    labelTextTransform: undefined,
+    labelLetterSpacing: undefined,
+  };
+}
+
+interface MoreTileButtonStyleInput {
+  config: MoreTileConfig;
+  hovered: boolean;
+  compact: boolean;
+  isMobile?: boolean;
+}
+
+function pickMoreTileButtonStyle({config, hovered, compact, isMobile}: MoreTileButtonStyleInput): React.CSSProperties {
+  return {
+    position: 'relative',
+    borderRadius: `${config.borderRadius}px`,
+    overflow: 'hidden',
+    aspectRatio: '0.72',
+    cursor: 'pointer',
+    background: COLORS.surfaceAlt,
+    border: `1px dashed ${hovered ? 'rgba(212, 175, 55, 0.35)' : '#444466'}`,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: pickMoreTileGap(compact, isMobile),
+    width: '100%',
+    padding: 0,
+    transition: 'transform 0.2s, box-shadow 0.2s, border-color 0.2s',
+    transform: hovered ? 'scale(1.04) translateY(-3px)' : undefined,
+    boxShadow: hovered ? '0 0 16px rgba(212, 175, 55, 0.15)' : undefined,
+    fontFamily: 'inherit',
+  };
+}
+
+function pickMoreTileGap(compact: boolean, isMobile?: boolean): string {
+  if (compact) return '2px';
+  if (isMobile) return '4px';
+  return '6px';
 }
 
 // Card list with overflow handling
@@ -148,6 +232,9 @@ interface SynergyCardListProps {
   groupKey: string;
   onShowAll?: (groupKey: string) => void;
   cardMinWidth?: number;
+  gridColumns?: number;
+  gridGap?: number;
+  compact?: boolean;
   onCardClick?: (card: LorcanaCard) => void;
 }
 
@@ -158,23 +245,29 @@ function SynergyCardList({
   groupKey,
   onShowAll,
   cardMinWidth = LAYOUT.synergyCardMinWidth,
+  gridColumns,
+  gridGap = 10,
+  compact = false,
   onCardClick,
 }: SynergyCardListProps) {
   const visible = synergies.slice(0, maxVisibleCards);
   const remaining = synergies.length - visible.length;
   const listRef = useRef<HTMLUListElement>(null);
   const containerWidth = useContainerWidth(listRef);
-  const GAP = 10;
   const columns = isMobile
     ? 3
-    : containerWidth > 0
-      ? Math.max(1, Math.floor((containerWidth + GAP) / (cardMinWidth + GAP)))
-      : 3; // fallback before measurement
+    : gridColumns ??
+      (containerWidth > 0
+        ? Math.max(1, Math.floor((containerWidth + gridGap) / (cardMinWidth + gridGap)))
+        : 3); // fallback before measurement
   const {handleKeyDown, getTabIndex} = useRovingTabIndex({
     itemCount: visible.length + (remaining > 0 ? 1 : 0),
     columns,
     containerRef: listRef,
   });
+  const desktopTemplate = gridColumns
+    ? `repeat(${gridColumns}, 1fr)`
+    : `repeat(auto-fill, minmax(${cardMinWidth}px, 1fr))`;
 
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- roving tabindex container for keyboard grid navigation
@@ -184,10 +277,8 @@ function SynergyCardList({
       onKeyDown={handleKeyDown}
       style={{
         display: 'grid',
-        gridTemplateColumns: isMobile
-          ? 'repeat(3, 1fr)'
-          : `repeat(auto-fill, minmax(${cardMinWidth}px, 1fr))`,
-        gap: '10px',
+        gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : desktopTemplate,
+        gap: `${gridGap}px`,
         listStyle: 'none',
         padding: 0,
         margin: 0,
@@ -199,6 +290,7 @@ function SynergyCardList({
             score={synergy.score}
             explanation={synergy.explanation}
             isMobile={isMobile}
+            compact={compact}
             onCardClick={onCardClick}
             tabIndex={getTabIndex(i)}
           />
@@ -210,6 +302,7 @@ function SynergyCardList({
             count={remaining}
             onClick={() => onShowAll?.(groupKey)}
             isMobile={isMobile}
+            compact={compact}
             tabIndex={getTabIndex(visible.length)}
           />
         </li>

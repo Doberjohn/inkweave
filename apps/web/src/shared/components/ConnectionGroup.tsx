@@ -1,75 +1,58 @@
-import {Fragment, useState} from 'react';
+import {useState, useEffect} from 'react';
 import type {LorcanaCard} from '../../features/cards';
-import type {PairSynergyConnection, LocationRole} from 'inkweave-synergy-engine';
-import {
-  getPlaystyleById,
-  LOCATION_ROLE_CHIP_LABELS,
-  LOCATION_ROLE_DESCRIPTIONS,
-} from 'inkweave-synergy-engine';
-import {getStrengthTier} from '../../features/synergies/utils';
-import {COLORS, FONT_SIZES, SPACING, RADIUS} from '../constants';
-import {StrengthBadge} from './StrengthBadge';
+import type {Ink, LocationRole, PairSynergyConnection} from 'inkweave-synergy-engine';
+import {LOCATION_ROLE_CHIP_LABELS, LOCATION_ROLE_DESCRIPTIONS} from 'inkweave-synergy-engine';
+import {COLORS, FONTS, FONT_SIZES, RADIUS} from '../constants';
+import {useResponsive} from '../hooks';
+import type {ConnectionGroupData} from './groupConnections';
 
-// --- Types ---
+// ── Chip palette ──
+// Vibrant Lorcana brand ink colors used as the inline-chip background. Distinct from
+// the darker INK_COLORS (which is tuned for card-badge use against dark surfaces);
+// these are the ink-symbol colors the game uses on its physical cards. Text colors
+// chosen per-ink for WCAG-readable contrast against each bg.
+const CHIP_BG_BY_INK: Record<Ink, string> = {
+  Amber: '#F5B202',
+  Amethyst: '#81377B',
+  Emerald: '#2A8934',
+  Ruby: '#D3082F',
+  Sapphire: '#0189C4',
+  Steel: '#9FA8B4',
+};
 
-export interface ConnectionGroupData {
-  key: string;
-  label: string;
-  score: number;
-  connections: PairSynergyConnection[];
-  category: 'direct' | 'playstyle';
-}
+const CHIP_TEXT_BY_INK: Record<Ink, string> = {
+  Amber: '#000000',
+  Amethyst: '#FFFFFF',
+  Emerald: '#FFFFFF',
+  Ruby: '#FFFFFF',
+  Sapphire: '#FFFFFF',
+  Steel: '#000000',
+};
 
 interface ConnectionGroupProps {
   group: ConnectionGroupData;
   cardA: LorcanaCard;
   cardB: LorcanaCard;
-  showScoreBadge?: boolean;
   onHighlight?: (card: 'a' | 'b' | null) => void;
 }
 
-// --- Grouping utility ---
+const ABILITY_BOX_SHADOW =
+  '0 3px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -1px 0 rgba(0, 0, 0, 0.18)';
 
-/** Group connections: playstyle rules merge by playstyleId, direct rules stay individual */
-export function groupConnections(connections: PairSynergyConnection[]): ConnectionGroupData[] {
-  const playstyleGroups = new Map<string, PairSynergyConnection[]>();
-  const result: ConnectionGroupData[] = [];
+/**
+ * AbilityRow stacking position. Drives corner radii and box-shadow:
+ * - 'solo':   single isolated row — full radius, full shadow (default; matches single-rule case)
+ * - 'first':  top of a stack — top corners rounded, bottom flat, no shadow
+ * - 'middle': middle of a stack — all corners flat, no shadow
+ * - 'last':   bottom of a stack — top flat, bottom rounded, no shadow
+ *
+ * The visible row in the desktop multi-role expand pattern uses 'last' when collapsed
+ * (square top, rounded bottom — reads as a "tab" hanging from above) and 'middle' when
+ * expanded (square all — joins the hidden rows seamlessly).
+ */
+type AbilityRowPosition = 'solo' | 'first' | 'middle' | 'last';
 
-  for (const conn of connections) {
-    if (conn.category === 'playstyle') {
-      const existing = playstyleGroups.get(conn.playstyleId);
-      if (existing) {
-        existing.push(conn);
-      } else {
-        playstyleGroups.set(conn.playstyleId, [conn]);
-      }
-    } else {
-      result.push({
-        key: conn.ruleId,
-        label: conn.ruleName,
-        score: conn.score,
-        connections: [conn],
-        category: 'direct',
-      });
-    }
-  }
-
-  for (const [playstyleId, conns] of playstyleGroups) {
-    const playstyle = getPlaystyleById(playstyleId);
-    const maxScore = Math.max(...conns.map((c) => c.score));
-    result.push({
-      key: playstyleId,
-      label: playstyle?.name ?? playstyleId,
-      score: maxScore,
-      connections: conns,
-      category: 'playstyle',
-    });
-  }
-
-  return result.sort((a, b) => b.score - a.score);
-}
-
-// --- Internal helpers ---
+// ── Internal helpers ──
 
 function extractLocationRole(ruleId: string): LocationRole | null {
   const prefix = 'location-';
@@ -112,224 +95,467 @@ function findCardInText(text: string, fullName: string): {index: number; match: 
   return {index: -1, match: ''};
 }
 
-// --- Subcomponents ---
+// ── Subcomponents ──
 
-function ExplanationWithHighlights({
-  text,
-  cardAName,
-  cardBName,
-  onHighlight,
-}: {
-  text: string;
-  cardAName: string;
-  cardBName: string;
-  onHighlight?: (card: 'a' | 'b' | null) => void;
-}) {
-  const segments: {text: string; card: 'a' | 'b' | null}[] = [];
+type ExplanationSegment =
+  | {kind: 'text'; text: string}
+  | {kind: 'name'; text: string; card: 'a' | 'b'}
+  | {kind: 'token'; card: 'a' | 'b'};
+
+/**
+ * Tokenize an explanation string into renderable segments. Detects:
+ * - `{A}` / `{B}` chip tokens (engine emits these for role-aware references)
+ * - Card-name occurrences (legacy path, preserved for any explanations that still embed names)
+ *
+ * Chip tokens always win over a card-name match at the same index since they are
+ * length-3 sentinels emitted by the engine specifically for this purpose.
+ */
+function tokenizeExplanation(
+  text: string,
+  cardAName: string,
+  cardBName: string,
+): ExplanationSegment[] {
+  const segments: ExplanationSegment[] = [];
   let remaining = text;
 
   while (remaining.length > 0) {
-    const hitA = findCardInText(remaining, cardAName);
-    const hitB = findCardInText(remaining, cardBName);
+    const tokenA = remaining.indexOf('{A}');
+    const tokenB = remaining.indexOf('{B}');
+    const nameA = findCardInText(remaining, cardAName);
+    const nameB = findCardInText(remaining, cardBName);
 
-    let matchIdx = -1;
-    let matchName = '';
-    let matchCard: 'a' | 'b' = 'a';
+    type Candidate =
+      | {kind: 'token'; idx: number; length: number; card: 'a' | 'b'}
+      | {kind: 'name'; idx: number; length: number; card: 'a' | 'b'; match: string};
+    const candidates: Candidate[] = [];
+    if (tokenA >= 0) candidates.push({kind: 'token', idx: tokenA, length: 3, card: 'a'});
+    if (tokenB >= 0) candidates.push({kind: 'token', idx: tokenB, length: 3, card: 'b'});
+    if (nameA.index >= 0) candidates.push({kind: 'name', idx: nameA.index, length: nameA.match.length, card: 'a', match: nameA.match});
+    if (nameB.index >= 0) candidates.push({kind: 'name', idx: nameB.index, length: nameB.match.length, card: 'b', match: nameB.match});
 
-    if (hitA.index >= 0 && hitB.index >= 0 && hitA.index === hitB.index) {
-      // Same position; prefer the longer match to avoid partial name splits
-      if (hitA.match.length >= hitB.match.length) {
-        matchIdx = hitA.index; matchName = hitA.match; matchCard = 'a';
-      } else {
-        matchIdx = hitB.index; matchName = hitB.match; matchCard = 'b';
-      }
-    } else if (hitA.index >= 0 && (hitB.index < 0 || hitA.index < hitB.index)) {
-      matchIdx = hitA.index; matchName = hitA.match; matchCard = 'a';
-    } else if (hitB.index >= 0) {
-      matchIdx = hitB.index; matchName = hitB.match; matchCard = 'b';
-    }
-
-    if (matchIdx < 0) {
-      segments.push({text: remaining, card: null});
+    if (candidates.length === 0) {
+      segments.push({kind: 'text', text: remaining});
       break;
     }
 
-    if (matchIdx > 0) segments.push({text: remaining.slice(0, matchIdx), card: null});
-    segments.push({text: matchName, card: matchCard});
-    remaining = remaining.slice(matchIdx + matchName.length);
+    // Earliest index wins; tie-break on longer match (prefer full names over partials)
+    candidates.sort((x, y) => (x.idx - y.idx) || (y.length - x.length));
+    const winner = candidates[0];
+
+    if (winner.idx > 0) segments.push({kind: 'text', text: remaining.slice(0, winner.idx)});
+    if (winner.kind === 'token') {
+      segments.push({kind: 'token', card: winner.card});
+    } else {
+      segments.push({kind: 'name', text: winner.match, card: winner.card});
+    }
+    remaining = remaining.slice(winner.idx + winner.length);
   }
 
+  return segments;
+}
+
+function ExplanationWithHighlights({
+  text,
+  cardA,
+  cardB,
+  onHighlight,
+}: {
+  text: string;
+  cardA: LorcanaCard;
+  cardB: LorcanaCard;
+  onHighlight?: (card: 'a' | 'b' | null) => void;
+}) {
+  const segments = tokenizeExplanation(text, cardA.fullName, cardB.fullName);
+  // Dual-ink cards take their primary ink (card.ink); secondary ink (card.ink2)
+  // is intentionally ignored to keep the chip a single swatch.
+
   return (
-    <span style={{fontSize: `${FONT_SIZES.base}px`, lineHeight: 1.4, color: COLORS.descriptionText}}>
-      {segments.map((seg, i) =>
-        seg.card && onHighlight ? (
+    <span>
+      {segments.map((seg, i) => {
+        if (seg.kind === 'text') {
+          return <span key={i}>{seg.text}</span>;
+        }
+        if (seg.kind === 'token') {
+          const refCard = seg.card === 'a' ? cardA : cardB;
+          // Chip displays the initial letter of the card's base name (e.g. Yzma → Y,
+          // Kuzco → K) so the user can match chip → card by initial without hover.
+          const initial = refCard.name.charAt(0).toUpperCase();
+          return (
+            <span
+              key={i}
+              onMouseEnter={onHighlight ? () => onHighlight(seg.card) : undefined}
+              onMouseLeave={onHighlight ? () => onHighlight(null) : undefined}
+              style={{
+                display: 'inline-block',
+                background: CHIP_BG_BY_INK[refCard.ink],
+                color: CHIP_TEXT_BY_INK[refCard.ink],
+                border: '1px solid #000000',
+                fontWeight: 700,
+                fontSize: 11,
+                lineHeight: 1,
+                padding: '4px 6px',
+                borderRadius: 3,
+                textAlign: 'center',
+                // Reset textIndent so the parent AbilityRow's text-indent:-12px
+                // (used to pull the role label flush left) doesn't cascade into
+                // the chip's own text and shift the letter off-center.
+                textIndent: 0,
+                verticalAlign: 'baseline',
+                cursor: onHighlight ? 'default' : 'inherit',
+                userSelect: 'none',
+              }}>
+              {initial}
+            </span>
+          );
+        }
+        // seg.kind === 'name' — legacy card-name highlight path (still styled the dashed-underline way)
+        return onHighlight ? (
           <span
             key={i}
             onMouseEnter={() => onHighlight(seg.card)}
             onMouseLeave={() => onHighlight(null)}
             style={{
-              color: COLORS.primary500,
-              borderBottom: '1px dashed rgba(212, 175, 55, 0.4)',
+              color: COLORS.lorcanaCardLink,
+              fontWeight: 700,
+              borderBottom: '1px dashed rgba(122, 77, 24, 0.45)',
               cursor: 'default',
-              transition: 'border-color 0.2s ease',
+              transition: 'border-color 0.15s ease, color 0.15s ease',
             }}>
             {seg.text}
           </span>
-        ) : seg.card ? (
-          <span key={i} style={{color: COLORS.primary500}}>
+        ) : (
+          <span key={i} style={{color: COLORS.lorcanaCardLink, fontWeight: 700}}>
             {seg.text}
           </span>
-        ) : (
-          <span key={i}>{seg.text}</span>
-        ),
-      )}
+        );
+      })}
     </span>
   );
 }
 
-// --- Main component ---
+// Description's line-height multiplier. Sized so one description line (13 × 1.7
+// = 22.1px) is comfortably taller than the inline-block label (font 12 + padding
+// 4+4 = 20px). When label height ≤ description line height, line 1's line-box
+// doesn't grow beyond a normal description line and wrapped lines (2+) follow
+// the standard description rhythm.
+const DESCRIPTION_LINE_HEIGHT = 1.7;
 
-export function ConnectionGroup({
-  group,
+function AbilityRow({
+  label,
+  description,
   cardA,
   cardB,
-  showScoreBadge = true,
   onHighlight,
-}: ConnectionGroupProps) {
-  const [expanded, setExpanded] = useState(true);
-  const [hovered, setHovered] = useState(false);
-  const tier = getStrengthTier(group.score);
-  const hasMultipleRoles = group.connections.length > 1;
-
+  position = 'solo',
+}: {
+  label: string;
+  description: string;
+  cardA: LorcanaCard;
+  cardB: LorcanaCard;
+  onHighlight?: (card: 'a' | 'b' | null) => void;
+  position?: AbilityRowPosition;
+}) {
+  const topRounded = position === 'solo' || position === 'first';
+  const bottomRounded = position === 'solo' || position === 'last';
+  const withShadow = position === 'solo';
   return (
+    // Lorcana ability-text layout: cream container with a small dark label inline at the
+    // start of the text flow. Line 1 (label + start of description) sits flush against the
+    // container's left border via text-indent; wrapped lines (line 2+) are governed by
+    // padding-left so they have breathing room from the border instead of touching it.
     <div
       style={{
-        background: COLORS.surface,
-        borderRadius: `${RADIUS.md}px`,
-        border: `1px solid ${expanded ? 'rgba(212, 175, 55, 0.2)' : COLORS.surfaceBorder}`,
+        background: COLORS.lorcanaCream,
+        borderTopLeftRadius: topRounded ? `${RADIUS.sm}px` : 0,
+        borderTopRightRadius: topRounded ? `${RADIUS.sm}px` : 0,
+        borderBottomLeftRadius: bottomRounded ? `${RADIUS.sm}px` : 0,
+        borderBottomRightRadius: bottomRounded ? `${RADIUS.sm}px` : 0,
+        padding: '8px 12px',
+        // textIndent pulls only line 1 back by `padding-left` so the label hugs
+        // the container's left edge while wrapped lines stay indented at content-left.
+        textIndent: -12,
         overflow: 'hidden',
-        transition: 'border-color 0.15s',
+        boxShadow: withShadow ? ABILITY_BOX_SHADOW : 'none',
+        color: COLORS.lorcanaTextDark,
+        fontFamily: FONTS.body,
+        fontSize: `${FONT_SIZES.base}px`,
+        fontWeight: 600,
+        lineHeight: DESCRIPTION_LINE_HEIGHT,
       }}>
-      {/* Collapsible header */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        aria-expanded={expanded}
+      <span
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: `${SPACING.sm}px`,
-          width: '100%',
-          padding: '10px 12px',
-          background: hovered ? 'rgba(255, 255, 255, 0.02)' : 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          transition: 'background 0.15s',
+          // inline-block keeps the label in the inline flow (so text-indent pulls
+          // it back to the container's left edge) while still giving us a proper
+          // block-level box model for vertical padding.
+          display: 'inline-block',
+          verticalAlign: 'middle',
+          // Reset text-indent so the parent's negative text-indent doesn't cascade
+          // into the label's own inline text and clip the first letter against the
+          // container's overflow:hidden edge. text-indent is an inherited property —
+          // the label has its own block-formatting context but still inherits the value.
+          textIndent: 0,
+          marginRight: 8,
+          padding: '4px 8px',
+          background: COLORS.lorcanaTagBg,
+          color: COLORS.lorcanaTagText,
+          fontFamily: FONTS.body,
+          fontWeight: 700,
+          fontSize: `${FONT_SIZES.md}px`,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+          lineHeight: `${FONT_SIZES.md}px`,
+          borderRadius: `${RADIUS.xs}px`,
         }}>
-        {showScoreBadge && (
-          <StrengthBadge tier={tier} size="lg">
-            {group.score}
-          </StrengthBadge>
-        )}
-        <span
-          style={{
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 600,
-            color: COLORS.text,
-          }}>
-          {group.label}
-        </span>
-        {hasMultipleRoles && (
-          <span
-            style={{
-              fontSize: `${FONT_SIZES.xs}px`,
-              fontWeight: 500,
-              color: COLORS.textMuted,
-            }}>
-            {group.connections.length} roles
-          </span>
-        )}
-        <span
-          style={{
-            marginLeft: 'auto',
-            fontSize: `${FONT_SIZES.base}px`,
-            color: expanded ? COLORS.primary : COLORS.textMuted,
-            transition: 'color 0.15s, transform 0.15s',
-            transform: expanded ? 'rotate(90deg)' : 'none',
-            lineHeight: 1,
-          }}>
-          ▸
-        </span>
-      </button>
+        {label}
+      </span>
+      <ExplanationWithHighlights
+        text={description}
+        cardA={cardA}
+        cardB={cardB}
+        onHighlight={onHighlight}
+      />
+    </div>
+  );
+}
 
-      {/* Expanded detail */}
-      {expanded && (
+// ── Multi-role expand/collapse subcomponents ──
+
+/** Feather chevron-down (https://feathericons.com/) — inline SVG to match project style. */
+function ChevronDownIcon() {
+  return (
+    <svg
+      width={16}
+      height={16}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+function ToggleButton({
+  isOpen,
+  onClick,
+  totalRoles,
+}: {
+  isOpen: boolean;
+  onClick: () => void;
+  totalRoles: number;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={isOpen}
+      aria-label={isOpen ? 'Hide additional roles' : `Show all ${totalRoles} roles`}
+      style={{
+        width: 28,
+        height: 28,
+        borderRadius: '50%',
+        background: COLORS.lorcanaTagBg,
+        color: COLORS.lorcanaTagText,
+        border: `2px solid ${COLORS.lorcanaCream}`,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.6)',
+        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+        transition: 'transform 0.25s ease',
+        padding: 0,
+      }}>
+      <ChevronDownIcon />
+    </button>
+  );
+}
+
+/** Map a row's index within a stack to its corner-radius variant. */
+function pickStackPosition(index: number, total: number): AbilityRowPosition {
+  if (total === 1) return 'solo';
+  if (index === 0) return 'first';
+  if (index === total - 1) return 'last';
+  return 'middle';
+}
+
+/** Resolve a connection's display label + description, using engine role tables. */
+function resolveRoleDisplay(
+  conn: PairSynergyConnection,
+  cardA: LorcanaCard,
+  cardB: LorcanaCard,
+): {key: string; label: string; description: string} {
+  const role = extractLocationRole(conn.ruleId);
+  const label = role ? LOCATION_ROLE_CHIP_LABELS[role] : conn.ruleName;
+  const description = role
+    ? LOCATION_ROLE_DESCRIPTIONS[role](
+        getRoleSourceName(conn, cardA, cardB),
+        getLocationName(cardA, cardB),
+      )
+    : conn.explanation;
+  return {key: conn.ruleId, label, description};
+}
+
+/**
+ * Multi-role display for connection groups with >1 sub-rule (e.g. Location Control's
+ * At-Payoff + Move + Buff).
+ *
+ * Desktop: shows only the highest-scoring role's row + a circular toggle button.
+ * Click expands the rest in an absolute-positioned overlay below the visible row,
+ * so the engine column doesn't grow — the expansion floats over content below.
+ *
+ * Mobile: stacks all roles always-open. No toggle, no overlay (mobile lays the
+ * modal columns vertically, so engine column height isn't constrained).
+ */
+function MultiRoleAbilityList({
+  connections,
+  cardA,
+  cardB,
+  onHighlight,
+}: {
+  connections: PairSynergyConnection[];
+  cardA: LorcanaCard;
+  cardB: LorcanaCard;
+  onHighlight?: (card: 'a' | 'b' | null) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const {isMobile} = useResponsive();
+
+  // Sort by score desc so the highest-scoring role becomes the visible top row on desktop
+  // and the first row on mobile. groupConnections() doesn't sort within a group.
+  const roles = [...connections]
+    .sort((a, b) => b.score - a.score)
+    .map((conn) => resolveRoleDisplay(conn, cardA, cardB));
+
+  // Esc closes the expansion (desktop only — mobile has no toggle).
+  useEffect(() => {
+    if (isMobile || !isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isMobile, isOpen]);
+
+  if (isMobile) {
+    return (
+      <div style={{display: 'flex', flexDirection: 'column', gap: 0}}>
+        {roles.map((r, i) => (
+          <AbilityRow
+            key={r.key}
+            label={r.label}
+            description={r.description}
+            cardA={cardA}
+            cardB={cardB}
+            onHighlight={onHighlight}
+            position={pickStackPosition(i, roles.length)}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // Desktop — visible row + absolute-positioned overlay extension.
+  // Visible row position: 'last' (square top, rounded bottom) when collapsed,
+  // 'middle' (square all) when expanded so it joins the hidden rows seamlessly.
+  const [visibleRole, ...hiddenRoles] = roles;
+  return (
+    <div style={{position: 'relative'}}>
+      <AbilityRow
+        label={visibleRole.label}
+        description={visibleRole.description}
+        cardA={cardA}
+        cardB={cardB}
+        onHighlight={onHighlight}
+        position={isOpen ? 'middle' : 'last'}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          right: 0,
+          zIndex: 5,
+          // Pass clicks through except on the interactive children (the hidden roles
+          // wrapper and the toggle button). Otherwise the absolute container would
+          // intercept clicks targeting content visually below it.
+          pointerEvents: 'none',
+        }}>
         <div
           style={{
-            borderTop: `1px solid ${COLORS.surfaceBorder}`,
-            padding: '10px 12px 12px',
             display: 'grid',
-            gridTemplateColumns: hasMultipleRoles ? 'auto 1fr' : '1fr',
-            gap: `${SPACING.sm}px`,
-            alignItems: 'start',
+            // CSS Grid 0fr → 1fr trick gives a smooth height-from-zero animation
+            // without measuring content height in JS.
+            gridTemplateRows: isOpen ? '1fr' : '0fr',
+            transition: 'grid-template-rows 0.25s ease-out',
+            pointerEvents: 'auto',
           }}>
-          {group.connections.map((conn, i) => {
-            const role = extractLocationRole(conn.ruleId);
-            const chipLabel = role ? LOCATION_ROLE_CHIP_LABELS[role] : null;
-            const description = role
-              ? LOCATION_ROLE_DESCRIPTIONS[role](getRoleSourceName(conn, cardA, cardB), getLocationName(cardA, cardB))
-              : conn.explanation;
-            const divider = i > 0 && (
-              <div
-                key={`${conn.ruleId}-divider`}
-                style={{
-                  gridColumn: '1 / -1',
-                  height: 1,
-                  background: 'rgba(212, 175, 55, 0.15)',
-                }}
+          <div style={{overflow: 'hidden', minHeight: 0}}>
+            {hiddenRoles.map((r, i) => (
+              <AbilityRow
+                key={r.key}
+                label={r.label}
+                description={r.description}
+                cardA={cardA}
+                cardB={cardB}
+                onHighlight={onHighlight}
+                position={i === hiddenRoles.length - 1 ? 'last' : 'middle'}
               />
-            );
-
-            return hasMultipleRoles ? (
-              <Fragment key={conn.ruleId}>
-                {divider}
-                <span
-                  style={{
-                    padding: '2px 8px',
-                    borderRadius: 8,
-                    background: chipLabel ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
-                    color: COLORS.primary,
-                    fontSize: `${FONT_SIZES.xs}px`,
-                    fontWeight: 600,
-                    textAlign: 'center',
-                    whiteSpace: 'nowrap',
-                    marginTop: 1,
-                  }}>
-                  {chipLabel ?? ''}
-                </span>
-                <ExplanationWithHighlights
-                  text={description}
-                  cardAName={cardA.fullName}
-                  cardBName={cardB.fullName}
-                  onHighlight={onHighlight}
-                />
-              </Fragment>
-            ) : (
-              <Fragment key={conn.ruleId}>
-                {divider}
-                <ExplanationWithHighlights
-                  text={description}
-                  cardAName={cardA.fullName}
-                  cardBName={cardB.fullName}
-                  onHighlight={onHighlight}
-                />
-              </Fragment>
-            );
-          })}
+            ))}
+          </div>
         </div>
-      )}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            // Half the button height — straddles the bottom border of whatever
+            // sits above (visible row when collapsed, last hidden row when open).
+            marginTop: -14,
+            pointerEvents: 'auto',
+          }}>
+          <ToggleButton
+            isOpen={isOpen}
+            onClick={() => setIsOpen((o) => !o)}
+            totalRoles={roles.length}
+          />
+        </div>
+      </div>
     </div>
+  );
+}
+
+// ── Main component ──
+
+/**
+ * Lorcana ability-box row variant for a synergy rule (or a multi-role playstyle group).
+ * Single-rule groups render as one ability box. Multi-role groups (Location Control)
+ * render via {@link MultiRoleAbilityList} — desktop hides extra roles behind a toggle,
+ * mobile stacks them all.
+ */
+export function ConnectionGroup({group, cardA, cardB, onHighlight}: ConnectionGroupProps) {
+  if (group.connections.length > 1) {
+    return (
+      <MultiRoleAbilityList
+        connections={group.connections}
+        cardA={cardA}
+        cardB={cardB}
+        onHighlight={onHighlight}
+      />
+    );
+  }
+
+  const conn = group.connections[0];
+  return (
+    <AbilityRow
+      label={group.label}
+      description={conn.explanation}
+      cardA={cardA}
+      cardB={cardB}
+      onHighlight={onHighlight}
+    />
   );
 }

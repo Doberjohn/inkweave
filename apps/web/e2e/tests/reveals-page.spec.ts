@@ -60,13 +60,14 @@ test.describe('Reveals page (flag on)', () => {
     ).toHaveCount(0);
   });
 
-  test('tier card click navigates to /card/:id', async ({page}, testInfo) => {
+  test('tier card click opens the card overview modal', async ({page}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 
     await page.goto('/reveals');
     const firstTile = page.getByTestId('card-tile').first();
     await expect(firstTile).toBeVisible();
     await firstTile.click();
-    await expect(page).toHaveURL(/\/card\/[^/]+/);
+    // Card click opens the global modal (URL stays at /reveals).
+    await expect(page.getByTestId('card-overview-modal')).toBeVisible({timeout: 5000});
   });
 });

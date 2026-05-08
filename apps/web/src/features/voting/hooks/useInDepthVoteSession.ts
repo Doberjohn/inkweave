@@ -1,6 +1,7 @@
 import {useState, useCallback, useMemo} from 'react';
 import {getSupabase, submitVote, type Accuracy, type Score, type InDepthVote} from '../../../shared/lib/supabase';
 import type {InDepthFormState, VotingPair} from '../types';
+import {writeInDepthVote} from '../lib/voteStorage';
 
 const INITIAL_STATE: InDepthFormState = {
   isReal: null,
@@ -36,12 +37,7 @@ export function useInDepthVoteSession(currentPair: VotingPair | null): UseInDept
 
   const isSupabaseAvailable = useMemo(() => getSupabase() !== null, []);
 
-  const hasAnyAnswer = formState.isReal !== null
-    || formState.accuracy !== null
-    || formState.score !== null
-    || formState.wouldPlay !== null
-    || formState.whoCarries !== null
-    || formState.difficulty !== null;
+  const hasAnyAnswer = hasAnyFormAnswer(formState);
 
   const setIsReal = useCallback((value: boolean | null) => {
     setFormState((prev) => ({...prev, isReal: value}));
@@ -73,35 +69,13 @@ export function useInDepthVoteSession(currentPair: VotingPair | null): UseInDept
   }, []);
 
   const submit = useCallback(async () => {
-    if (!currentPair || isRateLimited || !hasAnyAnswer) return;
-
+    if (isSubmitGated({currentPair, isRateLimited, hasAnyAnswer})) return;
     setIsSubmitting(true);
     setLastResult(null);
-
     try {
-      const vote: InDepthVote = {
-        cardA: currentPair.cardA.id,
-        cardB: currentPair.cardB.id,
-      };
-
-      // Only include non-null dimensions
-      if (formState.isReal !== null) vote.isReal = formState.isReal;
-      if (formState.accuracy !== null) vote.accuracy = formState.accuracy;
-      if (formState.score !== null) vote.score = formState.score;
-      if (formState.wouldPlay !== null) vote.wouldPlay = formState.wouldPlay;
-      if (formState.whoCarries !== null) vote.whoCarries = formState.whoCarries;
-      if (formState.difficulty !== null) vote.difficulty = formState.difficulty;
-
+      const vote = buildInDepthVote(currentPair, formState);
       const result = await submitVote(vote);
-
-      if (result.error === null) {
-        setLastResult('success');
-      } else if (result.error === 'rate_limited') {
-        setLastResult('rate_limited');
-        setIsRateLimited(true);
-      } else {
-        setLastResult('error');
-      }
+      applySubmitResult({result, currentPair, formState, setLastResult, setIsRateLimited});
     } catch (err) {
       console.error('[useInDepthVoteSession] Unexpected error:', err);
       setLastResult('error');
@@ -126,4 +100,66 @@ export function useInDepthVoteSession(currentPair: VotingPair | null): UseInDept
     isSupabaseAvailable,
     resetForm,
   };
+}
+
+function hasAnyFormAnswer(formState: InDepthFormState): boolean {
+  if (formState.isReal !== null) return true;
+  if (formState.accuracy !== null) return true;
+  if (formState.score !== null) return true;
+  if (formState.wouldPlay !== null) return true;
+  if (formState.whoCarries !== null) return true;
+  if (formState.difficulty !== null) return true;
+  return false;
+}
+
+interface SubmitGateInput {
+  currentPair: VotingPair | null;
+  isRateLimited: boolean;
+  hasAnyAnswer: boolean;
+}
+
+/** True when the form can't be submitted yet — missing pair, rate-limited, or no answers. */
+function isSubmitGated({currentPair, isRateLimited, hasAnyAnswer}: SubmitGateInput): boolean {
+  if (!currentPair) return true;
+  if (isRateLimited) return true;
+  if (!hasAnyAnswer) return true;
+  return false;
+}
+
+/** Compose the wire-format vote object — only the dimensions the user answered are included. */
+function buildInDepthVote(currentPair: VotingPair, formState: InDepthFormState): InDepthVote {
+  const vote: InDepthVote = {cardA: currentPair.cardA.id, cardB: currentPair.cardB.id};
+  if (formState.isReal !== null) vote.isReal = formState.isReal;
+  if (formState.accuracy !== null) vote.accuracy = formState.accuracy;
+  if (formState.score !== null) vote.score = formState.score;
+  if (formState.wouldPlay !== null) vote.wouldPlay = formState.wouldPlay;
+  if (formState.whoCarries !== null) vote.whoCarries = formState.whoCarries;
+  if (formState.difficulty !== null) vote.difficulty = formState.difficulty;
+  return vote;
+}
+
+interface ApplySubmitResultInput {
+  result: Awaited<ReturnType<typeof submitVote>>;
+  currentPair: VotingPair;
+  formState: InDepthFormState;
+  setLastResult: (r: 'success' | 'rate_limited' | 'error' | null) => void;
+  setIsRateLimited: (v: boolean) => void;
+}
+
+/** Branch on the submit result, persist on success, and surface the right last-result label. */
+function applySubmitResult({result, currentPair, formState, setLastResult, setIsRateLimited}: ApplySubmitResultInput): void {
+  if (result.error === null) {
+    writeInDepthVote(
+      {cardA: currentPair.cardA.id, cardB: currentPair.cardB.id},
+      {accuracy: formState.accuracy ?? undefined, score: formState.score ?? undefined},
+    );
+    setLastResult('success');
+    return;
+  }
+  if (result.error === 'rate_limited') {
+    setLastResult('rate_limited');
+    setIsRateLimited(true);
+    return;
+  }
+  setLastResult('error');
 }

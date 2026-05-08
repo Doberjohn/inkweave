@@ -18,6 +18,10 @@ export class AppPage {
   readonly featuredCards: Locator;
   readonly etherealBackground: Locator;
 
+  // Card overview modal — opens globally when a card is clicked or /card/:id is visited
+  readonly cardOverviewModal: Locator;
+  readonly cardOverviewBackdrop: Locator;
+
   constructor(page: Page) {
     this.page = page;
     this.header = page.locator('header');
@@ -33,6 +37,10 @@ export class AppPage {
     this.heroSearch = page.getByTestId('hero-search');
     this.featuredCards = page.getByTestId('featured-cards');
     this.etherealBackground = page.getByTestId('ethereal-background');
+
+    // Card modal
+    this.cardOverviewModal = page.getByTestId('card-overview-modal');
+    this.cardOverviewBackdrop = page.getByTestId('card-overview-backdrop');
   }
 
   async goto() {
@@ -52,16 +60,14 @@ export class AppPage {
   }
 
   /**
-   * Navigate to card-selected state by clicking a featured card.
-   * This transitions from the home hero view to the card-selected layout.
-   * Desktop: CompactHeader + 3-column layout
-   * Mobile: SynergyResults full screen
+   * Click a featured card — opens the global CardOverviewModal. URL stays at `/` since the
+   * modal is overlay-style (mounted by CardModalProvider, not a route). Hero remains in the
+   * DOM behind the backdrop.
    */
   async selectFeaturedCard() {
     const firstCard = this.featuredCards.getByTestId('card-tile').first();
     await firstCard.click();
-    // Wait for hero to disappear (transition to card-selected state)
-    await this.heroSection.waitFor({state: 'hidden', timeout: 10000});
+    await this.cardOverviewModal.waitFor({state: 'visible', timeout: 10000});
     await this.page.waitForTimeout(100);
   }
 }

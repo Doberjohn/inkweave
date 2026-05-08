@@ -1,33 +1,58 @@
 import {useState, useEffect, useId} from 'react';
 import {COLORS, EASING, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
 import {useResponsive} from '../../../shared/hooks';
-import {Sparkles} from '../../../shared/components/Sparkles';
-import {CtaButton} from '../../../shared/components/CtaButton';
 import type {AccuracyDistribution} from '../../../shared/lib/supabase';
 import type {QuickVoteError, QuickVoteState, Accuracy} from '../hooks/useQuickVote';
 import {DistributionBar} from './DistributionBar';
+import {VoteAffirmation} from './VoteAffirmation';
 
 interface QuickVoteControlProps {
   state: QuickVoteState;
   onVote: (accuracy: Accuracy) => void;
   distribution: AccuracyDistribution | null;
-  distributionFailed?: boolean;
   userChoice: Accuracy | null;
   error: QuickVoteError;
-  /** Optional callback for "Rate in detail" link in the thank-you state */
-  onRateInDetail?: () => void;
+  /** Engine score being rated — used in the prompt copy ("How accurate is Inkweave's score of N?"). */
+  engineScore?: number;
 }
 
+// Short labels matching mockup phase 2 — paired with the directional vote-icon (↓ ✓ ↑) for clarity.
 const CHOICE_LABELS: Record<Accuracy, string> = {
-  [-1]: 'Should be lower',
-  [0]: 'Score is fair',
-  [1]: 'Should be higher',
+  [-1]: 'Lower',
+  [0]: 'Fair',
+  [1]: 'Higher',
 };
 
-const CHOICE_COLORS: Record<Accuracy, {border: string; glow: string; hintBg: string; hoverBorder: string}> = {
-  [-1]: {border: '#f59090', glow: 'rgba(245, 144, 144, 0.15)', hintBg: 'rgba(245, 144, 144, 0.05)', hoverBorder: 'rgba(245, 144, 144, 0.35)'},
-  [0]: {border: '#6ee7a0', glow: 'rgba(110, 231, 160, 0.15)', hintBg: 'rgba(110, 231, 160, 0.05)', hoverBorder: 'rgba(110, 231, 160, 0.35)'},
-  [1]: {border: '#60b5f5', glow: 'rgba(96, 181, 245, 0.15)', hintBg: 'rgba(96, 181, 245, 0.05)', hoverBorder: 'rgba(96, 181, 245, 0.35)'},
+// Mockup phase 2 — tier colors visible AT REST so the vote buttons mirror the dist bar segments above.
+// `restBorder`/`restBg` are at-rest; `hoverBorder`/`hoverBg` amplify on hover; `glow` is the post-vote select aura.
+const CHOICE_COLORS: Record<
+  Accuracy,
+  {border: string; glow: string; restBg: string; restBorder: string; hoverBg: string; hoverBorder: string}
+> = {
+  [-1]: {
+    border: '#f59090',
+    glow: 'rgba(245, 144, 144, 0.15)',
+    restBg: 'rgba(245, 144, 144, 0.05)',
+    restBorder: 'rgba(245, 144, 144, 0.25)',
+    hoverBg: 'rgba(245, 144, 144, 0.12)',
+    hoverBorder: 'rgba(245, 144, 144, 0.55)',
+  },
+  [0]: {
+    border: '#6ee7a0',
+    glow: 'rgba(110, 231, 160, 0.15)',
+    restBg: 'rgba(110, 231, 160, 0.05)',
+    restBorder: 'rgba(110, 231, 160, 0.25)',
+    hoverBg: 'rgba(110, 231, 160, 0.12)',
+    hoverBorder: 'rgba(110, 231, 160, 0.55)',
+  },
+  [1]: {
+    border: '#60b5f5',
+    glow: 'rgba(96, 181, 245, 0.15)',
+    restBg: 'rgba(96, 181, 245, 0.05)',
+    restBorder: 'rgba(96, 181, 245, 0.25)',
+    hoverBg: 'rgba(96, 181, 245, 0.12)',
+    hoverBorder: 'rgba(96, 181, 245, 0.55)',
+  },
 };
 
 const VOTES = [-1, 0, 1] as const;
@@ -78,10 +103,6 @@ const KEYFRAMES = `
   from { opacity: 0; }
   to { opacity: 1; }
 }
-@keyframes qv-pulse-glow {
-  0%, 100% { text-shadow: 0 0 4px rgba(110, 231, 160, 0.2); }
-  50% { text-shadow: 0 0 12px rgba(110, 231, 160, 0.5); }
-}
 .qv-vote-btn:focus-visible {
   outline: 2px solid rgba(212, 175, 55, 0.6);
   outline-offset: 2px;
@@ -127,7 +148,8 @@ function getVoteButtonState({vote, hoveredVote, pressedVote, selectedChoice, sub
     isDimmed,
     isHovered,
     isPressed,
-    iconOpacity: isSelected || isHovered ? 1 : 0.4,
+    // Mockup phase 2 — vote-icon visible at rest (0.85), full opacity on hover/select.
+    iconOpacity: isSelected || isHovered ? 1 : 0.85,
   };
 }
 
@@ -139,16 +161,20 @@ interface VoteButtonStyleInput extends VoteButtonState {
 
 type VoteButtonColors = typeof CHOICE_COLORS[Accuracy];
 
-function getVoteButtonBorder(isSelected: boolean, isHovered: boolean, colors: VoteButtonColors): string | undefined {
+function getVoteButtonBorder(isSelected: boolean, isHovered: boolean, colors: VoteButtonColors): string {
   if (isSelected) return `1px solid ${colors.border}`;
   if (isHovered) return `1px solid ${colors.hoverBorder}`;
-  return BASE_BUTTON_STYLE.border;
+  // Mockup phase 2 — tier-tinted at-rest border so the buttons mirror the dist bar segments.
+  return `1px solid ${colors.restBorder}`;
 }
 
 function getVoteButtonStyle({isSelected, isDimmed, isHovered, isPressed, colors, disabled, index}: VoteButtonStyleInput): React.CSSProperties {
+  // At-rest fill is the tier's faint tint (mockup phase 2). Hover amplifies it; selected pulls
+  // toward the post-vote brighter tint with the glow ring.
+  const background = isSelected || isHovered ? colors.hoverBg : colors.restBg;
   return {
     ...BASE_BUTTON_STYLE,
-    background: isSelected || isHovered ? colors.hintBg : BASE_BUTTON_STYLE.background,
+    background,
     opacity: isDimmed ? 0.3 : 1,
     transform: isSelected ? 'scale(1.05)' : isPressed ? 'scale(0.97)' : undefined,
     border: getVoteButtonBorder(isSelected, isHovered, colors),
@@ -206,96 +232,7 @@ function VoteButtons({disabled, submitting, selectedChoice, onVote, isMobile, qu
   );
 }
 
-// ── Result branch (submitting/result state) ──
-
-function FirstVoterCallout() {
-  return (
-    <span style={{flexShrink: 0}}>
-      <Sparkles color="#6ee7a0" minSize={3} maxSize={8} rate={300}>
-        <span style={{fontSize: `${FONT_SIZES.sm}px`, color: '#6ee7a0', fontFamily: FONTS.body, fontWeight: 600, whiteSpace: 'nowrap', animation: 'qv-fade-up 0.4s ease-out 0.1s both, qv-pulse-glow 2s ease-in-out 0.5s infinite'}}>
-          First to rate this pair!
-        </span>
-      </Sparkles>
-    </span>
-  );
-}
-
-function RatingsCount({total}: {total: number}) {
-  const text = total === 1 ? '1 rating' : `${total} ratings`;
-  return (
-    <span style={{fontSize: `${FONT_SIZES.sm}px`, color: COLORS.textMuted, fontFamily: FONTS.body}}>
-      {text}
-    </span>
-  );
-}
-
-function ConfirmationCallout({distribution, isFirstVoter}: {distribution: AccuracyDistribution | null; isFirstVoter: boolean}) {
-  if (isFirstVoter) return <FirstVoterCallout />;
-  if (distribution) return <RatingsCount total={distribution.total} />;
-  return null;
-}
-
-function StatusMessage({text}: {text: string}) {
-  return (
-    <p style={{...QUESTION_STYLE, fontSize: `${FONT_SIZES.sm}px`, margin: 0, color: COLORS.textMuted, animation: 'qv-fade-in 0.3s ease-out'}}>
-      {text}
-    </p>
-  );
-}
-
-function DistributionContent({distribution, distributionFailed, isFirstVoter}: {
-  distribution: AccuracyDistribution | null;
-  distributionFailed: boolean;
-  isFirstVoter: boolean;
-}) {
-  if (distribution && !isFirstVoter) {
-    return <DistributionBar lower={distribution.lower} right={distribution.right} higher={distribution.higher} animate showLabels={false} />;
-  }
-  if (distributionFailed) return <StatusMessage text="Community ratings unavailable" />;
-  if (!distribution) return <StatusMessage text="Loading community ratings…" />;
-  return null;
-}
-
-function RateInDetailCta({onClick}: {onClick: () => void}) {
-  return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.xs, animation: 'qv-fade-up 0.3s ease-out 0.2s both'}}>
-      <p style={{...QUESTION_STYLE, fontSize: `${FONT_SIZES.sm}px`, margin: 0, textAlign: 'center'}}>
-        Want to help fine-tune this score?
-      </p>
-      <CtaButton onClick={onClick} style={{width: '100%', minHeight: 40}}>
-        Rate this pair in depth &rarr;
-      </CtaButton>
-    </div>
-  );
-}
-
-interface QuickVoteResultProps {
-  userChoice: Accuracy | null;
-  distribution: AccuracyDistribution | null;
-  distributionFailed: boolean;
-  onRateInDetail?: () => void;
-}
-
-function QuickVoteResult({userChoice, distribution, distributionFailed, onRateInDetail}: QuickVoteResultProps) {
-  const isFirstVoter = distribution?.total === 1;
-  const choiceColor = userChoice !== null ? CHOICE_COLORS[userChoice].border : COLORS.primary;
-  const choiceLabel = userChoice !== null ? CHOICE_LABELS[userChoice] : '';
-
-  return (
-    <div key="qv-result" style={{...CONTAINER_STYLE, animation: 'qv-fade-in 0.3s ease-out'}}>
-      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', animation: 'qv-fade-up 0.3s ease-out'}}>
-        <p style={{...QUESTION_STYLE, fontSize: `${FONT_SIZES.sm}px`, margin: 0}}>
-          Your rating: <span style={{color: choiceColor}}>{choiceLabel}</span>
-        </p>
-        <ConfirmationCallout distribution={distribution} isFirstVoter={isFirstVoter} />
-      </div>
-      <DistributionContent distribution={distribution} distributionFailed={distributionFailed} isFirstVoter={isFirstVoter} />
-      {onRateInDetail && distribution && <RateInDetailCta onClick={onRateInDetail} />}
-    </div>
-  );
-}
-
-// ── Prompt branch (ready/error state) ──
+// ── Prompt branch (single render path for all non-hidden states) ──
 
 function PromptError({error}: {error: QuickVoteError}) {
   const text = error === 'rate_limited' ? "You're rating fast! Try again in a bit." : 'Something went wrong, try again';
@@ -321,33 +258,134 @@ interface QuickVotePromptProps {
   error: QuickVoteError;
   isMobile: boolean;
   questionId: string;
+  /** Engine score being rated (used in the prompt copy). */
+  engineScore?: number;
+  /** Pre-vote distribution data (mockup phase 2 shows it above the prompt with a dashed divider). */
+  distribution: AccuracyDistribution | null;
 }
 
-function QuickVotePrompt({state, onVote, userChoice, error, isMobile, questionId}: QuickVotePromptProps) {
-  const isError = state === 'error';
-  const buttonsDisabled = isError && error === 'rate_limited';
+/**
+ * Two render paths:
+ * - ready / submitting / error: dist + dashed divider + prompt + 3 buttons (+ optional error banner).
+ * - result: dist + gold VoteAffirmation tile (no divider, no prompt, no buttons). The disabled-buttons
+ *   pattern after voting was a dead-end UX — affirmation replaces it with closure on the user's vote.
+ */
+function QuickVotePrompt({state, onVote, userChoice, error, isMobile, questionId, engineScore, distribution}: QuickVotePromptProps) {
+  const isResult = state === 'result';
+  const isSubmitting = state === 'submitting';
+  const hasDistribution = !!distribution && distribution.total > 0;
 
   return (
-    <div key="qv-prompt" style={{...CONTAINER_STYLE, animation: 'qv-fade-up 0.35s ease-out'}}>
+    <div
+      key="qv-prompt"
+      style={{
+        ...CONTAINER_STYLE,
+        // When the dist bar is shown above the prompt, give the block more breathing room
+        // (mockup phase 2 `.vote-section.combined-vote { gap: 14px }`).
+        gap: hasDistribution ? SPACING.section : SPACING.sm,
+        animation: 'qv-fade-up 0.35s ease-out',
+      }}>
+      <DistributionBlock distribution={distribution} hasDistribution={hasDistribution} isResult={isResult} />
+      <PromptOrResult
+        state={state}
+        onVote={onVote}
+        userChoice={userChoice}
+        error={error}
+        isMobile={isMobile}
+        isResult={isResult}
+        isSubmitting={isSubmitting}
+        questionId={questionId}
+        engineScore={engineScore}
+      />
+    </div>
+  );
+}
+
+interface DistributionBlockProps {
+  distribution: AccuracyDistribution | null;
+  hasDistribution: boolean;
+  isResult: boolean;
+}
+
+function DistributionBlock({distribution, hasDistribution, isResult}: DistributionBlockProps) {
+  if (!hasDistribution || !distribution) return null;
+  return (
+    <>
+      <DistributionBar
+        lower={distribution.lower}
+        right={distribution.right}
+        higher={distribution.higher}
+        animate={false}
+        contextLabel="How the community rates Inkweave's score"
+      />
+      {!isResult && (
+        <hr
+          aria-hidden="true"
+          style={{
+            border: 'none',
+            borderTop: `1px dashed rgba(212, 175, 55, 0.18)`,
+            margin: 0,
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+interface PromptOrResultProps {
+  state: QuickVoteState;
+  onVote: (accuracy: Accuracy) => void;
+  userChoice: Accuracy | null;
+  error: QuickVoteError;
+  isMobile: boolean;
+  isResult: boolean;
+  isSubmitting: boolean;
+  questionId: string;
+  engineScore?: number;
+}
+
+function PromptOrResult({state, onVote, userChoice, error, isMobile, isResult, isSubmitting, questionId, engineScore}: PromptOrResultProps) {
+  if (isResult) {
+    return (
+      <VoteAffirmation
+        accentColor={COLORS.primary500}
+        title="Thanks for your quick vote"
+        detail={userChoice != null ? `You picked: ${CHOICE_LABELS[userChoice]}` : undefined}
+      />
+    );
+  }
+  return (
+    <>
       <p id={questionId} style={{...QUESTION_STYLE, fontWeight: 600, color: COLORS.text, animation: 'qv-fade-in 0.3s ease-out'}}>
-        Do you agree with this score?
+        {pickPromptCopy(engineScore)}
       </p>
       <VoteButtons
-        disabled={buttonsDisabled}
-        submitting={false}
+        disabled={areButtonsDisabled(state, error)}
+        submitting={isSubmitting}
         selectedChoice={userChoice}
         onVote={onVote}
         isMobile={isMobile}
         questionId={questionId}
       />
-      {isError && <PromptError error={error} />}
-    </div>
+      {state === 'error' && <PromptError error={error} />}
+    </>
   );
+}
+
+function pickPromptCopy(engineScore: number | undefined): string {
+  if (engineScore === undefined) return 'Do you agree with this score?';
+  return `How accurate is Inkweave's score of ${engineScore}?`;
+}
+
+function areButtonsDisabled(state: QuickVoteState, error: QuickVoteError): boolean {
+  if (state === 'submitting' || state === 'result') return true;
+  if (state === 'error' && error === 'rate_limited') return true;
+  return false;
 }
 
 // ── Main component ──
 
-export function QuickVoteControl({state, onVote, distribution, distributionFailed, userChoice, error, onRateInDetail}: QuickVoteControlProps) {
+export function QuickVoteControl({state, onVote, distribution, userChoice, error, engineScore}: QuickVoteControlProps) {
   const {isMobile} = useResponsive();
   const questionId = useId();
 
@@ -355,17 +393,7 @@ export function QuickVoteControl({state, onVote, distribution, distributionFaile
 
   if (state === 'hidden') return null;
 
-  if (state === 'submitting' || state === 'result') {
-    return (
-      <QuickVoteResult
-        userChoice={userChoice}
-        distribution={distribution}
-        distributionFailed={Boolean(distributionFailed)}
-        onRateInDetail={onRateInDetail}
-      />
-    );
-  }
-
+  // QuickVotePrompt handles the result-vs-active branch internally — see its docstring.
   return (
     <QuickVotePrompt
       state={state}
@@ -374,6 +402,8 @@ export function QuickVoteControl({state, onVote, distribution, distributionFaile
       error={error}
       isMobile={isMobile}
       questionId={questionId}
+      engineScore={engineScore}
+      distribution={distribution}
     />
   );
 }

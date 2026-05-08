@@ -22,6 +22,7 @@ const mockGroup: SynergyGroupData = {
   groupKey: 'shift-targets',
   category: 'direct',
   label: 'Shift Targets',
+  tagline: 'Characters with Shift and their same-named targets',
   description: 'Characters with Shift and their same-named targets',
   synergies: [makeSynergy('1', 'Elsa - Snow Queen')],
 };

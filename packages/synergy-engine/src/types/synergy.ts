@@ -78,6 +78,9 @@ export interface SynergyGroup {
   groupKey: string; // rule.id for direct, playstyleId for playstyle
   category: SynergyCategory;
   label: string; // rule.name for direct, playstyle.name for playstyle
-  description: string; // rule.description for direct, playstyle.description for playstyle
+  /** One-sentence headline. Direct rules: rule.description. Playstyles: playstyle.tagline. */
+  tagline: string;
+  /** Long-form explanation. Direct rules: rule.description. Playstyles: playstyle.description. */
+  description: string;
   synergies: SynergyMatchDisplay[];
 }

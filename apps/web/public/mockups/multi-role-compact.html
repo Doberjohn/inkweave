@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Multi-role rendering — Compact rows (Approach 4)</title>
+  <style>
+    :root {
+      --bg: #0d0d14;
+      --surface: #1a1a2e;
+      --text: #e8e8e8;
+      --text-muted: #90a1b9;
+      --gold: #d4af37;
+      --gold-tint: rgba(212, 175, 55, 0.04);
+      --gold-border: rgba(212, 175, 55, 0.25);
+      --ability-bg: #f1cd82;
+      --ability-name-bg: #59432b;
+      --ability-text-color: #2a1f12;
+      --ability-name-color: #f5e6c8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 32px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      line-height: 1.5;
+    }
+    .doc { max-width: 720px; margin: 0 auto 32px; }
+    h1 { color: var(--gold); font-size: 24px; margin: 0 0 8px; }
+    h2 { color: var(--text); font-size: 16px; margin: 24px 0 8px; font-weight: 600; }
+    p { color: var(--text-muted); font-size: 14px; margin: 0 0 12px; }
+
+    .engine-col {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 16px 18px;
+      border: 1px solid var(--gold-border);
+      background: var(--gold-tint);
+      border-radius: 12px;
+    }
+
+    /* Multi-role group container */
+    .role-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    /* Compact AbilityRow — single line, smaller font, less padding */
+    .ability-row-compact {
+      background: var(--ability-bg);
+      border-radius: 3px;
+      padding: 4px 10px 4px 0;
+      text-indent: -10px;
+      overflow: hidden;
+      box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      color: var(--ability-text-color);
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.4;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .role-label-compact {
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 6px;
+      padding: 2px 6px;
+      background: var(--ability-name-bg);
+      color: var(--ability-name-color);
+      font-weight: 700;
+      font-size: 9px;
+      line-height: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      border-radius: 2px;
+      text-indent: 0;
+    }
+
+    .note {
+      display: block;
+      font-style: italic;
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-top: 12px;
+      text-align: center;
+    }
+    .demo-row { margin-bottom: 16px; }
+    .demo-row:last-child { margin-bottom: 0; }
+
+    /* Computed height annotations */
+    .height-tag {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 1px 6px;
+      background: rgba(212, 175, 55, 0.1);
+      color: var(--gold);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="doc">
+    <h1>Multi-role rendering — Approach 4: compact rows</h1>
+    <p>Each sub-role still renders as its own row, but the rows are smaller (~30px tall instead of 61px). Per-row content is single-line: short label chip + concise descriptor. Trades visual weight per row for fitting more roles in a fixed budget.</p>
+
+    <h2>Pros</h2>
+    <p>• Preserves enumeration — every sub-role gets its own descriptor line.<br>• Predictable height: 30px per role + 4px gap. 4 roles = 132px, 8 roles = 268px.<br>• Per-row hover/highlight semantics still work (each row is its own focus target).</p>
+
+    <h2>Cons</h2>
+    <p>• Descriptions truncate to single line — no room to explain mechanics in detail.<br>• At 8 sub-roles, total height (~268px) still exceeds a single AbilityRow (61px) significantly.<br>• Smaller font (11px) compared to standard ability rows (13px) — readability shift.</p>
+  </div>
+
+  <div class="engine-col">
+    <div class="demo-row">
+      <div class="role-group">
+        <div class="ability-row-compact">
+          <span class="role-label-compact">At-payoff</span>Gets bonuses when characters are at the location.
+        </div>
+        <div class="ability-row-compact">
+          <span class="role-label-compact">Move</span>Moves characters to the location for an advantage.
+        </div>
+        <div class="ability-row-compact">
+          <span class="role-label-compact">Buff</span>Strengthens the location with Resist or stat boosts.
+        </div>
+      </div>
+      <p class="note">3-role example<span class="height-tag">~100px total</span></p>
+    </div>
+
+    <div class="demo-row">
+      <div class="role-group">
+        <div class="ability-row-compact">
+          <span class="role-label-compact">At-payoff</span>Gets bonuses when characters are at the location.
+        </div>
+        <div class="ability-row-compact">
+          <span class="role-label-compact">Move</span>Moves characters to the location for an advantage.
+        </div>
+        <div class="ability-row-compact">
+          <span class="role-label-compact">Buff</span>Strengthens the location with Resist or stat boosts.
+        </div>
+        <div class="ability-row-compact">
+          <span class="role-label-compact">Search</span>Searches your deck or discard for the location.
+        </div>
+        <div class="ability-row-compact">
+          <span class="role-label-compact">Boost</span>Powers up the location via the Boost keyword.
+        </div>
+      </div>
+      <p class="note">5-role example<span class="height-tag">~165px total</span></p>
+    </div>
+  </div>
+</body>
+</html>

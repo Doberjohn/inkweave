@@ -35,20 +35,16 @@ test.describe('App Loading', () => {
     expect(count).toBeLessThanOrEqual(12);
   });
 
-  test('should transition to card page when card is selected', async ({appPage, page}) => {
+  test('should open the overview modal when a card is selected', async ({appPage, page}) => {
     await appPage.goto();
 
-    // Home state: no header visible
+    // Home state: no header visible (hero-only layout)
     await expect(appPage.header).not.toBeVisible();
 
-    // Click a featured card to enter card page
     await appPage.selectFeaturedCard();
 
-    // Should navigate to /card/:id
-    await expect(page).toHaveURL(/\/card\/\d+/);
-
-    // Card page: compact header and sidebar layout visible
-    await expect(appPage.header).toBeVisible();
-    await expect(appPage.heroSection).not.toBeVisible();
+    // Modal opens overlay-style — URL stays `/`, hero remains in DOM behind the backdrop.
+    await expect(page).toHaveURL('/');
+    await expect(appPage.cardOverviewModal).toBeVisible();
   });
 });

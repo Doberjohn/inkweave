@@ -33,7 +33,13 @@ if (DISCARD_TOTAL === 0) {
   );
 }
 
-test.describe('Synergy Expanded View — Desktop', () => {
+// NOTE: This file tests the "expanded view" pattern from the old card detail page —
+// clicking "+N more" navigated to a `[data-expanded-group]` view with its own toolbar +
+// "Back to all synergies" button. The CardOverviewModal redesign (#320) replaced that with
+// in-modal chip filtering: clicking "+N more" sets `activeGroupFilter`, which narrows the
+// modal's group list to that single group with a higher card cap. There's no separate
+// expanded-view route or selector to assert on. Skipping until rewritten for the new flow.
+test.describe.skip('Synergy Expanded View — Desktop', () => {
   test.beforeEach(async ({page, synergyResultsPage}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
     await page.goto(CARD_URL);
@@ -96,7 +102,7 @@ test.describe('Synergy Expanded View — Desktop', () => {
   });
 });
 
-test.describe('Synergy Expanded View — Mobile', () => {
+test.describe.skip('Synergy Expanded View — Mobile', () => {
   test.beforeEach(async ({page, synergyResultsPage}, testInfo) => {
     if (!testInfo.project.name.startsWith('mobile-')) test.skip();
     await page.goto(CARD_URL);

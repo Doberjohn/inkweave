@@ -3,6 +3,7 @@ import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SET_ABBREVIATIONS, SPACING, Z_INDEX} from '../constants';
 import {useCardDataContext} from '../contexts/CardDataContext';
+import {useCardModal} from '../contexts/CardModalContext';
 import {smallImageUrl} from '../../features/cards/loader';
 import {useAutocomplete, useDialogFocus, useScrollLock, useTransitionPresence} from '../hooks';
 
@@ -612,6 +613,7 @@ interface SearchBottomSheetProps {
 export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBottomSheetProps>(
   function SearchBottomSheet({isOpen, onClose}, ref) {
     const navigate = useNavigate();
+    const {openCardModal} = useCardModal();
     const {cards} = useCardDataContext();
     const inputRef = useRef<HTMLInputElement>(null);
     const proxyRef = useRef<HTMLInputElement>(null);
@@ -628,8 +630,8 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
     const handleSelect = (card: LorcanaCard) => {
       addRecentSearch(card.fullName);
       onClose();
-      // Small delay so close animation starts before navigation
-      setTimeout(() => navigate(`/card/${card.id}`), 50);
+      // Small delay so close animation starts before opening modal
+      setTimeout(() => openCardModal(card.id), 50);
     };
 
     const autocomplete = useAutocomplete({

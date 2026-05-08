@@ -8,13 +8,13 @@ import {filterSynergyCards, EMPTY_SYNERGY_FILTERS, applySynergySortOrder} from '
 import type {SynergyFilterState} from '../utils/filterSynergyCards';
 import {useCardDataContext} from '../../../shared/contexts/CardDataContext';
 import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
-import {BackLink, Callout} from '../../../shared/components';
+import {AbilityCallout, AbilityTag, BackLink} from '../../../shared/components';
 
 interface ExpandedGroupViewProps {
   group: SynergyGroupData;
   isMobile?: boolean;
   onBackToAll: () => void;
-  onCardClick?: (card: LorcanaCard) => void;
+  onCardClick?: (card: LorcanaCard, groupKey?: string) => void;
 }
 
 /** Shared expanded view for a single synergy group: back link, title, description, toolbar, full card grid. */
@@ -49,22 +49,21 @@ export function ExpandedGroupView({
       {/* Back navigation */}
       <BackLink onClick={handleBackToAll} label="Back to all synergies" />
 
-      {/* Group title */}
-      <h2
+      {/* Lorcana ability box: page-size tag at top-left + cream callout below */}
+      <div
         style={{
-          fontSize: `${FONT_SIZES.xl}px`,
-          fontWeight: 700,
-          letterSpacing: '0.06em',
-          textTransform: 'uppercase',
-          margin: 0,
-          marginBottom: `${SPACING.sm}px`,
-          color: COLORS.text,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          marginBottom: `${SPACING.lg}px`,
         }}>
-        {group.label}
-      </h2>
-
-      {/* Description callout */}
-      <Callout>{group.description}</Callout>
+        <h2 style={{margin: 0, lineHeight: 1}}>
+          <AbilityTag variant="page">{group.label}</AbilityTag>
+        </h2>
+        <div style={{alignSelf: 'stretch'}}>
+          <AbilityCallout variant="stacked-after-tag">{group.description}</AbilityCallout>
+        </div>
+      </div>
 
       {/* Toolbar with filters + sort */}
       <SynergyToolbar

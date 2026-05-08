@@ -24,19 +24,18 @@ test.describe('Mobile Viewport', () => {
     await expect(page.getByPlaceholder('Search for a card...')).toBeVisible();
   });
 
-  test('should navigate to card page when selecting a featured card', async ({appPage, page}) => {
-    // Click a featured card
+  test('should open the overview modal when selecting a featured card', async ({appPage, page}) => {
+    // Click a featured card → modal opens overlay-style. URL stays `/` (not navigation).
     await appPage.selectFeaturedCard();
+    await expect(page).toHaveURL('/');
+    await expect(appPage.cardOverviewModal).toBeVisible();
 
-    // Should navigate to /card/:id
-    await expect(page).toHaveURL(/\/card\/\d+/);
-
-    // Synergies are fetched async — wait for synergies heading, empty state, or error banner
-    const hasSynergies = page.getByRole('heading', {name: 'Synergies'});
-    const noSynergies = page.getByText('No synergies found for this card');
+    // Synergies fetched async — wait for groups, empty state, or error banner inside the modal.
+    const groupCount = appPage.cardOverviewModal.locator('[data-group-key]');
+    const noSynergies = appPage.cardOverviewModal.getByTestId('card-overview-empty');
     const errorBanner = page.getByRole('alert');
 
-    await expect(hasSynergies.or(noSynergies).or(errorBanner)).toBeVisible({timeout: 10000});
+    await expect(groupCount.first().or(noSynergies).or(errorBanner)).toBeVisible({timeout: 10000});
   });
 
   test('should show filter drawer on mobile browse', async ({page}) => {

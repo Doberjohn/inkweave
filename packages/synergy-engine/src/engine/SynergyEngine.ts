@@ -50,17 +50,22 @@ export class SynergyEngine {
   }
 
   /**
-   * Derive the group label and description for a rule.
-   * Playstyle rules pull from the playstyle registry; direct rules use rule metadata.
+   * Derive the group label, tagline, and description for a rule.
+   * Playstyle rules pull from the playstyle registry; direct rules use rule metadata
+   * (their description is already a one-sentence summary, so it doubles as the tagline).
    */
-  private getGroupMeta(rule: SynergyRule): {label: string; description: string} {
+  private getGroupMeta(rule: SynergyRule): {label: string; tagline: string; description: string} {
     if (rule.category === 'playstyle') {
       const playstyle = getPlaystyleById(rule.playstyleId);
       if (playstyle) {
-        return {label: playstyle.name, description: playstyle.description};
+        return {
+          label: playstyle.name,
+          tagline: playstyle.tagline,
+          description: playstyle.description,
+        };
       }
     }
-    return {label: rule.name, description: rule.description};
+    return {label: rule.name, tagline: rule.description, description: rule.description};
   }
 
   /**
@@ -91,6 +96,7 @@ export class SynergyEngine {
           groupKey,
           category: rule.category,
           label: meta.label,
+          tagline: meta.tagline,
           description: meta.description,
           synergies: [],
         });

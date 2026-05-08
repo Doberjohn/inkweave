@@ -1,4 +1,4 @@
-import {useReducer, useState, useEffect} from 'react';
+import {useReducer, useEffect} from 'react';
 import type {
   LorcanaCard,
   SynergyGroup,
@@ -22,6 +22,7 @@ interface PrecomputedSynergyGroup {
   groupKey: string;
   category: 'direct' | 'playstyle';
   label: string;
+  tagline: string;
   description: string;
   synergies: PrecomputedSynergyMatch[];
 }
@@ -39,7 +40,6 @@ interface PrecomputedCardData {
 // ── Module-level fetch cache ──
 
 const synergyFetchCache = new Map<string, PrecomputedCardData>();
-let playstyleFetchCache: Record<string, string[]> | null = null;
 
 export async function fetchCardSynergies(cardId: string): Promise<PrecomputedCardData> {
   const cached = synergyFetchCache.get(cardId);
@@ -66,21 +66,31 @@ export async function fetchCardSynergies(cardId: string): Promise<PrecomputedCar
   return data;
 }
 
-async function fetchPlaystyleCardIds(): Promise<Record<string, string[]>> {
-  if (playstyleFetchCache) return playstyleFetchCache;
+// ── Pure helpers ──
 
-  const response = await fetch('/data/synergies/_playstyles.json');
-  if (!response.ok) throw new Error(`Failed to fetch playstyle data: ${response.status}`);
-
-  // Guard against SPA fallback returning HTML instead of JSON
-  const contentType = response.headers.get('content-type') ?? '';
-  if (!contentType.includes('application/json')) {
-    throw new Error('Playstyle data unavailable (received HTML instead of JSON)');
+/**
+ * Group-scoped pair filter (Option A calibration).
+ *
+ * When `groupKey` is undefined, returns the pair unchanged. When provided, keeps only
+ * connections that belong to that group — direct rules are their own group (`ruleId`),
+ * playstyle rules merge by `playstyleId` — and recomputes `aggregateScore` from the
+ * filtered set. Returns null if no connections match.
+ */
+export function filterPairByGroup(
+  pairData: PrecomputedPairData,
+  groupKey?: string,
+): {connections: PairSynergyConnection[]; aggregateScore: number} | null {
+  if (!groupKey) {
+    return {connections: pairData.connections, aggregateScore: pairData.aggregateScore};
   }
-
-  const data: Record<string, string[]> = await response.json();
-  playstyleFetchCache = data;
-  return data;
+  const filtered = pairData.connections.filter((c) =>
+    c.category === 'playstyle' ? c.playstyleId === groupKey : c.ruleId === groupKey,
+  );
+  if (filtered.length === 0) return null;
+  return {
+    connections: filtered,
+    aggregateScore: Math.max(...filtered.map((c) => c.score)),
+  };
 }
 
 // ── Resolve pre-computed data into full types ──
@@ -94,6 +104,7 @@ function resolveGroups(
       groupKey: group.groupKey,
       category: group.category,
       label: group.label,
+      tagline: group.tagline,
       description: group.description,
       synergies: group.synergies
         .map((match): SynergyMatchDisplay | null => {
@@ -116,7 +127,7 @@ export interface UsePrecomputedSynergiesReturn {
   synergies: SynergyGroup[];
   isLoading: boolean;
   error: Error | null;
-  getPairSynergies: (clickedCard: LorcanaCard) => DetailedPairSynergy | null;
+  getPairSynergies: (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null;
 }
 
 type SynergyAction =
@@ -220,17 +231,7 @@ export function usePrecomputedSynergies(
     };
   }, [cardId, getCardById]);
 
-  const getPairSynergies = (clickedCard: LorcanaCard): DetailedPairSynergy | null => {
-    if (!selectedCard) return null;
-    const pairData = state.pairs[clickedCard.id];
-    if (!pairData) return null;
-    return {
-      cardA: selectedCard,
-      cardB: clickedCard,
-      connections: pairData.connections,
-      aggregateScore: pairData.aggregateScore,
-    };
-  };
+  const getPairSynergies = buildPairResolver(selectedCard, state.pairs);
 
   return {
     synergies: state.synergies,
@@ -240,85 +241,23 @@ export function usePrecomputedSynergies(
   };
 }
 
-// ── Playstyle hooks (single fetch, two views) ──
-
 /**
- * Fetches pre-computed playstyle card lists.
- * Used by PlaystyleDetailPage for a single playstyle's cards.
+ * Closes over the currently-selected card and its loaded pair data, returning a resolver that
+ * looks up a clicked-card → pair synergy. Extracted to keep `usePrecomputedSynergies`'s
+ * cyclomatic complexity under threshold (the hook orchestrates fetch + state, the resolver
+ * handles its own null/filter branches).
  */
-export function usePrecomputedPlaystyleCards(playstyleId: string | undefined): {
-  cards: LorcanaCard[];
-  isLoading: boolean;
-  error: Error | null;
-} {
-  const {data, isLoading: allLoading, error} = useAllPlaystyleCards();
-
-  const cards = (() => {
-    if (!playstyleId) return [];
-    const psData = data.get(playstyleId);
-    return psData?.allCards ?? [];
-  })();
-
-  return {cards, isLoading: allLoading, error};
+function buildPairResolver(
+  selectedCard: LorcanaCard | null,
+  pairs: Record<string, PrecomputedPairData>,
+): (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null {
+  return (clickedCard, groupKey) => {
+    if (!selectedCard) return null;
+    const pairData = pairs[clickedCard.id];
+    if (!pairData) return null;
+    const filtered = filterPairByGroup(pairData, groupKey);
+    if (!filtered) return null;
+    return {cardA: selectedCard, cardB: clickedCard, ...filtered};
+  };
 }
 
-/**
- * Fetches all playstyle card data (shared fetch for gallery + detail pages).
- * Returns resolved card objects for each playstyle.
- */
-export function useAllPlaystyleCards(): {
-  data: Map<string, {count: number; previewCards: LorcanaCard[]; allCards: LorcanaCard[]}>;
-  isLoading: boolean;
-  error: Error | null;
-} {
-  const {getCardById} = useCardDataContext();
-  const [rawData, setRawData] = useState<Record<string, string[]> | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    fetchPlaystyleCardIds()
-      .then((data) => {
-        if (!cancelled) {
-          setRawData(data);
-          setIsLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          const error = err instanceof Error ? err : new Error(String(err));
-          console.error('Failed to load playstyle data:', err);
-          setError(error);
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const data = (() => {
-    const result = new Map<
-      string,
-      {count: number; previewCards: LorcanaCard[]; allCards: LorcanaCard[]}
-    >();
-    if (!rawData) return result;
-    for (const [psId, ids] of Object.entries(rawData)) {
-      const resolved = ids
-        .map((id) => getCardById(id))
-        .filter((c): c is LorcanaCard => c != null)
-        .sort((a, b) => a.fullName.localeCompare(b.fullName));
-      result.set(psId, {
-        count: resolved.length,
-        previewCards: resolved.slice(0, 4),
-        allCards: resolved,
-      });
-    }
-    return result;
-  })();
-
-  return {data, isLoading, error};
-}
