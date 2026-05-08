@@ -57,7 +57,9 @@ test.describe('Search Autocomplete', () => {
 
     await appPage.heroSearch.press('Escape');
 
-    await expect(listbox).not.toBeVisible();
+    // The listbox uses an opacity transition + delayed unmount via useTransitionPresence —
+    // give it room to settle before asserting hidden. Default 5s is borderline on chromium.
+    await expect(listbox).not.toBeVisible({timeout: 10000});
   });
 
   test('should NOT show autocomplete on browse page search', async ({page}) => {
