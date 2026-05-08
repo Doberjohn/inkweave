@@ -48,10 +48,10 @@ test.describe('Responsive Images', () => {
   test('should use lazy loading for synergy card images', async ({appPage, page}) => {
     await appPage.selectFeaturedCard();
 
-    // Wait for synergies to load (fetched async from pre-computed JSON). Modal renders
-    // either chip filters (one button per group) or the empty state.
+    // Wait for synergies to load. Modal renders either synergy groups (data-group-key) or
+    // the empty state.
     const synergyCards = appPage.cardOverviewModal.getByTestId('reason-tag');
-    const noSynergies = appPage.cardOverviewModal.getByText('No synergies yet');
+    const noSynergies = appPage.cardOverviewModal.getByTestId('card-overview-empty');
     const errorBanner = page.getByRole('alert');
 
     await expect(synergyCards.first().or(noSynergies).or(errorBanner)).toBeVisible({

@@ -3,7 +3,11 @@ import {test, expect} from '../fixtures';
 // Elsa - Ice Artisan (2586) has both direct (Shift Targets) and playstyle (Locations) groups
 const CARD_WITH_BOTH_GROUPS = '/card/2586';
 
-test.describe('Show All UX — Desktop', () => {
+// NOTE: This file tested the old "+N more → [data-expanded-group] view → Back to all synergies"
+// pattern from the route-rendered card detail page. The CardOverviewModal redesign (#320)
+// replaced it with in-place chip filtering inside the modal. Skipping until rewritten for
+// the new flow; the modal's chip filter behavior is covered in `synergy-detail-modal.spec.ts`.
+test.describe.skip('Show All UX — Desktop', () => {
   test.beforeEach(async ({page}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
     await page.goto(CARD_WITH_BOTH_GROUPS);
@@ -42,7 +46,7 @@ test.describe('Show All UX — Desktop', () => {
   });
 });
 
-test.describe('Show All UX — Mobile', () => {
+test.describe.skip('Show All UX — Mobile', () => {
   test.beforeEach(async ({page}, testInfo) => {
     if (!testInfo.project.name.startsWith('mobile-')) test.skip();
     await page.goto(CARD_WITH_BOTH_GROUPS);

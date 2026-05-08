@@ -33,13 +33,14 @@ test.describe('Card Selection and Synergies', () => {
     // Synergies are fetched async — wait for chip filters, empty state, or error banner.
     // The modal uses chip-based filtering when it has synergies; the empty state shows
     // "No synergies yet" copy when none.
-    const hasSynergies = appPage.cardOverviewModal.getByRole('button', {name: /\d+ cards/i});
-    const noSynergies = appPage.cardOverviewModal.getByText('No synergies yet');
+    // Either at least one synergy group renders (data-group-key on the SynergyGroup root) or
+    // the modal's empty state shows. The internal `<section aria-label="Synergies">` always
+    // mounts; we just need to wait for the populated/empty branch to settle.
+    const groupCount = appPage.cardOverviewModal.locator('[data-group-key]');
+    const noSynergies = appPage.cardOverviewModal.getByTestId('card-overview-empty');
     const errorBanner = page.getByRole('alert');
 
-    await expect(hasSynergies.first().or(noSynergies).or(errorBanner)).toBeVisible({
-      timeout: 10000,
-    });
+    await expect(groupCount.first().or(noSynergies).or(errorBanner)).toBeVisible({timeout: 10000});
   });
 
   test('should clear selection by closing the modal', async ({appPage, page}) => {

@@ -17,9 +17,9 @@ test.describe('Synergy comparison — Desktop', () => {
     // CardPage redirects to '/' and opens the modal globally — wait for the modal first.
     await appPage.cardOverviewModal.waitFor({state: 'visible', timeout: 10000});
     // Then wait for synergies to populate (chip filter buttons or empty state).
-    const hasChips = appPage.cardOverviewModal.getByRole('button', {name: /\d+ cards/i});
-    const noSynergies = appPage.cardOverviewModal.getByText('No synergies yet');
-    await expect(hasChips.first().or(noSynergies)).toBeVisible({timeout: 10000});
+    const groupCount = appPage.cardOverviewModal.locator('[data-group-key]');
+    const noSynergies = appPage.cardOverviewModal.getByTestId('card-overview-empty');
+    await expect(groupCount.first().or(noSynergies)).toBeVisible({timeout: 10000});
   });
 
   test('should enter comparison mode when clicking a synergy card', async ({page, appPage}) => {
@@ -71,9 +71,9 @@ test.describe('Synergy comparison — Mobile', () => {
     if (!testInfo.project.name.startsWith('mobile-')) test.skip();
     await page.goto(CARD_URL);
     await appPage.cardOverviewModal.waitFor({state: 'visible', timeout: 10000});
-    const hasChips = appPage.cardOverviewModal.getByRole('button', {name: /\d+ cards/i});
-    const noSynergies = appPage.cardOverviewModal.getByText('No synergies yet');
-    await expect(hasChips.first().or(noSynergies)).toBeVisible({timeout: 10000});
+    const groupCount = appPage.cardOverviewModal.locator('[data-group-key]');
+    const noSynergies = appPage.cardOverviewModal.getByTestId('card-overview-empty');
+    await expect(groupCount.first().or(noSynergies)).toBeVisible({timeout: 10000});
   });
 
   test('should enter comparison mode on mobile', async ({appPage}) => {

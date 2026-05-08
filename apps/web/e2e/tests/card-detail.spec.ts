@@ -31,11 +31,12 @@ test.describe('Card Detail (modal)', () => {
     await appPage.selectFeaturedCard();
 
     // Synergies fetched async — wait for chips (one button per group), empty state, or error
-    const hasChips = appPage.cardOverviewModal.getByRole('button', {name: /\d+ cards/i});
-    const noSynergies = appPage.cardOverviewModal.getByText('No synergies yet');
+    // Either synergy groups render (data-group-key) or the empty-state testid appears.
+    const groupCount = appPage.cardOverviewModal.locator('[data-group-key]');
+    const noSynergies = appPage.cardOverviewModal.getByTestId('card-overview-empty');
     const errorBanner = page.getByRole('alert');
 
-    await expect(hasChips.first().or(noSynergies).or(errorBanner)).toBeVisible({timeout: 10000});
+    await expect(groupCount.first().or(noSynergies).or(errorBanner)).toBeVisible({timeout: 10000});
   });
 
   test('should open the modal when deep-linking to /card/:id', async ({appPage, page}) => {

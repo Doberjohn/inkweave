@@ -88,15 +88,13 @@ test.describe('Playstyle Detail — Desktop', () => {
     expect(count).toBeGreaterThan(5);
   });
 
-  test('should navigate to card page from playstyle detail', async ({page}) => {
+  test('should open the card overview modal from playstyle detail', async ({page}) => {
     // Wait for card tiles to load
     const cardTiles = page.getByTestId('card-tile');
     await expect(cardTiles.first()).toBeVisible({timeout: 15000});
 
-    // Click a card tile
+    // Click a card tile → opens the global modal (URL stays on the playstyle page).
     await cardTiles.first().click();
-
-    // Should navigate to a card detail page
-    await expect(page).toHaveURL(/\/card\/\d+/);
+    await expect(page.getByTestId('card-overview-modal')).toBeVisible({timeout: 5000});
   });
 });
