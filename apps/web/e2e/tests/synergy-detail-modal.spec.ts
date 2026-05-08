@@ -50,7 +50,7 @@ test.describe('Synergy comparison — Desktop', () => {
     await expect(engineSection.getByText(/shift/i).first()).toBeVisible();
   });
 
-  test('should exit comparison mode via the BACK button', async ({appPage}) => {
+  test('should exit comparison mode via the BACK button', async ({appPage, page}) => {
     const firstTile = appPage.cardOverviewModal
       .locator('[data-group-key="shift-targets"] button.card-tile')
       .first();
@@ -60,9 +60,11 @@ test.describe('Synergy comparison — Desktop', () => {
     await expect(backButton).toBeVisible({timeout: 3000});
     await backButton.click();
 
-    // Modal returns to default state — chip filters reappear, BACK button is gone
-    await expect(backButton).toBeHidden();
-    await expect(appPage.cardOverviewModal).toBeVisible();
+    // Modal returns to default state. data-mode attribute is the cleanest signal — exitComparison
+    // also navigates URL to /card/A which CardPage replaces with `/`, so URL settles asynchronously.
+    // (BACK button hidden + URL `/` are also true but fire after the data-mode flip.)
+    await expect(appPage.cardOverviewModal).toHaveAttribute('data-mode', 'default', {timeout: 5000});
+    await expect(page).toHaveURL('/', {timeout: 5000});
   });
 });
 

@@ -392,6 +392,19 @@ function invokeSynergyCardClick({clickedCard, groupKey, modalRef, captureStartRe
 
 // ── Layout config / static styles ──
 
+/** Screen-reader-only utility: keep an element in the a11y tree but visually hide it. */
+const SR_ONLY_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
+
 const CENTERING_WRAPPER_STYLE: React.CSSProperties = {
   position: 'fixed',
   inset: 0,
@@ -765,6 +778,10 @@ function DefaultInfoColumn({synergies, visibleGroups, activeGroupFilter, cardHei
         pointerEvents: inComparison ? 'none' : 'auto',
         transition: 'opacity 250ms ease-out',
       }}>
+      {/* Visually-hidden heading bridges the heading order: modal h1 (card name) → h2 here →
+          h3 from each SynergyGroup. Without this, axe flags `heading-order` because the page
+          jumps h1 → h3 directly. */}
+      <h2 style={SR_ONLY_STYLE}>Synergies</h2>
       {synergies.length === 0 ? (
         <SynergiesEmptyState />
       ) : (
