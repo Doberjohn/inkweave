@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
+    // TS 6.0 turned the `baseUrl` deprecation into a hard error; tsup's dts
+    // build injects baseUrl into its temporary config, so we acknowledge it
+    // here. Remove once tsup stops setting baseUrl (or before TS 7.0).
+    "ignoreDeprecations": "6.0",
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
