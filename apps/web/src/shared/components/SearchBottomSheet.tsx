@@ -49,9 +49,10 @@ const INK_COLORS: Record<string, string> = {
 };
 
 function inkColor(card: LorcanaCard): string {
-  const ink = Array.isArray(card.inkColor) ? card.inkColor[0] : card.inkColor;
-  if (!ink) return COLORS.surfaceBorder;
-  return INK_COLORS[ink] ?? COLORS.surfaceBorder;
+  // Use the primary ink for the thumbnail border. (LorcanaCard exposes
+  // `ink` / `ink2` — there is no `inkColor` field; the old code read an
+  // always-undefined property and silently fell back to the gray border.)
+  return INK_COLORS[card.ink] ?? COLORS.surfaceBorder;
 }
 
 /** Set abbreviation for a card. Split guard form keeps each conditional simple. */
@@ -62,11 +63,9 @@ function getSetAbbr(card: LorcanaCard): string {
   return '';
 }
 
-/** Ink display label like " · Amber" or " · Amethyst-Sapphire". Empty if no ink. */
+/** Ink display label like " · Amber" or " · Amethyst-Sapphire". */
 function getInkLabel(card: LorcanaCard): string {
-  if (!card.inkColor) return '';
-  if (Array.isArray(card.inkColor)) return ` · ${card.inkColor.join('-')}`;
-  return ` · ${card.inkColor}`;
+  return card.ink2 ? ` · ${card.ink}-${card.ink2}` : ` · ${card.ink}`;
 }
 
 /** Singular/plural results label. */
