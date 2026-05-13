@@ -37,6 +37,7 @@ const DOCS = [
   {src: 'docs/UX_REFERENCE.md', out: 'UX_REFERENCE.html', category: 'Quality & Research', label: 'UX Reference'},
   // Project
   {src: 'docs/DATABASE.md', out: 'DATABASE.html', category: 'Architecture', label: 'Database Architecture'},
+  {src: 'docs/CARD_DATA_PIPELINE.md', out: 'CARD_DATA_PIPELINE.html', category: 'Architecture', label: 'Card Data Pipeline'},
   {src: 'docs/TECH_STACK.md', out: 'TECH_STACK.html', category: 'Project', label: 'Tech Stack'},
   {src: 'docs/V1_LAUNCH_PLAN.md', out: 'V1_LAUNCH_PLAN.html', category: 'Project', label: 'v1.0 Launch Plan'},
 ];
@@ -57,6 +58,55 @@ const TEMPLATE = (title, body) => `<!DOCTYPE html>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script>
+    // Click-to-zoom for Mermaid diagrams
+    document.addEventListener('click', (e) => {
+      const overlay = e.target.closest('.mermaid-zoom-overlay');
+      if (overlay) { overlay.remove(); return; }
+      const diagram = e.target.closest('.mermaid');
+      if (!diagram) return;
+      const svg = diagram.querySelector('svg');
+      if (!svg) return;
+      const o = document.createElement('div');
+      o.className = 'mermaid-zoom-overlay';
+      o.appendChild(svg.cloneNode(true));
+      document.body.appendChild(o);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      document.querySelector('.mermaid-zoom-overlay')?.remove();
+    });
+  </script>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      themeVariables: {
+        background: '#0d0d14',
+        primaryColor: '#1a1a2e',
+        primaryBorderColor: '#d4af37',
+        primaryTextColor: '#e8e8e8',
+        secondaryColor: '#1a4a4a',
+        tertiaryColor: '#2a1a4a',
+        lineColor: '#90a1b9',
+        textColor: '#e8e8e8',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        fontSize: '14px',
+        mainBkg: '#1a1a2e',
+        secondBkg: '#2a2a3e',
+        clusterBkg: 'rgba(212, 175, 55, 0.05)',
+        clusterBorder: '#d4af37',
+        edgeLabelBackground: '#0d0d14',
+        nodeBorder: '#d4af37',
+        defaultLinkColor: '#90a1b9',
+        labelTextColor: '#e8e8e8',
+        noteBkgColor: '#1a4a1a',
+        noteBorderColor: '#90ee90',
+        noteTextColor: '#e8e8e8',
+      },
+    });
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
 
@@ -90,6 +140,8 @@ const TEMPLATE = (title, body) => `<!DOCTYPE html>
       margin-top: 2em;
       margin-bottom: 0.6em;
       line-height: 1.3;
+      /* TOC anchor scroll — leaves a bit of breathing room above the heading */
+      scroll-margin-top: 16px;
     }
     h1 {
       font-family: 'Playfair Display', Georgia, serif;
@@ -243,6 +295,92 @@ const TEMPLATE = (title, body) => `<!DOCTYPE html>
       margin-right: 6px;
       accent-color: #d4af37;
     }
+
+    /* Mermaid diagram containers — inline at body width; click to enlarge
+       opens a full-viewport overlay (see .mermaid-zoom-overlay below). */
+    .mermaid {
+      position: relative;
+      background: #151525;
+      border: 1px solid #2a2a44;
+      border-radius: 8px;
+      padding: 24px;
+      margin: 20px 0;
+      text-align: center;
+      overflow-x: auto;
+      cursor: zoom-in;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    .mermaid:hover {
+      border-color: #d4af37;
+      box-shadow: 0 0 24px rgba(212, 175, 55, 0.15);
+    }
+    .mermaid svg { max-width: 100%; height: auto; }
+    /* "Click to enlarge" hint, fades in on hover */
+    .mermaid::after {
+      content: 'Click to enlarge';
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      font-size: 11px;
+      color: #90a1b9;
+      letter-spacing: 0.5px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .mermaid:hover::after { opacity: 0.85; }
+
+    /* Zoom overlay shown on click */
+    .mermaid-zoom-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 13, 20, 0.96);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      cursor: zoom-out;
+      animation: fadeIn 0.18s ease-out;
+    }
+    .mermaid-zoom-overlay svg {
+      max-width: calc(100vw - 64px);
+      max-height: calc(100vh - 64px);
+      width: auto !important;
+      height: auto !important;
+    }
+    .mermaid-zoom-overlay::after {
+      content: 'ESC or click anywhere to close';
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: #90a1b9;
+      letter-spacing: 0.5px;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Pseudo-callout boxes (any blockquote whose first child <strong> starts with a label) */
+    blockquote.callout {
+      border-left: 3px solid #d4af37;
+      background: rgba(212, 175, 55, 0.06);
+    }
+    blockquote.callout-warning {
+      border-left-color: #ff9d3a;
+      background: rgba(255, 157, 58, 0.07);
+    }
+    blockquote.callout-warning strong { color: #ff9d3a; }
+    blockquote.callout-info {
+      border-left-color: #5cb1ff;
+      background: rgba(92, 177, 255, 0.06);
+    }
+    blockquote.callout-info strong { color: #5cb1ff; }
+    blockquote.callout-success {
+      border-left-color: #90ee90;
+      background: rgba(144, 238, 144, 0.06);
+    }
+    blockquote.callout-success strong { color: #90ee90; }
 
     /* Scrollbar */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -458,8 +596,77 @@ async function getGitHubToken() {
   }
 }
 
+/**
+ * Extract ```mermaid blocks from markdown and replace with placeholder sentinels
+ * so the GitHub API (which strips code-block language info to `<pre class="notranslate">`)
+ * doesn't lose them. We restore the blocks as `<div class="mermaid">...</div>` after
+ * rendering, where the client-side Mermaid script in TEMPLATE picks them up.
+ */
+function extractMermaidBlocks(md) {
+  const blocks = [];
+  const stubbed = md.replace(/```mermaid\n([\s\S]*?)```/g, (_, content) => {
+    blocks.push(content.trim());
+    return `@@MERMAID_BLOCK_${blocks.length - 1}@@`;
+  });
+  return {stubbed, blocks};
+}
+
+function restoreMermaidBlocks(html, blocks) {
+  return html.replace(/@@MERMAID_BLOCK_(\d+)@@/g, (_, idx) => {
+    const content = blocks[Number(idx)];
+    if (content === undefined) return '';
+    // Mermaid syntax doesn't include literal `<` / `>` / `&` (arrows are `-->`),
+    // but escape defensively in case future diagrams use HTML-like labels.
+    const escaped = content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<div class="mermaid">${escaped}</div>`;
+  });
+}
+
+/**
+ * GitHub's markdown API renders headings without `id` attributes, so anchor
+ * links in our TOC (`[Overview](#overview)`) don't scroll anywhere. We
+ * post-process to inject ids derived from the heading text — same slug
+ * rules GitHub uses on github.com (lowercase, drop punctuation, spaces→hyphens).
+ */
+function injectHeadingIds(html) {
+  return html.replace(/<(h[1-6])>([\s\S]+?)<\/\1>/g, (match, tag, content) => {
+    const text = content.replace(/<[^>]+>/g, '').trim();
+    const slug = text
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-');
+    if (!slug) return match;
+    return `<${tag} id="${slug}">${content}</${tag}>`;
+  });
+}
+
+/**
+ * GitHub's markdown API strips `class` from <blockquote> for XSS safety. We
+ * re-introduce callout variants by inferring from the leading <strong> label:
+ *   - "Warning" / "Active debt" / "Footgun" / "Never" / "Danger" → warning
+ *   - "Success" / "Complete" / "OK"                              → success
+ *   - Anything else with a bold leading label                    → info
+ * Blockquotes without a leading <strong> stay plain (no class injection).
+ */
+function injectCalloutClasses(html) {
+  return html.replace(
+    /<blockquote>(\s*(?:<p>)?\s*)<strong>([\s\S]+?)<\/strong>/g,
+    (match, prefix, label) => {
+      // Strip nested HTML (e.g. <code>immutable</code> inside <strong>) before
+      // keyword matching so labels with inline code or emphasis still classify.
+      const plain = label.replace(/<[^>]+>/g, '').toLowerCase();
+      let variant = 'info';
+      if (/warning|debt|footgun|danger|caution|never|skippable|risk/.test(plain)) variant = 'warning';
+      else if (/success|complete|ok\b|verified|✓/.test(plain)) variant = 'success';
+      return `<blockquote class="callout callout-${variant}">${prefix}<strong>${label}</strong>`;
+    },
+  );
+}
+
 let _ghToken;
 async function renderMarkdown(md) {
+  const {stubbed, blocks} = extractMermaidBlocks(md);
   try {
     if (_ghToken === undefined) _ghToken = await getGitHubToken();
     const headers = {
@@ -470,14 +677,15 @@ async function renderMarkdown(md) {
     const res = await fetch('https://api.github.com/markdown', {
       method: 'POST',
       headers,
-      body: JSON.stringify({text: md, mode: 'gfm'}),
+      body: JSON.stringify({text: stubbed, mode: 'gfm'}),
     });
     if (!res.ok) throw new Error(`GitHub API ${res.status}`);
-    return await res.text();
+    const html = await res.text();
+    return injectHeadingIds(injectCalloutClasses(restoreMermaidBlocks(html, blocks)));
   } catch (err) {
     console.warn(`  GitHub API failed (${err.message}), using raw markdown`);
-    const escaped = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return `<pre>${escaped}</pre>`;
+    const escaped = stubbed.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return restoreMermaidBlocks(`<pre>${escaped}</pre>`, blocks);
   }
 }
 
