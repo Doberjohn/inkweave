@@ -4,7 +4,7 @@ import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
 import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';
-import {CardImage, CardLightbox, RenderProfiler} from '../../../shared/components';
+import {CardImage, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {getDominantScore, getStrengthTier} from '../utils';
@@ -48,8 +48,6 @@ interface ModalState {
   visible: boolean;
   onTransitionEnd: () => void;
   activeGroupFilter: string | null;
-  lightboxOpen: boolean;
-  setLightboxOpen: (open: boolean) => void;
   comparisonPair: DetailedPairSynergy | null;
   highlightedCard: 'a' | 'b' | null;
   setHighlightedCard: (card: 'a' | 'b' | null) => void;
@@ -63,7 +61,7 @@ interface ModalState {
 }
 
 /**
- * Owns the modal's local state machine: chip filter, lightbox, comparison pair, FLIP refs,
+ * Owns the modal's local state machine: chip filter, comparison pair, FLIP refs,
  * highlight state, and all derived handlers. Render-time setState patterns (card-id reset,
  * isOpen reset, deep-link adoption) live in {@link useComparisonStateResets} so this hook
  * stays focused on orchestration.
@@ -76,7 +74,6 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   const {visible, onTransitionEnd} = useTransitionPresence(isOpen);
 
   const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [comparisonPair, setComparisonPair] = useState<DetailedPairSynergy | null>(null);
   const [highlightedCard, setHighlightedCard] = useState<'a' | 'b' | null>(null);
 
@@ -135,8 +132,6 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
     visible,
     onTransitionEnd,
     activeGroupFilter,
-    lightboxOpen,
-    setLightboxOpen,
     comparisonPair,
     highlightedCard,
     setHighlightedCard,
@@ -179,8 +174,6 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
     visible,
     onTransitionEnd,
     activeGroupFilter,
-    lightboxOpen,
-    setLightboxOpen,
     comparisonPair,
     highlightedCard,
     setHighlightedCard,
@@ -246,8 +239,6 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
                 activeGroupFilter={activeGroupFilter}
                 comparisonPair={comparisonPair}
                 highlightedCard={highlightedCard}
-                lightboxOpen={lightboxOpen}
-                setLightboxOpen={setLightboxOpen}
                 inComparison={inComparison}
                 compareCardRef={compareCardRef}
                 onShowAll={handleShowAll}
@@ -626,8 +617,6 @@ interface CardsRowProps {
   activeGroupFilter: string | null;
   comparisonPair: DetailedPairSynergy | null;
   highlightedCard: 'a' | 'b' | null;
-  lightboxOpen: boolean;
-  setLightboxOpen: (open: boolean) => void;
   inComparison: boolean;
   compareCardRef: React.RefObject<HTMLDivElement | null>;
   onShowAll: (groupKey: string) => void;
@@ -649,15 +638,12 @@ function CardsRow(props: CardsRowProps) {
         overflow: 'visible',
         position: 'relative',
       }}>
-      <CardImageButton
+      <CardImageDisplay
         card={props.card}
         cardWidth={props.cardWidth}
         cardHeight={cardHeight}
         isMobile={isMobile}
         highlightedCard={highlightedCard}
-        lightboxOpen={props.lightboxOpen}
-        setLightboxOpen={props.setLightboxOpen}
-        inComparison={props.inComparison}
       />
       <DefaultInfoColumn
         synergies={props.synergies}
@@ -683,45 +669,27 @@ function CardsRow(props: CardsRowProps) {
   );
 }
 
-interface CardImageButtonProps {
+interface CardImageDisplayProps {
   card: LorcanaCard;
   cardWidth: number;
   cardHeight: number;
   isMobile: boolean;
   highlightedCard: 'a' | 'b' | null;
-  lightboxOpen: boolean;
-  setLightboxOpen: (open: boolean) => void;
-  inComparison: boolean;
 }
 
-function CardImageButton({card, cardWidth, cardHeight, isMobile, highlightedCard, lightboxOpen, setLightboxOpen, inComparison}: CardImageButtonProps) {
-  const lightboxEnabled = !!card.imageUrl && !inComparison;
+function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCard}: CardImageDisplayProps) {
   return (
     <div style={pickCardWrapperStyle({isMobile, highlightedCard})}>
-      <button
-        type="button"
-        aria-label={lightboxEnabled ? 'Enlarge card image' : undefined}
-        disabled={!lightboxEnabled}
-        onClick={lightboxEnabled ? () => setLightboxOpen(true) : undefined}
-        style={{
-          border: 'none',
-          background: 'none',
-          padding: 0,
-          width: cardWidth,
-          cursor: lightboxEnabled ? 'pointer' : 'default',
-        }}>
-        <CardImage
-          src={card.imageUrl}
-          alt={card.fullName}
-          width={cardWidth}
-          height={cardHeight}
-          inkColor={card.ink}
-          cost={card.cost}
-          borderRadius={14}
-          style={{width: cardWidth, height: 'auto'}}
-        />
-      </button>
-      <MaybeLightbox card={card} lightboxOpen={lightboxOpen} setLightboxOpen={setLightboxOpen} />
+      <CardImage
+        src={card.imageUrl}
+        alt={card.fullName}
+        width={cardWidth}
+        height={cardHeight}
+        inkColor={card.ink}
+        cost={card.cost}
+        borderRadius={14}
+        style={{width: cardWidth, height: 'auto'}}
+      />
     </div>
   );
 }
@@ -736,18 +704,6 @@ function pickCardWrapperStyle({isMobile, highlightedCard}: {isMobile: boolean; h
     opacity: highlightedCard === 'b' ? 0.4 : 1,
     filter: highlightedCard === 'a' ? 'drop-shadow(0 0 8px rgba(212, 175, 55, 0.6))' : undefined,
   };
-}
-
-function MaybeLightbox({card, lightboxOpen, setLightboxOpen}: {card: LorcanaCard; lightboxOpen: boolean; setLightboxOpen: (open: boolean) => void}) {
-  if (!lightboxOpen || !card.imageUrl) return null;
-  return (
-    <CardLightbox
-      src={card.imageUrl}
-      alt={card.fullName}
-      isLocation={card.type === 'Location'}
-      onClose={() => setLightboxOpen(false)}
-    />
-  );
 }
 
 interface DefaultInfoColumnProps {
