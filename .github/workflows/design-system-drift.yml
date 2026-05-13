@@ -1,0 +1,106 @@
+name: design-system-drift
+
+# Reminds a PR author to refresh the external design-system project whenever a
+# PR modifies design tokens, brand assets, or the design-language sections of
+# CLAUDE.md. Comment-only — never blocks merging.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "apps/web/src/shared/constants/theme.ts"
+      - "apps/web/src/docs/Colors.stories.tsx"
+      - "apps/web/src/docs/Typography.stories.tsx"
+      - "apps/web/src/docs/SpacingLayout.stories.tsx"
+      - "apps/web/index.html"
+      - "apps/web/public/brand/**"
+      - "apps/web/src/assets/*.svg"
+      - "apps/web/public/art/**"
+      - "apps/web/public/mockups/**"
+      - "CLAUDE.md"
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect which design-surface files changed
+        id: detect
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          CHANGED=$(git diff --name-only "$BASE" "$HEAD")
+
+          # Bucket the diff by concern so the comment is specific instead of generic.
+          bucket() {
+            echo "$CHANGED" | grep -E "$1" || true
+          }
+
+          TOKENS=$(bucket '^apps/web/src/shared/constants/theme\.ts$')
+          DOCS=$(bucket '^apps/web/src/docs/(Colors|Typography|SpacingLayout)\.stories\.tsx$')
+          FONTS=$(bucket '^apps/web/index\.html$')
+          BRAND=$(bucket '^apps/web/public/brand/')
+          ICONS=$(bucket '^apps/web/src/assets/.*\.svg$')
+          ART=$(bucket '^apps/web/public/art/')
+          MOCKUPS=$(bucket '^apps/web/public/mockups/')
+          CLAUDEMD=$(bucket '^CLAUDE\.md$')
+
+          # Anything to comment on?
+          ANY=$(echo -e "$TOKENS\n$DOCS\n$FONTS\n$BRAND\n$ICONS\n$ART\n$MOCKUPS\n$CLAUDEMD" | grep . || true)
+          if [ -z "$ANY" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Compose the body as a heredoc so we can interpolate the buckets.
+          {
+            echo "body<<EOF"
+            echo "🎨 **Design-surface change detected**"
+            echo ""
+            echo "This PR touches files mirrored by the Inkweave design system project."
+            echo "After merge, refresh the mirror so it doesn't drift out of sync."
+            echo ""
+            echo "**What changed:**"
+            [ -n "$TOKENS"   ] && echo "- 🎯 **Design tokens** — \`theme.ts\` (the source of truth)"
+            [ -n "$DOCS"     ] && echo "- 📚 **Storybook design docs** — palette / typography / spacing"
+            [ -n "$FONTS"    ] && echo "- ✏️ **Font imports** — \`apps/web/index.html\` (flag any swap)"
+            [ -n "$BRAND"    ] && echo "- 🏷️ **Brand** — logo or wordmark"
+            [ -n "$ICONS"    ] && echo "- 🔷 **Icons** — ink / inkable SVGs"
+            [ -n "$ART"      ] && echo "- 🖼️ **Imagery** — playstyle or franchise covers"
+            [ -n "$MOCKUPS"  ] && echo "- 📐 **Mockups** — HTML/CSS source of truth"
+            [ -n "$CLAUDEMD" ] && echo "- 📖 **\`CLAUDE.md\`** — design language sections may have shifted"
+            echo ""
+            echo "**To refresh:** open the design system Claude project and prompt:"
+            echo ""
+            echo "> Refresh against the latest of \`Doberjohn/inkweave@master\`. Focus on the files this PR touched: ${ANY//$'\n'/, }"
+            echo ""
+            echo "<sub>This is a reminder, not a blocker. Configured in \`.github/workflows/design-system-drift.yml\`.</sub>"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Find existing reminder comment
+        if: steps.detect.outputs.skip != 'true'
+        id: find
+        uses: peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "Design-surface change detected"
+
+      - name: Upsert reminder comment
+        if: steps.detect.outputs.skip != 'true'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: ${{ steps.detect.outputs.body }}
+          edit-mode: replace
