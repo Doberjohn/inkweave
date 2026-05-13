@@ -2,8 +2,6 @@
 
 [![CI](https://github.com/Doberjohn/inkweave/actions/workflows/ci.yml/badge.svg)](https://github.com/Doberjohn/inkweave/actions/workflows/ci.yml) [![CodeScene general](https://codescene.io/images/analyzed-by-codescene-badge.svg)](https://codescene.io/projects/79388)
 
-[![CodeScene Average Code Health](https://codescene.io/projects/79388/status-badges/average-code-health)](https://codescene.io/projects/79388) [![CodeScene Hotspot Code Health](https://codescene.io/projects/79388/status-badges/hotspot-code-health)](https://codescene.io/projects/79388) [![CodeScene Missed Goals](https://codescene.io/projects/79388/status-badges/missed-goals)](https://codescene.io/projects/79388) [![CodeScene System Mastery](https://codescene.io/projects/79388/status-badges/system-mastery)](https://codescene.io/projects/79388)
-
 A synergy finder for [Disney Lorcana TCG](https://www.disneylorcana.com/) focused on Core format. Select any card to discover what synergizes with it through pattern-based rules and archetype detection.
 
 **Live at [inkweave.ink](https://www.inkweave.ink/)**
