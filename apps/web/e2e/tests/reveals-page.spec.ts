@@ -11,6 +11,28 @@ test.describe('Reveals page (flag on)', () => {
       }
     });
     testInfo.annotations.push({type: 'requires', description: 'VITE_IS_REVEAL_SEASON=true'});
+
+    // Skip when reveal season has ended (today is past the set's releaseDate).
+    // useRevealPhase returns 'released' once now >= releaseDate, RevealsGate
+    // redirects /reveals -> /, and the Reveals nav entry / promo modal no
+    // longer render — so these reveal-season-only assertions can't pass.
+    // After each set graduates and previewCards.json is refreshed with the
+    // NEXT set's dates, these tests pick back up automatically.
+    const resp = await page.request.get('/data/previewCards.json');
+    if (resp.ok()) {
+      const data = await resp.json();
+      const sets = (data?.sets ?? {}) as Record<string, {releaseDate?: string} | undefined>;
+      const dates = Object.values(sets)
+        .map((s) => s?.releaseDate)
+        .filter((d): d is string => typeof d === 'string');
+      const latestRelease = dates.length ? Math.max(...dates.map((d) => new Date(d).getTime())) : 0;
+      if (latestRelease > 0 && Date.now() >= latestRelease) {
+        test.skip(
+          true,
+          `Reveal season ended (latest releaseDate ${new Date(latestRelease).toISOString().slice(0, 10)})`,
+        );
+      }
+    }
   });
 
   test('renders hero and franchise tiers at /reveals', async ({page}, testInfo) => {
