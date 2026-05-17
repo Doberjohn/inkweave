@@ -114,17 +114,21 @@ describe('ConnectionGroup — multi-role expand/collapse', () => {
 
   it('collapses again on second toggle click', () => {
     render(<ConnectionGroup group={multiRoleGroup()} cardA={cardA} cardB={cardB} />);
-    const toggle = screen.getByRole('button');
-    fireEvent.click(toggle);
-    fireEvent.click(toggle);
-    expect(screen.getByRole('button')).toHaveAttribute('aria-expanded', 'false');
+    // Multi-role list exposes TWO role="button" elements: the chevron (canonical
+    // toggle) and the visible AbilityRow (secondary clickable affordance). Select
+    // the chevron by its aria-label to disambiguate.
+    const toggle = () => screen.getByRole('button', {name: /show all 3 roles|hide additional roles/i});
+    fireEvent.click(toggle());
+    fireEvent.click(toggle());
+    expect(toggle()).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('closes on Escape when expanded', () => {
     render(<ConnectionGroup group={multiRoleGroup()} cardA={cardA} cardB={cardB} />);
-    fireEvent.click(screen.getByRole('button'));
+    const toggle = () => screen.getByRole('button', {name: /show all 3 roles|hide additional roles/i});
+    fireEvent.click(toggle());
     fireEvent.keyDown(window, {key: 'Escape'});
-    expect(screen.getByRole('button')).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle()).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('renders all roles always-open with no toggle on mobile', () => {

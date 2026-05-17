@@ -64,10 +64,22 @@ apps/web/public/data/synergies/
 # Local domain knowledge base (rulebooks, guides — not committed)
 .knowledge/
 
-# Per-card source files for preview sets (scratch; previewCards.json is the runtime source of truth)
-apps/web/public/data/set12/
+# Per-card source files for preview sets (scratch staging area;
+# previewCards.json is the runtime source of truth). Generalised pattern
+# so each new reveal season (set13/, set14/, ...) is covered automatically.
+apps/web/public/data/set*/
 
 # Local scratch & review notes (not part of the app)
 tmp-*/
+.tmp-*/
 skills-lock.json
 TEXTS_REVIEW.md
+screenshots/
+docs/reviews/
+
+# Tool / plugin local state — managed by their installers, not tracked
+.agents/
+.superpowers/
+.claude/hookify.*.local.md
+.claude/skills/supabase-postgres-best-practices/
+docs/superpowers/

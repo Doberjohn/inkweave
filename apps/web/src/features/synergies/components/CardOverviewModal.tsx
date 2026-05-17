@@ -4,7 +4,7 @@ import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
 import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';
-import {CardImage, CardLightbox, RenderProfiler} from '../../../shared/components';
+import {CardImage, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {getDominantScore, getStrengthTier} from '../utils';
@@ -12,6 +12,14 @@ import {COLORS, FONTS, RADIUS, Z_INDEX} from '../../../shared/constants';
 
 const FLIP_DURATION = 480;
 const FLIP_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+/**
+ * Inset (px) each card pulls inward when entering comparison mode so its
+ * inner edge touches the PairConnector. Derived from the modal's typical
+ * desktop geometry: (rowWidth ~950 - 2*cardWidth 337 - connectorWidth 192) / 2.
+ * If the modal width changes, this may need to be recalculated dynamically
+ * (ResizeObserver) — for now it's a constant tuned to the current shell width.
+ */
+const COMPARISON_CARD_INSET = 42;
 
 interface CardOverviewModalProps {
   isOpen: boolean;
@@ -48,8 +56,6 @@ interface ModalState {
   visible: boolean;
   onTransitionEnd: () => void;
   activeGroupFilter: string | null;
-  lightboxOpen: boolean;
-  setLightboxOpen: (open: boolean) => void;
   comparisonPair: DetailedPairSynergy | null;
   highlightedCard: 'a' | 'b' | null;
   setHighlightedCard: (card: 'a' | 'b' | null) => void;
@@ -63,7 +69,7 @@ interface ModalState {
 }
 
 /**
- * Owns the modal's local state machine: chip filter, lightbox, comparison pair, FLIP refs,
+ * Owns the modal's local state machine: chip filter, comparison pair, FLIP refs,
  * highlight state, and all derived handlers. Render-time setState patterns (card-id reset,
  * isOpen reset, deep-link adoption) live in {@link useComparisonStateResets} so this hook
  * stays focused on orchestration.
@@ -76,7 +82,6 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   const {visible, onTransitionEnd} = useTransitionPresence(isOpen);
 
   const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [comparisonPair, setComparisonPair] = useState<DetailedPairSynergy | null>(null);
   const [highlightedCard, setHighlightedCard] = useState<'a' | 'b' | null>(null);
 
@@ -135,8 +140,6 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
     visible,
     onTransitionEnd,
     activeGroupFilter,
-    lightboxOpen,
-    setLightboxOpen,
     comparisonPair,
     highlightedCard,
     setHighlightedCard,
@@ -179,8 +182,6 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
     visible,
     onTransitionEnd,
     activeGroupFilter,
-    lightboxOpen,
-    setLightboxOpen,
     comparisonPair,
     highlightedCard,
     setHighlightedCard,
@@ -197,7 +198,11 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
 
   if (!mounted) return null;
 
-  const cardWidth = isMobile ? 240 : 380;
+  // 337px matches the full-size AVIF's intrinsic width (see scripts/download-card-images.mjs).
+  // Rendering at native size avoids browser upscaling (was 380 → ~1.13× zoom on the AVIF).
+  // The Lorcana card aspect ratio 264:368 is the same as the AVIF's 337:470, so cardHeight
+  // resolves to 470 — a clean 1:1 mapping for the LCP image.
+  const cardWidth = isMobile ? 240 : 337;
   const cardHeight = Math.round((cardWidth * 368) / 264);
   const dataMode = inComparison ? 'comparison' : 'default';
 
@@ -246,8 +251,6 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
                 activeGroupFilter={activeGroupFilter}
                 comparisonPair={comparisonPair}
                 highlightedCard={highlightedCard}
-                lightboxOpen={lightboxOpen}
-                setLightboxOpen={setLightboxOpen}
                 inComparison={inComparison}
                 compareCardRef={compareCardRef}
                 onShowAll={handleShowAll}
@@ -626,8 +629,6 @@ interface CardsRowProps {
   activeGroupFilter: string | null;
   comparisonPair: DetailedPairSynergy | null;
   highlightedCard: 'a' | 'b' | null;
-  lightboxOpen: boolean;
-  setLightboxOpen: (open: boolean) => void;
   inComparison: boolean;
   compareCardRef: React.RefObject<HTMLDivElement | null>;
   onShowAll: (groupKey: string) => void;
@@ -649,14 +650,12 @@ function CardsRow(props: CardsRowProps) {
         overflow: 'visible',
         position: 'relative',
       }}>
-      <CardImageButton
+      <CardImageDisplay
         card={props.card}
         cardWidth={props.cardWidth}
         cardHeight={cardHeight}
         isMobile={isMobile}
         highlightedCard={highlightedCard}
-        lightboxOpen={props.lightboxOpen}
-        setLightboxOpen={props.setLightboxOpen}
         inComparison={props.inComparison}
       />
       <DefaultInfoColumn
@@ -683,71 +682,53 @@ function CardsRow(props: CardsRowProps) {
   );
 }
 
-interface CardImageButtonProps {
+interface CardImageDisplayProps {
   card: LorcanaCard;
   cardWidth: number;
   cardHeight: number;
   isMobile: boolean;
   highlightedCard: 'a' | 'b' | null;
-  lightboxOpen: boolean;
-  setLightboxOpen: (open: boolean) => void;
   inComparison: boolean;
 }
 
-function CardImageButton({card, cardWidth, cardHeight, isMobile, highlightedCard, lightboxOpen, setLightboxOpen, inComparison}: CardImageButtonProps) {
-  const lightboxEnabled = !!card.imageUrl && !inComparison;
+function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCard, inComparison}: CardImageDisplayProps) {
   return (
-    <div style={pickCardWrapperStyle({isMobile, highlightedCard})}>
-      <button
-        type="button"
-        aria-label={lightboxEnabled ? 'Enlarge card image' : undefined}
-        disabled={!lightboxEnabled}
-        onClick={lightboxEnabled ? () => setLightboxOpen(true) : undefined}
-        style={{
-          border: 'none',
-          background: 'none',
-          padding: 0,
-          width: cardWidth,
-          cursor: lightboxEnabled ? 'pointer' : 'default',
-        }}>
-        <CardImage
-          src={card.imageUrl}
-          alt={card.fullName}
-          width={cardWidth}
-          height={cardHeight}
-          inkColor={card.ink}
-          cost={card.cost}
-          borderRadius={14}
-          style={{width: cardWidth, height: 'auto'}}
-        />
-      </button>
-      <MaybeLightbox card={card} lightboxOpen={lightboxOpen} setLightboxOpen={setLightboxOpen} />
+    <div style={pickCardWrapperStyle({isMobile, highlightedCard, inComparison})}>
+      <CardImage
+        src={card.imageUrl}
+        alt={card.fullName}
+        width={cardWidth}
+        height={cardHeight}
+        inkColor={card.ink}
+        cost={card.cost}
+        borderRadius={14}
+        // No style override: CardImage's root container already sets
+        // width/height in pixels, which reserves space before the image
+        // loads. The previous `style={{height:'auto'}}` collapsed that
+        // reservation and produced CLS=0.13 on /card/957 (lighthouserc
+        // threshold 0.1) — see commit 8fbe93c.
+        priority
+        lazy={false}
+      />
     </div>
   );
 }
 
-function pickCardWrapperStyle({isMobile, highlightedCard}: {isMobile: boolean; highlightedCard: 'a' | 'b' | null}): React.CSSProperties {
+function pickCardWrapperStyle({isMobile, highlightedCard, inComparison}: {isMobile: boolean; highlightedCard: 'a' | 'b' | null; inComparison: boolean}): React.CSSProperties {
+  // In comparison mode, pull Card A inward so its right edge touches the
+  // PairConnector's left edge. Match the FLIP timing on Card B so both
+  // cards slide into position together.
+  const inset = !isMobile && inComparison ? COMPARISON_CARD_INSET : 0;
   return {
     display: 'flex',
     justifyContent: isMobile ? 'center' : 'flex-start',
     alignItems: 'flex-start',
     flexShrink: 0,
-    transition: 'opacity 0.2s ease, filter 0.2s ease',
+    transform: inset ? `translateX(${inset}px)` : undefined,
+    transition: `opacity 0.2s ease, filter 0.2s ease, transform ${FLIP_DURATION}ms ${FLIP_EASING}`,
     opacity: highlightedCard === 'b' ? 0.4 : 1,
     filter: highlightedCard === 'a' ? 'drop-shadow(0 0 8px rgba(212, 175, 55, 0.6))' : undefined,
   };
-}
-
-function MaybeLightbox({card, lightboxOpen, setLightboxOpen}: {card: LorcanaCard; lightboxOpen: boolean; setLightboxOpen: (open: boolean) => void}) {
-  if (!lightboxOpen || !card.imageUrl) return null;
-  return (
-    <CardLightbox
-      src={card.imageUrl}
-      alt={card.fullName}
-      isLocation={card.type === 'Location'}
-      onClose={() => setLightboxOpen(false)}
-    />
-  );
 }
 
 interface DefaultInfoColumnProps {
@@ -843,7 +824,9 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
       style={{
         position: 'absolute',
         top: 0,
-        right: 0,
+        // Pull Card B inward to touch the PairConnector's right edge.
+        // Symmetric with Card A's translateX in pickCardWrapperStyle.
+        right: COMPARISON_CARD_INSET,
         width: cardWidth,
         height: cardHeight,
         borderRadius: 14,

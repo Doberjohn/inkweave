@@ -240,48 +240,101 @@ function ExplanationWithHighlights({
 // the standard description rhythm.
 const DESCRIPTION_LINE_HEIGHT = 1.7;
 
-function AbilityRow({
-  label,
-  description,
-  cardA,
-  cardB,
-  onHighlight,
-  position = 'solo',
-}: {
+interface AbilityRowProps {
   label: string;
   description: string;
   cardA: LorcanaCard;
   cardB: LorcanaCard;
   onHighlight?: (card: 'a' | 'b' | null) => void;
   position?: AbilityRowPosition;
-}) {
+  /** Optional click handler. When set, the row gets `cursor: pointer`, a gold
+   *  hover glow, role="button", tabIndex, and Enter/Space keyboard parity.
+   *  Used by MultiRoleAbilityList to make the visible row a secondary toggle
+   *  alongside the chevron (which remains the canonical control). */
+  onClick?: () => void;
+}
+
+function buildKeyDownHandler(onClick: (() => void) | undefined) {
+  if (!onClick) return undefined;
+  return (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+    }
+  };
+}
+
+function buildHoverHandlers(interactive: boolean, setHovered: (b: boolean) => void) {
+  if (!interactive) return {};
+  return {
+    onMouseEnter: () => setHovered(true),
+    onMouseLeave: () => setHovered(false),
+  };
+}
+
+function pickRowRadii(position: AbilityRowPosition): React.CSSProperties {
   const topRounded = position === 'solo' || position === 'first';
   const bottomRounded = position === 'solo' || position === 'last';
+  const r = `${RADIUS.sm}px`;
+  return {
+    borderTopLeftRadius: topRounded ? r : 0,
+    borderTopRightRadius: topRounded ? r : 0,
+    borderBottomLeftRadius: bottomRounded ? r : 0,
+    borderBottomRightRadius: bottomRounded ? r : 0,
+  };
+}
+
+function pickAbilityRowStyle({
+  position,
+  interactive,
+  hovered,
+}: {
+  position: AbilityRowPosition;
+  interactive: boolean;
+  hovered: boolean;
+}): React.CSSProperties {
   const withShadow = position === 'solo';
+  return {
+    background: COLORS.lorcanaCream,
+    ...pickRowRadii(position),
+    padding: '8px 12px',
+    // textIndent pulls only line 1 back by `padding-left` so the label hugs
+    // the container's left edge while wrapped lines stay indented at content-left.
+    textIndent: -12,
+    overflow: 'hidden',
+    // Canonical gold-glow hover pattern from the rest of the app
+    // (see SynergyGroup.tsx:216, BetaNotice, CardLightbox, voting cards).
+    boxShadow:
+      interactive && hovered
+        ? '0 0 16px rgba(212, 175, 55, 0.15)'
+        : withShadow
+          ? ABILITY_BOX_SHADOW
+          : 'none',
+    color: COLORS.lorcanaTextDark,
+    fontFamily: FONTS.body,
+    fontSize: `${FONT_SIZES.base}px`,
+    fontWeight: 600,
+    lineHeight: DESCRIPTION_LINE_HEIGHT,
+    cursor: interactive ? 'pointer' : undefined,
+    transition: 'box-shadow 0.2s ease-out',
+  };
+}
+
+function AbilityRow({label, description, cardA, cardB, onHighlight, position = 'solo', onClick}: AbilityRowProps) {
+  const interactive = !!onClick;
+  const [hovered, setHovered] = useState(false);
   return (
     // Lorcana ability-text layout: cream container with a small dark label inline at the
     // start of the text flow. Line 1 (label + start of description) sits flush against the
     // container's left border via text-indent; wrapped lines (line 2+) are governed by
     // padding-left so they have breathing room from the border instead of touching it.
     <div
-      style={{
-        background: COLORS.lorcanaCream,
-        borderTopLeftRadius: topRounded ? `${RADIUS.sm}px` : 0,
-        borderTopRightRadius: topRounded ? `${RADIUS.sm}px` : 0,
-        borderBottomLeftRadius: bottomRounded ? `${RADIUS.sm}px` : 0,
-        borderBottomRightRadius: bottomRounded ? `${RADIUS.sm}px` : 0,
-        padding: '8px 12px',
-        // textIndent pulls only line 1 back by `padding-left` so the label hugs
-        // the container's left edge while wrapped lines stay indented at content-left.
-        textIndent: -12,
-        overflow: 'hidden',
-        boxShadow: withShadow ? ABILITY_BOX_SHADOW : 'none',
-        color: COLORS.lorcanaTextDark,
-        fontFamily: FONTS.body,
-        fontSize: `${FONT_SIZES.base}px`,
-        fontWeight: 600,
-        lineHeight: DESCRIPTION_LINE_HEIGHT,
-      }}>
+      onClick={onClick}
+      onKeyDown={buildKeyDownHandler(onClick)}
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      {...buildHoverHandlers(interactive, setHovered)}
+      style={pickAbilityRowStyle({position, interactive, hovered})}>
       <span
         style={{
           // inline-block keeps the label in the inline flow (so text-indent pulls
@@ -411,6 +464,17 @@ function resolveRoleDisplay(
  * Mobile: stacks all roles always-open. No toggle, no overlay (mobile lays the
  * modal columns vertically, so engine column height isn't constrained).
  */
+function useEscapeToClose(active: boolean, setIsOpen: (v: boolean) => void) {
+  useEffect(() => {
+    if (!active) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [active, setIsOpen]);
+}
+
 function MultiRoleAbilityList({
   connections,
   cardA,
@@ -432,14 +496,7 @@ function MultiRoleAbilityList({
     .map((conn) => resolveRoleDisplay(conn, cardA, cardB));
 
   // Esc closes the expansion (desktop only — mobile has no toggle).
-  useEffect(() => {
-    if (isMobile || !isOpen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsOpen(false);
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [isMobile, isOpen]);
+  useEscapeToClose(!isMobile && isOpen, setIsOpen);
 
   if (isMobile) {
     return (
@@ -464,7 +521,15 @@ function MultiRoleAbilityList({
   // 'middle' (square all) when expanded so it joins the hidden rows seamlessly.
   const [visibleRole, ...hiddenRoles] = roles;
   return (
-    <div style={{position: 'relative'}}>
+    <div
+      style={{position: 'relative'}}
+      // Close on hover-out — when expanded and the pointer leaves the entire
+      // visual area (visible row + absolute overlay are both descendants of
+      // this root, so mouseleave fires only on a true exit, not when crossing
+      // between them).
+      onMouseLeave={() => {
+        if (isOpen) setIsOpen(false);
+      }}>
       <AbilityRow
         label={visibleRole.label}
         description={visibleRole.description}
@@ -472,6 +537,11 @@ function MultiRoleAbilityList({
         cardB={cardB}
         onHighlight={onHighlight}
         position={isOpen ? 'middle' : 'last'}
+        // Secondary toggle affordance: clicking anywhere on the visible row
+        // flips the expansion. Only enabled when there are hidden rows to
+        // reveal (i.e., the chevron button is rendered). The ToggleButton
+        // remains the canonical keyboard-accessible control.
+        onClick={hiddenRoles.length > 0 ? () => setIsOpen((o) => !o) : undefined}
       />
       <div
         style={{
@@ -494,7 +564,20 @@ function MultiRoleAbilityList({
             transition: 'grid-template-rows 0.25s ease-out',
             pointerEvents: 'auto',
           }}>
-          <div style={{overflow: 'hidden', minHeight: 0}}>
+          <div
+            style={{
+              overflow: 'hidden',
+              minHeight: 0,
+              // Elevated-popover shadow when expanded. Box-shadow renders outside
+              // the element's box (overflow:hidden doesn't clip it), so the
+              // expanded panel reads as a floating layer above the engine column.
+              // Layered shadow: deep outer dark for depth on the dark background,
+              // plus a subtle gold edge highlight to align with the brand palette.
+              boxShadow: isOpen
+                ? '0 18px 36px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(212, 175, 55, 0.18)'
+                : 'none',
+              transition: 'box-shadow 0.25s ease-out',
+            }}>
             {hiddenRoles.map((r, i) => (
               <AbilityRow
                 key={r.key}

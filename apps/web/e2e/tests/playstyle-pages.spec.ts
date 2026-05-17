@@ -68,18 +68,23 @@ test.describe('Playstyle Pages', () => {
 
   test('should navigate back from playstyle detail to gallery', async ({page}) => {
     await page.goto('/playstyles/lore-denial');
-    await page.waitForTimeout(500);
+    // Wait for the actual heading to render instead of an arbitrary 500ms
+    // sleep — the hardcoded wait raced webkit under full-suite load (5
+    // browsers × 60 tests parallel), causing intermittent failures where
+    // backLink.click() fired before the page settled.
+    await expect(page.getByRole('heading', {level: 1})).toBeVisible({timeout: 10000});
 
     // Find and click the back/breadcrumb link to gallery
-    const backLink = page.getByRole('link', {name: /playstyles|back/i});
+    const backLink = page.getByRole('link', {name: /playstyles|back/i}).first();
     if (await backLink.isVisible().catch(() => false)) {
       await backLink.click();
-      await expect(page).toHaveURL('/playstyles');
+      // 10s timeout for webkit's slower nav under load; 5s default was racy.
+      await expect(page).toHaveURL('/playstyles', {timeout: 10000});
     } else {
       // Fallback: use logo to go home
       const logo = page.getByLabel('Go to home page');
       await logo.click();
-      await expect(page).toHaveURL('/');
+      await expect(page).toHaveURL('/', {timeout: 10000});
     }
   });
 });
