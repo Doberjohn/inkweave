@@ -240,45 +240,82 @@ function ExplanationWithHighlights({
 // the standard description rhythm.
 const DESCRIPTION_LINE_HEIGHT = 1.7;
 
-function AbilityRow({
-  label,
-  description,
-  cardA,
-  cardB,
-  onHighlight,
-  position = 'solo',
-  onClick,
-}: {
+interface AbilityRowProps {
   label: string;
   description: string;
   cardA: LorcanaCard;
   cardB: LorcanaCard;
   onHighlight?: (card: 'a' | 'b' | null) => void;
   position?: AbilityRowPosition;
-  /** Optional click handler. When set, the row gets `cursor: pointer` and a
-   *  subtle brightness shift on hover to signal interactivity. Used by
-   *  MultiRoleAbilityList to make the visible row a secondary toggle alongside
-   *  the chevron button (mouse-only affordance; the ToggleButton remains the
-   *  canonical keyboard control). */
+  /** Optional click handler. When set, the row gets `cursor: pointer`, a gold
+   *  hover glow, role="button", tabIndex, and Enter/Space keyboard parity.
+   *  Used by MultiRoleAbilityList to make the visible row a secondary toggle
+   *  alongside the chevron (which remains the canonical control). */
   onClick?: () => void;
-}) {
+}
+
+function buildKeyDownHandler(onClick: (() => void) | undefined) {
+  if (!onClick) return undefined;
+  return (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+    }
+  };
+}
+
+function buildHoverHandlers(interactive: boolean, setHovered: (b: boolean) => void) {
+  if (!interactive) return {};
+  return {
+    onMouseEnter: () => setHovered(true),
+    onMouseLeave: () => setHovered(false),
+  };
+}
+
+function pickAbilityRowStyle({
+  position,
+  interactive,
+  hovered,
+}: {
+  position: AbilityRowPosition;
+  interactive: boolean;
+  hovered: boolean;
+}): React.CSSProperties {
   const topRounded = position === 'solo' || position === 'first';
   const bottomRounded = position === 'solo' || position === 'last';
   const withShadow = position === 'solo';
+  return {
+    background: COLORS.lorcanaCream,
+    borderTopLeftRadius: topRounded ? `${RADIUS.sm}px` : 0,
+    borderTopRightRadius: topRounded ? `${RADIUS.sm}px` : 0,
+    borderBottomLeftRadius: bottomRounded ? `${RADIUS.sm}px` : 0,
+    borderBottomRightRadius: bottomRounded ? `${RADIUS.sm}px` : 0,
+    padding: '8px 12px',
+    // textIndent pulls only line 1 back by `padding-left` so the label hugs
+    // the container's left edge while wrapped lines stay indented at content-left.
+    textIndent: -12,
+    overflow: 'hidden',
+    // Canonical gold-glow hover pattern from the rest of the app
+    // (see SynergyGroup.tsx:216, BetaNotice, CardLightbox, voting cards).
+    boxShadow:
+      interactive && hovered
+        ? '0 0 16px rgba(212, 175, 55, 0.15)'
+        : withShadow
+          ? ABILITY_BOX_SHADOW
+          : 'none',
+    color: COLORS.lorcanaTextDark,
+    fontFamily: FONTS.body,
+    fontSize: `${FONT_SIZES.base}px`,
+    fontWeight: 600,
+    lineHeight: DESCRIPTION_LINE_HEIGHT,
+    cursor: interactive ? 'pointer' : undefined,
+    transition: 'box-shadow 0.2s ease-out',
+  };
+}
+
+function AbilityRow({label, description, cardA, cardB, onHighlight, position = 'solo', onClick}: AbilityRowProps) {
   const interactive = !!onClick;
   const [hovered, setHovered] = useState(false);
-  // Keyboard parity for the row's secondary toggle affordance — Enter and Space
-  // fire onClick, matching what users expect from a role="button" element.
-  // The ToggleButton chevron remains the canonical control; the row is an
-  // additional keyboard-accessible affordance with a larger hit target.
-  const handleKeyDown = onClick
-    ? (e: React.KeyboardEvent<HTMLDivElement>) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick();
-        }
-      }
-    : undefined;
   return (
     // Lorcana ability-text layout: cream container with a small dark label inline at the
     // start of the text flow. Line 1 (label + start of description) sits flush against the
@@ -286,41 +323,11 @@ function AbilityRow({
     // padding-left so they have breathing room from the border instead of touching it.
     <div
       onClick={onClick}
-      onKeyDown={handleKeyDown}
+      onKeyDown={buildKeyDownHandler(onClick)}
       role={interactive ? 'button' : undefined}
       tabIndex={interactive ? 0 : undefined}
-      onMouseEnter={interactive ? () => setHovered(true) : undefined}
-      onMouseLeave={interactive ? () => setHovered(false) : undefined}
-      style={{
-        background: COLORS.lorcanaCream,
-        borderTopLeftRadius: topRounded ? `${RADIUS.sm}px` : 0,
-        borderTopRightRadius: topRounded ? `${RADIUS.sm}px` : 0,
-        borderBottomLeftRadius: bottomRounded ? `${RADIUS.sm}px` : 0,
-        borderBottomRightRadius: bottomRounded ? `${RADIUS.sm}px` : 0,
-        padding: '8px 12px',
-        // textIndent pulls only line 1 back by `padding-left` so the label hugs
-        // the container's left edge while wrapped lines stay indented at content-left.
-        textIndent: -12,
-        overflow: 'hidden',
-        // Canonical gold-glow hover pattern from the rest of the app
-        // (see SynergyGroup.tsx:216, BetaNotice, CardLightbox, voting cards).
-        // Subtle outer glow at 15% gold opacity reads as "this is interactive"
-        // without competing with the expanded-state shadow or feeling jarring
-        // against the cream row.
-        boxShadow:
-          interactive && hovered
-            ? '0 0 16px rgba(212, 175, 55, 0.15)'
-            : withShadow
-              ? ABILITY_BOX_SHADOW
-              : 'none',
-        color: COLORS.lorcanaTextDark,
-        fontFamily: FONTS.body,
-        fontSize: `${FONT_SIZES.base}px`,
-        fontWeight: 600,
-        lineHeight: DESCRIPTION_LINE_HEIGHT,
-        cursor: interactive ? 'pointer' : undefined,
-        transition: 'box-shadow 0.2s ease-out',
-      }}>
+      {...buildHoverHandlers(interactive, setHovered)}
+      style={pickAbilityRowStyle({position, interactive, hovered})}>
       <span
         style={{
           // inline-block keeps the label in the inline flow (so text-indent pulls
