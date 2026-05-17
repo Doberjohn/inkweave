@@ -272,6 +272,18 @@ function buildHoverHandlers(interactive: boolean, setHovered: (b: boolean) => vo
   };
 }
 
+function pickRowRadii(position: AbilityRowPosition): React.CSSProperties {
+  const topRounded = position === 'solo' || position === 'first';
+  const bottomRounded = position === 'solo' || position === 'last';
+  const r = `${RADIUS.sm}px`;
+  return {
+    borderTopLeftRadius: topRounded ? r : 0,
+    borderTopRightRadius: topRounded ? r : 0,
+    borderBottomLeftRadius: bottomRounded ? r : 0,
+    borderBottomRightRadius: bottomRounded ? r : 0,
+  };
+}
+
 function pickAbilityRowStyle({
   position,
   interactive,
@@ -281,15 +293,10 @@ function pickAbilityRowStyle({
   interactive: boolean;
   hovered: boolean;
 }): React.CSSProperties {
-  const topRounded = position === 'solo' || position === 'first';
-  const bottomRounded = position === 'solo' || position === 'last';
   const withShadow = position === 'solo';
   return {
     background: COLORS.lorcanaCream,
-    borderTopLeftRadius: topRounded ? `${RADIUS.sm}px` : 0,
-    borderTopRightRadius: topRounded ? `${RADIUS.sm}px` : 0,
-    borderBottomLeftRadius: bottomRounded ? `${RADIUS.sm}px` : 0,
-    borderBottomRightRadius: bottomRounded ? `${RADIUS.sm}px` : 0,
+    ...pickRowRadii(position),
     padding: '8px 12px',
     // textIndent pulls only line 1 back by `padding-left` so the label hugs
     // the container's left edge while wrapped lines stay indented at content-left.
