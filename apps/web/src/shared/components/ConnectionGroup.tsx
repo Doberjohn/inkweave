@@ -457,6 +457,17 @@ function resolveRoleDisplay(
  * Mobile: stacks all roles always-open. No toggle, no overlay (mobile lays the
  * modal columns vertically, so engine column height isn't constrained).
  */
+function useEscapeToClose(active: boolean, setIsOpen: (v: boolean) => void) {
+  useEffect(() => {
+    if (!active) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [active, setIsOpen]);
+}
+
 function MultiRoleAbilityList({
   connections,
   cardA,
@@ -478,14 +489,7 @@ function MultiRoleAbilityList({
     .map((conn) => resolveRoleDisplay(conn, cardA, cardB));
 
   // Esc closes the expansion (desktop only — mobile has no toggle).
-  useEffect(() => {
-    if (isMobile || !isOpen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsOpen(false);
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [isMobile, isOpen]);
+  useEscapeToClose(!isMobile && isOpen, setIsOpen);
 
   if (isMobile) {
     return (
