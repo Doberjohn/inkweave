@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {getPairScore, type PairScore} from '../../../shared/lib/supabase';
 
 export interface UsePairScoreReturn {
@@ -71,9 +71,19 @@ function usePairScoreInvalidationListener(
   onInvalidate: () => void,
 ): number {
   const [refreshTick, setRefreshTick] = useState(0);
+  // "Latest ref" pattern: callers typically pass an inline arrow that closes
+  // over render-fresh state. Storing the callback in a ref lets the subscribe
+  // effect depend on `key` only — no churning the listener Set on every
+  // render of usePairScore. Mutation lives in a post-commit effect to satisfy
+  // React 19's "no ref access during render" rule.
+  const onInvalidateRef = useRef(onInvalidate);
+  useEffect(() => {
+    onInvalidateRef.current = onInvalidate;
+  });
+
   useEffect(() => {
     const fn = () => {
-      onInvalidate();
+      onInvalidateRef.current();
       setRefreshTick((t) => t + 1);
     };
     let set = listeners.get(key);
@@ -86,7 +96,7 @@ function usePairScoreInvalidationListener(
       set!.delete(fn);
       if (set!.size === 0) listeners.delete(key);
     };
-  }, [key, onInvalidate]);
+  }, [key]);
   return refreshTick;
 }
 
