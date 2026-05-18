@@ -77,6 +77,7 @@ export function EngineColumn({pair, engineScore, onHighlight}: EngineColumnProps
         state={quickVote.state}
         onVote={quickVote.vote}
         distribution={quickVote.distribution}
+        distributionLoading={quickVote.distributionLoading}
         userChoice={quickVote.userChoice}
         error={quickVote.error}
         engineScore={engineScore}

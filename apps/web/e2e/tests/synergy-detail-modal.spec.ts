@@ -34,8 +34,10 @@ test.describe('Synergy comparison — Desktop', () => {
     await expect(
       appPage.cardOverviewModal.getByRole('button', {name: /back to synergies/i}),
     ).toBeVisible({timeout: 3000});
-    // URL updates to /compare/A/B/group (group key from the clicked tile)
-    await expect(page).toHaveURL(/\/compare\/\d+\/\d+\/shift-targets/);
+    // URL stays put — in-app comparison flow no longer pushes /compare/* so the
+    // originating page stays mounted in <Outlet /> behind the modal backdrop.
+    // (Deep-link flow still URL-syncs when switching pairs — see CardModalContext.)
+    await expect(page).toHaveURL('/');
   });
 
   test('should show engine column with rule explanations in comparison mode', async ({appPage}) => {
@@ -60,8 +62,9 @@ test.describe('Synergy comparison — Desktop', () => {
     await expect(backButton).toBeVisible({timeout: 3000});
     await backButton.click();
 
-    // Modal returns to default state. data-mode flips synchronously; URL navigates from
-    // /compare/A/B/group → /card/A → / via CardPage's redirect, so it settles a tick later.
+    // Modal returns to default state. URL stayed at '/' the whole time (in-app
+    // comparison flow doesn't push /compare/*), so the final URL assertion just
+    // confirms we didn't accidentally trigger a navigation on BACK.
     await expect(appPage.cardOverviewModal).toHaveAttribute('data-mode', 'default', {timeout: 5000});
     await expect(page).toHaveURL('/', {timeout: 5000});
   });

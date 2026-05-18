@@ -3,6 +3,7 @@ import {createBrowserRouter} from 'react-router-dom';
 import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
 import {AppLayout} from './AppLayout';
 import {RevealsGate} from './features/reveals';
+import {HomePageSkeleton} from './pages/HomePageSkeleton';
 import {COLORS, RADIUS, SPACING} from './shared/constants';
 
 /** Retry a dynamic import up to `retries` times, then force-reload on stale chunks (e.g. iOS home screen cache). */
@@ -52,41 +53,41 @@ const InDepthVotePage = lazyWithRetry(
 const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'), 'NotFoundPage');
 const RevealsPage = lazyWithRetry(() => import('./pages/RevealsPage'), 'RevealsPage');
 
-function SuspenseWrapper({children}: {children: React.ReactNode}) {
+/** Generic 3-line fallback used by every route except `/`. */
+function GenericFallback() {
   return (
-    <Suspense
-      fallback={
+    <div
+      style={{
+        minHeight: '100vh',
+        background: COLORS.background,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: SPACING.xl,
+      }}
+      aria-busy="true"
+      aria-label="Loading page">
+      <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
         <div
           style={{
-            minHeight: '100vh',
-            background: COLORS.background,
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: SPACING.xl,
-          }}
-          aria-busy="true"
-          aria-label="Loading page">
-          <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: SPACING.md,
-                width: '100%',
-                maxWidth: 320,
-              }}>
-              <Skeleton width="60%" height={24} borderRadius={RADIUS.sm} />
-              <Skeleton height={12} borderRadius={RADIUS.sm} />
-              <Skeleton height={12} width="80%" borderRadius={RADIUS.sm} />
-              <Skeleton height={12} width="40%" borderRadius={RADIUS.sm} />
-            </div>
-          </SkeletonTheme>
+            flexDirection: 'column',
+            gap: SPACING.md,
+            width: '100%',
+            maxWidth: 320,
+          }}>
+          <Skeleton width="60%" height={24} borderRadius={RADIUS.sm} />
+          <Skeleton height={12} borderRadius={RADIUS.sm} />
+          <Skeleton height={12} width="80%" borderRadius={RADIUS.sm} />
+          <Skeleton height={12} width="40%" borderRadius={RADIUS.sm} />
         </div>
-      }>
-      {children}
-    </Suspense>
+      </SkeletonTheme>
+    </div>
   );
+}
+
+function SuspenseWrapper({children, fallback}: {children: React.ReactNode; fallback?: React.ReactNode}) {
+  return <Suspense fallback={fallback ?? <GenericFallback />}>{children}</Suspense>;
 }
 
 export const router = createBrowserRouter([
@@ -97,7 +98,7 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: (
-          <SuspenseWrapper>
+          <SuspenseWrapper fallback={<HomePageSkeleton />}>
             <HomePage />
           </SuspenseWrapper>
         ),

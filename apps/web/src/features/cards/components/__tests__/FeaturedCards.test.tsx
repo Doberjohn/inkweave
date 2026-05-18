@@ -27,14 +27,15 @@ function makeCard(ink: string, id: string, name: string): LorcanaCard {
   } as LorcanaCard;
 }
 
-// IDs must match FEATURED_IDS in FeaturedCards.tsx
+// IDs must match DEFAULT_FEATURED_IDS in FeaturedCards.tsx (also overridable via
+// VITE_FEATURED_CARD_IDS — tests rely on the unset/default path).
 const mockCards: LorcanaCard[] = [
-  makeCard('Amber', '2208', 'Mowgli'),
-  makeCard('Amethyst', '1004', 'Elsa'),
-  makeCard('Emerald', '1543', 'Tramp'),
-  makeCard('Ruby', '2046', 'Powerline'),
-  makeCard('Sapphire', '2626', 'Let It Go'),
-  makeCard('Steel', '2363', 'The Headless Horseman'),
+  makeCard('Amber', '2730', 'Woody'),
+  makeCard('Amethyst', '2752', 'Snow White'),
+  makeCard('Emerald', '2806', 'Buzz Lightyear'),
+  makeCard('Ruby', '2841', 'Sid Phillips'),
+  makeCard('Sapphire', '2878', 'What Else Can I Do?'),
+  makeCard('Steel', '2906', 'Merida'),
 ];
 
 describe('FeaturedCards', () => {
@@ -73,8 +74,8 @@ describe('FeaturedCards', () => {
     render(<FeaturedCards cards={shuffled} onCardSelect={vi.fn()} />);
 
     const listItems = screen.getAllByRole('listitem');
-    expect(listItems[0]).toHaveTextContent('Mowgli');
-    expect(listItems[5]).toHaveTextContent('The Headless Horseman');
+    expect(listItems[0]).toHaveTextContent('Woody');
+    expect(listItems[5]).toHaveTextContent('Merida');
   });
 
   it('should gracefully handle missing featured cards', () => {

@@ -2,10 +2,11 @@ import {useState, useEffect, useCallback, useMemo, useRef, type MutableRefObject
 import {
   getSupabase,
   submitVote,
-  getAccuracyDistribution,
+  deriveAccuracyDistribution,
   type AccuracyDistribution,
   type Accuracy,
 } from '../../../shared/lib/supabase';
+import {usePairScore, invalidatePairScore} from './usePairScore';
 import {readQuickVote, writeQuickVote} from '../lib/voteStorage';
 
 export type {Accuracy};
@@ -47,20 +48,7 @@ interface VoteSlots {
   setState: (s: QuickVoteState) => void;
   setUserChoice: (c: Accuracy | null) => void;
   setError: (e: QuickVoteError) => void;
-  setDistribution: (d: AccuracyDistribution | null) => void;
-  setDistributionFailed: (f: boolean) => void;
   submittingRef: MutableRefObject<boolean>;
-}
-
-async function fetchPostVoteDistribution(slots: VoteSlots, pair: Pair): Promise<void> {
-  try {
-    const dist = await getAccuracyDistribution(pair.cardA, pair.cardB);
-    if (!slots.submittingRef.current) return;
-    if (dist) slots.setDistribution(dist);
-  } catch (err) {
-    console.error('[useQuickVote] Failed to fetch distribution after vote:', err);
-    slots.setDistributionFailed(true);
-  }
 }
 
 function applyVoteFailure(slots: VoteSlots, error: NonNullable<QuickVoteError>): void {
@@ -79,7 +67,9 @@ async function performVote(slots: VoteSlots, pair: Pair, accuracy: Accuracy): Pr
     if (result.error === null) {
       writeQuickVote(pair, accuracy);
       slots.setState('result');
-      await fetchPostVoteDistribution(slots, pair);
+      // Bust the shared pair-score cache so usePairScore subscribers (this hook +
+      // CommunityColumn) refetch the aggregate that now includes the user's vote.
+      invalidatePairScore(pair.cardA, pair.cardB);
       return;
     }
     if (result.error === 'rate_limited') {
@@ -97,32 +87,15 @@ async function performVote(slots: VoteSlots, pair: Pair, accuracy: Accuracy): Pr
   }
 }
 
-// ── Distribution-fetch predicate ──
-
-interface FetchDistributionInputs {
-  state: QuickVoteState;
-  distribution: AccuracyDistribution | null;
-  distributionFailed: boolean;
-}
-
-function shouldFetchDistribution({state, distribution, distributionFailed}: FetchDistributionInputs): boolean {
-  // Eager fetch — dist bar is shown alongside the vote prompt (mockup phase 2 combined view).
-  if (state === 'hidden') return false;
-  if (distribution) return false;
-  if (distributionFailed) return false;
-  return true;
-}
-
 // ── Sub-hooks ──
 
-type StateSlots = Omit<VoteSlots, 'submittingRef'>;
-
-interface QuickVoteSlots extends StateSlots {
+interface QuickVoteSlots {
   state: QuickVoteState;
+  setState: (s: QuickVoteState) => void;
   userChoice: Accuracy | null;
-  distribution: AccuracyDistribution | null;
-  distributionFailed: boolean;
+  setUserChoice: (c: Accuracy | null) => void;
   error: QuickVoteError;
+  setError: (e: QuickVoteError) => void;
 }
 
 interface SlotsInputs {
@@ -132,7 +105,7 @@ interface SlotsInputs {
 }
 
 /**
- * Owns all useState slots + the prev-value-during-render pair-change reset.
+ * Owns the state slots + the prev-value-during-render pair-change reset.
  * The submission-lock ref is owned by `useQuickVote` itself (refs created via
  * `useRef` should be mutated only in the hook that created them).
  */
@@ -141,42 +114,18 @@ function useQuickVoteSlots({pair, isAvailable, storedChoice}: SlotsInputs): Quic
   const initial = resolveQuickVoteState({isAvailable, storedChoice});
   const [state, setState] = useState<QuickVoteState>(initial.state);
   const [userChoice, setUserChoice] = useState<Accuracy | null>(initial.userChoice);
-  const [distribution, setDistribution] = useState<AccuracyDistribution | null>(null);
   const [error, setError] = useState<QuickVoteError>(null);
-  const [distributionFailed, setDistributionFailed] = useState(false);
   const [prevPairId, setPrevPairId] = useState(pairId);
 
   if (pairId !== prevPairId) {
     setPrevPairId(pairId);
-    setDistribution(null);
-    setDistributionFailed(false);
     setError(null);
     const next = resolveQuickVoteState({isAvailable, storedChoice});
     setState(next.state);
     setUserChoice(next.userChoice);
   }
 
-  return {
-    state, setState, userChoice, setUserChoice, distribution, setDistribution,
-    error, setError, distributionFailed, setDistributionFailed,
-  };
-}
-
-/** Fetch the accuracy distribution when a returning voter lands on the result state. */
-function useDistributionFetch(slots: QuickVoteSlots, pair: Pair): void {
-  const {state, distribution, distributionFailed, setDistribution, setDistributionFailed} = slots;
-  useEffect(() => {
-    if (!shouldFetchDistribution({state, distribution, distributionFailed})) return;
-    let cancelled = false;
-    getAccuracyDistribution(pair.cardA, pair.cardB)
-      .then((dist) => { if (!cancelled && dist) setDistribution(dist); })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error('[useQuickVote] Failed to fetch accuracy distribution:', err);
-        setDistributionFailed(true);
-      });
-    return () => { cancelled = true; };
-  }, [state, distribution, distributionFailed, pair.cardA, pair.cardB, setDistribution, setDistributionFailed]);
+  return {state, setState, userChoice, setUserChoice, error, setError};
 }
 
 /** Auto-recover from a rate-limit error after 30 seconds. */
@@ -195,7 +144,7 @@ export interface UseQuickVoteReturn {
   state: QuickVoteState;
   vote: (accuracy: Accuracy) => Promise<void>;
   distribution: AccuracyDistribution | null;
-  distributionFailed: boolean;
+  distributionLoading: boolean;
   userChoice: Accuracy | null;
   error: QuickVoteError;
 }
@@ -206,32 +155,44 @@ export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
   const storedChoice = useMemo(() => readQuickVote(pair), [pair]);
   const slots = useQuickVoteSlots({pair, isAvailable, storedChoice});
   const submittingRef = useRef(false);
+  // Single shared subscription — CommunityColumn reads the same row via usePairScore.
+  const pairScore = usePairScore(cardA, cardB);
 
   // Reset submission lock after pair-change commit (refs can't be mutated during render).
   useEffect(() => { submittingRef.current = false; }, [pair]);
 
-  useDistributionFetch(slots, pair);
   useRateLimitRecovery(slots);
 
-  const {state, setState, setUserChoice, setError, setDistribution, setDistributionFailed} = slots;
+  const distribution = useMemo(
+    () => deriveAccuracyDistribution(pairScore.score),
+    [pairScore.score],
+  );
+  const distributionLoading = pairScore.isLoading;
+  // `pairScore.error` is currently unreachable: getPairScore swallows query/network
+  // errors and resolves null (logs to console). Re-introduce a fetch-failure signal
+  // here only when a UI consumer actually needs to distinguish "no votes yet" from
+  // "fetch failed" — at which point getPairScore's contract needs to surface the
+  // distinction first. The previous `distributionFailed` flag was misleading.
+
+  const {state, setState, setUserChoice, setError} = slots;
   const vote = useCallback(
     async (accuracy: Accuracy) => {
       if (state !== 'ready' && state !== 'error') return;
       if (submittingRef.current) return;
       submittingRef.current = true;
       await performVote(
-        {setState, setUserChoice, setError, setDistribution, setDistributionFailed, submittingRef},
+        {setState, setUserChoice, setError, submittingRef},
         pair, accuracy,
       );
     },
-    [pair, state, setState, setUserChoice, setError, setDistribution, setDistributionFailed],
+    [pair, state, setState, setUserChoice, setError],
   );
 
   return {
     state: slots.state,
     vote,
-    distribution: slots.distribution,
-    distributionFailed: slots.distributionFailed,
+    distribution,
+    distributionLoading,
     userChoice: slots.userChoice,
     error: slots.error,
   };

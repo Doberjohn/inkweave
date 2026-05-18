@@ -18,7 +18,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const {openCardModal} = useCardModal();
   const {isMobile} = useResponsive();
-  const {cards} = useCardDataContext();
+  const {cards, isLoading} = useCardDataContext();
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearchSubmit = () => {
@@ -48,7 +48,12 @@ export function HomePage() {
         />
       </ErrorBoundary>
 
-      <FeaturedCards cards={cards} onCardSelect={handleCardSelect} isMobile={isMobile} />
+      <FeaturedCards
+        cards={cards}
+        onCardSelect={handleCardSelect}
+        isMobile={isMobile}
+        isLoading={isLoading}
+      />
     </main>
   );
 }
