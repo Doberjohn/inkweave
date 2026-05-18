@@ -16,9 +16,6 @@ import {COLORS, RADIUS, SPACING, Z_INDEX} from '../shared/constants';
  * layout. On mount, the responsive hook in HomePage takes over instantly.
  */
 export function HomePageSkeleton({isMobile = false}: {isMobile?: boolean} = {}) {
-  const ctaHeight = isMobile ? 48 : 44;
-  const searchHeight = isMobile ? 48 : 56;
-
   return (
     <main
       aria-busy="true"
@@ -33,75 +30,123 @@ export function HomePageSkeleton({isMobile = false}: {isMobile?: boolean} = {}) 
         background: COLORS.background,
       }}>
       <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
-        <HeroSkeleton isMobile={isMobile} searchHeight={searchHeight} ctaHeight={ctaHeight} />
+        <HeroSkeleton isMobile={isMobile} />
         <FeaturedCardsSkeleton isMobile={isMobile} />
       </SkeletonTheme>
     </main>
   );
 }
 
-interface HeroSkeletonProps {
-  isMobile: boolean;
+/**
+ * Pre-computed style + sizing values, one constant per breakpoint. Picking the
+ * shape with a single ternary in `pickHeroSkeletonStyles` keeps both the
+ * picker and `HeroSkeleton` itself branchless (CC ≤ 2) — CodeScene scans
+ * static literals as plain data, not as conditional branches.
+ */
+interface HeroSkeletonStyles {
+  section: React.CSSProperties;
+  heading: React.CSSProperties;
+  logo: React.CSSProperties;
+  subtitleContainer: React.CSSProperties;
+  subtitleText: React.CSSProperties;
+  searchRow: React.CSSProperties;
   searchHeight: number;
+  ctaRow: React.CSSProperties;
   ctaHeight: number;
+  ctaWidths: [number | string, number | string, number | string];
 }
 
-function HeroSkeleton({isMobile, searchHeight, ctaHeight}: HeroSkeletonProps) {
+const DESKTOP_HERO_STYLES: HeroSkeletonStyles = {
+  section: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: '0 0 80px',
+    position: 'relative',
+    zIndex: 2,
+    width: undefined,
+    boxSizing: 'border-box',
+  },
+  heading: {margin: 0, marginBottom: 20, lineHeight: 0},
+  logo: {display: 'block', width: '100%', maxWidth: 600, height: 'auto', userSelect: 'none'},
+  subtitleContainer: {textAlign: 'center', marginBottom: 32, padding: undefined},
+  subtitleText: {
+    fontSize: '20px',
+    color: COLORS.heroSubtitle,
+    margin: 0,
+    lineHeight: '28px',
+  },
+  searchRow: {
+    display: 'flex',
+    width: '100%',
+    maxWidth: 768,
+    zIndex: Z_INDEX.autocomplete,
+  },
+  searchHeight: 56,
+  ctaRow: {display: 'flex', flexDirection: 'row', gap: 12, marginTop: 20, width: undefined},
+  ctaHeight: 44,
+  ctaWidths: [168, 172, 152],
+};
+
+const MOBILE_HERO_STYLES: HeroSkeletonStyles = {
+  section: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: `48px ${SPACING.lg}px 40px`,
+    position: 'relative',
+    zIndex: 2,
+    width: '100%',
+    boxSizing: 'border-box',
+  },
+  heading: {margin: 0, marginBottom: 16, lineHeight: 0},
+  logo: {display: 'block', width: '100%', maxWidth: 380, height: 'auto', userSelect: 'none'},
+  subtitleContainer: {textAlign: 'center', marginBottom: 24, padding: '0 8px'},
+  subtitleText: {
+    fontSize: '16px',
+    color: COLORS.heroSubtitle,
+    margin: 0,
+    lineHeight: '22px',
+  },
+  searchRow: {
+    display: 'flex',
+    width: '100%',
+    maxWidth: undefined,
+    zIndex: Z_INDEX.autocomplete,
+  },
+  searchHeight: 48,
+  ctaRow: {display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16, width: '100%'},
+  ctaHeight: 48,
+  ctaWidths: ['100%', '100%', '100%'],
+};
+
+function pickHeroSkeletonStyles(isMobile: boolean): HeroSkeletonStyles {
+  return isMobile ? MOBILE_HERO_STYLES : DESKTOP_HERO_STYLES;
+}
+
+function HeroSkeleton({isMobile}: {isMobile: boolean}) {
+  const s = pickHeroSkeletonStyles(isMobile);
   return (
-    <section
-      aria-label="Hero"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: isMobile ? `48px ${SPACING.lg}px 40px` : '0 0 80px',
-        position: 'relative',
-        zIndex: 2,
-        width: isMobile ? '100%' : undefined,
-        boxSizing: 'border-box',
-      }}>
-      <h1 style={{margin: 0, marginBottom: isMobile ? 16 : 20, lineHeight: 0}}>
-        <img
-          src="/brand/logo-animated.svg"
-          alt="Inkweave"
-          style={{
-            display: 'block',
-            width: '100%',
-            maxWidth: isMobile ? 380 : 600,
-            height: 'auto',
-            userSelect: 'none',
-          }}
-        />
+    <section aria-label="Hero" style={s.section}>
+      <h1 style={s.heading}>
+        <img src="/brand/logo-animated.svg" alt="Inkweave" style={s.logo} />
       </h1>
-      <div style={{textAlign: 'center', marginBottom: isMobile ? 24 : 32, padding: isMobile ? '0 8px' : undefined}}>
-        <p
-          style={{
-            fontSize: `${isMobile ? 16 : 20}px`,
-            color: COLORS.heroSubtitle,
-            margin: 0,
-            lineHeight: isMobile ? '22px' : '28px',
-          }}>
+      <div style={s.subtitleContainer}>
+        <p style={s.subtitleText}>
           Select any Lorcana card and instantly discover powerful synergies.
         </p>
       </div>
-      <div style={{display: 'flex', width: '100%', maxWidth: isMobile ? undefined : 768, zIndex: Z_INDEX.autocomplete}}>
+      <div style={s.searchRow}>
         <Skeleton
-          height={searchHeight}
+          height={s.searchHeight}
           borderRadius={RADIUS.lg}
           containerClassName="inkweave-home-skel-flex"
         />
       </div>
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          gap: isMobile ? 10 : 12,
-          marginTop: isMobile ? 16 : 20,
-          width: isMobile ? '100%' : undefined,
-        }}>
-        <Skeleton width={isMobile ? '100%' : 168} height={ctaHeight} borderRadius={RADIUS.lg} />
-        <Skeleton width={isMobile ? '100%' : 172} height={ctaHeight} borderRadius={RADIUS.lg} />
-        <Skeleton width={isMobile ? '100%' : 152} height={ctaHeight} borderRadius={RADIUS.lg} />
+      <div style={s.ctaRow}>
+        <Skeleton width={s.ctaWidths[0]} height={s.ctaHeight} borderRadius={RADIUS.lg} />
+        <Skeleton width={s.ctaWidths[1]} height={s.ctaHeight} borderRadius={RADIUS.lg} />
+        <Skeleton width={s.ctaWidths[2]} height={s.ctaHeight} borderRadius={RADIUS.lg} />
       </div>
     </section>
   );
