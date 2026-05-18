@@ -152,40 +152,19 @@ export type AccuracyDistribution = {
   total: number;
 };
 
-export async function getAccuracyDistribution(
-  cardA: string,
-  cardB: string,
-): Promise<AccuracyDistribution | null> {
-  const supabase = getSupabase();
-  if (!supabase) return null;
-
-  const [a, b] = [cardA, cardB].sort();
-
-  try {
-    const { data, error } = await supabase
-      .from('pair_scores')
-      .select('accuracy_lower, accuracy_right, accuracy_higher')
-      .eq('card_a_id', a)
-      .eq('card_b_id', b)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') return null;
-      console.error('[getAccuracyDistribution] Supabase query failed:', {
-        code: error.code,
-        message: error.message,
-        pair: `${a} / ${b}`,
-      });
-      return null;
-    }
-
-    const lower = data.accuracy_lower ?? 0;
-    const right = data.accuracy_right ?? 0;
-    const higher = data.accuracy_higher ?? 0;
-
-    return { lower, right, higher, total: lower + right + higher };
-  } catch (e) {
-    console.error('[getAccuracyDistribution] Network error:', e);
-    return null;
-  }
+/**
+ * Pure-function derivation of the distribution from a `pair_scores` row.
+ * The accuracy columns are already in `getPairScore`'s `*` select, so
+ * any caller that already has the pair score can avoid a second round-trip.
+ * Returns null only when the score is null (no row for the pair yet);
+ * an all-zero distribution returns {lower:0, right:0, higher:0, total:0}.
+ */
+export function deriveAccuracyDistribution(score: PairScore | null): AccuracyDistribution | null {
+  if (!score) return null;
+  const lower = score.accuracy_lower ?? 0;
+  const right = score.accuracy_right ?? 0;
+  const higher = score.accuracy_higher ?? 0;
+  return { lower, right, higher, total: lower + right + higher };
 }
+
+

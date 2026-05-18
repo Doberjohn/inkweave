@@ -3,7 +3,8 @@ import {
   getSupabase,
   submitVote,
   getPairScore,
-  getAccuracyDistribution,
+  deriveAccuracyDistribution,
+  type PairScore,
   _resetClient,
 } from '../supabase';
 
@@ -241,105 +242,18 @@ describe('getPairScore', () => {
   });
 });
 
-describe('getAccuracyDistribution', () => {
-  it('returns null when Supabase is not configured', async () => {
-    const result = await getAccuracyDistribution('a', 'b');
-    expect(result).toBeNull();
-    expect(mockFrom).not.toHaveBeenCalled();
+describe('deriveAccuracyDistribution', () => {
+  it('returns null when score is null', () => {
+    expect(deriveAccuracyDistribution(null)).toBeNull();
   });
 
-  it('queries pair_scores with canonical pair order', async () => {
-    vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
-    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
-    mockSingle.mockResolvedValue({
-      data: {accuracy_lower: 2, accuracy_right: 8, accuracy_higher: 1},
-    });
-
-    // Pass in reverse order; should sort to (aaa, zzz)
-    await getAccuracyDistribution('zzz', 'aaa');
-
-    expect(mockFrom).toHaveBeenCalledWith('pair_scores');
-    expect(mockSelect).toHaveBeenCalledWith('accuracy_lower, accuracy_right, accuracy_higher');
-    expect(mockEq1).toHaveBeenCalledWith('card_a_id', 'aaa');
-    expect(mockEq2).toHaveBeenCalledWith('card_b_id', 'zzz');
-
-    vi.unstubAllEnvs();
+  it('returns distribution with computed total', () => {
+    const score = {accuracy_lower: 3, accuracy_right: 10, accuracy_higher: 2} as unknown as PairScore;
+    expect(deriveAccuracyDistribution(score)).toEqual({lower: 3, right: 10, higher: 2, total: 15});
   });
 
-  it('returns distribution with computed total', async () => {
-    vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
-    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
-    mockSingle.mockResolvedValue({
-      data: {accuracy_lower: 3, accuracy_right: 10, accuracy_higher: 2},
-    });
-
-    const result = await getAccuracyDistribution('a', 'b');
-    expect(result).toEqual({lower: 3, right: 10, higher: 2, total: 15});
-
-    vi.unstubAllEnvs();
-  });
-
-  it('handles null column values (nullable database columns)', async () => {
-    vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
-    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
-    mockSingle.mockResolvedValue({
-      data: {accuracy_lower: null, accuracy_right: null, accuracy_higher: null},
-    });
-
-    const result = await getAccuracyDistribution('a', 'b');
-    expect(result).toEqual({lower: 0, right: 0, higher: 0, total: 0});
-
-    vi.unstubAllEnvs();
-  });
-
-  it('returns null for PGRST116 (no rows found)', async () => {
-    vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
-    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
-    mockSingle.mockResolvedValue({
-      data: null,
-      error: {code: 'PGRST116', message: 'No rows found'},
-    });
-
-    const result = await getAccuracyDistribution('a', 'b');
-    expect(result).toBeNull();
-
-    vi.unstubAllEnvs();
-  });
-
-  it('returns null and logs on query error', async () => {
-    vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
-    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    mockSingle.mockResolvedValue({
-      data: null,
-      error: {code: '42P01', message: 'relation does not exist'},
-    });
-
-    const result = await getAccuracyDistribution('a', 'b');
-    expect(result).toBeNull();
-    expect(consoleSpy).toHaveBeenCalledWith(
-      '[getAccuracyDistribution] Supabase query failed:',
-      expect.objectContaining({code: '42P01'}),
-    );
-
-    consoleSpy.mockRestore();
-    vi.unstubAllEnvs();
-  });
-
-  it('catches network exceptions', async () => {
-    vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
-    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    mockSingle.mockRejectedValue(new TypeError('Failed to fetch'));
-
-    const result = await getAccuracyDistribution('a', 'b');
-    expect(result).toBeNull();
-    expect(consoleSpy).toHaveBeenCalledWith(
-      '[getAccuracyDistribution] Network error:',
-      expect.any(TypeError),
-    );
-
-    consoleSpy.mockRestore();
-    vi.unstubAllEnvs();
+  it('coerces null column values to zero', () => {
+    const score = {accuracy_lower: null, accuracy_right: null, accuracy_higher: null} as unknown as PairScore;
+    expect(deriveAccuracyDistribution(score)).toEqual({lower: 0, right: 0, higher: 0, total: 0});
   });
 });

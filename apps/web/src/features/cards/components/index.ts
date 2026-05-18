@@ -5,3 +5,4 @@ export {CardGridSkeleton} from './CardGridSkeleton';
 export {CardDetailSkeleton} from './CardDetailSkeleton';
 export {CardTile} from './CardTile';
 export {FeaturedCards} from './FeaturedCards';
+export {FeaturedCardsSkeleton} from './FeaturedCardsSkeleton';

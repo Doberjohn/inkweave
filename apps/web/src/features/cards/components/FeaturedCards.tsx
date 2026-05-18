@@ -1,24 +1,51 @@
 import type {LorcanaCard} from '../types';
 import {CardTile} from './CardTile';
+import {FeaturedCardsSkeleton} from './FeaturedCardsSkeleton';
 import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
 import {RenderProfiler} from '../../../shared/components';
 
-/** Curated card IDs, one per ink, chosen for visual appeal and synergy variety. */
-const FEATURED_IDS = [
-  '2208', // Amber:    Mowgli - Man Cub
-  '1004', // Amethyst: Elsa - The Fifth Spirit
-  '1543', // Emerald:  Tramp - Enterprising Dog
-  '2046', // Ruby:     Powerline - World's Greatest Rock Star
-  '2626', // Sapphire: Let It Go
-  '2363', // Steel:    The Headless Horseman - Cursed Rider
+/**
+ * Default featured card IDs — one per ink, chosen for visual appeal and synergy
+ * variety. Used as the fallback when `VITE_FEATURED_CARD_IDS` is unset or empty.
+ * Recommend keeping exactly 6 IDs so the desktop 6-col / mobile 3×2 grid stays
+ * symmetrical.
+ */
+const DEFAULT_FEATURED_IDS = [
+  '2730', // Amber:    Woody - Jungle Guide
+  '2752', // Amethyst: Snow White - Merry as the Morning
+  '2806', // Emerald:  Buzz Lightyear - Jungle Ranger
+  '2841', // Ruby:     Sid Phillips - Toy Surgeon
+  '2878', // Sapphire: What Else Can I Do?
+  '2906', // Steel:    Merida - Formidable Archer
 ];
 
+/**
+ * Resolve the featured card IDs from the build-time env var, with a graceful
+ * fallback to the in-code defaults. Vite inlines env vars at build time, so
+ * changing this on Vercel requires a redeploy — that's the intended workflow.
+ */
+function resolveFeaturedIds(raw: string | undefined): string[] {
+  if (!raw) return DEFAULT_FEATURED_IDS;
+  const parsed = raw
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+  return parsed.length > 0 ? parsed : DEFAULT_FEATURED_IDS;
+}
+
+const FEATURED_IDS = resolveFeaturedIds(import.meta.env.VITE_FEATURED_CARD_IDS);
 const FEATURED_COUNT = FEATURED_IDS.length;
 
 interface FeaturedCardsProps {
   cards: LorcanaCard[];
   onCardSelect: (card: LorcanaCard) => void;
   isMobile?: boolean;
+  /**
+   * True while the cards JSON is still being fetched. Renders
+   * `<FeaturedCardsSkeleton>` so the shimmer is continuous from the Suspense
+   * fallback through to the real card art (no flash of empty section).
+   */
+  isLoading?: boolean;
 }
 
 /** Look up curated featured cards by ID, preserving display order. */
@@ -85,11 +112,17 @@ export function FeaturedCards({
   cards,
   onCardSelect,
   isMobile,
+  isLoading,
 }: FeaturedCardsProps) {
   const featured = pickFeatured(cards);
 
   const styles = getStyles(!!isMobile);
 
+  // While the cards JSON is in flight, render the same skeleton row the
+  // Suspense fallback uses so the shimmer is visually continuous from page
+  // load through to real card art. Only return null if loading has completed
+  // and we still have no matches (curated IDs unknown, or empty data).
+  if (isLoading) return <FeaturedCardsSkeleton isMobile={!!isMobile} />;
   if (featured.length === 0) return null;
 
   return (

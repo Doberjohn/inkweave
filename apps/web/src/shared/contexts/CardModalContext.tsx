@@ -37,10 +37,20 @@ const CardModalContext = createContext<CardModalContextValue | undefined>(undefi
  *   is open. The optional `groupKey` filters connections to a specific rule or playstyle, mirroring
  *   the click flow which always carries the source group's key.
  *
- * URL sync (only the comparison sub-state is URL-backed):
- * - Entering comparison from a click → `navigate('/compare/A/B/groupKey')` push
- * - Exiting comparison via BACK button → `navigate('/card/A')` (CardPage redirects to '/')
- * - Closing the modal while on `/compare/*` → `navigate('/')` so the route doesn't re-open the modal
+ * URL sync — gated on whether the user is already on a `/compare/*` route:
+ * - In-app flow (modal opened via card click, URL is /browse, /card/:id, etc.):
+ *   entering/exiting comparison does NOT navigate. The underlying page stays
+ *   mounted in <Outlet />, so the modal backdrop overlays the originating page
+ *   and a backdrop click closes the modal back onto that page.
+ * - Deep-link flow (URL is /compare/A/B/groupKey from the start):
+ *   switching to a different comparison pair pushes a new `/compare/...` URL
+ *   (so the share link stays current); pressing BACK navigates to `/card/A`
+ *   (which redirects to '/'); backdrop click navigates to '/' so the route
+ *   doesn't immediately re-open the modal.
+ *
+ * Trade-off: in-app comparison views are not URL-shareable mid-session. Adding
+ * a deliberate "share this view" affordance is preferable to silently swapping
+ * out the visual context users built up via clicks.
  */
 export function CardModalProvider({children}: {children: ReactNode}) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -89,25 +99,11 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     }
   }, [location.pathname, navigate]);
 
-  // ── URL sync callbacks passed down to the modal ──
-
-  const enterComparisonRoute = useCallback(
-    (partnerId: string, groupKey?: string) => {
-      if (!selectedCardId) return;
-      const path = groupKey
-        ? `/compare/${selectedCardId}/${partnerId}/${groupKey}`
-        : `/compare/${selectedCardId}/${partnerId}`;
-      navigate(path);
-    },
-    [selectedCardId, navigate],
-  );
-
-  const exitComparisonRoute = useCallback(() => {
-    if (!selectedCardId) return;
-    setComparisonPartnerId(null);
-    setComparisonGroupKey(null);
-    navigate(`/card/${selectedCardId}`);
-  }, [selectedCardId, navigate]);
+  const {enterComparisonRoute, exitComparisonRoute} = useComparisonRouteSync({
+    selectedCardId,
+    setComparisonPartnerId,
+    setComparisonGroupKey,
+  });
 
   const value = useMemo(
     () => ({
@@ -139,6 +135,55 @@ export function CardModalProvider({children}: {children: ReactNode}) {
       />
     </CardModalContext.Provider>
   );
+}
+
+/**
+ * Owns the two URL-sync callbacks the modal calls when the user enters or
+ * exits comparison state. Lives outside `CardModalProvider` so the provider
+ * stays under the React-component CC threshold.
+ *
+ * Gate: only navigate when the user is already on a `/compare/*` route (deep
+ * link, or a switch-pair click from within the comparison view). Without the
+ * gate, an in-app click (from /browse, /card/:id, /playstyles/:id, etc.)
+ * would push `/compare/A/B/groupKey`, unmount the originating page from
+ * <Outlet />, and leave the modal's backdrop floating over nothing — losing
+ * the underlying-page context the user expects to return to on backdrop click.
+ */
+interface ComparisonRouteSyncInputs {
+  selectedCardId: string | null;
+  setComparisonPartnerId: (id: string | null) => void;
+  setComparisonGroupKey: (key: string | null) => void;
+}
+
+function useComparisonRouteSync({
+  selectedCardId,
+  setComparisonPartnerId,
+  setComparisonGroupKey,
+}: ComparisonRouteSyncInputs) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isOnCompareRoute = location.pathname.startsWith('/compare/');
+
+  const enterComparisonRoute = useCallback(
+    (partnerId: string, groupKey?: string) => {
+      if (!selectedCardId) return;
+      if (!isOnCompareRoute) return;
+      const path = groupKey
+        ? `/compare/${selectedCardId}/${partnerId}/${groupKey}`
+        : `/compare/${selectedCardId}/${partnerId}`;
+      navigate(path);
+    },
+    [selectedCardId, isOnCompareRoute, navigate],
+  );
+
+  const exitComparisonRoute = useCallback(() => {
+    if (!selectedCardId) return;
+    setComparisonPartnerId(null);
+    setComparisonGroupKey(null);
+    if (isOnCompareRoute) navigate(`/card/${selectedCardId}`);
+  }, [selectedCardId, isOnCompareRoute, navigate, setComparisonPartnerId, setComparisonGroupKey]);
+
+  return {enterComparisonRoute, exitComparisonRoute};
 }
 
 interface CardModalRootProps {
@@ -179,6 +224,7 @@ function CardModalRoot({onEnterComparison, onExitComparison}: CardModalRootProps
       isOpen
       card={card}
       synergies={synergies}
+      synergiesLoading={synergiesLoading}
       onClose={closeCardModal}
       getPairSynergies={getPairSynergies}
       isMobile={isMobile}

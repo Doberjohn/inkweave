@@ -14,7 +14,7 @@ const meta = {
       </div>
     ),
   ],
-  args: {onVote: fn()},
+  args: {onVote: fn(), distributionLoading: false},
 } satisfies Meta<typeof QuickVoteControl>;
 
 export default meta;
@@ -22,6 +22,10 @@ type Story = StoryObj<typeof meta>;
 
 export const Ready: Story = {
   args: {state: 'ready', distribution: null, userChoice: null, error: null},
+};
+
+export const ReadyWithDistributionLoading: Story = {
+  args: {state: 'ready', distribution: null, distributionLoading: true, userChoice: null, error: null},
 };
 
 export const Submitting: Story = {

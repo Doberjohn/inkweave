@@ -115,6 +115,23 @@ option {
   to { clip-path: inset(0); }
 }
 
+/* Home page card-slot shimmer (used by HomePageSkeleton and FeaturedCards while
+   the cards JSON is loading). Same animation, two surfaces — one shared keyframe
+   keeps them visually identical and bridges the gap between the Suspense
+   fallback and the live FeaturedCards render. */
+@keyframes inkweave-home-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Force react-loading-skeleton's wrapper span to act as a block-level flex
+   item so the search-bar skeleton can fill the hero's max-width row. */
+.inkweave-home-skel-flex {
+  display: block;
+  flex: 1;
+  width: 100%;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-ken-burns {
     animation: none !important;

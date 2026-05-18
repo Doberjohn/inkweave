@@ -1,4 +1,5 @@
 import {useLayoutEffect, useMemo, useRef, useState} from 'react';
+import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
@@ -25,6 +26,12 @@ interface CardOverviewModalProps {
   isOpen: boolean;
   card: LorcanaCard;
   synergies: SynergyGroupData[];
+  /** True while the per-card synergy JSON is in flight. When set, the right
+   *  column shows a skeleton placeholder instead of the empty-state copy,
+   *  which would mislead users on slow connections (3G) into thinking the
+   *  card genuinely has zero synergies. See usePrecomputedSynergies for the
+   *  fetch lifecycle. */
+  synergiesLoading?: boolean;
   onClose: () => void;
   /** Resolves a clicked card into its full pair-synergy data (engine + connection details). */
   getPairSynergies: (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null;
@@ -175,7 +182,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
  * - comparison — synergy card clicked → in-place pair detail, both A and B side-by-side
  */
 export function CardOverviewModal(props: CardOverviewModalProps) {
-  const {isOpen, card, synergies, onClose, isMobile = false, hideBackButton = false} = props;
+  const {isOpen, card, synergies, synergiesLoading = false, onClose, isMobile = false, hideBackButton = false} = props;
   const {
     modalRef,
     compareCardRef,
@@ -247,6 +254,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
                 cardHeight={cardHeight}
                 isMobile={isMobile}
                 synergies={synergies}
+                synergiesLoading={synergiesLoading}
                 visibleGroups={visibleGroups}
                 activeGroupFilter={activeGroupFilter}
                 comparisonPair={comparisonPair}
@@ -622,6 +630,7 @@ function ModalBody({isMobile, inComparison, children}: ModalBodyProps) {
 interface CardsRowProps {
   card: LorcanaCard;
   cardWidth: number;
+  synergiesLoading: boolean;
   cardHeight: number;
   isMobile: boolean;
   synergies: SynergyGroupData[];
@@ -660,6 +669,7 @@ function CardsRow(props: CardsRowProps) {
       />
       <DefaultInfoColumn
         synergies={props.synergies}
+        synergiesLoading={props.synergiesLoading}
         visibleGroups={props.visibleGroups}
         activeGroupFilter={props.activeGroupFilter}
         cardHeight={cardHeight}
@@ -733,6 +743,7 @@ function pickCardWrapperStyle({isMobile, highlightedCard, inComparison}: {isMobi
 
 interface DefaultInfoColumnProps {
   synergies: SynergyGroupData[];
+  synergiesLoading: boolean;
   visibleGroups: SynergyGroupData[];
   activeGroupFilter: string | null;
   cardHeight: number;
@@ -742,7 +753,7 @@ interface DefaultInfoColumnProps {
   onCardClick: (card: LorcanaCard, groupKey?: string) => void;
 }
 
-function DefaultInfoColumn({synergies, visibleGroups, activeGroupFilter, cardHeight, isMobile, inComparison, onShowAll, onCardClick}: DefaultInfoColumnProps) {
+function DefaultInfoColumn({synergies, synergiesLoading, visibleGroups, activeGroupFilter, cardHeight, isMobile, inComparison, onShowAll, onCardClick}: DefaultInfoColumnProps) {
   return (
     <section
       aria-label="Synergies"
@@ -763,7 +774,9 @@ function DefaultInfoColumn({synergies, visibleGroups, activeGroupFilter, cardHei
           h3 from each SynergyGroup. Without this, axe flags `heading-order` because the page
           jumps h1 → h3 directly. */}
       <h2 style={SR_ONLY_STYLE}>Synergies</h2>
-      {synergies.length === 0 ? (
+      {synergiesLoading ? (
+        <SynergiesLoadingSkeleton />
+      ) : synergies.length === 0 ? (
         <SynergiesEmptyState />
       ) : (
         visibleGroups.map((group) => (
@@ -783,6 +796,48 @@ function DefaultInfoColumn({synergies, visibleGroups, activeGroupFilter, cardHei
         ))
       )}
     </section>
+  );
+}
+
+/**
+ * Right-column placeholder shown while the per-card synergy JSON is in flight
+ * (usePrecomputedSynergies.isLoading === true). Mirrors the post-load layout:
+ * 2 group sections, each with a small label rect + 2-line description rect +
+ * 3-tile mini-card grid. Without this, slow connections (3G + Set 12-sized
+ * synergy files) made the modal show "No synergies yet" during load — which
+ * read as a true empty state and disappeared once data arrived. The skeleton
+ * makes the loading transition obvious instead of misleading.
+ */
+function SynergiesLoadingSkeleton() {
+  return (
+    <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+      <div
+        data-testid="card-overview-loading"
+        aria-busy="true"
+        aria-label="Loading synergies"
+        style={{display: 'flex', flexDirection: 'column', gap: 20}}>
+        {Array.from({length: 2}).map((_, groupIdx) => (
+          <div key={groupIdx} style={{display: 'flex', flexDirection: 'column', gap: 8}}>
+            {/* Label tag */}
+            <Skeleton width={92} height={20} borderRadius={2} />
+            {/* Cream callout description (2 lines suggested) */}
+            <Skeleton height={36} borderRadius={4} />
+            {/* Mini-card tile grid — matches modal's gridColumns={4}, 3 visible per group */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: 8,
+                marginTop: 4,
+              }}>
+              {Array.from({length: 3}).map((_, tileIdx) => (
+                <Skeleton key={tileIdx} height={170} borderRadius={5} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </SkeletonTheme>
   );
 }
 

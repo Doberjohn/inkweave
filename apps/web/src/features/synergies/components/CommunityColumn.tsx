@@ -1,4 +1,6 @@
+import {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
+import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONTS, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
 import {CommunityEmptyState} from './CommunityEmptyState';
@@ -40,7 +42,11 @@ export function CommunityColumn({pair, engineScore}: CommunityColumnProps) {
   const {cardA, cardB} = pair;
   const navigate = useNavigate();
   const {closeCardModal} = useCardModal();
-  const {score} = usePairScore(cardA.id, cardB.id);
+  const {score, isLoading} = usePairScore(cardA.id, cardB.id);
+  // Delay-before-show: only mount the skeleton if `isLoading` is still true
+  // after 200ms. Cached / fast (<200ms) Supabase responses never flash a
+  // skeleton — the UI just renders the loaded state immediately.
+  const showSkeleton = useDelayedLoading(isLoading, 200);
   const userVotedInDepth = hasInDepthVote({cardA: cardA.id, cardB: cardB.id});
   const visual = deriveCommunityVisualState(score);
 
@@ -54,21 +60,96 @@ export function CommunityColumn({pair, engineScore}: CommunityColumnProps) {
       <ColumnHeader
         title="Community"
         accentColor={COMMUNITY_TINT}
-        score={visual.hasEmptyState ? '—' : formatScore(visual.communityScore)}
+        score={showSkeleton || visual.hasEmptyState ? '—' : formatScore(visual.communityScore)}
         scoreColor={COMMUNITY_TINT}
         scoreFontSize={42}
-        showScale={!visual.hasEmptyState}
+        showScale={!showSkeleton && !visual.hasEmptyState}
         meta={<CommunityHeaderMeta visual={visual} engineScore={engineScore} />}
       />
-      <CommunityBody
-        visual={visual}
-        score={score}
-        cardA={cardA}
-        cardB={cardB}
-        onCta={goToInDepthVote}
-        userAlreadyVoted={userVotedInDepth}
-      />
+      {showSkeleton ? (
+        <CommunityLoadingSkeleton />
+      ) : (
+        <CommunityBody
+          visual={visual}
+          score={score}
+          cardA={cardA}
+          cardB={cardB}
+          onCta={goToInDepthVote}
+          userAlreadyVoted={userVotedInDepth}
+        />
+      )}
     </section>
+  );
+}
+
+/**
+ * Mounts a boolean that follows `isLoading`, but only after a `delayMs` wait.
+ * Fast loads (< delayMs) never flip `true` — no skeleton flash. Slow loads
+ * flip `true` once the timer expires, then back to `false` when loading ends.
+ */
+function useDelayedLoading(isLoading: boolean, delayMs: number): boolean {
+  const [showLoading, setShowLoading] = useState(false);
+  useEffect(() => {
+    if (!isLoading) return;
+    const timer = setTimeout(() => setShowLoading(true), delayMs);
+    // Cleanup handles both branches:
+    //  - isLoading: true -> false transition runs this cleanup, resetting to false.
+    //  - new isLoading: true (e.g. pair change) runs cleanup of prior effect, also resetting.
+    //  - unmount runs cleanup, leaving the next mount fresh.
+    // Placing the reset in cleanup avoids the synchronous setState-in-effect-body warning.
+    return () => {
+      clearTimeout(timer);
+      setShowLoading(false);
+    };
+  }, [isLoading, delayMs]);
+  return showLoading;
+}
+
+/**
+ * Skeleton placeholder for the CommunityBody while usePairScore's fetch is
+ * in flight. Mirrors the CommunityEmptyState shape (most pairs in beta are
+ * still 0-vote) so the cross-fade to the loaded state is structurally
+ * stable — no layout shift on the dominant "empty" outcome.
+ */
+function CommunityLoadingSkeleton() {
+  return (
+    <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+      <div
+        data-testid="community-loading"
+        aria-busy="true"
+        aria-label="Loading community vote data"
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          gap: 12,
+          padding: '24px 20px',
+          background: hexRgba(COMMUNITY_TINT, 0.06),
+          border: `1px solid ${COLORS.surfaceBorder}`,
+          borderRadius: `${RADIUS.lg}px`,
+          fontFamily: FONTS.body,
+        }}>
+        {/* Title rect — mirrors h4 'Not enough votes yet' */}
+        <Skeleton width={160} height={16} borderRadius={2} />
+        {/* Subtitle — 2 lines of description */}
+        <div style={{display: 'flex', flexDirection: 'column', gap: 4}}>
+          <Skeleton height={12} borderRadius={2} />
+          <Skeleton width="70%" height={12} borderRadius={2} />
+        </div>
+        {/* Progress bar row */}
+        <div style={{display: 'flex', alignItems: 'center', gap: 10, marginTop: 4}}>
+          <div style={{flex: 1}}>
+            <Skeleton height={6} borderRadius={3} />
+          </div>
+          <Skeleton width={28} height={11} borderRadius={2} />
+        </div>
+        {/* CTA button */}
+        <div style={{marginTop: 6}}>
+          <Skeleton height={40} borderRadius={RADIUS.sm} />
+        </div>
+      </div>
+    </SkeletonTheme>
   );
 }
 

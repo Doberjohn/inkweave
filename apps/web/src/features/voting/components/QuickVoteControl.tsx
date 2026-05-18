@@ -1,4 +1,5 @@
 import {useState, useEffect, useId} from 'react';
+import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
 import {COLORS, EASING, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
 import {useResponsive} from '../../../shared/hooks';
 import type {AccuracyDistribution} from '../../../shared/lib/supabase';
@@ -10,10 +11,30 @@ interface QuickVoteControlProps {
   state: QuickVoteState;
   onVote: (accuracy: Accuracy) => void;
   distribution: AccuracyDistribution | null;
+  /** True while the shared pair-score query is in flight. Drives the delay-before-show skeleton. */
+  distributionLoading: boolean;
   userChoice: Accuracy | null;
   error: QuickVoteError;
   /** Engine score being rated — used in the prompt copy ("How accurate is Inkweave's score of N?"). */
   engineScore?: number;
+}
+
+/**
+ * Mounts a boolean that follows `isLoading`, but only after a `delayMs` wait.
+ * Fast loads (< delayMs) never flip true — no skeleton flash. Mirrors the same
+ * helper in CommunityColumn so both halves of the modal share the cadence.
+ */
+function useDelayedLoading(isLoading: boolean, delayMs: number): boolean {
+  const [showLoading, setShowLoading] = useState(false);
+  useEffect(() => {
+    if (!isLoading) return;
+    const timer = setTimeout(() => setShowLoading(true), delayMs);
+    return () => {
+      clearTimeout(timer);
+      setShowLoading(false);
+    };
+  }, [isLoading, delayMs]);
+  return showLoading;
 }
 
 // Short labels matching mockup phase 2 — paired with the directional vote-icon (↓ ✓ ↑) for clarity.
@@ -102,6 +123,10 @@ const KEYFRAMES = `
 @keyframes qv-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+@keyframes qv-dist-reveal {
+  from { max-height: 0; opacity: 0; transform: translateY(-4px); }
+  to { max-height: 200px; opacity: 1; transform: translateY(0); }
 }
 .qv-vote-btn:focus-visible {
   outline: 2px solid rgba(212, 175, 55, 0.6);
@@ -262,6 +287,8 @@ interface QuickVotePromptProps {
   engineScore?: number;
   /** Pre-vote distribution data (mockup phase 2 shows it above the prompt with a dashed divider). */
   distribution: AccuracyDistribution | null;
+  /** True while the shared pair-score query is in flight. */
+  distributionLoading: boolean;
 }
 
 /**
@@ -270,22 +297,31 @@ interface QuickVotePromptProps {
  * - result: dist + gold VoteAffirmation tile (no divider, no prompt, no buttons). The disabled-buttons
  *   pattern after voting was a dead-end UX — affirmation replaces it with closure on the user's vote.
  */
-function QuickVotePrompt({state, onVote, userChoice, error, isMobile, questionId, engineScore, distribution}: QuickVotePromptProps) {
+function QuickVotePrompt({state, onVote, userChoice, error, isMobile, questionId, engineScore, distribution, distributionLoading}: QuickVotePromptProps) {
   const isResult = state === 'result';
   const isSubmitting = state === 'submitting';
   const hasDistribution = !!distribution && distribution.total > 0;
+  const showSkeleton = useDelayedLoading(distributionLoading && !hasDistribution, 200);
+  // Reserve the slot whenever the bar will show — loaded data or a delayed-show skeleton.
+  const showsDistSlot = hasDistribution || showSkeleton;
 
   return (
     <div
       key="qv-prompt"
       style={{
         ...CONTAINER_STYLE,
-        // When the dist bar is shown above the prompt, give the block more breathing room
-        // (mockup phase 2 `.vote-section.combined-vote { gap: 14px }`).
-        gap: hasDistribution ? SPACING.section : SPACING.sm,
+        // gap transitions in lockstep with the dist block's reveal so the parent's
+        // 8px → 14px shift doesn't snap while the bar is animating in.
+        gap: showsDistSlot ? SPACING.section : SPACING.sm,
+        transition: 'gap 0.28s ease-out',
         animation: 'qv-fade-up 0.35s ease-out',
       }}>
-      <DistributionBlock distribution={distribution} hasDistribution={hasDistribution} isResult={isResult} />
+      <DistributionBlock
+        distribution={distribution}
+        hasDistribution={hasDistribution}
+        isResult={isResult}
+        showSkeleton={showSkeleton}
+      />
       <PromptOrResult
         state={state}
         onVote={onVote}
@@ -305,30 +341,71 @@ interface DistributionBlockProps {
   distribution: AccuracyDistribution | null;
   hasDistribution: boolean;
   isResult: boolean;
+  showSkeleton: boolean;
 }
 
-function DistributionBlock({distribution, hasDistribution, isResult}: DistributionBlockProps) {
-  if (!hasDistribution || !distribution) return null;
+function DistributionBlock({distribution, hasDistribution, isResult, showSkeleton}: DistributionBlockProps) {
+  const showsAnything = showSkeleton || (hasDistribution && !!distribution);
+  if (!showsAnything) return null;
+  // Wrapper stays mounted while content swaps (skeleton → bar), so the keyframe
+  // fires exactly once per "show" transition — not on every child reconciliation.
   return (
-    <>
-      <DistributionBar
-        lower={distribution.lower}
-        right={distribution.right}
-        higher={distribution.higher}
-        animate={false}
-        contextLabel="How the community rates Inkweave's score"
-      />
-      {!isResult && (
-        <hr
-          aria-hidden="true"
-          style={{
-            border: 'none',
-            borderTop: `1px dashed rgba(212, 175, 55, 0.18)`,
-            margin: 0,
-          }}
-        />
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+        overflow: 'hidden',
+        animation: 'qv-dist-reveal 0.28s ease-out both',
+      }}>
+      {showSkeleton ? (
+        <DistributionSkeleton isResult={isResult} />
+      ) : (
+        <>
+          <DistributionBar
+            lower={distribution!.lower}
+            right={distribution!.right}
+            higher={distribution!.higher}
+            animate={false}
+            contextLabel="How the community rates Inkweave's score"
+          />
+          {!isResult && <DashedDivider />}
+        </>
       )}
-    </>
+    </div>
+  );
+}
+
+function DashedDivider() {
+  return (
+    <hr
+      aria-hidden="true"
+      style={{
+        border: 'none',
+        borderTop: `1px dashed rgba(212, 175, 55, 0.18)`,
+        margin: 0,
+      }}
+    />
+  );
+}
+
+/**
+ * Mirrors the DistributionBar's visual footprint (context label + bar row).
+ * Used while the shared pair-score query is in flight past the 200ms delay.
+ */
+function DistributionSkeleton({isResult}: {isResult: boolean}) {
+  return (
+    <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+      <div
+        data-testid="distribution-loading"
+        aria-busy="true"
+        aria-label="Loading vote distribution"
+        style={{display: 'flex', flexDirection: 'column', gap: 6}}>
+        <Skeleton width={220} height={11} borderRadius={2} />
+        <Skeleton height={22} borderRadius={4} />
+      </div>
+      {!isResult && <DashedDivider />}
+    </SkeletonTheme>
   );
 }
 
@@ -385,7 +462,7 @@ function areButtonsDisabled(state: QuickVoteState, error: QuickVoteError): boole
 
 // ── Main component ──
 
-export function QuickVoteControl({state, onVote, distribution, userChoice, error, engineScore}: QuickVoteControlProps) {
+export function QuickVoteControl({state, onVote, distribution, distributionLoading, userChoice, error, engineScore}: QuickVoteControlProps) {
   const {isMobile} = useResponsive();
   const questionId = useId();
 
@@ -404,6 +481,7 @@ export function QuickVoteControl({state, onVote, distribution, userChoice, error
       questionId={questionId}
       engineScore={engineScore}
       distribution={distribution}
+      distributionLoading={distributionLoading}
     />
   );
 }
