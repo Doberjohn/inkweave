@@ -240,17 +240,4 @@ describe('useQuickVote', () => {
     expect(result.current.userChoice).toBe(0);
   });
 
-  it('sets distributionFailed when pair-score fetch fails for returning voter', async () => {
-    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
-    vi.mocked(getPairScore).mockRejectedValue(new Error('Network error'));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({accuracy: 0, timestamp: Date.now()}));
-
-    const {result} = renderHook(() => useQuickVote(CARD_A, CARD_B));
-
-    await waitFor(() => {
-      expect(result.current.distributionFailed).toBe(true);
-    });
-    expect(result.current.state).toBe('result');
-    expect(result.current.distribution).toBeNull();
-  });
 });

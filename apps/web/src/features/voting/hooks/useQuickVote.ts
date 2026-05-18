@@ -145,7 +145,6 @@ export interface UseQuickVoteReturn {
   vote: (accuracy: Accuracy) => Promise<void>;
   distribution: AccuracyDistribution | null;
   distributionLoading: boolean;
-  distributionFailed: boolean;
   userChoice: Accuracy | null;
   error: QuickVoteError;
 }
@@ -169,7 +168,11 @@ export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
     [pairScore.score],
   );
   const distributionLoading = pairScore.isLoading;
-  const distributionFailed = pairScore.error !== null;
+  // `pairScore.error` is currently unreachable: getPairScore swallows query/network
+  // errors and resolves null (logs to console). Re-introduce a fetch-failure signal
+  // here only when a UI consumer actually needs to distinguish "no votes yet" from
+  // "fetch failed" — at which point getPairScore's contract needs to surface the
+  // distinction first. The previous `distributionFailed` flag was misleading.
 
   const {state, setState, setUserChoice, setError} = slots;
   const vote = useCallback(
@@ -190,7 +193,6 @@ export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
     vote,
     distribution,
     distributionLoading,
-    distributionFailed,
     userChoice: slots.userChoice,
     error: slots.error,
   };

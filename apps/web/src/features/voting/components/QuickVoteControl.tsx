@@ -393,7 +393,11 @@ function DashedDivider() {
  * Mirrors the DistributionBar's visual footprint (context label + bar row).
  * Used while the shared pair-score query is in flight past the 200ms delay.
  */
-function DistributionSkeleton({isResult}: {isResult: boolean}) {
+interface DistributionSkeletonProps {
+  isResult: boolean;
+}
+
+function DistributionSkeleton({isResult}: DistributionSkeletonProps) {
   return (
     <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
       <div

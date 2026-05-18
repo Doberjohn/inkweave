@@ -15,7 +15,11 @@ import {COLORS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
  * 0.72 shimmer tiles in the same 6-col desktop / 3-col mobile grid as the
  * loaded FeaturedCards layout.
  */
-export function FeaturedCardsSkeleton({isMobile = false}: {isMobile?: boolean} = {}) {
+interface FeaturedCardsSkeletonProps {
+  isMobile?: boolean;
+}
+
+export function FeaturedCardsSkeleton({isMobile = false}: FeaturedCardsSkeletonProps = {}) {
   const tileRadius = isMobile ? 10 : RADIUS.xl;
   return (
     <section
@@ -64,13 +68,10 @@ export function FeaturedCardsSkeleton({isMobile = false}: {isMobile?: boolean} =
         {Array.from({length: 6}).map((_, i) => (
           <li key={i} style={{aspectRatio: '0.72'}}>
             <div
+              className="inkweave-shimmer-tile"
               style={{
-                width: '100%',
-                height: '100%',
                 borderRadius: tileRadius,
                 background: `linear-gradient(110deg, ${COLORS.surfaceAlt} 0%, ${COLORS.surfaceHover} 50%, ${COLORS.surfaceAlt} 100%)`,
-                backgroundSize: '200% 100%',
-                animation: 'inkweave-home-shimmer 1.6s linear infinite',
               }}
             />
           </li>

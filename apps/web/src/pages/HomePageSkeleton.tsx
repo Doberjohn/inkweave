@@ -15,7 +15,11 @@ import {COLORS, RADIUS, SPACING, Z_INDEX} from '../shared/constants';
  * `isMobile` defaults to false so the SSR/early-render path picks the desktop
  * layout. On mount, the responsive hook in HomePage takes over instantly.
  */
-export function HomePageSkeleton({isMobile = false}: {isMobile?: boolean} = {}) {
+interface HomePageSkeletonProps {
+  isMobile?: boolean;
+}
+
+export function HomePageSkeleton({isMobile = false}: HomePageSkeletonProps = {}) {
   return (
     <main
       aria-busy="true"

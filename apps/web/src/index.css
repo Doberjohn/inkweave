@@ -124,6 +124,16 @@ option {
   100% { background-position: -200% 0; }
 }
 
+/* Card-slot shimmer tile — used by FeaturedCardsSkeleton and HomePageSkeleton.
+   Declared as a class (not inline) so the prefers-reduced-motion override below
+   can disable the animation for users who request reduced motion. */
+.inkweave-shimmer-tile {
+  width: 100%;
+  height: 100%;
+  background-size: 200% 100%;
+  animation: inkweave-home-shimmer 1.6s linear infinite;
+}
+
 /* Force react-loading-skeleton's wrapper span to act as a block-level flex
    item so the search-bar skeleton can fill the hero's max-width row. */
 .inkweave-home-skel-flex {
@@ -134,6 +144,12 @@ option {
 
 @media (prefers-reduced-motion: reduce) {
   .hero-ken-burns {
+    animation: none !important;
+  }
+  /* Disable card-slot shimmer for vestibular-sensitive users. The tile stays
+     visible at its base color (no shimmer sweep), still signalling "loading"
+     via its placeholder shape but without continuous motion. */
+  .inkweave-shimmer-tile {
     animation: none !important;
   }
 }
