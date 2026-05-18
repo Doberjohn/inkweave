@@ -43,6 +43,12 @@ function fromCache(key: string): UsePairScoreReturn {
 export function invalidatePairScore(cardA: string, cardB: string): void {
   const key = cacheKey(cardA, cardB);
   pairScoreCache.delete(key);
+  // Also drop any in-flight fetch promise: if the initial getPairScore is still
+  // resolving when a vote lands, listener-triggered subscribers would otherwise
+  // reuse the stale promise and populate the cache with pre-vote data. Deleting
+  // the slot forces the next subscriber to start a fresh fetch; the prior
+  // promise's `.then` handlers no-op via each consumer's `cancelled` flag.
+  pairScoreRequests.delete(key);
   const set = listeners.get(key);
   if (set) set.forEach((fn) => fn());
 }

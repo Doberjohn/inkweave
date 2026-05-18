@@ -128,7 +128,11 @@ function pickHeroSkeletonStyles(isMobile: boolean): HeroSkeletonStyles {
   return isMobile ? MOBILE_HERO_STYLES : DESKTOP_HERO_STYLES;
 }
 
-function HeroSkeleton({isMobile}: {isMobile: boolean}) {
+interface HeroSkeletonProps {
+  isMobile: boolean;
+}
+
+function HeroSkeleton({isMobile}: HeroSkeletonProps) {
   const s = pickHeroSkeletonStyles(isMobile);
   return (
     <section aria-label="Hero" style={s.section}>
