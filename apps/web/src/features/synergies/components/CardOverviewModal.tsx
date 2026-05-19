@@ -721,8 +721,15 @@ interface CardImageDisplayProps {
 }
 
 function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCard, inComparison}: CardImageDisplayProps) {
+  // In comparison mode the wrapper takes the ambient `focused-card-glow` className
+  // (#332 #6 idea D). The animation cycles `box-shadow` between a low and high gold-tinted
+  // aura around the card. Setting borderRadius=14 on the wrapper makes the shadow follow
+  // the card's rounded corners instead of drawing against a rectangular bounding box.
+  const useGlow = !isMobile && inComparison;
   return (
-    <div style={pickCardWrapperStyle({isMobile, highlightedCard, inComparison})}>
+    <div
+      className={useGlow ? 'focused-card-glow' : undefined}
+      style={pickCardWrapperStyle({isMobile, highlightedCard, inComparison})}>
       <CardImage
         src={card.imageUrl}
         alt={card.fullName}
@@ -757,6 +764,10 @@ function pickCardWrapperStyle({isMobile, highlightedCard, inComparison}: {isMobi
     transition: `opacity 0.2s ease, filter 0.2s ease, transform ${FLIP_DURATION}ms ${FLIP_EASING}`,
     opacity: highlightedCard === 'b' ? 0.4 : 1,
     filter: highlightedCard === 'a' ? 'drop-shadow(0 0 8px rgba(212, 175, 55, 0.6))' : undefined,
+    // borderRadius matches CardImage's so the ambient glow's box-shadow follows the rounded
+    // card silhouette instead of a rectangular bounding box. Only applied in comparison mode
+    // (when the glow class is also active); default state stays as-is.
+    borderRadius: inset ? 14 : undefined,
   };
 }
 
@@ -895,6 +906,13 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
     <div
       ref={compareCardRef}
       aria-hidden="true"
+      // `focused-card-glow focused-card-glow-offset` adds the ambient breathing animation
+      // (#332 #6 idea D) phased opposite to Card A — when A's glow peaks, B is at its
+      // minimum and vice versa. The keyframe bakes in the same 0 8px 24px depth shadow
+      // that was previously inline, plus the breathing aura. Reduced-motion override in
+      // index.css disables the animation; the previous static shadow is then absent —
+      // documented as acceptable since the cards still have CardImage's inner styling.
+      className="focused-card-glow focused-card-glow-offset"
       style={{
         position: 'absolute',
         top: 0,
@@ -906,7 +924,6 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
         borderRadius: 14,
         overflow: 'hidden',
         background: COLORS.background,
-        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
         transformOrigin: 'top left',
         zIndex: 5,
         opacity: highlightedCard === 'a' ? 0.4 : 1,

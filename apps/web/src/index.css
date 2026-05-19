@@ -131,6 +131,24 @@ option {
   animation: engine-score-pulse-on-entry 460ms ease-out 1180ms both;
 }
 
+/* Ambient glow on focused-state cards (#332 #6 idea D).
+   Steady-state continuous breath (3.6s loop) signalling "this pair is the
+   current focused state." Card A wrapper and Card B overlay share the same
+   keyframe but Card B applies `animation-delay: -1.8s` to phase the breathing
+   opposite — when A peaks at the high glow, B is at the low glow, and vice
+   versa. Subtle: the dark depth shadow (0 8px 24px / 0.5) stays constant; only
+   the gold-tinted aura cycles between low and high spread. */
+@keyframes focused-card-glow-breathe {
+  0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(212, 175, 55, 0.08); }
+  50%      { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 26px rgba(212, 175, 55, 0.22); }
+}
+.focused-card-glow {
+  animation: focused-card-glow-breathe 3.6s ease-in-out infinite;
+}
+.focused-card-glow-offset {
+  animation-delay: -1.8s;
+}
+
 /* Home page card-slot shimmer (used by HomePageSkeleton and FeaturedCards while
    the cards JSON is loading). Same animation, two surfaces — one shared keyframe
    keeps them visually identical and bridges the gap between the Suspense
@@ -171,6 +189,11 @@ option {
   /* Skip the engine-score pulse — score appears with the panel; no transient
      brightening when the connector lands. */
   .engine-score-pulse-on-entry {
+    animation: none !important;
+  }
+  /* Skip the focused-card breathing glow — cards rest at their base shadow
+     without the continuous cycle. */
+  .focused-card-glow {
     animation: none !important;
   }
 }
