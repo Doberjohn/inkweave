@@ -114,6 +114,17 @@ option {
   from { clip-path: inset(0 50% 0 50%); }
   to { clip-path: inset(0); }
 }
+/* Connector exit keyframes (#332 #7) — reverse of the entry animations. Wrapper fades out
+   in 200ms; line collapses centre-in over 480ms (faster than entry's 1000ms — exit doesn't
+   need the narrative buildup that entry uses to introduce the pair). */
+@keyframes card-overview-connector-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes card-overview-connector-line-collapse {
+  from { clip-path: inset(0); }
+  to { clip-path: inset(0 50% 0 50%); }
+}
 
 /* Engine score pulse on comparison entry (#332 #6 idea G).
    Fires ~1180ms after entry — just as the PairConnector finishes drawing — to
