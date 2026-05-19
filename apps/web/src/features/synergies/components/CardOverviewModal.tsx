@@ -246,7 +246,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               activeGroupFilter={activeGroupFilter}
               toggleChip={toggleChip}
             />
-            <HeroDivider visible={synergies.length > 0 && !inComparison} />
+            <HeroDivider hasSynergies={synergies.length > 0} inComparison={inComparison} />
             <ModalBody isMobile={isMobile} inComparison={inComparison} cardHeight={cardHeight}>
               <CardsRow
                 card={card}
@@ -522,9 +522,22 @@ interface ChipFilterRowProps {
 }
 
 function ChipFilterRow({synergies, inComparison, activeGroupFilter, toggleChip}: ChipFilterRowProps) {
-  if (synergies.length === 0 || inComparison) return null;
+  // Render even when inComparison so the row can fade smoothly (250ms ease-out) alongside the
+  // info-column's existing fade. Returning null on comparison-entry produces a jarring instant pop
+  // while the info-column animates next to it — that asymmetry is what this opacity-driven exit
+  // closes. The `synergies.length === 0` short-circuit still returns null (no chrome to fade).
+  if (synergies.length === 0) return null;
   return (
-    <div style={{padding: '14px 24px 0', display: 'flex', flexWrap: 'wrap', gap: 8}}>
+    <div
+      style={{
+        padding: '14px 24px 0',
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 8,
+        opacity: inComparison ? 0 : 1,
+        pointerEvents: inComparison ? 'none' : 'auto',
+        transition: 'opacity 250ms ease-out',
+      }}>
       {synergies.map((group) => (
         <FilterChip
           key={group.groupKey}
@@ -587,8 +600,12 @@ function FilterChip({group, activeGroupFilter, toggleChip}: FilterChipProps) {
   );
 }
 
-function HeroDivider({visible}: {visible: boolean}) {
-  if (!visible) return null;
+function HeroDivider({hasSynergies, inComparison}: {hasSynergies: boolean; inComparison: boolean}) {
+  // Render whenever there are synergies; let `inComparison` drive an opacity transition that
+  // matches the chip-row + info-column fade (250ms ease-out). Splitting the old `visible` boolean
+  // (`synergies.length > 0 && !inComparison`) into two props lets us animate the comparison-mode
+  // exit instead of unmounting instantly.
+  if (!hasSynergies) return null;
   return (
     <hr
       aria-hidden="true"
@@ -597,6 +614,8 @@ function HeroDivider({visible}: {visible: boolean}) {
         border: 'none',
         background: `linear-gradient(90deg, transparent, ${COLORS.primary500} 50%, transparent)`,
         margin: '16px 0 0',
+        opacity: inComparison ? 0 : 1,
+        transition: 'opacity 250ms ease-out',
       }}
     />
   );
