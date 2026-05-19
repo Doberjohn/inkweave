@@ -1017,37 +1017,44 @@ interface ComparisonDetailPanelProps {
 }
 
 function ComparisonDetailPanel({isMobile, inComparison, comparisonPair, setHighlightedCard}: ComparisonDetailPanelProps) {
+  // grid-template-rows: 0fr ↔ 1fr is the canonical "height: auto" transition. The interpolation
+  // covers the panel's *actual* content height (~280px when populated) instead of a synthetic
+  // 0 → 1500 max-height range that finished visibly in ~96ms with the cubic-bezier easing. This
+  // way the 480ms duration maps to real visible motion across the whole transition.
+  // Same pattern MultiRoleAbilityList uses in ConnectionGroup.tsx.
   return (
     <div
       aria-hidden={!inComparison}
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 14,
-        maxHeight: inComparison ? 1500 : 0,
+        display: 'grid',
+        gridTemplateRows: inComparison ? '1fr' : '0fr',
         opacity: inComparison ? 1 : 0,
-        overflow: 'hidden',
         flexShrink: 0,
-        transition: 'max-height 480ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 300ms ease-out 250ms',
+        transition: 'grid-template-rows 480ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 300ms ease-out 250ms',
       }}>
-      {comparisonPair && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-            gap: 20,
-            // `stretch` makes both columns fill the row's height (= max of their intrinsic heights).
-            // Mobile collapses to single column so the alignment is moot, but `stretch` is still the harmless default.
-            alignItems: 'stretch',
-          }}>
-          <EngineColumn
-            pair={comparisonPair}
-            engineScore={comparisonPair.aggregateScore}
-            onHighlight={setHighlightedCard}
-          />
-          <CommunityColumn pair={comparisonPair} engineScore={comparisonPair.aggregateScore} />
-        </div>
-      )}
+      {/* Inner wrapper holds the actual content. `min-height: 0` lets the grid row collapse
+          below content height during the transition; `overflow: hidden` clips so partial content
+          doesn't bleed out of the collapsing/expanding bounds. */}
+      <div style={{minHeight: 0, overflow: 'hidden'}}>
+        {comparisonPair && (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+              gap: 20,
+              // `stretch` makes both columns fill the row's height (= max of their intrinsic heights).
+              // Mobile collapses to single column so the alignment is moot, but `stretch` is still the harmless default.
+              alignItems: 'stretch',
+            }}>
+            <EngineColumn
+              pair={comparisonPair}
+              engineScore={comparisonPair.aggregateScore}
+              onHighlight={setHighlightedCard}
+            />
+            <CommunityColumn pair={comparisonPair} engineScore={comparisonPair.aggregateScore} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
