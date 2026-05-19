@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Modal Entry Animation Refinement — #332 #6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Tinos:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* COLORS — apps/web/src/shared/constants/theme.ts */
+    --bg: #0d0d14;
+    --surface: #1a1a2e;
+    --surface-hover: #252540;
+    --surface-alt: #151525;
+    --surface-border: #333355;
+    --primary: #ffb900;
+    --primary-500: #d4af37;
+    --primary-soft: rgba(212, 175, 55, 0.5);
+    --primary-faint: rgba(212, 175, 55, 0.18);
+    --primary-12: rgba(212, 175, 55, 0.12);
+    --primary-08: rgba(212, 175, 55, 0.08);
+    --primary-04: rgba(212, 175, 55, 0.04);
+    --text: #e8e8e8;
+    --text-muted: #90a1b9;
+    --description: #c8c8d8;
+    --amethyst: #b691ff;
+    --amethyst-25: rgba(182, 145, 255, 0.25);
+    --amethyst-06: rgba(182, 145, 255, 0.06);
+    /* Lorcana ability box (real values) */
+    --lorcana-cream: #f1cd82;
+    --lorcana-tag-bg: #59432b;
+    --lorcana-text-dark: #2a1f12;
+    --lorcana-tag-text: #f5e6c8;
+    --ability-shadow: 0 3px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+
+    /* Ink colors */
+    --ink-amber-bg: #3d2e10;     --ink-amber-text: #f5c542;
+    --ink-amethyst-bg: #2a1a45;  --ink-amethyst-text: #c4a5f5; --ink-amethyst-border: #8b5cf6;
+    --ink-emerald-bg: #0f2e1f;
+    --ink-ruby-bg: #3d1515;
+    --ink-sapphire-bg: #0f1e3d;
+    --ink-steel-bg: #252530;
+
+    --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-hero: 'Tinos', 'Georgia', serif;
+
+    /* PRODUCTION DIMENSIONS (CardOverviewModal.tsx) */
+    --modal-w: 1000px;
+    --modal-pad-x: 24px;
+    --modal-pad-top: 20px;
+    --modal-pad-bottom: 24px;
+    --modal-body-gap: 16px;
+    --card-w: 337px;
+    --card-h: 470px;
+    --cards-row-gap: 28px;
+    --info-col-pad: 14px;
+    --info-col-gap: 18px;
+    --comparison-inset: 42px;
+    --connector-w: 192px;
+
+    /* PRODUCTION TIMINGS (exact) */
+    --flip-dur: 480ms;
+    --flip-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --info-col-fade-dur: 250ms;
+    --connector-fade-dur: 250ms;
+    --connector-draw-dur: 1000ms;
+    --connector-delay: 200ms;
+    --cols-max-dur: 480ms;
+    --cols-opacity-dur: 300ms;
+    --cols-opacity-delay: 250ms;
+
+    /* IDEA timings (new) */
+    --click-ack-dur: 90ms;
+    --glow-breathe-dur: 3.6s;
+    --row-stagger: 70ms;
+    --score-pulse-dur: 460ms;
+    --score-pulse-delay: 1180ms; /* after connector finishes ~1200ms */
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--font-body); background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+
+  /* Page underneath */
+  .page { position: fixed; inset: 0; padding: 28px 32px; z-index: 1; opacity: 0.42; }
+  .page h1 { font-family: var(--font-hero); color: var(--primary-500); margin: 0 0 6px; font-size: 32px; }
+  .page .breadcrumb { color: var(--text-muted); font-size: 12px; }
+  .page-grid { margin-top: 24px; display: grid; grid-template-columns: repeat(8, 1fr); gap: 14px; max-width: 1280px; }
+  .page-card { aspect-ratio: 0.72; border-radius: 12px; background: linear-gradient(135deg, var(--surface) 0%, var(--surface-alt) 100%); border: 1px solid var(--surface-border); }
+
+  /* Control panel */
+  .controls {
+    position: fixed; top: 16px; right: 16px; z-index: 200;
+    background: rgba(21, 21, 37, 0.97);
+    border: 1px solid var(--primary-soft);
+    border-radius: 12px;
+    padding: 16px 18px;
+    width: 360px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    font-size: 13px;
+  }
+  .controls h2 { margin: 0 0 6px; color: var(--primary-500); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; }
+  .controls .subtitle { font-size: 11px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5; }
+  .controls .subtitle strong { color: var(--primary-500); }
+  .controls .baseline-banner {
+    background: var(--primary-04);
+    border: 1px solid var(--primary-faint);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .controls .baseline-banner strong { color: var(--primary-500); }
+  .controls label {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 7px 0; cursor: pointer; line-height: 1.35; user-select: none;
+  }
+  .controls label:hover { color: var(--primary-500); }
+  .controls input[type="checkbox"] { margin-top: 3px; accent-color: var(--primary-500); }
+  .controls .idea-num { color: var(--primary-500); font-weight: 700; min-width: 16px; }
+  .controls .idea-desc { font-size: 11px; color: var(--text-muted); margin: 2px 0 0 24px; line-height: 1.4; }
+  .controls .idea-desc em { color: var(--description); font-style: normal; }
+  .controls hr { border: none; border-top: 1px solid var(--surface-hover); margin: 12px 0; }
+  .controls .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .controls button { background: var(--surface); color: var(--text); border: 1px solid var(--surface-border); border-radius: 6px; padding: 8px 12px; font-size: 12px; cursor: pointer; font-family: inherit; transition: all 0.15s; flex: 1; }
+  .controls button:hover { border-color: var(--primary-500); color: var(--primary-500); }
+  .controls button.primary { background: var(--primary-500); color: var(--surface); border-color: var(--primary-500); font-weight: 600; }
+  .controls .state-line { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--surface-hover); font-size: 11px; color: var(--text-muted); font-family: 'Courier New', monospace; }
+  .controls .state-line strong { color: var(--primary-500); }
+
+  /* Modal stack */
+  .modal-stack { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    cursor: pointer;
+  }
+  .modal {
+    position: relative;
+    width: var(--modal-w);
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--surface-border);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(212, 175, 55, 0.08);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    font-family: var(--font-body);
+  }
+
+  /* Header */
+  .modal-header {
+    padding: var(--modal-pad-top) var(--modal-pad-x) 0;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .modal-title { margin: 0; font-family: var(--font-body); font-size: 22px; font-weight: 700; color: var(--text); line-height: 1.2; flex: 1; min-width: 0; }
+  .back-button {
+    display: none; align-items: center; gap: 6px;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid var(--primary-500);
+    color: var(--primary-500);
+    font-family: inherit;
+    font-size: 12px; font-weight: 700;
+    padding: 7px 14px;
+    border-radius: 18px;
+    cursor: pointer; text-transform: uppercase; letter-spacing: 0.08em;
+    transition: background 0.15s, color 0.15s;
+  }
+  .back-button:hover { background: rgba(212, 175, 55, 0.2); color: var(--primary); }
+  .close-x {
+    width: 28px; height: 28px;
+    padding: 0; border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--surface-border);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; line-height: 1;
+  }
+  .close-x:hover { color: var(--text); background: var(--surface-alt); border-color: var(--text-muted); }
+  body.modal-focused .back-button { display: inline-flex; }
+  body.modal-focused .modal-title { display: none; }
+
+  /* Chip filter row */
+  .chip-row {
+    padding: 14px var(--modal-pad-x) 0;
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; background: var(--surface-alt); border: 1px solid var(--surface-border); border-radius: 18px; font-size: 13px; color: var(--text); cursor: pointer; font-family: inherit; font-weight: 500; }
+  .chip.active { background: var(--primary-12); border-color: var(--primary-500); color: var(--text); font-weight: 600; }
+  .chip .count { padding: 2px 9px; border-radius: 11px; font-size: 11px; font-weight: 700; line-height: 1.3; background: var(--primary-faint); color: var(--primary-500); }
+  .chip.perfect .count { background: rgba(110, 231, 160, 0.18); color: #6ee7a0; }
+
+  .hero-divider { height: 1px; border: none; background: linear-gradient(90deg, transparent, var(--primary-500) 50%, transparent); margin: 16px 0 0; }
+
+  /*
+   * BASELINE PRODUCTION BEHAVIOR (chip-row + hero-divider):
+   *   In production these `return null` when inComparison — they pop out instantly with NO transition.
+   *   That's the inconsistency idea A closes.
+   *
+   * Baseline (default): we mimic the pop via display:none toggle on .modal-focused.
+   * Idea A on: render them with opacity transition, matching the 250ms info-column fade.
+   */
+  body.modal-focused .chip-row,
+  body.transitioning-in .chip-row,
+  body.modal-focused .hero-divider,
+  body.transitioning-in .hero-divider { display: none; }
+  body.idea-A.modal-focused .chip-row,
+  body.idea-A.transitioning-in .chip-row,
+  body.idea-A.modal-focused .hero-divider,
+  body.idea-A.transitioning-in .hero-divider {
+    display: block; opacity: 0; pointer-events: none;
+    transition: opacity var(--info-col-fade-dur) ease-out;
+  }
+  body.idea-A.chip-row {
+    display: flex;
+  }
+
+  /* Modal body */
+  .modal-body {
+    padding: var(--modal-pad-top) var(--modal-pad-x) var(--modal-pad-bottom);
+    display: flex; flex-direction: column; gap: var(--modal-body-gap);
+    flex: 1; min-height: 0;
+    overflow-y: auto;
+  }
+
+  /* CardsRow */
+  .cards-row {
+    display: grid;
+    grid-template-columns: var(--card-w) 1fr;
+    gap: var(--cards-row-gap);
+    height: var(--card-h);
+    flex-shrink: 0;
+    overflow: visible;
+    position: relative;
+    align-items: stretch;
+  }
+
+  /* Card */
+  .card {
+    width: var(--card-w); height: var(--card-h);
+    border-radius: 14px;
+    position: relative; overflow: hidden;
+    border: 2px solid var(--primary-soft);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    background: linear-gradient(135deg, var(--ink-amber-bg) 0%, #2a1f0a 100%);
+    display: flex; flex-direction: column;
+    flex-shrink: 0;
+  }
+  .card .card-cost { position: absolute; top: 12px; left: 12px; width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.65); border: 2px solid var(--primary-500); color: var(--primary-500); font-family: var(--font-hero); font-weight: 700; font-size: 20px; display: flex; align-items: center; justify-content: center; }
+  .card .card-art { flex: 1; background: radial-gradient(circle at 50% 35%, rgba(255,255,255,0.07) 0%, transparent 70%); }
+  .card .card-banner { padding: 14px 20px 18px; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.65)); }
+  .card .card-name { font-family: var(--font-hero); font-weight: 700; font-size: 26px; color: var(--primary-500); line-height: 1.1; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.85); }
+  .card .card-sub { font-family: var(--font-body); font-style: italic; font-size: 14px; color: rgba(255,255,255,0.85); margin-top: 4px; }
+  .card-b { background: linear-gradient(135deg, var(--ink-amethyst-bg) 0%, #1a0f2e 100%); border-color: var(--ink-amethyst-border); }
+  .card-b .card-cost { border-color: var(--ink-amethyst-text); color: var(--ink-amethyst-text); }
+  .card-b .card-name { color: var(--ink-amethyst-text); }
+
+  /* Card A wrapper — translates 42px during comparison, exact production timing */
+  .card-a-wrap {
+    display: flex; justify-content: flex-start; align-items: flex-start;
+    flex-shrink: 0;
+    transition: transform var(--flip-dur) var(--flip-ease);
+  }
+  body.modal-focused .card-a-wrap,
+  body.transitioning-in .card-a-wrap { transform: translateX(var(--comparison-inset)); }
+
+  /* Info column — fades opacity 1→0 over 250ms */
+  .info-column {
+    min-width: 0; min-height: 0;
+    display: flex; flex-direction: column;
+    gap: var(--info-col-gap);
+    max-height: var(--card-h);
+    overflow-y: auto;
+    padding: 0 var(--info-col-pad);
+    transition: opacity var(--info-col-fade-dur) ease-out;
+  }
+  body.modal-focused .info-column,
+  body.transitioning-in .info-column { opacity: 0; pointer-events: none; }
+
+  /* SynergyGroup — uses Lorcana AbilityTag + AbilityCallout for the header */
+  .synergy-section { display: flex; flex-direction: column; }
+  .ability-tag {
+    display: inline-flex; align-self: flex-start;
+    background: var(--lorcana-tag-bg); color: var(--lorcana-tag-text);
+    font-family: var(--font-body); font-weight: 700; font-size: 10px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 4px 4px 0 0;
+  }
+  .ability-callout {
+    background: var(--lorcana-cream); color: var(--lorcana-text-dark);
+    font-family: var(--font-body); font-weight: 600;
+    font-size: 13px; line-height: 1.4;
+    padding: 10px 14px;
+    border-radius: 0 4px 4px 4px;
+    box-shadow: var(--ability-shadow);
+    margin-bottom: 8px;
+  }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .tile {
+    aspect-ratio: 0.72;
+    border-radius: 5px;
+    background: var(--surface-alt);
+    border: 1px solid var(--surface-border);
+    cursor: pointer;
+    position: relative; overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s, border-color 0.2s;
+  }
+  .tile-art { position: absolute; inset: 0; background: linear-gradient(135deg, var(--ink-amber-bg) 0%, #1a1010 100%); }
+  .tile-name { position: absolute; bottom: 4px; left: 0; right: 0; text-align: center; font-size: 9px; color: rgba(255,255,255,0.75); text-shadow: 0 1px 2px rgba(0,0,0,0.8); font-family: var(--font-hero); padding: 0 4px; }
+  .tile-score { position: absolute; top: 4px; right: 4px; background: rgba(212, 175, 55, 0.92); color: var(--surface); font-size: 9px; font-weight: 700; border-radius: 4px; padding: 1px 5px; line-height: 1.2; }
+  .tile:hover { transform: scale(1.04) translateY(-3px); box-shadow: 0 4px 16px rgba(212, 175, 55, 0.18); border-color: var(--primary-soft); }
+  .tile:active { transform: scale(0.97); }
+  .tile.ink-emerald .tile-art { background: linear-gradient(135deg, var(--ink-emerald-bg) 0%, #061a10 100%); }
+  .tile.ink-ruby .tile-art    { background: linear-gradient(135deg, var(--ink-ruby-bg) 0%, #1f0808 100%); }
+  .tile.ink-amethyst .tile-art{ background: linear-gradient(135deg, var(--ink-amethyst-bg) 0%, #170a25 100%); }
+  .tile.ink-sapphire .tile-art{ background: linear-gradient(135deg, var(--ink-sapphire-bg) 0%, #060e1f 100%); }
+  .tile.ink-steel .tile-art   { background: linear-gradient(135deg, var(--ink-steel-bg) 0%, #14141a 100%); }
+  .tile.trigger-tile { border: 1.5px solid var(--ink-amethyst-border); box-shadow: 0 0 12px rgba(139, 92, 246, 0.4); }
+  .tile.trigger-tile::after { content: ''; position: absolute; inset: 0; border-radius: 5px; pointer-events: none; animation: trigger-pulse 2.4s ease-in-out infinite; }
+  @keyframes trigger-pulse {
+    0%, 100% { box-shadow: inset 0 0 0 1px rgba(196,165,245,0.4); }
+    50%      { box-shadow: inset 0 0 0 1px rgba(196,165,245,0.85), 0 0 18px rgba(196,165,245,0.5); }
+  }
+  .more-tile { aspect-ratio: 0.72; border-radius: 5px; background: var(--surface-alt); border: 1px dashed #444466; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+  .more-tile .more-count { font-size: 11px; font-weight: 700; color: var(--primary-500); }
+  .more-tile .more-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+
+  /* IDEA B — click acknowledgment beat */
+  body.idea-B.firing-ack .tile.trigger-tile { animation: tile-ack var(--click-ack-dur) ease-out; }
+  @keyframes tile-ack { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.94); } }
+
+  /* Card B overlay — production geometry */
+  .card-b-overlay {
+    position: absolute;
+    top: 0; right: var(--comparison-inset);
+    width: var(--card-w); height: var(--card-h);
+    z-index: 5;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    border-radius: 14px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+  body.modal-focused .card-b-overlay { opacity: 1; pointer-events: auto; }
+  body.transitioning-in .card-b-overlay {
+    opacity: 1;
+    animation: cardb-flip-in var(--flip-dur) var(--flip-ease) backwards;
+  }
+  /* FLIP origin approximates the trigger tile rect (row 1, col 3 of the 4-col grid, ~52px down) */
+  @keyframes cardb-flip-in {
+    from { opacity: 0; transform: translate(-180px, -50px) scale(0.18); }
+    to   { opacity: 1; transform: translate(0, 0) scale(1); }
+  }
+
+  /* PairConnector — production keyframes */
+  .pair-connector {
+    position: absolute;
+    top: calc(var(--card-h) / 2);
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: var(--connector-w);
+    z-index: 6;
+    opacity: 0;
+    pointer-events: none;
+  }
+  body.modal-focused .pair-connector,
+  body.transitioning-in .pair-connector { opacity: 1; }
+  .pair-connector-line {
+    display: block;
+    width: 100%; height: 2px;
+    background-image: repeating-linear-gradient(to right, var(--primary-500) 0, var(--primary-500) 6px, transparent 6px, transparent 12px);
+    background-size: 12px 2px;
+    opacity: 0.7;
+    clip-path: inset(0 50% 0 50%);
+  }
+  body.transitioning-in .pair-connector { animation: connector-fade-in var(--connector-fade-dur) ease-out var(--connector-delay) both; }
+  body.transitioning-in .pair-connector-line,
+  body.modal-focused .pair-connector-line { animation: connector-draw var(--connector-draw-dur) cubic-bezier(0.2, 0.8, 0.2, 1) var(--connector-delay) both; }
+  @keyframes connector-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes connector-draw { from { clip-path: inset(0 50% 0 50%); } to { clip-path: inset(0); } }
+
+  /* ComparisonDetailPanel — production: max-height 480ms cubic + opacity 300ms ease-out 250ms */
+  .comparison-detail {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    flex-shrink: 0;
+    transition: max-height var(--cols-max-dur) cubic-bezier(0.2, 0.8, 0.2, 1), opacity var(--cols-opacity-dur) ease-out var(--cols-opacity-delay);
+  }
+  body.modal-focused .comparison-detail,
+  body.transitioning-in .comparison-detail { max-height: 1500px; opacity: 1; }
+
+  .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch; }
+  .col { padding: 16px 18px; border-radius: 12px; }
+  .col-engine { border: 1px solid var(--primary-faint); background: var(--primary-04); display: flex; flex-direction: column; gap: 14px; }
+  .col-community { border: 1px solid var(--amethyst-25); background: var(--amethyst-06); display: flex; flex-direction: column; gap: 14px; }
+
+  /* ColumnHeader — production: grid 1fr auto 1fr, min-height 87 */
+  .col-header {
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+    min-height: 87px; padding-bottom: 14px;
+    position: relative;
+  }
+  .col-header::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent, var(--primary-500)) 50%, transparent);
+  }
+  .col-engine .col-header { --accent: var(--primary-500); }
+  .col-community .col-header { --accent: var(--amethyst); }
+  .col-title { grid-column: 2; margin: 0; font-family: var(--font-body); font-size: 22px; font-weight: 700; letter-spacing: 0.02em; text-align: center; line-height: 1.15; }
+  .col-engine .col-title { color: var(--primary-500); }
+  .col-community .col-title { color: var(--amethyst); }
+  .col-score-stats { grid-column: 3; justify-self: end; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .col-score-row { display: flex; align-items: baseline; gap: 4px; white-space: nowrap; }
+  .col-score { font-family: var(--font-hero); font-weight: 700; line-height: 1; }
+  .col-engine .col-score { color: var(--primary-500); font-size: 48px; }
+  .col-community .col-score { color: var(--amethyst); font-size: 42px; }
+  .col-scale { font-family: var(--font-body); font-size: 14px; color: var(--text-muted); font-weight: 600; margin-left: 2px; }
+  .col-meta { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px; }
+  .col-meta .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .col-engine .col-meta .dot { background: var(--primary-500); box-shadow: 0 0 6px rgba(212,175,55,0.6); }
+  .col-community .col-meta .dot { background: var(--amethyst); }
+
+  /* IDEA G — engine score pulse when connector lands */
+  body.idea-G.transitioning-in .col-engine .col-score,
+  body.idea-G.modal-focused .col-engine .col-score {
+    animation: score-pulse var(--score-pulse-dur) ease-out var(--score-pulse-delay) both;
+  }
+  @keyframes score-pulse {
+    0%   { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+    40%  { filter: brightness(1.45) drop-shadow(0 0 14px rgba(212, 175, 55, 0.55)); }
+    100% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+  }
+
+  /* ConnectionGroup ability boxes inside engine column */
+  .ability-row {
+    background: var(--lorcana-cream);
+    color: var(--lorcana-text-dark);
+    font-family: var(--font-body);
+    font-size: 13px; font-weight: 600;
+    line-height: 1.7;
+    padding: 8px 12px;
+    border-radius: 4px;
+    box-shadow: var(--ability-shadow);
+    text-indent: -12px;
+    overflow: hidden;
+  }
+  .ability-row .ability-label {
+    display: inline-block; vertical-align: middle;
+    text-indent: 0;
+    margin-right: 8px;
+    padding: 4px 8px;
+    background: var(--lorcana-tag-bg);
+    color: var(--lorcana-tag-text);
+    font-family: var(--font-body);
+    font-weight: 700; font-size: 12px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    white-space: nowrap;
+    line-height: 12px;
+    border-radius: 2px;
+  }
+
+  /* IDEA C — staggered ability row reveals inside engine column */
+  body.idea-C .col-engine .ability-row {
+    opacity: 0; transform: translateY(8px);
+  }
+  body.idea-C.modal-focused .col-engine .ability-row,
+  body.idea-C.transitioning-in .col-engine .ability-row {
+    animation: row-up 320ms ease-out forwards;
+  }
+  body.idea-C .col-engine .ability-row:nth-of-type(1) { animation-delay: calc(var(--cols-opacity-delay) + 80ms); }
+  body.idea-C .col-engine .ability-row:nth-of-type(2) { animation-delay: calc(var(--cols-opacity-delay) + 80ms + var(--row-stagger)); }
+  body.idea-C .col-engine .ability-row:nth-of-type(3) { animation-delay: calc(var(--cols-opacity-delay) + 80ms + (var(--row-stagger) * 2)); }
+  @keyframes row-up { to { opacity: 1; transform: translateY(0); } }
+
+  /* QuickVote placeholder + community body */
+  .vote-placeholder, .community-body {
+    background: rgba(212, 175, 55, 0.06);
+    border: 1px solid rgba(212, 175, 55, 0.18);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-top: auto;
+  }
+  .community-body {
+    background: rgba(182, 145, 255, 0.05);
+    border: 1px solid rgba(182, 145, 255, 0.18);
+  }
+  .vote-prompt { color: var(--text-muted); font-size: 12px; margin-bottom: 12px; text-align: center; }
+  .vote-buttons { display: flex; gap: 8px; }
+  .vote-btn { flex: 1; height: 44px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: var(--text); font-size: 13px; }
+  .community-metric { display: flex; justify-content: space-between; padding: 8px 10px; background: rgba(255,255,255,0.02); border-radius: 6px; margin-bottom: 6px; font-size: 13px; }
+  .community-metric .label { color: var(--text-muted); }
+
+  /* IDEA D — ambient glow on focused cards */
+  body.idea-D.modal-focused .card { animation: card-glow var(--glow-breathe-dur) ease-in-out infinite; }
+  body.idea-D.modal-focused .card-b { animation-delay: calc(var(--glow-breathe-dur) / -2); }
+  @keyframes card-glow {
+    0%, 100% { box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 12px rgba(212,175,55,0.08); }
+    50%      { box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 26px rgba(212,175,55,0.22); }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    body.idea-D .card { animation: none !important; }
+    .tile.trigger-tile::after { animation: none !important; }
+  }
+</style>
+</head>
+<body class="modal-default">
+
+<div class="page">
+  <h1>Browse — Amber</h1>
+  <div class="breadcrumb">Home / Browse / Amber</div>
+  <div class="page-grid">
+    <div class="page-card"></div><div class="page-card"></div><div class="page-card"></div><div class="page-card"></div>
+    <div class="page-card"></div><div class="page-card"></div><div class="page-card"></div><div class="page-card"></div>
+    <div class="page-card"></div><div class="page-card"></div><div class="page-card"></div><div class="page-card"></div>
+  </div>
+</div>
+
+<div class="controls">
+  <h2>Entry — Refinement</h2>
+  <div class="baseline-banner">
+    <strong>Baseline = production today.</strong> 7-channel choreography: Card B FLIP (480 cubic) + Card A drift (480) + info-col fade (250) + connector fade-in (250 @200ms) + connector draw (1000 @200ms) + cols max-height (480) + cols opacity (300 @250ms).
+  </div>
+  <div class="subtitle">
+    Click the pulsing amethyst tile to fire entry. Each toggle adds polish <em>on top of</em> the existing shipped sequence — none of them replace what's already there.
+  </div>
+
+  <label><input type="checkbox" id="idea-A">
+    <div>
+      <div><span class="idea-num">A.</span> Chip-row + hero-divider smooth exit</div>
+      <div class="idea-desc"><em>Closes a real gap.</em> Currently both pop out instantly because they return null when inComparison. Make them fade with the info-column (250ms). Cheapest, highest visual-consistency win.</div>
+    </div>
+  </label>
+
+  <label><input type="checkbox" id="idea-B">
+    <div>
+      <div><span class="idea-num">B.</span> Click acknowledgment beat</div>
+      <div class="idea-desc">90ms scale-bump (0.96 → 1) on the clicked tile <em>before</em> FLIP fires. Adds tactile feedback. Cost: 90ms latency on every entry.</div>
+    </div>
+  </label>
+
+  <label><input type="checkbox" id="idea-C">
+    <div>
+      <div><span class="idea-num">C.</span> Staggered ability rows in engine column</div>
+      <div class="idea-desc">3 cream ConnectionGroup boxes inside the engine column fade up one-by-one (70ms stagger). Nests inside the existing 480ms panel expand — no extra duration.</div>
+    </div>
+  </label>
+
+  <label><input type="checkbox" id="idea-D">
+    <div>
+      <div><span class="idea-num">D.</span> Ambient glow pulse (steady-state)</div>
+      <div class="idea-desc">3.6s breathing glow on both focused cards. Independent of entry — atmospheric weight for the focused state, not transition motion.</div>
+    </div>
+  </label>
+
+  <label><input type="checkbox" id="idea-G">
+    <div>
+      <div><span class="idea-num">G.</span> Engine score pulse when connector lands</div>
+      <div class="idea-desc">~460ms brightness + drop-shadow pulse on the engine score after connector finishes (~1200ms). Ties the connector visually to the engine readout — <em>"this line represents this score."</em></div>
+    </div>
+  </label>
+
+  <hr>
+  <div class="btn-row">
+    <button class="primary" id="replay">▶ Replay entry</button>
+    <button id="exit-btn">◀ Exit</button>
+  </div>
+  <div class="btn-row" style="margin-top: 8px;">
+    <button id="baseline">Baseline only</button>
+    <button id="all-on">A + B + C + D + G</button>
+  </div>
+  <div class="state-line">
+    <strong>State:</strong> <span id="state-readout">default</span><br>
+    <strong>Ideas:</strong> <span id="ideas-readout">none (baseline)</span>
+  </div>
+</div>
+
+<div class="modal-stack">
+  <div class="backdrop"></div>
+  <div class="modal">
+
+    <div class="modal-header">
+      <h1 class="modal-title">Mulan — Imperial Captain</h1>
+      <button class="back-button" id="back-btn"><span>←</span> Back</button>
+      <button class="close-x" aria-label="Close">×</button>
+    </div>
+
+    <div class="chip-row">
+      <div class="chip active"><span>Shift targets</span><span class="count">6</span></div>
+      <div class="chip perfect"><span>Named companions</span><span class="count">4</span></div>
+      <div class="chip"><span>Lore loss</span><span class="count">3</span></div>
+      <div class="chip"><span>Discard</span><span class="count">2</span></div>
+    </div>
+    <hr class="hero-divider">
+
+    <div class="modal-body">
+
+      <div class="cards-row">
+        <div class="card-a-wrap">
+          <div class="card card-a">
+            <div class="card-cost">5</div>
+            <div class="card-art"></div>
+            <div class="card-banner">
+              <div class="card-name">Mulan</div>
+              <div class="card-sub">Imperial Captain</div>
+            </div>
+          </div>
+        </div>
+
+        <section class="info-column">
+          <div class="synergy-section">
+            <span class="ability-tag">Shift targets</span>
+            <div class="ability-callout">Shift cards find the named base character. Curve gap + free Shift tier modify the score.</div>
+            <div class="tiles">
+              <div class="tile ink-amber"><div class="tile-art"></div><div class="tile-score">8</div><div class="tile-name">Mulan — Hero</div></div>
+              <div class="tile ink-amber"><div class="tile-art"></div><div class="tile-score">7</div><div class="tile-name">Mulan — Soldier</div></div>
+              <div class="tile trigger-tile ink-amethyst" id="trigger-tile">
+                <div class="tile-art"></div><div class="tile-score">9</div><div class="tile-name">Mulan — Reflecting</div>
+              </div>
+              <div class="more-tile"><div class="more-count">+3</div><div class="more-label">more</div></div>
+            </div>
+          </div>
+
+          <div class="synergy-section">
+            <span class="ability-tag">Named companions</span>
+            <div class="ability-callout">Cards that reference Mulan by name — Mushu, Cri-Kee, Khan.</div>
+            <div class="tiles">
+              <div class="tile ink-amber"><div class="tile-art"></div><div class="tile-score">8</div><div class="tile-name">Mushu</div></div>
+              <div class="tile ink-emerald"><div class="tile-art"></div><div class="tile-score">7</div><div class="tile-name">Cri-Kee</div></div>
+              <div class="tile ink-sapphire"><div class="tile-art"></div><div class="tile-score">6</div><div class="tile-name">Khan</div></div>
+              <div class="more-tile"><div class="more-count">+1</div><div class="more-label">more</div></div>
+            </div>
+          </div>
+
+          <div class="synergy-section">
+            <span class="ability-tag">Lore loss</span>
+            <div class="ability-callout">Cards that make opponents lose lore.</div>
+            <div class="tiles">
+              <div class="tile ink-ruby"><div class="tile-art"></div><div class="tile-score">7</div><div class="tile-name">Shan Yu</div></div>
+              <div class="tile ink-steel"><div class="tile-art"></div><div class="tile-score">6</div><div class="tile-name">Hayabusa</div></div>
+              <div class="tile ink-ruby"><div class="tile-art"></div><div class="tile-score">5</div><div class="tile-name">The Hun</div></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="card-b-overlay">
+          <div class="card card-b">
+            <div class="card-cost">3</div>
+            <div class="card-art"></div>
+            <div class="card-banner">
+              <div class="card-name">Mulan</div>
+              <div class="card-sub">Reflecting</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pair-connector"><span class="pair-connector-line"></span></div>
+      </div>
+
+      <div class="comparison-detail">
+        <div class="columns">
+          <div class="col col-engine">
+            <div class="col-header">
+              <h3 class="col-title">Engine</h3>
+              <div class="col-score-stats">
+                <div class="col-score-row">
+                  <span class="col-score">9</span>
+                  <span class="col-scale">/ 10</span>
+                </div>
+                <div class="col-meta"><span class="dot"></span>3 rules contributing</div>
+              </div>
+            </div>
+            <div class="ability-row">
+              <span class="ability-label">Shift target</span>
+              Free Shift cost — Mulan (Reflecting) shifts onto Imperial Captain for 0 ink at tier 3.
+            </div>
+            <div class="ability-row">
+              <span class="ability-label">Curve gap</span>
+              5 → 3 progression sets up Shift on turn 5 with mana left over for a song.
+            </div>
+            <div class="ability-row">
+              <span class="ability-label">Ink overlap</span>
+              Amber + Amethyst dual-ink lets either card front the deck while the other shifts in.
+            </div>
+            <div class="vote-placeholder">
+              <div class="vote-prompt">How accurate is Inkweave's score of 9?</div>
+              <div class="vote-buttons">
+                <button class="vote-btn">↓ Lower</button>
+                <button class="vote-btn">✓ Fair</button>
+                <button class="vote-btn">↑ Higher</button>
+              </div>
+            </div>
+          </div>
+          <div class="col col-community">
+            <div class="col-header">
+              <h3 class="col-title">Community</h3>
+              <div class="col-score-stats">
+                <div class="col-score-row">
+                  <span class="col-score">7.2</span>
+                  <span class="col-scale">/ 10</span>
+                </div>
+                <div class="col-meta"><span class="dot"></span>24 votes</div>
+              </div>
+            </div>
+            <div class="community-body">
+              <div class="community-metric"><span class="label">Real synergy</span><span>85%</span></div>
+              <div class="community-metric"><span class="label">Would play</span><span>73%</span></div>
+              <div class="community-metric"><span class="label">Difficulty</span><span>2 / 3</span></div>
+              <div class="community-metric"><span class="label">Carries</span><span>Card A</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const IDEAS = ['idea-A', 'idea-B', 'idea-C', 'idea-D', 'idea-G'];
+  const body = document.body;
+  const trigger = document.getElementById('trigger-tile');
+  const backBtn = document.getElementById('back-btn');
+  const replay = document.getElementById('replay');
+  const exitBtn = document.getElementById('exit-btn');
+  const baseline = document.getElementById('baseline');
+  const allOn = document.getElementById('all-on');
+  const stateReadout = document.getElementById('state-readout');
+  const ideasReadout = document.getElementById('ideas-readout');
+
+  function syncIdeas() {
+    IDEAS.forEach((id) => body.classList.toggle(id, document.getElementById(id).checked));
+    const active = IDEAS.filter((id) => document.getElementById(id).checked).map((i) => i.replace('idea-', ''));
+    ideasReadout.textContent = active.length ? active.join(' + ') : 'none (baseline)';
+  }
+  function setState(state) {
+    body.classList.remove('modal-default', 'modal-focused', 'transitioning-in', 'transitioning-out', 'firing-ack');
+    body.classList.add(state);
+    stateReadout.textContent = state.replace('modal-', '').replace('transitioning-', '→ ');
+  }
+  function fireEntry() {
+    setState('modal-default');
+    void body.offsetWidth;
+    const ackOn = document.getElementById('idea-B').checked;
+    const ackDelay = ackOn ? 90 : 0;
+    if (ackOn) {
+      body.classList.add('firing-ack');
+      setTimeout(() => body.classList.remove('firing-ack'), 100);
+    }
+    setTimeout(() => {
+      setState('transitioning-in');
+      setTimeout(() => setState('modal-focused'), 1200);
+    }, ackDelay);
+  }
+  function fireExit() {
+    if (!body.classList.contains('modal-focused')) return;
+    setState('transitioning-out');
+    setTimeout(() => setState('modal-default'), 520);
+  }
+
+  trigger.addEventListener('click', fireEntry);
+  backBtn.addEventListener('click', fireExit);
+  replay.addEventListener('click', fireEntry);
+  exitBtn.addEventListener('click', fireExit);
+
+  IDEAS.forEach((id) => document.getElementById(id).addEventListener('change', syncIdeas));
+  baseline.addEventListener('click', () => { IDEAS.forEach((id) => (document.getElementById(id).checked = false)); syncIdeas(); });
+  allOn.addEventListener('click', () => { IDEAS.forEach((id) => (document.getElementById(id).checked = true)); syncIdeas(); });
+
+  syncIdeas();
+
+  window.addEventListener('keydown', (e) => {
+    if (e.target.matches('input,select,button,label')) return;
+    if (e.key === 'Escape') fireExit();
+    if (e.key === ' ') { e.preventDefault(); fireEntry(); }
+  });
+</script>
+</body>
+</html>
