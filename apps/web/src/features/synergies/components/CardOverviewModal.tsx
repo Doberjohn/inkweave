@@ -141,6 +141,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
     isOpen,
     initialComparison,
     setComparisonPair,
+    setExitingPair,
     setHighlightedCard,
   });
 
@@ -156,15 +157,22 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   // user has already dismissed the modal, triggering state updates on a tearing-down component).
   const clickAckTimeoutRef = useRef<number | null>(null);
 
-  // Cancel any in-flight click-ack when the modal closes. The ack timeout is short (90ms) but
-  // a click → Esc → idle window can still let the timeout fire on a closing modal. Cleanup also
-  // covers regular unmount.
+  // Cancel any in-flight click-ack when the modal closes OR the component unmounts. The body
+  // clears on isOpen → false; the returned cleanup clears on every dependency change AND on
+  // unmount — covers the case where the component is torn down while isOpen is still true
+  // (e.g. Suspense boundary suspends mid-ack), which would otherwise let `fireComparison`
+  // run on an unmounted component and trigger a state-update warning.
   useEffect(() => {
-    if (isOpen) return;
-    if (clickAckTimeoutRef.current !== null) {
+    if (!isOpen && clickAckTimeoutRef.current !== null) {
       window.clearTimeout(clickAckTimeoutRef.current);
       clickAckTimeoutRef.current = null;
     }
+    return () => {
+      if (clickAckTimeoutRef.current !== null) {
+        window.clearTimeout(clickAckTimeoutRef.current);
+        clickAckTimeoutRef.current = null;
+      }
+    };
   }, [isOpen]);
 
   const toggleChip = (key: string) => {
@@ -338,6 +346,9 @@ interface ResetInput {
   isOpen: boolean;
   initialComparison: DetailedPairSynergy | null;
   setComparisonPair: (p: DetailedPairSynergy | null) => void;
+  /** Cleared alongside `comparisonPair` so the 480ms exit overlay can't leak across card-change
+   *  or modal-close boundaries (would otherwise render stale Card B on top of new state). */
+  setExitingPair: (p: DetailedPairSynergy | null) => void;
   setHighlightedCard: (c: 'a' | 'b' | null) => void;
 }
 
@@ -347,11 +358,12 @@ interface ResetInput {
  * state if they differ. Mirrors the cascading-render-warning workaround used elsewhere in the
  * codebase (avoids setState-in-effect).
  */
-function useComparisonStateResets({card, isOpen, initialComparison, setComparisonPair, setHighlightedCard}: ResetInput) {
+function useComparisonStateResets({card, isOpen, initialComparison, setComparisonPair, setExitingPair, setHighlightedCard}: ResetInput) {
   const [prevCardId, setPrevCardId] = useState(card.id);
   if (card.id !== prevCardId) {
     setPrevCardId(card.id);
     setComparisonPair(null);
+    setExitingPair(null);
     setHighlightedCard(null);
   }
 
@@ -368,6 +380,7 @@ function useComparisonStateResets({card, isOpen, initialComparison, setCompariso
     setPrevIsOpen(isOpen);
     if (!isOpen) {
       setComparisonPair(null);
+      setExitingPair(null);
       setHighlightedCard(null);
     }
   }
@@ -712,6 +725,10 @@ function ChipFilterRow({synergies, inComparison, activeGroupFilter, toggleChip}:
   if (synergies.length === 0) return null;
   return (
     <div
+      // `inert` removes the row + descendants from focus order + a11y tree while invisible
+      // during comparison. opacity:0 + pointer-events:none would still leave the chip buttons
+      // tab-reachable, defeating keyboard nav. React 19 honors `inert` as a boolean.
+      inert={inComparison}
       style={{
         padding: '14px 24px 0',
         display: 'flex',
@@ -1016,6 +1033,9 @@ function DefaultInfoColumn({synergies, synergiesLoading, visibleGroups, activeGr
   return (
     <section
       aria-label="Synergies"
+      // `inert` removes the synergy tile buttons from focus order + a11y tree during comparison
+      // mode — opacity:0 + pointer-events:none would still leave them tab-reachable.
+      inert={inComparison}
       style={{
         minWidth: 0,
         minHeight: 0,
