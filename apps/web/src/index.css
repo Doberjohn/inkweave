@@ -115,6 +115,22 @@ option {
   to { clip-path: inset(0); }
 }
 
+/* Engine score pulse on comparison entry (#332 #6 idea G).
+   Fires ~1180ms after entry — just as the PairConnector finishes drawing — to
+   visually link the connector ("these two cards are paired") with the engine
+   score ("and here's the resulting value"). 460ms brightness + drop-shadow
+   pulse: brightness peaks at 40% of the keyframe (185ms in), then decays.
+   The element using this class also takes a `key={pair.cardA.id-cardB.id}` so
+   pair-switching remounts the span and restarts the animation. */
+@keyframes engine-score-pulse-on-entry {
+  0%   { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+  40%  { filter: brightness(1.45) drop-shadow(0 0 14px rgba(212, 175, 55, 0.55)); }
+  100% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+}
+.engine-score-pulse-on-entry {
+  animation: engine-score-pulse-on-entry 460ms ease-out 1180ms both;
+}
+
 /* Home page card-slot shimmer (used by HomePageSkeleton and FeaturedCards while
    the cards JSON is loading). Same animation, two surfaces — one shared keyframe
    keeps them visually identical and bridges the gap between the Suspense
@@ -150,6 +166,11 @@ option {
      visible at its base color (no shimmer sweep), still signalling "loading"
      via its placeholder shape but without continuous motion. */
   .inkweave-shimmer-tile {
+    animation: none !important;
+  }
+  /* Skip the engine-score pulse — score appears with the panel; no transient
+     brightening when the connector lands. */
+  .engine-score-pulse-on-entry {
     animation: none !important;
   }
 }

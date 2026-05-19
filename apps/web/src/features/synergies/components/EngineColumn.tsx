@@ -42,6 +42,11 @@ export function EngineColumn({pair, engineScore, onHighlight}: EngineColumnProps
         scoreFontSize={48}
         showScale
         scoreTooltip={'Perfect — 9.5 and up\nStrong — 7 to 9.4\nModerate — 4 to 6.9\nWeak — under 4'}
+        // Key the score span by the pair ID so switching pairs re-mounts the span and re-fires
+        // the connector-lands pulse (#332 #6 idea G). Without the key the animation would only
+        // play on the initial mount — subsequent pair switches (clicking another partner from
+        // within comparison view) would silently skip the pulse.
+        pulseScoreKey={`${cardA.id}-${cardB.id}`}
         meta={
           <span style={{display: 'inline-flex', alignItems: 'center', gap: 6}}>
             <span
