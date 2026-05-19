@@ -12,9 +12,17 @@ interface ColumnHeaderProps {
   meta: ReactNode;
   /** Optional tooltip-shown ("?" info button next to score). Used by EngineColumn for tier explainer. */
   scoreTooltip?: string;
+  /**
+   * When set, the score span gets `className="engine-score-pulse-on-entry"` (a 460ms brightness +
+   * drop-shadow pulse that fires ~1180ms after mount, just as the PairConnector finishes drawing).
+   * The value is used as a React `key` on the score span so pair-switching remounts it and
+   * restarts the animation. EngineColumn passes a pair-id signature; CommunityColumn leaves it
+   * undefined (community score has no connector-landing event to celebrate).
+   */
+  pulseScoreKey?: string;
 }
 
-export function ColumnHeader({title, accentColor, score, scoreColor, scoreFontSize, showScale, meta, scoreTooltip}: ColumnHeaderProps) {
+export function ColumnHeader({title, accentColor, score, scoreColor, scoreFontSize, showScale, meta, scoreTooltip, pulseScoreKey}: ColumnHeaderProps) {
   return (
     <header style={HEADER_STYLE}>
       <h3 style={{...TITLE_STYLE, color: accentColor}}>{title}</h3>
@@ -25,6 +33,7 @@ export function ColumnHeader({title, accentColor, score, scoreColor, scoreFontSi
         showScale={showScale}
         scoreTooltip={scoreTooltip}
         meta={meta}
+        pulseScoreKey={pulseScoreKey}
       />
       <HeaderDivider accentColor={accentColor} />
     </header>
@@ -63,9 +72,11 @@ interface ScoreStatsProps {
   showScale: boolean;
   scoreTooltip?: string;
   meta: ReactNode;
+  pulseScoreKey?: string;
 }
 
-function ScoreStats({score, scoreColor, scoreFontSize, showScale, scoreTooltip, meta}: ScoreStatsProps) {
+function ScoreStats({score, scoreColor, scoreFontSize, showScale, scoreTooltip, meta, pulseScoreKey}: ScoreStatsProps) {
+  const scoreStyle: React.CSSProperties = {fontWeight: 700, fontSize: scoreFontSize, color: scoreColor, lineHeight: 1};
   return (
     <div
       style={{
@@ -78,7 +89,13 @@ function ScoreStats({score, scoreColor, scoreFontSize, showScale, scoreTooltip, 
         gap: 8,
       }}>
       <div style={{display: 'flex', alignItems: 'baseline', gap: 4, whiteSpace: 'nowrap'}}>
-        <span style={{fontWeight: 700, fontSize: scoreFontSize, color: scoreColor, lineHeight: 1}}>{score}</span>
+        {pulseScoreKey ? (
+          <span key={pulseScoreKey} className="engine-score-pulse-on-entry" style={scoreStyle}>
+            {score}
+          </span>
+        ) : (
+          <span style={scoreStyle}>{score}</span>
+        )}
         {showScale && (
           <span style={{fontSize: 14, fontWeight: 600, color: COLORS.textMuted, marginLeft: 2}}>/ 10</span>
         )}

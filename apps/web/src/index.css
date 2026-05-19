@@ -114,6 +114,66 @@ option {
   from { clip-path: inset(0 50% 0 50%); }
   to { clip-path: inset(0); }
 }
+/* Connector exit keyframes (#332 #7) — reverse of the entry animations. Wrapper fades out
+   in 200ms; line collapses centre-in over 480ms (faster than entry's 1000ms — exit doesn't
+   need the narrative buildup that entry uses to introduce the pair). */
+@keyframes card-overview-connector-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes card-overview-connector-line-collapse {
+  from { clip-path: inset(0); }
+  to { clip-path: inset(0 50% 0 50%); }
+}
+
+/* Engine score pulse on comparison entry (#332 #6 idea G).
+   Fires ~1180ms after entry — just as the PairConnector finishes drawing — to
+   visually link the connector ("these two cards are paired") with the engine
+   score ("and here's the resulting value"). 460ms brightness + drop-shadow
+   pulse: brightness peaks at 40% of the keyframe (185ms in), then decays.
+   The element using this class also takes a `key={pair.cardA.id-cardB.id}` so
+   pair-switching remounts the span and restarts the animation. */
+@keyframes engine-score-pulse-on-entry {
+  0%   { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+  40%  { filter: brightness(1.45) drop-shadow(0 0 14px rgba(212, 175, 55, 0.55)); }
+  100% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+}
+.engine-score-pulse-on-entry {
+  animation: engine-score-pulse-on-entry 460ms ease-out 1180ms both;
+}
+
+/* Ambient glow on focused-state cards (#332 #6 idea D).
+   Steady-state continuous breath (3.6s loop) signalling "this pair is the
+   current focused state." Card A wrapper and Card B overlay share the same
+   keyframe but Card B applies `animation-delay: -1.8s` to phase the breathing
+   opposite — when A peaks at the high glow, B is at the low glow, and vice
+   versa. Subtle: the dark depth shadow (0 8px 24px / 0.5) stays constant; only
+   the gold-tinted aura cycles between low and high spread. */
+@keyframes focused-card-glow-breathe {
+  0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(212, 175, 55, 0.08); }
+  50%      { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 26px rgba(212, 175, 55, 0.22); }
+}
+.focused-card-glow {
+  animation: focused-card-glow-breathe 3.6s ease-in-out infinite;
+}
+.focused-card-glow-offset {
+  animation-delay: -1.8s;
+}
+
+/* Click acknowledgment beat for synergy tiles (#332 #6 idea B).
+   Adds a 90ms scale-bump (0.94 then back to 1) on the clicked tile before
+   the FLIP fires. Gives the click a tactile "I heard you" beat distinct from
+   the existing `.card-tile:active { transform: scale(0.97) }` press-down state
+   (which only shows while the mouse is held). The class is removed in JS
+   after the animation completes; the FLIP is then triggered with the same
+   bounding rect as before (scale returns to 1). */
+@keyframes tile-click-ack {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(0.94); }
+}
+.tile-click-ack {
+  animation: tile-click-ack 90ms ease-out;
+}
 
 /* Home page card-slot shimmer (used by HomePageSkeleton and FeaturedCards while
    the cards JSON is loading). Same animation, two surfaces — one shared keyframe
@@ -150,6 +210,21 @@ option {
      visible at its base color (no shimmer sweep), still signalling "loading"
      via its placeholder shape but without continuous motion. */
   .inkweave-shimmer-tile {
+    animation: none !important;
+  }
+  /* Skip the engine-score pulse — score appears with the panel; no transient
+     brightening when the connector lands. */
+  .engine-score-pulse-on-entry {
+    animation: none !important;
+  }
+  /* Skip the focused-card breathing glow — cards rest at their base shadow
+     without the continuous cycle. */
+  .focused-card-glow {
+    animation: none !important;
+  }
+  /* Skip the click-ack scale-bump. JS also short-circuits the 90ms delay
+     when reduced-motion is set, so the FLIP fires immediately. */
+  .tile-click-ack {
     animation: none !important;
   }
 }

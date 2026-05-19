@@ -1,4 +1,4 @@
-import {useLayoutEffect, useMemo, useRef, useState} from 'react';
+import {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import type {SynergyGroup as SynergyGroupData} from '../types';
@@ -64,6 +64,12 @@ interface ModalState {
   onTransitionEnd: () => void;
   activeGroupFilter: string | null;
   comparisonPair: DetailedPairSynergy | null;
+  /**
+   * The pair held during the exit animation (#332 #7). When the user clicks BACK,
+   * `comparisonPair` becomes null but `exitingPair` retains the pair so CompareCardOverlay
+   * and PairConnector stay mounted long enough to animate out. Cleared after FLIP_DURATION.
+   */
+  exitingPair: DetailedPairSynergy | null;
   highlightedCard: 'a' | 'b' | null;
   setHighlightedCard: (card: 'a' | 'b' | null) => void;
   visibleGroups: SynergyGroupData[];
@@ -91,12 +97,35 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
   const [comparisonPair, setComparisonPair] = useState<DetailedPairSynergy | null>(null);
   const [highlightedCard, setHighlightedCard] = useState<'a' | 'b' | null>(null);
+  // Exit-animation state (#332 #7). When the user clicks BACK, `comparisonPair` becomes null
+  // immediately (chrome starts fading back in, Card A drifts back, panel collapses via existing
+  // transitions). `exitingPair` retains the pair so CompareCardOverlay + PairConnector stay
+  // mounted for the FLIP_DURATION exit window. The destination tile rect is read inside the
+  // FLIP layoutEffect at exit time (not captured here) so this callback has no ref access —
+  // keeping it analyzable as a pure event handler by React Compiler.
+  const [exitingPair, setExitingPair] = useState<DetailedPairSynergy | null>(null);
 
-  const exitComparison = () => {
+  const cancelPendingExit = useCallback(() => {
+    setExitingPair(null);
+  }, []);
+
+  const onExitComparisonProp = props.onExitComparison;
+  const exitComparison = useCallback(() => {
+    if (!comparisonPair) return;
+    setExitingPair(comparisonPair);
     setComparisonPair(null);
     setHighlightedCard(null);
-    props.onExitComparison?.();
-  };
+    onExitComparisonProp?.();
+  }, [comparisonPair, onExitComparisonProp]);
+
+  // Schedule the actual unmount of the exit overlays after FLIP_DURATION. Cleanup clears the
+  // timeout on re-entry (when `exitingPair` flips to null via cancelPendingExit) so a quick
+  // re-click during exit doesn't unmount the overlays mid-FLIP.
+  useEffect(() => {
+    if (!exitingPair) return;
+    const id = setTimeout(() => setExitingPair(null), FLIP_DURATION);
+    return () => clearTimeout(id);
+  }, [exitingPair]);
 
   const {handleKeyDown: handleModalKeyDown} = useDialogFocus({
     isOpen,
@@ -112,6 +141,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
     isOpen,
     initialComparison,
     setComparisonPair,
+    setExitingPair,
     setHighlightedCard,
   });
 
@@ -120,7 +150,30 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
     [props.synergies, activeGroupFilter],
   );
 
-  const {compareCardRef, captureStartRect} = useFLIPAnimation(comparisonPair);
+  const {compareCardRef, captureStartRect} = useFLIPAnimation(comparisonPair, exitingPair);
+  // Re-entry guard for the 90ms click-ack window (#332 #6 idea B). Holds the setTimeout id while
+  // the ack is in flight; null when idle. Doubles as a cancellation handle so the timeout can be
+  // cleared if the modal closes mid-ack (otherwise `fireComparison` would fire ~90ms after the
+  // user has already dismissed the modal, triggering state updates on a tearing-down component).
+  const clickAckTimeoutRef = useRef<number | null>(null);
+
+  // Cancel any in-flight click-ack when the modal closes OR the component unmounts. The body
+  // clears on isOpen → false; the returned cleanup clears on every dependency change AND on
+  // unmount — covers the case where the component is torn down while isOpen is still true
+  // (e.g. Suspense boundary suspends mid-ack), which would otherwise let `fireComparison`
+  // run on an unmounted component and trigger a state-update warning.
+  useEffect(() => {
+    if (!isOpen && clickAckTimeoutRef.current !== null) {
+      window.clearTimeout(clickAckTimeoutRef.current);
+      clickAckTimeoutRef.current = null;
+    }
+    return () => {
+      if (clickAckTimeoutRef.current !== null) {
+        window.clearTimeout(clickAckTimeoutRef.current);
+        clickAckTimeoutRef.current = null;
+      }
+    };
+  }, [isOpen]);
 
   const toggleChip = (key: string) => {
     setActiveGroupFilter((prev) => (prev === key ? null : key));
@@ -129,6 +182,9 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   const handleShowAll = (groupKey: string) => setActiveGroupFilter(groupKey);
 
   const handleSynergyCardClick = (clickedCard: LorcanaCard, groupKey?: string) => {
+    // If the user re-clicks a tile mid-exit, cancel the pending unmount so the new entry's
+    // FLIP doesn't race against the old exit's transform style on the same compareCardRef.
+    cancelPendingExit();
     invokeSynergyCardClick({
       clickedCard,
       groupKey,
@@ -137,6 +193,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
       setComparisonPair,
       getPairSynergies: props.getPairSynergies,
       onEnterComparison: props.onEnterComparison,
+      clickAckTimeoutRef,
     });
   };
 
@@ -148,6 +205,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
     onTransitionEnd,
     activeGroupFilter,
     comparisonPair,
+    exitingPair,
     highlightedCard,
     setHighlightedCard,
     visibleGroups,
@@ -190,6 +248,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
     onTransitionEnd,
     activeGroupFilter,
     comparisonPair,
+    exitingPair,
     highlightedCard,
     setHighlightedCard,
     visibleGroups,
@@ -246,7 +305,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               activeGroupFilter={activeGroupFilter}
               toggleChip={toggleChip}
             />
-            <HeroDivider visible={synergies.length > 0 && !inComparison} />
+            <HeroDivider hasSynergies={synergies.length > 0} inComparison={inComparison} />
             <ModalBody isMobile={isMobile} inComparison={inComparison} cardHeight={cardHeight}>
               <CardsRow
                 card={card}
@@ -258,6 +317,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
                 visibleGroups={visibleGroups}
                 activeGroupFilter={activeGroupFilter}
                 comparisonPair={comparisonPair}
+                exitingPair={exitingPair}
                 highlightedCard={highlightedCard}
                 inComparison={inComparison}
                 compareCardRef={compareCardRef}
@@ -268,6 +328,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
                 isMobile={isMobile}
                 inComparison={inComparison}
                 comparisonPair={comparisonPair}
+                exitingPair={exitingPair}
                 setHighlightedCard={setHighlightedCard}
               />
             </ModalBody>
@@ -285,6 +346,9 @@ interface ResetInput {
   isOpen: boolean;
   initialComparison: DetailedPairSynergy | null;
   setComparisonPair: (p: DetailedPairSynergy | null) => void;
+  /** Cleared alongside `comparisonPair` so the 480ms exit overlay can't leak across card-change
+   *  or modal-close boundaries (would otherwise render stale Card B on top of new state). */
+  setExitingPair: (p: DetailedPairSynergy | null) => void;
   setHighlightedCard: (c: 'a' | 'b' | null) => void;
 }
 
@@ -294,11 +358,12 @@ interface ResetInput {
  * state if they differ. Mirrors the cascading-render-warning workaround used elsewhere in the
  * codebase (avoids setState-in-effect).
  */
-function useComparisonStateResets({card, isOpen, initialComparison, setComparisonPair, setHighlightedCard}: ResetInput) {
+function useComparisonStateResets({card, isOpen, initialComparison, setComparisonPair, setExitingPair, setHighlightedCard}: ResetInput) {
   const [prevCardId, setPrevCardId] = useState(card.id);
   if (card.id !== prevCardId) {
     setPrevCardId(card.id);
     setComparisonPair(null);
+    setExitingPair(null);
     setHighlightedCard(null);
   }
 
@@ -315,6 +380,7 @@ function useComparisonStateResets({card, isOpen, initialComparison, setCompariso
     setPrevIsOpen(isOpen);
     if (!isOpen) {
       setComparisonPair(null);
+      setExitingPair(null);
       setHighlightedCard(null);
     }
   }
@@ -326,12 +392,24 @@ interface FLIPAnimationApi {
 }
 
 /**
- * FLIP animation when the comparison pair becomes set. Owns the destination ref + the source
- * rect; the rect is consumed-and-cleared after each animation so a stale value can't bleed
- * into a later deep-link entry. Refs live inside the hook to keep mutation contained
- * (React Compiler forbids mutation of hook arguments).
+ * FLIP animation for comparison entry AND exit (#332 #6 entry, #332 #7 exit).
+ *
+ * Entry: when `comparisonPair` becomes set, animate from the captured source rect (the clicked
+ * tile) to the destination ref's current rect (the CompareCardOverlay position). 480ms cubic.
+ *
+ * Exit: when `comparisonPair` clears AND `exitingPair` is set, animate FROM the overlay position
+ * TO the destination tile's rect (`exitDestRect`). Card B fades out near the end of the FLIP so
+ * it doesn't visibly land on the tile (the tile is fading IN at the same time via the info-column
+ * opacity transition).
+ *
+ * Refs live inside the hook to keep mutation contained (React Compiler forbids mutation of hook
+ * arguments). Source rect is consumed-and-cleared after the entry animation so a stale value
+ * can't bleed into a later deep-link entry.
  */
-function useFLIPAnimation(comparisonPair: DetailedPairSynergy | null): FLIPAnimationApi {
+function useFLIPAnimation(
+  comparisonPair: DetailedPairSynergy | null,
+  exitingPair: DetailedPairSynergy | null,
+): FLIPAnimationApi {
   const compareCardRef = useRef<HTMLDivElement>(null);
   const flipStartRectRef = useRef<DOMRect | null>(null);
 
@@ -340,25 +418,79 @@ function useFLIPAnimation(comparisonPair: DetailedPairSynergy | null): FLIPAnima
     const el = compareCardRef.current;
     const start = flipStartRectRef.current;
     flipStartRectRef.current = null;
-    if (!el || !start) return;
-    const end = el.getBoundingClientRect();
-    const dx = start.left - end.left;
-    const dy = start.top - end.top;
-    const sx = start.width / end.width;
-    const sy = start.height / end.height;
-
-    el.style.transition = 'none';
-    el.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
-    void el.offsetWidth;
-    el.style.transition = `transform ${FLIP_DURATION}ms ${FLIP_EASING}`;
-    el.style.transform = '';
+    if (el && start) runEntryFLIP(el, start);
   }, [comparisonPair]);
+
+  useLayoutEffect(() => {
+    if (comparisonPair || !exitingPair) return;
+    const el = compareCardRef.current;
+    if (el) runExitFLIP(el, exitingPair);
+  }, [comparisonPair, exitingPair]);
 
   const captureStartRect = (rect: DOMRect | null) => {
     flipStartRectRef.current = rect;
   };
 
   return {compareCardRef, captureStartRect};
+}
+
+/**
+ * Entry FLIP body. Clears any stale inline state from a prior exit FLIP BEFORE reading the end
+ * rect — without the reset, a mid-exit re-entry would measure the exit's destination position
+ * instead of the overlay position, and the FLIP would start from the wrong place.
+ */
+function runEntryFLIP(el: HTMLDivElement, start: DOMRect): void {
+  el.style.transition = 'none';
+  el.style.transform = '';
+  el.style.opacity = '';
+  if (prefersReducedMotion()) return;
+  void el.offsetWidth;
+  const end = el.getBoundingClientRect();
+  const dx = start.left - end.left;
+  const dy = start.top - end.top;
+  const sx = start.width / end.width;
+  const sy = start.height / end.height;
+  el.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
+  void el.offsetWidth;
+  el.style.transition = `transform ${FLIP_DURATION}ms ${FLIP_EASING}`;
+  el.style.transform = '';
+}
+
+/**
+ * Exit FLIP body. Animates Card B back to the originating tile's rect and fades it out near
+ * the end of the FLIP. The destination tile is queried from the DOM at exit time (not captured
+ * up-front) so the `exitComparison` event handler stays ref-free for React Compiler analysis.
+ */
+function runExitFLIP(el: HTMLDivElement, exitingPair: DetailedPairSynergy): void {
+  if (prefersReducedMotion()) {
+    el.style.transition = 'none';
+    el.style.opacity = '0';
+    return;
+  }
+  const tileEl = el
+    .closest('[data-testid="card-overview-modal"]')
+    ?.querySelector(`[data-card-id="${exitingPair.cardB.id}"]`) as HTMLElement | null;
+  if (!tileEl) {
+    // Fallback: destination tile is no longer in the DOM (e.g. the synergy group it came from
+    // was filtered out, or scroll position changed during the focused view). Without this,
+    // Card B would stay stuck at the overlay position until the unmount timeout fires (480ms
+    // later) — visually it pops out abruptly. Fade it out over 200ms instead.
+    el.style.transition = 'opacity 200ms ease-out';
+    el.style.opacity = '0';
+    return;
+  }
+  const destRect = tileEl.getBoundingClientRect();
+  const currentRect = el.getBoundingClientRect();
+  const dx = destRect.left - currentRect.left;
+  const dy = destRect.top - currentRect.top;
+  const sx = destRect.width / currentRect.width;
+  const sy = destRect.height / currentRect.height;
+  // Opacity transitions over 200ms with 280ms delay → fully invisible at t=480. By the time
+  // Card B reaches the tile rect, it's already gone — the tile beneath is visible (fading in
+  // via info-column's 250ms opacity transition).
+  el.style.transition = `transform ${FLIP_DURATION}ms ${FLIP_EASING}, opacity 200ms ease-out 280ms`;
+  el.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
+  el.style.opacity = '0';
 }
 
 interface EscapeHandlerInput {
@@ -388,17 +520,81 @@ interface SynergyCardClickInput {
   setComparisonPair: (p: DetailedPairSynergy | null) => void;
   getPairSynergies: (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null;
   onEnterComparison?: (partnerId: string, groupKey?: string) => void;
+  /**
+   * Re-entry guard for the click-ack beat (#332 #6 idea B). Holds the setTimeout id while the
+   * ack is in flight; null when idle. Truthy → ignore subsequent clicks. Also serves as the
+   * cancellation handle so the timeout can be cleared if the modal closes mid-ack.
+   */
+  clickAckTimeoutRef: React.MutableRefObject<number | null>;
 }
 
-function invokeSynergyCardClick({clickedCard, groupKey, modalRef, captureStartRect, setComparisonPair, getPairSynergies, onEnterComparison}: SynergyCardClickInput) {
-  const pair = getPairSynergies(clickedCard, groupKey);
-  if (!pair || pair.connections.length === 0) return;
-  const tileEl = modalRef.current?.querySelector(
-    `[data-card-id="${clickedCard.id}"]`,
-  ) as HTMLElement | null;
+const CLICK_ACK_DURATION_MS = 90;
+
+/** Whether the user has set OS-level "reduce motion." Returns false in non-browser contexts. */
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** A pair is click-actionable when it exists AND has at least one connection to display. */
+function isPairClickActionable(pair: DetailedPairSynergy | null): pair is DetailedPairSynergy {
+  return !!pair && pair.connections.length > 0;
+}
+
+interface FireComparisonInput {
+  pair: DetailedPairSynergy;
+  tileEl: HTMLElement | null;
+  clickedCard: LorcanaCard;
+  groupKey: string | undefined;
+  captureStartRect: (rect: DOMRect | null) => void;
+  setComparisonPair: (p: DetailedPairSynergy | null) => void;
+  onEnterComparison?: (partnerId: string, groupKey?: string) => void;
+  clickAckTimeoutRef: React.MutableRefObject<number | null>;
+}
+
+/** FLIP-start side effect: capture the source rect, set the comparison pair, notify the parent. */
+function fireComparison({pair, tileEl, clickedCard, groupKey, captureStartRect, setComparisonPair, onEnterComparison, clickAckTimeoutRef}: FireComparisonInput): void {
   captureStartRect(tileEl ? tileEl.getBoundingClientRect() : null);
   setComparisonPair(pair);
   onEnterComparison?.(clickedCard.id, groupKey);
+  clickAckTimeoutRef.current = null;
+}
+
+/**
+ * Plays the click-ack scale-bump on the tile, then runs `onComplete`. When reduced-motion is on,
+ * the ack is skipped entirely — `onComplete` fires synchronously so the FLIP latency stays at zero.
+ * The setTimeout id is stored on `timeoutRef` so the parent can cancel it if the modal closes
+ * mid-ack (prevents `onComplete` firing on a tearing-down component).
+ */
+function triggerClickAck(tileEl: HTMLElement, onComplete: () => void, timeoutRef: React.MutableRefObject<number | null>): void {
+  if (prefersReducedMotion()) {
+    onComplete();
+    return;
+  }
+  tileEl.classList.add('tile-click-ack');
+  timeoutRef.current = window.setTimeout(() => {
+    tileEl.classList.remove('tile-click-ack');
+    onComplete();
+  }, CLICK_ACK_DURATION_MS);
+}
+
+function invokeSynergyCardClick({clickedCard, groupKey, modalRef, captureStartRect, setComparisonPair, getPairSynergies, onEnterComparison, clickAckTimeoutRef}: SynergyCardClickInput) {
+  if (clickAckTimeoutRef.current !== null) return;
+  const pair = getPairSynergies(clickedCard, groupKey);
+  if (!isPairClickActionable(pair)) return;
+  const tileEl = modalRef.current?.querySelector(
+    `[data-card-id="${clickedCard.id}"]`,
+  ) as HTMLElement | null;
+  const fireInput: FireComparisonInput = {
+    pair, tileEl, clickedCard, groupKey, captureStartRect, setComparisonPair, onEnterComparison, clickAckTimeoutRef,
+  };
+  if (!tileEl) {
+    // No tile element to bump (shouldn't happen in practice — every SynergyCard has
+    // data-card-id). Fall back to the synchronous fire path so the click still works.
+    fireComparison(fireInput);
+    return;
+  }
+  triggerClickAck(tileEl, () => fireComparison(fireInput), clickAckTimeoutRef);
 }
 
 // ── Layout config / static styles ──
@@ -522,9 +718,26 @@ interface ChipFilterRowProps {
 }
 
 function ChipFilterRow({synergies, inComparison, activeGroupFilter, toggleChip}: ChipFilterRowProps) {
-  if (synergies.length === 0 || inComparison) return null;
+  // Render even when inComparison so the row can fade smoothly (250ms ease-out) alongside the
+  // info-column's existing fade. Returning null on comparison-entry produces a jarring instant pop
+  // while the info-column animates next to it — that asymmetry is what this opacity-driven exit
+  // closes. The `synergies.length === 0` short-circuit still returns null (no chrome to fade).
+  if (synergies.length === 0) return null;
   return (
-    <div style={{padding: '14px 24px 0', display: 'flex', flexWrap: 'wrap', gap: 8}}>
+    <div
+      // `inert` removes the row + descendants from focus order + a11y tree while invisible
+      // during comparison. opacity:0 + pointer-events:none would still leave the chip buttons
+      // tab-reachable, defeating keyboard nav. React 19 honors `inert` as a boolean.
+      inert={inComparison}
+      style={{
+        padding: '14px 24px 0',
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 8,
+        opacity: inComparison ? 0 : 1,
+        pointerEvents: inComparison ? 'none' : 'auto',
+        transition: 'opacity 250ms ease-out',
+      }}>
       {synergies.map((group) => (
         <FilterChip
           key={group.groupKey}
@@ -587,8 +800,17 @@ function FilterChip({group, activeGroupFilter, toggleChip}: FilterChipProps) {
   );
 }
 
-function HeroDivider({visible}: {visible: boolean}) {
-  if (!visible) return null;
+interface HeroDividerProps {
+  hasSynergies: boolean;
+  inComparison: boolean;
+}
+
+function HeroDivider({hasSynergies, inComparison}: HeroDividerProps) {
+  // Render whenever there are synergies; let `inComparison` drive an opacity transition that
+  // matches the chip-row + info-column fade (250ms ease-out). Splitting the old `visible` boolean
+  // (`synergies.length > 0 && !inComparison`) into two props lets us animate the comparison-mode
+  // exit instead of unmounting instantly.
+  if (!hasSynergies) return null;
   return (
     <hr
       aria-hidden="true"
@@ -597,6 +819,8 @@ function HeroDivider({visible}: {visible: boolean}) {
         border: 'none',
         background: `linear-gradient(90deg, transparent, ${COLORS.primary500} 50%, transparent)`,
         margin: '16px 0 0',
+        opacity: inComparison ? 0 : 1,
+        transition: 'opacity 250ms ease-out',
       }}
     />
   );
@@ -637,6 +861,9 @@ interface CardsRowProps {
   visibleGroups: SynergyGroupData[];
   activeGroupFilter: string | null;
   comparisonPair: DetailedPairSynergy | null;
+  /** Pair held during exit animation (#332 #7). Keeps CompareCardOverlay + PairConnector mounted
+   *  for the FLIP_DURATION exit window after `comparisonPair` becomes null. */
+  exitingPair: DetailedPairSynergy | null;
   highlightedCard: 'a' | 'b' | null;
   inComparison: boolean;
   compareCardRef: React.RefObject<HTMLDivElement | null>;
@@ -645,20 +872,12 @@ interface CardsRowProps {
 }
 
 function CardsRow(props: CardsRowProps) {
-  const {cardHeight, isMobile, comparisonPair, compareCardRef, highlightedCard} = props;
+  const {cardHeight, isMobile, comparisonPair, exitingPair, compareCardRef, highlightedCard} = props;
+  // During exit (comparisonPair=null, exitingPair set), keep the overlays mounted using
+  // the exitingPair's data so the FLIP-back animation has something to animate.
+  const effectivePair = comparisonPair ?? exitingPair;
   return (
-    <div
-      style={{
-        display: isMobile ? 'flex' : 'grid',
-        flexDirection: isMobile ? 'column' : undefined,
-        gridTemplateColumns: isMobile ? undefined : `${props.cardWidth}px 1fr`,
-        gap: 28,
-        alignItems: 'stretch',
-        height: isMobile ? undefined : cardHeight,
-        flexShrink: 0,
-        overflow: 'visible',
-        position: 'relative',
-      }}>
+    <div style={pickCardsRowStyle({isMobile, cardWidth: props.cardWidth, cardHeight})}>
       <CardImageDisplay
         card={props.card}
         cardWidth={props.cardWidth}
@@ -678,17 +897,63 @@ function CardsRow(props: CardsRowProps) {
         onShowAll={props.onShowAll}
         onCardClick={props.onCardClick}
       />
-      {comparisonPair && !isMobile && (
-        <CompareCardOverlay
-          pair={comparisonPair}
-          cardWidth={props.cardWidth}
-          cardHeight={cardHeight}
-          highlightedCard={highlightedCard}
-          compareCardRef={compareCardRef}
-        />
-      )}
-      {comparisonPair && !isMobile && <PairConnector cardHeight={cardHeight} />}
+      <ComparisonOverlays
+        pair={effectivePair}
+        isMobile={isMobile}
+        isExiting={!comparisonPair && !!exitingPair}
+        cardWidth={props.cardWidth}
+        cardHeight={cardHeight}
+        highlightedCard={highlightedCard}
+        compareCardRef={compareCardRef}
+      />
     </div>
+  );
+}
+
+interface PickCardsRowStyleInput {
+  isMobile: boolean;
+  cardWidth: number;
+  cardHeight: number;
+}
+
+function pickCardsRowStyle({isMobile, cardWidth, cardHeight}: PickCardsRowStyleInput): React.CSSProperties {
+  return {
+    display: isMobile ? 'flex' : 'grid',
+    flexDirection: isMobile ? 'column' : undefined,
+    gridTemplateColumns: isMobile ? undefined : `${cardWidth}px 1fr`,
+    gap: 28,
+    alignItems: 'stretch',
+    height: isMobile ? undefined : cardHeight,
+    flexShrink: 0,
+    overflow: 'visible',
+    position: 'relative',
+  };
+}
+
+interface ComparisonOverlaysProps {
+  pair: DetailedPairSynergy | null;
+  isMobile: boolean;
+  isExiting: boolean;
+  cardWidth: number;
+  cardHeight: number;
+  highlightedCard: 'a' | 'b' | null;
+  compareCardRef: React.RefObject<HTMLDivElement | null>;
+}
+
+/** Compare-card overlay + pair-connector, gated on having a pair and not being mobile. */
+function ComparisonOverlays({pair, isMobile, isExiting, cardWidth, cardHeight, highlightedCard, compareCardRef}: ComparisonOverlaysProps) {
+  if (!pair || isMobile) return null;
+  return (
+    <>
+      <CompareCardOverlay
+        pair={pair}
+        cardWidth={cardWidth}
+        cardHeight={cardHeight}
+        highlightedCard={highlightedCard}
+        compareCardRef={compareCardRef}
+      />
+      <PairConnector cardHeight={cardHeight} exiting={isExiting} />
+    </>
   );
 }
 
@@ -702,8 +967,15 @@ interface CardImageDisplayProps {
 }
 
 function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCard, inComparison}: CardImageDisplayProps) {
+  // In comparison mode the wrapper takes the ambient `focused-card-glow` className
+  // (#332 #6 idea D). The animation cycles `box-shadow` between a low and high gold-tinted
+  // aura around the card. Setting borderRadius=14 on the wrapper makes the shadow follow
+  // the card's rounded corners instead of drawing against a rectangular bounding box.
+  const useGlow = !isMobile && inComparison;
   return (
-    <div style={pickCardWrapperStyle({isMobile, highlightedCard, inComparison})}>
+    <div
+      className={useGlow ? 'focused-card-glow' : undefined}
+      style={pickCardWrapperStyle({isMobile, highlightedCard, inComparison})}>
       <CardImage
         src={card.imageUrl}
         alt={card.fullName}
@@ -738,6 +1010,10 @@ function pickCardWrapperStyle({isMobile, highlightedCard, inComparison}: {isMobi
     transition: `opacity 0.2s ease, filter 0.2s ease, transform ${FLIP_DURATION}ms ${FLIP_EASING}`,
     opacity: highlightedCard === 'b' ? 0.4 : 1,
     filter: highlightedCard === 'a' ? 'drop-shadow(0 0 8px rgba(212, 175, 55, 0.6))' : undefined,
+    // borderRadius matches CardImage's so the ambient glow's box-shadow follows the rounded
+    // card silhouette instead of a rectangular bounding box. Only applied in comparison mode
+    // (when the glow class is also active); default state stays as-is.
+    borderRadius: inset ? 14 : undefined,
   };
 }
 
@@ -757,6 +1033,9 @@ function DefaultInfoColumn({synergies, synergiesLoading, visibleGroups, activeGr
   return (
     <section
       aria-label="Synergies"
+      // `inert` removes the synergy tile buttons from focus order + a11y tree during comparison
+      // mode — opacity:0 + pointer-events:none would still leave them tab-reachable.
+      inert={inComparison}
       style={{
         minWidth: 0,
         minHeight: 0,
@@ -876,6 +1155,13 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
     <div
       ref={compareCardRef}
       aria-hidden="true"
+      // `focused-card-glow focused-card-glow-offset` adds the ambient breathing animation
+      // (#332 #6 idea D) phased opposite to Card A — when A's glow peaks, B is at its
+      // minimum and vice versa. The keyframe bakes in the same 0 8px 24px depth shadow
+      // that was previously inline, plus the breathing aura. Reduced-motion override in
+      // index.css disables the animation; the previous static shadow is then absent —
+      // documented as acceptable since the cards still have CardImage's inner styling.
+      className="focused-card-glow focused-card-glow-offset"
       style={{
         position: 'absolute',
         top: 0,
@@ -887,10 +1173,12 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
         borderRadius: 14,
         overflow: 'hidden',
         background: COLORS.background,
-        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
         transformOrigin: 'top left',
         zIndex: 5,
-        opacity: highlightedCard === 'a' ? 0.4 : 1,
+        // Only set opacity inline when actively dimming via hover. Default case is `undefined`
+        // so React doesn't manage the property — that way the exit FLIP's `el.style.opacity = '0'`
+        // (#332 #7) persists across re-renders during the 480ms exit window.
+        opacity: highlightedCard === 'a' ? 0.4 : undefined,
         filter: highlightedCard === 'b' ? 'drop-shadow(0 0 8px rgba(212, 175, 55, 0.6))' : undefined,
         transition: 'opacity 0.2s ease, filter 0.2s ease',
       }}>
@@ -909,57 +1197,80 @@ interface ComparisonDetailPanelProps {
   isMobile: boolean;
   inComparison: boolean;
   comparisonPair: DetailedPairSynergy | null;
+  /** Held during the 480ms exit window so the inner content stays mounted while the grid row
+   *  collapses (#332 #7). Without this, the inner `{comparisonPair && ...}` would unmount the
+   *  EngineColumn + CommunityColumn instantly on BACK, leaving the row to collapse around
+   *  empty space — which reads as a "pop" instead of a smooth shrink. */
+  exitingPair: DetailedPairSynergy | null;
   setHighlightedCard: (card: 'a' | 'b' | null) => void;
 }
 
-function ComparisonDetailPanel({isMobile, inComparison, comparisonPair, setHighlightedCard}: ComparisonDetailPanelProps) {
+function ComparisonDetailPanel({isMobile, inComparison, comparisonPair, exitingPair, setHighlightedCard}: ComparisonDetailPanelProps) {
+  // grid-template-rows: 0fr ↔ 1fr is the canonical "height: auto" transition. The interpolation
+  // covers the panel's *actual* content height (~280px when populated) instead of a synthetic
+  // 0 → 1500 max-height range that finished visibly in ~96ms with the cubic-bezier easing. This
+  // way the 480ms duration maps to real visible motion across the whole transition.
+  // Same pattern MultiRoleAbilityList uses in ConnectionGroup.tsx.
+  //
+  // effectivePair: keep content mounted during exit. comparisonPair drives entry mounting +
+  // open/close state via inComparison; exitingPair keeps the content rendered through the
+  // 480ms collapse so the row shrinks around real content (mirrors the expand path).
+  const effectivePair = comparisonPair ?? exitingPair;
   return (
     <div
       aria-hidden={!inComparison}
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 14,
-        maxHeight: inComparison ? 1500 : 0,
+        display: 'grid',
+        gridTemplateRows: inComparison ? '1fr' : '0fr',
         opacity: inComparison ? 1 : 0,
-        overflow: 'hidden',
         flexShrink: 0,
-        transition: 'max-height 480ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 300ms ease-out 250ms',
+        transition: 'grid-template-rows 480ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 300ms ease-out 250ms',
       }}>
-      {comparisonPair && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-            gap: 20,
-            // `stretch` makes both columns fill the row's height (= max of their intrinsic heights).
-            // Mobile collapses to single column so the alignment is moot, but `stretch` is still the harmless default.
-            alignItems: 'stretch',
-          }}>
-          <EngineColumn
-            pair={comparisonPair}
-            engineScore={comparisonPair.aggregateScore}
-            onHighlight={setHighlightedCard}
-          />
-          <CommunityColumn pair={comparisonPair} engineScore={comparisonPair.aggregateScore} />
-        </div>
-      )}
+      {/* Inner wrapper holds the actual content. `min-height: 0` lets the grid row collapse
+          below content height during the transition; `overflow: hidden` clips so partial content
+          doesn't bleed out of the collapsing/expanding bounds. */}
+      <div style={{minHeight: 0, overflow: 'hidden'}}>
+        {effectivePair && (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+              gap: 20,
+              // `stretch` makes both columns fill the row's height (= max of their intrinsic heights).
+              // Mobile collapses to single column so the alignment is moot, but `stretch` is still the harmless default.
+              alignItems: 'stretch',
+            }}>
+            <EngineColumn
+              pair={effectivePair}
+              engineScore={effectivePair.aggregateScore}
+              onHighlight={setHighlightedCard}
+            />
+            <CommunityColumn pair={effectivePair} engineScore={effectivePair.aggregateScore} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 interface PairConnectorProps {
   cardHeight: number;
+  /** When true, play the reverse-draw exit animation (clip-path collapses from inset(0) back to
+   *  inset(0 50% 0 50%); wrapper fades out). #332 #7 exit choreography. */
+  exiting: boolean;
 }
 
 /**
  * Pair connector — single gold dashed line between the two cards (mockup phase 2).
  *
- * The line spans the full info-col gap and reveals from center outward (clip-path inset(0 50% 0 50%)
- * → inset(0)) over 1s with a 200ms delay. Tier color and score were dropped here because the engine
- * column carries the score readout; this connector is purely a visual "these are paired" cue.
+ * Entry: The line spans the full info-col gap and reveals from center outward (clip-path
+ * inset(0 50% 0 50%) → inset(0)) over 1s with a 200ms delay.
+ *
+ * Exit (#332 #7): wrapper fades out (200ms), line collapses centre-in (clip-path back to
+ * inset(0 50% 0 50%)) over 480ms. Faster than entry's narrative 1000ms reveal — exit doesn't
+ * need the dramatic buildup since the user already understands the pair.
  */
-function PairConnector({cardHeight}: PairConnectorProps) {
+function PairConnector({cardHeight, exiting}: PairConnectorProps) {
   return (
     <div
       aria-hidden="true"
@@ -970,7 +1281,9 @@ function PairConnector({cardHeight}: PairConnectorProps) {
         transform: 'translate(-50%, -50%)',
         width: 192,
         zIndex: 6,
-        animation: 'card-overview-connector-in 250ms ease-out 200ms both',
+        animation: exiting
+          ? 'card-overview-connector-out 200ms ease-out forwards'
+          : 'card-overview-connector-in 250ms ease-out 200ms both',
       }}>
       <span
         style={{
@@ -980,7 +1293,9 @@ function PairConnector({cardHeight}: PairConnectorProps) {
           backgroundImage: `repeating-linear-gradient(to right, ${COLORS.primary500} 0, ${COLORS.primary500} 6px, transparent 6px, transparent 12px)`,
           backgroundSize: '12px 2px',
           opacity: 0.7,
-          animation: 'card-overview-connector-line-center 1000ms cubic-bezier(0.2, 0.8, 0.2, 1) 200ms both',
+          animation: exiting
+            ? 'card-overview-connector-line-collapse 480ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards'
+            : 'card-overview-connector-line-center 1000ms cubic-bezier(0.2, 0.8, 0.2, 1) 200ms both',
         }}
       />
     </div>
