@@ -149,6 +149,21 @@ option {
   animation-delay: -1.8s;
 }
 
+/* Click acknowledgment beat for synergy tiles (#332 #6 idea B).
+   Adds a 90ms scale-bump (0.94 then back to 1) on the clicked tile before
+   the FLIP fires. Gives the click a tactile "I heard you" beat distinct from
+   the existing `.card-tile:active { transform: scale(0.97) }` press-down state
+   (which only shows while the mouse is held). The class is removed in JS
+   after the animation completes; the FLIP is then triggered with the same
+   bounding rect as before (scale returns to 1). */
+@keyframes tile-click-ack {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(0.94); }
+}
+.tile-click-ack {
+  animation: tile-click-ack 90ms ease-out;
+}
+
 /* Home page card-slot shimmer (used by HomePageSkeleton and FeaturedCards while
    the cards JSON is loading). Same animation, two surfaces — one shared keyframe
    keeps them visually identical and bridges the gap between the Suspense
@@ -194,6 +209,11 @@ option {
   /* Skip the focused-card breathing glow — cards rest at their base shadow
      without the continuous cycle. */
   .focused-card-glow {
+    animation: none !important;
+  }
+  /* Skip the click-ack scale-bump. JS also short-circuits the 90ms delay
+     when reduced-motion is set, so the FLIP fires immediately. */
+  .tile-click-ack {
     animation: none !important;
   }
 }

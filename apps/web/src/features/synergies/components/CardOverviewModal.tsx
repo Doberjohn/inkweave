@@ -121,6 +121,10 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   );
 
   const {compareCardRef, captureStartRect} = useFLIPAnimation(comparisonPair);
+  // Re-entry guard for the 90ms click-acknowledgment ack window (#332 #6 idea B). Set to true
+  // when a click is captured; cleared inside `fireComparison`. Prevents double-FLIP if the user
+  // clicks a second tile during the ack.
+  const clickAckInFlightRef = useRef(false);
 
   const toggleChip = (key: string) => {
     setActiveGroupFilter((prev) => (prev === key ? null : key));
@@ -137,6 +141,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
       setComparisonPair,
       getPairSynergies: props.getPairSynergies,
       onEnterComparison: props.onEnterComparison,
+      clickAckInFlightRef,
     });
   };
 
@@ -388,17 +393,80 @@ interface SynergyCardClickInput {
   setComparisonPair: (p: DetailedPairSynergy | null) => void;
   getPairSynergies: (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null;
   onEnterComparison?: (partnerId: string, groupKey?: string) => void;
+  /**
+   * Re-entry guard for the click-acknowledgment beat (#332 #6 idea B). A click sets the ref to
+   * `true`; subsequent clicks in the 90ms ack window are ignored. Cleared once the FLIP fires.
+   * Prevents two tiles firing FLIPs in succession when the user double-clicks during the ack.
+   */
+  clickAckInFlightRef: React.MutableRefObject<boolean>;
 }
 
-function invokeSynergyCardClick({clickedCard, groupKey, modalRef, captureStartRect, setComparisonPair, getPairSynergies, onEnterComparison}: SynergyCardClickInput) {
-  const pair = getPairSynergies(clickedCard, groupKey);
-  if (!pair || pair.connections.length === 0) return;
-  const tileEl = modalRef.current?.querySelector(
-    `[data-card-id="${clickedCard.id}"]`,
-  ) as HTMLElement | null;
+const CLICK_ACK_DURATION_MS = 90;
+
+/** Whether the user has set OS-level "reduce motion." Returns false in non-browser contexts. */
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** A pair is click-actionable when it exists AND has at least one connection to display. */
+function isPairClickActionable(pair: DetailedPairSynergy | null): pair is DetailedPairSynergy {
+  return !!pair && pair.connections.length > 0;
+}
+
+interface FireComparisonInput {
+  pair: DetailedPairSynergy;
+  tileEl: HTMLElement | null;
+  clickedCard: LorcanaCard;
+  groupKey: string | undefined;
+  captureStartRect: (rect: DOMRect | null) => void;
+  setComparisonPair: (p: DetailedPairSynergy | null) => void;
+  onEnterComparison?: (partnerId: string, groupKey?: string) => void;
+  clickAckInFlightRef: React.MutableRefObject<boolean>;
+}
+
+/** FLIP-start side effect: capture the source rect, set the comparison pair, notify the parent. */
+function fireComparison({pair, tileEl, clickedCard, groupKey, captureStartRect, setComparisonPair, onEnterComparison, clickAckInFlightRef}: FireComparisonInput): void {
   captureStartRect(tileEl ? tileEl.getBoundingClientRect() : null);
   setComparisonPair(pair);
   onEnterComparison?.(clickedCard.id, groupKey);
+  clickAckInFlightRef.current = false;
+}
+
+/**
+ * Plays the click-ack scale-bump on the tile, then runs `onComplete`. When reduced-motion is on,
+ * the ack is skipped entirely — `onComplete` fires synchronously so the FLIP latency stays at zero.
+ */
+function triggerClickAck(tileEl: HTMLElement, onComplete: () => void): void {
+  if (prefersReducedMotion()) {
+    onComplete();
+    return;
+  }
+  tileEl.classList.add('tile-click-ack');
+  setTimeout(() => {
+    tileEl.classList.remove('tile-click-ack');
+    onComplete();
+  }, CLICK_ACK_DURATION_MS);
+}
+
+function invokeSynergyCardClick({clickedCard, groupKey, modalRef, captureStartRect, setComparisonPair, getPairSynergies, onEnterComparison, clickAckInFlightRef}: SynergyCardClickInput) {
+  if (clickAckInFlightRef.current) return;
+  const pair = getPairSynergies(clickedCard, groupKey);
+  if (!isPairClickActionable(pair)) return;
+  const tileEl = modalRef.current?.querySelector(
+    `[data-card-id="${clickedCard.id}"]`,
+  ) as HTMLElement | null;
+  const fireInput: FireComparisonInput = {
+    pair, tileEl, clickedCard, groupKey, captureStartRect, setComparisonPair, onEnterComparison, clickAckInFlightRef,
+  };
+  if (!tileEl) {
+    // No tile element to bump (shouldn't happen in practice — every SynergyCard has
+    // data-card-id). Fall back to the synchronous fire path so the click still works.
+    fireComparison(fireInput);
+    return;
+  }
+  clickAckInFlightRef.current = true;
+  triggerClickAck(tileEl, () => fireComparison(fireInput));
 }
 
 // ── Layout config / static styles ──
