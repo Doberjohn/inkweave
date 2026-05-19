@@ -150,10 +150,22 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   );
 
   const {compareCardRef, captureStartRect} = useFLIPAnimation(comparisonPair, exitingPair);
-  // Re-entry guard for the 90ms click-acknowledgment ack window (#332 #6 idea B). Set to true
-  // when a click is captured; cleared inside `fireComparison`. Prevents double-FLIP if the user
-  // clicks a second tile during the ack.
-  const clickAckInFlightRef = useRef(false);
+  // Re-entry guard for the 90ms click-ack window (#332 #6 idea B). Holds the setTimeout id while
+  // the ack is in flight; null when idle. Doubles as a cancellation handle so the timeout can be
+  // cleared if the modal closes mid-ack (otherwise `fireComparison` would fire ~90ms after the
+  // user has already dismissed the modal, triggering state updates on a tearing-down component).
+  const clickAckTimeoutRef = useRef<number | null>(null);
+
+  // Cancel any in-flight click-ack when the modal closes. The ack timeout is short (90ms) but
+  // a click → Esc → idle window can still let the timeout fire on a closing modal. Cleanup also
+  // covers regular unmount.
+  useEffect(() => {
+    if (isOpen) return;
+    if (clickAckTimeoutRef.current !== null) {
+      window.clearTimeout(clickAckTimeoutRef.current);
+      clickAckTimeoutRef.current = null;
+    }
+  }, [isOpen]);
 
   const toggleChip = (key: string) => {
     setActiveGroupFilter((prev) => (prev === key ? null : key));
@@ -173,7 +185,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
       setComparisonPair,
       getPairSynergies: props.getPairSynergies,
       onEnterComparison: props.onEnterComparison,
-      clickAckInFlightRef,
+      clickAckTimeoutRef,
     });
   };
 
@@ -445,7 +457,15 @@ function runExitFLIP(el: HTMLDivElement, exitingPair: DetailedPairSynergy): void
   const tileEl = el
     .closest('[data-testid="card-overview-modal"]')
     ?.querySelector(`[data-card-id="${exitingPair.cardB.id}"]`) as HTMLElement | null;
-  if (!tileEl) return;
+  if (!tileEl) {
+    // Fallback: destination tile is no longer in the DOM (e.g. the synergy group it came from
+    // was filtered out, or scroll position changed during the focused view). Without this,
+    // Card B would stay stuck at the overlay position until the unmount timeout fires (480ms
+    // later) — visually it pops out abruptly. Fade it out over 200ms instead.
+    el.style.transition = 'opacity 200ms ease-out';
+    el.style.opacity = '0';
+    return;
+  }
   const destRect = tileEl.getBoundingClientRect();
   const currentRect = el.getBoundingClientRect();
   const dx = destRect.left - currentRect.left;
@@ -488,11 +508,11 @@ interface SynergyCardClickInput {
   getPairSynergies: (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null;
   onEnterComparison?: (partnerId: string, groupKey?: string) => void;
   /**
-   * Re-entry guard for the click-acknowledgment beat (#332 #6 idea B). A click sets the ref to
-   * `true`; subsequent clicks in the 90ms ack window are ignored. Cleared once the FLIP fires.
-   * Prevents two tiles firing FLIPs in succession when the user double-clicks during the ack.
+   * Re-entry guard for the click-ack beat (#332 #6 idea B). Holds the setTimeout id while the
+   * ack is in flight; null when idle. Truthy → ignore subsequent clicks. Also serves as the
+   * cancellation handle so the timeout can be cleared if the modal closes mid-ack.
    */
-  clickAckInFlightRef: React.MutableRefObject<boolean>;
+  clickAckTimeoutRef: React.MutableRefObject<number | null>;
 }
 
 const CLICK_ACK_DURATION_MS = 90;
@@ -516,42 +536,44 @@ interface FireComparisonInput {
   captureStartRect: (rect: DOMRect | null) => void;
   setComparisonPair: (p: DetailedPairSynergy | null) => void;
   onEnterComparison?: (partnerId: string, groupKey?: string) => void;
-  clickAckInFlightRef: React.MutableRefObject<boolean>;
+  clickAckTimeoutRef: React.MutableRefObject<number | null>;
 }
 
 /** FLIP-start side effect: capture the source rect, set the comparison pair, notify the parent. */
-function fireComparison({pair, tileEl, clickedCard, groupKey, captureStartRect, setComparisonPair, onEnterComparison, clickAckInFlightRef}: FireComparisonInput): void {
+function fireComparison({pair, tileEl, clickedCard, groupKey, captureStartRect, setComparisonPair, onEnterComparison, clickAckTimeoutRef}: FireComparisonInput): void {
   captureStartRect(tileEl ? tileEl.getBoundingClientRect() : null);
   setComparisonPair(pair);
   onEnterComparison?.(clickedCard.id, groupKey);
-  clickAckInFlightRef.current = false;
+  clickAckTimeoutRef.current = null;
 }
 
 /**
  * Plays the click-ack scale-bump on the tile, then runs `onComplete`. When reduced-motion is on,
  * the ack is skipped entirely — `onComplete` fires synchronously so the FLIP latency stays at zero.
+ * The setTimeout id is stored on `timeoutRef` so the parent can cancel it if the modal closes
+ * mid-ack (prevents `onComplete` firing on a tearing-down component).
  */
-function triggerClickAck(tileEl: HTMLElement, onComplete: () => void): void {
+function triggerClickAck(tileEl: HTMLElement, onComplete: () => void, timeoutRef: React.MutableRefObject<number | null>): void {
   if (prefersReducedMotion()) {
     onComplete();
     return;
   }
   tileEl.classList.add('tile-click-ack');
-  setTimeout(() => {
+  timeoutRef.current = window.setTimeout(() => {
     tileEl.classList.remove('tile-click-ack');
     onComplete();
   }, CLICK_ACK_DURATION_MS);
 }
 
-function invokeSynergyCardClick({clickedCard, groupKey, modalRef, captureStartRect, setComparisonPair, getPairSynergies, onEnterComparison, clickAckInFlightRef}: SynergyCardClickInput) {
-  if (clickAckInFlightRef.current) return;
+function invokeSynergyCardClick({clickedCard, groupKey, modalRef, captureStartRect, setComparisonPair, getPairSynergies, onEnterComparison, clickAckTimeoutRef}: SynergyCardClickInput) {
+  if (clickAckTimeoutRef.current !== null) return;
   const pair = getPairSynergies(clickedCard, groupKey);
   if (!isPairClickActionable(pair)) return;
   const tileEl = modalRef.current?.querySelector(
     `[data-card-id="${clickedCard.id}"]`,
   ) as HTMLElement | null;
   const fireInput: FireComparisonInput = {
-    pair, tileEl, clickedCard, groupKey, captureStartRect, setComparisonPair, onEnterComparison, clickAckInFlightRef,
+    pair, tileEl, clickedCard, groupKey, captureStartRect, setComparisonPair, onEnterComparison, clickAckTimeoutRef,
   };
   if (!tileEl) {
     // No tile element to bump (shouldn't happen in practice — every SynergyCard has
@@ -559,8 +581,7 @@ function invokeSynergyCardClick({clickedCard, groupKey, modalRef, captureStartRe
     fireComparison(fireInput);
     return;
   }
-  clickAckInFlightRef.current = true;
-  triggerClickAck(tileEl, () => fireComparison(fireInput));
+  triggerClickAck(tileEl, () => fireComparison(fireInput), clickAckTimeoutRef);
 }
 
 // ── Layout config / static styles ──
@@ -762,7 +783,12 @@ function FilterChip({group, activeGroupFilter, toggleChip}: FilterChipProps) {
   );
 }
 
-function HeroDivider({hasSynergies, inComparison}: {hasSynergies: boolean; inComparison: boolean}) {
+interface HeroDividerProps {
+  hasSynergies: boolean;
+  inComparison: boolean;
+}
+
+function HeroDivider({hasSynergies, inComparison}: HeroDividerProps) {
   // Render whenever there are synergies; let `inComparison` drive an opacity transition that
   // matches the chip-row + info-column fade (250ms ease-out). Splitting the old `visible` boolean
   // (`synergies.length > 0 && !inComparison`) into two props lets us animate the comparison-mode
@@ -867,7 +893,13 @@ function CardsRow(props: CardsRowProps) {
   );
 }
 
-function pickCardsRowStyle({isMobile, cardWidth, cardHeight}: {isMobile: boolean; cardWidth: number; cardHeight: number}): React.CSSProperties {
+interface PickCardsRowStyleInput {
+  isMobile: boolean;
+  cardWidth: number;
+  cardHeight: number;
+}
+
+function pickCardsRowStyle({isMobile, cardWidth, cardHeight}: PickCardsRowStyleInput): React.CSSProperties {
   return {
     display: isMobile ? 'flex' : 'grid',
     flexDirection: isMobile ? 'column' : undefined,
