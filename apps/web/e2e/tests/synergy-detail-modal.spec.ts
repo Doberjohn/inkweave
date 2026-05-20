@@ -145,7 +145,7 @@ test.describe('Synergy comparison — Mobile', () => {
 
     await communityTab.click();
     await expect(communityTab).toHaveAttribute('aria-current', 'true', {timeout: 3000});
-    await expect(engineTab).not.toHaveAttribute('aria-current');
+    await expect(engineTab).toHaveAttribute('aria-current', 'false');
   });
 
   test('should open and dismiss the card lightbox on mobile', async ({appPage, page}) => {

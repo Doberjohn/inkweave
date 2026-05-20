@@ -439,7 +439,7 @@ function ScoreChevronsTab({label, score, showScale, isActive, tintColor, tintBg,
     marginLeft: 2,
   };
   return (
-    <button type="button" aria-current={isActive || undefined} onClick={onClick} style={tabStyle}>
+    <button type="button" aria-current={isActive} onClick={onClick} style={tabStyle}>
       <span style={labelStyle}>{label}</span>
       <span style={scoreStyle}>
         {score}
