@@ -1,7 +1,23 @@
 import {test, expect} from '../fixtures';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // Anna - Diplomatic Queen: has both direct and playstyle synergies, so shift-targets renders.
 const CARD_URL = '/card/1041';
+
+// A real synergy partner of card 1041 + its group key, derived from the precomputed data so the
+// /compare deep-link fixture survives Set 12+ pool drift. ComparePage 404s on a missing groupKey
+// (engine score is rule-context-specific), so a valid deep link is /compare/A/B/groupKey.
+const synergyData1041 = JSON.parse(
+  fs.readFileSync(path.resolve(process.cwd(), 'public/data/synergies', '1041.json'), 'utf8'),
+) as {groups: {groupKey: string; synergies: {cardId: string}[]}[]};
+const compareGroup1041 = synergyData1041.groups[0];
+const COMPARE_PARTNER_ID = compareGroup1041?.synergies[0]?.cardId;
+const COMPARE_GROUP_KEY = compareGroup1041?.groupKey;
+if (!COMPARE_PARTNER_ID || !COMPARE_GROUP_KEY) {
+  throw new Error('Fixture broken: card 1041 has no synergy group for the /compare deep-link test.');
+}
+const COMPARE_URL = `/compare/1041/${COMPARE_PARTNER_ID}/${COMPARE_GROUP_KEY}`;
 
 /**
  * Comparison mode (formerly the separate synergy detail modal). Clicking a synergy card tile
@@ -68,6 +84,24 @@ test.describe('Synergy comparison — Desktop', () => {
     await expect(appPage.cardOverviewModal).toHaveAttribute('data-mode', 'default', {timeout: 5000});
     await expect(page).toHaveURL('/', {timeout: 5000});
   });
+
+  test('should switch comparison pairs across exit and re-entry', async ({appPage}) => {
+    const modal = appPage.cardOverviewModal;
+    const backButton = modal.getByRole('button', {name: /back to synergies/i});
+
+    // Enter comparison from the shift-targets group.
+    await modal.locator('[data-group-key="shift-targets"] button.card-tile').first().click();
+    await expect(backButton).toBeVisible({timeout: 3000});
+
+    // Exit back to the default modal.
+    await backButton.click();
+    await expect(modal).toHaveAttribute('data-mode', 'default', {timeout: 5000});
+
+    // Re-enter a different comparison from another group — consecutive comparisons must work.
+    await modal.locator('[data-group-key="discard"] button.card-tile').first().click();
+    await expect(modal).toHaveAttribute('data-mode', 'comparison', {timeout: 3000});
+    await expect(backButton).toBeVisible();
+  });
 });
 
 test.describe('Synergy comparison — Mobile', () => {
@@ -88,5 +122,79 @@ test.describe('Synergy comparison — Mobile', () => {
     await expect(
       appPage.cardOverviewModal.getByRole('button', {name: /back to synergies/i}),
     ).toBeVisible({timeout: 3000});
+  });
+
+  test('should render the tabbed comparison layout on mobile', async ({appPage}) => {
+    await appPage.cardOverviewModal.locator('[data-group-key] button.card-tile').first().click();
+
+    // MobileComparisonView replaces the desktop two-column layout with an Engine/Community
+    // tab bar — the tablist's presence confirms the mobile-specific view rendered (#332 #5).
+    const tablist = appPage.cardOverviewModal.getByRole('tablist');
+    await expect(tablist).toBeVisible({timeout: 3000});
+    await expect(tablist.getByRole('tab', {name: /engine/i})).toBeVisible();
+    await expect(tablist.getByRole('tab', {name: /community/i})).toBeVisible();
+  });
+
+  test('should switch to the Community tab on mobile', async ({appPage}) => {
+    await appPage.cardOverviewModal.locator('[data-group-key] button.card-tile').first().click();
+
+    const tablist = appPage.cardOverviewModal.getByRole('tablist');
+    const engineTab = tablist.getByRole('tab', {name: /engine/i});
+    const communityTab = tablist.getByRole('tab', {name: /community/i});
+    await expect(engineTab).toHaveAttribute('aria-selected', 'true', {timeout: 3000});
+
+    await communityTab.click();
+    await expect(communityTab).toHaveAttribute('aria-selected', 'true', {timeout: 3000});
+    await expect(engineTab).toHaveAttribute('aria-selected', 'false');
+  });
+
+  test('should open and dismiss the card lightbox on mobile', async ({appPage, page}) => {
+    await appPage.cardOverviewModal.locator('[data-group-key] button.card-tile').first().click();
+
+    // Tapping a comparison card opens MobileLightbox — a portal-to-body dialog, so it's
+    // queried on `page`, not scoped to the modal.
+    await appPage.cardOverviewModal.getByRole('button', {name: /^Enlarge /}).first().click();
+    const lightbox = page.getByRole('dialog', {name: /enlarged/i});
+    await expect(lightbox).toBeVisible({timeout: 3000});
+
+    await lightbox.getByRole('button', {name: /close enlarged card/i}).click();
+    await expect(lightbox).toHaveCount(0, {timeout: 3000});
+  });
+
+  test('should exit comparison mode via BACK on mobile', async ({appPage}) => {
+    await appPage.cardOverviewModal.locator('[data-group-key] button.card-tile').first().click();
+
+    const backButton = appPage.cardOverviewModal.getByRole('button', {name: /back to synergies/i});
+    await expect(backButton).toBeVisible({timeout: 3000});
+    await backButton.click();
+
+    await expect(appPage.cardOverviewModal).toHaveAttribute('data-mode', 'default', {timeout: 5000});
+  });
+});
+
+/**
+ * Deep-link comparison: `/compare/:idA/:idB` opens the modal straight into comparison via
+ * ComparePage → openComparison. The user never saw the default modal state, so the BACK button
+ * is suppressed (hideBackButton) — Escape/backdrop close the whole modal instead.
+ */
+test.describe('Synergy comparison — deep link', () => {
+  test('opens directly in comparison with no BACK button (desktop)', async ({appPage, page}, testInfo) => {
+    test.skip(testInfo.project.name.startsWith('mobile-'), 'desktop-only assertions');
+    await page.goto(COMPARE_URL);
+
+    await expect(appPage.cardOverviewModal).toBeVisible({timeout: 10000});
+    await expect(appPage.cardOverviewModal).toHaveAttribute('data-mode', 'comparison', {timeout: 10000});
+    await expect(
+      appPage.cardOverviewModal.getByRole('button', {name: /back to synergies/i}),
+    ).toHaveCount(0);
+  });
+
+  test('opens the mobile tabbed comparison view (mobile)', async ({appPage, page}, testInfo) => {
+    test.skip(!testInfo.project.name.startsWith('mobile-'), 'mobile-only');
+    await page.goto(COMPARE_URL);
+
+    await expect(appPage.cardOverviewModal).toBeVisible({timeout: 10000});
+    await expect(appPage.cardOverviewModal).toHaveAttribute('data-mode', 'comparison', {timeout: 10000});
+    await expect(appPage.cardOverviewModal.getByRole('tablist')).toBeVisible({timeout: 3000});
   });
 });

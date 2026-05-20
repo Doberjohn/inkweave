@@ -58,4 +58,40 @@ test.describe('Card Detail (modal)', () => {
     await expect(appPage.cardOverviewModal).toBeHidden();
     await expect(appPage.heroSection).toBeVisible();
   });
+
+  test('should close the modal when Escape is pressed', async ({appPage, page}) => {
+    await appPage.selectFeaturedCard();
+    await expect(appPage.cardOverviewModal).toBeVisible();
+
+    await page.keyboard.press('Escape');
+
+    await expect(appPage.cardOverviewModal).toBeHidden();
+    await expect(appPage.heroSection).toBeVisible();
+  });
+
+  test('should show the empty state for a card with no synergies', async ({appPage, page}) => {
+    // Card 957 (Koda) has no precomputed synergy file — the modal renders its empty state.
+    await page.goto('/card/957');
+
+    await expect(appPage.cardOverviewModal).toBeVisible({timeout: 10000});
+    await expect(appPage.cardOverviewModal.getByTestId('card-overview-empty')).toBeVisible({
+      timeout: 10000,
+    });
+  });
+
+  test('should lock background scroll while the modal is open', async ({appPage, page}) => {
+    await appPage.selectFeaturedCard();
+    await expect(appPage.cardOverviewModal).toBeVisible();
+
+    // useScrollLock pins document.body overflow to hidden while the modal is open.
+    const overflowWhileOpen = await page.evaluate(() => getComputedStyle(document.body).overflow);
+    expect(overflowWhileOpen).toBe('hidden');
+
+    await appPage.cardOverviewModal.getByRole('button', {name: 'Close'}).click();
+    await expect(appPage.cardOverviewModal).toBeHidden();
+
+    // Closing restores scroll.
+    const overflowAfterClose = await page.evaluate(() => getComputedStyle(document.body).overflow);
+    expect(overflowAfterClose).not.toBe('hidden');
+  });
 });
