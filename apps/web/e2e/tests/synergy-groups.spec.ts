@@ -18,8 +18,11 @@ interface SynergyData {
 const synergyData: SynergyData = JSON.parse(
   fs.readFileSync(path.resolve(process.cwd(), 'public/data/synergies', `${CARD_ID}.json`), 'utf8'),
 );
-const discardGroup = synergyData.groups?.find((g) => g.groupKey === 'discard');
-if (!discardGroup || discardGroup.synergies.length <= 3 || synergyData.groups.length < 2) {
+// Coalesce `groups` once so a malformed JSON (missing `groups`) consistently falls through to
+// the custom fixture error below, rather than a cryptic TypeError at one unguarded access.
+const groups = synergyData.groups ?? [];
+const discardGroup = groups.find((g) => g.groupKey === 'discard');
+if (!discardGroup || discardGroup.synergies.length <= 3 || groups.length < 2) {
   throw new Error(
     `Fixture broken: card ${CARD_ID} must have 2+ synergy groups including a 'discard' group ` +
       `with >3 synergies (a truncated group with a "+N more" tile). Is the card still in the pool?`,
