@@ -12,10 +12,13 @@ interface SynergyGroup {
   groupKey: string;
   synergies: unknown[];
 }
-const synergyData: {groups: SynergyGroup[]} = JSON.parse(
+interface SynergyData {
+  groups: SynergyGroup[];
+}
+const synergyData: SynergyData = JSON.parse(
   fs.readFileSync(path.resolve(process.cwd(), 'public/data/synergies', `${CARD_ID}.json`), 'utf8'),
 );
-const discardGroup = synergyData.groups.find((g) => g.groupKey === 'discard');
+const discardGroup = synergyData.groups?.find((g) => g.groupKey === 'discard');
 if (!discardGroup || discardGroup.synergies.length <= 3 || synergyData.groups.length < 2) {
   throw new Error(
     `Fixture broken: card ${CARD_ID} must have 2+ synergy groups including a 'discard' group ` +

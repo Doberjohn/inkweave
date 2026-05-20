@@ -11,7 +11,7 @@ const CARD_URL = '/card/1041';
 const synergyData1041 = JSON.parse(
   fs.readFileSync(path.resolve(process.cwd(), 'public/data/synergies', '1041.json'), 'utf8'),
 ) as {groups: {groupKey: string; synergies: {cardId: string}[]}[]};
-const compareGroup1041 = synergyData1041.groups[0];
+const compareGroup1041 = synergyData1041.groups?.[0];
 const COMPARE_PARTNER_ID = compareGroup1041?.synergies[0]?.cardId;
 const COMPARE_GROUP_KEY = compareGroup1041?.groupKey;
 if (!COMPARE_PARTNER_ID || !COMPARE_GROUP_KEY) {
@@ -128,24 +128,24 @@ test.describe('Synergy comparison — Mobile', () => {
     await appPage.cardOverviewModal.locator('[data-group-key] button.card-tile').first().click();
 
     // MobileComparisonView replaces the desktop two-column layout with an Engine/Community
-    // tab bar — the tablist's presence confirms the mobile-specific view rendered (#332 #5).
-    const tablist = appPage.cardOverviewModal.getByRole('tablist');
-    await expect(tablist).toBeVisible({timeout: 3000});
-    await expect(tablist.getByRole('tab', {name: /engine/i})).toBeVisible();
-    await expect(tablist.getByRole('tab', {name: /community/i})).toBeVisible();
+    // section-switch bar — the two pill buttons confirm the mobile-specific view rendered (#332 #5).
+    const modal = appPage.cardOverviewModal;
+    await expect(modal.getByRole('button', {name: /^Engine/})).toBeVisible({timeout: 3000});
+    await expect(modal.getByRole('button', {name: /^Community/})).toBeVisible();
   });
 
   test('should switch to the Community tab on mobile', async ({appPage}) => {
     await appPage.cardOverviewModal.locator('[data-group-key] button.card-tile').first().click();
 
-    const tablist = appPage.cardOverviewModal.getByRole('tablist');
-    const engineTab = tablist.getByRole('tab', {name: /engine/i});
-    const communityTab = tablist.getByRole('tab', {name: /community/i});
-    await expect(engineTab).toHaveAttribute('aria-selected', 'true', {timeout: 3000});
+    const modal = appPage.cardOverviewModal;
+    const engineTab = modal.getByRole('button', {name: /^Engine/});
+    const communityTab = modal.getByRole('button', {name: /^Community/});
+    // The active section pill carries aria-current="true".
+    await expect(engineTab).toHaveAttribute('aria-current', 'true', {timeout: 3000});
 
     await communityTab.click();
-    await expect(communityTab).toHaveAttribute('aria-selected', 'true', {timeout: 3000});
-    await expect(engineTab).toHaveAttribute('aria-selected', 'false');
+    await expect(communityTab).toHaveAttribute('aria-current', 'true', {timeout: 3000});
+    await expect(engineTab).not.toHaveAttribute('aria-current');
   });
 
   test('should open and dismiss the card lightbox on mobile', async ({appPage, page}) => {
@@ -195,6 +195,6 @@ test.describe('Synergy comparison — deep link', () => {
 
     await expect(appPage.cardOverviewModal).toBeVisible({timeout: 10000});
     await expect(appPage.cardOverviewModal).toHaveAttribute('data-mode', 'comparison', {timeout: 10000});
-    await expect(appPage.cardOverviewModal.getByRole('tablist')).toBeVisible({timeout: 3000});
+    await expect(appPage.cardOverviewModal.getByRole('button', {name: /^Engine/})).toBeVisible({timeout: 3000});
   });
 });

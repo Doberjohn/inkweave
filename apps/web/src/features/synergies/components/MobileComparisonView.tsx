@@ -383,9 +383,8 @@ interface TabBarProps {
 
 function TabBar({activeTab, onChange, engineScore, communityScore, style}: TabBarProps) {
   return (
-    <div role="tablist" style={{...TAB_BAR_STYLE, ...style}}>
+    <div style={{...TAB_BAR_STYLE, ...style}}>
       <ScoreChevronsTab
-        name="engine"
         label="Engine"
         score={formatScore(engineScore)}
         showScale
@@ -397,7 +396,6 @@ function TabBar({activeTab, onChange, engineScore, communityScore, style}: TabBa
         onClick={() => onChange('engine')}
       />
       <ScoreChevronsTab
-        name="community"
         label="Community"
         score={communityScore != null ? formatScore(communityScore) : '—'}
         showScale={communityScore != null}
@@ -413,7 +411,6 @@ function TabBar({activeTab, onChange, engineScore, communityScore, style}: TabBa
 }
 
 interface ScoreChevronsTabProps {
-  name: TabName;
   label: string;
   score: string;
   showScale: boolean;
@@ -425,7 +422,7 @@ interface ScoreChevronsTabProps {
   onClick: () => void;
 }
 
-function ScoreChevronsTab({name, label, score, showScale, isActive, tintColor, tintBg, tintBorder, tintGlow, onClick}: ScoreChevronsTabProps) {
+function ScoreChevronsTab({label, score, showScale, isActive, tintColor, tintBg, tintBorder, tintGlow, onClick}: ScoreChevronsTabProps) {
   const tabStyle: React.CSSProperties = {
     ...TAB_BASE_STYLE,
     background: isActive ? tintBg : 'rgba(255, 255, 255, 0.02)',
@@ -442,7 +439,7 @@ function ScoreChevronsTab({name, label, score, showScale, isActive, tintColor, t
     marginLeft: 2,
   };
   return (
-    <button type="button" role="tab" aria-selected={isActive} aria-controls={`${name}-panel`} onClick={onClick} style={tabStyle}>
+    <button type="button" aria-current={isActive || undefined} onClick={onClick} style={tabStyle}>
       <span style={labelStyle}>{label}</span>
       <span style={scoreStyle}>
         {score}

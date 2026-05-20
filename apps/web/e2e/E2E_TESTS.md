@@ -139,8 +139,8 @@ Comparison mode — clicking a synergy card tile transitions CardOverviewModal i
 | should exit comparison mode via the BACK button | (desktop) BACK returns the modal to `data-mode="default"`, URL stays `/` |
 | should switch comparison pairs across exit and re-entry | (desktop) Enter → BACK → enter a different pair; consecutive comparisons work cleanly |
 | should enter comparison mode on mobile | (mobile) Tapping a synergy tile shows the BACK button |
-| should render the tabbed comparison layout on mobile | (mobile) MobileComparisonView's Engine/Community `role="tablist"` renders |
-| should switch to the Community tab on mobile | (mobile) Tapping the Community tab moves `aria-selected="true"` onto it |
+| should render the tabbed comparison layout on mobile | (mobile) MobileComparisonView's Engine/Community section-switch pill buttons render |
+| should switch to the Community tab on mobile | (mobile) Tapping the Community pill moves `aria-current="true"` onto it |
 | should open and dismiss the card lightbox on mobile | (mobile) Tapping a comparison card opens the portal-to-body `Enlarged:` dialog; its close button dismisses it |
 | should exit comparison mode via BACK on mobile | (mobile) BACK returns the modal to `data-mode="default"` |
 | opens directly in comparison with no BACK button (desktop) | (deep link) `/compare/A/B/groupKey` opens straight into comparison; BACK button suppressed (hideBackButton) |
