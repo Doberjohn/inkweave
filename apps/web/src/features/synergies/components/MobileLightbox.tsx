@@ -29,6 +29,20 @@ function prefersReducedMotion(): boolean {
 }
 
 /**
+ * Resolves the FLIP context — the card element plus its origin rect — or null when a FLIP
+ * can't run (missing element/rect, or reduced motion). Returning the narrowed pair lets callers
+ * guard with a single `if (!ctx) return` instead of a three-term compound conditional.
+ */
+function flipContext(
+  el: HTMLElement | null,
+  originRect: DOMRect | null,
+): {el: HTMLElement; originRect: DOMRect} | null {
+  if (!el || !originRect) return null;
+  if (prefersReducedMotion()) return null;
+  return {el, originRect};
+}
+
+/**
  * Mobile-only enlarged card preview. Portals to document.body so it can render the card at its
  * native 367px width without the modal's bounds clipping it.
  *
@@ -56,11 +70,12 @@ export function MobileLightbox({imageUrl, alt, ink, originRect, onClose}: Mobile
   // layoutEffect twice (effect → cleanup → effect); without it, two stacked animations compete
   // on `transform` and neither applies.
   useLayoutEffect(() => {
-    const el = cardRef.current;
-    if (!el || !originRect || prefersReducedMotion()) return;
+    const ctx = flipContext(cardRef.current, originRect);
+    if (!ctx) return;
+    const {el} = ctx;
     const dest = el.getBoundingClientRect();
     if (dest.width === 0) return;
-    const {dx, dy, scale} = flipDeltas(originRect, dest);
+    const {dx, dy, scale} = flipDeltas(ctx.originRect, dest);
     el.style.transformOrigin = 'top left';
     const anim = el.animate(
       [
@@ -75,16 +90,17 @@ export function MobileLightbox({imageUrl, alt, ink, originRect, onClose}: Mobile
 
   // Reverse FLIP — card shrinks back into the origin tile, then `onClose` unmounts the lightbox.
   const requestClose = useCallback(() => {
-    const el = cardRef.current;
-    if (!el || !originRect || prefersReducedMotion()) {
+    const ctx = flipContext(cardRef.current, originRect);
+    if (!ctx) {
       onClose();
       return;
     }
+    const {el} = ctx;
     setIsClosing(true); // fades the scrim + close button + caption out
     // Cancel any in-flight entry FLIP so the exit animation is the only one on `transform`.
     flipRef.current?.cancel();
     const dest = el.getBoundingClientRect();
-    const {dx, dy, scale} = flipDeltas(originRect, dest);
+    const {dx, dy, scale} = flipDeltas(ctx.originRect, dest);
     el.style.transformOrigin = 'top left';
     const anim = el.animate(
       [

@@ -877,6 +877,26 @@ const DEFAULT_VIEW_FADE_MS = 240;
 const DEFAULT_VIEW_FADE_DELAY_MS = 200;
 
 /**
+ * Default-view ScrollArea reveal style. Hidden (paint-only, no reflow) while a mobile comparison
+ * is active; fades back in — DELAYED past the overlay's chrome fade so the two layouts never
+ * overlap — during the exit window; plainly visible otherwise.
+ */
+function pickScrollAreaRevealStyle(args: {
+  isMobile: boolean;
+  comparisonActive: boolean;
+  isExiting: boolean;
+}): React.CSSProperties {
+  if (args.isMobile && args.comparisonActive) return {visibility: 'hidden', opacity: 0};
+  if (args.isExiting) {
+    return {
+      opacity: 1,
+      transition: `opacity ${DEFAULT_VIEW_FADE_MS}ms ease-out ${DEFAULT_VIEW_FADE_DELAY_MS}ms`,
+    };
+  }
+  return {opacity: 1};
+}
+
+/**
  * Dispatch between the tabbed {@link MobileComparisonView} (mobile + comparison) and the
  * default CardsRow + ComparisonDetailPanel layout (everything else).
  *
@@ -896,17 +916,13 @@ function MobileOrDesktopBody(props: MobileOrDesktopBodyProps) {
 
   // The default view's ScrollArea is permanently mounted with a layout that NEVER changes when
   // comparison opens/closes — `key` keeps it identity-matched so its CardImages never remount.
-  //
-  // While comparison is ACTIVE it's hidden via `visibility: hidden` + `opacity: 0` (paint-only,
-  // no reflow; keeps the subtree laid out so lazy CardImages still load; drops it from the a11y
-  // tree + tab order). On EXIT it fades back in, but DELAYED past the comparison overlay's chrome
-  // fade so the two layouts never overlap — see DEFAULT_VIEW_FADE_DELAY_MS.
-  const scrollAreaRevealStyle: React.CSSProperties =
-    isMobile && !!comparisonPair
-      ? {visibility: 'hidden', opacity: 0}
-      : isExiting
-        ? {opacity: 1, transition: `opacity ${DEFAULT_VIEW_FADE_MS}ms ease-out ${DEFAULT_VIEW_FADE_DELAY_MS}ms`}
-        : {opacity: 1};
+  // Hiding it is paint-only (`visibility`/`opacity`) so the subtree stays laid out, lazy
+  // CardImages still load, and there is zero reflow. See pickScrollAreaRevealStyle.
+  const scrollAreaRevealStyle = pickScrollAreaRevealStyle({
+    isMobile,
+    comparisonActive: !!comparisonPair,
+    isExiting,
+  });
 
   const defaultBody = (
     <div

@@ -91,6 +91,117 @@ interface MobileComparisonViewProps {
   isExiting?: boolean;
 }
 
+/** Cancel an in-flight FLIP animation if one is present. */
+function cancelAnim(anim: Animation | null): void {
+  if (anim) anim.cancel();
+}
+
+/** Which tab the scroll-snap viewport is centered on, or null if it has no width yet. */
+function tabFromScroll(root: HTMLDivElement): TabName | null {
+  const cw = root.clientWidth;
+  if (!cw) return null;
+  return root.scrollLeft > cw / 2 ? 'community' : 'engine';
+}
+
+/** The card backing the open lightbox preview, or null when no preview is open. */
+function pickPreviewCard(
+  preview: PreviewState | null,
+  cardA: LorcanaCard,
+  cardB: LorcanaCard,
+): LorcanaCard | null {
+  if (!preview) return null;
+  return preview.which === 'a' ? cardA : cardB;
+}
+
+/**
+ * Owns the entry + exit FLIP for both card tiles, plus their refs. Entry: the cards converge on
+ * their side-by-side slots. Exit (`isExiting`): they reverse to their origin rects. Each effect
+ * cancels the prior in-flight animation so StrictMode's double-invoke can't stack competing
+ * transforms.
+ */
+function useComparisonFlip(originRects: ComparisonOriginRects | null, isExiting: boolean) {
+  const cardARef = useRef<HTMLButtonElement>(null);
+  const cardBRef = useRef<HTMLButtonElement>(null);
+  const flipA = useRef<Animation | null>(null);
+  const flipB = useRef<Animation | null>(null);
+  const rectA = originRects ? originRects.cardA : null;
+  const rectB = originRects ? originRects.cardB : null;
+
+  useLayoutEffect(() => {
+    flipA.current = runCardFlip(cardARef.current, rectA, 'entry');
+    flipB.current = runCardFlip(cardBRef.current, rectB, 'entry');
+    const a = flipA.current;
+    const b = flipB.current;
+    return () => {
+      cancelAnim(a);
+      cancelAnim(b);
+    };
+  }, [rectA, rectB]);
+
+  useEffect(() => {
+    if (!isExiting) return;
+    cancelAnim(flipA.current);
+    cancelAnim(flipB.current);
+    flipA.current = runCardFlip(cardARef.current, rectA, 'exit');
+    flipB.current = runCardFlip(cardBRef.current, rectB, 'exit');
+    const a = flipA.current;
+    const b = flipB.current;
+    return () => {
+      cancelAnim(a);
+      cancelAnim(b);
+    };
+  }, [isExiting, rectA, rectB]);
+
+  return {cardARef, cardBRef};
+}
+
+/**
+ * Wires the scroll-snap viewport to the active-tab indicator. Swiping the strip updates the
+ * indicator; tapping a tab smooth-scrolls the strip — both converge on the same `activeTab`.
+ * The `last` guard skips redundant setState for in-progress swipes that don't cross the midpoint.
+ */
+function useTabScrollSync() {
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<TabName>('engine');
+
+  useEffect(() => {
+    const root = viewportRef.current;
+    if (!root) return;
+    let last: TabName | null = null;
+    const update = () => {
+      const next = tabFromScroll(root);
+      if (next && next !== last) {
+        last = next;
+        setActiveTab(next);
+      }
+    };
+    update();
+    root.addEventListener('scroll', update, {passive: true});
+    return () => root.removeEventListener('scroll', update);
+  }, []);
+
+  const scrollToTab = useCallback((name: TabName) => {
+    const root = viewportRef.current;
+    if (!root) return;
+    const target = root.querySelector<HTMLDivElement>(`[data-panel="${name}"]`);
+    if (!target) return;
+    setActiveTab(name); // optimistic — observer confirms once the smooth-scroll lands
+    target.scrollIntoView({behavior: 'smooth', inline: 'start', block: 'nearest'});
+  }, []);
+
+  return {viewportRef, activeTab, scrollToTab};
+}
+
+/** Entry fade-in driver: false on mount, flips true after the first frame. */
+function useRevealedAfterMount(): boolean {
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setRevealed(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  return revealed;
+}
+
 /**
  * Mobile comparison view — replaces the desktop two-column layout with a tabbed swipe-deck
  * (#332 #5). Top: cards side-by-side with cost/ink/magnify overlays. Middle: Score Chevrons
@@ -112,108 +223,35 @@ interface PreviewState {
 
 export function MobileComparisonView({pair, engineScore, originRects = null, isExiting = false}: MobileComparisonViewProps) {
   const {cardA, cardB} = pair;
-  const [activeTab, setActiveTab] = useState<TabName>('engine');
   const [preview, setPreview] = useState<PreviewState | null>(null);
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const cardARef = useRef<HTMLButtonElement>(null);
-  const cardBRef = useRef<HTMLButtonElement>(null);
-  // One in-flight FLIP animation per card. Cancelled before a new one starts so two animations
-  // never compete on `transform` (the StrictMode double-invoke / fast-reverse hazard).
-  const flipA = useRef<Animation | null>(null);
-  const flipB = useRef<Animation | null>(null);
+  const {cardARef, cardBRef} = useComparisonFlip(originRects, isExiting);
+  const {viewportRef, activeTab, scrollToTab} = useTabScrollSync();
+  const revealed = useRevealedAfterMount();
 
-  // The pair-score hook is shared with CommunityColumn's call via the module-level cache —
-  // duplicate calls dedupe, no extra fetches. We need the score here too so the Community
-  // tab pill can show a numeric score (or `—` when below threshold).
+  // pair-score is shared with CommunityColumn's call via the module-level cache — duplicate
+  // calls dedupe. The Community tab pill shows this score (or `—` when below threshold).
   const {score} = usePairScore(cardA.id, cardB.id);
   const communityScore = score && score.score_votes >= 5 ? Number(score.avg_score) : null;
 
-  // Entry FLIP — BOTH cards converge on their side-by-side slots: Card A shrinks from its big
-  // default-view image, Card B grows from the tapped synergy tile. The cleanup cancel() keeps
-  // StrictMode's double-invoke from stacking competing transform animations.
-  useLayoutEffect(() => {
-    flipA.current = runCardFlip(cardARef.current, originRects?.cardA, 'entry');
-    flipB.current = runCardFlip(cardBRef.current, originRects?.cardB, 'entry');
-    const a = flipA.current;
-    const b = flipB.current;
-    return () => {
-      a?.cancel();
-      b?.cancel();
-    };
-  }, [originRects]);
-
-  // Exit FLIP — on BACK, both cards reverse: Card A grows back to its big image, Card B shrinks
-  // back to the synergy tile. `fill: forwards` holds each at its origin until the parent unmounts
-  // the view. As the overlay fades, each card dissolves into the real element underneath.
-  useEffect(() => {
-    if (!isExiting) return;
-    flipA.current?.cancel();
-    flipB.current?.cancel();
-    flipA.current = runCardFlip(cardARef.current, originRects?.cardA, 'exit');
-    flipB.current = runCardFlip(cardBRef.current, originRects?.cardB, 'exit');
-    const a = flipA.current;
-    const b = flipB.current;
-    return () => {
-      a?.cancel();
-      b?.cancel();
-    };
-  }, [isExiting, originRects]);
-
-  // Root fades IN on mount (entry). It does NOT fade out as a whole on exit — that uniform
-  // crossfade ghosted the comparison chrome over the default view underneath. Exit is
-  // choreographed per-element via chromeExitStyle / cardsExitStyle below.
-  const [revealed, setRevealed] = useState(false);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setRevealed(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
+  // Root fades IN on mount; it does NOT fade out as a whole on exit (that uniform crossfade
+  // ghosted the chrome over the default view). Exit is choreographed per-element below.
   const rootOpacity = revealed ? 1 : 0;
-
   // Chrome (glow orbs, tab bar, panels) fades out fast — nothing in the default view replaces it.
   const chromeExitStyle: React.CSSProperties = {
     opacity: isExiting ? 0 : 1,
     transition: `opacity ${CHROME_EXIT_FADE_MS}ms ease-out`,
   };
-  // The cards stay fully opaque so the FLIP back home reads as real travel; once it has mostly
-  // landed (delay), a short tail-fade dissolves them into the real cards showing through.
+  // Cards stay fully opaque through the FLIP, then a short delayed tail-fade dissolves them
+  // into the real cards showing through underneath.
   const cardsExitStyle: React.CSSProperties = isExiting
     ? {opacity: 0, transition: `opacity ${CARDS_TAIL_FADE_MS}ms ease-out ${CARDS_TAIL_FADE_DELAY_MS}ms`}
     : {opacity: 1};
-
-  // Tab indicator follows scroll position. Update only when the active tab actually changes
-  // so React bails out for in-progress swipes that don't cross the midpoint.
-  useEffect(() => {
-    const root = viewportRef.current;
-    if (!root) return;
-    let last: TabName | null = null;
-    const update = () => {
-      const cw = root.clientWidth;
-      if (!cw) return;
-      const next: TabName = root.scrollLeft > cw / 2 ? 'community' : 'engine';
-      if (next !== last) {
-        last = next;
-        setActiveTab(next);
-      }
-    };
-    update();
-    root.addEventListener('scroll', update, {passive: true});
-    return () => root.removeEventListener('scroll', update);
-  }, []);
-
-  const scrollToTab = useCallback((name: TabName) => {
-    const root = viewportRef.current;
-    if (!root) return;
-    const target = root.querySelector<HTMLDivElement>(`[data-panel="${name}"]`);
-    if (!target) return;
-    setActiveTab(name); // optimistic — observer confirms once the smooth-scroll lands
-    target.scrollIntoView({behavior: 'smooth', inline: 'start', block: 'nearest'});
-  }, []);
 
   const onCardTap = useCallback((which: 'a' | 'b', tileEl: HTMLElement) => {
     setPreview({which, originRect: tileEl.getBoundingClientRect()});
   }, []);
 
-  const previewCard = preview?.which === 'a' ? cardA : preview?.which === 'b' ? cardB : null;
+  const previewCard = pickPreviewCard(preview, cardA, cardB);
 
   return (
     <div
