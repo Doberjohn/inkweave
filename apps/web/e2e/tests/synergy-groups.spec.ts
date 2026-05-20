@@ -2,136 +2,112 @@ import {test, expect} from '../fixtures';
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Anna - Diplomatic Queen: shift-targets (direct) + discard (playstyle);
-// discard count read from synergy data at test time.
+// Anna - Diplomatic Queen: shift-targets (direct) + discard (playstyle). Discard is large enough
+// to be truncated in the modal's default state, so it renders a "+N more" tile. Group sizes are
+// read from the precomputed synergy data so the fixture survives Set 12+ pool drift.
 const CARD_URL = '/card/1041';
 const CARD_ID = '1041';
 
-// Read the precomputed synergy data for the fixture card to derive expected
-// group sizes at test time. This avoids hardcoding counts that drift as
-// Set 12+ preview cards are added/removed from the pool.
 interface SynergyGroup {
   groupKey: string;
   synergies: unknown[];
 }
-interface SynergyFile {
+interface SynergyData {
   groups: SynergyGroup[];
 }
-
-const synergyDataPath = path.resolve(
-  process.cwd(),
-  'public/data/synergies',
-  `${CARD_ID}.json`,
+const synergyData: SynergyData = JSON.parse(
+  fs.readFileSync(path.resolve(process.cwd(), 'public/data/synergies', `${CARD_ID}.json`), 'utf8'),
 );
-const synergyData: SynergyFile = JSON.parse(fs.readFileSync(synergyDataPath, 'utf8'));
-const DISCARD_TOTAL =
-  synergyData.groups.find((g) => g.groupKey === 'discard')?.synergies.length ?? 0;
-if (DISCARD_TOTAL === 0) {
+// Coalesce `groups` once so a malformed JSON (missing `groups`) consistently falls through to
+// the custom fixture error below, rather than a cryptic TypeError at one unguarded access.
+const groups = synergyData.groups ?? [];
+const discardGroup = groups.find((g) => g.groupKey === 'discard');
+if (!discardGroup || discardGroup.synergies.length <= 3 || groups.length < 2) {
   throw new Error(
-    `No 'discard' group found for card ${CARD_ID} in ${synergyDataPath}. ` +
-      `Fixture is broken — is the card still in the pool?`,
+    `Fixture broken: card ${CARD_ID} must have 2+ synergy groups including a 'discard' group ` +
+      `with >3 synergies (a truncated group with a "+N more" tile). Is the card still in the pool?`,
   );
 }
-const DESKTOP_TRUNCATION_LIMIT = 12;
-const DESKTOP_OVERFLOW = DISCARD_TOTAL - DESKTOP_TRUNCATION_LIMIT;
 
-// NOTE: This file tested the old card detail page's synergy-breakdown sidebar + chip filter UX,
-// plus a 12-card desktop truncation policy. The CardOverviewModal redesign (#320) replaces:
-//   - The synergy-breakdown sidebar (deleted with CardDetailPanel)
-//   - The "All" chip (modal uses no-active-filter to show all)
-//   - 12-card truncation (modal uses 3 in default state, 11 when filtered)
-// Skipping until rewritten for the new modal-based flow. The new chip-filter behavior is
-// covered in `synergy-detail-modal.spec.ts`.
-test.describe.skip('Synergy Groups — Desktop', () => {
-  test.beforeEach(async ({page, synergyResultsPage}, testInfo) => {
+/**
+ * Default-mode CardOverviewModal interactions — chip filtering and "+N more" expansion. Both set
+ * `activeGroupFilter`, switching the modal into the focused single-group state
+ * (`data-state="focused"`). Replaces this file's pre-#320 card-detail-page tests, which were
+ * `describe.skip`'d after the modal redesign removed the route-rendered synergy sidebar.
+ */
+test.describe('Synergy groups — modal default mode (desktop)', () => {
+  test.beforeEach(async ({page, appPage}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
     await page.goto(CARD_URL);
-    await synergyResultsPage.waitForSynergiesLoaded();
+    await appPage.cardOverviewModal.waitFor({state: 'visible', timeout: 10000});
+    await expect(appPage.cardOverviewModal.locator('[data-group-key]').first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
-  test('should render both direct and playstyle synergy groups', async ({synergyResultsPage}) => {
-    // Direct group: Shift Targets
-    const shiftGroup = synergyResultsPage.getSynergyGroupByKey('shift-targets');
-    await expect(shiftGroup).toBeVisible();
+  test('a group chip toggles the modal between focused and default', async ({appPage}) => {
+    const modal = appPage.cardOverviewModal;
+    expect(await modal.locator('[data-group-key]').count()).toBeGreaterThan(1);
+    await expect(modal).toHaveAttribute('data-state', 'default');
 
-    // Playstyle group: Discard
-    const discardGroup = synergyResultsPage.getSynergyGroupByKey('discard');
-    await expect(discardGroup).toBeVisible();
-  });
-
-  test('should show synergy breakdown sidebar with group labels', async ({page}) => {
-    const breakdown = page.getByTestId('synergy-breakdown');
-    await expect(breakdown).toBeVisible();
-
-    // Breakdown should mention both group labels
-    await expect(breakdown.getByText('Shift Targets')).toBeVisible();
-    await expect(breakdown.getByText('Discard')).toBeVisible();
-  });
-
-  test('should filter synergy groups when clicking a group chip', async ({
-    page,
-    synergyResultsPage,
-  }) => {
-    // Both groups initially visible
-    await expect(synergyResultsPage.getSynergyGroupByKey('shift-targets')).toBeVisible();
-    await expect(synergyResultsPage.getSynergyGroupByKey('discard')).toBeVisible();
-
-    // Click the "Discard" chip to filter to only that group
-    const discardChip = page.getByRole('button', {name: 'Discard', exact: true});
+    // Filter chips are the only buttons carrying aria-pressed.
+    const discardChip = modal.locator('button[aria-pressed]').filter({hasText: 'Discard'});
     await discardChip.click();
-    await page.waitForTimeout(200);
 
-    // Only discard group should be visible
-    await expect(synergyResultsPage.getSynergyGroupByKey('discard')).toBeVisible();
-    await expect(synergyResultsPage.getSynergyGroupByKey('shift-targets')).not.toBeVisible();
+    // Focused: only the discard group remains and the chip reads pressed.
+    await expect(modal).toHaveAttribute('data-state', 'focused');
+    await expect(discardChip).toHaveAttribute('aria-pressed', 'true');
+    await expect(modal.locator('[data-group-key]')).toHaveCount(1);
+    await expect(modal.locator('[data-group-key="discard"]')).toBeVisible();
 
-    // Click "All" chip to reset
-    const allChip = page.getByRole('button', {name: 'All', exact: true});
-    await allChip.click();
-    await page.waitForTimeout(200);
-
-    // Both groups visible again
-    await expect(synergyResultsPage.getSynergyGroupByKey('shift-targets')).toBeVisible();
-    await expect(synergyResultsPage.getSynergyGroupByKey('discard')).toBeVisible();
+    // Clicking the active chip again clears the filter.
+    await discardChip.click();
+    await expect(modal).toHaveAttribute('data-state', 'default');
+    expect(await modal.locator('[data-group-key]').count()).toBeGreaterThan(1);
   });
 
-  test('should show all direct group cards inline without more tile', async ({
-    synergyResultsPage,
-  }) => {
-    // Direct group (shift-targets) has 3 cards — all should be visible, no more tile
-    const tiles = synergyResultsPage.getGroupCardTiles('shift-targets');
-    await expect(tiles.first()).toBeVisible({timeout: 5000});
-    const count = await tiles.count();
-    expect(count).toBe(3);
-
-    const moreTile = synergyResultsPage.getMoreTile('shift-targets');
-    await expect(moreTile).toHaveCount(0);
-  });
-
-  test('should truncate playstyle group and show more tile', async ({synergyResultsPage}) => {
-    // Discard group exceeds the 12-card truncation threshold on desktop
-    const discardGroup = synergyResultsPage.getSynergyGroupByKey('discard');
-    await expect(discardGroup).toBeVisible();
-
-    // Wait for card tiles to render within the group
-    const tiles = synergyResultsPage.getGroupCardTiles('discard');
-    await expect(tiles.first()).toBeVisible({timeout: 5000});
-    const count = await tiles.count();
-    expect(count).toBe(12);
-
-    // "+N more" tile should be visible with remaining count
-    const moreTile = synergyResultsPage.getMoreTile('discard');
+  test('the "+N more" tile expands its group', async ({appPage}) => {
+    const modal = appPage.cardOverviewModal;
+    const moreTile = modal.locator('[data-group-key="discard"] [data-testid="more-tile"]');
     await expect(moreTile).toBeVisible();
-    await expect(moreTile).toContainText(String(DESKTOP_OVERFLOW));
+    await moreTile.click();
+
+    // Expanding routes through the same activeGroupFilter → focused single-group view.
+    await expect(modal).toHaveAttribute('data-state', 'focused');
+    await expect(modal.locator('[data-group-key]')).toHaveCount(1);
+    await expect(modal.locator('[data-group-key="discard"]')).toBeVisible();
+  });
+});
+
+test.describe('Synergy groups — modal default mode (mobile)', () => {
+  test.beforeEach(async ({page, appPage}, testInfo) => {
+    if (!testInfo.project.name.startsWith('mobile-')) test.skip();
+    await page.goto(CARD_URL);
+    await appPage.cardOverviewModal.waitFor({state: 'visible', timeout: 10000});
+    await expect(appPage.cardOverviewModal.locator('[data-group-key]').first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
-  test('should display group description callout text', async ({synergyResultsPage}) => {
-    // The discard group should have a description callout
-    const discardGroup = synergyResultsPage.getSynergyGroupByKey('discard');
-    await expect(discardGroup.getByText(/discard/i).first()).toBeVisible();
+  test('a group chip filters the modal to that group', async ({appPage}) => {
+    const modal = appPage.cardOverviewModal;
+    expect(await modal.locator('[data-group-key]').count()).toBeGreaterThan(1);
 
-    // The shift-targets group should also have a description
-    const shiftGroup = synergyResultsPage.getSynergyGroupByKey('shift-targets');
-    await expect(shiftGroup.getByText(/shift/i).first()).toBeVisible();
+    const discardChip = modal.locator('button[aria-pressed]').filter({hasText: 'Discard'});
+    await discardChip.click();
+
+    await expect(modal).toHaveAttribute('data-state', 'focused');
+    await expect(modal.locator('[data-group-key]')).toHaveCount(1);
+    await expect(modal.locator('[data-group-key="discard"]')).toBeVisible();
+  });
+
+  test('the "+N more" tile expands its group', async ({appPage}) => {
+    const modal = appPage.cardOverviewModal;
+    const moreTile = modal.locator('[data-group-key="discard"] [data-testid="more-tile"]');
+    await expect(moreTile).toBeVisible();
+    await moreTile.click();
+
+    await expect(modal).toHaveAttribute('data-state', 'focused');
+    await expect(modal.locator('[data-group-key]')).toHaveCount(1);
   });
 });

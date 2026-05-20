@@ -430,7 +430,7 @@ Dark fantasy theme inspired by Lorcana:
 
 ### Design Session Workflow (HTML/CSS Mockups)
 
-Inkweave uses iterative HTML/CSS mockups instead of Figma. Mockups live in `apps/web/public/mockups/` and are the source of truth for visual design before React implementation.
+Inkweave uses iterative HTML/CSS mockups instead of Figma. Mockups live in `apps/web/public/mockups/` — a **git-ignored, local-only** scratch folder for pre-code design work; the files are never committed. They are the working reference for visual design during a design session, before React implementation.
 
 #### Session Structure
 1. **Start**: Read ALL mockup files in parallel before making any changes. Never work from memory of a previous session — files may have changed.
@@ -536,7 +536,6 @@ afterward (or note it in the PR description so I can refresh it later):
 | `apps/web/src/assets/*.svg` | Ink icons + inkable/uninkable glyphs |
 | `apps/web/public/art/playstyles/` | Playstyle cover imagery |
 | `apps/web/public/art/franchises/` | Franchise cover imagery |
-| `apps/web/public/mockups/` | Pre-React HTML/CSS mockups |
 | The "Design Session Workflow", "UI Theme", and "Design Token Changes" sections in this file | Design language + token-edit playbook |
 
 ### How to refresh

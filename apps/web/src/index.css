@@ -160,6 +160,23 @@ option {
   animation-delay: -1.8s;
 }
 
+/* Hide horizontal scrollbar on the mobile comparison tab viewport + each panel wrap.
+   Inline styles can set scrollbar-width but cannot target the ::-webkit-scrollbar pseudo,
+   so the classes live here. Used by MobileComparisonView (#332 #5). */
+.mobile-tab-viewport::-webkit-scrollbar,
+.mobile-tab-panel-wrap::-webkit-scrollbar { display: none; }
+
+/* Mobile lightbox scrim fade-in (#332 #5). The card itself reveals via a JS FLIP from the
+   originating tile (see MobileLightbox.tsx) — only the scrim animates via CSS. Declared as a
+   named class so the prefers-reduced-motion block below can disable it. */
+@keyframes mobile-lightbox-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.mobile-lightbox-scrim {
+  animation: mobile-lightbox-fade-in 250ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 /* Click acknowledgment beat for synergy tiles (#332 #6 idea B).
    Adds a 90ms scale-bump (0.94 then back to 1) on the clicked tile before
    the FLIP fires. Gives the click a tactile "I heard you" beat distinct from
@@ -225,6 +242,11 @@ option {
   /* Skip the click-ack scale-bump. JS also short-circuits the 90ms delay
      when reduced-motion is set, so the FLIP fires immediately. */
   .tile-click-ack {
+    animation: none !important;
+  }
+  /* Skip the mobile lightbox scrim fade — appears at full opacity instantly. The card's FLIP
+     reveal is JS-driven and separately guarded by prefersReducedMotion() in MobileLightbox. */
+  .mobile-lightbox-scrim {
     animation: none !important;
   }
 }

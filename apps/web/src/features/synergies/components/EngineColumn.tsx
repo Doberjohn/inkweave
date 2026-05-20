@@ -11,12 +11,57 @@ interface EngineColumnProps {
   pair: DetailedPairSynergy;
   engineScore: number;
   onHighlight?: (id: 'a' | 'b' | null) => void;
+  /**
+   * Compact mode for the mobile comparison view (#332 #5). Skips the ColumnHeader and outer
+   * tinted panel wrapper — the tab pill above already carries the title + score, and the
+   * MobileComparisonView panel container owns the surrounding spacing/padding. Renders just
+   * the connection stack + QuickVoteControl.
+   */
+  compact?: boolean;
 }
 
-export function EngineColumn({pair, engineScore, onHighlight}: EngineColumnProps) {
+export function EngineColumn({pair, engineScore, onHighlight, compact = false}: EngineColumnProps) {
   const {cardA, cardB, connections} = pair;
   const connectionGroups = groupConnections(connections);
   const quickVote = useQuickVote(cardA.id, cardB.id);
+
+  const connectionStack = connectionGroups.length > 0 ? (
+    <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.section}}>
+      {connectionGroups.map((group) => (
+        <ConnectionGroup
+          key={group.key}
+          group={group}
+          cardA={cardA}
+          cardB={cardB}
+          onHighlight={onHighlight}
+        />
+      ))}
+    </div>
+  ) : null;
+
+  const quickVoteEl = (
+    <QuickVoteControl
+      state={quickVote.state}
+      onVote={quickVote.vote}
+      distribution={quickVote.distribution}
+      distributionLoading={quickVote.distributionLoading}
+      userChoice={quickVote.userChoice}
+      error={quickVote.error}
+      engineScore={engineScore}
+    />
+  );
+
+  if (compact) {
+    // Mobile path — no ColumnHeader (tab pill replaces it), no outer panel wrapper (parent
+    // controls spacing). Returns the connection stack + quick vote as direct flex children
+    // of the parent panel; the parent's `gap` controls vertical rhythm between them.
+    return (
+      <>
+        {connectionStack}
+        {quickVoteEl}
+      </>
+    );
+  }
 
   const ruleCount = connectionGroups.length;
   const ruleLabel = `${ruleCount} ${ruleCount === 1 ? 'rule' : 'rules'} contributing`;
@@ -63,30 +108,12 @@ export function EngineColumn({pair, engineScore, onHighlight}: EngineColumnProps
           </span>
         }
       />
-      {connectionGroups.length > 0 && (
+      {connectionStack && (
         // marginBottom adds breathing room between the last ability row and the QuickVoteControl
         // below — the EngineColumn's outer gap (SPACING.section) wasn't enough on its own.
-        <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.section, marginBottom: SPACING.section}}>
-          {connectionGroups.map((group) => (
-            <ConnectionGroup
-              key={group.key}
-              group={group}
-              cardA={cardA}
-              cardB={cardB}
-              onHighlight={onHighlight}
-            />
-          ))}
-        </div>
+        <div style={{marginBottom: SPACING.section}}>{connectionStack}</div>
       )}
-      <QuickVoteControl
-        state={quickVote.state}
-        onVote={quickVote.vote}
-        distribution={quickVote.distribution}
-        distributionLoading={quickVote.distributionLoading}
-        userChoice={quickVote.userChoice}
-        error={quickVote.error}
-        engineScore={engineScore}
-      />
+      {quickVoteEl}
     </section>
   );
 }

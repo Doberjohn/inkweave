@@ -5,6 +5,7 @@ import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
 import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';
+import {MobileComparisonView, type ComparisonOriginRects} from './MobileComparisonView';
 import {CardImage, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
@@ -70,6 +71,8 @@ interface ModalState {
    * and PairConnector stay mounted long enough to animate out. Cleared after FLIP_DURATION.
    */
   exitingPair: DetailedPairSynergy | null;
+  /** Origin rects for the mobile comparison FLIP — see {@link ComparisonOriginRects}. */
+  comparisonOrigin: ComparisonOriginRects | null;
   highlightedCard: 'a' | 'b' | null;
   setHighlightedCard: (card: 'a' | 'b' | null) => void;
   visibleGroups: SynergyGroupData[];
@@ -104,6 +107,9 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   // FLIP layoutEffect at exit time (not captured here) so this callback has no ref access —
   // keeping it analyzable as a pure event handler by React Compiler.
   const [exitingPair, setExitingPair] = useState<DetailedPairSynergy | null>(null);
+  // Origin rects (Card A big image + tapped synergy tile) captured at click time, consumed by
+  // the mobile MobileComparisonView entry/exit FLIP. Survives the exit window for the FLIP-back.
+  const [comparisonOrigin, setComparisonOrigin] = useState<ComparisonOriginRects | null>(null);
 
   const cancelPendingExit = useCallback(() => {
     setExitingPair(null);
@@ -191,6 +197,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
       modalRef,
       captureStartRect,
       setComparisonPair,
+      setComparisonOrigin,
       getPairSynergies: props.getPairSynergies,
       onEnterComparison: props.onEnterComparison,
       clickAckTimeoutRef,
@@ -206,6 +213,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
     activeGroupFilter,
     comparisonPair,
     exitingPair,
+    comparisonOrigin,
     highlightedCard,
     setHighlightedCard,
     visibleGroups,
@@ -249,6 +257,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
     activeGroupFilter,
     comparisonPair,
     exitingPair,
+    comparisonOrigin,
     highlightedCard,
     setHighlightedCard,
     visibleGroups,
@@ -306,29 +315,24 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               toggleChip={toggleChip}
             />
             <HeroDivider hasSynergies={synergies.length > 0} inComparison={inComparison} />
-            <ModalBody isMobile={isMobile} inComparison={inComparison} cardHeight={cardHeight}>
-              <CardsRow
+            <ModalBody>
+              <MobileOrDesktopBody
+                isMobile={isMobile}
                 card={card}
                 cardWidth={cardWidth}
                 cardHeight={cardHeight}
-                isMobile={isMobile}
                 synergies={synergies}
                 synergiesLoading={synergiesLoading}
                 visibleGroups={visibleGroups}
                 activeGroupFilter={activeGroupFilter}
                 comparisonPair={comparisonPair}
                 exitingPair={exitingPair}
+                comparisonOrigin={comparisonOrigin}
                 highlightedCard={highlightedCard}
                 inComparison={inComparison}
                 compareCardRef={compareCardRef}
                 onShowAll={handleShowAll}
                 onCardClick={handleSynergyCardClick}
-              />
-              <ComparisonDetailPanel
-                isMobile={isMobile}
-                inComparison={inComparison}
-                comparisonPair={comparisonPair}
-                exitingPair={exitingPair}
                 setHighlightedCard={setHighlightedCard}
               />
             </ModalBody>
@@ -518,6 +522,8 @@ interface SynergyCardClickInput {
   modalRef: React.RefObject<HTMLDivElement | null>;
   captureStartRect: (rect: DOMRect | null) => void;
   setComparisonPair: (p: DetailedPairSynergy | null) => void;
+  /** Stores Card A + Card B origin rects for the mobile MobileComparisonView entry/exit FLIP. */
+  setComparisonOrigin: (origin: ComparisonOriginRects | null) => void;
   getPairSynergies: (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null;
   onEnterComparison?: (partnerId: string, groupKey?: string) => void;
   /**
@@ -543,18 +549,27 @@ function isPairClickActionable(pair: DetailedPairSynergy | null): pair is Detail
 
 interface FireComparisonInput {
   pair: DetailedPairSynergy;
+  /** The tapped synergy tile (Card B's origin). */
   tileEl: HTMLElement | null;
+  /** Card A's big-image element in the default view (Card A's FLIP origin). */
+  cardAEl: HTMLElement | null;
   clickedCard: LorcanaCard;
   groupKey: string | undefined;
   captureStartRect: (rect: DOMRect | null) => void;
   setComparisonPair: (p: DetailedPairSynergy | null) => void;
+  setComparisonOrigin: (origin: ComparisonOriginRects | null) => void;
   onEnterComparison?: (partnerId: string, groupKey?: string) => void;
   clickAckTimeoutRef: React.MutableRefObject<number | null>;
 }
 
-/** FLIP-start side effect: capture the source rect, set the comparison pair, notify the parent. */
-function fireComparison({pair, tileEl, clickedCard, groupKey, captureStartRect, setComparisonPair, onEnterComparison, clickAckTimeoutRef}: FireComparisonInput): void {
-  captureStartRect(tileEl ? tileEl.getBoundingClientRect() : null);
+/** FLIP-start side effect: capture both cards' origin rects, set the comparison pair, notify. */
+function fireComparison({pair, tileEl, cardAEl, clickedCard, groupKey, captureStartRect, setComparisonPair, setComparisonOrigin, onEnterComparison, clickAckTimeoutRef}: FireComparisonInput): void {
+  // Measured here, before setComparisonPair swaps the view away. The Card B (tile) rect also
+  // feeds the desktop useFLIPAnimation via captureStartRect.
+  const cardBRect = tileEl ? tileEl.getBoundingClientRect() : null;
+  const cardARect = cardAEl ? cardAEl.getBoundingClientRect() : null;
+  captureStartRect(cardBRect);
+  setComparisonOrigin({cardA: cardARect, cardB: cardBRect});
   setComparisonPair(pair);
   onEnterComparison?.(clickedCard.id, groupKey);
   clickAckTimeoutRef.current = null;
@@ -578,15 +593,17 @@ function triggerClickAck(tileEl: HTMLElement, onComplete: () => void, timeoutRef
   }, CLICK_ACK_DURATION_MS);
 }
 
-function invokeSynergyCardClick({clickedCard, groupKey, modalRef, captureStartRect, setComparisonPair, getPairSynergies, onEnterComparison, clickAckTimeoutRef}: SynergyCardClickInput) {
+function invokeSynergyCardClick({clickedCard, groupKey, modalRef, captureStartRect, setComparisonPair, setComparisonOrigin, getPairSynergies, onEnterComparison, clickAckTimeoutRef}: SynergyCardClickInput) {
   if (clickAckTimeoutRef.current !== null) return;
   const pair = getPairSynergies(clickedCard, groupKey);
   if (!isPairClickActionable(pair)) return;
   const tileEl = modalRef.current?.querySelector(
     `[data-card-id="${clickedCard.id}"]`,
   ) as HTMLElement | null;
+  // Card A's big image in the default view — its FLIP origin for the mobile transition.
+  const cardAEl = modalRef.current?.querySelector('[data-comparison-card-a]') as HTMLElement | null;
   const fireInput: FireComparisonInput = {
-    pair, tileEl, clickedCard, groupKey, captureStartRect, setComparisonPair, onEnterComparison, clickAckTimeoutRef,
+    pair, tileEl, cardAEl, clickedCard, groupKey, captureStartRect, setComparisonPair, setComparisonOrigin, onEnterComparison, clickAckTimeoutRef,
   };
   if (!tileEl) {
     // No tile element to bump (shouldn't happen in practice — every SynergyCard has
@@ -827,28 +844,134 @@ function HeroDivider({hasSynergies, inComparison}: HeroDividerProps) {
 }
 
 interface ModalBodyProps {
-  isMobile: boolean;
-  inComparison: boolean;
-  cardHeight: number;
   children: React.ReactNode;
 }
 
-function ModalBody({isMobile, inComparison, children}: ModalBodyProps) {
+/**
+ * Non-scrolling positioned frame for the modal's body region. Scrolling + padding live in the
+ * default-view ScrollArea inside (see MobileOrDesktopBody). Keeping ModalBody itself
+ * non-scrolling is what lets the mobile MobileComparisonView — a `position: absolute` overlay
+ * anchored here — stay put: an absolute child of a scroll container would scroll out of view.
+ */
+function ModalBody({children}: ModalBodyProps) {
   return (
+    <div style={{flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', position: 'relative'}}>
+      {children}
+    </div>
+  );
+}
+
+interface MobileOrDesktopBodyProps extends CardsRowProps {
+  setHighlightedCard: (card: 'a' | 'b' | null) => void;
+  /** Card A + Card B origin rects — drive the mobile MobileComparisonView entry/exit FLIP. */
+  comparisonOrigin: ComparisonOriginRects | null;
+}
+
+/**
+ * Default-view exit reveal (#332 #5). On exit the default view fades back IN, but DELAYED — the
+ * delay must clear MobileComparisonView's chrome fade (`CHROME_EXIT_FADE_MS`, ~200ms) so the
+ * comparison layout and the default layout are never both visible. Overlapping them is what
+ * produced the cross-layout ghosting; sequencing the fades removes it.
+ */
+const DEFAULT_VIEW_FADE_MS = 240;
+const DEFAULT_VIEW_FADE_DELAY_MS = 200;
+
+/**
+ * Default-view ScrollArea reveal style. Hidden (paint-only, no reflow) while a mobile comparison
+ * is active; fades back in — DELAYED past the overlay's chrome fade so the two layouts never
+ * overlap — during the exit window; plainly visible otherwise.
+ */
+function pickScrollAreaRevealStyle(args: {
+  isMobile: boolean;
+  comparisonActive: boolean;
+  isExiting: boolean;
+}): React.CSSProperties {
+  if (args.isMobile && args.comparisonActive) return {visibility: 'hidden', opacity: 0};
+  if (args.isExiting) {
+    return {
+      opacity: 1,
+      transition: `opacity ${DEFAULT_VIEW_FADE_MS}ms ease-out ${DEFAULT_VIEW_FADE_DELAY_MS}ms`,
+    };
+  }
+  return {opacity: 1};
+}
+
+/**
+ * Dispatch between the tabbed {@link MobileComparisonView} (mobile + comparison) and the
+ * default CardsRow + ComparisonDetailPanel layout (everything else).
+ *
+ * Layout stability is the design rule here (#332 #5): the default view lives in a
+ * permanently-mounted ScrollArea whose layout NEVER changes when comparison opens/closes, and
+ * MobileComparisonView is ALWAYS an absolute overlay on top of it. Entering/exiting comparison
+ * only toggles the ScrollArea's `visibility` (paint-only, zero reflow) and fades the overlay —
+ * it never repositions anything. That zero-reflow transition is what makes the mobile animation
+ * as smooth as desktop, which has always overlaid stable content.
+ */
+function MobileOrDesktopBody(props: MobileOrDesktopBodyProps) {
+  const {isMobile, comparisonPair, exitingPair, comparisonOrigin, setHighlightedCard, ...cardsRowProps} = props;
+  const mobilePair = isMobile ? (comparisonPair ?? exitingPair) : null;
+  // isExiting: comparisonPair cleared but exitingPair still set → the BACK-press exit window.
+  const isExiting = !!mobilePair && !comparisonPair && !!exitingPair;
+  const {inComparison} = cardsRowProps;
+
+  // The default view's ScrollArea is permanently mounted with a layout that NEVER changes when
+  // comparison opens/closes — `key` keeps it identity-matched so its CardImages never remount.
+  // Hiding it is paint-only (`visibility`/`opacity`) so the subtree stays laid out, lazy
+  // CardImages still load, and there is zero reflow. See pickScrollAreaRevealStyle.
+  const scrollAreaRevealStyle = pickScrollAreaRevealStyle({
+    isMobile,
+    comparisonActive: !!comparisonPair,
+    isExiting,
+  });
+
+  const defaultBody = (
     <div
+      key="default-body"
       style={{
         flex: 1,
         minHeight: 0,
+        position: 'relative',
+        overflowY: isMobile || inComparison ? 'auto' : 'hidden',
         padding: '20px 24px 24px',
         display: 'flex',
         flexDirection: 'column',
         gap: 16,
-        overflowY: isMobile || inComparison ? 'auto' : 'hidden',
-        position: 'relative',
+        ...scrollAreaRevealStyle,
       }}>
-      {children}
+      <CardsRow
+        {...cardsRowProps}
+        isMobile={isMobile}
+        comparisonPair={comparisonPair}
+        exitingPair={exitingPair}
+      />
+      <ComparisonDetailPanel
+        isMobile={isMobile}
+        inComparison={inComparison}
+        comparisonPair={comparisonPair}
+        exitingPair={exitingPair}
+        setHighlightedCard={setHighlightedCard}
+      />
     </div>
   );
+
+  if (mobilePair) {
+    // Comparison: the ScrollArea stays mounted (visibility:hidden while active, visible during
+    // exit); MobileComparisonView is an absolute overlay on top throughout — fading in on entry,
+    // fading out on exit. Neither transition repositions anything.
+    return (
+      <>
+        {defaultBody}
+        <MobileComparisonView
+          key="mobile-comparison-view"
+          pair={mobilePair}
+          engineScore={mobilePair.aggregateScore}
+          originRects={comparisonOrigin}
+          isExiting={isExiting}
+        />
+      </>
+    );
+  }
+  return defaultBody;
 }
 
 interface CardsRowProps {
@@ -976,22 +1099,27 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
     <div
       className={useGlow ? 'focused-card-glow' : undefined}
       style={pickCardWrapperStyle({isMobile, highlightedCard, inComparison})}>
-      <CardImage
-        src={card.imageUrl}
-        alt={card.fullName}
-        width={cardWidth}
-        height={cardHeight}
-        inkColor={card.ink}
-        cost={card.cost}
-        borderRadius={14}
-        // No style override: CardImage's root container already sets
-        // width/height in pixels, which reserves space before the image
-        // loads. The previous `style={{height:'auto'}}` collapsed that
-        // reservation and produced CLS=0.13 on /card/957 (lighthouserc
-        // threshold 0.1) — see commit 8fbe93c.
-        priority
-        lazy={false}
-      />
+      {/* Shrink-wrap span carrying the `data-comparison-card-a` marker — its rect is exactly
+          the card image (not the full-width flex wrapper), so the click handler captures the
+          correct FLIP origin for Card A's mobile comparison transition (#332 #5). */}
+      <span data-comparison-card-a style={{display: 'inline-block', lineHeight: 0}}>
+        <CardImage
+          src={card.imageUrl}
+          alt={card.fullName}
+          width={cardWidth}
+          height={cardHeight}
+          inkColor={card.ink}
+          cost={card.cost}
+          borderRadius={14}
+          // No style override: CardImage's root container already sets
+          // width/height in pixels, which reserves space before the image
+          // loads. The previous `style={{height:'auto'}}` collapsed that
+          // reservation and produced CLS=0.13 on /card/957 (lighthouserc
+          // threshold 0.1) — see commit 8fbe93c.
+          priority
+          lazy={false}
+        />
+      </span>
     </div>
   );
 }

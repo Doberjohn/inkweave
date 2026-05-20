@@ -188,4 +188,33 @@ test.describe('Mobile Viewport', () => {
     await expect(page.getByRole('button', {name: 'Filter by Sapphire'})).toBeVisible();
     await expect(page.getByRole('button', {name: 'Filter by Steel'})).toBeVisible();
   });
+
+  test('should close the overview modal via the close button', async ({appPage}) => {
+    await appPage.selectFeaturedCard();
+    await expect(appPage.cardOverviewModal).toBeVisible();
+
+    await appPage.cardOverviewModal.getByRole('button', {name: 'Close'}).click();
+    await expect(appPage.cardOverviewModal).toBeHidden();
+  });
+
+  test('should close the overview modal via backdrop tap', async ({appPage}) => {
+    await appPage.selectFeaturedCard();
+    await expect(appPage.cardOverviewModal).toBeVisible();
+
+    // dispatchEvent fires onClick directly — avoids hit-testing on the transparent backdrop.
+    await appPage.cardOverviewBackdrop.dispatchEvent('click');
+    await expect(appPage.cardOverviewModal).toBeHidden();
+  });
+
+  test('should open and dismiss the Mechanics bottom sheet on a playstyle page', async ({page}) => {
+    await page.goto('/playstyles/discard');
+
+    // The mobile playstyle detail view surfaces a Mechanics button that opens the bottom sheet.
+    await page.getByRole('button', {name: 'Mechanics'}).click();
+    const sheet = page.getByRole('dialog', {name: 'Mechanics filter'});
+    await expect(sheet).toBeVisible({timeout: 3000});
+
+    await page.getByTestId('mechanics-sheet-backdrop').dispatchEvent('click');
+    await expect(sheet).toBeHidden({timeout: 5000});
+  });
 });

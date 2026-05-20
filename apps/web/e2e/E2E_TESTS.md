@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-105 active tests across 18 spec files. Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+105 tests across 16 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
 
@@ -23,16 +23,21 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should display hero home page when app loads | Hero section, search input, featured cards, and ethereal background all render at `/` |
 | should display search input on home page | Hero search input is visible |
 | should show featured cards after loading | Featured cards grid has 1-12 card tiles |
-| should transition to card page when card is selected | Clicking a featured card navigates to `/card/:id`, shows compact header, hides hero |
+| should open the overview modal when a card is selected | Clicking a featured card opens the modal overlay-style; URL stays `/`, no compact header |
 
-## `card-detail.spec.ts` — 4 tests (desktop only)
+## `card-detail.spec.ts` — 7 tests (desktop only)
+
+CardOverviewModal — opening, closing, empty state, scroll lock.
 
 | Test | What it verifies |
 |---|---|
-| should render card name and image in detail panel | Card detail panel shows image, h1 heading with card name |
-| should render synergy breakdown when synergies exist | Either synergy breakdown or "no synergies" message is visible |
-| should deep link directly to a card page | Direct navigation to `/card/957` renders card detail panel + compact header |
-| should show card not found for invalid card ID | `/card/99999999` shows "Card not found" + Go Home button |
+| should render card name and image inside the overview modal | Modal shows card image + h1 with the card name |
+| should show synergy chips or empty state once data loads | Modal renders synergy groups, empty state, or error after async load |
+| should open the modal when deep-linking to /card/:id | `/card/957` opens the modal; URL redirects to `/` |
+| should not open the modal for an invalid card ID | `/card/99999999` → home, modal stays hidden |
+| should close the modal when Escape is pressed | Escape dismisses the modal, hero reappears |
+| should show the empty state for a card with no synergies | `/card/957` (no synergy file) renders `card-overview-empty` |
+| should lock background scroll while the modal is open | `document.body` overflow is `hidden` while open, restored on close |
 
 ## `card-search.spec.ts` — 6 tests (desktop only)
 
@@ -50,18 +55,18 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | Test | What it verifies |
 |---|---|
 | should show home state at root URL | Hero + featured cards visible, URL is `/` |
-| should display card detail panel when card is selected | Selecting a card navigates to `/card/:id`, shows detail panel + compact header |
-| should show synergy results area when card is selected | Card page shows either synergy count or "no synergies" message |
-| should clear selection and return to home | Back button navigates to `/`, hero reappears |
-| should return to home when clicking logo | Logo click navigates to `/`, hero reappears |
+| should open the card overview modal when a card is selected | Selecting a card opens the modal overlay-style; URL stays `/`, backdrop visible |
+| should show synergy results area when card is selected | Modal renders synergy groups, empty state, or error after async load |
+| should clear selection by closing the modal | ✕ button closes the modal; hero reachable, URL stays `/` |
+| should close the modal when the backdrop is clicked | Backdrop click closes the modal; hero reachable, URL stays `/` |
 
-## `mobile.spec.ts` — 13 tests (mobile only)
+## `mobile.spec.ts` — 15 tests (mobile only)
 
 | Test | What it verifies |
 |---|---|
 | should display hero home page on mobile | Hero, search input, and featured cards render on mobile viewport |
 | should show search input on home | "Search for a card..." placeholder is visible |
-| should navigate to card page when selecting a featured card | Card click navigates to `/card/:id`, shows synergies heading or "no synergies" |
+| should open the overview modal when selecting a featured card | Card tap opens the modal overlay-style; synergies load |
 | should show filter drawer on mobile browse | Navigate to `/browse`, tap filter icon, drawer shows Amber/Sapphire ink buttons |
 | should navigate to browse when searching from hero | Typing "Elsa" + Enter navigates to `/browse?q=Elsa`, hero hidden, browse heading visible |
 | should navigate to browsing view via Browse all cards CTA | "Browse all cards" CTA navigates away from hero, shows browse heading |
@@ -71,6 +76,9 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should show sort dropdown in browse toolbar | Sort select and Filters button both visible in browse toolbar |
 | should lock background scroll when filter drawer is open | Opening filter drawer sets body overflow to hidden |
 | should open filter drawer in mobile browsing view | From browsing view, tap Filters button, drawer shows Amber/Sapphire/Steel ink buttons |
+| should close the overview modal via the close button | ✕ button dismisses the modal on mobile |
+| should close the overview modal via backdrop tap | Backdrop tap dismisses the modal on mobile |
+| should open and dismiss the Mechanics bottom sheet on a playstyle page | Mechanics button opens the `Mechanics filter` sheet; backdrop tap dismisses it |
 
 ## `playstyle-pages.spec.ts` — 5 tests (desktop only)
 
@@ -86,9 +94,9 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 
 | Test | What it verifies |
 |---|---|
-| should use eager loading for above-fold featured cards | Featured card images have `loading="eager"` + `fetchpriority="high"` |
+| should use eager loading for above-fold featured cards | Featured card images have `loading="eager"` + `decoding="sync"` |
 | should render images in featured cards grid | Featured grid has images with valid `src` attributes |
-| should render image in card detail panel | Detail panel image is visible, not lazy-loaded, has valid src |
+| should render image in the card overview modal | The modal's primary card image renders with a valid `src` |
 | should use lazy loading for synergy card images | Synergy card images (below fold) use `loading="lazy"` |
 
 ## `search-autocomplete.spec.ts` — 5 tests (desktop only)
@@ -96,8 +104,8 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | Test | What it verifies |
 |---|---|
 | should show autocomplete dropdown when typing 2+ characters | Typing "El" in hero search shows listbox with options |
-| should navigate to card page when clicking a suggestion | Clicking an autocomplete suggestion navigates to `/card/:id` |
-| should navigate to card via keyboard (ArrowDown + Enter) | ArrowDown + Enter selects suggestion and navigates to card page |
+| should open card overview modal when clicking a suggestion | Clicking a suggestion opens the card modal; URL stays `/` |
+| should open card overview modal via keyboard (ArrowDown + Enter) | ArrowDown + Enter on a suggestion opens the card modal |
 | should close dropdown on Escape | Escape key dismisses autocomplete dropdown |
 | should NOT show autocomplete on browse page search | Typing in browse page search does NOT show autocomplete (browse filters inline) |
 
@@ -109,34 +117,34 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should have correct heading hierarchy on home page | h1 exists, h2 headings present |
 | should have font preconnect hints | Preconnect links for Google Fonts |
 
-## `synergy-groups.spec.ts` — 6 tests (desktop only)
+## `synergy-groups.spec.ts` — 4 tests (2 desktop, 2 mobile)
+
+CardOverviewModal default-mode interactions — chip filtering and "+N more" expansion. Both set `activeGroupFilter` → the focused single-group state (`data-state="focused"`).
 
 | Test | What it verifies |
 |---|---|
-| should render both direct and playstyle synergy groups | Card 1041 shows both `shift-targets` (direct) and `discard` (playstyle) groups |
-| should show synergy breakdown sidebar with group labels | Breakdown sidebar contains "Shift Targets" and "Discard" labels |
-| should filter synergy groups when clicking a group chip | Clicking "Discard" chip hides shift-targets group; "All" chip resets |
-| should show all direct group cards inline without more tile | Shift-targets group shows all 3 cards, no "+N more" tile |
-| should truncate playstyle group and show more tile | Discard group truncates at 12 cards with dynamic "+N more" tile (count read from `_manifest.json` at test-load time to survive pool drift) |
-| should display group description callout text | Both groups render description callout text |
+| a group chip toggles the modal between focused and default (desktop) | Clicking the Discard chip → `data-state="focused"`, one group; clicking again clears it |
+| the "+N more" tile expands its group (desktop) | Clicking the discard `more-tile` → `data-state="focused"`, only the discard group |
+| a group chip filters the modal to that group (mobile) | Clicking the Discard chip → `data-state="focused"`, one group |
+| the "+N more" tile expands its group (mobile) | Clicking the discard `more-tile` → `data-state="focused"` |
 
-## `synergy-detail-modal.spec.ts` — 4 tests (3 desktop, 1 mobile)
+## `synergy-detail-modal.spec.ts` — 11 tests (4 desktop, 5 mobile, 2 deep-link)
 
-| Test | What it verifies |
-|---|---|
-| should open modal when clicking a synergy card | Clicking a synergy card tile opens `role="dialog"` modal |
-| should display connection explanations in modal | Modal contains explanation text about the synergy connection |
-| should close modal on backdrop click | Clicking backdrop dismisses the modal |
-| should open modal on mobile | Tapping a synergy card on mobile viewport opens the modal |
-
-## `synergy-expanded-view.spec.ts` — 4 tests (3 desktop, 1 mobile)
+Comparison mode — clicking a synergy card tile transitions CardOverviewModal in-place to the side-by-side comparison view. Desktop uses two columns; mobile uses the tabbed `MobileComparisonView` (#332 #5). Deep links open it directly via `/compare/A/B/groupKey`.
 
 | Test | What it verifies |
 |---|---|
-| should show toolbar in expanded view | Expanded discard group shows sort select |
-| should show all cards without truncation in expanded view | Expanded view shows all discard cards (count read from `_manifest.json` at test-load time), no more tile |
-| should navigate back from expanded view | "Back to all synergies" returns to multi-group view |
-| should expand playstyle group on mobile | Mobile expand shows all discard cards (count derived from `_manifest.json`) |
+| should enter comparison mode when clicking a synergy card | (desktop) Clicking a shift-targets tile shows the BACK button; URL stays `/` |
+| should show engine column with rule explanations in comparison mode | (desktop) `section[aria-label="Engine score"]` renders with Shift rule explanations |
+| should exit comparison mode via the BACK button | (desktop) BACK returns the modal to `data-mode="default"`, URL stays `/` |
+| should switch comparison pairs across exit and re-entry | (desktop) Enter → BACK → enter a different pair; consecutive comparisons work cleanly |
+| should enter comparison mode on mobile | (mobile) Tapping a synergy tile shows the BACK button |
+| should render the tabbed comparison layout on mobile | (mobile) MobileComparisonView's Engine/Community section-switch pill buttons render |
+| should switch to the Community tab on mobile | (mobile) Tapping the Community pill moves `aria-current="true"` onto it |
+| should open and dismiss the card lightbox on mobile | (mobile) Tapping a comparison card opens the portal-to-body `Enlarged:` dialog; its close button dismisses it |
+| should exit comparison mode via BACK on mobile | (mobile) BACK returns the modal to `data-mode="default"` |
+| opens directly in comparison with no BACK button (desktop) | (deep link) `/compare/A/B/groupKey` opens straight into comparison; BACK button suppressed (hideBackButton) |
+| opens the mobile tabbed comparison view (mobile) | (deep link) `/compare/A/B/groupKey` opens the mobile MobileComparisonView |
 
 ## `playstyle-detail.spec.ts` — 5 tests (desktop only)
 
@@ -146,16 +154,7 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should toggle strategy tips section | Strategy Tips button toggles tip list visibility |
 | should show and use role filter chips | "Enabler" chip filters to subset; "All" chip resets |
 | should render card tiles in grid | `/playstyles/location-control` renders 5+ card tiles |
-| should navigate to card page from playstyle detail | Clicking a card tile navigates to `/card/:id` |
-
-## `show-all-ux.spec.ts` — 4 tests (2 desktop, 2 mobile)
-
-| Test | What it verifies |
-|---|---|
-| should expand playstyle group and scroll to expanded view | Clicking "+N more" tile renders `ExpandedGroupView`, "Back to all synergies" is in viewport after smooth scroll |
-| should show all direct group cards inline without truncation | Direct (Shift Targets) group has no "+N more" tile — all cards shown inline |
-| should expand playstyle group and scroll to expanded view on mobile | Same expand + scroll check on mobile viewport |
-| should show all direct group cards inline without truncation on mobile | Same no-truncation check on mobile viewport |
+| should open the card overview modal from playstyle detail | Clicking a card tile opens the modal; URL stays on the playstyle page |
 
 ## `voting.spec.ts` — 17 tests (12 desktop, 5 mobile)
 
@@ -171,7 +170,7 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should support keyboard shortcut for scoring (1-9) | Key '5' → pair advances |
 | should support keyboard shortcut 0 for score 10 | Key '0' → pair advances |
 | should support keyboard shortcut S for skip | Key 's' → pair advances |
-| should navigate to /vote from desktop nav | Nav link click → /vote |
+| should navigate to /vote from nav strip | Vote nav-strip link click → /vote |
 | should show compact header with nav strip | Header + Browse/Vote links visible |
 | should display compact card layout on mobile | Cards + score picker visible on mobile |
 | should show skip button without keyboard hint on mobile | No "(S)" on mobile |
@@ -179,13 +178,12 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should advance on skip (mobile) | Mobile skip → pair changes |
 | should show mobile bottom navigation | Mobile nav with Browse/Playstyles visible |
 
-## `page-shell-loading.spec.ts` — 5 tests (desktop only)
+## `page-shell-loading.spec.ts` — 4 tests (desktop only)
 
-Regression guard for issue #268 (skeleton-loading UI). Each test intercepts `/data/allCards.json` and `/data/synergies/**` with a 1500 ms delay, navigates to the page, and asserts the chrome landmark + skeleton are both visible during the loading window.
+Regression guard for issue #268 (skeleton-loading UI). Each test intercepts `/data/allCards.json` and `/data/synergies/**` with a 1500 ms delay, navigates to the page, and asserts the chrome landmark + skeleton are both visible during the loading window. (CardPage is now a thin redirect that opens the global modal, so its old skeleton case no longer applies — see the NOTE in the spec.)
 
 | Test | What it verifies |
 |---|---|
-| CardPage renders skeleton + CompactHeader while card data loads | `[data-testid="compact-header"]` visible within 3s; `[aria-busy="true"]` skeleton visible while loading; `[data-testid="card-detail-panel"]` visible after load |
 | PlaystyleDetailPage renders skeleton + CompactHeader while card data loads | CompactHeader visible; aria-busy skeleton visible; `<h1>` with playstyle display name visible after load |
 | PlaystyleGalleryPage renders skeleton inside preserved shell | `<h1>` "playstyles" title visible (shell was already preserved before #268); `[aria-label="Loading playstyles"]` visible, then hidden after load |
 | VotePage renders pair + score picker skeleton while queue loads | CompactHeader visible; `[aria-label="Loading vote pair"]` visible |
@@ -197,14 +195,15 @@ Regression guard for issue #268 (skeleton-loading UI). Each test intercepts `/da
 |---|---|
 | renders hero and franchise tiers at /reveals | All 4 tier headings (Toy Story, Incredibles, Brave, Returning) render |
 | desktop nav shows Reveals entry with NEW badge | `/` has a Reveals link with a "NEW" badge child |
-| mobile nav shows elevated Reveals button | On mobile, `/browse` shows a Reveals button in the bottom nav |
-| promo modal appears on landing page and not on /reveals | `role="dialog" name="Set 12 reveals"` visible on `/`, absent on `/reveals` |
-| tier card click navigates to /card/:id | Clicking a card tile on `/reveals` navigates to a `/card/<id>` URL |
+| mobile nav shows Reveals tab | On mobile, `/browse`'s bottom nav has a "Set 12 reveals" link |
+| promo modal appears on landing page and not on /reveals | `role="complementary" name=/Set 12 reveals/` visible on `/`, absent on `/reveals` |
+| tier card click opens the card overview modal | Clicking a card tile on `/reveals` opens the modal; URL stays `/reveals` |
 
 ## Patterns
 
 - **URL assertions** (`toHaveURL`) verify route-based navigation on every transition
 - **Hero visibility** is the marker for "home state" vs other pages
-- **Deep linking** is tested via direct navigation to `/browse?q=...&ink=...`, `/card/:id`, `/playstyles/:id`
+- **Deep linking** is tested via direct navigation to `/browse?q=...&ink=...`, `/card/:id`, `/playstyles/:id`, `/compare/A/B/groupKey`
+- **CardOverviewModal** is the post-#320 replacement for the routed card page — clicking a card (anywhere) opens it overlay-style with the URL unchanged, rather than navigating to `/card/:id`
 - **Navigation back** is tested via both clear/back button and logo click
-- **Image loading** is verified via `loading` and `fetchpriority` attributes (not `src` URLs, which differ between dev proxy and production AVIF)
+- **Image loading** is verified via `loading` and `decoding` attributes (not `src` URLs, which differ between dev proxy and production AVIF)

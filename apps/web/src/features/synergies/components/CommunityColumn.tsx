@@ -5,6 +5,7 @@ import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONTS, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
 import {CommunityEmptyState} from './CommunityEmptyState';
 import {ColumnHeader} from './ColumnHeader';
+import {DeltaPanel} from './DeltaPanel';
 import {usePairScore} from '../../voting/hooks/usePairScore';
 import {hasInDepthVote} from '../../voting/lib/voteStorage';
 import {useCardModal} from '../../../shared/contexts/CardModalContext';
@@ -26,6 +27,13 @@ const COMMUNITY_TINT = '#b691ff'; // amethyst
 interface CommunityColumnProps {
   pair: DetailedPairSynergy;
   engineScore: number;
+  /**
+   * Compact mode for the mobile comparison view (#332 #5). Skips the ColumnHeader and outer
+   * tinted panel wrapper — the tab pill carries the title + score, and the parent panel owns
+   * spacing. Filled state additionally renders a {@link DeltaPanel} above the MetricRows to
+   * replace the small DeltaBadge that the desktop ColumnHeader meta carries.
+   */
+  compact?: boolean;
 }
 
 /**
@@ -38,7 +46,7 @@ interface CommunityColumnProps {
  * Distribution bar + QuickVoteControl live in <EngineColumn>, not here — the community column
  * shows what the community thinks; the vote action belongs next to the engine score it rates.
  */
-export function CommunityColumn({pair, engineScore}: CommunityColumnProps) {
+export function CommunityColumn({pair, engineScore, compact = false}: CommunityColumnProps) {
   const {cardA, cardB} = pair;
   const navigate = useNavigate();
   const {closeCardModal} = useCardModal();
@@ -55,6 +63,28 @@ export function CommunityColumn({pair, engineScore}: CommunityColumnProps) {
     navigate(`/vote/${cardA.id}/${cardB.id}`);
   };
 
+  const body = showSkeleton ? (
+    <CommunityLoadingSkeleton />
+  ) : (
+    <CommunityBody
+      visual={visual}
+      score={score}
+      cardA={cardA}
+      cardB={cardB}
+      engineScore={engineScore}
+      onCta={goToInDepthVote}
+      userAlreadyVoted={userVotedInDepth}
+      compact={compact}
+    />
+  );
+
+  if (compact) {
+    // Mobile path — no ColumnHeader (tab pill replaces it), no outer panel wrapper. The body
+    // includes a DeltaPanel above the MetricRows in the filled state to surface the score
+    // comparison that the desktop ColumnHeader meta carries inline.
+    return <>{body}</>;
+  }
+
   return (
     <section aria-label="Community signal" style={SECTION_STYLE}>
       <ColumnHeader
@@ -66,18 +96,7 @@ export function CommunityColumn({pair, engineScore}: CommunityColumnProps) {
         showScale={!showSkeleton && !visual.hasEmptyState}
         meta={<CommunityHeaderMeta visual={visual} engineScore={engineScore} />}
       />
-      {showSkeleton ? (
-        <CommunityLoadingSkeleton />
-      ) : (
-        <CommunityBody
-          visual={visual}
-          score={score}
-          cardA={cardA}
-          cardB={cardB}
-          onCta={goToInDepthVote}
-          userAlreadyVoted={userVotedInDepth}
-        />
-      )}
+      {body}
     </section>
   );
 }
@@ -217,11 +236,14 @@ interface CommunityBodyProps {
   score: PairScore | null;
   cardA: LorcanaCard;
   cardB: LorcanaCard;
+  engineScore: number;
   onCta: () => void;
   userAlreadyVoted: boolean;
+  /** When true, the filled state prefixes a <DeltaPanel> above the MetricRows. */
+  compact: boolean;
 }
 
-function CommunityBody({visual, score, cardA, cardB, onCta, userAlreadyVoted}: CommunityBodyProps) {
+function CommunityBody({visual, score, cardA, cardB, engineScore, onCta, userAlreadyVoted, compact}: CommunityBodyProps) {
   if (visual.hasEmptyState) {
     return (
       <CommunityEmptyState
@@ -234,6 +256,16 @@ function CommunityBody({visual, score, cardA, cardB, onCta, userAlreadyVoted}: C
     );
   }
   if (!score) return null;
+  // Mobile filled state leads with the DeltaPanel — replaces the small inline DeltaBadge the
+  // desktop ColumnHeader carries (no header on mobile). Desktop filled state is metrics-only.
+  if (compact && visual.communityScore != null) {
+    return (
+      <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.section}}>
+        <DeltaPanel engineScore={engineScore} communityScore={visual.communityScore} votes={visual.scoreVotes} />
+        <MetricRows score={score} cardA={cardA} cardB={cardB} />
+      </div>
+    );
+  }
   return <MetricRows score={score} cardA={cardA} cardB={cardB} />;
 }
 

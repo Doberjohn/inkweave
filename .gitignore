@@ -77,6 +77,9 @@ TEXTS_REVIEW.md
 screenshots/
 docs/reviews/
 
+# Pre-code HTML/CSS design mockups — local-only design work, never committed
+apps/web/public/mockups/
+
 # Tool / plugin local state — managed by their installers, not tracked
 .agents/
 .superpowers/
