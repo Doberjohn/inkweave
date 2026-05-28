@@ -219,7 +219,26 @@ option {
   width: 100%;
 }
 
+/* Service-worker update toast spinner. Rendered inside #sw-update-toast by
+   shared/lib/swUpdateToast.ts as a <span> with aria-hidden="true". The toast
+   stays on-screen ~600ms before the SW activates and the page reloads, so the
+   animation only needs to look alive for that window. */
+.sw-update-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(212, 175, 55, 0.25);
+  border-top-color: #d4af37;
+  animation: spin 0.8s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  /* Stop the SW update spinner from rotating; the toast is still visible and
+     the label conveys the state via text alone. */
+  .sw-update-spinner {
+    animation: none !important;
+  }
   .hero-ken-burns {
     animation: none !important;
   }
