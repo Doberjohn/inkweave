@@ -11,7 +11,19 @@ pnpm --filter inkweave-web check:stories || exit $?
 #   see: Playwright's .click() on mobile projects fires touchstart → synthetic
 #   click (the real iOS/Android tap sequence). Desktop .click() is mouse-only.
 # Firefox + mobile-safari still run in CI only (pre-push time budget).
-pnpm --filter inkweave-web test:e2e --project chromium --project webkit --project mobile-chrome || exit $?
+#
+# Windows exception: Playwright's webkit + mobile-chrome workers don't always
+# terminate within Playwright's 5-min stop timeout on Windows, causing the
+# hook to exit 1 even when all tests pass. The full 7+ min run also exceeds
+# GitHub's SSH idle timeout, dropping the push connection mid-hook. CI's
+# Ubuntu containers don't have this teardown issue and still run the full
+# 5-browser matrix as the canonical gate. Set PRE_PUSH_FULL=1 to force
+# webkit + mobile-chrome locally when you suspect cross-browser issues.
+if { [ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ] || [ -n "$WINDIR" ]; } && [ "${PRE_PUSH_FULL:-0}" != "1" ]; then
+  pnpm --filter inkweave-web test:e2e --project chromium || exit $?
+else
+  pnpm --filter inkweave-web test:e2e --project chromium --project webkit --project mobile-chrome || exit $?
+fi
 
 # CodeScene quality gate — mirrors the CI check so failed branches never reach origin.
 # Tries the MCP server first; falls back to requiring CODESCENE_OK=1 when
