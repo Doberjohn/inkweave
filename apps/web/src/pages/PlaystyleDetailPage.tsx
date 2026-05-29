@@ -32,7 +32,12 @@ import {MechanicsButton} from '../features/synergies/components/MechanicsButton'
 import {Chip} from '../shared/components/Chip';
 import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
 import {BrowseToolbar, CardGrid, CardGridSkeleton} from '../features/cards';
-import {filterCards, applySortOrder, type CardFilterOptions} from '../features/cards/loader';
+import {
+  searchCardsByName,
+  filterCards,
+  applySortOrder,
+  type CardFilterOptions,
+} from '../features/cards/loader';
 import {
   CompactHeader,
   ErrorBoundary,
@@ -429,12 +434,14 @@ function buildCombinedFilters(
 
 function applyFilterAndSort(
   cards: LorcanaCard[],
+  searchQuery: string,
   combinedFilters: CardFilterOptions,
   sortOrder: Parameters<typeof applySortOrder>[1],
 ): LorcanaCard[] {
-  const filtered =
-    Object.keys(combinedFilters).length > 0 ? filterCards(cards, combinedFilters) : cards;
-  return applySortOrder(filtered, sortOrder);
+  let result = cards;
+  if (searchQuery.trim()) result = searchCardsByName(result, searchQuery);
+  if (Object.keys(combinedFilters).length > 0) result = filterCards(result, combinedFilters);
+  return applySortOrder(result, sortOrder);
 }
 
 function applyRoleFilter(
@@ -449,11 +456,6 @@ function applyRoleFilter(
 
 function getHeroLayout(isMobile: boolean): HeroLayout {
   return isMobile ? HERO_MOBILE : HERO_DESKTOP;
-}
-
-function buildSearchTarget(query: string): string {
-  const q = query.trim();
-  return q ? `/browse?q=${encodeURIComponent(q)}` : '/browse';
 }
 
 /** Toggle membership of an item in an immutable Set, returning the new Set. */
@@ -472,6 +474,8 @@ function buildPlaystyleViewProps(args: {
   showFilters: boolean;
   setShowFilters: (open: boolean) => void;
   activeFilterCount: number;
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
   inkFilters: ToolbarProps['inkFilters'];
   typeFilters: ToolbarProps['typeFilters'];
   costFilters: ToolbarProps['costFilters'];
@@ -479,9 +483,9 @@ function buildPlaystyleViewProps(args: {
   toggleInk: ToolbarProps['onToggleInk'];
   toggleType: ToolbarProps['onToggleType'];
   toggleCost: ToolbarProps['onToggleCost'];
+  clearCosts: ToolbarProps['onClearCosts'];
   setFilters: ToolbarProps['onFiltersChange'];
   replaceFilters: FilterDialogSharedProps['onApply'];
-  clearAllFilters: () => void;
   sortOrder: ToolbarProps['sortOrder'];
   setSortOrder: ToolbarProps['onSortChange'];
   uniqueKeywords: string[];
@@ -491,6 +495,8 @@ function buildPlaystyleViewProps(args: {
   const toolbarProps: ToolbarProps = {
     onFiltersClick: () => args.setShowFilters(true),
     activeFilterCount: args.activeFilterCount,
+    searchQuery: args.searchQuery,
+    onSearchChange: args.setSearchQuery,
     inkFilters: args.inkFilters,
     typeFilters: args.typeFilters,
     costFilters: args.costFilters,
@@ -498,8 +504,8 @@ function buildPlaystyleViewProps(args: {
     onToggleInk: args.toggleInk,
     onToggleType: args.toggleType,
     onToggleCost: args.toggleCost,
+    onClearCosts: args.clearCosts,
     onFiltersChange: args.setFilters,
-    onClearAll: args.clearAllFilters,
     sortOrder: args.sortOrder,
     onSortChange: args.setSortOrder,
   };
@@ -564,20 +570,21 @@ export function PlaystyleDetailPage() {
   const navigate = useNavigate();
   const {openCardModal} = useCardModal();
   const {isMobile} = useResponsive();
-  const {cards, isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, sets} =
+  const {isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, sets} =
     useCardDataContext();
-  const [headerSearchQuery, setHeaderSearchQuery] = useState('');
   const {
+    searchQuery,
+    setSearchQuery,
     inkFilters,
     toggleInk,
     typeFilters,
     toggleType,
     costFilters,
     toggleCost,
+    clearCosts,
     filters,
     setFilters,
     replaceFilters,
-    clearAllFilters,
     activeFilterCount,
     sortOrder,
     setSortOrder,
@@ -592,7 +599,7 @@ export function PlaystyleDetailPage() {
   const {cards: playstyleCards} = usePrecomputedPlaystyleCards(playstyle?.id);
 
   const combinedFilters = buildCombinedFilters(filters, inkFilters, typeFilters, costFilters);
-  const sortedCards = applyFilterAndSort(playstyleCards, combinedFilters, sortOrder);
+  const sortedCards = applyFilterAndSort(playstyleCards, searchQuery, combinedFilters, sortOrder);
   const roleChips = getRoleChips(playstyle?.id, sortedCards);
   const roleFilteredCards = applyRoleFilter(sortedCards, activeRoles, playstyle?.id);
   const displayedCards = roleFilteredCards.slice(0, LAYOUT.maxDisplayedCards);
@@ -600,21 +607,10 @@ export function PlaystyleDetailPage() {
   const goHome = () => navigate('/');
   const goPlaystyles = () => navigate('/playstyles');
   const handleCardSelect = (card: {id: string}) => openCardModal(card.id);
-  const handleSearchSubmit = () => navigate(buildSearchTarget(headerSearchQuery));
 
   // Still loading card data — show skeleton regardless of playstyle resolution.
   if (isLoading) {
-    return (
-      <PlaystyleDetailLoadingView
-        isMobile={isMobile}
-        cards={cards}
-        goHome={goHome}
-        headerSearchQuery={headerSearchQuery}
-        setHeaderSearchQuery={setHeaderSearchQuery}
-        handleSearchSubmit={handleSearchSubmit}
-        handleCardSelect={handleCardSelect}
-      />
-    );
+    return <PlaystyleDetailLoadingView isMobile={isMobile} goHome={goHome} />;
   }
 
   // Not loading, but playstyle ID is invalid — redirect to gallery.
@@ -627,6 +623,8 @@ export function PlaystyleDetailPage() {
     showFilters,
     setShowFilters,
     activeFilterCount,
+    searchQuery,
+    setSearchQuery,
     inkFilters,
     typeFilters,
     costFilters,
@@ -634,9 +632,9 @@ export function PlaystyleDetailPage() {
     toggleInk,
     toggleType,
     toggleCost,
+    clearCosts,
     setFilters,
     replaceFilters,
-    clearAllFilters,
     sortOrder,
     setSortOrder,
     uniqueKeywords,
@@ -673,10 +671,6 @@ export function PlaystyleDetailPage() {
       goHome={goHome}
       goPlaystyles={goPlaystyles}
       handleCardSelect={handleCardSelect}
-      cards={cards}
-      headerSearchQuery={headerSearchQuery}
-      setHeaderSearchQuery={setHeaderSearchQuery}
-      handleSearchSubmit={handleSearchSubmit}
       roleChips={roleChips}
       activeRoles={activeRoles}
       toggleRole={toggleRole}
@@ -696,6 +690,8 @@ type PlaystyleUIValue = (typeof PLAYSTYLE_UI)[PlaystyleId];
 interface ToolbarProps {
   onFiltersClick: () => void;
   activeFilterCount: number;
+  searchQuery: Parameters<typeof BrowseToolbar>[0]['searchQuery'];
+  onSearchChange: Parameters<typeof BrowseToolbar>[0]['onSearchChange'];
   inkFilters: Parameters<typeof BrowseToolbar>[0]['inkFilters'];
   typeFilters: Parameters<typeof BrowseToolbar>[0]['typeFilters'];
   costFilters: Parameters<typeof BrowseToolbar>[0]['costFilters'];
@@ -703,8 +699,8 @@ interface ToolbarProps {
   onToggleInk: Parameters<typeof BrowseToolbar>[0]['onToggleInk'];
   onToggleType: Parameters<typeof BrowseToolbar>[0]['onToggleType'];
   onToggleCost: Parameters<typeof BrowseToolbar>[0]['onToggleCost'];
+  onClearCosts: Parameters<typeof BrowseToolbar>[0]['onClearCosts'];
   onFiltersChange: Parameters<typeof BrowseToolbar>[0]['onFiltersChange'];
-  onClearAll: () => void;
   sortOrder: Parameters<typeof BrowseToolbar>[0]['sortOrder'];
   onSortChange: Parameters<typeof BrowseToolbar>[0]['onSortChange'];
 }
@@ -724,20 +720,10 @@ interface FilterDialogSharedProps {
 
 function PlaystyleDetailLoadingView({
   isMobile,
-  cards,
   goHome,
-  headerSearchQuery,
-  setHeaderSearchQuery,
-  handleSearchSubmit,
-  handleCardSelect,
 }: {
   isMobile: boolean;
-  cards: LorcanaCard[];
   goHome: () => void;
-  headerSearchQuery: string;
-  setHeaderSearchQuery: (q: string) => void;
-  handleSearchSubmit: () => void;
-  handleCardSelect: (card: {id: string}) => void;
 }) {
   return (
     <main
@@ -750,15 +736,7 @@ function PlaystyleDetailLoadingView({
         position: 'relative',
       }}>
       <EtherealBackground />
-      <CompactHeader
-        onLogoClick={goHome}
-        searchQuery={headerSearchQuery}
-        onSearchChange={setHeaderSearchQuery}
-        onSearchSubmit={handleSearchSubmit}
-        cards={cards}
-        onCardSelect={handleCardSelect}
-        isMobile={isMobile}
-      />
+      <CompactHeader onLogoClick={goHome} isMobile={isMobile} />
       <div style={{flex: 1, position: 'relative', zIndex: 1}}>
         <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
           <div
@@ -952,10 +930,6 @@ function PlaystyleDetailDesktopView({
   goHome,
   goPlaystyles,
   handleCardSelect,
-  cards,
-  headerSearchQuery,
-  setHeaderSearchQuery,
-  handleSearchSubmit,
   roleChips,
   activeRoles,
   toggleRole,
@@ -970,10 +944,6 @@ function PlaystyleDetailDesktopView({
   goHome: () => void;
   goPlaystyles: () => void;
   handleCardSelect: (card: {id: string}) => void;
-  cards: LorcanaCard[];
-  headerSearchQuery: string;
-  setHeaderSearchQuery: (q: string) => void;
-  handleSearchSubmit: () => void;
   roleChips: RoleChip[];
   activeRoles: ReadonlySet<string>;
   toggleRole: (role: string) => void;
@@ -993,14 +963,7 @@ function PlaystyleDetailDesktopView({
         position: 'relative',
       }}>
       <EtherealBackground />
-      <CompactHeader
-        onLogoClick={goHome}
-        searchQuery={headerSearchQuery}
-        onSearchChange={setHeaderSearchQuery}
-        onSearchSubmit={handleSearchSubmit}
-        cards={cards}
-        onCardSelect={handleCardSelect}
-      />
+      <CompactHeader onLogoClick={goHome} />
       <div
         style={{
           flex: 1,

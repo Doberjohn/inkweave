@@ -5,6 +5,7 @@ export {usePreloadImages} from './usePreloadImages';
 export {useDialogFocus} from './useDialogFocus';
 export {useDraftFilters} from './useDraftFilters';
 export {useFilterParams} from './useFilterParams';
+export {useInlineCostFilters} from './useInlineCostFilters';
 export {useResponsive} from './useResponsive';
 export {useRovingTabIndex} from './useRovingTabIndex';
 export {useScrollLock} from './useScrollLock';

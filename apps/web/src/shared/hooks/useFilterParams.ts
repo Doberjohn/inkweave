@@ -72,6 +72,7 @@ export interface UseFilterParamsReturn {
   toggleType: (type: CardTypeFilter) => void;
   costFilters: number[];
   toggleCost: (cost: number) => void;
+  clearCosts: () => void;
   filters: CardFilterOptions;
   setFilters: (filters: CardFilterOptions) => void;
   replaceFilters: (
@@ -179,6 +180,13 @@ export function useFilterParams(): UseFilterParamsReturn {
     });
   };
 
+  // Clear every selected cost in one atomic param update. A loop of toggleCost
+  // would be unreliable: each functional setSearchParams reads the current
+  // committed params, so synchronous calls all see the same state.
+  const clearCosts = () => {
+    updateParams((p) => p.delete('cost'));
+  };
+
   const setFilters = (newFilters: CardFilterOptions) => {
     updateParams((p) => serializeFilterOptions(p, newFilters));
   };
@@ -219,6 +227,7 @@ export function useFilterParams(): UseFilterParamsReturn {
     toggleType,
     costFilters,
     toggleCost,
+    clearCosts,
     filters,
     setFilters,
     replaceFilters,

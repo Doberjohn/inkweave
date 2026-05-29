@@ -7,9 +7,10 @@ const noopFilters = {
   onToggleInk: fn(),
   onToggleType: fn(),
   onToggleCost: fn(),
+  onClearCosts: fn(),
   onFiltersChange: fn(),
-  onClearAll: fn(),
   onSortChange: fn(),
+  onSearchChange: fn(),
 };
 
 const meta: Meta<typeof BrowseToolbar> = {
@@ -26,6 +27,7 @@ const meta: Meta<typeof BrowseToolbar> = {
     activeFilterCount: 0,
     sortOrder: 'name-asc',
     isMobile: false,
+    searchQuery: '',
   },
 };
 export default meta;

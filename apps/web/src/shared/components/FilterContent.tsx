@@ -42,6 +42,52 @@ interface FilterContentProps {
   onFiltersChange: (filters: CardFilterOptions) => void;
   /** Layout variant controls icon sizing and flex layout per section */
   variant: 'desktop' | 'mobile';
+  /**
+   * Whether the cost icons are shown inline in the toolbar. When false (narrow
+   * desktop), the modal renders the Ink Cost section so cost stays reachable.
+   * Ignored on mobile (cost always shows there). Defaults to true.
+   */
+  showInlineCost?: boolean;
+}
+
+// Cost shows in the panel on mobile, and on desktop only when its toolbar icons
+// are tucked away (narrow desktop). Hoisted out of the component to keep its CC down.
+function shouldShowCostSection(isDesktop: boolean, showInlineCost: boolean): boolean {
+  return !isDesktop || !showInlineCost;
+}
+
+// Extracted into its own component so the cost-button .map() branch doesn't count
+// toward FilterContent's (already large) cyclomatic complexity.
+function CostFilterSection({
+  costFilters,
+  onToggleCost,
+}: {
+  costFilters: number[];
+  onToggleCost: (cost: number) => void;
+}) {
+  return (
+    <FilterSection label="Ink Cost">
+      <div
+        role="group"
+        aria-label="Ink cost filters"
+        style={{display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center'}}>
+        {COST_BUTTONS.map((cost) => (
+          <FilterButton
+            key={cost}
+            size="sm"
+            active={costFilters.includes(cost)}
+            onClick={() => onToggleCost(cost)}
+            activeColor={COLORS.primary}
+            activeBgColor={COLORS.primary200}
+            inactiveColor="transparent"
+            inactiveTextColor="transparent"
+            aria-label={`Cost ${cost}${cost === 10 ? '+' : ''}`}>
+            <CostIcon cost={cost} size={34} />
+          </FilterButton>
+        ))}
+      </div>
+    </FilterSection>
+  );
 }
 
 /**
@@ -61,6 +107,7 @@ export function FilterContent({
   onToggleCost,
   onFiltersChange,
   variant,
+  showInlineCost = true,
 }: FilterContentProps) {
   const updateFilter = <K extends keyof CardFilterOptions>(key: K, value: CardFilterOptions[K]) => {
     const newFilters = {...filters};
@@ -73,6 +120,7 @@ export function FilterContent({
   };
 
   const isDesktop = variant === 'desktop';
+  const showCostSection = shouldShowCostSection(isDesktop, showInlineCost);
 
   return (
     <>
@@ -92,34 +140,9 @@ export function FilterContent({
         </FilterSection>
       )}
 
-      {/* Ink Cost (desktop has these inline in the toolbar) */}
-      {!isDesktop && (
-        <FilterSection label="Ink Cost">
-          <div
-            role="group"
-            aria-label="Ink cost filters"
-            style={{
-              display: 'flex',
-              gap: '6px',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-            }}>
-            {COST_BUTTONS.map((cost) => (
-              <FilterButton
-                key={cost}
-                size="sm"
-                active={costFilters.includes(cost)}
-                onClick={() => onToggleCost(cost)}
-                activeColor={COLORS.primary}
-                activeBgColor={COLORS.primary200}
-                inactiveColor="transparent"
-                inactiveTextColor="transparent"
-                aria-label={`Cost ${cost}${cost === 10 ? '+' : ''}`}>
-                <CostIcon cost={cost} size={34} />
-              </FilterButton>
-            ))}
-          </div>
-        </FilterSection>
+      {/* Ink Cost (inline in the toolbar on wide desktop; shown here otherwise) */}
+      {showCostSection && (
+        <CostFilterSection costFilters={costFilters} onToggleCost={onToggleCost} />
       )}
 
       {/* Inkwell (desktop has these inline in the toolbar) */}

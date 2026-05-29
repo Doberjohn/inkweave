@@ -89,4 +89,19 @@ test.describe('Card Search and Filtering', () => {
     // Search input should have the query
     await expect(page.getByPlaceholder('Search cards...')).toHaveValue('Elsa');
   });
+
+  test('should filter a playstyle page in place without navigating to browse', async ({page}) => {
+    await page.goto('/playstyles/ramp');
+
+    // The search now lives in the toolbar on the playstyle page too
+    const search = page.getByPlaceholder('Search cards...');
+    await expect(search).toBeVisible({timeout: 10000});
+
+    await search.fill('elsa');
+
+    // Filtering happens in place: stays on the playstyle page (no jump to /browse)
+    // and the query syncs to the URL.
+    await expect(page).toHaveURL(/\/playstyles\/ramp/);
+    await expect(page).toHaveURL(/q=elsa/);
+  });
 });
