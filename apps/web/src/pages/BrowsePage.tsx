@@ -160,6 +160,7 @@ export function BrowsePage() {
     toggleType,
     costFilters,
     toggleCost,
+    clearCosts,
     filters,
     setFilters,
     replaceFilters,
@@ -200,11 +201,13 @@ export function BrowsePage() {
     onToggleInk: toggleInk,
     onToggleType: toggleType,
     onToggleCost: toggleCost,
+    onClearCosts: clearCosts,
     onFiltersChange: setFilters,
-    onClearAll: clearAllFilters,
     sortOrder,
     onSortChange: setSortOrder,
     isMobile,
+    searchQuery,
+    onSearchChange: setSearchQuery,
   } as const;
 
   const filterDialogProps = {
@@ -260,11 +263,7 @@ export function BrowsePage() {
         overflow: 'hidden',
       }}>
       <EtherealBackground />
-      <CompactHeader
-        onLogoClick={goHome}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-      />
+      <CompactHeader onLogoClick={goHome} />
       <BrowseContentSection {...contentProps} />
       <FilterDialog {...filterDialogProps} variant="modal" />
     </main>

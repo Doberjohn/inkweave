@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-105 tests across 16 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+106 tests across 16 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
 
@@ -39,7 +39,9 @@ CardOverviewModal — opening, closing, empty state, scroll lock.
 | should show the empty state for a card with no synergies | `/card/957` (no synergy file) renders `card-overview-empty` |
 | should lock background scroll while the modal is open | `document.body` overflow is `hidden` while open, restored on close |
 
-## `card-search.spec.ts` — 6 tests (desktop only)
+## `card-search.spec.ts` — 7 tests (desktop only)
+
+The browse/playstyle search input lives in the toolbar (next to Filters), not the header. Both pages filter the grid in place.
 
 | Test | What it verifies |
 |---|---|
@@ -49,6 +51,7 @@ CardOverviewModal — opening, closing, empty state, scroll lock.
 | should navigate to browse via Browse all cards CTA | "Browse all cards" CTA navigates to `/browse`, hero gone, CardList visible |
 | should preserve search query in URL on browse page | Hero search for "Ariel" puts `q=Ariel` in URL, browse search input shows "Ariel" |
 | should deep link to browse with filters | Direct navigation to `/browse?q=Elsa&ink=Sapphire` populates the search input |
+| should filter a playstyle page in place without navigating to browse | Typing in the playstyle toolbar search filters in place: URL stays `/playstyles/ramp` and gains `q=elsa` (no jump to `/browse`) |
 
 ## `card-selection.spec.ts` — 5 tests (desktop only)
 

@@ -159,6 +159,18 @@ describe('useFilterParams', () => {
     });
   });
 
+  describe('clearCosts', () => {
+    it('should clear every selected cost in one update while preserving other filters', () => {
+      const {result} = renderHook(() => useFilterParams(), {
+        wrapper: createWrapper(['/?cost=3,5,7&ink=Amber&q=elsa']),
+      });
+      act(() => result.current.clearCosts());
+      expect(result.current.costFilters).toEqual([]);
+      expect(result.current.inkFilters).toEqual(['Amber']);
+      expect(result.current.searchQuery).toBe('elsa');
+    });
+  });
+
   describe('clearAllFilters', () => {
     it('should clear all params', () => {
       const {result} = renderHook(() => useFilterParams(), {

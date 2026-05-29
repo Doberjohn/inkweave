@@ -2,6 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import {COLORS, FONT_SIZES, SPACING, RADIUS, Z_INDEX} from '../constants';
 import {CtaButton} from './CtaButton';
 import {useDraftFilters} from '../hooks/useDraftFilters';
+import {useInlineCostFilters} from '../hooks';
 import {FilterContent} from './FilterContent';
 import type {FilterPanelProps} from './FilterContent';
 
@@ -24,6 +25,7 @@ export function FilterDialog({
   sets,
 }: FilterDialogProps) {
   const draft = useDraftFilters({isOpen, inkFilters, typeFilters, costFilters, filters});
+  const showInlineCost = useInlineCostFilters();
 
   const handleApply = () => {
     onApply(draft.draftInks, draft.draftTypes, draft.draftCosts, draft.draftFilters);
@@ -190,6 +192,7 @@ export function FilterDialog({
               onToggleCost={draft.toggleCost}
               onFiltersChange={draft.updateFilters}
               variant={variant === 'modal' ? 'desktop' : 'mobile'}
+              showInlineCost={showInlineCost}
             />
           </div>
 

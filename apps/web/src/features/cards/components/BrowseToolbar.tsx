@@ -2,13 +2,15 @@ import {useState} from 'react';
 import type {Ink} from 'inkweave-synergy-engine';
 import type {CardFilterOptions} from '../loader';
 import type {CardTypeFilter, BrowseSortOrder} from '../../../shared/constants';
-import {BROWSE_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
+import {BROWSE_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
 import {FiltersButton} from '../../../shared/components/FiltersButton';
+import {SearchIcon} from '../../../shared/components/SearchIcon';
 import {CostFilterGroup} from '../../../shared/components/CostFilterGroup';
 import {InkFilterGroup} from '../../../shared/components/InkFilterGroup';
 import {InkwellFilterGroup} from '../../../shared/components/InkwellFilterGroup';
 import {SortSelect} from '../../../shared/components/SortSelect';
+import {useInlineCostFilters} from '../../../shared/hooks';
 import type {ChipData} from '../../../shared/types';
 
 interface BrowseToolbarProps {
@@ -21,13 +23,20 @@ interface BrowseToolbarProps {
   onToggleInk: (ink: Ink) => void;
   onToggleType: (type: CardTypeFilter) => void;
   onToggleCost: (cost: number) => void;
+  /** Clears all selected costs at once (used by the combined cost chip's dismiss). */
+  onClearCosts: () => void;
   onFiltersChange: (filters: CardFilterOptions) => void;
-  onClearAll: () => void;
   sortOrder: BrowseSortOrder;
   onSortChange: (order: BrowseSortOrder) => void;
   isMobile: boolean;
   /** Optional slot rendered after the filters button (e.g., role filter chips) */
   extraChips?: React.ReactNode;
+  /**
+   * Search slot props. When both are provided (desktop only), an inline search
+   * input renders after the Filters button and filters the grid in place.
+   */
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
 // =====================================================================
@@ -37,6 +46,8 @@ interface BrowseToolbarProps {
 
 interface ChipBuildArgs {
   isMobile: boolean;
+  /** Whether the inline cost-filter icons are visible (false → cost shown as chips). */
+  showCost: boolean;
   inkFilters: Ink[];
   typeFilters: CardTypeFilter[];
   costFilters: number[];
@@ -44,24 +55,37 @@ interface ChipBuildArgs {
   onToggleInk: (ink: Ink) => void;
   onToggleType: (type: CardTypeFilter) => void;
   onToggleCost: (cost: number) => void;
+  onClearCosts: () => void;
   onFiltersChange: (filters: CardFilterOptions) => void;
 }
 
-function buildMobileOnlyChips(args: ChipBuildArgs): ChipData[] {
-  if (!args.isMobile) return [];
-  const chips: ChipData[] = [
-    ...args.inkFilters.map((ink) => ({
-      id: `ink:${ink}`,
-      label: ink,
-      onDismiss: () => args.onToggleInk(ink),
-    })),
-    ...args.costFilters.map((cost) => ({
-      id: `cost:${cost}`,
-      label: `Cost ${cost}`,
-      onDismiss: () => args.onToggleCost(cost),
-    })),
-  ];
-  if (args.filters.inkwell) {
+// Active filters whose inline icons are hidden need a dismissible chip so the
+// state stays visible. Ink + inkwell icons only hide on mobile; the cost icons
+// also hide on narrow desktop (showCost === false), so cost gets a chip there too.
+function buildHiddenIconChips(args: ChipBuildArgs): ChipData[] {
+  const chips: ChipData[] = [];
+  if (args.isMobile) {
+    chips.push(
+      ...args.inkFilters.map((ink) => ({
+        id: `ink:${ink}`,
+        label: ink,
+        onDismiss: () => args.onToggleInk(ink),
+      })),
+    );
+  }
+  // A single combined chip for every selected cost (e.g. "Costs: 3, 5"); its
+  // dismiss clears them all at once. Cost icons are hidden on mobile and on
+  // narrow desktop (!showCost), so the chip stands in for them there.
+  const costTucked = args.isMobile || !args.showCost;
+  if (costTucked && args.costFilters.length > 0) {
+    const sorted = [...args.costFilters].sort((a, b) => a - b);
+    chips.push({
+      id: 'cost',
+      label: `${sorted.length === 1 ? 'Cost' : 'Costs'}: ${sorted.join(', ')}`,
+      onDismiss: args.onClearCosts,
+    });
+  }
+  if (args.isMobile && args.filters.inkwell) {
     chips.push({
       id: `inkwell:${args.filters.inkwell}`,
       label: args.filters.inkwell === 'inkable' ? 'Inkable' : 'Uninkable',
@@ -108,7 +132,7 @@ function buildActiveChips(args: ChipBuildArgs): ChipData[] {
     buildSingleValueChip(args.filters, args.onFiltersChange, 'classifications'),
     buildSetChip(args.filters, args.onFiltersChange),
   ].filter((c): c is ChipData => c !== null);
-  return [...buildMobileOnlyChips(args), ...typeChips, ...optionalChips];
+  return [...buildHiddenIconChips(args), ...typeChips, ...optionalChips];
 }
 
 function getToolbarStyle(isMobile: boolean): React.CSSProperties {
@@ -136,36 +160,72 @@ const DIVIDER_STYLE: React.CSSProperties = {
 // Subcomponents — each owns a small concern.
 // =====================================================================
 
-function ClearAllButton({onClick}: {onClick: () => void}) {
-  const [hover, setHover] = useState(false);
+// Carried over from CompactHeader's old HeaderSearch: gold focus ring + border.
+function getToolbarSearchInputStyle(focused: boolean): React.CSSProperties {
+  return {
+    width: '100%',
+    height: 36,
+    padding: '0 12px 0 36px',
+    borderRadius: `${RADIUS.lg}px`,
+    border: `1px solid ${focused ? 'rgba(212, 175, 55, 0.5)' : COLORS.searchBorder}`,
+    background: COLORS.searchBg,
+    color: COLORS.text,
+    fontSize: `${FONT_SIZES.lg}px`,
+    fontFamily: FONTS.body,
+    boxSizing: 'border-box',
+    outline: 'none',
+    boxShadow: focused
+      ? '0 0 0 2px rgba(212, 175, 55, 0.15), 0 0 12px rgba(212, 175, 55, 0.08)'
+      : 'none',
+    transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
+  };
+}
+
+function getToolbarSearchWrapperStyle(): React.CSSProperties {
+  // Fixed-width, no-shrink: the search box holds a stable 300px so it reads as a
+  // consistent control next to Filters, and the active-filter chip row (flex:1)
+  // wraps below it under pressure instead of squeezing the input. position:'relative'
+  // anchors the absolute search icon.
+  return {position: 'relative', width: 300, flexShrink: 0};
+}
+
+function ToolbarSearch({query, onChange}: {query: string; onChange: (q: string) => void}) {
+  const [focused, setFocused] = useState(false);
   return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        background: 'none',
-        border: 'none',
-        color: hover ? COLORS.text : COLORS.textMuted,
-        fontFamily: FONTS.body,
-        fontSize: `${FONT_SIZES.base}px`,
-        cursor: 'pointer',
-        padding: 0,
-        textDecoration: hover ? 'underline' : 'none',
-        transition: 'color 0.15s',
-      }}>
-      Clear all
-    </button>
+    <div style={getToolbarSearchWrapperStyle()}>
+      <span
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          left: 12,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          display: 'flex',
+          pointerEvents: 'none',
+        }}>
+        <SearchIcon size={16} color={COLORS.searchPlaceholder} />
+      </span>
+      <input
+        type="text"
+        aria-label="Search cards"
+        placeholder="Search cards..."
+        value={query}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        data-testid="browse-search"
+        style={getToolbarSearchInputStyle(focused)}
+      />
+    </div>
   );
 }
 
 interface ActiveChipsRowProps {
   chips: ChipData[];
   isMobile: boolean;
-  onClearAll: () => void;
 }
 
-function ActiveChipsRow({chips, isMobile, onClearAll}: ActiveChipsRowProps) {
+function ActiveChipsRow({chips, isMobile}: ActiveChipsRowProps) {
   return (
     <div
       style={{
@@ -183,7 +243,6 @@ function ActiveChipsRow({chips, isMobile, onClearAll}: ActiveChipsRowProps) {
           isMobile={isMobile}
         />
       ))}
-      <ClearAllButton onClick={onClearAll} />
     </div>
   );
 }
@@ -195,6 +254,8 @@ interface DesktopFilterIconsProps {
   onToggleInk: (ink: Ink) => void;
   onToggleCost: (cost: number) => void;
   onInkwellChange: (v: CardFilterOptions['inkwell']) => void;
+  /** When false, the cost group is tucked into the Filters dialog (narrow desktop). */
+  showCost: boolean;
 }
 
 function DesktopFilterIcons({
@@ -204,13 +265,18 @@ function DesktopFilterIcons({
   onToggleInk,
   onToggleCost,
   onInkwellChange,
+  showCost,
 }: DesktopFilterIconsProps) {
   return (
     <>
       <InkFilterGroup inkFilters={inkFilters} onToggleInk={onToggleInk} />
       <div aria-hidden="true" style={DIVIDER_STYLE} />
-      <CostFilterGroup costFilters={costFilters} onToggleCost={onToggleCost} />
-      <div aria-hidden="true" style={DIVIDER_STYLE} />
+      {showCost && (
+        <>
+          <CostFilterGroup costFilters={costFilters} onToggleCost={onToggleCost} />
+          <div aria-hidden="true" style={DIVIDER_STYLE} />
+        </>
+      )}
       <InkwellFilterGroup activeValue={inkwell} onToggle={onInkwellChange} />
     </>
   );
@@ -230,15 +296,21 @@ export function BrowseToolbar({
   onToggleInk,
   onToggleType,
   onToggleCost,
+  onClearCosts,
   onFiltersChange,
-  onClearAll,
   sortOrder,
   onSortChange,
   isMobile,
   extraChips,
+  searchQuery,
+  onSearchChange,
 }: BrowseToolbarProps) {
+  // Cost icons stay inline only on wide desktops; below that they tuck into the
+  // Filters dialog and surface as a chip instead (see buildHiddenIconChips).
+  const showCost = useInlineCostFilters();
   const chips = buildActiveChips({
     isMobile,
+    showCost,
     inkFilters,
     typeFilters,
     costFilters,
@@ -246,6 +318,7 @@ export function BrowseToolbar({
     onToggleInk,
     onToggleType,
     onToggleCost,
+    onClearCosts,
     onFiltersChange,
   });
 
@@ -256,10 +329,11 @@ export function BrowseToolbar({
         activeCount={activeFilterCount}
         isMobile={isMobile}
       />
-      {extraChips}
-      {chips.length > 0 && (
-        <ActiveChipsRow chips={chips} isMobile={isMobile} onClearAll={onClearAll} />
+      {!isMobile && searchQuery !== undefined && onSearchChange !== undefined && (
+        <ToolbarSearch query={searchQuery} onChange={onSearchChange} />
       )}
+      {extraChips}
+      {chips.length > 0 && <ActiveChipsRow chips={chips} isMobile={isMobile} />}
       <div style={{marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10}}>
         {!isMobile && (
           <DesktopFilterIcons
@@ -269,6 +343,7 @@ export function BrowseToolbar({
             onToggleInk={onToggleInk}
             onToggleCost={onToggleCost}
             onInkwellChange={(v) => onFiltersChange({...filters, inkwell: v})}
+            showCost={showCost}
           />
         )}
         <SortSelect

@@ -215,6 +215,13 @@ export const BREAKPOINTS = {
   desktop: 1024,
 } as const;
 
+// Below this viewport width the inline cost-filter group (the widest inline
+// toolbar control at ~482px) tucks into the Filters dialog so the toolbar stays
+// one row alongside the 300px search box; ink + inkable icons are compact enough
+// to remain. Math: Filters(86) + search(300) + full icon group(1106) + gaps +
+// side padding needs ~1580px for one row; dropping cost frees ~493px → fits ~1075px.
+export const INLINE_COST_FILTER_MIN_WIDTH = 1580;
+
 // Z-index scale for layering
 export const Z_INDEX = {
   autocomplete: 900,
