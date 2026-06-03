@@ -6,6 +6,19 @@ import 'react-loading-skeleton/dist/skeleton.css';
 import './index.css';
 import {router} from './router';
 import {showUpdateToast} from './shared/lib/swUpdateToast';
+import {reloadForStaleChunk} from './shared/lib/staleChunkReload';
+
+// Recover from stale-deploy chunk mismatches. After a new deploy, a tab still
+// running the old bundle references hashed CSS/JS chunks the deploy has purged;
+// Vite fires a cancelable `vite:preloadError` and re-throws unless we cancel it
+// (that re-throw is what spammed Sentry). preventDefault() silences it at the
+// source, then we reload onto the fresh deploy (loop-guarded).
+if (import.meta.env.PROD) {
+  window.addEventListener('vite:preloadError', (event) => {
+    event.preventDefault();
+    reloadForStaleChunk();
+  });
+}
 
 // Lazy-load Sentry to keep it off the critical path (~150 KB gzip)
 if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
@@ -29,6 +42,15 @@ if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
       environment: 'production',
       integrations,
       tracesSampleRate: 0.1,
+      // Stale-deploy chunk mismatches are auto-recovered via reload (see the
+      // vite:preloadError handler above), so they're noise, not bugs. Drop the
+      // whole family — the preload re-throw plus the dynamic-import variants.
+      ignoreErrors: [
+        'Unable to preload CSS',
+        'Failed to fetch dynamically imported module',
+        'Importing a module script failed',
+        'error loading dynamically imported module',
+      ],
     });
   });
 }
