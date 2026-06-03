@@ -231,7 +231,7 @@ export function MobileComparisonView({pair, engineScore, originRects = null, isE
   // pair-score is shared with CommunityColumn's call via the module-level cache — duplicate
   // calls dedupe. The Community tab pill shows this score (or `—` when below threshold).
   const {score} = usePairScore(cardA.id, cardB.id);
-  const communityScore = score && score.score_votes >= 5 ? Number(score.avg_score) : null;
+  const communityScore = score && (score.score_votes ?? 0) >= 5 ? Number(score.avg_score) : null;
 
   // Root fades IN on mount; it does NOT fade out as a whole on exit (that uniform crossfade
   // ghosted the chrome over the default view). Exit is choreographed per-element below.
@@ -278,7 +278,7 @@ export function MobileComparisonView({pair, engineScore, originRects = null, isE
         </div>
       </div>
 
-      {previewCard && preview && (
+      {previewCard && previewCard.imageUrl && preview && (
         <MobileLightbox
           imageUrl={previewCard.imageUrl}
           alt={previewCard.fullName}

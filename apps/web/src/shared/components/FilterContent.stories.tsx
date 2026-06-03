@@ -13,9 +13,9 @@ const noopHandlers = {
 };
 
 const mockSets = [
-  {code: '5', name: 'Shimmering Skies'},
-  {code: '6', name: 'Azurite Sea'},
-  {code: '7', name: 'Archazia'},
+  {code: '5', name: 'Shimmering Skies', number: 5},
+  {code: '6', name: 'Azurite Sea', number: 6},
+  {code: '7', name: 'Archazia', number: 7},
 ];
 
 const meta: Meta<typeof FilterContent> = {

@@ -9,17 +9,19 @@ import {showUpdateToast} from './shared/lib/swUpdateToast';
 
 // Lazy-load Sentry to keep it off the critical path (~150 KB gzip)
 if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
-  import('@sentry/react').then((Sentry) => {
-    const integrations = [Sentry.browserTracingIntegration()];
+  import('@sentry/react').then(async (Sentry) => {
+    // Widen to the base integration type (@sentry/react v10 doesn't re-export
+    // `Integration`) so both browserTracing and supabase integrations fit.
+    const integrations: ReturnType<typeof Sentry.supabaseIntegration>[] = [
+      Sentry.browserTracingIntegration(),
+    ];
 
-    // Add Supabase monitoring when configured
+    // Add Supabase monitoring when configured. supabaseIntegration (v10) takes the
+    // SupabaseClient constructor so it can instrument every client instance; lazily
+    // imported here to keep @supabase/supabase-js off the critical path.
     if (import.meta.env.VITE_SUPABASE_URL) {
-      integrations.push(
-        Sentry.supabaseIntegration({
-          breadcrumbs: true,
-          tracing: true,
-        }),
-      );
+      const {SupabaseClient} = await import('@supabase/supabase-js');
+      integrations.push(Sentry.supabaseIntegration({supabaseClient: SupabaseClient}));
     }
 
     Sentry.init({

@@ -173,16 +173,20 @@ export function usePairQueue(): UsePairQueueReturn {
 
   const storeRef = useRef<PairQueueStore | null>(null);
   if (storeRef.current === null) storeRef.current = new PairQueueStore();
+  // Non-null past the guard above. Capture it so the loadNext/undo closures
+  // below see PairQueueStore, not PairQueueStore | null (TS can't narrow a
+  // mutable ref across a closure boundary).
+  const store = storeRef.current;
   const lastVotedPairRef = useRef<VotingPair | null>(null);
 
   const loadNext = async () => {
     setIsLoading(true);
-    const result = await loadNextPair(storeRef.current, getCardById);
+    const result = await loadNextPair(store, getCardById);
     if (result.error) {
       setError(result.error);
     } else if (result.pair) {
       setCurrentPair(result.pair);
-      setUpcomingPreviews(entriesToPreviews(storeRef.current.peekNext(3), getCardById));
+      setUpcomingPreviews(entriesToPreviews(store.peekNext(3), getCardById));
     } else if (result.isEmpty) {
       setCurrentPair(null);
       setIsEmpty(true);
@@ -234,16 +238,12 @@ export function usePairQueue(): UsePairQueueReturn {
     if (!lastPair || !currentPair) return;
 
     removeSeenPair(pairKey(lastPair.cardA.id, lastPair.cardB.id));
-    storeRef.current.pushBack([
-      currentPair.cardA.id,
-      currentPair.cardB.id,
-      currentPair.aggregateScore,
-    ]);
+    store.pushBack([currentPair.cardA.id, currentPair.cardB.id, currentPair.aggregateScore]);
 
     setCurrentPair(lastPair);
     setPreviousPreviews((prev) => prev.slice(1));
     setStats((prev) => ({...prev, voted: Math.max(0, prev.voted - 1)}));
-    setUpcomingPreviews(entriesToPreviews(storeRef.current.peekNext(3), getCardById));
+    setUpcomingPreviews(entriesToPreviews(store.peekNext(3), getCardById));
 
     lastVotedPairRef.current = null;
     setCanUndo(false);

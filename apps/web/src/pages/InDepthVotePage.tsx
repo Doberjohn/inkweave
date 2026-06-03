@@ -709,6 +709,7 @@ export function InDepthVotePage() {
   if (isMobile) {
     return (
       <InDepthMobileView
+        isMobile={isMobile}
         pair={pair}
         session={session}
         cards={cards}
@@ -721,6 +722,7 @@ export function InDepthVotePage() {
   }
   return (
     <InDepthDesktopView
+      isMobile={isMobile}
       pair={pair}
       session={session}
       cards={cards}

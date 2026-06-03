@@ -28,10 +28,11 @@ const noopListboxProps = {
 };
 
 const noopGetOptionProps = (index: number) => ({
-  role: 'option' as const,
   id: `option-${index}`,
-  'aria-selected': false as const,
-  onClick: fn(),
+  role: 'option' as const,
+  'aria-selected': false as boolean,
+  onMouseDown: fn(),
+  onMouseEnter: fn(),
 });
 
 const meta: Meta<typeof SearchAutocomplete> = {

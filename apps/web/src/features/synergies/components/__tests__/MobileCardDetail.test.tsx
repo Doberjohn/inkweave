@@ -13,8 +13,8 @@ vi.mock('../SynergyGroup', () => ({
   ),
 }));
 
-vi.mock('../../../shared/components', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../shared/components')>();
+vi.mock('../../../../shared/components', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../shared/components')>();
   return {
     ...actual,
     CardImage: ({alt}: {alt: string}) => <img alt={alt} />,

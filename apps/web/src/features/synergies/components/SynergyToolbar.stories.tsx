@@ -7,9 +7,9 @@ import {EMPTY_SYNERGY_FILTERS} from '../utils/filterSynergyCards';
 import {SynergyToolbar} from './SynergyToolbar';
 
 const mockSets = [
-  {code: '5', name: 'Shimmering Skies'},
-  {code: '6', name: 'Azurite Sea'},
-  {code: '7', name: 'Archazia'},
+  {code: '5', name: 'Shimmering Skies', number: 5},
+  {code: '6', name: 'Azurite Sea', number: 6},
+  {code: '7', name: 'Archazia', number: 7},
 ];
 
 const meta: Meta<typeof SynergyToolbar> = {

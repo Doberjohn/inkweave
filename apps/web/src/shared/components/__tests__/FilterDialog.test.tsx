@@ -1,13 +1,15 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {render, screen, fireEvent, waitFor} from '@testing-library/react';
+import type {Ink} from '../../../features/cards';
+import type {CardTypeFilter} from '../../constants';
 import {FilterDialog} from '../FilterDialog';
 
 const defaultProps = {
   isOpen: true,
   onClose: vi.fn(),
   onApply: vi.fn(),
-  inkFilters: [] as string[],
-  typeFilters: [] as string[],
+  inkFilters: [] as Ink[],
+  typeFilters: [] as CardTypeFilter[],
   costFilters: [] as number[],
   filters: {},
   uniqueKeywords: ['Singer', 'Evasive', 'Ward'],

@@ -383,7 +383,7 @@ function ScorePickerArea({
 }) {
   return (
     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10}}>
-      <span style={{fontSize: FONT_SIZES.base, color: COLORS.mutedText, fontFamily: FONTS.body}}>
+      <span style={{fontSize: FONT_SIZES.base, color: COLORS.textMuted, fontFamily: FONTS.body}}>
         How strong is this synergy?
       </span>
       <ScorePicker value={formScore} onChange={onScore} isMobile={compactLayout} />

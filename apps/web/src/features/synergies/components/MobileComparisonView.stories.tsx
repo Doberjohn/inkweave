@@ -51,6 +51,7 @@ const samplePair: DetailedPairSynergy = {
       ruleId: 'location-at-payoff',
       ruleName: 'Locations',
       category: 'playstyle',
+      playstyleId: 'location-control',
       score: 5,
       explanation: '{B} has location check synergy with {A}.',
     },

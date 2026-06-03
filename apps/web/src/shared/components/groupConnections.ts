@@ -1,4 +1,4 @@
-import type {PairSynergyConnection} from 'inkweave-synergy-engine';
+import type {PairSynergyConnection, PlaystyleId} from 'inkweave-synergy-engine';
 import {getPlaystyleById} from 'inkweave-synergy-engine';
 
 /** Aggregated rule grouping for the synergy detail modal. */
@@ -15,7 +15,7 @@ export interface ConnectionGroupData {
  * playstyle rules merge by `playstyleId`. Sorted by score descending.
  */
 export function groupConnections(connections: PairSynergyConnection[]): ConnectionGroupData[] {
-  const playstyleGroups = new Map<string, PairSynergyConnection[]>();
+  const playstyleGroups = new Map<PlaystyleId, PairSynergyConnection[]>();
   const result: ConnectionGroupData[] = [];
 
   for (const conn of connections) {

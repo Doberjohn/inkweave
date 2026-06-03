@@ -316,7 +316,7 @@ function ActivePlaystyleCard({
   ui: PlaystyleUiMeta;
   cardCount: number;
   mechanicCount: number;
-  previewCards: Pick<LorcanaCard, 'imageUrl' | 'fullName'>[];
+  previewCards: Pick<LorcanaCard, 'id' | 'imageUrl' | 'imageHashSm' | 'fullName'>[];
   onClick: () => void;
   layout: LayoutConfig;
   enableHover: boolean;
@@ -508,7 +508,7 @@ type ActivePlaystyleEntry = {
   ui: PlaystyleUiMeta;
   mechanicCount: number;
   cardCount: number;
-  previewCards: Pick<LorcanaCard, 'imageUrl' | 'fullName'>[];
+  previewCards: Pick<LorcanaCard, 'id' | 'imageUrl' | 'imageHashSm' | 'fullName'>[];
 };
 
 type PlaystyleCardData = ReturnType<typeof useAllPlaystyleCards>['data'];

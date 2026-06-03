@@ -1,4 +1,8 @@
 #!/bin/sh
+# TypeScript gate — fails fast if `tsc -b` finds a type error, so they surface
+# at push time instead of only in CI's build step (see issue #329).
+pnpm --filter inkweave-web typecheck || exit $?
+
 # Story coverage gate — fails fast (~130ms) if a new visual component shipped
 # without a .stories.tsx file. Mirrors the chromatic.yml CI check so missing
 # stories surface locally before the Chromatic run rejects the push.

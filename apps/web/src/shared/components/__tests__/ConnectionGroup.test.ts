@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import {groupConnections} from '../groupConnections';
-import type {PairSynergyConnection} from 'inkweave-synergy-engine';
+import type {PairSynergyConnection, PlaystyleId} from 'inkweave-synergy-engine';
 
 const direct = (id: string, score: number): PairSynergyConnection => ({
   ruleId: id,
@@ -10,7 +10,7 @@ const direct = (id: string, score: number): PairSynergyConnection => ({
   explanation: `Explanation for ${id}`,
 });
 
-const playstyle = (ruleId: string, playstyleId: string, score: number): PairSynergyConnection => ({
+const playstyle = (ruleId: string, playstyleId: PlaystyleId, score: number): PairSynergyConnection => ({
   ruleId,
   ruleName: ruleId,
   category: 'playstyle',

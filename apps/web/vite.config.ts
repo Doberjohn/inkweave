@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 import {sentryVitePlugin} from '@sentry/vite-plugin';
-import {defineConfig, type Plugin} from 'vite';
+import {type Plugin} from 'vite';
+import {defineConfig} from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import {VitePWA} from 'vite-plugin-pwa';
 import {visualizer} from 'rollup-plugin-visualizer';
@@ -193,7 +194,7 @@ export default defineConfig({
       },
     }),
     inlineCssPlugin(),
-    process.env.SENTRY_AUTH_TOKEN &&
+    !!process.env.SENTRY_AUTH_TOKEN &&
       sentryVitePlugin({
         org: process.env.SENTRY_ORG,
         project: process.env.SENTRY_PROJECT,
@@ -202,7 +203,7 @@ export default defineConfig({
           filesToDeleteAfterUpload: ['dist/**/*.map'],
         },
       }),
-    process.env.ANALYZE &&
+    !!process.env.ANALYZE &&
       visualizer({
         filename: 'dist/stats.html',
         open: true,

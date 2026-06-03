@@ -19,8 +19,8 @@ vi.mock('.', () => ({
   ),
 }));
 
-vi.mock('../../../shared/components', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../shared/components')>();
+vi.mock('../../../../shared/components', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../shared/components')>();
   return {
     ...actual,
     EmptyState: () => <div data-testid="empty-state" />,

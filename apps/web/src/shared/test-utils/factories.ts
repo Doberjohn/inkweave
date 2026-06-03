@@ -23,7 +23,7 @@ export function createCard(overrides: Partial<LorcanaCard> = {}): LorcanaCard {
 
 /** Create a mock SynergyMatchDisplay (a card + score inside a group). */
 export function createSynergyMatch(
-  overrides: Partial<SynergyMatchDisplay> & {card?: Partial<LorcanaCard>} = {},
+  overrides: Omit<Partial<SynergyMatchDisplay>, 'card'> & {card?: Partial<LorcanaCard>} = {},
 ): SynergyMatchDisplay {
   const {card: cardOverrides, ...rest} = overrides;
   return {
@@ -68,7 +68,10 @@ export function createConnection(
 
 /** Create a mock VotingPair for voting feature tests. */
 export function createVotingPair(
-  overrides: Partial<VotingPair> & {cardA?: Partial<LorcanaCard>; cardB?: Partial<LorcanaCard>} = {},
+  overrides: Omit<Partial<VotingPair>, 'cardA' | 'cardB'> & {
+    cardA?: Partial<LorcanaCard>;
+    cardB?: Partial<LorcanaCard>;
+  } = {},
 ): VotingPair {
   const {cardA: cardAOverrides, cardB: cardBOverrides, ...rest} = overrides;
   return {

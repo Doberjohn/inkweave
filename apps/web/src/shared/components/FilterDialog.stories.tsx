@@ -3,9 +3,9 @@ import {fn} from 'storybook/test';
 import {FilterDialog} from './FilterDialog';
 
 const mockSets = [
-  {code: '5', name: 'Shimmering Skies'},
-  {code: '6', name: 'Azurite Sea'},
-  {code: '7', name: 'Archazia'},
+  {code: '5', name: 'Shimmering Skies', number: 5},
+  {code: '6', name: 'Azurite Sea', number: 6},
+  {code: '7', name: 'Archazia', number: 7},
 ];
 
 const baseArgs = {
@@ -19,7 +19,7 @@ const baseArgs = {
   uniqueKeywords: ['Evasive', 'Rush', 'Singer', 'Shift', 'Ward'],
   uniqueClassifications: ['Floodborn', 'Dreamborn', 'Storyborn'],
   sets: mockSets,
-} as const;
+};
 
 const meta: Meta<typeof FilterDialog> = {
   title: 'Shared/FilterDialog',

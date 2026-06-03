@@ -1,13 +1,12 @@
 import {useEffect, useState} from 'react';
 import {useSearchParams} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {BrowseCardGrid, BrowseToolbar} from '../features/cards';
+import {BrowseCardGrid, BrowseToolbar, type Ink} from '../features/cards';
 import {
   searchCardsByName,
   filterCards,
   applySortOrder,
   type CardFilterOptions,
-  type SortOrder,
 } from '../features/cards/loader';
 import {
   CompactHeader,
@@ -16,7 +15,14 @@ import {
   FilterDialog,
   MOBILE_NAV_HEIGHT,
 } from '../shared/components';
-import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
+import {
+  COLORS,
+  FONTS,
+  FONT_SIZES,
+  SPACING,
+  type BrowseSortOrder,
+  type CardTypeFilter,
+} from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
@@ -27,8 +33,8 @@ import {useResponsive, useFilterParams} from '../shared/hooks';
 
 function buildCombinedFilters(
   base: CardFilterOptions,
-  inkFilters: string[],
-  typeFilters: string[],
+  inkFilters: Ink[],
+  typeFilters: CardTypeFilter[],
   costFilters: number[],
 ): CardFilterOptions {
   const combined: CardFilterOptions = {...base};
@@ -42,7 +48,7 @@ function applyFiltersAndSort(
   cards: LorcanaCard[],
   searchQuery: string,
   combinedFilters: CardFilterOptions,
-  sortOrder: SortOrder,
+  sortOrder: BrowseSortOrder,
 ): LorcanaCard[] {
   let result = cards;
   if (searchQuery.trim()) result = searchCardsByName(result, searchQuery);

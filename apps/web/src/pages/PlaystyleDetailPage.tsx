@@ -421,8 +421,8 @@ const centeredPage = {
 
 function buildCombinedFilters(
   filters: CardFilterOptions,
-  inkFilters: CardFilterOptions['ink'] extends readonly (infer U)[] ? U[] : never,
-  typeFilters: CardFilterOptions['type'] extends readonly (infer U)[] ? U[] : never,
+  inkFilters: Extract<CardFilterOptions['ink'], readonly unknown[]>,
+  typeFilters: Extract<CardFilterOptions['type'], readonly unknown[]>,
   costFilters: NonNullable<CardFilterOptions['costs']>,
 ): CardFilterOptions {
   const combined: CardFilterOptions = {...filters};

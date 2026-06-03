@@ -6,7 +6,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 const makeCard = (
   id: string,
   fullName: string,
-  ink = 'Amethyst' as const,
+  ink: LorcanaCard['ink'] = 'Amethyst',
   cost = 3,
   setCode = '5',
 ): LorcanaCard =>

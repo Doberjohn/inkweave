@@ -38,7 +38,6 @@ export const Result: Story = {
     distribution: {lower: 15, right: 68, higher: 17, total: 100},
     userChoice: 0,
     error: null,
-    onRateInDetail: fn(),
   },
 };
 
@@ -70,7 +69,6 @@ export const MobileResult: Story = {
     distribution: {lower: 8, right: 30, higher: 12, total: 50},
     userChoice: 1,
     error: null,
-    onRateInDetail: fn(),
   },
   parameters: {viewport: {defaultViewport: 'mobile1'}},
 };
