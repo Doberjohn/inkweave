@@ -2,7 +2,7 @@
 name: close-session
 description: Update docs with today's progress before ending session
 argument-hint: [summary of today's work]
-allowed-tools: Read, Edit, Write, Bash(git:*), Bash(gh:*), Bash(netstat:*), Bash(taskkill:*)
+allowed-tools: Read, Edit, Write, Bash(git:*), Bash(gh:*), Bash(netstat:*), Bash(taskkill:*), Bash(du:*), Bash(find:*), Bash(ls:*), Bash(rm:*)
 ---
 
 # Close Session
@@ -29,7 +29,40 @@ Check each and report findings:
 - **Stale remote refs**: Run `git remote prune origin` unconditionally. Report if any refs were pruned, otherwise skip silently.
 - **Uncommitted work**: If changes exist, ask whether to commit (via `/commit-and-push`), stash with a label, or leave.
 
-## Step 3: Update documentation
+## Step 3: Transient file cleanup
+
+Local scratch (ad-hoc screenshots, logs, test-run artifacts, validation dumps) piles up across sessions and is never committed. **List what exists first, then delete only after the user's explicit "go."** Never delete without confirmation.
+
+**Scan these (true throwaway — all git-ignored):**
+
+```bash
+for p in .tmp-*/ tmp-*/ screenshots/ *.log apps/web/*.log \
+         apps/web/test-results apps/web/playwright-report; do
+  [ -e "$p" ] && echo "$(du -sh "$p" 2>/dev/null | cut -f1)	$p ($(find "$p" -type f 2>/dev/null | wc -l | tr -d ' ') files)"
+done
+```
+
+Also surface any `/tmp/*.txt` (or similar) scratch dumps created during this session. If nothing exists, report "no transient files found" and skip the rest of this step.
+
+**Never touch (protected — exclude from the list entirely):**
+
+- `.knowledge/` — local reference material
+- `.worktrees/**` — intentional WIP (e.g. #206); skip everything inside, *including* its `screenshots/`
+- `apps/web/public/mockups/` — active design-session scratch (the design workflow treats it as a persistent working reference)
+- `dist/`, `coverage/`, `reports/` — regenerable build outputs; leave intact so the next build/dev/E2E stays fast
+- anything under `node_modules/`
+
+Delete a protected path **only** if the user explicitly names it.
+
+Present the categorized list with sizes and ask for the go. On explicit confirmation, delete **only** the approved paths (never a broad glob) and report total space freed:
+
+```bash
+rm -rf <only the paths the user approved>
+```
+
+If the user declines or doesn't respond, leave everything in place.
+
+## Step 4: Update documentation
 
 - **CLAUDE.md**: If changes affect architecture, conventions, or workflow rules, update the relevant sections.
 - **MEMORY.md**: Update the "Current State" section with:
@@ -37,7 +70,7 @@ Check each and report findings:
   - What's ready for next session
   - Any blockers or open questions
 
-## Step 4: Session summary
+## Step 5: Session summary
 
 Present a concise summary:
 
@@ -46,7 +79,7 @@ Present a concise summary:
 **Accomplished**: <what was done>
 **Commits**: <list of commits pushed>
 **Open items**: <anything left for next session>
-**Cleanup status**: <servers stopped, worktrees noted, etc.>
+**Cleanup status**: <servers stopped, worktrees noted, transient files removed + space freed, etc.>
 ```
 
 Ask if the user wants to commit and push any documentation updates.
