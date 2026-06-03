@@ -5,6 +5,7 @@ import {AppLayout} from './AppLayout';
 import {RevealsGate} from './features/reveals';
 import {HomePageSkeleton} from './pages/HomePageSkeleton';
 import {COLORS, RADIUS, SPACING} from './shared/constants';
+import {markStaleChunkRecovered, reloadForStaleChunk} from './shared/lib/staleChunkReload';
 
 /** Retry a dynamic import up to `retries` times, then force-reload on stale chunks (e.g. iOS home screen cache). */
 function lazyWithRetry(
@@ -15,17 +16,15 @@ function lazyWithRetry(
   return lazy(() => {
     const load = (attempt: number): Promise<{default: React.ComponentType}> =>
       importFn()
-        .then((m) => ({default: m[exportName]}))
+        .then((m) => {
+          markStaleChunkRecovered();
+          return {default: m[exportName]};
+        })
         .catch((err) => {
           if (attempt < retries) return load(attempt + 1);
-          // All retries exhausted. Likely stale chunks after deploy.
-          // Force reload to fetch new index.html with current chunk hashes.
-          // Guard against reload loops with a sessionStorage flag.
-          const reloadKey = 'chunk-reload';
-          if (!sessionStorage.getItem(reloadKey)) {
-            sessionStorage.setItem(reloadKey, '1');
-            window.location.reload();
-          }
+          // All retries exhausted. Likely stale chunks after deploy — reload to
+          // fetch a new index.html with current chunk hashes (loop-guarded).
+          reloadForStaleChunk();
           throw err;
         });
     return load(0);
