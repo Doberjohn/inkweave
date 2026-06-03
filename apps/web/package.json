@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "pnpm dlx @react-grab/claude-code@latest && vite",
     "build": "tsc -b && vite build",
-    "typecheck": "tsc -b",
+    "typecheck": "pnpm --filter inkweave-synergy-engine build && tsc -b",
     "build:storybook": "storybook build -o dist/storybook",
     "preview": "vite preview",
     "lint": "eslint .",
