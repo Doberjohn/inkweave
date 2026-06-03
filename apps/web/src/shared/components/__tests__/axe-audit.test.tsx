@@ -2,6 +2,15 @@ import {describe, it, expect} from 'vitest';
 import {render} from '@testing-library/react';
 import {axe} from 'vitest-axe';
 import * as matchers from 'vitest-axe/matchers';
+
+// vitest-axe ships the matcher but not its type; declare the one we use so it
+// type-checks (runtime wiring is the expect.extend(matchers) call below). A
+// bare `interface extends AxeMatchers {}` would trip no-empty-object-type.
+declare module 'vitest' {
+  interface Assertion {
+    toHaveNoViolations(): void;
+  }
+}
 import {Chip} from '../Chip';
 import {StrengthBadge} from '../StrengthBadge';
 import {TierCircle} from '../TierCircle';
@@ -59,7 +68,7 @@ describe('axe accessibility audit', () => {
   });
 
   it('EmptyState has no violations', async () => {
-    const {container} = render(<EmptyState message="No results" />);
+    const {container} = render(<EmptyState title="No results" />);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });

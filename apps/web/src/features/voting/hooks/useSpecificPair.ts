@@ -17,7 +17,7 @@ interface PairState {
 
 const INITIAL_STATE: PairState = {pair: null, isLoading: true, fetchError: null};
 
-function pairReducer(state: PairState, action: PairAction): PairState {
+function pairReducer(_state: PairState, action: PairAction): PairState {
   switch (action.type) {
     case 'FETCH_START':
       return {pair: null, isLoading: true, fetchError: null};

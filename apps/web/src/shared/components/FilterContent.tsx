@@ -81,7 +81,7 @@ function CostFilterSection({
             activeBgColor={COLORS.primary200}
             inactiveColor="transparent"
             inactiveTextColor="transparent"
-            aria-label={`Cost ${cost}${cost === 10 ? '+' : ''}`}>
+            aria-label={`Cost ${cost}${cost === 9 ? '+' : ''}`}>
             <CostIcon cost={cost} size={34} />
           </FilterButton>
         ))}

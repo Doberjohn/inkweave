@@ -30,7 +30,11 @@ vi.mock('../../../../shared/components', () => ({
       {group.connections.map((c: {explanation: string}, i: number) => <span key={i}>{c.explanation}</span>)}
     </div>
   ),
-  groupConnections: (conns: unknown[]) => conns.map((c: Record<string, unknown>) => ({key: c.ruleId, label: c.ruleName, score: c.score, connections: [c], category: c.category})),
+  groupConnections: (conns: unknown[]) =>
+    conns.map((conn) => {
+      const c = conn as Record<string, unknown>;
+      return {key: c.ruleId, label: c.ruleName, score: c.score, connections: [c], category: c.category};
+    }),
 }));
 
 const pair = createVotingPair({

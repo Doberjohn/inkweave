@@ -149,7 +149,6 @@ function SynergyDescriptionGroups({pair, onHighlight}: {pair: VotingPair; onHigh
           group={group}
           cardA={pair.cardA}
           cardB={pair.cardB}
-          showScoreBadge={false}
           onHighlight={onHighlight}
         />
       ))}

@@ -70,6 +70,9 @@ export function useInDepthVoteSession(currentPair: VotingPair | null): UseInDept
 
   const submit = useCallback(async () => {
     if (isSubmitGated({currentPair, isRateLimited, hasAnyAnswer})) return;
+    // Redundant with isSubmitGated's !currentPair check, but narrows the opaque
+    // boolean gate to VotingPair for buildInDepthVote/applySubmitResult below.
+    if (!currentPair) return;
     setIsSubmitting(true);
     setLastResult(null);
     try {

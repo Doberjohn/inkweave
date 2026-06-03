@@ -33,7 +33,7 @@ export function useResponsive(): ResponsiveState {
     return getWidthState(width);
   });
 
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     // SSR check

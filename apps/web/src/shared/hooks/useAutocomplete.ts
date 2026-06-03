@@ -59,8 +59,8 @@ export function useAutocomplete({
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Auto-reset internal state when query is externally cleared (e.g., bottom sheet close).
   // Uses prev-prop tracking so the reset fires exactly once per transition, not on every render.

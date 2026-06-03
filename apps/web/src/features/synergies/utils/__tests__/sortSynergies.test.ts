@@ -4,7 +4,7 @@ import type {SynergyMatchDisplay} from '../../types';
 import {createCard} from '../../../../shared/test-utils';
 
 function createSynergy(
-  overrides: Partial<SynergyMatchDisplay> & {card?: Partial<SynergyMatchDisplay['card']>},
+  overrides: Omit<Partial<SynergyMatchDisplay>, 'card'> & {card?: Partial<SynergyMatchDisplay['card']>},
 ): SynergyMatchDisplay {
   return {
     card: createCard(overrides.card),

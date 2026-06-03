@@ -12,14 +12,14 @@ beforeEach(() => {
 describe('QuickVoteControl', () => {
   it('renders nothing when state is hidden', () => {
     const {container} = render(
-      <QuickVoteControl state="hidden" onVote={mockVote} distribution={null} userChoice={null} error={null} />,
+      <QuickVoteControl state="hidden" onVote={mockVote} distributionLoading={false} distribution={null} userChoice={null} error={null} />,
     );
     expect(container.firstChild).toBeNull();
   });
 
   it('renders three vote buttons in ready state', () => {
     render(
-      <QuickVoteControl state="ready" onVote={mockVote} distribution={null} userChoice={null} error={null} />,
+      <QuickVoteControl state="ready" onVote={mockVote} distributionLoading={false} distribution={null} userChoice={null} error={null} />,
     );
     expect(screen.getByText('Do you agree with this score?')).toBeInTheDocument();
     expect(screen.getByRole('button', {name: 'Lower'})).toBeInTheDocument();
@@ -29,7 +29,7 @@ describe('QuickVoteControl', () => {
 
   it('calls onVote with -1 when "Lower" is clicked', () => {
     render(
-      <QuickVoteControl state="ready" onVote={mockVote} distribution={null} userChoice={null} error={null} />,
+      <QuickVoteControl state="ready" onVote={mockVote} distributionLoading={false} distribution={null} userChoice={null} error={null} />,
     );
     fireEvent.click(screen.getByRole('button', {name: 'Lower'}));
     expect(mockVote).toHaveBeenCalledWith(-1);
@@ -37,7 +37,7 @@ describe('QuickVoteControl', () => {
 
   it('calls onVote with 0 when "Fair" is clicked', () => {
     render(
-      <QuickVoteControl state="ready" onVote={mockVote} distribution={null} userChoice={null} error={null} />,
+      <QuickVoteControl state="ready" onVote={mockVote} distributionLoading={false} distribution={null} userChoice={null} error={null} />,
     );
     fireEvent.click(screen.getByRole('button', {name: 'Fair'}));
     expect(mockVote).toHaveBeenCalledWith(0);
@@ -45,7 +45,7 @@ describe('QuickVoteControl', () => {
 
   it('calls onVote with 1 when "Higher" is clicked', () => {
     render(
-      <QuickVoteControl state="ready" onVote={mockVote} distribution={null} userChoice={null} error={null} />,
+      <QuickVoteControl state="ready" onVote={mockVote} distributionLoading={false} distribution={null} userChoice={null} error={null} />,
     );
     fireEvent.click(screen.getByRole('button', {name: 'Higher'}));
     expect(mockVote).toHaveBeenCalledWith(1);
@@ -53,7 +53,7 @@ describe('QuickVoteControl', () => {
 
   it('keeps prompt layout + disables buttons during submitting state', () => {
     render(
-      <QuickVoteControl state="submitting" onVote={mockVote} distribution={null} userChoice={0} error={null} />,
+      <QuickVoteControl state="submitting" onVote={mockVote} distributionLoading={false} distribution={null} userChoice={0} error={null} />,
     );
     expect(screen.getByRole('button', {name: 'Lower'})).toBeDisabled();
     expect(screen.getByRole('button', {name: 'Fair'})).toBeDisabled();
@@ -63,7 +63,7 @@ describe('QuickVoteControl', () => {
   it('renders dist segment + affirmation in result state (no prompt or buttons)', () => {
     const dist: AccuracyDistribution = {lower: 3, right: 14, higher: 3, total: 20};
     render(
-      <QuickVoteControl state="result" onVote={mockVote} distribution={dist} userChoice={0} error={null} engineScore={9} />,
+      <QuickVoteControl state="result" onVote={mockVote} distributionLoading={false} distribution={dist} userChoice={0} error={null} engineScore={9} />,
     );
     // Dist segment stays visible above the affirmation
     expect(screen.getByText(/How the community rates Inkweave's score/)).toBeInTheDocument();
@@ -77,7 +77,7 @@ describe('QuickVoteControl', () => {
   it('shows dist segment + affirmation when total is 1 (first voter)', () => {
     const dist: AccuracyDistribution = {lower: 0, right: 1, higher: 0, total: 1};
     render(
-      <QuickVoteControl state="result" onVote={mockVote} distribution={dist} userChoice={0} error={null} engineScore={9} />,
+      <QuickVoteControl state="result" onVote={mockVote} distributionLoading={false} distribution={dist} userChoice={0} error={null} engineScore={9} />,
     );
     expect(screen.getByText(/How the community rates Inkweave's score/)).toBeInTheDocument();
     expect(screen.getByText('Thanks for your quick vote')).toBeInTheDocument();
@@ -85,7 +85,7 @@ describe('QuickVoteControl', () => {
 
   it('shows error message and re-enables buttons on error', () => {
     render(
-      <QuickVoteControl state="error" onVote={mockVote} distribution={null} userChoice={null} error="submission_failed" />,
+      <QuickVoteControl state="error" onVote={mockVote} distributionLoading={false} distribution={null} userChoice={null} error="submission_failed" />,
     );
     expect(screen.getByText('Something went wrong, try again')).toBeInTheDocument();
     expect(screen.getByRole('button', {name: 'Lower'})).not.toBeDisabled();
@@ -93,7 +93,7 @@ describe('QuickVoteControl', () => {
 
   it('disables vote buttons when rate limited', () => {
     render(
-      <QuickVoteControl state="error" onVote={mockVote} distribution={null} userChoice={null} error="rate_limited" />,
+      <QuickVoteControl state="error" onVote={mockVote} distributionLoading={false} distribution={null} userChoice={null} error="rate_limited" />,
     );
     expect(screen.getByRole('button', {name: 'Lower'})).toBeDisabled();
     expect(screen.getByRole('button', {name: 'Fair'})).toBeDisabled();
@@ -102,7 +102,7 @@ describe('QuickVoteControl', () => {
 
   it('hides dist segment when distribution is null in result state — affirmation alone', () => {
     render(
-      <QuickVoteControl state="result" onVote={mockVote} distribution={null} userChoice={0} error={null} engineScore={9} />,
+      <QuickVoteControl state="result" onVote={mockVote} distributionLoading={false} distribution={null} userChoice={0} error={null} engineScore={9} />,
     );
     // No dist segment without data — just the affirmation tile
     expect(screen.queryByText(/How the community rates Inkweave's score/)).not.toBeInTheDocument();
@@ -113,7 +113,7 @@ describe('QuickVoteControl', () => {
 
   it('shows rate limit message on rate_limited error', () => {
     render(
-      <QuickVoteControl state="error" onVote={mockVote} distribution={null} userChoice={null} error="rate_limited" />,
+      <QuickVoteControl state="error" onVote={mockVote} distributionLoading={false} distribution={null} userChoice={null} error="rate_limited" />,
     );
     expect(screen.getByText("You're rating fast! Try again in a bit.")).toBeInTheDocument();
   });

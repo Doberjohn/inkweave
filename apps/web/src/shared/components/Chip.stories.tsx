@@ -1,9 +1,15 @@
 import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
-import {Chip} from './Chip';
+import {Chip, type ChipProps} from './Chip';
 
-const meta: Meta<typeof Chip> = {
+// Chip's props are a discriminated union (toggle | dismiss). Storybook's CSF
+// generics can't reconcile both variants in one StoryObj, so the meta is pinned
+// to the toggle variant (the canonical args shape); dismiss stories build their
+// own props inside `render`.
+type ToggleChipArgs = Extract<ChipProps, {onClick: () => void}>;
+
+const meta: Meta<ToggleChipArgs> = {
   title: 'Components/Chip',
   component: Chip,
   parameters: {layout: 'centered'},

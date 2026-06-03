@@ -47,16 +47,6 @@ interface CardImgProps {
   onError: () => void;
 }
 
-// The DOM exposes fetchpriority via the fetchPriority property; React 19
-// accepts the camelCase prop and emits the lowercase attribute. Declared
-// here so TS doesn't complain pending @types/react catch-up.
-declare module 'react' {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface ImgHTMLAttributes<_T> {
-    fetchPriority?: 'high' | 'low' | 'auto';
-  }
-}
-
 function CardImg({src, alt, lazy, priority, visible, onLoad, onError}: CardImgProps) {
   return (
     <img

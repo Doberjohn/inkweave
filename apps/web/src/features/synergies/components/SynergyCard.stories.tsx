@@ -3,7 +3,7 @@ import {fn} from 'storybook/test';
 import type {LorcanaCard} from '../../cards';
 import {SynergyCard} from './SynergyCard';
 
-const mockCard = (ink: string, overrides: Partial<LorcanaCard> = {}): LorcanaCard => ({
+const mockCard = (ink: LorcanaCard['ink'], overrides: Partial<LorcanaCard> = {}): LorcanaCard => ({
   id: '1',
   name: 'Elsa',
   version: 'Snow Queen',

@@ -3,7 +3,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {PairPreview} from '../hooks/usePairQueue';
 import {PairStack} from './PairStack';
 
-const createMockCard = (id: string, name: string, ink: string): LorcanaCard => ({
+const createMockCard = (id: string, name: string, ink: LorcanaCard['ink']): LorcanaCard => ({
   id,
   name,
   fullName: name,

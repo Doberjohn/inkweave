@@ -1,4 +1,4 @@
-import {Page, Locator, expect} from '@playwright/test';
+import {expect, type Page, type Locator} from '@playwright/test';
 
 export class SynergyResultsPage {
   readonly page: Page;
