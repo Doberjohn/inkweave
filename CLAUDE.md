@@ -109,7 +109,7 @@ Claude Code hooks, skills, and agents enforce workflow rules automatically. Chec
 | `/draft-issue [title hint]` | optional title hint | Extract scope from conversation → clarifying questions if gaps → 8-section rubric draft → score → publish on approval |
 | `/implement-issue <num>` | issue number | Session hygiene → fetch issue → create branch → summary |
 | `/commit-and-push "msg"` | commit message | PR readiness → review → commit → push → PR → CI |
-| `/close-session [summary]` | work summary | Cleanup → docs update → MEMORY.md → summary |
+| `/close-session [summary]` | work summary | Cleanup (servers/worktrees/branches + transient-file sweep w/ confirmation) → docs update → MEMORY.md → summary |
 | `/inkweave-add-rule <name>` | mechanic name | Discovery → design → implement → validate |
 
 ### Agents (`.claude/agents/`)
