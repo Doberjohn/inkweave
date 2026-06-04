@@ -2,7 +2,8 @@
 import {sentryVitePlugin} from '@sentry/vite-plugin';
 import {type Plugin} from 'vite';
 import {defineConfig} from 'vitest/config';
-import react from '@vitejs/plugin-react';
+import react, {reactCompilerPreset} from '@vitejs/plugin-react';
+import babel from '@rolldown/plugin-babel';
 import {VitePWA} from 'vite-plugin-pwa';
 import {visualizer} from 'rollup-plugin-visualizer';
 import {spawnSync} from 'node:child_process';
@@ -115,11 +116,13 @@ function inlineCssPlugin(): Plugin {
 export default defineConfig({
   plugins: [
     ensureSynergiesPlugin(),
-    react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler', {target: '19'}]],
-      },
-    }),
+    react(),
+    // React Compiler runs via Babel: plugin-react v6 dropped its built-in Babel
+    // (Vite 8/Oxc handles React Refresh now), so the compiler is wired through a
+    // separate @rolldown/plugin-babel. reactCompilerPreset() defaults to React 19
+    // (our version) and self-filters to jsx/tsx; `target` is only for downgrading
+    // to React 17/18. Must run after react() so JSX is lowered first.
+    babel({presets: [reactCompilerPreset()]}),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['favicon.png', 'apple-touch-icon.png'],
