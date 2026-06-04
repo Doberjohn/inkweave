@@ -1,5 +1,5 @@
 {
-  "buildCommand": "node scripts/download-card-images.mjs && pnpm build:engine && node scripts/precompute-synergies.mjs && VITE_LOCAL_IMAGES=true pnpm build:web",
+  "buildCommand": "node scripts/download-card-images.mjs && pnpm build:engine && node scripts/precompute-synergies.mjs && VITE_LOCAL_IMAGES=true pnpm build:web && node scripts/check-sourcemaps.mjs apps/web/dist",
   "outputDirectory": "apps/web/dist",
   "installCommand": "pnpm install",
   "framework": "vite",
