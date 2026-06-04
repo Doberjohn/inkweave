@@ -142,17 +142,20 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Don't emit sw.js.map. VitePWA's GenerateSW sourcemap option defaults
+        // to the Vite build.sourcemap value ('hidden'), so the workbox step
+        // produces a service-worker map *after* the Sentry plugin's
+        // filesToDeleteAfterUpload pass — meaning it slips past deletion and
+        // ships with full sourcesContent (issue #358). We don't upload the SW
+        // map to Sentry anyway, so generating it has no upside.
+        sourcemap: false,
         globPatterns: ['**/*.{js,css,html,woff2}'],
         // Don't fall back to index.html for static-asset paths — they're real
         // files, not SPA routes. Without this, pasting a direct asset URL into
         // a new tab returns the SPA shell, which boots React Router, fails to
         // match the path, and renders NotFoundPage.tsx (HTTP 200 + a "404"
         // looking page). The runtime caching rules below handle these paths.
-        navigateFallbackDenylist: [
-          /^\/card-images\//,
-          /^\/card-images-preview\//,
-          /^\/data\//,
-        ],
+        navigateFallbackDenylist: [/^\/card-images\//, /^\/card-images-preview\//, /^\/data\//],
         runtimeCaching: [
           {
             urlPattern: /\/data\/allCards\.json$/,
