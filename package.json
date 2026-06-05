@@ -24,6 +24,7 @@
     "download-images": "node scripts/download-card-images.mjs",
     "convert-preview-images": "node scripts/convert-preview-images.mjs",
     "precompute-synergies": "node scripts/precompute-synergies.mjs",
+    "mine-rules": "pnpm build:engine && node scripts/mine-rule-candidates.mjs",
     "graduate-set": "node scripts/graduate-canonical-set.mjs",
     "docs": "node scripts/generate-docs.mjs",
     "analyze": "ANALYZE=true pnpm build:web",

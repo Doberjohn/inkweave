@@ -111,6 +111,7 @@ Claude Code hooks, skills, and agents enforce workflow rules automatically. Chec
 | `/commit-and-push "msg"` | commit message | PR readiness → review → commit → push → PR → CI |
 | `/close-session [summary]` | work summary | Cleanup (servers/worktrees/branches + transient-file sweep w/ confirmation) → docs update → MEMORY.md → summary |
 | `/inkweave-add-rule <name>` | mechanic name | Discovery → design → implement → validate |
+| `/mine-rules [dry-run]` | optional dry-run | Run the miner → dedup top candidate vs existing/removed/open → draft 5-baseline proposal → open one `rule-candidate` issue (`dry-run` drafts without publishing) |
 
 ### Agents (`.claude/agents/`)
 | Agent | Model | Triggered by | What it does |
@@ -119,6 +120,14 @@ Claude Code hooks, skills, and agents enforce workflow rules automatically. Chec
 | `pr-ready` | Sonnet | `/commit-and-push` Step 0 | Lint, tests, E2E, branch naming, diff size |
 | `engine-validator` | Sonnet | `/commit-and-push` when engine files in diff | Build, test, precompute, audit scores |
 | `supabase-validator` | Sonnet | `/commit-and-push` when migration files in diff | Integration tests, security advisor, type freshness, schema drift |
+
+### Scheduled jobs
+
+| Job | When | What it does |
+|-----|------|-------------|
+| **Rule-candidate miner** (`scripts/mine-rules.ps1`) | Weekly, Windows Task Scheduler task `Inkweave Rule Miner` (Mon ~09:07) | Runs headless `claude -p "/mine-rules"` with a scoped, read-only-plus-issue-create allowlist. Surfaces the top uncovered mechanic and opens one `rule-candidate` issue. **Read-only + issue-creation only**: never edits engine source, commits, or pushes. Output logged to `reports/mine-rules-last-run.log`. Disable with `schtasks /Delete /TN "Inkweave Rule Miner" /F`; the repo code is inert without the task. Requires Windows PowerShell 5.1 (pwsh 7 not assumed) and `claude` on PATH. |
+
+The miner itself (`scripts/mine-rule-candidates.mjs`, run via `pnpm mine-rules`) uses the live `SynergyEngine` as a coverage oracle: cards it finds zero synergies for are clustered by shared mechanical phrase, near-duplicates collapsed by card-set overlap, and ranked into `reports/rule-candidates.json` (git-ignored). See issue #359.
 
 ## Synergy Rules
 
@@ -318,6 +327,7 @@ pnpm test:supabase    # Run Supabase integration tests (requires .env.local)
 - Core format only (sets 5+)
 - **react-grab**: Dev-only inspection tool. The `dev` script runs `pnpm dlx @react-grab/claude-code@latest && vite`. Playwright always uses `npx vite` for its webServer (react-grab is irrelevant during E2E). If a dev server is already running, Playwright reuses it (`reuseExistingServer: true` locally) — which means `playwright.config.ts`'s `webServer.env` only applies when Playwright launches its own Vite. Set branch-specific env vars in `apps/web/.env.local` for determinism; see **Feature Flags & Local Dev**.
 - **useContainerWidth**: ResizeObserver hook guards against 0-width observations from detached elements (`if (w > 0)`) — required for React Strict Mode double-mount resilience
+- **Source-map leak guard** (#358): `scripts/check-sourcemaps.mjs` fails the build if any `.map` in a dir inlines original code via non-empty `sourcesContent`; `SKIP_SOURCEMAP_GUARD=1` bypasses. Wired ONLY into `vercel.json`'s `buildCommand` (the deploy boundary), plus `apps/web/vite.config.ts` sets `workbox.sourcemap:false` so VitePWA stops emitting `sw.js.map`. **Do NOT add the guard to CI or a `postbuild` hook** — CI/local builds run without `SENTRY_AUTH_TOKEN` (the Sentry plugin only uploads+deletes app maps where the token exists, i.e. the Vercel build), so they legitimately produce content-bearing maps that never deploy; gating those paths would false-fail safe artifacts and break forked PRs.
 - **Supabase**: Community voting backend (project: `ttyidjyaxnycbpxwngqr`, eu-central-1). Use Supabase MCP tools (`apply_migration`, `execute_sql`, `generate_typescript_types`, `get_advisors`, `list_tables`) for all database operations — do not use local Supabase CLI. After schema changes: apply migration via MCP → verify with `list_tables`/`execute_sql` → regenerate types → run `get_advisors` (security). Client SDK in `apps/web/src/shared/lib/supabase.ts`; migrations in `supabase/migrations/`.
 - **Card images** — production is **content-addressed and self-hosted**; dev falls back to proxies. All routed through `resolveImageUrl(raw)` / `smallImageUrl(card)` in `apps/web/src/features/cards/loader.ts`.
   - **Production build** (`VITE_LOCAL_IMAGES=true`, set in `vercel.json`'s build command): `scripts/download-card-images.mjs` runs first — downloads all set 1-11 images from Ravensburger, copies the committed set-12 preview AVIFs (`apps/web/public/card-images-preview/{id}{-sm}.avif`), converts/resizes to two sizes, then **hashes each AVIF (sha256 prefix, 16 hex chars)** and writes `apps/web/public/card-images/{id}.{hash}.avif` + `{id}.{hash}-sm.avif`. It also injects `imageHash` + `imageHashSm` into `allCards.json` and `previewCards.json`. `resolveImageUrl` then builds `/card-images/{id}.{imageHash}.avif`; `smallImageUrl` builds `/card-images/{id}.{imageHashSm}-sm.avif`. These URLs are content-addressed, so `vercel.json`'s `Cache-Control: public, max-age=31536000, immutable` on `/card-images/(.*)` is truthful — bytes change ⇒ URL changes ⇒ every cache layer (browser, Vercel Edge, SW) sees a fresh resource. **Never put `immutable` on a URL that isn't content-addressed** (issue #323 was a year-long cache-poisoning bug from exactly that). The Ravensburger rewrite in `vercel.json` is now a dev-only fallback (dead in prod since every card has a hashed URL).
