@@ -140,6 +140,68 @@ function loadCards(transformCards) {
   return transformCards(mergedRaw);
 }
 
+/**
+ * Cards the live engine finds (almost) nothing for — the coverage oracle.
+ */
+function findUncoveredCards(cards, synergyEngine) {
+  return cards.filter((card) => {
+    const groups = synergyEngine.findSynergies(card, cards);
+    const matchCount = groups.reduce((sum, g) => sum + g.synergies.length, 0);
+    return matchCount <= UNCOVERED_THRESHOLD;
+  });
+}
+
+/**
+ * Group uncovered cards into clusters keyed by shared mechanical phrase.
+ * Returns a Map of phrase -> { phrase, cardIds:Set, inks:Set }.
+ */
+function buildClusters(uncoveredCards) {
+  const clusters = new Map();
+  for (const card of uncoveredCards) {
+    for (const phrase of extractPhrases(card.text)) {
+      let cluster = clusters.get(phrase);
+      if (!cluster) {
+        cluster = {phrase, cardIds: new Set(), inks: new Set()};
+        clusters.set(phrase, cluster);
+      }
+      cluster.cardIds.add(card.id);
+      cluster.inks.add(card.ink);
+      if (card.ink2) cluster.inks.add(card.ink2);
+    }
+  }
+  return clusters;
+}
+
+/**
+ * Filter clusters to the meaningful ones, collapse near-duplicates, then shape and
+ * rank them into the report's candidate objects (score DESC).
+ */
+function buildCandidates(clusters, nameById) {
+  const filtered = [...clusters.values()].filter(
+    (c) => c.cardIds.size >= MIN_CARDS && c.inks.size >= MIN_INKS,
+  );
+  return collapseOverlapping(filtered)
+    .map((c) => ({
+      phrase: c.phrase,
+      cardCount: c.cardIds.size,
+      inkSpread: [...c.inks],
+      sampleCards: [...c.cardIds].slice(0, 12).map((id) => ({id, name: nameById.get(id)})),
+      score: rankCluster(c.cardIds.size, c.inks.size),
+    }))
+    .sort((a, b) => b.score - a.score);
+}
+
+/**
+ * Print the top candidates for a --verbose run.
+ */
+function logTopCandidates(candidates) {
+  for (const c of candidates.slice(0, 15)) {
+    console.log(
+      `  [${c.score}] "${c.phrase}" — ${c.cardCount} cards, ${c.inkSpread.length} inks (${c.inkSpread.join('/')})`,
+    );
+  }
+}
+
 async function main() {
   console.log('⛏ Mining uncovered rule candidates...');
 
@@ -155,53 +217,16 @@ async function main() {
   const nameById = new Map(cards.map((c) => [c.id, c.fullName]));
   console.log(`  ${cards.length} cards loaded`);
 
-  // Coverage oracle: keep cards the live engine finds (almost) nothing for.
-  const uncovered = cards.filter((card) => {
-    const groups = synergyEngine.findSynergies(card, cards);
-    const matchCount = groups.reduce((sum, g) => sum + g.synergies.length, 0);
-    return matchCount <= UNCOVERED_THRESHOLD;
-  });
+  const uncovered = findUncoveredCards(cards, synergyEngine);
   console.log(`  ${uncovered.length} uncovered cards (<= ${UNCOVERED_THRESHOLD} synergies)`);
 
-  // Cluster uncovered cards by shared mechanical phrase.
-  const clusters = new Map(); // phrase -> { phrase, cardIds:Set, inks:Set }
-  for (const card of uncovered) {
-    for (const phrase of extractPhrases(card.text)) {
-      let cluster = clusters.get(phrase);
-      if (!cluster) {
-        cluster = {phrase, cardIds: new Set(), inks: new Set()};
-        clusters.set(phrase, cluster);
-      }
-      cluster.cardIds.add(card.id);
-      cluster.inks.add(card.ink);
-      if (card.ink2) cluster.inks.add(card.ink2);
-    }
-  }
-
-  const filtered = [...clusters.values()].filter(
-    (c) => c.cardIds.size >= MIN_CARDS && c.inks.size >= MIN_INKS,
-  );
-  const candidates = collapseOverlapping(filtered)
-    .map((c) => ({
-      phrase: c.phrase,
-      cardCount: c.cardIds.size,
-      inkSpread: [...c.inks],
-      sampleCards: [...c.cardIds].slice(0, 12).map((id) => ({id, name: nameById.get(id)})),
-      score: rankCluster(c.cardIds.size, c.inks.size),
-    }))
-    .sort((a, b) => b.score - a.score);
+  const candidates = buildCandidates(buildClusters(uncovered), nameById);
 
   fs.mkdirSync(path.dirname(OUTPUT_FILE), {recursive: true});
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(candidates, null, 2));
   console.log(`✔ ${candidates.length} candidate clusters → ${path.relative(ROOT, OUTPUT_FILE)}`);
 
-  if (VERBOSE) {
-    for (const c of candidates.slice(0, 15)) {
-      console.log(
-        `  [${c.score}] "${c.phrase}" — ${c.cardCount} cards, ${c.inkSpread.length} inks (${c.inkSpread.join('/')})`,
-      );
-    }
-  }
+  if (VERBOSE) logTopCandidates(candidates);
 }
 
 main().catch((err) => {
