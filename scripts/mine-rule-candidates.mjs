@@ -13,7 +13,7 @@
  *
  * Output:
  *   reports/rule-candidates.json
- *     [{ phrase, cardCount, inkSpread, sampleCardIds, score }]  (ranked, score DESC)
+ *     [{ phrase, cardCount, inkSpread, sampleCards: [{id, name}], score }]  (ranked, score DESC)
  *
  * Usage:
  *   node scripts/mine-rule-candidates.mjs            # writes the report
@@ -152,6 +152,7 @@ async function main() {
   const {synergyEngine, transformCards} = await import(engineUrl.href);
 
   const cards = loadCards(transformCards);
+  const nameById = new Map(cards.map((c) => [c.id, c.fullName]));
   console.log(`  ${cards.length} cards loaded`);
 
   // Coverage oracle: keep cards the live engine finds (almost) nothing for.
@@ -185,7 +186,7 @@ async function main() {
       phrase: c.phrase,
       cardCount: c.cardIds.size,
       inkSpread: [...c.inks],
-      sampleCardIds: [...c.cardIds].slice(0, 12),
+      sampleCards: [...c.cardIds].slice(0, 12).map((id) => ({id, name: nameById.get(id)})),
       score: rankCluster(c.cardIds.size, c.inks.size),
     }))
     .sort((a, b) => b.score - a.score);
