@@ -70,6 +70,11 @@ string ids. Read each card's `fullText`, `cost`, `color`, and `type`, and confir
 cluster really is one coherent mechanic (the phrase is a heuristic; verify the cards
 actually share an interaction).
 
+The report's `payoffCount` (the number of cards that reward this mechanic happening, i.e.
+the size of the two-sided axis) is strong corroborating evidence: a high `payoffCount`
+means a real enabler/payoff archetype, while `payoffCount` 0-1 is a good-stuff signal that
+the cluster is parallel density, not synergy. Fold it into the coherence judgment.
+
 ## Step 5: Draft the proposal
 
 Draft a proposal that mirrors how rules are documented in `CLAUDE.md` and follows the
