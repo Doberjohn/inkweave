@@ -1,6 +1,6 @@
 ---
 name: mine-rules
-description: Mine the card database for the top uncovered mechanic and open one rule-candidate issue. Runs the deterministic miner, dedups against existing/removed/open candidates, drafts a proposal, and publishes.
+description: Mine the card database for the top uncovered mechanic and open one rule-candidate issue. Runs the deterministic miner, dedups against existing rules and open candidates (flagging previously-removed mechanics rather than skipping them), drafts a proposal, and publishes.
 argument-hint: "[dry-run]"
 allowed-tools: Read, Write, Grep, Glob, Bash(pnpm:*), Bash(node:*), Bash(gh:*)
 ---
@@ -39,21 +39,27 @@ gh issue list --label rule-candidate --state all --json number,title,state --lim
 ```
 
 Also read, to understand coverage and history:
-- `packages/synergy-engine/REMOVED_RULES.md` — mechanics tried and deliberately removed (never re-propose)
+- `packages/synergy-engine/REMOVED_RULES.md` — mechanics previously removed and why; used to FLAG (not skip) a removed mechanic if it resurfaces, so the proposal carries that history (see Steps 3 and 5)
 - `packages/synergy-engine/src/engine/rules.ts` — the `synergyRules` registry (what already exists)
 - The **Synergy Rules** section of `CLAUDE.md` — human-readable summary of current rules
 
-## Step 3: Select the top novel candidate
+## Step 3: Select the top candidate
 
 Walk `rule-candidates.json` from the top (highest score) and pick the FIRST candidate
-that is genuinely novel:
+worth proposing:
 - NOT already covered by an existing rule in `rules.ts` / CLAUDE.md
-- NOT listed in `REMOVED_RULES.md`
 - NOT already represented by an open `rule-candidate` issue (compare mechanic, not exact phrase wording)
+- Passes the Step 4 coherence check (a real two-sided interaction, not a coincidental shared phrase)
 
-If every candidate is already covered/removed/open, log "No novel candidate this run"
-and STOP without creating an issue. (This is the expected idempotent outcome on a
-re-run with no new cards.)
+**Previously-removed mechanics ARE eligible — do NOT skip them.** The card pool grows
+over time, so a mechanic removed when it was small may now be the largest gap (e.g. card
+draw is currently the single biggest uncovered cluster). If the chosen candidate's
+mechanic appears in `REMOVED_RULES.md`, keep it, and capture the stated removal reason to
+surface in the proposal (Step 5) — the reviewer should weigh re-introduction against why
+it was dropped, not be blind to either side.
+
+If every candidate is already covered or open, log "No novel candidate this run" and STOP
+without creating an issue. (Expected idempotent outcome on a re-run with no new cards.)
 
 ## Step 4: Research the chosen candidate
 
@@ -70,6 +76,7 @@ Draft a proposal that mirrors how rules are documented in `CLAUDE.md` and follow
 5-baseline convention in `packages/synergy-engine/SCORING_DESIGN.md`. Include:
 
 - **Mechanic** — one-sentence description of the interaction
+- **Previously removed (only if in `REMOVED_RULES.md`)** — state this prominently near the top, quote the removal reason, and note what has changed since (e.g. card count now vs. then) so the reviewer can weigh re-introduction against the original reason for dropping it
 - **Category** — `direct` (pair-specific) or `playstyle` (density-based); if playstyle, new or fits an existing one?
 - **Roles** — the role taxonomy (e.g., enabler / payoff), if applicable
 - **Score matrix** — pair scores anchored at 5 (same-axis density baseline); every score above 5 justified in one sentence per the audit rule
@@ -88,7 +95,7 @@ the literal start of the command:
 
 ```bash
 SKILL_APPROVED=1 gh issue create \
-  --title "<mechanic> rule candidate (<N> cards, <M> inks)" \
+  --title "<mechanic> rule candidate (<N> cards, <M> inks)" \  # append " [previously removed]" if applicable
   --label rule-candidate --label engine \
   --body-file <tempfile>
 ```
