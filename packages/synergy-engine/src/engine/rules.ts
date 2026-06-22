@@ -24,6 +24,8 @@ import {
   getToyRoles,
   isLoreDenialCard,
   getLoreDenialRoles,
+  getSacrificeRoles,
+  isSacrificeCard,
   LOCATION_PATTERNS,
   NAMED_EFFECT_SCORES,
   normalizeCardText,
@@ -31,6 +33,7 @@ import {
   type LocationRole,
   type LoreDenialRole,
   type RampRole,
+  type SacrificeRole,
   type ShiftType,
   type ToyRole,
 } from '../utils';
@@ -165,7 +168,10 @@ function curveAlignmentScore(
     };
   }
   if (curveGap === 0) {
-    return {score: 5, reason: `Same cost. No ink savings from Shifting, but skips the drying phase.`};
+    return {
+      score: 5,
+      reason: `Same cost. No ink savings from Shifting, but skips the drying phase.`,
+    };
   }
   if (curveGap === 3) {
     return {score: 5, reason: `Wide 3-turn gap. Playable but slow to set up.`};
@@ -248,7 +254,10 @@ export const LOCATION_ROLE_CHIP_LABELS: Record<LocationRole, string> = {
 };
 
 /** Educational descriptions explaining what each location role means, templated with card name and location name */
-export const LOCATION_ROLE_DESCRIPTIONS: Record<LocationRole, (cardName: string, locationName: string) => string> = {
+export const LOCATION_ROLE_DESCRIPTIONS: Record<
+  LocationRole,
+  (cardName: string, locationName: string) => string
+> = {
   'at-payoff': (_name, loc) => `Gets bonuses when characters are at ${loc}.`,
   'play-trigger': (_name, loc) => `Activates effects when you play ${loc}.`,
   buff: (_name, loc) => `Strengthens ${loc} with Resist or stat boosts.`,
@@ -439,12 +448,38 @@ function createLocationRule(spec: LocationRuleSpec): SynergyRule {
 
 /** Specs for all 8 location rules (order matters for deduplication). */
 const LOCATION_RULE_SPECS: readonly LocationRuleSpec[] = [
-  {id: 'at-payoff', name: 'At Location Payoff', role: 'at-payoff', pattern: LOCATION_PATTERNS['at-payoff']},
-  {id: 'play-trigger', name: 'Location Play Trigger', role: 'play-trigger', pattern: LOCATION_PATTERNS['play-trigger']},
+  {
+    id: 'at-payoff',
+    name: 'At Location Payoff',
+    role: 'at-payoff',
+    pattern: LOCATION_PATTERNS['at-payoff'],
+  },
+  {
+    id: 'play-trigger',
+    name: 'Location Play Trigger',
+    role: 'play-trigger',
+    pattern: LOCATION_PATTERNS['play-trigger'],
+  },
   {id: 'buff', name: 'Location Buff', role: 'buff', pattern: LOCATION_PATTERNS.buff},
-  {id: 'location-ramp', name: 'Location Ramp', role: 'location-ramp', pattern: LOCATION_PATTERNS['location-ramp']},
-  {id: 'move', name: 'Move to Location', role: 'move', pattern: LOCATION_PATTERNS.move, excludePattern: LOCATION_PATTERNS['move-exclude']},
-  {id: 'in-play-check', name: 'Location In-Play Check', role: 'in-play-check', pattern: LOCATION_PATTERNS['in-play-check']},
+  {
+    id: 'location-ramp',
+    name: 'Location Ramp',
+    role: 'location-ramp',
+    pattern: LOCATION_PATTERNS['location-ramp'],
+  },
+  {
+    id: 'move',
+    name: 'Move to Location',
+    role: 'move',
+    pattern: LOCATION_PATTERNS.move,
+    excludePattern: LOCATION_PATTERNS['move-exclude'],
+  },
+  {
+    id: 'in-play-check',
+    name: 'Location In-Play Check',
+    role: 'in-play-check',
+    pattern: LOCATION_PATTERNS['in-play-check'],
+  },
   {id: 'search', name: 'Location Search', role: 'search', pattern: LOCATION_PATTERNS.search},
   {id: 'boost', name: 'Location Boost', role: 'boost', pattern: LOCATION_PATTERNS.boost},
 ];
@@ -474,6 +509,22 @@ export const DISCARD_ROLE_DESCRIPTIONS: Record<DiscardRole, string> = {
   payoff: 'Get benefits for having more cards than your opponent',
 };
 
+// ============================================
+// SACRIFICE ROLE UI LABELS
+// ============================================
+
+/** Short chip labels for each sacrifice role (used in UI) */
+export const SACRIFICE_ROLE_CHIP_LABELS: Record<SacrificeRole, string> = {
+  'self-banish': 'Self-Banish',
+  'banish-trigger': 'Banish Trigger',
+};
+
+/** Educational descriptions explaining what each sacrifice role means */
+export const SACRIFICE_ROLE_DESCRIPTIONS: Record<SacrificeRole, string> = {
+  'self-banish': 'Banishes your own characters on demand',
+  'banish-trigger': 'Get a benefit when your characters are banished',
+};
+
 /** Standalone educational descriptions for location roles (no card name needed) */
 export const LOCATION_ROLE_TOOLTIP: Record<LocationRole, string> = {
   'at-payoff': 'Get benefits when characters are at a location',
@@ -497,7 +548,11 @@ function singerSongScore(diff: number): number {
   return 5;
 }
 
-function makeSingerSongMatch(singer: LorcanaCard, song: LorcanaCard, target: LorcanaCard): SynergyMatch {
+function makeSingerSongMatch(
+  singer: LorcanaCard,
+  song: LorcanaCard,
+  target: LorcanaCard,
+): SynergyMatch {
   const singerValue = getKeywordValue(singer, 'Singer') ?? singer.cost;
   return {
     card: target,
@@ -531,7 +586,11 @@ function findSingersForSong(song: LorcanaCard, allCards: LorcanaCard[]): Synergy
 // SHIFT TARGETS HELPERS
 // ============================================
 
-function makeShiftMatch(shiftCard: LorcanaCard, baseCard: LorcanaCard, target: LorcanaCard): SynergyMatch {
+function makeShiftMatch(
+  shiftCard: LorcanaCard,
+  baseCard: LorcanaCard,
+  target: LorcanaCard,
+): SynergyMatch {
   const {score, reason} = calculateShiftSynergy(shiftCard, baseCard);
   // The searcher (modal cardA / left card / token A) is whichever card is NOT the target.
   // If target === baseCard, searcher = shiftCard → A is the shift card, B is the base.
@@ -539,9 +598,7 @@ function makeShiftMatch(shiftCard: LorcanaCard, baseCard: LorcanaCard, target: L
   const searcherIsShift = baseCard.id === target.id;
   const baseToken = searcherIsShift ? '{B}' : '{A}';
   const shiftToken = searcherIsShift ? '{A}' : '{B}';
-  const explanation = reason
-    .replace(/<BASE>/g, baseToken)
-    .replace(/<SHIFT>/g, shiftToken);
+  const explanation = reason.replace(/<BASE>/g, baseToken).replace(/<SHIFT>/g, shiftToken);
   return {card: target, score, explanation, bidirectional: true};
 }
 
@@ -550,7 +607,12 @@ function findShiftTargets(shiftCard: LorcanaCard, allCards: LorcanaCard[]): Syne
   const shiftType = getShiftType(shiftCard);
   if (!shiftType) return [];
   return allCards
-    .filter((other) => other.id !== shiftCard.id && isCharacter(other) && isValidShiftTarget(shiftType, shiftCard, other))
+    .filter(
+      (other) =>
+        other.id !== shiftCard.id &&
+        isCharacter(other) &&
+        isValidShiftTarget(shiftType, shiftCard, other),
+    )
     .map((target) => makeShiftMatch(shiftCard, target, target));
 }
 
@@ -689,6 +751,34 @@ export const synergyRules: SynergyRule[] = [
         const otherRoles = getDiscardRoles(other);
         if (otherRoles.length === 0) continue;
         matches.push(scoreDiscardPair(card, cardRoles, other, otherRoles));
+      }
+      return matches;
+    },
+  },
+
+  // --------------------------------------------
+  // SACRIFICE ("Banish Matters")
+  // --------------------------------------------
+  {
+    id: 'sacrifice',
+    name: 'Sacrifice',
+    category: 'playstyle',
+    playstyleId: 'sacrifice',
+    description:
+      'Self-banish cards banish your own characters on demand to cash in banish-trigger payoffs',
+
+    matches: isSacrificeCard,
+
+    findSynergies: (card, allCards) => {
+      const cardRoles = getSacrificeRoles(card);
+      if (cardRoles.length === 0) return [];
+
+      const matches: SynergyMatch[] = [];
+      for (const other of allCards) {
+        if (other.id === card.id) continue;
+        const otherRoles = getSacrificeRoles(other);
+        if (otherRoles.length === 0) continue;
+        matches.push(scoreSacrificePair(card, cardRoles, other, otherRoles));
       }
       return matches;
     },
@@ -913,6 +1003,76 @@ function scoreDiscardPair(
 }
 
 // ============================================
+// SACRIFICE SCORING
+// ============================================
+
+/**
+ * A sacrifice banish combo is the cross-role pair: one side is the self-banish
+ * (banishes your own character on demand) and the other is the banish-trigger
+ * (pays off when your character is banished). Same-side pairs are not combos.
+ */
+function isSacrificeBanishCombo(
+  cardSelfBanish: boolean,
+  cardPayoff: boolean,
+  otherSelfBanish: boolean,
+  otherPayoff: boolean,
+): boolean {
+  return (cardSelfBanish && otherPayoff) || (cardPayoff && otherSelfBanish);
+}
+
+/**
+ * Score a sacrifice pair (5-baseline convention, mirrors the Discard rule shape):
+ *   - self-banish ↔ banish-trigger = 8  (win-condition combo)
+ *   - banish-trigger ↔ banish-trigger = 5  (parallel payoff density)
+ *   - self-banish ↔ self-banish     = 5  (parallel enablers, still need a payoff)
+ *
+ * `_card` is the searcher (token {A}); `other` is the partner (token {B}).
+ */
+function scoreSacrificePair(
+  _card: LorcanaCard,
+  cardRoles: SacrificeRole[],
+  other: LorcanaCard,
+  otherRoles: SacrificeRole[],
+): SynergyMatch {
+  const cardSelfBanish = cardRoles.includes('self-banish');
+  const otherSelfBanish = otherRoles.includes('self-banish');
+  const cardPayoff = cardRoles.includes('banish-trigger');
+  const otherPayoff = otherRoles.includes('banish-trigger');
+
+  const isBanishCombo = isSacrificeBanishCombo(
+    cardSelfBanish,
+    cardPayoff,
+    otherSelfBanish,
+    otherPayoff,
+  );
+
+  if (isBanishCombo) {
+    // Token-swap so the SELF-BANISH side always reads as the actor, regardless of
+    // which card is the searcher (token {A}) and which is the partner (token {B}).
+    const selfBanishToken = cardSelfBanish ? '{A}' : '{B}';
+    const payoffToken = cardSelfBanish ? '{B}' : '{A}';
+    return {
+      card: other,
+      score: 8,
+      explanation: `${selfBanishToken} banishes your own character on demand, guaranteeing ${payoffToken}'s banish payoff.`,
+      bidirectional: true,
+    };
+  }
+
+  // Same-side pair: density baseline. Two payoffs share the banish axis without
+  // amplifying it; two self-banish cards are parallel enablers that still need a payoff body.
+  const bothPayoff = cardPayoff && otherPayoff;
+  return {
+    card: other,
+    score: 5,
+    explanation: bothPayoff
+      ? `Both pay off when your characters are banished: a board that trades into value.`
+      : `Both banish your own characters: parallel self-banish cards.`,
+    bidirectional: true,
+  };
+}
+
+// ============================================
 // LORE DENIAL SCORING
 // ============================================
 
@@ -995,7 +1155,12 @@ function rampRoleFlags(roles: RampRole[]): RampRoleFlags {
 }
 
 /** True iff one card has roleX and the other has roleY (regardless of which side). */
-function hasMixedRoles(a: RampRoleFlags, b: RampRoleFlags, x: keyof RampRoleFlags, y: keyof RampRoleFlags): boolean {
+function hasMixedRoles(
+  a: RampRoleFlags,
+  b: RampRoleFlags,
+  x: keyof RampRoleFlags,
+  y: keyof RampRoleFlags,
+): boolean {
   return (a[x] && b[y]) || (a[y] && b[x]);
 }
 
@@ -1060,7 +1225,8 @@ function getRampPairScore(
   rolesB: RampRole[],
 ): number {
   const flags = classifyRampPair(cardA, rolesA, cardB, rolesB);
-  if (flags.shape === 'ramp-trigger') return scoreRampTriggerChain(flags.rampCard, flags.triggerCard);
+  if (flags.shape === 'ramp-trigger')
+    return scoreRampTriggerChain(flags.rampCard, flags.triggerCard);
   if (flags.shape === 'cost-cost') return costReductionTargetsOverlap(cardA, cardB) ? 6 : 0;
   return 5;
 }
@@ -1077,20 +1243,16 @@ const RAMP_EXPLANATIONS: Record<
     const triggerToken = rampIsA ? '{B}' : '{A}';
     return `${rampToken} adds ink to your inkwell, triggering ${triggerToken}'s inkwell effect.`;
   },
-  'ramp-ramp': (_a, _b) =>
-    `Both accelerate your ink. Gets you ahead faster.`,
+  'ramp-ramp': (_a, _b) => `Both accelerate your ink. Gets you ahead faster.`,
   'ramp-cost': (a, _b, f) => {
     const rampIsA = f.rampCard.id === a.id;
     const rampToken = rampIsA ? '{A}' : '{B}';
     const costToken = rampIsA ? '{B}' : '{A}';
     return `${rampToken} adds extra ink, ${costToken} discounts your plays.`;
   },
-  'trigger-trigger': (_a, _b) =>
-    `Both effects activate on inkwell events.`,
-  'cost-cost': (_a, _b) =>
-    `Both reduce costs. Stacking discounts plays cards faster.`,
-  'trigger-cost': (_a, _b) =>
-    `Both support an accelerated game plan.`,
+  'trigger-trigger': (_a, _b) => `Both effects activate on inkwell events.`,
+  'cost-cost': (_a, _b) => `Both reduce costs. Stacking discounts plays cards faster.`,
+  'trigger-cost': (_a, _b) => `Both support an accelerated game plan.`,
 };
 
 /** Generate a human-readable explanation for a ramp synergy pair. */

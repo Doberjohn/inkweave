@@ -46,13 +46,13 @@ const playstyles: Playstyle[] = [
     name: 'Toys',
     tagline: 'Toy characters and the cards that reward running them.',
     description:
-      'Toy characters and the cards that reward running them. Andy\'s Toys search the deck for more Toys and grow stronger when others are around; Sid\'s Toys send themselves to the discard pile to trigger their effects again. Each Toy you add makes the rest of the strategy stronger.',
+      "Toy characters and the cards that reward running them. Andy's Toys search the deck for more Toys and grow stronger when others are around; Sid's Toys send themselves to the discard pile to trigger their effects again. Each Toy you add makes the rest of the strategy stronger.",
     strategyTips: [
       'Aim for 12 to 16 Toys plus 4 to 6 payoffs so search effects and density triggers reliably hit.',
-      'Search effects (Woody — Leader of the Toys, You\'ve Got a Friend in Me) chain into free plays — keep cheap Toys in the deck for them to fetch.',
-      'The Sid\'s Toys package (Hand-in-the-Box, Wind-Up Frog, Bouncing Ducky, Jingle Joe, Sid Phillips) rewards self-banish loops — pair with sacrifice outlets or trade aggressively.',
+      "Search effects (Woody — Leader of the Toys, You've Got a Friend in Me) chain into free plays — keep cheap Toys in the deck for them to fetch.",
+      "The Sid's Toys package (Hand-in-the-Box, Wind-Up Frog, Bouncing Ducky, Jingle Joe, Sid Phillips) rewards self-banish loops — pair with self-banish cards or trade aggressively.",
       'Pizza Planet — Spaceport gives free moves for Toys; pair with at-location payoffs (Beast — Snowfield Troublemaker) for cross-archetype value.',
-      'The tribe is mostly Amber and Ruby. Amber+Ruby decks get the deepest pool; mono-Amber leans on Andy\'s Toys, mono-Ruby leans on Sid\'s Toys.',
+      "The tribe is mostly Amber and Ruby. Amber+Ruby decks get the deepest pool; mono-Amber leans on Andy's Toys, mono-Ruby leans on Sid's Toys.",
     ],
   },
   {
@@ -67,6 +67,20 @@ const playstyles: Playstyle[] = [
       'Cost reduction cards (Amber) stack with inkwell ramp — Lantern discount + extra ink means you can deploy two threats in one turn.',
       'Repeating triggers (Coils, Jafar) scale with the number of inks per turn. Once-per-turn triggers (Raya, Lyle) are strong but cap at one activation.',
       'Ramp is strongest in turns 2-5 when the extra ink lets you play 5-6 cost cards while opponents are still at 3-4.',
+    ],
+  },
+  {
+    id: 'sacrifice',
+    name: 'Sacrifice',
+    tagline: 'Banish your own characters on demand to cash in banish payoffs.',
+    description:
+      'Banish your own characters on demand to cash in banish payoffs. Self-banish cards let you banish a character whenever you want, and banish-trigger characters reward you when they leave play. Pairing the two converts a "maybe the opponent trades into it" payoff into a guaranteed, on-your-terms value engine.',
+    strategyTips: [
+      'You need both halves: self-banish cards without payoffs do nothing, payoffs without a way to banish wait on the opponent. Run a handful of each.',
+      'The combo lives in Ruby and Emerald, where every self-banish card currently sits. Splash a second ink for the deepest payoff pool.',
+      'Banish triggers that draw or gain lore (Diablo, David Xanatos) turn each sacrifice into raw card or tempo advantage.',
+      'Self-banish cards that do something extra (Time to Go! draws, The Claw bounces) pay you twice, once for their own effect and once for the payoff.',
+      'Tribal banish triggers (Racers, Illusions, Puppies) fire off any banish, so a generic self-banish card still turns them on.',
     ],
   },
 ];

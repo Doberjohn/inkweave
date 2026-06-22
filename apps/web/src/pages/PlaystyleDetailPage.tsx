@@ -4,6 +4,7 @@ import {
   getPlaystyleById,
   getLocationRoles,
   getDiscardRoles,
+  getSacrificeRoles,
   getRampRoles,
   getLoreDenialRoles,
   getToyRoles,
@@ -11,6 +12,8 @@ import {
   LOCATION_ROLE_TOOLTIP,
   DISCARD_ROLE_CHIP_LABELS,
   DISCARD_ROLE_DESCRIPTIONS,
+  SACRIFICE_ROLE_CHIP_LABELS,
+  SACRIFICE_ROLE_DESCRIPTIONS,
   RAMP_ROLE_CHIP_LABELS,
   RAMP_ROLE_DESCRIPTIONS,
   LORE_DENIAL_ROLE_CHIP_LABELS,
@@ -21,6 +24,7 @@ import {
   type LorcanaCard,
   type LocationRole,
   type DiscardRole,
+  type SacrificeRole,
   type RampRole,
   type LoreDenialRole,
   type ToyRole,
@@ -38,12 +42,7 @@ import {
   applySortOrder,
   type CardFilterOptions,
 } from '../features/cards/loader';
-import {
-  CompactHeader,
-  ErrorBoundary,
-  EtherealBackground,
-  FilterDialog,
-} from '../shared/components';
+import {CompactHeader, ErrorBoundary, EtherealBackground, FilterDialog} from '../shared/components';
 import {
   COLORS,
   FONTS,
@@ -348,6 +347,11 @@ const ROLE_CONFIGS: Partial<Record<PlaystyleId, RoleConfig>> = {
     getRoles: (card) => getDiscardRoles(card),
     getLabel: (role) => DISCARD_ROLE_CHIP_LABELS[role as DiscardRole],
     getTooltip: (role) => DISCARD_ROLE_DESCRIPTIONS[role as DiscardRole],
+  },
+  sacrifice: {
+    getRoles: (card) => getSacrificeRoles(card),
+    getLabel: (role) => SACRIFICE_ROLE_CHIP_LABELS[role as SacrificeRole],
+    getTooltip: (role) => SACRIFICE_ROLE_DESCRIPTIONS[role as SacrificeRole],
   },
   ramp: {
     getRoles: (card) => getRampRoles(card),
@@ -718,13 +722,7 @@ interface FilterDialogSharedProps {
   sets: Parameters<typeof FilterDialog>[0]['sets'];
 }
 
-function PlaystyleDetailLoadingView({
-  isMobile,
-  goHome,
-}: {
-  isMobile: boolean;
-  goHome: () => void;
-}) {
+function PlaystyleDetailLoadingView({isMobile, goHome}: {isMobile: boolean; goHome: () => void}) {
   return (
     <main
       style={{

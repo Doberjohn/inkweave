@@ -1,268 +1,271 @@
 # Synergy Data Audit
 
-Automated audit of all precomputed synergy JSON files. Last regenerated: **2026-04-29** via `node scripts/audit-synergy-data.mjs` against the post-rebaseline engine (5-baseline scoring convention applied to Lore Denial / Discard / Ramp / Toys).
-
 ## Issues Found
 
-- [OK] Rule "Lore Loss" tiered 5/6/7 (burn↔burn / burn↔steal / steal↔steal). Spread: 2.
-- [OK] Rule "Discard" 5/8 matrix (parallel-pressure baseline + asymmetric kill combo). Spread: 3.
-- [OK] Rule "Ramp" 5/6/7/8/9 with chain ladder for ramp ↔ trigger pairs. Spread: 4.
-- [OK] Rule "Toy" 5/7/8 role-driven matrix. Spread: 3.
-- [OK] Card 1537 (Baymax - Giant Robot) has 100 Shift Targets — correct, Universal Shift.
-- [OK] Coverage at 60.9% (995/1,633 cards) — above 40% threshold.
-- [OK] No playstyle exceeds 150 cards or drops below 10.
+- [OK] No threshold violations detected.
 
 ## Summary
 
-| Metric | Value |
-|--------|-------|
-| Total cards | 1,633 |
-| Cards with synergies | 995 (60.9%) |
-| Total matches | 19,020 |
-| Rules represented | 15 (Shift, Named, Singer + Songs, Lore Loss, Discard, Ramp, Toy, + 8 Location sub-rules) |
-| Playstyles | 5 (Location Control, Ramp, Discard, Lore Denial, Toy) |
-
-```chart
-{
-  "type": "doughnut",
-  "title": "Synergy Coverage (1,633 cards)",
-  "data": {
-    "labels": ["Cards with synergies (995)", "Cards without synergies (638)"],
-    "values": [995, 638]
-  }
-}
-```
+Coverage: 1022/1633 (62.6%) | Total matches: 21043 | Rules: 9 | Playstyles: 6
 
 ## Overall Score Distribution
 
-| Score | Count | % | Tier | Bar |
-|-------|-------|---|------|-----|
-| 10 | 2 | 0.0% | Perfect | |
-| 9 | 1,120 | 5.9% | Snowball chain | █████ |
-| 8 | 1,722 | 9.1% | Win-condition | █████████ |
-| 7 | 3,622 | 19.0% | Strong / compounding | ███████████████████ |
-| 6 | 1,076 | 5.7% | Complementary | █████ |
-| 5 | 10,198 | 53.6% | Neutral baseline | ██████████████████████████████████████████████████████ |
-| 4 | 18 | 0.1% | Hostile (Named Companions) | |
-| 3 | 1,262 | 6.6% | Weak | ███████ |
-
-**53.6% at score 5** confirms the 5-baseline convention is anchoring playstyle pairs as designed. Same-axis density pairs (burn↔burn, enabler↔enabler, ramp↔ramp, member↔member) sit at the floor; specific mechanical interactions earn 6+. The 19% at score 7 captures real compounding (steal↔steal, member↔tribal, etc.). The 9% at score 8 is genuine win-condition combos. The 6% at score 9 is Ramp's snowball chain (deck-ramp + repeating-trigger).
-
-```chart
-{
-  "type": "bar",
-  "title": "Overall Score Distribution (19,020 matches)",
-  "data": {
-    "labels": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
-    "datasets": [{
-      "label": "Matches",
-      "data": [0, 0, 1262, 18, 10198, 1076, 3622, 1722, 1120, 2],
-      "backgroundColor": ["#f59090", "#f59090", "#f59090", "#60b5f5", "#60b5f5", "#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#fbbf24"]
-    }]
-  }
-}
-```
+| Score | Count | Tier | % | Bar |
+|------|------|------|---|-----|
+| 10 | 2 | Perfect | 0.0% |  |
+| 9 | 1120 | Strong | 5.3% | ### |
+| 8 | 2208 | Strong | 10.5% | ###### |
+| 7 | 3622 | Strong | 17.2% | ######### |
+| 6 | 1082 | Moderate | 5.1% | ### |
+| 5 | 11646 | Moderate | 55.3% | ############################## |
+| 4 | 18 | Moderate | 0.1% |  |
+| 3 | 1345 | Weak | 6.4% | ### |
 
 ## Per-Rule Summary
 
-| Rule | Category | Matches | Cards | Min | Max | Mean | Median | Spread |
-|------|----------|---------|-------|-----|-----|------|--------|--------|
-| Ramp | playstyle | 7,514 | 90 | 5 | 9 | 5.97 | 5 | 4 |
-| Singer + Songs | direct | 2,050 | 95 | 5 | 8 | 6.09 | 6 | 3 |
-| Shift Targets | direct | 1,544 | 734 | 3 | 10 | 5.83 | 5 | 7 |
-| Discard | playstyle | 1,352 | 39 | 5 | 8 | 5.32 | 5 | 3 |
-| At Location Payoff | playstyle | 1,057 | 62 | 3 | 7 | 6.46 | 7 | 4 |
-| Location In-Play Check | playstyle | 868 | 61 | 3 | 5 | 4.74 | 5 | 2 |
-| Location Buff | playstyle | 822 | 60 | 3 | 7 | 6.34 | 7 | 4 |
-| Location Search | playstyle | 755 | 59 | 3 | 5 | 4.43 | 5 | 2 |
-| Location Ramp | playstyle | 610 | 58 | 3 | 7 | 6.08 | 7 | 4 |
-| Toy | playstyle | 552 | 24 | 5 | 8 | 6.51 | 7 | 3 |
-| Lore Loss | playstyle | 546 | 24 | 5 | 7 | 5.83 | 6 | 2 |
-| Move to Location | playstyle | 524 | 58 | 3 | 5 | 4.65 | 5 | 2 |
-| Named Companions | direct | 381 | 74 | 4 | 8 | 5.91 | 6 | 4 |
-| Location Play Trigger | playstyle | 249 | 56 | 3 | 7 | 6.65 | 7 | 4 |
-| Location Boost | playstyle | 196 | 16 | 3 | 5 | 3.57 | 3 | 2 |
-
-```chart
-{
-  "type": "bar",
-  "title": "Matches per Rule",
-  "data": {
-    "labels": ["Ramp", "Singer", "Shift", "Discard", "Loc Payoff", "Loc In-Play", "Loc Buff", "Loc Search", "Loc Ramp", "Toy", "Lore Loss", "Loc Move", "Named", "Loc Play-Trig", "Loc Boost"],
-    "values": [7514, 2050, 1544, 1352, 1057, 868, 822, 755, 610, 552, 546, 524, 381, 249, 196]
-  }
-}
-```
+| Rule | Category | Matches | Min | Max | Mean | Median | Spread | Flag |
+|------|----------|---------|-----|-----|------|--------|--------|------|
+| Ramp | playstyle | 7652 | 5 | 9 | 5.95 | 5 | 4 |  |
+| Locations | playstyle | 5272 | 3 | 7 | 5.46 | 5 | 4 |  |
+| Singer + Songs | direct | 2050 | 5 | 8 | 6.09 | 6 | 3 |  |
+| Sacrifice | playstyle | 1692 | 5 | 8 | 5.86 | 5 | 3 |  |
+| Shift Targets | direct | 1544 | 3 | 10 | 5.83 | 5 | 7 |  |
+| Discard | playstyle | 1352 | 5 | 8 | 5.32 | 5 | 3 |  |
+| Toys | playstyle | 552 | 5 | 8 | 6.51 | 7 | 3 |  |
+| Lore Denial | playstyle | 546 | 5 | 7 | 5.83 | 6 | 2 |  |
+| Companions | direct | 383 | 4 | 8 | 5.91 | 6 | 4 |  |
 
 ## Per-Rule Details
 
 <details>
-<summary>Ramp — 7,514 matches across 90 cards, score range 5–9</summary>
+<summary>Ramp — 7652 matches, score range 5–9</summary>
 
-| Score | Count | % |
-|-------|-------|---|
-| 9 | 938 | 12.5% |
-| 8 | 952 | 12.7% |
-| 7 | 230 | 3.1% |
-| 6 | 198 | 2.6% |
-| 5 | 5,196 | 69.2% |
+**Score Histogram**
 
-The 27% at 8–9 is the chain ladder: deck-ramp + repeating-trigger combos compound mechanically. The 69% at 5 is parallel-density baseline (ramp↔ramp, trigger↔trigger, ramp↔CR) — real but doesn't compound. The 6 tier is cost-reduction pairs with overlapping target types (genuine stacking discounts). 90 ramp cards × 89 partners = ~8,000 max possible pairs; 7,514 actual indicates broad coverage.
+| Score | Count | Tier | % |
+|------|------|------|---|
+| 9 | 938 | Strong | 12.3% |
+| 8 | 952 | Strong | 12.4% |
+| 7 | 230 | Strong | 3.0% |
+| 6 | 204 | Moderate | 2.7% |
+| 5 | 5328 | Moderate | 69.6% |
 
-</details>
+**Group Size Distribution**
 
-<details>
-<summary>Singer + Songs — 2,050 matches across 95 cards, score range 5–8</summary>
+| Group Size | Cards | % |
+|-----------|------|---|
+| 15+ | 91 | 100.0% |
 
-| Score | Count | % |
-|-------|-------|---|
-| 8 | 268 | 13.1% |
-| 7 | 456 | 22.2% |
-| 6 | 512 | 25.0% |
-| 5 | 814 | 39.7% |
-
-Threshold-utilization tiering: song cost = singer value (8), -1 (7), -2 (6), ≤-3 (5). Even distribution across 4 anchors — the most uniformly-tiered direct rule.
+Healthy spread.
 
 </details>
 
 <details>
-<summary>Shift Targets — 1,544 matches across 734 cards, score range 3–10</summary>
+<summary>Locations — 5272 matches, score range 3–7</summary>
 
-| Score | Count | % |
-|-------|-------|---|
-| 10 | 2 | 0.1% |
-| 9 | 182 | 11.8% |
-| 8 | 235 | 15.2% |
-| 7 | 320 | 20.7% |
-| 5 | 402 | 26.0% |
-| 3 | 403 | 26.1% |
+**Score Histogram**
 
-Best-differentiated rule — 6 distinct score values across a spread of 7. Driven by curve-gap math + inkable bonuses + free-Shift tiering + condition-activation +1 bonus (which pushes a 9 to 10). 734 cards participate (every Shift card and every base it can target).
+| Score | Count | Tier | % |
+|------|------|------|---|
+| 7 | 2160 | Strong | 41.0% |
+| 5 | 2170 | Moderate | 41.2% |
+| 3 | 942 | Weak | 17.9% |
 
-</details>
+**Group Size Distribution**
 
-<details>
-<summary>Discard — 1,352 matches across 39 cards, score range 5–8</summary>
+| Group Size | Cards | % |
+|-----------|------|---|
+| 10-14 | 14 | 13.3% |
+| 15+ | 91 | 86.7% |
 
-| Score | Count | % |
-|-------|-------|---|
-| 8 | 142 | 10.5% |
-| 5 | 1,210 | 89.5% |
-
-89.5% sit at the new 5 floor (parallel pressure + payoff↔payoff baseline). The 10.5% at 8 is the asymmetric kill combo with the 2 hand-size payoffs (Yzma — Transformed Kitten, Pacha — Trekmate). Bimodal by design — the rebaseline made the deck's structure visible: 90% pressure cards stacking, 10% genuine kill combos.
+Healthy spread.
 
 </details>
 
 <details>
-<summary>Toy — 552 matches across 24 cards, score range 5–8</summary>
+<summary>Singer + Songs — 2050 matches, score range 5–8</summary>
 
-| Score | Count | % |
-|-------|-------|---|
-| 8 | 86 | 15.6% |
-| 7 | 288 | 52.2% |
-| 5 | 178 | 32.2% |
+**Score Histogram**
 
-Role-driven matrix: 5 = same-deck baseline (member↔member, member↔generic, generic↔generic), 7 = tribal compounding (member↔tribal, tribal↔tribal), 8 = peak chain (member↔search, search↔banish-trigger). 52% mid-tier reflects the playstyle's tight tribal density — most pairs involve at least one tribal payoff role.
+| Score | Count | Tier | % |
+|------|------|------|---|
+| 8 | 268 | Strong | 13.1% |
+| 7 | 456 | Strong | 22.2% |
+| 6 | 512 | Moderate | 25.0% |
+| 5 | 814 | Moderate | 39.7% |
 
-</details>
+**Group Size Distribution**
 
-<details>
-<summary>Lore Loss — 546 matches across 24 cards, score range 5–7</summary>
+| Group Size | Cards | % |
+|-----------|------|---|
+| 1 | 8 | 8.4% |
+| 5-9 | 5 | 5.3% |
+| 10-14 | 5 | 5.3% |
+| 15+ | 74 | 77.9% |
+| 2-4 | 3 | 3.2% |
 
-| Score | Count | % |
-|-------|-------|---|
-| 7 | 90 | 16.5% |
-| 6 | 274 | 50.2% |
-| 5 | 182 | 33.3% |
-
-Tiered 5/6/7 by burn-vs-steal pair: burn↔burn = 5 (parallel pressure), burn↔steal = 6 (complementary), steal↔steal = 7 (double-swing engine). 50% mid-tier shows the deck's natural burn/steal mix is the most common pair shape. 24 cards (14 burn + 10 steal); the 7-tier slot is rare because pure-steal pairs are scarce.
-
-</details>
-
-<details>
-<summary>Named Companions — 381 matches across 74 cards, score range 4–8</summary>
-
-| Score | Count | % |
-|-------|-------|---|
-| 8 | 39 | 10.2% |
-| 7 | 78 | 20.5% |
-| 6 | 92 | 24.1% |
-| 5 | 154 | 40.4% |
-| 4 | 18 | 4.7% |
-
-5 distinct score tiers across all major effect categories: game-winning (8 — search/free play/multi-draw), strong (7 — cost reduction / keyword grants), moderate (6 — stat boosts / Resist / Support), minor (5 — everything else), hostile (4 — banish/exert the named target). Healthy distribution.
+Healthy spread.
 
 </details>
 
 <details>
-<summary>Location Control (8 sub-rules merged) — 5,081 matches across ~104 cards</summary>
+<summary>Sacrifice — 1692 matches, score range 5–8</summary>
 
-| Sub-rule | Matches | Score range | Mean |
-|----------|---------|-------------|------|
-| At Location Payoff | 1,057 | 3–7 | 6.46 |
-| Location In-Play Check | 868 | 3–5 | 4.74 |
-| Location Buff | 822 | 3–7 | 6.34 |
-| Location Search | 755 | 3–5 | 4.43 |
-| Location Ramp | 610 | 3–7 | 6.08 |
-| Move to Location | 524 | 3–5 | 4.65 |
-| Location Play Trigger | 249 | 3–7 | 6.65 |
-| Location Boost | 196 | 3–5 | 3.57 |
+**Score Histogram**
 
-Combined into a single `location-control` playstyle group in the UI (104 unique cards). Strong-tier sub-rules (Payoff / Buff / Ramp / Play-Trigger) score 7 for direct mechanic matches and 3 for incompatibles; baseline sub-rules (In-Play Check / Search / Move / Boost) score 5 for matches. Boost has the lowest mean (3.57) because it requires location-with-cards-beneath-it semantics that few locations satisfy — most pairs land at 3.
+| Score | Count | Tier | % |
+|------|------|------|---|
+| 8 | 486 | Strong | 28.7% |
+| 5 | 1206 | Moderate | 71.3% |
+
+**Group Size Distribution**
+
+| Group Size | Cards | % |
+|-----------|------|---|
+| 5-9 | 1 | 2.1% |
+| 10-14 | 4 | 8.5% |
+| 15+ | 42 | 89.4% |
+
+Healthy spread.
+
+</details>
+
+<details>
+<summary>Shift Targets — 1544 matches, score range 3–10</summary>
+
+**Score Histogram**
+
+| Score | Count | Tier | % |
+|------|------|------|---|
+| 10 | 2 | Perfect | 0.1% |
+| 9 | 182 | Strong | 11.8% |
+| 8 | 235 | Strong | 15.2% |
+| 7 | 320 | Strong | 20.7% |
+| 5 | 402 | Moderate | 26.0% |
+| 3 | 403 | Weak | 26.1% |
+
+**Group Size Distribution**
+
+| Group Size | Cards | % |
+|-----------|------|---|
+| 1 | 418 | 56.9% |
+| 5-9 | 34 | 4.6% |
+| 10-14 | 11 | 1.5% |
+| 15+ | 3 | 0.4% |
+| 2-4 | 268 | 36.5% |
+
+Healthy spread.
+
+</details>
+
+<details>
+<summary>Discard — 1352 matches, score range 5–8</summary>
+
+**Score Histogram**
+
+| Score | Count | Tier | % |
+|------|------|------|---|
+| 8 | 142 | Strong | 10.5% |
+| 5 | 1210 | Moderate | 89.5% |
+
+**Group Size Distribution**
+
+| Group Size | Cards | % |
+|-----------|------|---|
+| 5-9 | 1 | 2.6% |
+| 15+ | 38 | 97.4% |
+
+Healthy spread.
+
+</details>
+
+<details>
+<summary>Toys — 552 matches, score range 5–8</summary>
+
+**Score Histogram**
+
+| Score | Count | Tier | % |
+|------|------|------|---|
+| 8 | 86 | Strong | 15.6% |
+| 7 | 288 | Strong | 52.2% |
+| 5 | 178 | Moderate | 32.2% |
+
+**Group Size Distribution**
+
+| Group Size | Cards | % |
+|-----------|------|---|
+| 15+ | 24 | 100.0% |
+
+Healthy spread.
+
+</details>
+
+<details>
+<summary>Lore Denial — 546 matches, score range 5–7</summary>
+
+**Score Histogram**
+
+| Score | Count | Tier | % |
+|------|------|------|---|
+| 7 | 90 | Strong | 16.5% |
+| 6 | 274 | Moderate | 50.2% |
+| 5 | 182 | Moderate | 33.3% |
+
+**Group Size Distribution**
+
+| Group Size | Cards | % |
+|-----------|------|---|
+| 15+ | 24 | 100.0% |
+
+Healthy spread.
+
+</details>
+
+<details>
+<summary>Companions — 383 matches, score range 4–8</summary>
+
+**Score Histogram**
+
+| Score | Count | Tier | % |
+|------|------|------|---|
+| 8 | 39 | Strong | 10.2% |
+| 7 | 78 | Strong | 20.4% |
+| 6 | 92 | Moderate | 24.0% |
+| 5 | 156 | Moderate | 40.7% |
+| 4 | 18 | Moderate | 4.7% |
+
+**Group Size Distribution**
+
+| Group Size | Cards | % |
+|-----------|------|---|
+| 1 | 17 | 22.4% |
+| 5-9 | 22 | 28.9% |
+| 10-14 | 8 | 10.5% |
+| 15+ | 3 | 3.9% |
+| 2-4 | 26 | 34.2% |
+
+Healthy spread.
 
 </details>
 
 ## Playstyle Balance
 
-| Playstyle | Cards | % of Total |
-|-----------|-------|------------|
-| Location Control | 104 | 6.4% |
-| Ramp | 90 | 5.5% |
-| Discard | 39 | 2.4% |
-| Lore Denial | 24 | 1.5% |
-| Toys | 24 | 1.5% |
+| Playstyle | Cards | Flag |
+|-----------|------|------|
+| lore-denial | 24 | OK |
+| location-control | 105 | OK |
+| discard | 39 | OK |
+| toy | 24 | OK |
+| ramp | 91 | OK |
+| sacrifice | 47 | OK |
 
-All five playstyles above the 10-card minimum; Location Control is the largest at 104 (still well below the 150 cap).
-
-```chart
-{
-  "type": "bar",
-  "title": "Playstyle Archetype Balance",
-  "data": {
-    "labels": ["Location Control", "Ramp", "Discard", "Lore Denial", "Toys"],
-    "datasets": [{
-      "label": "Cards",
-      "data": [104, 90, 39, 24, 24],
-      "backgroundColor": ["#10b981", "#3b82f6", "#8b5cf6", "#ef4444", "#f59e0b"]
-    }]
-  }
-}
-```
-
-## Top 10 Cards by Total Matches
+## Top Cards by Matches
 
 | Card | Matches |
-|------|---------|
-| Minnie Mouse - Pirate Lookout | 183 |
-| The Cold Never Bothered Me | 180 |
-| Elsa - Concerned Sister | 166 |
-| Basil - Disguised Detective | 129 |
-| Rescue Rangers Submarine - Mobile Headquarters | 125 |
-| Motunui - Island Paradise | 125 |
-| Duckburg - Funso's Funzone | 115 |
-| The Islands I Pulled from the Sea | 113 |
-| One Jump Ahead | 105 |
-| Owl Island - Secluded Entrance | 104 |
+|------|--------|
+| 1319 | 184 |
+| 2593 | 180 |
+| 2588 | 166 |
+| 2621 | 132 |
+| 1600 | 131 |
 
-Top entries are dominated by Locations, Ramp anchors (One Jump Ahead inkwell ramp), and Sapphire ink-trigger sources (Elsa - Concerned Sister, Basil - Disguised Detective). Ramp's 7,514-match volume drives most of these into the top 10.
-
-```chart
-{
-  "type": "bar",
-  "title": "Top 10 Cards by Total Matches",
-  "data": {
-    "labels": ["Minnie Mouse", "Cold Never Bothered Me", "Elsa Concerned", "Basil Disguised", "Rescue Rangers Sub", "Motunui", "Duckburg", "Islands Pulled", "One Jump Ahead", "Owl Island"],
-    "values": [183, 180, 166, 129, 125, 125, 115, 113, 105, 104]
-  }
-}
-```
