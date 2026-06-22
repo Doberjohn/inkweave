@@ -260,7 +260,7 @@ function VoteButtons({disabled, submitting, selectedChoice, onVote, isMobile, qu
 // ── Prompt branch (single render path for all non-hidden states) ──
 
 function PromptError({error}: {error: QuickVoteError}) {
-  const text = error === 'rate_limited' ? "You're rating fast! Try again in a bit." : 'Something went wrong, try again';
+  const text = error === 'rate_limited' ? "You've hit today's voting limit. Come back tomorrow!" : 'Something went wrong, try again';
   return (
     <p
       role="alert"

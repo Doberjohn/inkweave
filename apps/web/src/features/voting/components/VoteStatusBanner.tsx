@@ -8,7 +8,7 @@ interface VoteStatusBannerProps {
 }
 
 const MESSAGES: Record<BannerType, string> = {
-  rate_limited: "You've reached the voting limit (30 per hour). Come back soon!",
+  rate_limited: "You've reached the voting limit (200 per day). Come back soon!",
   unavailable: 'Voting is currently unavailable. You can still browse pairs.',
   error: 'Something went wrong submitting your vote.',
 };

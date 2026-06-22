@@ -115,7 +115,7 @@ describe('QuickVoteControl', () => {
     render(
       <QuickVoteControl state="error" onVote={mockVote} distributionLoading={false} distribution={null} userChoice={null} error="rate_limited" />,
     );
-    expect(screen.getByText("You're rating fast! Try again in a bit.")).toBeInTheDocument();
+    expect(screen.getByText("You've hit today's voting limit. Come back tomorrow!")).toBeInTheDocument();
   });
 
 });

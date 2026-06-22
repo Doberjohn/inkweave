@@ -6,7 +6,7 @@ describe('VoteStatusBanner', () => {
   it('rate_limited: renders correct message', () => {
     render(<VoteStatusBanner type="rate_limited" />);
     expect(
-      screen.getByText("You've reached the voting limit (30 per hour). Come back soon!"),
+      screen.getByText("You've reached the voting limit (200 per day). Come back soon!"),
     ).toBeInTheDocument();
   });
 
