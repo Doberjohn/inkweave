@@ -90,6 +90,8 @@ test.describe('Reveals page (flag on)', () => {
     await expect(firstTile).toBeVisible();
     await firstTile.click();
     // Card click opens the global modal (URL stays at /reveals).
-    await expect(page.getByTestId('card-overview-modal')).toBeVisible({timeout: 5000});
+    // Modal open = React mount + per-card synergy fetch + visibility transition; slow CI
+    // webkit can exceed 5s before the overlay-visible class settles.
+    await expect(page.getByTestId('card-overview-modal')).toBeVisible({timeout: 15000});
   });
 });
