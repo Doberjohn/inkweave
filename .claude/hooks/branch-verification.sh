@@ -27,8 +27,15 @@ if ! echo "$FILE_PATH" | grep -qE "(apps/|packages/).*\.(ts|tsx|js|jsx|json|css)
   exit 0
 fi
 
-# Get current branch
-BRANCH=$(git -C "D:/johnn/Projects/inkweave" branch --show-current 2>/dev/null)
+# Get current branch. Resolve it from the edited file's own directory so the check
+# respects git worktrees (each worktree has its own HEAD) instead of always reading
+# the main checkout, which would false-positive whenever the main repo sits on master.
+FILE_DIR=$(dirname "$FILE_PATH")
+BRANCH=$(git -C "$FILE_DIR" branch --show-current 2>/dev/null)
+# Fall back to the main checkout if the file's directory isn't a git path yet.
+if [ -z "$BRANCH" ]; then
+  BRANCH=$(git -C "D:/johnn/Projects/inkweave" branch --show-current 2>/dev/null)
+fi
 
 if [ "$BRANCH" = "master" ] || [ "$BRANCH" = "main" ]; then
   echo "You are editing source files on '$BRANCH'. Did you forget to create a feature branch?" >&2
