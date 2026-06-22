@@ -19,6 +19,8 @@ export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
   discard: makeUiMeta('#10b981', '/art/playstyles/discard.webp'),
   ramp: makeUiMeta('#3b82f6', '/art/playstyles/ramp.webp'),
   toy: makeUiMeta('#f59e0b', '/art/playstyles/toy.webp'),
+  // Art asset sacrifice.webp (670x500 webp) is provided separately; drop it in apps/web/public/art/playstyles/.
+  sacrifice: makeUiMeta('#10b981', '/art/playstyles/sacrifice.webp'),
 };
 
 export interface ComingSoonPlaystyle extends PlaystyleUiMeta {
@@ -75,7 +77,7 @@ export const COMING_SOON_PLAYSTYLES: ComingSoonPlaystyle[] = [
   ),
   makeComingSoon(
     'Madrigals',
-    'Madrigal characters and the cards that reward running them. Each family member brings a different ability, and Madrigal-specific effects link them into a chain of triggers each turn. A full Madrigal lineup turns the family\'s variety into consistent extra value.',
+    "Madrigal characters and the cards that reward running them. Each family member brings a different ability, and Madrigal-specific effects link them into a chain of triggers each turn. A full Madrigal lineup turns the family's variety into consistent extra value.",
     '#8b5cf6',
     '/art/playstyles/madrigal.webp',
   ),

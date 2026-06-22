@@ -7,6 +7,8 @@ import {
   isLocationSupportCard,
   getDiscardRoles,
   isDiscardCard,
+  getSacrificeRoles,
+  isSacrificeCard,
   getRampRoles,
   isRampCard,
   isDeckRamp,
@@ -127,13 +129,63 @@ describe('Synergy Rules', () => {
         expected: number;
         shiftInkwell?: boolean;
       }>([
-        {label: 'on-curve both inkable (curveGap 1)', shiftCost: 7, shiftKeyword: 'Shift 5', baseCost: 4, baseInkwell: true, expected: 9},
-        {label: 'on-curve one inkable (curveGap 1)', shiftCost: 7, shiftKeyword: 'Shift 5', baseCost: 4, baseInkwell: false, expected: 8},
-        {label: 'on-curve neither inkable (curveGap 1)', shiftCost: 7, shiftKeyword: 'Shift 5', baseCost: 4, baseInkwell: false, expected: 7, shiftInkwell: false},
-        {label: 'curveGap 2 with inkable base', shiftCost: 8, shiftKeyword: 'Shift 6', baseCost: 4, baseInkwell: true, expected: 7},
-        {label: 'slightly off-curve (curveGap 3)', shiftCost: 7, shiftKeyword: 'Shift 5', baseCost: 2, baseInkwell: true, expected: 5},
-        {label: 'far off-curve (curveGap >= 4)', shiftCost: 7, shiftKeyword: 'Shift 5', baseCost: 1, baseInkwell: true, expected: 3},
-        {label: 'same-cost-as-shift (curveGap 0)', shiftCost: 7, shiftKeyword: 'Shift 5', baseCost: 5, baseInkwell: true, expected: 5},
+        {
+          label: 'on-curve both inkable (curveGap 1)',
+          shiftCost: 7,
+          shiftKeyword: 'Shift 5',
+          baseCost: 4,
+          baseInkwell: true,
+          expected: 9,
+        },
+        {
+          label: 'on-curve one inkable (curveGap 1)',
+          shiftCost: 7,
+          shiftKeyword: 'Shift 5',
+          baseCost: 4,
+          baseInkwell: false,
+          expected: 8,
+        },
+        {
+          label: 'on-curve neither inkable (curveGap 1)',
+          shiftCost: 7,
+          shiftKeyword: 'Shift 5',
+          baseCost: 4,
+          baseInkwell: false,
+          expected: 7,
+          shiftInkwell: false,
+        },
+        {
+          label: 'curveGap 2 with inkable base',
+          shiftCost: 8,
+          shiftKeyword: 'Shift 6',
+          baseCost: 4,
+          baseInkwell: true,
+          expected: 7,
+        },
+        {
+          label: 'slightly off-curve (curveGap 3)',
+          shiftCost: 7,
+          shiftKeyword: 'Shift 5',
+          baseCost: 2,
+          baseInkwell: true,
+          expected: 5,
+        },
+        {
+          label: 'far off-curve (curveGap >= 4)',
+          shiftCost: 7,
+          shiftKeyword: 'Shift 5',
+          baseCost: 1,
+          baseInkwell: true,
+          expected: 3,
+        },
+        {
+          label: 'same-cost-as-shift (curveGap 0)',
+          shiftCost: 7,
+          shiftKeyword: 'Shift 5',
+          baseCost: 5,
+          baseInkwell: true,
+          expected: 5,
+        },
       ])('$label → score $expected', ({expected, ...pairOpts}) => {
         const synergies = shiftPair(pairOpts);
         expect(synergies[0].score).toBe(expected);
@@ -147,23 +199,35 @@ describe('Synergy Rules', () => {
       });
 
       it('regression: small shift onto cheap base scores 9, not 3 (#108)', () => {
-        const synergies = shiftPair({shiftCost: 4, shiftKeyword: 'Shift 3', baseCost: 2, baseInkwell: true});
+        const synergies = shiftPair({
+          shiftCost: 4,
+          shiftKeyword: 'Shift 3',
+          baseCost: 2,
+          baseInkwell: true,
+        });
         expect(synergies[0].score).toBe(9);
       });
 
       it('regression: huge shift onto tiny base scores 3, not high (#108)', () => {
-        const synergies = shiftPair({shiftCost: 10, shiftKeyword: 'Shift 8', baseCost: 2, baseInkwell: true});
+        const synergies = shiftPair({
+          shiftCost: 10,
+          shiftKeyword: 'Shift 8',
+          baseCost: 2,
+          baseInkwell: true,
+        });
         expect(synergies[0].score).toBe(3);
       });
     });
 
     describe('free Shift scoring', () => {
-      const conditionText =
-        "If a card left a player's discard this turn, this card gains Shift 0.";
+      const conditionText = "If a card left a player's discard this turn, this card gains Shift 0.";
       const conditionBaseText =
         "When you play this character, you may put a card from chosen player's discard on the bottom of their deck.";
 
-      function freeShiftSetup(baseCost: number, opts: {shiftText?: string; baseText?: string} = {}) {
+      function freeShiftSetup(
+        baseCost: number,
+        opts: {shiftText?: string; baseText?: string} = {},
+      ) {
         return shiftSetup({
           shiftId: 'anna-shift',
           shiftName: 'Anna',
@@ -180,8 +244,20 @@ describe('Synergy Rules', () => {
         });
       }
 
-      it.each<{label: string; baseCost: number; expected: number; shiftText?: string; baseText?: string}>([
-        {label: 'base activates condition → 10', baseCost: 2, expected: 10, shiftText: conditionText, baseText: conditionBaseText},
+      it.each<{
+        label: string;
+        baseCost: number;
+        expected: number;
+        shiftText?: string;
+        baseText?: string;
+      }>([
+        {
+          label: 'base activates condition → 10',
+          baseCost: 2,
+          expected: 10,
+          shiftText: conditionText,
+          baseText: conditionBaseText,
+        },
         {label: 'cheap base (cost <= 3) → 9', baseCost: 2, expected: 9},
         {label: 'mid-cost base (cost 4-5) → 7', baseCost: 4, expected: 7},
         {label: 'expensive base (cost 6+) → 5', baseCost: 7, expected: 5},
@@ -710,7 +786,12 @@ describe('Location Synergy Rules', () => {
       expect(getLocationRoles(webbysDiary)).toContain('boost');
 
       const engine = new SynergyEngine();
-      const groups = engine.findSynergies(webbysDiary, [webbysDiary, scroogesCountingHouse, agrabah, unrelatedCard]);
+      const groups = engine.findSynergies(webbysDiary, [
+        webbysDiary,
+        scroogesCountingHouse,
+        agrabah,
+        unrelatedCard,
+      ]);
       const locationGroup = groups.find((g) => g.groupKey === 'location-control');
       expect(locationGroup).toBeDefined();
       const ids = locationGroup!.synergies.map((s) => s.card.id);
@@ -721,7 +802,10 @@ describe('Location Synergy Rules', () => {
 
     it('should assign score 5 for boost cards with boost-beneficiary Locations', () => {
       const engine = new SynergyEngine();
-      const groups = engine.findSynergies(scroogesCountingHouse, [scroogesCountingHouse, webbysDiary]);
+      const groups = engine.findSynergies(scroogesCountingHouse, [
+        scroogesCountingHouse,
+        webbysDiary,
+      ]);
       const diaryMatch = groups
         .find((g) => g.groupKey === 'location-control')!
         .synergies.find((s) => s.card.id === 'webbys-diary');
@@ -913,7 +997,9 @@ describe('Discard Control', () => {
 
     it('should detect symmetric draw/discard chaos as random role', () => {
       expect(
-        getDiscardRoles(createCard({text: 'Each player draws 3 cards, then discards 3 cards at random.'})),
+        getDiscardRoles(
+          createCard({text: 'Each player draws 3 cards, then discards 3 cards at random.'}),
+        ),
       ).toEqual(['random']);
     });
 
@@ -1522,7 +1608,7 @@ describe('Toy Tribal', () => {
   const handInTheBox = createCard({
     id: 'hand-in-box',
     name: 'Hand-in-the-Box',
-    fullName: 'Hand-in-the-Box - Sid\'s Toy',
+    fullName: "Hand-in-the-Box - Sid's Toy",
     classifications: ['Storyborn', 'Ally', 'Toy'],
     text: 'You may put a Toy character card from your discard on the bottom of your deck to play this character for free.',
   });
@@ -1530,7 +1616,7 @@ describe('Toy Tribal', () => {
   const windUpFrog = createCard({
     id: 'wind-up-frog',
     name: 'Wind-Up Frog',
-    fullName: 'Wind-Up Frog - Sid\'s Toy',
+    fullName: "Wind-Up Frog - Sid's Toy",
     classifications: ['Storyborn', 'Ally', 'Toy'],
     text: 'If one of your Toy characters was banished this turn, you pay 2 ⬡ less to play this character.',
   });
@@ -1665,6 +1751,151 @@ describe('Toy Tribal', () => {
 
     it('rule does not match non-Toy cards', () => {
       expect(toyRule.matches(mickey)).toBe(false);
+    });
+  });
+});
+
+describe('Sacrifice rule (Banish Matters)', () => {
+  const sacrificeRule = getRuleById('sacrifice')!;
+
+  // Enablers (self-banish cards) — banish your OWN characters on demand.
+  const hadesStrongArm = createCard({
+    id: 'hades-strong-arm',
+    fullName: 'Hades - Strong Arm',
+    ink: 'Ruby',
+    text: 'WHAT ARE YOU GONNA DO? \u27f3, 3 \u2b21, Banish one of your characters \u2014 Banish chosen character.',
+  });
+  const timeToGo = createCard({
+    id: 'time-to-go',
+    fullName: 'Time to Go!',
+    ink: 'Ruby',
+    type: 'Action',
+    text: 'Banish chosen character of yours to draw 2 cards. If that character had a card under them, draw 3 cards instead.',
+  });
+  const theClaw = createCard({
+    id: 'the-claw',
+    fullName: 'The Claw',
+    ink: 'Emerald',
+    type: 'Item',
+    text: 'THE CLAW CHOOSES \u27f3, 2 \u2b21, Banish one of your characters \u2014 Return chosen opposing character to their player\u2019s hand.',
+  });
+
+  // Payoffs (banish-triggers) — reward your characters being banished, any cause.
+  const diablo = createCard({
+    id: 'diablo',
+    fullName: 'Diablo - Obedient Raven',
+    ink: 'Amethyst',
+    text: 'FLY, MY PET! When this character is banished, you may draw a card.',
+  });
+  const davidXanatos = createCard({
+    id: 'david-xanatos',
+    fullName: 'David Xanatos - Charismatic Leader',
+    ink: 'Ruby',
+    text: 'LEARN FROM EVERYTHING During your turn, whenever one of your characters is banished, draw a card.',
+  });
+  const kingCandyRoyal = createCard({
+    id: 'king-candy-royal',
+    fullName: 'King Candy - Royal Racer',
+    ink: 'Amber',
+    ink2: 'Ruby',
+    text: 'A NEW ROSTER Whenever one of your other Racer characters is banished, each opponent loses 1 lore.',
+  });
+
+  // Excluded cases.
+  const iagoChallenge = createCard({
+    id: 'iago',
+    fullName: 'Iago - Reappearing Parrot',
+    ink: 'Amethyst',
+    text: 'GUESS WHO When this character is banished in a challenge, return this card to your hand.',
+  });
+  const energyBlast = createCard({
+    id: 'energy-blast',
+    fullName: 'Energy Blast',
+    ink: 'Ruby',
+    type: 'Action',
+    text: 'Banish chosen character. Draw a card.',
+  });
+  const unrelated = createCard({id: 'unrelated', fullName: 'Anna', text: 'Draw a card.'});
+
+  describe('role detection', () => {
+    it('detects self-banish from "Banish one of your characters"', () => {
+      expect(getSacrificeRoles(hadesStrongArm)).toEqual(['self-banish']);
+    });
+
+    it('detects self-banish from "Banish chosen character of yours"', () => {
+      expect(getSacrificeRoles(timeToGo)).toEqual(['self-banish']);
+    });
+
+    it('detects banish-trigger from self-banish ("when this character is banished")', () => {
+      expect(getSacrificeRoles(diablo)).toEqual(['banish-trigger']);
+    });
+
+    it('detects banish-trigger from "whenever one of your characters is banished"', () => {
+      expect(getSacrificeRoles(davidXanatos)).toEqual(['banish-trigger']);
+    });
+
+    it('detects banish-trigger from a tribal your-side trigger (Racer)', () => {
+      expect(getSacrificeRoles(kingCandyRoyal)).toEqual(['banish-trigger']);
+    });
+
+    it('excludes "banished in a challenge" recursion (belongs to Challenge axis)', () => {
+      expect(getSacrificeRoles(iagoChallenge)).toEqual([]);
+    });
+
+    it('excludes opponent removal ("banish chosen character" without "of yours")', () => {
+      expect(getSacrificeRoles(energyBlast)).toEqual([]);
+    });
+
+    it('returns no roles for unrelated or text-less cards', () => {
+      expect(getSacrificeRoles(unrelated)).toEqual([]);
+      expect(getSacrificeRoles(createCard({text: undefined}))).toEqual([]);
+      expect(isSacrificeCard(unrelated)).toBe(false);
+    });
+  });
+
+  describe('rule matching', () => {
+    it('matches both self-banish cards and payoffs, not unrelated cards', () => {
+      expect(sacrificeRule.matches(hadesStrongArm)).toBe(true);
+      expect(sacrificeRule.matches(diablo)).toBe(true);
+      expect(sacrificeRule.matches(unrelated)).toBe(false);
+    });
+  });
+
+  describe('synergy scoring', () => {
+    const allCards = [hadesStrongArm, timeToGo, theClaw, diablo, davidXanatos, unrelated];
+
+    it('self-banish \u2194 banish-trigger scores 8 (banish combo)', () => {
+      const synergies = sacrificeRule.findSynergies(hadesStrongArm, allCards);
+      const match = synergies.find((s) => s.card.id === 'diablo');
+      expect(match!.score).toBe(8);
+      // Token swap: the SELF-BANISH card ({A}, the searcher here) reads as the actor.
+      expect(match!.explanation).toBe(
+        "{A} banishes your own character on demand, guaranteeing {B}'s banish payoff.",
+      );
+    });
+
+    it('keeps the self-banish card as the actor when the payoff is the searcher', () => {
+      const synergies = sacrificeRule.findSynergies(diablo, allCards);
+      const match = synergies.find((s) => s.card.id === 'hades-strong-arm');
+      expect(match!.score).toBe(8);
+      // Now the self-banish card is the partner ({B}), so the tokens swap accordingly.
+      expect(match!.explanation).toBe(
+        "{B} banishes your own character on demand, guaranteeing {A}'s banish payoff.",
+      );
+    });
+
+    it('banish-trigger \u2194 banish-trigger scores 5 (parallel payoff density)', () => {
+      const synergies = sacrificeRule.findSynergies(diablo, allCards);
+      const match = synergies.find((s) => s.card.id === 'david-xanatos');
+      expect(match!.score).toBe(5);
+      expect(match!.explanation).toContain('pay off when your characters are banished');
+    });
+
+    it('self-banish \u2194 self-banish scores 5 (parallel enablers)', () => {
+      const synergies = sacrificeRule.findSynergies(hadesStrongArm, allCards);
+      const match = synergies.find((s) => s.card.id === 'the-claw');
+      expect(match!.score).toBe(5);
+      expect(match!.explanation).toContain('parallel self-banish cards');
     });
   });
 });

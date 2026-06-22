@@ -85,6 +85,7 @@ React web application that consumes the synergy engine package.
 - Discard (`discard`) - opponent discard enablers + hand-size payoffs
 - Ramp (`ramp`) - inkwell ramp + inkwell triggers + cost reduction grants
 - Toys (`toy`) - Toy-classification members + tribal payoffs (search, banish-trigger, self-discount)
+- Sacrifice (`sacrifice`) - self-banish cards (banish your own characters) + banish-trigger payoffs
 
 **Synergy Score**: 1-10 numeric scale (all integers valid). Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4)
 
@@ -299,6 +300,28 @@ Tribal playstyle for Toy-Story decks. **Membership gate**: `Toy` classification 
 
 **Full documentation**: See [`packages/synergy-engine/TOY_RULE.md`](packages/synergy-engine/TOY_RULE.md).
 
+### Rule 9: Sacrifice (playstyle: "Banish Matters", two roles)
+
+Aristocrats / "Banish Matters" axis. Cards that banish your **own** characters on demand (**self-banish cards**) synergize with cards that trigger **when one of your characters is banished** (**banish-triggers**). The self-banish card cashes in a banish-trigger on your terms instead of waiting for the opponent to trade into it. Same enabler/payoff shape as the Discard rule.
+
+**Detection**:
+- **banish-trigger** (40 cards, all 6 inks): `/when(?:ever)?\s+(?:this character|(?:one of\s+)?your(?:\s+other)?(?:\s+\w+)?\s+characters?|a\s+character\s+of\s+yours)\s+(?:is|are|gets?)\s+banished/i` — general (any-cause) banish trigger on your own side or self. The optional `\w+` slot admits tribal triggers (Racer/Illusion/Puppy). **Excludes** `banished in a challenge` recursion (combat-only, a self-banish can't trigger it; belongs to Challenge Matters #371).
+- **self-banish** (7 cards, Ruby 5 / Emerald 2): `/banish\s+(?:one of\s+)?(?:your(?:\s+other)?\s+characters?|(?:another\s+)?chosen\s+character\s+of\s+yours)/i` — the `of yours` / `your` gate separates sacrifice from opponent removal (`banish chosen character` alone is removal, excluded).
+
+**Scoring** (5-baseline):
+
+| Pair | Score | Explanation |
+|------|-------|-------------|
+| self-banish ↔ banish-trigger | **8** | Win-condition combo: self-banish card banishes your own payoff body on demand, guaranteeing the banish-trigger |
+| banish-trigger ↔ banish-trigger | **5** | Parallel payoff density, no compounding |
+| self-banish ↔ self-banish | **5** | Parallel enablers, still need a payoff body |
+
+Banish-combo explanation uses `{A}`/`{B}` token-swap so the self-banish side always reads as the actor.
+
+**Coverage**: 7 self-banish cards + 40 payoffs = 47 cards, 846 unique pairs after ink-compatibility filtering. Distribution: 28.7% at 8, 71.3% at 5. (Score-8 share runs higher than other playstyles because few enablers pair against many payoffs; the combo is the archetype.) The `banish-trigger` role is a superset of Toy's tribal-gated `banish-trigger`; shared Sid's Toys are expected cross-playstyle composition.
+
+**Full documentation**: See [`packages/synergy-engine/SACRIFICE_RULE.md`](packages/synergy-engine/SACRIFICE_RULE.md).
+
 ## Commands
 
 ```bash
@@ -380,6 +403,7 @@ Dark fantasy theme inspired by Lorcana:
 
 ### Synergy Rule Documentation
 - When modifying rule logic, scoring, or explanations in the engine, always update the **Synergy Rules** section in this file to match. This includes score tables, condition matchers, explanation templates, and display tier definitions.
+- Per-rule docs live in `packages/synergy-engine/*_RULE.md` and are **auto-discovered** by `scripts/generate-docs.mjs` (`pnpm run docs`) into the docs-hub "Synergy Rules" category. Adding a new `*_RULE.md` wires it in automatically; only add a `RULE_LABEL_OVERRIDES` entry there if the display label differs from the title-cased filename (e.g. "Singer + Songs"), and a `RULE_ORDER` entry to place it in the reading sequence.
 ### Code Quality
 - After writing or modifying significant code (new features, refactors, bug fixes), run the `code-simplifier` agent to polish for clarity and consistency
 - Use `/refactor-code` for periodic comprehensive codebase audits

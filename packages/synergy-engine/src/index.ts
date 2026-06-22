@@ -35,6 +35,8 @@ export {
   LOCATION_ROLE_TOOLTIP,
   DISCARD_ROLE_CHIP_LABELS,
   DISCARD_ROLE_DESCRIPTIONS,
+  SACRIFICE_ROLE_CHIP_LABELS,
+  SACRIFICE_ROLE_DESCRIPTIONS,
   RAMP_ROLE_CHIP_LABELS,
   RAMP_ROLE_DESCRIPTIONS,
   LORE_DENIAL_ROLE_CHIP_LABELS,
@@ -73,6 +75,8 @@ export {
   NAMED_EFFECT_SCORES,
   getDiscardRoles,
   isDiscardCard,
+  getSacrificeRoles,
+  isSacrificeCard,
   getRampRoles,
   isRampCard,
   isDeckRamp,
@@ -84,4 +88,14 @@ export {
   getLoreDenialRoles,
   isLoreDenialCard,
 } from './utils';
-export type {LocationRole, ShiftType, NamedEffectTier, DiscardRole, RampRole, ToyRole, LoreDenialRole, LorcanaJSONCard} from './utils';
+export type {
+  LocationRole,
+  ShiftType,
+  NamedEffectTier,
+  DiscardRole,
+  SacrificeRole,
+  RampRole,
+  ToyRole,
+  LoreDenialRole,
+  LorcanaJSONCard,
+} from './utils';

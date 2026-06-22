@@ -26,6 +26,8 @@ export {
   NAMED_EFFECT_SCORES,
   getDiscardRoles,
   isDiscardCard,
+  getSacrificeRoles,
+  isSacrificeCard,
   getRampRoles,
   isRampCard,
   isDeckRamp,
@@ -39,7 +41,17 @@ export {
   isLoreDenialCard,
   LORE_LOSS_PATTERN,
 } from './cardHelpers.js';
-export type {LocationRole, ShiftType, NamedEffectTier, DiscardRole, RampRole, CostReductionTarget, ToyRole, LoreDenialRole} from './cardHelpers.js';
+export type {
+  LocationRole,
+  ShiftType,
+  NamedEffectTier,
+  DiscardRole,
+  SacrificeRole,
+  RampRole,
+  CostReductionTarget,
+  ToyRole,
+  LoreDenialRole,
+} from './cardHelpers.js';
 
 export {isCardType} from './typeGuards.js';
 

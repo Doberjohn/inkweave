@@ -4,6 +4,7 @@ import {
   getAllPlaystyles,
   getLocationRoles,
   getDiscardRoles,
+  getSacrificeRoles,
   getRampRoles,
   getLoreDenialRoles,
   getToyRoles,
@@ -520,6 +521,7 @@ type PlaystyleCardData = ReturnType<typeof useAllPlaystyleCards>['data'];
 const ROLE_DETECTORS: Partial<Record<PlaystyleId, (card: LorcanaCard) => readonly string[]>> = {
   'location-control': getLocationRoles,
   discard: getDiscardRoles,
+  sacrifice: getSacrificeRoles,
   ramp: getRampRoles,
   'lore-denial': getLoreDenialRoles,
   toy: (card) => getToyRoles(card).filter((r) => r !== 'member'),

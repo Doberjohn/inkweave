@@ -254,7 +254,8 @@ export const LOCATION_PATTERNS = {
   'at-payoff': /while\b.{0,60}at a location|if\b.{0,60}at a location|is at a location/i,
   move: /\bmove\b[^.]{0,40}?\bcharacter[^.]{0,40}?\blocation|to the same location/i,
   'move-exclude': /move.*damage/i,
-  'play-trigger': /when(?:ever)? you play a location|whenever.*play a location|when(?:ever)?[^.]{0,40}moves? to a location/i,
+  'play-trigger':
+    /when(?:ever)? you play a location|whenever.*play a location|when(?:ever)?[^.]{0,40}moves? to a location/i,
   'in-play-check': /if you have a location|while you have a.*(location)|for each location/i,
   search: makeSearchPattern('location(?:\\s+cards?)?'),
   buff: /your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
@@ -402,6 +403,74 @@ export function isDiscardCard(card: LorcanaCard): boolean {
 }
 
 // ============================================
+// SACRIFICE DETECTION ("Banish Matters")
+// ============================================
+
+/**
+ * Sacrifice roles (the aristocrats / "Banish Matters" axis):
+ * - self-banish: banishes one of YOUR OWN characters on demand (the enabler)
+ * - banish-trigger: rewards you when one of your characters is banished (the payoff)
+ *
+ * The banish combo is self-banish ↔ banish-trigger: the self-banish card banishes your own
+ * payoff body whenever you want, turning a banish trigger into a guaranteed engine.
+ */
+export type SacrificeRole = 'self-banish' | 'banish-trigger';
+
+/**
+ * banish-trigger payoff — a GENERAL (any-cause) banish trigger on your own side
+ * or on this character itself. The optional `\w+` slot lets tribal triggers
+ * ("your other Racer characters is banished") count, since a self-banish can
+ * banish a Racer just as well as a generic character.
+ */
+const SACRIFICE_BANISH_TRIGGER_PATTERN =
+  /when(?:ever)?\s+(?:this character|(?:one of\s+)?your(?:\s+other)?(?:\s+\w+)?\s+characters?|a\s+character\s+of\s+yours)\s+(?:is|are|gets?)\s+banished/i;
+
+/**
+ * Combat-only recursion ("banished in a challenge, return this card") belongs to
+ * the Challenge Matters axis (#371), NOT sacrifice: a self-banish card banishes
+ * outside of combat, so it can never trigger an "in a challenge" payoff. Excluding
+ * these prevents promising a banish combo the cards cannot actually perform.
+ */
+const SACRIFICE_IN_CHALLENGE_PATTERN = /banished\s+in\s+a\s+challenge/i;
+
+/**
+ * self-banish enabler — banishes one of YOUR OWN characters. The "of yours" /
+ * "your characters" gate is what separates a self-banish card from opponent
+ * removal ("banish chosen character" alone targets the opponent — pure removal).
+ */
+const SACRIFICE_SELF_BANISH_PATTERN =
+  /banish\s+(?:one of\s+)?(?:your(?:\s+other)?\s+characters?|(?:another\s+)?chosen\s+character\s+of\s+yours)/i;
+
+/** Fast pre-filter: every sacrifice pattern contains the word "banish". */
+const HAS_BANISH_KEYWORD = /banish/i;
+
+/**
+ * Determine the sacrifice role(s) a card fulfills. A card can be both a self-banish card
+ * and a payoff, though none currently are (the two roles live on different cards).
+ */
+export function getSacrificeRoles(card: LorcanaCard): SacrificeRole[] {
+  if (!card.text) return [];
+  const text = normalizeCardText(card);
+  if (!HAS_BANISH_KEYWORD.test(text)) return [];
+
+  const roles: SacrificeRole[] = [];
+  if (SACRIFICE_SELF_BANISH_PATTERN.test(text)) {
+    roles.push('self-banish');
+  }
+  if (SACRIFICE_BANISH_TRIGGER_PATTERN.test(text) && !SACRIFICE_IN_CHALLENGE_PATTERN.test(text)) {
+    roles.push('banish-trigger');
+  }
+  return roles;
+}
+
+/**
+ * Check if a card participates in the sacrifice axis (self-banish or payoff).
+ */
+export function isSacrificeCard(card: LorcanaCard): boolean {
+  return getSacrificeRoles(card).length > 0;
+}
+
+// ============================================
 // RAMP DETECTION
 // ============================================
 
@@ -523,9 +592,11 @@ export function isRampCard(card: LorcanaCard): boolean {
 export function isDeckRamp(card: LorcanaCard): boolean {
   if (!card.text) return false;
   const t = normalizeCardText(card);
-  return /put\s+the\s+top\s+card\s+of\s+your\s+deck\s+into\s+your\s+inkwell/i.test(t) ||
+  return (
+    /put\s+the\s+top\s+card\s+of\s+your\s+deck\s+into\s+your\s+inkwell/i.test(t) ||
     /look\s+at\s+the\s+top.*?put.*?into\s+your\s+inkwell/i.test(t) ||
-    /put\s+up\s+to\s+\d+\s+cards?\s+from\s+your\s+discard\s+into\s+your\s+inkwell/i.test(t);
+    /put\s+up\s+to\s+\d+\s+cards?\s+from\s+your\s+discard\s+into\s+your\s+inkwell/i.test(t)
+  );
 }
 
 /**
@@ -557,7 +628,9 @@ export function getCostReductionTarget(card: LorcanaCard): CostReductionTarget |
   if (!COST_REDUCTION_GRANT_PATTERN.test(t) || COST_REDUCTION_SELF_PATTERN.test(t)) return null;
 
   // Extract the text after "you pay X less"
-  const match = t.match(/you\s+pay\s+\d+\s+⬡?\s*less\s+(?:for\s+the\s+(?:next|first)\s+|to\s+play\s+)(.{0,60})/i);
+  const match = t.match(
+    /you\s+pay\s+\d+\s+⬡?\s*less\s+(?:for\s+the\s+(?:next|first)\s+|to\s+play\s+)(.{0,60})/i,
+  );
   const snippet = match?.[1] ?? '';
 
   if (/location/i.test(snippet)) return 'location';

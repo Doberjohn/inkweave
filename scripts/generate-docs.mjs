@@ -10,42 +10,142 @@
  */
 
 import {execFileSync} from 'child_process';
-import {mkdirSync, readFileSync, writeFileSync} from 'fs';
+import {mkdirSync, readFileSync, readdirSync, writeFileSync} from 'fs';
 import {basename, resolve} from 'path';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const OUT = resolve(ROOT, 'reports');
 
+const ENGINE_DIR = 'packages/synergy-engine';
+
+/**
+ * Synergy-rule docs are auto-discovered from the engine package so adding a new
+ * `*_RULE.md` automatically wires it into the hub (no manual list to update).
+ * Files with a curated multi-word label go in the override map; everything else
+ * derives its label from the filename (SACRIFICE_RULE.md -> "Sacrifice").
+ */
+const RULE_LABEL_OVERRIDES = {
+  'SHIFT_TARGET_RULE.md': 'Shift Targets',
+  'NAMED_COMPANIONS_RULE.md': 'Named Companions',
+  'LORE_LOSS_RULE.md': 'Lore Loss',
+  'SINGER_SONGS_RULE.md': 'Singer + Songs',
+  'LOCATION_CONTROL_RULE.md': 'Location Control',
+  'REMOVED_RULES.md': 'Removed Rules',
+};
+
+/** Reading order; files not listed sort alphabetically, but always before Removed Rules. */
+const RULE_ORDER = [
+  'SHIFT_TARGET_RULE.md',
+  'NAMED_COMPANIONS_RULE.md',
+  'DISCARD_RULE.md',
+  'LORE_LOSS_RULE.md',
+  'SINGER_SONGS_RULE.md',
+  'LOCATION_CONTROL_RULE.md',
+  'RAMP_RULE.md',
+  'TOY_RULE.md',
+  'SACRIFICE_RULE.md',
+  'REMOVED_RULES.md',
+];
+
+function ruleLabelFromFilename(file) {
+  return file
+    .replace(/_RULES?\.md$/i, '')
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+}
+
+/** Discover every `*_RULE.md` / `*_RULES.md` in the engine package as a Synergy Rules doc. */
+function discoverRuleDocs() {
+  const removed = 'REMOVED_RULES.md';
+  const rank = (f) => {
+    const i = RULE_ORDER.indexOf(f);
+    if (i !== -1) return i;
+    return f === removed ? Infinity : RULE_ORDER.length - 1; // unknown rules sit before Removed
+  };
+  return readdirSync(resolve(ROOT, ENGINE_DIR))
+    .filter((f) => /_RULES?\.md$/i.test(f))
+    .sort((a, b) => rank(a) - rank(b) || a.localeCompare(b))
+    .map((file) => ({
+      src: `${ENGINE_DIR}/${file}`,
+      out: file.replace(/\.md$/i, '.html'),
+      category: 'Synergy Rules',
+      label: RULE_LABEL_OVERRIDES[file] ?? ruleLabelFromFilename(file),
+    }));
+}
+
 /** Markdown files to convert, with output filenames and categories */
 const DOCS = [
-  // Synergy Rules
-  {src: 'packages/synergy-engine/SHIFT_TARGET_RULE.md', out: 'SHIFT_TARGET_RULE.html', category: 'Synergy Rules', label: 'Shift Targets'},
-  {src: 'packages/synergy-engine/NAMED_COMPANIONS_RULE.md', out: 'NAMED_COMPANIONS_RULE.html', category: 'Synergy Rules', label: 'Named Companions'},
-  {src: 'packages/synergy-engine/DISCARD_RULE.md', out: 'DISCARD_RULE.html', category: 'Synergy Rules', label: 'Discard'},
-  {src: 'packages/synergy-engine/LORE_LOSS_RULE.md', out: 'LORE_LOSS_RULE.html', category: 'Synergy Rules', label: 'Lore Loss'},
-  {src: 'packages/synergy-engine/SINGER_SONGS_RULE.md', out: 'SINGER_SONGS_RULE.html', category: 'Synergy Rules', label: 'Singer + Songs'},
-  {src: 'packages/synergy-engine/LOCATION_CONTROL_RULE.md', out: 'LOCATION_CONTROL_RULE.html', category: 'Synergy Rules', label: 'Location Control'},
-  {src: 'packages/synergy-engine/RAMP_RULE.md', out: 'RAMP_RULE.html', category: 'Synergy Rules', label: 'Ramp'},
-  {src: 'packages/synergy-engine/TOY_RULE.md', out: 'TOY_RULE.html', category: 'Synergy Rules', label: 'Toy'},
-  {src: 'packages/synergy-engine/REMOVED_RULES.md', out: 'REMOVED_RULES.html', category: 'Synergy Rules', label: 'Removed Rules'},
+  // Synergy Rules (auto-discovered from packages/synergy-engine/*_RULE.md)
+  ...discoverRuleDocs(),
   // Architecture
-  {src: 'packages/synergy-engine/SCORING_DESIGN.md', out: 'SCORING_DESIGN.html', category: 'Architecture', label: 'Scoring Design'},
-  {src: 'packages/synergy-engine/README.md', out: 'synergy-engine-README.html', category: 'Architecture', label: 'Synergy Engine'},
+  {
+    src: 'packages/synergy-engine/SCORING_DESIGN.md',
+    out: 'SCORING_DESIGN.html',
+    category: 'Architecture',
+    label: 'Scoring Design',
+  },
+  {
+    src: 'packages/synergy-engine/README.md',
+    out: 'synergy-engine-README.html',
+    category: 'Architecture',
+    label: 'Synergy Engine',
+  },
   // Quality & Research
-  {src: 'docs/SYNERGY_AUDIT.md', out: 'SYNERGY_AUDIT.html', category: 'Quality & Research', label: 'Synergy Audit'},
-  {src: 'docs/UX_AUDIT.md', out: 'UX_AUDIT.html', category: 'Quality & Research', label: 'UX Audit'},
-  {src: 'docs/UX_REFERENCE.md', out: 'UX_REFERENCE.html', category: 'Quality & Research', label: 'UX Reference'},
+  {
+    src: 'docs/SYNERGY_AUDIT.md',
+    out: 'SYNERGY_AUDIT.html',
+    category: 'Quality & Research',
+    label: 'Synergy Audit',
+  },
+  {
+    src: 'docs/UX_AUDIT.md',
+    out: 'UX_AUDIT.html',
+    category: 'Quality & Research',
+    label: 'UX Audit',
+  },
+  {
+    src: 'docs/UX_REFERENCE.md',
+    out: 'UX_REFERENCE.html',
+    category: 'Quality & Research',
+    label: 'UX Reference',
+  },
   // Project
-  {src: 'docs/DATABASE.md', out: 'DATABASE.html', category: 'Architecture', label: 'Database Architecture'},
-  {src: 'docs/CARD_DATA_PIPELINE.md', out: 'CARD_DATA_PIPELINE.html', category: 'Architecture', label: 'Card Data Pipeline'},
+  {
+    src: 'docs/DATABASE.md',
+    out: 'DATABASE.html',
+    category: 'Architecture',
+    label: 'Database Architecture',
+  },
+  {
+    src: 'docs/CARD_DATA_PIPELINE.md',
+    out: 'CARD_DATA_PIPELINE.html',
+    category: 'Architecture',
+    label: 'Card Data Pipeline',
+  },
   {src: 'docs/TECH_STACK.md', out: 'TECH_STACK.html', category: 'Project', label: 'Tech Stack'},
-  {src: 'docs/V1_LAUNCH_PLAN.md', out: 'V1_LAUNCH_PLAN.html', category: 'Project', label: 'v1.0 Launch Plan'},
+  {
+    src: 'docs/V1_LAUNCH_PLAN.md',
+    out: 'V1_LAUNCH_PLAN.html',
+    category: 'Project',
+    label: 'v1.0 Launch Plan',
+  },
 ];
 
 /** Standalone HTML reports (not generated from markdown, already exist in reports/) */
 const STANDALONE = [
-  {out: 'META_REPORT.html', category: 'Meta & Competitive', label: 'Winterspell Meta Report', src: 'Core Constructed \u2014 27 tournaments, 8,231 players'},
-  {out: 'COMPETITIVE_ANALYSIS.html', category: 'Meta & Competitive', label: 'Competitive Analysis', src: '575 decklists \u2014 co-occurrence, engine validation, missing rules'},
+  {
+    out: 'META_REPORT.html',
+    category: 'Meta & Competitive',
+    label: 'Winterspell Meta Report',
+    src: 'Core Constructed \u2014 27 tournaments, 8,231 players',
+  },
+  {
+    out: 'COMPETITIVE_ANALYSIS.html',
+    category: 'Meta & Competitive',
+    label: 'Competitive Analysis',
+    src: '575 decklists \u2014 co-occurrence, engine validation, missing rules',
+  },
 ];
 
 const TEMPLATE = (title, body) => `<!DOCTYPE html>
@@ -489,9 +589,7 @@ function transformChartBlocks(html) {
       const type = config.type || 'bar';
 
       // Support multiple datasets
-      const datasets = config.data.datasets
-        ? JSON.stringify(config.data.datasets)
-        : null;
+      const datasets = config.data.datasets ? JSON.stringify(config.data.datasets) : null;
 
       // Build Chart.js config
       const chartConfig = datasets
@@ -525,7 +623,7 @@ function transformChartBlocks(html) {
         <script>
           new Chart(document.getElementById('${id}'), ${chartConfig});
         </script>`;
-    }
+    },
   );
 }
 
@@ -657,7 +755,8 @@ function injectCalloutClasses(html) {
       // keyword matching so labels with inline code or emphasis still classify.
       const plain = label.replace(/<[^>]+>/g, '').toLowerCase();
       let variant = 'info';
-      if (/warning|debt|footgun|danger|caution|never|skippable|risk/.test(plain)) variant = 'warning';
+      if (/warning|debt|footgun|danger|caution|never|skippable|risk/.test(plain))
+        variant = 'warning';
       else if (/success|complete|ok\b|verified|✓/.test(plain)) variant = 'success';
       return `<blockquote class="callout callout-${variant}">${prefix}<strong>${label}</strong>`;
     },

@@ -2,7 +2,13 @@
 export type SynergyCategory = 'direct' | 'playstyle';
 
 // Known playstyle identifiers — update this union when adding new playstyles
-export type PlaystyleId = 'lore-denial' | 'location-control' | 'discard' | 'ramp' | 'toy';
+export type PlaystyleId =
+  | 'lore-denial'
+  | 'location-control'
+  | 'discard'
+  | 'ramp'
+  | 'toy'
+  | 'sacrifice';
 
 // A playstyle groups related synergy rules that reinforce the same way of playing.
 // The more cards supporting a playstyle, the more consistent the deck becomes.
