@@ -242,7 +242,6 @@ export function HeroSection({
           variant="ghost"
           data-testid="cta-playstyles"
           onClick={onPlaystyles}
-          onMouseEnter={() => import('../../pages/PlaystyleGalleryPage')}
           style={{height: ctaHeight, width: mobile ? '100%' : undefined}}>
           <CompassIcon />
           Explore playstyles
@@ -252,7 +251,6 @@ export function HeroSection({
             variant="ghost"
             data-testid="cta-vote"
             onClick={onVote}
-            onMouseEnter={() => import('../../pages/VotePage')}
             style={{height: ctaHeight, width: mobile ? '100%' : undefined}}>
             <StarIcon />
             Rate synergies
