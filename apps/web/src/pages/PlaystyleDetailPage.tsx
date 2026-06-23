@@ -8,6 +8,7 @@ import {
   getRampRoles,
   getLoreDenialRoles,
   getToyRoles,
+  getDwarfsRoles,
   LOCATION_ROLE_CHIP_LABELS,
   LOCATION_ROLE_TOOLTIP,
   DISCARD_ROLE_CHIP_LABELS,
@@ -20,6 +21,8 @@ import {
   LORE_DENIAL_ROLE_DESCRIPTIONS,
   TOY_ROLE_CHIP_LABELS,
   TOY_ROLE_DESCRIPTIONS,
+  DWARFS_ROLE_CHIP_LABELS,
+  DWARFS_ROLE_DESCRIPTIONS,
   type PlaystyleId,
   type LorcanaCard,
   type LocationRole,
@@ -28,6 +31,7 @@ import {
   type RampRole,
   type LoreDenialRole,
   type ToyRole,
+  type DwarfsRole,
 } from 'inkweave-synergy-engine';
 import {usePrecomputedPlaystyleCards} from '../features/synergies/hooks';
 import {RoleTileRow, type RoleTile} from '../features/synergies/components/RoleTileRow';
@@ -369,6 +373,12 @@ const ROLE_CONFIGS: Partial<Record<PlaystyleId, RoleConfig>> = {
     getRoles: (card) => getToyRoles(card).filter((r) => r !== 'member'),
     getLabel: (role) => TOY_ROLE_CHIP_LABELS[role as ToyRole],
     getTooltip: (role) => TOY_ROLE_DESCRIPTIONS[role as ToyRole],
+  },
+  dwarfs: {
+    // Hide 'member' from chips (same rationale as Toy) — show only the payoff roles.
+    getRoles: (card) => getDwarfsRoles(card).filter((r) => r !== 'member'),
+    getLabel: (role) => DWARFS_ROLE_CHIP_LABELS[role as DwarfsRole],
+    getTooltip: (role) => DWARFS_ROLE_DESCRIPTIONS[role as DwarfsRole],
   },
 };
 

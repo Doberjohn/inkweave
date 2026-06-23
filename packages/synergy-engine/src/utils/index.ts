@@ -36,6 +36,8 @@ export {
   costReductionTargetsOverlap,
   getToyRoles,
   isToyCard,
+  getDwarfsRoles,
+  isDwarfsCard,
   isBoostBeneficiaryLocation,
   getLoreDenialRoles,
   isLoreDenialCard,
@@ -50,6 +52,7 @@ export type {
   RampRole,
   CostReductionTarget,
   ToyRole,
+  DwarfsRole,
   LoreDenialRole,
 } from './cardHelpers.js';
 

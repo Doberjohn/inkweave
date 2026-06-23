@@ -20,6 +20,8 @@ export {
   LORE_DENIAL_ROLE_DESCRIPTIONS,
   TOY_ROLE_CHIP_LABELS,
   TOY_ROLE_DESCRIPTIONS,
+  DWARFS_ROLE_CHIP_LABELS,
+  DWARFS_ROLE_DESCRIPTIONS,
 } from './rules.js';
 export {getAllPlaystyles, getPlaystyleById} from './playstyles.js';
 export {SynergyCache, synergyCache} from './SynergyCache.js';

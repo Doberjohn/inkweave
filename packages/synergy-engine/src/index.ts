@@ -43,6 +43,8 @@ export {
   LORE_DENIAL_ROLE_DESCRIPTIONS,
   TOY_ROLE_CHIP_LABELS,
   TOY_ROLE_DESCRIPTIONS,
+  DWARFS_ROLE_CHIP_LABELS,
+  DWARFS_ROLE_DESCRIPTIONS,
 } from './engine';
 export type {SynergyEngineOptions, CachedSynergyResult} from './engine';
 
@@ -85,6 +87,8 @@ export {
   transformCards,
   getToyRoles,
   isToyCard,
+  getDwarfsRoles,
+  isDwarfsCard,
   getLoreDenialRoles,
   isLoreDenialCard,
 } from './utils';
@@ -96,6 +100,7 @@ export type {
   SacrificeRole,
   RampRole,
   ToyRole,
+  DwarfsRole,
   LoreDenialRole,
   LorcanaJSONCard,
 } from './utils';

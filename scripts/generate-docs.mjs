@@ -44,6 +44,7 @@ const RULE_ORDER = [
   'RAMP_RULE.md',
   'TOY_RULE.md',
   'SACRIFICE_RULE.md',
+  'DWARFS_RULE.md',
   'REMOVED_RULES.md',
 ];
 

@@ -22,6 +22,8 @@ import {
   isSong,
   isToyCard,
   getToyRoles,
+  isDwarfsCard,
+  getDwarfsRoles,
   isLoreDenialCard,
   getLoreDenialRoles,
   getSacrificeRoles,
@@ -36,6 +38,7 @@ import {
   type SacrificeRole,
   type ShiftType,
   type ToyRole,
+  type DwarfsRole,
 } from '../utils';
 
 // ============================================
@@ -874,6 +877,38 @@ export const synergyRules: SynergyRule[] = [
       return matches;
     },
   },
+
+  // --------------------------------------------
+  // SEVEN DWARFS TRIBAL
+  // --------------------------------------------
+  {
+    id: 'dwarfs',
+    name: 'Dwarfs',
+    category: 'playstyle',
+    playstyleId: 'dwarfs',
+    description:
+      'Seven Dwarfs characters and the payoffs that reward running them — density draws, free recruits, and bounce-for-value effects compound as you fill the board with Dwarfs',
+
+    matches: isDwarfsCard,
+
+    findSynergies: (card, allCards) => {
+      const cardRoles = getDwarfsRoles(card);
+      if (cardRoles.length === 0) return [];
+
+      const matches: SynergyMatch[] = [];
+
+      for (const other of allCards) {
+        if (other.id === card.id) continue;
+        const otherRoles = getDwarfsRoles(other);
+        if (otherRoles.length === 0) continue;
+
+        const {score, explanation} = scoreDwarfsPair(card, cardRoles, other, otherRoles);
+        matches.push({card: other, score, explanation, bidirectional: true});
+      }
+
+      return matches;
+    },
+  },
 ];
 
 // ============================================
@@ -945,6 +980,22 @@ export const TOY_ROLE_DESCRIPTIONS: Record<ToyRole, string> = {
   'inkwell-ramp': RAMP_ROLE_DESCRIPTIONS['inkwell-ramp'],
   'inkwell-trigger': RAMP_ROLE_DESCRIPTIONS['inkwell-trigger'],
   'cost-reduction': RAMP_ROLE_DESCRIPTIONS['cost-reduction'],
+};
+
+/** Short chip labels for each Seven Dwarfs role (used in UI) */
+export const DWARFS_ROLE_CHIP_LABELS: Record<DwarfsRole, string> = {
+  member: 'Member',
+  density: 'Density',
+  recruit: 'Recruit',
+  return: 'Bounce',
+};
+
+/** Educational descriptions explaining what each Seven Dwarfs role means */
+export const DWARFS_ROLE_DESCRIPTIONS: Record<DwarfsRole, string> = {
+  member: 'Seven Dwarfs character — counts toward tribal density',
+  density: 'Get a benefit when you have Seven Dwarfs characters in play',
+  recruit: 'Play a Seven Dwarfs character for free',
+  return: 'Return a Seven Dwarfs character to your hand for value',
 };
 
 // ============================================
@@ -1389,6 +1440,70 @@ function scoreToyPair(
       explanation: `Both share the Toys deck. Density baseline.`,
     }
   );
+}
+
+// ============================================
+// SEVEN DWARFS TRIBAL SCORING
+// ============================================
+
+type DwarfsPairResult = {score: number; explanation: string};
+
+interface DwarfsPairCtx {
+  /** True iff one side has role `x` and the other has role `y` (direction-agnostic). */
+  cross: (x: DwarfsRole, y: DwarfsRole) => boolean;
+}
+
+/** Build a direction-agnostic role-comparison context for a Seven Dwarfs pair. */
+function buildDwarfsPairCtx(cardRoles: DwarfsRole[], otherRoles: DwarfsRole[]): DwarfsPairCtx {
+  const a = new Set(cardRoles);
+  const b = new Set(otherRoles);
+  // cross(x, x) doubles as a "both sides have x" test.
+  return {cross: (x, y) => (a.has(x) && b.has(y)) || (b.has(x) && a.has(y))};
+}
+
+/**
+ * Score a Seven Dwarfs pair using a role-driven matrix (5-baseline convention).
+ *
+ * Agreed matrix (highest precedence first):
+ *   - recruit ↔ member | recruit ↔ density = 8 (free recruit cheats a Dwarf onto the board)
+ *   - density ↔ density | density ↔ member | return ↔ member = 7 (compounding / member feeds payoff)
+ *   - everything else (member ↔ member, etc.)               = 5 (same-deck density baseline)
+ *
+ * Multi-role cards matter here: Right Behind You is BOTH recruit and density, so the
+ * precedence order decides which tier wins when it pairs with a member.
+ */
+function scoreDwarfsPair(
+  _card: LorcanaCard,
+  cardRoles: DwarfsRole[],
+  _other: LorcanaCard,
+  otherRoles: DwarfsRole[],
+): DwarfsPairResult {
+  const ctx = buildDwarfsPairCtx(cardRoles, otherRoles);
+
+  // 8 — a free recruit cheats a Dwarf onto the board (check first so a recruit+density
+  // card like Right Behind You scores 8, not 7, against a member).
+  if (ctx.cross('recruit', 'member') || ctx.cross('recruit', 'density')) {
+    return {
+      score: 8,
+      explanation: `A free recruit cheats a Seven Dwarfs character onto the board.`,
+    };
+  }
+
+  // 7 — compounding density payoffs, or a member feeding a payoff.
+  if (ctx.cross('density', 'density')) {
+    return {score: 7, explanation: `Both reward Seven Dwarfs density — the payoffs compound.`};
+  }
+  if (ctx.cross('density', 'member')) {
+    return {score: 7, explanation: `The member feeds the Seven Dwarfs density payoff.`};
+  }
+  if (ctx.cross('return', 'member')) {
+    return {
+      score: 7,
+      explanation: `Bouncing the member re-buys its enter-play ability and draws a card.`,
+    };
+  }
+
+  return {score: 5, explanation: `Both share the Seven Dwarfs deck. Density baseline.`};
 }
 
 // Get all rules
