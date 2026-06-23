@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>404 — Inkweave</title>
+    <style>
+      :root {
+        --bg: #0d0d14;
+        --text: #e8e8e8;
+        --muted: #90a1b9;
+        --gold: #d4af37;
+        --gold-bright: #ffb900;
+        --hero: 'Tinos', Georgia, serif;
+        --body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 0 24px;
+        font-family: var(--body);
+        color: var(--text);
+        background:
+          radial-gradient(
+            ellipse 600px 400px at 50% 45%,
+            rgba(139, 92, 246, 0.12) 0%,
+            rgba(212, 175, 55, 0.06) 40%,
+            transparent 70%
+          ),
+          var(--bg);
+      }
+      .code {
+        margin: 0;
+        font-family: var(--hero);
+        font-size: clamp(100px, 20vw, 180px);
+        font-weight: 400;
+        letter-spacing: 8px;
+        line-height: 1;
+        background: linear-gradient(180deg, #d4af37 0%, #ffb900 50%, rgba(212, 175, 55, 0.5) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .divider {
+        width: 200px;
+        height: 2px;
+        margin: 8px 0 24px;
+        background: linear-gradient(90deg, transparent 0%, #d4af37 50%, transparent 100%);
+      }
+      h1 {
+        margin: 0;
+        font-family: var(--hero);
+        font-size: clamp(24px, 4vw, 28px);
+        font-weight: 400;
+        letter-spacing: 2px;
+      }
+      p.message {
+        margin: 12px 0 0;
+        color: var(--muted);
+        max-width: 32ch;
+      }
+      a.cta {
+        display: inline-block;
+        margin-top: 36px;
+        padding: 12px 24px;
+        border: 1px solid var(--gold);
+        border-radius: 8px;
+        color: var(--gold-bright);
+        text-decoration: none;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+      a.cta:hover {
+        background: rgba(212, 175, 55, 0.1);
+      }
+      .watermark {
+        position: fixed;
+        bottom: 32px;
+        font-family: var(--hero);
+        font-size: 16px;
+        letter-spacing: 4px;
+        color: rgba(144, 161, 185, 0.25);
+      }
+    </style>
+  </head>
+  <body>
+    <p class="code">404</p>
+    <div class="divider" aria-hidden="true"></div>
+
+    <h1>Lost in the Inkwell</h1>
+    <p class="message">This page has vanished into the mists of Lorcana.</p>
+    <a class="cta" href="/">Return to Inkweave</a>
+
+    <span class="watermark" aria-hidden="true">INKWEAVE</span>
+  </body>
+</html>
