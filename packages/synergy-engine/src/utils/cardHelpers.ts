@@ -971,6 +971,13 @@ const DWARFS_RETURN_PATTERN = /return (?:chosen )?(?:a |an )?Seven Dwarfs charac
  */
 export type DwarfsRole = 'member' | 'density' | 'recruit' | 'return';
 
+/** Detect Seven-Dwarfs-scoped payoff roles from card text (density, recruit, return). */
+function detectDwarfsPayoffRoles(text: string, roles: DwarfsRole[]): void {
+  if (DWARFS_DENSITY_PATTERN.test(text)) roles.push('density');
+  if (DWARFS_RECRUIT_PATTERN.test(text)) roles.push('recruit');
+  if (DWARFS_RETURN_PATTERN.test(text)) roles.push('return');
+}
+
 export function getDwarfsRoles(card: LorcanaCard): DwarfsRole[] {
   const isMember = hasClassification(card, 'Seven Dwarfs');
   const text = card.text != null ? normalizeCardText(card) : '';
@@ -981,9 +988,7 @@ export function getDwarfsRoles(card: LorcanaCard): DwarfsRole[] {
 
   const roles: DwarfsRole[] = [];
   if (isMember) roles.push('member');
-  if (DWARFS_DENSITY_PATTERN.test(text)) roles.push('density');
-  if (DWARFS_RECRUIT_PATTERN.test(text)) roles.push('recruit');
-  if (DWARFS_RETURN_PATTERN.test(text)) roles.push('return');
+  detectDwarfsPayoffRoles(text, roles);
   return roles;
 }
 
