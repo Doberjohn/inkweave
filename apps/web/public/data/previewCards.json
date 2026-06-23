@@ -1,17 +1,17 @@
 {
   "metadata": {
     "formatVersion": "2.3.2",
-    "generatedOn": "2026-05-13T14:07:57",
+    "generatedOn": "2026-06-23T00:00:00",
     "language": "en"
   },
   "sets": {
-    "12": {
-      "name": "The Wilds Unknown",
-      "number": 12,
+    "13": {
+      "name": "Attack of the Vine!",
+      "number": 13,
       "type": "expansion",
-      "prereleaseDate": "2026-05-08",
-      "releaseDate": "2026-05-15",
-      "hasAllCards": true,
+      "prereleaseDate": "2026-07-17",
+      "releaseDate": "2026-07-24",
+      "hasAllCards": false,
       "allowedInFormats": {
         "Core": {
           "allowed": true,

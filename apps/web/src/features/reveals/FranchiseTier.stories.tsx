@@ -21,29 +21,29 @@ function make(id: string, name: string, overrides: Partial<LorcanaCard> = {}): L
     willpower: 2,
     lore: 1,
     imageUrl: '',
-    setCode: '12',
+    setCode: '13',
     setNumber: 1,
     ...overrides,
   };
 }
 
-const toyStoryTier: RevealTier = {
-  id: 'toy-story',
-  label: 'Toy Story',
-  logoUrl: '/art/franchises/toy-story.webp',
+const monstersIncTier: RevealTier = {
+  id: 'monsters-inc',
+  label: 'Monsters, Inc.',
+  logoUrl: '/art/franchises/monsters-inc.webp',
   cards: Array.from({length: 12}, (_, i) => make(`t${i}`, `Toy ${i}`, {ink: 'Amber'})),
 };
 
 const oneCardTier: RevealTier = {
-  id: 'brave',
-  label: 'Brave',
-  logoUrl: '/art/franchises/brave.webp',
-  cards: [make('b1', 'Merida', {ink: 'Emerald'})],
+  id: 'turning-red',
+  label: 'Turning Red',
+  logoUrl: '/art/franchises/turning-red.webp',
+  cards: [make('b1', 'Mei', {ink: 'Ruby'})],
 };
 
 const emptyTier: RevealTier = {
   id: 'returning',
-  label: 'Returning franchises in Wilds Unknown',
+  label: 'Returning franchises in Attack of the Vine!',
   cards: [],
 };
 
@@ -63,6 +63,6 @@ const meta: Meta<typeof FranchiseTier> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const ToyStoryTier: Story = {args: {tier: toyStoryTier, priorityCount: 6}};
+export const MonstersIncTier: Story = {args: {tier: monstersIncTier, priorityCount: 6}};
 export const OneCardTier: Story = {args: {tier: oneCardTier}};
 export const EmptyTier: Story = {args: {tier: emptyTier}};

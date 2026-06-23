@@ -27,7 +27,7 @@ interface TabDef {
 const TABS_REVEAL_SEASON: readonly TabDef[] = [
   {kind: 'browse', label: 'Browse collection', href: '/browse'},
   {kind: 'search', label: 'Search cards', action: 'search'},
-  {kind: 'reveals', label: 'Set 12 reveals', href: '/reveals', hasNewDot: true},
+  {kind: 'reveals', label: 'Set 13 reveals', href: '/reveals', hasNewDot: true},
   {kind: 'playstyles', label: 'Explore playstyles', href: '/playstyles'},
   {kind: 'vote', label: 'Rate synergies', href: '/vote'},
 ];

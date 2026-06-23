@@ -3,7 +3,7 @@ import {COLORS, FONTS, FONT_SIZES, SPACING} from '../../shared/constants';
 import {useResponsive} from '../../shared/hooks';
 import type {RevealPhase} from './useRevealPhase';
 
-const WILDS_UNKNOWN_LOGO = '/art/sets/wilds-unknown.png';
+const SET_LOGO = '/art/sets/attack-of-the-vine.png';
 const SUBTITLE = 'New IPs coming to Lorcana';
 const ANIMATE_IN_MS = 240;
 const ANIMATE_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
@@ -66,8 +66,8 @@ export function Hero({phase, days}: HeroProps) {
       }}>
       <div style={{position: 'relative', width: '100%'}}>
         <img
-          src={WILDS_UNKNOWN_LOGO}
-          alt="The Wilds Unknown"
+          src={SET_LOGO}
+          alt="Attack of the Vine!"
           style={{
             maxWidth: 320,
             width: '100%',

@@ -3,7 +3,7 @@ import {useNavigate} from 'react-router-dom';
 import {COLORS, FONTS, FONT_SIZES, RADIUS} from '../../shared/constants';
 import {useResponsive} from '../../shared/hooks';
 
-const WILDS_UNKNOWN_LOGO = '/art/sets/wilds-unknown.png';
+const SET_LOGO = '/art/sets/attack-of-the-vine.png';
 
 /** Staggered firefly configs — stable across renders so animations stay in sync. */
 const FIREFLY_SEEDS: ReadonlyArray<{left: string; delay: string; drift: string}> = [
@@ -267,10 +267,10 @@ export function RevealsPromoCard() {
   }, [reduced]);
 
   return (
-    <aside aria-label="Set 12 reveals" className="rpc-card" style={getAsideStyle(viewport, mounted)}>
+    <aside aria-label="Set 13 reveals" className="rpc-card" style={getAsideStyle(viewport, mounted)}>
       <button type="button" onClick={() => navigate('/reveals')} style={getButtonStyle(viewport)}>
         <img
-          src={WILDS_UNKNOWN_LOGO}
+          src={SET_LOGO}
           alt=""
           aria-hidden="true"
           draggable={false}
@@ -278,7 +278,7 @@ export function RevealsPromoCard() {
         />
         <span style={getCopyBlockStyle(viewport)}>
           <span style={NEW_BADGE_STYLE}>NEW</span>
-          <span style={getTitleStyle(viewport)}>All Set 12 cards revealed!</span>
+          <span style={getTitleStyle(viewport)}>All Set 13 cards revealed!</span>
         </span>
       </button>
       {!reduced && <FireflyField />}
