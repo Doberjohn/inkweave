@@ -129,6 +129,27 @@ export const MECHANIC_BY_ID: Record<string, Mechanic> = Object.fromEntries(
 );
 
 /**
+ * Maps a playstyle's structural role id to the catalog mechanic it duplicates.
+ * The display layer uses this to show ONE tile when a card carries both (e.g.
+ * Lore Denial's structural `burn` and the catalog's `lore-burn`) — the structural
+ * tile wins (keeping its home-context label), and the aliased catalog mechanic is
+ * suppressed for that card. Structural roles with no catalog twin (member, search,
+ * density, banish-trigger, location roles, …) are absent here and surface as their
+ * own tiles. See MECHANICS_TAXONOMY.md §3.
+ */
+export const STRUCTURAL_ROLE_TO_MECHANIC: Record<string, string> = {
+  burn: 'lore-burn',
+  steal: 'lore-steal',
+  targeted: 'discard-targeted',
+  random: 'discard-random',
+  standard: 'discard-forced',
+  draw: 'draw',
+  'inkwell-ramp': 'inkwell-ramp',
+  'inkwell-trigger': 'inkwell-trigger',
+  'cost-reduction': 'cost-reduction',
+};
+
+/**
  * Return the ids of every generic mechanic a card exhibits, in catalog order.
  * Deterministic and side-effect free — safe to call in the engine loop.
  */

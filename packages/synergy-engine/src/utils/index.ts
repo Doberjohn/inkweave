@@ -58,7 +58,12 @@ export type {
 
 export {isCardType} from './typeGuards.js';
 
-export {MECHANICS, MECHANIC_BY_ID, getCardMechanics} from './mechanics.js';
+export {
+  MECHANICS,
+  MECHANIC_BY_ID,
+  STRUCTURAL_ROLE_TO_MECHANIC,
+  getCardMechanics,
+} from './mechanics.js';
 export type {Mechanic} from './mechanics.js';
 
 export {transformCard, transformCards} from './cardTransformer.js';

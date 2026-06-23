@@ -9,6 +9,9 @@ import {
   getLoreDenialRoles,
   getToyRoles,
   getDwarfsRoles,
+  getCardMechanics,
+  MECHANIC_BY_ID,
+  STRUCTURAL_ROLE_TO_MECHANIC,
   LOCATION_ROLE_CHIP_LABELS,
   LOCATION_ROLE_TOOLTIP,
   DISCARD_ROLE_CHIP_LABELS,
@@ -383,21 +386,51 @@ const ROLE_CONFIGS: Partial<Record<PlaystyleId, RoleConfig>> = {
 };
 
 /** Get role chip definitions for playstyles that have roles */
+/**
+ * Build a card's display mechanics: the playstyle's structural roles (with their
+ * home-context labels) PLUS every generic catalog mechanic, de-duplicated so a
+ * structural role and its catalog twin (e.g. `burn`↔`lore-burn`) collapse to one
+ * tile (the structural side wins its label). See MECHANICS_TAXONOMY.md.
+ */
+function cardDisplayMechanics(config: RoleConfig, card: LorcanaCard): RoleChip[] {
+  const structural = config.getRoles(card);
+  const aliased = new Set(
+    structural.map((r) => STRUCTURAL_ROLE_TO_MECHANIC[r]).filter(Boolean),
+  );
+  const tiles: RoleChip[] = structural.map((role) => ({
+    role,
+    label: config.getLabel(role),
+    tooltip: config.getTooltip(role),
+    count: 1,
+  }));
+  for (const id of getCardMechanics(card)) {
+    if (aliased.has(id)) continue; // covered by a structural role on this card
+    const mech = MECHANIC_BY_ID[id];
+    tiles.push({role: id, label: mech.label, tooltip: mech.description, count: 1});
+  }
+  return tiles;
+}
+
 function getRoleChips(playstyleId: PlaystyleId | undefined, cards: LorcanaCard[]): RoleChip[] {
   if (!playstyleId) return [];
   const config = ROLE_CONFIGS[playstyleId];
   if (!config) return [];
-  const roleCounts = new Map<string, number>();
+  const counts = new Map<string, number>();
+  const meta = new Map<string, {label: string; tooltip: string}>();
   for (const card of cards) {
-    for (const role of config.getRoles(card)) {
-      roleCounts.set(role, (roleCounts.get(role) ?? 0) + 1);
+    const seen = new Set<string>(); // a mechanic counts once per card
+    for (const tile of cardDisplayMechanics(config, card)) {
+      if (seen.has(tile.role)) continue;
+      seen.add(tile.role);
+      counts.set(tile.role, (counts.get(tile.role) ?? 0) + 1);
+      if (!meta.has(tile.role)) meta.set(tile.role, {label: tile.label, tooltip: tile.tooltip});
     }
   }
   const extras = config.extraChips?.(cards) ?? [];
-  const chips = [...roleCounts].map(([role, count]) => ({
+  const chips = [...counts].map(([role, count]) => ({
     role,
-    label: config.getLabel(role),
-    tooltip: config.getTooltip(role),
+    label: meta.get(role)!.label,
+    tooltip: meta.get(role)!.tooltip,
     count,
   }));
   return [...extras, ...chips];
@@ -418,7 +451,9 @@ function cardHasRole(playstyleId: PlaystyleId, card: LorcanaCard, role: string):
     return card.type === 'Location';
   }
   const config = ROLE_CONFIGS[playstyleId];
-  return config ? config.getRoles(card).includes(role) : false;
+  if (!config) return false;
+  // Structural role, or a generic catalog mechanic surfaced as a tile.
+  return config.getRoles(card).includes(role) || getCardMechanics(card).includes(role);
 }
 
 // ── Centered page style ──

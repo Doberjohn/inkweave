@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {MECHANICS, MECHANIC_BY_ID, getCardMechanics} from '../utils';
+import {MECHANICS, MECHANIC_BY_ID, STRUCTURAL_ROLE_TO_MECHANIC, getCardMechanics} from '../utils';
 import {createCard} from './fixtures.js';
 
 describe('mechanics catalog', () => {
@@ -64,6 +64,12 @@ describe('mechanics catalog', () => {
       const ids = MECHANICS.map((m) => m.id);
       expect(new Set(ids).size).toBe(ids.length);
       expect(MECHANIC_BY_ID['draw'].label).toBe('Card Draw');
+    });
+
+    it('every structural-role alias points at a real catalog mechanic', () => {
+      for (const mechanicId of Object.values(STRUCTURAL_ROLE_TO_MECHANIC)) {
+        expect(MECHANIC_BY_ID[mechanicId]).toBeDefined();
+      }
     });
   });
 });
