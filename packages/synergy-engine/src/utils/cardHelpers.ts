@@ -254,8 +254,11 @@ export const LOCATION_PATTERNS = {
   'at-payoff': /while\b.{0,60}at a location|if\b.{0,60}at a location|is at a location/i,
   move: /\bmove\b[^.]{0,40}?\bcharacter[^.]{0,40}?\blocation|to the same location/i,
   'move-exclude': /move.*damage/i,
-  'play-trigger':
-    /when(?:ever)? you play a location|whenever.*play a location|when(?:ever)?[^.]{0,40}moves? to a location/i,
+  // Fires when you PLAY a location (e.g. Elsa - Ice Artisan).
+  'play-trigger': /when(?:ever)? you play a location|whenever.*play a location/i,
+  // Fires when a character MOVES onto a location (e.g. Taffyta, Goofy) — a payoff
+  // for the `move` enabler. Split from play-trigger so the two events score apart.
+  'move-trigger': /when(?:ever)?[^.]{0,40}moves? to a location/i,
   'in-play-check': /if you have a location|while you have a.*(location)|for each location/i,
   search: makeSearchPattern('location(?:\\s+cards?)?'),
   buff: /your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
@@ -274,6 +277,7 @@ export type LocationRole =
   | 'at-payoff'
   | 'move'
   | 'play-trigger'
+  | 'move-trigger'
   | 'in-play-check'
   | 'search'
   | 'buff'
@@ -284,35 +288,38 @@ export type LocationRole =
  * Get all location roles a card fulfills.
  * Returns empty array for cards with no location interaction.
  */
+/**
+ * Ordered role detectors (order = role-array order). A data table instead of an
+ * if-ladder keeps `getLocationRoles` flat — adding a role is one row, not one
+ * more branch. `exclude` (move only) suppresses a false-positive pattern.
+ */
+const LOCATION_ROLE_DETECTORS: ReadonlyArray<{
+  role: LocationRole;
+  pattern: RegExp;
+  exclude?: RegExp;
+}> = [
+  {role: 'at-payoff', pattern: LOCATION_PATTERNS['at-payoff']},
+  {role: 'move', pattern: LOCATION_PATTERNS.move, exclude: LOCATION_PATTERNS['move-exclude']},
+  {role: 'play-trigger', pattern: LOCATION_PATTERNS['play-trigger']},
+  {role: 'move-trigger', pattern: LOCATION_PATTERNS['move-trigger']},
+  {role: 'in-play-check', pattern: LOCATION_PATTERNS['in-play-check']},
+  {role: 'search', pattern: LOCATION_PATTERNS.search},
+  {role: 'buff', pattern: LOCATION_PATTERNS.buff},
+  {role: 'boost', pattern: LOCATION_PATTERNS.boost},
+  {role: 'location-ramp', pattern: LOCATION_PATTERNS['location-ramp']},
+];
+
 export function getLocationRoles(card: LorcanaCard): LocationRole[] {
-  if (isLocation(card)) return [];
-  if (!card.text) return [];
+  if (isLocation(card) || !card.text) return [];
 
   const text = normalizeCardText(card);
 
   // Anti-location cards (banish/remove locations) are excluded entirely
   if (LOCATION_PATTERNS['anti-location'].test(text)) return [];
 
-  const roles: LocationRole[] = [];
-
-  if (LOCATION_PATTERNS['at-payoff'].test(text)) roles.push('at-payoff');
-
-  if (LOCATION_PATTERNS.move.test(text) && !LOCATION_PATTERNS['move-exclude'].test(text))
-    roles.push('move');
-
-  if (LOCATION_PATTERNS['play-trigger'].test(text)) roles.push('play-trigger');
-
-  if (LOCATION_PATTERNS['in-play-check'].test(text)) roles.push('in-play-check');
-
-  if (LOCATION_PATTERNS.search.test(text)) roles.push('search');
-
-  if (LOCATION_PATTERNS.buff.test(text)) roles.push('buff');
-
-  if (LOCATION_PATTERNS.boost.test(text)) roles.push('boost');
-
-  if (LOCATION_PATTERNS['location-ramp'].test(text)) roles.push('location-ramp');
-
-  return roles;
+  return LOCATION_ROLE_DETECTORS.filter(
+    (d) => d.pattern.test(text) && !d.exclude?.test(text),
+  ).map((d) => d.role);
 }
 
 /**
@@ -869,8 +876,8 @@ const TOY_SEARCH_PATTERN = makeSearchPattern('Toy characters?(?:\\s+cards?)?');
 const TOY_BANISH_TRIGGER_TRIBAL_PATTERN = makeBanishTriggerPattern('Toy characters?');
 const TOY_BANISH_TRIGGER_SELF_PATTERN = makeBanishTriggerPattern('this character');
 
-/** Generic Draw mechanic — literal "draw a card" / "draw N cards". Used by Toys. */
-const DRAW_PATTERN = /(?:you may )?draws? (?:a|\d+) cards?/i;
+/** Generic Draw mechanic — literal "draw a card" / "draw N cards". Used by Toys and the mechanics catalog. */
+export const DRAW_PATTERN = /(?:you may )?draws? (?:a|\d+) cards?/i;
 
 /**
  * Roles in the Toy tribal playstyle.
@@ -936,6 +943,63 @@ export function getToyRoles(card: LorcanaCard): ToyRole[] {
 }
 
 export const isToyCard = (card: LorcanaCard): boolean => getToyRoles(card).length > 0;
+
+// ============================================
+// SEVEN DWARFS TRIBAL DETECTION
+// ============================================
+
+/**
+ * Tribe-payoff gate: text references the Seven Dwarfs tribe. Bare "Seven Dwarfs"
+ * is safe — no card in the database *names* an ability "Seven Dwarfs", so there
+ * is no caps ability-name false positive (unlike Toy's "WORLD'S GREATEST TOY").
+ * Matches all 5 payoff cards; membership itself is a subtype check, not regex.
+ */
+const DWARFS_PAYOFF_PATTERN = /\bSeven Dwarfs\b/i;
+
+/** Density payoff: a benefit gated on having Seven Dwarfs characters in play. */
+const DWARFS_DENSITY_PATTERN = /if you have (?:another |a |an |\d+ or more )?Seven Dwarfs/i;
+
+/** Recruit: cheat a Seven Dwarfs character into play for free (Right Behind You). */
+const DWARFS_RECRUIT_PATTERN = /play a Seven Dwarfs character[^.]*for free/i;
+
+/** Return: bounce one of your Seven Dwarfs back to hand for value (Snow White - Merry). */
+const DWARFS_RETURN_PATTERN = /return (?:chosen )?(?:a |an )?Seven Dwarfs character/i;
+
+/**
+ * Roles in the Seven Dwarfs tribal playstyle (modeled on the Toy rule):
+ * - 'member'  — Seven Dwarfs classification (the 14 subtype cards)
+ * - 'density' — pays off having Seven Dwarfs in play
+ * - 'recruit' — plays a Seven Dwarfs character for free
+ * - 'return'  — returns a Seven Dwarfs character to hand for value
+ *
+ * The "OR Princess" satisfier on the payoff cards is intentionally NOT modeled —
+ * Princess density belongs to the (separate) Princesses playstyle. A card enters
+ * this playstyle only via the Seven Dwarfs subtype or a Seven Dwarfs text reference.
+ */
+export type DwarfsRole = 'member' | 'density' | 'recruit' | 'return';
+
+/** Detect Seven-Dwarfs-scoped payoff roles from card text (density, recruit, return). */
+function detectDwarfsPayoffRoles(text: string, roles: DwarfsRole[]): void {
+  if (DWARFS_DENSITY_PATTERN.test(text)) roles.push('density');
+  if (DWARFS_RECRUIT_PATTERN.test(text)) roles.push('recruit');
+  if (DWARFS_RETURN_PATTERN.test(text)) roles.push('return');
+}
+
+export function getDwarfsRoles(card: LorcanaCard): DwarfsRole[] {
+  const isMember = hasClassification(card, 'Seven Dwarfs');
+  const text = card.text != null ? normalizeCardText(card) : '';
+  const isPayoff = text !== '' && DWARFS_PAYOFF_PATTERN.test(text);
+
+  // Not a Seven Dwarfs card at all — no membership, no payoff reference.
+  if (!isMember && !isPayoff) return [];
+
+  const roles: DwarfsRole[] = [];
+  if (isMember) roles.push('member');
+  detectDwarfsPayoffRoles(text, roles);
+  return roles;
+}
+
+export const isDwarfsCard = (card: LorcanaCard): boolean => getDwarfsRoles(card).length > 0;
 
 /**
  * A Location qualifies as a boost target only if its text references cards beneath it.

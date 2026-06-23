@@ -155,7 +155,7 @@ Comparison mode — clicking a synergy card tile transitions CardOverviewModal i
 |---|---|
 | should render hero with name, description, and breadcrumb | `/playstyles/discard` shows h1 "Discard", description, breadcrumb nav with "Playstyles" link |
 | should toggle strategy tips section | Strategy Tips button toggles tip list visibility |
-| should show and use role filter chips | "Enabler" chip filters to subset; "All" chip resets |
+| should show and use role filter chips | "Forced Discard" mechanic chip filters to a subset; toggling it off restores the full grid |
 | should render card tiles in grid | `/playstyles/location-control` renders 5+ card tiles |
 | should open the card overview modal from playstyle detail | Clicking a card tile opens the modal; URL stays on the playstyle page |
 

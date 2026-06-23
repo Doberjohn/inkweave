@@ -83,6 +83,20 @@ const playstyles: Playstyle[] = [
       'Tribal banish triggers (Racers, Illusions, Puppies) fire off any banish, so a generic self-banish card still turns them on.',
     ],
   },
+  {
+    id: 'dwarfs',
+    name: 'Seven Dwarfs',
+    tagline: 'Seven Dwarfs characters and the cards that reward running them.',
+    description:
+      'Seven Dwarfs characters and the cards that reward running them. Density payoffs draw extra cards the moment another Dwarf is on the board, free recruits cheat more Dwarfs into play, and bounce effects re-buy their enter-play abilities. Each Dwarf you add makes the rest of the team stronger — and Snow White ties the package together.',
+    strategyTips: [
+      'Run plenty of Seven Dwarfs members so density checks (Doc - Taking Notes, Don\'t Be Nervous) reliably switch on.',
+      'Snow White - Merry as the Morning returns a Dwarf to hand to draw — pair her with cheap enter-play Dwarfs to re-buy value every quest.',
+      'Right Behind You plays a Dwarf for free once you have a Dwarf and a Princess in play, so keep a Princess (Snow White) in the deck to turn it on.',
+      'The payoff package is Amethyst. Stay mono-Amethyst for consistency, or splash Steel for the set-5 Knight Dwarfs, who still count toward every density check.',
+      'Most payoffs also count Princesses — Snow White doubles as a Princess and a Dwarf payoff, bridging the two tribes for a deeper card pool.',
+    ],
+  },
 ];
 
 const playstyleMap = new Map(playstyles.map((p) => [p.id, p]));

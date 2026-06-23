@@ -22,11 +22,14 @@ import {
   isSong,
   isToyCard,
   getToyRoles,
+  isDwarfsCard,
+  getDwarfsRoles,
   isLoreDenialCard,
   getLoreDenialRoles,
   getSacrificeRoles,
   isSacrificeCard,
   LOCATION_PATTERNS,
+  mechanicLabel,
   NAMED_EFFECT_SCORES,
   normalizeCardText,
   type DiscardRole,
@@ -36,6 +39,7 @@ import {
   type SacrificeRole,
   type ShiftType,
   type ToyRole,
+  type DwarfsRole,
 } from '../utils';
 
 // ============================================
@@ -221,6 +225,7 @@ function isValidShiftTarget(
 const LOCATION_ROLE_SCORE: Record<LocationRole, number> = {
   'at-payoff': 7,
   'play-trigger': 7,
+  'move-trigger': 7,
   buff: 7,
   'location-ramp': 7,
   move: 5,
@@ -233,6 +238,7 @@ const LOCATION_ROLE_SCORE: Record<LocationRole, number> = {
 const ROLE_LABELS: Record<LocationRole, string> = {
   'at-payoff': 'at location payoff',
   'play-trigger': 'play trigger',
+  'move-trigger': 'move trigger',
   buff: 'location buff',
   'location-ramp': 'location ramp',
   move: 'move to location',
@@ -242,15 +248,19 @@ const ROLE_LABELS: Record<LocationRole, string> = {
 };
 
 /** Short chip labels for each location role (used in UI) */
+// Labels are single-sourced from the mechanics catalog (STRUCTURAL_MECHANICS) so
+// a location role reads identically on the carousel tiles and in the card-detail
+// synergy descriptions. Rename a location label in mechanics.ts, not here.
 export const LOCATION_ROLE_CHIP_LABELS: Record<LocationRole, string> = {
-  'at-payoff': 'Payoff',
-  'play-trigger': 'Trigger',
-  buff: 'Buff',
-  'location-ramp': 'Ramp',
-  move: 'Move',
-  'in-play-check': 'Check',
-  search: 'Search',
-  boost: 'Boost',
+  'at-payoff': mechanicLabel('at-payoff'),
+  'play-trigger': mechanicLabel('play-trigger'),
+  'move-trigger': mechanicLabel('move-trigger'),
+  buff: mechanicLabel('buff'),
+  'location-ramp': mechanicLabel('location-ramp'),
+  move: mechanicLabel('move'),
+  'in-play-check': mechanicLabel('in-play-check'),
+  search: mechanicLabel('search'),
+  boost: mechanicLabel('boost'),
 };
 
 /** Educational descriptions explaining what each location role means, templated with card name and location name */
@@ -260,6 +270,7 @@ export const LOCATION_ROLE_DESCRIPTIONS: Record<
 > = {
   'at-payoff': (_name, loc) => `Gets bonuses when characters are at ${loc}.`,
   'play-trigger': (_name, loc) => `Activates effects when you play ${loc}.`,
+  'move-trigger': (_name, loc) => `Triggers effects when a character moves to ${loc}.`,
   buff: (_name, loc) => `Strengthens ${loc} with Resist or stat boosts.`,
   'location-ramp': (_name, loc) => `Reduces the cost of moving characters to ${loc}.`,
   move: (_name, loc) => `Moves characters to ${loc} for an advantage.`,
@@ -275,13 +286,15 @@ export const LOCATION_ROLE_DESCRIPTIONS: Record<
  */
 const COMPLEMENTARY_ROLES: Partial<Record<LocationRole, LocationRole[]>> = {
   // Enablers: these roles help get locations into play or onto the board
-  search: ['at-payoff', 'play-trigger', 'buff', 'move', 'in-play-check', 'boost'],
-  'location-ramp': ['at-payoff', 'play-trigger', 'buff', 'move', 'in-play-check', 'boost'],
-  // Positioning: move enables payoffs and benefits from buffs
-  move: ['at-payoff', 'buff'],
+  search: ['at-payoff', 'play-trigger', 'move-trigger', 'buff', 'move', 'in-play-check', 'boost'],
+  'location-ramp': ['at-payoff', 'play-trigger', 'move-trigger', 'buff', 'move', 'in-play-check', 'boost'],
+  // Positioning: move enables payoffs (incl. move-trigger) and benefits from buffs
+  move: ['at-payoff', 'buff', 'move-trigger'],
   // Consumers: these need locations/positioning that enablers provide
   'at-payoff': ['move', 'search', 'location-ramp', 'buff'],
   'play-trigger': ['search', 'location-ramp'],
+  // move-trigger fires off the `move` enabler; search/ramp supply the destination.
+  'move-trigger': ['move', 'search', 'location-ramp'],
   buff: ['move', 'search', 'location-ramp', 'at-payoff', 'in-play-check'],
   'in-play-check': ['search', 'location-ramp'],
   boost: ['search', 'location-ramp'],
@@ -291,6 +304,7 @@ const COMPLEMENTARY_ROLES: Partial<Record<LocationRole, LocationRole[]>> = {
 const HIGH_VALUE_ROLES: Set<LocationRole> = new Set([
   'at-payoff',
   'play-trigger',
+  'move-trigger',
   'buff',
   'location-ramp',
 ]);
@@ -446,7 +460,7 @@ function createLocationRule(spec: LocationRuleSpec): SynergyRule {
   };
 }
 
-/** Specs for all 8 location rules (order matters for deduplication). */
+/** Specs for all 9 location rules (order matters for deduplication). */
 const LOCATION_RULE_SPECS: readonly LocationRuleSpec[] = [
   {
     id: 'at-payoff',
@@ -459,6 +473,12 @@ const LOCATION_RULE_SPECS: readonly LocationRuleSpec[] = [
     name: 'Location Play Trigger',
     role: 'play-trigger',
     pattern: LOCATION_PATTERNS['play-trigger'],
+  },
+  {
+    id: 'move-trigger',
+    name: 'Location Move Trigger',
+    role: 'move-trigger',
+    pattern: LOCATION_PATTERNS['move-trigger'],
   },
   {id: 'buff', name: 'Location Buff', role: 'buff', pattern: LOCATION_PATTERNS.buff},
   {
@@ -484,51 +504,20 @@ const LOCATION_RULE_SPECS: readonly LocationRuleSpec[] = [
   {id: 'boost', name: 'Location Boost', role: 'boost', pattern: LOCATION_PATTERNS.boost},
 ];
 
-/** Create all 8 location synergy rules (order matters for deduplication) */
+/** Create all 9 location synergy rules (order matters for deduplication) */
 function createLocationRules(): SynergyRule[] {
   return LOCATION_RULE_SPECS.map(createLocationRule);
 }
 
 // ============================================
-// DISCARD ROLE UI LABELS
+// DISCARD SCORING HELPERS (labels now live in the mechanics catalog)
 // ============================================
-
-/** Short chip labels for each discard role (used in UI) */
-export const DISCARD_ROLE_CHIP_LABELS: Record<DiscardRole, string> = {
-  targeted: 'Targeted',
-  random: 'Random',
-  standard: 'Standard',
-  payoff: 'Payoff',
-};
-
-/** Educational descriptions explaining what each discard role means */
-export const DISCARD_ROLE_DESCRIPTIONS: Record<DiscardRole, string> = {
-  targeted: 'Choose which card opponents discard',
-  random: 'Force opponents to discard at random',
-  standard: 'Force opponents to choose and discard',
-  payoff: 'Get benefits for having more cards than your opponent',
-};
-
-// ============================================
-// SACRIFICE ROLE UI LABELS
-// ============================================
-
-/** Short chip labels for each sacrifice role (used in UI) */
-export const SACRIFICE_ROLE_CHIP_LABELS: Record<SacrificeRole, string> = {
-  'self-banish': 'Self-Banish',
-  'banish-trigger': 'Banish Trigger',
-};
-
-/** Educational descriptions explaining what each sacrifice role means */
-export const SACRIFICE_ROLE_DESCRIPTIONS: Record<SacrificeRole, string> = {
-  'self-banish': 'Banishes your own characters on demand',
-  'banish-trigger': 'Get a benefit when your characters are banished',
-};
 
 /** Standalone educational descriptions for location roles (no card name needed) */
 export const LOCATION_ROLE_TOOLTIP: Record<LocationRole, string> = {
   'at-payoff': 'Get benefits when characters are at a location',
-  'play-trigger': 'Trigger effects when you play or move to a location',
+  'play-trigger': 'Trigger effects when you play a location',
+  'move-trigger': 'Trigger effects when a character moves to a location',
   buff: 'Give locations stat boosts and protection',
   'location-ramp': 'Reduce the cost of playing or moving to locations',
   move: 'Move characters to locations',
@@ -874,78 +863,39 @@ export const synergyRules: SynergyRule[] = [
       return matches;
     },
   },
+
+  // --------------------------------------------
+  // SEVEN DWARFS TRIBAL
+  // --------------------------------------------
+  {
+    id: 'dwarfs',
+    name: 'Seven Dwarfs',
+    category: 'playstyle',
+    playstyleId: 'dwarfs',
+    description:
+      'Seven Dwarfs characters and the payoffs that reward running them — density draws, free recruits, and bounce-for-value effects compound as you fill the board with Dwarfs',
+
+    matches: isDwarfsCard,
+
+    findSynergies: (card, allCards) => {
+      const cardRoles = getDwarfsRoles(card);
+      if (cardRoles.length === 0) return [];
+
+      const matches: SynergyMatch[] = [];
+
+      for (const other of allCards) {
+        if (other.id === card.id) continue;
+        const otherRoles = getDwarfsRoles(other);
+        if (otherRoles.length === 0) continue;
+
+        const {score, explanation} = scoreDwarfsPair(card, cardRoles, other, otherRoles);
+        matches.push({card: other, score, explanation, bidirectional: true});
+      }
+
+      return matches;
+    },
+  },
 ];
-
-// ============================================
-// RAMP ROLE LABELS & DESCRIPTIONS
-// ============================================
-
-/** Short chip labels for each ramp role (used in UI) */
-export const RAMP_ROLE_CHIP_LABELS: Record<RampRole, string> = {
-  'inkwell-ramp': 'Ramp',
-  'inkwell-trigger': 'Trigger',
-  'cost-reduction': 'Discount',
-};
-
-/** Educational descriptions explaining what each ramp role means */
-export const RAMP_ROLE_DESCRIPTIONS: Record<RampRole, string> = {
-  'inkwell-ramp': 'Put extra cards into your inkwell',
-  'inkwell-trigger': 'Trigger an effect when a card is put into your inkwell',
-  'cost-reduction': 'Reduce the cost of other cards you play',
-};
-
-/** Short chip labels for each lore-denial role (used in UI) */
-export const LORE_DENIAL_ROLE_CHIP_LABELS: Record<LoreDenialRole, string> = {
-  burn: 'Burn',
-  steal: 'Steal',
-};
-
-/** Educational descriptions explaining what each lore-denial role means */
-export const LORE_DENIAL_ROLE_DESCRIPTIONS: Record<LoreDenialRole, string> = {
-  burn: 'Make your opponents lose lore',
-  steal: 'Steal lore from your opponents to gain your own',
-};
-
-/**
- * Short chip labels for each Toy role.
- * Cross-playstyle mechanics get explicit Toy-context labels (Strategy B):
- * source playstyles keep their short labels (e.g., "Burn" on Lore Denial page),
- * but Toys disambiguates with the noun (e.g., "Lore Burn" on Toys page) since the
- * playstyle name no longer provides context. Descriptions stay shared.
- * 'Ramp' and 'Discount' are universal enough to read clearly in any playstyle.
- */
-export const TOY_ROLE_CHIP_LABELS: Record<ToyRole, string> = {
-  member: 'Member',
-  search: 'Search',
-  draw: 'Card Draw',
-  'banish-trigger': 'Banish Trigger',
-  'self-discount': 'Self Discount',
-  burn: 'Lore Burn',
-  steal: 'Lore Steal',
-  targeted: 'Targeted Discard',
-  random: 'Random Discard',
-  standard: 'Forced Discard',
-  'inkwell-ramp': 'Ramp',
-  'inkwell-trigger': 'Ink Trigger',
-  'cost-reduction': 'Cost Reduction',
-};
-
-/** Educational descriptions for each Toy role — composed from source playstyles where applicable */
-export const TOY_ROLE_DESCRIPTIONS: Record<ToyRole, string> = {
-  member: 'Toy character — counts toward tribal density',
-  search: 'Search your deck for Toy characters',
-  draw: 'Draw extra cards',
-  'banish-trigger': 'Trigger an effect when a Toy character is banished',
-  'self-discount': 'Pay less to play a character under some condition',
-  burn: LORE_DENIAL_ROLE_DESCRIPTIONS.burn,
-  steal: LORE_DENIAL_ROLE_DESCRIPTIONS.steal,
-  targeted: DISCARD_ROLE_DESCRIPTIONS.targeted,
-  random: DISCARD_ROLE_DESCRIPTIONS.random,
-  standard: DISCARD_ROLE_DESCRIPTIONS.standard,
-  'inkwell-ramp': RAMP_ROLE_DESCRIPTIONS['inkwell-ramp'],
-  'inkwell-trigger': RAMP_ROLE_DESCRIPTIONS['inkwell-trigger'],
-  'cost-reduction': RAMP_ROLE_DESCRIPTIONS['cost-reduction'],
-};
 
 // ============================================
 // DISCARD SCORING
@@ -1389,6 +1339,73 @@ function scoreToyPair(
       explanation: `Both share the Toys deck. Density baseline.`,
     }
   );
+}
+
+// ============================================
+// SEVEN DWARFS TRIBAL SCORING
+// ============================================
+
+interface DwarfsPairResult {
+  score: number;
+  explanation: string;
+}
+
+interface DwarfsPairCtx {
+  /** True iff one side has role `x` and the other has role `y` (direction-agnostic). */
+  cross: (x: DwarfsRole, y: DwarfsRole) => boolean;
+}
+
+/** Build a direction-agnostic role-comparison context for a Seven Dwarfs pair. */
+function buildDwarfsPairCtx(cardRoles: DwarfsRole[], otherRoles: DwarfsRole[]): DwarfsPairCtx {
+  const a = new Set(cardRoles);
+  const b = new Set(otherRoles);
+  // cross(x, x) doubles as a "both sides have x" test.
+  return {cross: (x, y) => (a.has(x) && b.has(y)) || (b.has(x) && a.has(y))};
+}
+
+/**
+ * Score a Seven Dwarfs pair using a role-driven matrix (5-baseline convention).
+ *
+ * Agreed matrix (highest precedence first):
+ *   - recruit ↔ member | recruit ↔ density = 8 (free recruit cheats a Dwarf onto the board)
+ *   - density ↔ density | density ↔ member | return ↔ member = 7 (compounding / member feeds payoff)
+ *   - everything else (member ↔ member, etc.)               = 5 (same-deck density baseline)
+ *
+ * Multi-role cards matter here: Right Behind You is BOTH recruit and density, so the
+ * precedence order decides which tier wins when it pairs with a member.
+ */
+function scoreDwarfsPair(
+  _card: LorcanaCard,
+  cardRoles: DwarfsRole[],
+  _other: LorcanaCard,
+  otherRoles: DwarfsRole[],
+): DwarfsPairResult {
+  const ctx = buildDwarfsPairCtx(cardRoles, otherRoles);
+
+  // 8 — a free recruit cheats a Dwarf onto the board (check first so a recruit+density
+  // card like Right Behind You scores 8, not 7, against a member).
+  if (ctx.cross('recruit', 'member') || ctx.cross('recruit', 'density')) {
+    return {
+      score: 8,
+      explanation: `A free recruit cheats a Seven Dwarfs character onto the board.`,
+    };
+  }
+
+  // 7 — compounding density payoffs, or a member feeding a payoff.
+  if (ctx.cross('density', 'density')) {
+    return {score: 7, explanation: `Both reward Seven Dwarfs density — the payoffs compound.`};
+  }
+  if (ctx.cross('density', 'member')) {
+    return {score: 7, explanation: `The member feeds the Seven Dwarfs density payoff.`};
+  }
+  if (ctx.cross('return', 'member')) {
+    return {
+      score: 7,
+      explanation: `Bouncing the member re-buys its enter-play ability and draws a card.`,
+    };
+  }
+
+  return {score: 5, explanation: `Both share the Seven Dwarfs deck. Density baseline.`};
 }
 
 // Get all rules

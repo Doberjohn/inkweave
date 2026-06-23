@@ -1,271 +1,209 @@
-# Synergy Data Audit
+# Synergy Audit — refreshed
 
-## Issues Found
-
-- [OK] No threshold violations detected.
-
-## Summary
-
-Coverage: 1022/1633 (62.6%) | Total matches: 21043 | Rules: 9 | Playstyles: 6
+Total cards: 1633
+Cards with synergies: 1036 (63.4%)
+Total matches: 21,315
+Rules represented: 17
+Playstyles: 7 (lore-denial, location-control, discard, toy, ramp, sacrifice, dwarfs)
 
 ## Overall Score Distribution
 
-| Score | Count | Tier | % | Bar |
-|------|------|------|---|-----|
-| 10 | 2 | Perfect | 0.0% |  |
-| 9 | 1120 | Strong | 5.3% | ### |
-| 8 | 2208 | Strong | 10.5% | ###### |
-| 7 | 3622 | Strong | 17.2% | ######### |
-| 6 | 1082 | Moderate | 5.1% | ### |
-| 5 | 11646 | Moderate | 55.3% | ############################## |
-| 4 | 18 | Moderate | 0.1% |  |
-| 3 | 1345 | Weak | 6.4% | ### |
+| Score | Count | % |
+|-------|-------|---|
+| 10 | 2 | 0.0% |
+| 9 | 1,120 | 5.3% |
+| 8 | 2,238 | 10.5% |
+| 7 | 3,728 | 17.5% |
+| 6 | 1,082 | 5.1% |
+| 5 | 11,782 | 55.3% |
+| 4 | 18 | 0.1% |
+| 3 | 1,345 | 6.3% |
 
 ## Per-Rule Summary
 
-| Rule | Category | Matches | Min | Max | Mean | Median | Spread | Flag |
-|------|----------|---------|-----|-----|------|--------|--------|------|
-| Ramp | playstyle | 7652 | 5 | 9 | 5.95 | 5 | 4 |  |
-| Locations | playstyle | 5272 | 3 | 7 | 5.46 | 5 | 4 |  |
-| Singer + Songs | direct | 2050 | 5 | 8 | 6.09 | 6 | 3 |  |
-| Sacrifice | playstyle | 1692 | 5 | 8 | 5.86 | 5 | 3 |  |
-| Shift Targets | direct | 1544 | 3 | 10 | 5.83 | 5 | 7 |  |
-| Discard | playstyle | 1352 | 5 | 8 | 5.32 | 5 | 3 |  |
-| Toys | playstyle | 552 | 5 | 8 | 6.51 | 7 | 3 |  |
-| Lore Denial | playstyle | 546 | 5 | 7 | 5.83 | 6 | 2 |  |
-| Companions | direct | 383 | 4 | 8 | 5.91 | 6 | 4 |  |
-
-## Per-Rule Details
-
-<details>
-<summary>Ramp — 7652 matches, score range 5–9</summary>
-
-**Score Histogram**
-
-| Score | Count | Tier | % |
-|------|------|------|---|
-| 9 | 938 | Strong | 12.3% |
-| 8 | 952 | Strong | 12.4% |
-| 7 | 230 | Strong | 3.0% |
-| 6 | 204 | Moderate | 2.7% |
-| 5 | 5328 | Moderate | 69.6% |
-
-**Group Size Distribution**
-
-| Group Size | Cards | % |
-|-----------|------|---|
-| 15+ | 91 | 100.0% |
-
-Healthy spread.
-
-</details>
-
-<details>
-<summary>Locations — 5272 matches, score range 3–7</summary>
-
-**Score Histogram**
-
-| Score | Count | Tier | % |
-|------|------|------|---|
-| 7 | 2160 | Strong | 41.0% |
-| 5 | 2170 | Moderate | 41.2% |
-| 3 | 942 | Weak | 17.9% |
-
-**Group Size Distribution**
-
-| Group Size | Cards | % |
-|-----------|------|---|
-| 10-14 | 14 | 13.3% |
-| 15+ | 91 | 86.7% |
-
-Healthy spread.
-
-</details>
-
-<details>
-<summary>Singer + Songs — 2050 matches, score range 5–8</summary>
-
-**Score Histogram**
-
-| Score | Count | Tier | % |
-|------|------|------|---|
-| 8 | 268 | Strong | 13.1% |
-| 7 | 456 | Strong | 22.2% |
-| 6 | 512 | Moderate | 25.0% |
-| 5 | 814 | Moderate | 39.7% |
-
-**Group Size Distribution**
-
-| Group Size | Cards | % |
-|-----------|------|---|
-| 1 | 8 | 8.4% |
-| 5-9 | 5 | 5.3% |
-| 10-14 | 5 | 5.3% |
-| 15+ | 74 | 77.9% |
-| 2-4 | 3 | 3.2% |
-
-Healthy spread.
-
-</details>
-
-<details>
-<summary>Sacrifice — 1692 matches, score range 5–8</summary>
-
-**Score Histogram**
-
-| Score | Count | Tier | % |
-|------|------|------|---|
-| 8 | 486 | Strong | 28.7% |
-| 5 | 1206 | Moderate | 71.3% |
-
-**Group Size Distribution**
-
-| Group Size | Cards | % |
-|-----------|------|---|
-| 5-9 | 1 | 2.1% |
-| 10-14 | 4 | 8.5% |
-| 15+ | 42 | 89.4% |
-
-Healthy spread.
-
-</details>
-
-<details>
-<summary>Shift Targets — 1544 matches, score range 3–10</summary>
-
-**Score Histogram**
-
-| Score | Count | Tier | % |
-|------|------|------|---|
-| 10 | 2 | Perfect | 0.1% |
-| 9 | 182 | Strong | 11.8% |
-| 8 | 235 | Strong | 15.2% |
-| 7 | 320 | Strong | 20.7% |
-| 5 | 402 | Moderate | 26.0% |
-| 3 | 403 | Weak | 26.1% |
-
-**Group Size Distribution**
-
-| Group Size | Cards | % |
-|-----------|------|---|
-| 1 | 418 | 56.9% |
-| 5-9 | 34 | 4.6% |
-| 10-14 | 11 | 1.5% |
-| 15+ | 3 | 0.4% |
-| 2-4 | 268 | 36.5% |
-
-Healthy spread.
-
-</details>
-
-<details>
-<summary>Discard — 1352 matches, score range 5–8</summary>
-
-**Score Histogram**
-
-| Score | Count | Tier | % |
-|------|------|------|---|
-| 8 | 142 | Strong | 10.5% |
-| 5 | 1210 | Moderate | 89.5% |
-
-**Group Size Distribution**
-
-| Group Size | Cards | % |
-|-----------|------|---|
-| 5-9 | 1 | 2.6% |
-| 15+ | 38 | 97.4% |
-
-Healthy spread.
-
-</details>
-
-<details>
-<summary>Toys — 552 matches, score range 5–8</summary>
-
-**Score Histogram**
-
-| Score | Count | Tier | % |
-|------|------|------|---|
-| 8 | 86 | Strong | 15.6% |
-| 7 | 288 | Strong | 52.2% |
-| 5 | 178 | Moderate | 32.2% |
-
-**Group Size Distribution**
-
-| Group Size | Cards | % |
-|-----------|------|---|
-| 15+ | 24 | 100.0% |
-
-Healthy spread.
-
-</details>
-
-<details>
-<summary>Lore Denial — 546 matches, score range 5–7</summary>
-
-**Score Histogram**
-
-| Score | Count | Tier | % |
-|------|------|------|---|
-| 7 | 90 | Strong | 16.5% |
-| 6 | 274 | Moderate | 50.2% |
-| 5 | 182 | Moderate | 33.3% |
-
-**Group Size Distribution**
-
-| Group Size | Cards | % |
-|-----------|------|---|
-| 15+ | 24 | 100.0% |
-
-Healthy spread.
-
-</details>
-
-<details>
-<summary>Companions — 383 matches, score range 4–8</summary>
-
-**Score Histogram**
-
-| Score | Count | Tier | % |
-|------|------|------|---|
-| 8 | 39 | Strong | 10.2% |
-| 7 | 78 | Strong | 20.4% |
-| 6 | 92 | Moderate | 24.0% |
-| 5 | 156 | Moderate | 40.7% |
-| 4 | 18 | Moderate | 4.7% |
-
-**Group Size Distribution**
-
-| Group Size | Cards | % |
-|-----------|------|---|
-| 1 | 17 | 22.4% |
-| 5-9 | 22 | 28.9% |
-| 10-14 | 8 | 10.5% |
-| 15+ | 3 | 3.9% |
-| 2-4 | 26 | 34.2% |
-
-Healthy spread.
-
-</details>
+| Rule | Matches | Cards | Min | Max | Mean | Median | Spread |
+|------|---------|-------|-----|-----|------|--------|--------|
+| Ramp | 7,652 | 91 | 5 | 9 | 5.95 | 5 | 4 |
+| Singer + Songs | 2,050 | 95 | 5 | 8 | 6.09 | 6 | 3 |
+| Sacrifice | 1,692 | 47 | 5 | 8 | 5.86 | 5 | 3 |
+| Shift Targets | 1,544 | 734 | 3 | 10 | 5.83 | 5 | 7 |
+| Discard | 1,352 | 39 | 5 | 8 | 5.32 | 5 | 3 |
+| At Location Payoff | 1,064 | 62 | 3 | 7 | 6.44 | 7 | 4 |
+| Location Search | 906 | 60 | 3 | 5 | 4.43 | 5 | 2 |
+| Location In-Play Check | 875 | 61 | 3 | 5 | 4.73 | 5 | 2 |
+| Location Buff | 828 | 60 | 3 | 7 | 6.32 | 7 | 4 |
+| Location Ramp | 610 | 58 | 3 | 7 | 6.08 | 7 | 4 |
+| Toy | 552 | 24 | 5 | 8 | 6.51 | 7 | 3 |
+| Lore Loss | 546 | 24 | 5 | 7 | 5.83 | 6 | 2 |
+| Move to Location | 528 | 58 | 3 | 5 | 4.64 | 5 | 2 |
+| Companions | 383 | 76 | 4 | 8 | 5.91 | 6 | 4 |
+| Seven Dwarfs | 272 | 17 | 5 | 8 | 6.11 | 6 | 3 |
+| Location Play Trigger | 251 | 56 | 3 | 7 | 6.63 | 7 | 4 |
+| Location Boost | 210 | 16 | 3 | 5 | 3.53 | 3 | 2 |
+
+## Per-Rule Score Histograms
+
+### Ramp — 7,652 matches across 91 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 9 | 938 | 12.3% |
+| 8 | 952 | 12.4% |
+| 7 | 230 | 3.0% |
+| 6 | 204 | 2.7% |
+| 5 | 5,328 | 69.6% |
+
+### Singer + Songs — 2,050 matches across 95 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 8 | 268 | 13.1% |
+| 7 | 456 | 22.2% |
+| 6 | 512 | 25.0% |
+| 5 | 814 | 39.7% |
+
+### Sacrifice — 1,692 matches across 47 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 8 | 486 | 28.7% |
+| 5 | 1,206 | 71.3% |
+
+### Shift Targets — 1,544 matches across 734 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 10 | 2 | 0.1% |
+| 9 | 182 | 11.8% |
+| 8 | 235 | 15.2% |
+| 7 | 320 | 20.7% |
+| 5 | 402 | 26.0% |
+| 3 | 403 | 26.1% |
+
+### Discard — 1,352 matches across 39 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 8 | 142 | 10.5% |
+| 5 | 1,210 | 89.5% |
+
+### At Location Payoff — 1,064 matches across 62 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 7 | 864 | 81.2% |
+| 5 | 103 | 9.7% |
+| 3 | 97 | 9.1% |
+
+### Location Search — 906 matches across 60 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 5 | 648 | 71.5% |
+| 3 | 258 | 28.5% |
+
+### Location In-Play Check — 875 matches across 61 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 5 | 756 | 86.4% |
+| 3 | 119 | 13.6% |
+
+### Location Buff — 828 matches across 60 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 7 | 648 | 78.3% |
+| 5 | 78 | 9.4% |
+| 3 | 102 | 12.3% |
+
+### Location Ramp — 610 matches across 58 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 7 | 432 | 70.8% |
+| 5 | 74 | 12.1% |
+| 3 | 104 | 17.0% |
+
+### Toy — 552 matches across 24 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 8 | 86 | 15.6% |
+| 7 | 288 | 52.2% |
+| 5 | 178 | 32.2% |
+
+### Lore Loss — 546 matches across 24 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 7 | 90 | 16.5% |
+| 6 | 274 | 50.2% |
+| 5 | 182 | 33.3% |
+
+### Move to Location — 528 matches across 58 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 5 | 432 | 81.8% |
+| 3 | 96 | 18.2% |
+
+### Companions — 383 matches across 76 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 8 | 39 | 10.2% |
+| 7 | 78 | 20.4% |
+| 6 | 92 | 24.0% |
+| 5 | 156 | 40.7% |
+| 4 | 18 | 4.7% |
+
+### Seven Dwarfs — 272 matches across 17 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 8 | 30 | 11.0% |
+| 7 | 106 | 39.0% |
+| 5 | 136 | 50.0% |
+
+### Location Play Trigger — 251 matches across 56 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 7 | 216 | 86.1% |
+| 5 | 23 | 9.2% |
+| 3 | 12 | 4.8% |
+
+### Location Boost — 210 matches across 16 cards
+
+| Score | Count | % |
+|-------|-------|---|
+| 5 | 56 | 26.7% |
+| 3 | 154 | 73.3% |
 
 ## Playstyle Balance
 
-| Playstyle | Cards | Flag |
-|-----------|------|------|
-| lore-denial | 24 | OK |
-| location-control | 105 | OK |
-| discard | 39 | OK |
-| toy | 24 | OK |
-| ramp | 91 | OK |
-| sacrifice | 47 | OK |
+| Playstyle | Cards | % of Total |
+|-----------|-------|------------|
+| location-control | 105 | 6.4% |
+| ramp | 91 | 5.6% |
+| sacrifice | 47 | 2.9% |
+| discard | 39 | 2.4% |
+| lore-denial | 24 | 1.5% |
+| toy | 24 | 1.5% |
+| dwarfs | 17 | 1.0% |
 
-## Top Cards by Matches
+## Top 10 Cards by Total Matches
 
 | Card | Matches |
-|------|--------|
-| 1319 | 184 |
-| 2593 | 180 |
-| 2588 | 166 |
-| 2621 | 132 |
-| 1600 | 131 |
-
+|------|---------|
+| Minnie Mouse - Pirate Lookout | 184 |
+| The Cold Never Bothered Me | 180 |
+| Elsa - Concerned Sister | 166 |
+| Belle - Snowfield Strategist | 132 |
+| Pepper - Quick-Thinking Puppy | 131 |
+| Basil - Disguised Detective | 130 |
+| Tadashi Hamada - Gifted Roboticist | 130 |
+| Ichabod Crane - Scared Out of His Mind | 130 |
+| Rescue Rangers Submarine - Mobile Headquarters | 127 |
+| Motunui - Island Paradise | 127 |
