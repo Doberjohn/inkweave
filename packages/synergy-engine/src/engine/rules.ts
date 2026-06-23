@@ -1446,7 +1446,10 @@ function scoreToyPair(
 // SEVEN DWARFS TRIBAL SCORING
 // ============================================
 
-type DwarfsPairResult = {score: number; explanation: string};
+interface DwarfsPairResult {
+  score: number;
+  explanation: string;
+}
 
 interface DwarfsPairCtx {
   /** True iff one side has role `x` and the other has role `y` (direction-agnostic). */
