@@ -104,20 +104,19 @@ export function Sparkles({
     && typeof window.matchMedia === 'function'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const addSparkle = () => {
-    const now = Date.now();
-    setSparkles((prev) => [
-      // Garbage collect expired sparkles
-      ...prev.filter((s) => now - s.createdAt < SPARKLE_LIFETIME_MS),
-      generateSparkle(color, minSize, maxSize),
-    ]);
-  };
-
   useEffect(() => {
     if (prefersReducedMotion) return;
+    const addSparkle = () => {
+      const now = Date.now();
+      setSparkles((prev) => [
+        // Garbage collect expired sparkles
+        ...prev.filter((s) => now - s.createdAt < SPARKLE_LIFETIME_MS),
+        generateSparkle(color, minSize, maxSize),
+      ]);
+    };
     const interval = setInterval(addSparkle, rate);
     return () => clearInterval(interval);
-  }, [addSparkle, rate, prefersReducedMotion]);
+  }, [color, minSize, maxSize, rate, prefersReducedMotion]);
 
   return (
     <span style={{position: 'relative', display: 'block', flex: 1, minWidth: 0}}>

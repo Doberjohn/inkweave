@@ -159,7 +159,7 @@ export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
   const pairScore = usePairScore(cardA, cardB);
 
   // Reset submission lock after pair-change commit (refs can't be mutated during render).
-  useEffect(() => { submittingRef.current = false; }, [pair]);
+  useEffect(() => { submittingRef.current = false; }, [cardA, cardB]);
 
   useRateLimitRecovery(slots);
 
