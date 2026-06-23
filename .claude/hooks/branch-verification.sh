@@ -34,7 +34,7 @@ FILE_DIR=$(dirname "$FILE_PATH")
 BRANCH=$(git -C "$FILE_DIR" branch --show-current 2>/dev/null)
 # Fall back to the main checkout if the file's directory isn't a git path yet.
 if [ -z "$BRANCH" ]; then
-  BRANCH=$(git -C "D:/johnn/Projects/inkweave" branch --show-current 2>/dev/null)
+  BRANCH=$(git -C "$CLAUDE_PROJECT_DIR" branch --show-current 2>/dev/null)
 fi
 
 if [ "$BRANCH" = "master" ] || [ "$BRANCH" = "main" ]; then
