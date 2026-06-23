@@ -30,6 +30,7 @@ const RULE_LABEL_OVERRIDES = {
   'LORE_LOSS_RULE.md': 'Lore Loss',
   'SINGER_SONGS_RULE.md': 'Singer + Songs',
   'LOCATION_CONTROL_RULE.md': 'Location Control',
+  'DWARFS_RULE.md': 'Seven Dwarfs',
   'REMOVED_RULES.md': 'Removed Rules',
 };
 

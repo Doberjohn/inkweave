@@ -7,7 +7,7 @@ Lorcana synergy finder for Core format with archetype-based synergy detection.
 Currently implementing v1.0.0 with:
 - **Scope**: Core format only (sets 5+), community voting, deck builder
 - **UI**: Dark fantasy theme (deep purple, gold accents)
-- **Synergies**: Shift, Named Companions, Lore Loss, Discard, Singer + Songs, Location Control, Ramp, Toy, Sacrifice, Dwarfs
+- **Synergies**: Shift, Named Companions, Lore Loss, Discard, Singer + Songs, Location Control, Ramp, Toy, Sacrifice, Seven Dwarfs
 
 See [GitHub Issues](https://github.com/Doberjohn/inkweave/issues) for full backlog.
 
@@ -86,7 +86,7 @@ React web application that consumes the synergy engine package.
 - Ramp (`ramp`) - inkwell ramp + inkwell triggers + cost reduction grants
 - Toys (`toy`) - Toy-classification members + tribal payoffs (search, banish-trigger, self-discount)
 - Sacrifice (`sacrifice`) - self-banish cards (banish your own characters) + banish-trigger payoffs
-- Dwarfs (`dwarfs`) - Seven Dwarfs-classification members + tribal payoffs (density, recruit, return)
+- Seven Dwarfs (`dwarfs`) - Seven Dwarfs-classification members + tribal payoffs (density, recruit, return)
 
 **Synergy Score**: 1-10 numeric scale (all integers valid). Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4)
 
@@ -323,7 +323,7 @@ Banish-combo explanation uses `{A}`/`{B}` token-swap so the self-banish side alw
 
 **Full documentation**: See [`packages/synergy-engine/SACRIFICE_RULE.md`](packages/synergy-engine/SACRIFICE_RULE.md).
 
-### Rule 10: Dwarfs (playstyle, role-driven matrix)
+### Rule 10: Seven Dwarfs (playstyle, role-driven matrix)
 
 Tribal playstyle for Seven Dwarfs / Snow White decks (Set 12 package). **Membership gate**: `Seven Dwarfs` classification OR text matches `/\bSeven Dwarfs\b/i`. The broad pattern is safe — no card *names* an ability "Seven Dwarfs", so there is no caps ability-name false positive (unlike Toy's "WORLD'S GREATEST TOY").
 

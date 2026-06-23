@@ -85,7 +85,7 @@ const playstyles: Playstyle[] = [
   },
   {
     id: 'dwarfs',
-    name: 'Dwarfs',
+    name: 'Seven Dwarfs',
     tagline: 'Seven Dwarfs characters and the cards that reward running them.',
     description:
       'Seven Dwarfs characters and the cards that reward running them. Density payoffs draw extra cards the moment another Dwarf is on the board, free recruits cheat more Dwarfs into play, and bounce effects re-buy their enter-play abilities. Each Dwarf you add makes the rest of the team stronger — and Snow White ties the package together.',

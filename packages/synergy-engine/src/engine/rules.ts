@@ -883,7 +883,7 @@ export const synergyRules: SynergyRule[] = [
   // --------------------------------------------
   {
     id: 'dwarfs',
-    name: 'Dwarfs',
+    name: 'Seven Dwarfs',
     category: 'playstyle',
     playstyleId: 'dwarfs',
     description:

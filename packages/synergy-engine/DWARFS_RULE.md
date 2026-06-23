@@ -1,6 +1,6 @@
-# Dwarfs Synergy Rule
+# Seven Dwarfs Synergy Rule
 
-Detailed documentation for the Dwarfs rule — a tribal playstyle synergy that detects Seven Dwarfs decks (the Snow White / Seven Dwarfs package introduced in Set 12).
+Detailed documentation for the Seven Dwarfs rule — a tribal playstyle synergy that detects Seven Dwarfs decks (the Snow White / Seven Dwarfs package introduced in Set 12).
 
 **Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/cardHelpers.ts`
 **Rule ID**: `dwarfs`
