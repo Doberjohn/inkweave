@@ -26,7 +26,7 @@ FILE_PATH=$(echo "$FILE_PATH" | sed 's|\\|/|g')
 
 # Check if the file is in the synergy engine source directory
 if echo "$FILE_PATH" | grep -q "packages/synergy-engine/src/"; then
-  cd "D:/johnn/Projects/inkweave" || exit 0
+  cd "$CLAUDE_PROJECT_DIR" || exit 0
 
   # Build engine (capture success/failure)
   BUILD_OUT=$(pnpm build:engine 2>&1)

@@ -30,7 +30,7 @@ FILE_PATH=$(echo "$FILE_PATH" | sed 's|\\|/|g')
 
 # Check if the file is the preview card data JSON
 if echo "$FILE_PATH" | grep -q "apps/web/public/data/previewCards\.json$"; then
-  cd "D:/johnn/Projects/inkweave" || exit 0
+  cd "$CLAUDE_PROJECT_DIR" || exit 0
 
   PRECOMPUTE_OUT=$(pnpm precompute-synergies 2>&1)
   PRECOMPUTE_OK=$?
