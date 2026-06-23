@@ -150,12 +150,12 @@ export const STRUCTURAL_MECHANICS: Mechanic[] = [
   {id: 'recruit', category: 'structural', label: 'Recruit', description: 'Play a tribe member for free'},
   {id: 'return', category: 'structural', label: 'Bounce', description: 'Return a character to your hand for value'},
   // Locations
-  {id: 'at-payoff', category: 'structural', label: 'Payoff', description: 'Get benefits when characters are at a location'},
+  {id: 'at-payoff', category: 'structural', label: 'At Location', description: 'Get benefits when characters are at a location'},
   {id: 'play-trigger', category: 'structural', label: 'Trigger', description: 'Trigger effects when you play or move to a location'},
   {id: 'buff', category: 'structural', label: 'Buff', description: 'Give locations stat boosts and protection'},
-  {id: 'location-ramp', category: 'structural', label: 'Ramp', description: 'Reduce the cost to play or move to locations'},
+  {id: 'location-ramp', category: 'structural', label: 'Location Ramp', description: 'Reduce the cost to play or move to locations'},
   {id: 'move', category: 'structural', label: 'Move', description: 'Move characters to locations'},
-  {id: 'in-play-check', category: 'structural', label: 'Check', description: 'Get benefits when you have locations in play'},
+  {id: 'in-play-check', category: 'structural', label: 'While in Play', description: 'Get benefits when you have locations in play'},
   {id: 'boost', category: 'structural', label: 'Boost', description: 'Put cards under locations to boost their abilities'},
 ];
 

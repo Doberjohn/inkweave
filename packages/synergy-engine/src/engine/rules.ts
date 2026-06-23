@@ -29,6 +29,7 @@ import {
   getSacrificeRoles,
   isSacrificeCard,
   LOCATION_PATTERNS,
+  mechanicLabel,
   NAMED_EFFECT_SCORES,
   normalizeCardText,
   type DiscardRole,
@@ -245,15 +246,18 @@ const ROLE_LABELS: Record<LocationRole, string> = {
 };
 
 /** Short chip labels for each location role (used in UI) */
+// Labels are single-sourced from the mechanics catalog (STRUCTURAL_MECHANICS) so
+// a location role reads identically on the carousel tiles and in the card-detail
+// synergy descriptions. Rename a location label in mechanics.ts, not here.
 export const LOCATION_ROLE_CHIP_LABELS: Record<LocationRole, string> = {
-  'at-payoff': 'Payoff',
-  'play-trigger': 'Trigger',
-  buff: 'Buff',
-  'location-ramp': 'Ramp',
-  move: 'Move',
-  'in-play-check': 'Check',
-  search: 'Search',
-  boost: 'Boost',
+  'at-payoff': mechanicLabel('at-payoff'),
+  'play-trigger': mechanicLabel('play-trigger'),
+  buff: mechanicLabel('buff'),
+  'location-ramp': mechanicLabel('location-ramp'),
+  move: mechanicLabel('move'),
+  'in-play-check': mechanicLabel('in-play-check'),
+  search: mechanicLabel('search'),
+  boost: mechanicLabel('boost'),
 };
 
 /** Educational descriptions explaining what each location role means, templated with card name and location name */

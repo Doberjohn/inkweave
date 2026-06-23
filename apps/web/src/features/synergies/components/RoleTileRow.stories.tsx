@@ -5,12 +5,12 @@ import {RoleTileRow, type RoleTile} from './RoleTileRow';
 const locationTiles: RoleTile[] = [
   {role: 'location', label: 'Locations', description: 'Location cards', count: 54},
   {role: 'boost', label: 'Boost', description: 'Put cards under locations to boost their abilities', count: 14},
-  {role: 'in-play-check', label: 'Check', description: 'Get benefits when you have locations in play', count: 8},
-  {role: 'at-payoff', label: 'Payoff', description: 'Get benefits when characters are at a location', count: 8},
+  {role: 'in-play-check', label: 'While in Play', description: 'Get benefits when you have locations in play', count: 8},
+  {role: 'at-payoff', label: 'At Location', description: 'Get benefits when characters are at a location', count: 8},
   {role: 'search', label: 'Search', description: 'Search your deck or discard for locations', count: 7},
   {role: 'buff', label: 'Buff', description: 'Give locations stat boosts and protection', count: 6},
   {role: 'move', label: 'Move', description: 'Move characters to locations', count: 6},
-  {role: 'location-ramp', label: 'Ramp', description: 'Reduce the cost of playing or moving to locations', count: 5},
+  {role: 'location-ramp', label: 'Location Ramp', description: 'Reduce the cost of playing or moving to locations', count: 5},
   {role: 'play-trigger', label: 'Trigger', description: 'Trigger effects when you play or move to a location', count: 4},
 ];
 

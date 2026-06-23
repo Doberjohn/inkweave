@@ -278,7 +278,11 @@ The engine exports labels and descriptions for UI display:
 
 ```typescript
 LOCATION_ROLE_CHIP_LABELS: Record<LocationRole, string>
-// { 'at-payoff': 'Payoff', 'play-trigger': 'Trigger', buff: 'Buff', ... }
+// { 'at-payoff': 'At Location', 'play-trigger': 'Trigger', buff: 'Buff',
+//   'location-ramp': 'Location Ramp', 'in-play-check': 'While in Play', ... }
+// Labels are single-sourced from the mechanics catalog (STRUCTURAL_MECHANICS in
+// utils/mechanics.ts) via mechanicLabel(), so the carousel tiles and these chips
+// always agree. Rename a label there, not in rules.ts.
 
 LOCATION_ROLE_DESCRIPTIONS: Record<LocationRole, (cardName: string, locationName: string) => string>
 // { 'at-payoff': (name, loc) => `${name} gets bonuses when characters are at ${loc}`, ... }
