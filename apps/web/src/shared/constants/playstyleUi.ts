@@ -21,6 +21,7 @@ export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
   toy: makeUiMeta('#f59e0b', '/art/playstyles/toy.webp'),
   // Art asset sacrifice.webp (670x500 webp) is provided separately; drop it in apps/web/public/art/playstyles/.
   sacrifice: makeUiMeta('#10b981', '/art/playstyles/sacrifice.webp'),
+  dwarfs: makeUiMeta('#8b5cf6', '/art/playstyles/dwarf.webp'),
 };
 
 export interface ComingSoonPlaystyle extends PlaystyleUiMeta {
@@ -56,12 +57,6 @@ export const COMING_SOON_PLAYSTYLES: ComingSoonPlaystyle[] = [
     'Force opponent characters into exerted position through abilities and actions. Lock down threats by keeping them tapped and vulnerable.',
     '#8b5cf6',
     '/art/playstyles/exert.webp',
-  ),
-  makeComingSoon(
-    'Dwarfs',
-    'Seven Dwarfs characters and the cards that reward running them. Search effects and named-companion abilities pull more Dwarfs onto the board, and stat boosts scale with how many you control. Each Dwarf you add makes the rest of the team stronger.',
-    '#8b5cf6',
-    '/art/playstyles/dwarf.webp',
   ),
   makeComingSoon(
     'Villains',

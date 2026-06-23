@@ -94,8 +94,8 @@ describe('ConnectionGroup — multi-role expand/collapse', () => {
 
   it('shows only the highest-scoring role on desktop with the toggle collapsed', () => {
     render(<ConnectionGroup group={multiRoleGroup()} cardA={cardA} cardB={cardB} />);
-    // at-payoff is the score-7 entry → label "Payoff" must surface.
-    expect(screen.getByText('Payoff')).toBeInTheDocument();
+    // at-payoff is the score-7 entry → label "At Location" must surface.
+    expect(screen.getByText('At Location')).toBeInTheDocument();
     // Move + Buff render too (in the absolute-positioned grid with 0fr height) but
     // their containing grid is collapsed. We assert via aria-expanded on the toggle.
     const toggle = screen.getByRole('button', {name: /show all 3 roles/i});
@@ -140,7 +140,7 @@ describe('ConnectionGroup — multi-role expand/collapse', () => {
       windowWidth: 480,
     });
     render(<ConnectionGroup group={multiRoleGroup()} cardA={cardA} cardB={cardB} />);
-    expect(screen.getByText('Payoff')).toBeInTheDocument();
+    expect(screen.getByText('At Location')).toBeInTheDocument();
     expect(screen.getByText('Move')).toBeInTheDocument();
     expect(screen.getByText('Buff')).toBeInTheDocument();
     expect(screen.queryByRole('button')).toBeNull();

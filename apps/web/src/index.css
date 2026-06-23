@@ -81,6 +81,29 @@ option {
   background: #444466;
 }
 
+/* Subtle gold-tinted scrollbar for the mechanics carousel (RoleTileRow).
+   Inline styles can set scrollbar-width/color (Firefox) but cannot target the
+   ::-webkit-scrollbar pseudo, so the WebKit track/thumb live here. Mostly
+   transparent at rest, brightening on hover — quieter than the default
+   #333355-on-#1a1a2e bar so it doesn't compete with the tiles. */
+.subtle-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 175, 55, 0.28) transparent;
+}
+.subtle-scrollbar::-webkit-scrollbar {
+  height: 6px;
+}
+.subtle-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.subtle-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.22);
+  border-radius: 3px;
+}
+.subtle-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.45);
+}
+
 /* Focus indicators for keyboard navigation */
 :focus-visible {
   outline: 2px solid #d4af37;

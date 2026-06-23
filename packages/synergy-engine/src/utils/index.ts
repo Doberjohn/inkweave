@@ -36,6 +36,8 @@ export {
   costReductionTargetsOverlap,
   getToyRoles,
   isToyCard,
+  getDwarfsRoles,
+  isDwarfsCard,
   isBoostBeneficiaryLocation,
   getLoreDenialRoles,
   isLoreDenialCard,
@@ -50,10 +52,22 @@ export type {
   RampRole,
   CostReductionTarget,
   ToyRole,
+  DwarfsRole,
   LoreDenialRole,
 } from './cardHelpers.js';
 
 export {isCardType} from './typeGuards.js';
+
+export {
+  MECHANICS,
+  STRUCTURAL_MECHANICS,
+  MECHANIC_BY_ID,
+  STRUCTURAL_ROLE_TO_MECHANIC,
+  getCardMechanics,
+  mechanicLabel,
+  mechanicDescription,
+} from './mechanics.js';
+export type {Mechanic} from './mechanics.js';
 
 export {transformCard, transformCards} from './cardTransformer.js';
 export type {LorcanaJSONCard} from './cardTransformer.js';
