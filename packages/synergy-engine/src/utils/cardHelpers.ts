@@ -288,37 +288,38 @@ export type LocationRole =
  * Get all location roles a card fulfills.
  * Returns empty array for cards with no location interaction.
  */
+/**
+ * Ordered role detectors (order = role-array order). A data table instead of an
+ * if-ladder keeps `getLocationRoles` flat — adding a role is one row, not one
+ * more branch. `exclude` (move only) suppresses a false-positive pattern.
+ */
+const LOCATION_ROLE_DETECTORS: ReadonlyArray<{
+  role: LocationRole;
+  pattern: RegExp;
+  exclude?: RegExp;
+}> = [
+  {role: 'at-payoff', pattern: LOCATION_PATTERNS['at-payoff']},
+  {role: 'move', pattern: LOCATION_PATTERNS.move, exclude: LOCATION_PATTERNS['move-exclude']},
+  {role: 'play-trigger', pattern: LOCATION_PATTERNS['play-trigger']},
+  {role: 'move-trigger', pattern: LOCATION_PATTERNS['move-trigger']},
+  {role: 'in-play-check', pattern: LOCATION_PATTERNS['in-play-check']},
+  {role: 'search', pattern: LOCATION_PATTERNS.search},
+  {role: 'buff', pattern: LOCATION_PATTERNS.buff},
+  {role: 'boost', pattern: LOCATION_PATTERNS.boost},
+  {role: 'location-ramp', pattern: LOCATION_PATTERNS['location-ramp']},
+];
+
 export function getLocationRoles(card: LorcanaCard): LocationRole[] {
-  if (isLocation(card)) return [];
-  if (!card.text) return [];
+  if (isLocation(card) || !card.text) return [];
 
   const text = normalizeCardText(card);
 
   // Anti-location cards (banish/remove locations) are excluded entirely
   if (LOCATION_PATTERNS['anti-location'].test(text)) return [];
 
-  const roles: LocationRole[] = [];
-
-  if (LOCATION_PATTERNS['at-payoff'].test(text)) roles.push('at-payoff');
-
-  if (LOCATION_PATTERNS.move.test(text) && !LOCATION_PATTERNS['move-exclude'].test(text))
-    roles.push('move');
-
-  if (LOCATION_PATTERNS['play-trigger'].test(text)) roles.push('play-trigger');
-
-  if (LOCATION_PATTERNS['move-trigger'].test(text)) roles.push('move-trigger');
-
-  if (LOCATION_PATTERNS['in-play-check'].test(text)) roles.push('in-play-check');
-
-  if (LOCATION_PATTERNS.search.test(text)) roles.push('search');
-
-  if (LOCATION_PATTERNS.buff.test(text)) roles.push('buff');
-
-  if (LOCATION_PATTERNS.boost.test(text)) roles.push('boost');
-
-  if (LOCATION_PATTERNS['location-ramp'].test(text)) roles.push('location-ramp');
-
-  return roles;
+  return LOCATION_ROLE_DETECTORS.filter(
+    (d) => d.pattern.test(text) && !d.exclude?.test(text),
+  ).map((d) => d.role);
 }
 
 /**
