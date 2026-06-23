@@ -438,14 +438,13 @@ Dark fantasy theme inspired by Lorcana:
 - Do not jump to implementation until the user confirms the approach
 
 ### Storybook
-- **Every new visual component needs a `.stories.tsx` file.** CI runs `check:stories` which fails if a new component is added without stories. The same check runs locally as the first pre-push step (~130ms), so missing stories surface before the Chromatic CI run rejects the push.
+- **Every new visual component needs a `.stories.tsx` file.** The `check:stories` story-coverage gate runs locally as the first pre-push step (~130ms) and fails if a new component is added without stories, so missing stories block the push before it lands. (No longer enforced in CI — that gate lived in the removed Chromatic workflow.)
 - Stories go next to the component: `ComponentName.stories.tsx` alongside `ComponentName.tsx`
 - Import Meta/StoryObj from `@storybook/react-vite` (NOT `@storybook/react` — Storybook 10 lint rule catches this)
 - Components using React Router need a `MemoryRouter` decorator
 - Components using `useCardPreview` (or rendering `SearchAutocomplete`) need a `CardPreviewProvider` decorator
 - Mock data: use the actual `LorcanaCard` type shape — `textSections` is `string[]`, not `{type, text}[]`
 - Excluded components (icons, context providers, ErrorBoundary) are listed in `apps/web/scripts/check-story-coverage.mjs`
-- Chromatic runs on every push; UI snapshots catch visual regressions automatically
 
 ### Testing Style
 - Write focused, minimal tests - not exhaustive coverage
