@@ -1,4 +1,4 @@
-import {createContext, useContext, useState, useMemo, type ReactNode} from 'react';
+import {createContext, useContext, useState, type ReactNode} from 'react';
 import {useNavigate, useLocation} from 'react-router-dom';
 import type {DetailedPairSynergy} from 'inkweave-synergy-engine';
 import {CardOverviewModal} from '../../features/synergies';
@@ -105,26 +105,15 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setComparisonGroupKey,
   });
 
-  const value = useMemo(
-    () => ({
-      selectedCardId,
-      comparisonPartnerId,
-      comparisonGroupKey,
-      hasUserSeenDefaultState,
-      openCardModal,
-      openComparison,
-      closeCardModal,
-    }),
-    [
-      selectedCardId,
-      comparisonPartnerId,
-      comparisonGroupKey,
-      hasUserSeenDefaultState,
-      openCardModal,
-      openComparison,
-      closeCardModal,
-    ],
-  );
+  const value = {
+    selectedCardId,
+    comparisonPartnerId,
+    comparisonGroupKey,
+    hasUserSeenDefaultState,
+    openCardModal,
+    openComparison,
+    closeCardModal,
+  };
 
   return (
     <CardModalContext.Provider value={value}>

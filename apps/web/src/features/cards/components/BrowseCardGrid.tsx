@@ -1,4 +1,4 @@
-import {forwardRef, useMemo, type CSSProperties, type ReactNode} from 'react';
+import {forwardRef, type CSSProperties, type ReactNode} from 'react';
 import {VirtuosoGrid} from 'react-virtuoso';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from './CardTile';
@@ -55,10 +55,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
   const {isMobile} = useResponsive();
   const paddingX = isMobile ? SPACING.lg : 32;
   const minColWidth = isMobile ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth;
-  const ListContainer = useMemo(
-    () => createListContainer({paddingX, minColWidth}),
-    [paddingX, minColWidth],
-  );
+  const ListContainer = createListContainer({paddingX, minColWidth});
 
   if (isLoading) {
     return <CardGridSkeleton />;

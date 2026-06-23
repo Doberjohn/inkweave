@@ -1,4 +1,4 @@
-import {useState, useEffect, useMemo, useRef, type MutableRefObject} from 'react';
+import {useState, useEffect, useRef, type MutableRefObject} from 'react';
 import {
   getSupabase,
   submitVote,
@@ -150,9 +150,9 @@ export interface UseQuickVoteReturn {
 }
 
 export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
-  const pair = useMemo<Pair>(() => ({cardA, cardB}), [cardA, cardB]);
-  const isAvailable = useMemo(() => getSupabase() !== null, []);
-  const storedChoice = useMemo(() => readQuickVote(pair), [pair]);
+  const pair: Pair = {cardA, cardB};
+  const isAvailable = getSupabase() !== null;
+  const storedChoice = readQuickVote(pair);
   const slots = useQuickVoteSlots({pair, isAvailable, storedChoice});
   const submittingRef = useRef(false);
   // Single shared subscription — CommunityColumn reads the same row via usePairScore.
@@ -163,10 +163,7 @@ export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
 
   useRateLimitRecovery(slots);
 
-  const distribution = useMemo(
-    () => deriveAccuracyDistribution(pairScore.score),
-    [pairScore.score],
-  );
+  const distribution = deriveAccuracyDistribution(pairScore.score);
   const distributionLoading = pairScore.isLoading;
   // `pairScore.error` is currently unreachable: getPairScore swallows query/network
   // errors and resolves null (logs to console). Re-introduce a fetch-failure signal

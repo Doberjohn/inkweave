@@ -1,4 +1,4 @@
-import {useState, useEffect, useRef, useMemo} from 'react';
+import {useState, useEffect, useRef} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {Accuracy, Score} from '../../../shared/lib/supabase';
 import type {InDepthFormState} from '../types';
@@ -503,10 +503,7 @@ export function InDepthVoteForm({
   const handlers: FormHandlers = {onSetIsReal, onSetAccuracy, onSetScore, onSetWouldPlay, onSetWhoCarries, onSetDifficulty};
   const ctx: SectionContext = {formState, handlers, cardA, cardB, useCompact};
 
-  const answeredByGroup = useMemo<Record<TabKey, number>>(
-    () => buildAnsweredByGroup(formState),
-    [formState],
-  );
+  const answeredByGroup: Record<TabKey, number> = buildAnsweredByGroup(formState);
 
   useTabAutoAdvance(answeredByGroup, activeTab, setActiveTab);
 

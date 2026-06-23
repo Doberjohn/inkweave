@@ -1,4 +1,4 @@
-import {useState, useMemo} from 'react';
+import {useState} from 'react';
 import {getSupabase, submitVote, type Accuracy, type Score, type InDepthVote} from '../../../shared/lib/supabase';
 import type {InDepthFormState, VotingPair} from '../types';
 import {writeInDepthVote} from '../lib/voteStorage';
@@ -35,7 +35,7 @@ export function useInDepthVoteSession(currentPair: VotingPair | null): UseInDept
   const [lastResult, setLastResult] = useState<'success' | 'rate_limited' | 'error' | null>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
 
-  const isSupabaseAvailable = useMemo(() => getSupabase() !== null, []);
+  const isSupabaseAvailable = getSupabase() !== null;
 
   const hasAnyAnswer = hasAnyFormAnswer(formState);
 

@@ -1,4 +1,4 @@
-import {useState, useMemo} from 'react';
+import {useState} from 'react';
 import {getSupabase, submitVote, type Score} from '../../../shared/lib/supabase';
 import type {VoteFormState, VotingPair} from '../types';
 
@@ -20,7 +20,7 @@ export function useVoteSession(currentPair: VotingPair | null): UseVoteSessionRe
   const [lastResult, setLastResult] = useState<'success' | 'rate_limited' | 'error' | null>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
 
-  const isSupabaseAvailable = useMemo(() => getSupabase() !== null, []);
+  const isSupabaseAvailable = getSupabase() !== null;
 
   const setScore = (score: Score) => {
     setFormState((prev) => ({...prev, score}));

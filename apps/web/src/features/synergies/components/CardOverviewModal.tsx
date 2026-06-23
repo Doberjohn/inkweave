@@ -1,4 +1,4 @@
-import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
+import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import type {SynergyGroup as SynergyGroupData} from '../types';
@@ -151,10 +151,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
     setHighlightedCard,
   });
 
-  const visibleGroups = useMemo(
-    () => buildVisibleGroups(props.synergies, activeGroupFilter),
-    [props.synergies, activeGroupFilter],
-  );
+  const visibleGroups = buildVisibleGroups(props.synergies, activeGroupFilter);
 
   const {compareCardRef, captureStartRect} = useFLIPAnimation(comparisonPair, exitingPair);
   // Re-entry guard for the 90ms click-ack window (#332 #6 idea B). Holds the setTimeout id while
