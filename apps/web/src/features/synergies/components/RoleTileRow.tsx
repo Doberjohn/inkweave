@@ -42,6 +42,54 @@ function cellCapacity(width: number): number {
   return Math.min(MAX_VISIBLE_TILES, Math.max(1, fits));
 }
 
+/** Sort tiles by count descending, breaking ties alphabetically by label. */
+function compareTiles(a: RoleTile, b: RoleTile): number {
+  return b.count - a.count || a.label.localeCompare(b.label);
+}
+
+interface RowLayout {
+  collapsed: boolean;
+  visibleTiles: RoleTile[];
+  hiddenCount: number;
+}
+
+/**
+ * Derive the row layout from the measured capacity. Collapse to (capacity − 1)
+ * tiles + a show-more cell only when the container fits a sensible row AND there
+ * are more tiles than fit; otherwise show every tile (the never-clip scroll
+ * path). The show-more cell is always the last *visible* cell, so it can never
+ * be clipped behind hidden overflow.
+ */
+function computeRowLayout(
+  sortedTiles: RoleTile[],
+  capacity: number,
+  expanded: boolean,
+): RowLayout {
+  const needsShowMore = capacity >= MIN_COLLAPSE_CELLS && sortedTiles.length > capacity;
+  const collapsed = needsShowMore && !expanded;
+  const collapsedTileCount = capacity - 1;
+  return {
+    collapsed,
+    visibleTiles: collapsed ? sortedTiles.slice(0, collapsedTileCount) : sortedTiles,
+    hiddenCount: sortedTiles.length - collapsedTileCount,
+  };
+}
+
+/** Section style — collapsed is a static clipped row; expanded scrolls (scroll-snap). */
+function getSectionStyle(collapsed: boolean): React.CSSProperties {
+  return {
+    display: 'flex',
+    gap: TILE_GAP,
+    // flex-start (not center) so overflowing leading tiles stay scrollable.
+    justifyContent: 'flex-start',
+    overflowX: collapsed ? 'hidden' : 'auto',
+    scrollSnapType: collapsed ? undefined : 'x proximity',
+    maxWidth: ROW_MAX_WIDTH,
+    margin: '0 auto 28px',
+    padding: '2px 2px 10px', // room for the focus ring + scrollbar track
+  };
+}
+
 /**
  * A playstyle's mechanic tiles. When every tile fits the measured width they
  * show in a static row. When there are more than fit, the row collapses to
@@ -58,19 +106,12 @@ export function RoleTileRow({tiles, activeRoles, onToggle}: RoleTileRowProps) {
 
   if (tiles.length === 0) return null;
 
-  const sortedTiles = [...tiles].sort(
-    (a, b) => b.count - a.count || a.label.localeCompare(b.label),
+  const sortedTiles = [...tiles].sort(compareTiles);
+  const {collapsed, visibleTiles, hiddenCount} = computeRowLayout(
+    sortedTiles,
+    cellCapacity(width),
+    expanded,
   );
-
-  // Capacity-driven collapse: only collapse when the container is wide enough
-  // for a sensible row AND there are more tiles than fit. The show-more cell
-  // then lands as the last *visible* cell, so it can never be clipped.
-  const capacity = cellCapacity(width);
-  const needsShowMore = capacity >= MIN_COLLAPSE_CELLS && sortedTiles.length > capacity;
-  const collapsed = needsShowMore && !expanded;
-  const collapsedTileCount = capacity - 1;
-  const visibleTiles = collapsed ? sortedTiles.slice(0, collapsedTileCount) : sortedTiles;
-  const hiddenCount = sortedTiles.length - collapsedTileCount;
 
   return (
     <section
@@ -78,17 +119,7 @@ export function RoleTileRow({tiles, activeRoles, onToggle}: RoleTileRowProps) {
       aria-label="Mechanics"
       // Carousel scrolls unless collapsed; collapsed is a static, exactly-fitting row.
       className={collapsed ? undefined : 'subtle-scrollbar'}
-      style={{
-        display: 'flex',
-        gap: TILE_GAP,
-        // flex-start (not center) so overflowing leading tiles stay scrollable.
-        justifyContent: 'flex-start',
-        overflowX: collapsed ? 'hidden' : 'auto',
-        scrollSnapType: collapsed ? undefined : 'x proximity',
-        maxWidth: ROW_MAX_WIDTH,
-        margin: '0 auto 28px',
-        padding: '2px 2px 10px', // room for the focus ring + scrollbar track
-      }}>
+      style={getSectionStyle(collapsed)}>
       {visibleTiles.map((t) => (
         <RoleTileButton
           key={t.role}
