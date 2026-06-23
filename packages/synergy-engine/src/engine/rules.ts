@@ -681,9 +681,13 @@ function makeSpikeSuitMatch(
 ): SynergyMatch {
   const anchorToken = searcherIsAnchor ? '{A}' : '{B}';
   const payoffToken = searcherIsAnchor ? '{B}' : '{A}';
+  // Optional stat fields default to 0 (same as spikeSuitGap). The gap-3 floor already
+  // guarantees a real willpower here; this just keeps the text type-safe.
+  const willpower = payoff.willpower ?? 0;
+  const strength = payoff.strength ?? 0;
   // One template covers walls and bodies alike: "instead of its 0 strength" reads
   // cleanly for a 0-strength body without special-casing (and no a/an grammar hazard).
-  const explanation = `${anchorToken} lets ${payoffToken} deal damage with its ${payoff.willpower} willpower instead of its ${payoff.strength} strength.`;
+  const explanation = `${anchorToken} lets ${payoffToken} deal damage with its ${willpower} willpower instead of its ${strength} strength.`;
   return {card: target, score: spikeSuitScore(payoff), explanation, bidirectional: true};
 }
 

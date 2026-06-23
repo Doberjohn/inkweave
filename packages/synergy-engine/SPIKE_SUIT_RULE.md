@@ -45,7 +45,7 @@ Selecting **Dale - Ready for His Shot** finds (top of the list):
 
 `isSpikeSuitAnchor(card)` tests the card's normalized text against:
 
-```
+```regex
 /deal damage with their .* instead of their/i
 ```
 
@@ -73,7 +73,7 @@ Handled centrally by the engine (`canShareDeck`) before rules run, so the rule i
 
 Score scales **linearly with the gap**, because the gap *is* the bonus damage — keeping the score directly interpretable. Strength-0 walls get **+1** on top: they jump from dealing *zero* in combat to swinging for their full willpower, a qualitative transformation the raw gap alone understates.
 
-```
+```text
 score = min(gap + 3 + (strength === 0 ? 1 : 0), 10)
 ```
 
@@ -111,7 +111,7 @@ Tier split: **0 Weak / 108 Moderate / 89 Strong / 7 Perfect**. Only the genuine 
 
 ### Explanation Template
 
-```
+```text
 {anchor} lets {payoff} deal damage with its {willpower} willpower instead of its {strength} strength.
 ```
 
