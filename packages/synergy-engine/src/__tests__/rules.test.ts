@@ -1358,7 +1358,8 @@ describe('Card Helper Functions', () => {
       expect(fwd.explanation).toContain('{A} lets {B}');
       // Reverse: payoff is the searcher → {A}; anchor swaps to {B} but still the actor
       expect(rev.explanation).toContain('{B} lets {A}');
-      expect(rev.explanation).toContain('+4 per challenge');
+      // Payoff stats interpolate correctly (3/7 body)
+      expect(rev.explanation).toContain('7 willpower instead of its 3 strength');
     });
 
     it('marks synergies as bidirectional', () => {

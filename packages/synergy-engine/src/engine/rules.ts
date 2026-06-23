@@ -679,12 +679,11 @@ function makeSpikeSuitMatch(
   target: LorcanaCard,
   searcherIsAnchor: boolean,
 ): SynergyMatch {
-  const gap = spikeSuitGap(payoff);
   const anchorToken = searcherIsAnchor ? '{A}' : '{B}';
   const payoffToken = searcherIsAnchor ? '{B}' : '{A}';
-  // One template covers walls and bodies alike: "instead of its 0 strength — +8 per
-  // challenge" already tells the 0-strength wall story without a/an grammar hazards.
-  const explanation = `${anchorToken} lets ${payoffToken} deal damage with its ${payoff.willpower} willpower instead of its ${payoff.strength} strength — +${gap} per challenge.`;
+  // One template covers walls and bodies alike: "instead of its 0 strength" reads
+  // cleanly for a 0-strength body without special-casing (and no a/an grammar hazard).
+  const explanation = `${anchorToken} lets ${payoffToken} deal damage with its ${payoff.willpower} willpower instead of its ${payoff.strength} strength.`;
   return {card: target, score: spikeSuitScore(payoff), explanation, bidirectional: true};
 }
 

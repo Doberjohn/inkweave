@@ -32,10 +32,10 @@ Both directions produce identical scores for the same pair. The explanation toke
 
 Selecting **Dale - Ready for His Shot** finds (top of the list):
 - **Minnie Mouse - Daring Defender** (0/8) — score 10 (a wall that now hits for 8)
-- **Prince Charming - Protector of the Realm** (3/10) — score 10 (+7 per challenge)
-- **Mufasa - Ruler of Pride Rock** (4/9) — score 8 (+5 per challenge)
-- **Kristoff - Reindeer Keeper** (3/7) — score 7 (+4 per challenge)
-- **Aladdin - Intrepid Commander** (1/4) — score 6 (+3 per challenge)
+- **Prince Charming - Protector of the Realm** (3/10) — score 10 (+7 combat damage)
+- **Mufasa - Ruler of Pride Rock** (4/9) — score 8 (+5 combat damage)
+- **Kristoff - Reindeer Keeper** (3/7) — score 7 (+4 combat damage)
+- **Aladdin - Intrepid Commander** (1/4) — score 6 (+3 combat damage)
 
 ---
 
@@ -112,10 +112,10 @@ Tier split: **0 Weak / 108 Moderate / 89 Strong / 7 Perfect**. Only the genuine 
 ### Explanation Template
 
 ```
-{anchor} lets {payoff} deal damage with its {willpower} willpower instead of its {strength} strength — +{gap} per challenge.
+{anchor} lets {payoff} deal damage with its {willpower} willpower instead of its {strength} strength.
 ```
 
-`{anchor}` / `{payoff}` are `{A}`/`{B}` chip tokens, swapped by direction so Dale always reads as the enabler. The unified template covers walls too — "instead of its 0 strength — +8 per challenge" tells the 0-strength story without special-casing (and dodges the "a 8" / "an 8" article hazard).
+`{anchor}` / `{payoff}` are `{A}`/`{B}` chip tokens, swapped by direction so Dale always reads as the enabler. The unified template covers walls too — "instead of its 0 strength" reads cleanly for a 0-strength body without special-casing (and dodges the "a 8" / "an 8" article hazard).
 
 ---
 

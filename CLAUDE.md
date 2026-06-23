@@ -268,7 +268,7 @@ Built around **Dale - Ready for His Shot** (Amber 0/4), whose SPIKE SUIT ability
 | gap-6 body / gap-5 wall | 6 / 5 | **9** | Strong |
 | gap-7+ body / gap-6+ wall | 7+ / 6+ | **10** | Perfect (capped) |
 
-Strength-0 walls get **+1** (`wallBonus`): they go from dealing zero combat damage to swinging for their full willpower — a category change, not just a bigger number. Explanation uses `{A}`/`{B}` token-swap so Dale always reads as the enabler: *"{A} lets {B} deal damage with its 7 willpower instead of its 3 strength — +4 per challenge."*
+Strength-0 walls get **+1** (`wallBonus`): they go from dealing zero combat damage to swinging for their full willpower — a category change, not just a bigger number. Explanation uses `{A}`/`{B}` token-swap so Dale always reads as the enabler: *"{A} lets {B} deal damage with its 7 willpower instead of its 3 strength."*
 
 **Coverage**: 1 anchor + 204 payoffs (40 of them strength-0 walls). Distribution: 0 Weak / 108 Moderate / 89 Strong / 7 Perfect.
 
