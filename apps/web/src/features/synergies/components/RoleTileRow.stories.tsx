@@ -55,3 +55,24 @@ export const WithActiveTiles: Story = {
     );
   },
 };
+
+/** ≤8 mechanics: every tile shows in a static row — no show-more, no scroll. */
+export const FewMechanics: Story = {
+  render: () => <InteractiveTileRow tiles={locationTiles.slice(0, 5)} />,
+};
+
+/**
+ * >8 mechanics: the row collapses to 7 tiles + a "+N Show more" tile. Click it to
+ * reveal the rest and turn the row into a horizontal scroll-snap carousel.
+ */
+export const ManyMechanics: Story = {
+  render: () => {
+    const manyTiles: RoleTile[] = Array.from({length: 13}, (_, i) => ({
+      role: `mechanic-${i}`,
+      label: `Mechanic ${i + 1}`,
+      description: 'An example mechanic that rewards a particular play pattern',
+      count: 13 - i,
+    }));
+    return <InteractiveTileRow tiles={manyTiles} />;
+  },
+};

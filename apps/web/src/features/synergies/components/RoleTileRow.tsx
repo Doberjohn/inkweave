@@ -18,38 +18,51 @@ const DESCRIPTION_COLOR = '#c8c8d8';
 
 const TILE_WIDTH = 190;
 const TILE_GAP = 10;
-/** Show ~8 tiles at a time; the rest are reachable via smooth horizontal scroll. */
+/** Cap a single row at 8 cells (7 tiles + a show-more cell, or 8 tiles outright). */
 const MAX_VISIBLE_TILES = 8;
+/** Collapsed view shows this many real tiles; the 8th cell is the show-more tile. */
+const COLLAPSED_TILE_COUNT = MAX_VISIBLE_TILES - 1;
 const ROW_MAX_WIDTH = MAX_VISIBLE_TILES * TILE_WIDTH + (MAX_VISIBLE_TILES - 1) * TILE_GAP;
 
 /**
- * Horizontal carousel of a playstyle's mechanic tiles — caps ~8 tiles in view
- * and scrolls (scroll-snap) for the rest. Each tile toggles a role filter.
+ * A playstyle's mechanic tiles. With ≤8 mechanics every tile shows in a static
+ * row. With more, the row collapses to 7 tiles + a "show more" tile; clicking it
+ * reveals the rest and turns the row into a smooth horizontal scroll carousel
+ * (scroll-snap + subtle scrollbar). Each tile toggles a role filter.
  */
 export function RoleTileRow({tiles, activeRoles, onToggle}: RoleTileRowProps) {
+  const [expanded, setExpanded] = useState(false);
+
   if (tiles.length === 0) return null;
 
   const sortedTiles = [...tiles].sort(
     (a, b) => b.count - a.count || a.label.localeCompare(b.label),
   );
 
+  // Show-more only earns its cell when it hides ≥2 tiles (total > 8); at exactly
+  // 8 the tiles all fit, so we never trade a real tile for the affordance.
+  const needsShowMore = sortedTiles.length > MAX_VISIBLE_TILES;
+  const collapsed = needsShowMore && !expanded;
+  const visibleTiles = collapsed ? sortedTiles.slice(0, COLLAPSED_TILE_COUNT) : sortedTiles;
+  const hiddenCount = sortedTiles.length - COLLAPSED_TILE_COUNT;
+
   return (
     <section
       aria-label="Mechanics"
+      // Carousel scrolls only once expanded; collapsed stays a clipped static row.
+      className={collapsed ? undefined : 'subtle-scrollbar'}
       style={{
         display: 'flex',
         gap: TILE_GAP,
-        // Horizontal carousel: cap the viewport to ~8 tiles, scroll for the rest.
         // flex-start (not center) so overflowing leading tiles stay scrollable.
         justifyContent: 'flex-start',
-        overflowX: 'auto',
-        scrollSnapType: 'x proximity',
+        overflowX: collapsed ? 'hidden' : 'auto',
+        scrollSnapType: collapsed ? undefined : 'x proximity',
         maxWidth: ROW_MAX_WIDTH,
         margin: '0 auto 28px',
         padding: '2px 2px 10px', // room for the focus ring + scrollbar track
-        scrollbarWidth: 'thin',
       }}>
-      {sortedTiles.map((t) => (
+      {visibleTiles.map((t) => (
         <RoleTileButton
           key={t.role}
           tile={t}
@@ -57,6 +70,9 @@ export function RoleTileRow({tiles, activeRoles, onToggle}: RoleTileRowProps) {
           onToggle={onToggle}
         />
       ))}
+      {collapsed && (
+        <ShowMoreTile hiddenCount={hiddenCount} onClick={() => setExpanded(true)} />
+      )}
     </section>
   );
 }
@@ -149,6 +165,65 @@ function RoleTileButton({
         }}>
         {tile.description}
       </p>
+    </button>
+  );
+}
+
+/**
+ * Base style for the show-more tile — a dashed "thematic" cell that matches the
+ * real tiles' footprint (190×120) but reads as a reveal affordance: dashed gold
+ * border on the dark dashed-tile background, brightening on hover. The inner
+ * content (label/count/icon) is the human contribution below.
+ */
+function getShowMoreTileStyle(hovered: boolean): React.CSSProperties {
+  return {
+    flex: `0 0 ${TILE_WIDTH}px`,
+    background: '#151525',
+    border: `1px dashed ${hovered ? COLORS.primary : '#444466'}`,
+    borderRadius: 8,
+    padding: '14px 12px',
+    cursor: 'pointer',
+    textAlign: 'center',
+    fontFamily: FONTS.body,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    minHeight: 120,
+    transition: 'border-color 0.15s ease, background 0.15s ease, transform 0.15s ease',
+    transform: hovered ? 'translateY(-1px)' : 'translateY(0)',
+  };
+}
+
+function ShowMoreTile({hiddenCount, onClick}: {hiddenCount: number; onClick: () => void}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      aria-label={`Show ${hiddenCount} more mechanics`}
+      style={getShowMoreTileStyle(hovered)}>
+      <span
+        style={{
+          fontSize: `${FONT_SIZES.xl}px`,
+          fontWeight: 700,
+          color: COLORS.primary,
+        }}>
+        +{hiddenCount}
+      </span>
+      <span
+        style={{
+          fontSize: `${FONT_SIZES.md}px`,
+          fontWeight: 500,
+          color: hovered ? COLORS.primary : COLORS.textMuted,
+          transition: 'color 0.15s ease',
+        }}>
+        Show more ▾
+      </span>
     </button>
   );
 }
