@@ -92,9 +92,12 @@ export {
   getLoreDenialRoles,
   isLoreDenialCard,
   MECHANICS,
+  STRUCTURAL_MECHANICS,
   MECHANIC_BY_ID,
   STRUCTURAL_ROLE_TO_MECHANIC,
   getCardMechanics,
+  mechanicLabel,
+  mechanicDescription,
 } from './utils';
 export type {
   LocationRole,

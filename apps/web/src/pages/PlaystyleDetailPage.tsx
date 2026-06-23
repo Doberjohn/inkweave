@@ -10,31 +10,11 @@ import {
   getToyRoles,
   getDwarfsRoles,
   getCardMechanics,
-  MECHANIC_BY_ID,
   STRUCTURAL_ROLE_TO_MECHANIC,
-  LOCATION_ROLE_CHIP_LABELS,
-  LOCATION_ROLE_TOOLTIP,
-  DISCARD_ROLE_CHIP_LABELS,
-  DISCARD_ROLE_DESCRIPTIONS,
-  SACRIFICE_ROLE_CHIP_LABELS,
-  SACRIFICE_ROLE_DESCRIPTIONS,
-  RAMP_ROLE_CHIP_LABELS,
-  RAMP_ROLE_DESCRIPTIONS,
-  LORE_DENIAL_ROLE_CHIP_LABELS,
-  LORE_DENIAL_ROLE_DESCRIPTIONS,
-  TOY_ROLE_CHIP_LABELS,
-  TOY_ROLE_DESCRIPTIONS,
-  DWARFS_ROLE_CHIP_LABELS,
-  DWARFS_ROLE_DESCRIPTIONS,
+  mechanicLabel,
+  mechanicDescription,
   type PlaystyleId,
   type LorcanaCard,
-  type LocationRole,
-  type DiscardRole,
-  type SacrificeRole,
-  type RampRole,
-  type LoreDenialRole,
-  type ToyRole,
-  type DwarfsRole,
 } from 'inkweave-synergy-engine';
 import {usePrecomputedPlaystyleCards} from '../features/synergies/hooks';
 import {RoleTileRow, type RoleTile} from '../features/synergies/components/RoleTileRow';
@@ -333,16 +313,18 @@ const LOCATION_CARD_ROLE = 'location' as const;
 
 interface RoleConfig {
   getRoles: (card: LorcanaCard) => readonly string[];
-  getLabel: (role: string) => string;
-  getTooltip: (role: string) => string;
   extraChips?: (cards: LorcanaCard[]) => RoleChip[];
 }
 
+/**
+ * Per-playstyle structural-role DETECTORS only. Labels/descriptions are NOT here —
+ * every tile's text comes from the one mechanics catalog (mechanicLabel/Description),
+ * so the same mechanic reads identically in every playstyle. `member` is structural
+ * membership, not a displayed mechanic, so it's filtered out. See MECHANICS_TAXONOMY.md.
+ */
 const ROLE_CONFIGS: Partial<Record<PlaystyleId, RoleConfig>> = {
   'location-control': {
     getRoles: (card) => getLocationRoles(card),
-    getLabel: (role) => LOCATION_ROLE_CHIP_LABELS[role as LocationRole],
-    getTooltip: (role) => LOCATION_ROLE_TOOLTIP[role as LocationRole],
     extraChips: (cards) => {
       const count = cards.filter((c) => c.type === 'Location').length;
       return count > 0
@@ -350,65 +332,26 @@ const ROLE_CONFIGS: Partial<Record<PlaystyleId, RoleConfig>> = {
         : [];
     },
   },
-  discard: {
-    getRoles: (card) => getDiscardRoles(card),
-    getLabel: (role) => DISCARD_ROLE_CHIP_LABELS[role as DiscardRole],
-    getTooltip: (role) => DISCARD_ROLE_DESCRIPTIONS[role as DiscardRole],
-  },
-  sacrifice: {
-    getRoles: (card) => getSacrificeRoles(card),
-    getLabel: (role) => SACRIFICE_ROLE_CHIP_LABELS[role as SacrificeRole],
-    getTooltip: (role) => SACRIFICE_ROLE_DESCRIPTIONS[role as SacrificeRole],
-  },
-  ramp: {
-    getRoles: (card) => getRampRoles(card),
-    getLabel: (role) => RAMP_ROLE_CHIP_LABELS[role as RampRole],
-    getTooltip: (role) => RAMP_ROLE_DESCRIPTIONS[role as RampRole],
-  },
-  'lore-denial': {
-    getRoles: (card) => getLoreDenialRoles(card),
-    getLabel: (role) => LORE_DENIAL_ROLE_CHIP_LABELS[role as LoreDenialRole],
-    getTooltip: (role) => LORE_DENIAL_ROLE_DESCRIPTIONS[role as LoreDenialRole],
-  },
-  toy: {
-    // Hide 'member' from chips — it's used internally for playstyle membership but
-    // doesn't add filter value as a chip (Type/classification filters handle that).
-    getRoles: (card) => getToyRoles(card).filter((r) => r !== 'member'),
-    getLabel: (role) => TOY_ROLE_CHIP_LABELS[role as ToyRole],
-    getTooltip: (role) => TOY_ROLE_DESCRIPTIONS[role as ToyRole],
-  },
-  dwarfs: {
-    // Hide 'member' from chips (same rationale as Toy) — show only the payoff roles.
-    getRoles: (card) => getDwarfsRoles(card).filter((r) => r !== 'member'),
-    getLabel: (role) => DWARFS_ROLE_CHIP_LABELS[role as DwarfsRole],
-    getTooltip: (role) => DWARFS_ROLE_DESCRIPTIONS[role as DwarfsRole],
-  },
+  discard: {getRoles: (card) => getDiscardRoles(card)},
+  sacrifice: {getRoles: (card) => getSacrificeRoles(card)},
+  ramp: {getRoles: (card) => getRampRoles(card)},
+  'lore-denial': {getRoles: (card) => getLoreDenialRoles(card)},
+  toy: {getRoles: (card) => getToyRoles(card).filter((r) => r !== 'member')},
+  dwarfs: {getRoles: (card) => getDwarfsRoles(card).filter((r) => r !== 'member')},
 };
 
-/** Get role chip definitions for playstyles that have roles */
 /**
- * Build a card's display mechanics: the playstyle's structural roles (with their
- * home-context labels) PLUS every generic catalog mechanic, de-duplicated so a
- * structural role and its catalog twin (e.g. `burn`↔`lore-burn`) collapse to one
- * tile (the structural side wins its label). See MECHANICS_TAXONOMY.md.
+ * The canonical mechanic ids a card contributes to its playstyle's tiles: the
+ * rule's structural roles (each canonicalised to its catalog twin, e.g.
+ * `burn`→`lore-burn`) unioned with every generic catalog mechanic. Canonicalising
+ * means a structural role and its catalog twin collapse to ONE id automatically;
+ * labels are resolved from the catalog so a mechanic reads identically everywhere.
  */
-function cardDisplayMechanics(config: RoleConfig, card: LorcanaCard): RoleChip[] {
-  const structural = config.getRoles(card);
-  const aliased = new Set(
-    structural.map((r) => STRUCTURAL_ROLE_TO_MECHANIC[r]).filter(Boolean),
-  );
-  const tiles: RoleChip[] = structural.map((role) => ({
-    role,
-    label: config.getLabel(role),
-    tooltip: config.getTooltip(role),
-    count: 1,
-  }));
-  for (const id of getCardMechanics(card)) {
-    if (aliased.has(id)) continue; // covered by a structural role on this card
-    const mech = MECHANIC_BY_ID[id];
-    tiles.push({role: id, label: mech.label, tooltip: mech.description, count: 1});
-  }
-  return tiles;
+function cardMechanicIds(config: RoleConfig, card: LorcanaCard): string[] {
+  const ids = new Set<string>();
+  for (const role of config.getRoles(card)) ids.add(STRUCTURAL_ROLE_TO_MECHANIC[role] ?? role);
+  for (const id of getCardMechanics(card)) ids.add(id);
+  return [...ids];
 }
 
 function getRoleChips(playstyleId: PlaystyleId | undefined, cards: LorcanaCard[]): RoleChip[] {
@@ -416,21 +359,14 @@ function getRoleChips(playstyleId: PlaystyleId | undefined, cards: LorcanaCard[]
   const config = ROLE_CONFIGS[playstyleId];
   if (!config) return [];
   const counts = new Map<string, number>();
-  const meta = new Map<string, {label: string; tooltip: string}>();
   for (const card of cards) {
-    const seen = new Set<string>(); // a mechanic counts once per card
-    for (const tile of cardDisplayMechanics(config, card)) {
-      if (seen.has(tile.role)) continue;
-      seen.add(tile.role);
-      counts.set(tile.role, (counts.get(tile.role) ?? 0) + 1);
-      if (!meta.has(tile.role)) meta.set(tile.role, {label: tile.label, tooltip: tile.tooltip});
-    }
+    for (const id of cardMechanicIds(config, card)) counts.set(id, (counts.get(id) ?? 0) + 1);
   }
   const extras = config.extraChips?.(cards) ?? [];
   const chips = [...counts].map(([role, count]) => ({
     role,
-    label: meta.get(role)!.label,
-    tooltip: meta.get(role)!.tooltip,
+    label: mechanicLabel(role),
+    tooltip: mechanicDescription(role),
     count,
   }));
   return [...extras, ...chips];
@@ -452,8 +388,8 @@ function cardHasRole(playstyleId: PlaystyleId, card: LorcanaCard, role: string):
   }
   const config = ROLE_CONFIGS[playstyleId];
   if (!config) return false;
-  // Structural role, or a generic catalog mechanic surfaced as a tile.
-  return config.getRoles(card).includes(role) || getCardMechanics(card).includes(role);
+  // Match against the same canonical id set used to build the tiles.
+  return cardMechanicIds(config, card).includes(role);
 }
 
 // ── Centered page style ──

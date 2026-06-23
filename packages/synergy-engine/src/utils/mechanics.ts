@@ -21,7 +21,15 @@ export interface Mechanic {
   id: string;
   label: string;
   description: string;
-  detect: (card: LorcanaCard) => boolean;
+  /**
+   * 'generic' mechanics recur across playstyles and carry a `detect` regex/role
+   * check (they drive `getCardMechanics`). 'structural' mechanics are a single
+   * playstyle's defining roles — detected by that rule's own `getXRoles`, so they
+   * have no `detect` here; the catalog supplies only their canonical label/spec.
+   * Defaults to 'generic' (detect-bearing) when omitted.
+   */
+  category?: 'generic' | 'structural';
+  detect?: (card: LorcanaCard) => boolean;
 }
 
 /** Lore boost — give a character +◊ (lore) for the turn, e.g. Sneezy - Startlingly Loud. */
@@ -123,10 +131,54 @@ export const MECHANICS: Mechanic[] = [
   },
 ];
 
-/** Lookup a mechanic by id. */
+/**
+ * Structural mechanics — a single playstyle's defining roles. Detection stays in
+ * the rule's own `getXRoles` (and feeds scoring); the catalog owns ONE canonical
+ * label/description per id so every playstyle's tiles read identically. See
+ * MECHANICS_TAXONOMY.md.
+ */
+export const STRUCTURAL_MECHANICS: Mechanic[] = [
+  // Discard
+  {id: 'payoff', category: 'structural', label: 'Payoff', description: 'Get benefits for having more cards in hand than opponents'},
+  // Sacrifice
+  {id: 'self-banish', category: 'structural', label: 'Self-Banish', description: 'Banish your own characters on demand'},
+  {id: 'banish-trigger', category: 'structural', label: 'Banish Trigger', description: 'Get a benefit when your characters are banished'},
+  // Tribal (Toy / Dwarfs)
+  {id: 'search', category: 'structural', label: 'Search', description: 'Search your deck for cards'},
+  {id: 'self-discount', category: 'structural', label: 'Self Discount', description: 'Pay less to play this under a condition'},
+  {id: 'density', category: 'structural', label: 'Density', description: 'Get a benefit when you have tribe members in play'},
+  {id: 'recruit', category: 'structural', label: 'Recruit', description: 'Play a tribe member for free'},
+  {id: 'return', category: 'structural', label: 'Bounce', description: 'Return a character to your hand for value'},
+  // Locations
+  {id: 'at-payoff', category: 'structural', label: 'Payoff', description: 'Get benefits when characters are at a location'},
+  {id: 'play-trigger', category: 'structural', label: 'Trigger', description: 'Trigger effects when you play or move to a location'},
+  {id: 'buff', category: 'structural', label: 'Buff', description: 'Give locations stat boosts and protection'},
+  {id: 'location-ramp', category: 'structural', label: 'Ramp', description: 'Reduce the cost to play or move to locations'},
+  {id: 'move', category: 'structural', label: 'Move', description: 'Move characters to locations'},
+  {id: 'in-play-check', category: 'structural', label: 'Check', description: 'Get benefits when you have locations in play'},
+  {id: 'boost', category: 'structural', label: 'Boost', description: 'Put cards under locations to boost their abilities'},
+];
+
+/** Lookup any mechanic (generic or structural) by id. */
 export const MECHANIC_BY_ID: Record<string, Mechanic> = Object.fromEntries(
-  MECHANICS.map((m) => [m.id, m]),
+  [...MECHANICS, ...STRUCTURAL_MECHANICS].map((m) => [m.id, m]),
 );
+
+/**
+ * Canonical display label for a mechanic id, resolving a structural role to its
+ * generic catalog twin first (e.g. `burn`→`lore-burn`) so the SAME mechanic reads
+ * identically in every playstyle. One label per mechanic, defined once here.
+ */
+export function mechanicLabel(id: string): string {
+  const canonical = STRUCTURAL_ROLE_TO_MECHANIC[id] ?? id;
+  return MECHANIC_BY_ID[canonical]?.label ?? id;
+}
+
+/** Canonical description for a mechanic id (alias-resolved, see `mechanicLabel`). */
+export function mechanicDescription(id: string): string {
+  const canonical = STRUCTURAL_ROLE_TO_MECHANIC[id] ?? id;
+  return MECHANIC_BY_ID[canonical]?.description ?? '';
+}
 
 /**
  * Maps a playstyle's structural role id to the catalog mechanic it duplicates.
@@ -155,5 +207,5 @@ export const STRUCTURAL_ROLE_TO_MECHANIC: Record<string, string> = {
  */
 export function getCardMechanics(card: LorcanaCard): string[] {
   if (card.text == null || card.text === '') return [];
-  return MECHANICS.filter((m) => m.detect(card)).map((m) => m.id);
+  return MECHANICS.filter((m) => m.detect?.(card)).map((m) => m.id);
 }
