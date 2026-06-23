@@ -48,4 +48,19 @@ describe('reloadForStaleChunk', () => {
     reloadForStaleChunk();
     expect(reload).toHaveBeenCalledTimes(2);
   });
+
+  // Fail-open guard: a non-finite or future stored timestamp must never wedge
+  // recovery (a naive NaN-only check would block forever on "Infinity").
+  it('fails open on a non-finite or future stored timestamp', () => {
+    const KEY = 'stale-chunk-reload-at';
+
+    sessionStorage.setItem(KEY, 'Infinity');
+    reloadForStaleChunk();
+    expect(reload).toHaveBeenCalledTimes(1);
+
+    reload.mockClear();
+    sessionStorage.setItem(KEY, String(Date.now() + 1_000_000)); // backward clock jump
+    reloadForStaleChunk();
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
 });

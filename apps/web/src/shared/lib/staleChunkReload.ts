@@ -31,14 +31,18 @@ const RELOAD_WINDOW_MS = 30_000;
 
 /**
  * Whether enough time has passed since our last recovery reload to attempt
- * another. A missing or unparseable timestamp means we've never reloaded (or
- * the value was tampered with), which must count as "allowed".
+ * another. Any value that isn't a sane past timestamp — missing, unparseable,
+ * ±Infinity, or a future time from a backward clock jump — fails open
+ * ("allowed") so a bad guard value can never permanently wedge recovery.
  */
 function canReload(now: number): boolean {
   const last = Number(sessionStorage.getItem(GUARD_KEY));
-  // NaN (non-numeric/tampered value) means "never reloaded" → allow. A missing
-  // key parses to 0, which the window check below also treats as long-elapsed.
-  return Number.isNaN(last) || now - last >= RELOAD_WINDOW_MS;
+  // Fail open on any value that isn't a sane past timestamp so a bad guard
+  // value can't wedge recovery: garbage parses to NaN and "Infinity" stays
+  // non-finite (both caught by !isFinite); a value > now means the clock
+  // jumped backward. A missing key parses to 0, allowed via the window check.
+  if (!Number.isFinite(last) || last > now) return true;
+  return now - last >= RELOAD_WINDOW_MS;
 }
 
 /**
