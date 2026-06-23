@@ -91,6 +91,9 @@ export {
   isDwarfsCard,
   getLoreDenialRoles,
   isLoreDenialCard,
+  MECHANICS,
+  MECHANIC_BY_ID,
+  getCardMechanics,
 } from './utils';
 export type {
   LocationRole,

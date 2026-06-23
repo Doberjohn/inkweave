@@ -869,8 +869,8 @@ const TOY_SEARCH_PATTERN = makeSearchPattern('Toy characters?(?:\\s+cards?)?');
 const TOY_BANISH_TRIGGER_TRIBAL_PATTERN = makeBanishTriggerPattern('Toy characters?');
 const TOY_BANISH_TRIGGER_SELF_PATTERN = makeBanishTriggerPattern('this character');
 
-/** Generic Draw mechanic — literal "draw a card" / "draw N cards". Used by Toys. */
-const DRAW_PATTERN = /(?:you may )?draws? (?:a|\d+) cards?/i;
+/** Generic Draw mechanic — literal "draw a card" / "draw N cards". Used by Toys and the mechanics catalog. */
+export const DRAW_PATTERN = /(?:you may )?draws? (?:a|\d+) cards?/i;
 
 /**
  * Roles in the Toy tribal playstyle.
