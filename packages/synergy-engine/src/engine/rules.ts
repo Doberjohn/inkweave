@@ -493,40 +493,8 @@ function createLocationRules(): SynergyRule[] {
 }
 
 // ============================================
-// DISCARD ROLE UI LABELS
+// DISCARD SCORING HELPERS (labels now live in the mechanics catalog)
 // ============================================
-
-/** Short chip labels for each discard role (used in UI) */
-export const DISCARD_ROLE_CHIP_LABELS: Record<DiscardRole, string> = {
-  targeted: 'Targeted',
-  random: 'Random',
-  standard: 'Standard',
-  payoff: 'Payoff',
-};
-
-/** Educational descriptions explaining what each discard role means */
-export const DISCARD_ROLE_DESCRIPTIONS: Record<DiscardRole, string> = {
-  targeted: 'Choose which card opponents discard',
-  random: 'Force opponents to discard at random',
-  standard: 'Force opponents to choose and discard',
-  payoff: 'Get benefits for having more cards than your opponent',
-};
-
-// ============================================
-// SACRIFICE ROLE UI LABELS
-// ============================================
-
-/** Short chip labels for each sacrifice role (used in UI) */
-export const SACRIFICE_ROLE_CHIP_LABELS: Record<SacrificeRole, string> = {
-  'self-banish': 'Self-Banish',
-  'banish-trigger': 'Banish Trigger',
-};
-
-/** Educational descriptions explaining what each sacrifice role means */
-export const SACRIFICE_ROLE_DESCRIPTIONS: Record<SacrificeRole, string> = {
-  'self-banish': 'Banishes your own characters on demand',
-  'banish-trigger': 'Get a benefit when your characters are banished',
-};
 
 /** Standalone educational descriptions for location roles (no card name needed) */
 export const LOCATION_ROLE_TOOLTIP: Record<LocationRole, string> = {
@@ -910,93 +878,6 @@ export const synergyRules: SynergyRule[] = [
     },
   },
 ];
-
-// ============================================
-// RAMP ROLE LABELS & DESCRIPTIONS
-// ============================================
-
-/** Short chip labels for each ramp role (used in UI) */
-export const RAMP_ROLE_CHIP_LABELS: Record<RampRole, string> = {
-  'inkwell-ramp': 'Ramp',
-  'inkwell-trigger': 'Trigger',
-  'cost-reduction': 'Discount',
-};
-
-/** Educational descriptions explaining what each ramp role means */
-export const RAMP_ROLE_DESCRIPTIONS: Record<RampRole, string> = {
-  'inkwell-ramp': 'Put extra cards into your inkwell',
-  'inkwell-trigger': 'Trigger an effect when a card is put into your inkwell',
-  'cost-reduction': 'Reduce the cost of other cards you play',
-};
-
-/** Short chip labels for each lore-denial role (used in UI) */
-export const LORE_DENIAL_ROLE_CHIP_LABELS: Record<LoreDenialRole, string> = {
-  burn: 'Burn',
-  steal: 'Steal',
-};
-
-/** Educational descriptions explaining what each lore-denial role means */
-export const LORE_DENIAL_ROLE_DESCRIPTIONS: Record<LoreDenialRole, string> = {
-  burn: 'Make your opponents lose lore',
-  steal: 'Steal lore from your opponents to gain your own',
-};
-
-/**
- * Short chip labels for each Toy role.
- * Cross-playstyle mechanics get explicit Toy-context labels (Strategy B):
- * source playstyles keep their short labels (e.g., "Burn" on Lore Denial page),
- * but Toys disambiguates with the noun (e.g., "Lore Burn" on Toys page) since the
- * playstyle name no longer provides context. Descriptions stay shared.
- * 'Ramp' and 'Discount' are universal enough to read clearly in any playstyle.
- */
-export const TOY_ROLE_CHIP_LABELS: Record<ToyRole, string> = {
-  member: 'Member',
-  search: 'Search',
-  draw: 'Card Draw',
-  'banish-trigger': 'Banish Trigger',
-  'self-discount': 'Self Discount',
-  burn: 'Lore Burn',
-  steal: 'Lore Steal',
-  targeted: 'Targeted Discard',
-  random: 'Random Discard',
-  standard: 'Forced Discard',
-  'inkwell-ramp': 'Ramp',
-  'inkwell-trigger': 'Ink Trigger',
-  'cost-reduction': 'Cost Reduction',
-};
-
-/** Educational descriptions for each Toy role — composed from source playstyles where applicable */
-export const TOY_ROLE_DESCRIPTIONS: Record<ToyRole, string> = {
-  member: 'Toy character — counts toward tribal density',
-  search: 'Search your deck for Toy characters',
-  draw: 'Draw extra cards',
-  'banish-trigger': 'Trigger an effect when a Toy character is banished',
-  'self-discount': 'Pay less to play a character under some condition',
-  burn: LORE_DENIAL_ROLE_DESCRIPTIONS.burn,
-  steal: LORE_DENIAL_ROLE_DESCRIPTIONS.steal,
-  targeted: DISCARD_ROLE_DESCRIPTIONS.targeted,
-  random: DISCARD_ROLE_DESCRIPTIONS.random,
-  standard: DISCARD_ROLE_DESCRIPTIONS.standard,
-  'inkwell-ramp': RAMP_ROLE_DESCRIPTIONS['inkwell-ramp'],
-  'inkwell-trigger': RAMP_ROLE_DESCRIPTIONS['inkwell-trigger'],
-  'cost-reduction': RAMP_ROLE_DESCRIPTIONS['cost-reduction'],
-};
-
-/** Short chip labels for each Seven Dwarfs role (used in UI) */
-export const DWARFS_ROLE_CHIP_LABELS: Record<DwarfsRole, string> = {
-  member: 'Member',
-  density: 'Density',
-  recruit: 'Recruit',
-  return: 'Bounce',
-};
-
-/** Educational descriptions explaining what each Seven Dwarfs role means */
-export const DWARFS_ROLE_DESCRIPTIONS: Record<DwarfsRole, string> = {
-  member: 'Seven Dwarfs character — counts toward tribal density',
-  density: 'Get a benefit when you have Seven Dwarfs characters in play',
-  recruit: 'Play a Seven Dwarfs character for free',
-  return: 'Return a Seven Dwarfs character to your hand for value',
-};
 
 // ============================================
 // DISCARD SCORING

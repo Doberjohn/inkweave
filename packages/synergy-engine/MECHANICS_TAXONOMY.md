@@ -1,7 +1,9 @@
 # Synergy Mechanics Taxonomy
 
-**Status:** Phase 1 design report (item 3 — auto-generated mechanics tiles).
+**Status:** ✅ Implemented (item 3 — auto-generated mechanics tiles).
 **Goal:** Replace the hardcoded, per-playstyle "mechanics cards" wiring (`RoleTileRow`) with a single, regex-driven mechanics catalog that every playstyle draws from deterministically in the engine loop. Adding a playstyle should surface its mechanics tiles with **zero per-mechanic boilerplate**; an unseen mechanic should be **one new regex** in the catalog.
+
+**Delivered:** the catalog (`mechanics.ts`) is the single source of truth for every tile's id/label/description. `getRoleChips` (web) builds tiles from each playstyle's structural roles ∪ `getCardMechanics`, canonicalised + deduped, with labels from `mechanicLabel`/`mechanicDescription`. The per-playstyle `*_ROLE_CHIP_LABELS`/`*_DESCRIPTIONS` maps were removed (only `LOCATION_ROLE_*` remain — `ConnectionGroup` uses their location-name-templated descriptions, a different surface). `RoleTileRow` is a horizontal-scroll carousel (~8 tiles visible). Result: the same mechanic reads identically in every playstyle, and every playstyle surfaces all mechanics its cards exhibit.
 
 ---
 
