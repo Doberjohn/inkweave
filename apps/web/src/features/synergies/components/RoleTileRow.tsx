@@ -1,6 +1,5 @@
 import {useState} from 'react';
 import {COLORS, FONTS, FONT_SIZES} from '../../../shared/constants';
-import {useResponsive} from '../../../shared/hooks/useResponsive';
 
 export interface RoleTile {
   role: string;
@@ -16,17 +15,14 @@ export interface RoleTileRowProps {
 }
 
 const DESCRIPTION_COLOR = '#c8c8d8';
-const DESKTOP_BREAKPOINT = 1400;
-const COMPACT_BREAKPOINT = 700;
 
-function gridTemplate(tileCount: number, viewport: number): string {
-  if (viewport < COMPACT_BREAKPOINT) return 'repeat(2, minmax(0, 180px))';
-  if (viewport < DESKTOP_BREAKPOINT) return 'repeat(4, minmax(0, 200px))';
-  return `repeat(${tileCount}, minmax(0, 190px))`;
-}
+const TILE_WIDTH = 190;
+const TILE_GAP = 10;
+/** Show ~8 tiles at a time; the rest are reachable via smooth horizontal scroll. */
+const MAX_VISIBLE_TILES = 8;
+const ROW_MAX_WIDTH = MAX_VISIBLE_TILES * TILE_WIDTH + (MAX_VISIBLE_TILES - 1) * TILE_GAP;
 
 export function RoleTileRow({tiles, activeRoles, onToggle}: RoleTileRowProps) {
-  const {windowWidth: viewport} = useResponsive();
   if (tiles.length === 0) return null;
 
   const sortedTiles = [...tiles].sort(
@@ -35,13 +31,19 @@ export function RoleTileRow({tiles, activeRoles, onToggle}: RoleTileRowProps) {
 
   return (
     <section
+      aria-label="Mechanics"
       style={{
-        display: 'grid',
-        gridTemplateColumns: gridTemplate(sortedTiles.length, viewport),
-        gap: 10,
-        justifyContent: 'center',
-        alignItems: 'stretch',
-        margin: '0 0 28px',
+        display: 'flex',
+        gap: TILE_GAP,
+        // Horizontal carousel: cap the viewport to ~8 tiles, scroll for the rest.
+        // flex-start (not center) so overflowing leading tiles stay scrollable.
+        justifyContent: 'flex-start',
+        overflowX: 'auto',
+        scrollSnapType: 'x proximity',
+        maxWidth: ROW_MAX_WIDTH,
+        margin: '0 auto 28px',
+        padding: '2px 2px 10px', // room for the focus ring + scrollbar track
+        scrollbarWidth: 'thin',
       }}>
       {sortedTiles.map((t) => (
         <RoleTileButton
@@ -66,6 +68,8 @@ function tileBoxShadow(active: boolean, hovered: boolean): string {
 function getRoleTileButtonStyle(active: boolean, hovered: boolean): React.CSSProperties {
   return {
     position: 'relative',
+    flex: `0 0 ${TILE_WIDTH}px`, // fixed-width carousel cells; the row scrolls
+    scrollSnapAlign: 'start',
     background: active || hovered ? COLORS.surface : COLORS.surfaceAlt,
     border: `1px solid ${active || hovered ? COLORS.primaryMuted : COLORS.surfaceBorder}`,
     borderRadius: 8,
