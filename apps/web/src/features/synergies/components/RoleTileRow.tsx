@@ -22,6 +22,10 @@ const TILE_GAP = 10;
 const MAX_VISIBLE_TILES = 8;
 const ROW_MAX_WIDTH = MAX_VISIBLE_TILES * TILE_WIDTH + (MAX_VISIBLE_TILES - 1) * TILE_GAP;
 
+/**
+ * Horizontal carousel of a playstyle's mechanic tiles — caps ~8 tiles in view
+ * and scrolls (scroll-snap) for the rest. Each tile toggles a role filter.
+ */
 export function RoleTileRow({tiles, activeRoles, onToggle}: RoleTileRowProps) {
   if (tiles.length === 0) return null;
 

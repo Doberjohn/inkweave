@@ -354,6 +354,10 @@ function cardMechanicIds(config: RoleConfig, card: LorcanaCard): string[] {
   return [...ids];
 }
 
+/**
+ * Aggregate a playstyle's cards into deduped mechanic chips — one chip per
+ * canonical mechanic id, counted across the cards, labelled from the catalog.
+ */
 function getRoleChips(playstyleId: PlaystyleId | undefined, cards: LorcanaCard[]): RoleChip[] {
   if (!playstyleId) return [];
   const config = ROLE_CONFIGS[playstyleId];
@@ -439,6 +443,7 @@ function applyFilterAndSort(
   return applySortOrder(result, sortOrder);
 }
 
+/** Narrow the card list to those matching ANY active mechanic chip. */
 function applyRoleFilter(
   cards: LorcanaCard[],
   activeRoles: ReadonlySet<string>,
