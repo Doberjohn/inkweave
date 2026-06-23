@@ -1267,6 +1267,85 @@ describe('Card Helper Functions', () => {
     });
   });
 
+  describe('Spike Suit', () => {
+    const spikeRule = getRuleById('spike-suit')!;
+
+    const anchor = createCard({
+      id: 'dale',
+      name: 'Dale',
+      fullName: 'Dale - Ready for His Shot',
+      ink: 'Amber',
+      strength: 0,
+      willpower: 4,
+      text: 'SPIKE SUIT During challenges, your characters deal damage with their ⛉ instead of their ¤.',
+    });
+
+    const makePayoff = (strength: number, willpower: number, id = 'payoff') =>
+      createCard({
+        id,
+        name: 'Body',
+        fullName: 'Body - Big Wall',
+        type: 'Character',
+        strength,
+        willpower,
+      });
+
+    it('matches the Spike Suit anchor by ability text', () => {
+      expect(spikeRule.matches(anchor)).toBe(true);
+    });
+
+    it('matches a character whose willpower beats strength by >= 3', () => {
+      expect(spikeRule.matches(makePayoff(1, 4))).toBe(true); // gap 3
+    });
+
+    it('does not match characters below the gap-3 floor', () => {
+      expect(spikeRule.matches(makePayoff(2, 4))).toBe(false); // gap 2
+      expect(spikeRule.matches(makePayoff(3, 3))).toBe(false); // gap 0
+      expect(spikeRule.matches(makePayoff(5, 4))).toBe(false); // strength > willpower
+    });
+
+    it('forward: anchor finds qualifying payoffs, excludes sub-floor bodies and itself', () => {
+      const ok = makePayoff(1, 4, 'ok'); // gap 3
+      const low = makePayoff(3, 4, 'low'); // gap 1
+      const synergies = spikeRule.findSynergies(anchor, [anchor, ok, low]);
+      expect(synergies.map((s) => s.card.id)).toEqual(['ok']);
+    });
+
+    it('reverse: a payoff finds the anchor', () => {
+      const payoff = makePayoff(1, 4);
+      const synergies = spikeRule.findSynergies(payoff, [payoff, anchor]);
+      expect(synergies).toHaveLength(1);
+      expect(synergies[0].card.id).toBe('dale');
+    });
+
+    it.each([
+      ['gap 3 body → 6', 3, 6, 6],
+      ['gap 4 body → 7', 3, 7, 7],
+      ['gap 5 body → 8', 4, 9, 8],
+      ['gap 3 wall (0/3) → 7 (wall bonus)', 0, 3, 7],
+      ['gap 8 wall (0/8) caps at 10', 0, 8, 10],
+    ] as const)('scores %s', (_label, strength, willpower, expected) => {
+      const synergies = spikeRule.findSynergies(anchor, [anchor, makePayoff(strength, willpower)]);
+      expect(synergies[0].score).toBe(expected);
+    });
+
+    it('frames the anchor as the enabler in both directions (token-swap)', () => {
+      const payoff = makePayoff(3, 7); // gap 4
+      const fwd = spikeRule.findSynergies(anchor, [anchor, payoff])[0];
+      const rev = spikeRule.findSynergies(payoff, [payoff, anchor])[0];
+      // Forward: anchor is the searcher → {A}; payoff is {B}
+      expect(fwd.explanation).toContain('{A} lets {B}');
+      // Reverse: payoff is the searcher → {A}; anchor swaps to {B} but still the actor
+      expect(rev.explanation).toContain('{B} lets {A}');
+      expect(rev.explanation).toContain('+4 per challenge');
+    });
+
+    it('marks synergies as bidirectional', () => {
+      const synergies = spikeRule.findSynergies(anchor, [anchor, makePayoff(1, 4)]);
+      expect(synergies.every((s) => s.bidirectional)).toBe(true);
+    });
+  });
+
   describe('Ramp', () => {
     const rampRule = getRuleById('ramp')!;
 
