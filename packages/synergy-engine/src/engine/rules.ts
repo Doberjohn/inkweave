@@ -617,6 +617,95 @@ function findShiftSourcesForBase(baseCard: LorcanaCard, allCards: LorcanaCard[])
 }
 
 // ============================================
+// SPIKE SUIT HELPERS (Dale - Ready for His Shot)
+// ============================================
+
+/**
+ * Minimum willpower − strength gap a character needs to be a worthwhile Spike Suit
+ * payoff. Below +3 the bonus combat damage is marginal (a 2/3 hitting for 3), so we
+ * floor here to keep the synergy meaningful in both directions and avoid flooding
+ * hundreds of low-gap character pages with a trivial Dale entry.
+ */
+const SPIKE_SUIT_FLOOR = 3;
+
+/** The bonus combat damage Spike Suit hands this character (willpower − strength). */
+function spikeSuitGap(card: LorcanaCard): number {
+  return (card.willpower ?? 0) - (card.strength ?? 0);
+}
+
+/** True when a character has no strength — Spike Suit transforms it from wall to threat. */
+function isSpikeSuitWall(card: LorcanaCard): boolean {
+  return (card.strength ?? 0) === 0;
+}
+
+/**
+ * Anchor: a card whose ability swaps your team's combat damage from strength to
+ * willpower (Dale - Ready for His Shot's SPIKE SUIT). Matched on the ability text,
+ * not a card id, so any future reprint with the same wording joins the rule for free.
+ */
+function isSpikeSuitAnchor(card: LorcanaCard): boolean {
+  return /deal damage with their .* instead of their/i.test(normalizeCardText(card));
+}
+
+/** Payoff: a character whose willpower beats its strength by at least the floor. */
+function isSpikeSuitPayoff(card: LorcanaCard): boolean {
+  return isCharacter(card) && spikeSuitGap(card) >= SPIKE_SUIT_FLOOR;
+}
+
+/**
+ * Score a Spike Suit pairing from the payoff's stats. The gap (willpower − strength)
+ * is exactly the bonus combat damage the pairing unlocks, so the score scales with it.
+ * The floor (gap >= 3) is already enforced by isSpikeSuitPayoff before we get here.
+ */
+function spikeSuitScore(payoff: LorcanaCard): number {
+  // gap (>= 3 here) is the bonus combat damage Spike Suit unlocks, so it anchors the
+  // score: gap 3 → 6 (floor of Moderate), gap 4 → 7, … capped at 10. Strength-0 walls
+  // get +1 on top — they go from a non-combatant to a full-willpower threat, a bigger
+  // jump than the raw gap alone conveys. Validated spread: 0 Weak / 108 Moderate /
+  // 89 Strong / 7 Perfect across the 204 deck-compatible payoffs.
+  const gap = spikeSuitGap(payoff);
+  const wallBonus = isSpikeSuitWall(payoff) ? 1 : 0;
+  return Math.min(gap + 3 + wallBonus, 10);
+}
+
+/**
+ * Build a Spike Suit match. `searcherIsAnchor` is true when the anchor (Dale) is the
+ * card being viewed, so it reads as {A} and the payoff as {B}; in the reverse direction
+ * the payoff is {A} and the anchor is {B}. Token-swap keeps the anchor framed as the
+ * enabler regardless of which page the pair is viewed from.
+ */
+function makeSpikeSuitMatch(
+  payoff: LorcanaCard,
+  target: LorcanaCard,
+  searcherIsAnchor: boolean,
+): SynergyMatch {
+  const anchorToken = searcherIsAnchor ? '{A}' : '{B}';
+  const payoffToken = searcherIsAnchor ? '{B}' : '{A}';
+  // Optional stat fields default to 0 (same as spikeSuitGap). The gap-3 floor already
+  // guarantees a real willpower here; this just keeps the text type-safe.
+  const willpower = payoff.willpower ?? 0;
+  const strength = payoff.strength ?? 0;
+  // One template covers walls and bodies alike: "instead of its 0 strength" reads
+  // cleanly for a 0-strength body without special-casing (and no a/an grammar hazard).
+  const explanation = `${anchorToken} lets ${payoffToken} deal damage with its ${willpower} willpower instead of its ${strength} strength.`;
+  return {card: target, score: spikeSuitScore(payoff), explanation, bidirectional: true};
+}
+
+/** Forward: the anchor (Dale) finds qualifying high-willpower payoff characters. */
+function findSpikeSuitPayoffs(anchor: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+  return allCards
+    .filter((other) => other.id !== anchor.id && isSpikeSuitPayoff(other))
+    .map((payoff) => makeSpikeSuitMatch(payoff, payoff, true));
+}
+
+/** Reverse: a high-willpower payoff finds anchor cards (Dale) that boost it. */
+function findSpikeSuitAnchors(payoff: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+  return allCards
+    .filter((other) => other.id !== payoff.id && isSpikeSuitAnchor(other))
+    .map((anchor) => makeSpikeSuitMatch(payoff, anchor, false));
+}
+
+// ============================================
 // SYNERGY RULES
 // ============================================
 
@@ -788,6 +877,25 @@ export const synergyRules: SynergyRule[] = [
       if (hasKeyword(card, 'Singer')) return findSongsForSinger(card, allCards);
       return findSingersForSong(card, allCards);
     },
+  },
+
+  // --------------------------------------------
+  // SPIKE SUIT (Dale - Ready for His Shot)
+  // --------------------------------------------
+  {
+    id: 'spike-suit',
+    name: 'Spike Suit',
+    category: 'direct',
+    description:
+      'Spike Suit makes your characters deal combat damage with their willpower instead of their strength, so bodies with more willpower than strength hit far above their weight',
+
+    // Anchor finds high-willpower payoffs (forward); payoffs find the anchor (reverse).
+    matches: (card) => isSpikeSuitAnchor(card) || isSpikeSuitPayoff(card),
+
+    findSynergies: (card, allCards) =>
+      isSpikeSuitAnchor(card)
+        ? findSpikeSuitPayoffs(card, allCards)
+        : findSpikeSuitAnchors(card, allCards),
   },
 
   // --------------------------------------------
