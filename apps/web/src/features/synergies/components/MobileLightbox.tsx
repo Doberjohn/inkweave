@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
 import type {Ink} from 'inkweave-synergy-engine';
 import {COLORS, Z_INDEX} from '../../../shared/constants';
@@ -89,7 +89,7 @@ export function MobileLightbox({imageUrl, alt, ink, originRect, onClose}: Mobile
   }, [originRect]);
 
   // Reverse FLIP — card shrinks back into the origin tile, then `onClose` unmounts the lightbox.
-  const requestClose = useCallback(() => {
+  const requestClose = () => {
     const ctx = flipContext(cardRef.current, originRect);
     if (!ctx) {
       onClose();
@@ -113,7 +113,7 @@ export function MobileLightbox({imageUrl, alt, ink, originRect, onClose}: Mobile
     );
     flipRef.current = anim;
     anim.onfinish = onClose;
-  }, [originRect, onClose]);
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

@@ -1,4 +1,4 @@
-import {useState, useEffect, useCallback} from 'react';
+import {useState, useEffect} from 'react';
 
 interface Sparkle {
   id: string;
@@ -104,14 +104,14 @@ export function Sparkles({
     && typeof window.matchMedia === 'function'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const addSparkle = useCallback(() => {
+  const addSparkle = () => {
     const now = Date.now();
     setSparkles((prev) => [
       // Garbage collect expired sparkles
       ...prev.filter((s) => now - s.createdAt < SPARKLE_LIFETIME_MS),
       generateSparkle(color, minSize, maxSize),
     ]);
-  }, [color, minSize, maxSize]);
+  };
 
   useEffect(() => {
     if (prefersReducedMotion) return;

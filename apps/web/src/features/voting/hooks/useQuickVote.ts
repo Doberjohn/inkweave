@@ -1,4 +1,4 @@
-import {useState, useEffect, useCallback, useMemo, useRef, type MutableRefObject} from 'react';
+import {useState, useEffect, useMemo, useRef, type MutableRefObject} from 'react';
 import {
   getSupabase,
   submitVote,
@@ -175,18 +175,15 @@ export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
   // distinction first. The previous `distributionFailed` flag was misleading.
 
   const {state, setState, setUserChoice, setError} = slots;
-  const vote = useCallback(
-    async (accuracy: Accuracy) => {
-      if (state !== 'ready' && state !== 'error') return;
-      if (submittingRef.current) return;
-      submittingRef.current = true;
-      await performVote(
-        {setState, setUserChoice, setError, submittingRef},
-        pair, accuracy,
-      );
-    },
-    [pair, state, setState, setUserChoice, setError],
-  );
+  const vote = async (accuracy: Accuracy) => {
+    if (state !== 'ready' && state !== 'error') return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    await performVote(
+      {setState, setUserChoice, setError, submittingRef},
+      pair, accuracy,
+    );
+  };
 
   return {
     state: slots.state,

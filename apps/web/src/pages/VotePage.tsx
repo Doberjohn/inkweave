@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useRef, useState, type ReactNode} from 'react';
+import {useEffect, useRef, useState, type ReactNode} from 'react';
 import {useNavigate} from 'react-router-dom';
 import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
@@ -58,45 +58,42 @@ function useVoteHandlers({
   const streakRef = useRef(0);
 
   /** One-click vote: click score → show toast → advance immediately → submit in background */
-  const handleScoreClick = useCallback(
-    (score: Score) => {
-      if (!currentPair || voteSession.isRateLimited) return;
+  const handleScoreClick = (score: Score) => {
+    if (!currentPair || voteSession.isRateLimited) return;
 
-      // Track streak (close match = diff <= 1)
-      const diff = Math.abs(score - currentPair.aggregateScore);
-      streakRef.current = diff <= 1 ? streakRef.current + 1 : 0;
+    // Track streak (close match = diff <= 1)
+    const diff = Math.abs(score - currentPair.aggregateScore);
+    streakRef.current = diff <= 1 ? streakRef.current + 1 : 0;
 
-      // Show toast immediately with score comparison (optimistic)
-      setToastData({
-        cardAName: currentPair.cardA.fullName,
-        cardBName: currentPair.cardB.fullName,
-        engineScore: currentPair.aggregateScore,
-        userScore: score,
-        streak: streakRef.current,
-      });
+    // Show toast immediately with score comparison (optimistic)
+    setToastData({
+      cardAName: currentPair.cardA.fullName,
+      cardBName: currentPair.cardB.fullName,
+      engineScore: currentPair.aggregateScore,
+      userScore: score,
+      streak: streakRef.current,
+    });
 
-      // Advance to next pair immediately
-      advance();
+    // Advance to next pair immediately
+    advance();
 
-      // Submit vote in background (fire-and-forget)
-      voteSession.submitWithScore(score);
-    },
-    [voteSession, currentPair, advance],
-  );
+    // Submit vote in background (fire-and-forget)
+    voteSession.submitWithScore(score);
+  };
 
-  const handleSkip = useCallback(() => {
+  const handleSkip = () => {
     voteSession.resetForm();
     skip();
-  }, [voteSession, skip]);
+  };
 
-  const handleToastDismiss = useCallback(() => {
+  const handleToastDismiss = () => {
     setToastData(null);
-  }, []);
+  };
 
-  const handleUndo = useCallback(() => {
+  const handleUndo = () => {
     undo();
     setToastData(null);
-  }, [undo]);
+  };
 
   return {toastData, handleScoreClick, handleSkip, handleToastDismiss, handleUndo};
 }
@@ -504,11 +501,8 @@ export function VotePage() {
   const queue = usePairQueue();
   const voteSession = useVoteSession(queue.currentPair);
 
-  const goHome = useCallback(() => navigate('/'), [navigate]);
-  const onCardSelect = useCallback(
-    (card: {id: string}) => openCardModal(card.id),
-    [openCardModal],
-  );
+  const goHome = () => navigate('/');
+  const onCardSelect = (card: {id: string}) => openCardModal(card.id);
 
   const handlers = useVoteHandlers({
     currentPair: queue.currentPair,

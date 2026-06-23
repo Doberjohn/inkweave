@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import type {DetailedPairSynergy, Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONTS} from '../../../shared/constants';
 import {usePairScore} from '../../voting/hooks/usePairScore';
@@ -180,14 +180,14 @@ function useTabScrollSync() {
     return () => root.removeEventListener('scroll', update);
   }, []);
 
-  const scrollToTab = useCallback((name: TabName) => {
+  const scrollToTab = (name: TabName) => {
     const root = viewportRef.current;
     if (!root) return;
     const target = root.querySelector<HTMLDivElement>(`[data-panel="${name}"]`);
     if (!target) return;
     setActiveTab(name); // optimistic — observer confirms once the smooth-scroll lands
     target.scrollIntoView({behavior: 'smooth', inline: 'start', block: 'nearest'});
-  }, []);
+  };
 
   return {viewportRef, activeTab, scrollToTab};
 }
@@ -247,9 +247,9 @@ export function MobileComparisonView({pair, engineScore, originRects = null, isE
     ? {opacity: 0, transition: `opacity ${CARDS_TAIL_FADE_MS}ms ease-out ${CARDS_TAIL_FADE_DELAY_MS}ms`}
     : {opacity: 1};
 
-  const onCardTap = useCallback((which: 'a' | 'b', tileEl: HTMLElement) => {
+  const onCardTap = (which: 'a' | 'b', tileEl: HTMLElement) => {
     setPreview({which, originRect: tileEl.getBoundingClientRect()});
-  }, []);
+  };
 
   const previewCard = pickPreviewCard(preview, cardA, cardB);
 
@@ -335,10 +335,7 @@ interface MobileCardTileProps {
 }
 
 function MobileCardTile({card, which, onTap, tileRef}: MobileCardTileProps) {
-  const handleClick = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>) => onTap(which, e.currentTarget),
-    [onTap, which],
-  );
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => onTap(which, e.currentTarget);
   const borderColor = INK_BORDER_TINT[card.ink];
   // No cost/ink overlay badges — the card art already shows both. Only the magnify hint is kept.
   return (
