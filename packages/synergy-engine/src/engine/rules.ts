@@ -225,6 +225,7 @@ function isValidShiftTarget(
 const LOCATION_ROLE_SCORE: Record<LocationRole, number> = {
   'at-payoff': 7,
   'play-trigger': 7,
+  'move-trigger': 7,
   buff: 7,
   'location-ramp': 7,
   move: 5,
@@ -237,6 +238,7 @@ const LOCATION_ROLE_SCORE: Record<LocationRole, number> = {
 const ROLE_LABELS: Record<LocationRole, string> = {
   'at-payoff': 'at location payoff',
   'play-trigger': 'play trigger',
+  'move-trigger': 'move trigger',
   buff: 'location buff',
   'location-ramp': 'location ramp',
   move: 'move to location',
@@ -252,6 +254,7 @@ const ROLE_LABELS: Record<LocationRole, string> = {
 export const LOCATION_ROLE_CHIP_LABELS: Record<LocationRole, string> = {
   'at-payoff': mechanicLabel('at-payoff'),
   'play-trigger': mechanicLabel('play-trigger'),
+  'move-trigger': mechanicLabel('move-trigger'),
   buff: mechanicLabel('buff'),
   'location-ramp': mechanicLabel('location-ramp'),
   move: mechanicLabel('move'),
@@ -267,6 +270,7 @@ export const LOCATION_ROLE_DESCRIPTIONS: Record<
 > = {
   'at-payoff': (_name, loc) => `Gets bonuses when characters are at ${loc}.`,
   'play-trigger': (_name, loc) => `Activates effects when you play ${loc}.`,
+  'move-trigger': (_name, loc) => `Triggers effects when a character moves to ${loc}.`,
   buff: (_name, loc) => `Strengthens ${loc} with Resist or stat boosts.`,
   'location-ramp': (_name, loc) => `Reduces the cost of moving characters to ${loc}.`,
   move: (_name, loc) => `Moves characters to ${loc} for an advantage.`,
@@ -282,13 +286,15 @@ export const LOCATION_ROLE_DESCRIPTIONS: Record<
  */
 const COMPLEMENTARY_ROLES: Partial<Record<LocationRole, LocationRole[]>> = {
   // Enablers: these roles help get locations into play or onto the board
-  search: ['at-payoff', 'play-trigger', 'buff', 'move', 'in-play-check', 'boost'],
-  'location-ramp': ['at-payoff', 'play-trigger', 'buff', 'move', 'in-play-check', 'boost'],
-  // Positioning: move enables payoffs and benefits from buffs
-  move: ['at-payoff', 'buff'],
+  search: ['at-payoff', 'play-trigger', 'move-trigger', 'buff', 'move', 'in-play-check', 'boost'],
+  'location-ramp': ['at-payoff', 'play-trigger', 'move-trigger', 'buff', 'move', 'in-play-check', 'boost'],
+  // Positioning: move enables payoffs (incl. move-trigger) and benefits from buffs
+  move: ['at-payoff', 'buff', 'move-trigger'],
   // Consumers: these need locations/positioning that enablers provide
   'at-payoff': ['move', 'search', 'location-ramp', 'buff'],
   'play-trigger': ['search', 'location-ramp'],
+  // move-trigger fires off the `move` enabler; search/ramp supply the destination.
+  'move-trigger': ['move', 'search', 'location-ramp'],
   buff: ['move', 'search', 'location-ramp', 'at-payoff', 'in-play-check'],
   'in-play-check': ['search', 'location-ramp'],
   boost: ['search', 'location-ramp'],
@@ -298,6 +304,7 @@ const COMPLEMENTARY_ROLES: Partial<Record<LocationRole, LocationRole[]>> = {
 const HIGH_VALUE_ROLES: Set<LocationRole> = new Set([
   'at-payoff',
   'play-trigger',
+  'move-trigger',
   'buff',
   'location-ramp',
 ]);
@@ -453,7 +460,7 @@ function createLocationRule(spec: LocationRuleSpec): SynergyRule {
   };
 }
 
-/** Specs for all 8 location rules (order matters for deduplication). */
+/** Specs for all 9 location rules (order matters for deduplication). */
 const LOCATION_RULE_SPECS: readonly LocationRuleSpec[] = [
   {
     id: 'at-payoff',
@@ -466,6 +473,12 @@ const LOCATION_RULE_SPECS: readonly LocationRuleSpec[] = [
     name: 'Location Play Trigger',
     role: 'play-trigger',
     pattern: LOCATION_PATTERNS['play-trigger'],
+  },
+  {
+    id: 'move-trigger',
+    name: 'Location Move Trigger',
+    role: 'move-trigger',
+    pattern: LOCATION_PATTERNS['move-trigger'],
   },
   {id: 'buff', name: 'Location Buff', role: 'buff', pattern: LOCATION_PATTERNS.buff},
   {
@@ -491,7 +504,7 @@ const LOCATION_RULE_SPECS: readonly LocationRuleSpec[] = [
   {id: 'boost', name: 'Location Boost', role: 'boost', pattern: LOCATION_PATTERNS.boost},
 ];
 
-/** Create all 8 location synergy rules (order matters for deduplication) */
+/** Create all 9 location synergy rules (order matters for deduplication) */
 function createLocationRules(): SynergyRule[] {
   return LOCATION_RULE_SPECS.map(createLocationRule);
 }
@@ -503,7 +516,8 @@ function createLocationRules(): SynergyRule[] {
 /** Standalone educational descriptions for location roles (no card name needed) */
 export const LOCATION_ROLE_TOOLTIP: Record<LocationRole, string> = {
   'at-payoff': 'Get benefits when characters are at a location',
-  'play-trigger': 'Trigger effects when you play or move to a location',
+  'play-trigger': 'Trigger effects when you play a location',
+  'move-trigger': 'Trigger effects when a character moves to a location',
   buff: 'Give locations stat boosts and protection',
   'location-ramp': 'Reduce the cost of playing or moving to locations',
   move: 'Move characters to locations',

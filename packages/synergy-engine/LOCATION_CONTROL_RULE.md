@@ -1,9 +1,9 @@
 # Location Control Synergy Rule
 
-Detailed documentation for the Location Control rules — a playstyle synergy built from 8 sub-rules using a factory pattern.
+Detailed documentation for the Location Control rules — a playstyle synergy built from 9 sub-rules using a factory pattern.
 
 **Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/cardHelpers.ts`
-**Rule IDs**: `location-at-payoff`, `location-play-trigger`, `location-buff`, `location-location-ramp`, `location-move`, `location-in-play-check`, `location-search`, `location-boost`
+**Rule IDs**: `location-at-payoff`, `location-play-trigger`, `location-move-trigger`, `location-buff`, `location-location-ramp`, `location-move`, `location-in-play-check`, `location-search`, `location-boost`
 **Category**: `playstyle`
 **Playstyle ID**: `location-control`
 
@@ -13,11 +13,11 @@ Detailed documentation for the Location Control rules — a playstyle synergy bu
 
 Locations are a card type in Lorcana that occupy a unique board zone. Characters can be moved to locations (paying a move cost), and many cards interact with locations through various roles — buffing them, triggering when they're played, rewarding characters that are "at" a location, and more.
 
-The Location Control playstyle detects cards that participate in location-based strategies and connects them with Location cards and with each other. Rather than one monolithic rule, the engine uses **8 specialized sub-rules** — one per location role — created by a factory function. All 8 merge into a single `location-control` playstyle group in the UI.
+The Location Control playstyle detects cards that participate in location-based strategies and connects them with Location cards and with each other. Rather than one monolithic rule, the engine uses **9 specialized sub-rules** — one per location role — created by a factory function. All 9 merge into a single `location-control` playstyle group in the UI.
 
-### Why 8 Rules Instead of 1?
+### Why 9 Rules Instead of 1?
 
-Each role has a distinct detection pattern and a distinct score when paired with a Location. A single rule would need complex internal routing; 8 rules keep each detection/scoring path simple and independently testable. The playstyle merging layer handles combining them into one group.
+Each role has a distinct detection pattern and a distinct score when paired with a Location. A single rule would need complex internal routing; 9 rules keep each detection/scoring path simple and independently testable. The playstyle merging layer handles combining them into one group.
 
 ---
 
@@ -28,7 +28,8 @@ Each role has a distinct detection pattern and a distinct score when paired with
 | Role | Score vs Location | Category | What It Does |
 |------|------------------|----------|-------------|
 | `at-payoff` | **7** | High-value | Gets bonuses when characters are at a location |
-| `play-trigger` | **7** | High-value | Triggers effects whenever you play a location |
+| `play-trigger` | **7** | High-value | Triggers effects when you **play** a location |
+| `move-trigger` | **7** | High-value | Triggers effects when a character **moves onto** a location (pairs with `move`) |
 | `buff` | **7** | High-value | Strengthens locations (resist, willpower, protection) |
 | `location-ramp` | **7** | High-value | Reduces cost of playing/moving to locations |
 | `move` | **5** | Utility | Moves characters to locations for positioning |
@@ -82,7 +83,16 @@ Gets bonuses when characters are at a location.
 | ![Elsa - Ice Artisan](https://api.lorcana.ravensburger.com/images/en/set11/123_c4e62c081171f16d197d27b8167524141478bdda.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
 | **Elsa - Ice Artisan** | **Elsa's Ice Palace** |
 
-Triggers effects whenever you play a location. Only 1 card currently has this role (also has at-payoff).
+Triggers effects when you **play** a location. Elsa is the only card with this role (she also has at-payoff). Cards that trigger when a character *moves onto* a location are a separate role — see Move Trigger below.
+
+#### Move Trigger (Score 7)
+
+| Support | Location |
+|:-------:|:--------:|
+| ![Taffyta Muttonfudge - Sour Speedster](https://api.lorcana.ravensburger.com/images/en/set5/117_b857847abeeb29cef2adae2b4b46033ab5e3886d.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
+| **Taffyta Muttonfudge - Sour Speedster** | **Elsa's Ice Palace** |
+
+Triggers effects when a character **moves onto** a location (Taffyta, Goofy). Split from `play-trigger` so the move event scores as its own combo: the `move` enabler that relocates a character is what fires this payoff, so `move ↔ move-trigger` is a complementary pair.
 
 #### Buff (Score 7)
 

@@ -151,7 +151,8 @@ export const STRUCTURAL_MECHANICS: Mechanic[] = [
   {id: 'return', category: 'structural', label: 'Bounce', description: 'Return a character to your hand for value'},
   // Locations
   {id: 'at-payoff', category: 'structural', label: 'At Location', description: 'Get benefits when characters are at a location'},
-  {id: 'play-trigger', category: 'structural', label: 'Trigger', description: 'Trigger effects when you play or move to a location'},
+  {id: 'play-trigger', category: 'structural', label: 'On Play', description: 'Trigger effects when you play a location'},
+  {id: 'move-trigger', category: 'structural', label: 'On Move', description: 'Trigger effects when a character moves to a location'},
   {id: 'buff', category: 'structural', label: 'Buff', description: 'Give locations stat boosts and protection'},
   {id: 'location-ramp', category: 'structural', label: 'Location Ramp', description: 'Reduce the cost to play or move to locations'},
   {id: 'move', category: 'structural', label: 'Move', description: 'Move characters to locations'},

@@ -254,8 +254,11 @@ export const LOCATION_PATTERNS = {
   'at-payoff': /while\b.{0,60}at a location|if\b.{0,60}at a location|is at a location/i,
   move: /\bmove\b[^.]{0,40}?\bcharacter[^.]{0,40}?\blocation|to the same location/i,
   'move-exclude': /move.*damage/i,
-  'play-trigger':
-    /when(?:ever)? you play a location|whenever.*play a location|when(?:ever)?[^.]{0,40}moves? to a location/i,
+  // Fires when you PLAY a location (e.g. Elsa - Ice Artisan).
+  'play-trigger': /when(?:ever)? you play a location|whenever.*play a location/i,
+  // Fires when a character MOVES onto a location (e.g. Taffyta, Goofy) — a payoff
+  // for the `move` enabler. Split from play-trigger so the two events score apart.
+  'move-trigger': /when(?:ever)?[^.]{0,40}moves? to a location/i,
   'in-play-check': /if you have a location|while you have a.*(location)|for each location/i,
   search: makeSearchPattern('location(?:\\s+cards?)?'),
   buff: /your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
@@ -274,6 +277,7 @@ export type LocationRole =
   | 'at-payoff'
   | 'move'
   | 'play-trigger'
+  | 'move-trigger'
   | 'in-play-check'
   | 'search'
   | 'buff'
@@ -301,6 +305,8 @@ export function getLocationRoles(card: LorcanaCard): LocationRole[] {
     roles.push('move');
 
   if (LOCATION_PATTERNS['play-trigger'].test(text)) roles.push('play-trigger');
+
+  if (LOCATION_PATTERNS['move-trigger'].test(text)) roles.push('move-trigger');
 
   if (LOCATION_PATTERNS['in-play-check'].test(text)) roles.push('in-play-check');
 

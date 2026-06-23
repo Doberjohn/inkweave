@@ -660,6 +660,21 @@ describe('Location Synergy Rules', () => {
       expect(getLocationRoles(felixSteward)).toContain('buff');
     });
 
+    it('splits move-trigger (moves to a location) apart from play-trigger', () => {
+      const taffyta = createCard({
+        id: 'taffyta-move-trigger',
+        name: 'Taffyta Muttonfudge',
+        cost: 3,
+        ink: 'Ruby',
+        text: 'Once per turn, when this character moves to a location, gain 2 lore.',
+      });
+      const taffytaRoles = getLocationRoles(taffyta);
+      expect(taffytaRoles).toContain('move-trigger');
+      expect(taffytaRoles).not.toContain('play-trigger');
+      // Elsa fires on *playing* a location, so she stays play-trigger only.
+      expect(getLocationRoles(elsaIceArtisan)).not.toContain('move-trigger');
+    });
+
     it('should return empty for Location cards and unrelated cards', () => {
       expect(getLocationRoles(agrabah)).toEqual([]);
       expect(isLocationSupportCard(agrabah)).toBe(false);
@@ -742,6 +757,10 @@ describe('Location Synergy Rules', () => {
       ['at-payoff + move → 3', ['at-payoff'], ['move'], 3],
       ['search + buff → 3', ['search'], ['buff'], 3],
       ['move + search → 3', ['move'], ['search'], 3],
+      // move enabler ↔ move-trigger payoff: complementary, but move isn't high-value → 3
+      ['move + move-trigger → 3', ['move'], ['move-trigger'], 3],
+      // two high-value complementary roles → 5
+      ['move-trigger + location-ramp → 5', ['move-trigger'], ['location-ramp'], 5],
     ])('%s', (_label, rolesA, rolesB, expected) => {
       expect(getCrossSynergyScore(rolesA, rolesB)).toBe(expected);
     });

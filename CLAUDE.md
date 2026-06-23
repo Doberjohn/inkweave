@@ -81,7 +81,7 @@ React web application that consumes the synergy engine package.
 
 **Playstyles** (implemented):
 - Lore Denial (`lore-denial`) - cards that make opponents lose lore
-- Location Control (`location-control`) - location-support roles (8 sub-rules)
+- Location Control (`location-control`) - location-support roles (9 sub-rules)
 - Discard (`discard`) - opponent discard enablers + hand-size payoffs
 - Ramp (`ramp`) - inkwell ramp + inkwell triggers + cost reduction grants
 - Toys (`toy`) - Toy-classification members + tribal payoffs (search, banish-trigger, self-discount)
@@ -250,9 +250,9 @@ Characters with the Singer keyword can exert to sing Song action cards for free,
 
 **Full documentation**: See [`packages/synergy-engine/SINGER_SONGS_RULE.md`](packages/synergy-engine/SINGER_SONGS_RULE.md) for detection details, bidirectional matching, scoring logic, and test coverage.
 
-### Location Control (playstyle, 8 sub-rules)
+### Location Control (playstyle, 9 sub-rules)
 
-8 specialized rules detecting location-support roles: at-payoff, play-trigger, buff, location-ramp, move, in-play-check, search, boost. All merge into a single `location-control` playstyle group. Factory pattern (`createLocationRule`) generates each rule. Anti-location cards (banish/remove locations) are excluded.
+9 specialized rules detecting location-support roles: at-payoff, play-trigger (fires on playing a location), move-trigger (fires when a character moves onto a location — pairs with the `move` enabler), buff, location-ramp, move, in-play-check, search, boost. All merge into a single `location-control` playstyle group. Factory pattern (`createLocationRule`) generates each rule. Anti-location cards (banish/remove locations) are excluded.
 
 **Full documentation**: See [`packages/synergy-engine/LOCATION_CONTROL_RULE.md`](packages/synergy-engine/LOCATION_CONTROL_RULE.md) for role taxonomy, detection patterns, cross-synergy matrix, and test coverage.
 
