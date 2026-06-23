@@ -1,5 +1,6 @@
-import {useState} from 'react';
+import {useRef, useState} from 'react';
 import {COLORS, FONTS, FONT_SIZES} from '../../../shared/constants';
+import {useContainerWidth} from '../../../shared/hooks';
 
 export interface RoleTile {
   role: string;
@@ -18,20 +19,42 @@ const DESCRIPTION_COLOR = '#c8c8d8';
 
 const TILE_WIDTH = 190;
 const TILE_GAP = 10;
+/** Width one fixed-width cell occupies in the row (tile + the gap before it). */
+const CELL_WIDTH = TILE_WIDTH + TILE_GAP;
 /** Cap a single row at 8 cells (7 tiles + a show-more cell, or 8 tiles outright). */
 const MAX_VISIBLE_TILES = 8;
-/** Collapsed view shows this many real tiles; the 8th cell is the show-more tile. */
-const COLLAPSED_TILE_COUNT = MAX_VISIBLE_TILES - 1;
+/**
+ * Below this many fitting cells the collapse isn't worth it (≤1 real tile + a
+ * show-more cell reads as broken), so narrow containers — e.g. the mobile
+ * MechanicsBottomSheet — just scroll the full set instead of collapsing.
+ */
+const MIN_COLLAPSE_CELLS = 3;
 const ROW_MAX_WIDTH = MAX_VISIBLE_TILES * TILE_WIDTH + (MAX_VISIBLE_TILES - 1) * TILE_GAP;
 
 /**
- * A playstyle's mechanic tiles. With ≤8 mechanics every tile shows in a static
- * row. With more, the row collapses to 7 tiles + a "show more" tile; clicking it
- * reveals the rest and turns the row into a smooth horizontal scroll carousel
- * (scroll-snap + subtle scrollbar). Each tile toggles a role filter.
+ * How many fixed-width cells fit in the measured content width, clamped to
+ * MAX_VISIBLE_TILES. Returns 0 until measured (width 0) so the caller defaults
+ * to the never-clip scroll path.
+ */
+function cellCapacity(width: number): number {
+  if (width <= 0) return 0;
+  const fits = Math.floor((width + TILE_GAP) / CELL_WIDTH);
+  return Math.min(MAX_VISIBLE_TILES, Math.max(1, fits));
+}
+
+/**
+ * A playstyle's mechanic tiles. When every tile fits the measured width they
+ * show in a static row. When there are more than fit, the row collapses to
+ * (capacity − 1) tiles + a "show more" cell; clicking it reveals the rest and
+ * turns the row into a smooth horizontal scroll carousel (scroll-snap + subtle
+ * scrollbar). Narrow containers (capacity < 3, e.g. mobile) skip the collapse
+ * and just scroll, so the reveal cell is never clipped behind hidden overflow.
+ * Each tile toggles a role filter.
  */
 export function RoleTileRow({tiles, activeRoles, onToggle}: RoleTileRowProps) {
   const [expanded, setExpanded] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+  const width = useContainerWidth(sectionRef);
 
   if (tiles.length === 0) return null;
 
@@ -39,17 +62,21 @@ export function RoleTileRow({tiles, activeRoles, onToggle}: RoleTileRowProps) {
     (a, b) => b.count - a.count || a.label.localeCompare(b.label),
   );
 
-  // Show-more only earns its cell when it hides ≥2 tiles (total > 8); at exactly
-  // 8 the tiles all fit, so we never trade a real tile for the affordance.
-  const needsShowMore = sortedTiles.length > MAX_VISIBLE_TILES;
+  // Capacity-driven collapse: only collapse when the container is wide enough
+  // for a sensible row AND there are more tiles than fit. The show-more cell
+  // then lands as the last *visible* cell, so it can never be clipped.
+  const capacity = cellCapacity(width);
+  const needsShowMore = capacity >= MIN_COLLAPSE_CELLS && sortedTiles.length > capacity;
   const collapsed = needsShowMore && !expanded;
-  const visibleTiles = collapsed ? sortedTiles.slice(0, COLLAPSED_TILE_COUNT) : sortedTiles;
-  const hiddenCount = sortedTiles.length - COLLAPSED_TILE_COUNT;
+  const collapsedTileCount = capacity - 1;
+  const visibleTiles = collapsed ? sortedTiles.slice(0, collapsedTileCount) : sortedTiles;
+  const hiddenCount = sortedTiles.length - collapsedTileCount;
 
   return (
     <section
+      ref={sectionRef}
       aria-label="Mechanics"
-      // Carousel scrolls only once expanded; collapsed stays a clipped static row.
+      // Carousel scrolls unless collapsed; collapsed is a static, exactly-fitting row.
       className={collapsed ? undefined : 'subtle-scrollbar'}
       style={{
         display: 'flex',
