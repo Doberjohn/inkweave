@@ -1,4 +1,4 @@
-import {createContext, useContext, useState, useCallback, useMemo, type ReactNode} from 'react';
+import {createContext, useContext, useState, type ReactNode} from 'react';
 import {useNavigate, useLocation} from 'react-router-dom';
 import type {DetailedPairSynergy} from 'inkweave-synergy-engine';
 import {CardOverviewModal} from '../../features/synergies';
@@ -72,14 +72,14 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setHasUserSeenDefaultState(true);
   }
 
-  const openCardModal = useCallback((cardId: string) => {
+  const openCardModal = (cardId: string) => {
     setSelectedCardId(cardId);
     setComparisonPartnerId(null);
     setComparisonGroupKey(null);
     // hasUserSeenDefaultState will flip true on the next render via the guard above.
-  }, []);
+  };
 
-  const openComparison = useCallback((cardId: string, partnerId: string, groupKey?: string) => {
+  const openComparison = (cardId: string, partnerId: string, groupKey?: string) => {
     setSelectedCardId(cardId);
     setComparisonPartnerId(partnerId);
     setComparisonGroupKey(groupKey ?? null);
@@ -87,9 +87,9 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     // had previously been in default state for this session. Click flow: openCardModal was
     // called first, flag is already true. Deep link: openComparison is the first call, flag
     // stays false.
-  }, []);
+  };
 
-  const closeCardModal = useCallback(() => {
+  const closeCardModal = () => {
     setSelectedCardId(null);
     setComparisonPartnerId(null);
     setComparisonGroupKey(null);
@@ -97,7 +97,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     if (location.pathname.startsWith('/compare/')) {
       navigate('/');
     }
-  }, [location.pathname, navigate]);
+  };
 
   const {enterComparisonRoute, exitComparisonRoute} = useComparisonRouteSync({
     selectedCardId,
@@ -105,26 +105,15 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setComparisonGroupKey,
   });
 
-  const value = useMemo(
-    () => ({
-      selectedCardId,
-      comparisonPartnerId,
-      comparisonGroupKey,
-      hasUserSeenDefaultState,
-      openCardModal,
-      openComparison,
-      closeCardModal,
-    }),
-    [
-      selectedCardId,
-      comparisonPartnerId,
-      comparisonGroupKey,
-      hasUserSeenDefaultState,
-      openCardModal,
-      openComparison,
-      closeCardModal,
-    ],
-  );
+  const value = {
+    selectedCardId,
+    comparisonPartnerId,
+    comparisonGroupKey,
+    hasUserSeenDefaultState,
+    openCardModal,
+    openComparison,
+    closeCardModal,
+  };
 
   return (
     <CardModalContext.Provider value={value}>
@@ -164,24 +153,21 @@ function useComparisonRouteSync({
   const location = useLocation();
   const isOnCompareRoute = location.pathname.startsWith('/compare/');
 
-  const enterComparisonRoute = useCallback(
-    (partnerId: string, groupKey?: string) => {
-      if (!selectedCardId) return;
-      if (!isOnCompareRoute) return;
-      const path = groupKey
-        ? `/compare/${selectedCardId}/${partnerId}/${groupKey}`
-        : `/compare/${selectedCardId}/${partnerId}`;
-      navigate(path);
-    },
-    [selectedCardId, isOnCompareRoute, navigate],
-  );
+  const enterComparisonRoute = (partnerId: string, groupKey?: string) => {
+    if (!selectedCardId) return;
+    if (!isOnCompareRoute) return;
+    const path = groupKey
+      ? `/compare/${selectedCardId}/${partnerId}/${groupKey}`
+      : `/compare/${selectedCardId}/${partnerId}`;
+    navigate(path);
+  };
 
-  const exitComparisonRoute = useCallback(() => {
+  const exitComparisonRoute = () => {
     if (!selectedCardId) return;
     setComparisonPartnerId(null);
     setComparisonGroupKey(null);
     if (isOnCompareRoute) navigate(`/card/${selectedCardId}`);
-  }, [selectedCardId, isOnCompareRoute, navigate, setComparisonPartnerId, setComparisonGroupKey]);
+  };
 
   return {enterComparisonRoute, exitComparisonRoute};
 }

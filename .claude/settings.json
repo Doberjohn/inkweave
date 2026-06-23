@@ -95,11 +95,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash D:/johnn/Projects/inkweave/.claude/hooks/git-write-protection.sh"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/git-write-protection.sh\""
           },
           {
             "type": "command",
-            "command": "bash D:/johnn/Projects/inkweave/.claude/hooks/issue-create-guard.sh"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/issue-create-guard.sh\""
           }
         ]
       },
@@ -108,7 +108,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash D:/johnn/Projects/inkweave/.claude/hooks/branch-verification.sh"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/branch-verification.sh\""
           }
         ]
       }
@@ -119,19 +119,19 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"D:\\johnn\\Projects\\inkweave\" && npx tsc --noEmit --pretty 2>&1 | head -20"
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && npx tsc --noEmit --pretty 2>&1 | head -20"
           },
           {
             "type": "command",
-            "command": "bash D:/johnn/Projects/inkweave/.claude/hooks/engine-auto-rebuild.sh"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/engine-auto-rebuild.sh\""
           },
           {
             "type": "command",
-            "command": "bash D:/johnn/Projects/inkweave/.claude/hooks/preview-images-auto-convert.sh"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/preview-images-auto-convert.sh\""
           },
           {
             "type": "command",
-            "command": "bash D:/johnn/Projects/inkweave/.claude/hooks/preview-data-auto-precompute.sh"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/preview-data-auto-precompute.sh\""
           }
         ]
       },
@@ -140,7 +140,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash D:/johnn/Projects/inkweave/.claude/hooks/agent-tool-substitution-guard.sh"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/agent-tool-substitution-guard.sh\""
           }
         ]
       }

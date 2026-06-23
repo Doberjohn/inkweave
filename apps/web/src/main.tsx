@@ -59,11 +59,36 @@ if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
 // `waiting` state, show a bottom-right toast for ~600ms so the user sees the
 // version swap, then activate + reload automatically.
 if (import.meta.env.PROD) {
+  // Backstop reload: fire exactly once when a new SW takes control. workbox-
+  // window's built-in controlling-reload only covers updates it initiated via
+  // updateSW(); this also catches a wedged `waiting` worker activated by the
+  // direct SKIP_WAITING message below. `hadController` gates out the first-ever
+  // install (no prior controller), which would otherwise spuriously reload a
+  // user's very first visit.
+  if ('serviceWorker' in navigator) {
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloaded) return;
+      reloaded = true;
+      window.location.reload();
+    });
+  }
+
   const updateSW = registerSW({
     onNeedRefresh() {
       showUpdateToast();
       window.setTimeout(() => {
         void updateSW(true);
+        // Backstop for a wedged `waiting` worker that updateSW() doesn't
+        // activate: message it directly so it calls skipWaiting() and fires
+        // `controllerchange` (handled above). skipWaiting is idempotent, so
+        // overlapping with updateSW(true) is harmless.
+        if ('serviceWorker' in navigator) {
+          void navigator.serviceWorker.getRegistration().then((reg) => {
+            reg?.waiting?.postMessage({type: 'SKIP_WAITING'});
+          });
+        }
       }, 600);
     },
     onOfflineReady() {

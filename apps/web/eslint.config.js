@@ -29,6 +29,26 @@ export default tseslint.config(
       ...jsxA11y.flatConfigs.recommended.rules,
       'react-refresh/only-export-components': ['warn', {allowConstantExport: true}],
       'react-compiler/react-compiler': 'error',
+      // Ban manual memoization. The React Compiler (wired in vite.config.ts via
+      // reactCompilerPreset) auto-memoizes component/hook values keyed on their
+      // reactive deps, so useMemo/useCallback are redundant. This guard stops the
+      // codebase from regressing after the #291 sweep (zero call sites remain).
+      // NOTE: do NOT reach for eslint-disable to silence the exhaustive-deps
+      // warnings this creates — disabling a react-hooks rule makes the compiler
+      // skip optimizing the whole component. Fix at the source or leave the warning.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression[callee.name='useMemo']",
+          message:
+            'Avoid useMemo — the React Compiler (vite.config.ts) auto-memoizes. Drop the wrapper and return the value directly (#291).',
+        },
+        {
+          selector: "CallExpression[callee.name='useCallback']",
+          message:
+            'Avoid useCallback — the React Compiler (vite.config.ts) auto-memoizes. Drop the wrapper and use a plain function (#291).',
+        },
+      ],
     },
   },
   storybook.configs['flat/recommended'],

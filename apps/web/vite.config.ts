@@ -155,7 +155,12 @@ export default defineConfig({
         // a new tab returns the SPA shell, which boots React Router, fails to
         // match the path, and renders NotFoundPage.tsx (HTTP 200 + a "404"
         // looking page). The runtime caching rules below handle these paths.
-        navigateFallbackDenylist: [/^\/card-images\//, /^\/card-images-preview\//, /^\/data\//],
+        navigateFallbackDenylist: [
+          /^\/card-images\//,
+          /^\/card-images-preview\//,
+          /^\/data\//,
+          /^\/assets\//,
+        ],
         runtimeCaching: [
           {
             urlPattern: /\/data\/allCards\.json$/,

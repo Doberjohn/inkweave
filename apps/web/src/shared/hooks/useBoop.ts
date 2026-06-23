@@ -1,4 +1,4 @@
-import {useState, useCallback, useEffect} from 'react';
+import {useState, useEffect} from 'react';
 import {EASING} from '../constants';
 
 interface BoopConfig {
@@ -40,9 +40,9 @@ export function useBoop({
 }: BoopConfig = {}): BoopReturn {
   const [isBooped, setIsBooped] = useState(false);
 
-  const trigger = useCallback(() => {
+  const trigger = () => {
     setIsBooped(true);
-  }, []);
+  };
 
   useEffect(() => {
     if (!isBooped) return;

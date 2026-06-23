@@ -5,39 +5,55 @@
  * deploy. A tab still running an old bundle references chunk URLs the new deploy
  * has purged, so the next lazy route load (or its CSS preload) 404s. We recover
  * by reloading the page: the browser fetches a fresh `index.html` with current
- * chunk hashes. The reload must be loop-safe — if it lands on the same broken
- * state (CDN serving a stale `index.html`, asset genuinely gone), reloading
- * again would trap the user in a refresh loop.
+ * chunk hashes.
+ *
+ * The reload must be loop-safe. The old design used a one-shot flag cleared on
+ * every successful import — but the reloaded page always loads `HomePage`
+ * successfully, which re-armed the flag immediately, so a *different*
+ * repeatedly-failing chunk could still drive an infinite reload loop (the
+ * success signal was decoupled from the failure). This version is time-based:
+ * we record *when* we last reloaded and refuse to reload again until a window
+ * has elapsed. One stale-deploy episode costs at most one reload, no matter
+ * which imports succeed in between; a genuinely new episode (a later deploy)
+ * lands outside the window and is allowed to recover.
  */
 
-/** sessionStorage flag marking that we already attempted a recovery reload. */
-const GUARD_KEY = 'stale-chunk-reload';
+/** sessionStorage key holding the timestamp (ms) of our last recovery reload. */
+const GUARD_KEY = 'stale-chunk-reload-at';
 
 /**
- * Clear the reload guard once a dynamic import has succeeded — the fresh bundle
- * is now being served, so a *later* failure is a new stale reference that should
- * be allowed to reload again. Called from `lazyWithRetry`'s success path.
+ * Minimum gap between recovery reloads. Long enough that a single stale-deploy
+ * episode (including a slow CDN still serving a stale `index.html` for a few
+ * seconds after the reload) collapses to one reload; short enough that a real
+ * later deploy in a long-lived tab still auto-recovers.
  */
-export function markStaleChunkRecovered(): void {
-  sessionStorage.removeItem(GUARD_KEY);
+const RELOAD_WINDOW_MS = 30_000;
+
+/**
+ * Whether enough time has passed since our last recovery reload to attempt
+ * another. Any value that isn't a sane past timestamp — missing, unparseable,
+ * ±Infinity, or a future time from a backward clock jump — fails open
+ * ("allowed") so a bad guard value can never permanently wedge recovery.
+ */
+function canReload(now: number): boolean {
+  const last = Number(sessionStorage.getItem(GUARD_KEY));
+  // Fail open on any value that isn't a sane past timestamp so a bad guard
+  // value can't wedge recovery: garbage parses to NaN and "Infinity" stays
+  // non-finite (both caught by !isFinite); a value > now means the clock
+  // jumped backward. A missing key parses to 0, allowed via the window check.
+  if (!Number.isFinite(last) || last > now) return true;
+  return now - last >= RELOAD_WINDOW_MS;
 }
 
 /**
  * Reload onto the fresh deploy to recover from a stale chunk reference, guarded
- * against infinite reload loops.
- *
- * Implementation note for the guard: use `GUARD_KEY` in `sessionStorage` so we
- * trigger `window.location.reload()` only when we haven't already tried this
- * session — and set the flag *before* reloading (a reload tears down the page,
- * so anything after `reload()` won't run on this load).
+ * against infinite reload loops by a time window (see `canReload`).
  */
 export function reloadForStaleChunk(): void {
-  // One-shot per session: bail if we've already tried. The flag is cleared by
-  // markStaleChunkRecovered() once an import succeeds, so a fresh stale
-  // reference later in the same tab can still trigger another recovery.
-  if (sessionStorage.getItem(GUARD_KEY)) return;
-  // Set before reloading — the reload tears down the page, so this line must
-  // win the race against window.location.reload().
-  sessionStorage.setItem(GUARD_KEY, '1');
+  const now = Date.now();
+  if (!canReload(now)) return;
+  // Persist *before* reloading — the reload tears down the page, so this write
+  // must win the race against window.location.reload().
+  sessionStorage.setItem(GUARD_KEY, String(now));
   window.location.reload();
 }

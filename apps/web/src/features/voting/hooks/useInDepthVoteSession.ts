@@ -1,4 +1,4 @@
-import {useState, useCallback, useMemo} from 'react';
+import {useState} from 'react';
 import {getSupabase, submitVote, type Accuracy, type Score, type InDepthVote} from '../../../shared/lib/supabase';
 import type {InDepthFormState, VotingPair} from '../types';
 import {writeInDepthVote} from '../lib/voteStorage';
@@ -35,40 +35,40 @@ export function useInDepthVoteSession(currentPair: VotingPair | null): UseInDept
   const [lastResult, setLastResult] = useState<'success' | 'rate_limited' | 'error' | null>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
 
-  const isSupabaseAvailable = useMemo(() => getSupabase() !== null, []);
+  const isSupabaseAvailable = getSupabase() !== null;
 
   const hasAnyAnswer = hasAnyFormAnswer(formState);
 
-  const setIsReal = useCallback((value: boolean | null) => {
+  const setIsReal = (value: boolean | null) => {
     setFormState((prev) => ({...prev, isReal: value}));
-  }, []);
+  };
 
-  const setAccuracy = useCallback((value: Accuracy) => {
+  const setAccuracy = (value: Accuracy) => {
     setFormState((prev) => ({...prev, accuracy: value}));
-  }, []);
+  };
 
-  const setScore = useCallback((value: Score) => {
+  const setScore = (value: Score) => {
     setFormState((prev) => ({...prev, score: value}));
-  }, []);
+  };
 
-  const setWouldPlay = useCallback((value: boolean | null) => {
+  const setWouldPlay = (value: boolean | null) => {
     setFormState((prev) => ({...prev, wouldPlay: value}));
-  }, []);
+  };
 
-  const setWhoCarries = useCallback((value: 'a' | 'b' | 'both') => {
+  const setWhoCarries = (value: 'a' | 'b' | 'both') => {
     setFormState((prev) => ({...prev, whoCarries: value}));
-  }, []);
+  };
 
-  const setDifficulty = useCallback((value: 1 | 2 | 3) => {
+  const setDifficulty = (value: 1 | 2 | 3) => {
     setFormState((prev) => ({...prev, difficulty: value}));
-  }, []);
+  };
 
-  const resetForm = useCallback(() => {
+  const resetForm = () => {
     setFormState(INITIAL_STATE);
     setLastResult(null);
-  }, []);
+  };
 
-  const submit = useCallback(async () => {
+  const submit = async () => {
     if (isSubmitGated({currentPair, isRateLimited, hasAnyAnswer})) return;
     // Redundant with isSubmitGated's !currentPair check, but narrows the opaque
     // boolean gate to VotingPair for buildInDepthVote/applySubmitResult below.
@@ -85,7 +85,7 @@ export function useInDepthVoteSession(currentPair: VotingPair | null): UseInDept
     } finally {
       setIsSubmitting(false);
     }
-  }, [currentPair, isRateLimited, hasAnyAnswer, formState]);
+  };
 
   return {
     formState,

@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
+import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import type {SynergyGroup as SynergyGroupData} from '../types';
@@ -111,18 +111,18 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   // the mobile MobileComparisonView entry/exit FLIP. Survives the exit window for the FLIP-back.
   const [comparisonOrigin, setComparisonOrigin] = useState<ComparisonOriginRects | null>(null);
 
-  const cancelPendingExit = useCallback(() => {
+  const cancelPendingExit = () => {
     setExitingPair(null);
-  }, []);
+  };
 
   const onExitComparisonProp = props.onExitComparison;
-  const exitComparison = useCallback(() => {
+  const exitComparison = () => {
     if (!comparisonPair) return;
     setExitingPair(comparisonPair);
     setComparisonPair(null);
     setHighlightedCard(null);
     onExitComparisonProp?.();
-  }, [comparisonPair, onExitComparisonProp]);
+  };
 
   // Schedule the actual unmount of the exit overlays after FLIP_DURATION. Cleanup clears the
   // timeout on re-entry (when `exitingPair` flips to null via cancelPendingExit) so a quick
@@ -151,10 +151,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
     setHighlightedCard,
   });
 
-  const visibleGroups = useMemo(
-    () => buildVisibleGroups(props.synergies, activeGroupFilter),
-    [props.synergies, activeGroupFilter],
-  );
+  const visibleGroups = buildVisibleGroups(props.synergies, activeGroupFilter);
 
   const {compareCardRef, captureStartRect} = useFLIPAnimation(comparisonPair, exitingPair);
   // Re-entry guard for the 90ms click-ack window (#332 #6 idea B). Holds the setTimeout id while

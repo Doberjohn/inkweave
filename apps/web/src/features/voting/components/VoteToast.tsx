@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {COLORS, EASING, FONTS} from '../../../shared/constants';
 import type {Score} from '../../../shared/lib/supabase';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';
@@ -86,12 +86,12 @@ export function VoteToast({data, onDismiss, onUndo, isMobile}: VoteToastProps) {
   const onDismissRef = useRef(onDismiss);
   useEffect(() => { onDismissRef.current = onDismiss; }, [onDismiss]);
 
-  const schedule = useCallback((ms: number) => {
+  const schedule = (ms: number) => {
     startRef.current = Date.now();
     remainRef.current = ms;
     timersRef.current.dismiss = setTimeout(() => setExiting(true), ms);
     timersRef.current.remove = setTimeout(() => onDismissRef.current(), ms + ENTER_MS);
-  }, []);
+  };
 
   useEffect(() => {
     schedule(DISMISS_MS);
@@ -101,17 +101,17 @@ export function VoteToast({data, onDismiss, onUndo, isMobile}: VoteToastProps) {
     };
   }, [schedule]);
 
-  const handleMouseEnter = useCallback(() => {
+  const handleMouseEnter = () => {
     remainRef.current = Math.max(0, remainRef.current - (Date.now() - startRef.current));
     clearTimeout(timersRef.current.dismiss);
     clearTimeout(timersRef.current.remove);
     setPaused(true);
-  }, []);
+  };
 
-  const handleMouseLeave = useCallback(() => {
+  const handleMouseLeave = () => {
     setPaused(false);
     schedule(remainRef.current);
-  }, [schedule]);
+  };
 
   const reaction = getReaction(data.userScore, data.engineScore);
 

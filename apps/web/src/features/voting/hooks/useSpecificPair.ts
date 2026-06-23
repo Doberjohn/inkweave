@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useReducer} from 'react';
+import {useEffect, useReducer} from 'react';
 import type {LorcanaCard, PairSynergyConnection} from 'inkweave-synergy-engine';
 import {useCardDataContext} from '../../../shared/contexts/CardDataContext';
 import {fetchCardSynergies} from '../../synergies/hooks/usePrecomputedSynergies';
@@ -39,13 +39,13 @@ export function useSpecificPair(
   const {getCardById} = useCardDataContext();
 
   // Derive card objects synchronously (no effect needed for lookups)
-  const resolved = useMemo(() => {
+  const resolved = (() => {
     if (!cardAId || !cardBId) return {cardA: null, cardB: null, error: 'Missing card IDs'};
     const cardA = getCardById(cardAId);
     const cardB = getCardById(cardBId);
     if (!cardA || !cardB) return {cardA: null, cardB: null, error: 'One or both cards not found'};
     return {cardA, cardB, error: null};
-  }, [cardAId, cardBId, getCardById]);
+  })();
 
   const [state, dispatch] = useReducer(pairReducer, INITIAL_STATE);
 
