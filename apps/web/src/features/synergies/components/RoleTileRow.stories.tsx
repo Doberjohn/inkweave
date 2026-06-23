@@ -30,6 +30,7 @@ const meta: Meta<typeof RoleTileRow> = {
 export default meta;
 type Story = StoryObj<typeof RoleTileRow>;
 
+/** Wraps RoleTileRow with local active-role state so stories show real toggle behavior. */
 function InteractiveTileRow({tiles}: {tiles: RoleTile[]}) {
   const [activeRoles, setActiveRoles] = useState<Set<string>>(() => new Set());
   const toggle = (role: string) => {

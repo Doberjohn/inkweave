@@ -169,6 +169,7 @@ function getRoleTileButtonStyle(active: boolean, hovered: boolean): React.CSSPro
   };
 }
 
+/** A single mechanic tile: shows the label + count + description and toggles its role filter on click. */
 function RoleTileButton({
   tile,
   active,
@@ -254,6 +255,7 @@ function getShowMoreTileStyle(hovered: boolean): React.CSSProperties {
   };
 }
 
+/** The dashed reveal tile shown as the last collapsed cell; clicking it expands the carousel. */
 function ShowMoreTile({hiddenCount, onClick}: {hiddenCount: number; onClick: () => void}) {
   const [hovered, setHovered] = useState(false);
 
