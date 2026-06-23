@@ -1,5 +1,11 @@
 import {describe, it, expect} from 'vitest';
-import {MECHANICS, MECHANIC_BY_ID, STRUCTURAL_ROLE_TO_MECHANIC, getCardMechanics} from '../utils';
+import {
+  MECHANICS,
+  STRUCTURAL_MECHANICS,
+  MECHANIC_BY_ID,
+  STRUCTURAL_ROLE_TO_MECHANIC,
+  getCardMechanics,
+} from '../utils';
 import {createCard} from './fixtures.js';
 
 describe('mechanics catalog', () => {
@@ -60,8 +66,9 @@ describe('mechanics catalog', () => {
   });
 
   describe('catalog integrity', () => {
-    it('has unique ids and a consistent id→mechanic lookup', () => {
-      const ids = MECHANICS.map((m) => m.id);
+    it('has unique ids across both catalogs and a consistent id→mechanic lookup', () => {
+      // MECHANIC_BY_ID merges both arrays — a duplicate id would silently overwrite.
+      const ids = [...MECHANICS, ...STRUCTURAL_MECHANICS].map((m) => m.id);
       expect(new Set(ids).size).toBe(ids.length);
       expect(MECHANIC_BY_ID['draw'].label).toBe('Card Draw');
     });

@@ -381,14 +381,24 @@ function toRoleTile(chip: RoleChip): RoleTile {
   };
 }
 
-/** Check if a card has a specific role within its playstyle */
-function cardHasRole(playstyleId: PlaystyleId, card: LorcanaCard, role: string): boolean {
+/**
+ * Check if a card has a specific role within its playstyle. Pass `precomputedIds`
+ * (the card's canonical mechanic-id set) when checking many roles for the same
+ * card to avoid recomputing the regex/role detection per role.
+ */
+function cardHasRole(
+  playstyleId: PlaystyleId,
+  card: LorcanaCard,
+  role: string,
+  precomputedIds?: ReadonlySet<string>,
+): boolean {
   if (playstyleId === 'location-control' && role === LOCATION_CARD_ROLE) {
     return card.type === 'Location';
   }
   const config = ROLE_CONFIGS[playstyleId];
   if (!config) return false;
   // Match against the same canonical id set used to build the tiles.
+  if (precomputedIds) return precomputedIds.has(role);
   return cardMechanicIds(config, card).includes(role);
 }
 
@@ -435,8 +445,14 @@ function applyRoleFilter(
   playstyleId: PlaystyleId | undefined,
 ): LorcanaCard[] {
   if (activeRoles.size === 0 || !playstyleId) return cards;
+  const config = ROLE_CONFIGS[playstyleId];
+  if (!config) return cards;
   const roles = [...activeRoles];
-  return cards.filter((card) => roles.some((r) => cardHasRole(playstyleId, card, r)));
+  return cards.filter((card) => {
+    // Compute the card's mechanic-id set once, then test every active role against it.
+    const ids = new Set(cardMechanicIds(config, card));
+    return roles.some((r) => cardHasRole(playstyleId, card, r, ids));
+  });
 }
 
 function getHeroLayout(isMobile: boolean): HeroLayout {
