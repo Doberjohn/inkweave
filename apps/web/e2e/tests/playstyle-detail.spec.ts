@@ -54,13 +54,14 @@ test.describe('Playstyle Detail — Desktop', () => {
     const initialCount = await cardTiles.count();
     expect(initialCount).toBeGreaterThan(0);
 
-    // Discard playstyle exposes Standard/Targeted/Random/Payoff role tiles.
-    // Standard is the broadest enabler role — its tile is reliably present.
-    const standardChip = page.getByRole('button', {name: /Standard/});
-    await expect(standardChip).toBeVisible();
+    // Discard exposes Forced/Targeted/Random Discard + Payoff mechanic tiles.
+    // "Forced Discard" is the broadest enabler — its tile is reliably present.
+    // (Labels come from the shared mechanics catalog; "standard" → "Forced Discard".)
+    const forcedDiscardChip = page.getByRole('button', {name: /Forced Discard/});
+    await expect(forcedDiscardChip).toBeVisible();
 
-    // Click to apply the filter — card grid should narrow to Standard-only enablers.
-    await standardChip.click();
+    // Click to apply the filter — card grid should narrow to forced-discard enablers.
+    await forcedDiscardChip.click();
     await page.waitForTimeout(200);
 
     const filteredCount = await cardTiles.count();
@@ -68,7 +69,7 @@ test.describe('Playstyle Detail — Desktop', () => {
     expect(filteredCount).toBeLessThan(initialCount);
 
     // Click the same chip again to toggle it off — grid restores to full set.
-    await standardChip.click();
+    await forcedDiscardChip.click();
     await page.waitForTimeout(200);
 
     const resetCount = await cardTiles.count();
