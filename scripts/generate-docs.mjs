@@ -41,6 +41,7 @@ const RULE_ORDER = [
   'DISCARD_RULE.md',
   'LORE_LOSS_RULE.md',
   'SINGER_SONGS_RULE.md',
+  'SPIKE_SUIT_RULE.md',
   'LOCATION_CONTROL_RULE.md',
   'RAMP_RULE.md',
   'TOY_RULE.md',

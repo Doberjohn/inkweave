@@ -250,6 +250,30 @@ Characters with the Singer keyword can exert to sing Song action cards for free,
 
 **Full documentation**: See [`packages/synergy-engine/SINGER_SONGS_RULE.md`](packages/synergy-engine/SINGER_SONGS_RULE.md) for detection details, bidirectional matching, scoring logic, and test coverage.
 
+### Rule 6: Spike Suit (direct, single-anchor, bidirectional)
+
+Built around **Dale - Ready for His Shot** (Amber 0/4), whose SPIKE SUIT ability makes your characters deal combat damage with their willpower instead of their strength. Dale therefore synergizes with characters whose willpower beats their strength — the bigger the gap, the more free combat damage. The engine's first **single-anchor** rule (one card defines the synergy) and first rule keyed on a **numeric stat relationship** rather than text/keyword/name.
+
+**Detection**:
+- **anchor** (1 card): text matches `/deal damage with their .* instead of their/i` (matched on ability text, not card id, so reprints join for free).
+- **payoff** (204 deck-compatible): `isCharacter` AND `willpower − strength >= 3` (the `SPIKE_SUIT_FLOOR`). The floor drops the 265 trivial +1 bodies that a literal "willpower > strength" reading would surface.
+
+**Scoring** (`min(gap + 3 + wallBonus, 10)`, where `gap = willpower − strength`):
+
+| Payoff | Gap | Score | Notes |
+|--------|-----|-------|-------|
+| gap-3 body (e.g. 3/6) | 3 | **6** | Floor of Moderate — every match is at least a real +3 swing |
+| gap-4 body / gap-3 wall | 4 / 3 | **7** | Strong |
+| gap-5 body / gap-4 wall | 5 / 4 | **8** | Strong |
+| gap-6 body / gap-5 wall | 6 / 5 | **9** | Strong |
+| gap-7+ body / gap-6+ wall | 7+ / 6+ | **10** | Perfect (capped) |
+
+Strength-0 walls get **+1** (`wallBonus`): they go from dealing zero combat damage to swinging for their full willpower — a category change, not just a bigger number. Explanation uses `{A}`/`{B}` token-swap so Dale always reads as the enabler: *"{A} lets {B} deal damage with its 7 willpower instead of its 3 strength."*
+
+**Coverage**: 1 anchor + 204 payoffs (40 of them strength-0 walls). Distribution: 0 Weak / 108 Moderate / 89 Strong / 7 Perfect.
+
+**Full documentation**: See [`packages/synergy-engine/SPIKE_SUIT_RULE.md`](packages/synergy-engine/SPIKE_SUIT_RULE.md).
+
 ### Location Control (playstyle, 9 sub-rules)
 
 9 specialized rules detecting location-support roles: at-payoff, play-trigger (fires on playing a location), move-trigger (fires when a character moves onto a location — pairs with the `move` enabler), buff, location-ramp, move, in-play-check, search, boost. All merge into a single `location-control` playstyle group. Factory pattern (`createLocationRule`) generates each rule. Anti-location cards (banish/remove locations) are excluded.
