@@ -27,7 +27,7 @@ FILE_PATH=$(echo "$FILE_PATH" | sed 's|\\|/|g')
 
 # Check if the file is in the preview card raw-images directory
 if echo "$FILE_PATH" | grep -q "apps/web/public/card-images-raw/"; then
-  cd "D:/johnn/Projects/inkweave" || exit 0
+  cd "$CLAUDE_PROJECT_DIR" || exit 0
 
   # Convert raw images (script is idempotent — only processes new/changed files)
   CONVERT_OUT=$(pnpm convert-preview-images 2>&1)
