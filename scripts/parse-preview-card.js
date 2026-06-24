@@ -38,14 +38,50 @@ function parseLorcanaCard(doc = document, opts = {}) {
     'Version', 'Subtitle',
   ]);
 
-  // Collect ordered leaf text blocks, then group each value under its label.
+  // Lorcana ability text mixes inline symbol <img>s and bold ability names with
+  // bare text nodes. Map the known symbols to the glyphs canonical allCards.json
+  // uses (e.g. "pay 3 ⬡"); collect anything unmapped to warn rather than emit a
+  // wrong glyph. Extend SYMBOLS as new symbols are encountered.
+  const SYMBOLS = {ink: '⬡', exert: '⟳', lore: '◊', willpower: '⛉'};
+  const unmappedSymbols = new Set();
+  const nodeText = (node) => {
+    let out = '';
+    for (const n of node.childNodes) {
+      if (n.nodeType === 3) {
+        out += n.textContent;
+      } else if (n.nodeType === 1) {
+        if (n.tagName === 'IMG') {
+          const key = (n.getAttribute('alt') || n.getAttribute('title') || '').trim().toLowerCase();
+          if (SYMBOLS[key]) out += SYMBOLS[key];
+          else if (key) unmappedSymbols.add(key);
+        } else if (n.tagName === 'BR') {
+          out += '\n';
+        } else {
+          out += nodeText(n);
+        }
+      }
+    }
+    return out;
+  };
+
+  // Collect ordered text blocks, then group each value under its label. An element
+  // is a "block" if it has no child elements OR carries its own non-whitespace text
+  // node — the latter catches ability lines like
+  // "<strong>NAME</strong> effect <em>(reminder <img>)</em>" that a leaf-only walk
+  // would otherwise shred down to just the bold name.
   const leaves = [];
   (function walk(el) {
     for (const c of el.children) {
-      if (c.children.length === 0) {
-        const t = c.innerText.replace(/\s+\n/g, '\n').trim();
+      const ownText = [...c.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim() !== '');
+      if (c.children.length === 0 || ownText) {
+        const t = nodeText(c)
+          .replace(/[^\S\n]+/g, ' ')
+          .replace(/ *\n */g, '\n')
+          .trim();
         if (t) leaves.push(t);
-      } else walk(c);
+      } else {
+        walk(c);
+      }
     }
   })(container);
 
@@ -130,7 +166,9 @@ function parseLorcanaCard(doc = document, opts = {}) {
   const version = first('Version') || first('Subtitle') || '';
   const setName = first('Set');
   const setCode = opts.setCode ?? SET_NAME_TO_CODE[setName] ?? '';
-  const rawCardId = num('Card ID');
+  // Card ID is "129/207" (collector number / set total) — take the first group.
+  const cardIdMatch = first('Card ID').match(/\d+/);
+  const rawCardId = cardIdMatch ? Number(cardIdMatch[0]) : null;
   const number = opts.number ?? rawCardId ?? undefined;
   const id = opts.id ?? deriveCardId({ setCode, number, name, rawCardId, setName });
 
@@ -186,6 +224,9 @@ function parseLorcanaCard(doc = document, opts = {}) {
   if (!out.setCode) console.warn('[parse] setCode unresolved — pass opts.setCode (e.g. "13") or add', JSON.stringify(setName), 'to SET_NAME_TO_CODE.');
   if (!out.color) console.warn('[parse] color is empty — check the Ink Color field.');
   if (out.cost == null) console.warn('[parse] cost is missing.');
+  if (unmappedSymbols.size) {
+    console.warn('[parse] unmapped symbol(s) dropped — add to SYMBOLS:', [...unmappedSymbols]);
+  }
   if (synthesizedReminder) console.info('[parse] synthesized the standard Singer reminder for this song — verify it matches the printed card.');
   const illustrator = first('Illustrator');
   const releaseDate = first('Release Date');
