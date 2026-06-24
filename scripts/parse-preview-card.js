@@ -8,9 +8,10 @@
  * Output conforms to `LorcanaJSONCard` (packages/synergy-engine/src/utils/cardTransformer.ts:7-44).
  * See docs/CARD_DATA_PIPELINE.md → "Preview card schema" for the field-by-field contract.
  *
- * Usage:
- *   parseLorcanaCard(document, { setCode: '13' })          // set code is required-ish
- *   parseLorcanaCard(document, { setCode: '13', number: 1, id: 131201 })
+ * Usage: paste this entire file into the devtools console on a card-detail page.
+ * It auto-detects the card, logs it, copies it to the clipboard, and downloads
+ * {id}-{slug}.json. The set is resolved from the page via SET_NAME_TO_CODE below
+ * (add a line per reveal season), or call parseLorcanaCard(document, {setCode}).
  *
  * Convention notes baked in here (vs. the original parser):
  *   - Optional fields are OMITTED when absent, never set to null.
@@ -27,8 +28,9 @@ function parseLorcanaCard(doc = document, opts = {}) {
   // Map a scraped set *name* → numeric set code. Extend per reveal season,
   // or just pass opts.setCode and ignore this.
   const SET_NAME_TO_CODE = {
-    // 'The Wilds Unknown': '12',
-    // 'Attack of the Vine!': '13',
+    'The Wilds Unknown': '12',
+    'Attack of the Vine!': '13',
+    // Add the next set's display name → numeric code each reveal season.
   };
 
   const LABELS = new Set([
@@ -266,5 +268,39 @@ function deriveCardId(ctx) {
   return set * 1000 + 900 + (h % 100);
 }
 
-// Browser console convenience: `copy(JSON.stringify(parseLorcanaCard(document, { setCode: '13' }), null, 2))`
-if (typeof module !== 'undefined' && module.exports) module.exports = { parseLorcanaCard };
+// --- Auto-run when pasted into a browser devtools console on a card page ----------
+// Parses the card, logs it, copies the JSON to the clipboard, and downloads it as
+// {id}-{slug}.json. Skipped under Node (no document) so the module stays testable.
+if (typeof document !== 'undefined' && document.querySelector && document.querySelector('.card-details')) {
+  try {
+    const card = parseLorcanaCard(document);
+    console.log(card);
+    const json = JSON.stringify(card, null, 2);
+    const slug = String(card.fullName || card.id)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    const blob = new Blob([json], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${card.id}-${slug}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    try {
+      if (typeof copy === 'function') copy(json); // devtools-only clipboard helper
+    } catch (e) {
+      /* `copy` only exists in the devtools console */
+    }
+  } catch (e) {
+    console.error(
+      '[parse]',
+      e.message,
+      '\nIf the set is unknown, add it to SET_NAME_TO_CODE or call parseLorcanaCard(document, {setCode: "13"}).',
+    );
+  }
+}
+
+if (typeof module !== 'undefined' && module.exports) module.exports = {parseLorcanaCard};
