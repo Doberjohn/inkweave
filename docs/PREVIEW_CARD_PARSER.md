@@ -1,3 +1,42 @@
+# Preview Card Parser (browser-console snippet)
+
+A copy-paste devtools snippet that scrapes a **single** Lorcana card-detail page
+(e.g. a `lorcanaplayer.com` reveal page) into the `LorcanaJSONCard` shape used by
+[`apps/web/public/data/previewCards.json`](../apps/web/public/data/previewCards.json).
+Use it during **reveal season** to turn a freshly-revealed card into a
+ready-to-paste JSON entry before LorcanaJSON.org publishes the canonical set.
+
+> **Why this lives in a doc, not `scripts/`** — it's a browser-console tool, not
+> part of the Node build pipeline (nothing in the repo imports it). Keeping it as
+> a fenced code block means it's versioned and discoverable without being gated as
+> build/runtime source. To use it, copy the whole block below into the console.
+
+## How to use
+
+1. Open a card-detail page (one whose DOM has a `.card-details` container).
+2. Open devtools → Console, paste the entire snippet below, press Enter.
+3. It auto-runs: logs the parsed card, copies the JSON to your clipboard, and
+   downloads `{id}-{slug}.json`.
+4. Resolve the set: add the set's display name → numeric code to `SET_NAME_TO_CODE`
+   each reveal season, or call `parseLorcanaCard(document, {setCode: '13'})` directly.
+5. Read the `[parse]` console warnings — they flag unmapped symbols, a missing
+   `setCode`/`cost`, a synthesized Song reminder to verify, and non-schema fields
+   (illustrator / release date) that were dropped off the card.
+
+## After scraping
+
+- Paste the card object into the `cards[]` array of `previewCards.json`. The
+  field-by-field contract is the **Preview card schema** collapsible in
+  [`CARD_DATA_PIPELINE.md`](CARD_DATA_PIPELINE.md#the-two-source-jsons).
+- The parser drops `releaseDate` from the card and logs it — put it in
+  `sets["<code>"].releaseDate` (`YYYY-MM-DD`), not on the card.
+- `id` is a `setCode`-prefixed composite (`setNum * 1000 + collectorNumber`, e.g.
+  Set 13 #1 → `13001`) so it can't collide with the low sequential ids already in
+  `allCards.json` (a collision makes the loader silently drop the preview card).
+
+## The snippet
+
+```js
 /**
  * parse-preview-card.js — browser-console snippet (NOT a Node build script).
  *
@@ -425,3 +464,4 @@ if (typeof document !== 'undefined' && document.querySelector && document.queryS
 }
 
 if (typeof module !== 'undefined' && module.exports) module.exports = {parseLorcanaCard};
+```
