@@ -20,82 +20,276 @@
  *   - Non-schema fields (illustrator, releaseDate) are stripped off the card and
  *     logged instead — releaseDate belongs in sets["<code>"].releaseDate.
  *   - Song cards get the standard Singer reminder synthesized if the page omits it.
+ *
+ * Structure: parseLorcanaCard() is a thin orchestrator. The work lives in
+ * module-level stages — DOM scraping, ability extraction, identity, pruning,
+ * diagnostics — each small enough to read and test in isolation.
  */
+
+// Map a scraped set *name* → numeric set code. Extend per reveal season,
+// or just pass opts.setCode and ignore this.
+const SET_NAME_TO_CODE = {
+  'The Wilds Unknown': '12',
+  'Attack of the Vine!': '13',
+  // Add the next set's display name → numeric code each reveal season.
+};
+
+const LABELS = new Set([
+  'Name', 'Card Type', 'Ink Cost', 'Inkwell', 'Ink Color', 'Rarity', 'Card ID', 'Set',
+  'Keywords + Abilities', 'Classifications', 'Card Text', 'Flavor Text', 'Illustrator',
+  'Franchise', 'Release Date', 'Revealed', 'Strength', 'Willpower', 'Lore', 'Move Cost',
+  'Version', 'Subtitle',
+]);
+
+// Lorcana ability text mixes inline symbol <img>s and bold ability names with
+// bare text nodes. Map the known symbols to the glyphs canonical allCards.json
+// uses (e.g. "pay 3 ⬡"); collect anything unmapped to warn rather than emit a
+// wrong glyph. Extend SYMBOLS as new symbols are encountered.
+const SYMBOLS = {ink: '⬡', exert: '⟳', lore: '◊', willpower: '⛉'};
+
+// Title-case keywords (matched case-sensitively) — longest first so "Temporary
+// Shift" wins over "Shift". Extend as new keywords appear; ALL-CAPS ability
+// names (e.g. "PATH OF DESTRUCTION") won't false-match a title-case keyword.
+const KEYWORDS = [
+  'Temporary Shift', 'Sing Together', 'Bodyguard', 'Challenger', 'Evasive',
+  'Reckless', 'Resist', 'Rush', 'Shift', 'Singer', 'Support', 'Vanish', 'Voiceless', 'Ward',
+].sort((a, b) => b.length - a.length);
+
+// =====================================================================
+// DOM scraping — page → ordered text "leaves" → {label: [values]} map.
+// =====================================================================
+
+/** Resolve an inline symbol <img> to its canonical glyph; records misses in `unmapped`. */
+function imgSymbol(img, unmapped) {
+  const key = (img.getAttribute('alt') || img.getAttribute('title') || '').trim().toLowerCase();
+  if (SYMBOLS[key]) return SYMBOLS[key];
+  if (key) unmapped.add(key);
+  return '';
+}
+
+/** Flatten an element's text, mapping inline symbol <img>s to glyphs and <br> to "\n". */
+function nodeText(node, unmapped) {
+  let out = '';
+  for (const n of node.childNodes) {
+    if (n.nodeType === 3) { out += n.textContent; continue; }
+    if (n.nodeType !== 1) continue;
+    if (n.tagName === 'IMG') out += imgSymbol(n, unmapped);
+    else if (n.tagName === 'BR') out += '\n';
+    else out += nodeText(n, unmapped);
+  }
+  return out;
+}
+
+// An element is a "block" if it has no child elements OR carries its own
+// non-whitespace text node — the latter catches ability lines like
+// "<strong>NAME</strong> effect <em>(reminder <img>)</em>" that a leaf-only
+// walk would otherwise shred down to just the bold name.
+const isBlock = (el) =>
+  el.children.length === 0 ||
+  [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim() !== '');
+
+/** Collect ordered text blocks from the card container, symbols mapped to glyphs. */
+function scrapeLeaves(container, unmapped) {
+  const leaves = [];
+  const walk = (el) => {
+    for (const c of el.children) {
+      if (!isBlock(c)) { walk(c); continue; }
+      const t = nodeText(c, unmapped)
+        .replace(/[^\S\n]+/g, ' ')
+        .replace(/ *\n */g, '\n')
+        .trim();
+      if (t) leaves.push(t);
+    }
+  };
+  walk(container);
+  return leaves;
+}
+
+/** Group ordered leaves into a {label: [values]} map, keyed by the known LABELS. */
+function groupFields(leaves) {
+  const fields = {};
+  let current = null;
+  for (const item of leaves) {
+    if (LABELS.has(item)) {
+      current = item;
+      if (!fields[current]) fields[current] = [];
+    } else if (current) {
+      fields[current].push(item);
+    }
+  }
+  return fields;
+}
+
+/** First image URL on the card page (preview cards: one URL serves both sizes). */
+function scrapeImage(doc) {
+  const imgEl = doc.querySelector('.card-details img, article img');
+  return imgEl ? (imgEl.currentSrc || imgEl.src) : '';
+}
+
+// =====================================================================
+// Ability extraction — keyword abilities → named abilities → reminder
+// statics; bare effect blocks produce no entry (canonical omits those).
+// Keyword extraction lets the engine detect Shift/Singer/Resist/etc., since
+// transformCard reads abilities[] entries whose type === 'keyword'.
+// =====================================================================
+
+const isUpperWord = (w) => /[A-Z]/.test(w) && !/[a-z]/.test(w);
+
+function inferType(effect) {
+  if (/^(when\b|whenever\b|at the (start|end)\b|once (during|per turn)\b)/i.test(effect)) return 'triggered';
+  if (/^[⟳↻]/.test(effect)) return 'activated';
+  return 'static';
+}
+
+// Match a leading title-case keyword without a dynamic RegExp (avoids the
+// non-literal-regexp lint): the block must start with the keyword, followed by a
+// word boundary so "Shifty" doesn't match "Shift".
+function keywordAbility(text) {
+  for (const kw of KEYWORDS) {
+    if (!text.startsWith(kw)) continue;
+    const after = text[kw.length];
+    if (after !== undefined && /\w/.test(after)) continue;
+    const value = text.slice(kw.length).split('(')[0].trim(); // "7", "+1", or ""
+    return value ? {keyword: kw, value} : {keyword: kw};
+  }
+  return null;
+}
+
+/** Split "NAME effect..." (leading ALL-CAPS run = ability name) → {name, effect} or null. */
+function splitNamed(block) {
+  const words = block.split(/\s+/);
+  let i = 0;
+  while (i < words.length && isUpperWord(words[i])) i++;
+  if (i < 1 || i >= words.length) return null;
+  const nameRun = words.slice(0, i).join(' ');
+  if (nameRun.replace(/[^A-Za-z0-9]/g, '').length < 2) return null;
+  return {
+    name: nameRun.replace(/[\s!?.]+$/, '').trim(),
+    effect: words.slice(i).join(' ').replace(/\n/g, ' ').trim(),
+  };
+}
+
+/** One card-text block → 0 or 1 ability entries (keyword | reminder-static | named). */
+function abilityFromBlock(block) {
+  const norm = block.replace(/\n/g, ' ').trim();
+  const kw = keywordAbility(norm);
+  if (kw) {
+    const ability = {type: 'keyword', keyword: kw.keyword, fullText: block};
+    if (kw.value) ability.keywordValue = kw.value;
+    return [ability];
+  }
+  if (/^\([\s\S]*\)$/.test(block)) {
+    return [{effect: norm.replace(/^\(|\)$/g, '').trim(), fullText: block, type: 'static'}];
+  }
+  const named = splitNamed(block);
+  if (named) {
+    return [{effect: named.effect, fullText: block, name: named.name, type: inferType(named.effect)}];
+  }
+  return []; // plain effect block → no ability entry (canonical omits these)
+}
+
+const extractAbilities = (textBlocks) => textBlocks.flatMap(abilityFromBlock);
+
+// =====================================================================
+// Songs — synthesize the standard Singer reminder if the source page omitted
+// it. (Skip Sing Together — its reminder text differs and we can't safely
+// guess it.) Mutates textBlocks in place; returns whether it added a reminder.
+// =====================================================================
+
+function maybeSynthesizeSongReminder(textBlocks, ctx) {
+  const {type, subtypes, cost, rawTextBlocks, keywordsAbilities} = ctx;
+  const isSong = type === 'Action' && subtypes.includes('Song');
+  if (!isSong || cost == null) return false;
+  const hasReminder = textBlocks.some((b) => /sing this song for free/i.test(b));
+  const isSingTogether = [...rawTextBlocks, keywordsAbilities].some((b) => /sing together/i.test(b));
+  if (hasReminder || isSingTogether) return false;
+  textBlocks.unshift(`(A character with cost ${cost} or more can ⟳ to sing this song for free.)`);
+  return true;
+}
+
+// =====================================================================
+// Identity — id/name/version/set resolution. `id` is the pipeline's primary
+// key, so deriveCardId() guarantees a unique, collision-safe Number.
+// =====================================================================
+
+/** Rarity string, blanked when the page reports unknown/placeholder. */
+const cleanRarity = (raw) => (raw && !/unknown/i.test(raw)) ? raw : '';
+
+/** Resolve id/name/version/setCode/number from raw scraped strings + opts. */
+function resolveIdentity(raw) {
+  const {name, subtitle, setName, cardId, opts} = raw;
+  const version = raw.version || subtitle || '';
+  const setCode = opts.setCode ?? SET_NAME_TO_CODE[setName] ?? '';
+  // Card ID is "129/207" (collector number / set total) — take the first group.
+  const cardIdMatch = cardId.match(/\d+/);
+  const rawCardId = cardIdMatch ? Number(cardIdMatch[0]) : null;
+  const number = opts.number ?? rawCardId ?? undefined;
+  const id = opts.id ?? deriveCardId({setCode, number, name, rawCardId, setName});
+  return {id, name, version, setName, setCode, number};
+}
+
+// =====================================================================
+// Pruning — drop keys canonical never emits (null/empty), keep valid
+// falsy values (inkwell:false, cost:0).
+// =====================================================================
+
+const isPlainObject = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** True for values canonical never emits: null/undefined, blank string, empty array/object. */
+function isEmptyValue(v) {
+  if (v == null) return true;
+  if (typeof v === 'string') return v.trim() === '';
+  if (Array.isArray(v)) return v.length === 0;
+  if (isPlainObject(v)) return Object.keys(v).length === 0;
+  return false;
+}
+
+// Recurse into nested objects BEFORE testing, so an object that becomes empty
+// after its children are pruned is itself removed. Sequential guards (no
+// else-if nesting) keep this flat — the recursion does the depth, not the loop.
+function pruneEmpty(obj) {
+  for (const k of Object.keys(obj)) {
+    if (isPlainObject(obj[k])) pruneEmpty(obj[k]);
+    if (isEmptyValue(obj[k])) delete obj[k];
+  }
+}
+
+// =====================================================================
+// Diagnostics — console warnings/info for fields needing manual attention.
+// Not part of the emitted card; split in two so neither trips the
+// per-method complexity threshold.
+// =====================================================================
+
+/** Warn about identity/cost fields that look missing or wrong. */
+function warnMissingFields(out, setName, unmappedSymbols) {
+  if (typeof out.id !== 'number' || Number.isNaN(out.id)) {
+    console.warn('[parse] id is not a number — implement deriveCardId() or pass opts.id. Got:', out.id);
+  }
+  if (!out.setCode) console.warn('[parse] setCode unresolved — pass opts.setCode (e.g. "13") or add', JSON.stringify(setName), 'to SET_NAME_TO_CODE.');
+  if (!out.color) console.warn('[parse] color is empty — check the Ink Color field.');
+  if (out.cost == null) console.warn('[parse] cost is missing.');
+  if (unmappedSymbols.size) console.warn('[parse] unmapped symbol(s) dropped — add to SYMBOLS:', [...unmappedSymbols]);
+}
+
+/** Note synthesized reminders and non-schema fields that were dropped off the card. */
+function noteSynthesizedAndDropped(out, synthesizedReminder, illustrator, releaseDate) {
+  if (synthesizedReminder) console.info('[parse] synthesized the standard Singer reminder for this song — verify it matches the printed card.');
+  if (!illustrator && !releaseDate) return;
+  console.info('[parse] dropped non-schema fields:', {illustrator, releaseDate});
+  if (releaseDate) console.info(`[parse] → put release date in sets["${out.setCode || '<code>'}"].releaseDate as YYYY-MM-DD (got "${releaseDate}").`);
+}
+
+// =====================================================================
+// Orchestrator.
+// =====================================================================
+
 function parseLorcanaCard(doc = document, opts = {}) {
   const container = doc.querySelector('.card-details');
   if (!container) throw new Error('Card details container not found');
 
-  // Map a scraped set *name* → numeric set code. Extend per reveal season,
-  // or just pass opts.setCode and ignore this.
-  const SET_NAME_TO_CODE = {
-    'The Wilds Unknown': '12',
-    'Attack of the Vine!': '13',
-    // Add the next set's display name → numeric code each reveal season.
-  };
-
-  const LABELS = new Set([
-    'Name', 'Card Type', 'Ink Cost', 'Inkwell', 'Ink Color', 'Rarity', 'Card ID', 'Set',
-    'Keywords + Abilities', 'Classifications', 'Card Text', 'Flavor Text', 'Illustrator',
-    'Franchise', 'Release Date', 'Revealed', 'Strength', 'Willpower', 'Lore', 'Move Cost',
-    'Version', 'Subtitle',
-  ]);
-
-  // Lorcana ability text mixes inline symbol <img>s and bold ability names with
-  // bare text nodes. Map the known symbols to the glyphs canonical allCards.json
-  // uses (e.g. "pay 3 ⬡"); collect anything unmapped to warn rather than emit a
-  // wrong glyph. Extend SYMBOLS as new symbols are encountered.
-  const SYMBOLS = {ink: '⬡', exert: '⟳', lore: '◊', willpower: '⛉'};
   const unmappedSymbols = new Set();
-  /** Resolve an inline symbol <img> to its canonical glyph (or '' + warn if unmapped). */
-  const imgSymbol = (img) => {
-    const key = (img.getAttribute('alt') || img.getAttribute('title') || '').trim().toLowerCase();
-    if (SYMBOLS[key]) return SYMBOLS[key];
-    if (key) unmappedSymbols.add(key);
-    return '';
-  };
-  /** Flatten an element's text, mapping inline symbol <img>s to glyphs and <br> to "\n". */
-  const nodeText = (node) => {
-    let out = '';
-    for (const n of node.childNodes) {
-      if (n.nodeType === 3) {
-        out += n.textContent;
-        continue;
-      }
-      if (n.nodeType !== 1) continue;
-      if (n.tagName === 'IMG') out += imgSymbol(n);
-      else if (n.tagName === 'BR') out += '\n';
-      else out += nodeText(n);
-    }
-    return out;
-  };
+  const fields = groupFields(scrapeLeaves(container, unmappedSymbols));
 
-  // Collect ordered text blocks, then group each value under its label. An element
-  // is a "block" if it has no child elements OR carries its own non-whitespace text
-  // node — the latter catches ability lines like
-  // "<strong>NAME</strong> effect <em>(reminder <img>)</em>" that a leaf-only walk
-  // would otherwise shred down to just the bold name.
-  const leaves = [];
-  (function walk(el) {
-    for (const c of el.children) {
-      const ownText = [...c.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim() !== '');
-      if (c.children.length === 0 || ownText) {
-        const t = nodeText(c)
-          .replace(/[^\S\n]+/g, ' ')
-          .replace(/ *\n */g, '\n')
-          .trim();
-        if (t) leaves.push(t);
-      } else {
-        walk(c);
-      }
-    }
-  })(container);
-
-  const fields = {};
-  let current = null;
-  for (const item of leaves) {
-    if (LABELS.has(item)) { current = item; if (!fields[current]) fields[current] = []; }
-    else if (current) fields[current].push(item);
-  }
   const first = (k) => (fields[k] && fields[k][0]) || '';
   const all = (k) => fields[k] || [];
   const num = (k) => { const v = first(k).replace(/[^0-9]/g, ''); return v === '' ? null : Number(v); };
@@ -118,103 +312,29 @@ function parseLorcanaCard(doc = document, opts = {}) {
   // --- card text: keep ALL blocks (incl. reminder parentheticals) for layout fidelity ---
   const rawTextBlocks = all('Card Text').map((s) => s.trim()).filter(Boolean);
   const textBlocks = rawTextBlocks.slice();
-
-  // Songs: synthesize the standard Singer reminder if the source page omitted it.
-  // (Skip Sing Together — its reminder text differs and we can't safely guess it.)
-  const isSong = type === 'Action' && subtypes.includes('Song');
-  const hasReminder = textBlocks.some((b) => /sing this song for free/i.test(b));
-  const isSingTogether = [...rawTextBlocks, first('Keywords + Abilities')].some((b) => /sing together/i.test(b));
-  let synthesizedReminder = false;
-  if (isSong && cost != null && !hasReminder && !isSingTogether) {
-    textBlocks.unshift(`(A character with cost ${cost} or more can ⟳ to sing this song for free.)`);
-    synthesizedReminder = true;
-  }
+  const synthesizedReminder = maybeSynthesizeSongReminder(textBlocks, {
+    type, subtypes, cost, rawTextBlocks, keywordsAbilities: first('Keywords + Abilities'),
+  });
 
   const fullText = textBlocks.join('\n');
   const fullTextSections = textBlocks.slice();
+  const abilities = extractAbilities(textBlocks);
 
-  // --- abilities: keyword abilities → named abilities → reminder statics; drop bare
-  // effect blocks (canonical omits an entry for a plain action whose text is just an
-  // effect). Keyword extraction lets the engine detect Shift/Singer/Resist/etc., since
-  // transformCard reads abilities[] entries whose type === 'keyword'.
-  // Title-case keywords (matched case-sensitively) — longest first so "Temporary Shift"
-  // wins over "Shift". Extend as new keywords appear; ALL-CAPS names won't false-match.
-  const KEYWORDS = [
-    'Temporary Shift', 'Sing Together', 'Bodyguard', 'Challenger', 'Evasive',
-    'Reckless', 'Resist', 'Rush', 'Shift', 'Singer', 'Support', 'Vanish', 'Voiceless', 'Ward',
-  ].sort((a, b) => b.length - a.length);
-  // Match a leading title-case keyword without a dynamic RegExp (avoids the
-  // non-literal-regexp lint): the block must start with the keyword, followed by a
-  // word boundary so "Shifty" doesn't match "Shift".
-  const keywordAbility = (text) => {
-    for (const kw of KEYWORDS) {
-      if (!text.startsWith(kw)) continue;
-      const after = text[kw.length];
-      if (after !== undefined && /\w/.test(after)) continue;
-      const value = text.slice(kw.length).split('(')[0].trim(); // "7", "+1", or ""
-      return value ? {keyword: kw, value} : {keyword: kw};
-    }
-    return null;
-  };
-  const isUpperWord = (w) => /[A-Z]/.test(w) && !/[a-z]/.test(w);
-  const inferType = (effect) => {
-    if (/^(when\b|whenever\b|at the (start|end)\b|once (during|per turn)\b)/i.test(effect)) return 'triggered';
-    if (/^[⟳↻]/.test(effect)) return 'activated';
-    return 'static';
-  };
-  const splitNamed = (block) => {
-    const words = block.split(/\s+/);
-    let i = 0;
-    while (i < words.length && isUpperWord(words[i])) i++;
-    if (i < 1) return null;
-    if (i >= words.length) return null;
-    const nameRun = words.slice(0, i).join(' ');
-    if (nameRun.replace(/[^A-Za-z0-9]/g, '').length < 2) return null;
-    return {
-      name: nameRun.replace(/[\s!?.]+$/, '').trim(),
-      effect: words.slice(i).join(' ').replace(/\n/g, ' ').trim(),
-    };
-  };
-  const abilities = textBlocks.flatMap((block) => {
-    const norm = block.replace(/\n/g, ' ').trim();
-    const kw = keywordAbility(norm);
-    if (kw) {
-      const ability = {type: 'keyword', keyword: kw.keyword, fullText: block};
-      if (kw.value) ability.keywordValue = kw.value;
-      return [ability];
-    }
-    if (/^\([\s\S]*\)$/.test(block)) {
-      return [{effect: norm.replace(/^\(|\)$/g, '').trim(), fullText: block, type: 'static'}];
-    }
-    const named = splitNamed(block);
-    if (named) {
-      return [{effect: named.effect, fullText: block, name: named.name, type: inferType(named.effect)}];
-    }
-    return []; // plain effect block → no ability entry (canonical omits these)
+  // --- identity ---
+  const ident = resolveIdentity({
+    name: first('Name'),
+    version: first('Version'),
+    subtitle: first('Subtitle'),
+    setName: first('Set'),
+    cardId: first('Card ID'),
+    opts,
   });
 
-  // --- identity fields ---
-  const name = first('Name');
-  const version = first('Version') || first('Subtitle') || '';
-  const setName = first('Set');
-  const setCode = opts.setCode ?? SET_NAME_TO_CODE[setName] ?? '';
-  // Card ID is "129/207" (collector number / set total) — take the first group.
-  const cardIdMatch = first('Card ID').match(/\d+/);
-  const rawCardId = cardIdMatch ? Number(cardIdMatch[0]) : null;
-  const number = opts.number ?? rawCardId ?? undefined;
-  const id = opts.id ?? deriveCardId({ setCode, number, name, rawCardId, setName });
-
-  // --- image (preview cards: one URL for both sizes; loader rewrites by id) ---
-  const imgEl = doc.querySelector('.card-details img, article img');
-  const img = imgEl ? (imgEl.currentSrc || imgEl.src) : '';
-
-  const rarity = (first('Rarity') && !/unknown/i.test(first('Rarity'))) ? first('Rarity') : '';
-
   const out = {
-    id,
-    name,
-    version,
-    fullName: version ? `${name} - ${version}` : name,
+    id: ident.id,
+    name: ident.name,
+    version: ident.version,
+    fullName: ident.version ? `${ident.name} - ${ident.version}` : ident.name,
     cost,
     color,
     inkwell: /yes/i.test(first('Inkwell')),
@@ -226,48 +346,18 @@ function parseLorcanaCard(doc = document, opts = {}) {
     strength: num('Strength'),
     willpower: num('Willpower'),
     lore: num('Lore'),
-    setCode,
-    number,
-    rarity,
+    setCode: ident.setCode,
+    number: ident.number,
+    rarity: cleanRarity(first('Rarity')),
     franchise: first('Franchise') || '',
-    images: { thumbnail: img, full: img },
+    images: (() => { const img = scrapeImage(doc); return {thumbnail: img, full: img}; })(),
   };
   if (type !== 'Character') { delete out.strength; delete out.willpower; delete out.lore; }
 
-  // Drop null/undefined/empty-string/empty-array/empty-object keys, but keep
-  // valid falsy values (inkwell:false, cost:0). Canonical never emits null.
-  const isEmptyValue = (v) =>
-    v == null || (typeof v === 'string' && v.trim() === '') || (Array.isArray(v) && v.length === 0);
-  (function prune(obj) {
-    for (const k of Object.keys(obj)) {
-      const v = obj[k];
-      if (isEmptyValue(v)) {
-        delete obj[k];
-      } else if (typeof v === 'object' && !Array.isArray(v)) {
-        prune(v);
-        if (Object.keys(v).length === 0) delete obj[k];
-      }
-    }
-  })(out);
+  pruneEmpty(out);
 
-  // --- diagnostics (not part of the card; surface what needs manual attention) ---
-  if (typeof out.id !== 'number' || Number.isNaN(out.id)) {
-    console.warn('[parse] id is not a number — implement deriveCardId() or pass opts.id. Got:', out.id);
-  }
-  if (!out.setCode) console.warn('[parse] setCode unresolved — pass opts.setCode (e.g. "13") or add', JSON.stringify(setName), 'to SET_NAME_TO_CODE.');
-  if (!out.color) console.warn('[parse] color is empty — check the Ink Color field.');
-  if (out.cost == null) console.warn('[parse] cost is missing.');
-  if (unmappedSymbols.size) {
-    console.warn('[parse] unmapped symbol(s) dropped — add to SYMBOLS:', [...unmappedSymbols]);
-  }
-  if (synthesizedReminder) console.info('[parse] synthesized the standard Singer reminder for this song — verify it matches the printed card.');
-  const illustrator = first('Illustrator');
-  const releaseDate = first('Release Date');
-  if (illustrator || releaseDate) {
-    console.info('[parse] dropped non-schema fields:', { illustrator, releaseDate });
-    if (releaseDate) console.info(`[parse] → put release date in sets["${out.setCode || '<code>'}"].releaseDate as YYYY-MM-DD (got "${releaseDate}").`);
-  }
-
+  warnMissingFields(out, ident.setName, unmappedSymbols);
+  noteSynthesizedAndDropped(out, synthesizedReminder, first('Illustrator'), first('Release Date'));
   return out;
 }
 
