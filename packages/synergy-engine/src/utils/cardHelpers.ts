@@ -121,31 +121,36 @@ function parseShiftCost(keyword: string): number {
  * Determine the Shift variant and cost for a card, or null if it has no Shift keyword.
  * Handles "Shift N", "X Shift N" (classification), and "Universal Shift N".
  */
+/** Classify a single keyword string into a Shift variant, or null if it isn't Shift. */
+function classifyShiftKeyword(kw: string): ShiftType | null {
+  const lower = kw.toLowerCase();
+  if (lower.startsWith('universal shift')) {
+    return {kind: 'universal', cost: parseShiftCost(kw)};
+  }
+  // "Temporary Shift N" shifts onto a same-named character (then returns it to hand),
+  // so it matches like standard Shift. "Temporary" is a modifier, not a classification
+  // — checked before the classification branch so it isn't read as a "Temporary" class.
+  if (lower.startsWith('temporary shift')) {
+    return {kind: 'standard', cost: parseShiftCost(kw)};
+  }
+  // "Puppy Shift 3" or "Puppy Shift" → classification variant
+  if (lower.endsWith(' shift') || lower.match(/^\w+ shift \d+$/)) {
+    const prefix = kw.split(/\s+shift\s*/i)[0];
+    if (prefix && prefix.toLowerCase() !== kw.toLowerCase()) {
+      return {kind: 'classification', classification: prefix, cost: parseShiftCost(kw)};
+    }
+  }
+  if (lower.startsWith('shift')) {
+    return {kind: 'standard', cost: parseShiftCost(kw)};
+  }
+  return null;
+}
+
 export function getShiftType(card: LorcanaCard): ShiftType | null {
   if (!card.keywords) return null;
-
   for (const kw of card.keywords) {
-    const lower = kw.toLowerCase();
-    if (lower.startsWith('universal shift')) {
-      return {kind: 'universal', cost: parseShiftCost(kw)};
-    }
-    // "Temporary Shift N" shifts onto a same-named character (then returns it to
-    // hand), so it matches like standard Shift. "Temporary" is a modifier, not a
-    // classification — must be checked before the classification branch below, which
-    // would otherwise read it as a "Temporary" classification and find no targets.
-    if (lower.startsWith('temporary shift')) {
-      return {kind: 'standard', cost: parseShiftCost(kw)};
-    }
-    // "Puppy Shift 3" or "Puppy Shift" → classification variant
-    if (lower.endsWith(' shift') || lower.match(/^\w+ shift \d+$/)) {
-      const prefix = kw.split(/\s+shift\s*/i)[0];
-      if (prefix && prefix.toLowerCase() !== kw.toLowerCase()) {
-        return {kind: 'classification', classification: prefix, cost: parseShiftCost(kw)};
-      }
-    }
-    if (lower.startsWith('shift')) {
-      return {kind: 'standard', cost: parseShiftCost(kw)};
-    }
+    const variant = classifyShiftKeyword(kw);
+    if (variant) return variant;
   }
   return null;
 }

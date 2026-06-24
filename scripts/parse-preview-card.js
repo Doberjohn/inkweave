@@ -46,22 +46,25 @@ function parseLorcanaCard(doc = document, opts = {}) {
   // wrong glyph. Extend SYMBOLS as new symbols are encountered.
   const SYMBOLS = {ink: '⬡', exert: '⟳', lore: '◊', willpower: '⛉'};
   const unmappedSymbols = new Set();
+  /** Resolve an inline symbol <img> to its canonical glyph (or '' + warn if unmapped). */
+  const imgSymbol = (img) => {
+    const key = (img.getAttribute('alt') || img.getAttribute('title') || '').trim().toLowerCase();
+    if (SYMBOLS[key]) return SYMBOLS[key];
+    if (key) unmappedSymbols.add(key);
+    return '';
+  };
+  /** Flatten an element's text, mapping inline symbol <img>s to glyphs and <br> to "\n". */
   const nodeText = (node) => {
     let out = '';
     for (const n of node.childNodes) {
       if (n.nodeType === 3) {
         out += n.textContent;
-      } else if (n.nodeType === 1) {
-        if (n.tagName === 'IMG') {
-          const key = (n.getAttribute('alt') || n.getAttribute('title') || '').trim().toLowerCase();
-          if (SYMBOLS[key]) out += SYMBOLS[key];
-          else if (key) unmappedSymbols.add(key);
-        } else if (n.tagName === 'BR') {
-          out += '\n';
-        } else {
-          out += nodeText(n);
-        }
+        continue;
       }
+      if (n.nodeType !== 1) continue;
+      if (n.tagName === 'IMG') out += imgSymbol(n);
+      else if (n.tagName === 'BR') out += '\n';
+      else out += nodeText(n);
     }
     return out;
   };
@@ -140,12 +143,16 @@ function parseLorcanaCard(doc = document, opts = {}) {
     'Temporary Shift', 'Sing Together', 'Bodyguard', 'Challenger', 'Evasive',
     'Reckless', 'Resist', 'Rush', 'Shift', 'Singer', 'Support', 'Vanish', 'Voiceless', 'Ward',
   ].sort((a, b) => b.length - a.length);
+  // Match a leading title-case keyword without a dynamic RegExp (avoids the
+  // non-literal-regexp lint): the block must start with the keyword, followed by a
+  // word boundary so "Shifty" doesn't match "Shift".
   const keywordAbility = (text) => {
     for (const kw of KEYWORDS) {
-      if (new RegExp(`^${kw}\\b`).test(text)) {
-        const value = text.slice(kw.length).split('(')[0].trim(); // "7", "+1", or ""
-        return value ? {keyword: kw, value} : {keyword: kw};
-      }
+      if (!text.startsWith(kw)) continue;
+      const after = text[kw.length];
+      if (after !== undefined && /\w/.test(after)) continue;
+      const value = text.slice(kw.length).split('(')[0].trim(); // "7", "+1", or ""
+      return value ? {keyword: kw, value} : {keyword: kw};
     }
     return null;
   };
@@ -159,14 +166,14 @@ function parseLorcanaCard(doc = document, opts = {}) {
     const words = block.split(/\s+/);
     let i = 0;
     while (i < words.length && isUpperWord(words[i])) i++;
+    if (i < 1) return null;
+    if (i >= words.length) return null;
     const nameRun = words.slice(0, i).join(' ');
-    if (i >= 1 && i < words.length && nameRun.replace(/[^A-Za-z0-9]/g, '').length >= 2) {
-      return {
-        name: nameRun.replace(/[\s!?.]+$/, '').trim(),
-        effect: words.slice(i).join(' ').replace(/\n/g, ' ').trim(),
-      };
-    }
-    return null;
+    if (nameRun.replace(/[^A-Za-z0-9]/g, '').length < 2) return null;
+    return {
+      name: nameRun.replace(/[\s!?.]+$/, '').trim(),
+      effect: words.slice(i).join(' ').replace(/\n/g, ' ').trim(),
+    };
   };
   const abilities = textBlocks.flatMap((block) => {
     const norm = block.replace(/\n/g, ' ').trim();
@@ -229,13 +236,14 @@ function parseLorcanaCard(doc = document, opts = {}) {
 
   // Drop null/undefined/empty-string/empty-array/empty-object keys, but keep
   // valid falsy values (inkwell:false, cost:0). Canonical never emits null.
+  const isEmptyValue = (v) =>
+    v == null || (typeof v === 'string' && v.trim() === '') || (Array.isArray(v) && v.length === 0);
   (function prune(obj) {
     for (const k of Object.keys(obj)) {
       const v = obj[k];
-      if (v === null || v === undefined) { delete obj[k]; continue; }
-      if (typeof v === 'string' && v.trim() === '') { delete obj[k]; continue; }
-      if (Array.isArray(v) && v.length === 0) { delete obj[k]; continue; }
-      if (v && typeof v === 'object' && !Array.isArray(v)) {
+      if (isEmptyValue(v)) {
+        delete obj[k];
+      } else if (typeof v === 'object' && !Array.isArray(v)) {
         prune(v);
         if (Object.keys(v).length === 0) delete obj[k];
       }
@@ -263,10 +271,7 @@ function parseLorcanaCard(doc = document, opts = {}) {
   return out;
 }
 
-/**
- * Return a unique NUMBER for this card's `id`.
- * Implemented by the maintainer — see the Learn-by-Doing note in chat.
- */
+/** Return a unique NUMBER for this card's `id` (a setCode-prefixed composite). */
 function deriveCardId(ctx) {
   // `id` is the pipeline's primary key — loader dedup, getCardById, the synergy
   // filename (data/synergies/{id}.json), and the preview-image rewrite
@@ -277,7 +282,10 @@ function deriveCardId(ctx) {
   // setCode-prefixed composite stays safely above them.
   const {setCode, number, name} = ctx;
   const set = Number(setCode);
-  if (!Number.isFinite(set)) {
+  // Number('') === 0 and Number.isFinite(0) is true, so reject set <= 0 too —
+  // otherwise an unresolved setCode would mint a low id that collides with
+  // canonical allCards ids (and the loader would silently drop the preview card).
+  if (!Number.isFinite(set) || set <= 0) {
     throw new Error('deriveCardId: numeric setCode required — pass opts.setCode (e.g. "13").');
   }
   // Numbered card: setNum * 1000 + collector number (e.g. Set 13 #1 -> 13001).

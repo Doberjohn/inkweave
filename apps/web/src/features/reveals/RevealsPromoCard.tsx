@@ -278,7 +278,7 @@ export function RevealsPromoCard() {
         />
         <span style={getCopyBlockStyle(viewport)}>
           <span style={NEW_BADGE_STYLE}>NEW</span>
-          <span style={getTitleStyle(viewport)}>All Set 13 cards revealed!</span>
+          <span style={getTitleStyle(viewport)}>Set 13 reveals are here!</span>
         </span>
       </button>
       {!reduced && <FireflyField />}

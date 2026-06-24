@@ -196,7 +196,7 @@ Regression guard for issue #268 (skeleton-loading UI). Each test intercepts `/da
 
 | Test | What it verifies |
 |---|---|
-| renders hero and franchise tiers at /reveals | All 4 tier headings (Monsters Inc., Up, Turning Red, Returning) render |
+| renders hero and franchise tiers at /reveals | All 4 tier headings (Monsters, Inc., Up, Turning Red, Returning) render |
 | desktop nav shows Reveals entry with NEW badge | `/` has a Reveals link with a "NEW" badge child |
 | mobile nav shows Reveals tab | On mobile, `/browse`'s bottom nav has a "Set 13 reveals" link |
 | promo modal appears on landing page and not on /reveals | `role="complementary" name=/Set 13 reveals/` visible on `/`, absent on `/reveals` |
