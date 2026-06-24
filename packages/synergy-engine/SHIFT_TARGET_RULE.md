@@ -42,6 +42,19 @@ Selecting **Elsa - Ice Maker** (cost 7, Shift 5) finds:
 Selecting **Elsa - Snow Queen** (cost 4) finds:
 - **Elsa - Ice Maker** (Shift 5) — score 9, same pair, same score
 
+### Shift Variants
+
+`getShiftType` (`utils/cardHelpers.ts`) classifies the Shift keyword into three target kinds so the rule knows what counts as a valid target:
+
+| Keyword | Kind | Valid targets |
+|---|---|---|
+| `Shift N` | `standard` | same base name |
+| `Temporary Shift N` | `standard` | same base name (shifts onto a same-named character, then returns it to hand at end of turn) |
+| `X Shift N` (e.g. `Puppy Shift`) | `classification` | characters with classification `X` |
+| `Universal Shift N` | `universal` | any character |
+
+`Temporary Shift` is matched **before** the `X Shift` classification branch — "Temporary" is a modifier, not a classification, so it must not be read as a `Temporary` classification (which would match no targets).
+
 ---
 
 ## Scoring Architecture

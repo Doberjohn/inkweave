@@ -129,6 +129,13 @@ export function getShiftType(card: LorcanaCard): ShiftType | null {
     if (lower.startsWith('universal shift')) {
       return {kind: 'universal', cost: parseShiftCost(kw)};
     }
+    // "Temporary Shift N" shifts onto a same-named character (then returns it to
+    // hand), so it matches like standard Shift. "Temporary" is a modifier, not a
+    // classification — must be checked before the classification branch below, which
+    // would otherwise read it as a "Temporary" classification and find no targets.
+    if (lower.startsWith('temporary shift')) {
+      return {kind: 'standard', cost: parseShiftCost(kw)};
+    }
     // "Puppy Shift 3" or "Puppy Shift" → classification variant
     if (lower.endsWith(' shift') || lower.match(/^\w+ shift \d+$/)) {
       const prefix = kw.split(/\s+shift\s*/i)[0];

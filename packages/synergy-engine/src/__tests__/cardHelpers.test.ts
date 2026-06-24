@@ -41,6 +41,11 @@ describe('shift type utilities', () => {
       const card = createCard({keywords: ['Universal Shift 4']});
       expect(getShiftType(card)).toEqual({kind: 'universal', cost: 4});
     });
+
+    it('returns standard for Temporary Shift (same-name shift, not a "Temporary" classification)', () => {
+      const card = createCard({keywords: ['Temporary Shift 7']});
+      expect(getShiftType(card)).toEqual({kind: 'standard', cost: 7});
+    });
   });
 
   describe('hasAnyShift', () => {
@@ -48,6 +53,7 @@ describe('shift type utilities', () => {
       expect(hasAnyShift(createCard({keywords: ['Shift 5']}))).toBe(true);
       expect(hasAnyShift(createCard({keywords: ['Puppy Shift 3']}))).toBe(true);
       expect(hasAnyShift(createCard({keywords: ['Universal Shift 4']}))).toBe(true);
+      expect(hasAnyShift(createCard({keywords: ['Temporary Shift 7']}))).toBe(true);
     });
 
     it('returns false for non-Shift cards', () => {

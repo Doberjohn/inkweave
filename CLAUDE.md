@@ -160,6 +160,8 @@ See `packages/synergy-engine/REMOVED_RULES.md` for archived rules (Evasive, Trib
 
 Shift cards find same-named base characters; base characters find Shift cards. Both directions use the same scoring. Scores 3-10 based on curve gap, inkwell flexibility, free Shift cost tiers, and condition activation.
 
+**Variants** (`getShiftType` in `utils/cardHelpers.ts`): `Shift N` and `Temporary Shift N` target same-named characters (standard); `X Shift N` (e.g. `Puppy Shift`) targets characters with classification `X`; `Universal Shift N` targets any character. `Temporary Shift` is matched before the classification branch so "Temporary" isn't read as a classification.
+
 **Full documentation**: See [`packages/synergy-engine/SHIFT_TARGET_RULE.md`](packages/synergy-engine/SHIFT_TARGET_RULE.md) for detailed score tables, examples, condition matchers, and design rationale.
 
 ### Rule 2: Named Companions (direct, forward-only matching)
