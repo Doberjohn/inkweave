@@ -130,8 +130,25 @@ function parseLorcanaCard(doc = document, opts = {}) {
   const fullText = textBlocks.join('\n');
   const fullTextSections = textBlocks.slice();
 
-  // --- abilities: keep named abilities + reminder statics; drop bare effect blocks ---
-  // (canonical omits an abilities entry for a plain action whose text is just an effect).
+  // --- abilities: keyword abilities → named abilities → reminder statics; drop bare
+  // effect blocks (canonical omits an entry for a plain action whose text is just an
+  // effect). Keyword extraction lets the engine detect Shift/Singer/Resist/etc., since
+  // transformCard reads abilities[] entries whose type === 'keyword'.
+  // Title-case keywords (matched case-sensitively) — longest first so "Temporary Shift"
+  // wins over "Shift". Extend as new keywords appear; ALL-CAPS names won't false-match.
+  const KEYWORDS = [
+    'Temporary Shift', 'Sing Together', 'Bodyguard', 'Challenger', 'Evasive',
+    'Reckless', 'Resist', 'Rush', 'Shift', 'Singer', 'Support', 'Vanish', 'Voiceless', 'Ward',
+  ].sort((a, b) => b.length - a.length);
+  const keywordAbility = (text) => {
+    for (const kw of KEYWORDS) {
+      if (new RegExp(`^${kw}\\b`).test(text)) {
+        const value = text.slice(kw.length).split('(')[0].trim(); // "7", "+1", or ""
+        return value ? {keyword: kw, value} : {keyword: kw};
+      }
+    }
+    return null;
+  };
   const isUpperWord = (w) => /[A-Z]/.test(w) && !/[a-z]/.test(w);
   const inferType = (effect) => {
     if (/^(when\b|whenever\b|at the (start|end)\b|once (during|per turn)\b)/i.test(effect)) return 'triggered';
@@ -153,6 +170,12 @@ function parseLorcanaCard(doc = document, opts = {}) {
   };
   const abilities = textBlocks.flatMap((block) => {
     const norm = block.replace(/\n/g, ' ').trim();
+    const kw = keywordAbility(norm);
+    if (kw) {
+      const ability = {type: 'keyword', keyword: kw.keyword, fullText: block};
+      if (kw.value) ability.keywordValue = kw.value;
+      return [ability];
+    }
     if (/^\([\s\S]*\)$/.test(block)) {
       return [{effect: norm.replace(/^\(|\)$/g, '').trim(), fullText: block, type: 'static'}];
     }
