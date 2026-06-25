@@ -67,6 +67,57 @@
       }
     },
     {
+      "id": 13005,
+      "name": "Rabbit",
+      "version": "Hunny Paladin",
+      "fullName": "Rabbit - Hunny Paladin",
+      "cost": 4,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Ally",
+        "Hunny",
+        "Knight"
+      ],
+      "fullText": "Bodyguard\n(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)\nHUNNY AURA When you play this character, chosen Hunny character gets +1 ◊ this turn.",
+      "fullTextSections": [
+        "Bodyguard",
+        "(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
+        "HUNNY AURA When you play this character, chosen Hunny character gets +1 ◊ this turn."
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Bodyguard",
+          "fullText": "Bodyguard"
+        },
+        {
+          "effect": "This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.",
+          "fullText": "(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
+          "type": "static"
+        },
+        {
+          "effect": "When you play this character, chosen Hunny character gets +1 ◊ this turn.",
+          "fullText": "HUNNY AURA When you play this character, chosen Hunny character gets +1 ◊ this turn.",
+          "name": "HUNNY AURA",
+          "type": "triggered"
+        }
+      ],
+      "strength": 2,
+      "willpower": 5,
+      "lore": 1,
+      "setCode": "13",
+      "number": 5,
+      "rarity": "Uncommon",
+      "franchise": "Winnie the Pooh",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/5-207-EN-13-Rabbit-Hunny-Paladin-LQ-Lorcana-Player.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/5-207-EN-13-Rabbit-Hunny-Paladin-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
       "id": 13006,
       "name": "Celia Mae",
       "version": "Friendly Receptionist",
@@ -679,6 +730,43 @@
       }
     },
     {
+      "id": 13038,
+      "name": "Fflewddur Fflam",
+      "version": "Luckless Bard",
+      "fullName": "Fflewddur Fflam - Luckless Bard",
+      "cost": 6,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "CHASING ADVENTURE When you play this character, if a character of yours quested this turn, draw a card.",
+      "fullTextSections": [
+        "CHASING ADVENTURE When you play this character, if a character of yours quested this turn, draw a card."
+      ],
+      "abilities": [
+        {
+          "effect": "When you play this character, if a character of yours quested this turn, draw a card.",
+          "fullText": "CHASING ADVENTURE When you play this character, if a character of yours quested this turn, draw a card.",
+          "name": "CHASING ADVENTURE",
+          "type": "triggered"
+        }
+      ],
+      "strength": 4,
+      "willpower": 5,
+      "lore": 2,
+      "setCode": "13",
+      "number": 38,
+      "rarity": "Common",
+      "franchise": "The Black Cauldron",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/38-207-EN-13-Fflewddur-Fflam-Luckless-Bard-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/38-207-EN-13-Fflewddur-Fflam-Luckless-Bard-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
       "id": 13040,
       "name": "Winnie the Pooh",
       "version": "Hunny Archmage",
@@ -791,6 +879,44 @@
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/49-207-EN-13-Ming-Lee-Overprotective-Parent-LQ-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/49-207-EN-13-Ming-Lee-Overprotective-Parent-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13051,
+      "name": "Mrs. Incredible",
+      "version": "Created by the Vine",
+      "fullName": "Mrs. Incredible - Created by the Vine",
+      "cost": 4,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Floodborn",
+        "Super",
+        "Vineling"
+      ],
+      "fullText": "TORRENT Whenever one of your Floodborn characters quests, you pay 1 ⬡ less for the next character you shift this turn.",
+      "fullTextSections": [
+        "TORRENT Whenever one of your Floodborn characters quests, you pay 1 ⬡ less for the next character you shift this turn."
+      ],
+      "abilities": [
+        {
+          "effect": "Whenever one of your Floodborn characters quests, you pay 1 ⬡ less for the next character you shift this turn.",
+          "fullText": "TORRENT Whenever one of your Floodborn characters quests, you pay 1 ⬡ less for the next character you shift this turn.",
+          "name": "TORRENT",
+          "type": "triggered"
+        }
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 1,
+      "setCode": "13",
+      "number": 51,
+      "rarity": "Rare",
+      "franchise": "The Incredibles",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/51-207-EN-13-Mrs.-Incredible-Created-by-the-Vine-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/51-207-EN-13-Mrs.-Incredible-Created-by-the-Vine-Lorcana-Player.jpg.webp"
       }
     },
     {
@@ -2164,6 +2290,30 @@
       }
     },
     {
+      "id": 13136,
+      "name": "Rahr!",
+      "fullName": "Rahr!",
+      "cost": 1,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Action",
+      "subtypes": [
+        "Action"
+      ],
+      "fullText": "Chosen character gets +3 ¤ this turn.",
+      "fullTextSections": [
+        "Chosen character gets +3 ¤ this turn."
+      ],
+      "setCode": "13",
+      "number": 136,
+      "rarity": "Common",
+      "franchise": "Monsters, Inc.",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/136-207-EN-13-Rahr-LQ-Lorcana-Player.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/136-207-EN-13-Rahr-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
       "id": 13139,
       "name": "Scream Canister",
       "fullName": "Scream Canister",
@@ -2268,6 +2418,31 @@
       }
     },
     {
+      "id": 13150,
+      "name": "Mrs. Hasagawa",
+      "version": "Fruit Vendor",
+      "fullName": "Mrs. Hasagawa - Fruit Vendor",
+      "cost": 2,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 1,
+      "setCode": "13",
+      "number": 150,
+      "rarity": "Uncommon",
+      "franchise": "Lilo & Stitch",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/150-207-EN-13-Mrs.-Hasagawa-Fruit-Vendor-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/150-207-EN-13-Mrs.-Hasagawa-Fruit-Vendor-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
       "id": 13153,
       "name": "Randall Boggs",
       "version": "Scary Smart",
@@ -2310,6 +2485,31 @@
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/153-207-EN-13-Randall-Boggs-Scary-Smart-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/153-207-EN-13-Randall-Boggs-Scary-Smart-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13155,
+      "name": "Mickey Mouse",
+      "version": "Inquisitive Explorer",
+      "fullName": "Mickey Mouse - Inquisitive Explorer",
+      "cost": 4,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Hero"
+      ],
+      "strength": 3,
+      "willpower": 5,
+      "lore": 2,
+      "setCode": "13",
+      "number": 155,
+      "rarity": "Common",
+      "franchise": "Mickey Mouse & Friends",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/155-207-EN-13-Mickey-Mouse-Inquisitive-Explorer-LQ-Lorcana-Player.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/155-207-EN-13-Mickey-Mouse-Inquisitive-Explorer-LQ-Lorcana-Player.jpg"
       }
     },
     {
@@ -2388,6 +2588,48 @@
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/160-207-EN-13-Boo-Human-Child-LQ-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/160-207-EN-13-Boo-Human-Child-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13161,
+      "name": "Pluto",
+      "version": "Suspicious Sentinel",
+      "fullName": "Pluto - Suspicious Sentinel",
+      "cost": 5,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Ally"
+      ],
+      "fullText": "Support\n(Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn.)",
+      "fullTextSections": [
+        "Support",
+        "(Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn.)"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Support",
+          "fullText": "Support"
+        },
+        {
+          "effect": "Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn.",
+          "fullText": "(Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn.)",
+          "type": "static"
+        }
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 3,
+      "setCode": "13",
+      "number": 161,
+      "rarity": "Common",
+      "franchise": "Mickey Mouse & Friends",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/161-207-IT-13-Pluto-Suspicious-Sentinel-Italian-LQ-Lorcana-Player.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/161-207-IT-13-Pluto-Suspicious-Sentinel-Italian-LQ-Lorcana-Player.jpg"
       }
     },
     {
@@ -2540,6 +2782,38 @@
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/169-207-DE-13-Frightening-German-LQ-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/169-207-DE-13-Frightening-German-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13172,
+      "name": "Laugh Canister",
+      "fullName": "Laugh Canister",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": false,
+      "type": "Item",
+      "subtypes": [
+        "Item"
+      ],
+      "fullText": "COPYCAT ⟳ – Put the top card of your deck into your inkwell facedown and exerted. Chosen opponent may put the top card of their deck into their inkwell facedown and exerted.",
+      "fullTextSections": [
+        "COPYCAT ⟳ – Put the top card of your deck into your inkwell facedown and exerted. Chosen opponent may put the top card of their deck into their inkwell facedown and exerted."
+      ],
+      "abilities": [
+        {
+          "effect": "⟳ – Put the top card of your deck into your inkwell facedown and exerted. Chosen opponent may put the top card of their deck into their inkwell facedown and exerted.",
+          "fullText": "COPYCAT ⟳ – Put the top card of your deck into your inkwell facedown and exerted. Chosen opponent may put the top card of their deck into their inkwell facedown and exerted.",
+          "name": "COPYCAT",
+          "type": "activated"
+        }
+      ],
+      "setCode": "13",
+      "number": 172,
+      "rarity": "Rare",
+      "franchise": "Monsters, Inc.",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/172-207-EN-13-Laugh-Canister-LQ-Lorcana-Player.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/172-207-EN-13-Laugh-Canister-LQ-Lorcana-Player.jpg"
       }
     },
     {
