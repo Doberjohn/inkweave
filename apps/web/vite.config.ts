@@ -186,21 +186,6 @@ export default defineConfig({
               expiration: {maxEntries: 600, maxAgeSeconds: 60 * 60 * 24 * 30},
             },
           },
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'google-fonts-stylesheets',
-            },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-webfonts',
-              expiration: {maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365},
-            },
-          },
         ],
       },
     }),
