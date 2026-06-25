@@ -59,7 +59,7 @@ Selecting **Elsa - Snow Queen** (cost 4) finds:
 
 "Team" Shift cards print a compound name joined by an ampersand — **Belle & Beast**, **Mickey & Minnie** — and their reminder text reads "shift onto a character named X **or** Y." A literal same-name match would find neither half, so `standard` targeting routes through `getShiftBaseNames` (`utils/cardHelpers.ts`), which decomposes the shifter's base name on `&` and matches the target against **every** landing name:
 
-```
+```text
 getShiftBaseNames("Belle & Beast")            -> ["Belle & Beast", "Belle", "Beast"]
 getShiftBaseNames("Carl Fredricksen & Russell") -> ["Carl Fredricksen & Russell", "Carl Fredricksen", "Russell"]
 getShiftBaseNames("Ming Lee")                  -> ["Ming Lee"]
