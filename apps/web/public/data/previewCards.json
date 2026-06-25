@@ -67,6 +67,44 @@
       }
     },
     {
+      "id": 13006,
+      "name": "Celia Mae",
+      "version": "Friendly Receptionist",
+      "fullName": "Celia Mae - Friendly Receptionist",
+      "cost": 3,
+      "color": "Amber",
+      "inkwell": false,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Monster"
+      ],
+      "fullText": "PLEASE HOLD When you play this character, you may pay 1 ⬡ to ready chosen character of yours. They can’t quest or challenge for the rest of this turn.",
+      "fullTextSections": [
+        "PLEASE HOLD When you play this character, you may pay 1 ⬡ to ready chosen character of yours. They can’t quest or challenge for the rest of this turn."
+      ],
+      "abilities": [
+        {
+          "effect": "When you play this character, you may pay 1 ⬡ to ready chosen character of yours. They can’t quest or challenge for the rest of this turn.",
+          "fullText": "PLEASE HOLD When you play this character, you may pay 1 ⬡ to ready chosen character of yours. They can’t quest or challenge for the rest of this turn.",
+          "name": "PLEASE HOLD",
+          "type": "triggered"
+        }
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 2,
+      "setCode": "13",
+      "number": 6,
+      "rarity": "Uncommon",
+      "franchise": "Monsters, Inc.",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/6-207-EN-13-Celia-Mae-Friendly-Receptionist-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/6-207-EN-13-Celia-Mae-Friendly-Receptionist-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
       "id": 13007,
       "name": "Meilin Lee",
       "version": "Lead Vocalist",
@@ -316,6 +354,145 @@
       }
     },
     {
+      "id": 13028,
+      "name": "Woody & Buzz Lightyear",
+      "version": "Best Buddies",
+      "fullName": "Woody & Buzz Lightyear - Best Buddies",
+      "cost": 7,
+      "color": "Amber-Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Captain",
+        "Hero",
+        "Team",
+        "Toy"
+      ],
+      "fullText": "Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Woody or Buzz Lightyear.)\nTO INFINITY . . . When you play this character, if chosen opponent has more cards in their hand than you, draw cards until you have the same number.\n. . . AND BEYOND! Whenever this character quests, you may play a card with cost 2 or less for free.",
+      "fullTextSections": [
+        "Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Woody or Buzz Lightyear.)",
+        "TO INFINITY . . . When you play this character, if chosen opponent has more cards in their hand than you, draw cards until you have the same number.",
+        ". . . AND BEYOND! Whenever this character quests, you may play a card with cost 2 or less for free."
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "fullText": "Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Woody or Buzz Lightyear.)",
+          "keywordValue": "5"
+        },
+        {
+          "effect": ". . . When you play this character, if chosen opponent has more cards in their hand than you, draw cards until you have the same number.",
+          "fullText": "TO INFINITY . . . When you play this character, if chosen opponent has more cards in their hand than you, draw cards until you have the same number.",
+          "name": "TO INFINITY",
+          "type": "static"
+        }
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 3,
+      "setCode": "13",
+      "number": 28,
+      "rarity": "Legendary",
+      "franchise": "Toy Story",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/28-207-EN-13-Woody-Buzz-Lightyear-Best-Buddies-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/28-207-EN-13-Woody-Buzz-Lightyear-Best-Buddies-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13029,
+      "name": "Sulley & Boo",
+      "version": "Scare Buddies",
+      "fullName": "Sulley & Boo - Scare Buddies",
+      "cost": 6,
+      "color": "Amber-Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Monster",
+        "Team"
+      ],
+      "fullText": "Combo Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Sulley, one named Boo, or one of each.)\nTHE POWER OF FRIENDSHIP When this character is banished, if any of the cards that were under them are character cards, you may play those characters from your discard for free.",
+      "fullTextSections": [
+        "Combo Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Sulley, one named Boo, or one of each.)",
+        "THE POWER OF FRIENDSHIP When this character is banished, if any of the cards that were under them are character cards, you may play those characters from your discard for free."
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Combo Shift",
+          "keywordValue": "4",
+          "fullText": "Combo Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Sulley, one named Boo, or one of each.)"
+        },
+        {
+          "effect": "When this character is banished, if any of the cards that were under them are character cards, you may play those characters from your discard for free.",
+          "fullText": "THE POWER OF FRIENDSHIP When this character is banished, if any of the cards that were under them are character cards, you may play those characters from your discard for free.",
+          "name": "THE POWER OF FRIENDSHIP",
+          "type": "triggered"
+        }
+      ],
+      "strength": 6,
+      "willpower": 5,
+      "lore": 2,
+      "setCode": "13",
+      "number": 29,
+      "rarity": "Super Rare",
+      "franchise": "Monsters, Inc.",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/29-207-EN-13-Sulley-Boo-Scare-Buddies-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/29-207-EN-13-Sulley-Boo-Scare-Buddies-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13030,
+      "name": "The Madrigal Family",
+      "version": "Every Generation",
+      "fullName": "The Madrigal Family - Every Generation",
+      "cost": 5,
+      "color": "Amber-Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Madrigal",
+        "Team"
+      ],
+      "fullText": "Madrigal Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one of your Madrigal characters.)\nFAMILY BLESSINGS Once during your turn, whenever you remove 1 or more damage from one of your characters, put the top card of your deck into your inkwell facedown and exerted.",
+      "fullTextSections": [
+        "Madrigal Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one of your Madrigal characters.)",
+        "FAMILY BLESSINGS Once during your turn, whenever you remove 1 or more damage from one of your characters, put the top card of your deck into your inkwell facedown and exerted."
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Madrigal Shift",
+          "keywordValue": "3",
+          "fullText": "Madrigal Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one of your Madrigal characters.)"
+        },
+        {
+          "effect": "Once during your turn, whenever you remove 1 or more damage from one of your characters, put the top card of your deck into your inkwell facedown and exerted.",
+          "fullText": "FAMILY BLESSINGS Once during your turn, whenever you remove 1 or more damage from one of your characters, put the top card of your deck into your inkwell facedown and exerted.",
+          "name": "FAMILY BLESSINGS",
+          "type": "triggered"
+        }
+      ],
+      "strength": 2,
+      "willpower": 8,
+      "lore": 2,
+      "setCode": "13",
+      "number": 30,
+      "rarity": "Rare",
+      "franchise": "Encanto",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/30-207-EN-13-The-Madrigal-Family-Every-Generation-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/30-207-EN-13-The-Madrigal-Family-Every-Generation-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
       "id": 13031,
       "name": "Lilo & Stitch",
       "version": "Fun-Loving Friends",
@@ -429,6 +606,39 @@
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/34-207-EN-13-Besties-Assemble-LQ-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/34-207-EN-13-Besties-Assemble-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13037,
+      "name": "Rapunzel's Tower",
+      "version": "In the Vines' Grip",
+      "fullName": "Rapunzel's Tower - In the Vines' Grip",
+      "cost": 4,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Location",
+      "subtypes": [
+        "Location"
+      ],
+      "fullText": "IRRESISTIBLE TRANSFORMATION Your Floodborn characters get +2 ⛉.",
+      "fullTextSections": [
+        "IRRESISTIBLE TRANSFORMATION Your Floodborn characters get +2 ⛉."
+      ],
+      "abilities": [
+        {
+          "effect": "Your Floodborn characters get +2 ⛉.",
+          "fullText": "IRRESISTIBLE TRANSFORMATION Your Floodborn characters get +2 ⛉.",
+          "name": "IRRESISTIBLE TRANSFORMATION",
+          "type": "static"
+        }
+      ],
+      "setCode": "13",
+      "number": 37,
+      "rarity": "Rare",
+      "franchise": "Tangled",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/Rapunzels-Tower-In-the-Vines-Grip-Japanese-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/Rapunzels-Tower-In-the-Vines-Grip-Japanese-LQ-Lorcana-Player.jpg.webp"
       }
     },
     {
@@ -584,6 +794,134 @@
       }
     },
     {
+      "id": 13058,
+      "name": "Peter Pan",
+      "version": "Playful Prankster",
+      "fullName": "Peter Pan - Playful Prankster",
+      "cost": 2,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero"
+      ],
+      "fullText": "STAY WHERE YOU ARE When you play this character, chosen opposing character can’t ready at the start of their next turn.",
+      "fullTextSections": [
+        "STAY WHERE YOU ARE When you play this character, chosen opposing character can’t ready at the start of their next turn."
+      ],
+      "abilities": [
+        {
+          "effect": "When you play this character, chosen opposing character can’t ready at the start of their next turn.",
+          "fullText": "STAY WHERE YOU ARE When you play this character, chosen opposing character can’t ready at the start of their next turn.",
+          "name": "STAY WHERE YOU ARE",
+          "type": "triggered"
+        }
+      ],
+      "strength": 1,
+      "willpower": 3,
+      "lore": 1,
+      "setCode": "13",
+      "number": 58,
+      "rarity": "Common",
+      "franchise": "Peter Pan",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/58-207-IT-13-Peter-Pan-Playful-Prankster-Italian-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/58-207-IT-13-Peter-Pan-Playful-Prankster-Italian-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13059,
+      "name": "Aladdin & Genie",
+      "version": "Mischievous Pals",
+      "fullName": "Aladdin & Genie - Mischievous Pals",
+      "cost": 5,
+      "color": "Amethyst-Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Team"
+      ],
+      "fullText": "Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one of your characters named Aladdin or Genie.)\nSLEIGHT OF HAND When you play this character, you may put any number of cards from your hand on the bottom of your deck in any order. If you do, draw that number of cards plus 1.",
+      "fullTextSections": [
+        "Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one of your characters named Aladdin or Genie.)",
+        "SLEIGHT OF HAND When you play this character, you may put any number of cards from your hand on the bottom of your deck in any order. If you do, draw that number of cards plus 1."
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "fullText": "Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one of your characters named Aladdin or Genie.)",
+          "keywordValue": "3"
+        },
+        {
+          "effect": "When you play this character, you may put any number of cards from your hand on the bottom of your deck in any order. If you do, draw that number of cards plus 1.",
+          "fullText": "SLEIGHT OF HAND When you play this character, you may put any number of cards from your hand on the bottom of your deck in any order. If you do, draw that number of cards plus 1.",
+          "name": "SLEIGHT OF HAND",
+          "type": "triggered"
+        }
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 2,
+      "setCode": "13",
+      "number": 59,
+      "rarity": "Super Rare",
+      "franchise": "Aladdin",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/59-207-EN-13-Aladdin-Genie-Mischievous-Pals-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/59-207-EN-13-Aladdin-Genie-Mischievous-Pals-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13060,
+      "name": "Peter Pan & Tinker Bell",
+      "version": "Fast Friends",
+      "fullName": "Peter Pan & Tinker Bell - Fast Friends",
+      "cost": 6,
+      "color": "Amethyst-Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Fairy",
+        "Hero",
+        "Team"
+      ],
+      "fullText": "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Peter Pan or Tinker Bell.)\nYOU CAN FLY! Your characters gain Evasive. (Only characters with Evasive can challenge them.)",
+      "fullTextSections": [
+        "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Peter Pan or Tinker Bell.)",
+        "YOU CAN FLY! Your characters gain Evasive. (Only characters with Evasive can challenge them.)"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "fullText": "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Peter Pan or Tinker Bell.)",
+          "keywordValue": "4"
+        },
+        {
+          "effect": "Your characters gain Evasive. (Only characters with Evasive can challenge them.)",
+          "fullText": "YOU CAN FLY! Your characters gain Evasive. (Only characters with Evasive can challenge them.)",
+          "name": "YOU CAN FLY",
+          "type": "static"
+        }
+      ],
+      "strength": 5,
+      "willpower": 4,
+      "lore": 2,
+      "setCode": "13",
+      "number": 60,
+      "rarity": "Super Rare",
+      "franchise": "Peter Pan",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/60-207-EN-13-Peter-Pan-Tinker-Bell-Fast-Friends-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/60-207-EN-13-Peter-Pan-Tinker-Bell-Fast-Friends-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
       "id": 13061,
       "name": "Christopher Robin",
       "version": "Hunny Sage",
@@ -626,6 +964,40 @@
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/61-207-EN-13-Christopher-Robin-Hunny-Sage-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/61-207-EN-13-Christopher-Robin-Hunny-Sage-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13065,
+      "name": "With A Few Good Friends",
+      "fullName": "With A Few Good Friends",
+      "cost": 6,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Action",
+      "subtypes": [
+        "Song",
+        "Action"
+      ],
+      "fullText": "Sing Together 6 (Any number of your or your teammates’ characters with total cost 6 or more may ⟳ to sing this song for free.)\nChoose a player. That player draws a card for each ink type among characters you have in play.",
+      "fullTextSections": [
+        "Sing Together 6 (Any number of your or your teammates’ characters with total cost 6 or more may ⟳ to sing this song for free.)",
+        "Choose a player. That player draws a card for each ink type among characters you have in play."
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Sing Together",
+          "fullText": "Sing Together 6 (Any number of your or your teammates’ characters with total cost 6 or more may ⟳ to sing this song for free.)",
+          "keywordValue": "6"
+        }
+      ],
+      "setCode": "13",
+      "number": 65,
+      "rarity": "Rare",
+      "franchise": "Winnie the Pooh",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/With-A-Few-Good-Friends-Japanese-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/With-A-Few-Good-Friends-Japanese-LQ-Lorcana-Player.jpg.webp"
       }
     },
     {
@@ -754,6 +1126,43 @@
       }
     },
     {
+      "id": 13082,
+      "name": "Russell",
+      "version": "Junior Wilderness Explorer",
+      "fullName": "Russell - Junior Wilderness Explorer",
+      "cost": 2,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero"
+      ],
+      "fullText": "ASSISTING THE ELDERLY BADGE Whenever this character quests, you may move him and one of your other characters to the same location for free.",
+      "fullTextSections": [
+        "ASSISTING THE ELDERLY BADGE Whenever this character quests, you may move him and one of your other characters to the same location for free."
+      ],
+      "abilities": [
+        {
+          "effect": "Whenever this character quests, you may move him and one of your other characters to the same location for free.",
+          "fullText": "ASSISTING THE ELDERLY BADGE Whenever this character quests, you may move him and one of your other characters to the same location for free.",
+          "name": "ASSISTING THE ELDERLY BADGE",
+          "type": "triggered"
+        }
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1,
+      "setCode": "13",
+      "number": 82,
+      "rarity": "Common",
+      "franchise": "Up",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/82-207-EN-13-Russell-Junior-Wilderness-Explorer-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/82-207-EN-13-Russell-Junior-Wilderness-Explorer-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
       "id": 13083,
       "name": "Roo",
       "version": "Hunny Rogue",
@@ -801,6 +1210,43 @@
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/83-207-EN-13-Roo-Hunny-Rogue-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/83-207-EN-13-Roo-Hunny-Rogue-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13088,
+      "name": "Kevin",
+      "version": "Flightless Bird",
+      "fullName": "Kevin - Flightless Bird",
+      "cost": 2,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "BACK TO THE NEST Whenever this character quests, put this card on the top of your deck. (She returns to your deck after you gain the lore.)",
+      "fullTextSections": [
+        "BACK TO THE NEST Whenever this character quests, put this card on the top of your deck. (She returns to your deck after you gain the lore.)"
+      ],
+      "abilities": [
+        {
+          "effect": "Whenever this character quests, put this card on the top of your deck. (She returns to your deck after you gain the lore.)",
+          "fullText": "BACK TO THE NEST Whenever this character quests, put this card on the top of your deck. (She returns to your deck after you gain the lore.)",
+          "name": "BACK TO THE NEST",
+          "type": "triggered"
+        }
+      ],
+      "strength": 1,
+      "willpower": 3,
+      "lore": 3,
+      "setCode": "13",
+      "number": 88,
+      "rarity": "Uncommon",
+      "franchise": "Up",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/Kevin-Flightless-Bird-Japanese-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/Kevin-Flightless-Bird-Japanese-LQ-Lorcana-Player.jpg.webp"
       }
     },
     {
@@ -924,6 +1370,51 @@
       }
     },
     {
+      "id": 13099,
+      "name": "Mickey Mouse & Minnie Mouse",
+      "version": "Adventuring Duo",
+      "fullName": "Mickey Mouse & Minnie Mouse - Adventuring Duo",
+      "cost": 7,
+      "color": "Emerald-Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Hero",
+        "Team"
+      ],
+      "fullText": "Duo Shift 0 ⬡ (You may pay 0 ⬡ to play this on top of two of your characters, one named Mickey Mouse and one named Minnie Mouse.)\nTHINKING OF YOU If this character would be banished, put them into your inkwell facedown and exerted instead.",
+      "fullTextSections": [
+        "Duo Shift 0 ⬡ (You may pay 0 ⬡ to play this on top of two of your characters, one named Mickey Mouse and one named Minnie Mouse.)",
+        "THINKING OF YOU If this character would be banished, put them into your inkwell facedown and exerted instead."
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Duo Shift",
+          "keywordValue": "0",
+          "fullText": "Duo Shift 0 ⬡ (You may pay 0 ⬡ to play this on top of two of your characters, one named Mickey Mouse and one named Minnie Mouse.)"
+        },
+        {
+          "effect": "If this character would be banished, put them into your inkwell facedown and exerted instead.",
+          "fullText": "THINKING OF YOU If this character would be banished, put them into your inkwell facedown and exerted instead.",
+          "name": "THINKING OF YOU",
+          "type": "static"
+        }
+      ],
+      "strength": 5,
+      "willpower": 5,
+      "lore": 5,
+      "setCode": "13",
+      "number": 99,
+      "rarity": "Legendary",
+      "franchise": "Mickey Mouse & Friends",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/99-207-EN-13-Mickey-Mouse-Minnie-Mouse-Adventuring-Duo-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/99-207-EN-13-Mickey-Mouse-Minnie-Mouse-Adventuring-Duo-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
       "id": 13100,
       "name": "Rapunzel & Flynn Rider",
       "version": "Unlikely Pair",
@@ -975,6 +1466,39 @@
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/100-207-EN-13-Rapunzel-Flynn-Rider-Unlikely-Pair-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/100-207-EN-13-Rapunzel-Flynn-Rider-Unlikely-Pair-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13103,
+      "name": "Put That Thing Back Where It Came From",
+      "fullName": "Put That Thing Back Where It Came From",
+      "cost": 4,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Action",
+      "subtypes": [
+        "Song",
+        "Action"
+      ],
+      "fullText": "(A character with cost 4 or more can ⟳ to sing this song for free.)\nChoose a character or item. Return it to its player’s hand.",
+      "fullTextSections": [
+        "(A character with cost 4 or more can ⟳ to sing this song for free.)",
+        "Choose a character or item. Return it to its player’s hand."
+      ],
+      "abilities": [
+        {
+          "effect": "A character with cost 4 or more can ⟳ to sing this song for free.",
+          "fullText": "(A character with cost 4 or more can ⟳ to sing this song for free.)",
+          "type": "static"
+        }
+      ],
+      "setCode": "13",
+      "number": 103,
+      "rarity": "Uncommon",
+      "franchise": "Monsters, Inc.",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/Put-That-Thing-Back-Where-It-Came-From-Japanese-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/Put-That-Thing-Back-Where-It-Came-From-Japanese-LQ-Lorcana-Player.jpg.webp"
       }
     },
     {
@@ -1089,6 +1613,81 @@
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/115-207-EN-13-Gaston-Created-by-the-Vine-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/115-207-EN-13-Gaston-Created-by-the-Vine-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13119,
+      "name": "Sun Yee",
+      "version": "Soul of the Red Panda",
+      "fullName": "Sun Yee - Soul of the Red Panda",
+      "cost": 5,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Red Panda"
+      ],
+      "fullText": "Temporary Red Panda Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your Red Panda characters. At the end of your turn, remove all damage from this character and return only this card to your hand.)",
+      "fullTextSections": [
+        "Temporary Red Panda Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your Red Panda characters. At the end of your turn, remove all damage from this character and return only this card to your hand.)"
+      ],
+      "strength": 5,
+      "willpower": 5,
+      "lore": 2,
+      "setCode": "13",
+      "number": 119,
+      "rarity": "Uncommon",
+      "franchise": "Turning Red",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/Sun-Yee-Soul-of-the-Red-Panda-Japanese-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/Sun-Yee-Soul-of-the-Red-Panda-Japanese-LQ-Lorcana-Player.jpg.webp"
+      },
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Temporary Red Panda Shift",
+          "keywordValue": "2",
+          "fullText": "Temporary Red Panda Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your Red Panda characters. At the end of your turn, remove all damage from this character and return only this card to your hand.)"
+        }
+      ]
+    },
+    {
+      "id": 13122,
+      "name": "Beast",
+      "version": "Fearless Defender",
+      "fullName": "Beast - Fearless Defender",
+      "cost": 3,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Prince"
+      ],
+      "fullText": "MONSTROUS LOVE While you have a character named Belle in play, this character gets +2 ¤.",
+      "fullTextSections": [
+        "MONSTROUS LOVE While you have a character named Belle in play, this character gets +2 ¤."
+      ],
+      "abilities": [
+        {
+          "effect": "While you have a character named Belle in play, this character gets +2 ¤.",
+          "fullText": "MONSTROUS LOVE While you have a character named Belle in play, this character gets +2 ¤.",
+          "name": "MONSTROUS LOVE",
+          "type": "static"
+        }
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 1,
+      "setCode": "13",
+      "number": 122,
+      "rarity": "Common",
+      "franchise": "Beauty and the Beast",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/122-207-DE-13-Beast-Fearless-Defender-German-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/122-207-DE-13-Beast-Fearless-Defender-German-LQ-Lorcana-Player.jpg.webp"
       }
     },
     {
@@ -1377,6 +1976,31 @@
       }
     },
     {
+      "id": 13131,
+      "name": "Peter Pan",
+      "version": "Vine Duelist",
+      "fullName": "Peter Pan - Vine Duelist",
+      "cost": 1,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero"
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1,
+      "setCode": "13",
+      "number": 131,
+      "rarity": "Common",
+      "franchise": "Peter Pan",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/131-207-EN-13-Peter-Pan-Vine-Duelist-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/131-207-EN-13-Peter-Pan-Vine-Duelist-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
       "id": 13132,
       "name": "Belle & Beast",
       "version": "Certain as the Sun",
@@ -1502,6 +2126,39 @@
       }
     },
     {
+      "id": 13142,
+      "name": "Carl's House",
+      "version": "Flying High",
+      "fullName": "Carl's House - Flying High",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Location",
+      "subtypes": [
+        "Location"
+      ],
+      "fullText": "MOVING DAY Once during your turn, you may move chosen character from here to another location for free. If you do, gain 1 ◊.",
+      "fullTextSections": [
+        "MOVING DAY Once during your turn, you may move chosen character from here to another location for free. If you do, gain 1 ◊."
+      ],
+      "abilities": [
+        {
+          "effect": "Once during your turn, you may move chosen character from here to another location for free. If you do, gain 1 ◊.",
+          "fullText": "MOVING DAY Once during your turn, you may move chosen character from here to another location for free. If you do, gain 1 ◊.",
+          "name": "MOVING DAY",
+          "type": "triggered"
+        }
+      ],
+      "setCode": "13",
+      "number": 142,
+      "rarity": "Rare",
+      "franchise": "Up",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/Carls-House-Flying-High-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/Carls-House-Flying-High-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
       "id": 13153,
       "name": "Randall Boggs",
       "version": "Scary Smart",
@@ -1547,6 +2204,48 @@
       }
     },
     {
+      "id": 13156,
+      "name": "Hades",
+      "version": "Meticulous Schemer",
+      "fullName": "Hades - Meticulous Schemer",
+      "cost": 6,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Villain"
+      ],
+      "fullText": "Ward\n(Opponents can’t choose this character except to challenge.)",
+      "fullTextSections": [
+        "Ward",
+        "(Opponents can’t choose this character except to challenge.)"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Ward",
+          "fullText": "Ward"
+        },
+        {
+          "effect": "Opponents can’t choose this character except to challenge.",
+          "fullText": "(Opponents can’t choose this character except to challenge.)",
+          "type": "static"
+        }
+      ],
+      "strength": 5,
+      "willpower": 5,
+      "lore": 3,
+      "setCode": "13",
+      "number": 156,
+      "rarity": "Uncommon",
+      "franchise": "Hercules",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/156-207-EN-13-Hades-Meticulous-Schemer-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/156-207-EN-13-Hades-Meticulous-Schemer-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
       "id": 13160,
       "name": "Boo",
       "version": "Human Child",
@@ -1583,6 +2282,110 @@
       }
     },
     {
+      "id": 13162,
+      "name": "Charles Muntz",
+      "version": "Bird-Obsessed Adventurer",
+      "fullName": "Charles Muntz - Bird-Obsessed Adventurer",
+      "cost": 4,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Inventor",
+        "Villain"
+      ],
+      "fullText": "HANDY EQUIPMENT Whenever you play an item, look at the top card of your deck. Put it on the top or the bottom of your deck.\nFIND THAT BIRD! Whenever this character quests, look at the top card of your deck. If it’s a character card named Kevin, you may reveal it and put it into your hand to gain 3 ◊. Otherwise, put it on the top or the bottom of your deck.",
+      "fullTextSections": [
+        "HANDY EQUIPMENT Whenever you play an item, look at the top card of your deck. Put it on the top or the bottom of your deck.",
+        "FIND THAT BIRD! Whenever this character quests, look at the top card of your deck. If it’s a character card named Kevin, you may reveal it and put it into your hand to gain 3 ◊. Otherwise, put it on the top or the bottom of your deck."
+      ],
+      "abilities": [
+        {
+          "effect": "Whenever you play an item, look at the top card of your deck. Put it on the top or the bottom of your deck.",
+          "fullText": "HANDY EQUIPMENT Whenever you play an item, look at the top card of your deck. Put it on the top or the bottom of your deck.",
+          "name": "HANDY EQUIPMENT",
+          "type": "triggered"
+        },
+        {
+          "effect": "Whenever this character quests, look at the top card of your deck. If it’s a character card named Kevin, you may reveal it and put it into your hand to gain 3 ◊. Otherwise, put it on the top or the bottom of your deck.",
+          "fullText": "FIND THAT BIRD! Whenever this character quests, look at the top card of your deck. If it’s a character card named Kevin, you may reveal it and put it into your hand to gain 3 ◊. Otherwise, put it on the top or the bottom of your deck.",
+          "name": "FIND THAT BIRD",
+          "type": "triggered"
+        }
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 2,
+      "setCode": "13",
+      "number": 162,
+      "rarity": "Super Rare",
+      "franchise": "Up",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/Charles-Muntz-Bird-Obsessed-Adventurer-Japanese-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/Charles-Muntz-Bird-Obsessed-Adventurer-Japanese-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13165,
+      "name": "Darkwing Duck & Launchpad",
+      "version": "St. Canard's Finest",
+      "fullName": "Darkwing Duck & Launchpad - St. Canard's Finest",
+      "cost": 7,
+      "color": "Sapphire-Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Detective",
+        "Hero",
+        "Super",
+        "Team"
+      ],
+      "fullText": "Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Darkwing Duck or Launchpad.)\nWard\n(Opponents can’t choose this character except to challenge.)\nVICTORY POSE During your turn, whenever this character banishes another character in a challenge, gain 2 lore.",
+      "fullTextSections": [
+        "Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Darkwing Duck or Launchpad.)",
+        "Ward",
+        "(Opponents can’t choose this character except to challenge.)",
+        "VICTORY POSE During your turn, whenever this character banishes another character in a challenge, gain 2 lore."
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "fullText": "Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Darkwing Duck or Launchpad.)",
+          "keywordValue": "5"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Ward",
+          "fullText": "Ward"
+        },
+        {
+          "effect": "Opponents can’t choose this character except to challenge.",
+          "fullText": "(Opponents can’t choose this character except to challenge.)",
+          "type": "static"
+        },
+        {
+          "effect": "During your turn, whenever this character banishes another character in a challenge, gain 2 lore.",
+          "fullText": "VICTORY POSE During your turn, whenever this character banishes another character in a challenge, gain 2 lore.",
+          "name": "VICTORY POSE",
+          "type": "static"
+        }
+      ],
+      "strength": 5,
+      "willpower": 7,
+      "lore": 2,
+      "setCode": "13",
+      "number": 165,
+      "rarity": "Super Rare",
+      "franchise": "Darkwing Duck",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/165-207-EN-13-Darkwing-Duck-Launchpad-St.-Canards-Finest-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/165-207-EN-13-Darkwing-Duck-Launchpad-St.-Canards-Finest-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
       "id": 13166,
       "name": "Power Surge",
       "fullName": "Power Surge",
@@ -1604,6 +2407,164 @@
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/166-207-EN-13-Power-Surge-LQ-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/166-207-EN-13-Power-Surge-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13169,
+      "name": "Frightening",
+      "fullName": "Frightening",
+      "cost": 1,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Action",
+      "subtypes": [
+        "Action"
+      ],
+      "fullText": "Chosen character gets -3 ¤ this turn.",
+      "fullTextSections": [
+        "Chosen character gets -3 ¤ this turn."
+      ],
+      "setCode": "13",
+      "number": 169,
+      "rarity": "Common",
+      "franchise": "Aladdin",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/169-207-DE-13-Frightening-German-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/169-207-DE-13-Frightening-German-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13174,
+      "name": "The Great Book of Hunny",
+      "fullName": "The Great Book of Hunny",
+      "cost": 2,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Item",
+      "subtypes": [
+        "Hunny",
+        "Item"
+      ],
+      "fullText": "HUNNY ACTIVATION ⟳, 2 ⬡: Reveal the top card of your deck. If it’s a Hunny card, put it into your hand. If not, put it on the bottom of your deck.",
+      "fullTextSections": [
+        "HUNNY ACTIVATION ⟳, 2 ⬡: Reveal the top card of your deck. If it’s a Hunny card, put it into your hand. If not, put it on the bottom of your deck."
+      ],
+      "abilities": [
+        {
+          "effect": "⟳, 2 ⬡: Reveal the top card of your deck. If it’s a Hunny card, put it into your hand. If not, put it on the bottom of your deck.",
+          "fullText": "HUNNY ACTIVATION ⟳, 2 ⬡: Reveal the top card of your deck. If it’s a Hunny card, put it into your hand. If not, put it on the bottom of your deck.",
+          "name": "HUNNY ACTIVATION",
+          "type": "activated"
+        }
+      ],
+      "setCode": "13",
+      "number": 174,
+      "rarity": "Uncommon",
+      "franchise": "Winnie the Pooh",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/The-Great-Book-of-Hunny-Japanese-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/The-Great-Book-of-Hunny-Japanese-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13178,
+      "name": "Willie the Giant",
+      "version": "Created by the Vine",
+      "fullName": "Willie the Giant - Created by the Vine",
+      "cost": 6,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Floodborn",
+        "Giant",
+        "Vineling"
+      ],
+      "fullText": "DEFEND THE STALK Your Floodborn characters gain Resist +1. (Damage dealt to them is reduced by 1.)",
+      "fullTextSections": [
+        "DEFEND THE STALK Your Floodborn characters gain Resist +1. (Damage dealt to them is reduced by 1.)"
+      ],
+      "abilities": [
+        {
+          "effect": "Your Floodborn characters gain Resist +1. (Damage dealt to them is reduced by 1.)",
+          "fullText": "DEFEND THE STALK Your Floodborn characters gain Resist +1. (Damage dealt to them is reduced by 1.)",
+          "name": "DEFEND THE STALK",
+          "type": "static"
+        }
+      ],
+      "strength": 6,
+      "willpower": 3,
+      "lore": 2,
+      "setCode": "13",
+      "number": 178,
+      "rarity": "Uncommon",
+      "franchise": "Mickey and the Beanstalk",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/178-207-EN-13-Willie-the-Giant-Created-by-the-Vine-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/178-207-EN-13-Willie-the-Giant-Created-by-the-Vine-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13187,
+      "name": "Darkwing Duck",
+      "version": "Shadowy Superhero",
+      "fullName": "Darkwing Duck - Shadowy Superhero",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": false,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Detective",
+        "Hero",
+        "Super"
+      ],
+      "fullText": "PREEMPTIVE STRIKE When you play this character, you may deal 1 damage to chosen character.",
+      "fullTextSections": [
+        "PREEMPTIVE STRIKE When you play this character, you may deal 1 damage to chosen character."
+      ],
+      "abilities": [
+        {
+          "effect": "When you play this character, you may deal 1 damage to chosen character.",
+          "fullText": "PREEMPTIVE STRIKE When you play this character, you may deal 1 damage to chosen character.",
+          "name": "PREEMPTIVE STRIKE",
+          "type": "triggered"
+        }
+      ],
+      "strength": 2,
+      "willpower": 5,
+      "lore": 1,
+      "setCode": "13",
+      "number": 187,
+      "rarity": "Common",
+      "franchise": "Darkwing Duck",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/187-207-DE-13-Darkwing-Duck-Shadowy-Superhero-German-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/187-207-DE-13-Darkwing-Duck-Shadowy-Superhero-German-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13190,
+      "name": "The Irate Chef",
+      "version": "Meat Hut Cook",
+      "fullName": "The Irate Chef - Meat Hut Cook",
+      "cost": 4,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn"
+      ],
+      "strength": 5,
+      "willpower": 5,
+      "lore": 1,
+      "setCode": "13",
+      "number": 190,
+      "rarity": "Uncommon",
+      "franchise": "Hercules",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/190-207-EN-13-The-Irate-Chef-Meat-Hut-Cook-LQ-Lorcana-Player.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/190-207-EN-13-The-Irate-Chef-Meat-Hut-Cook-LQ-Lorcana-Player.jpg"
       }
     },
     {
