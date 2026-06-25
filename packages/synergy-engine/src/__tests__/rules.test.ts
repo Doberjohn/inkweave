@@ -122,6 +122,45 @@ describe('Synergy Rules', () => {
       expect(reverse.find((s) => s.card.id === 'belle-beast-shift')).toBeDefined();
     });
 
+    it('should treat Combo Shift on a team card as a same-name shift', () => {
+      const combo = createCard({
+        id: 'sulley-boo',
+        name: 'Sulley & Boo',
+        fullName: 'Sulley & Boo - Scare Buddies',
+        cost: 6,
+        keywords: ['Combo Shift 4'],
+      });
+      const sulley = createCard({id: 'sulley-base', name: 'Sulley', cost: 3});
+      const boo = createCard({id: 'boo-base', name: 'Boo', cost: 2});
+      const pool = [combo, sulley, boo];
+
+      const forward = shiftRule.findSynergies(combo, pool);
+      expect(forward.find((s) => s.card.id === 'sulley-base')).toBeDefined();
+      expect(forward.find((s) => s.card.id === 'boo-base')).toBeDefined();
+    });
+
+    it('should match a multi-word classification Shift (Temporary Red Panda) to its class', () => {
+      const sunYee = createCard({
+        id: 'sun-yee',
+        name: 'Sun Yee',
+        fullName: 'Sun Yee - Soul of the Red Panda',
+        cost: 5,
+        keywords: ['Temporary Red Panda Shift 2'],
+      });
+      const meilin = createCard({id: 'meilin', name: 'Meilin Lee', cost: 3, classifications: ['Red Panda']});
+      const notPanda = createCard({id: 'mulan', name: 'Mulan', cost: 3, classifications: ['Hero']});
+      const pool = [sunYee, meilin, notPanda];
+
+      // Forward: the Red Panda shifter lands on Red Panda characters, not on Mulan.
+      const forward = shiftRule.findSynergies(sunYee, pool);
+      expect(forward.find((s) => s.card.id === 'meilin')).toBeDefined();
+      expect(forward.find((s) => s.card.id === 'mulan')).toBeUndefined();
+
+      // Reverse: a Red Panda character finds the classification shifter.
+      const reverse = shiftRule.findSynergies(meilin, pool);
+      expect(reverse.find((s) => s.card.id === 'sun-yee')).toBeDefined();
+    });
+
     it('should not match non-Character cards', () => {
       expect(shiftRule.matches(createCard({type: 'Action', keywords: ['Shift 3']}))).toBe(false);
     });

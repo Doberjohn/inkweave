@@ -47,6 +47,33 @@ describe('shift type utilities', () => {
       const card = createCard({keywords: ['Temporary Shift 7']});
       expect(getShiftType(card)).toEqual({kind: 'standard', cost: 7});
     });
+
+    it('routes Combo/Duo Shift on a compound-name team card to standard', () => {
+      const combo = createCard({name: 'Sulley & Boo', keywords: ['Combo Shift 4']});
+      expect(getShiftType(combo)).toEqual({kind: 'standard', cost: 4});
+      const duo = createCard({name: 'Mickey Mouse & Minnie Mouse', keywords: ['Duo Shift 0']});
+      expect(getShiftType(duo)).toEqual({kind: 'standard', cost: 0});
+    });
+
+    it('returns multi-word classification for Temporary Red Panda Shift', () => {
+      const card = createCard({name: 'Sun Yee', keywords: ['Temporary Red Panda Shift 2']});
+      expect(getShiftType(card)).toEqual({
+        kind: 'classification',
+        classification: 'Red Panda',
+        cost: 2,
+      });
+    });
+
+    it('returns classification for Floodborn and Madrigal Shift', () => {
+      expect(getShiftType(createCard({name: 'The Vine', keywords: ['Floodborn Shift 7']}))).toEqual({
+        kind: 'classification',
+        classification: 'Floodborn',
+        cost: 7,
+      });
+      expect(
+        getShiftType(createCard({name: 'The Madrigal Family', keywords: ['Madrigal Shift 3']})),
+      ).toEqual({kind: 'classification', classification: 'Madrigal', cost: 3});
+    });
   });
 
   describe('hasAnyShift', () => {

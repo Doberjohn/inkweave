@@ -49,15 +49,19 @@ Selecting **Elsa - Snow Queen** (cost 4) finds:
 | Keyword | Kind | Valid targets |
 |---|---|---|
 | `Shift N` | `standard` | same base name (Team compound names like "Belle & Beast" match either half — see below) |
-| `Temporary Shift N` | `standard` | same base name (shifts onto a same-named character, then returns it to hand at end of turn) |
-| `X Shift N` (e.g. `Puppy Shift`) | `classification` | characters with classification `X` |
+| `Temporary Shift N` | `standard` | same base name; the card returns to hand at end of turn ("Temporary" is a modifier, stripped before classifying) |
+| `Combo Shift N` / `Duo Shift N` | `standard` | the named halves of a Team card — flavor labels for a compound-name shift (see below) |
+| `X Shift N` (e.g. `Puppy Shift`, `Madrigal Shift`, `Temporary Red Panda Shift`) | `classification` | characters with classification `X` (the prefix may be multiple words) |
 | `Universal Shift N` | `universal` | any character |
 
-`Temporary Shift` is matched **before** the `X Shift` classification branch — "Temporary" is a modifier, not a classification, so it must not be read as a `Temporary` classification (which would match no targets).
+`classifyShiftKeyword` resolves a keyword in this order: **Universal** → **Team** (card name contains `&`, so any shift label routes to `standard`) → strip a leading **`Temporary `** modifier → **`<classification> Shift N`** → plain **`Shift N`**. Two consequences:
+
+- **"Temporary" is a modifier, not a classification.** It's stripped before the classification match, so `Temporary Shift N` → `standard` and `Temporary Red Panda Shift N` → classification `Red Panda` (rather than a non-existent `Temporary Red Panda` class). The classification prefix may be **multiple words** (`Red Panda`), which the lazy `^(.+?)\s+shift` match handles.
+- **"Combo"/"Duo" look like classification prefixes but aren't** — they're flavor labels on Team cards. The reminder text ("named X or Y") isn't visible at classify-time, so the `&` in the card's name is the real signal: Team detection runs before the classification branch and routes `Combo Shift` / `Duo Shift` to `standard`.
 
 #### Team (compound-name) Shift
 
-"Team" Shift cards print a compound name joined by an ampersand — **Belle & Beast**, **Mickey & Minnie** — and their reminder text reads "shift onto a character named X **or** Y." A literal same-name match would find neither half, so `standard` targeting routes through `getShiftBaseNames` (`utils/cardHelpers.ts`), which decomposes the shifter's base name on `&` and matches the target against **every** landing name:
+"Team" Shift cards print a compound name joined by an ampersand — **Belle & Beast**, **Mickey & Minnie**, **Sulley & Boo** — and their reminder text reads "shift onto a character named X **or** Y." The keyword may be plain `Shift N` or a flavor-labelled `Combo Shift N` / `Duo Shift N`; either way the `&` name is what determines targeting, so all of them route to `standard`. A literal same-name match would find neither half, so `standard` targeting routes through `getShiftBaseNames` (`utils/cardHelpers.ts`), which decomposes the shifter's base name on `&` and matches the target against **every** landing name:
 
 ```text
 getShiftBaseNames("Belle & Beast")            -> ["Belle & Beast", "Belle", "Beast"]
