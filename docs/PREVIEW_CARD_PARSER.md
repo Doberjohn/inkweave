@@ -414,11 +414,11 @@ function deriveCardId(ctx) {
   // Number('') === 0 and Number.isFinite(0) is true, so reject set <= 0 too —
   // otherwise an unresolved setCode would mint a low id that collides with
   // canonical allCards ids (and the loader would silently drop the preview card).
-  if (!Number.isFinite(set) || set <= 0) {
+  if (!Number.isInteger(set) || set <= 0) {
     throw new Error('deriveCardId: numeric setCode required — pass opts.setCode (e.g. "13").');
   }
   // Numbered card: setNum * 1000 + collector number (e.g. Set 13 #1 -> 13001).
-  if (typeof number === 'number' && !Number.isNaN(number)) {
+  if (Number.isInteger(number) && number > 0) {
     return set * 1000 + number;
   }
   // Promo with no collector number: stable hash of the name into a reserved

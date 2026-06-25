@@ -208,7 +208,7 @@ Negative-claim evidence:
 
 ### Updating `previewCards.json`
 
-1. Edit `apps/web/public/data/previewCards.json` directly — append new cards in the LorcanaJSON shape (full schema in the collapsible below). To scrape a revealed card straight from its source page into this shape, paste the browser-console parser from [`docs/PREVIEW_CARD_PARSER.md`](PREVIEW_CARD_PARSER.md) into devtools — it downloads a ready-to-paste `{id}.json`.
+1. Edit `apps/web/public/data/previewCards.json` directly — append new cards in the LorcanaJSON shape (full schema in the collapsible below). To scrape a revealed card straight from its source page into this shape, paste the browser-console parser from [`docs/PREVIEW_CARD_PARSER.md`](PREVIEW_CARD_PARSER.md) into devtools — it downloads a ready-to-paste `{id}-{slug}.json`.
 2. (Optional) Drop raw JPGs in `apps/web/public/card-images-raw/` named `{id}.jpg` (or `.jpeg`/`.png`/`.webp`). The `preview-images-auto-convert.sh` hook fires `pnpm convert-preview-images` which produces the AVIFs at `apps/web/public/card-images-preview/{id}.avif` + `{id}-sm.avif`.
 3. The `preview-data-auto-precompute.sh` hook fires `pnpm precompute-synergies`
 4. Commit
