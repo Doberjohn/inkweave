@@ -149,6 +149,43 @@
       }
     },
     {
+      "id": 13009,
+      "name": "Miriam Mendelsohn",
+      "version": "Ticket Holder",
+      "fullName": "Miriam Mendelsohn - Ticket Holder",
+      "cost": 2,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "I GOT ’EM! When you play this character, each player draws a card.",
+      "fullTextSections": [
+        "I GOT ’EM! When you play this character, each player draws a card."
+      ],
+      "abilities": [
+        {
+          "effect": "When you play this character, each player draws a card.",
+          "fullText": "I GOT ’EM! When you play this character, each player draws a card.",
+          "name": "I GOT ’EM",
+          "type": "triggered"
+        }
+      ],
+      "strength": 1,
+      "willpower": 3,
+      "lore": 1,
+      "setCode": "13",
+      "number": 9,
+      "rarity": "Common",
+      "franchise": "Turning Red",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/9-207-EN-13-Miriam-Mendelsohn-Ticket-Holder-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/9-207-EN-13-Miriam-Mendelsohn-Ticket-Holder-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
       "id": 13017,
       "name": "4*Town",
       "version": "Hottest Band of the Year",
@@ -1001,6 +1038,54 @@
       }
     },
     {
+      "id": 13067,
+      "name": "One and Only",
+      "fullName": "One and Only",
+      "cost": 3,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Action",
+      "subtypes": [
+        "Action"
+      ],
+      "fullText": "Choose a character. Banish all other characters with the same name as that character.",
+      "fullTextSections": [
+        "Choose a character. Banish all other characters with the same name as that character."
+      ],
+      "setCode": "13",
+      "number": 67,
+      "rarity": "Uncommon",
+      "franchise": "Aladdin",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/67-207-EN-13-One-and-Only-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/67-207-EN-13-One-and-Only-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13068,
+      "name": "Protective Aura",
+      "fullName": "Protective Aura",
+      "cost": 2,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Action",
+      "subtypes": [
+        "Action"
+      ],
+      "fullText": "Your Floodborn characters gain Evasive until the start of your next turn. (Only characters with Evasive can challenge them.)",
+      "fullTextSections": [
+        "Your Floodborn characters gain Evasive until the start of your next turn. (Only characters with Evasive can challenge them.)"
+      ],
+      "setCode": "13",
+      "number": 68,
+      "rarity": "Uncommon",
+      "franchise": "Robin Hood",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/68-207-EN-13-Protective-Aura-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/68-207-EN-13-Protective-Aura-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
       "id": 13074,
       "name": "Carl Fredricksen",
       "version": "Loving Husband",
@@ -1466,6 +1551,30 @@
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/100-207-EN-13-Rapunzel-Flynn-Rider-Unlikely-Pair-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/100-207-EN-13-Rapunzel-Flynn-Rider-Unlikely-Pair-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13102,
+      "name": "Piercing Attack",
+      "fullName": "Piercing Attack",
+      "cost": 2,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Action",
+      "subtypes": [
+        "Action"
+      ],
+      "fullText": "Deal 2 damage to chosen character. This damage can’t be reduced by Resist.",
+      "fullTextSections": [
+        "Deal 2 damage to chosen character. This damage can’t be reduced by Resist."
+      ],
+      "setCode": "13",
+      "number": 102,
+      "rarity": "Common",
+      "franchise": "Lorcana",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/102-207-EN-13-Piercing-Attack-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/102-207-EN-13-Piercing-Attack-Lorcana-Player.jpg.webp"
       }
     },
     {
@@ -2615,6 +2724,39 @@
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/197-207-EN-13-The-Vine-Towering-Stalk-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/197-207-EN-13-The-Vine-Towering-Stalk-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13199,
+      "name": "We'll Save Our Village",
+      "fullName": "We'll Save Our Village",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Action",
+      "subtypes": [
+        "Song",
+        "Action"
+      ],
+      "fullText": "(A character with cost 2 or more can ⟳ to sing this song for free.)\nYour characters and locations gain Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1.)",
+      "fullTextSections": [
+        "(A character with cost 2 or more can ⟳ to sing this song for free.)",
+        "Your characters and locations gain Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1.)"
+      ],
+      "abilities": [
+        {
+          "effect": "A character with cost 2 or more can ⟳ to sing this song for free.",
+          "fullText": "(A character with cost 2 or more can ⟳ to sing this song for free.)",
+          "type": "static"
+        }
+      ],
+      "setCode": "13",
+      "number": 199,
+      "rarity": "Common",
+      "franchise": "Beauty and the Beast",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/199-207-EN-13-Well-Save-Our-Village-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/199-207-EN-13-Well-Save-Our-Village-LQ-Lorcana-Player.jpg.webp"
       }
     },
     {
