@@ -8,6 +8,7 @@ export {
   hasKeywordExact,
   hasClassification,
   getBaseName,
+  getShiftBaseNames,
   getKeywordValue,
   isSong,
   isCharacter,

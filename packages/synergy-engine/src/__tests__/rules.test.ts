@@ -98,6 +98,30 @@ describe('Synergy Rules', () => {
       expect(synergies.find((s) => s.card.id === 'elsa-shift-2')).toBeDefined();
     });
 
+    it('should find both halves of a "Team" compound-name Shift card', () => {
+      const team = createCard({
+        id: 'belle-beast-shift',
+        name: 'Belle & Beast',
+        fullName: 'Belle & Beast - Certain as the Sun',
+        cost: 8,
+        keywords: ['Shift 6'],
+      });
+      const belle = createCard({id: 'belle-base', name: 'Belle', cost: 2});
+      const beast = createCard({id: 'beast-base', name: 'Beast', cost: 3});
+      const anna = createCard({id: 'anna-1', name: 'Anna', cost: 3});
+      const pool = [team, belle, beast, anna];
+
+      // Forward: the team shifter lands on either named half, not on Anna.
+      const forward = shiftRule.findSynergies(team, pool);
+      expect(forward.find((s) => s.card.id === 'belle-base')).toBeDefined();
+      expect(forward.find((s) => s.card.id === 'beast-base')).toBeDefined();
+      expect(forward.find((s) => s.card.id === 'anna-1')).toBeUndefined();
+
+      // Reverse: a "Belle" base finds the team shifter.
+      const reverse = shiftRule.findSynergies(belle, pool);
+      expect(reverse.find((s) => s.card.id === 'belle-beast-shift')).toBeDefined();
+    });
+
     it('should not match non-Character cards', () => {
       expect(shiftRule.matches(createCard({type: 'Action', keywords: ['Shift 3']}))).toBe(false);
     });

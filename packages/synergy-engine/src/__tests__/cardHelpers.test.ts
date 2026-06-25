@@ -5,6 +5,7 @@ import {
   canShareDeck,
   getShiftType,
   hasAnyShift,
+  getShiftBaseNames,
   getNamedReferences,
   classifyNamedEffect,
   NAMED_EFFECT_SCORES,
@@ -126,6 +127,24 @@ describe('ink compatibility utilities', () => {
       const b = createCard({ink: 'Emerald', ink2: 'Sapphire'});
       expect(canShareDeck(a, b)).toBe(false);
     });
+  });
+});
+
+describe('getShiftBaseNames', () => {
+  it('returns the single base name for an atomic card', () => {
+    expect(getShiftBaseNames(createCard({name: 'Ming Lee'}))).toEqual(['Ming Lee']);
+  });
+
+  it('decomposes a "Team" compound name into both halves', () => {
+    const names = getShiftBaseNames(createCard({name: 'Belle & Beast'}));
+    expect(names).toContain('Belle');
+    expect(names).toContain('Beast');
+  });
+
+  it('keeps multi-word component names intact (splits on "&", not spaces)', () => {
+    const names = getShiftBaseNames(createCard({name: 'Carl Fredricksen & Russell'}));
+    expect(names).toContain('Carl Fredricksen');
+    expect(names).toContain('Russell');
   });
 });
 

@@ -48,12 +48,24 @@ Selecting **Elsa - Snow Queen** (cost 4) finds:
 
 | Keyword | Kind | Valid targets |
 |---|---|---|
-| `Shift N` | `standard` | same base name |
+| `Shift N` | `standard` | same base name (Team compound names like "Belle & Beast" match either half — see below) |
 | `Temporary Shift N` | `standard` | same base name (shifts onto a same-named character, then returns it to hand at end of turn) |
 | `X Shift N` (e.g. `Puppy Shift`) | `classification` | characters with classification `X` |
 | `Universal Shift N` | `universal` | any character |
 
 `Temporary Shift` is matched **before** the `X Shift` classification branch — "Temporary" is a modifier, not a classification, so it must not be read as a `Temporary` classification (which would match no targets).
+
+#### Team (compound-name) Shift
+
+"Team" Shift cards print a compound name joined by an ampersand — **Belle & Beast**, **Mickey & Minnie** — and their reminder text reads "shift onto a character named X **or** Y." A literal same-name match would find neither half, so `standard` targeting routes through `getShiftBaseNames` (`utils/cardHelpers.ts`), which decomposes the shifter's base name on `&` and matches the target against **every** landing name:
+
+```
+getShiftBaseNames("Belle & Beast")            -> ["Belle & Beast", "Belle", "Beast"]
+getShiftBaseNames("Carl Fredricksen & Russell") -> ["Carl Fredricksen & Russell", "Carl Fredricksen", "Russell"]
+getShiftBaseNames("Ming Lee")                  -> ["Ming Lee"]
+```
+
+The split is on `&` only (not spaces or " and "), so multi-word halves stay intact and ordinary names with no ampersand pass through as a single-element list — behaviourally identical to the old exact-match path. Both directions benefit: the Team card finds either base, and either base finds the Team card.
 
 ---
 

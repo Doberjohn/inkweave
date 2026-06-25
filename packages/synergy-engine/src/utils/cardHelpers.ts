@@ -101,6 +101,33 @@ export function getBaseName(card: LorcanaCard): string {
 }
 
 /**
+ * Every base name a Shift card can land on.
+ *
+ * Most Shift cards target a single name — their own — so this is usually a
+ * one-element list. But "Team" cards print a compound name ("Belle & Beast",
+ * "Lilo & Stitch", "Carl Fredricksen & Russell") whose reminder reads
+ * "named X or Y", making EACH half a valid Shift base. Decomposing the compound
+ * name lets a "Belle & Beast" shifter match both "Belle" and "Beast" bases
+ * instead of a literal "Belle & Beast" character that never exists.
+ *
+ * The Shift matcher (isValidShiftTarget, standard variant) checks a target's
+ * base name against this list, so returning extra names only ADDS matches —
+ * an atomic name must still come back as a single-element list unchanged.
+ */
+export function getShiftBaseNames(card: LorcanaCard): string[] {
+  const base = getBaseName(card);
+  // "Team" cards print a compound name ("Belle & Beast") whose reminder reads
+  // "named X or Y", so each half is a valid Shift base. Split on the ampersand
+  // (not spaces — keeps multi-word halves like "Carl Fredricksen" intact) and
+  // return the components alongside the full name. Atomic names have no "&" and
+  // pass through unchanged. Split on "&" only: the card NAMES use it, while
+  // " and "/" or " can appear inside a single legitimate name.
+  if (!base.includes('&')) return [base];
+  const parts = base.split('&').map((part) => part.trim()).filter(Boolean);
+  return parts.length > 1 ? [base, ...parts] : [base];
+}
+
+/**
  * Shift variant type. Each variant carries its cost (parsed from the keyword).
  * - 'standard': targets same-name characters (e.g., "Shift 5")
  * - 'classification': targets characters with a specific classification (e.g., "Puppy Shift 3")
