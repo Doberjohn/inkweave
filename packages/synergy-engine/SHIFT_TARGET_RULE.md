@@ -54,7 +54,7 @@ Selecting **Elsa - Snow Queen** (cost 4) finds:
 | `X Shift N` (e.g. `Puppy Shift`, `Madrigal Shift`, `Temporary Red Panda Shift`) | `classification` | characters with classification `X` (the prefix may be multiple words) |
 | `Universal Shift N` | `universal` | any character |
 
-`classifyShiftKeyword` resolves a keyword in this order: **Universal** → **Team** (card name contains `&`, so any shift label routes to `standard`) → strip a leading **`Temporary `** modifier → **`<classification> Shift N`** → plain **`Shift N`**. Two consequences:
+`classifyShiftKeyword` resolves a keyword in this order: **Universal** → **Team** (card name contains `&`, so any shift label routes to `standard`) → strip a leading **`Temporary`** modifier → **`<classification> Shift N`** → plain **`Shift N`**. Two consequences:
 
 - **"Temporary" is a modifier, not a classification.** It's stripped before the classification match, so `Temporary Shift N` → `standard` and `Temporary Red Panda Shift N` → classification `Red Panda` (rather than a non-existent `Temporary Red Panda` class). The classification prefix may be **multiple words** (`Red Panda`), which the lazy `^(.+?)\s+shift` match handles.
 - **"Combo"/"Duo" look like classification prefixes but aren't** — they're flavor labels on Team cards. The reminder text ("named X or Y") isn't visible at classify-time, so the `&` in the card's name is the real signal: Team detection runs before the classification branch and routes `Combo Shift` / `Duo Shift` to `standard`.

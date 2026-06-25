@@ -162,16 +162,20 @@ describe('getShiftBaseNames', () => {
     expect(getShiftBaseNames(createCard({name: 'Ming Lee'}))).toEqual(['Ming Lee']);
   });
 
-  it('decomposes a "Team" compound name into both halves', () => {
-    const names = getShiftBaseNames(createCard({name: 'Belle & Beast'}));
-    expect(names).toContain('Belle');
-    expect(names).toContain('Beast');
+  it('decomposes a "Team" compound name into the full name plus both halves', () => {
+    expect(getShiftBaseNames(createCard({name: 'Belle & Beast'}))).toEqual([
+      'Belle & Beast',
+      'Belle',
+      'Beast',
+    ]);
   });
 
   it('keeps multi-word component names intact (splits on "&", not spaces)', () => {
-    const names = getShiftBaseNames(createCard({name: 'Carl Fredricksen & Russell'}));
-    expect(names).toContain('Carl Fredricksen');
-    expect(names).toContain('Russell');
+    expect(getShiftBaseNames(createCard({name: 'Carl Fredricksen & Russell'}))).toEqual([
+      'Carl Fredricksen & Russell',
+      'Carl Fredricksen',
+      'Russell',
+    ]);
   });
 });
 

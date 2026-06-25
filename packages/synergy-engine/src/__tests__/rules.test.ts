@@ -137,6 +137,12 @@ describe('Synergy Rules', () => {
       const forward = shiftRule.findSynergies(combo, pool);
       expect(forward.find((s) => s.card.id === 'sulley-base')).toBeDefined();
       expect(forward.find((s) => s.card.id === 'boo-base')).toBeDefined();
+
+      // Reverse: either named base finds the Combo team shifter (Rule 1 is bidirectional).
+      expect(
+        shiftRule.findSynergies(sulley, pool).find((s) => s.card.id === 'sulley-boo'),
+      ).toBeDefined();
+      expect(shiftRule.findSynergies(boo, pool).find((s) => s.card.id === 'sulley-boo')).toBeDefined();
     });
 
     it('should match a multi-word classification Shift (Temporary Red Panda) to its class', () => {
