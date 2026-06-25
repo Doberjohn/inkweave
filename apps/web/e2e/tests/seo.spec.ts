@@ -26,15 +26,15 @@ test.describe('SEO', () => {
     await expect(page.locator('h1 img')).toHaveAttribute('alt', 'Inkweave');
   });
 
-  test('should have font preconnect hints', async ({page, appPage}) => {
+  test('should preload self-hosted fonts', async ({page, appPage}) => {
     await appPage.goto();
 
-    const preconnects = await page.evaluate(() => {
-      const links = document.querySelectorAll('link[rel="preconnect"]');
+    const preloads = await page.evaluate(() => {
+      const links = document.querySelectorAll('link[rel="preload"][as="font"]');
       return Array.from(links).map((l) => l.getAttribute('href'));
     });
 
-    expect(preconnects).toContain('https://fonts.googleapis.com');
-    expect(preconnects).toContain('https://fonts.gstatic.com');
+    expect(preloads).toContain('/fonts/plus-jakarta-sans-400.woff2');
+    expect(preloads).toContain('/fonts/tinos-400.woff2');
   });
 });
