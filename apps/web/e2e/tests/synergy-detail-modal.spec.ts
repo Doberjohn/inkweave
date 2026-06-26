@@ -155,10 +155,12 @@ test.describe('Synergy comparison — Mobile', () => {
     // queried on `page`, not scoped to the modal.
     await appPage.cardOverviewModal.getByRole('button', {name: /^Enlarge /}).first().click();
     const lightbox = page.getByRole('dialog', {name: /enlarged/i});
-    await expect(lightbox).toBeVisible({timeout: 3000});
+    // The mobile-safari binary runs the lightbox open/close transition slower than the
+    // 3s default; widen both assertions to 15s for determinism (same fix as #376's modal).
+    await expect(lightbox).toBeVisible({timeout: 15000});
 
     await lightbox.getByRole('button', {name: /close enlarged card/i}).click();
-    await expect(lightbox).toHaveCount(0, {timeout: 3000});
+    await expect(lightbox).toHaveCount(0, {timeout: 15000});
   });
 
   test('should exit comparison mode via BACK on mobile', async ({appPage}) => {
