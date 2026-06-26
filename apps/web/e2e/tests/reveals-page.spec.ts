@@ -35,15 +35,25 @@ test.describe('Reveals page (flag on)', () => {
     }
   });
 
-  test('renders hero and franchise tiers at /reveals', async ({page}, testInfo) => {
+  test('renders the tracker: hero, six ink trackers, and franchise cards', async ({page}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 
     await page.goto('/reveals');
 
-    await expect(page.getByRole('heading', {name: 'Monsters, Inc.', exact: true})).toBeVisible();
-    await expect(page.getByRole('heading', {name: 'Up', exact: true})).toBeVisible();
-    await expect(page.getByRole('heading', {name: 'Turning Red', exact: true})).toBeVisible();
-    await expect(page.getByRole('heading', {name: /Returning franchises/i})).toBeVisible();
+    // Page identity (the visible title is the set logo image; the h1 is sr-only).
+    await expect(page.getByRole('heading', {level: 1, name: /Attack of the Vine/i})).toHaveCount(1);
+    await expect(page.getByAltText('Attack of the Vine!')).toBeVisible();
+
+    // Six ink tracker tiles (one per ink).
+    await expect(page.getByTestId('ink-tracker-tile')).toHaveCount(6);
+
+    // The featured ink board.
+    await expect(page.getByText('Ink board', {exact: true})).toBeVisible();
+
+    // The three new-franchise cards (open their cards modal on click).
+    await expect(page.getByRole('button', {name: 'View Monsters, Inc. cards'})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'View Up cards'})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'View Turning Red cards'})).toBeVisible();
   });
 
   test('desktop nav shows Reveals entry with NEW badge', async ({page}, testInfo) => {
@@ -82,21 +92,48 @@ test.describe('Reveals page (flag on)', () => {
     ).toHaveCount(0);
   });
 
-  test('tier card click opens the card overview modal', async ({page}, testInfo) => {
+  test('mosaic card click opens the card overview modal', async ({page}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 
     await page.goto('/reveals');
-    // Early reveal season: previewCards.json may still have cards: [] (no tiles to
-    // click). Skip until at least one Set 13 card is curated, mirroring the
-    // season-ended skip in beforeEach so the suite stays green across the lifecycle.
-    const tileCount = await page.getByTestId('card-tile').count();
-    test.skip(tileCount === 0, 'No reveal cards curated yet (previewCards.json cards: []).');
-    const firstTile = page.getByTestId('card-tile').first();
-    await expect(firstTile).toBeVisible();
-    await firstTile.click();
+    // The mosaic renders after the card data loads (async), so wait for the first
+    // revealed slot rather than snapshotting the count. Early reveal season:
+    // previewCards.json may still have cards: [] (no slots) — skip then, mirroring
+    // the season-ended skip in beforeEach so the suite stays green across the lifecycle.
+    const firstSlot = page.getByTestId('reveal-card-slot').first();
+    const hasSlots = await firstSlot
+      .waitFor({state: 'visible', timeout: 10000})
+      .then(() => true)
+      .catch(() => false);
+    test.skip(!hasSlots, 'No reveal cards curated yet (previewCards.json cards: []).');
+    await firstSlot.click();
     // Card click opens the global modal (URL stays at /reveals).
     // Modal open = React mount + per-card synergy fetch + visibility transition; slow CI
     // webkit can exceed 5s before the overlay-visible class settles.
+    await expect(page.getByTestId('card-overview-modal')).toBeVisible({timeout: 15000});
+  });
+
+  test('franchise card click opens the franchise cards modal', async ({page}, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+
+    await page.goto('/reveals');
+    await page.getByRole('button', {name: 'View Monsters, Inc. cards'}).click();
+
+    const modal = page.getByRole('dialog', {name: 'Monsters, Inc. cards'});
+    await expect(modal).toBeVisible({timeout: 15000});
+
+    // A card inside the franchise modal opens the shared card overview modal on top.
+    // The grid renders a tick after the dialog opens, so wait for the first tile
+    // rather than snapshotting the count. If the franchise has no revealed cards
+    // yet (early season), the grid stays empty and we skip the card-click assertion.
+    const cardTiles = modal.getByTestId('card-tile');
+    const hasCards = await cardTiles
+      .first()
+      .waitFor({state: 'visible', timeout: 5000})
+      .then(() => true)
+      .catch(() => false);
+    test.skip(!hasCards, 'No cards revealed for this franchise yet.');
+    await cardTiles.first().click();
     await expect(page.getByTestId('card-overview-modal')).toBeVisible({timeout: 15000});
   });
 });

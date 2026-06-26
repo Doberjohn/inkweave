@@ -15,15 +15,15 @@ interface ProgressRingProps {
 
 /**
  * Circular progress ring for an ink: a conic sweep filled to `count/total`,
- * masked to a thin ring, with the ink symbol over the count in the centre. The
- * sweep starts at 12 o'clock (`from -90deg`) and the glow tracks the ink colour.
+ * masked to a thin ring, with the ink symbol in the centre (the running count
+ * lives on the tile below the ring, so it isn't repeated here). The sweep starts
+ * at 12 o'clock (`from -90deg`) and the glow tracks the ink colour.
  */
 export function ProgressRing({ink, count, total = PER_INK, size = 82}: ProgressRingProps) {
   const pct = Math.max(0, Math.min(1, count / total));
   const deg = pct * 360;
   const rgb = inkRgb(ink);
-  const symbolSize = Math.round(size * 0.32);
-  const countFontSize = size >= 76 ? 14 : 12;
+  const symbolSize = Math.round(size * 0.44);
 
   return (
     <div style={{position: 'relative', width: size, height: size}}>
@@ -43,17 +43,12 @@ export function ProgressRing({ink, count, total = PER_INK, size = 82}: ProgressR
           position: 'absolute',
           inset: 0,
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 3,
         }}
       >
         <span style={{lineHeight: 0, opacity: 0.92, filter: `drop-shadow(0 1px 4px ${inkRgba(ink, 0.6)})`}}>
           <InkIcon ink={ink} size={symbolSize} />
-        </span>
-        <span style={{fontWeight: 700, fontSize: countFontSize, color: '#e8e8e8', lineHeight: 1}}>
-          {count}
         </span>
       </div>
     </div>

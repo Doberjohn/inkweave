@@ -1,4 +1,4 @@
-import {RARITIES} from './rarity';
+import {RARITIES, type RarityConfig} from './rarity';
 import {RaritySymbol} from './RaritySymbol';
 
 interface RarityBreakdownProps {
@@ -9,57 +9,63 @@ interface RarityBreakdownProps {
 }
 
 /**
+ * One vertical stat chip: the rarity symbol over the revealed count over the
+ * name. Held to its own component so the per-chip `has`/`compact` conditionals
+ * don't pile onto RarityBreakdown's complexity.
+ */
+function RarityChip({rarity, revealed, compact}: {rarity: RarityConfig; revealed: number; compact: boolean}) {
+  const has = revealed > 0;
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 8,
+        padding: compact ? '12px 6px' : '14px 8px',
+        background: has ? 'rgba(255, 255, 255, 0.035)' : 'rgba(255, 255, 255, 0.012)',
+        border: '1px solid #25253c',
+        borderRadius: 12,
+        opacity: has ? 1 : 0.65,
+      }}
+    >
+      <div style={{height: compact ? 26 : 32, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <RaritySymbol rarity={rarity.key} size={compact ? 24 : 30} />
+      </div>
+      <div style={{fontWeight: 800, fontSize: compact ? 22 : 28, color: has ? '#f0f0f5' : '#55556e', lineHeight: 1}}>
+        {revealed}
+      </div>
+      <div style={{fontWeight: 600, fontSize: 10, letterSpacing: 0.7, textTransform: 'uppercase', color: '#8a8aa4'}}>
+        {rarity.name}
+      </div>
+    </div>
+  );
+}
+
+/**
  * Per-rarity tally for an ink board: each of the five rarities shows its real
- * symbol, a `revealed/total` count, and its name. The numerator is capped at the
- * per-color total so a dual-ink spillover never renders as e.g. "4/3" — the
- * extra card still occupies a mosaic slot, but the fraction stays truthful to
- * the official 34-card composition.
+ * symbol, the actual number of revealed cards of that rarity, and its name. The
+ * count is the live tally from the data (no hardcoded total / denominator — the
+ * set's real composition differs from the old 12/9/8/3/2 assumption).
  *
- * The divider spans the full board, but the five items are held to a centered
- * band so they read as a tidy row (the prototype's grid stretched 6 items full
- * width; with 5 that left them too far apart).
+ * The divider spans the full board, but the five chips are held to a centered
+ * band so they read as a tidy row.
  */
 export function RarityBreakdown({rarityCounts, compact = false}: RarityBreakdownProps) {
   return (
-    <div style={{borderTop: '1px solid #22223a', marginTop: 22, paddingTop: 12}}>
+    <div style={{borderTop: '1px solid #22223a', marginTop: 22, paddingTop: 16}}>
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: compact ? 'repeat(3, 1fr)' : 'repeat(auto-fit, minmax(96px, 1fr))',
-          gap: compact ? 2 : 4,
-          maxWidth: compact ? undefined : 900,
+          gridTemplateColumns: compact ? 'repeat(3, 1fr)' : 'repeat(5, 1fr)',
+          gap: compact ? 8 : 12,
+          maxWidth: compact ? undefined : 680,
           margin: compact ? undefined : '0 auto',
         }}
       >
-        {RARITIES.map((r) => {
-          const revealed = Math.min(rarityCounts[r.key] ?? 0, r.total);
-          const has = revealed > 0;
-          return (
-            <div key={r.key} style={{display: 'flex', alignItems: 'center', gap: 9, padding: '8px 6px'}}>
-              <div style={{width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto'}}>
-                <RaritySymbol rarity={r.key} size={compact ? 15 : 18} />
-              </div>
-              <div>
-                <div style={{fontWeight: 700, fontSize: 15, color: has ? '#e8e8e8' : '#4a4a60', lineHeight: 1}}>
-                  {revealed}
-                  <span style={{fontSize: 11, fontWeight: 600, color: '#54546e'}}>/{r.total}</span>
-                </div>
-                <div
-                  style={{
-                    fontWeight: 500,
-                    fontSize: 9.5,
-                    letterSpacing: 0.6,
-                    textTransform: 'uppercase',
-                    color: '#7a7a92',
-                    marginTop: 3,
-                  }}
-                >
-                  {r.name}
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {RARITIES.map((r) => (
+          <RarityChip key={r.key} rarity={r} revealed={rarityCounts[r.key] ?? 0} compact={compact} />
+        ))}
       </div>
     </div>
   );

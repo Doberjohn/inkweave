@@ -33,9 +33,21 @@ const QUALITY = 50;
 const ACCEPTED_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 
 async function convert(id, srcPath) {
+  // Location cards print landscape (wider than tall); the slots and grid are
+  // portrait, so rotate landscape sources 270° (counter-clockwise) before the
+  // portrait resize. Otherwise `fit: cover` crops them to a sideways centre
+  // strip. Character/item/action sources are already portrait and pass through
+  // untouched. The rotation is baked into the AVIF (not applied at display time)
+  // and the production build copies these AVIFs byte-for-byte, so it carries to
+  // prod without any further handling.
+  const meta = await sharp(srcPath).metadata();
+  const isLandscape = (meta.width ?? 0) > (meta.height ?? 0);
+
   for (const s of SIZES) {
     const outPath = path.join(OUT_DIR, `${id}${s.suffix}.avif`);
-    await sharp(srcPath)
+    const pipeline = sharp(srcPath);
+    if (isLandscape) pipeline.rotate(270);
+    await pipeline
       .resize(s.width, s.height, {fit: 'cover'})
       .avif({quality: QUALITY})
       .toFile(outPath);

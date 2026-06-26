@@ -1,8 +1,9 @@
-import {useState} from 'react';
+import {useState, type CSSProperties} from 'react';
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {InkIcon} from '../../shared/components/InkIcon';
 import {smallImageUrl} from '../cards/loader';
 import {inkRgba} from './inkTint';
+import './reveals.css';
 
 interface CardSlotProps {
   ink: Ink;
@@ -14,42 +15,36 @@ interface CardSlotProps {
   height?: number;
   /** Called when a revealed slot is activated (opens the card modal). */
   onOpen?: (card: LorcanaCard) => void;
+  /** When true, the slot plays the cellPop animation (a switch-in burst). */
+  animate?: boolean;
 }
 
 /**
- * One slot in the diamond mosaic. Every slot is an ink-art tile (radial gradient
- * + ink border + glow + top sheen). A revealed slot fills the tile with the real
- * card image and opens the card modal on click; an unrevealed slot shows the ink
- * symbol. No cost or rarity pips — the slot stays clean (matches the offline
- * design tile minus the pips).
+ * Revealed tiles are bright with an ink glow so they stand out; unrevealed tiles
+ * are dimmer (subtler border, recessed shadow) so the board visibly lights up as
+ * cards drop. Pulled out so the `revealed` branches don't add to CardSlot.
  */
-export function CardSlot({ink, card, width = 58, height = 80, onOpen}: CardSlotProps) {
-  const [imgFailed, setImgFailed] = useState(false);
-  const compact = width < 54;
-  const revealed = !!card;
-  const imgUrl = card && !imgFailed ? smallImageUrl(card) : undefined;
-
-  // Revealed tiles are bright with an ink glow so they stand out; unrevealed
-  // tiles are dimmer (subtler border, recessed shadow, darker art) so the board
-  // visibly lights up as cards drop.
-  const tileStyle = {
+function slotTileStyle(ink: Ink, revealed: boolean, width: number, height: number): CSSProperties {
+  return {
     width,
     height,
     borderRadius: 6,
-    position: 'relative' as const,
-    overflow: 'hidden' as const,
+    position: 'relative',
+    overflow: 'hidden',
     flex: '0 0 auto',
     border: `1.5px solid ${inkRgba(ink, revealed ? 0.85 : 0.3)}`,
     boxShadow: revealed
       ? `0 2px 7px rgba(0, 0, 0, 0.45), 0 0 9px ${inkRgba(ink, 0.4)}`
       : 'inset 0 2px 8px rgba(0, 0, 0, 0.55)',
   };
+}
 
+/** The tile contents: ink-art base, the real image (or ink-symbol fallback), and a top sheen. */
+function SlotFace({ink, revealed, imgUrl, compact, onImgError}: {ink: Ink; revealed: boolean; imgUrl?: string; compact: boolean; onImgError: () => void}) {
   const art = revealed
     ? `radial-gradient(120% 80% at 50% 18%, ${inkRgba(ink, 0.62)}, ${inkRgba(ink, 0.14)} 70%, rgba(8, 8, 14, 0.9))`
     : `radial-gradient(120% 80% at 50% 18%, ${inkRgba(ink, 0.26)}, ${inkRgba(ink, 0.06)} 70%, rgba(8, 8, 14, 0.95))`;
-
-  const inner = (
+  return (
     <>
       {/* Ink-art base (also the graceful fallback behind a revealed image). */}
       <span style={{position: 'absolute', inset: 0, background: art}} />
@@ -57,7 +52,7 @@ export function CardSlot({ink, card, width = 58, height = 80, onOpen}: CardSlotP
         <img
           src={imgUrl}
           alt=""
-          onError={() => setImgFailed(true)}
+          onError={onImgError}
           style={{position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover'}}
         />
       ) : (
@@ -88,19 +83,43 @@ export function CardSlot({ink, card, width = 58, height = 80, onOpen}: CardSlotP
       />
     </>
   );
+}
+
+/**
+ * One slot in the diamond mosaic. Every slot is an ink-art tile (radial gradient
+ * + ink border + glow + top sheen). A revealed slot fills the tile with the real
+ * card image and opens the card modal on click; an unrevealed slot shows the ink
+ * symbol. No cost or rarity pips — the slot stays clean.
+ */
+export function CardSlot({ink, card, width = 58, height = 80, onOpen, animate = false}: CardSlotProps) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const compact = width < 54;
+  const revealed = !!card;
+  const imgUrl = card && !imgFailed ? smallImageUrl(card) : undefined;
+  const popClass = animate ? 'reveal-cellpop' : undefined;
+  const tileStyle = slotTileStyle(ink, revealed, width, height);
+  const face = (
+    <SlotFace ink={ink} revealed={revealed} imgUrl={imgUrl} compact={compact} onImgError={() => setImgFailed(true)} />
+  );
 
   if (card && onOpen) {
     return (
       <button
         type="button"
+        data-testid="reveal-card-slot"
+        className={popClass}
         onClick={() => onOpen(card)}
         aria-label={`View ${card.fullName}`}
         style={{...tileStyle, padding: 0, font: 'inherit', cursor: 'pointer', background: 'none'}}
       >
-        {inner}
+        {face}
       </button>
     );
   }
 
-  return <div style={tileStyle}>{inner}</div>;
+  return (
+    <div className={popClass} style={tileStyle}>
+      {face}
+    </div>
+  );
 }

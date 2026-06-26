@@ -1,18 +1,93 @@
-import {FRANCHISES} from './franchise';
+import './reveals.css';
+import {FRANCHISES, type FranchiseConfig} from './franchise';
 import {INK_COLORS, FONTS} from '../../shared/constants';
 import {inkRgba} from './inkTint';
 
 interface NewFranchisesProps {
+  /** Opens the franchise's cards modal when its card is clicked. */
+  onSelect?: (franchise: FranchiseConfig) => void;
   compact?: boolean;
 }
 
 /**
- * The "new to the Inkverse" section: one card per debut franchise, each with its
- * real key art, an ink-tinted bloom, a "NEW THIS SET" pill in that ink, the
- * franchise name, and a one-line blurb. The ink tint is the curated association
- * from franchise.ts.
+ * One debut-franchise card: real key art over an ink-tinted bloom, a "NEW THIS
+ * SET" pill in that ink, the name, and a blurb. A button that opens the
+ * franchise's cards modal. Held to its own component so the per-card `compact`
+ * branches don't pile onto NewFranchises' complexity.
  */
-export function NewFranchises({compact = false}: NewFranchisesProps) {
+function FranchiseCard({franchise, onSelect, compact}: {franchise: FranchiseConfig; onSelect?: (f: FranchiseConfig) => void; compact: boolean}) {
+  const inkText = INK_COLORS[franchise.ink].text;
+  return (
+    <button
+      type="button"
+      className="reveal-franchise-card"
+      onClick={() => onSelect?.(franchise)}
+      aria-label={`View ${franchise.label} cards`}
+      style={{
+        position: 'relative',
+        appearance: 'none',
+        font: 'inherit',
+        color: 'inherit',
+        textAlign: 'left',
+        padding: 0,
+        width: '100%',
+        display: 'block',
+        background: '#0c0c15',
+        borderRadius: 16,
+        overflow: 'hidden',
+        backgroundImage: `radial-gradient(420px 200px at 50% -20%, ${inkRgba(franchise.ink, 0.16)}, transparent)`,
+      }}
+    >
+      <div
+        style={{
+          height: compact ? 150 : 210,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: compact ? '12px 18px' : '16px 24px',
+        }}
+      >
+        <img
+          src={`/art/franchises/${franchise.id}.webp`}
+          alt={franchise.label}
+          // These assets are logo/title treatments, not scene art — contain them
+          // so the full logo shows centered instead of being cropped.
+          style={{maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block'}}
+        />
+      </div>
+      <div style={{padding: compact ? '14px 16px 18px' : '20px 22px 24px'}}>
+        <span
+          style={{
+            display: 'inline-block',
+            fontWeight: 600,
+            fontSize: 10,
+            letterSpacing: 1.4,
+            textTransform: 'uppercase',
+            color: inkText,
+            border: `1px solid ${inkRgba(franchise.ink, 0.4)}`,
+            background: inkRgba(franchise.ink, 0.1),
+            padding: '4px 10px',
+            borderRadius: 20,
+          }}
+        >
+          New this set
+        </span>
+        <div style={{fontFamily: FONTS.hero, fontWeight: 700, fontSize: compact ? 22 : 26, color: '#f0f0f5', margin: '13px 0 0'}}>
+          {franchise.label}
+        </div>
+        <p style={{fontWeight: 400, fontSize: compact ? 12 : 13, lineHeight: 1.55, color: '#c8c8d8', margin: '8px 0 0'}}>
+          {franchise.blurb}
+        </p>
+      </div>
+    </button>
+  );
+}
+
+/**
+ * The "new to the Inkverse" section: one card per debut franchise, each opening
+ * that franchise's cards modal (via `onSelect`).
+ */
+export function NewFranchises({onSelect, compact = false}: NewFranchisesProps) {
   return (
     <section>
       <div style={{textAlign: 'center', marginBottom: compact ? 18 : 26}}>
@@ -31,65 +106,9 @@ export function NewFranchises({compact = false}: NewFranchisesProps) {
           gap: compact ? 14 : 20,
         }}
       >
-        {FRANCHISES.map((f) => {
-          const inkText = INK_COLORS[f.ink].text;
-          return (
-            <article
-              key={f.id}
-              style={{
-                position: 'relative',
-                background: '#0c0c15',
-                border: '1px solid #24243a',
-                borderRadius: 16,
-                overflow: 'hidden',
-                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)',
-                backgroundImage: `radial-gradient(420px 200px at 50% -20%, ${inkRgba(f.ink, 0.16)}, transparent)`,
-              }}
-            >
-              <div
-                style={{
-                  height: compact ? 150 : 210,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: compact ? '12px 18px' : '16px 24px',
-                }}
-              >
-                <img
-                  src={`/art/franchises/${f.id}.webp`}
-                  alt={f.label}
-                  // These assets are logo/title treatments, not scene art — contain
-                  // them so the full logo shows centered instead of being cropped.
-                  style={{maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block'}}
-                />
-              </div>
-              <div style={{padding: compact ? '14px 16px 18px' : '20px 22px 24px'}}>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    fontWeight: 600,
-                    fontSize: 10,
-                    letterSpacing: 1.4,
-                    textTransform: 'uppercase',
-                    color: inkText,
-                    border: `1px solid ${inkRgba(f.ink, 0.4)}`,
-                    background: inkRgba(f.ink, 0.1),
-                    padding: '4px 10px',
-                    borderRadius: 20,
-                  }}
-                >
-                  New this set
-                </span>
-                <h3 style={{fontFamily: FONTS.hero, fontWeight: 700, fontSize: compact ? 22 : 26, color: '#f0f0f5', margin: '13px 0 0'}}>
-                  {f.label}
-                </h3>
-                <p style={{fontWeight: 400, fontSize: compact ? 12 : 13, lineHeight: 1.55, color: '#c8c8d8', margin: '8px 0 0'}}>
-                  {f.blurb}
-                </p>
-              </div>
-            </article>
-          );
-        })}
+        {FRANCHISES.map((f) => (
+          <FranchiseCard key={f.id} franchise={f} onSelect={onSelect} compact={compact} />
+        ))}
       </div>
     </section>
   );

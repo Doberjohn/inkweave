@@ -1,14 +1,91 @@
+import {useState} from 'react';
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {CardSlot} from './CardSlot';
-import {PER_INK} from './setComposition';
-import {scatterRanks} from './scatter';
 
-/** Slots per row of the diamond; sums to PER_INK (34). */
-const ROWS = [4, 6, 7, 7, 6, 4] as const;
+/** Slots per row of the diamond; sums to BOARD_SLOTS (38). Grown from the old 34
+ *  so each card can sit at its true collector-number position (Set 13 numbers each
+ *  ink across ~37-38 numbers — the 34 app cards plus the excluded enchanted/iconic
+ *  that leave gaps). */
+const ROWS = [4, 7, 8, 8, 7, 4] as const;
+const BOARD_SLOTS = 38;
+
+/** How many random revealed slots burst in on each ink switch. */
+const POP_COUNT = 5;
+
+/**
+ * First collector number of each ink's block. A card's slot is `number - base`,
+ * so the lowest-numbered card lands at (or near) slot 0 and the rest read across
+ * in true set order, leaving fallback gaps for unrevealed numbers. Amber anchors
+ * on the set's #1 (so unrevealed low numbers show as leading gaps); the others
+ * anchor on their first revealed card, since their exact block start isn't
+ * knowable from the revealed subset alone.
+ */
+const INK_BASE: Record<Ink, number> = {
+  Amber: 1,
+  Amethyst: 38,
+  Emerald: 74,
+  Ruby: 113,
+  Sapphire: 148,
+  Steel: 178,
+};
+
+function pickRandom(pool: number[], n: number): Set<number> {
+  const a = [...pool];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return new Set(a.slice(0, n));
+}
+
+/**
+ * Lay the revealed cards into the 38 slots by collector number. In-range numbered
+ * cards (number-base ∈ [0,37]) claim their exact slot. Anything that can't be
+ * placed absolutely — cards numbered outside the block (e.g. a mis-tagged outlier)
+ * or with no number at all — fills the remaining gaps from the end so every
+ * revealed card still shows.
+ */
+/** The card's absolute slot from its collector number, or -1 if it can't claim one. */
+function slotFor(card: LorcanaCard, base: number): number {
+  if (card.setNumber == null) return -1;
+  const slot = card.setNumber - base;
+  return slot >= 0 && slot < BOARD_SLOTS ? slot : -1;
+}
+
+/** Empty slot indices, highest first — where leftover cards spill in. */
+function emptySlotsFromEnd(placed: (LorcanaCard | undefined)[]): number[] {
+  const empty: number[] = [];
+  for (let i = BOARD_SLOTS - 1; i >= 0; i--) {
+    if (placed[i] == null) empty.push(i);
+  }
+  return empty;
+}
+
+function placeCards(ink: Ink, cards: LorcanaCard[]): (LorcanaCard | undefined)[] {
+  const placed: (LorcanaCard | undefined)[] = new Array(BOARD_SLOTS).fill(undefined);
+  const base = INK_BASE[ink];
+  const leftovers: LorcanaCard[] = [];
+
+  for (const card of cards) {
+    const slot = slotFor(card, base);
+    if (slot >= 0 && placed[slot] == null) {
+      placed[slot] = card;
+    } else {
+      leftovers.push(card);
+    }
+  }
+
+  // Spill outliers / numberless cards into the remaining gaps from the end.
+  const empty = emptySlotsFromEnd(placed);
+  leftovers.forEach((card, i) => {
+    if (i < empty.length) placed[empty[i]] = card;
+  });
+  return placed;
+}
 
 interface CardMosaicProps {
   ink: Ink;
-  /** Revealed cards for this ink (placed into scattered slots). */
+  /** Revealed cards for this ink (placed by collector number). */
   cards: LorcanaCard[];
   /** Opens the card modal when a revealed slot is clicked. */
   onOpen?: (card: LorcanaCard) => void;
@@ -17,28 +94,43 @@ interface CardMosaicProps {
 }
 
 /**
- * The featured ink board's diamond: six centered rows [4,6,7,7,6,4] of CardSlots.
- * Revealed cards fill scattered slots (see scatter.ts) so the board lights up
- * across the diamond rather than left-to-right. Lives in an overflow-x rail so
- * it never clips on narrow screens.
+ * The featured ink board's diamond: six centered rows [4,7,8,8,7,4] of CardSlots
+ * (BOARD_SLOTS = 38). Each revealed card sits at its true collector-number slot
+ * (see placeCards), so unrevealed numbers show as fallback gaps and the board
+ * reads in set order. Lives in an overflow-x rail so it never clips on narrow
+ * screens.
  */
 export function CardMosaic({ink, cards, onOpen, compact = false}: CardMosaicProps) {
-  const rank = scatterRanks(ink.toLowerCase());
-  const revealed = [...cards]
-    .sort((a, b) => (a.setNumber ?? 0) - (b.setNumber ?? 0))
-    .slice(0, PER_INK);
+  const placed = placeCards(ink, cards);
   const slotW = compact ? 46 : 58;
   const slotH = compact ? 64 : 80;
   const gap = compact ? 5 : 7;
+
+  // Pick the random slots to pop once per mount. The parent keys this component
+  // by ink, so switching colors re-mounts it and a fresh set bursts in each time.
+  const [poppedSlots] = useState(() => {
+    const filled: number[] = [];
+    for (let s = 0; s < BOARD_SLOTS; s++) {
+      if (placed[s] != null) filled.push(s);
+    }
+    return pickRandom(filled, POP_COUNT);
+  });
 
   let slot = 0;
   const rows = ROWS.map((width, ri) => {
     const cells = [];
     for (let k = 0; k < width; k++) {
       const s = slot++;
-      const card = rank[s] < revealed.length ? revealed[rank[s]] : undefined;
       cells.push(
-        <CardSlot key={s} ink={ink} card={card} width={slotW} height={slotH} onOpen={onOpen} />,
+        <CardSlot
+          key={s}
+          ink={ink}
+          card={placed[s]}
+          width={slotW}
+          height={slotH}
+          onOpen={onOpen}
+          animate={poppedSlots.has(s)}
+        />,
       );
     }
     return (

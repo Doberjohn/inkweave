@@ -45,7 +45,7 @@ export function RevealHero({
         src={SET_LOGO}
         alt="Attack of the Vine!"
         style={{
-          maxWidth: compact ? 300 : 460,
+          maxWidth: compact ? 240 : 300,
           width: '100%',
           height: 'auto',
           display: 'block',
@@ -67,7 +67,7 @@ export function RevealHero({
         <div
           style={{
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'flex-end',
             gap: 16,
             background: 'rgba(212, 175, 55, 0.06)',
             border: '1px solid rgba(212, 175, 55, 0.28)',
@@ -85,7 +85,7 @@ export function RevealHero({
           </div>
           <div style={{width: 1, height: 40, background: '#3a3a52'}} />
           <div style={{textAlign: 'left'}}>
-            <div style={{fontWeight: 700, fontSize: 16, color: '#e8e8e8', lineHeight: 1.2}}>{releaseDate}</div>
+            <div style={{fontWeight: 700, fontSize: 18, color: '#e8e8e8', lineHeight: 1.2}}>{releaseDate}</div>
             <div style={labelStyle}>Set release</div>
           </div>
         </div>

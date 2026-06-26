@@ -18,6 +18,17 @@ const IMG_IDS = [
   13068, 13074, 13075, 13079, 13082, 13083,
 ];
 
+// Each ink's first collector number (mirrors CardMosaic's INK_BASE), so mock
+// setNumbers land in-range and the cards place on the 38-slot board.
+const INK_BASE: Record<Ink, number> = {
+  Amber: 1,
+  Amethyst: 38,
+  Emerald: 74,
+  Ruby: 113,
+  Sapphire: 148,
+  Steel: 178,
+};
+
 function cards(n: number, ink: Ink = 'Amber'): LorcanaCard[] {
   return IMG_IDS.slice(0, n).map(
     (id, i) =>
@@ -31,7 +42,8 @@ function cards(n: number, ink: Ink = 'Amber'): LorcanaCard[] {
         type: 'Character',
         imageUrl: `/card-images-preview/${id}.avif`,
         setCode: '13',
-        setNumber: i + 1,
+        // Anchor on the ink's base so cards fill from the first slot of the board.
+        setNumber: INK_BASE[ink] + i,
       }) as LorcanaCard,
   );
 }
