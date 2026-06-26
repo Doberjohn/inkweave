@@ -13,7 +13,7 @@ export {useRevealProgress} from './useRevealProgress';
 export type {RevealProgress, InkProgress} from './useRevealProgress';
 export {PER_INK, SET_TOTAL} from './setComposition';
 export {RARITIES, rarityConfigOf} from './rarity';
-export type {RarityConfig, RarityClip} from './rarity';
+export type {RarityConfig} from './rarity';
 export {Hero} from './Hero';
 export {FranchiseTier} from './FranchiseTier';
 export {RevealsPromoCard} from './RevealsPromoCard';
