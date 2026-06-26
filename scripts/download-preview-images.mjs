@@ -91,6 +91,29 @@ async function fetchImage(page, url) {
   return Buffer.from(result.b64, 'base64');
 }
 
+// Download every card's image into OUT_DIR, skipping ones already on disk.
+// Extracted from main() so each stays simple (CodeScene CC gate).
+async function downloadCards(page, cards) {
+  let ok = 0, skipped = 0, failed = 0;
+  for (const card of cards) {
+    const url = card.images?.full;
+    if (!url) { console.warn(`  - ${card.id}: no images.full`); failed++; continue; }
+    const out = path.join(OUT_DIR, `${card.id}.${extOf(url)}`);
+    if (fs.existsSync(out)) { skipped++; continue; }
+    try {
+      const buf = await fetchImage(page, url);
+      fs.writeFileSync(out, buf);
+      ok++;
+      console.log(`  + ${card.id} ${card.fullName} (${(buf.length / 1024).toFixed(0)} KB)`);
+    } catch (err) {
+      console.error(`  x ${card.id} ${card.fullName}: ${err.message}`);
+      failed++;
+    }
+    await sleep(300);
+  }
+  return {ok, skipped, failed};
+}
+
 async function main() {
   const onlyIds = new Set(process.argv.slice(2));
   const all = JSON.parse(fs.readFileSync(PREVIEW_JSON, 'utf8')).cards;
@@ -120,26 +143,9 @@ async function main() {
     process.exit(1);
   }
   console.log('  Cloudflare cleared. Starting downloads…');
-
-  let ok = 0, skipped = 0, failed = 0;
   console.log(`\n  Downloading ${cards.length} image(s) -> ${path.relative(ROOT, OUT_DIR)}/\n`);
 
-  for (const card of cards) {
-    const url = card.images?.full;
-    if (!url) { console.warn(`  - ${card.id}: no images.full`); failed++; continue; }
-    const out = path.join(OUT_DIR, `${card.id}.${extOf(url)}`);
-    if (fs.existsSync(out)) { skipped++; continue; }
-    try {
-      const buf = await fetchImage(page, url);
-      fs.writeFileSync(out, buf);
-      ok++;
-      console.log(`  + ${card.id} ${card.fullName} (${(buf.length / 1024).toFixed(0)} KB)`);
-    } catch (err) {
-      console.error(`  x ${card.id} ${card.fullName}: ${err.message}`);
-      failed++;
-    }
-    await sleep(300);
-  }
+  const {ok, skipped, failed} = await downloadCards(page, cards);
 
   await ctx.close();
   console.log(`\n  Done: ${ok} downloaded, ${skipped} skipped, ${failed} failed`);
