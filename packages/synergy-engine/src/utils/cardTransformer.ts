@@ -131,6 +131,7 @@ export function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
     setCode: raw.setCode,
     setNumber: raw.number,
     franchise: raw.franchise,
+    rarity: raw.rarity,
   };
 }
 

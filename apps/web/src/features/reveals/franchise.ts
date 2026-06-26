@@ -1,4 +1,4 @@
-import type {LorcanaCard} from 'inkweave-synergy-engine';
+import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 
 export type FranchiseId = 'monsters-inc' | 'up' | 'turning-red';
 
@@ -7,12 +7,18 @@ export interface FranchiseConfig {
   label: string;
   /** Value to match against `card.franchise`. */
   match: string;
+  /**
+   * Canonical ink used to tint the franchise card's bloom glow on the reveals
+   * page. These franchises span multiple inks in the data, so this is a curated
+   * association (design intent), not derived from the card pool.
+   */
+  ink: Ink;
 }
 
 export const FRANCHISES: readonly FranchiseConfig[] = [
-  {id: 'monsters-inc', label: 'Monsters, Inc.', match: 'Monsters, Inc.'},
-  {id: 'up', label: 'Up', match: 'Up'},
-  {id: 'turning-red', label: 'Turning Red', match: 'Turning Red'},
+  {id: 'monsters-inc', label: 'Monsters, Inc.', match: 'Monsters, Inc.', ink: 'Emerald'},
+  {id: 'up', label: 'Up', match: 'Up', ink: 'Sapphire'},
+  {id: 'turning-red', label: 'Turning Red', match: 'Turning Red', ink: 'Ruby'},
 ];
 
 /**

@@ -3110,6 +3110,7 @@
       "willpower": 5,
       "lore": 1,
       "setCode": "13",
+      "rarity": "Rare",
       "franchise": "Tangled",
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/8-PD1-EN-13-Maximus-Relentless-Stallion-Prerelease-Promo-Lorcana-Player.jpg.webp",
@@ -3146,6 +3147,7 @@
       "willpower": 3,
       "lore": 1,
       "setCode": "13",
+      "rarity": "Common",
       "franchise": "Pocahontas",
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/3-PD1-EN-13-Pocahontas-Guiding-the-Tribe-Prerelease-Promo-Lorcana-Player.jpg.webp",
@@ -3182,6 +3184,7 @@
       "willpower": 3,
       "lore": 1,
       "setCode": "13",
+      "rarity": "Common",
       "franchise": "Beauty and the Beast",
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/13-P4-EN-13-Belle-Always-Reading-Promo-LQ-Lorcana-Player.jpg.webp",
@@ -3218,82 +3221,11 @@
       "willpower": 4,
       "lore": 2,
       "setCode": "13",
+      "rarity": "Rare",
       "franchise": "Toy Story",
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/60-P3-EN-13-Woody-Helping-a-Friend-Event-Promo-LQ-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/60-P3-EN-13-Woody-Helping-a-Friend-Event-Promo-LQ-Lorcana-Player.jpg.webp"
-      }
-    },
-    {
-      "id": 13926,
-      "name": "Buzz Lightyear",
-      "version": "Providing Cover",
-      "fullName": "Buzz Lightyear - Providing Cover",
-      "cost": 4,
-      "color": "Emerald",
-      "inkwell": false,
-      "type": "Character",
-      "subtypes": [
-        "Storyborn",
-        "Captain",
-        "Hero",
-        "Toy"
-      ],
-      "fullText": "ACTION FIGURE When you play this character, choose one of the following. If you have another Toy character in play, choose both instead:\n\n• You may return an action card with cost 2 or less from your discard to your hand.\n\n• You may play an action with cost 2 or less for free.",
-      "fullTextSections": [
-        "ACTION FIGURE When you play this character, choose one of the following. If you have another Toy character in play, choose both instead:\n\n• You may return an action card with cost 2 or less from your discard to your hand.\n\n• You may play an action with cost 2 or less for free."
-      ],
-      "abilities": [
-        {
-          "effect": "When you play this character, choose one of the following. If you have another Toy character in play, choose both instead: • You may return an action card with cost 2 or less from your discard to your hand. • You may play an action with cost 2 or less for free.",
-          "fullText": "ACTION FIGURE When you play this character, choose one of the following. If you have another Toy character in play, choose both instead:\n\n• You may return an action card with cost 2 or less from your discard to your hand.\n\n• You may play an action with cost 2 or less for free.",
-          "name": "ACTION FIGURE",
-          "type": "triggered"
-        }
-      ],
-      "strength": 4,
-      "willpower": 2,
-      "lore": 2,
-      "setCode": "13",
-      "franchise": "Toy Story",
-      "images": {
-        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/5-PD1-EN-13-Buzz-Lightyear-Providing-Cover-Prerelease-Promo-Lorcana-Player.jpg.webp",
-        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/5-PD1-EN-13-Buzz-Lightyear-Providing-Cover-Prerelease-Promo-Lorcana-Player.jpg.webp"
-      }
-    },
-    {
-      "id": 13933,
-      "name": "Vixey",
-      "version": "Expert Fisher",
-      "fullName": "Vixey - Expert Fisher",
-      "cost": 3,
-      "color": "Amethyst",
-      "inkwell": true,
-      "type": "Character",
-      "subtypes": [
-        "Storyborn",
-        "Ally"
-      ],
-      "fullText": "STEALING IN When you play this character, if you have a character with Evasive in play, you may return chosen character, item, or location with cost 2 or less to their player’s hand.",
-      "fullTextSections": [
-        "STEALING IN When you play this character, if you have a character with Evasive in play, you may return chosen character, item, or location with cost 2 or less to their player’s hand."
-      ],
-      "abilities": [
-        {
-          "effect": "When you play this character, if you have a character with Evasive in play, you may return chosen character, item, or location with cost 2 or less to their player’s hand.",
-          "fullText": "STEALING IN When you play this character, if you have a character with Evasive in play, you may return chosen character, item, or location with cost 2 or less to their player’s hand.",
-          "name": "STEALING IN",
-          "type": "triggered"
-        }
-      ],
-      "strength": 2,
-      "willpower": 4,
-      "lore": 1,
-      "setCode": "13",
-      "franchise": "The Fox and the Hound",
-      "images": {
-        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/4-PD1-EN-13-Vixey-Expert-Fisher-Prerelease-Promo-Lorcana-Player.jpg.webp",
-        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/4-PD1-EN-13-Vixey-Expert-Fisher-Prerelease-Promo-Lorcana-Player.jpg.webp"
       }
     },
     {
@@ -3326,6 +3258,7 @@
       "willpower": 2,
       "lore": 1,
       "setCode": "13",
+      "rarity": "Uncommon",
       "franchise": "Treasure Planet",
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/9-P4-EN-13-Morph-Little-Imitator-Weekly-Play-Promo-Lorcana-Player.jpg.webp",
@@ -3350,53 +3283,11 @@
       "willpower": 2,
       "lore": 1,
       "setCode": "13",
+      "rarity": "Common",
       "franchise": "Sleeping Beauty",
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/4-DIS-EN-13-Maleficent-Exultant-Spellcaster-Disney-Parks-Promo-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/4-DIS-EN-13-Maleficent-Exultant-Spellcaster-Disney-Parks-Promo-Lorcana-Player.jpg.webp"
-      }
-    },
-    {
-      "id": 13975,
-      "name": "Merlin",
-      "version": "Envisioning the Future",
-      "fullName": "Merlin - Envisioning the Future",
-      "cost": 4,
-      "color": "Sapphire",
-      "inkwell": false,
-      "type": "Character",
-      "subtypes": [
-        "Dreamborn",
-        "Mentor",
-        "Sorcerer"
-      ],
-      "fullText": "MINOR TRICKERY When you play this character, you may draw a card from the bottom of your deck.\nAGE OF INCONVENIENCE When this character is banished, put this card from your discard on the bottom of your deck.",
-      "fullTextSections": [
-        "MINOR TRICKERY When you play this character, you may draw a card from the bottom of your deck.",
-        "AGE OF INCONVENIENCE When this character is banished, put this card from your discard on the bottom of your deck."
-      ],
-      "abilities": [
-        {
-          "effect": "When you play this character, you may draw a card from the bottom of your deck.",
-          "fullText": "MINOR TRICKERY When you play this character, you may draw a card from the bottom of your deck.",
-          "name": "MINOR TRICKERY",
-          "type": "triggered"
-        },
-        {
-          "effect": "When this character is banished, put this card from your discard on the bottom of your deck.",
-          "fullText": "AGE OF INCONVENIENCE When this character is banished, put this card from your discard on the bottom of your deck.",
-          "name": "AGE OF INCONVENIENCE",
-          "type": "triggered"
-        }
-      ],
-      "strength": 1,
-      "willpower": 4,
-      "lore": 2,
-      "setCode": "13",
-      "franchise": "The Sword in the Stone",
-      "images": {
-        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/7-PD1-EN-13-Merlin-Envisioning-the-Future-Prerelease-Promo-Lorcana-Player.jpg.webp",
-        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/7-PD1-EN-13-Merlin-Envisioning-the-Future-Prerelease-Promo-Lorcana-Player.jpg.webp"
       }
     },
     {
@@ -3424,6 +3315,7 @@
         }
       ],
       "setCode": "13",
+      "rarity": "Common",
       "franchise": "Monsters, Inc.",
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/14-P4-EN-13-If-I-Didnt-Have-You-Promo-LQ-Lorcana-Player.jpg.webp",
