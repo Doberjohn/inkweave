@@ -5,6 +5,7 @@ import {
   canShareDeck,
   getShiftType,
   hasAnyShift,
+  getShiftBaseNames,
   getNamedReferences,
   classifyNamedEffect,
   NAMED_EFFECT_SCORES,
@@ -41,6 +42,38 @@ describe('shift type utilities', () => {
       const card = createCard({keywords: ['Universal Shift 4']});
       expect(getShiftType(card)).toEqual({kind: 'universal', cost: 4});
     });
+
+    it('returns standard for Temporary Shift (same-name shift, not a "Temporary" classification)', () => {
+      const card = createCard({keywords: ['Temporary Shift 7']});
+      expect(getShiftType(card)).toEqual({kind: 'standard', cost: 7});
+    });
+
+    it('routes Combo/Duo Shift on a compound-name team card to standard', () => {
+      const combo = createCard({name: 'Sulley & Boo', keywords: ['Combo Shift 4']});
+      expect(getShiftType(combo)).toEqual({kind: 'standard', cost: 4});
+      const duo = createCard({name: 'Mickey Mouse & Minnie Mouse', keywords: ['Duo Shift 0']});
+      expect(getShiftType(duo)).toEqual({kind: 'standard', cost: 0});
+    });
+
+    it('returns multi-word classification for Temporary Red Panda Shift', () => {
+      const card = createCard({name: 'Sun Yee', keywords: ['Temporary Red Panda Shift 2']});
+      expect(getShiftType(card)).toEqual({
+        kind: 'classification',
+        classification: 'Red Panda',
+        cost: 2,
+      });
+    });
+
+    it('returns classification for Floodborn and Madrigal Shift', () => {
+      expect(getShiftType(createCard({name: 'The Vine', keywords: ['Floodborn Shift 7']}))).toEqual({
+        kind: 'classification',
+        classification: 'Floodborn',
+        cost: 7,
+      });
+      expect(
+        getShiftType(createCard({name: 'The Madrigal Family', keywords: ['Madrigal Shift 3']})),
+      ).toEqual({kind: 'classification', classification: 'Madrigal', cost: 3});
+    });
   });
 
   describe('hasAnyShift', () => {
@@ -48,6 +81,7 @@ describe('shift type utilities', () => {
       expect(hasAnyShift(createCard({keywords: ['Shift 5']}))).toBe(true);
       expect(hasAnyShift(createCard({keywords: ['Puppy Shift 3']}))).toBe(true);
       expect(hasAnyShift(createCard({keywords: ['Universal Shift 4']}))).toBe(true);
+      expect(hasAnyShift(createCard({keywords: ['Temporary Shift 7']}))).toBe(true);
     });
 
     it('returns false for non-Shift cards', () => {
@@ -120,6 +154,28 @@ describe('ink compatibility utilities', () => {
       const b = createCard({ink: 'Emerald', ink2: 'Sapphire'});
       expect(canShareDeck(a, b)).toBe(false);
     });
+  });
+});
+
+describe('getShiftBaseNames', () => {
+  it('returns the single base name for an atomic card', () => {
+    expect(getShiftBaseNames(createCard({name: 'Ming Lee'}))).toEqual(['Ming Lee']);
+  });
+
+  it('decomposes a "Team" compound name into the full name plus both halves', () => {
+    expect(getShiftBaseNames(createCard({name: 'Belle & Beast'}))).toEqual([
+      'Belle & Beast',
+      'Belle',
+      'Beast',
+    ]);
+  });
+
+  it('keeps multi-word component names intact (splits on "&", not spaces)', () => {
+    expect(getShiftBaseNames(createCard({name: 'Carl Fredricksen & Russell'}))).toEqual([
+      'Carl Fredricksen & Russell',
+      'Carl Fredricksen',
+      'Russell',
+    ]);
   });
 });
 

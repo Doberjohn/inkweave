@@ -42,6 +42,35 @@ Selecting **Elsa - Ice Maker** (cost 7, Shift 5) finds:
 Selecting **Elsa - Snow Queen** (cost 4) finds:
 - **Elsa - Ice Maker** (Shift 5) — score 9, same pair, same score
 
+### Shift Variants
+
+`getShiftType` (`utils/cardHelpers.ts`) classifies the Shift keyword into three target kinds so the rule knows what counts as a valid target:
+
+| Keyword | Kind | Valid targets |
+|---|---|---|
+| `Shift N` | `standard` | same base name (Team compound names like "Belle & Beast" match either half — see below) |
+| `Temporary Shift N` | `standard` | same base name; the card returns to hand at end of turn ("Temporary" is a modifier, stripped before classifying) |
+| `Combo Shift N` / `Duo Shift N` | `standard` | the named halves of a Team card — flavor labels for a compound-name shift (see below) |
+| `X Shift N` (e.g. `Puppy Shift`, `Madrigal Shift`, `Temporary Red Panda Shift`) | `classification` | characters with classification `X` (the prefix may be multiple words) |
+| `Universal Shift N` | `universal` | any character |
+
+`classifyShiftKeyword` resolves a keyword in this order: **Universal** → **Team** (card name contains `&`, so any shift label routes to `standard`) → strip a leading **`Temporary`** modifier → **`<classification> Shift N`** → plain **`Shift N`**. Two consequences:
+
+- **"Temporary" is a modifier, not a classification.** It's stripped before the classification match, so `Temporary Shift N` → `standard` and `Temporary Red Panda Shift N` → classification `Red Panda` (rather than a non-existent `Temporary Red Panda` class). The classification prefix may be **multiple words** (`Red Panda`), which the lazy `^(.+?)\s+shift` match handles.
+- **"Combo"/"Duo" look like classification prefixes but aren't** — they're flavor labels on Team cards. The reminder text ("named X or Y") isn't visible at classify-time, so the `&` in the card's name is the real signal: Team detection runs before the classification branch and routes `Combo Shift` / `Duo Shift` to `standard`.
+
+#### Team (compound-name) Shift
+
+"Team" Shift cards print a compound name joined by an ampersand — **Belle & Beast**, **Mickey & Minnie**, **Sulley & Boo** — and their reminder text reads "shift onto a character named X **or** Y." The keyword may be plain `Shift N` or a flavor-labelled `Combo Shift N` / `Duo Shift N`; either way the `&` name is what determines targeting, so all of them route to `standard`. A literal same-name match would find neither half, so `standard` targeting routes through `getShiftBaseNames` (`utils/cardHelpers.ts`), which decomposes the shifter's base name on `&` and matches the target against **every** landing name:
+
+```text
+getShiftBaseNames("Belle & Beast")            -> ["Belle & Beast", "Belle", "Beast"]
+getShiftBaseNames("Carl Fredricksen & Russell") -> ["Carl Fredricksen & Russell", "Carl Fredricksen", "Russell"]
+getShiftBaseNames("Ming Lee")                  -> ["Ming Lee"]
+```
+
+The split is on `&` only (not spaces or " and "), so multi-word halves stay intact and ordinary names with no ampersand pass through as a single-element list — behaviourally identical to the old exact-match path. Both directions benefit: the Team card finds either base, and either base finds the Team card.
+
 ---
 
 ## Scoring Architecture

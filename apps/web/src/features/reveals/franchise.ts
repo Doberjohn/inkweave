@@ -1,6 +1,6 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 
-export type FranchiseId = 'toy-story' | 'incredibles' | 'brave';
+export type FranchiseId = 'monsters-inc' | 'up' | 'turning-red';
 
 export interface FranchiseConfig {
   id: FranchiseId;
@@ -10,9 +10,9 @@ export interface FranchiseConfig {
 }
 
 export const FRANCHISES: readonly FranchiseConfig[] = [
-  {id: 'toy-story', label: 'Toy Story', match: 'Toy Story'},
-  {id: 'incredibles', label: 'The Incredibles', match: 'The Incredibles'},
-  {id: 'brave', label: 'Brave', match: 'Brave'},
+  {id: 'monsters-inc', label: 'Monsters, Inc.', match: 'Monsters, Inc.'},
+  {id: 'up', label: 'Up', match: 'Up'},
+  {id: 'turning-red', label: 'Turning Red', match: 'Turning Red'},
 ];
 
 /**

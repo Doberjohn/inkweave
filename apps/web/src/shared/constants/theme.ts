@@ -177,7 +177,7 @@ export const COLORS = {
 export const ALL_INKS: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
 
 // Known set codes
-export type SetCode = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11';
+export type SetCode = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12' | '13';
 
 // Set abbreviations (keyed by setCode)
 export const SET_ABBREVIATIONS: Record<SetCode, string> = {
@@ -192,6 +192,8 @@ export const SET_ABBREVIATIONS: Record<SetCode, string> = {
   '9': '9FAB',
   '10': '10WHI',
   '11': '11WSP',
+  '12': '12WIL',
+  '13': '13AVN',
 } as const;
 
 // Set full names (keyed by setCode)
@@ -207,6 +209,8 @@ export const SET_NAMES: Record<SetCode, string> = {
   '9': 'Fabled',
   '10': 'Whispers in the Well',
   '11': 'Winterspell',
+  '12': 'The Wilds Unknown',
+  '13': 'Attack of the Vine!',
 } as const;
 
 // Breakpoints for responsive design

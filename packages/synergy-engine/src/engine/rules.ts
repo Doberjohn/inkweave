@@ -2,6 +2,7 @@ import type {LorcanaCard, PlaystyleId, SynergyMatch, SynergyRule} from '../types
 import {
   classifyNamedEffect,
   getBaseName,
+  getShiftBaseNames,
   getDiscardRoles,
   getKeywordValue,
   getLocationRoles,
@@ -209,7 +210,9 @@ function isValidShiftTarget(
 ): boolean {
   switch (shiftType.kind) {
     case 'standard':
-      return getBaseName(target) === getBaseName(shiftCard);
+      // Team cards ("Belle & Beast") shift onto either named half, so match the
+      // target's base name against every name the shifter can land on.
+      return getShiftBaseNames(shiftCard).includes(getBaseName(target));
     case 'classification':
       return hasClassification(target, shiftType.classification);
     case 'universal':

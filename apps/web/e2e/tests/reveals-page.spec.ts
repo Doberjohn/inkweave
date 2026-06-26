@@ -40,9 +40,9 @@ test.describe('Reveals page (flag on)', () => {
 
     await page.goto('/reveals');
 
-    await expect(page.getByRole('heading', {name: /Toy Story/i})).toBeVisible();
-    await expect(page.getByRole('heading', {name: /The Incredibles/i})).toBeVisible();
-    await expect(page.getByRole('heading', {name: /Brave/i})).toBeVisible();
+    await expect(page.getByRole('heading', {name: 'Monsters, Inc.', exact: true})).toBeVisible();
+    await expect(page.getByRole('heading', {name: 'Up', exact: true})).toBeVisible();
+    await expect(page.getByRole('heading', {name: 'Turning Red', exact: true})).toBeVisible();
     await expect(page.getByRole('heading', {name: /Returning franchises/i})).toBeVisible();
   });
 
@@ -64,7 +64,7 @@ test.describe('Reveals page (flag on)', () => {
     await page.goto('/browse');
     const mobileNav = page.getByRole('navigation', {name: 'Mobile navigation'});
     // aria-label is the descriptive form after the Option B accessible-name refactor.
-    const revealsLink = mobileNav.getByRole('link', {name: 'Set 12 reveals', exact: true});
+    const revealsLink = mobileNav.getByRole('link', {name: 'Set 13 reveals', exact: true});
     await expect(revealsLink).toBeVisible();
   });
 
@@ -73,12 +73,12 @@ test.describe('Reveals page (flag on)', () => {
 
     await page.goto('/');
     await expect(
-      page.getByRole('complementary', {name: /Set 12 reveals/i}),
+      page.getByRole('complementary', {name: /Set 13 reveals/i}),
     ).toBeVisible();
 
     await page.goto('/reveals');
     await expect(
-      page.getByRole('complementary', {name: /Set 12 reveals/i}),
+      page.getByRole('complementary', {name: /Set 13 reveals/i}),
     ).toHaveCount(0);
   });
 
@@ -86,6 +86,11 @@ test.describe('Reveals page (flag on)', () => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 
     await page.goto('/reveals');
+    // Early reveal season: previewCards.json may still have cards: [] (no tiles to
+    // click). Skip until at least one Set 13 card is curated, mirroring the
+    // season-ended skip in beforeEach so the suite stays green across the lifecycle.
+    const tileCount = await page.getByTestId('card-tile').count();
+    test.skip(tileCount === 0, 'No reveal cards curated yet (previewCards.json cards: []).');
     const firstTile = page.getByTestId('card-tile').first();
     await expect(firstTile).toBeVisible();
     await firstTile.click();

@@ -1,5 +1,5 @@
 const PREVIEW_CARDS_PATH = '/data/previewCards.json';
-const REVEAL_SET_CODE = '12';
+const REVEAL_SET_CODE = '13';
 
 export interface RevealDates {
   prereleaseDate: Date;

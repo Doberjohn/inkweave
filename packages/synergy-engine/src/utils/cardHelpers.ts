@@ -101,6 +101,33 @@ export function getBaseName(card: LorcanaCard): string {
 }
 
 /**
+ * Every base name a Shift card can land on.
+ *
+ * Most Shift cards target a single name — their own — so this is usually a
+ * one-element list. But "Team" cards print a compound name ("Belle & Beast",
+ * "Lilo & Stitch", "Carl Fredricksen & Russell") whose reminder reads
+ * "named X or Y", making EACH half a valid Shift base. Decomposing the compound
+ * name lets a "Belle & Beast" shifter match both "Belle" and "Beast" bases
+ * instead of a literal "Belle & Beast" character that never exists.
+ *
+ * The Shift matcher (isValidShiftTarget, standard variant) checks a target's
+ * base name against this list, so returning extra names only ADDS matches —
+ * an atomic name must still come back as a single-element list unchanged.
+ */
+export function getShiftBaseNames(card: LorcanaCard): string[] {
+  const base = getBaseName(card);
+  // "Team" cards print a compound name ("Belle & Beast") whose reminder reads
+  // "named X or Y", so each half is a valid Shift base. Split on the ampersand
+  // (not spaces — keeps multi-word halves like "Carl Fredricksen" intact) and
+  // return the components alongside the full name. Atomic names have no "&" and
+  // pass through unchanged. Split on "&" only: the card NAMES use it, while
+  // " and "/" or " can appear inside a single legitimate name.
+  if (!base.includes('&')) return [base];
+  const parts = base.split('&').map((part) => part.trim()).filter(Boolean);
+  return parts.length > 1 ? [base, ...parts] : [base];
+}
+
+/**
  * Shift variant type. Each variant carries its cost (parsed from the keyword).
  * - 'standard': targets same-name characters (e.g., "Shift 5")
  * - 'classification': targets characters with a specific classification (e.g., "Puppy Shift 3")
@@ -118,27 +145,59 @@ function parseShiftCost(keyword: string): number {
 }
 
 /**
+ * Classify a single keyword string into a Shift variant, or null if it isn't Shift.
+ *
+ * `isTeam` marks a compound-name card ("Belle & Beast", "Sulley & Boo"). Team cards shift
+ * onto either named half regardless of the keyword's flavor label (plain Shift, Combo Shift,
+ * Duo Shift), so they classify as `standard` and let `getShiftBaseNames` decompose the name.
+ * Non-team `<prefix> Shift N` keywords are genuine classification shifts (Puppy, Floodborn,
+ * Madrigal, Red Panda) — the prefix names the targeted classification.
+ */
+function classifyShiftKeyword(kw: string, isTeam = false): ShiftType | null {
+  const lower = kw.toLowerCase();
+  if (!lower.includes('shift')) return null;
+  // Universal Shift targets any character — checked first so a team card that somehow has
+  // Universal Shift still keeps every target rather than being narrowed to its named halves.
+  if (lower.startsWith('universal shift')) {
+    return {kind: 'universal', cost: parseShiftCost(kw)};
+  }
+  // Team cards shift onto either half of their compound name. "Combo Shift" / "Duo Shift"
+  // read like classification prefixes but aren't — the '&' name is the real signal, and
+  // getShiftBaseNames (used by the matcher) splits it. Routes plain/Combo/Duo team shifts alike.
+  if (isTeam) {
+    return {kind: 'standard', cost: parseShiftCost(kw)};
+  }
+  // Strip a leading "Temporary " modifier: it bounces the card to hand at end of turn but
+  // doesn't change WHO it shifts onto. "Temporary Shift N" → standard; "Temporary Red Panda
+  // Shift N" → the underlying "Red Panda" classification shift.
+  const core = lower.startsWith('temporary ') ? kw.slice('Temporary '.length) : kw;
+  // "<classification> Shift N" / "<classification> Shift" → classification variant. The prefix
+  // may be multiple words ("Red Panda Shift 2"), so match lazily up to the trailing " Shift".
+  const classMatch = core.match(/^(.+?)\s+shift(?:\s+\d+)?$/i);
+  if (classMatch) {
+    return {kind: 'classification', classification: classMatch[1].trim(), cost: parseShiftCost(kw)};
+  }
+  // Plain "Shift N" (including a "Temporary Shift N" reduced to "Shift N") → standard.
+  if (core.toLowerCase().startsWith('shift')) {
+    return {kind: 'standard', cost: parseShiftCost(kw)};
+  }
+  return null;
+}
+
+/**
  * Determine the Shift variant and cost for a card, or null if it has no Shift keyword.
- * Handles "Shift N", "X Shift N" (classification), and "Universal Shift N".
+ * Handles "Shift N", "Temporary Shift N", "Combo/Duo Shift N" (team), "<Class> Shift N"
+ * (classification, single- or multi-word), and "Universal Shift N".
  */
 export function getShiftType(card: LorcanaCard): ShiftType | null {
   if (!card.keywords) return null;
-
+  // Compound-name cards ("Belle & Beast", "Sulley & Boo") shift onto either named half
+  // regardless of the shift's flavor label, so flag them for the classifier to route to
+  // `standard` (where getShiftBaseNames decomposes the name).
+  const isTeam = card.name.includes('&');
   for (const kw of card.keywords) {
-    const lower = kw.toLowerCase();
-    if (lower.startsWith('universal shift')) {
-      return {kind: 'universal', cost: parseShiftCost(kw)};
-    }
-    // "Puppy Shift 3" or "Puppy Shift" → classification variant
-    if (lower.endsWith(' shift') || lower.match(/^\w+ shift \d+$/)) {
-      const prefix = kw.split(/\s+shift\s*/i)[0];
-      if (prefix && prefix.toLowerCase() !== kw.toLowerCase()) {
-        return {kind: 'classification', classification: prefix, cost: parseShiftCost(kw)};
-      }
-    }
-    if (lower.startsWith('shift')) {
-      return {kind: 'standard', cost: parseShiftCost(kw)};
-    }
+    const variant = classifyShiftKeyword(kw, isTeam);
+    if (variant) return variant;
   }
   return null;
 }
