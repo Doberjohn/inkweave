@@ -13,12 +13,32 @@ export interface FranchiseConfig {
    * association (design intent), not derived from the card pool.
    */
   ink: Ink;
+  /** One-line description shown on the reveals page's new-franchises card. */
+  blurb: string;
 }
 
 export const FRANCHISES: readonly FranchiseConfig[] = [
-  {id: 'monsters-inc', label: 'Monsters, Inc.', match: 'Monsters, Inc.', ink: 'Emerald'},
-  {id: 'up', label: 'Up', match: 'Up', ink: 'Sapphire'},
-  {id: 'turning-red', label: 'Turning Red', match: 'Turning Red', ink: 'Ruby'},
+  {
+    id: 'monsters-inc',
+    label: 'Monsters, Inc.',
+    match: 'Monsters, Inc.',
+    ink: 'Emerald',
+    blurb: 'Sulley, Mike and the laughter that powers a whole city.',
+  },
+  {
+    id: 'up',
+    label: 'Up',
+    match: 'Up',
+    ink: 'Sapphire',
+    blurb: 'Carl, Russell and the house that flew on a thousand balloons.',
+  },
+  {
+    id: 'turning-red',
+    label: 'Turning Red',
+    match: 'Turning Red',
+    ink: 'Ruby',
+    blurb: 'Mei Lee, her friends, and the red panda within.',
+  },
 ];
 
 /**
