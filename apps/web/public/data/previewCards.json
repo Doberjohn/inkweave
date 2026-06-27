@@ -1819,7 +1819,7 @@
       "version": "Created by the Vine",
       "fullName": "Gaston - Created by the Vine",
       "cost": 2,
-      "color": "Sapphire",
+      "color": "Ruby",
       "inkwell": true,
       "type": "Character",
       "subtypes": [
@@ -3082,7 +3082,7 @@
       }
     },
     {
-      "id": 13900,
+      "id": 13195,
       "name": "Maximus",
       "version": "Relentless Stallion",
       "fullName": "Maximus - Relentless Stallion",
@@ -3110,6 +3110,8 @@
       "willpower": 5,
       "lore": 1,
       "setCode": "13",
+      "number": 195,
+      "rarity": "Rare",
       "franchise": "Tangled",
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/8-PD1-EN-13-Maximus-Relentless-Stallion-Prerelease-Promo-Lorcana-Player.jpg.webp",
@@ -3117,43 +3119,7 @@
       }
     },
     {
-      "id": 13912,
-      "name": "Pocahontas",
-      "version": "Guiding the Tribe",
-      "fullName": "Pocahontas - Guiding the Tribe",
-      "cost": 2,
-      "color": "Amber",
-      "inkwell": true,
-      "type": "Character",
-      "subtypes": [
-        "Storyborn",
-        "Hero",
-        "Princess"
-      ],
-      "fullText": "STAY CLOSE When you play this character, you may play a character with cost 1 for free.",
-      "fullTextSections": [
-        "STAY CLOSE When you play this character, you may play a character with cost 1 for free."
-      ],
-      "abilities": [
-        {
-          "effect": "When you play this character, you may play a character with cost 1 for free.",
-          "fullText": "STAY CLOSE When you play this character, you may play a character with cost 1 for free.",
-          "name": "STAY CLOSE",
-          "type": "triggered"
-        }
-      ],
-      "strength": 2,
-      "willpower": 3,
-      "lore": 1,
-      "setCode": "13",
-      "franchise": "Pocahontas",
-      "images": {
-        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/3-PD1-EN-13-Pocahontas-Guiding-the-Tribe-Prerelease-Promo-Lorcana-Player.jpg.webp",
-        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/3-PD1-EN-13-Pocahontas-Guiding-the-Tribe-Prerelease-Promo-Lorcana-Player.jpg.webp"
-      }
-    },
-    {
-      "id": 13914,
+      "id": 13148,
       "name": "Belle",
       "version": "Always Reading",
       "fullName": "Belle - Always Reading",
@@ -3182,6 +3148,8 @@
       "willpower": 3,
       "lore": 1,
       "setCode": "13",
+      "number": 148,
+      "rarity": "Common",
       "franchise": "Beauty and the Beast",
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/13-P4-EN-13-Belle-Always-Reading-Promo-LQ-Lorcana-Player.jpg.webp",
@@ -3189,7 +3157,7 @@
       }
     },
     {
-      "id": 13920,
+      "id": 13001,
       "name": "Woody",
       "version": "Helping a Friend",
       "fullName": "Woody - Helping a Friend",
@@ -3218,6 +3186,8 @@
       "willpower": 4,
       "lore": 2,
       "setCode": "13",
+      "number": 1,
+      "rarity": "Rare",
       "franchise": "Toy Story",
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/60-P3-EN-13-Woody-Helping-a-Friend-Event-Promo-LQ-Lorcana-Player.jpg.webp",
@@ -3225,79 +3195,7 @@
       }
     },
     {
-      "id": 13926,
-      "name": "Buzz Lightyear",
-      "version": "Providing Cover",
-      "fullName": "Buzz Lightyear - Providing Cover",
-      "cost": 4,
-      "color": "Emerald",
-      "inkwell": false,
-      "type": "Character",
-      "subtypes": [
-        "Storyborn",
-        "Captain",
-        "Hero",
-        "Toy"
-      ],
-      "fullText": "ACTION FIGURE When you play this character, choose one of the following. If you have another Toy character in play, choose both instead:\n\n• You may return an action card with cost 2 or less from your discard to your hand.\n\n• You may play an action with cost 2 or less for free.",
-      "fullTextSections": [
-        "ACTION FIGURE When you play this character, choose one of the following. If you have another Toy character in play, choose both instead:\n\n• You may return an action card with cost 2 or less from your discard to your hand.\n\n• You may play an action with cost 2 or less for free."
-      ],
-      "abilities": [
-        {
-          "effect": "When you play this character, choose one of the following. If you have another Toy character in play, choose both instead: • You may return an action card with cost 2 or less from your discard to your hand. • You may play an action with cost 2 or less for free.",
-          "fullText": "ACTION FIGURE When you play this character, choose one of the following. If you have another Toy character in play, choose both instead:\n\n• You may return an action card with cost 2 or less from your discard to your hand.\n\n• You may play an action with cost 2 or less for free.",
-          "name": "ACTION FIGURE",
-          "type": "triggered"
-        }
-      ],
-      "strength": 4,
-      "willpower": 2,
-      "lore": 2,
-      "setCode": "13",
-      "franchise": "Toy Story",
-      "images": {
-        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/5-PD1-EN-13-Buzz-Lightyear-Providing-Cover-Prerelease-Promo-Lorcana-Player.jpg.webp",
-        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/5-PD1-EN-13-Buzz-Lightyear-Providing-Cover-Prerelease-Promo-Lorcana-Player.jpg.webp"
-      }
-    },
-    {
-      "id": 13933,
-      "name": "Vixey",
-      "version": "Expert Fisher",
-      "fullName": "Vixey - Expert Fisher",
-      "cost": 3,
-      "color": "Amethyst",
-      "inkwell": true,
-      "type": "Character",
-      "subtypes": [
-        "Storyborn",
-        "Ally"
-      ],
-      "fullText": "STEALING IN When you play this character, if you have a character with Evasive in play, you may return chosen character, item, or location with cost 2 or less to their player’s hand.",
-      "fullTextSections": [
-        "STEALING IN When you play this character, if you have a character with Evasive in play, you may return chosen character, item, or location with cost 2 or less to their player’s hand."
-      ],
-      "abilities": [
-        {
-          "effect": "When you play this character, if you have a character with Evasive in play, you may return chosen character, item, or location with cost 2 or less to their player’s hand.",
-          "fullText": "STEALING IN When you play this character, if you have a character with Evasive in play, you may return chosen character, item, or location with cost 2 or less to their player’s hand.",
-          "name": "STEALING IN",
-          "type": "triggered"
-        }
-      ],
-      "strength": 2,
-      "willpower": 4,
-      "lore": 1,
-      "setCode": "13",
-      "franchise": "The Fox and the Hound",
-      "images": {
-        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/4-PD1-EN-13-Vixey-Expert-Fisher-Prerelease-Promo-Lorcana-Player.jpg.webp",
-        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/4-PD1-EN-13-Vixey-Expert-Fisher-Prerelease-Promo-Lorcana-Player.jpg.webp"
-      }
-    },
-    {
-      "id": 13948,
+      "id": 13057,
       "name": "Morph",
       "version": "Little Imitator",
       "fullName": "Morph - Little Imitator",
@@ -3326,6 +3224,8 @@
       "willpower": 2,
       "lore": 1,
       "setCode": "13",
+      "number": 57,
+      "rarity": "Uncommon",
       "franchise": "Treasure Planet",
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/9-P4-EN-13-Morph-Little-Imitator-Weekly-Play-Promo-Lorcana-Player.jpg.webp",
@@ -3333,7 +3233,7 @@
       }
     },
     {
-      "id": 13952,
+      "id": 13039,
       "name": "Maleficent",
       "version": "Exultant Spellcaster",
       "fullName": "Maleficent - Exultant Spellcaster",
@@ -3350,6 +3250,8 @@
       "willpower": 2,
       "lore": 1,
       "setCode": "13",
+      "number": 39,
+      "rarity": "Common",
       "franchise": "Sleeping Beauty",
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/4-DIS-EN-13-Maleficent-Exultant-Spellcaster-Disney-Parks-Promo-Lorcana-Player.jpg.webp",
@@ -3357,50 +3259,7 @@
       }
     },
     {
-      "id": 13975,
-      "name": "Merlin",
-      "version": "Envisioning the Future",
-      "fullName": "Merlin - Envisioning the Future",
-      "cost": 4,
-      "color": "Sapphire",
-      "inkwell": false,
-      "type": "Character",
-      "subtypes": [
-        "Dreamborn",
-        "Mentor",
-        "Sorcerer"
-      ],
-      "fullText": "MINOR TRICKERY When you play this character, you may draw a card from the bottom of your deck.\nAGE OF INCONVENIENCE When this character is banished, put this card from your discard on the bottom of your deck.",
-      "fullTextSections": [
-        "MINOR TRICKERY When you play this character, you may draw a card from the bottom of your deck.",
-        "AGE OF INCONVENIENCE When this character is banished, put this card from your discard on the bottom of your deck."
-      ],
-      "abilities": [
-        {
-          "effect": "When you play this character, you may draw a card from the bottom of your deck.",
-          "fullText": "MINOR TRICKERY When you play this character, you may draw a card from the bottom of your deck.",
-          "name": "MINOR TRICKERY",
-          "type": "triggered"
-        },
-        {
-          "effect": "When this character is banished, put this card from your discard on the bottom of your deck.",
-          "fullText": "AGE OF INCONVENIENCE When this character is banished, put this card from your discard on the bottom of your deck.",
-          "name": "AGE OF INCONVENIENCE",
-          "type": "triggered"
-        }
-      ],
-      "strength": 1,
-      "willpower": 4,
-      "lore": 2,
-      "setCode": "13",
-      "franchise": "The Sword in the Stone",
-      "images": {
-        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/7-PD1-EN-13-Merlin-Envisioning-the-Future-Prerelease-Promo-Lorcana-Player.jpg.webp",
-        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/7-PD1-EN-13-Merlin-Envisioning-the-Future-Prerelease-Promo-Lorcana-Player.jpg.webp"
-      }
-    },
-    {
-      "id": 13977,
+      "id": 13032,
       "name": "If I Didn't Have You",
       "fullName": "If I Didn't Have You",
       "cost": 3,
@@ -3424,10 +3283,749 @@
         }
       ],
       "setCode": "13",
+      "number": 32,
+      "rarity": "Common",
       "franchise": "Monsters, Inc.",
       "images": {
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/14-P4-EN-13-If-I-Didnt-Have-You-Promo-LQ-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/14-P4-EN-13-If-I-Didnt-Have-You-Promo-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13003,
+      "name": "Isabela Madrigal",
+      "version": "Kind Cultivator",
+      "fullName": "Isabela Madrigal - Kind Cultivator",
+      "cost": 2,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Madrigal"
+      ],
+      "strength": 2,
+      "willpower": 4,
+      "lore": 1,
+      "setCode": "13",
+      "number": 3,
+      "rarity": "Common",
+      "franchise": "Encanto",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/3-207-EN-13-Isabela-Madrigal-Kind-Cultivator-Lorcana-Player-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/3-207-EN-13-Isabela-Madrigal-Kind-Cultivator-Lorcana-Player-430x600.jpg.webp"
+      }
+    },
+    {
+      "id": 13048,
+      "name": "Pain",
+      "version": "Running with Scissors",
+      "fullName": "Pain - Running with Scissors",
+      "cost": 4,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "MULTIPURPOSE TOOL When you play this character, if you have a character card named Panic in your discard, gain 2 lore.",
+      "fullTextSections": [
+        "MULTIPURPOSE TOOL When you play this character, if you have a character card named Panic in your discard, gain 2 lore."
+      ],
+      "abilities": [
+        {
+          "effect": "When you play this character, if you have a character card named Panic in your discard, gain 2 lore.",
+          "fullText": "MULTIPURPOSE TOOL When you play this character, if you have a character card named Panic in your discard, gain 2 lore.",
+          "name": "MULTIPURPOSE TOOL",
+          "type": "triggered"
+        }
+      ],
+      "strength": 5,
+      "willpower": 3,
+      "lore": 1,
+      "setCode": "13",
+      "number": 48,
+      "rarity": "Common",
+      "franchise": "Hercules",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/48-207-EN-13-Pain-Running-with-Scissors-Lorcana-Player-1-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/48-207-EN-13-Pain-Running-with-Scissors-Lorcana-Player-1-430x600.jpg.webp"
+      }
+    },
+    {
+      "id": 13041,
+      "name": "Panic",
+      "version": "Hammer Enthusiast",
+      "fullName": "Panic - Hammer Enthusiast",
+      "cost": 3,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "Rush\n(This character can challenge the turn they’re played.)",
+      "fullTextSections": [
+        "Rush",
+        "(This character can challenge the turn they’re played.)"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Rush",
+          "fullText": "Rush"
+        },
+        {
+          "effect": "This character can challenge the turn they’re played.",
+          "fullText": "(This character can challenge the turn they’re played.)",
+          "type": "static"
+        }
+      ],
+      "strength": 3,
+      "willpower": 1,
+      "lore": 2,
+      "setCode": "13",
+      "number": 41,
+      "rarity": "Common",
+      "franchise": "Hercules",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/41-207-EN-13-Panic-Hammer-Enthusiast-Lorcana-Player-1-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/41-207-EN-13-Panic-Hammer-Enthusiast-Lorcana-Player-1-430x600.jpg.webp"
+      }
+    },
+    {
+      "id": 13151,
+      "name": "Alpha",
+      "version": "Leader of the Pack",
+      "fullName": "Alpha - Leader of the Pack",
+      "cost": 2,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "WHO WANTS A TREAT? Whenever you play an item, chosen character gets +1 and Resist +1 this turn. (Damage dealt to them is reduced by 1.)",
+      "fullTextSections": [
+        "WHO WANTS A TREAT? Whenever you play an item, chosen character gets +1 and Resist +1 this turn. (Damage dealt to them is reduced by 1.)"
+      ],
+      "abilities": [
+        {
+          "effect": "Whenever you play an item, chosen character gets +1 and Resist +1 this turn. (Damage dealt to them is reduced by 1.)",
+          "fullText": "WHO WANTS A TREAT? Whenever you play an item, chosen character gets +1 and Resist +1 this turn. (Damage dealt to them is reduced by 1.)",
+          "name": "WHO WANTS A TREAT",
+          "type": "triggered"
+        }
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1,
+      "setCode": "13",
+      "number": 151,
+      "rarity": "Rare",
+      "franchise": "Up",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/Alpha-Leader-of-the-Pack-German-LQ-Lorcana-Player-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/Alpha-Leader-of-the-Pack-German-LQ-Lorcana-Player-430x600.jpg.webp"
+      }
+    },
+    {
+      "id": 13196,
+      "name": "Omnidroid",
+      "version": "Ultimate Learning Version",
+      "fullName": "Omnidroid - Ultimate Learning Version",
+      "cost": 8,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Robot"
+      ],
+      "fullText": "Shift 6 ⬡ (You may pay 6 ⬡ to play this on top of one of your characters named Omnidroid.)\nResist +2 (Damage dealt to this character is reduced by 2.)\nRETURN ON INVESTMENT When you shift this character onto a character, you may return all cards under this one to your hand.",
+      "fullTextSections": [
+        "Shift 6 ⬡ (You may pay 6 ⬡ to play this on top of one of your characters named Omnidroid.)",
+        "Resist +2 (Damage dealt to this character is reduced by 2.)",
+        "RETURN ON INVESTMENT When you shift this character onto a character, you may return all cards under this one to your hand."
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "fullText": "Shift 6 ⬡ (You may pay 6 ⬡ to play this on top of one of your characters named Omnidroid.)",
+          "keywordValue": "6 ⬡"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Resist",
+          "fullText": "Resist +2 (Damage dealt to this character is reduced by 2.)",
+          "keywordValue": "+2"
+        },
+        {
+          "effect": "When you shift this character onto a character, you may return all cards under this one to your hand.",
+          "fullText": "RETURN ON INVESTMENT When you shift this character onto a character, you may return all cards under this one to your hand.",
+          "name": "RETURN ON INVESTMENT",
+          "type": "triggered"
+        }
+      ],
+      "strength": 8,
+      "willpower": 8,
+      "lore": 2,
+      "setCode": "13",
+      "number": 196,
+      "rarity": "Rare",
+      "franchise": "The Incredibles",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/Omnidroid-Ultimate-Learning-Version-Japanese-LQ-Lorcana-Player-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/Omnidroid-Ultimate-Learning-Version-Japanese-LQ-Lorcana-Player-430x600.jpg.webp"
+      }
+    },
+    {
+      "id": 13036,
+      "name": "Powhatan's Staff",
+      "fullName": "Powhatan's Staff",
+      "cost": 1,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Item",
+      "subtypes": [
+        "Item"
+      ],
+      "fullText": "STEP FORWARD ⟳, 1 ⬡ – The next character you play this turn enters play exerted and gains Bodyguard until the start of your next turn. (An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
+      "fullTextSections": [
+        "STEP FORWARD ⟳, 1 ⬡ – The next character you play this turn enters play exerted and gains Bodyguard until the start of your next turn. (An opposing character who challenges one of your characters must choose one with Bodyguard if able.)"
+      ],
+      "abilities": [
+        {
+          "effect": "⟳, 1 ⬡ – The next character you play this turn enters play exerted and gains Bodyguard until the start of your next turn. (An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
+          "fullText": "STEP FORWARD ⟳, 1 ⬡ – The next character you play this turn enters play exerted and gains Bodyguard until the start of your next turn. (An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
+          "name": "STEP FORWARD",
+          "type": "activated"
+        }
+      ],
+      "setCode": "13",
+      "number": 36,
+      "rarity": "Uncommon",
+      "franchise": "Pocahontas",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/36-207-EN-13-Powhatans-Staff-Lorcana-Player-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/36-207-EN-13-Powhatans-Staff-Lorcana-Player-430x600.jpg.webp"
+      }
+    },
+    {
+      "id": 13050,
+      "name": "Merida",
+      "version": "Wisp Conjurer",
+      "fullName": "Merida - Wisp Conjurer",
+      "cost": 4,
+      "color": "Amethyst",
+      "inkwell": false,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Hero",
+        "Princess",
+        "Sorcerer"
+      ],
+      "fullText": "FOCUSED ENERGY This character may enter play exerted to draw a card.\nBECKON During your turn, whenever another character of yours enters play exerted, you may draw a card.",
+      "fullTextSections": [
+        "FOCUSED ENERGY This character may enter play exerted to draw a card.",
+        "BECKON During your turn, whenever another character of yours enters play exerted, you may draw a card."
+      ],
+      "abilities": [
+        {
+          "effect": "This character may enter play exerted to draw a card.",
+          "fullText": "FOCUSED ENERGY This character may enter play exerted to draw a card.",
+          "name": "FOCUSED ENERGY",
+          "type": "static"
+        },
+        {
+          "effect": "During your turn, whenever another character of yours enters play exerted, you may draw a card.",
+          "fullText": "BECKON During your turn, whenever another character of yours enters play exerted, you may draw a card.",
+          "name": "BECKON",
+          "type": "static"
+        }
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 1,
+      "setCode": "13",
+      "number": 50,
+      "rarity": "Legendary",
+      "franchise": "Brave",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/50-207-EN-13-Merida-Wisp-Conjurer-Lorcana-Player-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/50-207-EN-13-Merida-Wisp-Conjurer-Lorcana-Player-430x600.jpg.webp"
+      }
+    },
+    {
+      "id": 13071,
+      "name": "Magical Hunny Staff",
+      "fullName": "Magical Hunny Staff",
+      "cost": 1,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Item",
+      "subtypes": [
+        "Hunny",
+        "Item"
+      ],
+      "fullText": "GIFT OF THE HIVE Once during your turn, you may pay 1 ⬡ to give chosen character of yours the Hunny classification until the start of your next turn.\nSPELL OF SWIFTNESS ⟳, 2 ⬡ – Chosen Hunny character of yours gains Evasive until the start of your next turn. (Only characters with Evasive can challenge them.)",
+      "fullTextSections": [
+        "GIFT OF THE HIVE Once during your turn, you may pay 1 ⬡ to give chosen character of yours the Hunny classification until the start of your next turn.",
+        "SPELL OF SWIFTNESS ⟳, 2 ⬡ – Chosen Hunny character of yours gains Evasive until the start of your next turn. (Only characters with Evasive can challenge them.)"
+      ],
+      "abilities": [
+        {
+          "effect": "Once during your turn, you may pay 1 ⬡ to give chosen character of yours the Hunny classification until the start of your next turn.",
+          "fullText": "GIFT OF THE HIVE Once during your turn, you may pay 1 ⬡ to give chosen character of yours the Hunny classification until the start of your next turn.",
+          "name": "GIFT OF THE HIVE",
+          "type": "triggered"
+        },
+        {
+          "effect": "⟳, 2 ⬡ – Chosen Hunny character of yours gains Evasive until the start of your next turn. (Only characters with Evasive can challenge them.)",
+          "fullText": "SPELL OF SWIFTNESS ⟳, 2 ⬡ – Chosen Hunny character of yours gains Evasive until the start of your next turn. (Only characters with Evasive can challenge them.)",
+          "name": "SPELL OF SWIFTNESS",
+          "type": "activated"
+        }
+      ],
+      "setCode": "13",
+      "number": 71,
+      "rarity": "Rare",
+      "franchise": "Winnie the Pooh",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/71-207-EN-13-Magical-Hunny-Staff-Lorcana-Player-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/71-207-EN-13-Magical-Hunny-Staff-Lorcana-Player-430x600.jpg.webp"
+      }
+    },
+    {
+      "id": 13084,
+      "name": "Winifred",
+      "version": "Exasperated Elephant",
+      "fullName": "Winifred - Exasperated Elephant",
+      "cost": 6,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "Ward\n(Opponents can’t choose this character except to challenge.)",
+      "fullTextSections": [
+        "Ward",
+        "(Opponents can’t choose this character except to challenge.)"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Ward",
+          "fullText": "Ward"
+        },
+        {
+          "effect": "Opponents can’t choose this character except to challenge.",
+          "fullText": "(Opponents can’t choose this character except to challenge.)",
+          "type": "static"
+        }
+      ],
+      "strength": 6,
+      "willpower": 6,
+      "lore": 2,
+      "setCode": "13",
+      "number": 84,
+      "rarity": "Common",
+      "franchise": "The Jungle Book",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/84-207-EN-13-Winifred-Exasperated-Elephant-Lorcana-Player-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/84-207-EN-13-Winifred-Exasperated-Elephant-Lorcana-Player-430x600.jpg.webp"
+      }
+    },
+    {
+      "id": 13092,
+      "name": "Dr. Bushroot",
+      "version": "Evil Botanist",
+      "fullName": "Dr. Bushroot - Evil Botanist",
+      "cost": 5,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Super",
+        "Villain"
+      ],
+      "fullText": "Ward\n(Opponents can’t choose this character except to challenge.)\nFAIR IS FAIR Whenever this character is challenged, chosen opponent chooses and discards a card.",
+      "fullTextSections": [
+        "Ward",
+        "(Opponents can’t choose this character except to challenge.)",
+        "FAIR IS FAIR Whenever this character is challenged, chosen opponent chooses and discards a card."
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Ward",
+          "fullText": "Ward"
+        },
+        {
+          "effect": "Opponents can’t choose this character except to challenge.",
+          "fullText": "(Opponents can’t choose this character except to challenge.)",
+          "type": "static"
+        },
+        {
+          "effect": "Whenever this character is challenged, chosen opponent chooses and discards a card.",
+          "fullText": "FAIR IS FAIR Whenever this character is challenged, chosen opponent chooses and discards a card.",
+          "name": "FAIR IS FAIR",
+          "type": "triggered"
+        }
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 3,
+      "setCode": "13",
+      "number": 92,
+      "rarity": "Rare",
+      "franchise": "Darkwing Duck",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/92-207-EN-13-Dr.-Bushroot-Evil-Botanist-Lorcana-Player-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/92-207-EN-13-Dr.-Bushroot-Evil-Botanist-Lorcana-Player-430x600.jpg.webp"
+      }
+    },
+    {
+      "id": 13130,
+      "name": "Captain Hook",
+      "version": "Conniving Pirate",
+      "fullName": "Captain Hook - Conniving Pirate",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Captain",
+        "Pirate",
+        "Villain"
+      ],
+      "fullText": "HAVE AT YOU Whenever this character challenges another character, gain 1 lore.",
+      "fullTextSections": [
+        "HAVE AT YOU Whenever this character challenges another character, gain 1 lore."
+      ],
+      "abilities": [
+        {
+          "effect": "Whenever this character challenges another character, gain 1 lore.",
+          "fullText": "HAVE AT YOU Whenever this character challenges another character, gain 1 lore.",
+          "name": "HAVE AT YOU",
+          "type": "triggered"
+        }
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1,
+      "setCode": "13",
+      "number": 130,
+      "rarity": "Uncommon",
+      "franchise": "Peter Pan",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/130-207-EN-13-Captain-Hook-Conniving-Pirate-Lorcana-Player-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/130-207-EN-13-Captain-Hook-Conniving-Pirate-Lorcana-Player-430x600.jpg.webp"
+      }
+    },
+    {
+      "id": 13158,
+      "name": "Maid Marian",
+      "version": "Created by the Vine",
+      "fullName": "Maid Marian - Created by the Vine",
+      "cost": 4,
+      "color": "Sapphire",
+      "inkwell": false,
+      "type": "Character",
+      "subtypes": [
+        "Floodborn",
+        "Princess",
+        "Vineling"
+      ],
+      "fullText": "INKFLOW Whenever one of your Floodborn characters is banished, you may put the top card of your deck into your inkwell facedown and exerted.",
+      "fullTextSections": [
+        "INKFLOW Whenever one of your Floodborn characters is banished, you may put the top card of your deck into your inkwell facedown and exerted."
+      ],
+      "abilities": [
+        {
+          "effect": "Whenever one of your Floodborn characters is banished, you may put the top card of your deck into your inkwell facedown and exerted.",
+          "fullText": "INKFLOW Whenever one of your Floodborn characters is banished, you may put the top card of your deck into your inkwell facedown and exerted.",
+          "name": "INKFLOW",
+          "type": "triggered"
+        }
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 1,
+      "setCode": "13",
+      "number": 158,
+      "rarity": "Rare",
+      "franchise": "Robin Hood",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/158-207-EN-13-Maid-Marian-Created-by-the-Vine-Lorcana-Player-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/158-207-EN-13-Maid-Marian-Created-by-the-Vine-Lorcana-Player-430x600.jpg.webp"
+      }
+    },
+    {
+      "id": 13173,
+      "name": "Translation Collar",
+      "fullName": "Translation Collar",
+      "cost": 2,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Item",
+      "subtypes": [
+        "Item"
+      ],
+      "fullText": "YOU ARE MY FRIEND ⟳, 1 ⬡ – Chosen character gets +1 ◊ and gains Support this turn. (Whenever they quest, you may add their to another chosen character’s this turn.)",
+      "fullTextSections": [
+        "YOU ARE MY FRIEND ⟳, 1 ⬡ – Chosen character gets +1 ◊ and gains Support this turn. (Whenever they quest, you may add their to another chosen character’s this turn.)"
+      ],
+      "abilities": [
+        {
+          "effect": "⟳, 1 ⬡ – Chosen character gets +1 ◊ and gains Support this turn. (Whenever they quest, you may add their to another chosen character’s this turn.)",
+          "fullText": "YOU ARE MY FRIEND ⟳, 1 ⬡ – Chosen character gets +1 ◊ and gains Support this turn. (Whenever they quest, you may add their to another chosen character’s this turn.)",
+          "name": "YOU ARE MY FRIEND",
+          "type": "activated"
+        }
+      ],
+      "setCode": "13",
+      "number": 173,
+      "rarity": "Rare",
+      "franchise": "Up",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/173-207-EN-13-Translation-Collar-Lorcana-Player-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/173-207-EN-13-Translation-Collar-Lorcana-Player-430x600.jpg.webp"
+      }
+    },
+    {
+      "id": 13203,
+      "name": "Windstorm",
+      "fullName": "Windstorm",
+      "cost": 4,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Action",
+      "subtypes": [
+        "Action"
+      ],
+      "fullText": "Deal 1 damage to each opposing character and location. Then, deal 2 damage to each opposing character with Evasive and each opposing location with Evasive.",
+      "fullTextSections": [
+        "Deal 1 damage to each opposing character and location. Then, deal 2 damage to each opposing character with Evasive and each opposing location with Evasive."
+      ],
+      "setCode": "13",
+      "number": 203,
+      "rarity": "Rare",
+      "franchise": "Up",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/203-207-EN-13-Windstorm-Lorcana-Player-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/203-207-EN-13-Windstorm-Lorcana-Player-430x600.jpg.webp"
+      }
+    },
+    {
+      "id": 13204,
+      "name": "Discarded Armor",
+      "fullName": "Discarded Armor",
+      "cost": 1,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Item",
+      "subtypes": [
+        "Item"
+      ],
+      "fullText": "FOUND EQUIPMENT ⟳ – If you discarded a card this turn, chosen character of yours gains Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1.)",
+      "fullTextSections": [
+        "FOUND EQUIPMENT ⟳ – If you discarded a card this turn, chosen character of yours gains Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1.)"
+      ],
+      "abilities": [
+        {
+          "effect": "⟳ – If you discarded a card this turn, chosen character of yours gains Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1.)",
+          "fullText": "FOUND EQUIPMENT ⟳ – If you discarded a card this turn, chosen character of yours gains Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1.)",
+          "name": "FOUND EQUIPMENT",
+          "type": "activated"
+        }
+      ],
+      "setCode": "13",
+      "number": 204,
+      "rarity": "Uncommon",
+      "franchise": "Mulan",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/204-207-EN-13-Discarded-Armor-Lorcana-Player-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/204-207-EN-13-Discarded-Armor-Lorcana-Player-430x600.jpg.webp"
+      }
+    },
+    {
+      "id": 13035,
+      "name": "Nobody Like U",
+      "fullName": "Nobody Like U",
+      "cost": 5,
+      "color": "Amber",
+      "inkwell": false,
+      "type": "Action",
+      "subtypes": [
+        "Song",
+        "Action"
+      ],
+      "fullText": "Sing Together 5 (Any number of your or your teammates’ characters with total cost 5 or more may ⟳ to sing this song for free.)\nPlay a character with cost 4 or less for free.",
+      "fullTextSections": [
+        "Sing Together 5 (Any number of your or your teammates’ characters with total cost 5 or more may ⟳ to sing this song for free.)",
+        "Play a character with cost 4 or less for free."
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Sing Together",
+          "fullText": "Sing Together 5 (Any number of your or your teammates’ characters with total cost 5 or more may ⟳ to sing this song for free.)",
+          "keywordValue": "5"
+        }
+      ],
+      "setCode": "13",
+      "number": 35,
+      "rarity": "Rare",
+      "franchise": "Turning Red",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/35-207-EN-13-Nobody-Like-U-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/35-207-EN-13-Nobody-Like-U-LQ-Lorcana-Player-430x600.jpg"
+      }
+    },
+    {
+      "id": 13134,
+      "name": "Red Moon Ritual",
+      "fullName": "Red Moon Ritual",
+      "cost": 7,
+      "color": "Ruby",
+      "inkwell": false,
+      "type": "Action",
+      "subtypes": [
+        "Song",
+        "Action"
+      ],
+      "fullText": "Sing Together 7 (Any number of your or your teammates’ characters with total cost 7 or more may ⟳ to sing this song for free.)\nBanish chosen character.",
+      "fullTextSections": [
+        "Sing Together 7 (Any number of your or your teammates’ characters with total cost 7 or more may ⟳ to sing this song for free.)",
+        "Banish chosen character."
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Sing Together",
+          "fullText": "Sing Together 7 (Any number of your or your teammates’ characters with total cost 7 or more may ⟳ to sing this song for free.)",
+          "keywordValue": "7"
+        }
+      ],
+      "setCode": "13",
+      "number": 134,
+      "rarity": "Uncommon",
+      "franchise": "Turning Red",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/134-207-EN-13-Red-Moon-Ritual-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/134-207-EN-13-Red-Moon-Ritual-LQ-Lorcana-Player-430x600.jpg"
+      }
+    },
+    {
+      "id": 13186,
+      "name": "Megavolt",
+      "version": "Electrical Menace",
+      "fullName": "Megavolt - Electrical Menace",
+      "cost": 4,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Super",
+        "Villain"
+      ],
+      "fullText": "FORCE FIELD While you have no cards in your hand, this character gains Resist +2. (Damage dealt to them is reduced by 2.)",
+      "fullTextSections": [
+        "FORCE FIELD While you have no cards in your hand, this character gains Resist +2. (Damage dealt to them is reduced by 2.)"
+      ],
+      "abilities": [
+        {
+          "effect": "While you have no cards in your hand, this character gains Resist +2. (Damage dealt to them is reduced by 2.)",
+          "fullText": "FORCE FIELD While you have no cards in your hand, this character gains Resist +2. (Damage dealt to them is reduced by 2.)",
+          "name": "FORCE FIELD",
+          "type": "static"
+        }
+      ],
+      "strength": 1,
+      "willpower": 4,
+      "lore": 3,
+      "setCode": "13",
+      "number": 186,
+      "rarity": "Uncommon",
+      "franchise": "Darkwing Duck",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/186-207-EN-13-Megavolt-Electrical-Menace-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/186-207-EN-13-Megavolt-Electrical-Menace-LQ-Lorcana-Player-430x600.jpg"
+      }
+    },
+    {
+      "id": 13043,
+      "name": "Abu",
+      "version": "Wise Sultan",
+      "fullName": "Abu - Wise Sultan",
+      "cost": 1,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "RULER FOR A DAY When this character quests, banish him.",
+      "fullTextSections": [
+        "RULER FOR A DAY When this character quests, banish him."
+      ],
+      "abilities": [
+        {
+          "effect": "When this character quests, banish him.",
+          "fullText": "RULER FOR A DAY When this character quests, banish him.",
+          "name": "RULER FOR A DAY",
+          "type": "triggered"
+        }
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 2,
+      "setCode": "13",
+      "number": 43,
+      "rarity": "Uncommon",
+      "franchise": "Aladdin",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/43-207-IT-13-Abu-Wise-Sultan-Italian-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/43-207-IT-13-Abu-Wise-Sultan-Italian-LQ-Lorcana-Player-430x600.jpg"
+      }
+    },
+    {
+      "id": 13180,
+      "name": "Stitch",
+      "version": "Protector of Frogs",
+      "fullName": "Stitch - Protector of Frogs",
+      "cost": 1,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Alien",
+        "Hero"
+      ],
+      "strength": 1,
+      "willpower": 3,
+      "lore": 1,
+      "setCode": "13",
+      "number": 180,
+      "rarity": "Common",
+      "franchise": "Lilo & Stitch",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/180-207-EN-13-Stitch-Protector-of-Frogs-LQ-Lorcana-Player-430x600.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/180-207-EN-13-Stitch-Protector-of-Frogs-LQ-Lorcana-Player-430x600.jpg"
       }
     }
   ]

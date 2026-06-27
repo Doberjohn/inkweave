@@ -192,15 +192,16 @@ Regression guard for issue #268 (skeleton-loading UI). Each test intercepts `/da
 | VotePage renders pair + score picker skeleton while queue loads | CompactHeader visible; `[aria-label="Loading vote pair"]` visible |
 | InDepthVotePage renders pair + form skeleton while pair data loads | CompactHeader visible; `[aria-label="Loading vote pair and form"]` visible |
 
-## `reveals-page.spec.ts` — 5 tests (4 desktop, 1 mobile)
+## `reveals-page.spec.ts` — 6 tests (5 desktop, 1 mobile)
 
 | Test | What it verifies |
 |---|---|
-| renders hero and franchise tiers at /reveals | All 4 tier headings (Monsters, Inc., Up, Turning Red, Returning) render |
+| renders the tracker: hero, six ink trackers, and franchise cards | sr-only `h1`, the "Attack of the Vine!" logo, 6 `ink-tracker-tile`s, the "Ink board" section, and the 3 "View … cards" franchise buttons all render |
 | desktop nav shows Reveals entry with NEW badge | `/` has a Reveals link with a "NEW" badge child |
 | mobile nav shows Reveals tab | On mobile, `/browse`'s bottom nav has a "Set 13 reveals" link |
 | promo modal appears on landing page and not on /reveals | `role="complementary" name=/Set 13 reveals/` visible on `/`, absent on `/reveals` |
-| tier card click opens the card overview modal | Clicking a card tile on `/reveals` opens the modal; URL stays `/reveals` |
+| mosaic card click opens the card overview modal | Clicking a `reveal-card-slot` on `/reveals` opens the modal; URL stays `/reveals` |
+| franchise card click opens the franchise cards modal | Clicking "View Monsters, Inc. cards" opens the `dialog`; a card-tile inside opens the overview modal on top |
 
 ## Patterns
 

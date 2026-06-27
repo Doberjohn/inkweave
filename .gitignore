@@ -79,6 +79,8 @@ docs/reviews/
 
 # Pre-code HTML/CSS design mockups — local-only design work, never committed
 apps/web/public/mockups/
+# Design handoff reference (Claude Design exports) — local-only, never committed
+apps/web/reveals page redesign/
 
 # Tool / plugin local state — managed by their installers, not tracked
 .agents/
