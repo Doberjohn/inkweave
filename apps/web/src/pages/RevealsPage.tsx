@@ -4,6 +4,7 @@ import {CompactHeader, ErrorBoundary, EtherealBackground} from '../shared/compon
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 import {useResponsive} from '../shared/hooks';
 import {useCardModal} from '../shared/contexts/CardModalContext';
+import {trackEvent} from '../shared/lib/analytics';
 import {
   FRANCHISES,
   FranchiseCardsModal,
@@ -115,7 +116,10 @@ export function RevealsPage() {
 
   const {days} = useCountdown(dates?.prereleaseDate ?? null);
   const releaseDate = dates ? formatReleaseDate(dates.releaseDate) : '';
-  const handleOpen = (card: LorcanaCard) => openCardModal(card.id);
+  const openAndTrack = (card: LorcanaCard, source: 'mosaic' | 'franchise_modal') => {
+    trackEvent('reveal_card_click', {cardName: card.fullName, source});
+    openCardModal(card.id);
+  };
   const sidePad = isMobile ? SPACING.lg : 36;
 
   return (
@@ -138,7 +142,7 @@ export function RevealsPage() {
             progress={progress}
             selectedInk={selectedInk}
             onSelectInk={setSelectedInk}
-            onOpen={handleOpen}
+            onOpen={(card) => openAndTrack(card, 'mosaic')}
             onSelectFranchise={setSelectedFranchise}
             compact={isMobile}
           />
@@ -150,7 +154,7 @@ export function RevealsPage() {
           franchise={selectedFranchise}
           cards={cardsForFranchise(tiers, selectedFranchise)}
           onClose={() => setSelectedFranchise(null)}
-          onCardClick={handleOpen}
+          onCardClick={(card) => openAndTrack(card, 'franchise_modal')}
         />
       )}
     </ErrorBoundary>

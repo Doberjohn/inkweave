@@ -8,6 +8,7 @@ import {
 } from '../../../shared/lib/supabase';
 import {usePairScore, invalidatePairScore} from './usePairScore';
 import {readQuickVote, writeQuickVote} from '../lib/voteStorage';
+import {trackEvent} from '../../../shared/lib/analytics';
 
 export type {Accuracy};
 export type QuickVoteState = 'hidden' | 'ready' | 'submitting' | 'result' | 'error';
@@ -66,6 +67,7 @@ async function performVote(slots: VoteSlots, pair: Pair, accuracy: Accuracy): Pr
     if (!slots.submittingRef.current) return;
     if (result.error === null) {
       writeQuickVote(pair, accuracy);
+      trackEvent('vote_submitted', {voteType: 'quick'});
       slots.setState('result');
       // Bust the shared pair-score cache so usePairScore subscribers (this hook +
       // CommunityColumn) refetch the aggregate that now includes the user's vote.

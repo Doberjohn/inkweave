@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {getSupabase, submitVote, type Accuracy, type Score, type InDepthVote} from '../../../shared/lib/supabase';
 import type {InDepthFormState, VotingPair} from '../types';
 import {writeInDepthVote} from '../lib/voteStorage';
+import {trackEvent} from '../../../shared/lib/analytics';
 
 const INITIAL_STATE: InDepthFormState = {
   isReal: null,
@@ -156,6 +157,7 @@ function applySubmitResult({result, currentPair, formState, setLastResult, setIs
       {cardA: currentPair.cardA.id, cardB: currentPair.cardB.id},
       {accuracy: formState.accuracy ?? undefined, score: formState.score ?? undefined},
     );
+    trackEvent('vote_submitted', {voteType: 'in_depth'});
     setLastResult('success');
     return;
   }
