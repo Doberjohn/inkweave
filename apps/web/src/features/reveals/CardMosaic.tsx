@@ -1,13 +1,20 @@
-import {useState} from 'react';
+import {useRef, useState} from 'react';
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {CardSlot} from './CardSlot';
+import {mobileSlotWidth} from './mosaicSizing';
+import {useContainerWidth} from '../../shared/hooks';
 
 /** Slots per row of the diamond; sums to BOARD_SLOTS (38). Grown from the old 34
  *  so each card can sit at its true collector-number position (Set 13 numbers each
  *  ink across ~37-38 numbers — the 34 app cards plus the excluded enchanted/iconic
  *  that leave gaps). */
 const ROWS = [4, 7, 8, 8, 7, 4] as const;
+/** Mobile diamond — narrower and taller so the widest row fits a phone. Sums to BOARD_SLOTS. */
+const ROWS_MOBILE = [3, 4, 6, 6, 6, 6, 4, 3] as const;
 const BOARD_SLOTS = 38;
+
+/** Card slot proportion (height / width) — preserved when the mobile slot auto-fits. */
+const CARD_RATIO = 64 / 46;
 
 /** How many random revealed slots burst in on each ink switch. */
 const POP_COUNT = 5;
@@ -94,17 +101,23 @@ interface CardMosaicProps {
 }
 
 /**
- * The featured ink board's diamond: six centered rows [4,7,8,8,7,4] of CardSlots
- * (BOARD_SLOTS = 38). Each revealed card sits at its true collector-number slot
+ * The featured ink board's diamond of CardSlots (BOARD_SLOTS = 38). Desktop uses
+ * the wide [4,7,8,8,7,4] rows; mobile uses the narrower/taller ROWS_MOBILE and
+ * auto-fits the slot size to the measured rail width so all cards fit with no
+ * horizontal scroll. Each revealed card sits at its true collector-number slot
  * (see placeCards), so unrevealed numbers show as fallback gaps and the board
- * reads in set order. Lives in an overflow-x rail so it never clips on narrow
- * screens.
+ * reads in set order.
  */
 export function CardMosaic({ink, cards, onOpen, compact = false}: CardMosaicProps) {
   const placed = placeCards(ink, cards);
-  const slotW = compact ? 46 : 58;
-  const slotH = compact ? 64 : 80;
+  const railRef = useRef<HTMLDivElement>(null);
+  const containerW = useContainerWidth(railRef);
+  const rowWidths = compact ? ROWS_MOBILE : ROWS;
+  const maxCols = Math.max(...rowWidths);
   const gap = compact ? 5 : 7;
+
+  const slotW = compact ? mobileSlotWidth(containerW, maxCols, gap) : 58;
+  const slotH = compact ? Math.round(slotW * CARD_RATIO) : 80;
 
   // Pick the random slots to pop once per mount. The parent keys this component
   // by ink, so switching colors re-mounts it and a fresh set bursts in each time.
@@ -117,7 +130,7 @@ export function CardMosaic({ink, cards, onOpen, compact = false}: CardMosaicProp
   });
 
   let slot = 0;
-  const rows = ROWS.map((width, ri) => {
+  const rows = rowWidths.map((width, ri) => {
     const cells = [];
     for (let k = 0; k < width; k++) {
       const s = slot++;
@@ -141,7 +154,7 @@ export function CardMosaic({ink, cards, onOpen, compact = false}: CardMosaicProp
   });
 
   return (
-    <div style={{overflowX: 'auto', paddingBottom: 4}}>
+    <div ref={railRef} style={{overflowX: compact ? 'visible' : 'auto', paddingBottom: 4}}>
       <div style={{display: 'flex', flexDirection: 'column', gap, alignItems: 'center', padding: '6px 0'}}>
         {rows}
       </div>

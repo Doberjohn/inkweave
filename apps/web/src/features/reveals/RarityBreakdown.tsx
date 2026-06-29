@@ -4,40 +4,48 @@ import {RaritySymbol} from './RaritySymbol';
 interface RarityBreakdownProps {
   /** Revealed count per rarity key (from useRevealProgress). */
   rarityCounts: Record<string, number>;
-  /** Mobile sizing: fixed 3 columns / smaller gems. */
+  /** Mobile sizing: all five gems in one row (gem + count, no name labels) / smaller gems. */
   compact?: boolean;
 }
 
 /**
  * One vertical stat chip: the rarity symbol over the revealed count over the
- * name. Held to its own component so the per-chip `has`/`compact` conditionals
- * don't pile onto RarityBreakdown's complexity.
+ * name (the name is dropped on mobile so all five chips fit one row). Held to its
+ * own component so the per-chip `has`/`compact` conditionals don't pile onto
+ * RarityBreakdown's complexity.
  */
 function RarityChip({rarity, revealed, compact}: {rarity: RarityConfig; revealed: number; compact: boolean}) {
   const has = revealed > 0;
+  // One size lookup keyed on `compact` instead of five parallel ternaries — keeps
+  // RarityChip's cyclomatic complexity below the CodeScene threshold.
+  const dims = compact
+    ? {gap: 5, padding: '10px 4px', symHeight: 22, symSize: 20, count: 18}
+    : {gap: 8, padding: '14px 8px', symHeight: 32, symSize: 30, count: 28};
   return (
     <div
       style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 8,
-        padding: compact ? '12px 6px' : '14px 8px',
+        gap: dims.gap,
+        padding: dims.padding,
         background: has ? 'rgba(255, 255, 255, 0.035)' : 'rgba(255, 255, 255, 0.012)',
         border: '1px solid #25253c',
         borderRadius: 12,
         opacity: has ? 1 : 0.65,
       }}
     >
-      <div style={{height: compact ? 26 : 32, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <RaritySymbol rarity={rarity.key} size={compact ? 24 : 30} />
+      <div style={{height: dims.symHeight, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <RaritySymbol rarity={rarity.key} size={dims.symSize} />
       </div>
-      <div style={{fontWeight: 800, fontSize: compact ? 22 : 28, color: has ? '#f0f0f5' : '#55556e', lineHeight: 1}}>
+      <div style={{fontWeight: 800, fontSize: dims.count, color: has ? '#f0f0f5' : '#55556e', lineHeight: 1}}>
         {revealed}
       </div>
-      <div style={{fontWeight: 600, fontSize: 10, letterSpacing: 0.7, textTransform: 'uppercase', color: '#8a8aa4'}}>
-        {rarity.name}
-      </div>
+      {!compact && (
+        <div style={{fontWeight: 600, fontSize: 10, letterSpacing: 0.7, textTransform: 'uppercase', color: '#8a8aa4'}}>
+          {rarity.name}
+        </div>
+      )}
     </div>
   );
 }
@@ -57,8 +65,8 @@ export function RarityBreakdown({rarityCounts, compact = false}: RarityBreakdown
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: compact ? 'repeat(3, 1fr)' : 'repeat(5, 1fr)',
-          gap: compact ? 8 : 12,
+          gridTemplateColumns: 'repeat(5, 1fr)',
+          gap: compact ? 6 : 12,
           maxWidth: compact ? undefined : 680,
           margin: compact ? undefined : '0 auto',
         }}
