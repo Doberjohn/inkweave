@@ -31,11 +31,11 @@ export interface RevealProgress {
  * Which ink board(s) a card counts toward.
  *
  * Primary-ink only: a dual-ink card (e.g. the Set 13 Team cards "Amber-Emerald")
- * counts toward its first ink alone. This keeps the six 34-slot boards summing
- * cleanly to SET_TOTAL (6 × 34 = 204) and each revealed card in exactly one
- * board. To instead show dual-ink cards in both boards, return
- * `card.ink2 ? [card.ink, card.ink2] : [card.ink]` — but note that breaks the
- * 34/ink denominators and double-counts in per-ink sums.
+ * counts toward its first ink alone. This keeps the six per-ink boards summing
+ * cleanly to SET_TOTAL (the per-ink totals in setComposition add to 207) and each
+ * revealed card in exactly one board. To instead show dual-ink cards in both
+ * boards, return `card.ink2 ? [card.ink, card.ink2] : [card.ink]` — but note that
+ * breaks the per-ink denominators and double-counts in per-ink sums.
  */
 function cardInks(card: LorcanaCard): Ink[] {
   return [card.ink];
@@ -69,7 +69,7 @@ export function useRevealProgress(): RevealProgress {
     }
   }
   for (const ink of ALL_INKS) {
-    byInk[ink].count = Math.min(byInk[ink].cards.length, PER_INK);
+    byInk[ink].count = Math.min(byInk[ink].cards.length, PER_INK[ink]);
   }
 
   const inks = ALL_INKS.map((ink) => byInk[ink]);

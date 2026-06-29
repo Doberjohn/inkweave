@@ -2,16 +2,34 @@ import {useRef, useState} from 'react';
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {CardSlot} from './CardSlot';
 import {mobileSlotWidth} from './mosaicSizing';
+import {PER_INK} from './setComposition';
 import {useContainerWidth} from '../../shared/hooks';
 
-/** Slots per row of the diamond; sums to BOARD_SLOTS (38). Grown from the old 34
- *  so each card can sit at its true collector-number position (Set 13 numbers each
- *  ink across ~37-38 numbers — the 34 app cards plus the excluded enchanted/iconic
- *  that leave gaps). */
-const ROWS = [4, 7, 8, 8, 7, 4] as const;
-/** Mobile diamond — narrower and taller so the widest row fits a phone. Sums to BOARD_SLOTS. */
-const ROWS_MOBILE = [3, 4, 6, 6, 6, 6, 4, 3] as const;
-const BOARD_SLOTS = 38;
+/**
+ * Per-ink diamond row layouts. Each ink's rows sum to its PER_INK total — Set 13
+ * splits 207 cards as Amber 37 · Amethyst 36 · Emerald 35 · Ruby 34 · Sapphire 33
+ * · Steel 32 — so every ink board renders exactly that many slots. Desktop peaks
+ * at 8 columns; mobile peaks at 6 so the widest row fits a phone. The
+ * `cardMosaic.test.ts` "layouts" suite asserts each row set sums to PER_INK[ink],
+ * so a hand-edited layout that drifts from the composition fails the build.
+ */
+export const ROWS: Record<Ink, readonly number[]> = {
+  Amber: [4, 6, 8, 8, 7, 4], // 37
+  Amethyst: [4, 6, 8, 8, 6, 4], // 36
+  Emerald: [4, 6, 8, 7, 6, 4], // 35
+  Ruby: [4, 6, 7, 7, 6, 4], // 34
+  Sapphire: [4, 6, 7, 6, 6, 4], // 33
+  Steel: [4, 6, 6, 6, 6, 4], // 32
+};
+/** Mobile diamonds — narrower (peak 6) and taller so the widest row fits a phone. */
+export const ROWS_MOBILE: Record<Ink, readonly number[]> = {
+  Amber: [3, 4, 6, 6, 6, 5, 4, 3], // 37
+  Amethyst: [3, 4, 5, 6, 6, 5, 4, 3], // 36
+  Emerald: [3, 4, 5, 6, 5, 5, 4, 3], // 35
+  Ruby: [3, 4, 5, 5, 5, 5, 4, 3], // 34
+  Sapphire: [3, 4, 5, 5, 5, 4, 4, 3], // 33
+  Steel: [3, 4, 4, 5, 5, 4, 4, 3], // 32
+};
 
 /** Card slot proportion (height / width) — preserved when the mobile slot auto-fits. */
 const CARD_RATIO = 64 / 46;
@@ -45,36 +63,36 @@ function pickRandom(pool: number[], n: number): Set<number> {
   return new Set(a.slice(0, n));
 }
 
-/**
- * Lay the revealed cards into the 38 slots by collector number. In-range numbered
- * cards (number-base ∈ [0,37]) claim their exact slot. Anything that can't be
- * placed absolutely — cards numbered outside the block (e.g. a mis-tagged outlier)
- * or with no number at all — fills the remaining gaps from the end so every
- * revealed card still shows.
- */
 /** The card's absolute slot from its collector number, or -1 if it can't claim one. */
-function slotFor(card: LorcanaCard, base: number): number {
+function slotFor(card: LorcanaCard, base: number, slotCount: number): number {
   if (card.setNumber == null) return -1;
   const slot = card.setNumber - base;
-  return slot >= 0 && slot < BOARD_SLOTS ? slot : -1;
+  return slot >= 0 && slot < slotCount ? slot : -1;
 }
 
 /** Empty slot indices, highest first — where leftover cards spill in. */
 function emptySlotsFromEnd(placed: (LorcanaCard | undefined)[]): number[] {
   const empty: number[] = [];
-  for (let i = BOARD_SLOTS - 1; i >= 0; i--) {
+  for (let i = placed.length - 1; i >= 0; i--) {
     if (placed[i] == null) empty.push(i);
   }
   return empty;
 }
 
-function placeCards(ink: Ink, cards: LorcanaCard[]): (LorcanaCard | undefined)[] {
-  const placed: (LorcanaCard | undefined)[] = new Array(BOARD_SLOTS).fill(undefined);
+/**
+ * Lay the revealed cards into the ink's `slotCount` slots by collector number.
+ * In-range numbered cards (number-base ∈ [0,slotCount)) claim their exact slot.
+ * Anything that can't be placed absolutely — cards numbered outside the block or
+ * with no number — fills the remaining gaps from the end so every revealed card
+ * still shows.
+ */
+function placeCards(ink: Ink, cards: LorcanaCard[], slotCount: number): (LorcanaCard | undefined)[] {
+  const placed: (LorcanaCard | undefined)[] = new Array(slotCount).fill(undefined);
   const base = INK_BASE[ink];
   const leftovers: LorcanaCard[] = [];
 
   for (const card of cards) {
-    const slot = slotFor(card, base);
+    const slot = slotFor(card, base, slotCount);
     if (slot >= 0 && placed[slot] == null) {
       placed[slot] = card;
     } else {
@@ -101,18 +119,19 @@ interface CardMosaicProps {
 }
 
 /**
- * The featured ink board's diamond of CardSlots (BOARD_SLOTS = 38). Desktop uses
- * the wide [4,7,8,8,7,4] rows; mobile uses the narrower/taller ROWS_MOBILE and
- * auto-fits the slot size to the measured rail width so all cards fit with no
- * horizontal scroll. Each revealed card sits at its true collector-number slot
- * (see placeCards), so unrevealed numbers show as fallback gaps and the board
- * reads in set order.
+ * The featured ink board's diamond of CardSlots, sized to the ink's PER_INK total
+ * (37 for Amber … 32 for Steel). Desktop uses the wider `ROWS[ink]`; mobile uses
+ * the narrower/taller `ROWS_MOBILE[ink]` and auto-fits the slot size to the
+ * measured rail width so all cards fit with no horizontal scroll. Each revealed
+ * card sits at its true collector-number slot (see placeCards), so unrevealed
+ * numbers show as fallback gaps and the board reads in set order.
  */
 export function CardMosaic({ink, cards, onOpen, compact = false}: CardMosaicProps) {
-  const placed = placeCards(ink, cards);
+  const rowWidths = compact ? ROWS_MOBILE[ink] : ROWS[ink];
+  const slotCount = PER_INK[ink]; // === sum(rowWidths); guarded by cardMosaic.test.ts
+  const placed = placeCards(ink, cards, slotCount);
   const railRef = useRef<HTMLDivElement>(null);
   const containerW = useContainerWidth(railRef);
-  const rowWidths = compact ? ROWS_MOBILE : ROWS;
   const maxCols = Math.max(...rowWidths);
   const gap = compact ? 5 : 7;
 
@@ -123,7 +142,7 @@ export function CardMosaic({ink, cards, onOpen, compact = false}: CardMosaicProp
   // by ink, so switching colors re-mounts it and a fresh set bursts in each time.
   const [poppedSlots] = useState(() => {
     const filled: number[] = [];
-    for (let s = 0; s < BOARD_SLOTS; s++) {
+    for (let s = 0; s < slotCount; s++) {
       if (placed[s] != null) filled.push(s);
     }
     return pickRandom(filled, POP_COUNT);

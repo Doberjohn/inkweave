@@ -22,7 +22,7 @@ interface InkBoardProps {
  * component so its `compact`/`done` branches don't pile onto InkBoard.
  */
 function BoardHeader({ink, count, compact}: {ink: Ink; count: number; compact: boolean}) {
-  const done = count >= PER_INK;
+  const done = count >= PER_INK[ink];
   const inkText = INK_COLORS[ink].text;
   const badgeSize = compact ? 52 : 70;
   const symbolSize = compact ? 32 : 44;
@@ -67,7 +67,7 @@ function BoardHeader({ink, count, compact}: {ink: Ink; count: number; compact: b
       <div style={{marginLeft: 'auto', textAlign: 'right'}}>
         <div style={{fontWeight: 800, fontSize: compact ? 28 : 38, color: '#f5d877', lineHeight: 1}}>
           {count}
-          <span style={{fontSize: compact ? 14 : 19, fontWeight: 700, color: '#666680'}}> / {PER_INK}</span>
+          <span style={{fontSize: compact ? 14 : 19, fontWeight: 700, color: '#666680'}}> / {PER_INK[ink]}</span>
         </div>
         {done ? (
           <div
@@ -109,7 +109,7 @@ function BoardHeader({ink, count, compact}: {ink: Ink; count: number; compact: b
  */
 export function InkBoard({progress, onOpen, compact = false}: InkBoardProps) {
   const {ink, count, cards, rarityCounts} = progress;
-  const fill = count / PER_INK;
+  const fill = count / PER_INK[ink];
 
   return (
     <div

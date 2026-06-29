@@ -1,5 +1,10 @@
 import {describe, it, expect} from 'vitest';
 import {mobileSlotWidth} from '../mosaicSizing';
+import {ROWS, ROWS_MOBILE} from '../CardMosaic';
+import {PER_INK} from '../setComposition';
+import {ALL_INKS} from '../../../shared/constants';
+
+const sum = (a: readonly number[]) => a.reduce((x, y) => x + y, 0);
 
 // The mobile mosaic's widest row (ROWS_MOBILE) has 6 slots; the mobile gap is 5px.
 const MAX_COLS = 6;
@@ -32,6 +37,22 @@ describe('mobileSlotWidth', () => {
     for (let vp = 320; vp <= 767; vp++) {
       const w = mobileSlotWidth(avail(vp), MAX_COLS, GAP);
       expect(widestRowWidth(w)).toBeLessThanOrEqual(avail(vp));
+    }
+  });
+});
+
+describe('mosaic diamond layouts', () => {
+  it('each ink renders exactly its PER_INK slot count (desktop + mobile)', () => {
+    for (const ink of ALL_INKS) {
+      expect(sum(ROWS[ink])).toBe(PER_INK[ink]);
+      expect(sum(ROWS_MOBILE[ink])).toBe(PER_INK[ink]);
+    }
+  });
+
+  it('desktop diamonds peak at <= 8 columns, mobile at <= 6', () => {
+    for (const ink of ALL_INKS) {
+      expect(Math.max(...ROWS[ink])).toBeLessThanOrEqual(8);
+      expect(Math.max(...ROWS_MOBILE[ink])).toBeLessThanOrEqual(MAX_COLS);
     }
   });
 });

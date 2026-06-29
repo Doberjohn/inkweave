@@ -65,8 +65,8 @@ describe('useRevealProgress', () => {
     expect(result.current.byInk.Steel.rarityCounts).toEqual({}); // s1 has no rarity
   });
 
-  it('derives overallPct from the unique total against the 204-card set', () => {
+  it('derives overallPct from the unique total against the 207-card set', () => {
     const {result} = renderHook(() => useRevealProgress());
-    expect(result.current.overallPct).toBe(Math.round((5 / 204) * 100)); // 2
+    expect(result.current.overallPct).toBe(Math.round((5 / 207) * 100)); // 2
   });
 });
