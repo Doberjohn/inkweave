@@ -4027,6 +4027,761 @@
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/180-207-EN-13-Stitch-Protector-of-Frogs-LQ-Lorcana-Player-430x600.jpg",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/180-207-EN-13-Stitch-Protector-of-Frogs-LQ-Lorcana-Player-430x600.jpg"
       }
+    },
+    {
+      "id": 13004,
+      "name": "Tyler Nguyen-Baker",
+      "version": "4*Town Fan",
+      "fullName": "Tyler Nguyen-Baker - 4*Town Fan",
+      "cost": 1,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1,
+      "setCode": "13",
+      "number": 4,
+      "rarity": "Common",
+      "franchise": "Turning Red",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/4-207-IT-13-Tyler-Nguyen-Baker-4Town-Fan-Italian-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/4-207-IT-13-Tyler-Nguyen-Baker-4Town-Fan-Italian-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13011,
+      "name": "Kocoum",
+      "version": "Defender of the Tribe",
+      "fullName": "Kocoum - Defender of the Tribe",
+      "cost": 6,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "Bodyguard\n(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
+      "fullTextSections": [
+        "Bodyguard",
+        "(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Bodyguard",
+          "fullText": "Bodyguard"
+        },
+        {
+          "effect": "This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.",
+          "fullText": "(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
+          "type": "static"
+        }
+      ],
+      "strength": 4,
+      "willpower": 6,
+      "lore": 3,
+      "setCode": "13",
+      "number": 11,
+      "rarity": "Common",
+      "franchise": "Pocahontas",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/11-207-DE-13-Kocoum-Defender-of-the-Tribe-German-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/11-207-DE-13-Kocoum-Defender-of-the-Tribe-German-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13014,
+      "name": "Abby Park",
+      "version": "Over the Top",
+      "fullName": "Abby Park - Over the Top",
+      "cost": 3,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "ROCK THE MIC Once during your turn, whenever you play a song, you may ready this character. If you do, she can’t quest or challenge for the rest of this turn.",
+      "fullTextSections": [
+        "ROCK THE MIC Once during your turn, whenever you play a song, you may ready this character. If you do, she can’t quest or challenge for the rest of this turn."
+      ],
+      "abilities": [
+        {
+          "effect": "Once during your turn, whenever you play a song, you may ready this character. If you do, she can’t quest or challenge for the rest of this turn.",
+          "fullText": "ROCK THE MIC Once during your turn, whenever you play a song, you may ready this character. If you do, she can’t quest or challenge for the rest of this turn.",
+          "name": "ROCK THE MIC",
+          "type": "triggered"
+        }
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 1,
+      "setCode": "13",
+      "number": 14,
+      "rarity": "Uncommon",
+      "franchise": "Turning Red",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/14-207-EN-13-Abby-Park-Over-the-Top-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/14-207-EN-13-Abby-Park-Over-the-Top-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13020,
+      "name": "Jasmine",
+      "version": "Vine Expert",
+      "fullName": "Jasmine - Vine Expert",
+      "cost": 4,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Hero",
+        "Princess"
+      ],
+      "fullText": "SHARED RESOURCES When you play this character, each player draws a card.",
+      "fullTextSections": [
+        "SHARED RESOURCES When you play this character, each player draws a card."
+      ],
+      "abilities": [
+        {
+          "effect": "When you play this character, each player draws a card.",
+          "fullText": "SHARED RESOURCES When you play this character, each player draws a card.",
+          "name": "SHARED RESOURCES",
+          "type": "triggered"
+        }
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 2,
+      "setCode": "13",
+      "number": 20,
+      "rarity": "Common",
+      "franchise": "Aladdin",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/20-207-EN-13-Jasmine-Vine-Expert-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/20-207-EN-13-Jasmine-Vine-Expert-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13023,
+      "name": "Kanga",
+      "version": "Hunny Bard",
+      "fullName": "Kanga - Hunny Bard",
+      "cost": 3,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Ally",
+        "Hunny"
+      ],
+      "fullText": "Singer 5 (This character counts as cost 5 to sing songs.)",
+      "fullTextSections": [
+        "Singer 5 (This character counts as cost 5 to sing songs.)"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Singer",
+          "fullText": "Singer 5 (This character counts as cost 5 to sing songs.)",
+          "keywordValue": "5"
+        }
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 1,
+      "setCode": "13",
+      "number": 23,
+      "rarity": "Common",
+      "franchise": "Winnie the Pooh",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/23-207-EN-13-Kanga-Hunny-Bard-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/23-207-EN-13-Kanga-Hunny-Bard-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13025,
+      "name": "Mirabel Madrigal",
+      "version": "Family Guardian",
+      "fullName": "Mirabel Madrigal - Family Guardian",
+      "cost": 5,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Madrigal"
+      ],
+      "fullText": "WONDROUS PROTECTION Each time you remove damage from one of your characters, you may ready that character. If you do, they can’t quest or challenge for the rest of this turn.",
+      "fullTextSections": [
+        "WONDROUS PROTECTION Each time you remove damage from one of your characters, you may ready that character. If you do, they can’t quest or challenge for the rest of this turn."
+      ],
+      "abilities": [
+        {
+          "effect": "Each time you remove damage from one of your characters, you may ready that character. If you do, they can’t quest or challenge for the rest of this turn.",
+          "fullText": "WONDROUS PROTECTION Each time you remove damage from one of your characters, you may ready that character. If you do, they can’t quest or challenge for the rest of this turn.",
+          "name": "WONDROUS PROTECTION",
+          "type": "static"
+        }
+      ],
+      "strength": 3,
+      "willpower": 7,
+      "lore": 2,
+      "setCode": "13",
+      "number": 25,
+      "rarity": "Rare",
+      "franchise": "Encanto",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/25-207-DE-13-Mirabel-Madrigal-Family-Guardian-German-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/25-207-DE-13-Mirabel-Madrigal-Family-Guardian-German-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13045,
+      "name": "Genie",
+      "version": "Hard to Grasp",
+      "fullName": "Genie - Hard to Grasp",
+      "cost": 4,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "Evasive\n(Only characters with Evasive can challenge this character.)",
+      "fullTextSections": [
+        "Evasive",
+        "(Only characters with Evasive can challenge this character.)"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        },
+        {
+          "effect": "Only characters with Evasive can challenge this character.",
+          "fullText": "(Only characters with Evasive can challenge this character.)",
+          "type": "static"
+        }
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 2,
+      "setCode": "13",
+      "number": 45,
+      "rarity": "Uncommon",
+      "franchise": "Aladdin",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/45-207-EN-13-Genie-Hard-to-Grasp-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/45-207-EN-13-Genie-Hard-to-Grasp-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13055,
+      "name": "Hera",
+      "version": "Created by the Vine",
+      "fullName": "Hera - Created by the Vine",
+      "cost": 5,
+      "color": "Amethyst",
+      "inkwell": false,
+      "type": "Character",
+      "subtypes": [
+        "Floodborn",
+        "Deity",
+        "Queen",
+        "Vineling"
+      ],
+      "fullText": "MYSTICAL BOON Whenever you play this or another Floodborn character, gain 1 lore.",
+      "fullTextSections": [
+        "MYSTICAL BOON Whenever you play this or another Floodborn character, gain 1 lore."
+      ],
+      "abilities": [
+        {
+          "effect": "Whenever you play this or another Floodborn character, gain 1 lore.",
+          "fullText": "MYSTICAL BOON Whenever you play this or another Floodborn character, gain 1 lore.",
+          "name": "MYSTICAL BOON",
+          "type": "triggered"
+        }
+      ],
+      "strength": 4,
+      "willpower": 6,
+      "lore": 1,
+      "setCode": "13",
+      "number": 55,
+      "rarity": "Uncommon",
+      "franchise": "Hercules",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/55-207-EN-13-Hera-Created-by-the-Vine-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/55-207-EN-13-Hera-Created-by-the-Vine-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13073,
+      "name": "Ring of Stones",
+      "version": "Taken by the Vine",
+      "fullName": "Ring of Stones - Taken by the Vine",
+      "cost": 4,
+      "color": "Amethyst",
+      "inkwell": false,
+      "type": "Location",
+      "subtypes": [
+        "Location"
+      ],
+      "fullText": "DEEP WISDOM Your Floodborn characters get +1 ◊.",
+      "fullTextSections": [
+        "DEEP WISDOM Your Floodborn characters get +1 ◊."
+      ],
+      "abilities": [
+        {
+          "effect": "Your Floodborn characters get +1 ◊.",
+          "fullText": "DEEP WISDOM Your Floodborn characters get +1 ◊.",
+          "name": "DEEP WISDOM",
+          "type": "static"
+        }
+      ],
+      "setCode": "13",
+      "number": 73,
+      "rarity": "Rare",
+      "franchise": "Brave",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/73-207-EN-13-Ring-of-Stones-Taken-by-the-Vine-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/73-207-EN-13-Ring-of-Stones-Taken-by-the-Vine-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13078,
+      "name": "Gopher",
+      "version": "Hunny Cook",
+      "fullName": "Gopher - Hunny Cook",
+      "cost": 2,
+      "color": "Emerald",
+      "inkwell": false,
+      "type": "Character",
+      "subtypes": [
+        "Dreamborn",
+        "Ally",
+        "Hunny"
+      ],
+      "fullText": "DOWN THE HOLE This character may enter play exerted.\nFORTIFYING MEAL During an opponent’s turn, while this character is exerted, your other Hunny characters gain Resist +1. (Damage dealt to them is reduced by 1.)",
+      "fullTextSections": [
+        "DOWN THE HOLE This character may enter play exerted.",
+        "FORTIFYING MEAL During an opponent’s turn, while this character is exerted, your other Hunny characters gain Resist +1. (Damage dealt to them is reduced by 1.)"
+      ],
+      "abilities": [
+        {
+          "effect": "This character may enter play exerted.",
+          "fullText": "DOWN THE HOLE This character may enter play exerted.",
+          "name": "DOWN THE HOLE",
+          "type": "static"
+        },
+        {
+          "effect": "During an opponent’s turn, while this character is exerted, your other Hunny characters gain Resist +1. (Damage dealt to them is reduced by 1.)",
+          "fullText": "FORTIFYING MEAL During an opponent’s turn, while this character is exerted, your other Hunny characters gain Resist +1. (Damage dealt to them is reduced by 1.)",
+          "name": "FORTIFYING MEAL",
+          "type": "static"
+        }
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1,
+      "setCode": "13",
+      "number": 78,
+      "rarity": "Rare",
+      "franchise": "Winnie the Pooh",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/78-207-EN-13-Gopher-Hunny-Cook-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/78-207-EN-13-Gopher-Hunny-Cook-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13080,
+      "name": "Rapunzel",
+      "version": "Tower Keeper",
+      "fullName": "Rapunzel - Tower Keeper",
+      "cost": 4,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Princess"
+      ],
+      "fullText": "TURN BACK THE RIVER OF FATE When you play this character, you may choose and discard a card. If you do, choose a character and return that character to its player’s hand.",
+      "fullTextSections": [
+        "TURN BACK THE RIVER OF FATE When you play this character, you may choose and discard a card. If you do, choose a character and return that character to its player’s hand."
+      ],
+      "abilities": [
+        {
+          "effect": "When you play this character, you may choose and discard a card. If you do, choose a character and return that character to its player’s hand.",
+          "fullText": "TURN BACK THE RIVER OF FATE When you play this character, you may choose and discard a card. If you do, choose a character and return that character to its player’s hand.",
+          "name": "TURN BACK THE RIVER OF FATE",
+          "type": "triggered"
+        }
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 1,
+      "setCode": "13",
+      "number": 80,
+      "rarity": "Common",
+      "franchise": "Tangled",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/80-207-EN-13-Rapunzel-Tower-Keeper-Japanese-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/80-207-EN-13-Rapunzel-Tower-Keeper-Japanese-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13116,
+      "name": "Colonel Hathi",
+      "version": "On the March",
+      "fullName": "Colonel Hathi - On the March",
+      "cost": 5,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn"
+      ],
+      "fullText": "HUP, TWO, THREE, FOUR Whenever this character quests, you may move him to one of your locations for free.",
+      "fullTextSections": [
+        "HUP, TWO, THREE, FOUR Whenever this character quests, you may move him to one of your locations for free."
+      ],
+      "abilities": [
+        {
+          "effect": "Whenever this character quests, you may move him to one of your locations for free.",
+          "fullText": "HUP, TWO, THREE, FOUR Whenever this character quests, you may move him to one of your locations for free.",
+          "name": "HUP, TWO, THREE, FOUR",
+          "type": "triggered"
+        }
+      ],
+      "strength": 5,
+      "willpower": 5,
+      "lore": 2,
+      "setCode": "13",
+      "number": 116,
+      "rarity": "Common",
+      "franchise": "The Jungle Book",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/116-207-EN-13-Colonel-Hathi-On-the-March-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/116-207-EN-13-Colonel-Hathi-On-the-March-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13118,
+      "name": "Pacha",
+      "version": "Panicked Customer",
+      "fullName": "Pacha - Panicked Customer",
+      "cost": 4,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero"
+      ],
+      "fullText": "Reckless\n(This character can’t quest and must challenge each turn if able.)\nADRENALINE RUSH During your turn, this character gets +4 .",
+      "fullTextSections": [
+        "Reckless",
+        "(This character can’t quest and must challenge each turn if able.)",
+        "ADRENALINE RUSH During your turn, this character gets +4 ."
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Reckless",
+          "fullText": "Reckless"
+        },
+        {
+          "effect": "This character can’t quest and must challenge each turn if able.",
+          "fullText": "(This character can’t quest and must challenge each turn if able.)",
+          "type": "static"
+        },
+        {
+          "effect": "During your turn, this character gets +4 .",
+          "fullText": "ADRENALINE RUSH During your turn, this character gets +4 .",
+          "name": "ADRENALINE RUSH",
+          "type": "static"
+        }
+      ],
+      "strength": 2,
+      "willpower": 6,
+      "lore": 0,
+      "setCode": "13",
+      "number": 118,
+      "rarity": "Uncommon",
+      "franchise": "The Emperor's New Groove",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/118-207-IT-13-Pacha-Panicked-Customer-Italian-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/118-207-IT-13-Pacha-Panicked-Customer-Italian-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13124,
+      "name": "Donald Duck",
+      "version": "Vineling Rider",
+      "fullName": "Donald Duck - Vineling Rider",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": false,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "Rush\n(This character can challenge the turn they’re played.)",
+      "fullTextSections": [
+        "Rush",
+        "(This character can challenge the turn they’re played.)"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Rush",
+          "fullText": "Rush"
+        },
+        {
+          "effect": "This character can challenge the turn they’re played.",
+          "fullText": "(This character can challenge the turn they’re played.)",
+          "type": "static"
+        }
+      ],
+      "strength": 2,
+      "willpower": 3,
+      "lore": 1,
+      "setCode": "13",
+      "number": 124,
+      "rarity": "Common",
+      "franchise": "Mickey Mouse & Friends",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/124-207-EN-13-Donald-Duck-Vineling-Rider-LQ-Lorcana-Player.jpg",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/124-207-EN-13-Donald-Duck-Vineling-Rider-LQ-Lorcana-Player.jpg"
+      }
+    },
+    {
+      "id": 13157,
+      "name": "Antonio Madrigal",
+      "version": "Animal Doctor",
+      "fullName": "Antonio Madrigal - Animal Doctor",
+      "cost": 4,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Madrigal"
+      ],
+      "fullText": "HEALING HANDS When you play this character, you may remove up to 3 damage from chosen character of yours. If you removed damage this way, put the top card of your deck into your inkwell facedown and exerted.",
+      "fullTextSections": [
+        "HEALING HANDS When you play this character, you may remove up to 3 damage from chosen character of yours. If you removed damage this way, put the top card of your deck into your inkwell facedown and exerted."
+      ],
+      "abilities": [
+        {
+          "effect": "When you play this character, you may remove up to 3 damage from chosen character of yours. If you removed damage this way, put the top card of your deck into your inkwell facedown and exerted.",
+          "fullText": "HEALING HANDS When you play this character, you may remove up to 3 damage from chosen character of yours. If you removed damage this way, put the top card of your deck into your inkwell facedown and exerted.",
+          "name": "HEALING HANDS",
+          "type": "triggered"
+        }
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 1,
+      "setCode": "13",
+      "number": 157,
+      "rarity": "Uncommon",
+      "franchise": "Encanto",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/157-207-EN-13-Antonio-Madrigal-Animal-Doctor-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/157-207-EN-13-Antonio-Madrigal-Animal-Doctor-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13163,
+      "name": "Henry J. Waternoose III",
+      "version": "Chief Executive Officer",
+      "fullName": "Henry J. Waternoose III - Chief Executive Officer",
+      "cost": 6,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Monster",
+        "Villain"
+      ],
+      "fullText": "THE BOTTOM LINE While you have more cards in your inkwell than each opposing player, this character gets +2 and gains Ward. (Opponents can’t choose them except to challenge.)",
+      "fullTextSections": [
+        "THE BOTTOM LINE While you have more cards in your inkwell than each opposing player, this character gets +2 and gains Ward. (Opponents can’t choose them except to challenge.)"
+      ],
+      "abilities": [
+        {
+          "effect": "While you have more cards in your inkwell than each opposing player, this character gets +2 and gains Ward. (Opponents can’t choose them except to challenge.)",
+          "fullText": "THE BOTTOM LINE While you have more cards in your inkwell than each opposing player, this character gets +2 and gains Ward. (Opponents can’t choose them except to challenge.)",
+          "name": "THE BOTTOM LINE",
+          "type": "static"
+        }
+      ],
+      "strength": 5,
+      "willpower": 5,
+      "lore": 2,
+      "setCode": "13",
+      "number": 163,
+      "rarity": "Rare",
+      "franchise": "Monsters, Inc.",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/163-207-EN-13-Henry-J.-Waternoose-III-Chief-Executive-Officer-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/163-207-EN-13-Henry-J.-Waternoose-III-Chief-Executive-Officer-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13182,
+      "name": "Mata",
+      "version": "Meat Hut Waitress",
+      "fullName": "Mata - Meat Hut Waitress",
+      "cost": 1,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn"
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1,
+      "setCode": "13",
+      "number": 182,
+      "rarity": "Common",
+      "franchise": "The Emperor's New Groove",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/182-207-EN-13-Mata-Meat-Hut-Waitress-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/182-207-EN-13-Mata-Meat-Hut-Waitress-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13188,
+      "name": "Omnidroid",
+      "version": "Scanning for Threats",
+      "fullName": "Omnidroid - Scanning for Threats",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Robot"
+      ],
+      "fullText": "FACTORY SETTINGS While this character has no damage, it gets +2 .",
+      "fullTextSections": [
+        "FACTORY SETTINGS While this character has no damage, it gets +2 ."
+      ],
+      "abilities": [
+        {
+          "effect": "While this character has no damage, it gets +2 .",
+          "fullText": "FACTORY SETTINGS While this character has no damage, it gets +2 .",
+          "name": "FACTORY SETTINGS",
+          "type": "static"
+        }
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 1,
+      "setCode": "13",
+      "number": 188,
+      "rarity": "Common",
+      "franchise": "The Incredibles",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/188-207-EN-13-Omnidroid-Scanning-for-Threats-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/188-207-EN-13-Omnidroid-Scanning-for-Threats-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13189,
+      "name": "Flynn Rider",
+      "version": "Stealing in the Tower",
+      "fullName": "Flynn Rider - Stealing in the Tower",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Prince"
+      ],
+      "fullText": "LET’S TALK IT OVER Whenever an opponent chooses this character with an action or ability, that player chooses and discards a card.",
+      "fullTextSections": [
+        "LET’S TALK IT OVER Whenever an opponent chooses this character with an action or ability, that player chooses and discards a card."
+      ],
+      "abilities": [
+        {
+          "effect": "Whenever an opponent chooses this character with an action or ability, that player chooses and discards a card.",
+          "fullText": "LET’S TALK IT OVER Whenever an opponent chooses this character with an action or ability, that player chooses and discards a card.",
+          "name": "LET’S TALK IT OVER",
+          "type": "triggered"
+        }
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 2,
+      "setCode": "13",
+      "number": 189,
+      "rarity": "Common",
+      "franchise": "Tangled",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/189-207-EN-13-Flynn-Rider-Stealing-in-the-Tower-Japanese-LQ-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/189-207-EN-13-Flynn-Rider-Stealing-in-the-Tower-Japanese-LQ-Lorcana-Player.jpg.webp"
+      }
+    },
+    {
+      "id": 13192,
+      "name": "Mulan",
+      "version": "Created by the Vine",
+      "fullName": "Mulan - Created by the Vine",
+      "cost": 4,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Floodborn",
+        "Princess",
+        "Vineling"
+      ],
+      "fullText": "DEMOLISH Whenever you play this or another Floodborn character, you may banish chosen item.",
+      "fullTextSections": [
+        "DEMOLISH Whenever you play this or another Floodborn character, you may banish chosen item."
+      ],
+      "abilities": [
+        {
+          "effect": "Whenever you play this or another Floodborn character, you may banish chosen item.",
+          "fullText": "DEMOLISH Whenever you play this or another Floodborn character, you may banish chosen item.",
+          "name": "DEMOLISH",
+          "type": "triggered"
+        }
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 2,
+      "setCode": "13",
+      "number": 192,
+      "rarity": "Common",
+      "franchise": "Mulan",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/192-207-EN-13-Mulan-Created-by-the-Vine-Lorcana-Player.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/192-207-EN-13-Mulan-Created-by-the-Vine-Lorcana-Player.jpg.webp"
+      }
     }
   ]
 }
