@@ -19,7 +19,7 @@ interface ProgressRingProps {
  * lives on the tile below the ring, so it isn't repeated here). The sweep starts
  * at 12 o'clock (`from -90deg`) and the glow tracks the ink colour.
  */
-export function ProgressRing({ink, count, total = PER_INK, size = 82}: ProgressRingProps) {
+export function ProgressRing({ink, count, total = PER_INK[ink], size = 82}: ProgressRingProps) {
   const pct = Math.max(0, Math.min(1, count / total));
   const deg = pct * 360;
   const rgb = inkRgb(ink);

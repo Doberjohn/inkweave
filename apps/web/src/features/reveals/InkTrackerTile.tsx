@@ -27,14 +27,14 @@ function selectionShadow(ink: Ink, selected: boolean, compact: boolean): string 
 
 /** The ink name over its `count / 34` (or a gold "Complete" at 34). */
 function TileLabel({ink, count, selected, compact}: {ink: Ink; count: number; selected: boolean; compact: boolean}) {
-  const done = count >= PER_INK;
+  const done = count >= PER_INK[ink];
   return (
     <>
       <div style={{fontWeight: 600, fontSize: compact ? 12 : 13, letterSpacing: 0.3, color: selected ? INK_COLORS[ink].text : '#cfd3df'}}>
         {ink}
       </div>
       <div style={{fontWeight: 500, fontSize: 14, letterSpacing: 0.5, color: done ? '#f5d877' : 'rgb(240, 240, 245)'}}>
-        {done ? 'Complete' : `${count} / ${PER_INK}`}
+        {done ? 'Complete' : `${count} / ${PER_INK[ink]}`}
       </div>
     </>
   );
