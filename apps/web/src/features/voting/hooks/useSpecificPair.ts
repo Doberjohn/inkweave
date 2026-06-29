@@ -83,7 +83,11 @@ export function useSpecificPair(
     return () => {
       cancelled = true;
     };
-  }, [resolved]);
+    // Depend on the stable resolved fields, NOT the `resolved` object itself: the
+    // IIFE returns a fresh object every render, so `[resolved]` re-fired this effect
+    // (which dispatches FETCH_START) on every render → infinite loop. cardA/cardB are
+    // stable refs from getCardById (a map lookup), and error is a string|null.
+  }, [resolved.cardA, resolved.cardB, resolved.error]);
 
   // If sync validation failed, report that error without loading
   if (resolved.error) {
