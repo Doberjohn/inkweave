@@ -48,10 +48,13 @@
     "@lhci/cli": "^0.15.1",
     "@size-limit/file": "^12.1.0",
     "husky": "^9.1.7",
-    "prettier": "^3.8.4",
+    "prettier": "^3.9.1",
     "sharp": "^0.35.2",
     "size-limit": "^12.1.0",
     "typescript": "^6.0.3"
   },
-  "packageManager": "pnpm@9.0.0"
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=22 <23"
+  }
 }
