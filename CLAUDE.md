@@ -498,7 +498,7 @@ Dark fantasy theme inspired by Lorcana:
 - Excluded components (icons, context providers, ErrorBoundary) are listed in `apps/web/scripts/check-story-coverage.mjs`
 
 ### Testing Style
-- Unit/integration test conventions (focused, minimal, 5-15 per unit, one behavior per test) live in [`.claude/rules/tests.md`](.claude/rules/tests.md) — auto-loaded when editing `*.test.ts(x)`.
+- Unit/integration test conventions (focused, minimal, 5-15 per unit, one behavior per test) live in [`.claude/rules/tests.md`](.claude/rules/tests.md), auto-loaded when editing `*.test.ts(x)`.
 - **E2E test inventory**: `apps/web/e2e/E2E_TESTS.md` — update this file whenever E2E tests are added, removed, or edited.
 
 ### Debugging E2E Failures

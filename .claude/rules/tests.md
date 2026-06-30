@@ -9,7 +9,7 @@ paths:
 
 When editing a `*.test.ts` / `*.test.tsx` file, follow Inkweave's testing style:
 
-- Write focused, minimal tests — not exhaustive coverage.
+- Write focused, minimal tests, not exhaustive coverage.
 - One test per distinct behavior; no redundant variations.
 - Skip trivial edge cases unless they are critical paths.
 - Prefer readability over coverage percentage.
