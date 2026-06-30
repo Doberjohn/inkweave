@@ -14,6 +14,7 @@ import {
   RevealHero,
   fetchRevealDates,
   useCountdown,
+  useInkParam,
   useRevealCards,
   useRevealProgress,
   type FranchiseConfig,
@@ -101,7 +102,7 @@ export function RevealsPage() {
   const progress = useRevealProgress();
   const {openCardModal} = useCardModal();
   const [dates, setDates] = useState<RevealDates | null>(null);
-  const [selectedInk, setSelectedInk] = useState<Ink>('Amber');
+  const [selectedInk, selectInk] = useInkParam();
   const [selectedFranchise, setSelectedFranchise] = useState<FranchiseConfig | null>(null);
 
   useEffect(() => {
@@ -141,7 +142,7 @@ export function RevealsPage() {
             error={error}
             progress={progress}
             selectedInk={selectedInk}
-            onSelectInk={setSelectedInk}
+            onSelectInk={selectInk}
             onOpen={(card) => openAndTrack(card, 'mosaic')}
             onSelectFranchise={setSelectedFranchise}
             compact={isMobile}

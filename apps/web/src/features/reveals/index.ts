@@ -14,6 +14,7 @@ export type {RevealProgress, InkProgress} from './useRevealProgress';
 export {PER_INK, SET_TOTAL} from './setComposition';
 export {RARITIES, rarityConfigOf} from './rarity';
 export type {RarityConfig} from './rarity';
+export {useInkParam, parseInkParam} from './useInkParam';
 export {RevealsPromoCard} from './RevealsPromoCard';
 export {RevealHero} from './RevealHero';
 export {InkTrackerStrip} from './InkTrackerStrip';
