@@ -27,6 +27,8 @@ import {
   getDwarfsRoles,
   getVinelingRoles,
   isVinelingCard,
+  getHunnyRoles,
+  isHunnyCard,
   isLoreDenialCard,
   getLoreDenialRoles,
   getSacrificeRoles,
@@ -44,6 +46,7 @@ import {
   type ToyRole,
   type DwarfsRole,
   type VinelingRole,
+  type HunnyRole,
 } from '../utils';
 
 // ============================================
@@ -1042,6 +1045,36 @@ export const synergyRules: SynergyRule[] = [
       return matches;
     },
   },
+
+  // --------------------------------------------
+  // HUNNY TRIBAL
+  // --------------------------------------------
+  {
+    id: 'hunny',
+    name: 'Hunny',
+    category: 'playstyle',
+    playstyleId: 'hunny',
+    description:
+      'Hunny characters and the payoffs that reward running them: searches that dig the tribe out of the deck, density payoffs that scale with Hunny in play, and single-target buffs.',
+
+    matches: isHunnyCard,
+
+    findSynergies: (card, allCards) => {
+      const cardRoles = getHunnyRoles(card);
+      if (cardRoles.length === 0) return [];
+
+      const matches: SynergyMatch[] = [];
+      for (const other of allCards) {
+        if (other.id === card.id) continue;
+        const otherRoles = getHunnyRoles(other);
+        if (otherRoles.length === 0) continue;
+
+        const {score, explanation} = scoreHunnyPair(cardRoles, otherRoles);
+        matches.push({card: other, score, explanation, bidirectional: true});
+      }
+      return matches;
+    },
+  },
 ];
 
 // ============================================
@@ -1585,6 +1618,47 @@ function scoreVinelingPair(
     return {score: 7, explanation: 'The Floodborn body fires the repeating payoff trigger.'};
   }
   return {score: 6, explanation: 'The Floodborn body is pumped by the team buff.'};
+}
+
+// ============================================
+// SHARED TRIBAL SCORING HELPERS
+// ============================================
+
+/** Direction-agnostic role-cross matcher: true iff one side has `x` and the other has `y`. */
+function crossMatcher<T extends string>(aRoles: T[], bRoles: T[]): (x: T, y: T) => boolean {
+  const a = new Set(aRoles);
+  const b = new Set(bRoles);
+  return (x, y) => (a.has(x) && b.has(y)) || (b.has(x) && a.has(y));
+}
+
+// ============================================
+// HUNNY TRIBAL SCORING (5-baseline)
+// ============================================
+
+/**
+ *   - search <-> member | search <-> density = 8 (fetch converts a slot / fuels the payoff)
+ *   - density <-> density | density <-> member = 7 (compounding / member feeds payoff)
+ *   - buff <-> member                          = 6 (single-target pump on a Hunny body)
+ *   - everything else                          = 5 (same-deck density baseline)
+ */
+function scoreHunnyPair(
+  cardRoles: HunnyRole[],
+  otherRoles: HunnyRole[],
+): {score: number; explanation: string} {
+  const cross = crossMatcher(cardRoles, otherRoles);
+  if (cross('search', 'member') || cross('search', 'density')) {
+    return {score: 8, explanation: 'A Hunny search digs the tribe out of your deck, fueling the payoffs.'};
+  }
+  if (cross('density', 'density')) {
+    return {score: 7, explanation: 'Both reward Hunny density, so the payoffs compound.'};
+  }
+  if (cross('density', 'member')) {
+    return {score: 7, explanation: 'The member feeds the Hunny density payoff.'};
+  }
+  if (cross('buff', 'member')) {
+    return {score: 6, explanation: 'The single-target buff pumps a Hunny body.'};
+  }
+  return {score: 5, explanation: 'Both share the Hunny deck. Density baseline.'};
 }
 
 // Get all rules

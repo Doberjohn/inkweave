@@ -50,6 +50,23 @@ describe('Synergy Rules', () => {
     });
   });
 
+  describe('Hunny rule', () => {
+    const rule = getRuleById('hunny')!;
+    const member = createCard({id: 'kanga', name: 'Kanga', cost: 3, classifications: ['Hunny'], text: 'Quests for 2.'});
+    const density = createCard({id: 'winnie', name: 'Winnie', cost: 4, classifications: ['Hunny'], text: 'While you have another Hunny character in play, this character gets +2 ◊.'});
+    const search = createCard({id: 'cr', name: 'Christopher Robin', cost: 5, classifications: ['Hunny'], text: 'Search your deck for a Hunny card, reveal it, and put it in your hand.'});
+    const buff = createCard({id: 'staff', name: 'Magical Hunny Staff', cost: 2, type: 'Item', text: 'Chosen Hunny character gains Evasive until the start of your next turn.'});
+    const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+    it('scores search + member at 8', () => { expect(scoreWith(search, member)?.score).toBe(8); });
+    it('scores density + member at 7', () => { expect(scoreWith(density, member)?.score).toBe(7); });
+    it('scores buff + member at 6', () => { expect(scoreWith(buff, member)?.score).toBe(6); });
+    it('scores member + member at 5', () => {
+      const m2 = createCard({id: 'roo', name: 'Roo', cost: 1, classifications: ['Hunny'], text: 'Has Ward.'});
+      expect(scoreWith(member, m2)?.score).toBe(5);
+    });
+  });
+
   describe('Shift Targets', () => {
     const shiftRule = getRuleById('shift-targets')!;
 
