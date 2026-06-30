@@ -494,7 +494,7 @@ Dark fantasy theme inspired by Lorcana:
 
 ### Testing Style
 - Unit/integration test conventions (focused, minimal, 5-15 per unit, one behavior per test) live in [`.claude/rules/tests.md`](.claude/rules/tests.md), auto-loaded when editing `**/*.test.ts(x)`.
-- **E2E test inventory**: `apps/web/e2e/E2E_TESTS.md` — update this file whenever E2E tests are added, removed, or edited.
+- **E2E test inventory**: `apps/web/e2e/E2E_TESTS.md`, update this file whenever E2E tests are added, removed, or edited.
 
 ### Debugging E2E Failures
 - **Read the failure screenshot before theorizing.** Playwright writes one per failed test to `apps/web/test-results/{test-name}-chromium/test-failed-1.png`. It shows the rendered DOM at the moment of failure — the fastest way to distinguish "test is stale" / "UI refactored" / "route gate fired" / "feature flag off."
