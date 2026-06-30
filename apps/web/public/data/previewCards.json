@@ -5143,6 +5143,55 @@
       "strength": 3,
       "willpower": 3,
       "lore": 2
+    },
+    {
+      "id": 13149,
+      "name": "Ellie Fredricksen",
+      "fullName": "Ellie Fredricksen - Adventure Partner",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "13",
+      "number": 149,
+      "version": "Adventure Partner",
+      "rarity": "Common",
+      "franchise": "Up",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "When this character is banished, you may put this card into your inkwell facedown and exerted.",
+      "fullTextSections": [
+        "When this character is banished, you may put this card into your inkwell facedown and exerted."
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 13013,
+      "name": "Woody",
+      "fullName": "Woody - Town Sheriff",
+      "cost": 3,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 13,
+      "version": "Town Sheriff",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "MOVE ALONG When you play this character, until the start of your next turn, chosen opposing character can't challenge and must quest if able.",
+      "fullTextSections": [
+        "MOVE ALONG When you play this character, until the start of your next turn, chosen opposing character can't challenge and must quest if able."
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1
     }
   ]
 }
