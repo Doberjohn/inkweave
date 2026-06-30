@@ -86,7 +86,7 @@ function TokenGate({onSave}: {onSave: (token: string) => void}) {
 
   return (
     <div style={{maxWidth: 460, margin: '0 auto', padding: SPACING.lg, color: COLORS.text}}>
-      <h1 style={{fontSize: FONT_SIZES.xl}}>Reveal admin</h1>
+      <h1 style={{fontSize: FONT_SIZES.xxl}}>Reveal admin</h1>
       <p style={{color: COLORS.gray600, fontSize: FONT_SIZES.sm}}>
         Paste a GitHub fine-grained token scoped to <code>Doberjohn/inkweave</code> with Contents:
         read and write.
@@ -173,7 +173,7 @@ export function RevealAdminPage() {
   return (
     <main style={{maxWidth: 1000, margin: '0 auto', padding: SPACING.lg, color: COLORS.text}}>
       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-        <h1 style={{fontSize: FONT_SIZES.xl}}>Add a reveal card</h1>
+        <h1 style={{fontSize: FONT_SIZES.xxl}}>Add a reveal card</h1>
         <button
           onClick={clearToken}
           style={{
@@ -242,11 +242,11 @@ export function RevealAdminPage() {
             gap: SPACING.lg,
           }}>
           <div>
-            <h2 style={{fontSize: FONT_SIZES.md}}>Preview</h2>
+            <h2 style={{fontSize: FONT_SIZES.xl}}>Preview</h2>
             <CardPreviewPanel card={previewCard} />
           </div>
           <div>
-            <h2 style={{fontSize: FONT_SIZES.md}}>Synergies</h2>
+            <h2 style={{fontSize: FONT_SIZES.xl}}>Synergies</h2>
             <SynergyPreviewPanel groups={synergyGroups} />
           </div>
         </aside>
