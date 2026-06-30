@@ -95,15 +95,20 @@ async function loadRuleRoster(root) {
   }));
 }
 
+/** Record a card's display name, keeping the first occurrence (allCards wins). */
+function addNameIfAbsent(names, card) {
+  if (!names.has(card.id)) names.set(card.id, card.fullName ?? card.name ?? card.id);
+}
+
 /** Card id -> display name, from allCards.json + previewCards.json. */
 function loadCardNames(root) {
   const names = new Map();
-  for (const f of ['allCards.json', 'previewCards.json']) {
-    const p = path.join(root, 'apps/web/public/data', f);
-    if (!fs.existsSync(p)) continue;
-    for (const c of JSON.parse(fs.readFileSync(p, 'utf8')).cards) {
-      if (!names.has(c.id)) names.set(c.id, c.fullName ?? c.name ?? c.id);
-    }
+  const files = ['allCards.json', 'previewCards.json']
+    .map((f) => path.join(root, 'apps/web/public/data', f))
+    .filter((p) => fs.existsSync(p));
+  for (const p of files) {
+    const {cards} = JSON.parse(fs.readFileSync(p, 'utf8'));
+    for (const c of cards) addNameIfAbsent(names, c);
   }
   return names;
 }

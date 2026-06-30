@@ -71,6 +71,12 @@ export function buildPairRecords(scoreRows, enginePairs, names) {
   return {pairs, engineSilent};
 }
 
+/** Append `value` to the array stored at `key`, creating the array if absent. */
+function appendToGroup(map, key, value) {
+  if (!map.has(key)) map.set(key, []);
+  map.get(key).push(value);
+}
+
 /**
  * Roll pair records up to per-rule calibration stats. A pair is credited to
  * EVERY rule in its `rules` list (a vote is feedback on the whole displayed
@@ -79,17 +85,14 @@ export function buildPairRecords(scoreRows, enginePairs, names) {
  *
  * Precondition: `pairRecords` is expected to contain only gap-defined
  * (non-engine-silent) pairs, as produced by `buildPairRecords().pairs`. The
- * internal `if (rec.gap == null) continue;` is a defensive safety net for
- * direct callers that might pass engine-silent records.
+ * `gap != null` filter is a defensive safety net for direct callers that
+ * might pass engine-silent records.
  */
 export function rollUpByRule(pairRecords, allRules, ruleTotalPairs) {
-  const byRule = new Map(); // ruleId -> pair records that fired it
-  for (const rec of pairRecords) {
-    if (rec.gap == null) continue;
-    for (const ruleId of rec.rules) {
-      if (!byRule.has(ruleId)) byRule.set(ruleId, []);
-      byRule.get(ruleId).push(rec);
-    }
+  // ruleId -> pair records that fired it (only gap-defined pairs contribute)
+  const byRule = new Map();
+  for (const rec of pairRecords.filter((r) => r.gap != null)) {
+    for (const ruleId of rec.rules) appendToGroup(byRule, ruleId, rec);
   }
 
   return allRules.map((rule) => {
@@ -121,6 +124,17 @@ export function isoWeekStart(timestamp) {
   return monday.toISOString().slice(0, 10);
 }
 
+/** Accumulate one raw vote into its ISO-week bucket (votes count + optional gap). */
+function accrueVote(weeks, vote, enginePairs) {
+  const week = isoWeekStart(vote.created_at);
+  if (!weeks.has(week)) weeks.set(week, {votes: 0, gapItems: []});
+  const bucket = weeks.get(week);
+  bucket.votes += 1;
+  if (vote.score == null) return;
+  const enginePair = enginePairs.get(pairKey(vote.card_a_id, vote.card_b_id));
+  if (enginePair) bucket.gapItems.push({gap: round2(vote.score - enginePair.engineScore)});
+}
+
 /**
  * Bucket raw votes by ISO week. `votes` counts all votes; `meanGap` is the
  * vote-weighted (equal-weight) mean gap of votes that carry a score AND map to
@@ -128,16 +142,7 @@ export function isoWeekStart(timestamp) {
  */
 export function bucketWeekly(rawVotes, enginePairs) {
   const weeks = new Map(); // week -> {votes, gapItems: [{gap}]}
-  for (const v of rawVotes) {
-    const week = isoWeekStart(v.created_at);
-    if (!weeks.has(week)) weeks.set(week, {votes: 0, gapItems: []});
-    const bucket = weeks.get(week);
-    bucket.votes += 1;
-    if (v.score != null) {
-      const enginePair = enginePairs.get(pairKey(v.card_a_id, v.card_b_id));
-      if (enginePair) bucket.gapItems.push({gap: round2(v.score - enginePair.engineScore)});
-    }
-  }
+  for (const v of rawVotes) accrueVote(weeks, v, enginePairs);
   return [...weeks.entries()]
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([week, {votes, gapItems}]) => ({
