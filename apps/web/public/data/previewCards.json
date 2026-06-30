@@ -4782,6 +4782,27 @@
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/192-207-EN-13-Mulan-Created-by-the-Vine-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/192-207-EN-13-Mulan-Created-by-the-Vine-Lorcana-Player.jpg.webp"
       }
+    },
+    {
+      "id": 13090,
+      "name": "Copper",
+      "fullName": "Copper - Creative Storyteller",
+      "cost": 2,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 90,
+      "version": "Creative Storyteller",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Puppy"
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 2
     }
   ]
 }
