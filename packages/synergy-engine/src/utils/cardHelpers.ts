@@ -1150,3 +1150,40 @@ export function getVinelingRoles(card: LorcanaCard): VinelingRole[] {
 }
 
 export const isVinelingCard = (card: LorcanaCard): boolean => getVinelingRoles(card).length > 0;
+
+// ============================================
+// HUNNY TRIBAL DETECTION
+// ============================================
+
+/**
+ * Hunny tribe (Winnie-the-Pooh, Set 13). Membership is the Hunny classification.
+ * The payoff gate is "Hunny (character|card|classification)" and deliberately NOT
+ * bare "Hunny", because abilities are named "HUNNY AURA" / "HUNNY ACTIVATION"
+ * (the same caps-ability-name trap as Toy's "WORLD'S GREATEST TOY").
+ *
+ * Roles: 'member', 'density' (gated on Hunny in play), 'search' (dig a Hunny from deck),
+ * 'buff' (single-target pump of a chosen Hunny).
+ */
+export type HunnyRole = 'member' | 'density' | 'search' | 'buff';
+
+const HUNNY_PAYOFF_PATTERN = /\bHunny (?:character|card|classification)/i;
+const HUNNY_DENSITY_PATTERN = /(?:\d+ or more other|another|your other)\s+Hunny characters?/i;
+const HUNNY_SEARCH_PATTERN = /search your deck for a Hunny card|Hunny card[^.]*put it into your hand/i;
+const HUNNY_BUFF_PATTERN = /chosen Hunny character/i;
+
+export function getHunnyRoles(card: LorcanaCard): HunnyRole[] {
+  const isMember = hasClassification(card, 'Hunny');
+  const text = card.text != null ? normalizeCardText(card) : '';
+  const isPayoff = text !== '' && HUNNY_PAYOFF_PATTERN.test(text);
+
+  if (!isMember && !isPayoff) return [];
+
+  const roles: HunnyRole[] = [];
+  if (isMember) roles.push('member');
+  if (HUNNY_DENSITY_PATTERN.test(text)) roles.push('density');
+  if (HUNNY_SEARCH_PATTERN.test(text)) roles.push('search');
+  if (HUNNY_BUFF_PATTERN.test(text)) roles.push('buff');
+  return roles;
+}
+
+export const isHunnyCard = (card: LorcanaCard): boolean => getHunnyRoles(card).length > 0;

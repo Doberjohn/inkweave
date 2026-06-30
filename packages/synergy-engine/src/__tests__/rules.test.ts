@@ -20,10 +20,36 @@ import {
   isDwarfsCard,
   getVinelingRoles,
   isVinelingCard,
+  getHunnyRoles,
+  isHunnyCard,
 } from '../utils';
 import {createCard} from './fixtures.js';
 
 describe('Synergy Rules', () => {
+  describe('Hunny detection', () => {
+    const memberOnly = createCard({id: 'kanga', name: 'Kanga', fullName: 'Kanga - Hunny Bard', cost: 3, classifications: ['Hunny'], text: 'Quests for 2 lore.'});
+    const density = createCard({id: 'winnie', name: 'Winnie the Pooh', cost: 4, classifications: ['Hunny'], text: 'STICK TOGETHER While you have 2 or more other Hunny characters in play, this character gets +2 ◊.'});
+    const search = createCard({id: 'cr', name: 'Christopher Robin', cost: 5, classifications: ['Hunny'], text: 'MAGICAL SUMMONS When you play this character, you may search your deck for a Hunny card, reveal it, and put it in your hand.'});
+    const buff = createCard({id: 'rabbit', name: 'Rabbit', cost: 3, classifications: ['Hunny'], text: 'HUNNY AURA When you play this character, chosen Hunny character gets +1 ◊ this turn.'});
+
+    it('tags a member with no payoff text as member only', () => {
+      expect(getHunnyRoles(memberOnly)).toEqual(['member']);
+    });
+    it('detects density', () => {
+      expect(getHunnyRoles(density)).toEqual(['member', 'density']);
+    });
+    it('detects search', () => {
+      expect(getHunnyRoles(search)).toEqual(['member', 'search']);
+    });
+    it('detects single-target buff', () => {
+      expect(getHunnyRoles(buff)).toEqual(['member', 'buff']);
+    });
+    it('does not match a bare "HUNNY"-named ability on a non-member', () => {
+      const decoy = createCard({id: 'd', name: 'Decoy', cost: 3, text: 'HUNNY ACTIVATION ⟳, 2 ⬡: Reveal the top card of your deck.'});
+      expect(isHunnyCard(decoy)).toBe(false);
+    });
+  });
+
   describe('Shift Targets', () => {
     const shiftRule = getRuleById('shift-targets')!;
 
