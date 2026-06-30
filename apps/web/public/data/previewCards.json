@@ -5004,6 +5004,22 @@
       "strength": 5,
       "willpower": 4,
       "lore": 1
+    },
+    {
+      "id": 13137,
+      "name": "Prophetic Vision",
+      "fullName": "Prophetic Vision",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "13",
+      "number": 137,
+      "rarity": "Uncommon",
+      "fullText": "Shuffle your deck, then reveal the top card. If it’s an action card, you may play it for free. If not, put it on the bottom of your deck. Then each opponent loses 1 lore and you gain 1 lore.",
+      "fullTextSections": [
+        "Shuffle your deck, then reveal the top card. If it’s an action card, you may play it for free. If not, put it on the bottom of your deck. Then each opponent loses 1 lore and you gain 1 lore."
+      ]
     }
   ]
 }
