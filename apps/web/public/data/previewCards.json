@@ -5122,6 +5122,27 @@
       "strength": 2,
       "willpower": 2,
       "lore": 1
+    },
+    {
+      "id": 13117,
+      "name": "Splodyhead",
+      "fullName": "Splodyhead - Experiment 619",
+      "cost": 3,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 117,
+      "version": "Experiment 619",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Alien"
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 2
     }
   ]
 }
