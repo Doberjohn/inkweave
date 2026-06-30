@@ -17,6 +17,8 @@ interface CardSlotProps {
   onOpen?: (card: LorcanaCard) => void;
   /** When true, the slot plays the cellPop animation (a switch-in burst). */
   animate?: boolean;
+  /** When true, the slot fades (a rarity highlight is active and this card is not it). */
+  dimmed?: boolean;
 }
 
 /**
@@ -91,13 +93,14 @@ function SlotFace({ink, revealed, imgUrl, compact, onImgError}: {ink: Ink; revea
  * card image and opens the card modal on click; an unrevealed slot shows the ink
  * symbol. No cost or rarity pips — the slot stays clean.
  */
-export function CardSlot({ink, card, width = 58, height = 80, onOpen, animate = false}: CardSlotProps) {
+export function CardSlot({ink, card, width = 58, height = 80, onOpen, animate = false, dimmed = false}: CardSlotProps) {
   const [imgFailed, setImgFailed] = useState(false);
   const compact = width < 54;
   const revealed = !!card;
   const imgUrl = card && !imgFailed ? smallImageUrl(card) : undefined;
   const popClass = animate ? 'reveal-cellpop' : undefined;
   const tileStyle = slotTileStyle(ink, revealed, width, height);
+  const dimStyle: CSSProperties = {opacity: dimmed ? 0.22 : 1, transition: 'opacity 0.25s ease'};
   const face = (
     <SlotFace ink={ink} revealed={revealed} imgUrl={imgUrl} compact={compact} onImgError={() => setImgFailed(true)} />
   );
@@ -107,10 +110,11 @@ export function CardSlot({ink, card, width = 58, height = 80, onOpen, animate = 
       <button
         type="button"
         data-testid="reveal-card-slot"
+        data-dimmed={dimmed || undefined}
         className={popClass}
         onClick={() => onOpen(card)}
         aria-label={`View ${card.fullName}`}
-        style={{...tileStyle, padding: 0, font: 'inherit', cursor: 'pointer', background: 'none'}}
+        style={{...tileStyle, ...dimStyle, padding: 0, font: 'inherit', cursor: 'pointer', background: 'none'}}
       >
         {face}
       </button>
@@ -118,7 +122,7 @@ export function CardSlot({ink, card, width = 58, height = 80, onOpen, animate = 
   }
 
   return (
-    <div className={popClass} style={tileStyle}>
+    <div className={popClass} data-dimmed={dimmed || undefined} style={{...tileStyle, ...dimStyle}}>
       {face}
     </div>
   );
