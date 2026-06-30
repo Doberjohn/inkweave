@@ -5037,6 +5037,42 @@
       "fullTextSections": [
         "NEW MEMORIES ⟳, 1 ⬡ – Reveal the top card of your deck. If it's a non-character card or a character card named Kevin, put it into your hand. Otherwise, put it on the bottom of your deck."
       ]
+    },
+    {
+      "id": 13063,
+      "name": "Maleficent & Diablo",
+      "fullName": "Maleficent & Diablo - Embodiment of Evil",
+      "cost": 7,
+      "color": "Amethyst-Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 63,
+      "version": "Embodiment of Evil",
+      "rarity": "Rare",
+      "subtypes": [
+        "Storyborn",
+        "Team",
+        "Villain",
+        "Sorcerer"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "5",
+          "fullText": "Shift 5"
+        }
+      ],
+      "fullText": "Shift 5 (You may pay 5 ⬡ to play this on top of one of your characters named Maleficent or Diablo.)\nYOU FOOL You may put 5 character cards from your discard on the bottom of your deck in any order to play this character using its Shift ability without paying its Shift cost.\nCALL OF THE RAVEN During your turn, whenever this character exerts, draw a card.",
+      "fullTextSections": [
+        "Shift 5 (You may pay 5 ⬡ to play this on top of one of your characters named Maleficent or Diablo.)",
+        "YOU FOOL You may put 5 character cards from your discard on the bottom of your deck in any order to play this character using its Shift ability without paying its Shift cost.",
+        "CALL OF THE RAVEN During your turn, whenever this character exerts, draw a card."
+      ],
+      "strength": 6,
+      "willpower": 5,
+      "lore": 2
     }
   ]
 }
