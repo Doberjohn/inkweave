@@ -5143,6 +5143,31 @@
       "strength": 3,
       "willpower": 3,
       "lore": 2
+    },
+    {
+      "id": 13149,
+      "name": "Ellie Fredricksen",
+      "fullName": "Ellie Fredricksen - Adventure Partner",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "13",
+      "number": 149,
+      "version": "Adventure Partner",
+      "rarity": "Common",
+      "franchise": "Up",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "When this character is banished, you may put this card into your inkwell facedown and exerted.",
+      "fullTextSections": [
+        "When this character is banished, you may put this card into your inkwell facedown and exerted."
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 1
     }
   ]
 }
