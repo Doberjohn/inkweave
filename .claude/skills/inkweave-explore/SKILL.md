@@ -20,7 +20,7 @@ Return a single structured report with these sections:
 2. **Engine**: the public API from `packages/synergy-engine/src/index.ts`, and the rule registry (which `SynergyRule`s are wired in `packages/synergy-engine/src/engine/`).
 3. **Web data flow**: trace `apps/web/src` from card load (`allCards.json` to `features/cards/loader.ts`) to synergy fetch (`/data/synergies/{cardId}.json`) to UI (`features/synergies`).
 4. **Precompute**: where the per-card synergy JSON comes from (`scripts/precompute-synergies.mjs`) and that it runs at build time.
-5. **Entry points**: `apps/web/src/App.tsx` and the route structure.
+5. **Entry points**: `apps/web/src/main.tsx` (bootstrap), `apps/web/src/router.tsx` (routes), and `apps/web/src/AppLayout.tsx` (layout shell).
 
 ## Method
 
