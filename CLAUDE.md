@@ -94,7 +94,7 @@ React web application that consumes the synergy engine package.
 
 ## Automation
 
-Claude Code hooks, skills, and agents enforce workflow rules automatically. Check these before adding redundant instructions to CLAUDE.md.
+Claude Code hooks, skills, agents, and path-scoped rules enforce workflow rules automatically. Check these before adding redundant instructions to CLAUDE.md.
 
 ### Hooks (`.claude/hooks/`)
 | Hook | Event | What it does |
@@ -116,6 +116,18 @@ Claude Code hooks, skills, and agents enforce workflow rules automatically. Chec
 | `/close-session [summary]` | work summary | Cleanup (servers/worktrees/branches + transient-file sweep w/ confirmation) → docs update → MEMORY.md → summary |
 | `/inkweave-add-rule <name>` | mechanic name | Discovery → design → implement → validate |
 | `/mine-rules [dry-run]` | optional dry-run | Run the miner → pick top candidate (dedup vs existing rules + open candidates; previously-removed mechanics are flagged, not skipped) → draft 5-baseline proposal → open one `rule-candidate` issue (`dry-run` drafts without publishing) |
+| `/inkweave-explore [focus]` | optional focus area | Read-only, fork-isolated codebase/architecture map (workspace, engine API + rule registry, web data flow, precompute); verbose output stays in the fork |
+
+### Path-scoped rules (`.claude/rules/`)
+
+Convention files that auto-load only when editing files matching their `paths:` glob, keeping zone-specific detail out of always-loaded context (the differentiated split). Each rule's content also has a one-line pointer in the relevant section below.
+
+| Rule | Loads when editing | Covers |
+|------|-------------------|--------|
+| `tests.md` | `**/*.test.ts(x)` | unit/integration test style |
+| `stories.md` | `**/*.stories.tsx` | Storybook conventions (imports, decorators, mock-data shape) |
+| `migrations.md` | `supabase/migrations/**` | Supabase MCP migration workflow |
+| `engine.md` | `packages/synergy-engine/src/**` | engine rule pattern, 5-baseline scoring, doc-sync, auto-rebuild |
 
 ### Agents (`.claude/agents/`)
 | Agent | Model | Triggered by | What it does |
