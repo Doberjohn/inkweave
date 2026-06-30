@@ -87,7 +87,7 @@ function RevealsBody({loading, error, progress, selectedInk, onSelectInk, onOpen
         <InkTrackerStrip inks={progress.inks} selected={selectedInk} onSelect={onSelectInk} compact={compact} />
       </div>
       <div style={{marginTop: SPACING.xxl}}>
-        <InkBoard progress={progress.byInk[selectedInk]} onOpen={onOpen} compact={compact} />
+        <InkBoard key={selectedInk} progress={progress.byInk[selectedInk]} onOpen={onOpen} compact={compact} />
       </div>
       <div style={{marginTop: 64}}>
         <NewFranchises onSelect={onSelectFranchise} compact={compact} />

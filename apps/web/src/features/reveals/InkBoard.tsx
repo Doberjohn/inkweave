@@ -1,4 +1,5 @@
 import './reveals.css';
+import {useState} from 'react';
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {INK_COLORS, FONTS} from '../../shared/constants';
 import {InkIcon} from '../../shared/components/InkIcon';
@@ -110,6 +111,9 @@ function BoardHeader({ink, count, compact}: {ink: Ink; count: number; compact: b
 export function InkBoard({progress, onOpen, compact = false}: InkBoardProps) {
   const {ink, count, cards, rarityCounts} = progress;
   const fill = count / PER_INK[ink];
+  const [selectedRarity, setSelectedRarity] = useState<string | null>(null);
+  // Toggle: click the active rarity to clear it, click another to switch.
+  const toggleRarity = (key: string) => setSelectedRarity((prev) => (prev === key ? null : key));
 
   return (
     <div
@@ -143,10 +147,15 @@ export function InkBoard({progress, onOpen, compact = false}: InkBoardProps) {
         <div style={{marginTop: 22}}>
           {/* key={ink} re-mounts the mosaic on each color switch so a fresh set of
               random slots bursts in (see CardMosaic's pop logic). */}
-          <CardMosaic key={ink} ink={ink} cards={cards} onOpen={onOpen} compact={compact} />
+          <CardMosaic key={ink} ink={ink} cards={cards} onOpen={onOpen} compact={compact} selectedRarity={selectedRarity} />
         </div>
 
-        <RarityBreakdown rarityCounts={rarityCounts} compact={compact} />
+        <RarityBreakdown
+          rarityCounts={rarityCounts}
+          compact={compact}
+          selectedRarity={selectedRarity}
+          onSelectRarity={toggleRarity}
+        />
       </div>
     </div>
   );
