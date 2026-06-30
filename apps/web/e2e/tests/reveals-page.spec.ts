@@ -136,4 +136,45 @@ test.describe('Reveals page (flag on)', () => {
     await cardTiles.first().click();
     await expect(page.getByTestId('card-overview-modal')).toBeVisible({timeout: 15000});
   });
+
+  test('?ink= param selects the starting mosaic ink', async ({page}, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+
+    await page.goto('/reveals?ink=emerald');
+
+    // The Emerald tracker tile is the selected one (aria-pressed reflects selection).
+    const emeraldTile = page.getByTestId('ink-tracker-tile').filter({hasText: 'Emerald'});
+    await expect(emeraldTile).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('clicking a rarity chip dims the other revealed cards', async ({page}, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+
+    await page.goto('/reveals');
+
+    // Needs revealed slots; skip in early season (previewCards.json cards: []).
+    const firstSlot = page.getByTestId('reveal-card-slot').first();
+    const hasSlots = await firstSlot
+      .waitFor({state: 'visible', timeout: 10000})
+      .then(() => true)
+      .catch(() => false);
+    test.skip(!hasSlots, 'No reveal cards curated yet (previewCards.json cards: []).');
+
+    // Dimming is only observable when the featured board has at least two revealed
+    // rarities (one chip highlighted, the others fade). Each interactive chip is a
+    // "Highlight ... cards" button.
+    const chips = page.getByRole('button', {name: /^Highlight .* cards$/});
+    const chipCount = await chips.count();
+    test.skip(chipCount < 2, 'Need at least two revealed rarities to observe dimming.');
+
+    const chip = chips.first();
+    await chip.click();
+    await expect(chip).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-dimmed="true"]').first()).toBeVisible();
+
+    // Clicking the active chip again clears the highlight and restores all slots.
+    await chip.click();
+    await expect(chip).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('[data-dimmed="true"]')).toHaveCount(0);
+  });
 });
