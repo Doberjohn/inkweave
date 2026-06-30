@@ -4857,6 +4857,26 @@
       "fullTextSections": [
         "Exert chosen opposing character."
       ]
+    },
+    {
+      "id": 13064,
+      "name": "You've Got Some Punch",
+      "fullName": "You've Got Some Punch",
+      "cost": 2,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "13",
+      "number": 64,
+      "rarity": "Common",
+      "subtypes": [
+        "Song"
+      ],
+      "fullText": "(A character with cost 2 or more can ⟳ to sing this song for free.)\nChosen character gains Rush and Challenger +2 this turn. (They can challenge the turn they're played. They get +2 ⚔ while challenging.)",
+      "fullTextSections": [
+        "(A character with cost 2 or more can ⟳ to sing this song for free.)",
+        "Chosen character gains Rush and Challenger +2 this turn. (They can challenge the turn they're played. They get +2 ⚔ while challenging.)"
+      ]
     }
   ]
 }
