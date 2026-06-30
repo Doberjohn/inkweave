@@ -39,7 +39,9 @@ inkweave/
         ├── package.json      # inkweave-web
         ├── vite.config.ts
         └── src/
-            ├── App.tsx       # Root component (two-column layout)
+            ├── main.tsx      # App bootstrap (mounts the router)
+            ├── router.tsx    # Route definitions
+            ├── AppLayout.tsx # Two-column layout shell
             ├── features/
             │   ├── cards/    # Card loading, components, hooks
             │   └── synergies/# Synergy display components, hooks
