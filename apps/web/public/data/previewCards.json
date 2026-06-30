@@ -4877,6 +4877,39 @@
         "(A character with cost 2 or more can ⟳ to sing this song for free.)",
         "Chosen character gains Rush and Challenger +2 this turn. (They can challenge the turn they're played. They get +2 ⚔ while challenging.)"
       ]
+    },
+    {
+      "id": 13179,
+      "name": "Sprout",
+      "fullName": "Sprout - Experiment 509",
+      "cost": 5,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 179,
+      "version": "Experiment 509",
+      "rarity": "Rare",
+      "subtypes": [
+        "Storyborn",
+        "Alien"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Resist",
+          "keywordValue": "+1",
+          "fullText": "Resist +1"
+        }
+      ],
+      "fullText": "Resist +1 (Damage dealt to this character is reduced by 1.)\nBOTANICAL EVIL When you play this character, you may choose and discard an Alien character card or a location card from your hand. If you do, deal 2 damage to chosen character.",
+      "fullTextSections": [
+        "Resist +1 (Damage dealt to this character is reduced by 1.)",
+        "BOTANICAL EVIL When you play this character, you may choose and discard an Alien character card or a location card from your hand. If you do, deal 2 damage to chosen character."
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 2
     }
   ]
 }
