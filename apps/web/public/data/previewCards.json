@@ -5088,7 +5088,7 @@
       "rarity": "Common",
       "franchise": "Winnie the Pooh",
       "subtypes": [
-        "Dreamborm",
+        "Dreamborn",
         "Ally",
         "Hunny"
       ],
@@ -5161,9 +5161,9 @@
         "Storyborn",
         "Ally"
       ],
-      "fullText": "When this character is banished, you may put this card into your inkwell facedown and exerted.",
+      "fullText": "ALWAYS WITH YOU When this character is banished, you may put this card into your inkwell facedown and exerted.",
       "fullTextSections": [
-        "When this character is banished, you may put this card into your inkwell facedown and exerted."
+        "ALWAYS WITH YOU When this character is banished, you may put this card into your inkwell facedown and exerted."
       ],
       "strength": 3,
       "willpower": 3,
@@ -5181,9 +5181,11 @@
       "number": 13,
       "version": "Town Sheriff",
       "rarity": "Common",
+      "franchise": "Toy Story",
       "subtypes": [
         "Storyborn",
-        "Ally"
+        "Hero",
+        "Toy"
       ],
       "fullText": "MOVE ALONG When you play this character, until the start of your next turn, chosen opposing character can't challenge and must quest if able.",
       "fullTextSections": [
