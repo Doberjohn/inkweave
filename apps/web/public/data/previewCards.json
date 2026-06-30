@@ -4978,6 +4978,32 @@
       "strength": 4,
       "willpower": 4,
       "lore": 1
+    },
+    {
+      "id": 13022,
+      "name": "The Horned Kingd",
+      "fullName": "The Horned Kingd - Merciless Master",
+      "cost": 5,
+      "color": "Amber",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "13",
+      "number": 22,
+      "version": "Merciless Master",
+      "rarity": "Legendary",
+      "subtypes": [
+        "Storyborn",
+        "Villain",
+        "King",
+        "Sorcerer"
+      ],
+      "fullText": "THE POWER OF THE CAULDRON While this character is exerted, you may play characters from your discard. If you do, they enter play exerted. (You pay all costs.)",
+      "fullTextSections": [
+        "THE POWER OF THE CAULDRON While this character is exerted, you may play characters from your discard. If you do, they enter play exerted. (You pay all costs.)"
+      ],
+      "strength": 5,
+      "willpower": 4,
+      "lore": 1
     }
   ]
 }
