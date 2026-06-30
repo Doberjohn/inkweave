@@ -4952,6 +4952,32 @@
       "fullTextSections": [
         "Up to 2 chosen opposing characters can't challenge during their next turn."
       ]
+    },
+    {
+      "id": 13076,
+      "name": "Buzz Lightyear",
+      "fullName": "Buzz Lightyear - Grounded",
+      "cost": 3,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 76,
+      "version": "Grounded",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Toy",
+        "Captain"
+      ],
+      "fullText": "NO FLYING TOY This character can’t gain Evasive.",
+      "fullTextSections": [
+        "NO FLYING TOY This character can’t gain Evasive."
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 1
     }
   ]
 }
