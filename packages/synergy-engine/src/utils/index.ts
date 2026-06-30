@@ -39,6 +39,8 @@ export {
   isToyCard,
   getDwarfsRoles,
   isDwarfsCard,
+  getVinelingRoles,
+  isVinelingCard,
   isBoostBeneficiaryLocation,
   getLoreDenialRoles,
   isLoreDenialCard,
@@ -54,6 +56,7 @@ export type {
   CostReductionTarget,
   ToyRole,
   DwarfsRole,
+  VinelingRole,
   LoreDenialRole,
 } from './cardHelpers.js';
 

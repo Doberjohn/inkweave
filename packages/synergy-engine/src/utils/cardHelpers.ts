@@ -1107,3 +1107,46 @@ export function getLoreDenialRoles(card: LorcanaCard): LoreDenialRole[] {
 }
 
 export const isLoreDenialCard = (card: LorcanaCard): boolean => getLoreDenialRoles(card).length > 0;
+
+// ============================================
+// VINELINGS DETECTION (Floodborn Matters, payoff-anchored)
+// ============================================
+
+/**
+ * The "Vinelings" archetype is branded for the new Set 13 Vineling classification,
+ * but its membership and payoffs key on the broader **Floodborn** classification:
+ * every payoff card reads "your Floodborn characters". So a `member` is any Floodborn
+ * character (114+ across all sets), and `isVinelingCard` returns true for any Floodborn
+ * character or Floodborn-matters payoff, NOT only the Vineling subtype.
+ *
+ * Roles:
+ * - 'member'  — a Floodborn character (the body the payoffs reward)
+ * - 'buff'    — a static team pump: "your [...] Floodborn characters get/gain ..."
+ * - 'trigger' — a repeating engine: "whenever [...] Floodborn ..." (quest / play / banish)
+ *
+ * Payoff-anchored: the rule (see rules.ts) does not pair two plain members with each
+ * other, so 'member' alone never produces a synergy without a 'buff'/'trigger' partner.
+ */
+export type VinelingRole = 'member' | 'buff' | 'trigger';
+
+/** Static team buff: "Your [...] Floodborn characters get/gain ...". */
+const VINELING_BUFF_PATTERN = /your\b[^.]*\bfloodborn characters?\b[^.]*\b(?:get|gain)\b/i;
+/** Repeating trigger: "whenever [...] Floodborn ..." (quests / is banished / you play another). */
+const VINELING_TRIGGER_PATTERN = /\bwhen(?:ever)?\b[^.]*\bfloodborn\b/i;
+
+export function getVinelingRoles(card: LorcanaCard): VinelingRole[] {
+  const text = card.text != null ? normalizeCardText(card) : '';
+  const isMember = isCharacter(card) && hasClassification(card, 'Floodborn');
+  const isBuff = text !== '' && VINELING_BUFF_PATTERN.test(text);
+  const isTrigger = text !== '' && VINELING_TRIGGER_PATTERN.test(text);
+
+  if (!isMember && !isBuff && !isTrigger) return [];
+
+  const roles: VinelingRole[] = [];
+  if (isMember) roles.push('member');
+  if (isBuff) roles.push('buff');
+  if (isTrigger) roles.push('trigger');
+  return roles;
+}
+
+export const isVinelingCard = (card: LorcanaCard): boolean => getVinelingRoles(card).length > 0;

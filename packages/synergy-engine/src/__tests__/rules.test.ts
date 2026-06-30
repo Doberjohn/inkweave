@@ -18,6 +18,8 @@ import {
   isToyCard,
   getDwarfsRoles,
   isDwarfsCard,
+  getVinelingRoles,
+  isVinelingCard,
 } from '../utils';
 import {createCard} from './fixtures.js';
 
@@ -2199,6 +2201,44 @@ describe('Dwarfs Tribal', () => {
 
     it('return ↔ member scores 7 (bounce re-buys the enter-play ability)', () => {
       expect(findScore(snowWhiteMerry, 'dopey-music')).toBe(7);
+    });
+  });
+
+  describe('Vinelings detection', () => {
+    const floodbornMember = createCard({
+      id: 'elsa-fb', name: 'Elsa', fullName: 'Elsa - Spirit of Winter',
+      cost: 7, classifications: ['Floodborn'], text: 'Whenever this character quests, draw a card.',
+    });
+    const buffPayoff = createCard({
+      id: 'gaston-vine', name: 'Gaston', fullName: 'Gaston - Created by the Vine',
+      cost: 2, classifications: ['Floodborn', 'Vineling'],
+      text: 'DRAWING STRENGTH Your Floodborn characters get +1 ¤.',
+    });
+    const triggerPayoff = createCard({
+      id: 'hera-vine', name: 'Hera', fullName: 'Hera - Created by the Vine',
+      cost: 5, classifications: ['Floodborn', 'Vineling'],
+      text: 'MYSTICAL BOON Whenever you play this or another Floodborn character, gain 1 lore.',
+    });
+    const theVine = createCard({
+      id: 'the-vine', name: 'The Vine', fullName: 'The Vine - Towering Stalk',
+      cost: 10, classifications: ['Floodborn'],
+      text: 'SATURATE Your other exerted Floodborn characters gain Bodyguard. HOSTILE SWARM During an opponent\'s turn, whenever one of your Floodborn characters is banished, deal 1 damage to each opposing character.',
+    });
+
+    it('tags a plain Floodborn character as member only', () => {
+      expect(getVinelingRoles(floodbornMember)).toEqual(['member']);
+    });
+    it('detects a static team buff', () => {
+      expect(getVinelingRoles(buffPayoff)).toEqual(['member', 'buff']);
+    });
+    it('detects a repeating trigger', () => {
+      expect(getVinelingRoles(triggerPayoff)).toEqual(['member', 'trigger']);
+    });
+    it('detects The Vine as member + buff + trigger', () => {
+      expect(getVinelingRoles(theVine)).toEqual(['member', 'buff', 'trigger']);
+    });
+    it('ignores non-Floodborn cards with no Floodborn payoff text', () => {
+      expect(isVinelingCard(createCard({id: 'x', name: 'X', cost: 3, text: 'Draw a card.'}))).toBe(false);
     });
   });
 });
