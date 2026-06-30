@@ -5073,6 +5073,32 @@
       "strength": 6,
       "willpower": 5,
       "lore": 2
+    },
+    {
+      "id": 13185,
+      "name": "Owl",
+      "fullName": "Owl - Hunny Ranger",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 185,
+      "version": "Hunny Ranger",
+      "rarity": "Common",
+      "franchise": "Winnie the Pooh",
+      "subtypes": [
+        "Dreamborm",
+        "Ally",
+        "Hunny"
+      ],
+      "fullText": "HUNNY ALLIANCE While you have another Hunny character in play, this character gains Resist +2. (Damage dealt to them is reduced by 2.)",
+      "fullTextSections": [
+        "HUNNY ALLIANCE While you have another Hunny character in play, this character gains Resist +2. (Damage dealt to them is reduced by 2.)"
+      ],
+      "strength": 1,
+      "willpower": 1,
+      "lore": 2
     }
   ]
 }
