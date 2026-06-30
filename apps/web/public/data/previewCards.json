@@ -4936,6 +4936,22 @@
       "strength": 2,
       "willpower": 3,
       "lore": 1
+    },
+    {
+      "id": 13198,
+      "name": "Cower Before Me!",
+      "fullName": "Cower Before Me!",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "13",
+      "number": 198,
+      "rarity": "Common",
+      "fullText": "Up to 2 chosen opposing characters can't challenge during their next turn.",
+      "fullTextSections": [
+        "Up to 2 chosen opposing characters can't challenge during their next turn."
+      ]
     }
   ]
 }
