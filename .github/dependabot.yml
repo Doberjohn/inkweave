@@ -19,7 +19,7 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-    # Keep @types/node on the pinned Node 22 runtime line (see .nvmrc /
+    # Keep @types/node on the pinned Node 24 runtime line (see .nvmrc /
     # engines.node). Minor/patch type updates still flow; majors are suppressed.
     ignore:
       - dependency-name: '@types/node'
