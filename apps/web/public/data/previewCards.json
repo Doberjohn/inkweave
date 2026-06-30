@@ -5194,6 +5194,22 @@
       "strength": 3,
       "willpower": 2,
       "lore": 1
+    },
+    {
+      "id": 13104,
+      "name": "Scout Ahead",
+      "fullName": "Scout Ahead",
+      "cost": 1,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "13",
+      "number": 104,
+      "rarity": "Common",
+      "fullText": "If an opponent has more Lore than you, gain 2 Lore",
+      "fullTextSections": [
+        "If an opponent has more Lore than you, gain 2 Lore"
+      ]
     }
   ]
 }
