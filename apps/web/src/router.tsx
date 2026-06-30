@@ -48,6 +48,7 @@ const InDepthVotePage = lazyWithRetry(
 );
 const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'), 'NotFoundPage');
 const RevealsPage = lazyWithRetry(() => import('./pages/RevealsPage'), 'RevealsPage');
+const RevealAdminPage = lazyWithRetry(() => import('./pages/RevealAdminPage'), 'RevealAdminPage');
 
 /** Generic 3-line fallback used by every route except `/`. */
 function GenericFallback() {
@@ -171,6 +172,14 @@ export const router = createBrowserRouter([
               <RevealsPage />
             </SuspenseWrapper>
           </RevealsGate>
+        ),
+      },
+      {
+        path: 'reveal-admin',
+        element: (
+          <SuspenseWrapper>
+            <RevealAdminPage />
+          </SuspenseWrapper>
         ),
       },
       {
