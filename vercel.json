@@ -1,5 +1,5 @@
 {
-  "buildCommand": "node scripts/download-card-images.mjs && pnpm build:engine && node scripts/precompute-synergies.mjs && VITE_LOCAL_IMAGES=true pnpm build:web && node scripts/check-sourcemaps.mjs apps/web/dist",
+  "buildCommand": "node scripts/download-card-images.mjs && pnpm build:engine && node scripts/precompute-synergies.mjs && node scripts/precompute-vote-analytics.mjs && VITE_LOCAL_IMAGES=true pnpm build:web && node scripts/check-sourcemaps.mjs apps/web/dist",
   "outputDirectory": "apps/web/dist",
   "installCommand": "pnpm install",
   "framework": "vite",
@@ -32,6 +32,15 @@
     },
     {
       "source": "/data/synergies/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/data/vote-analytics.json",
       "headers": [
         {
           "key": "Cache-Control",

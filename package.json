@@ -24,6 +24,8 @@
     "download-images": "node scripts/download-card-images.mjs",
     "convert-preview-images": "node scripts/convert-preview-images.mjs",
     "precompute-synergies": "node scripts/precompute-synergies.mjs",
+    "precompute-vote-analytics": "node scripts/precompute-vote-analytics.mjs",
+    "test:scripts": "vitest run --config vitest.scripts.config.mjs",
     "mine-rules": "pnpm build:engine && node scripts/mine-rule-candidates.mjs",
     "graduate-set": "node scripts/graduate-canonical-set.mjs",
     "docs": "node scripts/generate-docs.mjs",
@@ -46,6 +48,7 @@
   ],
   "devDependencies": {
     "@lhci/cli": "^0.15.1",
+    "vitest": "^4.0.0",
     "@size-limit/file": "^12.1.0",
     "husky": "^9.1.7",
     "prettier": "^3.9.1",
