@@ -1029,24 +1029,14 @@ export const synergyRules: SynergyRule[] = [
 
     matches: isVinelingCard,
 
-    findSynergies: (card, allCards) => {
-      const cardRoles = getVinelingRoles(card);
-      if (cardRoles.length === 0) return [];
-      const cardIsPayoff = isVinelingPayoff(cardRoles);
-
-      const matches: SynergyMatch[] = [];
-      for (const other of allCards) {
-        if (other.id === card.id) continue;
-        const otherRoles = getVinelingRoles(other);
-        if (otherRoles.length === 0) continue;
-        // Payoff-anchored: skip member <-> member (neither side is a payoff).
-        if (!cardIsPayoff && !isVinelingPayoff(otherRoles)) continue;
-
-        const {score, explanation} = scoreVinelingPair(cardRoles, otherRoles);
-        matches.push({card: other, score, explanation, bidirectional: true});
-      }
-      return matches;
-    },
+    // Payoff-anchored: the scorePair callback returns null for member-member pairs
+    // (neither side is a payoff), so they are never emitted.
+    findSynergies: (card, allCards) =>
+      tribalFindSynergies(card, allCards, getVinelingRoles, (cardRoles, otherRoles) =>
+        isVinelingPayoff(cardRoles) || isVinelingPayoff(otherRoles)
+          ? scoreVinelingPair(cardRoles, otherRoles)
+          : null,
+      ),
   },
 
   // --------------------------------------------
@@ -1062,21 +1052,8 @@ export const synergyRules: SynergyRule[] = [
 
     matches: isHunnyCard,
 
-    findSynergies: (card, allCards) => {
-      const cardRoles = getHunnyRoles(card);
-      if (cardRoles.length === 0) return [];
-
-      const matches: SynergyMatch[] = [];
-      for (const other of allCards) {
-        if (other.id === card.id) continue;
-        const otherRoles = getHunnyRoles(other);
-        if (otherRoles.length === 0) continue;
-
-        const {score, explanation} = scoreHunnyPair(cardRoles, otherRoles);
-        matches.push({card: other, score, explanation, bidirectional: true});
-      }
-      return matches;
-    },
+    findSynergies: (card, allCards) =>
+      tribalFindSynergies(card, allCards, getHunnyRoles, scoreHunnyPair),
   },
 
   // --------------------------------------------
@@ -1092,21 +1069,8 @@ export const synergyRules: SynergyRule[] = [
 
     matches: isRedPandaCard,
 
-    findSynergies: (card, allCards) => {
-      const cardRoles = getRedPandaRoles(card);
-      if (cardRoles.length === 0) return [];
-
-      const matches: SynergyMatch[] = [];
-      for (const other of allCards) {
-        if (other.id === card.id) continue;
-        const otherRoles = getRedPandaRoles(other);
-        if (otherRoles.length === 0) continue;
-
-        const {score, explanation} = scoreRedPandaPair(cardRoles, otherRoles);
-        matches.push({card: other, score, explanation, bidirectional: true});
-      }
-      return matches;
-    },
+    findSynergies: (card, allCards) =>
+      tribalFindSynergies(card, allCards, getRedPandaRoles, scoreRedPandaPair),
   },
 ];
 
@@ -1662,6 +1626,32 @@ function crossMatcher<T extends string>(aRoles: T[], bRoles: T[]): (x: T, y: T) 
   const a = new Set(aRoles);
   const b = new Set(bRoles);
   return (x, y) => (a.has(x) && b.has(y)) || (b.has(x) && a.has(y));
+}
+
+/**
+ * Shared tribal `findSynergies` loop: pair the card against every other role-bearing
+ * card, scoring each via `scorePair`. A `null` result skips the pair (the payoff-anchored
+ * Vinelings rule uses this to drop member-member pairs).
+ */
+function tribalFindSynergies<R>(
+  card: LorcanaCard,
+  allCards: LorcanaCard[],
+  getRoles: (c: LorcanaCard) => R[],
+  scorePair: (cardRoles: R[], otherRoles: R[]) => {score: number; explanation: string} | null,
+): SynergyMatch[] {
+  const cardRoles = getRoles(card);
+  if (cardRoles.length === 0) return [];
+
+  const matches: SynergyMatch[] = [];
+  for (const other of allCards) {
+    if (other.id === card.id) continue;
+    const otherRoles = getRoles(other);
+    if (otherRoles.length === 0) continue;
+    const result = scorePair(cardRoles, otherRoles);
+    if (result === null) continue;
+    matches.push({card: other, score: result.score, explanation: result.explanation, bidirectional: true});
+  }
+  return matches;
 }
 
 // ============================================

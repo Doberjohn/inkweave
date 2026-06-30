@@ -1134,18 +1134,17 @@ const VINELING_BUFF_PATTERN = /your\b[^.]*\bfloodborn characters?\b[^.]*\b(?:get
 /** Repeating trigger: "whenever [...] Floodborn ..." (quests / is banished / you play another). */
 const VINELING_TRIGGER_PATTERN = /\bwhen(?:ever)?\b[^.]*\bfloodborn\b/i;
 
+/** Detect Floodborn-matters payoff roles from card text (buff, trigger). */
+function detectVinelingPayoffRoles(text: string, roles: VinelingRole[]): void {
+  if (VINELING_BUFF_PATTERN.test(text)) roles.push('buff');
+  if (VINELING_TRIGGER_PATTERN.test(text)) roles.push('trigger');
+}
+
 export function getVinelingRoles(card: LorcanaCard): VinelingRole[] {
   const text = card.text != null ? normalizeCardText(card) : '';
-  const isMember = isCharacter(card) && hasClassification(card, 'Floodborn');
-  const isBuff = text !== '' && VINELING_BUFF_PATTERN.test(text);
-  const isTrigger = text !== '' && VINELING_TRIGGER_PATTERN.test(text);
-
-  if (!isMember && !isBuff && !isTrigger) return [];
-
   const roles: VinelingRole[] = [];
-  if (isMember) roles.push('member');
-  if (isBuff) roles.push('buff');
-  if (isTrigger) roles.push('trigger');
+  if (isCharacter(card) && hasClassification(card, 'Floodborn')) roles.push('member');
+  detectVinelingPayoffRoles(text, roles);
   return roles;
 }
 
@@ -1171,18 +1170,22 @@ const HUNNY_DENSITY_PATTERN = /(?:\d+ or more other|another|your other)\s+Hunny 
 const HUNNY_SEARCH_PATTERN = /search your deck for a Hunny card|Hunny card[^.]*put it into your hand/i;
 const HUNNY_BUFF_PATTERN = /chosen Hunny character/i;
 
+/** Detect Hunny-scoped payoff roles from card text (density, search, buff). */
+function detectHunnyPayoffRoles(text: string, roles: HunnyRole[]): void {
+  if (HUNNY_DENSITY_PATTERN.test(text)) roles.push('density');
+  if (HUNNY_SEARCH_PATTERN.test(text)) roles.push('search');
+  if (HUNNY_BUFF_PATTERN.test(text)) roles.push('buff');
+}
+
 export function getHunnyRoles(card: LorcanaCard): HunnyRole[] {
   const isMember = hasClassification(card, 'Hunny');
   const text = card.text != null ? normalizeCardText(card) : '';
   const isPayoff = text !== '' && HUNNY_PAYOFF_PATTERN.test(text);
-
   if (!isMember && !isPayoff) return [];
 
   const roles: HunnyRole[] = [];
   if (isMember) roles.push('member');
-  if (HUNNY_DENSITY_PATTERN.test(text)) roles.push('density');
-  if (HUNNY_SEARCH_PATTERN.test(text)) roles.push('search');
-  if (HUNNY_BUFF_PATTERN.test(text)) roles.push('buff');
+  detectHunnyPayoffRoles(text, roles);
   return roles;
 }
 
