@@ -22,6 +22,11 @@ export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
   // Art asset sacrifice.webp (670x500 webp) is provided separately; drop it in apps/web/public/art/playstyles/.
   sacrifice: makeUiMeta('#10b981', '/art/playstyles/sacrifice.webp'),
   dwarfs: makeUiMeta('#8b5cf6', '/art/playstyles/dwarf.webp'),
+  // Set 13 playstyles. Cover art assets (vinelings/hunny/red-panda .webp) are pending;
+  // drop them in apps/web/public/art/playstyles/ to replace the placeholder cover paths.
+  vinelings: makeUiMeta('#65a30d', '/art/playstyles/vinelings.webp'),
+  hunny: makeUiMeta('#eab308', '/art/playstyles/hunny.webp'),
+  'red-panda': makeUiMeta('#ea580c', '/art/playstyles/red-panda.webp'),
 };
 
 export interface ComingSoonPlaystyle extends PlaystyleUiMeta {
