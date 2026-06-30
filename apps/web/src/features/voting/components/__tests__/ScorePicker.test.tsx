@@ -61,4 +61,19 @@ describe('ScorePicker', () => {
       expect(button).toHaveAttribute('aria-checked', 'false');
     }
   });
+
+  it('cancels the click-pulse timer on unmount (no leaked timer)', () => {
+    vi.useFakeTimers();
+    try {
+      const {unmount} = render(<ScorePicker value={null} onChange={onChange} />);
+      fireEvent.click(screen.getByLabelText('Score 7'));
+      expect(vi.getTimerCount()).toBe(1); // the 300ms pulse-reset timer is scheduled
+      unmount();
+      // A leaked timer firing setState into a torn-down tree crashed CI's coverage
+      // run with "window is not defined"; the cleanup must cancel it on unmount.
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
