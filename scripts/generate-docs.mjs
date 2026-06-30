@@ -47,6 +47,9 @@ const RULE_ORDER = [
   'TOY_RULE.md',
   'SACRIFICE_RULE.md',
   'DWARFS_RULE.md',
+  'VINELINGS_RULE.md',
+  'HUNNY_RULE.md',
+  'RED_PANDA_RULE.md',
   'REMOVED_RULES.md',
 ];
 
