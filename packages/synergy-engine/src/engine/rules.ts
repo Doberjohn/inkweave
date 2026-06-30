@@ -25,6 +25,8 @@ import {
   getToyRoles,
   isDwarfsCard,
   getDwarfsRoles,
+  getVinelingRoles,
+  isVinelingCard,
   isLoreDenialCard,
   getLoreDenialRoles,
   getSacrificeRoles,
@@ -41,6 +43,7 @@ import {
   type ShiftType,
   type ToyRole,
   type DwarfsRole,
+  type VinelingRole,
 } from '../utils';
 
 // ============================================
@@ -1006,6 +1009,39 @@ export const synergyRules: SynergyRule[] = [
       return matches;
     },
   },
+
+  // --------------------------------------------
+  // VINELINGS (Floodborn matters, payoff-anchored)
+  // --------------------------------------------
+  {
+    id: 'vinelings',
+    name: 'Vinelings',
+    category: 'playstyle',
+    playstyleId: 'vinelings',
+    description:
+      'Floodborn characters and the Set 13 Vine payoffs that buff or trigger off them. Payoff-anchored: a Floodborn body synergizes with payoffs, but two plain Floodborn do not synergize with each other.',
+
+    matches: isVinelingCard,
+
+    findSynergies: (card, allCards) => {
+      const cardRoles = getVinelingRoles(card);
+      if (cardRoles.length === 0) return [];
+      const cardIsPayoff = isVinelingPayoff(cardRoles);
+
+      const matches: SynergyMatch[] = [];
+      for (const other of allCards) {
+        if (other.id === card.id) continue;
+        const otherRoles = getVinelingRoles(other);
+        if (otherRoles.length === 0) continue;
+        // Payoff-anchored: skip member <-> member (neither side is a payoff).
+        if (!cardIsPayoff && !isVinelingPayoff(otherRoles)) continue;
+
+        const {score, explanation} = scoreVinelingPair(cardRoles, otherRoles);
+        matches.push({card: other, score, explanation, bidirectional: true});
+      }
+      return matches;
+    },
+  },
 ];
 
 // ============================================
@@ -1517,6 +1553,38 @@ function scoreDwarfsPair(
   }
 
   return {score: 5, explanation: `Both share the Seven Dwarfs deck. Density baseline.`};
+}
+
+// ============================================
+// VINELINGS SCORING (payoff-anchored, 5-baseline)
+// ============================================
+
+const isVinelingPayoff = (roles: VinelingRole[]): boolean =>
+  roles.includes('buff') || roles.includes('trigger');
+
+/**
+ * Score a Vinelings pair. Called only when at least one side is a payoff
+ * (the rule's findSynergies skips member-member pairs).
+ *   - payoff <-> payoff           = 7 (two payoffs stack on the same Floodborn board)
+ *   - member <-> trigger payoff   = 7 (the body fires the repeating trigger)
+ *   - member <-> buff payoff      = 6 (the body is pumped by the team buff)
+ */
+function scoreVinelingPair(
+  cardRoles: VinelingRole[],
+  otherRoles: VinelingRole[],
+): {score: number; explanation: string} {
+  const cardPayoff = isVinelingPayoff(cardRoles);
+  const otherPayoff = isVinelingPayoff(otherRoles);
+
+  if (cardPayoff && otherPayoff) {
+    return {score: 7, explanation: 'Both reward a wide Floodborn board, so the payoffs stack.'};
+  }
+  // Exactly one side is a payoff; the other is a member only.
+  const payoffRoles = cardPayoff ? cardRoles : otherRoles;
+  if (payoffRoles.includes('trigger')) {
+    return {score: 7, explanation: 'The Floodborn body fires the repeating payoff trigger.'};
+  }
+  return {score: 6, explanation: 'The Floodborn body is pumped by the team buff.'};
 }
 
 // Get all rules

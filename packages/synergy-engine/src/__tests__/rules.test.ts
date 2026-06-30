@@ -2241,4 +2241,27 @@ describe('Dwarfs Tribal', () => {
       expect(isVinelingCard(createCard({id: 'x', name: 'X', cost: 3, text: 'Draw a card.'}))).toBe(false);
     });
   });
+
+  describe('Vinelings rule', () => {
+    const rule = getRuleById('vinelings')!;
+    const member = createCard({id: 'm1', name: 'Elsa', cost: 7, classifications: ['Floodborn'], text: 'Quests for 2 lore.'});
+    const member2 = createCard({id: 'm2', name: 'Ariel', cost: 5, classifications: ['Floodborn'], text: 'Has Evasive.'});
+    const buff = createCard({id: 'b1', name: 'Gaston', cost: 2, classifications: ['Floodborn'], text: 'Your Floodborn characters get +1 ¤.'});
+    const trigger = createCard({id: 't1', name: 'Hera', cost: 5, classifications: ['Floodborn'], text: 'Whenever you play this or another Floodborn character, gain 1 lore.'});
+
+    const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+    it('does not pair two plain Floodborn members (payoff-anchored)', () => {
+      expect(rule.findSynergies(member, [member, member2])).toHaveLength(0);
+    });
+    it('scores member + trigger payoff at 7', () => {
+      expect(scoreWith(member, trigger)?.score).toBe(7);
+    });
+    it('scores member + buff payoff at 6', () => {
+      expect(scoreWith(member, buff)?.score).toBe(6);
+    });
+    it('scores payoff + payoff at 7', () => {
+      expect(scoreWith(buff, trigger)?.score).toBe(7);
+    });
+  });
 });
