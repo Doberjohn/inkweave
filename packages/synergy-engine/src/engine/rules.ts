@@ -29,6 +29,8 @@ import {
   isVinelingCard,
   getHunnyRoles,
   isHunnyCard,
+  getRedPandaRoles,
+  isRedPandaCard,
   isLoreDenialCard,
   getLoreDenialRoles,
   getSacrificeRoles,
@@ -47,6 +49,7 @@ import {
   type DwarfsRole,
   type VinelingRole,
   type HunnyRole,
+  type RedPandaRole,
 } from '../utils';
 
 // ============================================
@@ -1075,6 +1078,36 @@ export const synergyRules: SynergyRule[] = [
       return matches;
     },
   },
+
+  // --------------------------------------------
+  // RED PANDA TRIBAL
+  // --------------------------------------------
+  {
+    id: 'red-panda',
+    name: 'Red Panda',
+    category: 'playstyle',
+    playstyleId: 'red-panda',
+    description:
+      'Red Panda characters and the deck-search payoff that digs the tribe out of your deck.',
+
+    matches: isRedPandaCard,
+
+    findSynergies: (card, allCards) => {
+      const cardRoles = getRedPandaRoles(card);
+      if (cardRoles.length === 0) return [];
+
+      const matches: SynergyMatch[] = [];
+      for (const other of allCards) {
+        if (other.id === card.id) continue;
+        const otherRoles = getRedPandaRoles(other);
+        if (otherRoles.length === 0) continue;
+
+        const {score, explanation} = scoreRedPandaPair(cardRoles, otherRoles);
+        matches.push({card: other, score, explanation, bidirectional: true});
+      }
+      return matches;
+    },
+  },
 ];
 
 // ============================================
@@ -1659,6 +1692,21 @@ function scoreHunnyPair(
     return {score: 6, explanation: 'The single-target buff pumps a Hunny body.'};
   }
   return {score: 5, explanation: 'Both share the Hunny deck. Density baseline.'};
+}
+
+// ============================================
+// RED PANDA TRIBAL SCORING (5-baseline)
+// ============================================
+
+function scoreRedPandaPair(
+  cardRoles: RedPandaRole[],
+  otherRoles: RedPandaRole[],
+): {score: number; explanation: string} {
+  const cross = crossMatcher(cardRoles, otherRoles);
+  if (cross('search', 'member')) {
+    return {score: 8, explanation: 'A Red Panda search converts a deck slot into a tribe member.'};
+  }
+  return {score: 5, explanation: 'Both share the Red Panda deck. Density baseline.'};
 }
 
 // Get all rules
