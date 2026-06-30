@@ -4910,6 +4910,32 @@
       "strength": 4,
       "willpower": 4,
       "lore": 2
+    },
+    {
+      "id": 13016,
+      "name": "Meilin Lee",
+      "fullName": "Meilin Lee - Losing Control",
+      "cost": 3,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 16,
+      "version": "Losing Control",
+      "rarity": "Rare",
+      "franchise": "Turning Red",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Red Panda"
+      ],
+      "fullText": "RED PANDA POWER When you play this character, look at the top 4 cards of your deck. You may reveal a Red Panda character card or a song card and put it into your hand. Put the rest on the bottom of your deck in any order.",
+      "fullTextSections": [
+        "RED PANDA POWER When you play this character, look at the top 4 cards of your deck. You may reveal a Red Panda character card or a song card and put it into your hand. Put the rest on the bottom of your deck in any order."
+      ],
+      "strength": 2,
+      "willpower": 3,
+      "lore": 1
     }
   ]
 }
