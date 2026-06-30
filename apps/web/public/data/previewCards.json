@@ -5073,6 +5073,76 @@
       "strength": 6,
       "willpower": 5,
       "lore": 2
+    },
+    {
+      "id": 13185,
+      "name": "Owl",
+      "fullName": "Owl - Hunny Ranger",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 185,
+      "version": "Hunny Ranger",
+      "rarity": "Common",
+      "franchise": "Winnie the Pooh",
+      "subtypes": [
+        "Dreamborm",
+        "Ally",
+        "Hunny"
+      ],
+      "fullText": "HUNNY ALLIANCE While you have another Hunny character in play, this character gains Resist +2. (Damage dealt to them is reduced by 2.)",
+      "fullTextSections": [
+        "HUNNY ALLIANCE While you have another Hunny character in play, this character gains Resist +2. (Damage dealt to them is reduced by 2.)"
+      ],
+      "strength": 1,
+      "willpower": 1,
+      "lore": 2
+    },
+    {
+      "id": 13154,
+      "name": "Piglet",
+      "fullName": "Piglet - Hunny Mage Apprentice",
+      "cost": 1,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 154,
+      "version": "Hunny Mage Apprentice",
+      "rarity": "Common",
+      "franchise": "Winnie the Pooh",
+      "subtypes": [
+        "Dreamborn",
+        "Ally",
+        "Sorcerer",
+        "Hunny"
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 13117,
+      "name": "Splodyhead",
+      "fullName": "Splodyhead - Experiment 619",
+      "cost": 3,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 117,
+      "version": "Experiment 619",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Alien"
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 2
     }
   ]
 }
