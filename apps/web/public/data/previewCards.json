@@ -5099,6 +5099,29 @@
       "strength": 1,
       "willpower": 1,
       "lore": 2
+    },
+    {
+      "id": 13154,
+      "name": "Piglet",
+      "fullName": "Piglet - Hunny Mage Apprentice",
+      "cost": 1,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 154,
+      "version": "Hunny Mage Apprentice",
+      "rarity": "Common",
+      "franchise": "Winnie the Pooh",
+      "subtypes": [
+        "Dreamborn",
+        "Ally",
+        "Sorcerer",
+        "Hunny"
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1
     }
   ]
 }
