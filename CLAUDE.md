@@ -89,6 +89,9 @@ React web application that consumes the synergy engine package.
 - Toys (`toy`) - Toy-classification members + tribal payoffs (search, banish-trigger, self-discount)
 - Sacrifice (`sacrifice`) - self-banish cards (banish your own characters) + banish-trigger payoffs
 - Seven Dwarfs (`dwarfs`) - Seven Dwarfs-classification members + tribal payoffs (density, recruit, return)
+- Vinelings (`vinelings`) - Floodborn-matters payoffs (buff + trigger), payoff-anchored against the whole Floodborn tribe
+- Hunny (`hunny`) - Winnie-the-Pooh tribe (density, search, buff)
+- Red Panda (`red-panda`) - Turning Red tribe (member + search)
 
 **Synergy Score**: 1-10 numeric scale (all integers valid). Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4)
 
@@ -386,6 +389,61 @@ Tribal playstyle for Seven Dwarfs / Snow White decks (Set 12 package). **Members
 **Coverage**: 14 members + 3 non-member payoffs = 17 cards, 136 unique pairs. Distribution: 50% at 5, 39% at 7, 11% at 8. Role population: 14 member, 4 density (Doc - Taking Notes, Sleepy - Deep Sleeper, Right Behind You, Don't Be Nervous), 1 recruit (Right Behind You), 1 return (Snow White - Merry as the Morning).
 
 **Full documentation**: See [`packages/synergy-engine/DWARFS_RULE.md`](packages/synergy-engine/DWARFS_RULE.md).
+
+### Rule 11: Vinelings (playstyle: Floodborn matters, payoff-anchored)
+
+Set 13 "Vine" archetype. Branded **Vinelings** but keyed on the **Floodborn** classification: every payoff reads "your Floodborn characters", and every Shift card in the game is Floodborn. **Payoff-anchored**: a Floodborn body synergizes with payoffs, but two plain Floodborn do not synergize with each other (`findSynergies` skips member ↔ member, avoiding ~6,400 density pairs that would tag every shifted card).
+
+**Roles**:
+- **Membership**: `member` (`isCharacter` + `Floodborn` classification)
+- **Payoffs**: `buff` (static "your Floodborn characters get/gain ..."), `trigger` (repeating "whenever ... Floodborn ..." on quest/play/banish). The Vine carries all three.
+
+**Scoring** (5-baseline):
+
+| Pair | Score | Why |
+|------|-------|-----|
+| member ↔ trigger | **7** | The body fires the repeating payoff trigger |
+| payoff ↔ payoff | **7** | Two payoffs stack on the same Floodborn board |
+| member ↔ buff | **6** | The body is pumped by the team buff |
+| member ↔ member | (not generated) | Payoff-anchored |
+
+**Cross-rule**: Floodborn banish-triggers (Maid Marian, The Vine) are also caught by the Sacrifice `banish-trigger` (expected cross-playstyle composition).
+
+**Full documentation**: See [`packages/synergy-engine/VINELINGS_RULE.md`](packages/synergy-engine/VINELINGS_RULE.md).
+
+### Rule 12: Hunny (playstyle, tribal)
+
+Winnie-the-Pooh tribe (Set 13), modeled on Seven Dwarfs. **Membership gate**: `Hunny` classification. **Payoff gate**: `/\bHunny (character|card|classification)/i`, deliberately NOT bare "Hunny" (abilities are named "HUNNY AURA"/"HUNNY ACTIVATION", the same caps trap as Toy's "WORLD'S GREATEST TOY").
+
+**Roles**: `member`, `density` (gated on Hunny in play), `search` (dig a Hunny from deck), `buff` (single-target pump of a chosen Hunny).
+
+**Scoring** (5-baseline):
+
+| Pair | Score |
+|------|-------|
+| search ↔ member / search ↔ density | **8** |
+| density ↔ density / density ↔ member | **7** |
+| buff ↔ member | **6** |
+| everything else | **5** |
+
+**Coverage**: 9 members + 3 density, 2 search, 3 buff payoffs (several multi-role).
+
+**Full documentation**: See [`packages/synergy-engine/HUNNY_RULE.md`](packages/synergy-engine/HUNNY_RULE.md).
+
+### Rule 13: Red Panda (playstyle, tribal, minimal)
+
+Turning Red tribe (Set 13). Intentionally thin: one tribal payoff plus members. **Membership gate**: `Red Panda` classification. **Payoff**: `search` = `/reveal a Red Panda character/i` (the search shape, NOT bare "Red Panda character", so Sun Yee's Temporary Red Panda Shift reminder does not false-positive).
+
+**Scoring** (5-baseline):
+
+| Pair | Score |
+|------|-------|
+| search ↔ member | **8** |
+| member ↔ member | **5** |
+
+Red Panda's other connections (Meilin/Ming named-companions, Red Panda Shift) come from Rules 1 and 2; this rule only adds the tribal-fetch axis.
+
+**Full documentation**: See [`packages/synergy-engine/RED_PANDA_RULE.md`](packages/synergy-engine/RED_PANDA_RULE.md).
 
 ## Commands
 

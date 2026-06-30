@@ -1107,3 +1107,116 @@ export function getLoreDenialRoles(card: LorcanaCard): LoreDenialRole[] {
 }
 
 export const isLoreDenialCard = (card: LorcanaCard): boolean => getLoreDenialRoles(card).length > 0;
+
+// ============================================
+// VINELINGS DETECTION (Floodborn Matters, payoff-anchored)
+// ============================================
+
+/**
+ * The "Vinelings" archetype is branded for the new Set 13 Vineling classification,
+ * but its membership and payoffs key on the broader **Floodborn** classification:
+ * every payoff card reads "your Floodborn characters". So a `member` is any Floodborn
+ * character (114+ across all sets), and `isVinelingCard` returns true for any Floodborn
+ * character or Floodborn-matters payoff, NOT only the Vineling subtype.
+ *
+ * Roles:
+ * - 'member'  — a Floodborn character (the body the payoffs reward)
+ * - 'buff'    — a static team pump: "your [...] Floodborn characters get/gain ..."
+ * - 'trigger' — a repeating engine: "whenever [...] Floodborn ..." (quest / play / banish)
+ *
+ * Payoff-anchored: the rule (see rules.ts) does not pair two plain members with each
+ * other, so 'member' alone never produces a synergy without a 'buff'/'trigger' partner.
+ */
+export type VinelingRole = 'member' | 'buff' | 'trigger';
+
+/** Static team buff: "Your [...] Floodborn characters get/gain ...". */
+const VINELING_BUFF_PATTERN = /your\b[^.]*\bfloodborn characters?\b[^.]*\b(?:get|gain)\b/i;
+/** Repeating trigger: "whenever [...] Floodborn ..." (quests / is banished / you play another). */
+const VINELING_TRIGGER_PATTERN = /\bwhen(?:ever)?\b[^.]*\bfloodborn\b/i;
+
+/** Detect Floodborn-matters payoff roles from card text (buff, trigger). */
+function detectVinelingPayoffRoles(text: string, roles: VinelingRole[]): void {
+  if (VINELING_BUFF_PATTERN.test(text)) roles.push('buff');
+  if (VINELING_TRIGGER_PATTERN.test(text)) roles.push('trigger');
+}
+
+export function getVinelingRoles(card: LorcanaCard): VinelingRole[] {
+  const text = card.text != null ? normalizeCardText(card) : '';
+  const roles: VinelingRole[] = [];
+  if (isCharacter(card) && hasClassification(card, 'Floodborn')) roles.push('member');
+  detectVinelingPayoffRoles(text, roles);
+  return roles;
+}
+
+export const isVinelingCard = (card: LorcanaCard): boolean => getVinelingRoles(card).length > 0;
+
+// ============================================
+// HUNNY TRIBAL DETECTION
+// ============================================
+
+/**
+ * Hunny tribe (Winnie-the-Pooh, Set 13). Membership is the Hunny classification.
+ * The payoff gate is "Hunny (character|card|classification)" and deliberately NOT
+ * bare "Hunny", because abilities are named "HUNNY AURA" / "HUNNY ACTIVATION"
+ * (the same caps-ability-name trap as Toy's "WORLD'S GREATEST TOY").
+ *
+ * Roles: 'member', 'density' (gated on Hunny in play), 'search' (dig a Hunny from deck),
+ * 'buff' (single-target pump of a chosen Hunny).
+ */
+export type HunnyRole = 'member' | 'density' | 'search' | 'buff';
+
+const HUNNY_PAYOFF_PATTERN = /\bHunny (?:character|card|classification)/i;
+const HUNNY_DENSITY_PATTERN = /(?:\d+ or more other|another|your other)\s+Hunny characters?/i;
+const HUNNY_SEARCH_PATTERN = /search your deck for a Hunny card|Hunny card[^.]*put it into your hand/i;
+const HUNNY_BUFF_PATTERN = /chosen Hunny character/i;
+
+/** Detect Hunny-scoped payoff roles from card text (density, search, buff). */
+function detectHunnyPayoffRoles(text: string, roles: HunnyRole[]): void {
+  if (HUNNY_DENSITY_PATTERN.test(text)) roles.push('density');
+  if (HUNNY_SEARCH_PATTERN.test(text)) roles.push('search');
+  if (HUNNY_BUFF_PATTERN.test(text)) roles.push('buff');
+}
+
+export function getHunnyRoles(card: LorcanaCard): HunnyRole[] {
+  const isMember = hasClassification(card, 'Hunny');
+  const text = card.text != null ? normalizeCardText(card) : '';
+  const isPayoff = text !== '' && HUNNY_PAYOFF_PATTERN.test(text);
+  if (!isMember && !isPayoff) return [];
+
+  const roles: HunnyRole[] = [];
+  if (isMember) roles.push('member');
+  detectHunnyPayoffRoles(text, roles);
+  return roles;
+}
+
+export const isHunnyCard = (card: LorcanaCard): boolean => getHunnyRoles(card).length > 0;
+
+// ============================================
+// RED PANDA TRIBAL DETECTION
+// ============================================
+
+/**
+ * Red Panda tribe (Turning Red, Set 13). Membership is the Red Panda classification.
+ * The lone tribal payoff is a deck search; the pattern matches the search shape
+ * ("reveal a Red Panda character"), NOT bare "Red Panda character", so Sun Yee's
+ * Temporary Red Panda Shift reminder text ("on top of one of your Red Panda characters")
+ * does not false-positive.
+ */
+export type RedPandaRole = 'member' | 'search';
+
+const RED_PANDA_SEARCH_PATTERN = /reveal a Red Panda character/i;
+
+export function getRedPandaRoles(card: LorcanaCard): RedPandaRole[] {
+  const isMember = hasClassification(card, 'Red Panda');
+  const text = card.text != null ? normalizeCardText(card) : '';
+  const isSearch = text !== '' && RED_PANDA_SEARCH_PATTERN.test(text);
+
+  if (!isMember && !isSearch) return [];
+
+  const roles: RedPandaRole[] = [];
+  if (isMember) roles.push('member');
+  if (isSearch) roles.push('search');
+  return roles;
+}
+
+export const isRedPandaCard = (card: LorcanaCard): boolean => getRedPandaRoles(card).length > 0;

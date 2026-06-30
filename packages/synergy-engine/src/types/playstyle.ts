@@ -9,7 +9,10 @@ export type PlaystyleId =
   | 'ramp'
   | 'toy'
   | 'sacrifice'
-  | 'dwarfs';
+  | 'dwarfs'
+  | 'vinelings'
+  | 'hunny'
+  | 'red-panda';
 
 // A playstyle groups related synergy rules that reinforce the same way of playing.
 // The more cards supporting a playstyle, the more consistent the deck becomes.

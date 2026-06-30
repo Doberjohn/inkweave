@@ -25,6 +25,12 @@ import {
   getToyRoles,
   isDwarfsCard,
   getDwarfsRoles,
+  getVinelingRoles,
+  isVinelingCard,
+  getHunnyRoles,
+  isHunnyCard,
+  getRedPandaRoles,
+  isRedPandaCard,
   isLoreDenialCard,
   getLoreDenialRoles,
   getSacrificeRoles,
@@ -41,6 +47,9 @@ import {
   type ShiftType,
   type ToyRole,
   type DwarfsRole,
+  type VinelingRole,
+  type HunnyRole,
+  type RedPandaRole,
 } from '../utils';
 
 // ============================================
@@ -1006,6 +1015,63 @@ export const synergyRules: SynergyRule[] = [
       return matches;
     },
   },
+
+  // --------------------------------------------
+  // VINELINGS (Floodborn matters, payoff-anchored)
+  // --------------------------------------------
+  {
+    id: 'vinelings',
+    name: 'Vinelings',
+    category: 'playstyle',
+    playstyleId: 'vinelings',
+    description:
+      'Floodborn characters and the Set 13 Vine payoffs that buff or trigger off them. Payoff-anchored: a Floodborn body synergizes with payoffs, but two plain Floodborn do not synergize with each other.',
+
+    matches: isVinelingCard,
+
+    // Payoff-anchored: the scorePair callback returns null for member-member pairs
+    // (neither side is a payoff), so they are never emitted.
+    findSynergies: (card, allCards) =>
+      tribalFindSynergies(card, allCards, getVinelingRoles, (cardRoles, otherRoles) =>
+        isVinelingPayoff(cardRoles) || isVinelingPayoff(otherRoles)
+          ? scoreVinelingPair(cardRoles, otherRoles)
+          : null,
+      ),
+  },
+
+  // --------------------------------------------
+  // HUNNY TRIBAL
+  // --------------------------------------------
+  {
+    id: 'hunny',
+    name: 'Hunny',
+    category: 'playstyle',
+    playstyleId: 'hunny',
+    description:
+      'Hunny characters and the payoffs that reward running them: searches that dig the tribe out of the deck, density payoffs that scale with Hunny in play, and single-target buffs.',
+
+    matches: isHunnyCard,
+
+    findSynergies: (card, allCards) =>
+      tribalFindSynergies(card, allCards, getHunnyRoles, scoreHunnyPair),
+  },
+
+  // --------------------------------------------
+  // RED PANDA TRIBAL
+  // --------------------------------------------
+  {
+    id: 'red-panda',
+    name: 'Red Panda',
+    category: 'playstyle',
+    playstyleId: 'red-panda',
+    description:
+      'Red Panda characters and the deck-search payoff that digs the tribe out of your deck.',
+
+    matches: isRedPandaCard,
+
+    findSynergies: (card, allCards) =>
+      tribalFindSynergies(card, allCards, getRedPandaRoles, scoreRedPandaPair),
+  },
 ];
 
 // ============================================
@@ -1517,6 +1583,120 @@ function scoreDwarfsPair(
   }
 
   return {score: 5, explanation: `Both share the Seven Dwarfs deck. Density baseline.`};
+}
+
+// ============================================
+// VINELINGS SCORING (payoff-anchored, 5-baseline)
+// ============================================
+
+const isVinelingPayoff = (roles: VinelingRole[]): boolean =>
+  roles.includes('buff') || roles.includes('trigger');
+
+/**
+ * Score a Vinelings pair. Called only when at least one side is a payoff
+ * (the rule's findSynergies skips member-member pairs).
+ *   - payoff <-> payoff           = 7 (two payoffs stack on the same Floodborn board)
+ *   - member <-> trigger payoff   = 7 (the body fires the repeating trigger)
+ *   - member <-> buff payoff      = 6 (the body is pumped by the team buff)
+ */
+function scoreVinelingPair(
+  cardRoles: VinelingRole[],
+  otherRoles: VinelingRole[],
+): {score: number; explanation: string} {
+  const cardPayoff = isVinelingPayoff(cardRoles);
+  const otherPayoff = isVinelingPayoff(otherRoles);
+
+  if (cardPayoff && otherPayoff) {
+    return {score: 7, explanation: 'Both reward a wide Floodborn board, so the payoffs stack.'};
+  }
+  // Exactly one side is a payoff; the other is a member only.
+  const payoffRoles = cardPayoff ? cardRoles : otherRoles;
+  if (payoffRoles.includes('trigger')) {
+    return {score: 7, explanation: 'The Floodborn body fires the repeating payoff trigger.'};
+  }
+  return {score: 6, explanation: 'The Floodborn body is pumped by the team buff.'};
+}
+
+// ============================================
+// SHARED TRIBAL SCORING HELPERS
+// ============================================
+
+/** Direction-agnostic role-cross matcher: true iff one side has `x` and the other has `y`. */
+function crossMatcher<T extends string>(aRoles: T[], bRoles: T[]): (x: T, y: T) => boolean {
+  const a = new Set(aRoles);
+  const b = new Set(bRoles);
+  return (x, y) => (a.has(x) && b.has(y)) || (b.has(x) && a.has(y));
+}
+
+/**
+ * Shared tribal `findSynergies` loop: pair the card against every other role-bearing
+ * card, scoring each via `scorePair`. A `null` result skips the pair (the payoff-anchored
+ * Vinelings rule uses this to drop member-member pairs).
+ */
+function tribalFindSynergies<R>(
+  card: LorcanaCard,
+  allCards: LorcanaCard[],
+  getRoles: (c: LorcanaCard) => R[],
+  scorePair: (cardRoles: R[], otherRoles: R[]) => {score: number; explanation: string} | null,
+): SynergyMatch[] {
+  const cardRoles = getRoles(card);
+  if (cardRoles.length === 0) return [];
+
+  const matches: SynergyMatch[] = [];
+  for (const other of allCards) {
+    if (other.id === card.id) continue;
+    const otherRoles = getRoles(other);
+    if (otherRoles.length === 0) continue;
+    const result = scorePair(cardRoles, otherRoles);
+    if (result === null) continue;
+    matches.push({card: other, score: result.score, explanation: result.explanation, bidirectional: true});
+  }
+  return matches;
+}
+
+// ============================================
+// HUNNY TRIBAL SCORING (5-baseline)
+// ============================================
+
+/**
+ *   - search <-> member | search <-> density = 8 (fetch converts a slot / fuels the payoff)
+ *   - density <-> density | density <-> member = 7 (compounding / member feeds payoff)
+ *   - buff <-> member                          = 6 (single-target pump on a Hunny body)
+ *   - everything else                          = 5 (same-deck density baseline)
+ */
+function scoreHunnyPair(
+  cardRoles: HunnyRole[],
+  otherRoles: HunnyRole[],
+): {score: number; explanation: string} {
+  const cross = crossMatcher(cardRoles, otherRoles);
+  if (cross('search', 'member') || cross('search', 'density')) {
+    return {score: 8, explanation: 'A Hunny search digs the tribe out of your deck, fueling the payoffs.'};
+  }
+  if (cross('density', 'density')) {
+    return {score: 7, explanation: 'Both reward Hunny density, so the payoffs compound.'};
+  }
+  if (cross('density', 'member')) {
+    return {score: 7, explanation: 'The member feeds the Hunny density payoff.'};
+  }
+  if (cross('buff', 'member')) {
+    return {score: 6, explanation: 'The single-target buff pumps a Hunny body.'};
+  }
+  return {score: 5, explanation: 'Both share the Hunny deck. Density baseline.'};
+}
+
+// ============================================
+// RED PANDA TRIBAL SCORING (5-baseline)
+// ============================================
+
+function scoreRedPandaPair(
+  cardRoles: RedPandaRole[],
+  otherRoles: RedPandaRole[],
+): {score: number; explanation: string} {
+  const cross = crossMatcher(cardRoles, otherRoles);
+  if (cross('search', 'member')) {
+    return {score: 8, explanation: 'A Red Panda search converts a deck slot into a tribe member.'};
+  }
+  return {score: 5, explanation: 'Both share the Red Panda deck. Density baseline.'};
 }
 
 // Get all rules
