@@ -490,10 +490,10 @@ Dark fantasy theme inspired by Lorcana:
 
 ### Storybook
 - **Every new visual component needs a `.stories.tsx` file.** The `check:stories` story-coverage gate runs locally as the first pre-push step (~130ms) and fails if a new component is added without stories.
-- Story-writing mechanics (imports, decorators, mock-data shape, exclusions) live in [`.claude/rules/stories.md`](.claude/rules/stories.md), auto-loaded when editing `*.stories.tsx`.
+- Story-writing mechanics (imports, decorators, mock-data shape, exclusions) live in [`.claude/rules/stories.md`](.claude/rules/stories.md), auto-loaded when editing `**/*.stories.tsx`.
 
 ### Testing Style
-- Unit/integration test conventions (focused, minimal, 5-15 per unit, one behavior per test) live in [`.claude/rules/tests.md`](.claude/rules/tests.md), auto-loaded when editing `*.test.ts(x)`.
+- Unit/integration test conventions (focused, minimal, 5-15 per unit, one behavior per test) live in [`.claude/rules/tests.md`](.claude/rules/tests.md), auto-loaded when editing `**/*.test.ts(x)`.
 - **E2E test inventory**: `apps/web/e2e/E2E_TESTS.md` — update this file whenever E2E tests are added, removed, or edited.
 
 ### Debugging E2E Failures
