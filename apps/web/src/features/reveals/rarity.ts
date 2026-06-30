@@ -1,3 +1,5 @@
+import type {LorcanaCard} from 'inkweave-synergy-engine';
+
 export interface RarityConfig {
   /** Lowercased match key against `card.rarity` (e.g. "super rare"). */
   key: string;
@@ -25,4 +27,16 @@ export function rarityConfigOf(rarity: string | undefined): RarityConfig | undef
   if (!rarity) return undefined;
   const key = rarity.trim().toLowerCase();
   return RARITIES.find((r) => r.key === key);
+}
+
+/**
+ * Whether a mosaic slot should fade when a rarity is highlighted: true only for a
+ * revealed card whose rarity differs from the selected one. Empty slots (no card)
+ * and cards of the matching rarity stay at full brightness; a null selection never
+ * dims. Uses the same `rarityConfigOf` normalizer the chips use, so both sides of
+ * the feature compare identical keys.
+ */
+export function isSlotDimmed(card: LorcanaCard | undefined, selectedRarity: string | null): boolean {
+  if (selectedRarity == null || card == null) return false;
+  return rarityConfigOf(card.rarity)?.key !== selectedRarity;
 }

@@ -1,3 +1,4 @@
+import type {CSSProperties} from 'react';
 import {RARITIES, type RarityConfig} from './rarity';
 import {RaritySymbol} from './RaritySymbol';
 
@@ -6,35 +7,59 @@ interface RarityBreakdownProps {
   rarityCounts: Record<string, number>;
   /** Mobile sizing: all five gems in one row (gem + count, no name labels) / smaller gems. */
   compact?: boolean;
+  /** The highlighted rarity key, or null when none is active. */
+  selectedRarity?: string | null;
+  /** Toggle a rarity highlight. Omit to render non-interactive chips. */
+  onSelectRarity?: (key: string) => void;
 }
 
 /**
- * One vertical stat chip: the rarity symbol over the revealed count over the
- * name (the name is dropped on mobile so all five chips fit one row). Held to its
- * own component so the per-chip `has`/`compact` conditionals don't pile onto
- * RarityBreakdown's complexity.
+ * One stat chip: the rarity symbol over the revealed count over the name (the name
+ * is dropped on mobile so all five chips fit one row). A chip with revealed cards
+ * and a handler renders as a toggle button (the highlight control); a zero-count
+ * chip stays a non-interactive div. The selected chip gets a gold border and a
+ * faint gold wash so it reads as the live filter.
  */
-function RarityChip({rarity, revealed, compact}: {rarity: RarityConfig; revealed: number; compact: boolean}) {
+function RarityChip({
+  rarity,
+  revealed,
+  compact,
+  selected,
+  onSelect,
+}: {
+  rarity: RarityConfig;
+  revealed: number;
+  compact: boolean;
+  selected: boolean;
+  onSelect?: (key: string) => void;
+}) {
   const has = revealed > 0;
-  // One size lookup keyed on `compact` instead of five parallel ternaries — keeps
+  const interactive = has && !!onSelect;
+  // One size lookup keyed on `compact` instead of five parallel ternaries, to keep
   // RarityChip's cyclomatic complexity below the CodeScene threshold.
   const dims = compact
     ? {gap: 5, padding: '10px 4px', symHeight: 22, symSize: 20, count: 18}
     : {gap: 8, padding: '14px 8px', symHeight: 32, symSize: 30, count: 28};
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: dims.gap,
-        padding: dims.padding,
-        background: has ? 'rgba(255, 255, 255, 0.035)' : 'rgba(255, 255, 255, 0.012)',
-        border: '1px solid #25253c',
-        borderRadius: 12,
-        opacity: has ? 1 : 0.65,
-      }}
-    >
+
+  const chipStyle: CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: dims.gap,
+    padding: dims.padding,
+    background: selected
+      ? 'rgba(212, 175, 55, 0.12)'
+      : has
+        ? 'rgba(255, 255, 255, 0.035)'
+        : 'rgba(255, 255, 255, 0.012)',
+    border: `1px solid ${selected ? '#d4af37' : '#25253c'}`,
+    borderRadius: 12,
+    opacity: has ? 1 : 0.65,
+    transition: 'background 0.2s ease, border-color 0.2s ease',
+  };
+
+  const inner = (
+    <>
       <div style={{height: dims.symHeight, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
         <RaritySymbol rarity={rarity.key} size={dims.symSize} />
       </div>
@@ -46,20 +71,41 @@ function RarityChip({rarity, revealed, compact}: {rarity: RarityConfig; revealed
           {rarity.name}
         </div>
       )}
-    </div>
+    </>
   );
+
+  if (interactive) {
+    return (
+      <button
+        type="button"
+        onClick={() => onSelect!(rarity.key)}
+        aria-pressed={selected}
+        aria-label={`Highlight ${rarity.name} cards`}
+        style={{...chipStyle, appearance: 'none', font: 'inherit', cursor: 'pointer'}}
+      >
+        {inner}
+      </button>
+    );
+  }
+
+  return <div style={chipStyle}>{inner}</div>;
 }
 
 /**
  * Per-rarity tally for an ink board: each of the five rarities shows its real
- * symbol, the actual number of revealed cards of that rarity, and its name. The
- * count is the live tally from the data (no hardcoded total / denominator — the
- * set's real composition differs from the old 12/9/8/3/2 assumption).
+ * symbol, the actual number of revealed cards of that rarity, and its name. With a
+ * handler, chips become toggle buttons that highlight that rarity in the mosaic.
+ * The count is the live tally from the data (no hardcoded total).
  *
- * The divider spans the full board, but the five chips are held to a centered
- * band so they read as a tidy row.
+ * The divider spans the full board, but the five chips are held to a centered band
+ * so they read as a tidy row.
  */
-export function RarityBreakdown({rarityCounts, compact = false}: RarityBreakdownProps) {
+export function RarityBreakdown({
+  rarityCounts,
+  compact = false,
+  selectedRarity = null,
+  onSelectRarity,
+}: RarityBreakdownProps) {
   return (
     <div style={{borderTop: '1px solid #22223a', marginTop: 22, paddingTop: 16}}>
       <div
@@ -72,7 +118,14 @@ export function RarityBreakdown({rarityCounts, compact = false}: RarityBreakdown
         }}
       >
         {RARITIES.map((r) => (
-          <RarityChip key={r.key} rarity={r} revealed={rarityCounts[r.key] ?? 0} compact={compact} />
+          <RarityChip
+            key={r.key}
+            rarity={r}
+            revealed={rarityCounts[r.key] ?? 0}
+            compact={compact}
+            selected={selectedRarity === r.key}
+            onSelect={onSelectRarity}
+          />
         ))}
       </div>
     </div>

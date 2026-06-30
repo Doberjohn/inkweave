@@ -14,6 +14,7 @@ import {
   RevealHero,
   fetchRevealDates,
   useCountdown,
+  useInkParam,
   useRevealCards,
   useRevealProgress,
   type FranchiseConfig,
@@ -86,7 +87,7 @@ function RevealsBody({loading, error, progress, selectedInk, onSelectInk, onOpen
         <InkTrackerStrip inks={progress.inks} selected={selectedInk} onSelect={onSelectInk} compact={compact} />
       </div>
       <div style={{marginTop: SPACING.xxl}}>
-        <InkBoard progress={progress.byInk[selectedInk]} onOpen={onOpen} compact={compact} />
+        <InkBoard key={selectedInk} progress={progress.byInk[selectedInk]} onOpen={onOpen} compact={compact} />
       </div>
       <div style={{marginTop: 64}}>
         <NewFranchises onSelect={onSelectFranchise} compact={compact} />
@@ -101,7 +102,7 @@ export function RevealsPage() {
   const progress = useRevealProgress();
   const {openCardModal} = useCardModal();
   const [dates, setDates] = useState<RevealDates | null>(null);
-  const [selectedInk, setSelectedInk] = useState<Ink>('Amber');
+  const [selectedInk, selectInk] = useInkParam();
   const [selectedFranchise, setSelectedFranchise] = useState<FranchiseConfig | null>(null);
 
   useEffect(() => {
@@ -141,7 +142,7 @@ export function RevealsPage() {
             error={error}
             progress={progress}
             selectedInk={selectedInk}
-            onSelectInk={setSelectedInk}
+            onSelectInk={selectInk}
             onOpen={(card) => openAndTrack(card, 'mosaic')}
             onSelectFranchise={setSelectedFranchise}
             compact={isMobile}
