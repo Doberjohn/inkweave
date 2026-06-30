@@ -39,19 +39,20 @@ const POP_COUNT = 5;
 
 /**
  * First collector number of each ink's block. A card's slot is `number - base`,
- * so the lowest-numbered card lands at (or near) slot 0 and the rest read across
- * in true set order, leaving fallback gaps for unrevealed numbers. Amber anchors
- * on the set's #1 (so unrevealed low numbers show as leading gaps); the others
- * anchor on their first revealed card, since their exact block start isn't
- * knowable from the revealed subset alone.
+ * so cards read across in true set order, leaving fallback gaps for unrevealed
+ * numbers. Each base is the cumulative block start — Amber #1, then offset by the
+ * preceding inks' PER_INK totals: 1, 38, 74, 109, 143, 176 — so every board spans
+ * its true set range and unrevealed numbers show as gaps in the right place
+ * (e.g. Sapphire #148 Belle sits 5 slots in, after 143-147) rather than trailing
+ * off the end.
  */
 const INK_BASE: Record<Ink, number> = {
   Amber: 1,
   Amethyst: 38,
   Emerald: 74,
-  Ruby: 113,
-  Sapphire: 148,
-  Steel: 178,
+  Ruby: 109,
+  Sapphire: 143,
+  Steel: 176,
 };
 
 function pickRandom(pool: number[], n: number): Set<number> {
