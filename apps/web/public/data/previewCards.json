@@ -5499,6 +5499,39 @@
       "strength": 4,
       "willpower": 4,
       "lore": 1
+    },
+    {
+      "id": 13114,
+      "name": "Dash Parr",
+      "fullName": "Dash Parr - Dodgeball Dynamo",
+      "cost": 1,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 114,
+      "version": "Dodgeball Dynamo",
+      "rarity": "Common",
+      "franchise": "The Incredibles",
+      "subtypes": [
+        "Storyborn",
+        "Super",
+        "Hero"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        }
+      ],
+      "fullText": "Evasive (Only characters with Evasive can challenge this character.)",
+      "fullTextSections": [
+        "Evasive (Only characters with Evasive can challenge this character.)"
+      ],
+      "strength": 1,
+      "willpower": 1,
+      "lore": 1
     }
   ]
 }
