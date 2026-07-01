@@ -5532,6 +5532,23 @@
       "strength": 1,
       "willpower": 1,
       "lore": 1
+    },
+    {
+      "id": 13107,
+      "name": "Vine Pod",
+      "fullName": "Vine Pod",
+      "cost": 4,
+      "color": "Emerald",
+      "inkwell": false,
+      "type": "Item",
+      "setCode": "13",
+      "number": 107,
+      "rarity": "Rare",
+      "fullText": "FRAGILE HUSK This item enters play exerted.\nREGENERATE ⟳, 1 ⬡ – Banish chosen character of yours. You may play a character with the same name as that character for free.",
+      "fullTextSections": [
+        "FRAGILE HUSK This item enters play exerted.",
+        "REGENERATE ⟳, 1 ⬡ – Banish chosen character of yours. You may play a character with the same name as that character for free."
+      ]
     }
   ]
 }
