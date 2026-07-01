@@ -18,8 +18,8 @@ import {
   isToyCard,
   getDwarfsRoles,
   isDwarfsCard,
-  getVinelingRoles,
-  isVinelingCard,
+  getFloodbornRoles,
+  isFloodbornCard,
   getHunnyRoles,
   isHunnyCard,
   getRedPandaRoles,
@@ -2268,7 +2268,7 @@ describe('Dwarfs Tribal', () => {
     });
   });
 
-  describe('Vinelings detection', () => {
+  describe('Floodborns detection', () => {
     const floodbornMember = createCard({
       id: 'elsa-fb', name: 'Elsa', fullName: 'Elsa - Spirit of Winter',
       cost: 7, classifications: ['Floodborn'], text: 'Whenever this character quests, draw a card.',
@@ -2290,24 +2290,24 @@ describe('Dwarfs Tribal', () => {
     });
 
     it('tags a plain Floodborn character as member only', () => {
-      expect(getVinelingRoles(floodbornMember)).toEqual(['member']);
+      expect(getFloodbornRoles(floodbornMember)).toEqual(['member']);
     });
     it('detects a static team buff', () => {
-      expect(getVinelingRoles(buffPayoff)).toEqual(['member', 'buff']);
+      expect(getFloodbornRoles(buffPayoff)).toEqual(['member', 'buff']);
     });
     it('detects a repeating trigger', () => {
-      expect(getVinelingRoles(triggerPayoff)).toEqual(['member', 'trigger']);
+      expect(getFloodbornRoles(triggerPayoff)).toEqual(['member', 'trigger']);
     });
     it('detects The Vine as member + buff + trigger', () => {
-      expect(getVinelingRoles(theVine)).toEqual(['member', 'buff', 'trigger']);
+      expect(getFloodbornRoles(theVine)).toEqual(['member', 'buff', 'trigger']);
     });
     it('ignores non-Floodborn cards with no Floodborn payoff text', () => {
-      expect(isVinelingCard(createCard({id: 'x', name: 'X', cost: 3, text: 'Draw a card.'}))).toBe(false);
+      expect(isFloodbornCard(createCard({id: 'x', name: 'X', cost: 3, text: 'Draw a card.'}))).toBe(false);
     });
   });
 
-  describe('Vinelings rule', () => {
-    const rule = getRuleById('vinelings')!;
+  describe('Floodborns rule', () => {
+    const rule = getRuleById('floodborn')!;
     const member = createCard({id: 'm1', name: 'Elsa', cost: 7, classifications: ['Floodborn'], text: 'Quests for 2 lore.'});
     const member2 = createCard({id: 'm2', name: 'Ariel', cost: 5, classifications: ['Floodborn'], text: 'Has Evasive.'});
     const buff = createCard({id: 'b1', name: 'Gaston', cost: 2, classifications: ['Floodborn'], text: 'Your Floodborn characters get +1 ¤.'});

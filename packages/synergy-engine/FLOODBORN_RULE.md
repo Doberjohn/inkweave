@@ -1,4 +1,4 @@
-# Vinelings Rule (playstyle: Floodborn matters, payoff-anchored)
+# Floodborns Rule (playstyle: Floodborn matters, payoff-anchored)
 
 The Set 13 "Vinelings" archetype. Named for the new Vineling classification, but its
 membership and payoffs key on the broader **Floodborn** classification: every payoff

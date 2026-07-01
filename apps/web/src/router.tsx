@@ -1,5 +1,5 @@
 import {lazy, Suspense} from 'react';
-import {createBrowserRouter} from 'react-router-dom';
+import {createBrowserRouter, Navigate} from 'react-router-dom';
 import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
 import {AppLayout} from './AppLayout';
 import {RevealsGate} from './features/reveals';
@@ -139,6 +139,11 @@ export const router = createBrowserRouter([
             <PlaystyleGalleryPage />
           </SuspenseWrapper>
         ),
+      },
+      {
+        // Redirect the pre-rebrand Vinelings path to the renamed Floodborns playstyle.
+        path: 'playstyles/vinelings',
+        element: <Navigate to="/playstyles/floodborn" replace />,
       },
       {
         path: 'playstyles/:playstyleId',

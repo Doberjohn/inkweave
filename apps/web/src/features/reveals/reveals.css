@@ -56,9 +56,70 @@
   outline-offset: 2px;
 }
 
+/* Spotlight hero card. Transforms, border, and glow live here (not inline) so
+   :hover can override the base, and the accent arrives via --accent-rgb. */
+.reveal-spotlight-hero {
+  cursor: pointer;
+  transition: box-shadow 0.4s ease;
+}
+.reveal-spotlight-hero:hover {
+  box-shadow: 0 0 52px rgba(var(--accent-rgb), 0.18);
+}
+.reveal-spotlight-hero:focus-visible {
+  outline: 2px solid #d4af37;
+  outline-offset: 3px;
+}
+
+.reveal-hero-card {
+  transform: var(--t);
+  border: 1px solid rgba(var(--accent-rgb), 0.65);
+  box-shadow: 0 26px 54px rgba(0, 0, 0, 0.6), 0 0 46px rgba(var(--accent-rgb), 0.42);
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.5s ease;
+}
+.reveal-spotlight-hero:hover .reveal-hero-card {
+  transform: var(--th);
+  box-shadow: 0 34px 66px rgba(0, 0, 0, 0.62), 0 0 72px rgba(var(--accent-rgb), 0.72);
+}
+
+.reveal-fan-card {
+  transform: var(--t);
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.reveal-spotlight-hero:hover .reveal-fan-card {
+  transform: var(--th);
+}
+
+/* Entrance: the wrappers (not the tilted cards) rise + fade in, lightly staggered,
+   so each card's base transform is preserved after the animation ends. */
+@keyframes reveal-spotlightRise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.reveal-spotlight-hero .reveal-rise {
+  animation: reveal-spotlightRise 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.reveal-spotlight-hero .reveal-rise-1 {
+  animation-delay: 0.08s;
+}
+.reveal-spotlight-hero .reveal-rise-2 {
+  animation-delay: 0.16s;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal-anim,
-  .reveal-cellpop {
+  .reveal-cellpop,
+  .reveal-spotlight-hero .reveal-rise {
     animation: none !important;
+  }
+  .reveal-spotlight-hero,
+  .reveal-hero-card,
+  .reveal-fan-card {
+    transition: none !important;
   }
 }

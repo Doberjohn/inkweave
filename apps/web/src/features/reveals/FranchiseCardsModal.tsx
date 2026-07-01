@@ -1,15 +1,15 @@
 import {useEffect} from 'react';
 import {createPortal} from 'react-dom';
-import type {LorcanaCard} from 'inkweave-synergy-engine';
+import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {CardGrid} from '../cards/components/CardGrid';
 import {FONTS, INK_COLORS, Z_INDEX} from '../../shared/constants';
 import {useScrollLock} from '../../shared/hooks';
-import type {FranchiseConfig} from './franchise';
 import {inkRgba} from './inkTint';
 
 interface FranchiseCardsModalProps {
-  franchise: FranchiseConfig;
-  /** The revealed cards belonging to this franchise. */
+  /** Heading + aria label for the showcase (a franchise name, or "Team Characters"). */
+  source: {label: string; ink: Ink};
+  /** The revealed cards to list. */
   cards: LorcanaCard[];
   onClose: () => void;
   /** Opens a card's detail (the shared card modal) on top of this one. */
@@ -17,13 +17,13 @@ interface FranchiseCardsModalProps {
 }
 
 /**
- * A focused overlay listing one franchise's revealed cards in a grid. Replaces
- * the old Tracker/Franchises toggle: a click on a franchise card opens this.
- * Dismiss via backdrop click or Escape. Sits one z-index below the shared
- * card-detail modal's backdrop so clicking a card layers its detail cleanly on
- * top while this stays behind. Portals to body to escape stacking contexts.
+ * A focused overlay listing one Set 13 showcase's revealed cards in a grid — a
+ * franchise (Monsters, Inc. / Up / Turning Red) or the Team characters. Dismiss
+ * via backdrop click or Escape. Sits one z-index below the shared card-detail
+ * modal's backdrop so clicking a card layers its detail cleanly on top while
+ * this stays behind. Portals to body to escape stacking contexts.
  */
-export function FranchiseCardsModal({franchise, cards, onClose, onCardClick}: FranchiseCardsModalProps) {
+export function FranchiseCardsModal({source, cards, onClose, onCardClick}: FranchiseCardsModalProps) {
   useScrollLock(true);
 
   useEffect(() => {
@@ -34,14 +34,14 @@ export function FranchiseCardsModal({franchise, cards, onClose, onCardClick}: Fr
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const inkText = INK_COLORS[franchise.ink].text;
+  const inkText = INK_COLORS[source.ink].text;
 
   return createPortal(
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- backdrop dismiss; Escape handled via document listener
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={`${franchise.label} cards`}
+      aria-label={`${source.label} cards`}
       onClick={onClose}
       style={{
         position: 'fixed',
@@ -64,10 +64,10 @@ export function FranchiseCardsModal({franchise, cards, onClose, onCardClick}: Fr
           display: 'flex',
           flexDirection: 'column',
           background: '#12121f',
-          border: `1px solid ${inkRgba(franchise.ink, 0.4)}`,
+          border: `1px solid ${inkRgba(source.ink, 0.4)}`,
           borderRadius: 16,
           overflow: 'hidden',
-          boxShadow: `0 24px 80px rgba(0, 0, 0, 0.6), 0 0 40px ${inkRgba(franchise.ink, 0.12)}`,
+          boxShadow: `0 24px 80px rgba(0, 0, 0, 0.6), 0 0 40px ${inkRgba(source.ink, 0.12)}`,
         }}
       >
         <header
@@ -78,7 +78,7 @@ export function FranchiseCardsModal({franchise, cards, onClose, onCardClick}: Fr
             gap: 16,
             padding: '18px 22px',
             borderBottom: '1px solid #24243a',
-            backgroundImage: `radial-gradient(420px 120px at 0% 0%, ${inkRgba(franchise.ink, 0.16)}, transparent)`,
+            backgroundImage: `radial-gradient(420px 120px at 0% 0%, ${inkRgba(source.ink, 0.16)}, transparent)`,
           }}
         >
           <div>
@@ -86,7 +86,7 @@ export function FranchiseCardsModal({franchise, cards, onClose, onCardClick}: Fr
               New this set
             </div>
             <h2 style={{fontFamily: FONTS.hero, fontWeight: 700, fontSize: 24, color: '#f0f0f5', margin: '4px 0 0'}}>
-              {franchise.label}
+              {source.label}
             </h2>
           </div>
           <div style={{display: 'flex', alignItems: 'center', gap: 14}}>
@@ -116,11 +116,7 @@ export function FranchiseCardsModal({franchise, cards, onClose, onCardClick}: Fr
         </header>
 
         <div style={{overflowY: 'auto', padding: '16px 18px 22px'}}>
-          <CardGrid
-            cards={cards}
-            onSelect={onCardClick}
-            emptyMessage="No cards revealed yet for this franchise."
-          />
+          <CardGrid cards={cards} onSelect={onCardClick} emptyMessage="No cards revealed yet." />
         </div>
       </div>
     </div>,

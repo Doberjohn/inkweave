@@ -98,8 +98,8 @@ const playstyles: Playstyle[] = [
     ],
   },
   {
-    id: 'vinelings',
-    name: 'Vinelings',
+    id: 'floodborn',
+    name: 'Floodborns',
     tagline: 'Flood the board with Floodborn characters and cash in the Vine payoffs.',
     description:
       'Flood the board with Floodborn characters and cash in the Vine payoffs. The Set 13 Vinelings each buff or trigger off "your Floodborn characters", and because every Shift card in the game is Floodborn, the payoffs reward a deep, pre-built tribe. Stack buffs to grow the whole board, or lean on the play and quest triggers for a repeating engine.',

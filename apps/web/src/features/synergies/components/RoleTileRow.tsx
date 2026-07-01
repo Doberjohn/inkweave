@@ -76,12 +76,13 @@ function computeRowLayout(
 }
 
 /** Section style — collapsed is a static clipped row; expanded scrolls (scroll-snap). */
-function getSectionStyle(collapsed: boolean): React.CSSProperties {
+function getSectionStyle(collapsed: boolean, centered: boolean): React.CSSProperties {
   return {
     display: 'flex',
     gap: TILE_GAP,
-    // flex-start (not center) so overflowing leading tiles stay scrollable.
-    justifyContent: 'flex-start',
+    // Center when every tile fits; flex-start when the row scrolls, so the
+    // overflowing leading tiles stay reachable from the start.
+    justifyContent: centered ? 'center' : 'flex-start',
     overflowX: collapsed ? 'hidden' : 'auto',
     scrollSnapType: collapsed ? undefined : 'x proximity',
     maxWidth: ROW_MAX_WIDTH,
@@ -107,11 +108,11 @@ export function RoleTileRow({tiles, activeRoles, onToggle}: RoleTileRowProps) {
   if (tiles.length === 0) return null;
 
   const sortedTiles = [...tiles].sort(compareTiles);
-  const {collapsed, visibleTiles, hiddenCount} = computeRowLayout(
-    sortedTiles,
-    cellCapacity(width),
-    expanded,
-  );
+  const capacity = cellCapacity(width);
+  const {collapsed, visibleTiles, hiddenCount} = computeRowLayout(sortedTiles, capacity, expanded);
+  // Center the row when every tile fits (no scroll); otherwise flex-start so the
+  // leading tiles of a scrolling carousel stay reachable.
+  const centered = width > 0 && sortedTiles.length <= capacity;
 
   return (
     <section
@@ -119,7 +120,7 @@ export function RoleTileRow({tiles, activeRoles, onToggle}: RoleTileRowProps) {
       aria-label="Mechanics"
       // Carousel scrolls unless collapsed; collapsed is a static, exactly-fitting row.
       className={collapsed ? undefined : 'subtle-scrollbar'}
-      style={getSectionStyle(collapsed)}>
+      style={getSectionStyle(collapsed, centered)}>
       {visibleTiles.map((t) => (
         <RoleTileButton
           key={t.role}
