@@ -5606,6 +5606,22 @@
       "strength": 4,
       "willpower": 4,
       "lore": 2
+    },
+    {
+      "id": 13171,
+      "name": "Hana's Inkcaster",
+      "fullName": "Hana's Inkcaster",
+      "cost": 2,
+      "color": "Amber",
+      "inkwell": false,
+      "type": "Item",
+      "setCode": "13",
+      "number": 171,
+      "rarity": "Uncommon",
+      "fullText": "REJUVENATING FLOURISH ⟳ – Remove up to 2 damage from chosen character. If there's a card under that character, they gain Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1.)",
+      "fullTextSections": [
+        "REJUVENATING FLOURISH ⟳ – Remove up to 2 damage from chosen character. If there's a card under that character, they gain Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1.)"
+      ]
     }
   ]
 }
