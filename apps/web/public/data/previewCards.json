@@ -5250,6 +5250,22 @@
       "strength": 3,
       "willpower": 2,
       "lore": 1
+    },
+    {
+      "id": 13202,
+      "name": "Attack of the Vine!",
+      "fullName": "Attack of the Vine!",
+      "cost": 6,
+      "color": "Steel",
+      "inkwell": false,
+      "type": "Action",
+      "setCode": "13",
+      "number": 202,
+      "rarity": "Rare",
+      "fullText": "Your Floodborn characters gain Resist +2 and can challenge ready characters this turn. (Damage dealt to them is reduced by 2.)",
+      "fullTextSections": [
+        "Your Floodborn characters gain Resist +2 and can challenge ready characters this turn. (Damage dealt to them is reduced by 2.)"
+      ]
     }
   ]
 }
