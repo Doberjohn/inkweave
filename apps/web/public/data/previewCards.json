@@ -5622,6 +5622,32 @@
       "fullTextSections": [
         "REJUVENATING FLOURISH ⟳ – Remove up to 2 damage from chosen character. If there's a card under that character, they gain Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1.)"
       ]
+    },
+    {
+      "id": 13042,
+      "name": "Lumpy",
+      "fullName": "Lumpy - Hunny Druid",
+      "cost": 5,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 42,
+      "version": "Hunny Druid",
+      "rarity": "Uncommon",
+      "franchise": "Winnie the Pooh",
+      "subtypes": [
+        "Dreamborn",
+        "Ally",
+        "Hunny"
+      ],
+      "fullText": "WELCOME HEALING When you play this character, you may move up to 2 damage from chosen character to chosen opposing character.",
+      "fullTextSections": [
+        "WELCOME HEALING When you play this character, you may move up to 2 damage from chosen character to chosen opposing character."
+      ],
+      "strength": 3,
+      "willpower": 6,
+      "lore": 2
     }
   ]
 }
