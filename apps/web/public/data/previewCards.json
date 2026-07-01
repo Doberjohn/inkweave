@@ -5458,6 +5458,47 @@
       "fullTextSections": [
         "RENEWAL PROCESS ⟳, 1 ⬡ – Put a card from chosen player's discard on the bottom of their deck."
       ]
+    },
+    {
+      "id": 13109,
+      "name": "Dash Parr",
+      "fullName": "Dash Parr - Super Fast",
+      "cost": 5,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 109,
+      "version": "Super Fast",
+      "rarity": "Rare",
+      "franchise": "The Incredibles",
+      "subtypes": [
+        "Storyborn",
+        "Super",
+        "Hero"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "3",
+          "fullText": "Shift 3"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        }
+      ],
+      "fullText": "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Dash Parr.)\nEvasive (Only characters with Evasive can challenge this character.)\nFOLLOW ME! Whenever this character quests, you may reveal the top card of your deck. If you do, you may play it. Otherwise, put it into your discard. (You pay all costs.)",
+      "fullTextSections": [
+        "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Dash Parr.)",
+        "Evasive (Only characters with Evasive can challenge this character.)",
+        "FOLLOW ME! Whenever this character quests, you may reveal the top card of your deck. If you do, you may play it. Otherwise, put it into your discard. (You pay all costs.)"
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 1
     }
   ]
 }
