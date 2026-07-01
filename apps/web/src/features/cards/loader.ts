@@ -43,7 +43,10 @@ function resolveImageUrl(raw: LorcanaJSONCard): string | undefined {
     return raw.imageHash ? `/card-images/${raw.id}.${raw.imageHash}.avif` : undefined;
   }
   const rawUrl = raw.images?.thumbnail;
-  if (!rawUrl) return undefined;
+  // Reveal-admin Set 13 preview cards may carry no remote thumbnail (only a raw
+  // scan + pre-converted AVIF). Fall back to the local preview path so they show
+  // in dev. (Production uses the injected imageHash branch above.)
+  if (!rawUrl) return raw.setCode === '13' ? `/card-images-preview/${raw.id}.avif` : undefined;
   // Ravensburger: proxy through same-origin rewrite (dev Vite proxy + Vercel rewrite).
   if (rawUrl.startsWith(IMAGE_CDN_ORIGIN)) return rawUrl.replace(IMAGE_CDN_ORIGIN, '/card-images/');
   // Set 12 previews: lorcanaplayer.com is behind Cloudflare bot protection so we can't

@@ -1,0 +1,30 @@
+/* Playstyle gallery fan tile. The tilt lives here (not inline) so :hover can
+   swap --t for --th; the accent arrives via --accent-rgb. */
+.playstyle-fan-tile {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+}
+.playstyle-fan-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45), 0 0 26px rgba(var(--accent-rgb), 0.18);
+}
+.playstyle-fan-tile:focus-visible {
+  outline: 2px solid #d4af37;
+  outline-offset: 3px;
+}
+.playstyle-fan-card {
+  transform: var(--t);
+  transition: transform 0.32s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.playstyle-fan-tile:hover .playstyle-fan-card {
+  transform: var(--th);
+}
+@media (prefers-reduced-motion: reduce) {
+  .playstyle-fan-tile,
+  .playstyle-fan-card {
+    transition: none !important;
+  }
+}

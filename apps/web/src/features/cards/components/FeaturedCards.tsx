@@ -5,18 +5,18 @@ import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
 import {RenderProfiler} from '../../../shared/components';
 
 /**
- * Default featured card IDs — one per ink, chosen for visual appeal and synergy
- * variety. Used as the fallback when `VITE_FEATURED_CARD_IDS` is unset or empty.
- * Recommend keeping exactly 6 IDs so the desktop 6-col / mobile 3×2 grid stays
- * symmetrical.
+ * Default featured card IDs — a Set 13 showcase spanning all six inks, chosen for
+ * visual appeal. Used as the fallback when `VITE_FEATURED_CARD_IDS` is unset or
+ * empty. Recommend keeping exactly 6 IDs so the desktop 6-col / mobile 3×2 grid
+ * stays symmetrical.
  */
 const DEFAULT_FEATURED_IDS = [
-  '2730', // Amber:    Woody - Jungle Guide
-  '2752', // Amethyst: Snow White - Merry as the Morning
-  '2806', // Emerald:  Buzz Lightyear - Jungle Ranger
-  '2841', // Ruby:     Sid Phillips - Toy Surgeon
-  '2878', // Sapphire: What Else Can I Do?
-  '2906', // Steel:    Merida - Formidable Archer
+  '13028', // Amber-Emerald: Woody & Buzz Lightyear - Best Buddies
+  '13051', // Amethyst:      Mrs. Incredible - Created by the Vine
+  '13082', // Emerald:       Russell - Junior Wilderness Explorer
+  '13125', // Ruby:          Meilin Lee - Popular Red Panda
+  '13158', // Sapphire:      Maid Marian - Created by the Vine
+  '13197', // Steel:         The Vine - Towering Stalk
 ];
 
 /**

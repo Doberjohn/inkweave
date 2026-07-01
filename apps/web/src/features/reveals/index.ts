@@ -20,4 +20,5 @@ export {RevealHero} from './RevealHero';
 export {InkTrackerStrip} from './InkTrackerStrip';
 export {InkBoard} from './InkBoard';
 export {NewFranchises} from './NewFranchises';
+export {WhatsNewSection} from './WhatsNewSection';
 export {FranchiseCardsModal} from './FranchiseCardsModal';

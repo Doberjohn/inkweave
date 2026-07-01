@@ -143,6 +143,8 @@ export const STRUCTURAL_MECHANICS: Mechanic[] = [
   // Sacrifice
   {id: 'self-banish', category: 'structural', label: 'Self-Banish', description: 'Banish your own characters on demand'},
   {id: 'banish-trigger', category: 'structural', label: 'Banish Trigger', description: 'Get a benefit when your characters are banished'},
+  // Floodborns
+  {id: 'trigger', category: 'structural', label: 'Trigger', description: 'Get a repeating benefit when your Floodborn characters quest, play, or are banished'},
   // Tribal (Toy / Dwarfs)
   {id: 'search', category: 'structural', label: 'Search', description: 'Search your deck for cards'},
   {id: 'self-discount', category: 'structural', label: 'Self Discount', description: 'Pay less to play this under a condition'},
@@ -153,7 +155,7 @@ export const STRUCTURAL_MECHANICS: Mechanic[] = [
   {id: 'at-payoff', category: 'structural', label: 'At Location', description: 'Get benefits when characters are at a location'},
   {id: 'play-trigger', category: 'structural', label: 'On Play', description: 'Trigger effects when you play a location'},
   {id: 'move-trigger', category: 'structural', label: 'On Move', description: 'Trigger effects when a character moves to a location'},
-  {id: 'buff', category: 'structural', label: 'Buff', description: 'Give locations stat boosts and protection'},
+  {id: 'buff', category: 'structural', label: 'Buff', description: 'Give friendly characters or locations stat boosts and protection'},
   {id: 'location-ramp', category: 'structural', label: 'Location Ramp', description: 'Reduce the cost to play or move to locations'},
   {id: 'move', category: 'structural', label: 'Move', description: 'Move characters to locations'},
   {id: 'in-play-check', category: 'structural', label: 'While in Play', description: 'Get benefits when you have locations in play'},

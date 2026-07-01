@@ -10,7 +10,7 @@ export type PlaystyleId =
   | 'toy'
   | 'sacrifice'
   | 'dwarfs'
-  | 'vinelings'
+  | 'floodborn'
   | 'hunny'
   | 'red-panda';
 

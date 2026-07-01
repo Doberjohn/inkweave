@@ -1109,14 +1109,14 @@ export function getLoreDenialRoles(card: LorcanaCard): LoreDenialRole[] {
 export const isLoreDenialCard = (card: LorcanaCard): boolean => getLoreDenialRoles(card).length > 0;
 
 // ============================================
-// VINELINGS DETECTION (Floodborn Matters, payoff-anchored)
+// FLOODBORNS DETECTION (Floodborn Matters, payoff-anchored)
 // ============================================
 
 /**
- * The "Vinelings" archetype is branded for the new Set 13 Vineling classification,
+ * The "Floodborns" archetype is branded for the new Set 13 Vineling classification,
  * but its membership and payoffs key on the broader **Floodborn** classification:
  * every payoff card reads "your Floodborn characters". So a `member` is any Floodborn
- * character (114+ across all sets), and `isVinelingCard` returns true for any Floodborn
+ * character (114+ across all sets), and `isFloodbornCard` returns true for any Floodborn
  * character or Floodborn-matters payoff, NOT only the Vineling subtype.
  *
  * Roles:
@@ -1127,28 +1127,28 @@ export const isLoreDenialCard = (card: LorcanaCard): boolean => getLoreDenialRol
  * Payoff-anchored: the rule (see rules.ts) does not pair two plain members with each
  * other, so 'member' alone never produces a synergy without a 'buff'/'trigger' partner.
  */
-export type VinelingRole = 'member' | 'buff' | 'trigger';
+export type FloodbornRole = 'member' | 'buff' | 'trigger';
 
 /** Static team buff: "Your [...] Floodborn characters get/gain ...". */
-const VINELING_BUFF_PATTERN = /your\b[^.]*\bfloodborn characters?\b[^.]*\b(?:get|gain)\b/i;
+const FLOODBORN_BUFF_PATTERN = /your\b[^.]*\bfloodborn characters?\b[^.]*\b(?:get|gain)\b/i;
 /** Repeating trigger: "whenever [...] Floodborn ..." (quests / is banished / you play another). */
-const VINELING_TRIGGER_PATTERN = /\bwhen(?:ever)?\b[^.]*\bfloodborn\b/i;
+const FLOODBORN_TRIGGER_PATTERN = /\bwhen(?:ever)?\b[^.]*\bfloodborn\b/i;
 
 /** Detect Floodborn-matters payoff roles from card text (buff, trigger). */
-function detectVinelingPayoffRoles(text: string, roles: VinelingRole[]): void {
-  if (VINELING_BUFF_PATTERN.test(text)) roles.push('buff');
-  if (VINELING_TRIGGER_PATTERN.test(text)) roles.push('trigger');
+function detectFloodbornPayoffRoles(text: string, roles: FloodbornRole[]): void {
+  if (FLOODBORN_BUFF_PATTERN.test(text)) roles.push('buff');
+  if (FLOODBORN_TRIGGER_PATTERN.test(text)) roles.push('trigger');
 }
 
-export function getVinelingRoles(card: LorcanaCard): VinelingRole[] {
+export function getFloodbornRoles(card: LorcanaCard): FloodbornRole[] {
   const text = card.text != null ? normalizeCardText(card) : '';
-  const roles: VinelingRole[] = [];
+  const roles: FloodbornRole[] = [];
   if (isCharacter(card) && hasClassification(card, 'Floodborn')) roles.push('member');
-  detectVinelingPayoffRoles(text, roles);
+  detectFloodbornPayoffRoles(text, roles);
   return roles;
 }
 
-export const isVinelingCard = (card: LorcanaCard): boolean => getVinelingRoles(card).length > 0;
+export const isFloodbornCard = (card: LorcanaCard): boolean => getFloodbornRoles(card).length > 0;
 
 // ============================================
 // HUNNY TRIBAL DETECTION

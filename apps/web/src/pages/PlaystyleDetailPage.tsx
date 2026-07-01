@@ -9,6 +9,9 @@ import {
   getLoreDenialRoles,
   getToyRoles,
   getDwarfsRoles,
+  getFloodbornRoles,
+  getHunnyRoles,
+  getRedPandaRoles,
   getCardMechanics,
   STRUCTURAL_ROLE_TO_MECHANIC,
   mechanicLabel,
@@ -134,7 +137,7 @@ function PlaystyleHero({
           zIndex: 1,
           backgroundSize: 'cover',
           backgroundPosition: 'center top',
-          backgroundImage: `url(${coverArt})`,
+          backgroundImage: `linear-gradient(160deg, rgba(${accentRgb}, 0.35), transparent 70%), url(${coverArt})`,
           opacity: 0.4,
           filter: 'saturate(0.3) brightness(0.7)',
           animation: 'heroKenBurns 20s ease-in-out infinite alternate',
@@ -338,6 +341,9 @@ const ROLE_CONFIGS: Partial<Record<PlaystyleId, RoleConfig>> = {
   'lore-denial': {getRoles: (card) => getLoreDenialRoles(card)},
   toy: {getRoles: (card) => getToyRoles(card).filter((r) => r !== 'member')},
   dwarfs: {getRoles: (card) => getDwarfsRoles(card).filter((r) => r !== 'member')},
+  floodborn: {getRoles: (card) => getFloodbornRoles(card).filter((r) => r !== 'member')},
+  hunny: {getRoles: (card) => getHunnyRoles(card).filter((r) => r !== 'member')},
+  'red-panda': {getRoles: (card) => getRedPandaRoles(card).filter((r) => r !== 'member')},
 };
 
 /**

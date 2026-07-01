@@ -89,7 +89,7 @@ React web application that consumes the synergy engine package.
 - Toys (`toy`) - Toy-classification members + tribal payoffs (search, banish-trigger, self-discount)
 - Sacrifice (`sacrifice`) - self-banish cards (banish your own characters) + banish-trigger payoffs
 - Seven Dwarfs (`dwarfs`) - Seven Dwarfs-classification members + tribal payoffs (density, recruit, return)
-- Vinelings (`vinelings`) - Floodborn-matters payoffs (buff + trigger), payoff-anchored against the whole Floodborn tribe
+- Floodborns (`floodborn`) - Floodborn-matters payoffs (buff + trigger), payoff-anchored against the whole Floodborn tribe
 - Hunny (`hunny`) - Winnie-the-Pooh tribe (density, search, buff)
 - Red Panda (`red-panda`) - Turning Red tribe (member + search)
 
@@ -390,9 +390,9 @@ Tribal playstyle for Seven Dwarfs / Snow White decks (Set 12 package). **Members
 
 **Full documentation**: See [`packages/synergy-engine/DWARFS_RULE.md`](packages/synergy-engine/DWARFS_RULE.md).
 
-### Rule 11: Vinelings (playstyle: Floodborn matters, payoff-anchored)
+### Rule 11: Floodborns (playstyle: Floodborn matters, payoff-anchored)
 
-Set 13 "Vine" archetype. Branded **Vinelings** but keyed on the **Floodborn** classification: every payoff reads "your Floodborn characters", and every Shift card in the game is Floodborn. **Payoff-anchored**: a Floodborn body synergizes with payoffs, but two plain Floodborn do not synergize with each other (`findSynergies` skips member ↔ member, avoiding ~6,400 density pairs that would tag every shifted card).
+Set 13 "Vine" archetype, the **Floodborns** playstyle. The new Set 13 cards are branded Vinelings, but the rule is keyed on the **Floodborn** classification: every payoff reads "your Floodborn characters", and every Shift card in the game is Floodborn. **Payoff-anchored**: a Floodborn body synergizes with payoffs, but two plain Floodborn do not synergize with each other (`findSynergies` skips member ↔ member, avoiding ~6,400 density pairs that would tag every shifted card).
 
 **Roles**:
 - **Membership**: `member` (`isCharacter` + `Floodborn` classification)
@@ -409,7 +409,7 @@ Set 13 "Vine" archetype. Branded **Vinelings** but keyed on the **Floodborn** cl
 
 **Cross-rule**: Floodborn banish-triggers (Maid Marian, The Vine) are also caught by the Sacrifice `banish-trigger` (expected cross-playstyle composition).
 
-**Full documentation**: See [`packages/synergy-engine/VINELINGS_RULE.md`](packages/synergy-engine/VINELINGS_RULE.md).
+**Full documentation**: See [`packages/synergy-engine/FLOODBORN_RULE.md`](packages/synergy-engine/FLOODBORN_RULE.md).
 
 ### Rule 12: Hunny (playstyle, tribal)
 

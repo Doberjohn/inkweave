@@ -25,8 +25,8 @@ import {
   getToyRoles,
   isDwarfsCard,
   getDwarfsRoles,
-  getVinelingRoles,
-  isVinelingCard,
+  getFloodbornRoles,
+  isFloodbornCard,
   getHunnyRoles,
   isHunnyCard,
   getRedPandaRoles,
@@ -47,7 +47,7 @@ import {
   type ShiftType,
   type ToyRole,
   type DwarfsRole,
-  type VinelingRole,
+  type FloodbornRole,
   type HunnyRole,
   type RedPandaRole,
 } from '../utils';
@@ -1017,24 +1017,24 @@ export const synergyRules: SynergyRule[] = [
   },
 
   // --------------------------------------------
-  // VINELINGS (Floodborn matters, payoff-anchored)
+  // FLOODBORNS (Floodborn matters, payoff-anchored)
   // --------------------------------------------
   {
-    id: 'vinelings',
-    name: 'Vinelings',
+    id: 'floodborn',
+    name: 'Floodborns',
     category: 'playstyle',
-    playstyleId: 'vinelings',
+    playstyleId: 'floodborn',
     description:
       'Floodborn characters and the Set 13 Vine payoffs that buff or trigger off them. Payoff-anchored: a Floodborn body synergizes with payoffs, but two plain Floodborn do not synergize with each other.',
 
-    matches: isVinelingCard,
+    matches: isFloodbornCard,
 
     // Payoff-anchored: the scorePair callback returns null for member-member pairs
     // (neither side is a payoff), so they are never emitted.
     findSynergies: (card, allCards) =>
-      tribalFindSynergies(card, allCards, getVinelingRoles, (cardRoles, otherRoles) =>
-        isVinelingPayoff(cardRoles) || isVinelingPayoff(otherRoles)
-          ? scoreVinelingPair(cardRoles, otherRoles)
+      tribalFindSynergies(card, allCards, getFloodbornRoles, (cardRoles, otherRoles) =>
+        isFloodbornPayoff(cardRoles) || isFloodbornPayoff(otherRoles)
+          ? scoreFloodbornPair(cardRoles, otherRoles)
           : null,
       ),
   },
@@ -1586,25 +1586,25 @@ function scoreDwarfsPair(
 }
 
 // ============================================
-// VINELINGS SCORING (payoff-anchored, 5-baseline)
+// FLOODBORNS SCORING (payoff-anchored, 5-baseline)
 // ============================================
 
-const isVinelingPayoff = (roles: VinelingRole[]): boolean =>
+const isFloodbornPayoff = (roles: FloodbornRole[]): boolean =>
   roles.includes('buff') || roles.includes('trigger');
 
 /**
- * Score a Vinelings pair. Called only when at least one side is a payoff
+ * Score a Floodborns pair. Called only when at least one side is a payoff
  * (the rule's findSynergies skips member-member pairs).
  *   - payoff <-> payoff           = 7 (two payoffs stack on the same Floodborn board)
  *   - member <-> trigger payoff   = 7 (the body fires the repeating trigger)
  *   - member <-> buff payoff      = 6 (the body is pumped by the team buff)
  */
-function scoreVinelingPair(
-  cardRoles: VinelingRole[],
-  otherRoles: VinelingRole[],
+function scoreFloodbornPair(
+  cardRoles: FloodbornRole[],
+  otherRoles: FloodbornRole[],
 ): {score: number; explanation: string} {
-  const cardPayoff = isVinelingPayoff(cardRoles);
-  const otherPayoff = isVinelingPayoff(otherRoles);
+  const cardPayoff = isFloodbornPayoff(cardRoles);
+  const otherPayoff = isFloodbornPayoff(otherRoles);
 
   if (cardPayoff && otherPayoff) {
     return {score: 7, explanation: 'Both reward a wide Floodborn board, so the payoffs stack.'};
@@ -1631,7 +1631,7 @@ function crossMatcher<T extends string>(aRoles: T[], bRoles: T[]): (x: T, y: T) 
 /**
  * Shared tribal `findSynergies` loop: pair the card against every other role-bearing
  * card, scoring each via `scorePair`. A `null` result skips the pair (the payoff-anchored
- * Vinelings rule uses this to drop member-member pairs).
+ * Floodborns rule uses this to drop member-member pairs).
  */
 function tribalFindSynergies<R>(
   card: LorcanaCard,

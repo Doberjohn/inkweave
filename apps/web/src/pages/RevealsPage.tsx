@@ -10,7 +10,7 @@ import {
   FranchiseCardsModal,
   InkBoard,
   InkTrackerStrip,
-  NewFranchises,
+  WhatsNewSection,
   RevealHero,
   fetchRevealDates,
   useCountdown,
@@ -62,6 +62,7 @@ interface RevealsBodyProps {
   onSelectInk: (ink: Ink) => void;
   onOpen: (card: LorcanaCard) => void;
   onSelectFranchise: (franchise: FranchiseConfig) => void;
+  onSelectTeam: () => void;
   compact: boolean;
 }
 
@@ -70,7 +71,7 @@ interface RevealsBodyProps {
  * strip + featured board + new-franchises). Early returns keep its branches off
  * RevealsPage.
  */
-function RevealsBody({loading, error, progress, selectedInk, onSelectInk, onOpen, onSelectFranchise, compact}: RevealsBodyProps) {
+function RevealsBody({loading, error, progress, selectedInk, onSelectInk, onOpen, onSelectFranchise, onSelectTeam, compact}: RevealsBodyProps) {
   if (error) {
     return (
       <p role="alert" style={{...messageStyle, color: COLORS.error}}>
@@ -90,7 +91,7 @@ function RevealsBody({loading, error, progress, selectedInk, onSelectInk, onOpen
         <InkBoard key={selectedInk} progress={progress.byInk[selectedInk]} onOpen={onOpen} compact={compact} />
       </div>
       <div style={{marginTop: 64}}>
-        <NewFranchises onSelect={onSelectFranchise} compact={compact} />
+        <WhatsNewSection onSelectFranchise={onSelectFranchise} onSelectTeam={onSelectTeam} compact={compact} />
       </div>
     </>
   );
@@ -103,7 +104,7 @@ export function RevealsPage() {
   const {openCardModal} = useCardModal();
   const [dates, setDates] = useState<RevealDates | null>(null);
   const [selectedInk, selectInk] = useInkParam();
-  const [selectedFranchise, setSelectedFranchise] = useState<FranchiseConfig | null>(null);
+  const [showcase, setShowcase] = useState<{label: string; ink: Ink; cards: LorcanaCard[]} | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -122,6 +123,7 @@ export function RevealsPage() {
     openCardModal(card.id);
   };
   const sidePad = isMobile ? SPACING.lg : 36;
+  const teamCards = tiers.flatMap((t) => t.cards).filter((c) => c.classifications?.includes('Team'));
 
   return (
     <ErrorBoundary>
@@ -144,17 +146,18 @@ export function RevealsPage() {
             selectedInk={selectedInk}
             onSelectInk={selectInk}
             onOpen={(card) => openAndTrack(card, 'mosaic')}
-            onSelectFranchise={setSelectedFranchise}
+            onSelectFranchise={(f) => setShowcase({label: f.label, ink: f.ink, cards: cardsForFranchise(tiers, f)})}
+            onSelectTeam={() => setShowcase({label: 'Team Characters', ink: 'Ruby', cards: teamCards})}
             compact={isMobile}
           />
         </div>
       </main>
 
-      {selectedFranchise && (
+      {showcase && (
         <FranchiseCardsModal
-          franchise={selectedFranchise}
-          cards={cardsForFranchise(tiers, selectedFranchise)}
-          onClose={() => setSelectedFranchise(null)}
+          source={{label: showcase.label, ink: showcase.ink}}
+          cards={showcase.cards}
+          onClose={() => setShowcase(null)}
           onCardClick={(card) => openAndTrack(card, 'franchise_modal')}
         />
       )}
