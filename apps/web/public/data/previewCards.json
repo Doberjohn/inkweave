@@ -5370,6 +5370,33 @@
       "strength": 3,
       "willpower": 4,
       "lore": 2
+    },
+    {
+      "id": 13147,
+      "name": "Quackerjack",
+      "fullName": "Quackerjack - Loony Toymaker",
+      "cost": 5,
+      "color": "Sapphire",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "13",
+      "number": 147,
+      "version": "Loony Toymaker",
+      "rarity": "Legendary",
+      "franchise": "Darkwing Duck",
+      "subtypes": [
+        "Storyborn",
+        "Super",
+        "Villain",
+        "Inventor"
+      ],
+      "fullText": "EVIL DESIGN When you play this character and whenever he quests, put the top 4 cards of your deck into your discard. You may deal 1 damage to chosen character for each item card put into your discard this way.",
+      "fullTextSections": [
+        "EVIL DESIGN When you play this character and whenever he quests, put the top 4 cards of your deck into your discard. You may deal 1 damage to chosen character for each item card put into your discard this way."
+      ],
+      "strength": 2,
+      "willpower": 4,
+      "lore": 2
     }
   ]
 }
