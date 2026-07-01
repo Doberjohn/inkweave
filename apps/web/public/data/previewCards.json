@@ -5333,6 +5333,43 @@
         "SIPHON Whenever an opposing character quests, you gain 1 lore unless their player pays 1 ⬡.",
         "RADIANT BLOOM ⟳, 2 ⬡ – Gain 1 lore."
       ]
+    },
+    {
+      "id": 13062,
+      "name": "Winnie the Pooh & Piglet",
+      "fullName": "Winnie the Pooh & Piglet - Hunny Mages",
+      "cost": 5,
+      "color": "Amethyst-Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 62,
+      "version": "Hunny Mages",
+      "rarity": "Super Rare",
+      "franchise": "Winnie the Pooh",
+      "subtypes": [
+        "Dreamborn",
+        "Team",
+        "Hero",
+        "Sorcerer",
+        "Hunny"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "3",
+          "fullText": "Shift 3"
+        }
+      ],
+      "fullText": "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Winnie the Pooh or Piglet.)\nMAGICAL MIX This character gets +1 ◊ for each different ink type of characters you have in play.",
+      "fullTextSections": [
+        "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Winnie the Pooh or Piglet.)",
+        "MAGICAL MIX This character gets +1 ◊ for each different ink type of characters you have in play."
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 2
     }
   ]
 }
