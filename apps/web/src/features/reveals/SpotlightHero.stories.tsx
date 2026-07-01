@@ -2,14 +2,14 @@ import type {Meta, StoryObj} from '@storybook/react-vite';
 import {SpotlightHero} from './SpotlightHero';
 import {SET_SPOTLIGHTS} from './setSpotlights';
 
-const vinelings = SET_SPOTLIGHTS[0].items.find((s) => s.id === 'vinelings')!;
+const floodborn = SET_SPOTLIGHTS[0].items.find((s) => s.id === 'floodborn')!;
 
 const meta: Meta<typeof SpotlightHero> = {
   title: 'Features/Reveals/SpotlightHero',
   component: SpotlightHero,
   parameters: {backgrounds: {default: 'dark'}, layout: 'padded'},
   tags: ['autodocs'],
-  args: {data: vinelings},
+  args: {data: floodborn},
   decorators: [
     (Story) => (
       <div style={{maxWidth: 880, margin: '0 auto'}}>

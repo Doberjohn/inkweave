@@ -44,7 +44,7 @@ function buildTabs(
 }
 
 /** One pill in the What's-New tab bar; active state drives colour, glow, and border. */
-function WhatsNewTab({label, isActive, compact, onSelect}: {label: string; isActive: boolean; compact: boolean; onSelect: () => void}) {
+function WhatsNewTab({label, isActive, compact, id, controls, onSelect}: {label: string; isActive: boolean; compact: boolean; id: string; controls: string; onSelect: () => void}) {
   const tone = isActive
     ? {
         border: COLORS.primary500,
@@ -62,7 +62,9 @@ function WhatsNewTab({label, isActive, compact, onSelect}: {label: string; isAct
     <button
       type="button"
       role="tab"
+      id={id}
       aria-selected={isActive}
+      aria-controls={controls}
       onClick={onSelect}
       style={{
         appearance: 'none',
@@ -135,11 +137,25 @@ export function WhatsNewSection({compact = false, onSelectFranchise, onSelectTea
         style={{display: 'flex', justifyContent: 'center', gap: s.tablistGap, flexWrap: 'wrap', marginBottom: s.tablistMargin}}
       >
         {tabs.map((t, i) => (
-          <WhatsNewTab key={t.key} label={t.label} isActive={i === active} compact={compact} onSelect={() => setActive(i)} />
+          <WhatsNewTab
+            key={t.key}
+            id={`whatsnew-tab-${i}`}
+            controls="whatsnew-panel"
+            label={t.label}
+            isActive={i === active}
+            compact={compact}
+            onSelect={() => setActive(i)}
+          />
         ))}
       </div>
 
-      <div role="tabpanel" style={{display: 'flex', flexDirection: 'column', gap: s.panelGap}}>
+      <div
+        role="tabpanel"
+        id="whatsnew-panel"
+        aria-labelledby={`whatsnew-tab-${active}`}
+        tabIndex={0}
+        style={{display: 'flex', flexDirection: 'column', gap: s.panelGap}}
+      >
         {tabs[active].cards}
       </div>
     </section>

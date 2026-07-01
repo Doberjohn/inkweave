@@ -1,4 +1,4 @@
-import {useRef, type CSSProperties} from 'react';
+import {useRef, type CSSProperties, type MouseEvent} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {smallImageUrl} from '../cards';
 import {useContainerWidth} from '../../shared/hooks';
@@ -33,6 +33,11 @@ export interface PlaystyleFanTileProps {
   onNavigate?: (id: string) => void;
 }
 
+/** Unmodified primary-button click — the only case we hijack for in-app navigation. */
+function isPlainLeftClick(e: MouseEvent): boolean {
+  return e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+}
+
 export function PlaystyleFanTile({
   playstyleId,
   name,
@@ -58,7 +63,9 @@ export function PlaystyleFanTile({
       className="playstyle-fan-tile"
       aria-label={`${name}: ${cardCount} cards`}
       onClick={(e) => {
-        if (onNavigate) {
+        // Only hijack plain left-clicks for SPA nav; let ctrl/cmd/middle-click
+        // fall through to the anchor's native open-in-new-tab behavior.
+        if (onNavigate && isPlainLeftClick(e)) {
           e.preventDefault();
           onNavigate(playstyleId);
         }

@@ -59,7 +59,6 @@
 /* Spotlight hero card. Transforms, border, and glow live here (not inline) so
    :hover can override the base, and the accent arrives via --accent-rgb. */
 .reveal-spotlight-hero {
-  cursor: pointer;
   transition: box-shadow 0.4s ease;
 }
 .reveal-spotlight-hero:hover {
