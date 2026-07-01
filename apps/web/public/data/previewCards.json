@@ -5266,6 +5266,22 @@
       "fullTextSections": [
         "Your Floodborn characters gain Resist +2 and can challenge ready characters this turn. (Damage dealt to them is reduced by 2.)"
       ]
+    },
+    {
+      "id": 13069,
+      "name": "Narrow Escape",
+      "fullName": "Narrow Escape",
+      "cost": 4,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "13",
+      "number": 69,
+      "rarity": "Common",
+      "fullText": "Return up to 2 chosen characters, items, or locations with cost 2 or less each to their player's hand.",
+      "fullTextSections": [
+        "Return up to 2 chosen characters, items, or locations with cost 2 or less each to their player's hand."
+      ]
     }
   ]
 }
