@@ -5442,6 +5442,22 @@
       "strength": 4,
       "willpower": 3,
       "lore": 2
+    },
+    {
+      "id": 13070,
+      "name": "Broken Pod",
+      "fullName": "Broken Pod",
+      "cost": 1,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "13",
+      "number": 70,
+      "rarity": "Uncommon",
+      "fullText": "RENEWAL PROCESS ⟳, 1 ⬡ – Put a card from chosen player's discard on the bottom of their deck.",
+      "fullTextSections": [
+        "RENEWAL PROCESS ⟳, 1 ⬡ – Put a card from chosen player's discard on the bottom of their deck."
+      ]
     }
   ]
 }
