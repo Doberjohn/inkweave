@@ -5565,6 +5565,47 @@
       "fullTextSections": [
         "METAMORPHOSIS ⟳, 1 ⬡ – If a character was banished in a challenge this turn, draw a card."
       ]
+    },
+    {
+      "id": 13176,
+      "name": "Violet Parr",
+      "fullName": "Violet Parr - Super Resilient",
+      "cost": 5,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 176,
+      "version": "Super Resilient",
+      "rarity": "Super Rare",
+      "subtypes": [
+        "Storyborn",
+        "Super",
+        "Hero"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "3",
+          "fullText": "Shift 3"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Resist",
+          "keywordValue": "+1",
+          "fullText": "Resist +1"
+        }
+      ],
+      "fullText": "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Violet Parr.)\nResist +1 (Damage dealt to this character is reduced by 1.)\nHEROIC SYNERGY Whenever you play this or another Hero character, you may draw a card, then choose and discard a card.",
+      "fullTextSections": [
+        "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Violet Parr.)",
+        "Resist +1 (Damage dealt to this character is reduced by 1.)",
+        "HEROIC SYNERGY Whenever you play this or another Hero character, you may draw a card, then choose and discard a card."
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 2
     }
   ]
 }
