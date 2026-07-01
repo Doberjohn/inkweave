@@ -5226,6 +5226,30 @@
       "fullTextSections": [
         "This item enters play exerted"
       ]
+    },
+    {
+      "id": 13144,
+      "name": "Dug",
+      "fullName": "Dug - Good Boy",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 144,
+      "version": "Good Boy",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "When you play this character, if you have an item in play, draw a card.",
+      "fullTextSections": [
+        "When you play this character, if you have an item in play, draw a card."
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1
     }
   ]
 }
