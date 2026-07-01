@@ -5549,6 +5549,22 @@
         "FRAGILE HUSK This item enters play exerted.",
         "REGENERATE ⟳, 1 ⬡ – Banish chosen character of yours. You may play a character with the same name as that character for free."
       ]
+    },
+    {
+      "id": 13206,
+      "name": "Absorbing Bloom",
+      "fullName": "Absorbing Bloom",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": false,
+      "type": "Item",
+      "setCode": "13",
+      "number": 206,
+      "rarity": "Uncommon",
+      "fullText": "METAMORPHOSIS ⟳, 1 ⬡ – If a character was banished in a challenge this turn, draw a card.",
+      "fullTextSections": [
+        "METAMORPHOSIS ⟳, 1 ⬡ – If a character was banished in a challenge this turn, draw a card."
+      ]
     }
   ]
 }
