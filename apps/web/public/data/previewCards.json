@@ -5316,6 +5316,23 @@
       "strength": 3,
       "willpower": 2,
       "lore": 1
+    },
+    {
+      "id": 13072,
+      "name": "Source of the Vine",
+      "fullName": "Source of the Vine",
+      "cost": 4,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "13",
+      "number": 72,
+      "rarity": "Super Rare",
+      "fullText": "SIPHON Whenever an opposing character quests, you gain 1 lore unless their player pays 1 ⬡.\nRADIANT BLOOM ⟳, 2 ⬡ – Gain 1 lore.",
+      "fullTextSections": [
+        "SIPHON Whenever an opposing character quests, you gain 1 lore unless their player pays 1 ⬡.",
+        "RADIANT BLOOM ⟳, 2 ⬡ – Gain 1 lore."
+      ]
     }
   ]
 }
