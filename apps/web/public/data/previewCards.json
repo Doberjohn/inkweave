@@ -5397,6 +5397,26 @@
       "strength": 2,
       "willpower": 4,
       "lore": 2
+    },
+    {
+      "id": 13111,
+      "name": "Kuzco",
+      "fullName": "Kuzco - Picky Customer",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 111,
+      "version": "Picky Customer",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "King"
+      ],
+      "strength": 5,
+      "willpower": 1,
+      "lore": 1
     }
   ]
 }
