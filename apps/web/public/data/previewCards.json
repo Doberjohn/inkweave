@@ -5282,6 +5282,40 @@
       "fullTextSections": [
         "Return up to 2 chosen characters, items, or locations with cost 2 or less each to their player's hand."
       ]
+    },
+    {
+      "id": 13183,
+      "name": "Violet Parr",
+      "fullName": "Violet Parr - Force Field Practice",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 183,
+      "version": "Force Field Practice",
+      "rarity": "Common",
+      "franchise": "The Incredibles",
+      "subtypes": [
+        "Storyborn",
+        "Super",
+        "Hero"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Resist",
+          "keywordValue": "+1",
+          "fullText": "Resist +1"
+        }
+      ],
+      "fullText": "Resist +1 (Damage dealt to this character is reduced by 1.)",
+      "fullTextSections": [
+        "Resist +1 (Damage dealt to this character is reduced by 1.)"
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1
     }
   ]
 }
