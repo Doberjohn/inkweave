@@ -5417,6 +5417,31 @@
       "strength": 5,
       "willpower": 1,
       "lore": 1
+    },
+    {
+      "id": 13110,
+      "name": "Yzma",
+      "fullName": "Yzma - Choosy Customer",
+      "cost": 4,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 110,
+      "version": "Choosy Customer",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Villain",
+        "Sorcerer"
+      ],
+      "fullText": "When you play this character, each opponent loses 1 lore.",
+      "fullTextSections": [
+        "When you play this character, each opponent loses 1 lore."
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 2
     }
   ]
 }
