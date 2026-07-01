@@ -202,7 +202,7 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 |---|---|
 | loads the pair and renders the interactive vote form | Navigates to `/vote/2730/2718`; the `[aria-label="Loading vote pair and form"]` skeleton becomes hidden, then "Is this synergy real?" + the "Yes" radio are visible (a loop/hang fails by timeout) |
 
-## `reveals-page.spec.ts` — 6 tests (5 desktop, 1 mobile)
+## `reveals-page.spec.ts` — 8 tests (7 desktop, 1 mobile)
 
 | Test | What it verifies |
 |---|---|
@@ -212,6 +212,8 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 | promo modal appears on landing page and not on /reveals | `role="complementary" name=/Set 13 reveals/` visible on `/`, absent on `/reveals` |
 | mosaic card click opens the card overview modal | Clicking a `reveal-card-slot` on `/reveals` opens the modal; URL stays `/reveals` |
 | franchise card click opens the franchise cards modal | Clicking "View Monsters, Inc. cards" opens the `dialog`; a card-tile inside opens the overview modal on top |
+| ?ink= param selects the starting mosaic ink | `/reveals?ink=emerald` makes the Emerald `ink-tracker-tile` the `aria-pressed` (featured) one |
+| clicking a rarity chip dims the other revealed cards | A "Highlight ... cards" chip toggles `aria-pressed`; other-rarity slots get `data-dimmed`; clicking again clears it (skips when <2 rarities revealed) |
 
 ## Patterns
 
