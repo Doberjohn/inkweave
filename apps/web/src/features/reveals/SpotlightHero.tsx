@@ -200,7 +200,7 @@ export function SpotlightHero({
         type="button"
         onClick={onActivate}
         className="reveal-spotlight-hero"
-        aria-label={`${data.title}: ${data.cta ?? 'view cards'}`}
+        aria-label={`View ${data.title} cards`}
         style={{...shell, appearance: 'none', font: 'inherit', textAlign: 'left', cursor: 'pointer', width: '100%'}}
       >
         {inner}

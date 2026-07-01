@@ -186,7 +186,6 @@ function ComingSoonBand() {
               justifyContent: 'center',
               color: COLORS.textMuted,
               fontSize: `${FONT_SIZES.base}px`,
-              opacity: 0.7,
             }}>
             {ps.name}
           </div>
