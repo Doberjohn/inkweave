@@ -97,6 +97,112 @@ function SupportFan({cards, accent, compact}: {cards: SupportCard[]; accent: str
   );
 }
 
+/** Per-density layout values, resolved once from `compact` so the render body stays branch-free. */
+interface SpotlightDims {
+  heroW: number;
+  heroT: string;
+  heroTh: string;
+  padding: string;
+  gap: number;
+  flexDirection: CSSProperties['flexDirection'];
+  textAlign: CSSProperties['textAlign'];
+  headerJustify: CSSProperties['justifyContent'];
+  titleSize: number;
+  summarySize: number;
+}
+
+const FULL_DIMS: SpotlightDims = {
+  heroW: 188,
+  heroT: 'perspective(1000px) rotateY(14deg) rotate(-4deg)',
+  heroTh: 'perspective(1000px) rotateY(7deg) rotate(-2deg) translateY(-6px) scale(1.05)',
+  padding: '30px 34px',
+  gap: 36,
+  flexDirection: 'row',
+  textAlign: 'left',
+  headerJustify: 'flex-start',
+  titleSize: 27,
+  summarySize: 14,
+};
+
+const COMPACT_DIMS: SpotlightDims = {
+  heroW: 132,
+  heroT: 'none',
+  heroTh: 'translateY(-4px) scale(1.03)',
+  padding: '22px 18px',
+  gap: 14,
+  flexDirection: 'column',
+  textAlign: 'center',
+  headerJustify: 'center',
+  titleSize: 22,
+  summarySize: 13,
+};
+
+/** Accent wash behind the hero: a two-color gradient for dual-ink spotlights, else a single-accent sweep. */
+function washFor(rgb: string, grad?: {from: string; to: string}): string {
+  if (grad) {
+    const from = hexToRgb(grad.from);
+    const to = hexToRgb(grad.to);
+    return `linear-gradient(105deg, rgba(${from}, 0.32) 0%, rgba(${from}, 0.12) 34%, rgba(${to}, 0.14) 64%, rgba(${to}, 0.32) 100%), radial-gradient(520px 320px at 100% 40%, rgba(${to}, 0.18), transparent)`;
+  }
+  return `linear-gradient(110deg, rgba(${rgb}, 0.26), rgba(${rgb}, 0.06) 52%, transparent 78%), radial-gradient(560px 320px at 92% 130%, rgba(${rgb}, 0.22), transparent)`;
+}
+
+/** CTA label: caller-provided, else the sensible default for a link vs an action tile. */
+function ctaLabel(data: SpotlightHeroData): string {
+  return data.cta ?? (data.href ? 'View synergies →' : 'View cards →');
+}
+
+/** The shared hero + copy + fan interior, rendered inside whichever wrapper the tile needs. */
+function SpotlightInner({data, dims, onActivate, compact}: {data: SpotlightHeroData; dims: SpotlightDims; onActivate?: () => void; compact: boolean}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: dims.gap,
+        flexDirection: dims.flexDirection,
+        textAlign: dims.textAlign,
+      }}
+    >
+      <div className="reveal-rise" style={{flexShrink: 0}}>
+        <div
+          className="reveal-hero-card"
+          style={
+            {
+              '--t': dims.heroT,
+              '--th': dims.heroTh,
+              width: dims.heroW,
+              height: Math.round(dims.heroW * 1.4),
+              borderRadius: 13,
+              overflow: 'hidden',
+              background: '#0c0c15',
+            } as CSSProperties
+          }
+        >
+          <img src={data.heroImage} alt={data.heroAlt} style={{width: '100%', height: '100%', objectFit: 'cover', display: 'block'}} />
+        </div>
+      </div>
+
+      <div className="reveal-rise reveal-rise-1" style={{flex: '0 1 auto', minWidth: 0, maxWidth: 460}}>
+        <div style={{display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', justifyContent: dims.headerJustify}}>
+          {data.isNew && <NewBadge accent={data.accent} />}
+          <span style={{fontSize: 10, fontWeight: 600, letterSpacing: 0.8, textTransform: 'uppercase', color: '#90a1b9'}}>{data.count}</span>
+        </div>
+        <h3 style={{fontFamily: FONTS.hero, fontWeight: 700, fontSize: dims.titleSize, color: '#f4f4f8', margin: '11px 0 0'}}>{data.title}</h3>
+        <p style={{fontWeight: 400, fontSize: dims.summarySize, lineHeight: 1.55, color: '#d2d2de', margin: '9px 0 0', maxWidth: 420}}>{data.summary}</p>
+        {(data.href || onActivate) && (
+          <span style={{display: 'inline-block', marginTop: 13, fontSize: 13, fontWeight: 700, color: data.accent, letterSpacing: 0.3}}>
+            {ctaLabel(data)}
+          </span>
+        )}
+      </div>
+
+      <SupportFan cards={data.support} accent={data.accent} compact={compact} />
+    </div>
+  );
+}
+
 /**
  * Cinematic spotlight: a large hero card tilted in pseudo-3D over a saturated
  * accent wash on the left, a fan of supporting cards on the right, and the
@@ -114,16 +220,7 @@ export function SpotlightHero({
   onActivate?: () => void;
 }) {
   const rgb = hexToRgb(data.accent);
-  const heroW = compact ? 132 : 188;
-  const heroT = compact ? 'none' : 'perspective(1000px) rotateY(14deg) rotate(-4deg)';
-  const heroTh = compact
-    ? 'translateY(-4px) scale(1.03)'
-    : 'perspective(1000px) rotateY(7deg) rotate(-2deg) translateY(-6px) scale(1.05)';
-
-  const grad = data.accentGradient;
-  const backgroundImage = grad
-    ? `linear-gradient(105deg, rgba(${hexToRgb(grad.from)}, 0.32) 0%, rgba(${hexToRgb(grad.from)}, 0.12) 34%, rgba(${hexToRgb(grad.to)}, 0.14) 64%, rgba(${hexToRgb(grad.to)}, 0.32) 100%), radial-gradient(520px 320px at 100% 40%, rgba(${hexToRgb(grad.to)}, 0.18), transparent)`
-    : `linear-gradient(110deg, rgba(${rgb}, 0.26), rgba(${rgb}, 0.06) 52%, transparent 78%), radial-gradient(560px 320px at 92% 130%, rgba(${rgb}, 0.22), transparent)`;
+  const dims = compact ? COMPACT_DIMS : FULL_DIMS;
 
   const shell = {
     position: 'relative',
@@ -131,61 +228,15 @@ export function SpotlightHero({
     borderRadius: 18,
     border: `1px solid rgba(${rgb}, 0.4)`,
     background: '#0b0b12',
-    backgroundImage,
-    padding: compact ? '22px 18px' : '30px 34px',
+    backgroundImage: washFor(rgb, data.accentGradient),
+    padding: dims.padding,
     textDecoration: 'none',
     color: 'inherit',
     display: 'block',
     '--accent-rgb': rgb,
   } as CSSProperties;
 
-  const inner = (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: compact ? 14 : 36,
-        flexDirection: compact ? 'column' : 'row',
-        textAlign: compact ? 'center' : 'left',
-      }}
-    >
-      <div className="reveal-rise" style={{flexShrink: 0}}>
-        <div
-          className="reveal-hero-card"
-          style={
-            {
-              '--t': heroT,
-              '--th': heroTh,
-              width: heroW,
-              height: Math.round(heroW * 1.4),
-              borderRadius: 13,
-              overflow: 'hidden',
-              background: '#0c0c15',
-            } as CSSProperties
-          }
-        >
-          <img src={data.heroImage} alt={data.heroAlt} style={{width: '100%', height: '100%', objectFit: 'cover', display: 'block'}} />
-        </div>
-      </div>
-
-      <div className="reveal-rise reveal-rise-1" style={{flex: '0 1 auto', minWidth: 0, maxWidth: 460}}>
-        <div style={{display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', justifyContent: compact ? 'center' : 'flex-start'}}>
-          {data.isNew && <NewBadge accent={data.accent} />}
-          <span style={{fontSize: 10, fontWeight: 600, letterSpacing: 0.8, textTransform: 'uppercase', color: '#90a1b9'}}>{data.count}</span>
-        </div>
-        <h3 style={{fontFamily: FONTS.hero, fontWeight: 700, fontSize: compact ? 22 : 27, color: '#f4f4f8', margin: '11px 0 0'}}>{data.title}</h3>
-        <p style={{fontWeight: 400, fontSize: compact ? 13 : 14, lineHeight: 1.55, color: '#d2d2de', margin: '9px 0 0', maxWidth: 420}}>{data.summary}</p>
-        {(data.href || onActivate) && (
-          <span style={{display: 'inline-block', marginTop: 13, fontSize: 13, fontWeight: 700, color: data.accent, letterSpacing: 0.3}}>
-            {data.cta ?? (data.href ? 'View synergies →' : 'View cards →')}
-          </span>
-        )}
-      </div>
-
-      <SupportFan cards={data.support} accent={data.accent} compact={compact} />
-    </div>
-  );
+  const inner = <SpotlightInner data={data} dims={dims} onActivate={onActivate} compact={compact} />;
 
   if (data.href) {
     return (
