@@ -8,7 +8,7 @@ import {
 } from '../../../shared/lib/supabase';
 import {usePairScore, invalidatePairScore} from './usePairScore';
 import {readQuickVote, writeQuickVote} from '../lib/voteStorage';
-import {trackEvent} from '../../../shared/lib/analytics';
+import {trackQuickVote, type QuickVoteContext} from '../lib/voteAnalytics';
 
 export type {Accuracy};
 export type QuickVoteState = 'hidden' | 'ready' | 'submitting' | 'result' | 'error';
@@ -58,7 +58,12 @@ function applyVoteFailure(slots: VoteSlots, error: NonNullable<QuickVoteError>):
   slots.setState('error');
 }
 
-async function performVote(slots: VoteSlots, pair: Pair, accuracy: Accuracy): Promise<void> {
+async function performVote(
+  slots: VoteSlots,
+  pair: Pair,
+  accuracy: Accuracy,
+  context?: QuickVoteContext,
+): Promise<void> {
   slots.setState('submitting');
   slots.setUserChoice(accuracy);
   slots.setError(null);
@@ -67,7 +72,7 @@ async function performVote(slots: VoteSlots, pair: Pair, accuracy: Accuracy): Pr
     if (!slots.submittingRef.current) return;
     if (result.error === null) {
       writeQuickVote(pair, accuracy);
-      trackEvent('vote_submitted', {voteType: 'quick'});
+      trackQuickVote(pair.cardA, pair.cardB, accuracy, context);
       slots.setState('result');
       // Bust the shared pair-score cache so usePairScore subscribers (this hook +
       // CommunityColumn) refetch the aggregate that now includes the user's vote.
@@ -151,7 +156,11 @@ export interface UseQuickVoteReturn {
   error: QuickVoteError;
 }
 
-export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
+export function useQuickVote(
+  cardA: string,
+  cardB: string,
+  context?: QuickVoteContext,
+): UseQuickVoteReturn {
   const pair: Pair = {cardA, cardB};
   const isAvailable = getSupabase() !== null;
   const storedChoice = readQuickVote(pair);
@@ -180,7 +189,7 @@ export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
     submittingRef.current = true;
     await performVote(
       {setState, setUserChoice, setError, submittingRef},
-      pair, accuracy,
+      pair, accuracy, context,
     );
   };
 

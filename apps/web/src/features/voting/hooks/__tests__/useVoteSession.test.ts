@@ -2,11 +2,16 @@ import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {renderHook, act} from '@testing-library/react';
 import {useVoteSession} from '../useVoteSession';
 import {getSupabase, submitVote} from '../../../../shared/lib/supabase';
+import {trackPairVote} from '../../lib/voteAnalytics';
 import {createVotingPair} from '../../../../shared/test-utils';
 
 vi.mock('../../../../shared/lib/supabase', () => ({
   getSupabase: vi.fn(),
   submitVote: vi.fn(),
+}));
+
+vi.mock('../../lib/voteAnalytics', () => ({
+  trackPairVote: vi.fn(),
 }));
 
 const mockPair = createVotingPair({
@@ -126,6 +131,28 @@ describe('useVoteSession', () => {
       });
 
       expect(result.current.lastResult).toBe('success');
+    });
+
+    it('tracks vote_submitted with voteType score on success', async () => {
+      vi.mocked(submitVote).mockResolvedValue({error: null});
+      const {result} = renderHook(() => useVoteSession(mockPair));
+
+      await act(async () => {
+        await result.current.submitWithScore(8);
+      });
+
+      expect(trackPairVote).toHaveBeenCalledWith('score', mockPair, 8);
+    });
+
+    it('does not track when submission fails', async () => {
+      vi.mocked(submitVote).mockResolvedValue({error: 'Something went wrong'});
+      const {result} = renderHook(() => useVoteSession(mockPair));
+
+      await act(async () => {
+        await result.current.submitWithScore(5);
+      });
+
+      expect(trackPairVote).not.toHaveBeenCalled();
     });
 
     it('sets lastResult to rate_limited on rate limit', async () => {
