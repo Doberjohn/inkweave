@@ -6029,6 +6029,26 @@
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/07/27-207-EN-13-Pocahontas-Meeko-Adventurous-Friends-LQ-Lorcana-Player-430x600.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/07/27-207-EN-13-Pocahontas-Meeko-Adventurous-Friends-LQ-Lorcana-Player-430x600.jpg.webp"
       }
+    },
+    {
+      "id": 13087,
+      "name": "Minnie Mouse",
+      "fullName": "Minnie Mouse - Curious Adventurer",
+      "cost": 1,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 87,
+      "version": "Curious Adventurer",
+      "rarity": "Common",
+      "subtypes": [
+        "Dreamborn",
+        "Hero"
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1
     }
   ]
 }
