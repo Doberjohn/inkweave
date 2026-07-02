@@ -5766,6 +5766,29 @@
         "ROOT OF POWER The first time a Floodborn character moves here each turn, you may deal 1 damage to chosen character."
       ],
       "moveCost": 1
+    },
+    {
+      "id": 13175,
+      "name": "Hundred Acre Wood",
+      "fullName": "Hundred Acre Wood - Hunny Campsite",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": false,
+      "type": "Location",
+      "setCode": "13",
+      "number": 175,
+      "version": "Hunny Campsite",
+      "rarity": "Uncommon",
+      "franchise": "Winnie the Pooh",
+      "subtypes": [
+        "Hunny"
+      ],
+      "fullText": "HOME AWAY FROM HOME Characters get +1 {willpower} while here.\nHUNNY QUEST Hunny characters get +1 ◊ while here.",
+      "fullTextSections": [
+        "HOME AWAY FROM HOME Characters get +1 {willpower} while here.",
+        "HUNNY QUEST Hunny characters get +1 ◊ while here."
+      ],
+      "moveCost": 1
     }
   ]
 }
