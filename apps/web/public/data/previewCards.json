@@ -5912,6 +5912,32 @@
       "strength": 2,
       "willpower": 3,
       "lore": 1
+    },
+    {
+      "id": 13019,
+      "name": "Boo",
+      "fullName": "Boo - In Disguise",
+      "cost": 2,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 19,
+      "version": "In Disguise",
+      "rarity": "Uncommon",
+      "franchise": "Monsters, Inc.",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Monster"
+      ],
+      "fullText": "YOU'RE SAFE NOW While you have an exerted character named Sulley in play, this character can't be challenged.",
+      "fullTextSections": [
+        "YOU'RE SAFE NOW While you have an exerted character named Sulley in play, this character can't be challenged."
+      ],
+      "strength": 1,
+      "willpower": 2,
+      "lore": 2
     }
   ]
 }
