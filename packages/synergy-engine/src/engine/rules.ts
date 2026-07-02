@@ -15,6 +15,7 @@ import {
   isCharacter,
   isDeckRamp,
   isDiscardCard,
+  isItem,
   isLocation,
   isLocationSupportCard,
   isRampCard,
@@ -208,9 +209,13 @@ function calculateShiftBaseScore(
 
 /**
  * Check if a target card is a valid Shift target for the given Shift variant.
- * - standard: same base name
- * - classification: target has the required classification
+ * - standard: same base name (character)
+ * - classification: character with the required classification
  * - universal: any character
+ * - named-item: the item this shift lands on
+ *
+ * Each case asserts the target's own card type (character vs item), so callers can pass the
+ * full card pool without a separate type pre-filter.
  */
 function isValidShiftTarget(
   shiftType: ShiftType,
@@ -221,11 +226,16 @@ function isValidShiftTarget(
     case 'standard':
       // Team cards ("Belle & Beast") shift onto either named half, so match the
       // target's base name against every name the shifter can land on.
-      return getShiftBaseNames(shiftCard).includes(getBaseName(target));
+      return isCharacter(target) && getShiftBaseNames(shiftCard).includes(getBaseName(target));
     case 'classification':
-      return hasClassification(target, shiftType.classification);
+      return isCharacter(target) && hasClassification(target, shiftType.classification);
     case 'universal':
-      return true;
+      return isCharacter(target);
+    case 'named-item':
+      // The card-type gate is load-bearing: a character named/classified "Potato" must NOT
+      // match — only an item named Potato does. Name match is case-insensitive to match the
+      // hasClassification convention, so card-data casing drift can't silently break it.
+      return isItem(target) && getBaseName(target).toLowerCase() === shiftType.itemName.toLowerCase();
   }
 }
 
@@ -603,17 +613,14 @@ function makeShiftMatch(
   return {card: target, score, explanation, bidirectional: true};
 }
 
-/** Forward: a Shift card finds valid base targets per its variant. */
+/** Forward: a Shift card finds valid targets per its variant (character or item). */
 function findShiftTargets(shiftCard: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
   const shiftType = getShiftType(shiftCard);
   if (!shiftType) return [];
+  // No card-type pre-filter here: isValidShiftTarget asserts the right type per variant
+  // (characters for standard/classification/universal, items for named-item).
   return allCards
-    .filter(
-      (other) =>
-        other.id !== shiftCard.id &&
-        isCharacter(other) &&
-        isValidShiftTarget(shiftType, shiftCard, other),
-    )
+    .filter((other) => other.id !== shiftCard.id && isValidShiftTarget(shiftType, shiftCard, other))
     .map((target) => makeShiftMatch(shiftCard, target, target));
 }
 
@@ -731,8 +738,10 @@ export const synergyRules: SynergyRule[] = [
     category: 'direct',
     description: 'Characters with Shift and their valid targets',
 
-    // Matches all characters: Shift cards find targets (forward), base characters find Shift cards (reverse)
-    matches: (card) => isCharacter(card),
+    // Matches characters and items: Shift cards find targets (forward), base cards find
+    // Shift cards (reverse). Items are included so item-target shifts (named-item) resolve
+    // from the item side too.
+    matches: (card) => isCharacter(card) || isItem(card),
 
     findSynergies: (card, allCards) => {
       if (getShiftType(card)) return findShiftTargets(card, allCards);
