@@ -5674,6 +5674,32 @@
       "strength": 2,
       "willpower": 3,
       "lore": 1
+    },
+    {
+      "id": 13164,
+      "name": "Eeyore",
+      "fullName": "Eeyore - Hunny Scholar",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 164,
+      "version": "Hunny Scholar",
+      "rarity": "Uncommon",
+      "franchise": "Winnie the Pooh",
+      "subtypes": [
+        "Dreamborn",
+        "Ally",
+        "Hunny"
+      ],
+      "fullText": "HUNNY TACTICS Whenever this character quests, chosen Hunny character of yours gets +1 ◊ and gains Ward until the start of your next turn. (Opponents can't choose them except to challenge.)",
+      "fullTextSections": [
+        "HUNNY TACTICS Whenever this character quests, chosen Hunny character of yours gets +1 ◊ and gains Ward until the start of your next turn. (Opponents can't choose them except to challenge.)"
+      ],
+      "strength": 2,
+      "willpower": 4,
+      "lore": 1
     }
   ]
 }
