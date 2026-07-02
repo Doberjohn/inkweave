@@ -198,6 +198,34 @@ describe('Unique Extractors', () => {
     expect(keywords).not.toContain('Singer 5');
   });
 
+  describe('Keyword normalization', () => {
+    it('collapses every Shift variant to a single "Shift" option', () => {
+      const shiftCards = [
+        createCard({id: 's1', keywords: ['Floodborn Shift 7']}),
+        createCard({id: 's2', keywords: ['Puppy Shift 3']}),
+        createCard({id: 's3', keywords: ['Combo Shift 4']}),
+        createCard({id: 's4', keywords: ['Temporary Shift 3']}),
+        createCard({id: 's5', keywords: ['Shift 5']}),
+      ];
+      // The classification/team prefixes must NOT leak as bogus keyword options:
+      // "Floodborn" is a classification, findable via the Classification filter.
+      expect(getUniqueKeywords(shiftCards)).toEqual(['Shift']);
+    });
+
+    it('keeps the two-word "Sing Together" keyword intact (not "Sing")', () => {
+      const keywords = getUniqueKeywords([createCard({id: 'st', keywords: ['Sing Together 8']})]);
+      expect(keywords).toContain('Sing Together');
+      expect(keywords).not.toContain('Sing');
+    });
+
+    it('drops non-keyword noise from mis-tagged source abilities', () => {
+      const keywords = getUniqueKeywords([
+        createCard({id: 'n', keywords: ['THIS', 'gain', 'if', 'Bodyguard']}),
+      ]);
+      expect(keywords).toEqual(['Bodyguard']);
+    });
+  });
+
   it('should extract unique classifications', () => {
     const classifications = getUniqueClassifications(cards);
     expect(classifications).toHaveLength(3);

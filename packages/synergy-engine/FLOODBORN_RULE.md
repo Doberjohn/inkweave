@@ -2,7 +2,9 @@
 
 The Set 13 "Vinelings" archetype. Named for the new Vineling classification, but its
 membership and payoffs key on the broader **Floodborn** classification: every payoff
-reads "your Floodborn characters", and every Shift card in the game is Floodborn.
+reads "your Floodborn characters". Most Floodborn characters have Shift, but not every
+Shift card is Floodborn: the Set 13 Team-ups and some Incredibles Shift cards are Storyborn,
+so membership keys on the `Floodborn` classification tag, never on the Shift keyword.
 
 ## Roles
 - `member` is a Floodborn character (`isCharacter` + `hasClassification('Floodborn')`).

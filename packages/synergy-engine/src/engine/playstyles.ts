@@ -102,9 +102,9 @@ const playstyles: Playstyle[] = [
     name: 'Floodborns',
     tagline: 'Flood the board with Floodborn characters and cash in the Vine payoffs.',
     description:
-      'Flood the board with Floodborn characters and cash in the Vine payoffs. The Set 13 Vinelings each buff or trigger off "your Floodborn characters", and because every Shift card in the game is Floodborn, the payoffs reward a deep, pre-built tribe. Stack buffs to grow the whole board, or lean on the play and quest triggers for a repeating engine.',
+      'Flood the board with Floodborn characters and cash in the Vine payoffs. The Set 13 Vinelings each buff or trigger off "your Floodborn characters", and because Floodborn is a deep classification spanning every set, the payoffs reward a large, pre-built tribe. Stack buffs to grow the whole board, or lean on the play and quest triggers for a repeating engine.',
     strategyTips: [
-      'The payoffs reward any Floodborn body, not just Vinelings, so run plenty of Shift characters as fuel.',
+      'The payoffs reward any Floodborn body, not just Vinelings, so run plenty of Floodborn characters as fuel. Floodborn is a classification, not the Shift keyword: some Shift cards, like the Set 13 Team-ups, are Storyborn.',
       'Trigger payoffs (Hera, Mulan, Ursula) want a wide, cheap Floodborn board so they fire often.',
       'Stat buffs (Gaston, Pete, Ring of Stones) stack, so two payoffs on the same board pump the whole team twice.',
       'Banish triggers (Maid Marian, The Vine) double as a Sacrifice-deck payoff if you add self-banish enablers.',
