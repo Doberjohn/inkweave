@@ -6,6 +6,7 @@ name: Convert reveal images
 # so card-images-raw never stays tracked at HEAD. See issue #420.
 
 on:
+  workflow_dispatch:  # allow manual re-run (e.g. to reconvert a stuck raw)
   push:
     branches: [master]
     paths:
@@ -25,6 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      HUSKY: "0"
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -61,11 +64,11 @@ jobs:
             echo "No image changes to commit."
             exit 0
           fi
-          git commit -m "chore(reveals): convert raw scans to AVIF [skip ci]"
+          git commit --no-verify -m "chore(reveals): convert raw scans to AVIF [skip ci]"
           # reveal-admin may push another raw while we run; rebase before pushing,
           # and retry a few times to absorb a concurrent push.
           for attempt in 1 2 3; do
-            git pull --rebase --autostash origin master && git push && exit 0
+            git pull --rebase --autostash origin master && git push --no-verify && exit 0
             echo "push attempt $attempt failed; retrying after rebase..."
             sleep 5
           done
