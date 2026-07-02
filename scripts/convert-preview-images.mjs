@@ -63,6 +63,46 @@ function allVariantsExist(id) {
   return SIZES.every((s) => fs.existsSync(path.join(OUT_DIR, `${id}${s.suffix}.avif`)));
 }
 
+/**
+ * Convert one raw file to its AVIF variants, or skip if they already exist.
+ * Returns 'converted' | 'skipped' | 'failed'. A non-numeric stem or a sharp
+ * error is a failure — its raw is kept as the retry source.
+ */
+async function ensureAvifs(file) {
+  const stem = path.basename(file, path.extname(file));
+  if (!/^\d+$/.test(stem)) {
+    console.error(`  x ${file}: filename stem must be numeric card id (got "${stem}")`);
+    return 'failed';
+  }
+  if (!FORCE && allVariantsExist(stem)) return 'skipped';
+  try {
+    await convert(stem, path.join(RAW_DIR, file));
+    return 'converted';
+  } catch (err) {
+    console.error(`  x ${file}: ${err.message}`);
+    return 'failed';
+  }
+}
+
+/**
+ * With --prune-raw, delete a consumed raw once its AVIFs are on disk; returns
+ * true only if the raw was removed. A failed conversion keeps its raw, and a
+ * filesystem error is logged (except ENOENT) but never aborts the batch: the
+ * AVIFs are already written, which is what matters.
+ */
+function pruneRaw(file, status) {
+  if (!PRUNE_RAW || status === 'failed') return false;
+  try {
+    fs.unlinkSync(path.join(RAW_DIR, file));
+    return true;
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      console.error(`  ! ${file}: could not prune raw: ${err.message}`);
+    }
+    return false;
+  }
+}
+
 async function main() {
   if (!fs.existsSync(RAW_DIR)) {
     console.log(`  No raw directory at ${RAW_DIR}. Nothing to do.`);
@@ -84,63 +124,24 @@ async function main() {
     `\n  Converting ${files.length} raw image(s)${FORCE ? ' [force]' : ''}`,
   );
 
-  let converted = 0;
-  let skipped = 0;
-  let failed = 0;
+  const tally = {converted: 0, skipped: 0, failed: 0};
   let pruned = 0;
   const startTime = Date.now();
 
   for (const file of files) {
-    const stem = path.basename(file, path.extname(file));
-    if (!/^\d+$/.test(stem)) {
-      console.error(`  x ${file}: filename stem must be numeric card id (got "${stem}")`);
-      failed++;
-      continue;
-    }
-    const id = stem;
-    const rawPath = path.join(RAW_DIR, file);
-
-    // Whether this card's AVIFs are on disk after this iteration — either they
-    // already existed (skip) or we just wrote them (convert). Only a raw whose
-    // AVIFs are ready is safe to prune; a failed conversion keeps its raw.
-    let avifsReady = false;
-    if (!FORCE && allVariantsExist(id)) {
-      skipped++;
-      avifsReady = true;
-    } else {
-      try {
-        await convert(id, rawPath);
-        converted++;
-        avifsReady = true;
-      } catch (err) {
-        console.error(`  x ${file}: ${err.message}`);
-        failed++;
-      }
-    }
-
-    if (PRUNE_RAW && avifsReady) {
-      try {
-        fs.unlinkSync(rawPath);
-        pruned++;
-      } catch (err) {
-        // ENOENT just means the raw is already gone (idempotent re-run); any
-        // other error is worth surfacing, but a prune failure must never abort
-        // the batch — the AVIFs are already written, which is what matters.
-        if (err.code !== 'ENOENT') {
-          console.error(`  ! ${file}: could not prune raw: ${err.message}`);
-        }
-      }
-    }
+    const status = await ensureAvifs(file);
+    tally[status]++;
+    if (pruneRaw(file, status)) pruned++;
   }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(
-    `\n  Done in ${elapsed}s: ${converted} converted, ${skipped} skipped (exists), ${failed} failed` +
+    `\n  Done in ${elapsed}s: ${tally.converted} converted, ${tally.skipped} skipped (exists), ${tally.failed} failed` +
       (PRUNE_RAW ? `, ${pruned} raw pruned` : '') +
       '\n',
   );
 
-  if (failed > 0) process.exit(1);
+  if (tally.failed > 0) process.exit(1);
 }
 
 main().catch((err) => {
