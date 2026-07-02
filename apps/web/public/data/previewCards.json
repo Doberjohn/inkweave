@@ -5971,6 +5971,64 @@
       "strength": 7,
       "willpower": 8,
       "lore": 2
+    },
+    {
+      "id": 13027,
+      "name": "Pocahontas & Meeko",
+      "version": "Adventurous Friends",
+      "fullName": "Pocahontas & Meeko - Adventurous Friends",
+      "cost": 4,
+      "color": "Amber-Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Princess",
+        "Team"
+      ],
+      "fullText": "Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your characters named Pocahontas or Meeko.)\nEvasive\n(Only characters with Evasive can challenge this character.)\nWELCOME RETURN Whenever this character quests, you may return chosen character of yours with cost 1 to your hand. If you do, you may play a character with cost 1 for free.",
+      "fullTextSections": [
+        "Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your characters named Pocahontas or Meeko.)",
+        "Evasive",
+        "(Only characters with Evasive can challenge this character.)",
+        "WELCOME RETURN Whenever this character quests, you may return chosen character of yours with cost 1 to your hand. If you do, you may play a character with cost 1 for free."
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "fullText": "Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your characters named Pocahontas or Meeko.)",
+          "keywordValue": "2 ⬡"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        },
+        {
+          "effect": "Only characters with Evasive can challenge this character.",
+          "fullText": "(Only characters with Evasive can challenge this character.)",
+          "type": "static"
+        },
+        {
+          "effect": "Whenever this character quests, you may return chosen character of yours with cost 1 to your hand. If you do, you may play a character with cost 1 for free.",
+          "fullText": "WELCOME RETURN Whenever this character quests, you may return chosen character of yours with cost 1 to your hand. If you do, you may play a character with cost 1 for free.",
+          "name": "WELCOME RETURN",
+          "type": "triggered"
+        }
+      ],
+      "strength": 2,
+      "willpower": 3,
+      "lore": 2,
+      "setCode": "13",
+      "number": 27,
+      "rarity": "Legendary",
+      "franchise": "Pocahontas",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/07/27-207-EN-13-Pocahontas-Meeko-Adventurous-Friends-LQ-Lorcana-Player-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/07/27-207-EN-13-Pocahontas-Meeko-Adventurous-Friends-LQ-Lorcana-Player-430x600.jpg.webp"
+      }
     }
   ]
 }
