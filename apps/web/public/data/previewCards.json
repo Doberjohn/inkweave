@@ -5886,6 +5886,32 @@
       "strength": 2,
       "willpower": 3,
       "lore": 1
+    },
+    {
+      "id": 13012,
+      "name": "Pocahontas",
+      "fullName": "Pocahontas - Guiding the Tribe",
+      "cost": 2,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 12,
+      "version": "Guiding the Tribe",
+      "rarity": "Rare",
+      "franchise": "Pocahontas",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Princess"
+      ],
+      "fullText": "STAY CLOSE When you play this character, you may play a character with cost 1 for free.",
+      "fullTextSections": [
+        "STAY CLOSE When you play this character, you may play a character with cost 1 for free."
+      ],
+      "strength": 2,
+      "willpower": 3,
+      "lore": 1
     }
   ]
 }
