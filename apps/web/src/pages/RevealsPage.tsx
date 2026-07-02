@@ -119,7 +119,15 @@ export function RevealsPage() {
   const {days} = useCountdown(dates?.prereleaseDate ?? null);
   const releaseDate = dates ? formatReleaseDate(dates.releaseDate) : '';
   const openAndTrack = (card: LorcanaCard, source: 'mosaic' | 'franchise_modal') => {
-    trackEvent('reveal_card_click', {cardName: card.fullName, source});
+    trackEvent('reveal_card_click', {
+      cardName: card.fullName,
+      cardId: card.id,
+      source,
+      ink: card.ink,
+      type: card.type,
+      rarity: card.rarity ?? null,
+      franchise: card.franchise ?? null,
+    });
     openCardModal(card.id);
   };
   const sidePad = isMobile ? SPACING.lg : 36;

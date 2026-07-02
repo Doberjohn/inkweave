@@ -7,8 +7,9 @@ import {
   type Accuracy,
 } from '../../../shared/lib/supabase';
 import {usePairScore, invalidatePairScore} from './usePairScore';
+import type {Ink} from 'inkweave-synergy-engine';
 import {readQuickVote, writeQuickVote} from '../lib/voteStorage';
-import {trackEvent} from '../../../shared/lib/analytics';
+import {trackVoteSubmitted} from '../lib/voteAnalytics';
 
 export type {Accuracy};
 export type QuickVoteState = 'hidden' | 'ready' | 'submitting' | 'result' | 'error';
@@ -17,6 +18,18 @@ export type QuickVoteError = 'submission_failed' | 'rate_limited' | null;
 interface Pair {
   cardA: string;
   cardB: string;
+}
+
+/**
+ * Analytics context the caller threads in so the `vote_submitted` event carries the
+ * pair's inks / engine score / synergy count. The hook itself only knows the card
+ * IDs, so the comparison view (which holds the full pair) supplies the rest.
+ */
+export interface QuickVoteContext {
+  cardAInk: Ink;
+  cardBInk: Ink;
+  engineScore: number;
+  synergyCount: number;
 }
 
 // Storage parse/write helpers live in ../lib/voteStorage so the in-depth hook can share them.
@@ -58,7 +71,12 @@ function applyVoteFailure(slots: VoteSlots, error: NonNullable<QuickVoteError>):
   slots.setState('error');
 }
 
-async function performVote(slots: VoteSlots, pair: Pair, accuracy: Accuracy): Promise<void> {
+async function performVote(
+  slots: VoteSlots,
+  pair: Pair,
+  accuracy: Accuracy,
+  context?: QuickVoteContext,
+): Promise<void> {
   slots.setState('submitting');
   slots.setUserChoice(accuracy);
   slots.setError(null);
@@ -67,7 +85,16 @@ async function performVote(slots: VoteSlots, pair: Pair, accuracy: Accuracy): Pr
     if (!slots.submittingRef.current) return;
     if (result.error === null) {
       writeQuickVote(pair, accuracy);
-      trackEvent('vote_submitted', {voteType: 'quick'});
+      trackVoteSubmitted({
+        voteType: 'quick',
+        cardAId: pair.cardA,
+        cardBId: pair.cardB,
+        cardAInk: context?.cardAInk ?? null,
+        cardBInk: context?.cardBInk ?? null,
+        engineScore: context?.engineScore ?? null,
+        synergyCount: context?.synergyCount ?? null,
+        userScore: accuracy,
+      });
       slots.setState('result');
       // Bust the shared pair-score cache so usePairScore subscribers (this hook +
       // CommunityColumn) refetch the aggregate that now includes the user's vote.
@@ -151,7 +178,11 @@ export interface UseQuickVoteReturn {
   error: QuickVoteError;
 }
 
-export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
+export function useQuickVote(
+  cardA: string,
+  cardB: string,
+  context?: QuickVoteContext,
+): UseQuickVoteReturn {
   const pair: Pair = {cardA, cardB};
   const isAvailable = getSupabase() !== null;
   const storedChoice = readQuickVote(pair);
@@ -180,7 +211,7 @@ export function useQuickVote(cardA: string, cardB: string): UseQuickVoteReturn {
     submittingRef.current = true;
     await performVote(
       {setState, setUserChoice, setError, submittingRef},
-      pair, accuracy,
+      pair, accuracy, context,
     );
   };
 
