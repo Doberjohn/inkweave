@@ -5748,6 +5748,24 @@
       "strength": 5,
       "willpower": 5,
       "lore": 2
+    },
+    {
+      "id": 13207,
+      "name": "Vine Entrance",
+      "fullName": "Vine Entrance - Ominous Passageway",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Location",
+      "setCode": "13",
+      "number": 207,
+      "version": "Ominous Passageway",
+      "rarity": "Rare",
+      "fullText": "ROOT OF POWER The first time a Floodborn character moves here each turn, you may deal 1 damage to chosen character.",
+      "fullTextSections": [
+        "ROOT OF POWER The first time a Floodborn character moves here each turn, you may deal 1 damage to chosen character."
+      ],
+      "moveCost": 1
     }
   ]
 }
