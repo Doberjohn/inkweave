@@ -5700,6 +5700,54 @@
       "strength": 2,
       "willpower": 4,
       "lore": 1
+    },
+    {
+      "id": 13133,
+      "name": "Dash Parr & Violet Parr",
+      "fullName": "Dash Parr & Violet Parr - Super Siblings",
+      "cost": 8,
+      "color": "Ruby-Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 133,
+      "version": "Super Siblings",
+      "rarity": "Legendary",
+      "franchise": "The Incredibles",
+      "subtypes": [
+        "Storyborn",
+        "Team",
+        "Super",
+        "Hero"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Combo Shift",
+          "keywordValue": "6",
+          "fullText": "Combo Shift 6"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Resist",
+          "keywordValue": "+1",
+          "fullText": "Resist +1"
+        }
+      ],
+      "fullText": "Combo Shift 6 ⬡ (You may pay 6 ⬡ to play this on top of one of your characters named Dash Parr, one named Violet Parr, or one of each.)\nEvasive, Resist +1\nINCREDIBLE TACTICS Whenever this character quests or challenges, draw a card for each card under them.",
+      "fullTextSections": [
+        "Combo Shift 6 ⬡ (You may pay 6 ⬡ to play this on top of one of your characters named Dash Parr, one named Violet Parr, or one of each.)",
+        "Evasive, Resist +1",
+        "INCREDIBLE TACTICS Whenever this character quests or challenges, draw a card for each card under them."
+      ],
+      "strength": 5,
+      "willpower": 5,
+      "lore": 2
     }
   ]
 }
