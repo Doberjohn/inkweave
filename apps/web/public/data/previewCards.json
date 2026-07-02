@@ -5938,6 +5938,39 @@
       "strength": 1,
       "willpower": 2,
       "lore": 2
+    },
+    {
+      "id": 13091,
+      "name": "Posey",
+      "fullName": "Posey - Vampire Potato",
+      "cost": 7,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 91,
+      "version": "Vampire Potato",
+      "rarity": "Uncommon",
+      "franchise": "Darkwing Duck",
+      "subtypes": [
+        "Storyborn",
+        "Monster"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Potato Shift",
+          "keywordValue": "5",
+          "fullText": "Potato Shift 5"
+        }
+      ],
+      "fullText": "Potato Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your items named Potato.)",
+      "fullTextSections": [
+        "Potato Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your items named Potato.)"
+      ],
+      "strength": 7,
+      "willpower": 8,
+      "lore": 2
     }
   ]
 }
