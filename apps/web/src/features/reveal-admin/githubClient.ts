@@ -79,6 +79,12 @@ export interface CommitResult {
  * One atomic commit on master adding the card to previewCards.json and its raw
  * image to card-images-raw/. Re-reads the live file for an authoritative
  * duplicate-id check before committing.
+ *
+ * The committed raw is a transient CI input, not a permanent artifact: the
+ * `convert-reveal-images` GitHub Action converts it to AVIFs under
+ * card-images-preview/ and removes the raw, so card-images-raw/ stays untracked
+ * at HEAD (see issue #420). card-images-raw/ is gitignored; this API write is
+ * what puts the raw in the tree until the Action prunes it.
  */
 export async function commitNewCard(opts: {
   token: string;

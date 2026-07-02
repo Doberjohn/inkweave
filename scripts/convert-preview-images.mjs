@@ -10,9 +10,13 @@
  *
  * Idempotent — skips cards whose AVIFs already exist unless --force.
  *
+ * With --prune-raw, each source raw is deleted once its AVIFs are on disk, so the
+ * CI conversion workflow leaves no tracked raw behind (see issue #420).
+ *
  * Usage:
- *   pnpm convert-preview-images           # Convert all missing
- *   pnpm convert-preview-images --force   # Re-convert everything
+ *   pnpm convert-preview-images              # Convert all missing
+ *   pnpm convert-preview-images --force      # Re-convert everything
+ *   pnpm convert-preview-images --prune-raw  # Convert, then delete each consumed raw
  */
 import sharp from 'sharp';
 import fs from 'node:fs';
@@ -24,6 +28,7 @@ const ROOT = path.resolve(__dirname, '..');
 const RAW_DIR = path.join(ROOT, 'apps/web/public/card-images-raw');
 const OUT_DIR = path.join(ROOT, 'apps/web/public/card-images-preview');
 const FORCE = process.argv.includes('--force');
+const PRUNE_RAW = process.argv.includes('--prune-raw');
 
 const SIZES = [
   {suffix: '', width: 337, height: 470},
@@ -82,6 +87,7 @@ async function main() {
   let converted = 0;
   let skipped = 0;
   let failed = 0;
+  let pruned = 0;
   const startTime = Date.now();
 
   for (const file of files) {
@@ -92,24 +98,46 @@ async function main() {
       continue;
     }
     const id = stem;
+    const rawPath = path.join(RAW_DIR, file);
 
+    // Whether this card's AVIFs are on disk after this iteration — either they
+    // already existed (skip) or we just wrote them (convert). Only a raw whose
+    // AVIFs are ready is safe to prune; a failed conversion keeps its raw.
+    let avifsReady = false;
     if (!FORCE && allVariantsExist(id)) {
       skipped++;
-      continue;
+      avifsReady = true;
+    } else {
+      try {
+        await convert(id, rawPath);
+        converted++;
+        avifsReady = true;
+      } catch (err) {
+        console.error(`  x ${file}: ${err.message}`);
+        failed++;
+      }
     }
 
-    try {
-      await convert(id, path.join(RAW_DIR, file));
-      converted++;
-    } catch (err) {
-      console.error(`  x ${file}: ${err.message}`);
-      failed++;
+    if (PRUNE_RAW && avifsReady) {
+      try {
+        fs.unlinkSync(rawPath);
+        pruned++;
+      } catch (err) {
+        // ENOENT just means the raw is already gone (idempotent re-run); any
+        // other error is worth surfacing, but a prune failure must never abort
+        // the batch — the AVIFs are already written, which is what matters.
+        if (err.code !== 'ENOENT') {
+          console.error(`  ! ${file}: could not prune raw: ${err.message}`);
+        }
+      }
     }
   }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(
-    `\n  Done in ${elapsed}s: ${converted} converted, ${skipped} skipped (exists), ${failed} failed\n`,
+    `\n  Done in ${elapsed}s: ${converted} converted, ${skipped} skipped (exists), ${failed} failed` +
+      (PRUNE_RAW ? `, ${pruned} raw pruned` : '') +
+      '\n',
   );
 
   if (failed > 0) process.exit(1);
