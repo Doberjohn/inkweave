@@ -228,6 +228,14 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/shared/test-utils/setup.ts'],
     exclude: ['**/node_modules/**', '**/e2e/**'],
+    // Pin render-gating feature-flag env vars to their default (unset) state so a
+    // developer's local .env.local override can't break unit tests. FeaturedCards
+    // reads VITE_FEATURED_CARD_IDS at module load and renders null when its curated
+    // IDs are unknown; without this pin, a local override makes its tests (which
+    // assume the default IDs) fail locally while passing in CI.
+    env: {
+      VITE_FEATURED_CARD_IDS: '',
+    },
     coverage: {
       reporter: ['text', 'json-summary', 'html'],
       exclude: [

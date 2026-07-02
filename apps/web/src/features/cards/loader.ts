@@ -308,15 +308,64 @@ export function filterCards(cards: LorcanaCard[], options: CardFilterOptions): L
 }
 
 /**
- * Get unique keywords from card collection
+ * Canonical single-word Lorcana keyword labels. Matching against this set,
+ * rather than trusting the first word, drops non-keyword noise that leaks in
+ * from mis-tagged source abilities ("THIS", "gain", "if"). Shift and
+ * Sing Together are handled by pattern before this fallback, so they are
+ * intentionally omitted here.
+ */
+const KNOWN_KEYWORD_BASES = new Set<string>([
+  'Alert',
+  'Bodyguard',
+  'Boost',
+  'Challenger',
+  'Evasive',
+  'Reckless',
+  'Resist',
+  'Rush',
+  'Singer',
+  'Support',
+  'Vanish',
+  'Ward',
+]);
+
+/**
+ * Reduce a stored keyword string to its canonical Keyword-filter label, or
+ * return null to drop it from the filter entirely.
+ *
+ * Stored keyword strings are messy: valued keywords ("Singer 5", "Resist +1"),
+ * the two-word "Sing Together 8", classification/team Shift variants
+ * ("Floodborn Shift 7", "Puppy Shift 3", "Combo Shift 4", "Duo Shift 0",
+ * "Temporary Shift 3", "Universal Shift 4", "Madrigal Shift 3"), plain "Shift 5",
+ * and occasional non-keyword noise from mis-tagged source abilities ("THIS",
+ * "gain", "if"). The old `k.split(' ')[0]` turned every Shift variant into a
+ * bogus filter option ("Floodborn", "Puppy", "Combo", ...) that matched almost
+ * nothing — which is why filtering by keyword "Floodborn" returned only The Vine.
+ */
+function normalizeKeywordBase(keyword: string): string | null {
+  // All Shift variants ("Floodborn Shift 7", "Puppy Shift 3", "Combo Shift 4",
+  // "Temporary Shift 3", plain "Shift 5") are the one Shift keyword; the prefix
+  // is a classification, filterable via the Classification facet instead.
+  if (/\bShift\b/i.test(keyword)) return 'Shift';
+  // Two-word keyword: check before the single-word fallback below.
+  if (/^Sing Together\b/i.test(keyword)) return 'Sing Together';
+  // Valued/simple keywords ("Singer 5", "Resist +1", "Bodyguard") key off the
+  // first word; anything not in the whitelist is noise and is dropped.
+  const base = keyword.split(' ')[0];
+  return KNOWN_KEYWORD_BASES.has(base) ? base : null;
+}
+
+/**
+ * Get unique keyword filter options from a card collection, canonicalized so
+ * multi-word and Shift-variant keywords collapse to their real keyword name
+ * (and non-keyword noise is dropped) via {@link normalizeKeywordBase}.
  */
 export function getUniqueKeywords(cards: LorcanaCard[]): string[] {
   const keywords = new Set<string>();
   for (const card of cards) {
     card.keywords?.forEach((k) => {
-      // Extract base keyword (e.g., "Singer 5" -> "Singer")
-      const base = k.split(' ')[0];
-      keywords.add(base);
+      const base = normalizeKeywordBase(k);
+      if (base) keywords.add(base);
     });
   }
   return Array.from(keywords).sort();

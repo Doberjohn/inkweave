@@ -392,7 +392,7 @@ Tribal playstyle for Seven Dwarfs / Snow White decks (Set 12 package). **Members
 
 ### Rule 11: Floodborns (playstyle: Floodborn matters, payoff-anchored)
 
-Set 13 "Vine" archetype, the **Floodborns** playstyle. The new Set 13 cards are branded Vinelings, but the rule is keyed on the **Floodborn** classification: every payoff reads "your Floodborn characters", and every Shift card in the game is Floodborn. **Payoff-anchored**: a Floodborn body synergizes with payoffs, but two plain Floodborn do not synergize with each other (`findSynergies` skips member ↔ member, avoiding ~6,400 density pairs that would tag every shifted card).
+Set 13 "Vine" archetype, the **Floodborns** playstyle. The new Set 13 cards are branded Vinelings, but the rule is keyed on the **Floodborn** classification: every payoff reads "your Floodborn characters", and Floodborn is a deep, cross-set classification (note: not every Shift card is Floodborn; the Set 13 Team-ups and some Incredibles Shift cards are Storyborn, so membership keys on the classification tag, not the Shift keyword). **Payoff-anchored**: a Floodborn body synergizes with payoffs, but two plain Floodborn do not synergize with each other (`findSynergies` skips member ↔ member, avoiding ~6,400 density pairs that would tag every shifted card).
 
 **Roles**:
 - **Membership**: `member` (`isCharacter` + `Floodborn` classification)
