@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {trackVoteSubmitted, trackPairVote} from '../voteAnalytics';
+import {trackVoteSubmitted, trackPairVote, trackQuickVote} from '../voteAnalytics';
 import {trackEvent} from '../../../../shared/lib/analytics';
 import {createVotingPair} from '../../../../shared/test-utils';
 
@@ -91,6 +91,43 @@ describe('voteAnalytics', () => {
         'vote_submitted',
         expect.objectContaining({voteType: 'in_depth', userScore: null}),
       );
+    });
+  });
+
+  describe('trackQuickVote', () => {
+    it('maps card ink, engine score and synergy count from context', () => {
+      trackQuickVote('card-a', 'card-b', 1, {
+        cardAInk: 'Ruby',
+        cardBInk: 'Steel',
+        engineScore: 6,
+        synergyCount: 2,
+      });
+
+      expect(trackEvent).toHaveBeenCalledWith('vote_submitted', {
+        voteType: 'quick',
+        cardAId: 'card-a',
+        cardBId: 'card-b',
+        cardAInk: 'Ruby',
+        cardBInk: 'Steel',
+        engineScore: 6,
+        synergyCount: 2,
+        userScore: 1,
+      });
+    });
+
+    it('falls back to null card/engine fields when no context is supplied', () => {
+      trackQuickVote('card-a', 'card-b', -1);
+
+      expect(trackEvent).toHaveBeenCalledWith('vote_submitted', {
+        voteType: 'quick',
+        cardAId: 'card-a',
+        cardBId: 'card-b',
+        cardAInk: null,
+        cardBInk: null,
+        engineScore: null,
+        synergyCount: null,
+        userScore: -1,
+      });
     });
   });
 });

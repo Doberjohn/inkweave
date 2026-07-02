@@ -67,3 +67,38 @@ export function trackPairVote(
     userScore,
   });
 }
+
+/**
+ * Analytics context the quick-vote caller threads in. `useQuickVote` only knows the
+ * card IDs, so the comparison view (which holds the full pair) supplies the inks /
+ * engine score / synergy count that the other surfaces read off their `VotingPair`.
+ */
+export interface QuickVoteContext {
+  cardAInk: Ink;
+  cardBInk: Ink;
+  engineScore: number;
+  synergyCount: number;
+}
+
+/**
+ * Convenience for the quick-vote (modal thumbs) surface, which holds only card IDs
+ * plus an optional context. Absorbing the null-coalescing here keeps the calling
+ * hook's submission path simple.
+ */
+export function trackQuickVote(
+  cardAId: string,
+  cardBId: string,
+  userScore: number,
+  context?: QuickVoteContext,
+): void {
+  trackVoteSubmitted({
+    voteType: 'quick',
+    cardAId,
+    cardBId,
+    cardAInk: context?.cardAInk ?? null,
+    cardBInk: context?.cardBInk ?? null,
+    engineScore: context?.engineScore ?? null,
+    synergyCount: context?.synergyCount ?? null,
+    userScore,
+  });
+}
