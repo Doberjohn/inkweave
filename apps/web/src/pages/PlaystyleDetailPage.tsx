@@ -43,6 +43,7 @@ import {
   PLAYSTYLE_UI,
 } from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
+import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive, useFilterParams, usePreloadImages} from '../shared/hooks';
 
@@ -582,7 +583,7 @@ export function PlaystyleDetailPage() {
   const navigate = useNavigate();
   const {openCardModal} = useCardModal();
   const {isMobile} = useResponsive();
-  const {isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, sets} =
+  const {isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, sets, getCardById} =
     useCardDataContext();
   const {
     searchQuery,
@@ -618,7 +619,10 @@ export function PlaystyleDetailPage() {
 
   const goHome = () => navigate('/');
   const goPlaystyles = () => navigate('/playstyles');
-  const handleCardSelect = (card: {id: string}) => openCardModal(card.id);
+  const handleCardSelect = (card: {id: string}) => {
+    trackCardSelected(getCardById(card.id), 'playstyle');
+    openCardModal(card.id);
+  };
 
   // Still loading card data — show skeleton regardless of playstyle resolution.
   if (isLoading) {

@@ -30,7 +30,29 @@ type AnalyticsEvents = {
     synergyCount: number | null;
     userScore: number | null;
   };
-  // future (#124): card_selected, filter_applied, search_query, synergy_group_viewed...
+  // A card detail was opened from a discovery surface (grid/featured/search).
+  // `source` is the originating page. Reveals and synergy clicks are NOT card_selected —
+  // they have their own events (reveal_card_click, synergy_card_clicked).
+  card_selected: {
+    cardId: string;
+    cardName: string;
+    source: 'browse' | 'home' | 'playstyle' | 'playstyle_gallery';
+    ink: Ink;
+    type: CardType;
+  };
+  // A card was clicked from within another card's synergy results (following a synergy).
+  synergy_card_clicked: {
+    sourceCardId: string;
+    clickedCardId: string;
+    clickedCardName: string;
+    clickedCardInk: Ink;
+    groupKey: string | null;
+  };
+  // A playstyle tile was opened from the gallery.
+  playstyle_opened: {playstyleId: string; playstyleName: string};
+  // A pair was skipped on the /vote page.
+  vote_skipped: {cardAId: string; cardBId: string; engineScore: number};
+  // future (#124): filter_applied, search_query, synergy_group_viewed...
 };
 
 /**

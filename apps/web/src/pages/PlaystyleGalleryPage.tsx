@@ -19,6 +19,8 @@ import {
   type PlaystyleUiMeta,
 } from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
+import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
+import {trackEvent} from '../shared/lib/analytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive, usePreloadImages} from '../shared/hooks';
 
@@ -263,11 +265,18 @@ export function PlaystyleGalleryPage() {
     const q = searchQuery.trim();
     navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
   };
-  const handleCardSelect = (card: {id: string}) => openCardModal(card.id);
-  const onPlaystyleClick = (id: string) => navigate(`/playstyles/${id}`);
+  const handleCardSelect = (card: {id: string}) => {
+    trackCardSelected(getCardById(card.id), 'playstyle_gallery');
+    openCardModal(card.id);
+  };
 
   const {data: playstyleCardData} = useAllPlaystyleCards();
   const activePlaystyles = buildActivePlaystyles(playstyleCardData);
+  const onPlaystyleClick = (id: string) => {
+    const name = activePlaystyles.find((e) => e.playstyle.id === id)?.playstyle.name ?? id;
+    trackEvent('playstyle_opened', {playstyleId: id, playstyleName: name});
+    navigate(`/playstyles/${id}`);
+  };
 
   if (error) return <PageErrorView onRetry={retryLoad} />;
 

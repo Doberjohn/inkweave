@@ -24,6 +24,7 @@ import {
   type CardTypeFilter,
 } from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
+import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
 
@@ -155,7 +156,7 @@ function BrowseContentSection({
 export function BrowsePage() {
   const {openCardModal} = useCardModal();
   const {isMobile} = useResponsive();
-  const {cards, isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, sets} =
+  const {cards, isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, sets, getCardById} =
     useCardDataContext();
   const {
     searchQuery,
@@ -195,7 +196,10 @@ export function BrowsePage() {
   const combinedFilters = buildCombinedFilters(filters, inkFilters, typeFilters, costFilters);
   const sortedCards = applyFiltersAndSort(cards, searchQuery, combinedFilters, sortOrder);
   const goHome = clearAllFilters;
-  const selectCard = (card: {id: string}) => openCardModal(card.id);
+  const selectCard = (card: {id: string}) => {
+    trackCardSelected(getCardById(card.id), 'browse');
+    openCardModal(card.id);
+  };
 
   const toolbarProps = {
     onFiltersClick: () => setShowFilters(true),
