@@ -6,6 +6,7 @@ name: Convert reveal images
 # so card-images-raw never stays tracked at HEAD. See issue #420.
 
 on:
+  workflow_dispatch:  # allow manual re-run (e.g. to reconvert a stuck raw)
   push:
     branches: [master]
     paths:
