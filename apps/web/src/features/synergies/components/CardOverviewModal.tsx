@@ -10,6 +10,7 @@ import {CardImage, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {getDominantScore, getStrengthTier} from '../utils';
+import {trackEvent} from '../../../shared/lib/analytics';
 import {COLORS, FONTS, RADIUS, Z_INDEX} from '../../../shared/constants';
 
 const FLIP_DURATION = 480;
@@ -185,6 +186,13 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   const handleShowAll = (groupKey: string) => setActiveGroupFilter(groupKey);
 
   const handleSynergyCardClick = (clickedCard: LorcanaCard, groupKey?: string) => {
+    trackEvent('synergy_card_clicked', {
+      sourceCardId: props.card.id,
+      clickedCardId: clickedCard.id,
+      clickedCardName: clickedCard.fullName,
+      clickedCardInk: clickedCard.ink,
+      groupKey: groupKey ?? null,
+    });
     // If the user re-clicks a tile mid-exit, cancel the pending unmount so the new entry's
     // FLIP doesn't race against the old exit's transform style on the same compareCardRef.
     cancelPendingExit();
