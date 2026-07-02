@@ -132,11 +132,13 @@ export function getShiftBaseNames(card: LorcanaCard): string[] {
  * - 'standard': targets same-name characters (e.g., "Shift 5")
  * - 'classification': targets characters with a specific classification (e.g., "Puppy Shift 3")
  * - 'universal': targets any character (e.g., "Universal Shift 4")
+ * - 'named-item': targets an ITEM by name (e.g., "Potato Shift 5" → items named Potato)
  */
 export type ShiftType =
   | {kind: 'standard'; cost: number}
   | {kind: 'classification'; classification: string; cost: number}
-  | {kind: 'universal'; cost: number};
+  | {kind: 'universal'; cost: number}
+  | {kind: 'named-item'; itemName: string; cost: number};
 
 /** Parse the numeric cost from a Shift keyword string like "Shift 5" or "Puppy Shift 3". */
 function parseShiftCost(keyword: string): number {
@@ -185,9 +187,23 @@ function classifyShiftKeyword(kw: string, isTeam = false): ShiftType | null {
 }
 
 /**
+ * Item-target Shift ("Potato Shift 5" → items named Potato) is distinguished from a
+ * classification shift ("Puppy Shift 3") only by its reminder text — the keyword prefix
+ * reads identically. So the item name comes from the reminder, not the keyword. Returns
+ * the item's name, or null when the card isn't an item-target shift.
+ */
+const ITEM_SHIFT_TARGET = /on top of one of your items? named ([^.)]+?)\s*[.)]/i;
+
+function itemShiftName(card: LorcanaCard): string | null {
+  const match = normalizeCardText(card).match(ITEM_SHIFT_TARGET);
+  return match ? match[1].trim() : null;
+}
+
+/**
  * Determine the Shift variant and cost for a card, or null if it has no Shift keyword.
  * Handles "Shift N", "Temporary Shift N", "Combo/Duo Shift N" (team), "<Class> Shift N"
- * (classification, single- or multi-word), and "Universal Shift N".
+ * (classification, single- or multi-word), "Universal Shift N", and item-target
+ * "<Item> Shift N" (an "items named X" reminder → named-item).
  */
 export function getShiftType(card: LorcanaCard): ShiftType | null {
   if (!card.keywords) return null;
@@ -195,9 +211,14 @@ export function getShiftType(card: LorcanaCard): ShiftType | null {
   // regardless of the shift's flavor label, so flag them for the classifier to route to
   // `standard` (where getShiftBaseNames decomposes the name).
   const isTeam = card.name.includes('&');
+  // An "items named X" reminder marks an item-target shift. Its keyword prefix ("Potato")
+  // reads like a classification, so reinterpret the classified shift as `named-item`
+  // (keeping the parsed cost) instead of a nonexistent "Potato" character classification.
+  const itemName = itemShiftName(card);
   for (const kw of card.keywords) {
     const variant = classifyShiftKeyword(kw, isTeam);
-    if (variant) return variant;
+    if (!variant) continue;
+    return itemName ? {kind: 'named-item', itemName, cost: variant.cost} : variant;
   }
   return null;
 }

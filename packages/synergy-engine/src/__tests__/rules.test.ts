@@ -453,6 +453,61 @@ describe('Synergy Rules', () => {
     });
   });
 
+  describe('Item-targeting Shift (Potato Shift)', () => {
+    const shiftRule = getRuleById('shift-targets')!;
+
+    // "Potato Shift 5" shifts onto an *item* named Potato, not a character. The item name
+    // comes from the reminder text, so the keyword prefix ("Potato") must NOT be read as a
+    // character classification (issue #422).
+    function poseySetup() {
+      const posey = createCard({
+        id: 'posey',
+        name: 'Posey',
+        fullName: 'Posey - Vampire Potato',
+        cost: 7,
+        ink: 'Emerald',
+        keywords: ['Potato Shift 5'],
+        classifications: ['Storyborn', 'Monster'],
+        text: 'Potato Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your items named Potato.)',
+      });
+      const potatoItem = createCard({
+        id: 'potato-item',
+        name: 'Potato',
+        fullName: 'Potato',
+        cost: 2,
+        ink: 'Emerald',
+        type: 'Item',
+      });
+      return {posey, potatoItem};
+    }
+
+    it('should find the item named Potato as a target (forward)', () => {
+      const {posey, potatoItem} = poseySetup();
+      const synergies = shiftRule.findSynergies(posey, [posey, potatoItem]);
+      expect(synergies.find((s) => s.card.id === 'potato-item')).toBeDefined();
+    });
+
+    it('should find the Potato Shift card when selecting the item (reverse)', () => {
+      const {posey, potatoItem} = poseySetup();
+      const synergies = shiftRule.findSynergies(potatoItem, [posey, potatoItem]);
+      expect(synergies.find((s) => s.card.id === 'posey')).toBeDefined();
+    });
+
+    it('should NOT match a character that merely has a "Potato" classification', () => {
+      const {posey, potatoItem} = poseySetup();
+      const potatoChar = createCard({
+        id: 'spud',
+        name: 'Spud',
+        cost: 3,
+        ink: 'Emerald',
+        classifications: ['Storyborn', 'Potato'],
+      });
+      const synergies = shiftRule.findSynergies(posey, [posey, potatoItem, potatoChar]);
+      expect(synergies.find((s) => s.card.id === 'potato-item')).toBeDefined();
+      expect(synergies.find((s) => s.card.id === 'spud')).toBeUndefined();
+    });
+  });
+
   describe('Universal Shift', () => {
     const shiftRule = getRuleById('shift-targets')!;
 

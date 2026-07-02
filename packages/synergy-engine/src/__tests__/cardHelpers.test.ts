@@ -74,6 +74,15 @@ describe('shift type utilities', () => {
         getShiftType(createCard({name: 'The Madrigal Family', keywords: ['Madrigal Shift 3']})),
       ).toEqual({kind: 'classification', classification: 'Madrigal', cost: 3});
     });
+
+    it('returns named-item for an item-target Shift ("items named X" reminder)', () => {
+      const posey = createCard({
+        name: 'Posey',
+        keywords: ['Potato Shift 5'],
+        text: 'Potato Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your items named Potato.)',
+      });
+      expect(getShiftType(posey)).toEqual({kind: 'named-item', itemName: 'Potato', cost: 5});
+    });
   });
 
   describe('hasAnyShift', () => {
