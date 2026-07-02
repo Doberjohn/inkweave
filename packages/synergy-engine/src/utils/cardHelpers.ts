@@ -191,8 +191,12 @@ function classifyShiftKeyword(kw: string, isTeam = false): ShiftType | null {
  * classification shift ("Puppy Shift 3") only by its reminder text — the keyword prefix
  * reads identically. So the item name comes from the reminder, not the keyword. Returns
  * the item's name, or null when the card isn't an item-target shift.
+ *
+ * The name runs to the reminder's closing `)` (with its trailing sentence period stripped),
+ * so item names with internal periods ("Mr. Potato Head") aren't truncated — matching how
+ * getNamedReferences tolerates periods in character names.
  */
-const ITEM_SHIFT_TARGET = /on top of one of your items? named ([^.)]+?)\s*[.)]/i;
+const ITEM_SHIFT_TARGET = /on top of one of your items? named ([^)]+?)\.?\)/i;
 
 function itemShiftName(card: LorcanaCard): string | null {
   const match = normalizeCardText(card).match(ITEM_SHIFT_TARGET);

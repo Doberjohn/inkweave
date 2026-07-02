@@ -83,6 +83,15 @@ describe('shift type utilities', () => {
       });
       expect(getShiftType(posey)).toEqual({kind: 'named-item', itemName: 'Potato', cost: 5});
     });
+
+    it('captures a full item name with internal periods (does not truncate at "Mr.")', () => {
+      const card = createCard({
+        name: 'Spud',
+        keywords: ['Spud Shift 3'],
+        text: 'Spud Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one of your items named Mr. Potato Head.)',
+      });
+      expect(getShiftType(card)).toEqual({kind: 'named-item', itemName: 'Mr. Potato Head', cost: 3});
+    });
   });
 
   describe('hasAnyShift', () => {
