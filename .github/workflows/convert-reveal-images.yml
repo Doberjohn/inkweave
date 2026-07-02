@@ -52,7 +52,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add apps/web/public/card-images-preview
-          git add -u apps/web/public/card-images-raw
+          # Tolerate an empty/absent raw dir: after --prune-raw removes the last
+          # raw, this pathspec matches no tracked files and plain `git add -u`
+          # exits 128 under `bash -e`, aborting the job AFTER conversion (the raw
+          # stays tracked and the AVIF is thrown away). `|| true` keeps it robust.
+          git add -u apps/web/public/card-images-raw || true
           if git diff --cached --quiet; then
             echo "No image changes to commit."
             exit 0
