@@ -5830,6 +5830,31 @@
       "strength": 3,
       "willpower": 3,
       "lore": 2
+    },
+    {
+      "id": 13015,
+      "name": "Gaston",
+      "fullName": "Gaston - Superior Archer",
+      "cost": 5,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 15,
+      "version": "Superior Archer",
+      "rarity": "Uncommon",
+      "franchise": "Beauty and the Beast",
+      "subtypes": [
+        "Storyborn",
+        "Villain"
+      ],
+      "fullText": "TAKE A LOOK AT THIS! When you play this character, you may choose a character with 5 ¤ or more and banish them.",
+      "fullTextSections": [
+        "TAKE A LOOK AT THIS! When you play this character, you may choose a character with 5 ¤ or more and banish them."
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 1
     }
   ]
 }
