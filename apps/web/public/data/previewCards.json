@@ -5648,6 +5648,32 @@
       "strength": 3,
       "willpower": 6,
       "lore": 2
+    },
+    {
+      "id": 13145,
+      "name": "Roz",
+      "fullName": "Roz - Always Watching",
+      "cost": 2,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 145,
+      "version": "Always Watching",
+      "rarity": "Common",
+      "franchise": "Monsters, Inc.",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Monster"
+      ],
+      "fullText": "ALWAYS Each opponent plays with the top card of their deck faceup.",
+      "fullTextSections": [
+        "ALWAYS Each opponent plays with the top card of their deck faceup."
+      ],
+      "strength": 2,
+      "willpower": 3,
+      "lore": 1
     }
   ]
 }
