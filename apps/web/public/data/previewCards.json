@@ -5789,6 +5789,47 @@
         "HUNNY QUEST Hunny characters get +1 ◊ while here."
       ],
       "moveCost": 1
+    },
+    {
+      "id": 13094,
+      "name": "Tod & Copper",
+      "fullName": "Tod & Copper - Two Pals",
+      "cost": 4,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 94,
+      "version": "Two Pals",
+      "rarity": "Rare",
+      "franchise": "The Fox and the Hound",
+      "subtypes": [
+        "Storyborn",
+        "Team",
+        "Hero",
+        "Puppy"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "2",
+          "fullText": "Shift 2"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        }
+      ],
+      "fullText": "Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your characters named Tod or Copper.)\nEvasive (Only characters with Evasive can challenge this character.)",
+      "fullTextSections": [
+        "Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your characters named Tod or Copper.)",
+        "Evasive (Only characters with Evasive can challenge this character.)"
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 2
     }
   ]
 }
