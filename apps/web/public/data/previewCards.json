@@ -6807,6 +6807,35 @@
       "strength": 1,
       "willpower": 4,
       "lore": 2
+    },
+    {
+      "id": 13077,
+      "name": "Buzz Lightyear",
+      "fullName": "Buzz Lightyear - Providing Cover",
+      "cost": 4,
+      "color": "Emerald",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "13",
+      "number": 77,
+      "version": "Providing Cover",
+      "rarity": "Rare",
+      "franchise": "Toy Story",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Toy",
+        "Captain"
+      ],
+      "fullText": "ACTION FIGURE When you play this character, choose one of the following. If you have another Toy character in play, choose both instead:\n• You may return an action card with cost 2 or less from your discard to your hand.\n• You may play an action with cost 2 or less for free.",
+      "fullTextSections": [
+        "ACTION FIGURE When you play this character, choose one of the following. If you have another Toy character in play, choose both instead:",
+        "• You may return an action card with cost 2 or less from your discard to your hand.",
+        "• You may play an action with cost 2 or less for free."
+      ],
+      "strength": 4,
+      "willpower": 2,
+      "lore": 2
     }
   ]
 }
