@@ -6159,6 +6159,39 @@
       "strength": 3,
       "willpower": 4,
       "lore": 1
+    },
+    {
+      "id": 13181,
+      "name": "Sheriff of Nottingham",
+      "fullName": "Sheriff of Nottingham - Vine Slayer",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 181,
+      "version": "Vine Slayer",
+      "rarity": "Common",
+      "franchise": "Robin Hood",
+      "subtypes": [
+        "Storyborn",
+        "Villain"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Challenger",
+          "keywordValue": "+3",
+          "fullText": "Challenger +3"
+        }
+      ],
+      "fullText": "Challenger +3 (While challenging, this character gets +3 ⚔.)",
+      "fullTextSections": [
+        "Challenger +3 (While challenging, this character gets +3 ⚔.)"
+      ],
+      "strength": 6,
+      "willpower": 5,
+      "lore": 1
     }
   ]
 }
