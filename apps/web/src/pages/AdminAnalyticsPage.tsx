@@ -1,46 +1,17 @@
-import {useState} from 'react';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../shared/constants';
 import {useVoteAnalytics} from '../features/admin-analytics/useVoteAnalytics';
 import {useVoteLog} from '../features/admin-analytics/useVoteLog';
-import {TabBar, type AdminTab} from '../features/admin-analytics/TabBar';
-import {CalibrationView} from '../features/admin-analytics/CalibrationView';
-import {ActivityView} from '../features/admin-analytics/ActivityView';
-import type {VoteAnalytics} from '../features/admin-analytics/voteAnalyticsTypes';
+import {AdminAnalyticsDashboard} from '../features/admin-analytics/AdminAnalyticsDashboard';
 import type {VoteLog} from '../features/admin-analytics/voteLogTypes';
 
 /** Rendered while the vote-log artifact is still loading, so both tab views always receive a VoteLog. */
 const EMPTY_VOTE_LOG: VoteLog = {generatedAt: '', votes: [], voterCount: 0};
 
-interface DashboardProps {
-  analytics: VoteAnalytics;
-  voteLog: VoteLog;
-}
-
 /**
- * Presentational tabbed dashboard: the TabBar plus the active tab body. All
- * data arrives via props (fetched by the page), so Storybook can render it from
- * inline fixtures without hitting the network. Tab selection is local state.
- */
-export function AdminAnalyticsDashboard({analytics, voteLog}: DashboardProps) {
-  const [active, setActive] = useState<AdminTab>('calibration');
-
-  return (
-    <>
-      <TabBar active={active} onChange={setActive} />
-      {active === 'calibration' ? (
-        <CalibrationView analytics={analytics} voteLog={voteLog} />
-      ) : (
-        <ActivityView voteLog={voteLog} />
-      )}
-    </>
-  );
-}
-
-/**
- * Admin vote-calibration dashboard. Fetches the build-time analytics + vote-log
- * artifacts, then renders a tabbed dashboard (Calibration | Activity). The
- * vote-log may still be loading after analytics resolves; the views receive an
- * empty VoteLog fallback so they render regardless.
+ * Admin vote-calibration dashboard route. Fetches the build-time analytics +
+ * vote-log artifacts, then renders the tabbed dashboard (Calibration | Activity).
+ * The vote-log may still be loading after analytics resolves; the views receive
+ * an empty VoteLog fallback so they render regardless.
  */
 export function AdminAnalyticsPage() {
   const {data: analytics, loading, error} = useVoteAnalytics();

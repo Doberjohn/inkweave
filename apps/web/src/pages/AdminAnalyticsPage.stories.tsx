@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
-import {AdminAnalyticsDashboard} from './AdminAnalyticsPage';
+import {AdminAnalyticsDashboard} from '../features/admin-analytics/AdminAnalyticsDashboard';
 import type {PairStat, RuleStat, VoteAnalytics} from '../features/admin-analytics/voteAnalyticsTypes';
 import type {VoteLog, VoteLogRow} from '../features/admin-analytics/voteLogTypes';
 
