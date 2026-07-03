@@ -215,6 +215,14 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 | ?ink= param selects the starting mosaic ink | `/reveals?ink=emerald` makes the Emerald `ink-tracker-tile` the `aria-pressed` (featured) one |
 | clicking a rarity chip dims the other revealed cards | A "Highlight ... cards" chip toggles `aria-pressed`; other-rarity slots get `data-dimmed`; clicking again clears it (skips when <2 rarities revealed) |
 
+## `admin-analytics.spec.ts` — 1 test (flag-gated, self-skipping)
+
+Requires `VITE_SHOW_ADMIN_ANALYTICS=true` (playwright `webServer.env` + `apps/web/.env.local`) and the build-time `vote-analytics.json` artifact. The test skips gracefully when the flag is off (route redirects home) or the artifact is absent, so it never false-fails an unset environment. Flag-off redirect is also covered by `AdminGate` unit tests.
+
+| Test | What it verifies |
+|---|---|
+| renders the calibration + activity tabs | `/admin/analytics` shows the `Engine Calibration` h1 and the verdict scale + `Total votes` on the Calibration tab, then switches to the Activity tab and confirms the day-by-day log header |
+
 ## Patterns
 
 - **URL assertions** (`toHaveURL`) verify route-based navigation on every transition

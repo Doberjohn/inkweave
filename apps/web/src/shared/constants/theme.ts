@@ -112,6 +112,7 @@ export const COLORS = {
   error: '#ef4444',
   errorBg: '#2a1515',
   errorBorder: '#5c2020',
+  success: '#4ade80',
   successBg: '#152a15',
 
   // Gray scale (remapped for dark theme)

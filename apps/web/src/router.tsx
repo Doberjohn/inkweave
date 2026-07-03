@@ -2,6 +2,7 @@ import {lazy, Suspense} from 'react';
 import {createBrowserRouter, Navigate} from 'react-router-dom';
 import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
 import {AppLayout} from './AppLayout';
+import {AdminGate} from './features/admin-analytics/AdminGate';
 import {RevealsGate} from './features/reveals';
 import {HomePageSkeleton} from './pages/HomePageSkeleton';
 import {COLORS, RADIUS, SPACING} from './shared/constants';
@@ -49,6 +50,10 @@ const InDepthVotePage = lazyWithRetry(
 const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'), 'NotFoundPage');
 const RevealsPage = lazyWithRetry(() => import('./pages/RevealsPage'), 'RevealsPage');
 const RevealAdminPage = lazyWithRetry(() => import('./pages/RevealAdminPage'), 'RevealAdminPage');
+const AdminAnalyticsPage = lazyWithRetry(
+  () => import('./pages/AdminAnalyticsPage'),
+  'AdminAnalyticsPage',
+);
 
 /** Generic 3-line fallback used by every route except `/`. */
 function GenericFallback() {
@@ -185,6 +190,16 @@ export const router = createBrowserRouter([
           <SuspenseWrapper>
             <RevealAdminPage />
           </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'admin/analytics',
+        element: (
+          <AdminGate>
+            <SuspenseWrapper>
+              <AdminAnalyticsPage />
+            </SuspenseWrapper>
+          </AdminGate>
         ),
       },
       {

@@ -49,6 +49,10 @@ export default defineConfig({
       // unexpected floating card. If a future test covers the notice itself, flip
       // to 'true' and clear localStorage in beforeEach.
       VITE_SHOW_BETA_NOTICE: 'false',
+      // Render the flag-gated /admin/analytics route in E2E (production default
+      // stays off via .env.example). The spec still skips gracefully if the
+      // vote-analytics artifact was not generated in the environment.
+      VITE_SHOW_ADMIN_ANALYTICS: 'true',
     },
   },
 });

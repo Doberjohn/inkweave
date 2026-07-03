@@ -8,7 +8,7 @@ describe('pairKey', () => {
   });
 });
 
-import {computePairRecord, buildPairRecords, voteWeightedMean, rollUpByRule, isoWeekStart, bucketWeekly, buildAnalytics} from '../voteAnalytics.mjs';
+import {computePairRecord, buildPairRecords, voteWeightedMean, rollUpByRule, isoWeekStart, bucketWeekly, buildAnalytics, buildVoteLog} from '../voteAnalytics.mjs';
 
 const enginePair = {
   engineScore: 7,
@@ -182,5 +182,73 @@ describe('buildAnalytics', () => {
     expect(out.global.distinctVoters).toBe(1);
     expect(out.global.weekly.length).toBe(1);
     expect(out.global.dimensionFill).toEqual({score: 1, accuracy: 0, isReal: 0, wouldPlay: 0, difficulty: 1});
+  });
+});
+
+describe('buildVoteLog', () => {
+  const names = new Map([['a1', 'Card One'], ['b2', 'Card Two']]);
+  const raw = (over) => ({
+    ip_hash: 'ip-a', card_a_id: 'a1', card_b_id: 'b2',
+    score: 7, accuracy: 1, is_real: true, would_play: false, difficulty: 2,
+    who_carries: 'a', created_at: '2026-06-29T01:00:00.000Z', ...over,
+  });
+
+  it('assigns first-seen sequential voter tokens; same ip -> same token, new ip -> next integer', () => {
+    const {votes, voterCount} = buildVoteLog(
+      [
+        raw({ip_hash: 'ip-a', created_at: '2026-06-29T01:00:00.000Z'}),
+        raw({ip_hash: 'ip-b', created_at: '2026-06-29T02:00:00.000Z'}),
+        raw({ip_hash: 'ip-a', created_at: '2026-06-29T03:00:00.000Z'}),
+      ],
+      names,
+    );
+    // newest-first: ip-a(3h), ip-b(2h), ip-a(1h) -> tokens by first-seen: ip-a=1, ip-b=2
+    expect(votes.map((v) => v.voter)).toEqual([1, 2, 1]);
+    expect(voterCount).toBe(2);
+  });
+
+  it('never leaks ip_hash into any output row', () => {
+    const {votes} = buildVoteLog([raw()], names);
+    expect(votes[0]).not.toHaveProperty('ip_hash');
+    expect(Object.values(votes[0])).not.toContain('ip-a');
+  });
+
+  it('canonicalizes pair order so a < b regardless of input order', () => {
+    const {votes} = buildVoteLog([raw({card_a_id: 'b2', card_b_id: 'a1'})], names);
+    expect(votes[0].a).toBe('a1');
+    expect(votes[0].b).toBe('b2');
+    expect(votes[0].aName).toBe('Card One');
+    expect(votes[0].bName).toBe('Card Two');
+  });
+
+  it('sorts newest-first by ts', () => {
+    const {votes} = buildVoteLog(
+      [
+        raw({created_at: '2026-06-29T01:00:00.000Z'}),
+        raw({created_at: '2026-06-30T01:00:00.000Z'}),
+        raw({created_at: '2026-06-28T01:00:00.000Z'}),
+      ],
+      names,
+    );
+    expect(votes.map((v) => v.ts)).toEqual([
+      '2026-06-30T01:00:00.000Z',
+      '2026-06-29T01:00:00.000Z',
+      '2026-06-28T01:00:00.000Z',
+    ]);
+  });
+
+  it('resolves names via the map and carries every dimension (snake -> camel)', () => {
+    const {votes} = buildVoteLog([raw()], names);
+    expect(votes[0]).toEqual({
+      a: 'a1', b: 'b2', aName: 'Card One', bName: 'Card Two',
+      score: 7, accuracy: 1, isReal: true, wouldPlay: false,
+      difficulty: 2, whoCarries: 'a', ts: '2026-06-29T01:00:00.000Z', voter: 1,
+    });
+  });
+
+  it('falls back to the id when the name is not in the map', () => {
+    const {votes} = buildVoteLog([raw({card_a_id: 'zz', card_b_id: 'a1'})], names);
+    // canonical order: 'a1' < 'zz' -> a='a1', b='zz'; zz has no name -> falls back to id
+    expect(votes[0].bName).toBe('zz');
   });
 });

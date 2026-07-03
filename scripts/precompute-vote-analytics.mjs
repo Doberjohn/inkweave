@@ -17,12 +17,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
-import {buildAnalytics, pairKey} from './lib/voteAnalytics.mjs';
+import {buildAnalytics, buildVoteLog, pairKey} from './lib/voteAnalytics.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const SYN_DIR = path.join(ROOT, 'apps/web/public/data/synergies');
 const OUT_FILE = path.join(ROOT, 'apps/web/public/data/vote-analytics.json');
+const VOTE_LOG_FILE = path.join(ROOT, 'apps/web/public/data/vote-log.json');
 
 const require = createRequire(path.join(ROOT, 'apps/web/package.json'));
 const {createClient} = require('@supabase/supabase-js');
@@ -97,7 +98,9 @@ async function loadRuleRoster(root) {
 
 /** Record a card's display name, keeping the first occurrence (allCards wins). */
 function addNameIfAbsent(names, card) {
-  if (!names.has(card.id)) names.set(card.id, card.fullName ?? card.name ?? card.id);
+  // Card ids are numbers here; vote/pair_scores card ids are strings — key by
+  // String(id) so `names.get(stringId)` in the builders actually matches.
+  if (!names.has(String(card.id))) names.set(String(card.id), card.fullName ?? card.name ?? String(card.id));
 }
 
 /** Card id -> display name, from allCards.json + previewCards.json. */
@@ -137,7 +140,7 @@ async function main() {
     rawVotes = await fetchAllRows(
       createClient(url, service),
       'votes',
-      'created_at, ip_hash, card_a_id, card_b_id, score, accuracy, is_real, would_play, difficulty',
+      'created_at, ip_hash, card_a_id, card_b_id, score, accuracy, is_real, would_play, difficulty, who_carries',
     );
   } else {
     console.warn('  ⚠ SUPABASE_SERVICE_ROLE_KEY absent — skipping weekly/voters/dimensions.');
@@ -147,6 +150,14 @@ async function main() {
   writeArtifact(analytics);
   console.log(`✓ ${scoreRows.length} pairs, ${analytics.rules.length} rules, hasRawVotes=${analytics.hasRawVotes}`);
   console.log(`  Output: ${OUT_FILE}`);
+
+  const generatedAt = new Date().toISOString();
+  const voteLog = rawVotes
+    ? {generatedAt, ...buildVoteLog(rawVotes, names)}
+    : {generatedAt, votes: [], voterCount: 0};
+  fs.writeFileSync(VOTE_LOG_FILE, JSON.stringify(voteLog));
+  console.log(`✓ ${voteLog.votes.length} raw votes, ${voteLog.voterCount} voters`);
+  console.log(`  Output: ${VOTE_LOG_FILE}`);
 }
 
 main().catch((err) => {
