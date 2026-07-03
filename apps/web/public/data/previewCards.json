@@ -6412,6 +6412,27 @@
       "strength": 1,
       "willpower": 3,
       "lore": 1
+    },
+    {
+      "id": 13056,
+      "name": "Tinker Bell",
+      "fullName": "Tinker Bell - Finding a Way",
+      "cost": 2,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 56,
+      "version": "Finding a Way",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Fairy"
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 2
     }
   ]
 }
