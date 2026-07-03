@@ -6468,6 +6468,26 @@
       "strength": 1,
       "willpower": 4,
       "lore": 1
+    },
+    {
+      "id": 13138,
+      "name": "It's Gonna Be Great!",
+      "fullName": "It's Gonna Be Great!",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "13",
+      "number": 138,
+      "rarity": "Common",
+      "subtypes": [
+        "Song"
+      ],
+      "fullText": "(A character with cost 2 or more can ⟳ to sing this song for free.)\nReady chosen character. They can't quest for the rest of this turn.",
+      "fullTextSections": [
+        "(A character with cost 2 or more can ⟳ to sing this song for free.)",
+        "Ready chosen character. They can't quest for the rest of this turn."
+      ]
     }
   ]
 }
