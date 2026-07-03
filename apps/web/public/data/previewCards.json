@@ -6612,6 +6612,26 @@
         "KNOCK, KNOCK This item enters play exerted.",
         "WHO'S THERE? ⟳, 2 ⬡ – Look at the top 3 cards of your deck. You may reveal a character, item, or location card with cost 6 or less and play it for free. Put the rest on the bottom of your deck in any order. Put this card into your inkwell facedown and exerted."
       ]
+    },
+    {
+      "id": 13168,
+      "name": "We've Got a Lot to Do!",
+      "fullName": "We've Got a Lot to Do!",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "13",
+      "number": 168,
+      "rarity": "Common",
+      "subtypes": [
+        "Song"
+      ],
+      "fullText": "(A character with cost 3 or more can ⟳ to sing this song for free.)\nPut chosen item or location into its player's inkwell facedown and exerted.",
+      "fullTextSections": [
+        "(A character with cost 3 or more can ⟳ to sing this song for free.)",
+        "Put chosen item or location into its player's inkwell facedown and exerted."
+      ]
     }
   ]
 }
