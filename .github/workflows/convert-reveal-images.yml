@@ -47,8 +47,14 @@ jobs:
       # Generates card-images-preview/{id}.avif (+ -sm) for each raw, then deletes
       # each consumed raw. A conversion failure keeps its raw and exits non-zero,
       # failing the job so the missing art is noticed.
+      #
+      # --force re-converts every pending raw even when an AVIF already exists.
+      # With --prune-raw the raw dir only ever holds the just-pushed raw(s), so
+      # this only re-converts those. It is required so image-admin re-uploads (and
+      # updates to cards that already have a committed preview AVIF, e.g. set 12/13)
+      # actually regenerate the AVIF instead of being skipped as "already exists".
       - name: Convert raws to AVIF and prune
-        run: pnpm convert-preview-images --prune-raw
+        run: pnpm convert-preview-images --force --prune-raw
 
       - name: Commit AVIFs and remove consumed raws
         run: |
