@@ -6538,6 +6538,30 @@
       "strength": 5,
       "willpower": 7,
       "lore": 1
+    },
+    {
+      "id": 13112,
+      "name": "The Bear",
+      "fullName": "The Bear - Territorial Animal",
+      "cost": 3,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 112,
+      "version": "Territorial Animal",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Villain"
+      ],
+      "fullText": "SAVAGE FURY While this character has damage, he gets +3 ⚔.",
+      "fullTextSections": [
+        "SAVAGE FURY While this character has damage, he gets +3 ⚔."
+      ],
+      "strength": 2,
+      "willpower": 5,
+      "lore": 1
     }
   ]
 }
