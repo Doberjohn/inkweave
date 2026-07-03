@@ -1,5 +1,7 @@
 import {useState} from 'react';
 
+// Keep the historical key so a token saved from reveal-admin is reused by the
+// image tool with no re-entry. Renaming it would silently drop saved tokens.
 const KEY = 'inkweave.reveal-admin.gh-token';
 
 export interface UseGithubToken {

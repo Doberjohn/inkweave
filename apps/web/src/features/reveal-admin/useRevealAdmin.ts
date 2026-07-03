@@ -9,7 +9,7 @@ import {useCardDataContext} from '../../shared/contexts/CardDataContext';
 import {buildPreviewCard, type RevealCardForm} from './buildPreviewCard';
 import {validateRevealCardForm, type ValidationResult} from './validateForm';
 import {commitNewCard} from './githubClient';
-import {useGithubToken} from './useGithubToken';
+import {useGithubToken} from '../../shared/hooks/useGithubToken';
 
 const EMPTY_FORM: RevealCardForm = {
   collectorNumber: '',

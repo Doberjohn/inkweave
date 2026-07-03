@@ -2,7 +2,7 @@
 export {buildPreviewCard, type RevealCardForm} from './buildPreviewCard';
 export {validateRevealCardForm, type ValidationResult} from './validateForm';
 export {commitNewCard, validateToken, type CommitResult, type TokenInfo} from './githubClient';
-export {useGithubToken} from './useGithubToken';
+export {useGithubToken} from '../../shared/hooks/useGithubToken';
 export {useRevealAdmin, type RevealAdminController} from './useRevealAdmin';
 export {RevealAdminForm} from './components/RevealAdminForm';
 export {CardPreviewPanel} from './components/CardPreviewPanel';
