@@ -6656,6 +6656,23 @@
       "strength": 4,
       "willpower": 5,
       "lore": 2
+    },
+    {
+      "id": 13167,
+      "name": "Focused Search",
+      "fullName": "Focused Search",
+      "cost": 1,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "13",
+      "number": 167,
+      "rarity": "Common",
+      "franchise": "Up",
+      "fullText": "Look at the top 4 cards of your deck. You may reveal a character card named Kevin or an item card and put it into your hand. Put the rest on the bottom of your deck in any order.",
+      "fullTextSections": [
+        "Look at the top 4 cards of your deck. You may reveal a character card named Kevin or an item card and put it into your hand. Put the rest on the bottom of your deck in any order."
+      ]
     }
   ]
 }
