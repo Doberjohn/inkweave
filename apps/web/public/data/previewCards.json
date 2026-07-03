@@ -6192,6 +6192,26 @@
       "strength": 6,
       "willpower": 5,
       "lore": 1
+    },
+    {
+      "id": 13101,
+      "name": "To Wither a Flower",
+      "fullName": "To Wither a Flower",
+      "cost": 4,
+      "color": "Emerald",
+      "inkwell": false,
+      "type": "Action",
+      "setCode": "13",
+      "number": 101,
+      "rarity": "Rare",
+      "subtypes": [
+        "Song"
+      ],
+      "fullText": "(A character with cost 4 or more can ⟳ to sing this song for free.)\nDeal 2 damage to each opposing damaged character.",
+      "fullTextSections": [
+        "(A character with cost 4 or more can ⟳ to sing this song for free.)",
+        "Deal 2 damage to each opposing damaged character."
+      ]
     }
   ]
 }
