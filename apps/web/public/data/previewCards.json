@@ -6278,6 +6278,30 @@
       "strength": 1,
       "willpower": 1,
       "lore": 1
+    },
+    {
+      "id": 13081,
+      "name": "Tod",
+      "fullName": "Tod - Clever Fox",
+      "cost": 3,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 81,
+      "version": "Clever Fox",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "Hero"
+      ],
+      "fullText": "PROBLEM SOLVING When you play this character, draw 2 cards, then choose and discard a card.",
+      "fullTextSections": [
+        "PROBLEM SOLVING When you play this character, draw 2 cards, then choose and discard a card."
+      ],
+      "strength": 1,
+      "willpower": 2,
+      "lore": 1
     }
   ]
 }
