@@ -20,7 +20,7 @@ describe('commitCardImage', () => {
 
     const res = await commitCardImage({
       token: 'tok',
-      card: {id: '5001', fullName: 'Elsa - Snow Queen', setCode: '5', setNumber: 1},
+      card: {id: '5001', fullName: 'Elsa - Snow Queen'},
       imageBase64: 'data:image/png;base64,Zm9v',
       imageExt: 'png',
     });
