@@ -6433,6 +6433,41 @@
       "strength": 2,
       "willpower": 2,
       "lore": 2
+    },
+    {
+      "id": 13053,
+      "name": "Grandma Wu",
+      "fullName": "Grandma Wu - Wise Grandmother",
+      "cost": 3,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 53,
+      "version": "Wise Grandmother",
+      "rarity": "Rare",
+      "franchise": "Turning Red",
+      "subtypes": [
+        "Storyborn",
+        "Mentor",
+        "Red Panda"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Challenger",
+          "keywordValue": "+2",
+          "fullText": "Challenger +2"
+        }
+      ],
+      "fullText": "Challenger +2 (While challenging, this character gets +2 ⚔.)\nANCESTRAL UNDERSTANDING When you shift a character on top of this character, gain 1 lore.",
+      "fullTextSections": [
+        "Challenger +2 (While challenging, this character gets +2 ⚔.)",
+        "ANCESTRAL UNDERSTANDING When you shift a character on top of this character, gain 1 lore."
+      ],
+      "strength": 1,
+      "willpower": 4,
+      "lore": 1
     }
   ]
 }
