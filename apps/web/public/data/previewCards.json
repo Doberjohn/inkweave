@@ -6392,6 +6392,26 @@
       "strength": 3,
       "willpower": 3,
       "lore": 1
+    },
+    {
+      "id": 13047,
+      "name": "Meeko",
+      "fullName": "Meeko - Lucku Raccoon",
+      "cost": 1,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 47,
+      "version": "Lucku Raccoon",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "strength": 1,
+      "willpower": 3,
+      "lore": 1
     }
   ]
 }
