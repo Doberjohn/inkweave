@@ -6092,6 +6092,39 @@
         "FULL POWER ⟳, 1 ⬡ – Chosen character gains Challenger +2 this turn. (They get +2 ⚔ while challenging.)",
         "CLEAR-CUT 2 ⬡, Banish this item – Banish chosen Vineling character."
       ]
+    },
+    {
+      "id": 13191,
+      "name": "Kronk",
+      "fullName": "Kronk - Meat Hut Cook",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 191,
+      "version": "Meat Hut Cook",
+      "rarity": "Rare",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Resist",
+          "keywordValue": "+1",
+          "fullText": "Resist +1"
+        }
+      ],
+      "fullText": "Resist +1 (Damage dealt to this character is reduced by 1.)\nPICKUP! Once during your turn, you may pay 1 ⬡ to draw a card, then choose and discard a card.",
+      "fullTextSections": [
+        "Resist +1 (Damage dealt to this character is reduced by 1.)",
+        "PICKUP! Once during your turn, you may pay 1 ⬡ to draw a card, then choose and discard a card."
+      ],
+      "strength": 1,
+      "willpower": 3,
+      "lore": 1
     }
   ]
 }
