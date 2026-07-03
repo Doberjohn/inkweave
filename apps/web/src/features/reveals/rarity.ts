@@ -30,13 +30,13 @@ export function rarityConfigOf(rarity: string | undefined): RarityConfig | undef
 }
 
 /**
- * Whether a mosaic slot should fade when a rarity is highlighted: true only for a
- * revealed card whose rarity differs from the selected one. Empty slots (no card)
- * and cards of the matching rarity stay at full brightness; a null selection never
- * dims. Uses the same `rarityConfigOf` normalizer the chips use, so both sides of
- * the feature compare identical keys.
+ * Whether a mosaic slot should fade when a rarity is highlighted: true for any slot
+ * that isn't a card of the selected rarity. Non-matching revealed cards AND empty
+ * slots (no card ⇒ no rarity) both dim, so only the selected rarity stays lit; a
+ * null selection never dims. Uses the same `rarityConfigOf` normalizer the chips
+ * use, so both sides of the feature compare identical keys.
  */
 export function isSlotDimmed(card: LorcanaCard | undefined, selectedRarity: string | null): boolean {
-  if (selectedRarity == null || card == null) return false;
-  return rarityConfigOf(card.rarity)?.key !== selectedRarity;
+  if (selectedRarity == null) return false;
+  return rarityConfigOf(card?.rarity)?.key !== selectedRarity;
 }

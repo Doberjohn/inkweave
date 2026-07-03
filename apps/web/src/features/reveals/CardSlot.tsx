@@ -42,13 +42,13 @@ function slotTileStyle(ink: Ink, revealed: boolean, width: number, height: numbe
 }
 
 /**
- * Opacity for a slot when a rarity highlight is active: dimmed slots fade. Only
- * revealed slots ever change opacity (unrevealed slots are never dimmed), so the
- * transition lives only on them rather than on every placeholder div. Pulled out so
- * its `dimmed`/`revealed` branches don't add to CardSlot.
+ * Opacity for a slot when a rarity highlight is active: any dimmed slot fades to
+ * 0.22. Both non-matching revealed cards and empty placeholder slots can dim (see
+ * isSlotDimmed), so the transition is always present and the fade animates smoothly
+ * in either direction. Pulled out so its `dimmed` branch doesn't add to CardSlot.
  */
-function slotDimStyle(dimmed: boolean, revealed: boolean): CSSProperties {
-  return {opacity: dimmed ? 0.22 : 1, transition: revealed ? 'opacity 0.25s ease' : undefined};
+function slotDimStyle(dimmed: boolean): CSSProperties {
+  return {opacity: dimmed ? 0.22 : 1, transition: 'opacity 0.25s ease'};
 }
 
 /** The tile contents: ink-art base, the real image (or ink-symbol fallback), and a top sheen. */
@@ -110,7 +110,7 @@ export function CardSlot({ink, card, width = 58, height = 80, onOpen, animate = 
   const imgUrl = card && !imgFailed ? smallImageUrl(card) : undefined;
   const popClass = animate ? 'reveal-cellpop' : undefined;
   const tileStyle = slotTileStyle(ink, revealed, width, height);
-  const dimStyle = slotDimStyle(dimmed, revealed);
+  const dimStyle = slotDimStyle(dimmed);
   const face = (
     <SlotFace ink={ink} revealed={revealed} imgUrl={imgUrl} compact={compact} onImgError={() => setImgFailed(true)} />
   );
