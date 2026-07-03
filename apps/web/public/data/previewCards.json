@@ -6562,6 +6562,38 @@
       "strength": 2,
       "willpower": 5,
       "lore": 1
+    },
+    {
+      "id": 13121,
+      "name": "King Louie",
+      "fullName": "King Louie - King of Swing",
+      "cost": 4,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 121,
+      "version": "King of Swing",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "King"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Singer",
+          "keywordValue": "6",
+          "fullText": "Singer 6"
+        }
+      ],
+      "fullText": "Singer 6 (This character counts as cost 6 to sing songs.)",
+      "fullTextSections": [
+        "Singer 6 (This character counts as cost 6 to sing songs.)"
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 2
     }
   ]
 }
