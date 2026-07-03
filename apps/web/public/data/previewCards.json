@@ -6302,6 +6302,30 @@
       "strength": 1,
       "willpower": 2,
       "lore": 1
+    },
+    {
+      "id": 13193,
+      "name": "Diablo",
+      "fullName": "Diablo - Protecting His Mistress",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 193,
+      "version": "Protecting His Mistress",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "Your characters named Maleficent gain Resist +1 (Damage dealt to them is reduced by 1.)",
+      "fullTextSections": [
+        "Your characters named Maleficent gain Resist +1 (Damage dealt to them is reduced by 1.)"
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1
     }
   ]
 }
