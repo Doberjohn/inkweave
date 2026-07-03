@@ -6368,6 +6368,30 @@
         "IMMINENT THREAT Your Floodborn characters gain Rush. (They can challenge the turn they're played.)"
       ],
       "moveCost": 2
+    },
+    {
+      "id": 13177,
+      "name": "Aladdin",
+      "fullName": "Aladdin - Created by the Vine",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 177,
+      "version": "Created by the Vine",
+      "rarity": "Rare",
+      "subtypes": [
+        "Floodborn",
+        "Vineling"
+      ],
+      "fullText": "THE VINE PROVIDES Whenever one of your Floodborn characters quests, you may draw a card, then choose and discard a card.",
+      "fullTextSections": [
+        "THE VINE PROVIDES Whenever one of your Floodborn characters quests, you may draw a card, then choose and discard a card."
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 1
     }
   ]
 }
