@@ -6673,6 +6673,32 @@
       "fullTextSections": [
         "Look at the top 4 cards of your deck. You may reveal a character card named Kevin or an item card and put it into your hand. Put the rest on the bottom of your deck in any order."
       ]
+    },
+    {
+      "id": 13152,
+      "name": "Sulley",
+      "fullName": "Sulley - Strategic Scarer",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 152,
+      "version": "Strategic Scarer",
+      "rarity": "Common",
+      "franchise": "Monsters, Inc.",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Monster"
+      ],
+      "fullText": "JUMP SCARE While you have 5 or more cards in your inkwell, this character gets +2 ⚔.",
+      "fullTextSections": [
+        "JUMP SCARE While you have 5 or more cards in your inkwell, this character gets +2 ⚔."
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 1
     }
   ]
 }
