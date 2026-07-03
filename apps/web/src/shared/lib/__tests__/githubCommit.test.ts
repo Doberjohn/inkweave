@@ -28,19 +28,30 @@ describe('validateToken', () => {
   });
 });
 
+// Table-driven git-data API stub: [url matcher, JSON body, status]. Keeps the
+// fetch mock branch-free (avoids the "complex method" gate on the test).
+const GIT_ROUTES: [(u: string) => boolean, unknown, number][] = [
+  [(u) => u.endsWith('/git/ref/heads/master'), {object: {sha: 'basecommit'}}, 200],
+  [(u) => u.includes('/git/commits/basecommit'), {tree: {sha: 'basetree'}}, 200],
+  [(u) => u.endsWith('/git/blobs'), {sha: 'blobsha'}, 201],
+  [(u) => u.endsWith('/git/trees'), {sha: 'newtree'}, 201],
+  [(u) => u.endsWith('/git/commits'), {sha: 'newcommit', html_url: 'https://github.com/x/y/commit/newcommit'}, 201],
+  [(u) => u.endsWith('/git/refs/heads/master'), {}, 200],
+];
+
+function gitStub(url: string): Response {
+  const route = GIT_ROUTES.find(([match]) => match(url));
+  if (!route) throw new Error(`unexpected url ${url}`);
+  return new Response(JSON.stringify(route[1]), {status: route[2]});
+}
+
 describe('commitFiles', () => {
   it('creates a blob + tree per file and patches the ref', async () => {
     const calls: {url: string; method: string; body?: unknown}[] = [];
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
       const u = String(url);
       calls.push({url: u, method: init?.method ?? 'GET', body: init?.body ? JSON.parse(init.body as string) : undefined});
-      if (u.endsWith('/git/ref/heads/master')) return new Response(JSON.stringify({object: {sha: 'basecommit'}}), {status: 200});
-      if (u.includes('/git/commits/basecommit')) return new Response(JSON.stringify({tree: {sha: 'basetree'}}), {status: 200});
-      if (u.endsWith('/git/blobs')) return new Response(JSON.stringify({sha: 'blobsha'}), {status: 201});
-      if (u.endsWith('/git/trees')) return new Response(JSON.stringify({sha: 'newtree'}), {status: 201});
-      if (u.endsWith('/git/commits')) return new Response(JSON.stringify({sha: 'newcommit', html_url: 'https://github.com/x/y/commit/newcommit'}), {status: 201});
-      if (u.endsWith('/git/refs/heads/master')) return new Response(JSON.stringify({}), {status: 200});
-      throw new Error(`unexpected url ${u}`);
+      return gitStub(u);
     });
 
     const res = await commitFiles({

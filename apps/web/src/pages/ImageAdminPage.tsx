@@ -1,6 +1,6 @@
 import {COLORS, SPACING, FONT_SIZES, RADIUS} from '../shared/constants';
 import {GithubTokenGate} from '../shared/components/GithubTokenGate';
-import {useImageAdmin, CardImagePicker, ImageComparePanel} from '../features/image-admin';
+import {useImageAdmin, CardImagePicker, UploadColumn} from '../features/image-admin';
 
 export function ImageAdminPage() {
   const ctrl = useImageAdmin();
@@ -58,50 +58,16 @@ export function ImageAdminPage() {
           />
         </section>
 
-        <aside style={{flex: '1 1 360px', minWidth: 320}}>
-          <h2 style={{fontSize: FONT_SIZES.xl}}>2. Upload the new image</h2>
-          {ctrl.selectedCard ? (
-            <>
-              <p style={{color: COLORS.gray600, fontSize: FONT_SIZES.xs, margin: `0 0 ${SPACING.sm}px`}}>
-                Click the New tile to choose a jpg, png, or webp.
-              </p>
-              <ImageComparePanel
-                card={ctrl.selectedCard}
-                newImageUrl={ctrl.newImageUrl}
-                onImageChange={ctrl.onImageChange}
-              />
-              {ctrl.imageName && (
-                <div style={{color: COLORS.gray600, fontSize: FONT_SIZES.xs, marginTop: SPACING.sm}}>
-                  {ctrl.imageName}
-                </div>
-              )}
-            </>
-          ) : (
-            <p style={{color: COLORS.gray600, fontSize: FONT_SIZES.sm}}>Pick a card to enable upload.</p>
-          )}
-
-          {ctrl.publishError && (
-            <div style={{color: COLORS.error, fontSize: FONT_SIZES.sm, marginTop: SPACING.sm}}>
-              {ctrl.publishError}
-            </div>
-          )}
-
-          <button
-            onClick={ctrl.publish}
-            disabled={!ctrl.canPublish || ctrl.publishing}
-            style={{
-              marginTop: SPACING.md,
-              padding: '12px 20px',
-              background: ctrl.canPublish ? COLORS.primary500 : COLORS.surfaceHover,
-              color: COLORS.white,
-              border: 'none',
-              borderRadius: RADIUS.sm,
-              cursor: ctrl.canPublish ? 'pointer' : 'not-allowed',
-              fontWeight: 600,
-            }}>
-            {ctrl.publishing ? 'Publishing…' : 'Publish to master'}
-          </button>
-        </aside>
+        <UploadColumn
+          selectedCard={ctrl.selectedCard}
+          newImageUrl={ctrl.newImageUrl}
+          imageName={ctrl.imageName}
+          canPublish={ctrl.canPublish}
+          publishing={ctrl.publishing}
+          publishError={ctrl.publishError}
+          onImageChange={ctrl.onImageChange}
+          onPublish={ctrl.publish}
+        />
       </div>
     </main>
   );

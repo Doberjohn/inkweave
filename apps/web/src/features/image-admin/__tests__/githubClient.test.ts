@@ -3,19 +3,29 @@ import {commitCardImage} from '../githubClient';
 
 afterEach(() => vi.restoreAllMocks());
 
+// Table-driven git-data API stub: [url matcher, JSON body, status]. Keeps the
+// fetch mock branch-free (avoids the "complex method" gate on the test).
+const GIT_ROUTES: [(u: string) => boolean, unknown, number][] = [
+  [(u) => u.endsWith('/git/ref/heads/master'), {object: {sha: 'c0'}}, 200],
+  [(u) => u.includes('/git/commits/c0'), {tree: {sha: 't0'}}, 200],
+  [(u) => u.endsWith('/git/blobs'), {sha: 'b0'}, 201],
+  [(u) => u.endsWith('/git/trees'), {sha: 't1'}, 201],
+  [(u) => u.endsWith('/git/commits'), {sha: 'c1', html_url: 'https://gh/commit/c1'}, 201],
+  [(u) => u.endsWith('/git/refs/heads/master'), {}, 200],
+];
+
+function gitStub(url: string): Response {
+  const route = GIT_ROUTES.find(([match]) => match(url));
+  if (!route) throw new Error(`unexpected ${url}`);
+  return new Response(JSON.stringify(route[1]), {status: route[2]});
+}
+
 describe('commitCardImage', () => {
   it('commits one raw file to card-images-raw and no previewCards path', async () => {
     const bodies: unknown[] = [];
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
-      const u = String(url);
       if (init?.body) bodies.push(JSON.parse(init.body as string));
-      if (u.endsWith('/git/ref/heads/master')) return new Response(JSON.stringify({object: {sha: 'c0'}}), {status: 200});
-      if (u.includes('/git/commits/c0')) return new Response(JSON.stringify({tree: {sha: 't0'}}), {status: 200});
-      if (u.endsWith('/git/blobs')) return new Response(JSON.stringify({sha: 'b0'}), {status: 201});
-      if (u.endsWith('/git/trees')) return new Response(JSON.stringify({sha: 't1'}), {status: 201});
-      if (u.endsWith('/git/commits')) return new Response(JSON.stringify({sha: 'c1', html_url: 'https://gh/commit/c1'}), {status: 201});
-      if (u.endsWith('/git/refs/heads/master')) return new Response(JSON.stringify({}), {status: 200});
-      throw new Error(`unexpected ${u}`);
+      return gitStub(String(url));
     });
 
     const res = await commitCardImage({

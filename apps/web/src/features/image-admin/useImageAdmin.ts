@@ -2,7 +2,7 @@ import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {useCardDataContext} from '../../shared/contexts/CardDataContext';
 import {useGithubToken} from '../../shared/hooks/useGithubToken';
-import {commitCardImage} from './githubClient';
+import {commitCardImage, type ImageAdminCard} from './githubClient';
 import type {CommitResult} from '../../shared/lib/githubCommit';
 
 const VALID_EXT = new Set(['jpg', 'jpeg', 'png', 'webp']);
@@ -19,6 +19,32 @@ function readAsDataUrl(file: File): Promise<string> {
 
 function extOf(name: string): string {
   return (name.split('.').pop() ?? '').toLowerCase();
+}
+
+interface PublishPayload {
+  token: string;
+  card: ImageAdminCard;
+  imageBase64: string;
+  imageExt: string;
+}
+
+/**
+ * Collapse the publish preconditions into a ready-to-commit payload, or null if
+ * anything is missing. Single-condition guards keep this out of "complex
+ * conditional" territory and give the caller clean type-narrowing.
+ */
+function toPublishPayload(inputs: {
+  token: string | null;
+  selectedCard: LorcanaCard | null;
+  imageFile: File | null;
+  newImageUrl: string | null;
+}): PublishPayload | null {
+  const {token, selectedCard, imageFile, newImageUrl} = inputs;
+  if (!token || !selectedCard) return null;
+  if (!imageFile || !newImageUrl) return null;
+  const imageExt = extOf(imageFile.name);
+  if (!VALID_EXT.has(imageExt)) return null;
+  return {token, card: selectedCard, imageBase64: newImageUrl, imageExt};
 }
 
 export interface ImageAdminController {
@@ -49,8 +75,8 @@ export function useImageAdmin(): ImageAdminController {
   const [publishError, setPublishError] = useState<string | null>(null);
 
   const imageName = imageFile?.name ?? null;
-  const extValid = imageName ? VALID_EXT.has(extOf(imageName)) : false;
-  const canPublish = Boolean(token && selectedCard && imageFile && newImageUrl && extValid);
+  const publishPayload = toPublishPayload({token, selectedCard, imageFile, newImageUrl});
+  const canPublish = publishPayload !== null;
 
   function selectCard(card: LorcanaCard) {
     setSelectedCard(card);
@@ -64,16 +90,11 @@ export function useImageAdmin(): ImageAdminController {
   }
 
   async function publish() {
-    if (!token || !selectedCard || !imageFile || !newImageUrl || !extValid) return;
+    if (!publishPayload) return;
     setPublishing(true);
     setPublishError(null);
     try {
-      const res = await commitCardImage({
-        token,
-        card: selectedCard,
-        imageBase64: newImageUrl,
-        imageExt: extOf(imageFile.name),
-      });
+      const res = await commitCardImage(publishPayload);
       setResult(res);
       setSelectedCard(null);
       setImageFile(null);
