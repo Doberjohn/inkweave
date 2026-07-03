@@ -80,6 +80,10 @@ export function useImageAdmin(): ImageAdminController {
 
   function selectCard(card: LorcanaCard) {
     setSelectedCard(card);
+    // Clear any image staged for the previously selected card, so you can never
+    // publish card A's upload against card B's id after switching cards.
+    setImageFile(null);
+    setNewImageUrl(null);
     setResult(null);
     setPublishError(null);
   }
