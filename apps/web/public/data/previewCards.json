@@ -6780,6 +6780,33 @@
       "strength": 1,
       "willpower": 3,
       "lore": 1
+    },
+    {
+      "id": 13146,
+      "name": "Merlin",
+      "fullName": "Merlin - Envisioning the Future",
+      "cost": 4,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 146,
+      "version": "Envisioning the Future",
+      "rarity": "Rare",
+      "franchise": "The Sword in the Stone",
+      "subtypes": [
+        "Dreamborn",
+        "Mentor",
+        "Sorcerer"
+      ],
+      "fullText": "MINOR TRICKERY When you play this character, you may draw a card from the bottom of your deck.\nAGE OF INCONVENIENCE When this character is banished, put this card from your discard on the bottom of your deck.",
+      "fullTextSections": [
+        "MINOR TRICKERY When you play this character, you may draw a card from the bottom of your deck.",
+        "AGE OF INCONVENIENCE When this character is banished, put this card from your discard on the bottom of your deck."
+      ],
+      "strength": 1,
+      "willpower": 4,
+      "lore": 2
     }
   ]
 }
