@@ -6326,6 +6326,27 @@
       "strength": 3,
       "willpower": 2,
       "lore": 1
+    },
+    {
+      "id": 13096,
+      "name": "Cetus",
+      "fullName": "Cetus - Mighty Serpent",
+      "cost": 6,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 96,
+      "version": "Mighty Serpent",
+      "rarity": "Common",
+      "franchise": "Hercules",
+      "subtypes": [
+        "Storyborn",
+        "Monster"
+      ],
+      "strength": 6,
+      "willpower": 7,
+      "lore": 2
     }
   ]
 }
