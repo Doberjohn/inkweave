@@ -21,7 +21,10 @@ import {
   driverCopy,
 } from '../../../shared/utils/scoreFormatting';
 
-const VOTES_THRESHOLD = 5;
+// Show community signal as soon as a pair has any vote. A 0-vote pair still falls
+// back to the empty panel because getPairScore returns null (no row) and
+// CommunityBody renders nothing for a null score, so `1` is the effective floor.
+const VOTES_THRESHOLD = 1;
 const COMMUNITY_TINT = '#b691ff'; // amethyst
 
 interface CommunityColumnProps {
@@ -41,7 +44,8 @@ interface CommunityColumnProps {
  *
  * Renders an amethyst-tinted panel with: score header (community avg / 10 + delta vs engine + vote count),
  * then either four metric rows (Real / Would Play / Difficulty / Driver) when populated, or a
- * <CommunityEmptyState> when total_votes < 5 (full-empty) or score_votes < 5 (half-empty).
+ * <CommunityEmptyState> when total_votes < VOTES_THRESHOLD (full-empty) or
+ * score_votes < VOTES_THRESHOLD (half-empty).
  *
  * Distribution bar + QuickVoteControl live in <EngineColumn>, not here — the community column
  * shows what the community thinks; the vote action belongs next to the engine score it rates.

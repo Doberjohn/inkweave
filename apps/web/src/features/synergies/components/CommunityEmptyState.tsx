@@ -14,7 +14,7 @@ interface CommunityEmptyStateProps {
   variant: CommunityEmptyVariant;
   /** Total community votes received so far (for the progress label). */
   current: number;
-  /** Threshold above which the corresponding state ends. Defaults to 5. */
+  /** Threshold above which the corresponding state ends. Defaults to 1. */
   threshold?: number;
   onCta: () => void;
   /** When true, replace the CTA with an affirmation tile — user has already in-depth-voted from this browser. */
@@ -51,7 +51,7 @@ const COPY: Record<CommunityEmptyVariant, {title: string; renderDesc: (n: number
  * `half-empty`: total_votes ≥ threshold but score_votes < threshold — replaces only the metric rows;
  *   parent still renders the dist bar above.
  */
-export function CommunityEmptyState({variant, current, threshold = 5, onCta, userAlreadyVoted = false}: CommunityEmptyStateProps) {
+export function CommunityEmptyState({variant, current, threshold = 1, onCta, userAlreadyVoted = false}: CommunityEmptyStateProps) {
   const remaining = Math.max(threshold - current, 0);
   const {title, renderDesc, ctaLabel} = COPY[variant];
   const progressPct = Math.min((current / threshold) * 100, 100);
