@@ -21,6 +21,7 @@ const sample: LorcanaCard = {
 const meta: Meta<typeof CardPreviewPanel> = {
   title: 'Reveal Admin/CardPreviewPanel',
   component: CardPreviewPanel,
+  args: {onImageChange: () => {}},
 };
 export default meta;
 type Story = StoryObj<typeof CardPreviewPanel>;

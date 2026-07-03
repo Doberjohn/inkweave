@@ -9,7 +9,7 @@ import {useCardDataContext} from '../../shared/contexts/CardDataContext';
 import {buildPreviewCard, type RevealCardForm} from './buildPreviewCard';
 import {validateRevealCardForm, type ValidationResult} from './validateForm';
 import {commitNewCard} from './githubClient';
-import {useGithubToken} from './useGithubToken';
+import {useGithubToken} from '../../shared/hooks/useGithubToken';
 
 const EMPTY_FORM: RevealCardForm = {
   collectorNumber: '',
@@ -79,7 +79,6 @@ export interface RevealAdminController {
   clearToken: () => void;
   form: RevealCardForm;
   patchForm: (patch: Partial<RevealCardForm>) => void;
-  imageName: string | null;
   previewCard: LorcanaCard | null;
   synergyGroups: SynergyGroup[];
   validation: ValidationResult;
@@ -149,7 +148,6 @@ export function useRevealAdmin(): RevealAdminController {
     clearToken,
     form,
     patchForm,
-    imageName,
     previewCard,
     synergyGroups,
     validation,
