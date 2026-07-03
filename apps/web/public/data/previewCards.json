@@ -6125,6 +6125,40 @@
       "strength": 1,
       "willpower": 3,
       "lore": 1
+    },
+    {
+      "id": 13184,
+      "name": "Dr. Hamsterviel",
+      "fullName": "Dr. Hamsterviel - Evil Observer",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 184,
+      "version": "Evil Observer",
+      "rarity": "Uncommon",
+      "franchise": "Lilo & Stitch",
+      "subtypes": [
+        "Storyborn",
+        "Villain",
+        "Alien",
+        "Inventor"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Alert",
+          "fullText": "Alert"
+        }
+      ],
+      "fullText": "Alert (This character can challenge as if they had Evasive.)",
+      "fullTextSections": [
+        "Alert (This character can challenge as if they had Evasive.)"
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 1
     }
   ]
 }
