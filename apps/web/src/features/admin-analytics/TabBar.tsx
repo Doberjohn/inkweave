@@ -1,7 +1,7 @@
 import {useRef} from 'react';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../../shared/constants';
 
-export type AdminTab = 'calibration' | 'activity';
+export type AdminTab = 'calibration' | 'activity' | 'webAnalytics';
 
 interface TabBarProps {
   active: AdminTab;
@@ -11,6 +11,7 @@ interface TabBarProps {
 const TABS: {id: AdminTab; label: string}[] = [
   {id: 'calibration', label: 'Calibration'},
   {id: 'activity', label: 'Activity'},
+  {id: 'webAnalytics', label: 'Web Analytics'},
 ];
 
 /**

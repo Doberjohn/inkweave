@@ -1,6 +1,7 @@
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../shared/constants';
 import {useVoteAnalytics} from '../features/admin-analytics/useVoteAnalytics';
 import {useVoteLog} from '../features/admin-analytics/useVoteLog';
+import {useVercelAnalytics} from '../features/admin-analytics/useVercelAnalytics';
 import {AdminAnalyticsDashboard} from '../features/admin-analytics/AdminAnalyticsDashboard';
 import type {VoteLog} from '../features/admin-analytics/voteLogTypes';
 
@@ -16,6 +17,7 @@ const EMPTY_VOTE_LOG: VoteLog = {generatedAt: '', votes: [], voterCount: 0};
 export function AdminAnalyticsPage() {
   const {data: analytics, loading, error} = useVoteAnalytics();
   const {data: voteLog} = useVoteLog();
+  const {data: vercelAnalytics} = useVercelAnalytics();
 
   return (
     <main
@@ -72,7 +74,13 @@ export function AdminAnalyticsPage() {
           Could not load vote analytics. Has the artifact been generated? ({error.message})
         </div>
       )}
-      {analytics && <AdminAnalyticsDashboard analytics={analytics} voteLog={voteLog ?? EMPTY_VOTE_LOG} />}
+      {analytics && (
+        <AdminAnalyticsDashboard
+          analytics={analytics}
+          voteLog={voteLog ?? EMPTY_VOTE_LOG}
+          vercelAnalytics={vercelAnalytics}
+        />
+      )}
     </main>
   );
 }
