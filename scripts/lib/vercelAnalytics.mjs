@@ -164,6 +164,24 @@ export function reportingWindow(reference, days) {
   return {since, until};
 }
 
+/** Row fields that carry metrics/time, not the grouped value. */
+const ROW_METRIC_KEYS = new Set(['count', 'visitors', 'timestamp', 'date']);
+
+/** A usable grouped value: present and non-empty. */
+const isPresentValue = (v) => v != null && v !== '';
+
+/**
+ * The grouped value for an aggregate row, robust to the API's field naming. Vercel's docs
+ * show it under `eventData`, but real `by=eventData/<prop>` responses put the value under a
+ * different key, so we fall back to the first non-metric field on the row.
+ */
+export function rowValue(row, valueKey) {
+  if (valueKey && isPresentValue(row[valueKey])) return String(row[valueKey]);
+  if (isPresentValue(row.eventData)) return String(row.eventData);
+  const found = Object.entries(row).find(([key, value]) => !ROW_METRIC_KEYS.has(key) && isPresentValue(value));
+  return found ? String(found[1]) : '';
+}
+
 /** Numeric-ascending comparator that pushes non-numeric values (e.g. an "Others" row) last. */
 function byNumericValue(a, b) {
   const na = Number(a.value);
@@ -191,7 +209,7 @@ export function buildEvent({name, label, count, trend, breakdowns}) {
     })),
     breakdowns: (breakdowns ?? []).map((b) => {
       const rows = (b.rows ?? []).map((row) => ({
-        value: String(row[b.valueKey] ?? row.eventData ?? row.value ?? ''),
+        value: rowValue(row, b.valueKey),
         count: row.count ?? 0,
         visitors: row.visitors ?? 0,
       }));
