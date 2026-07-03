@@ -6245,6 +6245,39 @@
       "strength": 3,
       "willpower": 2,
       "lore": 1
+    },
+    {
+      "id": 13086,
+      "name": "Madam Mim",
+      "fullName": "Madam Mim - Hummingbird",
+      "cost": 2,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 86,
+      "version": "Hummingbird",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Dreamborn",
+        "Villain",
+        "Sorcerer"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        }
+      ],
+      "fullText": "Evasive (Only characters with Evasive can challenge this character.)\nJUST HOW I LIKE IT All cards in your hand count as having ⬡.",
+      "fullTextSections": [
+        "Evasive (Only characters with Evasive can challenge this character.)",
+        "JUST HOW I LIKE IT All cards in your hand count as having ⬡."
+      ],
+      "strength": 1,
+      "willpower": 1,
+      "lore": 1
     }
   ]
 }
