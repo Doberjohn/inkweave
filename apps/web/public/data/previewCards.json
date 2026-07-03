@@ -6049,6 +6049,32 @@
       "strength": 2,
       "willpower": 2,
       "lore": 1
+    },
+    {
+      "id": 13194,
+      "name": "Scar",
+      "fullName": "Scar - Created by the Vine",
+      "cost": 5,
+      "color": "Steel",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "13",
+      "number": 194,
+      "version": "Created by the Vine",
+      "rarity": "Legendary",
+      "franchise": "The Lion King",
+      "subtypes": [
+        "Floodborn",
+        "Vineling"
+      ],
+      "fullText": "VICTOR'S REWARD During your turn, whenever one of your Floodborn characters banishes another character in a challenge, gain 1 lore.\nFILL THE RANKS During an opponent's turn, whenever one of your Floodborn characters is banished, draw a card.",
+      "fullTextSections": [
+        "VICTOR'S REWARD During your turn, whenever one of your Floodborn characters banishes another character in a challenge, gain 1 lore.",
+        "FILL THE RANKS During an opponent's turn, whenever one of your Floodborn characters is banished, draw a card."
+      ],
+      "strength": 5,
+      "willpower": 4,
+      "lore": 1
     }
   ]
 }
