@@ -6,6 +6,7 @@ import {
   breakdownValueKey,
   reportingWindow,
   resolveWindowDays,
+  rowValue,
   buildEvent,
   buildVercelAnalytics,
   emptyVercelAnalytics,
@@ -115,6 +116,26 @@ describe('resolveWindowDays', () => {
 
   it('passes through valid smaller windows', () => {
     expect(resolveWindowDays('30')).toBe(30);
+  });
+});
+
+describe('rowValue', () => {
+  it('reads the docs-shaped eventData field', () => {
+    expect(rowValue({eventData: 'browse', count: 5, visitors: 3}, 'eventData')).toBe('browse');
+  });
+
+  it('reads a dimension field by its valueKey', () => {
+    expect(rowValue({deviceType: 'mobile', count: 5}, 'deviceType')).toBe('mobile');
+  });
+
+  it('falls back to the first non-metric field when the value is under an unexpected key (the label bug)', () => {
+    expect(rowValue({source: 'home', count: 5, visitors: 3}, 'eventData')).toBe('home');
+    expect(rowValue({'eventData/source': 'gallery', count: 5}, 'eventData')).toBe('gallery');
+  });
+
+  it('returns empty string when only metrics/time are present', () => {
+    expect(rowValue({count: 5, visitors: 3}, 'eventData')).toBe('');
+    expect(rowValue({timestamp: '2026-07-01T00:00:00.000Z', count: 5}, 'eventData')).toBe('');
   });
 });
 

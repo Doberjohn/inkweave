@@ -164,6 +164,24 @@ export function reportingWindow(reference, days) {
   return {since, until};
 }
 
+/** Row fields that carry metrics/time, not the grouped value. */
+const ROW_METRIC_KEYS = new Set(['count', 'visitors', 'timestamp', 'date']);
+
+/**
+ * The grouped value for an aggregate row, robust to the API's field naming. Vercel's docs
+ * show it under `eventData`, but real `by=eventData/<prop>` responses put the value under a
+ * different key, so we fall back to the first non-metric field on the row.
+ */
+export function rowValue(row, valueKey) {
+  const primary = valueKey ? row[valueKey] : undefined;
+  if (primary != null && primary !== '') return String(primary);
+  if (row.eventData != null && row.eventData !== '') return String(row.eventData);
+  for (const [k, v] of Object.entries(row)) {
+    if (!ROW_METRIC_KEYS.has(k) && v != null && v !== '') return String(v);
+  }
+  return '';
+}
+
 /** Numeric-ascending comparator that pushes non-numeric values (e.g. an "Others" row) last. */
 function byNumericValue(a, b) {
   const na = Number(a.value);
@@ -191,7 +209,7 @@ export function buildEvent({name, label, count, trend, breakdowns}) {
     })),
     breakdowns: (breakdowns ?? []).map((b) => {
       const rows = (b.rows ?? []).map((row) => ({
-        value: String(row[b.valueKey] ?? row.eventData ?? row.value ?? ''),
+        value: rowValue(row, b.valueKey),
         count: row.count ?? 0,
         visitors: row.visitors ?? 0,
       }));
