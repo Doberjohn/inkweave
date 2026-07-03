@@ -6699,6 +6699,37 @@
       "strength": 4,
       "willpower": 3,
       "lore": 1
+    },
+    {
+      "id": 13143,
+      "name": "Launchpad",
+      "fullName": "Launchpad - Sky Patrol",
+      "cost": 4,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 143,
+      "version": "Sky Patrol",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Alert",
+          "fullText": "Alert"
+        }
+      ],
+      "fullText": "Alert (This character can challenge as if they had Evasive.)",
+      "fullTextSections": [
+        "Alert (This character can challenge as if they had Evasive.)"
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 2
     }
   ]
 }
