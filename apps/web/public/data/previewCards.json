@@ -6488,6 +6488,22 @@
         "(A character with cost 2 or more can ⟳ to sing this song for free.)",
         "Ready chosen character. They can't quest for the rest of this turn."
       ]
+    },
+    {
+      "id": 13135,
+      "name": "Red Alert",
+      "fullName": "Red Alert",
+      "cost": 4,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "13",
+      "number": 135,
+      "rarity": "Uncommon",
+      "fullText": "Banish chosen character with 3 ⚔ or less. If you have a Monster character in play, chosen opponent loses 1 lore.",
+      "fullTextSections": [
+        "Banish chosen character with 3 ⚔ or less. If you have a Monster character in play, chosen opponent loses 1 lore."
+      ]
     }
   ]
 }
