@@ -5,6 +5,7 @@ import {
   breakdownDimension,
   breakdownValueKey,
   reportingWindow,
+  resolveWindowDays,
   buildEvent,
   buildVercelAnalytics,
   emptyVercelAnalytics,
@@ -98,6 +99,22 @@ describe('reportingWindow', () => {
   it('returns YYYY-MM-DD bounds `days` apart', () => {
     const ref = new Date('2026-07-03T12:00:00.000Z');
     expect(reportingWindow(ref, 30)).toEqual({since: '2026-06-03', until: '2026-07-03'});
+  });
+});
+
+describe('resolveWindowDays', () => {
+  it('defaults when unset or invalid', () => {
+    expect(resolveWindowDays(undefined)).toBe(60);
+    expect(resolveWindowDays('abc')).toBe(60);
+    expect(resolveWindowDays('0')).toBe(60);
+  });
+
+  it('clamps above the 62-day day-granularity cap (the deploy bug)', () => {
+    expect(resolveWindowDays('90')).toBe(62);
+  });
+
+  it('passes through valid smaller windows', () => {
+    expect(resolveWindowDays('30')).toBe(30);
   });
 });
 

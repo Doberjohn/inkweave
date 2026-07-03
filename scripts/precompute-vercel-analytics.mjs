@@ -7,7 +7,7 @@
  *   - VERCEL_ANALYTICS_TOKEN     — Vercel access token, read scope (required)
  *   - VERCEL_PROJECT_ID          — prj_… of the Inkweave project (required)
  *   - VERCEL_TEAM_ID             — team_… (optional; omit for a personal-account project)
- *   - VERCEL_ANALYTICS_WINDOW_DAYS — trend/breakdown lookback in days (optional, default 90)
+ *   - VERCEL_ANALYTICS_WINDOW_DAYS — trend/breakdown lookback in days (optional, default 60, capped at 62)
  *
  * Degrades gracefully: when the token or project id is absent (forked PRs / offline
  * builds) it writes the empty-but-valid artifact and exits 0. A real API failure
@@ -25,6 +25,7 @@ import {
   breakdownDimension,
   breakdownValueKey,
   reportingWindow,
+  resolveWindowDays,
   buildEvent,
   buildVercelAnalytics,
   emptyVercelAnalytics,
@@ -34,7 +35,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const OUT_FILE = path.join(ROOT, 'apps/web/public/data/vercel-analytics.json');
 const API_BASE = 'https://api.vercel.com/v1/query/web-analytics';
-const DEFAULT_WINDOW_DAYS = 90;
 
 // --- env (mirror scripts/precompute-vote-analytics.mjs loader) ---
 function loadEnv() {
@@ -109,7 +109,7 @@ async function main() {
     return;
   }
 
-  const days = Number(process.env.VERCEL_ANALYTICS_WINDOW_DAYS) || DEFAULT_WINDOW_DAYS;
+  const days = resolveWindowDays(process.env.VERCEL_ANALYTICS_WINDOW_DAYS);
   const window = reportingWindow(new Date(), days);
   const creds = {token, projectId, teamId};
 
@@ -126,6 +126,12 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('Vercel-analytics precompute failed:', err);
-  process.exit(1);
+  // A non-critical admin analytics tab must never break a production deploy. Log loudly,
+  // write the empty-but-valid artifact so the tab shows its no-data state, and exit 0.
+  console.warn(`  ⚠ Vercel-analytics precompute failed — writing empty artifact, build continues: ${err.message}`);
+  try {
+    writeArtifact(emptyVercelAnalytics());
+  } catch (writeErr) {
+    console.warn(`  ⚠ Could not write empty artifact: ${writeErr.message}`);
+  }
 });

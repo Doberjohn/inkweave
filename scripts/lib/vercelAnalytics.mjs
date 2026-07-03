@@ -137,6 +137,22 @@ export function breakdownValueKey(breakdown) {
   return breakdown.source === 'dimension' ? breakdown.prop : 'eventData';
 }
 
+/** Default trend/breakdown lookback in days. */
+export const DEFAULT_WINDOW_DAYS = 60;
+
+/**
+ * Vercel caps day-granularity (`by=day`) aggregate queries at 62 days of data, so the
+ * trend query can't look back further. Clamp the whole window to stay within the cap.
+ */
+export const MAX_WINDOW_DAYS = 62;
+
+/** Resolve the configured window (an env string) to a valid day count within the API cap. */
+export function resolveWindowDays(envValue) {
+  const n = Number(envValue);
+  const days = Number.isFinite(n) && n > 0 ? n : DEFAULT_WINDOW_DAYS;
+  return Math.min(days, MAX_WINDOW_DAYS);
+}
+
 /**
  * Reporting window [since, until] as YYYY-MM-DD strings, `days` back from `reference`
  * (a Date). Aggregate queries only see data inside the plan's reporting window, so the
