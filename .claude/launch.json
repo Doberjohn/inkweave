@@ -8,6 +8,12 @@
       "port": 5173
     },
     {
+      "name": "dev-vite",
+      "runtimeExecutable": "cmd.exe",
+      "runtimeArgs": ["/c", "pnpm", "--filter", "inkweave-web", "exec", "vite"],
+      "port": 5173
+    },
+    {
       "name": "storybook",
       "runtimeExecutable": "cmd.exe",
       "runtimeArgs": ["/c", "pnpm", "--filter", "inkweave-web", "storybook"],

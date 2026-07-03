@@ -8,8 +8,8 @@ describe('isSlotDimmed', () => {
   it('never dims when no rarity is selected', () => {
     expect(isSlotDimmed(card('rare'), null)).toBe(false);
   });
-  it('never dims an empty slot', () => {
-    expect(isSlotDimmed(undefined, 'rare')).toBe(false);
+  it('dims an empty slot when a rarity is selected', () => {
+    expect(isSlotDimmed(undefined, 'rare')).toBe(true);
   });
   it('does not dim a matching rarity', () => {
     expect(isSlotDimmed(card('rare'), 'rare')).toBe(false);

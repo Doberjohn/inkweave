@@ -19,18 +19,19 @@
   }
 }
 
-/* A card slot popping in — used for the burst of random cards on each ink switch. */
+/* A card slot popping in — used for the burst of random cards on each ink switch.
+   Animates scale only. Opacity is owned by the rarity-dim inline style (see
+   isSlotDimmed / slotDimStyle); an opacity keyframe here plus the `both` fill-mode
+   below would pin the popped slots at full opacity and defeat the dim highlight. */
 @keyframes reveal-cellPop {
   0% {
     transform: scale(0.5);
-    opacity: 0;
   }
   60% {
     transform: scale(1.08);
   }
   100% {
     transform: scale(1);
-    opacity: 1;
   }
 }
 
