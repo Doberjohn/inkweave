@@ -6861,6 +6861,31 @@
       "strength": 3,
       "willpower": 2,
       "lore": 1
+    },
+    {
+      "id": 13089,
+      "name": "Peter Pan",
+      "fullName": "Peter Pan - Created by the Vine",
+      "cost": 3,
+      "color": "Emerald",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "13",
+      "number": 89,
+      "version": "Created by the Vine",
+      "rarity": "Rare",
+      "franchise": "Peter Pan",
+      "subtypes": [
+        "Floodborn",
+        "Vineling"
+      ],
+      "fullText": "CLEVER TRICK Whenever one of your Floodborn characters is challenged, the challenging player chooses and discards a card.",
+      "fullTextSections": [
+        "CLEVER TRICK Whenever one of your Floodborn characters is challenged, the challenging player chooses and discards a card."
+      ],
+      "strength": 1,
+      "willpower": 3,
+      "lore": 2
     }
   ]
 }
