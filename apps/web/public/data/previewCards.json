@@ -6594,6 +6594,24 @@
       "strength": 3,
       "willpower": 4,
       "lore": 2
+    },
+    {
+      "id": 13170,
+      "name": "Closet Door Portal",
+      "fullName": "Closet Door Portal",
+      "cost": 4,
+      "color": "Sapphire",
+      "inkwell": false,
+      "type": "Item",
+      "setCode": "13",
+      "number": 170,
+      "rarity": "Super Rare",
+      "franchise": "Monsters, Inc.",
+      "fullText": "KNOCK, KNOCK This item enters play exerted.\nWHO'S THERE? ⟳, 2 ⬡ – Look at the top 3 cards of your deck. You may reveal a character, item, or location card with cost 6 or less and play it for free. Put the rest on the bottom of your deck in any order. Put this card into your inkwell facedown and exerted.",
+      "fullTextSections": [
+        "KNOCK, KNOCK This item enters play exerted.",
+        "WHO'S THERE? ⟳, 2 ⬡ – Look at the top 3 cards of your deck. You may reveal a character, item, or location card with cost 6 or less and play it for free. Put the rest on the bottom of your deck in any order. Put this card into your inkwell facedown and exerted."
+      ]
     }
   ]
 }
