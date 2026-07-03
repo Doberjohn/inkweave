@@ -6755,6 +6755,31 @@
       "strength": 2,
       "willpower": 4,
       "lore": 1
+    },
+    {
+      "id": 13054,
+      "name": "HeiHei",
+      "fullName": "HeiHei - Created by the Vine",
+      "cost": 2,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 54,
+      "version": "Created by the Vine",
+      "rarity": "Rare",
+      "franchise": "Moana",
+      "subtypes": [
+        "Floodborn",
+        "Vineling"
+      ],
+      "fullText": "BOTANICAL REMEDY Whenever one of your Floodborn characters quests, you may move 1 damage from chosen character to chosen opposing character.",
+      "fullTextSections": [
+        "BOTANICAL REMEDY Whenever one of your Floodborn characters quests, you may move 1 damage from chosen character to chosen opposing character."
+      ],
+      "strength": 1,
+      "willpower": 3,
+      "lore": 1
     }
   ]
 }
