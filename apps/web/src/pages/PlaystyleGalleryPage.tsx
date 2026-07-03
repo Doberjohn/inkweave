@@ -263,6 +263,7 @@ export function PlaystyleGalleryPage() {
 
   const handleSearchSubmit = () => {
     const q = searchQuery.trim();
+    if (q) trackEvent('search_submitted', {query: q, source: 'gallery'});
     navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
   };
   const handleCardSelect = (card: {id: string}) => {

@@ -1,8 +1,11 @@
-import {describe, it, expect} from 'vitest';
+import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {renderHook, act} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import {useFilterParams} from '../useFilterParams';
+import {trackEvent} from '../../lib/analytics';
 import type {ReactNode} from 'react';
+
+vi.mock('../../lib/analytics', () => ({trackEvent: vi.fn()}));
 
 /** Create a wrapper with MemoryRouter and optional initial URL entries */
 function createWrapper(initialEntries: string[] = ['/']) {
@@ -12,6 +15,32 @@ function createWrapper(initialEntries: string[] = ['/']) {
 }
 
 describe('useFilterParams', () => {
+  describe('analytics', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('tracks filter_applied with add when toggling a new ink', () => {
+      const {result} = renderHook(() => useFilterParams(), {wrapper: createWrapper(['/'])});
+      act(() => result.current.toggleInk('Amber'));
+      expect(trackEvent).toHaveBeenCalledWith('filter_applied', {
+        facet: 'ink',
+        value: 'Amber',
+        action: 'add',
+      });
+    });
+
+    it('tracks filter_applied with remove when toggling an active ink', () => {
+      const {result} = renderHook(() => useFilterParams(), {wrapper: createWrapper(['/?ink=Amber'])});
+      act(() => result.current.toggleInk('Amber'));
+      expect(trackEvent).toHaveBeenCalledWith('filter_applied', {
+        facet: 'ink',
+        value: 'Amber',
+        action: 'remove',
+      });
+    });
+  });
+
   describe('URL parsing', () => {
     it('should parse ink param as array', () => {
       const {result} = renderHook(() => useFilterParams(), {

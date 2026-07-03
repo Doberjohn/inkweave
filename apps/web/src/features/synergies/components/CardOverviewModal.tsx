@@ -180,10 +180,17 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   }, [isOpen]);
 
   const toggleChip = (key: string) => {
+    // Only fire when isolating a group, not when clearing the current one.
+    if (activeGroupFilter !== key) {
+      trackEvent('synergy_group_viewed', {sourceCardId: props.card.id, groupKey: key, action: 'isolate'});
+    }
     setActiveGroupFilter((prev) => (prev === key ? null : key));
   };
 
-  const handleShowAll = (groupKey: string) => setActiveGroupFilter(groupKey);
+  const handleShowAll = (groupKey: string) => {
+    trackEvent('synergy_group_viewed', {sourceCardId: props.card.id, groupKey, action: 'show_all'});
+    setActiveGroupFilter(groupKey);
+  };
 
   const handleSynergyCardClick = (clickedCard: LorcanaCard, groupKey?: string) => {
     trackEvent('synergy_card_clicked', {
