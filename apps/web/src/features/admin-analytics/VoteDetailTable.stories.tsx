@@ -11,31 +11,28 @@ const meta: Meta<typeof VoteDetailTable> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const vote = (
-  voter: number,
-  score: number | null,
-  accuracy: number | null,
-  wouldPlay: boolean | null,
-  ts: string,
-): VoteLogRow => ({
+const DEFAULT_VOTE: VoteLogRow = {
   a: 'crd_a',
   b: 'crd_b',
   aName: 'Sisu - Divine Water Dragon',
   bName: 'Raya - Leader of Heart',
-  score,
-  accuracy,
+  score: null,
+  accuracy: null,
   isReal: true,
-  wouldPlay,
+  wouldPlay: null,
   difficulty: null,
   whoCarries: null,
-  ts,
-  voter,
-});
+  ts: '',
+  voter: 1,
+};
+
+/** Build a VoteLogRow fixture over the shared default pair. */
+const vote = (v: Partial<VoteLogRow>): VoteLogRow => ({...DEFAULT_VOTE, ...v});
 
 const VOTES: VoteLogRow[] = [
-  vote(1, 8, -1, true, '2026-06-28T14:02:00Z'),
-  vote(2, 5, 0, false, '2026-06-29T09:41:00Z'),
-  vote(3, 3, 1, null, '2026-06-30T22:15:00Z'),
+  vote({voter: 1, score: 8, accuracy: -1, wouldPlay: true, ts: '2026-06-28T14:02:00Z'}),
+  vote({voter: 2, score: 5, accuracy: 0, wouldPlay: false, ts: '2026-06-29T09:41:00Z'}),
+  vote({voter: 3, score: 3, accuracy: 1, wouldPlay: null, ts: '2026-06-30T22:15:00Z'}),
 ];
 
 export const WithVotes: Story = {

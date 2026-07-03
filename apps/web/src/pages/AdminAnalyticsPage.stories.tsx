@@ -12,59 +12,37 @@ const meta: Meta<typeof AdminAnalyticsDashboard> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const rule = (
-  ruleId: string,
-  ruleName: string,
-  category: 'direct' | 'playstyle',
-  scoreVotes: number,
-  meanGap: number | null,
-): RuleStat => ({
-  ruleId,
-  ruleName,
-  category,
-  scoreVotes,
-  pairsVoted: Math.round(scoreVotes / 2),
-  meanGap,
-  accuracySentiment: meanGap == null ? null : -meanGap / 3,
-  pairsCovered: scoreVotes * 3,
+type RuleSeed = Pick<RuleStat, 'ruleId' | 'ruleName' | 'category' | 'scoreVotes' | 'meanGap'>;
+/** Build a RuleStat fixture, deriving the secondary counts from scoreVotes/meanGap. */
+const rule = (r: RuleSeed): RuleStat => ({
+  ...r,
+  pairsVoted: Math.round(r.scoreVotes / 2),
+  accuracySentiment: r.meanGap == null ? null : -r.meanGap / 3,
+  pairsCovered: r.scoreVotes * 3,
 });
 
 const RULES: RuleStat[] = [
-  rule('ramp', 'Ramp', 'playstyle', 557, -0.57),
-  rule('shift-targets', 'Shift Targets', 'direct', 214, -0.22),
-  rule('singer-songs', 'Singer + Songs', 'direct', 141, 0.14),
-  rule('discard', 'Discard', 'playstyle', 103, 0.83),
-  rule('location-boost', 'Location Boost', 'playstyle', 9, 2.44),
+  rule({ruleId: 'ramp', ruleName: 'Ramp', category: 'playstyle', scoreVotes: 557, meanGap: -0.57}),
+  rule({ruleId: 'shift-targets', ruleName: 'Shift Targets', category: 'direct', scoreVotes: 214, meanGap: -0.22}),
+  rule({ruleId: 'singer-songs', ruleName: 'Singer + Songs', category: 'direct', scoreVotes: 141, meanGap: 0.14}),
+  rule({ruleId: 'discard', ruleName: 'Discard', category: 'playstyle', scoreVotes: 103, meanGap: 0.83}),
+  rule({ruleId: 'location-boost', ruleName: 'Location Boost', category: 'playstyle', scoreVotes: 9, meanGap: 2.44}),
 ];
 
-const pair = (
-  a: string,
-  b: string,
-  aName: string,
-  bName: string,
-  engineScore: number,
-  communityScore: number,
-  scoreVotes: number,
-  rules: string[],
-): PairStat => ({
-  a,
-  b,
-  aName,
-  bName,
-  engineScore,
-  communityScore,
-  gap: engineScore - communityScore,
-  scoreVotes,
-  rules,
-});
+type PairSeed = Pick<
+  PairStat,
+  'a' | 'b' | 'aName' | 'bName' | 'engineScore' | 'communityScore' | 'scoreVotes' | 'rules'
+>;
+/** Build a PairStat fixture; gap = communityScore - engineScore (the real convention). */
+const pair = (p: PairSeed): PairStat => ({...p, gap: p.communityScore - p.engineScore});
 
 const PAIRS: PairStat[] = [
-  pair('crd-loc-1', 'crd-loc-2', 'Cogsworth', 'Beast’s Castle', 9, 3, 4, ['location-boost']),
-  pair('crd-ramp-1', 'crd-ramp-2', 'Maui', 'Fishhook', 8, 5, 12, ['ramp']),
-  pair('crd-ramp-3', 'crd-ramp-4', 'Pawpsicle', 'Duke of Weselton', 7, 5, 6, ['ramp']),
-  pair('crd-disc-1', 'crd-disc-2', 'Mad Hatter', 'The Queen of Hearts', 5, 7, 5, ['discard']),
-  pair('crd-shift-1', 'crd-shift-2', 'Elsa - Spirit', 'Elsa - Snow Queen', 8, 7, 3, ['shift-targets']),
-  pair('crd-sing-1', 'crd-sing-2', 'Ariel - Singer', 'Part of Your World', 8, 8, 2, ['singer-songs']),
+  pair({a: 'crd-loc-1', b: 'crd-loc-2', aName: 'Cogsworth', bName: 'Beast’s Castle', engineScore: 9, communityScore: 3, scoreVotes: 4, rules: ['location-boost']}),
+  pair({a: 'crd-ramp-1', b: 'crd-ramp-2', aName: 'Maui', bName: 'Fishhook', engineScore: 8, communityScore: 5, scoreVotes: 12, rules: ['ramp']}),
+  pair({a: 'crd-ramp-3', b: 'crd-ramp-4', aName: 'Pawpsicle', bName: 'Duke of Weselton', engineScore: 7, communityScore: 5, scoreVotes: 6, rules: ['ramp']}),
+  pair({a: 'crd-disc-1', b: 'crd-disc-2', aName: 'Mad Hatter', bName: 'The Queen of Hearts', engineScore: 5, communityScore: 7, scoreVotes: 5, rules: ['discard']}),
+  pair({a: 'crd-shift-1', b: 'crd-shift-2', aName: 'Elsa - Spirit', bName: 'Elsa - Snow Queen', engineScore: 8, communityScore: 7, scoreVotes: 3, rules: ['shift-targets']}),
+  pair({a: 'crd-sing-1', b: 'crd-sing-2', aName: 'Ariel - Singer', bName: 'Part of Your World', engineScore: 8, communityScore: 8, scoreVotes: 2, rules: ['singer-songs']}),
 ];
 
 const vote = (over: Partial<VoteLogRow>): VoteLogRow => ({
