@@ -57,10 +57,7 @@ export function RevealAdminPage() {
           <RevealAdminForm
             form={ctrl.form}
             errors={ctrl.validation.errors}
-            imageName={ctrl.imageName}
-            imageDataUrl={ctrl.imageDataUrl}
             onChange={ctrl.patchForm}
-            onImageChange={ctrl.onImageChange}
           />
           {ctrl.publishError && (
             <div style={{color: COLORS.error, fontSize: FONT_SIZES.sm}}>{ctrl.publishError}</div>
@@ -92,7 +89,7 @@ export function RevealAdminPage() {
           }}>
           <div>
             <h2 style={{fontSize: FONT_SIZES.xl}}>Preview</h2>
-            <CardPreviewPanel card={ctrl.previewCard} />
+            <CardPreviewPanel card={ctrl.previewCard} onImageChange={ctrl.onImageChange} />
           </div>
           <div>
             <h2 style={{fontSize: FONT_SIZES.xl}}>Synergies</h2>

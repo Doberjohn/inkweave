@@ -32,16 +32,12 @@ type Story = StoryObj<typeof RevealAdminForm>;
 
 function Harness({errors}: {errors: Record<string, string>}) {
   const [form, setForm] = useState(initial);
-  const [imageName, setImageName] = useState<string | null>('mei.png');
   return (
     <div style={{maxWidth: 420}}>
       <RevealAdminForm
         form={form}
         errors={errors}
-        imageName={imageName}
-        imageDataUrl={null}
         onChange={(patch) => setForm((f) => ({...f, ...patch}))}
-        onImageChange={(file) => setImageName(file?.name ?? null)}
       />
     </div>
   );

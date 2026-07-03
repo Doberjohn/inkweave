@@ -79,8 +79,6 @@ export interface RevealAdminController {
   clearToken: () => void;
   form: RevealCardForm;
   patchForm: (patch: Partial<RevealCardForm>) => void;
-  imageName: string | null;
-  imageDataUrl: string | null;
   previewCard: LorcanaCard | null;
   synergyGroups: SynergyGroup[];
   validation: ValidationResult;
@@ -150,8 +148,6 @@ export function useRevealAdmin(): RevealAdminController {
     clearToken,
     form,
     patchForm,
-    imageName,
-    imageDataUrl,
     previewCard,
     synergyGroups,
     validation,

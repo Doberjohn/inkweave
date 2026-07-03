@@ -2,16 +2,12 @@ import type {ChangeEvent} from 'react';
 import type {Ink} from 'inkweave-synergy-engine';
 import type {RevealCardForm} from '../buildPreviewCard';
 import {ALL_INKS, COLORS, SPACING, FONT_SIZES, RADIUS} from '../../../shared/constants';
-import {ImageUploadTile} from '../../../shared/components/ImageUploadTile';
 import {CARD_TYPES, RARITIES, FEATURED_FRANCHISE_HINT} from '../constants';
 
 interface RevealAdminFormProps {
   form: RevealCardForm;
   errors: Record<string, string>;
-  imageName: string | null;
-  imageDataUrl: string | null;
   onChange: (patch: Partial<RevealCardForm>) => void;
-  onImageChange: (file: File | null) => void;
 }
 
 const labelStyle = {fontSize: FONT_SIZES.xs, color: COLORS.gray600, display: 'block', marginBottom: 4};
@@ -49,7 +45,7 @@ function Field({
   );
 }
 
-export function RevealAdminForm({form, errors, imageName, imageDataUrl, onChange, onImageChange}: RevealAdminFormProps) {
+export function RevealAdminForm({form, errors, onChange}: RevealAdminFormProps) {
   const text = (name: keyof RevealCardForm) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     onChange({[name]: e.target.value} as Partial<RevealCardForm>);
 
@@ -132,10 +128,6 @@ export function RevealAdminForm({form, errors, imageName, imageDataUrl, onChange
       </Field>
       <Field label="Full card text (one ability per line)" name="fullText" errors={errors}>
         <textarea id="field-fullText" style={{...fieldStyle, minHeight: 100}} value={form.fullText} onChange={text('fullText')} />
-      </Field>
-      <Field label="Card image (jpg / png / webp)" name="image" errors={errors}>
-        <ImageUploadTile imageUrl={imageDataUrl} onImageChange={onImageChange} width={140} height={195} />
-        {imageName && <div style={{color: COLORS.gray600, fontSize: FONT_SIZES.xs, marginTop: 4}}>{imageName}</div>}
       </Field>
     </div>
   );
