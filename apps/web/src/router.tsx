@@ -50,6 +50,7 @@ const InDepthVotePage = lazyWithRetry(
 const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'), 'NotFoundPage');
 const RevealsPage = lazyWithRetry(() => import('./pages/RevealsPage'), 'RevealsPage');
 const RevealAdminPage = lazyWithRetry(() => import('./pages/RevealAdminPage'), 'RevealAdminPage');
+const ImageAdminPage = lazyWithRetry(() => import('./pages/ImageAdminPage'), 'ImageAdminPage');
 const AdminAnalyticsPage = lazyWithRetry(
   () => import('./pages/AdminAnalyticsPage'),
   'AdminAnalyticsPage',
@@ -185,12 +186,25 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'reveal-admin',
+        path: 'admin/reveal',
         element: (
           <SuspenseWrapper>
             <RevealAdminPage />
           </SuspenseWrapper>
         ),
+      },
+      {
+        path: 'admin/image',
+        element: (
+          <SuspenseWrapper>
+            <ImageAdminPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        // Preserve old bookmarks / the scan-reveal-card workflow.
+        path: 'reveal-admin',
+        element: <Navigate to="/admin/reveal" replace />,
       },
       {
         path: 'admin/analytics',
