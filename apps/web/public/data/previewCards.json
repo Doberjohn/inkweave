@@ -6632,6 +6632,30 @@
         "(A character with cost 3 or more can ⟳ to sing this song for free.)",
         "Put chosen item or location into its player's inkwell facedown and exerted."
       ]
+    },
+    {
+      "id": 13159,
+      "name": "Robin Hood",
+      "fullName": "Robin Hood - Created by the Vine",
+      "cost": 5,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 159,
+      "version": "Created by the Vine",
+      "rarity": "Common",
+      "subtypes": [
+        "Floodborn",
+        "Vineling"
+      ],
+      "fullText": "KEEN-EYED Your Floodborn characters gain Alert. (They can challenge as if they had Evasive.)",
+      "fullTextSections": [
+        "KEEN-EYED Your Floodborn characters gain Alert. (They can challenge as if they had Evasive.)"
+      ],
+      "strength": 4,
+      "willpower": 5,
+      "lore": 2
     }
   ]
 }
