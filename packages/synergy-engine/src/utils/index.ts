@@ -39,6 +39,12 @@ export {
   isToyCard,
   getDwarfsRoles,
   isDwarfsCard,
+  getFloodbornRoles,
+  isFloodbornCard,
+  getHunnyRoles,
+  isHunnyCard,
+  getRedPandaRoles,
+  isRedPandaCard,
   isBoostBeneficiaryLocation,
   getLoreDenialRoles,
   isLoreDenialCard,
@@ -54,6 +60,9 @@ export type {
   CostReductionTarget,
   ToyRole,
   DwarfsRole,
+  FloodbornRole,
+  HunnyRole,
+  RedPandaRole,
   LoreDenialRole,
 } from './cardHelpers.js';
 

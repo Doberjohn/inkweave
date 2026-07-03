@@ -5,6 +5,7 @@ import type {CardFilterOptions} from '../../features/cards/loader';
 import type {CardTypeFilter, BrowseSortOrder} from '../constants';
 import {BROWSE_SORT_OPTIONS} from '../constants';
 import type {InkwellValue} from '../components/InkwellIcon';
+import {trackEvent} from '../lib/analytics';
 
 const VALID_INKS = new Set<string>(['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel']);
 const VALID_TYPES = new Set<string>(['Character', 'Action', 'Song', 'Item', 'Location']);
@@ -150,6 +151,7 @@ export function useFilterParams(): UseFilterParamsReturn {
   };
 
   const toggleInk = (ink: Ink) => {
+    trackEvent('filter_applied', {facet: 'ink', value: ink, action: inkFilters.includes(ink) ? 'remove' : 'add'});
     updateParams((p) => {
       const current = parseCommaSeparated(p.get('ink'), isValidInk);
       const next = current.includes(ink) ? current.filter((i) => i !== ink) : [...current, ink];
@@ -159,6 +161,7 @@ export function useFilterParams(): UseFilterParamsReturn {
   };
 
   const toggleType = (type: CardTypeFilter) => {
+    trackEvent('filter_applied', {facet: 'type', value: type, action: typeFilters.includes(type) ? 'remove' : 'add'});
     updateParams((p) => {
       const current = parseCommaSeparated(p.get('type'), isValidType);
       const next = current.includes(type)
@@ -170,6 +173,7 @@ export function useFilterParams(): UseFilterParamsReturn {
   };
 
   const toggleCost = (cost: number) => {
+    trackEvent('filter_applied', {facet: 'cost', value: String(cost), action: costFilters.includes(cost) ? 'remove' : 'add'});
     updateParams((p) => {
       const current = parseCostParam(p.get('cost'));
       const next = current.includes(cost)
@@ -206,6 +210,9 @@ export function useFilterParams(): UseFilterParamsReturn {
   };
 
   const setSortOrder = (order: BrowseSortOrder) => {
+    if (order !== sortOrder) {
+      trackEvent('sort_changed', {sortOrder: order, previousSort: sortOrder});
+    }
     updateParams((p) => {
       if (order === 'newest') p.delete('sort');
       else p.set('sort', order);

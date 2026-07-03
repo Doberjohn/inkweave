@@ -44,7 +44,7 @@ Selecting **Elsa - Snow Queen** (cost 4) finds:
 
 ### Shift Variants
 
-`getShiftType` (`utils/cardHelpers.ts`) classifies the Shift keyword into three target kinds so the rule knows what counts as a valid target:
+`getShiftType` (`utils/cardHelpers.ts`) classifies the Shift keyword into four target kinds so the rule knows what counts as a valid target:
 
 | Keyword | Kind | Valid targets |
 |---|---|---|
@@ -53,11 +53,13 @@ Selecting **Elsa - Snow Queen** (cost 4) finds:
 | `Combo Shift N` / `Duo Shift N` | `standard` | the named halves of a Team card — flavor labels for a compound-name shift (see below) |
 | `X Shift N` (e.g. `Puppy Shift`, `Madrigal Shift`, `Temporary Red Panda Shift`) | `classification` | characters with classification `X` (the prefix may be multiple words) |
 | `Universal Shift N` | `universal` | any character |
+| `X Shift N` with an "items named X" reminder (e.g. `Potato Shift N`) | `named-item` | the **item** named `X` — identified by the reminder text, not the keyword prefix (see below) |
 
 `classifyShiftKeyword` resolves a keyword in this order: **Universal** → **Team** (card name contains `&`, so any shift label routes to `standard`) → strip a leading **`Temporary`** modifier → **`<classification> Shift N`** → plain **`Shift N`**. Two consequences:
 
 - **"Temporary" is a modifier, not a classification.** It's stripped before the classification match, so `Temporary Shift N` → `standard` and `Temporary Red Panda Shift N` → classification `Red Panda` (rather than a non-existent `Temporary Red Panda` class). The classification prefix may be **multiple words** (`Red Panda`), which the lazy `^(.+?)\s+shift` match handles.
 - **"Combo"/"Duo" look like classification prefixes but aren't** — they're flavor labels on Team cards. The reminder text ("named X or Y") isn't visible at classify-time, so the `&` in the card's name is the real signal: Team detection runs before the classification branch and routes `Combo Shift` / `Duo Shift` to `standard`.
+- **Item-target shifts read the reminder, not the keyword.** `Potato Shift N` (Posey - Vampire Potato) is byte-for-byte a classification shift at the keyword level, so `getShiftType` inspects the card's reminder text: an "…on top of one of your **items** named X" reminder overrides the classification reading and yields `named-item`, landing on the **item** named `X`. The keyword prefix ("Potato") is never treated as a character classification. `isValidShiftTarget` gates this case with `isItem` (case-insensitive name match), so a character that merely happens to be named/classified "Potato" cannot match — and the rule's `matches` gate admits items so the reverse lookup (item finds its shifter) fires too.
 
 #### Team (compound-name) Shift
 

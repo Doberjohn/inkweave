@@ -2,31 +2,55 @@ import type {PlaystyleId} from 'inkweave-synergy-engine';
 import {hexToRgb} from './theme';
 
 export interface PlaystyleUiMeta {
+  /** The hero card's ink colour (from INK_COLORS[color].border). */
   accentColor: string;
-  /** CSS rgb components for rgba() usage, e.g. "239, 68, 68" */
+  /** Same ink colour as rgb components for rgba(), e.g. "239, 68, 68". */
   accentRgb: string;
+  /** Detail-page Ken Burns background; falls back to an accent gradient if the asset is missing. */
   coverArt: string;
+  /** Gallery grouping: strategy mechanics vs creature-type tribes. */
+  kind: 'mechanic' | 'tribe';
+  /** Curated centre card of the gallery fan (a LorcanaCard id); its ink sets accentColor/accentRgb. */
+  heroCardId: string;
 }
 
-function makeUiMeta(accentColor: string, coverArt: string): PlaystyleUiMeta {
-  return {accentColor, accentRgb: hexToRgb(accentColor), coverArt};
+function makeUiMeta(
+  accentColor: string,
+  coverArt: string,
+  kind: PlaystyleUiMeta['kind'],
+  heroCardId: string,
+): PlaystyleUiMeta {
+  return {accentColor, accentRgb: hexToRgb(accentColor), coverArt, kind, heroCardId};
 }
 
-/** Presentational metadata for registered playstyles (active in the engine). */
+/**
+ * Presentational metadata for registered playstyles. accentColor is the hero
+ * card's ink colour (INK_COLORS[color].border); see the Hero cards table in
+ * docs/superpowers/specs/2026-07-01-playstyles-gallery-rebrand-design.md.
+ */
 export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
-  'lore-denial': makeUiMeta('#ef4444', '/art/playstyles/lore-denial-cover.webp'),
-  'location-control': makeUiMeta('#71717a', '/art/playstyles/location-control-cover.webp'),
-  discard: makeUiMeta('#10b981', '/art/playstyles/discard.webp'),
-  ramp: makeUiMeta('#3b82f6', '/art/playstyles/ramp.webp'),
-  toy: makeUiMeta('#f59e0b', '/art/playstyles/toy.webp'),
-  // Art asset sacrifice.webp (670x500 webp) is provided separately; drop it in apps/web/public/art/playstyles/.
-  sacrifice: makeUiMeta('#10b981', '/art/playstyles/sacrifice.webp'),
-  dwarfs: makeUiMeta('#8b5cf6', '/art/playstyles/dwarf.webp'),
+  // Mechanics
+  'lore-denial': makeUiMeta('#ef4444', '/art/playstyles/lore-denial-cover.webp', 'mechanic', '2847'), // Hero Work (Ruby)
+  'location-control': makeUiMeta('#ef4444', '/art/playstyles/location-control-cover.webp', 'mechanic', '2586'), // Elsa - Ice Artisan (Ruby)
+  discard: makeUiMeta('#f59e0b', '/art/playstyles/discard.webp', 'mechanic', '2208'), // Mowgli - Man Cub (Amber)
+  ramp: makeUiMeta('#3b82f6', '/art/playstyles/ramp.webp', 'mechanic', '2344'), // Cinderella - Dream Come True (Sapphire)
+  sacrifice: makeUiMeta('#ef4444', '/art/playstyles/sacrifice.webp', 'mechanic', '2841'), // Sid Phillips - Toy Surgeon (Ruby)
+  // Tribes
+  toy: makeUiMeta('#f59e0b', '/art/playstyles/toy.webp', 'tribe', '2730'), // Woody - Jungle Guide (Amber)
+  dwarfs: makeUiMeta('#8b5cf6', '/art/playstyles/dwarf.webp', 'tribe', '2752'), // Snow White - Merry as the Morning (Amethyst)
+  // Set 13 tribes. Cover art assets (floodborn/hunny/red-panda .webp) are pending;
+  // the detail hero falls back to an accent gradient until they are dropped in apps/web/public/art/playstyles/.
+  floodborn: makeUiMeta('#6b7280', '/art/playstyles/floodborn.webp', 'tribe', '13197'), // The Vine - Towering Stalk (Steel)
+  hunny: makeUiMeta('#8b5cf6', '/art/playstyles/hunny.webp', 'tribe', '1977'), // Winnie the Pooh - Hunny Wizard (Amethyst)
+  'red-panda': makeUiMeta('#ef4444', '/art/playstyles/red-panda.webp', 'tribe', '13125'), // Meilin Lee - Popular Red Panda (Ruby)
 };
 
-export interface ComingSoonPlaystyle extends PlaystyleUiMeta {
+export interface ComingSoonPlaystyle {
   name: string;
   description: string;
+  accentColor: string;
+  accentRgb: string;
+  coverArt: string;
 }
 
 function makeComingSoon(
@@ -35,7 +59,7 @@ function makeComingSoon(
   accentColor: string,
   coverArt: string,
 ): ComingSoonPlaystyle {
-  return {name, description, ...makeUiMeta(accentColor, coverArt)};
+  return {name, description, accentColor, accentRgb: hexToRgb(accentColor), coverArt};
 }
 
 /** Playstyles that are planned but not yet implemented in the engine. */

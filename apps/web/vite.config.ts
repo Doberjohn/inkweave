@@ -79,8 +79,10 @@ function isNewerRecursive(dir: string, threshold: number): boolean {
 }
 
 /**
- * Inline all CSS into <style> tags in the HTML output.
- * Eliminates the render-blocking CSS round-trip (~2 KB saved).
+ * Inline the render-blocking entry CSS into a <style> tag in index.html and drop
+ * that file from the bundle (eliminates the CSS round-trip, ~2 KB saved). Code-split
+ * route CSS is deliberately left in the bundle so it still loads at runtime via its
+ * JS chunk — inlining only applies to stylesheets actually linked in index.html.
  */
 function inlineCssPlugin(): Plugin {
   return {
@@ -95,15 +97,22 @@ function inlineCssPlugin(): Plugin {
         for (const [fileName, chunk] of Object.entries(ctx.bundle)) {
           if (chunk.type === 'asset' && fileName.endsWith('.css')) {
             const cssContent = typeof chunk.source === 'string' ? chunk.source : '';
-            // Replace the <link> tag with an inline <style> tag
+            const before = html;
+            // Replace the entry <link> tag with an inline <style> tag
             html = html.replace(
               new RegExp(
                 `<link[^>]*href="[^"]*${fileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[^>]*>`,
               ),
               `<style>${cssContent}</style>`,
             );
-            // Remove the CSS file from the bundle
-            delete ctx.bundle[fileName];
+            // Only drop the emitted file if we actually inlined it (its <link> was
+            // present in index.html). Code-split route CSS (e.g. PlaystyleGalleryPage,
+            // RevealsPage) has no <link> here — it is fetched at runtime by its JS
+            // chunk. Deleting it would 404 the stylesheet on production, so the
+            // route's styles (fan-out animations) silently never apply.
+            if (html !== before) {
+              delete ctx.bundle[fileName];
+            }
           }
         }
         return html;
@@ -228,6 +237,14 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/shared/test-utils/setup.ts'],
     exclude: ['**/node_modules/**', '**/e2e/**'],
+    // Pin render-gating feature-flag env vars to their default (unset) state so a
+    // developer's local .env.local override can't break unit tests. FeaturedCards
+    // reads VITE_FEATURED_CARD_IDS at module load and renders null when its curated
+    // IDs are unknown; without this pin, a local override makes its tests (which
+    // assume the default IDs) fail locally while passing in CI.
+    env: {
+      VITE_FEATURED_CARD_IDS: '',
+    },
     coverage: {
       reporter: ['text', 'json-summary', 'html'],
       exclude: [

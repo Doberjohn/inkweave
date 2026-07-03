@@ -6,6 +6,7 @@ import {useCardDataContext} from '../contexts/CardDataContext';
 import {useCardModal} from '../contexts/CardModalContext';
 import {smallImageUrl} from '../../features/cards/loader';
 import {useAutocomplete, useDialogFocus, useScrollLock, useTransitionPresence} from '../hooks';
+import {trackEvent} from '../lib/analytics';
 
 // =====================================================================
 // Highlighted name (reused from SearchAutocomplete).
@@ -667,8 +668,10 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
     };
 
     const handleSubmit = () => {
+      const q = query.trim();
+      if (q) trackEvent('search_submitted', {query: q, source: 'mobile_sheet'});
       onClose();
-      navigate(`/browse?q=${encodeURIComponent(query.trim())}`);
+      navigate(`/browse?q=${encodeURIComponent(q)}`);
     };
 
     // Focus trap + Escape key handling.

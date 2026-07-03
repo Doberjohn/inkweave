@@ -9,6 +9,7 @@
     "build": "pnpm -r build",
     "build:engine": "pnpm --filter inkweave-synergy-engine build",
     "build:web": "pnpm --filter inkweave-web build",
+    "build:vercel": "node scripts/convert-preview-images.mjs && node scripts/download-card-images.mjs && pnpm build:engine && node scripts/precompute-synergies.mjs && node scripts/precompute-vote-analytics.mjs && VITE_LOCAL_IMAGES=true pnpm build:web",
     "test": "pnpm -r test:run",
     "test:engine": "pnpm --filter inkweave-synergy-engine test:run",
     "test:web": "pnpm --filter inkweave-web test:run",
@@ -58,6 +59,6 @@
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {
-    "node": ">=22 <23"
+    "node": ">=24 <25"
   }
 }

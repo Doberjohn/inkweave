@@ -1,6 +1,8 @@
 import {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {FeaturedCards} from '../features/cards';
+import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
+import {trackEvent} from '../shared/lib/analytics';
 import {HeroSection, EtherealBackground, ErrorBoundary} from '../shared/components';
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
@@ -18,14 +20,18 @@ export function HomePage() {
   const navigate = useNavigate();
   const {openCardModal} = useCardModal();
   const {isMobile} = useResponsive();
-  const {cards, isLoading} = useCardDataContext();
+  const {cards, isLoading, getCardById} = useCardDataContext();
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearchSubmit = () => {
     const q = searchQuery.trim();
+    if (q) trackEvent('search_submitted', {query: q, source: 'home'});
     navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
   };
-  const handleCardSelect = (card: {id: string}) => openCardModal(card.id);
+  const handleCardSelect = (card: {id: string}) => {
+    trackCardSelected(getCardById(card.id), 'home');
+    openCardModal(card.id);
+  };
   const handleBrowse = () => navigate('/browse');
   const handlePlaystyles = () => navigate('/playstyles');
   const handleVote = () => navigate('/vote');

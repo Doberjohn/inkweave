@@ -39,7 +39,9 @@ inkweave/
         ├── package.json      # inkweave-web
         ├── vite.config.ts
         └── src/
-            ├── App.tsx       # Root component (two-column layout)
+            ├── main.tsx      # App bootstrap (mounts the router)
+            ├── router.tsx    # Route definitions
+            ├── AppLayout.tsx # Two-column layout shell
             ├── features/
             │   ├── cards/    # Card loading, components, hooks
             │   └── synergies/# Synergy display components, hooks
@@ -87,12 +89,15 @@ React web application that consumes the synergy engine package.
 - Toys (`toy`) - Toy-classification members + tribal payoffs (search, banish-trigger, self-discount)
 - Sacrifice (`sacrifice`) - self-banish cards (banish your own characters) + banish-trigger payoffs
 - Seven Dwarfs (`dwarfs`) - Seven Dwarfs-classification members + tribal payoffs (density, recruit, return)
+- Floodborns (`floodborn`) - Floodborn-matters payoffs (buff + trigger), payoff-anchored against the whole Floodborn tribe
+- Hunny (`hunny`) - Winnie-the-Pooh tribe (density, search, buff)
+- Red Panda (`red-panda`) - Turning Red tribe (member + search)
 
 **Synergy Score**: 1-10 numeric scale (all integers valid). Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4)
 
 ## Automation
 
-Claude Code hooks, skills, and agents enforce workflow rules automatically. Check these before adding redundant instructions to CLAUDE.md.
+Claude Code hooks, skills, agents, and path-scoped rules enforce workflow rules automatically. Check these before adding redundant instructions to CLAUDE.md.
 
 ### Hooks (`.claude/hooks/`)
 | Hook | Event | What it does |
@@ -114,6 +119,18 @@ Claude Code hooks, skills, and agents enforce workflow rules automatically. Chec
 | `/close-session [summary]` | work summary | Cleanup (servers/worktrees/branches + transient-file sweep w/ confirmation) → docs update → MEMORY.md → summary |
 | `/inkweave-add-rule <name>` | mechanic name | Discovery → design → implement → validate |
 | `/mine-rules [dry-run]` | optional dry-run | Run the miner → pick top candidate (dedup vs existing rules + open candidates; previously-removed mechanics are flagged, not skipped) → draft 5-baseline proposal → open one `rule-candidate` issue (`dry-run` drafts without publishing) |
+| `/inkweave-explore [focus]` | optional focus area | Read-only, fork-isolated codebase/architecture map (workspace, engine API + rule registry, web data flow, precompute); verbose output stays in the fork |
+
+### Path-scoped rules (`.claude/rules/`)
+
+Convention files that auto-load only when editing files matching their `paths:` glob, keeping zone-specific detail out of always-loaded context (the differentiated split). Each rule's content also has a one-line pointer in the relevant section below.
+
+| Rule | Loads when editing | Covers |
+|------|-------------------|--------|
+| `tests.md` | `**/*.test.ts(x)` | unit/integration test style |
+| `stories.md` | `**/*.stories.tsx` | Storybook conventions (imports, decorators, mock-data shape) |
+| `migrations.md` | `supabase/migrations/**` | Supabase MCP migration workflow |
+| `engine.md` | `packages/synergy-engine/src/**` | engine rule pattern, 5-baseline scoring, doc-sync, auto-rebuild |
 
 ### Agents (`.claude/agents/`)
 | Agent | Model | Triggered by | What it does |
@@ -160,7 +177,7 @@ See `packages/synergy-engine/REMOVED_RULES.md` for archived rules (Evasive, Trib
 
 Shift cards find same-named base characters; base characters find Shift cards. Both directions use the same scoring. Scores 3-10 based on curve gap, inkwell flexibility, free Shift cost tiers, and condition activation.
 
-**Variants** (`getShiftType` in `utils/cardHelpers.ts`): `Shift N` and `Temporary Shift N` target same-named characters (standard); `X Shift N` (e.g. `Puppy Shift`, `Madrigal Shift`, `Temporary Red Panda Shift`) targets characters with classification `X` — the prefix may be multiple words, and a leading `Temporary` modifier is stripped before classifying; `Universal Shift N` targets any character. **Team** cards print a compound name ("Belle & Beast", "Sulley & Boo") and shift onto a character named either half, whatever the keyword's flavor label (`Shift`, `Combo Shift`, `Duo Shift`). The `&` in the name is the team signal — checked before the classification branch so `Combo`/`Duo` aren't misread as classifications; `standard` matching routes through `getShiftBaseNames`, which splits the base name on `&` so each component is a valid target (atomic names with no `&` pass through unchanged).
+**Variants** (`getShiftType` in `utils/cardHelpers.ts`): `Shift N` and `Temporary Shift N` target same-named characters (standard); `X Shift N` (e.g. `Puppy Shift`, `Madrigal Shift`, `Temporary Red Panda Shift`) targets characters with classification `X` — the prefix may be multiple words, and a leading `Temporary` modifier is stripped before classifying; `Universal Shift N` targets any character. An `X Shift N` whose reminder reads "items named X" (e.g. `Potato Shift`, Posey - Vampire Potato) is an **item-target** shift (`named-item`) that lands on the **item** named `X`, not a character classification — the reminder text is the signal, and `isValidShiftTarget` gates the target with `isItem` (case-insensitive name) so a same-named character can't match; the rule's `matches` gate admits items so the reverse lookup fires. **Team** cards print a compound name ("Belle & Beast", "Sulley & Boo") and shift onto a character named either half, whatever the keyword's flavor label (`Shift`, `Combo Shift`, `Duo Shift`). The `&` in the name is the team signal — checked before the classification branch so `Combo`/`Duo` aren't misread as classifications; `standard` matching routes through `getShiftBaseNames`, which splits the base name on `&` so each component is a valid target (atomic names with no `&` pass through unchanged).
 
 **Full documentation**: See [`packages/synergy-engine/SHIFT_TARGET_RULE.md`](packages/synergy-engine/SHIFT_TARGET_RULE.md) for detailed score tables, examples, condition matchers, and design rationale.
 
@@ -373,6 +390,61 @@ Tribal playstyle for Seven Dwarfs / Snow White decks (Set 12 package). **Members
 
 **Full documentation**: See [`packages/synergy-engine/DWARFS_RULE.md`](packages/synergy-engine/DWARFS_RULE.md).
 
+### Rule 11: Floodborns (playstyle: Floodborn matters, payoff-anchored)
+
+Set 13 "Vine" archetype, the **Floodborns** playstyle. The new Set 13 cards are branded Vinelings, but the rule is keyed on the **Floodborn** classification: every payoff reads "your Floodborn characters", and Floodborn is a deep, cross-set classification (note: not every Shift card is Floodborn; the Set 13 Team-ups and some Incredibles Shift cards are Storyborn, so membership keys on the classification tag, not the Shift keyword). **Payoff-anchored**: a Floodborn body synergizes with payoffs, but two plain Floodborn do not synergize with each other (`findSynergies` skips member ↔ member, avoiding ~6,400 density pairs that would tag every shifted card).
+
+**Roles**:
+- **Membership**: `member` (`isCharacter` + `Floodborn` classification)
+- **Payoffs**: `buff` (static "your Floodborn characters get/gain ..."), `trigger` (repeating "whenever ... Floodborn ..." on quest/play/banish). The Vine carries all three.
+
+**Scoring** (5-baseline):
+
+| Pair | Score | Why |
+|------|-------|-----|
+| member ↔ trigger | **7** | The body fires the repeating payoff trigger |
+| payoff ↔ payoff | **7** | Two payoffs stack on the same Floodborn board |
+| member ↔ buff | **6** | The body is pumped by the team buff |
+| member ↔ member | (not generated) | Payoff-anchored |
+
+**Cross-rule**: Floodborn banish-triggers (Maid Marian, The Vine) are also caught by the Sacrifice `banish-trigger` (expected cross-playstyle composition).
+
+**Full documentation**: See [`packages/synergy-engine/FLOODBORN_RULE.md`](packages/synergy-engine/FLOODBORN_RULE.md).
+
+### Rule 12: Hunny (playstyle, tribal)
+
+Winnie-the-Pooh tribe (Set 13), modeled on Seven Dwarfs. **Membership gate**: `Hunny` classification. **Payoff gate**: `/\bHunny (character|card|classification)/i`, deliberately NOT bare "Hunny" (abilities are named "HUNNY AURA"/"HUNNY ACTIVATION", the same caps trap as Toy's "WORLD'S GREATEST TOY").
+
+**Roles**: `member`, `density` (gated on Hunny in play), `search` (dig a Hunny from deck), `buff` (single-target pump of a chosen Hunny).
+
+**Scoring** (5-baseline):
+
+| Pair | Score |
+|------|-------|
+| search ↔ member / search ↔ density | **8** |
+| density ↔ density / density ↔ member | **7** |
+| buff ↔ member | **6** |
+| everything else | **5** |
+
+**Coverage**: 9 members + 3 density, 2 search, 3 buff payoffs (several multi-role).
+
+**Full documentation**: See [`packages/synergy-engine/HUNNY_RULE.md`](packages/synergy-engine/HUNNY_RULE.md).
+
+### Rule 13: Red Panda (playstyle, tribal, minimal)
+
+Turning Red tribe (Set 13). Intentionally thin: one tribal payoff plus members. **Membership gate**: `Red Panda` classification. **Payoff**: `search` = `/reveal a Red Panda character/i` (the search shape, NOT bare "Red Panda character", so Sun Yee's Temporary Red Panda Shift reminder does not false-positive).
+
+**Scoring** (5-baseline):
+
+| Pair | Score |
+|------|-------|
+| search ↔ member | **8** |
+| member ↔ member | **5** |
+
+Red Panda's other connections (Meilin/Ming named-companions, Red Panda Shift) come from Rules 1 and 2; this rule only adds the tribal-fetch axis.
+
+**Full documentation**: See [`packages/synergy-engine/RED_PANDA_RULE.md`](packages/synergy-engine/RED_PANDA_RULE.md).
+
 ## Commands
 
 ```bash
@@ -402,7 +474,7 @@ pnpm test:supabase    # Run Supabase integration tests (requires .env.local)
 - **react-grab**: Dev-only inspection tool. The `dev` script runs `pnpm dlx @react-grab/claude-code@latest && vite`. Playwright always uses `npx vite` for its webServer (react-grab is irrelevant during E2E). If a dev server is already running, Playwright reuses it (`reuseExistingServer: true` locally) — which means `playwright.config.ts`'s `webServer.env` only applies when Playwright launches its own Vite. Set branch-specific env vars in `apps/web/.env.local` for determinism; see **Feature Flags & Local Dev**.
 - **useContainerWidth**: ResizeObserver hook guards against 0-width observations from detached elements (`if (w > 0)`) — required for React Strict Mode double-mount resilience
 - **Source-map leak guard** (#358): `scripts/check-sourcemaps.mjs` fails the build if any `.map` in a dir inlines original code via non-empty `sourcesContent`; `SKIP_SOURCEMAP_GUARD=1` bypasses. Wired ONLY into `vercel.json`'s `buildCommand` (the deploy boundary), plus `apps/web/vite.config.ts` sets `workbox.sourcemap:false` so VitePWA stops emitting `sw.js.map`. **Do NOT add the guard to CI or a `postbuild` hook** — CI/local builds run without `SENTRY_AUTH_TOKEN` (the Sentry plugin only uploads+deletes app maps where the token exists, i.e. the Vercel build), so they legitimately produce content-bearing maps that never deploy; gating those paths would false-fail safe artifacts and break forked PRs.
-- **Supabase**: Community voting backend (project: `ttyidjyaxnycbpxwngqr`, eu-central-1). Use Supabase MCP tools (`apply_migration`, `execute_sql`, `generate_typescript_types`, `get_advisors`, `list_tables`) for all database operations — do not use local Supabase CLI. After schema changes: apply migration via MCP → verify with `list_tables`/`execute_sql` → regenerate types → run `get_advisors` (security). Client SDK in `apps/web/src/shared/lib/supabase.ts`; migrations in `supabase/migrations/`.
+- **Supabase**: Community voting backend (project: `ttyidjyaxnycbpxwngqr`, eu-central-1). Client SDK in `apps/web/src/shared/lib/supabase.ts`; migrations in `supabase/migrations/`. The MCP-driven migration workflow (apply, verify, regenerate types, advisors) lives in [`.claude/rules/migrations.md`](.claude/rules/migrations.md), auto-loaded when editing `supabase/migrations/**`.
 - **Card images** — production is **content-addressed and self-hosted**; dev falls back to proxies. All routed through `resolveImageUrl(raw)` / `smallImageUrl(card)` in `apps/web/src/features/cards/loader.ts`.
   - **Production build** (`VITE_LOCAL_IMAGES=true`, set in `vercel.json`'s build command): `scripts/download-card-images.mjs` runs first — downloads all set 1-11 images from Ravensburger, copies the committed set-12 preview AVIFs (`apps/web/public/card-images-preview/{id}{-sm}.avif`), converts/resizes to two sizes, then **hashes each AVIF (sha256 prefix, 16 hex chars)** and writes `apps/web/public/card-images/{id}.{hash}.avif` + `{id}.{hash}-sm.avif`. It also injects `imageHash` + `imageHashSm` into `allCards.json` and `previewCards.json`. `resolveImageUrl` then builds `/card-images/{id}.{imageHash}.avif`; `smallImageUrl` builds `/card-images/{id}.{imageHashSm}-sm.avif`. These URLs are content-addressed, so `vercel.json`'s `Cache-Control: public, max-age=31536000, immutable` on `/card-images/(.*)` is truthful — bytes change ⇒ URL changes ⇒ every cache layer (browser, Vercel Edge, SW) sees a fresh resource. **Never put `immutable` on a URL that isn't content-addressed** (issue #323 was a year-long cache-poisoning bug from exactly that). The Ravensburger rewrite in `vercel.json` is now a dev-only fallback (dead in prod since every card has a hashed URL).
   - **Dev / CI** (`VITE_LOCAL_IMAGES` unset): `resolveImageUrl` rewrites `api.lorcana.ravensburger.com/images/...` → `/card-images/...` (Vite dev proxy + the Vercel rewrite forward to Ravensburger; proxy key uses the trailing-slash form `'/card-images/'` so it doesn't also grab `/card-images-preview/*`), and `lorcanaplayer.com/...` → `/card-images-preview/{id}.avif` (committed AVIFs; that host is behind Cloudflare Bot Management so server-to-server proxying fails). `smallImageUrl` falls back to the `.avif` → `-sm.avif` string transform.
@@ -453,7 +525,7 @@ Dark fantasy theme inspired by Lorcana:
 - Example: on `feature/285-reveals-page`, `VITE_IS_REVEAL_SEASON=true` must be in `.env.local` or the `/reveals` route redirects to `/` and the nav omits the Reveals entry.
 
 ### Synergy Rule Documentation
-- When modifying rule logic, scoring, or explanations in the engine, always update the **Synergy Rules** section in this file to match. This includes score tables, condition matchers, explanation templates, and display tier definitions.
+- Engine source conventions (rule pattern, 5-baseline scoring discipline, doc-sync rule, auto-rebuild) live in [`.claude/rules/engine.md`](.claude/rules/engine.md), auto-loaded when editing `packages/synergy-engine/src/**`.
 - Per-rule docs live in `packages/synergy-engine/*_RULE.md` and are **auto-discovered** by `scripts/generate-docs.mjs` (`pnpm run docs`) into the docs-hub "Synergy Rules" category. Adding a new `*_RULE.md` wires it in automatically; only add a `RULE_LABEL_OVERRIDES` entry there if the display label differs from the title-cased filename (e.g. "Singer + Songs"), and a `RULE_ORDER` entry to place it in the reading sequence.
 ### Code Quality
 - After writing or modifying significant code (new features, refactors, bug fixes), run the `code-simplifier` agent to polish for clarity and consistency
@@ -489,21 +561,12 @@ Dark fantasy theme inspired by Lorcana:
 - Do not jump to implementation until the user confirms the approach
 
 ### Storybook
-- **Every new visual component needs a `.stories.tsx` file.** The `check:stories` story-coverage gate runs locally as the first pre-push step (~130ms) and fails if a new component is added without stories, so missing stories block the push before it lands. (No longer enforced in CI — that gate lived in the removed Chromatic workflow.)
-- Stories go next to the component: `ComponentName.stories.tsx` alongside `ComponentName.tsx`
-- Import Meta/StoryObj from `@storybook/react-vite` (NOT `@storybook/react` — Storybook 10 lint rule catches this)
-- Components using React Router need a `MemoryRouter` decorator
-- Components using `useCardPreview` (or rendering `SearchAutocomplete`) need a `CardPreviewProvider` decorator
-- Mock data: use the actual `LorcanaCard` type shape — `textSections` is `string[]`, not `{type, text}[]`
-- Excluded components (icons, context providers, ErrorBoundary) are listed in `apps/web/scripts/check-story-coverage.mjs`
+- **Every new visual component needs a `.stories.tsx` file.** The `check:stories` story-coverage gate runs locally as the first pre-push step (~130ms) and fails if a new component is added without stories.
+- Story-writing mechanics (imports, decorators, mock-data shape, exclusions) live in [`.claude/rules/stories.md`](.claude/rules/stories.md), auto-loaded when editing `**/*.stories.tsx`.
 
 ### Testing Style
-- Write focused, minimal tests - not exhaustive coverage
-- One test per distinct behavior, no redundant variations
-- Skip trivial edge cases unless they're critical paths
-- Prefer readability over coverage percentage
-- Aim for 5-15 tests per component/hook, not 30+
-- **E2E test inventory**: `apps/web/e2e/E2E_TESTS.md` — update this file whenever E2E tests are added, removed, or edited
+- Unit/integration test conventions (focused, minimal, 5-15 per unit, one behavior per test) live in [`.claude/rules/tests.md`](.claude/rules/tests.md), auto-loaded when editing `**/*.test.ts(x)`.
+- **E2E test inventory**: `apps/web/e2e/E2E_TESTS.md`, update this file whenever E2E tests are added, removed, or edited.
 
 ### Debugging E2E Failures
 - **Read the failure screenshot before theorizing.** Playwright writes one per failed test to `apps/web/test-results/{test-name}-chromium/test-failed-1.png`. It shows the rendered DOM at the moment of failure — the fastest way to distinguish "test is stale" / "UI refactored" / "route gate fired" / "feature flag off."

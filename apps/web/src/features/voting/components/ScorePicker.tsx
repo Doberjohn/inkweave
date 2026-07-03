@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {EASING, FONTS} from '../../../shared/constants';
 import type {Score} from '../../../shared/lib/supabase';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';
@@ -57,10 +57,18 @@ export function ScorePicker({value, onChange, isMobile, responsive}: ScorePicker
   const [hoveredScore, setHoveredScore] = useState<Score | null>(null);
   const [pulsingScore, setPulsingScore] = useState<Score | null>(null);
 
+  // Clear the click pulse 300ms after it starts. The cleanup cancels the timer on
+  // unmount (or a new click), so a stray timer can't fire setState into a torn-down
+  // tree, which crashed CI's coverage run with "window is not defined".
+  useEffect(() => {
+    if (pulsingScore === null) return;
+    const id = setTimeout(() => setPulsingScore(null), 300);
+    return () => clearTimeout(id);
+  }, [pulsingScore]);
+
   const handleClick = (score: Score) => {
     setPulsingScore(score);
     onChange(score);
-    setTimeout(() => setPulsingScore(null), 300);
   };
 
   const renderButton = (score: Score) => {

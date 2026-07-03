@@ -4782,6 +4782,1273 @@
         "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/06/192-207-EN-13-Mulan-Created-by-the-Vine-Lorcana-Player.jpg.webp",
         "full": "https://lorcanaplayer.com/wp-content/uploads/2026/06/192-207-EN-13-Mulan-Created-by-the-Vine-Lorcana-Player.jpg.webp"
       }
+    },
+    {
+      "id": 13090,
+      "name": "Copper",
+      "fullName": "Copper - Creative Storyteller",
+      "cost": 2,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 90,
+      "version": "Creative Storyteller",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Puppy"
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 2
+    },
+    {
+      "id": 13008,
+      "name": "Priya Mangal",
+      "fullName": "Priya Mangal - Serious Music Lover",
+      "cost": 2,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 8,
+      "version": "Serious Music Lover",
+      "rarity": "Common",
+      "franchise": "Turning Red",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "THIS IS MY JAM When you play this character",
+          "fullText": "THIS IS MY JAM When you play this character"
+        },
+        {
+          "type": "keyword",
+          "keyword": "if there's a song card in your discard",
+          "fullText": "if there's a song card in your discard"
+        },
+        {
+          "type": "keyword",
+          "keyword": "gain 1 lore.",
+          "fullText": "gain 1 lore."
+        }
+      ],
+      "strength": 1,
+      "willpower": 4,
+      "lore": 1
+    },
+    {
+      "id": 13066,
+      "name": "Petrify",
+      "fullName": "Petrify",
+      "cost": 1,
+      "color": "Amethyst",
+      "inkwell": false,
+      "type": "Action",
+      "setCode": "13",
+      "number": 66,
+      "rarity": "Common",
+      "fullText": "Exert chosen opposing character.",
+      "fullTextSections": [
+        "Exert chosen opposing character."
+      ]
+    },
+    {
+      "id": 13064,
+      "name": "You've Got Some Punch",
+      "fullName": "You've Got Some Punch",
+      "cost": 2,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "13",
+      "number": 64,
+      "rarity": "Common",
+      "subtypes": [
+        "Song"
+      ],
+      "fullText": "(A character with cost 2 or more can ⟳ to sing this song for free.)\nChosen character gains Rush and Challenger +2 this turn. (They can challenge the turn they're played. They get +2 ⚔ while challenging.)",
+      "fullTextSections": [
+        "(A character with cost 2 or more can ⟳ to sing this song for free.)",
+        "Chosen character gains Rush and Challenger +2 this turn. (They can challenge the turn they're played. They get +2 ⚔ while challenging.)"
+      ]
+    },
+    {
+      "id": 13179,
+      "name": "Sprout",
+      "fullName": "Sprout - Experiment 509",
+      "cost": 5,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 179,
+      "version": "Experiment 509",
+      "rarity": "Rare",
+      "subtypes": [
+        "Storyborn",
+        "Alien"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Resist",
+          "keywordValue": "+1",
+          "fullText": "Resist +1"
+        }
+      ],
+      "fullText": "Resist +1 (Damage dealt to this character is reduced by 1.)\nBOTANICAL EVIL When you play this character, you may choose and discard an Alien character card or a location card from your hand. If you do, deal 2 damage to chosen character.",
+      "fullTextSections": [
+        "Resist +1 (Damage dealt to this character is reduced by 1.)",
+        "BOTANICAL EVIL When you play this character, you may choose and discard an Alien character card or a location card from your hand. If you do, deal 2 damage to chosen character."
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 2
+    },
+    {
+      "id": 13016,
+      "name": "Meilin Lee",
+      "fullName": "Meilin Lee - Losing Control",
+      "cost": 3,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 16,
+      "version": "Losing Control",
+      "rarity": "Rare",
+      "franchise": "Turning Red",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Red Panda"
+      ],
+      "fullText": "RED PANDA POWER When you play this character, look at the top 4 cards of your deck. You may reveal a Red Panda character card or a song card and put it into your hand. Put the rest on the bottom of your deck in any order.",
+      "fullTextSections": [
+        "RED PANDA POWER When you play this character, look at the top 4 cards of your deck. You may reveal a Red Panda character card or a song card and put it into your hand. Put the rest on the bottom of your deck in any order."
+      ],
+      "strength": 2,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 13198,
+      "name": "Cower Before Me!",
+      "fullName": "Cower Before Me!",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "13",
+      "number": 198,
+      "rarity": "Common",
+      "fullText": "Up to 2 chosen opposing characters can't challenge during their next turn.",
+      "fullTextSections": [
+        "Up to 2 chosen opposing characters can't challenge during their next turn."
+      ]
+    },
+    {
+      "id": 13076,
+      "name": "Buzz Lightyear",
+      "fullName": "Buzz Lightyear - Grounded",
+      "cost": 3,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 76,
+      "version": "Grounded",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Toy",
+        "Captain"
+      ],
+      "fullText": "NO FLYING TOY This character can’t gain Evasive.",
+      "fullTextSections": [
+        "NO FLYING TOY This character can’t gain Evasive."
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 1
+    },
+    {
+      "id": 13022,
+      "name": "The Horned King",
+      "fullName": "The Horned King - Merciless Master",
+      "cost": 5,
+      "color": "Amber",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "13",
+      "number": 22,
+      "version": "Merciless Master",
+      "rarity": "Legendary",
+      "subtypes": [
+        "Storyborn",
+        "Villain",
+        "King",
+        "Sorcerer"
+      ],
+      "fullText": "THE POWER OF THE CAULDRON While this character is exerted, you may play characters from your discard. If you do, they enter play exerted. (You pay all costs.)",
+      "fullTextSections": [
+        "THE POWER OF THE CAULDRON While this character is exerted, you may play characters from your discard. If you do, they enter play exerted. (You pay all costs.)"
+      ],
+      "strength": 5,
+      "willpower": 4,
+      "lore": 1
+    },
+    {
+      "id": 13137,
+      "name": "Prophetic Vision",
+      "fullName": "Prophetic Vision",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "13",
+      "number": 137,
+      "rarity": "Uncommon",
+      "fullText": "Shuffle your deck, then reveal the top card. If it’s an action card, you may play it for free. If not, put it on the bottom of your deck. Then each opponent loses 1 lore and you gain 1 lore.",
+      "fullTextSections": [
+        "Shuffle your deck, then reveal the top card. If it’s an action card, you may play it for free. If not, put it on the bottom of your deck. Then each opponent loses 1 lore and you gain 1 lore."
+      ]
+    },
+    {
+      "id": 13106,
+      "name": "My Adventure Book",
+      "fullName": "My Adventure Book",
+      "cost": 3,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "13",
+      "number": 106,
+      "rarity": "Uncommon",
+      "franchise": "Up",
+      "fullText": "NEW MEMORIES ⟳, 1 ⬡ – Reveal the top card of your deck. If it's a non-character card or a character card named Kevin, put it into your hand. Otherwise, put it on the bottom of your deck.",
+      "fullTextSections": [
+        "NEW MEMORIES ⟳, 1 ⬡ – Reveal the top card of your deck. If it's a non-character card or a character card named Kevin, put it into your hand. Otherwise, put it on the bottom of your deck."
+      ]
+    },
+    {
+      "id": 13063,
+      "name": "Maleficent & Diablo",
+      "fullName": "Maleficent & Diablo - Embodiment of Evil",
+      "cost": 7,
+      "color": "Amethyst-Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 63,
+      "version": "Embodiment of Evil",
+      "rarity": "Rare",
+      "subtypes": [
+        "Storyborn",
+        "Team",
+        "Villain",
+        "Sorcerer"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "5",
+          "fullText": "Shift 5"
+        }
+      ],
+      "fullText": "Shift 5 (You may pay 5 ⬡ to play this on top of one of your characters named Maleficent or Diablo.)\nYOU FOOL You may put 5 character cards from your discard on the bottom of your deck in any order to play this character using its Shift ability without paying its Shift cost.\nCALL OF THE RAVEN During your turn, whenever this character exerts, draw a card.",
+      "fullTextSections": [
+        "Shift 5 (You may pay 5 ⬡ to play this on top of one of your characters named Maleficent or Diablo.)",
+        "YOU FOOL You may put 5 character cards from your discard on the bottom of your deck in any order to play this character using its Shift ability without paying its Shift cost.",
+        "CALL OF THE RAVEN During your turn, whenever this character exerts, draw a card."
+      ],
+      "strength": 6,
+      "willpower": 5,
+      "lore": 2
+    },
+    {
+      "id": 13185,
+      "name": "Owl",
+      "fullName": "Owl - Hunny Ranger",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 185,
+      "version": "Hunny Ranger",
+      "rarity": "Common",
+      "franchise": "Winnie the Pooh",
+      "subtypes": [
+        "Dreamborn",
+        "Ally",
+        "Hunny"
+      ],
+      "fullText": "HUNNY ALLIANCE While you have another Hunny character in play, this character gains Resist +2. (Damage dealt to them is reduced by 2.)",
+      "fullTextSections": [
+        "HUNNY ALLIANCE While you have another Hunny character in play, this character gains Resist +2. (Damage dealt to them is reduced by 2.)"
+      ],
+      "strength": 1,
+      "willpower": 1,
+      "lore": 2
+    },
+    {
+      "id": 13154,
+      "name": "Piglet",
+      "fullName": "Piglet - Hunny Mage Apprentice",
+      "cost": 1,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 154,
+      "version": "Hunny Mage Apprentice",
+      "rarity": "Common",
+      "franchise": "Winnie the Pooh",
+      "subtypes": [
+        "Dreamborn",
+        "Ally",
+        "Sorcerer",
+        "Hunny"
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 13117,
+      "name": "Splodyhead",
+      "fullName": "Splodyhead - Experiment 619",
+      "cost": 3,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 117,
+      "version": "Experiment 619",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Alien"
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 2
+    },
+    {
+      "id": 13149,
+      "name": "Ellie Fredricksen",
+      "fullName": "Ellie Fredricksen - Adventure Partner",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "13",
+      "number": 149,
+      "version": "Adventure Partner",
+      "rarity": "Common",
+      "franchise": "Up",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "ALWAYS WITH YOU When this character is banished, you may put this card into your inkwell facedown and exerted.",
+      "fullTextSections": [
+        "ALWAYS WITH YOU When this character is banished, you may put this card into your inkwell facedown and exerted."
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 13013,
+      "name": "Woody",
+      "fullName": "Woody - Town Sheriff",
+      "cost": 3,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 13,
+      "version": "Town Sheriff",
+      "rarity": "Common",
+      "franchise": "Toy Story",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Toy"
+      ],
+      "fullText": "MOVE ALONG When you play this character, until the start of your next turn, chosen opposing character can't challenge and must quest if able.",
+      "fullTextSections": [
+        "MOVE ALONG When you play this character, until the start of your next turn, chosen opposing character can't challenge and must quest if able."
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 13104,
+      "name": "Scout Ahead",
+      "fullName": "Scout Ahead",
+      "cost": 1,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "13",
+      "number": 104,
+      "rarity": "Common",
+      "fullText": "If an opponent has more Lore than you, gain 2 Lore",
+      "fullTextSections": [
+        "If an opponent has more Lore than you, gain 2 Lore"
+      ]
+    },
+    {
+      "id": 13105,
+      "name": "Potato",
+      "fullName": "Potato",
+      "cost": 1,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "13",
+      "number": 105,
+      "rarity": "Common",
+      "fullText": "This item enters play exerted",
+      "fullTextSections": [
+        "This item enters play exerted"
+      ]
+    },
+    {
+      "id": 13144,
+      "name": "Dug",
+      "fullName": "Dug - Good Boy",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 144,
+      "version": "Good Boy",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "When you play this character, if you have an item in play, draw a card.",
+      "fullTextSections": [
+        "When you play this character, if you have an item in play, draw a card."
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 13202,
+      "name": "Attack of the Vine!",
+      "fullName": "Attack of the Vine!",
+      "cost": 6,
+      "color": "Steel",
+      "inkwell": false,
+      "type": "Action",
+      "setCode": "13",
+      "number": 202,
+      "rarity": "Rare",
+      "fullText": "Your Floodborn characters gain Resist +2 and can challenge ready characters this turn. (Damage dealt to them is reduced by 2.)",
+      "fullTextSections": [
+        "Your Floodborn characters gain Resist +2 and can challenge ready characters this turn. (Damage dealt to them is reduced by 2.)"
+      ]
+    },
+    {
+      "id": 13069,
+      "name": "Narrow Escape",
+      "fullName": "Narrow Escape",
+      "cost": 4,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "13",
+      "number": 69,
+      "rarity": "Common",
+      "fullText": "Return up to 2 chosen characters, items, or locations with cost 2 or less each to their player's hand.",
+      "fullTextSections": [
+        "Return up to 2 chosen characters, items, or locations with cost 2 or less each to their player's hand."
+      ]
+    },
+    {
+      "id": 13183,
+      "name": "Violet Parr",
+      "fullName": "Violet Parr - Force Field Practice",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 183,
+      "version": "Force Field Practice",
+      "rarity": "Common",
+      "franchise": "The Incredibles",
+      "subtypes": [
+        "Storyborn",
+        "Super",
+        "Hero"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Resist",
+          "keywordValue": "+1",
+          "fullText": "Resist +1"
+        }
+      ],
+      "fullText": "Resist +1 (Damage dealt to this character is reduced by 1.)",
+      "fullTextSections": [
+        "Resist +1 (Damage dealt to this character is reduced by 1.)"
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 13072,
+      "name": "Source of the Vine",
+      "fullName": "Source of the Vine",
+      "cost": 4,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "13",
+      "number": 72,
+      "rarity": "Super Rare",
+      "fullText": "SIPHON Whenever an opposing character quests, you gain 1 lore unless their player pays 1 ⬡.\nRADIANT BLOOM ⟳, 2 ⬡ – Gain 1 lore.",
+      "fullTextSections": [
+        "SIPHON Whenever an opposing character quests, you gain 1 lore unless their player pays 1 ⬡.",
+        "RADIANT BLOOM ⟳, 2 ⬡ – Gain 1 lore."
+      ]
+    },
+    {
+      "id": 13062,
+      "name": "Winnie the Pooh & Piglet",
+      "fullName": "Winnie the Pooh & Piglet - Hunny Mages",
+      "cost": 5,
+      "color": "Amethyst-Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 62,
+      "version": "Hunny Mages",
+      "rarity": "Super Rare",
+      "franchise": "Winnie the Pooh",
+      "subtypes": [
+        "Dreamborn",
+        "Team",
+        "Hero",
+        "Sorcerer",
+        "Hunny"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "3",
+          "fullText": "Shift 3"
+        }
+      ],
+      "fullText": "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Winnie the Pooh or Piglet.)\nMAGICAL MIX This character gets +1 ◊ for each different ink type of characters you have in play.",
+      "fullTextSections": [
+        "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Winnie the Pooh or Piglet.)",
+        "MAGICAL MIX This character gets +1 ◊ for each different ink type of characters you have in play."
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 2
+    },
+    {
+      "id": 13147,
+      "name": "Quackerjack",
+      "fullName": "Quackerjack - Loony Toymaker",
+      "cost": 5,
+      "color": "Sapphire",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "13",
+      "number": 147,
+      "version": "Loony Toymaker",
+      "rarity": "Legendary",
+      "franchise": "Darkwing Duck",
+      "subtypes": [
+        "Storyborn",
+        "Super",
+        "Villain",
+        "Inventor"
+      ],
+      "fullText": "EVIL DESIGN When you play this character and whenever he quests, put the top 4 cards of your deck into your discard. You may deal 1 damage to chosen character for each item card put into your discard this way.",
+      "fullTextSections": [
+        "EVIL DESIGN When you play this character and whenever he quests, put the top 4 cards of your deck into your discard. You may deal 1 damage to chosen character for each item card put into your discard this way."
+      ],
+      "strength": 2,
+      "willpower": 4,
+      "lore": 2
+    },
+    {
+      "id": 13111,
+      "name": "Kuzco",
+      "fullName": "Kuzco - Picky Customer",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 111,
+      "version": "Picky Customer",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "King"
+      ],
+      "strength": 5,
+      "willpower": 1,
+      "lore": 1
+    },
+    {
+      "id": 13110,
+      "name": "Yzma",
+      "fullName": "Yzma - Choosy Customer",
+      "cost": 4,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 110,
+      "version": "Choosy Customer",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Villain",
+        "Sorcerer"
+      ],
+      "fullText": "When you play this character, each opponent loses 1 lore.",
+      "fullTextSections": [
+        "When you play this character, each opponent loses 1 lore."
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 2
+    },
+    {
+      "id": 13070,
+      "name": "Broken Pod",
+      "fullName": "Broken Pod",
+      "cost": 1,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "13",
+      "number": 70,
+      "rarity": "Uncommon",
+      "fullText": "RENEWAL PROCESS ⟳, 1 ⬡ – Put a card from chosen player's discard on the bottom of their deck.",
+      "fullTextSections": [
+        "RENEWAL PROCESS ⟳, 1 ⬡ – Put a card from chosen player's discard on the bottom of their deck."
+      ]
+    },
+    {
+      "id": 13109,
+      "name": "Dash Parr",
+      "fullName": "Dash Parr - Super Fast",
+      "cost": 5,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 109,
+      "version": "Super Fast",
+      "rarity": "Rare",
+      "franchise": "The Incredibles",
+      "subtypes": [
+        "Storyborn",
+        "Super",
+        "Hero"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "3",
+          "fullText": "Shift 3"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        }
+      ],
+      "fullText": "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Dash Parr.)\nEvasive (Only characters with Evasive can challenge this character.)\nFOLLOW ME! Whenever this character quests, you may reveal the top card of your deck. If you do, you may play it. Otherwise, put it into your discard. (You pay all costs.)",
+      "fullTextSections": [
+        "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Dash Parr.)",
+        "Evasive (Only characters with Evasive can challenge this character.)",
+        "FOLLOW ME! Whenever this character quests, you may reveal the top card of your deck. If you do, you may play it. Otherwise, put it into your discard. (You pay all costs.)"
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 1
+    },
+    {
+      "id": 13114,
+      "name": "Dash Parr",
+      "fullName": "Dash Parr - Dodgeball Dynamo",
+      "cost": 1,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 114,
+      "version": "Dodgeball Dynamo",
+      "rarity": "Common",
+      "franchise": "The Incredibles",
+      "subtypes": [
+        "Storyborn",
+        "Super",
+        "Hero"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        }
+      ],
+      "fullText": "Evasive (Only characters with Evasive can challenge this character.)",
+      "fullTextSections": [
+        "Evasive (Only characters with Evasive can challenge this character.)"
+      ],
+      "strength": 1,
+      "willpower": 1,
+      "lore": 1
+    },
+    {
+      "id": 13107,
+      "name": "Vine Pod",
+      "fullName": "Vine Pod",
+      "cost": 4,
+      "color": "Emerald",
+      "inkwell": false,
+      "type": "Item",
+      "setCode": "13",
+      "number": 107,
+      "rarity": "Rare",
+      "fullText": "FRAGILE HUSK This item enters play exerted.\nREGENERATE ⟳, 1 ⬡ – Banish chosen character of yours. You may play a character with the same name as that character for free.",
+      "fullTextSections": [
+        "FRAGILE HUSK This item enters play exerted.",
+        "REGENERATE ⟳, 1 ⬡ – Banish chosen character of yours. You may play a character with the same name as that character for free."
+      ]
+    },
+    {
+      "id": 13206,
+      "name": "Absorbing Bloom",
+      "fullName": "Absorbing Bloom",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": false,
+      "type": "Item",
+      "setCode": "13",
+      "number": 206,
+      "rarity": "Uncommon",
+      "fullText": "METAMORPHOSIS ⟳, 1 ⬡ – If a character was banished in a challenge this turn, draw a card.",
+      "fullTextSections": [
+        "METAMORPHOSIS ⟳, 1 ⬡ – If a character was banished in a challenge this turn, draw a card."
+      ]
+    },
+    {
+      "id": 13176,
+      "name": "Violet Parr",
+      "fullName": "Violet Parr - Super Resilient",
+      "cost": 5,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 176,
+      "version": "Super Resilient",
+      "rarity": "Super Rare",
+      "subtypes": [
+        "Storyborn",
+        "Super",
+        "Hero"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "3",
+          "fullText": "Shift 3"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Resist",
+          "keywordValue": "+1",
+          "fullText": "Resist +1"
+        }
+      ],
+      "fullText": "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Violet Parr.)\nResist +1 (Damage dealt to this character is reduced by 1.)\nHEROIC SYNERGY Whenever you play this or another Hero character, you may draw a card, then choose and discard a card.",
+      "fullTextSections": [
+        "Shift 3 (You may pay 3 ⬡ to play this on top of one of your characters named Violet Parr.)",
+        "Resist +1 (Damage dealt to this character is reduced by 1.)",
+        "HEROIC SYNERGY Whenever you play this or another Hero character, you may draw a card, then choose and discard a card."
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 2
+    },
+    {
+      "id": 13171,
+      "name": "Hana's Inkcaster",
+      "fullName": "Hana's Inkcaster",
+      "cost": 2,
+      "color": "Sapphire",
+      "inkwell": false,
+      "type": "Item",
+      "setCode": "13",
+      "number": 171,
+      "rarity": "Uncommon",
+      "fullText": "REJUVENATING FLOURISH ⟳ – Remove up to 2 damage from chosen character. If there's a card under that character, they gain Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1.)",
+      "fullTextSections": [
+        "REJUVENATING FLOURISH ⟳ – Remove up to 2 damage from chosen character. If there's a card under that character, they gain Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1.)"
+      ]
+    },
+    {
+      "id": 13042,
+      "name": "Lumpy",
+      "fullName": "Lumpy - Hunny Druid",
+      "cost": 5,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 42,
+      "version": "Hunny Druid",
+      "rarity": "Uncommon",
+      "franchise": "Winnie the Pooh",
+      "subtypes": [
+        "Dreamborn",
+        "Ally",
+        "Hunny"
+      ],
+      "fullText": "WELCOME HEALING When you play this character, you may move up to 2 damage from chosen character to chosen opposing character.",
+      "fullTextSections": [
+        "WELCOME HEALING When you play this character, you may move up to 2 damage from chosen character to chosen opposing character."
+      ],
+      "strength": 3,
+      "willpower": 6,
+      "lore": 2
+    },
+    {
+      "id": 13145,
+      "name": "Roz",
+      "fullName": "Roz - Always Watching",
+      "cost": 2,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 145,
+      "version": "Always Watching",
+      "rarity": "Common",
+      "franchise": "Monsters, Inc.",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Monster"
+      ],
+      "fullText": "ALWAYS Each opponent plays with the top card of their deck faceup.",
+      "fullTextSections": [
+        "ALWAYS Each opponent plays with the top card of their deck faceup."
+      ],
+      "strength": 2,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 13164,
+      "name": "Eeyore",
+      "fullName": "Eeyore - Hunny Scholar",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 164,
+      "version": "Hunny Scholar",
+      "rarity": "Uncommon",
+      "franchise": "Winnie the Pooh",
+      "subtypes": [
+        "Dreamborn",
+        "Ally",
+        "Hunny"
+      ],
+      "fullText": "HUNNY TACTICS Whenever this character quests, chosen Hunny character of yours gets +1 ◊ and gains Ward until the start of your next turn. (Opponents can't choose them except to challenge.)",
+      "fullTextSections": [
+        "HUNNY TACTICS Whenever this character quests, chosen Hunny character of yours gets +1 ◊ and gains Ward until the start of your next turn. (Opponents can't choose them except to challenge.)"
+      ],
+      "strength": 2,
+      "willpower": 4,
+      "lore": 1
+    },
+    {
+      "id": 13133,
+      "name": "Dash Parr & Violet Parr",
+      "fullName": "Dash Parr & Violet Parr - Super Siblings",
+      "cost": 8,
+      "color": "Ruby-Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 133,
+      "version": "Super Siblings",
+      "rarity": "Legendary",
+      "franchise": "The Incredibles",
+      "subtypes": [
+        "Storyborn",
+        "Team",
+        "Super",
+        "Hero"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Combo Shift",
+          "keywordValue": "6",
+          "fullText": "Combo Shift 6"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Resist",
+          "keywordValue": "+1",
+          "fullText": "Resist +1"
+        }
+      ],
+      "fullText": "Combo Shift 6 ⬡ (You may pay 6 ⬡ to play this on top of one of your characters named Dash Parr, one named Violet Parr, or one of each.)\nEvasive, Resist +1\nINCREDIBLE TACTICS Whenever this character quests or challenges, draw a card for each card under them.",
+      "fullTextSections": [
+        "Combo Shift 6 ⬡ (You may pay 6 ⬡ to play this on top of one of your characters named Dash Parr, one named Violet Parr, or one of each.)",
+        "Evasive, Resist +1",
+        "INCREDIBLE TACTICS Whenever this character quests or challenges, draw a card for each card under them."
+      ],
+      "strength": 5,
+      "willpower": 5,
+      "lore": 2
+    },
+    {
+      "id": 13207,
+      "name": "Vine Entrance",
+      "fullName": "Vine Entrance - Ominous Passageway",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Location",
+      "setCode": "13",
+      "number": 207,
+      "version": "Ominous Passageway",
+      "rarity": "Rare",
+      "fullText": "ROOT OF POWER The first time a Floodborn character moves here each turn, you may deal 1 damage to chosen character.",
+      "fullTextSections": [
+        "ROOT OF POWER The first time a Floodborn character moves here each turn, you may deal 1 damage to chosen character."
+      ],
+      "moveCost": 1
+    },
+    {
+      "id": 13175,
+      "name": "Hundred Acre Wood",
+      "fullName": "Hundred Acre Wood - Hunny Campsite",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": false,
+      "type": "Location",
+      "setCode": "13",
+      "number": 175,
+      "version": "Hunny Campsite",
+      "rarity": "Uncommon",
+      "franchise": "Winnie the Pooh",
+      "subtypes": [
+        "Hunny"
+      ],
+      "fullText": "HOME AWAY FROM HOME Characters get +1 {willpower} while here.\nHUNNY QUEST Hunny characters get +1 ◊ while here.",
+      "fullTextSections": [
+        "HOME AWAY FROM HOME Characters get +1 {willpower} while here.",
+        "HUNNY QUEST Hunny characters get +1 ◊ while here."
+      ],
+      "moveCost": 1
+    },
+    {
+      "id": 13094,
+      "name": "Tod & Copper",
+      "fullName": "Tod & Copper - Two Pals",
+      "cost": 4,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 94,
+      "version": "Two Pals",
+      "rarity": "Rare",
+      "franchise": "The Fox and the Hound",
+      "subtypes": [
+        "Storyborn",
+        "Team",
+        "Hero",
+        "Puppy"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "2",
+          "fullText": "Shift 2"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        }
+      ],
+      "fullText": "Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your characters named Tod or Copper.)\nEvasive (Only characters with Evasive can challenge this character.)",
+      "fullTextSections": [
+        "Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your characters named Tod or Copper.)",
+        "Evasive (Only characters with Evasive can challenge this character.)"
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 2
+    },
+    {
+      "id": 13015,
+      "name": "Gaston",
+      "fullName": "Gaston - Superior Archer",
+      "cost": 5,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 15,
+      "version": "Superior Archer",
+      "rarity": "Uncommon",
+      "franchise": "Beauty and the Beast",
+      "subtypes": [
+        "Storyborn",
+        "Villain"
+      ],
+      "fullText": "TAKE A LOOK AT THIS! When you play this character, you may choose a character with 5 ¤ or more and banish them.",
+      "fullTextSections": [
+        "TAKE A LOOK AT THIS! When you play this character, you may choose a character with 5 ¤ or more and banish them."
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 1
+    },
+    {
+      "id": 13010,
+      "name": "Lilo",
+      "fullName": "Lilo - Patient Weaver",
+      "cost": 2,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 10,
+      "version": "Patient Weaver",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Hero"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Support",
+          "fullText": "Support"
+        }
+      ],
+      "fullText": "Support (Whenever this character quests, you may add their ¤ to another chosen character's ¤ this turn.)",
+      "fullTextSections": [
+        "Support (Whenever this character quests, you may add their ¤ to another chosen character's ¤ this turn.)"
+      ],
+      "strength": 2,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 13012,
+      "name": "Pocahontas",
+      "fullName": "Pocahontas - Guiding the Tribe",
+      "cost": 2,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 12,
+      "version": "Guiding the Tribe",
+      "rarity": "Rare",
+      "franchise": "Pocahontas",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Princess"
+      ],
+      "fullText": "STAY CLOSE When you play this character, you may play a character with cost 1 for free.",
+      "fullTextSections": [
+        "STAY CLOSE When you play this character, you may play a character with cost 1 for free."
+      ],
+      "strength": 2,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 13019,
+      "name": "Boo",
+      "fullName": "Boo - In Disguise",
+      "cost": 2,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 19,
+      "version": "In Disguise",
+      "rarity": "Uncommon",
+      "franchise": "Monsters, Inc.",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Monster"
+      ],
+      "fullText": "YOU'RE SAFE NOW While you have an exerted character named Sulley in play, this character can't be challenged.",
+      "fullTextSections": [
+        "YOU'RE SAFE NOW While you have an exerted character named Sulley in play, this character can't be challenged."
+      ],
+      "strength": 1,
+      "willpower": 2,
+      "lore": 2
+    },
+    {
+      "id": 13091,
+      "name": "Posey",
+      "fullName": "Posey - Vampire Potato",
+      "cost": 7,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 91,
+      "version": "Vampire Potato",
+      "rarity": "Uncommon",
+      "franchise": "Darkwing Duck",
+      "subtypes": [
+        "Storyborn",
+        "Monster"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Potato Shift",
+          "keywordValue": "5",
+          "fullText": "Potato Shift 5"
+        }
+      ],
+      "fullText": "Potato Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your items named Potato.)",
+      "fullTextSections": [
+        "Potato Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your items named Potato.)"
+      ],
+      "strength": 7,
+      "willpower": 8,
+      "lore": 2
+    },
+    {
+      "id": 13027,
+      "name": "Pocahontas & Meeko",
+      "version": "Adventurous Friends",
+      "fullName": "Pocahontas & Meeko - Adventurous Friends",
+      "cost": 4,
+      "color": "Amber-Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Princess",
+        "Team"
+      ],
+      "fullText": "Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your characters named Pocahontas or Meeko.)\nEvasive\n(Only characters with Evasive can challenge this character.)\nWELCOME RETURN Whenever this character quests, you may return chosen character of yours with cost 1 to your hand. If you do, you may play a character with cost 1 for free.",
+      "fullTextSections": [
+        "Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your characters named Pocahontas or Meeko.)",
+        "Evasive",
+        "(Only characters with Evasive can challenge this character.)",
+        "WELCOME RETURN Whenever this character quests, you may return chosen character of yours with cost 1 to your hand. If you do, you may play a character with cost 1 for free."
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "fullText": "Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your characters named Pocahontas or Meeko.)",
+          "keywordValue": "2 ⬡"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        },
+        {
+          "effect": "Only characters with Evasive can challenge this character.",
+          "fullText": "(Only characters with Evasive can challenge this character.)",
+          "type": "static"
+        },
+        {
+          "effect": "Whenever this character quests, you may return chosen character of yours with cost 1 to your hand. If you do, you may play a character with cost 1 for free.",
+          "fullText": "WELCOME RETURN Whenever this character quests, you may return chosen character of yours with cost 1 to your hand. If you do, you may play a character with cost 1 for free.",
+          "name": "WELCOME RETURN",
+          "type": "triggered"
+        }
+      ],
+      "strength": 2,
+      "willpower": 3,
+      "lore": 2,
+      "setCode": "13",
+      "number": 27,
+      "rarity": "Legendary",
+      "franchise": "Pocahontas",
+      "images": {
+        "thumbnail": "https://lorcanaplayer.com/wp-content/uploads/2026/07/27-207-EN-13-Pocahontas-Meeko-Adventurous-Friends-LQ-Lorcana-Player-430x600.jpg.webp",
+        "full": "https://lorcanaplayer.com/wp-content/uploads/2026/07/27-207-EN-13-Pocahontas-Meeko-Adventurous-Friends-LQ-Lorcana-Player-430x600.jpg.webp"
+      }
+    },
+    {
+      "id": 13087,
+      "name": "Minnie Mouse",
+      "fullName": "Minnie Mouse - Curious Adventurer",
+      "cost": 1,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 87,
+      "version": "Curious Adventurer",
+      "rarity": "Common",
+      "subtypes": [
+        "Dreamborn",
+        "Hero"
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1
     }
   ]
 }

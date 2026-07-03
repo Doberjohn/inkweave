@@ -23,7 +23,12 @@ interface EngineColumnProps {
 export function EngineColumn({pair, engineScore, onHighlight, compact = false}: EngineColumnProps) {
   const {cardA, cardB, connections} = pair;
   const connectionGroups = groupConnections(connections);
-  const quickVote = useQuickVote(cardA.id, cardB.id);
+  const quickVote = useQuickVote(cardA.id, cardB.id, {
+    cardAInk: cardA.ink,
+    cardBInk: cardB.ink,
+    engineScore,
+    synergyCount: connections.length,
+  });
 
   const connectionStack = connectionGroups.length > 0 ? (
     <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.section}}>

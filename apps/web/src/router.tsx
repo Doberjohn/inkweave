@@ -1,5 +1,5 @@
 import {lazy, Suspense} from 'react';
-import {createBrowserRouter} from 'react-router-dom';
+import {createBrowserRouter, Navigate} from 'react-router-dom';
 import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
 import {AppLayout} from './AppLayout';
 import {AdminGate} from './features/admin-analytics/AdminGate';
@@ -49,6 +49,7 @@ const InDepthVotePage = lazyWithRetry(
 );
 const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'), 'NotFoundPage');
 const RevealsPage = lazyWithRetry(() => import('./pages/RevealsPage'), 'RevealsPage');
+const RevealAdminPage = lazyWithRetry(() => import('./pages/RevealAdminPage'), 'RevealAdminPage');
 const AdminAnalyticsPage = lazyWithRetry(
   () => import('./pages/AdminAnalyticsPage'),
   'AdminAnalyticsPage',
@@ -145,6 +146,11 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        // Redirect the pre-rebrand Vinelings path to the renamed Floodborns playstyle.
+        path: 'playstyles/vinelings',
+        element: <Navigate to="/playstyles/floodborn" replace />,
+      },
+      {
         path: 'playstyles/:playstyleId',
         element: (
           <SuspenseWrapper>
@@ -176,6 +182,14 @@ export const router = createBrowserRouter([
               <RevealsPage />
             </SuspenseWrapper>
           </RevealsGate>
+        ),
+      },
+      {
+        path: 'reveal-admin',
+        element: (
+          <SuspenseWrapper>
+            <RevealAdminPage />
+          </SuspenseWrapper>
         ),
       },
       {

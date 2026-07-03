@@ -1,0 +1,76 @@
+name: Convert reveal images
+
+# reveal-admin commits raw card scans to apps/web/public/card-images-raw/ via the
+# GitHub API, which bypasses .gitignore and leaves the raw tracked. This workflow
+# converts each raw into its committed AVIF variants and removes the consumed raw,
+# so card-images-raw never stays tracked at HEAD. See issue #420.
+
+on:
+  workflow_dispatch:  # allow manual re-run (e.g. to reconvert a stuck raw)
+  push:
+    branches: [master]
+    paths:
+      - 'apps/web/public/card-images-raw/**'
+
+# Serialize runs so two reveals in quick succession don't race on the push.
+concurrency:
+  group: convert-reveal-images
+  cancel-in-progress: false
+
+jobs:
+  convert:
+    # Skip the workflow's own bot commit. Belt-and-suspenders: pushes made with the
+    # default GITHUB_TOKEN do not recursively trigger workflows, and the commit also
+    # carries [skip ci]. This guard covers the paths trigger regardless.
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      HUSKY: "0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      # Generates card-images-preview/{id}.avif (+ -sm) for each raw, then deletes
+      # each consumed raw. A conversion failure keeps its raw and exits non-zero,
+      # failing the job so the missing art is noticed.
+      - name: Convert raws to AVIF and prune
+        run: pnpm convert-preview-images --prune-raw
+
+      - name: Commit AVIFs and remove consumed raws
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/web/public/card-images-preview
+          # Tolerate an empty/absent raw dir: after --prune-raw removes the last
+          # raw, this pathspec matches no tracked files and plain `git add -u`
+          # exits 128 under `bash -e`, aborting the job AFTER conversion (the raw
+          # stays tracked and the AVIF is thrown away). `|| true` keeps it robust.
+          git add -u apps/web/public/card-images-raw || true
+          if git diff --cached --quiet; then
+            echo "No image changes to commit."
+            exit 0
+          fi
+          git commit --no-verify -m "chore(reveals): convert raw scans to AVIF [skip ci]"
+          # reveal-admin may push another raw while we run; rebase before pushing,
+          # and retry a few times to absorb a concurrent push.
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin master && git push --no-verify && exit 0
+            echo "push attempt $attempt failed; retrying after rebase..."
+            sleep 5
+          done
+          echo "::error::Failed to push converted images after 3 attempts."
+          exit 1

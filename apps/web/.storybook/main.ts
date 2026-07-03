@@ -2,6 +2,9 @@ import type {StorybookConfig} from '@storybook/react-vite';
 
 const config: StorybookConfig = {
   stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
+  // Serve public/ so stories that reference public assets (card art, franchise/
+  // playstyle art, /card-images-preview) render their images instead of 0x0 broken refs.
+  staticDirs: ['../public'],
   addons: [
     '@chromatic-com/storybook',
     '@storybook/addon-vitest',

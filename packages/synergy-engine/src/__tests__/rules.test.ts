@@ -18,10 +18,76 @@ import {
   isToyCard,
   getDwarfsRoles,
   isDwarfsCard,
+  getFloodbornRoles,
+  isFloodbornCard,
+  getHunnyRoles,
+  isHunnyCard,
+  getRedPandaRoles,
 } from '../utils';
 import {createCard} from './fixtures.js';
 
 describe('Synergy Rules', () => {
+  describe('Hunny detection', () => {
+    const memberOnly = createCard({id: 'kanga', name: 'Kanga', fullName: 'Kanga - Hunny Bard', cost: 3, classifications: ['Hunny'], text: 'Quests for 2 lore.'});
+    const density = createCard({id: 'winnie', name: 'Winnie the Pooh', cost: 4, classifications: ['Hunny'], text: 'STICK TOGETHER While you have 2 or more other Hunny characters in play, this character gets +2 ◊.'});
+    const search = createCard({id: 'cr', name: 'Christopher Robin', cost: 5, classifications: ['Hunny'], text: 'MAGICAL SUMMONS When you play this character, you may search your deck for a Hunny card, reveal it, and put it in your hand.'});
+    const buff = createCard({id: 'rabbit', name: 'Rabbit', cost: 3, classifications: ['Hunny'], text: 'HUNNY AURA When you play this character, chosen Hunny character gets +1 ◊ this turn.'});
+
+    it('tags a member with no payoff text as member only', () => {
+      expect(getHunnyRoles(memberOnly)).toEqual(['member']);
+    });
+    it('detects density', () => {
+      expect(getHunnyRoles(density)).toEqual(['member', 'density']);
+    });
+    it('detects search', () => {
+      expect(getHunnyRoles(search)).toEqual(['member', 'search']);
+    });
+    it('detects single-target buff', () => {
+      expect(getHunnyRoles(buff)).toEqual(['member', 'buff']);
+    });
+    it('does not match a bare "HUNNY"-named ability on a non-member', () => {
+      const decoy = createCard({id: 'd', name: 'Decoy', cost: 3, text: 'HUNNY ACTIVATION ⟳, 2 ⬡: Reveal the top card of your deck.'});
+      expect(isHunnyCard(decoy)).toBe(false);
+    });
+  });
+
+  describe('Hunny rule', () => {
+    const rule = getRuleById('hunny')!;
+    const member = createCard({id: 'kanga', name: 'Kanga', cost: 3, classifications: ['Hunny'], text: 'Quests for 2.'});
+    const density = createCard({id: 'winnie', name: 'Winnie', cost: 4, classifications: ['Hunny'], text: 'While you have another Hunny character in play, this character gets +2 ◊.'});
+    const search = createCard({id: 'cr', name: 'Christopher Robin', cost: 5, classifications: ['Hunny'], text: 'Search your deck for a Hunny card, reveal it, and put it in your hand.'});
+    const buff = createCard({id: 'staff', name: 'Magical Hunny Staff', cost: 2, type: 'Item', text: 'Chosen Hunny character gains Evasive until the start of your next turn.'});
+    const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+    it('scores search + member at 8', () => { expect(scoreWith(search, member)?.score).toBe(8); });
+    it('scores density + member at 7', () => { expect(scoreWith(density, member)?.score).toBe(7); });
+    it('scores buff + member at 6', () => { expect(scoreWith(buff, member)?.score).toBe(6); });
+    it('scores member + member at 5', () => {
+      const m2 = createCard({id: 'roo', name: 'Roo', cost: 1, classifications: ['Hunny'], text: 'Has Ward.'});
+      expect(scoreWith(member, m2)?.score).toBe(5);
+    });
+  });
+
+  describe('Red Panda', () => {
+    const rule = getRuleById('red-panda')!;
+    const member = createCard({id: 'ming', name: 'Ming Lee', cost: 3, classifications: ['Red Panda'], text: 'Quests for 2.'});
+    const searcher = createCard({id: 'meilin-lc', name: 'Meilin Lee', fullName: 'Meilin Lee - Losing Control', cost: 3, classifications: ['Red Panda'], text: 'RED PANDA POWER When you play this character, look at the top 4 cards of your deck. You may reveal a Red Panda character card or a song card and put it into your hand.'});
+    const sunYee = createCard({id: 'sun-yee', name: 'Sun Yee', cost: 5, classifications: ['Red Panda'], keywords: ['Temporary Red Panda Shift 2'], text: 'Temporary Red Panda Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your Red Panda characters.)'});
+    const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+    it('detects the search payoff', () => {
+      expect(getRedPandaRoles(searcher)).toEqual(['member', 'search']);
+    });
+    it('does not treat a Red Panda Shift reminder as search', () => {
+      expect(getRedPandaRoles(sunYee)).toEqual(['member']);
+    });
+    it('scores search + member at 8', () => { expect(scoreWith(searcher, member)?.score).toBe(8); });
+    it('scores member + member at 5', () => {
+      const m2 = createCard({id: 'meilin-lv', name: 'Meilin Lee', cost: 1, classifications: ['Red Panda'], text: 'Has Singer.'});
+      expect(scoreWith(member, m2)?.score).toBe(5);
+    });
+  });
+
   describe('Shift Targets', () => {
     const shiftRule = getRuleById('shift-targets')!;
 
@@ -384,6 +450,61 @@ describe('Synergy Rules', () => {
       const synergies = shiftRule.findSynergies(puppy, [thunderbolt]);
       expect(synergies).toHaveLength(1);
       expect(synergies[0].card.id).toBe('thunderbolt');
+    });
+  });
+
+  describe('Item-targeting Shift (Potato Shift)', () => {
+    const shiftRule = getRuleById('shift-targets')!;
+
+    // "Potato Shift 5" shifts onto an *item* named Potato, not a character. The item name
+    // comes from the reminder text, so the keyword prefix ("Potato") must NOT be read as a
+    // character classification (issue #422).
+    function poseySetup() {
+      const posey = createCard({
+        id: 'posey',
+        name: 'Posey',
+        fullName: 'Posey - Vampire Potato',
+        cost: 7,
+        ink: 'Emerald',
+        keywords: ['Potato Shift 5'],
+        classifications: ['Storyborn', 'Monster'],
+        text: 'Potato Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your items named Potato.)',
+      });
+      const potatoItem = createCard({
+        id: 'potato-item',
+        name: 'Potato',
+        fullName: 'Potato',
+        cost: 2,
+        ink: 'Emerald',
+        type: 'Item',
+      });
+      return {posey, potatoItem};
+    }
+
+    it('should find the item named Potato as a target (forward)', () => {
+      const {posey, potatoItem} = poseySetup();
+      const synergies = shiftRule.findSynergies(posey, [posey, potatoItem]);
+      expect(synergies.find((s) => s.card.id === 'potato-item')).toBeDefined();
+    });
+
+    it('should find the Potato Shift card when selecting the item (reverse)', () => {
+      const {posey, potatoItem} = poseySetup();
+      const synergies = shiftRule.findSynergies(potatoItem, [posey, potatoItem]);
+      expect(synergies.find((s) => s.card.id === 'posey')).toBeDefined();
+    });
+
+    it('should NOT match a character that merely has a "Potato" classification', () => {
+      const {posey, potatoItem} = poseySetup();
+      const potatoChar = createCard({
+        id: 'spud',
+        name: 'Spud',
+        cost: 3,
+        ink: 'Emerald',
+        classifications: ['Storyborn', 'Potato'],
+      });
+      const synergies = shiftRule.findSynergies(posey, [posey, potatoItem, potatoChar]);
+      expect(synergies.find((s) => s.card.id === 'potato-item')).toBeDefined();
+      expect(synergies.find((s) => s.card.id === 'spud')).toBeUndefined();
     });
   });
 
@@ -2199,6 +2320,67 @@ describe('Dwarfs Tribal', () => {
 
     it('return ↔ member scores 7 (bounce re-buys the enter-play ability)', () => {
       expect(findScore(snowWhiteMerry, 'dopey-music')).toBe(7);
+    });
+  });
+
+  describe('Floodborns detection', () => {
+    const floodbornMember = createCard({
+      id: 'elsa-fb', name: 'Elsa', fullName: 'Elsa - Spirit of Winter',
+      cost: 7, classifications: ['Floodborn'], text: 'Whenever this character quests, draw a card.',
+    });
+    const buffPayoff = createCard({
+      id: 'gaston-vine', name: 'Gaston', fullName: 'Gaston - Created by the Vine',
+      cost: 2, classifications: ['Floodborn', 'Vineling'],
+      text: 'DRAWING STRENGTH Your Floodborn characters get +1 ¤.',
+    });
+    const triggerPayoff = createCard({
+      id: 'hera-vine', name: 'Hera', fullName: 'Hera - Created by the Vine',
+      cost: 5, classifications: ['Floodborn', 'Vineling'],
+      text: 'MYSTICAL BOON Whenever you play this or another Floodborn character, gain 1 lore.',
+    });
+    const theVine = createCard({
+      id: 'the-vine', name: 'The Vine', fullName: 'The Vine - Towering Stalk',
+      cost: 10, classifications: ['Floodborn'],
+      text: 'SATURATE Your other exerted Floodborn characters gain Bodyguard. HOSTILE SWARM During an opponent\'s turn, whenever one of your Floodborn characters is banished, deal 1 damage to each opposing character.',
+    });
+
+    it('tags a plain Floodborn character as member only', () => {
+      expect(getFloodbornRoles(floodbornMember)).toEqual(['member']);
+    });
+    it('detects a static team buff', () => {
+      expect(getFloodbornRoles(buffPayoff)).toEqual(['member', 'buff']);
+    });
+    it('detects a repeating trigger', () => {
+      expect(getFloodbornRoles(triggerPayoff)).toEqual(['member', 'trigger']);
+    });
+    it('detects The Vine as member + buff + trigger', () => {
+      expect(getFloodbornRoles(theVine)).toEqual(['member', 'buff', 'trigger']);
+    });
+    it('ignores non-Floodborn cards with no Floodborn payoff text', () => {
+      expect(isFloodbornCard(createCard({id: 'x', name: 'X', cost: 3, text: 'Draw a card.'}))).toBe(false);
+    });
+  });
+
+  describe('Floodborns rule', () => {
+    const rule = getRuleById('floodborn')!;
+    const member = createCard({id: 'm1', name: 'Elsa', cost: 7, classifications: ['Floodborn'], text: 'Quests for 2 lore.'});
+    const member2 = createCard({id: 'm2', name: 'Ariel', cost: 5, classifications: ['Floodborn'], text: 'Has Evasive.'});
+    const buff = createCard({id: 'b1', name: 'Gaston', cost: 2, classifications: ['Floodborn'], text: 'Your Floodborn characters get +1 ¤.'});
+    const trigger = createCard({id: 't1', name: 'Hera', cost: 5, classifications: ['Floodborn'], text: 'Whenever you play this or another Floodborn character, gain 1 lore.'});
+
+    const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+    it('does not pair two plain Floodborn members (payoff-anchored)', () => {
+      expect(rule.findSynergies(member, [member, member2])).toHaveLength(0);
+    });
+    it('scores member + trigger payoff at 7', () => {
+      expect(scoreWith(member, trigger)?.score).toBe(7);
+    });
+    it('scores member + buff payoff at 6', () => {
+      expect(scoreWith(member, buff)?.score).toBe(6);
+    });
+    it('scores payoff + payoff at 7', () => {
+      expect(scoreWith(buff, trigger)?.score).toBe(7);
     });
   });
 });

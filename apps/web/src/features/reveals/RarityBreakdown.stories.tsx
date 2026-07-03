@@ -21,3 +21,11 @@ export const Complete: Story = {
 export const Mobile: Story = {
   args: {rarityCounts: {common: 4, uncommon: 3, rare: 2, 'super rare': 1, legendary: 0}, compact: true},
 };
+
+export const RaritySelected: Story = {
+  args: {
+    rarityCounts: {common: 6, uncommon: 5, rare: 6, 'super rare': 3, legendary: 1},
+    selectedRarity: 'rare',
+    onSelectRarity: () => {},
+  },
+};

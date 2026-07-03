@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {getSupabase, submitVote, type Score} from '../../../shared/lib/supabase';
 import type {VoteFormState, VotingPair} from '../types';
+import {trackPairVote} from '../lib/voteAnalytics';
 
 export interface UseVoteSessionReturn {
   formState: VoteFormState;
@@ -48,6 +49,9 @@ export function useVoteSession(currentPair: VotingPair | null): UseVoteSessionRe
 
       if (result.error === null) {
         setLastResult('success');
+        // The /vote one-click score surface was previously untracked; emit here so it
+        // joins the modal-thumbs and in-depth surfaces under `vote_submitted`.
+        trackPairVote('score', currentPair, score);
       } else if (result.error === 'rate_limited') {
         setLastResult('rate_limited');
         setIsRateLimited(true);

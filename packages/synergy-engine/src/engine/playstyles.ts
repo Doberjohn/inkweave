@@ -97,6 +97,44 @@ const playstyles: Playstyle[] = [
       'Most payoffs also count Princesses — Snow White doubles as a Princess and a Dwarf payoff, bridging the two tribes for a deeper card pool.',
     ],
   },
+  {
+    id: 'floodborn',
+    name: 'Floodborns',
+    tagline: 'Flood the board with Floodborn characters and cash in the Vine payoffs.',
+    description:
+      'Flood the board with Floodborn characters and cash in the Vine payoffs. The Set 13 Vinelings each buff or trigger off "your Floodborn characters", and because Floodborn is a deep classification spanning every set, the payoffs reward a large, pre-built tribe. Stack buffs to grow the whole board, or lean on the play and quest triggers for a repeating engine.',
+    strategyTips: [
+      'The payoffs reward any Floodborn body, not just Vinelings, so run plenty of Floodborn characters as fuel. Floodborn is a classification, not the Shift keyword: some Shift cards, like the Set 13 Team-ups, are Storyborn.',
+      'Trigger payoffs (Hera, Mulan, Ursula) want a wide, cheap Floodborn board so they fire often.',
+      'Stat buffs (Gaston, Pete, Ring of Stones) stack, so two payoffs on the same board pump the whole team twice.',
+      'Banish triggers (Maid Marian, The Vine) double as a Sacrifice-deck payoff if you add self-banish enablers.',
+    ],
+  },
+  {
+    id: 'hunny',
+    name: 'Hunny',
+    tagline: 'A Hundred Acre Wood adventuring party that rewards going wide on the Hunny tribe.',
+    description:
+      'A Hundred Acre Wood adventuring party that rewards going wide on the Hunny tribe. Search effects dig the party out of your deck, density payoffs grow stronger with every Hunny on the board, and single-target buffs pump the body that matters. Christopher Robin even lets you run Hunny characters off-ink, deepening the pool.',
+    strategyTips: [
+      'Run a high Hunny count so density payoffs (Winnie, Roo, Gopher) reliably switch on.',
+      'Christopher Robin and The Great Book of Hunny dig the tribe out of your deck, smoothing your draws.',
+      'Christopher Robin breaks ink restrictions for Hunny cards, so you can splash the best party members regardless of color.',
+      'Single-target buffs (Rabbit, Magical Hunny Staff, Tigger) protect or push your key threat.',
+    ],
+  },
+  {
+    id: 'red-panda',
+    name: 'Red Panda',
+    tagline: 'A small Turning Red tribe built around the Lee family.',
+    description:
+      'A small Turning Red tribe built around the Lee family. The package is light on dedicated payoffs, but Meilin Lee - Losing Control digs more Red Pandas out of your deck, and the tribe leans on named-companion and Temporary Shift synergies that other rules already surface.',
+    strategyTips: [
+      'Meilin Lee - Losing Control digs for a Red Panda or a song, so keep the deck dense in both.',
+      'Most of the Red Panda payoff comes from named-companion bonuses (Meilin, Ming) and Temporary Red Panda Shift, which the Companions and Shift rules already cover.',
+      'The tribe is shallow on its own, so pair it with a stronger second archetype rather than building mono-Red-Panda.',
+    ],
+  },
 ];
 
 const playstyleMap = new Map(playstyles.map((p) => [p.id, p]));

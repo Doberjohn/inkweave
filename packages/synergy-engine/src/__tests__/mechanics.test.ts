@@ -5,6 +5,7 @@ import {
   MECHANIC_BY_ID,
   STRUCTURAL_ROLE_TO_MECHANIC,
   getCardMechanics,
+  mechanicLabel,
 } from '../utils';
 import {createCard} from './fixtures.js';
 
@@ -77,6 +78,13 @@ describe('mechanics catalog', () => {
       for (const mechanicId of Object.values(STRUCTURAL_ROLE_TO_MECHANIC)) {
         expect(MECHANIC_BY_ID[mechanicId]).toBeDefined();
       }
+    });
+  });
+
+  describe('tribal payoff labels', () => {
+    it('labels the Floodborns trigger role', () => {
+      expect(mechanicLabel('trigger')).toBe('Trigger');
+      expect(mechanicLabel('trigger')).not.toBe('trigger');
     });
   });
 });

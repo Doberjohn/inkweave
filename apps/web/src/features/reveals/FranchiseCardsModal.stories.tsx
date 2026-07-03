@@ -32,7 +32,7 @@ const cards: LorcanaCard[] = IMG_IDS.map(
 
 export const Default: Story = {
   args: {
-    franchise: FRANCHISES[0],
+    source: FRANCHISES[0],
     cards,
     onClose: () => {},
     onCardClick: () => {},
@@ -41,7 +41,7 @@ export const Default: Story = {
 
 export const Empty: Story = {
   args: {
-    franchise: FRANCHISES[2],
+    source: FRANCHISES[2],
     cards: [],
     onClose: () => {},
     onCardClick: () => {},

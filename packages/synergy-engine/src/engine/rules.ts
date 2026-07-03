@@ -15,6 +15,7 @@ import {
   isCharacter,
   isDeckRamp,
   isDiscardCard,
+  isItem,
   isLocation,
   isLocationSupportCard,
   isRampCard,
@@ -25,6 +26,12 @@ import {
   getToyRoles,
   isDwarfsCard,
   getDwarfsRoles,
+  getFloodbornRoles,
+  isFloodbornCard,
+  getHunnyRoles,
+  isHunnyCard,
+  getRedPandaRoles,
+  isRedPandaCard,
   isLoreDenialCard,
   getLoreDenialRoles,
   getSacrificeRoles,
@@ -41,6 +48,9 @@ import {
   type ShiftType,
   type ToyRole,
   type DwarfsRole,
+  type FloodbornRole,
+  type HunnyRole,
+  type RedPandaRole,
 } from '../utils';
 
 // ============================================
@@ -199,9 +209,13 @@ function calculateShiftBaseScore(
 
 /**
  * Check if a target card is a valid Shift target for the given Shift variant.
- * - standard: same base name
- * - classification: target has the required classification
+ * - standard: same base name (character)
+ * - classification: character with the required classification
  * - universal: any character
+ * - named-item: the item this shift lands on
+ *
+ * Each case asserts the target's own card type (character vs item), so callers can pass the
+ * full card pool without a separate type pre-filter.
  */
 function isValidShiftTarget(
   shiftType: ShiftType,
@@ -212,11 +226,16 @@ function isValidShiftTarget(
     case 'standard':
       // Team cards ("Belle & Beast") shift onto either named half, so match the
       // target's base name against every name the shifter can land on.
-      return getShiftBaseNames(shiftCard).includes(getBaseName(target));
+      return isCharacter(target) && getShiftBaseNames(shiftCard).includes(getBaseName(target));
     case 'classification':
-      return hasClassification(target, shiftType.classification);
+      return isCharacter(target) && hasClassification(target, shiftType.classification);
     case 'universal':
-      return true;
+      return isCharacter(target);
+    case 'named-item':
+      // The card-type gate is load-bearing: a character named/classified "Potato" must NOT
+      // match — only an item named Potato does. Name match is case-insensitive to match the
+      // hasClassification convention, so card-data casing drift can't silently break it.
+      return isItem(target) && getBaseName(target).toLowerCase() === shiftType.itemName.toLowerCase();
   }
 }
 
@@ -594,17 +613,14 @@ function makeShiftMatch(
   return {card: target, score, explanation, bidirectional: true};
 }
 
-/** Forward: a Shift card finds valid base targets per its variant. */
+/** Forward: a Shift card finds valid targets per its variant (character or item). */
 function findShiftTargets(shiftCard: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
   const shiftType = getShiftType(shiftCard);
   if (!shiftType) return [];
+  // No card-type pre-filter here: isValidShiftTarget asserts the right type per variant
+  // (characters for standard/classification/universal, items for named-item).
   return allCards
-    .filter(
-      (other) =>
-        other.id !== shiftCard.id &&
-        isCharacter(other) &&
-        isValidShiftTarget(shiftType, shiftCard, other),
-    )
+    .filter((other) => other.id !== shiftCard.id && isValidShiftTarget(shiftType, shiftCard, other))
     .map((target) => makeShiftMatch(shiftCard, target, target));
 }
 
@@ -722,8 +738,10 @@ export const synergyRules: SynergyRule[] = [
     category: 'direct',
     description: 'Characters with Shift and their valid targets',
 
-    // Matches all characters: Shift cards find targets (forward), base characters find Shift cards (reverse)
-    matches: (card) => isCharacter(card),
+    // Matches characters and items: Shift cards find targets (forward), base cards find
+    // Shift cards (reverse). Items are included so item-target shifts (named-item) resolve
+    // from the item side too.
+    matches: (card) => isCharacter(card) || isItem(card),
 
     findSynergies: (card, allCards) => {
       if (getShiftType(card)) return findShiftTargets(card, allCards);
@@ -1005,6 +1023,63 @@ export const synergyRules: SynergyRule[] = [
 
       return matches;
     },
+  },
+
+  // --------------------------------------------
+  // FLOODBORNS (Floodborn matters, payoff-anchored)
+  // --------------------------------------------
+  {
+    id: 'floodborn',
+    name: 'Floodborns',
+    category: 'playstyle',
+    playstyleId: 'floodborn',
+    description:
+      'Floodborn characters and the Set 13 Vine payoffs that buff or trigger off them. Payoff-anchored: a Floodborn body synergizes with payoffs, but two plain Floodborn do not synergize with each other.',
+
+    matches: isFloodbornCard,
+
+    // Payoff-anchored: the scorePair callback returns null for member-member pairs
+    // (neither side is a payoff), so they are never emitted.
+    findSynergies: (card, allCards) =>
+      tribalFindSynergies(card, allCards, getFloodbornRoles, (cardRoles, otherRoles) =>
+        isFloodbornPayoff(cardRoles) || isFloodbornPayoff(otherRoles)
+          ? scoreFloodbornPair(cardRoles, otherRoles)
+          : null,
+      ),
+  },
+
+  // --------------------------------------------
+  // HUNNY TRIBAL
+  // --------------------------------------------
+  {
+    id: 'hunny',
+    name: 'Hunny',
+    category: 'playstyle',
+    playstyleId: 'hunny',
+    description:
+      'Hunny characters and the payoffs that reward running them: searches that dig the tribe out of the deck, density payoffs that scale with Hunny in play, and single-target buffs.',
+
+    matches: isHunnyCard,
+
+    findSynergies: (card, allCards) =>
+      tribalFindSynergies(card, allCards, getHunnyRoles, scoreHunnyPair),
+  },
+
+  // --------------------------------------------
+  // RED PANDA TRIBAL
+  // --------------------------------------------
+  {
+    id: 'red-panda',
+    name: 'Red Panda',
+    category: 'playstyle',
+    playstyleId: 'red-panda',
+    description:
+      'Red Panda characters and the deck-search payoff that digs the tribe out of your deck.',
+
+    matches: isRedPandaCard,
+
+    findSynergies: (card, allCards) =>
+      tribalFindSynergies(card, allCards, getRedPandaRoles, scoreRedPandaPair),
   },
 ];
 
@@ -1517,6 +1592,120 @@ function scoreDwarfsPair(
   }
 
   return {score: 5, explanation: `Both share the Seven Dwarfs deck. Density baseline.`};
+}
+
+// ============================================
+// FLOODBORNS SCORING (payoff-anchored, 5-baseline)
+// ============================================
+
+const isFloodbornPayoff = (roles: FloodbornRole[]): boolean =>
+  roles.includes('buff') || roles.includes('trigger');
+
+/**
+ * Score a Floodborns pair. Called only when at least one side is a payoff
+ * (the rule's findSynergies skips member-member pairs).
+ *   - payoff <-> payoff           = 7 (two payoffs stack on the same Floodborn board)
+ *   - member <-> trigger payoff   = 7 (the body fires the repeating trigger)
+ *   - member <-> buff payoff      = 6 (the body is pumped by the team buff)
+ */
+function scoreFloodbornPair(
+  cardRoles: FloodbornRole[],
+  otherRoles: FloodbornRole[],
+): {score: number; explanation: string} {
+  const cardPayoff = isFloodbornPayoff(cardRoles);
+  const otherPayoff = isFloodbornPayoff(otherRoles);
+
+  if (cardPayoff && otherPayoff) {
+    return {score: 7, explanation: 'Both reward a wide Floodborn board, so the payoffs stack.'};
+  }
+  // Exactly one side is a payoff; the other is a member only.
+  const payoffRoles = cardPayoff ? cardRoles : otherRoles;
+  if (payoffRoles.includes('trigger')) {
+    return {score: 7, explanation: 'The Floodborn body fires the repeating payoff trigger.'};
+  }
+  return {score: 6, explanation: 'The Floodborn body is pumped by the team buff.'};
+}
+
+// ============================================
+// SHARED TRIBAL SCORING HELPERS
+// ============================================
+
+/** Direction-agnostic role-cross matcher: true iff one side has `x` and the other has `y`. */
+function crossMatcher<T extends string>(aRoles: T[], bRoles: T[]): (x: T, y: T) => boolean {
+  const a = new Set(aRoles);
+  const b = new Set(bRoles);
+  return (x, y) => (a.has(x) && b.has(y)) || (b.has(x) && a.has(y));
+}
+
+/**
+ * Shared tribal `findSynergies` loop: pair the card against every other role-bearing
+ * card, scoring each via `scorePair`. A `null` result skips the pair (the payoff-anchored
+ * Floodborns rule uses this to drop member-member pairs).
+ */
+function tribalFindSynergies<R>(
+  card: LorcanaCard,
+  allCards: LorcanaCard[],
+  getRoles: (c: LorcanaCard) => R[],
+  scorePair: (cardRoles: R[], otherRoles: R[]) => {score: number; explanation: string} | null,
+): SynergyMatch[] {
+  const cardRoles = getRoles(card);
+  if (cardRoles.length === 0) return [];
+
+  const matches: SynergyMatch[] = [];
+  for (const other of allCards) {
+    if (other.id === card.id) continue;
+    const otherRoles = getRoles(other);
+    if (otherRoles.length === 0) continue;
+    const result = scorePair(cardRoles, otherRoles);
+    if (result === null) continue;
+    matches.push({card: other, score: result.score, explanation: result.explanation, bidirectional: true});
+  }
+  return matches;
+}
+
+// ============================================
+// HUNNY TRIBAL SCORING (5-baseline)
+// ============================================
+
+/**
+ *   - search <-> member | search <-> density = 8 (fetch converts a slot / fuels the payoff)
+ *   - density <-> density | density <-> member = 7 (compounding / member feeds payoff)
+ *   - buff <-> member                          = 6 (single-target pump on a Hunny body)
+ *   - everything else                          = 5 (same-deck density baseline)
+ */
+function scoreHunnyPair(
+  cardRoles: HunnyRole[],
+  otherRoles: HunnyRole[],
+): {score: number; explanation: string} {
+  const cross = crossMatcher(cardRoles, otherRoles);
+  if (cross('search', 'member') || cross('search', 'density')) {
+    return {score: 8, explanation: 'A Hunny search digs the tribe out of your deck, fueling the payoffs.'};
+  }
+  if (cross('density', 'density')) {
+    return {score: 7, explanation: 'Both reward Hunny density, so the payoffs compound.'};
+  }
+  if (cross('density', 'member')) {
+    return {score: 7, explanation: 'The member feeds the Hunny density payoff.'};
+  }
+  if (cross('buff', 'member')) {
+    return {score: 6, explanation: 'The single-target buff pumps a Hunny body.'};
+  }
+  return {score: 5, explanation: 'Both share the Hunny deck. Density baseline.'};
+}
+
+// ============================================
+// RED PANDA TRIBAL SCORING (5-baseline)
+// ============================================
+
+function scoreRedPandaPair(
+  cardRoles: RedPandaRole[],
+  otherRoles: RedPandaRole[],
+): {score: number; explanation: string} {
+  const cross = crossMatcher(cardRoles, otherRoles);
+  if (cross('search', 'member')) {
+    return {score: 8, explanation: 'A Red Panda search converts a deck slot into a tribe member.'};
+  }
+  return {score: 5, explanation: 'Both share the Red Panda deck. Density baseline.'};
 }
 
 // Get all rules
