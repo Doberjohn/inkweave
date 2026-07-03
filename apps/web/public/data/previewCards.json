@@ -6075,6 +6075,23 @@
       "strength": 5,
       "willpower": 4,
       "lore": 1
+    },
+    {
+      "id": 13205,
+      "name": "The Weedwhacker",
+      "fullName": "The Weedwhacker",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "13",
+      "number": 205,
+      "rarity": "Uncommon",
+      "fullText": "FULL POWER ⟳, 1 ⬡ – Chosen character gains Challenger +2 this turn. (They get +2 ⚔ while challenging.)\nCLEAR-CUT 2 ⬡, Banish this item – Banish chosen Vineling character.",
+      "fullTextSections": [
+        "FULL POWER ⟳, 1 ⬡ – Chosen character gains Challenger +2 this turn. (They get +2 ⚔ while challenging.)",
+        "CLEAR-CUT 2 ⬡, Banish this item – Banish chosen Vineling character."
+      ]
     }
   ]
 }
