@@ -192,6 +192,23 @@ export function computeGlobal({scoreRows, pairs, engineSilent, rawVotes, engineP
   };
 }
 
+/** Build the raw vote log with anonymized sequential voter tokens (drops ip_hash). */
+export function buildVoteLog(rawVotes, names) {
+  const voterIndex = new Map();           // ip_hash -> #N, first-seen order
+  const rows = rawVotes.map((v) => {
+    if (!voterIndex.has(v.ip_hash)) voterIndex.set(v.ip_hash, voterIndex.size + 1);
+    const [a, b] = v.card_a_id < v.card_b_id ? [v.card_a_id, v.card_b_id] : [v.card_b_id, v.card_a_id];
+    return {
+      a, b, aName: names.get(a) ?? a, bName: names.get(b) ?? b,
+      score: v.score, accuracy: v.accuracy, isReal: v.is_real,
+      wouldPlay: v.would_play, difficulty: v.difficulty, whoCarries: v.who_carries,
+      ts: v.created_at, voter: voterIndex.get(v.ip_hash),
+    };
+  });
+  rows.sort((x, y) => (x.ts < y.ts ? 1 : x.ts > y.ts ? -1 : 0));   // newest first
+  return {votes: rows, voterCount: voterIndex.size};
+}
+
 /**
  * Top-level: produce the full vote-analytics artifact (minus generatedAt).
  * The caller (orchestrator) merges a `generatedAt` ISO timestamp into the

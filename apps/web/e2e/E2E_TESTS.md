@@ -213,6 +213,14 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 | mosaic card click opens the card overview modal | Clicking a `reveal-card-slot` on `/reveals` opens the modal; URL stays `/reveals` |
 | franchise card click opens the franchise cards modal | Clicking "View Monsters, Inc. cards" opens the `dialog`; a card-tile inside opens the overview modal on top |
 
+## `admin-analytics.spec.ts` — 1 test (flag-gated, self-skipping)
+
+Requires `VITE_SHOW_ADMIN_ANALYTICS=true` (playwright `webServer.env` + `apps/web/.env.local`) and the build-time `vote-analytics.json` artifact. The test skips gracefully when the flag is off (route redirects home) or the artifact is absent, so it never false-fails an unset environment. Flag-off redirect is also covered by `AdminGate` unit tests.
+
+| Test | What it verifies |
+|---|---|
+| renders the calibration + activity tabs | `/admin/analytics` shows the `Engine Calibration` h1 and the verdict scale + `Total votes` on the Calibration tab, then switches to the Activity tab and confirms the day-by-day log header |
+
 ## Patterns
 
 - **URL assertions** (`toHaveURL`) verify route-based navigation on every transition
