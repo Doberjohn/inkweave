@@ -39,6 +39,7 @@ function Harness({errors}: {errors: Record<string, string>}) {
         form={form}
         errors={errors}
         imageName={imageName}
+        imageDataUrl={null}
         onChange={(patch) => setForm((f) => ({...f, ...patch}))}
         onImageChange={(file) => setImageName(file?.name ?? null)}
       />

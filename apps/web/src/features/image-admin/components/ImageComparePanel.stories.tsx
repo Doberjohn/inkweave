@@ -16,7 +16,7 @@ const card: LorcanaCard = {
 const meta: Meta<typeof ImageComparePanel> = {
   title: 'ImageAdmin/ImageComparePanel',
   component: ImageComparePanel,
-  args: {card, newImageUrl: null},
+  args: {card, newImageUrl: null, onImageChange: () => {}},
 };
 export default meta;
 

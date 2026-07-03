@@ -60,21 +60,25 @@ export function ImageAdminPage() {
 
         <aside style={{flex: '1 1 360px', minWidth: 320}}>
           <h2 style={{fontSize: FONT_SIZES.xl}}>2. Upload the new image</h2>
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            disabled={!ctrl.selectedCard}
-            onChange={(e) => ctrl.onImageChange(e.target.files?.[0] ?? null)}
-          />
-          {ctrl.imageName && (
-            <div style={{color: COLORS.gray600, fontSize: FONT_SIZES.xs, marginTop: 4}}>
-              {ctrl.imageName}
-            </div>
+          {ctrl.selectedCard ? (
+            <>
+              <p style={{color: COLORS.gray600, fontSize: FONT_SIZES.xs, margin: `0 0 ${SPACING.sm}px`}}>
+                Click the New tile to choose a jpg, png, or webp.
+              </p>
+              <ImageComparePanel
+                card={ctrl.selectedCard}
+                newImageUrl={ctrl.newImageUrl}
+                onImageChange={ctrl.onImageChange}
+              />
+              {ctrl.imageName && (
+                <div style={{color: COLORS.gray600, fontSize: FONT_SIZES.xs, marginTop: SPACING.sm}}>
+                  {ctrl.imageName}
+                </div>
+              )}
+            </>
+          ) : (
+            <p style={{color: COLORS.gray600, fontSize: FONT_SIZES.sm}}>Pick a card to enable upload.</p>
           )}
-
-          <div style={{marginTop: SPACING.md}}>
-            <ImageComparePanel card={ctrl.selectedCard} newImageUrl={ctrl.newImageUrl} />
-          </div>
 
           {ctrl.publishError && (
             <div style={{color: COLORS.error, fontSize: FONT_SIZES.sm, marginTop: SPACING.sm}}>

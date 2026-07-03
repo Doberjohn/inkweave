@@ -58,6 +58,7 @@ export function RevealAdminPage() {
             form={ctrl.form}
             errors={ctrl.validation.errors}
             imageName={ctrl.imageName}
+            imageDataUrl={ctrl.imageDataUrl}
             onChange={ctrl.patchForm}
             onImageChange={ctrl.onImageChange}
           />
