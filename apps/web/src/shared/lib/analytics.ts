@@ -52,7 +52,15 @@ type AnalyticsEvents = {
   playstyle_opened: {playstyleId: string; playstyleName: string};
   // A pair was skipped on the /vote page.
   vote_skipped: {cardAId: string; cardBId: string; engineScore: number};
-  // future (#124): filter_applied, search_query, synergy_group_viewed...
+  // A search was submitted (navigates to /browse). `query` is the trimmed term.
+  search_submitted: {query: string; source: 'home' | 'gallery' | 'mobile_sheet'};
+  // A single card filter facet was toggled from the toolbar (ink/type/cost).
+  // Bulk dialog facets (keyword/set/classification/inkwell) are not tracked here.
+  filter_applied: {facet: 'ink' | 'type' | 'cost'; value: string; action: 'add' | 'remove'};
+  // The card-list sort order changed on browse/playstyle-detail.
+  sort_changed: {sortOrder: string; previousSort: string};
+  // A synergy group was isolated (chip) or expanded (show-all) inside the card modal.
+  synergy_group_viewed: {sourceCardId: string; groupKey: string; action: 'isolate' | 'show_all'};
 };
 
 /**
