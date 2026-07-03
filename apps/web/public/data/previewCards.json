@@ -6347,6 +6347,27 @@
       "strength": 6,
       "willpower": 7,
       "lore": 2
+    },
+    {
+      "id": 13141,
+      "name": "Beast's Castle",
+      "fullName": "Beast's Castle - Overrun by the Vine",
+      "cost": 4,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Location",
+      "setCode": "13",
+      "number": 141,
+      "version": "Overrun by the Vine",
+      "rarity": "Rare",
+      "subtypes": [
+        "Location"
+      ],
+      "fullText": "IMMINENT THREAT Your Floodborn characters gain Rush. (They can challenge the turn they're played.)",
+      "fullTextSections": [
+        "IMMINENT THREAT Your Floodborn characters gain Rush. (They can challenge the turn they're played.)"
+      ],
+      "moveCost": 2
     }
   ]
 }
