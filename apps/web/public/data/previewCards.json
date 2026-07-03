@@ -6504,6 +6504,40 @@
       "fullTextSections": [
         "Banish chosen character with 3 ⚔ or less. If you have a Monster character in play, chosen opponent loses 1 lore."
       ]
+    },
+    {
+      "id": 13120,
+      "name": "Grandma Wu",
+      "fullName": "Grandma Wu - Fierce Red Panda",
+      "cost": 7,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 120,
+      "version": "Fierce Red Panda",
+      "rarity": "Rare",
+      "subtypes": [
+        "Storyborn",
+        "Mentor",
+        "Red Panda"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Temporary Shift",
+          "keywordValue": "4",
+          "fullText": "Temporary Shift 4"
+        }
+      ],
+      "fullText": "Temporary Shift 4 (You may pay 4 ⬡ to play this on top of one of your characters named Grandma Wu. At the end of your turn, remove all damage from this character and return only this card to your hand.)\nINTIMIDATING CHARGE Whenever this character challenges another character, you gain 2 lore and each opponent loses 2 lore.",
+      "fullTextSections": [
+        "Temporary Shift 4 (You may pay 4 ⬡ to play this on top of one of your characters named Grandma Wu. At the end of your turn, remove all damage from this character and return only this card to your hand.)",
+        "INTIMIDATING CHARGE Whenever this character challenges another character, you gain 2 lore and each opponent loses 2 lore."
+      ],
+      "strength": 5,
+      "willpower": 7,
+      "lore": 1
     }
   ]
 }
