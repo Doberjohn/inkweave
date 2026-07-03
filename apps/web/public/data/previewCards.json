@@ -6212,6 +6212,39 @@
         "(A character with cost 4 or more can ⟳ to sing this song for free.)",
         "Deal 2 damage to each opposing damaged character."
       ]
+    },
+    {
+      "id": 13097,
+      "name": "Mushu",
+      "fullName": "Mushu - Stealthy Dragon",
+      "cost": 3,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "13",
+      "number": 97,
+      "version": "Stealthy Dragon",
+      "rarity": "Legendary",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Dragon"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        }
+      ],
+      "fullText": "Evasive (Only characters with Evasive can challenge this character.)\nTIP THE SCALES Whenever this character quests, if an opponent has more cards in their hand than you, you may draw a card.",
+      "fullTextSections": [
+        "Evasive (Only characters with Evasive can challenge this character.)",
+        "TIP THE SCALES Whenever this character quests, if an opponent has more cards in their hand than you, you may draw a card."
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1
     }
   ]
 }
