@@ -84,6 +84,18 @@ Three activation patterns (same synergy behavior, affects scoring nuance):
 
 ---
 
+## Card examples by role
+
+Real cards the `getRampRoles` detector tags for each role (names from the live database; effects paraphrased):
+
+| Role | Real cards | What they do |
+|------|-----------|--------------|
+| **inkwell-ramp** | Donald Duck - Focused Flatfoot (Sapphire), Tipo - Growing Son (Sapphire), All Funned Out (Sapphire) | Put an extra card into your inkwell: off the top of your deck, from hand, or by sinking one of your own characters |
+| **inkwell-trigger** | Rafiki - Ethereal Guide (Amethyst), Owl - Pirate Lookout (Amber), Raya - Kumandran Rider (Ruby) | Fire a bonus whenever a card enters your inkwell: draw, shrink an opposing character, or ready one of yours |
+| **cost-reduction** | Iago - Fake Flamingo (Emerald), Owl Island - Secluded Entrance (Emerald), Yokai - Intellectual Schemer (Emerald-Sapphire) | Cut future costs: the next action, the first action each turn, or Shift characters |
+
+---
+
 ## Scoring (5–9 chain ladder + density baseline)
 
 The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral default (parallel acceleration / same-axis density, no compounding), 6+ = specific mechanical interaction. The chain ladder (Ramp↔Trigger, scored 7–9) is the only real mechanical chain in the playstyle and is preserved at full strength.

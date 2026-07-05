@@ -81,6 +81,19 @@ The original `payoff` fallback bucket was retired once every Toy in the live dat
 
 ---
 
+## Card examples by role
+
+Real cards the `getToyRoles` detector tags for each **Toy-specific** role (names from the live database; effects paraphrased). Generic roles Toy composes from other rules (`draw`, `burn`, `steal`, ramp) are owned by their own playstyles and omitted here:
+
+| Role | Real cards | What they do |
+|------|-----------|--------------|
+| **member** | Woody - Waiting for a Friend (Amber), Buzz Lightyear - Space Ranger (Emerald), Jingle Joe - Sid's Toy (Ruby) | Carry the Toy classification: the tribe's bodies |
+| **search** | Woody - Leader of the Toys (Amber), You've Got a Friend in Me (Amber) | Dig Toy characters out of your deck |
+| **banish-trigger** | Rex - Protective Dinosaur (Amber), Alien - True Believer (Emerald), Pterodactyl Janie Doll - Sid's Toy (Ruby) | Fire a bonus when one of your Toys is banished (Sid's-Toys recursion) |
+| **self-discount** | Bullseye - Loyal Horse (Amber), Wind-Up Frog - Sid's Toy (Ruby), Hand-in-the-Box - Sid's Toy (Ruby) | Cost less to play when a Toy condition is met |
+
+---
+
 ## Scoring (5/7/8 matrix)
 
 The rule uses the project-wide **5-baseline scoring convention**: 5 = neutral default (same-deck density, no compounding), 6+ = specific mechanical interaction. Toys does not use 6 — it skips straight from 5 (baseline) to 7 (tribal compounding) to 8 (peak chain).
