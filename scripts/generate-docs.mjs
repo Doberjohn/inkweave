@@ -27,6 +27,7 @@ const ENGINE_DIR = 'packages/synergy-engine';
 const RULE_LABEL_OVERRIDES = {
   'SHIFT_TARGET_RULE.md': 'Shift Targets',
   'NAMED_COMPANIONS_RULE.md': 'Named Companions',
+  'SELF_DISCARD_RULE.md': 'Self-Discard',
   'LORE_LOSS_RULE.md': 'Lore Loss',
   'SINGER_SONGS_RULE.md': 'Singer + Songs',
   'LOCATION_CONTROL_RULE.md': 'Location Control',
@@ -39,6 +40,7 @@ const RULE_ORDER = [
   'SHIFT_TARGET_RULE.md',
   'NAMED_COMPANIONS_RULE.md',
   'DISCARD_RULE.md',
+  'SELF_DISCARD_RULE.md',
   'LORE_LOSS_RULE.md',
   'SINGER_SONGS_RULE.md',
   'SPIKE_SUIT_RULE.md',

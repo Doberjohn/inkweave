@@ -9,6 +9,8 @@ import {
   isDiscardCard,
   getSacrificeRoles,
   isSacrificeCard,
+  getSelfDiscardRoles,
+  isSelfDiscardCard,
   getRampRoles,
   isRampCard,
   isDeckRamp,
@@ -2042,6 +2044,137 @@ describe('Toy Tribal', () => {
 
     it('rule does not match non-Toy cards', () => {
       expect(toyRule.matches(mickey)).toBe(false);
+    });
+  });
+});
+
+describe('Self-Discard rule (Discard Matters)', () => {
+  const selfDiscardRule = getRuleById('self-discard')!;
+
+  // Enablers — self-discard OUTLETS from hand.
+  const loot = createCard({
+    id: 'kronk-loot',
+    fullName: 'Kronk - Meat Hut Cook',
+    ink: 'Steel',
+    text: 'PICKUP! Once during your turn, you may pay 1 ⬡ to draw a card, then choose and discard a card.',
+  });
+  const dumpHand = createCard({
+    id: 'dump-hand',
+    fullName: 'You Broke My Smolder',
+    ink: 'Steel',
+    type: 'Action',
+    text: 'Discard your hand. Draw 2 cards.',
+  });
+
+  // Payoffs.
+  const reanimator = createCard({
+    id: 'gothel-reanimate',
+    fullName: 'Mother Gothel - Evil as Ever',
+    ink: 'Emerald',
+    text: 'MUMMY When you discard this card, you may play this character from your discard.',
+  });
+  const discardedThisTurn = createCard({
+    id: 'maximus-state',
+    fullName: 'Maximus - Relentless Stallion',
+    ink: 'Steel',
+    text: 'NO ESCAPE If you discarded a card this turn, this character gains Challenger +2.',
+  });
+  const hellbent = createCard({
+    id: 'megavolt-hellbent',
+    fullName: 'Megavolt - Electrical Menace',
+    ink: 'Steel',
+    text: 'FORCE FIELD While you have no cards in your hand, this character gains Resist +2.',
+  });
+  const lootReanimate = createCard({
+    id: 'rapunzel-flynn',
+    fullName: 'Rapunzel & Flynn Rider - Unlikely Pair',
+    ink: 'Emerald',
+    ink2: 'Steel',
+    text: 'CLEVER SWAP Whenever this character quests, you may draw a card, then choose and discard a card. FRESH START Whenever you discard a character card, you may play that character from your discard.',
+  });
+
+  // Excluded cases.
+  const opponentDiscard = createCard({
+    id: 'opp-discard',
+    fullName: 'Hand Disruption',
+    ink: 'Amethyst',
+    type: 'Action',
+    text: 'Each opponent chooses and discards a card.',
+  });
+  const mill = createCard({
+    id: 'quackerjack-mill',
+    fullName: 'Quackerjack - Loony Toymaker',
+    ink: 'Sapphire',
+    text: 'EVIL DESIGN When you play this character, put the top 4 cards of your deck into your discard.',
+  });
+  const unrelated = createCard({id: 'unrelated-sd', fullName: 'Anna', text: 'Gain 1 lore.'});
+
+  describe('role detection', () => {
+    it('detects enabler from loot (draw, then discard)', () => {
+      expect(getSelfDiscardRoles(loot)).toEqual(['enabler']);
+    });
+
+    it('detects enabler from "discard your hand"', () => {
+      expect(getSelfDiscardRoles(dumpHand)).toEqual(['enabler']);
+    });
+
+    it('detects reanimator from "play ... from your discard"', () => {
+      expect(getSelfDiscardRoles(reanimator)).toEqual(['reanimator']);
+    });
+
+    it('detects state-payoff from "discarded a card this turn"', () => {
+      expect(getSelfDiscardRoles(discardedThisTurn)).toEqual(['state-payoff']);
+    });
+
+    it('detects state-payoff from Hellbent ("no cards in your hand")', () => {
+      expect(getSelfDiscardRoles(hellbent)).toEqual(['state-payoff']);
+    });
+
+    it('detects both enabler and reanimator on an all-in-one card', () => {
+      expect(getSelfDiscardRoles(lootReanimate)).toEqual(['enabler', 'reanimator']);
+    });
+
+    it('does not tag opponent-facing discard (that is the Discard rule)', () => {
+      expect(getSelfDiscardRoles(opponentDiscard)).toEqual([]);
+    });
+
+    it('excludes mill (deck to discard, not hand)', () => {
+      expect(getSelfDiscardRoles(mill)).toEqual([]);
+    });
+
+    it('returns no roles for unrelated or text-less cards', () => {
+      expect(getSelfDiscardRoles(unrelated)).toEqual([]);
+      expect(getSelfDiscardRoles(createCard({text: undefined}))).toEqual([]);
+      expect(isSelfDiscardCard(unrelated)).toBe(false);
+    });
+  });
+
+  describe('synergy scoring', () => {
+    const allCards = [loot, dumpHand, reanimator, discardedThisTurn, hellbent, unrelated];
+
+    it('enabler ↔ reanimator scores 8 (win-condition combo)', () => {
+      const match = selfDiscardRule
+        .findSynergies(loot, allCards)
+        .find((s) => s.card.id === 'gothel-reanimate');
+      expect(match!.score).toBe(8);
+      // Token swap: the enabler ({A}, the searcher here) reads as the actor.
+      expect(match!.explanation).toBe(
+        '{A} discards your own cards so {B} can replay them from the discard.',
+      );
+    });
+
+    it('enabler ↔ state-payoff scores 8', () => {
+      const match = selfDiscardRule
+        .findSynergies(loot, allCards)
+        .find((s) => s.card.id === 'maximus-state');
+      expect(match!.score).toBe(8);
+    });
+
+    it('enabler ↔ enabler scores 5 (parallel outlets)', () => {
+      const match = selfDiscardRule
+        .findSynergies(loot, allCards)
+        .find((s) => s.card.id === 'dump-hand');
+      expect(match!.score).toBe(5);
     });
   });
 });

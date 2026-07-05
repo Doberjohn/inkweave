@@ -562,6 +562,66 @@ export function isSacrificeCard(card: LorcanaCard): boolean {
 }
 
 // ============================================
+// SELF-DISCARD DETECTION (fill your own discard, then cash it)
+// ============================================
+
+/**
+ * Self-Discard is the player-side mirror of the opponent-facing Discard rule (Rule 4):
+ * you discard your OWN cards from hand, then benefit. Three roles:
+ *  - 'enabler'      — a hand-discard outlet (loot, discard-your-hand, discard-as-cost)
+ *  - 'reanimator'   — plays / returns a card FROM YOUR DISCARD (recursion). `makeSearchPattern`
+ *                     deliberately excludes "from your discard" and defers recursion to this role.
+ *  - 'state-payoff' — rewards the discard EVENT ("discarded a card this turn") or an empty hand.
+ *
+ * Mill ("put the top N of your deck into your discard") is deliberately NOT an enabler: it fills
+ * the bin from the deck, not the hand, so it never triggers a "when you discard" payoff. The
+ * opponent-exclusion keeps the enabler disjoint from the Discard rule.
+ */
+export type SelfDiscardRole = 'enabler' | 'reanimator' | 'state-payoff';
+
+/** Loot — "draw a card, then choose and discard a card": the dominant self-discard outlet. */
+const SELF_DISCARD_LOOT_PATTERN = /draw\s+(?:a|an|\d+)\s+cards?,?\s+then\s+(?:choose and\s+)?discard/i;
+/** Discard-your-hand — a full hand dump (e.g. dump the hand, draw N). */
+const SELF_DISCARD_HAND_PATTERN = /discard\s+your\s+hand/i;
+/**
+ * Discard-as-cost — kept tight (≤2 words between "discard a" and "card") so it catches generic
+ * "discard a card" costs without over-tagging narrow conditional costs like a Princess/Queen discard.
+ */
+const SELF_DISCARD_COST_PATTERN = /(?:you may\s+)?discard\s+(?:a|an|another|\d+)\s+(?:\w+\s+){0,2}?cards?\b/i;
+/** Opponent-facing discard belongs to the Discard rule; exclude it here to keep the two axes disjoint. */
+const SELF_DISCARD_OPPONENT_PATTERN = /opponent|each player|challenging player|that player/i;
+
+/** Reanimator — play / return / put a card FROM YOUR DISCARD (recursion payoff). */
+const SELF_DISCARD_REANIMATOR_PATTERN = /(?:play|return|put)\b[^.]{0,60}\bfrom your discard\b/i;
+/** State payoff — rewards the discard EVENT (discarded this turn) or an empty hand (Hellbent). */
+const SELF_DISCARD_STATE_PATTERN = /discarded\s+a\s+card\s+this\s+turn|no cards in (?:your )?hand/i;
+
+/** Fast pre-filter: every self-discard pattern contains "discard" or "no cards in". */
+const HAS_SELF_DISCARD_KEYWORD = /discard|no cards in/i;
+
+/** Determine the self-discard role(s) a card fulfills. A card can be multi-role (loot + reanimate). */
+export function getSelfDiscardRoles(card: LorcanaCard): SelfDiscardRole[] {
+  if (!card.text) return [];
+  const text = normalizeCardText(card);
+  if (!HAS_SELF_DISCARD_KEYWORD.test(text)) return [];
+
+  const roles: SelfDiscardRole[] = [];
+  const isOutlet =
+    SELF_DISCARD_LOOT_PATTERN.test(text) ||
+    SELF_DISCARD_HAND_PATTERN.test(text) ||
+    SELF_DISCARD_COST_PATTERN.test(text);
+  if (isOutlet && !SELF_DISCARD_OPPONENT_PATTERN.test(text)) roles.push('enabler');
+  if (SELF_DISCARD_REANIMATOR_PATTERN.test(text)) roles.push('reanimator');
+  if (SELF_DISCARD_STATE_PATTERN.test(text)) roles.push('state-payoff');
+  return roles;
+}
+
+/** Check if a card participates in the self-discard axis (enabler, reanimator, or state payoff). */
+export function isSelfDiscardCard(card: LorcanaCard): boolean {
+  return getSelfDiscardRoles(card).length > 0;
+}
+
+// ============================================
 // RAMP DETECTION
 // ============================================
 

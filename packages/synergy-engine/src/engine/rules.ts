@@ -36,6 +36,8 @@ import {
   getLoreDenialRoles,
   getSacrificeRoles,
   isSacrificeCard,
+  getSelfDiscardRoles,
+  isSelfDiscardCard,
   LOCATION_PATTERNS,
   mechanicLabel,
   NAMED_EFFECT_SCORES,
@@ -45,6 +47,7 @@ import {
   type LoreDenialRole,
   type RampRole,
   type SacrificeRole,
+  type SelfDiscardRole,
   type ShiftType,
   type ToyRole,
   type DwarfsRole,
@@ -884,6 +887,34 @@ export const synergyRules: SynergyRule[] = [
   },
 
   // --------------------------------------------
+  // SELF-DISCARD ("Discard Matters" — player-side)
+  // --------------------------------------------
+  {
+    id: 'self-discard',
+    name: 'Self-Discard',
+    category: 'playstyle',
+    playstyleId: 'self-discard',
+    description:
+      'Discard your own cards to fill the discard, then replay them from the bin or trigger discard payoffs',
+
+    matches: isSelfDiscardCard,
+
+    findSynergies: (card, allCards) => {
+      const cardRoles = getSelfDiscardRoles(card);
+      if (cardRoles.length === 0) return [];
+
+      const matches: SynergyMatch[] = [];
+      for (const other of allCards) {
+        if (other.id === card.id) continue;
+        const otherRoles = getSelfDiscardRoles(other);
+        if (otherRoles.length === 0) continue;
+        matches.push(scoreSelfDiscardPair(card, cardRoles, other, otherRoles));
+      }
+      return matches;
+    },
+  },
+
+  // --------------------------------------------
   // SINGER + SONGS
   // --------------------------------------------
   {
@@ -1204,6 +1235,67 @@ function scoreSacrificePair(
     explanation: bothPayoff
       ? `Both pay off when your characters are banished: a board that trades into value.`
       : `Both banish your own characters: parallel self-banish cards.`,
+    bidirectional: true,
+  };
+}
+
+// ============================================
+// SELF-DISCARD SCORING
+// ============================================
+
+/**
+ * Score a self-discard pair (5-baseline convention, mirrors the Sacrifice shape):
+ *   - enabler ↔ payoff (reanimator or state) = 8  (win-condition: discard, then cash it)
+ *   - reanimator ↔ reanimator                = 6  (two recursion engines share one bin)
+ *   - all other same-axis pairs              = 5  (parallel density)
+ *
+ * `_card` is the searcher (token {A}); `other` is the partner (token {B}). The token-swap keeps
+ * the enabler side reading as the actor regardless of which card is the searcher.
+ */
+function scoreSelfDiscardPair(
+  _card: LorcanaCard,
+  cardRoles: SelfDiscardRole[],
+  other: LorcanaCard,
+  otherRoles: SelfDiscardRole[],
+): SynergyMatch {
+  const cardEnabler = cardRoles.includes('enabler');
+  const otherEnabler = otherRoles.includes('enabler');
+  const isPayoff = (roles: SelfDiscardRole[]): boolean =>
+    roles.includes('reanimator') || roles.includes('state-payoff');
+
+  // 8 — win-condition combo: an enabler on one side, a payoff (reanimator or state) on the other.
+  if ((cardEnabler && isPayoff(otherRoles)) || (otherEnabler && isPayoff(cardRoles))) {
+    const enablerToken = cardEnabler ? '{A}' : '{B}';
+    const payoffToken = cardEnabler ? '{B}' : '{A}';
+    const payoffRoles = cardEnabler ? otherRoles : cardRoles;
+    return {
+      card: other,
+      score: 8,
+      explanation: payoffRoles.includes('reanimator')
+        ? `${enablerToken} discards your own cards so ${payoffToken} can replay them from the discard.`
+        : `${enablerToken}'s self-discard switches on ${payoffToken}'s discard payoff.`,
+      bidirectional: true,
+    };
+  }
+
+  // 6 — two recursion engines mining the same discard pile.
+  if (cardRoles.includes('reanimator') && otherRoles.includes('reanimator')) {
+    return {
+      card: other,
+      score: 6,
+      explanation: `Both replay cards from your discard: two recursion engines sharing one bin.`,
+      bidirectional: true,
+    };
+  }
+
+  // 5 — same-axis density: parallel enablers, or two payoffs that do not compound.
+  return {
+    card: other,
+    score: 5,
+    explanation:
+      cardEnabler && otherEnabler
+        ? `Both fill your own discard: parallel self-discard outlets.`
+        : `Same discard-matters axis without compounding.`,
     bidirectional: true,
   };
 }

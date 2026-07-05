@@ -85,6 +85,7 @@ React web application that consumes the synergy engine package.
 - Lore Denial (`lore-denial`) - cards that make opponents lose lore
 - Location Control (`location-control`) - location-support roles (9 sub-rules)
 - Discard (`discard`) - opponent discard enablers + hand-size payoffs
+- Self-Discard (`self-discard`) - discard your OWN cards (loot / discard-cost) + reanimator (play from discard) + discard-state payoffs (player-side mirror of Discard)
 - Ramp (`ramp`) - inkwell ramp + inkwell triggers + cost reduction grants
 - Toys (`toy`) - Toy-classification members + tribal payoffs (search, banish-trigger, self-discount)
 - Sacrifice (`sacrifice`) - self-banish cards (banish your own characters) + banish-trigger payoffs
@@ -444,6 +445,31 @@ Turning Red tribe (Set 13). Intentionally thin: one tribal payoff plus members. 
 Red Panda's other connections (Meilin/Ming named-companions, Red Panda Shift) come from Rules 1 and 2; this rule only adds the tribal-fetch axis.
 
 **Full documentation**: See [`packages/synergy-engine/RED_PANDA_RULE.md`](packages/synergy-engine/RED_PANDA_RULE.md).
+
+### Rule 14: Self-Discard (playstyle: "Discard Matters" player-side, three roles)
+
+Player-side mirror of the opponent-facing Discard rule (Rule 4): discard your OWN cards, then cash them in. Fills the "recursion role" that `makeSearchPattern` deferred ("from your discard ... Recursion deserves its own role"). Mirrors the Sacrifice structure (enabler feeds payoff).
+
+**Roles** (`getSelfDiscardRoles`):
+- **enabler** — a hand-discard OUTLET: loot (`/draw (a|\d+) cards?,? then (choose and )?discard/`), discard-your-hand (`/discard your hand/`), or discard-as-cost (`/discard (a|an|another|\d+) (\w+ ){0,2}?cards?/`, kept tight so it doesn't over-tag narrow conditional costs). Gated with `!/opponent|each player|.../` so it stays disjoint from the Discard rule.
+- **reanimator** — play/return a card from your discard (`/(play|return|put)[^.]{0,60} from your discard/`), the deep recursion payoff.
+- **state-payoff** — `/discarded a card this turn|no cards in (your )?hand/` (discard-event + Hellbent empty-hand).
+
+**Excludes**: opponent discard (Rule 4's domain), and mill (`into your discard` fills the bin from the deck, not the hand — 3 rotation cards; mill feeds pull-from-discard reanimators but never triggers "when you discard" payoffs).
+
+**Scoring** (5-baseline):
+
+| Pair | Score | Explanation |
+|------|-------|-------------|
+| enabler ↔ payoff (reanimator or state) | **8** | Win-condition: discard, then replay it from the bin, or flip the discard-state payoff on demand |
+| reanimator ↔ reanimator | **6** | Two recursion engines mining one discard pile |
+| enabler ↔ enabler / reanimator ↔ state / state ↔ state | **5** | Same-axis density, no compounding |
+
+Combo explanation uses `{A}`/`{B}` token-swap so the enabler always reads as the actor.
+
+**Coverage**: 142 cards (59 enabler + 78 reanimator + 8 state-payoff; roles overlap on multi-role cards like Rapunzel & Flynn Rider). 7,613 unique pairs after the ink filter: 55% at 8, 27% at 6, 18% at 5. The high 8-share is structural, recursion is one of the deepest payoff pools in the game.
+
+**Full documentation**: See [`packages/synergy-engine/SELF_DISCARD_RULE.md`](packages/synergy-engine/SELF_DISCARD_RULE.md).
 
 ## Commands
 

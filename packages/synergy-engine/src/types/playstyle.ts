@@ -6,6 +6,7 @@ export type PlaystyleId =
   | 'lore-denial'
   | 'location-control'
   | 'discard'
+  | 'self-discard'
   | 'ramp'
   | 'toy'
   | 'sacrifice'
@@ -19,9 +20,6 @@ export type PlaystyleId =
 export interface Playstyle {
   id: PlaystyleId;
   name: string;
-  /** One-sentence headline shown in narrow contexts (modal, search snippets). */
+  /** One-sentence headline shown in narrow contexts (modal, search snippets, group meta). */
   tagline: string;
-  /** Multi-sentence body shown in detail contexts (playstyle gallery, strategy guide). */
-  description: string;
-  strategyTips: string[]; // Deck-building advice specific to this archetype
 }
