@@ -56,6 +56,11 @@ const playstyles: Playstyle[] = [
     name: 'Red Panda',
     tagline: 'A small Turning Red tribe built around the Lee family.',
   },
+  {
+    id: 'items',
+    name: 'Items',
+    tagline: 'Flood the board with items and cash in the payoffs that reward playing them.',
+  },
 ];
 
 const playstyleMap = new Map(playstyles.map((p) => [p.id, p]));

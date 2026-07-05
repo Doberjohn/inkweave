@@ -52,6 +52,7 @@ const RULE_ORDER = [
   'VINELINGS_RULE.md',
   'HUNNY_RULE.md',
   'RED_PANDA_RULE.md',
+  'ITEMS_RULE.md',
   'REMOVED_RULES.md',
 ];
 

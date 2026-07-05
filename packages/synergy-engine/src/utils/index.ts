@@ -47,6 +47,8 @@ export {
   isHunnyCard,
   getRedPandaRoles,
   isRedPandaCard,
+  getItemRoles,
+  isItemCard,
   isBoostBeneficiaryLocation,
   getLoreDenialRoles,
   isLoreDenialCard,
@@ -66,6 +68,7 @@ export type {
   FloodbornRole,
   HunnyRole,
   RedPandaRole,
+  ItemRole,
   LoreDenialRole,
 } from './cardHelpers.js';
 

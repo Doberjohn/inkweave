@@ -11,6 +11,7 @@ import type {
   FloodbornRole,
   HunnyRole,
   RedPandaRole,
+  ItemRole,
 } from './cardHelpers.js';
 import {
   normalizeCardText,
@@ -157,6 +158,10 @@ export const STRUCTURAL_MECHANICS: Mechanic[] = [
   {id: 'enabler', category: 'structural', label: 'Discard then Draw', description: 'Discard your own cards from hand (loot, discard your hand, or as a cost)'},
   {id: 'reanimator', category: 'structural', label: 'Play from Discard', description: 'Play or return a card from your discard'},
   {id: 'state-payoff', category: 'structural', label: 'Discard Benefits', description: 'Get benefits for discarding a card or having an empty hand'},
+  // Items
+  {id: 'item-engine', category: 'structural', label: 'Item Engine', description: 'Search, replay, or discount items to keep playing more'},
+  {id: 'payoff-trigger', category: 'structural', label: 'Item Trigger', description: 'Triggers an effect whenever you play an item'},
+  {id: 'payoff-static', category: 'structural', label: 'Item Payoff', description: 'Rewards having items in play or counts your items'},
   // Sacrifice
   {id: 'self-banish', category: 'structural', label: 'Self-Banish', description: 'Banish your own characters on demand'},
   {id: 'banish-trigger', category: 'structural', label: 'Banish Trigger', description: 'Get a benefit when your characters are banished'},
@@ -237,7 +242,8 @@ type StructuralRoleId =
   | DwarfsRole
   | FloodbornRole
   | HunnyRole
-  | RedPandaRole;
+  | RedPandaRole
+  | ItemRole;
 
 /**
  * Every structural role id, flagged `true` when it surfaces as a display tile (and
@@ -259,6 +265,9 @@ export const STRUCTURAL_ROLE_DISPLAY: Record<StructuralRoleId, boolean> = {
   enabler: true,
   reanimator: true,
   'state-payoff': true,
+  'item-engine': true,
+  'payoff-trigger': true,
+  'payoff-static': true,
   'inkwell-ramp': true,
   'inkwell-trigger': true,
   'cost-reduction': true,

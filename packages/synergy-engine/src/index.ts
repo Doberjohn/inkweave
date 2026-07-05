@@ -88,6 +88,8 @@ export {
   isHunnyCard,
   getRedPandaRoles,
   isRedPandaCard,
+  getItemRoles,
+  isItemCard,
   MECHANICS,
   STRUCTURAL_MECHANICS,
   MECHANIC_BY_ID,
@@ -110,5 +112,6 @@ export type {
   FloodbornRole,
   HunnyRole,
   RedPandaRole,
+  ItemRole,
   LorcanaJSONCard,
 } from './utils';

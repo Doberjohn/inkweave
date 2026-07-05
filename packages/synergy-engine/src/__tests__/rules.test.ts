@@ -25,6 +25,8 @@ import {
   getHunnyRoles,
   isHunnyCard,
   getRedPandaRoles,
+  getItemRoles,
+  isItemCard,
 } from '../utils';
 import {createCard} from './fixtures.js';
 
@@ -88,6 +90,53 @@ describe('Synergy Rules', () => {
       const m2 = createCard({id: 'meilin-lv', name: 'Meilin Lee', cost: 1, classifications: ['Red Panda'], text: 'Has Singer.'});
       expect(scoreWith(member, m2)?.score).toBe(5);
     });
+  });
+
+  describe('Items detection', () => {
+    const bareItem = createCard({id: 'blue-smoke', name: 'Blue Smoke', type: 'Item', cost: 2, text: 'If you have a character named Darkwing Duck in play, you pay 1 ⬡ less to play this item.'});
+    const trigger = createCard({id: 'norton', name: 'Norton Nimnul', cost: 5, text: 'DEVITALIZER RAY Once during your turn, whenever you play an item, chosen opposing character gets -2 ¤ this turn.'});
+    const staticPayoff = createCard({id: 'dug', name: 'Dug', cost: 3, text: 'When you play this character, if you have an item in play, draw a card.'});
+    const engine = createCard({id: 'gadget', name: 'Gadget Hackwrench', cost: 4, text: 'When you play this character, you may play an item with cost 3 or less for free.'});
+    const recursionItem = createCard({id: 'shepherd', name: "Shepherd's Journal", type: 'Item', cost: 3, text: '⟳, Banish this item, Return an item card from your discard to your hand.'});
+    const removal = createCard({id: 'wildcat', name: 'Wildcat', cost: 3, text: 'DISASSEMBLE ⟳ — Banish chosen item.'});
+
+    it('tags a plain item as member only (self-discount is not an engine)', () => {
+      expect(getItemRoles(bareItem)).toEqual(['member']);
+    });
+    it('detects the "whenever you play an item" trigger payoff', () => {
+      expect(getItemRoles(trigger)).toEqual(['payoff-trigger']);
+    });
+    it('detects the "if you have an item in play" static payoff', () => {
+      expect(getItemRoles(staticPayoff)).toEqual(['payoff-static']);
+    });
+    it('detects a free-play item engine', () => {
+      expect(getItemRoles(engine)).toEqual(['item-engine']);
+    });
+    it('tags an item that recurs items as member + engine', () => {
+      expect(getItemRoles(recursionItem)).toEqual(['member', 'item-engine']);
+    });
+    it('excludes item removal ("banish chosen item")', () => {
+      expect(isItemCard(removal)).toBe(false);
+    });
+  });
+
+  describe('Items rule (payoff-anchored)', () => {
+    const rule = getRuleById('items')!;
+    const item = createCard({id: 'item-a', name: 'Lantern', type: 'Item', cost: 2, text: 'The next character you play this turn costs 1 ⬡ less.'});
+    const item2 = createCard({id: 'item-b', name: 'Magic Mirror', type: 'Item', cost: 3, text: 'Draw a card.'});
+    const trigger = createCard({id: 'norton', name: 'Norton Nimnul', cost: 5, text: 'Once during your turn, whenever you play an item, chosen opposing character gets -2 ¤ this turn.'});
+    const trigger2 = createCard({id: 'alpha', name: 'Alpha', cost: 4, text: 'Whenever you play an item, chosen character gets +1 ¤ and Resist +1 this turn.'});
+    const staticPayoff = createCard({id: 'dug', name: 'Dug', cost: 3, text: 'When you play this character, if you have an item in play, draw a card.'});
+    const engine = createCard({id: 'gadget', name: 'Gadget Hackwrench', cost: 4, text: 'When you play this character, you may play an item with cost 3 or less for free.'});
+    const engine2 = createCard({id: 'pluto', name: 'Pluto', cost: 3, text: 'Return an item card from your discard to your hand.'});
+    const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+    it('scores item-engine + payoff at 8', () => { expect(scoreWith(engine, trigger)?.score).toBe(8); });
+    it('scores member + trigger payoff at 7', () => { expect(scoreWith(item, trigger)?.score).toBe(7); });
+    it('scores payoff + payoff at 7', () => { expect(scoreWith(trigger, trigger2)?.score).toBe(7); });
+    it('scores member + static payoff at 6', () => { expect(scoreWith(item, staticPayoff)?.score).toBe(6); });
+    it('drops bare item + bare item (payoff-anchored)', () => { expect(scoreWith(item, item2)).toBeUndefined(); });
+    it('drops item-engine + item-engine (neither is a payoff)', () => { expect(scoreWith(engine, engine2)).toBeUndefined(); });
   });
 
   describe('Shift Targets', () => {

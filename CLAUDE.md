@@ -93,6 +93,7 @@ React web application that consumes the synergy engine package.
 - Floodborns (`floodborn`) - Floodborn-matters payoffs (buff + trigger), payoff-anchored against the whole Floodborn tribe
 - Hunny (`hunny`) - Winnie-the-Pooh tribe (density, search, buff)
 - Red Panda (`red-panda`) - Turning Red tribe (member + search)
+- Items (`items`) - Item Matters (Set 9-13 Inventor/artifacts axis): item members + item engine (search/recursion/cost-reduction) + payoffs that reward playing items; payoff-anchored, Sapphire-heavy
 
 **Synergy Score**: 1-10 numeric scale (all integers valid). Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4)
 
@@ -470,6 +471,26 @@ Combo explanation uses `{A}`/`{B}` token-swap so the enabler always reads as the
 **Coverage**: 142 cards (59 enabler + 78 reanimator + 8 state-payoff; roles overlap on multi-role cards like Rapunzel & Flynn Rider). 7,613 unique pairs after the ink filter: 55% at 8, 27% at 6, 18% at 5. The high 8-share is structural, recursion is one of the deepest payoff pools in the game.
 
 **Full documentation**: See [`packages/synergy-engine/SELF_DISCARD_RULE.md`](packages/synergy-engine/SELF_DISCARD_RULE.md).
+
+### Rule 15: Items (playstyle: "Item Matters", payoff-anchored)
+
+Set 9-13 Inventor / artifacts axis: play a lot of items, cash in the payoffs. **Payoff-anchored like Floodborn** (a pair scores only when one side is an item payoff; the 82-item pool never self-pairs, which would emit thousands of density pairs).
+
+**Roles** (`getItemRoles`): `member` (any Item card); `item-engine` (tutor/search items, return items from discard, or discount OTHER items — self-discount on "this item" is gated out, so a self-discounting item stays a plain member); `payoff-trigger` (`/whenever you play an item/i`); `payoff-static` ("for each item", "while/if you have an item in play"). Multi-role allowed (an item that recurs items is member+item-engine). **Excludes** item removal ("banish chosen item", the opposite axis).
+
+**Scoring** (8/7/6, 5-baseline; highest applicable bucket wins):
+
+| Pair | Score |
+|------|-------|
+| item-engine ↔ payoff (trigger or static) | **8** |
+| payoff ↔ payoff | **7** |
+| member ↔ payoff-trigger | **7** |
+| member ↔ payoff-static | **6** |
+| item-engine / member density (neither side a payoff) | (not generated) |
+
+**Coverage**: 3,443 pairs (8: 514 / 7: 850 / 6: 2,079). Sapphire-concentrated (6 of 7 rotation payoffs are Sapphire). The item engine overlaps Ramp (cost-reduction), Self-Discard (recursion), and Sacrifice (Ingenious Device) by design, so engine-only density is dropped here rather than double-scored.
+
+**Full documentation**: See [`packages/synergy-engine/ITEMS_RULE.md`](packages/synergy-engine/ITEMS_RULE.md).
 
 ## Commands
 

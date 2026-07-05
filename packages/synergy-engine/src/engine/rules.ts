@@ -32,6 +32,8 @@ import {
   isHunnyCard,
   getRedPandaRoles,
   isRedPandaCard,
+  getItemRoles,
+  isItemCard,
   isLoreDenialCard,
   getLoreDenialRoles,
   getSacrificeRoles,
@@ -54,6 +56,7 @@ import {
   type FloodbornRole,
   type HunnyRole,
   type RedPandaRole,
+  type ItemRole,
 } from '../utils';
 
 // ============================================
@@ -1080,6 +1083,30 @@ export const synergyRules: SynergyRule[] = [
   },
 
   // --------------------------------------------
+  // ITEMS (Item Matters, payoff-anchored)
+  // --------------------------------------------
+  {
+    id: 'items',
+    name: 'Items',
+    category: 'playstyle',
+    playstyleId: 'items',
+    description:
+      'The Set 9-13 Inventor / artifacts axis: item members, the item engine (search / recursion / cost-reduction), and the payoffs that reward playing or having items. Payoff-anchored: two plain item cards do not synergize with each other.',
+
+    matches: isItemCard,
+
+    // Payoff-anchored (like Floodborn): a pair scores only when at least one side is an
+    // item payoff. Pure density (item x item, item x engine, engine x engine) is dropped —
+    // those engine connections already surface via Ramp / Self-Discard.
+    findSynergies: (card, allCards) =>
+      tribalFindSynergies(card, allCards, getItemRoles, (cardRoles, otherRoles) =>
+        isItemPayoff(cardRoles) || isItemPayoff(otherRoles)
+          ? scoreItemPair(cardRoles, otherRoles)
+          : null,
+      ),
+  },
+
+  // --------------------------------------------
   // HUNNY TRIBAL
   // --------------------------------------------
   {
@@ -1716,6 +1743,45 @@ function scoreFloodbornPair(
     return {score: 7, explanation: 'The Floodborn body fires the repeating payoff trigger.'};
   }
   return {score: 6, explanation: 'The Floodborn body is pumped by the team buff.'};
+}
+
+// ============================================
+// ITEMS SCORING (Item Matters, payoff-anchored, 5-baseline)
+// ============================================
+
+/** A payoff side rewards item volume, either a repeating trigger or a static/count check. */
+const isItemPayoff = (roles: ItemRole[]): boolean =>
+  roles.includes('payoff-trigger') || roles.includes('payoff-static');
+
+/**
+ * Score an Item-Matters pair. findSynergies only calls this when at least one side is a
+ * payoff (payoff-anchored), so every pair resolves to 8/7/6. Cards are multi-role (an item
+ * that recurs items is member+item-engine), so the HIGHEST applicable bucket wins:
+ *   item-engine x payoff (trigger|static)  = 8  the engine floods items, each firing the payoff
+ *   payoff      x payoff                    = 7  two payoffs stack on one item flood
+ *   member      x payoff-trigger            = 7  the item body fires the repeating "whenever you play an item"
+ *   member      x payoff-static             = 6  the item satisfies the "have an item in play" check
+ * The trailing `return 5` is an unreachable guard — the payoff gate guarantees a match above.
+ */
+function scoreItemPair(
+  cardRoles: ItemRole[],
+  otherRoles: ItemRole[],
+): {score: number; explanation: string} {
+  const has = crossMatcher(cardRoles, otherRoles);
+
+  if (has('item-engine', 'payoff-trigger') || has('item-engine', 'payoff-static')) {
+    return {score: 8, explanation: 'The item engine floods the board, and every item it plays fires the payoff.'};
+  }
+  if (isItemPayoff(cardRoles) && isItemPayoff(otherRoles)) {
+    return {score: 7, explanation: 'Two item payoffs stack on the same item flood.'};
+  }
+  if (has('member', 'payoff-trigger')) {
+    return {score: 7, explanation: 'Playing the item fires the repeating "whenever you play an item" payoff.'};
+  }
+  if (has('member', 'payoff-static')) {
+    return {score: 6, explanation: 'The item in play turns on the "have an item in play" payoff.'};
+  }
+  return {score: 5, explanation: 'Parallel item-engine pieces on the same axis, no direct combo.'};
 }
 
 // ============================================

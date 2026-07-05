@@ -13,7 +13,8 @@ export type PlaystyleId =
   | 'dwarfs'
   | 'floodborn'
   | 'hunny'
-  | 'red-panda';
+  | 'red-panda'
+  | 'items';
 
 // A playstyle groups related synergy rules that reinforce the same way of playing.
 // The more cards supporting a playstyle, the more consistent the deck becomes.

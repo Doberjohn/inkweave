@@ -13,6 +13,7 @@ import {
   getFloodbornRoles,
   getHunnyRoles,
   getRedPandaRoles,
+  getItemRoles,
   getCardMechanics,
   STRUCTURAL_ROLE_TO_MECHANIC,
   mechanicLabel,
@@ -216,6 +217,7 @@ const ROLE_CONFIGS: Record<PlaystyleId, RoleConfig> = {
   floodborn: {getRoles: (card) => getFloodbornRoles(card).filter((r) => r !== 'member')},
   hunny: {getRoles: (card) => getHunnyRoles(card).filter((r) => r !== 'member')},
   'red-panda': {getRoles: (card) => getRedPandaRoles(card).filter((r) => r !== 'member')},
+  items: {getRoles: (card) => getItemRoles(card).filter((r) => r !== 'member')},
 };
 
 /**
@@ -862,6 +864,7 @@ function PlaystyleDetailDesktopView({
               tiles={roleChips.map(toRoleTile)}
               activeRoles={activeRoles}
               onToggle={toggleRole}
+              showDescriptions={false}
             />
             <hr
               aria-hidden="true"
