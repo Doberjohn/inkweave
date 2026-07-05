@@ -4,6 +4,7 @@ import {
   getPlaystyleById,
   getLocationRoles,
   getDiscardRoles,
+  getSelfDiscardRoles,
   getSacrificeRoles,
   getRampRoles,
   getLoreDenialRoles,
@@ -195,7 +196,7 @@ interface RoleConfig {
  * so the same mechanic reads identically in every playstyle. `member` is structural
  * membership, not a displayed mechanic, so it's filtered out. See MECHANICS_TAXONOMY.md.
  */
-const ROLE_CONFIGS: Partial<Record<PlaystyleId, RoleConfig>> = {
+const ROLE_CONFIGS: Record<PlaystyleId, RoleConfig> = {
   'location-control': {
     getRoles: (card) => getLocationRoles(card),
     extraChips: (cards) => {
@@ -206,6 +207,7 @@ const ROLE_CONFIGS: Partial<Record<PlaystyleId, RoleConfig>> = {
     },
   },
   discard: {getRoles: (card) => getDiscardRoles(card)},
+  'self-discard': {getRoles: (card) => getSelfDiscardRoles(card)},
   sacrifice: {getRoles: (card) => getSacrificeRoles(card)},
   ramp: {getRoles: (card) => getRampRoles(card)},
   'lore-denial': {getRoles: (card) => getLoreDenialRoles(card)},
