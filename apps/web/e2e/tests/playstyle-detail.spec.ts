@@ -7,42 +7,17 @@ test.describe('Playstyle Detail — Desktop', () => {
     await page.waitForTimeout(500);
   });
 
-  test('should render hero with name, description, and breadcrumb', async ({page}) => {
+  test('should render hero with name and breadcrumb', async ({page}) => {
     // Page heading (h1) with playstyle name
     const heading = page.getByRole('heading', {level: 1});
     await expect(heading).toBeVisible({timeout: 10000});
     await expect(heading).toContainText('Discard');
-
-    // Description paragraph should be visible
-    const description = page.getByText(/discard cards/i).first();
-    await expect(description).toBeVisible();
 
     // Breadcrumb nav with "Playstyles" link (exclude the main nav header)
     const breadcrumb = page.locator('section nav').filter({hasText: 'Playstyles'});
     await expect(breadcrumb).toBeVisible();
     const playstyleLink = breadcrumb.getByRole('link', {name: 'Playstyles'});
     await expect(playstyleLink).toBeVisible();
-  });
-
-  test('should toggle strategy tips section', async ({page}) => {
-    // Strategy Tips toggle button
-    const tipsButton = page.getByRole('button', {name: /Strategy Tips/});
-    await expect(tipsButton).toBeVisible({timeout: 10000});
-
-    // Click to open tips
-    await tipsButton.click();
-    await page.waitForTimeout(200);
-
-    // After clicking, tips list should be visible (contains <li> elements)
-    const visibleTips = page.locator('section ul li');
-    await expect(visibleTips.first()).toBeVisible({timeout: 3000});
-
-    // Click again to close
-    await tipsButton.click();
-    await page.waitForTimeout(200);
-
-    // Tips should be hidden
-    await expect(visibleTips.first()).not.toBeVisible();
   });
 
   test('should show and use role filter chips', async ({page}) => {

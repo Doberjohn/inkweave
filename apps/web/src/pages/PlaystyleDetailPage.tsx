@@ -45,11 +45,7 @@ import {
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
-import {useResponsive, useFilterParams, usePreloadImages} from '../shared/hooks';
-
-// Feature flag: gates the "Strategy Tips" collapsible section on the hero.
-// Off by default in production (set `VITE_SHOW_STRATEGY_TIPS=true` in .env.local for dev).
-const SHOW_STRATEGY_TIPS = import.meta.env.VITE_SHOW_STRATEGY_TIPS === 'true';
+import {useResponsive, useFilterParams} from '../shared/hooks';
 
 // ── Hero layout configs ──
 
@@ -57,57 +53,38 @@ interface HeroLayout {
   padding: string;
   contentGap: number;
   headerGap: number;
-  maxDescriptionWidth: number | undefined;
   breadcrumbLinkMinHeight: number | undefined;
-  tipsMinHeight: number | undefined;
 }
 
 const HERO_DESKTOP: HeroLayout = {
   padding: '20px 32px',
   contentGap: 12,
   headerGap: 12,
-  maxDescriptionWidth: 640,
   breadcrumbLinkMinHeight: undefined,
-  tipsMinHeight: undefined,
 };
 
 const HERO_MOBILE: HeroLayout = {
   padding: '16px',
   contentGap: 10,
   headerGap: 10,
-  maxDescriptionWidth: undefined,
   breadcrumbLinkMinHeight: 44,
-  tipsMinHeight: 44,
 };
-
-// ── Hero scrim ──
-
-const HERO_SCRIM =
-  'linear-gradient(180deg, rgba(13,13,20,0.6) 0%, rgba(13,13,20,0.4) 50%, rgba(13,13,20,0.6) 100%)';
 
 // ── Hero Section ──
 
 function PlaystyleHero({
   name,
-  description,
-  tips,
   accentColor,
   accentRgb,
-  coverArt,
   layout,
   onPlaystylesBreadcrumb,
 }: {
   name: string;
-  description: string;
-  tips: string[];
   accentColor: string;
   accentRgb: string;
-  coverArt: string;
   layout: HeroLayout;
   onPlaystylesBreadcrumb: () => void;
 }) {
-  const [tipsOpen, setTipsOpen] = useState(false);
-
   return (
     <section
       style={{
@@ -129,32 +106,6 @@ function PlaystyleHero({
           zIndex: 3,
         }}
       />
-      {/* Background art with Ken Burns */}
-      <div
-        className="hero-ken-burns"
-        style={{
-          position: 'absolute',
-          inset: -20,
-          zIndex: 1,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center top',
-          backgroundImage: `linear-gradient(160deg, rgba(${accentRgb}, 0.35), transparent 70%), url(${coverArt})`,
-          opacity: 0.4,
-          filter: 'saturate(0.3) brightness(0.7)',
-          animation: 'heroKenBurns 20s ease-in-out infinite alternate',
-        }}
-      />
-      {/* Scrim */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          zIndex: 1,
-          background: HERO_SCRIM,
-          pointerEvents: 'none',
-        }}
-      />
-
       {/* Content */}
       <div
         style={{
@@ -216,88 +167,6 @@ function PlaystyleHero({
           </h1>
         </div>
 
-        {/* Description */}
-        <p
-          style={{
-            fontSize: `${FONT_SIZES.base}px`,
-            lineHeight: 1.6,
-            color: COLORS.descriptionText,
-            maxWidth: layout.maxDescriptionWidth,
-            margin: 0,
-          }}>
-          {description}
-        </p>
-
-        {/* Strategy Tips: collapsible section (hidden when no tips or when flag is off) */}
-        {SHOW_STRATEGY_TIPS && tips.length > 0 && (
-          <>
-            <button
-              onClick={() => setTipsOpen(!tipsOpen)}
-              style={{
-                fontSize: `${FONT_SIZES.base}px`,
-                fontWeight: 500,
-                color: COLORS.primary,
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 0,
-                fontFamily: FONTS.body,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                minHeight: layout.tipsMinHeight,
-                transition: 'opacity 0.15s',
-              }}>
-              <span
-                style={{
-                  fontSize: `${FONT_SIZES.xs}px`,
-                  display: 'inline-block',
-                  transform: tipsOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.2s',
-                }}>
-                &#9654;
-              </span>
-              Strategy Tips
-            </button>
-            {tipsOpen && (
-              <ul
-                style={{
-                  listStyle: 'none',
-                  padding: `${SPACING.md}px ${SPACING.lg}px`,
-                  background: `rgba(${accentRgb}, 0.08)`,
-                  borderRadius: `${RADIUS.lg}px`,
-                  border: `1px solid rgba(${accentRgb}, 0.15)`,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 8,
-                  maxWidth: layout.maxDescriptionWidth,
-                }}>
-                {tips.map((tip, i) => (
-                  <li
-                    key={i}
-                    style={{
-                      fontSize: `${FONT_SIZES.base}px`,
-                      lineHeight: 1.6,
-                      color: COLORS.descriptionText,
-                      paddingLeft: 16,
-                      position: 'relative',
-                    }}>
-                    <span
-                      style={{
-                        position: 'absolute',
-                        left: 0,
-                        color: accentColor,
-                        fontWeight: 700,
-                      }}>
-                      ·
-                    </span>
-                    {tip}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
-        )}
       </div>
     </section>
   );
@@ -540,7 +409,6 @@ function buildPlaystyleViewProps(args: {
 function useResolvedPlaystyle(playstyleId: string | undefined) {
   const playstyle = playstyleId ? getPlaystyleById(playstyleId as PlaystyleId) : undefined;
   const ui = playstyleId ? PLAYSTYLE_UI[playstyleId as PlaystyleId] : undefined;
-  usePreloadImages(ui ? [ui.coverArt] : []);
   return {playstyle, ui};
 }
 
@@ -901,11 +769,8 @@ function PlaystyleDetailMobileView({
       <div style={{position: 'relative', zIndex: 1}}>
         <PlaystyleHero
           name={playstyle.name}
-          description={playstyle.description}
-          tips={playstyle.strategyTips}
           accentColor={ui.accentColor}
           accentRgb={ui.accentRgb}
-          coverArt={ui.coverArt}
           layout={heroLayout}
           onPlaystylesBreadcrumb={goPlaystyles}
         />
@@ -983,11 +848,8 @@ function PlaystyleDetailDesktopView({
         }}>
         <PlaystyleHero
           name={playstyle.name}
-          description={playstyle.description}
-          tips={playstyle.strategyTips}
           accentColor={ui.accentColor}
           accentRgb={ui.accentRgb}
-          coverArt={ui.coverArt}
           layout={heroLayout}
           onPlaystylesBreadcrumb={goPlaystyles}
         />

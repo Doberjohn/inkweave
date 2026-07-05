@@ -22,7 +22,7 @@ import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {trackEvent} from '../shared/lib/analytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
-import {useResponsive, usePreloadImages} from '../shared/hooks';
+import {useResponsive} from '../shared/hooks';
 
 // ── Layout config (computed once, passed as concrete values) ──
 
@@ -244,11 +244,6 @@ function PlaystyleGalleryGrid({
 
 // ── Page ──
 
-const ALL_COVER_ART_URLS = [
-  ...Object.values(PLAYSTYLE_UI).map((ui) => ui.coverArt),
-  ...COMING_SOON_PLAYSTYLES.map((ps) => ps.coverArt),
-];
-
 export function PlaystyleGalleryPage() {
   const navigate = useNavigate();
   const {openCardModal} = useCardModal();
@@ -257,9 +252,6 @@ export function PlaystyleGalleryPage() {
   const {isMobile} = useResponsive();
 
   const layout = isMobile ? MOBILE_LAYOUT : DESKTOP_LAYOUT;
-
-  // Preload cover art images so CSS backgroundImage doesn't wait for render
-  usePreloadImages(ALL_COVER_ART_URLS);
 
   const handleSearchSubmit = () => {
     const q = searchQuery.trim();
