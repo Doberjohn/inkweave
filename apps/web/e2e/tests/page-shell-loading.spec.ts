@@ -47,14 +47,30 @@ test.describe('Page shell + skeleton during card-data loading', () => {
   });
 
   test('PlaystyleGalleryPage renders skeleton inside preserved shell', async ({page}) => {
-    await page.goto('/playstyles');
-    // Gallery shell (title + description) was already preserved before #268 —
-    // the regression we catch here is the grid-area skeleton replacing the inner spinner.
-    await expect(page.getByRole('heading', {level: 1, name: /playstyles/i})).toBeVisible({
-      timeout: 3000,
+    // The gallery grid is a heavy lazy tree, so under parallel-worker contention its first render
+    // can eat the fixed LOAD_DELAY_MS window and let the skeleton vanish before we assert it (the
+    // flake that blocked #444's pre-push). Instead of racing the clock, HOLD allCards.json open
+    // until the skeleton is asserted, then release it — the loading state is then deterministic.
+    // This per-test route is registered after the beforeEach one, so it wins for allCards.json
+    // (Playwright resolves routes last-registered-first); synergies/*.json still use the delay.
+    let releaseCardData = () => {};
+    const cardDataHeld = new Promise<void>((resolve) => {
+      releaseCardData = resolve;
     });
-    await expect(page.locator('[aria-label="Loading playstyles"]')).toBeVisible({timeout: 3000});
-    // Once data loads, the loading-skeleton region is gone
+    await page.route(/\/data\/allCards.*\.json/, async (route) => {
+      await cardDataHeld;
+      await route.continue();
+    });
+
+    await page.goto('/playstyles');
+    // Data is held open → the loading skeleton is guaranteed present, and the shell (title +
+    // description) is preserved around it — the regression we catch here is the grid-area
+    // skeleton replacing the inner spinner, not the shell itself.
+    await expect(page.locator('[aria-label="Loading playstyles"]')).toBeVisible({timeout: 5000});
+    await expect(page.getByRole('heading', {level: 1, name: /playstyles/i})).toBeVisible();
+
+    // Release the data; once it loads, the loading-skeleton region is gone.
+    releaseCardData();
     await expect(page.locator('[aria-label="Loading playstyles"]')).toBeHidden({timeout: 15000});
   });
 
