@@ -41,9 +41,9 @@ export function FilterDialog({
         overlay: {
           position: 'fixed',
           inset: 0,
-          background: 'rgba(0, 0, 0, 0.6)',
+          // Solid scrim only — no backdrop-filter (WebKit continuous-repaint trap; see #444).
+          background: 'rgba(0, 0, 0, 0.72)',
           zIndex: Z_INDEX.modalBackdrop,
-          backdropFilter: 'blur(4px)',
         },
         content: {
           position: 'fixed',
