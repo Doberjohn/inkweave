@@ -29,7 +29,6 @@ export const Floodborns: Story = {
     name: 'Floodborns',
     accentColor: '#6b7280',
     accentRgb: '107, 114, 128',
-    cardCount: 119,
     heroCard: card(13197, 'The Vine - Towering Stalk'),
     supportCards: [
       card(13115, 'Gaston - Created by the Vine'),
@@ -46,7 +45,6 @@ export const RedPanda: Story = {
     name: 'Red Panda',
     accentColor: '#ef4444',
     accentRgb: '239, 68, 68',
-    cardCount: 8,
     heroCard: card(13125, 'Meilin Lee - Popular Red Panda'),
     supportCards: [
       card(13007, 'Meilin Lee - Lead Vocalist'),

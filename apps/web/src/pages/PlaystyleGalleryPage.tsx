@@ -49,7 +49,6 @@ const MOBILE_LAYOUT: LayoutConfig = {
 type ActivePlaystyleEntry = {
   playstyle: Playstyle;
   ui: PlaystyleUiMeta;
-  cardCount: number;
   allCards: LorcanaCard[];
 };
 
@@ -65,7 +64,7 @@ function buildActivePlaystyles(playstyleCardData: PlaystyleCardData): ActivePlay
     .map((ps) => {
       const ui = PLAYSTYLE_UI[ps.id];
       const psData = playstyleCardData.get(ps.id);
-      return {playstyle: ps, ui, cardCount: psData?.count ?? 0, allCards: psData?.allCards ?? []};
+      return {playstyle: ps, ui, allCards: psData?.allCards ?? []};
     });
 }
 
@@ -211,9 +210,11 @@ function PlaystyleGalleryGrid({
   getCardById: (id: string) => LorcanaCard | undefined;
 }) {
   if (isLoading) return <PlaystyleGalleryLoadingGrid isMobile={isMobile} />;
-  const mechanics = activePlaystyles.filter((e) => e.ui.kind === 'mechanic');
-  const tribes = activePlaystyles.filter((e) => e.ui.kind === 'tribe');
-  const renderTile = ({playstyle, ui, cardCount, allCards}: ActivePlaystyleEntry) => {
+  const byName = (a: ActivePlaystyleEntry, b: ActivePlaystyleEntry) =>
+    a.playstyle.name.localeCompare(b.playstyle.name);
+  const mechanics = activePlaystyles.filter((e) => e.ui.kind === 'mechanic').sort(byName);
+  const tribes = activePlaystyles.filter((e) => e.ui.kind === 'tribe').sort(byName);
+  const renderTile = ({playstyle, ui, allCards}: ActivePlaystyleEntry) => {
     const {heroCard, supportCards} = fanCardsFor(ui, allCards, getCardById);
     return (
       <PlaystyleFanTile
@@ -222,7 +223,6 @@ function PlaystyleGalleryGrid({
         name={playstyle.name}
         accentColor={ui.accentColor}
         accentRgb={ui.accentRgb}
-        cardCount={cardCount}
         heroCard={heroCard}
         supportCards={supportCards}
         onNavigate={onPlaystyleClick}

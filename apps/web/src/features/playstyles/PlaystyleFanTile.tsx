@@ -26,11 +26,20 @@ export interface PlaystyleFanTileProps {
   name: string;
   accentColor: string;
   accentRgb: string;
-  cardCount: number;
   heroCard: FanCardData;
   /** Up to four supporting cards; fewer renders empty card backs. */
   supportCards: FanCardData[];
   onNavigate?: (id: string) => void;
+}
+
+/** The name row: centred title over a short accent underline that widens on tile hover. */
+function NameRow({name, accentColor}: {name: string; accentColor: string}) {
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6}}>
+      <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.xl}px`, fontWeight: 600, color: COLORS.text}}>{name}</span>
+      <span className="playstyle-name-underline" style={{background: accentColor}} />
+    </div>
+  );
 }
 
 /** Unmodified primary-button click — the only case we hijack for in-app navigation. */
@@ -43,7 +52,6 @@ export function PlaystyleFanTile({
   name,
   accentColor,
   accentRgb,
-  cardCount,
   heroCard,
   supportCards,
   onNavigate,
@@ -61,7 +69,7 @@ export function PlaystyleFanTile({
     <a
       href={`/playstyles/${playstyleId}`}
       className="playstyle-fan-tile"
-      aria-label={`${name}: ${cardCount} cards`}
+      aria-label={name}
       onClick={(e) => {
         // Only hijack plain left-clicks for SPA nav; let ctrl/cmd/middle-click
         // fall through to the anchor's native open-in-new-tab behavior.
@@ -131,11 +139,7 @@ export function PlaystyleFanTile({
         </div>
       </div>
 
-      <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
-        <span style={{width: 9, height: 9, borderRadius: '50%', background: accentColor, flexShrink: 0}} />
-        <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.xl}px`, fontWeight: 600, color: COLORS.text}}>{name}</span>
-        <span style={{marginLeft: 'auto', fontSize: `${FONT_SIZES.base}px`, color: COLORS.textMuted}}>{cardCount} cards</span>
-      </div>
+      <NameRow name={name} accentColor={accentColor} />
     </a>
   );
 }

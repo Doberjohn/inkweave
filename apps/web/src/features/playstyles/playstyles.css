@@ -22,9 +22,20 @@
 .playstyle-fan-tile:hover .playstyle-fan-card {
   transform: var(--th);
 }
+/* Accent underline beneath the playstyle name; grows on tile hover. */
+.playstyle-name-underline {
+  width: 40px;
+  height: 2px;
+  border-radius: 2px;
+  transition: width 0.28s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.playstyle-fan-tile:hover .playstyle-name-underline {
+  width: 96px;
+}
 @media (prefers-reduced-motion: reduce) {
   .playstyle-fan-tile,
-  .playstyle-fan-card {
+  .playstyle-fan-card,
+  .playstyle-name-underline {
     transition: none !important;
   }
 }

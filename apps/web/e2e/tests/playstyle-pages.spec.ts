@@ -28,8 +28,8 @@ test.describe('Playstyle Pages', () => {
     const heading = page.getByRole('heading', {level: 1});
     await expect(heading).toBeVisible({timeout: 10000});
 
-    // Playstyle fan tiles are links labelled "<name>: <count> cards".
-    const playstyleCards = page.getByRole('link', {name: /: \d+ cards$/});
+    // Playstyle fan tiles are links to /playstyles/<id>.
+    const playstyleCards = page.locator('a[href^="/playstyles/"]');
     await expect(playstyleCards.first()).toBeVisible();
     const count = await playstyleCards.count();
     expect(count).toBeGreaterThanOrEqual(2); // lore-denial + location-control
@@ -39,8 +39,8 @@ test.describe('Playstyle Pages', () => {
     await page.goto('/playstyles');
     await page.waitForTimeout(500);
 
-    // Click the first playstyle fan tile (a link labelled "<name>: <count> cards").
-    const firstCard = page.getByRole('link', {name: /: \d+ cards$/}).first();
+    // Click the first playstyle fan tile (a link to /playstyles/<id>).
+    const firstCard = page.locator('a[href^="/playstyles/"]').first();
     await expect(firstCard).toBeVisible({timeout: 10000});
     await firstCard.click();
 
