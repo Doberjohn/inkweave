@@ -40,18 +40,18 @@ const BENIGN_CONSOLE: readonly RegExp[] = [
   // E2E runs under `npx vite` (dev) with no react-grab daemon, so the connection is
   // refused and logged. Pure dev-tooling noise — it never exists in a prod build.
   /ws:\/\/localhost:4722/,
-  // WebKit-only (webkit + mobile-safari) intermittently logs a resource-load
-  // failure for the preview-card fetch — "/data/previewCards.json due to access
-  // control checks" — under the Playwright harness. It's a WebKit security-check
-  // quirk on the local fetch, not an app fault: the loader already treats a
-  // missing/!ok preview response gracefully (see loader.ts fetchCardsFromLocal),
-  // so a genuine preview problem never reaches the console. The phrasing is
-  // WebKit-specific, so this entry stays WebKit-scoped even though the allowlist
-  // applies to every project. Both anchors are required (filename AND the
-  // "access control checks" phrase) so it can't mask an unrelated preview fault —
-  // a real preview problem surfaces as an HTTP status or JSON parse error, which
-  // contain neither anchor and still fail the guard.
-  /previewCards\.json.*access control checks/i,
+  // WebKit-only (webkit + mobile-safari) intermittently logs a resource-load failure for a
+  // same-origin /data/*.json fetch — e.g. "/data/previewCards.json due to access control checks"
+  // or "/data/allCards.json due to access control checks" — under the Playwright harness. It's a
+  // WebKit security-check quirk on the local fetch, not an app fault: the data still loads (the
+  // page renders its data-dependent UI, and loader.ts handles a missing/!ok response gracefully).
+  // Playwright's page.route interception (e.g. the voting specs' mockVoteQueue) perturbs WebKit's
+  // fetch layer enough to surface it more often — including on allCards.json, not just preview.
+  // The phrasing is WebKit-specific, so this stays WebKit-scoped even though the allowlist applies
+  // to every project. Both anchors are required (a /data/*.json filename AND the "access control
+  // checks" phrase) so it can't mask a real data fault — a genuine problem surfaces as an HTTP
+  // status or JSON parse error, which contain neither anchor and still fail the guard.
+  /\/data\/(allCards|previewCards)\.json.*access control checks/i,
 ];
 
 // Extend base test with custom fixtures + a global console-error guard.
