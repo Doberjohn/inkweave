@@ -31,8 +31,8 @@ function SheetBackdrop({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(4px)',
+        // Solid scrim only — no backdrop-filter (WebKit continuous-repaint trap; see #444).
+        background: 'rgba(0, 0, 0, 0.72)',
         zIndex: Z_INDEX.modalBackdrop,
       }}
     />
