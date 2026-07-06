@@ -25,7 +25,6 @@ import {
   type ItemRole,
   type HealRole,
   type ExertRole,
-  type BounceRole,
   type TribalRole,
   type TribalSpec,
 } from '../utils';
@@ -139,6 +138,20 @@ function isDiscardKillCombo(
   return (cardDisruption && otherPayoff) || (cardPayoff && otherDisruption);
 }
 
+/**
+ * Build the 8-score discard kill-combo result: a disruption enabler empties the opponent's
+ * hand, powering up the hand-size payoff. `_card` is the searcher (token {A}); `_other` is the
+ * partner ({B}), so the disruption side reads as {A} when the searcher holds it.
+ */
+function scoreDiscardKillCombo(cardDisruption: boolean): {score: number; explanation: string} {
+  const disruptionToken = cardDisruption ? '{A}' : '{B}';
+  const payoffToken = cardDisruption ? '{B}' : '{A}';
+  return {
+    score: 8,
+    explanation: `${disruptionToken} empties the opponent's hand, powering up ${payoffToken}'s hand-size edge.`,
+  };
+}
+
 export function scoreDiscardPair(
   _card: LorcanaCard,
   cardRoles: DiscardRole[],
@@ -151,13 +164,7 @@ export function scoreDiscardPair(
   const otherPayoff = otherRoles.includes('payoff');
 
   if (isDiscardKillCombo(cardDisruption, cardPayoff, otherDisruption, otherPayoff)) {
-    // _card is the searcher (modal cardA / left / token A); _other is the partner (B).
-    const disruptionToken = cardDisruption ? '{A}' : '{B}';
-    const payoffToken = cardDisruption ? '{B}' : '{A}';
-    return {
-      score: 8,
-      explanation: `${disruptionToken} empties the opponent's hand, powering up ${payoffToken}'s hand-size edge.`,
-    };
+    return scoreDiscardKillCombo(cardDisruption);
   }
 
   // Same-side pair (both disruption or both payoff): density baseline.
@@ -197,6 +204,19 @@ function isSacrificeBanishCombo(
  *
  * `_card` is the searcher (token {A}); `other` is the partner (token {B}).
  */
+/**
+ * Build the 8-score sacrifice banish-combo result. Token-swap so the SELF-BANISH side always
+ * reads as the actor: it is {A} when the searcher (card) holds the self-banish role, else {B}.
+ */
+function scoreSacrificeBanishCombo(cardSelfBanish: boolean): {score: number; explanation: string} {
+  const selfBanishToken = cardSelfBanish ? '{A}' : '{B}';
+  const payoffToken = cardSelfBanish ? '{B}' : '{A}';
+  return {
+    score: 8,
+    explanation: `${selfBanishToken} banishes your own character on demand, guaranteeing ${payoffToken}'s banish payoff.`,
+  };
+}
+
 export function scoreSacrificePair(
   _card: LorcanaCard,
   cardRoles: SacrificeRole[],
@@ -216,14 +236,7 @@ export function scoreSacrificePair(
   );
 
   if (isBanishCombo) {
-    // Token-swap so the SELF-BANISH side always reads as the actor, regardless of
-    // which card is the searcher (token {A}) and which is the partner (token {B}).
-    const selfBanishToken = cardSelfBanish ? '{A}' : '{B}';
-    const payoffToken = cardSelfBanish ? '{B}' : '{A}';
-    return {
-      score: 8,
-      explanation: `${selfBanishToken} banishes your own character on demand, guaranteeing ${payoffToken}'s banish payoff.`,
-    };
+    return scoreSacrificeBanishCombo(cardSelfBanish);
   }
 
   // Same-side pair: density baseline. Two payoffs share the banish axis without
@@ -281,6 +294,27 @@ function buildSelfDiscardPairCtx(
  * `_card` is the searcher (token {A}); `other` is the partner (token {B}). The token-swap keeps
  * the enabler side reading as the actor regardless of which card is the searcher.
  */
+/**
+ * Build the 8-score self-discard combo result: an enabler on one side, a payoff on the
+ * other. Token-swap keeps the enabler reading as {A} when the searcher is the enabler; the
+ * explanation branches on whether the payoff side is a reanimator or a discard-state payoff.
+ */
+function scoreSelfDiscardCombo(
+  ctx: SelfDiscardPairCtx,
+  cardRoles: SelfDiscardRole[],
+  otherRoles: SelfDiscardRole[],
+): {score: number; explanation: string} {
+  const enablerToken = ctx.cardEnabler ? '{A}' : '{B}';
+  const payoffToken = ctx.cardEnabler ? '{B}' : '{A}';
+  const payoffRoles = ctx.cardEnabler ? otherRoles : cardRoles;
+  return {
+    score: 8,
+    explanation: payoffRoles.includes('reanimator')
+      ? `${enablerToken} discards your own cards so ${payoffToken} can replay them from the discard.`
+      : `${enablerToken}'s self-discard switches on ${payoffToken}'s discard payoff.`,
+  };
+}
+
 export function scoreSelfDiscardPair(
   _card: LorcanaCard,
   cardRoles: SelfDiscardRole[],
@@ -291,15 +325,7 @@ export function scoreSelfDiscardPair(
 
   // 8 — win-condition combo: an enabler on one side, a payoff (reanimator or state) on the other.
   if (ctx.isCombo) {
-    const enablerToken = ctx.cardEnabler ? '{A}' : '{B}';
-    const payoffToken = ctx.cardEnabler ? '{B}' : '{A}';
-    const payoffRoles = ctx.cardEnabler ? otherRoles : cardRoles;
-    return {
-      score: 8,
-      explanation: payoffRoles.includes('reanimator')
-        ? `${enablerToken} discards your own cards so ${payoffToken} can replay them from the discard.`
-        : `${enablerToken}'s self-discard switches on ${payoffToken}'s discard payoff.`,
-    };
+    return scoreSelfDiscardCombo(ctx, cardRoles, otherRoles);
   }
 
   // 6 — two recursion engines mining the same discard pile.
@@ -335,6 +361,21 @@ export function scoreSelfDiscardPair(
  *   - burn ↔ steal  = 6 (complementary — pressure + race-close)
  *   - steal ↔ steal = 7 (double swing engine — every trigger advances both axes)
  */
+/**
+ * Score the mixed burn ↔ steal Lore Denial pair (6). A is the searcher (modal cardA /
+ * left card), B is the partner; the token-swap keeps burn and steal reading correctly
+ * based on which role the searcher holds.
+ */
+function scoreLoreDenialMixed(roleA: LoreDenialRole): {score: number; explanation: string} {
+  const burnIsA = roleA === 'burn';
+  const burnToken = burnIsA ? '{A}' : '{B}';
+  const stealToken = burnIsA ? '{B}' : '{A}';
+  return {
+    score: 6,
+    explanation: `${burnToken} pushes opponents down. ${stealToken} pulls you up. Both ends pressed.`,
+  };
+}
+
 export function scoreLoreDenialPair(
   roleA: LoreDenialRole,
   roleB: LoreDenialRole,
@@ -353,15 +394,7 @@ export function scoreLoreDenialPair(
       explanation: `Both make opponents lose lore. Stacks the denial pressure.`,
     };
   }
-  // Mixed pair — A is the searcher (modal cardA / left card), B is the partner. Compute
-  // which token corresponds to burn vs steal based on which role the searcher holds.
-  const burnIsA = roleA === 'burn';
-  const burnToken = burnIsA ? '{A}' : '{B}';
-  const stealToken = burnIsA ? '{B}' : '{A}';
-  return {
-    score: 6,
-    explanation: `${burnToken} pushes opponents down. ${stealToken} pulls you up. Both ends pressed.`,
-  };
+  return scoreLoreDenialMixed(roleA);
 }
 
 // ============================================
@@ -450,6 +483,14 @@ function scoreRampTriggerChain(rampCard: LorcanaCard, triggerCard: LorcanaCard):
 }
 
 /**
+ * Score the cost-reduction ↔ cost-reduction pair: 6 when both discounts target the same
+ * card type (stacking discounts), 0 (silently dropped) when they target disjoint types.
+ */
+function scoreRampCostPair(cardA: LorcanaCard, cardB: LorcanaCard): number {
+  return costReductionTargetsOverlap(cardA, cardB) ? 6 : 0;
+}
+
+/**
  * Score a ramp pair based on their roles and sub-patterns.
  *
  * Convention: 5 = same-strategy density baseline, no compounding interaction.
@@ -474,7 +515,7 @@ export function getRampPairScore(
   const flags = classifyRampPair(cardA, rolesA, cardB, rolesB);
   if (flags.shape === 'ramp-trigger')
     return scoreRampTriggerChain(flags.rampCard, flags.triggerCard);
-  if (flags.shape === 'cost-cost') return costReductionTargetsOverlap(cardA, cardB) ? 6 : 0;
+  if (flags.shape === 'cost-cost') return scoreRampCostPair(cardA, cardB);
   return 5;
 }
 
@@ -671,23 +712,11 @@ function buildDwarfsPairCtx(cardRoles: DwarfsRole[], otherRoles: DwarfsRole[]): 
  * Multi-role cards matter here: Right Behind You is BOTH recruit and density, so the
  * precedence order decides which tier wins when it pairs with a member.
  */
-export function scoreDwarfsPair(
-  _card: LorcanaCard,
-  cardRoles: DwarfsRole[],
-  _other: LorcanaCard,
-  otherRoles: DwarfsRole[],
-): DwarfsPairResult {
-  const ctx = buildDwarfsPairCtx(cardRoles, otherRoles);
-
-  // 8 — a free recruit cheats a Dwarf onto the board (check first so a recruit+density
-  // card like Right Behind You scores 8, not 7, against a member).
-  if (ctx.cross('recruit', 'member') || ctx.cross('recruit', 'density')) {
-    return {
-      score: 8,
-      explanation: `A free recruit cheats a Seven Dwarfs character onto the board.`,
-    };
-  }
-
+/**
+ * Score the Seven Dwarfs 7/5 tiers, reached only after the recruit combo (8) misses.
+ * Split out of scoreDwarfsPair so the top-level scorer stays a flat recruit → lower sequence.
+ */
+function scoreDwarfsLowerTiers(ctx: DwarfsPairCtx): DwarfsPairResult {
   // 7 — compounding density payoffs, or a member feeding a payoff.
   if (ctx.cross('density', 'density')) {
     return {score: 7, explanation: `Both reward Seven Dwarfs density — the payoffs compound.`};
@@ -705,6 +734,26 @@ export function scoreDwarfsPair(
   return {score: 5, explanation: `Both share the Seven Dwarfs deck. Density baseline.`};
 }
 
+export function scoreDwarfsPair(
+  _card: LorcanaCard,
+  cardRoles: DwarfsRole[],
+  _other: LorcanaCard,
+  otherRoles: DwarfsRole[],
+): DwarfsPairResult {
+  const ctx = buildDwarfsPairCtx(cardRoles, otherRoles);
+
+  // 8 — a free recruit cheats a Dwarf onto the board (check first so a recruit+density
+  // card like Right Behind You scores 8, not 7, against a member).
+  if (ctx.cross('recruit', 'member') || ctx.cross('recruit', 'density')) {
+    return {
+      score: 8,
+      explanation: `A free recruit cheats a Seven Dwarfs character onto the board.`,
+    };
+  }
+
+  return scoreDwarfsLowerTiers(ctx);
+}
+
 // ============================================
 // FLOODBORNS SCORING (payoff-anchored, 5-baseline)
 // ============================================
@@ -719,6 +768,19 @@ export const isFloodbornPayoff = (roles: FloodbornRole[]): boolean =>
  *   - member <-> trigger payoff   = 7 (the body fires the repeating trigger)
  *   - member <-> buff payoff      = 6 (the body is pumped by the team buff)
  */
+/**
+ * Score a member ↔ single-payoff Floodborn pair (exactly one side is a payoff): 7 when the
+ * payoff is a repeating trigger the body fires, 6 when it is a team buff pumping the body.
+ */
+function scoreFloodbornMemberPayoff(
+  payoffRoles: FloodbornRole[],
+): {score: number; explanation: string} {
+  if (payoffRoles.includes('trigger')) {
+    return {score: 7, explanation: 'The Floodborn body fires the repeating payoff trigger.'};
+  }
+  return {score: 6, explanation: 'The Floodborn body is pumped by the team buff.'};
+}
+
 export function scoreFloodbornPair(
   cardRoles: FloodbornRole[],
   otherRoles: FloodbornRole[],
@@ -730,11 +792,7 @@ export function scoreFloodbornPair(
     return {score: 7, explanation: 'Both reward a wide Floodborn board, so the payoffs stack.'};
   }
   // Exactly one side is a payoff; the other is a member only.
-  const payoffRoles = cardPayoff ? cardRoles : otherRoles;
-  if (payoffRoles.includes('trigger')) {
-    return {score: 7, explanation: 'The Floodborn body fires the repeating payoff trigger.'};
-  }
-  return {score: 6, explanation: 'The Floodborn body is pumped by the team buff.'};
+  return scoreFloodbornMemberPayoff(cardPayoff ? cardRoles : otherRoles);
 }
 
 // ============================================
@@ -744,6 +802,11 @@ export function scoreFloodbornPair(
 /** A payoff side rewards item volume, either a repeating trigger or a static/count check. */
 export const isItemPayoff = (roles: ItemRole[]): boolean =>
   roles.includes('payoff-trigger') || roles.includes('payoff-static');
+
+/** The peak item chain: an item engine on one side, any item payoff on the other. */
+function hasItemEnginePayoffCombo(has: (x: ItemRole, y: ItemRole) => boolean): boolean {
+  return has('item-engine', 'payoff-trigger') || has('item-engine', 'payoff-static');
+}
 
 /**
  * Score an Item-Matters pair. findSynergies only calls this when at least one side is a
@@ -761,7 +824,7 @@ export function scoreItemPair(
 ): {score: number; explanation: string} {
   const has = crossMatcher(cardRoles, otherRoles);
 
-  if (has('item-engine', 'payoff-trigger') || has('item-engine', 'payoff-static')) {
+  if (hasItemEnginePayoffCombo(has)) {
     return {score: 8, explanation: 'The item engine floods the board, and every item it plays fires the payoff.'};
   }
   if (isItemPayoff(cardRoles) && isItemPayoff(otherRoles)) {
@@ -826,14 +889,13 @@ export function scoreHealPair(
  *   - buff <-> member                          = 6 (single-target pump on a Hunny body)
  *   - everything else                          = 5 (same-deck density baseline)
  */
-export function scoreHunnyPair(
-  cardRoles: HunnyRole[],
-  otherRoles: HunnyRole[],
+/**
+ * Score the Hunny 7/6/5 tiers, reached only after the search combo (8) misses. Split out of
+ * scoreHunnyPair so the top-level scorer stays a flat search → lower sequence.
+ */
+function scoreHunnyLowerTiers(
+  cross: (x: HunnyRole, y: HunnyRole) => boolean,
 ): {score: number; explanation: string} {
-  const cross = crossMatcher(cardRoles, otherRoles);
-  if (cross('search', 'member') || cross('search', 'density')) {
-    return {score: 8, explanation: 'A Hunny search digs the tribe out of your deck, fueling the payoffs.'};
-  }
   if (cross('density', 'density')) {
     return {score: 7, explanation: 'Both reward Hunny density, so the payoffs compound.'};
   }
@@ -844,6 +906,17 @@ export function scoreHunnyPair(
     return {score: 6, explanation: 'The single-target buff pumps a Hunny body.'};
   }
   return {score: 5, explanation: 'Both share the Hunny deck. Density baseline.'};
+}
+
+export function scoreHunnyPair(
+  cardRoles: HunnyRole[],
+  otherRoles: HunnyRole[],
+): {score: number; explanation: string} {
+  const cross = crossMatcher(cardRoles, otherRoles);
+  if (cross('search', 'member') || cross('search', 'density')) {
+    return {score: 8, explanation: 'A Hunny search digs the tribe out of your deck, fueling the payoffs.'};
+  }
+  return scoreHunnyLowerTiers(cross);
 }
 
 // ============================================
@@ -877,6 +950,16 @@ interface ExertPairCtx {
   payoffCard: LorcanaCard;
 }
 
+/** The exert enabler↔payoff combo fired: one side enables, the other pays off. */
+function isExertCombo(
+  cardEnabler: boolean,
+  cardPayoff: boolean,
+  otherEnabler: boolean,
+  otherPayoff: boolean,
+): boolean {
+  return (cardEnabler && otherPayoff) || (otherEnabler && cardPayoff);
+}
+
 function buildExertPairCtx(
   card: LorcanaCard,
   cardRoles: ExertRole[],
@@ -888,7 +971,7 @@ function buildExertPairCtx(
   const cardPayoff = cardRoles.includes('exert-payoff');
   const otherPayoff = otherRoles.includes('exert-payoff');
   return {
-    isCombo: (cardEnabler && otherPayoff) || (otherEnabler && cardPayoff),
+    isCombo: isExertCombo(cardEnabler, cardPayoff, otherEnabler, otherPayoff),
     bothPayoff: cardPayoff && otherPayoff,
     enablerToken: cardEnabler ? '{A}' : '{B}',
     payoffToken: cardEnabler ? '{B}' : '{A}',
@@ -1035,64 +1118,4 @@ export function makeTribalRule(spec: TribalSpec, name: string, noun: string, des
         scoreTribalPair(noun, cardRoles, otherRoles),
       ),
   };
-}
-
-// ============================================
-// BOUNCE SCORING (return-from-play-to-hand, payoff-anchored, 5-baseline)
-// ============================================
-
-/** An enabler side can return your OWN body (self-bounce, or the un-restricted flexible bounce). */
-const bounceIsEnabler = (roles: BounceRole[]): boolean =>
-  roles.includes('self-bounce') || roles.includes('flexible');
-
-/** An opponent-side bounce (removal/tempo) — opponent-bounce, or flexible aimed across the table. */
-const bounceIsOpponentSide = (roles: BounceRole[]): boolean =>
-  roles.includes('opponent-bounce') || roles.includes('flexible');
-
-/** A payoff side: the re-buyable ETB body, or the "when returned" lore payoff. */
-export const isBouncePayoff = (roles: BounceRole[]): boolean =>
-  roles.includes('rebuy-payoff') || roles.includes('return-payoff');
-
-/**
- * Score a Bounce pair (payoff-anchored — enabler↔enabler, same-side, and payoff↔payoff density all
- * resolve to null and are dropped by `tribalFindSynergies`). 5-baseline:
- *   - enabler (self-bounce|flexible) ↔ rebuy-payoff  = 8  win-condition: bounce re-fires the ETB
- *                                                          (mirrors Sacrifice self-banish↔trigger,
- *                                                          Self-Discard enabler↔reanimator)
- *   - opponent-side ↔ return-payoff (Maleficent's Staff) = 6  tempo bounce + a lore trickle
- *
- * `cardRoles` is the searcher (token {A}); `otherRoles` the partner ({B}). The token-swap keeps
- * the bounce side reading as the actor regardless of which card the user selected.
- */
-export function scoreBouncePair(
-  cardRoles: BounceRole[],
-  otherRoles: BounceRole[],
-): {score: number; explanation: string} | null {
-  const cross = crossMatcher(cardRoles, otherRoles);
-
-  // 8 — the re-buy combo: an enabler on one side, a re-buyable ETB body on the other.
-  if (
-    (bounceIsEnabler(cardRoles) && otherRoles.includes('rebuy-payoff')) ||
-    (bounceIsEnabler(otherRoles) && cardRoles.includes('rebuy-payoff'))
-  ) {
-    const enablerToken = bounceIsEnabler(cardRoles) ? '{A}' : '{B}';
-    const payoffToken = bounceIsEnabler(cardRoles) ? '{B}' : '{A}';
-    return {
-      score: 8,
-      explanation: `${enablerToken} returns ${payoffToken} to your hand, re-firing its enter-play ability.`,
-    };
-  }
-
-  // 6 — opponent-side bounce feeding the lore payoff (Maleficent's Staff).
-  if (cross('opponent-bounce', 'return-payoff') || cross('flexible', 'return-payoff')) {
-    const bounceToken = bounceIsOpponentSide(cardRoles) ? '{A}' : '{B}';
-    const payoffToken = bounceIsOpponentSide(cardRoles) ? '{B}' : '{A}';
-    return {
-      score: 6,
-      explanation: `${bounceToken} keeps bouncing the opponent's board while ${payoffToken} skims 1 lore off every return.`,
-    };
-  }
-
-  // Payoff-on-payoff or any non-combo pair: no compounding interaction → drop (payoff-anchored).
-  return null;
 }

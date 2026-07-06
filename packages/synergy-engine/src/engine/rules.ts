@@ -76,12 +76,12 @@ import {
   isHealPayoff,
   scoreHunnyPair,
   scoreRedPandaPair,
-  scoreBouncePair,
   tribalFindSynergies,
   pairFindSynergies,
   makePayoffAnchoredRule,
   makeTribalRule,
 } from './ruleScoring';
+import {scoreBouncePair} from './bounceScoring';
 
 // ============================================
 // CONDITIONAL SHIFT MATCHERS
