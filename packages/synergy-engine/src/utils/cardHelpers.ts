@@ -599,6 +599,19 @@ const SELF_DISCARD_STATE_PATTERN = /discarded\s+a\s+card\s+this\s+turn|no cards 
 /** Fast pre-filter: every self-discard pattern contains "discard" or "no cards in". */
 const HAS_SELF_DISCARD_KEYWORD = /discard|no cards in/i;
 
+/**
+ * Enabler: a hand-discard OUTLET (loot / discard-your-hand / discard-as-cost) that is NOT
+ * opponent-facing (opponent discard belongs to the Discard rule). Split out of
+ * getSelfDiscardRoles so the role builder stays a flat sequence of named pushes.
+ */
+function isSelfDiscardEnabler(text: string): boolean {
+  const isOutlet =
+    SELF_DISCARD_LOOT_PATTERN.test(text) ||
+    SELF_DISCARD_HAND_PATTERN.test(text) ||
+    SELF_DISCARD_COST_PATTERN.test(text);
+  return isOutlet && !SELF_DISCARD_OPPONENT_PATTERN.test(text);
+}
+
 /** Determine the self-discard role(s) a card fulfills. A card can be multi-role (loot + reanimate). */
 export function getSelfDiscardRoles(card: LorcanaCard): SelfDiscardRole[] {
   if (!card.text) return [];
@@ -606,11 +619,7 @@ export function getSelfDiscardRoles(card: LorcanaCard): SelfDiscardRole[] {
   if (!HAS_SELF_DISCARD_KEYWORD.test(text)) return [];
 
   const roles: SelfDiscardRole[] = [];
-  const isOutlet =
-    SELF_DISCARD_LOOT_PATTERN.test(text) ||
-    SELF_DISCARD_HAND_PATTERN.test(text) ||
-    SELF_DISCARD_COST_PATTERN.test(text);
-  if (isOutlet && !SELF_DISCARD_OPPONENT_PATTERN.test(text)) roles.push('enabler');
+  if (isSelfDiscardEnabler(text)) roles.push('enabler');
   if (SELF_DISCARD_REANIMATOR_PATTERN.test(text)) roles.push('reanimator');
   if (SELF_DISCARD_STATE_PATTERN.test(text)) roles.push('state-payoff');
   return roles;
@@ -1211,6 +1220,16 @@ export function isBeckonAnchor(card: LorcanaCard): boolean {
 }
 
 /**
+ * A card is excluded from the BECKON enabler tiers when it is the anchor itself (Merida's own
+ * FOCUSED ENERGY self-exert is "another character", so she can't self-pair) or when the exert
+ * lands on an OPPOSING character (removal, not an enabler). Split out of getBeckonEnablerTier
+ * so the tier classifier stays a flat reject → tier sequence.
+ */
+function isBeckonEnablerExcluded(card: LorcanaCard, t: string): boolean {
+  return isBeckonAnchor(card) || BECKON_OPPOSING_PATTERN.test(t);
+}
+
+/**
  * Classify a card's BECKON enabler tier, or null if it doesn't push YOUR characters into play
  * exerted. Order is load-bearing:
  *   1. anchor self-check — Merida's own self-exert (FOCUSED ENERGY) never counts as an enabler
@@ -1225,8 +1244,7 @@ export function getBeckonEnablerTier(card: LorcanaCard): BeckonEnablerTier | nul
   if (card.text == null) return null;
   const t = normalizeCardText(card);
   if (!BECKON_HAS_EXERT.test(t)) return null;
-  if (isBeckonAnchor(card)) return null;
-  if (BECKON_OPPOSING_PATTERN.test(t)) return null;
+  if (isBeckonEnablerExcluded(card, t)) return null;
   if (BECKON_REANIMATOR_PATTERN.test(t)) return 'reanimator';
   if (BECKON_ENGINE_PATTERN.test(t)) return 'engine';
   if (BECKON_SELF_PATTERN.test(t) && isCharacter(card)) return 'self';
@@ -1431,6 +1449,19 @@ const ITEM_COST_REDUCTION = /pay \d+[^.]{0,5}(?:less|fewer)[^.]{0,28}\bitems?\b/
 const SELF_ITEM_DISCOUNT = /(?:less|fewer)[^.]{0,12}to play this item/i;
 const HAS_ITEM_KEYWORD = /\bitem/i;
 
+/**
+ * An item engine tutors/searches items, returns items from discard, or discounts OTHER
+ * items. The cost-reduction branch is gated so a self-discount ("this item") stays a plain
+ * member. Split out of getItemRoles so the role builder reads as a flat sequence of pushes.
+ */
+function isItemEngine(text: string): boolean {
+  return (
+    ITEM_SEARCH.test(text) ||
+    ITEM_RECURSION.test(text) ||
+    (ITEM_COST_REDUCTION.test(text) && !SELF_ITEM_DISCOUNT.test(text))
+  );
+}
+
 /** Determine the Item-Matters role(s) a card fulfills. A card can be multi-role. */
 export function getItemRoles(card: LorcanaCard): ItemRole[] {
   const roles: ItemRole[] = [];
@@ -1442,12 +1473,7 @@ export function getItemRoles(card: LorcanaCard): ItemRole[] {
 
   if (ITEM_PLAY_TRIGGER.test(text)) roles.push('payoff-trigger');
   if (ITEM_STATIC_PAYOFF.test(text)) roles.push('payoff-static');
-
-  const isEngine =
-    ITEM_SEARCH.test(text) ||
-    ITEM_RECURSION.test(text) ||
-    (ITEM_COST_REDUCTION.test(text) && !SELF_ITEM_DISCOUNT.test(text));
-  if (isEngine) roles.push('item-engine');
+  if (isItemEngine(text)) roles.push('item-engine');
 
   return roles;
 }
@@ -1499,6 +1525,15 @@ const MOVE_DAMAGE_PATTERN = /\bmove\b[^.]*\bdamage\b/i;
 /** Fast pre-filter: every heal pattern contains "remove" or "damage removed". */
 const HAS_HEAL_KEYWORD = /remove|damage removed/i;
 
+/**
+ * Pure-mover guard: true when a card is a bare damage-mover — no genuine remove clause and
+ * no payoff, with a "move ... damage" interaction (see MOVE_DAMAGE_PATTERN). Split out of
+ * getHealRoles so the flagged three-branch guard reads as one named check.
+ */
+function isPureDamageMover(text: string, healer: boolean, payoff: boolean): boolean {
+  return !healer && !payoff && MOVE_DAMAGE_PATTERN.test(text);
+}
+
 /** Determine the heal role(s) a card fulfills. A card can be both (e.g. Ohana Means Family). */
 export function getHealRoles(card: LorcanaCard): HealRole[] {
   if (!card.text) return [];
@@ -1507,9 +1542,7 @@ export function getHealRoles(card: LorcanaCard): HealRole[] {
 
   const healer = HEALER_PATTERN.test(text);
   const payoff = HEAL_PAYOFF_PATTERN.test(text);
-  // Pure-mover guard: drop only when the card has neither a remove clause nor a payoff and
-  // its damage interaction is a move (see MOVE_DAMAGE_PATTERN).
-  if (!healer && !payoff && MOVE_DAMAGE_PATTERN.test(text)) return [];
+  if (isPureDamageMover(text, healer, payoff)) return [];
 
   const roles: HealRole[] = [];
   if (healer) roles.push('healer');
@@ -1686,6 +1719,20 @@ function isExertStatePayoff(t: string): boolean {
 }
 
 /**
+ * Enabler: exerts an OPPOSING character (not an item). Exert-as-cost (⟳ glyph) never matches
+ * this effect shape, so cost-glyph cards are excluded by construction. Split out of
+ * getExertRoles so its role builder stays a flat sequence of named checks.
+ */
+function isExertEnabler(t: string): boolean {
+  return EXERT_OPPOSING_VERB.test(t) && EXERT_HAS_OPPOSING_CHAR.test(t) && !EXERT_ITEM_ONLY.test(t);
+}
+
+/** Payoff: consumes/rewards an already-exerted opposing body, and is NOT self-exert powered. */
+function isExertPayoff(card: LorcanaCard, t: string): boolean {
+  return !EXERT_SELF_STATE.test(t) && (isExertConsumePayoff(card) || isExertStatePayoff(t));
+}
+
+/**
  * Determine the exert role(s) a card fulfills. Enabler and payoff are independent gates,
  * so a card could in principle be both (none in the live database are).
  */
@@ -1695,15 +1742,8 @@ export function getExertRoles(card: LorcanaCard): ExertRole[] {
   if (!HAS_EXERT_KEYWORD.test(t)) return [];
 
   const roles: ExertRole[] = [];
-  // Enabler: exerts an OPPOSING character (not an item). Exert-as-cost (⟳ glyph) never
-  // matches this effect shape, so cost-glyph cards are excluded by construction.
-  if (EXERT_OPPOSING_VERB.test(t) && EXERT_HAS_OPPOSING_CHAR.test(t) && !EXERT_ITEM_ONLY.test(t)) {
-    roles.push('exert-enabler');
-  }
-  // Payoff: consumes/rewards an already-exerted opposing body, and is NOT self-exert powered.
-  if (!EXERT_SELF_STATE.test(t) && (isExertConsumePayoff(card) || isExertStatePayoff(t))) {
-    roles.push('exert-payoff');
-  }
+  if (isExertEnabler(t)) roles.push('exert-enabler');
+  if (isExertPayoff(card, t)) roles.push('exert-payoff');
   return roles;
 }
 
@@ -1782,3 +1822,96 @@ export function isMeridaDamageAction(card: LorcanaCard): boolean {
 export function isMultiTargetDamageAction(card: LorcanaCard): boolean {
   return ACTION_DAMAGE_MULTI_PATTERN.test(normalizeCardText(card));
 }
+
+// ============================================
+// BOUNCE DETECTION ("return from play to hand")
+// ============================================
+
+/**
+ * Bounce is the "return from play to hand" axis. Two payoff shapes anchor it:
+ *  - self-bounce (enabler) returns a chosen OWN body to your hand, re-firing its
+ *    enter-play (ETB) ability — cashed in by a `rebuy-payoff` ETB body.
+ *  - opponent-bounce (tempo/removal) returns a body to their player's hand — cashed
+ *    in by the single `return-payoff` (Maleficent's Staff: lore on every opponent return).
+ *  - flexible cards ("return chosen character/item/location to their player's hand",
+ *    no side restriction) hit BOTH sides, so they carry the `flexible` role and act as
+ *    a self-bounce enabler AND an opponent-bounce.
+ *
+ * Disjoint by construction from Self-Discard's "from your discard" reanimator (a bounce
+ * returns from PLAY, not the bin) and from Challenge Matters' "banished in a challenge"
+ * combat-recursion (no `banish` verb participates in these patterns).
+ */
+export type BounceRole = 'self-bounce' | 'flexible' | 'opponent-bounce' | 'return-payoff' | 'rebuy-payoff';
+
+/** self-bounce enabler — return a CHOSEN own body to YOUR hand (the `of yours` gate = your side). */
+const BOUNCE_SELF_PATTERN =
+  /return\s+(?:another\s+)?chosen\s+(?:\w+\s+){0,2}?characters?(?:\s+card)?\s+of\s+yours\b[^.]{0,50}?to\s+your\s+hand/i;
+/** flexible — "return [up to N] chosen character/item/location … to their player's hand", no side gate. */
+const BOUNCE_FLEX_PATTERN =
+  /return\s+(?:up to \d+\s+)?(?:a\s+|an\s+)?chosen\s+(?:character|item|location)[^.]{0,80}?to\s+their\s+player'?s?\s+hand/i;
+/** Any "return … to their player's hand" — the opponent-side umbrella (flexible is the un-restricted subset). */
+const BOUNCE_TO_THEIR_HAND_PATTERN = /return\s+(?:up to \d+\s+)?[^.]{0,80}?to\s+their\s+player'?s?\s+hand/i;
+const BOUNCE_OF_YOURS = /\bof\s+yours\b/i;
+const BOUNCE_OPPONENT_SIDE = /opposing|opponent'?s?\b/i;
+/** return-payoff — gain value whenever a card is returned to hand from play (Maleficent's Staff). */
+const BOUNCE_RETURN_PAYOFF_PATTERN =
+  /when(?:ever)?\s+[^.]{0,90}?\bis\s+returned\s+to\s+(?:their|your|its player'?s?)\s+hand/i;
+/** rebuy-payoff — a "when you play this character" ETB whose effect is unambiguous re-fire value. */
+const BOUNCE_ETB_PATTERN = /when\s+you\s+play\s+this\s+character/i;
+const BOUNCE_REBUY_EFFECT_PATTERN =
+  /draw\s+(?:\d+|two|three)\s+cards?|search\s+your\s+(?:deck|library)|look at the top \d+ cards of your deck|banish\s+(?:a|an|another\s+)?chosen\s+character|(?:play|put)\b[^.]{0,50}for free|without paying/i;
+/**
+ * Fast pre-filter. Admits BOTH the "return … to hand" bounce shapes AND the enter-play bodies
+ * the re-buy payoff keys on — a rebuy body (e.g. Merlin - Turtle's deck-dig ETB) need not contain
+ * "return", so a return-only prefilter would silently drop the whole rebuy-payoff pool.
+ */
+const HAS_BOUNCE_KEYWORD = /return|is returned|when you play this character/i;
+
+/**
+ * A re-buyable ETB body: a "when you play this character" enter-play with unambiguous re-fire
+ * value (draw 2+, deck search, free-play, banish-chosen). Shift bodies are excluded — their
+ * re-buy already surfaces through the Shift Targets rule, so pairing them here only duplicates it.
+ */
+function isBounceRebuyPayoff(card: LorcanaCard, text: string): boolean {
+  return (
+    isCharacter(card) &&
+    BOUNCE_ETB_PATTERN.test(text) &&
+    BOUNCE_REBUY_EFFECT_PATTERN.test(text) &&
+    !hasAnyShift(card)
+  );
+}
+
+/** flexible — an un-restricted "return chosen … to their player's hand" (neither self-only nor opponent-only). */
+function isBounceFlexible(text: string): boolean {
+  return (
+    BOUNCE_FLEX_PATTERN.test(text) && !BOUNCE_OF_YOURS.test(text) && !BOUNCE_OPPONENT_SIDE.test(text)
+  );
+}
+
+/** opponent-bounce — returns a body to their hand for tempo, but is neither self-bounce nor flexible. */
+function isBounceOpponentOnly(text: string, self: boolean, flexible: boolean): boolean {
+  return !self && !flexible && BOUNCE_TO_THEIR_HAND_PATTERN.test(text);
+}
+
+/**
+ * Determine the bounce role(s) a card fulfills. Multi-role allowed: a self-bounce enabler that is
+ * itself a re-buyable ETB body (e.g. Witches of Morva) carries both roles and self-pairs.
+ */
+export function getBounceRoles(card: LorcanaCard): BounceRole[] {
+  if (!card.text) return [];
+  const text = normalizeCardText(card);
+  if (!HAS_BOUNCE_KEYWORD.test(text)) return [];
+
+  const self = BOUNCE_SELF_PATTERN.test(text);
+  const flexible = isBounceFlexible(text);
+  const roles: BounceRole[] = [];
+  if (self) roles.push('self-bounce');
+  if (flexible) roles.push('flexible');
+  if (isBounceOpponentOnly(text, self, flexible)) roles.push('opponent-bounce');
+  if (BOUNCE_RETURN_PAYOFF_PATTERN.test(text)) roles.push('return-payoff');
+  if (isBounceRebuyPayoff(card, text)) roles.push('rebuy-payoff');
+  return roles;
+}
+
+/** Check if a card participates in the bounce axis (any role). */
+export const isBounceCard = (card: LorcanaCard): boolean => getBounceRoles(card).length > 0;

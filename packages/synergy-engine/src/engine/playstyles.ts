@@ -72,6 +72,11 @@ const playstyles: Playstyle[] = [
     tagline: 'Tap the opponent’s characters, then banish or lock the exerted bodies.',
   },
   {
+    id: 'bounce',
+    name: 'Bounce',
+    tagline: 'Return characters from play to hand to re-fire enter-play abilities or buy tempo.',
+  },
+  {
     id: 'monster',
     name: 'Monsters',
     tagline: 'Monster characters and the payoffs that reward fielding the tribe.',

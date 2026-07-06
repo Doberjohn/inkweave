@@ -36,6 +36,7 @@ export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
   items: makeUiMeta('#0ea5e9', 'mechanic', '2860'), // Gadget Hackwrench - Resourceful Mechanic (Sapphire)
   healing: makeUiMeta('#3b82f6', 'mechanic', '2086'), // Grand Pabbie - Oldest and Wisest (Sapphire)
   exert: makeUiMeta('#8b5cf6', 'mechanic', '1004'), // Elsa - The Fifth Spirit (Amethyst)
+  bounce: makeUiMeta('#8b5cf6', 'mechanic', '2500'), // Tigger - Bouncing All the Way (Amethyst)
   // Tribes
   toy: makeUiMeta('#f59e0b', 'tribe', '2730'), // Woody - Jungle Guide (Amber)
   dwarfs: makeUiMeta('#8b5cf6', 'tribe', '2752'), // Snow White - Merry as the Morning (Amethyst)
@@ -62,7 +63,6 @@ function makeComingSoon(name: string, accentColor: string): ComingSoonPlaystyle 
 
 /** Playstyles that are planned but not yet implemented in the engine. */
 export const COMING_SOON_PLAYSTYLES: ComingSoonPlaystyle[] = [
-  makeComingSoon('Bounce', '#8b5cf6'),
   makeComingSoon('Zombies', '#f59e0b'),
   makeComingSoon('Villains', '#3b82f6'),
   makeComingSoon('Madrigals', '#8b5cf6'),

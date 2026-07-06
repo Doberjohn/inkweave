@@ -96,6 +96,7 @@ React web application that consumes the synergy engine package.
 - Items (`items`) - Item Matters (Set 9-13 Inventor/artifacts axis): item members + item engine (search/recursion/cost-reduction) + payoffs that reward playing items; payoff-anchored, Sapphire-heavy
 - Healing (`healing`) - Heal Matters: healers (remove damage from your own characters) + heal-payoffs (reward the removal event); payoff-anchored enabler->payoff axis, Amber/Sapphire-heavy, NOT a Madrigal tribe (only 12% of healers are Madrigal)
 - Exert (`exert`) - Exert Matters (opponent-facing soft-removal): exert-enablers (exert an opposing character) + exert-payoffs (banish / lock / scale off the exerted body); payoff-anchored, consume-vs-state tier (8 vs 6), mono-Amethyst
+- Bounce (`bounce`) - return characters from play to hand: self-bounce/flexible enablers re-fire re-buyable ETB bodies (=8), opponent-bounce/flexible feed the lone return-payoff (Maleficent's Staff, =6); payoff-anchored, Amethyst/Emerald
 - Classification Tribes (`monster` / `princess` / `hero` / `super` / `royalty` / `detective`) - one shared payoff-anchored factory; members + tribal payoffs (buff / trigger / search / in-play-check). Royalty = Queen/King/Prince, excludes Princess. Detective = the Set 10 Zootopia/Great Mouse Detective tribe
 
 **Synergy Score**: 1-10 numeric scale (all integers valid). Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4)
@@ -605,6 +606,24 @@ Explanation token-swaps so Merida always reads as the payoff (`{enabler} <does X
 **Coverage**: 1 anchor + 60 raw enablers (3 engine + 2 reanimator + 55 self-only); 55 deck-compatible with Amethyst Merida. Merida's page distribution: 50 × 5 / 2 × 7 / 3 × 8. The self-only pool is Bodyguard-heavy (Amber 23 / Steel 20).
 
 **Full documentation**: See [`packages/synergy-engine/MERIDA_WISP_RULE.md`](packages/synergy-engine/MERIDA_WISP_RULE.md).
+
+### Rule 21: Bounce (playstyle: "return from play to hand", payoff-anchored)
+
+Two mechanically opposite halves that share the "return to hand" verb and never combo with each other. **Payoff-anchored** (`scoreBouncePair` returns null for enabler↔enabler and payoff↔payoff, dropped by `tribalFindSynergies`).
+
+**Roles** (`getBounceRoles`, multi-role): `self-bounce` (10, return your own body to your hand), `flexible` (18, "return chosen character/item/location to their player's hand" with no side restriction — acts as BOTH a self-bounce enabler and an opponent-bounce), `opponent-bounce` (9, return a body to their player's hand for tempo), `return-payoff` (1, Maleficent's Staff — the only "when returned" payoff), `rebuy-payoff` (35, a "when you play this character" ETB worth re-firing: draw 2+/search/free-play/banish-chosen, Shift bodies excluded). Fast pre-filter is `/return|is returned|when you play this character/i` (a re-buy body need not contain "return"). Disjoint from Self-Discard's "from your discard" and Challenge Matters' "banished in a challenge".
+
+**Scoring** (payoff-anchored, 5-baseline; `{A}`/`{B}` token-swap keeps the bounce side the actor):
+
+| Pair | Score |
+|------|-------|
+| enabler (self-bounce \| flexible) ↔ rebuy-payoff | **8** |
+| opponent-side (opponent-bounce \| flexible) ↔ return-payoff | **6** |
+| everything else | (not generated) |
+
+**Coverage**: 72 participating cards, **864 pairs** (840 at 8, 24 at 6). The 8-share is structural (28 enablers × 35 re-buy payoffs, like Sacrifice/Self-Discard). The re-buy pool overlaps Hero/Self-Discard/Items **by design** (a good ETB body is a good ETB body) — accepted cross-playstyle composition, since the engine cannot query another rule's coverage without a two-pass architecture. Closes 13 zero-synergy cards incl. the gallery hero Tigger (2500).
+
+**Full documentation**: See [`packages/synergy-engine/BOUNCE_RULE.md`](packages/synergy-engine/BOUNCE_RULE.md).
 
 ## Commands
 

@@ -11,6 +11,8 @@ import {
   isSacrificeCard,
   getExertRoles,
   isExertCard,
+  getBounceRoles,
+  isBounceCard,
   getSelfDiscardRoles,
   isSelfDiscardCard,
   getRampRoles,
@@ -2959,6 +2961,67 @@ describe('Exert rule (Exert Matters)', () => {
     it('enabler ↔ enabler is not emitted (payoff-anchored)', () => {
       const synergies = exertRule.findSynergies(petrify, allCards);
       expect(synergies.find((s) => s.card.id === 'elsa-fifth')).toBeUndefined();
+    });
+  });
+});
+
+describe('Bounce rule (return from play to hand)', () => {
+  const bounceRule = getRuleById('bounce')!;
+
+  // Enablers.
+  const selfBounce = createCard({id: 'madam-mim', fullName: 'Madam Mim - Elephant', ink: 'Amethyst', text: 'A LITTLE GAME When you play this character, banish her or return another chosen character of yours to your hand.'});
+  const flexible = createCard({id: 'tigger', fullName: 'Tigger - Bouncing All the Way', ink: 'Amethyst', text: "SPLENDERIFFIC BOUNCE When you play this character, you may return chosen character, item, or location with cost 2 or less to their player's hand."});
+  const opponentBounce = createCard({id: 'mal-queen', fullName: 'Maleficent - Formidable Queen', ink: 'Amethyst', text: "Return chosen opposing character to their player's hand."});
+  // Payoffs.
+  const rebuy = createCard({id: 'merlin-turtle', fullName: 'Merlin - Turtle', ink: 'Amethyst', text: 'When you play this character, draw 2 cards.'});
+  const returnPayoff = createCard({id: 'mal-staff', fullName: "Maleficent's Staff", type: 'Item', ink: 'Amethyst', text: "BACK, FOOLS! Whenever one of your opponents' characters, items, or locations is returned to their hand from play, gain 1 lore."});
+  // Multi-role: self-bounce enabler that is itself a re-buyable ETB body.
+  const both = createCard({id: 'witches', fullName: 'Witches of Morva', ink: 'Amethyst', text: 'When you play this character, return another chosen character of yours to your hand, then draw 2 cards.'});
+  // Excluded shapes.
+  const discardReanimator = createCard({id: 'reani', fullName: 'Reanimator', ink: 'Amethyst', text: 'When you play this character, return a character card from your discard to your hand.'});
+  const shiftBody = createCard({id: 'shift-etb', fullName: 'Shifted Body', ink: 'Amethyst', keywords: ['Shift 4'], text: 'Shift 4 When you play this character, draw 2 cards.'});
+  const scoreWith = (a: typeof selfBounce, b: typeof rebuy) => bounceRule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+  describe('role detection', () => {
+    it('detects self-bounce, flexible, opponent-bounce, return-payoff, rebuy-payoff', () => {
+      expect(getBounceRoles(selfBounce)).toEqual(['self-bounce']);
+      expect(getBounceRoles(flexible)).toEqual(['flexible']);
+      expect(getBounceRoles(opponentBounce)).toEqual(['opponent-bounce']);
+      expect(getBounceRoles(returnPayoff)).toEqual(['return-payoff']);
+      expect(getBounceRoles(rebuy)).toEqual(['rebuy-payoff']);
+    });
+    it('tags a self-bounce + re-buyable ETB body as both roles', () => {
+      expect(getBounceRoles(both)).toEqual(['self-bounce', 'rebuy-payoff']);
+    });
+    it('excludes discard-recursion (from your discard) and Shift ETB bodies', () => {
+      expect(getBounceRoles(discardReanimator)).toEqual([]);
+      expect(getBounceRoles(shiftBody)).toEqual([]); // Shift re-buy is owned by Shift Targets
+      expect(isBounceCard(discardReanimator)).toBe(false);
+    });
+  });
+
+  describe('synergy scoring', () => {
+    it('enabler ↔ rebuy-payoff scores 8, bounce reads as the actor', () => {
+      const match = scoreWith(selfBounce, rebuy);
+      expect(match!.score).toBe(8);
+      expect(match!.explanation).toBe('{A} returns {B} to your hand, re-firing its enter-play ability.');
+    });
+    it('keeps the bounce side as the actor when the payoff is the searcher (token-swap)', () => {
+      const match = scoreWith(rebuy, selfBounce);
+      expect(match!.score).toBe(8);
+      expect(match!.explanation).toBe('{B} returns {A} to your hand, re-firing its enter-play ability.');
+    });
+    it('flexible ↔ rebuy-payoff also scores 8 (flexible acts as an enabler)', () => {
+      expect(scoreWith(flexible, rebuy)?.score).toBe(8);
+    });
+    it('opponent-side ↔ return-payoff scores 6', () => {
+      expect(scoreWith(opponentBounce, returnPayoff)?.score).toBe(6);
+    });
+    it('drops payoff ↔ payoff and enabler ↔ enabler (payoff-anchored)', () => {
+      const rebuy2 = createCard({id: 'rebuy2', fullName: 'Second ETB', text: 'When you play this character, search your deck for a card.'});
+      const self2 = createCard({id: 'self2', fullName: 'Second Bounce', text: 'Return another chosen character of yours to your hand.'});
+      expect(scoreWith(rebuy, rebuy2)).toBeUndefined();
+      expect(scoreWith(selfBounce, self2)).toBeUndefined();
     });
   });
 });

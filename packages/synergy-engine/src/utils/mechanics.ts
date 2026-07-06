@@ -14,6 +14,7 @@ import type {
   ItemRole,
   HealRole,
   ExertRole,
+  BounceRole,
   TribalRole,
 } from './cardHelpers.js';
 import {
@@ -174,6 +175,12 @@ export const STRUCTURAL_MECHANICS: Mechanic[] = [
   // Exert
   {id: 'exert-enabler', category: 'structural', label: 'Exert Opponent', description: 'Exert an opposing character to keep it from questing or challenging'},
   {id: 'exert-payoff', category: 'structural', label: 'Exert Payoff', description: 'Banish, lock, or scale off an already-exerted opposing character'},
+  // Bounce
+  {id: 'self-bounce', category: 'structural', label: 'Self-Bounce', description: 'Return your own character to hand to re-fire its enter-play ability'},
+  {id: 'flexible', category: 'structural', label: 'Flexible Bounce', description: 'Return a chosen character, item, or location to its owner’s hand (either side)'},
+  {id: 'opponent-bounce', category: 'structural', label: 'Opponent Bounce', description: 'Return an opponent’s card to their hand for tempo'},
+  {id: 'return-payoff', category: 'structural', label: 'Return Payoff', description: 'Get a benefit whenever a card is returned to hand from play'},
+  {id: 'rebuy-payoff', category: 'structural', label: 'Re-buy Target', description: 'A strong enter-play ability worth re-firing by bouncing this character'},
   // Floodborns
   {id: 'trigger', category: 'structural', label: 'Trigger', description: 'Get a repeating benefit when your Floodborn characters quest, play, or are banished'},
   // Tribal (Toy / Dwarfs)
@@ -255,6 +262,7 @@ type StructuralRoleId =
   | ItemRole
   | HealRole
   | ExertRole
+  | BounceRole
   | TribalRole;
 
 /**
@@ -289,6 +297,11 @@ export const STRUCTURAL_ROLE_DISPLAY: Record<StructuralRoleId, boolean> = {
   'heal-payoff': true,
   'exert-enabler': true,
   'exert-payoff': true,
+  'self-bounce': true,
+  flexible: true,
+  'opponent-bounce': true,
+  'return-payoff': true,
+  'rebuy-payoff': true,
   'at-payoff': true,
   move: true,
   'play-trigger': true,

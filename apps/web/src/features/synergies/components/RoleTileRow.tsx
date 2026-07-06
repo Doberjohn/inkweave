@@ -92,7 +92,7 @@ function computeRowLayout(
 }
 
 /** Section style — collapsed is a static clipped row; expanded scrolls (scroll-snap). */
-function getSectionStyle(collapsed: boolean, centered: boolean): React.CSSProperties {
+function getSectionStyle({collapsed, centered}: {collapsed: boolean; centered: boolean}): React.CSSProperties {
   return {
     display: 'flex',
     gap: TILE_GAP,
@@ -175,7 +175,7 @@ export function RoleTileRow({
       aria-label="Mechanics"
       // Carousel scrolls unless collapsed; collapsed is a static, exactly-fitting row.
       className={collapsed ? undefined : 'subtle-scrollbar'}
-      style={getSectionStyle(collapsed, centered)}>
+      style={getSectionStyle({collapsed, centered})}>
       {visibleTiles.map((t) => (
         <RoleTileButton
           key={t.role}
@@ -193,15 +193,27 @@ export function RoleTileRow({
   );
 }
 
+/**
+ * Interaction + layout inputs for a single role tile's style, grouped into one options
+ * object so the style helpers take a typed shape rather than a run of positional booleans
+ * and numbers (keeps the shared active/hovered/minHeight/fill state consistent between them).
+ */
+interface RoleTileButtonOptions {
+  active: boolean;
+  hovered: boolean;
+  minHeight: number;
+  fill: boolean;
+}
+
 /** Compute box-shadow for the tile based on active/hover state. */
-function tileBoxShadow(active: boolean, hovered: boolean): string {
+function tileBoxShadow({active, hovered}: Pick<RoleTileButtonOptions, 'active' | 'hovered'>): string {
   if (active) return `0 0 0 1px ${COLORS.primaryMuted}, 0 0 18px rgba(212, 175, 55, 0.18)`;
   if (hovered) return '0 4px 12px rgba(0, 0, 0, 0.4)';
   return 'none';
 }
 
 /** Compute the full button style for a RoleTile based on its interaction state. */
-function getRoleTileButtonStyle(active: boolean, hovered: boolean, minHeight: number, fill: boolean): React.CSSProperties {
+function getRoleTileButtonStyle({active, hovered, minHeight, fill}: RoleTileButtonOptions): React.CSSProperties {
   return {
     position: 'relative',
     // Grid cells fill their column; carousel cells are fixed-width and scroll-snap.
@@ -225,8 +237,14 @@ function getRoleTileButtonStyle(active: boolean, hovered: boolean, minHeight: nu
     transition:
       'transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.2s ease',
     transform: hovered && !active ? 'translateY(-1px)' : 'translateY(0)',
-    boxShadow: tileBoxShadow(active, hovered),
+    boxShadow: tileBoxShadow({active, hovered}),
   };
+}
+
+/** Viewport-fixed anchor point (tile-center x, tile-bottom y) the tooltip is positioned at. */
+interface TooltipAnchor {
+  left: number;
+  top: number;
 }
 
 /**
@@ -234,14 +252,14 @@ function getRoleTileButtonStyle(active: boolean, hovered: boolean, minHeight: nu
  * overflow clip and sits above modal layers. Positioned (viewport-fixed) centered
  * under the tile that opened it.
  */
-function RoleTileTooltip({left, top, text}: {left: number; top: number; text: string}) {
+function RoleTileTooltip({anchor, text}: {anchor: TooltipAnchor; text: string}) {
   return createPortal(
     <div
       role="tooltip"
       style={{
         position: 'fixed',
-        left,
-        top,
+        left: anchor.left,
+        top: anchor.top,
         transform: 'translateX(-50%)',
         maxWidth: 220,
         background: COLORS.surface,
@@ -285,7 +303,7 @@ function RoleTileButton({
   fill?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
-  const [tip, setTip] = useState<{left: number; top: number} | null>(null);
+  const [tip, setTip] = useState<TooltipAnchor | null>(null);
   const ref = useRef<HTMLButtonElement>(null);
   const accent = active ? COLORS.primaryMuted : undefined;
 
@@ -313,7 +331,7 @@ function RoleTileButton({
       onBlur={closeTip}
       aria-label={`${tile.label}, ${tile.count} cards`}
       aria-pressed={active}
-      style={getRoleTileButtonStyle(active, hovered, minHeight, fill)}>
+      style={getRoleTileButtonStyle({active, hovered, minHeight, fill})}>
       <span
         aria-hidden="true"
         style={{
@@ -343,7 +361,7 @@ function RoleTileButton({
           {tile.description}
         </p>
       )}
-      {tip && <RoleTileTooltip left={tip.left} top={tip.top} text={tile.description} />}
+      {tip && <RoleTileTooltip anchor={tip} text={tile.description} />}
     </button>
   );
 }
@@ -353,7 +371,7 @@ function RoleTileButton({
  * real tiles' footprint but reads as a reveal affordance: dashed gold border on
  * the dark dashed-tile background, brightening on hover.
  */
-function getShowMoreTileStyle(hovered: boolean, minHeight: number): React.CSSProperties {
+function getShowMoreTileStyle({hovered, minHeight}: {hovered: boolean; minHeight: number}): React.CSSProperties {
   return {
     flex: `0 0 ${TILE_WIDTH}px`,
     background: '#151525',
@@ -385,7 +403,7 @@ function ShowMoreTile({hiddenCount, minHeight, onClick}: {hiddenCount: number; m
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       aria-label={`Show ${hiddenCount} more mechanics`}
-      style={getShowMoreTileStyle(hovered, minHeight)}>
+      style={getShowMoreTileStyle({hovered, minHeight})}>
       <span
         style={{
           fontSize: `${FONT_SIZES.xl}px`,
