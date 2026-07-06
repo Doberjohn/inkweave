@@ -14,7 +14,15 @@ export type PlaystyleId =
   | 'floodborn'
   | 'hunny'
   | 'red-panda'
-  | 'items';
+  | 'items'
+  | 'healing'
+  | 'exert'
+  | 'monster'
+  | 'princess'
+  | 'hero'
+  | 'super'
+  | 'royalty'
+  | 'detective';
 
 // A playstyle groups related synergy rules that reinforce the same way of playing.
 // The more cards supporting a playstyle, the more consistent the deck becomes.

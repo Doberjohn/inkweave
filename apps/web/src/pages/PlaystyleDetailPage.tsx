@@ -14,6 +14,10 @@ import {
   getHunnyRoles,
   getRedPandaRoles,
   getItemRoles,
+  getHealRoles,
+  getExertRoles,
+  getTribalRoles,
+  TRIBAL_SPECS,
   getCardMechanics,
   STRUCTURAL_ROLE_TO_MECHANIC,
   mechanicLabel,
@@ -218,6 +222,14 @@ const ROLE_CONFIGS: Record<PlaystyleId, RoleConfig> = {
   hunny: {getRoles: (card) => getHunnyRoles(card).filter((r) => r !== 'member')},
   'red-panda': {getRoles: (card) => getRedPandaRoles(card).filter((r) => r !== 'member')},
   items: {getRoles: (card) => getItemRoles(card).filter((r) => r !== 'member')},
+  healing: {getRoles: (card) => getHealRoles(card)},
+  exert: {getRoles: (card) => getExertRoles(card)},
+  monster: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.monster).filter((r) => r !== 'member')},
+  princess: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.princess).filter((r) => r !== 'member')},
+  hero: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.hero).filter((r) => r !== 'member')},
+  super: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.super).filter((r) => r !== 'member')},
+  royalty: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.royalty).filter((r) => r !== 'member')},
+  detective: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.detective).filter((r) => r !== 'member')},
 };
 
 /**

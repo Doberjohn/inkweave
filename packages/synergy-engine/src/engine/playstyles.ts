@@ -61,6 +61,46 @@ const playstyles: Playstyle[] = [
     name: 'Items',
     tagline: 'Flood the board with items and cash in the payoffs that reward playing them.',
   },
+  {
+    id: 'healing',
+    name: 'Healing',
+    tagline: 'Remove damage from your own characters, then cash in the payoffs that reward healing.',
+  },
+  {
+    id: 'exert',
+    name: 'Exert',
+    tagline: 'Tap the opponent’s characters, then banish or lock the exerted bodies.',
+  },
+  {
+    id: 'monster',
+    name: 'Monsters',
+    tagline: 'Monster characters and the payoffs that reward fielding the tribe.',
+  },
+  {
+    id: 'princess',
+    name: 'Princesses',
+    tagline: 'Go wide on Princesses and cash in the buffs, searches, and in-play payoffs that reward them.',
+  },
+  {
+    id: 'hero',
+    name: 'Heroes',
+    tagline: 'Hero characters and the payoffs that buff or trigger off the tribe.',
+  },
+  {
+    id: 'super',
+    name: 'Supers',
+    tagline: 'The Incredibles Super package: Super characters and the payoffs that pump and ready them.',
+  },
+  {
+    id: 'royalty',
+    name: 'Royalty',
+    tagline: 'Queen, King, and Prince characters and the payoffs that reward the crown.',
+  },
+  {
+    id: 'detective',
+    name: 'Detectives',
+    tagline: 'Detective characters and the payoffs that reward running the tribe.',
+  },
 ];
 
 const playstyleMap = new Map(playstyles.map((p) => [p.id, p]));

@@ -12,6 +12,9 @@ import type {
   HunnyRole,
   RedPandaRole,
   ItemRole,
+  HealRole,
+  ExertRole,
+  TribalRole,
 } from './cardHelpers.js';
 import {
   normalizeCardText,
@@ -165,6 +168,12 @@ export const STRUCTURAL_MECHANICS: Mechanic[] = [
   // Sacrifice
   {id: 'self-banish', category: 'structural', label: 'Self-Banish', description: 'Banish your own characters on demand'},
   {id: 'banish-trigger', category: 'structural', label: 'Banish Trigger', description: 'Get a benefit when your characters are banished'},
+  // Healing
+  {id: 'healer', category: 'structural', label: 'Healer', description: 'Remove damage from your characters'},
+  {id: 'heal-payoff', category: 'structural', label: 'Heal Payoff', description: 'Get a benefit whenever you remove damage'},
+  // Exert
+  {id: 'exert-enabler', category: 'structural', label: 'Exert Opponent', description: 'Exert an opposing character to keep it from questing or challenging'},
+  {id: 'exert-payoff', category: 'structural', label: 'Exert Payoff', description: 'Banish, lock, or scale off an already-exerted opposing character'},
   // Floodborns
   {id: 'trigger', category: 'structural', label: 'Trigger', description: 'Get a repeating benefit when your Floodborn characters quest, play, or are banished'},
   // Tribal (Toy / Dwarfs)
@@ -243,7 +252,10 @@ type StructuralRoleId =
   | FloodbornRole
   | HunnyRole
   | RedPandaRole
-  | ItemRole;
+  | ItemRole
+  | HealRole
+  | ExertRole
+  | TribalRole;
 
 /**
  * Every structural role id, flagged `true` when it surfaces as a display tile (and
@@ -273,6 +285,10 @@ export const STRUCTURAL_ROLE_DISPLAY: Record<StructuralRoleId, boolean> = {
   'cost-reduction': true,
   'self-banish': true,
   'banish-trigger': true,
+  healer: true,
+  'heal-payoff': true,
+  'exert-enabler': true,
+  'exert-payoff': true,
   'at-payoff': true,
   move: true,
   'play-trigger': true,

@@ -94,6 +94,9 @@ React web application that consumes the synergy engine package.
 - Hunny (`hunny`) - Winnie-the-Pooh tribe (density, search, buff)
 - Red Panda (`red-panda`) - Turning Red tribe (member + search)
 - Items (`items`) - Item Matters (Set 9-13 Inventor/artifacts axis): item members + item engine (search/recursion/cost-reduction) + payoffs that reward playing items; payoff-anchored, Sapphire-heavy
+- Healing (`healing`) - Heal Matters: healers (remove damage from your own characters) + heal-payoffs (reward the removal event); payoff-anchored enabler->payoff axis, Amber/Sapphire-heavy, NOT a Madrigal tribe (only 12% of healers are Madrigal)
+- Exert (`exert`) - Exert Matters (opponent-facing soft-removal): exert-enablers (exert an opposing character) + exert-payoffs (banish / lock / scale off the exerted body); payoff-anchored, consume-vs-state tier (8 vs 6), mono-Amethyst
+- Classification Tribes (`monster` / `princess` / `hero` / `super` / `royalty` / `detective`) - one shared payoff-anchored factory; members + tribal payoffs (buff / trigger / search / in-play-check). Royalty = Queen/King/Prince, excludes Princess. Detective = the Set 10 Zootopia/Great Mouse Detective tribe
 
 **Synergy Score**: 1-10 numeric scale (all integers valid). Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4)
 
@@ -491,6 +494,117 @@ Set 9-13 Inventor / artifacts axis: play a lot of items, cash in the payoffs. **
 **Coverage**: 3,443 pairs (8: 514 / 7: 850 / 6: 2,079). Sapphire-concentrated (6 of 7 rotation payoffs are Sapphire). The item engine overlaps Ramp (cost-reduction), Self-Discard (recursion), and Sacrifice (Ingenious Device) by design, so engine-only density is dropped here rather than double-scored.
 
 **Full documentation**: See [`packages/synergy-engine/ITEMS_RULE.md`](packages/synergy-engine/ITEMS_RULE.md).
+
+### Rule 16: Classification Tribes (Monsters / Princesses / Heroes / Supers / Royalty / Detectives)
+
+Six payoff-anchored tribal playstyles from **one shared factory** (`makeTribalRule` over `TRIBAL_SPECS`). Each keys on a character classification and pairs members with the payoffs that reward them. `royalty` = Queen/King/Prince and deliberately **excludes** Princess so it complements the `princess` rule. `detective` is the Set 10 (Zootopia / Great Mouse Detective) tribe.
+
+**Roles** (`getTribalRoles`, multi-role): `member` (classification); `buff` (team / single-target buff / tribal ready); `trigger` (`whenever you play a X` or `whenever your X quests/challenges`); `search` (`search/reveal a X character`); `in-play-check` (`while/if you have a X`, event-this-turn, `if a [Y or] X character is …`). All five ids already exist in the mechanics catalog, so no new tiles.
+
+**Scoring** (payoff-anchored, member↔member never emitted; highest bucket wins):
+
+| Pair | Score |
+|------|-------|
+| search ↔ member \| payoff | **8** |
+| trigger ↔ member | **7** |
+| payoff ↔ payoff | **7** |
+| buff ↔ member | **6** |
+| in-play-check ↔ member | **6** |
+
+**Coverage** (members / payoffs / pairs): Monsters 15/1/15, Princesses 102/14/1366, Heroes 495/14/6449, Supers 42/6/241, Royalty 150/7/950, Detectives 39/9/331. Monsters is thin (1 payoff) and Heroes is high-volume/low-signal (495 near-universal members); Princesses/Supers/Royalty/Detectives are the coherent archetypes. Detectives is the Set-10-concentrated 6th tribe (6/7/8 dist 229/61/41, zero density floor); two real payoffs are missed by the shared patterns (Nick Wilde 2376 banish-trigger → cross-covered by Sacrifice, Fangmeyer 2473 discard-recursion → cross-covered by Self-Discard). The shared single-target `buff` clause was extended to accept a give-form `+N` stat buff (`chosen X character … +\d`) to recover Flash 2203; measured zero-collateral across all six tribes.
+
+**Full documentation**: See [`packages/synergy-engine/TRIBES_RULE.md`](packages/synergy-engine/TRIBES_RULE.md).
+
+### Rule 17: Heal Matters (playstyle: Healing, payoff-anchored)
+
+Remove damage from your own characters, then cash in the payoffs that reward healing. **Payoff-anchored like Floodborn/Items** (a pair scores only when one side is a heal payoff; the 58-healer pool never self-pairs). NOT a Madrigal tribe: only 12% of healers are Madrigal and every payoff is generically worded ("remove damage from one of your characters").
+
+**Roles** (`getHealRoles`): `healer` (removes damage: `/remove (up to \d+|all|\d+) damage from/i`) and `heal-payoff` (rewards the removal event: `/whenever you remove damage|when you remove damage|if you removed damage|for each \d+ damage removed|damage removed this way|remove 1 or more damage/i`). A pure-mover guard (`/\bmove ... damage\b/`) drops cards whose only damage interaction is a move; Steel 'no damage/undamaged' statics are excluded naturally. Cards can be both roles (Ohana Means Family - 2495).
+
+**Scoring** (7/8, 5-baseline; token-swap keeps the healer as the actor):
+
+| Pair | Score |
+|------|-------|
+| healer <-> heal-payoff | **8** |
+| heal-payoff <-> heal-payoff | **7** |
+| healer <-> healer | (not generated) |
+
+**Coverage**: 58 healers + 14 heal-payoffs (7 pure + 7 dual-role) = 65 cards. 755 ink-compatible pairs (8: 666 / 7: 89); 1,142 healer<->healer pairs dropped. Amber 27 / Sapphire 21-heavy.
+
+**Full documentation**: See [`packages/synergy-engine/HEALING_RULE.md`](packages/synergy-engine/HEALING_RULE.md).
+
+### Rule 18: Exert (playstyle: "Exert Matters", opponent-facing, payoff-anchored)
+
+A clean revival of the archived `exert-synergies` rule (see `REMOVED_RULES.md`), tightly scoped to the **opponent-facing** exert-as-removal axis. Two roles, payoff-anchored (enabler↔enabler never emitted), mono-**Amethyst** in practice.
+
+**Roles** (`getExertRoles`):
+- **exert-enabler** — an EFFECT that exerts an OPPOSING character: `/\bexerts?\b\s+…(?:opposing|opponent's)/i` AND an `opposing/opponent's character` reference (the `(?:\w+ ){0,2}` slot admits "opposing ready character").
+- **exert-payoff** — consumes/rewards an already-exerted opposing body WITHOUT self-exerting. Two tiers: **consume** (exert-trigger `whenever an opposing character is/becomes exerted`, `banish chosen exerted character`, `chosen exerted character can't ready`) and **state** (`if an opponent has an exerted character`, `for each exerted character opponents have`, `gain lore equal to another chosen exerted character`).
+
+**Excludes**: exert-as-COST (`⟳`/`—` dash-clause — excluded by construction, an enabler needs an exert *effect*), the ~61 `into ... inkwell facedown and exerted` ramp cards, self-exert-state (`while this character is exerted`), and exert-an-ITEM effects.
+
+**Scoring** (payoff-anchored, 5-baseline; `{A}`/`{B}` token-swap keeps the enabler as the actor):
+
+| Pair | Score | Explanation |
+|------|-------|-------------|
+| enabler ↔ consume payoff | **8** | {enabler} exerts an opposing character, and {payoff} punishes the exerted body |
+| enabler ↔ state payoff | **6** | {enabler} keeps an opposing character exerted, switching on {payoff} |
+| payoff ↔ payoff | **5** | Both reward opposing characters being exerted. Density baseline |
+| enabler ↔ enabler | (not generated) | Payoff-anchored |
+
+**Coverage**: 21 enablers (Amethyst 16, Amethyst-Steel 2, Ruby 3) + 12 payoffs (8 consume + 4 state; Amethyst 10, Amethyst-Ruby 1, Amber 1) = 33 cards, 313 ink-compatible pairs after `canShareDeck` (52% at 8, 27% at 6, 21% at 5).
+
+**Full documentation**: See [`packages/synergy-engine/EXERT_RULE.md`](packages/synergy-engine/EXERT_RULE.md).
+
+### Rule 19: Merida Archer (direct, single-anchor, bidirectional)
+
+Built around **Merida - Formidable Archer** (Steel, id 2906), whose **STEADY AIM** ability deals 2 extra damage whenever one of your actions deals damage to an opposing character. Merida therefore synergizes with **damage-dealing Action cards** — every one hits for +2 while she's in play, and the more it already deals (and the more targets it hits) the bigger the absolute swing. Second single-anchor direct rule (after Spike Suit), keyed on the anchor's ability text so reprints join for free.
+
+**Detection**:
+- **anchor** (1 card): text matches `/whenever one of your actions deals? damage to an opposing character/i` (on ability text, not id).
+- **payoff** (19 deck-compatible): `isAction` AND `/\bdeals?\s+\d+\s+damage\b/i` AND NOT self-only (`/deals?\s+\d+\s+damage to chosen character of yours/i`, e.g. Break Free 1083) AND NOT a granted-ability action (`/\bgains?\b[^.]{0,40}["“'][^"”']*deals?\s+\d+\s+damage/i`, e.g. Food Fight! 1155 grants a character a damage ability).
+
+**Scoring** (`min(5 + min(actionDamage, 3) + multiTargetBonus, 10)`; floor 6):
+
+| Payoff | Score | Notes |
+|--------|-------|-------|
+| 1-damage single (e.g. Quick Shot) | **6** | Floor — every match is at least a real +2 upgrade |
+| 2-damage single / 1-damage multi | **7** | Strong |
+| 3+-damage single / 2-damage multi | **8** | Strong |
+| 3+-damage multi (Mob Song, Unfortunate Situation) | **9** | Strong — +2 on every one of several bodies |
+
+`multiTargetBonus` = +1 if `/each|up to \d+ chosen|another chosen/i` (board-wipe / up-to-N / follow-up hit). Explanation uses `{A}`/`{B}` token-swap so Merida always reads as the enabler: *"{A}'s STEADY AIM adds 2 damage to {B}'s 3 damage each time it hits an opposing character."*
+
+**Coverage**: 1 anchor + 19 payoffs (15 Steel, 3 Emerald, 1 Ruby-Steel). Distribution: 1 at 6 / 11 at 7 / 5 at 8 / 2 at 9 — 0 Weak / 1 Moderate / 18 Strong / 0 Perfect. **Unfortunate Situation (1398)** is included despite an opponent-self-damage rules ambiguity (documented in the rule doc); **Light the Fuse (1813)** scores 7 from a scaling single-target that trips the `each` multi-pattern (cosmetic over-count).
+
+**Full documentation**: See [`packages/synergy-engine/MERIDA_ARCHER_RULE.md`](packages/synergy-engine/MERIDA_ARCHER_RULE.md).
+
+### Rule 20: Merida - Wisp Conjurer (direct, single-anchor, bidirectional)
+
+Built around **Merida - Wisp Conjurer** (Amethyst 13050), whose **BECKON** ability draws a card whenever *another* of your characters enters play exerted. Merida therefore synergizes with cards that push your characters into play exerted — the engine's second **single-anchor** direct rule (after Spike Suit), keyed on ability text so a reprint joins for free.
+
+**Detection**:
+- **anchor** (1 card): text matches `/whenever another character of yours enters play exerted/i` (matched on ability text, not a card id).
+- **enabler tiers** (`getBeckonEnablerTier`, order load-bearing — anchor self-check → opposing exclusion → reanimator → engine → self):
+  - `engine` (3): pushes OTHER of your characters into play exerted, board-wide — `/they enter play exerted|the next character you play[^.]{0,80}enters? play exerted/i` (The Horned King 13022, Simba 2209, and the **item** Powhatan's Staff 13036).
+  - `reanimator` (2): replays ITSELF exerted from your discard — `/(?:this card is in your discard|from your discard)[^.]{0,140}(?:he|she|it|they|this character) enters? play exerted/i` (Lilo 1201, Stitch 1830).
+  - `self` (55): a self-only body that enters exerted once — `/this character (?:may )?enters? play exerted/i`, gated on `isCharacter` (Bodyguard reminder + a few explicit bodies).
+
+**Item exception** (like Shift's `named-item`): Powhatan's Staff is admitted even though `type !== 'Character'` because it pushes a **character** into exerted. Items that enter exerted *themselves* ("this item enters play exerted" — Sapphire Chromicon, MegaBot, Potato, ...) are excluded (character-only trigger). Opposing-side exerts (Jiminy Cricket, Figaro) are excluded via the `/opposing.../` gate. Merida's own FOCUSED ENERGY self-exert does NOT trigger BECKON ("another character"), so she never self-pairs.
+
+**Scoring** (tier-driven, 5-baseline):
+
+| Enabler tier | Score | Why |
+|--------------|-------|-----|
+| engine | **8** | Board-wide / repeatable push — fires BECKON many times (win-condition engine) |
+| reanimator | **7** | Replays itself exerted from the discard, repeatably |
+| self | **5** | One-shot self-only body (Bodyguard reminder) — same-deck density baseline |
+
+Explanation token-swaps so Merida always reads as the payoff (`{enabler} <does X>, so {Merida} draws a card each time`).
+
+**Coverage**: 1 anchor + 60 raw enablers (3 engine + 2 reanimator + 55 self-only); 55 deck-compatible with Amethyst Merida. Merida's page distribution: 50 × 5 / 2 × 7 / 3 × 8. The self-only pool is Bodyguard-heavy (Amber 23 / Steel 20).
+
+**Full documentation**: See [`packages/synergy-engine/MERIDA_WISP_RULE.md`](packages/synergy-engine/MERIDA_WISP_RULE.md).
 
 ## Commands
 

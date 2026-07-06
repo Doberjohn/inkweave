@@ -34,12 +34,20 @@ export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
   ramp: makeUiMeta('#3b82f6', 'mechanic', '2344'), // Cinderella - Dream Come True (Sapphire)
   sacrifice: makeUiMeta('#ef4444', 'mechanic', '2841'), // Sid Phillips - Toy Surgeon (Ruby)
   items: makeUiMeta('#0ea5e9', 'mechanic', '2860'), // Gadget Hackwrench - Resourceful Mechanic (Sapphire)
+  healing: makeUiMeta('#3b82f6', 'mechanic', '2086'), // Grand Pabbie - Oldest and Wisest (Sapphire)
+  exert: makeUiMeta('#8b5cf6', 'mechanic', '1004'), // Elsa - The Fifth Spirit (Amethyst)
   // Tribes
   toy: makeUiMeta('#f59e0b', 'tribe', '2730'), // Woody - Jungle Guide (Amber)
   dwarfs: makeUiMeta('#8b5cf6', 'tribe', '2752'), // Snow White - Merry as the Morning (Amethyst)
   floodborn: makeUiMeta('#6b7280', 'tribe', '13197'), // The Vine - Towering Stalk (Steel)
   hunny: makeUiMeta('#8b5cf6', 'tribe', '1977'), // Winnie the Pooh - Hunny Wizard (Amethyst)
   'red-panda': makeUiMeta('#ef4444', 'tribe', '13125'), // Meilin Lee - Popular Red Panda (Ruby)
+  monster: makeUiMeta('#f59e0b', 'tribe', '13024'), // Sulley - The New Boss (Amber)
+  princess: makeUiMeta('#10b981', 'tribe', '1283'), // Jasmine - Royal Commodore (Emerald)
+  hero: makeUiMeta('#6b7280', 'tribe', '1863'), // Mickey Mouse - Giant Mouse (Steel)
+  super: makeUiMeta('#8b5cf6', 'tribe', '2774'), // Frozone - Super Cool (Amethyst)
+  royalty: makeUiMeta('#8b5cf6', 'tribe', '991'), // Maleficent - Formidable Queen (Amethyst)
+  detective: makeUiMeta('#3b82f6', 'tribe', '2345'), // Judy Hopps - Uncovering Clues (Sapphire)
 };
 
 export interface ComingSoonPlaystyle {
@@ -56,9 +64,6 @@ function makeComingSoon(name: string, accentColor: string): ComingSoonPlaystyle 
 export const COMING_SOON_PLAYSTYLES: ComingSoonPlaystyle[] = [
   makeComingSoon('Bounce', '#8b5cf6'),
   makeComingSoon('Zombies', '#f59e0b'),
-  makeComingSoon('Exert', '#8b5cf6'),
   makeComingSoon('Villains', '#3b82f6'),
-  makeComingSoon('Princesses', '#f59e0b'),
   makeComingSoon('Madrigals', '#8b5cf6'),
-  makeComingSoon('Supers', '#ef4444'),
 ];

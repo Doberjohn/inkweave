@@ -24,8 +24,14 @@ import {
   isSong,
   isToyCard,
   getToyRoles,
+  isSteadyAimAnchor,
+  isMeridaDamageAction,
+  getActionDamage,
+  isMultiTargetDamageAction,
   isDwarfsCard,
   getDwarfsRoles,
+  isBeckonAnchor,
+  getBeckonEnablerTier,
   getFloodbornRoles,
   isFloodbornCard,
   getHunnyRoles,
@@ -34,6 +40,14 @@ import {
   isRedPandaCard,
   getItemRoles,
   isItemCard,
+  getHealRoles,
+  isHealCard,
+  getTribalRoles,
+  isTribalCard,
+  TRIBAL_SPECS,
+  getExertRoles,
+  isExertCard,
+  isExertConsumePayoff,
   isLoreDenialCard,
   getLoreDenialRoles,
   getSacrificeRoles,
@@ -57,6 +71,11 @@ import {
   type HunnyRole,
   type RedPandaRole,
   type ItemRole,
+  type HealRole,
+  type ExertRole,
+  type BeckonEnablerTier,
+  type TribalRole,
+  type TribalSpec,
 } from '../utils';
 
 // ============================================
@@ -731,6 +750,126 @@ function findSpikeSuitAnchors(payoff: LorcanaCard, allCards: LorcanaCard[]): Syn
 }
 
 // ============================================
+// MERIDA ARCHER HELPERS (Merida - Formidable Archer, STEADY AIM)
+// ============================================
+
+/**
+ * Score a Merida pairing from the payoff action's stats. STEADY AIM adds a flat
+ * +2 to every hit, so a bigger base action is a bigger absolute upgrade; the
+ * printed damage (capped at 3 so a lone 4-damage nuke doesn't dwarf a repeatable
+ * 3) anchors the score, and a multi-target action earns +1 because each extra
+ * body is another STEADY AIM trigger.
+ *
+ *   score = min(5 + min(actionDamage, 3) + (multiTarget ? 1 : 0), 10)
+ *
+ * Floor is 6 (a 1-damage single-target still becomes a real +2 upgrade). Validated
+ * spread across the 19 deck-compatible payoffs: 1x6 / 11x7 / 5x8 / 2x9.
+ */
+function steadyAimScore(action: LorcanaCard): number {
+  const damage = Math.min(getActionDamage(action), 3);
+  const multiBonus = isMultiTargetDamageAction(action) ? 1 : 0;
+  return Math.min(5 + damage + multiBonus, 10);
+}
+
+/**
+ * Build a Merida match. `searcherIsAnchor` is true when Merida (the anchor) is the
+ * card being viewed, so she reads as {A} and the action as {B}; in the reverse
+ * direction the action is {A} and Merida is {B}. Token-swap keeps Merida framed as
+ * the enabler regardless of which page the pair is viewed from.
+ */
+function makeMeridaMatch(
+  action: LorcanaCard,
+  target: LorcanaCard,
+  searcherIsAnchor: boolean,
+): SynergyMatch {
+  const anchorToken = searcherIsAnchor ? '{A}' : '{B}';
+  const actionToken = searcherIsAnchor ? '{B}' : '{A}';
+  const damage = getActionDamage(action);
+  const explanation = `${anchorToken}'s STEADY AIM adds 2 damage to ${actionToken}'s ${damage} damage each time it hits an opposing character.`;
+  return {card: target, score: steadyAimScore(action), explanation, bidirectional: true};
+}
+
+/** Forward: the anchor (Merida) finds damage-dealing Action payoffs. */
+function findMeridaActions(anchor: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+  return allCards
+    .filter((other) => other.id !== anchor.id && isMeridaDamageAction(other))
+    .map((action) => makeMeridaMatch(action, action, true));
+}
+
+/** Reverse: a damage-dealing Action finds anchor cards (Merida) that amplify it. */
+function findMeridaAnchors(action: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+  return allCards
+    .filter((other) => other.id !== action.id && isSteadyAimAnchor(other))
+    .map((anchor) => makeMeridaMatch(action, anchor, false));
+}
+
+// ============================================
+// MERIDA - WISP CONJURER (BECKON) HELPERS
+// ============================================
+
+/**
+ * Score by enabler tier — how much exerted-entry pressure the enabler generates for BECKON:
+ *   engine     8  board-wide / repeatable push of OTHER characters (win-condition engine)
+ *   reanimator 7  a body that replays ITSELF exerted from the discard, repeatably
+ *   self       5  a one-shot self-only body (Bodyguard reminder) — density baseline
+ * 5 is the same-deck-density floor; 7/8 justify themselves by firing BECKON repeatedly.
+ */
+const BECKON_TIER_SCORE: Record<BeckonEnablerTier, number> = {
+  engine: 8,
+  reanimator: 7,
+  self: 5,
+};
+
+/** Per-tier explanation fragment describing WHAT the enabler does (subject-free, the template adds the actor). */
+const BECKON_TIER_REASON: Record<BeckonEnablerTier, string> = {
+  engine: 'repeatedly pushes your characters into play exerted',
+  reanimator: 'keeps replaying itself into play exerted from your discard',
+  self: 'enters play exerted',
+};
+
+/**
+ * Build a BECKON match. `searcherIsAnchor` is true when Merida (the anchor) is the card being
+ * viewed, so she reads as {A} and the enabler as {B}; reversed on the enabler's page. The
+ * token-swap keeps Merida framed as the payoff ("{Merida} draws when {enabler} ...") regardless
+ * of direction, mirroring the Spike Suit token-swap.
+ */
+function makeBeckonMatch(
+  enablerTier: BeckonEnablerTier,
+  target: LorcanaCard,
+  searcherIsAnchor: boolean,
+): SynergyMatch {
+  const anchorToken = searcherIsAnchor ? '{A}' : '{B}';
+  const enablerToken = searcherIsAnchor ? '{B}' : '{A}';
+  return {
+    card: target,
+    score: BECKON_TIER_SCORE[enablerTier],
+    explanation: `${enablerToken} ${BECKON_TIER_REASON[enablerTier]}, so ${anchorToken} draws a card each time.`,
+    bidirectional: true,
+  };
+}
+
+/** Forward: the anchor (Merida) finds every card that pushes your characters into play exerted. */
+function findBeckonEnablers(anchor: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+  const matches: SynergyMatch[] = [];
+  for (const other of allCards) {
+    if (other.id === anchor.id) continue;
+    const tier = getBeckonEnablerTier(other);
+    if (tier === null) continue;
+    matches.push(makeBeckonMatch(tier, other, true));
+  }
+  return matches;
+}
+
+/** Reverse: an exerted-entry enabler finds the anchor (Merida). */
+function findBeckonAnchors(enabler: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+  const tier = getBeckonEnablerTier(enabler);
+  if (tier === null) return [];
+  return allCards
+    .filter((other) => other.id !== enabler.id && isBeckonAnchor(other))
+    .map((anchor) => makeBeckonMatch(tier, anchor, false));
+}
+
+// ============================================
 // SYNERGY RULES
 // ============================================
 
@@ -954,6 +1093,44 @@ export const synergyRules: SynergyRule[] = [
   },
 
   // --------------------------------------------
+  // MERIDA ARCHER (Merida - Formidable Archer, STEADY AIM)
+  // --------------------------------------------
+  {
+    id: 'merida-archer',
+    name: 'Merida Archer',
+    category: 'direct',
+    description:
+      "Merida's STEADY AIM adds 2 damage whenever one of your actions deals damage to an opposing character, so damage-dealing action cards hit far harder",
+
+    // Anchor (Merida) finds damage-dealing Action payoffs (forward); the actions find the anchor (reverse).
+    matches: (card) => isSteadyAimAnchor(card) || isMeridaDamageAction(card),
+
+    findSynergies: (card, allCards) =>
+      isSteadyAimAnchor(card)
+        ? findMeridaActions(card, allCards)
+        : findMeridaAnchors(card, allCards),
+  },
+
+  // --------------------------------------------
+  // MERIDA - WISP CONJURER (BECKON)
+  // --------------------------------------------
+  {
+    id: 'merida-wisp',
+    name: 'Merida - Wisp Conjurer',
+    category: 'direct',
+    description:
+      "Merida's BECKON draws a card whenever another of your characters enters play exerted, so she synergizes with cards that push your characters into play exerted — board-wide engines, self-reanimators, and Bodyguard bodies.",
+
+    // Anchor finds exerted-entry enablers (forward); enablers find the anchor (reverse).
+    matches: (card) => isBeckonAnchor(card) || getBeckonEnablerTier(card) !== null,
+
+    findSynergies: (card, allCards) =>
+      isBeckonAnchor(card)
+        ? findBeckonEnablers(card, allCards)
+        : findBeckonAnchors(card, allCards),
+  },
+
+  // --------------------------------------------
   // INK RAMP (playstyle: ramp)
   // --------------------------------------------
   {
@@ -1107,6 +1284,29 @@ export const synergyRules: SynergyRule[] = [
   },
 
   // --------------------------------------------
+  // HEALING (Heal Matters, payoff-anchored)
+  // --------------------------------------------
+  {
+    id: 'healing',
+    name: 'Healing',
+    category: 'playstyle',
+    playstyleId: 'healing',
+    description:
+      'Healers remove damage from your own characters to cash in the payoffs that reward healing. Payoff-anchored: a healer synergizes with payoffs, but two plain healers do not synergize with each other.',
+
+    matches: isHealCard,
+
+    // Payoff-anchored (like Floodborn / Items): a pair scores only when at least one side is a
+    // heal payoff, so the scorePair callback is skipped for healer-healer pairs (returns null).
+    findSynergies: (card, allCards) =>
+      tribalFindSynergies(card, allCards, getHealRoles, (cardRoles, otherRoles) =>
+        isHealPayoff(cardRoles) || isHealPayoff(otherRoles)
+          ? scoreHealPair(cardRoles, otherRoles)
+          : null,
+      ),
+  },
+
+  // --------------------------------------------
   // HUNNY TRIBAL
   // --------------------------------------------
   {
@@ -1138,6 +1338,78 @@ export const synergyRules: SynergyRule[] = [
 
     findSynergies: (card, allCards) =>
       tribalFindSynergies(card, allCards, getRedPandaRoles, scoreRedPandaPair),
+  },
+
+  // --------------------------------------------
+  // CLASSIFICATION TRIBES (Monster, Princess, Hero, Super, Royalty)
+  // Generated from one shared factory — all payoff-anchored, all 5-baseline.
+  // --------------------------------------------
+  makeTribalRule(
+    TRIBAL_SPECS.monster,
+    'Monsters',
+    'Monster',
+    'Monster characters and the payoffs that reward fielding the tribe. Payoff-anchored: plain Monster bodies do not synergize with each other.',
+  ),
+  makeTribalRule(
+    TRIBAL_SPECS.princess,
+    'Princesses',
+    'Princess',
+    'The Princess archetype: Princess characters and the payoffs that buff them, dig them out of the deck, or reward having a Princess in play.',
+  ),
+  makeTribalRule(
+    TRIBAL_SPECS.hero,
+    'Heroes',
+    'Hero',
+    'Hero characters and the Set 12 payoffs that buff or trigger off the tribe. Payoff-anchored, so a Hero body only surfaces against the payoffs that reward it.',
+  ),
+  makeTribalRule(
+    TRIBAL_SPECS.super,
+    'Supers',
+    'Super',
+    'The Incredibles "Super" package: Super characters and the payoffs that pump, ready, or reward them.',
+  ),
+  makeTribalRule(
+    TRIBAL_SPECS.royalty,
+    'Royalty',
+    'Royalty',
+    'Queen / King / Prince characters (Royalty, kept distinct from Princess) and the payoffs that buff or reward the crown.',
+  ),
+  makeTribalRule(
+    TRIBAL_SPECS.detective,
+    'Detectives',
+    'Detective',
+    'The Set 10 Detective tribe (Zootopia / Great Mouse Detective): Detective characters and the payoffs that buff them, search them out, or reward having one in play.',
+  ),
+
+  // --------------------------------------------
+  // EXERT (Exert Matters, opponent-facing, payoff-anchored)
+  // --------------------------------------------
+  {
+    id: 'exert',
+    name: 'Exert',
+    category: 'playstyle',
+    playstyleId: 'exert',
+    description:
+      'Effects that exert an opposing character pair with the payoffs that banish, lock, or scale off the exerted body. Payoff-anchored: two exert enablers do not synergize with each other.',
+
+    matches: isExertCard,
+
+    findSynergies: (card, allCards) => {
+      const cardRoles = getExertRoles(card);
+      if (cardRoles.length === 0) return [];
+
+      const matches: SynergyMatch[] = [];
+      for (const other of allCards) {
+        if (other.id === card.id) continue;
+        const otherRoles = getExertRoles(other);
+        if (otherRoles.length === 0) continue;
+        // Payoff-anchored: scoreExertPair returns null for enabler↔enabler pairs.
+        const result = scoreExertPair(card, cardRoles, other, otherRoles);
+        if (result === null) continue;
+        matches.push({card: other, score: result.score, explanation: result.explanation, bidirectional: true});
+      }
+      return matches;
+    },
   },
 ];
 
@@ -1785,6 +2057,46 @@ function scoreItemPair(
 }
 
 // ============================================
+// HEALING SCORING (Heal Matters, payoff-anchored, 5-baseline)
+// ============================================
+
+/** A payoff side rewards the removal event. Healers alone are enablers, not payoffs. */
+const isHealPayoff = (roles: HealRole[]): boolean => roles.includes('heal-payoff');
+
+/**
+ * Score a Heal-Matters pair. findSynergies only calls this when at least one side is a payoff
+ * (payoff-anchored), so healer-healer pairs never reach here. Cards can be multi-role (Ohana
+ * Means Family is healer+heal-payoff), so a side counts as the payoff whenever it carries the
+ * 'heal-payoff' role:
+ *   healer      <-> heal-payoff  = 8  win-condition: the healer clears damage, firing the payoff engine
+ *   heal-payoff <-> heal-payoff  = 7  two heal engines compound on the same board
+ *
+ * `cardRoles` is the searcher (token {A}); `otherRoles` is the partner (token {B}). The token-swap
+ * keeps the HEALER side reading as the actor regardless of which card the user selected.
+ */
+function scoreHealPair(
+  cardRoles: HealRole[],
+  otherRoles: HealRole[],
+): {score: number; explanation: string} {
+  const cardPayoff = isHealPayoff(cardRoles);
+  const otherPayoff = isHealPayoff(otherRoles);
+
+  if (cardPayoff && otherPayoff) {
+    return {
+      score: 7,
+      explanation: 'Both reward removing damage: two heal engines that compound on the same board.',
+    };
+  }
+  // Exactly one side is a payoff; the other is a healer only. The healer is the enabler/actor.
+  const healerToken = cardPayoff ? '{B}' : '{A}';
+  const payoffToken = cardPayoff ? '{A}' : '{B}';
+  return {
+    score: 8,
+    explanation: `${healerToken} clears damage off your characters, firing ${payoffToken}'s heal payoff.`,
+  };
+}
+
+// ============================================
 // SHARED TRIBAL SCORING HELPERS
 // ============================================
 
@@ -1864,6 +2176,131 @@ function scoreRedPandaPair(
     return {score: 8, explanation: 'A Red Panda search converts a deck slot into a tribe member.'};
   }
   return {score: 5, explanation: 'Both share the Red Panda deck. Density baseline.'};
+}
+// ============================================
+// EXERT SCORING (Exert Matters, payoff-anchored, 5-baseline)
+// ============================================
+
+/**
+ * Score an Exert pair (payoff-anchored). Returns null for enabler↔enabler pairs so the
+ * rule's findSynergies drops them (two soft-taps stack pressure but never combo).
+ *
+ *   enabler ↔ consume payoff (exert-trigger / banish-exerted / can't-ready lock) = 8
+ *   enabler ↔ state payoff   (opp-exert-state / lore-off-exerted)               = 6
+ *   payoff  ↔ payoff                                                             = 5
+ *   enabler ↔ enabler                                                            = null
+ *
+ * `card` is the searcher (token {A}); `other` is the partner (token {B}). The token-swap
+ * keeps the ENABLER side reading as the actor regardless of which card is the searcher.
+ * The consume/state tier is read from the payoff card's text via isExertConsumePayoff.
+ */
+function scoreExertPair(
+  card: LorcanaCard,
+  cardRoles: ExertRole[],
+  other: LorcanaCard,
+  otherRoles: ExertRole[],
+): {score: number; explanation: string} | null {
+  const cardEnabler = cardRoles.includes('exert-enabler');
+  const otherEnabler = otherRoles.includes('exert-enabler');
+  const cardPayoff = cardRoles.includes('exert-payoff');
+  const otherPayoff = otherRoles.includes('exert-payoff');
+
+  // enabler ↔ payoff (cross-role): score by the PAYOFF side's tier.
+  if ((cardEnabler && otherPayoff) || (otherEnabler && cardPayoff)) {
+    const enablerToken = cardEnabler ? '{A}' : '{B}';
+    const payoffToken = cardEnabler ? '{B}' : '{A}';
+    const payoffCard = cardEnabler ? other : card;
+    if (isExertConsumePayoff(payoffCard)) {
+      return {
+        score: 8,
+        explanation: `${enablerToken} exerts an opposing character, and ${payoffToken} punishes the exerted body.`,
+      };
+    }
+    return {
+      score: 6,
+      explanation: `${enablerToken} keeps an opposing character exerted, switching on ${payoffToken}.`,
+    };
+  }
+
+  // payoff ↔ payoff = 5 (parallel payoff density).
+  if (cardPayoff && otherPayoff) {
+    return {score: 5, explanation: `Both reward opposing characters being exerted. Density baseline.`};
+  }
+
+  // enabler ↔ enabler = null (payoff-anchored, never emitted).
+  return null;
+}
+
+// ============================================
+// CLASSIFICATION-TRIBE SCORING (Monster/Princess/Hero/Super/Royalty)
+// Shared factory over TRIBAL_SPECS — payoff-anchored, 5-baseline.
+// ============================================
+
+/** Any non-member role rewards the tribe: a buff, a repeating trigger, a search, or an in-play check. */
+const isTribalPayoff = (roles: TribalRole[]): boolean => roles.some((r) => r !== 'member');
+
+/**
+ * Score a classification-tribe pair (payoff-anchored). Returns null for member-member
+ * pairs so `tribalFindSynergies` drops them (a tribe is only interesting through its payoffs).
+ * `tribe` is the SINGULAR grammar noun ("Princess", "Royalty") woven into each explanation —
+ * kept distinct from the plural display name ("Princesses", "Royalties") so the templates stay grammatical.
+ * Highest applicable bucket wins, since cards are multi-role (Philoctetes is member+buff+trigger):
+ *   search  <-> member|payoff       = 8  the search digs the tribe out to fuel the payoffs
+ *   trigger <-> member              = 7  the body fires the repeating payoff each time
+ *   payoff  <-> payoff              = 7  two payoffs stack on one tribal board
+ *   buff    <-> member              = 6  the body is pumped by the (team or single-target) buff
+ *   check   <-> member              = 6  the body turns on the "have a X in play" payoff
+ */
+function scoreTribalPair(
+  tribe: string,
+  cardRoles: TribalRole[],
+  otherRoles: TribalRole[],
+): {score: number; explanation: string} | null {
+  if (!isTribalPayoff(cardRoles) && !isTribalPayoff(otherRoles)) return null;
+  const cross = crossMatcher(cardRoles, otherRoles);
+
+  if (
+    cross('search', 'member') ||
+    cross('search', 'buff') ||
+    cross('search', 'trigger') ||
+    cross('search', 'in-play-check')
+  ) {
+    return {score: 8, explanation: `A ${tribe} search digs the tribe out of your deck, fueling the payoffs.`};
+  }
+  if (cross('trigger', 'member')) {
+    return {score: 7, explanation: `The ${tribe} body fires the repeating payoff trigger.`};
+  }
+  if (isTribalPayoff(cardRoles) && isTribalPayoff(otherRoles)) {
+    return {score: 7, explanation: `Two ${tribe} payoffs stack on the same board.`};
+  }
+  if (cross('buff', 'member')) {
+    return {score: 6, explanation: `The ${tribe} body is pumped by the buff.`};
+  }
+  if (cross('in-play-check', 'member')) {
+    return {score: 6, explanation: `The ${tribe} body turns on the "have a ${tribe} in play" payoff.`};
+  }
+  // Unreachable guard: the payoff gate above admits only member-payoff or payoff-payoff pairs.
+  return {score: 5, explanation: `Both share the ${tribe} deck. Density baseline.`};
+}
+
+/**
+ * Build a payoff-anchored tribal rule from a spec — one line per classification tribe.
+ * `name` is the plural display label (e.g. "Princesses"); `noun` is the singular grammar noun
+ * (e.g. "Princess") fed to the explanation templates so they read "A Princess search", not "A Princesses search".
+ */
+function makeTribalRule(spec: TribalSpec, name: string, noun: string, description: string): SynergyRule {
+  return {
+    id: spec.playstyleId,
+    name,
+    category: 'playstyle',
+    playstyleId: spec.playstyleId as PlaystyleId,
+    description,
+    matches: (card) => isTribalCard(card, spec),
+    findSynergies: (card, allCards) =>
+      tribalFindSynergies(card, allCards, (c) => getTribalRoles(c, spec), (cardRoles, otherRoles) =>
+        scoreTribalPair(noun, cardRoles, otherRoles),
+      ),
+  };
 }
 
 // Get all rules
