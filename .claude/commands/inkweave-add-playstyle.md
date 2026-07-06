@@ -11,7 +11,7 @@ and group multiple synergy rules under one identity.
 ## Phase 1: Discovery
 
 1. **ASK the user**: "Which playstyle are you adding? What's the core gameplay strategy?"
-   - Check `COMING_SOON_PLAYSTYLES` in `apps/web/src/shared/constants/playstyleUi.ts` — it may already be planned there with a name, description, and accent color.
+   - Check `COMING_SOON_PLAYSTYLES` in `apps/web/src/shared/constants/playstyleUi.ts` — it may already be planned there with a name and accent color.
    - WAIT for their response.
 
 2. **Research the strategy** in the card data:
@@ -35,8 +35,8 @@ and group multiple synergy rules under one identity.
 5. **Propose the playstyle definition**:
    - `id`: kebab-case slug (e.g., `'discard'`, `'bounce'`)
    - `name`: Display name for the UI (e.g., `'Discard Control'`)
-   - `description`: 1-2 sentence strategy summary
-   - Accent color and cover art path
+   - `tagline`: one-sentence strategy summary (playstyles have no long description or strategy tips)
+   - Accent color, `kind` (`mechanic` or `tribe`), and hero card id (no cover art)
 
 6. **Propose the rules** this playstyle needs:
    - What distinct synergy rules will detect cards in this playstyle?
@@ -58,7 +58,7 @@ and group multiple synergy rules under one identity.
 
 10. **Register the playstyle** in the engine:
     - File: `packages/synergy-engine/src/engine/playstyles.ts`
-    - Add entry to the `playstyles` array with id, name, description
+    - Add entry to the `playstyles` array with id, name, tagline
 
 11. **Add the synergy rules**:
     - File: `packages/synergy-engine/src/engine/rules.ts`
@@ -73,7 +73,7 @@ and group multiple synergy rules under one identity.
 
 13. **Add the UI configuration**:
     - File: `apps/web/src/shared/constants/playstyleUi.ts`
-    - Add entry to `PLAYSTYLE_UI` record with accent color and cover art path
+    - Add entry to `PLAYSTYLE_UI` record with accent color, `kind`, and hero card id
     - If this was in `COMING_SOON_PLAYSTYLES`, remove it from there
 
 14. **Add unit tests** in `packages/synergy-engine/src/__tests__/`:

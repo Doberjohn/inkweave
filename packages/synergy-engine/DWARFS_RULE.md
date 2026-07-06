@@ -56,6 +56,19 @@ Every Set-12 payoff is worded "Seven Dwarfs **OR Princess** character." That Pri
 
 ---
 
+## Card examples by role
+
+Real cards the `getDwarfsRoles` detector tags for each role (names from the live database; effects paraphrased):
+
+| Role | Real cards | What they do |
+|------|-----------|--------------|
+| **member** | Sleepy - Sluggish Knight (Steel), Dopey - Drawn to Music (Amethyst), Sneezy - Noisy Knight (Steel) | Carry the Seven Dwarfs classification |
+| **density** | Doc - Taking Notes (Amethyst), Sleepy - Deep Sleeper (Amethyst), Right Behind You (Amethyst) | Benefit gated on having Dwarfs in play |
+| **recruit** | Right Behind You (Amethyst) | Play a Seven Dwarfs character for free |
+| **return** | Snow White - Merry as the Morning (Amethyst) | Bounce a Dwarf to hand: re-buys its enter-play ability and draws |
+
+---
+
 ## Scoring (5/7/8 matrix)
 
 The rule uses the project-wide **5-baseline scoring convention**: 5 = neutral default (same-deck density, no compounding), 7+ = a specific mechanical interaction. Dwarfs skips the 6 slot (like Toy).

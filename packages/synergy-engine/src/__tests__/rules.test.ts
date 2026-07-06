@@ -9,6 +9,12 @@ import {
   isDiscardCard,
   getSacrificeRoles,
   isSacrificeCard,
+  getExertRoles,
+  isExertCard,
+  getBounceRoles,
+  isBounceCard,
+  getSelfDiscardRoles,
+  isSelfDiscardCard,
   getRampRoles,
   isRampCard,
   isDeckRamp,
@@ -23,6 +29,13 @@ import {
   getHunnyRoles,
   isHunnyCard,
   getRedPandaRoles,
+  getItemRoles,
+  isItemCard,
+  getHealRoles,
+  isHealCard,
+  getTribalRoles,
+  isTribalCard,
+  TRIBAL_SPECS,
 } from '../utils';
 import {createCard} from './fixtures.js';
 
@@ -86,6 +99,152 @@ describe('Synergy Rules', () => {
       const m2 = createCard({id: 'meilin-lv', name: 'Meilin Lee', cost: 1, classifications: ['Red Panda'], text: 'Has Singer.'});
       expect(scoreWith(member, m2)?.score).toBe(5);
     });
+  });
+
+  describe('Items detection', () => {
+    const bareItem = createCard({id: 'blue-smoke', name: 'Blue Smoke', type: 'Item', cost: 2, text: 'If you have a character named Darkwing Duck in play, you pay 1 ⬡ less to play this item.'});
+    const trigger = createCard({id: 'norton', name: 'Norton Nimnul', cost: 5, text: 'DEVITALIZER RAY Once during your turn, whenever you play an item, chosen opposing character gets -2 ¤ this turn.'});
+    const staticPayoff = createCard({id: 'dug', name: 'Dug', cost: 3, text: 'When you play this character, if you have an item in play, draw a card.'});
+    const engine = createCard({id: 'gadget', name: 'Gadget Hackwrench', cost: 4, text: 'When you play this character, you may play an item with cost 3 or less for free.'});
+    const recursionItem = createCard({id: 'shepherd', name: "Shepherd's Journal", type: 'Item', cost: 3, text: '⟳, Banish this item, Return an item card from your discard to your hand.'});
+    const removal = createCard({id: 'wildcat', name: 'Wildcat', cost: 3, text: 'DISASSEMBLE ⟳ — Banish chosen item.'});
+
+    it('tags a plain item as member only (self-discount is not an engine)', () => {
+      expect(getItemRoles(bareItem)).toEqual(['member']);
+    });
+    it('detects the "whenever you play an item" trigger payoff', () => {
+      expect(getItemRoles(trigger)).toEqual(['payoff-trigger']);
+    });
+    it('detects the "if you have an item in play" static payoff', () => {
+      expect(getItemRoles(staticPayoff)).toEqual(['payoff-static']);
+    });
+    it('detects a free-play item engine', () => {
+      expect(getItemRoles(engine)).toEqual(['item-engine']);
+    });
+    it('tags an item that recurs items as member + engine', () => {
+      expect(getItemRoles(recursionItem)).toEqual(['member', 'item-engine']);
+    });
+    it('excludes item removal ("banish chosen item")', () => {
+      expect(isItemCard(removal)).toBe(false);
+    });
+  });
+
+  describe('Items rule (payoff-anchored)', () => {
+    const rule = getRuleById('items')!;
+    const item = createCard({id: 'item-a', name: 'Lantern', type: 'Item', cost: 2, text: 'The next character you play this turn costs 1 ⬡ less.'});
+    const item2 = createCard({id: 'item-b', name: 'Magic Mirror', type: 'Item', cost: 3, text: 'Draw a card.'});
+    const trigger = createCard({id: 'norton', name: 'Norton Nimnul', cost: 5, text: 'Once during your turn, whenever you play an item, chosen opposing character gets -2 ¤ this turn.'});
+    const trigger2 = createCard({id: 'alpha', name: 'Alpha', cost: 4, text: 'Whenever you play an item, chosen character gets +1 ¤ and Resist +1 this turn.'});
+    const staticPayoff = createCard({id: 'dug', name: 'Dug', cost: 3, text: 'When you play this character, if you have an item in play, draw a card.'});
+    const engine = createCard({id: 'gadget', name: 'Gadget Hackwrench', cost: 4, text: 'When you play this character, you may play an item with cost 3 or less for free.'});
+    const engine2 = createCard({id: 'pluto', name: 'Pluto', cost: 3, text: 'Return an item card from your discard to your hand.'});
+    const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+    it('scores item-engine + payoff at 8', () => { expect(scoreWith(engine, trigger)?.score).toBe(8); });
+    it('scores member + trigger payoff at 7', () => { expect(scoreWith(item, trigger)?.score).toBe(7); });
+    it('scores payoff + payoff at 7', () => { expect(scoreWith(trigger, trigger2)?.score).toBe(7); });
+    it('scores member + static payoff at 6', () => { expect(scoreWith(item, staticPayoff)?.score).toBe(6); });
+    it('drops bare item + bare item (payoff-anchored)', () => { expect(scoreWith(item, item2)).toBeUndefined(); });
+    it('drops item-engine + item-engine (neither is a payoff)', () => { expect(scoreWith(engine, engine2)).toBeUndefined(); });
+  });
+
+  describe('Classification tribes detection', () => {
+    const P = TRIBAL_SPECS.princess;
+    const memberOnly = createCard({id: 'aurora', name: 'Aurora', cost: 4, classifications: ['Princess'], text: 'Quests for 2 lore.'});
+    const teamBuff = createCard({id: 'beast', name: 'Beast', cost: 6, classifications: ['Prince'], text: 'FULL DANCE CARD Your Princess characters get +1 ¤ and +1 ⛉.'});
+    const targetBuff = createCard({id: 'wand', name: "Fairy Godmother's Wand", type: 'Item', cost: 2, text: 'Chosen Princess character of yours gains Ward until the start of your next turn.'});
+    const trigger = createCard({id: 'vanellope', name: 'Vanellope', cost: 4, classifications: ['Princess'], text: 'Whenever you play another Princess character, all opposing characters get -1 ¤ this turn.'});
+    const search = createCard({id: 'nervous', name: "Don't Be Nervous", type: 'Action', cost: 2, text: 'Search your deck for a Princess character card, reveal that card, and put it into your hand.'});
+    const check = createCard({id: 'hans', name: 'Hans', cost: 3, classifications: ['Prince'], text: 'When you play this character, if a Princess or Queen character is in play, gain 1 lore.'});
+
+    it('tags a member with no payoff text as member only', () => {
+      expect(getTribalRoles(memberOnly, P)).toEqual(['member']);
+    });
+    it('detects a team buff on a non-member payoff', () => {
+      expect(getTribalRoles(teamBuff, P)).toEqual(['buff']);
+    });
+    it('detects a single-target buff with an "of yours" gap', () => {
+      expect(getTribalRoles(targetBuff, P)).toEqual(['buff']);
+    });
+    it('detects the "whenever you play a Princess" trigger', () => {
+      expect(getTribalRoles(trigger, P)).toEqual(['member', 'trigger']);
+    });
+    it('detects a deck search', () => {
+      expect(getTribalRoles(search, P)).toEqual(['search']);
+    });
+    it('detects an in-play check where the tribe is the second option', () => {
+      expect(getTribalRoles(check, P)).toEqual(['in-play-check']);
+    });
+    it('keeps Royalty disjoint from Princess (a Prince is not a Princess member)', () => {
+      const phillip = createCard({id: 'phillip', name: 'Prince Phillip', cost: 4, classifications: ['Hero', 'Prince'], text: 'Bodyguard.'});
+      expect(getTribalRoles(phillip, TRIBAL_SPECS.royalty)).toEqual(['member']);
+      expect(isTribalCard(phillip, TRIBAL_SPECS.princess)).toBe(false);
+    });
+  });
+
+  describe('Classification tribes rule (payoff-anchored)', () => {
+    const rule = getRuleById('princess')!;
+    const member = createCard({id: 'aurora', name: 'Aurora', cost: 4, classifications: ['Princess'], text: 'Quests for 2.'});
+    const member2 = createCard({id: 'belle', name: 'Belle', cost: 3, classifications: ['Princess'], text: 'Has Ward.'});
+    const teamBuff = createCard({id: 'beast', name: 'Beast', cost: 6, classifications: ['Prince'], text: 'Your Princess characters get +1 ¤ and +1 ⛉.'});
+    const trigger = createCard({id: 'vanellope', name: 'Vanellope', cost: 4, classifications: ['Princess'], text: 'Whenever you play another Princess character, draw a card.'});
+    const search = createCard({id: 'nervous', name: "Don't Be Nervous", type: 'Action', cost: 2, text: 'Search your deck for a Princess character card and put it into your hand.'});
+    const check = createCard({id: 'hans', name: 'Hans', cost: 3, classifications: ['Prince'], text: 'When you play this character, if a Princess character is in play, gain 1 lore.'});
+    const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+    it('scores search + member at 8', () => { expect(scoreWith(search, member)?.score).toBe(8); });
+    it('scores trigger + member at 7', () => { expect(scoreWith(trigger, member)?.score).toBe(7); });
+    it('scores payoff + payoff at 7', () => { expect(scoreWith(teamBuff, trigger)?.score).toBe(7); });
+    it('scores buff + member at 6', () => { expect(scoreWith(teamBuff, member)?.score).toBe(6); });
+    it('scores in-play-check + member at 6', () => { expect(scoreWith(check, member)?.score).toBe(6); });
+    it('drops member + member (payoff-anchored)', () => { expect(scoreWith(member, member2)).toBeUndefined(); });
+  });
+  describe('Detectives detection', () => {
+    const D = TRIBAL_SPECS.detective;
+    const memberOnly = createCard({id: 'basil-dt', name: 'Basil', fullName: 'Basil - Practiced Detective', cost: 3, classifications: ['Detective'], text: 'Quests for 2 lore.'});
+    const teamBuff = createCard({id: 'judy-lead', name: 'Judy Hopps', fullName: 'Judy Hopps - Lead Detective', cost: 5, classifications: ['Detective'], text: 'THE CASE IS AFOOT Your Detective characters get +1 ⛉.'});
+    const trigger = createCard({id: 'basil-ten', name: 'Basil', fullName: 'Basil - Tenacious Mouse', cost: 4, classifications: ['Detective'], text: 'WORKING THEORY Whenever one of your Detective characters quests, you may draw a card.'});
+    const search = createCard({id: 'judy-clues', name: 'Judy Hopps', fullName: 'Judy Hopps - Uncovering Clues', cost: 4, classifications: ['Detective'], text: 'FOLLOW THE CLUES When you play this character, you may search your deck for a Detective character card, reveal it, and put it into your hand.'});
+    const check = createCard({id: 'pluto', name: 'Pluto', fullName: 'Pluto - Clever Cluefinder', cost: 3, text: 'SNIFF THEM OUT While you have a Detective character in play, this character gets +1 ◊.'});
+    // Give-form single-target buff on a NON-member payoff (Flash - Records Specialist).
+    const giveBuff = createCard({id: 'flash', name: 'Flash', fullName: 'Flash - Records Specialist', cost: 3, text: 'DEEP RESEARCH Whenever this character quests, you may give chosen Detective character +2 ¤ this turn.'});
+
+    it('tags a member with no payoff text as member only', () => {
+      expect(getTribalRoles(memberOnly, D)).toEqual(['member']);
+    });
+    it('detects a give-form "+N" single-target buff (Flash - Records Specialist)', () => {
+      expect(getTribalRoles(giveBuff, D)).toEqual(['buff']);
+    });
+    it('detects a team buff on a Detective member', () => {
+      expect(getTribalRoles(teamBuff, D)).toEqual(['member', 'buff']);
+    });
+    it('detects the tribal quest trigger', () => {
+      expect(getTribalRoles(trigger, D)).toEqual(['member', 'trigger']);
+    });
+    it('detects a deck search', () => {
+      expect(getTribalRoles(search, D)).toEqual(['member', 'search']);
+    });
+    it('detects an in-play check on a non-member', () => {
+      expect(getTribalRoles(check, D)).toEqual(['in-play-check']);
+    });
+  });
+
+  describe('Detectives rule (payoff-anchored)', () => {
+    const rule = getRuleById('detective')!;
+    const member = createCard({id: 'basil-dt', name: 'Basil', classifications: ['Detective'], text: 'Quests for 2.'});
+    const member2 = createCard({id: 'dawson', name: 'Dawson', classifications: ['Detective'], text: 'Has Ward.'});
+    const teamBuff = createCard({id: 'judy-lead', name: 'Judy Hopps', classifications: ['Detective'], text: 'Your Detective characters get +1 ⛉.'});
+    const trigger = createCard({id: 'basil-ten', name: 'Basil', classifications: ['Detective'], text: 'Whenever one of your Detective characters quests, draw a card.'});
+    const search = createCard({id: 'clues', name: 'Search for Clues', type: 'Action', cost: 2, text: 'Search your deck for a Detective character card and put it into your hand.'});
+    const check = createCard({id: 'pluto', name: 'Pluto', cost: 3, text: 'While you have a Detective character in play, this character gets +1 ◊.'});
+    const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+    it('scores search + member at 8', () => { expect(scoreWith(search, member)?.score).toBe(8); });
+    it('scores trigger + member at 7', () => { expect(scoreWith(trigger, member)?.score).toBe(7); });
+    it('scores payoff + payoff at 7', () => { expect(scoreWith(teamBuff, trigger)?.score).toBe(7); });
+    it('scores buff + member at 6', () => { expect(scoreWith(teamBuff, member)?.score).toBe(6); });
+    it('scores in-play-check + member at 6', () => { expect(scoreWith(check, member)?.score).toBe(6); });
+    it('drops member + member (payoff-anchored)', () => { expect(scoreWith(member, member2)).toBeUndefined(); });
   });
 
   describe('Shift Targets', () => {
@@ -1558,6 +1717,232 @@ describe('Card Helper Functions', () => {
     });
   });
 
+  describe('Merida Archer', () => {
+    const meridaRule = getRuleById('merida-archer')!;
+
+    const anchor = createCard({
+      id: 'merida',
+      name: 'Merida',
+      fullName: 'Merida - Formidable Archer',
+      ink: 'Steel',
+      text: 'STEADY AIM Whenever one of your actions deals damage to an opposing character, deal 2 damage to that character.',
+    });
+
+    const smash = createCard({
+      id: 'smash',
+      name: 'Smash',
+      fullName: 'Smash',
+      type: 'Action',
+      ink: 'Steel',
+      text: 'Deal 3 damage to chosen character.',
+    });
+
+    const mobSong = createCard({
+      id: 'mob-song',
+      name: 'The Mob Song',
+      fullName: 'The Mob Song',
+      type: 'Action',
+      ink: 'Steel',
+      text: 'Deal 3 damage to up to 3 chosen characters and/or locations.',
+    });
+
+    // Break Free — self-only removal (damage to YOUR OWN character), must be excluded.
+    const breakFree = createCard({
+      id: 'break-free',
+      name: 'Break Free',
+      fullName: 'Break Free',
+      type: 'Action',
+      ink: 'Steel',
+      text: 'Deal 1 damage to chosen character of yours. They gain Rush and get +1 ¤ this turn.',
+    });
+
+    // Food Fight! — grants a damage ability to characters, must be excluded.
+    const foodFight = createCard({
+      id: 'food-fight',
+      name: 'Food Fight!',
+      fullName: 'Food Fight!',
+      type: 'Action',
+      ink: 'Steel',
+      text: 'Your characters gain “⟳, 1 ⬡ — Deal 1 damage to chosen character” this turn.',
+    });
+
+    it('matches the STEADY AIM anchor by ability text', () => {
+      expect(meridaRule.matches(anchor)).toBe(true);
+    });
+
+    it('matches a damage-dealing action', () => {
+      expect(meridaRule.matches(smash)).toBe(true);
+    });
+
+    it('does not match self-only removal (Break Free) or granted-ability damage (Food Fight!)', () => {
+      expect(meridaRule.matches(breakFree)).toBe(false);
+      expect(meridaRule.matches(foodFight)).toBe(false);
+    });
+
+    it('forward: anchor finds damage actions, excludes non-payoffs and itself', () => {
+      const synergies = meridaRule.findSynergies(anchor, [anchor, smash, breakFree, foodFight]);
+      expect(synergies.map((s) => s.card.id)).toEqual(['smash']);
+    });
+
+    it('reverse: a damage action finds the anchor', () => {
+      const synergies = meridaRule.findSynergies(smash, [smash, anchor]);
+      expect(synergies).toHaveLength(1);
+      expect(synergies[0].card.id).toBe('merida');
+    });
+
+    it.each([
+      ['1-damage single → 6 (floor)', 'Deal 1 damage to chosen character.', 6],
+      ['3-damage single (Smash) → 8', 'Deal 3 damage to chosen character.', 8],
+      ['3-damage multi (Mob Song) → 9', 'Deal 3 damage to up to 3 chosen characters and/or locations.', 9],
+      ['1-damage multi → 7', 'Deal 1 damage each to up to 2 chosen characters.', 7],
+      ['4-damage single caps at 8 (min(dmg,3))', 'Deal 4 damage to chosen character.', 8],
+    ] as const)('scores %s', (_label, text, expected) => {
+      const action = createCard({id: 'a', type: 'Action', ink: 'Steel', text});
+      const synergies = meridaRule.findSynergies(anchor, [anchor, action]);
+      expect(synergies[0].score).toBe(expected);
+    });
+
+    it('frames Merida as the enabler in both directions (token-swap)', () => {
+      const fwd = meridaRule.findSynergies(anchor, [anchor, smash])[0];
+      const rev = meridaRule.findSynergies(smash, [smash, anchor])[0];
+      // Forward: anchor is the searcher → {A}; action is {B}
+      expect(fwd.explanation).toContain("{A}'s STEADY AIM adds 2 damage to {B}");
+      // Reverse: action is the searcher → {A}; Merida swaps to {B} but stays the actor
+      expect(rev.explanation).toContain("{B}'s STEADY AIM adds 2 damage to {A}");
+    });
+
+    it('marks synergies as bidirectional', () => {
+      const synergies = meridaRule.findSynergies(anchor, [anchor, smash, mobSong]);
+      expect(synergies.every((s) => s.bidirectional)).toBe(true);
+    });
+  });
+
+  describe('Merida - Wisp Conjurer (BECKON)', () => {
+    const beckonRule = getRuleById('merida-wisp')!;
+
+    const merida = createCard({
+      id: '13050',
+      name: 'Merida',
+      fullName: 'Merida - Wisp Conjurer',
+      ink: 'Amethyst',
+      text: 'FOCUSED ENERGY This character may enter play exerted to draw a card. BECKON During your turn, whenever another character of yours enters play exerted, you may draw a card.',
+    });
+
+    // engine (8): pushes OTHER of your characters into play exerted, board-wide.
+    const hornedKing = createCard({
+      id: '13022',
+      name: 'The Horned King',
+      fullName: 'The Horned King - Merciless Master',
+      ink: 'Amber',
+      text: 'THE POWER OF THE CAULDRON While this character is exerted, you may play characters from your discard. If you do, they enter play exerted. (You pay all costs.)',
+    });
+    const simba = createCard({
+      id: '2209',
+      name: 'Simba',
+      fullName: 'Simba - King in the Making',
+      ink: 'Amber',
+      text: 'TIMELY ALLIANCE Whenever you put a card under this character, you may reveal the top card of your deck. If it’s a character card, you may play that character for free and they enter play exerted.',
+    });
+    // engine (8), ITEM — admitted even though type !== Character (it pushes a CHARACTER exerted).
+    const powhatansStaff = createCard({
+      id: '13036',
+      name: "Powhatan's Staff",
+      fullName: "Powhatan's Staff",
+      type: 'Item',
+      ink: 'Amber',
+      text: 'STEP FORWARD ⟳, 1 ⬡ – The next character you play this turn enters play exerted and gains Bodyguard until the start of your next turn.',
+    });
+
+    // reanimator (7): replays ITSELF exerted from your discard.
+    const lilo = createCard({
+      id: '1201',
+      name: 'Lilo',
+      fullName: 'Lilo - Escape Artist',
+      ink: 'Amber',
+      text: "NO PLACE I'D RATHER BE At the start of your turn, if this card is in your discard, you may play her and she enters play exerted.",
+    });
+
+    // self (5): a Bodyguard self-only body — enters play exerted once when played.
+    const fixItFelix = createCard({
+      id: '966',
+      name: 'Fix-It Felix, Jr.',
+      fullName: 'Fix-It Felix, Jr. - Trusty Builder',
+      ink: 'Amber',
+      text: 'Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)',
+    });
+
+    // excluded: makes the OPPONENT's characters enter exerted (not an enabler).
+    const jiminy = createCard({
+      id: '1726',
+      name: 'Jiminy Cricket',
+      fullName: 'Jiminy Cricket - Level-Headed and Wise',
+      ink: 'Amethyst',
+      text: "ENOUGH'S ENOUGH While this character is exerted, opposing characters with Rush enter play exerted.",
+    });
+    // excluded: an ITEM that enters exerted ITSELF (character-only trigger).
+    const chromicon = createCard({
+      id: '1124',
+      name: 'Sapphire Chromicon',
+      fullName: 'Sapphire Chromicon',
+      type: 'Item',
+      ink: 'Sapphire',
+      text: 'POWERING UP This item enters play exerted. SAPPHIRE LIGHT ⟳, 2 ⬡, Banish one of your items — Gain 2 lore.',
+    });
+
+    it('matches the BECKON anchor by ability text', () => {
+      expect(beckonRule.matches(merida)).toBe(true);
+    });
+
+    it('matches enablers across all three tiers', () => {
+      expect(beckonRule.matches(hornedKing)).toBe(true); // engine
+      expect(beckonRule.matches(lilo)).toBe(true); // reanimator
+      expect(beckonRule.matches(fixItFelix)).toBe(true); // self
+      expect(beckonRule.matches(powhatansStaff)).toBe(true); // item engine
+    });
+
+    it('excludes opposing-side exerts and items that enter exerted themselves', () => {
+      expect(beckonRule.matches(jiminy)).toBe(false);
+      expect(beckonRule.matches(chromicon)).toBe(false);
+    });
+
+    it('scores enablers by tier: engine 8, reanimator 7, self 5', () => {
+      const pool = [merida, hornedKing, simba, powhatansStaff, lilo, fixItFelix];
+      const syn = beckonRule.findSynergies(merida, pool);
+      const scoreOf = (id: string) => syn.find((s) => s.card.id === id)?.score;
+      expect(scoreOf('13022')).toBe(8); // Horned King (engine)
+      expect(scoreOf('2209')).toBe(8); // Simba (engine)
+      expect(scoreOf('13036')).toBe(8); // Powhatan's Staff (item engine)
+      expect(scoreOf('1201')).toBe(7); // Lilo (reanimator)
+      expect(scoreOf('966')).toBe(5); // Fix-It Felix (self-only body)
+    });
+
+    it('does not self-pair (FOCUSED ENERGY self-exert never triggers BECKON)', () => {
+      const syn = beckonRule.findSynergies(merida, [merida, hornedKing, fixItFelix]);
+      expect(syn.some((s) => s.card.id === '13050')).toBe(false);
+      expect(syn.map((s) => s.card.id).sort()).toEqual(['13022', '966']);
+    });
+
+    it('reverse: a self-only body finds only the anchor', () => {
+      const syn = beckonRule.findSynergies(fixItFelix, [fixItFelix, merida, hornedKing, chromicon]);
+      expect(syn).toHaveLength(1);
+      expect(syn[0].card.id).toBe('13050');
+    });
+
+    it('frames Merida as the payoff in both directions (token-swap)', () => {
+      const fwd = beckonRule.findSynergies(merida, [merida, fixItFelix])[0];
+      const rev = beckonRule.findSynergies(fixItFelix, [fixItFelix, merida])[0];
+      // Forward: Merida is the searcher ({A}); the enabler is {B}.
+      expect(fwd.explanation).toContain('{B} enters play exerted, so {A} draws');
+      // Reverse: the enabler is the searcher ({A}); Merida swaps to {B} but stays the payoff.
+      expect(rev.explanation).toContain('{A} enters play exerted, so {B} draws');
+    });
+
+    it('marks synergies as bidirectional', () => {
+      const syn = beckonRule.findSynergies(merida, [merida, hornedKing, lilo, fixItFelix]);
+      expect(syn.every((s) => s.bidirectional)).toBe(true);
+    });
+  });
+
   describe('Ramp', () => {
     const rampRule = getRuleById('ramp')!;
 
@@ -2046,6 +2431,241 @@ describe('Toy Tribal', () => {
   });
 });
 
+describe('Self-Discard rule (Discard Matters)', () => {
+  const selfDiscardRule = getRuleById('self-discard')!;
+
+  // Enablers — self-discard OUTLETS from hand.
+  const loot = createCard({
+    id: 'kronk-loot',
+    fullName: 'Kronk - Meat Hut Cook',
+    ink: 'Steel',
+    text: 'PICKUP! Once during your turn, you may pay 1 ⬡ to draw a card, then choose and discard a card.',
+  });
+  const dumpHand = createCard({
+    id: 'dump-hand',
+    fullName: 'You Broke My Smolder',
+    ink: 'Steel',
+    type: 'Action',
+    text: 'Discard your hand. Draw 2 cards.',
+  });
+
+  // Payoffs.
+  const reanimator = createCard({
+    id: 'gothel-reanimate',
+    fullName: 'Mother Gothel - Evil as Ever',
+    ink: 'Emerald',
+    text: 'MUMMY When you discard this card, you may play this character from your discard.',
+  });
+  const discardedThisTurn = createCard({
+    id: 'maximus-state',
+    fullName: 'Maximus - Relentless Stallion',
+    ink: 'Steel',
+    text: 'NO ESCAPE If you discarded a card this turn, this character gains Challenger +2.',
+  });
+  const hellbent = createCard({
+    id: 'megavolt-hellbent',
+    fullName: 'Megavolt - Electrical Menace',
+    ink: 'Steel',
+    text: 'FORCE FIELD While you have no cards in your hand, this character gains Resist +2.',
+  });
+  const lootReanimate = createCard({
+    id: 'rapunzel-flynn',
+    fullName: 'Rapunzel & Flynn Rider - Unlikely Pair',
+    ink: 'Emerald',
+    ink2: 'Steel',
+    text: 'CLEVER SWAP Whenever this character quests, you may draw a card, then choose and discard a card. FRESH START Whenever you discard a character card, you may play that character from your discard.',
+  });
+
+  // Excluded cases.
+  const opponentDiscard = createCard({
+    id: 'opp-discard',
+    fullName: 'Hand Disruption',
+    ink: 'Amethyst',
+    type: 'Action',
+    text: 'Each opponent chooses and discards a card.',
+  });
+  const mill = createCard({
+    id: 'quackerjack-mill',
+    fullName: 'Quackerjack - Loony Toymaker',
+    ink: 'Sapphire',
+    text: 'EVIL DESIGN When you play this character, put the top 4 cards of your deck into your discard.',
+  });
+  const unrelated = createCard({id: 'unrelated-sd', fullName: 'Anna', text: 'Gain 1 lore.'});
+
+  describe('role detection', () => {
+    it('detects enabler from loot (draw, then discard)', () => {
+      expect(getSelfDiscardRoles(loot)).toEqual(['enabler']);
+    });
+
+    it('detects enabler from "discard your hand"', () => {
+      expect(getSelfDiscardRoles(dumpHand)).toEqual(['enabler']);
+    });
+
+    it('detects reanimator from "play ... from your discard"', () => {
+      expect(getSelfDiscardRoles(reanimator)).toEqual(['reanimator']);
+    });
+
+    it('detects state-payoff from "discarded a card this turn"', () => {
+      expect(getSelfDiscardRoles(discardedThisTurn)).toEqual(['state-payoff']);
+    });
+
+    it('detects state-payoff from Hellbent ("no cards in your hand")', () => {
+      expect(getSelfDiscardRoles(hellbent)).toEqual(['state-payoff']);
+    });
+
+    it('detects both enabler and reanimator on an all-in-one card', () => {
+      expect(getSelfDiscardRoles(lootReanimate)).toEqual(['enabler', 'reanimator']);
+    });
+
+    it('does not tag opponent-facing discard (that is the Discard rule)', () => {
+      expect(getSelfDiscardRoles(opponentDiscard)).toEqual([]);
+    });
+
+    it('excludes mill (deck to discard, not hand)', () => {
+      expect(getSelfDiscardRoles(mill)).toEqual([]);
+    });
+
+    it('returns no roles for unrelated or text-less cards', () => {
+      expect(getSelfDiscardRoles(unrelated)).toEqual([]);
+      expect(getSelfDiscardRoles(createCard({text: undefined}))).toEqual([]);
+      expect(isSelfDiscardCard(unrelated)).toBe(false);
+    });
+  });
+
+  describe('synergy scoring', () => {
+    const allCards = [loot, dumpHand, reanimator, discardedThisTurn, hellbent, unrelated];
+
+    it('enabler ↔ reanimator scores 8 (win-condition combo)', () => {
+      const match = selfDiscardRule
+        .findSynergies(loot, allCards)
+        .find((s) => s.card.id === 'gothel-reanimate');
+      expect(match!.score).toBe(8);
+      // Token swap: the enabler ({A}, the searcher here) reads as the actor.
+      expect(match!.explanation).toBe(
+        '{A} discards your own cards so {B} can replay them from the discard.',
+      );
+    });
+
+    it('enabler ↔ state-payoff scores 8', () => {
+      const match = selfDiscardRule
+        .findSynergies(loot, allCards)
+        .find((s) => s.card.id === 'maximus-state');
+      expect(match!.score).toBe(8);
+    });
+
+    it('enabler ↔ enabler scores 5 (parallel outlets)', () => {
+      const match = selfDiscardRule
+        .findSynergies(loot, allCards)
+        .find((s) => s.card.id === 'dump-hand');
+      expect(match!.score).toBe(5);
+    });
+  });
+});
+
+describe('Healing rule (Heal Matters)', () => {
+  const healingRule = getRuleById('healing')!;
+
+  // Healer (enabler) — removes damage from a character.
+  const healingTouch = createCard({
+    id: 'healing-touch',
+    fullName: 'Healing Touch',
+    ink: 'Amber',
+    type: 'Action',
+    text: 'Remove up to 3 damage from chosen character.',
+  });
+
+  // Heal-payoffs — reward the removal event.
+  const grandPabbie = createCard({
+    id: '2086',
+    fullName: 'Grand Pabbie - Oldest and Wisest',
+    ink: 'Sapphire',
+    text: 'ANCIENT INSIGHT Whenever you remove 1 or more damage from one of your characters, gain 2 lore.',
+  });
+  const isabela = createCard({
+    id: '2734',
+    fullName: 'Isabela Madrigal - Caring Cultivator',
+    ink: 'Amber',
+    text: 'DO NO WRONG Whenever you remove damage from one of your characters, gain 1 lore for each 1 damage removed.',
+  });
+  // Dual-role: healer AND payoff on one card.
+  const ohana = createCard({
+    id: '2495',
+    fullName: 'Ohana Means Family',
+    ink: 'Amber',
+    type: 'Action',
+    text: 'Remove all damage from chosen character of yours. Draw a card for each 1 damage removed this way.',
+  });
+
+  // Excluded / unrelated.
+  const moveDamage = createCard({
+    id: 'mover',
+    fullName: 'Damage Mover',
+    ink: 'Sapphire',
+    text: 'You may move all damage from chosen character of yours to this character.',
+  });
+  const unrelated = createCard({id: 'unrelated', fullName: 'Anna', text: 'Draw a card.'});
+
+  describe('role detection', () => {
+    it('detects a healer from "remove up to N damage from"', () => {
+      expect(getHealRoles(healingTouch)).toEqual(['healer']);
+    });
+
+    it('detects a heal-payoff from "whenever you remove ... damage"', () => {
+      expect(getHealRoles(grandPabbie)).toEqual(['heal-payoff']);
+    });
+
+    it('detects a dual-role card as healer + heal-payoff (Ohana Means Family)', () => {
+      expect(getHealRoles(ohana)).toEqual(['healer', 'heal-payoff']);
+    });
+
+    it('excludes a pure move-damage card and text-less / unrelated cards', () => {
+      expect(getHealRoles(moveDamage)).toEqual([]);
+      expect(getHealRoles(unrelated)).toEqual([]);
+      expect(isHealCard(unrelated)).toBe(false);
+    });
+  });
+
+  describe('rule matching', () => {
+    it('matches healers and payoffs, not unrelated cards', () => {
+      expect(healingRule.matches(healingTouch)).toBe(true);
+      expect(healingRule.matches(grandPabbie)).toBe(true);
+      expect(healingRule.matches(unrelated)).toBe(false);
+    });
+  });
+
+  describe('synergy scoring', () => {
+    const scoreWith = (a: typeof healingTouch, b: typeof grandPabbie) =>
+      healingRule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+    it('healer ↔ heal-payoff scores 8, healer reads as the actor', () => {
+      const match = scoreWith(healingTouch, grandPabbie);
+      expect(match!.score).toBe(8);
+      // healingTouch is the searcher ({A}); it is the healer, so it stays the actor.
+      expect(match!.explanation).toBe(
+        "{A} clears damage off your characters, firing {B}'s heal payoff.",
+      );
+    });
+
+    it('keeps the healer as the actor when the payoff is the searcher', () => {
+      const match = scoreWith(grandPabbie, healingTouch);
+      expect(match!.score).toBe(8);
+      // grandPabbie is the searcher ({A}) but is the payoff, so the healer reads as {B}.
+      expect(match!.explanation).toBe(
+        "{B} clears damage off your characters, firing {A}'s heal payoff.",
+      );
+    });
+
+    it('heal-payoff ↔ heal-payoff scores 7 (two engines compound)', () => {
+      expect(scoreWith(grandPabbie, isabela)?.score).toBe(7);
+    });
+
+    it('does not pair two plain healers (payoff-anchored)', () => {
+      const healer2 = createCard({id: 'h2', fullName: 'Second Healer', text: 'Remove 2 damage from chosen character.'});
+      expect(healingRule.findSynergies(healingTouch, [healingTouch, healer2])).toHaveLength(0);
+    });
+  });
+});
+
 describe('Sacrifice rule (Banish Matters)', () => {
   const sacrificeRule = getRuleById('sacrifice')!;
 
@@ -2187,6 +2807,221 @@ describe('Sacrifice rule (Banish Matters)', () => {
       const match = synergies.find((s) => s.card.id === 'the-claw');
       expect(match!.score).toBe(5);
       expect(match!.explanation).toContain('parallel self-banish cards');
+    });
+  });
+});
+
+describe('Exert rule (Exert Matters)', () => {
+  const exertRule = getRuleById('exert')!;
+
+  // Enabler — an effect that exerts an OPPOSING character.
+  const petrify = createCard({
+    id: 'petrify',
+    fullName: 'Petrify',
+    ink: 'Amethyst',
+    type: 'Action',
+    text: 'Exert chosen opposing character.',
+  });
+  // Consume payoffs (score 8 vs enabler).
+  const teKa = createCard({
+    id: 'te-ka',
+    fullName: 'Te Kā - Elemental Terror',
+    ink: 'Amethyst',
+    text: 'ANCIENT RAGE During your turn, whenever an opposing character is exerted, banish them.',
+  });
+  const imStuck = createCard({
+    id: 'im-stuck',
+    fullName: "I'm Stuck!",
+    ink: 'Amethyst',
+    type: 'Action',
+    text: "Chosen exerted character can't ready at the start of their next turn.",
+  });
+  // State payoff (score 6 vs enabler).
+  const honeymaren = createCard({
+    id: 'honeymaren',
+    fullName: 'Honeymaren - Northuldra Guide',
+    ink: 'Amethyst',
+    text: 'TALE OF THE FIFTH SPIRIT When you play this character, if an opponent has an exerted character in play, gain 1 lore.',
+  });
+  // A second pure enabler, to prove enabler↔enabler is not emitted.
+  const elsaFifth = createCard({
+    id: 'elsa-fifth',
+    fullName: 'Elsa - The Fifth Spirit',
+    ink: 'Amethyst',
+    text: 'CRYSTALLIZE When you play this character, exert chosen opposing character.',
+  });
+
+  // Excluded cases.
+  const costGlyph = createCard({
+    id: 'freeze-cost',
+    fullName: 'Cost Glyph Card',
+    ink: 'Amethyst',
+    text: 'FREEZE ⟳ — Draw a card.', // ⟳ is an activation cost; exerts nothing opposing
+  });
+  const inkwellRamp = createCard({
+    id: 'ink-ramp-exerted',
+    fullName: 'Inkwell Ramp Card',
+    ink: 'Sapphire',
+    text: 'When you play this character, each opponent puts the top card of their deck into their inkwell facedown and exerted.',
+  });
+  const selfExert = createCard({
+    id: 'genie-main',
+    fullName: 'Genie - Main Attraction',
+    ink: 'Amethyst',
+    text: "PHENOMENAL SHOWMAN While this character is exerted, opposing characters can't ready at the start of their turn.",
+  });
+  const itemExert = createCard({
+    id: 'heihei',
+    fullName: 'HeiHei - Not-So-Tricky Chicken',
+    ink: 'Sapphire',
+    text: "EAT ANYTHING When you play this character, exert chosen opposing item. It can't ready at the start of its next turn.",
+  });
+
+  describe('role detection', () => {
+    it('detects exert-enabler from "exert chosen opposing character"', () => {
+      expect(getExertRoles(petrify)).toEqual(['exert-enabler']);
+    });
+
+    it('detects a consume payoff from an exert-trigger', () => {
+      expect(getExertRoles(teKa)).toEqual(['exert-payoff']);
+    });
+
+    it('detects a consume payoff from a can’t-ready lock', () => {
+      expect(getExertRoles(imStuck)).toEqual(['exert-payoff']);
+    });
+
+    it('detects a state payoff from an opponent-exerted-state check', () => {
+      expect(getExertRoles(honeymaren)).toEqual(['exert-payoff']);
+    });
+
+    it('excludes exert-as-cost (⟳ glyph, no opposing exert)', () => {
+      expect(getExertRoles(costGlyph)).toEqual([]);
+    });
+
+    it('excludes inkwell ramp ("into inkwell facedown and exerted")', () => {
+      expect(getExertRoles(inkwellRamp)).toEqual([]);
+    });
+
+    it('excludes self-exert-state payoffs', () => {
+      expect(getExertRoles(selfExert)).toEqual([]);
+    });
+
+    it('excludes exert-an-item effects', () => {
+      expect(getExertRoles(itemExert)).toEqual([]);
+      expect(isExertCard(itemExert)).toBe(false);
+    });
+  });
+
+  describe('rule matching', () => {
+    it('matches enablers and payoffs, not excluded cards', () => {
+      expect(exertRule.matches(petrify)).toBe(true);
+      expect(exertRule.matches(teKa)).toBe(true);
+      expect(exertRule.matches(selfExert)).toBe(false);
+    });
+  });
+
+  describe('synergy scoring', () => {
+    const allCards = [petrify, teKa, imStuck, honeymaren, elsaFifth];
+
+    it('enabler ↔ consume payoff (exert-trigger) scores 8, enabler reads as actor', () => {
+      const synergies = exertRule.findSynergies(petrify, allCards);
+      const match = synergies.find((s) => s.card.id === 'te-ka');
+      expect(match!.score).toBe(8);
+      // Petrify is the searcher ({A}) and the enabler, so it reads as the actor.
+      expect(match!.explanation).toBe(
+        '{A} exerts an opposing character, and {B} punishes the exerted body.',
+      );
+    });
+
+    it('keeps the enabler as the actor when the payoff is the searcher', () => {
+      const synergies = exertRule.findSynergies(teKa, allCards);
+      const match = synergies.find((s) => s.card.id === 'petrify');
+      expect(match!.score).toBe(8);
+      // Now the enabler (Petrify) is the partner ({B}), so the tokens swap.
+      expect(match!.explanation).toBe(
+        '{B} exerts an opposing character, and {A} punishes the exerted body.',
+      );
+    });
+
+    it('enabler ↔ consume payoff (can’t-ready lock) scores 8', () => {
+      const synergies = exertRule.findSynergies(petrify, allCards);
+      const match = synergies.find((s) => s.card.id === 'im-stuck');
+      expect(match!.score).toBe(8);
+    });
+
+    it('enabler ↔ state payoff scores 6', () => {
+      const synergies = exertRule.findSynergies(petrify, allCards);
+      const match = synergies.find((s) => s.card.id === 'honeymaren');
+      expect(match!.score).toBe(6);
+      expect(match!.explanation).toBe(
+        '{A} keeps an opposing character exerted, switching on {B}.',
+      );
+    });
+
+    it('enabler ↔ enabler is not emitted (payoff-anchored)', () => {
+      const synergies = exertRule.findSynergies(petrify, allCards);
+      expect(synergies.find((s) => s.card.id === 'elsa-fifth')).toBeUndefined();
+    });
+  });
+});
+
+describe('Bounce rule (return from play to hand)', () => {
+  const bounceRule = getRuleById('bounce')!;
+
+  // Enablers.
+  const selfBounce = createCard({id: 'madam-mim', fullName: 'Madam Mim - Elephant', ink: 'Amethyst', text: 'A LITTLE GAME When you play this character, banish her or return another chosen character of yours to your hand.'});
+  const flexible = createCard({id: 'tigger', fullName: 'Tigger - Bouncing All the Way', ink: 'Amethyst', text: "SPLENDERIFFIC BOUNCE When you play this character, you may return chosen character, item, or location with cost 2 or less to their player's hand."});
+  const opponentBounce = createCard({id: 'mal-queen', fullName: 'Maleficent - Formidable Queen', ink: 'Amethyst', text: "Return chosen opposing character to their player's hand."});
+  // Payoffs.
+  const rebuy = createCard({id: 'merlin-turtle', fullName: 'Merlin - Turtle', ink: 'Amethyst', text: 'When you play this character, draw 2 cards.'});
+  const returnPayoff = createCard({id: 'mal-staff', fullName: "Maleficent's Staff", type: 'Item', ink: 'Amethyst', text: "BACK, FOOLS! Whenever one of your opponents' characters, items, or locations is returned to their hand from play, gain 1 lore."});
+  // Multi-role: self-bounce enabler that is itself a re-buyable ETB body.
+  const both = createCard({id: 'witches', fullName: 'Witches of Morva', ink: 'Amethyst', text: 'When you play this character, return another chosen character of yours to your hand, then draw 2 cards.'});
+  // Excluded shapes.
+  const discardReanimator = createCard({id: 'reani', fullName: 'Reanimator', ink: 'Amethyst', text: 'When you play this character, return a character card from your discard to your hand.'});
+  const shiftBody = createCard({id: 'shift-etb', fullName: 'Shifted Body', ink: 'Amethyst', keywords: ['Shift 4'], text: 'Shift 4 When you play this character, draw 2 cards.'});
+  const scoreWith = (a: typeof selfBounce, b: typeof rebuy) => bounceRule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+  describe('role detection', () => {
+    it('detects self-bounce, flexible, opponent-bounce, return-payoff, rebuy-payoff', () => {
+      expect(getBounceRoles(selfBounce)).toEqual(['self-bounce']);
+      expect(getBounceRoles(flexible)).toEqual(['flexible']);
+      expect(getBounceRoles(opponentBounce)).toEqual(['opponent-bounce']);
+      expect(getBounceRoles(returnPayoff)).toEqual(['return-payoff']);
+      expect(getBounceRoles(rebuy)).toEqual(['rebuy-payoff']);
+    });
+    it('tags a self-bounce + re-buyable ETB body as both roles', () => {
+      expect(getBounceRoles(both)).toEqual(['self-bounce', 'rebuy-payoff']);
+    });
+    it('excludes discard-recursion (from your discard) and Shift ETB bodies', () => {
+      expect(getBounceRoles(discardReanimator)).toEqual([]);
+      expect(getBounceRoles(shiftBody)).toEqual([]); // Shift re-buy is owned by Shift Targets
+      expect(isBounceCard(discardReanimator)).toBe(false);
+    });
+  });
+
+  describe('synergy scoring', () => {
+    it('enabler ↔ rebuy-payoff scores 8, bounce reads as the actor', () => {
+      const match = scoreWith(selfBounce, rebuy);
+      expect(match!.score).toBe(8);
+      expect(match!.explanation).toBe('{A} returns {B} to your hand, re-firing its enter-play ability.');
+    });
+    it('keeps the bounce side as the actor when the payoff is the searcher (token-swap)', () => {
+      const match = scoreWith(rebuy, selfBounce);
+      expect(match!.score).toBe(8);
+      expect(match!.explanation).toBe('{B} returns {A} to your hand, re-firing its enter-play ability.');
+    });
+    it('flexible ↔ rebuy-payoff also scores 8 (flexible acts as an enabler)', () => {
+      expect(scoreWith(flexible, rebuy)?.score).toBe(8);
+    });
+    it('opponent-side ↔ return-payoff scores 6', () => {
+      expect(scoreWith(opponentBounce, returnPayoff)?.score).toBe(6);
+    });
+    it('drops payoff ↔ payoff and enabler ↔ enabler (payoff-anchored)', () => {
+      const rebuy2 = createCard({id: 'rebuy2', fullName: 'Second ETB', text: 'When you play this character, search your deck for a card.'});
+      const self2 = createCard({id: 'self2', fullName: 'Second Bounce', text: 'Return another chosen character of yours to your hand.'});
+      expect(scoreWith(rebuy, rebuy2)).toBeUndefined();
+      expect(scoreWith(selfBounce, self2)).toBeUndefined();
     });
   });
 });

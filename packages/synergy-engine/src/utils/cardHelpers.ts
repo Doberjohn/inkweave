@@ -562,6 +562,75 @@ export function isSacrificeCard(card: LorcanaCard): boolean {
 }
 
 // ============================================
+// SELF-DISCARD DETECTION (fill your own discard, then cash it)
+// ============================================
+
+/**
+ * Self-Discard is the player-side mirror of the opponent-facing Discard rule (Rule 4):
+ * you discard your OWN cards from hand, then benefit. Three roles:
+ *  - 'enabler'      — a hand-discard outlet (loot, discard-your-hand, discard-as-cost)
+ *  - 'reanimator'   — plays / returns a card FROM YOUR DISCARD (recursion). `makeSearchPattern`
+ *                     deliberately excludes "from your discard" and defers recursion to this role.
+ *  - 'state-payoff' — rewards the discard EVENT ("discarded a card this turn") or an empty hand.
+ *
+ * Mill ("put the top N of your deck into your discard") is deliberately NOT an enabler: it fills
+ * the bin from the deck, not the hand, so it never triggers a "when you discard" payoff. The
+ * opponent-exclusion keeps the enabler disjoint from the Discard rule.
+ */
+export type SelfDiscardRole = 'enabler' | 'reanimator' | 'state-payoff';
+
+/** Loot — "draw a card, then choose and discard a card": the dominant self-discard outlet. */
+const SELF_DISCARD_LOOT_PATTERN = /draw\s+(?:a|an|\d+)\s+cards?,?\s+then\s+(?:choose and\s+)?discard/i;
+/** Discard-your-hand — a full hand dump (e.g. dump the hand, draw N). */
+const SELF_DISCARD_HAND_PATTERN = /discard\s+your\s+hand/i;
+/**
+ * Discard-as-cost — kept tight (≤2 words between "discard a" and "card") so it catches generic
+ * "discard a card" costs without over-tagging narrow conditional costs like a Princess/Queen discard.
+ */
+const SELF_DISCARD_COST_PATTERN = /(?:you may\s+)?discard\s+(?:a|an|another|\d+)\s+(?:\w+\s+){0,2}?cards?\b/i;
+/** Opponent-facing discard belongs to the Discard rule; exclude it here to keep the two axes disjoint. */
+const SELF_DISCARD_OPPONENT_PATTERN = /opponent|each player|challenging player|that player/i;
+
+/** Reanimator — play / return / put a card FROM YOUR DISCARD (recursion payoff). */
+const SELF_DISCARD_REANIMATOR_PATTERN = /(?:play|return|put)\b[^.]{0,60}\bfrom your discard\b/i;
+/** State payoff — rewards the discard EVENT (discarded this turn) or an empty hand (Hellbent). */
+const SELF_DISCARD_STATE_PATTERN = /discarded\s+a\s+card\s+this\s+turn|no cards in (?:your )?hand/i;
+
+/** Fast pre-filter: every self-discard pattern contains "discard" or "no cards in". */
+const HAS_SELF_DISCARD_KEYWORD = /discard|no cards in/i;
+
+/**
+ * Enabler: a hand-discard OUTLET (loot / discard-your-hand / discard-as-cost) that is NOT
+ * opponent-facing (opponent discard belongs to the Discard rule). Split out of
+ * getSelfDiscardRoles so the role builder stays a flat sequence of named pushes.
+ */
+function isSelfDiscardEnabler(text: string): boolean {
+  const isOutlet =
+    SELF_DISCARD_LOOT_PATTERN.test(text) ||
+    SELF_DISCARD_HAND_PATTERN.test(text) ||
+    SELF_DISCARD_COST_PATTERN.test(text);
+  return isOutlet && !SELF_DISCARD_OPPONENT_PATTERN.test(text);
+}
+
+/** Determine the self-discard role(s) a card fulfills. A card can be multi-role (loot + reanimate). */
+export function getSelfDiscardRoles(card: LorcanaCard): SelfDiscardRole[] {
+  if (!card.text) return [];
+  const text = normalizeCardText(card);
+  if (!HAS_SELF_DISCARD_KEYWORD.test(text)) return [];
+
+  const roles: SelfDiscardRole[] = [];
+  if (isSelfDiscardEnabler(text)) roles.push('enabler');
+  if (SELF_DISCARD_REANIMATOR_PATTERN.test(text)) roles.push('reanimator');
+  if (SELF_DISCARD_STATE_PATTERN.test(text)) roles.push('state-payoff');
+  return roles;
+}
+
+/** Check if a card participates in the self-discard axis (enabler, reanimator, or state payoff). */
+export function isSelfDiscardCard(card: LorcanaCard): boolean {
+  return getSelfDiscardRoles(card).length > 0;
+}
+
+// ============================================
 // RAMP DETECTION
 // ============================================
 
@@ -1085,6 +1154,106 @@ export function getDwarfsRoles(card: LorcanaCard): DwarfsRole[] {
 
 export const isDwarfsCard = (card: LorcanaCard): boolean => getDwarfsRoles(card).length > 0;
 
+// ============================================
+// MERIDA - WISP CONJURER (BECKON) DETECTION
+// ============================================
+
+/**
+ * Single-anchor direct rule built around **Merida - Wisp Conjurer** (Amethyst, id 13050).
+ * Her BECKON ability draws a card "whenever ANOTHER character of yours enters play exerted",
+ * so she synergizes with cards that push YOUR characters into play exerted. Modeled on the
+ * Spike Suit rule (one card defines the synergy; matched on ability text, not a card id, so a
+ * reprint joins for free).
+ *
+ * Enabler tiers, scored by how much exerted-entry pressure the card generates:
+ * - 'engine'     (8) — board-wide / repeatable: pushes OTHER of your characters into play
+ *                      exerted. "...they enter play exerted" (Horned King, Simba) or the item
+ *                      "the next character you play this turn enters play exerted"
+ *                      (Powhatan's Staff). Fires BECKON many times per game.
+ * - 'reanimator' (7) — replays ITSELF exerted from your discard ("if this card is in your
+ *                      discard ... she/he enters play exerted" — Lilo, Stitch). One repeatable
+ *                      exerted entry per loop.
+ * - 'self'       (5) — a self-only body that "enters play exerted" once when played (the
+ *                      Bodyguard reminder "This character may enter play exerted", plus a few
+ *                      explicit bodies). Parallel density: fires BECKON exactly once.
+ */
+export type BeckonEnablerTier = 'engine' | 'reanimator' | 'self';
+
+/** Fast pre-filter: every BECKON card mentions entering play exerted. */
+const BECKON_HAS_EXERT = /enters? play exerted/i;
+
+/**
+ * Anchor: Merida's BECKON reward, matched on ability text so a reprint joins automatically.
+ * The "another character of yours" wording is what excludes her own FOCUSED ENERGY self-exert
+ * ("This character may enter play exerted") from triggering the draw.
+ */
+const BECKON_ANCHOR_PATTERN = /whenever another character of yours enters play exerted/i;
+
+/**
+ * Opposing-side exclusion: cards that make the OPPONENT's characters enter play exerted are
+ * removal/tempo, not a BECKON enabler (BECKON fires only on YOUR characters). e.g. Jiminy
+ * Cricket ("opposing characters with Rush enter play exerted").
+ */
+const BECKON_OPPOSING_PATTERN = /opposing[^.]{0,40}enters? play exerted/i;
+
+/**
+ * Engine: pushes OTHER of your characters into play exerted, repeatably.
+ * - "...they enter play exerted" — playing characters from your discard / a revealed character
+ *   (Horned King, Simba).
+ * - "the next character you play this turn enters play exerted" — an ITEM (Powhatan's Staff)
+ *   that shoves the next character in exerted; admitted even though it isn't a character
+ *   (the Shift named-item exception: an item can still push a CHARACTER into exerted).
+ */
+const BECKON_ENGINE_PATTERN =
+  /they enter play exerted|the next character you play[^.]{0,80}enters? play exerted/i;
+
+/** Reanimator: this card replays ITSELF exerted from your discard (Lilo, Stitch). */
+const BECKON_REANIMATOR_PATTERN =
+  /(?:this card is in your discard|from your discard)[^.]{0,140}(?:he|she|it|they|this character) enters? play exerted/i;
+
+/** Self-only body: "this character (may) enters play exerted" (incl. the Bodyguard reminder). */
+const BECKON_SELF_PATTERN = /this character (?:may )?enters? play exerted/i;
+
+/** True for the BECKON anchor (Merida - Wisp Conjurer or a same-text reprint). */
+export function isBeckonAnchor(card: LorcanaCard): boolean {
+  return card.text != null && BECKON_ANCHOR_PATTERN.test(normalizeCardText(card));
+}
+
+/**
+ * A card is excluded from the BECKON enabler tiers when it is the anchor itself (Merida's own
+ * FOCUSED ENERGY self-exert is "another character", so she can't self-pair) or when the exert
+ * lands on an OPPOSING character (removal, not an enabler). Split out of getBeckonEnablerTier
+ * so the tier classifier stays a flat reject → tier sequence.
+ */
+function isBeckonEnablerExcluded(card: LorcanaCard, t: string): boolean {
+  return isBeckonAnchor(card) || BECKON_OPPOSING_PATTERN.test(t);
+}
+
+/**
+ * Classify a card's BECKON enabler tier, or null if it doesn't push YOUR characters into play
+ * exerted. Order is load-bearing:
+ *   1. anchor self-check — Merida's own self-exert (FOCUSED ENERGY) never counts as an enabler
+ *      ("another character"), so she can't self-pair.
+ *   2. opposing exclusion — opponent-side exerts are removal, not an enabler.
+ *   3. reanimator → engine → self.
+ * The `self` branch is gated on isCharacter so an ITEM reading "this item enters play exerted"
+ * (Sapphire Chromicon, MegaBot, Potato, ...) drops out — it's a character-only trigger. Powhatan's
+ * Staff (an item) is still admitted, but via the engine branch, because it makes a CHARACTER exerted.
+ */
+export function getBeckonEnablerTier(card: LorcanaCard): BeckonEnablerTier | null {
+  if (card.text == null) return null;
+  const t = normalizeCardText(card);
+  if (!BECKON_HAS_EXERT.test(t)) return null;
+  if (isBeckonEnablerExcluded(card, t)) return null;
+  if (BECKON_REANIMATOR_PATTERN.test(t)) return 'reanimator';
+  if (BECKON_ENGINE_PATTERN.test(t)) return 'engine';
+  if (BECKON_SELF_PATTERN.test(t) && isCharacter(card)) return 'self';
+  return null;
+}
+
+/** True for any card that participates in the BECKON rule (the anchor or an enabler). */
+export const isBeckonEnabler = (card: LorcanaCard): boolean => getBeckonEnablerTier(card) !== null;
+
 /**
  * A Location qualifies as a boost target only if its text references cards beneath it.
  * Without this gate, every Location pairs with every boost-role support card.
@@ -1245,3 +1414,504 @@ export function getRedPandaRoles(card: LorcanaCard): RedPandaRole[] {
 }
 
 export const isRedPandaCard = (card: LorcanaCard): boolean => getRedPandaRoles(card).length > 0;
+
+// ============================================
+// ITEM MATTERS ("Items" playstyle)
+// ============================================
+
+/**
+ * Item Matters roles (the Set 9-13 Inventor / artifacts axis). PAYOFF-ANCHORED like
+ * Floodborn: item members synergize with payoffs, never with each other, so the
+ * rule's `findSynergies` skips member↔member to avoid ~3,000 density pairs across the
+ * 82-item pool.
+ *
+ * - `member` — any Item card (the thing that gets played).
+ * - `payoff-trigger` — a repeating "whenever you play an item" reward.
+ * - `payoff-static` — a conditional/count reward ("for each item", "while/if you have an item in play").
+ * - `item-engine` — tutor/search items, return items from discard, or discount OTHER items.
+ *
+ * EXCLUDES item removal ("banish chosen item") — anti-item control on the opposite
+ * axis, which never matches the play/return/for-each patterns below. Role ids are
+ * item-specific ("item-engine") to avoid colliding with other rules' catalog labels.
+ */
+export type ItemRole = 'member' | 'item-engine' | 'payoff-trigger' | 'payoff-static';
+
+const ITEM_PLAY_TRIGGER = /whenever you play an item/i;
+const ITEM_STATIC_PAYOFF =
+  /for each (?:of your )?items?\b|(?:while|if) you have (?:an?|\d+ or more) items?(?:\s+named [^.]+?)?(?: in play)?|each item you have in play/i;
+/** Search/tutor/free-play an item from deck, hand, or discard. */
+const ITEM_SEARCH =
+  /reveal[^.]{0,40}\bitem card|\bplay (?:a|an|that|chosen)[^.]{0,30}\bitem\b[^.]{0,30}(?:for free|from your (?:hand|discard))/i;
+/** Return an item card from your discard. */
+const ITEM_RECURSION = /\bitem card[^.]{0,30}from your discard|from your discard[^.]{0,15}\bitem card/i;
+/** Discount an item you play (gated below so self-discount "this item" doesn't count). */
+const ITEM_COST_REDUCTION = /pay \d+[^.]{0,5}(?:less|fewer)[^.]{0,28}\bitems?\b/i;
+const SELF_ITEM_DISCOUNT = /(?:less|fewer)[^.]{0,12}to play this item/i;
+const HAS_ITEM_KEYWORD = /\bitem/i;
+
+/**
+ * An item engine tutors/searches items, returns items from discard, or discounts OTHER
+ * items. The cost-reduction branch is gated so a self-discount ("this item") stays a plain
+ * member. Split out of getItemRoles so the role builder reads as a flat sequence of pushes.
+ */
+function isItemEngine(text: string): boolean {
+  return (
+    ITEM_SEARCH.test(text) ||
+    ITEM_RECURSION.test(text) ||
+    (ITEM_COST_REDUCTION.test(text) && !SELF_ITEM_DISCOUNT.test(text))
+  );
+}
+
+/** Determine the Item-Matters role(s) a card fulfills. A card can be multi-role. */
+export function getItemRoles(card: LorcanaCard): ItemRole[] {
+  const roles: ItemRole[] = [];
+  if (card.type === 'Item') roles.push('member');
+
+  if (card.text == null) return roles;
+  const text = normalizeCardText(card);
+  if (!HAS_ITEM_KEYWORD.test(text)) return roles;
+
+  if (ITEM_PLAY_TRIGGER.test(text)) roles.push('payoff-trigger');
+  if (ITEM_STATIC_PAYOFF.test(text)) roles.push('payoff-static');
+  if (isItemEngine(text)) roles.push('item-engine');
+
+  return roles;
+}
+
+export const isItemCard = (card: LorcanaCard): boolean => getItemRoles(card).length > 0;
+
+// ============================================
+// HEAL MATTERS DETECTION ("Heal Matters", payoff-anchored)
+// ============================================
+
+/**
+ * The Heal Matters axis: remove damage from your OWN characters, then cash in the
+ * payoffs that reward the removal. NOT a Madrigal tribe — only ~12% of healers carry
+ * the Madrigal classification and every payoff is worded generically ("remove damage
+ * from one of your characters"), so the rule keys on the mechanic, not a subtype.
+ *
+ * Two roles (enabler -> payoff, mirroring Sacrifice / Discard):
+ *  - 'healer'      — an OUTLET that removes damage from a character (the enabler).
+ *  - 'heal-payoff' — a benefit gated on the removal event (the payoff).
+ *
+ * Payoff-anchored: the rule (see rules.ts) pairs a healer only with a payoff, never
+ * two plain healers, so 'healer' alone never produces a synergy without a payoff partner.
+ */
+export type HealRole = 'healer' | 'heal-payoff';
+
+/** Healer (enabler): an outlet that removes damage from a character. Begins with "remove", so a
+ *  "move ... damage" clause on the same card can never fabricate a false healer here. */
+const HEALER_PATTERN = /remove (?:up to \d+|all|\d+) damage from/i;
+
+/**
+ * Heal-payoff: a benefit triggered or gated on removing damage. Covers the repeating
+ * "whenever/when you remove damage" triggers, the "if you removed damage" turn-state
+ * condition, and the "for each N damage removed" / "damage removed this way" / "remove 1
+ * or more damage" count payoffs.
+ */
+const HEAL_PAYOFF_PATTERN =
+  /whenever you remove damage|when you remove damage|if you removed damage|for each \d+ damage removed|damage removed this way|remove 1 or more damage/i;
+
+/**
+ * Move-damage is the OPPOSITE mechanic (relocating damage between characters, not clearing
+ * it); Steel "no damage / undamaged" statics are a different axis again. Neither can create a
+ * healer or payoff via the patterns above, so this guard only drops a card whose text is a
+ * PURE mover — one with no genuine remove clause and no payoff. That keeps a dual card like
+ * Isabela Madrigal - Perfectly in Control (moves damage onto herself in one clause, then
+ * "remove[s] all damage from this character" in another) as a real healer.
+ */
+const MOVE_DAMAGE_PATTERN = /\bmove\b[^.]*\bdamage\b/i;
+
+/** Fast pre-filter: every heal pattern contains "remove" or "damage removed". */
+const HAS_HEAL_KEYWORD = /remove|damage removed/i;
+
+/**
+ * Pure-mover guard: true when a card is a bare damage-mover — no genuine remove clause and
+ * no payoff, with a "move ... damage" interaction (see MOVE_DAMAGE_PATTERN). Split out of
+ * getHealRoles so the flagged three-branch guard reads as one named check.
+ */
+function isPureDamageMover(text: string, healer: boolean, payoff: boolean): boolean {
+  return !healer && !payoff && MOVE_DAMAGE_PATTERN.test(text);
+}
+
+/** Determine the heal role(s) a card fulfills. A card can be both (e.g. Ohana Means Family). */
+export function getHealRoles(card: LorcanaCard): HealRole[] {
+  if (!card.text) return [];
+  const text = normalizeCardText(card);
+  if (!HAS_HEAL_KEYWORD.test(text)) return [];
+
+  const healer = HEALER_PATTERN.test(text);
+  const payoff = HEAL_PAYOFF_PATTERN.test(text);
+  if (isPureDamageMover(text, healer, payoff)) return [];
+
+  const roles: HealRole[] = [];
+  if (healer) roles.push('healer');
+  if (payoff) roles.push('heal-payoff');
+  return roles;
+}
+
+/** Check if a card participates in the heal axis (healer or heal-payoff). */
+export const isHealCard = (card: LorcanaCard): boolean => getHealRoles(card).length > 0;
+
+// ============================================
+// TRIBAL PLAYSTYLES (Monster, Princess, Hero, Super, Royalty) — shared detector
+// ============================================
+
+/**
+ * Generic tribal roles, reused across every classification tribe. All ids already
+ * exist in the mechanics catalog (buff/trigger/search/in-play-check from
+ * Location/Floodborn/Hunny, member is membership), so no new tile labels are needed.
+ */
+export type TribalRole = 'member' | 'buff' | 'trigger' | 'search' | 'in-play-check';
+
+/** A tribal playstyle: which classification(s) make a member, and the word(s) its payoffs name. */
+export interface TribalSpec {
+  playstyleId: string;
+  /** Classifications that make a card a member. */
+  memberClasses: readonly string[];
+  /** Words payoffs use to name the tribe (usually the classes; Royalty spans Queen/King/Prince). */
+  refWords: readonly string[];
+}
+
+/** The six tribal specs. Royalty deliberately excludes Princess so it complements the Princess rule. */
+export const TRIBAL_SPECS = {
+  monster: {playstyleId: 'monster', memberClasses: ['Monster'], refWords: ['Monster']},
+  princess: {playstyleId: 'princess', memberClasses: ['Princess'], refWords: ['Princess']},
+  hero: {playstyleId: 'hero', memberClasses: ['Hero'], refWords: ['Hero']},
+  super: {playstyleId: 'super', memberClasses: ['Super'], refWords: ['Super']},
+  royalty: {playstyleId: 'royalty', memberClasses: ['Queen', 'King', 'Prince'], refWords: ['Queen', 'King', 'Prince']},
+  // Detectives — the Set 10 (Zootopia / Great Mouse Detective) tribe. 39 members, 8
+  // pattern-caught payoffs (all Set 10, Sapphire/Steel-heavy). Drop-in over the shared
+  // factory: reuses member/buff/trigger/search/in-play-check, no new roles.
+  detective: {playstyleId: 'detective', memberClasses: ['Detective'], refWords: ['Detective']},
+} as const satisfies Record<string, TribalSpec>;
+
+const tribalPatternCache = new Map<string, {buff: RegExp; trigger: RegExp; search: RegExp; check: RegExp}>();
+
+function tribalPatterns(spec: TribalSpec) {
+  const cached = tribalPatternCache.get(spec.playstyleId);
+  if (cached) return cached;
+  const w = spec.refWords.join('|');
+  const T = `(?:${w})`;
+  const p = {
+    // Benefit the tribe: team buff, single-target buff, or tribal ready (all strengthen/free your bodies).
+    buff: new RegExp(
+      `your (?:other )?${T}[^.]{0,18}characters? (?:get|gain|can)` + // team: "your [other] X characters get/gain/can't-be..."
+        `|chosen ${T} character[^.]{0,12}(?:gets|gains|can|\\+\\d)` + // single-target: "chosen X character gains ..." or a give-form "+N" stat buff (Flash - Records Specialist)
+        `|ready (?:your|chosen)[^.]{0,30}${T} characters?`, // tribal ready: "ready your other exerted X characters"
+      'i',
+    ),
+    // Repeating trigger tied to the tribe: on play, quest, or challenge.
+    trigger: new RegExp(
+      `whenever you play (?:a|an|another|this or another) ${T}\\b` + // "whenever you play another X"
+        `|whenever[^.]{0,40}your (?:other )?${T} characters?[^.]{0,20}(?:quest|challenge)`, // "whenever one of your X characters challenges"
+      'i',
+    ),
+    // Deck dig for a tribe member.
+    search: new RegExp(`(?:search your deck for|reveal) (?:a|an) ${T} character`, 'i'),
+    // Conditional gated on tribe presence or a tribe event this turn.
+    check: new RegExp(
+      `(?:while|if) you have (?:a|an|another|\\d+ or more)[^.]{0,30}${T}\\b` + // "while you have a [Dwarfs or a] X character in play"
+        `|if (?:a|an) (?:\\w+ or (?:a )?)?${T}(?: or \\w+)? character (?:is|card)` + // "if a [Y or] X [or Y] character is in play/chosen"
+        `|if you (?:played|returned)[^.]{0,20}${T} character` + // "if you played a X character this turn"
+        `|if (?:that card|the \\w+) is (?:a|an) ${T} character card`, // "if that card is a X character card"
+      'i',
+    ),
+  };
+  tribalPatternCache.set(spec.playstyleId, p);
+  return p;
+}
+
+/** Determine a card's roles for one tribal spec. Multi-role allowed; payoffs never require membership. */
+export function getTribalRoles(card: LorcanaCard, spec: TribalSpec): TribalRole[] {
+  const roles: TribalRole[] = [];
+  if (card.type === 'Character' && spec.memberClasses.some((c) => hasClassification(card, c))) roles.push('member');
+
+  if (card.text != null) {
+    const text = normalizeCardText(card);
+    const p = tribalPatterns(spec);
+    if (p.buff.test(text)) roles.push('buff');
+    if (p.trigger.test(text)) roles.push('trigger');
+    if (p.search.test(text)) roles.push('search');
+    if (p.check.test(text)) roles.push('in-play-check');
+  }
+  return roles;
+}
+
+export const isTribalCard = (card: LorcanaCard, spec: TribalSpec): boolean =>
+  getTribalRoles(card, spec).length > 0;
+
+// ============================================
+// EXERT DETECTION ("Exert Matters" — opponent-facing, payoff-anchored)
+// ============================================
+
+/**
+ * Exert is the opponent-facing soft-removal axis (a clean revival of the archived
+ * `exert-synergies` rule; see REMOVED_RULES.md). Two roles:
+ *  - 'exert-enabler' — an EFFECT that exerts an OPPOSING character (a soft tap that
+ *    keeps the body from questing/challenging next turn).
+ *  - 'exert-payoff'  — consumes or rewards an ALREADY-exerted opposing body WITHOUT
+ *    self-exerting: banish it, lock it (can't ready), or scale off its exerted state.
+ *
+ * Payoff-anchored (like Floodborn / Items): two enablers never synergize with each
+ * other, so the rule (see rules.ts) drops enabler↔enabler pairs. Mono-Amethyst in
+ * practice (16/21 enablers, 10/12 payoffs).
+ */
+export type ExertRole = 'exert-enabler' | 'exert-payoff';
+
+/**
+ * enabler — an effect that exerts an OPPOSING character. Both the verb pattern and the
+ * opposing-character reference must match. The `(?:\w+ ){0,2}` slot in HAS_OPPOSING_CHAR
+ * admits an adjective ("exert chosen opposing READY character", Ursula - Voice Stealer).
+ * The `['’]?` apostrophe class handles "opponent's character" in either quote style.
+ */
+const EXERT_OPPOSING_VERB =
+  /\bexerts?\b\s+(?:up to \d+ )?(?:all |each )?(?:chosen |target )?(?:opposing|opponent['’]?s)/i;
+const EXERT_HAS_OPPOSING_CHAR =
+  /opposing (?:\w+ ){0,2}character|opponent['’]?s (?:\w+ ){0,2}character/i;
+/** Exert-an-ITEM effect ("exert chosen opposing item") — a different axis; excluded from both roles. */
+const EXERT_ITEM_ONLY = /\bexerts?\b[^.]{0,25}\bitems?\b/i;
+
+/**
+ * Self-exert-state gate: a payoff powered by THIS character being exerted (Genie -
+ * Main Attraction) is an engine on your own side, not a consumer of an opponent's
+ * exerted body. Excluded from the payoff role.
+ */
+const EXERT_SELF_STATE = /while this character is exerted|if this character is exerted/i;
+
+/**
+ * Consume-tier payoffs (score 8 vs an enabler): turn the exerted body into a kill or
+ * hard lock — an exert-trigger, a banish-of-an-exerted-body, or a can't-ready lock.
+ * The `['’]?` apostrophe class is load-bearing for Set 13 curly-quote text (Ming Lee's
+ * "can’t ready"), which a straight-apostrophe pattern would silently drop.
+ */
+const EXERT_PAYOFF_TRIGGER =
+  /when(?:ever)?\s+(?:an?\s+)?(?:opposing|opponent['’]?s)[^.]{0,40}(?:is|are|gets?|becomes?)\s+exerted/i;
+const EXERT_PAYOFF_BANISH = /banish (?:chosen |an? )?exerted (?:opposing )?character/i;
+const EXERT_PAYOFF_CANT_READY =
+  /chosen (?:opposing )?exerted character[^.]{0,30}can['’]?t ready|exerted character can['’]?t ready at the start of (?:their|its) next turn/i;
+
+/**
+ * State-tier payoffs (score 6 vs an enabler): scale off an opponent HAVING an exerted
+ * body without hard-punishing it ("if an opponent has an exerted character", "for each
+ * exerted character opponents have", "gain lore equal to another chosen exerted character").
+ */
+const EXERT_PAYOFF_OPP_STATE =
+  /if an opponent has an exerted character|opponent has an exerted character in play|for each exerted character opponents have/i;
+const EXERT_PAYOFF_LORE =
+  /gain lore equal to[^.]{0,40}chosen exerted character|another chosen exerted character/i;
+
+/** Fast pre-filter: every exert pattern contains "exert". */
+const HAS_EXERT_KEYWORD = /exert/i;
+
+/** True when a payoff hard-punishes the exerted body (banish / lock / trigger) → score 8 vs enabler. */
+export function isExertConsumePayoff(card: LorcanaCard): boolean {
+  if (card.text == null) return false;
+  const t = normalizeCardText(card);
+  return (
+    EXERT_PAYOFF_TRIGGER.test(t) || EXERT_PAYOFF_BANISH.test(t) || EXERT_PAYOFF_CANT_READY.test(t)
+  );
+}
+
+/** True when a payoff scales off the opponent's exerted state without punishing it → score 6 vs enabler. */
+function isExertStatePayoff(t: string): boolean {
+  return EXERT_PAYOFF_OPP_STATE.test(t) || EXERT_PAYOFF_LORE.test(t);
+}
+
+/**
+ * Enabler: exerts an OPPOSING character (not an item). Exert-as-cost (⟳ glyph) never matches
+ * this effect shape, so cost-glyph cards are excluded by construction. Split out of
+ * getExertRoles so its role builder stays a flat sequence of named checks.
+ */
+function isExertEnabler(t: string): boolean {
+  return EXERT_OPPOSING_VERB.test(t) && EXERT_HAS_OPPOSING_CHAR.test(t) && !EXERT_ITEM_ONLY.test(t);
+}
+
+/** Payoff: consumes/rewards an already-exerted opposing body, and is NOT self-exert powered. */
+function isExertPayoff(card: LorcanaCard, t: string): boolean {
+  return !EXERT_SELF_STATE.test(t) && (isExertConsumePayoff(card) || isExertStatePayoff(t));
+}
+
+/**
+ * Determine the exert role(s) a card fulfills. Enabler and payoff are independent gates,
+ * so a card could in principle be both (none in the live database are).
+ */
+export function getExertRoles(card: LorcanaCard): ExertRole[] {
+  if (card.text == null) return [];
+  const t = normalizeCardText(card);
+  if (!HAS_EXERT_KEYWORD.test(t)) return [];
+
+  const roles: ExertRole[] = [];
+  if (isExertEnabler(t)) roles.push('exert-enabler');
+  if (isExertPayoff(card, t)) roles.push('exert-payoff');
+  return roles;
+}
+
+export const isExertCard = (card: LorcanaCard): boolean => getExertRoles(card).length > 0;
+// ============================================
+// MERIDA ARCHER DETECTION (Merida - Formidable Archer, STEADY AIM)
+// ============================================
+
+/**
+ * Anchor: a card whose ability adds damage whenever one of your ACTIONS deals
+ * damage to an opposing character (Merida - Formidable Archer's STEADY AIM).
+ * Matched on the ability text, not a card id, so any reprint with the same
+ * wording joins the rule for free. `deals?` covers the singular "deals" printed
+ * on the card and a possible "deal" reprint. Against the current pool the pattern
+ * matches exactly one card (Merida, id 2906).
+ */
+const STEADY_AIM_ANCHOR_PATTERN =
+  /whenever one of your actions deals? damage to an opposing character/i;
+
+/** An Action that itself deals a fixed amount of damage: "deal N damage". */
+const ACTION_DAMAGE_PATTERN = /\bdeals?\s+\d+\s+damage\b/i;
+
+/**
+ * Self-only removal (Break Free): "deal N damage to chosen character of yours"
+ * targets YOUR OWN character, never an opposing one, so STEADY AIM (which keys on
+ * damage to an OPPOSING character) can never fire off it. Excluded.
+ */
+const ACTION_DAMAGE_SELF_ONLY_PATTERN =
+  /deals?\s+\d+\s+damage to chosen character of yours/i;
+
+/**
+ * Granted-ability action (Food Fight!): the damage lives inside an ability the
+ * action GRANTS to a character ("Your characters gain “... Deal 1 damage ...”"),
+ * so the damage is dealt by the granted CHARACTER ability, not by the action
+ * itself. STEADY AIM fires on an ACTION dealing damage, so these don't combo.
+ * The char classes include both curly (“”) and straight (") quotes because the
+ * live card data prints curly quotes; keep both so a straight-quote reprint also matches.
+ */
+const ACTION_DAMAGE_GRANTED_PATTERN =
+  /\bgains?\b[^.]{0,40}["“'][^"”']*deals?\s+\d+\s+damage/i;
+
+/**
+ * Multi-target damage: hits more than one body (board-wipe "each", "up to N
+ * chosen", or a follow-up "another chosen"). Each extra target is another STEADY
+ * AIM trigger, so multi-target actions earn a +1 scoring bump.
+ */
+const ACTION_DAMAGE_MULTI_PATTERN = /each|up to \d+ chosen|another chosen/i;
+
+/** True when a card carries the STEADY AIM anchor ability (matched on text, not id). */
+export function isSteadyAimAnchor(card: LorcanaCard): boolean {
+  return STEADY_AIM_ANCHOR_PATTERN.test(normalizeCardText(card));
+}
+
+/** The fixed damage an Action deals ("deal N damage" → N), or 0 if none. */
+export function getActionDamage(card: LorcanaCard): number {
+  const match = normalizeCardText(card).match(/deals?\s+(\d+)\s+damage/i);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+/**
+ * Payoff: an Action that deals fixed damage to an (opposing) character, so
+ * Merida's STEADY AIM adds 2 damage every time it lands. Excludes self-only
+ * removal ("chosen character of yours") and granted-ability damage (Food Fight!),
+ * neither of which triggers STEADY AIM.
+ */
+export function isMeridaDamageAction(card: LorcanaCard): boolean {
+  if (!isAction(card) || card.text == null) return false;
+  const text = normalizeCardText(card);
+  if (!ACTION_DAMAGE_PATTERN.test(text)) return false;
+  if (ACTION_DAMAGE_SELF_ONLY_PATTERN.test(text)) return false;
+  if (ACTION_DAMAGE_GRANTED_PATTERN.test(text)) return false;
+  return true;
+}
+
+/** True when an Action hits multiple targets (each / up to N chosen / another chosen). */
+export function isMultiTargetDamageAction(card: LorcanaCard): boolean {
+  return ACTION_DAMAGE_MULTI_PATTERN.test(normalizeCardText(card));
+}
+
+// ============================================
+// BOUNCE DETECTION ("return from play to hand")
+// ============================================
+
+/**
+ * Bounce is the "return from play to hand" axis. Two payoff shapes anchor it:
+ *  - self-bounce (enabler) returns a chosen OWN body to your hand, re-firing its
+ *    enter-play (ETB) ability — cashed in by a `rebuy-payoff` ETB body.
+ *  - opponent-bounce (tempo/removal) returns a body to their player's hand — cashed
+ *    in by the single `return-payoff` (Maleficent's Staff: lore on every opponent return).
+ *  - flexible cards ("return chosen character/item/location to their player's hand",
+ *    no side restriction) hit BOTH sides, so they carry the `flexible` role and act as
+ *    a self-bounce enabler AND an opponent-bounce.
+ *
+ * Disjoint by construction from Self-Discard's "from your discard" reanimator (a bounce
+ * returns from PLAY, not the bin) and from Challenge Matters' "banished in a challenge"
+ * combat-recursion (no `banish` verb participates in these patterns).
+ */
+export type BounceRole = 'self-bounce' | 'flexible' | 'opponent-bounce' | 'return-payoff' | 'rebuy-payoff';
+
+/** self-bounce enabler — return a CHOSEN own body to YOUR hand (the `of yours` gate = your side). */
+const BOUNCE_SELF_PATTERN =
+  /return\s+(?:another\s+)?chosen\s+(?:\w+\s+){0,2}?characters?(?:\s+card)?\s+of\s+yours\b[^.]{0,50}?to\s+your\s+hand/i;
+/** flexible — "return [up to N] chosen character/item/location … to their player's hand", no side gate. */
+const BOUNCE_FLEX_PATTERN =
+  /return\s+(?:up to \d+\s+)?(?:a\s+|an\s+)?chosen\s+(?:character|item|location)[^.]{0,80}?to\s+their\s+player'?s?\s+hand/i;
+/** Any "return … to their player's hand" — the opponent-side umbrella (flexible is the un-restricted subset). */
+const BOUNCE_TO_THEIR_HAND_PATTERN = /return\s+(?:up to \d+\s+)?[^.]{0,80}?to\s+their\s+player'?s?\s+hand/i;
+const BOUNCE_OF_YOURS = /\bof\s+yours\b/i;
+const BOUNCE_OPPONENT_SIDE = /opposing|opponent'?s?\b/i;
+/** return-payoff — gain value whenever a card is returned to hand from play (Maleficent's Staff). */
+const BOUNCE_RETURN_PAYOFF_PATTERN =
+  /when(?:ever)?\s+[^.]{0,90}?\bis\s+returned\s+to\s+(?:their|your|its player'?s?)\s+hand/i;
+/** rebuy-payoff — a "when you play this character" ETB whose effect is unambiguous re-fire value. */
+const BOUNCE_ETB_PATTERN = /when\s+you\s+play\s+this\s+character/i;
+const BOUNCE_REBUY_EFFECT_PATTERN =
+  /draw\s+(?:\d+|two|three)\s+cards?|search\s+your\s+(?:deck|library)|look at the top \d+ cards of your deck|banish\s+(?:a|an|another\s+)?chosen\s+character|(?:play|put)\b[^.]{0,50}for free|without paying/i;
+/**
+ * Fast pre-filter. Admits BOTH the "return … to hand" bounce shapes AND the enter-play bodies
+ * the re-buy payoff keys on — a rebuy body (e.g. Merlin - Turtle's deck-dig ETB) need not contain
+ * "return", so a return-only prefilter would silently drop the whole rebuy-payoff pool.
+ */
+const HAS_BOUNCE_KEYWORD = /return|is returned|when you play this character/i;
+
+/**
+ * A re-buyable ETB body: a "when you play this character" enter-play with unambiguous re-fire
+ * value (draw 2+, deck search, free-play, banish-chosen). Shift bodies are excluded — their
+ * re-buy already surfaces through the Shift Targets rule, so pairing them here only duplicates it.
+ */
+function isBounceRebuyPayoff(card: LorcanaCard, text: string): boolean {
+  return (
+    isCharacter(card) &&
+    BOUNCE_ETB_PATTERN.test(text) &&
+    BOUNCE_REBUY_EFFECT_PATTERN.test(text) &&
+    !hasAnyShift(card)
+  );
+}
+
+/** flexible — an un-restricted "return chosen … to their player's hand" (neither self-only nor opponent-only). */
+function isBounceFlexible(text: string): boolean {
+  return (
+    BOUNCE_FLEX_PATTERN.test(text) && !BOUNCE_OF_YOURS.test(text) && !BOUNCE_OPPONENT_SIDE.test(text)
+  );
+}
+
+/** opponent-bounce — returns a body to their hand for tempo, but is neither self-bounce nor flexible. */
+function isBounceOpponentOnly(text: string, self: boolean, flexible: boolean): boolean {
+  return !self && !flexible && BOUNCE_TO_THEIR_HAND_PATTERN.test(text);
+}
+
+/**
+ * Determine the bounce role(s) a card fulfills. Multi-role allowed: a self-bounce enabler that is
+ * itself a re-buyable ETB body (e.g. Witches of Morva) carries both roles and self-pairs.
+ */
+export function getBounceRoles(card: LorcanaCard): BounceRole[] {
+  if (!card.text) return [];
+  const text = normalizeCardText(card);
+  if (!HAS_BOUNCE_KEYWORD.test(text)) return [];
+
+  const self = BOUNCE_SELF_PATTERN.test(text);
+  const flexible = isBounceFlexible(text);
+  const roles: BounceRole[] = [];
+  if (self) roles.push('self-bounce');
+  if (flexible) roles.push('flexible');
+  if (isBounceOpponentOnly(text, self, flexible)) roles.push('opponent-bounce');
+  if (BOUNCE_RETURN_PAYOFF_PATTERN.test(text)) roles.push('return-payoff');
+  if (isBounceRebuyPayoff(card, text)) roles.push('rebuy-payoff');
+  return roles;
+}
+
+/** Check if a card participates in the bounce axis (any role). */
+export const isBounceCard = (card: LorcanaCard): boolean => getBounceRoles(card).length > 0;

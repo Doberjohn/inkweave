@@ -1,4 +1,22 @@
 import type {LorcanaCard} from '../types/card.js';
+import type {
+  LoreDenialRole,
+  LocationRole,
+  DiscardRole,
+  SelfDiscardRole,
+  RampRole,
+  SacrificeRole,
+  ToyRole,
+  DwarfsRole,
+  FloodbornRole,
+  HunnyRole,
+  RedPandaRole,
+  ItemRole,
+  HealRole,
+  ExertRole,
+  BounceRole,
+  TribalRole,
+} from './cardHelpers.js';
 import {
   normalizeCardText,
   getLoreDenialRoles,
@@ -140,9 +158,29 @@ export const MECHANICS: Mechanic[] = [
 export const STRUCTURAL_MECHANICS: Mechanic[] = [
   // Discard
   {id: 'payoff', category: 'structural', label: 'Payoff', description: 'Get benefits for having more cards in hand than opponents'},
+  // Self-Discard
+  {id: 'enabler', category: 'structural', label: 'Discard then Draw', description: 'Discard your own cards from hand (loot, discard your hand, or as a cost)'},
+  {id: 'reanimator', category: 'structural', label: 'Play from Discard', description: 'Play or return a card from your discard'},
+  {id: 'state-payoff', category: 'structural', label: 'Discard Benefits', description: 'Get benefits for discarding a card or having an empty hand'},
+  // Items
+  {id: 'item-engine', category: 'structural', label: 'Item Engine', description: 'Search, replay, or discount items to keep playing more'},
+  {id: 'payoff-trigger', category: 'structural', label: 'Item Trigger', description: 'Triggers an effect whenever you play an item'},
+  {id: 'payoff-static', category: 'structural', label: 'Item Payoff', description: 'Rewards having items in play or counts your items'},
   // Sacrifice
   {id: 'self-banish', category: 'structural', label: 'Self-Banish', description: 'Banish your own characters on demand'},
   {id: 'banish-trigger', category: 'structural', label: 'Banish Trigger', description: 'Get a benefit when your characters are banished'},
+  // Healing
+  {id: 'healer', category: 'structural', label: 'Healer', description: 'Remove damage from your characters'},
+  {id: 'heal-payoff', category: 'structural', label: 'Heal Payoff', description: 'Get a benefit whenever you remove damage'},
+  // Exert
+  {id: 'exert-enabler', category: 'structural', label: 'Exert Opponent', description: 'Exert an opposing character to keep it from questing or challenging'},
+  {id: 'exert-payoff', category: 'structural', label: 'Exert Payoff', description: 'Banish, lock, or scale off an already-exerted opposing character'},
+  // Bounce
+  {id: 'self-bounce', category: 'structural', label: 'Self-Bounce', description: 'Return your own character to hand to re-fire its enter-play ability'},
+  {id: 'flexible', category: 'structural', label: 'Flexible Bounce', description: 'Return a chosen character, item, or location to its owner’s hand (either side)'},
+  {id: 'opponent-bounce', category: 'structural', label: 'Opponent Bounce', description: 'Return an opponent’s card to their hand for tempo'},
+  {id: 'return-payoff', category: 'structural', label: 'Return Payoff', description: 'Get a benefit whenever a card is returned to hand from play'},
+  {id: 'rebuy-payoff', category: 'structural', label: 'Re-buy Target', description: 'A strong enter-play ability worth re-firing by bouncing this character'},
   // Floodborns
   {id: 'trigger', category: 'structural', label: 'Trigger', description: 'Get a repeating benefit when your Floodborn characters quest, play, or are banished'},
   // Tribal (Toy / Dwarfs)
@@ -202,6 +240,84 @@ export const STRUCTURAL_ROLE_TO_MECHANIC: Record<string, string> = {
   'inkwell-ramp': 'inkwell-ramp',
   'inkwell-trigger': 'inkwell-trigger',
   'cost-reduction': 'cost-reduction',
+};
+
+/**
+ * The union of every structural role id any playstyle detector (`getXRoles`) can
+ * emit. Composed from each rule's `*Role` type, so it widens automatically when a
+ * rule's role union changes.
+ */
+type StructuralRoleId =
+  | LoreDenialRole
+  | LocationRole
+  | DiscardRole
+  | SelfDiscardRole
+  | RampRole
+  | SacrificeRole
+  | ToyRole
+  | DwarfsRole
+  | FloodbornRole
+  | HunnyRole
+  | RedPandaRole
+  | ItemRole
+  | HealRole
+  | ExertRole
+  | BounceRole
+  | TribalRole;
+
+/**
+ * Every structural role id, flagged `true` when it surfaces as a display tile (and
+ * therefore MUST have a catalog label) or `false` when it is membership-only (`member`).
+ *
+ * This is a TOTAL `Record<StructuralRoleId, boolean>`: when a new playstyle's role
+ * union introduces an id that isn't registered here, this object fails to compile —
+ * the guardrail that stops a new rule from shipping mechanic tiles with no label. A
+ * unit test (`mechanics.test.ts`) then asserts every `true` id resolves via
+ * `mechanicLabel`. See MECHANICS_TAXONOMY.md.
+ */
+export const STRUCTURAL_ROLE_DISPLAY: Record<StructuralRoleId, boolean> = {
+  burn: true,
+  steal: true,
+  targeted: true,
+  random: true,
+  standard: true,
+  payoff: true,
+  enabler: true,
+  reanimator: true,
+  'state-payoff': true,
+  'item-engine': true,
+  'payoff-trigger': true,
+  'payoff-static': true,
+  'inkwell-ramp': true,
+  'inkwell-trigger': true,
+  'cost-reduction': true,
+  'self-banish': true,
+  'banish-trigger': true,
+  healer: true,
+  'heal-payoff': true,
+  'exert-enabler': true,
+  'exert-payoff': true,
+  'self-bounce': true,
+  flexible: true,
+  'opponent-bounce': true,
+  'return-payoff': true,
+  'rebuy-payoff': true,
+  'at-payoff': true,
+  move: true,
+  'play-trigger': true,
+  'move-trigger': true,
+  'in-play-check': true,
+  boost: true,
+  'location-ramp': true,
+  search: true,
+  'self-discount': true,
+  density: true,
+  recruit: true,
+  return: true,
+  trigger: true,
+  buff: true,
+  draw: true,
+  member: false,
 };
 
 /**

@@ -29,10 +29,13 @@ Sudden Chill depletes the opponent's hand → Pacha's condition activates → +2
 ### Architecture
 
 ```typescript
-getDiscardRoles(card: LorcanaCard): DiscardRole[]  // returns ['enabler'] | ['payoff'] | ['enabler', 'payoff'] | []
+getDiscardRoles(card: LorcanaCard): DiscardRole[]
+// DiscardRole = 'targeted' | 'random' | 'standard' | 'payoff'
+// The 3 disruption roles are mutually exclusive (checked most-specific-first); 'payoff' can stack.
+// returns e.g. ['standard'] | ['payoff'] | ['targeted', 'payoff'] | []
 ```
 
-A card can be both enabler and payoff (dual-role). Detection uses a fast pre-filter (`HAS_DISCARD_KEYWORD`) before running the full pattern battery.
+The three disruption roles (`targeted` / `random` / `standard`) are collectively what this doc calls **enablers**: the scorer treats them identically via `DISCARD_DISRUPTION_ROLES` in `rules.ts`, so the "Enabler ↔ Payoff" scoring below applies to all three. A card can carry a disruption role *and* `payoff` (dual-role). Detection uses a fast pre-filter (`HAS_DISCARD_KEYWORD`) before running the full pattern battery.
 
 ### Enabler Patterns (7 Families)
 
@@ -76,6 +79,19 @@ Before running the 7 enabler regexes, `getDiscardRoles` checks `HAS_DISCARD_KEYW
 ```
 
 This skips the full pattern battery for the ~95% of cards that don't mention discard at all.
+
+---
+
+## Card examples by role
+
+Real cards the `getDiscardRoles` detector tags for each role (names from the live database; effects paraphrased). `standard` / `targeted` / `random` are the three enabler shapes; `payoff` is the hand-size reward:
+
+| Role | Real cards | What they do |
+|------|-----------|--------------|
+| **standard** (enabler) | Anna - Diplomatic Queen (Emerald), Kuzco - Panicked Llama (Amethyst-Emerald), Undermine (Emerald-Ruby) | Each or chosen opponent chooses and discards: forced or symmetric hand attack |
+| **targeted** (enabler) | Ludwig Von Drake - All-Around Expert (Amber-Sapphire), Ursula - Deceiver (Emerald), Timon - Snowball Swiper (Amber) | Opponent reveals their hand and *you* pick what they pitch: surgical removal |
+| **random** (enabler) | Yzma - Above It All (Amethyst-Emerald), Lady Tremaine - Bitterly Jealous (Emerald), The Headless Horseman - Cursed Rider (Steel) | Opponent discards at random: indirect, no choice for them |
+| **payoff** | Yzma - Transformed Kitten (Amethyst), Pacha - Trekmate (Emerald) | Rewards holding more cards than the opponent: the archetype's win condition |
 
 ---
 
