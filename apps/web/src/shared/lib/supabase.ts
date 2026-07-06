@@ -123,11 +123,11 @@ export async function getPairScore(
       .select('*')
       .eq('card_a_id', a)
       .eq('card_b_id', b)
-      .single();
+      // maybeSingle() → { data: null, error: null } for a pair with no votes yet,
+      // instead of the PGRST116 error the Sentry Supabase integration captures.
+      .maybeSingle();
 
     if (error) {
-      // PGRST116 = no rows found, expected for pairs with no votes
-      if (error.code === 'PGRST116') return null;
       console.error('[getPairScore] Supabase query failed:', {
         code: error.code,
         message: error.message,
