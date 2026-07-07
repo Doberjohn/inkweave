@@ -66,16 +66,15 @@ test.describe('Synergy groups — modal default mode (desktop)', () => {
     expect(await modal.locator('[data-group-key]').count()).toBeGreaterThan(1);
   });
 
-  test('the "+N more" tile expands its group', async ({appPage}) => {
+  test('the "+N more" tile opens the full expanded group view', async ({appPage}) => {
     const modal = appPage.cardOverviewModal;
     const moreTile = modal.locator('[data-group-key="discard"] [data-testid="more-tile"]');
     await expect(moreTile).toBeVisible();
     await moreTile.click();
 
-    // Expanding routes through the same activeGroupFilter → focused single-group view.
-    await expect(modal).toHaveAttribute('data-state', 'focused');
-    await expect(modal.locator('[data-group-key]')).toHaveCount(1);
-    await expect(modal.locator('[data-group-key="discard"]')).toBeVisible();
+    // One click on the More tile jumps straight to the full ExpandedGroupView.
+    await expect(modal).toHaveAttribute('data-state', 'expanded');
+    await expect(modal.getByText(/back to all synergies/i)).toBeVisible();
   });
 });
 
@@ -101,13 +100,13 @@ test.describe('Synergy groups — modal default mode (mobile)', () => {
     await expect(modal.locator('[data-group-key="discard"]')).toBeVisible();
   });
 
-  test('the "+N more" tile expands its group', async ({appPage}) => {
+  test('the "+N more" tile opens the full expanded group view', async ({appPage}) => {
     const modal = appPage.cardOverviewModal;
     const moreTile = modal.locator('[data-group-key="discard"] [data-testid="more-tile"]');
     await expect(moreTile).toBeVisible();
     await moreTile.click();
 
-    await expect(modal).toHaveAttribute('data-state', 'focused');
-    await expect(modal.locator('[data-group-key]')).toHaveCount(1);
+    await expect(modal).toHaveAttribute('data-state', 'expanded');
+    await expect(modal.getByText(/back to all synergies/i)).toBeVisible();
   });
 });

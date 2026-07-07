@@ -126,14 +126,14 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 
 ## `synergy-groups.spec.ts` — 4 tests (2 desktop, 2 mobile)
 
-CardOverviewModal default-mode interactions — chip filtering and "+N more" expansion. Both set `activeGroupFilter` → the focused single-group state (`data-state="focused"`).
+CardOverviewModal default-mode interactions — chip filtering (→ focused single-group) and "+N more" one-click expansion (→ full ExpandedGroupView).
 
 | Test | What it verifies |
 |---|---|
 | a group chip toggles the modal between focused and default (desktop) | Clicking the Discard chip → `data-state="focused"`, one group; clicking again clears it |
-| the "+N more" tile expands its group (desktop) | Clicking the discard `more-tile` → `data-state="focused"`, only the discard group |
+| the "+N more" tile opens the full expanded group view (desktop) | Clicking the discard `more-tile` once → `data-state="expanded"` with a "Back to all synergies" link |
 | a group chip filters the modal to that group (mobile) | Clicking the Discard chip → `data-state="focused"`, one group |
-| the "+N more" tile expands its group (mobile) | Clicking the discard `more-tile` → `data-state="focused"` |
+| the "+N more" tile opens the full expanded group view (mobile) | Clicking the discard `more-tile` once → `data-state="expanded"` with a "Back to all synergies" link |
 
 ## `synergy-detail-modal.spec.ts` — 11 tests (4 desktop, 5 mobile, 2 deep-link)
 
