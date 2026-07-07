@@ -17,6 +17,9 @@ export type {
   DetailedPairSynergy,
 } from './types';
 
+// Format
+export {MIN_CORE_SET, isCoreSet} from './constants';
+
 // Engine
 export {
   SynergyEngine,

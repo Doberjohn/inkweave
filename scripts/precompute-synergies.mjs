@@ -36,7 +36,8 @@ async function main() {
     process.exit(1);
   }
   const engineUrl = new URL(`file:///${enginePath.replace(/\\/g, '/')}`);
-  const {synergyEngine, getAllPlaystyles, transformCards} = await import(engineUrl.href);
+  const {synergyEngine, getAllPlaystyles, transformCards, isCoreSet, MIN_CORE_SET} =
+    await import(engineUrl.href);
 
   // Load and transform card data (main + optional preview) using the engine's shared transformer
   const mainData = JSON.parse(fs.readFileSync(MAIN_DATA_FILE, 'utf-8'));
@@ -50,6 +51,14 @@ async function main() {
     const previewFiltered = previewData.cards.filter((c) => !mainIds.has(c.id));
     previewCount = previewFiltered.length;
     mergedRaw = [...mainData.cards, ...previewFiltered];
+  }
+
+  // Enforce the Core rotation floor: drop cards from sets below MIN_CORE_SET so the
+  // engine only computes synergies over Core-legal cards (see engine constants.ts).
+  const preCoreCount = mergedRaw.length;
+  mergedRaw = mergedRaw.filter((c) => isCoreSet(c.setCode));
+  if (mergedRaw.length < preCoreCount) {
+    console.log(`  Core filter: dropped ${preCoreCount - mergedRaw.length} cards (sets < ${MIN_CORE_SET})`);
   }
 
   const rawCount = mergedRaw.length;
