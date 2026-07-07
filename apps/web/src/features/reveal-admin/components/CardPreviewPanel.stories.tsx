@@ -3,7 +3,7 @@ import {CardPreviewPanel} from './CardPreviewPanel';
 import type {LorcanaCard} from '../../cards/types';
 
 const sample: LorcanaCard = {
-  id: '13050',
+  id: '3021',
   name: 'Mei',
   version: 'Red Panda',
   fullName: 'Mei - Red Panda',

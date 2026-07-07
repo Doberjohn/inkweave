@@ -27,7 +27,7 @@ function card(id: number, ink: Ink, cost: number, rarity: string): LorcanaCard {
 }
 
 export const Revealed: Story = {
-  args: {ink: 'Amber', card: card(13002, 'Amber', 3, 'Rare'), onOpen: () => {}},
+  args: {ink: 'Amber', card: card(2973, 'Amber', 3, 'Rare'), onOpen: () => {}},
 };
 
 export const Unrevealed: Story = {
@@ -35,20 +35,20 @@ export const Unrevealed: Story = {
 };
 
 export const Mobile: Story = {
-  args: {ink: 'Ruby', card: card(13129, 'Ruby', 7, 'Super Rare'), width: 46, height: 64, onOpen: () => {}},
+  args: {ink: 'Ruby', card: card(3100, 'Ruby', 7, 'Super Rare'), width: 46, height: 64, onOpen: () => {}},
 };
 
 // A mosaic row mixing revealed (varied rarities) and unrevealed slots.
 export const Row: Story = {
   render: () => (
     <div style={{display: 'flex', gap: 7, padding: 16}}>
-      <CardSlot ink="Amber" card={card(13002, 'Amber', 3, 'Common')} onOpen={() => {}} />
-      <CardSlot ink="Amber" card={card(13017, 'Amber', 5, 'Super Rare')} onOpen={() => {}} />
+      <CardSlot ink="Amber" card={card(2973, 'Amber', 3, 'Common')} onOpen={() => {}} />
+      <CardSlot ink="Amber" card={card(2988, 'Amber', 5, 'Super Rare')} onOpen={() => {}} />
       <CardSlot ink="Amber" />
-      <CardSlot ink="Amber" card={card(13024, 'Amber', 6, 'Legendary')} onOpen={() => {}} />
+      <CardSlot ink="Amber" card={card(2995, 'Amber', 6, 'Legendary')} onOpen={() => {}} />
       <CardSlot ink="Amber" />
-      <CardSlot ink="Amber" card={card(13009, 'Amber', 2, 'Uncommon')} onOpen={() => {}} />
-      <CardSlot ink="Amber" card={card(13005, 'Amber', 4, 'Rare')} onOpen={() => {}} />
+      <CardSlot ink="Amber" card={card(2980, 'Amber', 2, 'Uncommon')} onOpen={() => {}} />
+      <CardSlot ink="Amber" card={card(2976, 'Amber', 4, 'Rare')} onOpen={() => {}} />
     </div>
   ),
 };

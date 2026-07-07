@@ -35,8 +35,8 @@ export const Tribes: Story = {
           name="Floodborns"
           accentColor="#6b7280"
           accentRgb="107, 114, 128"
-          heroCard={card(13197, 'The Vine - Towering Stalk')}
-          supportCards={[card(13115, 'Gaston'), card(13026, 'Ursula'), card(13192, 'Mulan'), card(1979, 'Elsa')]}
+          heroCard={card(3168, 'The Vine - Towering Stalk')}
+          supportCards={[card(3086, 'Gaston'), card(2997, 'Ursula'), card(3163, 'Mulan'), card(1979, 'Elsa')]}
         />
         <PlaystyleFanTile
           playstyleId="hunny"
@@ -44,7 +44,7 @@ export const Tribes: Story = {
           accentColor="#8b5cf6"
           accentRgb="139, 92, 246"
           heroCard={card(1977, 'Winnie the Pooh - Hunny Wizard')}
-          supportCards={[card(13126, 'Tigger'), card(13083, 'Roo'), card(13061, 'Christopher Robin'), card(13005, 'Rabbit')]}
+          supportCards={[card(3097, 'Tigger'), card(3054, 'Roo'), card(3032, 'Christopher Robin'), card(2976, 'Rabbit')]}
         />
       </>
     ),

@@ -38,12 +38,12 @@ export const SET_SPOTLIGHTS: SpotlightGroup[] = [
         summary:
           'The Vine twists your characters into Floodborn Vinelings, then rewards you for flooding the board with them. Strengthen them all at once, and let the vines tighten their grip with every quest and banish.',
         href: '/playstyles/floodborn',
-        heroImage: art(13197),
+        heroImage: art(3168),
         heroAlt: 'The Vine - Towering Stalk',
         support: [
-          {src: art(13115), alt: 'Gaston - Created by the Vine'},
-          {src: art(13026), alt: 'Ursula - Created by the Vine'},
-          {src: art(13192), alt: 'Mulan - Created by the Vine'},
+          {src: art(3086), alt: 'Gaston - Created by the Vine'},
+          {src: art(2997), alt: 'Ursula - Created by the Vine'},
+          {src: art(3163), alt: 'Mulan - Created by the Vine'},
         ],
       },
       {
@@ -55,12 +55,12 @@ export const SET_SPOTLIGHTS: SpotlightGroup[] = [
         title: 'Team Characters',
         summary:
           'Beloved pairs arrive as a single card, ready to Shift onto either partner already in play. Two names, two inks, one unbreakable bond.',
-        heroImage: art(13132),
+        heroImage: art(3103),
         heroAlt: 'Belle & Beast - Certain as the Sun',
         support: [
-          {src: art(13031), alt: 'Lilo & Stitch - Fun-Loving Friends'},
-          {src: art(13028), alt: 'Woody & Buzz Lightyear - Best Buddies'},
-          {src: art(13099), alt: 'Mickey Mouse & Minnie Mouse - Adventuring Duo'},
+          {src: art(3002), alt: 'Lilo & Stitch - Fun-Loving Friends'},
+          {src: art(2999), alt: 'Woody & Buzz Lightyear - Best Buddies'},
+          {src: art(3070), alt: 'Mickey Mouse & Minnie Mouse - Adventuring Duo'},
         ],
       },
       {
@@ -71,11 +71,11 @@ export const SET_SPOTLIGHTS: SpotlightGroup[] = [
         title: 'Temporary Shift',
         summary:
           'A fleeting transformation. Shift in for a single turn, make your move, then slip back to hand with every bit of damage washed away.',
-        heroImage: art(13125),
+        heroImage: art(3096),
         heroAlt: 'Meilin Lee - Popular Red Panda',
         support: [
-          {src: art(13044), alt: 'Meilin Lee - Superficially Obedient'},
-          {src: art(13049), alt: 'Ming Lee - Overprotective Parent'},
+          {src: art(3015), alt: 'Meilin Lee - Superficially Obedient'},
+          {src: art(3020), alt: 'Ming Lee - Overprotective Parent'},
         ],
       },
     ],
@@ -92,12 +92,12 @@ export const SET_SPOTLIGHTS: SpotlightGroup[] = [
         summary:
           'Turning Red joins the fight. Dig through your deck to gather the Lee family, and the more Red Pandas you bring out, the stronger the whole pack becomes.',
         href: '/playstyles/red-panda',
-        heroImage: art(13119),
+        heroImage: art(3090),
         heroAlt: 'Sun Yee - Soul of the Red Panda',
         support: [
-          {src: art(13007), alt: 'Meilin Lee - Lead Vocalist'},
-          {src: art(13002), alt: 'Ming Lee - Proud Parent'},
-          {src: art(13129), alt: 'Ming Lee - Giant Red Panda'},
+          {src: art(2978), alt: 'Meilin Lee - Lead Vocalist'},
+          {src: art(2973), alt: 'Ming Lee - Proud Parent'},
+          {src: art(3100), alt: 'Ming Lee - Giant Red Panda'},
         ],
       },
       {
@@ -109,12 +109,12 @@ export const SET_SPOTLIGHTS: SpotlightGroup[] = [
         summary:
           'Winnie the Pooh and friends set out as a brave adventuring party. Search out your fellow Hunny, gather the gang, and grow stronger with every friend at your side.',
         href: '/playstyles/hunny',
-        heroImage: art(13040),
+        heroImage: art(3011),
         heroAlt: 'Winnie the Pooh - Hunny Archmage',
         support: [
-          {src: art(13126), alt: 'Tigger - Hunny Barbarian'},
-          {src: art(13083), alt: 'Roo - Hunny Rogue'},
-          {src: art(13061), alt: 'Christopher Robin - Hunny Sage'},
+          {src: art(3097), alt: 'Tigger - Hunny Barbarian'},
+          {src: art(3054), alt: 'Roo - Hunny Rogue'},
+          {src: art(3032), alt: 'Christopher Robin - Hunny Sage'},
         ],
       },
     ],
@@ -123,9 +123,9 @@ export const SET_SPOTLIGHTS: SpotlightGroup[] = [
 
 /** Representative hero + fan card art for each debut franchise. */
 const FRANCHISE_ART: Record<FranchiseId, {hero: number; support: number[]; accent: string}> = {
-  'monsters-inc': {hero: 13024, support: [13021, 13127, 13123], accent: INK_COLORS.Amber.border},
-  up: {hero: 13079, support: [13113, 13088, 13075], accent: INK_COLORS.Emerald.border},
-  'turning-red': {hero: 13007, support: [13009, 13017, 13033], accent: INK_COLORS.Ruby.border},
+  'monsters-inc': {hero: 2995, support: [2992, 3098, 3094], accent: INK_COLORS.Amber.border},
+  up: {hero: 3050, support: [3084, 3059, 3046], accent: INK_COLORS.Emerald.border},
+  'turning-red': {hero: 2978, support: [2980, 2988, 3004], accent: INK_COLORS.Ruby.border},
 };
 
 /**

@@ -30,12 +30,12 @@ function makeCard(ink: string, id: string, name: string): LorcanaCard {
 // IDs must match DEFAULT_FEATURED_IDS in FeaturedCards.tsx (also overridable via
 // VITE_FEATURED_CARD_IDS — tests rely on the unset/default path).
 const mockCards: LorcanaCard[] = [
-  makeCard('Amber', '13028', 'Woody & Buzz Lightyear'),
-  makeCard('Amethyst', '13051', 'Mrs. Incredible'),
-  makeCard('Emerald', '13082', 'Russell'),
-  makeCard('Ruby', '13125', 'Meilin Lee'),
-  makeCard('Sapphire', '13158', 'Maid Marian'),
-  makeCard('Steel', '13197', 'The Vine'),
+  makeCard('Amber', '2999', 'Woody & Buzz Lightyear'),
+  makeCard('Amethyst', '3022', 'Mrs. Incredible'),
+  makeCard('Emerald', '3053', 'Russell'),
+  makeCard('Ruby', '3096', 'Meilin Lee'),
+  makeCard('Sapphire', '3129', 'Maid Marian'),
+  makeCard('Steel', '3168', 'The Vine'),
 ];
 
 describe('FeaturedCards', () => {

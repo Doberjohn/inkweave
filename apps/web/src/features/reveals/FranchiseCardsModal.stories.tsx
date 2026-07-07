@@ -12,7 +12,7 @@ const meta: Meta<typeof FranchiseCardsModal> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const IMG_IDS = [13074, 13075, 13079, 13082, 13083, 13088, 13093, 13095, 13102, 13103, 13108];
+const IMG_IDS = [3045, 3046, 3050, 3053, 3054, 3059, 3064, 3066, 3073, 3074, 3079];
 
 const cards: LorcanaCard[] = IMG_IDS.map(
   (id, i) =>
