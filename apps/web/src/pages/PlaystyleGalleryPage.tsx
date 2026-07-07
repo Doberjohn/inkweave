@@ -74,8 +74,11 @@ function fanCardsFor(
   allCards: LorcanaCard[],
   getCardById: (id: string) => LorcanaCard | undefined,
 ) {
-  const heroCard = getCardById(ui.heroCardId);
-  const supportCards = allCards.filter((c) => c.id !== ui.heroCardId).slice(0, 4);
+  // Fall back to the first member if the curated hero id was rotated out of the pool,
+  // so the tile degrades to a member card instead of a blank. The card-id-integrity
+  // test fails the build first; this is the runtime safety net (defense in depth).
+  const heroCard = getCardById(ui.heroCardId) ?? allCards[0];
+  const supportCards = allCards.filter((c) => c.id !== heroCard?.id).slice(0, 4);
   return {heroCard, supportCards};
 }
 

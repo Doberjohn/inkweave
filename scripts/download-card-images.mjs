@@ -45,6 +45,16 @@ const FORCE = process.argv.includes('--force');
 // at the cache→output boundary so the cache stays valid across hash-policy changes.
 const CACHE_VERSION = '3';
 
+// Image-coverage guard: fail the build if any set is missing image hashes for too
+// many of its cards. A few individually-rotted Ravensburger URLs are tolerated
+// (non-fatal above → fallback UI), but a whole set with no images (e.g. a freshly
+// graduated set whose downloads all failed) must NOT ship: without imageHash,
+// resolveImageUrl returns undefined and every card in that set renders blank in
+// the production (VITE_LOCAL_IMAGES) build. See apps/web/src/features/cards/loader.ts
+// and issue #323.
+const SET_COVERAGE_FLOOR = 0.75; // a set below this hashed fraction fails the build
+const SET_MIN_CARDS_TO_CHECK = 12; // ignore tiny sets where a couple misses skew the ratio
+
 // Output sizes: full (popover/detail) and small (grid tiles).
 // `key` is the manifest property surfaced in card data as `imageHash` (full)
 // and `imageHashSm` (small).
@@ -178,6 +188,38 @@ function injectManifest(filePath, manifest) {
   return updated;
 }
 
+/**
+ * Fail the build if any adequately-sized set is missing image hashes for more than
+ * (1 - SET_COVERAGE_FLOOR) of its cards. Guards against a graduated or new set
+ * silently shipping blank: without imageHash, resolveImageUrl returns undefined and
+ * every card in that set renders empty in the production build. Scattered rot across
+ * a set stays green (matches the non-fatal per-image warning above).
+ */
+function assertImageCoverage(dataFile, manifest) {
+  const {cards} = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+  const bySet = new Map();
+  for (const card of cards) {
+    const set = String(card.setCode ?? 'unknown');
+    const stat = bySet.get(set) ?? {total: 0, hashed: 0};
+    stat.total++;
+    if (manifest[card.id]) stat.hashed++;
+    bySet.set(set, stat);
+  }
+  const broken = [...bySet].filter(
+    ([, {total, hashed}]) => total >= SET_MIN_CARDS_TO_CHECK && hashed / total < SET_COVERAGE_FLOOR,
+  );
+  if (broken.length === 0) return;
+  console.error('\n  x Image-coverage guard FAILED — these sets would render blank in production:');
+  for (const [set, {total, hashed}] of broken) {
+    console.error(`      set ${set}: only ${hashed}/${total} cards have an image hash`);
+  }
+  console.error(
+    '  Cards without imageHash render blank in the VITE_LOCAL_IMAGES build. Re-source the\n' +
+      '  dead image URLs (or re-run the download) before deploying.\n',
+  );
+  process.exit(1);
+}
+
 /** Invalidate cache when CACHE_VERSION changes; ensure CACHE_DIR exists. */
 function prepareCacheDir() {
   const versionFile = path.join(CACHE_DIR, '.version');
@@ -290,6 +332,9 @@ async function main() {
   console.log(
     `  Injected hashes into card data: ${mainUpdated} in allCards.json, ${previewUpdated} in previewCards.json\n`,
   );
+
+  // Guard: refuse to finish green if a whole set failed to image (would ship blank).
+  assertImageCoverage(DATA_FILE, manifest);
 }
 
 main().catch((err) => {
