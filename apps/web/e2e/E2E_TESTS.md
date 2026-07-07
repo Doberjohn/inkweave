@@ -27,9 +27,9 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should show featured cards after loading | Featured cards grid has 1-12 card tiles |
 | should open the overview modal when a card is selected | Clicking a featured card opens the modal overlay-style; URL stays `/`, no compact header |
 
-## `card-detail.spec.ts` — 7 tests (desktop only)
+## `card-detail.spec.ts` — 9 tests (desktop only)
 
-CardOverviewModal — opening, closing, empty state, scroll lock.
+CardOverviewModal — opening, closing, empty state, scroll lock, show-all expansion, sibling navigation.
 
 | Test | What it verifies |
 |---|---|
@@ -40,6 +40,8 @@ CardOverviewModal — opening, closing, empty state, scroll lock.
 | should close the modal when Escape is pressed | Escape dismisses the modal, hero reappears |
 | should show the empty state for a card with no synergies | `/card/957` (no synergy file) renders `card-overview-empty` |
 | should lock background scroll while the modal is open | `document.body` overflow is `hidden` while open, restored on close |
+| Show More reveals the full expanded group, and Back returns to default | `/card/1102` ramp group: one "+N more" click → `data-state="expanded"` with a "Back to all synergies" link; Back → `data-state="default"` |
+| arrows navigate to a sibling card from the Browse grid | Opening a card from `/browse` shows prev/next arrows; clicking "Next card" changes the modal's h1 to the adjacent grid card |
 
 ## `card-search.spec.ts` — 7 tests (desktop only)
 
@@ -124,14 +126,14 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 
 ## `synergy-groups.spec.ts` — 4 tests (2 desktop, 2 mobile)
 
-CardOverviewModal default-mode interactions — chip filtering and "+N more" expansion. Both set `activeGroupFilter` → the focused single-group state (`data-state="focused"`).
+CardOverviewModal default-mode interactions — chip filtering (→ focused single-group) and "+N more" one-click expansion (→ full ExpandedGroupView).
 
 | Test | What it verifies |
 |---|---|
 | a group chip toggles the modal between focused and default (desktop) | Clicking the Discard chip → `data-state="focused"`, one group; clicking again clears it |
-| the "+N more" tile expands its group (desktop) | Clicking the discard `more-tile` → `data-state="focused"`, only the discard group |
+| the "+N more" tile opens the full expanded group view (desktop) | Clicking the discard `more-tile` once → `data-state="expanded"` with a "Back to all synergies" link |
 | a group chip filters the modal to that group (mobile) | Clicking the Discard chip → `data-state="focused"`, one group |
-| the "+N more" tile expands its group (mobile) | Clicking the discard `more-tile` → `data-state="focused"` |
+| the "+N more" tile opens the full expanded group view (mobile) | Clicking the discard `more-tile` once → `data-state="expanded"` with a "Back to all synergies" link |
 
 ## `synergy-detail-modal.spec.ts` — 11 tests (4 desktop, 5 mobile, 2 deep-link)
 

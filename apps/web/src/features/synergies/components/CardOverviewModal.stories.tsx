@@ -141,6 +141,13 @@ export const Default: Story = {
   // Default mode renders only presentational children (no Router / CardModalContext deps).
 };
 
+export const WithSiblingNavigation: Story = {
+  args: {
+    siblingCardIds: ['a', cardA.id, 'c'],
+    onGoToSibling: fn(),
+  },
+};
+
 export const Mobile: Story = {
   args: {isMobile: true},
   parameters: {viewport: {defaultViewport: 'mobile1'}},
@@ -158,6 +165,38 @@ export const ComparisonMode: Story = {
           <CardModalProvider>
             <Story />
           </CardModalProvider>
+        </CardDataProvider>
+      </MemoryRouter>
+    ),
+  ],
+};
+
+export const LargeGroupShowAll: Story = {
+  args: {
+    synergies: [
+      {
+        groupKey: 'singer-songs',
+        category: 'playstyle',
+        label: 'Singer + Songs',
+        tagline: 'A large group to exercise Show More.',
+        description: 'Click More to reach the full expanded view.',
+        synergies: Array.from({length: 24}, (_, i) => ({
+          card: {...annaSister, id: `song-${i}`, fullName: `Song ${i} - Test`, name: `Song ${i}`},
+          score: 5,
+          explanation: `Synergy ${i}`,
+        })),
+      },
+    ],
+  },
+  decorators: [
+    // Renders a large group whose More tile a human can click (manual, no play function)
+    // to reach the full ExpandedGroupView, which uses useCardDataContext() for its filter
+    // toolbar — no CardModalProvider needed here (that's only for useCardModal consumers like
+    // CommunityColumn in ComparisonMode).
+    (Story) => (
+      <MemoryRouter>
+        <CardDataProvider>
+          <Story />
         </CardDataProvider>
       </MemoryRouter>
     ),
