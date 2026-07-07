@@ -65,6 +65,7 @@ interface CardOverviewModalProps {
 
 interface ModalState {
   modalRef: React.RefObject<HTMLDivElement | null>;
+  frameRef: React.RefObject<HTMLDivElement | null>;
   initialFocusRef: React.RefObject<HTMLElement | null>;
   compareCardRef: React.RefObject<HTMLDivElement | null>;
   visible: boolean;
@@ -102,6 +103,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   const {isOpen, card, onClose, initialComparison = null, hideBackButton = false} = props;
 
   const modalRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
   const initialFocusRef = useRef<HTMLElement>(null);
   const {visible, onTransitionEnd} = useTransitionPresence(isOpen);
 
@@ -144,7 +146,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
 
   const {handleKeyDown: handleModalKeyDown} = useDialogFocus({
     isOpen,
-    containerRef: modalRef,
+    containerRef: frameRef,
     initialFocusRef,
     // In deep-link comparison (hideBackButton), Esc closes the whole modal — there's no
     // back-stack to step out into. In normal comparison, Esc exits comparison only.
@@ -199,11 +201,9 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
 
   const handleShowAll = (groupKey: string) => {
     trackEvent('synergy_group_viewed', {sourceCardId: props.card.id, groupKey, action: 'show_all'});
-    if (activeGroupFilter === groupKey) {
-      setExpandedGroupKey(groupKey); // second click on an already-isolated group: full view
-    } else {
-      setActiveGroupFilter(groupKey); // first click: isolate the group (11 + More)
-    }
+    // One click on a group's More tile jumps straight to the full expanded view. The intermediate
+    // isolated tier still exists, reached by clicking a group chip (toggleChip), not the More tile.
+    setExpandedGroupKey(groupKey);
   };
 
   const handleBackToAll = () => {
@@ -238,6 +238,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
 
   return {
     modalRef,
+    frameRef,
     initialFocusRef,
     compareCardRef,
     visible,
@@ -286,6 +287,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
   const {siblingCardIds = [], onGoToSibling} = props;
   const {
     modalRef,
+    frameRef,
     compareCardRef,
     visible,
     onTransitionEnd,
@@ -334,7 +336,11 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
       <>
         <ModalBackdrop visible={visible} onClose={onClose} onTransitionEnd={onTransitionEnd} />
         <div style={CENTERING_WRAPPER_STYLE}>
-          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog keyboard handling (Escape to close) */}
+          {/* Relative frame sized to the shell; lets the sibling nav arrows straddle the modal
+              border without the shell's own overflow:hidden clipping them. The frame also owns the
+              focus trap + arrow-key handling so the arrows (outside the dialog) stay reachable. */}
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- see comment above */}
+          <div ref={frameRef} style={MODAL_FRAME_STYLE} onKeyDown={handleShellKeyDown}>
           <div
             ref={modalRef}
             className={`overlay-transition overlay-scale overlay-enter ${visible ? 'overlay-visible' : ''}`}
@@ -345,12 +351,8 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
             data-state={dataState}
             data-mode={dataMode}
             data-highlighted={highlightedCard ?? undefined}
-            onKeyDown={handleShellKeyDown}
             onTransitionEnd={onTransitionEnd}
             style={pickModalShellStyle(isMobile)}>
-            {showSiblingNav && (
-              <SiblingNavButtons onPrev={() => onGoToSibling?.(-1)} onNext={() => onGoToSibling?.(1)} />
-            )}
             <ModalHeader
               card={card}
               isMobile={isMobile}
@@ -382,6 +384,10 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               handleShowAll={handleShowAll}
               setHighlightedCard={setHighlightedCard}
             />
+          </div>
+          {showSiblingNav && (
+            <SiblingNavButtons onPrev={() => onGoToSibling?.(-1)} onNext={() => onGoToSibling?.(1)} />
+          )}
           </div>
         </div>
       </>
@@ -544,16 +550,18 @@ const SIBLING_BTN_BASE: React.CSSProperties = {
   position: 'absolute',
   top: '50%',
   transform: 'translateY(-50%)',
-  zIndex: 3,
-  width: 40,
-  height: 40,
+  zIndex: 4,
+  width: 44,
+  height: 44,
   borderRadius: '50%',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  background: 'rgba(26, 26, 46, 0.85)',
-  border: `1px solid ${COLORS.surfaceBorder}`,
-  color: COLORS.primary,
+  // Match the landing page's "Browse all cards" CTA treatment (orange gradient + dark glyph).
+  background: COLORS.filterGradient,
+  border: 'none',
+  color: COLORS.filterText,
+  boxShadow: COLORS.filterShadow,
   cursor: 'pointer',
   pointerEvents: 'auto',
 };
@@ -561,14 +569,14 @@ const SIBLING_BTN_BASE: React.CSSProperties = {
 function SiblingNavButtons({onPrev, onNext}: {onPrev: () => void; onNext: () => void}) {
   return (
     <>
-      <button type="button" aria-label="Previous card" onClick={onPrev} style={{...SIBLING_BTN_BASE, left: 8}}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <button type="button" aria-label="Previous card" onClick={onPrev} style={{...SIBLING_BTN_BASE, left: -22}}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
-      <button type="button" aria-label="Next card" onClick={onNext} style={{...SIBLING_BTN_BASE, right: 8}}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <button type="button" aria-label="Next card" onClick={onNext} style={{...SIBLING_BTN_BASE, right: -22}}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
     </>
@@ -874,6 +882,12 @@ const CENTERING_WRAPPER_STYLE: React.CSSProperties = {
   zIndex: Z_INDEX.modal,
   pointerEvents: 'none',
   padding: '24px',
+};
+
+/** Shrink-wraps the modal shell so the sibling nav arrows can be positioned against its edges. */
+const MODAL_FRAME_STYLE: React.CSSProperties = {
+  position: 'relative',
+  pointerEvents: 'none',
 };
 
 function pickModalShellStyle(isMobile: boolean): React.CSSProperties {

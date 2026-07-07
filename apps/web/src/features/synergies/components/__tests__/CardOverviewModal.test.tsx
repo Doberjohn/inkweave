@@ -41,12 +41,10 @@ function renderModal(cardCount: number) {
   );
 }
 
-test('second Show More opens the full expanded group view', async () => {
+test('Show More opens the full expanded group view', async () => {
   const user = userEvent.setup();
   renderModal(20);
-  // First More -> focused (isolates the group, still a More tile).
-  await user.click(screen.getByRole('button', {name: /more/i}));
-  // Second More -> full ExpandedGroupView with its back link.
+  // One More click jumps straight to the full ExpandedGroupView with its back link.
   await user.click(screen.getByRole('button', {name: /more/i}));
   expect(screen.getByText(/back to all synergies/i)).toBeVisible();
 });
@@ -54,7 +52,6 @@ test('second Show More opens the full expanded group view', async () => {
 test('Back to all synergies returns to the default view', async () => {
   const user = userEvent.setup();
   renderModal(20);
-  await user.click(screen.getByRole('button', {name: /more/i}));
   await user.click(screen.getByRole('button', {name: /more/i}));
   expect(screen.getByText(/back to all synergies/i)).toBeVisible();
   await user.click(screen.getByText(/back to all synergies/i));
@@ -73,7 +70,6 @@ test('changing the card resets the expanded view', async () => {
     </MemoryRouter>
   );
   const {rerender} = render(tree(makeCard('source')));
-  await user.click(screen.getByRole('button', {name: /more/i}));
   await user.click(screen.getByRole('button', {name: /more/i}));
   expect(screen.getByText(/back to all synergies/i)).toBeVisible();
   rerender(tree(makeCard('other')));

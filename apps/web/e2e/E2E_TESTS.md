@@ -40,7 +40,7 @@ CardOverviewModal — opening, closing, empty state, scroll lock, show-all expan
 | should close the modal when Escape is pressed | Escape dismisses the modal, hero reappears |
 | should show the empty state for a card with no synergies | `/card/957` (no synergy file) renders `card-overview-empty` |
 | should lock background scroll while the modal is open | `document.body` overflow is `hidden` while open, restored on close |
-| Show More twice reveals the full expanded group, and Back returns to default | `/card/1102` ramp group: first "+N more" → `data-state="focused"`, second → `data-state="expanded"` with a "Back to all synergies" link; Back → `data-state="default"` |
+| Show More reveals the full expanded group, and Back returns to default | `/card/1102` ramp group: one "+N more" click → `data-state="expanded"` with a "Back to all synergies" link; Back → `data-state="default"` |
 | arrows navigate to a sibling card from the Browse grid | Opening a card from `/browse` shows prev/next arrows; clicking "Next card" changes the modal's h1 to the adjacent grid card |
 
 ## `card-search.spec.ts` — 7 tests (desktop only)

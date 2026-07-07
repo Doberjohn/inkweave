@@ -179,7 +179,7 @@ export const LargeGroupShowAll: Story = {
         category: 'playstyle',
         label: 'Singer + Songs',
         tagline: 'A large group to exercise Show More.',
-        description: 'Click More twice to reach the full expanded view.',
+        description: 'Click More to reach the full expanded view.',
         synergies: Array.from({length: 24}, (_, i) => ({
           card: {...annaSister, id: `song-${i}`, fullName: `Song ${i} - Test`, name: `Song ${i}`},
           score: 5,
@@ -189,7 +189,7 @@ export const LargeGroupShowAll: Story = {
     ],
   },
   decorators: [
-    // Renders a large group whose More tile a human can click twice (manual, no play function)
+    // Renders a large group whose More tile a human can click (manual, no play function)
     // to reach the full ExpandedGroupView, which uses useCardDataContext() for its filter
     // toolbar — no CardModalProvider needed here (that's only for useCardModal consumers like
     // CommunityColumn in ComparisonMode).
