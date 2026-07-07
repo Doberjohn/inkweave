@@ -36,6 +36,42 @@ const revertBtnStyle = {
   fontSize: FONT_SIZES.xs,
 };
 
+function PendingEditRow({edit, onRevert}: {edit: PendingEdit; onRevert: (pathKey: string) => void}) {
+  return (
+    <div style={rowStyle}>
+      <div style={{minWidth: 0}}>
+        <div style={{color: COLORS.text}}>{edit.label}</div>
+        <div style={{color: edit.valid ? COLORS.gray600 : COLORS.error, fontSize: FONT_SIZES.xs}}>
+          {edit.valid ? `${String(edit.oldValue)} → ${String(edit.value)}` : edit.error}
+        </div>
+      </div>
+      <button style={revertBtnStyle} onClick={() => onRevert(edit.pathKey)}>
+        revert
+      </button>
+    </div>
+  );
+}
+
+function PublishButton({disabled, publishing, onClick}: {disabled: boolean; publishing: boolean; onClick: () => void}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        marginTop: SPACING.md,
+        padding: '12px 20px',
+        background: disabled ? COLORS.surfaceHover : COLORS.primary500,
+        color: COLORS.white,
+        border: 'none',
+        borderRadius: RADIUS.sm,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        fontWeight: 600,
+      }}>
+      {publishing ? 'Publishing…' : 'Publish'}
+    </button>
+  );
+}
+
 /** Bottom tray listing staged edits as diff rows plus publish/clear actions. */
 export function PendingTray({
   pending,
@@ -67,25 +103,7 @@ export function PendingTray({
       {pending.length === 0 ? (
         <p style={{color: COLORS.gray600, fontSize: FONT_SIZES.sm, margin: 0}}>No pending changes</p>
       ) : (
-        pending.map((edit) => (
-          <div key={edit.pathKey} style={rowStyle}>
-            <div style={{minWidth: 0}}>
-              <div style={{color: COLORS.text}}>{edit.label}</div>
-              <div style={{color: edit.valid ? COLORS.gray600 : COLORS.error, fontSize: FONT_SIZES.xs}}>
-                {edit.valid ? (
-                  <>
-                    {String(edit.oldValue)} → {String(edit.value)}
-                  </>
-                ) : (
-                  edit.error
-                )}
-              </div>
-            </div>
-            <button style={revertBtnStyle} onClick={() => onRevert(edit.pathKey)}>
-              revert
-            </button>
-          </div>
-        ))
+        pending.map((edit) => <PendingEditRow key={edit.pathKey} edit={edit} onRevert={onRevert} />)
       )}
 
       {error && (
@@ -102,21 +120,7 @@ export function PendingTray({
         </div>
       )}
 
-      <button
-        onClick={onPublish}
-        disabled={publishDisabled}
-        style={{
-          marginTop: SPACING.md,
-          padding: '12px 20px',
-          background: publishDisabled ? COLORS.surfaceHover : COLORS.primary500,
-          color: COLORS.white,
-          border: 'none',
-          borderRadius: RADIUS.sm,
-          cursor: publishDisabled ? 'not-allowed' : 'pointer',
-          fontWeight: 600,
-        }}>
-        {publishing ? 'Publishing…' : 'Publish'}
-      </button>
+      <PublishButton disabled={publishDisabled} publishing={publishing} onClick={onPublish} />
     </section>
   );
 }
