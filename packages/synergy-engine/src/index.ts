@@ -115,6 +115,7 @@ export {
   mechanicLabel,
   mechanicDescription,
 } from './utils';
+export {TUNING, type TuningConfig, type TierText} from './data/tuning';
 export type {
   LocationRole,
   ShiftType,
