@@ -32,6 +32,15 @@ const LORE_STEAL_PATTERNS: RegExp[] = [
 - **Conditional prevention**: Cards that *prevent* lore loss — no "opponent loses" anywhere.
 - **Lore gain only**: Pure lore-gain effects with no opponent-loss component.
 
+## Card examples by role
+
+Real cards the `getLoreDenialRoles` detector tags for each role (names from the live database; effects paraphrased):
+
+| Role | Real cards | What they do |
+|------|-----------|--------------|
+| **burn** | Donald Duck - Pie Slinger (Ruby), The Witch - Wily Woodcarver (Emerald), Taffyta Muttonfudge - Crowd Favorite (Ruby) | Opponent loses lore with no upside for them: on a Shift play, when challenged, or while you hold a location |
+| **steal** | The Sword Released (Ruby), LeFou - Cake Thief (Ruby-Sapphire), Thievery (Ruby) | Opponent loses lore *and* you gain it from the same effect: swings the race twice per trigger |
+
 ## Scoring (5/6/7 matrix)
 
 The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral default, bumps above 5 reflect mechanical efficiency.

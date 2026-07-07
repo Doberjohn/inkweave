@@ -13,45 +13,75 @@ import {
   hasKeyword,
   isBoostBeneficiaryLocation,
   isCharacter,
-  isDeckRamp,
   isDiscardCard,
   isItem,
   isLocation,
   isLocationSupportCard,
   isRampCard,
-  isRepeatingTrigger,
-  costReductionTargetsOverlap,
   isSong,
   isToyCard,
   getToyRoles,
+  isSteadyAimAnchor,
+  isMeridaDamageAction,
+  getActionDamage,
+  isMultiTargetDamageAction,
   isDwarfsCard,
   getDwarfsRoles,
+  isBeckonAnchor,
+  getBeckonEnablerTier,
   getFloodbornRoles,
   isFloodbornCard,
   getHunnyRoles,
   isHunnyCard,
   getRedPandaRoles,
   isRedPandaCard,
+  getItemRoles,
+  isItemCard,
+  getHealRoles,
+  isHealCard,
+  TRIBAL_SPECS,
+  getExertRoles,
+  isExertCard,
+  getBounceRoles,
+  isBounceCard,
   isLoreDenialCard,
   getLoreDenialRoles,
   getSacrificeRoles,
   isSacrificeCard,
+  getSelfDiscardRoles,
+  isSelfDiscardCard,
   LOCATION_PATTERNS,
   mechanicLabel,
   NAMED_EFFECT_SCORES,
   normalizeCardText,
-  type DiscardRole,
   type LocationRole,
-  type LoreDenialRole,
-  type RampRole,
-  type SacrificeRole,
   type ShiftType,
-  type ToyRole,
-  type DwarfsRole,
-  type FloodbornRole,
-  type HunnyRole,
-  type RedPandaRole,
+  type BeckonEnablerTier,
 } from '../utils';
+import {
+  scoreDiscardPair,
+  scoreSacrificePair,
+  scoreSelfDiscardPair,
+  scoreLoreDenialPair,
+  getRampPairScore,
+  getRampExplanation,
+  scoreToyPair,
+  scoreDwarfsPair,
+  scoreExertPair,
+  scoreFloodbornPair,
+  isFloodbornPayoff,
+  scoreItemPair,
+  isItemPayoff,
+  scoreHealPair,
+  isHealPayoff,
+  scoreHunnyPair,
+  scoreRedPandaPair,
+  tribalFindSynergies,
+  pairFindSynergies,
+  makePayoffAnchoredRule,
+  makeTribalRule,
+} from './ruleScoring';
+import {scoreBouncePair} from './bounceScoring';
 
 // ============================================
 // CONDITIONAL SHIFT MATCHERS
@@ -725,6 +755,126 @@ function findSpikeSuitAnchors(payoff: LorcanaCard, allCards: LorcanaCard[]): Syn
 }
 
 // ============================================
+// MERIDA ARCHER HELPERS (Merida - Formidable Archer, STEADY AIM)
+// ============================================
+
+/**
+ * Score a Merida pairing from the payoff action's stats. STEADY AIM adds a flat
+ * +2 to every hit, so a bigger base action is a bigger absolute upgrade; the
+ * printed damage (capped at 3 so a lone 4-damage nuke doesn't dwarf a repeatable
+ * 3) anchors the score, and a multi-target action earns +1 because each extra
+ * body is another STEADY AIM trigger.
+ *
+ *   score = min(5 + min(actionDamage, 3) + (multiTarget ? 1 : 0), 10)
+ *
+ * Floor is 6 (a 1-damage single-target still becomes a real +2 upgrade). Validated
+ * spread across the 19 deck-compatible payoffs: 1x6 / 11x7 / 5x8 / 2x9.
+ */
+function steadyAimScore(action: LorcanaCard): number {
+  const damage = Math.min(getActionDamage(action), 3);
+  const multiBonus = isMultiTargetDamageAction(action) ? 1 : 0;
+  return Math.min(5 + damage + multiBonus, 10);
+}
+
+/**
+ * Build a Merida match. `searcherIsAnchor` is true when Merida (the anchor) is the
+ * card being viewed, so she reads as {A} and the action as {B}; in the reverse
+ * direction the action is {A} and Merida is {B}. Token-swap keeps Merida framed as
+ * the enabler regardless of which page the pair is viewed from.
+ */
+function makeMeridaMatch(
+  action: LorcanaCard,
+  target: LorcanaCard,
+  searcherIsAnchor: boolean,
+): SynergyMatch {
+  const anchorToken = searcherIsAnchor ? '{A}' : '{B}';
+  const actionToken = searcherIsAnchor ? '{B}' : '{A}';
+  const damage = getActionDamage(action);
+  const explanation = `${anchorToken}'s STEADY AIM adds 2 damage to ${actionToken}'s ${damage} damage each time it hits an opposing character.`;
+  return {card: target, score: steadyAimScore(action), explanation, bidirectional: true};
+}
+
+/** Forward: the anchor (Merida) finds damage-dealing Action payoffs. */
+function findMeridaActions(anchor: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+  return allCards
+    .filter((other) => other.id !== anchor.id && isMeridaDamageAction(other))
+    .map((action) => makeMeridaMatch(action, action, true));
+}
+
+/** Reverse: a damage-dealing Action finds anchor cards (Merida) that amplify it. */
+function findMeridaAnchors(action: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+  return allCards
+    .filter((other) => other.id !== action.id && isSteadyAimAnchor(other))
+    .map((anchor) => makeMeridaMatch(action, anchor, false));
+}
+
+// ============================================
+// MERIDA - WISP CONJURER (BECKON) HELPERS
+// ============================================
+
+/**
+ * Score by enabler tier — how much exerted-entry pressure the enabler generates for BECKON:
+ *   engine     8  board-wide / repeatable push of OTHER characters (win-condition engine)
+ *   reanimator 7  a body that replays ITSELF exerted from the discard, repeatably
+ *   self       5  a one-shot self-only body (Bodyguard reminder) — density baseline
+ * 5 is the same-deck-density floor; 7/8 justify themselves by firing BECKON repeatedly.
+ */
+const BECKON_TIER_SCORE: Record<BeckonEnablerTier, number> = {
+  engine: 8,
+  reanimator: 7,
+  self: 5,
+};
+
+/** Per-tier explanation fragment describing WHAT the enabler does (subject-free, the template adds the actor). */
+const BECKON_TIER_REASON: Record<BeckonEnablerTier, string> = {
+  engine: 'repeatedly pushes your characters into play exerted',
+  reanimator: 'keeps replaying itself into play exerted from your discard',
+  self: 'enters play exerted',
+};
+
+/**
+ * Build a BECKON match. `searcherIsAnchor` is true when Merida (the anchor) is the card being
+ * viewed, so she reads as {A} and the enabler as {B}; reversed on the enabler's page. The
+ * token-swap keeps Merida framed as the payoff ("{Merida} draws when {enabler} ...") regardless
+ * of direction, mirroring the Spike Suit token-swap.
+ */
+function makeBeckonMatch(
+  enablerTier: BeckonEnablerTier,
+  target: LorcanaCard,
+  searcherIsAnchor: boolean,
+): SynergyMatch {
+  const anchorToken = searcherIsAnchor ? '{A}' : '{B}';
+  const enablerToken = searcherIsAnchor ? '{B}' : '{A}';
+  return {
+    card: target,
+    score: BECKON_TIER_SCORE[enablerTier],
+    explanation: `${enablerToken} ${BECKON_TIER_REASON[enablerTier]}, so ${anchorToken} draws a card each time.`,
+    bidirectional: true,
+  };
+}
+
+/** Forward: the anchor (Merida) finds every card that pushes your characters into play exerted. */
+function findBeckonEnablers(anchor: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+  const matches: SynergyMatch[] = [];
+  for (const other of allCards) {
+    if (other.id === anchor.id) continue;
+    const tier = getBeckonEnablerTier(other);
+    if (tier === null) continue;
+    matches.push(makeBeckonMatch(tier, other, true));
+  }
+  return matches;
+}
+
+/** Reverse: an exerted-entry enabler finds the anchor (Merida). */
+function findBeckonAnchors(enabler: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+  const tier = getBeckonEnablerTier(enabler);
+  if (tier === null) return [];
+  return allCards
+    .filter((other) => other.id !== enabler.id && isBeckonAnchor(other))
+    .map((anchor) => makeBeckonMatch(tier, anchor, false));
+}
+
+// ============================================
 // SYNERGY RULES
 // ============================================
 
@@ -840,19 +990,8 @@ export const synergyRules: SynergyRule[] = [
 
     matches: isDiscardCard,
 
-    findSynergies: (card, allCards) => {
-      const cardRoles = getDiscardRoles(card);
-      if (cardRoles.length === 0) return [];
-
-      const matches: SynergyMatch[] = [];
-      for (const other of allCards) {
-        if (other.id === card.id) continue;
-        const otherRoles = getDiscardRoles(other);
-        if (otherRoles.length === 0) continue;
-        matches.push(scoreDiscardPair(card, cardRoles, other, otherRoles));
-      }
-      return matches;
-    },
+    findSynergies: (card, allCards) =>
+      pairFindSynergies(card, allCards, getDiscardRoles, scoreDiscardPair),
   },
 
   // --------------------------------------------
@@ -868,19 +1007,25 @@ export const synergyRules: SynergyRule[] = [
 
     matches: isSacrificeCard,
 
-    findSynergies: (card, allCards) => {
-      const cardRoles = getSacrificeRoles(card);
-      if (cardRoles.length === 0) return [];
+    findSynergies: (card, allCards) =>
+      pairFindSynergies(card, allCards, getSacrificeRoles, scoreSacrificePair),
+  },
 
-      const matches: SynergyMatch[] = [];
-      for (const other of allCards) {
-        if (other.id === card.id) continue;
-        const otherRoles = getSacrificeRoles(other);
-        if (otherRoles.length === 0) continue;
-        matches.push(scoreSacrificePair(card, cardRoles, other, otherRoles));
-      }
-      return matches;
-    },
+  // --------------------------------------------
+  // SELF-DISCARD ("Discard Matters" — player-side)
+  // --------------------------------------------
+  {
+    id: 'self-discard',
+    name: 'Self-Discard',
+    category: 'playstyle',
+    playstyleId: 'self-discard',
+    description:
+      'Discard your own cards to fill the discard, then replay them from the bin or trigger discard payoffs',
+
+    matches: isSelfDiscardCard,
+
+    findSynergies: (card, allCards) =>
+      pairFindSynergies(card, allCards, getSelfDiscardRoles, scoreSelfDiscardPair),
   },
 
   // --------------------------------------------
@@ -917,6 +1062,44 @@ export const synergyRules: SynergyRule[] = [
       isSpikeSuitAnchor(card)
         ? findSpikeSuitPayoffs(card, allCards)
         : findSpikeSuitAnchors(card, allCards),
+  },
+
+  // --------------------------------------------
+  // MERIDA ARCHER (Merida - Formidable Archer, STEADY AIM)
+  // --------------------------------------------
+  {
+    id: 'merida-archer',
+    name: 'Merida Archer',
+    category: 'direct',
+    description:
+      "Merida's STEADY AIM adds 2 damage whenever one of your actions deals damage to an opposing character, so damage-dealing action cards hit far harder",
+
+    // Anchor (Merida) finds damage-dealing Action payoffs (forward); the actions find the anchor (reverse).
+    matches: (card) => isSteadyAimAnchor(card) || isMeridaDamageAction(card),
+
+    findSynergies: (card, allCards) =>
+      isSteadyAimAnchor(card)
+        ? findMeridaActions(card, allCards)
+        : findMeridaAnchors(card, allCards),
+  },
+
+  // --------------------------------------------
+  // MERIDA - WISP CONJURER (BECKON)
+  // --------------------------------------------
+  {
+    id: 'merida-wisp',
+    name: 'Merida - Wisp Conjurer',
+    category: 'direct',
+    description:
+      "Merida's BECKON draws a card whenever another of your characters enters play exerted, so she synergizes with cards that push your characters into play exerted — board-wide engines, self-reanimators, and Bodyguard bodies.",
+
+    // Anchor finds exerted-entry enablers (forward); enablers find the anchor (reverse).
+    matches: (card) => isBeckonAnchor(card) || getBeckonEnablerTier(card) !== null,
+
+    findSynergies: (card, allCards) =>
+      isBeckonAnchor(card)
+        ? findBeckonEnablers(card, allCards)
+        : findBeckonAnchors(card, allCards),
   },
 
   // --------------------------------------------
@@ -974,23 +1157,8 @@ export const synergyRules: SynergyRule[] = [
 
     matches: isToyCard,
 
-    findSynergies: (card, allCards) => {
-      const cardRoles = getToyRoles(card);
-      if (cardRoles.length === 0) return [];
-
-      const matches: SynergyMatch[] = [];
-
-      for (const other of allCards) {
-        if (other.id === card.id) continue;
-        const otherRoles = getToyRoles(other);
-        if (otherRoles.length === 0) continue;
-
-        const {score, explanation} = scoreToyPair(card, cardRoles, other, otherRoles);
-        matches.push({card: other, score, explanation, bidirectional: true});
-      }
-
-      return matches;
-    },
+    findSynergies: (card, allCards) =>
+      pairFindSynergies(card, allCards, getToyRoles, scoreToyPair),
   },
 
   // --------------------------------------------
@@ -1006,47 +1174,70 @@ export const synergyRules: SynergyRule[] = [
 
     matches: isDwarfsCard,
 
-    findSynergies: (card, allCards) => {
-      const cardRoles = getDwarfsRoles(card);
-      if (cardRoles.length === 0) return [];
-
-      const matches: SynergyMatch[] = [];
-
-      for (const other of allCards) {
-        if (other.id === card.id) continue;
-        const otherRoles = getDwarfsRoles(other);
-        if (otherRoles.length === 0) continue;
-
-        const {score, explanation} = scoreDwarfsPair(card, cardRoles, other, otherRoles);
-        matches.push({card: other, score, explanation, bidirectional: true});
-      }
-
-      return matches;
-    },
+    findSynergies: (card, allCards) =>
+      pairFindSynergies(card, allCards, getDwarfsRoles, scoreDwarfsPair),
   },
 
   // --------------------------------------------
   // FLOODBORNS (Floodborn matters, payoff-anchored)
   // --------------------------------------------
-  {
-    id: 'floodborn',
-    name: 'Floodborns',
-    category: 'playstyle',
-    playstyleId: 'floodborn',
-    description:
-      'Floodborn characters and the Set 13 Vine payoffs that buff or trigger off them. Payoff-anchored: a Floodborn body synergizes with payoffs, but two plain Floodborn do not synergize with each other.',
+  // Payoff-anchored: makePayoffAnchoredRule drops member-member pairs (neither side a
+  // payoff) so two plain Floodborn never synergize.
+  makePayoffAnchoredRule(
+    {
+      id: 'floodborn',
+      name: 'Floodborns',
+      category: 'playstyle',
+      playstyleId: 'floodborn',
+      description:
+        'Floodborn characters and the Set 13 Vine payoffs that buff or trigger off them. Payoff-anchored: a Floodborn body synergizes with payoffs, but two plain Floodborn do not synergize with each other.',
+      matches: isFloodbornCard,
+    },
+    getFloodbornRoles,
+    isFloodbornPayoff,
+    scoreFloodbornPair,
+  ),
 
-    matches: isFloodbornCard,
+  // --------------------------------------------
+  // ITEMS (Item Matters, payoff-anchored)
+  // --------------------------------------------
+  // Payoff-anchored (like Floodborn): a pair scores only when at least one side is an
+  // item payoff. Pure density (item x item, item x engine, engine x engine) is dropped —
+  // those engine connections already surface via Ramp / Self-Discard.
+  makePayoffAnchoredRule(
+    {
+      id: 'items',
+      name: 'Items',
+      category: 'playstyle',
+      playstyleId: 'items',
+      description:
+        'The Set 9-13 Inventor / artifacts axis: item members, the item engine (search / recursion / cost-reduction), and the payoffs that reward playing or having items. Payoff-anchored: two plain item cards do not synergize with each other.',
+      matches: isItemCard,
+    },
+    getItemRoles,
+    isItemPayoff,
+    scoreItemPair,
+  ),
 
-    // Payoff-anchored: the scorePair callback returns null for member-member pairs
-    // (neither side is a payoff), so they are never emitted.
-    findSynergies: (card, allCards) =>
-      tribalFindSynergies(card, allCards, getFloodbornRoles, (cardRoles, otherRoles) =>
-        isFloodbornPayoff(cardRoles) || isFloodbornPayoff(otherRoles)
-          ? scoreFloodbornPair(cardRoles, otherRoles)
-          : null,
-      ),
-  },
+  // --------------------------------------------
+  // HEALING (Heal Matters, payoff-anchored)
+  // --------------------------------------------
+  // Payoff-anchored (like Floodborn / Items): a pair scores only when at least one side is a
+  // heal payoff, so healer-healer pairs are dropped.
+  makePayoffAnchoredRule(
+    {
+      id: 'healing',
+      name: 'Healing',
+      category: 'playstyle',
+      playstyleId: 'healing',
+      description:
+        'Healers remove damage from your own characters to cash in the payoffs that reward healing. Payoff-anchored: a healer synergizes with payoffs, but two plain healers do not synergize with each other.',
+      matches: isHealCard,
+    },
+    getHealRoles,
+    isHealPayoff,
+    scoreHealPair,
+  ),
 
   // --------------------------------------------
   // HUNNY TRIBAL
@@ -1081,632 +1272,86 @@ export const synergyRules: SynergyRule[] = [
     findSynergies: (card, allCards) =>
       tribalFindSynergies(card, allCards, getRedPandaRoles, scoreRedPandaPair),
   },
+
+  // --------------------------------------------
+  // CLASSIFICATION TRIBES (Monster, Princess, Hero, Super, Royalty)
+  // Generated from one shared factory — all payoff-anchored, all 5-baseline.
+  // --------------------------------------------
+  makeTribalRule(
+    TRIBAL_SPECS.monster,
+    'Monsters',
+    'Monster',
+    'Monster characters and the payoffs that reward fielding the tribe. Payoff-anchored: plain Monster bodies do not synergize with each other.',
+  ),
+  makeTribalRule(
+    TRIBAL_SPECS.princess,
+    'Princesses',
+    'Princess',
+    'The Princess archetype: Princess characters and the payoffs that buff them, dig them out of the deck, or reward having a Princess in play.',
+  ),
+  makeTribalRule(
+    TRIBAL_SPECS.hero,
+    'Heroes',
+    'Hero',
+    'Hero characters and the Set 12 payoffs that buff or trigger off the tribe. Payoff-anchored, so a Hero body only surfaces against the payoffs that reward it.',
+  ),
+  makeTribalRule(
+    TRIBAL_SPECS.super,
+    'Supers',
+    'Super',
+    'The Incredibles "Super" package: Super characters and the payoffs that pump, ready, or reward them.',
+  ),
+  makeTribalRule(
+    TRIBAL_SPECS.royalty,
+    'Royalty',
+    'Royalty',
+    'Queen / King / Prince characters (Royalty, kept distinct from Princess) and the payoffs that buff or reward the crown.',
+  ),
+  makeTribalRule(
+    TRIBAL_SPECS.detective,
+    'Detectives',
+    'Detective',
+    'The Set 10 Detective tribe (Zootopia / Great Mouse Detective): Detective characters and the payoffs that buff them, search them out, or reward having one in play.',
+  ),
+
+  // --------------------------------------------
+  // EXERT (Exert Matters, opponent-facing, payoff-anchored)
+  // --------------------------------------------
+  {
+    id: 'exert',
+    name: 'Exert',
+    category: 'playstyle',
+    playstyleId: 'exert',
+    description:
+      'Effects that exert an opposing character pair with the payoffs that banish, lock, or scale off the exerted body. Payoff-anchored: two exert enablers do not synergize with each other.',
+
+    matches: isExertCard,
+
+    // Payoff-anchored: scoreExertPair returns null for enabler↔enabler pairs, which
+    // pairFindSynergies drops.
+    findSynergies: (card, allCards) =>
+      pairFindSynergies(card, allCards, getExertRoles, scoreExertPair),
+  },
+
+  // --------------------------------------------
+  // BOUNCE ("return from play to hand")
+  // --------------------------------------------
+  {
+    id: 'bounce',
+    name: 'Bounce',
+    category: 'playstyle',
+    playstyleId: 'bounce',
+    description:
+      'Return characters from play to hand: self-bounce re-fires enter-play abilities, opponent-bounce buys tempo and feeds the lore payoff. Payoff-anchored, so two plain bounce cards do not synergize with each other. The re-buyable-ETB pool overlaps Hero / Self-Discard / Items by nature (a good enter-play body is a good enter-play body) — accepted cross-playstyle composition.',
+
+    matches: isBounceCard,
+
+    // Payoff-anchored: scoreBouncePair returns null for enabler↔enabler and payoff↔payoff
+    // density, which tribalFindSynergies drops.
+    findSynergies: (card, allCards) =>
+      tribalFindSynergies(card, allCards, getBounceRoles, scoreBouncePair),
+  },
 ];
-
-// ============================================
-// DISCARD SCORING
-// ============================================
-
-const DISCARD_DISRUPTION_ROLES: readonly DiscardRole[] = ['targeted', 'random', 'standard'];
-
-function hasDiscardDisruption(roles: DiscardRole[]): boolean {
-  return roles.some((r) => DISCARD_DISRUPTION_ROLES.includes(r));
-}
-
-function isDiscardKillCombo(
-  cardDisruption: boolean,
-  cardPayoff: boolean,
-  otherDisruption: boolean,
-  otherPayoff: boolean,
-): boolean {
-  return (cardDisruption && otherPayoff) || (cardPayoff && otherDisruption);
-}
-
-function scoreDiscardPair(
-  _card: LorcanaCard,
-  cardRoles: DiscardRole[],
-  other: LorcanaCard,
-  otherRoles: DiscardRole[],
-): SynergyMatch {
-  const cardDisruption = hasDiscardDisruption(cardRoles);
-  const otherDisruption = hasDiscardDisruption(otherRoles);
-  const cardPayoff = cardRoles.includes('payoff');
-  const otherPayoff = otherRoles.includes('payoff');
-
-  if (isDiscardKillCombo(cardDisruption, cardPayoff, otherDisruption, otherPayoff)) {
-    // _card is the searcher (modal cardA / left / token A); other is the partner (B).
-    const disruptionToken = cardDisruption ? '{A}' : '{B}';
-    const payoffToken = cardDisruption ? '{B}' : '{A}';
-    return {
-      card: other,
-      score: 8,
-      explanation: `${disruptionToken} empties the opponent's hand, powering up ${payoffToken}'s hand-size edge.`,
-      bidirectional: true,
-    };
-  }
-
-  // Same-side pair (both disruption or both payoff): density baseline.
-  // Two enablers don't compound — they stack pressure. Two payoffs share an axis without amplifying it.
-  const bothPayoff = cardPayoff && otherPayoff;
-  return {
-    card: other,
-    score: 5,
-    explanation: bothPayoff
-      ? `Both reward hand-size advantage over opponents.`
-      : `Both disrupt the opponent's hand.`,
-    bidirectional: true,
-  };
-}
-
-// ============================================
-// SACRIFICE SCORING
-// ============================================
-
-/**
- * A sacrifice banish combo is the cross-role pair: one side is the self-banish
- * (banishes your own character on demand) and the other is the banish-trigger
- * (pays off when your character is banished). Same-side pairs are not combos.
- */
-function isSacrificeBanishCombo(
-  cardSelfBanish: boolean,
-  cardPayoff: boolean,
-  otherSelfBanish: boolean,
-  otherPayoff: boolean,
-): boolean {
-  return (cardSelfBanish && otherPayoff) || (cardPayoff && otherSelfBanish);
-}
-
-/**
- * Score a sacrifice pair (5-baseline convention, mirrors the Discard rule shape):
- *   - self-banish ↔ banish-trigger = 8  (win-condition combo)
- *   - banish-trigger ↔ banish-trigger = 5  (parallel payoff density)
- *   - self-banish ↔ self-banish     = 5  (parallel enablers, still need a payoff)
- *
- * `_card` is the searcher (token {A}); `other` is the partner (token {B}).
- */
-function scoreSacrificePair(
-  _card: LorcanaCard,
-  cardRoles: SacrificeRole[],
-  other: LorcanaCard,
-  otherRoles: SacrificeRole[],
-): SynergyMatch {
-  const cardSelfBanish = cardRoles.includes('self-banish');
-  const otherSelfBanish = otherRoles.includes('self-banish');
-  const cardPayoff = cardRoles.includes('banish-trigger');
-  const otherPayoff = otherRoles.includes('banish-trigger');
-
-  const isBanishCombo = isSacrificeBanishCombo(
-    cardSelfBanish,
-    cardPayoff,
-    otherSelfBanish,
-    otherPayoff,
-  );
-
-  if (isBanishCombo) {
-    // Token-swap so the SELF-BANISH side always reads as the actor, regardless of
-    // which card is the searcher (token {A}) and which is the partner (token {B}).
-    const selfBanishToken = cardSelfBanish ? '{A}' : '{B}';
-    const payoffToken = cardSelfBanish ? '{B}' : '{A}';
-    return {
-      card: other,
-      score: 8,
-      explanation: `${selfBanishToken} banishes your own character on demand, guaranteeing ${payoffToken}'s banish payoff.`,
-      bidirectional: true,
-    };
-  }
-
-  // Same-side pair: density baseline. Two payoffs share the banish axis without
-  // amplifying it; two self-banish cards are parallel enablers that still need a payoff body.
-  const bothPayoff = cardPayoff && otherPayoff;
-  return {
-    card: other,
-    score: 5,
-    explanation: bothPayoff
-      ? `Both pay off when your characters are banished: a board that trades into value.`
-      : `Both banish your own characters: parallel self-banish cards.`,
-    bidirectional: true,
-  };
-}
-
-// ============================================
-// LORE DENIAL SCORING
-// ============================================
-
-/**
- * Score a Lore Denial pair based on the role mix.
- *
- * Convention: 5 = neutral baseline (same strategy, no compounding interaction).
- * Bumps above 5 reflect mechanical efficiency: steal swings the lore race in
- * both directions per point (opponent down + you up), burn only one direction.
- *
- * Matrix:
- *   - burn ↔ burn   = 5 (parallel pressure, no compounding)
- *   - burn ↔ steal  = 6 (complementary — pressure + race-close)
- *   - steal ↔ steal = 7 (double swing engine — every trigger advances both axes)
- */
-function scoreLoreDenialPair(
-  roleA: LoreDenialRole,
-  roleB: LoreDenialRole,
-  _cardA: LorcanaCard,
-  _cardB: LorcanaCard,
-): {score: number; explanation: string} {
-  if (roleA === 'steal' && roleB === 'steal') {
-    return {
-      score: 7,
-      explanation: `Both steal lore. Every trigger swings the race twice in your favor.`,
-    };
-  }
-  if (roleA === 'burn' && roleB === 'burn') {
-    return {
-      score: 5,
-      explanation: `Both make opponents lose lore. Stacks the denial pressure.`,
-    };
-  }
-  // Mixed pair — A is the searcher (modal cardA / left card), B is the partner. Compute
-  // which token corresponds to burn vs steal based on which role the searcher holds.
-  const burnIsA = roleA === 'burn';
-  const burnToken = burnIsA ? '{A}' : '{B}';
-  const stealToken = burnIsA ? '{B}' : '{A}';
-  return {
-    score: 6,
-    explanation: `${burnToken} pushes opponents down. ${stealToken} pulls you up. Both ends pressed.`,
-  };
-}
-
-// ============================================
-// RAMP SCORING
-// ============================================
-
-/**
- * Tags every ramp pair by role mix. The tag drives both scoring and explanation
- * generation, replacing the repeated boolean-flag arithmetic that lived in both.
- */
-type RampPairShape =
-  | 'ramp-trigger'
-  | 'cost-cost'
-  | 'ramp-ramp'
-  | 'trigger-trigger'
-  | 'ramp-cost'
-  | 'trigger-cost';
-
-interface RampPairFlags {
-  shape: RampPairShape;
-  rampCard: LorcanaCard; // valid when shape involves 'inkwell-ramp'
-  triggerCard: LorcanaCard; // valid when shape involves 'inkwell-trigger'
-  costCard: LorcanaCard; // valid when shape involves 'cost-reduction'
-}
-
-interface RampRoleFlags {
-  ramp: boolean;
-  trigger: boolean;
-  cost: boolean;
-}
-
-function rampRoleFlags(roles: RampRole[]): RampRoleFlags {
-  return {
-    ramp: roles.includes('inkwell-ramp'),
-    trigger: roles.includes('inkwell-trigger'),
-    cost: roles.includes('cost-reduction'),
-  };
-}
-
-/** True iff one card has roleX and the other has roleY (regardless of which side). */
-function hasMixedRoles(
-  a: RampRoleFlags,
-  b: RampRoleFlags,
-  x: keyof RampRoleFlags,
-  y: keyof RampRoleFlags,
-): boolean {
-  return (a[x] && b[y]) || (a[y] && b[x]);
-}
-
-function bothHaveRole(a: RampRoleFlags, b: RampRoleFlags, role: keyof RampRoleFlags): boolean {
-  return a[role] && b[role];
-}
-
-function determineRampShape(a: RampRoleFlags, b: RampRoleFlags): RampPairShape {
-  if (hasMixedRoles(a, b, 'ramp', 'trigger')) return 'ramp-trigger';
-  if (bothHaveRole(a, b, 'cost')) return 'cost-cost';
-  if (bothHaveRole(a, b, 'ramp')) return 'ramp-ramp';
-  if (bothHaveRole(a, b, 'trigger')) return 'trigger-trigger';
-  if (hasMixedRoles(a, b, 'ramp', 'cost')) return 'ramp-cost';
-  return 'trigger-cost';
-}
-
-function classifyRampPair(
-  cardA: LorcanaCard,
-  rolesA: RampRole[],
-  cardB: LorcanaCard,
-  rolesB: RampRole[],
-): RampPairFlags {
-  const a = rampRoleFlags(rolesA);
-  const b = rampRoleFlags(rolesB);
-  return {
-    shape: determineRampShape(a, b),
-    rampCard: a.ramp ? cardA : cardB,
-    triggerCard: a.trigger ? cardA : cardB,
-    costCard: a.cost ? cardA : cardB,
-  };
-}
-
-/** Score the ramp ↔ trigger chain (the only pair shape with a tiered ladder). */
-function scoreRampTriggerChain(rampCard: LorcanaCard, triggerCard: LorcanaCard): number {
-  const deckRamp = isDeckRamp(rampCard);
-  const repeatingTrigger = isRepeatingTrigger(triggerCard);
-  if (deckRamp && repeatingTrigger) return 9;
-  if (deckRamp || repeatingTrigger) return 8;
-  return 7;
-}
-
-/**
- * Score a ramp pair based on their roles and sub-patterns.
- *
- * Convention: 5 = same-strategy density baseline, no compounding interaction.
- * Bumps above 5 reflect real mechanical chains where one card *enables* or
- * *amplifies* the other (not just parallel acceleration).
- *
- * Scoring priority:
- * - Deck ramp ↔ Repeating trigger: 9 (snowball chain — every free ink fires a trigger)
- * - Deck ramp ↔ Once/turn trigger: 8 (free ink but trigger capped)
- * - Self-sacrifice ↔ Repeating trigger: 8 (fires every event but costs a card)
- * - Self-sacrifice ↔ Once/turn trigger: 7 (card cost + capped)
- * - Cost reduction ↔ Cost reduction (overlap): 6 (stacking discounts on same card type)
- * - Cost reduction ↔ Cost reduction (no overlap): 0 (silently dropped)
- * - All other same-axis density pairs: 5 (parallel acceleration)
- */
-function getRampPairScore(
-  cardA: LorcanaCard,
-  rolesA: RampRole[],
-  cardB: LorcanaCard,
-  rolesB: RampRole[],
-): number {
-  const flags = classifyRampPair(cardA, rolesA, cardB, rolesB);
-  if (flags.shape === 'ramp-trigger')
-    return scoreRampTriggerChain(flags.rampCard, flags.triggerCard);
-  if (flags.shape === 'cost-cost') return costReductionTargetsOverlap(cardA, cardB) ? 6 : 0;
-  return 5;
-}
-
-/** Explanation templates keyed by ramp pair shape. */
-const RAMP_EXPLANATIONS: Record<
-  RampPairShape,
-  (cardA: LorcanaCard, cardB: LorcanaCard, flags: RampPairFlags) => string
-> = {
-  'ramp-trigger': (a, _b, f) => {
-    // `a` is the searcher (modal cardA / left / token A); `_b` is the partner (B).
-    const rampIsA = f.rampCard.id === a.id;
-    const rampToken = rampIsA ? '{A}' : '{B}';
-    const triggerToken = rampIsA ? '{B}' : '{A}';
-    return `${rampToken} adds ink to your inkwell, triggering ${triggerToken}'s inkwell effect.`;
-  },
-  'ramp-ramp': (_a, _b) => `Both accelerate your ink. Gets you ahead faster.`,
-  'ramp-cost': (a, _b, f) => {
-    const rampIsA = f.rampCard.id === a.id;
-    const rampToken = rampIsA ? '{A}' : '{B}';
-    const costToken = rampIsA ? '{B}' : '{A}';
-    return `${rampToken} adds extra ink, ${costToken} discounts your plays.`;
-  },
-  'trigger-trigger': (_a, _b) => `Both effects activate on inkwell events.`,
-  'cost-cost': (_a, _b) => `Both reduce costs. Stacking discounts plays cards faster.`,
-  'trigger-cost': (_a, _b) => `Both support an accelerated game plan.`,
-};
-
-/** Generate a human-readable explanation for a ramp synergy pair. */
-function getRampExplanation(
-  cardA: LorcanaCard,
-  rolesA: RampRole[],
-  cardB: LorcanaCard,
-  rolesB: RampRole[],
-): string {
-  const flags = classifyRampPair(cardA, rolesA, cardB, rolesB);
-  return RAMP_EXPLANATIONS[flags.shape](cardA, cardB, flags);
-}
-
-// ============================================
-// TOY TRIBAL SCORING
-// ============================================
-
-/**
- * Tribal payoff roles — these specifically reward Toy density (vs. generic
- * mechanics inherited via composition like draw, burn, ramp, etc., which
- * happen to appear on Toy cards but don't compound with tribal mass).
- */
-const TOY_TRIBAL_ROLES: readonly ToyRole[] = ['search', 'banish-trigger', 'self-discount'];
-
-const hasTribalRole = (roles: ToyRole[]): boolean =>
-  roles.some((r) => TOY_TRIBAL_ROLES.includes(r));
-
-type ToyPairResult = {score: number; explanation: string};
-
-/** Pair context passed to each tier helper — derived flags so the helpers stay shape-agnostic. */
-interface ToyPairCtx {
-  card: LorcanaCard;
-  other: LorcanaCard;
-  aMember: boolean;
-  bMember: boolean;
-  aHasSearch: boolean;
-  bHasSearch: boolean;
-  aHasBanish: boolean;
-  bHasBanish: boolean;
-  aTribal: boolean;
-  bTribal: boolean;
-}
-
-function buildToyPairCtx(
-  card: LorcanaCard,
-  cardRoles: ToyRole[],
-  other: LorcanaCard,
-  otherRoles: ToyRole[],
-): ToyPairCtx {
-  return {
-    card,
-    other,
-    aMember: cardRoles.includes('member'),
-    bMember: otherRoles.includes('member'),
-    aHasSearch: cardRoles.includes('search'),
-    bHasSearch: otherRoles.includes('search'),
-    aHasBanish: cardRoles.includes('banish-trigger'),
-    bHasBanish: otherRoles.includes('banish-trigger'),
-    aTribal: hasTribalRole(cardRoles),
-    bTribal: hasTribalRole(otherRoles),
-  };
-}
-
-/** 8 — search ↔ banish-trigger (peak tribal chain: load board, pay off on banish). */
-function tryToyPeakChain(ctx: ToyPairCtx): ToyPairResult | null {
-  const matched = (ctx.aHasSearch && ctx.bHasBanish) || (ctx.aHasBanish && ctx.bHasSearch);
-  if (!matched) return null;
-  // ctx.card is the searcher (modal cardA / left / token A); ctx.other is the partner (B).
-  const searchToken = ctx.aHasSearch ? '{A}' : '{B}';
-  const banishToken = ctx.aHasBanish ? '{A}' : '{B}';
-  return {
-    score: 8,
-    explanation: `${searchToken} loads a Toy, then ${banishToken} pays off when it gets banished. Peak chain.`,
-  };
-}
-
-/** 8 — Member ↔ search (search converts a deck slot to a tribal member). */
-function tryToyMemberSearch(ctx: ToyPairCtx): ToyPairResult | null {
-  const matched = (ctx.aMember && ctx.bHasSearch) || (ctx.aHasSearch && ctx.bMember);
-  if (!matched) return null;
-  const searchToken = ctx.aHasSearch ? '{A}' : '{B}';
-  const memberToken = ctx.aHasSearch ? '{B}' : '{A}';
-  return {
-    score: 8,
-    explanation: `${searchToken} fetches ${memberToken} from the deck. Direct tribal access.`,
-  };
-}
-
-/** 7 — Tribal ↔ Tribal (multiple density rewards compound). */
-function tryToyTribalCompound(ctx: ToyPairCtx): ToyPairResult | null {
-  if (!(ctx.aTribal && ctx.bTribal)) return null;
-  return {
-    score: 7,
-    explanation: `Both reward Toy density. Tribal payoffs compound.`,
-  };
-}
-
-/** 7 — Member ↔ Tribal (member feeds the tribal payoff). */
-function tryToyMemberTribal(ctx: ToyPairCtx): ToyPairResult | null {
-  const matched = (ctx.aMember && ctx.bTribal) || (ctx.aTribal && ctx.bMember);
-  if (!matched) return null;
-  return {
-    score: 7,
-    explanation: `Contributes to the Toy density that gets rewarded.`,
-  };
-}
-
-/**
- * Score a Toy pair using a role-driven matrix.
- *
- * Convention: 5 = same-deck baseline, 7+ = mechanical compounding around tribal density.
- *
- * Matrix (highest precedence first):
- *   - search ↔ banish-trigger  = 8 (peak chain — load board, pay off on banish)
- *   - Member ↔ search          = 8 (search converts deck slot to tribal member)
- *   - Tribal ↔ Tribal (other)  = 7 (multiple density rewards compound)
- *   - Member ↔ Tribal          = 7 (member feeds the tribal payoff)
- *   - Otherwise                = 5 (Member↔Member, Member↔generic, Generic↔generic;
- *                                   generic mechanic synergies are owned by their own rules)
- */
-function scoreToyPair(
-  card: LorcanaCard,
-  cardRoles: ToyRole[],
-  other: LorcanaCard,
-  otherRoles: ToyRole[],
-): ToyPairResult {
-  const ctx = buildToyPairCtx(card, cardRoles, other, otherRoles);
-  return (
-    tryToyPeakChain(ctx) ??
-    tryToyMemberSearch(ctx) ??
-    tryToyTribalCompound(ctx) ??
-    tryToyMemberTribal(ctx) ?? {
-      score: 5,
-      explanation: `Both share the Toys deck. Density baseline.`,
-    }
-  );
-}
-
-// ============================================
-// SEVEN DWARFS TRIBAL SCORING
-// ============================================
-
-interface DwarfsPairResult {
-  score: number;
-  explanation: string;
-}
-
-interface DwarfsPairCtx {
-  /** True iff one side has role `x` and the other has role `y` (direction-agnostic). */
-  cross: (x: DwarfsRole, y: DwarfsRole) => boolean;
-}
-
-/** Build a direction-agnostic role-comparison context for a Seven Dwarfs pair. */
-function buildDwarfsPairCtx(cardRoles: DwarfsRole[], otherRoles: DwarfsRole[]): DwarfsPairCtx {
-  const a = new Set(cardRoles);
-  const b = new Set(otherRoles);
-  // cross(x, x) doubles as a "both sides have x" test.
-  return {cross: (x, y) => (a.has(x) && b.has(y)) || (b.has(x) && a.has(y))};
-}
-
-/**
- * Score a Seven Dwarfs pair using a role-driven matrix (5-baseline convention).
- *
- * Agreed matrix (highest precedence first):
- *   - recruit ↔ member | recruit ↔ density = 8 (free recruit cheats a Dwarf onto the board)
- *   - density ↔ density | density ↔ member | return ↔ member = 7 (compounding / member feeds payoff)
- *   - everything else (member ↔ member, etc.)               = 5 (same-deck density baseline)
- *
- * Multi-role cards matter here: Right Behind You is BOTH recruit and density, so the
- * precedence order decides which tier wins when it pairs with a member.
- */
-function scoreDwarfsPair(
-  _card: LorcanaCard,
-  cardRoles: DwarfsRole[],
-  _other: LorcanaCard,
-  otherRoles: DwarfsRole[],
-): DwarfsPairResult {
-  const ctx = buildDwarfsPairCtx(cardRoles, otherRoles);
-
-  // 8 — a free recruit cheats a Dwarf onto the board (check first so a recruit+density
-  // card like Right Behind You scores 8, not 7, against a member).
-  if (ctx.cross('recruit', 'member') || ctx.cross('recruit', 'density')) {
-    return {
-      score: 8,
-      explanation: `A free recruit cheats a Seven Dwarfs character onto the board.`,
-    };
-  }
-
-  // 7 — compounding density payoffs, or a member feeding a payoff.
-  if (ctx.cross('density', 'density')) {
-    return {score: 7, explanation: `Both reward Seven Dwarfs density — the payoffs compound.`};
-  }
-  if (ctx.cross('density', 'member')) {
-    return {score: 7, explanation: `The member feeds the Seven Dwarfs density payoff.`};
-  }
-  if (ctx.cross('return', 'member')) {
-    return {
-      score: 7,
-      explanation: `Bouncing the member re-buys its enter-play ability and draws a card.`,
-    };
-  }
-
-  return {score: 5, explanation: `Both share the Seven Dwarfs deck. Density baseline.`};
-}
-
-// ============================================
-// FLOODBORNS SCORING (payoff-anchored, 5-baseline)
-// ============================================
-
-const isFloodbornPayoff = (roles: FloodbornRole[]): boolean =>
-  roles.includes('buff') || roles.includes('trigger');
-
-/**
- * Score a Floodborns pair. Called only when at least one side is a payoff
- * (the rule's findSynergies skips member-member pairs).
- *   - payoff <-> payoff           = 7 (two payoffs stack on the same Floodborn board)
- *   - member <-> trigger payoff   = 7 (the body fires the repeating trigger)
- *   - member <-> buff payoff      = 6 (the body is pumped by the team buff)
- */
-function scoreFloodbornPair(
-  cardRoles: FloodbornRole[],
-  otherRoles: FloodbornRole[],
-): {score: number; explanation: string} {
-  const cardPayoff = isFloodbornPayoff(cardRoles);
-  const otherPayoff = isFloodbornPayoff(otherRoles);
-
-  if (cardPayoff && otherPayoff) {
-    return {score: 7, explanation: 'Both reward a wide Floodborn board, so the payoffs stack.'};
-  }
-  // Exactly one side is a payoff; the other is a member only.
-  const payoffRoles = cardPayoff ? cardRoles : otherRoles;
-  if (payoffRoles.includes('trigger')) {
-    return {score: 7, explanation: 'The Floodborn body fires the repeating payoff trigger.'};
-  }
-  return {score: 6, explanation: 'The Floodborn body is pumped by the team buff.'};
-}
-
-// ============================================
-// SHARED TRIBAL SCORING HELPERS
-// ============================================
-
-/** Direction-agnostic role-cross matcher: true iff one side has `x` and the other has `y`. */
-function crossMatcher<T extends string>(aRoles: T[], bRoles: T[]): (x: T, y: T) => boolean {
-  const a = new Set(aRoles);
-  const b = new Set(bRoles);
-  return (x, y) => (a.has(x) && b.has(y)) || (b.has(x) && a.has(y));
-}
-
-/**
- * Shared tribal `findSynergies` loop: pair the card against every other role-bearing
- * card, scoring each via `scorePair`. A `null` result skips the pair (the payoff-anchored
- * Floodborns rule uses this to drop member-member pairs).
- */
-function tribalFindSynergies<R>(
-  card: LorcanaCard,
-  allCards: LorcanaCard[],
-  getRoles: (c: LorcanaCard) => R[],
-  scorePair: (cardRoles: R[], otherRoles: R[]) => {score: number; explanation: string} | null,
-): SynergyMatch[] {
-  const cardRoles = getRoles(card);
-  if (cardRoles.length === 0) return [];
-
-  const matches: SynergyMatch[] = [];
-  for (const other of allCards) {
-    if (other.id === card.id) continue;
-    const otherRoles = getRoles(other);
-    if (otherRoles.length === 0) continue;
-    const result = scorePair(cardRoles, otherRoles);
-    if (result === null) continue;
-    matches.push({card: other, score: result.score, explanation: result.explanation, bidirectional: true});
-  }
-  return matches;
-}
-
-// ============================================
-// HUNNY TRIBAL SCORING (5-baseline)
-// ============================================
-
-/**
- *   - search <-> member | search <-> density = 8 (fetch converts a slot / fuels the payoff)
- *   - density <-> density | density <-> member = 7 (compounding / member feeds payoff)
- *   - buff <-> member                          = 6 (single-target pump on a Hunny body)
- *   - everything else                          = 5 (same-deck density baseline)
- */
-function scoreHunnyPair(
-  cardRoles: HunnyRole[],
-  otherRoles: HunnyRole[],
-): {score: number; explanation: string} {
-  const cross = crossMatcher(cardRoles, otherRoles);
-  if (cross('search', 'member') || cross('search', 'density')) {
-    return {score: 8, explanation: 'A Hunny search digs the tribe out of your deck, fueling the payoffs.'};
-  }
-  if (cross('density', 'density')) {
-    return {score: 7, explanation: 'Both reward Hunny density, so the payoffs compound.'};
-  }
-  if (cross('density', 'member')) {
-    return {score: 7, explanation: 'The member feeds the Hunny density payoff.'};
-  }
-  if (cross('buff', 'member')) {
-    return {score: 6, explanation: 'The single-target buff pumps a Hunny body.'};
-  }
-  return {score: 5, explanation: 'Both share the Hunny deck. Density baseline.'};
-}
-
-// ============================================
-// RED PANDA TRIBAL SCORING (5-baseline)
-// ============================================
-
-function scoreRedPandaPair(
-  cardRoles: RedPandaRole[],
-  otherRoles: RedPandaRole[],
-): {score: number; explanation: string} {
-  const cross = crossMatcher(cardRoles, otherRoles);
-  if (cross('search', 'member')) {
-    return {score: 8, explanation: 'A Red Panda search converts a deck slot into a tribe member.'};
-  }
-  return {score: 5, explanation: 'Both share the Red Panda deck. Density baseline.'};
-}
 
 // Get all rules
 export const getAllRules = (): SynergyRule[] => synergyRules;

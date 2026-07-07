@@ -4,6 +4,7 @@ import {
   getPlaystyleById,
   getLocationRoles,
   getDiscardRoles,
+  getSelfDiscardRoles,
   getSacrificeRoles,
   getRampRoles,
   getLoreDenialRoles,
@@ -12,6 +13,12 @@ import {
   getFloodbornRoles,
   getHunnyRoles,
   getRedPandaRoles,
+  getItemRoles,
+  getHealRoles,
+  getExertRoles,
+  getBounceRoles,
+  getTribalRoles,
+  TRIBAL_SPECS,
   getCardMechanics,
   STRUCTURAL_ROLE_TO_MECHANIC,
   mechanicLabel,
@@ -45,11 +52,7 @@ import {
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
-import {useResponsive, useFilterParams, usePreloadImages} from '../shared/hooks';
-
-// Feature flag: gates the "Strategy Tips" collapsible section on the hero.
-// Off by default in production (set `VITE_SHOW_STRATEGY_TIPS=true` in .env.local for dev).
-const SHOW_STRATEGY_TIPS = import.meta.env.VITE_SHOW_STRATEGY_TIPS === 'true';
+import {useResponsive, useFilterParams} from '../shared/hooks';
 
 // ── Hero layout configs ──
 
@@ -57,190 +60,35 @@ interface HeroLayout {
   padding: string;
   contentGap: number;
   headerGap: number;
-  maxDescriptionWidth: number | undefined;
   breadcrumbLinkMinHeight: number | undefined;
-  tipsMinHeight: number | undefined;
 }
 
 const HERO_DESKTOP: HeroLayout = {
   padding: '20px 32px',
   contentGap: 12,
   headerGap: 12,
-  maxDescriptionWidth: 640,
   breadcrumbLinkMinHeight: undefined,
-  tipsMinHeight: undefined,
 };
 
 const HERO_MOBILE: HeroLayout = {
   padding: '16px',
   contentGap: 10,
   headerGap: 10,
-  maxDescriptionWidth: undefined,
   breadcrumbLinkMinHeight: 44,
-  tipsMinHeight: 44,
 };
-
-// ── Hero scrim ──
-
-const HERO_SCRIM =
-  'linear-gradient(180deg, rgba(13,13,20,0.6) 0%, rgba(13,13,20,0.4) 50%, rgba(13,13,20,0.6) 100%)';
 
 // ── Hero Section ──
 
-function HeroBackdrop({
-  accentColor,
-  accentRgb,
-  coverArt,
-}: {
-  accentColor: string;
-  accentRgb: string;
-  coverArt: string;
-}) {
-  return (
-    <>
-      {/* Accent bar */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: 4,
-          height: '100%',
-          background: accentColor,
-          zIndex: 3,
-        }}
-      />
-      {/* Background art with Ken Burns */}
-      <div
-        className="hero-ken-burns"
-        style={{
-          position: 'absolute',
-          inset: -20,
-          zIndex: 1,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center top',
-          backgroundImage: `linear-gradient(160deg, rgba(${accentRgb}, 0.35), transparent 70%), url(${coverArt})`,
-          opacity: 0.4,
-          filter: 'saturate(0.3) brightness(0.7)',
-          animation: 'heroKenBurns 20s ease-in-out infinite alternate',
-        }}
-      />
-      {/* Scrim */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          zIndex: 1,
-          background: HERO_SCRIM,
-          pointerEvents: 'none',
-        }}
-      />
-    </>
-  );
-}
-
-function PlaystyleStrategyTips({
-  tips,
-  accentColor,
-  accentRgb,
-  layout,
-}: {
-  tips: string[];
-  accentColor: string;
-  accentRgb: string;
-  layout: HeroLayout;
-}) {
-  const [tipsOpen, setTipsOpen] = useState(false);
-
-  if (!SHOW_STRATEGY_TIPS || tips.length === 0) return null;
-
-  return (
-    <>
-      <button
-        onClick={() => setTipsOpen(!tipsOpen)}
-        style={{
-          fontSize: `${FONT_SIZES.base}px`,
-          fontWeight: 500,
-          color: COLORS.primary,
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: 0,
-          fontFamily: FONTS.body,
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 5,
-          minHeight: layout.tipsMinHeight,
-          transition: 'opacity 0.15s',
-        }}>
-        <span
-          style={{
-            fontSize: `${FONT_SIZES.xs}px`,
-            display: 'inline-block',
-            transform: tipsOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s',
-          }}>
-          &#9654;
-        </span>
-        Strategy Tips
-      </button>
-      {tipsOpen && (
-        <ul
-          style={{
-            listStyle: 'none',
-            padding: `${SPACING.md}px ${SPACING.lg}px`,
-            background: `rgba(${accentRgb}, 0.08)`,
-            borderRadius: `${RADIUS.lg}px`,
-            border: `1px solid rgba(${accentRgb}, 0.15)`,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-            maxWidth: layout.maxDescriptionWidth,
-          }}>
-          {tips.map((tip, i) => (
-            <li
-              key={i}
-              style={{
-                fontSize: `${FONT_SIZES.base}px`,
-                lineHeight: 1.6,
-                color: COLORS.descriptionText,
-                paddingLeft: 16,
-                position: 'relative',
-              }}>
-              <span
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  color: accentColor,
-                  fontWeight: 700,
-                }}>
-                ·
-              </span>
-              {tip}
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
-  );
-}
-
 function PlaystyleHero({
   name,
-  description,
-  tips,
   accentColor,
   accentRgb,
-  coverArt,
   layout,
   onPlaystylesBreadcrumb,
 }: {
   name: string;
-  description: string;
-  tips: string[];
   accentColor: string;
   accentRgb: string;
-  coverArt: string;
   layout: HeroLayout;
   onPlaystylesBreadcrumb: () => void;
 }) {
@@ -253,8 +101,18 @@ function PlaystyleHero({
         borderBottom: `1px solid rgba(${accentRgb}, 0.25)`,
         boxShadow: `0 4px 20px rgba(${accentRgb}, 0.08)`,
       }}>
-      <HeroBackdrop accentColor={accentColor} accentRgb={accentRgb} coverArt={coverArt} />
-
+      {/* Accent bar */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: 4,
+          height: '100%',
+          background: accentColor,
+          zIndex: 3,
+        }}
+      />
       {/* Content */}
       <div
         style={{
@@ -316,19 +174,6 @@ function PlaystyleHero({
           </h1>
         </div>
 
-        {/* Description */}
-        <p
-          style={{
-            fontSize: `${FONT_SIZES.base}px`,
-            lineHeight: 1.6,
-            color: COLORS.descriptionText,
-            maxWidth: layout.maxDescriptionWidth,
-            margin: 0,
-          }}>
-          {description}
-        </p>
-
-        <PlaystyleStrategyTips tips={tips} accentColor={accentColor} accentRgb={accentRgb} layout={layout} />
       </div>
     </section>
   );
@@ -357,7 +202,7 @@ interface RoleConfig {
  * so the same mechanic reads identically in every playstyle. `member` is structural
  * membership, not a displayed mechanic, so it's filtered out. See MECHANICS_TAXONOMY.md.
  */
-const ROLE_CONFIGS: Partial<Record<PlaystyleId, RoleConfig>> = {
+const ROLE_CONFIGS: Record<PlaystyleId, RoleConfig> = {
   'location-control': {
     getRoles: (card) => getLocationRoles(card),
     extraChips: (cards) => {
@@ -368,6 +213,7 @@ const ROLE_CONFIGS: Partial<Record<PlaystyleId, RoleConfig>> = {
     },
   },
   discard: {getRoles: (card) => getDiscardRoles(card)},
+  'self-discard': {getRoles: (card) => getSelfDiscardRoles(card)},
   sacrifice: {getRoles: (card) => getSacrificeRoles(card)},
   ramp: {getRoles: (card) => getRampRoles(card)},
   'lore-denial': {getRoles: (card) => getLoreDenialRoles(card)},
@@ -376,6 +222,16 @@ const ROLE_CONFIGS: Partial<Record<PlaystyleId, RoleConfig>> = {
   floodborn: {getRoles: (card) => getFloodbornRoles(card).filter((r) => r !== 'member')},
   hunny: {getRoles: (card) => getHunnyRoles(card).filter((r) => r !== 'member')},
   'red-panda': {getRoles: (card) => getRedPandaRoles(card).filter((r) => r !== 'member')},
+  items: {getRoles: (card) => getItemRoles(card).filter((r) => r !== 'member')},
+  healing: {getRoles: (card) => getHealRoles(card)},
+  exert: {getRoles: (card) => getExertRoles(card)},
+  bounce: {getRoles: (card) => getBounceRoles(card)},
+  monster: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.monster).filter((r) => r !== 'member')},
+  princess: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.princess).filter((r) => r !== 'member')},
+  hero: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.hero).filter((r) => r !== 'member')},
+  super: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.super).filter((r) => r !== 'member')},
+  royalty: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.royalty).filter((r) => r !== 'member')},
+  detective: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.detective).filter((r) => r !== 'member')},
 };
 
 /**
@@ -571,7 +427,6 @@ function buildPlaystyleViewProps(args: {
 function useResolvedPlaystyle(playstyleId: string | undefined) {
   const playstyle = playstyleId ? getPlaystyleById(playstyleId as PlaystyleId) : undefined;
   const ui = playstyleId ? PLAYSTYLE_UI[playstyleId as PlaystyleId] : undefined;
-  usePreloadImages(ui ? [ui.coverArt] : []);
   return {playstyle, ui};
 }
 
@@ -932,11 +787,8 @@ function PlaystyleDetailMobileView({
       <div style={{position: 'relative', zIndex: 1}}>
         <PlaystyleHero
           name={playstyle.name}
-          description={playstyle.description}
-          tips={playstyle.strategyTips}
           accentColor={ui.accentColor}
           accentRgb={ui.accentRgb}
-          coverArt={ui.coverArt}
           layout={heroLayout}
           onPlaystylesBreadcrumb={goPlaystyles}
         />
@@ -1014,11 +866,8 @@ function PlaystyleDetailDesktopView({
         }}>
         <PlaystyleHero
           name={playstyle.name}
-          description={playstyle.description}
-          tips={playstyle.strategyTips}
           accentColor={ui.accentColor}
           accentRgb={ui.accentRgb}
-          coverArt={ui.coverArt}
           layout={heroLayout}
           onPlaystylesBreadcrumb={goPlaystyles}
         />
@@ -1029,6 +878,7 @@ function PlaystyleDetailDesktopView({
               tiles={roleChips.map(toRoleTile)}
               activeRoles={activeRoles}
               onToggle={toggleRole}
+              showDescriptions={false}
             />
             <hr
               aria-hidden="true"

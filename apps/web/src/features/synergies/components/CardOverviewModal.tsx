@@ -929,10 +929,14 @@ function ModalBackdrop({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0, 0, 0, 0.6)',
+        // Solid scrim only — NO backdrop-filter. The comparison view animates continuously behind
+        // this backdrop (the 1s PairConnector reveal + the infinite focused-card glow), and on
+        // WebKit a blurred backdrop over animating content re-rasterizes every frame, wedging the
+        // compositor so BACK/switch clicks and the overlay-visibility flip never settle (#444).
+        // The deeper 0.72-alpha black preserves the "page recedes" separation the blur provided.
+        background: 'rgba(0, 0, 0, 0.72)',
         zIndex: Z_INDEX.modalBackdrop,
         cursor: 'pointer',
-        backdropFilter: 'blur(6px)',
       }}
     />
   );

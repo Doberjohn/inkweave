@@ -153,12 +153,11 @@ Comparison mode — clicking a synergy card tile transitions CardOverviewModal i
 | opens directly in comparison with no BACK button (desktop) | (deep link) `/compare/A/B/groupKey` opens straight into comparison; BACK button suppressed (hideBackButton) |
 | opens the mobile tabbed comparison view (mobile) | (deep link) `/compare/A/B/groupKey` opens the mobile MobileComparisonView |
 
-## `playstyle-detail.spec.ts` — 5 tests (desktop only)
+## `playstyle-detail.spec.ts` — 4 tests (desktop only)
 
 | Test | What it verifies |
 |---|---|
-| should render hero with name, description, and breadcrumb | `/playstyles/discard` shows h1 "Discard", description, breadcrumb nav with "Playstyles" link |
-| should toggle strategy tips section | Strategy Tips button toggles tip list visibility |
+| should render hero with name and breadcrumb | `/playstyles/discard` shows h1 "Discard" and the breadcrumb nav with "Playstyles" link |
 | should show and use role filter chips | "Forced Discard" mechanic chip filters to a subset; toggling it off restores the full grid |
 | should render card tiles in grid | `/playstyles/location-control` renders 5+ card tiles |
 | should open the card overview modal from playstyle detail | Clicking a card tile opens the modal; URL stays on the playstyle page |

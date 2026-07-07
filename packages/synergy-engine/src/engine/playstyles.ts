@@ -5,135 +5,106 @@ const playstyles: Playstyle[] = [
     id: 'lore-denial',
     name: 'Lore Denial',
     tagline: 'Cards that make your opponent lose lore.',
-    description:
-      'Cards that make your opponent lose lore. Songs, character abilities, and location triggers that strip points off their score. Each one you add slows the race in your favor without needing extra quests of your own.',
-    strategyTips: [
-      'Aim for 6 to 8 lore stealing cards so you reliably draw them each game.',
-      'Prioritize repeatable effects (quest triggers, location abilities) over one-shot actions.',
-      'Early game matters most — removing lore on turns 2-4 can set your opponent behind for the rest of the game.',
-    ],
   },
   {
     id: 'location-control',
     name: 'Locations',
     tagline: 'Cards that build their value around locations.',
-    description:
-      'Cards that build their value around locations. Search for the right location, move characters into it for stat boosts, and stack location-quest triggers so each turn a location is in play earns extra lore.',
-    strategyTips: [
-      'Balance your roles — search and ramp get locations into play, but you need payoff and buff cards to win with them.',
-      'Protect your locations with buff cards (willpower boosts, resist) since opponents will try to banish them.',
-      'Include at least one search effect to find key locations consistently.',
-      'Move effects are strongest when paired with at-location payoffs — free moves let you trigger payoffs without paying ink.',
-      'Avoid overloading on locations themselves; 3-4 locations plus strong support cards is more effective than 6+ locations.',
-    ],
   },
   {
     id: 'discard',
     name: 'Discard',
     tagline: 'Force opponents to discard cards while you keep yours.',
-    description:
-      'Force opponents to discard cards while you keep yours. Stack effects that empty their hand each turn, then follow up with cards that reward having more cards than they do. The fewer cards they hold, the more freely your characters can quest and challenge.',
-    strategyTips: [
-      'Run a mix of enablers and payoffs — enablers empty their hand, payoffs convert that into lore and stats.',
-      'Repeatable enablers (quest triggers) outperform one-shot effects since they pressure every turn.',
-      'Maintain your own hand size with card draw so you stay ahead on cards while forcing discards.',
-      'Hand-cap effects shine in the late game when opponents naturally have fewer cards to work with.',
-      'Timing matters — discard effects are most punishing when your opponent is down to their last 1-2 cards, which are usually the ones they fought hardest to keep.',
-    ],
   },
   {
     id: 'toy',
     name: 'Toys',
     tagline: 'Toy characters and the cards that reward running them.',
-    description:
-      "Toy characters and the cards that reward running them. Andy's Toys search the deck for more Toys and grow stronger when others are around; Sid's Toys send themselves to the discard pile to trigger their effects again. Each Toy you add makes the rest of the strategy stronger.",
-    strategyTips: [
-      'Aim for 12 to 16 Toys plus 4 to 6 payoffs so search effects and density triggers reliably hit.',
-      "Search effects (Woody — Leader of the Toys, You've Got a Friend in Me) chain into free plays — keep cheap Toys in the deck for them to fetch.",
-      "The Sid's Toys package (Hand-in-the-Box, Wind-Up Frog, Bouncing Ducky, Jingle Joe, Sid Phillips) rewards self-banish loops — pair with self-banish cards or trade aggressively.",
-      'Pizza Planet — Spaceport gives free moves for Toys; pair with at-location payoffs (Beast — Snowfield Troublemaker) for cross-archetype value.',
-      "The tribe is mostly Amber and Ruby. Amber+Ruby decks get the deepest pool; mono-Amber leans on Andy's Toys, mono-Ruby leans on Sid's Toys.",
-    ],
   },
   {
     id: 'ramp',
     name: 'Ramp',
     tagline: 'Speed up your ink so you can play powerful cards earlier than your opponent.',
-    description:
-      'Speed up your ink so you can play powerful cards earlier than your opponent. Some cards put extra cards into your inkwell each turn, others trigger effects every time you ink a card, and a few discount the cost of what you play. Stack all three for turns where you play far above your ink count.',
-    strategyTips: [
-      'Pair inkwell ramp with inkwell triggers for the strongest synergy — each extra ink fires every trigger on board.',
-      'Deck-top ramp (Sapphire) is free mana with no card cost. Hand-to-inkwell ramp trades a card for speed — run card draw to compensate.',
-      'Cost reduction cards (Amber) stack with inkwell ramp — Lantern discount + extra ink means you can deploy two threats in one turn.',
-      'Repeating triggers (Coils, Jafar) scale with the number of inks per turn. Once-per-turn triggers (Raya, Lyle) are strong but cap at one activation.',
-      'Ramp is strongest in turns 2-5 when the extra ink lets you play 5-6 cost cards while opponents are still at 3-4.',
-    ],
   },
   {
     id: 'sacrifice',
     name: 'Sacrifice',
     tagline: 'Banish your own characters on demand to cash in banish payoffs.',
-    description:
-      'Banish your own characters on demand to cash in banish payoffs. Self-banish cards let you banish a character whenever you want, and banish-trigger characters reward you when they leave play. Pairing the two converts a "maybe the opponent trades into it" payoff into a guaranteed, on-your-terms value engine.',
-    strategyTips: [
-      'You need both halves: self-banish cards without payoffs do nothing, payoffs without a way to banish wait on the opponent. Run a handful of each.',
-      'The combo lives in Ruby and Emerald, where every self-banish card currently sits. Splash a second ink for the deepest payoff pool.',
-      'Banish triggers that draw or gain lore (Diablo, David Xanatos) turn each sacrifice into raw card or tempo advantage.',
-      'Self-banish cards that do something extra (Time to Go! draws, The Claw bounces) pay you twice, once for their own effect and once for the payoff.',
-      'Tribal banish triggers (Racers, Illusions, Puppies) fire off any banish, so a generic self-banish card still turns them on.',
-    ],
+  },
+  {
+    id: 'self-discard',
+    name: 'Self-Discard',
+    tagline: 'Discard your own cards, then replay them from the bin or cash in discard payoffs.',
   },
   {
     id: 'dwarfs',
     name: 'Seven Dwarfs',
     tagline: 'Seven Dwarfs characters and the cards that reward running them.',
-    description:
-      'Seven Dwarfs characters and the cards that reward running them. Density payoffs draw extra cards the moment another Dwarf is on the board, free recruits cheat more Dwarfs into play, and bounce effects re-buy their enter-play abilities. Each Dwarf you add makes the rest of the team stronger — and Snow White ties the package together.',
-    strategyTips: [
-      'Run plenty of Seven Dwarfs members so density checks (Doc - Taking Notes, Don\'t Be Nervous) reliably switch on.',
-      'Snow White - Merry as the Morning returns a Dwarf to hand to draw — pair her with cheap enter-play Dwarfs to re-buy value every quest.',
-      'Right Behind You plays a Dwarf for free once you have a Dwarf and a Princess in play, so keep a Princess (Snow White) in the deck to turn it on.',
-      'The payoff package is Amethyst. Stay mono-Amethyst for consistency, or splash Steel for the set-5 Knight Dwarfs, who still count toward every density check.',
-      'Most payoffs also count Princesses — Snow White doubles as a Princess and a Dwarf payoff, bridging the two tribes for a deeper card pool.',
-    ],
   },
   {
     id: 'floodborn',
     name: 'Floodborns',
     tagline: 'Flood the board with Floodborn characters and cash in the Vine payoffs.',
-    description:
-      'Flood the board with Floodborn characters and cash in the Vine payoffs. The Set 13 Vinelings each buff or trigger off "your Floodborn characters", and because Floodborn is a deep classification spanning every set, the payoffs reward a large, pre-built tribe. Stack buffs to grow the whole board, or lean on the play and quest triggers for a repeating engine.',
-    strategyTips: [
-      'The payoffs reward any Floodborn body, not just Vinelings, so run plenty of Floodborn characters as fuel. Floodborn is a classification, not the Shift keyword: some Shift cards, like the Set 13 Team-ups, are Storyborn.',
-      'Trigger payoffs (Hera, Mulan, Ursula) want a wide, cheap Floodborn board so they fire often.',
-      'Stat buffs (Gaston, Pete, Ring of Stones) stack, so two payoffs on the same board pump the whole team twice.',
-      'Banish triggers (Maid Marian, The Vine) double as a Sacrifice-deck payoff if you add self-banish enablers.',
-    ],
   },
   {
     id: 'hunny',
     name: 'Hunny',
     tagline: 'A Hundred Acre Wood adventuring party that rewards going wide on the Hunny tribe.',
-    description:
-      'A Hundred Acre Wood adventuring party that rewards going wide on the Hunny tribe. Search effects dig the party out of your deck, density payoffs grow stronger with every Hunny on the board, and single-target buffs pump the body that matters. Christopher Robin even lets you run Hunny characters off-ink, deepening the pool.',
-    strategyTips: [
-      'Run a high Hunny count so density payoffs (Winnie, Roo, Gopher) reliably switch on.',
-      'Christopher Robin and The Great Book of Hunny dig the tribe out of your deck, smoothing your draws.',
-      'Christopher Robin breaks ink restrictions for Hunny cards, so you can splash the best party members regardless of color.',
-      'Single-target buffs (Rabbit, Magical Hunny Staff, Tigger) protect or push your key threat.',
-    ],
   },
   {
     id: 'red-panda',
     name: 'Red Panda',
     tagline: 'A small Turning Red tribe built around the Lee family.',
-    description:
-      'A small Turning Red tribe built around the Lee family. The package is light on dedicated payoffs, but Meilin Lee - Losing Control digs more Red Pandas out of your deck, and the tribe leans on named-companion and Temporary Shift synergies that other rules already surface.',
-    strategyTips: [
-      'Meilin Lee - Losing Control digs for a Red Panda or a song, so keep the deck dense in both.',
-      'Most of the Red Panda payoff comes from named-companion bonuses (Meilin, Ming) and Temporary Red Panda Shift, which the Companions and Shift rules already cover.',
-      'The tribe is shallow on its own, so pair it with a stronger second archetype rather than building mono-Red-Panda.',
-    ],
+  },
+  {
+    id: 'items',
+    name: 'Items',
+    tagline: 'Flood the board with items and cash in the payoffs that reward playing them.',
+  },
+  {
+    id: 'healing',
+    name: 'Healing',
+    tagline: 'Remove damage from your own characters, then cash in the payoffs that reward healing.',
+  },
+  {
+    id: 'exert',
+    name: 'Exert',
+    tagline: 'Tap the opponent’s characters, then banish or lock the exerted bodies.',
+  },
+  {
+    id: 'bounce',
+    name: 'Bounce',
+    tagline: 'Return characters from play to hand to re-fire enter-play abilities or buy tempo.',
+  },
+  {
+    id: 'monster',
+    name: 'Monsters',
+    tagline: 'Monster characters and the payoffs that reward fielding the tribe.',
+  },
+  {
+    id: 'princess',
+    name: 'Princesses',
+    tagline: 'Go wide on Princesses and cash in the buffs, searches, and in-play payoffs that reward them.',
+  },
+  {
+    id: 'hero',
+    name: 'Heroes',
+    tagline: 'Hero characters and the payoffs that buff or trigger off the tribe.',
+  },
+  {
+    id: 'super',
+    name: 'Supers',
+    tagline: 'The Incredibles Super package: Super characters and the payoffs that pump and ready them.',
+  },
+  {
+    id: 'royalty',
+    name: 'Royalty',
+    tagline: 'Queen, King, and Prince characters and the payoffs that reward the crown.',
+  },
+  {
+    id: 'detective',
+    name: 'Detectives',
+    tagline: 'Detective characters and the payoffs that reward running the tribe.',
   },
 ];
 

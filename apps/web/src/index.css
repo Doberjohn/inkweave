@@ -164,15 +164,6 @@ option {
   }
 }
 
-@keyframes heroKenBurns {
-  0% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(1.05);
-  }
-}
-
 /* Card-overview comparison-mode connector (mockup phase 2) —
    pair-connector fades in 200ms after entering comparison mode.
    Single gold dashed line reveals from center outward (clip-path inset(0 50% 0 50%) → inset(0)) over 1s. */
@@ -307,9 +298,6 @@ option {
   /* Stop the SW update spinner from rotating; the toast is still visible and
      the label conveys the state via text alone. */
   .sw-update-spinner {
-    animation: none !important;
-  }
-  .hero-ken-burns {
     animation: none !important;
   }
   /* Disable card-slot shimmer for vestibular-sensitive users. The tile stays

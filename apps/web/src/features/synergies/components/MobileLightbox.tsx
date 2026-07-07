@@ -194,9 +194,11 @@ const ROOT_STYLE: React.CSSProperties = {
 const SCRIM_STYLE: React.CSSProperties = {
   position: 'absolute',
   inset: 0,
-  background: 'rgba(0, 0, 0, 0.78)',
-  backdropFilter: 'blur(8px)',
-  WebkitBackdropFilter: 'blur(8px)',
+  // Solid scrim only — NO backdrop-filter. On WebKit (mobile-safari especially) a blurred
+  // backdrop re-rasterizes every frame the card FLIPs behind it, so the compositor never idles
+  // and Playwright's actionability "stable" check on the close button never resolves (#444).
+  // The 0.86-alpha black already carries the "card floats above" separation the blur used to add.
+  background: 'rgba(0, 0, 0, 0.86)',
   cursor: 'zoom-out',
 };
 

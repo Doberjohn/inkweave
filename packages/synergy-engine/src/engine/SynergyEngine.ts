@@ -61,7 +61,7 @@ export class SynergyEngine {
         return {
           label: playstyle.name,
           tagline: playstyle.tagline,
-          description: playstyle.description,
+          description: playstyle.tagline,
         };
       }
     }

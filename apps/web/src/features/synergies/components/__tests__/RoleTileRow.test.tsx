@@ -21,8 +21,8 @@ describe('RoleTileRow', () => {
     render(<RoleTileRow tiles={tiles} activeRoles={new Set()} onToggle={vi.fn()} />);
     expect(screen.getByText('Locations')).toBeInTheDocument();
     expect(screen.getByText('Boost')).toBeInTheDocument();
-    expect(screen.getByText('(54)')).toBeInTheDocument();
-    expect(screen.getByText('(14)')).toBeInTheDocument();
+    expect(screen.getByText('54')).toBeInTheDocument();
+    expect(screen.getByText('14')).toBeInTheDocument();
     expect(screen.getByText('Boost description')).toBeInTheDocument();
   });
 
@@ -34,21 +34,21 @@ describe('RoleTileRow', () => {
     ];
     render(<RoleTileRow tiles={tiedTiles} activeRoles={new Set()} onToggle={vi.fn()} />);
     const buttons = screen.getAllByRole('button');
-    expect(buttons[0]).toHaveAccessibleName('Charlie');
-    expect(buttons[1]).toHaveAccessibleName('Alpha');
-    expect(buttons[2]).toHaveAccessibleName('Bravo');
+    expect(buttons[0]).toHaveAccessibleName(/^Charlie\b/);
+    expect(buttons[1]).toHaveAccessibleName(/^Alpha\b/);
+    expect(buttons[2]).toHaveAccessibleName(/^Bravo\b/);
   });
 
   it('places highest-count tile first (Locations 54 outranks the rest)', () => {
     render(<RoleTileRow tiles={tiles} activeRoles={new Set()} onToggle={vi.fn()} />);
     const buttons = screen.getAllByRole('button');
-    expect(buttons[0]).toHaveAccessibleName('Locations');
+    expect(buttons[0]).toHaveAccessibleName(/^Locations\b/);
   });
 
   it('calls onToggle with the clicked role', () => {
     const onToggle = vi.fn();
     render(<RoleTileRow tiles={tiles} activeRoles={new Set()} onToggle={onToggle} />);
-    fireEvent.click(screen.getByRole('button', {name: 'Boost'}));
+    fireEvent.click(screen.getByRole('button', {name: /^Boost\b/}));
     expect(onToggle).toHaveBeenCalledWith('boost');
   });
 
@@ -56,9 +56,9 @@ describe('RoleTileRow', () => {
     render(
       <RoleTileRow tiles={tiles} activeRoles={new Set(['boost', 'search'])} onToggle={vi.fn()} />,
     );
-    expect(screen.getByRole('button', {name: 'Boost'})).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', {name: 'Search'})).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', {name: 'Trigger'})).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', {name: /^Boost\b/})).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', {name: /^Search\b/})).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', {name: /^Trigger\b/})).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('supports multi-select toggle (clicking second tile keeps first active)', () => {
@@ -70,7 +70,7 @@ describe('RoleTileRow', () => {
       active = next;
     });
     render(<RoleTileRow tiles={tiles} activeRoles={active} onToggle={onToggle} />);
-    fireEvent.click(screen.getByRole('button', {name: 'Search'}));
+    fireEvent.click(screen.getByRole('button', {name: /^Search\b/}));
     expect(onToggle).toHaveBeenCalledWith('search');
     expect(active.has('boost')).toBe(true);
     expect(active.has('search')).toBe(true);

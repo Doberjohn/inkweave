@@ -1,4 +1,5 @@
 import {test, expect} from '../fixtures';
+import {mockVoteQueue, gotoWithRetry} from '../pages/vote.page';
 
 test.describe('Voting Page — Desktop', () => {
   test.beforeEach(async ({page}, testInfo) => {
@@ -8,6 +9,8 @@ test.describe('Voting Page — Desktop', () => {
     // Clear voting localStorage to get fresh pairs
     await page.goto('/');
     await page.evaluate(() => localStorage.removeItem('inkweave:voted-pairs'));
+    // Deterministic vote queue (see mockVoteQueue) — set AFTER the home load so only /vote is mocked.
+    await mockVoteQueue(page);
   });
 
   test('should navigate to /vote and display a card pair', async ({votePage, page}) => {
@@ -109,8 +112,9 @@ test.describe('Voting Page — Desktop', () => {
   });
 
   test('should navigate to /vote from nav strip', async ({page}) => {
-    // Navigate to browse first (has compact header with nav strip)
-    await page.goto('/browse');
+    // Navigate to browse first (has compact header with nav strip). gotoWithRetry absorbs the
+    // same contention-induced navigation interrupt that the /vote goto handles.
+    await gotoWithRetry(page, '/browse');
     await page.waitForTimeout(500);
 
     const voteLink = page.getByRole('link', {name: 'Vote'});
@@ -138,6 +142,8 @@ test.describe('Voting Page — Mobile', () => {
     }
     await page.goto('/');
     await page.evaluate(() => localStorage.removeItem('inkweave:voted-pairs'));
+    // Deterministic vote queue (see mockVoteQueue) — set AFTER the home load so only /vote is mocked.
+    await mockVoteQueue(page);
   });
 
   test('should display compact card layout on mobile', async ({votePage}) => {

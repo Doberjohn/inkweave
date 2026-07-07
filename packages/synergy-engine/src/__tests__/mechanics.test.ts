@@ -6,7 +6,9 @@ import {
   STRUCTURAL_ROLE_TO_MECHANIC,
   getCardMechanics,
   mechanicLabel,
+  mechanicDescription,
 } from '../utils';
+import {STRUCTURAL_ROLE_DISPLAY} from '../utils/mechanics.js';
 import {createCard} from './fixtures.js';
 
 describe('mechanics catalog', () => {
@@ -78,6 +80,22 @@ describe('mechanics catalog', () => {
       for (const mechanicId of Object.values(STRUCTURAL_ROLE_TO_MECHANIC)) {
         expect(MECHANIC_BY_ID[mechanicId]).toBeDefined();
       }
+    });
+
+    it('every displayed structural role resolves to a real label + description', () => {
+      // STRUCTURAL_ROLE_DISPLAY is compile-exhaustive over every playstyle's roles, so this
+      // fails the moment a new rule ships a displayed role with no catalog entry.
+      for (const [role, displayed] of Object.entries(STRUCTURAL_ROLE_DISPLAY)) {
+        if (!displayed) continue; // membership-only (member) is never shown as a tile
+        expect(mechanicLabel(role), `role "${role}" has no label`).not.toBe(role);
+        expect(mechanicDescription(role), `role "${role}" has no description`).not.toBe('');
+      }
+    });
+
+    it('labels the self-discard roles with their friendly tile names', () => {
+      expect(mechanicLabel('enabler')).toBe('Discard then Draw');
+      expect(mechanicLabel('reanimator')).toBe('Play from Discard');
+      expect(mechanicLabel('state-payoff')).toBe('Discard Benefits');
     });
   });
 

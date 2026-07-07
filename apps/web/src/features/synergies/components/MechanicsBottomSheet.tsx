@@ -31,8 +31,8 @@ function SheetBackdrop({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(4px)',
+        // Solid scrim only — no backdrop-filter (WebKit continuous-repaint trap; see #444).
+        background: 'rgba(0, 0, 0, 0.72)',
         zIndex: Z_INDEX.modalBackdrop,
       }}
     />
@@ -153,7 +153,7 @@ export function MechanicsBottomSheet({
           left: 0,
           right: 0,
           bottom: 0,
-          maxHeight: '85vh',
+          maxHeight: '78vh',
           background: COLORS.surface,
           borderRadius: '24px 24px 0 0',
           boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.6)',
@@ -172,7 +172,7 @@ export function MechanicsBottomSheet({
             WebkitOverflowScrolling: 'touch',
             padding: `${SPACING.md}px ${SPACING.lg}px ${SPACING.lg}px`,
           }}>
-          <RoleTileRow tiles={tiles} activeRoles={activeRoles} onToggle={onToggle} />
+          <RoleTileRow tiles={tiles} activeRoles={activeRoles} onToggle={onToggle} layout="grid" />
         </div>
       </div>
     </>

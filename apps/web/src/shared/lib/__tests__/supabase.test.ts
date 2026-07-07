@@ -8,9 +8,9 @@ import {
   _resetClient,
 } from '../supabase';
 
-// Chainable mock for .from().select().eq().eq().single()
-const mockSingle = vi.fn();
-const mockEq2 = vi.fn(() => ({single: mockSingle}));
+// Chainable mock for .from().select().eq().eq().maybeSingle()
+const mockMaybeSingle = vi.fn();
+const mockEq2 = vi.fn(() => ({maybeSingle: mockMaybeSingle}));
 const mockEq1 = vi.fn(() => ({eq: mockEq2}));
 const mockSelect = vi.fn(() => ({eq: mockEq1}));
 const mockFrom = vi.fn(() => ({select: mockSelect}));
@@ -176,7 +176,7 @@ describe('getPairScore', () => {
   it('queries pair_scores view with canonical pair order', async () => {
     vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
-    mockSingle.mockResolvedValue({data: {avg_score: 7.5}});
+    mockMaybeSingle.mockResolvedValue({data: {avg_score: 7.5}, error: null});
 
     // Pass in reverse order; should sort to (aaa, zzz)
     await getPairScore('zzz', 'aaa');
@@ -199,7 +199,7 @@ describe('getPairScore', () => {
       score_votes: 8,
       avg_score: 7.25,
     };
-    mockSingle.mockResolvedValue({data: mockData});
+    mockMaybeSingle.mockResolvedValue({data: mockData, error: null});
 
     const result = await getPairScore('a', 'b');
     expect(result).toEqual(mockData);
@@ -207,13 +207,12 @@ describe('getPairScore', () => {
     vi.unstubAllEnvs();
   });
 
-  it('returns null for PGRST116 (no rows found)', async () => {
+  it('returns null when the pair has no votes yet', async () => {
     vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
-    mockSingle.mockResolvedValue({
-      data: null,
-      error: {code: 'PGRST116', message: 'No rows found'},
-    });
+    // maybeSingle() resolves to {data: null, error: null} for zero rows — no
+    // PGRST116 error, so nothing reaches the Sentry Supabase integration.
+    mockMaybeSingle.mockResolvedValue({data: null, error: null});
 
     const result = await getPairScore('a', 'b');
     expect(result).toBeNull();
@@ -225,7 +224,7 @@ describe('getPairScore', () => {
     vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    mockSingle.mockResolvedValue({
+    mockMaybeSingle.mockResolvedValue({
       data: null,
       error: {code: '42P01', message: 'relation does not exist'},
     });

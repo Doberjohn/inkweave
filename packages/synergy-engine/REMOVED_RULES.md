@@ -12,7 +12,7 @@ Rules removed to simplify the engine. Full implementations preserved here for fu
 | villain-tribal   | Villain Synergies           | classification | Villain characters + cards referencing "Villain character"         |
 | hero-tribal      | Hero Synergies              | classification | Hero characters + cards referencing "Hero character"               |
 | challenger-buffs | Challenger + Strength Buffs | keyword        | Challenger characters paired with strength buff cards              |
-| exert-synergies  | Exert Synergies             | mechanic       | Cards that exert opponents + cards that benefit from exerted state |
+| ~~exert-synergies~~ | ~~Exert Synergies~~      | ~~mechanic~~   | **Re-implemented** as the payoff-anchored `exert` playstyle. See [`EXERT_RULE.md`](EXERT_RULE.md) |
 | draw-engine      | Card Draw Synergies         | mechanic       | Draw effects + "when you draw" payoffs                             |
 | ~~ink-ramp~~     | ~~Ink Ramp~~                | ~~mechanic~~   | **Re-implemented** in `rules.ts` as Ramp playstyle (#42). See [`RAMP_RULE.md`](RAMP_RULE.md) |
 | ward-aggro       | Ward + Aggression           | keyword        | Ward characters paired with challenge/ready effects                |

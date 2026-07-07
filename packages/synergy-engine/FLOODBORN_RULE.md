@@ -17,6 +17,16 @@ A card is a **payoff** if `buff` or `trigger` matches (multi-role allowed; The V
 `findSynergies` skips member-member pairs, so two plain Floodborn never synergize. This
 avoids ~6,400 density-5 pairs that would tag every shifted card in the game.
 
+## Card examples by role
+
+Real cards the `getFloodbornRoles` detector tags for each role (names from the live database; effects paraphrased):
+
+| Role | Real cards | What they do |
+|------|-----------|--------------|
+| **member** | Fix-It Felix, Jr. - Niceland Steward (Amber), Maleficent - Formidable Queen (Amethyst), Clarabelle - Light on Her Hooves (Emerald) | A Floodborn character: the tribe's bodies (payoff-anchored, so members don't pair with each other) |
+| **trigger** | Hiro Hamada - Future Champion (Emerald), Honey Lemon - Chemistry Whiz (Sapphire), Honey Lemon - Costumed Catalyst (Emerald-Sapphire) | Repeating engine that fires whenever you play a Floodborn |
+| **buff** | Rapunzel's Tower - In the Vines' Grip (Amber), Pete - Created by the Vine (Amethyst), Hiro Hamada - Armor Designer (Emerald-Sapphire) | Static team pump for your Floodborn characters |
+
 ## Scoring (5-baseline)
 | Pair | Score | Why |
 |------|-------|-----|

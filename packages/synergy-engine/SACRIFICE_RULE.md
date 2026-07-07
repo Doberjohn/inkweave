@@ -79,6 +79,17 @@ This `banish-trigger` role is a strict **superset** of the Toy rule's tribal-gat
 
 ---
 
+## Card examples by role
+
+Real cards the `getSacrificeRoles` detector tags for each role (names from the live database; effects paraphrased):
+
+| Role | Real cards | What they do |
+|------|-----------|--------------|
+| **self-banish** (enabler) | Hades - Strong Arm (Ruby), Retro Evolution Device (Emerald), Glimmer vs Glimmer (Ruby) | Banish one of *your own* characters on demand |
+| **banish-trigger** (payoff) | Bruni - Fire Salamander (Amethyst), Emerald Chromicon (Emerald), Tadashi Hamada - Gifted Roboticist (Sapphire) | Fire a bonus when one of your characters is banished, any cause |
+
+---
+
 ## Scoring (5/8 matrix)
 
 Applies the project-wide **5-baseline convention** and mirrors the Discard rule's shape exactly (asymmetric banish combo at peak, same-side density at floor).
