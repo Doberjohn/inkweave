@@ -14,7 +14,7 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 |---|---|
 | home page should have no axe violations | `/` passes axe-core audit with zero violations |
 | browse page should have no axe violations | `/browse` passes axe-core audit |
-| card detail page should have no axe violations | `/card/1041` passes axe-core audit |
+| card detail page should have no axe violations | `/card/1939` passes axe-core audit |
 | playstyle gallery should have no axe violations | `/playstyles` passes axe-core audit |
 | playstyle detail should have no axe violations | `/playstyles/discard` passes axe-core audit |
 
@@ -35,10 +35,10 @@ CardOverviewModal — opening, closing, empty state, scroll lock.
 |---|---|
 | should render card name and image inside the overview modal | Modal shows card image + h1 with the card name |
 | should show synergy chips or empty state once data loads | Modal renders synergy groups, empty state, or error after async load |
-| should open the modal when deep-linking to /card/:id | `/card/957` opens the modal; URL redirects to `/` |
+| should open the modal when deep-linking to /card/:id | `/card/1936` opens the modal; URL redirects to `/` |
 | should not open the modal for an invalid card ID | `/card/99999999` → home, modal stays hidden |
 | should close the modal when Escape is pressed | Escape dismisses the modal, hero reappears |
-| should show the empty state for a card with no synergies | `/card/957` (no synergy file) renders `card-overview-empty` |
+| should show the empty state for a card with no synergies | `/card/1936` (no synergy file) renders `card-overview-empty` |
 | should lock background scroll while the modal is open | `document.body` overflow is `hidden` while open, restored on close |
 
 ## `card-search.spec.ts` — 7 tests (desktop only)

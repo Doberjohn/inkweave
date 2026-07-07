@@ -27,7 +27,7 @@ test.describe('Accessibility — axe audits', () => {
   });
 
   test('card detail page should have no axe violations', async ({page}) => {
-    await page.goto('/card/1041');
+    await page.goto('/card/1939');
     // The CardOverviewModal opens with a 200ms opacity-fade-in transition. If axe runs mid-
     // transition, it computes effective text colors against a partially-transparent background
     // (text gold rgb(212,175,55) at opacity 0.05 ≈ #111015 on bg #0d0d14 — fails 4.5:1). Wait

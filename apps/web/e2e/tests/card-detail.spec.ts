@@ -40,9 +40,9 @@ test.describe('Card Detail (modal)', () => {
   });
 
   test('should open the modal when deep-linking to /card/:id', async ({appPage, page}) => {
-    // Card IDs start at 957 in the dataset. CardPage opens the modal globally and redirects
+    // A valid card id from the Core pool. CardPage opens the modal globally and redirects
     // the URL to `/`, so closing the modal lands on the home page.
-    await page.goto('/card/957');
+    await page.goto('/card/1936');
 
     await expect(appPage.cardOverviewModal).toBeVisible({timeout: 10000});
     await expect(page).toHaveURL('/');
@@ -70,8 +70,8 @@ test.describe('Card Detail (modal)', () => {
   });
 
   test('should show the empty state for a card with no synergies', async ({appPage, page}) => {
-    // Card 957 (Koda) has no precomputed synergy file — the modal renders its empty state.
-    await page.goto('/card/957');
+    // Card 1936 (Bruno Madrigal - Undetected Uncle) has no precomputed synergy file — the modal renders its empty state.
+    await page.goto('/card/1936');
 
     await expect(appPage.cardOverviewModal).toBeVisible({timeout: 10000});
     await expect(appPage.cardOverviewModal.getByTestId('card-overview-empty')).toBeVisible({
