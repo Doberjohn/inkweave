@@ -4,8 +4,9 @@
  *
  * Reads a per-set LorcanaJSON file (the format LorcanaJSON.org publishes for
  * each set, e.g. `set012.json`), strips it per the 6 graduation rules,
- * replaces any existing entries for that set in `allCards.json`, and empties
- * `previewCards.json`.
+ * replaces any existing entries for that set in `allCards.json`, retargets
+ * hardcoded card-id references (featured, playstyle heroes, reveals demos) from
+ * preview to canonical, and empties `previewCards.json`.
  *
  * Encodes the 6 graduation rules documented at:
  *   docs/CARD_DATA_PIPELINE.md  (Rules during canonical integration)
@@ -39,6 +40,31 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const ALL_CARDS = path.join(ROOT, 'apps/web/public/data/allCards.json');
 const PREVIEW = path.join(ROOT, 'apps/web/public/data/previewCards.json');
+const FEATURED_TSX = path.join(ROOT, 'apps/web/src/features/cards/components/FeaturedCards.tsx');
+
+/**
+ * Committed source that hardcodes REAL card ids from a set: the landing-page
+ * featured cards + their test, the playstyle-gallery hero cards, and the reveals /
+ * playstyle Storybook demos. When a set graduates its ids change, so these are
+ * retargeted preview->canonical. Deliberately EXCLUDES self-contained mock-fixture
+ * tests (analytics, reveal-admin, card-analytics) whose 13xxx ids are arbitrary and
+ * must not move — add a new file here only if it references real graduated cards.
+ */
+const ID_REFERENCE_FILES = [
+  'apps/web/src/features/cards/components/FeaturedCards.tsx',
+  'apps/web/src/features/cards/components/__tests__/FeaturedCards.test.tsx',
+  'apps/web/src/shared/constants/playstyleUi.ts',
+  'apps/web/.env.example',
+  'apps/web/src/features/reveals/setSpotlights.ts',
+  'apps/web/src/features/reveals/InkBoard.stories.tsx',
+  'apps/web/src/features/reveals/CardMosaic.stories.tsx',
+  'apps/web/src/features/reveals/FranchiseCardsModal.stories.tsx',
+  'apps/web/src/features/reveals/CardSlot.stories.tsx',
+  'apps/web/src/features/playstyles/PlaystyleFanTile.stories.tsx',
+  'apps/web/src/features/playstyles/PlaystyleSection.stories.tsx',
+  'apps/web/src/features/reveal-admin/components/CardPreviewPanel.stories.tsx',
+  'apps/web/src/features/reveal-admin/components/RevealAdminForm.stories.tsx',
+].map((p) => path.join(ROOT, p));
 
 /**
  * Rule 5 — allow-list of fields the synergy engine + web loader consume.
@@ -101,6 +127,83 @@ function stripCard(card, setCode) {
   return out;
 }
 
+/**
+ * Step 7 — retarget hardcoded card-id references from the graduating set's PREVIEW
+ * ids to their new canonical ids.
+ *
+ * Committed source hardcodes real card ids in a few spots: the landing-page
+ * featured cards + their test, the playstyle-gallery hero cards, and the reveals /
+ * playstyle Storybook demos (ID_REFERENCE_FILES). Graduation renumbers those cards,
+ * so every such reference would otherwise dangle. This maps each graduating-set
+ * preview id -> canonical id (previewCards' id<->number joined to the canonical
+ * number<->id) and rewrites those files in place.
+ *
+ * The Vercel `VITE_FEATURED_CARD_IDS` env var lives outside the repo and can't be
+ * written here — the translated value is printed for a manual paste + redeploy.
+ *
+ * TODO(future): when the featured ids don't reference the graduating set (a brand
+ * new set with no pre-picked cards), prompt for which canonical ids to feature
+ * rather than only translating existing ones.
+ */
+function retargetHardcodedIds(previewCards, baseCards) {
+  const previewToCanonical = buildPreviewToCanonicalMap(previewCards, baseCards);
+  if (previewToCanonical.size === 0) {
+    console.log(`  Card-id refs:               previewCards empty — skipped\n`);
+    return;
+  }
+
+  const touched = retargetIdsInFiles(previewToCanonical);
+  if (touched === 0) {
+    console.log(`  Card-id refs:               no graduating-set ids referenced — nothing to retarget\n`);
+    return;
+  }
+
+  console.log(`  Card-id refs:               retargeted across ${touched} file(s) to canonical`);
+  printFeaturedVercelHint();
+}
+
+/** Map each graduating-set preview id -> canonical id, joined on the shared card number. */
+function buildPreviewToCanonicalMap(previewCards, baseCards) {
+  const numberToCanonical = new Map(baseCards.map((c) => [c.number, String(c.id)]));
+  const map = new Map();
+  for (const pc of previewCards) {
+    const canonId = numberToCanonical.get(pc.number);
+    if (canonId) map.set(String(pc.id), canonId);
+  }
+  return map;
+}
+
+/** Replace every graduating-set preview id in one file; return true if it changed. */
+function retargetFileIds(file, previewToCanonical) {
+  if (!fs.existsSync(file)) return false;
+  const before = fs.readFileSync(file, 'utf8');
+  let after = before;
+  for (const [pid, cid] of previewToCanonical) {
+    after = after.replace(new RegExp(`\\b${pid}\\b`, 'g'), cid);
+  }
+  if (after === before) return false;
+  fs.writeFileSync(file, after);
+  return true;
+}
+
+/** Run the id retarget across every reference file; return how many changed. */
+function retargetIdsInFiles(previewToCanonical) {
+  let touched = 0;
+  for (const file of ID_REFERENCE_FILES) {
+    if (retargetFileIds(file, previewToCanonical)) touched++;
+  }
+  return touched;
+}
+
+/** Print the ordered canonical featured ids for the manual Vercel env update. */
+function printFeaturedVercelHint() {
+  const block = fs.readFileSync(FEATURED_TSX, 'utf8').match(/DEFAULT_FEATURED_IDS\s*=\s*\[([\s\S]*?)]/);
+  const ordered = block ? [...block[1].matchAll(/'(\d+)'/g)].map((m) => m[1]) : [];
+  if (ordered.length === 0) return;
+  console.log(`\n  ⚠ Set the Vercel env var (external to repo — paste + redeploy):`);
+  console.log(`    VITE_FEATURED_CARD_IDS=${ordered.join(',')}\n`);
+}
+
 function parseArgs(argv) {
   const [, , setCode, sourceArg] = argv;
   if (!setCode) {
@@ -126,6 +229,11 @@ function main() {
 
   const all = JSON.parse(fs.readFileSync(ALL_CARDS, 'utf8'));
   const canonical = JSON.parse(fs.readFileSync(source, 'utf8'));
+  // Snapshot preview cards BEFORE the reset below empties them — the featured-id
+  // retarget needs the graduating set's preview id<->number pairs.
+  const existingPreview = fs.existsSync(PREVIEW)
+    ? JSON.parse(fs.readFileSync(PREVIEW, 'utf8'))
+    : {cards: []};
   const sourceCards = canonical.cards ?? canonical;
   if (!Array.isArray(sourceCards)) {
     console.error(`Source file has no .cards array (got keys: ${Object.keys(canonical).join(', ')})`);
@@ -174,6 +282,9 @@ function main() {
 
   fs.writeFileSync(ALL_CARDS, JSON.stringify(all, null, 2) + '\n');
   console.log(`  Wrote allCards.json:        ${ALL_CARDS}\n`);
+
+  // Retarget hardcoded card-id references to the new canonical ids (before reset).
+  retargetHardcodedIds(existingPreview.cards ?? [], stripped);
 
   // Reset previewCards.json — empty cards, but preserve sets[setCode] metadata
   // so revealDates.ts (which reads prereleaseDate/releaseDate from this file)

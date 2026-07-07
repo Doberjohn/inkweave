@@ -45,5 +45,5 @@ function Harness({errors}: {errors: Record<string, string>}) {
 
 export const Default: Story = {render: () => <Harness errors={{}} />};
 export const WithErrors: Story = {
-  render: () => <Harness errors={{collectorNumber: 'Card id 13050 already exists', image: 'Upload a card image'}} />,
+  render: () => <Harness errors={{collectorNumber: 'Card id 3021 already exists', image: 'Upload a card image'}} />,
 };

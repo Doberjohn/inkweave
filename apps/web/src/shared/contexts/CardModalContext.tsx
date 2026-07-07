@@ -13,7 +13,9 @@ interface CardModalContextValue {
   comparisonGroupKey: string | null;
   /** True once the user has seen the default modal state in this session (click flow). */
   hasUserSeenDefaultState: boolean;
-  openCardModal: (cardId: string) => void;
+  /** Ordered snapshot of the grid the modal was opened from, for prev/next navigation. */
+  siblingCardIds: string[];
+  openCardModal: (cardId: string, siblingIds?: string[]) => void;
   /**
    * Open the modal directly in comparison state. Optional `groupKey` filters connections to
    * that rule, mirroring the click-from-group flow (`/compare/A/B/shift-targets`). Omit for the
@@ -21,6 +23,8 @@ interface CardModalContextValue {
    */
   openComparison: (cardId: string, partnerId: string, groupKey?: string) => void;
   closeCardModal: () => void;
+  /** Move to the previous (-1) or next (1) sibling in `siblingCardIds`, wrapping at the ends. */
+  goToSibling: (direction: 1 | -1) => void;
 }
 
 const CardModalContext = createContext<CardModalContextValue | undefined>(undefined);
@@ -61,6 +65,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
   // true. Deep-link users skip default and go straight to comparison, so this stays false.
   // Drives `hideBackButton` — there's no default state to step back to if the user never saw one.
   const [hasUserSeenDefaultState, setHasUserSeenDefaultState] = useState(false);
+  const [siblingCardIds, setSiblingCardIds] = useState<string[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -72,10 +77,11 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setHasUserSeenDefaultState(true);
   }
 
-  const openCardModal = (cardId: string) => {
+  const openCardModal = (cardId: string, siblingIds: string[] = []) => {
     setSelectedCardId(cardId);
     setComparisonPartnerId(null);
     setComparisonGroupKey(null);
+    setSiblingCardIds(siblingIds);
     // hasUserSeenDefaultState will flip true on the next render via the guard above.
   };
 
@@ -83,6 +89,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setSelectedCardId(cardId);
     setComparisonPartnerId(partnerId);
     setComparisonGroupKey(groupKey ?? null);
+    setSiblingCardIds([]);
     // Don't touch hasUserSeenDefaultState here — its value is determined by whether the user
     // had previously been in default state for this session. Click flow: openCardModal was
     // called first, flag is already true. Deep link: openComparison is the first call, flag
@@ -94,9 +101,21 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setComparisonPartnerId(null);
     setComparisonGroupKey(null);
     setHasUserSeenDefaultState(false);
+    setSiblingCardIds([]);
     if (location.pathname.startsWith('/compare/')) {
       navigate('/');
     }
+  };
+
+  const goToSibling = (direction: 1 | -1) => {
+    if (!selectedCardId || siblingCardIds.length < 2) return;
+    const index = siblingCardIds.indexOf(selectedCardId);
+    if (index === -1) return;
+    const n = siblingCardIds.length;
+    const nextId = siblingCardIds[(index + direction + n) % n];
+    setSelectedCardId(nextId);
+    setComparisonPartnerId(null);
+    setComparisonGroupKey(null);
   };
 
   const {enterComparisonRoute, exitComparisonRoute} = useComparisonRouteSync({
@@ -110,9 +129,11 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     comparisonPartnerId,
     comparisonGroupKey,
     hasUserSeenDefaultState,
+    siblingCardIds,
     openCardModal,
     openComparison,
     closeCardModal,
+    goToSibling,
   };
 
   return (
@@ -178,7 +199,15 @@ interface CardModalRootProps {
 }
 
 function CardModalRoot({onEnterComparison, onExitComparison}: CardModalRootProps) {
-  const {selectedCardId, comparisonPartnerId, comparisonGroupKey, hasUserSeenDefaultState, closeCardModal} = useCardModal();
+  const {
+    selectedCardId,
+    comparisonPartnerId,
+    comparisonGroupKey,
+    hasUserSeenDefaultState,
+    siblingCardIds,
+    closeCardModal,
+    goToSibling,
+  } = useCardModal();
   const {getCardById} = useCardDataContext();
   const {isMobile} = useResponsive();
   const card = selectedCardId ? (getCardById(selectedCardId) ?? null) : null;
@@ -218,6 +247,8 @@ function CardModalRoot({onEnterComparison, onExitComparison}: CardModalRootProps
       onEnterComparison={onEnterComparison}
       onExitComparison={onExitComparison}
       hideBackButton={hideBackButton}
+      siblingCardIds={siblingCardIds}
+      onGoToSibling={goToSibling}
     />
   );
 }

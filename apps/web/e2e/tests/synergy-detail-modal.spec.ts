@@ -2,22 +2,23 @@ import {test, expect} from '../fixtures';
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Anna - Diplomatic Queen: has both direct and playstyle synergies, so shift-targets renders.
-const CARD_URL = '/card/1041';
+// Daisy Duck - Musketeer Spy: has shift-targets (direct) + discard (playstyle) groups, so both
+// the shift-targets tile and the discard tile (used by the re-entry test at L101) render.
+const CARD_URL = '/card/1947';
 
-// A real synergy partner of card 1041 + its group key, derived from the precomputed data so the
+// A real synergy partner of card 1947 + its group key, derived from the precomputed data so the
 // /compare deep-link fixture survives Set 12+ pool drift. ComparePage 404s on a missing groupKey
 // (engine score is rule-context-specific), so a valid deep link is /compare/A/B/groupKey.
-const synergyData1041 = JSON.parse(
-  fs.readFileSync(path.resolve(process.cwd(), 'public/data/synergies', '1041.json'), 'utf8'),
+const synergyData1947 = JSON.parse(
+  fs.readFileSync(path.resolve(process.cwd(), 'public/data/synergies', '1947.json'), 'utf8'),
 ) as {groups: {groupKey: string; synergies: {cardId: string}[]}[]};
-const compareGroup1041 = synergyData1041.groups?.[0];
-const COMPARE_PARTNER_ID = compareGroup1041?.synergies[0]?.cardId;
-const COMPARE_GROUP_KEY = compareGroup1041?.groupKey;
+const compareGroup1947 = synergyData1947.groups?.[0];
+const COMPARE_PARTNER_ID = compareGroup1947?.synergies[0]?.cardId;
+const COMPARE_GROUP_KEY = compareGroup1947?.groupKey;
 if (!COMPARE_PARTNER_ID || !COMPARE_GROUP_KEY) {
-  throw new Error('Fixture broken: card 1041 has no synergy group for the /compare deep-link test.');
+  throw new Error('Fixture broken: card 1947 has no synergy group for the /compare deep-link test.');
 }
-const COMPARE_URL = `/compare/1041/${COMPARE_PARTNER_ID}/${COMPARE_GROUP_KEY}`;
+const COMPARE_URL = `/compare/1947/${COMPARE_PARTNER_ID}/${COMPARE_GROUP_KEY}`;
 
 /**
  * Comparison mode (formerly the separate synergy detail modal). Clicking a synergy card tile

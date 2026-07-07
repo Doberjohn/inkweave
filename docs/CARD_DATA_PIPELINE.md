@@ -887,7 +887,10 @@ flowchart TD
 #    apps/web/public/data/set{N}data.json
 #    (or pass a custom path as second arg)
 
-# 2. Run the graduation script — encodes the 6 rules below.
+# 2. Run the graduation script — encodes the 6 rules below AND retargets hardcoded
+#    card-id references (featured cards, playstyle-gallery heroes, reveals/playstyle
+#    stories) from preview to canonical ids. It prints the canonical
+#    VITE_FEATURED_CARD_IDS value to paste into Vercel (see step 6).
 #    Default: reads apps/web/public/data/set{N}data.json
 pnpm graduate-set <set-code>
 
@@ -903,8 +906,10 @@ pnpm download-images
 # 5. Confirm no regressions
 pnpm test
 
-# 6. Flip VITE_IS_REVEAL_SEASON=false in .env.local + Vercel env
-#    (deactivates /reveals route until the next reveal season)
+# 6. In Vercel env (+ redeploy): flip VITE_IS_REVEAL_SEASON=false (deactivates
+#    /reveals until the next reveal season), and set VITE_FEATURED_CARD_IDS to the
+#    canonical value the script printed in step 2 (or delete it to use the in-code
+#    default, which the script already retargeted). Both are external to the repo.
 
 # 7. Optionally: delete the canonical input file once migration succeeded
 #    (it served its purpose; LorcanaJSON evolves so the snapshot is short-lived)
@@ -913,6 +918,8 @@ pnpm test
 ```
 
 The script is idempotent on dry-run safety: if you run it twice with the same source, the second run replaces what the first wrote (since canonical entries are stripped to a stable shape).
+
+The script also retargets hardcoded card-id references (`retargetHardcodedIds`, run before the `previewCards.json` reset): a set graduation renumbers ids, dangling every place that hardcodes a real card id by its preview id. The step rewrites a curated `ID_REFERENCE_FILES` list — `FeaturedCards.tsx` + its test, `playstyleUi.ts` gallery hero cards, `setSpotlights.ts`, and the reveals/playstyle Storybook demos — and deliberately skips self-contained mock-fixture tests (analytics, reveal-admin, card-analytics) whose `13xxx` ids are arbitrary. The blast radius is wide and mostly not test-guarded (only the `FeaturedCards` fixtures fail loudly); grep `\b13[0-9]{3}\b` across `apps/web/src` after graduating to confirm nothing was missed. Add a file to `ID_REFERENCE_FILES` only if it references real graduated cards.
 
 ### Rules during canonical integration
 

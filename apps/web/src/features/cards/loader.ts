@@ -1,4 +1,8 @@
-import {transformCard as baseTransformCard, type LorcanaJSONCard} from 'inkweave-synergy-engine';
+import {
+  transformCard as baseTransformCard,
+  isCoreSet,
+  type LorcanaJSONCard,
+} from 'inkweave-synergy-engine';
 import type {LorcanaCard, Ink, CardType} from './types';
 import {ALL_INKS, type BrowseSortOrder} from '../../shared/constants';
 
@@ -181,12 +185,15 @@ export async function fetchCardsFromLocal(
 
   const primaryIds = new Set(primary.cards.map((c) => c.id));
   const previewCards = preview?.cards.filter((c) => !primaryIds.has(c.id)) ?? [];
-  const mergedCards = [...primary.cards, ...previewCards];
+  // Enforce the Core rotation floor: drop cards/sets below MIN_CORE_SET so browse,
+  // search, and synergies only ever see Core-legal cards (see engine constants.ts).
+  const mergedCards = [...primary.cards, ...previewCards].filter((c) => isCoreSet(c.setCode));
 
-  const mergedSets: Record<string, LorcanaJSONSet> = {
-    ...(primary.sets ?? {}),
-    ...(preview?.sets ?? {}),
-  };
+  const mergedSets: Record<string, LorcanaJSONSet> = Object.fromEntries(
+    Object.entries({...(primary.sets ?? {}), ...(preview?.sets ?? {})}).filter(([code]) =>
+      isCoreSet(code),
+    ),
+  );
 
   const merged: LorcanaJSONData = {
     metadata: primary.metadata,
