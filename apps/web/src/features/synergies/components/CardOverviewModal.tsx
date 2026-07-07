@@ -56,6 +56,10 @@ interface CardOverviewModalProps {
    * way out, and clicking it leaves the user wherever closing the modal would normally land.
    */
   hideBackButton?: boolean;
+  /** Ordered ids of the grid the modal was opened from; enables prev/next arrows when length > 1. */
+  siblingCardIds?: string[];
+  /** Navigate to the previous (-1) or next (1) sibling card. */
+  onGoToSibling?: (direction: 1 | -1) => void;
 }
 
 interface ModalState {
