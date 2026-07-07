@@ -82,10 +82,14 @@ import {
   makeTribalRule,
 } from './ruleScoring';
 import {scoreBouncePair} from './bounceScoring';
+import {TUNING} from '../data/tuning';
 
 // ============================================
 // CONDITIONAL SHIFT MATCHERS
 // ============================================
+
+const SHIFT = TUNING.ruleTexts['shift-targets'];
+const shiftTier = (key: string) => ({score: SHIFT[key].score!, reason: SHIFT[key].text!});
 
 /**
  * A condition matcher: extracts a condition from the Shift card's text and
@@ -146,7 +150,7 @@ function calculateShiftSynergy(
   if (activates) {
     return {
       score: Math.min(base.score + 1, 10),
-      reason: `Same target. Also unlocks the free Shift condition.`,
+      reason: SHIFT['activationBonus'].text!,
     };
   }
 
@@ -158,22 +162,9 @@ function freeShiftScore(
   _shiftCard: LorcanaCard,
   baseCard: LorcanaCard,
 ): {score: number; reason: string} {
-  if (baseCard.cost <= 3) {
-    return {
-      score: 9,
-      reason: `Free Shift. Play <BASE> early, then shift <SHIFT> in for 0 ink.`,
-    };
-  }
-  if (baseCard.cost <= 5) {
-    return {
-      score: 7,
-      reason: `Free Shift saves ink, but <BASE> takes longer to set up.`,
-    };
-  }
-  return {
-    score: 5,
-    reason: `Free Shift, but <BASE> is expensive and hard to set up first.`,
-  };
+  if (baseCard.cost <= 3) return shiftTier('free.cheapBase');
+  if (baseCard.cost <= 5) return shiftTier('free.midBase');
+  return shiftTier('free.expensiveBase');
 }
 
 /** Score the gap=1 case based on inkable fallback flexibility (both / one / neither). */
@@ -181,22 +172,9 @@ function onCurveScore(
   shiftCard: LorcanaCard,
   baseCard: LorcanaCard,
 ): {score: number; reason: string} {
-  if (baseCard.inkwell && shiftCard.inkwell) {
-    return {
-      score: 9,
-      reason: `Perfect curve. Both cards inkable as fallback.`,
-    };
-  }
-  if (baseCard.inkwell || shiftCard.inkwell) {
-    return {
-      score: 8,
-      reason: `Perfect curve. One card inkable as fallback.`,
-    };
-  }
-  return {
-    score: 7,
-    reason: `On curve, but neither card is inkable. Less flexible off-curve.`,
-  };
+  if (baseCard.inkwell && shiftCard.inkwell) return shiftTier('curve.bothInkable');
+  if (baseCard.inkwell || shiftCard.inkwell) return shiftTier('curve.oneInkable');
+  return shiftTier('curve.neitherInkable');
 }
 
 /** Score a paid Shift based on the curve gap (shiftCost - baseCost). */
@@ -206,26 +184,11 @@ function curveAlignmentScore(
   curveGap: number,
 ): {score: number; reason: string} {
   if (curveGap === 1) return onCurveScore(shiftCard, baseCard);
-  if (curveGap === 2) {
-    return {
-      score: 7,
-      reason: `Smooth curve. <BASE> flows into Shift in a couple of turns.`,
-    };
-  }
-  if (curveGap === 0) {
-    return {
-      score: 5,
-      reason: `Same cost. No ink savings from Shifting, but skips the drying phase.`,
-    };
-  }
-  if (curveGap === 3) {
-    return {score: 5, reason: `Wide 3-turn gap. Playable but slow to set up.`};
-  }
+  if (curveGap === 2) return shiftTier('curve.gap2');
+  if (curveGap === 0) return shiftTier('curve.gap0');
+  if (curveGap === 3) return shiftTier('curve.gap3');
   // Poor alignment: 4+ turn gap or negative (shift costs less than base)
-  return {
-    score: 3,
-    reason: `The cost gap makes it hard to set up <BASE> in time to Shift.`,
-  };
+  return shiftTier('curve.poor');
 }
 
 function calculateShiftBaseScore(
@@ -884,9 +847,9 @@ export const synergyRules: SynergyRule[] = [
   // --------------------------------------------
   {
     id: 'shift-targets',
-    name: 'Shift Targets',
+    name: TUNING.directRules['shift-targets'].name,
     category: 'direct',
-    description: 'Characters with Shift and their valid targets',
+    description: TUNING.directRules['shift-targets'].description,
 
     // Matches characters and items: Shift cards find targets (forward), base cards find
     // Shift cards (reverse). Items are included so item-target shifts (named-item) resolve

@@ -28,6 +28,7 @@ import {
   type TribalRole,
   type TribalSpec,
 } from '../utils';
+import {TUNING} from '../data/tuning';
 
 // ============================================
 // SHARED TRIBAL SCORING HELPERS
@@ -401,6 +402,8 @@ export function scoreLoreDenialPair(
 // RAMP SCORING
 // ============================================
 
+const RAMP = TUNING.ruleTexts.ramp;
+
 /**
  * Tags every ramp pair by role mix. The tag drives both scoring and explanation
  * generation, replacing the repeated boolean-flag arithmetic that lived in both.
@@ -477,9 +480,9 @@ function classifyRampPair(
 function scoreRampTriggerChain(rampCard: LorcanaCard, triggerCard: LorcanaCard): number {
   const deckRamp = isDeckRamp(rampCard);
   const repeatingTrigger = isRepeatingTrigger(triggerCard);
-  if (deckRamp && repeatingTrigger) return 9;
-  if (deckRamp || repeatingTrigger) return 8;
-  return 7;
+  if (deckRamp && repeatingTrigger) return RAMP.scores['chain.deckRepeating'];
+  if (deckRamp || repeatingTrigger) return RAMP.scores['chain.mixed'];
+  return RAMP.scores['chain.neither'];
 }
 
 /**
@@ -487,7 +490,7 @@ function scoreRampTriggerChain(rampCard: LorcanaCard, triggerCard: LorcanaCard):
  * card type (stacking discounts), 0 (silently dropped) when they target disjoint types.
  */
 function scoreRampCostPair(cardA: LorcanaCard, cardB: LorcanaCard): number {
-  return costReductionTargetsOverlap(cardA, cardB) ? 6 : 0;
+  return costReductionTargetsOverlap(cardA, cardB) ? RAMP.scores.costOverlap : 0;
 }
 
 /**
@@ -516,7 +519,7 @@ export function getRampPairScore(
   if (flags.shape === 'ramp-trigger')
     return scoreRampTriggerChain(flags.rampCard, flags.triggerCard);
   if (flags.shape === 'cost-cost') return scoreRampCostPair(cardA, cardB);
-  return 5;
+  return RAMP.scores.density;
 }
 
 /** Explanation templates keyed by ramp pair shape. */
@@ -529,18 +532,20 @@ const RAMP_EXPLANATIONS: Record<
     const rampIsA = f.rampCard.id === a.id;
     const rampToken = rampIsA ? '{A}' : '{B}';
     const triggerToken = rampIsA ? '{B}' : '{A}';
-    return `${rampToken} adds ink to your inkwell, triggering ${triggerToken}'s inkwell effect.`;
+    return RAMP.templates['ramp-trigger']
+      .replace('{RAMP}', rampToken)
+      .replace('{TRIGGER}', triggerToken);
   },
-  'ramp-ramp': (_a, _b) => `Both accelerate your ink. Gets you ahead faster.`,
+  'ramp-ramp': (_a, _b) => RAMP.templates['ramp-ramp'],
   'ramp-cost': (a, _b, f) => {
     const rampIsA = f.rampCard.id === a.id;
     const rampToken = rampIsA ? '{A}' : '{B}';
     const costToken = rampIsA ? '{B}' : '{A}';
-    return `${rampToken} adds extra ink, ${costToken} discounts your plays.`;
+    return RAMP.templates['ramp-cost'].replace('{RAMP}', rampToken).replace('{COST}', costToken);
   },
-  'trigger-trigger': (_a, _b) => `Both effects activate on inkwell events.`,
-  'cost-cost': (_a, _b) => `Both reduce costs. Stacking discounts plays cards faster.`,
-  'trigger-cost': (_a, _b) => `Both support an accelerated game plan.`,
+  'trigger-trigger': (_a, _b) => RAMP.templates['trigger-trigger'],
+  'cost-cost': (_a, _b) => RAMP.templates['cost-cost'],
+  'trigger-cost': (_a, _b) => RAMP.templates['trigger-cost'],
 };
 
 /** Generate a human-readable explanation for a ramp synergy pair. */

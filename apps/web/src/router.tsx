@@ -51,6 +51,10 @@ const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'), 'NotFou
 const RevealsPage = lazyWithRetry(() => import('./pages/RevealsPage'), 'RevealsPage');
 const RevealAdminPage = lazyWithRetry(() => import('./pages/RevealAdminPage'), 'RevealAdminPage');
 const ImageAdminPage = lazyWithRetry(() => import('./pages/ImageAdminPage'), 'ImageAdminPage');
+const TuningAdminPage = lazyWithRetry(
+  () => import('./pages/TuningAdminPage'),
+  'TuningAdminPage',
+);
 const AdminAnalyticsPage = lazyWithRetry(
   () => import('./pages/AdminAnalyticsPage'),
   'AdminAnalyticsPage',
@@ -198,6 +202,14 @@ export const router = createBrowserRouter([
         element: (
           <SuspenseWrapper>
             <ImageAdminPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'admin/tuning',
+        element: (
+          <SuspenseWrapper>
+            <TuningAdminPage />
           </SuspenseWrapper>
         ),
       },
