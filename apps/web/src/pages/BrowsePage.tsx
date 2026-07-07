@@ -198,7 +198,7 @@ export function BrowsePage() {
   const goHome = clearAllFilters;
   const selectCard = (card: {id: string}) => {
     trackCardSelected(getCardById(card.id), 'browse');
-    openCardModal(card.id);
+    openCardModal(card.id, sortedCards.map((c) => c.id));
   };
 
   const toolbarProps = {

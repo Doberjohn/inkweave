@@ -621,7 +621,7 @@ export function PlaystyleDetailPage() {
   const goPlaystyles = () => navigate('/playstyles');
   const handleCardSelect = (card: {id: string}) => {
     trackCardSelected(getCardById(card.id), 'playstyle');
-    openCardModal(card.id);
+    openCardModal(card.id, displayedCards.map((c) => c.id));
   };
 
   // Still loading card data — show skeleton regardless of playstyle resolution.
