@@ -317,22 +317,16 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
   const cardWidth = isMobile ? 240 : 337;
   const cardHeight = Math.round((cardWidth * 368) / 264);
   const dataMode = inComparison ? 'comparison' : 'default';
-  const expandedGroup = expandedGroupKey ? (synergies.find((g) => g.groupKey === expandedGroupKey) ?? null) : null;
-  const showExpanded = !!expandedGroup && !inComparison;
-  const showSiblingNav = siblingCardIds.length > 1 && !inComparison && !showExpanded;
+  const {expandedGroup, showExpanded, showSiblingNav, dataState} = deriveModalFlags({
+    expandedGroupKey,
+    synergies,
+    inComparison,
+    siblingCardIds,
+    activeGroupFilter,
+  });
 
   const handleShellKeyDown = (e: React.KeyboardEvent) => {
-    if (showSiblingNav && !isTextEntryTarget(e.target)) {
-      if (e.key === 'ArrowLeft') {
-        onGoToSibling?.(-1);
-        return;
-      }
-      if (e.key === 'ArrowRight') {
-        onGoToSibling?.(1);
-        return;
-      }
-    }
-    handleModalKeyDown(e);
+    if (!handleSiblingArrowKey(e, showSiblingNav, onGoToSibling)) handleModalKeyDown(e);
   };
 
   return (
@@ -348,7 +342,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
             aria-modal="true"
             aria-label={`${card.fullName} synergies`}
             data-testid="card-overview-modal"
-            data-state={showExpanded ? 'expanded' : activeGroupFilter ? 'focused' : 'default'}
+            data-state={dataState}
             data-mode={dataMode}
             data-highlighted={highlightedCard ?? undefined}
             onKeyDown={handleShellKeyDown}
@@ -365,47 +359,29 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               onClose={onClose}
               exitComparison={exitComparison}
             />
-            {showExpanded ? (
-              <div style={{flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 24px 24px'}}>
-                <ExpandedGroupView
-                  group={expandedGroup}
-                  isMobile={isMobile}
-                  onBackToAll={handleBackToAll}
-                  onCardClick={handleSynergyCardClick}
-                />
-              </div>
-            ) : (
-              <>
-                <ChipFilterRow
-                  synergies={synergies}
-                  inComparison={inComparison}
-                  activeGroupFilter={activeGroupFilter}
-                  toggleChip={toggleChip}
-                />
-                <HeroDivider hasSynergies={synergies.length > 0} inComparison={inComparison} />
-                <ModalBody>
-                  <MobileOrDesktopBody
-                    isMobile={isMobile}
-                    card={card}
-                    cardWidth={cardWidth}
-                    cardHeight={cardHeight}
-                    synergies={synergies}
-                    synergiesLoading={synergiesLoading}
-                    visibleGroups={visibleGroups}
-                    activeGroupFilter={activeGroupFilter}
-                    comparisonPair={comparisonPair}
-                    exitingPair={exitingPair}
-                    comparisonOrigin={comparisonOrigin}
-                    highlightedCard={highlightedCard}
-                    inComparison={inComparison}
-                    compareCardRef={compareCardRef}
-                    onShowAll={handleShowAll}
-                    onCardClick={handleSynergyCardClick}
-                    setHighlightedCard={setHighlightedCard}
-                  />
-                </ModalBody>
-              </>
-            )}
+            <ModalContentRegion
+              showExpanded={showExpanded}
+              expandedGroup={expandedGroup}
+              isMobile={isMobile}
+              handleBackToAll={handleBackToAll}
+              handleSynergyCardClick={handleSynergyCardClick}
+              synergies={synergies}
+              inComparison={inComparison}
+              activeGroupFilter={activeGroupFilter}
+              toggleChip={toggleChip}
+              card={card}
+              cardWidth={cardWidth}
+              cardHeight={cardHeight}
+              synergiesLoading={synergiesLoading}
+              visibleGroups={visibleGroups}
+              comparisonPair={comparisonPair}
+              exitingPair={exitingPair}
+              comparisonOrigin={comparisonOrigin}
+              highlightedCard={highlightedCard}
+              compareCardRef={compareCardRef}
+              handleShowAll={handleShowAll}
+              setHighlightedCard={setHighlightedCard}
+            />
           </div>
         </div>
       </>
@@ -419,6 +395,149 @@ function isTextEntryTarget(target: EventTarget | null): boolean {
   if (!el) return false;
   const tag = el.tagName;
   return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable;
+}
+
+interface ModalFlags {
+  expandedGroup: SynergyGroupData | null;
+  showExpanded: boolean;
+  showSiblingNav: boolean;
+  dataState: 'expanded' | 'focused' | 'default';
+}
+
+interface DeriveModalFlagsInput {
+  expandedGroupKey: string | null;
+  synergies: SynergyGroupData[];
+  inComparison: boolean;
+  siblingCardIds: string[];
+  activeGroupFilter: string | null;
+}
+
+/** Pure derivation of the modal's view-state flags from raw state — kept out of the component
+ *  body to hold CardOverviewModal's cyclomatic complexity down. */
+function deriveModalFlags(input: DeriveModalFlagsInput): ModalFlags {
+  const {expandedGroupKey, synergies, inComparison, siblingCardIds, activeGroupFilter} = input;
+  const expandedGroup = expandedGroupKey ? (synergies.find((g) => g.groupKey === expandedGroupKey) ?? null) : null;
+  const showExpanded = !!expandedGroup && !inComparison;
+  const showSiblingNav = siblingCardIds.length > 1 && !inComparison && !showExpanded;
+  const dataState = showExpanded ? 'expanded' : activeGroupFilter ? 'focused' : 'default';
+  return {expandedGroup, showExpanded, showSiblingNav, dataState};
+}
+
+/** Arrow-key sibling navigation. Returns true if it handled the key (caller should not also
+ *  run the dialog's own keydown handler). */
+function handleSiblingArrowKey(
+  e: React.KeyboardEvent,
+  showSiblingNav: boolean,
+  onGoToSibling?: (d: 1 | -1) => void,
+): boolean {
+  if (!showSiblingNav || isTextEntryTarget(e.target)) return false;
+  if (e.key === 'ArrowLeft') {
+    onGoToSibling?.(-1);
+    return true;
+  }
+  if (e.key === 'ArrowRight') {
+    onGoToSibling?.(1);
+    return true;
+  }
+  return false;
+}
+
+interface ModalContentRegionProps {
+  showExpanded: boolean;
+  expandedGroup: SynergyGroupData | null;
+  isMobile: boolean;
+  handleBackToAll: () => void;
+  handleSynergyCardClick: (card: LorcanaCard, groupKey?: string) => void;
+  synergies: SynergyGroupData[];
+  inComparison: boolean;
+  activeGroupFilter: string | null;
+  toggleChip: (key: string) => void;
+  card: LorcanaCard;
+  cardWidth: number;
+  cardHeight: number;
+  synergiesLoading: boolean;
+  visibleGroups: SynergyGroupData[];
+  comparisonPair: DetailedPairSynergy | null;
+  exitingPair: DetailedPairSynergy | null;
+  comparisonOrigin: ComparisonOriginRects | null;
+  highlightedCard: 'a' | 'b' | null;
+  compareCardRef: React.RefObject<HTMLDivElement | null>;
+  handleShowAll: (groupKey: string) => void;
+  setHighlightedCard: (card: 'a' | 'b' | null) => void;
+}
+
+/**
+ * Dispatches between the full expanded-group view and the default chip-row + body layout.
+ * Extracted from CardOverviewModal to keep its cyclomatic complexity and line count under
+ * threshold; every prop below is passed through unchanged to the same children.
+ */
+function ModalContentRegion({
+  showExpanded,
+  expandedGroup,
+  isMobile,
+  handleBackToAll,
+  handleSynergyCardClick,
+  synergies,
+  inComparison,
+  activeGroupFilter,
+  toggleChip,
+  card,
+  cardWidth,
+  cardHeight,
+  synergiesLoading,
+  visibleGroups,
+  comparisonPair,
+  exitingPair,
+  comparisonOrigin,
+  highlightedCard,
+  compareCardRef,
+  handleShowAll,
+  setHighlightedCard,
+}: ModalContentRegionProps) {
+  if (showExpanded && expandedGroup) {
+    return (
+      <div style={{flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 24px 24px'}}>
+        <ExpandedGroupView
+          group={expandedGroup}
+          isMobile={isMobile}
+          onBackToAll={handleBackToAll}
+          onCardClick={handleSynergyCardClick}
+        />
+      </div>
+    );
+  }
+  return (
+    <>
+      <ChipFilterRow
+        synergies={synergies}
+        inComparison={inComparison}
+        activeGroupFilter={activeGroupFilter}
+        toggleChip={toggleChip}
+      />
+      <HeroDivider hasSynergies={synergies.length > 0} inComparison={inComparison} />
+      <ModalBody>
+        <MobileOrDesktopBody
+          isMobile={isMobile}
+          card={card}
+          cardWidth={cardWidth}
+          cardHeight={cardHeight}
+          synergies={synergies}
+          synergiesLoading={synergiesLoading}
+          visibleGroups={visibleGroups}
+          activeGroupFilter={activeGroupFilter}
+          comparisonPair={comparisonPair}
+          exitingPair={exitingPair}
+          comparisonOrigin={comparisonOrigin}
+          highlightedCard={highlightedCard}
+          inComparison={inComparison}
+          compareCardRef={compareCardRef}
+          onShowAll={handleShowAll}
+          onCardClick={handleSynergyCardClick}
+          setHighlightedCard={setHighlightedCard}
+        />
+      </ModalBody>
+    </>
+  );
 }
 
 const SIBLING_BTN_BASE: React.CSSProperties = {

@@ -81,14 +81,19 @@ test('changing the card resets the expanded view', async () => {
   expect(screen.getByRole('button', {name: /more/i})).toBeVisible();
 });
 
+function renderWithSiblings(opts: {onGoToSibling?: (d: 1 | -1) => void; siblingCardIds?: string[]} = {}) {
+  return render(
+    <MemoryRouter>
+      <CardOverviewModal isOpen card={makeCard('b')} synergies={[]} getPairSynergies={() => null} onClose={() => {}}
+        siblingCardIds={opts.siblingCardIds ?? ['a', 'b', 'c']} onGoToSibling={opts.onGoToSibling ?? (() => {})} />
+    </MemoryRouter>,
+  );
+}
+
 test('shows prev/next arrows and calls onGoToSibling', async () => {
   const user = userEvent.setup();
   const onGoToSibling = vi.fn();
-  render(
-    <MemoryRouter>
-      <CardOverviewModal isOpen card={makeCard('b')} synergies={[]} getPairSynergies={() => null} onClose={() => {}} siblingCardIds={['a', 'b', 'c']} onGoToSibling={onGoToSibling} />
-    </MemoryRouter>,
-  );
+  renderWithSiblings({onGoToSibling});
   await user.click(screen.getByRole('button', {name: /next card/i}));
   expect(onGoToSibling).toHaveBeenCalledWith(1);
   await user.click(screen.getByRole('button', {name: /previous card/i}));
@@ -96,22 +101,14 @@ test('shows prev/next arrows and calls onGoToSibling', async () => {
 });
 
 test('hides arrows when there is one or zero siblings', () => {
-  render(
-    <MemoryRouter>
-      <CardOverviewModal isOpen card={makeCard('b')} synergies={[]} getPairSynergies={() => null} onClose={() => {}} siblingCardIds={['b']} onGoToSibling={() => {}} />
-    </MemoryRouter>,
-  );
+  renderWithSiblings({siblingCardIds: ['b']});
   expect(screen.queryByRole('button', {name: /next card/i})).toBeNull();
 });
 
 test('ArrowRight / ArrowLeft navigate siblings', async () => {
   const user = userEvent.setup();
   const onGoToSibling = vi.fn();
-  render(
-    <MemoryRouter>
-      <CardOverviewModal isOpen card={makeCard('b')} synergies={[]} getPairSynergies={() => null} onClose={() => {}} siblingCardIds={['a', 'b', 'c']} onGoToSibling={onGoToSibling} />
-    </MemoryRouter>,
-  );
+  renderWithSiblings({onGoToSibling});
   screen.getByRole('button', {name: /next card/i}).focus();
   await user.keyboard('{ArrowRight}');
   expect(onGoToSibling).toHaveBeenCalledWith(1);

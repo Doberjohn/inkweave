@@ -87,36 +87,17 @@ const HERO_SCRIM =
 
 // ── Hero Section ──
 
-function PlaystyleHero({
-  name,
-  description,
-  tips,
+function HeroBackdrop({
   accentColor,
   accentRgb,
   coverArt,
-  layout,
-  onPlaystylesBreadcrumb,
 }: {
-  name: string;
-  description: string;
-  tips: string[];
   accentColor: string;
   accentRgb: string;
   coverArt: string;
-  layout: HeroLayout;
-  onPlaystylesBreadcrumb: () => void;
 }) {
-  const [tipsOpen, setTipsOpen] = useState(false);
-
   return (
-    <section
-      style={{
-        position: 'relative',
-        padding: layout.padding,
-        overflow: 'hidden',
-        borderBottom: `1px solid rgba(${accentRgb}, 0.25)`,
-        boxShadow: `0 4px 20px rgba(${accentRgb}, 0.08)`,
-      }}>
+    <>
       {/* Accent bar */}
       <div
         style={{
@@ -154,6 +135,125 @@ function PlaystyleHero({
           pointerEvents: 'none',
         }}
       />
+    </>
+  );
+}
+
+function PlaystyleStrategyTips({
+  tips,
+  accentColor,
+  accentRgb,
+  layout,
+}: {
+  tips: string[];
+  accentColor: string;
+  accentRgb: string;
+  layout: HeroLayout;
+}) {
+  const [tipsOpen, setTipsOpen] = useState(false);
+
+  if (!SHOW_STRATEGY_TIPS || tips.length === 0) return null;
+
+  return (
+    <>
+      <button
+        onClick={() => setTipsOpen(!tipsOpen)}
+        style={{
+          fontSize: `${FONT_SIZES.base}px`,
+          fontWeight: 500,
+          color: COLORS.primary,
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: 0,
+          fontFamily: FONTS.body,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 5,
+          minHeight: layout.tipsMinHeight,
+          transition: 'opacity 0.15s',
+        }}>
+        <span
+          style={{
+            fontSize: `${FONT_SIZES.xs}px`,
+            display: 'inline-block',
+            transform: tipsOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s',
+          }}>
+          &#9654;
+        </span>
+        Strategy Tips
+      </button>
+      {tipsOpen && (
+        <ul
+          style={{
+            listStyle: 'none',
+            padding: `${SPACING.md}px ${SPACING.lg}px`,
+            background: `rgba(${accentRgb}, 0.08)`,
+            borderRadius: `${RADIUS.lg}px`,
+            border: `1px solid rgba(${accentRgb}, 0.15)`,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+            maxWidth: layout.maxDescriptionWidth,
+          }}>
+          {tips.map((tip, i) => (
+            <li
+              key={i}
+              style={{
+                fontSize: `${FONT_SIZES.base}px`,
+                lineHeight: 1.6,
+                color: COLORS.descriptionText,
+                paddingLeft: 16,
+                position: 'relative',
+              }}>
+              <span
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  color: accentColor,
+                  fontWeight: 700,
+                }}>
+                ·
+              </span>
+              {tip}
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
+}
+
+function PlaystyleHero({
+  name,
+  description,
+  tips,
+  accentColor,
+  accentRgb,
+  coverArt,
+  layout,
+  onPlaystylesBreadcrumb,
+}: {
+  name: string;
+  description: string;
+  tips: string[];
+  accentColor: string;
+  accentRgb: string;
+  coverArt: string;
+  layout: HeroLayout;
+  onPlaystylesBreadcrumb: () => void;
+}) {
+  return (
+    <section
+      style={{
+        position: 'relative',
+        padding: layout.padding,
+        overflow: 'hidden',
+        borderBottom: `1px solid rgba(${accentRgb}, 0.25)`,
+        boxShadow: `0 4px 20px rgba(${accentRgb}, 0.08)`,
+      }}>
+      <HeroBackdrop accentColor={accentColor} accentRgb={accentRgb} coverArt={coverArt} />
 
       {/* Content */}
       <div
@@ -228,76 +328,7 @@ function PlaystyleHero({
           {description}
         </p>
 
-        {/* Strategy Tips: collapsible section (hidden when no tips or when flag is off) */}
-        {SHOW_STRATEGY_TIPS && tips.length > 0 && (
-          <>
-            <button
-              onClick={() => setTipsOpen(!tipsOpen)}
-              style={{
-                fontSize: `${FONT_SIZES.base}px`,
-                fontWeight: 500,
-                color: COLORS.primary,
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 0,
-                fontFamily: FONTS.body,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                minHeight: layout.tipsMinHeight,
-                transition: 'opacity 0.15s',
-              }}>
-              <span
-                style={{
-                  fontSize: `${FONT_SIZES.xs}px`,
-                  display: 'inline-block',
-                  transform: tipsOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.2s',
-                }}>
-                &#9654;
-              </span>
-              Strategy Tips
-            </button>
-            {tipsOpen && (
-              <ul
-                style={{
-                  listStyle: 'none',
-                  padding: `${SPACING.md}px ${SPACING.lg}px`,
-                  background: `rgba(${accentRgb}, 0.08)`,
-                  borderRadius: `${RADIUS.lg}px`,
-                  border: `1px solid rgba(${accentRgb}, 0.15)`,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 8,
-                  maxWidth: layout.maxDescriptionWidth,
-                }}>
-                {tips.map((tip, i) => (
-                  <li
-                    key={i}
-                    style={{
-                      fontSize: `${FONT_SIZES.base}px`,
-                      lineHeight: 1.6,
-                      color: COLORS.descriptionText,
-                      paddingLeft: 16,
-                      position: 'relative',
-                    }}>
-                    <span
-                      style={{
-                        position: 'absolute',
-                        left: 0,
-                        color: accentColor,
-                        fontWeight: 700,
-                      }}>
-                      ·
-                    </span>
-                    {tip}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
-        )}
+        <PlaystyleStrategyTips tips={tips} accentColor={accentColor} accentRgb={accentRgb} layout={layout} />
       </div>
     </section>
   );
