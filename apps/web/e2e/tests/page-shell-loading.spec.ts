@@ -81,7 +81,7 @@ test.describe('Page shell + skeleton during card-data loading', () => {
   });
 
   test('InDepthVotePage renders pair + form skeleton while pair data loads', async ({page}) => {
-    await page.goto('/vote/1041/957');
+    await page.goto('/vote/1939/1945');
     await expect(page.getByTestId('compact-header')).toBeVisible({timeout: 3000});
     // Use role+name instead of getByLabel: the <main> landmark with aria-label
     // is more reliably matched via getByRole than getByLabel (Playwright's

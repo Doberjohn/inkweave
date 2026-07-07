@@ -2,11 +2,11 @@ import {test, expect} from '../fixtures';
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Anna - Diplomatic Queen: shift-targets (direct) + discard (playstyle). Discard is large enough
+// Daisy Duck - Musketeer Spy: shift-targets (direct) + discard (playstyle). Discard is large enough
 // to be truncated in the modal's default state, so it renders a "+N more" tile. Group sizes are
 // read from the precomputed synergy data so the fixture survives Set 12+ pool drift.
-const CARD_URL = '/card/1041';
-const CARD_ID = '1041';
+const CARD_URL = '/card/1947';
+const CARD_ID = '1947';
 
 interface SynergyGroup {
   groupKey: string;

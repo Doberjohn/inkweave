@@ -11,12 +11,12 @@ import {RenderProfiler} from '../../../shared/components';
  * stays symmetrical.
  */
 const DEFAULT_FEATURED_IDS = [
-  '13028', // Amber-Emerald: Woody & Buzz Lightyear - Best Buddies
-  '13051', // Amethyst:      Mrs. Incredible - Created by the Vine
-  '13082', // Emerald:       Russell - Junior Wilderness Explorer
-  '13125', // Ruby:          Meilin Lee - Popular Red Panda
-  '13158', // Sapphire:      Maid Marian - Created by the Vine
-  '13197', // Steel:         The Vine - Towering Stalk
+  '2999', // Amber-Emerald: Woody & Buzz Lightyear - Best Buddies
+  '3022', // Amethyst:      Mrs. Incredible - Created by the Vine
+  '3053', // Emerald:       Russell - Junior Wilderness Explorer
+  '3096', // Ruby:          Meilin Lee - Popular Red Panda
+  '3129', // Sapphire:      Maid Marian - Created by the Vine
+  '3168', // Steel:         The Vine - Towering Stalk
 ];
 
 /**

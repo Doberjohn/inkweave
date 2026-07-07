@@ -25,6 +25,9 @@ function makeJsonData(...cardOverrides: Record<string, unknown>[]) {
       color: 'Amber',
       inkwell: true,
       type: 'Character',
+      // Default to a Core-legal set so fetchCardsFromLocal's MIN_CORE_SET filter
+      // keeps these fixtures (override per-test to exercise the filter).
+      setCode: '9',
       ...c,
     })),
   };
@@ -311,7 +314,8 @@ describe('loadCardsFromJSON', () => {
   });
 
   it('should handle cards without setCode or abilities', () => {
-    const cards = loadCardsFromJSON(makeJsonData({}));
+    // Override the makeJsonData Core-set default back to undefined for this case.
+    const cards = loadCardsFromJSON(makeJsonData({setCode: undefined}));
     expect(cards).toHaveLength(1);
     expect(cards[0].setCode).toBeUndefined();
     expect(cards[0].keywords).toBeUndefined();
@@ -472,6 +476,24 @@ describe('fetchCardsFromLocal', () => {
     const result = await fetchCardsFromLocal();
     expect(result.cards).toHaveLength(1);
     expect(result.cards[0].fullName).toBe('Canonical Card');
+  });
+
+  it('should drop cards from sets below the Core rotation floor (MIN_CORE_SET)', async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve(
+            makeJsonData(
+              {id: 1, name: 'Core', fullName: 'Core Card', setCode: '9'},
+              {id: 2, name: 'Rotated', fullName: 'Rotated Card', setCode: '5'},
+            ),
+          ),
+      })
+      .mockResolvedValueOnce({ok: false, status: 404});
+
+    const result = await fetchCardsFromLocal();
+    expect(result.cards.map((c) => c.fullName)).toEqual(['Core Card']);
   });
 
   it('should merge sets from both files', async () => {

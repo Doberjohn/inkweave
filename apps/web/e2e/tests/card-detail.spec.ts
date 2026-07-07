@@ -2,10 +2,11 @@ import {test, expect} from '../fixtures';
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Card 1102 has a large 'ramp' synergy group, so it is truncated in the modal's default view and
-// renders a "+N more" tile — the precondition for one-clicking through to the fully-expanded
-// ExpandedGroupView. Group size is read from the precomputed data so the fixture survives pool drift.
-const EXPAND_CARD_ID = '1102';
+// Card 2095 (Winnie the Pooh - Having a Think) has a large 'ramp' synergy group, so it is truncated
+// in the modal's default view and renders a "+N more" tile — the precondition for one-clicking
+// through to the fully-expanded ExpandedGroupView. Group size is read from the precomputed data so
+// the fixture survives pool drift.
+const EXPAND_CARD_ID = '2095';
 const EXPAND_GROUP = 'ramp';
 interface E2ESynergyGroup {
   groupKey: string;
@@ -65,9 +66,9 @@ test.describe('Card Detail (modal)', () => {
   });
 
   test('should open the modal when deep-linking to /card/:id', async ({appPage, page}) => {
-    // Card IDs start at 957 in the dataset. CardPage opens the modal globally and redirects
+    // A valid card id from the Core pool. CardPage opens the modal globally and redirects
     // the URL to `/`, so closing the modal lands on the home page.
-    await page.goto('/card/957');
+    await page.goto('/card/1936');
 
     await expect(appPage.cardOverviewModal).toBeVisible({timeout: 10000});
     await expect(page).toHaveURL('/');
@@ -95,8 +96,8 @@ test.describe('Card Detail (modal)', () => {
   });
 
   test('should show the empty state for a card with no synergies', async ({appPage, page}) => {
-    // Card 957 (Koda) has no precomputed synergy file — the modal renders its empty state.
-    await page.goto('/card/957');
+    // Card 1936 (Bruno Madrigal - Undetected Uncle) has no precomputed synergy file — the modal renders its empty state.
+    await page.goto('/card/1936');
 
     await expect(appPage.cardOverviewModal).toBeVisible({timeout: 10000});
     await expect(appPage.cardOverviewModal.getByTestId('card-overview-empty')).toBeVisible({
