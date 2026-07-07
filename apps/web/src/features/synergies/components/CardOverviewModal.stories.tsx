@@ -163,3 +163,35 @@ export const ComparisonMode: Story = {
     ),
   ],
 };
+
+export const LargeGroupShowAll: Story = {
+  args: {
+    synergies: [
+      {
+        groupKey: 'singer-songs',
+        category: 'playstyle',
+        label: 'Singer + Songs',
+        tagline: 'A large group to exercise Show More.',
+        description: 'Click More twice to reach the full expanded view.',
+        synergies: Array.from({length: 24}, (_, i) => ({
+          card: {...annaSister, id: `song-${i}`, fullName: `Song ${i} - Test`, name: `Song ${i}`},
+          score: 5,
+          explanation: `Synergy ${i}`,
+        })),
+      },
+    ],
+  },
+  decorators: [
+    // Renders a large group whose More tile a human can click twice (manual, no play function)
+    // to reach the full ExpandedGroupView, which uses useCardDataContext() for its filter
+    // toolbar — no CardModalProvider needed here (that's only for useCardModal consumers like
+    // CommunityColumn in ComparisonMode).
+    (Story) => (
+      <MemoryRouter>
+        <CardDataProvider>
+          <Story />
+        </CardDataProvider>
+      </MemoryRouter>
+    ),
+  ],
+};

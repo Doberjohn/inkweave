@@ -6,6 +6,7 @@ import {SynergyGroup} from './SynergyGroup';
 import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';
 import {MobileComparisonView, type ComparisonOriginRects} from './MobileComparisonView';
+import {ExpandedGroupView} from './ExpandedGroupView';
 import {CardImage, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
@@ -69,6 +70,7 @@ interface ModalState {
   visible: boolean;
   onTransitionEnd: () => void;
   activeGroupFilter: string | null;
+  expandedGroupKey: string | null;
   comparisonPair: DetailedPairSynergy | null;
   /**
    * The pair held during the exit animation (#332 #7). When the user clicks BACK,
@@ -86,6 +88,7 @@ interface ModalState {
   exitComparison: () => void;
   toggleChip: (key: string) => void;
   handleShowAll: (groupKey: string) => void;
+  handleBackToAll: () => void;
   handleSynergyCardClick: (clickedCard: LorcanaCard, groupKey?: string) => void;
 }
 
@@ -103,6 +106,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   const {visible, onTransitionEnd} = useTransitionPresence(isOpen);
 
   const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
+  const [expandedGroupKey, setExpandedGroupKey] = useState<string | null>(null);
   const [comparisonPair, setComparisonPair] = useState<DetailedPairSynergy | null>(null);
   const [highlightedCard, setHighlightedCard] = useState<'a' | 'b' | null>(null);
   // Exit-animation state (#332 #7). When the user clicks BACK, `comparisonPair` becomes null
@@ -154,6 +158,8 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
     setComparisonPair,
     setExitingPair,
     setHighlightedCard,
+    setActiveGroupFilter,
+    setExpandedGroupKey,
   });
 
   const visibleGroups = buildVisibleGroups(props.synergies, activeGroupFilter);
@@ -193,7 +199,16 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
 
   const handleShowAll = (groupKey: string) => {
     trackEvent('synergy_group_viewed', {sourceCardId: props.card.id, groupKey, action: 'show_all'});
-    setActiveGroupFilter(groupKey);
+    if (activeGroupFilter === groupKey) {
+      setExpandedGroupKey(groupKey); // second click on an already-isolated group: full view
+    } else {
+      setActiveGroupFilter(groupKey); // first click: isolate the group (11 + More)
+    }
+  };
+
+  const handleBackToAll = () => {
+    setExpandedGroupKey(null);
+    setActiveGroupFilter(null);
   };
 
   const handleSynergyCardClick = (clickedCard: LorcanaCard, groupKey?: string) => {
@@ -204,6 +219,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
       clickedCardInk: clickedCard.ink,
       groupKey: groupKey ?? null,
     });
+    setExpandedGroupKey(null);
     // If the user re-clicks a tile mid-exit, cancel the pending unmount so the new entry's
     // FLIP doesn't race against the old exit's transform style on the same compareCardRef.
     cancelPendingExit();
@@ -227,6 +243,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
     visible,
     onTransitionEnd,
     activeGroupFilter,
+    expandedGroupKey,
     comparisonPair,
     exitingPair,
     comparisonOrigin,
@@ -238,6 +255,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
     exitComparison,
     toggleChip,
     handleShowAll,
+    handleBackToAll,
     handleSynergyCardClick,
   };
 }
@@ -271,6 +289,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
     visible,
     onTransitionEnd,
     activeGroupFilter,
+    expandedGroupKey,
     comparisonPair,
     exitingPair,
     comparisonOrigin,
@@ -282,6 +301,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
     exitComparison,
     toggleChip,
     handleShowAll,
+    handleBackToAll,
     handleSynergyCardClick,
   } = useCardOverviewModalState(props);
   const {mounted} = useTransitionPresence(isOpen);
@@ -296,6 +316,8 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
   const cardWidth = isMobile ? 240 : 337;
   const cardHeight = Math.round((cardWidth * 368) / 264);
   const dataMode = inComparison ? 'comparison' : 'default';
+  const expandedGroup = expandedGroupKey ? (synergies.find((g) => g.groupKey === expandedGroupKey) ?? null) : null;
+  const showExpanded = !!expandedGroup && !inComparison;
 
   return (
     <RenderProfiler id="CardOverviewModal">
@@ -310,7 +332,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
             aria-modal="true"
             aria-label={`${card.fullName} synergies`}
             data-testid="card-overview-modal"
-            data-state={activeGroupFilter ? 'focused' : 'default'}
+            data-state={showExpanded ? 'expanded' : activeGroupFilter ? 'focused' : 'default'}
             data-mode={dataMode}
             data-highlighted={highlightedCard ?? undefined}
             onKeyDown={handleModalKeyDown}
@@ -324,34 +346,47 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               onClose={onClose}
               exitComparison={exitComparison}
             />
-            <ChipFilterRow
-              synergies={synergies}
-              inComparison={inComparison}
-              activeGroupFilter={activeGroupFilter}
-              toggleChip={toggleChip}
-            />
-            <HeroDivider hasSynergies={synergies.length > 0} inComparison={inComparison} />
-            <ModalBody>
-              <MobileOrDesktopBody
-                isMobile={isMobile}
-                card={card}
-                cardWidth={cardWidth}
-                cardHeight={cardHeight}
-                synergies={synergies}
-                synergiesLoading={synergiesLoading}
-                visibleGroups={visibleGroups}
-                activeGroupFilter={activeGroupFilter}
-                comparisonPair={comparisonPair}
-                exitingPair={exitingPair}
-                comparisonOrigin={comparisonOrigin}
-                highlightedCard={highlightedCard}
-                inComparison={inComparison}
-                compareCardRef={compareCardRef}
-                onShowAll={handleShowAll}
-                onCardClick={handleSynergyCardClick}
-                setHighlightedCard={setHighlightedCard}
-              />
-            </ModalBody>
+            {showExpanded ? (
+              <div style={{flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 24px 24px'}}>
+                <ExpandedGroupView
+                  group={expandedGroup}
+                  isMobile={isMobile}
+                  onBackToAll={handleBackToAll}
+                  onCardClick={handleSynergyCardClick}
+                />
+              </div>
+            ) : (
+              <>
+                <ChipFilterRow
+                  synergies={synergies}
+                  inComparison={inComparison}
+                  activeGroupFilter={activeGroupFilter}
+                  toggleChip={toggleChip}
+                />
+                <HeroDivider hasSynergies={synergies.length > 0} inComparison={inComparison} />
+                <ModalBody>
+                  <MobileOrDesktopBody
+                    isMobile={isMobile}
+                    card={card}
+                    cardWidth={cardWidth}
+                    cardHeight={cardHeight}
+                    synergies={synergies}
+                    synergiesLoading={synergiesLoading}
+                    visibleGroups={visibleGroups}
+                    activeGroupFilter={activeGroupFilter}
+                    comparisonPair={comparisonPair}
+                    exitingPair={exitingPair}
+                    comparisonOrigin={comparisonOrigin}
+                    highlightedCard={highlightedCard}
+                    inComparison={inComparison}
+                    compareCardRef={compareCardRef}
+                    onShowAll={handleShowAll}
+                    onCardClick={handleSynergyCardClick}
+                    setHighlightedCard={setHighlightedCard}
+                  />
+                </ModalBody>
+              </>
+            )}
           </div>
         </div>
       </>
@@ -370,6 +405,8 @@ interface ResetInput {
    *  or modal-close boundaries (would otherwise render stale Card B on top of new state). */
   setExitingPair: (p: DetailedPairSynergy | null) => void;
   setHighlightedCard: (c: 'a' | 'b' | null) => void;
+  setActiveGroupFilter: (v: string | null) => void;
+  setExpandedGroupKey: (v: string | null) => void;
 }
 
 /**
@@ -378,13 +415,15 @@ interface ResetInput {
  * state if they differ. Mirrors the cascading-render-warning workaround used elsewhere in the
  * codebase (avoids setState-in-effect).
  */
-function useComparisonStateResets({card, isOpen, initialComparison, setComparisonPair, setExitingPair, setHighlightedCard}: ResetInput) {
+function useComparisonStateResets({card, isOpen, initialComparison, setComparisonPair, setExitingPair, setHighlightedCard, setActiveGroupFilter, setExpandedGroupKey}: ResetInput) {
   const [prevCardId, setPrevCardId] = useState(card.id);
   if (card.id !== prevCardId) {
     setPrevCardId(card.id);
     setComparisonPair(null);
     setExitingPair(null);
     setHighlightedCard(null);
+    setActiveGroupFilter(null);
+    setExpandedGroupKey(null);
   }
 
   const [adoptedInitialId, setAdoptedInitialId] = useState<string | null>(null);
