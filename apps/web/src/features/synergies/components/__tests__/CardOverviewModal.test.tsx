@@ -1,5 +1,5 @@
 import {render, screen} from '@testing-library/react';
-import {test, expect} from 'vitest';
+import {test, expect, vi} from 'vitest';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
@@ -79,4 +79,42 @@ test('changing the card resets the expanded view', async () => {
   rerender(tree(makeCard('other')));
   expect(screen.queryByText(/back to all synergies/i)).toBeNull();
   expect(screen.getByRole('button', {name: /more/i})).toBeVisible();
+});
+
+test('shows prev/next arrows and calls onGoToSibling', async () => {
+  const user = userEvent.setup();
+  const onGoToSibling = vi.fn();
+  render(
+    <MemoryRouter>
+      <CardOverviewModal isOpen card={makeCard('b')} synergies={[]} getPairSynergies={() => null} onClose={() => {}} siblingCardIds={['a', 'b', 'c']} onGoToSibling={onGoToSibling} />
+    </MemoryRouter>,
+  );
+  await user.click(screen.getByRole('button', {name: /next card/i}));
+  expect(onGoToSibling).toHaveBeenCalledWith(1);
+  await user.click(screen.getByRole('button', {name: /previous card/i}));
+  expect(onGoToSibling).toHaveBeenCalledWith(-1);
+});
+
+test('hides arrows when there is one or zero siblings', () => {
+  render(
+    <MemoryRouter>
+      <CardOverviewModal isOpen card={makeCard('b')} synergies={[]} getPairSynergies={() => null} onClose={() => {}} siblingCardIds={['b']} onGoToSibling={() => {}} />
+    </MemoryRouter>,
+  );
+  expect(screen.queryByRole('button', {name: /next card/i})).toBeNull();
+});
+
+test('ArrowRight / ArrowLeft navigate siblings', async () => {
+  const user = userEvent.setup();
+  const onGoToSibling = vi.fn();
+  render(
+    <MemoryRouter>
+      <CardOverviewModal isOpen card={makeCard('b')} synergies={[]} getPairSynergies={() => null} onClose={() => {}} siblingCardIds={['a', 'b', 'c']} onGoToSibling={onGoToSibling} />
+    </MemoryRouter>,
+  );
+  screen.getByRole('button', {name: /next card/i}).focus();
+  await user.keyboard('{ArrowRight}');
+  expect(onGoToSibling).toHaveBeenCalledWith(1);
+  await user.keyboard('{ArrowLeft}');
+  expect(onGoToSibling).toHaveBeenCalledWith(-1);
 });

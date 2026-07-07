@@ -283,6 +283,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
  */
 export function CardOverviewModal(props: CardOverviewModalProps) {
   const {isOpen, card, synergies, synergiesLoading = false, onClose, isMobile = false, hideBackButton = false} = props;
+  const {siblingCardIds = [], onGoToSibling} = props;
   const {
     modalRef,
     compareCardRef,
@@ -318,6 +319,21 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
   const dataMode = inComparison ? 'comparison' : 'default';
   const expandedGroup = expandedGroupKey ? (synergies.find((g) => g.groupKey === expandedGroupKey) ?? null) : null;
   const showExpanded = !!expandedGroup && !inComparison;
+  const showSiblingNav = siblingCardIds.length > 1 && !inComparison && !showExpanded;
+
+  const handleShellKeyDown = (e: React.KeyboardEvent) => {
+    if (showSiblingNav && !isTextEntryTarget(e.target)) {
+      if (e.key === 'ArrowLeft') {
+        onGoToSibling?.(-1);
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        onGoToSibling?.(1);
+        return;
+      }
+    }
+    handleModalKeyDown(e);
+  };
 
   return (
     <RenderProfiler id="CardOverviewModal">
@@ -335,9 +351,12 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
             data-state={showExpanded ? 'expanded' : activeGroupFilter ? 'focused' : 'default'}
             data-mode={dataMode}
             data-highlighted={highlightedCard ?? undefined}
-            onKeyDown={handleModalKeyDown}
+            onKeyDown={handleShellKeyDown}
             onTransitionEnd={onTransitionEnd}
             style={pickModalShellStyle(isMobile)}>
+            {showSiblingNav && (
+              <SiblingNavButtons onPrev={() => onGoToSibling?.(-1)} onNext={() => onGoToSibling?.(1)} />
+            )}
             <ModalHeader
               card={card}
               isMobile={isMobile}
@@ -391,6 +410,49 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
         </div>
       </>
     </RenderProfiler>
+  );
+}
+
+/** Guards arrow-key sibling navigation from firing while the user is typing in an input. */
+function isTextEntryTarget(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null;
+  if (!el) return false;
+  const tag = el.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable;
+}
+
+const SIBLING_BTN_BASE: React.CSSProperties = {
+  position: 'absolute',
+  top: '50%',
+  transform: 'translateY(-50%)',
+  zIndex: 3,
+  width: 40,
+  height: 40,
+  borderRadius: '50%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: 'rgba(26, 26, 46, 0.85)',
+  border: `1px solid ${COLORS.surfaceBorder}`,
+  color: COLORS.primary,
+  cursor: 'pointer',
+  pointerEvents: 'auto',
+};
+
+function SiblingNavButtons({onPrev, onNext}: {onPrev: () => void; onNext: () => void}) {
+  return (
+    <>
+      <button type="button" aria-label="Previous card" onClick={onPrev} style={{...SIBLING_BTN_BASE, left: 8}}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      <button type="button" aria-label="Next card" onClick={onNext} style={{...SIBLING_BTN_BASE, right: 8}}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+    </>
   );
 }
 

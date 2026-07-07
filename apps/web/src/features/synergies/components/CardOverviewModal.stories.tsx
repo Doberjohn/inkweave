@@ -141,6 +141,13 @@ export const Default: Story = {
   // Default mode renders only presentational children (no Router / CardModalContext deps).
 };
 
+export const WithSiblingNavigation: Story = {
+  args: {
+    siblingCardIds: ['a', cardA.id, 'c'],
+    onGoToSibling: fn(),
+  },
+};
+
 export const Mobile: Story = {
   args: {isMobile: true},
   parameters: {viewport: {defaultViewport: 'mobile1'}},
