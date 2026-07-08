@@ -90,6 +90,8 @@ export interface DeckStats {
   isLegal: boolean;
   /** Human-readable reasons the deck fails legality; empty when `isLegal`. */
   legalityErrors: string[];
+  /** Non-blocking notes that don't affect legality (e.g. cardIds that no longer resolve — likely rotated out of Core). */
+  warnings?: string[];
 }
 
 // ---------------------------------------------------------------------------

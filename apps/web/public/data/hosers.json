@@ -1,0 +1,302 @@
+[
+  {
+    "cardId": "1941",
+    "name": "Minnie Mouse - Sweetheart Princess",
+    "ink": "Amber",
+    "condition": {
+      "type": "high-cost",
+      "threshold": 5
+    },
+    "scope": "conditional",
+    "text": "ROYAL FAVOR Your characters named Mickey Mouse\ngain Support. (Whenever they quest, you may add their\n¤ to another chosen character's ¤ this turn.)\nBYE BYE, NOW Whenever this character quests,\nyou may banish chosen exerted character with 5 ¤\nor more."
+  },
+  {
+    "cardId": "1966",
+    "name": "World's Greatest Criminal Mind",
+    "ink": "Amber",
+    "condition": {
+      "type": "high-cost",
+      "threshold": 5
+    },
+    "scope": "conditional",
+    "text": "(A character with cost 3 or more can ⟳ to sing this\nsong for free.)\nBanish chosen character with 5 ¤ or more."
+  },
+  {
+    "cardId": "2009",
+    "name": "Prince Phillip - Vanquisher of Foes",
+    "ink": "Emerald",
+    "condition": {
+      "type": "damaged"
+    },
+    "scope": "conditional",
+    "text": "Shift 6 ⬡ (You may pay 6 ⬡ to play this on top of one of\nyour characters named Prince Phillip.)\nEvasive (Only characters with Evasive can challenge this\ncharacter.)\nSWIFT AND SURE When you play this character, banish all\nopposing damaged characters."
+  },
+  {
+    "cardId": "2034",
+    "name": "Make the Potion",
+    "ink": "Emerald",
+    "condition": {
+      "type": "damaged"
+    },
+    "scope": "conditional",
+    "text": "Choose one:\n• Banish chosen item.\n• Deal 2 damage to chosen damaged character."
+  },
+  {
+    "cardId": "2055",
+    "name": "Sisu - Daring Visitor",
+    "ink": "Ruby",
+    "condition": {
+      "type": "low-strength",
+      "threshold": 1
+    },
+    "scope": "conditional",
+    "text": "Evasive (Only characters with Evasive can challenge\nthis character.)\nBRING ON THE HEAT! When you play this character,\nbanish chosen opposing character with 1 ¤ or less."
+  },
+  {
+    "cardId": "2124",
+    "name": "Tinker Bell - Giant Fairy",
+    "ink": "Steel",
+    "condition": {
+      "type": "mass"
+    },
+    "scope": "mass",
+    "text": "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of\nyour characters named Tinker Bell.)\nROCK THE BOAT When you play this character, deal 1\ndamage to each opposing character.\nPUNY PIRATE! During your turn, whenever this character\nbanishes another character in a challenge, you may deal 2\ndamage to chosen opposing character."
+  },
+  {
+    "cardId": "2138",
+    "name": "The Mob Song",
+    "ink": "Steel",
+    "condition": {
+      "type": "mass"
+    },
+    "scope": "mass",
+    "text": "Sing Together 10 (Any number of your or your\nteammates' characters with total cost 10 or more may\n⟳ to sing this song for free.)\nDeal 3 damage to up to 3 chosen characters and/or\nlocations."
+  },
+  {
+    "cardId": "2218",
+    "name": "The Horseman Strikes!",
+    "ink": "Amber",
+    "condition": {
+      "type": "evasive"
+    },
+    "scope": "conditional",
+    "text": "Draw a card. You may banish chosen character\nwith Evasive."
+  },
+  {
+    "cardId": "2263",
+    "name": "Finnick - Tiny Terror",
+    "ink": "Emerald",
+    "condition": {
+      "type": "low-strength",
+      "threshold": 2
+    },
+    "scope": "conditional",
+    "text": "YOU BETTER RUN When you play this character,\nyou may pay 2 ⬡ to return chosen opposing\ncharacter with 2 ¤ or less to their player's hand."
+  },
+  {
+    "cardId": "2266",
+    "name": "Jetsam - Opportunistic Eel",
+    "ink": "Emerald",
+    "condition": {
+      "type": "damaged"
+    },
+    "scope": "conditional",
+    "text": "AMBUSH FROM THE DEEP When you play this\ncharacter, deal 3 damage to chosen opposing\ndamaged character."
+  },
+  {
+    "cardId": "2277",
+    "name": "Shere Khan - Fearsome Tiger",
+    "ink": "Emerald",
+    "condition": {
+      "type": "damaged"
+    },
+    "scope": "conditional",
+    "text": "Evasive (Only characters with Evasive can\nchallenge this character.)\nON THE HUNT Whenever this character quests,\nbanish chosen opposing damaged character.\nThen, you may put 1 damage counter on another\nchosen character."
+  },
+  {
+    "cardId": "2285",
+    "name": "Chomp!",
+    "ink": "Emerald",
+    "condition": {
+      "type": "damaged"
+    },
+    "scope": "conditional",
+    "text": "Deal 2 damage to chosen damaged character."
+  },
+  {
+    "cardId": "2314",
+    "name": "The Headless Horseman - Terror of Sleepy Hollow",
+    "ink": "Ruby",
+    "condition": {
+      "type": "low-strength",
+      "threshold": 2
+    },
+    "scope": "conditional",
+    "text": "LEAVES NO TRACE When you play this character,\nbanish chosen opposing character with 2 ¤ or less.\nGATHERING STRENGTH During your turn, whenever\nan opposing character is banished, each of your\ncharacters gets +1 ¤ this turn."
+  },
+  {
+    "cardId": "2360",
+    "name": "Robin Hood - Ephemeral Archer",
+    "ink": "Steel",
+    "condition": {
+      "type": "mass"
+    },
+    "scope": "mass",
+    "text": "Boost 1 ⬡ (Once during your turn, you may pay 1 ⬡\nto put the top card of your deck facedown under this\ncharacter.)\nEXPERT SHOT Whenever this character quests, if\nthere's a card under him, deal 1 damage to up to 2\nchosen characters."
+  },
+  {
+    "cardId": "2491",
+    "name": "Raging Storm",
+    "ink": "Amber",
+    "condition": {
+      "type": "mass"
+    },
+    "scope": "mass",
+    "text": "Banish all characters."
+  },
+  {
+    "cardId": "2560",
+    "name": "Education or Elimination",
+    "ink": "Emerald",
+    "condition": {
+      "type": "damaged"
+    },
+    "scope": "conditional",
+    "text": "(A character with cost 4 or more can ⟳ to sing this song\nfor free.)\nChoose one:\n• Draw a card. Chosen character of yours gets +1 ◊ and gains\nEvasive until the start of your next turn. (Only characters\nwith Evasive can challenge them.)\n• Banish chosen damaged character."
+  },
+  {
+    "cardId": "2564",
+    "name": "Battering Ram",
+    "ink": "Emerald",
+    "condition": {
+      "type": "damaged"
+    },
+    "scope": "conditional",
+    "text": "FULL FORCE ⟳ — Deal 1 damage to chosen damaged\ncharacter.\nBREAK THROUGH ⟳, Banish this item — Banish chosen\nlocation."
+  },
+  {
+    "cardId": "2566",
+    "name": "Wreck-It Ralph - Raging Wrecker",
+    "ink": "Ruby",
+    "condition": {
+      "type": "mass"
+    },
+    "scope": "mass",
+    "text": "Boost 1 ⬡ (Once during your turn, you may pay 1 ⬡ to put\nthe top card of your deck facedown under this character.)\nPOWERED UP This character gets +1 ¤ for each card\nunder him.\nWHO'S COMIN' WITH ME? When this character is banished,\nbanish all characters with ¤ equal to or less than the ¤\nhe had in play."
+  },
+  {
+    "cardId": "2594",
+    "name": "Grab Your Bow",
+    "ink": "Ruby",
+    "condition": {
+      "type": "low-strength",
+      "threshold": 2
+    },
+    "scope": "conditional",
+    "text": "(A character with cost 5 or more can ⟳ to sing this\nsong for free.)\nBanish up to 2 chosen characters with 2 ¤ or less."
+  },
+  {
+    "cardId": "2793",
+    "name": "Lord MacGuffin - Clever Swordsman",
+    "ink": "Emerald",
+    "condition": {
+      "type": "damaged"
+    },
+    "scope": "conditional",
+    "text": "WAIT FOR IT... This character may enter play\nexerted to deal 3 damage to chosen damaged\ncharacter."
+  },
+  {
+    "cardId": "2800",
+    "name": "Buzz Lightyear - On the Way",
+    "ink": "Emerald",
+    "condition": {
+      "type": "damaged"
+    },
+    "scope": "conditional",
+    "text": "SECRET MISSION Whenever you pay 2 ⬡ or less\nto play a non-character, draw a card, then choose\nand discard a card.\nWORLD'S GREATEST TOY Whenever you pay 2 ⬡\nor less to play a character, deal 1 damage to\nchosen opposing damaged character."
+  },
+  {
+    "cardId": "2807",
+    "name": "Cruella De Vil - Judgmental Traveler",
+    "ink": "Emerald",
+    "condition": {
+      "type": "damaged"
+    },
+    "scope": "conditional",
+    "text": "YOU'RE OUT OF FASHION Whenever this character\nquests, if you played another character this turn,\nyou may banish chosen damaged character."
+  },
+  {
+    "cardId": "2845",
+    "name": "Firefly Swarm",
+    "ink": "Ruby",
+    "condition": {
+      "type": "low-strength",
+      "threshold": 2
+    },
+    "scope": "conditional",
+    "text": "Choose one:\n• Banish chosen character with 2 ¤ or less.\n• If 2 or more other cards were put into your discard\nthis turn, banish chosen character."
+  },
+  {
+    "cardId": "2909",
+    "name": "Fergus - Outpost Builder",
+    "ink": "Steel",
+    "condition": {
+      "type": "low-strength",
+      "threshold": 4
+    },
+    "scope": "conditional",
+    "text": "JUST THE SPOT During your turn, whenever this\ncharacter becomes exerted, you may play a location\nfrom your hand or discard with cost 4 or less for free.\nHOLD FAST While this character is at a location,\nwhenever a location is challenged and banished, you\nmay deal 4 damage to chosen character."
+  },
+  {
+    "cardId": "2986",
+    "name": "Gaston - Superior Archer",
+    "ink": "Amber",
+    "condition": {
+      "type": "high-cost",
+      "threshold": 5
+    },
+    "scope": "conditional",
+    "text": "WATCH THIS! When you play this character, you\nmay banish chosen character with 5 ¤ or more."
+  },
+  {
+    "cardId": "3072",
+    "name": "To Wither a Flower",
+    "ink": "Emerald",
+    "condition": {
+      "type": "damaged"
+    },
+    "scope": "conditional",
+    "text": "(A character with cost 4 or more can ⟳ to sing this\nsong for free.)\nDeal 2 damage to each opposing damaged character."
+  },
+  {
+    "cardId": "3106",
+    "name": "Red Alert",
+    "ink": "Ruby",
+    "condition": {
+      "type": "low-strength",
+      "threshold": 3
+    },
+    "scope": "conditional",
+    "text": "Banish chosen character with 3 ¤ or less. If you have\na Monster character in play, chosen opponent loses\n1 lore."
+  },
+  {
+    "cardId": "3168",
+    "name": "The Vine - Towering Stalk",
+    "ink": "Steel",
+    "condition": {
+      "type": "mass"
+    },
+    "scope": "mass",
+    "text": "Floodborn Shift 7 ⬡ (You may pay 7 ⬡ to play this on top\nof one of your Floodborn characters.)\nSATURATE Your other exerted Floodborn characters gain\nBodyguard.\nHOSTILE SWARM During an opponent's turn, whenever one\nof your Floodborn characters is banished, deal 1 damage to\neach opposing character."
+  },
+  {
+    "cardId": "3174",
+    "name": "Windstorm",
+    "ink": "Steel",
+    "condition": {
+      "type": "evasive"
+    },
+    "scope": "conditional",
+    "text": "Deal 1 damage to each opposing character and location.\nThen, deal 2 damage to each opposing character with\nEvasive and each opposing location with Evasive."
+  }
+]

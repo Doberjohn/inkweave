@@ -1,0 +1,22 @@
+{
+  "version": "score-v1",
+  "weights": {
+    "curve": 0.12,
+    "inkable": 0.1,
+    "draw": 0.1,
+    "removal": 0.12,
+    "actionsCap": 0.06,
+    "typeMix": 0.06,
+    "ruleOfEight": 0.08,
+    "consistency": 0.1,
+    "lore": 0.08,
+    "shiftCoverage": 0.04,
+    "synergyDensity": 0.14
+  },
+  "vulnerabilityPenalty": {
+    "high": 8,
+    "medium": 4,
+    "low": 1
+  },
+  "vulnerabilityPenaltyCap": 20
+}
