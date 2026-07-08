@@ -10,7 +10,7 @@ import {RenderProfiler} from '../../../shared/components';
  * empty. Recommend keeping exactly 6 IDs so the desktop 6-col / mobile 3×2 grid
  * stays symmetrical.
  */
-const DEFAULT_FEATURED_IDS = [
+export const DEFAULT_FEATURED_IDS = [
   '2999', // Amber-Emerald: Woody & Buzz Lightyear - Best Buddies
   '3022', // Amethyst:      Mrs. Incredible - Created by the Vine
   '3053', // Emerald:       Russell - Junior Wilderness Explorer

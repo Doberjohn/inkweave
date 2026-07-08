@@ -35,7 +35,7 @@ export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
   sacrifice: makeUiMeta('#ef4444', 'mechanic', '2841'), // Sid Phillips - Toy Surgeon (Ruby)
   items: makeUiMeta('#0ea5e9', 'mechanic', '2860'), // Gadget Hackwrench - Resourceful Mechanic (Sapphire)
   healing: makeUiMeta('#3b82f6', 'mechanic', '2086'), // Grand Pabbie - Oldest and Wisest (Sapphire)
-  exert: makeUiMeta('#8b5cf6', 'mechanic', '1004'), // Elsa - The Fifth Spirit (Amethyst)
+  exert: makeUiMeta('#8b5cf6', 'mechanic', '2244'), // Demona - Scourge of the Wyvern Clan (Amethyst)
   bounce: makeUiMeta('#8b5cf6', 'mechanic', '2500'), // Tigger - Bouncing All the Way (Amethyst)
   // Tribes
   toy: makeUiMeta('#f59e0b', 'tribe', '2730'), // Woody - Jungle Guide (Amber)
@@ -44,10 +44,10 @@ export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
   hunny: makeUiMeta('#8b5cf6', 'tribe', '1977'), // Winnie the Pooh - Hunny Wizard (Amethyst)
   'red-panda': makeUiMeta('#ef4444', 'tribe', '3096'), // Meilin Lee - Popular Red Panda (Ruby)
   monster: makeUiMeta('#f59e0b', 'tribe', '2995'), // Sulley - The New Boss (Amber)
-  princess: makeUiMeta('#10b981', 'tribe', '1283'), // Jasmine - Royal Commodore (Emerald)
-  hero: makeUiMeta('#6b7280', 'tribe', '1863'), // Mickey Mouse - Giant Mouse (Steel)
+  princess: makeUiMeta('#10b981', 'tribe', '2532'), // Mulan - Resourceful Recruit (Emerald)
+  hero: makeUiMeta('#6b7280', 'tribe', '2655'), // Darkwing Duck - Cool Under Pressure (Steel)
   super: makeUiMeta('#8b5cf6', 'tribe', '2774'), // Frozone - Super Cool (Amethyst)
-  royalty: makeUiMeta('#8b5cf6', 'tribe', '991'), // Maleficent - Formidable Queen (Amethyst)
+  royalty: makeUiMeta('#8b5cf6', 'tribe', '1979'), // Elsa - Spirit of Winter (Amethyst)
   detective: makeUiMeta('#3b82f6', 'tribe', '2345'), // Judy Hopps - Uncovering Clues (Sapphire)
 };
 
