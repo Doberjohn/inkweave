@@ -2,6 +2,22 @@
 
 Lorcana synergy finder for Core format with archetype-based synergy detection.
 
+## Active Epic: Deck Builder & Engine Score (milestone #3)
+
+The flagship multi-session initiative. **Read these before starting any deck-builder work:**
+- **Plan (source of truth)**: [`docs/deck-builder/PLAN.md`](docs/deck-builder/PLAN.md) — full design + rationale (8 phases, E0–E7).
+- **Progress**: milestone #3 → `gh issue list --milestone "Deck Builder & Engine Score" --state all`. Epics #450–#457; Phase-0/1 tasks #458–#473.
+- **Session Handoff Log**: pinned issue **#474** — the running ledger. **Append an entry every session** (shipped / decisions / gotchas / in-progress / next); read the latest entry at session start.
+- **Working location**: the MAIN checkout on branch `claude/inkweave-deck-builder-af3e5b`. The `.claude/worktrees/unruffled-bun-a123c3` folder is empty scratch — do not work there.
+
+**Golden rules for this epic:**
+1. Deck-level synergy uses the **precomputed pairs JSON** (`pairs[id].aggregateScore`), NOT the live engine — lazy-import the engine only for hypothetical/preview cards.
+2. The advisor is **pool-driven + archetype-parameterized** — detect roles from card text/keywords, **never hardcode card names** (Core rotates).
+3. The Deck Quality Score is a **transparent weighted formula + case library**, never ML.
+4. Meta/matchups are **deferred** until the user's Set-13 data exists (Phase 6).
+
+**Session ritual** (lean on existing skills): _start_ → read the plan + the latest #474 entry, `gh issue list --milestone` to pick the next unblocked task, then `/implement-issue <num>`. _End / any pause_ → commit (WIP if incomplete), append a #474 entry, write memory for durable gotchas, comment implementation notes on touched issues, then `/close-session`.
+
 ## MVP Status
 
 Currently implementing v1.0.0 with:
