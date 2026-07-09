@@ -2,14 +2,19 @@ import {describe, it, expect, beforeEach, afterEach, vi} from 'vitest';
 import {renderHook, act} from '@testing-library/react';
 import type {ReactNode} from 'react';
 import {DeckProvider, useDeck} from './DeckContext';
-import {readDraft} from './deckStorage';
+import {readDraft, writeDraft} from './deckStorage';
 import {createCard} from '../../../shared/test-utils';
-import type {LorcanaCard} from '../types';
+import type {Deck, LorcanaCard} from '../types';
 
-// DeckProvider only needs `getCardById`; inject fixtures instead of loading the DB.
+// DeckProvider needs `getCardById` + `isLoading`; inject fixtures instead of loading the DB.
+// `mockCtl.loading` lets a test simulate the card DB still fetching (getCardById -> undefined).
 const fixtureCards = vi.hoisted(() => new Map<string, LorcanaCard>());
+const mockCtl = vi.hoisted(() => ({loading: false}));
 vi.mock('../../../shared/contexts/CardDataContext', () => ({
-  useCardDataContext: () => ({getCardById: (id: string) => fixtureCards.get(id)}),
+  useCardDataContext: () => ({
+    getCardById: (id: string) => (mockCtl.loading ? undefined : fixtureCards.get(id)),
+    isLoading: mockCtl.loading,
+  }),
 }));
 
 function wrapper({children}: {children: ReactNode}) {
@@ -21,6 +26,7 @@ const render = () => renderHook(() => useDeck(), {wrapper});
 beforeEach(() => {
   localStorage.clear();
   fixtureCards.clear();
+  mockCtl.loading = false;
   fixtureCards.set('amber', createCard({id: 'amber', fullName: 'Amber Card', ink: 'Amber'}));
   fixtureCards.set('steel', createCard({id: 'steel', fullName: 'Steel Card', ink: 'Steel'}));
   // Dual-ink is two typed fields (ink + ink2), not a hyphenated string — that's what getInks reads.
@@ -96,6 +102,67 @@ describe('DeckContext', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('restores a persisted draft on mount', () => {
+    const stored: Deck = {
+      id: 'saved-1',
+      name: 'Saved Deck',
+      cards: [{cardId: 'amber', quantity: 3}],
+      inks: ['Amber'],
+      createdAt: 1,
+      updatedAt: 2,
+      schemaVersion: 1,
+    };
+    writeDraft(stored);
+    const {result} = render();
+    expect(result.current.deck.id).toBe('saved-1');
+    expect(result.current.deck.name).toBe('Saved Deck');
+    expect(result.current.deck.cards).toEqual([{cardId: 'amber', quantity: 3}]);
+  });
+
+  it('flushes the draft on unmount even inside the debounce window', () => {
+    vi.useFakeTimers();
+    try {
+      const {result, unmount} = render();
+      act(() => result.current.addCard('amber'));
+      act(() => unmount()); // unmount BEFORE the 400ms debounce fires
+      expect(readDraft()?.cards).toEqual([{cardId: 'amber', quantity: 1}]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('self-heals stale stored inks against the card DB on mount', () => {
+    // Stored inks are wrong for the actual cards; the self-heal effect corrects them.
+    const stale: Deck = {
+      id: 'stale-1',
+      name: 'Stale',
+      cards: [{cardId: 'dual', quantity: 1}],
+      inks: ['Amber'],
+      createdAt: 1,
+      updatedAt: 2,
+      schemaVersion: 1,
+    };
+    writeDraft(stale);
+    const {result} = render();
+    expect(result.current.deck.inks).toEqual(['Amethyst', 'Sapphire']);
+  });
+
+  it('does not wipe stored inks while the card DB is still loading', () => {
+    mockCtl.loading = true; // getCardById -> undefined for everything
+    const loading: Deck = {
+      id: 'loading-1',
+      name: 'Loading',
+      cards: [{cardId: 'amber', quantity: 1}],
+      inks: ['Amber'],
+      createdAt: 1,
+      updatedAt: 2,
+      schemaVersion: 1,
+    };
+    writeDraft(loading);
+    const {result} = render();
+    expect(result.current.deck.inks).toEqual(['Amber']);
   });
 });
 

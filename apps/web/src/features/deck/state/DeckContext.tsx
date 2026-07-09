@@ -8,7 +8,7 @@
 // legality truth; the DeckPanel UI (#468) prevents illegal actions. Keeping the
 // caps out of here avoids duplicating that logic in two places.
 
-import {createContext, useContext, useEffect, useState, type ReactNode} from 'react';
+import {createContext, useContext, useEffect, useRef, useState, type ReactNode} from 'react';
 import {getInks} from 'inkweave-synergy-engine';
 import type {Archetype, Deck, DeckCard, Ink, LorcanaCard} from '../types';
 import {useCardDataContext} from '../../../shared/contexts/CardDataContext';
@@ -38,6 +38,11 @@ function deriveInks(
     for (const ink of getInks(card)) inks.add(ink);
   }
   return INK_ORDER.filter((ink) => inks.has(ink));
+}
+
+/** Order-sensitive ink equality (both lists are already in canonical INK_ORDER). */
+function inksEqual(a: readonly Ink[], b: readonly Ink[]): boolean {
+  return a.length === b.length && a.every((ink, i) => ink === b[i]);
 }
 
 /** A brand-new empty draft. */
@@ -98,15 +103,44 @@ interface DeckContextValue {
 const DeckContext = createContext<DeckContextValue | null>(null);
 
 export function DeckProvider({children}: {children: ReactNode}) {
-  const {getCardById} = useCardDataContext();
+  const {getCardById, isLoading} = useCardDataContext();
   const [deck, setDeck] = useState<Deck>(loadOrCreateDraft);
 
-  // Persist (debounced). `deck`'s identity only changes when an op runs, so this
-  // fires once per settled change, not per render.
+  // Inks are DERIVED in render, never stored as authoritative state — so they
+  // self-correct once the async card DB resolves (getCardById changes identity) and
+  // after a set-graduation id-renumber, with NO setState-in-effect. While the DB is
+  // still loading, keep the persisted inks (getCardById can't resolve anything yet) so
+  // a restored draft isn't transiently blanked. The React Compiler memoizes this, so
+  // `currentDeck` stays referentially stable across renders.
+  const inks = isLoading ? deck.inks : deriveInks(deck.cards, getCardById);
+  const currentDeck: Deck = inksEqual(inks, deck.inks) ? deck : {...deck, inks};
+
+  // Latest deck for the teardown flush. Synced in an effect — never mutate a ref in render.
+  const latestDeck = useRef(currentDeck);
   useEffect(() => {
-    const handle = setTimeout(() => writeDraft(deck), DRAFT_WRITE_DEBOUNCE_MS);
+    latestDeck.current = currentDeck;
+  });
+
+  // Persist (debounced). Recomputed from stable inputs so the deps stay referentially
+  // stable (no per-render churn) yet it re-fires on an edit or once the DB resolves.
+  useEffect(() => {
+    const resolved = isLoading ? deck.inks : deriveInks(deck.cards, getCardById);
+    const toPersist: Deck = inksEqual(resolved, deck.inks) ? deck : {...deck, inks: resolved};
+    const handle = setTimeout(() => writeDraft(toPersist), DRAFT_WRITE_DEBOUNCE_MS);
     return () => clearTimeout(handle);
-  }, [deck]);
+  }, [deck, isLoading, getCardById]);
+
+  // Flush the pending draft on teardown so an edit made inside the debounce window is
+  // never lost: on unmount (leaving the builder) and on pagehide (tab close / mobile
+  // background). `writeDraft` is idempotent last-write-wins, so a redundant flush is cheap.
+  useEffect(() => {
+    const flush = () => writeDraft(latestDeck.current);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      flush();
+    };
+  }, []);
 
   const addCard = (cardId: string) =>
     setDeck((d) => {
@@ -148,7 +182,7 @@ export function DeckProvider({children}: {children: ReactNode}) {
     setDeck((d) => ({...d, cards: [], inks: [], updatedAt: Date.now()}));
 
   const value: DeckContextValue = {
-    deck,
+    deck: currentDeck,
     addCard,
     removeCard,
     setQuantity,
