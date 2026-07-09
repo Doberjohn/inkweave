@@ -16,7 +16,24 @@ The flagship multi-session initiative. **Read these before starting any deck-bui
 3. The Deck Quality Score is a **transparent weighted formula + case library**, never ML.
 4. Meta/matchups are **deferred** until the user's Set-13 data exists (Phase 6).
 
-**Session ritual** (lean on existing skills): _start_ → read the plan + the latest #474 entry, `gh issue list --milestone` to pick the next unblocked task, then `/implement-issue <num>`. _End / any pause_ → commit (WIP if incomplete), append a #474 entry, write memory for durable gotchas, comment implementation notes on touched issues, then `/close-session`.
+**Session ritual (a process to run every session, not a hope):**
+
+_Start:_
+1. **Audit the previous session's close-out first.** Is `git status` clean and on `claude/inkweave-deck-builder-af3e5b`? Does the latest #474 comment exist and end with a `Next:` line? Do the issues touched last time have a note? If anything is missing, surface it to the user before starting new work.
+2. Read `docs/deck-builder/PLAN.md` and the latest #474 entry (its `Next:` line names your task).
+3. `gh issue list --milestone "Deck Builder & Engine Score" --state open`, then pick the next unblocked task. Auth (#463) and migrations (#464) need the user's OAuth apps + live-DB authorization, so skip them when running headless.
+4. `/implement-issue <num>`.
+
+_End or any pause (the close-out contract, in order, all of it):_
+1. **Adversarial review before committing.** Self-review the diff, or spawn a code-reviewer agent, for correctness, lifecycle/async edge cases, and convention. Fix what it finds. A green suite is necessary, not sufficient (that is how the #465 unmount-flush + async-ink bugs slipped past a passing session).
+2. **Commit** (WIP if incomplete). The pre-commit gate (lint + tests) must pass; never `--no-verify`. Nothing important stays only in the working tree.
+3. **Append a #474 entry**: shipped (with SHAs) / decisions + why / gotchas / in-progress / **`Next:`**. Always end with an explicit `Next:` line, even on a demo or review entry, so the next session finds the thread immediately.
+4. **Comment implementation notes** on each touched issue (decisions, deviations, carry-forward gotchas).
+5. **Write a memory file** for any durable gotcha that generalizes beyond this task.
+6. **Update `docs/deck-builder/PLAN.md`** if the design or scope changed.
+7. **Verify clean**: `git status` clean, scratch files removed, then `/close-session`.
+
+**Epic-issue convention:** the milestone's task issues (#458 onward) are compact pointers; their authoritative spec is `docs/deck-builder/PLAN.md` plus the reference files each one names, not a standalone ops-runbook. Override `/implement-issue`'s defaults deliberately (and say so, do not expand the issue): stay on the epic branch (do NOT cut a `feature/<n>-*` branch, since the work depends on this branch's unmerged commits), and treat its issue-quality rubric as not applicable (it scores production runbooks, not feature-code pointers).
 
 ## MVP Status
 
