@@ -5,6 +5,10 @@ import {PoolCardTile} from './PoolCardTile';
 import {COLORS, FONT_SIZES, LAYOUT, SPACING} from '../../../shared/constants';
 import {useResponsive} from '../../../shared/hooks';
 
+// Larger than Browse's grid so the pool shows bigger, more readable card scans
+// (fewer per row) — the deck panel is wide, so the pool doesn't need the density.
+const POOL_CARD_MIN_WIDTH = 220;
+
 interface DeckPoolGridProps {
   cards: LorcanaCard[];
   /** The deck's inks — forwarded to each tile for off-ink gating. */
@@ -53,7 +57,7 @@ const createListContainer = (paddingX: number, minColWidth: number) =>
 export function DeckPoolGrid({cards, deckInks, quantities, onIncrement, onDecrement, onViewDetails}: DeckPoolGridProps) {
   const {isMobile} = useResponsive();
   const paddingX = isMobile ? SPACING.lg : SPACING.md;
-  const minColWidth = isMobile ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth;
+  const minColWidth = isMobile ? LAYOUT.cardGridMinWidthMobile : POOL_CARD_MIN_WIDTH;
   const ListContainer = createListContainer(paddingX, minColWidth);
 
   if (cards.length === 0) {

@@ -11,8 +11,10 @@ import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive} from '../shared/hooks';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 
-/** Fixed width of the right-hand deck pane on desktop. */
-const DECK_PANE_WIDTH = 420;
+// Desktop split: the deck panel takes ~40% (min 500px) so it has room for the
+// synergy / suggestion / analysis content to come; the pool gets the rest, with
+// larger, more readable card scans (see DeckPoolGrid's min column width).
+const DECK_PANE_COLUMNS = 'minmax(0, 1fr) minmax(500px, 37%)';
 
 function CenteredNotice({children}: {children: ReactNode}) {
   return (
@@ -96,7 +98,7 @@ export function DeckBuilderPage() {
 
   return (
     <main style={{height: '100vh', background: COLORS.background, fontFamily: FONTS.body, overflow: 'hidden'}}>
-      <div style={{height: '100%', display: 'grid', gridTemplateColumns: `1fr ${DECK_PANE_WIDTH}px`}}>
+      <div style={{height: '100%', display: 'grid', gridTemplateColumns: DECK_PANE_COLUMNS}}>
         <section aria-label="Card pool" style={{display: 'flex', flexDirection: 'column', minHeight: 0}}>
           <h1
             style={{
