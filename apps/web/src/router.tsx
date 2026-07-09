@@ -59,6 +59,10 @@ const AdminAnalyticsPage = lazyWithRetry(
   () => import('./pages/AdminAnalyticsPage'),
   'AdminAnalyticsPage',
 );
+const PrivacyPage = lazyWithRetry(() => import('./pages/PrivacyPage'), 'PrivacyPage');
+const TermsPage = lazyWithRetry(() => import('./pages/TermsPage'), 'TermsPage');
+const DisclaimerPage = lazyWithRetry(() => import('./pages/DisclaimerPage'), 'DisclaimerPage');
+const AboutPage = lazyWithRetry(() => import('./pages/AboutPage'), 'AboutPage');
 
 /** Generic 3-line fallback used by every route except `/`. */
 function GenericFallback() {
@@ -226,6 +230,38 @@ export const router = createBrowserRouter([
               <AdminAnalyticsPage />
             </SuspenseWrapper>
           </AdminGate>
+        ),
+      },
+      {
+        path: 'privacy',
+        element: (
+          <SuspenseWrapper>
+            <PrivacyPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'terms',
+        element: (
+          <SuspenseWrapper>
+            <TermsPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'disclaimer',
+        element: (
+          <SuspenseWrapper>
+            <DisclaimerPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'about',
+        element: (
+          <SuspenseWrapper>
+            <AboutPage />
+          </SuspenseWrapper>
         ),
       },
       {
