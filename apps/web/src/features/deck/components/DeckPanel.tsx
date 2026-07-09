@@ -123,7 +123,7 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
               fontFamily: FONTS.body,
               fontSize: `${FONT_SIZES.base}px`,
             }}>
-            No cards yet. Add cards from the pool with the + button.
+            No cards yet. Click cards in the pool to add them.
           </p>
         ) : (
           rows.map(({card, quantity}) => (

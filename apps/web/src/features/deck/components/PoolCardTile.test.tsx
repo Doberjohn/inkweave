@@ -13,13 +13,26 @@ function renderTile(props: Partial<ComponentProps<typeof PoolCardTile>> = {}) {
 }
 
 describe('PoolCardTile', () => {
-  it('adds when the + is clicked (not in deck)', () => {
+  it('adds a copy when the card body is clicked', () => {
     const {onIncrement} = renderTile({inDeckCount: 0});
-    fireEvent.click(screen.getByRole('button', {name: /add pocahontas - guiding the tribe to deck/i}));
+    fireEvent.click(screen.getByTestId('card-tile'));
     expect(onIncrement).toHaveBeenCalledWith(card);
   });
 
-  it('increments and decrements when already in deck', () => {
+  it('adds another copy when an already-in-deck card is clicked', () => {
+    const {onIncrement} = renderTile({inDeckCount: 2});
+    fireEvent.click(screen.getByTestId('card-tile'));
+    expect(onIncrement).toHaveBeenCalledWith(card);
+  });
+
+  it('opens details from the info button without adding', () => {
+    const {onViewDetails, onIncrement} = renderTile({inDeckCount: 0});
+    fireEvent.click(screen.getByRole('button', {name: /view pocahontas - guiding the tribe details/i}));
+    expect(onViewDetails).toHaveBeenCalledWith(card);
+    expect(onIncrement).not.toHaveBeenCalled();
+  });
+
+  it('steps quantity with the in-deck − / + controls', () => {
     const {onIncrement, onDecrement} = renderTile({inDeckCount: 2});
     fireEvent.click(screen.getByRole('button', {name: /add one copy/i}));
     fireEvent.click(screen.getByRole('button', {name: /remove one copy/i}));
@@ -27,15 +40,14 @@ describe('PoolCardTile', () => {
     expect(onDecrement).toHaveBeenCalledWith(card);
   });
 
-  it('disables the + at the 4-copy limit', () => {
+  it('does not add past the 4-copy limit', () => {
     const {onIncrement} = renderTile({inDeckCount: 4});
-    const inc = screen.getByRole('button', {name: /max 4 copies/i});
-    expect(inc).toBeDisabled();
-    fireEvent.click(inc);
+    expect(screen.getByRole('button', {name: /max 4 copies/i})).toBeDisabled();
+    fireEvent.click(screen.getByTestId('card-tile'));
     expect(onIncrement).not.toHaveBeenCalled();
   });
 
-  it('disables adding an off-ink card', () => {
+  it('does not add an off-ink card on click', () => {
     const ruby = createCard({fullName: 'Maleficent - Monstrous Dragon', ink: 'Ruby'});
     const onIncrement = vi.fn();
     render(
@@ -48,13 +60,7 @@ describe('PoolCardTile', () => {
         onViewDetails={vi.fn()}
       />,
     );
-    fireEvent.click(screen.getByRole('button', {name: /can't have more than two ink colors/i}));
-    expect(onIncrement).not.toHaveBeenCalled();
-  });
-
-  it('opens details when the card body is clicked', () => {
-    const {onViewDetails} = renderTile({inDeckCount: 0});
     fireEvent.click(screen.getByTestId('card-tile'));
-    expect(onViewDetails).toHaveBeenCalledWith(card);
+    expect(onIncrement).not.toHaveBeenCalled();
   });
 });
