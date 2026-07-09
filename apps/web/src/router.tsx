@@ -63,6 +63,7 @@ const DeckLayout = lazyWithRetry(() => import('./pages/DeckLayout'), 'DeckLayout
 const DecksPage = lazyWithRetry(() => import('./pages/DecksPage'), 'DecksPage');
 const DeckBuilderPage = lazyWithRetry(() => import('./pages/DeckBuilderPage'), 'DeckBuilderPage');
 const DeckViewPage = lazyWithRetry(() => import('./pages/DeckViewPage'), 'DeckViewPage');
+const AuthCallbackPage = lazyWithRetry(() => import('./pages/AuthCallbackPage'), 'AuthCallbackPage');
 
 /** Generic 3-line fallback used by every route except `/`. */
 function GenericFallback() {
@@ -275,6 +276,14 @@ export const router = createBrowserRouter([
             ),
           },
         ],
+      },
+      {
+        path: 'auth/callback',
+        element: (
+          <SuspenseWrapper>
+            <AuthCallbackPage />
+          </SuspenseWrapper>
+        ),
       },
       {
         path: '*',

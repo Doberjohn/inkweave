@@ -26,7 +26,17 @@ export function getSupabase(): SupabaseClient<Database> | null {
     return null;
   }
 
-  client = createClient<Database>(url, key);
+  client = createClient<Database>(url, key, {
+    auth: {
+      // Persist the session so a signed-in user stays signed in across reloads,
+      // auto-refresh tokens, and complete the OAuth PKCE redirect on /auth/callback.
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+      storageKey: 'inkweave:auth',
+    },
+  });
   return client;
 }
 
