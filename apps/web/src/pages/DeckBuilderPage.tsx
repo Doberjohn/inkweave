@@ -42,7 +42,7 @@ function CenteredNotice({children}: {children: ReactNode}) {
  */
 export function DeckBuilderPage() {
   const {isMobile} = useResponsive();
-  const {deck, addCard, setQuantity, removeCard, renameDeck} = useDeck();
+  const {deck, setQuantity, removeCard, renameDeck} = useDeck();
   const {cards, isLoading, getCardById, uniqueKeywords, uniqueClassifications, sets} = useCardDataContext();
   const {openCardModal} = useCardModal();
   const pool = useDeckPoolFilters();
@@ -115,7 +115,8 @@ export function DeckBuilderPage() {
               cards={filtered}
               deckInks={deck.inks}
               quantities={quantities}
-              onAdd={(card) => addCard(card.id)}
+              onIncrement={(card) => setQuantity(card.id, (quantities.get(card.id) ?? 0) + 1)}
+              onDecrement={(card) => setQuantity(card.id, (quantities.get(card.id) ?? 0) - 1)}
               onViewDetails={viewDetails}
             />
           </div>

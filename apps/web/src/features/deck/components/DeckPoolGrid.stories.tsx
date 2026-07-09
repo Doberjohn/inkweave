@@ -26,7 +26,7 @@ const meta: Meta<typeof DeckPoolGrid> = {
     ),
   ],
   tags: ['autodocs'],
-  args: {onAdd: fn(), onViewDetails: fn()},
+  args: {onIncrement: fn(), onDecrement: fn(), onViewDetails: fn()},
 };
 export default meta;
 type Story = StoryObj<typeof meta>;

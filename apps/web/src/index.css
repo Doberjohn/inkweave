@@ -46,6 +46,16 @@
   src: url('/fonts/plus-jakarta-sans-700.woff2') format('woff2');
 }
 
+/* Deck-builder pool tile: quantity-change pop (replays on count remount). */
+@keyframes inkweave-qty-pop {
+  from {
+    transform: scale(1.5);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
 *,
 *::before,
 *::after {

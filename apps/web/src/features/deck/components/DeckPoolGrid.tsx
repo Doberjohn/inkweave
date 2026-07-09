@@ -9,9 +9,10 @@ interface DeckPoolGridProps {
   cards: LorcanaCard[];
   /** The deck's inks — forwarded to each tile for off-ink gating. */
   deckInks: Ink[];
-  /** cardId → copies already in the deck (drives the pip + disable-at-4). */
+  /** cardId → copies already in the deck (drives each tile's count + stepper). */
   quantities: Map<string, number>;
-  onAdd: (card: LorcanaCard) => void;
+  onIncrement: (card: LorcanaCard) => void;
+  onDecrement: (card: LorcanaCard) => void;
   onViewDetails: (card: LorcanaCard) => void;
 }
 
@@ -22,6 +23,8 @@ interface ListContainerProps {
 
 // See BrowseCardGrid: VirtuosoGrid imperatively writes paddingTop/paddingBottom
 // for virtual scroll positioning, so only horizontal padding is safe to set here.
+// Row gap is a touch wider than the column gap to give the tiles' overhanging
+// stepper (and its glow) breathing room between rows.
 const createListContainer = (paddingX: number, minColWidth: number) =>
   forwardRef<HTMLDivElement, ListContainerProps>(function ListContainer({style, children}, ref) {
     return (
@@ -31,7 +34,8 @@ const createListContainer = (paddingX: number, minColWidth: number) =>
           ...style,
           display: 'grid',
           gridTemplateColumns: `repeat(auto-fill, minmax(${minColWidth}px, 1fr))`,
-          gap: SPACING.md,
+          columnGap: SPACING.md,
+          rowGap: SPACING.lg,
           paddingLeft: paddingX,
           paddingRight: paddingX,
         }}>
@@ -46,7 +50,7 @@ const createListContainer = (paddingX: number, minColWidth: number) =>
  * card base; react-virtuoso keeps it cheap by only mounting visible rows.
  * Requires a height-bounded flex ancestor (the page provides `flex:1;minHeight:0`).
  */
-export function DeckPoolGrid({cards, deckInks, quantities, onAdd, onViewDetails}: DeckPoolGridProps) {
+export function DeckPoolGrid({cards, deckInks, quantities, onIncrement, onDecrement, onViewDetails}: DeckPoolGridProps) {
   const {isMobile} = useResponsive();
   const paddingX = isMobile ? SPACING.lg : SPACING.md;
   const minColWidth = isMobile ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth;
@@ -71,7 +75,8 @@ export function DeckPoolGrid({cards, deckInks, quantities, onAdd, onViewDetails}
             card={card}
             deckInks={deckInks}
             inDeckCount={quantities.get(card.id) ?? 0}
-            onAdd={onAdd}
+            onIncrement={onIncrement}
+            onDecrement={onDecrement}
             onViewDetails={onViewDetails}
             priority={index < 6}
           />
