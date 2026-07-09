@@ -11,7 +11,7 @@ interface MobileBottomNavProps {
   phaseOverride?: RevealPhase;
 }
 
-type TabKind = 'browse' | 'search' | 'reveals' | 'playstyles' | 'vote';
+type TabKind = 'browse' | 'search' | 'reveals' | 'playstyles' | 'vote' | 'decks';
 
 interface TabDef {
   kind: TabKind;
@@ -29,7 +29,7 @@ const TABS_REVEAL_SEASON: readonly TabDef[] = [
   {kind: 'search', label: 'Search cards', action: 'search'},
   {kind: 'reveals', label: 'Set 13 reveals', href: '/reveals', hasNewDot: true},
   {kind: 'playstyles', label: 'Explore playstyles', href: '/playstyles'},
-  {kind: 'vote', label: 'Rate synergies', href: '/vote'},
+  {kind: 'decks', label: 'Build a deck', href: '/decks'},
 ];
 
 const TABS_OFF_SEASON: readonly TabDef[] = [
@@ -37,6 +37,7 @@ const TABS_OFF_SEASON: readonly TabDef[] = [
   {kind: 'search', label: 'Search cards', action: 'search'},
   {kind: 'playstyles', label: 'Explore playstyles', href: '/playstyles'},
   {kind: 'vote', label: 'Rate synergies', href: '/vote'},
+  {kind: 'decks', label: 'Build a deck', href: '/decks'},
 ];
 
 /**
@@ -51,12 +52,7 @@ const POS_5 = {
   dashOffset: [-4, -24, -44, -64, -84],
 } as const;
 
-const POS_4 = {
-  paddingTop: [29, 20, 20, 29],
-  dashOffset: [-6.5, -31.5, -56.5, -81.5],
-} as const;
-
-type PositionTable = typeof POS_5 | typeof POS_4;
+type PositionTable = typeof POS_5;
 
 // =====================================================================
 // Domain types — aggregate related state so subcomponent signatures read
@@ -105,7 +101,7 @@ function isRevealSeasonPhase({phase}: PhaseInput): boolean {
 
 function pickTabsAndPositions({isRevealSeason}: SeasonInput): TabsAndPositions {
   if (isRevealSeason) return {tabs: TABS_REVEAL_SEASON, positions: POS_5};
-  return {tabs: TABS_OFF_SEASON, positions: POS_4};
+  return {tabs: TABS_OFF_SEASON, positions: POS_5};
 }
 
 /**
@@ -175,6 +171,13 @@ function TabIcon({kind}: {kind: TabKind}) {
         <svg width={24} height={24} viewBox="0 0 24 24" {...iconCommon}>
           <circle cx="12" cy="12" r="10" />
           <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+        </svg>
+      );
+    case 'decks':
+      return (
+        <svg width={24} height={24} viewBox="0 0 24 24" {...iconCommon}>
+          <rect x="4" y="6" width="10" height="14" rx="1.6" />
+          <rect x="10" y="4" width="10" height="14" rx="1.6" />
         </svg>
       );
     case 'vote':
