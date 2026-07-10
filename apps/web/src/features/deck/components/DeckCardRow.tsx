@@ -31,6 +31,16 @@ function TrashIcon() {
   );
 }
 
+/** The row's display name: fullName, then name, then a stable placeholder. */
+function resolveCardName(card: LorcanaCard): string {
+  return card.fullName || card.name || 'Unknown card';
+}
+
+/** True for the keys that activate the card-identity button: Enter or Space. */
+function isActivationKey(key: string): boolean {
+  return key === 'Enter' || key === ' ';
+}
+
 /**
  * One line in the deck panel: cost-in-inkwell glyph, thumbnail + name (the hover
  * preview target), an always-open [− qty +] stepper, and a trash remove. The +
@@ -39,7 +49,7 @@ function TrashIcon() {
 export function DeckCardRow({card, quantity, onIncrement, onDecrement, onRemove, onPreviewEnter, onPreviewLeave, onOpenDetails}: DeckCardRowProps) {
   const [hovered, setHovered] = useState(false);
   const ink = INK_COLORS[card.ink];
-  const name = card.fullName || card.name || 'Unknown card';
+  const name = resolveCardName(card);
   const atMax = quantity >= MAX_COPIES;
 
   return (
@@ -71,7 +81,7 @@ export function DeckCardRow({card, quantity, onIncrement, onDecrement, onRemove,
         aria-label={`View ${name} synergies`}
         onClick={() => onOpenDetails?.(card)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
+          if (isActivationKey(e.key)) {
             e.preventDefault();
             onOpenDetails?.(card);
           }

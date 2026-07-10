@@ -229,6 +229,17 @@ function scoreCandidate(candidate: LorcanaCard, ctx: DeckContext): Suggestion | 
   };
 }
 
+/** Inputs for {@link rankSuggestions}, bundled so the call reads by name. */
+export interface RankSuggestionsInput {
+  deck: Deck;
+  /** Candidate card ids to rank; assumed pre-filtered to the deck's inks. */
+  candidateIds: string[];
+  /** Precomputed pair-score provider (the controller wires the real fetch). */
+  getPairScore: PairScore;
+  health: DeckHealth;
+  getCardById: (id: string) => LorcanaCard | undefined;
+}
+
 /**
  * Rank `candidateIds` as add-this-card suggestions for `deck`.
  *
@@ -242,13 +253,13 @@ function scoreCandidate(candidate: LorcanaCard, ctx: DeckContext): Suggestion | 
  *
  * Pure and deterministic given the same inputs (incl. `getPairScore`).
  */
-export function rankSuggestions(
-  deck: Deck,
-  candidateIds: string[],
-  getPairScore: PairScore,
-  health: DeckHealth,
-  getCardById: (id: string) => LorcanaCard | undefined,
-): Suggestion[] {
+export function rankSuggestions({
+  deck,
+  candidateIds,
+  getPairScore,
+  health,
+  getCardById,
+}: RankSuggestionsInput): Suggestion[] {
   const ctx = buildContext(deck, getPairScore, health, getCardById);
 
   return [...new Set(candidateIds)]

@@ -1,0 +1,95 @@
+// Pure, reducer-style deck transforms for the builder (#465). Each returns a NEW
+// Deck; none touches React or storage. Kept beside DeckContext (the poolTileState
+// idiom) so the provider stays thin wiring and the branchy edit logic is unit-
+// tested in isolation. `getCardById` resolves cardId -> LorcanaCard for ink re-
+// derivation; ids that no longer resolve (rotated out of Core) are skipped.
+
+import {getInks} from 'inkweave-synergy-engine';
+import type {Archetype, Deck, DeckCard, Ink, LorcanaCard} from '../types';
+
+type CardResolver = (id: string) => LorcanaCard | undefined;
+
+/** Canonical Lorcana ink order, so a derived ink list reads consistently. */
+const INK_ORDER: readonly Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
+
+/**
+ * Derive the deck's ink set from its cards. A dual-ink card contributes BOTH of
+ * its inks (the engine's `getInks` returns 1 or 2). Ids that no longer resolve
+ * (rotated out of Core) are skipped. The result must be DEDUPED and returned in
+ * canonical {@link INK_ORDER}, the same derivation `deckStats` uses, so the
+ * builder's ink chips agree with the stats bar.
+ */
+export function deriveInks(cards: DeckCard[], getCardById: CardResolver): Ink[] {
+  const inks = new Set<Ink>();
+  for (const {cardId} of cards) {
+    const card = getCardById(cardId);
+    if (!card) continue; // rotated out of Core, skip like deckStats
+    for (const ink of getInks(card)) inks.add(ink);
+  }
+  return INK_ORDER.filter((ink) => inks.has(ink));
+}
+
+/** Order-sensitive ink equality (both lists are already in canonical INK_ORDER). */
+export function inksEqual(a: readonly Ink[], b: readonly Ink[]): boolean {
+  return a.length === b.length && a.every((ink, i) => ink === b[i]);
+}
+
+/** Replace the deck's card list, re-deriving inks and stamping `updatedAt`. */
+function withCards(deck: Deck, cards: DeckCard[], getCardById: CardResolver): Deck {
+  return {...deck, cards, inks: deriveInks(cards, getCardById), updatedAt: Date.now()};
+}
+
+/** Add one copy of a card (new line, or +1 on the existing line). */
+export function addCardToDeck(deck: Deck, cardId: string, getCardById: CardResolver): Deck {
+  const existing = deck.cards.find((c) => c.cardId === cardId);
+  const cards = existing
+    ? deck.cards.map((c) => (c.cardId === cardId ? {...c, quantity: c.quantity + 1} : c))
+    : [...deck.cards, {cardId, quantity: 1}];
+  return withCards(deck, cards, getCardById);
+}
+
+/** Remove a card's line entirely. */
+export function removeCardFromDeck(deck: Deck, cardId: string, getCardById: CardResolver): Deck {
+  return withCards(deck, deck.cards.filter((c) => c.cardId !== cardId), getCardById);
+}
+
+/** Set an exact copy count; `<= 0` removes the line. */
+export function setCardQuantity(
+  deck: Deck,
+  cardId: string,
+  quantity: number,
+  getCardById: CardResolver,
+): Deck {
+  if (quantity <= 0) {
+    return withCards(deck, deck.cards.filter((c) => c.cardId !== cardId), getCardById);
+  }
+  const has = deck.cards.some((c) => c.cardId === cardId);
+  const cards = has
+    ? deck.cards.map((c) => (c.cardId === cardId ? {...c, quantity} : c))
+    : [...deck.cards, {cardId, quantity}];
+  return withCards(deck, cards, getCardById);
+}
+
+/** Flag/unflag a card as a "deck core" anchor for suggestions. */
+export function markCardCore(deck: Deck, cardId: string, isCore: boolean): Deck {
+  return {
+    ...deck,
+    cards: deck.cards.map((c) => (c.cardId === cardId ? {...c, isCore} : c)),
+    updatedAt: Date.now(),
+  };
+}
+
+/** Declare (or clear) the gameplan archetype; overrides auto-detection. */
+export function setDeckGameplan(deck: Deck, gameplan: Archetype | undefined): Deck {
+  return {...deck, gameplan, updatedAt: Date.now()};
+}
+
+/** Rename the deck. */
+export function renameDeckName(deck: Deck, name: string): Deck {
+  return {...deck, name, updatedAt: Date.now()};
+}
+
+/** Empty the card list, keeping the deck's identity and name. */
+export function clearDeckCards(deck: Deck): Deck {
+  return {...deck, cards: [], inks: [], updatedAt: Date.now()};
+}

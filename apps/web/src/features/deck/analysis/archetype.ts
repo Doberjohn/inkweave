@@ -37,67 +37,93 @@ interface Features {
   highCostShare: number;
 }
 
-/** Scale a raw count to its 60-card-deck equivalent. */
-function per60(count: number, total: number): number {
-  return total > 0 ? (count / total) * 60 : 0;
+/** A linear response window: `lo`/`hi` bound where a signal starts and finishes scoring. */
+interface Ramp {
+  lo: number;
+  hi: number;
+}
+
+/** A triangular response window: the `[lo, hi]` plateau plus a `margin` of linear falloff. */
+interface Band {
+  lo: number;
+  hi: number;
+  margin: number;
 }
 
 /** 0 at/below `lo`, 1 at/above `hi`, linear in between (higher input scores higher). */
-function rampUp(x: number, lo: number, hi: number): number {
-  if (x <= lo) return 0;
-  if (x >= hi) return 1;
-  return (x - lo) / (hi - lo);
+function rampUp(x: number, r: Ramp): number {
+  if (x <= r.lo) return 0;
+  if (x >= r.hi) return 1;
+  return (x - r.lo) / (r.hi - r.lo);
 }
 
 /** 1 at/below `lo`, 0 at/above `hi`, linear in between (lower input scores higher). */
-function rampDown(x: number, lo: number, hi: number): number {
-  if (x <= lo) return 1;
-  if (x >= hi) return 0;
-  return (hi - x) / (hi - lo);
+function rampDown(x: number, r: Ramp): number {
+  if (x <= r.lo) return 1;
+  if (x >= r.hi) return 0;
+  return (r.hi - x) / (r.hi - r.lo);
 }
 
 /** Triangular peak: 1 inside `[lo, hi]`, linear falloff to 0 over `margin` beyond either edge. */
-function band(x: number, lo: number, hi: number, margin: number): number {
-  if (x >= lo && x <= hi) return 1;
-  const d = x < lo ? lo - x : x - hi;
-  return Math.max(0, 1 - d / margin);
+function band(x: number, b: Band): number {
+  if (x >= b.lo && x <= b.hi) return 1;
+  const d = x < b.lo ? b.lo - x : x - b.hi;
+  return Math.max(0, 1 - d / b.margin);
+}
+
+/** Running per-role tallies accumulated across a deck's resolved card copies. */
+interface FeatureTotals {
+  resolved: number;
+  cost: number;
+  removal: number;
+  draw: number;
+  ramp: number;
+  lore: number;
+  chars: number;
+  highCost: number;
+}
+
+/** Fold one card's copies into the running totals (mutates `totals` in place). */
+function addCard(totals: FeatureTotals, card: LorcanaCard, quantity: number): void {
+  totals.resolved += quantity;
+  totals.cost += card.cost * quantity;
+  if (getRemovalRoles(card).length > 0) totals.removal += quantity;
+  if (getCardMechanics(card).includes('draw')) totals.draw += quantity;
+  if (getRampRoles(card).includes('inkwell-ramp')) totals.ramp += quantity;
+  if (isCharacter(card)) {
+    totals.chars += quantity;
+    totals.lore += (card.lore ?? 0) * quantity;
+    if (card.cost >= 5) totals.highCost += quantity;
+  }
 }
 
 /** Fold the deck's resolved cards into the feature vector the scorecard reads. */
 function extractFeatures(deck: Deck, getCardById: (id: string) => LorcanaCard | undefined): Features {
-  let resolved = 0;
-  let cost = 0;
-  let removal = 0;
-  let draw = 0;
-  let ramp = 0;
-  let lore = 0;
-  let chars = 0;
-  let highCost = 0;
+  const totals: FeatureTotals = {
+    resolved: 0,
+    cost: 0,
+    removal: 0,
+    draw: 0,
+    ramp: 0,
+    lore: 0,
+    chars: 0,
+    highCost: 0,
+  };
 
   for (const {cardId, quantity} of deck.cards) {
     const card = getCardById(cardId);
-    if (!card) continue;
-    resolved += quantity;
-    cost += card.cost * quantity;
-    if (getRemovalRoles(card).length > 0) removal += quantity;
-    if (getCardMechanics(card).includes('draw')) draw += quantity;
-    if (getRampRoles(card).includes('inkwell-ramp')) ramp += quantity;
-    if (isCharacter(card)) {
-      chars += quantity;
-      lore += (card.lore ?? 0) * quantity;
-      if (card.cost >= 5) highCost += quantity;
-    }
+    if (card) addCard(totals, card, quantity);
   }
 
-  const denom = resolved || 1;
+  const denom = totals.resolved || 1;
   return {
-    centroid: cost / denom,
-    removalPer60: per60(removal, denom),
-    drawPer60: per60(draw, denom),
-    rampPer60: per60(ramp, denom),
-    lorePer60: per60(lore, denom),
-    charShare: chars / denom,
-    highCostShare: highCost / denom,
+    centroid: totals.cost / denom,
+    removalPer60: (totals.removal / denom) * 60,
+    drawPer60: (totals.draw / denom) * 60,
+    rampPer60: (totals.ramp / denom) * 60,
+    lorePer60: (totals.lore / denom) * 60,
+    charShare: totals.chars / denom,
+    highCostShare: totals.highCost / denom,
   };
 }
 
@@ -111,39 +137,39 @@ function scoreArchetypes(f: Features): Record<Archetype, number> {
   return {
     // Fast, front-loaded, lore-forward, light on removal.
     aggro:
-      1.4 * rampDown(f.centroid, 2.9, 3.7) +
-      1.2 * rampUp(f.lorePer60, 22, 40) +
-      0.9 * rampDown(f.removalPer60, 4, 10) +
-      0.5 * rampUp(f.charShare, 0.5, 0.62),
+      1.4 * rampDown(f.centroid, {lo: 2.9, hi: 3.7}) +
+      1.2 * rampUp(f.lorePer60, {lo: 22, hi: 40}) +
+      0.9 * rampDown(f.removalPer60, {lo: 4, hi: 10}) +
+      0.5 * rampUp(f.charShare, {lo: 0.5, hi: 0.62}),
     // Low-mid curve with real interaction and efficient bodies.
     tempo:
-      1.2 * band(f.centroid, 2.7, 3.3, 0.8) +
-      0.9 * band(f.removalPer60, 5, 9, 4) +
-      0.8 * rampUp(f.lorePer60, 16, 28) +
-      0.5 * rampUp(f.drawPer60, 3, 8),
+      1.2 * band(f.centroid, {lo: 2.7, hi: 3.3, margin: 0.8}) +
+      0.9 * band(f.removalPer60, {lo: 5, hi: 9, margin: 4}) +
+      0.8 * rampUp(f.lorePer60, {lo: 16, hi: 28}) +
+      0.5 * rampUp(f.drawPer60, {lo: 3, hi: 8}),
     // Balanced everything — the default fallback (baseline constant).
     midrange:
-      1.2 * band(f.centroid, 3.0, 3.7, 0.7) +
-      0.9 * band(f.removalPer60, 5, 10, 4) +
-      0.7 * band(f.charShare, 0.42, 0.58, 0.15) +
+      1.2 * band(f.centroid, {lo: 3.0, hi: 3.7, margin: 0.7}) +
+      0.9 * band(f.removalPer60, {lo: 5, hi: 10, margin: 4}) +
+      0.7 * band(f.charShare, {lo: 0.42, hi: 0.58, margin: 0.15}) +
       0.6,
     // High curve, removal-and-draw heavy, low own-lore (wins late).
     control:
-      1.5 * rampUp(f.centroid, 3.4, 4.4) +
-      1.4 * rampUp(f.removalPer60, 7, 12) +
-      1.0 * rampUp(f.drawPer60, 6, 11) +
-      0.8 * rampDown(f.lorePer60, 30, 14),
+      1.5 * rampUp(f.centroid, {lo: 3.4, hi: 4.4}) +
+      1.4 * rampUp(f.removalPer60, {lo: 7, hi: 12}) +
+      1.0 * rampUp(f.drawPer60, {lo: 6, hi: 11}) +
+      0.8 * rampDown(f.lorePer60, {lo: 30, hi: 14}),
     // Draw-forward, low interaction (a conservative signal — Inkweave has no
     // generic tutor detector yet, so combo only edges out on clear draw engines).
     combo:
-      1.3 * rampUp(f.drawPer60, 7, 12) +
-      0.8 * rampDown(f.removalPer60, 5, 11) +
-      0.4 * rampUp(f.highCostShare, 0.05, 0.15),
+      1.3 * rampUp(f.drawPer60, {lo: 7, hi: 12}) +
+      0.8 * rampDown(f.removalPer60, {lo: 5, hi: 11}) +
+      0.4 * rampUp(f.highCostShare, {lo: 0.05, hi: 0.15}),
     // Mana acceleration into a top-heavy payoff — the ramp enabler term dominates.
     ramp:
-      1.9 * rampUp(f.rampPer60, 2, 6) +
-      1.0 * rampUp(f.highCostShare, 0.08, 0.2) +
-      0.8 * rampUp(f.centroid, 3.3, 4.4),
+      1.9 * rampUp(f.rampPer60, {lo: 2, hi: 6}) +
+      1.0 * rampUp(f.highCostShare, {lo: 0.08, hi: 0.2}) +
+      0.8 * rampUp(f.centroid, {lo: 3.3, hi: 4.4}),
   };
 }
 

@@ -9,41 +9,23 @@
 // caps out of here avoids duplicating that logic in two places.
 
 import {createContext, useContext, useEffect, useRef, useState, type ReactNode} from 'react';
-import {getInks} from 'inkweave-synergy-engine';
-import type {Archetype, Deck, DeckCard, Ink, LorcanaCard} from '../types';
+import type {Archetype, Deck} from '../types';
 import {useCardDataContext} from '../../../shared/contexts/CardDataContext';
 import {readDraft, writeDraft} from './deckStorage';
+import {
+  addCardToDeck,
+  clearDeckCards,
+  deriveInks,
+  inksEqual,
+  markCardCore,
+  removeCardFromDeck,
+  renameDeckName,
+  setCardQuantity,
+  setDeckGameplan,
+} from './deckMutations';
 
 /** Debounce window for persisting the draft — coalesces rapid quantity/rename edits. */
 const DRAFT_WRITE_DEBOUNCE_MS = 400;
-
-/** Canonical Lorcana ink order, so a derived ink list reads consistently. */
-const INK_ORDER: readonly Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
-
-/**
- * Derive the deck's ink set from its cards. A dual-ink card contributes BOTH of
- * its inks (the engine's `getInks` returns 1 or 2). Ids that no longer resolve
- * (rotated out of Core) are skipped. The result must be DEDUPED and returned in
- * canonical {@link INK_ORDER} — the same derivation `deckStats` uses, so the
- * builder's ink chips agree with the stats bar.
- */
-function deriveInks(
-  cards: DeckCard[],
-  getCardById: (id: string) => LorcanaCard | undefined,
-): Ink[] {
-  const inks = new Set<Ink>();
-  for (const {cardId} of cards) {
-    const card = getCardById(cardId);
-    if (!card) continue; // rotated out of Core — skip, like deckStats
-    for (const ink of getInks(card)) inks.add(ink);
-  }
-  return INK_ORDER.filter((ink) => inks.has(ink));
-}
-
-/** Order-sensitive ink equality (both lists are already in canonical INK_ORDER). */
-function inksEqual(a: readonly Ink[], b: readonly Ink[]): boolean {
-  return a.length === b.length && a.every((ink, i) => ink === b[i]);
-}
 
 /** A brand-new empty draft. */
 function createEmptyDraft(): Deck {
@@ -70,15 +52,6 @@ function newDeckId(): string {
 /** Restore the persisted draft, or start a fresh one. Runs once on mount. */
 function loadOrCreateDraft(): Deck {
   return readDraft() ?? createEmptyDraft();
-}
-
-/** Replace the deck's card list, re-deriving inks and stamping `updatedAt`. */
-function withCards(
-  deck: Deck,
-  cards: DeckCard[],
-  getCardById: (id: string) => LorcanaCard | undefined,
-): Deck {
-  return {...deck, cards, inks: deriveInks(cards, getCardById), updatedAt: Date.now()};
 }
 
 interface DeckContextValue {
@@ -142,44 +115,23 @@ export function DeckProvider({children}: {children: ReactNode}) {
     };
   }, []);
 
-  const addCard = (cardId: string) =>
-    setDeck((d) => {
-      const existing = d.cards.find((c) => c.cardId === cardId);
-      const cards = existing
-        ? d.cards.map((c) => (c.cardId === cardId ? {...c, quantity: c.quantity + 1} : c))
-        : [...d.cards, {cardId, quantity: 1}];
-      return withCards(d, cards, getCardById);
-    });
+  const addCard = (cardId: string) => setDeck((d) => addCardToDeck(d, cardId, getCardById));
 
   const removeCard = (cardId: string) =>
-    setDeck((d) => withCards(d, d.cards.filter((c) => c.cardId !== cardId), getCardById));
+    setDeck((d) => removeCardFromDeck(d, cardId, getCardById));
 
   const setQuantity = (cardId: string, quantity: number) =>
-    setDeck((d) => {
-      if (quantity <= 0) {
-        return withCards(d, d.cards.filter((c) => c.cardId !== cardId), getCardById);
-      }
-      const has = d.cards.some((c) => c.cardId === cardId);
-      const cards = has
-        ? d.cards.map((c) => (c.cardId === cardId ? {...c, quantity} : c))
-        : [...d.cards, {cardId, quantity}];
-      return withCards(d, cards, getCardById);
-    });
+    setDeck((d) => setCardQuantity(d, cardId, quantity, getCardById));
 
   const markCore = (cardId: string, isCore: boolean) =>
-    setDeck((d) => ({
-      ...d,
-      cards: d.cards.map((c) => (c.cardId === cardId ? {...c, isCore} : c)),
-      updatedAt: Date.now(),
-    }));
+    setDeck((d) => markCardCore(d, cardId, isCore));
 
   const setGameplan = (gameplan: Archetype | undefined) =>
-    setDeck((d) => ({...d, gameplan, updatedAt: Date.now()}));
+    setDeck((d) => setDeckGameplan(d, gameplan));
 
-  const renameDeck = (name: string) => setDeck((d) => ({...d, name, updatedAt: Date.now()}));
+  const renameDeck = (name: string) => setDeck((d) => renameDeckName(d, name));
 
-  const clearDeck = () =>
-    setDeck((d) => ({...d, cards: [], inks: [], updatedAt: Date.now()}));
+  const clearDeck = () => setDeck((d) => clearDeckCards(d));
 
   const value: DeckContextValue = {
     deck: currentDeck,

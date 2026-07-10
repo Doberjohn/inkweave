@@ -55,6 +55,62 @@ function PlusIcon({size}: {size: number}) {
   );
 }
 
+function cellStyle(dims: StepperDims): CSSProperties {
+  // Centered glyph/number cell. `line-height: 1` + flex-centering keeps the "−",
+  // "+" and digit optically centered in the pill regardless of their font metrics.
+  return {
+    minWidth: dims.countMinWidth,
+    height: '100%',
+    padding: dims.cellPadding,
+    border: 'none',
+    background: 'transparent',
+    fontFamily: FONTS.body,
+    fontWeight: 800,
+    lineHeight: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+}
+
+// The − / + side buttons collapse to width 0 when `collapsed`; the width
+// transition grows the count pill into a full stepper when opened.
+function sideButtonStyle(dims: StepperDims, isShown: boolean, disabled: boolean, color: string): CSSProperties {
+  return {
+    ...cellStyle(dims),
+    minWidth: 0,
+    width: isShown ? dims.sideWidth : 0,
+    opacity: isShown ? 1 : 0,
+    padding: 0,
+    color: disabled ? COLORS.textDim : color,
+    cursor: disabled ? 'default' : 'pointer',
+    overflow: 'hidden',
+    transition: 'width 0.2s ease, opacity 0.18s ease, color 0.15s ease',
+  };
+}
+
+function incrementAriaLabel(disabled: boolean, disabledReason: string | undefined, name: string): string {
+  if (disabled) return disabledReason ?? `Cannot add more ${name}`;
+  return `Add one copy of ${name}`;
+}
+
+// Owns the pop animation state so the component stays a thin view. Controlled
+// (parent passes `popping`/`onPopEnd`) or uncontrolled (internal state); the pop
+// is triggered from the click handlers only, never a render-time effect.
+function usePopAnimation(popping: boolean | undefined, onPopEnd: (() => void) | undefined) {
+  const isControlled = popping !== undefined;
+  const [internalPop, setInternalPop] = useState(false);
+  const shouldPop = isControlled ? popping : internalPop;
+  const triggerPop = () => {
+    if (!isControlled) setInternalPop(true);
+  };
+  const handlePopEnd = () => {
+    if (isControlled) onPopEnd?.();
+    else setInternalPop(false);
+  };
+  return {shouldPop, triggerPop, handlePopEnd};
+}
+
 /**
  * The gold-pill `− count +` quantity stepper shared by the pool tile (variant
  * `md`, collapse-on-hover) and the deck row (variant `sm`, always-open).
@@ -81,53 +137,19 @@ export function QuantityStepper({
   const shown = !collapsed;
   const name = label ?? 'card';
 
-  const isControlled = popping !== undefined;
-  const [internalPop, setInternalPop] = useState(false);
-  const shouldPop = isControlled ? popping : internalPop;
+  const {shouldPop, triggerPop, handlePopEnd} = usePopAnimation(popping, onPopEnd);
 
   const handleInc = () => {
     if (incrementDisabled) return;
-    if (!isControlled) setInternalPop(true);
+    triggerPop();
     onIncrement();
   };
   const handleDec = () => {
-    if (!isControlled) setInternalPop(true);
+    triggerPop();
     onDecrement();
   };
-  const handlePopEnd = () => {
-    if (isControlled) onPopEnd?.();
-    else setInternalPop(false);
-  };
 
-  // Centered glyph/number cell. `line-height: 1` + flex-centering keeps the "−",
-  // "+" and digit optically centered in the pill regardless of their font metrics.
-  const cell: CSSProperties = {
-    minWidth: dims.countMinWidth,
-    height: '100%',
-    padding: dims.cellPadding,
-    border: 'none',
-    background: 'transparent',
-    fontFamily: FONTS.body,
-    fontWeight: 800,
-    lineHeight: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  };
-
-  // The − / + side buttons collapse to width 0 when `collapsed`; the width
-  // transition grows the count pill into a full stepper when opened.
-  const sideBtn = (isShown: boolean, disabled: boolean, color: string): CSSProperties => ({
-    ...cell,
-    minWidth: 0,
-    width: isShown ? dims.sideWidth : 0,
-    opacity: isShown ? 1 : 0,
-    padding: 0,
-    color: disabled ? COLORS.textDim : color,
-    cursor: disabled ? 'default' : 'pointer',
-    overflow: 'hidden',
-    transition: 'width 0.2s ease, opacity 0.18s ease, color 0.15s ease',
-  });
+  const cell = cellStyle(dims);
 
   return (
     <div
@@ -140,7 +162,7 @@ export function QuantityStepper({
         background: 'rgba(13, 13, 20, 0.94)',
         overflow: 'hidden',
       }}>
-      <button type="button" style={sideBtn(shown, false, COLORS.error)} onClick={handleDec} aria-label={`Remove one copy of ${name}`}>
+      <button type="button" style={sideButtonStyle(dims, shown, false, COLORS.error)} onClick={handleDec} aria-label={`Remove one copy of ${name}`}>
         <MinusIcon size={dims.iconSize} />
       </button>
       <span
@@ -150,11 +172,11 @@ export function QuantityStepper({
       </span>
       <button
         type="button"
-        style={sideBtn(shown, incrementDisabled, COLORS.success)}
+        style={sideButtonStyle(dims, shown, incrementDisabled, COLORS.success)}
         onClick={handleInc}
         disabled={incrementDisabled}
         title={incrementDisabled ? disabledReason : undefined}
-        aria-label={incrementDisabled ? (disabledReason ?? `Cannot add more ${name}`) : `Add one copy of ${name}`}>
+        aria-label={incrementAriaLabel(incrementDisabled, disabledReason, name)}>
         <PlusIcon size={dims.iconSize} />
       </button>
     </div>

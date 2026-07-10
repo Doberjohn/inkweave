@@ -40,13 +40,13 @@ describe('rankSuggestions', () => {
     const removal = createCard({id: 'rem', ink: 'Amber', text: 'Banish chosen character.'});
     const vanilla = createCard({id: 'van', ink: 'Amber'}); // no removal, no synergy
 
-    const result = rankSuggestions(
-      makeDeck([{card: deckCard}]),
-      ['rem', 'van'],
-      NO_SYNERGY,
-      makeHealth([analyzer('removal', 'bad')]),
-      resolver([deckCard, removal, vanilla]),
-    );
+    const result = rankSuggestions({
+      deck: makeDeck([{card: deckCard}]),
+      candidateIds: ['rem', 'van'],
+      getPairScore: NO_SYNERGY,
+      health: makeHealth([analyzer('removal', 'bad')]),
+      getCardById: resolver([deckCard, removal, vanilla]),
+    });
 
     // Only the removal card earns points; the vanilla candidate scores 0 and is dropped.
     expect(result.map((s) => s.cardId)).toEqual(['rem']);
@@ -59,13 +59,13 @@ describe('rankSuggestions', () => {
     const onCurve = createCard({id: 'song4', ink: 'Amber', type: 'Action', classifications: ['Song'], cost: 4});
     const offCurve = createCard({id: 'song7', ink: 'Amber', type: 'Action', classifications: ['Song'], cost: 7});
 
-    const result = rankSuggestions(
-      makeDeck([{card: singer}]),
-      ['song4', 'song7'],
-      NO_SYNERGY,
-      NO_GAPS,
-      resolver([singer, onCurve, offCurve]),
-    );
+    const result = rankSuggestions({
+      deck: makeDeck([{card: singer}]),
+      candidateIds: ['song4', 'song7'],
+      getPairScore: NO_SYNERGY,
+      health: NO_GAPS,
+      getCardById: resolver([singer, onCurve, offCurve]),
+    });
 
     // Only the cost-4 Song is singable by Singer 5; the cost-7 Song earns nothing.
     expect(result.map((s) => s.cardId)).toEqual(['song4']);
@@ -80,16 +80,16 @@ describe('rankSuggestions', () => {
     // Candidate pairs at 5 with both deck cards.
     const scores: PairScore = (a, b) => (a === 'cand' || b === 'cand' ? 5 : 0);
 
-    const result = rankSuggestions(
-      makeDeck([
+    const result = rankSuggestions({
+      deck: makeDeck([
         {card: core, isCore: true},
         {card: plain},
       ]),
-      ['cand'],
-      scores,
-      NO_GAPS,
-      resolver([core, plain, candidate]),
-    );
+      candidateIds: ['cand'],
+      getPairScore: scores,
+      health: NO_GAPS,
+      getCardById: resolver([core, plain, candidate]),
+    });
 
     // 5×2 (core) + 5×1 (plain) = 15, vs 10 without the core weighting.
     expect(result[0].synergyScore).toBe(15);
@@ -98,13 +98,13 @@ describe('rankSuggestions', () => {
 
   it('excludes a candidate already at 4 copies', () => {
     const maxed = createCard({id: 'x', ink: 'Amber', text: 'Banish chosen character.'});
-    const result = rankSuggestions(
-      makeDeck([{card: maxed, quantity: 4}]),
-      ['x'],
-      NO_SYNERGY,
-      makeHealth([analyzer('removal', 'bad')]),
-      resolver([maxed]),
-    );
+    const result = rankSuggestions({
+      deck: makeDeck([{card: maxed, quantity: 4}]),
+      candidateIds: ['x'],
+      getPairScore: NO_SYNERGY,
+      health: makeHealth([analyzer('removal', 'bad')]),
+      getCardById: resolver([maxed]),
+    });
 
     expect(result).toEqual([]);
   });
@@ -113,13 +113,13 @@ describe('rankSuggestions', () => {
     const dual = createCard({id: 'dual', ink: 'Amber', ink2: 'Steel'});
     const ruby = createCard({id: 'ruby', ink: 'Ruby', text: 'Banish chosen character.'});
 
-    const result = rankSuggestions(
-      makeDeck([{card: dual}]),
-      ['ruby'],
-      NO_SYNERGY,
-      makeHealth([analyzer('removal', 'bad')]),
-      resolver([dual, ruby]),
-    );
+    const result = rankSuggestions({
+      deck: makeDeck([{card: dual}]),
+      candidateIds: ['ruby'],
+      getPairScore: NO_SYNERGY,
+      health: makeHealth([analyzer('removal', 'bad')]),
+      getCardById: resolver([dual, ruby]),
+    });
 
     // Ruby can't live in an Amber/Steel deck, so it's filtered despite the removal gap.
     expect(result).toEqual([]);
@@ -138,13 +138,13 @@ describe('rankSuggestions', () => {
       text: 'This character enters play exerted.',
     });
 
-    const result = rankSuggestions(
-      makeDeck([{card: anchor}]),
-      ['enabler'],
-      NO_SYNERGY,
-      NO_GAPS,
-      resolver([anchor, enabler]),
-    );
+    const result = rankSuggestions({
+      deck: makeDeck([{card: anchor}]),
+      candidateIds: ['enabler'],
+      getPairScore: NO_SYNERGY,
+      health: NO_GAPS,
+      getCardById: resolver([anchor, enabler]),
+    });
 
     expect(result.map((s) => s.cardId)).toEqual(['enabler']);
     expect(result[0].reasons).toContain('BECKON enabler for Merida');

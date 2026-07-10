@@ -199,11 +199,6 @@ function isRampEnabler(card: LorcanaCard): boolean {
   return getRampRoles(card).includes('inkwell-ramp') || isDeckRamp(card);
 }
 
-/** Normalize a keyword to its base ("Shift 4" -> "shift") so numbered variants group together. */
-function keywordBase(keyword: string): string {
-  return keyword.replace(/\s*\d+\s*$/, '').trim().toLowerCase();
-}
-
 /**
  * Deepest "interchangeable package": the largest number of copies that share a
  * classification, a keyword, or a functional role (removal / draw). A proxy for
@@ -215,7 +210,10 @@ function largestInterchangeable(entries: ResolvedEntry[]): number {
 
   for (const {card, quantity} of entries) {
     for (const cls of card.classifications ?? []) bump(`class:${cls.toLowerCase()}`, quantity);
-    for (const kw of card.keywords ?? []) bump(`kw:${keywordBase(kw)}`, quantity);
+    for (const kw of card.keywords ?? []) {
+      const base = kw.replace(/\s*\d+\s*$/, '').trim().toLowerCase();
+      bump(`kw:${base}`, quantity);
+    }
     if (getRemovalRoles(card).length > 0) bump('role:removal', quantity);
     if (getCardMechanics(card).includes('draw')) bump('role:draw', quantity);
   }
@@ -306,13 +304,6 @@ function per60(count: number, total: number): number {
   return total > 0 ? (count / total) * 60 : 0;
 }
 
-/** DeckStatus from a 0..100 score: good ≥75, warn ≥45, else bad. */
-function statusFromScore(score: number): DeckStatus {
-  if (score >= 75) return 'good';
-  if (score >= 45) return 'warn';
-  return 'bad';
-}
-
 /**
  * "Meet the floor, reward the ideal" curve: 100 at/above `ideal`, 55 at `floor`
  * (the just-acceptable line), linearly interpolated between, and dropping toward
@@ -353,10 +344,21 @@ function sizeAdherencePenalty(deckSize: number): number {
   return Math.min(25, (deckSize - 60) * 3);
 }
 
+/** Inputs for a HealthAnalyzer before its score is clamped, rounded, and graded. */
+interface AnalyzerSpec {
+  id: string;
+  label: string;
+  /** Raw (pre-clamp) 0..100 score; `mk` clamps and rounds it. */
+  score: number;
+  message: string;
+  value: number;
+}
+
 /** Assemble a HealthAnalyzer, clamping + rounding the score and deriving its status. */
-function mk(id: string, label: string, rawScore: number, message: string, value: number): HealthAnalyzer {
-  const score = Math.round(clamp(rawScore, 0, 100));
-  return {id, label, score, status: statusFromScore(score), message, value};
+function mk(spec: AnalyzerSpec): HealthAnalyzer {
+  const score = Math.round(clamp(spec.score, 0, 100));
+  const status: DeckStatus = score >= 75 ? 'good' : score >= 45 ? 'warn' : 'bad';
+  return {id: spec.id, label: spec.label, score, status, message: spec.message, value: spec.value};
 }
 
 // ---------------------------------------------------------------------------
@@ -376,7 +378,7 @@ function analyzeRampCurve(m: DeckMetrics): HealthAnalyzer {
     score >= 75
       ? `Ramp plan holds up: ${m.rampEnablers} ramp source(s) into ${m.highCostBodies} high-cost payoff bodies.`
       : `Curve-jump incomplete: ${m.rampEnablers} ramp source(s) and ${m.highCostBodies} big bodies, want more of each to justify the gap.`;
-  return mk('curve', 'Curve', score, message, m.highCostBodies);
+  return mk({id: 'curve', label: 'Curve', score, message, value: m.highCostBodies});
 }
 
 function analyzeCurve(m: DeckMetrics, archetype: Archetype, t: ArchetypeProfile): HealthAnalyzer {
@@ -387,7 +389,7 @@ function analyzeCurve(m: DeckMetrics, archetype: Archetype, t: ArchetypeProfile)
     score >= 75
       ? `Curve centers at ${centroid} avg cost, on plan for ${archetype}.`
       : `Curve centers at ${centroid} avg cost; ${archetype} wants ${t.curve.min} to ${t.curve.max}.`;
-  return mk('curve', 'Curve', score, message, centroid);
+  return mk({id: 'curve', label: 'Curve', score, message, value: centroid});
 }
 
 function analyzeInkable(m: DeckMetrics, archetype: Archetype, t: ArchetypeProfile): HealthAnalyzer {
@@ -399,7 +401,7 @@ function analyzeInkable(m: DeckMetrics, archetype: Archetype, t: ArchetypeProfil
     score >= 75
       ? `${m.inkableCount} inkable (${pct}% of deck), a reliable inkwell.`
       : `${m.inkableCount} inkable (${pct}%); ${archetype} wants about ${Math.round(t.inkableFloor * 100)}%+.`;
-  return mk('inkable', 'Inkable Ratio', score, message, m.inkableCount);
+  return mk({id: 'inkable', label: 'Inkable Ratio', score, message, value: m.inkableCount});
 }
 
 function analyzeDraw(m: DeckMetrics, archetype: Archetype, t: ArchetypeProfile): HealthAnalyzer {
@@ -408,7 +410,7 @@ function analyzeDraw(m: DeckMetrics, archetype: Archetype, t: ArchetypeProfile):
     score >= 75
       ? `${m.drawCount} card-draw source(s), enough to refuel a ${archetype} plan.`
       : `Only ${m.drawCount} cards draw, aim for ${t.draw.ideal}+.`;
-  return mk('draw', 'Card Draw', score, message, m.drawCount);
+  return mk({id: 'draw', label: 'Card Draw', score, message, value: m.drawCount});
 }
 
 function analyzeRemoval(m: DeckMetrics, archetype: Archetype, t: ArchetypeProfile): HealthAnalyzer {
@@ -422,7 +424,7 @@ function analyzeRemoval(m: DeckMetrics, archetype: Archetype, t: ArchetypeProfil
   } else {
     message = `Only ${m.removalCount} removal card(s), ${archetype} wants ${t.removal.idealMin} to ${t.removal.idealMax}.`;
   }
-  return mk('removal', 'Removal', score, message, m.removalCount);
+  return mk({id: 'removal', label: 'Removal', score, message, value: m.removalCount});
 }
 
 function analyzeActions(m: DeckMetrics, archetype: Archetype, t: ArchetypeProfile): HealthAnalyzer {
@@ -434,7 +436,7 @@ function analyzeActions(m: DeckMetrics, archetype: Archetype, t: ArchetypeProfil
     score >= 75
       ? `${m.actionCount} actions/songs (${pct}% of deck)${songs}, within the ${archetype} budget.`
       : `${m.actionCount} actions/songs (${pct}%)${songs}, over the ~${Math.round(t.actionShareCap * 100)}% cap.`;
-  return mk('actionsCap', 'Actions & Songs', score, message, m.actionCount);
+  return mk({id: 'actionsCap', label: 'Actions & Songs', score, message, value: m.actionCount});
 }
 
 function analyzeTypeMix(m: DeckMetrics, archetype: Archetype, t: ArchetypeProfile): HealthAnalyzer {
@@ -443,7 +445,7 @@ function analyzeTypeMix(m: DeckMetrics, archetype: Archetype, t: ArchetypeProfil
     score >= 75
       ? `${m.charCount} characters plus ${m.actionCount} actions and ${m.itemLocCount} items/locations, a healthy mix.`
       : `${m.charCount} characters; ${archetype} wants ${t.characters.min} to ${t.characters.max} (${m.actionCount} actions, ${m.itemLocCount} items/locations).`;
-  return mk('typeMix', 'Card Types', score, message, m.charCount);
+  return mk({id: 'typeMix', label: 'Card Types', score, message, value: m.charCount});
 }
 
 function analyzeRuleOfEight(m: DeckMetrics): HealthAnalyzer {
@@ -452,7 +454,7 @@ function analyzeRuleOfEight(m: DeckMetrics): HealthAnalyzer {
     score >= 75
       ? `Deepest interchangeable package is ${m.largestPackage} cards, redundant enough to draw reliably.`
       : `Deepest interchangeable package is only ${m.largestPackage} cards, aim for 8+ so you draw your plan.`;
-  return mk('ruleOfEight', 'Rule of Eight', score, message, m.largestPackage);
+  return mk({id: 'ruleOfEight', label: 'Rule of Eight', score, message, value: m.largestPackage});
 }
 
 function analyzeConsistency(m: DeckMetrics): HealthAnalyzer {
@@ -462,7 +464,7 @@ function analyzeConsistency(m: DeckMetrics): HealthAnalyzer {
     score >= 75
       ? `${m.uniqueLines} distinct cards with few singletons, draws stay consistent.`
       : `${m.singletonLines} singleton(s) across ${m.uniqueLines} lines, favor 4-ofs for consistency.`;
-  return mk('consistency', 'Consistency', score, message, m.uniqueCards);
+  return mk({id: 'consistency', label: 'Consistency', score, message, value: m.uniqueCards});
 }
 
 function analyzeLore(m: DeckMetrics, archetype: Archetype, t: ArchetypeProfile): HealthAnalyzer {
@@ -471,12 +473,12 @@ function analyzeLore(m: DeckMetrics, archetype: Archetype, t: ArchetypeProfile):
     score >= 75
       ? `${m.totalLore} board lore, enough to race as ${archetype}.`
       : `${m.totalLore} board lore, low for ${archetype} (want about ${t.loreFloor}+ scaled to 60).`;
-  return mk('lore', 'Lore Output', score, message, m.totalLore);
+  return mk({id: 'lore', label: 'Lore Output', score, message, value: m.totalLore});
 }
 
 function analyzeShiftCoverage(m: DeckMetrics): HealthAnalyzer {
   if (m.shiftTotal === 0) {
-    return mk('shiftCoverage', 'Shift Coverage', 100, 'No Shift cards, nothing to cover.', 0);
+    return mk({id: 'shiftCoverage', label: 'Shift Coverage', score: 100, message: 'No Shift cards, nothing to cover.', value: 0});
   }
   const covered = m.shiftTotal - m.shiftUncovered;
   const score = (100 * covered) / m.shiftTotal;
@@ -484,7 +486,7 @@ function analyzeShiftCoverage(m: DeckMetrics): HealthAnalyzer {
     m.shiftUncovered === 0
       ? `All ${m.shiftTotal} Shift card(s) have a same-named base in the deck.`
       : `${m.shiftUncovered} of ${m.shiftTotal} Shift card(s) have no base target, add their base version.`;
-  return mk('shiftCoverage', 'Shift Coverage', score, message, m.shiftUncovered);
+  return mk({id: 'shiftCoverage', label: 'Shift Coverage', score, message, value: m.shiftUncovered});
 }
 
 // ---------------------------------------------------------------------------

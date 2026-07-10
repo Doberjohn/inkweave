@@ -36,6 +36,21 @@ beforeEach(() => {
   );
 });
 
+// Both persistence tests share one fake-timer arrange (render, add a card) and one
+// assert (the add reached the stored draft). They differ only in what triggers the
+// write, so each test passes in just that trigger.
+function expectAddPersistsVia(trigger: (rendered: ReturnType<typeof render>) => void) {
+  vi.useFakeTimers();
+  try {
+    const rendered = render();
+    act(() => rendered.result.current.addCard('amber'));
+    act(() => trigger(rendered));
+    expect(readDraft()?.cards).toEqual([{cardId: 'amber', quantity: 1}]);
+  } finally {
+    vi.useRealTimers();
+  }
+}
+
 describe('DeckContext', () => {
   it('addCard creates a line then increments the existing line', () => {
     const {result} = render();
@@ -93,15 +108,8 @@ describe('DeckContext', () => {
   });
 
   it('persists the draft to localStorage after the debounce window', () => {
-    vi.useFakeTimers();
-    try {
-      const {result} = render();
-      act(() => result.current.addCard('amber'));
-      act(() => vi.advanceTimersByTime(500));
-      expect(readDraft()?.cards).toEqual([{cardId: 'amber', quantity: 1}]);
-    } finally {
-      vi.useRealTimers();
-    }
+    // 500ms clears the 400ms debounce, so the scheduled write fires.
+    expectAddPersistsVia(() => vi.advanceTimersByTime(500));
   });
 
   it('restores a persisted draft on mount', () => {
@@ -122,15 +130,8 @@ describe('DeckContext', () => {
   });
 
   it('flushes the draft on unmount even inside the debounce window', () => {
-    vi.useFakeTimers();
-    try {
-      const {result, unmount} = render();
-      act(() => result.current.addCard('amber'));
-      act(() => unmount()); // unmount BEFORE the 400ms debounce fires
-      expect(readDraft()?.cards).toEqual([{cardId: 'amber', quantity: 1}]);
-    } finally {
-      vi.useRealTimers();
-    }
+    // Unmount BEFORE the 400ms debounce fires; the flush-on-unmount path still writes.
+    expectAddPersistsVia(({unmount}) => unmount());
   });
 
   it('self-heals stale stored inks against the card DB on mount', () => {

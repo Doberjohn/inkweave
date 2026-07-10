@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {useSession, type AuthProvider} from '../contexts/SessionContext';
 import {COLORS, FONTS, RADIUS, SPACING, Z_INDEX} from '../constants';
+import {signInProviderButtonState} from './signInProviderState';
 
 interface SignInDialogProps {
   isOpen: boolean;
@@ -78,26 +79,29 @@ export function SignInDialog({isOpen, onClose}: SignInDialogProps) {
         </p>
 
         <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm, marginTop: SPACING.lg}}>
-          {PROVIDERS.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => start(p.id)}
-              disabled={!enabled || busy !== null}
-              style={{
-                padding: `${SPACING.md}px ${SPACING.lg}px`,
-                background: COLORS.primary,
-                color: COLORS.background,
-                border: 'none',
-                borderRadius: RADIUS.md,
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: enabled && busy === null ? 'pointer' : 'default',
-                opacity: !enabled || busy !== null ? 0.6 : 1,
-              }}>
-              {busy === p.id ? 'Redirecting…' : p.label}
-            </button>
-          ))}
+          {PROVIDERS.map((p) => {
+            const button = signInProviderButtonState(p, enabled, busy);
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => start(p.id)}
+                disabled={button.disabled}
+                style={{
+                  padding: `${SPACING.md}px ${SPACING.lg}px`,
+                  background: COLORS.primary,
+                  color: COLORS.background,
+                  border: 'none',
+                  borderRadius: RADIUS.md,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: button.cursor,
+                  opacity: button.opacity,
+                }}>
+                {button.label}
+              </button>
+            );
+          })}
         </div>
 
         {!enabled && (

@@ -137,21 +137,23 @@ function boardReliance(ctx: DeckContext): number {
   return ctx.totalResolvedCopies > 0 ? (ctx.characterCopies / ctx.totalResolvedCopies) * 100 : 0;
 }
 
+/**
+ * Per-condition exposure formula, keyed by condition type. Stat/keyword
+ * conditions measure the share of matching characters; board-reliance
+ * conditions (mass, damaged) measure how character-dense the deck is.
+ */
+const EXPOSURE_FNS: Record<ConditionType, (ctx: DeckContext, threshold: number | undefined) => number> = {
+  'low-strength': (ctx, threshold) => matchShare(ctx, (c) => c.strength != null && c.strength <= (threshold ?? 0)),
+  'high-cost': (ctx, threshold) => matchShare(ctx, (c) => c.cost >= (threshold ?? Infinity)),
+  evasive: (ctx) => matchShare(ctx, (c) => hasKeyword(c, 'Evasive')),
+  bodyguard: (ctx) => matchShare(ctx, (c) => hasKeyword(c, 'Bodyguard')),
+  mass: (ctx) => boardReliance(ctx),
+  damaged: (ctx) => boardReliance(ctx),
+};
+
 /** Raw exposure share (0..100) of the deck to one removal condition. */
 function computeExposure(type: ConditionType, threshold: number | undefined, ctx: DeckContext): number {
-  switch (type) {
-    case 'low-strength':
-      return matchShare(ctx, (c) => c.strength != null && c.strength <= (threshold ?? 0));
-    case 'high-cost':
-      return matchShare(ctx, (c) => c.cost >= (threshold ?? Infinity));
-    case 'evasive':
-      return matchShare(ctx, (c) => hasKeyword(c, 'Evasive'));
-    case 'bodyguard':
-      return matchShare(ctx, (c) => hasKeyword(c, 'Bodyguard'));
-    case 'mass':
-    case 'damaged':
-      return boardReliance(ctx);
-  }
+  return EXPOSURE_FNS[type](ctx, threshold);
 }
 
 /** Map a rounded exposure share to a severity, or null when the deck isn't materially exposed. */
@@ -180,25 +182,45 @@ function groupByType(hosers: HoserEntry[]): Map<ConditionType, HoserEntry[]> {
   return byType;
 }
 
+/** Tally how often each stat threshold appears across a condition's catalog entries. */
+function tallyThresholds(entries: HoserEntry[]): Map<number, number> {
+  const counts = new Map<number, number>();
+  for (const e of entries) {
+    const t = e.condition.threshold;
+    if (t != null) counts.set(t, (counts.get(t) ?? 0) + 1);
+  }
+  return counts;
+}
+
+/**
+ * Does `threshold` (seen `count` times) beat the current best? More frequent
+ * wins; ties break toward the lower, more conservative threshold.
+ */
+function beatsBest(
+  threshold: number,
+  count: number,
+  best: number | undefined,
+  bestCount: number,
+): boolean {
+  if (count > bestCount) return true;
+  if (count < bestCount) return false;
+  return threshold < (best ?? Infinity);
+}
+
 /**
  * The representative threshold for a stat-gated condition: the MOST COMMON one
  * across the catalog's entries of that type (ties broken toward the lower, more
  * conservative threshold). Undefined for keyword / board-reliance conditions.
  */
 function modalThreshold(entries: HoserEntry[]): number | undefined {
-  const counts = new Map<number, number>();
-  for (const e of entries) {
-    const t = e.condition.threshold;
-    if (t != null) counts.set(t, (counts.get(t) ?? 0) + 1);
-  }
+  const counts = tallyThresholds(entries);
 
   let best: number | undefined;
   let bestCount = -1;
   for (const [threshold, count] of counts) {
-    if (count > bestCount || (count === bestCount && threshold < (best ?? Infinity))) {
-      best = threshold;
-      bestCount = count;
-    }
+    if (!beatsBest(threshold, count, best, bestCount)) continue;
+    best = threshold;
+    bestCount = count;
   }
   return best;
 }
@@ -214,6 +236,25 @@ function pickExamples(entries: HoserEntry[], deckInks: Set<Ink>): HoserEntry[] {
 // Message
 // ---------------------------------------------------------------------------
 
+/** Per-condition message formatter, keyed by condition type. `eg` is the pre-rendered example suffix. */
+const MESSAGE_BUILDERS: Record<
+  ConditionType,
+  (pct: number, threshold: number | undefined, eg: string) => string
+> = {
+  'low-strength': (pct, threshold, eg) =>
+    `${pct}% of your characters have ${threshold ?? 0} strength or less; exposed to low-strength removal${eg}.`,
+  'high-cost': (pct, threshold, eg) =>
+    `${pct}% of your characters cost ${threshold ?? 0} or more; exposed to high-cost removal${eg}.`,
+  evasive: (pct, _threshold, eg) =>
+    `${pct}% of your characters have Evasive; exposed to Evasive-hate removal${eg}.`,
+  bodyguard: (pct, _threshold, eg) =>
+    `${pct}% of your characters have Bodyguard; exposed to Bodyguard-punishing removal${eg}.`,
+  mass: (pct, _threshold, eg) =>
+    `${pct}% of your deck is characters; a go-wide board is exposed to board sweepers${eg}.`,
+  damaged: (pct, _threshold, eg) =>
+    `${pct}% of your deck is characters; once they take chip damage, damage-based removal can pick them off${eg}.`,
+};
+
 function buildMessage(
   type: ConditionType,
   threshold: number | undefined,
@@ -221,25 +262,50 @@ function buildMessage(
   exampleName: string | undefined,
 ): string {
   const eg = exampleName ? ` (e.g. ${exampleName})` : '';
-  switch (type) {
-    case 'low-strength':
-      return `${pct}% of your characters have ${threshold ?? 0} strength or less; exposed to low-strength removal${eg}.`;
-    case 'high-cost':
-      return `${pct}% of your characters cost ${threshold ?? 0} or more; exposed to high-cost removal${eg}.`;
-    case 'evasive':
-      return `${pct}% of your characters have Evasive; exposed to Evasive-hate removal${eg}.`;
-    case 'bodyguard':
-      return `${pct}% of your characters have Bodyguard; exposed to Bodyguard-punishing removal${eg}.`;
-    case 'mass':
-      return `${pct}% of your deck is characters; a go-wide board is exposed to board sweepers${eg}.`;
-    case 'damaged':
-      return `${pct}% of your deck is characters; once they take chip damage, damage-based removal can pick them off${eg}.`;
-  }
+  return MESSAGE_BUILDERS[type](pct, threshold, eg);
 }
 
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
+
+/**
+ * Evaluate one removal condition against the deck, returning a `Vulnerability`
+ * only when the deck is materially exposed (>= 25%), else null. Pure given ctx.
+ */
+function evaluateCondition(
+  type: ConditionType,
+  entries: HoserEntry[] | undefined,
+  ctx: DeckContext,
+): Vulnerability | null {
+  if (!entries || entries.length === 0) return null;
+
+  const threshold = modalThreshold(entries);
+  const exposurePct = Math.round(computeExposure(type, threshold, ctx));
+  const severity = severityFor(type, exposurePct);
+  if (!severity) return null;
+
+  const examples = pickExamples(entries, ctx.deckInks);
+  return {
+    id: type,
+    label: LABELS[type],
+    conditionType: type,
+    severity,
+    exposurePct,
+    message: buildMessage(type, threshold, exposurePct, examples[0]?.name),
+    hoserCardIds: examples.map((e) => e.cardId),
+  };
+}
+
+/** Sort comparator: sharpest first (severity, then exposure share, then canonical type order). */
+function compareVulnerabilities(a: Vulnerability, b: Vulnerability): number {
+  return (
+    SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity] ||
+    (b.exposurePct ?? 0) - (a.exposurePct ?? 0) ||
+    TYPE_ORDER.indexOf(a.conditionType as ConditionType) -
+      TYPE_ORDER.indexOf(b.conditionType as ConditionType)
+  );
+}
 
 /**
  * Compute the deck's "what to watch for" vulnerabilities from the pool-derived
@@ -263,31 +329,9 @@ export function analyzeVulnerabilities(
   const out: Vulnerability[] = [];
 
   for (const type of TYPE_ORDER) {
-    const entries = byType.get(type);
-    if (!entries || entries.length === 0) continue;
-
-    const threshold = modalThreshold(entries);
-    const exposurePct = Math.round(computeExposure(type, threshold, ctx));
-    const severity = severityFor(type, exposurePct);
-    if (!severity) continue;
-
-    const examples = pickExamples(entries, ctx.deckInks);
-    out.push({
-      id: type,
-      label: LABELS[type],
-      conditionType: type,
-      severity,
-      exposurePct,
-      message: buildMessage(type, threshold, exposurePct, examples[0]?.name),
-      hoserCardIds: examples.map((e) => e.cardId),
-    });
+    const vuln = evaluateCondition(type, byType.get(type), ctx);
+    if (vuln) out.push(vuln);
   }
 
-  return out.sort(
-    (a, b) =>
-      SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity] ||
-      (b.exposurePct ?? 0) - (a.exposurePct ?? 0) ||
-      TYPE_ORDER.indexOf(a.conditionType as ConditionType) -
-        TYPE_ORDER.indexOf(b.conditionType as ConditionType),
-  );
+  return out.sort(compareVulnerabilities);
 }
