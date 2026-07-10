@@ -90,6 +90,9 @@ apps/web/public/mockups/
 # Design handoff reference (Claude Design exports) — local-only, never committed
 apps/web/reveals page redesign/
 
+# Security audit findings — sensitive, keep out of the public repo
+docs/SECURITY_AUDIT.md
+
 # Tool / plugin local state — managed by their installers, not tracked
 .agents/
 .superpowers/

@@ -90,11 +90,22 @@ const DeckContext = createContext<DeckContextValue | null>(null);
  * deferred to #473. Fire-and-forget: on failure the local draft still persists.
  */
 function useFirstSignInMigration(uid: string | null, isLoading: boolean, latestDeck: {current: Deck}) {
-  const migratedUid = useRef<string | null>(null);
+  const claimedUid = useRef<string | null>(null);
+  // Once a sign-in has been seen and then lost (sign-out), migration is blocked for
+  // the rest of this page instance: the draft still in memory belongs to the user
+  // who just left, and must not migrate into the NEXT account signed in on a shared
+  // browser without a reload. Refs only (set-state-in-effect is banned under the
+  // React Compiler). The rarer reload-then-different-user path is left to #473's
+  // saved-deck model, which will clear the draft on sign-out.
+  const blockedAfterSignOut = useRef(false);
   useEffect(() => {
-    if (!uid || isLoading) return; // wait for auth + the card DB (so inks are correct)
-    if (migratedUid.current === uid) return; // already handled this uid this session
-    migratedUid.current = uid;
+    if (!uid) {
+      if (claimedUid.current !== null) blockedAfterSignOut.current = true; // a real sign-out
+      return;
+    }
+    if (isLoading || blockedAfterSignOut.current) return; // wait for the card DB; never after a sign-out
+    if (claimedUid.current === uid) return; // already handled this uid this session
+    claimedUid.current = uid;
     if (hasMigratedDraft(uid)) return; // migrated in a prior session
     const snapshot = latestDeck.current;
     if (snapshot.cards.length === 0) return; // empty pre-sign-in draft: nothing to preserve
