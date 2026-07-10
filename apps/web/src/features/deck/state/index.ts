@@ -8,3 +8,13 @@ export {
   markDraftMigrated,
   DRAFT_KEY,
 } from './deckStorage';
+// Cloud persistence (#464).
+export {
+  listDecks,
+  getDeck,
+  createDeck,
+  updateDeck,
+  deleteDeck,
+  upsertDeck,
+  type RepoResult,
+} from './deckRepository';

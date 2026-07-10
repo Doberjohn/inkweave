@@ -17,6 +17,20 @@ vi.mock('../../../shared/contexts/CardDataContext', () => ({
   }),
 }));
 
+// DeckProvider reads useSession for the first-sign-in cloud migrator (#464). These
+// tests cover the LOCAL draft, so stub a signed-out session: uid is null, the
+// migrator effect returns early, and nothing touches Supabase.
+vi.mock('../../../shared/contexts/SessionContext', () => ({
+  useSession: () => ({
+    user: null,
+    session: null,
+    loading: false,
+    enabled: false,
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+  }),
+}));
+
 function wrapper({children}: {children: ReactNode}) {
   return <DeckProvider>{children}</DeckProvider>;
 }
