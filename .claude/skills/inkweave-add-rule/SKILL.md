@@ -79,7 +79,8 @@ If not, ask: "What game mechanic or interaction does this rule detect?"
     - Verify new rule appears with expected scores
 
 14. **Update documentation**:
-    - Update **Synergy Rules** section in `CLAUDE.md`
+    - Write the rule's spec into `packages/synergy-engine/<NAME>_RULE.md` (the authoritative doc: detection, score matrix, coverage, rationale)
+    - Add ONE row to the **Synergy Rules** registry table in `CLAUDE.md` (rule name, playstyle id, doc link). Do NOT restate rule detail there — it is always-loaded context
     - Update `REMOVED_RULES.md` if replacing a removed rule
 
 15. **Report summary**: rule name, category, cards matched, pairs created, test results
