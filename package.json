@@ -37,9 +37,9 @@
   },
   "size-limit": [
     {
-      "name": "Total JS bundle",
-      "path": "apps/web/dist/assets/*.js",
-      "limit": "360 kB",
+      "name": "Initial JS (entry chunk)",
+      "path": "apps/web/dist/assets/index-*.js",
+      "limit": "200 kB",
       "gzip": true
     },
     {
