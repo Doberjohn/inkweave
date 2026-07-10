@@ -24,7 +24,7 @@ function getStyles(isMobile: boolean) {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      padding: isMobile ? `48px ${SPACING.lg}px 40px` : '0 0 80px',
+      padding: isMobile ? `48px ${SPACING.lg}px 40px` : 0,
       position: 'relative',
       zIndex: 2,
       width: isMobile ? '100%' : undefined,

@@ -99,9 +99,9 @@ and group multiple synergy rules under one identity.
     - Compare total synergy counts before vs after
 
 18. **Update documentation**:
-    - Update the **Synergy Rules** section in `CLAUDE.md`
+    - Write the playstyle's spec into `packages/synergy-engine/<NAME>_RULE.md` (the authoritative doc)
+    - Add ONE row to the **Synergy Rules** registry table in `CLAUDE.md` (playstyle name, `PlaystyleId`, doc link). Do NOT restate rule detail there — it is always-loaded context
     - Update the **Archetypes** list in `CLAUDE.md` if this is an MVP archetype
-    - Update `PlaystyleId` comment in CLAUDE.md if documented there
 
 19. **Report summary**:
     - New playstyle: name, id, accent color

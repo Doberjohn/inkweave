@@ -3,13 +3,13 @@ import {useNavigate} from 'react-router-dom';
 import {FeaturedCards} from '../features/cards';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {trackEvent} from '../shared/lib/analytics';
-import {HeroSection, EtherealBackground, ErrorBoundary} from '../shared/components';
+import {HeroSection, EtherealBackground, ErrorBoundary, Footer} from '../shared/components';
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 
 const mainStyle: React.CSSProperties = {
-  minHeight: '100vh',
+  flex: 1,
   position: 'relative',
   display: 'flex',
   flexDirection: 'column',
@@ -37,29 +37,32 @@ export function HomePage() {
   const handleVote = () => navigate('/vote');
 
   return (
-    <main style={{...mainStyle, justifyContent: isMobile ? undefined : 'center'}}>
-      <EtherealBackground isMobile={isMobile} />
+    <div style={{minHeight: '100vh', display: 'flex', flexDirection: 'column'}}>
+      <main style={{...mainStyle, justifyContent: isMobile ? undefined : 'center'}}>
+        <EtherealBackground isMobile={isMobile} />
 
-      <ErrorBoundary>
-        <HeroSection
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onSearchSubmit={handleSearchSubmit}
+        <ErrorBoundary>
+          <HeroSection
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onSearchSubmit={handleSearchSubmit}
+            cards={cards}
+            onCardSelect={handleCardSelect}
+            onBrowse={handleBrowse}
+            onPlaystyles={handlePlaystyles}
+            onVote={handleVote}
+            isMobile={isMobile}
+          />
+        </ErrorBoundary>
+
+        <FeaturedCards
           cards={cards}
           onCardSelect={handleCardSelect}
-          onBrowse={handleBrowse}
-          onPlaystyles={handlePlaystyles}
-          onVote={handleVote}
           isMobile={isMobile}
+          isLoading={isLoading}
         />
-      </ErrorBoundary>
-
-      <FeaturedCards
-        cards={cards}
-        onCardSelect={handleCardSelect}
-        isMobile={isMobile}
-        isLoading={isLoading}
-      />
-    </main>
+      </main>
+      <Footer />
+    </div>
   );
 }

@@ -64,6 +64,10 @@ const DecksPage = lazyWithRetry(() => import('./pages/DecksPage'), 'DecksPage');
 const DeckBuilderPage = lazyWithRetry(() => import('./pages/DeckBuilderPage'), 'DeckBuilderPage');
 const DeckViewPage = lazyWithRetry(() => import('./pages/DeckViewPage'), 'DeckViewPage');
 const AuthCallbackPage = lazyWithRetry(() => import('./pages/AuthCallbackPage'), 'AuthCallbackPage');
+const PrivacyPage = lazyWithRetry(() => import('./pages/PrivacyPage'), 'PrivacyPage');
+const TermsPage = lazyWithRetry(() => import('./pages/TermsPage'), 'TermsPage');
+const DisclaimerPage = lazyWithRetry(() => import('./pages/DisclaimerPage'), 'DisclaimerPage');
+const AboutPage = lazyWithRetry(() => import('./pages/AboutPage'), 'AboutPage');
 
 /** Generic 3-line fallback used by every route except `/`. */
 function GenericFallback() {
@@ -282,6 +286,38 @@ export const router = createBrowserRouter([
         element: (
           <SuspenseWrapper>
             <AuthCallbackPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'privacy',
+        element: (
+          <SuspenseWrapper>
+            <PrivacyPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'terms',
+        element: (
+          <SuspenseWrapper>
+            <TermsPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'disclaimer',
+        element: (
+          <SuspenseWrapper>
+            <DisclaimerPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'about',
+        element: (
+          <SuspenseWrapper>
+            <AboutPage />
           </SuspenseWrapper>
         ),
       },

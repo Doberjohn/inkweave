@@ -232,3 +232,11 @@ Requires `VITE_SHOW_ADMIN_ANALYTICS=true` (playwright `webServer.env` + `apps/we
 - **CardOverviewModal** is the post-#320 replacement for the routed card page — clicking a card (anywhere) opens it overlay-style with the URL unchanged, rather than navigating to `/card/:id`
 - **Navigation back** is tested via both clear/back button and logo click
 - **Image loading** is verified via `loading` and `decoding` attributes (not `src` URLs, which differ between dev proxy and production AVIF)
+
+## Debugging a failed E2E run
+
+- **Read the failure screenshot before theorizing.** Playwright writes one per failed test to `apps/web/test-results/{test-name}-chromium/test-failed-1.png`. It shows the rendered DOM at the moment of failure, the fastest way to distinguish "test is stale" / "UI refactored" / "route gate fired" / "feature flag off."
+- Common patterns visible in the screenshot:
+  - **Unexpected page** (e.g., home rendered when the test navigated to `/reveals`) → a route gate redirected; check the corresponding phase/flag hook.
+  - **Correct page but expected text missing** → the UI may have been refactored (element moved to `<img alt>`, or hidden via `position: absolute; left: -10000` for screen readers, which `toBeVisible()` excludes). Query the `<section>` by role/name instead, or use `.toHaveCount(1)`.
+  - **Flash of initial state** → async state (fetch, localStorage) had not resolved; check what the page is waiting for before asserting.

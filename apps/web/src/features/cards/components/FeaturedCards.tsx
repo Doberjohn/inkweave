@@ -61,7 +61,7 @@ function getStyles(isMobile: boolean) {
     container: {
       width: isMobile ? '100%' : 1280,
       maxWidth: '100%',
-      margin: '0 auto',
+      margin: '50px auto',
       padding: isMobile ? `0 ${SPACING.lg}px 48px` : '0 32px',
       position: 'relative',
       zIndex: 1,
