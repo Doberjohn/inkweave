@@ -31,13 +31,12 @@ const meta: Meta<typeof DeckPoolGrid> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const EmptyDeck: Story = {args: {cards, deckInks: [], quantities: new Map()}};
+export const EmptyDeck: Story = {args: {cards, quantities: new Map()}};
 
-// Amber + Sapphire locked: off-ink cards dim, card 1 is at max, card 5 shows a pip.
+// card 1 is at the 4-copy max (its + disables); card 5 shows a count pip.
 export const WithDeckState: Story = {
   args: {
     cards,
-    deckInks: ['Amber', 'Sapphire'],
     quantities: new Map([
       ['1', 4],
       ['5', 2],
@@ -45,4 +44,4 @@ export const WithDeckState: Story = {
   },
 };
 
-export const NoResults: Story = {args: {cards: [], deckInks: [], quantities: new Map()}};
+export const NoResults: Story = {args: {cards: [], quantities: new Map()}};

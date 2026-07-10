@@ -56,6 +56,18 @@
   }
 }
 
+/* Deck-builder deck row: slide + fade in on mount (add / initial render). */
+@keyframes inkweave-row-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 *,
 *::before,
 *::after {

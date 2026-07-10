@@ -8,7 +8,7 @@ const card = createCard({fullName: 'Pocahontas - Guiding the Tribe', ink: 'Amber
 
 function renderTile(props: Partial<ComponentProps<typeof PoolCardTile>> = {}) {
   const handlers = {onIncrement: vi.fn(), onDecrement: vi.fn(), onViewDetails: vi.fn()};
-  render(<PoolCardTile card={card} deckInks={['Amber']} inDeckCount={0} {...handlers} {...props} />);
+  render(<PoolCardTile card={card} inDeckCount={0} {...handlers} {...props} />);
   return handlers;
 }
 
@@ -47,13 +47,12 @@ describe('PoolCardTile', () => {
     expect(onIncrement).not.toHaveBeenCalled();
   });
 
-  it('does not add an off-ink card on click', () => {
+  it('adds an off-ink card on click — the ink limit is a soft legality error, not a pool block', () => {
     const ruby = createCard({fullName: 'Maleficent - Monstrous Dragon', ink: 'Ruby'});
     const onIncrement = vi.fn();
     render(
       <PoolCardTile
         card={ruby}
-        deckInks={['Amber', 'Amethyst']}
         inDeckCount={0}
         onIncrement={onIncrement}
         onDecrement={vi.fn()}
@@ -61,6 +60,6 @@ describe('PoolCardTile', () => {
       />,
     );
     fireEvent.click(screen.getByTestId('card-tile'));
-    expect(onIncrement).not.toHaveBeenCalled();
+    expect(onIncrement).toHaveBeenCalledWith(ruby);
   });
 });

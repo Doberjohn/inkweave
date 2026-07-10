@@ -1,11 +1,11 @@
-import {useState, type ReactNode} from 'react';
+import {useState, type CSSProperties, type ReactNode} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {useDeck} from '../features/deck/state';
 import {DeckPanel, DeckPoolGrid, type DeckRow} from '../features/deck/components';
 import {useDeckPoolFilters, applyPoolFilters} from '../features/deck/hooks/useDeckPoolFilters';
 import {calculateDeckStats} from '../features/deck/analysis/deckStats';
 import {BrowseToolbar} from '../features/cards';
-import {FilterDialog} from '../shared/components';
+import {CompactHeader, FilterDialog} from '../shared/components';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive} from '../shared/hooks';
@@ -15,6 +15,20 @@ import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 // synergy / suggestion / analysis content to come; the pool gets the rest, with
 // larger, more readable card scans (see DeckPoolGrid's min column width).
 const DECK_PANE_COLUMNS = 'minmax(0, 1fr) minmax(500px, 37%)';
+
+// The visible page chrome is CompactHeader; keep one h1 in the a11y tree so the
+// heading outline stays intact without a second visible title.
+const SR_ONLY: CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
 
 function CenteredNotice({children}: {children: ReactNode}) {
   return (
@@ -77,6 +91,10 @@ export function DeckBuilderPage() {
       filtered.map((c) => c.id),
     );
 
+  // Opened from the DECK panel: the panel supplies its own rows (in rendered,
+  // type-grouped order) so the modal's arrow-nav walks the deck, not the pool.
+  const viewDeckDetails = (card: LorcanaCard, siblingIds: string[]) => openCardModal(card.id, siblingIds);
+
   const toolbarProps = {
     onFiltersClick: () => setShowFilters(true),
     activeFilterCount: pool.activeFilterCount,
@@ -97,25 +115,25 @@ export function DeckBuilderPage() {
   } as const;
 
   return (
-    <main style={{height: '100vh', background: COLORS.background, fontFamily: FONTS.body, overflow: 'hidden'}}>
-      <div style={{height: '100%', display: 'grid', gridTemplateColumns: DECK_PANE_COLUMNS}}>
+    <main
+      style={{
+        height: '100vh',
+        background: COLORS.background,
+        fontFamily: FONTS.body,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+      <CompactHeader isMobile={isMobile} />
+      <h1 style={SR_ONLY}>Deck Builder</h1>
+      {/* The grid takes the remaining height under the sticky header; minHeight:0
+          lets its panes own their own scroll instead of overflowing the 100vh shell. */}
+      <div style={{flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: DECK_PANE_COLUMNS}}>
         <section aria-label="Card pool" style={{display: 'flex', flexDirection: 'column', minHeight: 0}}>
-          <h1
-            style={{
-              padding: `${SPACING.lg}px ${SPACING.md}px 0`,
-              margin: 0,
-              fontFamily: FONTS.hero,
-              fontSize: `${FONT_SIZES.xxl}px`,
-              color: COLORS.text,
-              flexShrink: 0,
-            }}>
-            Deck Builder
-          </h1>
           <BrowseToolbar {...toolbarProps} />
           <div style={{flex: 1, minHeight: 0, position: 'relative'}}>
             <DeckPoolGrid
               cards={filtered}
-              deckInks={deck.inks}
               quantities={quantities}
               onIncrement={(card) => setQuantity(card.id, (quantities.get(card.id) ?? 0) + 1)}
               onDecrement={(card) => setQuantity(card.id, (quantities.get(card.id) ?? 0) - 1)}
@@ -132,6 +150,7 @@ export function DeckBuilderPage() {
           onIncrement={(id) => setQuantity(id, (quantities.get(id) ?? 0) + 1)}
           onDecrement={(id) => setQuantity(id, (quantities.get(id) ?? 0) - 1)}
           onRemove={removeCard}
+          onOpenDetails={viewDeckDetails}
         />
       </div>
 

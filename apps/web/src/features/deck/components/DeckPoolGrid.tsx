@@ -1,6 +1,6 @@
 import {forwardRef, type CSSProperties, type ReactNode} from 'react';
 import {VirtuosoGrid} from 'react-virtuoso';
-import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {PoolCardTile} from './PoolCardTile';
 import {COLORS, FONT_SIZES, LAYOUT, SPACING} from '../../../shared/constants';
 import {useResponsive} from '../../../shared/hooks';
@@ -11,8 +11,6 @@ const POOL_CARD_MIN_WIDTH = 220;
 
 interface DeckPoolGridProps {
   cards: LorcanaCard[];
-  /** The deck's inks — forwarded to each tile for off-ink gating. */
-  deckInks: Ink[];
   /** cardId → copies already in the deck (drives each tile's count + stepper). */
   quantities: Map<string, number>;
   onIncrement: (card: LorcanaCard) => void;
@@ -54,7 +52,7 @@ const createListContainer = (paddingX: number, minColWidth: number) =>
  * card base; react-virtuoso keeps it cheap by only mounting visible rows.
  * Requires a height-bounded flex ancestor (the page provides `flex:1;minHeight:0`).
  */
-export function DeckPoolGrid({cards, deckInks, quantities, onIncrement, onDecrement, onViewDetails}: DeckPoolGridProps) {
+export function DeckPoolGrid({cards, quantities, onIncrement, onDecrement, onViewDetails}: DeckPoolGridProps) {
   const {isMobile} = useResponsive();
   const paddingX = isMobile ? SPACING.lg : SPACING.md;
   const minColWidth = isMobile ? LAYOUT.cardGridMinWidthMobile : POOL_CARD_MIN_WIDTH;
@@ -77,7 +75,6 @@ export function DeckPoolGrid({cards, deckInks, quantities, onIncrement, onDecrem
         return (
           <PoolCardTile
             card={card}
-            deckInks={deckInks}
             inDeckCount={quantities.get(card.id) ?? 0}
             onIncrement={onIncrement}
             onDecrement={onDecrement}

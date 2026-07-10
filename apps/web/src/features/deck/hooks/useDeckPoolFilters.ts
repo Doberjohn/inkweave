@@ -6,6 +6,7 @@
 // the WHOLE query string, which is exactly why it can't be reused here.
 
 import {useState} from 'react';
+import {getInks} from 'inkweave-synergy-engine';
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {
   searchCardsByName,
@@ -78,15 +79,17 @@ export interface PoolFilterState {
   sortOrder: BrowseSortOrder;
 }
 
-/** Merge the inline facets (ink/type/cost) into the dialog-driven CardFilterOptions. */
+/**
+ * Merge the inline facets (type/cost) into the dialog-driven CardFilterOptions.
+ * Ink is deliberately NOT delegated here — the pool applies its own AND-style ink
+ * gate in {@link applyPoolFilters}, unlike Browse's shared either-ink matching.
+ */
 function buildCombinedFilters(
   base: CardFilterOptions,
-  inks: Ink[],
   types: CardTypeFilter[],
   costs: number[],
 ): CardFilterOptions {
   const combined: CardFilterOptions = {...base};
-  if (inks.length > 0) combined.ink = inks;
   if (types.length > 0) combined.type = types;
   if (costs.length > 0) combined.costs = costs;
   return combined;
@@ -97,14 +100,25 @@ function buildCombinedFilters(
  * BrowsePage uses, so pool results match Browse exactly.
  */
 export function applyPoolFilters(cards: LorcanaCard[], state: PoolFilterState): LorcanaCard[] {
-  const combined = buildCombinedFilters(
-    state.filters,
-    state.inkFilters,
-    state.typeFilters,
-    state.costFilters,
-  );
+  const combined = buildCombinedFilters(state.filters, state.typeFilters, state.costFilters);
   let result = cards;
   if (state.searchQuery.trim()) result = searchCardsByName(result, state.searchQuery);
   if (Object.keys(combined).length > 0) result = filterCards(result, combined);
+  // Pool ink gate deviates from Browse's shared either-ink OR semantics: a legal
+  // deck holds exactly two inks, so once BOTH are chosen a dual-ink card must fit
+  // entirely inside them (an outside ink would be an illegal third). Browse's
+  // matchesInk can't express this, so gate ink locally rather than delegating it.
+  if (state.inkFilters.length > 0) {
+    const selected = state.inkFilters;
+    result = result.filter((card) => {
+      const inks = getInks(card);
+      // Two inks chosen = the deck's inks are decided, so a card must fit ENTIRELY
+      // inside them (a dual with an outside ink would be a third ink).
+      // One ink chosen = the second slot is still open, so a dual containing it is legal.
+      return selected.length >= 2
+        ? inks.every((i) => selected.includes(i))
+        : inks.some((i) => selected.includes(i));
+    });
+  }
   return applySortOrder(result, state.sortOrder);
 }

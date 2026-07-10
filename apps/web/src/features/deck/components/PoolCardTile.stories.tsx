@@ -21,18 +21,6 @@ const pocahontas = (over: Partial<LorcanaCard> = {}): LorcanaCard => ({
   ...over,
 });
 
-const maleficent = (over: Partial<LorcanaCard> = {}): LorcanaCard => ({
-  id: '2044',
-  name: 'Maleficent',
-  fullName: 'Maleficent - Monstrous Dragon',
-  cost: 8,
-  ink: 'Ruby',
-  inkwell: false,
-  type: 'Character',
-  imageUrl: `${RB}/set9/108_83580e6844153a5788c87a6f9984a3c69de9c9c3.jpg`,
-  ...over,
-});
-
 const meta: Meta<typeof PoolCardTile> = {
   title: 'Deck/PoolCardTile',
   component: PoolCardTile,
@@ -50,11 +38,8 @@ const meta: Meta<typeof PoolCardTile> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Addable: Story = {args: {card: pocahontas(), deckInks: ['Amber'], inDeckCount: 0}};
+export const Addable: Story = {args: {card: pocahontas(), inDeckCount: 0}};
 
-export const InDeck: Story = {args: {card: pocahontas(), deckInks: ['Amber'], inDeckCount: 2}};
+export const InDeck: Story = {args: {card: pocahontas(), inDeckCount: 2}};
 
-export const AtMaxCopies: Story = {args: {card: pocahontas(), deckInks: ['Amber'], inDeckCount: 4}};
-
-// Ruby card while the deck is locked to Amber + Amethyst — dims + disables the +.
-export const OffInk: Story = {args: {card: maleficent(), deckInks: ['Amber', 'Amethyst'], inDeckCount: 0}};
+export const AtMaxCopies: Story = {args: {card: pocahontas(), inDeckCount: 4}};
