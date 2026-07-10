@@ -77,6 +77,33 @@ interface DeckContextValue {
 
 const DeckContext = createContext<DeckContextValue | null>(null);
 
+/**
+ * First-sign-in draft->cloud migration (#464, #463 last mile). When a user signs
+ * in, promote their pre-sign-in anonymous draft into `decks` exactly ONCE so the
+ * work isn't lost. hasMigratedDraft/markDraftMigrated (localStorage, per-uid) make
+ * it idempotent across reloads and re-sign-ins; `migratedUid` claims the uid the
+ * moment it's handled so rapid edits during the in-flight upsert can't re-fire it.
+ * Only a non-empty pre-sign-in draft migrates: an authed user opening a fresh
+ * builder never litters `decks` with an empty ghost row. Reads the draft through
+ * `latestDeck` (synced each render) so the effect depends only on the sign-in
+ * moment, not every edit. Continuous sync + SaveDeckDialog + /decks list are
+ * deferred to #473. Fire-and-forget: on failure the local draft still persists.
+ */
+function useFirstSignInMigration(uid: string | null, isLoading: boolean, latestDeck: {current: Deck}) {
+  const migratedUid = useRef<string | null>(null);
+  useEffect(() => {
+    if (!uid || isLoading) return; // wait for auth + the card DB (so inks are correct)
+    if (migratedUid.current === uid) return; // already handled this uid this session
+    migratedUid.current = uid;
+    if (hasMigratedDraft(uid)) return; // migrated in a prior session
+    const snapshot = latestDeck.current;
+    if (snapshot.cards.length === 0) return; // empty pre-sign-in draft: nothing to preserve
+    void upsertDeck({...snapshot, ownerId: uid}, uid).then(({error}) => {
+      if (!error) markDraftMigrated(uid);
+    });
+  }, [uid, isLoading, latestDeck]);
+}
+
 export function DeckProvider({children}: {children: ReactNode}) {
   const {getCardById, isLoading} = useCardDataContext();
   const {user} = useSession();
@@ -118,32 +145,7 @@ export function DeckProvider({children}: {children: ReactNode}) {
     };
   }, []);
 
-  // First-sign-in draft->cloud migration (#464, #463 last mile). When a user signs
-  // in, promote their pre-sign-in anonymous draft into `decks` exactly ONCE so the
-  // work isn't lost. hasMigratedDraft/markDraftMigrated (localStorage, per-uid) make
-  // it idempotent across reloads and re-sign-ins; `migratedUid` claims the uid the
-  // moment it's handled so rapid edits during the in-flight upsert can't re-fire it.
-  // Only a non-empty pre-sign-in draft migrates: an authed user opening a fresh
-  // builder never litters `decks` with an empty ghost row. Continuous sync of later
-  // edits and explicit named saves are deferred to #473 (the saved-deck model); this
-  // guarantees only that the pre-sign-in draft survives. Fire-and-forget: on failure
-  // the local draft still persists via deckStorage, so nothing is lost.
-  const uid = user?.id ?? null;
-  const migratedUid = useRef<string | null>(null);
-  useEffect(() => {
-    if (!uid || isLoading) return; // wait for auth + the card DB (so inks are correct)
-    if (migratedUid.current === uid) return; // already handled this uid this session
-    migratedUid.current = uid;
-    if (hasMigratedDraft(uid)) return; // migrated in a prior session
-    // Read the draft through latestDeck (synced to currentDeck each render by the
-    // ref effect above) so this effect depends only on the sign-in moment, not on
-    // every deck edit. The migration decision is captured at this first-ready run.
-    const snapshot = latestDeck.current;
-    if (snapshot.cards.length === 0) return; // empty pre-sign-in draft: nothing to preserve
-    void upsertDeck({...snapshot, ownerId: uid}, uid).then(({error}) => {
-      if (!error) markDraftMigrated(uid);
-    });
-  }, [uid, isLoading]);
+  useFirstSignInMigration(user?.id ?? null, isLoading, latestDeck);
 
   const addCard = (cardId: string) => setDeck((d) => addCardToDeck(d, cardId, getCardById));
 

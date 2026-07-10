@@ -20,7 +20,7 @@ import type {Archetype, Deck, DeckCard, Ink} from '../types';
 // coupling between the schema and this repository.
 type DeckRow = Database['public']['Tables']['decks']['Row'];
 type DeckInsert = Database['public']['Tables']['decks']['Insert'];
-type DeckUpdate = Database['public']['Tables']['decks']['Update'];
+type DecksClient = NonNullable<ReturnType<typeof getSupabase>>;
 
 /** Uniform read/write result. `data` is null on any failure or empty read. */
 export interface RepoResult<T> {
@@ -34,14 +34,33 @@ const SCHEMA_VERSION = 1 as const;
 const VALID_ARCHETYPES = new Set<Archetype>(['aggro', 'tempo', 'midrange', 'control', 'combo', 'ramp']);
 const VALID_INKS = new Set<Ink>(['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel']);
 
+/**
+ * The shared shell every CRUD call runs inside: env-gate the client, await the
+ * caller's already-mapped query, and normalize errors to a {@link RepoResult}.
+ * `op` returns domain data (mapping happens inside it) so this stays generic and
+ * the six operations below carry no duplicated null-check / try-catch / logging.
+ */
+async function run<T>(
+  op: (client: DecksClient) => PromiseLike<{data: T | null; error: {message: string} | null}>,
+): Promise<RepoResult<T>> {
+  const supabase = getSupabase();
+  if (!supabase) return {data: null, error: NOT_CONFIGURED};
+  try {
+    const {data, error} = await op(supabase);
+    if (error) {
+      console.error('[deckRepository] query failed:', error.message);
+      return {data: null, error: error.message};
+    }
+    return {data, error: null};
+  } catch (e) {
+    console.error('[deckRepository] network error:', e);
+    return {data: null, error: 'Network error'};
+  }
+}
+
 // -------------------------------------------------------------------
 // Row <-> domain mapping (defensive: never trusts jsonb / text[] blindly)
 // -------------------------------------------------------------------
-
-function parseArchetype(value: string | null): Archetype | undefined {
-  if (value !== null && VALID_ARCHETYPES.has(value as Archetype)) return value as Archetype;
-  return undefined;
-}
 
 function parseInks(value: unknown): Ink[] {
   if (!Array.isArray(value)) return [];
@@ -62,161 +81,104 @@ function parseCards(value: Json): DeckCard[] {
   return cards;
 }
 
-/** timestamptz string -> epoch millis, matching the Deck domain's numeric clocks. */
-function toMillis(iso: string): number {
-  const t = Date.parse(iso);
-  return Number.isNaN(t) ? Date.now() : t;
-}
-
 /** Supabase row -> domain Deck. */
 function rowToDeck(row: DeckRow): Deck {
+  // gameplan is a loose text column; keep it only when it's a known archetype.
+  const gameplan =
+    row.gameplan !== null && VALID_ARCHETYPES.has(row.gameplan as Archetype)
+      ? (row.gameplan as Archetype)
+      : undefined;
+  // timestamptz strings -> epoch millis, matching the Deck domain's numeric clocks.
+  const created = Date.parse(row.created_at);
+  const updated = Date.parse(row.updated_at);
   return {
     id: row.id,
     name: row.name,
     cards: parseCards(row.cards),
-    gameplan: parseArchetype(row.gameplan),
+    gameplan,
     inks: parseInks(row.inks),
     isPublic: row.is_public,
     ownerId: row.owner_id,
-    createdAt: toMillis(row.created_at),
-    updatedAt: toMillis(row.updated_at),
+    createdAt: Number.isNaN(created) ? Date.now() : created,
+    updatedAt: Number.isNaN(updated) ? Date.now() : updated,
     schemaVersion: SCHEMA_VERSION,
   };
 }
 
-/**
- * Full column set for insert/upsert. owner_id is set explicitly so the RLS
- * WITH CHECK (owner_id = auth.uid()) passes. created_at is carried from the draft
- * so an aged local draft keeps its age; updated_at is omitted and left to the
- * column default plus the touch trigger. DeckCard[] is JSON-serializable.
- */
-function deckToInsert(deck: Deck, ownerId: string): DeckInsert {
+/** The columns a client may freely rewrite on every save (no id / owner / clocks). */
+function writableColumns(deck: Deck) {
   return {
-    id: deck.id,
-    owner_id: ownerId,
     name: deck.name,
     gameplan: deck.gameplan ?? null,
     inks: deck.inks,
     cards: deck.cards as unknown as Json,
     is_public: deck.isPublic ?? false,
-    created_at: new Date(deck.createdAt).toISOString(),
   };
 }
 
-/** Mutable columns for update. id / owner_id / created_at are immutable post-create. */
-function deckToUpdate(deck: Deck): DeckUpdate {
-  return {
-    name: deck.name,
-    gameplan: deck.gameplan ?? null,
-    inks: deck.inks,
-    cards: deck.cards as unknown as Json,
-    is_public: deck.isPublic ?? false,
-  };
+/**
+ * Full column payload for insert/upsert, minus owner_id (the caller sets that from
+ * the authenticated id so the RLS WITH CHECK passes). created_at is carried from
+ * the draft so an aged local draft keeps its age; updated_at is left to the column
+ * default plus the touch trigger.
+ */
+function deckToInsert(deck: Deck): Omit<DeckInsert, 'owner_id'> {
+  return {id: deck.id, ...writableColumns(deck), created_at: new Date(deck.createdAt).toISOString()};
 }
 
 // -------------------------------------------------------------------
-// CRUD
+// CRUD (each is a single mapped query inside the shared `run` shell)
 // -------------------------------------------------------------------
 
 /** All of the caller's own decks, newest-touched first. RLS scopes to owner. */
-export async function listDecks(ownerId: string): Promise<RepoResult<Deck[]>> {
-  const supabase = getSupabase();
-  if (!supabase) return {data: null, error: NOT_CONFIGURED};
-  try {
-    const {data, error} = await supabase
+export function listDecks(ownerId: string): Promise<RepoResult<Deck[]>> {
+  return run(async (c) => {
+    const {data, error} = await c
       .from('decks')
       .select('*')
       .eq('owner_id', ownerId)
       .order('updated_at', {ascending: false});
-    if (error) {
-      console.error('[deckRepository.listDecks] query failed:', error.message);
-      return {data: null, error: error.message};
-    }
-    return {data: (data ?? []).map(rowToDeck), error: null};
-  } catch (e) {
-    console.error('[deckRepository.listDecks] network error:', e);
-    return {data: null, error: 'Network error'};
-  }
+    return {data: data ? data.map(rowToDeck) : null, error};
+  });
 }
 
 /** One deck by id. RLS returns it when it is the caller's own or is_public. */
-export async function getDeck(id: string): Promise<RepoResult<Deck>> {
-  const supabase = getSupabase();
-  if (!supabase) return {data: null, error: NOT_CONFIGURED};
-  try {
-    const {data, error} = await supabase
-      .from('decks')
-      .select('*')
-      .eq('id', id)
-      // maybeSingle(): a missing or RLS-hidden row is {data:null, error:null}, not
-      // the PGRST116 the Sentry Supabase integration flags as unhandled.
-      .maybeSingle();
-    if (error) {
-      console.error('[deckRepository.getDeck] query failed:', error.message);
-      return {data: null, error: error.message};
-    }
-    return {data: data ? rowToDeck(data) : null, error: null};
-  } catch (e) {
-    console.error('[deckRepository.getDeck] network error:', e);
-    return {data: null, error: 'Network error'};
-  }
+export function getDeck(id: string): Promise<RepoResult<Deck>> {
+  return run(async (c) => {
+    const {data, error} = await c.from('decks').select('*').eq('id', id).maybeSingle();
+    return {data: data ? rowToDeck(data) : null, error};
+  });
 }
 
-export async function createDeck(deck: Deck, ownerId: string): Promise<RepoResult<Deck>> {
-  const supabase = getSupabase();
-  if (!supabase) return {data: null, error: NOT_CONFIGURED};
-  try {
-    const {data, error} = await supabase
-      .from('decks')
-      .insert(deckToInsert(deck, ownerId))
-      .select('*')
-      .maybeSingle();
-    if (error) {
-      console.error('[deckRepository.createDeck] insert failed:', error.message);
-      return {data: null, error: error.message};
-    }
-    return {data: data ? rowToDeck(data) : null, error: null};
-  } catch (e) {
-    console.error('[deckRepository.createDeck] network error:', e);
-    return {data: null, error: 'Network error'};
-  }
+/**
+ * Run a single-row write (insert / update / upsert) that already appends
+ * `.select('*').maybeSingle()`, and map the returned row to a domain Deck. The
+ * three write ops differ only in `build`, so their env-gate + await + map shell
+ * lives here once.
+ */
+function writeOne(
+  build: (client: DecksClient) => PromiseLike<{data: DeckRow | null; error: {message: string} | null}>,
+): Promise<RepoResult<Deck>> {
+  return run(async (c) => {
+    const {data, error} = await build(c);
+    return {data: data ? rowToDeck(data) : null, error};
+  });
 }
 
-export async function updateDeck(deck: Deck): Promise<RepoResult<Deck>> {
-  const supabase = getSupabase();
-  if (!supabase) return {data: null, error: NOT_CONFIGURED};
-  try {
-    const {data, error} = await supabase
-      .from('decks')
-      .update(deckToUpdate(deck))
-      .eq('id', deck.id)
-      .select('*')
-      .maybeSingle();
-    if (error) {
-      console.error('[deckRepository.updateDeck] update failed:', error.message);
-      return {data: null, error: error.message};
-    }
-    return {data: data ? rowToDeck(data) : null, error: null};
-  } catch (e) {
-    console.error('[deckRepository.updateDeck] network error:', e);
-    return {data: null, error: 'Network error'};
-  }
+export function createDeck(deck: Deck, ownerId: string): Promise<RepoResult<Deck>> {
+  return writeOne((c) => c.from('decks').insert({...deckToInsert(deck), owner_id: ownerId}).select('*').maybeSingle());
 }
 
-export async function deleteDeck(id: string): Promise<RepoResult<null>> {
-  const supabase = getSupabase();
-  if (!supabase) return {data: null, error: NOT_CONFIGURED};
-  try {
-    const {error} = await supabase.from('decks').delete().eq('id', id);
-    if (error) {
-      console.error('[deckRepository.deleteDeck] delete failed:', error.message);
-      return {data: null, error: error.message};
-    }
-    return {data: null, error: null};
-  } catch (e) {
-    console.error('[deckRepository.deleteDeck] network error:', e);
-    return {data: null, error: 'Network error'};
-  }
+/** Update the writable columns; id / owner_id / created_at stay immutable. */
+export function updateDeck(deck: Deck): Promise<RepoResult<Deck>> {
+  return writeOne((c) => c.from('decks').update(writableColumns(deck)).eq('id', deck.id).select('*').maybeSingle());
+}
+
+export function deleteDeck(id: string): Promise<RepoResult<null>> {
+  return run(async (c) => {
+    const {error} = await c.from('decks').delete().eq('id', id);
+    return {data: null, error};
+  });
 }
 
 /**
@@ -226,22 +188,8 @@ export async function deleteDeck(id: string): Promise<RepoResult<null>> {
  * to INSERT ... ON CONFLICT DO UPDATE, so the decks table defines BOTH an
  * owner-scoped INSERT policy (WITH CHECK) and an owner-scoped UPDATE policy.
  */
-export async function upsertDeck(deck: Deck, ownerId: string): Promise<RepoResult<Deck>> {
-  const supabase = getSupabase();
-  if (!supabase) return {data: null, error: NOT_CONFIGURED};
-  try {
-    const {data, error} = await supabase
-      .from('decks')
-      .upsert(deckToInsert(deck, ownerId), {onConflict: 'id'})
-      .select('*')
-      .maybeSingle();
-    if (error) {
-      console.error('[deckRepository.upsertDeck] upsert failed:', error.message);
-      return {data: null, error: error.message};
-    }
-    return {data: data ? rowToDeck(data) : null, error: null};
-  } catch (e) {
-    console.error('[deckRepository.upsertDeck] network error:', e);
-    return {data: null, error: 'Network error'};
-  }
+export function upsertDeck(deck: Deck, ownerId: string): Promise<RepoResult<Deck>> {
+  return writeOne((c) =>
+    c.from('decks').upsert({...deckToInsert(deck), owner_id: ownerId}, {onConflict: 'id'}).select('*').maybeSingle(),
+  );
 }
