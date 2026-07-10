@@ -11,7 +11,7 @@ import {COLORS, FONTS, LAYOUT, RADIUS, SPACING} from '../shared/constants';
  * this scaffold (#466) also carries the auth entry point (#463): sign in to save decks.
  */
 export function DecksPage() {
-  const {user, enabled, signOut} = useSession();
+  const {user, enabled, loading, signOut} = useSession();
   const {isMobile} = useResponsive();
   const [signInOpen, setSignInOpen] = useState(false);
 
@@ -28,7 +28,7 @@ export function DecksPage() {
         }}>
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SPACING.md}}>
           <h1 style={{fontFamily: FONTS.hero, fontSize: 20, color: COLORS.text, margin: 0}}>Your Decks</h1>
-          {enabled && user && (
+          {enabled && !loading && user && (
             <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
               <span style={{fontFamily: FONTS.body, fontSize: 12, color: COLORS.textMuted}}>
                 {user.email ?? 'Signed in'}
@@ -49,7 +49,7 @@ export function DecksPage() {
               </button>
             </div>
           )}
-          {enabled && !user && (
+          {enabled && !loading && !user && (
             <button
               type="button"
               onClick={() => setSignInOpen(true)}

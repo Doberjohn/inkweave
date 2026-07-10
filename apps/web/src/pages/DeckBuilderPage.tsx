@@ -58,7 +58,7 @@ function CenteredNotice({children}: {children: ReactNode}) {
  */
 export function DeckBuilderPage() {
   const {isMobile} = useResponsive();
-  const {deck, setQuantity, removeCard, renameDeck} = useDeck();
+  const {deck, addCard, setQuantity, removeCard, renameDeck} = useDeck();
   const {cards, isLoading, getCardById, uniqueKeywords, uniqueClassifications, sets} = useCardDataContext();
   const {openCardModal} = useCardModal();
   const pool = useDeckPoolFilters();
@@ -135,7 +135,7 @@ export function DeckBuilderPage() {
             <DeckPoolGrid
               cards={filtered}
               quantities={quantities}
-              onIncrement={(card) => setQuantity(card.id, (quantities.get(card.id) ?? 0) + 1)}
+              onIncrement={(card) => addCard(card.id)}
               onDecrement={(card) => setQuantity(card.id, (quantities.get(card.id) ?? 0) - 1)}
               onViewDetails={viewDetails}
             />
@@ -147,7 +147,7 @@ export function DeckBuilderPage() {
           onRename={renameDeck}
           rows={rows}
           stats={stats}
-          onIncrement={(id) => setQuantity(id, (quantities.get(id) ?? 0) + 1)}
+          onIncrement={(id) => addCard(id)}
           onDecrement={(id) => setQuantity(id, (quantities.get(id) ?? 0) - 1)}
           onRemove={removeCard}
           onOpenDetails={viewDeckDetails}

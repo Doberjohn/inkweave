@@ -34,6 +34,8 @@ describe('PoolCardTile', () => {
 
   it('steps quantity with the in-deck − / + controls', () => {
     const {onIncrement, onDecrement} = renderTile({inDeckCount: 2});
+    // The − / + are revealed (and exposed to AT) only on hover/focus; hover first.
+    fireEvent.mouseEnter(screen.getByTestId('card-tile'));
     fireEvent.click(screen.getByRole('button', {name: /add one copy/i}));
     fireEvent.click(screen.getByRole('button', {name: /remove one copy/i}));
     expect(onIncrement).toHaveBeenCalledWith(card);
@@ -42,6 +44,7 @@ describe('PoolCardTile', () => {
 
   it('does not add past the 4-copy limit', () => {
     const {onIncrement} = renderTile({inDeckCount: 4});
+    fireEvent.mouseEnter(screen.getByTestId('card-tile')); // reveal the stepper
     expect(screen.getByRole('button', {name: /max 4 copies/i})).toBeDisabled();
     fireEvent.click(screen.getByTestId('card-tile'));
     expect(onIncrement).not.toHaveBeenCalled();

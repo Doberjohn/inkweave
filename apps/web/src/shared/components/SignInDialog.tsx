@@ -38,9 +38,14 @@ export function SignInDialog({isOpen, onClose}: SignInDialogProps) {
   const start = async (provider: AuthProvider) => {
     setBusy(provider);
     setError(null);
-    const {error: err} = await signIn(provider);
-    if (err) {
-      setError(err);
+    try {
+      const {error: err} = await signIn(provider);
+      if (err) {
+        setError(err);
+        setBusy(null);
+      }
+    } catch {
+      setError('Sign-in failed. Please try again.');
       setBusy(null);
     }
   };

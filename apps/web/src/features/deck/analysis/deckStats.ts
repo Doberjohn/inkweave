@@ -4,6 +4,7 @@
 
 import type {CardType, Deck, DeckStats, Ink, LorcanaCard} from '../types';
 import {getInks} from 'inkweave-synergy-engine';
+import {ALL_INKS} from '../../../shared/constants';
 
 /** Costs at or above this collapse into a single top bucket keyed by this value. */
 const COST_CURVE_CAP = 7;
@@ -12,9 +13,6 @@ const COST_CURVE_CAP = 7;
 const MIN_DECK_SIZE = 60;
 const MAX_COPIES = 4;
 const MAX_INKS = 2;
-
-/** Canonical Lorcana ink order, so the "N inks: ..." message reads consistently. */
-const INK_ORDER: readonly Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
 
 /** Mutable running totals folded over the deck's resolvable cards. */
 interface Tallies {
@@ -74,7 +72,7 @@ function buildLegalityErrors(
   }
 
   if (inks.size > MAX_INKS) {
-    const named = INK_ORDER.filter((ink) => inks.has(ink)).join(', ');
+    const named = ALL_INKS.filter((ink) => inks.has(ink)).join(', ');
     errors.push(`${inks.size} inks: ${named} (max ${MAX_INKS})`);
   }
 

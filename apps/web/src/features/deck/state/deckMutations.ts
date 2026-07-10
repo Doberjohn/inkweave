@@ -6,17 +6,15 @@
 
 import {getInks} from 'inkweave-synergy-engine';
 import type {Archetype, Deck, DeckCard, Ink, LorcanaCard} from '../types';
+import {ALL_INKS} from '../../../shared/constants';
 
 type CardResolver = (id: string) => LorcanaCard | undefined;
-
-/** Canonical Lorcana ink order, so a derived ink list reads consistently. */
-const INK_ORDER: readonly Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
 
 /**
  * Derive the deck's ink set from its cards. A dual-ink card contributes BOTH of
  * its inks (the engine's `getInks` returns 1 or 2). Ids that no longer resolve
  * (rotated out of Core) are skipped. The result must be DEDUPED and returned in
- * canonical {@link INK_ORDER}, the same derivation `deckStats` uses, so the
+ * canonical {@link ALL_INKS}, the same derivation `deckStats` uses, so the
  * builder's ink chips agree with the stats bar.
  */
 export function deriveInks(cards: DeckCard[], getCardById: CardResolver): Ink[] {
@@ -26,10 +24,10 @@ export function deriveInks(cards: DeckCard[], getCardById: CardResolver): Ink[] 
     if (!card) continue; // rotated out of Core, skip like deckStats
     for (const ink of getInks(card)) inks.add(ink);
   }
-  return INK_ORDER.filter((ink) => inks.has(ink));
+  return ALL_INKS.filter((ink) => inks.has(ink));
 }
 
-/** Order-sensitive ink equality (both lists are already in canonical INK_ORDER). */
+/** Order-sensitive ink equality (both lists are already in canonical ALL_INKS order). */
 export function inksEqual(a: readonly Ink[], b: readonly Ink[]): boolean {
   return a.length === b.length && a.every((ink, i) => ink === b[i]);
 }

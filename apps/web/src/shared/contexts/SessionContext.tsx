@@ -32,11 +32,17 @@ export function SessionProvider({children}: {children: ReactNode}) {
     if (!supabase) return;
     let active = true;
 
-    supabase.auth.getSession().then(({data}) => {
-      if (!active) return;
-      setSession(data.session);
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({data}) => {
+        if (active) setSession(data.session);
+      })
+      .catch(() => {
+        // Network or storage failure: swallow so the loading gate still resolves below.
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
 
     const {data} = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next);

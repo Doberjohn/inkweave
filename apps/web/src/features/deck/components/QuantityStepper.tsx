@@ -162,7 +162,7 @@ export function QuantityStepper({
         background: 'rgba(13, 13, 20, 0.94)',
         overflow: 'hidden',
       }}>
-      <button type="button" style={sideButtonStyle(dims, shown, false, COLORS.error)} onClick={handleDec} aria-label={`Remove one copy of ${name}`}>
+      <button type="button" style={sideButtonStyle(dims, shown, false, COLORS.error)} onClick={handleDec} tabIndex={shown ? 0 : -1} aria-hidden={!shown} aria-label={`Remove one copy of ${name}`}>
         <MinusIcon size={dims.iconSize} />
       </button>
       <span
@@ -175,6 +175,8 @@ export function QuantityStepper({
         style={sideButtonStyle(dims, shown, incrementDisabled, COLORS.success)}
         onClick={handleInc}
         disabled={incrementDisabled}
+        tabIndex={shown ? 0 : -1}
+        aria-hidden={!shown}
         title={incrementDisabled ? disabledReason : undefined}
         aria-label={incrementAriaLabel(incrementDisabled, disabledReason, name)}>
         <PlusIcon size={dims.iconSize} />
