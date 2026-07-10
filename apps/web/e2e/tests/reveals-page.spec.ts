@@ -1,5 +1,29 @@
 import {test, expect} from '../fixtures';
 
+/**
+ * Why the reveals suite is off-season-gated: the whole page only exists during a
+ * reveal season, so off-season the assertions cannot pass. Two off-season signals,
+ * either of which means "skip cleanly", checked BEFORE any 30s-timeout-prone wait:
+ *   1. No revealed cards at all — previewCards.json cards: [] (the primary signal;
+ *      once a set graduates its cards move into allCards.json and this file empties).
+ *   2. Past the set's releaseDate — useRevealPhase returns 'released', RevealsGate
+ *      redirects /reveals -> / and the nav entry / promo modal drop.
+ * Returns the skip reason, or null when a reveal season is genuinely active.
+ */
+function offSeasonSkipReason(data: unknown): string | null {
+  const d = (data ?? {}) as {cards?: unknown; sets?: Record<string, {releaseDate?: string} | undefined>};
+  const revealCount = Array.isArray(d.cards) ? d.cards.length : 0;
+  if (revealCount === 0) return 'No active reveal season (previewCards.json has no revealed cards).';
+  const dates = Object.values(d.sets ?? {})
+    .map((s) => s?.releaseDate)
+    .filter((x): x is string => typeof x === 'string');
+  const latestRelease = dates.length ? Math.max(...dates.map((x) => new Date(x).getTime())) : 0;
+  if (latestRelease > 0 && Date.now() >= latestRelease) {
+    return `Reveal season ended (latest releaseDate ${new Date(latestRelease).toISOString().slice(0, 10)}).`;
+  }
+  return null;
+}
+
 test.describe('Reveals page (flag on)', () => {
   test.beforeEach(async ({page}, testInfo) => {
     // Clear the daily-dismiss key so the promo modal reliably appears.
@@ -12,27 +36,10 @@ test.describe('Reveals page (flag on)', () => {
     });
     testInfo.annotations.push({type: 'requires', description: 'VITE_IS_REVEAL_SEASON=true'});
 
-    // Skip when reveal season has ended (today is past the set's releaseDate).
-    // useRevealPhase returns 'released' once now >= releaseDate, RevealsGate
-    // redirects /reveals -> /, and the Reveals nav entry / promo modal no
-    // longer render — so these reveal-season-only assertions can't pass.
-    // After each set graduates and previewCards.json is refreshed with the
-    // NEXT set's dates, these tests pick back up automatically.
+    // Skip the whole suite off-season (see offSeasonSkipReason), before any wait.
     const resp = await page.request.get('/data/previewCards.json');
-    if (resp.ok()) {
-      const data = await resp.json();
-      const sets = (data?.sets ?? {}) as Record<string, {releaseDate?: string} | undefined>;
-      const dates = Object.values(sets)
-        .map((s) => s?.releaseDate)
-        .filter((d): d is string => typeof d === 'string');
-      const latestRelease = dates.length ? Math.max(...dates.map((d) => new Date(d).getTime())) : 0;
-      if (latestRelease > 0 && Date.now() >= latestRelease) {
-        test.skip(
-          true,
-          `Reveal season ended (latest releaseDate ${new Date(latestRelease).toISOString().slice(0, 10)})`,
-        );
-      }
-    }
+    const reason = resp.ok() ? offSeasonSkipReason(await resp.json()) : null;
+    test.skip(reason !== null, reason ?? '');
   });
 
   test('renders the tracker: hero, six ink trackers, and franchise cards', async ({page}, testInfo) => {
