@@ -18,6 +18,7 @@ on:
       - "apps/web/public/art/**"
       - "apps/web/public/mockups/**"
       - "CLAUDE.md"
+      - ".claude/rules/mockups.md"
 
 permissions:
   pull-requests: write

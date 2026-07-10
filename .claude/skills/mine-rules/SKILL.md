@@ -41,7 +41,7 @@ gh issue list --label rule-candidate --state all --json number,title,state --lim
 Also read, to understand coverage and history:
 - `packages/synergy-engine/REMOVED_RULES.md` — mechanics previously removed and why; used to FLAG (not skip) a removed mechanic if it resurfaces, so the proposal carries that history (see Steps 3 and 5)
 - `packages/synergy-engine/src/engine/rules.ts` — the `synergyRules` registry (what already exists)
-- The **Synergy Rules** section of `CLAUDE.md` — human-readable summary of current rules
+- The **Synergy Rules** registry table in `CLAUDE.md` — the index of current rules; follow a row's doc link for that rule's full spec
 
 ## Step 3: Select the top candidate
 
