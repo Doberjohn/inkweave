@@ -80,6 +80,13 @@ export interface DeckStats {
   inkDistribution: Partial<Record<Ink, number>>;
   /** Mana-cost histogram: cost -> copy count. Costs >= 7 are bucketed under key `7`. */
   costCurve: Record<number, number>;
+  /**
+   * Per-cost ink breakdown: cost bucket -> ink -> copy count. A dual-ink card
+   * counts toward BOTH of its inks (same convention as `inkDistribution`), so a
+   * bucket's ink counts can sum above its `costCurve` count. Drives the
+   * ink-colored segments of the cost-curve strip.
+   */
+  costCurveByInk: Record<number, Partial<Record<Ink, number>>>;
   /** Copies per card type (Character / Action / Item / Location). */
   typeDistribution: Partial<Record<CardType, number>>;
   /** Number of distinct inks in the deck (<= 2 when legal). */

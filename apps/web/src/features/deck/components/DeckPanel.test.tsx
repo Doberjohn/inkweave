@@ -9,6 +9,7 @@ const stats: DeckStats = {
   uniqueCards: 2,
   inkDistribution: {Amber: 3},
   costCurve: {2: 3},
+  costCurveByInk: {2: {Amber: 3}},
   typeDistribution: {Character: 2, Action: 1},
   inkCount: 1,
   inkableCount: 3,
@@ -121,7 +122,7 @@ describe('DeckPanel', () => {
   });
 
   it('shows the empty prompt (not five empty groups) when the deck has no cards', () => {
-    renderPanel({rows: [], stats: {...stats, totalCards: 0, uniqueCards: 0}});
+    renderPanel({rows: [], stats: {...stats, totalCards: 0, uniqueCards: 0, costCurve: {}, costCurveByInk: {}}});
     expect(screen.getByText(/no cards yet/i)).toBeInTheDocument();
     expect(screen.queryByText('None yet')).not.toBeInTheDocument();
   });

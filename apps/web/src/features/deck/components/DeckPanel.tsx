@@ -3,6 +3,7 @@ import {createPortal} from 'react-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {DeckStats} from '../types';
 import {DeckCardRow} from './DeckCardRow';
+import {CostCurveStrip} from './CostCurveStrip';
 import {previewGeometry} from './previewGeometry';
 import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../../../shared/constants';
 
@@ -325,6 +326,8 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
           Analysis
         </button>
       </div>
+
+      {tab === 'cards' && <CostCurveStrip costCurve={stats.costCurve} costCurveByInk={stats.costCurveByInk} />}
 
       <div style={{flex: 1, minHeight: 0, overflowY: 'auto'}}>
         {tab === 'analysis' ? (

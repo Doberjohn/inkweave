@@ -76,6 +76,25 @@ describe('calculateDeckStats', () => {
     expect(stats.typeDistribution).toEqual({Character: 4, Action: 2});
   });
 
+  it('breaks the cost curve down by ink, counting a dual-ink card toward both', () => {
+    const amber2 = createCard({id: 'a2', fullName: 'Amber Two', cost: 2, ink: 'Amber'});
+    const emerald2 = createCard({id: 'e2', fullName: 'Emerald Two', cost: 2, ink: 'Emerald'});
+    const dual3 = createCard({id: 'd3', fullName: 'Dual Three', cost: 3, ink: 'Amber', ink2: 'Emerald'});
+    const deck = makeDeck([
+      [amber2, 3],
+      [emerald2, 2],
+      [dual3, 1],
+    ]);
+
+    const stats = calculateDeckStats(deck, makeResolver([amber2, emerald2, dual3]));
+
+    // Cost 2 splits 3 Amber / 2 Emerald; the cost-3 dual card lands in BOTH inks.
+    expect(stats.costCurveByInk).toEqual({
+      2: {Amber: 3, Emerald: 2},
+      3: {Amber: 1, Emerald: 1},
+    });
+  });
+
   it('counts a dual-ink card toward both inks while keeping the deck legal at 2 inks', () => {
     const amber = genCards(8, 'amber', {ink: 'Amber'}); // 32
     const steel = genCards(6, 'steel', {ink: 'Steel'}); // 24

@@ -18,6 +18,7 @@ const MAX_INKS = 2;
 interface Tallies {
   inkDistribution: Partial<Record<Ink, number>>;
   costCurve: Record<number, number>;
+  costCurveByInk: Record<number, Partial<Record<Ink, number>>>;
   typeDistribution: Partial<Record<CardType, number>>;
   inks: Set<Ink>;
   copiesByFullName: Map<string, number>;
@@ -28,6 +29,7 @@ function emptyTallies(): Tallies {
   return {
     inkDistribution: {},
     costCurve: {},
+    costCurveByInk: {},
     typeDistribution: {},
     inks: new Set(),
     copiesByFullName: new Map(),
@@ -40,10 +42,13 @@ function tallyCard(t: Tallies, card: LorcanaCard, quantity: number): void {
   const bucket = Math.min(card.cost, COST_CURVE_CAP);
   t.costCurve[bucket] = (t.costCurve[bucket] ?? 0) + quantity;
 
-  // A dual-ink card contributes to BOTH of its inks (getInks returns 1 or 2).
+  // A dual-ink card contributes to BOTH of its inks (getInks returns 1 or 2),
+  // for both the overall distribution and this cost bucket's ink breakdown.
   for (const ink of getInks(card)) {
     t.inkDistribution[ink] = (t.inkDistribution[ink] ?? 0) + quantity;
     t.inks.add(ink);
+    t.costCurveByInk[bucket] ??= {};
+    t.costCurveByInk[bucket][ink] = (t.costCurveByInk[bucket][ink] ?? 0) + quantity;
   }
 
   t.typeDistribution[card.type] = (t.typeDistribution[card.type] ?? 0) + quantity;
@@ -126,6 +131,7 @@ export function calculateDeckStats(
     uniqueCards: uniqueIds.size,
     inkDistribution: tallies.inkDistribution,
     costCurve: tallies.costCurve,
+    costCurveByInk: tallies.costCurveByInk,
     typeDistribution: tallies.typeDistribution,
     inkCount,
     inkableCount: tallies.inkableCount,
