@@ -8,7 +8,7 @@ The flagship multi-session initiative. **Read these before starting any deck-bui
 - **Plan (source of truth)**: [`docs/deck-builder/PLAN.md`](docs/deck-builder/PLAN.md) — full design + rationale (8 phases, E0–E7).
 - **Progress**: milestone #3 → `gh issue list --milestone "Deck Builder & Engine Score" --state all`. Epics #450–#457; Phase-0/1 tasks #458–#473.
 - **Session Handoff Log**: pinned issue **#474** — the running ledger. **Append an entry every session** (shipped / decisions / gotchas / in-progress / next); read the latest entry at session start.
-- **Working location**: the MAIN checkout (`D:\johnn\Projects\inkweave`) on branch `claude/inkweave-deck-builder-af3e5b`. Never work from a `.claude/worktrees/` folder: this epic's commits are unmerged, and `.claude/settings.json` wires the hooks to the main checkout by absolute path, so a worktree silently runs without `branch-verification` or `engine-auto-rebuild`.
+- **Working location**: the MAIN checkout (`D:\johnn\Projects\inkweave`) on branch `deck-builder` — the integration branch off `master`. Phase 0 + the done Phase-1 tasks landed here via PR #480 and stay **unmerged to `master`/production** until the epic is ready to ship (then one `deck-builder` → `master` PR releases it). The old `claude/inkweave-deck-builder-af3e5b` branch is retained as merged history: do not work on it. Never work from a `.claude/worktrees/` folder: this epic's commits are unmerged to production, and `.claude/settings.json` wires the hooks to the main checkout by absolute path, so a worktree silently runs without `branch-verification` or `engine-auto-rebuild`.
 
 **Golden rules for this epic:**
 1. Deck-level synergy uses the **precomputed pairs JSON** (`pairs[id].aggregateScore`), NOT the live engine — lazy-import the engine only for hypothetical/preview cards.
@@ -19,7 +19,7 @@ The flagship multi-session initiative. **Read these before starting any deck-bui
 **Session ritual (a process to run every session, not a hope):**
 
 _Start:_
-1. **Audit the previous session's close-out first.** Is `git status` clean and on `claude/inkweave-deck-builder-af3e5b`? Does the latest #474 comment exist and end with a `Next:` line? Do the issues touched last time have a note? If anything is missing, surface it to the user before starting new work.
+1. **Audit the previous session's close-out first.** Is `git status` clean and on `deck-builder`? Does the latest #474 comment exist and end with a `Next:` line? Do the issues touched last time have a note? If anything is missing, surface it to the user before starting new work.
 2. Read `docs/deck-builder/PLAN.md` and the latest #474 entry (its `Next:` line names your task).
 3. `gh issue list --milestone "Deck Builder & Engine Score" --state open`, then pick the next unblocked task. Auth (#463) and migrations (#464) need the user's OAuth apps + live-DB authorization, so skip them when running headless.
 4. `/implement-issue <num>`.
@@ -33,7 +33,7 @@ _End or any pause (the close-out contract, in order, all of it):_
 6. **Update `docs/deck-builder/PLAN.md`** if the design or scope changed.
 7. **Verify clean**: `git status` clean, scratch files removed, then `/close-session`.
 
-**Epic-issue convention:** the milestone's task issues (#458 onward) are compact pointers; their authoritative spec is `docs/deck-builder/PLAN.md` plus the reference files each one names, not a standalone ops-runbook. Override `/implement-issue`'s defaults deliberately (and say so, do not expand the issue): stay on the epic branch (do NOT cut a `feature/<n>-*` branch, since the work depends on this branch's unmerged commits), and treat its issue-quality rubric as not applicable (it scores production runbooks, not feature-code pointers).
+**Epic-issue convention:** the milestone's task issues (#458 onward) are compact pointers; their authoritative spec is `docs/deck-builder/PLAN.md` plus the reference files each one names, not a standalone ops-runbook. Override `/implement-issue`'s defaults deliberately (and say so, do not expand the issue): stay on the `deck-builder` integration branch (do NOT cut a `feature/<n>-*` branch, since the work depends on this branch's commits that are unmerged to production), and treat its issue-quality rubric as not applicable (it scores production runbooks, not feature-code pointers).
 
 **Retire this whole section when milestone #3 closes.** It is the only always-loaded epic context in this file, and it should leave with the epic rather than becoming another stale block. It earns its place here only because the session ritual has no `paths:` trigger to hang a `.claude/rules/` file on: start-of-session process cannot be lazily loaded.
 
