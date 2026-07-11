@@ -12,6 +12,7 @@ import {
 } from './shared/components';
 import type {SearchBottomSheetHandle} from './shared/components/SearchBottomSheet';
 import {CardDataProvider} from './shared/contexts/CardDataContext';
+import {SessionProvider} from './shared/contexts/SessionContext';
 import {CardModalProvider} from './shared/contexts/CardModalContext';
 import {COLORS} from './shared/constants';
 import {useCardDataContext} from './shared/contexts/CardDataContext';
@@ -115,11 +116,13 @@ function AppContent() {
 export function AppLayout() {
   return (
     <ErrorBoundary>
-      <CardDataProvider>
-        <CardModalProvider>
-          <AppContent />
-        </CardModalProvider>
-      </CardDataProvider>
+      <SessionProvider>
+        <CardDataProvider>
+          <CardModalProvider>
+            <AppContent />
+          </CardModalProvider>
+        </CardDataProvider>
+      </SessionProvider>
       <Analytics />
       <SpeedInsights />
     </ErrorBoundary>

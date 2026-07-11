@@ -1915,3 +1915,159 @@ export function getBounceRoles(card: LorcanaCard): BounceRole[] {
 
 /** Check if a card participates in the bounce axis (any role). */
 export const isBounceCard = (card: LorcanaCard): boolean => getBounceRoles(card).length > 0;
+
+// ============================================
+// REMOVAL DETECTION (generic opponent removal — the "removal pillar")
+// ============================================
+
+/**
+ * Generic opponent-facing removal, the piece the engine was missing: the existing
+ * detectors are either per-classification (`hasNegativeTargeting`) or your-OWN board
+ * (`getSacrificeRoles` self-banish), so nothing measured plain "kill the opponent's
+ * stuff" across the whole pool. This feeds the deck "removal pillar" count and the
+ * pool-derived vulnerability (hoser) catalog (#461).
+ *
+ * Five roles, one per interaction shape (a card can fill several — a banish that also
+ * debuffs carries both):
+ *  - 'banish'             — hard, ungated banish of an opposing/neutral body.
+ *  - 'conditional-banish' — a banish GATED on a stat/cost threshold ("with N ¤ or less").
+ *  - 'damage'             — deals fixed damage to a chosen/opposing character (any card type).
+ *  - 'debuff'             — shrinks a chosen character's combat stat ("gets -N ¤").
+ *  - 'bounce'             — returns an opposing body to hand for tempo (delegated to Bounce).
+ */
+export type RemovalRole = 'banish' | 'conditional-banish' | 'damage' | 'debuff' | 'bounce';
+
+/**
+ * The "hoser trigger" a removal effect keys on — what makes a card in the pool vulnerable
+ * to it (#461 scans the pool with this). Thresholds carry the numeric gate:
+ *  - 'low-strength'  — targets small bodies ("N ¤ or less" / "cost N or less"), threshold N.
+ *  - 'high-cost'     — targets big bodies ("N ¤ or more" / "cost N or more"), threshold N.
+ *  - 'evasive' / 'bodyguard' / 'damaged' — keyed on a keyword/state the target must have.
+ *  - 'mass'          — board-wide (banish/damage ALL or EACH opposing, up-to-N).
+ *  - 'unconditional' — removal with no recognized gate (the removal always applies).
+ * The threshold direction is the primary signal: "or less" ⇒ low-strength, "or more" ⇒
+ * high-cost, regardless of whether the gate reads strength (¤) or cost.
+ */
+export type RemovalConditionType =
+  | 'low-strength'
+  | 'evasive'
+  | 'bodyguard'
+  | 'damaged'
+  | 'high-cost'
+  | 'mass'
+  | 'unconditional';
+
+export interface RemovalCondition {
+  type: RemovalConditionType;
+  threshold?: number;
+}
+
+/**
+ * Hard banish of an opposing/neutral body. The target qualifier (chosen/target/another
+ * chosen/each/all) plus a character/item/location noun keeps it off self-references
+ * ("banish this character/item") and off "is banished" trigger text. Self-banish
+ * ("... of yours", "your characters") is gated out separately via the Sacrifice pattern.
+ */
+const REMOVAL_BANISH_PATTERN =
+  /\bbanish (?:up to \d+ )?(?:chosen|target|another chosen|each|all)[^.]{0,30}?\b(?:characters?|items?|locations?)\b/i;
+
+/** A stat/cost threshold gate ("with N ¤ or less" / "with cost N or more") turns a banish conditional. */
+const REMOVAL_THRESHOLD_PATTERN = /with (?:cost )?\d+ ?[¤⛉]? or (?:less|more)/i;
+/** Capturing variants of the threshold gate (direction fixes the condition type). */
+const REMOVAL_THRESHOLD_LESS = /with (?:cost )?(\d+) ?[¤⛉]? or less/i;
+const REMOVAL_THRESHOLD_MORE = /with (?:cost )?(\d+) ?[¤⛉]? or more/i;
+
+/**
+ * Opponent-facing damage: "deal N damage to <chosen|target|each opposing|up to N chosen>
+ * character". Works for any card type (Actions, Items, Characters, Locations all print
+ * this). Self-only damage ("... to chosen character of yours" / "to this character" /
+ * "to each of your ... character") never matches the target qualifiers here.
+ */
+const REMOVAL_DAMAGE_PATTERN =
+  /deals? \d+ damage to (?:up to \d+ )?(?:another |each )?(?:chosen|target|opposing)[^.]{0,25}?character/i;
+
+/** Combat-stat debuff: "chosen [opposing] character gets -N ¤/⛉". The minus sign gates out buffs;
+ *  the strength/willpower glyph keeps it off lore (-N ◊) reduction, which is the Lore Denial axis. */
+const REMOVAL_DEBUFF_PATTERN = /chosen (?:opposing )?character[^.]{0,20}gets -\d+ ?[¤⛉]/i;
+
+/** Target restrictions that name the hoser trigger. Verb-anchored so a keyword REMINDER
+ *  ("Only characters with Evasive can challenge this character") can't fake a match. */
+const REMOVAL_TARGET_DAMAGED = /(?:banish|damage to|return)[^.]{0,30}\bdamaged character/i;
+const REMOVAL_TARGET_EVASIVE = /(?:banish|damage to|return)[^.]{0,30}character with evasive/i;
+const REMOVAL_TARGET_BODYGUARD = /(?:banish|damage to|return)[^.]{0,30}character with bodyguard/i;
+/** Board-wide removal: banish/damage ALL or EACH opposing characters, or hit up-to-N chosen. */
+const REMOVAL_MASS_PATTERN = /\b(?:all|each) (?:opposing )?(?:damaged )?characters?\b|up to \d+ chosen/i;
+
+/**
+ * Singer/Sing-Together reminders print "(A character with cost N or more can ⟳ to sing this
+ * song for free.)", whose "cost N or more" would otherwise be read as a removal threshold and
+ * poison both the conditional-banish split and the threshold extraction. Strip them first.
+ */
+const REMOVAL_SINGER_REMINDER = /\([^)]*sing this song[^)]*\)/gi;
+
+/** Fast pre-filter for the text-scanned roles (bounce is delegated and has its own pre-filter). */
+const HAS_REMOVAL_KEYWORD = /banish|damage|gets -/i;
+
+/** Card text with the Singer reminder stripped, so its "cost N or more" can't fake a threshold. */
+function removalText(card: LorcanaCard): string {
+  return normalizeCardText(card).replace(REMOVAL_SINGER_REMINDER, ' ');
+}
+
+/** Hard/conditional banisher: banishes an opposing/neutral body and is NOT a self-banish (Sacrifice). */
+function isRemovalBanisher(text: string): boolean {
+  return REMOVAL_BANISH_PATTERN.test(text) && !SACRIFICE_SELF_BANISH_PATTERN.test(text);
+}
+
+/** Opponent-facing damage that is not the self-only "deal N damage to chosen character of yours". */
+function isRemovalDamage(text: string): boolean {
+  return REMOVAL_DAMAGE_PATTERN.test(text) && !ACTION_DAMAGE_SELF_ONLY_PATTERN.test(text);
+}
+
+/**
+ * Determine the removal role(s) a card fulfills. A card can be multi-role. Bounce is delegated
+ * to the Bounce detector (opponent-bounce only) rather than re-parsed, so the two stay in sync.
+ */
+export function getRemovalRoles(card: LorcanaCard): RemovalRole[] {
+  const roles: RemovalRole[] = [];
+  if (card.text) {
+    const text = removalText(card);
+    if (HAS_REMOVAL_KEYWORD.test(text)) {
+      if (isRemovalBanisher(text)) {
+        roles.push(REMOVAL_THRESHOLD_PATTERN.test(text) ? 'conditional-banish' : 'banish');
+      }
+      if (isRemovalDamage(text)) roles.push('damage');
+      if (REMOVAL_DEBUFF_PATTERN.test(text)) roles.push('debuff');
+    }
+  }
+  if (getBounceRoles(card).includes('opponent-bounce')) roles.push('bounce');
+  return roles;
+}
+
+/** Check if a card is any kind of opponent-removal card. */
+export const isRemovalCard = (card: LorcanaCard): boolean => getRemovalRoles(card).length > 0;
+
+/** Extract the stat/cost threshold gate: "or less" ⇒ low-strength, "or more" ⇒ high-cost. */
+function removalThreshold(text: string): RemovalCondition | null {
+  const less = text.match(REMOVAL_THRESHOLD_LESS);
+  if (less) return {type: 'low-strength', threshold: parseInt(less[1], 10)};
+  const more = text.match(REMOVAL_THRESHOLD_MORE);
+  if (more) return {type: 'high-cost', threshold: parseInt(more[1], 10)};
+  return null;
+}
+
+/**
+ * The hoser trigger a card's removal keys on, or null when the card is not removal.
+ * Priority runs most-specific first (a named target restriction / threshold beats the
+ * board-wide 'mass' flag), falling through to 'unconditional' for ungated removal.
+ */
+export function getRemovalCondition(card: LorcanaCard): RemovalCondition | null {
+  if (getRemovalRoles(card).length === 0) return null;
+  const text = removalText(card);
+  if (REMOVAL_TARGET_DAMAGED.test(text)) return {type: 'damaged'};
+  if (REMOVAL_TARGET_EVASIVE.test(text)) return {type: 'evasive'};
+  if (REMOVAL_TARGET_BODYGUARD.test(text)) return {type: 'bodyguard'};
+  const threshold = removalThreshold(text);
+  if (threshold) return threshold;
+  if (REMOVAL_MASS_PATTERN.test(text)) return {type: 'mass'};
+  return {type: 'unconditional'};
+}

@@ -59,6 +59,11 @@ const AdminAnalyticsPage = lazyWithRetry(
   () => import('./pages/AdminAnalyticsPage'),
   'AdminAnalyticsPage',
 );
+const DeckLayout = lazyWithRetry(() => import('./pages/DeckLayout'), 'DeckLayout');
+const DecksPage = lazyWithRetry(() => import('./pages/DecksPage'), 'DecksPage');
+const DeckBuilderPage = lazyWithRetry(() => import('./pages/DeckBuilderPage'), 'DeckBuilderPage');
+const DeckViewPage = lazyWithRetry(() => import('./pages/DeckViewPage'), 'DeckViewPage');
+const AuthCallbackPage = lazyWithRetry(() => import('./pages/AuthCallbackPage'), 'AuthCallbackPage');
 const PrivacyPage = lazyWithRetry(() => import('./pages/PrivacyPage'), 'PrivacyPage');
 const TermsPage = lazyWithRetry(() => import('./pages/TermsPage'), 'TermsPage');
 const DisclaimerPage = lazyWithRetry(() => import('./pages/DisclaimerPage'), 'DisclaimerPage');
@@ -230,6 +235,58 @@ export const router = createBrowserRouter([
               <AdminAnalyticsPage />
             </SuspenseWrapper>
           </AdminGate>
+        ),
+      },
+      {
+        // The deck builder subtree. The layout element mounts DeckProvider (under
+        // CardDataProvider) so one working draft is shared across list/builder/view.
+        path: 'decks',
+        element: (
+          <SuspenseWrapper>
+            <DeckLayout />
+          </SuspenseWrapper>
+        ),
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseWrapper>
+                <DecksPage />
+              </SuspenseWrapper>
+            ),
+          },
+          {
+            path: 'new',
+            element: (
+              <SuspenseWrapper>
+                <DeckBuilderPage />
+              </SuspenseWrapper>
+            ),
+          },
+          {
+            path: ':id',
+            element: (
+              <SuspenseWrapper>
+                <DeckViewPage />
+              </SuspenseWrapper>
+            ),
+          },
+          {
+            path: ':id/edit',
+            element: (
+              <SuspenseWrapper>
+                <DeckBuilderPage />
+              </SuspenseWrapper>
+            ),
+          },
+        ],
+      },
+      {
+        path: 'auth/callback',
+        element: (
+          <SuspenseWrapper>
+            <AuthCallbackPage />
+          </SuspenseWrapper>
         ),
       },
       {

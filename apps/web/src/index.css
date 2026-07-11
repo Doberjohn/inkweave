@@ -46,6 +46,28 @@
   src: url('/fonts/plus-jakarta-sans-700.woff2') format('woff2');
 }
 
+/* Deck-builder pool tile: quantity-change pop (replays on count remount). */
+@keyframes inkweave-qty-pop {
+  from {
+    transform: scale(1.5);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* Deck-builder deck row: slide + fade in on mount (add / initial render). */
+@keyframes inkweave-row-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 *,
 *::before,
 *::after {

@@ -2,6 +2,41 @@
 
 Lorcana synergy finder for Core format with archetype-based synergy detection.
 
+## Active Epic: Deck Builder & Engine Score (milestone #3)
+
+The flagship multi-session initiative. **Read these before starting any deck-builder work:**
+- **Plan (source of truth)**: [`docs/deck-builder/PLAN.md`](docs/deck-builder/PLAN.md) — full design + rationale (8 phases, E0–E7).
+- **Progress**: milestone #3 → `gh issue list --milestone "Deck Builder & Engine Score" --state all`. Epics #450–#457; Phase-0/1 tasks #458–#473.
+- **Session Handoff Log**: pinned issue **#474** — the running ledger. **Append an entry every session** (shipped / decisions / gotchas / in-progress / next); read the latest entry at session start.
+- **Working location**: the MAIN checkout (`D:\johnn\Projects\inkweave`) on branch `claude/inkweave-deck-builder-af3e5b`. Never work from a `.claude/worktrees/` folder: this epic's commits are unmerged, and `.claude/settings.json` wires the hooks to the main checkout by absolute path, so a worktree silently runs without `branch-verification` or `engine-auto-rebuild`.
+
+**Golden rules for this epic:**
+1. Deck-level synergy uses the **precomputed pairs JSON** (`pairs[id].aggregateScore`), NOT the live engine — lazy-import the engine only for hypothetical/preview cards.
+2. The advisor is **pool-driven + archetype-parameterized** — detect roles from card text/keywords, **never hardcode card names** (Core rotates).
+3. The Deck Quality Score is a **transparent weighted formula + case library**, never ML.
+4. Meta/matchups are **deferred** until the user's Set-13 data exists (Phase 6).
+
+**Session ritual (a process to run every session, not a hope):**
+
+_Start:_
+1. **Audit the previous session's close-out first.** Is `git status` clean and on `claude/inkweave-deck-builder-af3e5b`? Does the latest #474 comment exist and end with a `Next:` line? Do the issues touched last time have a note? If anything is missing, surface it to the user before starting new work.
+2. Read `docs/deck-builder/PLAN.md` and the latest #474 entry (its `Next:` line names your task).
+3. `gh issue list --milestone "Deck Builder & Engine Score" --state open`, then pick the next unblocked task. Auth (#463) and migrations (#464) need the user's OAuth apps + live-DB authorization, so skip them when running headless.
+4. `/implement-issue <num>`.
+
+_End or any pause (the close-out contract, in order, all of it):_
+1. **Adversarial review before committing.** Self-review the diff, or spawn a code-reviewer agent, for correctness, lifecycle/async edge cases, and convention. Fix what it finds. A green suite is necessary, not sufficient (that is how the #465 unmount-flush + async-ink bugs slipped past a passing session).
+2. **Commit** (WIP if incomplete). The pre-commit gate (lint + tests) must pass; never `--no-verify`. Nothing important stays only in the working tree.
+3. **Append a #474 entry**: shipped (with SHAs) / decisions + why / gotchas / in-progress / **`Next:`**. Always end with an explicit `Next:` line, even on a demo or review entry, so the next session finds the thread immediately.
+4. **Comment implementation notes** on each touched issue (decisions, deviations, carry-forward gotchas).
+5. **Write a memory file** for any durable gotcha that generalizes beyond this task.
+6. **Update `docs/deck-builder/PLAN.md`** if the design or scope changed.
+7. **Verify clean**: `git status` clean, scratch files removed, then `/close-session`.
+
+**Epic-issue convention:** the milestone's task issues (#458 onward) are compact pointers; their authoritative spec is `docs/deck-builder/PLAN.md` plus the reference files each one names, not a standalone ops-runbook. Override `/implement-issue`'s defaults deliberately (and say so, do not expand the issue): stay on the epic branch (do NOT cut a `feature/<n>-*` branch, since the work depends on this branch's unmerged commits), and treat its issue-quality rubric as not applicable (it scores production runbooks, not feature-code pointers).
+
+**Retire this whole section when milestone #3 closes.** It is the only always-loaded epic context in this file, and it should leave with the epic rather than becoming another stale block. It earns its place here only because the session ritual has no `paths:` trigger to hang a `.claude/rules/` file on: start-of-session process cannot be lazily loaded.
+
 ## MVP Status
 
 - **Scope**: Core format only (sets 9+), community voting, deck builder

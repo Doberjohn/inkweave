@@ -205,6 +205,8 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 
 ## `reveals-page.spec.ts` — 8 tests (7 desktop, 1 mobile)
 
+**Seasonal — the whole suite auto-skips off-season.** `beforeEach` reads `/data/previewCards.json` and `test.skip`s when there are no revealed cards (`cards: []`, e.g. after a set graduates into `allCards.json`) or the release date has passed. Skipping happens before any 30s-timeout wait, so the suite is dormant (not failing) whenever there is nothing to reveal, and resumes automatically once the next set's reveal data is populated.
+
 | Test | What it verifies |
 |---|---|
 | renders the tracker: hero, six ink trackers, and franchise cards | sr-only `h1`, the "Attack of the Vine!" logo, 6 `ink-tracker-tile`s, the "Ink board" section, and the 3 "View … cards" franchise buttons all render |
