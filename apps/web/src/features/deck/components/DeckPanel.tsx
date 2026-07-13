@@ -2,8 +2,12 @@ import {useEffect, useRef, useState, type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {DeckStats} from '../types';
+import type {DeckAnalysis} from '../analysis/analyzeDeck';
 import {DeckCardRow} from './DeckCardRow';
 import {CostCurveStrip} from './CostCurveStrip';
+import {totalCopies} from './costCurveColumns';
+import {HealthSummary} from './HealthSummary';
+import {ScoreGauge} from './ScoreGauge';
 import {previewGeometry} from './previewGeometry';
 import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../../../shared/constants';
 
@@ -31,6 +35,12 @@ interface DeckPanelProps {
    * walks the deck as rendered rather than the page's flat cost-then-name sort.
    */
   onOpenDetails?: (card: LorcanaCard, siblingIds: string[]) => void;
+  /** Live advisor result for the Analysis tab (null until the deck has cards + the first run lands). */
+  analysis?: DeckAnalysis | null;
+  /** True while the advisor is (re)computing. */
+  analysisLoading?: boolean;
+  /** Set when the advisor pipeline failed; surfaced as an "unavailable" state. */
+  analysisError?: Error | null;
 }
 
 type PanelTab = 'cards' | 'analysis';
@@ -52,15 +62,15 @@ function rowGroup(card: LorcanaCard): RowGroup {
   return card.isSong ? 'Song' : card.type;
 }
 
-// Reserved zones for the advisor (issue #472) — its analyzers already exist under
-// features/deck/analysis/; this tab is where they will surface.
-const ANALYSIS_ZONES = [
-  'Deck quality score',
-  'Cost curve',
-  'Ink balance',
-  'Synergies & key cards',
+// Advisor zones still dashed. The Deck Quality Score renders via <ScoreGauge>;
+// "Vulnerabilities" becomes a real VulnerabilityBox in this task (#472). Cost
+// curve / ink balance were dropped as duplicates of the Cards-tab strip.
+// Synergies & suggestions belong to a SEPARATE task (#471), labelled as such so
+// the tab doesn't imply #472 owns them.
+const PENDING_ADVISOR_ZONES = [
   'Vulnerabilities · what to watch for',
-  'Suggestions',
+  'Synergies & key cards · coming with #471',
+  'Suggestions · coming with #471',
 ];
 
 function CountBadge({total, isLegal}: {total: number; isLegal: boolean}) {
@@ -107,13 +117,23 @@ function LegalitySummary({stats}: {stats: DeckStats}) {
   );
 }
 
-function AnalysisTab() {
+function AnalysisTab({analysis, isLoading, error}: {analysis: DeckAnalysis | null; isLoading: boolean; error: Error | null}) {
+  const emptyMessage = error
+    ? 'Analysis unavailable — try editing the deck.'
+    : isLoading
+      ? 'Analyzing deck…'
+      : 'Add cards to see the Deck Quality Score.';
   return (
     <div style={{padding: SPACING.md, display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
-      <p style={{fontFamily: FONTS.body, color: COLORS.textMuted, fontSize: `${FONT_SIZES.md}px`, margin: 0}}>
-        Reserved for the advisor (#472). The analysis backend already exists; this tab is where it surfaces.
-      </p>
-      {ANALYSIS_ZONES.map((zone) => (
+      {analysis ? (
+        <ScoreGauge quality={analysis.quality} />
+      ) : (
+        <div
+          style={{border: `1px dashed ${COLORS.surfaceBorder}`, borderRadius: RADIUS.md, padding: SPACING.lg, textAlign: 'center', color: COLORS.textMuted, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.base}px`}}>
+          {emptyMessage}
+        </div>
+      )}
+      {PENDING_ADVISOR_ZONES.map((zone) => (
         <div
           key={zone}
           style={{border: `1px dashed ${COLORS.surfaceBorder}`, borderRadius: RADIUS.md, padding: SPACING.md, color: COLORS.textDim, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.base}px`}}>
@@ -185,7 +205,7 @@ const groupHeader: CSSProperties = {
  * (resolved rows + {@link DeckStats}); all mutations route back through the page's
  * useDeck actions. Removal is deferred so the row can collapse out first.
  */
-export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement, onRemove, onOpenDetails}: DeckPanelProps) {
+export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement, onRemove, onOpenDetails, analysis, analysisLoading, analysisError}: DeckPanelProps) {
   const [tab, setTab] = useState<PanelTab>('cards');
   // cardId -> the quantity snapshot when trash was clicked. The row collapses out,
   // then the real removal completes on transitionEnd — but only if the quantity
@@ -327,11 +347,31 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
         </button>
       </div>
 
-      {tab === 'cards' && <CostCurveStrip costCurve={stats.costCurve} costCurveByInk={stats.costCurveByInk} />}
+      {tab === 'cards' && totalCopies(stats.costCurve) > 0 && (
+        <div style={{display: 'flex', flexShrink: 0}}>
+          <div style={{flex: 2, minWidth: 0}}>
+            <CostCurveStrip costCurve={stats.costCurve} costCurveByInk={stats.costCurveByInk} />
+          </div>
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              borderLeft: `1px solid ${COLORS.surfaceBorder}`,
+              borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+            }}>
+            <HealthSummary
+              analysis={analysis ?? null}
+              isLoading={analysisLoading ?? false}
+              error={analysisError ?? null}
+              onOpenAnalysis={() => switchTab('analysis')}
+            />
+          </div>
+        </div>
+      )}
 
       <div style={{flex: 1, minHeight: 0, overflowY: 'auto'}}>
         {tab === 'analysis' ? (
-          <AnalysisTab />
+          <AnalysisTab analysis={analysis ?? null} isLoading={analysisLoading ?? false} error={analysisError ?? null} />
         ) : rows.length === 0 ? (
           <p
             style={{

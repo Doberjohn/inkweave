@@ -3,6 +3,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {useDeck} from '../features/deck/state';
 import {DeckPanel, DeckPoolGrid, type DeckRow} from '../features/deck/components';
 import {useDeckPoolFilters, applyPoolFilters} from '../features/deck/hooks/useDeckPoolFilters';
+import {useDeckAnalysis} from '../features/deck/hooks/useDeckAnalysis';
 import {calculateDeckStats} from '../features/deck/analysis/deckStats';
 import {BrowseToolbar} from '../features/cards';
 import {CompactHeader, FilterDialog} from '../shared/components';
@@ -63,6 +64,7 @@ export function DeckBuilderPage() {
   const {openCardModal} = useCardModal();
   const pool = useDeckPoolFilters();
   const [showFilters, setShowFilters] = useState(false);
+  const deckAnalysis = useDeckAnalysis(deck, getCardById, !isLoading);
 
   if (isMobile) {
     return (
@@ -151,6 +153,9 @@ export function DeckBuilderPage() {
           onDecrement={(id) => setQuantity(id, (quantities.get(id) ?? 0) - 1)}
           onRemove={removeCard}
           onOpenDetails={viewDeckDetails}
+          analysis={deckAnalysis.analysis}
+          analysisLoading={deckAnalysis.isLoading}
+          analysisError={deckAnalysis.error}
         />
       </div>
 
