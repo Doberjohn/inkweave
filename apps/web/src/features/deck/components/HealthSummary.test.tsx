@@ -48,11 +48,11 @@ describe('HealthSummary', () => {
     );
     expect(screen.getByText('72')).toBeInTheDocument();
     expect(screen.getByText('Strong')).toBeInTheDocument();
-    expect(screen.getByText('Card Draw')).toBeInTheDocument();
-    expect(screen.getByText('Removal')).toBeInTheDocument();
-    // a good dimension is never surfaced as a flag
-    expect(screen.queryByText('Curve')).not.toBeInTheDocument();
+    // signals: risks first, then the worst flag; capped at two
     expect(screen.getByText('2 risks')).toBeInTheDocument();
+    expect(screen.getByText('Card Draw')).toBeInTheDocument();
+    expect(screen.queryByText('Removal')).not.toBeInTheDocument(); // warn — cut by the cap
+    expect(screen.queryByText('Curve')).not.toBeInTheDocument(); // good — never a signal
   });
 
   it('opens the analysis tab on click', () => {

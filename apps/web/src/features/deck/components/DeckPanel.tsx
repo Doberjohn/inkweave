@@ -14,6 +14,10 @@ import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../../../s
 /** Competitive Core deck size — the count badge + progress bar target. */
 const DECK_TARGET = 60;
 
+/** Fixed height (px) of the Cards-tab cost-curve + health row (#472). Fixed rather
+ *  than content-driven so the cost-curve chart has room to breathe (Option C). */
+const STATS_ROW_HEIGHT = 240;
+
 /** A resolved deck line: the card plus how many copies are in the deck. */
 export interface DeckRow {
   card: LorcanaCard;
@@ -348,17 +352,11 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
       </div>
 
       {tab === 'cards' && totalCopies(stats.costCurve) > 0 && (
-        <div style={{display: 'flex', flexShrink: 0}}>
-          <div style={{flex: 2, minWidth: 0}}>
+        <div style={{display: 'flex', height: STATS_ROW_HEIGHT, flexShrink: 0, borderBottom: `1px solid ${COLORS.surfaceBorder}`}}>
+          <div style={{flex: 1, minWidth: 0, borderRight: `1px solid ${COLORS.surfaceBorder}`}}>
             <CostCurveStrip costCurve={stats.costCurve} costCurveByInk={stats.costCurveByInk} />
           </div>
-          <div
-            style={{
-              flex: 1,
-              minWidth: 0,
-              borderLeft: `1px solid ${COLORS.surfaceBorder}`,
-              borderBottom: `1px solid ${COLORS.surfaceBorder}`,
-            }}>
+          <div style={{flex: 1, minWidth: 0}}>
             <HealthSummary
               analysis={analysis ?? null}
               isLoading={analysisLoading ?? false}

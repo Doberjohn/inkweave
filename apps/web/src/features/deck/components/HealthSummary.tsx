@@ -4,8 +4,8 @@ import type {DeckAnalysis} from '../analysis/analyzeDeck';
 import type {DeckStatus} from '../types';
 import {scoreTier} from './scoreTier';
 
-/** How many warn/bad health dimensions to surface as flags in the compact summary. */
-const MAX_FLAGS = 2;
+/** How many signals (risks + worst health dimensions) the compact summary shows. */
+const MAX_SIGNALS = 2;
 /** Worst-first ordering: bad before warn before good. */
 const STATUS_RANK: Record<DeckStatus, number> = {bad: 0, warn: 1, good: 2};
 
@@ -16,14 +16,15 @@ function statusColor(status: DeckStatus): string {
 const button: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 6,
   width: '100%',
   height: '100%',
   textAlign: 'left',
   border: 'none',
   background: 'transparent',
   cursor: 'pointer',
-  padding: `${SPACING.sm}px ${SPACING.md}px ${SPACING.md}px`,
+  // 15px top/sides, 8px bottom — matches CostCurveStrip; the body centers the
+  // score/signals and the "Analysis →" link sits at the foot via marginTop:auto.
+  padding: '15px 15px 8px 15px',
   fontFamily: FONTS.body,
 };
 
@@ -34,6 +35,18 @@ const capLabel: CSSProperties = {
   textTransform: 'uppercase',
   letterSpacing: '0.05em',
   color: COLORS.textMuted,
+  marginBottom: SPACING.lg,
+};
+
+// Score + signals live in a flex-fill body that centers them between the high title
+// and the footer link. The empty room here is where the #5 PageSpeed ring will land.
+const healthBody: CSSProperties = {
+  flex: 1,
+  minHeight: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  gap: 8,
 };
 
 const link: CSSProperties = {
@@ -82,33 +95,38 @@ export function HealthSummary({analysis, isLoading, error, onOpenAnalysis}: Heal
   }
 
   const tier = scoreTier(analysis.quality.score);
-  const flags = [...analysis.health.analyzers]
+  const riskCount = analysis.health.vulnerabilities.length;
+  const flagSignals = [...analysis.health.analyzers]
     .filter((a) => a.status !== 'good')
     .sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status] || a.score - b.score)
-    .slice(0, MAX_FLAGS);
-  const riskCount = analysis.health.vulnerabilities.length;
+    .map((a) => ({key: a.id, color: statusColor(a.status), text: a.label}));
+  // Surface the sharpest signals: vulnerabilities first (they subtract points),
+  // then the worst health dimensions. Capped so the summary stays a compact glance
+  // roughly the height of the cost curve beside it.
+  const signals = (
+    riskCount > 0
+      ? [{key: 'risks', color: COLORS.error, text: `${riskCount} risk${riskCount === 1 ? '' : 's'}`}, ...flagSignals]
+      : flagSignals
+  ).slice(0, MAX_SIGNALS);
 
   return (
     <button type="button" onClick={onOpenAnalysis} aria-label="Open deck analysis" style={button}>
       <span style={capLabel}>Deck health</span>
-      <span style={{display: 'flex', alignItems: 'baseline', gap: 6}}>
-        <span style={{fontFamily: FONTS.hero, fontSize: 26, lineHeight: 1, color: COLORS.text, fontVariantNumeric: 'tabular-nums'}}>
-          {analysis.quality.score}
+      <div style={healthBody}>
+        <span style={{display: 'flex', alignItems: 'baseline', gap: 6}}>
+          <span style={{fontFamily: FONTS.hero, fontSize: 20, lineHeight: 1, color: COLORS.text, fontVariantNumeric: 'tabular-nums'}}>
+            {analysis.quality.score}
+          </span>
+          <span style={{fontSize: `${FONT_SIZES.xs}px`, fontWeight: 700, color: COLORS.background, background: tier.color, padding: '2px 7px', borderRadius: RADIUS.sm}}>
+            {tier.label}
+          </span>
         </span>
-        <span style={{fontSize: `${FONT_SIZES.xs}px`, fontWeight: 700, color: COLORS.background, background: tier.color, padding: '2px 7px', borderRadius: RADIUS.sm}}>
-          {tier.label}
-        </span>
-      </span>
-      {flags.map((f) => (
-        <Flag key={f.id} color={statusColor(f.status)}>
-          {f.label}
-        </Flag>
-      ))}
-      {riskCount > 0 && (
-        <Flag color={COLORS.error}>
-          {riskCount} risk{riskCount === 1 ? '' : 's'}
-        </Flag>
-      )}
+        {signals.map((s) => (
+          <Flag key={s.key} color={s.color}>
+            {s.text}
+          </Flag>
+        ))}
+      </div>
       <span style={link}>Analysis →</span>
     </button>
   );

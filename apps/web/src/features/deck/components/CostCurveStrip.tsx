@@ -31,8 +31,13 @@ export function CostCurveStrip({costCurve, costCurveByInk}: CostCurveStripProps)
       aria-label="Cost curve"
       style={{
         flexShrink: 0,
-        padding: `${SPACING.sm}px ${SPACING.md}px ${SPACING.md}px`,
-        borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+        height: '100%',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        // 15px top/sides, 8px bottom (per design): title sits high, the chart body fills
+        // the rest of the fixed-height row, axis grounded just above the bottom padding.
+        padding: '15px 15px 8px 15px',
       }}>
       <div
         style={{
@@ -42,12 +47,15 @@ export function CostCurveStrip({costCurve, costCurveByInk}: CostCurveStripProps)
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
           color: COLORS.textMuted,
-          marginBottom: SPACING.sm,
+          marginBottom: SPACING.lg,
         }}>
         Cost curve
       </div>
 
-      <div style={{display: 'flex', alignItems: 'flex-end', gap: SPACING.xs, height: CHART_HEIGHT}}>
+      {/* flex:1 lets the chart grow to fill the section height (min CHART_HEIGHT) so the
+          bars scale with the row instead of leaving a void, and the axis below stays
+          grounded just above the bottom padding. Bar heights are a % of this area. */}
+      <div style={{display: 'flex', alignItems: 'flex-end', gap: SPACING.xs, flex: 1, minHeight: CHART_HEIGHT}}>
         {columns.map((col) => {
           // Glow the bar in its own dominant ink (like the CTA glows its own orange).
           const glowInk = col.segments.length
