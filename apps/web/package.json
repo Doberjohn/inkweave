@@ -25,16 +25,16 @@
     "check:stories": "node scripts/check-story-coverage.mjs"
   },
   "dependencies": {
-    "@radix-ui/react-dialog": "^1.1.17",
-    "@sentry/react": "^10.62.0",
-    "@supabase/supabase-js": "^2.108.2",
+    "@radix-ui/react-dialog": "^1.1.19",
+    "@sentry/react": "^10.65.0",
+    "@supabase/supabase-js": "^2.110.2",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "inkweave-synergy-engine": "workspace:*",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-loading-skeleton": "^3.5.0",
-    "react-router-dom": "^7.18.0",
+    "react-router-dom": "^7.18.1",
     "react-virtuoso": "^4.18.10"
   },
   "devDependencies": {
