@@ -718,6 +718,76 @@ function findSpikeSuitAnchors(payoff: LorcanaCard, allCards: LorcanaCard[]): Syn
 }
 
 // ============================================
+// FREE PLAY (Pocahontas - Guiding the Tribe)
+// ============================================
+
+/**
+ * Anchor: a card whose ability plays a cost-1 character for free (Pocahontas - Guiding
+ * the Tribe's STAY CLOSE). Matched on the ability text, not a card id, so any future
+ * reprint with the same wording joins the rule for free. Matches Pocahontas - Guiding the
+ * Tribe and the dual-legend Pocahontas & Meeko in the current Core pool.
+ */
+function isFreePlayAnchor(card: LorcanaCard): boolean {
+  return /play a character with cost 1 for free/i.test(normalizeCardText(card));
+}
+
+/** Payoff: a cost-1 character the anchor can drop for free. */
+function isFreePlayPayoff(card: LorcanaCard): boolean {
+  return isCharacter(card) && card.cost === 1;
+}
+
+/**
+ * True when a cost-1 character carries a "when you play this character" effect. The free
+ * play triggers it too, turning a free body into a free two-for-one.
+ */
+function hasOnPlayEffect(card: LorcanaCard): boolean {
+  return /when you play this character/i.test(normalizeCardText(card));
+}
+
+/**
+ * Score a free-play pairing. Two flat tiers (design locked with the user): every cost-1
+ * body is a free tempo play worth the Moderate tier, and one whose on-play effect the
+ * free play also triggers is a two-for-one worth the Strong tier.
+ */
+function scoreFreePlayPayoff(payoff: LorcanaCard): number {
+  // Two flat tiers: every free cost-1 body clears the Moderate floor (6); one whose
+  // on-play effect the free play also triggers is a two-for-one worth the Strong tier (8).
+  return hasOnPlayEffect(payoff) ? 8 : 6;
+}
+
+/**
+ * Build a free-play match. `searcherIsAnchor` is true when the anchor (Pocahontas) is the
+ * card being viewed, so it reads as {A} and the payoff as {B}; the tokens swap in the
+ * reverse direction. This keeps the anchor framed as the enabler on either card's page.
+ */
+function makeFreePlayMatch(
+  payoff: LorcanaCard,
+  target: LorcanaCard,
+  searcherIsAnchor: boolean,
+): SynergyMatch {
+  const anchorToken = searcherIsAnchor ? '{A}' : '{B}';
+  const payoffToken = searcherIsAnchor ? '{B}' : '{A}';
+  const explanation = hasOnPlayEffect(payoff)
+    ? `${anchorToken} plays ${payoffToken} for free, triggering its on-play effect.`
+    : `${anchorToken} plays ${payoffToken} for free.`;
+  return {card: target, score: scoreFreePlayPayoff(payoff), explanation, bidirectional: true};
+}
+
+/** Forward: the anchor (Pocahontas) finds cost-1 characters it can play for free. */
+function findFreePlayPayoffs(anchor: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+  return allCards
+    .filter((other) => other.id !== anchor.id && isFreePlayPayoff(other))
+    .map((payoff) => makeFreePlayMatch(payoff, payoff, true));
+}
+
+/** Reverse: a cost-1 character finds anchors (Pocahontas) that play it for free. */
+function findFreePlayAnchors(payoff: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
+  return allCards
+    .filter((other) => other.id !== payoff.id && isFreePlayAnchor(other))
+    .map((anchor) => makeFreePlayMatch(payoff, anchor, false));
+}
+
+// ============================================
 // MERIDA ARCHER HELPERS (Merida - Formidable Archer, STEADY AIM)
 // ============================================
 
@@ -1063,6 +1133,25 @@ export const synergyRules: SynergyRule[] = [
       isBeckonAnchor(card)
         ? findBeckonEnablers(card, allCards)
         : findBeckonAnchors(card, allCards),
+  },
+
+  // --------------------------------------------
+  // FREE PLAY (Pocahontas - Guiding the Tribe)
+  // --------------------------------------------
+  {
+    id: 'free-play',
+    name: 'Free Play',
+    category: 'direct',
+    description:
+      "Pocahontas - Guiding the Tribe's STAY CLOSE plays a cost-1 character for free, so she pairs with every cheap body, and best with the ones whose on-play effect the free play also triggers.",
+
+    // Anchor finds cost-1 payoffs (forward); cost-1 characters find the anchor (reverse).
+    matches: (card) => isFreePlayAnchor(card) || isFreePlayPayoff(card),
+
+    findSynergies: (card, allCards) =>
+      isFreePlayAnchor(card)
+        ? findFreePlayPayoffs(card, allCards)
+        : findFreePlayAnchors(card, allCards),
   },
 
   // --------------------------------------------
