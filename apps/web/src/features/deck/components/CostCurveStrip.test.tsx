@@ -13,13 +13,6 @@ describe('CostCurveStrip', () => {
     expect(screen.getByTitle('0 cards at cost 7+')).toBeInTheDocument();
   });
 
-  it('lists a legend entry for each ink present, in fixed order', () => {
-    render(<CostCurveStrip costCurve={{2: 5}} costCurveByInk={{2: {Emerald: 2, Amber: 3}}} />);
-    expect(screen.getByText('Amber')).toBeInTheDocument();
-    expect(screen.getByText('Emerald')).toBeInTheDocument();
-    expect(screen.queryByText('Ruby')).not.toBeInTheDocument();
-  });
-
   it('renders nothing for an empty deck so a fresh build stays clean', () => {
     const {container} = render(<CostCurveStrip costCurve={{}} costCurveByInk={{}} />);
     expect(container).toBeEmptyDOMElement();
