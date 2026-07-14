@@ -25,6 +25,7 @@ const EXCLUDED = new Set([
   'InkIcon.tsx', // tiny SVG icon
   'EtherealBackground.tsx', // canvas animation, no props
   'RenderProfiler.tsx', // performance utility wrapper, not visual
+  'SynergyBanner.tsx', // marketing-banner generator, rendered only by the dev-only /banner export route
 ]);
 
 // Pre-existing components without stories (tracked debt — remove as stories are added)
