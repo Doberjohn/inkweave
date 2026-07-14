@@ -180,8 +180,13 @@ export default defineConfig({
             },
           },
           {
+            // Synergy JSON is mutable but its URL is NOT content-addressed (a card's file keeps
+            // the same /data/synergies/<id>.json path when a rule change alters its contents), so
+            // CacheFirst would pin a returning visitor to pre-deploy synergies until the entry
+            // expires (was invisible for 24h after a new rule shipped). StaleWhileRevalidate serves
+            // the cached copy instantly and refetches in the background, matching allCards.json.
             urlPattern: /\/data\/synergies\/.+\.json$/,
-            handler: 'CacheFirst',
+            handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'synergy-data',
               expiration: {maxEntries: 500, maxAgeSeconds: 60 * 60 * 24},
