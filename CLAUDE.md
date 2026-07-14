@@ -170,6 +170,7 @@ Rules live in `packages/synergy-engine/src/engine/rules/` and run at build time 
 | Spike Suit | single-anchor (Dale) | [SPIKE_SUIT_RULE.md](packages/synergy-engine/SPIKE_SUIT_RULE.md) |
 | Merida Archer | single-anchor | [MERIDA_ARCHER_RULE.md](packages/synergy-engine/MERIDA_ARCHER_RULE.md) |
 | Merida Wisp Conjurer | single-anchor | [MERIDA_WISP_RULE.md](packages/synergy-engine/MERIDA_WISP_RULE.md) |
+| Free Play | anchor-by-text (Pocahontas) | [FREE_PLAY_RULE.md](packages/synergy-engine/FREE_PLAY_RULE.md) |
 
 **Playstyle rules** — strategy-reinforcing. The `id` is the `PlaystyleId` the web UI keys its exhaustive `Record`s on (see `.claude/rules/engine.md` before adding one):
 

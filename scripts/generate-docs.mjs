@@ -48,6 +48,7 @@ const RULE_ORDER = [
   'SPIKE_SUIT_RULE.md',
   'MERIDA_ARCHER_RULE.md',
   'MERIDA_WISP_RULE.md',
+  'FREE_PLAY_RULE.md',
   'LOCATION_CONTROL_RULE.md',
   'RAMP_RULE.md',
   'TOY_RULE.md',
