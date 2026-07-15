@@ -22,10 +22,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Inkweave" />
 
-    <!-- Canonical -->
-    <link rel="canonical" href="https://inkweave.ink" />
+    <!-- Canonical is set per-route by the <Seo> component (React 19 native metadata); no
+         static canonical here so each route self-references its own URL, not the homepage (#486). -->
 
-    <!-- Open Graph -->
+    <!-- Open Graph (homepage defaults; per-route values set by <Seo>) -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Inkweave — Master Lorcana Synergies" />
     <meta

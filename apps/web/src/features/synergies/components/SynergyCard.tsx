@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, type MouseEvent} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from '../../cards';
 import {smallImageUrl} from '../../cards';
@@ -34,14 +34,34 @@ export function SynergyCard({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
 
-  const handleClick = () => {
-    handleSynergyTileClick({card, isMobile, onCardClick, openLightbox: () => setLightboxOpen(true)});
+  // Rendered as a real <a href> so the synergy graph is crawlable (issue #486). Plain
+  // left-click is intercepted for the in-app behavior (onCardClick — modal comparison or
+  // page navigation); modified/middle-clicks fall through to the native link and open the
+  // partner's card page in a new tab.
+  const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+    // Touch devices fire a synthetic mouse event after touch — suppress the desktop-only path.
+    if (!isMobile && isSyntheticMouseEvent()) {
+      e.preventDefault();
+      return;
+    }
+    if (onCardClick) {
+      e.preventDefault();
+      onCardClick(card);
+      return;
+    }
+    if (isMobile && card.imageUrl) {
+      e.preventDefault();
+      setLightboxOpen(true);
+    }
+    // Otherwise let the <a href> navigate to the card's page.
   };
 
   return (
     <div>
-      <button
+      <a
         className="card-tile"
+        href={`/card/${card.id}`}
         data-roving-item
         data-card-id={card.id}
         tabIndex={tabIndex}
@@ -60,31 +80,17 @@ export function SynergyCard({
           aspectRatio: '0.72',
           padding: 0,
           width: '100%',
+          display: 'block',
+          textDecoration: 'none',
+          color: 'inherit',
         }}>
         <ViewDetailsHoverCue isMobile={isMobile} compact={compact} hovered={hovered} />
         <CardImageOrFallback card={card} colors={colors} />
         <StrengthBadgeOverlay tier={tier} score={score} explanation={explanation} isMobile={isMobile} />
-      </button>
+      </a>
       <MaybeLightbox card={card} lightboxOpen={lightboxOpen} setLightboxOpen={setLightboxOpen} />
     </div>
   );
-}
-
-interface SynergyTileClickInput {
-  card: LorcanaCard;
-  isMobile: boolean;
-  onCardClick?: (card: LorcanaCard) => void;
-  openLightbox: () => void;
-}
-
-function handleSynergyTileClick({card, isMobile, onCardClick, openLightbox}: SynergyTileClickInput) {
-  // Touch devices fire a synthetic mouse event after touch — skip the desktop-only path.
-  if (!isMobile && isSyntheticMouseEvent()) return;
-  if (onCardClick) {
-    onCardClick(card);
-    return;
-  }
-  if (isMobile && card.imageUrl) openLightbox();
 }
 
 function ViewDetailsHoverCue({isMobile, compact, hovered}: {isMobile: boolean; compact: boolean; hovered: boolean}) {

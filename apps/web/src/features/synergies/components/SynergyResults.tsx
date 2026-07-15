@@ -36,6 +36,9 @@ interface SynergyResultsProps {
   onBackToAll?: () => void;
   /** Called when a synergy card tile is clicked (opens detail modal) */
   onSynergyCardClick?: (card: LorcanaCard, groupKey?: string) => void;
+  /** When true, flows in the page scroll (no internal max-height/overflow). Used by the full
+   *  card page so the app footer is reachable; default false = modal fixed-height scroll. */
+  flowInPage?: boolean;
 }
 
 export function SynergyResults({
@@ -51,6 +54,7 @@ export function SynergyResults({
   onShowAll,
   onBackToAll,
   onSynergyCardClick,
+  flowInPage = false,
 }: SynergyResultsProps) {
   // Default: show card detail on mobile, hide on desktop (it's in its own panel)
   const renderCardDetail = showCardDetail ?? isMobile;
@@ -84,8 +88,12 @@ export function SynergyResults({
       style={{
         flex: 1,
         padding: isMobile ? `${SPACING.md}px` : `${SPACING.xl}px`,
-        overflowY: 'auto',
-        maxHeight: isMobile ? '100vh' : `calc(100vh - ${LAYOUT.compactHeaderHeight}px)`,
+        overflowY: flowInPage ? undefined : 'auto',
+        maxHeight: flowInPage
+          ? undefined
+          : isMobile
+            ? '100vh'
+            : `calc(100vh - ${LAYOUT.compactHeaderHeight}px)`,
         background: isMobile ? COLORS.background : undefined,
       }}>
       {!selectedCard ? (
