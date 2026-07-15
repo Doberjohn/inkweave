@@ -26,8 +26,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      # npm retired the legacy audit endpoint (HTTP 410) on 2026-07-15, which breaks
+      # `pnpm audit` on pnpm <=10.x (this repo pins pnpm@9.0.0). pnpm 11+ queries the
+      # bulk advisory endpoint instead, so run the audit under a throwaway pnpm 11 via
+      # dlx: same command and semantics, working endpoint, no repo-wide pnpm bump.
+      # See pnpm/pnpm#11265.
       - name: Audit dependencies
-        run: pnpm audit --audit-level high --prod
+        run: pnpm dlx pnpm@11 audit --audit-level high --prod
 
   build-and-test:
     runs-on: ubuntu-latest
