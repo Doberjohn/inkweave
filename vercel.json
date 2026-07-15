@@ -3,7 +3,11 @@
   "outputDirectory": "apps/web/dist",
   "installCommand": "pnpm install",
   "framework": "vite",
-  "redirects": [{"source": "/mockups/:path*", "statusCode": 308, "destination": "/"}],
+  "redirects": [
+    {"source": "/mockups/:path*", "statusCode": 308, "destination": "/"},
+    {"source": "/reveal-admin", "statusCode": 308, "destination": "/admin/reveal"},
+    {"source": "/playstyles/vinelings", "statusCode": 308, "destination": "/playstyles/floodborn"}
+  ],
   "rewrites": [
     {
       "source": "/card-images/:path*",
@@ -58,8 +62,21 @@
       ]
     },
     {
+      "source": "/admin/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000"
+        },
         {
           "key": "X-Frame-Options",
           "value": "DENY"
