@@ -1,38 +1,37 @@
-# Prerender-aware deploy (issue #492).
+# Production deploy with the prerender crawl (issue #492).
 #
 # WHY: scripts/prerender.mjs (the SSG crawl from #486) can't run in Vercel's own build —
 # Playwright's chromium has no system deps on Amazon Linux, so build:vercel falls back to
 # SPA-only and non-JS crawlers get empty shells. This workflow runs the SAME build (via
 # `vercel build`, which honours vercel.json's buildCommand → build:vercel) on Ubuntu, where
-# `playwright install --with-deps chromium` works, so the crawl actually renders. It then
-# ships the prebuilt output with `vercel deploy --prebuilt`.
+# `playwright install --with-deps chromium` works, so the crawl renders (verified: 1052/1052,
+# 0 failed). It then ships the prebuilt output with `vercel deploy --prebuilt --prod`.
 #
-# SAFE-TO-MERGE GATE: the job only runs when the repo variable DEPLOY_VIA_CI == 'true'.
-# Until you set it (Repo → Settings → Variables → Actions), every run is skipped (grey, not
-# red) and Vercel's own git integration keeps deploying as today. See #492 for the ordered
-# cutover — set the three secrets + DEPLOY_VIA_CI=true, verify a preview here, and ONLY then
-# disable Vercel's git auto-deploy (vercel.json `git.deploymentEnabled`) to avoid double deploys.
+# SCOPE: production only. PR previews stay on Vercel's own git integration (fast SPA — previews
+# aren't indexed, so they don't need the crawl). vercel.json sets git.deploymentEnabled.master
+# = false so Vercel does NOT also deploy master (no double / flip-flopping production deploy).
+#
+# KILL SWITCH: the job only runs when repo variable DEPLOY_VIA_CI == 'true'. Unsetting it stops
+# CI deploys — but note Vercel git-deploy for master is off, so to fully hand deploys back to
+# Vercel you must also revert the vercel.json git.deploymentEnabled change.
 
 name: Deploy
 
 on:
   push:
     branches: [master]
-  pull_request:
 
 concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: true
+  group: deploy-production
+  cancel-in-progress: false
 
 jobs:
   deploy:
-    # Inert until you flip the repo variable on (post-secrets). Fork PRs (no secrets) also skip.
     if: vars.DEPLOY_VIA_CI == 'true'
     runs-on: ubuntu-latest
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      IS_PROD: ${{ github.ref == 'refs/heads/master' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -49,11 +48,11 @@ jobs:
       - name: Install Playwright chromium (with system deps — this is what Vercel's AL build can't do)
         run: pnpm --filter inkweave-web exec playwright install --with-deps chromium
 
-      - name: Pull Vercel environment
-        run: npx vercel pull --yes --environment=${{ env.IS_PROD == 'true' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Pull Vercel production environment
+        run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build (runs build:vercel → the prerender crawl renders on Ubuntu)
-        run: npx vercel build ${{ env.IS_PROD == 'true' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Deploy prebuilt output
-        run: npx vercel deploy --prebuilt ${{ env.IS_PROD == 'true' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy prebuilt output to production
+        run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}

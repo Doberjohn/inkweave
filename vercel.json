@@ -3,6 +3,7 @@
   "outputDirectory": "apps/web/dist",
   "installCommand": "pnpm install",
   "framework": "vite",
+  "git": {"deploymentEnabled": {"master": false}},
   "redirects": [
     {"source": "/mockups/:path*", "statusCode": 308, "destination": "/"},
     {"source": "/reveal-admin", "statusCode": 308, "destination": "/admin/reveal"},
