@@ -112,7 +112,11 @@ async function crawlRoute(browser, route) {
       })
       .then(() => true)
       .catch(() => false);
-    const html = await page.content();
+    // React 19 hoists the per-route <Seo> title but does NOT remove index.html's static shell
+    // <title> (kept as a fallback for routes without <Seo>), leaving a redundant second title in
+    // the captured HTML. Strip the shell title so each prerendered page carries exactly one — the
+    // per-route title. (Cosmetic: the per-route title already came first and won for crawlers.)
+    const html = (await page.content()).replace(`<title>${SHELL_TITLE}</title>`, '');
     const outDir = route === '/' ? DIST : join(DIST, route);
     await mkdir(outDir, {recursive: true});
     await writeFile(join(outDir, 'index.html'), html, 'utf8');
