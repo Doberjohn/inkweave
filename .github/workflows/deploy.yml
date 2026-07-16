@@ -56,3 +56,8 @@ jobs:
 
       - name: Deploy prebuilt output to production
         run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      # Push the hub URLs to IndexNow (Bing/DuckDuckGo) for near-instant re-crawl (#496).
+      # Non-fatal: a ping failure must never fail the production deploy.
+      - name: Ping IndexNow
+        run: node scripts/ping-indexnow.mjs || true

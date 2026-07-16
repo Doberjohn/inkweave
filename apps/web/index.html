@@ -49,16 +49,44 @@
     <!-- Prefetch card data (loaded on app mount) -->
     <link rel="prefetch" href="/data/allCards.json" as="fetch" crossorigin />
 
-    <!-- Structured Data -->
+    <!-- Structured Data: site-entity @graph (Organization + WebSite + WebApplication). #496 -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "Inkweave",
-        "url": "https://inkweave.ink",
-        "description": "Discover powerful card synergies for Disney Lorcana. Inkweave analyzes every card interaction to help you build stronger decks in Core format.",
-        "applicationCategory": "GameApplication",
-        "operatingSystem": "Web"
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://inkweave.ink/#org",
+            "name": "Inkweave",
+            "url": "https://inkweave.ink",
+            "logo": "https://inkweave.ink/pwa-512x512.png"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://inkweave.ink/#website",
+            "name": "Inkweave",
+            "url": "https://inkweave.ink",
+            "publisher": { "@id": "https://inkweave.ink/#org" },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://inkweave.ink/browse?q={search_term_string}"
+              },
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://inkweave.ink/#app",
+            "name": "Inkweave",
+            "url": "https://inkweave.ink",
+            "description": "Discover powerful card synergies for Disney Lorcana. Inkweave analyzes every card interaction to help you build stronger decks in Core format.",
+            "applicationCategory": "GameApplication",
+            "operatingSystem": "Web",
+            "publisher": { "@id": "https://inkweave.ink/#org" }
+          }
+        ]
       }
     </script>
   </head>

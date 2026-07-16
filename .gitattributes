@@ -1,7 +1,26 @@
-# Force LF line endings for shell scripts and husky internals
-# Prevents CRLF drift on Windows (Git auto-converts LF→CRLF on checkout)
+# Line endings: normalize ALL text files to LF, in the repo and the working tree, on every
+# platform. Git auto-detects binary and leaves it untouched (binaries are also pinned below).
+#
+# Why repo-wide: with core.autocrlf=true, Windows checkout smudges LF blobs to CRLF, and
+# Vite/vitest's transform mis-parses a regex-in-a-template-literal under CRLF -- which silently
+# broke scripts/generate-sitemap.test.mjs (#496). Forcing LF everywhere closes that trap for
+# every source type, not just the one file that happened to trigger it.
+* text=auto eol=lf
+
+# Critical shell scripts stay LF even if content sniffing ever wavers (husky, git hooks).
 .husky/_/* text eol=lf
 *.sh text eol=lf
 
-# Keep lockfile consistent across platforms
-pnpm-lock.yaml text eol=lf
+# Binary assets: never apply text/eol/diff conversion (explicit guard over text=auto).
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.avif binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.eot binary
