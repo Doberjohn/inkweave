@@ -29,18 +29,21 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 
 ## `card-detail.spec.ts` — 9 tests (desktop only)
 
-CardOverviewModal — opening, closing, empty state, scroll lock, show-all expansion, sibling navigation.
+Two surfaces: the crawlable `/card/:id` **page** (#486 — renders, not-found, empty state) and the
+CardOverviewModal opened from a tile (render, close, empty, scroll lock, show-all, sibling nav). The
+modal is opened via `appPage.openCardOverview(name)` (Browse `?q=` + tile click) since `/card/:id`
+is a real page now, not a modal shortcut.
 
 | Test | What it verifies |
 |---|---|
 | should render card name and image inside the overview modal | Modal shows card image + h1 with the card name |
 | should show synergy chips or empty state once data loads | Modal renders synergy groups, empty state, or error after async load |
-| should open the modal when deep-linking to /card/:id | `/card/1936` opens the modal; URL redirects to `/` |
-| should not open the modal for an invalid card ID | `/card/99999999` → home, modal stays hidden |
+| renders the crawlable card page when deep-linking to /card/:id | `/card/1947` renders the real page (#486): URL stays, `<title>` + self-referential canonical baked in, synergy section visible, no modal |
+| shows a not-found page for an invalid card ID | `/card/99999999` → noindex "Card not found" page; URL stays, no modal |
 | should close the modal when Escape is pressed | Escape dismisses the modal, hero reappears |
-| should show the empty state for a card with no synergies | `/card/1936` (no synergy file) renders `card-overview-empty` |
+| shows the empty state on the page for a card with no synergies | `/card/1936` (no synergy file) → page "No synergies found for this card" notice |
 | should lock background scroll while the modal is open | `document.body` overflow is `hidden` while open, restored on close |
-| Show More reveals the full expanded group, and Back returns to default | `/card/2095` ramp group: one "+N more" click → `data-state="expanded"` with a "Back to all synergies" link; Back → `data-state="default"` |
+| Show More reveals the full expanded group, and Back returns to default | Modal opened on card 2095 via Browse (`openCardOverview`); ramp group: one "+N more" click → `data-state="expanded"` with a "Back to all synergies" link; Back → `data-state="default"` |
 | arrows navigate to a sibling card from the Browse grid | Opening a card from `/browse` shows prev/next arrows; clicking "Next card" changes the modal's h1 to the adjacent grid card |
 
 ## `card-search.spec.ts` — 7 tests (desktop only)
@@ -126,7 +129,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 
 ## `synergy-groups.spec.ts` — 4 tests (2 desktop, 2 mobile)
 
-CardOverviewModal default-mode interactions — chip filtering (→ focused single-group) and "+N more" one-click expansion (→ full ExpandedGroupView).
+CardOverviewModal default-mode interactions — chip filtering (→ focused single-group) and "+N more" one-click expansion (→ full ExpandedGroupView). The modal is opened on the fixture card via `appPage.openCardOverview(name)` (Browse `?q=` + tile click) — `/card/:id` is a real page now (#486), not a modal shortcut.
 
 | Test | What it verifies |
 |---|---|
@@ -137,7 +140,7 @@ CardOverviewModal default-mode interactions — chip filtering (→ focused sing
 
 ## `synergy-detail-modal.spec.ts` — 11 tests (4 desktop, 5 mobile, 2 deep-link)
 
-Comparison mode — clicking a synergy card tile transitions CardOverviewModal in-place to the side-by-side comparison view. Desktop uses two columns; mobile uses the tabbed `MobileComparisonView` (#332 #5). Deep links open it directly via `/compare/A/B/groupKey`.
+Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #486) transitions CardOverviewModal in-place to the side-by-side comparison view. Desktop uses two columns; mobile uses the tabbed `MobileComparisonView` (#332 #5). Setup opens the modal on the fixture card via `appPage.openCardOverview(name)` (Browse `?q=` + tile click). Deep links open comparison directly via `/compare/A/B/groupKey`.
 
 | Test | What it verifies |
 |---|---|
@@ -229,7 +232,8 @@ Requires `VITE_SHOW_ADMIN_ANALYTICS=true` (playwright `webServer.env` + `apps/we
 - **URL assertions** (`toHaveURL`) verify route-based navigation on every transition
 - **Hero visibility** is the marker for "home state" vs other pages
 - **Deep linking** is tested via direct navigation to `/browse?q=...&ink=...`, `/card/:id`, `/playstyles/:id`, `/compare/A/B/groupKey`
-- **CardOverviewModal** is the post-#320 replacement for the routed card page — clicking a card (anywhere) opens it overlay-style with the URL unchanged, rather than navigating to `/card/:id`
+- **CardOverviewModal** is the quick-look surface: clicking a card tile (anywhere) opens it overlay-style with the URL unchanged. **`/card/:id` is also a real, crawlable page** (#486) — deep-linking or middle-clicking a tile lands on the routed `CardPage` (which reuses the same `CardDetailPanel` + `SynergyResults` composition). To open the modal on a *specific* card in a test, use `appPage.openCardOverview(name)` (Browse `?q=` + tile click); `/card/:id` no longer opens the modal.
+- **Synergy card tiles** render as crawlable `a.card-tile` anchors (#486), not `button.card-tile` — plain-click is intercepted for in-app behavior (comparison in the modal, page-to-page nav on the card page), modified/middle-click follows the link.
 - **Navigation back** is tested via both clear/back button and logo click
 - **Image loading** is verified via `loading` and `decoding` attributes (not `src` URLs, which differ between dev proxy and production AVIF)
 

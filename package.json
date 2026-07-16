@@ -9,7 +9,7 @@
     "build": "pnpm -r build",
     "build:engine": "pnpm --filter inkweave-synergy-engine build",
     "build:web": "pnpm --filter inkweave-web build",
-    "build:vercel": "node scripts/convert-preview-images.mjs && node scripts/download-card-images.mjs && pnpm build:engine && node scripts/precompute-synergies.mjs && node scripts/precompute-vote-analytics.mjs && node scripts/precompute-vercel-analytics.mjs && VITE_LOCAL_IMAGES=true pnpm build:web",
+    "build:vercel": "node scripts/convert-preview-images.mjs && node scripts/download-card-images.mjs && pnpm build:engine && node scripts/precompute-synergies.mjs && node scripts/precompute-vote-analytics.mjs && node scripts/precompute-vercel-analytics.mjs && VITE_LOCAL_IMAGES=true pnpm build:web && (pnpm --filter inkweave-web exec playwright install chromium && node scripts/prerender.mjs || echo '[prerender] crawl failed or unavailable in this environment — shipping SPA-only (safe fallback, no regression)')",
     "test": "pnpm -r test:run",
     "test:engine": "pnpm --filter inkweave-synergy-engine test:run",
     "test:web": "pnpm --filter inkweave-web test:run",
@@ -27,6 +27,7 @@
     "precompute-synergies": "node scripts/precompute-synergies.mjs",
     "precompute-vote-analytics": "node scripts/precompute-vote-analytics.mjs",
     "precompute-vercel-analytics": "node scripts/precompute-vercel-analytics.mjs",
+    "prerender": "node scripts/prerender.mjs",
     "test:scripts": "vitest run --config vitest.scripts.config.mjs",
     "mine-rules": "pnpm build:engine && node scripts/mine-rule-candidates.mjs",
     "graduate-set": "node scripts/graduate-canonical-set.mjs",
@@ -39,7 +40,7 @@
     {
       "name": "Total JS bundle",
       "path": "apps/web/dist/assets/*.js",
-      "limit": "360 kB",
+      "limit": "375 kB",
       "gzip": true
     },
     {

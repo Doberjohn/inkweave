@@ -146,6 +146,7 @@ export function FeaturedCards({
           <li key={card.id}>
             <CardTile
               card={card}
+              href={`/card/${card.id}`}
               onSelect={onCardSelect}
               isSelected={false}
               variant="minimal"

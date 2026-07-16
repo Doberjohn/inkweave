@@ -14,6 +14,7 @@ import {
   EtherealBackground,
   FilterDialog,
   MOBILE_NAV_HEIGHT,
+  Seo,
 } from '../shared/components';
 import {
   COLORS,
@@ -61,6 +62,16 @@ function applyFiltersAndSort(
 // Subcomponents — local to this file. Keep BrowsePage's render small
 // and unduplicated across mobile/desktop branches.
 // =====================================================================
+
+function BrowseSeo() {
+  return (
+    <Seo
+      title="Browse Disney Lorcana Cards | Inkweave"
+      description="Browse and search every Disney Lorcana Core-format card by ink, cost, type, and keyword. Open any card for its strongest synergies and combos."
+      canonicalPath="/browse"
+    />
+  );
+}
 
 function BrowsePageError({onRetry}: {onRetry: () => void}) {
   return (
@@ -253,6 +264,7 @@ export function BrowsePage() {
           position: 'relative',
           overflow: 'hidden',
         }}>
+        <BrowseSeo />
         <EtherealBackground />
         <CompactHeader onLogoClick={goHome} isMobile />
         <BrowseContentSection {...contentProps} />
@@ -272,6 +284,7 @@ export function BrowsePage() {
         position: 'relative',
         overflow: 'hidden',
       }}>
+      <BrowseSeo />
       <EtherealBackground />
       <CompactHeader onLogoClick={goHome} />
       <BrowseContentSection {...contentProps} />

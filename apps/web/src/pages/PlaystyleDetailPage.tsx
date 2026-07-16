@@ -39,7 +39,7 @@ import {
   applySortOrder,
   type CardFilterOptions,
 } from '../features/cards/loader';
-import {CompactHeader, ErrorBoundary, EtherealBackground, FilterDialog} from '../shared/components';
+import {CompactHeader, ErrorBoundary, EtherealBackground, FilterDialog, Seo} from '../shared/components';
 import {
   COLORS,
   FONTS,
@@ -81,12 +81,14 @@ const HERO_MOBILE: HeroLayout = {
 
 function PlaystyleHero({
   name,
+  tagline,
   accentColor,
   accentRgb,
   layout,
   onPlaystylesBreadcrumb,
 }: {
   name: string;
+  tagline: string;
   accentColor: string;
   accentRgb: string;
   layout: HeroLayout;
@@ -174,6 +176,18 @@ function PlaystyleHero({
           </h1>
         </div>
 
+        {tagline && (
+          <p
+            style={{
+              margin: 0,
+              fontSize: `${FONT_SIZES.base}px`,
+              color: COLORS.textMuted,
+              maxWidth: 640,
+              lineHeight: 1.5,
+            }}>
+            {tagline}
+          </p>
+        )}
       </div>
     </section>
   );
@@ -620,6 +634,17 @@ interface FilterDialogSharedProps {
   sets: Parameters<typeof FilterDialog>[0]['sets'];
 }
 
+/** Per-route metadata for a playstyle page (React 19 native, self-referential canonical). */
+function PlaystyleSeo({playstyle}: {playstyle: ResolvedPlaystyle}) {
+  return (
+    <Seo
+      title={`${playstyle.name} Deck Archetype | Lorcana Synergies | Inkweave`}
+      description={`${playstyle.tagline} Explore the cards, enablers, and payoffs that define the ${playstyle.name} archetype in Disney Lorcana Core format.`}
+      canonicalPath={`/playstyles/${playstyle.id}`}
+    />
+  );
+}
+
 function PlaystyleDetailLoadingView({isMobile, goHome}: {isMobile: boolean; goHome: () => void}) {
   return (
     <main
@@ -709,6 +734,7 @@ function CardGridOrEmpty({
         onSelect={handleCardSelect}
         variant="minimal"
         borderRadius={borderRadius}
+        linkToCards
         emptyMessage={cards.length === 0 ? 'No cards match your filters.' : undefined}
       />
     </div>
@@ -782,11 +808,13 @@ function PlaystyleDetailMobileView({
         fontFamily: FONTS.body,
         position: 'relative',
       }}>
+      <PlaystyleSeo playstyle={playstyle} />
       <EtherealBackground />
       <CompactHeader onLogoClick={goHome} isMobile />
       <div style={{position: 'relative', zIndex: 1}}>
         <PlaystyleHero
           name={playstyle.name}
+          tagline={playstyle.tagline}
           accentColor={ui.accentColor}
           accentRgb={ui.accentRgb}
           layout={heroLayout}
@@ -855,6 +883,7 @@ function PlaystyleDetailDesktopView({
         flexDirection: 'column',
         position: 'relative',
       }}>
+      <PlaystyleSeo playstyle={playstyle} />
       <EtherealBackground />
       <CompactHeader onLogoClick={goHome} />
       <div
@@ -866,6 +895,7 @@ function PlaystyleDetailDesktopView({
         }}>
         <PlaystyleHero
           name={playstyle.name}
+          tagline={playstyle.tagline}
           accentColor={ui.accentColor}
           accentRgb={ui.accentRgb}
           layout={heroLayout}

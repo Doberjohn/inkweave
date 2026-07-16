@@ -85,6 +85,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
         itemContent={(index) => (
           <CardTile
             card={displayedCards[index]}
+            href={`/card/${displayedCards[index].id}`}
             isSelected={false}
             onSelect={onCardSelect}
             variant="minimal"

@@ -7,7 +7,7 @@ import {
 } from 'inkweave-synergy-engine';
 import {useAllPlaystyleCards} from '../features/synergies/hooks';
 import {CardGridSkeleton} from '../features/cards';
-import {CompactHeader, ErrorBoundary, EtherealBackground} from '../shared/components';
+import {CompactHeader, ErrorBoundary, EtherealBackground, Seo} from '../shared/components';
 import {PlaystyleFanTile, PlaystyleSection} from '../features/playstyles';
 import {
   COLORS,
@@ -284,6 +284,11 @@ export function PlaystyleGalleryPage() {
         fontFamily: FONTS.body,
         position: 'relative',
       }}>
+      <Seo
+        title="Lorcana Playstyles & Deck Archetypes | Inkweave"
+        description="Explore Disney Lorcana deck archetypes for Core format: ramp, discard, tribal packages, and more, each with the cards that power it and community-voted synergies."
+        canonicalPath="/playstyles"
+      />
       <EtherealBackground />
       <CompactHeader
         {...(!isMobile && {

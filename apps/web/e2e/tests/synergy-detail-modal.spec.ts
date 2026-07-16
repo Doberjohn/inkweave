@@ -1,10 +1,12 @@
 import {test, expect} from '../fixtures';
+import {cardFullNameById} from '../helpers/cardData';
 import fs from 'node:fs';
 import path from 'node:path';
 
 // Daisy Duck - Musketeer Spy: has shift-targets (direct) + discard (playstyle) groups, so both
 // the shift-targets tile and the discard tile (used by the re-entry test at L101) render.
-const CARD_URL = '/card/1947';
+const CARD_ID = '1947';
+const CARD_NAME = cardFullNameById(CARD_ID);
 
 // A real synergy partner of card 1947 + its group key, derived from the precomputed data so the
 // /compare deep-link fixture survives Set 12+ pool drift. ComparePage 404s on a missing groupKey
@@ -28,12 +30,11 @@ const COMPARE_URL = `/compare/1947/${COMPARE_PARTNER_ID}/${COMPARE_GROUP_KEY}`;
  */
 
 test.describe('Synergy comparison — Desktop', () => {
-  test.beforeEach(async ({page, appPage}, testInfo) => {
+  test.beforeEach(async ({appPage}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
-    await page.goto(CARD_URL);
-    // CardPage redirects to '/' and opens the modal globally — wait for the modal first.
-    await appPage.cardOverviewModal.waitFor({state: 'visible', timeout: 10000});
-    // Then wait for synergies to populate (chip filter buttons or empty state).
+    // /card/:id is a real page now (#486); open the modal on the fixture card via Browse.
+    await appPage.openCardOverview(CARD_NAME);
+    // Wait for synergies to populate (chip filter buttons or empty state).
     const groupCount = appPage.cardOverviewModal.locator('[data-group-key]');
     const noSynergies = appPage.cardOverviewModal.getByTestId('card-overview-empty');
     await expect(groupCount.first().or(noSynergies)).toBeVisible({timeout: 10000});
@@ -42,7 +43,7 @@ test.describe('Synergy comparison — Desktop', () => {
   test('should enter comparison mode when clicking a synergy card', async ({page, appPage}) => {
     // Click the first card tile in the shift-targets group inside the modal
     const firstTile = appPage.cardOverviewModal
-      .locator('[data-group-key="shift-targets"] button.card-tile')
+      .locator('[data-group-key="shift-targets"] a.card-tile')
       .first();
     await expect(firstTile).toBeVisible({timeout: 5000});
     await firstTile.click();
@@ -51,15 +52,15 @@ test.describe('Synergy comparison — Desktop', () => {
     await expect(
       appPage.cardOverviewModal.getByRole('button', {name: /back to synergies/i}),
     ).toBeVisible({timeout: 3000});
-    // URL stays put — in-app comparison flow no longer pushes /compare/* so the
-    // originating page stays mounted in <Outlet /> behind the modal backdrop.
+    // URL stays on the originating Browse page — the in-app comparison flow doesn't push
+    // /compare/*, so Browse stays mounted in <Outlet /> behind the modal backdrop.
     // (Deep-link flow still URL-syncs when switching pairs — see CardModalContext.)
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL(/\/browse/);
   });
 
   test('should show engine column with rule explanations in comparison mode', async ({appPage}) => {
     const firstTile = appPage.cardOverviewModal
-      .locator('[data-group-key="shift-targets"] button.card-tile')
+      .locator('[data-group-key="shift-targets"] a.card-tile')
       .first();
     await firstTile.click();
 
@@ -71,7 +72,7 @@ test.describe('Synergy comparison — Desktop', () => {
 
   test('should exit comparison mode via the BACK button', async ({appPage, page}) => {
     const firstTile = appPage.cardOverviewModal
-      .locator('[data-group-key="shift-targets"] button.card-tile')
+      .locator('[data-group-key="shift-targets"] a.card-tile')
       .first();
     await firstTile.click();
 
@@ -79,11 +80,11 @@ test.describe('Synergy comparison — Desktop', () => {
     await expect(backButton).toBeVisible({timeout: 3000});
     await backButton.click();
 
-    // Modal returns to default state. URL stayed at '/' the whole time (in-app
+    // Modal returns to default state. URL stayed on Browse the whole time (in-app
     // comparison flow doesn't push /compare/*), so the final URL assertion just
     // confirms we didn't accidentally trigger a navigation on BACK.
     await expect(appPage.cardOverviewModal).toHaveAttribute('data-mode', 'default', {timeout: 5000});
-    await expect(page).toHaveURL('/', {timeout: 5000});
+    await expect(page).toHaveURL(/\/browse/, {timeout: 5000});
   });
 
   test('should switch comparison pairs across exit and re-entry', async ({appPage}) => {
@@ -91,7 +92,7 @@ test.describe('Synergy comparison — Desktop', () => {
     const backButton = modal.getByRole('button', {name: /back to synergies/i});
 
     // Enter comparison from the shift-targets group.
-    await modal.locator('[data-group-key="shift-targets"] button.card-tile').first().click();
+    await modal.locator('[data-group-key="shift-targets"] a.card-tile').first().click();
     await expect(backButton).toBeVisible({timeout: 3000});
 
     // Exit back to the default modal.
@@ -99,24 +100,24 @@ test.describe('Synergy comparison — Desktop', () => {
     await expect(modal).toHaveAttribute('data-mode', 'default', {timeout: 5000});
 
     // Re-enter a different comparison from another group — consecutive comparisons must work.
-    await modal.locator('[data-group-key="discard"] button.card-tile').first().click();
+    await modal.locator('[data-group-key="discard"] a.card-tile').first().click();
     await expect(modal).toHaveAttribute('data-mode', 'comparison', {timeout: 3000});
     await expect(backButton).toBeVisible();
   });
 });
 
 test.describe('Synergy comparison — Mobile', () => {
-  test.beforeEach(async ({page, appPage}, testInfo) => {
+  test.beforeEach(async ({appPage}, testInfo) => {
     if (!testInfo.project.name.startsWith('mobile-')) test.skip();
-    await page.goto(CARD_URL);
-    await appPage.cardOverviewModal.waitFor({state: 'visible', timeout: 10000});
+    // /card/:id is a real page now (#486); open the modal on the fixture card via Browse.
+    await appPage.openCardOverview(CARD_NAME);
     const groupCount = appPage.cardOverviewModal.locator('[data-group-key]');
     const noSynergies = appPage.cardOverviewModal.getByTestId('card-overview-empty');
     await expect(groupCount.first().or(noSynergies)).toBeVisible({timeout: 10000});
   });
 
   test('should enter comparison mode on mobile', async ({appPage}) => {
-    const firstTile = appPage.cardOverviewModal.locator('[data-group-key] button.card-tile').first();
+    const firstTile = appPage.cardOverviewModal.locator('[data-group-key] a.card-tile').first();
     await expect(firstTile).toBeVisible({timeout: 5000});
     await firstTile.click();
 
@@ -126,7 +127,7 @@ test.describe('Synergy comparison — Mobile', () => {
   });
 
   test('should render the tabbed comparison layout on mobile', async ({appPage}) => {
-    await appPage.cardOverviewModal.locator('[data-group-key] button.card-tile').first().click();
+    await appPage.cardOverviewModal.locator('[data-group-key] a.card-tile').first().click();
 
     // MobileComparisonView replaces the desktop two-column layout with an Engine/Community
     // section-switch bar — the two pill buttons confirm the mobile-specific view rendered (#332 #5).
@@ -136,7 +137,7 @@ test.describe('Synergy comparison — Mobile', () => {
   });
 
   test('should switch to the Community tab on mobile', async ({appPage}) => {
-    await appPage.cardOverviewModal.locator('[data-group-key] button.card-tile').first().click();
+    await appPage.cardOverviewModal.locator('[data-group-key] a.card-tile').first().click();
 
     const modal = appPage.cardOverviewModal;
     const engineTab = modal.getByRole('button', {name: /^Engine/});
@@ -150,7 +151,7 @@ test.describe('Synergy comparison — Mobile', () => {
   });
 
   test('should open and dismiss the card lightbox on mobile', async ({appPage, page}) => {
-    await appPage.cardOverviewModal.locator('[data-group-key] button.card-tile').first().click();
+    await appPage.cardOverviewModal.locator('[data-group-key] a.card-tile').first().click();
 
     // Tapping a comparison card opens MobileLightbox — a portal-to-body dialog, so it's
     // queried on `page`, not scoped to the modal.
@@ -165,7 +166,7 @@ test.describe('Synergy comparison — Mobile', () => {
   });
 
   test('should exit comparison mode via BACK on mobile', async ({appPage}) => {
-    await appPage.cardOverviewModal.locator('[data-group-key] button.card-tile').first().click();
+    await appPage.cardOverviewModal.locator('[data-group-key] a.card-tile').first().click();
 
     const backButton = appPage.cardOverviewModal.getByRole('button', {name: /back to synergies/i});
     await expect(backButton).toBeVisible({timeout: 3000});

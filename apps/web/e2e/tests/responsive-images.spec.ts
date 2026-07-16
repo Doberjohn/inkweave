@@ -62,7 +62,7 @@ test.describe('Responsive Images', () => {
 
     // Synergy card images should lazy-load (below the fold inside the modal)
     const synergyImg = appPage.cardOverviewModal
-      .locator('button.card-tile')
+      .locator('a.card-tile')
       .filter({has: appPage.cardOverviewModal.getByTestId('reason-tag')})
       .first()
       .locator('img');

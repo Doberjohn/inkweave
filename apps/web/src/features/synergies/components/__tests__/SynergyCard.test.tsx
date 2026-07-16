@@ -55,8 +55,8 @@ describe('SynergyCard', () => {
 
   it('should show View details cue on hover (desktop)', () => {
     render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
-    const button = screen.getByRole('button', {name: 'Elsa - Snow Queen'});
-    fireEvent.mouseEnter(button);
+    const tile = screen.getByRole('link', {name: 'Elsa - Snow Queen'});
+    fireEvent.mouseEnter(tile);
     expect(screen.getByText('View details')).toBeTruthy();
   });
 
