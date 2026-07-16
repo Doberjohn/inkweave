@@ -188,6 +188,7 @@ function CardTileButton({
 }) {
   return (
     <button
+      type="button"
       className="card-tile"
       data-testid="card-tile"
       data-roving-item

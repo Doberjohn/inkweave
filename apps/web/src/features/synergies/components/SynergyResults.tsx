@@ -3,7 +3,6 @@ import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {CardDetail, SynergyGroup} from '.';
 import {ExpandedGroupView} from './ExpandedGroupView';
-import {applySynergySortOrder} from '../utils';
 import {Chip, EmptyState, RenderProfiler} from '../../../shared/components';
 import {SortSelect} from '../../../shared/components/SortSelect';
 import type {SynergySortOrder} from '../../../shared/constants';
@@ -219,10 +218,6 @@ function SynergyResultsBody({
   const visibleGroups = activeGroupFilter
     ? synergies.filter((g) => g.groupKey === activeGroupFilter)
     : synergies;
-  const sortedGroups = visibleGroups.map((group) => ({
-    ...group,
-    synergies: applySynergySortOrder(group.synergies, sortOrder),
-  }));
 
   return (
     <>
@@ -240,7 +235,7 @@ function SynergyResultsBody({
             setSortOrder={setSortOrder}
             isMobile={isMobile}
           />
-          {sortedGroups.map((group) => (
+          {visibleGroups.map((group) => (
             <SynergyGroup
               key={group.groupKey}
               group={group}
@@ -248,6 +243,7 @@ function SynergyResultsBody({
               maxVisibleCards={isMobile ? 5 : 12}
               onShowAll={onShowAll}
               onCardClick={onSynergyCardClick}
+              sortOrder={sortOrder}
             />
           ))}
         </>

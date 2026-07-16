@@ -31,14 +31,21 @@ export function isSyntheticMouseEvent(): boolean {
 }
 
 /** The subset of a click event needed to tell a plain left-click from a link-following one. */
-type ClickIntent = {metaKey: boolean; ctrlKey: boolean; shiftKey: boolean; button: number};
+type ClickIntent = {
+  metaKey: boolean;
+  ctrlKey: boolean;
+  shiftKey: boolean;
+  altKey: boolean;
+  button: number;
+};
 
 /**
  * True when a click on a crawlable `<a href>` should be left to the browser's native
- * navigation (open in a new tab / window) rather than intercepted for in-app behavior:
- * any modifier key held, or a middle-click. Shared by the card tiles (issue #486) so the
- * "modified click follows the link" rule lives in exactly one place.
+ * navigation (open in a new tab / window / download) rather than intercepted for in-app
+ * behavior: any modifier key held (Ctrl/Cmd new tab, Shift new window, Alt download), or a
+ * middle-click. Shared by the card tiles (issue #486) so the "modified click follows the
+ * link" rule lives in exactly one place.
  */
 export function isModifiedClick(e: ClickIntent): boolean {
-  return e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1;
+  return e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button === 1;
 }

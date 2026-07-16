@@ -72,6 +72,17 @@ export function CardPage() {
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
+  // React Router reuses this component across /card/:cardId navigations (clicking a synergy
+  // partner routes here again), so the group filter/expansion would otherwise carry over from
+  // the previous card and hide the new card's groups. Reset when the route card changes.
+  // (Adjust-state-during-render pattern — no stale frame, unlike a useEffect.)
+  const [prevCardId, setPrevCardId] = useState(cardId);
+  if (cardId !== prevCardId) {
+    setPrevCardId(cardId);
+    setActiveGroup(null);
+    setExpandedGroup(null);
+  }
+
   if (!card) {
     if (cardsLoading) {
       return (

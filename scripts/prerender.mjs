@@ -97,26 +97,31 @@ function startServer(shellHtml) {
 }
 
 async function crawlRoute(browser, route) {
-  const page = await browser.newPage();
+  let page;
   try {
+    page = await browser.newPage();
     await page.goto(`http://localhost:${PORT}${route}`, {waitUntil: 'networkidle', timeout: 30000});
-    // Wait until the per-route <Seo> has replaced the shell title, i.e. the route's real
-    // content (not the loading skeleton) has rendered. Falls through to whatever is rendered
-    // if it times out, so a slow route still gets captured rather than failing the build.
-    await page
+    // A route is "rendered" once its <Seo> has replaced the shell <title>, i.e. the real content
+    // (not the loading skeleton) is on the page. If that never happens within the timeout, the
+    // capture is just the empty shell — return ok:false so the failure-rate guard in main() can
+    // catch a broken crawl. Otherwise a timing-out crawl would write content-less shells for
+    // every route and still report success, shipping a hollow "prerender".
+    const rendered = await page
       .waitForFunction((shell) => document.title && document.title !== shell, SHELL_TITLE, {
         timeout: 15000,
       })
-      .catch(() => {});
+      .then(() => true)
+      .catch(() => false);
     const html = await page.content();
     const outDir = route === '/' ? DIST : join(DIST, route);
     await mkdir(outDir, {recursive: true});
     await writeFile(join(outDir, 'index.html'), html, 'utf8');
+    if (!rendered) return {route, ok: false, error: 'title never left the shell (empty render)'};
     return {route, ok: true};
   } catch (e) {
     return {route, ok: false, error: e && e.message ? e.message : String(e)};
   } finally {
-    await page.close();
+    if (page) await page.close();
   }
 }
 

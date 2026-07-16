@@ -3,7 +3,7 @@ import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData, SynergyMatchDisplay} from '../types';
 import {SynergyCard} from './SynergyCard';
 import {applySynergySortOrder} from '../utils';
-import {COLORS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, LAYOUT, RADIUS, SPACING, type SynergySortOrder} from '../../../shared/constants';
 import {AbilityCallout, AbilityTag} from '../../../shared/components';
 import {useContainerWidth, useRovingTabIndex} from '../../../shared/hooks';
 
@@ -27,6 +27,9 @@ interface SynergyGroupProps {
   /** Compact tile + MoreTile sizing for narrow grids (e.g. inside CardOverviewModal):
    *  neutral tile border, no "View details" hover cue, smaller corner radius, smaller MoreTile font. Default false. */
   compact?: boolean;
+  /** Sort order for the cards within this group. Default 'ink-cost' (ink alphabetical, then cost).
+   *  The card page threads the user's SortSelect choice through here; the modal uses the default. */
+  sortOrder?: SynergySortOrder;
   onCardClick?: (card: LorcanaCard, groupKey?: string) => void;
 }
 
@@ -42,6 +45,7 @@ export function SynergyGroup({
   gridGap,
   marginBottom = SPACING.xl,
   compact = false,
+  sortOrder = 'ink-cost',
   onCardClick,
 }: SynergyGroupProps) {
   // Wrap onCardClick to inject this group's groupKey before bubbling up.
@@ -50,8 +54,8 @@ export function SynergyGroup({
   const onCardClickWithGroupKey = onCardClick
     ? (card: LorcanaCard) => onCardClick(card, group.groupKey)
     : undefined;
-  // Default sort: ink alphabetical, then cost ascending within each ink
-  const sortedSynergies = applySynergySortOrder(group.synergies, 'ink-cost');
+  // Sort the group's cards by the requested order (default: ink alphabetical, then cost ascending).
+  const sortedSynergies = applySynergySortOrder(group.synergies, sortOrder);
 
   const totalCount = sortedSynergies.length;
   const visibleCount = Math.min(maxVisibleCards, totalCount);
