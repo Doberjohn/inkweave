@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /compare/
+Disallow: /vote/
 
 Sitemap: https://inkweave.ink/sitemap.xml
