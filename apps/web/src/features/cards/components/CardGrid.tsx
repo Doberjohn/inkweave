@@ -16,6 +16,8 @@ interface CardGridProps {
   borderRadius?: number;
   /** Empty state message. Rendered when cards.length === 0; otherwise empty branch is omitted. */
   emptyMessage?: string;
+  /** When true, each tile renders as a crawlable `<a href="/card/:id">` (issue #486). */
+  linkToCards?: boolean;
 }
 
 /**
@@ -40,6 +42,7 @@ export function CardGrid({
   useSmallImage = true,
   borderRadius,
   emptyMessage,
+  linkToCards,
 }: CardGridProps) {
   const {isMobile} = useResponsive();
   const minColWidth = isMobile ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth;
@@ -69,6 +72,7 @@ export function CardGrid({
         <CardTile
           key={card.id}
           card={card}
+          href={linkToCards ? `/card/${card.id}` : undefined}
           isSelected={false}
           onSelect={onSelect}
           variant={variant}

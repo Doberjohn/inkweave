@@ -734,6 +734,7 @@ function CardGridOrEmpty({
         onSelect={handleCardSelect}
         variant="minimal"
         borderRadius={borderRadius}
+        linkToCards
         emptyMessage={cards.length === 0 ? 'No cards match your filters.' : undefined}
       />
     </div>

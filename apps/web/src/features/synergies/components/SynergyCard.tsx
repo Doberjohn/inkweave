@@ -4,7 +4,7 @@ import type {LorcanaCard} from '../../cards';
 import {smallImageUrl} from '../../cards';
 import {INK_COLORS, COLORS, EASING, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {CardLightbox, StrengthBadge} from '../../../shared/components';
-import {isSyntheticMouseEvent} from '../../../shared/utils/touchGuard';
+import {isSyntheticMouseEvent, isModifiedClick} from '../../../shared/utils/touchGuard';
 import {getStrengthTier} from '../utils';
 
 interface SynergyCardProps {
@@ -39,7 +39,7 @@ export function SynergyCard({
   // page navigation); modified/middle-clicks fall through to the native link and open the
   // partner's card page in a new tab.
   const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+    if (isModifiedClick(e)) return; // let the browser open the partner's card page in a new tab
     // Touch devices fire a synthetic mouse event after touch — suppress the desktop-only path.
     if (!isMobile && isSyntheticMouseEvent()) {
       e.preventDefault();

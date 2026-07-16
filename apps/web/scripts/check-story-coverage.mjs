@@ -26,6 +26,7 @@ const EXCLUDED = new Set([
   'EtherealBackground.tsx', // canvas animation, no props
   'RenderProfiler.tsx', // performance utility wrapper, not visual
   'SynergyBanner.tsx', // marketing-banner generator, rendered only by the dev-only /banner export route
+  'Seo.tsx', // head-only: emits <title>/<meta>/<link> via React 19 native metadata, renders no visible UI
 ]);
 
 // Pre-existing components without stories (tracked debt — remove as stories are added)

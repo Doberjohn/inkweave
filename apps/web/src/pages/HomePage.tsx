@@ -3,7 +3,7 @@ import {useNavigate} from 'react-router-dom';
 import {FeaturedCards} from '../features/cards';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {trackEvent} from '../shared/lib/analytics';
-import {HeroSection, EtherealBackground, ErrorBoundary, Footer} from '../shared/components';
+import {HeroSection, EtherealBackground, ErrorBoundary, Footer, Seo} from '../shared/components';
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
@@ -38,6 +38,11 @@ export function HomePage() {
 
   return (
     <div style={{minHeight: '100vh', display: 'flex', flexDirection: 'column'}}>
+      <Seo
+        title="Inkweave | Disney Lorcana Synergy Finder & Deck Builder"
+        description="Free Disney Lorcana synergy finder for Core format. Discover the strongest card combos and archetype pairings, with community-voted synergy scores, and build better decks."
+        canonicalPath="/"
+      />
       <main style={{...mainStyle, justifyContent: isMobile ? undefined : 'center'}}>
         <EtherealBackground isMobile={isMobile} />
 
