@@ -18,7 +18,8 @@ export class AppPage {
   readonly featuredCards: Locator;
   readonly etherealBackground: Locator;
 
-  // Card overview modal — opens globally when a card is clicked or /card/:id is visited
+  // Card overview modal — opens globally when a card tile is clicked (home featured, Browse grid).
+  // Note: /card/:id is a real page now (issue #486), no longer a modal shortcut.
   readonly cardOverviewModal: Locator;
   readonly cardOverviewBackdrop: Locator;
 
@@ -67,6 +68,24 @@ export class AppPage {
   async selectFeaturedCard() {
     const firstCard = this.featuredCards.getByTestId('card-tile').first();
     await firstCard.click();
+    await this.cardOverviewModal.waitFor({state: 'visible', timeout: 10000});
+    await this.page.waitForTimeout(100);
+  }
+
+  /**
+   * Open the global CardOverviewModal for a SPECIFIC card via the Browse UI.
+   *
+   * The old `/card/:id`-opens-the-modal shortcut is gone — that route renders a real, crawlable
+   * page now (issue #486) — so specs that need the modal on a chosen card drive it through Browse:
+   * filter the grid to the card with `?q=` (URL param works on both desktop and mobile; the inline
+   * search box is desktop-only), then click the first matching tile. `query` should uniquely
+   * identify the card — pass its fullName (see `cardFullNameById`).
+   */
+  async openCardOverview(query: string) {
+    await this.page.goto(`/browse?q=${encodeURIComponent(query)}`);
+    const firstTile = this.page.getByTestId('card-tile').first();
+    await firstTile.waitFor({state: 'visible', timeout: 30000});
+    await firstTile.click();
     await this.cardOverviewModal.waitFor({state: 'visible', timeout: 10000});
     await this.page.waitForTimeout(100);
   }

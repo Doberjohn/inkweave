@@ -27,15 +27,13 @@ test.describe('Accessibility — axe audits', () => {
   });
 
   test('card detail page should have no axe violations', async ({page}) => {
+    // #486: /card/:id is a real, crawlable page (was a modal overlay). Wait for the synergy
+    // results section to render before auditing the whole page.
     await page.goto('/card/1939');
-    // The CardOverviewModal opens with a 200ms opacity-fade-in transition. If axe runs mid-
-    // transition, it computes effective text colors against a partially-transparent background
-    // (text gold rgb(212,175,55) at opacity 0.05 ≈ #111015 on bg #0d0d14 — fails 4.5:1). Wait
-    // for the modal's opacity to be fully 1 before running axe.
-    await page.waitForFunction(() => {
-      const el = document.querySelector('[data-testid="card-overview-modal"]');
-      return !!el && getComputedStyle(el).opacity === '1';
-    }, {timeout: 5000});
+    await page.locator('section[aria-label="Synergy results"]').waitFor({
+      state: 'visible',
+      timeout: 10000,
+    });
 
     const results = await new AxeBuilder({page}).exclude('[data-react-grab]').analyze();
     expect(results.violations).toEqual([]);

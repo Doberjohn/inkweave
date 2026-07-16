@@ -1,4 +1,5 @@
 import {test, expect} from '../fixtures';
+import {cardFullNameById} from '../helpers/cardData';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -65,24 +66,26 @@ test.describe('Card Detail (modal)', () => {
     await expect(groupCount.first().or(noSynergies).or(errorBanner)).toBeVisible({timeout: 10000});
   });
 
-  test('should open the modal when deep-linking to /card/:id', async ({appPage, page}) => {
-    // A valid card id from the Core pool. CardPage opens the modal globally and redirects
-    // the URL to `/`, so closing the modal lands on the home page.
-    await page.goto('/card/1936');
+  test('renders the crawlable card page when deep-linking to /card/:id', async ({appPage, page}) => {
+    // #486: /card/:id is now a real, crawlable page (was a modal that redirected to `/`).
+    await page.goto('/card/1947');
 
-    await expect(appPage.cardOverviewModal).toBeVisible({timeout: 10000});
-    await expect(page).toHaveURL('/');
+    // URL stays put — no redirect — and the per-route <Seo> bakes in a self-referential title
+    // and canonical, with the synergy results rendered in the page (not a modal overlay).
+    await expect(page).toHaveURL('/card/1947');
+    await expect(page).toHaveTitle(/Daisy Duck.*Inkweave/);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/card\/1947$/);
+    await expect(page.locator('section[aria-label="Synergy results"]')).toBeVisible({timeout: 10000});
+    await expect(appPage.cardOverviewModal).toBeHidden();
   });
 
-  test('should not open the modal for an invalid card ID', async ({appPage, page}) => {
+  test('shows a not-found page for an invalid card ID', async ({appPage, page}) => {
     await page.goto('/card/99999999');
 
-    // CardPage redirects to `/`. selectedCardId is set but getCardById returns undefined,
-    // so the modal renders nothing. End state: home page, modal hidden.
-    await page.waitForTimeout(500);
-    await expect(page).toHaveURL('/');
+    // #486: CardPage renders a noindex "Card not found" page (no redirect, no modal).
+    await expect(page.getByRole('heading', {name: /card not found/i})).toBeVisible({timeout: 10000});
+    await expect(page).toHaveURL('/card/99999999');
     await expect(appPage.cardOverviewModal).toBeHidden();
-    await expect(appPage.heroSection).toBeVisible();
   });
 
   test('should close the modal when Escape is pressed', async ({appPage, page}) => {
@@ -95,14 +98,12 @@ test.describe('Card Detail (modal)', () => {
     await expect(appPage.heroSection).toBeVisible();
   });
 
-  test('should show the empty state for a card with no synergies', async ({appPage, page}) => {
-    // Card 1936 (Bruno Madrigal - Undetected Uncle) has no precomputed synergy file — the modal renders its empty state.
+  test('shows the empty state on the page for a card with no synergies', async ({page}) => {
+    // Card 1936 (Bruno Madrigal - Undetected Uncle) has no precomputed synergy file — the card
+    // page's SynergyResults renders its "no synergies" notice (#486).
     await page.goto('/card/1936');
 
-    await expect(appPage.cardOverviewModal).toBeVisible({timeout: 10000});
-    await expect(appPage.cardOverviewModal.getByTestId('card-overview-empty')).toBeVisible({
-      timeout: 10000,
-    });
+    await expect(page.getByText(/no synergies found for this card/i)).toBeVisible({timeout: 10000});
   });
 
   test('should lock background scroll while the modal is open', async ({appPage, page}) => {
@@ -123,12 +124,13 @@ test.describe('Card Detail (modal)', () => {
 });
 
 test.describe('Card Detail: Show More and sibling navigation (desktop)', () => {
-  test('Show More reveals the full expanded group, and Back returns to default', async ({appPage, page}, testInfo) => {
+  test('Show More reveals the full expanded group, and Back returns to default', async ({appPage}, testInfo) => {
     // Desktop only: arrows and the expanded view are exercised on the desktop layout here.
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
-    await page.goto(`/card/${EXPAND_CARD_ID}`);
+    // The modal's default view truncates the ramp group (>3), so a "+N more" tile renders. Open
+    // the modal on the fixture card via Browse (/card/:id is a page now, #486).
+    await appPage.openCardOverview(cardFullNameById(EXPAND_CARD_ID));
     const modal = appPage.cardOverviewModal;
-    await modal.waitFor({state: 'visible', timeout: 10000});
 
     const moreTile = modal.locator(`[data-group-key="${EXPAND_GROUP}"] [data-testid="more-tile"]`);
     await expect(moreTile).toBeVisible({timeout: 10000});
