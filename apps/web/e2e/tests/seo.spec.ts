@@ -10,9 +10,20 @@ test.describe('SEO', () => {
     });
 
     expect(jsonLd).not.toBeNull();
-    expect(jsonLd['@type']).toBe('WebApplication');
-    expect(jsonLd.name).toBe('Inkweave');
-    expect(jsonLd.url).toBeTruthy();
+    // #496: structured data is a schema.org @graph (Organization + WebSite + WebApplication),
+    // cross-linked by @id. Assert all three node types plus the WebSite's SearchAction.
+    const graph = jsonLd['@graph'] as Array<Record<string, unknown>>;
+    expect(Array.isArray(graph)).toBe(true);
+    expect(graph.map((node) => node['@type'])).toEqual(
+      expect.arrayContaining(['Organization', 'WebSite', 'WebApplication']),
+    );
+
+    const app = graph.find((node) => node['@type'] === 'WebApplication');
+    expect(app?.name).toBe('Inkweave');
+    expect(app?.url).toBeTruthy();
+
+    const website = graph.find((node) => node['@type'] === 'WebSite');
+    expect((website?.potentialAction as Record<string, unknown>)?.['@type']).toBe('SearchAction');
   });
 
   test('should have correct heading hierarchy on home page', async ({appPage, page}) => {
