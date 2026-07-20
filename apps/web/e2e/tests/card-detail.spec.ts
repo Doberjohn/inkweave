@@ -70,13 +70,29 @@ test.describe('Card Detail (modal)', () => {
     // #486: /card/:id is now a real, crawlable page (was a modal that redirected to `/`).
     await page.goto('/card/1947');
 
-    // URL stays put — no redirect — and the per-route <Seo> bakes in a self-referential title
-    // and canonical, with the synergy results rendered in the page (not a modal overlay).
+    // URL stays put — no redirect — and the per-route <Seo> bakes in a self-referential title.
+    // The canonical is the slug URL /card/:id/:slug (#498), even from the bare numeric deep link.
     await expect(page).toHaveURL('/card/1947');
     await expect(page).toHaveTitle(/Daisy Duck.*Inkweave/);
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/card\/1947$/);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      'href',
+      /\/card\/1947\/[a-z0-9-]+$/,
+    );
     await expect(page.locator('section[aria-label="Synergy results"]')).toBeVisible({timeout: 10000});
     await expect(appPage.cardOverviewModal).toBeHidden();
+  });
+
+  test('a wrong slug still renders the card by id and canonicalizes to the correct slug (#498)', async ({
+    page,
+  }) => {
+    // The id is the lookup key; the slug is decorative (#498). A deliberately wrong slug still
+    // resolves card 1947, and the canonical is rewritten to its derived slug, not the URL's.
+    await page.goto('/card/1947/wrong-slug-here');
+
+    await expect(page).toHaveTitle(/Daisy Duck.*Inkweave/);
+    const canonical = page.locator('link[rel="canonical"]');
+    await expect(canonical).toHaveAttribute('href', /\/card\/1947\/[a-z0-9-]+$/);
+    await expect(canonical).not.toHaveAttribute('href', /wrong-slug-here$/);
   });
 
   test('shows a not-found page for an invalid card ID', async ({appPage, page}) => {

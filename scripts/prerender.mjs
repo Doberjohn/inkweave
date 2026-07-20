@@ -58,12 +58,14 @@ async function enumerateRoutes() {
   // Import the built engine from its dist path (matches scripts/precompute-synergies.mjs);
   // the workspace package name isn't resolvable from a root script.
   const enginePath = join(ROOT, 'packages', 'synergy-engine', 'dist', 'index.js');
-  const {getAllPlaystyles} = await import(new URL(`file:///${enginePath.replace(/\\/g, '/')}`).href);
+  const {getAllPlaystyles, cardPath} = await import(
+    new URL(`file:///${enginePath.replace(/\\/g, '/')}`).href
+  );
   const cardData = JSON.parse(await readFile(join(DIST, 'data', 'allCards.json'), 'utf8'));
   return {
     staticRoutes: ['/', '/browse', '/playstyles', '/about', '/privacy', '/terms', '/disclaimer'],
     playstyleRoutes: getAllPlaystyles().map((p) => `/playstyles/${p.id}`),
-    cardRoutes: cardData.cards.map((c) => `/card/${c.id}`),
+    cardRoutes: cardData.cards.map((c) => cardPath(c)),
   };
 }
 

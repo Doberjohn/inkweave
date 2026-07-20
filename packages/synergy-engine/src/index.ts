@@ -79,6 +79,8 @@ export {
   isRepeatingTrigger,
   transformCard,
   transformCards,
+  cardSlug,
+  cardPath,
   getToyRoles,
   isToyCard,
   getDwarfsRoles,

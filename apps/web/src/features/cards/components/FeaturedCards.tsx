@@ -1,4 +1,5 @@
 import type {LorcanaCard} from '../types';
+import {cardPath} from 'inkweave-synergy-engine';
 import {CardTile} from './CardTile';
 import {FeaturedCardsSkeleton} from './FeaturedCardsSkeleton';
 import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
@@ -146,7 +147,7 @@ export function FeaturedCards({
           <li key={card.id}>
             <CardTile
               card={card}
-              href={`/card/${card.id}`}
+              href={cardPath(card)}
               onSelect={onCardSelect}
               isSelected={false}
               variant="minimal"

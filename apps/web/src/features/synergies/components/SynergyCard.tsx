@@ -1,6 +1,7 @@
 import {useState, type MouseEvent} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from '../../cards';
+import {cardPath} from 'inkweave-synergy-engine';
 import {smallImageUrl} from '../../cards';
 import {INK_COLORS, COLORS, EASING, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {CardLightbox, StrengthBadge} from '../../../shared/components';
@@ -61,7 +62,7 @@ export function SynergyCard({
     <div>
       <a
         className="card-tile"
-        href={`/card/${card.id}`}
+        href={cardPath(card)}
         data-roving-item
         data-card-id={card.id}
         tabIndex={tabIndex}

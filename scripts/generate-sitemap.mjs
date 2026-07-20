@@ -4,7 +4,7 @@
  * (issue #487). Replaces the hand-maintained 2-URL file, which drifted with every set release.
  *
  * Emits, on the apex host, with <lastmod> and NO <priority>/<changefreq> (Google ignores both):
- *   - every card:      /card/:id            (× ~1,024)
+ *   - every card:      /card/:id/:slug      (× ~1,024)
  *   - every playstyle: /playstyles/:id      (× 21)
  *   - static hubs:     /, /browse, /playstyles, /vote, /about, /privacy, /terms, /disclaimer
  *
@@ -46,15 +46,13 @@ function isoDate(value) {
 }
 
 /**
- * Load playstyle ids from the BUILT engine dist. A root script can't resolve the workspace
- * package name, so import the dist by file URL (matches scripts/prerender.mjs + precompute).
+ * Load the BUILT engine dist once. A root script can't resolve the workspace package name,
+ * so import the dist by file URL (matches scripts/prerender.mjs + precompute). Returns the
+ * module so callers use both getAllPlaystyles and cardSlug (the shared slug source, #498).
  */
-async function loadPlaystyleIds() {
+async function loadEngine() {
   const enginePath = path.join(ROOT, 'packages', 'synergy-engine', 'dist', 'index.js');
-  const {getAllPlaystyles} = await import(
-    new URL(`file:///${enginePath.replace(/\\/g, '/')}`).href
-  );
-  return getAllPlaystyles().map((p) => p.id);
+  return import(new URL(`file:///${enginePath.replace(/\\/g, '/')}`).href);
 }
 
 /**
@@ -65,12 +63,13 @@ export async function buildSitemapUrls() {
   const {cards} = JSON.parse(fs.readFileSync(CARDS_FILE, 'utf8'));
   const cardsLastmod = isoDate(fs.statSync(CARDS_FILE).mtime);
   const buildDate = isoDate(Date.now());
-  const playstyleIds = await loadPlaystyleIds();
+  const {getAllPlaystyles, cardPath} = await loadEngine();
+  const playstyleIds = getAllPlaystyles().map((p) => p.id);
 
   return [
     ...STATIC_ROUTES.map((route) => ({loc: `${SITE_ORIGIN}${route}`, lastmod: buildDate})),
     ...playstyleIds.map((id) => ({loc: `${SITE_ORIGIN}/playstyles/${id}`, lastmod: buildDate})),
-    ...cards.map((c) => ({loc: `${SITE_ORIGIN}/card/${c.id}`, lastmod: cardsLastmod})),
+    ...cards.map((c) => ({loc: `${SITE_ORIGIN}${cardPath(c)}`, lastmod: cardsLastmod})),
   ];
 }
 
