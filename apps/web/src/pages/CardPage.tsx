@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import type {LorcanaCard} from 'inkweave-synergy-engine';
+import {cardPath, type LorcanaCard} from 'inkweave-synergy-engine';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {usePrecomputedSynergies} from '../features/synergies/hooks';
 import {CardDetailPanel} from '../features/synergies/components/CardDetailPanel';
@@ -110,7 +110,7 @@ export function CardPage() {
       <Seo
         title={`${card.fullName} | Lorcana Synergies | Inkweave`}
         description={buildDescription(card)}
-        canonicalPath={`/card/${card.id}`}
+        canonicalPath={cardPath(card)}
       />
       <main style={{flex: 1, display: 'flex', alignItems: 'flex-start'}}>
         {!isMobile && (
@@ -135,7 +135,7 @@ export function CardPage() {
           expandedGroup={expandedGroup}
           onShowAll={setExpandedGroup}
           onBackToAll={() => setExpandedGroup(null)}
-          onSynergyCardClick={(partner) => navigate(`/card/${partner.id}`)}
+          onSynergyCardClick={(partner) => navigate(cardPath(partner))}
           flowInPage
         />
       </main>

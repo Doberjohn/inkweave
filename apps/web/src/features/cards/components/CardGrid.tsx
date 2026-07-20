@@ -1,4 +1,4 @@
-import type {LorcanaCard} from 'inkweave-synergy-engine';
+import {cardPath, type LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from './CardTile';
 import {COLORS, FONT_SIZES, LAYOUT, SPACING} from '../../../shared/constants';
 import {useResponsive} from '../../../shared/hooks';
@@ -72,7 +72,7 @@ export function CardGrid({
         <CardTile
           key={card.id}
           card={card}
-          href={linkToCards ? `/card/${card.id}` : undefined}
+          href={linkToCards ? cardPath(card) : undefined}
           isSelected={false}
           onSelect={onSelect}
           variant={variant}

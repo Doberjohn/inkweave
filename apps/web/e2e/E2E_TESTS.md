@@ -27,9 +27,9 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should show featured cards after loading | Featured cards grid has 1-12 card tiles |
 | should open the overview modal when a card is selected | Clicking a featured card opens the modal overlay-style; URL stays `/`, no compact header |
 
-## `card-detail.spec.ts` — 9 tests (desktop only)
+## `card-detail.spec.ts` — 10 tests (desktop only)
 
-Two surfaces: the crawlable `/card/:id` **page** (#486 — renders, not-found, empty state) and the
+Two surfaces: the crawlable `/card/:id` **page** (#486 — renders, not-found, empty state; slug URLs `/card/:id/:slug` with the id as the lookup key and the slug decorative, #498) and the
 CardOverviewModal opened from a tile (render, close, empty, scroll lock, show-all, sibling nav). The
 modal is opened via `appPage.openCardOverview(name)` (Browse `?q=` + tile click) since `/card/:id`
 is a real page now, not a modal shortcut.
@@ -38,7 +38,8 @@ is a real page now, not a modal shortcut.
 |---|---|
 | should render card name and image inside the overview modal | Modal shows card image + h1 with the card name |
 | should show synergy chips or empty state once data loads | Modal renders synergy groups, empty state, or error after async load |
-| renders the crawlable card page when deep-linking to /card/:id | `/card/1947` renders the real page (#486): URL stays, `<title>` + self-referential canonical baked in, synergy section visible, no modal |
+| renders the crawlable card page when deep-linking to /card/:id | `/card/1947` renders the real page (#486): URL stays, `<title>` baked in, canonical is the slug URL (#498), synergy section visible, no modal |
+| a wrong slug still renders the card by id and canonicalizes to the correct slug (#498) | `/card/1947/wrong-slug-here` resolves card 1947 by id (slug decorative); canonical rewritten to the derived slug, not the URL's |
 | shows a not-found page for an invalid card ID | `/card/99999999` → noindex "Card not found" page; URL stays, no modal |
 | should close the modal when Escape is pressed | Escape dismisses the modal, hero reappears |
 | shows the empty state on the page for a card with no synergies | `/card/1936` (no synergy file) → page "No synergies found for this card" notice |

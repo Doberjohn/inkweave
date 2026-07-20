@@ -137,6 +137,16 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        // Slug URL (#498). CardPage looks the card up by :cardId; :slug is decorative and
+        // canonicalizes to cardPath(). A wrong or absent slug still renders the right card.
+        path: 'card/:cardId/:slug',
+        element: (
+          <SuspenseWrapper>
+            <CardPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
         path: 'compare/:idA/:idB',
         element: (
           <SuspenseWrapper>
