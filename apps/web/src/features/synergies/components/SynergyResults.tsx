@@ -38,6 +38,9 @@ interface SynergyResultsProps {
   /** When true, flows in the page scroll (no internal max-height/overflow). Used by the full
    *  card page so the app footer is reachable; default false = modal fixed-height scroll. */
   flowInPage?: boolean;
+  /** When true, each playstyle group's header renders a crawlable link to its /playstyles/:id hub
+   *  page (#498 Phase 3). Set only by the full card page — the modal stays link-free. Default false. */
+  linkPlaystyleHeaders?: boolean;
 }
 
 /**
@@ -197,6 +200,7 @@ interface ResultsBodyProps {
   setSortOrder: (order: SynergySortOrder) => void;
   onShowAll?: (groupKey: string) => void;
   onSynergyCardClick?: (card: LorcanaCard, groupKey?: string) => void;
+  linkPlaystyleHeaders?: boolean;
 }
 
 /** The default (non-expanded) view: optional card detail, then either the empty notice or the
@@ -214,6 +218,7 @@ function SynergyResultsBody({
   setSortOrder,
   onShowAll,
   onSynergyCardClick,
+  linkPlaystyleHeaders,
 }: ResultsBodyProps) {
   const visibleGroups = activeGroupFilter
     ? synergies.filter((g) => g.groupKey === activeGroupFilter)
@@ -244,6 +249,11 @@ function SynergyResultsBody({
               onShowAll={onShowAll}
               onCardClick={onSynergyCardClick}
               sortOrder={sortOrder}
+              playstyleHref={
+                linkPlaystyleHeaders && group.category === 'playstyle'
+                  ? `/playstyles/${group.groupKey}`
+                  : undefined
+              }
             />
           ))}
         </>
@@ -302,6 +312,7 @@ function SynergyResultsContent(
       setSortOrder={props.setSortOrder}
       onShowAll={props.onShowAll}
       onSynergyCardClick={onSynergyCardClick}
+      linkPlaystyleHeaders={props.linkPlaystyleHeaders}
     />
   );
 }
