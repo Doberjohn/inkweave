@@ -139,6 +139,7 @@ export function CardPage() {
           onBackToAll={() => setExpandedGroup(null)}
           onSynergyCardClick={(partner) => navigate(cardPath(partner))}
           flowInPage
+          linkPlaystyleHeaders
         />
       </main>
     </PageShell>

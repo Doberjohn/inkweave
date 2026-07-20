@@ -5,17 +5,23 @@ import type {SynergyGroup as SynergyGroupData} from '../../types';
 import type {LorcanaCard} from '../../../cards';
 import {createCard, createSynergyGroup} from '../../../../shared/test-utils';
 
-// Mock child components
+// Mock child components. The stub surfaces `playstyleHref` as a data attribute so tests can assert
+// the parent's #498 Phase 3 gating policy (which groups get a /playstyles/:id link) without a router.
+// NOTE: inlined per factory (not a shared const) — vi.mock is hoisted above top-level consts.
 vi.mock('../SynergyGroup', () => ({
-  SynergyGroup: ({group}: {group: SynergyGroupData}) => (
-    <div data-testid="synergy-group">{group.label}</div>
+  SynergyGroup: ({group, playstyleHref}: {group: SynergyGroupData; playstyleHref?: string}) => (
+    <div data-testid="synergy-group" data-playstyle-href={playstyleHref ?? ''}>
+      {group.label}
+    </div>
   ),
 }));
 
 vi.mock('.', () => ({
   CardDetail: ({card}: {card: LorcanaCard}) => <div data-testid="card-detail">{card.name}</div>,
-  SynergyGroup: ({group}: {group: SynergyGroupData}) => (
-    <div data-testid="synergy-group">{group.label}</div>
+  SynergyGroup: ({group, playstyleHref}: {group: SynergyGroupData; playstyleHref?: string}) => (
+    <div data-testid="synergy-group" data-playstyle-href={playstyleHref ?? ''}>
+      {group.label}
+    </div>
   ),
 }));
 
@@ -144,5 +150,40 @@ describe('SynergyResults', () => {
       />,
     );
     expect(screen.getByRole('combobox', {name: 'Sort synergies'})).toBeInTheDocument();
+  });
+
+  // #498 Phase 3 gating policy: a /playstyles/:id hub link is passed ONLY to playstyle-category
+  // groups, and ONLY when linkPlaystyleHeaders is set (card page). This is the load-bearing rule
+  // the change adds — a regression (dropping either condition) would leak a broken/miscategorised link.
+  it('links only playstyle group headers, and only when linkPlaystyleHeaders is set', () => {
+    const hrefByLabel = () =>
+      Object.fromEntries(
+        screen
+          .getAllByTestId('synergy-group')
+          .map((el) => [el.textContent?.trim(), el.getAttribute('data-playstyle-href')]),
+      );
+
+    const {rerender} = render(
+      <SynergyResults
+        selectedCard={mockCard}
+        synergies={mockSynergies}
+        totalSynergyCount={2}
+        onClearSelection={vi.fn()}
+        linkPlaystyleHeaders
+      />,
+    );
+    // groupKey 'lore-denial' (playstyle) gets the hub link; 'shift-targets' (direct) gets none.
+    expect(hrefByLabel()).toEqual({'Lore Steal': '/playstyles/lore-denial', 'Shift Targets': ''});
+
+    // Without the flag (the modal path), no group is linked.
+    rerender(
+      <SynergyResults
+        selectedCard={mockCard}
+        synergies={mockSynergies}
+        totalSynergyCount={2}
+        onClearSelection={vi.fn()}
+      />,
+    );
+    expect(hrefByLabel()).toEqual({'Lore Steal': '', 'Shift Targets': ''});
   });
 });

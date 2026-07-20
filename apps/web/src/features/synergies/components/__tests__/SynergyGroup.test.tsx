@@ -1,5 +1,6 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen} from '@testing-library/react';
+import {MemoryRouter} from 'react-router-dom';
 import {SynergyGroup} from '../SynergyGroup';
 import type {SynergyGroup as SynergyGroupData} from '../../types';
 
@@ -55,6 +56,23 @@ describe('SynergyGroup', () => {
   it('should not render MoreTile when all cards fit', () => {
     render(<SynergyGroup group={mockGroup} maxVisibleCards={6} />);
     expect(screen.queryByText('more cards')).toBeNull();
+  });
+
+  // #498 Phase 3: the leaf renders a crawlable playstyle link ONLY when handed an href. The parent
+  // (SynergyResultsBody) owns the policy of when to pass one, so this component stays route-agnostic.
+  it('renders a crawlable playstyle link when playstyleHref is set', () => {
+    render(
+      <MemoryRouter>
+        <SynergyGroup group={mockGroup} playstyleHref="/playstyles/ramp" />
+      </MemoryRouter>,
+    );
+    const link = screen.getByRole('link', {name: /view the shift targets playstyle/i});
+    expect(link.getAttribute('href')).toBe('/playstyles/ramp');
+  });
+
+  it('renders no playstyle link when playstyleHref is absent', () => {
+    render(<SynergyGroup group={mockGroup} />);
+    expect(screen.queryByRole('link')).toBeNull();
   });
 
   it('renders cards in the order given by the sortOrder prop (#491)', () => {
