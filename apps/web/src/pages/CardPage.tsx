@@ -3,6 +3,7 @@ import {useNavigate, useParams} from 'react-router-dom';
 import {cardPath, type LorcanaCard} from 'inkweave-synergy-engine';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {usePrecomputedSynergies} from '../features/synergies/hooks';
+import {cardSynergySummary} from '../features/synergies/cardSynergySummary';
 import {CardDetailPanel} from '../features/synergies/components/CardDetailPanel';
 import {SynergyResults} from '../features/synergies/components/SynergyResults';
 import {CompactHeader, Footer, Seo} from '../shared/components';
@@ -100,6 +101,7 @@ export function CardPage() {
   }
 
   const totalCount = synergies.reduce((n, g) => n + g.synergies.length, 0);
+  const summary = cardSynergySummary(card, synergies);
   const handleGroupClick = (groupKey: string) => {
     setActiveGroup((current) => (current === groupKey ? null : groupKey));
     setExpandedGroup(null);
@@ -109,7 +111,7 @@ export function CardPage() {
     <PageShell>
       <Seo
         title={`${card.fullName} | Lorcana Synergies | Inkweave`}
-        description={buildDescription(card)}
+        description={summary || buildDescription(card)}
         canonicalPath={cardPath(card)}
       />
       <main style={{flex: 1, display: 'flex', alignItems: 'flex-start'}}>
