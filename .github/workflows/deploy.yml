@@ -1,0 +1,63 @@
+# Production deploy with the prerender crawl (issue #492).
+#
+# WHY: scripts/prerender.mjs (the SSG crawl from #486) can't run in Vercel's own build —
+# Playwright's chromium has no system deps on Amazon Linux, so build:vercel falls back to
+# SPA-only and non-JS crawlers get empty shells. This workflow runs the SAME build (via
+# `vercel build`, which honours vercel.json's buildCommand → build:vercel) on Ubuntu, where
+# `playwright install --with-deps chromium` works, so the crawl renders (verified: 1052/1052,
+# 0 failed). It then ships the prebuilt output with `vercel deploy --prebuilt --prod`.
+#
+# SCOPE: production only. PR previews stay on Vercel's own git integration (fast SPA — previews
+# aren't indexed, so they don't need the crawl). vercel.json sets git.deploymentEnabled.master
+# = false so Vercel does NOT also deploy master (no double / flip-flopping production deploy).
+#
+# KILL SWITCH: the job only runs when repo variable DEPLOY_VIA_CI == 'true'. Unsetting it stops
+# CI deploys — but note Vercel git-deploy for master is off, so to fully hand deploys back to
+# Vercel you must also revert the vercel.json git.deploymentEnabled change.
+
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: vars.DEPLOY_VIA_CI == 'true'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright chromium (with system deps — this is what Vercel's AL build can't do)
+        run: pnpm --filter inkweave-web exec playwright install --with-deps chromium
+
+      - name: Pull Vercel production environment
+        run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build (runs build:vercel → the prerender crawl renders on Ubuntu)
+        run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy prebuilt output to production
+        run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      # Push the hub URLs to IndexNow (Bing/DuckDuckGo) for near-instant re-crawl (#496).
+      # Non-fatal: a ping failure must never fail the production deploy.
+      - name: Ping IndexNow
+        run: node scripts/ping-indexnow.mjs || true

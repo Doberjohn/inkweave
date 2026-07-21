@@ -1,6 +1,6 @@
 import {forwardRef, type CSSProperties, type ReactNode} from 'react';
 import {VirtuosoGrid} from 'react-virtuoso';
-import type {LorcanaCard} from 'inkweave-synergy-engine';
+import {cardPath, type LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from './CardTile';
 import {COLORS, FONT_SIZES, LAYOUT, SPACING} from '../../../shared/constants';
 import {RenderProfiler} from '../../../shared/components';
@@ -85,6 +85,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
         itemContent={(index) => (
           <CardTile
             card={displayedCards[index]}
+            href={cardPath(displayedCards[index])}
             isSelected={false}
             onSelect={onCardSelect}
             variant="minimal"

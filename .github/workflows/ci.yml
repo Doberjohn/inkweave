@@ -26,7 +26,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      # TEMPORARY (non-blocking): npm retired the legacy audit endpoint (HTTP 410) on
+      # 2026-07-15, and every current pnpm version still queries it (verified in CI:
+      # even pnpm 11 hits the retired endpoint, not the bulk advisory one), so
+      # `pnpm audit` fails with no working version to bump to. Kept running so the step
+      # self-heals (goes green) once pnpm ships the bulk-endpoint fix, at which point
+      # remove continue-on-error. Proper migration to osv-scanner tracked separately.
+      # See pnpm/pnpm#11265.
       - name: Audit dependencies
+        continue-on-error: true
         run: pnpm audit --audit-level high --prod
 
   build-and-test:

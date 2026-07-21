@@ -1,12 +1,13 @@
 import {test, expect} from '../fixtures';
+import {cardFullNameById} from '../helpers/cardData';
 import fs from 'node:fs';
 import path from 'node:path';
 
 // Daisy Duck - Musketeer Spy: shift-targets (direct) + discard (playstyle). Discard is large enough
 // to be truncated in the modal's default state, so it renders a "+N more" tile. Group sizes are
 // read from the precomputed synergy data so the fixture survives Set 12+ pool drift.
-const CARD_URL = '/card/1947';
 const CARD_ID = '1947';
+const CARD_NAME = cardFullNameById(CARD_ID);
 
 interface SynergyGroup {
   groupKey: string;
@@ -36,10 +37,10 @@ if (!discardGroup || discardGroup.synergies.length <= 3 || groups.length < 2) {
  * `describe.skip`'d after the modal redesign removed the route-rendered synergy sidebar.
  */
 test.describe('Synergy groups — modal default mode (desktop)', () => {
-  test.beforeEach(async ({page, appPage}, testInfo) => {
+  test.beforeEach(async ({appPage}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
-    await page.goto(CARD_URL);
-    await appPage.cardOverviewModal.waitFor({state: 'visible', timeout: 10000});
+    // /card/:id is a real page now (#486); open the modal on the fixture card via Browse.
+    await appPage.openCardOverview(CARD_NAME);
     await expect(appPage.cardOverviewModal.locator('[data-group-key]').first()).toBeVisible({
       timeout: 10000,
     });
@@ -79,10 +80,10 @@ test.describe('Synergy groups — modal default mode (desktop)', () => {
 });
 
 test.describe('Synergy groups — modal default mode (mobile)', () => {
-  test.beforeEach(async ({page, appPage}, testInfo) => {
+  test.beforeEach(async ({appPage}, testInfo) => {
     if (!testInfo.project.name.startsWith('mobile-')) test.skip();
-    await page.goto(CARD_URL);
-    await appPage.cardOverviewModal.waitFor({state: 'visible', timeout: 10000});
+    // /card/:id is a real page now (#486); open the modal on the fixture card via Browse.
+    await appPage.openCardOverview(CARD_NAME);
     await expect(appPage.cardOverviewModal.locator('[data-group-key]').first()).toBeVisible({
       timeout: 10000,
     });

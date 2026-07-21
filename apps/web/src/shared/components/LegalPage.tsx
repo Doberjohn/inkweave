@@ -1,8 +1,10 @@
 import type {ReactNode} from 'react';
+import {useLocation} from 'react-router-dom';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../constants';
 import {useResponsive} from '../hooks';
 import {CompactHeader} from './CompactHeader';
 import {Footer} from './Footer';
+import {Seo} from './Seo';
 
 /**
  * Shared shell for the static legal/product pages (Privacy, Terms, Disclaimer,
@@ -36,11 +38,14 @@ export const legalLinkStyle: React.CSSProperties = {
 interface LegalPageProps {
   /** Page title, rendered as the single <h1>. */
   title: string;
+  /** Optional meta description; defaults to the brand blurb. */
+  description?: string;
   children: ReactNode;
 }
 
-export function LegalPage({title, children}: LegalPageProps) {
+export function LegalPage({title, description, children}: LegalPageProps) {
   const {isMobile} = useResponsive();
+  const {pathname} = useLocation();
 
   return (
     <main
@@ -51,6 +56,14 @@ export function LegalPage({title, children}: LegalPageProps) {
         background: COLORS.background,
         fontFamily: FONTS.body,
       }}>
+      <Seo
+        title={`${title} | Inkweave`}
+        description={
+          description ??
+          'Inkweave is a free Disney Lorcana synergy finder and deck builder for the Core format.'
+        }
+        canonicalPath={pathname}
+      />
       <CompactHeader isMobile={isMobile} />
 
       <article

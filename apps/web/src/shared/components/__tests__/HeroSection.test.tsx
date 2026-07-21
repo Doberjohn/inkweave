@@ -17,8 +17,12 @@ describe('HeroSection', () => {
     render(<HeroSection {...defaultProps} />);
 
     expect(screen.getByTestId('hero-section')).toBeInTheDocument();
-    // h1 wraps the animated logo; its accessible name comes from the img's alt.
-    const heading = screen.getByRole('heading', {level: 1, name: 'Inkweave'});
+    // h1 = logo (alt "Inkweave") + an sr-only keyword head-term (#496); the heading's
+    // accessible name is the two concatenated, which is the SEO signal we lock in here.
+    const heading = screen.getByRole('heading', {
+      level: 1,
+      name: 'Inkweave Disney Lorcana Card Synergy Finder for Core format',
+    });
     expect(heading).toBeInTheDocument();
     expect(heading.querySelector('img')).toHaveAttribute('src', '/brand/logo-animated.svg');
     expect(

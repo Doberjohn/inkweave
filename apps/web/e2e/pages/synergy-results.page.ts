@@ -63,7 +63,8 @@ export class SynergyResultsPage {
 
   /** Get all synergy card tiles within a specific synergy group */
   getGroupCardTiles(groupKey: string): Locator {
-    return this.getSynergyGroupByKey(groupKey).locator('button.card-tile');
+    // SynergyCard renders a crawlable <a> now (issue #486), not a <button>.
+    return this.getSynergyGroupByKey(groupKey).locator('a.card-tile');
   }
 
   /** Get the "+N more" tile within a specific synergy group */

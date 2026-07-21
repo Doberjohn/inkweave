@@ -68,6 +68,12 @@ const PrivacyPage = lazyWithRetry(() => import('./pages/PrivacyPage'), 'PrivacyP
 const TermsPage = lazyWithRetry(() => import('./pages/TermsPage'), 'TermsPage');
 const DisclaimerPage = lazyWithRetry(() => import('./pages/DisclaimerPage'), 'DisclaimerPage');
 const AboutPage = lazyWithRetry(() => import('./pages/AboutPage'), 'AboutPage');
+// Dev-only: the /banner marketing-image generator exists solely for `pnpm banner`, which runs
+// against the Vite dev server. Gating the dynamic import behind import.meta.env.DEV lets the
+// production build tree-shake BannerPage (and SynergyBanner) out of the bundle entirely.
+const BannerPage = import.meta.env.DEV
+  ? lazyWithRetry(() => import('./pages/BannerPage'), 'BannerPage')
+  : null;
 
 /** Generic 3-line fallback used by every route except `/`. */
 function GenericFallback() {
@@ -129,6 +135,16 @@ export const router = createBrowserRouter([
       },
       {
         path: 'card/:cardId',
+        element: (
+          <SuspenseWrapper>
+            <CardPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        // Slug URL (#498). CardPage looks the card up by :cardId; :slug is decorative and
+        // canonicalizes to cardPath(). A wrong or absent slug still renders the right card.
+        path: 'card/:cardId/:slug',
         element: (
           <SuspenseWrapper>
             <CardPage />
@@ -321,6 +337,18 @@ export const router = createBrowserRouter([
           </SuspenseWrapper>
         ),
       },
+      ...(BannerPage
+        ? [
+            {
+              path: 'banner/:cardId',
+              element: (
+                <SuspenseWrapper>
+                  <BannerPage />
+                </SuspenseWrapper>
+              ),
+            },
+          ]
+        : []),
       {
         path: '*',
         element: (

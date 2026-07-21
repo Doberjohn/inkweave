@@ -42,6 +42,18 @@ function getStyles(isMobile: boolean) {
       height: 'auto',
       userSelect: 'none',
     } as React.CSSProperties,
+    // Head-term for the H1: read by Google + screen readers, invisible on screen (#496).
+    srOnly: {
+      position: 'absolute',
+      width: 1,
+      height: 1,
+      padding: 0,
+      margin: -1,
+      overflow: 'hidden',
+      clip: 'rect(0 0 0 0)',
+      whiteSpace: 'nowrap',
+      border: 0,
+    } as React.CSSProperties,
     subtitleContainer: {
       textAlign: 'center',
       marginBottom: isMobile ? 24 : 32,
@@ -160,11 +172,8 @@ export function HeroSection({
       {/* Logo — animated SVG with self-contained CSS animations (honors prefers-reduced-motion).
           Wrapping in h1 preserves a single top-level heading for a11y; alt provides the name. */}
       <h1 style={styles.heading}>
-        <img
-          src="/brand/logo-animated.svg"
-          alt="Inkweave"
-          style={styles.logo}
-        />
+        <img src="/brand/logo-animated.svg" alt="Inkweave" style={styles.logo} />
+        <span style={styles.srOnly}>Disney Lorcana Card Synergy Finder for Core format</span>
       </h1>
 
       {/* Subtitle */}

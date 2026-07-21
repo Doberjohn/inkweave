@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
+import {MemoryRouter} from 'react-router-dom';
 import {fn} from 'storybook/test';
 import type {SynergyGroup as SynergyGroupData, SynergyMatchDisplay} from '../types';
 import type {LorcanaCard} from '../../cards';
@@ -40,6 +41,15 @@ const largeGroup: SynergyGroupData = {
   tagline: 'Return characters to hand to trigger enter-the-board effects repeatedly.',
   description: 'Return characters to hand to trigger enter-the-board effects repeatedly.',
   synergies: Array.from({length: 12}, (_, i) => match(String(i + 1), i, 10 - Math.floor(i / 2))),
+};
+
+const playstyleGroup: SynergyGroupData = {
+  ...mockGroup,
+  groupKey: 'ramp',
+  category: 'playstyle',
+  label: 'Ramp',
+  tagline: 'Speed up your ink so you can play powerful cards earlier than your opponent.',
+  description: 'Speed up your ink so you can play powerful cards earlier than your opponent.',
 };
 
 const meta: Meta<typeof SynergyGroup> = {
@@ -87,6 +97,22 @@ export const Mobile: Story = {
       <div style={{padding: 16, maxWidth: 390}}>
         <Story />
       </div>
+    ),
+  ],
+};
+
+// Card page only (#498 Phase 3): a playstyle group whose header carries a crawlable link to its
+// /playstyles/:id hub page. Renders a react-router <Link>, so it needs a MemoryRouter decorator.
+export const WithPlaystyleLink: Story = {
+  args: {
+    group: playstyleGroup,
+    playstyleHref: '/playstyles/ramp',
+  },
+  decorators: [
+    (Story) => (
+      <MemoryRouter>
+        <Story />
+      </MemoryRouter>
     ),
   ],
 };

@@ -1,9 +1,10 @@
 import {useState, useRef} from 'react';
+import {Link} from 'react-router-dom';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData, SynergyMatchDisplay} from '../types';
 import {SynergyCard} from './SynergyCard';
 import {applySynergySortOrder} from '../utils';
-import {COLORS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, LAYOUT, RADIUS, SPACING, type SynergySortOrder} from '../../../shared/constants';
 import {AbilityCallout, AbilityTag} from '../../../shared/components';
 import {useContainerWidth, useRovingTabIndex} from '../../../shared/hooks';
 
@@ -27,6 +28,13 @@ interface SynergyGroupProps {
   /** Compact tile + MoreTile sizing for narrow grids (e.g. inside CardOverviewModal):
    *  neutral tile border, no "View details" hover cue, smaller corner radius, smaller MoreTile font. Default false. */
   compact?: boolean;
+  /** Sort order for the cards within this group. Default 'ink-cost' (ink alphabetical, then cost).
+   *  The card page threads the user's SortSelect choice through here; the modal uses the default. */
+  sortOrder?: SynergySortOrder;
+  /** When set, renders a crawlable link to the playstyle hub page in the group header (#498 Phase 3).
+   *  The parent decides when to pass it (card page only, playstyle groups only); this component just
+   *  renders the link if given an href, so it stays route-agnostic and its router-less stories pass. */
+  playstyleHref?: string;
   onCardClick?: (card: LorcanaCard, groupKey?: string) => void;
 }
 
@@ -42,6 +50,8 @@ export function SynergyGroup({
   gridGap,
   marginBottom = SPACING.xl,
   compact = false,
+  sortOrder = 'ink-cost',
+  playstyleHref,
   onCardClick,
 }: SynergyGroupProps) {
   // Wrap onCardClick to inject this group's groupKey before bubbling up.
@@ -50,8 +60,8 @@ export function SynergyGroup({
   const onCardClickWithGroupKey = onCardClick
     ? (card: LorcanaCard) => onCardClick(card, group.groupKey)
     : undefined;
-  // Default sort: ink alphabetical, then cost ascending within each ink
-  const sortedSynergies = applySynergySortOrder(group.synergies, 'ink-cost');
+  // Sort the group's cards by the requested order (default: ink alphabetical, then cost ascending).
+  const sortedSynergies = applySynergySortOrder(group.synergies, sortOrder);
 
   const totalCount = sortedSynergies.length;
   const visibleCount = Math.min(maxVisibleCards, totalCount);
@@ -76,6 +86,23 @@ export function SynergyGroup({
               <AbilityCallout variant="stacked-after-tag">{group.description}</AbilityCallout>
             </div>
           </div>
+
+          {/* Crawlable internal link to the playstyle hub page (#498 Phase 3). Only rendered when the
+              parent supplies an href (card page, playstyle groups) — the SEO edge card → archetype. */}
+          {playstyleHref && (
+            <Link
+              to={playstyleHref}
+              style={{
+                display: 'inline-block',
+                marginBottom: `${SPACING.sm}px`,
+                color: COLORS.primary,
+                fontSize: `${FONT_SIZES.sm}px`,
+                fontWeight: 600,
+                textDecoration: 'none',
+              }}>
+              View the {group.label} playstyle <span aria-hidden="true">→</span>
+            </Link>
+          )}
 
           {/* Card-count meta — sits outside the cream box, muted. Hidden in mockup-fidelity contexts (e.g. CardOverviewModal). */}
           {showCardCount && (
