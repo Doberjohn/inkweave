@@ -2,31 +2,41 @@ import {test, expect} from '@playwright/test';
 
 // The /admin/analytics route is gated by VITE_SHOW_ADMIN_ANALYTICS (set in the
 // playwright webServer env + apps/web/.env.local) and reads the build-time
-// vote-analytics.json artifact. When the flag is off the route redirects home;
-// when the artifact is absent the page shows an error card. The test skips in
-// either case so it never false-fails an environment that lacks the setup.
+// vote-analytics.json artifact. Both preconditions are gated below so the test
+// never false-fails an environment that lacks the setup.
+const ANALYTICS_PATH = '/data/vote-analytics.json';
+
 test.describe('Admin analytics (flag on)', () => {
-  test('renders the calibration + activity tabs', async ({page}, testInfo) => {
+  test('renders the calibration + activity tabs', async ({page, request}, testInfo) => {
     testInfo.annotations.push({type: 'requires', description: 'VITE_SHOW_ADMIN_ANALYTICS=true + vote-analytics.json'});
+
+    // Gate on the DATA first, and gate on it directly. A missing artifact must skip
+    // in milliseconds: this previously inferred absence from a second 10s UI wait,
+    // and goto + 10s + 10s overran the 30s default budget, so the test TIMED OUT
+    // instead of ever reaching its own skip.
+    //
+    // Status alone cannot answer this. Vite dev serves the SPA shell with HTTP 200
+    // for a missing file, which is why the app's own fetch (useVoteAnalytics.ts,
+    // guarded on `!res.ok`) fails on "Unexpected token '<'" rather than on a 404.
+    // Content-type is the honest discriminator.
+    const res = await request.get(ANALYTICS_PATH);
+    const hasArtifact = res.ok() && (res.headers()['content-type'] ?? '').includes('json');
+    test.skip(!hasArtifact, 'vote-analytics.json not generated in this environment.');
 
     await page.goto('/admin/analytics');
 
     // Flag off -> AdminGate redirected to '/', so the page identity never appears.
     // Wait for it (the SPA mounts async) rather than reading instant visibility.
     const h1 = page.getByRole('heading', {level: 1, name: /Engine Calibration/i});
-    const gated = await h1
+    const flagOn = await h1
       .waitFor({state: 'visible', timeout: 10000})
       .then(() => true)
       .catch(() => false);
-    test.skip(!gated, 'Admin analytics flag off (route redirected home).');
+    test.skip(!flagOn, 'Admin analytics flag off (route redirected home).');
 
-    // Tabs render only once the artifact loads; absent artifact shows an error card.
-    const calibrationTab = page.getByRole('tab', {name: 'Calibration'});
-    const loaded = await calibrationTab
-      .waitFor({state: 'visible', timeout: 10000})
-      .then(() => true)
-      .catch(() => false);
-    test.skip(!loaded, 'vote-analytics.json not generated in this environment.');
+    // Artifact present and flag on, so the tabs MUST render. Assert rather than skip:
+    // past this point a missing tab is a real failure, not an environment gap.
+    await expect(page.getByRole('tab', {name: 'Calibration'})).toBeVisible();
 
     // Calibration tab (default) shows the verdict hero (its diverging scale) and stat strip.
     await expect(page.getByText('over-rates')).toBeVisible();

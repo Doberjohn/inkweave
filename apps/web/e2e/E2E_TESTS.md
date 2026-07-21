@@ -224,7 +224,11 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 
 ## `admin-analytics.spec.ts` — 1 test (flag-gated, self-skipping)
 
-Requires `VITE_SHOW_ADMIN_ANALYTICS=true` (playwright `webServer.env` + `apps/web/.env.local`) and the build-time `vote-analytics.json` artifact. The test skips gracefully when the flag is off (route redirects home) or the artifact is absent, so it never false-fails an unset environment. Flag-off redirect is also covered by `AdminGate` unit tests.
+Requires `VITE_SHOW_ADMIN_ANALYTICS=true` (playwright `webServer.env` + `apps/web/.env.local`) and the build-time `vote-analytics.json` artifact.
+
+Gating order matters here. The artifact is probed directly with `request.get` **before navigating**, and judged on **content-type, not status** — Vite dev serves the SPA shell with HTTP 200 for a missing file, which is why the app's own fetch fails on `Unexpected token '<'` rather than on a 404. The flag is gated second, on the `Engine Calibration` h1. Past both gates the tabs are **asserted, not skipped**: a missing tab there is a real failure, not an environment gap.
+
+This replaced a version that inferred artifact absence from a *second* 10s UI wait. With `goto` on a cold Vite compile plus 10s plus 10s, it overran Playwright's 30s default and **timed out instead of reaching its own skip** — a gate that cannot be reached is not a gate. Flag-off redirect is also covered by `AdminGate` unit tests.
 
 | Test | What it verifies |
 |---|---|
