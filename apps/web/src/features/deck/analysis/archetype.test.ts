@@ -43,7 +43,7 @@ function classify(deck: Deck, cards: LorcanaCard[]) {
 }
 
 describe('classifyArchetype', () => {
-  it('detects aggro: low curve, high lore, light removal', () => {
+  it('detects aggro: low curve, character-dense, light removal', () => {
     const {deck, cards} = fourOfDeck(
       genCards(5, 'aggro-1', {type: 'Character', cost: 1, lore: 1}),
       genCards(6, 'aggro-2', {type: 'Character', cost: 2, lore: 2}),
@@ -73,6 +73,23 @@ describe('classifyArchetype', () => {
 
     const {archetype, confidence} = classify(deck, cards);
     expect(archetype).toBe('control');
+    expect(confidence).toBeGreaterThan(0.1);
+  });
+
+  // Regression (#472): a low-curve, removal-AND-draw-heavy, character-dense deck is
+  // tempo — it used to mis-read as aggro because aggro over-scored universal board
+  // lore and tempo's removal band was too narrow to credit 16 removal/60.
+  it('detects tempo: low-mid curve, removal-and-draw heavy, character-dense', () => {
+    const {deck, cards} = fourOfDeck(
+      genCards(2, 'tempo-c2', {type: 'Character', cost: 2, lore: 2}),
+      genCards(5, 'tempo-c3', {type: 'Character', cost: 3, lore: 2}),
+      genCards(2, 'tempo-c4', {type: 'Character', cost: 4, lore: 2}),
+      genCards(4, 'tempo-rm', {type: 'Action', cost: 3, inkwell: false, text: 'Banish chosen character.'}),
+      genCards(2, 'tempo-draw', {type: 'Action', cost: 3, text: 'Draw 2 cards.'}),
+    );
+
+    const {archetype, confidence} = classify(deck, cards);
+    expect(archetype).toBe('tempo');
     expect(confidence).toBeGreaterThan(0.1);
   });
 

@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, FONTS, hexRgba, RADIUS, SPACING} from '../../../shared/constants';
 import type {QualityScore, ScoreContribution} from '../types';
 import {scoreTier} from './scoreTier';
 
@@ -105,6 +105,20 @@ export function ScoreGauge({quality}: {quality: QualityScore}) {
           marginBottom: SPACING.md,
         }}>
         Deck quality score
+        <span
+          style={{
+            fontSize: 8,
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            color: COLORS.primary,
+            border: `1px solid ${hexRgba(COLORS.primary, 0.4)}`,
+            borderRadius: 3,
+            padding: '1px 4px',
+            marginLeft: 6,
+            verticalAlign: 'middle',
+          }}>
+          BETA
+        </span>
       </div>
 
       <div style={{display: 'flex', alignItems: 'baseline', gap: SPACING.md, marginBottom: SPACING.md}}>
@@ -163,7 +177,10 @@ export function ScoreGauge({quality}: {quality: QualityScore}) {
         )}
       </div>
 
-      <div style={{marginTop: SPACING.md, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.xs}px`, color: COLORS.textDim}}>
+      <div style={{marginTop: SPACING.md, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.xs}px`, color: COLORS.textDim, lineHeight: 1.5}}>
+        <span style={{color: COLORS.primary, fontWeight: 700}}>Beta scoring.</span> Targets are still being calibrated
+        against real decks — treat this as a rough guide, not a verdict.
+        <br />
         Inkweave Engine Score · config {quality.configVersion} · transparent weighted formula
       </div>
     </div>

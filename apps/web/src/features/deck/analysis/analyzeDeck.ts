@@ -91,5 +91,28 @@ export function analyzeDeck(
   const quality = scoreDeck(health);
   health.overall = quality.score;
 
+  // TEMP DEBUG — per-dimension analysis trace (#472). REMOVE before committing.
+  // `deck` is a copy-pasteable { "<cardId>": <qty> } map; each dimension shows its raw
+  // measured `value`, its 0-100 `score`, the `why` message, and its weight/points toward
+  // the overall — so a suspect number can be classed as a detection gap vs a mapping issue.
+  // eslint-disable-next-line no-console
+  console.log('[deck-analysis]', {
+    deck: Object.fromEntries(deck.cards.map((c) => [c.cardId, c.quantity])),
+    overall: quality.score,
+    archetype: health.archetype,
+    dimensions: health.analyzers.map((a) => {
+      const b = quality.breakdown.find((x) => x.dimension === a.id);
+      return {
+        dim: a.label,
+        score: a.score,
+        status: a.status,
+        value: a.value,
+        why: a.message,
+        weight: b?.weight,
+        points: b ? +b.contribution.toFixed(1) : undefined,
+      };
+    }),
+  });
+
   return {stats, synergy, health, quality};
 }

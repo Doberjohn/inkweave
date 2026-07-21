@@ -7,9 +7,14 @@ import {DeckCardRow} from './DeckCardRow';
 import {CostCurveStrip} from './CostCurveStrip';
 import {totalCopies} from './costCurveColumns';
 import {HealthSummary} from './HealthSummary';
+import {type HealthVariant} from './HealthVariants';
+import {SortSelect} from '../../../shared/components/SortSelect';
 import {ScoreGauge} from './ScoreGauge';
+import {VulnerabilityBox} from './VulnerabilityBox';
 import {previewGeometry} from './previewGeometry';
-import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../../../shared/constants';
+import {ALL_INKS, COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../../../shared/constants';
+import {InkIcon} from '../../../shared/components/InkIcon';
+import {InkwellIcon} from '../../../shared/components/InkwellIcon';
 
 /** Competitive Core deck size — the count badge + progress bar target. */
 const DECK_TARGET = 60;
@@ -66,51 +71,198 @@ function rowGroup(card: LorcanaCard): RowGroup {
   return card.isSong ? 'Song' : card.type;
 }
 
-// Advisor zones still dashed. The Deck Quality Score renders via <ScoreGauge>;
-// "Vulnerabilities" becomes a real VulnerabilityBox in this task (#472). Cost
-// curve / ink balance were dropped as duplicates of the Cards-tab strip.
-// Synergies & suggestions belong to a SEPARATE task (#471), labelled as such so
-// the tab doesn't imply #472 owns them.
+// Advisor zones still dashed. The Deck Quality Score renders via <ScoreGauge> and
+// vulnerabilities via <VulnerabilityBox> (#472). Cost curve / ink balance were dropped
+// as duplicates of the Cards-tab strip. Synergies & suggestions belong to a SEPARATE
+// task (#471), labelled as such so the tab doesn't imply #472 owns them.
 const PENDING_ADVISOR_ZONES = [
-  'Vulnerabilities · what to watch for',
   'Synergies & key cards · coming with #471',
   'Suggestions · coming with #471',
 ];
 
-function CountBadge({total, isLegal}: {total: number; isLegal: boolean}) {
-  const reached = total >= DECK_TARGET;
-  const color = isLegal ? COLORS.success : reached ? COLORS.error : COLORS.textMuted;
+/**
+ * Duels.ink-style deck info: the deck's ink symbols, total card count (colored by
+ * legality), and inkable / uninkable counts. Replaces the old N/60 count badge.
+ * Uses the shared InkIcon / InkwellIcon assets (per-ink SVGs + inkwell symbols).
+ */
+function DeckInfoStrip({stats}: {stats: DeckStats}) {
+  const inks = ALL_INKS.filter((ink) => (stats.inkDistribution[ink] ?? 0) > 0);
+  const reached = stats.totalCards >= DECK_TARGET;
+  const countColor = stats.isLegal ? COLORS.primary : reached ? COLORS.error : COLORS.text;
+  const uninkable = stats.totalCards - stats.inkableCount;
   return (
-    <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.base}px`, fontWeight: 700, color, flexShrink: 0}}>
-      {total}/{DECK_TARGET}
-    </span>
+    <div style={{display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.lg}px`}}>
+      {inks.length > 0 && (
+        <div style={{display: 'flex', gap: 3}}>
+          {inks.map((ink) => (
+            <InkIcon key={ink} ink={ink} size={20} />
+          ))}
+        </div>
+      )}
+      <span style={{color: countColor, fontWeight: 700, whiteSpace: 'nowrap'}}>
+        {stats.totalCards} <span style={{color: COLORS.textMuted, fontWeight: 500}}>cards</span>
+      </span>
+      <span title="Inkable cards" style={{display: 'flex', alignItems: 'center', gap: 4, color: COLORS.textMuted}}>
+        <InkwellIcon value="inkable" size={20} />
+        {stats.inkableCount}
+      </span>
+      <span title="Uninkable cards" style={{display: 'flex', alignItems: 'center', gap: 4, color: COLORS.textMuted}}>
+        <InkwellIcon value="uninkable" size={20} />
+        {uninkable}
+      </span>
+    </div>
   );
 }
 
-function LegalitySummary({stats}: {stats: DeckStats}) {
-  const pct = Math.min(100, Math.round((stats.totalCards / DECK_TARGET) * 100));
-  const barColor = stats.isLegal ? COLORS.success : COLORS.primary;
-  const status = stats.isLegal
-    ? 'Core legal'
-    : stats.legalityErrors.length === 0
-      ? 'Keep building'
-      : `${stats.legalityErrors.length} to fix`;
+/**
+ * Deck name field — pencil-to-edit (#472). Shows the deck name as a heading with a
+ * pencil affordance; clicking swaps to a focused input that commits on Enter/blur. The
+ * renamed heading shown back IS the "it saved" feedback (the rename auto-persists).
+ */
+function DeckNameField({name, onRename}: {name: string; onRename: (name: string) => void}) {
+  const [editing, setEditing] = useState(false);
+  const [hover, setHover] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
+  const dirty = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [editing]);
+  useEffect(() => {
+    if (!justSaved) return;
+    const t = setTimeout(() => setJustSaved(false), 1900);
+    return () => clearTimeout(t);
+  }, [justSaved]);
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        aria-label="Deck name"
+        value={name}
+        onChange={(e) => {
+          onRename(e.target.value);
+          dirty.current = true;
+        }}
+        onBlur={() => {
+          setEditing(false);
+          if (dirty.current) {
+            dirty.current = false;
+            setJustSaved(true);
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === 'Escape') e.currentTarget.blur();
+        }}
+        placeholder="Untitled deck"
+        style={{
+          flex: 1,
+          minWidth: 0,
+          background: COLORS.surfaceAlt,
+          border: `1px solid ${COLORS.primary}`,
+          borderRadius: RADIUS.sm,
+          outline: 'none',
+          padding: '2px 8px',
+          color: COLORS.text,
+          fontFamily: FONTS.hero,
+          fontSize: `${FONT_SIZES.xxl}px`,
+        }}
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setEditing(true)}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      aria-label="Rename deck"
+      title="Rename deck"
+      style={{
+        flex: 1,
+        minWidth: 0,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        padding: 0,
+        textAlign: 'left',
+      }}>
+      <span
+        style={{
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          color: name ? COLORS.text : COLORS.textDim,
+          fontFamily: FONTS.hero,
+          fontSize: `${FONT_SIZES.xxl}px`,
+        }}>
+        {name || 'Untitled deck'}
+      </span>
+      <svg
+        aria-hidden
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={hover ? COLORS.primary : COLORS.textDim}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{flexShrink: 0, transition: 'stroke 0.15s ease'}}>
+        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+      </svg>
+      {justSaved && (
+        <span
+          role="status"
+          style={{
+            flexShrink: 0,
+            fontFamily: FONTS.body,
+            fontSize: `${FONT_SIZES.sm}px`,
+            fontWeight: 700,
+            color: COLORS.primary,
+            whiteSpace: 'nowrap',
+          }}>
+          ✓ Renamed
+        </span>
+      )}
+    </button>
+  );
+}
+
+/**
+ * Real rule violations only. The header count badge already tracks deck size
+ * (e.g. 44/60), so the "still under 60 cards" shortfall (`(minimum 60)`) is
+ * filtered out — otherwise the strip would nag for the whole build. What's left
+ * is the genuine problems the badge's color can't explain: too many copies / inks.
+ */
+function ruleViolations(errors: string[]): string[] {
+  return errors.filter((e) => !e.includes('(minimum '));
+}
+
+/**
+ * Legality problems, surfaced only when there's something to fix. Stays quiet
+ * (renders nothing) for a legal deck or a deck that's merely still being built —
+ * the redundant progress bar + "Core legal" happy-state were dropped in favor of
+ * the header count badge, which already conveys size + legal state.
+ */
+function LegalityErrors({stats}: {stats: DeckStats}) {
+  const problems = ruleViolations(stats.legalityErrors);
+  if (problems.length === 0) return null;
 
   return (
     <div style={{padding: SPACING.md, borderTop: `1px solid ${COLORS.surfaceBorder}`, flexShrink: 0}}>
-      <div style={{height: 6, borderRadius: RADIUS.sm, background: COLORS.surfaceAlt, overflow: 'hidden'}}>
-        <div style={{width: `${pct}%`, height: '100%', background: barColor, transition: 'width 0.2s ease'}} />
+      <div style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.md}px`, fontWeight: 700, color: COLORS.error}}>
+        Not Core legal
       </div>
-      <div
-        style={{
-          marginTop: SPACING.sm,
-          fontFamily: FONTS.body,
-          fontSize: `${FONT_SIZES.md}px`,
-          color: stats.isLegal ? COLORS.success : COLORS.textMuted,
-        }}>
-        {status}
-      </div>
-      {stats.legalityErrors.map((err) => (
+      {problems.map((err) => (
         <div
           key={err}
           style={{marginTop: 4, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.md}px`, color: COLORS.textMuted}}>
@@ -130,7 +282,10 @@ function AnalysisTab({analysis, isLoading, error}: {analysis: DeckAnalysis | nul
   return (
     <div style={{padding: SPACING.md, display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
       {analysis ? (
-        <ScoreGauge quality={analysis.quality} />
+        <>
+          <ScoreGauge quality={analysis.quality} />
+          <VulnerabilityBox vulnerabilities={analysis.health.vulnerabilities} />
+        </>
       ) : (
         <div
           style={{border: `1px dashed ${COLORS.surfaceBorder}`, borderRadius: RADIUS.md, padding: SPACING.lg, textAlign: 'center', color: COLORS.textMuted, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.base}px`}}>
@@ -209,8 +364,35 @@ const groupHeader: CSSProperties = {
  * (resolved rows + {@link DeckStats}); all mutations route back through the page's
  * useDeck actions. Removal is deferred so the row can collapse out first.
  */
+const HEALTH_VARIANT_KEY = 'inkweave:healthVariant';
+/** Health-cell lenses (#472). Priorities is the default: its sub-rings explain the score. */
+const HEALTH_VARIANT_OPTIONS: {value: HealthVariant; label: string}[] = [
+  {value: 'priorities', label: 'Priorities'},
+  {value: 'vitals', label: 'Vitals'},
+  {value: 'radar', label: 'Radar'},
+];
+
+function readHealthVariant(): HealthVariant {
+  try {
+    const v = localStorage.getItem(HEALTH_VARIANT_KEY);
+    if (v === 'vitals' || v === 'radar' || v === 'priorities') return v;
+  } catch {
+    // localStorage may be unavailable (private mode); fall back to the default.
+  }
+  return 'priorities';
+}
+
 export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement, onRemove, onOpenDetails, analysis, analysisLoading, analysisError}: DeckPanelProps) {
   const [tab, setTab] = useState<PanelTab>('cards');
+  const [healthVariant, setHealthVariant] = useState<HealthVariant>(readHealthVariant);
+  const updateHealthVariant = (v: HealthVariant) => {
+    setHealthVariant(v);
+    try {
+      localStorage.setItem(HEALTH_VARIANT_KEY, v);
+    } catch {
+      // ignore persistence failure
+    }
+  };
   // cardId -> the quantity snapshot when trash was clicked. The row collapses out,
   // then the real removal completes on transitionEnd — but only if the quantity
   // hasn't changed under us in the meantime (the user could re-increment via the
@@ -323,23 +505,8 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
           borderBottom: `1px solid ${COLORS.surfaceBorder}`,
           flexShrink: 0,
         }}>
-        <input
-          aria-label="Deck name"
-          value={name}
-          onChange={(e) => onRename(e.target.value)}
-          placeholder="Untitled deck"
-          style={{
-            flex: 1,
-            minWidth: 0,
-            background: 'transparent',
-            border: 'none',
-            outline: 'none',
-            color: COLORS.text,
-            fontFamily: FONTS.hero,
-            fontSize: `${FONT_SIZES.xxl}px`,
-          }}
-        />
-        <CountBadge total={stats.totalCards} isLegal={stats.isLegal} />
+        <DeckNameField name={name} onRename={onRename} />
+        <DeckInfoStrip stats={stats} />
       </div>
 
       <div style={{display: 'flex', gap: 4, padding: `4px ${SPACING.md}px 0`, borderBottom: `1px solid ${COLORS.surfaceBorder}`, flexShrink: 0}}>
@@ -356,12 +523,20 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
           <div style={{flex: 1, minWidth: 0, borderRight: `1px solid ${COLORS.surfaceBorder}`}}>
             <CostCurveStrip costCurve={stats.costCurve} costCurveByInk={stats.costCurveByInk} />
           </div>
-          <div style={{flex: 1, minWidth: 0}}>
+          <div style={{flex: 1, minWidth: 0, position: 'relative'}}>
             <HealthSummary
               analysis={analysis ?? null}
               isLoading={analysisLoading ?? false}
               error={analysisError ?? null}
               onOpenAnalysis={() => switchTab('analysis')}
+              variant={healthVariant}
+            />
+            <SortSelect
+              options={HEALTH_VARIANT_OPTIONS}
+              value={healthVariant}
+              onChange={updateHealthVariant}
+              ariaLabel="Deck health view"
+              style={{position: 'absolute', top: 10, right: 10, zIndex: 2, height: 28, fontSize: 12}}
             />
           </div>
         </div>
@@ -401,7 +576,7 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
         )}
       </div>
 
-      <LegalitySummary stats={stats} />
+      <LegalityErrors stats={stats} />
       {peek && <FloatingPreview card={peek.card} anchor={peek.anchor} />}
     </aside>
   );

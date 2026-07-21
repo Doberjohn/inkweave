@@ -135,16 +135,19 @@ function extractFeatures(deck: Deck, getCardById: (id: string) => LorcanaCard | 
  */
 function scoreArchetypes(f: Features): Record<Archetype, number> {
   return {
-    // Fast, front-loaded, lore-forward, light on removal.
+    // Fast, front-loaded, light on interaction. Lore is deliberately NOT scored:
+    // every Lorcana deck quests, so high lore doesn't distinguish aggro — it used to
+    // hand aggro a free maxed point on any character deck (the aggro over-trigger #472).
     aggro:
       1.4 * rampDown(f.centroid, {lo: 2.9, hi: 3.7}) +
-      1.2 * rampUp(f.lorePer60, {lo: 22, hi: 40}) +
       0.9 * rampDown(f.removalPer60, {lo: 4, hi: 10}) +
       0.5 * rampUp(f.charShare, {lo: 0.5, hi: 0.62}),
-    // Low-mid curve with real interaction and efficient bodies.
+    // Low-mid curve with real interaction and efficient bodies. The removal band
+    // runs wider than midrange's so a low-curve, removal-heavy deck lands tempo
+    // instead of falling off the edge into aggro/control (#472).
     tempo:
       1.2 * band(f.centroid, {lo: 2.7, hi: 3.3, margin: 0.8}) +
-      0.9 * band(f.removalPer60, {lo: 5, hi: 9, margin: 4}) +
+      0.9 * band(f.removalPer60, {lo: 5, hi: 14, margin: 5}) +
       0.8 * rampUp(f.lorePer60, {lo: 16, hi: 28}) +
       0.5 * rampUp(f.drawPer60, {lo: 3, hi: 8}),
     // Balanced everything — the default fallback (baseline constant).
@@ -203,5 +206,37 @@ export function classifyArchetype(
   const runnerUp = ranked[1][1];
   const confidence = topScore > 0 ? Math.min(1, Math.max(0, (topScore - runnerUp) / topScore)) : 0;
 
+  // TEMP DEBUG — archetype diagnosis (#472). REMOVE before committing.
+  // eslint-disable-next-line no-console
+  console.log('[archetype]', {
+    features: Object.fromEntries(Object.entries(features).map(([k, v]) => [k, +v.toFixed(2)])),
+    scores: Object.fromEntries(ranked.map(([a, s]) => [a, +s.toFixed(2)])),
+    winner: topArchetype,
+    confidence: +confidence.toFixed(2),
+    roles: debugRoles(deck, getCardById),
+  });
+
   return {archetype: topArchetype, confidence};
+}
+
+// TEMP DEBUG (#472) — lists which cards feed each role-detected feature, so gaps in
+// role tagging are visible (a removal card missing from `removal` = a detection gap).
+// REMOVE together with the console.log above before committing.
+function debugRoles(deck: Deck, getCardById: (id: string) => LorcanaCard | undefined) {
+  const buckets: {removal: string[]; draw: string[]; ramp: string[]; highCostChar: string[]} = {
+    removal: [],
+    draw: [],
+    ramp: [],
+    highCostChar: [],
+  };
+  for (const {cardId, quantity} of deck.cards) {
+    const card = getCardById(cardId);
+    if (!card) continue;
+    const tag = `${quantity}x ${card.fullName ?? card.name} [${card.cost}]`;
+    if (getRemovalRoles(card).length > 0) buckets.removal.push(tag);
+    if (getCardMechanics(card).includes('draw')) buckets.draw.push(tag);
+    if (getRampRoles(card).includes('inkwell-ramp')) buckets.ramp.push(tag);
+    if (isCharacter(card) && card.cost >= 5) buckets.highCostChar.push(tag);
+  }
+  return buckets;
 }
