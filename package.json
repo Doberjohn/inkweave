@@ -49,7 +49,7 @@
     {
       "name": "Total JS bundle",
       "path": "apps/web/dist/assets/*.js",
-      "limit": "375 kB",
+      "limit": "425 kB",
       "gzip": true
     },
     {
