@@ -42,6 +42,15 @@ function classify(deck: Deck, cards: LorcanaCard[]) {
   return classifyArchetype(calculateDeckStats(deck, resolver), deck, resolver);
 }
 
+/** Every positive case makes the same claim: the deck reads as `expected`, with a
+ *  confidence inside the valid band. Only the deck and the label differ. */
+function expectArchetype(deck: Deck, cards: LorcanaCard[], expected: ReturnType<typeof classify>['archetype']) {
+  const {archetype, confidence} = classify(deck, cards);
+  expect(archetype).toBe(expected);
+  expect(confidence).toBeGreaterThan(0.1);
+  expect(confidence).toBeLessThanOrEqual(1);
+}
+
 describe('classifyArchetype', () => {
   it('detects aggro: low curve, character-dense, light removal', () => {
     const {deck, cards} = fourOfDeck(
@@ -51,10 +60,7 @@ describe('classifyArchetype', () => {
       genCards(1, 'aggro-rm', {type: 'Action', cost: 2, inkwell: false, text: 'Banish chosen character.'}),
     );
 
-    const {archetype, confidence} = classify(deck, cards);
-    expect(archetype).toBe('aggro');
-    expect(confidence).toBeGreaterThan(0.1);
-    expect(confidence).toBeLessThanOrEqual(1);
+    expectArchetype(deck, cards, 'aggro');
   });
 
   it('detects control: high curve, removal-and-draw heavy, low own-lore', () => {
@@ -71,9 +77,7 @@ describe('classifyArchetype', () => {
       }),
     );
 
-    const {archetype, confidence} = classify(deck, cards);
-    expect(archetype).toBe('control');
-    expect(confidence).toBeGreaterThan(0.1);
+    expectArchetype(deck, cards, 'control');
   });
 
   // Regression (#472): a low-curve, removal-AND-draw-heavy, character-dense deck is
@@ -88,9 +92,7 @@ describe('classifyArchetype', () => {
       genCards(2, 'tempo-draw', {type: 'Action', cost: 3, text: 'Draw 2 cards.'}),
     );
 
-    const {archetype, confidence} = classify(deck, cards);
-    expect(archetype).toBe('tempo');
-    expect(confidence).toBeGreaterThan(0.1);
+    expectArchetype(deck, cards, 'tempo');
   });
 
   it('detects ramp: inkwell-ramp sources into a top-heavy payoff', () => {
@@ -111,9 +113,7 @@ describe('classifyArchetype', () => {
       genCards(2, 'ramp-early', {type: 'Character', cost: 2, lore: 1}),
     );
 
-    const {archetype, confidence} = classify(deck, cards);
-    expect(archetype).toBe('ramp');
-    expect(confidence).toBeGreaterThan(0.1);
+    expectArchetype(deck, cards, 'ramp');
   });
 
   it('defaults to midrange with zero confidence on an empty deck', () => {

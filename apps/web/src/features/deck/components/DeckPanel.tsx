@@ -119,65 +119,63 @@ function DeckInfoStrip({stats}: {stats: DeckStats}) {
  * pencil affordance; clicking swaps to a focused input that commits on Enter/blur. The
  * renamed heading shown back IS the "it saved" feedback (the rename auto-persists).
  */
-function DeckNameField({name, onRename}: {name: string; onRename: (name: string) => void}) {
-  const [editing, setEditing] = useState(false);
-  const [hover, setHover] = useState(false);
-  const [justSaved, setJustSaved] = useState(false);
+/**
+ * The rename input. Mounted only while editing, so it focuses on mount instead of
+ * guarding a shared effect on an `editing` flag. `onDone` reports whether the name
+ * was actually edited, which is what drives the transient "Renamed" note.
+ */
+function DeckNameInput({
+  name,
+  onRename,
+  onDone,
+}: {
+  name: string;
+  onRename: (name: string) => void;
+  onDone: (changed: boolean) => void;
+}) {
   const dirty = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (editing) {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }
-  }, [editing]);
-  useEffect(() => {
-    if (!justSaved) return;
-    const t = setTimeout(() => setJustSaved(false), 1900);
-    return () => clearTimeout(t);
-  }, [justSaved]);
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }, []);
+  return (
+    <input
+      ref={inputRef}
+      aria-label="Deck name"
+      value={name}
+      onChange={(e) => {
+        onRename(e.target.value);
+        dirty.current = true;
+      }}
+      onBlur={() => onDone(dirty.current)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === 'Escape') e.currentTarget.blur();
+      }}
+      placeholder="Untitled deck"
+      style={{
+        flex: 1,
+        minWidth: 0,
+        background: COLORS.surfaceAlt,
+        border: `1px solid ${COLORS.primary}`,
+        borderRadius: RADIUS.sm,
+        outline: 'none',
+        padding: '2px 8px',
+        color: COLORS.text,
+        fontFamily: FONTS.hero,
+        fontSize: `${FONT_SIZES.xxl}px`,
+      }}
+    />
+  );
+}
 
-  if (editing) {
-    return (
-      <input
-        ref={inputRef}
-        aria-label="Deck name"
-        value={name}
-        onChange={(e) => {
-          onRename(e.target.value);
-          dirty.current = true;
-        }}
-        onBlur={() => {
-          setEditing(false);
-          if (dirty.current) {
-            dirty.current = false;
-            setJustSaved(true);
-          }
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === 'Escape') e.currentTarget.blur();
-        }}
-        placeholder="Untitled deck"
-        style={{
-          flex: 1,
-          minWidth: 0,
-          background: COLORS.surfaceAlt,
-          border: `1px solid ${COLORS.primary}`,
-          borderRadius: RADIUS.sm,
-          outline: 'none',
-          padding: '2px 8px',
-          color: COLORS.text,
-          fontFamily: FONTS.hero,
-          fontSize: `${FONT_SIZES.xxl}px`,
-        }}
-      />
-    );
-  }
-
+/** Resting state: the deck name, a pencil affordance, and the transient saved note. */
+function DeckNameButton({name, justSaved, onEdit}: {name: string; justSaved: boolean; onEdit: () => void}) {
+  const [hover, setHover] = useState(false);
   return (
     <button
       type="button"
-      onClick={() => setEditing(true)}
+      onClick={onEdit}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       aria-label="Rename deck"
@@ -235,6 +233,32 @@ function DeckNameField({name, onRename}: {name: string; onRename: (name: string)
       )}
     </button>
   );
+}
+
+/** Owns the edit/rest mode switch. The saved-note timer lives here rather than in
+ *  the input, since the note must outlive the input's unmount on blur. */
+function DeckNameField({name, onRename}: {name: string; onRename: (name: string) => void}) {
+  const [editing, setEditing] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
+  useEffect(() => {
+    if (!justSaved) return;
+    const t = setTimeout(() => setJustSaved(false), 1900);
+    return () => clearTimeout(t);
+  }, [justSaved]);
+
+  if (editing) {
+    return (
+      <DeckNameInput
+        name={name}
+        onRename={onRename}
+        onDone={(changed) => {
+          setEditing(false);
+          if (changed) setJustSaved(true);
+        }}
+      />
+    );
+  }
+  return <DeckNameButton name={name} justSaved={justSaved} onEdit={() => setEditing(true)} />;
 }
 
 /**
@@ -372,10 +396,16 @@ const HEALTH_VARIANT_OPTIONS: {value: HealthVariant; label: string}[] = [
   {value: 'radar', label: 'Radar'},
 ];
 
+/** Narrows a persisted string, using the options list as the single source of truth
+ *  so adding a lens does not need a second literal union kept in sync by hand. */
+function isHealthVariant(value: string | null): value is HealthVariant {
+  return HEALTH_VARIANT_OPTIONS.some((o) => o.value === value);
+}
+
 function readHealthVariant(): HealthVariant {
   try {
-    const v = localStorage.getItem(HEALTH_VARIANT_KEY);
-    if (v === 'vitals' || v === 'radar' || v === 'priorities') return v;
+    const stored = localStorage.getItem(HEALTH_VARIANT_KEY);
+    if (isHealthVariant(stored)) return stored;
   } catch {
     // localStorage may be unavailable (private mode); fall back to the default.
   }
