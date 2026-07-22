@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, hexRgba} from '../constants';
+import {COLORS, DISABLED_STYLE, EASING, FONTS, FONT_SIZES, PRESS_SCALE, RADIUS, hexRgba} from '../constants';
 import {useBoop} from '../hooks';
 import {CTA_FILLED_STYLE} from './ctaStyles';
 
@@ -17,14 +17,6 @@ interface CtaButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: CtaVariant;
 }
 
-/** Uniform kit disabled recipe (#509): visibly dimmed, explicit cursor, no motion. */
-const DISABLED_STYLE: React.CSSProperties = {
-  opacity: 0.4,
-  cursor: 'not-allowed',
-};
-
-/** Uniform kit press feedback (#509): a small scale-down while the pointer is held. */
-const PRESS_SCALE = 'scale(0.97)';
 
 /** Per-variant recipe; `hot` = hovered and enabled (drives the neutral warm-up). */
 function variantStyle(variant: CtaVariant, hot: boolean): React.CSSProperties {
@@ -125,7 +117,7 @@ export function CtaButton({
         ...baseStyle,
         ...variantStyle(variant, hovered && !disabled),
         ...(!disabled ? boop.style : {}),
-        ...(pressed && !disabled ? {transform: PRESS_SCALE} : {}),
+        ...(pressed && !disabled ? {transform: `scale(${PRESS_SCALE})`} : {}),
         ...(disabled ? DISABLED_STYLE : {}),
         ...style,
       }}>
