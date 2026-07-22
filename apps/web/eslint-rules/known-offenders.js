@@ -66,7 +66,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/CardLightbox.stories.tsx', // x1
     'src/shared/components/CardTextBlock.stories.tsx', // x1
     'src/shared/components/CollapsibleSection.stories.tsx', // x1
-    'src/shared/components/CompactHeader.tsx', // x1
     'src/shared/components/ConnectionGroup.stories.tsx', // x1
     'src/shared/components/ConnectionGroup.tsx', // x13
     'src/shared/components/CountBadge.tsx', // x1
@@ -132,7 +131,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/BetaNotice.tsx', // x1
     'src/shared/components/CardLightbox.tsx', // x2
     'src/shared/components/Chip.tsx', // x6
-    'src/shared/components/CompactHeader.tsx', // x9
     'src/shared/components/ConnectionGroup.tsx', // x5
     'src/shared/components/CountBadge.tsx', // x1
     'src/shared/components/EtherealBackground.tsx', // x4
@@ -191,7 +189,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/VoteStatusBanner.tsx', // x2
     'src/features/voting/components/VoteToast.tsx', // x8
     'src/pages/HomePageSkeleton.tsx', // x2
-    'src/pages/VotePage.tsx', // x3
     'src/shared/components/CardImage.stories.tsx', // x1
     'src/shared/components/Chip.stories.tsx', // x1
     'src/shared/components/CollapsibleSection.stories.tsx', // x2
@@ -253,12 +250,10 @@ export const KNOWN_OFFENDERS = {
     'src/pages/InDepthVotePage.tsx', // x2
     'src/pages/PlaystyleDetailPage.tsx', // x1
     'src/pages/PlaystyleGalleryPage.tsx', // x2
-    'src/pages/VotePage.tsx', // x1
     'src/shared/components/CardLightbox.stories.tsx', // x1
     'src/shared/components/CardTextBlock.stories.tsx', // x1
     'src/shared/components/Chip.tsx', // x1
     'src/shared/components/CollapsibleSection.stories.tsx', // x1
-    'src/shared/components/CompactHeader.tsx', // x2
     'src/shared/components/ConnectionGroup.stories.tsx', // x1
     'src/shared/components/ConnectionGroup.tsx', // x1
     'src/shared/components/FilterContent.stories.tsx', // x3
@@ -295,9 +290,7 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/QuickVoteControl.tsx', // x6
     'src/features/voting/components/VotingCardDisplay.tsx', // x3
     'src/pages/InDepthVotePage.tsx', // x3
-    'src/pages/VotePage.tsx', // x1
     'src/shared/components/CardImage.tsx', // x1
-    'src/shared/components/CompactHeader.tsx', // x3
     'src/shared/components/ConnectionGroup.tsx', // x5
     'src/shared/components/HeroSection.tsx', // x1
     'src/shared/components/SearchBottomSheet.tsx', // x2

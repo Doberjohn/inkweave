@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, hexRgba} from '../constants';
 import {useBoop} from '../hooks';
+import {CTA_FILLED_STYLE} from './ctaStyles';
 
 /**
  * The blessed CTA variants (#509, one component per the owner ruling):
@@ -25,12 +26,6 @@ const DISABLED_STYLE: React.CSSProperties = {
 /** Uniform kit press feedback (#509): a small scale-down while the pointer is held. */
 const PRESS_SCALE = 'scale(0.97)';
 
-const FILLED_STYLE: React.CSSProperties = {
-  border: 'none',
-  background: COLORS.filterGradient,
-  color: COLORS.filterText,
-  boxShadow: COLORS.filterShadow,
-};
 
 /** Shared CTA button: variant menu + built-in boop hover, press, and disabled states. */
 export function CtaButton({
@@ -65,8 +60,8 @@ export function CtaButton({
   };
 
   const variantStyles: Record<CtaVariant, React.CSSProperties> = {
-    filled: FILLED_STYLE,
-    pill: {...FILLED_STYLE, borderRadius: `${RADIUS.pill}px`},
+    filled: CTA_FILLED_STYLE,
+    pill: {...CTA_FILLED_STYLE, borderRadius: `${RADIUS.pill}px`},
     ghost: {
       background: 'transparent',
       color: COLORS.primary,
