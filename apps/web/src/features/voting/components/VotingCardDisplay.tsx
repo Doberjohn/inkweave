@@ -53,6 +53,45 @@ function RotatedCardImage({card, containerWidth, borderRadius}: {card: LorcanaCa
   );
 }
 
+/**
+ * Mobile tap-to-enlarge wrapper (#511): keyboard-operable (role=button +
+ * Enter/Space) when an image exists, inert otherwise. Extracted so its
+ * conditional wiring doesn't roll up to VotingCardDisplay's CC.
+ */
+function TapToEnlarge({
+  card,
+  highlighted,
+  onOpen,
+  children,
+}: {
+  card: LorcanaCard;
+  highlighted?: boolean;
+  onOpen: () => void;
+  children: React.ReactNode;
+}) {
+  const interactive = Boolean(card.imageUrl);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    onOpen();
+  };
+  return (
+    <div
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? `Enlarge ${card.fullName}` : undefined}
+      onClick={interactive ? onOpen : undefined}
+      onKeyDown={interactive ? handleKeyDown : undefined}
+      style={{
+        boxShadow: highlighted ? `0 0 16px 2px ${hexRgba(COLORS.primary500, 0.45)}` : 'none',
+        transition: `box-shadow 0.2s ${EASING.snappy}`,
+        borderRadius: RADIUS.lg,
+      }}>
+      {children}
+    </div>
+  );
+}
+
 export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingCardDisplayProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const isLocation = card.type === 'Location';
@@ -74,25 +113,7 @@ export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingC
           opacity: dimmed ? 0.4 : 1,
           transition: `opacity 0.2s ${EASING.snappy}`,
         }}>
-        <div
-          role={card.imageUrl ? 'button' : undefined}
-          tabIndex={card.imageUrl ? 0 : undefined}
-          aria-label={card.imageUrl ? `Enlarge ${card.fullName}` : undefined}
-          onClick={card.imageUrl ? () => setLightboxOpen(true) : undefined}
-          onKeyDown={
-            card.imageUrl
-              ? (e) => {
-                  if (e.key !== 'Enter' && e.key !== ' ') return;
-                  e.preventDefault();
-                  setLightboxOpen(true);
-                }
-              : undefined
-          }
-          style={{
-            boxShadow: highlighted ? `0 0 16px 2px ${hexRgba(COLORS.primary500, 0.45)}` : 'none',
-            transition: `box-shadow 0.2s ${EASING.snappy}`,
-            borderRadius: RADIUS.lg,
-          }}>
+        <TapToEnlarge card={card} highlighted={highlighted} onOpen={() => setLightboxOpen(true)}>
           {isLocation ? (
             <RotatedCardImage card={card} containerWidth={imageWidth} borderRadius={8} />
           ) : (
@@ -107,7 +128,7 @@ export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingC
               style={{maxWidth: '100%', height: 'auto', flexShrink: 1}}
             />
           )}
-        </div>
+        </TapToEnlarge>
         <div style={{minHeight: 36, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
           <span style={{fontSize: FONT_SIZES.base, fontWeight: 500, color: COLORS.text, fontFamily: FONTS.body, textAlign: 'center'}}>
             {name}
