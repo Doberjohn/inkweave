@@ -97,8 +97,9 @@ function ColorGroup({
 
 // ── Color Palette page ───────────────────────────────────────────────
 
-function ColorPalette() {
-  const groups = [
+// Static swatch data hoisted out of the component (the render function stays
+// small; the data reads live from the token objects either way).
+const PALETTE_GROUPS = [
     {
       title: 'Background & Surface',
       colors: [
@@ -173,13 +174,16 @@ function ColorPalette() {
     },
   ];
 
-  const inkColors = ALL_INKS.map((ink) => ({
-    name: ink,
-    bg: INK_COLORS[ink].bg,
-    text: INK_COLORS[ink].text,
-    border: INK_COLORS[ink].border,
-  }));
+const INK_SWATCHES = ALL_INKS.map((ink) => ({
+  name: ink,
+  bg: INK_COLORS[ink].bg,
+  text: INK_COLORS[ink].text,
+  border: INK_COLORS[ink].border,
+}));
 
+function ColorPalette() {
+  const groups = PALETTE_GROUPS;
+  const inkColors = INK_SWATCHES;
   return (
     <div style={{padding: 24, maxWidth: 960}}>
       <h1
