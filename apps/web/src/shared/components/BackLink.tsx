@@ -1,20 +1,21 @@
-import {useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, SPACING} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES} from '../constants';
+import {useHover} from '../hooks/useHover';
 
 interface BackLinkProps {
   onClick: () => void;
   label: string;
+  /** Merged last — outer spacing belongs to the call site, not the component (#509). */
+  style?: React.CSSProperties;
 }
 
 /** Styled back-navigation button with arrow and gold hover effect. */
-export function BackLink({onClick, label}: BackLinkProps) {
-  const [hovered, setHovered] = useState(false);
+export function BackLink({onClick, label, style}: BackLinkProps) {
+  const {hovered, hoverProps} = useHover();
 
   return (
     <button
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      {...hoverProps}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -27,8 +28,8 @@ export function BackLink({onClick, label}: BackLinkProps) {
         fontSize: `${FONT_SIZES.base}px`,
         fontWeight: 500,
         padding: 0,
-        marginBottom: `${SPACING.lg}px`,
         transition: `color 0.15s ${EASING.snappy}`,
+        ...style,
       }}>
       <span style={{fontSize: `${FONT_SIZES.base}px`}}>&larr;</span>
       {label}

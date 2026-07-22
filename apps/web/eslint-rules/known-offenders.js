@@ -54,7 +54,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/VoteProgress.tsx', // x1
     'src/features/voting/components/VoteStatusBanner.tsx', // x9
     'src/pages/BannerPage.tsx', // x1
-    'src/pages/InDepthVotePage.tsx', // x8
     'src/pages/NotFoundPage.tsx', // x5
     'src/pages/PlaystyleDetailPage.tsx', // x1
     'src/shared/components/CardImage.stories.tsx', // x1
@@ -110,7 +109,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/QuickVoteControl.tsx', // x21
     'src/features/voting/components/VoteConfirmation.tsx', // x2
     'src/features/voting/components/VotingCardDisplay.tsx', // x2
-    'src/pages/InDepthVotePage.tsx', // x9
     'src/pages/NotFoundPage.tsx', // x4
     'src/pages/PlaystyleDetailPage.tsx', // x2
     'src/shared/components/AbilityCallout.tsx', // x1
@@ -213,7 +211,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/VoteStatusBanner.tsx', // x2
     'src/features/voting/components/VotingCardDisplay.tsx', // x2
     'src/pages/BrowsePage.tsx', // x1
-    'src/pages/InDepthVotePage.tsx', // x2
     'src/pages/PlaystyleDetailPage.tsx', // x1
     'src/pages/PlaystyleGalleryPage.tsx', // x2
     'src/shared/components/CardLightbox.stories.tsx', // x1
@@ -248,7 +245,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/PairStack.tsx', // x1
     'src/features/voting/components/QuickVoteControl.tsx', // x6
     'src/features/voting/components/VotingCardDisplay.tsx', // x3
-    'src/pages/InDepthVotePage.tsx', // x3
     'src/shared/components/CardImage.tsx', // x1
     'src/shared/components/ConnectionGroup.tsx', // x5
     'src/shared/components/HeroSection.tsx', // x1
