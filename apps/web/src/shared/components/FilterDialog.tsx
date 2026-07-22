@@ -1,6 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import {COLORS, FONT_SIZES, SHADOWS, SPACING, RADIUS, Z_INDEX} from '../constants';
 import {CtaButton} from './CtaButton';
+import {IconButton} from './IconButton';
 import {LinkButton} from './LinkButton';
 import {useDraftFilters} from '../hooks/useDraftFilters';
 import {useInlineCostFilters} from '../hooks';
@@ -144,19 +145,11 @@ export function FilterDialog({
               )}
               {variant === 'modal' ? (
                 <Dialog.Close asChild>
-                  <button
+                  <IconButton
                     aria-label="Close filters"
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: COLORS.textMuted,
-                      fontSize: `${FONT_SIZES.xxl}px`,
-                      cursor: 'pointer',
-                      padding: `${SPACING.xs}px`,
-                      lineHeight: 1,
-                    }}>
+                    style={{fontSize: `${FONT_SIZES.xxl}px`, lineHeight: 1}}>
                     ×
-                  </button>
+                  </IconButton>
                 </Dialog.Close>
               ) : (
                 <CtaButton onClick={handleApply}>Apply</CtaButton>

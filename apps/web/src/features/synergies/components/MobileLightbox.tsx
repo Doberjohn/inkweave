@@ -1,7 +1,8 @@
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
 import type {Ink} from 'inkweave-synergy-engine';
-import {COLORS, Z_INDEX} from '../../../shared/constants';
+import {COLORS, EASING, FONT_SIZES, INK_COLORS, RADIUS, Z_INDEX, blackRgba, hexRgba} from '../../../shared/constants';
+import {IconButton} from '../../../shared/components';
 
 interface MobileLightboxProps {
   imageUrl: string;
@@ -123,11 +124,11 @@ export function MobileLightbox({imageUrl, alt, ink, originRect, onClose}: Mobile
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [requestClose]);
 
-  const tint = INK_LIGHTBOX_TINT[ink];
+  const tint = inkLightboxTint(ink);
   // Chrome fades out on close; the card itself does the FLIP, not a fade.
   const chromeStyle: React.CSSProperties = {
     opacity: isClosing ? 0 : 1,
-    transition: `opacity ${CHROME_FADE_MS}ms ease-out`,
+    transition: `opacity ${CHROME_FADE_MS}ms ${EASING.smooth}`,
   };
 
   return createPortal(
@@ -138,19 +139,20 @@ export function MobileLightbox({imageUrl, alt, ink, originRect, onClose}: Mobile
         aria-hidden="true"
         style={{...SCRIM_STYLE, ...chromeStyle}}
       />
-      <button
+      <IconButton
         type="button"
         aria-label="Close enlarged card"
         onClick={requestClose}
+        size={36}
         style={{...CLOSE_BUTTON_STYLE, ...chromeStyle}}>
         ×
-      </button>
+      </IconButton>
       <div
         ref={cardRef}
         style={{
           ...CARD_STYLE,
           border: `2px solid ${tint.border}`,
-          boxShadow: `0 0 36px ${tint.glow}, 0 24px 60px rgba(0, 0, 0, 0.8)`,
+          boxShadow: `0 0 36px ${tint.glow}, 0 24px 60px ${blackRgba(0.8)}`,
         }}>
         <img src={imageUrl} alt={alt} style={IMG_STYLE} />
       </div>
@@ -169,15 +171,16 @@ function flipDeltas(origin: DOMRect, dest: DOMRect): {dx: number; dy: number; sc
   };
 }
 
-/** Per-ink border + glow tint pair. Border at 0.7 alpha for the solid edge; glow at 0.35 for the soft halo. */
-const INK_LIGHTBOX_TINT: Record<Ink, {border: string; glow: string}> = {
-  Amber:    {border: 'rgba(245, 178, 2, 0.7)',  glow: 'rgba(245, 178, 2, 0.35)'},
-  Amethyst: {border: 'rgba(139, 92, 246, 0.7)', glow: 'rgba(139, 92, 246, 0.35)'},
-  Emerald:  {border: 'rgba(16, 185, 129, 0.7)', glow: 'rgba(16, 185, 129, 0.35)'},
-  Ruby:     {border: 'rgba(239, 68, 68, 0.7)',  glow: 'rgba(239, 68, 68, 0.35)'},
-  Sapphire: {border: 'rgba(59, 130, 246, 0.7)', glow: 'rgba(59, 130, 246, 0.35)'},
-  Steel:    {border: 'rgba(107, 114, 128, 0.7)', glow: 'rgba(107, 114, 128, 0.35)'},
-};
+/**
+ * Per-ink border + glow tint pair, derived from INK_COLORS so the lightbox can
+ * never drift from the canonical ink hexes (#509 folded a hand-expanded copy
+ * that had already drifted on Amber). Border at 0.7 alpha for the solid edge;
+ * glow at 0.35 for the soft halo.
+ */
+function inkLightboxTint(ink: Ink): {border: string; glow: string} {
+  const base = INK_COLORS[ink].border;
+  return {border: hexRgba(base, 0.7), glow: hexRgba(base, 0.35)};
+}
 
 const ROOT_STYLE: React.CSSProperties = {
   position: 'fixed',
@@ -198,7 +201,7 @@ const SCRIM_STYLE: React.CSSProperties = {
   // backdrop re-rasterizes every frame the card FLIPs behind it, so the compositor never idles
   // and Playwright's actionability "stable" check on the close button never resolves (#444).
   // The 0.86-alpha black already carries the "card floats above" separation the blur used to add.
-  background: 'rgba(0, 0, 0, 0.86)',
+  background: blackRgba(0.86),
   cursor: 'zoom-out',
 };
 
@@ -208,7 +211,7 @@ const CARD_STYLE: React.CSSProperties = {
   // 367 fits on every modern phone (iPhone SE = 375 logical px is the narrowest mainstream).
   width: 367,
   aspectRatio: '264 / 368',
-  borderRadius: 18,
+  borderRadius: RADIUS.xl,
   overflow: 'hidden',
   zIndex: 11,
 };
@@ -220,25 +223,21 @@ const IMG_STYLE: React.CSSProperties = {
   display: 'block',
 };
 
+/**
+ * Overrides on the shared IconButton: the lightbox × floats over card art, so
+ * it keeps a visible scrim-tinted circle instead of the quiet-at-rest default.
+ */
 const CLOSE_BUTTON_STYLE: React.CSSProperties = {
   position: 'absolute',
   top: 18,
   right: 18,
-  width: 36,
-  height: 36,
   borderRadius: '50%',
-  background: 'rgba(13, 13, 20, 0.8)',
+  background: hexRgba(COLORS.background, 0.8),
   border: `1px solid ${COLORS.surfaceBorder}`,
   color: COLORS.text,
-  fontSize: 22,
-  fontFamily: 'Arial, sans-serif',
+  fontSize: FONT_SIZES.xxxl,
   lineHeight: 1,
   zIndex: 12,
-  cursor: 'pointer',
-  padding: 0,
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
 };
 
 const CAPTION_STYLE: React.CSSProperties = {
@@ -248,7 +247,7 @@ const CAPTION_STYLE: React.CSSProperties = {
   right: 0,
   textAlign: 'center',
   color: COLORS.textMuted,
-  fontSize: 11,
+  fontSize: FONT_SIZES.sm,
   fontWeight: 600,
   letterSpacing: '0.04em',
   zIndex: 12,

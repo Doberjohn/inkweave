@@ -1,6 +1,6 @@
 import {useRef} from 'react';
 import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../../../shared/constants';
-import {LinkButton} from '../../../shared/components';
+import {IconButton, LinkButton} from '../../../shared/components';
 import {useDialogFocus, useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {RoleTileRow, type RoleTile} from './RoleTileRow';
 
@@ -80,22 +80,13 @@ function SheetHeader({onClose, onClearAll, hasActive}: {onClose: () => void; onC
             Clear all
           </LinkButton>
         )}
-        <button
+        <IconButton
           type="button"
           aria-label="Close"
           onClick={onClose}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: COLORS.textMuted,
-            fontFamily: FONTS.body,
-            fontSize: `${FONT_SIZES.xl}px`,
-            cursor: 'pointer',
-            padding: 0,
-            lineHeight: 1,
-          }}>
+          style={{fontSize: `${FONT_SIZES.xl}px`, lineHeight: 1}}>
           ×
-        </button>
+        </IconButton>
       </div>
     </div>
   );

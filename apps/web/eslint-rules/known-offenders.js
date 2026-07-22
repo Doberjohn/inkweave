@@ -16,7 +16,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/playstyles/PlaystyleFanTile.stories.tsx', // x2
     'src/features/playstyles/PlaystyleFanTile.tsx', // x2
     'src/features/playstyles/PlaystyleSection.stories.tsx', // x2
-    'src/features/reveals/FranchiseCardsModal.tsx', // x6
     'src/features/reveals/InkBoard.tsx', // x7
     'src/features/reveals/InkTrackerTile.tsx', // x3
     'src/features/reveals/NewFranchises.tsx', // x5
@@ -36,7 +35,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/DeltaPanel.tsx', // x5
     'src/features/synergies/components/MobileComparisonView.stories.tsx', // x2
     'src/features/synergies/components/MobileComparisonView.tsx', // x4
-    'src/features/synergies/components/MobileLightbox.stories.tsx', // x3
     'src/features/synergies/components/RoleTileRow.stories.tsx', // x1
     'src/features/synergies/components/RoleTileRow.tsx', // x3
     'src/features/synergies/components/SynergyBanner.tsx', // x1
@@ -85,7 +83,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/cards/components/CardTile.tsx', // x2
     'src/features/playstyles/PlaystyleFanTile.tsx', // x6
     'src/features/reveals/CardSlot.tsx', // x5
-    'src/features/reveals/FranchiseCardsModal.tsx', // x3
     'src/features/reveals/InkBoard.tsx', // x2
     'src/features/reveals/InkTrackerTile.tsx', // x2
     'src/features/reveals/ProgressRing.tsx', // x1
@@ -97,14 +94,12 @@ export const KNOWN_OFFENDERS = {
     'src/features/reveals/inkTint.ts', // x2
     'src/features/synergies/components/CardDetail.tsx', // x1
     'src/features/synergies/components/CardDetailPanel.tsx', // x2
-    'src/features/synergies/components/CardOverviewModal.tsx', // x7
     'src/features/synergies/components/ColumnHeader.tsx', // x3
     'src/features/synergies/components/CommunityEmptyState.tsx', // x3
     'src/features/synergies/components/DeltaPanel.tsx', // x4
     'src/features/synergies/components/MechanicsButton.tsx', // x5
     'src/features/synergies/components/MobileCardDetail.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.tsx', // x16
-    'src/features/synergies/components/MobileLightbox.tsx', // x15
     'src/features/synergies/components/RoleTileRow.tsx', // x3
     'src/features/synergies/components/SynergyBanner.tsx', // x16
     'src/features/synergies/components/SynergyCard.tsx', // x2
@@ -140,9 +135,6 @@ export const KNOWN_OFFENDERS = {
   // 6 files, 15 violations at seeding
   'no-literal-font-family': [
     'src/docs/Colors.stories.tsx', // x10
-    'src/features/synergies/components/CardOverviewModal.tsx', // x1
-    'src/features/synergies/components/MobileLightbox.stories.tsx', // x1
-    'src/features/synergies/components/MobileLightbox.tsx', // x1
     'src/features/synergies/components/SynergyBanner.tsx', // x1
     'src/shared/components/Footer.stories.tsx', // x1
   ],
@@ -155,7 +147,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/admin-analytics/RuleCalibrationTable.tsx', // x1
     'src/features/admin-analytics/Scorecard.tsx', // x1
     'src/features/admin-analytics/VerdictHero.tsx', // x2
-    'src/features/reveals/FranchiseCardsModal.tsx', // x4
     'src/features/reveals/InkBoard.tsx', // x3
     'src/features/reveals/InkTrackerTile.tsx', // x1
     'src/features/reveals/NewFranchises.tsx', // x1
@@ -163,13 +154,11 @@ export const KNOWN_OFFENDERS = {
     'src/features/reveals/RaritySymbol.stories.tsx', // x1
     'src/features/reveals/RevealHero.tsx', // x1
     'src/features/reveals/SpotlightHero.tsx', // x3
-    'src/features/synergies/components/CardOverviewModal.tsx', // x6
     'src/features/synergies/components/ColumnHeader.tsx', // x4
     'src/features/synergies/components/CommunityColumn.tsx', // x4
     'src/features/synergies/components/CommunityEmptyState.tsx', // x2
     'src/features/synergies/components/DeltaPanel.tsx', // x5
     'src/features/synergies/components/MobileComparisonView.tsx', // x3
-    'src/features/synergies/components/MobileLightbox.tsx', // x2
     'src/features/synergies/components/SynergyBanner.tsx', // x5
     'src/features/voting/components/CarriesPicker.tsx', // x1
     'src/features/voting/components/DistributionBar.tsx', // x2
@@ -199,14 +188,12 @@ export const KNOWN_OFFENDERS = {
     'src/features/image-admin/components/CardImagePicker.tsx', // x1
     'src/features/playstyles/PlaystyleFanTile.tsx', // x2
     'src/features/reveals/CardSlot.tsx', // x1
-    'src/features/reveals/FranchiseCardsModal.tsx', // x2
     'src/features/reveals/InkBoard.tsx', // x1
     'src/features/reveals/NewFranchises.tsx', // x2
     'src/features/reveals/RarityBreakdown.tsx', // x1
     'src/features/reveals/RevealHero.tsx', // x2
     'src/features/reveals/SpotlightHero.tsx', // x4
     'src/features/reveals/WhatsNewSection.tsx', // x1
-    'src/features/synergies/components/CardOverviewModal.tsx', // x4
     'src/features/synergies/components/ColumnHeader.stories.tsx', // x1
     'src/features/synergies/components/CommunityColumn.tsx', // x2
     'src/features/synergies/components/CommunityEmptyState.stories.tsx', // x1
@@ -217,8 +204,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/MobileCardDetail.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.stories.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.tsx', // x2
-    'src/features/synergies/components/MobileLightbox.stories.tsx', // x1
-    'src/features/synergies/components/MobileLightbox.tsx', // x1
     'src/features/synergies/components/RoleTileRow.tsx', // x3
     'src/features/synergies/components/SynergyBanner.tsx', // x4
     'src/features/voting/components/DistributionBar.stories.tsx', // x1
@@ -262,10 +247,8 @@ export const KNOWN_OFFENDERS = {
     'src/features/reveals/InkBoard.tsx', // x1
     'src/features/reveals/RarityBreakdown.tsx', // x1
     'src/features/reveals/WhatsNewSection.tsx', // x1
-    'src/features/synergies/components/CardOverviewModal.tsx', // x9
     'src/features/synergies/components/CommunityEmptyState.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.tsx', // x4
-    'src/features/synergies/components/MobileLightbox.tsx', // x1
     'src/features/synergies/components/RoleTileRow.tsx', // x3
     'src/features/synergies/components/SynergyCard.tsx', // x1
     'src/features/voting/components/PairDisplay.tsx', // x3
