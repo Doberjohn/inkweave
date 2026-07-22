@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SPACING, hexRgba, whiteRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, hexRgba, whiteRgba} from '../../../shared/constants';
 
 export interface OptionPickerOption<T> {
   key: string;
@@ -26,11 +26,12 @@ interface OptionPickerProps<T> {
   animationDelayBase?: number;
 }
 
+/** The gold default composes from GOLD_GLOW (#511) so pickers match chips/nav/search. */
 const DEFAULT_OPTION_COLOR: OptionColor = {
   border: COLORS.primary,
   glow: hexRgba(COLORS.primary, 0.15),
-  hintBg: hexRgba(COLORS.primary, 0.06),
-  hoverBorder: hexRgba(COLORS.primary, 0.35),
+  hintBg: GOLD_GLOW.hoverBg,
+  hoverBorder: GOLD_GLOW.hoverBorder,
 };
 
 /** Inject keyframes once at module load */

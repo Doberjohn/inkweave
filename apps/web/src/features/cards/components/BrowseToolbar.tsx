@@ -2,7 +2,7 @@ import {useState} from 'react';
 import type {Ink} from 'inkweave-synergy-engine';
 import type {CardFilterOptions} from '../loader';
 import type {CardTypeFilter, BrowseSortOrder} from '../../../shared/constants';
-import {BROWSE_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {BROWSE_SORT_OPTIONS, COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING} from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
 import {FiltersButton} from '../../../shared/components/FiltersButton';
 import {SearchIcon} from '../../../shared/components/SearchIcon';
@@ -167,17 +167,15 @@ function getToolbarSearchInputStyle(focused: boolean): React.CSSProperties {
     height: 36,
     padding: '0 12px 0 36px',
     borderRadius: `${RADIUS.lg}px`,
-    border: `1px solid ${focused ? 'rgba(212, 175, 55, 0.5)' : COLORS.searchBorder}`,
+    border: `1px solid ${focused ? GOLD_GLOW.activeBorder : COLORS.searchBorder}`,
     background: COLORS.searchBg,
     color: COLORS.text,
     fontSize: `${FONT_SIZES.lg}px`,
     fontFamily: FONTS.body,
     boxSizing: 'border-box',
     outline: 'none',
-    boxShadow: focused
-      ? '0 0 0 2px rgba(212, 175, 55, 0.15), 0 0 12px rgba(212, 175, 55, 0.08)'
-      : 'none',
-    transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
+    boxShadow: focused ? GOLD_GLOW.focusRing : 'none',
+    transition: `border-color 0.25s ${EASING.snappy}, box-shadow 0.25s ${EASING.snappy}`,
   };
 }
 

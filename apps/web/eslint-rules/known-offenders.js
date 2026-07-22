@@ -109,7 +109,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/EtherealBackground.tsx', // x4
     'src/shared/components/FilterButton.stories.tsx', // x1
     'src/shared/components/HeroSection.tsx', // x2
-    'src/shared/components/SortSelect.tsx', // x1
     'src/shared/components/Sparkles.stories.tsx', // x2
     'src/shared/components/Tooltip.stories.tsx', // x3
   ],

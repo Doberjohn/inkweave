@@ -1,7 +1,7 @@
 import {type ReactNode, useState} from 'react';
 import {Link, NavLink} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONT_SIZES, FONTS, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX, hexRgba} from '../constants';
+import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../constants';
 import {useAutocomplete} from '../hooks';
 import {useRevealPhase} from '../../features/reveals';
 import {CTA_FILLED_STYLE} from './ctaStyles';
@@ -97,7 +97,7 @@ function getHeaderStyle(viewport: ViewportConfig): React.CSSProperties {
 
 function getNavItemBackground(state: InteractionState): string {
   if (state.isActive) return COLORS.surfaceHover;
-  if (state.isHovered) return hexRgba(COLORS.primary, 0.06);
+  if (state.isHovered) return GOLD_GLOW.hoverBg;
   return 'transparent';
 }
 
@@ -110,7 +110,7 @@ function getNavItemColor(state: InteractionState): string {
 function getNavItemBoxShadow(state: InteractionState): string {
   if (!state.isHovered) return 'none';
   if (state.isActive) return 'none';
-  return `0 0 12px ${hexRgba(COLORS.primary, 0.15)}, inset 0 0 8px ${hexRgba(COLORS.primary, 0.05)}`;
+  return GOLD_GLOW.shadow;
 }
 
 interface SearchSizing {
@@ -129,9 +129,9 @@ function getSearchSizing(viewport: ViewportConfig): SearchSizing {
 }
 
 function getSearchInputStyle(config: SearchInputStyleConfig): React.CSSProperties {
-  const borderColor = config.focused ? hexRgba(COLORS.primary500, 0.5) : COLORS.searchBorder;
+  const borderColor = config.focused ? GOLD_GLOW.activeBorder : COLORS.searchBorder;
   const boxShadow = config.focused
-    ? `0 0 0 2px ${hexRgba(COLORS.primary500, 0.15)}, 0 0 12px ${hexRgba(COLORS.primary500, 0.08)}`
+    ? GOLD_GLOW.focusRing
     : 'none';
   return {
     width: '100%',

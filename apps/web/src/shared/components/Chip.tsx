@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, hexRgba} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, hexRgba} from '../constants';
 
 interface ChipBaseProps {
   label: string;
@@ -64,19 +64,17 @@ export function Chip(props: ChipProps) {
         fontFamily: FONTS.body,
         transition: `all 0.25s ${EASING.snappy}`,
         border: active
-          ? `1px solid ${hexRgba(COLORS.primary500, 0.4)}`
+          ? `1px solid ${GOLD_GLOW.activeBorder}`
           : hovered
-            ? `1px solid ${hexRgba(COLORS.primary, 0.25)}`
+            ? `1px solid ${GOLD_GLOW.hoverBorder}`
             : `1px solid ${COLORS.surfaceBorder}`,
         background: active
-          ? hexRgba(COLORS.primary500, hovered ? 0.18 : 0.12)
+          ? hexRgba(COLORS.primary, hovered ? 0.18 : 0.12)
           : hovered
-            ? hexRgba(COLORS.primary, 0.06)
+            ? GOLD_GLOW.hoverBg
             : 'transparent',
-        color: glow ? COLORS.primary500 : COLORS.textMuted,
-        boxShadow: glow
-          ? `0 0 12px ${hexRgba(COLORS.primary, 0.15)}, inset 0 0 8px ${hexRgba(COLORS.primary, 0.05)}`
-          : 'none',
+        color: glow ? COLORS.primary : COLORS.textMuted,
+        boxShadow: glow ? GOLD_GLOW.shadow : 'none',
         ...(isMobile
           ? {
               flexShrink: 0,
