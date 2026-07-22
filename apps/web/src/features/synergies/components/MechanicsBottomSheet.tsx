@@ -1,5 +1,6 @@
 import {useRef} from 'react';
-import {COLORS, FONTS, FONT_SIZES, SPACING, Z_INDEX} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../../../shared/constants';
+import {LinkButton} from '../../../shared/components';
 import {useDialogFocus, useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {RoleTileRow, type RoleTile} from './RoleTileRow';
 
@@ -32,7 +33,7 @@ function SheetBackdrop({
         position: 'fixed',
         inset: 0,
         // Solid scrim only — no backdrop-filter (WebKit continuous-repaint trap; see #444).
-        background: 'rgba(0, 0, 0, 0.72)',
+        background: COLORS.scrim,
         zIndex: Z_INDEX.modalBackdrop,
       }}
     />
@@ -48,7 +49,7 @@ function DragHandle() {
         padding: `${SPACING.md}px 0 ${SPACING.sm}px`,
         flexShrink: 0,
       }}>
-      <div style={{width: 36, height: 4, borderRadius: 2, background: '#444466'}} />
+      <div style={{width: 36, height: 4, borderRadius: RADIUS.xs, background: COLORS.gray300}} />
     </div>
   );
 }
@@ -75,20 +76,9 @@ function SheetHeader({onClose, onClearAll, hasActive}: {onClose: () => void; onC
       </h2>
       <div style={{display: 'flex', alignItems: 'center', gap: SPACING.md}}>
         {hasActive && (
-          <button
-            type="button"
-            onClick={onClearAll}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: COLORS.primary,
-              fontFamily: FONTS.body,
-              fontSize: `${FONT_SIZES.sm}px`,
-              cursor: 'pointer',
-              padding: 0,
-            }}>
+          <LinkButton type="button" size="sm" onClick={onClearAll}>
             Clear all
-          </button>
+          </LinkButton>
         )}
         <button
           type="button"
@@ -156,12 +146,12 @@ export function MechanicsBottomSheet({
           maxHeight: '78vh',
           background: COLORS.surface,
           borderRadius: '24px 24px 0 0',
-          boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.6)',
+          boxShadow: SHADOWS.sheet,
           zIndex: Z_INDEX.modal,
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          transition: 'transform 0.25s ease, opacity 0.25s ease',
+          transition: `transform 0.25s ${EASING.smooth}, opacity 0.25s ${EASING.smooth}`,
         }}>
         <DragHandle />
         <SheetHeader onClose={onClose} onClearAll={onClearAll} hasActive={hasActive} />

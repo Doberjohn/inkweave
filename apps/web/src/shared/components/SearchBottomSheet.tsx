@@ -1,7 +1,8 @@
 import {forwardRef, useImperativeHandle, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SET_ABBREVIATIONS, SPACING, Z_INDEX} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SET_ABBREVIATIONS, SHADOWS, SPACING, Z_INDEX} from '../constants';
+import {LinkButton} from './LinkButton';
 import {useCardDataContext} from '../contexts/CardDataContext';
 import {useCardModal} from '../contexts/CardModalContext';
 import {smallImageUrl} from '../../features/cards/loader';
@@ -186,13 +187,13 @@ function SearchSheetInput({query, autocomplete, inputRef, onSubmit, onClear}: Se
             padding: '0 36px 0 12px',
             borderRadius: RADIUS.lg,
             border: `1px solid ${COLORS.primary}`,
-            background: 'rgba(15, 23, 43, 0.8)',
+            background: COLORS.searchBg,
             color: COLORS.text,
             fontSize: `${FONT_SIZES.lg}px`,
             fontFamily: FONTS.body,
             boxSizing: 'border-box',
             outline: 'none',
-            boxShadow: '0 0 8px rgba(212, 175, 55, 0.2)',
+            boxShadow: SHADOWS.glowSm,
           }}
         />
         {query && <ClearButton onClear={onClear} />}
@@ -213,7 +214,7 @@ function ClearButton({onClear}: {onClear: () => void}) {
         transform: 'translateY(-50%)',
         width: 24,
         height: 24,
-        borderRadius: 12,
+        borderRadius: '50%',
         border: 'none',
         background: COLORS.surfaceBorder,
         color: COLORS.textMuted,
@@ -221,7 +222,7 @@ function ClearButton({onClear}: {onClear: () => void}) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 14,
+        fontSize: FONT_SIZES.lg,
         lineHeight: 1,
         padding: 0,
       }}>
@@ -253,14 +254,14 @@ function SearchResultRow({card, isHighlighted, isLast, query, optionProps}: Sear
           minHeight: 60,
           cursor: 'pointer',
           background: isHighlighted ? COLORS.surfaceHover : 'transparent',
-          transition: 'background 0.1s ease',
+          transition: `background 0.1s ${EASING.snappy}`,
         }}>
         {/* Thumbnail */}
         <div
           style={{
             width: 38,
             height: 53,
-            borderRadius: 4,
+            borderRadius: RADIUS.sm,
             background: inkColor(card),
             flexShrink: 0,
             overflow: 'hidden',
@@ -303,12 +304,12 @@ function SearchResultRow({card, isHighlighted, isLast, query, optionProps}: Sear
 
         {/* Chevron */}
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" style={{flexShrink: 0}}>
-          <path d="M9 18l6-6-6-6" stroke="#444466" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M9 18l6-6-6-6" stroke={COLORS.gray300} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
 
       {!isLast && (
-        <div style={{height: 1, background: '#222244', marginLeft: SPACING.lg, marginRight: SPACING.lg}} />
+        <div style={{height: 1, background: COLORS.surfaceHover, marginLeft: SPACING.lg, marginRight: SPACING.lg}} />
       )}
     </div>
   );
@@ -363,7 +364,7 @@ function RecentSearchChip({term, onClick}: RecentSearchChipProps) {
         gap: 6,
         height: 32,
         padding: '0 12px',
-        borderRadius: 16,
+        borderRadius: RADIUS.pill,
         border: `1px solid ${COLORS.surfaceBorder}`,
         background: COLORS.surfaceAlt,
         color: COLORS.text,
@@ -373,8 +374,8 @@ function RecentSearchChip({term, onClick}: RecentSearchChipProps) {
         cursor: 'pointer',
       }}>
       <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="10" stroke="#444466" strokeWidth="2" />
-        <path d="M12 6v6l4 2" stroke="#444466" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="12" cy="12" r="10" stroke={COLORS.gray300} strokeWidth="2" />
+        <path d="M12 6v6l4 2" stroke={COLORS.gray300} strokeWidth="2" strokeLinecap="round" />
       </svg>
       {term}
     </button>
@@ -415,20 +416,9 @@ function RecentSection({recentSearches, onRecentClick, onClearRecent}: SearchEmp
           }}>
           Recent
         </span>
-        <button
-          onClick={onClearRecent}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: COLORS.primary,
-            fontSize: `${FONT_SIZES.xs}px`,
-            fontWeight: 500,
-            fontFamily: FONTS.body,
-            cursor: 'pointer',
-            padding: 0,
-          }}>
+        <LinkButton size="sm" onClick={onClearRecent}>
           Clear
-        </button>
+        </LinkButton>
       </div>
       <div style={{display: 'flex', flexWrap: 'wrap', gap: SPACING.sm}}>
         {recentSearches.map((term) => (
@@ -477,7 +467,7 @@ function SheetBackdrop({visible, onClose, onTransitionEnd}: SheetBackdropProps) 
         position: 'fixed',
         inset: 0,
         // Solid scrim only — no backdrop-filter (WebKit continuous-repaint trap; see #444).
-        background: 'rgba(0, 0, 0, 0.72)',
+        background: COLORS.scrim,
         zIndex: Z_INDEX.modalBackdrop,
       }}
     />
@@ -493,7 +483,7 @@ function DragHandle() {
         padding: `${SPACING.md}px 0 ${SPACING.sm}px`,
         flexShrink: 0,
       }}>
-      <div style={{width: 36, height: 4, borderRadius: 2, background: '#444466'}} />
+      <div style={{width: 36, height: 4, borderRadius: RADIUS.xs, background: COLORS.gray300}} />
     </div>
   );
 }
@@ -553,12 +543,12 @@ function SearchSheet({
         top: sheetTop,
         background: COLORS.surface,
         borderRadius: '24px 24px 0 0',
-        boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.6)',
+        boxShadow: SHADOWS.sheet,
         zIndex: Z_INDEX.modal,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        transition: 'top 0.25s ease, opacity 0.25s ease, transform 0.25s ease',
+        transition: `top 0.25s ${EASING.smooth}, opacity 0.25s ${EASING.smooth}, transform 0.25s ${EASING.smooth}`,
       }}>
       <DragHandle />
       <SearchSheetInput

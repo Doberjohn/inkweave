@@ -6,8 +6,9 @@ import type {CardFilterOptions} from '../../cards/loader';
 import type {CardTypeFilter, SynergySortOrder} from '../../../shared/constants';
 import type {SynergyFilterState, StrengthTierFilter} from '../utils/filterSynergyCards';
 import {EMPTY_SYNERGY_FILTERS} from '../utils/filterSynergyCards';
-import {SYNERGY_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
+import {SYNERGY_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
 import {FilterDialog} from '../../../shared/components/FilterDialog';
+import {LinkButton} from '../../../shared/components/LinkButton';
 import {Chip} from '../../../shared/components/Chip';
 import {FiltersButton} from '../../../shared/components/FiltersButton';
 import {InkFilterGroup} from '../../../shared/components/InkFilterGroup';
@@ -43,7 +44,6 @@ export function SynergyToolbar({
   sets,
 }: SynergyToolbarProps) {
   const [filterOpen, setFilterOpen] = useState(false);
-  const [clearHover, setClearHover] = useState(false);
   const [hoveredTier, setHoveredTier] = useState<string | null>(null);
 
   const {inkFilters, typeFilters, costFilters, filters, strengthFilters} = filterState;
@@ -197,19 +197,19 @@ export function SynergyToolbar({
                   alignItems: 'center',
                   gap: 6,
                   padding: isMobile ? '5px 10px' : '5px 12px',
-                  borderRadius: 20,
+                  borderRadius: RADIUS.pill,
                   background: active
                     ? isHovered
-                      ? 'rgba(212, 175, 55, 0.18)'
-                      : 'rgba(212, 175, 55, 0.1)'
+                      ? hexRgba(COLORS.primary500, 0.18)
+                      : hexRgba(COLORS.primary500, 0.1)
                     : isHovered
-                      ? 'rgba(255, 185, 0, 0.06)'
+                      ? hexRgba(COLORS.primary, 0.06)
                       : 'transparent',
                   border: `1px solid ${
                     active
-                      ? 'rgba(212, 175, 55, 0.25)'
+                      ? hexRgba(COLORS.primary500, 0.25)
                       : isHovered
-                        ? 'rgba(255, 185, 0, 0.25)'
+                        ? hexRgba(COLORS.primary, 0.25)
                         : COLORS.surfaceBorder
                   }`,
                   color: active || isHovered ? COLORS.primary500 : COLORS.textMuted,
@@ -220,7 +220,7 @@ export function SynergyToolbar({
                   transition: 'all 0.2s',
                   boxShadow:
                     active || isHovered
-                      ? '0 0 12px rgba(255, 185, 0, 0.15), inset 0 0 8px rgba(255, 185, 0, 0.05)'
+                      ? `0 0 12px ${hexRgba(COLORS.primary, 0.15)}, inset 0 0 8px ${hexRgba(COLORS.primary, 0.05)}`
                       : 'none',
                   ...(isMobile ? {minHeight: 44} : {}),
                 }}>
@@ -248,23 +248,9 @@ export function SynergyToolbar({
                 isMobile={isMobile}
               />
             ))}
-            <button
-              onClick={handleClearAll}
-              onMouseEnter={() => setClearHover(true)}
-              onMouseLeave={() => setClearHover(false)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: clearHover ? COLORS.text : COLORS.textMuted,
-                fontFamily: FONTS.body,
-                fontSize: `${FONT_SIZES.base}px`,
-                cursor: 'pointer',
-                padding: 0,
-                textDecoration: clearHover ? 'underline' : 'none',
-                transition: 'color 0.15s',
-              }}>
+            <LinkButton tone="muted" underlineOnHover onClick={handleClearAll}>
               Clear all
-            </button>
+            </LinkButton>
           </div>
         )}
 

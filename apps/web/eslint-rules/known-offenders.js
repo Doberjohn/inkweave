@@ -34,7 +34,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/CommunityEmptyState.tsx', // x2
     'src/features/synergies/components/DeltaPanel.stories.tsx', // x1
     'src/features/synergies/components/DeltaPanel.tsx', // x5
-    'src/features/synergies/components/MechanicsBottomSheet.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.stories.tsx', // x2
     'src/features/synergies/components/MobileComparisonView.tsx', // x4
     'src/features/synergies/components/MobileLightbox.stories.tsx', // x3
@@ -57,7 +56,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/VoteFormSkeleton.stories.tsx', // x1
     'src/features/voting/components/VoteProgress.tsx', // x1
     'src/features/voting/components/VoteStatusBanner.tsx', // x9
-    'src/features/voting/components/VoteToast.tsx', // x7
     'src/pages/BannerPage.tsx', // x1
     'src/pages/InDepthVotePage.tsx', // x8
     'src/pages/NotFoundPage.tsx', // x5
@@ -74,7 +72,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/FilterContent.stories.tsx', // x3
     'src/shared/components/FilterSection.stories.tsx', // x2
     'src/shared/components/Footer.stories.tsx', // x1
-    'src/shared/components/SearchBottomSheet.tsx', // x5
     'src/shared/components/Sparkles.stories.tsx', // x9
     'src/shared/components/Sparkles.tsx', // x1
     'src/shared/components/StrengthBadge.stories.tsx', // x8
@@ -104,7 +101,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/ColumnHeader.tsx', // x3
     'src/features/synergies/components/CommunityEmptyState.tsx', // x3
     'src/features/synergies/components/DeltaPanel.tsx', // x4
-    'src/features/synergies/components/MechanicsBottomSheet.tsx', // x2
     'src/features/synergies/components/MechanicsButton.tsx', // x5
     'src/features/synergies/components/MobileCardDetail.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.tsx', // x16
@@ -113,7 +109,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/SynergyBanner.tsx', // x16
     'src/features/synergies/components/SynergyCard.tsx', // x2
     'src/features/synergies/components/SynergyGroup.tsx', // x2
-    'src/features/synergies/components/SynergyToolbar.tsx', // x6
     'src/features/voting/components/CarriesPicker.tsx', // x5
     'src/features/voting/components/DistributionBar.tsx', // x3
     'src/features/voting/components/InDepthVoteForm.tsx', // x9
@@ -122,7 +117,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/PairDisplay.tsx', // x3
     'src/features/voting/components/QuickVoteControl.tsx', // x21
     'src/features/voting/components/VoteConfirmation.tsx', // x2
-    'src/features/voting/components/VoteToast.tsx', // x1
     'src/features/voting/components/VotingCardDisplay.tsx', // x2
     'src/pages/InDepthVotePage.tsx', // x9
     'src/pages/NotFoundPage.tsx', // x4
@@ -135,10 +129,8 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/CountBadge.tsx', // x1
     'src/shared/components/EtherealBackground.tsx', // x4
     'src/shared/components/FilterButton.stories.tsx', // x1
-    'src/shared/components/FilterDialog.tsx', // x3
     'src/shared/components/HeroSection.tsx', // x2
     'src/shared/components/SearchAutocomplete.tsx', // x1
-    'src/shared/components/SearchBottomSheet.tsx', // x4
     'src/shared/components/SortSelect.tsx', // x1
     'src/shared/components/Sparkles.stories.tsx', // x2
     'src/shared/components/Tooltip.stories.tsx', // x3
@@ -187,7 +179,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/VoteConfirmation.tsx', // x8
     'src/features/voting/components/VoteProgress.tsx', // x1
     'src/features/voting/components/VoteStatusBanner.tsx', // x2
-    'src/features/voting/components/VoteToast.tsx', // x8
     'src/pages/HomePageSkeleton.tsx', // x2
     'src/shared/components/CardImage.stories.tsx', // x1
     'src/shared/components/Chip.stories.tsx', // x1
@@ -195,7 +186,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/ConnectionGroup.tsx', // x1
     'src/shared/components/EmptyState.stories.tsx', // x3
     'src/shared/components/MobileBottomNav.tsx', // x1
-    'src/shared/components/SearchBottomSheet.tsx', // x1
     'src/shared/components/Sparkles.stories.tsx', // x3
     'src/shared/components/Tooltip.stories.tsx', // x2
     'src/shared/components/Tooltip.tsx', // x1
@@ -224,7 +214,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/DeltaPanel.stories.tsx', // x1
     'src/features/synergies/components/DeltaPanel.tsx', // x2
     'src/features/synergies/components/EngineColumn.tsx', // x1
-    'src/features/synergies/components/MechanicsBottomSheet.tsx', // x1
     'src/features/synergies/components/MobileCardDetail.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.stories.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.tsx', // x2
@@ -232,7 +221,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/MobileLightbox.tsx', // x1
     'src/features/synergies/components/RoleTileRow.tsx', // x3
     'src/features/synergies/components/SynergyBanner.tsx', // x4
-    'src/features/synergies/components/SynergyToolbar.tsx', // x1
     'src/features/voting/components/DistributionBar.stories.tsx', // x1
     'src/features/voting/components/DistributionBar.tsx', // x1
     'src/features/voting/components/InDepthVoteForm.stories.tsx', // x1
@@ -244,7 +232,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/VoteAffirmation.stories.tsx', // x1
     'src/features/voting/components/VoteConfirmation.tsx', // x2
     'src/features/voting/components/VoteStatusBanner.tsx', // x2
-    'src/features/voting/components/VoteToast.tsx', // x4
     'src/features/voting/components/VotingCardDisplay.tsx', // x2
     'src/pages/BrowsePage.tsx', // x1
     'src/pages/InDepthVotePage.tsx', // x2
@@ -257,9 +244,7 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/ConnectionGroup.stories.tsx', // x1
     'src/shared/components/ConnectionGroup.tsx', // x1
     'src/shared/components/FilterContent.stories.tsx', // x3
-    'src/shared/components/FilterDialog.tsx', // x1
     'src/shared/components/FilterSection.stories.tsx', // x2
-    'src/shared/components/SearchBottomSheet.tsx', // x4
     'src/shared/components/Sparkles.stories.tsx', // x3
     'src/shared/components/Tooltip.tsx', // x1
   ],
@@ -267,7 +252,6 @@ export const KNOWN_OFFENDERS = {
   'no-raw-z-index': [
     'src/features/reveals/RevealsPromoCard.tsx', // x1
     'src/features/voting/components/VoteConfirmation.tsx', // x1
-    'src/features/voting/components/VoteToast.tsx', // x1
     'src/shared/components/BetaNotice.tsx', // x1
     'src/shared/components/MobileBottomNav.tsx', // x1
   ],
@@ -280,7 +264,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/reveals/WhatsNewSection.tsx', // x1
     'src/features/synergies/components/CardOverviewModal.tsx', // x9
     'src/features/synergies/components/CommunityEmptyState.tsx', // x1
-    'src/features/synergies/components/MechanicsBottomSheet.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.tsx', // x4
     'src/features/synergies/components/MobileLightbox.tsx', // x1
     'src/features/synergies/components/RoleTileRow.tsx', // x3
@@ -293,7 +276,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/CardImage.tsx', // x1
     'src/shared/components/ConnectionGroup.tsx', // x5
     'src/shared/components/HeroSection.tsx', // x1
-    'src/shared/components/SearchBottomSheet.tsx', // x2
   ],
   // 0 files, 0 violations at seeding
   'no-raw-spacing': [
