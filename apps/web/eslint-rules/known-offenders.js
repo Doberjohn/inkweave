@@ -113,7 +113,6 @@ export const KNOWN_OFFENDERS = {
     'src/pages/PlaystyleDetailPage.tsx', // x2
     'src/shared/components/AbilityCallout.tsx', // x1
     'src/shared/components/BetaNotice.tsx', // x1
-    'src/shared/components/CardLightbox.tsx', // x2
     'src/shared/components/ConnectionGroup.tsx', // x5
     'src/shared/components/CountBadge.tsx', // x1
     'src/shared/components/EtherealBackground.tsx', // x4
