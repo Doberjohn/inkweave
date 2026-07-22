@@ -104,6 +104,26 @@ export function DialogShell({
     return () => clearTimeout(timer);
   }, [animated, isOpen, mounted, onTransitionEnd]);
 
+  // useDialogFocus's one-shot 100ms focus can be silently REFUSED: during the
+  // enter transition the panel's `visibility` interpolates hidden→visible and
+  // Chrome treats the first half as hidden (discrete-at-50%), so a focus that
+  // lands mid-transition does nothing. Retry (bounded) until focus takes or
+  // the user has already focused something inside the panel.
+  useEffect(() => {
+    if (!animated || !visible) return;
+    let tries = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const attempt = () => {
+      const panel = panelRef.current;
+      const target = (initialFocusRef ?? panelRef).current;
+      if (!panel || !target || panel.contains(document.activeElement)) return;
+      target.focus();
+      if (!panel.contains(document.activeElement) && ++tries < 6) timer = setTimeout(attempt, 60);
+    };
+    timer = setTimeout(attempt, 0);
+    return () => clearTimeout(timer);
+  }, [animated, visible, initialFocusRef]);
+
   if (!rendered) return null;
 
   const tiers = LAYERS[layer];
