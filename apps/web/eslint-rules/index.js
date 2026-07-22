@@ -277,6 +277,44 @@ const noAdhocButtons = {
   },
 };
 
+/**
+ * The overlay contract (#510): a surface claiming aria-modal must get its
+ * behavior from the house machinery — DialogShell / BottomSheet (which wire
+ * the hook trio) or useDialogFocus directly. FilterDialog is the documented
+ * Radix exception (.claude/rules/overlays.md).
+ */
+const ARIA_MODAL_EXEMPT = [
+  /src[\\/]shared[\\/]components[\\/](DialogShell|BottomSheet)\.tsx$/,
+  /FilterDialog\.tsx$/, // Radix Dialog supplies trap/lock/Escape — the one sanctioned alternative
+  /\.stories\.tsx$/,
+  /\.test\.(ts|tsx)$/,
+];
+const UNSHELLED_MESSAGE =
+  'aria-modal without the overlay contract. Render through DialogShell / BottomSheet, or wire useDialogFocus + useScrollLock + useTransitionPresence directly (#510, .claude/rules/overlays.md)';
+const noUnshelledDialogs = {
+  meta: {
+    type: 'problem',
+    docs: {description: 'aria-modal surfaces must use DialogShell/BottomSheet or the useDialogFocus trio'},
+    schema: [],
+  },
+  create(context) {
+    if (isExempt(context, ARIA_MODAL_EXEMPT) || isKnownOffender(context, 'no-unshelled-dialogs')) return {};
+    let sanctioned = false;
+    let firstAriaModal = null;
+    return {
+      ImportDeclaration(node) {
+        if (/DialogShell|BottomSheet|useDialogFocus/.test(context.sourceCode.getText(node))) sanctioned = true;
+      },
+      JSXAttribute(node) {
+        if (node.name.name === 'aria-modal' && !firstAriaModal) firstAriaModal = node;
+      },
+      'Program:exit'() {
+        if (firstAriaModal && !sanctioned) context.report({node: firstAriaModal, message: UNSHELLED_MESSAGE});
+      },
+    };
+  },
+};
+
 export const inkweave = {
   meta: {name: 'eslint-plugin-inkweave', version: '1.0.0'},
   rules: {
@@ -290,5 +328,6 @@ export const inkweave = {
     'no-backdrop-filter': noBackdropFilter,
     'no-raw-spacing': noRawSpacing,
     'no-adhoc-buttons': noAdhocButtons,
+    'no-unshelled-dialogs': noUnshelledDialogs,
   },
 };
