@@ -13,7 +13,9 @@ import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {trackEvent} from '../../../shared/lib/analytics';
 import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SHADOWS, Z_INDEX, hexRgba} from '../../../shared/constants';
+import {Chip} from '../../../shared/components/Chip';
 import {IconButton} from '../../../shared/components/IconButton';
+import {LinkButton} from '../../../shared/components/LinkButton';
 
 const FLIP_DURATION = 480;
 const FLIP_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
@@ -1034,28 +1036,12 @@ function FilterChip({group, activeGroupFilter, toggleChip}: FilterChipProps) {
   const isActive = activeGroupFilter === group.groupKey;
   const isInactive = activeGroupFilter !== null && !isActive;
   return (
-    <button
-      type="button"
+    <Chip
+      label={group.label}
+      active={isActive}
       onClick={() => toggleChip(group.groupKey)}
-      aria-pressed={isActive}
       title={`${group.synergies.length} cards · top score ${topScore}`}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '7px 14px',
-        background: isActive ? hexRgba(COLORS.primary500, 0.12) : COLORS.surfaceAlt,
-        border: `1px solid ${isActive ? COLORS.primary500 : COLORS.surfaceBorder}`,
-        borderRadius: RADIUS.pill,
-        fontSize: FONT_SIZES.base,
-        color: isInactive ? COLORS.textMuted : COLORS.text,
-        cursor: 'pointer',
-        fontFamily: 'inherit',
-        fontWeight: isActive ? 600 : 500,
-        opacity: isInactive ? 0.55 : 1,
-        transition: 'border-color 0.15s, background 0.15s, color 0.15s, opacity 0.15s',
-      }}>
-      <span style={{lineHeight: 1}}>{group.label}</span>
+      style={isInactive ? {opacity: 0.55} : undefined}>
       <span
         style={{
           padding: '2px 9px',
@@ -1068,7 +1054,7 @@ function FilterChip({group, activeGroupFilter, toggleChip}: FilterChipProps) {
         }}>
         {group.synergies.length}
       </span>
-    </button>
+    </Chip>
   );
 }
 
@@ -1704,39 +1690,25 @@ function CloseButton({onClose}: {onClose: () => void}) {
   );
 }
 
-/**
- * BACK button (focused-state nav) — gold-bordered chip.
- * Matches mockup `.compare-back:hover { background: rgba(212,175,55,0.2); color: var(--gold-bright) }`.
- */
+/** BACK button (focused-state nav) — the shared LinkButton in its gold tone (#509). */
 function BackButton({onClick}: {onClick: () => void}) {
-  const [hovered, setHovered] = useState(false);
   return (
-    <button
+    <LinkButton
       type="button"
       aria-label="Back to synergies"
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      size="sm"
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        background: hexRgba(COLORS.primary500, hovered ? 0.2 : 0.1),
-        border: `1px solid ${COLORS.primary500}`,
-        color: hovered ? COLORS.primary : COLORS.primary500,
-        fontFamily: 'inherit',
-        fontSize: FONT_SIZES.md,
         fontWeight: 700,
-        padding: '7px 14px',
-        borderRadius: RADIUS.pill,
-        cursor: 'pointer',
         textTransform: 'uppercase',
         letterSpacing: '0.08em',
         flexShrink: 0,
-        transition: `background 0.15s ${EASING.snappy}, color 0.15s ${EASING.snappy}`,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
       }}>
       <span aria-hidden="true">←</span>
       <span>Back</span>
-    </button>
+    </LinkButton>
   );
 }

@@ -44,7 +44,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/InDepthVoteForm.stories.tsx', // x1
     'src/features/voting/components/InDepthVoteForm.tsx', // x8
     'src/features/voting/components/OptionPicker.stories.tsx', // x5
-    'src/features/voting/components/OptionPicker.tsx', // x1
     'src/features/voting/components/PairDisplay.tsx', // x7
     'src/features/voting/components/QuickVoteControl.stories.tsx', // x1
     'src/features/voting/components/QuickVoteControl.tsx', // x3
@@ -104,11 +103,9 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/SynergyBanner.tsx', // x16
     'src/features/synergies/components/SynergyCard.tsx', // x2
     'src/features/synergies/components/SynergyGroup.tsx', // x2
-    'src/features/voting/components/CarriesPicker.tsx', // x5
     'src/features/voting/components/DistributionBar.tsx', // x3
     'src/features/voting/components/InDepthVoteForm.tsx', // x9
     'src/features/voting/components/OptionPicker.stories.tsx', // x3
-    'src/features/voting/components/OptionPicker.tsx', // x5
     'src/features/voting/components/PairDisplay.tsx', // x3
     'src/features/voting/components/QuickVoteControl.tsx', // x21
     'src/features/voting/components/VoteConfirmation.tsx', // x2
@@ -119,7 +116,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/AbilityCallout.tsx', // x1
     'src/shared/components/BetaNotice.tsx', // x1
     'src/shared/components/CardLightbox.tsx', // x2
-    'src/shared/components/Chip.tsx', // x6
     'src/shared/components/ConnectionGroup.tsx', // x5
     'src/shared/components/CountBadge.tsx', // x1
     'src/shared/components/EtherealBackground.tsx', // x4
@@ -160,9 +156,7 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/DeltaPanel.tsx', // x5
     'src/features/synergies/components/MobileComparisonView.tsx', // x3
     'src/features/synergies/components/SynergyBanner.tsx', // x5
-    'src/features/voting/components/CarriesPicker.tsx', // x1
     'src/features/voting/components/DistributionBar.tsx', // x2
-    'src/features/voting/components/OptionPicker.tsx', // x1
     'src/features/voting/components/ScorePicker.tsx', // x1
     'src/features/voting/components/VoteAffirmation.tsx', // x3
     'src/features/voting/components/VoteConfirmation.tsx', // x8
@@ -224,7 +218,6 @@ export const KNOWN_OFFENDERS = {
     'src/pages/PlaystyleGalleryPage.tsx', // x2
     'src/shared/components/CardLightbox.stories.tsx', // x1
     'src/shared/components/CardTextBlock.stories.tsx', // x1
-    'src/shared/components/Chip.tsx', // x1
     'src/shared/components/CollapsibleSection.stories.tsx', // x1
     'src/shared/components/ConnectionGroup.stories.tsx', // x1
     'src/shared/components/ConnectionGroup.tsx', // x1

@@ -6,7 +6,7 @@ import type {CardFilterOptions} from '../../cards/loader';
 import type {CardTypeFilter, SynergySortOrder} from '../../../shared/constants';
 import type {SynergyFilterState, StrengthTierFilter} from '../utils/filterSynergyCards';
 import {EMPTY_SYNERGY_FILTERS} from '../utils/filterSynergyCards';
-import {SYNERGY_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
+import {SYNERGY_SORT_OPTIONS, SPACING} from '../../../shared/constants';
 import {FilterDialog} from '../../../shared/components/FilterDialog';
 import {LinkButton} from '../../../shared/components/LinkButton';
 import {Chip} from '../../../shared/components/Chip';
@@ -44,7 +44,6 @@ export function SynergyToolbar({
   sets,
 }: SynergyToolbarProps) {
   const [filterOpen, setFilterOpen] = useState(false);
-  const [hoveredTier, setHoveredTier] = useState<string | null>(null);
 
   const {inkFilters, typeFilters, costFilters, filters, strengthFilters} = filterState;
 
@@ -181,53 +180,17 @@ export function SynergyToolbar({
           isMobile={isMobile}
         />
 
-        {/* Strength tier toggle chips */}
+        {/* Strength tier toggle chips — the shared Chip recipe (#509 folded an inline clone) */}
         <div style={{display: 'flex', gap: 6, ...(isMobile ? {flexShrink: 0} : {})}}>
-          {STRENGTH_TIERS.map((tier) => {
-            const active = strengthFilters.includes(tier);
-            const isHovered = hoveredTier === `strength-${tier}`;
-            return (
-              <button
-                key={tier}
-                onClick={() => toggleStrength(tier)}
-                onMouseEnter={() => setHoveredTier(`strength-${tier}`)}
-                onMouseLeave={() => setHoveredTier(null)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: isMobile ? '5px 10px' : '5px 12px',
-                  borderRadius: RADIUS.pill,
-                  background: active
-                    ? isHovered
-                      ? hexRgba(COLORS.primary500, 0.18)
-                      : hexRgba(COLORS.primary500, 0.1)
-                    : isHovered
-                      ? hexRgba(COLORS.primary, 0.06)
-                      : 'transparent',
-                  border: `1px solid ${
-                    active
-                      ? hexRgba(COLORS.primary500, 0.25)
-                      : isHovered
-                        ? hexRgba(COLORS.primary, 0.25)
-                        : COLORS.surfaceBorder
-                  }`,
-                  color: active || isHovered ? COLORS.primary500 : COLORS.textMuted,
-                  fontFamily: FONTS.body,
-                  fontSize: `${FONT_SIZES.base}px`,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  boxShadow:
-                    active || isHovered
-                      ? `0 0 12px ${hexRgba(COLORS.primary, 0.15)}, inset 0 0 8px ${hexRgba(COLORS.primary, 0.05)}`
-                      : 'none',
-                  ...(isMobile ? {minHeight: 44} : {}),
-                }}>
-                {tier}
-              </button>
-            );
-          })}
+          {STRENGTH_TIERS.map((tier) => (
+            <Chip
+              key={tier}
+              label={tier}
+              active={strengthFilters.includes(tier)}
+              onClick={() => toggleStrength(tier)}
+              isMobile={isMobile}
+            />
+          ))}
         </div>
 
         {/* Active filter chips */}

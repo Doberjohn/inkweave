@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, EASING, FONTS, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SPACING, hexRgba, whiteRgba} from '../../../shared/constants';
 
 export interface OptionPickerOption<T> {
   key: string;
@@ -28,9 +28,9 @@ interface OptionPickerProps<T> {
 
 const DEFAULT_OPTION_COLOR: OptionColor = {
   border: COLORS.primary,
-  glow: 'rgba(255, 185, 0, 0.15)',
-  hintBg: 'rgba(255, 185, 0, 0.06)',
-  hoverBorder: 'rgba(255, 185, 0, 0.35)',
+  glow: hexRgba(COLORS.primary, 0.15),
+  hintBg: hexRgba(COLORS.primary, 0.06),
+  hoverBorder: hexRgba(COLORS.primary, 0.35),
 };
 
 /** Inject keyframes once at module load */
@@ -50,7 +50,7 @@ const DEFAULT_OPTION_COLOR: OptionColor = {
       to   { opacity: 1; transform: translateY(0); }
     }
     .idv-option-btn:focus-visible {
-      outline: 2px solid #d4af37;
+      outline: 2px solid ${COLORS.primary500};
       outline-offset: 2px;
     }
   `;
@@ -94,7 +94,7 @@ export function OptionPicker<T>({ariaLabel, options, value, onChange, isMobile, 
       height,
       borderRadius: RADIUS.lg,
       cursor: 'pointer',
-      fontSize: 13,
+      fontSize: FONT_SIZES.base,
       fontFamily: FONTS.body,
       padding: '0 12px',
       transition: `all 0.3s ${EASING.bounce}`,
@@ -115,10 +115,10 @@ export function OptionPicker<T>({ariaLabel, options, value, onChange, isMobile, 
             opacity: 1,
           }
         : {
-            background: isHovered ? colors.hintBg : 'rgba(255,255,255,0.03)',
+            background: isHovered ? colors.hintBg : whiteRgba(0.03),
             border: isHovered
               ? `1px solid ${colors.hoverBorder}`
-              : '1px solid rgba(255,255,255,0.08)',
+              : `1px solid ${whiteRgba(0.08)}`,
             color: isHovered ? COLORS.text : COLORS.textMuted,
             fontWeight: 500,
             boxShadow: isHovered ? `inset 0 0 12px ${colors.glow}` : 'none',
