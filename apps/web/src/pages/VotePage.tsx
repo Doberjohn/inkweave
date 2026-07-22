@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState, type ReactNode} from 'react';
 import {useNavigate} from 'react-router-dom';
-import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
+import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CompactHeader, CtaButton, EtherealBackground} from '../shared/components';
 import {CardDetailSkeleton} from '../features/cards';
@@ -234,7 +234,7 @@ function VoteSkeletonPair({compactLayout}: {compactLayout: boolean}) {
 
 function VoteSkeletonPicker() {
   return (
-    <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+    <>
       <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10}}>
         <Skeleton width={220} height={14} borderRadius={RADIUS.sm} />
         <div style={{display: 'flex', gap: 6}}>
@@ -244,7 +244,7 @@ function VoteSkeletonPicker() {
         </div>
         <Skeleton width={140} height={32} borderRadius={RADIUS.lg} />
       </div>
-    </SkeletonTheme>
+    </>
   );
 }
 

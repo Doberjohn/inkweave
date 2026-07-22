@@ -1,5 +1,5 @@
 import {useState, useEffect, useId} from 'react';
-import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
+import Skeleton from 'react-loading-skeleton';
 import {COLORS, EASING, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
 import {useResponsive} from '../../../shared/hooks';
 import type {AccuracyDistribution} from '../../../shared/lib/supabase';
@@ -399,7 +399,7 @@ interface DistributionSkeletonProps {
 
 function DistributionSkeleton({isResult}: DistributionSkeletonProps) {
   return (
-    <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+    <>
       <div
         data-testid="distribution-loading"
         aria-busy="true"
@@ -409,7 +409,7 @@ function DistributionSkeleton({isResult}: DistributionSkeletonProps) {
         <Skeleton height={22} borderRadius={4} />
       </div>
       {!isResult && <DashedDivider />}
-    </SkeletonTheme>
+    </>
   );
 }
 

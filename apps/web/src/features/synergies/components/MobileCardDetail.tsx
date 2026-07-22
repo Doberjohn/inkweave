@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {Link} from 'react-router-dom';
-import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
+import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from '../../cards';
 import {CardDetailSkeleton, CardGridSkeleton} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
@@ -58,7 +58,7 @@ function MobileLoadingView() {
   return (
     <>
       <CardDetailSkeleton imageWidth={220} textLines={2} padding={0} ariaLabel="Loading card detail" />
-      <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+      <>
         <div
           style={{
             display: 'flex',
@@ -78,7 +78,7 @@ function MobileLoadingView() {
             </div>
           </div>
         ))}
-      </SkeletonTheme>
+      </>
     </>
   );
 }

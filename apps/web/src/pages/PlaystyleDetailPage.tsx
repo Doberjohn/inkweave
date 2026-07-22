@@ -31,7 +31,7 @@ import {RoleTileRow, type RoleTile} from '../features/synergies/components/RoleT
 import {MechanicsBottomSheet} from '../features/synergies/components/MechanicsBottomSheet';
 import {MechanicsButton} from '../features/synergies/components/MechanicsButton';
 import {Chip} from '../shared/components/Chip';
-import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
+import Skeleton from 'react-loading-skeleton';
 import {BrowseToolbar, CardGrid, CardGridSkeleton} from '../features/cards';
 import {
   searchCardsByName,
@@ -661,7 +661,7 @@ function PlaystyleDetailLoadingView({isMobile, goHome}: {isMobile: boolean; goHo
       <EtherealBackground />
       <CompactHeader onLogoClick={goHome} isMobile={isMobile} />
       <div style={{flex: 1, position: 'relative', zIndex: 1}}>
-        <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+        <>
           <div
             style={{
               padding: isMobile ? SPACING.lg : '20px 32px',
@@ -679,7 +679,7 @@ function PlaystyleDetailLoadingView({isMobile, goHome}: {isMobile: boolean; goHo
               <Skeleton height={12} width="60%" borderRadius={RADIUS.sm} />
             </div>
           </div>
-        </SkeletonTheme>
+        </>
         <CardGridSkeleton
           rows={3}
           columns={isMobile ? 3 : undefined}

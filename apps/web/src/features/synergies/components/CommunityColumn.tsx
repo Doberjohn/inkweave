@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
+import Skeleton from 'react-loading-skeleton';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONTS, FONT_SIZES, INK_COLORS, LETTER_SPACING, RADIUS, SPACING, TIER_COLORS, hexRgba} from '../../../shared/constants';
 import {CommunityEmptyState} from './CommunityEmptyState';
@@ -136,7 +136,7 @@ function useDelayedLoading(isLoading: boolean, delayMs: number): boolean {
  */
 function CommunityLoadingSkeleton() {
   return (
-    <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+    <>
       <div
         data-testid="community-loading"
         aria-busy="true"
@@ -172,7 +172,7 @@ function CommunityLoadingSkeleton() {
           <Skeleton height={40} borderRadius={RADIUS.sm} />
         </div>
       </div>
-    </SkeletonTheme>
+    </>
   );
 }
 

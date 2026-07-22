@@ -120,7 +120,6 @@ export const KNOWN_OFFENDERS = {
   ],
   // 44 files, 116 violations at seeding
   'no-raw-font-size': [
-    'src/AppLayout.tsx', // x1
     'src/docs/Colors.stories.tsx', // x10
     'src/docs/SpacingLayout.stories.tsx', // x2
     'src/docs/Typography.stories.tsx', // x5
@@ -227,7 +226,6 @@ export const KNOWN_OFFENDERS = {
   // kit component (CtaButton/LinkButton/TabList/IconButton/Chip) on touch.
   // 24 files, 29 sites at seeding (2026-07-22).
   'no-adhoc-buttons': [
-    'src/AppLayout.tsx', // x1
     'src/features/admin-analytics/DayGroup.tsx', // x1
     'src/features/admin-analytics/PairList.tsx', // x1
     'src/features/admin-analytics/RuleCalibrationTable.tsx', // x1

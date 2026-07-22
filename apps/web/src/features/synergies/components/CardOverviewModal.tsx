@@ -1,5 +1,5 @@
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
-import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
+import Skeleton from 'react-loading-skeleton';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
@@ -1462,7 +1462,7 @@ function DefaultInfoColumn({synergies, synergiesLoading, visibleGroups, activeGr
  */
 function SynergiesLoadingSkeleton() {
   return (
-    <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+    <>
       <div
         data-testid="card-overview-loading"
         aria-busy="true"
@@ -1489,7 +1489,7 @@ function SynergiesLoadingSkeleton() {
           </div>
         ))}
       </div>
-    </SkeletonTheme>
+    </>
   );
 }
 
