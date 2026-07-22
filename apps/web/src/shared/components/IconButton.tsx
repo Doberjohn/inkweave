@@ -6,6 +6,8 @@ interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
   'aria-label': string;
   /** Square hit target in px. Defaults to the 44px touch-target floor. */
   size?: number;
+  /** React 19 ref-as-prop: dialogs attach initial-focus refs to their close ×. */
+  ref?: React.Ref<HTMLButtonElement>;
 }
 
 /**
