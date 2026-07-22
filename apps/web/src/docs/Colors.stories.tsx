@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
-import {COLORS, INK_COLORS, ALL_INKS} from '../shared/constants';
+import {COLORS, INK_COLORS, ALL_INKS, TIER_COLORS} from '../shared/constants';
 
 // ── Swatch component ─────────────────────────────────────────────────
 // Renders a single color token with visual preview, name, and hex value.
@@ -107,6 +107,24 @@ function ColorPalette() {
         {name: 'surfaceHover', value: COLORS.surfaceHover},
         {name: 'surfaceAlt', value: COLORS.surfaceAlt},
         {name: 'surfaceBorder', value: COLORS.surfaceBorder},
+      ],
+    },
+    {
+      title: 'Elevation Ladder (higher = lighter; shadows are secondary cues)',
+      colors: [
+        {name: 'surface (rest)', value: COLORS.surface},
+        {name: 'surfaceRaised', value: COLORS.surfaceRaised},
+        {name: 'surfaceFloating', value: COLORS.surfaceFloating},
+        {name: 'surfaceOverlay', value: COLORS.surfaceOverlay},
+      ],
+    },
+    {
+      title: 'Strength Tiers (TIER_COLORS)',
+      colors: [
+        {name: 'perfect', value: TIER_COLORS.perfect.color},
+        {name: 'strong', value: TIER_COLORS.strong.color},
+        {name: 'moderate', value: TIER_COLORS.moderate.color},
+        {name: 'weak', value: TIER_COLORS.weak.color},
       ],
     },
     {

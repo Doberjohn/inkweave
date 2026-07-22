@@ -1,7 +1,7 @@
 import {forwardRef, useImperativeHandle, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SET_ABBREVIATIONS, SPACING, Z_INDEX} from '../constants';
+import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SET_ABBREVIATIONS, SPACING, Z_INDEX} from '../constants';
 import {useCardDataContext} from '../contexts/CardDataContext';
 import {useCardModal} from '../contexts/CardModalContext';
 import {smallImageUrl} from '../../features/cards/loader';
@@ -40,20 +40,13 @@ function HighlightedName({fullName, query}: {fullName: string; query: string}) {
 // Ink color / set abbreviation helpers.
 // =====================================================================
 
-const INK_COLORS: Record<string, string> = {
-  Amber: '#f59e0b',
-  Amethyst: '#8b5cf6',
-  Emerald: '#10b981',
-  Ruby: '#ef4444',
-  Sapphire: '#3b82f6',
-  Steel: '#71717a',
-};
-
 function inkColor(card: LorcanaCard): string {
   // Use the primary ink for the thumbnail border. (LorcanaCard exposes
   // `ink` / `ink2` — there is no `inkColor` field; the old code read an
   // always-undefined property and silently fell back to the gray border.)
-  return INK_COLORS[card.ink] ?? COLORS.surfaceBorder;
+  // 2026-07-22: the former private ink map here drifted from the theme
+  // (Steel #71717a vs INK_COLORS' #6b7280) — derive from the token instead.
+  return INK_COLORS[card.ink]?.border ?? COLORS.surfaceBorder;
 }
 
 /** Set abbreviation for a card. Split guard form keeps each conditional simple. */

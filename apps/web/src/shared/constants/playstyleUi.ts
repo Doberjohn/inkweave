@@ -33,6 +33,9 @@ export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
   'self-discard': makeUiMeta('#10b981', 'mechanic', '3071'), // Rapunzel & Flynn Rider - Unlikely Pair (Emerald-Steel)
   ramp: makeUiMeta('#3b82f6', 'mechanic', '2344'), // Cinderella - Dream Come True (Sapphire)
   sacrifice: makeUiMeta('#ef4444', 'mechanic', '2841'), // Sid Phillips - Toy Surgeon (Ruby)
+  // DELIBERATE off-palette accent (2026-07-22 ruling): sky-blue distinguishes
+  // Items from the three true-Sapphire playstyles above/below; it is the only
+  // accent not drawn from INK_COLORS borders.
   items: makeUiMeta('#0ea5e9', 'mechanic', '2860'), // Gadget Hackwrench - Resourceful Mechanic (Sapphire)
   healing: makeUiMeta('#3b82f6', 'mechanic', '2086'), // Grand Pabbie - Oldest and Wisest (Sapphire)
   exert: makeUiMeta('#8b5cf6', 'mechanic', '2244'), // Demona - Scourge of the Wyvern Clan (Amethyst)

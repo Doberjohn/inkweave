@@ -23,6 +23,11 @@ export {
   SYNERGY_SORT_OPTIONS,
   hexToRgb,
   hexRgba,
+  blackRgba,
+  whiteRgba,
+  glow,
+  SHADOWS,
+  TIER_COLORS,
 } from './theme';
 export type {PlaystyleUiMeta, ComingSoonPlaystyle} from './playstyleUi';
 export {PLAYSTYLE_UI, COMING_SOON_PLAYSTYLES} from './playstyleUi';
