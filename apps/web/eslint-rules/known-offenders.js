@@ -70,7 +70,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/ConnectionGroup.stories.tsx', // x1
     'src/shared/components/ConnectionGroup.tsx', // x13
     'src/shared/components/CountBadge.tsx', // x1
-    'src/shared/components/CtaButton.stories.tsx', // x2
     'src/shared/components/EtherealBackground.tsx', // x1
     'src/shared/components/FilterButton.stories.tsx', // x1
     'src/shared/components/FilterContent.stories.tsx', // x3
@@ -136,11 +135,9 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/CompactHeader.tsx', // x9
     'src/shared/components/ConnectionGroup.tsx', // x5
     'src/shared/components/CountBadge.tsx', // x1
-    'src/shared/components/CtaButton.tsx', // x1
     'src/shared/components/EtherealBackground.tsx', // x4
     'src/shared/components/FilterButton.stories.tsx', // x1
     'src/shared/components/FilterDialog.tsx', // x3
-    'src/shared/components/FiltersButton.tsx', // x2
     'src/shared/components/HeroSection.tsx', // x2
     'src/shared/components/SearchAutocomplete.tsx', // x1
     'src/shared/components/SearchBottomSheet.tsx', // x4
