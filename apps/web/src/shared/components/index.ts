@@ -16,6 +16,7 @@ export {CostFilterGroup} from './CostFilterGroup';
 export {CostIcon} from './CostIcon';
 export {CountBadge} from './CountBadge';
 export {CtaButton} from './CtaButton';
+export {DialogShell} from './DialogShell';
 export {LinkButton} from './LinkButton';
 export {TabList} from './TabList';
 export {IconButton} from './IconButton';

@@ -19,6 +19,7 @@ import {AbilityTag} from '../AbilityTag';
 import {BackLink} from '../BackLink';
 import {EmptyState} from '../EmptyState';
 import {CtaButton} from '../CtaButton';
+import {DialogShell} from '../DialogShell';
 
 expect.extend(matchers);
 
@@ -76,6 +77,17 @@ describe('axe accessibility audit', () => {
   it('CtaButton has no violations', async () => {
     const {container} = render(<CtaButton>Browse all cards</CtaButton>);
     const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
+  it('DialogShell (open) has no violations', async () => {
+    // Portals to document.body, so audit baseElement — `container` would be empty.
+    const {baseElement} = render(
+      <DialogShell isOpen onClose={() => {}} ariaLabel="Example dialog">
+        <button type="button">Close</button>
+      </DialogShell>,
+    );
+    const results = await axe(baseElement);
     expect(results).toHaveNoViolations();
   });
 });
