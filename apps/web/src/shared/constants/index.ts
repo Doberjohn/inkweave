@@ -42,4 +42,4 @@ export {
   DISABLED_STYLE,
 } from './theme';
 export type {PlaystyleUiMeta, ComingSoonPlaystyle} from './playstyleUi';
-export {PLAYSTYLE_UI, COMING_SOON_PLAYSTYLES} from './playstyleUi';
+export {PLAYSTYLE_UI, COMING_SOON_PLAYSTYLES, accentRgba} from './playstyleUi';

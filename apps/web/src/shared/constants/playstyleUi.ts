@@ -20,6 +20,9 @@ function makeUiMeta(
   return {accentColor, accentRgb: hexToRgb(accentColor), kind, heroCardId};
 }
 
+/** Compose an alpha color from a playstyle's `accentRgb` ("r, g, b") — the dynamic-accent sibling of hexRgba (#511). */
+export const accentRgba = (accentRgb: string, a: number) => `rgba(${accentRgb}, ${a})`;
+
 /**
  * Presentational metadata for registered playstyles. accentColor is the hero
  * card's ink colour (INK_COLORS[color].border); see the Hero cards table in

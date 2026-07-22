@@ -1,4 +1,4 @@
-import {COLORS, FONT_SIZES, RADIUS} from '../constants';
+import {COLORS, EMPTY_BOX, FONT_SIZES, RADIUS} from '../constants';
 
 interface ImageUploadTileProps {
   /** Preview URL for the chosen image (data URL), or null when none chosen. */
@@ -42,17 +42,13 @@ export function ImageUploadTile({
   return (
     <label
       style={{
+        ...EMPTY_BOX,
         position: 'relative',
-        display: 'grid',
-        placeItems: 'center',
         width,
         height,
-        border: `1px dashed ${COLORS.surfaceHover}`,
         borderRadius: RADIUS.sm,
         background: COLORS.surfaceAlt,
-        color: COLORS.gray600,
         fontSize: FONT_SIZES.xs,
-        textAlign: 'center',
         cursor: 'pointer',
         overflow: 'hidden',
       }}>

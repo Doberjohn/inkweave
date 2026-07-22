@@ -45,9 +45,11 @@ import {
   FONTS,
   FONT_SIZES,
   LAYOUT,
+  LETTER_SPACING,
   RADIUS,
   SPACING,
   PLAYSTYLE_UI,
+  accentRgba,
 } from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
@@ -100,8 +102,8 @@ function PlaystyleHero({
         position: 'relative',
         padding: layout.padding,
         overflow: 'hidden',
-        borderBottom: `1px solid rgba(${accentRgb}, 0.25)`,
-        boxShadow: `0 4px 20px rgba(${accentRgb}, 0.08)`,
+        borderBottom: `1px solid ${accentRgba(accentRgb, 0.25)}`,
+        boxShadow: `0 4px 20px ${accentRgba(accentRgb, 0.08)}`,
       }}>
       {/* Accent bar */}
       <div
@@ -149,7 +151,7 @@ function PlaystyleHero({
             }}>
             Playstyles
           </a>
-          <span style={{fontSize: `${FONT_SIZES.xs}px`, color: '#555570'}}>/</span>
+          <span style={{fontSize: `${FONT_SIZES.xs}px`, color: COLORS.textDim}}>/</span>
           <span style={{color: COLORS.text, fontWeight: 500}}>{name}</span>
         </nav>
 
@@ -168,7 +170,7 @@ function PlaystyleHero({
             style={{
               fontSize: `${FONT_SIZES.xxl}px`,
               fontWeight: 700,
-              letterSpacing: '0.08em',
+              letterSpacing: LETTER_SPACING.eyebrow,
               textTransform: 'uppercase',
               margin: 0,
             }}>

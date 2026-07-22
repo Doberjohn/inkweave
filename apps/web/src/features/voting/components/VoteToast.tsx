@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SHADOWS, TIER_COLORS, Z_INDEX} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SHADOWS, TIER_COLORS, TRUNCATE, Z_INDEX} from '../../../shared/constants';
 import {LinkButton} from '../../../shared/components/LinkButton';
 import type {Score} from '../../../shared/lib/supabase';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';
@@ -158,9 +158,7 @@ export function VoteToast({data, onDismiss, onUndo, isMobile}: VoteToastProps) {
             fontSize: FONT_SIZES.sm,
             color: COLORS.textMuted,
             fontFamily: FONTS.body,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            ...TRUNCATE,
           }}>
           {data.cardAName} + {data.cardBName}
         </span>

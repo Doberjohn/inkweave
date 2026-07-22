@@ -1,4 +1,4 @@
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
+import {CAP_LABEL_XS, COLORS, EMPTY_BOX, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
 import type {VoteLogRow} from './voteLogTypes';
 
 interface VoteDetailTableProps {
@@ -28,11 +28,7 @@ function wouldPlayLabel(wouldPlay: boolean | null): string {
 }
 
 const HEAD: React.CSSProperties = {
-  fontSize: FONT_SIZES.xs,
-  color: COLORS.textMuted,
-  fontWeight: 700,
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
+  ...CAP_LABEL_XS,
   textAlign: 'left',
   padding: `${SPACING.sm}px ${SPACING.md}px`,
 };
@@ -47,13 +43,10 @@ export function VoteDetailTable({pair, votes}: VoteDetailTableProps) {
     return (
       <div
         style={{
+          ...EMPTY_BOX,
           fontFamily: FONTS.body,
           fontSize: FONT_SIZES.base,
-          color: COLORS.textMuted,
           padding: SPACING.lg,
-          textAlign: 'center',
-          border: `1px dashed ${COLORS.surfaceBorder}`,
-          borderRadius: RADIUS.lg,
         }}>
         Select a pair to see its votes
       </div>

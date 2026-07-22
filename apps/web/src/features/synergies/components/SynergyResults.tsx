@@ -9,6 +9,7 @@ import type {SynergySortOrder} from '../../../shared/constants';
 import {
   COLORS,
   FONT_SIZES,
+  LETTER_SPACING,
   SPACING,
   RADIUS,
   LAYOUT,
@@ -78,7 +79,7 @@ function SynergyResultsHeader({totalSynergyCount}: {totalSynergyCount: number}) 
           fontSize: `${FONT_SIZES.xl}px`,
           fontWeight: 700,
           color: COLORS.text,
-          letterSpacing: '0.08em',
+          letterSpacing: LETTER_SPACING.eyebrow,
           textTransform: 'uppercase',
           margin: 0,
         }}>

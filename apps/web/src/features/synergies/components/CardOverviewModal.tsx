@@ -12,7 +12,7 @@ import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {trackEvent} from '../../../shared/lib/analytics';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SHADOWS, Z_INDEX, hexRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, LETTER_SPACING, RADIUS, SHADOWS, Z_INDEX, hexRgba} from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
 import {IconButton} from '../../../shared/components/IconButton';
 import {LinkButton} from '../../../shared/components/LinkButton';
@@ -1706,7 +1706,7 @@ function BackButton({onClick}: {onClick: () => void}) {
       style={{
         fontWeight: 700,
         textTransform: 'uppercase',
-        letterSpacing: '0.08em',
+        letterSpacing: LETTER_SPACING.eyebrow,
         flexShrink: 0,
         display: 'inline-flex',
         alignItems: 'center',

@@ -1,5 +1,5 @@
 import type {ReactNode} from 'react';
-import {COLORS, FONT_SIZES, RADIUS, SPACING} from '../constants';
+import {CAP_LABEL, COLORS, FONT_SIZES, RADIUS, SPACING} from '../constants';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -45,11 +45,9 @@ export function CollapsibleSection({
         }}>
         <span
           style={{
+            ...CAP_LABEL,
             fontSize: `${FONT_SIZES.base}px`,
             fontWeight: 600,
-            color: COLORS.textMuted,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
             display: 'flex',
             alignItems: 'center',
             gap: `${SPACING.sm}px`,

@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, TRUNCATE} from '../../shared/constants';
 import type {PairStat} from './voteAnalyticsTypes';
 
 interface PairListProps {
@@ -8,11 +8,7 @@ interface PairListProps {
   onSelectPair: (p: {a: string; b: string}) => void;
 }
 
-const truncate: React.CSSProperties = {
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-};
+const truncate = TRUNCATE;
 
 /**
  * A clickable list of voted pairs (already filtered + sorted by the parent).
