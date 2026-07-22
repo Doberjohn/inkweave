@@ -70,6 +70,7 @@ export default tseslint.config(
       'inkweave/no-raw-z-index': 'error',
       'inkweave/no-raw-easing': 'error',
       'inkweave/no-backdrop-filter': 'error',
+      'inkweave/no-adhoc-buttons': 'error',
       // OFF until the Wave-0 convergence sweep shrinks the ~429-literal noise
       // floor (#508 Step 6; enable together with seeding its ledger).
       'inkweave/no-raw-spacing': 'off',

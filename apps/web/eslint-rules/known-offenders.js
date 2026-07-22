@@ -252,4 +252,33 @@ export const KNOWN_OFFENDERS = {
   // 0 files, 0 violations at seeding
   'no-raw-spacing': [
   ],
+  // Ad-hoc styled <button> sites pre-dating the #509 kit. Converge each to a
+  // kit component (CtaButton/LinkButton/TabList/IconButton/Chip) on touch.
+  // 24 files, 29 sites at seeding (2026-07-22).
+  'no-adhoc-buttons': [
+    'src/AppLayout.tsx', // x1
+    'src/features/admin-analytics/DayGroup.tsx', // x1
+    'src/features/admin-analytics/PairList.tsx', // x1
+    'src/features/admin-analytics/RuleCalibrationTable.tsx', // x1
+    'src/features/admin-analytics/WebAnalyticsView.tsx', // x1
+    'src/features/image-admin/components/CardImagePicker.tsx', // x1
+    'src/features/reveals/InkTrackerTile.tsx', // x1
+    'src/features/reveals/NewFranchises.tsx', // x1
+    'src/features/reveals/RarityBreakdown.tsx', // x1
+    'src/features/reveals/RevealsPromoCard.tsx', // x1
+    'src/features/reveals/SpotlightHero.tsx', // x1
+    'src/features/reveals/WhatsNewSection.tsx', // x1
+    'src/features/synergies/components/CardDetail.tsx', // x1
+    'src/features/synergies/components/CardDetailPanel.tsx', // x1
+    'src/features/synergies/components/CardOverviewModal.tsx', // x2
+    'src/features/synergies/components/ColumnHeader.tsx', // x1
+    'src/features/synergies/components/MechanicsButton.tsx', // x1
+    'src/features/synergies/components/MobileCardDetail.tsx', // x1
+    'src/features/synergies/components/MobileComparisonView.tsx', // x2
+    'src/features/synergies/components/SynergyGroup.tsx', // x1
+    'src/features/tuning-admin/components/PendingTray.tsx', // x2
+    'src/features/tuning-admin/components/RuleSelector.tsx', // x2
+    'src/features/voting/components/InDepthVoteForm.tsx', // x2
+    'src/features/voting/components/VoteStatusBanner.tsx', // x1
+  ],
 };
