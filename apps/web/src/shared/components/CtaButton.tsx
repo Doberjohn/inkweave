@@ -26,6 +26,60 @@ const DISABLED_STYLE: React.CSSProperties = {
 /** Uniform kit press feedback (#509): a small scale-down while the pointer is held. */
 const PRESS_SCALE = 'scale(0.97)';
 
+/** Per-variant recipe; `hot` = hovered and enabled (drives the neutral warm-up). */
+function variantStyle(variant: CtaVariant, hot: boolean): React.CSSProperties {
+  const styles: Record<CtaVariant, React.CSSProperties> = {
+    filled: CTA_FILLED_STYLE,
+    pill: {...CTA_FILLED_STYLE, borderRadius: `${RADIUS.pill}px`},
+    ghost: {
+      background: 'transparent',
+      color: COLORS.primary,
+      border: `1px solid ${hexRgba(COLORS.primary, 0.4)}`,
+    },
+    neutral: {
+      background: 'transparent',
+      color: hot ? COLORS.primary : COLORS.textMuted,
+      border: `1px solid ${hot ? hexRgba(COLORS.primary, 0.4) : COLORS.surfaceBorder}`,
+    },
+  };
+  return styles[variant];
+}
+
+
+type MouseHandlers = Pick<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  'onMouseEnter' | 'onMouseLeave' | 'onMouseDown' | 'onMouseUp'
+>;
+
+/** Hover + press tracking with the boop trigger, chaining any caller-supplied handlers. */
+function useCtaInteractions(disabled: boolean | undefined, handlers: MouseHandlers) {
+  const boop = useBoop({scale: 1.03, timing: 200});
+  const [hovered, setHovered] = useState(false);
+  const [pressed, setPressed] = useState(false);
+
+  const props: MouseHandlers = {
+    onMouseEnter: (e) => {
+      setHovered(true);
+      if (!disabled) boop.trigger();
+      handlers.onMouseEnter?.(e);
+    },
+    onMouseLeave: (e) => {
+      setHovered(false);
+      setPressed(false);
+      handlers.onMouseLeave?.(e);
+    },
+    onMouseDown: (e) => {
+      if (!disabled) setPressed(true);
+      handlers.onMouseDown?.(e);
+    },
+    onMouseUp: (e) => {
+      setPressed(false);
+      handlers.onMouseUp?.(e);
+    },
+  };
+
+  return {boop, hovered, pressed, props};
+}
 
 /** Shared CTA button: variant menu + built-in boop hover, press, and disabled states. */
 export function CtaButton({
@@ -39,9 +93,12 @@ export function CtaButton({
   disabled,
   ...rest
 }: CtaButtonProps) {
-  const boop = useBoop({scale: 1.03, timing: 200});
-  const [hovered, setHovered] = useState(false);
-  const [pressed, setPressed] = useState(false);
+  const {boop, hovered, pressed, props} = useCtaInteractions(disabled, {
+    onMouseEnter,
+    onMouseLeave,
+    onMouseDown,
+    onMouseUp,
+  });
 
   const baseStyle: React.CSSProperties = {
     display: 'flex',
@@ -59,46 +116,14 @@ export function CtaButton({
     textDecoration: 'none',
   };
 
-  const variantStyles: Record<CtaVariant, React.CSSProperties> = {
-    filled: CTA_FILLED_STYLE,
-    pill: {...CTA_FILLED_STYLE, borderRadius: `${RADIUS.pill}px`},
-    ghost: {
-      background: 'transparent',
-      color: COLORS.primary,
-      border: `1px solid ${hexRgba(COLORS.primary, 0.4)}`,
-    },
-    neutral: {
-      background: 'transparent',
-      color: hovered && !disabled ? COLORS.primary : COLORS.textMuted,
-      border: `1px solid ${hovered && !disabled ? hexRgba(COLORS.primary, 0.4) : COLORS.surfaceBorder}`,
-    },
-  };
-
   return (
     <button
       {...rest}
+      {...props}
       disabled={disabled}
-      onMouseEnter={(e) => {
-        setHovered(true);
-        if (!disabled) boop.trigger();
-        onMouseEnter?.(e);
-      }}
-      onMouseLeave={(e) => {
-        setHovered(false);
-        setPressed(false);
-        onMouseLeave?.(e);
-      }}
-      onMouseDown={(e) => {
-        if (!disabled) setPressed(true);
-        onMouseDown?.(e);
-      }}
-      onMouseUp={(e) => {
-        setPressed(false);
-        onMouseUp?.(e);
-      }}
       style={{
         ...baseStyle,
-        ...variantStyles[variant],
+        ...variantStyle(variant, hovered && !disabled),
         ...(!disabled ? boop.style : {}),
         ...(pressed && !disabled ? {transform: PRESS_SCALE} : {}),
         ...(disabled ? DISABLED_STYLE : {}),
