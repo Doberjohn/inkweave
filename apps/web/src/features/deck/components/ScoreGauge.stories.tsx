@@ -28,6 +28,7 @@ const quality = (over: Partial<QualityScore> = {}): QualityScore => ({
 const meta: Meta<typeof ScoreGauge> = {
   title: 'Deck/ScoreGauge',
   component: ScoreGauge,
+  args: {onShowMath: () => {}},
   parameters: {backgrounds: {default: 'dark'}},
   decorators: [
     (Story) => (

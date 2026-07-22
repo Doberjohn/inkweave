@@ -206,37 +206,5 @@ export function classifyArchetype(
   const runnerUp = ranked[1][1];
   const confidence = topScore > 0 ? Math.min(1, Math.max(0, (topScore - runnerUp) / topScore)) : 0;
 
-  // TEMP DEBUG — archetype diagnosis (#472). REMOVE before committing.
-  // eslint-disable-next-line no-console
-  console.log('[archetype]', {
-    features: Object.fromEntries(Object.entries(features).map(([k, v]) => [k, +v.toFixed(2)])),
-    scores: Object.fromEntries(ranked.map(([a, s]) => [a, +s.toFixed(2)])),
-    winner: topArchetype,
-    confidence: +confidence.toFixed(2),
-    roles: debugRoles(deck, getCardById),
-  });
-
   return {archetype: topArchetype, confidence};
-}
-
-// TEMP DEBUG (#472) — lists which cards feed each role-detected feature, so gaps in
-// role tagging are visible (a removal card missing from `removal` = a detection gap).
-// REMOVE together with the console.log above before committing.
-function debugRoles(deck: Deck, getCardById: (id: string) => LorcanaCard | undefined) {
-  const buckets: {removal: string[]; draw: string[]; ramp: string[]; highCostChar: string[]} = {
-    removal: [],
-    draw: [],
-    ramp: [],
-    highCostChar: [],
-  };
-  for (const {cardId, quantity} of deck.cards) {
-    const card = getCardById(cardId);
-    if (!card) continue;
-    const tag = `${quantity}x ${card.fullName ?? card.name} [${card.cost}]`;
-    if (getRemovalRoles(card).length > 0) buckets.removal.push(tag);
-    if (getCardMechanics(card).includes('draw')) buckets.draw.push(tag);
-    if (getRampRoles(card).includes('inkwell-ramp')) buckets.ramp.push(tag);
-    if (isCharacter(card) && card.cost >= 5) buckets.highCostChar.push(tag);
-  }
-  return buckets;
 }

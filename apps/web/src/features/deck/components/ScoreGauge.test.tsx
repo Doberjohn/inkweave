@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 import {fireEvent, render, screen} from '@testing-library/react';
 import type {QualityScore, ScoreContribution} from '../types';
 import {ScoreGauge} from './ScoreGauge';
@@ -17,7 +17,7 @@ const quality = (score: number, breakdown: ScoreContribution[]): QualityScore =>
   configVersion: '1',
 });
 
-// 6 positive dimensions (> TOP_N of 5) + a penalty, so the "show more" toggle appears.
+// 6 positive dimensions + a penalty, all behind the "show the math" disclosure.
 const sixPlusPenalty: ScoreContribution[] = [
   row('curve', 11),
   row('inkable', 9),
@@ -42,17 +42,16 @@ describe('ScoreGauge', () => {
     expect(screen.getByText('Needs work')).toBeInTheDocument();
   });
 
-  it('collapses to the top contributors, expanding on demand', () => {
-    render(<ScoreGauge quality={quality(72, sixPlusPenalty)} />);
-    // 6 positive dimensions, top 5 shown → the weakest (Shift Coverage) is hidden.
-    expect(screen.queryByText('Shift Coverage')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', {name: /show 1 more/i}));
-    expect(screen.getByText('Shift Coverage')).toBeInTheDocument();
+  it('fires onShowMath from the "show the math" button; the math itself lives in the modal', () => {
+    const onShowMath = vi.fn();
+    render(<ScoreGauge quality={quality(72, sixPlusPenalty)} onShowMath={onShowMath} />);
+    expect(screen.queryByText(/subtract 6 points/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name: /why 72\? show the math/i}));
+    expect(onShowMath).toHaveBeenCalledOnce();
   });
 
-  it('always shows the vulnerability penalty row, below the dimensions', () => {
+  it('renders no math button without an onShowMath callback', () => {
     render(<ScoreGauge quality={quality(72, sixPlusPenalty)} />);
-    expect(screen.getByText('Vulnerabilities')).toBeInTheDocument();
-    expect(screen.getByText(/subtract 6 points/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: /show the math/i})).not.toBeInTheDocument();
   });
 });

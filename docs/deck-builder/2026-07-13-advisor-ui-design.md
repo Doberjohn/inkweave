@@ -16,15 +16,17 @@ Surface the already-built **v1** deck advisor (`analyzeDeck` → stats / synergy
 
 Sourced from `useDeckAnalysis(deck, getCardById)` → `{analysis, isLoading}` (built).
 
-| Component | Renders | Status |
+| Component | Renders | Status (updated 2026-07-22) |
 |---|---|---|
 | `ScoreGauge` | Deck Quality Score + glass-box breakdown | **done** |
-| `HealthMeter` (per dimension) | analyzer rows (curve/removal/draw/…) + status | to build |
-| `VulnerabilityBox` | pool-derived "what to watch for" risks | to build |
+| ~~`HealthMeter`~~ → panel health list | full per-dimension analyzer detail in the panel | to build (see ruling below) |
+| `VulnerabilityBox` | pool-derived "what to watch for" risks | **done** (`0586910`) |
 | `ArchetypeBadge` | detected archetype + confidence | to build |
 | Declared-gameplan selector | overrides the auto archetype → `deck.gameplan` → re-runs `analyzeDeck` | to build |
-| `HealthSummary` (Cards-tab 1/3) | compact live preview → links to Analysis tab | to build |
+| `HealthSummary` (Cards-tab cell) | lens switcher: `HealthVariants` Priorities / Vitals / Radar → links to Analysis tab | **done** (`0586910`, shipped as 50/50 "Option C" split) |
 | `DeckAdvisorPanel` | composes the above in the Analysis tab | to build |
+
+**Lens ruling (2026-07-22):** the flat per-dimension `HealthMeter` is retired. The Cards-tab health cell keeps all three `HealthVariants` lenses behind a dropdown (Priorities default, persisted per user); the *panel* carries the complete per-dimension detail instead. Score numerals use `FONTS.body` (Plus Jakarta Sans), matching the deck name. Mobile bottom-sheet deferred until the mobile builder exists (DeckBuilderPage is desktop-only).
 
 ## Data flow
 

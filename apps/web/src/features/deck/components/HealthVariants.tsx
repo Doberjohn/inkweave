@@ -154,7 +154,7 @@ export function RadarMedallion({analysis}: {analysis: DeckAnalysis}) {
           <circle key={i} cx={x} cy={y} r={3} fill={dimensionColor(dims[i].status)} />
         ))}
         <circle cx={CX} cy={CY} r={22} fill={COLORS.surfaceAlt} stroke={COLORS.surfaceBorder} strokeWidth={1} />
-        <text x={CX} y={CY + 2} textAnchor="middle" dominantBaseline="middle" fontFamily={FONTS.hero} fontSize={29} fill={tier.color}>
+        <text x={CX} y={CY + 2} textAnchor="middle" dominantBaseline="middle" fontFamily={FONTS.body} fontWeight={700} fontSize={29} fill={tier.color}>
           {analysis.quality.score}
         </text>
         {dims.map((d, i) => {

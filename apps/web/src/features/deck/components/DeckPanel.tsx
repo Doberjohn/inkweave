@@ -1,7 +1,7 @@
 import {useEffect, useRef, useState, type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import type {DeckStats} from '../types';
+import type {Archetype, DeckStats} from '../types';
 import type {DeckAnalysis} from '../analysis/analyzeDeck';
 import {DeckCardRow} from './DeckCardRow';
 import {CostCurveStrip} from './CostCurveStrip';
@@ -9,8 +9,7 @@ import {totalCopies} from './costCurveColumns';
 import {HealthSummary} from './HealthSummary';
 import {type HealthVariant} from './HealthVariants';
 import {SortSelect} from '../../../shared/components/SortSelect';
-import {ScoreGauge} from './ScoreGauge';
-import {VulnerabilityBox} from './VulnerabilityBox';
+import {DeckAdvisorPanel} from './DeckAdvisorPanel';
 import {previewGeometry} from './previewGeometry';
 import {ALL_INKS, COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../../../shared/constants';
 import {InkIcon} from '../../../shared/components/InkIcon';
@@ -50,6 +49,10 @@ interface DeckPanelProps {
   analysisLoading?: boolean;
   /** Set when the advisor pipeline failed; surfaced as an "unavailable" state. */
   analysisError?: Error | null;
+  /** The deck's declared gameplan (undefined = auto-detect); drives the advisor's selector. */
+  gameplan?: Archetype;
+  /** Writes `deck.gameplan`; undefined clears the declaration back to auto-detect. */
+  onGameplanChange?: (gameplan: Archetype | undefined) => void;
 }
 
 type PanelTab = 'cards' | 'analysis';
@@ -297,25 +300,28 @@ function LegalityErrors({stats}: {stats: DeckStats}) {
   );
 }
 
-function AnalysisTab({analysis, isLoading, error}: {analysis: DeckAnalysis | null; isLoading: boolean; error: Error | null}) {
-  const emptyMessage = error
-    ? 'Analysis unavailable — try editing the deck.'
-    : isLoading
-      ? 'Analyzing deck…'
-      : 'Add cards to see the Deck Quality Score.';
+function AnalysisTab({
+  analysis,
+  isLoading,
+  error,
+  gameplan,
+  onGameplanChange,
+}: {
+  analysis: DeckAnalysis | null;
+  isLoading: boolean;
+  error: Error | null;
+  gameplan: Archetype | undefined;
+  onGameplanChange: (gameplan: Archetype | undefined) => void;
+}) {
   return (
     <div style={{padding: SPACING.md, display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
-      {analysis ? (
-        <>
-          <ScoreGauge quality={analysis.quality} />
-          <VulnerabilityBox vulnerabilities={analysis.health.vulnerabilities} />
-        </>
-      ) : (
-        <div
-          style={{border: `1px dashed ${COLORS.surfaceBorder}`, borderRadius: RADIUS.md, padding: SPACING.lg, textAlign: 'center', color: COLORS.textMuted, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.base}px`}}>
-          {emptyMessage}
-        </div>
-      )}
+      <DeckAdvisorPanel
+        analysis={analysis}
+        isLoading={isLoading}
+        error={error}
+        gameplan={gameplan}
+        onGameplanChange={onGameplanChange}
+      />
       {PENDING_ADVISOR_ZONES.map((zone) => (
         <div
           key={zone}
@@ -412,7 +418,7 @@ function readHealthVariant(): HealthVariant {
   return 'priorities';
 }
 
-export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement, onRemove, onOpenDetails, analysis, analysisLoading, analysisError}: DeckPanelProps) {
+export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement, onRemove, onOpenDetails, analysis, analysisLoading, analysisError, gameplan, onGameplanChange}: DeckPanelProps) {
   const [tab, setTab] = useState<PanelTab>('cards');
   const [healthVariant, setHealthVariant] = useState<HealthVariant>(readHealthVariant);
   const updateHealthVariant = (v: HealthVariant) => {
@@ -574,7 +580,13 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
 
       <div style={{flex: 1, minHeight: 0, overflowY: 'auto'}}>
         {tab === 'analysis' ? (
-          <AnalysisTab analysis={analysis ?? null} isLoading={analysisLoading ?? false} error={analysisError ?? null} />
+          <AnalysisTab
+            analysis={analysis ?? null}
+            isLoading={analysisLoading ?? false}
+            error={analysisError ?? null}
+            gameplan={gameplan}
+            onGameplanChange={onGameplanChange ?? (() => {})}
+          />
         ) : rows.length === 0 ? (
           <p
             style={{

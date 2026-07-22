@@ -56,7 +56,8 @@ export function ScoreRing({score, color, size, label}: ScoreRingProps) {
           textAnchor="middle"
           dominantBaseline="middle"
           fill={color}
-          fontFamily={FONTS.hero}
+          fontFamily={FONTS.body}
+          fontWeight={700}
           fontSize={NUMBER_FONT}
           style={{fontVariantNumeric: 'tabular-nums'}}>
           {clamped}
