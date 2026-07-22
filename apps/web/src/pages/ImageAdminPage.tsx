@@ -1,5 +1,6 @@
 import {COLORS, SPACING, FONT_SIZES, RADIUS} from '../shared/constants';
 import {GithubTokenGate} from '../shared/components/GithubTokenGate';
+import {CtaButton} from '../shared/components';
 import {useImageAdmin, CardImagePicker, UploadColumn} from '../features/image-admin';
 
 export function ImageAdminPage() {
@@ -13,18 +14,12 @@ export function ImageAdminPage() {
     <main style={{maxWidth: 900, margin: '0 auto', padding: SPACING.lg, color: COLORS.text}}>
       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
         <h1 style={{fontSize: FONT_SIZES.xxl}}>Update a card image</h1>
-        <button
+        <CtaButton
+          variant="neutral"
           onClick={ctrl.clearToken}
-          style={{
-            background: 'none',
-            border: `1px solid ${COLORS.surfaceHover}`,
-            color: COLORS.gray600,
-            borderRadius: RADIUS.sm,
-            padding: '6px 10px',
-            cursor: 'pointer',
-          }}>
+          style={{minHeight: 0, padding: '6px 10px', fontSize: FONT_SIZES.sm}}>
           Forget token
-        </button>
+        </CtaButton>
       </div>
 
       {ctrl.result && (
