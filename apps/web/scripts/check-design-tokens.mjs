@@ -56,21 +56,24 @@ function* walk(dir) {
 
 const files = [...walk(join(ROOT, 'src')), join(ROOT, 'index.html')];
 
+/** Occurrences of `needle` in `haystack` (plain substring scan). */
+function countOccurrences(haystack, needle) {
+  let count = 0;
+  let i = -1;
+  while ((i = haystack.indexOf(needle, i + 1)) !== -1) count += 1;
+  return count;
+}
+
+/** Total occurrences of every needle in `text` against the given haystack. */
+function sumNeedleHits(haystack, needles) {
+  return needles.reduce((sum, needle) => sum + countOccurrences(haystack, needle), 0);
+}
+
 function countHits(text) {
-  let tokens = 0;
-  const lower = text.toLowerCase();
-  for (const hex of TOKEN_HEXES) {
-    let i = -1;
-    while ((i = lower.indexOf(hex, i + 1)) !== -1) tokens += 1;
-  }
-  for (const s of EASING_STRINGS) {
-    let i = -1;
-    while ((i = text.indexOf(s, i + 1)) !== -1) tokens += 1;
-  }
-  for (const f of FONT_NAMES) {
-    let i = -1;
-    while ((i = text.indexOf(f, i + 1)) !== -1) tokens += 1;
-  }
+  const tokens =
+    sumNeedleHits(text.toLowerCase(), TOKEN_HEXES) +
+    sumNeedleHits(text, EASING_STRINGS) +
+    sumNeedleHits(text, FONT_NAMES);
   const trips = TRIPWIRES.filter((t) => t.re.test(text)).map((t) => t.name);
   return {tokens, trips};
 }
