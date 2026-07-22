@@ -145,7 +145,7 @@ describe('FilterButton', () => {
       );
 
       const button = screen.getByRole('button');
-      expect(button.style.padding).toBe('5px 10px');
+      expect(button.style.padding).toBe('0px');
     });
 
     it('should apply md size styles when specified', () => {

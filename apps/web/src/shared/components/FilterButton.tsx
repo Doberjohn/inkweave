@@ -18,7 +18,7 @@ interface FilterButtonProps {
 
 const SIZE_STYLES: Record<FilterButtonSize, React.CSSProperties> = {
   sm: {
-    padding: '5px 10px',
+    padding: 0,
     borderRadius: `${RADIUS.md}px`,
     fontSize: `${FONT_SIZES.sm}px`,
   },

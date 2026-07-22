@@ -182,11 +182,13 @@ function getToolbarSearchInputStyle(focused: boolean): React.CSSProperties {
 }
 
 function getToolbarSearchWrapperStyle(): React.CSSProperties {
-  // Fixed-width, no-shrink: the search box holds a stable 300px so it reads as a
-  // consistent control next to Filters, and the active-filter chip row (flex:1)
-  // wraps below it under pressure instead of squeezing the input. position:'relative'
-  // anchors the absolute search icon.
-  return {position: 'relative', width: 300, flexShrink: 0};
+  // Row filler: flex-basis 0 (via flex:1) keeps the search out of the flex-wrap
+  // line-break math entirely, so it can never push the icon groups to a second
+  // row; it then grows into exactly the leftover space (wider screens = wider
+  // search). minWidth:0 overrides the implicit min-content floor for the same
+  // reason. When active-filter chips render, their row (flex:1) splits the
+  // leftover space with the search. position:'relative' anchors the search icon.
+  return {position: 'relative', flex: 1, minWidth: 0};
 }
 
 function ToolbarSearch({query, onChange}: {query: string; onChange: (q: string) => void}) {
@@ -334,7 +336,7 @@ export function BrowseToolbar({
       )}
       {extraChips}
       {chips.length > 0 && <ActiveChipsRow chips={chips} isMobile={isMobile} />}
-      <div style={{marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10}}>
+      <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
         {!isMobile && (
           <DesktopFilterIcons
             inkFilters={inkFilters}
