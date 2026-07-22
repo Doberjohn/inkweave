@@ -39,7 +39,7 @@ import {
   applySortOrder,
   type CardFilterOptions,
 } from '../features/cards/loader';
-import {CompactHeader, ErrorBoundary, EtherealBackground, FilterDialog, Seo} from '../shared/components';
+import {CompactHeader, CtaButton, ErrorBoundary, EtherealBackground, FilterDialog, Seo} from '../shared/components';
 import {
   COLORS,
   FONTS,
@@ -696,20 +696,7 @@ function PlaystyleDetailError({onRetry}: {onRetry: () => void}) {
       <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
         Failed to load card data.
       </p>
-      <button
-        onClick={onRetry}
-        style={{
-          padding: '8px 20px',
-          background: COLORS.primary,
-          color: COLORS.background,
-          border: 'none',
-          borderRadius: 6,
-          cursor: 'pointer',
-          fontFamily: FONTS.body,
-          fontWeight: 600,
-        }}>
-        Retry
-      </button>
+      <CtaButton onClick={onRetry}>Retry</CtaButton>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import {COLORS, SPACING, FONT_SIZES, RADIUS} from '../shared/constants';
 import {GithubTokenGate} from '../shared/components/GithubTokenGate';
+import {CtaButton} from '../shared/components';
 import {
   useRevealAdmin,
   RevealAdminForm,
@@ -62,21 +63,9 @@ export function RevealAdminPage() {
           {ctrl.publishError && (
             <div style={{color: COLORS.error, fontSize: FONT_SIZES.sm}}>{ctrl.publishError}</div>
           )}
-          <button
-            onClick={ctrl.publish}
-            disabled={!ctrl.canPublish || ctrl.publishing}
-            style={{
-              marginTop: SPACING.md,
-              padding: '12px 20px',
-              background: ctrl.canPublish ? COLORS.primary500 : COLORS.surfaceHover,
-              color: COLORS.white,
-              border: 'none',
-              borderRadius: RADIUS.sm,
-              cursor: ctrl.canPublish ? 'pointer' : 'not-allowed',
-              fontWeight: 600,
-            }}>
+          <CtaButton onClick={ctrl.publish} disabled={!ctrl.canPublish || ctrl.publishing} style={{marginTop: SPACING.md}}>
             {ctrl.publishing ? 'Publishing…' : 'Publish to master'}
-          </button>
+          </CtaButton>
         </section>
 
         <aside

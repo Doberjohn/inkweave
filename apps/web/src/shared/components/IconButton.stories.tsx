@@ -14,7 +14,9 @@ type Story = StoryObj<typeof meta>;
 // The close-× consolidation: five hand-rolled recipes become this one.
 export const Close: Story = {args: {'aria-label': 'Close', children: '×'}};
 
-export const WithSvgIcon: Story = {args: {'aria-label': 'Search', children: <SearchIcon size={20} />}};
+export const WithSvgIcon: Story = {
+  args: {'aria-label': 'Search', children: <SearchIcon size={20} color="currentColor" />},
+};
 
 // Compact variant for dense chrome (modal corners); hit target stays generous.
 export const Compact: Story = {args: {'aria-label': 'Close', size: 36, children: '×'}};
