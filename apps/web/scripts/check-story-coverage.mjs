@@ -94,6 +94,14 @@ function getScanRoster() {
   return roster;
 }
 
+/** True when a `.stories.tsx` file has no sibling component (concept-file rot, #512). */
+function isOrphanedStory(fullPath) {
+  if (!fullPath.endsWith('.stories.tsx')) return false;
+  // src/docs/ stories are documentation pages, not component mirrors.
+  if (fullPath.includes(join('src', 'docs'))) return false;
+  return !existsSync(fullPath.replace('.stories.tsx', '.tsx'));
+}
+
 function findOrphanedStories() {
   const orphans = [];
   const stack = [srcDir];
@@ -101,16 +109,8 @@ function findOrphanedStories() {
     const dir = stack.pop();
     for (const entry of readdirSync(dir, {withFileTypes: true})) {
       const full = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        stack.push(full);
-      } else if (entry.name.endsWith('.stories.tsx')) {
-        // src/docs/ stories are documentation pages, not component mirrors.
-        if (full.includes(join('src', 'docs'))) continue;
-        const componentPath = full.replace('.stories.tsx', '.tsx');
-        if (!existsSync(componentPath)) {
-          orphans.push(full.replace(join(srcDir, '..'), '').replaceAll('\\', '/'));
-        }
-      }
+      if (entry.isDirectory()) stack.push(full);
+      else if (isOrphanedStory(full)) orphans.push(full.replace(join(srcDir, '..'), '').replaceAll('\\', '/'));
     }
   }
   return orphans;
