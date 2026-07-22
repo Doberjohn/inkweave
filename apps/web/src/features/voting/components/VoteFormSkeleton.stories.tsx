@@ -6,7 +6,6 @@ const meta: Meta<typeof VoteFormSkeleton> = {
   component: VoteFormSkeleton,
   parameters: {
     layout: 'fullscreen',
-    backgrounds: {default: 'dark'},
   },
   decorators: [
     (Story) => (

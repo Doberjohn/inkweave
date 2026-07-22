@@ -4,7 +4,7 @@ import {AbilityTag} from './AbilityTag';
 const meta: Meta<typeof AbilityTag> = {
   title: 'Components/AbilityTag',
   component: AbilityTag,
-  parameters: {layout: 'centered', backgrounds: {default: 'dark'}},
+  parameters: {layout: 'centered'},
   tags: ['autodocs'],
 };
 

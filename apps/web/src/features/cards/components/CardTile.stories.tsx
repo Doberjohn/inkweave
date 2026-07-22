@@ -3,24 +3,26 @@ import {fn} from 'storybook/test';
 import {CardTile} from './CardTile';
 import type {LorcanaCard} from '../types';
 
+// A real Core card (set 9) whose self-hosted AVIF ships in public/card-images,
+// so stories render the actual image instead of an error fallback (#512).
 const createMockCard = (overrides: Partial<LorcanaCard> = {}): LorcanaCard => ({
-  id: '1',
-  name: 'Elsa',
-  version: 'Snow Queen',
-  fullName: 'Elsa - Snow Queen',
-  cost: 5,
-  ink: 'Sapphire',
+  id: '1936',
+  name: 'Bruno Madrigal',
+  version: 'Undetected Uncle',
+  fullName: 'Bruno Madrigal - Undetected Uncle',
+  cost: 4,
+  ink: 'Amethyst',
   inkwell: true,
   type: 'Character',
-  classifications: ['Floodborn', 'Princess'],
-  keywords: ['Singer 5', 'Evasive'],
-  text: 'When you play this character, draw 2 cards.',
-  strength: 3,
-  willpower: 4,
-  lore: 2,
-  imageUrl: 'https://lorcana-api.com/images/tfc/1/en/full.webp',
-  setCode: '1',
-  setNumber: 42,
+  classifications: ['Storyborn', 'Ally', 'Madrigal'],
+  keywords: ['Evasive'],
+  text: 'YOU JUST HAVE TO SEE IT — Name a card, then reveal the top card of your deck.',
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+  imageUrl: '/card-images/1936.cdbd5dcfc4e4baf1.avif',
+  setCode: '9',
+  setNumber: 34,
   ...overrides,
 });
 
@@ -39,7 +41,7 @@ const meta: Meta<typeof CardTile> = {
   },
   tags: ['autodocs'],
   args: {
-    onClick: fn(),
+    onSelect: fn(),
   },
 };
 
@@ -57,6 +59,43 @@ export const Selected: Story = {
   args: {
     card: createMockCard(),
     isSelected: true,
+  },
+};
+
+// The compact variant used in dense grids.
+export const Minimal: Story = {
+  args: {
+    card: createMockCard(),
+    isSelected: false,
+    variant: 'minimal',
+  },
+};
+
+// Crawlable <a href> form (#486): plain click stays in-app, modified clicks follow the link.
+export const CrawlableLink: Story = {
+  args: {
+    card: createMockCard(),
+    isSelected: false,
+    href: '/card/1936-bruno-madrigal-undetected-uncle',
+  },
+};
+
+// Above-fold LCP candidate: lazy-loading disabled, fetch priority boosted.
+export const Priority: Story = {
+  args: {
+    card: createMockCard(),
+    isSelected: false,
+    priority: true,
+  },
+};
+
+// Grid-optimized 191x266 image. The mock's base URL uses the small variant's
+// content hash so smallImageUrl's `-sm` derivation resolves to a real file.
+export const SmallImage: Story = {
+  args: {
+    card: createMockCard({imageUrl: '/card-images/1936.c2298563d34f4ac4.avif'}),
+    isSelected: false,
+    useSmallImage: true,
   },
 };
 
@@ -101,7 +140,7 @@ export const AllInkColors: Story = {
           key={ink}
           card={createMockCard({ink, name: `${ink} Character`})}
           isSelected={false}
-          onClick={fn()}
+          onSelect={fn()}
         />
       ))}
     </div>

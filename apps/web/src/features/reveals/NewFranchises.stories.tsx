@@ -4,7 +4,7 @@ import {NewFranchises} from './NewFranchises';
 const meta: Meta<typeof NewFranchises> = {
   title: 'Features/Reveals/NewFranchises',
   component: NewFranchises,
-  parameters: {backgrounds: {default: 'dark'}, layout: 'padded'},
+  parameters: {layout: 'padded'},
   tags: ['autodocs'],
   decorators: [
     (Story) => (

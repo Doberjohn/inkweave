@@ -4,7 +4,7 @@ import {InkTrackerTile} from './InkTrackerTile';
 const meta: Meta<typeof InkTrackerTile> = {
   title: 'Features/Reveals/InkTrackerTile',
   component: InkTrackerTile,
-  parameters: {backgrounds: {default: 'dark'}, layout: 'centered'},
+  parameters: {layout: 'centered'},
   tags: ['autodocs'],
 };
 export default meta;

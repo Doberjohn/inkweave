@@ -11,7 +11,7 @@ const tiers = {
 const meta: Meta<typeof StrengthBadge> = {
   title: 'Components/StrengthBadge',
   component: StrengthBadge,
-  parameters: {layout: 'centered', backgrounds: {default: 'dark'}},
+  parameters: {layout: 'centered'},
   tags: ['autodocs'],
 };
 

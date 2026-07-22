@@ -6,7 +6,7 @@ import {FRANCHISES} from './franchise';
 const meta: Meta<typeof FranchiseCardsModal> = {
   title: 'Features/Reveals/FranchiseCardsModal',
   component: FranchiseCardsModal,
-  parameters: {backgrounds: {default: 'dark'}, layout: 'fullscreen'},
+  parameters: {layout: 'fullscreen'},
   tags: ['autodocs'],
 };
 export default meta;

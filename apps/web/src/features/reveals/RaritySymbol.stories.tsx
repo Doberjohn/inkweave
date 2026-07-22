@@ -5,7 +5,6 @@ import {RARITIES} from './rarity';
 const meta: Meta<typeof RaritySymbol> = {
   title: 'Features/Reveals/RaritySymbol',
   component: RaritySymbol,
-  parameters: {backgrounds: {default: 'dark'}},
   tags: ['autodocs'],
 };
 export default meta;

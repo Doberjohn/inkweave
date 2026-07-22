@@ -150,7 +150,7 @@ export const WithSiblingNavigation: Story = {
 
 export const Mobile: Story = {
   args: {isMobile: true},
-  parameters: {viewport: {defaultViewport: 'mobile1'}},
+  globals: {viewport: {value: 'mobile1'}},
 };
 
 export const ComparisonMode: Story = {

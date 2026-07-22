@@ -6,7 +6,6 @@ const meta = {
   component: FeaturedCardsSkeleton,
   parameters: {
     layout: 'fullscreen',
-    backgrounds: {default: 'inkweave-dark'},
   },
   tags: ['autodocs'],
 } satisfies Meta<typeof FeaturedCardsSkeleton>;
@@ -20,5 +19,5 @@ export const Desktop: Story = {
 
 export const Mobile: Story = {
   args: {isMobile: true},
-  parameters: {viewport: {defaultViewport: 'mobile1'}},
+  globals: {viewport: {value: 'mobile1'}},
 };

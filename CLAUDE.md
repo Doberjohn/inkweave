@@ -221,7 +221,6 @@ pnpm test:supabase    # Run Supabase integration tests (requires .env.local)
 - Card data loaded once on init from `allCards.json`; synergy data lazy-loaded per card from `/data/synergies/{cardId}.json`
 - Card data pre-deduplicated in `allCards.json` (same card in multiple sets appears once); loader expects clean data
 - Multi-page SPA via react-router (home, browse, card detail, playstyles, deck builder, voting, admin). Routes in `router.tsx`; `AppLayout` mounts the providers plus `<Outlet />`
-- Floating card preview popover on hover (CardPreviewContext + CardPreviewPopover)
 - Core format only (sets 9+)
 - **react-grab**: Dev-only inspection tool. The `dev` script runs `pnpm dlx @react-grab/claude-code@latest && vite`. Playwright's webServer runs `npx vite`, which is still DEV mode, so `index.html`'s `import.meta.env.DEV` gate loads react-grab during E2E as well; its `ws://localhost:4722` connection error must stay allowlisted in the E2E console-error guard (#405). If a dev server is already running, Playwright reuses it (`reuseExistingServer: true` locally) — which means `playwright.config.ts`'s `webServer.env` only applies when Playwright launches its own Vite. Set branch-specific env vars in `apps/web/.env.local` for determinism; see **Feature Flags & Local Dev**.
 - **useContainerWidth**: ResizeObserver hook guards against 0-width observations from detached elements (`if (w > 0)`) — required for React Strict Mode double-mount resilience

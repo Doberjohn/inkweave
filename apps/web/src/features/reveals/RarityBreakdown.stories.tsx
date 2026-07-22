@@ -4,7 +4,7 @@ import {RarityBreakdown} from './RarityBreakdown';
 const meta: Meta<typeof RarityBreakdown> = {
   title: 'Features/Reveals/RarityBreakdown',
   component: RarityBreakdown,
-  parameters: {backgrounds: {default: 'dark'}, layout: 'padded'},
+  parameters: {layout: 'padded'},
   tags: ['autodocs'],
 };
 export default meta;

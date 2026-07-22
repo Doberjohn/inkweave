@@ -11,7 +11,6 @@ const card = (id: number, fullName: string): FanCardData => ({
 const meta: Meta<typeof PlaystyleFanTile> = {
   title: 'Features/Playstyles/PlaystyleFanTile',
   component: PlaystyleFanTile,
-  parameters: {backgrounds: {default: 'dark'}},
   decorators: [
     (Story) => (
       <div style={{maxWidth: 360, padding: 16}}>

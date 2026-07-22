@@ -4,7 +4,7 @@ import {RevealHero} from './RevealHero';
 const meta: Meta<typeof RevealHero> = {
   title: 'Features/Reveals/RevealHero',
   component: RevealHero,
-  parameters: {backgrounds: {default: 'dark'}, layout: 'fullscreen'},
+  parameters: {layout: 'fullscreen'},
   tags: ['autodocs'],
 };
 export default meta;

@@ -4,7 +4,7 @@ import {WhatsNewSection} from './WhatsNewSection';
 const meta: Meta<typeof WhatsNewSection> = {
   title: 'Features/Reveals/WhatsNewSection',
   component: WhatsNewSection,
-  parameters: {backgrounds: {default: 'dark'}, layout: 'padded'},
+  parameters: {layout: 'padded'},
   tags: ['autodocs'],
   decorators: [
     (Story) => (

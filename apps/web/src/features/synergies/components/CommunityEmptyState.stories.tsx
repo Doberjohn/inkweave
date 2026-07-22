@@ -5,7 +5,7 @@ import {CommunityEmptyState} from './CommunityEmptyState';
 const meta: Meta<typeof CommunityEmptyState> = {
   title: 'Synergies/CommunityEmptyState',
   component: CommunityEmptyState,
-  parameters: {layout: 'centered', backgrounds: {default: 'dark'}},
+  parameters: {layout: 'centered'},
   tags: ['autodocs'],
   decorators: [
     (Story) => (

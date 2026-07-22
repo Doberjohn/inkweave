@@ -6,7 +6,7 @@ import type {InkProgress} from './useRevealProgress';
 const meta: Meta<typeof InkBoard> = {
   title: 'Features/Reveals/InkBoard',
   component: InkBoard,
-  parameters: {backgrounds: {default: 'dark'}, layout: 'padded'},
+  parameters: {layout: 'padded'},
   tags: ['autodocs'],
   // The board fills its container; on the real page that's the 1180px-max
   // content column, so preview it constrained rather than full-bleed.
