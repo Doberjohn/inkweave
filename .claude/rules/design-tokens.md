@@ -20,6 +20,20 @@ Two mechanisms enforce the token system; both run automatically:
 
 `apps/web/eslint-rules/known-offenders.js` lists pre-enforcement files per rule. It ONLY SHRINKS: when you touch a listed file, converge its violations to tokens and remove its entry. Never add entries. The value gate's baseline (`scripts/known-design-values.json`) works the same way — counts may only decrease (`--update-baseline` after shrinking).
 
+## The micro-pattern consts (#511)
+
+One source per retyped idiom, in `theme.ts` (Storybook: Docs/MicroPatterns). Spread, then override:
+`CAP_LABEL` / `CAP_LABEL_XS` (uppercase section labels; `LETTER_SPACING.cap`/`.eyebrow`), `SURFACE_CARD` (radius rule: `RADIUS.card` standalone panels, `RADIUS.lg` nested cards), `EMPTY_BOX` (centered dashed empty states — NOT prose notices), `TRUNCATE` (needs ancestor `minWidth: 0`), `TABULAR` (any numeral column that must not jitter), `GOLD_GLOW` (the one-gold selection/hover/focus recipe — never hand-mix gold alphas), `TOUCH_TARGET`, `ICON_SIZE`, `PRESS_SCALE`, `DISABLED_STYLE`. Dynamic playstyle accents compose via `accentRgba` (playstyleUi.ts).
+
+## Interaction conventions (#511)
+
+- **Selection is border + glow (GOLD_GLOW), never `outline`**; the focus ring is never suppressed without a visible replacement (`GOLD_GLOW.focusRing`).
+- **Disabled** = `DISABLED_STYLE`, everywhere. **Press** = `scale(${PRESS_SCALE})`.
+- **EASING intent**: `snappy` hover/fast, `bounce` selection/press, `smooth` fades/progress.
+- **Reduced motion**: one source — `shared/utils/prefersReducedMotion` (fn for trigger-time, hook for render gating). No new hand-rolled `matchMedia` checks; new infinite animations MUST have a class in index.css's reduced-motion block. `useBoop` is already guarded.
+- **Loading states**: skeleton for layout-known surfaces (one app-level `SkeletonTheme` in AppLayout — never add local wrappers), text for admin/unknown shapes, spinner only for the SW toast.
+- **`surfaceHover` is overloaded** (six jobs); do not add new ones — aliases are deferred to a future ruling.
+
 ## Related
 
 - Spacing rule exists but is `'off'` until the convergence sweep (#508 Step 6; #511 owns the sweep).

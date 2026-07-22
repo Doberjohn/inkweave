@@ -5,6 +5,7 @@ import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {usePrecomputedSynergies} from '../features/synergies/hooks';
 import {cardSynergySummary} from '../features/synergies/cardSynergySummary';
 import {CardDetailPanel} from '../features/synergies/components/CardDetailPanel';
+import {CardDetailSkeleton} from '../features/cards';
 import {SynergyResults} from '../features/synergies/components/SynergyResults';
 import {CompactHeader, Footer, Seo} from '../shared/components';
 import {useResponsive} from '../shared/hooks';
@@ -86,9 +87,12 @@ export function CardPage() {
 
   if (!card) {
     if (cardsLoading) {
+      // #511 loading rule: skeleton for layout-known surfaces (no text flash).
       return (
         <PageShell>
-          <CenteredMessage title="Loading card…" body="Fetching card data." />
+          <div style={{display: 'flex', justifyContent: 'center'}}>
+            <CardDetailSkeleton ariaLabel="Loading card" />
+          </div>
         </PageShell>
       );
     }

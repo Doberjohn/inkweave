@@ -252,6 +252,7 @@ const ADHOC_BUTTON_EXEMPT = [
   /RoleTileRow\.tsx$/, // tile-toggle family
   /CardTile\.tsx$/, // card-grid tile family
   /CardSlot\.tsx$/, // reveals tile family
+  /InkTrackerTile\.tsx$/, // reveals ink-selection tile family (#511)
   /\.stories\.tsx$/,
   /\.test\.(ts|tsx)$/,
 ];

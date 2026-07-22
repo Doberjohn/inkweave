@@ -1,4 +1,4 @@
-import {useLocation, useNavigate} from 'react-router-dom';
+import {NavLink, useLocation} from 'react-router-dom';
 import {COLORS, FONTS} from '../constants';
 import {useRevealPhase, type RevealPhase} from '../../features/reveals';
 
@@ -257,13 +257,11 @@ function NavCurveBackground({underline}: NavCurveBackgroundProps) {
 
 interface NavTabProps {
   tab: TabDef;
-  isActive: boolean;
   paddingTop: number;
   onSearchClick?: () => void;
-  onNavigate: (href: string) => void;
 }
 
-function NavTab({tab, isActive, paddingTop, onSearchClick, onNavigate}: NavTabProps) {
+function NavTab({tab, paddingTop, onSearchClick}: NavTabProps) {
   const tabStyle: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
@@ -322,21 +320,17 @@ function NavTab({tab, isActive, paddingTop, onSearchClick, onNavigate}: NavTabPr
     );
   }
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (tab.href) onNavigate(tab.href);
-  };
-
+  // NavLink (#511): the old hand-rolled <a> + unconditional preventDefault
+  // defeated modifier-clicks (open-in-new-tab) and middle-click; react-router
+  // handles those natively and supplies aria-current="page" itself.
   return (
-    <a
-      href={tab.href}
+    <NavLink
+      to={tab.href ?? '/'}
       className="mbn-tab"
       aria-label={tab.label}
-      aria-current={isActive ? 'page' : undefined}
-      onClick={handleClick}
       style={tabStyle}>
       {contents}
-    </a>
+    </NavLink>
   );
 }
 
@@ -372,7 +366,6 @@ function ActiveLabelStrip({label, visible}: ActiveLabelStripProps) {
 // =====================================================================
 
 export function MobileBottomNav({onSearchClick, phaseOverride}: MobileBottomNavProps) {
-  const navigate = useNavigate();
   const {pathname} = useLocation();
   const hookPhase = useRevealPhase();
   const phase = phaseOverride ?? hookPhase;
@@ -420,10 +413,8 @@ export function MobileBottomNav({onSearchClick, phaseOverride}: MobileBottomNavP
           <NavTab
             key={tab.kind}
             tab={tab}
-            isActive={i === activeIdx}
             paddingTop={positions.paddingTop[i]}
             onSearchClick={onSearchClick}
-            onNavigate={navigate}
           />
         ))}
       </div>

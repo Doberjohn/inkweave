@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardImage, CardLightbox} from '../../../shared/components';
-import {COLORS, FONTS, FONT_SIZES} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, hexRgba} from '../../../shared/constants';
 
 interface VotingCardDisplayProps {
   card: LorcanaCard;
@@ -72,15 +72,26 @@ export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingC
           flex: 1,
           minWidth: 0,
           opacity: dimmed ? 0.4 : 1,
-          transition: 'opacity 0.2s ease',
+          transition: `opacity 0.2s ${EASING.snappy}`,
         }}>
-        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- mobile-only tap-to-enlarge */}
         <div
+          role={card.imageUrl ? 'button' : undefined}
+          tabIndex={card.imageUrl ? 0 : undefined}
+          aria-label={card.imageUrl ? `Enlarge ${card.fullName}` : undefined}
           onClick={card.imageUrl ? () => setLightboxOpen(true) : undefined}
+          onKeyDown={
+            card.imageUrl
+              ? (e) => {
+                  if (e.key !== 'Enter' && e.key !== ' ') return;
+                  e.preventDefault();
+                  setLightboxOpen(true);
+                }
+              : undefined
+          }
           style={{
-            boxShadow: highlighted ? '0 0 16px 2px rgba(212, 175, 55, 0.45)' : 'none',
-            transition: 'box-shadow 0.2s ease',
-            borderRadius: 8,
+            boxShadow: highlighted ? `0 0 16px 2px ${hexRgba(COLORS.primary500, 0.45)}` : 'none',
+            transition: `box-shadow 0.2s ${EASING.snappy}`,
+            borderRadius: RADIUS.lg,
           }}>
           {isLocation ? (
             <RotatedCardImage card={card} containerWidth={imageWidth} borderRadius={8} />
@@ -126,10 +137,10 @@ export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingC
         height: displayHeight,
         flexShrink: 0,
         boxSizing: 'border-box',
-        borderRadius: 12,
-        boxShadow: highlighted ? '0 0 16px 2px rgba(212, 175, 55, 0.45)' : 'none',
+        borderRadius: RADIUS.card,
+        boxShadow: highlighted ? `0 0 16px 2px ${hexRgba(COLORS.primary500, 0.45)}` : 'none',
         opacity: dimmed ? 0.4 : 1,
-        transition: 'box-shadow 0.2s ease, opacity 0.2s ease',
+        transition: `box-shadow 0.2s ${EASING.snappy}, opacity 0.2s ${EASING.snappy}`,
       }}>
       {isLocation ? (
         <RotatedCardImage card={card} containerWidth={imageWidth} borderRadius={12} />

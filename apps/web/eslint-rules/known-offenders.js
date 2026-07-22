@@ -17,7 +17,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/playstyles/PlaystyleFanTile.tsx', // x2
     'src/features/playstyles/PlaystyleSection.stories.tsx', // x2
     'src/features/reveals/InkBoard.tsx', // x7
-    'src/features/reveals/InkTrackerTile.tsx', // x3
     'src/features/reveals/NewFranchises.tsx', // x5
     'src/features/reveals/ProgressRing.tsx', // x2
     'src/features/reveals/RarityBreakdown.tsx', // x6
@@ -43,7 +42,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/InDepthVoteForm.stories.tsx', // x1
     'src/features/voting/components/InDepthVoteForm.tsx', // x8
     'src/features/voting/components/OptionPicker.stories.tsx', // x5
-    'src/features/voting/components/PairDisplay.tsx', // x7
     'src/features/voting/components/QuickVoteControl.stories.tsx', // x1
     'src/features/voting/components/QuickVoteControl.tsx', // x3
     'src/features/voting/components/ScorePicker.tsx', // x1
@@ -78,7 +76,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/playstyles/PlaystyleFanTile.tsx', // x6
     'src/features/reveals/CardSlot.tsx', // x5
     'src/features/reveals/InkBoard.tsx', // x2
-    'src/features/reveals/InkTrackerTile.tsx', // x2
     'src/features/reveals/ProgressRing.tsx', // x1
     'src/features/reveals/RarityBreakdown.tsx', // x3
     'src/features/reveals/RevealHero.tsx', // x5
@@ -98,9 +95,7 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/DistributionBar.tsx', // x3
     'src/features/voting/components/InDepthVoteForm.tsx', // x9
     'src/features/voting/components/OptionPicker.stories.tsx', // x3
-    'src/features/voting/components/PairDisplay.tsx', // x3
     'src/features/voting/components/QuickVoteControl.tsx', // x21
-    'src/features/voting/components/VotingCardDisplay.tsx', // x2
     'src/pages/NotFoundPage.tsx', // x4
     'src/shared/components/AbilityCallout.tsx', // x1
     'src/shared/components/BetaNotice.tsx', // x1
@@ -125,7 +120,6 @@ export const KNOWN_OFFENDERS = {
     'src/docs/Typography.stories.tsx', // x5
     'src/features/admin-analytics/Scorecard.tsx', // x1
     'src/features/reveals/InkBoard.tsx', // x3
-    'src/features/reveals/InkTrackerTile.tsx', // x1
     'src/features/reveals/NewFranchises.tsx', // x1
     'src/features/reveals/RarityBreakdown.tsx', // x1
     'src/features/reveals/RaritySymbol.stories.tsx', // x1
@@ -183,7 +177,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/ScorePicker.tsx', // x1
     'src/features/voting/components/VoteAffirmation.stories.tsx', // x1
     'src/features/voting/components/VoteStatusBanner.tsx', // x2
-    'src/features/voting/components/VotingCardDisplay.tsx', // x2
     'src/pages/BrowsePage.tsx', // x1
     'src/shared/components/CardLightbox.stories.tsx', // x1
     'src/shared/components/CardTextBlock.stories.tsx', // x1
@@ -211,10 +204,8 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/MobileComparisonView.tsx', // x4
     'src/features/synergies/components/RoleTileRow.tsx', // x3
     'src/features/synergies/components/SynergyCard.tsx', // x1
-    'src/features/voting/components/PairDisplay.tsx', // x3
     'src/features/voting/components/PairStack.tsx', // x1
     'src/features/voting/components/QuickVoteControl.tsx', // x6
-    'src/features/voting/components/VotingCardDisplay.tsx', // x3
     'src/shared/components/CardImage.tsx', // x1
     'src/shared/components/ConnectionGroup.tsx', // x5
     'src/shared/components/HeroSection.tsx', // x1
@@ -234,7 +225,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/ColumnHeader.tsx', // x1
     'src/features/synergies/components/MobileCardDetail.tsx', // x1
     'src/features/image-admin/components/CardImagePicker.tsx', // x1
-    'src/features/reveals/InkTrackerTile.tsx', // x1
     'src/features/reveals/NewFranchises.tsx', // x1
     'src/features/reveals/RarityBreakdown.tsx', // x1
     'src/features/reveals/RevealsPromoCard.tsx', // x1

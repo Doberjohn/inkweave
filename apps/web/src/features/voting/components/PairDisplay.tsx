@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {COLORS, FONTS, SPACING} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, SPACING, hexRgba} from '../../../shared/constants';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';
 import type {Score} from '../../../shared/lib/supabase';
 import type {VotingPair} from '../types';
@@ -33,8 +33,8 @@ const STACK_OFFSET_PX = 440;
       to   { transform: translateX(0); opacity: 1; }
     }
     @keyframes mystery-pulse {
-      0%, 100% { box-shadow: 0 0 20px 2px rgba(212, 175, 55, 0.35); transform: scale(1); }
-      50%      { box-shadow: 0 0 28px 6px rgba(212, 175, 55, 0.55); transform: scale(1.08); }
+      0%, 100% { box-shadow: 0 0 20px 2px ${hexRgba(COLORS.primary500, 0.35)}; transform: scale(1); }
+      50%      { box-shadow: 0 0 28px 6px ${hexRgba(COLORS.primary500, 0.55)}; transform: scale(1.08); }
     }
   `;
   document.head.appendChild(style);
@@ -59,7 +59,7 @@ function DashedLine({width, muted}: {width: number; muted?: boolean}) {
         y1={1}
         x2={width}
         y2={1}
-        stroke={muted ? '#555577' : '#333355'}
+        stroke={muted ? COLORS.textDim : COLORS.surfaceBorder}
         strokeWidth={2}
         strokeDasharray="6 4"
         strokeLinecap="round"
@@ -73,9 +73,9 @@ function MysteryBadge({selectedScore, size}: {selectedScore: Score | null; size:
   const tier = selectedScore !== null ? getStrengthTier(selectedScore) : null;
 
   const color = tier?.color ?? COLORS.primary500;
-  const bg = tier?.bg ?? '#1a1a0a';
-  const glowColor = tier ? `${color}59` : 'rgba(212, 175, 55, 0.35)';
-  const textGlow = tier ? `0 0 12px ${color}99` : '0 0 12px rgba(255, 185, 0, 0.6)';
+  const bg = tier?.bg ?? COLORS.surfaceAlt;
+  const glowColor = tier ? `${color}59` : hexRgba(COLORS.primary500, 0.35);
+  const textGlow = tier ? `0 0 12px ${color}99` : `0 0 12px ${hexRgba(COLORS.primary, 0.6)}`;
 
   return (
     <div
@@ -91,7 +91,7 @@ function MysteryBadge({selectedScore, size}: {selectedScore: Score | null; size:
         flexShrink: 0,
         boxShadow: `0 0 20px 2px ${glowColor}`,
         animation: tier ? 'none' : 'mystery-pulse 3s ease-in-out infinite',
-        transition: 'all 0.3s ease',
+        transition: `all 0.3s ${EASING.smooth}`,
       }}
       className="pair-mystery-pulse">
       <span
@@ -175,8 +175,8 @@ function PreviousStack({pairs}: {pairs: PairPreview[]}) {
       {/* Ghost silhouettes for remaining tiers */}
       {ghostTiers.map((tier, i) => (
         <div key={`ghost-${realCount + i}`} style={{display: 'flex', gap: tier.gap, transform: `rotate(${tier.tilt}deg)`, opacity: tier.opacity}}>
-          <div style={{width: tier.w, height: tier.h, borderRadius: tier.radius, border: '1px dashed #555577', background: '#12121f'}} />
-          <div style={{width: tier.w, height: tier.h, borderRadius: tier.radius, border: '1px dashed #555577', background: '#12121f'}} />
+          <div style={{width: tier.w, height: tier.h, borderRadius: tier.radius, border: `1px dashed ${COLORS.textDim}`, background: COLORS.surfaceAlt}} />
+          <div style={{width: tier.w, height: tier.h, borderRadius: tier.radius, border: `1px dashed ${COLORS.textDim}`, background: COLORS.surfaceAlt}} />
         </div>
       ))}
     </div>
@@ -214,7 +214,7 @@ export function PairDisplay({pair, selectedScore, previousPairs, upcomingPairs, 
           key={pairId}
           style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%',
-            animation: 'pair-slide-in 400ms ease-out',
+            animation: `pair-slide-in 400ms ${EASING.smooth}`,
           }}>
           <PairRow pair={pair} selectedScore={badgeScore} size="mobile" />
           <SynergyDescriptionGroups pair={pair} onHighlight={() => {}} />
@@ -244,7 +244,7 @@ export function PairDisplay({pair, selectedScore, previousPairs, upcomingPairs, 
                 display: 'flex',
                 alignItems: 'center',
                 gap: 0,
-                animation: `pair-exit-left ${TRANSITION_MS}ms ease-in forwards`,
+                animation: `pair-exit-left ${TRANSITION_MS}ms ${EASING.smooth} forwards`,
               }}>
               <PairRow pair={exitingPair} selectedScore={null} size="desktop" />
             </div>
