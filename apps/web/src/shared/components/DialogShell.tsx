@@ -66,6 +66,90 @@ interface DialogShellProps {
  * asserts `toHaveCount(0)`, and a fallback timer guarantees it even under
  * `prefers-reduced-motion`, where `transitionend` never fires.
  */
+/**
+ * Reduced-motion sets `transition: none !important` on .overlay-transition,
+ * so transitionend never fires and `mounted` would leak forever (#467-class
+ * bug: work deferred to a transition must flush at every exit). Race it.
+ */
+function useExitFallback(animated: boolean, isOpen: boolean, mounted: boolean, onTransitionEnd: () => void) {
+  useEffect(() => {
+    if (!animated) return;
+    if (isOpen || !mounted) return;
+    const timer = setTimeout(onTransitionEnd, EXIT_FALLBACK_MS);
+    return () => clearTimeout(timer);
+  }, [animated, isOpen, mounted, onTransitionEnd]);
+}
+
+/**
+ * useDialogFocus's one-shot 100ms focus can be silently REFUSED: during the
+ * enter transition the panel's `visibility` interpolates hidden→visible and
+ * Chrome treats the first half as hidden (discrete-at-50%), so a focus that
+ * lands mid-transition does nothing. Retry (bounded) until focus takes or
+ * the user has already focused something inside the panel.
+ */
+function useFocusRetry(
+  animated: boolean,
+  visible: boolean,
+  panelRef: React.RefObject<HTMLDivElement | null>,
+  initialFocusRef: React.RefObject<HTMLElement | null> | undefined,
+) {
+  useEffect(() => {
+    if (!animated || !visible) return;
+    let tries = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const attempt = () => {
+      const panel = panelRef.current;
+      const target = (initialFocusRef ?? panelRef).current;
+      if (!panel || !target) return;
+      if (panel.contains(document.activeElement)) return;
+      target.focus();
+      if (panel.contains(document.activeElement)) return;
+      if (++tries < 6) timer = setTimeout(attempt, 60);
+    };
+    timer = setTimeout(attempt, 0);
+    return () => clearTimeout(timer);
+  }, [animated, visible, panelRef, initialFocusRef]);
+}
+
+/** The scrim only fades; the panel fades + scales (the CardOverviewModal precedent). */
+function overlayClasses(animated: boolean, visible: boolean) {
+  if (!animated) return {scrimClass: undefined, panelClass: undefined};
+  const visibleClass = visible ? ' overlay-visible' : '';
+  return {
+    scrimClass: `overlay-transition overlay-enter${visibleClass}`,
+    panelClass: `overlay-transition overlay-scale overlay-enter${visibleClass}`,
+  };
+}
+
+function scrimPresentation(
+  scrim: 'default' | 'heavy',
+  closable: boolean,
+  zIndex: number,
+): React.CSSProperties {
+  return {
+    position: 'fixed',
+    inset: 0,
+    background: scrim === 'heavy' ? COLORS.scrimHeavy : COLORS.scrim,
+    zIndex,
+    cursor: closable ? 'pointer' : undefined,
+  };
+}
+
+function panelChrome(size: keyof typeof SIZE_MAX_WIDTH, goldRing: boolean): React.CSSProperties {
+  return {
+    pointerEvents: 'auto',
+    width: '100%',
+    maxWidth: SIZE_MAX_WIDTH[size],
+    maxHeight: '85vh',
+    overflow: 'auto',
+    outline: 'none',
+    background: COLORS.surface,
+    border: `1px solid ${COLORS.surfaceBorder}`,
+    borderRadius: RADIUS.xl,
+    boxShadow: goldRing ? `${SHADOWS.overlay}, ${SHADOWS.goldRing}` : SHADOWS.overlay,
+  };
+}
+
 export function DialogShell({
   isOpen,
   onClose,
@@ -94,59 +178,26 @@ export function DialogShell({
     onClose,
   });
   useScrollLock(rendered);
-
-  // Reduced-motion sets `transition: none !important` on .overlay-transition,
-  // so transitionend never fires and `mounted` would leak forever (#467-class
-  // bug: work deferred to a transition must flush at every exit). Race it.
-  useEffect(() => {
-    if (!animated || isOpen || !mounted) return;
-    const timer = setTimeout(onTransitionEnd, EXIT_FALLBACK_MS);
-    return () => clearTimeout(timer);
-  }, [animated, isOpen, mounted, onTransitionEnd]);
-
-  // useDialogFocus's one-shot 100ms focus can be silently REFUSED: during the
-  // enter transition the panel's `visibility` interpolates hidden→visible and
-  // Chrome treats the first half as hidden (discrete-at-50%), so a focus that
-  // lands mid-transition does nothing. Retry (bounded) until focus takes or
-  // the user has already focused something inside the panel.
-  useEffect(() => {
-    if (!animated || !visible) return;
-    let tries = 0;
-    let timer: ReturnType<typeof setTimeout>;
-    const attempt = () => {
-      const panel = panelRef.current;
-      const target = (initialFocusRef ?? panelRef).current;
-      if (!panel || !target || panel.contains(document.activeElement)) return;
-      target.focus();
-      if (!panel.contains(document.activeElement) && ++tries < 6) timer = setTimeout(attempt, 60);
-    };
-    timer = setTimeout(attempt, 0);
-    return () => clearTimeout(timer);
-  }, [animated, visible, initialFocusRef]);
+  useExitFallback(animated, isOpen, mounted, onTransitionEnd);
+  useFocusRetry(animated, visible, panelRef, initialFocusRef);
 
   if (!rendered) return null;
 
   const tiers = LAYERS[layer];
-  const visibleClass = visible ? ' overlay-visible' : '';
-  // The scrim only fades; the panel fades + scales (the CardOverviewModal precedent).
-  const scrimClass = animated ? `overlay-transition overlay-enter${visibleClass}` : undefined;
-  const panelClass = animated ? `overlay-transition overlay-scale overlay-enter${visibleClass}` : undefined;
+  const {scrimClass, panelClass} = overlayClasses(animated, visible);
+
+  const closable = !disableBackdropClose;
+  const handleTransitionEnd = animated ? onTransitionEnd : undefined;
 
   return createPortal(
     <>
       <div
         aria-hidden="true"
         data-testid={scrimTestId}
-        onClick={disableBackdropClose ? undefined : onClose}
+        onClick={closable ? onClose : undefined}
         className={scrimClass}
-        onTransitionEnd={animated ? onTransitionEnd : undefined}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: scrim === 'heavy' ? COLORS.scrimHeavy : COLORS.scrim,
-          zIndex: tiers.scrim,
-          cursor: disableBackdropClose ? undefined : 'pointer',
-        }}
+        onTransitionEnd={handleTransitionEnd}
+        style={scrimPresentation(scrim, closable, tiers.scrim)}
       />
       <div
         style={{
@@ -170,20 +221,8 @@ export function DialogShell({
           data-testid={panelTestId}
           onKeyDown={handleKeyDown}
           className={panelClass}
-          onTransitionEnd={animated ? onTransitionEnd : undefined}
-          style={{
-            pointerEvents: 'auto',
-            width: '100%',
-            maxWidth: SIZE_MAX_WIDTH[size],
-            maxHeight: '85vh',
-            overflow: 'auto',
-            outline: 'none',
-            background: COLORS.surface,
-            border: `1px solid ${COLORS.surfaceBorder}`,
-            borderRadius: RADIUS.xl,
-            boxShadow: goldRing ? `${SHADOWS.overlay}, ${SHADOWS.goldRing}` : SHADOWS.overlay,
-            ...panelStyle,
-          }}>
+          onTransitionEnd={handleTransitionEnd}
+          style={{...panelChrome(size, goldRing), ...panelStyle}}>
           {children}
         </div>
       </div>

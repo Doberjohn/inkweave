@@ -85,7 +85,8 @@ describe('DialogShell', () => {
     expect(document.activeElement).toBe(first);
   });
 
-  it('unmounts after the exit transition completes', () => {
+  /** Open the shell, then flip isOpen false; returns with the exit transition pending. */
+  function renderClosing() {
     const {rerender} = renderShell();
     rerender(
       <DialogShell isOpen={false} onClose={vi.fn()} ariaLabel="Test dialog" scrimTestId="shell-scrim">
@@ -93,20 +94,17 @@ describe('DialogShell', () => {
         <button type="button">Last</button>
       </DialogShell>,
     );
-    const dialog = screen.getByRole('dialog');
+    return screen.getByRole('dialog');
+  }
+
+  it('unmounts after the exit transition completes', () => {
+    const dialog = renderClosing();
     fireEvent.transitionEnd(dialog);
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('unmounts via the fallback timer when transitionend never fires (reduced motion)', () => {
-    const {rerender} = renderShell();
-    rerender(
-      <DialogShell isOpen={false} onClose={vi.fn()} ariaLabel="Test dialog" scrimTestId="shell-scrim">
-        <button type="button">First</button>
-        <button type="button">Last</button>
-      </DialogShell>,
-    );
-    expect(screen.getByRole('dialog')).toBeTruthy();
+    renderClosing();
     act(() => {
       vi.advanceTimersByTime(400);
     });
