@@ -1,6 +1,6 @@
 import {useRef} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../../../shared/constants';
-import {IconButton, LinkButton} from '../../../shared/components';
+import {COLORS, EASING, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
+import {BottomSheet, IconButton, LinkButton} from '../../../shared/components';
 import {useDialogFocus, useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {RoleTileRow, type RoleTile} from './RoleTileRow';
 
@@ -11,47 +11,6 @@ interface MechanicsBottomSheetProps {
   activeRoles: ReadonlySet<string>;
   onToggle: (role: string) => void;
   onClearAll: () => void;
-}
-
-function SheetBackdrop({
-  visible,
-  onClose,
-  onTransitionEnd,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  onTransitionEnd: React.TransitionEventHandler<HTMLDivElement>;
-}) {
-  return (
-    <div
-      data-testid="mechanics-sheet-backdrop"
-      className={`overlay-transition overlay-enter ${visible ? 'overlay-visible' : ''}`}
-      onTransitionEnd={onTransitionEnd}
-      onClick={onClose}
-      aria-hidden="true"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        // Solid scrim only — no backdrop-filter (WebKit continuous-repaint trap; see #444).
-        background: COLORS.scrim,
-        zIndex: Z_INDEX.modalBackdrop,
-      }}
-    />
-  );
-}
-
-function DragHandle() {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        padding: `${SPACING.md}px 0 ${SPACING.sm}px`,
-        flexShrink: 0,
-      }}>
-      <div style={{width: 36, height: 4, borderRadius: RADIUS.xs, background: COLORS.gray300}} />
-    </div>
-  );
 }
 
 function SheetHeader({onClose, onClearAll, hasActive}: {onClose: () => void; onClearAll: () => void; hasActive: boolean}) {
@@ -117,45 +76,28 @@ export function MechanicsBottomSheet({
   const hasActive = activeRoles.size > 0;
 
   return (
-    <>
-      <SheetBackdrop visible={visible} onClose={onClose} onTransitionEnd={onTransitionEnd} />
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog keyboard handling (Escape to close) */}
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      onTransitionEnd={onTransitionEnd}
+      ariaLabel="Mechanics filter"
+      backdropTestId="mechanics-sheet-backdrop"
+      sheetRef={sheetRef}
+      onKeyDown={handleKeyDown}
+      sheetStyle={{
+        maxHeight: '78vh',
+        transition: `transform 0.25s ${EASING.smooth}, opacity 0.25s ${EASING.smooth}`,
+      }}>
+      <SheetHeader onClose={onClose} onClearAll={onClearAll} hasActive={hasActive} />
       <div
-        ref={sheetRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Mechanics filter"
-        tabIndex={-1}
-        onKeyDown={handleKeyDown}
-        className={`overlay-transition overlay-slide-up overlay-enter ${visible ? 'overlay-visible' : ''}`}
-        onTransitionEnd={onTransitionEnd}
         style={{
-          position: 'fixed',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          maxHeight: '78vh',
-          background: COLORS.surface,
-          borderRadius: '24px 24px 0 0',
-          boxShadow: SHADOWS.sheet,
-          zIndex: Z_INDEX.modal,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          transition: `transform 0.25s ${EASING.smooth}, opacity 0.25s ${EASING.smooth}`,
+          flex: 1,
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          padding: `${SPACING.md}px ${SPACING.lg}px ${SPACING.lg}px`,
         }}>
-        <DragHandle />
-        <SheetHeader onClose={onClose} onClearAll={onClearAll} hasActive={hasActive} />
-        <div
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            padding: `${SPACING.md}px ${SPACING.lg}px ${SPACING.lg}px`,
-          }}>
-          <RoleTileRow tiles={tiles} activeRoles={activeRoles} onToggle={onToggle} layout="grid" />
-        </div>
+        <RoleTileRow tiles={tiles} activeRoles={activeRoles} onToggle={onToggle} layout="grid" />
       </div>
-    </>
+    </BottomSheet>
   );
 }

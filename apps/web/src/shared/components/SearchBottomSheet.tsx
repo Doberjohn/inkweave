@@ -1,7 +1,8 @@
 import {forwardRef, useImperativeHandle, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SET_ABBREVIATIONS, SHADOWS, SPACING, Z_INDEX} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SET_ABBREVIATIONS, SHADOWS, SPACING} from '../constants';
+import {BottomSheet} from './BottomSheet';
 import {LinkButton} from './LinkButton';
 import {useCardDataContext} from '../contexts/CardDataContext';
 import {useCardModal} from '../contexts/CardModalContext';
@@ -449,45 +450,6 @@ function EmptyPrompt() {
 // component's function body stays under the line-length threshold.
 // =====================================================================
 
-interface SheetBackdropProps {
-  visible: boolean;
-  onClose: () => void;
-  onTransitionEnd: React.TransitionEventHandler<HTMLDivElement>;
-}
-
-function SheetBackdrop({visible, onClose, onTransitionEnd}: SheetBackdropProps) {
-  return (
-    <div
-      data-testid="search-sheet-backdrop"
-      className={`overlay-transition overlay-enter ${visible ? 'overlay-visible' : ''}`}
-      onTransitionEnd={onTransitionEnd}
-      onClick={onClose}
-      aria-hidden="true"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        // Solid scrim only — no backdrop-filter (WebKit continuous-repaint trap; see #444).
-        background: COLORS.scrim,
-        zIndex: Z_INDEX.modalBackdrop,
-      }}
-    />
-  );
-}
-
-function DragHandle() {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        padding: `${SPACING.md}px 0 ${SPACING.sm}px`,
-        flexShrink: 0,
-      }}>
-      <div style={{width: 36, height: 4, borderRadius: RADIUS.xs, background: COLORS.gray300}} />
-    </div>
-  );
-}
-
 function Divider() {
   return <div style={{height: 1, background: COLORS.surfaceBorder, flexShrink: 0}} />;
 }
@@ -499,6 +461,7 @@ interface SearchSheetProps {
   hasResults: boolean;
   onKeyDown: React.KeyboardEventHandler<HTMLDivElement>;
   onTransitionEnd: React.TransitionEventHandler<HTMLDivElement>;
+  onClose: () => void;
   query: string;
   autocomplete: ReturnType<typeof useAutocomplete>;
   inputRef: React.RefObject<HTMLInputElement | null>;
@@ -516,6 +479,7 @@ function SearchSheet({
   hasResults,
   onKeyDown,
   onTransitionEnd,
+  onClose,
   query,
   autocomplete,
   inputRef,
@@ -526,31 +490,18 @@ function SearchSheet({
   onClearRecent,
 }: SearchSheetProps) {
   return (
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog keyboard handling (Escape to close)
-    <div
-      ref={sheetRef}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Search cards"
-      onKeyDown={onKeyDown}
-      className={`overlay-transition overlay-slide-up overlay-enter ${visible ? 'overlay-visible' : ''}`}
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
       onTransitionEnd={onTransitionEnd}
-      style={{
-        position: 'fixed',
-        left: 0,
-        right: 0,
-        bottom: 0,
+      ariaLabel="Search cards"
+      backdropTestId="search-sheet-backdrop"
+      sheetRef={sheetRef}
+      onKeyDown={onKeyDown}
+      sheetStyle={{
         top: sheetTop,
-        background: COLORS.surface,
-        borderRadius: '24px 24px 0 0',
-        boxShadow: SHADOWS.sheet,
-        zIndex: Z_INDEX.modal,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
         transition: `top 0.25s ${EASING.smooth}, opacity 0.25s ${EASING.smooth}, transform 0.25s ${EASING.smooth}`,
       }}>
-      <DragHandle />
       <SearchSheetInput
         query={query}
         autocomplete={autocomplete}
@@ -575,7 +526,7 @@ function SearchSheet({
           />
         )}
       </div>
-    </div>
+    </BottomSheet>
   );
 }
 
@@ -686,7 +637,6 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
     return (
       <>
         {proxyInput}
-        <SheetBackdrop visible={visible} onClose={onClose} onTransitionEnd={onTransitionEnd} />
         <SearchSheet
           sheetRef={sheetRef}
           visible={visible}
@@ -694,6 +644,7 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
           hasResults={hasResults}
           onKeyDown={handleDialogKeyDown}
           onTransitionEnd={onTransitionEnd}
+          onClose={onClose}
           query={query}
           autocomplete={autocomplete}
           inputRef={inputRef}
