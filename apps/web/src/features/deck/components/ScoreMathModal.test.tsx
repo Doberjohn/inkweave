@@ -3,12 +3,12 @@ import {fireEvent, render, screen} from '@testing-library/react';
 import type {DeckStatus, HealthAnalyzer, ScoreContribution} from '../types';
 import {ScoreMathModal} from './ScoreMathModal';
 
-const analyzer = (id: string, label: string, score: number, status: DeckStatus, message = `${label} verdict`): HealthAnalyzer => ({
+const analyzer = (id: string, label: string, score: number, status: DeckStatus): HealthAnalyzer => ({
   id,
   label,
   score,
   status,
-  message,
+  message: `${label} verdict`,
 });
 
 const contribution = (dimension: string, points: number, reason = `${dimension} reason`): ScoreContribution => ({

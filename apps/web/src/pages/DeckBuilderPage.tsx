@@ -1,6 +1,7 @@
 import {useState, type ReactNode} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {useDeck} from '../features/deck/state';
+import type {Deck} from '../features/deck/types';
 import {DeckPanel, DeckPoolGrid, type DeckRow} from '../features/deck/components';
 import {useDeckPoolFilters, applyPoolFilters} from '../features/deck/hooks/useDeckPoolFilters';
 import {useDeckAnalysis} from '../features/deck/hooks/useDeckAnalysis';
@@ -43,6 +44,20 @@ function CenteredNotice({children}: {children: ReactNode}) {
  * store; the deck side reads/writes the shared DeckProvider draft. The advisor
  * (#472) and full mobile building are later increments.
  */
+// Deck rows resolved and sorted (cost, then name) for the panel's grouped list.
+// Cards that no longer resolve (rotated out of Core) are dropped silently here;
+// calculateDeckStats surfaces them as warnings instead.
+function buildDeckRows(deck: Deck, getCardById: (id: string) => LorcanaCard | undefined): DeckRow[] {
+  return deck.cards
+    .map((dc) => ({card: getCardById(dc.cardId), quantity: dc.quantity}))
+    .filter((r): r is DeckRow => r.card !== undefined)
+    .sort(
+      (a, b) =>
+        a.card.cost - b.card.cost ||
+        (a.card.fullName || a.card.name).localeCompare(b.card.fullName || b.card.name),
+    );
+}
+
 export function DeckBuilderPage() {
   const {isMobile} = useResponsive();
   const {deck, addCard, setQuantity, removeCard, renameDeck, setGameplan} = useDeck();
@@ -63,14 +78,7 @@ export function DeckBuilderPage() {
 
   const filtered = applyPoolFilters(cards, pool);
   const quantities = new Map(deck.cards.map((c) => [c.cardId, c.quantity] as const));
-  const rows: DeckRow[] = deck.cards
-    .map((dc) => ({card: getCardById(dc.cardId), quantity: dc.quantity}))
-    .filter((r): r is DeckRow => r.card !== undefined)
-    .sort(
-      (a, b) =>
-        a.card.cost - b.card.cost ||
-        (a.card.fullName || a.card.name).localeCompare(b.card.fullName || b.card.name),
-    );
+  const rows = buildDeckRows(deck, getCardById);
   const stats = calculateDeckStats(deck, getCardById);
 
   const viewDetails = (card: LorcanaCard) =>

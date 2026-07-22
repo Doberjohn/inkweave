@@ -1,16 +1,8 @@
 import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import type {DeckAnalysis} from '../analysis/analyzeDeck';
-import type {Archetype, DeckStatus, HealthAnalyzer, ScoreContribution, Vulnerability} from '../types';
+import type {Archetype, HealthAnalyzer, ScoreContribution, Vulnerability} from '../types';
 import {DeckAdvisorPanel} from './DeckAdvisorPanel';
-
-const analyzer = (id: string, label: string, score: number, status: DeckStatus, message: string): HealthAnalyzer => ({
-  id,
-  label,
-  score,
-  status,
-  message,
-});
 
 const contribution = (dimension: string, weight: number, dimensionScore: number, reason: string): ScoreContribution => ({
   dimension,
@@ -20,18 +12,19 @@ const contribution = (dimension: string, weight: number, dimensionScore: number,
   reason,
 });
 
+const a = (entry: HealthAnalyzer): HealthAnalyzer => entry;
 const ANALYZERS: HealthAnalyzer[] = [
-  analyzer('curve', 'Curve', 90, 'good', 'Peak at 2-3 ink with a healthy front-load.'),
-  analyzer('inkable', 'Inkable Ratio', 70, 'warn', '43 inkable is a touch below the 44-48 target.'),
-  analyzer('draw', 'Card Draw', 55, 'warn', '5 draw effects; the archetype wants 6-10.'),
-  analyzer('removal', 'Removal', 40, 'bad', '3 removal pieces; the floor is 4.'),
-  analyzer('actionsCap', 'Actions & Songs', 85, 'good', '13 actions sits under the ~15 cap.'),
-  analyzer('typeMix', 'Card Types', 75, 'good', '24 characters / 13 actions / 5 items.'),
-  analyzer('ruleOfEight', 'Rule of Eight', 65, 'warn', '7 interchangeable core pieces; 8 hits ~65% of opening hands.'),
-  analyzer('consistency', 'Consistency', 80, 'warn', '18 distinct cards, 11 playsets.'),
-  analyzer('lore', 'Lore Output', 95, 'good', 'Board lore keeps pace with a racing plan.'),
-  analyzer('shiftCoverage', 'Shift Coverage', 100, 'good', 'Every Shift card has a same-name base.'),
-  analyzer('synergyDensity', 'Synergy Density', 72, 'warn', 'Strong core pairs, two weak links.'),
+  a({id: 'curve', label: 'Curve', score: 90, status: 'good', message: 'Peak at 2-3 ink with a healthy front-load.'}),
+  a({id: 'inkable', label: 'Inkable Ratio', score: 70, status: 'warn', message: '43 inkable is a touch below the 44-48 target.'}),
+  a({id: 'draw', label: 'Card Draw', score: 55, status: 'warn', message: '5 draw effects; the archetype wants 6-10.'}),
+  a({id: 'removal', label: 'Removal', score: 40, status: 'bad', message: '3 removal pieces; the floor is 4.'}),
+  a({id: 'actionsCap', label: 'Actions & Songs', score: 85, status: 'good', message: '13 actions sits under the ~15 cap.'}),
+  a({id: 'typeMix', label: 'Card Types', score: 75, status: 'good', message: '24 characters / 13 actions / 5 items.'}),
+  a({id: 'ruleOfEight', label: 'Rule of Eight', score: 65, status: 'warn', message: '7 interchangeable core pieces; 8 hits ~65% of opening hands.'}),
+  a({id: 'consistency', label: 'Consistency', score: 80, status: 'warn', message: '18 distinct cards, 11 playsets.'}),
+  a({id: 'lore', label: 'Lore Output', score: 95, status: 'good', message: 'Board lore keeps pace with a racing plan.'}),
+  a({id: 'shiftCoverage', label: 'Shift Coverage', score: 100, status: 'good', message: 'Every Shift card has a same-name base.'}),
+  a({id: 'synergyDensity', label: 'Synergy Density', score: 72, status: 'warn', message: 'Strong core pairs, two weak links.'}),
 ];
 
 const BREAKDOWN: ScoreContribution[] = [

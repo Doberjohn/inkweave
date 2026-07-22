@@ -57,6 +57,80 @@ const detailText: CSSProperties = {
   padding: `0 0 ${SPACING.sm}px 21px`,
 };
 
+/** One dimension row: status dot, label, health score, signed points; verdict + weight when open. */
+function AnalyzerRow({
+  analyzer,
+  points,
+  isOpen,
+  onToggle,
+}: {
+  analyzer: HealthAnalyzer;
+  points: ScoreContribution | undefined;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div style={{borderBottom: `1px solid ${COLORS.surfaceBorder}`}}>
+      <button type="button" onClick={onToggle} aria-expanded={isOpen} style={rowButton}>
+        <span
+          aria-hidden
+          style={{width: 9, height: 9, borderRadius: '50%', background: dimensionColor(analyzer.status), flexShrink: 0}}
+        />
+        <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.base}px`, fontWeight: isOpen ? 700 : 400, color: COLORS.text}}>
+          {analyzer.label}
+        </span>
+        <span style={{flex: 1}} />
+        <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.sm}px`, color: COLORS.textDim, fontVariantNumeric: 'tabular-nums'}}>
+          {analyzer.score}
+        </span>
+        {points && <span style={pointsCell(points.contribution < 0)}>{signed(points.contribution)}</span>}
+      </button>
+      {isOpen && (
+        <div style={detailText}>
+          {analyzer.message}
+          {points && (
+            <span style={{color: COLORS.textDim}}>
+              {' '}
+              · Weight {Number(points.weight.toFixed(2))}, hitting {Math.round(points.dimensionScore * 100)}% of target
+              {/* score.ts sets reason = analyzer.message, so only append when it truly adds something */}
+              {points.reason && points.reason !== analyzer.message ? ` · ${points.reason}` : ''}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** A breakdown term with no matching analyzer (e.g. a future coherence term): plain row. */
+function LeftoverRow({term}: {term: ScoreContribution}) {
+  return (
+    <div style={{...rowButton, cursor: 'default', borderBottom: `1px solid ${COLORS.surfaceBorder}`}}>
+      <span aria-hidden style={{width: 9, height: 9, borderRadius: '50%', background: COLORS.textDim, flexShrink: 0}} />
+      <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.base}px`, color: COLORS.text}}>{labelFor(term.dimension)}</span>
+      <span style={{flex: 1}} />
+      <span style={pointsCell(term.contribution < 0)}>{signed(term.contribution)}</span>
+    </div>
+  );
+}
+
+/** The subtractive vulnerability penalty, last, with its reason always visible. */
+function PenaltyRow({penalty}: {penalty: ScoreContribution}) {
+  return (
+    <div style={{paddingTop: 2}}>
+      <div style={{...rowButton, cursor: 'default'}}>
+        <span aria-hidden style={{width: 9, height: 9, borderRadius: '50%', background: COLORS.error, flexShrink: 0}} />
+        <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.base}px`, fontWeight: 700, color: COLORS.text}}>
+          {labelFor(PENALTY_ID)}
+        </span>
+        <span style={{flex: 1}} />
+        <span style={pointsCell(penalty.contribution < 0)}>{signed(penalty.contribution)}</span>
+      </div>
+      <div style={detailText}>{penalty.reason}</div>
+    </div>
+  );
+}
+
 interface ScoreMathModalProps {
   score: number;
   configVersion: string;
@@ -136,64 +210,19 @@ export function ScoreMathModal({score, configVersion, analyzers, breakdown, onCl
         </p>
 
         <div style={{overflowY: 'auto', flex: 1, minHeight: 0}}>
-          {ordered.map((a) => {
-            const isOpen = open.has(a.id);
-            const points = byDimension.get(a.id);
-            return (
-              <div key={a.id} style={{borderBottom: `1px solid ${COLORS.surfaceBorder}`}}>
-                <button type="button" onClick={() => toggle(a.id)} aria-expanded={isOpen} style={rowButton}>
-                  <span
-                    aria-hidden
-                    style={{width: 9, height: 9, borderRadius: '50%', background: dimensionColor(a.status), flexShrink: 0}}
-                  />
-                  <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.base}px`, fontWeight: isOpen ? 700 : 400, color: COLORS.text}}>
-                    {a.label}
-                  </span>
-                  <span style={{flex: 1}} />
-                  <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.sm}px`, color: COLORS.textDim, fontVariantNumeric: 'tabular-nums'}}>
-                    {a.score}
-                  </span>
-                  {points && <span style={pointsCell(points.contribution < 0)}>{signed(points.contribution)}</span>}
-                </button>
-                {isOpen && (
-                  <div style={detailText}>
-                    {a.message}
-                    {points && (
-                      <span style={{color: COLORS.textDim}}>
-                        {' '}
-                        · Weight {Number(points.weight.toFixed(2))}, hitting {Math.round(points.dimensionScore * 100)}% of target
-                        {/* score.ts sets reason = analyzer.message, so only append when it truly adds something */}
-                        {points.reason && points.reason !== a.message ? ` · ${points.reason}` : ''}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {leftovers.map((b) => (
-            <div key={b.dimension} style={{...rowButton, cursor: 'default', borderBottom: `1px solid ${COLORS.surfaceBorder}`}}>
-              <span aria-hidden style={{width: 9, height: 9, borderRadius: '50%', background: COLORS.textDim, flexShrink: 0}} />
-              <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.base}px`, color: COLORS.text}}>{labelFor(b.dimension)}</span>
-              <span style={{flex: 1}} />
-              <span style={pointsCell(b.contribution < 0)}>{signed(b.contribution)}</span>
-            </div>
+          {ordered.map((a) => (
+            <AnalyzerRow
+              key={a.id}
+              analyzer={a}
+              points={byDimension.get(a.id)}
+              isOpen={open.has(a.id)}
+              onToggle={() => toggle(a.id)}
+            />
           ))}
-
-          {penalty && (
-            <div style={{paddingTop: 2}}>
-              <div style={{...rowButton, cursor: 'default'}}>
-                <span aria-hidden style={{width: 9, height: 9, borderRadius: '50%', background: COLORS.error, flexShrink: 0}} />
-                <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.base}px`, fontWeight: 700, color: COLORS.text}}>
-                  {labelFor(PENALTY_ID)}
-                </span>
-                <span style={{flex: 1}} />
-                <span style={pointsCell(penalty.contribution < 0)}>{signed(penalty.contribution)}</span>
-              </div>
-              <div style={detailText}>{penalty.reason}</div>
-            </div>
-          )}
+          {leftovers.map((b) => (
+            <LeftoverRow key={b.dimension} term={b} />
+          ))}
+          {penalty && <PenaltyRow penalty={penalty} />}
         </div>
 
         <p style={{fontSize: `${FONT_SIZES.xs}px`, color: COLORS.textDim, margin: `${SPACING.md}px 0 0`}}>
