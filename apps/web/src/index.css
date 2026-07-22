@@ -294,10 +294,45 @@ option {
   animation: spin 0.8s linear infinite;
 }
 
+/* Vote toast slide (#511: moved from VoteToast.tsx's injected block so the
+   reduced-motion override below can reach it). Durations match ENTER_MS. */
+@keyframes toast-enter {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+@keyframes toast-exit {
+  from { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(-100%); opacity: 0; }
+}
+@keyframes toast-progress {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+.vote-toast-enter {
+  animation: toast-enter 300ms ease-out;
+}
+.vote-toast-exit {
+  animation: toast-exit 300ms ease-in forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   /* Stop the SW update spinner from rotating; the toast is still visible and
      the label conveys the state via text alone. */
   .sw-update-spinner {
+    animation: none !important;
+  }
+  /* No toast slide — it appears/disappears in place; the dismiss timer and
+     progress bar (information-bearing) still run. */
+  .vote-toast-enter,
+  .vote-toast-exit {
+    animation: none !important;
+  }
+  /* Kill the #511-audited infinite loops: the vote progress shimmer + glow
+     pulses and the mystery-score breathing circle. All decorative. */
+  .idv-shimmer-sweep,
+  .idv-progress-fill,
+  .idv-submit-btn,
+  .pair-mystery-pulse {
     animation: none !important;
   }
   /* Disable card-slot shimmer for vestibular-sensitive users. The tile stays

@@ -92,7 +92,8 @@ function MysteryBadge({selectedScore, size}: {selectedScore: Score | null; size:
         boxShadow: `0 0 20px 2px ${glowColor}`,
         animation: tier ? 'none' : 'mystery-pulse 3s ease-in-out infinite',
         transition: 'all 0.3s ease',
-      }}>
+      }}
+      className="pair-mystery-pulse">
       <span
         style={{
           fontSize: size > 40 ? 20 : 16,

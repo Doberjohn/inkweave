@@ -1,4 +1,5 @@
 import {useState, useEffect} from 'react';
+import {prefersReducedMotion} from '../utils/prefersReducedMotion';
 
 interface Sparkle {
   id: string;
@@ -100,12 +101,10 @@ export function Sparkles({
     generateSparkle(color, minSize, maxSize),
   ]);
 
-  const prefersReducedMotion = typeof window !== 'undefined'
-    && typeof window.matchMedia === 'function'
-    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reducedMotion = prefersReducedMotion();
 
   useEffect(() => {
-    if (prefersReducedMotion) return;
+    if (reducedMotion) return;
     const addSparkle = () => {
       const now = Date.now();
       setSparkles((prev) => [
@@ -116,7 +115,7 @@ export function Sparkles({
     };
     const interval = setInterval(addSparkle, rate);
     return () => clearInterval(interval);
-  }, [color, minSize, maxSize, rate, prefersReducedMotion]);
+  }, [color, minSize, maxSize, rate, reducedMotion]);
 
   return (
     <span style={{position: 'relative', display: 'block', flex: 1, minWidth: 0}}>
@@ -125,7 +124,7 @@ export function Sparkles({
           key={sparkle.id}
           style={{
             ...sparkle.style,
-            animation: prefersReducedMotion
+            animation: reducedMotion
               ? undefined
               : `sparkle-grow ${SPARKLE_LIFETIME_MS}ms ease-in-out forwards`,
           }}>
@@ -133,7 +132,7 @@ export function Sparkles({
           <span
             style={{
               display: 'block',
-              animation: prefersReducedMotion
+              animation: reducedMotion
                 ? undefined
                 : `sparkle-spin ${SPARKLE_LIFETIME_MS}ms linear forwards`,
             }}>

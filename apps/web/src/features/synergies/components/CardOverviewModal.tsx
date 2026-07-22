@@ -10,6 +10,7 @@ import {ExpandedGroupView} from './ExpandedGroupView';
 import {CardImage, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
+import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {trackEvent} from '../../../shared/lib/analytics';
 import {COLORS, EASING, FONTS, FONT_SIZES, LETTER_SPACING, RADIUS, SHADOWS, Z_INDEX, hexRgba} from '../../../shared/constants';
@@ -786,10 +787,6 @@ interface SynergyCardClickInput {
 const CLICK_ACK_DURATION_MS = 90;
 
 /** Whether the user has set OS-level "reduce motion." Returns false in non-browser contexts. */
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 /** A pair is click-actionable when it exists AND has at least one connection to display. */
 function isPairClickActionable(pair: DetailedPairSynergy | null): pair is DetailedPairSynergy {

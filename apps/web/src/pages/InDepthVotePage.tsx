@@ -211,12 +211,13 @@ function ProgressBar({answeredCount, maxWidth}: {answeredCount: number; maxWidth
           }}>
           {/* Fill with golden gradient + glow */}
           <div
+            className="idv-progress-fill"
             style={{
               height: '100%',
               width: `${pct}%`,
               background: v.barBg,
               borderRadius: RADIUS.sm,
-              transition: `width 0.5s ${EASING.bounce}, box-shadow 0.5s ${EASING.smooth}`,
+              transition: `width 0.5s ${EASING.smooth}, box-shadow 0.5s ${EASING.smooth}`,
               boxShadow: v.barShadow,
               animation: v.barAnimation,
               position: 'relative',
@@ -225,6 +226,7 @@ function ProgressBar({answeredCount, maxWidth}: {answeredCount: number; maxWidth
             {/* Shimmer sweep */}
             {showSparkles && (
               <div
+                className="idv-shimmer-sweep"
                 style={{
                   position: 'absolute',
                   inset: 0,
@@ -296,12 +298,13 @@ function SubmitVoteButton({
     <CtaButton
       onClick={session.submit}
       disabled={session.isSubmitting || session.isRateLimited}
+      className="idv-submit-btn"
       style={{
         width: '100%',
         maxWidth,
         animation: session.isSubmitting
-          ? 'idv-submit-glow 1.5s ease-in-out infinite'
-          : 'idv-fade-up 0.35s ease-out',
+          ? `idv-submit-glow 1.5s ${EASING.smooth} infinite`
+          : `idv-fade-up 0.35s ${EASING.smooth}`,
       }}>
       {session.isSubmitting ? 'Submitting...' : 'Submit your vote'}
     </CtaButton>

@@ -4,6 +4,7 @@ import type {Ink} from 'inkweave-synergy-engine';
 import {COLORS, EASING, FONT_SIZES, INK_COLORS, RADIUS, Z_INDEX, blackRgba, hexRgba} from '../../../shared/constants';
 import {IconButton} from '../../../shared/components';
 import {useDialogFocus, useScrollLock} from '../../../shared/hooks';
+import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
 
 interface MobileLightboxProps {
   imageUrl: string;
@@ -24,11 +25,6 @@ const FLIP_DURATION_MS = 340;
 const FLIP_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
 /** Chrome (scrim + close button + caption) fades slightly faster than the card FLIP. */
 const CHROME_FADE_MS = 240;
-
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 /**
  * Resolves the FLIP context — the card element plus its origin rect — or null when a FLIP
