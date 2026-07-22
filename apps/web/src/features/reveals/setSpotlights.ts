@@ -1,7 +1,6 @@
 import type {SpotlightHeroData} from './SpotlightHero';
 import {FRANCHISES, type FranchiseConfig, type FranchiseId} from './franchise';
-import {INK_COLORS} from '../../shared/constants';
-import {PLAYSTYLE_UI} from '../../shared/constants/playstyleUi';
+import {INK_COLORS, PLAYSTYLE_UI} from '../../shared/constants';
 
 /** A Set 13 spotlight, rendered as a SpotlightHero card in the What's New band. */
 export interface Spotlight extends SpotlightHeroData {

@@ -65,6 +65,14 @@ jobs:
       - name: Run linting
         run: pnpm lint
 
+      # Backstops for the local pre-push gates (#508): story coverage was
+      # previously local-only; the design-token value gate ships with it.
+      - name: Story coverage gate
+        run: pnpm --filter inkweave-web check:stories
+
+      - name: Design-token value gate
+        run: pnpm --filter inkweave-web check:design
+
       - name: Run engine tests
         run: pnpm --filter inkweave-synergy-engine test:run
 

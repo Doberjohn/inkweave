@@ -4,9 +4,14 @@
 pnpm --filter inkweave-web typecheck || exit $?
 
 # Story coverage gate — fails fast (~130ms) if a new visual component shipped
-# without a .stories.tsx file. Mirrors the chromatic.yml CI check so missing
-# stories surface locally before the Chromatic run rejects the push.
+# without a .stories.tsx file. Also runs in CI (build-and-test) as the backstop.
 pnpm --filter inkweave-web check:stories || exit $?
+
+# Design-token value gate (#508) — fails fast if any file restates a token's
+# literal value (theme hexes, EASING strings, font names) or trips the
+# 'Barlow'/backdrop-filter wires. Complements the inkweave ESLint rules, which
+# run in pre-commit; this catches cssText/CSS/html that the AST cannot see.
+pnpm --filter inkweave-web check:design || exit $?
 
 # Run chromium + webkit + mobile-chrome pre-push.
 # - Chromium alone misses WebKit-specific stacking-context bugs and Safari
