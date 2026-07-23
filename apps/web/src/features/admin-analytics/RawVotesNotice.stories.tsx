@@ -4,7 +4,6 @@ import {RawVotesNotice} from './RawVotesNotice';
 const meta: Meta<typeof RawVotesNotice> = {
   title: 'Features/AdminAnalytics/RawVotesNotice',
   component: RawVotesNotice,
-  parameters: {backgrounds: {default: 'dark'}},
   tags: ['autodocs'],
 };
 export default meta;

@@ -4,7 +4,6 @@ import {Scorecard, ScorecardRow} from './Scorecard';
 const meta: Meta<typeof Scorecard> = {
   title: 'Features/AdminAnalytics/Scorecard',
   component: Scorecard,
-  parameters: {backgrounds: {default: 'dark'}},
   tags: ['autodocs'],
 };
 export default meta;

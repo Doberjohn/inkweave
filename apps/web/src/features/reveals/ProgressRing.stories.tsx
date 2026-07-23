@@ -5,7 +5,6 @@ import {ALL_INKS} from '../../shared/constants';
 const meta: Meta<typeof ProgressRing> = {
   title: 'Features/Reveals/ProgressRing',
   component: ProgressRing,
-  parameters: {backgrounds: {default: 'dark'}},
   tags: ['autodocs'],
 };
 export default meta;

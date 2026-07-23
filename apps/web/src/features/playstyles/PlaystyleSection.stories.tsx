@@ -12,7 +12,7 @@ const card = (id: number, fullName: string): FanCardData => ({
 const meta: Meta<typeof PlaystyleSection> = {
   title: 'Features/Playstyles/PlaystyleSection',
   component: PlaystyleSection,
-  parameters: {backgrounds: {default: 'dark'}, layout: 'fullscreen'},
+  parameters: {layout: 'fullscreen'},
   decorators: [
     (Story) => (
       <div style={{padding: 24}}>

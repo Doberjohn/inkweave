@@ -4,7 +4,6 @@ import {WeeklyActivityChart} from './WeeklyActivityChart';
 const meta: Meta<typeof WeeklyActivityChart> = {
   title: 'Features/AdminAnalytics/WeeklyActivityChart',
   component: WeeklyActivityChart,
-  parameters: {backgrounds: {default: 'dark'}},
   tags: ['autodocs'],
 };
 export default meta;

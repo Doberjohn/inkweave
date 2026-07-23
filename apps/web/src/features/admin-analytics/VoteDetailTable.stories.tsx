@@ -5,7 +5,6 @@ import type {VoteLogRow} from './voteLogTypes';
 const meta: Meta<typeof VoteDetailTable> = {
   title: 'Features/AdminAnalytics/VoteDetailTable',
   component: VoteDetailTable,
-  parameters: {backgrounds: {default: 'dark'}},
   tags: ['autodocs'],
 };
 export default meta;

@@ -5,7 +5,7 @@ import {RevealsPromoCard} from './RevealsPromoCard';
 const meta: Meta<typeof RevealsPromoCard> = {
   title: 'Features/Reveals/RevealsPromoCard',
   component: RevealsPromoCard,
-  parameters: {layout: 'fullscreen', backgrounds: {default: 'dark'}},
+  parameters: {layout: 'fullscreen'},
   decorators: [
     (Story) => (
       <MemoryRouter>

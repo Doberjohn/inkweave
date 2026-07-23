@@ -6,7 +6,6 @@ import type {VoteLog, VoteLogRow} from './voteLogTypes';
 const meta: Meta<typeof CalibrationView> = {
   title: 'Features/AdminAnalytics/CalibrationView',
   component: CalibrationView,
-  parameters: {backgrounds: {default: 'dark'}},
   tags: ['autodocs'],
 };
 export default meta;

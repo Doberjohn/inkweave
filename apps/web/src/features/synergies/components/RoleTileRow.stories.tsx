@@ -17,7 +17,7 @@ const locationTiles: RoleTile[] = [
 const meta: Meta<typeof RoleTileRow> = {
   title: 'Features/RoleTileRow',
   component: RoleTileRow,
-  parameters: {layout: 'fullscreen', backgrounds: {default: 'dark'}},
+  parameters: {layout: 'fullscreen'},
   tags: ['autodocs'],
   decorators: [
     (Story) => (

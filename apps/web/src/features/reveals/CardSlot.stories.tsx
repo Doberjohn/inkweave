@@ -5,7 +5,6 @@ import {CardSlot} from './CardSlot';
 const meta: Meta<typeof CardSlot> = {
   title: 'Features/Reveals/CardSlot',
   component: CardSlot,
-  parameters: {backgrounds: {default: 'dark'}},
   tags: ['autodocs'],
 };
 export default meta;

@@ -7,7 +7,7 @@ const floodborn = SET_SPOTLIGHTS[0].items.find((s) => s.id === 'floodborn')!;
 const meta: Meta<typeof SpotlightHero> = {
   title: 'Features/Reveals/SpotlightHero',
   component: SpotlightHero,
-  parameters: {backgrounds: {default: 'dark'}, layout: 'padded'},
+  parameters: {layout: 'padded'},
   tags: ['autodocs'],
   args: {data: floodborn},
   decorators: [

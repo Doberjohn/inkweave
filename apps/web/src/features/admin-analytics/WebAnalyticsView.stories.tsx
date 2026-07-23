@@ -6,7 +6,7 @@ import type {TrendPoint, VercelAnalytics} from './vercelAnalyticsTypes';
 const meta: Meta<typeof WebAnalyticsView> = {
   title: 'Features/AdminAnalytics/WebAnalyticsView',
   component: WebAnalyticsView,
-  parameters: {backgrounds: {default: 'dark'}, layout: 'fullscreen'},
+  parameters: {layout: 'fullscreen'},
   tags: ['autodocs'],
   // Mimic the AdminAnalyticsPage frame (dark bg, page padding, centered max-width, body font)
   // so the story reads like the real route rather than flush to the viewport edges.

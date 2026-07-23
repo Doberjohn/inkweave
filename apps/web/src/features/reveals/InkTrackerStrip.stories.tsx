@@ -6,7 +6,7 @@ import {InkTrackerStrip} from './InkTrackerStrip';
 const meta: Meta<typeof InkTrackerStrip> = {
   title: 'Features/Reveals/InkTrackerStrip',
   component: InkTrackerStrip,
-  parameters: {backgrounds: {default: 'dark'}, layout: 'padded'},
+  parameters: {layout: 'padded'},
   tags: ['autodocs'],
 };
 export default meta;
