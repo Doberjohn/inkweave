@@ -50,4 +50,36 @@ describe('CtaButton', () => {
     render(<CtaButton style={{marginTop: 10}}>Styled</CtaButton>);
     expect(screen.getByRole('button')).toHaveStyle({marginTop: '10px'});
   });
+
+  it('renders the neutral variant muted, warming to gold on hover', () => {
+    render(<CtaButton variant="neutral">Cancel</CtaButton>);
+    const btn = screen.getByRole('button');
+    expect(btn.style.border).toContain('51, 51, 85'); // surfaceBorder at rest
+    fireEvent.mouseEnter(btn);
+    expect(btn.style.border).toContain('255, 185, 0'); // gold on hover
+  });
+
+  it('renders the pill variant fully rounded on the filled recipe', () => {
+    render(<CtaButton variant="pill">Reveals</CtaButton>);
+    const btn = screen.getByRole('button');
+    expect(btn.style.borderRadius).toBe('999px');
+    expect(btn.style.background).toContain('gradient');
+  });
+
+  it('applies the uniform disabled recipe (dimmed + not-allowed)', () => {
+    render(<CtaButton disabled>Publish</CtaButton>);
+    const btn = screen.getByRole('button');
+    expect(btn).toBeDisabled();
+    expect(btn.style.opacity).toBe('0.4');
+    expect(btn.style.cursor).toBe('not-allowed');
+  });
+
+  it('scales down while pressed and recovers on release', () => {
+    render(<CtaButton>Press</CtaButton>);
+    const btn = screen.getByRole('button');
+    fireEvent.mouseDown(btn);
+    expect(btn.style.transform).toBe('scale(0.97)');
+    fireEvent.mouseUp(btn);
+    expect(btn.style.transform).not.toBe('scale(0.97)');
+  });
 });

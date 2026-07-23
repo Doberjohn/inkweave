@@ -1,6 +1,8 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import {COLORS, FONT_SIZES, SPACING, RADIUS, Z_INDEX} from '../constants';
+import {COLORS, FONT_SIZES, SHADOWS, SPACING, RADIUS, Z_INDEX} from '../constants';
 import {CtaButton} from './CtaButton';
+import {IconButton} from './IconButton';
+import {LinkButton} from './LinkButton';
 import {useDraftFilters} from '../hooks/useDraftFilters';
 import {useInlineCostFilters} from '../hooks';
 import {FilterContent} from './FilterContent';
@@ -42,7 +44,7 @@ export function FilterDialog({
           position: 'fixed',
           inset: 0,
           // Solid scrim only — no backdrop-filter (WebKit continuous-repaint trap; see #444).
-          background: 'rgba(0, 0, 0, 0.72)',
+          background: COLORS.scrim,
           zIndex: Z_INDEX.modalBackdrop,
         },
         content: {
@@ -56,7 +58,7 @@ export function FilterDialog({
           background: COLORS.surface,
           borderRadius: `${RADIUS.xl}px`,
           border: `1px solid ${COLORS.surfaceBorder}`,
-          boxShadow: '0 24px 64px rgba(0, 0, 0, 0.5), 0 0 1px rgba(212, 175, 55, 0.2)',
+          boxShadow: `${SHADOWS.overlay}, ${SHADOWS.goldRing}`,
           display: 'flex',
           flexDirection: 'column' as const,
           overflow: 'hidden',
@@ -68,7 +70,7 @@ export function FilterDialog({
       overlay: {
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0, 0, 0, 0.5)',
+        background: COLORS.scrim,
         zIndex: Z_INDEX.modalBackdrop,
       },
       content: {
@@ -108,7 +110,7 @@ export function FilterDialog({
                 style={{
                   width: 36,
                   height: 4,
-                  borderRadius: 2,
+                  borderRadius: RADIUS.xs,
                   background: COLORS.gray300,
                 }}
               />
@@ -137,34 +139,17 @@ export function FilterDialog({
 
             <div style={{display: 'flex', gap: `${SPACING.md}px`, alignItems: 'center'}}>
               {draft.activeFilterCount > 0 && (
-                <button
-                  onClick={draft.clearAll}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: variant === 'modal' ? COLORS.primary : COLORS.primary600,
-                    fontSize: `${FONT_SIZES.base}px`,
-                    cursor: 'pointer',
-                    padding: `${SPACING.sm}px`,
-                  }}>
+                <LinkButton onClick={draft.clearAll} style={{padding: `${SPACING.sm}px`}}>
                   Clear all
-                </button>
+                </LinkButton>
               )}
               {variant === 'modal' ? (
                 <Dialog.Close asChild>
-                  <button
+                  <IconButton
                     aria-label="Close filters"
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: COLORS.textMuted,
-                      fontSize: `${FONT_SIZES.xxl}px`,
-                      cursor: 'pointer',
-                      padding: `${SPACING.xs}px`,
-                      lineHeight: 1,
-                    }}>
+                    style={{fontSize: `${FONT_SIZES.xxl}px`, lineHeight: 1}}>
                     ×
-                  </button>
+                  </IconButton>
                 </Dialog.Close>
               ) : (
                 <CtaButton onClick={handleApply}>Apply</CtaButton>

@@ -237,6 +237,46 @@ const noBackdropFilter = {
   },
 };
 
+/**
+ * The blessed button menu is closed (#509): a raw `<button style={…}>` in
+ * feature code is an ad-hoc recipe the kit already covers. The kit's own
+ * internals (shared/components/**) and the domain families below are the only
+ * legitimate styled-button authors.
+ */
+const ADHOC_BUTTON_EXEMPT = [
+  /src[\\/]shared[\\/]components[\\/]/, // the kit itself
+  /QuantityStepper\.tsx$/, // domain stepper family
+  /OptionPicker\.tsx$/, // vote picker family (CarriesPicker adapts it)
+  /ScorePicker\.tsx$/, // vote score row
+  /QuickVoteControl\.tsx$/, // vote control family
+  /RoleTileRow\.tsx$/, // tile-toggle family
+  /CardTile\.tsx$/, // card-grid tile family
+  /CardSlot\.tsx$/, // reveals tile family
+  /\.stories\.tsx$/,
+  /\.test\.(ts|tsx)$/,
+];
+const ADHOC_BUTTON_MESSAGE =
+  'Ad-hoc styled <button>. Use the kit: CtaButton (filled/ghost/neutral/pill), LinkButton, TabList, IconButton, FiltersButton, Chip — or extend a kit component (#509)';
+const noAdhocButtons = {
+  meta: {
+    type: 'problem',
+    docs: {description: 'Buttons come from the #509 kit; no hand-styled <button> in feature code'},
+    schema: [],
+  },
+  create(context) {
+    if (isExempt(context, ADHOC_BUTTON_EXEMPT) || isKnownOffender(context, 'no-adhoc-buttons')) return {};
+    return {
+      JSXOpeningElement(node) {
+        if (node.name.type !== 'JSXIdentifier' || node.name.name !== 'button') return;
+        const styled = node.attributes.some(
+          (a) => a.type === 'JSXAttribute' && a.name.name === 'style',
+        );
+        if (styled) context.report({node, message: ADHOC_BUTTON_MESSAGE});
+      },
+    };
+  },
+};
+
 export const inkweave = {
   meta: {name: 'eslint-plugin-inkweave', version: '1.0.0'},
   rules: {
@@ -249,5 +289,6 @@ export const inkweave = {
     'no-raw-easing': noRawEasing,
     'no-backdrop-filter': noBackdropFilter,
     'no-raw-spacing': noRawSpacing,
+    'no-adhoc-buttons': noAdhocButtons,
   },
 };

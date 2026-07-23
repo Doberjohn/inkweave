@@ -1,5 +1,6 @@
 import {useEffect, useRef, useState} from 'react';
-import {COLORS, EASING, FONTS} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SHADOWS, TIER_COLORS, Z_INDEX} from '../../../shared/constants';
+import {LinkButton} from '../../../shared/components/LinkButton';
 import type {Score} from '../../../shared/lib/supabase';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';
 
@@ -48,19 +49,19 @@ function ScoreCircle({score, label}: {score: number; label: string}) {
   const tier = getStrengthTier(score);
   return (
     <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
-      <span style={{fontSize: 11, color: COLORS.textMuted, fontFamily: FONTS.body}}>{label}</span>
+      <span style={{fontSize: FONT_SIZES.sm, color: COLORS.textMuted, fontFamily: FONTS.body}}>{label}</span>
       <div
         style={{
           width: 28,
           height: 28,
-          borderRadius: 14,
+          borderRadius: '50%',
           background: tier.bg,
           border: `2px solid ${tier.color}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
         }}>
-        <span style={{fontSize: 13, fontWeight: 700, color: tier.color, fontFamily: FONTS.body}}>
+        <span style={{fontSize: FONT_SIZES.base, fontWeight: 700, color: tier.color, fontFamily: FONTS.body}}>
           {score}
         </span>
       </div>
@@ -70,11 +71,11 @@ function ScoreCircle({score, label}: {score: number; label: string}) {
 
 function getReaction(userScore: number, engineScore: number): {text: string; color: string} {
   const diff = Math.abs(userScore - engineScore);
-  if (diff === 0) return {text: 'Exact match!', color: '#fbbf24'};
-  if (diff <= 1) return {text: 'Close match!', color: '#6ee7a0'};
-  if (diff >= 5) return {text: 'Hot take!', color: '#f59090'};
-  if (userScore > engineScore) return {text: 'You rated higher', color: '#60b5f5'};
-  return {text: 'You rated lower', color: '#f59090'};
+  if (diff === 0) return {text: 'Exact match!', color: TIER_COLORS.perfect.color};
+  if (diff <= 1) return {text: 'Close match!', color: TIER_COLORS.strong.color};
+  if (diff >= 5) return {text: 'Hot take!', color: TIER_COLORS.weak.color};
+  if (userScore > engineScore) return {text: 'You rated higher', color: TIER_COLORS.moderate.color};
+  return {text: 'You rated lower', color: TIER_COLORS.weak.color};
 }
 
 export function VoteToast({data, onDismiss, onUndo, isMobile}: VoteToastProps) {
@@ -125,13 +126,13 @@ export function VoteToast({data, onDismiss, onUndo, isMobile}: VoteToastProps) {
         position: 'fixed',
         bottom: isMobile ? 120 : 20,
         left: 20,
-        zIndex: 900,
+        zIndex: Z_INDEX.toast,
         width: 'calc(100vw - 40px)',
         maxWidth: 340,
-        borderRadius: 12,
+        borderRadius: RADIUS.card,
         background: COLORS.surface,
         border: `1px solid ${COLORS.surfaceBorder}`,
-        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
+        boxShadow: SHADOWS.float,
         overflow: 'hidden',
         animation: exiting
           ? `toast-exit ${ENTER_MS}ms ease-in forwards`
@@ -140,36 +141,21 @@ export function VoteToast({data, onDismiss, onUndo, isMobile}: VoteToastProps) {
       <div style={{padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8}}>
         {/* Header */}
         <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
-          <span style={{color: '#6ee7a0', fontSize: 14, fontWeight: 700}}>✓</span>
-          <span style={{fontSize: 13, fontWeight: 600, color: COLORS.text, fontFamily: FONTS.body}}>
+          <span style={{color: TIER_COLORS.strong.color, fontSize: FONT_SIZES.lg, fontWeight: 700}}>✓</span>
+          <span style={{fontSize: FONT_SIZES.base, fontWeight: 600, color: COLORS.text, fontFamily: FONTS.body}}>
             Vote submitted
           </span>
           {onUndo && (
-            <button
-              onClick={onUndo}
-              style={{
-                marginLeft: 'auto',
-                background: 'none',
-                border: 'none',
-                color: COLORS.primary500,
-                fontSize: 12,
-                fontFamily: FONTS.body,
-                cursor: 'pointer',
-                padding: '2px 6px',
-                borderRadius: 4,
-                transition: `color 0.2s ${EASING.snappy}`,
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = COLORS.primary; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = COLORS.primary500; }}>
+            <LinkButton onClick={onUndo} style={{marginLeft: 'auto', padding: '2px 6px'}}>
               Undo
-            </button>
+            </LinkButton>
           )}
         </div>
 
         {/* Pair names */}
         <span
           style={{
-            fontSize: 11,
+            fontSize: FONT_SIZES.sm,
             color: COLORS.textMuted,
             fontFamily: FONTS.body,
             whiteSpace: 'nowrap',
@@ -182,9 +168,9 @@ export function VoteToast({data, onDismiss, onUndo, isMobile}: VoteToastProps) {
         {/* Score comparison */}
         <div style={{display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap'}}>
           <ScoreCircle score={data.userScore} label="You:" />
-          <span style={{fontSize: 11, color: COLORS.textMuted, fontFamily: FONTS.body, fontStyle: 'italic'}}>vs</span>
+          <span style={{fontSize: FONT_SIZES.sm, color: COLORS.textMuted, fontFamily: FONTS.body, fontStyle: 'italic'}}>vs</span>
           <ScoreCircle score={data.engineScore} label="Engine:" />
-          <span style={{fontSize: 11, fontWeight: 600, color: reaction.color, fontFamily: FONTS.body, marginLeft: 'auto'}}>
+          <span style={{fontSize: FONT_SIZES.sm, fontWeight: 600, color: reaction.color, fontFamily: FONTS.body, marginLeft: 'auto'}}>
             {data.streak && data.streak >= 2
               ? `${reaction.text} · ${data.streak} in a row!`
               : reaction.text}
@@ -197,8 +183,8 @@ export function VoteToast({data, onDismiss, onUndo, isMobile}: VoteToastProps) {
         <div
           style={{
             height: '100%',
-            background: 'linear-gradient(90deg, #d4af37, #ffb900)',
-            borderRadius: 2,
+            background: `linear-gradient(90deg, ${COLORS.primary500}, ${COLORS.primary})`,
+            borderRadius: RADIUS.xs,
             animation: `toast-progress ${DISMISS_MS}ms linear forwards`,
             animationPlayState: paused ? 'paused' : 'running',
           }}

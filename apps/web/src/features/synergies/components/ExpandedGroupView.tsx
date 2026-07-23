@@ -47,7 +47,7 @@ export function ExpandedGroupView({
   return (
     <div data-expanded-group={group.groupKey}>
       {/* Back navigation */}
-      <BackLink onClick={handleBackToAll} label="Back to all synergies" />
+      <BackLink onClick={handleBackToAll} label="Back to all synergies" style={{marginBottom: SPACING.lg}} />
 
       {/* Lorcana ability box: page-size tag at top-left + cream callout below */}
       <div

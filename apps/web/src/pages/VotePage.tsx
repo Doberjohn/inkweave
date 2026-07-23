@@ -323,12 +323,12 @@ function EmptyVotesView({onHome}: {onHome: () => void}) {
         gap: 16,
         padding: 32,
       }}>
-      <span style={{fontSize: 20, fontWeight: 700, color: COLORS.text, fontFamily: FONTS.body}}>
+      <span style={{fontSize: FONT_SIZES.xxl, fontWeight: 700, color: COLORS.text, fontFamily: FONTS.body}}>
         All caught up!
       </span>
       <span
         style={{
-          fontSize: 13,
+          fontSize: FONT_SIZES.base,
           color: COLORS.textMuted,
           fontFamily: FONTS.body,
           textAlign: 'center',
@@ -348,30 +348,17 @@ function SkipPairButton({
   compactLayout: boolean;
 }) {
   return (
-    <button
+    <CtaButton
+      variant="ghost"
       onClick={onClick}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.color = COLORS.primary500;
-        e.currentTarget.style.borderColor = COLORS.primary500;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.color = COLORS.textMuted;
-        e.currentTarget.style.borderColor = COLORS.surfaceBorder;
-      }}
       style={{
-        background: 'none',
-        border: `1px solid ${COLORS.surfaceBorder}`,
-        borderRadius: 8,
-        color: COLORS.textMuted,
-        fontSize: 13,
-        fontFamily: FONTS.body,
-        cursor: 'pointer',
+        fontSize: `${FONT_SIZES.base}px`,
         padding: compactLayout ? '12px 24px' : '8px 24px',
+        minHeight: 0,
         marginTop: 4,
-        transition: 'color 0.2s ease, border-color 0.2s ease',
       }}>
       {compactLayout ? 'Skip this pair' : 'Skip this pair (S)'}
-    </button>
+    </CtaButton>
   );
 }
 

@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
+import {COLORS, FONTS, RADIUS} from '../../../shared/constants';
 import {MobileLightbox} from './MobileLightbox';
 
 const meta = {
@@ -10,8 +11,8 @@ const meta = {
     (Story) => (
       // Lightbox uses position: absolute, so it needs a positioned ancestor. A 390×844 frame
       // simulates the mobile modal it sits inside.
-      <div style={{position: 'relative', width: 390, height: 844, background: '#1a1a2e', border: '1px solid #333355', borderRadius: 22, overflow: 'hidden', margin: '24px auto'}}>
-        <div style={{padding: 20, color: '#90a1b9', fontFamily: "'Plus Jakarta Sans', sans-serif"}}>
+      <div style={{position: 'relative', width: 390, height: 844, background: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: RADIUS.xl, overflow: 'hidden', margin: '24px auto'}}>
+        <div style={{padding: 20, color: COLORS.textMuted, fontFamily: FONTS.body}}>
           (Underlying modal contents — obscured by the lightbox)
         </div>
         <Story />
