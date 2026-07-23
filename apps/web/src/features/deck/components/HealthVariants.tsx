@@ -1,4 +1,4 @@
-import {COLORS, FONTS, hexRgba} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, hexRgba} from '../../../shared/constants';
 import type {DeckAnalysis} from '../analysis/analyzeDeck';
 import type {HealthAnalyzer} from '../types';
 import {scoreTier} from './scoreTier';
@@ -64,7 +64,7 @@ function DimensionRingsView({analysis, dims}: {analysis: DeckAnalysis; dims: Hea
   return (
     <div style={{...body, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8}}>
       <ScoreRing score={analysis.quality.score} color={tier.color} size={82} />
-      <div style={{display: 'flex', alignItems: 'center', gap: 6, fontFamily: FONTS.body, fontSize: 9.5}}>
+      <div style={{display: 'flex', alignItems: 'center', gap: 6, fontFamily: FONTS.body, fontSize: FONT_SIZES.xs}}>
         <span style={{letterSpacing: '0.1em', textTransform: 'uppercase', color: COLORS.textMuted, fontWeight: 600}}>
           <span style={{color: COLORS.primary}}>◆</span> {analysis.health.archetype}
         </span>
@@ -78,7 +78,7 @@ function DimensionRingsView({analysis, dims}: {analysis: DeckAnalysis; dims: Hea
         {dims.map((d) => (
           <div key={d.id} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3}}>
             <ScoreRing score={d.score} color={dimensionColor(d.status)} size={58} />
-            <span style={{fontFamily: FONTS.body, fontSize: 10, color: COLORS.textMuted, fontWeight: 600, whiteSpace: 'nowrap'}}>
+            <span style={{fontFamily: FONTS.body, fontSize: FONT_SIZES.xs, color: COLORS.textMuted, fontWeight: 600, whiteSpace: 'nowrap'}}>
               {shortLabel(d)}
             </span>
           </div>
@@ -173,7 +173,7 @@ export function RadarMedallion({analysis}: {analysis: DeckAnalysis}) {
           justifyContent: 'space-between',
           paddingTop: 6,
           borderTop: `1px solid ${COLORS.surfaceBorder}`,
-          fontSize: 11,
+          fontSize: FONT_SIZES.sm,
         }}>
         <span style={{color: COLORS.textMuted, textTransform: 'capitalize'}}>{analysis.health.archetype}</span>
         <span style={{color: COLORS.textMuted}}>

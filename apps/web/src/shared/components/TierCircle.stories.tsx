@@ -11,7 +11,7 @@ const strongTier = {
 const meta: Meta<typeof TierCircle> = {
   title: 'Components/TierCircle',
   component: TierCircle,
-  parameters: {layout: 'centered', backgrounds: {default: 'dark'}},
+  parameters: {layout: 'centered'},
   tags: ['autodocs'],
 };
 

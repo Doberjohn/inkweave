@@ -9,6 +9,8 @@
  * could leave a partial commit. Vanilla DOM keeps it bulletproof.
  */
 
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SHADOWS, Z_INDEX} from '../constants';
+
 const TOAST_ID = 'sw-update-toast';
 
 export function showUpdateToast(): HTMLElement {
@@ -21,7 +23,10 @@ export function showUpdateToast(): HTMLElement {
   toast.setAttribute('aria-live', 'polite');
   toast.className = 'sw-update-toast';
   toast.style.cssText =
-    "position:fixed;right:16px;bottom:16px;background:#1a1a2e;color:#e8e8e8;padding:12px 16px;border-radius:8px;border:1px solid #333355;display:flex;align-items:center;gap:10px;z-index:9999;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,0.5)";
+    `position:fixed;right:16px;bottom:16px;background:${COLORS.surface};color:${COLORS.text};` +
+    `padding:12px 16px;border-radius:${RADIUS.lg}px;border:1px solid ${COLORS.surfaceBorder};` +
+    `display:flex;align-items:center;gap:10px;z-index:${Z_INDEX.swUpdate};` +
+    `font-family:${FONTS.body};font-size:${FONT_SIZES.base}px;box-shadow:${SHADOWS.float}`;
 
   const spinner = document.createElement('span');
   spinner.className = 'sw-update-spinner';

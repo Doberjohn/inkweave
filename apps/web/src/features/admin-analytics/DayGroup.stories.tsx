@@ -34,7 +34,6 @@ const group = {day: '2026-07-02', count: votes.length, voters: 5, votes};
 const meta: Meta<typeof DayGroup> = {
   title: 'Features/AdminAnalytics/DayGroup',
   component: DayGroup,
-  parameters: {backgrounds: {default: 'dark'}},
   tags: ['autodocs'],
 };
 export default meta;

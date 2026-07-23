@@ -6,7 +6,6 @@ import type {VoteLog, VoteLogRow} from '../features/admin-analytics/voteLogTypes
 const meta: Meta<typeof AdminAnalyticsDashboard> = {
   title: 'Pages/AdminAnalyticsPage',
   component: AdminAnalyticsDashboard,
-  parameters: {backgrounds: {default: 'dark'}},
   tags: ['autodocs'],
 };
 export default meta;

@@ -4,7 +4,6 @@ import {VerdictHero} from './VerdictHero';
 const meta: Meta<typeof VerdictHero> = {
   title: 'Features/AdminAnalytics/VerdictHero',
   component: VerdictHero,
-  parameters: {backgrounds: {default: 'dark'}},
   tags: ['autodocs'],
 };
 export default meta;

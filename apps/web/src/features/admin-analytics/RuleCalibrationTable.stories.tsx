@@ -5,7 +5,6 @@ import type {RuleStat} from './voteAnalyticsTypes';
 const meta: Meta<typeof RuleCalibrationTable> = {
   title: 'Features/AdminAnalytics/RuleCalibrationTable',
   component: RuleCalibrationTable,
-  parameters: {backgrounds: {default: 'dark'}},
   tags: ['autodocs'],
 };
 export default meta;

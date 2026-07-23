@@ -1,3 +1,4 @@
+import {COLORS} from '../../../shared/constants';
 import {InkwellIcon} from '../../../shared/components/InkwellIcon';
 
 interface CostGlyphProps {
@@ -18,7 +19,7 @@ export function CostGlyph({cost, inkwell, size = 28}: CostGlyphProps) {
   return (
     <span style={{position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: size, height: size, flexShrink: 0}}>
       <InkwellIcon value={inkwell ? 'inkable' : 'uninkable'} size={size} decorative={false} />
-      <span style={{position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#fff', fontSize, fontWeight: 700, lineHeight: 1, pointerEvents: 'none', userSelect: 'none'}}>
+      <span style={{position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: COLORS.white, fontSize, fontWeight: 700, lineHeight: 1, pointerEvents: 'none', userSelect: 'none'}}>
         {label}
       </span>
     </span>

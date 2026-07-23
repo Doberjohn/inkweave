@@ -1,5 +1,6 @@
 import {useState, useEffect} from 'react';
 import {EASING} from '../constants';
+import {prefersReducedMotion} from '../utils/prefersReducedMotion';
 
 interface BoopConfig {
   /** X translation in px. Default 0. */
@@ -41,6 +42,9 @@ export function useBoop({
   const [isBooped, setIsBooped] = useState(false);
 
   const trigger = () => {
+    // #511 reduced-motion rule: the boop is decorative — no transform burst
+    // for vestibular-sensitive users (state never flips, style stays identity).
+    if (prefersReducedMotion()) return;
     setIsBooped(true);
   };
 

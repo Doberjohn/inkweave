@@ -5,7 +5,7 @@ import {BackLink} from './BackLink';
 const meta: Meta<typeof BackLink> = {
   title: 'Components/BackLink',
   component: BackLink,
-  parameters: {layout: 'centered', backgrounds: {default: 'dark'}},
+  parameters: {layout: 'centered'},
   tags: ['autodocs'],
 };
 

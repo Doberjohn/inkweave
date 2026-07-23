@@ -3,7 +3,7 @@ import {Link} from 'react-router-dom';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup} from '../types';
 import {getDominantScore, getStrengthTier} from '../utils';
-import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, TRUNCATE, hexRgba} from '../../../shared/constants';
 import {CardImage, CardLightbox, CardTextBlock, TierCircle} from '../../../shared/components';
 
 interface CardDetailPanelProps {
@@ -34,8 +34,8 @@ function activateOnEnterOrSpace(handler: () => void) {
 }
 
 function getRowBackground(isActive: boolean, isHovered: boolean): string {
-  if (isActive) return 'rgba(212, 175, 55, 0.1)';
-  if (isHovered) return 'rgba(212, 175, 55, 0.08)';
+  if (isActive) return hexRgba(COLORS.primary500, 0.1);
+  if (isHovered) return hexRgba(COLORS.primary500, 0.08);
   return 'transparent';
 }
 
@@ -210,9 +210,7 @@ function SynergyBreakdownRow({
           fontSize: `${FONT_SIZES.base}px`,
           color: COLORS.text,
           fontWeight: 500,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
+          ...TRUNCATE,
         }}>
         {group.label}
       </div>

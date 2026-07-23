@@ -84,5 +84,5 @@ export const Mobile: Story = {
     },
     isMobile: true,
   },
-  parameters: {viewport: {defaultViewport: 'mobile1'}},
+  globals: {viewport: {value: 'mobile1'}},
 };

@@ -1,5 +1,6 @@
 import type {PendingEdit} from '../useTuningAdmin';
 import {COLORS, SPACING, FONT_SIZES, RADIUS} from '../../../shared/constants';
+import {CtaButton} from '../../../shared/components';
 
 interface PendingTrayProps {
   pending: PendingEdit[];
@@ -54,21 +55,9 @@ function PendingEditRow({edit, onRevert}: {edit: PendingEdit; onRevert: (pathKey
 
 function PublishButton({disabled, publishing, onClick}: {disabled: boolean; publishing: boolean; onClick: () => void}) {
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        marginTop: SPACING.md,
-        padding: '12px 20px',
-        background: disabled ? COLORS.surfaceHover : COLORS.primary500,
-        color: COLORS.white,
-        border: 'none',
-        borderRadius: RADIUS.sm,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        fontWeight: 600,
-      }}>
+    <CtaButton onClick={onClick} disabled={disabled} style={{marginTop: SPACING.md}}>
       {publishing ? 'Publishing…' : 'Publish'}
-    </button>
+    </CtaButton>
   );
 }
 

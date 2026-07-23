@@ -92,7 +92,7 @@ describe('ScoreMathModal', () => {
 
   it('closes on Escape and via the Close button', () => {
     const onClose = renderModal();
-    fireEvent.keyDown(window, {key: 'Escape'});
+    fireEvent.keyDown(document, {key: 'Escape'});
     expect(onClose).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole('button', {name: 'Close'}));
     expect(onClose).toHaveBeenCalledTimes(2);

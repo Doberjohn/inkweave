@@ -1,17 +1,7 @@
-import {COLORS, FONT_SIZES, FONTS, hexRgba, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, EASING, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
+import {BetaTag, LinkButton} from '../../../shared/components';
 import type {QualityScore} from '../types';
 import {scoreTier} from './scoreTier';
-
-const mathButton: React.CSSProperties = {
-  alignSelf: 'flex-start',
-  border: 'none',
-  background: 'transparent',
-  cursor: 'pointer',
-  color: COLORS.primary,
-  fontFamily: FONTS.body,
-  fontSize: `${FONT_SIZES.md}px`,
-  padding: '2px 0',
-};
 
 /**
  * The Deck Quality Score display (#472): the composite 0..100 score from
@@ -36,24 +26,11 @@ export function ScoreGauge({quality, onShowMath}: {quality: QualityScore; onShow
           marginBottom: SPACING.md,
         }}>
         Deck quality score
-        <span
-          style={{
-            fontSize: 8,
-            fontWeight: 700,
-            letterSpacing: '0.08em',
-            color: COLORS.primary,
-            border: `1px solid ${hexRgba(COLORS.primary, 0.4)}`,
-            borderRadius: 3,
-            padding: '1px 4px',
-            marginLeft: 6,
-            verticalAlign: 'middle',
-          }}>
-          BETA
-        </span>
+        <BetaTag style={{marginLeft: 6}} />
       </div>
 
       <div style={{display: 'flex', alignItems: 'baseline', gap: SPACING.md, marginBottom: SPACING.md}}>
-        <span style={{fontFamily: FONTS.body, fontWeight: 700, fontSize: 52, lineHeight: 1, color: COLORS.text, fontVariantNumeric: 'tabular-nums'}}>{quality.score}</span>
+        <span style={{fontFamily: FONTS.body, fontWeight: 700, fontSize: FONT_SIZES.displayLg, lineHeight: 1, color: COLORS.text, fontVariantNumeric: 'tabular-nums'}}>{quality.score}</span>
         <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.xl}px`, color: COLORS.textDim}}>/100</span>
         <span
           style={{
@@ -72,13 +49,13 @@ export function ScoreGauge({quality, onShowMath}: {quality: QualityScore; onShow
       </div>
 
       <div style={{height: 8, borderRadius: RADIUS.sm, background: COLORS.surfaceAlt, overflow: 'hidden', marginBottom: SPACING.md}}>
-        <div style={{width: `${quality.score}%`, height: '100%', background: tier.color, transition: 'width 0.3s ease'}} />
+        <div style={{width: `${quality.score}%`, height: '100%', background: tier.color, transition: `width 0.3s ${EASING.smooth}`}} />
       </div>
 
       {onShowMath && (
-        <button type="button" onClick={onShowMath} style={mathButton}>
+        <LinkButton onClick={onShowMath} style={{alignSelf: 'flex-start'}}>
           Why {quality.score}? Show the math
-        </button>
+        </LinkButton>
       )}
 
       <div style={{marginTop: SPACING.md, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.xs}px`, color: COLORS.textDim, lineHeight: 1.5}}>

@@ -6,7 +6,6 @@ const meta: Meta<typeof CardDetailSkeleton> = {
   component: CardDetailSkeleton,
   parameters: {
     layout: 'fullscreen',
-    backgrounds: {default: 'dark'},
   },
   decorators: [
     (Story) => (

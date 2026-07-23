@@ -1,4 +1,4 @@
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, Z_INDEX} from '../constants';
 
 /**
  * Persistent beta-warning card on the landing page, top-left.
@@ -26,7 +26,7 @@ export function BetaNotice() {
         fontFamily: FONTS.body,
         fontSize: `${FONT_SIZES.sm}px`,
         lineHeight: 1.5,
-        zIndex: 800,
+        zIndex: Z_INDEX.promo,
       }}>
       <span
         style={{

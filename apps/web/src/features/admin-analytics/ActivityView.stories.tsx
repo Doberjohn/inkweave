@@ -42,7 +42,6 @@ const voteLog: VoteLog = {
 const meta: Meta<typeof ActivityView> = {
   title: 'Features/AdminAnalytics/ActivityView',
   component: ActivityView,
-  parameters: {backgrounds: {default: 'dark'}},
   tags: ['autodocs'],
 };
 export default meta;

@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../../../shared/constants';
+import {IconButton} from '../../../shared/components';
 import {smallImageUrl} from '../../cards/loader';
 import {CostGlyph} from './CostGlyph';
 import {QuantityStepper} from './QuantityStepper';
@@ -66,8 +67,8 @@ export function DeckCardRow({card, quantity, onIncrement, onDecrement, onRemove,
         // hex-alpha suffixes, matching the filter-button convention.
         background: hovered ? `${ink.border}14` : 'transparent',
         boxShadow: hovered ? `0 0 14px ${ink.border}40, inset 0 0 0 1px ${ink.border}66` : 'inset 0 0 0 1px transparent',
-        transition: 'background 0.15s ease, box-shadow 0.15s ease',
-        animation: 'inkweave-row-enter 0.28s ease-out',
+        transition: `background 0.15s ${EASING.snappy}, box-shadow 0.15s ${EASING.snappy}`,
+        animation: `inkweave-row-enter 0.28s ${EASING.smooth}`,
       }}>
       <CostGlyph cost={card.cost} inkwell={card.inkwell} size={28} />
       {/* Card identity: hovering it floats the preview, clicking it opens the detail
@@ -105,13 +106,13 @@ export function DeckCardRow({card, quantity, onIncrement, onDecrement, onRemove,
         disabledReason={`Maximum ${MAX_COPIES} copies of ${name}`}
         label={name}
       />
-      <button
-        type="button"
+      <IconButton
         onClick={onRemove}
         aria-label={`Remove ${name} from deck`}
-        style={{width: 26, height: 26, flexShrink: 0, border: 'none', background: 'transparent', color: hovered ? COLORS.textMuted : COLORS.textDim, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'color 0.15s'}}>
+        size={26}
+        style={{flexShrink: 0, color: hovered ? COLORS.textMuted : COLORS.textDim}}>
         <TrashIcon />
-      </button>
+      </IconButton>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
+import Skeleton from 'react-loading-skeleton';
 import {FeaturedCardsSkeleton} from '../features/cards/components/FeaturedCardsSkeleton';
 import {COLORS, RADIUS, SPACING, Z_INDEX} from '../shared/constants';
 
@@ -33,10 +33,10 @@ export function HomePageSkeleton({isMobile = false}: HomePageSkeletonProps = {})
         justifyContent: isMobile ? undefined : 'center',
         background: COLORS.background,
       }}>
-      <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+      <>
         <HeroSkeleton isMobile={isMobile} />
         <FeaturedCardsSkeleton isMobile={isMobile} />
-      </SkeletonTheme>
+      </>
     </main>
   );
 }

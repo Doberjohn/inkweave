@@ -1,7 +1,6 @@
 import type {CSSProperties} from 'react';
 import './reveals.css';
-import {FONTS} from '../../shared/constants';
-import {hexToRgb} from '../../shared/constants/theme';
+import {FONTS, hexToRgb} from '../../shared/constants';
 
 export interface SupportCard {
   src: string;

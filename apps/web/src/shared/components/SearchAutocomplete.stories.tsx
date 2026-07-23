@@ -3,22 +3,24 @@ import {fn} from 'storybook/test';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {SearchAutocomplete} from './SearchAutocomplete';
 
-const card = (id: string, name: string, setCode: string): LorcanaCard =>
-  ({
-    id,
-    name: name.split(' - ')[0],
-    fullName: name,
-    ink: 'Sapphire',
-    cost: 3,
-    type: 'Character',
-    setCode,
-  }) as LorcanaCard;
+// Complete LorcanaCard shape, Core-era sets (#512: no cast, no pre-Core mocks).
+const card = (id: string, name: string, setCode: string): LorcanaCard => ({
+  id,
+  name: name.split(' - ')[0],
+  version: name.split(' - ')[1],
+  fullName: name,
+  ink: 'Sapphire',
+  cost: 3,
+  inkwell: true,
+  type: 'Character',
+  setCode,
+});
 
 const suggestions = [
-  card('1', 'Elsa - Snow Queen', '5'),
-  card('2', 'Elsa - Spirit of Winter', '6'),
-  card('3', 'Elsa - Ice Surfer', '7'),
-  card('4', 'Belle - Strange but Special', '5'),
+  card('1', 'Elsa - Snow Queen', '9'),
+  card('2', 'Elsa - Spirit of Winter', '10'),
+  card('3', 'Elsa - Ice Surfer', '11'),
+  card('4', 'Belle - Strange but Special', '9'),
 ];
 
 const noopListboxProps = {

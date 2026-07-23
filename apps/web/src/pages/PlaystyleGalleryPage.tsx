@@ -7,12 +7,14 @@ import {
 } from 'inkweave-synergy-engine';
 import {useAllPlaystyleCards} from '../features/synergies/hooks';
 import {CardGridSkeleton} from '../features/cards';
-import {CompactHeader, ErrorBoundary, EtherealBackground, Seo} from '../shared/components';
+import {CompactHeader, CtaButton, ErrorBoundary, EtherealBackground, Seo} from '../shared/components';
 import {PlaystyleFanTile, PlaystyleSection} from '../features/playstyles';
 import {
   COLORS,
+  EMPTY_BOX,
   FONTS,
   FONT_SIZES,
+  RADIUS,
   SPACING,
   PLAYSTYLE_UI,
   COMING_SOON_PLAYSTYLES,
@@ -100,20 +102,7 @@ function PageErrorView({onRetry}: {onRetry: () => void}) {
       <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
         Failed to load card data.
       </p>
-      <button
-        onClick={onRetry}
-        style={{
-          padding: '8px 20px',
-          background: COLORS.primary,
-          color: COLORS.background,
-          border: 'none',
-          borderRadius: 6,
-          cursor: 'pointer',
-          fontFamily: FONTS.body,
-          fontWeight: 600,
-        }}>
-        Retry
-      </button>
+      <CtaButton onClick={onRetry}>Retry</CtaButton>
     </main>
   );
 }
@@ -182,13 +171,9 @@ function ComingSoonBand() {
           <div
             key={ps.name}
             style={{
-              border: `1px dashed ${COLORS.surfaceBorder}`,
-              borderRadius: 12,
+              ...EMPTY_BOX,
+              borderRadius: RADIUS.card,
               minHeight: 84,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: COLORS.textMuted,
               fontSize: `${FONT_SIZES.base}px`,
             }}>
             {ps.name}

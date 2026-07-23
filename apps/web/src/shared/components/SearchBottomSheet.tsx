@@ -1,7 +1,9 @@
 import {forwardRef, useImperativeHandle, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SET_ABBREVIATIONS, SPACING, Z_INDEX} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SET_ABBREVIATIONS, SHADOWS, SPACING, TRUNCATE} from '../constants';
+import {BottomSheet} from './BottomSheet';
+import {LinkButton} from './LinkButton';
 import {useCardDataContext} from '../contexts/CardDataContext';
 import {useCardModal} from '../contexts/CardModalContext';
 import {smallImageUrl} from '../../features/cards/loader';
@@ -40,20 +42,13 @@ function HighlightedName({fullName, query}: {fullName: string; query: string}) {
 // Ink color / set abbreviation helpers.
 // =====================================================================
 
-const INK_COLORS: Record<string, string> = {
-  Amber: '#f59e0b',
-  Amethyst: '#8b5cf6',
-  Emerald: '#10b981',
-  Ruby: '#ef4444',
-  Sapphire: '#3b82f6',
-  Steel: '#71717a',
-};
-
 function inkColor(card: LorcanaCard): string {
   // Use the primary ink for the thumbnail border. (LorcanaCard exposes
   // `ink` / `ink2` — there is no `inkColor` field; the old code read an
   // always-undefined property and silently fell back to the gray border.)
-  return INK_COLORS[card.ink] ?? COLORS.surfaceBorder;
+  // 2026-07-22: the former private ink map here drifted from the theme
+  // (Steel #71717a vs INK_COLORS' #6b7280) — derive from the token instead.
+  return INK_COLORS[card.ink]?.border ?? COLORS.surfaceBorder;
 }
 
 /** Set abbreviation for a card. Split guard form keeps each conditional simple. */
@@ -193,13 +188,13 @@ function SearchSheetInput({query, autocomplete, inputRef, onSubmit, onClear}: Se
             padding: '0 36px 0 12px',
             borderRadius: RADIUS.lg,
             border: `1px solid ${COLORS.primary}`,
-            background: 'rgba(15, 23, 43, 0.8)',
+            background: COLORS.searchBg,
             color: COLORS.text,
             fontSize: `${FONT_SIZES.lg}px`,
             fontFamily: FONTS.body,
             boxSizing: 'border-box',
             outline: 'none',
-            boxShadow: '0 0 8px rgba(212, 175, 55, 0.2)',
+            boxShadow: SHADOWS.glowSm,
           }}
         />
         {query && <ClearButton onClear={onClear} />}
@@ -220,7 +215,7 @@ function ClearButton({onClear}: {onClear: () => void}) {
         transform: 'translateY(-50%)',
         width: 24,
         height: 24,
-        borderRadius: 12,
+        borderRadius: '50%',
         border: 'none',
         background: COLORS.surfaceBorder,
         color: COLORS.textMuted,
@@ -228,7 +223,7 @@ function ClearButton({onClear}: {onClear: () => void}) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 14,
+        fontSize: FONT_SIZES.lg,
         lineHeight: 1,
         padding: 0,
       }}>
@@ -260,14 +255,14 @@ function SearchResultRow({card, isHighlighted, isLast, query, optionProps}: Sear
           minHeight: 60,
           cursor: 'pointer',
           background: isHighlighted ? COLORS.surfaceHover : 'transparent',
-          transition: 'background 0.1s ease',
+          transition: `background 0.1s ${EASING.snappy}`,
         }}>
         {/* Thumbnail */}
         <div
           style={{
             width: 38,
             height: 53,
-            borderRadius: 4,
+            borderRadius: RADIUS.sm,
             background: inkColor(card),
             flexShrink: 0,
             overflow: 'hidden',
@@ -290,9 +285,7 @@ function SearchResultRow({card, isHighlighted, isLast, query, optionProps}: Sear
               fontWeight: 500,
               color: COLORS.text,
               fontFamily: FONTS.body,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              ...TRUNCATE,
             }}>
             <HighlightedName fullName={card.fullName} query={query} />
           </div>
@@ -310,12 +303,12 @@ function SearchResultRow({card, isHighlighted, isLast, query, optionProps}: Sear
 
         {/* Chevron */}
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" style={{flexShrink: 0}}>
-          <path d="M9 18l6-6-6-6" stroke="#444466" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M9 18l6-6-6-6" stroke={COLORS.gray300} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
 
       {!isLast && (
-        <div style={{height: 1, background: '#222244', marginLeft: SPACING.lg, marginRight: SPACING.lg}} />
+        <div style={{height: 1, background: COLORS.surfaceHover, marginLeft: SPACING.lg, marginRight: SPACING.lg}} />
       )}
     </div>
   );
@@ -370,7 +363,7 @@ function RecentSearchChip({term, onClick}: RecentSearchChipProps) {
         gap: 6,
         height: 32,
         padding: '0 12px',
-        borderRadius: 16,
+        borderRadius: RADIUS.pill,
         border: `1px solid ${COLORS.surfaceBorder}`,
         background: COLORS.surfaceAlt,
         color: COLORS.text,
@@ -380,8 +373,8 @@ function RecentSearchChip({term, onClick}: RecentSearchChipProps) {
         cursor: 'pointer',
       }}>
       <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="10" stroke="#444466" strokeWidth="2" />
-        <path d="M12 6v6l4 2" stroke="#444466" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="12" cy="12" r="10" stroke={COLORS.gray300} strokeWidth="2" />
+        <path d="M12 6v6l4 2" stroke={COLORS.gray300} strokeWidth="2" strokeLinecap="round" />
       </svg>
       {term}
     </button>
@@ -422,20 +415,9 @@ function RecentSection({recentSearches, onRecentClick, onClearRecent}: SearchEmp
           }}>
           Recent
         </span>
-        <button
-          onClick={onClearRecent}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: COLORS.primary,
-            fontSize: `${FONT_SIZES.xs}px`,
-            fontWeight: 500,
-            fontFamily: FONTS.body,
-            cursor: 'pointer',
-            padding: 0,
-          }}>
+        <LinkButton size="sm" onClick={onClearRecent}>
           Clear
-        </button>
+        </LinkButton>
       </div>
       <div style={{display: 'flex', flexWrap: 'wrap', gap: SPACING.sm}}>
         {recentSearches.map((term) => (
@@ -466,45 +448,6 @@ function EmptyPrompt() {
 // component's function body stays under the line-length threshold.
 // =====================================================================
 
-interface SheetBackdropProps {
-  visible: boolean;
-  onClose: () => void;
-  onTransitionEnd: React.TransitionEventHandler<HTMLDivElement>;
-}
-
-function SheetBackdrop({visible, onClose, onTransitionEnd}: SheetBackdropProps) {
-  return (
-    <div
-      data-testid="search-sheet-backdrop"
-      className={`overlay-transition overlay-enter ${visible ? 'overlay-visible' : ''}`}
-      onTransitionEnd={onTransitionEnd}
-      onClick={onClose}
-      aria-hidden="true"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        // Solid scrim only — no backdrop-filter (WebKit continuous-repaint trap; see #444).
-        background: 'rgba(0, 0, 0, 0.72)',
-        zIndex: Z_INDEX.modalBackdrop,
-      }}
-    />
-  );
-}
-
-function DragHandle() {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        padding: `${SPACING.md}px 0 ${SPACING.sm}px`,
-        flexShrink: 0,
-      }}>
-      <div style={{width: 36, height: 4, borderRadius: 2, background: '#444466'}} />
-    </div>
-  );
-}
-
 function Divider() {
   return <div style={{height: 1, background: COLORS.surfaceBorder, flexShrink: 0}} />;
 }
@@ -516,6 +459,7 @@ interface SearchSheetProps {
   hasResults: boolean;
   onKeyDown: React.KeyboardEventHandler<HTMLDivElement>;
   onTransitionEnd: React.TransitionEventHandler<HTMLDivElement>;
+  onClose: () => void;
   query: string;
   autocomplete: ReturnType<typeof useAutocomplete>;
   inputRef: React.RefObject<HTMLInputElement | null>;
@@ -533,6 +477,7 @@ function SearchSheet({
   hasResults,
   onKeyDown,
   onTransitionEnd,
+  onClose,
   query,
   autocomplete,
   inputRef,
@@ -543,31 +488,18 @@ function SearchSheet({
   onClearRecent,
 }: SearchSheetProps) {
   return (
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog keyboard handling (Escape to close)
-    <div
-      ref={sheetRef}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Search cards"
-      onKeyDown={onKeyDown}
-      className={`overlay-transition overlay-slide-up overlay-enter ${visible ? 'overlay-visible' : ''}`}
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
       onTransitionEnd={onTransitionEnd}
-      style={{
-        position: 'fixed',
-        left: 0,
-        right: 0,
-        bottom: 0,
+      ariaLabel="Search cards"
+      backdropTestId="search-sheet-backdrop"
+      sheetRef={sheetRef}
+      onKeyDown={onKeyDown}
+      sheetStyle={{
         top: sheetTop,
-        background: COLORS.surface,
-        borderRadius: '24px 24px 0 0',
-        boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.6)',
-        zIndex: Z_INDEX.modal,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        transition: 'top 0.25s ease, opacity 0.25s ease, transform 0.25s ease',
+        transition: `top 0.25s ${EASING.smooth}, opacity 0.25s ${EASING.smooth}, transform 0.25s ${EASING.smooth}`,
       }}>
-      <DragHandle />
       <SearchSheetInput
         query={query}
         autocomplete={autocomplete}
@@ -592,7 +524,7 @@ function SearchSheet({
           />
         )}
       </div>
-    </div>
+    </BottomSheet>
   );
 }
 
@@ -703,7 +635,6 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
     return (
       <>
         {proxyInput}
-        <SheetBackdrop visible={visible} onClose={onClose} onTransitionEnd={onTransitionEnd} />
         <SearchSheet
           sheetRef={sheetRef}
           visible={visible}
@@ -711,6 +642,7 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
           hasResults={hasResults}
           onKeyDown={handleDialogKeyDown}
           onTransitionEnd={onTransitionEnd}
+          onClose={onClose}
           query={query}
           autocomplete={autocomplete}
           inputRef={inputRef}

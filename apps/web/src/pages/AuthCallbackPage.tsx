@@ -1,7 +1,8 @@
 import {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {useSession} from '../shared/contexts/SessionContext';
-import {COLORS, FONTS, SPACING} from '../shared/constants';
+import {CtaButton} from '../shared/components';
+import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 
 /**
  * `/auth/callback` (#463) — the OAuth provider redirects here after consent. supabase-js
@@ -37,29 +38,18 @@ export function AuthCallbackPage() {
       }}>
       {failed ? (
         <div style={{textAlign: 'center', maxWidth: 360}}>
-          <p style={{color: COLORS.text, fontSize: 16, margin: 0}}>Sign-in didn't complete.</p>
-          <p style={{color: COLORS.textMuted, fontSize: 13, marginTop: SPACING.sm}}>
+          <p style={{color: COLORS.text, fontSize: FONT_SIZES.xl, margin: 0}}>Sign-in didn't complete.</p>
+          <p style={{color: COLORS.textMuted, fontSize: FONT_SIZES.base, marginTop: SPACING.sm}}>
             Please try again from the deck builder.
           </p>
-          <button
-            type="button"
+          <CtaButton
             onClick={() => navigate('/decks', {replace: true})}
-            style={{
-              marginTop: SPACING.lg,
-              padding: `${SPACING.sm}px ${SPACING.lg}px`,
-              background: COLORS.primary,
-              color: COLORS.background,
-              border: 'none',
-              borderRadius: 10,
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}>
+            style={{margin: `${SPACING.lg}px auto 0`}}>
             Back to decks
-          </button>
+          </CtaButton>
         </div>
       ) : (
-        <p style={{color: COLORS.textMuted, fontSize: 14}}>Finishing sign-in…</p>
+        <p style={{color: COLORS.textMuted, fontSize: FONT_SIZES.lg}}>Finishing sign-in…</p>
       )}
     </main>
   );

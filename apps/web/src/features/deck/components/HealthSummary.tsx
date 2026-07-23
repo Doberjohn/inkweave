@@ -1,20 +1,8 @@
 import type {CSSProperties} from 'react';
-import {COLORS, FONT_SIZES, FONTS, hexRgba, SPACING} from '../../../shared/constants';
+import {CAP_LABEL, COLORS, FONT_SIZES, FONTS, SPACING} from '../../../shared/constants';
+import {BetaTag} from '../../../shared/components';
 import type {DeckAnalysis} from '../analysis/analyzeDeck';
 import {PrioritiesView, RadarMedallion, VitalsView, type HealthVariant} from './HealthVariants';
-
-/** Small "not final yet" badge — the v1 scores are surfaced but not calibrated (#472). */
-const betaTag: CSSProperties = {
-  fontSize: 8,
-  fontWeight: 700,
-  letterSpacing: '0.08em',
-  color: COLORS.primary,
-  border: `1px solid ${hexRgba(COLORS.primary, 0.4)}`,
-  borderRadius: 3,
-  padding: '1px 4px',
-  marginLeft: 6,
-  verticalAlign: 'middle',
-};
 
 const button: CSSProperties = {
   display: 'flex',
@@ -31,15 +19,7 @@ const button: CSSProperties = {
   fontFamily: FONTS.body,
 };
 
-const capLabel: CSSProperties = {
-  fontFamily: FONTS.body,
-  fontSize: `${FONT_SIZES.md}px`,
-  fontWeight: 700,
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  color: COLORS.textMuted,
-  marginBottom: SPACING.lg,
-};
+const capLabel: CSSProperties = {...CAP_LABEL, marginBottom: SPACING.lg};
 
 interface HealthSummaryProps {
   analysis: DeckAnalysis | null;
@@ -63,7 +43,7 @@ export function HealthSummary({analysis, isLoading, error, onOpenAnalysis, varia
     <button type="button" onClick={onOpenAnalysis} aria-label="Open deck analysis" style={button}>
       <span style={capLabel}>
         Deck health
-        <span style={betaTag}>BETA</span>
+        <BetaTag style={{marginLeft: 6}} />
       </span>
       {analysis ? (
         variant === 'radar' ? (

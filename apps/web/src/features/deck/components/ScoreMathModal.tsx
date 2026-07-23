@@ -1,6 +1,7 @@
-import {useEffect, useState} from 'react';
+import {useState} from 'react';
 import type {CSSProperties} from 'react';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, Z_INDEX} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
+import {CtaButton, DialogShell} from '../../../shared/components';
 import type {HealthAnalyzer, ScoreContribution} from '../types';
 import {dimensionColor} from './dimensionColor';
 import {orderAnalyzers} from './HealthGrid';
@@ -142,23 +143,16 @@ interface ScoreMathModalProps {
 /**
  * The glass-box score math as a modal (#472): one row per dimension (status dot,
  * label, health score, signed points), status-grouped with problems pre-expanded
- * so they self-explain; any row toggles its verdict + weight math. Solid scrim
- * (no backdrop-filter, a WebKit E2E repaint trap); Escape or the Close button
- * dismiss, never a backdrop click (jsx-a11y).
+ * so they self-explain; any row toggles its verdict + weight math. Rides the
+ * DialogShell overlay contract (#510): token scrim (no backdrop-filter, a
+ * WebKit E2E repaint trap), focus trap, scroll lock, and Escape / backdrop /
+ * Close all dismiss.
  */
 export function ScoreMathModal({score, configVersion, analyzers, breakdown, onClose}: ScoreMathModalProps) {
   const ordered = orderAnalyzers(analyzers);
   const [open, setOpen] = useState<Set<string>>(
     () => new Set(ordered.filter((a) => a.status === 'bad').map((a) => a.id)),
   );
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
 
   const toggle = (id: string) =>
     setOpen((prev) => {
@@ -176,75 +170,39 @@ export function ScoreMathModal({score, configVersion, analyzers, breakdown, onCl
   const leftovers = breakdown.filter((b) => b.dimension !== PENALTY_ID && !matched.has(b.dimension));
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: Z_INDEX.modal,
-        background: 'rgba(4, 4, 10, 0.72)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: SPACING.lg,
-        fontFamily: FONTS.body,
-      }}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Score math for ${score}`}
-        style={{
-          width: '100%',
-          maxWidth: 440,
-          maxHeight: '82vh',
-          display: 'flex',
-          flexDirection: 'column',
-          background: COLORS.surface,
-          border: `1px solid ${COLORS.surfaceBorder}`,
-          borderRadius: RADIUS.card,
-          padding: SPACING.xl,
-          boxShadow: '0 24px 60px -20px rgba(0,0,0,0.7)',
-        }}>
-        <h2 style={{fontFamily: FONTS.hero, fontSize: 20, color: COLORS.text, margin: 0}}>Why {score}?</h2>
-        <p style={{fontSize: `${FONT_SIZES.sm}px`, color: COLORS.textDim, margin: `${SPACING.xs}px 0 ${SPACING.md}px`}}>
-          Every dimension's points, weighted and summed. Tap a row for its verdict and weight.
-        </p>
+    <DialogShell
+      isOpen
+      onClose={onClose}
+      ariaLabel={`Score math for ${score}`}
+      size="md"
+      panelStyle={{display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: SPACING.xl, fontFamily: FONTS.body}}>
+      <h2 style={{fontFamily: FONTS.hero, fontSize: FONT_SIZES.xxl, color: COLORS.text, margin: 0}}>Why {score}?</h2>
+      <p style={{fontSize: `${FONT_SIZES.sm}px`, color: COLORS.textDim, margin: `${SPACING.xs}px 0 ${SPACING.md}px`}}>
+        Every dimension's points, weighted and summed. Tap a row for its verdict and weight.
+      </p>
 
-        <div style={{overflowY: 'auto', flex: 1, minHeight: 0}}>
-          {ordered.map((a) => (
-            <AnalyzerRow
-              key={a.id}
-              analyzer={a}
-              points={byDimension.get(a.id)}
-              isOpen={open.has(a.id)}
-              onToggle={() => toggle(a.id)}
-            />
-          ))}
-          {leftovers.map((b) => (
-            <LeftoverRow key={b.dimension} term={b} />
-          ))}
-          {penalty && <PenaltyRow penalty={penalty} />}
-        </div>
-
-        <p style={{fontSize: `${FONT_SIZES.xs}px`, color: COLORS.textDim, margin: `${SPACING.md}px 0 0`}}>
-          Inkweave Engine Score · config {configVersion} · transparent weighted formula
-        </p>
-        <button
-          type="button"
-          onClick={onClose}
-          style={{
-            marginTop: SPACING.md,
-            width: '100%',
-            padding: `${SPACING.sm}px`,
-            background: 'transparent',
-            color: COLORS.textMuted,
-            border: `1px solid ${COLORS.surfaceBorder}`,
-            borderRadius: RADIUS.md,
-            fontSize: `${FONT_SIZES.base}px`,
-            cursor: 'pointer',
-          }}>
-          Close
-        </button>
+      <div style={{overflowY: 'auto', flex: 1, minHeight: 0}}>
+        {ordered.map((a) => (
+          <AnalyzerRow
+            key={a.id}
+            analyzer={a}
+            points={byDimension.get(a.id)}
+            isOpen={open.has(a.id)}
+            onToggle={() => toggle(a.id)}
+          />
+        ))}
+        {leftovers.map((b) => (
+          <LeftoverRow key={b.dimension} term={b} />
+        ))}
+        {penalty && <PenaltyRow penalty={penalty} />}
       </div>
-    </div>
+
+      <p style={{fontSize: `${FONT_SIZES.xs}px`, color: COLORS.textDim, margin: `${SPACING.md}px 0 0`}}>
+        Inkweave Engine Score · config {configVersion} · transparent weighted formula
+      </p>
+      <CtaButton variant="neutral" onClick={onClose} style={{marginTop: SPACING.md, width: '100%'}}>
+        Close
+      </CtaButton>
+    </DialogShell>
   );
 }

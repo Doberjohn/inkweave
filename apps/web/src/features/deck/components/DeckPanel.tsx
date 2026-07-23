@@ -9,9 +9,10 @@ import {totalCopies} from './costCurveColumns';
 import {HealthSummary} from './HealthSummary';
 import {type HealthVariant} from './HealthVariants';
 import {SortSelect} from '../../../shared/components/SortSelect';
+import {TabList} from '../../../shared/components/TabList';
 import {DeckAdvisorPanel} from './DeckAdvisorPanel';
 import {previewGeometry} from './previewGeometry';
-import {ALL_INKS, COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../../../shared/constants';
+import {ALL_INKS, COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING, Z_INDEX, blackRgba} from '../../../shared/constants';
 import {InkIcon} from '../../../shared/components/InkIcon';
 import {InkwellIcon} from '../../../shared/components/InkwellIcon';
 
@@ -57,6 +58,11 @@ interface DeckPanelProps {
 
 type PanelTab = 'cards' | 'analysis';
 
+const TAB_DEFS: ReadonlyArray<{id: PanelTab; label: string}> = [
+  {id: 'cards', label: 'Cards'},
+  {id: 'analysis', label: 'Analysis'},
+];
+
 // Songs are pulled out of Actions into their own group. `card.isSong` is the
 // reliable flag — the isSong() helper misses transformed cards (their 'Song'
 // subtype is moved off `classifications` onto this boolean at load time).
@@ -79,8 +85,8 @@ function rowGroup(card: LorcanaCard): RowGroup {
 // as duplicates of the Cards-tab strip. Synergies & suggestions belong to a SEPARATE
 // task (#471), labelled as such so the tab doesn't imply #472 owns them.
 const PENDING_ADVISOR_ZONES = [
-  'Synergies & key cards · coming with #471',
-  'Suggestions · coming with #471',
+  'Synergies & key cards · coming soon',
+  'Suggestions · coming soon',
 ];
 
 /**
@@ -217,7 +223,7 @@ function DeckNameButton({name, justSaved, onEdit}: {name: string; justSaved: boo
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        style={{flexShrink: 0, transition: 'stroke 0.15s ease'}}>
+        style={{flexShrink: 0, transition: `stroke 0.15s ${EASING.snappy}`}}>
         <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
       </svg>
       {justSaved && (
@@ -351,28 +357,16 @@ function FloatingPreview({card, anchor}: {card: LorcanaCard; anchor: DOMRect}) {
         borderRadius: RADIUS.card,
         overflow: 'hidden',
         border: `2px solid ${INK_COLORS[card.ink].border}`,
-        boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
+        boxShadow: `0 16px 48px ${blackRgba(0.6)}`,
         pointerEvents: 'none',
-        zIndex: 60,
-        animation: 'inkweave-row-enter 0.18s ease-out',
+        zIndex: Z_INDEX.popover,
+        animation: `inkweave-row-enter 0.18s ${EASING.smooth}`,
       }}>
       <img src={card.imageUrl} alt="" style={{width: '100%', display: 'block'}} />
     </div>,
     document.body,
   );
 }
-
-const tabButton = (active: boolean): CSSProperties => ({
-  border: 'none',
-  background: 'transparent',
-  cursor: 'pointer',
-  fontFamily: FONTS.body,
-  fontSize: `${FONT_SIZES.lg}px`,
-  fontWeight: 700,
-  color: active ? COLORS.text : COLORS.textMuted,
-  padding: '8px 12px',
-  borderBottom: `2px solid ${active ? COLORS.primary : 'transparent'}`,
-});
 
 const groupHeader: CSSProperties = {
   display: 'flex',
@@ -501,7 +495,7 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
           opacity: isLeaving ? 0 : 1,
           overflow: isLeaving ? 'hidden' : 'visible',
           pointerEvents: isLeaving ? 'none' : undefined,
-          transition: 'max-height 0.26s ease, opacity 0.2s ease',
+          transition: `max-height 0.26s ${EASING.smooth}, opacity 0.2s ${EASING.smooth}`,
         }}
         onTransitionEnd={(e) => {
           if (isLeaving && e.propertyName === 'max-height') finishRemove(card.id, quantity);
@@ -545,13 +539,13 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
         <DeckInfoStrip stats={stats} />
       </div>
 
-      <div style={{display: 'flex', gap: 4, padding: `4px ${SPACING.md}px 0`, borderBottom: `1px solid ${COLORS.surfaceBorder}`, flexShrink: 0}}>
-        <button type="button" onClick={() => switchTab('cards')} style={tabButton(tab === 'cards')}>
-          Cards
-        </button>
-        <button type="button" onClick={() => switchTab('analysis')} style={tabButton(tab === 'analysis')}>
-          Analysis
-        </button>
+      <div style={{padding: `4px ${SPACING.md}px 0`, flexShrink: 0}}>
+        <TabList
+          tabs={TAB_DEFS}
+          active={tab}
+          onChange={switchTab}
+          ariaLabel="Deck panel views"
+        />
       </div>
 
       {tab === 'cards' && totalCopies(stats.costCurve) > 0 && (
@@ -572,7 +566,7 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
               value={healthVariant}
               onChange={updateHealthVariant}
               ariaLabel="Deck health view"
-              style={{position: 'absolute', top: 10, right: 10, zIndex: 2, height: 28, fontSize: 12}}
+              style={{position: 'absolute', top: 10, right: 10, zIndex: 2, height: 28, fontSize: FONT_SIZES.md}}
             />
           </div>
         </div>

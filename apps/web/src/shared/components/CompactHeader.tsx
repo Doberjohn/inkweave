@@ -1,9 +1,10 @@
 import {type ReactNode, useState} from 'react';
 import {Link, NavLink} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONT_SIZES, FONTS, LAYOUT, RADIUS, SPACING, Z_INDEX} from '../constants';
+import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../constants';
 import {useAutocomplete} from '../hooks';
 import {useRevealPhase} from '../../features/reveals';
+import {CTA_FILLED_STYLE} from './ctaStyles';
 import {SearchAutocomplete} from './SearchAutocomplete';
 
 interface CompactHeaderProps {
@@ -96,7 +97,7 @@ function getHeaderStyle(viewport: ViewportConfig): React.CSSProperties {
 
 function getNavItemBackground(state: InteractionState): string {
   if (state.isActive) return COLORS.surfaceHover;
-  if (state.isHovered) return 'rgba(255, 185, 0, 0.06)';
+  if (state.isHovered) return GOLD_GLOW.hoverBg;
   return 'transparent';
 }
 
@@ -109,20 +110,7 @@ function getNavItemColor(state: InteractionState): string {
 function getNavItemBoxShadow(state: InteractionState): string {
   if (!state.isHovered) return 'none';
   if (state.isActive) return 'none';
-  return '0 0 12px rgba(255, 185, 0, 0.15), inset 0 0 8px rgba(255, 185, 0, 0.05)';
-}
-
-function getRevealsPillBg(state: InteractionState): string {
-  if (state.isActive) {
-    return 'linear-gradient(180deg, rgba(255, 185, 0, 0.28) 0%, rgba(255, 185, 0, 0.14) 100%)';
-  }
-  return 'linear-gradient(180deg, rgba(255, 185, 0, 0.14) 0%, rgba(255, 185, 0, 0.06) 100%)';
-}
-
-function getRevealsPillShadow(state: InteractionState): string {
-  if (state.isActive) return '0 0 20px rgba(255, 185, 0, 0.35)';
-  if (state.isHovered) return '0 0 20px rgba(255, 185, 0, 0.35)';
-  return '0 0 12px rgba(255, 185, 0, 0.2)';
+  return GOLD_GLOW.shadow;
 }
 
 interface SearchSizing {
@@ -141,9 +129,9 @@ function getSearchSizing(viewport: ViewportConfig): SearchSizing {
 }
 
 function getSearchInputStyle(config: SearchInputStyleConfig): React.CSSProperties {
-  const borderColor = config.focused ? 'rgba(212, 175, 55, 0.5)' : COLORS.searchBorder;
+  const borderColor = config.focused ? GOLD_GLOW.activeBorder : COLORS.searchBorder;
   const boxShadow = config.focused
-    ? '0 0 0 2px rgba(212, 175, 55, 0.15), 0 0 12px rgba(212, 175, 55, 0.08)'
+    ? GOLD_GLOW.focusRing
     : 'none';
   return {
     width: '100%',
@@ -158,7 +146,7 @@ function getSearchInputStyle(config: SearchInputStyleConfig): React.CSSPropertie
     boxSizing: 'border-box',
     outline: 'none',
     boxShadow,
-    transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
+    transition: `border-color 0.25s ${EASING.snappy}, box-shadow 0.25s ${EASING.snappy}`,
   };
 }
 
@@ -343,7 +331,7 @@ function NavItemLink({path, label, isHovered, onMouseEnter, onMouseLeave}: NavIt
           fontSize: `${FONT_SIZES.base}px`,
           fontWeight: isActive ? 600 : 500,
           textDecoration: 'none',
-          transition: 'background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease',
+          transition: `background 0.2s ${EASING.snappy}, color 0.2s ${EASING.snappy}, box-shadow 0.2s ${EASING.snappy}`,
           boxShadow: getNavItemBoxShadow(state),
           cursor: 'pointer',
         };
@@ -359,6 +347,7 @@ interface RevealsPillProps {
   onMouseLeave: () => void;
 }
 
+/** The header Reveals promo wearing the CtaButton pill recipe, kept a crawlable NavLink (#509). */
 function RevealsPill({isHovered, onMouseEnter, onMouseLeave}: RevealsPillProps) {
   return (
     <NavLink
@@ -366,38 +355,34 @@ function RevealsPill({isHovered, onMouseEnter, onMouseLeave}: RevealsPillProps) 
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       aria-label="Reveals"
-      style={({isActive}) => {
-        const state: InteractionState = {isActive, isHovered};
-        return {
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '0 14px',
-          height: 38,
-          borderRadius: 999,
-          background: getRevealsPillBg(state),
-          border: `1px solid ${COLORS.primary500}`,
-          color: COLORS.primary,
-          fontFamily: FONTS.body,
-          fontSize: `${FONT_SIZES.base}px`,
-          fontWeight: 600,
-          textDecoration: 'none',
-          boxShadow: getRevealsPillShadow(state),
-          transform: isHovered ? 'translateY(-1px)' : 'translateY(0)',
-          transition:
-            'transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 200ms cubic-bezier(0.2, 0.8, 0.2, 1), background 200ms ease',
-          cursor: 'pointer',
-        };
-      }}>
+      style={({isActive}) => ({
+        ...CTA_FILLED_STYLE,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '0 14px',
+        height: 38,
+        borderRadius: RADIUS.pill,
+        fontFamily: FONTS.body,
+        fontSize: `${FONT_SIZES.base}px`,
+        fontWeight: 600,
+        textDecoration: 'none',
+        transform: isHovered ? 'translateY(-1px)' : 'translateY(0)',
+        transition: `transform 0.2s ${EASING.snappy}, box-shadow 0.2s ${EASING.snappy}`,
+        cursor: 'pointer',
+        ...(isActive || isHovered
+          ? {boxShadow: `${COLORS.filterShadow}, ${SHADOWS.glowSm}`}
+          : {}),
+      })}>
       Reveals
       <span
         style={{
           fontSize: FONT_SIZES.xs,
           fontWeight: 700,
           padding: '2px 6px',
-          borderRadius: 999,
-          background: COLORS.primary500,
-          color: COLORS.background,
+          borderRadius: RADIUS.pill,
+          background: COLORS.filterText,
+          color: COLORS.primary,
           letterSpacing: 0.4,
           lineHeight: 1,
         }}>
@@ -433,7 +418,7 @@ function DesktopNav({isRevealSeason}: DesktopNavProps) {
           height: 38,
           borderRadius: RADIUS.lg,
           border: `1px solid ${COLORS.surfaceBorder}`,
-          background: '#10101c',
+          background: COLORS.background,
           overflow: 'hidden',
         }}>
         {NAV_ITEMS.map(({path, label}) => (

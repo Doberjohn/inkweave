@@ -2,9 +2,9 @@ import {useState} from 'react';
 import {Link} from 'react-router-dom';
 import {useSession} from '../shared/contexts/SessionContext';
 import {SignInDialog} from '../shared/components/SignInDialog';
-import {CompactHeader} from '../shared/components';
+import {CompactHeader, CtaButton} from '../shared/components';
 import {useResponsive} from '../shared/hooks';
-import {COLORS, FONTS, LAYOUT, RADIUS, SPACING} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../shared/constants';
 
 /**
  * `/decks` — the user's deck list. Local drafts and cloud decks fill in with #473/#464;
@@ -27,48 +27,31 @@ export function DecksPage() {
           margin: '0 auto',
         }}>
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SPACING.md}}>
-          <h1 style={{fontFamily: FONTS.hero, fontSize: 20, color: COLORS.text, margin: 0}}>Your Decks</h1>
+          <h1 style={{fontFamily: FONTS.hero, fontSize: FONT_SIZES.xxl, color: COLORS.text, margin: 0}}>Your Decks</h1>
           {enabled && !loading && user && (
             <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
-              <span style={{fontFamily: FONTS.body, fontSize: 12, color: COLORS.textMuted}}>
+              <span style={{fontFamily: FONTS.body, fontSize: FONT_SIZES.md, color: COLORS.textMuted}}>
                 {user.email ?? 'Signed in'}
               </span>
-              <button
-                type="button"
+              <CtaButton
+                variant="neutral"
                 onClick={() => void signOut()}
-                style={{
-                  padding: `4px ${SPACING.md}px`,
-                  background: 'transparent',
-                  color: COLORS.textMuted,
-                  border: `1px solid ${COLORS.surfaceBorder}`,
-                  borderRadius: RADIUS.md,
-                  fontSize: 12,
-                  cursor: 'pointer',
-                }}>
+                style={{minHeight: 0, padding: `4px ${SPACING.md}px`, fontSize: FONT_SIZES.md}}>
                 Sign out
-              </button>
+              </CtaButton>
             </div>
           )}
           {enabled && !loading && !user && (
-            <button
-              type="button"
+            <CtaButton
+              variant="ghost"
               onClick={() => setSignInOpen(true)}
-              style={{
-                padding: `6px ${SPACING.lg}px`,
-                background: 'transparent',
-                color: COLORS.primary,
-                border: `1px solid ${COLORS.primary}`,
-                borderRadius: RADIUS.md,
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}>
+              style={{minHeight: 0, padding: `6px ${SPACING.lg}px`, fontSize: FONT_SIZES.base}}>
               Sign in
-            </button>
+            </CtaButton>
           )}
         </div>
 
-        <p style={{fontFamily: FONTS.body, fontSize: 13, color: COLORS.textMuted, marginTop: SPACING.sm}}>
+        <p style={{fontFamily: FONTS.body, fontSize: FONT_SIZES.base, color: COLORS.textMuted, marginTop: SPACING.sm}}>
           Build a Core-legal deck with live synergy guidance.
         </p>
         <Link
@@ -80,9 +63,9 @@ export function DecksPage() {
             background: COLORS.primary,
             color: COLORS.background,
             fontFamily: FONTS.body,
-            fontSize: 14,
+            fontSize: FONT_SIZES.lg,
             fontWeight: 600,
-            borderRadius: 10,
+            borderRadius: RADIUS.lg,
             textDecoration: 'none',
           }}>
           + New deck

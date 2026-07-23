@@ -2,9 +2,11 @@ import {useEffect, useRef, useState} from 'react';
 import {Outlet, useLocation} from 'react-router-dom';
 import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
+import {SkeletonTheme} from 'react-loading-skeleton';
 import {RevealsPromoCard, useRevealPhase, type RevealPhase} from './features/reveals';
 import {
   BetaNotice,
+  CtaButton,
   ErrorBoundary,
   MobileBottomNav,
   MOBILE_NAV_HEIGHT,
@@ -78,20 +80,9 @@ function AppContent() {
       <div role="alert" style={{padding: '40px', textAlign: 'center'}}>
         <h2 style={{color: COLORS.error}}>Error loading cards</h2>
         <p style={{color: COLORS.gray600, marginBottom: '20px'}}>{error.message}</p>
-        <button
-          onClick={retryLoad}
-          style={{
-            padding: '10px 20px',
-            background: COLORS.primary500,
-            color: COLORS.white,
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '16px',
-            fontWeight: 500,
-          }}>
+        <CtaButton onClick={retryLoad} style={{margin: '0 auto'}}>
           Try Again
-        </button>
+        </CtaButton>
       </div>
     );
   }
@@ -117,11 +108,14 @@ export function AppLayout() {
   return (
     <ErrorBoundary>
       <SessionProvider>
-        <CardDataProvider>
-          <CardModalProvider>
-            <AppContent />
-          </CardModalProvider>
-        </CardDataProvider>
+        {/* One SkeletonTheme for the whole app (#511) — the 11 per-feature wrappers collapse into this. */}
+        <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+          <CardDataProvider>
+            <CardModalProvider>
+              <AppContent />
+            </CardModalProvider>
+          </CardDataProvider>
+        </SkeletonTheme>
       </SessionProvider>
       <Analytics />
       <SpeedInsights />

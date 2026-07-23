@@ -1,7 +1,8 @@
 import {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {COLORS, FONTS, FONT_SIZES, RADIUS} from '../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, Z_INDEX} from '../../shared/constants';
 import {useResponsive} from '../../shared/hooks';
+import {prefersReducedMotion} from '../../shared/utils/prefersReducedMotion';
 
 const SET_LOGO = '/art/sets/attack-of-the-vine.png';
 
@@ -97,18 +98,6 @@ interface ViewportConfig {
   isMobile: boolean;
 }
 
-/**
- * Check whether the user has requested reduced motion.
- * Three-guard form keeps each conditional simple (0 logical operators)
- * rather than one compound expression, which trips CodeScene's
- * Complex Conditional rule.
- */
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
-  if (typeof window.matchMedia !== 'function') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
 // =====================================================================
 // Style helpers — module-level, each takes a ViewportConfig object so
 // the Primitive Obsession rule doesn't fire on a mobile-boolean parade.
@@ -119,7 +108,7 @@ function getAsideStyle(viewport: ViewportConfig, mounted: boolean): React.CSSPro
     position: 'fixed',
     background: `linear-gradient(180deg, ${COLORS.surface} 0%, ${COLORS.surfaceAlt} 100%)`,
     color: COLORS.text,
-    zIndex: 800,
+    zIndex: Z_INDEX.promo,
     opacity: mounted ? 1 : 0,
     overflow: 'hidden',
   };

@@ -1,5 +1,6 @@
 import {COLORS, SPACING, FONT_SIZES, RADIUS} from '../shared/constants';
 import {GithubTokenGate} from '../shared/components/GithubTokenGate';
+import {CtaButton} from '../shared/components';
 import {
   useRevealAdmin,
   RevealAdminForm,
@@ -18,18 +19,12 @@ export function RevealAdminPage() {
     <main style={{maxWidth: 1000, margin: '0 auto', padding: SPACING.lg, color: COLORS.text}}>
       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
         <h1 style={{fontSize: FONT_SIZES.xxl}}>Add a reveal card</h1>
-        <button
+        <CtaButton
+          variant="neutral"
           onClick={ctrl.clearToken}
-          style={{
-            background: 'none',
-            border: `1px solid ${COLORS.surfaceHover}`,
-            color: COLORS.gray600,
-            borderRadius: RADIUS.sm,
-            padding: '6px 10px',
-            cursor: 'pointer',
-          }}>
+          style={{minHeight: 0, padding: '6px 10px', fontSize: FONT_SIZES.sm}}>
           Forget token
-        </button>
+        </CtaButton>
       </div>
 
       {ctrl.result && (
@@ -62,21 +57,9 @@ export function RevealAdminPage() {
           {ctrl.publishError && (
             <div style={{color: COLORS.error, fontSize: FONT_SIZES.sm}}>{ctrl.publishError}</div>
           )}
-          <button
-            onClick={ctrl.publish}
-            disabled={!ctrl.canPublish || ctrl.publishing}
-            style={{
-              marginTop: SPACING.md,
-              padding: '12px 20px',
-              background: ctrl.canPublish ? COLORS.primary500 : COLORS.surfaceHover,
-              color: COLORS.white,
-              border: 'none',
-              borderRadius: RADIUS.sm,
-              cursor: ctrl.canPublish ? 'pointer' : 'not-allowed',
-              fontWeight: 600,
-            }}>
+          <CtaButton onClick={ctrl.publish} disabled={!ctrl.canPublish || ctrl.publishing} style={{marginTop: SPACING.md}}>
             {ctrl.publishing ? 'Publishing…' : 'Publish to master'}
-          </button>
+          </CtaButton>
         </section>
 
         <aside

@@ -1,5 +1,5 @@
 import type {ReactNode} from 'react';
-import {COLORS, FONT_SIZES, RADIUS, SPACING} from '../constants';
+import {CAP_LABEL, COLORS, FONT_SIZES, RADIUS, SPACING} from '../constants';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -23,10 +23,10 @@ export function CollapsibleSection({
   return (
     <div
       style={{
-        background: COLORS.gray50,
+        background: COLORS.surfaceAlt,
         borderRadius: `${RADIUS.lg}px`,
         padding: `${SPACING.lg}px`,
-        border: `1px solid ${COLORS.gray200}`,
+        border: `1px solid ${COLORS.surfaceBorder}`,
       }}>
       {/* Header */}
       <button
@@ -45,11 +45,9 @@ export function CollapsibleSection({
         }}>
         <span
           style={{
+            ...CAP_LABEL,
             fontSize: `${FONT_SIZES.base}px`,
             fontWeight: 600,
-            color: COLORS.gray700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
             display: 'flex',
             alignItems: 'center',
             gap: `${SPACING.sm}px`,
@@ -58,7 +56,7 @@ export function CollapsibleSection({
           {badge}
         </span>
         {onToggle && (
-          <span style={{color: COLORS.gray500, fontSize: `${FONT_SIZES.base}px`}}>
+          <span style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.base}px`}}>
             {collapsed ? '+' : '-'}
           </span>
         )}

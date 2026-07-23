@@ -5,7 +5,7 @@ import {CardMosaic} from './CardMosaic';
 const meta: Meta<typeof CardMosaic> = {
   title: 'Features/Reveals/CardMosaic',
   component: CardMosaic,
-  parameters: {backgrounds: {default: 'dark'}, layout: 'centered'},
+  parameters: {layout: 'centered'},
   tags: ['autodocs'],
 };
 export default meta;

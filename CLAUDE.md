@@ -139,7 +139,7 @@ Claude Code hooks, skills, agents, and path-scoped rules enforce workflow rules 
 | `preview-data-auto-precompute.sh` | PostToolUse/Edit\|Write | Auto `pnpm precompute-synergies` after `apps/web/public/data/previewCards.json` writes (engine hook already covers engine-src changes) |
 | `issue-create-guard.sh` | PreToolUse/Bash | Redirects direct `gh issue create` to `/draft-issue` skill (`SKILL_APPROVED=1` bypass) |
 | `agent-tool-substitution-guard.sh` | PostToolUse/Agent | Halts when a subagent reports a missing tool, so the fix lands in that agent's `tools:` frontmatter instead of the main session silently substituting |
-| Husky pre-push | git push | Runs `typecheck` (`tsc -b`), `check:stories` (story coverage), E2E, then the CodeScene gate. **On Windows only chromium runs** (webkit + mobile-chrome workers hang past Playwright's stop timeout); set `PRE_PUSH_FULL=1` to force them. Elsewhere: chromium + webkit + mobile-chrome. Full 5-browser matrix in CI |
+| Husky pre-push | git push | Runs `typecheck` (`tsc -b`), `check:stories` (story coverage), `check:design` (design-token value gate, #508), E2E, then the CodeScene gate. **On Windows only chromium runs** (webkit + mobile-chrome workers hang past Playwright's stop timeout); set `PRE_PUSH_FULL=1` to force them. Elsewhere: chromium + webkit + mobile-chrome. Full 5-browser matrix in CI |
 
 ### Skills (`.claude/skills/`)
 | Skill | Arg | What it does |
@@ -164,6 +164,8 @@ Convention files that auto-load only when editing files matching their `paths:` 
 | `stories.md` | `**/*.stories.tsx` | Storybook conventions (imports, decorators, mock-data shape) |
 | `migrations.md` | `supabase/migrations/**` | Supabase MCP migration workflow |
 | `engine.md` | `packages/synergy-engine/src/**` | engine rule pattern, 5-baseline scoring anchors, doc-sync, auto-rebuild |
+| `design-tokens.md` | `apps/web/src/**/*.ts(x)` | design-token lint rules (#508): the `inkweave/*` ESLint rules + value-grep gate, the shrink-only grandfather ledgers, and what to do when a rule fires |
+| `overlays.md` | `apps/web/src/**/*.tsx` | overlay contract (#510): DialogShell/BottomSheet + hook trio, backdrop-always-closes, scrim tokens, the FilterDialog Radix exception, E2E backdrop/unmount invariants |
 | `mockups.md` | `apps/web/public/mockups/**` | design-session workflow, mockup token set, audit passes |
 
 ### Agents (`.claude/agents/`)
@@ -254,7 +256,6 @@ pnpm test:supabase    # Run Supabase integration tests (requires .env.local)
 - Card data loaded once on init from `allCards.json`; synergy data lazy-loaded per card from `/data/synergies/{cardId}.json`
 - Card data pre-deduplicated in `allCards.json` (same card in multiple sets appears once); loader expects clean data
 - Multi-page SPA via react-router (home, browse, card detail, playstyles, deck builder, voting, admin). Routes in `router.tsx`; `AppLayout` mounts the providers plus `<Outlet />`
-- Floating card preview popover on hover (CardPreviewContext + CardPreviewPopover)
 - Core format only (sets 9+)
 - **react-grab**: Dev-only inspection tool. The `dev` script runs `pnpm dlx @react-grab/claude-code@latest && vite`. Playwright's webServer runs `npx vite`, which is still DEV mode, so `index.html`'s `import.meta.env.DEV` gate loads react-grab during E2E as well; its `ws://localhost:4722` connection error must stay allowlisted in the E2E console-error guard (#405). If a dev server is already running, Playwright reuses it (`reuseExistingServer: true` locally) — which means `playwright.config.ts`'s `webServer.env` only applies when Playwright launches its own Vite. Set branch-specific env vars in `apps/web/.env.local` for determinism; see **Feature Flags & Local Dev**.
 - **useContainerWidth**: ResizeObserver hook guards against 0-width observations from detached elements (`if (w > 0)`) — required for React Strict Mode double-mount resilience
@@ -267,10 +268,10 @@ pnpm test:supabase    # Run Supabase integration tests (requires .env.local)
 
 Dark fantasy theme inspired by Lorcana:
 - Background: #0d0d14 (near black)
-- Surface: #1a1a2e (dark purple)
-- Primary: #d4af37 (gold accents)
+- Surface: #1a1a2e (dark purple); elevation = LIGHTNESS (surfaceRaised/Floating/Overlay), shadows are secondary cues
+- Primary: #ffb900 (THE brand gold — glows/rings via `hexRgba`/`SHADOWS`); #d4af37 (`primary500`) is the legacy accent, grandfathered only
 - Text: #e8e8e8 (off-white)
-- Glowing borders on hover, purple-tinted shadows
+- Glowing borders on hover; token source of truth is `apps/web/src/shared/constants/theme.ts` (2026-07-22 rulings: milestone #4)
 
 ## Workflow Preferences
 

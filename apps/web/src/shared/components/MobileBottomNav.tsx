@@ -1,5 +1,5 @@
-import {useLocation, useNavigate} from 'react-router-dom';
-import {COLORS, FONTS} from '../constants';
+import {NavLink, useLocation} from 'react-router-dom';
+import {COLORS, FONTS, Z_INDEX} from '../constants';
 import {useRevealPhase, type RevealPhase} from '../../features/reveals';
 
 /** Height of the nav bar in CSS px. Used for bottom padding on page content. */
@@ -260,13 +260,11 @@ function NavCurveBackground({underline}: NavCurveBackgroundProps) {
 
 interface NavTabProps {
   tab: TabDef;
-  isActive: boolean;
   paddingTop: number;
   onSearchClick?: () => void;
-  onNavigate: (href: string) => void;
 }
 
-function NavTab({tab, isActive, paddingTop, onSearchClick, onNavigate}: NavTabProps) {
+function NavTab({tab, paddingTop, onSearchClick}: NavTabProps) {
   const tabStyle: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
@@ -325,21 +323,17 @@ function NavTab({tab, isActive, paddingTop, onSearchClick, onNavigate}: NavTabPr
     );
   }
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (tab.href) onNavigate(tab.href);
-  };
-
+  // NavLink (#511): the old hand-rolled <a> + unconditional preventDefault
+  // defeated modifier-clicks (open-in-new-tab) and middle-click; react-router
+  // handles those natively and supplies aria-current="page" itself.
   return (
-    <a
-      href={tab.href}
+    <NavLink
+      to={tab.href ?? '/'}
       className="mbn-tab"
       aria-label={tab.label}
-      aria-current={isActive ? 'page' : undefined}
-      onClick={handleClick}
       style={tabStyle}>
       {contents}
-    </a>
+    </NavLink>
   );
 }
 
@@ -375,7 +369,6 @@ function ActiveLabelStrip({label, visible}: ActiveLabelStripProps) {
 // =====================================================================
 
 export function MobileBottomNav({onSearchClick, phaseOverride}: MobileBottomNavProps) {
-  const navigate = useNavigate();
   const {pathname} = useLocation();
   const hookPhase = useRevealPhase();
   const phase = phaseOverride ?? hookPhase;
@@ -403,7 +396,7 @@ export function MobileBottomNav({onSearchClick, phaseOverride}: MobileBottomNavP
         left: 0,
         right: 0,
         height: MOBILE_NAV_HEIGHT,
-        zIndex: 900,
+        zIndex: Z_INDEX.nav,
         // Absorb taps across the whole nav rectangle. Without this, gaps between
         // tabs + transparent parts of the SVG (default `visiblePainted` hit-testing)
         // let taps fall through to content behind the nav.
@@ -423,10 +416,8 @@ export function MobileBottomNav({onSearchClick, phaseOverride}: MobileBottomNavP
           <NavTab
             key={tab.kind}
             tab={tab}
-            isActive={i === activeIdx}
             paddingTop={positions.paddingTop[i]}
             onSearchClick={onSearchClick}
-            onNavigate={navigate}
           />
         ))}
       </div>

@@ -1,5 +1,5 @@
 import {useState, type CSSProperties} from 'react';
-import {COLORS, FONTS, FONT_SIZES} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, hexRgba} from '../../../shared/constants';
 
 interface QuantityStepperProps {
   value: number;
@@ -85,7 +85,7 @@ function sideButtonStyle(dims: StepperDims, isShown: boolean, disabled: boolean,
     color: disabled ? COLORS.textDim : color,
     cursor: disabled ? 'default' : 'pointer',
     overflow: 'hidden',
-    transition: 'width 0.2s ease, opacity 0.18s ease, color 0.15s ease',
+    transition: `width 0.2s ${EASING.snappy}, opacity 0.18s ${EASING.snappy}, color 0.15s ${EASING.snappy}`,
   };
 }
 
@@ -159,7 +159,7 @@ export function QuantityStepper({
         height: dims.height,
         borderRadius: dims.radius,
         border: `1px solid ${COLORS.primary}80`,
-        background: 'rgba(13, 13, 20, 0.94)',
+        background: hexRgba(COLORS.background, 0.94),
         overflow: 'hidden',
       }}>
       <button type="button" style={sideButtonStyle(dims, shown, false, COLORS.error)} onClick={handleDec} tabIndex={shown ? 0 : -1} aria-hidden={!shown} aria-label={`Remove one copy of ${name}`}>

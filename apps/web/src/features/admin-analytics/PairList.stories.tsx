@@ -5,7 +5,6 @@ import type {PairStat} from './voteAnalyticsTypes';
 const meta: Meta<typeof PairList> = {
   title: 'Features/AdminAnalytics/PairList',
   component: PairList,
-  parameters: {backgrounds: {default: 'dark'}},
   tags: ['autodocs'],
 };
 export default meta;

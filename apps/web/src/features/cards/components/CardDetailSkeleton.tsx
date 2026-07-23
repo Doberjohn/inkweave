@@ -1,5 +1,5 @@
-import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
-import {COLORS, RADIUS, SPACING} from '../../../shared/constants';
+import Skeleton from 'react-loading-skeleton';
+import {RADIUS, SPACING} from '../../../shared/constants';
 
 interface CardDetailSkeletonProps {
   /** Card image width (default: 298, matches CardDetailPanel's image) */
@@ -38,7 +38,7 @@ export function CardDetailSkeleton({
       }}
       aria-busy="true"
       aria-label={ariaLabel}>
-      <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+      <>
         <div style={{display: 'flex', justifyContent: 'center'}}>
           <Skeleton width={imageWidth} height={imageHeight} borderRadius={RADIUS.xl} />
         </div>
@@ -56,7 +56,7 @@ export function CardDetailSkeleton({
             />
           ))}
         </div>
-      </SkeletonTheme>
+      </>
     </div>
   );
 }

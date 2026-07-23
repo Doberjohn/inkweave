@@ -1,6 +1,6 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from '../../cards/components/CardTile';
-import {COLORS, SPACING, FONT_SIZES, RADIUS} from '../../../shared/constants';
+import {COLORS, EMPTY_BOX, SPACING, FONT_SIZES, RADIUS} from '../../../shared/constants';
 
 const ACCEPT = 'image/jpeg,image/png,image/webp';
 
@@ -38,15 +38,11 @@ export function CardPreviewPanel({card, onImageChange}: CardPreviewPanelProps) {
         ) : (
           <div
             style={{
+              ...EMPTY_BOX,
               aspectRatio: '0.72',
-              display: 'grid',
-              placeItems: 'center',
               padding: SPACING.md,
-              textAlign: 'center',
-              border: `1px dashed ${COLORS.surfaceHover}`,
               borderRadius: RADIUS.xl,
               background: COLORS.surfaceAlt,
-              color: COLORS.gray600,
               fontSize: FONT_SIZES.sm,
             }}>
             Click to upload card art

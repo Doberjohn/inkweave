@@ -1,4 +1,4 @@
-import {COLORS, FONTS, hexRgba} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, hexRgba} from '../../../shared/constants';
 
 /** SVG geometry: a 0..100 viewBox with the arc radius leaving room for the stroke. */
 const VIEWBOX = 100;
@@ -63,7 +63,7 @@ export function ScoreRing({score, color, size, label}: ScoreRingProps) {
           {clamped}
         </text>
       </svg>
-      {label && <span style={{fontFamily: FONTS.body, fontSize: 11, color: COLORS.textMuted, textAlign: 'center'}}>{label}</span>}
+      {label && <span style={{fontFamily: FONTS.body, fontSize: FONT_SIZES.sm, color: COLORS.textMuted, textAlign: 'center'}}>{label}</span>}
     </div>
   );
 }

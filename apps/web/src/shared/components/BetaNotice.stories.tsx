@@ -4,7 +4,7 @@ import {BetaNotice} from './BetaNotice';
 const meta: Meta<typeof BetaNotice> = {
   title: 'Shared/BetaNotice',
   component: BetaNotice,
-  parameters: {layout: 'fullscreen', backgrounds: {default: 'dark'}},
+  parameters: {layout: 'fullscreen'},
   decorators: [
     (Story) => (
       <div style={{position: 'relative', minHeight: '100vh'}}>

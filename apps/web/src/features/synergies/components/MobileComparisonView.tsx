@@ -3,6 +3,7 @@ import type {DetailedPairSynergy, Ink, LorcanaCard} from 'inkweave-synergy-engin
 import {COLORS, FONTS} from '../../../shared/constants';
 import {usePairScore} from '../../voting/hooks/usePairScore';
 import {formatScore} from '../../../shared/utils/scoreFormatting';
+import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
 import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';
 import {MobileLightbox} from './MobileLightbox';
@@ -26,11 +27,6 @@ const CONTENT_FADE_MS = 260;
 const CHROME_EXIT_FADE_MS = 200;
 const CARDS_TAIL_FADE_MS = 140;
 const CARDS_TAIL_FADE_DELAY_MS = 300;
-
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 /** Translate + uniform-scale deltas to FLIP a card between an origin rect and its slot. */
 function flipDeltas(origin: DOMRect, dest: DOMRect): {dx: number; dy: number; scale: number} {

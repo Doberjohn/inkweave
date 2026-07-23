@@ -15,6 +15,14 @@ const preview: Preview = {
   ],
   parameters: {
     layout: 'fullscreen',
+    // SB10-correct canvas backgrounds (#512): the runtime reads {options},
+    // not the pre-SB8 {default} / {values} shapes the story files used to set.
+    backgrounds: {
+      options: {
+        dark: {name: 'Inkweave dark', value: '#0d0d14'},
+        surface: {name: 'Surface', value: '#1a1a2e'},
+      },
+    },
     docs: {
       theme: themes.dark,
     },
@@ -24,6 +32,9 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
+  },
+  initialGlobals: {
+    backgrounds: {value: 'dark'},
   },
 };
 

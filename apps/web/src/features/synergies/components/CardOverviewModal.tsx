@@ -1,5 +1,5 @@
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
-import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
+import Skeleton from 'react-loading-skeleton';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
@@ -10,9 +10,13 @@ import {ExpandedGroupView} from './ExpandedGroupView';
 import {CardImage, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
+import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {trackEvent} from '../../../shared/lib/analytics';
-import {COLORS, FONTS, RADIUS, Z_INDEX} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, LETTER_SPACING, RADIUS, SHADOWS, Z_INDEX, hexRgba} from '../../../shared/constants';
+import {Chip} from '../../../shared/components/Chip';
+import {IconButton} from '../../../shared/components/IconButton';
+import {LinkButton} from '../../../shared/components/LinkButton';
 
 const FLIP_DURATION = 480;
 const FLIP_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
@@ -66,7 +70,7 @@ interface CardOverviewModalProps {
 interface ModalState {
   modalRef: React.RefObject<HTMLDivElement | null>;
   frameRef: React.RefObject<HTMLDivElement | null>;
-  initialFocusRef: React.RefObject<HTMLElement | null>;
+  initialFocusRef: React.RefObject<HTMLButtonElement | null>;
   compareCardRef: React.RefObject<HTMLDivElement | null>;
   visible: boolean;
   onTransitionEnd: () => void;
@@ -104,7 +108,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
 
   const modalRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
-  const initialFocusRef = useRef<HTMLElement>(null);
+  const initialFocusRef = useRef<HTMLButtonElement>(null);
   const {visible, onTransitionEnd} = useTransitionPresence(isOpen);
 
   const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
@@ -288,6 +292,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
   const {
     modalRef,
     frameRef,
+    initialFocusRef,
     compareCardRef,
     visible,
     onTransitionEnd,
@@ -360,6 +365,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               hideBackButton={hideBackButton}
               onClose={onClose}
               exitComparison={exitComparison}
+              initialFocusRef={initialFocusRef}
             />
             <ModalContentRegion
               showExpanded={showExpanded}
@@ -781,10 +787,6 @@ interface SynergyCardClickInput {
 const CLICK_ACK_DURATION_MS = 90;
 
 /** Whether the user has set OS-level "reduce motion." Returns false in non-browser contexts. */
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 /** A pair is click-actionable when it exists AND has at least one connection to display. */
 function isPairClickActionable(pair: DetailedPairSynergy | null): pair is DetailedPairSynergy {
@@ -898,7 +900,7 @@ function pickModalShellStyle(isMobile: boolean): React.CSSProperties {
     background: COLORS.surface,
     borderRadius: `${RADIUS.card}px`,
     border: `1px solid ${COLORS.surfaceBorder}`,
-    boxShadow: '0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(212, 175, 55, 0.08)',
+    boxShadow: `${SHADOWS.overlay}, ${SHADOWS.goldRing}`,
     position: 'relative',
     pointerEvents: 'auto',
     fontFamily: FONTS.body,
@@ -934,7 +936,7 @@ function ModalBackdrop({
         // WebKit a blurred backdrop over animating content re-rasterizes every frame, wedging the
         // compositor so BACK/switch clicks and the overlay-visibility flip never settle (#444).
         // The deeper 0.72-alpha black preserves the "page recedes" separation the blur provided.
-        background: 'rgba(0, 0, 0, 0.72)',
+        background: COLORS.scrim,
         zIndex: Z_INDEX.modalBackdrop,
         cursor: 'pointer',
       }}
@@ -949,16 +951,18 @@ interface ModalHeaderProps {
   hideBackButton: boolean;
   onClose: () => void;
   exitComparison: () => void;
+  /** useDialogFocus's initial-focus target — attached to the close × (#510: it was created but never attached). */
+  initialFocusRef: React.RefObject<HTMLButtonElement | null>;
 }
 
-function ModalHeader({card, isMobile, inComparison, hideBackButton, onClose, exitComparison}: ModalHeaderProps) {
+function ModalHeader({card, isMobile, inComparison, hideBackButton, onClose, exitComparison, initialFocusRef}: ModalHeaderProps) {
   const showBack = inComparison && !hideBackButton;
   return (
     <header style={{padding: '20px 24px 0', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap'}}>
       {showBack ? <BackButton onClick={exitComparison} /> : <ModalTitle card={card} isMobile={isMobile} />}
       {/* Spacer pushes close button to the right when BACK is in the slot (BACK doesn't have flex:1) */}
       {inComparison && <div style={{flex: 1}} />}
-      <CloseButton onClose={onClose} />
+      <CloseButton onClose={onClose} focusRef={initialFocusRef} />
     </header>
   );
 }
@@ -1007,7 +1011,7 @@ function ChipFilterRow({synergies, inComparison, activeGroupFilter, toggleChip}:
         gap: 8,
         opacity: inComparison ? 0 : 1,
         pointerEvents: inComparison ? 'none' : 'auto',
-        transition: 'opacity 250ms ease-out',
+        transition: `opacity 250ms ${EASING.smooth}`,
       }}>
       {synergies.map((group) => (
         <FilterChip
@@ -1033,33 +1037,17 @@ function FilterChip({group, activeGroupFilter, toggleChip}: FilterChipProps) {
   const isActive = activeGroupFilter === group.groupKey;
   const isInactive = activeGroupFilter !== null && !isActive;
   return (
-    <button
-      type="button"
+    <Chip
+      label={group.label}
+      active={isActive}
       onClick={() => toggleChip(group.groupKey)}
-      aria-pressed={isActive}
       title={`${group.synergies.length} cards · top score ${topScore}`}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '7px 14px',
-        background: isActive ? 'rgba(212, 175, 55, 0.12)' : COLORS.surfaceAlt,
-        border: `1px solid ${isActive ? COLORS.primary500 : COLORS.surfaceBorder}`,
-        borderRadius: 18,
-        fontSize: 13,
-        color: isInactive ? COLORS.textMuted : COLORS.text,
-        cursor: 'pointer',
-        fontFamily: 'inherit',
-        fontWeight: isActive ? 600 : 500,
-        opacity: isInactive ? 0.55 : 1,
-        transition: 'border-color 0.15s, background 0.15s, color 0.15s, opacity 0.15s',
-      }}>
-      <span style={{lineHeight: 1}}>{group.label}</span>
+      style={isInactive ? {opacity: 0.55} : undefined}>
       <span
         style={{
           padding: '2px 9px',
-          borderRadius: 11,
-          fontSize: 11,
+          borderRadius: RADIUS.pill,
+          fontSize: FONT_SIZES.sm,
           fontWeight: 700,
           lineHeight: 1.3,
           background: tier.bg,
@@ -1067,7 +1055,7 @@ function FilterChip({group, activeGroupFilter, toggleChip}: FilterChipProps) {
         }}>
         {group.synergies.length}
       </span>
-    </button>
+    </Chip>
   );
 }
 
@@ -1091,7 +1079,7 @@ function HeroDivider({hasSynergies, inComparison}: HeroDividerProps) {
         background: `linear-gradient(90deg, transparent, ${COLORS.primary500} 50%, transparent)`,
         margin: '16px 0 0',
         opacity: inComparison ? 0 : 1,
-        transition: 'opacity 250ms ease-out',
+        transition: `opacity 250ms ${EASING.smooth}`,
       }}
     />
   );
@@ -1144,7 +1132,7 @@ function pickScrollAreaRevealStyle(args: {
   if (args.isExiting) {
     return {
       opacity: 1,
-      transition: `opacity ${DEFAULT_VIEW_FADE_MS}ms ease-out ${DEFAULT_VIEW_FADE_DELAY_MS}ms`,
+      transition: `opacity ${DEFAULT_VIEW_FADE_MS}ms ${EASING.smooth} ${DEFAULT_VIEW_FADE_DELAY_MS}ms`,
     };
   }
   return {opacity: 1};
@@ -1389,9 +1377,9 @@ function pickCardWrapperStyle({isMobile, highlightedCard, inComparison}: {isMobi
     alignItems: 'flex-start',
     flexShrink: 0,
     transform: inset ? `translateX(${inset}px)` : undefined,
-    transition: `opacity 0.2s ease, filter 0.2s ease, transform ${FLIP_DURATION}ms ${FLIP_EASING}`,
+    transition: `opacity 0.2s ${EASING.smooth}, filter 0.2s ${EASING.smooth}, transform ${FLIP_DURATION}ms ${FLIP_EASING}`,
     opacity: highlightedCard === 'b' ? 0.4 : 1,
-    filter: highlightedCard === 'a' ? 'drop-shadow(0 0 8px rgba(212, 175, 55, 0.6))' : undefined,
+    filter: highlightedCard === 'a' ? `drop-shadow(0 0 8px ${hexRgba(COLORS.primary500, 0.6)})` : undefined,
     // borderRadius matches CardImage's so the ambient glow's box-shadow follows the rounded
     // card silhouette instead of a rectangular bounding box. Only applied in comparison mode
     // (when the glow class is also active); default state stays as-is.
@@ -1429,7 +1417,7 @@ function DefaultInfoColumn({synergies, synergiesLoading, visibleGroups, activeGr
         padding: isMobile ? 0 : '0 14px',
         opacity: inComparison ? 0 : 1,
         pointerEvents: inComparison ? 'none' : 'auto',
-        transition: 'opacity 250ms ease-out',
+        transition: `opacity 250ms ${EASING.smooth}`,
       }}>
       {/* Visually-hidden heading bridges the heading order: modal h1 (card name) → h2 here →
           h3 from each SynergyGroup. Without this, axe flags `heading-order` because the page
@@ -1471,7 +1459,7 @@ function DefaultInfoColumn({synergies, synergiesLoading, visibleGroups, activeGr
  */
 function SynergiesLoadingSkeleton() {
   return (
-    <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+    <>
       <div
         data-testid="card-overview-loading"
         aria-busy="true"
@@ -1498,7 +1486,7 @@ function SynergiesLoadingSkeleton() {
           </div>
         ))}
       </div>
-    </SkeletonTheme>
+    </>
   );
 }
 
@@ -1516,8 +1504,8 @@ function SynergiesEmptyState() {
         padding: 24,
         gap: 8,
       }}>
-      <p style={{margin: 0, color: COLORS.text, fontSize: 14, fontWeight: 600}}>No synergies yet</p>
-      <p style={{margin: 0, color: COLORS.textMuted, fontSize: 12, lineHeight: 1.5, maxWidth: 280}}>
+      <p style={{margin: 0, color: COLORS.text, fontSize: FONT_SIZES.lg, fontWeight: 600}}>No synergies yet</p>
+      <p style={{margin: 0, color: COLORS.textMuted, fontSize: FONT_SIZES.md, lineHeight: 1.5, maxWidth: 280}}>
         This card may match new rules as the engine evolves.
       </p>
     </div>
@@ -1552,7 +1540,7 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
         right: COMPARISON_CARD_INSET,
         width: cardWidth,
         height: cardHeight,
-        borderRadius: 14,
+        borderRadius: RADIUS.xl,
         overflow: 'hidden',
         background: COLORS.background,
         transformOrigin: 'top left',
@@ -1561,8 +1549,8 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
         // so React doesn't manage the property — that way the exit FLIP's `el.style.opacity = '0'`
         // (#332 #7) persists across re-renders during the 480ms exit window.
         opacity: highlightedCard === 'a' ? 0.4 : undefined,
-        filter: highlightedCard === 'b' ? 'drop-shadow(0 0 8px rgba(212, 175, 55, 0.6))' : undefined,
-        transition: 'opacity 0.2s ease, filter 0.2s ease',
+        filter: highlightedCard === 'b' ? `drop-shadow(0 0 8px ${hexRgba(COLORS.primary500, 0.6)})` : undefined,
+        transition: `opacity 0.2s ${EASING.smooth}, filter 0.2s ${EASING.smooth}`,
       }}>
       {pair.cardB.imageUrl && (
         <img
@@ -1606,7 +1594,7 @@ function ComparisonDetailPanel({isMobile, inComparison, comparisonPair, exitingP
         gridTemplateRows: inComparison ? '1fr' : '0fr',
         opacity: inComparison ? 1 : 0,
         flexShrink: 0,
-        transition: 'grid-template-rows 480ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 300ms ease-out 250ms',
+        transition: `grid-template-rows 480ms ${EASING.snappy}, opacity 300ms ${EASING.smooth} 250ms`,
       }}>
       {/* Inner wrapper holds the actual content. `min-height: 0` lets the grid row collapse
           below content height during the transition; `overflow: hidden` clips so partial content
@@ -1684,74 +1672,45 @@ function PairConnector({cardHeight, exiting}: PairConnectorProps) {
   );
 }
 
-/**
- * Close (×) button — circular, gold-accent on hover.
- * Matches mockup `.close-btn:hover { color: var(--text); border-color: var(--muted); background: var(--surface-alt) }`.
- */
-function CloseButton({onClose}: {onClose: () => void}) {
-  const [hovered, setHovered] = useState(false);
+/** Close (×) button — the shared IconButton in its circular-bordered form (#509). */
+function CloseButton({onClose, focusRef}: {onClose: () => void; focusRef?: React.RefObject<HTMLButtonElement | null>}) {
   return (
-    <button
+    <IconButton
       type="button"
       aria-label="Close"
       onClick={onClose}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      ref={focusRef}
+      size={28}
       style={{
-        width: 28,
-        height: 28,
-        padding: 0,
         borderRadius: '50%',
-        background: hovered ? COLORS.surfaceAlt : 'transparent',
-        border: `1px solid ${hovered ? COLORS.textMuted : COLORS.surfaceBorder}`,
-        color: hovered ? COLORS.text : COLORS.textMuted,
-        fontSize: 18,
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        border: `1px solid ${COLORS.surfaceBorder}`,
+        fontSize: FONT_SIZES.xl,
         flexShrink: 0,
-        fontFamily: 'Arial, sans-serif',
-        transition: 'color 0.15s ease, border-color 0.15s ease, background 0.15s ease',
       }}>
       ×
-    </button>
+    </IconButton>
   );
 }
 
-/**
- * BACK button (focused-state nav) — gold-bordered chip.
- * Matches mockup `.compare-back:hover { background: rgba(212,175,55,0.2); color: var(--gold-bright) }`.
- */
+/** BACK button (focused-state nav) — the shared LinkButton in its gold tone (#509). */
 function BackButton({onClick}: {onClick: () => void}) {
-  const [hovered, setHovered] = useState(false);
   return (
-    <button
+    <LinkButton
       type="button"
       aria-label="Back to synergies"
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      size="sm"
       style={{
+        fontWeight: 700,
+        textTransform: 'uppercase',
+        letterSpacing: LETTER_SPACING.eyebrow,
+        flexShrink: 0,
         display: 'inline-flex',
         alignItems: 'center',
         gap: 6,
-        background: hovered ? 'rgba(212, 175, 55, 0.2)' : 'rgba(212, 175, 55, 0.1)',
-        border: `1px solid ${COLORS.primary500}`,
-        color: hovered ? COLORS.primary : COLORS.primary500,
-        fontFamily: 'inherit',
-        fontSize: 12,
-        fontWeight: 700,
-        padding: '7px 14px',
-        borderRadius: 18,
-        cursor: 'pointer',
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        flexShrink: 0,
-        transition: 'background 0.15s ease, color 0.15s ease',
       }}>
       <span aria-hidden="true">←</span>
       <span>Back</span>
-    </button>
+    </LinkButton>
   );
 }

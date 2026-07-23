@@ -73,7 +73,7 @@ describe('DeckPanel', () => {
     const {props} = renderPanel();
     fireEvent.click(trashElsa());
     expect(props.onRemove).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', {name: 'Analysis'}));
+    fireEvent.click(screen.getByRole('tab', {name: 'Analysis'}));
     expect(props.onRemove).toHaveBeenCalledOnce();
     expect(props.onRemove).toHaveBeenCalledWith('ch1');
   });

@@ -1,11 +1,20 @@
 import {useState} from 'react';
-import {TabBar, type AdminTab} from './TabBar';
+import {TabList} from '../../shared/components/TabList';
+import {SPACING} from '../../shared/constants';
 import {CalibrationView} from './CalibrationView';
 import {ActivityView} from './ActivityView';
 import {WebAnalyticsView} from './WebAnalyticsView';
 import type {VoteAnalytics} from './voteAnalyticsTypes';
 import type {VoteLog} from './voteLogTypes';
 import type {VercelAnalytics} from './vercelAnalyticsTypes';
+
+type AdminTab = 'calibration' | 'activity' | 'webAnalytics';
+
+const TABS: ReadonlyArray<{id: AdminTab; label: string}> = [
+  {id: 'calibration', label: 'Calibration'},
+  {id: 'activity', label: 'Activity'},
+  {id: 'webAnalytics', label: 'Web Analytics'},
+];
 
 interface DashboardProps {
   analytics: VoteAnalytics;
@@ -14,9 +23,10 @@ interface DashboardProps {
 }
 
 /**
- * Presentational tabbed dashboard: the TabBar plus the active tab body. All
- * data arrives via props (fetched by the page), so Storybook can render it from
- * inline fixtures without hitting the network. Tab selection is local state.
+ * Presentational tabbed dashboard: the shared TabList plus the active tab
+ * body (#509 folded the local TabBar into it). All data arrives via props
+ * (fetched by the page), so Storybook can render it from inline fixtures
+ * without hitting the network. Tab selection is local state.
  *
  * Lives in the feature folder (not the route module) so the route module can
  * export only the zero-prop page component, satisfying router.tsx's
@@ -27,7 +37,9 @@ export function AdminAnalyticsDashboard({analytics, voteLog, vercelAnalytics}: D
 
   return (
     <>
-      <TabBar active={active} onChange={setActive} />
+      <div style={{marginBottom: SPACING.section}}>
+        <TabList tabs={TABS} active={active} onChange={setActive} ariaLabel="Admin analytics views" />
+      </div>
       {active === 'calibration' ? (
         <CalibrationView analytics={analytics} voteLog={voteLog} />
       ) : active === 'activity' ? (

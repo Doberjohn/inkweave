@@ -1,11 +1,13 @@
 import {useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, hexRgba} from '../constants';
 
 interface ChipBaseProps {
   label: string;
   isMobile?: boolean;
   title?: string;
   children?: React.ReactNode;
+  /** Merged last — for site-specific layout tweaks (e.g. dimming in a filter row). */
+  style?: React.CSSProperties;
 }
 
 interface ToggleChipProps extends ChipBaseProps {
@@ -27,7 +29,7 @@ export type ChipProps = ToggleChipProps | DismissChipProps;
  * - `dismiss`: always-active chip with × button to remove
  */
 export function Chip(props: ChipProps) {
-  const {label, isMobile, title, children} = props;
+  const {label, isMobile, title, children, style} = props;
   const [hovered, setHovered] = useState(false);
   const isDismiss = props.variant === 'dismiss';
 
@@ -55,28 +57,24 @@ export function Chip(props: ChipProps) {
           : isMobile
             ? '8px 14px'
             : '6px 14px',
-        borderRadius: 20,
+        borderRadius: RADIUS.pill,
         fontSize: `${FONT_SIZES.base}px`,
         fontWeight: 500,
         cursor: 'pointer',
         fontFamily: FONTS.body,
         transition: `all 0.25s ${EASING.snappy}`,
         border: active
-          ? '1px solid rgba(212, 175, 55, 0.4)'
+          ? `1px solid ${GOLD_GLOW.activeBorder}`
           : hovered
-            ? '1px solid rgba(255, 185, 0, 0.25)'
+            ? `1px solid ${GOLD_GLOW.hoverBorder}`
             : `1px solid ${COLORS.surfaceBorder}`,
         background: active
-          ? hovered
-            ? 'rgba(212, 175, 55, 0.18)'
-            : 'rgba(212, 175, 55, 0.12)'
+          ? hexRgba(COLORS.primary, hovered ? 0.18 : 0.12)
           : hovered
-            ? 'rgba(255, 185, 0, 0.06)'
+            ? GOLD_GLOW.hoverBg
             : 'transparent',
-        color: glow ? COLORS.primary500 : COLORS.textMuted,
-        boxShadow: glow
-          ? '0 0 12px rgba(255, 185, 0, 0.15), inset 0 0 8px rgba(255, 185, 0, 0.05)'
-          : 'none',
+        color: glow ? COLORS.primary : COLORS.textMuted,
+        boxShadow: glow ? GOLD_GLOW.shadow : 'none',
         ...(isMobile
           ? {
               flexShrink: 0,
@@ -84,6 +82,7 @@ export function Chip(props: ChipProps) {
               minHeight: '44px',
             }
           : {}),
+        ...style,
       }}>
       {label}
       {children}

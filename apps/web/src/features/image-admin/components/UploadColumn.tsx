@@ -1,5 +1,6 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, SPACING, FONT_SIZES, RADIUS} from '../../../shared/constants';
+import {COLORS, SPACING, FONT_SIZES} from '../../../shared/constants';
+import {CtaButton} from '../../../shared/components';
 import {ImageComparePanel} from './ImageComparePanel';
 
 interface UploadColumnProps {
@@ -49,21 +50,9 @@ export function UploadColumn({
         </div>
       )}
 
-      <button
-        onClick={onPublish}
-        disabled={!canPublish || publishing}
-        style={{
-          marginTop: SPACING.md,
-          padding: '12px 20px',
-          background: canPublish ? COLORS.primary500 : COLORS.surfaceHover,
-          color: COLORS.white,
-          border: 'none',
-          borderRadius: RADIUS.sm,
-          cursor: canPublish ? 'pointer' : 'not-allowed',
-          fontWeight: 600,
-        }}>
+      <CtaButton onClick={onPublish} disabled={!canPublish || publishing} style={{marginTop: SPACING.md}}>
         {publishing ? 'Publishing…' : 'Publish to master'}
-      </button>
+      </CtaButton>
     </aside>
   );
 }

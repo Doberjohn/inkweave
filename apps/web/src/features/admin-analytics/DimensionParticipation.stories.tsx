@@ -4,7 +4,6 @@ import {DimensionParticipation} from './DimensionParticipation';
 const meta: Meta<typeof DimensionParticipation> = {
   title: 'Features/AdminAnalytics/DimensionParticipation',
   component: DimensionParticipation,
-  parameters: {backgrounds: {default: 'dark'}},
   tags: ['autodocs'],
 };
 export default meta;

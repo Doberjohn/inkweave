@@ -3,10 +3,10 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from '../../cards/components/CardTile';
 import {QuantityStepper} from './QuantityStepper';
 import {getPoolTileState} from './poolTileState';
-import {COLORS, FONTS} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, blackRgba, hexRgba} from '../../../shared/constants';
 
 const GOLD = COLORS.primary;
-const GLOW = `0 0 10px ${GOLD}99, 0 4px 12px rgba(0,0,0,0.55)`;
+const GLOW = `0 0 10px ${GOLD}99, 0 4px 12px ${blackRgba(0.55)}`;
 
 interface PoolCardTileProps {
   card: LorcanaCard;
@@ -26,18 +26,18 @@ const infoBtn: CSSProperties = {
   height: 22,
   borderRadius: '50%',
   border: `1px solid ${COLORS.surfaceBorder}`,
-  background: 'rgba(13, 13, 20, 0.72)',
+  background: hexRgba(COLORS.background, 0.72),
   color: COLORS.text,
   fontFamily: FONTS.hero,
   fontStyle: 'italic',
-  fontSize: 14,
+  fontSize: FONT_SIZES.lg,
   fontWeight: 700,
   lineHeight: 1,
   cursor: 'pointer',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  boxShadow: '0 1px 4px rgba(0,0,0,0.5)',
+  boxShadow: `0 1px 4px ${blackRgba(0.5)}`,
 };
 
 /**
@@ -96,7 +96,7 @@ export function PoolCardTile({
       </button>
 
       {inDeck && (
-        <div style={{position: 'absolute', left: '50%', bottom: 15, transform: 'translateX(-50%)', display: 'inline-flex', borderRadius: 16, boxShadow: GLOW}}>
+        <div style={{position: 'absolute', left: '50%', bottom: 15, transform: 'translateX(-50%)', display: 'inline-flex', borderRadius: RADIUS.xl, boxShadow: GLOW}}>
           <QuantityStepper
             value={inDeckCount}
             collapsed={!showSides}

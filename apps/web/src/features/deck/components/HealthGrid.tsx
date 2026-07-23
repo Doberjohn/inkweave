@@ -1,20 +1,12 @@
 import {useState} from 'react';
 import type {CSSProperties} from 'react';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {CAP_LABEL, COLORS, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING} from '../../../shared/constants';
 import type {HealthAnalyzer, ScoreContribution} from '../types';
 import {dimensionColor} from './dimensionColor';
 import {ScoreRing} from './ScoreRing';
 
 /** Section header cap, matching ScoreGauge / VulnerabilityBox. */
-const capLabel: CSSProperties = {
-  fontFamily: FONTS.body,
-  fontSize: `${FONT_SIZES.md}px`,
-  fontWeight: 700,
-  letterSpacing: '0.05em',
-  textTransform: 'uppercase',
-  color: COLORS.textMuted,
-  marginBottom: SPACING.md,
-};
+const capLabel: CSSProperties = {...CAP_LABEL, marginBottom: SPACING.md};
 
 /**
  * Grid caption per analyzer id. Display-only: the brain's full `label` stays the
@@ -80,12 +72,14 @@ export function HealthGrid({analyzers, breakdown}: {analyzers: HealthAnalyzer[];
             onClick={() => setSelectedId(a.id)}
             aria-pressed={a.id === active.id}
             style={{
-              border: 'none',
+              // #511 selection rule: never `outline`; a stable 2px border (transparent
+              // when unselected) + gold glow encodes the active ring.
+              border: a.id === active.id ? `2px solid ${COLORS.primary}` : '2px solid transparent',
               background: 'transparent',
               cursor: 'pointer',
               borderRadius: RADIUS.md,
               padding: 4,
-              outline: a.id === active.id ? `2px solid ${COLORS.primary}` : 'none',
+              boxShadow: a.id === active.id ? GOLD_GLOW.shadow : 'none',
             }}>
             <ScoreRing score={a.score} color={dimensionColor(a.status)} size={40} label={SHORT_LABELS[a.id] ?? a.label} />
           </button>

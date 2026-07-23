@@ -60,7 +60,7 @@ export const RateLimited: Story = {
 
 export const Mobile: Story = {
   args: {state: 'ready', distribution: null, userChoice: null, error: null},
-  parameters: {viewport: {defaultViewport: 'mobile1'}},
+  globals: {viewport: {value: 'mobile1'}},
 };
 
 export const MobileResult: Story = {
@@ -70,5 +70,5 @@ export const MobileResult: Story = {
     userChoice: 1,
     error: null,
   },
-  parameters: {viewport: {defaultViewport: 'mobile1'}},
+  globals: {viewport: {value: 'mobile1'}},
 };

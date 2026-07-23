@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {validateToken} from '../lib/githubCommit';
 import {COLORS, SPACING, FONT_SIZES, RADIUS} from '../constants';
+import {CtaButton} from './CtaButton';
 
 interface GithubTokenGateProps {
   title: string;
@@ -46,20 +47,9 @@ export function GithubTokenGate({title, onSave}: GithubTokenGateProps) {
       {error && (
         <div style={{color: COLORS.error, fontSize: FONT_SIZES.sm, marginTop: SPACING.xs}}>{error}</div>
       )}
-      <button
-        onClick={check}
-        disabled={busy || !value.trim()}
-        style={{
-          marginTop: SPACING.sm,
-          padding: '10px 16px',
-          background: COLORS.primary500,
-          color: COLORS.white,
-          border: 'none',
-          borderRadius: RADIUS.sm,
-          cursor: 'pointer',
-        }}>
+      <CtaButton onClick={check} disabled={busy || !value.trim()} style={{marginTop: SPACING.sm}}>
         {busy ? 'Checking…' : 'Save token'}
-      </button>
+      </CtaButton>
     </div>
   );
 }

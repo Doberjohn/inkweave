@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, TRUNCATE} from '../../shared/constants';
 import type {DayGroup as DayGroupData} from './activityStats';
 
 interface DayGroupProps {
@@ -119,9 +119,7 @@ export function DayGroup({group, maxCount, defaultOpen = false}: DayGroupProps) 
                       padding: `${SPACING.xs}px ${SPACING.sm}px`,
                       color: COLORS.text,
                       maxWidth: 240,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                      ...TRUNCATE,
                     }}>
                     {vote.aName} × {vote.bName}
                   </td>

@@ -17,7 +17,8 @@ const toyTiles: RoleTile[] = [
 const meta: Meta<typeof MechanicsBottomSheet> = {
   title: 'Synergies/MechanicsBottomSheet',
   component: MechanicsBottomSheet,
-  parameters: {layout: 'fullscreen', viewport: {defaultViewport: 'mobile1'}},
+  parameters: {layout: 'fullscreen'},
+  globals: {viewport: {value: 'mobile1'}},
   tags: ['autodocs'],
   args: {
     isOpen: true,

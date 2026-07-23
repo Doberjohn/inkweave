@@ -100,5 +100,5 @@ export const Mobile: Story = {
     value: null,
     isMobile: true,
   },
-  parameters: {viewport: {defaultViewport: 'mobile1'}},
+  globals: {viewport: {value: 'mobile1'}},
 };

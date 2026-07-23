@@ -14,7 +14,7 @@ import {
 } from '../features/voting/hooks/useInDepthVoteSession';
 import type {InDepthFormState, VotingPair} from '../features/voting/types';
 import type {Accuracy} from '../shared/lib/supabase';
-import {COLORS, EASING, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING, TIER_COLORS, hexRgba, whiteRgba} from '../shared/constants';
 
 /** Inject keyframes once at module load */
 (function injectKeyframes() {
@@ -24,9 +24,9 @@ import {COLORS, EASING, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../sha
   style.id = STYLE_ID;
   style.textContent = `
     @keyframes idv-submit-glow {
-      0%   { box-shadow: 0 0 0 0 rgba(212,175,55,0.4); }
-      50%  { box-shadow: 0 0 20px 6px rgba(212,175,55,0.15); }
-      100% { box-shadow: 0 0 0 0 rgba(212,175,55,0); }
+      0%   { box-shadow: 0 0 0 0 ${hexRgba(COLORS.primary500, 0.4)}; }
+      50%  { box-shadow: 0 0 20px 6px ${hexRgba(COLORS.primary500, 0.15)}; }
+      100% { box-shadow: 0 0 0 0 ${hexRgba(COLORS.primary500, 0)}; }
     }
     @keyframes idv-check-draw {
       from { stroke-dashoffset: 24; }
@@ -37,9 +37,9 @@ import {COLORS, EASING, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../sha
       100% { transform: translateX(200%); }
     }
     @keyframes idv-complete-pulse {
-      0%   { box-shadow: 0 0 4px 1px rgba(110,231,160,0.3); }
-      50%  { box-shadow: 0 0 12px 3px rgba(110,231,160,0.5); }
-      100% { box-shadow: 0 0 4px 1px rgba(110,231,160,0.3); }
+      0%   { box-shadow: 0 0 4px 1px ${hexRgba(TIER_COLORS.strong.color, 0.3)}; }
+      50%  { box-shadow: 0 0 12px 3px ${hexRgba(TIER_COLORS.strong.color, 0.5)}; }
+      100% { box-shadow: 0 0 4px 1px ${hexRgba(TIER_COLORS.strong.color, 0.3)}; }
     }
   `;
   document.head.appendChild(style);
@@ -154,24 +154,24 @@ function buildProgressVisuals(
 ): ProgressVisuals {
   if (isComplete) {
     return {
-      sparkleColor: '#6ee7a0',
-      barBg: 'linear-gradient(90deg, #4ade80, #6ee7a0, #4ade80)',
-      barShadow: '0 0 12px 2px rgba(110,231,160,0.4)',
-      barAnimation: 'idv-complete-pulse 2s ease-in-out infinite',
+      sparkleColor: TIER_COLORS.strong.color,
+      barBg: `linear-gradient(90deg, ${COLORS.success}, ${TIER_COLORS.strong.color}, ${COLORS.success})`,
+      barShadow: `0 0 12px 2px ${hexRgba(TIER_COLORS.strong.color, 0.4)}`,
+      barAnimation: `idv-complete-pulse 2s ${EASING.smooth} infinite`,
       labelWeight: 700,
-      labelColor: '#6ee7a0',
-      labelShadow: '0 0 8px rgba(110,231,160,0.4)',
+      labelColor: TIER_COLORS.strong.color,
+      labelShadow: `0 0 8px ${hexRgba(TIER_COLORS.strong.color, 0.4)}`,
       labelText: '✓ Complete',
     };
   }
   return {
-    sparkleColor: '#ffd700',
-    barBg: 'linear-gradient(90deg, #b8860b, #d4af37, #ffb900, #ffd700)',
-    barShadow: `0 0 ${8 + glowIntensity * 12}px ${1 + glowIntensity * 2}px rgba(255,185,0,${0.15 + glowIntensity * 0.25})`,
+    sparkleColor: COLORS.primaryHover,
+    barBg: `linear-gradient(90deg, ${COLORS.primary700}, ${COLORS.primary600}, ${COLORS.primary}, ${COLORS.primaryHover})`,
+    barShadow: `0 0 ${8 + glowIntensity * 12}px ${1 + glowIntensity * 2}px ${hexRgba(COLORS.primary, 0.15 + glowIntensity * 0.25)}`,
     barAnimation: undefined,
     labelWeight: 600,
     labelColor: COLORS.primary,
-    labelShadow: `0 0 ${4 + glowIntensity * 6}px rgba(255,185,0,${0.1 + glowIntensity * 0.2})`,
+    labelShadow: `0 0 ${4 + glowIntensity * 6}px ${hexRgba(COLORS.primary, 0.1 + glowIntensity * 0.2)}`,
     labelText: `${answeredCount} / ${TOTAL_DIMENSIONS}`,
   };
 }
@@ -203,20 +203,21 @@ function ProgressBar({answeredCount, maxWidth}: {answeredCount: number; maxWidth
           style={{
             width: '100%',
             height: 8,
-            background: 'rgba(255,255,255,0.04)',
-            borderRadius: 4,
+            background: whiteRgba(0.04),
+            borderRadius: RADIUS.sm,
             overflow: 'hidden',
             position: 'relative',
-            border: '1px solid rgba(255,255,255,0.06)',
+            border: `1px solid ${whiteRgba(0.06)}`,
           }}>
           {/* Fill with golden gradient + glow */}
           <div
+            className="idv-progress-fill"
             style={{
               height: '100%',
               width: `${pct}%`,
               background: v.barBg,
-              borderRadius: 4,
-              transition: `width 0.5s ${EASING.bounce}, box-shadow 0.5s ${EASING.smooth}`,
+              borderRadius: RADIUS.sm,
+              transition: `width 0.5s ${EASING.smooth}, box-shadow 0.5s ${EASING.smooth}`,
               boxShadow: v.barShadow,
               animation: v.barAnimation,
               position: 'relative',
@@ -225,12 +226,12 @@ function ProgressBar({answeredCount, maxWidth}: {answeredCount: number; maxWidth
             {/* Shimmer sweep */}
             {showSparkles && (
               <div
+                className="idv-shimmer-sweep"
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  background:
-                    'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
-                  animation: 'idv-shimmer 2.5s ease-in-out infinite',
+                  background: `linear-gradient(90deg, transparent 0%, ${whiteRgba(0.3)} 50%, transparent 100%)`,
+                  animation: `idv-shimmer 2.5s ${EASING.smooth} infinite`,
                 }}
               />
             )}
@@ -297,12 +298,13 @@ function SubmitVoteButton({
     <CtaButton
       onClick={session.submit}
       disabled={session.isSubmitting || session.isRateLimited}
+      className="idv-submit-btn"
       style={{
         width: '100%',
         maxWidth,
         animation: session.isSubmitting
-          ? 'idv-submit-glow 1.5s ease-in-out infinite'
-          : 'idv-fade-up 0.35s ease-out',
+          ? `idv-submit-glow 1.5s ${EASING.smooth} infinite`
+          : `idv-fade-up 0.35s ${EASING.smooth}`,
       }}>
       {session.isSubmitting ? 'Submitting...' : 'Submit your vote'}
     </CtaButton>
@@ -327,7 +329,7 @@ function SuccessCard({
         background: COLORS.surface,
         border: `1px solid ${COLORS.surfaceBorder}`,
         borderRadius: RADIUS.card,
-        boxShadow: '0 8px 32px rgba(212, 175, 55, 0.15)',
+        boxShadow: `0 8px 32px ${hexRgba(COLORS.primary500, 0.15)}`,
         padding: '32px 24px',
         textAlign: 'center',
         display: 'flex',
@@ -335,15 +337,15 @@ function SuccessCard({
         alignItems: 'center',
         gap: 16,
         width: '100%',
-        animation: 'idv-fade-up 0.4s ease-out',
+        animation: `idv-fade-up 0.4s ${EASING.smooth}`,
       }}>
       <div
         style={{
           width: 56,
           height: 56,
           borderRadius: '50%',
-          background: '#1a3d1a',
-          border: '2px solid #6ee7a0',
+          background: TIER_COLORS.strong.bg,
+          border: `2px solid ${TIER_COLORS.strong.color}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -351,12 +353,12 @@ function SuccessCard({
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <path
             d="M5 13l4 4L19 7"
-            stroke="#6ee7a0"
+            stroke={TIER_COLORS.strong.color}
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeDasharray="24"
-            style={{animation: 'idv-check-draw 0.5s ease-out 0.2s both'}}
+            style={{animation: `idv-check-draw 0.5s ${EASING.smooth} 0.2s both`}}
           />
         </svg>
       </div>
@@ -563,7 +565,7 @@ function InDepthMobileView({
   return (
     <InDepthPageShell isMobile cards={cards} onLogoClick={onLogoClick} onCardSelect={onCardSelect}>
       <div style={{width: '100%', maxWidth: 560}}>
-        <BackLink onClick={onBack} label="Back to synergy" />
+        <BackLink onClick={onBack} label="Back to synergy" style={{marginBottom: SPACING.lg}} />
       </div>
       <PairDisplay pair={pair} selectedScore={null} isMobile showEngineScore />
       {!isSuccess && <ProgressEncouragement answeredCount={answeredCount} maxWidth={560} />}
@@ -611,7 +613,7 @@ function InDepthDesktopView({
       onLogoClick={onLogoClick}
       onCardSelect={onCardSelect}>
       <div style={{width: '100%', maxWidth: 1320}}>
-        <BackLink onClick={onBack} label="Back to synergy" />
+        <BackLink onClick={onBack} label="Back to synergy" style={{marginBottom: SPACING.lg}} />
       </div>
       <div
         style={{
