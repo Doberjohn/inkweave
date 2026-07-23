@@ -22,7 +22,8 @@
     "test:e2e:debug": "playwright test --debug",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "check:stories": "node scripts/check-story-coverage.mjs"
+    "check:stories": "node scripts/check-story-coverage.mjs",
+    "check:design": "node scripts/check-design-tokens.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.17",
