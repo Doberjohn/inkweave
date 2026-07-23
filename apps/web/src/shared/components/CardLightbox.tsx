@@ -1,7 +1,6 @@
-import {useState, useEffect} from 'react';
-import {createPortal} from 'react-dom';
-import {COLORS, FONT_SIZES, RADIUS, Z_INDEX} from '../constants';
-import {useScrollLock} from '../hooks';
+import {useState} from 'react';
+import {COLORS, FONT_SIZES, RADIUS, hexRgba} from '../constants';
+import {DialogShell} from './DialogShell';
 
 interface CardLightboxProps {
   src: string;
@@ -10,50 +9,41 @@ interface CardLightboxProps {
   onClose: () => void;
 }
 
-/** Fullscreen lightbox overlay for enlarged card images. Dismiss via backdrop click or Escape. Locks body scroll while open.
- *  Renders via portal to document.body to escape transform-based stacking contexts (e.g. animated modals). */
+/** Panel chrome neutralized: the lightbox "panel" is the free-floating image itself. */
+const BARE_PANEL: React.CSSProperties = {
+  background: 'transparent',
+  border: 'none',
+  boxShadow: 'none',
+  width: 'auto',
+  maxWidth: 'none',
+  maxHeight: 'none',
+  overflow: 'visible',
+};
+
+/**
+ * Fullscreen lightbox overlay for enlarged card images, riding DialogShell
+ * (#510) on the `lightbox` layer so it clears an open card modal. Dismiss via
+ * backdrop click or Escape; gains the focus trap + restore it never had.
+ */
 export function CardLightbox({src, alt, isLocation, onClose}: CardLightboxProps) {
   const [imgError, setImgError] = useState(false);
 
-  useScrollLock(true);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
-  return createPortal(
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- backdrop dismiss; Escape key handled via document listener
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Enlarged view of ${alt}`}
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: Z_INDEX.modal,
-        background: 'rgba(0, 0, 0, 0.85)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-        WebkitTapHighlightColor: 'transparent',
-      }}>
+  return (
+    <DialogShell
+      isOpen
+      onClose={onClose}
+      ariaLabel={`Enlarged view of ${alt}`}
+      scrim="heavy"
+      layer="lightbox"
+      panelStyle={BARE_PANEL}>
       {imgError ? (
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- click interception to prevent backdrop dismiss; not interactive, just event boundary
         <div
-          onClick={(e) => e.stopPropagation()}
           style={{
             padding: '40px 32px',
             background: COLORS.surface,
             borderRadius: `${RADIUS.xl}px`,
             border: `2px solid ${COLORS.primary500}`,
             textAlign: 'center',
-            cursor: 'default',
           }}>
           <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.base}px`, margin: 0}}>
             Image could not be loaded
@@ -63,25 +53,23 @@ export function CardLightbox({src, alt, isLocation, onClose}: CardLightboxProps)
           </p>
         </div>
       ) : (
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- click interception to prevent backdrop dismiss; not interactive, just event boundary
         <img
           src={src}
           alt={alt}
           onError={() => setImgError(true)}
-          onClick={(e) => e.stopPropagation()}
           style={{
+            display: 'block',
+            margin: '0 auto',
             maxWidth: isLocation ? '85vh' : 'calc(100vw - 80px)',
             maxHeight: isLocation ? 'calc(100vw - 80px)' : '85vh',
             borderRadius: `${RADIUS.xl}px`,
             border: `2px solid ${COLORS.primary500}`,
-            boxShadow: '0 0 30px rgba(212, 175, 55, 0.3)',
-            cursor: 'default',
+            boxShadow: `0 0 30px ${hexRgba(COLORS.primary500, 0.3)}`,
             objectFit: 'contain',
             transform: isLocation ? 'rotate(90deg)' : undefined,
           }}
         />
       )}
-    </div>,
-    document.body,
+    </DialogShell>
   );
 }

@@ -27,9 +27,11 @@ describe('CardLightbox', () => {
     expect(dialog).toHaveAttribute('aria-modal', 'true');
   });
 
-  it('should call onClose when backdrop is clicked', () => {
+  it('should call onClose when the backdrop scrim is clicked', () => {
     render(<CardLightbox {...defaultProps} />);
-    fireEvent.click(screen.getByRole('dialog'));
+    // DialogShell (#510) renders the scrim as an aria-hidden sibling of the dialog panel.
+    const scrim = document.querySelector('[aria-hidden="true"]');
+    fireEvent.click(scrim!);
     expect(defaultProps.onClose).toHaveBeenCalledOnce();
   });
 

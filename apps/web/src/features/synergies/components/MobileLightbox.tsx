@@ -1,8 +1,9 @@
-import {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {useLayoutEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
 import type {Ink} from 'inkweave-synergy-engine';
 import {COLORS, EASING, FONT_SIZES, INK_COLORS, RADIUS, Z_INDEX, blackRgba, hexRgba} from '../../../shared/constants';
 import {IconButton} from '../../../shared/components';
+import {useDialogFocus, useScrollLock} from '../../../shared/hooks';
 
 interface MobileLightboxProps {
   imageUrl: string;
@@ -59,6 +60,8 @@ function flipContext(
  */
 export function MobileLightbox({imageUrl, alt, ink, originRect, onClose}: MobileLightboxProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   // Holds the in-flight FLIP animation (entry or exit). Cancelled before starting a new one so
   // two animations never compete on `transform` — see the entry-FLIP comment for the StrictMode
   // double-invoke rationale.
@@ -116,13 +119,17 @@ export function MobileLightbox({imageUrl, alt, ink, originRect, onClose}: Mobile
     anim.onfinish = onClose;
   };
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') requestClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [requestClose]);
+  // The #510 overlay contract via the hook trio directly — the shell's CSS
+  // presence would fight the WAAPI FLIP, so this dialog keeps its structure.
+  // useDialogFocus supplies document-level Escape (→ reverse FLIP), the Tab
+  // trap, initial focus on the ×, and focus restore to the opening tile.
+  const {handleKeyDown} = useDialogFocus({
+    isOpen: true,
+    containerRef: rootRef,
+    initialFocusRef: closeButtonRef,
+    onClose: requestClose,
+  });
+  useScrollLock(true);
 
   const tint = inkLightboxTint(ink);
   // Chrome fades out on close; the card itself does the FLIP, not a fade.
@@ -132,7 +139,14 @@ export function MobileLightbox({imageUrl, alt, ink, originRect, onClose}: Mobile
   };
 
   return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={`Enlarged: ${alt}`} style={ROOT_STYLE}>
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog keyboard handling (Tab trap via useDialogFocus)
+    <div
+      ref={rootRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Enlarged: ${alt}`}
+      onKeyDown={handleKeyDown}
+      style={ROOT_STYLE}>
       <div
         className="mobile-lightbox-scrim"
         onClick={requestClose}
@@ -140,6 +154,7 @@ export function MobileLightbox({imageUrl, alt, ink, originRect, onClose}: Mobile
         style={{...SCRIM_STYLE, ...chromeStyle}}
       />
       <IconButton
+        ref={closeButtonRef}
         type="button"
         aria-label="Close enlarged card"
         onClick={requestClose}
@@ -201,7 +216,7 @@ const SCRIM_STYLE: React.CSSProperties = {
   // backdrop re-rasterizes every frame the card FLIPs behind it, so the compositor never idles
   // and Playwright's actionability "stable" check on the close button never resolves (#444).
   // The 0.86-alpha black already carries the "card floats above" separation the blur used to add.
-  background: blackRgba(0.86),
+  background: COLORS.scrimHeavy,
   cursor: 'zoom-out',
 };
 

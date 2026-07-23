@@ -69,7 +69,7 @@ interface CardOverviewModalProps {
 interface ModalState {
   modalRef: React.RefObject<HTMLDivElement | null>;
   frameRef: React.RefObject<HTMLDivElement | null>;
-  initialFocusRef: React.RefObject<HTMLElement | null>;
+  initialFocusRef: React.RefObject<HTMLButtonElement | null>;
   compareCardRef: React.RefObject<HTMLDivElement | null>;
   visible: boolean;
   onTransitionEnd: () => void;
@@ -107,7 +107,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
 
   const modalRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
-  const initialFocusRef = useRef<HTMLElement>(null);
+  const initialFocusRef = useRef<HTMLButtonElement>(null);
   const {visible, onTransitionEnd} = useTransitionPresence(isOpen);
 
   const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
@@ -291,6 +291,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
   const {
     modalRef,
     frameRef,
+    initialFocusRef,
     compareCardRef,
     visible,
     onTransitionEnd,
@@ -363,6 +364,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               hideBackButton={hideBackButton}
               onClose={onClose}
               exitComparison={exitComparison}
+              initialFocusRef={initialFocusRef}
             />
             <ModalContentRegion
               showExpanded={showExpanded}
@@ -952,16 +954,18 @@ interface ModalHeaderProps {
   hideBackButton: boolean;
   onClose: () => void;
   exitComparison: () => void;
+  /** useDialogFocus's initial-focus target — attached to the close × (#510: it was created but never attached). */
+  initialFocusRef: React.RefObject<HTMLButtonElement | null>;
 }
 
-function ModalHeader({card, isMobile, inComparison, hideBackButton, onClose, exitComparison}: ModalHeaderProps) {
+function ModalHeader({card, isMobile, inComparison, hideBackButton, onClose, exitComparison, initialFocusRef}: ModalHeaderProps) {
   const showBack = inComparison && !hideBackButton;
   return (
     <header style={{padding: '20px 24px 0', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap'}}>
       {showBack ? <BackButton onClick={exitComparison} /> : <ModalTitle card={card} isMobile={isMobile} />}
       {/* Spacer pushes close button to the right when BACK is in the slot (BACK doesn't have flex:1) */}
       {inComparison && <div style={{flex: 1}} />}
-      <CloseButton onClose={onClose} />
+      <CloseButton onClose={onClose} focusRef={initialFocusRef} />
     </header>
   );
 }
@@ -1672,12 +1676,13 @@ function PairConnector({cardHeight, exiting}: PairConnectorProps) {
 }
 
 /** Close (×) button — the shared IconButton in its circular-bordered form (#509). */
-function CloseButton({onClose}: {onClose: () => void}) {
+function CloseButton({onClose, focusRef}: {onClose: () => void; focusRef?: React.RefObject<HTMLButtonElement | null>}) {
   return (
     <IconButton
       type="button"
       aria-label="Close"
       onClick={onClose}
+      ref={focusRef}
       size={28}
       style={{
         borderRadius: '50%',

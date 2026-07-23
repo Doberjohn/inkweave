@@ -49,7 +49,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/QuickVoteControl.tsx', // x3
     'src/features/voting/components/ScorePicker.tsx', // x1
     'src/features/voting/components/VoteAffirmation.stories.tsx', // x3
-    'src/features/voting/components/VoteConfirmation.tsx', // x13
     'src/features/voting/components/VoteFormSkeleton.stories.tsx', // x1
     'src/features/voting/components/VoteProgress.tsx', // x1
     'src/features/voting/components/VoteStatusBanner.tsx', // x9
@@ -73,7 +72,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/StrengthBadge.stories.tsx', // x8
     'src/shared/components/TierCircle.stories.tsx', // x2
     'src/shared/components/Tooltip.stories.tsx', // x2
-    'src/shared/lib/swUpdateToast.ts', // x1
   ],
   // 63 files, 259 violations at seeding
   'no-raw-rgba': [
@@ -107,13 +105,11 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/OptionPicker.stories.tsx', // x3
     'src/features/voting/components/PairDisplay.tsx', // x3
     'src/features/voting/components/QuickVoteControl.tsx', // x21
-    'src/features/voting/components/VoteConfirmation.tsx', // x2
     'src/features/voting/components/VotingCardDisplay.tsx', // x2
     'src/pages/NotFoundPage.tsx', // x4
     'src/pages/PlaystyleDetailPage.tsx', // x2
     'src/shared/components/AbilityCallout.tsx', // x1
     'src/shared/components/BetaNotice.tsx', // x1
-    'src/shared/components/CardLightbox.tsx', // x2
     'src/shared/components/ConnectionGroup.tsx', // x5
     'src/shared/components/CountBadge.tsx', // x1
     'src/shared/components/EtherealBackground.tsx', // x4
@@ -123,8 +119,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/SortSelect.tsx', // x1
     'src/shared/components/Sparkles.stories.tsx', // x2
     'src/shared/components/Tooltip.stories.tsx', // x3
-    'src/shared/components/Tooltip.tsx', // x1
-    'src/shared/lib/swUpdateToast.ts', // x1
   ],
   // 6 files, 15 violations at seeding
   'no-literal-font-family': [
@@ -157,7 +151,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/DistributionBar.tsx', // x2
     'src/features/voting/components/ScorePicker.tsx', // x1
     'src/features/voting/components/VoteAffirmation.tsx', // x3
-    'src/features/voting/components/VoteConfirmation.tsx', // x8
     'src/features/voting/components/VoteProgress.tsx', // x1
     'src/features/voting/components/VoteStatusBanner.tsx', // x2
     'src/pages/HomePageSkeleton.tsx', // x2
@@ -169,7 +162,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/MobileBottomNav.tsx', // x1
     'src/shared/components/Sparkles.stories.tsx', // x3
     'src/shared/components/Tooltip.stories.tsx', // x2
-    'src/shared/components/Tooltip.tsx', // x1
   ],
   // 62 files, 102 violations at seeding
   'no-raw-radius': [
@@ -207,7 +199,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/QuickVoteControl.tsx', // x1
     'src/features/voting/components/ScorePicker.tsx', // x1
     'src/features/voting/components/VoteAffirmation.stories.tsx', // x1
-    'src/features/voting/components/VoteConfirmation.tsx', // x2
     'src/features/voting/components/VoteStatusBanner.tsx', // x2
     'src/features/voting/components/VotingCardDisplay.tsx', // x2
     'src/pages/BrowsePage.tsx', // x1
@@ -221,12 +212,10 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/FilterContent.stories.tsx', // x3
     'src/shared/components/FilterSection.stories.tsx', // x2
     'src/shared/components/Sparkles.stories.tsx', // x3
-    'src/shared/components/Tooltip.tsx', // x1
   ],
   // 5 files, 5 violations at seeding
   'no-raw-z-index': [
     'src/features/reveals/RevealsPromoCard.tsx', // x1
-    'src/features/voting/components/VoteConfirmation.tsx', // x1
     'src/shared/components/BetaNotice.tsx', // x1
     'src/shared/components/MobileBottomNav.tsx', // x1
   ],

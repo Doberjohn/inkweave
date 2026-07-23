@@ -1,6 +1,6 @@
 import {useRef, useState, useLayoutEffect, type ReactNode, type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
-import {COLORS, Z_INDEX} from '../constants';
+import {COLORS, FONT_SIZES, RADIUS, SHADOWS, Z_INDEX} from '../constants';
 
 const TIP_GAP = 8;
 const TIP_MARGIN = 8;
@@ -91,17 +91,18 @@ export function Tooltip({children, content, triggerAriaLabel, triggerStyle}: Too
               padding: '10px 14px',
               background: COLORS.background,
               border: `1px solid ${COLORS.surfaceBorder}`,
-              borderRadius: 6,
-              boxShadow: '0 6px 18px rgba(0, 0, 0, 0.5)',
-              fontSize: 11,
+              borderRadius: RADIUS.md,
+              boxShadow: SHADOWS.float,
+              fontSize: FONT_SIZES.sm,
               lineHeight: 1.6,
               color: COLORS.descriptionText,
               textAlign: 'left',
               whiteSpace: 'pre-line',
               pointerEvents: 'none',
               // Must clear Z_INDEX.modal (1000) — tooltip is portal'd to document.body but the
-              // modal still stacks above unless we explicitly out-rank it.
-              zIndex: Z_INDEX.modal + 100,
+              // modal still stacks above unless we explicitly out-rank it (#510: the named
+              // popover tier, not modal + 100 arithmetic that happened to equal it).
+              zIndex: Z_INDEX.popover,
             }}>
             {content}
             <TooltipArrow placement={placement} />

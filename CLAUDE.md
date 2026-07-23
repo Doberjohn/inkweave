@@ -130,6 +130,7 @@ Convention files that auto-load only when editing files matching their `paths:` 
 | `migrations.md` | `supabase/migrations/**` | Supabase MCP migration workflow |
 | `engine.md` | `packages/synergy-engine/src/**` | engine rule pattern, 5-baseline scoring anchors, doc-sync, auto-rebuild |
 | `design-tokens.md` | `apps/web/src/**/*.ts(x)` | design-token lint rules (#508): the `inkweave/*` ESLint rules + value-grep gate, the shrink-only grandfather ledgers, and what to do when a rule fires |
+| `overlays.md` | `apps/web/src/**/*.tsx` | overlay contract (#510): DialogShell/BottomSheet + hook trio, backdrop-always-closes, scrim tokens, the FilterDialog Radix exception, E2E backdrop/unmount invariants |
 | `mockups.md` | `apps/web/public/mockups/**` | design-session workflow, mockup token set, audit passes |
 
 ### Agents (`.claude/agents/`)
