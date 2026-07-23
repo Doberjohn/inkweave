@@ -36,22 +36,28 @@ export const LAYOUT = {
 } as const;
 
 // Spacing scale.
-// xs..xxl are a 4-multiple size ladder for general-purpose padding/gap.
+// xs..xxxl are a 4-multiple size ladder for general-purpose padding/gap.
+// `xxs` is the sanctioned hairline half-step (2px separations); it is the ONLY
+// sub-4 value — 6px and 10px are ruled out (2026-07-22 ruling: the 4-multiple
+// principle stands; raw 6/10 converge to 4/8 and 8/12 when touched).
 // `section` is the panel-rhythm value used for outer column gaps and the
 // breathing room between major sections within a panel (header, content,
 // CTA). It sits between md (12) and lg (16) and is referenced by mockup
 // phase 2 as `.vote-section.combined-vote { gap: 14px }`.
 export const SPACING = {
+  xxs: 2,
   xs: 4,
   sm: 8,
   md: 12,
   lg: 16,
   xl: 20,
   xxl: 24,
+  xxxl: 32,
   section: 14,
 } as const;
 
-// Border radius scale
+// Border radius scale. `pill` is the fully-rounded idiom for chips/badges/nav
+// pills (2026-07-22 ruling; replaces raw 999/20/18/10 literals).
 export const RADIUS = {
   xs: 2,
   sm: 4,
@@ -59,6 +65,7 @@ export const RADIUS = {
   lg: 8,
   card: 12,
   xl: 14,
+  pill: 999,
 } as const;
 
 /**
@@ -68,15 +75,17 @@ export const RADIUS = {
  * Browser support: 88%+ (all major browsers since Dec 2023).
  */
 export const EASING = {
-  /** Gentle overshoot then settle. For selections, hover effects, button presses. */
+  /** Gentle overshoot then settle. For selection commits and press feedback (the "it landed" moments). */
   bounce: 'linear(0, 0.004, 0.016, 0.035, 0.063, 0.098, 0.141, 0.191, 0.25, 0.316, 0.391, 0.472, 0.562, 0.66, 0.765, 0.878, 1, 1.029, 1.049, 1.061, 1.066, 1.064, 1.055, 1.042, 1.026, 1.008, 0.99, 0.974, 0.96, 0.95, 0.943, 0.94, 0.941, 0.946, 0.953, 0.963, 0.975, 0.987, 1)',
-  /** Quick, minimal overshoot. For fast transitions, tab switching. */
+  /** Quick, minimal overshoot. For hover effects, fast transitions, tab switching (the de-facto hover standard; doc corrected 2026-07-22 to match usage). */
   snappy: 'linear(0, 0.11, 0.342, 0.562, 0.733, 0.858, 0.942, 0.992, 1.018, 1.026, 1.022, 1.012, 1.004, 0.998, 0.997, 0.999, 1)',
   /** Smooth deceleration, no overshoot. For fades, progress bars, subtle shifts. */
   smooth: 'linear(0, 0.064, 0.178, 0.324, 0.478, 0.621, 0.74, 0.833, 0.902, 0.95, 0.979, 0.995, 1)',
 } as const;
 
-// Typography
+// Typography. The display tier (2026-07-22 ruling) covers hero numerals and
+// display headings above the 22px body ceiling; raw 30/32/44 converge to the
+// nearest step when touched. The dev-only banner tool's 68 stays exempt.
 export const FONT_SIZES = {
   xs: 10,
   sm: 11,
@@ -86,6 +95,9 @@ export const FONT_SIZES = {
   xl: 16,
   xxl: 20,
   xxxl: 22,
+  displaySm: 28,
+  displayMd: 38,
+  displayLg: 52,
 } as const;
 
 // Dark fantasy color palette
@@ -96,6 +108,19 @@ export const COLORS = {
   surfaceHover: '#252540',
   surfaceAlt: '#151525',
   surfaceBorder: '#333355',
+
+  // Elevation ladder (2026-07-22 ruling): on this near-black ground, black
+  // drop-shadows barely read, so ELEVATION IS LIGHTNESS — higher surfaces get
+  // lighter fills, with SHADOWS.* as soft secondary cues. rest = `surface`.
+  surfaceRaised: '#1e1e35', // one step up (equals gray100 by design)
+  surfaceFloating: '#222240', // floating cards/previews
+  surfaceOverlay: '#252545', // top elevation: modal/panel fills
+
+  // Overlay scrims (2026-07-22 ruling): the blue-black dialog scrim, and the
+  // deeper pure-black variant for image lightboxes. Solid colors only — never
+  // backdrop-filter (WebKit E2E repaint trap, #444/#445).
+  scrim: 'rgba(4, 4, 10, 0.72)',
+  scrimHeavy: 'rgba(0, 0, 0, 0.85)',
 
   // Primary accent (gold)
   primary: '#ffb900',
@@ -127,7 +152,11 @@ export const COLORS = {
   gray800: '#e8e8e8',
   gray900: '#f0f0f5',
 
-  // Primary shades (gold-based for dark theme)
+  // Primary shades (gold-based for dark theme).
+  // ONE-GOLD RULING (2026-07-22): `primary` #ffb900 is THE brand gold — glows,
+  // rings, and new accents use it (via hexRgba/SHADOWS). The classic #d4af37
+  // below is the LEGACY accent: existing uses are grandfathered, new work
+  // should not reach for it.
   primary100: '#2a2515',
   primary200: '#3d3520',
   primary500: '#d4af37',
@@ -234,6 +263,10 @@ export const Z_INDEX = {
   modal: 1000,
   popoverBackdrop: 1099,
   popover: 1100,
+  /** Toasts sit above every overlay so confirmations survive open modals (2026-07-22; replaces raw 900/9999). */
+  toast: 1200,
+  /** The service-worker update prompt outranks everything, including toasts. */
+  swUpdate: 1300,
 } as const;
 
 // Card type filter options (includes "Song" pseudo-type for UI filtering)
@@ -279,6 +312,59 @@ export const hexToRgb = (hex: string) =>
 
 /** Convert a hex color (#rrggbb) to rgba with the given alpha */
 export const hexRgba = (hex: string, a: number) => `rgba(${hexToRgb(hex)}, ${a})`;
+
+/** Black at the given alpha — for scrims, insets, and neutral shadows with no hue. */
+export const blackRgba = (a: number) => `rgba(0, 0, 0, ${a})`;
+
+/** White at the given alpha — for top-light highlights and subtle overlays. */
+export const whiteRgba = (a: number) => `rgba(255, 255, 255, ${a})`;
+
+/**
+ * A colored glow shadow for DYNAMIC accents (ink colors, tier colors) that no
+ * static token can cover. Fixed-color gold glows should use SHADOWS.glow* instead.
+ */
+export const glow = (color: string, size = 16) => `0 0 ${size}px ${color}`;
+
+/**
+ * Shadow recipes (2026-07-22 ruling). On the near-black ground, ELEVATION IS
+ * LIGHTNESS (see COLORS.surfaceRaised/Floating/Overlay); these shadows are the
+ * soft secondary cues plus the gold glow language. Gold members use
+ * COLORS.primary per the one-gold ruling.
+ */
+export const SHADOWS = {
+  /** Subtle resting lift for chips/tiles overlapping content. */
+  raise: `0 2px 6px ${blackRgba(0.4)}`,
+  /** Tooltips, toasts, hover-lifted tiles. */
+  float: `0 6px 18px ${blackRgba(0.4)}`,
+  /** Featured cards and fan tiles. */
+  card: `0 10px 22px ${blackRgba(0.5)}`,
+  /** Floating panels and previews. */
+  panel: `0 16px 48px ${blackRgba(0.5)}`,
+  /** Modal/dialog panels (soft negative spread). */
+  overlay: `0 24px 60px -20px ${blackRgba(0.7)}`,
+  /** Bottom sheets rising from below. */
+  sheet: `0 -8px 32px ${blackRgba(0.6)}`,
+  /** Composable faint 1px gold ring for overlay panels that want the accent: `${SHADOWS.overlay}, ${SHADOWS.goldRing}`. */
+  goldRing: `0 0 0 1px ${hexRgba(COLORS.primary, 0.1)}`,
+  /** Small gold glow: markers, badges, focus accents. */
+  glowSm: `0 0 8px ${hexRgba(COLORS.primary, 0.35)}`,
+  /** Medium gold glow: selection highlight. */
+  glowMd: `0 0 16px 2px ${hexRgba(COLORS.primary, 0.45)}`,
+  /** Large gold glow: hero/lightbox aura. */
+  glowLg: `0 0 30px ${hexRgba(COLORS.primary, 0.3)}`,
+} as const;
+
+/**
+ * Synergy-strength tier palette (2026-07-22 ruling: promoted from
+ * scoreUtils.ts, where these hexes were the de-facto standard re-hardcoded
+ * across features). Keys mirror the Synergy Score display tiers.
+ */
+export const TIER_COLORS = {
+  perfect: {color: '#fbbf24', bg: '#3d3010'},
+  strong: {color: '#6ee7a0', bg: '#1a3d1a'},
+  moderate: {color: '#60b5f5', bg: '#10253d'},
+  weak: {color: '#f59090', bg: '#3d1a1a'},
+} as const;
 
 // Browse sort order
 // ── Sort orders ──

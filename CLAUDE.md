@@ -232,10 +232,10 @@ pnpm test:supabase    # Run Supabase integration tests (requires .env.local)
 
 Dark fantasy theme inspired by Lorcana:
 - Background: #0d0d14 (near black)
-- Surface: #1a1a2e (dark purple)
-- Primary: #d4af37 (gold accents)
+- Surface: #1a1a2e (dark purple); elevation = LIGHTNESS (surfaceRaised/Floating/Overlay), shadows are secondary cues
+- Primary: #ffb900 (THE brand gold — glows/rings via `hexRgba`/`SHADOWS`); #d4af37 (`primary500`) is the legacy accent, grandfathered only
 - Text: #e8e8e8 (off-white)
-- Glowing borders on hover, purple-tinted shadows
+- Glowing borders on hover; token source of truth is `apps/web/src/shared/constants/theme.ts` (2026-07-22 rulings: milestone #4)
 
 ## Workflow Preferences
 

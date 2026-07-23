@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
-import {COLORS, INK_COLORS, ALL_INKS} from '../shared/constants';
+import {COLORS, INK_COLORS, ALL_INKS, TIER_COLORS} from '../shared/constants';
 
 // ── Swatch component ─────────────────────────────────────────────────
 // Renders a single color token with visual preview, name, and hex value.
@@ -97,8 +97,9 @@ function ColorGroup({
 
 // ── Color Palette page ───────────────────────────────────────────────
 
-function ColorPalette() {
-  const groups = [
+// Static swatch data hoisted out of the component (the render function stays
+// small; the data reads live from the token objects either way).
+const PALETTE_GROUPS = [
     {
       title: 'Background & Surface',
       colors: [
@@ -107,6 +108,24 @@ function ColorPalette() {
         {name: 'surfaceHover', value: COLORS.surfaceHover},
         {name: 'surfaceAlt', value: COLORS.surfaceAlt},
         {name: 'surfaceBorder', value: COLORS.surfaceBorder},
+      ],
+    },
+    {
+      title: 'Elevation Ladder (higher = lighter; shadows are secondary cues)',
+      colors: [
+        {name: 'surface (rest)', value: COLORS.surface},
+        {name: 'surfaceRaised', value: COLORS.surfaceRaised},
+        {name: 'surfaceFloating', value: COLORS.surfaceFloating},
+        {name: 'surfaceOverlay', value: COLORS.surfaceOverlay},
+      ],
+    },
+    {
+      title: 'Strength Tiers (TIER_COLORS)',
+      colors: [
+        {name: 'perfect', value: TIER_COLORS.perfect.color},
+        {name: 'strong', value: TIER_COLORS.strong.color},
+        {name: 'moderate', value: TIER_COLORS.moderate.color},
+        {name: 'weak', value: TIER_COLORS.weak.color},
       ],
     },
     {
@@ -155,13 +174,16 @@ function ColorPalette() {
     },
   ];
 
-  const inkColors = ALL_INKS.map((ink) => ({
-    name: ink,
-    bg: INK_COLORS[ink].bg,
-    text: INK_COLORS[ink].text,
-    border: INK_COLORS[ink].border,
-  }));
+const INK_SWATCHES = ALL_INKS.map((ink) => ({
+  name: ink,
+  bg: INK_COLORS[ink].bg,
+  text: INK_COLORS[ink].text,
+  border: INK_COLORS[ink].border,
+}));
 
+function ColorPalette() {
+  const groups = PALETTE_GROUPS;
+  const inkColors = INK_SWATCHES;
   return (
     <div style={{padding: 24, maxWidth: 960}}>
       <h1
