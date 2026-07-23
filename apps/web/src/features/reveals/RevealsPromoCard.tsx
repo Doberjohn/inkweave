@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {COLORS, FONTS, FONT_SIZES, RADIUS} from '../../shared/constants';
 import {useResponsive} from '../../shared/hooks';
+import {prefersReducedMotion} from '../../shared/utils/prefersReducedMotion';
 
 const SET_LOGO = '/art/sets/attack-of-the-vine.png';
 
@@ -95,18 +96,6 @@ const FIREFLY_SEEDS: ReadonlyArray<{left: string; delay: string; drift: string}>
 /** Responsive viewport config. Mirrors the CompactHeader pattern. */
 interface ViewportConfig {
   isMobile: boolean;
-}
-
-/**
- * Check whether the user has requested reduced motion.
- * Three-guard form keeps each conditional simple (0 logical operators)
- * rather than one compound expression, which trips CodeScene's
- * Complex Conditional rule.
- */
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
-  if (typeof window.matchMedia !== 'function') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 // =====================================================================

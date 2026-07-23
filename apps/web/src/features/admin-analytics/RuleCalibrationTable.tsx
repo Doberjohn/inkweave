@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
+import {CAP_LABEL_XS, COLORS, FONTS, FONT_SIZES, LETTER_SPACING, RADIUS, SPACING} from '../../shared/constants';
 import type {RuleStat} from './voteAnalyticsTypes';
 
 interface RuleCalibrationTableProps {
@@ -33,7 +33,7 @@ function GapBar({meanGap}: {meanGap: number | null}) {
   const magnitude = meanGap == null ? 0 : Math.min(Math.abs(meanGap) / GAP_FULL_SCALE, 1) * 50;
   const overRates = meanGap != null && meanGap < 0;
   return (
-    <div style={{position: 'relative', height: 6, background: COLORS.surface, borderRadius: 3, minWidth: 80}}>
+    <div style={{position: 'relative', height: 6, background: COLORS.surface, borderRadius: RADIUS.xs, minWidth: 80}}>
       <div style={{position: 'absolute', left: '50%', top: -2, width: 1, height: 10, background: COLORS.textDim}} />
       {meanGap != null && meanGap !== 0 && (
         <div
@@ -42,7 +42,7 @@ function GapBar({meanGap}: {meanGap: number | null}) {
             top: 0,
             height: 6,
             width: `${magnitude}%`,
-            borderRadius: 3,
+            borderRadius: RADIUS.xs,
             background: overRates ? COLORS.error : COLORS.success,
             ...(overRates ? {right: '50%'} : {left: '50%'}),
           }}
@@ -53,11 +53,7 @@ function GapBar({meanGap}: {meanGap: number | null}) {
 }
 
 const HEADER_CELL: React.CSSProperties = {
-  fontSize: FONT_SIZES.xs,
-  color: COLORS.textMuted,
-  fontWeight: 700,
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
+  ...CAP_LABEL_XS,
   textAlign: 'left',
   padding: `${SPACING.sm}px ${SPACING.md}px`,
 };
@@ -85,9 +81,9 @@ function SortHeader({
           padding: 0,
           cursor: 'pointer',
           font: 'inherit',
-          color: active ? COLORS.primary : COLORS.textMuted,
           textTransform: 'uppercase',
-          letterSpacing: '0.05em',
+          letterSpacing: LETTER_SPACING.cap,
+          color: active ? COLORS.primary : COLORS.textMuted,
         }}>
         {label}
         {active ? ' ▼' : ''}
@@ -106,7 +102,7 @@ const NUMERIC_CELL: React.CSSProperties = {
 };
 
 const LOW_N_CHIP: React.CSSProperties = {
-  fontSize: 9,
+  fontSize: FONT_SIZES.xs,
   color: COLORS.textDim,
   border: `1px solid ${COLORS.surfaceBorder}`,
   borderRadius: RADIUS.xs,

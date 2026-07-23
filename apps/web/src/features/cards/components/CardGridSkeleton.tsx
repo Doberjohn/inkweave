@@ -1,5 +1,5 @@
-import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
-import {COLORS, LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
+import Skeleton from 'react-loading-skeleton';
+import {LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
 import {useContainerWidth} from '../../../shared/hooks/useContainerWidth';
 import {useRef} from 'react';
 
@@ -50,7 +50,7 @@ export function CardGridSkeleton({
       aria-label={ariaLabel}
     >
       {containerWidth > 0 && (
-        <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+        <>
           <div style={{
             display: 'grid',
             gridTemplateColumns: `repeat(${columns}, 1fr)`,
@@ -60,7 +60,7 @@ export function CardGridSkeleton({
               <Skeleton key={i} height={cardHeight} borderRadius={RADIUS.card} />
             ))}
           </div>
-        </SkeletonTheme>
+        </>
       )}
     </div>
   );

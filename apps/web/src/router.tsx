@@ -1,6 +1,6 @@
 import {lazy, Suspense} from 'react';
 import {createBrowserRouter, Navigate} from 'react-router-dom';
-import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
+import Skeleton from 'react-loading-skeleton';
 import {AppLayout} from './AppLayout';
 import {AdminGate} from './features/admin-analytics/AdminGate';
 import {RevealsGate} from './features/reveals';
@@ -84,7 +84,7 @@ function GenericFallback() {
       }}
       aria-busy="true"
       aria-label="Loading page">
-      <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+      <>
         <div
           style={{
             display: 'flex',
@@ -98,7 +98,7 @@ function GenericFallback() {
           <Skeleton height={12} width="80%" borderRadius={RADIUS.sm} />
           <Skeleton height={12} width="40%" borderRadius={RADIUS.sm} />
         </div>
-      </SkeletonTheme>
+      </>
     </div>
   );
 }

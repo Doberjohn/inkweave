@@ -1,5 +1,5 @@
-import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
-import {COLORS, RADIUS, SPACING} from '../../../shared/constants';
+import Skeleton from 'react-loading-skeleton';
+import {RADIUS, SPACING} from '../../../shared/constants';
 
 interface VoteFormSkeletonProps {
   /** Number of dimension-row placeholders (default: 6, matches InDepthVoteForm) */
@@ -29,14 +29,14 @@ export function VoteFormSkeleton({
       }}
       aria-busy="true"
       aria-label={ariaLabel}>
-      <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+      <>
         {Array.from({length: rows}, (_, i) => (
           <div key={i} style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
             <Skeleton height={14} width="40%" borderRadius={RADIUS.sm} />
             <Skeleton height={44} borderRadius={RADIUS.md} />
           </div>
         ))}
-      </SkeletonTheme>
+      </>
     </div>
   );
 }

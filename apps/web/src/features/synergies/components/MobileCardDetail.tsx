@@ -1,13 +1,13 @@
 import {useState} from 'react';
 import {Link} from 'react-router-dom';
-import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
+import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from '../../cards';
 import {CardDetailSkeleton, CardGridSkeleton} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
 import {ExpandedGroupView} from './ExpandedGroupView';
 import {CardImage, CardLightbox, Chip} from '../../../shared/components';
-import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, FONTS, INK_COLORS, LETTER_SPACING, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
 
 interface MobileCardDetailProps {
   card?: LorcanaCard | null;
@@ -47,7 +47,7 @@ function EtherealOrb() {
         width: 300,
         height: 300,
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)',
+        background: `radial-gradient(circle, ${hexRgba(INK_COLORS.Amethyst.border, 0.12)} 0%, transparent 70%)`,
         pointerEvents: 'none',
       }}
     />
@@ -58,7 +58,7 @@ function MobileLoadingView() {
   return (
     <>
       <CardDetailSkeleton imageWidth={220} textLines={2} padding={0} ariaLabel="Loading card detail" />
-      <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+      <>
         <div
           style={{
             display: 'flex',
@@ -78,7 +78,7 @@ function MobileLoadingView() {
             </div>
           </div>
         ))}
-      </SkeletonTheme>
+      </>
     </>
   );
 }
@@ -91,7 +91,7 @@ function CardImageButton({card, onOpen}: {card: LorcanaCard; onOpen: () => void}
         onClick={onOpen}
         style={{
           border: 'none',
-          borderRadius: 12,
+          borderRadius: RADIUS.card,
           overflow: 'hidden',
           cursor: 'pointer',
           padding: 0,
@@ -165,7 +165,7 @@ function SynergiesSectionHeader() {
           margin: 0,
           fontSize: `${FONT_SIZES.xl}px`,
           fontWeight: 700,
-          letterSpacing: '0.08em',
+          letterSpacing: LETTER_SPACING.eyebrow,
           textTransform: 'uppercase',
           color: COLORS.text,
         }}>

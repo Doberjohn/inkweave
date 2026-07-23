@@ -1,7 +1,7 @@
 import {forwardRef, useImperativeHandle, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SET_ABBREVIATIONS, SHADOWS, SPACING} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SET_ABBREVIATIONS, SHADOWS, SPACING, TRUNCATE} from '../constants';
 import {BottomSheet} from './BottomSheet';
 import {LinkButton} from './LinkButton';
 import {useCardDataContext} from '../contexts/CardDataContext';
@@ -285,9 +285,7 @@ function SearchResultRow({card, isHighlighted, isLast, query, optionProps}: Sear
               fontWeight: 500,
               color: COLORS.text,
               fontFamily: FONTS.body,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              ...TRUNCATE,
             }}>
             <HighlightedName fullName={card.fullName} query={query} />
           </div>

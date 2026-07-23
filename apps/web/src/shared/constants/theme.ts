@@ -366,6 +366,88 @@ export const TIER_COLORS = {
   weak: {color: '#f59090', bg: '#3d1a1a'},
 } as const;
 
+// ---------------------------------------------------------------------------
+// Micro-pattern style consts (#511). One source per retyped idiom, following
+// the SELECT_STYLE_* precedent: consts, not wrapper components, so inline-style
+// composition never fights flex/grid parents. Spread them, then override.
+// ---------------------------------------------------------------------------
+
+/** Letter-spacing scale: `cap` for uppercase section labels, `eyebrow` for hero kickers. */
+export const LETTER_SPACING = {cap: '0.05em', eyebrow: '0.08em'} as const;
+
+/** Uppercase section label (the 51-site idiom): md size, bold, tracked, muted. */
+export const CAP_LABEL: React.CSSProperties = {
+  fontSize: FONT_SIZES.md,
+  fontWeight: 700,
+  letterSpacing: LETTER_SPACING.cap,
+  textTransform: 'uppercase',
+  color: COLORS.textMuted,
+};
+
+/** CAP_LABEL at xs — for dense chrome (badges, tile captions). */
+export const CAP_LABEL_XS: React.CSSProperties = {
+  ...CAP_LABEL,
+  fontSize: FONT_SIZES.xs,
+};
+
+/** Standalone surface panel. Radius rule: RADIUS.card for standalone panels/modals, RADIUS.lg for cards nested inside one. */
+export const SURFACE_CARD: React.CSSProperties = {
+  background: COLORS.surface,
+  border: `1px solid ${COLORS.surfaceBorder}`,
+  borderRadius: RADIUS.card,
+  padding: SPACING.lg,
+};
+
+/** Dashed empty-state box, centered content. */
+export const EMPTY_BOX: React.CSSProperties = {
+  border: `1px dashed ${COLORS.surfaceBorder}`,
+  borderRadius: RADIUS.lg,
+  color: COLORS.textMuted,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  textAlign: 'center',
+};
+
+/** Single-line ellipsis truncation. REQUIRES an ancestor with minWidth: 0 in flex/grid layouts. */
+export const TRUNCATE: React.CSSProperties = {
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};
+
+/** Lining tabular figures — any numeral column that must not jitter (scores, counts, timers). */
+export const TABULAR: React.CSSProperties = {fontVariantNumeric: 'tabular-nums'};
+
+/**
+ * The gold interaction glow, unified per the one-gold ruling: every value
+ * derives from COLORS.primary (#ffb900). Selection/hover chips, nav pills,
+ * and search focus rings compose from these.
+ */
+export const GOLD_GLOW = {
+  activeBorder: hexRgba(COLORS.primary, 0.4),
+  hoverBorder: hexRgba(COLORS.primary, 0.25),
+  activeBg: hexRgba(COLORS.primary, 0.12),
+  hoverBg: hexRgba(COLORS.primary, 0.06),
+  shadow: `0 0 12px ${hexRgba(COLORS.primary, 0.15)}, inset 0 0 8px ${hexRgba(COLORS.primary, 0.05)}`,
+  focusRing: `0 0 0 2px ${hexRgba(COLORS.primary, 0.15)}, 0 0 12px ${hexRgba(COLORS.primary, 0.08)}`,
+} as const;
+
+/** Minimum touch-target square (px) — the a11y floor for tap surfaces. */
+export const TOUCH_TARGET = 44;
+
+/** Icon size scale (px). */
+export const ICON_SIZE = {sm: 16, md: 20, lg: 24} as const;
+
+/** Uniform kit press feedback: pass to `scale(${PRESS_SCALE})`. */
+export const PRESS_SCALE = 0.97;
+
+/** Uniform kit disabled recipe: visibly dimmed, explicit cursor, no motion. */
+export const DISABLED_STYLE: React.CSSProperties = {
+  opacity: 0.4,
+  cursor: 'not-allowed',
+};
+
 // Browse sort order
 // ── Sort orders ──
 

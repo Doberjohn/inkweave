@@ -1,5 +1,5 @@
 import type {SynergyGroup} from '../types';
-import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, SPACING, TRUNCATE} from '../../../shared/constants';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {StrengthBadge, TierCircle} from '../../../shared/components';
 
@@ -83,9 +83,7 @@ export function SynergyBreakdown({
                   color: COLORS.text,
                   fontWeight: 500,
                   lineHeight: 1.2,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  ...TRUNCATE,
                 }}>
                 {group.label}
               </div>

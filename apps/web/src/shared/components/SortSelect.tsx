@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS} from '../constants';
 
 interface SortSelectProps<T extends string> {
   options: {value: T; label: string; mobileLabel?: string}[];
@@ -23,7 +23,7 @@ export function SortSelect<T extends string>({
   const [focus, setFocus] = useState(false);
 
   const borderColor = focus
-    ? 'rgba(212, 175, 55, 0.4)'
+    ? GOLD_GLOW.activeBorder
     : hover
       ? COLORS.gray300
       : COLORS.surfaceBorder;
@@ -64,8 +64,12 @@ export function SortSelect<T extends string>({
         fontSize: `${FONT_SIZES.base}px`,
         lineHeight: 1,
         cursor: 'pointer',
+        // #511 interaction rule: never suppress the focus ring without a
+        // replacement — the UA outline is dropped ONLY because the GOLD_GLOW
+        // ring below renders a visible focus indicator in its place.
         outline: 'none',
-        transition: `border-color 0.15s ${EASING.snappy}`,
+        boxShadow: focus ? GOLD_GLOW.focusRing : 'none',
+        transition: `border-color 0.15s ${EASING.snappy}, box-shadow 0.15s ${EASING.snappy}`,
         ...style,
       }}>
       {options.map((opt) => (

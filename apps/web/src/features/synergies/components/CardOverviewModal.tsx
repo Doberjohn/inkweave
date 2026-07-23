@@ -1,5 +1,5 @@
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
-import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
+import Skeleton from 'react-loading-skeleton';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
@@ -10,9 +10,10 @@ import {ExpandedGroupView} from './ExpandedGroupView';
 import {CardImage, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
+import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {trackEvent} from '../../../shared/lib/analytics';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SHADOWS, Z_INDEX, hexRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, LETTER_SPACING, RADIUS, SHADOWS, Z_INDEX, hexRgba} from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
 import {IconButton} from '../../../shared/components/IconButton';
 import {LinkButton} from '../../../shared/components/LinkButton';
@@ -786,10 +787,6 @@ interface SynergyCardClickInput {
 const CLICK_ACK_DURATION_MS = 90;
 
 /** Whether the user has set OS-level "reduce motion." Returns false in non-browser contexts. */
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 /** A pair is click-actionable when it exists AND has at least one connection to display. */
 function isPairClickActionable(pair: DetailedPairSynergy | null): pair is DetailedPairSynergy {
@@ -1462,7 +1459,7 @@ function DefaultInfoColumn({synergies, synergiesLoading, visibleGroups, activeGr
  */
 function SynergiesLoadingSkeleton() {
   return (
-    <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+    <>
       <div
         data-testid="card-overview-loading"
         aria-busy="true"
@@ -1489,7 +1486,7 @@ function SynergiesLoadingSkeleton() {
           </div>
         ))}
       </div>
-    </SkeletonTheme>
+    </>
   );
 }
 
@@ -1706,7 +1703,7 @@ function BackButton({onClick}: {onClick: () => void}) {
       style={{
         fontWeight: 700,
         textTransform: 'uppercase',
-        letterSpacing: '0.08em',
+        letterSpacing: LETTER_SPACING.eyebrow,
         flexShrink: 0,
         display: 'inline-flex',
         alignItems: 'center',

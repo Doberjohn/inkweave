@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SHADOWS, TIER_COLORS, Z_INDEX} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SHADOWS, TIER_COLORS, TRUNCATE, Z_INDEX} from '../../../shared/constants';
 import {LinkButton} from '../../../shared/components/LinkButton';
 import type {Score} from '../../../shared/lib/supabase';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';
@@ -22,28 +22,8 @@ interface VoteToastProps {
 const DISMISS_MS = 3000;
 const ENTER_MS = 300;
 
-/** Inject keyframes once at module load. Must exist before first render. */
-(function injectKeyframes() {
-  const STYLE_ID = 'vote-toast-keyframes';
-  if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return;
-  const style = document.createElement('style');
-  style.id = STYLE_ID;
-  style.textContent = `
-    @keyframes toast-enter {
-      from { transform: translateX(-100%); opacity: 0; }
-      to   { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes toast-exit {
-      from { transform: translateX(0); opacity: 1; }
-      to   { transform: translateX(-100%); opacity: 0; }
-    }
-    @keyframes toast-progress {
-      from { width: 100%; }
-      to   { width: 0%; }
-    }
-  `;
-  document.head.appendChild(style);
-})();
+// Keyframes live in index.css (#511) so the global reduced-motion block can
+// disable the slide; the classes below reference them.
 
 function ScoreCircle({score, label}: {score: number; label: string}) {
   const tier = getStrengthTier(score);
@@ -134,10 +114,8 @@ export function VoteToast({data, onDismiss, onUndo, isMobile}: VoteToastProps) {
         border: `1px solid ${COLORS.surfaceBorder}`,
         boxShadow: SHADOWS.float,
         overflow: 'hidden',
-        animation: exiting
-          ? `toast-exit ${ENTER_MS}ms ease-in forwards`
-          : `toast-enter ${ENTER_MS}ms ease-out`,
-      }}>
+      }}
+      className={exiting ? 'vote-toast-exit' : 'vote-toast-enter'}>
       <div style={{padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8}}>
         {/* Header */}
         <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
@@ -158,9 +136,7 @@ export function VoteToast({data, onDismiss, onUndo, isMobile}: VoteToastProps) {
             fontSize: FONT_SIZES.sm,
             color: COLORS.textMuted,
             fontFamily: FONTS.body,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            ...TRUNCATE,
           }}>
           {data.cardAName} + {data.cardBName}
         </span>

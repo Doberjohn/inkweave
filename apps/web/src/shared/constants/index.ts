@@ -28,6 +28,18 @@ export {
   glow,
   SHADOWS,
   TIER_COLORS,
+  LETTER_SPACING,
+  CAP_LABEL,
+  CAP_LABEL_XS,
+  SURFACE_CARD,
+  EMPTY_BOX,
+  TRUNCATE,
+  TABULAR,
+  GOLD_GLOW,
+  TOUCH_TARGET,
+  ICON_SIZE,
+  PRESS_SCALE,
+  DISABLED_STYLE,
 } from './theme';
 export type {PlaystyleUiMeta, ComingSoonPlaystyle} from './playstyleUi';
-export {PLAYSTYLE_UI, COMING_SOON_PLAYSTYLES} from './playstyleUi';
+export {PLAYSTYLE_UI, COMING_SOON_PLAYSTYLES, accentRgba} from './playstyleUi';

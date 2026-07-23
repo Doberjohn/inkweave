@@ -1,8 +1,8 @@
 import {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
+import Skeleton from 'react-loading-skeleton';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, INK_COLORS, LETTER_SPACING, RADIUS, SPACING, TIER_COLORS, hexRgba} from '../../../shared/constants';
 import {CommunityEmptyState} from './CommunityEmptyState';
 import {ColumnHeader} from './ColumnHeader';
 import {DeltaPanel} from './DeltaPanel';
@@ -25,7 +25,7 @@ import {
 // back to the empty panel because getPairScore returns null (no row) and
 // CommunityBody renders nothing for a null score, so `1` is the effective floor.
 const VOTES_THRESHOLD = 1;
-const COMMUNITY_TINT = '#b691ff'; // amethyst
+const COMMUNITY_TINT = INK_COLORS.Amethyst.text; // amethyst family (#511: was a drifted local #b691ff)
 
 interface CommunityColumnProps {
   pair: DetailedPairSynergy;
@@ -136,7 +136,7 @@ function useDelayedLoading(isLoading: boolean, delayMs: number): boolean {
  */
 function CommunityLoadingSkeleton() {
   return (
-    <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+    <>
       <div
         data-testid="community-loading"
         aria-busy="true"
@@ -172,7 +172,7 @@ function CommunityLoadingSkeleton() {
           <Skeleton height={40} borderRadius={RADIUS.sm} />
         </div>
       </div>
-    </SkeletonTheme>
+    </>
   );
 }
 
@@ -203,7 +203,7 @@ const SECTION_STYLE: React.CSSProperties = {
   padding: '16px 18px',
   border: `1px solid ${hexRgba(COMMUNITY_TINT, 0.25)}`,
   background: hexRgba(COMMUNITY_TINT, 0.04),
-  borderRadius: 12,
+  borderRadius: RADIUS.card,
   fontFamily: FONTS.body,
 };
 
@@ -295,9 +295,9 @@ type Delta = ReturnType<typeof formatDelta>;
 
 /** Lower → red, higher → green, even → blue. */
 function pickDeltaColor(tone: Delta['tone']): string {
-  if (tone === 'lower') return '#f59090';
-  if (tone === 'higher') return '#6ee7a0';
-  return '#60b5f5';
+  if (tone === 'lower') return TIER_COLORS.weak.color;
+  if (tone === 'higher') return TIER_COLORS.strong.color;
+  return TIER_COLORS.moderate.color;
 }
 
 function DeltaBadge({delta}: {delta: Delta}) {
@@ -311,8 +311,8 @@ function DeltaBadge({delta}: {delta: Delta}) {
           background: hexRgba(color, 0.15),
           color,
           padding: '2px 7px',
-          borderRadius: 4,
-          fontSize: 11,
+          borderRadius: RADIUS.sm,
+          fontSize: FONT_SIZES.sm,
           fontWeight: 700,
           letterSpacing: 'normal',
           textTransform: 'none',
@@ -402,7 +402,7 @@ function MetricRow({
       <div
         style={{
           flex: '0 0 80px',
-          fontSize: 22,
+          fontSize: FONT_SIZES.xxxl,
           fontWeight: 700,
           color: COLORS.text,
           textAlign: 'center',
@@ -413,17 +413,17 @@ function MetricRow({
       <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0}}>
         <div
           style={{
-            fontSize: 11,
+            fontSize: FONT_SIZES.sm,
             fontWeight: 700,
             color: COLORS.textMuted,
             textTransform: 'uppercase',
-            letterSpacing: '0.08em',
+            letterSpacing: LETTER_SPACING.eyebrow,
           }}>
           {label}
         </div>
         <div
           style={{
-            fontSize: 12,
+            fontSize: FONT_SIZES.md,
             color: COLORS.descriptionText,
             lineHeight: 1.4,
           }}>

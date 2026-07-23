@@ -1,6 +1,6 @@
 import type {ReactNode} from 'react';
 import {Tooltip} from '../../../shared/components';
-import {COLORS, FONTS, SPACING} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, LETTER_SPACING, SPACING, hexRgba} from '../../../shared/constants';
 
 interface ColumnHeaderProps {
   title: string;
@@ -58,7 +58,7 @@ const TITLE_STYLE: React.CSSProperties = {
   // Match the modal h1 (card name) treatment: Plus Jakarta Sans, 22px / 700. Bigger than the
   // mockup's 17px — column titles are the second most important readout in focused state.
   fontFamily: FONTS.body,
-  fontSize: 22,
+  fontSize: FONT_SIZES.xxxl,
   fontWeight: 700,
   letterSpacing: '0.02em',
   textAlign: 'center',
@@ -97,7 +97,7 @@ function ScoreStats({score, scoreColor, scoreFontSize, showScale, scoreTooltip, 
           <span style={scoreStyle}>{score}</span>
         )}
         {showScale && (
-          <span style={{fontSize: 14, fontWeight: 600, color: COLORS.textMuted, marginLeft: 2}}>/ 10</span>
+          <span style={{fontSize: FONT_SIZES.lg, fontWeight: 600, color: COLORS.textMuted, marginLeft: 2}}>/ 10</span>
         )}
         {scoreTooltip && <ScoreTooltipButton content={scoreTooltip} />}
       </div>
@@ -107,10 +107,10 @@ function ScoreStats({score, scoreColor, scoreFontSize, showScale, scoreTooltip, 
 }
 
 const META_STYLE: React.CSSProperties = {
-  fontSize: 11,
+  fontSize: FONT_SIZES.sm,
   fontWeight: 600,
   textTransform: 'uppercase',
-  letterSpacing: '0.08em',
+  letterSpacing: LETTER_SPACING.eyebrow,
   display: 'inline-flex',
   alignItems: 'center',
   gap: 6,
@@ -128,10 +128,10 @@ function ScoreTooltipButton({content}: {content: string}) {
           width: 18,
           height: 18,
           borderRadius: '50%',
-          background: 'rgba(212, 175, 55, 0.06)',
-          border: '1px solid rgba(212, 175, 55, 0.3)',
-          color: 'rgba(212, 175, 55, 0.85)',
-          fontSize: 11,
+          background: hexRgba(COLORS.primary500, 0.06),
+          border: `1px solid ${hexRgba(COLORS.primary500, 0.3)}`,
+          color: hexRgba(COLORS.primary500, 0.85),
+          fontSize: FONT_SIZES.sm,
           fontWeight: 700,
           cursor: 'help',
           fontFamily: 'inherit',

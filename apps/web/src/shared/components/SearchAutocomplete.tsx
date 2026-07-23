@@ -8,7 +8,9 @@ import {
   RADIUS,
   SET_ABBREVIATIONS,
   SET_NAMES,
+  SHADOWS,
   SPACING,
+  TRUNCATE,
   Z_INDEX,
 } from '../constants';
 
@@ -76,7 +78,7 @@ export function SearchAutocomplete({
         background: COLORS.surface,
         border: `1px solid ${COLORS.surfaceBorder}`,
         borderRadius: RADIUS.lg,
-        boxShadow: '0 8px 24px rgba(0,0,0,0.4), 0 0 1px rgba(212,175,55,0.15)',
+        boxShadow: `${SHADOWS.float}, ${SHADOWS.goldRing}`,
         maxHeight: 360,
         overflowY: 'auto',
         zIndex: Z_INDEX.autocomplete,
@@ -128,9 +130,7 @@ export function SearchAutocomplete({
               style={{
                 flex: 1,
                 minWidth: 0,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                ...TRUNCATE,
                 lineHeight: 1,
               }}>
               <HighlightedName fullName={card.fullName} query={query} />

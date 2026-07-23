@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardImage, CardLightbox} from '../../../shared/components';
-import {COLORS, FONTS, FONT_SIZES} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, hexRgba} from '../../../shared/constants';
 
 interface VotingCardDisplayProps {
   card: LorcanaCard;
@@ -53,6 +53,45 @@ function RotatedCardImage({card, containerWidth, borderRadius}: {card: LorcanaCa
   );
 }
 
+/**
+ * Mobile tap-to-enlarge wrapper (#511): keyboard-operable (role=button +
+ * Enter/Space) when an image exists, inert otherwise. Extracted so its
+ * conditional wiring doesn't roll up to VotingCardDisplay's CC.
+ */
+function TapToEnlarge({
+  card,
+  highlighted,
+  onOpen,
+  children,
+}: {
+  card: LorcanaCard;
+  highlighted?: boolean;
+  onOpen: () => void;
+  children: React.ReactNode;
+}) {
+  const interactive = Boolean(card.imageUrl);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    onOpen();
+  };
+  return (
+    <div
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? `Enlarge ${card.fullName}` : undefined}
+      onClick={interactive ? onOpen : undefined}
+      onKeyDown={interactive ? handleKeyDown : undefined}
+      style={{
+        boxShadow: highlighted ? `0 0 16px 2px ${hexRgba(COLORS.primary500, 0.45)}` : 'none',
+        transition: `box-shadow 0.2s ${EASING.snappy}`,
+        borderRadius: RADIUS.lg,
+      }}>
+      {children}
+    </div>
+  );
+}
+
 export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingCardDisplayProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const isLocation = card.type === 'Location';
@@ -72,16 +111,9 @@ export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingC
           flex: 1,
           minWidth: 0,
           opacity: dimmed ? 0.4 : 1,
-          transition: 'opacity 0.2s ease',
+          transition: `opacity 0.2s ${EASING.snappy}`,
         }}>
-        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- mobile-only tap-to-enlarge */}
-        <div
-          onClick={card.imageUrl ? () => setLightboxOpen(true) : undefined}
-          style={{
-            boxShadow: highlighted ? '0 0 16px 2px rgba(212, 175, 55, 0.45)' : 'none',
-            transition: 'box-shadow 0.2s ease',
-            borderRadius: 8,
-          }}>
+        <TapToEnlarge card={card} highlighted={highlighted} onOpen={() => setLightboxOpen(true)}>
           {isLocation ? (
             <RotatedCardImage card={card} containerWidth={imageWidth} borderRadius={8} />
           ) : (
@@ -96,7 +128,7 @@ export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingC
               style={{maxWidth: '100%', height: 'auto', flexShrink: 1}}
             />
           )}
-        </div>
+        </TapToEnlarge>
         <div style={{minHeight: 36, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
           <span style={{fontSize: FONT_SIZES.base, fontWeight: 500, color: COLORS.text, fontFamily: FONTS.body, textAlign: 'center'}}>
             {name}
@@ -126,10 +158,10 @@ export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingC
         height: displayHeight,
         flexShrink: 0,
         boxSizing: 'border-box',
-        borderRadius: 12,
-        boxShadow: highlighted ? '0 0 16px 2px rgba(212, 175, 55, 0.45)' : 'none',
+        borderRadius: RADIUS.card,
+        boxShadow: highlighted ? `0 0 16px 2px ${hexRgba(COLORS.primary500, 0.45)}` : 'none',
         opacity: dimmed ? 0.4 : 1,
-        transition: 'box-shadow 0.2s ease, opacity 0.2s ease',
+        transition: `box-shadow 0.2s ${EASING.snappy}, opacity 0.2s ${EASING.snappy}`,
       }}>
       {isLocation ? (
         <RotatedCardImage card={card} containerWidth={imageWidth} borderRadius={12} />

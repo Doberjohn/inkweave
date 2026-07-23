@@ -15,6 +15,7 @@ export {CompactHeader} from './CompactHeader';
 export {CostFilterGroup} from './CostFilterGroup';
 export {CostIcon} from './CostIcon';
 export {CountBadge} from './CountBadge';
+export {BetaTag} from './BetaTag';
 export {BottomSheet} from './BottomSheet';
 export {CtaButton} from './CtaButton';
 export {DialogShell} from './DialogShell';

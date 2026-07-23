@@ -11,8 +11,10 @@ import {CompactHeader, CtaButton, ErrorBoundary, EtherealBackground, Seo} from '
 import {PlaystyleFanTile, PlaystyleSection} from '../features/playstyles';
 import {
   COLORS,
+  EMPTY_BOX,
   FONTS,
   FONT_SIZES,
+  RADIUS,
   SPACING,
   PLAYSTYLE_UI,
   COMING_SOON_PLAYSTYLES,
@@ -169,13 +171,9 @@ function ComingSoonBand() {
           <div
             key={ps.name}
             style={{
-              border: `1px dashed ${COLORS.surfaceBorder}`,
-              borderRadius: 12,
+              ...EMPTY_BOX,
+              borderRadius: RADIUS.card,
               minHeight: 84,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: COLORS.textMuted,
               fontSize: `${FONT_SIZES.base}px`,
             }}>
             {ps.name}
