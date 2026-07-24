@@ -15,6 +15,7 @@ const analyzer = (id: string, label: string, score: number, status: DeckStatus):
 const vuln = (id: string): Vulnerability => ({id, label: id, conditionType: id, severity: 'high', message: ''});
 
 const ANALYSIS: DeckAnalysis = {
+  suggestions: [],
   stats: {
     totalCards: 60,
     uniqueCards: 17,

@@ -29,6 +29,7 @@ const analysis = (
   analyzers: HealthAnalyzer[],
   vulnerabilities: Vulnerability[],
 ): DeckAnalysis => ({
+  suggestions: [],
   stats: {
     totalCards: 60,
     uniqueCards: 17,

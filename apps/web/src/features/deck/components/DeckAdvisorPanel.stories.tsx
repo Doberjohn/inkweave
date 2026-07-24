@@ -56,6 +56,7 @@ const RISKS: Vulnerability[] = [
 ];
 
 const ANALYSIS: DeckAnalysis = {
+  suggestions: [],
   stats: {
     totalCards: 60,
     uniqueCards: 18,

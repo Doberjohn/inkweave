@@ -39,6 +39,7 @@ const analysis = (
   vulnerabilities: Vulnerability[],
   breakdown: ScoreContribution[] = [],
 ): DeckAnalysis => ({
+  suggestions: [],
   stats: {
     totalCards: 60,
     uniqueCards: 17,

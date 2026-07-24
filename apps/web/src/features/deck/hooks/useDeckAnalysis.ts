@@ -75,17 +75,22 @@ export function useDeckAnalysis(
   deck: Deck,
   getCardById: (id: string) => LorcanaCard | undefined,
   ready: boolean,
+  allCards: LorcanaCard[],
 ): AnalysisState {
   const [state, dispatch] = useReducer(reducer, {analysis: null, isLoading: false, error: null});
 
-  // Keep the latest deck / resolver in refs so the analysis effect can key on a
-  // stable content signature (below) rather than object identity. Written in an
-  // effect, not during render (refs must not be mutated while rendering).
+  // Keep the latest deck / resolver / card pool in refs so the analysis effect can
+  // key on a stable content signature (below) rather than object identity. Written
+  // in an effect, not during render (refs must not be mutated while rendering). The
+  // pool is the suggestion candidate set — its size is stable, so it stays out of
+  // the signature and is read at compute time.
   const deckRef = useRef(deck);
   const getCardByIdRef = useRef(getCardById);
+  const allCardsRef = useRef(allCards);
   useEffect(() => {
     deckRef.current = deck;
     getCardByIdRef.current = getCardById;
+    allCardsRef.current = allCards;
   });
 
   // Recompute only when the deck's cards/quantities or declared gameplan change.
@@ -114,6 +119,7 @@ export function useDeckAnalysis(
             getPairScore: buildGetPairScore(new Map(entries)),
             hosers,
             gameplan: currentDeck.gameplan,
+            candidateIds: allCardsRef.current.map((c) => c.id),
           });
           dispatch({type: 'RESULT', analysis});
         })

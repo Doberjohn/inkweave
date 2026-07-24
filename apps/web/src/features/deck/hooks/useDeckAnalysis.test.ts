@@ -48,7 +48,7 @@ afterEach(() => {
 
 describe('useDeckAnalysis', () => {
   it('produces no analysis for an empty deck', async () => {
-    const {result} = renderHook(() => useDeckAnalysis(deck([]), getCardById, true));
+    const {result} = renderHook(() => useDeckAnalysis(deck([]), getCardById, true, []));
     await flush(500);
     expect(analyzeDeckMock).not.toHaveBeenCalled();
     expect(result.current.analysis).toBeNull();
@@ -56,7 +56,7 @@ describe('useDeckAnalysis', () => {
 
   it('waits for card-DB readiness, then analyzes when ready flips true', async () => {
     const d = deck(['a', 'b']);
-    const {result, rerender} = renderHook(({ready}) => useDeckAnalysis(d, getCardById, ready), {
+    const {result, rerender} = renderHook(({ready}) => useDeckAnalysis(d, getCardById, ready, []), {
       initialProps: {ready: false},
     });
     await flush(500);
@@ -69,7 +69,7 @@ describe('useDeckAnalysis', () => {
   });
 
   it('debounces rapid deck edits into a single analysis', async () => {
-    const {rerender} = renderHook(({d}) => useDeckAnalysis(d, getCardById, true), {
+    const {rerender} = renderHook(({d}) => useDeckAnalysis(d, getCardById, true, []), {
       initialProps: {d: deck(['a'])},
     });
     for (const ids of [['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd']]) {
@@ -81,7 +81,7 @@ describe('useDeckAnalysis', () => {
   });
 
   it('cancels a pending analysis on unmount', async () => {
-    const {unmount} = renderHook(() => useDeckAnalysis(deck(['a']), getCardById, true));
+    const {unmount} = renderHook(() => useDeckAnalysis(deck(['a']), getCardById, true, []));
     unmount(); // before the 300ms debounce fires
     await flush(500);
     expect(analyzeDeckMock).not.toHaveBeenCalled();

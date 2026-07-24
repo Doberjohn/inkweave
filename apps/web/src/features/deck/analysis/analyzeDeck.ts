@@ -11,19 +11,26 @@ import type {
   HealthAnalyzer,
   LorcanaCard,
   QualityScore,
+  Suggestion,
 } from '../types';
 import {calculateDeckStats} from './deckStats';
 import {classifyArchetype} from './archetype';
 import {buildHealthAnalyzers} from './analyzers';
 import {analyzeVulnerabilities, type HoserEntry} from './vulnerabilities';
 import {aggregateDeckSynergy, type DeckSynergyResult, type PairScore} from './deckSynergy';
+import {rankSuggestions} from './suggestions';
 import {scoreDeck} from './score';
+
+/** Cap on the ranked suggestions returned to the UI (it shows the top few). */
+const SUGGESTION_LIMIT = 12;
 
 export interface DeckAnalysis {
   stats: DeckStats;
   synergy: DeckSynergyResult;
   health: DeckHealth;
   quality: QualityScore;
+  /** Ranked add-a-card suggestions (top {@link SUGGESTION_LIMIT}), strongest first. */
+  suggestions: Suggestion[];
 }
 
 export interface AnalyzeDeckOptions {
@@ -33,6 +40,12 @@ export interface AnalyzeDeckOptions {
   hosers: HoserEntry[];
   /** Optional user-declared gameplan; overrides the auto-detected archetype. */
   gameplan?: Archetype;
+  /**
+   * Candidate card ids to rank as suggestions — typically the whole Core pool.
+   * `rankSuggestions` guards each against `canShareDeck` + the 4-copy cap, so an
+   * unfiltered pool is safe; ineligible cards are rejected before any scoring.
+   */
+  candidateIds: string[];
 }
 
 /** Rough status cutoffs for the synergy-density indicator (calibrated later in Phase 3). */
@@ -91,5 +104,13 @@ export function analyzeDeck(
   const quality = scoreDeck(health);
   health.overall = quality.score;
 
-  return {stats, synergy, health, quality};
+  const suggestions = rankSuggestions({
+    deck,
+    candidateIds: opts.candidateIds,
+    getPairScore: opts.getPairScore,
+    health,
+    getCardById,
+  }).slice(0, SUGGESTION_LIMIT);
+
+  return {stats, synergy, health, quality, suggestions};
 }

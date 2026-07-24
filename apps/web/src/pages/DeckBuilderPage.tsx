@@ -67,7 +67,7 @@ export function DeckBuilderPage() {
   const {openCardModal} = useCardModal();
   const pool = useDeckPoolFilters();
   const [showFilters, setShowFilters] = useState(false);
-  const deckAnalysis = useDeckAnalysis(deck, getCardById, !isLoading);
+  const deckAnalysis = useDeckAnalysis(deck, getCardById, !isLoading, cards);
 
   if (isMobile) {
     return (
