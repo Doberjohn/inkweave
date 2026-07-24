@@ -162,6 +162,7 @@ export function DeckBuilderPage() {
           onDecrement={(id) => setQuantity(id, (quantities.get(id) ?? 0) - 1)}
           onRemove={removeCard}
           onSetCore={markCore}
+          getCardById={getCardById}
           onOpenDetails={viewDeckDetails}
           analysis={deckAnalysis.analysis}
           analysisLoading={deckAnalysis.isLoading}

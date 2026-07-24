@@ -5,13 +5,13 @@ import type {Archetype, DeckStats} from '../types';
 import type {DeckAnalysis} from '../analysis/analyzeDeck';
 import {DeckCardRow} from './DeckCardRow';
 import {CostCurveStrip} from './CostCurveStrip';
-import {TypeSplitPips} from './TypeSplitPips';
 import {totalCopies} from './costCurveColumns';
 import {HealthSummary} from './HealthSummary';
 import {type HealthVariant} from './HealthVariants';
 import {SortSelect} from '../../../shared/components/SortSelect';
 import {TabList} from '../../../shared/components/TabList';
 import {DeckAdvisorPanel} from './DeckAdvisorPanel';
+import {SynergySurface} from './SynergySurface';
 import {previewGeometry} from './previewGeometry';
 import {ALL_INKS, COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING, Z_INDEX, blackRgba} from '../../../shared/constants';
 import {InkIcon} from '../../../shared/components/InkIcon';
@@ -43,6 +43,8 @@ interface DeckPanelProps {
   onRemove: (cardId: string) => void;
   /** Flags/unflags a card as a deck-core anchor (mirrors DeckContext.markCore). */
   onSetCore?: (cardId: string, isCore: boolean) => void;
+  /** Resolves a card id to its card — the Analysis tab renders key cards + suggestions by id. */
+  getCardById: (id: string) => LorcanaCard | undefined;
   /**
    * Clicking a row's thumbnail/name opens that card's detail modal. `siblingIds` is
    * the deck in the panel's VISUAL (type-grouped) order, so the modal's arrow-nav
@@ -89,10 +91,7 @@ function rowGroup(card: LorcanaCard): RowGroup {
 // vulnerabilities via <VulnerabilityBox> (#472). Cost curve / ink balance were dropped
 // as duplicates of the Cards-tab strip. Synergies & suggestions belong to a SEPARATE
 // task (#471), labelled as such so the tab doesn't imply #472 owns them.
-const PENDING_ADVISOR_ZONES = [
-  'Synergies & key cards · coming soon',
-  'Suggestions · coming soon',
-];
+const PENDING_ADVISOR_ZONES = ['Suggestions · coming soon'];
 
 /**
  * Duels.ink-style deck info: the deck's ink symbols, total card count (colored by
@@ -317,12 +316,14 @@ function AnalysisTab({
   error,
   gameplan,
   onGameplanChange,
+  getCardById,
 }: {
   analysis: DeckAnalysis | null;
   isLoading: boolean;
   error: Error | null;
   gameplan: Archetype | undefined;
   onGameplanChange: (gameplan: Archetype | undefined) => void;
+  getCardById: (id: string) => LorcanaCard | undefined;
 }) {
   return (
     <div style={{padding: SPACING.md, display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
@@ -333,6 +334,7 @@ function AnalysisTab({
         gameplan={gameplan}
         onGameplanChange={onGameplanChange}
       />
+      {analysis && <SynergySurface synergy={analysis.synergy} getCardById={getCardById} />}
       {PENDING_ADVISOR_ZONES.map((zone) => (
         <div
           key={zone}
@@ -417,7 +419,7 @@ function readHealthVariant(): HealthVariant {
   return 'priorities';
 }
 
-export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement, onRemove, onSetCore, onOpenDetails, analysis, analysisLoading, analysisError, gameplan, onGameplanChange}: DeckPanelProps) {
+export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement, onRemove, onSetCore, getCardById, onOpenDetails, analysis, analysisLoading, analysisError, gameplan, onGameplanChange}: DeckPanelProps) {
   const [tab, setTab] = useState<PanelTab>('cards');
   const [healthVariant, setHealthVariant] = useState<HealthVariant>(readHealthVariant);
   const updateHealthVariant = (v: HealthVariant) => {
@@ -557,19 +559,8 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
 
       {tab === 'cards' && totalCopies(stats.costCurve) > 0 && (
         <div style={{display: 'flex', height: STATS_ROW_HEIGHT, flexShrink: 0, borderBottom: `1px solid ${COLORS.surfaceBorder}`}}>
-          <div
-            style={{
-              flex: 1,
-              minWidth: 0,
-              borderRight: `1px solid ${COLORS.surfaceBorder}`,
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: 0,
-            }}>
-            <div style={{flex: 1, minHeight: 0}}>
-              <CostCurveStrip costCurve={stats.costCurve} costCurveByInk={stats.costCurveByInk} />
-            </div>
-            <TypeSplitPips typeDistribution={stats.typeDistribution} />
+          <div style={{flex: 1, minWidth: 0, borderRight: `1px solid ${COLORS.surfaceBorder}`}}>
+            <CostCurveStrip costCurve={stats.costCurve} costCurveByInk={stats.costCurveByInk} />
           </div>
           <div style={{flex: 1, minWidth: 0, position: 'relative'}}>
             <HealthSummary
@@ -598,6 +589,7 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
             error={analysisError ?? null}
             gameplan={gameplan}
             onGameplanChange={onGameplanChange ?? (() => {})}
+            getCardById={getCardById}
           />
         ) : rows.length === 0 ? (
           <p

@@ -33,6 +33,7 @@ function renderPanel(over: Partial<Props> = {}) {
     onIncrement: vi.fn(),
     onDecrement: vi.fn(),
     onRemove: vi.fn(),
+    getCardById: (id: string) => rows.find((r) => r.card.id === id)?.card,
     ...over,
   };
   return {props, ...render(<DeckPanel {...props} />)};

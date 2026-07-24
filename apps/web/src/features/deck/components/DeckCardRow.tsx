@@ -85,8 +85,8 @@ function CardIdentity({
       onMouseEnter={(e) => onPreviewEnter?.(card, e.currentTarget.getBoundingClientRect())}
       onMouseLeave={onPreviewLeave}
       style={{display: 'flex', alignItems: 'center', gap: SPACING.md, flex: 1, minWidth: 0, cursor: 'pointer'}}>
-      <div style={{width: 46, height: 34, borderRadius: RADIUS.sm, overflow: 'hidden', flexShrink: 0, border: `1px solid ${ink.border}`}}>
-        <img src={smallImageUrl(card)} alt="" style={{width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 18%'}} />
+      <div style={{width: 46, height: 21, borderRadius: RADIUS.sm, overflow: 'hidden', flexShrink: 0, border: `1px solid ${ink.border}`}}>
+        <img src={smallImageUrl(card)} alt="" style={{width: '100%', height: '100%', objectFit: 'cover', objectPosition: '58% 4%'}} />
       </div>
       <span style={{flex: 1, minWidth: 0, color: COLORS.text, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.lg}px`, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
         {name}
