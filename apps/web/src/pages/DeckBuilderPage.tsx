@@ -49,8 +49,10 @@ function CenteredNotice({children}: {children: ReactNode}) {
 // calculateDeckStats surfaces them as warnings instead.
 function buildDeckRows(deck: Deck, getCardById: (id: string) => LorcanaCard | undefined): DeckRow[] {
   return deck.cards
-    .map((dc) => ({card: getCardById(dc.cardId), quantity: dc.quantity}))
-    .filter((r): r is DeckRow => r.card !== undefined)
+    .flatMap((dc) => {
+      const card = getCardById(dc.cardId);
+      return card ? [{card, quantity: dc.quantity, isCore: dc.isCore}] : [];
+    })
     .sort(
       (a, b) =>
         a.card.cost - b.card.cost ||
@@ -60,7 +62,7 @@ function buildDeckRows(deck: Deck, getCardById: (id: string) => LorcanaCard | un
 
 export function DeckBuilderPage() {
   const {isMobile} = useResponsive();
-  const {deck, addCard, setQuantity, removeCard, renameDeck, setGameplan} = useDeck();
+  const {deck, addCard, setQuantity, removeCard, renameDeck, setGameplan, markCore} = useDeck();
   const {cards, isLoading, getCardById, uniqueKeywords, uniqueClassifications, sets} = useCardDataContext();
   const {openCardModal} = useCardModal();
   const pool = useDeckPoolFilters();
@@ -159,6 +161,7 @@ export function DeckBuilderPage() {
           onIncrement={(id) => addCard(id)}
           onDecrement={(id) => setQuantity(id, (quantities.get(id) ?? 0) - 1)}
           onRemove={removeCard}
+          onSetCore={markCore}
           onOpenDetails={viewDeckDetails}
           analysis={deckAnalysis.analysis}
           analysisLoading={deckAnalysis.isLoading}

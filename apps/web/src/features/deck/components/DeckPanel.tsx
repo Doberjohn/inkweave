@@ -5,6 +5,7 @@ import type {Archetype, DeckStats} from '../types';
 import type {DeckAnalysis} from '../analysis/analyzeDeck';
 import {DeckCardRow} from './DeckCardRow';
 import {CostCurveStrip} from './CostCurveStrip';
+import {TypeSplitPips} from './TypeSplitPips';
 import {totalCopies} from './costCurveColumns';
 import {HealthSummary} from './HealthSummary';
 import {type HealthVariant} from './HealthVariants';
@@ -27,6 +28,8 @@ const STATS_ROW_HEIGHT = 240;
 export interface DeckRow {
   card: LorcanaCard;
   quantity: number;
+  /** Whether this line is flagged a deck-core anchor (weights suggestions ×2). */
+  isCore?: boolean;
 }
 
 interface DeckPanelProps {
@@ -38,6 +41,8 @@ interface DeckPanelProps {
   onIncrement: (cardId: string) => void;
   onDecrement: (cardId: string) => void;
   onRemove: (cardId: string) => void;
+  /** Flags/unflags a card as a deck-core anchor (mirrors DeckContext.markCore). */
+  onSetCore?: (cardId: string, isCore: boolean) => void;
   /**
    * Clicking a row's thumbnail/name opens that card's detail modal. `siblingIds` is
    * the deck in the panel's VISUAL (type-grouped) order, so the modal's arrow-nav
@@ -412,7 +417,7 @@ function readHealthVariant(): HealthVariant {
   return 'priorities';
 }
 
-export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement, onRemove, onOpenDetails, analysis, analysisLoading, analysisError, gameplan, onGameplanChange}: DeckPanelProps) {
+export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement, onRemove, onSetCore, onOpenDetails, analysis, analysisLoading, analysisError, gameplan, onGameplanChange}: DeckPanelProps) {
   const [tab, setTab] = useState<PanelTab>('cards');
   const [healthVariant, setHealthVariant] = useState<HealthVariant>(readHealthVariant);
   const updateHealthVariant = (v: HealthVariant) => {
@@ -485,7 +490,7 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
     setPeek(null);
   };
 
-  const renderRow = ({card, quantity}: DeckRow) => {
+  const renderRow = ({card, quantity, isCore}: DeckRow) => {
     const isLeaving = card.id in leaving;
     return (
       <div
@@ -506,6 +511,8 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
           onIncrement={() => onIncrement(card.id)}
           onDecrement={() => onDecrement(card.id)}
           onRemove={() => requestRemove(card.id, quantity)}
+          isCore={isCore}
+          onSetCore={onSetCore ? () => onSetCore(card.id, !isCore) : undefined}
           onPreviewEnter={(previewCard, anchor) => setPeek({card: previewCard, anchor})}
           onPreviewLeave={() => setPeek(null)}
           onOpenDetails={openDetails}
@@ -550,8 +557,19 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
 
       {tab === 'cards' && totalCopies(stats.costCurve) > 0 && (
         <div style={{display: 'flex', height: STATS_ROW_HEIGHT, flexShrink: 0, borderBottom: `1px solid ${COLORS.surfaceBorder}`}}>
-          <div style={{flex: 1, minWidth: 0, borderRight: `1px solid ${COLORS.surfaceBorder}`}}>
-            <CostCurveStrip costCurve={stats.costCurve} costCurveByInk={stats.costCurveByInk} />
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              borderRight: `1px solid ${COLORS.surfaceBorder}`,
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 0,
+            }}>
+            <div style={{flex: 1, minHeight: 0}}>
+              <CostCurveStrip costCurve={stats.costCurve} costCurveByInk={stats.costCurveByInk} />
+            </div>
+            <TypeSplitPips typeDistribution={stats.typeDistribution} />
           </div>
           <div style={{flex: 1, minWidth: 0, position: 'relative'}}>
             <HealthSummary

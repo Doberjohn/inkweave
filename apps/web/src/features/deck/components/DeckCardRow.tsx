@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, INK_COLORS, RADIUS, SPACING} from '../../../shared/constants';
 import {IconButton} from '../../../shared/components';
 import {smallImageUrl} from '../../cards/loader';
 import {CostGlyph} from './CostGlyph';
@@ -15,6 +15,10 @@ interface DeckCardRowProps {
   onIncrement: () => void;
   onDecrement: () => void;
   onRemove: () => void;
+  /** Whether this line is flagged a deck-core anchor (weights suggestions ×2). */
+  isCore?: boolean;
+  /** Toggles the core flag; the star affordance is hidden until hover unless already core. */
+  onSetCore?: () => void;
   /** Fired when the thumbnail/name is hovered; the panel shows a floating preview anchored to `anchor`. */
   onPreviewEnter?: (card: LorcanaCard, anchor: DOMRect) => void;
   /** Fired when the pointer leaves the thumbnail/name; the panel hides the preview. */
@@ -28,6 +32,15 @@ function TrashIcon() {
     <svg width={15} height={15} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M4 7h16M10 4h4a1 1 0 0 1 1 1v2H9V5a1 1 0 0 1 1-1zM6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Filled when the card is a core anchor, outline otherwise. */
+function StarIcon({filled}: {filled: boolean}) {
+  return (
+    <svg width={15} height={15} viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} aria-hidden="true">
+      <path d="M12 3.5l2.6 5.27 5.82.85-4.21 4.1.99 5.79L12 16.77l-5.2 2.73.99-5.79-4.21-4.1 5.82-.85L12 3.5z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -47,7 +60,7 @@ function isActivationKey(key: string): boolean {
  * preview target), an always-open [− qty +] stepper, and a trash remove. The +
  * disables at MAX_COPIES; the row glows in the card's ink on hover.
  */
-export function DeckCardRow({card, quantity, onIncrement, onDecrement, onRemove, onPreviewEnter, onPreviewLeave, onOpenDetails}: DeckCardRowProps) {
+export function DeckCardRow({card, quantity, onIncrement, onDecrement, onRemove, isCore = false, onSetCore, onPreviewEnter, onPreviewLeave, onOpenDetails}: DeckCardRowProps) {
   const [hovered, setHovered] = useState(false);
   const ink = INK_COLORS[card.ink];
   const name = resolveCardName(card);
@@ -106,6 +119,25 @@ export function DeckCardRow({card, quantity, onIncrement, onDecrement, onRemove,
         disabledReason={`Maximum ${MAX_COPIES} copies of ${name}`}
         label={name}
       />
+      {onSetCore && (
+        <IconButton
+          onClick={onSetCore}
+          aria-label={isCore ? `Unmark ${name} as a core card` : `Mark ${name} as a core card`}
+          aria-pressed={isCore}
+          title={isCore ? 'Core card' : 'Mark as core'}
+          size={26}
+          tabIndex={hovered || isCore ? 0 : -1}
+          style={{
+            flexShrink: 0,
+            color: isCore ? COLORS.primary : COLORS.textDim,
+            opacity: hovered || isCore ? 1 : 0,
+            pointerEvents: hovered || isCore ? 'auto' : 'none',
+            boxShadow: isCore ? GOLD_GLOW.shadow : 'none',
+            transition: `opacity 0.15s ${EASING.snappy}, color 0.15s ${EASING.snappy}, box-shadow 0.15s ${EASING.snappy}`,
+          }}>
+          <StarIcon filled={isCore} />
+        </IconButton>
+      )}
       <IconButton
         onClick={onRemove}
         aria-label={`Remove ${name} from deck`}

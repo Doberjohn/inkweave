@@ -27,7 +27,7 @@ const meta: Meta<typeof DeckCardRow> = {
     ),
   ],
   tags: ['autodocs'],
-  args: {onIncrement: fn(), onDecrement: fn(), onRemove: fn()},
+  args: {onIncrement: fn(), onDecrement: fn(), onRemove: fn(), onSetCore: fn()},
 };
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -35,3 +35,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {args: {card: card(), quantity: 2}};
 
 export const AtMaxCopies: Story = {args: {card: card(), quantity: 4}};
+
+// Flagged a deck-core anchor: the star stays visible and gold with a soft glow
+// (unmarked rows only reveal the outline star on hover).
+export const Core: Story = {args: {card: card(), quantity: 3, isCore: true}};

@@ -37,4 +37,25 @@ describe('DeckCardRow', () => {
     fireEvent.click(screen.getByRole('button', {name: /remove elsa - snow queen from deck/i}));
     expect(onRemove).toHaveBeenCalledOnce();
   });
+
+  it('calls onSetCore when the core star is clicked', () => {
+    const onSetCore = vi.fn();
+    render(
+      <DeckCardRow card={card} quantity={2} onIncrement={vi.fn()} onDecrement={vi.fn()} onRemove={vi.fn()} onSetCore={onSetCore} />,
+    );
+    fireEvent.click(screen.getByRole('button', {name: /mark elsa - snow queen as a core card/i}));
+    expect(onSetCore).toHaveBeenCalledOnce();
+  });
+
+  it('marks the star pressed and offers to unmark once the card is core', () => {
+    render(
+      <DeckCardRow card={card} quantity={2} onIncrement={vi.fn()} onDecrement={vi.fn()} onRemove={vi.fn()} isCore onSetCore={vi.fn()} />,
+    );
+    expect(screen.getByRole('button', {name: /unmark elsa - snow queen as a core card/i})).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('omits the core star entirely when onSetCore is not provided', () => {
+    render(<DeckCardRow card={card} quantity={2} onIncrement={vi.fn()} onDecrement={vi.fn()} onRemove={vi.fn()} />);
+    expect(screen.queryByRole('button', {name: /core card/i})).not.toBeInTheDocument();
+  });
 });
