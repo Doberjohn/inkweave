@@ -55,10 +55,74 @@ function isActivationKey(key: string): boolean {
   return key === 'Enter' || key === ' ';
 }
 
+/** Thumbnail + name: hovering floats the preview, clicking opens the detail modal. */
+function CardIdentity({
+  card,
+  name,
+  onOpenDetails,
+  onPreviewEnter,
+  onPreviewLeave,
+}: {
+  card: LorcanaCard;
+  name: string;
+  onOpenDetails?: (card: LorcanaCard) => void;
+  onPreviewEnter?: (card: LorcanaCard, anchor: DOMRect) => void;
+  onPreviewLeave?: () => void;
+}) {
+  const ink = INK_COLORS[card.ink];
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={`View ${name} synergies`}
+      onClick={() => onOpenDetails?.(card)}
+      onKeyDown={(e) => {
+        if (isActivationKey(e.key)) {
+          e.preventDefault();
+          onOpenDetails?.(card);
+        }
+      }}
+      onMouseEnter={(e) => onPreviewEnter?.(card, e.currentTarget.getBoundingClientRect())}
+      onMouseLeave={onPreviewLeave}
+      style={{display: 'flex', alignItems: 'center', gap: SPACING.md, flex: 1, minWidth: 0, cursor: 'pointer'}}>
+      <div style={{width: 46, height: 34, borderRadius: RADIUS.sm, overflow: 'hidden', flexShrink: 0, border: `1px solid ${ink.border}`}}>
+        <img src={smallImageUrl(card)} alt="" style={{width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 18%'}} />
+      </div>
+      <span style={{flex: 1, minWidth: 0, color: COLORS.text, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.lg}px`, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+        {name}
+      </span>
+    </div>
+  );
+}
+
+/** Core-anchor toggle: hidden until row hover unless the card is already core. */
+function CoreStar({isCore, name, hovered, onToggle}: {isCore: boolean; name: string; hovered: boolean; onToggle: () => void}) {
+  const visible = hovered || isCore;
+  return (
+    <IconButton
+      onClick={onToggle}
+      aria-label={isCore ? `Unmark ${name} as a core card` : `Mark ${name} as a core card`}
+      aria-pressed={isCore}
+      title={isCore ? 'Core card' : 'Mark as core'}
+      size={26}
+      tabIndex={visible ? 0 : -1}
+      style={{
+        flexShrink: 0,
+        color: isCore ? COLORS.primary : COLORS.textDim,
+        opacity: visible ? 1 : 0,
+        pointerEvents: visible ? 'auto' : 'none',
+        boxShadow: isCore ? GOLD_GLOW.shadow : 'none',
+        transition: `opacity 0.15s ${EASING.snappy}, color 0.15s ${EASING.snappy}, box-shadow 0.15s ${EASING.snappy}`,
+      }}>
+      <StarIcon filled={isCore} />
+    </IconButton>
+  );
+}
+
 /**
  * One line in the deck panel: cost-in-inkwell glyph, thumbnail + name (the hover
- * preview target), an always-open [− qty +] stepper, and a trash remove. The +
- * disables at MAX_COPIES; the row glows in the card's ink on hover.
+ * preview target), an always-open [− qty +] stepper, a core-anchor star, and a
+ * trash remove. The + disables at MAX_COPIES; the row glows in the card's ink on hover.
  */
 export function DeckCardRow({card, quantity, onIncrement, onDecrement, onRemove, isCore = false, onSetCore, onPreviewEnter, onPreviewLeave, onOpenDetails}: DeckCardRowProps) {
   const [hovered, setHovered] = useState(false);
@@ -84,32 +148,15 @@ export function DeckCardRow({card, quantity, onIncrement, onDecrement, onRemove,
         animation: `inkweave-row-enter 0.28s ${EASING.smooth}`,
       }}>
       <CostGlyph cost={card.cost} inkwell={card.inkwell} size={28} />
-      {/* Card identity: hovering it floats the preview, clicking it opens the detail
-          modal. Scoped to the thumbnail + name so the stepper and trash (siblings
-          below) neither preview nor open. */}
-      {/* Named for what it opens, not "View ... details": the pool tile's info
-          button already owns that label, and both can be on screen at once. */}
-      <div
-        role="button"
-        tabIndex={0}
-        aria-label={`View ${name} synergies`}
-        onClick={() => onOpenDetails?.(card)}
-        onKeyDown={(e) => {
-          if (isActivationKey(e.key)) {
-            e.preventDefault();
-            onOpenDetails?.(card);
-          }
-        }}
-        onMouseEnter={(e) => onPreviewEnter?.(card, e.currentTarget.getBoundingClientRect())}
-        onMouseLeave={onPreviewLeave}
-        style={{display: 'flex', alignItems: 'center', gap: SPACING.md, flex: 1, minWidth: 0, cursor: 'pointer'}}>
-        <div style={{width: 46, height: 34, borderRadius: RADIUS.sm, overflow: 'hidden', flexShrink: 0, border: `1px solid ${ink.border}`}}>
-          <img src={smallImageUrl(card)} alt="" style={{width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 18%'}} />
-        </div>
-        <span style={{flex: 1, minWidth: 0, color: COLORS.text, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.lg}px`, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
-          {name}
-        </span>
-      </div>
+      {/* Card identity is scoped to the thumbnail + name so the stepper, star, and
+          trash (siblings below) neither preview nor open the detail modal. */}
+      <CardIdentity
+        card={card}
+        name={name}
+        onOpenDetails={onOpenDetails}
+        onPreviewEnter={onPreviewEnter}
+        onPreviewLeave={onPreviewLeave}
+      />
       <QuantityStepper
         value={quantity}
         size="sm"
@@ -119,25 +166,7 @@ export function DeckCardRow({card, quantity, onIncrement, onDecrement, onRemove,
         disabledReason={`Maximum ${MAX_COPIES} copies of ${name}`}
         label={name}
       />
-      {onSetCore && (
-        <IconButton
-          onClick={onSetCore}
-          aria-label={isCore ? `Unmark ${name} as a core card` : `Mark ${name} as a core card`}
-          aria-pressed={isCore}
-          title={isCore ? 'Core card' : 'Mark as core'}
-          size={26}
-          tabIndex={hovered || isCore ? 0 : -1}
-          style={{
-            flexShrink: 0,
-            color: isCore ? COLORS.primary : COLORS.textDim,
-            opacity: hovered || isCore ? 1 : 0,
-            pointerEvents: hovered || isCore ? 'auto' : 'none',
-            boxShadow: isCore ? GOLD_GLOW.shadow : 'none',
-            transition: `opacity 0.15s ${EASING.snappy}, color 0.15s ${EASING.snappy}, box-shadow 0.15s ${EASING.snappy}`,
-          }}>
-          <StarIcon filled={isCore} />
-        </IconButton>
-      )}
+      {onSetCore && <CoreStar isCore={isCore} name={name} hovered={hovered} onToggle={onSetCore} />}
       <IconButton
         onClick={onRemove}
         aria-label={`Remove ${name} from deck`}
