@@ -81,6 +81,9 @@ jobs:
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v7
+        # Diagnostic artifact only — an infra hiccup uploading it (e.g. Actions
+        # storage quota exhausted) must not fail a job whose tests already passed.
+        continue-on-error: true
         with:
           name: coverage-report
           path: apps/web/coverage/
@@ -88,6 +91,11 @@ jobs:
 
       - name: Upload build artifacts for E2E
         uses: actions/upload-artifact@v7
+        # A real build failure is already caught by "Build packages" above, so a
+        # failure uploading here is infra (e.g. storage quota), not a bad build —
+        # don't fail build-and-test for it. If the artifact is genuinely missing,
+        # the e2e job's "Download build artifacts" step surfaces it downstream.
+        continue-on-error: true
         with:
           name: build-output
           path: |
@@ -159,6 +167,9 @@ jobs:
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7
         if: always()
+        # Diagnostic artifact only — a storage-quota/upload hiccup must not fail
+        # the e2e job when the tests themselves determined the outcome.
+        continue-on-error: true
         with:
           # Per-project artifact names so the 5 parallel jobs don't collide on upload.
           name: playwright-report-${{ matrix.project }}
@@ -168,6 +179,8 @@ jobs:
       - name: Upload test results
         uses: actions/upload-artifact@v7
         if: failure()
+        # Diagnostic artifact only — never fail the job on the upload itself.
+        continue-on-error: true
         with:
           name: test-results-${{ matrix.project }}
           path: apps/web/test-results/
