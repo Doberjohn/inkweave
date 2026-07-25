@@ -23,11 +23,15 @@ if (import.meta.env.PROD) {
 // Lazy-load Sentry to keep it off the critical path (~150 KB gzip)
 if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
   import('@sentry/react').then(async (Sentry) => {
-    // Widen to the base integration type (@sentry/react v10 doesn't re-export
-    // `Integration`) so both browserTracing and supabase integrations fit.
-    const integrations: ReturnType<typeof Sentry.supabaseIntegration>[] = [
-      Sentry.browserTracingIntegration(),
-    ];
+    // Widen the array so both browserTracing and supabase integrations fit. A
+    // prior `ReturnType<typeof Sentry.supabaseIntegration>[]` annotation stopped
+    // widening once @sentry/react 10.67 narrowed supabaseIntegration()'s `name`
+    // to the literal "Supabase" (TS2322 on push). @sentry/react doesn't re-export
+    // the base `Integration` type, so union the two integration return types.
+    const integrations: (
+      | ReturnType<typeof Sentry.browserTracingIntegration>
+      | ReturnType<typeof Sentry.supabaseIntegration>
+    )[] = [Sentry.browserTracingIntegration()];
 
     // Add Supabase monitoring when configured. supabaseIntegration (v10) takes the
     // SupabaseClient constructor so it can instrument every client instance; lazily
