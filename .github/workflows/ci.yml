@@ -134,10 +134,22 @@ jobs:
         run: pnpm install
 
       - name: Download build artifacts
+        id: download-build
         uses: actions/download-artifact@v8
+        # build-and-test's build-output upload is non-fatal (storage-quota
+        # resilience), so during an outage the artifact may be missing. Don't
+        # fail here — the fallback step below rebuilds locally instead.
+        continue-on-error: true
         with:
           name: build-output
           path: .
+
+      - name: Rebuild if build artifact was unavailable
+        # Only runs when the download above failed (e.g. the artifact was never
+        # uploaded during a storage-quota outage). Produces the same dist/ the
+        # artifact would have, so e2e stays green instead of dying at download.
+        if: steps.download-build.outcome == 'failure'
+        run: pnpm build
 
       - name: Pre-compute synergy data
         run: pnpm precompute-synergies
