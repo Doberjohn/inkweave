@@ -5,10 +5,21 @@ import {CardImage, CardTextBlock, InkIcon} from '../../../shared/components';
 interface CardDetailProps {
   card: LorcanaCard;
   onClear: () => void;
+  /**
+   * Heading level for the card name. Defaults to `h2`, which is correct inside the
+   * synergy modal — that dialog is not the document's primary subject.
+   *
+   * On the mobile card page this must be `h1` (#524): CardPage renders the desktop
+   * `CardDetailPanel` (which owns the real `<h1>`) only when `!isMobile`, so below
+   * that breakpoint the page shipped no `<h1>` at all. Googlebot renders mobile, so
+   * that is the version of all 1,024 card pages Google actually indexes.
+   */
+  headingLevel?: 'h1' | 'h2';
 }
 
-export function CardDetail({card, onClear}: CardDetailProps) {
+export function CardDetail({card, onClear, headingLevel = 'h2'}: CardDetailProps) {
   const inkColors = INK_COLORS[card.ink];
+  const Heading = headingLevel;
 
   return (
     <article
@@ -34,7 +45,7 @@ export function CardDetail({card, onClear}: CardDetailProps) {
       <div style={{flex: 1}}>
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
           <div>
-            <h2
+            <Heading
               style={{
                 fontSize: `${FONT_SIZES.xxl}px`,
                 fontWeight: 700,
@@ -42,7 +53,7 @@ export function CardDetail({card, onClear}: CardDetailProps) {
                 margin: 0,
               }}>
               {card.fullName}
-            </h2>
+            </Heading>
             <div
               style={{
                 display: 'flex',
