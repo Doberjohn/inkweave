@@ -281,6 +281,12 @@ function SynergyCardList({
   const remaining = synergies.length - visible.length;
   const listRef = useRef<HTMLUListElement>(null);
   const containerWidth = useContainerWidth(listRef);
+  // Column count for roving-tabindex arrow navigation ONLY — it must never feed
+  // grid-template-columns. Deriving layout from `isMobile` made the prerendered HTML
+  // (captured at 1280x720) lay out with desktop columns when a phone rendered it, which
+  // is a large part of #532's mobile shift. The grid itself is now CSS-driven; this stays
+  // in JS because keyboard navigation needs an actual number, and getting it wrong for one
+  // frame costs nothing visible.
   const columns = isMobile
     ? 3
     : gridColumns ??
@@ -300,16 +306,24 @@ function SynergyCardList({
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- roving tabindex container for keyboard grid navigation
     <ul
       ref={listRef}
+      className="synergy-card-grid"
       aria-label="Synergy cards"
       onKeyDown={handleKeyDown}
-      style={{
-        display: 'grid',
-        gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : desktopTemplate,
-        gap: `${gridGap}px`,
-        listStyle: 'none',
-        padding: 0,
-        margin: 0,
-      }}>
+      style={
+        {
+          display: 'grid',
+          // The wide-viewport template is passed as a custom property rather than applied
+          // directly: index.css overrides it to 3 columns under the tablet breakpoint. The
+          // value itself is viewport-INDEPENDENT, so the same markup lays out correctly
+          // whether it was rendered by a phone or captured by the desktop prerender crawl
+          // (#532). Do not reintroduce an `isMobile` ternary here.
+          '--synergy-grid-columns': desktopTemplate,
+          gap: `${gridGap}px`,
+          listStyle: 'none',
+          padding: 0,
+          margin: 0,
+        } as React.CSSProperties
+      }>
       {visible.map((synergy, i) => (
         <li key={synergy.card.id}>
           <SynergyCard
