@@ -5,7 +5,7 @@ import {CompactHeader, EtherealBackground, Seo} from '../shared/components';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {sortBySetThenNumber} from '../features/cards';
-import {COLORS, FONTS, FONT_SIZES, INK_COLORS, SPACING} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 import {NotFoundPage} from './NotFoundPage';
 
 /**
@@ -32,7 +32,6 @@ export function InkHubPage() {
   if (!hub) return <NotFoundPage />;
 
   const inkCards = sortBySetThenNumber(cardsForInk(cards, hub.ink));
-  const accent = INK_COLORS[hub.ink];
 
   return (
     <main
@@ -62,7 +61,7 @@ export function InkHubPage() {
           width: '100%',
           margin: '0 auto',
         }}>
-        <InkHubHeader ink={hub.ink} blurb={hub.blurb} accentBorder={accent.border} />
+        <InkHubHeader ink={hub.ink} blurb={hub.blurb} cardCount={inkCards.length} />
 
         {isLoading ? (
           <CardGridSkeleton rows={3} />
@@ -88,11 +87,11 @@ export function InkHubPage() {
 function InkHubHeader({
   ink,
   blurb,
-  accentBorder,
+  cardCount,
 }: {
   ink: string;
   blurb: string;
-  accentBorder: string;
+  cardCount: number;
 }) {
   return (
     <>
@@ -114,27 +113,18 @@ function InkHubHeader({
         <span style={{color: COLORS.text, fontWeight: 500}}>{ink}</span>
       </nav>
 
-      <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
-        <span
-          aria-hidden="true"
-          style={{
-            width: 10,
-            height: 10,
-            borderRadius: '50%',
-            background: accentBorder,
-            flexShrink: 0,
-          }}
-        />
-        <h1
-          style={{
-            fontSize: `${FONT_SIZES.xxl}px`,
-            fontWeight: 700,
-            color: COLORS.text,
-            margin: 0,
-          }}>
-          {ink} Cards
-        </h1>
-      </div>
+      {/* No accent dot here, unlike PlaystyleDetailPage: the ink tokens for Steel and
+          Sapphire are near-invisible against the dark background, and the H1 already names
+          the ink. The footer keeps its dots — there they help scan a row of six. */}
+      <h1
+        style={{
+          fontSize: `${FONT_SIZES.xxl}px`,
+          fontWeight: 700,
+          color: COLORS.text,
+          margin: 0,
+        }}>
+        {ink} Cards
+      </h1>
 
       {/* The blurb is the page's indexable prose. Rendered as a real <p>, not a tooltip
           or a collapsed panel, so it counts as content rather than chrome. */}
@@ -149,6 +139,19 @@ function InkHubHeader({
         }}>
         {blurb}
       </p>
+
+      {/* Count line, matching SynergyGroup's muted meta treatment. Cheap indexable text,
+          and it tells a reader the hub is complete rather than a sample. */}
+      <div
+        style={{
+          fontSize: `${FONT_SIZES.xs}px`,
+          color: COLORS.textMuted,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          marginBottom: `${SPACING.sm}px`,
+        }}>
+        {cardCount} card{cardCount !== 1 ? 's' : ''}
+      </div>
     </>
   );
 }
