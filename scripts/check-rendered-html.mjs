@@ -21,11 +21,11 @@
  *   2. it contains the card's fullName as visible content (not just an SPA shell)
  *   3. its <link rel="canonical"> is self-referential (the slug URL), not the homepage
  *   4. dist/browse/index.html links at least one /card/ URL
- *
- * Deliberately NOT checked: the presence of `localhost:` in the output. Prerendered
- * pages currently do bake in the crawl server's origin via modulepreload hints; that
- * defect and its matching assertion belong to the sibling artifact-hygiene issue.
- * Asserting it here would block production deploys until that fix lands.
+ *   5. no sampled page contains the crawl server's origin (#525) — Vite's __vitePreload
+ *      resolves modulepreload hrefs against the page origin, so an uncleaned capture bakes
+ *      http://localhost:PORT into 7-14 hints per page; vercel.json's `default-src 'self'`
+ *      CSP then blocks every one of them in production. prerender.mjs's
+ *      cleanPrerenderedHtml() strips it; this asserts the strip actually ran.
  *
  * Usage: node scripts/check-rendered-html.mjs [targetDir]   (default: apps/web/dist)
  * Bypass: SKIP_RENDER_GUARD=1  (emergency escape hatch)
@@ -109,7 +109,9 @@ export function findOffenders(targetDir, samples, cardPath) {
   // deploy for a reason that has nothing to do with the prerender — the most
   // expensive kind of false positive for a gate that runs on every release.
   if (!existsSync(targetDir)) {
-    return [{file: targetDir, reason: 'target directory does not exist (wrong path, not a failed crawl)'}];
+    return [
+      {file: targetDir, reason: 'target directory does not exist (wrong path, not a failed crawl)'},
+    ];
   }
 
   for (const card of samples) {
@@ -126,7 +128,10 @@ export function findOffenders(targetDir, samples, cardPath) {
     // The card's own name is the cheapest proof that real content rendered: an SPA
     // shell contains the app skeleton and nothing card-specific.
     if (!html.includes(card.fullName)) {
-      offenders.push({file, reason: `does not contain its card name "${card.fullName}" (empty shell?)`});
+      offenders.push({
+        file,
+        reason: `does not contain its card name "${card.fullName}" (empty shell?)`,
+      });
     }
 
     // #486's central acceptance criterion: every route self-references. A homepage
@@ -134,7 +139,27 @@ export function findOffenders(targetDir, samples, cardPath) {
     const canonical = html.match(/<link\s+rel="canonical"\s+href="([^"]+)"/)?.[1];
     const expected = `${SITE_ORIGIN}${route}`;
     if (canonical !== expected) {
-      offenders.push({file, reason: `canonical is "${canonical ?? '(none)'}", expected "${expected}"`});
+      offenders.push({
+        file,
+        reason: `canonical is "${canonical ?? '(none)'}", expected "${expected}"`,
+      });
+    }
+
+    // The crawl server's origin must never survive into shipped HTML (#525). Vite's
+    // __vitePreload resolves modulepreload hrefs against the page origin, so an
+    // uncleaned capture bakes http://localhost:PORT into 7-14 hints per page — plain
+    // HTTP on an HTTPS page, blocked outright by vercel.json's `default-src 'self'`.
+    //
+    // Deliberately BROADER than prerender.mjs's cleanPrerenderedHtml, which rewrites only
+    // the exact `http://localhost:PORT` string: this also trips on escaped (`http:\/\/`)
+    // and protocol-relative forms the rewrite would silently miss. Do NOT narrow it to
+    // match the cleaner. A false positive costs one investigation; a miss ships
+    // CSP-blocked preloads to every visitor until someone reads a page source by hand.
+    if (html.includes('localhost')) {
+      offenders.push({
+        file,
+        reason: "contains 'localhost' — the crawl server's origin leaked into shipped HTML",
+      });
     }
   }
 

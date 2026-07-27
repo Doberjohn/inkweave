@@ -1,9 +1,11 @@
-import {useNavigate} from 'react-router-dom';
+import {useLocation, useNavigate} from 'react-router-dom';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 import {CtaButton} from '../shared/components/CtaButton';
+import {Seo} from '../shared/components';
 
 export function NotFoundPage() {
   const navigate = useNavigate();
+  const {pathname} = useLocation();
 
   return (
     <main
@@ -17,6 +19,14 @@ export function NotFoundPage() {
         position: 'relative',
         overflow: 'hidden',
       }}>
+      {/*
+        vercel.json rewrites every extensionless path to dist/index.html, which prerender.mjs
+        overwrote with the HOME route's render — so an unknown URL returns HTTP 200 carrying
+        home's title and canonical="/" (#525). public/404.html has a noindex but is unreachable
+        through that rewrite. This is the only thing that tells a crawler not to index junk URLs.
+        Self-referential canonical, not "/", so Google does not consolidate junk into the homepage.
+      */}
+      <Seo title="Page not found | Inkweave" canonicalPath={pathname} noindex />
       {/* Ethereal glow behind content */}
       <div
         aria-hidden="true"

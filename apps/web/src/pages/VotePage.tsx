@@ -2,7 +2,7 @@ import {useEffect, useRef, useState, type ReactNode} from 'react';
 import {useNavigate} from 'react-router-dom';
 import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {CompactHeader, CtaButton, EtherealBackground} from '../shared/components';
+import {CompactHeader, CtaButton, EtherealBackground, Seo} from '../shared/components';
 import {CardDetailSkeleton} from '../features/cards';
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
@@ -323,7 +323,13 @@ function EmptyVotesView({onHome}: {onHome: () => void}) {
         gap: 16,
         padding: 32,
       }}>
-      <span style={{fontSize: FONT_SIZES.xxl, fontWeight: 700, color: COLORS.text, fontFamily: FONTS.body}}>
+      <span
+        style={{
+          fontSize: FONT_SIZES.xxl,
+          fontWeight: 700,
+          color: COLORS.text,
+          fontFamily: FONTS.body,
+        }}>
         All caught up!
       </span>
       <span
@@ -340,13 +346,7 @@ function EmptyVotesView({onHome}: {onHome: () => void}) {
   );
 }
 
-function SkipPairButton({
-  onClick,
-  compactLayout,
-}: {
-  onClick: () => void;
-  compactLayout: boolean;
-}) {
+function SkipPairButton({onClick, compactLayout}: {onClick: () => void; compactLayout: boolean}) {
   return (
     <CtaButton
       variant="ghost"
@@ -514,40 +514,63 @@ export function VotePage() {
     onSkip: handlers.handleSkip,
   });
 
+  // /vote is submitted in sitemap.xml (generate-sitemap.mjs STATIC_ROUTES) but rendered no
+  // <Seo>, so Vercel's SPA rewrite served it dist/index.html — which prerender.mjs overwrites
+  // with the HOME route's render. The hub therefore returned the homepage's title, body and
+  // canonical="/" (#525). Declared once here and shared across all three branches, since React
+  // 19 hoists metadata from anywhere in the tree and the loading/error states are equally
+  // indexable entry points.
+  const seo = (
+    <Seo
+      title="Vote on Lorcana Card Synergies | Inkweave"
+      description="Rate how well Disney Lorcana cards work together. Community votes refine Inkweave's synergy scores for Core format."
+      canonicalPath="/vote"
+    />
+  );
+
   if (queue.isLoading && !queue.currentPair) {
     return (
-      <VoteLoadingView
-        isMobile={isMobile}
-        cards={cards}
-        compactLayout={compactLayout}
-        onLogoClick={goHome}
-        onCardSelect={onCardSelect}
-      />
+      <>
+        {seo}
+        <VoteLoadingView
+          isMobile={isMobile}
+          cards={cards}
+          compactLayout={compactLayout}
+          onLogoClick={goHome}
+          onCardSelect={onCardSelect}
+        />
+      </>
     );
   }
 
   if (queue.error) {
     return (
-      <VoteErrorView
-        isMobile={isMobile}
-        cards={cards}
-        onLogoClick={goHome}
-        onCardSelect={onCardSelect}
-      />
+      <>
+        {seo}
+        <VoteErrorView
+          isMobile={isMobile}
+          cards={cards}
+          onLogoClick={goHome}
+          onCardSelect={onCardSelect}
+        />
+      </>
     );
   }
 
   return (
-    <VotePageMainView
-      isMobile={isMobile}
-      cards={cards}
-      compactLayout={compactLayout}
-      showStacks={showStacks}
-      queue={queue}
-      voteSession={voteSession}
-      handlers={handlers}
-      onLogoClick={goHome}
-      onCardSelect={onCardSelect}
-    />
+    <>
+      {seo}
+      <VotePageMainView
+        isMobile={isMobile}
+        cards={cards}
+        compactLayout={compactLayout}
+        showStacks={showStacks}
+        queue={queue}
+        voteSession={voteSession}
+        handlers={handlers}
+        onLogoClick={goHome}
+        onCardSelect={onCardSelect}
+      />
+    </>
   );
 }
