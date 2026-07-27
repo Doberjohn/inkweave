@@ -91,6 +91,71 @@ export function selectSampleCards(cards) {
 }
 
 /**
+ * Every reason one sampled card page fails the guard. Split out of findOffenders so
+ * each function states one question: this one asks "is THIS page sound?", the caller
+ * asks "is the BUILD sound?". Adding a fifth per-page assertion (#525) pushed the
+ * combined form to a cyclomatic complexity of 10, and further checks are expected.
+ *
+ * @param {string} targetDir - build output root to inspect
+ * @param {{id: number, fullName: string}} card - the sampled card
+ * @param {string} route - the card's slug path, from the engine's cardPath
+ * @returns {Array<{file: string, reason: string}>} empty when the page is sound
+ */
+function findCardPageOffenders(targetDir, card, route) {
+  const file = join(targetDir, route, 'index.html');
+  if (!existsSync(file)) {
+    return [{file, reason: 'prerendered card page missing (crawl did not run?)'}];
+  }
+
+  const html = readFileSync(file, 'utf8');
+  const canonical = html.match(/<link\s+rel="canonical"\s+href="([^"]+)"/)?.[1];
+  const expectedCanonical = `${SITE_ORIGIN}${route}`;
+
+  // Each entry is one assertion: [failed?, why]. A table rather than a chain of ifs
+  // so a new check is one row, not another branch in an already-dense function.
+  return [
+    // The card's own name is the cheapest proof that real content rendered: an SPA
+    // shell contains the app skeleton and nothing card-specific.
+    [
+      !html.includes(card.fullName),
+      `does not contain its card name "${card.fullName}" (empty shell?)`,
+    ],
+    // #486's central acceptance criterion: every route self-references. A homepage
+    // canonical here means the SPA fallback was served instead of a prerendered file.
+    [
+      canonical !== expectedCanonical,
+      `canonical is "${canonical ?? '(none)'}", expected "${expectedCanonical}"`,
+    ],
+    // The crawl server's origin must never survive into shipped HTML (#525). Vite's
+    // __vitePreload resolves modulepreload hrefs against the page origin, so an
+    // uncleaned capture bakes http://localhost:PORT into 7-14 hints per page — plain
+    // HTTP on an HTTPS page, blocked outright by vercel.json's `default-src 'self'`.
+    //
+    // Deliberately BROADER than prerender.mjs's cleanPrerenderedHtml, which rewrites only
+    // the exact `http://localhost:PORT` string: this also trips on escaped (`http:\/\/`)
+    // and protocol-relative forms the rewrite would silently miss. Do NOT narrow it to
+    // match the cleaner. A false positive costs one investigation; a miss ships
+    // CSP-blocked preloads to every visitor until someone reads a page source by hand.
+    [
+      html.includes('localhost'),
+      "contains 'localhost' — the crawl server's origin leaked into shipped HTML",
+    ],
+  ]
+    .filter(([failed]) => failed)
+    .map(([, reason]) => ({file, reason}));
+}
+
+/** /browse is the corpus hub; a shell there is a failed crawl even if cards rendered. */
+function findBrowseHubOffenders(targetDir) {
+  const file = join(targetDir, 'browse', 'index.html');
+  if (!existsSync(file)) return [{file, reason: 'prerendered /browse missing'}];
+  if (!readFileSync(file, 'utf8').includes('href="/card/')) {
+    return [{file, reason: 'links no /card/ URLs (empty shell?)'}];
+  }
+  return [];
+}
+
+/**
  * Collect every reason `targetDir` fails the guard. Pure apart from reading the
  * filesystem — returns the full offender list rather than throwing on the first,
  * so one build-and-deploy cycle surfaces every problem (the check-sourcemaps.mjs
@@ -102,8 +167,6 @@ export function selectSampleCards(cards) {
  * @returns {Array<{file: string, reason: string}>} empty when the build is sound
  */
 export function findOffenders(targetDir, samples, cardPath) {
-  const offenders = [];
-
   // Distinguish "wrong path" from "bad crawl" before anything else. Without this,
   // a mistyped targetDir reports every sampled page as missing and blocks the
   // deploy for a reason that has nothing to do with the prerender — the most
@@ -114,65 +177,10 @@ export function findOffenders(targetDir, samples, cardPath) {
     ];
   }
 
-  for (const card of samples) {
-    const route = cardPath(card);
-    const file = join(targetDir, route, 'index.html');
-
-    if (!existsSync(file)) {
-      offenders.push({file, reason: 'prerendered card page missing (crawl did not run?)'});
-      continue;
-    }
-
-    const html = readFileSync(file, 'utf8');
-
-    // The card's own name is the cheapest proof that real content rendered: an SPA
-    // shell contains the app skeleton and nothing card-specific.
-    if (!html.includes(card.fullName)) {
-      offenders.push({
-        file,
-        reason: `does not contain its card name "${card.fullName}" (empty shell?)`,
-      });
-    }
-
-    // #486's central acceptance criterion: every route self-references. A homepage
-    // canonical here means the SPA fallback was served instead of a prerendered file.
-    const canonical = html.match(/<link\s+rel="canonical"\s+href="([^"]+)"/)?.[1];
-    const expected = `${SITE_ORIGIN}${route}`;
-    if (canonical !== expected) {
-      offenders.push({
-        file,
-        reason: `canonical is "${canonical ?? '(none)'}", expected "${expected}"`,
-      });
-    }
-
-    // The crawl server's origin must never survive into shipped HTML (#525). Vite's
-    // __vitePreload resolves modulepreload hrefs against the page origin, so an
-    // uncleaned capture bakes http://localhost:PORT into 7-14 hints per page — plain
-    // HTTP on an HTTPS page, blocked outright by vercel.json's `default-src 'self'`.
-    //
-    // Deliberately BROADER than prerender.mjs's cleanPrerenderedHtml, which rewrites only
-    // the exact `http://localhost:PORT` string: this also trips on escaped (`http:\/\/`)
-    // and protocol-relative forms the rewrite would silently miss. Do NOT narrow it to
-    // match the cleaner. A false positive costs one investigation; a miss ships
-    // CSP-blocked preloads to every visitor until someone reads a page source by hand.
-    if (html.includes('localhost')) {
-      offenders.push({
-        file,
-        reason: "contains 'localhost' — the crawl server's origin leaked into shipped HTML",
-      });
-    }
-  }
-
-  // /browse is the corpus hub; if it links no cards, the crawl produced a shell
-  // there even if the sampled card pages happened to render.
-  const browseFile = join(targetDir, 'browse', 'index.html');
-  if (!existsSync(browseFile)) {
-    offenders.push({file: browseFile, reason: 'prerendered /browse missing'});
-  } else if (!readFileSync(browseFile, 'utf8').includes('href="/card/')) {
-    offenders.push({file: browseFile, reason: 'links no /card/ URLs (empty shell?)'});
-  }
-
-  return offenders;
+  return [
+    ...samples.flatMap((card) => findCardPageOffenders(targetDir, card, cardPath(card))),
+    ...findBrowseHubOffenders(targetDir),
+  ];
 }
 
 async function main() {
