@@ -16,7 +16,8 @@ const goodCardHtml = (card) =>
   `<body><h1>${card.fullName}</h1></body></html>`;
 
 /** The SPA shell Vercel's rewrite serves when no prerendered file exists. */
-const shellHtml = `<!doctype html><html><head><title>Inkweave — Master Lorcana Synergies</title>` +
+const shellHtml =
+  `<!doctype html><html><head><title>Inkweave — Master Lorcana Synergies</title>` +
   `<link rel="canonical" href="${SITE_ORIGIN}/"/></head><body><div id="root"></div></body></html>`;
 
 let dist;
@@ -105,6 +106,21 @@ describe('findOffenders', () => {
   it('reports every offender at once rather than stopping at the first', () => {
     // Nothing seeded: both the card page and /browse are missing.
     expect(findOffenders(dist, [CARD], cardPath).length).toBeGreaterThan(1);
+  });
+
+  it("fails when the crawl server's origin leaked into the shipped HTML", () => {
+    seedGoodBuild();
+    const cardFile = path.join(dist, 'card', '1989', 'elsa-snow-queen', 'index.html');
+    fs.writeFileSync(
+      cardFile,
+      goodCardHtml(CARD).replace(
+        '</head>',
+        '<link rel="modulepreload" as="script" href="http://localhost:4179/assets/x.js"></head>',
+      ),
+    );
+    const offenders = findOffenders(dist, [CARD], cardPath);
+    expect(offenders).toHaveLength(1);
+    expect(offenders[0].reason).toMatch(/localhost/);
   });
 
   it('distinguishes a wrong target path from a failed crawl', () => {

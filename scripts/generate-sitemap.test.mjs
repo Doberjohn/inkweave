@@ -11,7 +11,9 @@ const cards = JSON.parse(
 
 async function playstyleCount() {
   const enginePath = path.join(ROOT, 'packages/synergy-engine/dist/index.js');
-  const {getAllPlaystyles} = await import(new URL(`file:///${enginePath.replace(/\\/g, '/')}`).href);
+  const {getAllPlaystyles} = await import(
+    new URL(`file:///${enginePath.replace(/\\/g, '/')}`).href
+  );
   return getAllPlaystyles().length;
 }
 
@@ -34,9 +36,41 @@ describe('generate-sitemap', () => {
     expect(urls.some((u) => /\/compare\//.test(u.loc) || /\/vote\/.+/.test(u.loc))).toBe(false);
   });
 
-  it('gives every entry a valid ISO-8601 (YYYY-MM-DD) lastmod', async () => {
+  it('gives card entries a content-derived lastmod, never the build date', async () => {
     const urls = await buildSitemapUrls();
-    expect(urls.every((u) => /^\d{4}-\d{2}-\d{2}$/.test(u.lastmod))).toBe(true);
+    const cardUrls = urls.filter((u) => u.loc.includes('/card/'));
+    const {metadata} = JSON.parse(
+      fs.readFileSync(path.join(ROOT, 'apps/web/public/data/allCards.json'), 'utf8'),
+    );
+    const expected = new Date(metadata.generatedOn).toISOString().slice(0, 10);
+
+    expect(cardUrls.length).toBeGreaterThan(0);
+    expect(cardUrls.every((u) => u.lastmod === expected)).toBe(true);
+
+    // The regression this pins (#525): lastmod was read from the file's mtime, and
+    // download-card-images.mjs rewrites allCards.json on every build — so every deploy
+    // claimed all 1,024 cards changed that day. Google discredits an unreliable lastmod
+    // sitemap-wide, which is worse than having none.
+    const today = new Date().toISOString().slice(0, 10);
+    expect(cardUrls.some((u) => u.lastmod === today)).toBe(
+      expected === today, // only legitimate if the data really was re-pulled today
+    );
+  });
+
+  it('omits lastmod on routes whose change date cannot be known', async () => {
+    const urls = await buildSitemapUrls();
+    const nonCard = urls.filter((u) => !u.loc.includes('/card/'));
+
+    // Static and playstyle routes change when code changes, which the generator cannot
+    // observe. Absent is handled gracefully by Google; fabricated is not.
+    expect(nonCard.length).toBeGreaterThan(0);
+    expect(nonCard.every((u) => u.lastmod === undefined)).toBe(true);
+  });
+
+  it('produces byte-identical output across runs when no card data changed', async () => {
+    const a = renderSitemap(await buildSitemapUrls());
+    const b = renderSitemap(await buildSitemapUrls());
+    expect(a).toBe(b);
   });
 
   it('renders well-formed XML with the sitemap namespace and no priority/changefreq', async () => {
@@ -47,9 +81,12 @@ describe('generate-sitemap', () => {
     expect(xml.trimEnd().endsWith('</urlset>')).toBe(true);
     expect(xml).not.toContain('<priority>');
     expect(xml).not.toContain('<changefreq>');
-    // Balanced tags: one <loc> and one <lastmod> per <url>.
+    // Balanced tags: one <loc> per <url>. <lastmod> is optional and now appears only on
+    // card entries (#525), so it must be present-but-fewer, never more.
     expect(count(/<url>/g)).toBe(count(/<\/url>/g));
     expect(count(/<loc>/g)).toBe(count(/<url>/g));
-    expect(count(/<lastmod>/g)).toBe(count(/<url>/g));
+    expect(count(/<lastmod>/g)).toBeGreaterThan(0);
+    expect(count(/<lastmod>/g)).toBeLessThan(count(/<url>/g));
+    expect(count(/<lastmod>/g)).toBe(count(/<\/lastmod>/g));
   });
 });

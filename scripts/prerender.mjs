@@ -63,7 +63,20 @@ async function enumerateRoutes() {
   );
   const cardData = JSON.parse(await readFile(join(DIST, 'data', 'allCards.json'), 'utf8'));
   return {
-    staticRoutes: ['/', '/browse', '/playstyles', '/about', '/privacy', '/terms', '/disclaimer'],
+    // Must stay in sync with STATIC_ROUTES in scripts/generate-sitemap.mjs. /vote was
+    // missing here while present there (#525), so the deploy logged 1053 sitemap URLs
+    // against 1052 prerendered routes and /vote fell through to the SPA rewrite —
+    // serving the homepage's prerendered HTML, canonical and all.
+    staticRoutes: [
+      '/',
+      '/browse',
+      '/playstyles',
+      '/vote',
+      '/about',
+      '/privacy',
+      '/terms',
+      '/disclaimer',
+    ],
     playstyleRoutes: getAllPlaystyles().map((p) => `/playstyles/${p.id}`),
     cardRoutes: cardData.cards.map((c) => cardPath(c)),
   };
@@ -98,6 +111,33 @@ function startServer(shellHtml) {
   return new Promise((r) => server.listen(PORT, () => r(server)));
 }
 
+/**
+ * Clean a captured page before it is written to dist.
+ *
+ * 1. Strips index.html's static shell `<title>` (#492). React 19 hoists the per-route
+ *    `<Seo>` title but does NOT remove the shell one (kept as a fallback for routes
+ *    without `<Seo>`), leaving a redundant second title in the capture. The per-route
+ *    title already came first and won for crawlers, so this is cosmetic — but exactly
+ *    one `<title>` is what validators and scripts/check-rendered-html.mjs expect.
+ *
+ * 2. Rewrites the crawl server's absolute origin out of the HTML (#525). Vite's
+ *    `__vitePreload` resolves modulepreload hrefs against the page origin, so a capture
+ *    served from http://localhost:4179 bakes that origin into 7-14
+ *    `<link rel="modulepreload">` tags per page. Shipped to production those are
+ *    plain-HTTP subresource hints on an HTTPS page, which vercel.json's
+ *    `default-src 'self'` CSP blocks outright — dead requests, wasted preload slots, and
+ *    a batch of console violations on every page load for every visitor and every
+ *    rendering crawler. Stripping the origin makes them root-relative, which is what
+ *    they should have been.
+ *
+ * Exported for scripts/prerender.test.mjs. The origin rewrite MUST remove every
+ * occurrence — a single-replace regression would leave 6-13 per page and be invisible
+ * in a spot check of the built output.
+ */
+export function cleanPrerenderedHtml(html, shellTitle, origin) {
+  return html.replace(`<title>${shellTitle}</title>`, '').replaceAll(origin, '');
+}
+
 async function crawlRoute(browser, route) {
   let page;
   try {
@@ -114,11 +154,11 @@ async function crawlRoute(browser, route) {
       })
       .then(() => true)
       .catch(() => false);
-    // React 19 hoists the per-route <Seo> title but does NOT remove index.html's static shell
-    // <title> (kept as a fallback for routes without <Seo>), leaving a redundant second title in
-    // the captured HTML. Strip the shell title so each prerendered page carries exactly one — the
-    // per-route title. (Cosmetic: the per-route title already came first and won for crawlers.)
-    const html = (await page.content()).replace(`<title>${SHELL_TITLE}</title>`, '');
+    const html = cleanPrerenderedHtml(
+      await page.content(),
+      SHELL_TITLE,
+      `http://localhost:${PORT}`,
+    );
     const outDir = route === '/' ? DIST : join(DIST, route);
     await mkdir(outDir, {recursive: true});
     await writeFile(join(outDir, 'index.html'), html, 'utf8');
@@ -145,7 +185,9 @@ async function main() {
       ? [...staticRoutes, ...playstyleRoutes.slice(0, 3), ...cardRoutes.slice(0, 5)]
       : [...staticRoutes, ...playstyleRoutes, ...cardRoutes];
 
-  console.log(`[prerender] ${routes.length} routes @ concurrency ${CONCURRENCY}${sample ? ' (SAMPLE)' : ''}`);
+  console.log(
+    `[prerender] ${routes.length} routes @ concurrency ${CONCURRENCY}${sample ? ' (SAMPLE)' : ''}`,
+  );
   // Cache the clean shell BEFORE any crawl overwrites dist/index.html (the home route).
   const shellHtml = await readFile(join(DIST, 'index.html'), 'utf8');
   const server = await startServer(shellHtml);
@@ -178,7 +220,10 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// Run only when invoked directly (never when imported by the test).
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}
