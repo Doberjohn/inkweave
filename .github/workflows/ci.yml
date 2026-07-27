@@ -62,6 +62,14 @@ jobs:
       - name: Build packages
         run: pnpm build
 
+      # Root-level script suites (#524). These were runnable but wired into no hook
+      # and no workflow, so the only automated assertions that the sitemap stays on
+      # the apex host and omits priority/changefreq never ran. Must come after
+      # "Build packages" — the suites import getAllPlaystyles from the engine dist.
+      # Cheap (~1.3s), so it sits early and fails fast.
+      - name: Run script tests (sitemap, IndexNow, analytics)
+        run: pnpm test:scripts
+
       - name: Run linting
         run: pnpm lint
 

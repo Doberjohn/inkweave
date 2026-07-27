@@ -19,11 +19,17 @@ module.exports = {
     collect: {
       startServerCommand: 'npx serve apps/web/dist -l 8080 -s',
       startServerReadyPattern: 'Accepting connections',
+      // Slug URLs, matching what the sitemap emits and the prerender writes (#498).
+      // The former list audited `/card/2095` (the numeric form that 308s in
+      // production) and `/card/2095/synergies` (not a real page — :slug is
+      // decorative, so it rendered card 2095 under a wrong slug). Both are now
+      // real canonical routes, so `serve -s` resolves them to prerendered files
+      // rather than falling back to the SPA shell.
       url: [
         'http://localhost:8080/',
         'http://localhost:8080/browse',
-        'http://localhost:8080/card/2095',
-        'http://localhost:8080/card/2095/synergies',
+        'http://localhost:8080/card/2095/winnie-the-pooh-having-a-think',
+        'http://localhost:8080/card/1989/elsa-snow-queen',
         'http://localhost:8080/playstyles',
         'http://localhost:8080/playstyles/lore-denial',
       ],
