@@ -1,7 +1,7 @@
 ---
 name: session-start
 description: Run session hygiene checks at the beginning of a work session. Checks worktrees, branches, stashes, ports, and open PR status.
-tools: Read, Bash, Glob
+tools: Read, Bash, Glob, ToolSearch, mcp__github__list_pull_requests
 model: haiku
 maxTurns: 15
 ---
@@ -40,10 +40,25 @@ netstat -ano | findstr ":5175 "
 Report any processes using dev server ports 5173-5175.
 
 ### 5. Open PRs
+
+The `gh` CLI is available on the local Windows machine but NOT in Claude Code remote
+sessions. Try `gh` first, and fall back to the GitHub MCP server when it is missing —
+do not report "unable to check".
+
 ```bash
 gh pr list --state open --json number,title,headRefName,updatedAt
 ```
-List open PRs with their branches and last update.
+
+If that fails with a "command not found" style error, load the MCP tool and use it
+instead:
+
+```
+ToolSearch("select:mcp__github__list_pull_requests")
+mcp__github__list_pull_requests(owner: "Doberjohn", repo: "inkweave", state: "open", perPage: 20)
+```
+
+List open PRs with their branches and last update. Flag any awaiting review as BLOCKING —
+they are the finding most often forgotten between sessions.
 
 ### 6. Uncommitted Changes
 ```bash
