@@ -202,6 +202,8 @@ interface ResultsBodyProps {
   onShowAll?: (groupKey: string) => void;
   onSynergyCardClick?: (card: LorcanaCard, groupKey?: string) => void;
   linkPlaystyleHeaders?: boolean;
+  /** 'h1' on the standalone card page, 'h2' inside the modal. See CardDetail. */
+  cardDetailHeadingLevel: 'h1' | 'h2';
 }
 
 /** The default (non-expanded) view: optional card detail, then either the empty notice or the
@@ -220,6 +222,7 @@ function SynergyResultsBody({
   onShowAll,
   onSynergyCardClick,
   linkPlaystyleHeaders,
+  cardDetailHeadingLevel,
 }: ResultsBodyProps) {
   const visibleGroups = activeGroupFilter
     ? synergies.filter((g) => g.groupKey === activeGroupFilter)
@@ -227,7 +230,13 @@ function SynergyResultsBody({
 
   return (
     <>
-      {renderCardDetail && <CardDetail card={selectedCard} onClear={onClearSelection} />}
+      {renderCardDetail && (
+        <CardDetail
+          card={selectedCard}
+          onClear={onClearSelection}
+          headingLevel={cardDetailHeadingLevel}
+        />
+      )}
       {synergies.length === 0 ? (
         <NoSynergiesNotice />
       ) : (
@@ -314,6 +323,9 @@ function SynergyResultsContent(
       onShowAll={props.onShowAll}
       onSynergyCardClick={onSynergyCardClick}
       linkPlaystyleHeaders={props.linkPlaystyleHeaders}
+      // flowInPage is only set by CardPage, so it is the page-vs-modal signal: the
+      // standalone card page owns the document's h1, the modal must not (#524).
+      cardDetailHeadingLevel={props.flowInPage ? 'h1' : 'h2'}
     />
   );
 }

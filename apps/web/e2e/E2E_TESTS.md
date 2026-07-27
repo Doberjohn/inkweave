@@ -120,13 +120,29 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should close dropdown on Escape | Escape key dismisses autocomplete dropdown |
 | should NOT show autocomplete on browse page search | Typing in browse page search does NOT show autocomplete (browse filters inline) |
 
-## `seo.spec.ts` — 3 tests (both viewports)
+## `seo.spec.ts` — 9 tests (both viewports)
+
+Route-level metadata coverage (#524). Before this, the file asserted only home-page
+properties, so #486's central acceptance criterion — every route self-references its own
+canonical — was unguarded. `/vote` shipped into the sitemap without a `<Seo>` as a direct
+consequence.
+
+Note the title assertion checks the *effective* `document.title`, not a count of `<title>`
+elements: React 19 hoists the `<Seo>` title but leaves `index.html`'s shell `<title>` in
+the DOM, and `prerender.mjs` strips the duplicate only at capture time (#492). E2E runs
+against the dev server, where both are present.
 
 | Test | What it verifies |
 |---|---|
-| should have valid JSON-LD structured data on home page | JSON-LD script tag with WebApplication type |
-| should have correct heading hierarchy on home page | h1 exists, h2 headings present |
-| should have font preconnect hints | Preconnect links for Google Fonts |
+| should have valid JSON-LD structured data on home page | `@graph` carries Organization + WebSite + WebApplication, cross-linked by `@id`, with the WebSite's SearchAction |
+| should have correct heading hierarchy on home page | Exactly one h1; its accessible name comes from the logo img's `alt` |
+| should preload self-hosted fonts | `link[rel=preload][as=font]` for plus-jakarta-sans-400 and tinos-400 (self-hosted, not a CDN) |
+| should own its title and canonical: `/` | Title leaves the shell fallback; canonical self-references |
+| should own its title and canonical: `/browse` | As above |
+| should own its title and canonical: `/playstyles` | As above |
+| should own its title and canonical: `/playstyles/lore-denial` | As above |
+| should own its title and canonical: `/card/1989/elsa-snow-queen` | As above, on a slug card route (#498) |
+| card page has exactly one h1 at a mobile viewport | 412×915 — CardPage gates the desktop `CardDetailPanel` behind `!isMobile` while `MobileCardDetail` owns the h1 below it. Googlebot renders mobile, so a regression in either branch is invisible at desktop width |
 
 ## `synergy-groups.spec.ts` — 4 tests (2 desktop, 2 mobile)
 

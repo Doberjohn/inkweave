@@ -118,6 +118,13 @@ function CardTitleBlock({card}: {card: LorcanaCard}) {
   const [nameHovered, setNameHovered] = useState(false);
   return (
     <div>
+      {/*
+        The h1 carries the full head term — name AND version (#524). It previously held
+        only `card.name`, so 13 different Elsa cards all claimed the h1 "Elsa" while their
+        titles differed, and the page's strongest heading was entirely anchor text for a
+        link to /browse. The version stays a block-level span, so the rendered result is
+        the same two lines as before; only the semantics changed.
+      */}
       <h1
         style={{
           fontSize: `${FONT_SIZES.xxl}px`,
@@ -126,24 +133,34 @@ function CardTitleBlock({card}: {card: LorcanaCard}) {
           margin: 0,
           lineHeight: 1.2,
         }}>
-        <Link
-          to={`/browse?q=${encodeURIComponent(card.name)}`}
-          style={buildNameLinkStyle(nameHovered)}
-          onMouseEnter={() => setNameHovered(true)}
-          onMouseLeave={() => setNameHovered(false)}>
-          {card.name}
-        </Link>
+        {card.name}
+        {card.version && (
+          <span
+            style={{
+              display: 'block',
+              fontSize: `${FONT_SIZES.base}px`,
+              fontWeight: 400,
+              color: COLORS.textMuted,
+              marginTop: 3,
+            }}>
+            {card.version}
+          </span>
+        )}
       </h1>
-      {card.version && (
-        <div
-          style={{
-            fontSize: `${FONT_SIZES.base}px`,
-            color: COLORS.textMuted,
-            marginTop: 3,
-          }}>
-          {card.version}
-        </div>
-      )}
+      {/* The all-versions affordance, demoted out of the heading but kept in place. */}
+      <Link
+        to={`/browse?q=${encodeURIComponent(card.name)}`}
+        style={{
+          ...buildNameLinkStyle(nameHovered),
+          display: 'inline-block',
+          fontSize: `${FONT_SIZES.sm}px`,
+          color: nameHovered ? COLORS.primary500 : COLORS.textMuted,
+          marginTop: SPACING.sm,
+        }}
+        onMouseEnter={() => setNameHovered(true)}
+        onMouseLeave={() => setNameHovered(false)}>
+        All {card.name} cards →
+      </Link>
     </div>
   );
 }
