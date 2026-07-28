@@ -9,7 +9,7 @@
     "build": "pnpm -r build",
     "build:engine": "pnpm --filter inkweave-synergy-engine build",
     "build:web": "pnpm --filter inkweave-web build",
-    "build:vercel": "node scripts/convert-preview-images.mjs && node scripts/download-card-images.mjs && pnpm build:engine && node scripts/precompute-synergies.mjs && node scripts/precompute-vote-analytics.mjs && node scripts/precompute-vercel-analytics.mjs && node scripts/generate-sitemap.mjs && node scripts/generate-card-slug-map.mjs && VITE_LOCAL_IMAGES=true pnpm build:web && (pnpm --filter inkweave-web exec playwright install chromium && node scripts/prerender.mjs || echo '[prerender] crawl failed or unavailable in this environment — shipping SPA-only (safe fallback, no regression)')",
+    "build:vercel": "node scripts/convert-preview-images.mjs && node scripts/download-card-images.mjs && pnpm build:engine && node scripts/precompute-synergies.mjs && node scripts/precompute-vote-analytics.mjs && node scripts/precompute-vercel-analytics.mjs && node scripts/generate-sitemap.mjs && node scripts/generate-card-slug-map.mjs && VITE_LOCAL_IMAGES=true pnpm build:web && (pnpm --filter inkweave-web exec playwright install chromium && node scripts/prerender.mjs || echo '[prerender] crawl failed or unavailable in this environment \u2014 shipping SPA-only (safe fallback, no regression)')",
     "test": "pnpm -r test:run",
     "test:engine": "pnpm --filter inkweave-synergy-engine test:run",
     "test:web": "pnpm --filter inkweave-web test:run",
@@ -40,9 +40,28 @@
   },
   "size-limit": [
     {
-      "name": "Total JS bundle",
-      "path": "apps/web/dist/assets/*.js",
-      "limit": "375 kB",
+      "name": "User-facing JS",
+      "path": [
+        "apps/web/dist/assets/*.js",
+        "!apps/web/dist/assets/RevealsPage-*.js",
+        "!apps/web/dist/assets/RevealAdminPage-*.js",
+        "!apps/web/dist/assets/AdminAnalyticsPage-*.js",
+        "!apps/web/dist/assets/ImageAdminPage-*.js",
+        "!apps/web/dist/assets/TuningAdminPage-*.js"
+      ],
+      "limit": "350 kB",
+      "gzip": true
+    },
+    {
+      "name": "Admin & flag-gated JS",
+      "path": [
+        "apps/web/dist/assets/RevealsPage-*.js",
+        "apps/web/dist/assets/RevealAdminPage-*.js",
+        "apps/web/dist/assets/AdminAnalyticsPage-*.js",
+        "apps/web/dist/assets/ImageAdminPage-*.js",
+        "apps/web/dist/assets/TuningAdminPage-*.js"
+      ],
+      "limit": "60 kB",
       "gzip": true
     },
     {
