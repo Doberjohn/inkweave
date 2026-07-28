@@ -27,7 +27,7 @@ const meta: Meta<typeof DeckCardRow> = {
     ),
   ],
   tags: ['autodocs'],
-  args: {onIncrement: fn(), onDecrement: fn(), onRemove: fn(), onSetCore: fn()},
+  args: {onIncrement: fn(), onDecrement: fn(), onSetCore: fn()},
 };
 export default meta;
 type Story = StoryObj<typeof meta>;

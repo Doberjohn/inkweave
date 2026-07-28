@@ -26,8 +26,11 @@ interface HealthSummaryProps {
   isLoading: boolean;
   /** Set when the advisor pipeline failed; shown as an "unavailable" note. */
   error?: Error | null;
-  /** Switch the deck panel to the Analysis tab (the full DeckAdvisorPanel). */
-  onOpenAnalysis: () => void;
+  /**
+   * Opens the full advisor. Optional: the Analysis tab is currently removed from
+   * the panel, so the cell renders as a non-interactive summary when omitted.
+   */
+  onOpenAnalysis?: () => void;
   /** Which health-cell lens to render (dropdown, #472). */
   variant?: HealthVariant;
 }
@@ -40,7 +43,7 @@ interface HealthSummaryProps {
  */
 export function HealthSummary({analysis, isLoading, error, onOpenAnalysis, variant = 'priorities'}: HealthSummaryProps) {
   return (
-    <button type="button" onClick={onOpenAnalysis} aria-label="Open deck analysis" style={button}>
+    <button type="button" onClick={onOpenAnalysis} aria-label="Open deck analysis" disabled={!onOpenAnalysis} style={button}>
       <span style={capLabel}>
         Deck health
         <BetaTag style={{marginLeft: 6}} />

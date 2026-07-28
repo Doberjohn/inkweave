@@ -32,14 +32,10 @@ function renderPanel(over: Partial<Props> = {}) {
     stats,
     onIncrement: vi.fn(),
     onDecrement: vi.fn(),
-    onRemove: vi.fn(),
-    getCardById: (id: string) => rows.find((r) => r.card.id === id)?.card,
     ...over,
   };
   return {props, ...render(<DeckPanel {...props} />)};
 }
-
-const trashElsa = () => screen.getByRole('button', {name: /remove elsa - snow queen from deck/i});
 
 describe('DeckPanel', () => {
   it('groups rows under type headers, hiding empty groups', () => {
@@ -54,56 +50,12 @@ describe('DeckPanel', () => {
     expect(screen.queryByText('None yet')).not.toBeInTheDocument();
   });
 
-  it('defers removal until the collapse transition ends', () => {
-    const {props} = renderPanel();
-    fireEvent.click(trashElsa());
-    expect(props.onRemove).not.toHaveBeenCalled(); // deferred, not immediate
-    fireEvent.transitionEnd(trashElsa(), {propertyName: 'max-height'});
-    expect(props.onRemove).toHaveBeenCalledOnce();
-    expect(props.onRemove).toHaveBeenCalledWith('ch1');
-  });
-
-  it('ignores an unrelated transition (e.g. opacity) — only max-height completes the removal', () => {
-    const {props} = renderPanel();
-    fireEvent.click(trashElsa());
-    fireEvent.transitionEnd(trashElsa(), {propertyName: 'opacity'});
-    expect(props.onRemove).not.toHaveBeenCalled();
-  });
-
-  it('flushes a pending removal when switching tabs (so the row cannot get stuck)', () => {
-    const {props} = renderPanel();
-    fireEvent.click(trashElsa());
-    expect(props.onRemove).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('tab', {name: 'Analysis'}));
-    expect(props.onRemove).toHaveBeenCalledOnce();
-    expect(props.onRemove).toHaveBeenCalledWith('ch1');
-  });
-
-  it('aborts the removal if the quantity changed during the collapse', () => {
-    const {props, rerender} = renderPanel();
-    fireEvent.click(trashElsa());
-    // The user re-incremented mid-collapse: the same card now has a new quantity.
-    const bumped: DeckRow[] = [{...rows[0], quantity: 3}, rows[1]];
-    rerender(<DeckPanel {...props} rows={bumped} />);
-    fireEvent.transitionEnd(trashElsa(), {propertyName: 'max-height'});
-    expect(props.onRemove).not.toHaveBeenCalled();
-  });
-
-  it('flushes a pending removal on unmount (transitionEnd never fires for an unmounted row)', () => {
-    const {props, unmount} = renderPanel();
-    fireEvent.click(trashElsa());
-    expect(props.onRemove).not.toHaveBeenCalled();
-    unmount(); // e.g. the user navigates away mid-collapse
-    expect(props.onRemove).toHaveBeenCalledOnce();
-    expect(props.onRemove).toHaveBeenCalledWith('ch1');
-  });
-
-  it('aborts the removal on unmount too if the quantity changed during the collapse', () => {
-    const {props, rerender, unmount} = renderPanel();
-    fireEvent.click(trashElsa());
-    rerender(<DeckPanel {...props} rows={[{...rows[0], quantity: 3}, rows[1]]} />);
-    unmount();
-    expect(props.onRemove).not.toHaveBeenCalled();
+  // The panel is the card list only: no Cards/Analysis tabs, and no delete button
+  // (removal is the stepper's − at one copy).
+  it('renders no view tabs and no per-row delete button', () => {
+    renderPanel();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: /from deck/i})).not.toBeInTheDocument();
   });
 
   it('opens details with the ids in rendered (type-grouped) order, not the given row order', () => {

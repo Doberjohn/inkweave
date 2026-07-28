@@ -4,7 +4,6 @@ import {useDeck} from '../features/deck/state';
 import type {Deck} from '../features/deck/types';
 import {DeckPanel, DeckPoolGrid, type DeckRow} from '../features/deck/components';
 import {useDeckPoolFilters, applyPoolFilters} from '../features/deck/hooks/useDeckPoolFilters';
-import {useDeckAnalysis} from '../features/deck/hooks/useDeckAnalysis';
 import {calculateDeckStats} from '../features/deck/analysis/deckStats';
 import {BrowseToolbar} from '../features/cards';
 import {CompactHeader, FilterDialog} from '../shared/components';
@@ -62,12 +61,16 @@ function buildDeckRows(deck: Deck, getCardById: (id: string) => LorcanaCard | un
 
 export function DeckBuilderPage() {
   const {isMobile} = useResponsive();
-  const {deck, addCard, setQuantity, removeCard, renameDeck, setGameplan, markCore} = useDeck();
+  const {deck, addCard, setQuantity, renameDeck, markCore} = useDeck();
   const {cards, isLoading, getCardById, uniqueKeywords, uniqueClassifications, sets} = useCardDataContext();
   const {openCardModal} = useCardModal();
   const pool = useDeckPoolFilters();
   const [showFilters, setShowFilters] = useState(false);
-  const deckAnalysis = useDeckAnalysis(deck, getCardById, !isLoading, cards);
+  // The advisor UI is pulled while its design is rethought (no numeric surface, no
+  // Analysis tab), so nothing consumes the analysis today. The pipeline is left
+  // UNWIRED rather than running unread: it fetches per-card pair data on every deck
+  // edit, which is real work for an unrendered result. Re-wire when the advisor
+  // surface returns — `useDeckAnalysis(deck, getCardById, !isLoading, cards)`.
 
   if (isMobile) {
     return (
@@ -160,15 +163,8 @@ export function DeckBuilderPage() {
           stats={stats}
           onIncrement={(id) => addCard(id)}
           onDecrement={(id) => setQuantity(id, (quantities.get(id) ?? 0) - 1)}
-          onRemove={removeCard}
           onSetCore={markCore}
-          getCardById={getCardById}
           onOpenDetails={viewDeckDetails}
-          analysis={deckAnalysis.analysis}
-          analysisLoading={deckAnalysis.isLoading}
-          analysisError={deckAnalysis.error}
-          gameplan={deck.gameplan}
-          onGameplanChange={setGameplan}
         />
       </div>
 

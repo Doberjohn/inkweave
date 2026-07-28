@@ -9,7 +9,7 @@ describe('DeckCardRow', () => {
   it('calls onIncrement when + is clicked', () => {
     const onIncrement = vi.fn();
     render(
-      <DeckCardRow card={card} quantity={2} onIncrement={onIncrement} onDecrement={vi.fn()} onRemove={vi.fn()} />,
+      <DeckCardRow card={card} quantity={2} onIncrement={onIncrement} onDecrement={vi.fn()} />,
     );
     fireEvent.click(screen.getByRole('button', {name: /add one copy/i}));
     expect(onIncrement).toHaveBeenCalledOnce();
@@ -18,30 +18,28 @@ describe('DeckCardRow', () => {
   it('calls onDecrement when − is clicked', () => {
     const onDecrement = vi.fn();
     render(
-      <DeckCardRow card={card} quantity={2} onIncrement={vi.fn()} onDecrement={onDecrement} onRemove={vi.fn()} />,
+      <DeckCardRow card={card} quantity={2} onIncrement={vi.fn()} onDecrement={onDecrement} />,
     );
     fireEvent.click(screen.getByRole('button', {name: /remove one copy/i}));
     expect(onDecrement).toHaveBeenCalledOnce();
   });
 
   it('disables + at the 4-copy limit (UI-side enforcement)', () => {
-    render(<DeckCardRow card={card} quantity={4} onIncrement={vi.fn()} onDecrement={vi.fn()} onRemove={vi.fn()} />);
+    render(<DeckCardRow card={card} quantity={4} onIncrement={vi.fn()} onDecrement={vi.fn()} />);
     expect(screen.getByRole('button', {name: /maximum 4 copies/i})).toBeDisabled();
   });
 
-  it('calls onRemove when × is clicked', () => {
-    const onRemove = vi.fn();
-    render(
-      <DeckCardRow card={card} quantity={2} onIncrement={vi.fn()} onDecrement={vi.fn()} onRemove={onRemove} />,
-    );
-    fireEvent.click(screen.getByRole('button', {name: /remove elsa - snow queen from deck/i}));
-    expect(onRemove).toHaveBeenCalledOnce();
+  // The row has no delete affordance: removal is the stepper's − at one copy
+  // (setCardQuantity drops the line at 0), so a separate trash button was redundant.
+  it('has no delete button — the stepper is the only way to remove a card', () => {
+    render(<DeckCardRow card={card} quantity={2} onIncrement={vi.fn()} onDecrement={vi.fn()} />);
+    expect(screen.queryByRole('button', {name: /from deck/i})).not.toBeInTheDocument();
   });
 
   it('calls onSetCore when the core star is clicked', () => {
     const onSetCore = vi.fn();
     render(
-      <DeckCardRow card={card} quantity={2} onIncrement={vi.fn()} onDecrement={vi.fn()} onRemove={vi.fn()} onSetCore={onSetCore} />,
+      <DeckCardRow card={card} quantity={2} onIncrement={vi.fn()} onDecrement={vi.fn()} onSetCore={onSetCore} />,
     );
     fireEvent.click(screen.getByRole('button', {name: /mark elsa - snow queen as a core card/i}));
     expect(onSetCore).toHaveBeenCalledOnce();
@@ -49,13 +47,13 @@ describe('DeckCardRow', () => {
 
   it('marks the star pressed and offers to unmark once the card is core', () => {
     render(
-      <DeckCardRow card={card} quantity={2} onIncrement={vi.fn()} onDecrement={vi.fn()} onRemove={vi.fn()} isCore onSetCore={vi.fn()} />,
+      <DeckCardRow card={card} quantity={2} onIncrement={vi.fn()} onDecrement={vi.fn()} isCore onSetCore={vi.fn()} />,
     );
     expect(screen.getByRole('button', {name: /unmark elsa - snow queen as a core card/i})).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('omits the core star entirely when onSetCore is not provided', () => {
-    render(<DeckCardRow card={card} quantity={2} onIncrement={vi.fn()} onDecrement={vi.fn()} onRemove={vi.fn()} />);
+    render(<DeckCardRow card={card} quantity={2} onIncrement={vi.fn()} onDecrement={vi.fn()} />);
     expect(screen.queryByRole('button', {name: /core card/i})).not.toBeInTheDocument();
   });
 });
