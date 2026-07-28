@@ -40,6 +40,101 @@ test.describe('SEO', () => {
     });
   }
 
+  /**
+   * #535 duplication guard.
+   *
+   * The prerender crawl bakes React's hoisted <Seo> tags into the static HTML; on a real
+   * visit React does not recognise them as its own and hoists a second copy of all eight
+   * (measured: title/description/canonical 1 -> 2, og 8 -> 11, twitter 4 -> 6, every
+   * route). `sweepPrerenderedSeoTags()` in main.tsx removes `head [data-seo]` before
+   * render so React's copy is the only one.
+   *
+   * These specs run against the DEV server, which serves the shell rather than
+   * prerendered files, so the baked-in duplicate does not exist here and the count going
+   * 1 -> 2 cannot be reproduced. What IS reproducible, and what actually regresses, is
+   * the marker contract: every tag <Seo> owns must carry `data-seo` (an unmarked one
+   * escapes the sweep and silently reintroduces the bug), and SPA navigation must swap
+   * metadata in place rather than accumulate it.
+   */
+  test('every tag <Seo> emits carries the data-seo sweep marker', async ({page}) => {
+    await gotoWithRetry(page, '/ink/steel');
+
+    // <title> is checked separately, qualified by [data-seo]. A bare `head title` count is
+    // 2 on the dev server — index.html's shell title is still present, and prerender.mjs
+    // strips it only at capture time (#492/#494). The marker is what distinguishes the tag
+    // <Seo> manages from the shell's, and it is the one that must be swept: title was among
+    // the tags measured duplicating 1 -> 2, and it is the most user-visible of them.
+    await expect
+      .poll(() => page.locator('head title[data-seo]').count(), {
+        message: 'the <Seo>-managed title must carry data-seo exactly once',
+      })
+      .toBe(1);
+
+    for (const selector of [
+      'link[rel="canonical"]',
+      'meta[name="description"]',
+      'meta[property="og:title"]',
+      'meta[property="og:url"]',
+      'meta[property="og:description"]',
+      'meta[name="twitter:title"]',
+      'meta[name="twitter:description"]',
+    ]) {
+      await expect
+        .poll(() => page.locator(`head ${selector}`).count(), {
+          message: `${selector} should appear exactly once`,
+        })
+        .toBe(1);
+
+      expect(
+        await page.locator(`head ${selector}`).getAttribute('data-seo'),
+        `${selector} is missing data-seo, so sweepPrerenderedSeoTags() will not remove its
+         prerendered copy and the tag will duplicate on every real visit`,
+      ).not.toBeNull();
+    }
+  });
+
+  test('client navigation swaps metadata in place instead of accumulating it', async ({page}) => {
+    await gotoWithRetry(page, '/inks');
+    const canonicalCount = () => page.locator('head link[rel="canonical"]').count();
+    await expect.poll(canonicalCount).toBe(1);
+
+    // In-app navigation — no document load, so React re-hoists into the existing <head>.
+    await page.getByRole('link', {name: 'Steel'}).first().click();
+    await page.waitForURL('**/ink/steel');
+
+    await expect
+      .poll(() => page.locator('head link[rel="canonical"]').getAttribute('href'), {
+        message: 'canonical did not follow the client-side navigation',
+      })
+      .toBe(`${SITE_ORIGIN}/ink/steel`);
+    // The failure this guards: a second canonical appended beside the first. Two of them
+    // makes Google ignore canonicalisation entirely, which is worse than emitting none.
+    expect(await canonicalCount()).toBe(1);
+    expect(await page.locator('head meta[property="og:url"]').count()).toBe(1);
+  });
+
+  /**
+   * index.html carries site-level constants that <Seo> never emits. The sweep is scoped
+   * to [data-seo] precisely so these survive it — widening that selector would strip them
+   * on every page load, and nothing else asserts they exist.
+   */
+  test('sweep preserves index.html site-level constants', async ({page}) => {
+    await gotoWithRetry(page, '/ink/steel');
+    for (const selector of [
+      'meta[property="og:type"]',
+      'meta[property="og:locale"]',
+      'meta[property="og:image:width"]',
+      'meta[property="og:image:height"]',
+      'meta[name="twitter:card"]',
+    ]) {
+      await expect
+        .poll(() => page.locator(`head ${selector}`).count(), {
+          message: `${selector} is a site-level constant and must survive the sweep`,
+        })
+        .toBe(1);
+    }
+  });
+
   // Googlebot renders mobile, and CardPage gates the desktop CardDetailPanel behind
   // !isMobile while MobileCardDetail owns the h1 on small viewports. A regression in
   // either branch is invisible at desktop width.
