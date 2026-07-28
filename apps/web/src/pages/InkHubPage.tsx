@@ -1,6 +1,6 @@
 import {useNavigate, useParams} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {CardGrid, CardGridSkeleton, cardsForInk, getInkHub} from '../features/cards';
+import {CardGrid, CardGridSkeleton, INK_HUB_BLURBS, cardsForInk, getInkHub} from '../features/cards';
 import {CompactHeader, EtherealBackground, Seo} from '../shared/components';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
@@ -45,7 +45,7 @@ export function InkHubPage() {
       }}>
       <Seo
         title={`${hub.ink} Cards | Disney Lorcana | Inkweave`}
-        description={hub.blurb}
+        description={INK_HUB_BLURBS[hub.ink]}
         canonicalPath={`/ink/${hub.slug}`}
       />
       <EtherealBackground />
@@ -61,7 +61,7 @@ export function InkHubPage() {
           width: '100%',
           margin: '0 auto',
         }}>
-        <InkHubHeader ink={hub.ink} blurb={hub.blurb} cardCount={inkCards.length} />
+        <InkHubHeader ink={hub.ink} blurb={INK_HUB_BLURBS[hub.ink]} cardCount={inkCards.length} />
 
         {isLoading ? (
           <CardGridSkeleton rows={3} />

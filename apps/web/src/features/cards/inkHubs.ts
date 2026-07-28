@@ -17,8 +17,6 @@ export interface InkHub {
   /** URL segment: /ink/{slug}. Lowercased ink name; never derive it from user input. */
   slug: string;
   ink: Ink;
-  /** One-paragraph intro rendered as real prose above the grid — the page's indexable copy. */
-  blurb: string;
 }
 
 /**
@@ -36,39 +34,55 @@ const HUB_BY_INK: Record<Ink, InkHub> = {
   Amber: {
     slug: 'amber',
     ink: 'Amber',
-    blurb:
-      "Amber protects and sustains. It holds the format's densest cluster of Bodyguard characters alongside its Singers, and leads on Sing Together, so Amber decks tend to stall the board, heal back damage, and convert songs into tempo.",
   },
   Amethyst: {
     slug: 'amethyst',
     ink: 'Amethyst',
-    blurb:
-      'Amethyst pressures through the air. Evasive is its most common keyword by some margin, backed by Rush and Challenger, giving it characters that get in early and keep questing while the opponent struggles to block.',
   },
   Emerald: {
     slug: 'emerald',
     ink: 'Emerald',
-    blurb:
-      "Emerald evades and protects what it plays. It pairs the format's highest Evasive count with heavy Ward, so its threats are both hard to block and hard to remove once they land.",
   },
   Ruby: {
     slug: 'ruby',
     ink: 'Ruby',
-    blurb:
-      'Ruby is the aggressive ink. Reckless and Rush push its characters into combat on the turn they arrive, and its Evasive count keeps the pressure on when the board stalls.',
   },
   Sapphire: {
     slug: 'sapphire',
     ink: 'Sapphire',
-    blurb:
-      "Sapphire builds advantage before it attacks. Support and Ward concentrate here, and it carries the format's item density — the ink that ramps, draws and sets up rather than racing.",
   },
   Steel: {
     slug: 'steel',
     ink: 'Steel',
-    blurb:
-      'Steel wins the ground. Resist clusters here far more than in any other ink, paired with the format\'s highest Challenger count to trade up, producing bodies that survive removal and hold the board.',
   },
+};
+
+/**
+ * Editorial copy, split from the hub list ON PURPOSE (#530).
+ *
+ * `Footer` lives in the MAIN bundle and imports INK_HUBS for six link labels. When the
+ * blurbs lived on those same objects, ~1.8 kB of prose that only two lazy pages ever
+ * render was pulled into every page load. Keeping them in a separate record lets the
+ * bundler drop them from the main chunk — which mattered: the PR that added these pages
+ * landed the total JS bundle within 936 bytes of its 375 kB ceiling.
+ *
+ * Every factual claim below was verified against allCards.json rather than written from
+ * memory. Two claims in the original #530 draft were wrong and are corrected here:
+ * Support concentrates in Sapphire (15) not Amber (11), and Bodyguard in Amber (13) not
+ * Steel (10). Re-verify before editing — these pages target players who will notice.
+ */
+export const INK_HUB_BLURBS: Record<Ink, string> = {
+  Amber:
+    "Amber protects and sustains. It holds the format's densest cluster of Bodyguard characters alongside its Singers, and leads on Sing Together, so Amber decks tend to stall the board, heal back damage, and convert songs into tempo.",
+  Amethyst:
+    'Amethyst pressures through the air. Evasive is its most common keyword by some margin, backed by Rush and Challenger, giving it characters that get in early and keep questing while the opponent struggles to block.',
+  Emerald:
+    "Emerald evades and protects what it plays. It pairs the format's highest Evasive count with heavy Ward, so its threats are both hard to block and hard to remove once they land.",
+  Ruby: 'Ruby is the aggressive ink. Reckless and Rush push its characters into combat on the turn they arrive, and its Evasive count keeps the pressure on when the board stalls.',
+  Sapphire:
+    "Sapphire builds advantage before it attacks. Support and Ward concentrate here, and it carries the format's item density — the ink that ramps, draws and sets up rather than racing.",
+  Steel:
+    "Steel wins the ground. Resist clusters here far more than in any other ink, paired with the format's highest Challenger count to trade up, producing bodies that survive removal and hold the board.",
 };
 
 /** Alphabetical by ink — the order the gallery and footer render. */

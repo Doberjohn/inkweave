@@ -24,4 +24,4 @@ export * from './utils';
 export * from './components';
 
 // Ink hub pages (#530) — the six /ink/:slug routes that guarantee every card an inbound link.
-export {INK_HUBS, getInkHub, cardsForInk, type InkHub} from './inkHubs';
+export {INK_HUBS, INK_HUB_BLURBS, getInkHub, cardsForInk, type InkHub} from './inkHubs';

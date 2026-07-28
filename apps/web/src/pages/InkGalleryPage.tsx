@@ -1,5 +1,5 @@
 import {Link, useNavigate} from 'react-router-dom';
-import {INK_HUBS, cardsForInk} from '../features/cards';
+import {INK_HUBS, INK_HUB_BLURBS, cardsForInk} from '../features/cards';
 import {CompactHeader, EtherealBackground, Seo} from '../shared/components';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../shared/constants';
@@ -117,7 +117,7 @@ export function InkGalleryPage() {
                     lineHeight: 1.55,
                     color: COLORS.textMuted,
                   }}>
-                  {hub.blurb}
+                  {INK_HUB_BLURBS[hub.ink]}
                 </span>
               </Link>
             </li>
