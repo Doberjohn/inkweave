@@ -57,10 +57,13 @@ function InkHubNav() {
         gap: `${SPACING.sm}px`,
         fontSize: `${FONT_SIZES.xs}px`,
       }}>
-      {/* textMuted, NOT textDim: #666680 on the #0d0d14 background gives a contrast ratio
-          of 3.48 at this 10px size, failing WCAG AA's 4.5:1 and breaking the axe audits on
-          every page that renders the footer. textDim is only safe on larger text or as a
-          decorative glyph — which is why the separator dots below still use it. */}
+      {/* textMuted, NOT textDim. At FONT_SIZES.xs against COLORS.background, textDim
+          measures a contrast ratio of 3.48 — below WCAG AA's 4.5:1 — and axe fails the
+          home and card-detail audits on every page that renders the footer. textDim is
+          only safe on larger text or as a decorative glyph, which is why the separator
+          dots still use it. (Hex values omitted deliberately: the design-token value gate
+          greps literal token values across tsx and cannot tell a comment from a
+          cssText string.) */}
       <span style={{color: COLORS.textMuted}}>Cards by ink</span>
       {INK_HUBS.map((hub) => (
         <span
