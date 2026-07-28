@@ -16,6 +16,8 @@ const INDEXABLE_ROUTES = [
   '/playstyles',
   '/playstyles/lore-denial',
   '/card/1989/elsa-snow-queen',
+  '/inks',
+  '/ink/steel',
 ];
 
 test.describe('SEO', () => {
@@ -95,5 +97,66 @@ test.describe('SEO', () => {
 
     expect(preloads).toContain('/fonts/plus-jakarta-sans-400.woff2');
     expect(preloads).toContain('/fonts/tinos-400.woff2');
+  });
+
+  /**
+   * The internal-link guarantee from #530.
+   *
+   * Ink is the only total partition of the corpus, so these six footer links are what put
+   * every one of the 1,024 card pages within one click of a hub — and every card within
+   * one click back. Asserted at a MOBILE viewport because that is the regression that
+   * matters: Googlebot renders mobile, and the orphan gap exists precisely because synergy
+   * adjacency truncates to 5 partners there with a <button>, not a link, as the overflow.
+   */
+  test('card page links to all six ink hubs at a mobile viewport', async ({page}) => {
+    await page.setViewportSize({width: 412, height: 915});
+    await gotoWithRetry(page, '/card/1989/elsa-snow-queen');
+
+    // Against the dev server the page renders a skeleton until card data arrives, and the
+    // footer mounts with it — poll rather than assert on the first frame.
+    await expect(page.locator('footer a[href^="/ink/"]')).toHaveCount(6);
+
+    const hrefs = await page
+      .locator('footer a[href^="/ink/"]')
+      .evaluateAll((links) => links.map((l) => l.getAttribute('href')));
+
+    expect(hrefs.sort()).toEqual([
+      '/ink/amber',
+      '/ink/amethyst',
+      '/ink/emerald',
+      '/ink/ruby',
+      '/ink/sapphire',
+      '/ink/steel',
+    ]);
+  });
+
+  /**
+   * A hub must emit a real anchor per card, not a virtualized window. BrowseCardGrid's
+   * Virtuoso only mounts visible rows, so swapping it in here would render correctly in a
+   * browser while emitting a fraction of the links to a crawler — silently defeating the
+   * only thing these pages exist to do.
+   */
+  test('ink hub emits one crawlable anchor per card, identically on mobile', async ({page}) => {
+    await gotoWithRetry(page, '/ink/steel');
+    // The hub renders CardGridSkeleton until card data loads, so poll for the settled
+    // count rather than reading the first frame (which is legitimately 0).
+    await expect
+      .poll(() => page.locator('a[href^="/card/"]').count(), {timeout: 15000})
+      .toBeGreaterThan(150);
+    const desktopCount = await page.locator('a[href^="/card/"]').count();
+
+    await page.setViewportSize({width: 412, height: 915});
+    await gotoWithRetry(page, '/ink/steel');
+    // Equality is the assertion, not the magnitude: a viewport-dependent count would
+    // reproduce the exact bug this issue closes.
+    await expect
+      .poll(() => page.locator('a[href^="/card/"]').count(), {timeout: 15000})
+      .toBe(desktopCount);
+  });
+
+  test('unknown ink slug renders the 404 page, not an empty hub', async ({page}) => {
+    await gotoWithRetry(page, '/ink/nonsense');
+    // A thin 200 on a junk URL is what #525's NotFoundPage <Seo> exists to prevent.
+    await expect(page.locator('meta[name="robots"][content="noindex"]')).toHaveCount(1);
   });
 });

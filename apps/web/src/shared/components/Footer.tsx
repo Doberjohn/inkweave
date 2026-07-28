@@ -1,5 +1,6 @@
 import {Link} from 'react-router-dom';
-import {APP_NAME, COLORS, FONTS, FONT_SIZES, SPACING} from '../constants';
+import {INK_HUBS} from '../../features/cards/inkHubs';
+import {APP_NAME, COLORS, FONTS, FONT_SIZES, INK_COLORS, SPACING} from '../constants';
 
 /**
  * Site footer: legal/product navigation plus the Ravensburger Community Code
@@ -28,6 +29,62 @@ function Dot() {
     <span aria-hidden="true" style={{color: COLORS.textDim}}>
       &middot;
     </span>
+  );
+}
+
+/**
+ * Six links to the ink hub pages (#530) — the step that actually closes the orphan gap.
+ *
+ * The Footer already renders on CardPage, so these six anchors put every hub ONE click
+ * from all 1,024 card pages, and every card one click back from its hub. Ink is a total
+ * partition of the corpus, so this is what guarantees no card is reachable only via the
+ * sitemap: synergy adjacency truncates at `maxVisibleCards` (5 on mobile, and Googlebot
+ * renders mobile), and playstyle membership covers just 682 of 1,024 cards.
+ *
+ * Kept as its own labelled <nav> rather than appended to NAV_LINKS so the legal/product
+ * group stays visually and semantically distinct — and so screen-reader users get a
+ * meaningful landmark name instead of eleven undifferentiated links.
+ */
+function InkHubNav() {
+  return (
+    <nav
+      aria-label="Browse cards by ink"
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: `${SPACING.sm}px`,
+        fontSize: `${FONT_SIZES.xs}px`,
+      }}>
+      {/* textMuted, NOT textDim. At FONT_SIZES.xs against COLORS.background, textDim
+          measures a contrast ratio of 3.48 — below WCAG AA's 4.5:1 — and axe fails the
+          home and card-detail audits on every page that renders the footer. textDim is
+          only safe on larger text or as a decorative glyph, which is why the separator
+          dots still use it. (Hex values omitted deliberately: the design-token value gate
+          greps literal token values across tsx and cannot tell a comment from a
+          cssText string.) */}
+      <span style={{color: COLORS.textMuted}}>Cards by ink</span>
+      {INK_HUBS.map((hub) => (
+        <span
+          key={hub.slug}
+          style={{display: 'inline-flex', alignItems: 'center', gap: `${SPACING.xs}px`}}>
+          <span
+            aria-hidden="true"
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: INK_COLORS[hub.ink].border,
+              flexShrink: 0,
+            }}
+          />
+          <Link to={`/ink/${hub.slug}`} style={linkStyle}>
+            {hub.ink}
+          </Link>
+        </span>
+      ))}
+    </nav>
   );
 }
 
@@ -87,6 +144,8 @@ export function Footer() {
             </a>
           </span>
         </nav>
+
+        <InkHubNav />
 
         <p
           style={{
