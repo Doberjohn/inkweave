@@ -20,7 +20,6 @@
     "lint": "pnpm -r lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lighthouse": "lhci autorun",
     "size": "size-limit",
     "download-images": "node scripts/download-card-images.mjs",
     "convert-preview-images": "node scripts/convert-preview-images.mjs",
@@ -72,7 +71,6 @@
     }
   ],
   "devDependencies": {
-    "@lhci/cli": "^0.15.1",
     "vitest": "^4.1.10",
     "@size-limit/file": "^12.1.0",
     "husky": "^9.1.7",

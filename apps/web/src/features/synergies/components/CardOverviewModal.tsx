@@ -1356,8 +1356,8 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
           // No style override: CardImage's root container already sets
           // width/height in pixels, which reserves space before the image
           // loads. The previous `style={{height:'auto'}}` collapsed that
-          // reservation and produced CLS=0.13 on /card/957 (lighthouserc
-          // threshold 0.1) — see commit 8fbe93c.
+          // reservation and produced CLS=0.13 on /card/957 — above Google's
+          // 0.1 "good" CLS threshold — see commit 8fbe93c.
           priority
           lazy={false}
         />
