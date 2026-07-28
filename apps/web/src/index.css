@@ -435,8 +435,29 @@ option {
   }
 }
 
+/*
+ * Synergy card grid (#532).
+ *
+ * The column template is CSS-driven, not JS-driven. It used to be
+ * `isMobile ? 'repeat(3, 1fr)' : desktopTemplate`, which made the DOM's layout depend on
+ * the viewport that RENDERED it — so the prerendered HTML (captured at 1280x720 by
+ * scripts/prerender.mjs) laid itself out with desktop columns when a phone loaded it, and
+ * snapped to 3 columns only once React booted. That snap is a large share of the mobile
+ * CLS measured on card pages.
+ *
+ * SynergyCardList passes the wide-viewport value as --synergy-grid-columns; the breakpoint
+ * below is the only thing that knows about phones. Keep it that way.
+ */
+.synergy-card-grid {
+  grid-template-columns: var(--synergy-grid-columns, repeat(auto-fill, minmax(140px, 1fr)));
+}
+
 /* Mobile-specific styles */
 @media (max-width: 767px) {
+  .synergy-card-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
   /* Prevent pull-to-refresh on mobile */
   body {
     overscroll-behavior-y: contain;
