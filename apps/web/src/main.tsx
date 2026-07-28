@@ -101,6 +101,30 @@ if (import.meta.env.PROD) {
   });
 }
 
+/**
+ * Drop the prerendered copies of <Seo>'s tags before React renders (#535).
+ *
+ * The prerender crawl bakes React's hoisted metadata into the static HTML. On a real
+ * visit those tags are already in <head> as plain markup, React does not recognise them
+ * as its own, and it hoists a second copy — measured at title/description/canonical
+ * 1 -> 2, og 8 -> 11, twitter 4 -> 6 on EVERY route. Two <link rel="canonical"> is the
+ * costly one: Google resolves the conflict by ignoring canonicalisation altogether.
+ *
+ * Scoped by `[data-seo]`, which only <Seo> emits, so index.html's site-level constants
+ * (og:type, og:image:width/height, og:locale, twitter:card) are left alone — those are
+ * not duplicated and must survive.
+ *
+ * Runs before render, so the brief gap with no metadata coincides with the gap where
+ * createRoot has emptied #root anyway. Nothing samples the document in between.
+ */
+function sweepPrerenderedSeoTags() {
+  for (const tag of document.head.querySelectorAll('[data-seo]')) {
+    tag.remove();
+  }
+}
+
+sweepPrerenderedSeoTags();
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <RouterProvider router={router} />
