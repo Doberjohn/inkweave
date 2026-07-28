@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {cleanPrerenderedHtml} from './prerender.mjs';
+import {cleanPrerenderedHtml, isCleanShell} from './prerender.mjs';
 
 const SHELL = 'Inkweave — Master Lorcana Synergies';
 const ORIGIN = 'http://localhost:4179';
@@ -54,5 +54,41 @@ describe('cleanPrerenderedHtml', () => {
   it('is a no-op when the shell title is absent (already-clean input)', () => {
     const html = `<html><head><title>Real</title></head><body>x</body></html>`;
     expect(cleanPrerenderedHtml(html, SHELL, ORIGIN)).toBe(html);
+  });
+});
+
+describe('isCleanShell', () => {
+  it('accepts an untouched build shell', () => {
+    const shell = `<!doctype html><html><head><title>${SHELL}</title></head><body><div id="root"></div></body></html>`;
+    expect(isCleanShell(shell, SHELL)).toBe(true);
+  });
+
+  it('rejects what a previous crawl wrote to dist/index.html', () => {
+    // The bug (#542): the home route's outDir IS dist, so crawling `/` replaces the shell.
+    // A second process then serves this as every route's shell, and every capture inherits
+    // HomePage's <Seo> metadata.
+    const crawledHome = cleanPrerenderedHtml(
+      `<!doctype html><html><head><title>${SHELL}</title>` +
+        `<title>Inkweave | Disney Lorcana Synergy Finder &amp; Deck Builder</title>` +
+        `<link rel="canonical" href="${ORIGIN}/"></head><body><h1>Inkweave</h1></body></html>`,
+      SHELL,
+      ORIGIN,
+    );
+    expect(isCleanShell(crawledHome, SHELL)).toBe(false);
+  });
+
+  it('rejects every output cleanPrerenderedHtml produces', () => {
+    // Ties the guard to its real producer rather than to a hand-written fixture: the
+    // cleaner's job is to strip the shell title, so its output is by definition never a
+    // clean shell. If that ever stopped holding, the guard would silently pass on
+    // corrupted input — which is the exact failure this issue exists to prevent.
+    expect(isCleanShell(cleanPrerenderedHtml(capture(3), SHELL, ORIGIN), SHELL)).toBe(false);
+  });
+
+  it('is not fooled by the shell title appearing outside a <title> element', () => {
+    // index.html carries HTML comments that mention <title>; matching on the bare string
+    // would accept a crawled shell whose comments survived the strip.
+    const crawled = `<html><head><!-- <title> is a fallback: ${SHELL} --><title>Real</title></head><body>x</body></html>`;
+    expect(isCleanShell(crawled, SHELL)).toBe(false);
   });
 });

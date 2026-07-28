@@ -145,6 +145,32 @@ export function cleanPrerenderedHtml(html, shellTitle, origin) {
   return html.replace(`<title>${shellTitle}</title>`, '').replaceAll(origin, '');
 }
 
+/**
+ * Is dist/index.html still the untouched build shell? (#542)
+ *
+ * The home route writes its capture to DIST itself (`outDir` in crawlRoute), so crawling
+ * `/` REPLACES the file this script reads as its shell. Within one process that is
+ * handled — main() caches the shell before crawling. Across processes it is not: a second
+ * `node scripts/prerender.mjs` without an intervening `pnpm build:web` reads the rendered
+ * homepage and serves it as the shell for every route.
+ *
+ * Every downstream symptom of that is silent:
+ *   - every route inherits HomePage's <Seo> metadata, so captures carry two real <title>s
+ *   - cleanPrerenderedHtml no-ops, because it strips a LITERAL `<title>${shellTitle}` that
+ *     a crawled shell no longer contains
+ *   - worst, the corruption defeats its own detector: crawlRoute treats a route as
+ *     rendered once `document.title !== SHELL_TITLE`, and a crawled shell's title already
+ *     differs — so the "title never left the shell" guard cannot fire and the run reports
+ *     success while writing wrong HTML
+ *
+ * Anchored on the shell title rather than, say, an empty #root: PRERENDER_URL and
+ * PRERENDER_SAMPLE make scoped re-runs a normal workflow, and the title is the one marker
+ * that is present in every clean build and absent from every crawled one.
+ */
+export function isCleanShell(html, shellTitle) {
+  return html.includes(`<title>${shellTitle}</title>`);
+}
+
 async function crawlRoute(browser, route) {
   let page;
   try {
@@ -183,6 +209,21 @@ async function main() {
     console.error('[prerender] apps/web/dist not found — run `pnpm build:web` first');
     process.exit(1);
   }
+  // Cache the clean shell BEFORE any crawl overwrites dist/index.html (the home route)...
+  const shellHtml = await readFile(join(DIST, 'index.html'), 'utf8');
+  // ...and refuse to run if a PREVIOUS invocation already overwrote it (#542). Proceeding
+  // would serve the rendered homepage as every route's shell and still report success,
+  // because a crawled shell's title already differs from SHELL_TITLE and so satisfies
+  // crawlRoute's "did this render?" check. Both preflight checks sit here, before any
+  // work is announced or a browser is launched.
+  if (!isCleanShell(shellHtml, SHELL_TITLE)) {
+    console.error(
+      '[prerender] dist/index.html has already been crawled — the home route overwrites it.\n' +
+        '            Run `pnpm build:web` to restore a clean shell before re-running.',
+    );
+    process.exit(1);
+  }
+
   const {staticRoutes, playstyleRoutes, cardRoutes} = await enumerateRoutes();
   const only = process.env.PRERENDER_URL;
   const sample = Number(process.env.PRERENDER_SAMPLE || 0);
@@ -195,8 +236,6 @@ async function main() {
   console.log(
     `[prerender] ${routes.length} routes @ concurrency ${CONCURRENCY}${sample ? ' (SAMPLE)' : ''}`,
   );
-  // Cache the clean shell BEFORE any crawl overwrites dist/index.html (the home route).
-  const shellHtml = await readFile(join(DIST, 'index.html'), 'utf8');
   const server = await startServer(shellHtml);
   const browser = await chromium.launch();
 
