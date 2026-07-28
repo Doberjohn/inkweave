@@ -59,6 +59,17 @@ test.describe('SEO', () => {
   test('every tag <Seo> emits carries the data-seo sweep marker', async ({page}) => {
     await gotoWithRetry(page, '/ink/steel');
 
+    // <title> is checked separately, qualified by [data-seo]. A bare `head title` count is
+    // 2 on the dev server — index.html's shell title is still present, and prerender.mjs
+    // strips it only at capture time (#492/#494). The marker is what distinguishes the tag
+    // <Seo> manages from the shell's, and it is the one that must be swept: title was among
+    // the tags measured duplicating 1 -> 2, and it is the most user-visible of them.
+    await expect
+      .poll(() => page.locator('head title[data-seo]').count(), {
+        message: 'the <Seo>-managed title must carry data-seo exactly once',
+      })
+      .toBe(1);
+
     for (const selector of [
       'link[rel="canonical"]',
       'meta[name="description"]',
