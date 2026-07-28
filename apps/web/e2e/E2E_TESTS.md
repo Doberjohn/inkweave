@@ -120,13 +120,42 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should close dropdown on Escape | Escape key dismisses autocomplete dropdown |
 | should NOT show autocomplete on browse page search | Typing in browse page search does NOT show autocomplete (browse filters inline) |
 
-## `seo.spec.ts` — 3 tests (both viewports)
+## `seo.spec.ts` — 17 tests (both viewports)
+
+Route-level metadata coverage (#524). Before this, the file asserted only home-page
+properties, so #486's central acceptance criterion — every route self-references its own
+canonical — was unguarded. `/vote` shipped into the sitemap without a `<Seo>` as a direct
+consequence.
+
+Note the title assertion checks the *effective* `document.title`, not a count of `<title>`
+elements: React 19 hoists the `<Seo>` title but leaves `index.html`'s shell `<title>` in
+the DOM, and `prerender.mjs` strips the duplicate only at capture time (#492). E2E runs
+against the dev server, where both are present.
 
 | Test | What it verifies |
 |---|---|
-| should have valid JSON-LD structured data on home page | JSON-LD script tag with WebApplication type |
-| should have correct heading hierarchy on home page | h1 exists, h2 headings present |
-| should have font preconnect hints | Preconnect links for Google Fonts |
+| should have valid JSON-LD structured data on home page | `@graph` carries Organization + WebSite + WebApplication, cross-linked by `@id`, with the WebSite's SearchAction |
+| should have correct heading hierarchy on home page | Exactly one h1; its accessible name comes from the logo img's `alt` |
+| should preload self-hosted fonts | `link[rel=preload][as=font]` for plus-jakarta-sans-400 and tinos-400 (self-hosted, not a CDN) |
+| should own its title and canonical: `/` | Title leaves the shell fallback; canonical self-references |
+| should own its title and canonical: `/browse` | As above |
+| should own its title and canonical: `/playstyles` | As above |
+| should own its title and canonical: `/playstyles/lore-denial` | As above |
+| should own its title and canonical: `/card/1989/elsa-snow-queen` | As above, on a slug card route (#498) |
+| should own its title and canonical: `/inks` | As above, on the ink gallery (#530) |
+| should own its title and canonical: `/ink/steel` | As above, on an ink hub (#530) |
+| card page has exactly one h1 at a mobile viewport | 412×915 — CardPage gates the desktop `CardDetailPanel` behind `!isMobile` while `MobileCardDetail` owns the h1 below it. Googlebot renders mobile, so a regression in either branch is invisible at desktop width |
+| card page links to all six ink hubs at a mobile viewport | The footer's ink nav is what puts every hub one click from all 1,024 card pages (#530) |
+| ink hub emits one crawlable anchor per card, identically on mobile | `CardGrid`, not the Virtuoso-windowed `BrowseCardGrid` — windowing would emit a fraction of the anchors to a crawler (#530) |
+| unknown ink slug renders the 404 page, not an empty hub | Junk URLs under `/ink/` declare themselves unindexable instead of returning a thin 200 (#525) |
+| every tag `<Seo>` emits carries the data-seo sweep marker | #535 — an unmarked tag escapes `sweepPrerenderedSeoTags()` and silently duplicates on every real visit |
+| client navigation swaps metadata in place instead of accumulating it | #535 — two `<link rel="canonical">` makes Google ignore canonicalisation entirely, which is worse than emitting none |
+| sweep preserves index.html site-level constants | #535 — `og:type` / `og:locale` / `og:image:width` / `og:image:height` / `twitter:card` are not emitted by `<Seo>`; widening the sweep selector would strip them on every load |
+
+The three #535 specs cannot observe the duplication itself: it requires the prerendered
+HTML, and E2E runs against the dev server, which serves the shell. They guard the marker
+contract and the client-navigation path instead — the two things that actually regress.
+Verifying the fix end-to-end needs a real `prerender.mjs` build.
 
 ## `synergy-groups.spec.ts` — 4 tests (2 desktop, 2 mobile)
 

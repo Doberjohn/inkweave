@@ -54,4 +54,26 @@ test.describe('Accessibility — axe audits', () => {
     const results = await new AxeBuilder({page}).exclude('[data-react-grab]').analyze();
     expect(results.violations).toEqual([]);
   });
+
+  /**
+   * The ink pages (#530) were added with no axe coverage, and a contrast violation on the
+   * gallery's card-count text survived a full CI round because of it — textDim at
+   * FONT_SIZES.xs measures 3.07 against COLORS.surface, below WCAG AA's 4.5:1. Every new
+   * indexable route belongs here: a page nobody audits is a page whose regressions ship.
+   */
+  test('ink gallery should have no axe violations', async ({page}) => {
+    await page.goto('/inks');
+    await page.waitForSelector('h1');
+
+    const results = await new AxeBuilder({page}).exclude('[data-react-grab]').analyze();
+    expect(results.violations).toEqual([]);
+  });
+
+  test('ink hub should have no axe violations', async ({page}) => {
+    await page.goto('/ink/steel');
+    await page.waitForSelector('h1');
+
+    const results = await new AxeBuilder({page}).exclude('[data-react-grab]').analyze();
+    expect(results.violations).toEqual([]);
+  });
 });

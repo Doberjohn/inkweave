@@ -40,6 +40,16 @@ const BENIGN_CONSOLE: readonly RegExp[] = [
   // E2E runs under `npx vite` (dev) with no react-grab daemon, so the connection is
   // refused and logged. Pure dev-tooling noise — it never exists in a prod build.
   /ws:\/\/localhost:4722/,
+  // Firefox-only: a self-hosted @font-face weight that ISN'T preloaded (index.html
+  // preloads only the 400 weights) can still be in-flight when a test navigates or
+  // tears down — e.g. the compact header renders weight-500 text, then the spec moves
+  // on before plus-jakarta-sans-500.woff2 finishes. Gecko cancels the request and logs
+  //   "downloadable font: download failed (... plus-jakarta-sans-500.woff2 ...) status=2152398850"
+  // where 2152398850 = 0x804B0002 = NS_BINDING_ABORTED (request cancelled). Same class
+  // as the "TypeError: Failed to fetch" navigation-abort above — a teardown artifact, not
+  // a font fault. BOTH anchors are required ("download failed" AND the abort code) so a
+  // REAL font failure (404 / bad MIME / CORS reports a different status) still fails the guard.
+  /downloadable font: download failed.*status=2152398850/i,
   // WebKit-only (webkit + mobile-safari) intermittently logs a resource-load failure for a
   // same-origin /data/*.json fetch — e.g. "/data/previewCards.json due to access control checks"
   // or "/data/allCards.json due to access control checks" — under the Playwright harness. It's a

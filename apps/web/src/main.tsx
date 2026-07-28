@@ -23,11 +23,15 @@ if (import.meta.env.PROD) {
 // Lazy-load Sentry to keep it off the critical path (~150 KB gzip)
 if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
   import('@sentry/react').then(async (Sentry) => {
-    // Widen to the base integration type (@sentry/react v10 doesn't re-export
-    // `Integration`) so both browserTracing and supabase integrations fit.
-    const integrations: ReturnType<typeof Sentry.supabaseIntegration>[] = [
-      Sentry.browserTracingIntegration(),
-    ];
+    // Widen the array so both browserTracing and supabase integrations fit. A
+    // prior `ReturnType<typeof Sentry.supabaseIntegration>[]` annotation stopped
+    // widening once @sentry/react 10.67 narrowed supabaseIntegration()'s `name`
+    // to the literal "Supabase" (TS2322 on push). @sentry/react doesn't re-export
+    // the base `Integration` type, so union the two integration return types.
+    const integrations: (
+      | ReturnType<typeof Sentry.browserTracingIntegration>
+      | ReturnType<typeof Sentry.supabaseIntegration>
+    )[] = [Sentry.browserTracingIntegration()];
 
     // Add Supabase monitoring when configured. supabaseIntegration (v10) takes the
     // SupabaseClient constructor so it can instrument every client instance; lazily
@@ -96,6 +100,30 @@ if (import.meta.env.PROD) {
     },
   });
 }
+
+/**
+ * Drop the prerendered copies of <Seo>'s tags before React renders (#535).
+ *
+ * The prerender crawl bakes React's hoisted metadata into the static HTML. On a real
+ * visit those tags are already in <head> as plain markup, React does not recognise them
+ * as its own, and it hoists a second copy — measured at title/description/canonical
+ * 1 -> 2, og 8 -> 11, twitter 4 -> 6 on EVERY route. Two <link rel="canonical"> is the
+ * costly one: Google resolves the conflict by ignoring canonicalisation altogether.
+ *
+ * Scoped by `[data-seo]`, which only <Seo> emits, so index.html's site-level constants
+ * (og:type, og:image:width/height, og:locale, twitter:card) are left alone — those are
+ * not duplicated and must survive.
+ *
+ * Runs before render, so the brief gap with no metadata coincides with the gap where
+ * createRoot has emptied #root anyway. Nothing samples the document in between.
+ */
+function sweepPrerenderedSeoTags() {
+  for (const tag of document.head.querySelectorAll('[data-seo]')) {
+    tag.remove();
+  }
+}
+
+sweepPrerenderedSeoTags();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

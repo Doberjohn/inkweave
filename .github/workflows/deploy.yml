@@ -33,11 +33,11 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
@@ -53,6 +53,16 @@ jobs:
 
       - name: Build (runs build:vercel → the prerender crawl renders on Ubuntu)
         run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      # Fatal here and ONLY here (#524). build:vercel deliberately swallows a failed
+      # crawl with `|| echo` so Vercel-native preview builds — which cannot
+      # `playwright install --with-deps` — degrade to SPA-only instead of failing.
+      # The cost of that tolerance is that a production crawl failure also deploys
+      # green, serving `<div id="root">` to every non-JS crawler. This step closes
+      # that hole at the deploy boundary without touching preview behaviour.
+      # `.vercel/output/static` is the Build Output API v3 static root.
+      - name: Verify the prerender actually produced content
+        run: node scripts/check-rendered-html.mjs .vercel/output/static
 
       - name: Deploy prebuilt output to production
         run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}

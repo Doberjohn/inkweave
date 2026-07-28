@@ -18,7 +18,7 @@ jobs:
         uses: pnpm/action-setup@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
@@ -48,7 +48,7 @@ jobs:
         uses: pnpm/action-setup@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
@@ -61,6 +61,14 @@ jobs:
 
       - name: Build packages
         run: pnpm build
+
+      # Root-level script suites (#524). These were runnable but wired into no hook
+      # and no workflow, so the only automated assertions that the sitemap stays on
+      # the apex host and omits priority/changefreq never ran. Must come after
+      # "Build packages" — the suites import getAllPlaystyles from the engine dist.
+      # Cheap (~1.3s), so it sits early and fails fast.
+      - name: Run script tests (sitemap, IndexNow, analytics)
+        run: pnpm test:scripts
 
       - name: Run linting
         run: pnpm lint
@@ -81,6 +89,9 @@ jobs:
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v7
+        # Diagnostic artifact only — an infra hiccup uploading it (e.g. Actions
+        # storage quota exhausted) must not fail a job whose tests already passed.
+        continue-on-error: true
         with:
           name: coverage-report
           path: apps/web/coverage/
@@ -88,6 +99,11 @@ jobs:
 
       - name: Upload build artifacts for E2E
         uses: actions/upload-artifact@v7
+        # A real build failure is already caught by "Build packages" above, so a
+        # failure uploading here is infra (e.g. storage quota), not a bad build —
+        # don't fail build-and-test for it. If the artifact is genuinely missing,
+        # the e2e job's "Download build artifacts" step surfaces it downstream.
+        continue-on-error: true
         with:
           name: build-output
           path: |
@@ -117,7 +133,7 @@ jobs:
         uses: pnpm/action-setup@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
@@ -126,10 +142,22 @@ jobs:
         run: pnpm install
 
       - name: Download build artifacts
+        id: download-build
         uses: actions/download-artifact@v8
+        # build-and-test's build-output upload is non-fatal (storage-quota
+        # resilience), so during an outage the artifact may be missing. Don't
+        # fail here — the fallback step below rebuilds locally instead.
+        continue-on-error: true
         with:
           name: build-output
           path: .
+
+      - name: Rebuild if build artifact was unavailable
+        # Only runs when the download above failed (e.g. the artifact was never
+        # uploaded during a storage-quota outage). Produces the same dist/ the
+        # artifact would have, so e2e stays green instead of dying at download.
+        if: steps.download-build.outcome == 'failure'
+        run: pnpm build
 
       - name: Pre-compute synergy data
         run: pnpm precompute-synergies
@@ -159,6 +187,9 @@ jobs:
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7
         if: always()
+        # Diagnostic artifact only — a storage-quota/upload hiccup must not fail
+        # the e2e job when the tests themselves determined the outcome.
+        continue-on-error: true
         with:
           # Per-project artifact names so the 5 parallel jobs don't collide on upload.
           name: playwright-report-${{ matrix.project }}
@@ -168,6 +199,8 @@ jobs:
       - name: Upload test results
         uses: actions/upload-artifact@v7
         if: failure()
+        # Diagnostic artifact only — never fail the job on the upload itself.
+        continue-on-error: true
         with:
           name: test-results-${{ matrix.project }}
           path: apps/web/test-results/

@@ -20,7 +20,6 @@
     "lint": "pnpm -r lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lighthouse": "lhci autorun",
     "size": "size-limit",
     "download-images": "node scripts/download-card-images.mjs",
     "convert-preview-images": "node scripts/convert-preview-images.mjs",
@@ -41,15 +40,28 @@
   },
   "size-limit": [
     {
-      "name": "Initial JS (entry chunk)",
-      "path": "apps/web/dist/assets/index-*.js",
-      "limit": "200 kB",
+      "name": "User-facing JS",
+      "path": [
+        "apps/web/dist/assets/*.js",
+        "!apps/web/dist/assets/RevealsPage-*.js",
+        "!apps/web/dist/assets/RevealAdminPage-*.js",
+        "!apps/web/dist/assets/AdminAnalyticsPage-*.js",
+        "!apps/web/dist/assets/ImageAdminPage-*.js",
+        "!apps/web/dist/assets/TuningAdminPage-*.js"
+      ],
+      "limit": "350 kB",
       "gzip": true
     },
     {
-      "name": "Total JS bundle",
-      "path": "apps/web/dist/assets/*.js",
-      "limit": "425 kB",
+      "name": "Admin & flag-gated JS",
+      "path": [
+        "apps/web/dist/assets/RevealsPage-*.js",
+        "apps/web/dist/assets/RevealAdminPage-*.js",
+        "apps/web/dist/assets/AdminAnalyticsPage-*.js",
+        "apps/web/dist/assets/ImageAdminPage-*.js",
+        "apps/web/dist/assets/TuningAdminPage-*.js"
+      ],
+      "limit": "60 kB",
       "gzip": true
     },
     {
@@ -60,11 +72,10 @@
     }
   ],
   "devDependencies": {
-    "@lhci/cli": "^0.15.1",
-    "vitest": "^4.0.0",
+    "vitest": "^4.1.10",
     "@size-limit/file": "^12.1.0",
     "husky": "^9.1.7",
-    "prettier": "^3.9.4",
+    "prettier": "^3.9.6",
     "sharp": "^0.35.3",
     "size-limit": "^12.1.0",
     "typescript": "^6.0.3"

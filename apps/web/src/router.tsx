@@ -47,6 +47,8 @@ const InDepthVotePage = lazyWithRetry(
   () => import('./pages/InDepthVotePage'),
   'InDepthVotePage',
 );
+const InkHubPage = lazyWithRetry(() => import('./pages/InkHubPage'), 'InkHubPage');
+const InkGalleryPage = lazyWithRetry(() => import('./pages/InkGalleryPage'), 'InkGalleryPage');
 const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'), 'NotFoundPage');
 const RevealsPage = lazyWithRetry(() => import('./pages/RevealsPage'), 'RevealsPage');
 const RevealAdminPage = lazyWithRetry(() => import('./pages/RevealAdminPage'), 'RevealAdminPage');
@@ -164,6 +166,25 @@ export const router = createBrowserRouter([
         element: (
           <SuspenseWrapper>
             <ComparePage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        // Parent of the six hubs (#530) — the breadcrumb on every hub resolves here.
+        path: 'inks',
+        element: (
+          <SuspenseWrapper>
+            <InkGalleryPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        // Six ink hub pages (#530). Ink is the only total partition of the corpus, so these
+        // guarantee every card an inbound crawlable link independent of the sitemap.
+        path: 'ink/:inkSlug',
+        element: (
+          <SuspenseWrapper>
+            <InkHubPage />
           </SuspenseWrapper>
         ),
       },

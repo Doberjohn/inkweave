@@ -34,6 +34,13 @@ export const STATIC_ROUTES = [
   '/browse',
   '/playstyles',
   '/vote',
+  '/inks',
+  '/ink/amber',
+  '/ink/amethyst',
+  '/ink/emerald',
+  '/ink/ruby',
+  '/ink/sapphire',
+  '/ink/steel',
   '/about',
   '/privacy',
   '/terms',
@@ -60,15 +67,25 @@ async function loadEngine() {
  * is async; kept separate from disk-writing so tests can assert the URL set without side effects.
  */
 export async function buildSitemapUrls() {
-  const {cards} = JSON.parse(fs.readFileSync(CARDS_FILE, 'utf8'));
-  const cardsLastmod = isoDate(fs.statSync(CARDS_FILE).mtime);
-  const buildDate = isoDate(Date.now());
+  const {cards, metadata} = JSON.parse(fs.readFileSync(CARDS_FILE, 'utf8'));
+
+  // Content-derived, NOT mtime-derived (#525). scripts/download-card-images.mjs rewrites
+  // allCards.json in place as the first step of build:vercel, so its mtime is always the
+  // build time — every deploy previously told Google all 1,024 card pages had changed
+  // that day, including dependabot merges. `generatedOn` is the LorcanaJSON snapshot
+  // timestamp: it moves only on a real card-data re-pull, and it survives that rewrite.
+  const cardsLastmod = isoDate(metadata.generatedOn);
+
   const {getAllPlaystyles, cardPath} = await loadEngine();
   const playstyleIds = getAllPlaystyles().map((p) => p.id);
 
+  // Static and playstyle routes change when CODE changes, which this script cannot
+  // observe. They therefore carry NO <lastmod> rather than a fabricated one: Google
+  // handles an absent value gracefully, but discredits the signal sitemap-wide when it
+  // proves unreliable — and `Date.now()` was unreliable by construction.
   return [
-    ...STATIC_ROUTES.map((route) => ({loc: `${SITE_ORIGIN}${route}`, lastmod: buildDate})),
-    ...playstyleIds.map((id) => ({loc: `${SITE_ORIGIN}/playstyles/${id}`, lastmod: buildDate})),
+    ...STATIC_ROUTES.map((route) => ({loc: `${SITE_ORIGIN}${route}`})),
+    ...playstyleIds.map((id) => ({loc: `${SITE_ORIGIN}/playstyles/${id}`})),
     ...cards.map((c) => ({loc: `${SITE_ORIGIN}${cardPath(c)}`, lastmod: cardsLastmod})),
   ];
 }
@@ -76,7 +93,12 @@ export async function buildSitemapUrls() {
 /** Render sitemap XML from entries. Pure. */
 export function renderSitemap(urls) {
   const body = urls
-    .map((u) => `  <url>\n    <loc>${u.loc}</loc>\n    <lastmod>${u.lastmod}</lastmod>\n  </url>`)
+    .map((u) => {
+      // <lastmod> is optional. Omit it entirely rather than emit a value we cannot
+      // stand behind — see buildSitemapUrls (#525).
+      const lastmod = u.lastmod ? `\n    <lastmod>${u.lastmod}</lastmod>` : '';
+      return `  <url>\n    <loc>${u.loc}</loc>${lastmod}\n  </url>`;
+    })
     .join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }

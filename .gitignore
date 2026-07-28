@@ -42,9 +42,6 @@ storybook-static
 /apps/web/playwright-report/
 /apps/web/playwright/.cache/
 
-# Lighthouse CI
-.lighthouseci/
-
 # Generated HTML reports (from markdown docs)
 reports/
 
