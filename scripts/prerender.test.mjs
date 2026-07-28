@@ -85,10 +85,21 @@ describe('isCleanShell', () => {
     expect(isCleanShell(cleanPrerenderedHtml(capture(3), SHELL, ORIGIN), SHELL)).toBe(false);
   });
 
-  it('is not fooled by the shell title appearing outside a <title> element', () => {
-    // index.html carries HTML comments that mention <title>; matching on the bare string
-    // would accept a crawled shell whose comments survived the strip.
-    const crawled = `<html><head><!-- <title> is a fallback: ${SHELL} --><title>Real</title></head><body>x</body></html>`;
+  it('is not fooled by the exact shell title sitting inside an HTML comment', () => {
+    // index.html documents the shell title in prose right beside it ("<title> above is a
+    // fallback for routes without <Seo>"). A comment carrying the FULL literal would
+    // otherwise make a crawled shell look clean — so the marker here is byte-for-byte what
+    // the predicate searches for, not a near-miss that would pass either way.
+    const crawled = `<html><head><!-- <title>${SHELL}</title> --><title>Real</title></head><body>x</body></html>`;
     expect(isCleanShell(crawled, SHELL)).toBe(false);
+  });
+
+  it('still accepts a clean shell that carries commentary about the title', () => {
+    // The comment strip must not be so eager that a real build is rejected: index.html
+    // ships both the live <title> and comments discussing it.
+    const shell =
+      `<!doctype html><html><head><!-- <title> above is a fallback for routes without <Seo> -->` +
+      `<title>${SHELL}</title></head><body><div id="root"></div></body></html>`;
+    expect(isCleanShell(shell, SHELL)).toBe(true);
   });
 });

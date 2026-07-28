@@ -168,7 +168,12 @@ export function cleanPrerenderedHtml(html, shellTitle, origin) {
  * that is present in every clean build and absent from every crawled one.
  */
 export function isCleanShell(html, shellTitle) {
-  return html.includes(`<title>${shellTitle}</title>`);
+  // Comments are stripped first because index.html documents the shell title in prose
+  // right next to it ("<title> above is a fallback for routes without <Seo>"). A comment
+  // carrying the exact literal would otherwise satisfy this predicate on a crawled shell —
+  // and would mislead cleanPrerenderedHtml too, whose single `.replace()` takes the FIRST
+  // occurrence and would strip the comment's copy while leaving the real title behind.
+  return html.replace(/<!--[\s\S]*?-->/g, '').includes(`<title>${shellTitle}</title>`);
 }
 
 async function crawlRoute(browser, route) {
@@ -236,16 +241,24 @@ async function loadBuildShell() {
   return shellHtml;
 }
 
+/**
+ * Which routes this invocation crawls.
+ *
+ * `PRERENDER_URL` takes a single route and `PRERENDER_SAMPLE` takes a thin slice — both
+ * exist so a reproduction does not need the full 1,060-route crawl, and both are the
+ * workflow #542's guard protects.
+ */
+function selectRoutes({staticRoutes, playstyleRoutes, cardRoutes}, only, sample) {
+  if (only) return [only];
+  if (sample) return [...staticRoutes, ...playstyleRoutes.slice(0, 3), ...cardRoutes.slice(0, 5)];
+  return [...staticRoutes, ...playstyleRoutes, ...cardRoutes];
+}
+
 async function main() {
   const shellHtml = await loadBuildShell();
-  const {staticRoutes, playstyleRoutes, cardRoutes} = await enumerateRoutes();
   const only = process.env.PRERENDER_URL;
   const sample = Number(process.env.PRERENDER_SAMPLE || 0);
-  const routes = only
-    ? [only]
-    : sample
-      ? [...staticRoutes, ...playstyleRoutes.slice(0, 3), ...cardRoutes.slice(0, 5)]
-      : [...staticRoutes, ...playstyleRoutes, ...cardRoutes];
+  const routes = selectRoutes(await enumerateRoutes(), only, sample);
 
   console.log(
     `[prerender] ${routes.length} routes @ concurrency ${CONCURRENCY}${sample ? ' (SAMPLE)' : ''}`,
