@@ -204,18 +204,28 @@ async function crawlRoute(browser, route) {
   }
 }
 
-async function main() {
+/**
+ * Preflight, run before anything is announced or a browser is launched: return the build
+ * shell, or exit with an actionable message.
+ *
+ * Caching the shell here is what keeps the crawl correct — the home route writes its
+ * capture to DIST itself, so crawling `/` replaces this very file mid-run. Re-reading it
+ * per request would serve later routes a rendered homepage.
+ *
+ * The second check covers the same corruption across processes (#542): a re-run without an
+ * intervening `pnpm build:web` reads an index.html a PREVIOUS invocation already
+ * overwrote. That has to be fatal rather than best-effort, because every downstream
+ * symptom is silent — and worst, it disarms crawlRoute's own detector, which treats a
+ * route as rendered once `document.title !== SHELL_TITLE`. A crawled shell's title already
+ * differs, so the "title never left the shell" guard cannot fire and the run reports
+ * success while writing wrong HTML.
+ */
+async function loadBuildShell() {
   if (!existsSync(join(DIST, 'index.html'))) {
     console.error('[prerender] apps/web/dist not found — run `pnpm build:web` first');
     process.exit(1);
   }
-  // Cache the clean shell BEFORE any crawl overwrites dist/index.html (the home route)...
   const shellHtml = await readFile(join(DIST, 'index.html'), 'utf8');
-  // ...and refuse to run if a PREVIOUS invocation already overwrote it (#542). Proceeding
-  // would serve the rendered homepage as every route's shell and still report success,
-  // because a crawled shell's title already differs from SHELL_TITLE and so satisfies
-  // crawlRoute's "did this render?" check. Both preflight checks sit here, before any
-  // work is announced or a browser is launched.
   if (!isCleanShell(shellHtml, SHELL_TITLE)) {
     console.error(
       '[prerender] dist/index.html has already been crawled — the home route overwrites it.\n' +
@@ -223,7 +233,11 @@ async function main() {
     );
     process.exit(1);
   }
+  return shellHtml;
+}
 
+async function main() {
+  const shellHtml = await loadBuildShell();
   const {staticRoutes, playstyleRoutes, cardRoutes} = await enumerateRoutes();
   const only = process.env.PRERENDER_URL;
   const sample = Number(process.env.PRERENDER_SAMPLE || 0);
