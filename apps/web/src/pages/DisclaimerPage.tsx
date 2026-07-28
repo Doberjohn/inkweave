@@ -8,7 +8,8 @@ export function DisclaimerPage() {
         Ravensburger&rsquo;s Community Code Policy. We are expressly prohibited from charging you to use or
         access this content. Inkweave is not published, endorsed, or specifically approved by Disney or
         Ravensburger. For more information about Disney Lorcana TCG, visit{' '}
-        <a href="https://www.disneylorcana.com" target="_blank" rel="noreferrer" style={legalLinkStyle}>
+        {/* Locale-prefixed root — see the note in Footer.tsx. The bare domain 403s. */}
+        <a href="https://www.disneylorcana.com/en-US/" target="_blank" rel="noreferrer" style={legalLinkStyle}>
           disneylorcana.com
         </a>
         .
