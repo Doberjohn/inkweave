@@ -159,8 +159,17 @@ export function Footer() {
           Ravensburger&rsquo;s Community Code Policy. We are expressly prohibited from charging you to use or
           access this content. {APP_NAME} is not published, endorsed, or specifically approved by Disney or
           Ravensburger. For more information about Disney Lorcana TCG, visit{' '}
+          {/* Locale-prefixed root, NOT the bare domain: disneylorcana.com's root returns 403
+              and geo-redirects to a locale path, so the bare form left a dead link on all
+              1,029 pages that render this footer (1,024 card pages + home + the four legal
+              pages). /en-US/ matches the three links already on AboutPage; visitors outside
+              the US are geo-redirected onward, which costs one hop and lands correctly.
+
+              The link TEXT must stay "disneylorcana.com" — that wording is prescribed by
+              Ravensburger's Community Code, which is also why a broken target here is a
+              compliance problem and not merely a cosmetic one. */}
           <a
-            href="https://www.disneylorcana.com"
+            href="https://www.disneylorcana.com/en-US/"
             target="_blank"
             rel="noreferrer"
             style={{color: COLORS.primary, textDecoration: 'underline'}}>
