@@ -98,12 +98,17 @@ export function InkGalleryPage() {
                   {hub.ink}
                 </span>
                 {/* Counts derive from the same helper the hubs use, so the index can never
-                    advertise a number the hub does not deliver. */}
+                    advertise a number the hub does not deliver.
+
+                    textMuted, NOT textDim: at FONT_SIZES.xs against COLORS.surface, textDim
+                    measures a contrast ratio of 3.07 — worse than the 3.48 that failed axe
+                    in the Footer, because this sits on the lighter card surface rather than
+                    the page background. Both are below WCAG AA's 4.5:1. */}
                 <span
                   style={{
                     display: 'block',
                     fontSize: `${FONT_SIZES.xs}px`,
-                    color: COLORS.textDim,
+                    color: COLORS.textMuted,
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                     marginBottom: `${SPACING.sm}px`,
