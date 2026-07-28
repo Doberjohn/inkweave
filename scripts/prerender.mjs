@@ -145,6 +145,37 @@ export function cleanPrerenderedHtml(html, shellTitle, origin) {
   return html.replace(`<title>${shellTitle}</title>`, '').replaceAll(origin, '');
 }
 
+/**
+ * Is dist/index.html still the untouched build shell? (#542)
+ *
+ * The home route writes its capture to DIST itself (`outDir` in crawlRoute), so crawling
+ * `/` REPLACES the file this script reads as its shell. Within one process that is
+ * handled — main() caches the shell before crawling. Across processes it is not: a second
+ * `node scripts/prerender.mjs` without an intervening `pnpm build:web` reads the rendered
+ * homepage and serves it as the shell for every route.
+ *
+ * Every downstream symptom of that is silent:
+ *   - every route inherits HomePage's <Seo> metadata, so captures carry two real <title>s
+ *   - cleanPrerenderedHtml no-ops, because it strips a LITERAL `<title>${shellTitle}` that
+ *     a crawled shell no longer contains
+ *   - worst, the corruption defeats its own detector: crawlRoute treats a route as
+ *     rendered once `document.title !== SHELL_TITLE`, and a crawled shell's title already
+ *     differs — so the "title never left the shell" guard cannot fire and the run reports
+ *     success while writing wrong HTML
+ *
+ * Anchored on the shell title rather than, say, an empty #root: PRERENDER_URL and
+ * PRERENDER_SAMPLE make scoped re-runs a normal workflow, and the title is the one marker
+ * that is present in every clean build and absent from every crawled one.
+ */
+export function isCleanShell(html, shellTitle) {
+  // Comments are stripped first because index.html documents the shell title in prose
+  // right next to it ("<title> above is a fallback for routes without <Seo>"). A comment
+  // carrying the exact literal would otherwise satisfy this predicate on a crawled shell —
+  // and would mislead cleanPrerenderedHtml too, whose single `.replace()` takes the FIRST
+  // occurrence and would strip the comment's copy while leaving the real title behind.
+  return html.replace(/<!--[\s\S]*?-->/g, '').includes(`<title>${shellTitle}</title>`);
+}
+
 async function crawlRoute(browser, route) {
   let page;
   try {
@@ -178,25 +209,60 @@ async function crawlRoute(browser, route) {
   }
 }
 
-async function main() {
+/**
+ * Preflight, run before anything is announced or a browser is launched: return the build
+ * shell, or exit with an actionable message.
+ *
+ * Caching the shell here is what keeps the crawl correct — the home route writes its
+ * capture to DIST itself, so crawling `/` replaces this very file mid-run. Re-reading it
+ * per request would serve later routes a rendered homepage.
+ *
+ * The second check covers the same corruption across processes (#542): a re-run without an
+ * intervening `pnpm build:web` reads an index.html a PREVIOUS invocation already
+ * overwrote. That has to be fatal rather than best-effort, because every downstream
+ * symptom is silent — and worst, it disarms crawlRoute's own detector, which treats a
+ * route as rendered once `document.title !== SHELL_TITLE`. A crawled shell's title already
+ * differs, so the "title never left the shell" guard cannot fire and the run reports
+ * success while writing wrong HTML.
+ */
+async function loadBuildShell() {
   if (!existsSync(join(DIST, 'index.html'))) {
     console.error('[prerender] apps/web/dist not found — run `pnpm build:web` first');
     process.exit(1);
   }
-  const {staticRoutes, playstyleRoutes, cardRoutes} = await enumerateRoutes();
+  const shellHtml = await readFile(join(DIST, 'index.html'), 'utf8');
+  if (!isCleanShell(shellHtml, SHELL_TITLE)) {
+    console.error(
+      '[prerender] dist/index.html has already been crawled — the home route overwrites it.\n' +
+        '            Run `pnpm build:web` to restore a clean shell before re-running.',
+    );
+    process.exit(1);
+  }
+  return shellHtml;
+}
+
+/**
+ * Which routes this invocation crawls.
+ *
+ * `PRERENDER_URL` takes a single route and `PRERENDER_SAMPLE` takes a thin slice — both
+ * exist so a reproduction does not need the full 1,060-route crawl, and both are the
+ * workflow #542's guard protects.
+ */
+function selectRoutes({staticRoutes, playstyleRoutes, cardRoutes}, only, sample) {
+  if (only) return [only];
+  if (sample) return [...staticRoutes, ...playstyleRoutes.slice(0, 3), ...cardRoutes.slice(0, 5)];
+  return [...staticRoutes, ...playstyleRoutes, ...cardRoutes];
+}
+
+async function main() {
+  const shellHtml = await loadBuildShell();
   const only = process.env.PRERENDER_URL;
   const sample = Number(process.env.PRERENDER_SAMPLE || 0);
-  const routes = only
-    ? [only]
-    : sample
-      ? [...staticRoutes, ...playstyleRoutes.slice(0, 3), ...cardRoutes.slice(0, 5)]
-      : [...staticRoutes, ...playstyleRoutes, ...cardRoutes];
+  const routes = selectRoutes(await enumerateRoutes(), only, sample);
 
   console.log(
     `[prerender] ${routes.length} routes @ concurrency ${CONCURRENCY}${sample ? ' (SAMPLE)' : ''}`,
   );
-  // Cache the clean shell BEFORE any crawl overwrites dist/index.html (the home route).
-  const shellHtml = await readFile(join(DIST, 'index.html'), 'utf8');
   const server = await startServer(shellHtml);
   const browser = await chromium.launch();
 
