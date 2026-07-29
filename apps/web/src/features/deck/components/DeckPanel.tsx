@@ -13,9 +13,9 @@ import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING, Z_INDEX,
 /** Competitive Core deck size — the count badge + progress bar target. */
 const DECK_TARGET = 60;
 
-/** Fixed height (px) of the tabbed stats view. Fixed rather than content-driven so
- *  switching tabs never reflows the card list under it. */
-const STATS_ROW_HEIGHT = 200;
+/** Fixed height (px) of the stats row. Fixed rather than content-driven so switching
+ *  tabs never reflows the card list under it, and the curve chart has room to breathe. */
+const STATS_ROW_HEIGHT = 240;
 
 /** Which stats view the panel's tab strip is showing. */
 type StatsTab = 'curve' | 'profile';
@@ -396,18 +396,32 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
         {actions}
       </div>
 
-      {/* The deck's makeup, tabbed: the curve chart and the ink/inkable/type profile
-          that used to crowd the header row. Hidden until the deck has cards. */}
       {totalCopies(stats.costCurve) > 0 && (
-        <div style={{flexShrink: 0, borderBottom: `1px solid ${COLORS.surfaceBorder}`}}>
-          <TabList tabs={STATS_TABS} active={statsTab} onChange={setStatsTab} ariaLabel="Deck stats views" />
-          <div style={{height: STATS_ROW_HEIGHT, overflowY: 'auto'}}>
-            {statsTab === 'curve' ? (
-              <CostCurveStrip costCurve={stats.costCurve} costCurveByInk={stats.costCurveByInk} />
-            ) : (
-              <DeckProfile stats={stats} />
-            )}
+        <div style={{display: 'flex', height: STATS_ROW_HEIGHT, flexShrink: 0, borderBottom: `1px solid ${COLORS.surfaceBorder}`}}>
+          {/* Left cell: the deck's makeup, tabbed — the curve chart and the
+              ink/inkable/type profile that used to crowd the header row. */}
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              borderRight: `1px solid ${COLORS.surfaceBorder}`,
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 0,
+            }}>
+            <TabList tabs={STATS_TABS} active={statsTab} onChange={setStatsTab} ariaLabel="Deck stats views" />
+            <div style={{flex: 1, minHeight: 0, overflowY: 'auto'}}>
+              {statsTab === 'curve' ? (
+                <CostCurveStrip costCurve={stats.costCurve} costCurveByInk={stats.costCurveByInk} />
+              ) : (
+                <DeckProfile stats={stats} />
+              )}
+            </div>
           </div>
+          {/* Reserved: the deck-health cell lived here until the numeric advisor was
+              pulled (it led with a 0-100 score). Left empty on purpose until we know
+              what belongs in this slot — a rejected placeholder is worse than space. */}
+          <div style={{flex: 1, minWidth: 0}} />
         </div>
       )}
 
