@@ -50,12 +50,21 @@ describe('DeckPanel', () => {
     expect(screen.queryByText('None yet')).not.toBeInTheDocument();
   });
 
-  // The panel is the card list only: no Cards/Analysis tabs, and no delete button
-  // (removal is the stepper's − at one copy).
-  it('renders no view tabs and no per-row delete button', () => {
+  // Removal is the stepper's − at one copy; there is no separate delete affordance.
+  it('renders no per-row delete button', () => {
     renderPanel();
-    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', {name: /from deck/i})).not.toBeInTheDocument();
+  });
+
+  it('switches the stats view between the cost curve and the deck profile', () => {
+    renderPanel();
+    expect(screen.getByRole('tab', {name: /cost curve/i})).toHaveAttribute('aria-selected', 'true');
+    // Curve first: the profile's ink breakdown is not rendered yet.
+    expect(screen.queryByText('Inkable')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', {name: /profile/i}));
+    expect(screen.getByRole('tab', {name: /profile/i})).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('Inkable')).toBeInTheDocument();
   });
 
   it('opens details with the ids in rendered (type-grouped) order, not the given row order', () => {

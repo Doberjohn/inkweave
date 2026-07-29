@@ -6,16 +6,40 @@ import {DeckCardRow} from './DeckCardRow';
 import {CostCurveStrip} from './CostCurveStrip';
 import {totalCopies} from './costCurveColumns';
 import {previewGeometry} from './previewGeometry';
-import {ALL_INKS, COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING, Z_INDEX, blackRgba} from '../../../shared/constants';
-import {InkIcon} from '../../../shared/components/InkIcon';
-import {InkwellIcon} from '../../../shared/components/InkwellIcon';
+import {DeckProfile} from './DeckProfile';
+import {TabList} from '../../../shared/components/TabList';
+import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING, Z_INDEX, blackRgba} from '../../../shared/constants';
 
 /** Competitive Core deck size — the count badge + progress bar target. */
 const DECK_TARGET = 60;
 
-/** Fixed height (px) of the Cards-tab cost-curve + health row (#472). Fixed rather
- *  than content-driven so the cost-curve chart has room to breathe (Option C). */
-const STATS_ROW_HEIGHT = 240;
+/** Fixed height (px) of the tabbed stats view. Fixed rather than content-driven so
+ *  switching tabs never reflows the card list under it. */
+const STATS_ROW_HEIGHT = 200;
+
+/** Which stats view the panel's tab strip is showing. */
+type StatsTab = 'curve' | 'profile';
+
+function CurveIcon() {
+  return (
+    <svg width={15} height={15} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ProfileIcon() {
+  return (
+    <svg width={15} height={15} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 3s6 6.3 6 10a6 6 0 0 1-12 0c0-3.7 6-10 6-10z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+const STATS_TABS: ReadonlyArray<{id: StatsTab; label: string; icon: ReactNode}> = [
+  {id: 'curve', label: 'Cost curve', icon: <CurveIcon />},
+  {id: 'profile', label: 'Profile', icon: <ProfileIcon />},
+];
 
 /** A resolved deck line: the card plus how many copies are in the deck. */
 export interface DeckRow {
@@ -64,36 +88,25 @@ function rowGroup(card: LorcanaCard): RowGroup {
 }
 
 /**
- * Duels.ink-style deck info: the deck's ink symbols, total card count (colored by
- * legality), and inkable / uninkable counts. Replaces the old N/60 count badge.
- * Uses the shared InkIcon / InkwellIcon assets (per-ink SVGs + inkwell symbols).
+ * The deck's card count, colored by legality — the one figure worth a permanent
+ * slot in the header (it is checked after every add). The rest of the old info
+ * strip (ink symbols, inkable/uninkable) moved into the Profile tab.
  */
-function DeckInfoStrip({stats}: {stats: DeckStats}) {
-  const inks = ALL_INKS.filter((ink) => (stats.inkDistribution[ink] ?? 0) > 0);
+function DeckCardCount({stats}: {stats: DeckStats}) {
   const reached = stats.totalCards >= DECK_TARGET;
   const countColor = stats.isLegal ? COLORS.primary : reached ? COLORS.error : COLORS.text;
-  const uninkable = stats.totalCards - stats.inkableCount;
   return (
-    <div style={{display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.lg}px`}}>
-      {inks.length > 0 && (
-        <div style={{display: 'flex', gap: 3}}>
-          {inks.map((ink) => (
-            <InkIcon key={ink} ink={ink} size={20} />
-          ))}
-        </div>
-      )}
-      <span style={{color: countColor, fontWeight: 700, whiteSpace: 'nowrap'}}>
-        {stats.totalCards} <span style={{color: COLORS.textMuted, fontWeight: 500}}>cards</span>
-      </span>
-      <span title="Inkable cards" style={{display: 'flex', alignItems: 'center', gap: 4, color: COLORS.textMuted}}>
-        <InkwellIcon value="inkable" size={20} />
-        {stats.inkableCount}
-      </span>
-      <span title="Uninkable cards" style={{display: 'flex', alignItems: 'center', gap: 4, color: COLORS.textMuted}}>
-        <InkwellIcon value="uninkable" size={20} />
-        {uninkable}
-      </span>
-    </div>
+    <span
+      style={{
+        flexShrink: 0,
+        whiteSpace: 'nowrap',
+        color: countColor,
+        fontFamily: FONTS.body,
+        fontSize: `${FONT_SIZES.lg}px`,
+        fontWeight: 700,
+      }}>
+      {stats.totalCards} <span style={{color: COLORS.textMuted, fontWeight: 500}}>cards</span>
+    </span>
   );
 }
 
@@ -330,6 +343,7 @@ const groupHeader: CSSProperties = {
  * useDeck actions. Removal is deferred so the row can collapse out first.
  */
 export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement, onSetCore, actions, onOpenDetails}: DeckPanelProps) {
+  const [statsTab, setStatsTab] = useState<StatsTab>('curve');
   const [peek, setPeek] = useState<{card: LorcanaCard; anchor: DOMRect} | null>(null);
 
   /** The deck's card ids in the order the panel renders them (grouped by type). */
@@ -378,22 +392,22 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
           flexShrink: 0,
         }}>
         <DeckNameField name={name} onRename={onRename} />
-        <DeckInfoStrip stats={stats} />
+        <DeckCardCount stats={stats} />
+        {actions}
       </div>
 
-      {actions && (
-        <div style={{padding: `${SPACING.sm}px ${SPACING.md}px`, borderBottom: `1px solid ${COLORS.surfaceBorder}`, flexShrink: 0}}>{actions}</div>
-      )}
-
+      {/* The deck's makeup, tabbed: the curve chart and the ink/inkable/type profile
+          that used to crowd the header row. Hidden until the deck has cards. */}
       {totalCopies(stats.costCurve) > 0 && (
-        <div style={{display: 'flex', height: STATS_ROW_HEIGHT, flexShrink: 0, borderBottom: `1px solid ${COLORS.surfaceBorder}`}}>
-          <div style={{flex: 1, minWidth: 0, borderRight: `1px solid ${COLORS.surfaceBorder}`}}>
-            <CostCurveStrip costCurve={stats.costCurve} costCurveByInk={stats.costCurveByInk} />
+        <div style={{flexShrink: 0, borderBottom: `1px solid ${COLORS.surfaceBorder}`}}>
+          <TabList tabs={STATS_TABS} active={statsTab} onChange={setStatsTab} ariaLabel="Deck stats views" />
+          <div style={{height: STATS_ROW_HEIGHT, overflowY: 'auto'}}>
+            {statsTab === 'curve' ? (
+              <CostCurveStrip costCurve={stats.costCurve} costCurveByInk={stats.costCurveByInk} />
+            ) : (
+              <DeckProfile stats={stats} />
+            )}
           </div>
-          {/* Reserved: the deck-health cell lived here until the numeric advisor was
-              pulled (it led with a 0-100 score). Left empty on purpose until we know
-              what belongs in this slot — a rejected placeholder is worse than space. */}
-          <div style={{flex: 1, minWidth: 0}} />
         </div>
       )}
 
