@@ -14,9 +14,6 @@ const SYMBOL_SIZE = 40;
  */
 const TILE_MIN_WIDTH = 48;
 
-/** Symbol-to-count gap. Owner-set; sits between SPACING.sm (8) and md (12). */
-const SYMBOL_GAP = 10;
-
 /**
  * Card-type glyphs. Lorcana prints no type symbol on its cards, so these are the
  * conventional TCG readings rather than game iconography: a figure for Character,
@@ -70,16 +67,15 @@ const TYPE_TILES: ReadonlyArray<{type: CardType; icon: ReactNode}> = [
 function StatTile({symbol, count, title}: {symbol: ReactNode; count: number; title: string}) {
   const present = count > 0;
   return (
-    <div title={title} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SYMBOL_GAP}}>
+    <div title={title} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.sm}}>
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           height: SYMBOL_SIZE,
-          // Dim the whole tile when the deck has none, so absence reads at a glance.
+          // textDim alone carries "none of these" — no second opacity mechanism.
           color: present ? COLORS.textMuted : COLORS.textDim,
-          opacity: present ? 1 : 0.45,
         }}>
         {symbol}
       </div>
@@ -138,8 +134,8 @@ export function DeckProfile({stats}: {stats: DeckStats}) {
         padding: `${SPACING.md}px ${SPACING.md}px`,
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-evenly',
-        gap: SPACING.sm,
+        justifyContent: 'space-around',
+        gap: SPACING.xl,
       }}>
       <TileRow>
         {inks.map((ink) => (
