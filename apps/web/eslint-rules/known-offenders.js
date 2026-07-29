@@ -191,21 +191,38 @@ export const KNOWN_OFFENDERS = {
   // by the #511 Wave-2 ruling (parked-token adoption).
   'no-raw-z-index': [],
   // 23 files, 54 violations at seeding
+  // RE-SEEDED 2026-07-29 when no-raw-easing became a string scan: 14 files -> 23.
+  // This is the ONE sanctioned way the ledger grows, and only because the RULE
+  // widened, not because drift did. Every added entry is pre-enforcement code the
+  // property-shaped rule could not see (ternary values, hoisted consts, el.style
+  // assignments, injected cssText) -- measured with the ledger emptied and all 47
+  // reported lines hand-inspected. BrowseToolbar.tsx DROPS OUT: it already uses
+  // ${EASING.snappy} and its old entry was stale, so the re-seed drains one.
+  // Normal shrink-only discipline resumes from here.
   'no-raw-easing': [
-    'src/features/cards/components/BrowseToolbar.tsx', // x1
+    'src/features/deck/components/QuantityStepper.tsx', // x1 (ternary)
     'src/features/reveals/CardSlot.tsx', // x1
     'src/features/reveals/InkBoard.tsx', // x1
     'src/features/reveals/RarityBreakdown.tsx', // x1
+    'src/features/reveals/RevealsPromoCard.tsx', // x1 (injected cssText)
     'src/features/reveals/WhatsNewSection.tsx', // x1
+    'src/features/synergies/components/CardOverviewModal.tsx', // x7 (hoisted const + el.style)
     'src/features/synergies/components/CommunityEmptyState.tsx', // x1
-    'src/features/synergies/components/MobileComparisonView.tsx', // x4
+    'src/features/synergies/components/MobileComparisonView.tsx', // x5 (hoisted const)
+    'src/features/synergies/components/MobileLightbox.tsx', // x1 (hoisted const)
     'src/features/synergies/components/RoleTileRow.tsx', // x3
     'src/features/synergies/components/SynergyCard.tsx', // x1
+    'src/features/voting/components/InDepthVoteForm.tsx', // x1 (ternary)
+    'src/features/voting/components/OptionPicker.tsx', // x2 (ternary)
+    'src/features/voting/components/PairDisplay.tsx', // x2 (ternary)
     'src/features/voting/components/PairStack.tsx', // x1
     'src/features/voting/components/QuickVoteControl.tsx', // x6
+    'src/features/voting/components/ScorePicker.tsx', // x1 (ternary)
     'src/shared/components/CardImage.tsx', // x1
     'src/shared/components/ConnectionGroup.tsx', // x5
     'src/shared/components/HeroSection.tsx', // x1
+    'src/shared/components/MobileBottomNav.tsx', // x2 (injected cssText)
+    'src/shared/components/Sparkles.tsx', // x1
   ],
   // 0 files, 0 violations at seeding
   'no-raw-spacing': [

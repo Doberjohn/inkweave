@@ -235,33 +235,30 @@ const noLegacyGold = makeMemberRule({
     'Legacy gold. COLORS.primary (#ffb900) is the one brand gold — build glows/rings from SHADOWS.glowSm/Md/Lg and GOLD_GLOW.*, not primary500/600/700 (one-gold ruling, 2026-07-22).',
 });
 
-/** Transitions use the EASING spring tokens, not keyword easings. */
-const EASING_PROPS = new Set(['transition', 'animation', 'transitionTimingFunction', 'animationTimingFunction']);
-const EASE_RE = /\b(ease(?:-in|-out|-in-out)?|cubic-bezier\s*\()/;
-const noRawEasing = {
-  meta: {
-    type: 'problem',
-    docs: {description: 'Use EASING.snappy/bounce/smooth instead of ease keywords or raw cubic-bezier'},
-    schema: [],
-  },
-  create(context) {
-    if (isExempt(context, TEST_EXEMPT) || isKnownOffender(context, 'no-raw-easing')) return {};
-    return {
-      Property(node) {
-        if (!EASING_PROPS.has(keyName(node))) return;
-        forEachStringChunk(node.value, (chunk, text) => {
-          if (EASE_RE.test(text)) {
-            context.report({
-              node: chunk,
-              message:
-                'Keyword/bezier easing. Use the spring tokens: EASING.snappy (hover/fast), EASING.bounce (selection/press), EASING.smooth (fades/progress) (#508).',
-            });
-          }
-        });
-      },
-    };
-  },
-};
+/**
+ * Transitions use the EASING spring tokens, not keyword easings.
+ *
+ * SCANS STRINGS rather than style properties. The original property-shaped
+ * version caught roughly one violation in four: given the identical value,
+ * `{transition: 'opacity 200ms ease-out'}` reported, while the ternary
+ * `{transition: on ? '…' : 'none'}`, a hoisted `const EASE = '…'`, and
+ * `el.style.transition = '…'` all passed silently — and the ternary is this
+ * repo's idiomatic conditional-animation form. A string scan sees all four
+ * because it ignores syntactic position, and it reaches injected cssText
+ * template literals for free.
+ *
+ * The duration guard is needed ONLY for the bare `ease` keyword, which is also
+ * an English word ("ease the transition"); `cubic-bezier(` and the hyphenated
+ * forms are unambiguous CSS on their own.
+ */
+const noRawEasing = makeStringScanRule({
+  name: 'no-raw-easing',
+  description: 'Use EASING.snappy/bounce/smooth instead of ease keywords or raw cubic-bezier',
+  re: /cubic-bezier\s*\(|\b(?:ease-in-out|ease-out|ease-in)\b|\d\s*m?s\b[^;]*\bease\b/,
+  exempt: TEST_EXEMPT,
+  message:
+    'Keyword/bezier easing. Use the spring tokens: EASING.snappy (hover/fast), EASING.bounce (selection/press), EASING.smooth (fades/progress) (#508).',
+});
 
 /** backdrop-filter is banned outright: WebKit continuous-repaint E2E trap (#444/#445). */
 const BACKDROP_MESSAGE =

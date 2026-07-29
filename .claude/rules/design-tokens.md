@@ -24,7 +24,9 @@ This needed a third rule shape (`makeMemberRule`) because a deprecated *token* i
 
 ## The grandfather ledger
 
-`apps/web/eslint-rules/known-offenders.js` lists pre-enforcement files per rule. It ONLY SHRINKS: when you touch a listed file, converge its violations to tokens and remove its entry. Never add entries. The value gate's baseline (`scripts/known-design-values.json`) works the same way — counts may only decrease (`--update-baseline` after shrinking).
+`apps/web/eslint-rules/known-offenders.js` lists pre-enforcement files per rule. It ONLY SHRINKS: when you touch a listed file, converge its violations to tokens and remove its entry. Never add entries.
+
+**The one sanctioned exception is a RULE widening.** When a rule's visitor changes shape it exposes pre-existing code it could never see, and its ledger must be re-seeded from a measured run — that growth is the rule catching up, not drift advancing. It happened once, to `no-raw-easing` (2026-07-29, 14 → 23 files). Requirements: measure with the ledger emptied, hand-inspect every reported line for false positives, and say so in the ledger comment. Shrink-only resumes immediately after. The value gate's baseline (`scripts/known-design-values.json`) works the same way — counts may only decrease (`--update-baseline` after shrinking).
 
 ## The micro-pattern consts (#511)
 
