@@ -35,23 +35,10 @@ export function CostCurveStrip({costCurve, costCurveByInk}: CostCurveStripProps)
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
-        // 15px top/sides, 8px bottom (per design): title sits high, the chart body fills
-        // the rest of the fixed-height row, axis grounded just above the bottom padding.
+        // The tab strip above names this view, so the chart carries no visible title;
+        // `aria-label` keeps the section named for assistive tech.
         padding: '15px 15px 8px 15px',
       }}>
-      <div
-        style={{
-          fontFamily: FONTS.body,
-          fontSize: `${FONT_SIZES.md}px`,
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          color: COLORS.textMuted,
-          marginBottom: SPACING.lg,
-        }}>
-        Cost curve
-      </div>
-
       {/* flex:1 lets the chart grow to fill the section height (min CHART_HEIGHT) so the
           bars scale with the row instead of leaving a void, and the axis below stays
           grounded just above the bottom padding. Bar heights are a % of this area. */}
