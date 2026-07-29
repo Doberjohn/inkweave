@@ -16,7 +16,11 @@ export const INK_COLORS: Record<Ink, {bg: string; text: string; border: string}>
 // Font families
 export const FONTS = {
   body: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif",
-  hero: "'Tinos', 'Georgia', serif",
+  // Resolves to the `--font-hero` custom property declared in index.css, so the
+  // app's serif is swapped in ONE place instead of hunting 18 files (and the dev
+  // font switcher can trial candidates at runtime). Safe as a var(): every
+  // consumer puts this into CSS (a style prop or a cssText string), never canvas.
+  hero: "var(--font-hero, 'Tinos', 'Georgia', serif)",
 } as const;
 
 // Layout constants

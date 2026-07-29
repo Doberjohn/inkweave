@@ -1,6 +1,7 @@
 import {useEffect, useRef, useState} from 'react';
 import {Outlet, useLocation} from 'react-router-dom';
 import {Analytics} from '@vercel/analytics/react';
+import {FontSwitcher} from './shared/components/FontSwitcher';
 import {SpeedInsights} from '@vercel/speed-insights/react';
 import {SkeletonTheme} from 'react-loading-skeleton';
 import {RevealsPromoCard, useRevealPhase, type RevealPhase} from './features/reveals';
@@ -117,6 +118,8 @@ export function AppLayout() {
           </CardDataProvider>
         </SkeletonTheme>
       </SessionProvider>
+      {/* Hero-font trial (temporary): dev-only, tree-shaken from production. */}
+      {import.meta.env.DEV && <FontSwitcher />}
       <Analytics />
       <SpeedInsights />
     </ErrorBoundary>
