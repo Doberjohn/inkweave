@@ -287,4 +287,65 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/FilterContent.tsx', // x2
     'src/shared/components/InkwellFilterGroup.tsx', // x1
   ],
+
+  // Seeded 2026-07-29 with the DURATION ruling: 47 files, 127 violations.
+  // Bounded to the UI-transition band by the PATTERN (sub-second decimals and
+  // <=3-digit ms), so decorative infinite loops (reveal-floatY 4s, idv-shimmer
+  // 2.5s) and narrative choreography (1000ms) never appear here at all -- a
+  // ledger entry promises convergence, and those should never converge.
+  // NOTE the kit's own components are listed (CtaButton, IconButton, Chip,
+  // TabList, SortSelect): the design system was hand-picking its own durations,
+  // which is the best argument for the token. Converge those first.
+  // A few entries are legitimately bespoke (a 0.7s decorative stagger delay, a
+  // 500ms progress fill). Resolve those by NAMING a local const, as the FLIP
+  // timings already do -- do not force them onto fast/base/slow.
+  'no-raw-duration': [
+    'src/features/admin-analytics/DayGroup.tsx', // x1
+    'src/features/admin-analytics/WebAnalyticsView.tsx', // x2
+    'src/features/cards/components/BrowseToolbar.tsx', // x2
+    'src/features/cards/components/CardTile.tsx', // x1
+    'src/features/deck/components/DeckCardRow.tsx', // x6
+    'src/features/deck/components/DeckPanel.tsx', // x2
+    'src/features/deck/components/QuantityStepper.tsx', // x4
+    'src/features/deck/components/ScoreGauge.tsx', // x1
+    'src/features/reveals/CardSlot.tsx', // x1
+    'src/features/reveals/InkTrackerTile.tsx', // x1
+    'src/features/reveals/RarityBreakdown.tsx', // x1
+    'src/features/reveals/RevealsPromoCard.tsx', // x2
+    'src/features/reveals/WhatsNewSection.tsx', // x1
+    'src/features/synergies/components/CardDetailPanel.tsx', // x4
+    'src/features/synergies/components/CardOverviewModal.tsx', // x16
+    'src/features/synergies/components/CommunityEmptyState.tsx', // x1
+    'src/features/synergies/components/MechanicsBottomSheet.tsx', // x2
+    'src/features/synergies/components/MechanicsButton.tsx', // x2
+    'src/features/synergies/components/MobileComparisonView.tsx', // x1
+    'src/features/synergies/components/RoleTileRow.tsx', // x3
+    'src/features/synergies/components/SynergyCard.tsx', // x2
+    'src/features/synergies/components/SynergyGroup.tsx', // x1
+    'src/features/voting/components/DistributionBar.tsx', // x1
+    'src/features/voting/components/InDepthVoteForm.tsx', // x5
+    'src/features/voting/components/OptionPicker.tsx', // x3
+    'src/features/voting/components/PairDisplay.tsx', // x2
+    'src/features/voting/components/PairStack.tsx', // x1
+    'src/features/voting/components/QuickVoteControl.tsx', // x8
+    'src/features/voting/components/ScorePicker.tsx', // x4
+    'src/features/voting/components/VoteConfirmation.tsx', // x2
+    'src/features/voting/components/VotingCardDisplay.tsx', // x4
+    'src/pages/InDepthVotePage.tsx', // x7
+    'src/shared/components/BackLink.tsx', // x1
+    'src/shared/components/CardImage.tsx', // x1
+    'src/shared/components/Chip.tsx', // x1
+    'src/shared/components/CompactHeader.tsx', // x7
+    'src/shared/components/ConnectionGroup.tsx', // x5
+    'src/shared/components/CtaButton.tsx', // x1
+    'src/shared/components/FilterButton.tsx', // x3
+    'src/shared/components/HeroSection.tsx', // x1
+    'src/shared/components/IconButton.tsx', // x1
+    'src/shared/components/LinkButton.tsx', // x1
+    'src/shared/components/MobileBottomNav.tsx', // x2
+    'src/shared/components/SearchAutocomplete.tsx', // x1
+    'src/shared/components/SearchBottomSheet.tsx', // x4
+    'src/shared/components/SortSelect.tsx', // x2
+    'src/shared/components/TabList.tsx', // x2
+  ],
 };

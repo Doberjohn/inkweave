@@ -260,6 +260,32 @@ const noRawEasing = makeStringScanRule({
     'Keyword/bezier easing. Use the spring tokens: EASING.snappy (hover/fast), EASING.bounce (selection/press), EASING.smooth (fades/progress) (#508).',
 });
 
+/**
+ * The other half of every transition (2026-07-29 ruling). EASING guarded the
+ * curve while the duration in front of it went untokenized: 18 distinct values
+ * across 48 files, three of the top four spelled BOTH ways (`0.25s` and `250ms`).
+ *
+ * BOUNDED TO THE UI-TRANSITION BAND by the pattern itself: sub-second decimals
+ * (`0.2s`) and at most three digits of ms (`200ms`). Anything >= 1s is a
+ * decorative infinite loop (`reveal-floatY 4s`, `idv-shimmer 2.5s`) or a
+ * narrative choreography beat (`1000ms`), which the fast/base/slow scale must
+ * NOT swallow — so they never match, rather than sitting in a ledger that would
+ * wrongly promise convergence. A `${FLIP_DURATION}ms` template is likewise
+ * invisible: the number lives in an expression, and a named const is the goal.
+ *
+ * Its OWN ledger, not no-raw-easing's: every file ledgered for easing also
+ * carries raw durations, so sharing a key would make this rule dead on arrival
+ * in exactly the 23 files that need it most.
+ */
+const noRawDuration = makeStringScanRule({
+  name: 'no-raw-duration',
+  description: 'Use DURATION.fast/base/slow for transition and animation timings',
+  re: /(?:^|[\s,(:])(?:0?\.\d+s|\d{1,3}ms)(?=[\s,)]|$)/,
+  exempt: TEST_EXEMPT,
+  message:
+    'Raw transition duration. Use DURATION.fast (150, hover/press), DURATION.base (200, the default) or DURATION.slow (300, panels/expands) — decorative loops and FLIP choreography stay literal (2026-07-29 ruling).',
+});
+
 /** backdrop-filter is banned outright: WebKit continuous-repaint E2E trap (#444/#445). */
 const BACKDROP_MESSAGE =
   'backdrop-filter hangs WebKit E2E (#444/#445). Use a solid scrim instead: COLORS.scrim / COLORS.scrimHeavy.';
@@ -378,6 +404,7 @@ export const inkweave = {
     'no-raw-radius': noRawRadius,
     'no-raw-z-index': noRawZIndex,
     'no-raw-easing': noRawEasing,
+    'no-raw-duration': noRawDuration,
     'no-backdrop-filter': noBackdropFilter,
     'no-raw-spacing': noRawSpacing,
     'no-adhoc-buttons': noAdhocButtons,

@@ -89,6 +89,31 @@ export const EASING = {
   smooth: 'linear(0, 0.064, 0.178, 0.324, 0.478, 0.621, 0.74, 0.833, 0.902, 0.95, 0.979, 0.995, 1)',
 } as const;
 
+/**
+ * Transition durations, in milliseconds (2026-07-29 ruling). EASING tokenized
+ * the CURVE; this is the other half of every transition, which was 18 distinct
+ * values across 48 files — and three of the top four were spelled BOTH ways
+ * (`0.25s` x20 alongside `250ms` x11). Milliseconds is the one spelling, to
+ * match the `FLIP_DURATION` / `*_MS` consts already in the code.
+ *
+ * Three steps, deliberately. The 31 uses of 250ms converge to `base` or `slow`
+ * when their file is next touched, on the same principle as the 4-multiple
+ * spacing ruling: a step nobody can feel is a choice nobody should have to make.
+ *
+ * SCOPE: UI transitions and hovers only. Decorative infinite animations
+ * (`reveal-floatY 4s`, `idv-shimmer 2.5s`) and FLIP/handoff choreography
+ * (480ms, 1000ms) are cross-component or narrative timings, not system values —
+ * they stay literal and named at their call site.
+ */
+export const DURATION = {
+  /** Hover, press, small state flips. */
+  fast: 150,
+  /** The default: most transitions and fades. */
+  base: 200,
+  /** Larger moves — panels, expands, progress. */
+  slow: 300,
+} as const;
+
 // Typography. The display tier (2026-07-22 ruling) covers hero numerals and
 // display headings above the 22px body ceiling; raw 30/32/44 converge to the
 // nearest step when touched. The dev-only banner tool's 68 stays exempt.

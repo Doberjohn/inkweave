@@ -70,6 +70,7 @@ export default tseslint.config(
       'inkweave/no-raw-radius': 'error',
       'inkweave/no-raw-z-index': 'error',
       'inkweave/no-raw-easing': 'error',
+      'inkweave/no-raw-duration': 'error',
       'inkweave/no-backdrop-filter': 'error',
       'inkweave/no-adhoc-buttons': 'error',
       'inkweave/no-unshelled-dialogs': 'error',
