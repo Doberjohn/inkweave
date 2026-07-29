@@ -237,4 +237,37 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/InDepthVoteForm.tsx', // x2
     'src/features/voting/components/VoteStatusBanner.tsx', // x1
   ],
+
+  // 28 files, 60 violations at seeding (2026-07-29). The one-gold ruling
+  // predates this rule by a week, so these are pre-enforcement drift, not new.
+  'no-legacy-gold': [
+    'src/features/cards/components/BrowseToolbar.tsx', // x1
+    'src/features/reveals/RevealsPromoCard.tsx', // x3
+    'src/features/reveals/WhatsNewSection.tsx', // x1
+    'src/features/synergies/components/CardDetailPanel.tsx', // x6
+    'src/features/synergies/components/CardOverviewModal.tsx', // x5
+    'src/features/synergies/components/ColumnHeader.tsx', // x3
+    'src/features/synergies/components/DeltaPanel.tsx', // x1
+    'src/features/synergies/components/EngineColumn.tsx', // x1
+    'src/features/synergies/components/MobileComparisonView.tsx', // x5
+    'src/features/synergies/components/RoleTileRow.tsx', // x1
+    'src/features/synergies/components/SynergyGroup.tsx', // x1
+    'src/features/voting/components/OptionPicker.tsx', // x1
+    'src/features/voting/components/PairDisplay.tsx', // x4
+    'src/features/voting/components/QuickVoteControl.tsx', // x1
+    'src/features/voting/components/VoteConfirmation.tsx', // x2
+    'src/features/voting/components/VoteToast.tsx', // x1
+    'src/features/voting/components/VotingCardDisplay.tsx', // x2
+    'src/pages/ImageAdminPage.tsx', // x1
+    'src/pages/InDepthVotePage.tsx', // x6
+    'src/pages/NotFoundPage.tsx', // x3
+    'src/pages/PlaystyleDetailPage.tsx', // x1
+    'src/pages/RevealAdminPage.tsx', // x1
+    'src/shared/components/BackLink.tsx', // x1
+    'src/shared/components/CardLightbox.tsx', // x3
+    'src/shared/components/ErrorBoundary.tsx', // x1
+    'src/shared/components/FilterButton.tsx', // x1
+    'src/shared/components/FilterContent.tsx', // x2
+    'src/shared/components/InkwellFilterGroup.tsx', // x1
+  ],
 };

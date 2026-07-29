@@ -8,13 +8,19 @@ paths:
 
 Two mechanisms enforce the token system; both run automatically:
 
-1. **`inkweave/*` ESLint rules** (`apps/web/eslint-rules/index.js`, per-commit + CI): no raw hex colors, `rgba()`, font-family strings, font sizes, radii, app-layer z-indexes (≥50), keyword/bezier easings, or `backdrop-filter` (WebKit E2E trap, #444/#445). Every message names the replacement token. **`no-adhoc-buttons`** (#509) additionally blocks any `<button style={…}>` in feature code: buttons come from the kit (`CtaButton` filled/ghost/neutral/pill, `LinkButton`, `TabList`, `IconButton`, `FiltersButton`, `Chip`); the exempt domain families (steppers, vote pickers, tile toggles) are listed in the rule itself.
+1. **`inkweave/*` ESLint rules** (`apps/web/eslint-rules/index.js`, per-commit + CI): no raw hex colors, `rgba()`, font-family strings, font sizes, radii, app-layer z-indexes (≥50), keyword/bezier easings, `backdrop-filter` (WebKit E2E trap, #444/#445), or **legacy gold** (`no-legacy-gold`: `COLORS.primary500/600/700`). Every message names the replacement token. **`no-adhoc-buttons`** (#509) additionally blocks any `<button style={…}>` in feature code: buttons come from the kit (`CtaButton` filled/ghost/neutral/pill, `LinkButton`, `TabList`, `IconButton`, `FiltersButton`, `Chip`); the exempt domain families (steppers, vote pickers, tile toggles) are listed in the rule itself.
 2. **Value-grep gate** (`check:design` → `scripts/check-design-tokens.mjs`, pre-push + CI): greps the LITERAL values of the tokens (theme hexes, EASING strings, font names) across ts/tsx/css/html — it catches `cssText` strings and quoted shorthands the AST cannot see. `'Barlow'` and `backdrop-filter:` usage are zero-tolerance tripwires.
 
 ## When a rule fires on you
 
 - Use the token it names: `COLORS.*` / `INK_COLORS.*` / `TIER_COLORS.*`, `hexRgba(COLORS.x, a)` / `blackRgba` / `whiteRgba` / `COLORS.scrim`, `FONTS.*`, `FONT_SIZES.*` (display tier exists: `displaySm/Md/Lg`), `RADIUS.*` (incl. `pill`), `Z_INDEX.*` (incl. `toast`/`swUpdate`), `EASING.snappy` (hover/fast) / `bounce` (selection/press) / `smooth` (fades/progress), `SHADOWS.*`.
 - If NO token fits, that is a design-system gap: raise it with the owner, do not inline the value. Scale additions require a ruling, not a headcount (census-vs-law).
+
+## One gold (`no-legacy-gold`)
+
+`COLORS.primary` (`#ffb900`) is THE brand gold. `primary500`/`600`/`700` are the legacy accent (`#d4af37`; 500 and 600 are the SAME hex) and are ledgered, not legal — 28 files / 60 refs at seeding. `primary100`/`200` are gold-tinted dark BACKGROUNDS and stay legal.
+
+This needed a third rule shape (`makeMemberRule`) because a deprecated *token* is invisible to both existing mechanisms by construction: `no-raw-hex-colors` scans string literals and a `MemberExpression` is not one, and the value-grep gate greps hexes parsed out of `theme.ts` while a token reference carries no hex. The ruling was prose-only from 2026-07-22 until 2026-07-29 and it was **losing** — commit `f541458f`, three days after milestone #4 merged, net-added a fresh reference. A ruling with no mechanism is a suggestion.
 
 ## The grandfather ledger
 

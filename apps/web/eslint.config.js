@@ -64,6 +64,7 @@ export default tseslint.config(
     rules: {
       'inkweave/no-raw-hex-colors': 'error',
       'inkweave/no-raw-rgba': 'error',
+      'inkweave/no-legacy-gold': 'error',
       'inkweave/no-literal-font-family': 'error',
       'inkweave/no-raw-font-size': 'error',
       'inkweave/no-raw-radius': 'error',

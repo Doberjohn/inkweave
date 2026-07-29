@@ -54,7 +54,13 @@ The locked 4-color text palette maps to these exact exports (all WCAG AA on `#0d
 | Description / educational | `#c8c8d8` | `COLORS.descriptionText` | ~12.4:1 |
 | Placeholder / empty-state only | `#aaaaaa` | (no token; literal) | ~9.0:1 |
 
-Note the **two golds**: `COLORS.primary` is `#ffb900` (used for CTAs, active nav, the focus outline is a third value `#d4af37`); `COLORS.primary500` is `#d4af37` (labelled "Brand, accents, active states, CTAs" in the Typography story). Both are AA. Use `COLORS.primary` for interactive gold (links/CTA) and `primary500` where you want the slightly softer brand gold. Do not introduce new hex values; the multi-pass audit rule (CLAUDE.md "Color/Contrast") checks every `color:` against this palette.
+> **Superseded 2026-07-22 by the one-gold ruling.** This section used to say to
+> pick between two golds. There is now exactly ONE: `COLORS.primary` (`#ffb900`).
+> `primary500`/`600`/`700` (`#d4af37`, and 500 and 600 are the same hex) are the
+> LEGACY accent, grandfathered only — `inkweave/no-legacy-gold` blocks new uses.
+> Build glows and rings from `SHADOWS.glowSm/Md/Lg` and `GOLD_GLOW.*`.
+
+Both golds are AA, so the contrast table above stays accurate as a reference. Do not introduce new hex values; the multi-pass audit rule (CLAUDE.md "Color/Contrast") checks every `color:` against this palette.
 
 Recommended legal-prose color assignment:
 - `<h1>` page title: `COLORS.text` (`#e8e8e8`).

@@ -58,6 +58,12 @@ function forEachStringChunk(node, cb) {
   }
 }
 
+/** Member name for both `X.y` and the computed `X['y']`; undefined otherwise. */
+function memberName(node) {
+  if (node.computed) return node.property.type === 'Literal' ? String(node.property.value) : undefined;
+  return node.property.type === 'Identifier' ? node.property.name : undefined;
+}
+
 /** Property key name for both identifier and string keys. */
 function keyName(prop) {
   if (prop.key?.type === 'Identifier') return prop.key.name;
@@ -97,6 +103,27 @@ function makePropertyRule({name, description, props, valueTest, message, exempt 
         Property(node) {
           if (!propSet.has(keyName(node))) return;
           if (valueTest(node.value)) context.report({node: node.value, message});
+        },
+      };
+    },
+  };
+}
+
+/**
+ * A rule that flags reads of `Object.prop` for a named set of props. The third
+ * shape the plugin needs: a deprecated TOKEN is neither a string literal nor a
+ * style-property value, so neither existing factory can see it.
+ */
+function makeMemberRule({name, description, object, properties, message, exempt = []}) {
+  const propSet = new Set(properties);
+  return {
+    meta: {type: 'problem', docs: {description}, schema: []},
+    create(context) {
+      if (isExempt(context, exempt) || isKnownOffender(context, name)) return {};
+      return {
+        MemberExpression(node) {
+          if (node.object.type !== 'Identifier' || node.object.name !== object) return;
+          if (propSet.has(memberName(node))) context.report({node, message});
         },
       };
     },
@@ -183,6 +210,29 @@ const noRawSpacing = makePropertyRule({
   valueTest: isNonZeroNumber,
   exempt: TEST_EXEMPT,
   message: 'Raw spacing. Use SPACING.* (xxs..xxxl; 0 is always allowed) (#508).',
+});
+
+/**
+ * The one-gold ruling (2026-07-22): COLORS.primary (#ffb900) is THE brand gold.
+ * primary500/600/700 are the legacy accent, grandfathered only — and 500 and 600
+ * are the SAME hex (#d4af37), a duplicate nobody had a mechanism to notice.
+ *
+ * This needs its own rule shape because BOTH existing mechanisms are blind to it
+ * by construction: no-raw-hex-colors scans string literals and a MemberExpression
+ * is not one, while the value-grep gate greps hexes parsed out of theme.ts and a
+ * token reference carries no hex. The ruling was prose-only until now, and it was
+ * losing ground — a post-ruling commit net-added a fresh reference.
+ *
+ * primary100/200 are gold-tinted dark BACKGROUNDS, not accents, and stay legal.
+ */
+const noLegacyGold = makeMemberRule({
+  name: 'no-legacy-gold',
+  description: 'Use COLORS.primary (the one brand gold); primary500/600/700 are the grandfathered legacy accent',
+  object: 'COLORS',
+  properties: ['primary500', 'primary600', 'primary700'],
+  exempt: COLOR_EXEMPT,
+  message:
+    'Legacy gold. COLORS.primary (#ffb900) is the one brand gold — build glows/rings from SHADOWS.glowSm/Md/Lg and GOLD_GLOW.*, not primary500/600/700 (one-gold ruling, 2026-07-22).',
 });
 
 /** Transitions use the EASING spring tokens, not keyword easings. */
@@ -325,6 +375,7 @@ export const inkweave = {
   rules: {
     'no-raw-hex-colors': noRawHexColors,
     'no-raw-rgba': noRawRgba,
+    'no-legacy-gold': noLegacyGold,
     'no-literal-font-family': noLiteralFontFamily,
     'no-raw-font-size': noRawFontSize,
     'no-raw-radius': noRawRadius,
