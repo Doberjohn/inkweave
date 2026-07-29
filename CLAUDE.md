@@ -269,7 +269,7 @@ pnpm test:supabase    # Run Supabase integration tests (requires .env.local)
 Dark fantasy theme inspired by Lorcana:
 - Background: #0d0d14 (near black)
 - Surface: #1a1a2e (dark purple); elevation = LIGHTNESS (surfaceRaised/Floating/Overlay), shadows are secondary cues
-- Primary: #ffb900 (THE brand gold — glows/rings via `hexRgba`/`SHADOWS`); #d4af37 (`primary500`) is the legacy accent, grandfathered only
+- Primary: #ffb900 (THE brand gold — glows/rings via `hexRgba`/`SHADOWS`); #d4af37 (`primary500`/`600`, the same hex) is the legacy accent, grandfathered only and now enforced by `inkweave/no-legacy-gold`
 - Text: #e8e8e8 (off-white)
 - Glowing borders on hover; token source of truth is `apps/web/src/shared/constants/theme.ts` (2026-07-22 rulings: milestone #4)
 
