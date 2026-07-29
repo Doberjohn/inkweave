@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {CtaButton, DialogShell} from '../../../shared/components';
-import {CAP_LABEL_XS, COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
 import type {DeckCard, LorcanaCard} from '../types';
 import {parseDecklist, resolveDecklist} from '../deckTransfer';
 
@@ -15,10 +15,8 @@ interface ImportDeckDialogProps {
   currentCardCount: number;
 }
 
-/** What the import produced, shown after the user commits. */
+/** Only the lines Inkweave could not use — a clean import closes without a receipt. */
 interface ImportResult {
-  importedCards: number;
-  importedCopies: number;
   skipped: string[];
 }
 
@@ -70,28 +68,24 @@ function PasteStep({
   );
 }
 
-/** The outcome, including anything Inkweave could not match. */
-function ResultStep({result}: {result: ImportResult}) {
+/**
+ * Shown ONLY when lines could not be used — the deck itself is the receipt for a
+ * clean import, so success closes silently.
+ */
+function SkippedStep({result}: {result: ImportResult}) {
   return (
     <>
-      <p style={{color: COLORS.text, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.base}px`, marginTop: SPACING.xs}}>
-        Imported {result.importedCopies} cards ({result.importedCards} different).
+      <p style={{color: COLORS.textMuted, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.sm}px`, marginTop: SPACING.xs}}>
+        The rest of the deck was imported. Inkweave covers the Core format (sets 9 and up),
+        and these lines matched no Core card:
       </p>
-      {result.skipped.length > 0 && (
-        <div style={{marginTop: SPACING.md}}>
-          <div style={CAP_LABEL_XS}>Skipped {result.skipped.length}</div>
-          <p style={{color: COLORS.textMuted, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.sm}px`, marginTop: SPACING.xs}}>
-            Inkweave covers the Core format (sets 9 and up). These lines matched no Core card:
-          </p>
-          <ul style={{margin: `${SPACING.sm}px 0 0`, paddingLeft: SPACING.lg, color: COLORS.textMuted, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.sm}px`}}>
-            {result.skipped.map((line) => (
-              <li key={line} style={{marginBottom: 2}}>
-                {line}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <ul style={{margin: `${SPACING.md}px 0 0`, paddingLeft: SPACING.lg, color: COLORS.textMuted, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.sm}px`}}>
+        {result.skipped.map((line) => (
+          <li key={line} style={{marginBottom: 2}}>
+            {line}
+          </li>
+        ))}
+      </ul>
     </>
   );
 }
@@ -116,11 +110,15 @@ export function ImportDeckDialog({isOpen, onClose, pool, onImport, currentCardCo
     const {lines, unparsed} = parseDecklist(text);
     const {cards, unmatched} = resolveDecklist(lines, pool);
     onImport(cards);
-    setResult({
-      importedCards: cards.length,
-      importedCopies: cards.reduce((n, c) => n + c.quantity, 0),
-      skipped: [...unmatched, ...unparsed],
-    });
+
+    // A clean import needs no receipt — the deck list itself shows the result. Only
+    // stay open when there is something the user would otherwise not know about.
+    const skipped = [...unmatched, ...unparsed];
+    if (skipped.length === 0) {
+      close();
+      return;
+    }
+    setResult({skipped});
   };
 
   return (
@@ -131,15 +129,15 @@ export function ImportDeckDialog({isOpen, onClose, pool, onImport, currentCardCo
       size="md"
       panelStyle={{padding: SPACING.xl, fontFamily: FONTS.body}}>
       <h2 style={{fontFamily: FONTS.hero, fontSize: FONT_SIZES.xxl, color: COLORS.text, margin: 0}}>
-        {result ? 'Deck imported' : 'Import a deck'}
+        {result ? `Skipped ${result.skipped.length} ${result.skipped.length === 1 ? 'card' : 'cards'}` : 'Import a deck'}
       </h2>
 
-      {result ? <ResultStep result={result} /> : <PasteStep text={text} onChange={setText} currentCardCount={currentCardCount} />}
+      {result ? <SkippedStep result={result} /> : <PasteStep text={text} onChange={setText} currentCardCount={currentCardCount} />}
 
       <div style={{display: 'flex', gap: SPACING.sm, marginTop: SPACING.lg}}>
         {result ? (
           <CtaButton onClick={close} style={{flex: 1}}>
-            Done
+            Got it
           </CtaButton>
         ) : (
           <>
