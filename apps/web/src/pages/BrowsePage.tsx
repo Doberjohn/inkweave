@@ -8,15 +8,7 @@ import {
   applySortOrder,
   type CardFilterOptions,
 } from '../features/cards/loader';
-import {
-  CompactHeader,
-  CtaButton,
-  ErrorBoundary,
-  EtherealBackground,
-  FilterDialog,
-  MOBILE_NAV_HEIGHT,
-  Seo,
-} from '../shared/components';
+import {CompactHeader, CtaButton, ErrorBoundary, EtherealBackground, FilterDialog, MOBILE_NAV_HEIGHT, PageTitle, Seo} from '../shared/components';
 import {
   COLORS,
   FONTS,
@@ -123,18 +115,7 @@ function BrowseContentSection({
         position: 'relative',
         zIndex: 1,
       }}>
-      <h1
-        style={{
-          padding: titlePadding,
-          fontSize: `${FONT_SIZES.xxl}px`,
-          fontWeight: 700,
-          color: COLORS.text,
-          letterSpacing: '0.06em',
-          textTransform: 'uppercase',
-          flexShrink: 0,
-        }}>
-        Browse Cards
-      </h1>
+      <PageTitle style={{padding: titlePadding, flexShrink: 0}}>Browse Cards</PageTitle>
       <BrowseToolbar {...toolbarProps} />
       {/* Card grid — flex-fills remaining space; VirtuosoGrid scrolls inside */}
       <div style={{flex: 1, minHeight: 0, position: 'relative'}}>

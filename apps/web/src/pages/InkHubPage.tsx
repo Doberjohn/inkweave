@@ -1,7 +1,7 @@
 import {useNavigate, useParams} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardGrid, CardGridSkeleton, INK_HUB_BLURBS, cardsForInk, getInkHub} from '../features/cards';
-import {CompactHeader, EtherealBackground, Seo} from '../shared/components';
+import {CompactHeader, EtherealBackground, PageTitle, Seo} from '../shared/components';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {sortBySetThenNumber} from '../features/cards';
@@ -116,15 +116,7 @@ function InkHubHeader({
       {/* No accent dot here, unlike PlaystyleDetailPage: the ink tokens for Steel and
           Sapphire are near-invisible against the dark background, and the H1 already names
           the ink. The footer keeps its dots — there they help scan a row of six. */}
-      <h1
-        style={{
-          fontSize: `${FONT_SIZES.xxl}px`,
-          fontWeight: 700,
-          color: COLORS.text,
-          margin: 0,
-        }}>
-        {ink} Cards
-      </h1>
+      <PageTitle style={{margin: 0}}>{ink} Cards</PageTitle>
 
       {/* The blurb is the page's indexable prose. Rendered as a real <p>, not a tooltip
           or a collapsed panel, so it counts as content rather than chrome. */}

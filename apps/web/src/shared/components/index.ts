@@ -20,6 +20,7 @@ export {BottomSheet} from './BottomSheet';
 export {CtaButton} from './CtaButton';
 export {DialogShell} from './DialogShell';
 export {LinkButton} from './LinkButton';
+export {PageTitle} from './PageTitle';
 export {TabList} from './TabList';
 export {IconButton} from './IconButton';
 export {EtherealBackground} from './EtherealBackground';

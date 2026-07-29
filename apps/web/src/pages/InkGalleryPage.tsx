@@ -1,6 +1,6 @@
 import {Link, useNavigate} from 'react-router-dom';
 import {INK_HUBS, INK_HUB_BLURBS, cardsForInk} from '../features/cards';
-import {CompactHeader, EtherealBackground, Seo} from '../shared/components';
+import {CompactHeader, EtherealBackground, PageTitle, Seo} from '../shared/components';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../shared/constants';
 
@@ -43,15 +43,7 @@ export function InkGalleryPage() {
           width: '100%',
           margin: '0 auto',
         }}>
-        <h1
-          style={{
-            fontSize: `${FONT_SIZES.xxl}px`,
-            fontWeight: 700,
-            color: COLORS.text,
-            margin: 0,
-          }}>
-          Cards by Ink
-        </h1>
+        <PageTitle style={{margin: 0}}>Cards by Ink</PageTitle>
         <p
           style={{
             marginTop: `${SPACING.sm}px`,

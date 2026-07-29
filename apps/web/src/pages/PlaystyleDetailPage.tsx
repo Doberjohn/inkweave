@@ -39,13 +39,12 @@ import {
   applySortOrder,
   type CardFilterOptions,
 } from '../features/cards/loader';
-import {CompactHeader, CtaButton, ErrorBoundary, EtherealBackground, FilterDialog, Seo} from '../shared/components';
+import {CompactHeader, CtaButton, ErrorBoundary, EtherealBackground, FilterDialog, PageTitle, Seo} from '../shared/components';
 import {
   COLORS,
   FONTS,
   FONT_SIZES,
   LAYOUT,
-  LETTER_SPACING,
   RADIUS,
   SPACING,
   PLAYSTYLE_UI,
@@ -166,16 +165,7 @@ function PlaystyleHero({
               flexShrink: 0,
             }}
           />
-          <h1
-            style={{
-              fontSize: `${FONT_SIZES.xxl}px`,
-              fontWeight: 700,
-              letterSpacing: LETTER_SPACING.eyebrow,
-              textTransform: 'uppercase',
-              margin: 0,
-            }}>
-            {name}
-          </h1>
+          <PageTitle style={{margin: 0, color: 'inherit'}}>{name}</PageTitle>
         </div>
 
         {tagline && (

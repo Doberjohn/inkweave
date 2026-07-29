@@ -9,7 +9,7 @@ import {duelsInkUrl, formatDecklist} from '../features/deck/deckTransfer';
 import {useDeckPoolFilters, applyPoolFilters} from '../features/deck/hooks/useDeckPoolFilters';
 import {calculateDeckStats} from '../features/deck/analysis/deckStats';
 import {BrowseToolbar} from '../features/cards';
-import {CompactHeader, FilterDialog} from '../shared/components';
+import {CompactHeader, FilterDialog, PageTitle} from '../shared/components';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive} from '../shared/hooks';
@@ -143,18 +143,9 @@ export function DeckBuilderPage() {
           lets its panes own their own scroll instead of overflowing the 100vh shell. */}
       <div style={{flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: DECK_PANE_COLUMNS}}>
         <section aria-label="Card pool" style={{display: 'flex', flexDirection: 'column', minHeight: 0}}>
-          <h1
-            style={{
-              // No margin:0 here — Browse's title keeps the UA default 0.67em
-              // block margin, so we match it (not reset it) for identical spacing.
-              padding: `${SPACING.xxl}px 32px 0`,
-              fontSize: `${FONT_SIZES.xxl}px`,
-              fontWeight: 700,
-              color: COLORS.text,
-              flexShrink: 0,
-            }}>
-            Deck Builder
-          </h1>
+          {/* No margin reset — Browse's title keeps the UA default 0.67em block
+              margin, so we match it (not reset it) for identical spacing. */}
+          <PageTitle style={{padding: `${SPACING.xxl}px 32px 0`, flexShrink: 0}}>Deck Builder</PageTitle>
           <BrowseToolbar {...toolbarProps} />
           <div style={{flex: 1, minHeight: 0, position: 'relative'}}>
             <DeckPoolGrid
