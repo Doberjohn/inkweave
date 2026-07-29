@@ -65,7 +65,7 @@ describe('DeckPanel', () => {
     fireEvent.click(screen.getByRole('tab', {name: /deck stats/i}));
     expect(screen.getByRole('tab', {name: /deck stats/i})).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByTitle('Inkable cards')).toBeInTheDocument();
-    expect(screen.getByText('Char')).toBeInTheDocument();
+    expect(screen.getByTitle('Character cards')).toBeInTheDocument();
   });
 
   it('opens details with the ids in rendered (type-grouped) order, not the given row order', () => {
