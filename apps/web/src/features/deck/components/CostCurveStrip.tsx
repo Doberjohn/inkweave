@@ -37,7 +37,7 @@ export function CostCurveStrip({costCurve, costCurveByInk}: CostCurveStripProps)
         flexDirection: 'column',
         // The tab strip above names this view, so the chart carries no visible title;
         // `aria-label` keeps the section named for assistive tech.
-        padding: '15px 15px 8px 15px',
+        padding: '25px 10px 8px 30px',
       }}>
       {/* flex:1 lets the chart grow to fill the section height (min CHART_HEIGHT) so the
           bars scale with the row instead of leaving a void, and the axis below stays

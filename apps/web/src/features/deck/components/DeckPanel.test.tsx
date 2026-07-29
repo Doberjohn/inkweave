@@ -62,8 +62,8 @@ describe('DeckPanel', () => {
     // Curve first: the profile's ink breakdown is not rendered yet.
     expect(screen.queryByText('Inkable')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('tab', {name: /profile/i}));
-    expect(screen.getByRole('tab', {name: /profile/i})).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(screen.getByRole('tab', {name: /deck stats/i}));
+    expect(screen.getByRole('tab', {name: /deck stats/i})).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByText('Inkable')).toBeInTheDocument();
   });
 

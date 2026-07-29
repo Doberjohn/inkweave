@@ -28,17 +28,19 @@ function CurveIcon() {
   );
 }
 
-function ProfileIcon() {
+/** Pie: the deck's proportional makeup (ink split, inkable ratio, type spread). */
+function DeckStatsIcon() {
   return (
     <svg width={15} height={15} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 3s6 6.3 6 10a6 6 0 0 1-12 0c0-3.7 6-10 6-10z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+      <path d="M12 3v9l6.4 6.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
 const STATS_TABS: ReadonlyArray<{id: StatsTab; label: string; icon: ReactNode}> = [
   {id: 'curve', label: 'Cost curve', icon: <CurveIcon />},
-  {id: 'profile', label: 'Profile', icon: <ProfileIcon />},
+  {id: 'profile', label: 'Deck stats', icon: <DeckStatsIcon />},
 ];
 
 /** A resolved deck line: the card plus how many copies are in the deck. */
