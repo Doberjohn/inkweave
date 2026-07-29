@@ -86,13 +86,22 @@ function toBase64(text: string): string {
  */
 const LINE_PATTERN = /^(\d+)\s*x?\s+(.+?)(?:\s*\((\d+-\d+)\))?$/;
 
+/**
+ * Lines that carry no card: blanks, and the `//` or `#` comments both Duels.ink
+ * and Dreamborn allow as section headers. Skipped silently rather than reported
+ * as unparsed, which is reserved for lines that LOOK like cards but are not.
+ */
+function isDecklistChrome(line: string): boolean {
+  return line === '' || line.startsWith('//') || line.startsWith('#');
+}
+
 export function parseDecklist(text: string): {lines: ParsedDeckLine[]; unparsed: string[]} {
   const lines: ParsedDeckLine[] = [];
   const unparsed: string[] = [];
 
   for (const raw of text.split(/\r?\n/)) {
     const trimmed = raw.trim();
-    if (trimmed === '' || trimmed.startsWith('//') || trimmed.startsWith('#')) continue;
+    if (isDecklistChrome(trimmed)) continue;
 
     const match = LINE_PATTERN.exec(trimmed);
     if (!match) {

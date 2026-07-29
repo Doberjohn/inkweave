@@ -62,6 +62,32 @@ function buildDeckRows(deck: Deck, getCardById: (id: string) => LorcanaCard | un
     );
 }
 
+/**
+ * Adapt the LOCAL pool-filter store to BrowseToolbar's props. Lifted out of the
+ * component because it is a pure rename layer, not builder logic: BrowseToolbar
+ * was built for Browse's URL-backed store and names its handlers differently.
+ */
+function buildToolbarProps(pool: ReturnType<typeof useDeckPoolFilters>, onFiltersClick: () => void) {
+  return {
+    onFiltersClick,
+    activeFilterCount: pool.activeFilterCount,
+    inkFilters: pool.inkFilters,
+    typeFilters: pool.typeFilters,
+    costFilters: pool.costFilters,
+    filters: pool.filters,
+    onToggleInk: pool.toggleInk,
+    onToggleType: pool.toggleType,
+    onToggleCost: pool.toggleCost,
+    onClearCosts: pool.clearCosts,
+    onFiltersChange: pool.setFilters,
+    sortOrder: pool.sortOrder,
+    onSortChange: pool.setSortOrder,
+    isMobile: false,
+    searchQuery: pool.searchQuery,
+    onSearchChange: pool.setSearchQuery,
+  } as const;
+}
+
 export function DeckBuilderPage() {
   const {isMobile} = useResponsive();
   const {deck, addCard, setQuantity, renameDeck, markCore, clearDeck, replaceCards} = useDeck();
@@ -109,24 +135,7 @@ export function DeckBuilderPage() {
     window.open(duelsInkUrl(text), '_blank', 'noopener,noreferrer');
   };
 
-  const toolbarProps = {
-    onFiltersClick: () => setShowFilters(true),
-    activeFilterCount: pool.activeFilterCount,
-    inkFilters: pool.inkFilters,
-    typeFilters: pool.typeFilters,
-    costFilters: pool.costFilters,
-    filters: pool.filters,
-    onToggleInk: pool.toggleInk,
-    onToggleType: pool.toggleType,
-    onToggleCost: pool.toggleCost,
-    onClearCosts: pool.clearCosts,
-    onFiltersChange: pool.setFilters,
-    sortOrder: pool.sortOrder,
-    onSortChange: pool.setSortOrder,
-    isMobile: false,
-    searchQuery: pool.searchQuery,
-    onSearchChange: pool.setSearchQuery,
-  } as const;
+  const toolbarProps = buildToolbarProps(pool, () => setShowFilters(true));
 
   return (
     <main
