@@ -151,8 +151,6 @@ export function DeckBuilderPage() {
               fontSize: `${FONT_SIZES.xxl}px`,
               fontWeight: 700,
               color: COLORS.text,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
               flexShrink: 0,
             }}>
             Deck Builder
