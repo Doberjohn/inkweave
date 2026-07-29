@@ -136,6 +136,9 @@ const isNumberLiteral = (v) => v.type === 'Literal' && typeof v.value === 'numbe
 const isRawFontFamily = (v) => isStringLiteral(v) && v.value !== 'inherit';
 const isRawFontSize = (v) => isNumberLiteral(v) || (isStringLiteral(v) && /^\d+(px)?$/.test(v.value));
 const isAppLayerZIndex = (v) => isNumberLiteral(v) && v.value >= 50;
+/** Only these four have a self-hosted woff2; see the @font-face block in index.css. */
+const LOADED_FONT_WEIGHTS = new Set([400, 500, 600, 700]);
+const isUnloadedWeight = (v) => isNumberLiteral(v) && !LOADED_FONT_WEIGHTS.has(v.value);
 const isNonZeroNumber = (v) => isNumberLiteral(v) && v.value !== 0;
 
 // ---------------------------------------------------------------------------
@@ -210,6 +213,31 @@ const noRawSpacing = makePropertyRule({
   valueTest: isNonZeroNumber,
   exempt: TEST_EXEMPT,
   message: 'Raw spacing. Use SPACING.* (xxs..xxxl; 0 is always allowed) (#508).',
+});
+
+/**
+ * A weight with no loaded face does not render — it silently falls back.
+ * `font-synthesis: none` on :root (index.css) forbids faking one, and only
+ * 400/500/600/700 ship a woff2. Measured 2026-07-29: `fontWeight: 800` and 700
+ * both rasterize to 738.50px, so 7 declarations of 800 were doing nothing.
+ *
+ * This is a RENDERING rule, not a token rule: the values are dictated by which
+ * files exist in public/fonts. Adding a weight to the set means adding both a
+ * woff2 and an @font-face block. Ships with an EMPTY ledger, since the 18 dead
+ * declarations were corrected in the same commit that added it.
+ *
+ * Covers the JS object form only. The CSS-string form (`font-weight:800` inside
+ * a cssText template) is not visited — it is rare, and would need a value-gate
+ * tripwire rather than an AST rule.
+ */
+const noUnloadedFontWeight = makePropertyRule({
+  name: 'no-unloaded-font-weight',
+  description: 'Only 400/500/600/700 have a self-hosted face; font-synthesis is none, so others silently fall back',
+  props: ['fontWeight'],
+  valueTest: isUnloadedWeight,
+  exempt: TEST_EXEMPT,
+  message:
+    'No font face is loaded for this weight, and font-synthesis is none — it will silently render as the nearest loaded weight. Use 400/500/600/700, or add the woff2 + @font-face first. Marcellus (FONTS.hero) is 400-ONLY.',
 });
 
 /**
@@ -401,6 +429,7 @@ export const inkweave = {
     'no-legacy-gold': noLegacyGold,
     'no-literal-font-family': noLiteralFontFamily,
     'no-raw-font-size': noRawFontSize,
+    'no-unloaded-font-weight': noUnloadedFontWeight,
     'no-raw-radius': noRawRadius,
     'no-raw-z-index': noRawZIndex,
     'no-raw-easing': noRawEasing,

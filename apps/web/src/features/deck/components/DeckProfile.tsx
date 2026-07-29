@@ -1,5 +1,5 @@
 import type {ReactNode} from 'react';
-import {ALL_INKS, COLORS, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
+import {ALL_INKS, COLORS, FONT_SIZES, FONTS, SPACING, TABULAR} from '../../../shared/constants';
 import {InkIcon} from '../../../shared/components/InkIcon';
 import {InkwellIcon} from '../../../shared/components/InkwellIcon';
 import type {CardType, DeckStats} from '../types';
@@ -85,7 +85,7 @@ function StatTile({symbol, count, title}: {symbol: ReactNode; count: number; tit
           fontFamily: FONTS.body,
           fontSize: `${FONT_SIZES.xl}px`,
           fontWeight: 700,
-          fontVariantNumeric: 'tabular-nums',
+          ...TABULAR,
           lineHeight: 1,
         }}>
         {count}

@@ -1,8 +1,17 @@
 /* Base styles for Inkweave */
 
 /* Self-hosted fonts (woff2 in /public/fonts, precached by the workbox glob).
-   Marcellus = hero/serif (400 only; bold headings synthesize);
-   Plus Jakarta Sans = body (400/500/600/700). */
+   The hero serif (FONTS.hero) ships 400 ONLY; the body sans ships 400/500/600/700.
+
+   NOTHING SYNTHESIZES: `font-synthesis: none` is set on :root below, so a weight
+   with no loaded face does not render bold — it silently falls back to the
+   nearest face that exists. This comment used to claim "bold headings
+   synthesize", which was wrong in the very file that forbids it, and 18
+   declarations were written against that claim. Measured 2026-07-29: the serif
+   renders identically at 400/500/600/700, and the body sans at 800 matches its
+   700. `inkweave/no-unloaded-font-weight` now blocks the recurrence.
+
+   Adding a weight means adding BOTH a woff2 and an @font-face block below. */
 
 @font-face {
   font-family: 'Marcellus';

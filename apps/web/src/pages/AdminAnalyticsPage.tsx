@@ -55,7 +55,7 @@ export function AdminAnalyticsPage() {
         style={{
           fontFamily: FONTS.hero,
           fontSize: FONT_SIZES.xxl,
-          fontWeight: 700,
+          fontWeight: 400,
           margin: `${SPACING.section}px 0 ${SPACING.md}px`,
         }}>
         Engine Calibration

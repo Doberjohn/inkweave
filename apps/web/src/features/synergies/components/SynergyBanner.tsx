@@ -1,5 +1,5 @@
 import type {LorcanaCard, SynergyGroup} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, RADIUS} from '../../../shared/constants';
+import {COLORS, FONTS, LETTER_SPACING, RADIUS} from '../../../shared/constants';
 
 /**
  * Marketing banner (1200x1240 per page): bigger Set 13 logo up top, big hero + an "Explore
@@ -209,7 +209,7 @@ function BannerRow({group, cardId, fullImage}: {group: SynergyGroup; cardId: str
 function SynergyHeader({label, blurb, highlight}: {label: string; blurb: string; highlight?: string[]}) {
   return (
     <div style={{display: 'flex', alignItems: 'stretch', marginBottom: 10, background: COLORS.lorcanaCream, borderRadius: `${RADIUS.sm}px`, overflow: 'hidden', boxShadow: ABILITY_BOX_SHADOW}}>
-      <div style={{background: COLORS.lorcanaTagBg, color: COLORS.lorcanaTagText, display: 'flex', alignItems: 'center', padding: '0 15px', flexShrink: 0, fontFamily: FONTS.body, fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap'}}>
+      <div style={{background: COLORS.lorcanaTagBg, color: COLORS.lorcanaTagText, display: 'flex', alignItems: 'center', padding: '0 15px', flexShrink: 0, fontFamily: FONTS.body, fontWeight: 700, fontSize: '12px', letterSpacing: LETTER_SPACING.eyebrow, textTransform: 'uppercase', whiteSpace: 'nowrap'}}>
         {label}
       </div>
       <div style={{color: COLORS.lorcanaTextDark, padding: '9px 15px', flex: 1, fontFamily: FONTS.body, fontWeight: 600, fontSize: '15px', lineHeight: 1.35}}>
@@ -228,7 +228,7 @@ function renderBlurb(text: string, highlight?: string[]): React.ReactNode {
   const wanted = new Set(highlight.map((t) => t.toLowerCase()));
   return text.split(new RegExp(`\\b(${escaped.join('|')})\\b`, 'gi')).map((part, i) =>
     wanted.has(part.toLowerCase()) ? (
-      <strong key={i} style={{fontWeight: 800}}>
+      <strong key={i} style={{fontWeight: 700}}>
         {part}
       </strong>
     ) : (
@@ -248,7 +248,7 @@ function MoreTile({count}: {count: number}) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
       <div style={{position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 42%, rgba(8,8,13,0.82) 0%, rgba(8,8,13,0.95) 92%)'}} />
-      <span style={{position: 'relative', fontFamily: FONTS.hero, fontSize: 68, fontWeight: 700, color: COLORS.primary, textShadow: '0 2px 12px rgba(0,0,0,0.9)'}}>
+      <span style={{position: 'relative', fontFamily: FONTS.hero, fontSize: 68, fontWeight: 400, color: COLORS.primary, textShadow: '0 2px 12px rgba(0,0,0,0.9)'}}>
         +{count}
       </span>
     </div>

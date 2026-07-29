@@ -67,6 +67,7 @@ export default tseslint.config(
       'inkweave/no-legacy-gold': 'error',
       'inkweave/no-literal-font-family': 'error',
       'inkweave/no-raw-font-size': 'error',
+      'inkweave/no-unloaded-font-weight': 'error',
       'inkweave/no-raw-radius': 'error',
       'inkweave/no-raw-z-index': 'error',
       'inkweave/no-raw-easing': 'error',

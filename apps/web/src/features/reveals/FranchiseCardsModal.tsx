@@ -54,7 +54,7 @@ export function FranchiseCardsModal({source, cards, onClose, onCardClick}: Franc
           <div style={{fontWeight: 600, fontSize: FONT_SIZES.xs, letterSpacing: 2, textTransform: 'uppercase', color: inkText}}>
             New this set
           </div>
-          <h2 style={{fontFamily: FONTS.hero, fontWeight: 700, fontSize: FONT_SIZES.xxxl, color: COLORS.text, margin: '4px 0 0'}}>
+          <h2 style={{fontFamily: FONTS.hero, fontWeight: 400, fontSize: FONT_SIZES.xxxl, color: COLORS.text, margin: '4px 0 0'}}>
             {source.label}
           </h2>
         </div>

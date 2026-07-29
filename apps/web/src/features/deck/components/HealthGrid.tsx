@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import type {CSSProperties} from 'react';
-import {CAP_LABEL, COLORS, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING} from '../../../shared/constants';
+import {CAP_LABEL, COLORS, FONT_SIZES, FONTS, GOLD_GLOW, RADIUS, SPACING, TABULAR} from '../../../shared/constants';
 import type {HealthAnalyzer, ScoreContribution} from '../types';
 import {dimensionColor} from './dimensionColor';
 import {ScoreRing} from './ScoreRing';
@@ -94,7 +94,7 @@ export function HealthGrid({analyzers, breakdown}: {analyzers: HealthAnalyzer[];
                 marginLeft: 8,
                 fontSize: `${FONT_SIZES.sm}px`,
                 color: points.contribution < 0 ? COLORS.error : COLORS.textMuted,
-                fontVariantNumeric: 'tabular-nums',
+                ...TABULAR,
               }}>
               {points.contribution >= 0 ? '+' : ''}
               {Math.round(points.contribution)} points

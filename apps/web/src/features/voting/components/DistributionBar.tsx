@@ -1,5 +1,5 @@
 import {useState, useEffect} from 'react';
-import {COLORS, EASING} from '../../../shared/constants';
+import {COLORS, EASING, LETTER_SPACING} from '../../../shared/constants';
 
 interface DistributionBarProps {
   lower: number;
@@ -107,7 +107,7 @@ function ContextLine({label}: {label: string | undefined}) {
         fontSize: 11,
         color: COLORS.textMuted,
         textTransform: 'uppercase',
-        letterSpacing: '0.08em',
+        letterSpacing: LETTER_SPACING.eyebrow,
         fontWeight: 500,
         textAlign: 'center',
       }}>

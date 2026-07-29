@@ -188,7 +188,7 @@ function SpotlightInner({data, dims, onActivate, compact}: {data: SpotlightHeroD
           {data.isNew && <NewBadge accent={data.accent} />}
           <span style={{fontSize: 10, fontWeight: 600, letterSpacing: 0.8, textTransform: 'uppercase', color: '#90a1b9'}}>{data.count}</span>
         </div>
-        <h3 style={{fontFamily: FONTS.hero, fontWeight: 700, fontSize: dims.titleSize, color: '#f4f4f8', margin: '11px 0 0'}}>{data.title}</h3>
+        <h3 style={{fontFamily: FONTS.hero, fontWeight: 400, fontSize: dims.titleSize, color: '#f4f4f8', margin: '11px 0 0'}}>{data.title}</h3>
         <p style={{fontWeight: 400, fontSize: dims.summarySize, lineHeight: 1.55, color: '#d2d2de', margin: '9px 0 0', maxWidth: 420}}>{data.summary}</p>
         {(data.href || onActivate) && (
           <span style={{display: 'inline-block', marginTop: 13, fontSize: 13, fontWeight: 700, color: data.accent, letterSpacing: 0.3}}>

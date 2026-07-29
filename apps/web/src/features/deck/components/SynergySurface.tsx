@@ -1,4 +1,4 @@
-import {CAP_LABEL, CAP_LABEL_XS, COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, SURFACE_CARD} from '../../../shared/constants';
+import {CAP_LABEL, CAP_LABEL_XS, COLORS, FONT_SIZES, FONTS, RADIUS, SPACING, SURFACE_CARD, TABULAR} from '../../../shared/constants';
 import type {LorcanaCard} from '../types';
 import type {DeckSynergyResult} from '../analysis/deckSynergy';
 import {smallImageUrl} from '../../cards/loader';
@@ -29,7 +29,7 @@ function SynergyCardChip({card, connections}: {card: LorcanaCard; connections: n
         }}>
         {name}
       </span>
-      <span style={{flexShrink: 0, color: COLORS.textMuted, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.sm}px`, fontVariantNumeric: 'tabular-nums'}}>
+      <span style={{flexShrink: 0, color: COLORS.textMuted, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.sm}px`, ...TABULAR}}>
         {connections} {connections === 1 ? 'link' : 'links'}
       </span>
     </div>
@@ -72,7 +72,7 @@ export function SynergySurface({synergy, getCardById}: SynergySurfaceProps) {
     <div style={{...SURFACE_CARD, display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
       <div style={{display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: SPACING.sm}}>
         <div style={CAP_LABEL}>Synergy</div>
-        <span style={{color: COLORS.textMuted, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.sm}px`, fontVariantNumeric: 'tabular-nums'}}>
+        <span style={{color: COLORS.textMuted, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.sm}px`, ...TABULAR}}>
           {synergy.overallScore} / 100 density
         </span>
       </div>

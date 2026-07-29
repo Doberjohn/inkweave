@@ -28,7 +28,7 @@ function barColor(prop: string, value: string): string {
 const STYLES = `
 .wa-head{display:flex;justify-content:space-between;align-items:flex-end;gap:${SPACING.lg}px;flex-wrap:wrap;padding-bottom:${SPACING.md}px;border-bottom:1px solid ${COLORS.surfaceBorder};margin-bottom:${SPACING.xl}px;}
 .wa-eyebrow{font-size:${FONT_SIZES.xs}px;letter-spacing:.14em;text-transform:uppercase;color:${COLORS.textDim};margin-bottom:${SPACING.sm}px;}
-.wa-kpi{font-family:${FONTS.hero};font-size:30px;line-height:1;font-weight:700;color:${COLORS.primary};}
+.wa-kpi{font-family:${FONTS.hero};font-size:30px;line-height:1;font-weight:400;color:${COLORS.primary};}
 .wa-kpi-sub{font-size:${FONT_SIZES.base}px;color:${COLORS.textMuted};margin-top:${SPACING.xs}px;}
 .wa-win{font-size:${FONT_SIZES.sm}px;color:${COLORS.textDim};text-align:right;}
 .wa-win strong{display:block;margin-top:2px;font-size:${FONT_SIZES.base}px;font-weight:600;color:${COLORS.textMuted};}
@@ -44,7 +44,7 @@ const STYLES = `
 .wa-row-total{font-variant-numeric:tabular-nums;opacity:.8;}
 .wa-row[aria-current="true"] .wa-row-total{color:${COLORS.primary};opacity:1;}
 .wa-detail{background:${COLORS.surface};border:1px solid ${COLORS.surfaceBorder};border-radius:${RADIUS.card}px;padding:${SPACING.xl}px;}
-.wa-dnum{font-family:${FONTS.hero};font-size:28px;line-height:1;font-weight:700;color:${COLORS.primary};}
+.wa-dnum{font-family:${FONTS.hero};font-size:28px;line-height:1;font-weight:400;color:${COLORS.primary};}
 .wa-block-h{font-size:${FONT_SIZES.xs}px;letter-spacing:.12em;text-transform:uppercase;color:${COLORS.textMuted};margin:${SPACING.lg}px 0 ${SPACING.xs}px;}
 .wa-brow{position:relative;display:grid;grid-template-columns:1fr auto;align-items:center;gap:${SPACING.sm}px;padding:6px ${SPACING.sm}px;border-radius:${RADIUS.sm}px;overflow:hidden;}
 .wa-bfill{position:absolute;top:0;bottom:0;left:0;border-radius:${RADIUS.sm}px;}

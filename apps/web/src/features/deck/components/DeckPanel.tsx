@@ -8,7 +8,7 @@ import {totalCopies} from './costCurveColumns';
 import {previewGeometry} from './previewGeometry';
 import {DeckProfile} from './DeckProfile';
 import {TabList} from '../../../shared/components/TabList';
-import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING, Z_INDEX, blackRgba} from '../../../shared/constants';
+import {blackRgba, COLORS, EASING, FONT_SIZES, FONTS, INK_COLORS, LETTER_SPACING, RADIUS, SPACING, Z_INDEX} from '../../../shared/constants';
 
 /** Competitive Core deck size — the count badge + progress bar target. */
 const DECK_TARGET = 60;
@@ -334,7 +334,7 @@ const groupHeader: CSSProperties = {
   fontWeight: 700,
   color: COLORS.textMuted,
   textTransform: 'uppercase',
-  letterSpacing: '0.05em',
+  letterSpacing: LETTER_SPACING.cap,
 };
 
 /**

@@ -74,7 +74,7 @@ export function VerdictHero({meanGap, accuracySentiment}: VerdictHeroProps) {
           }}>
           The engine <span style={{color: verdict.wordColor, fontStyle: 'italic'}}>{verdict.word}</span>
         </h2>
-        <div style={{fontSize: FONT_SIZES.displayMd, fontWeight: 800, lineHeight: 1.05, margin: '4px 0 6px', color: verdict.numberColor}}>
+        <div style={{fontSize: FONT_SIZES.displayMd, fontWeight: 700, lineHeight: 1.05, margin: '4px 0 6px', color: verdict.numberColor}}>
           {meanGap == null ? '—' : meanGap.toFixed(2)}
         </div>
         <div style={{fontSize: FONT_SIZES.base, color: COLORS.gray700, maxWidth: 380}}>{read}</div>

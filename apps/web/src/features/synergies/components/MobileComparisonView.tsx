@@ -584,7 +584,7 @@ const TAB_LABEL_STYLE: React.CSSProperties = {
 
 const TAB_SCORE_STYLE: React.CSSProperties = {
   fontSize: 26,
-  fontWeight: 800,
+  fontWeight: 700,
   lineHeight: 1,
   fontFeatureSettings: '"tnum"',
 };

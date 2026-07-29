@@ -1,4 +1,4 @@
-import {COLORS, FONTS, FONT_SIZES, hexRgba} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, FONTS, hexRgba, TABULAR} from '../../../shared/constants';
 
 /** SVG geometry: a 0..100 viewBox with the arc radius leaving room for the stroke. */
 const VIEWBOX = 100;
@@ -59,7 +59,7 @@ export function ScoreRing({score, color, size, label}: ScoreRingProps) {
           fontFamily={FONTS.body}
           fontWeight={700}
           fontSize={NUMBER_FONT}
-          style={{fontVariantNumeric: 'tabular-nums'}}>
+          style={{...TABULAR}}>
           {clamped}
         </text>
       </svg>

@@ -6,7 +6,7 @@ import type {OptionColor} from './OptionPicker';
 import {OptionPicker} from './OptionPicker';
 import {ScorePicker} from './ScorePicker';
 import {CarriesPicker} from './CarriesPicker';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, EASING, FONT_SIZES, FONTS, LETTER_SPACING, RADIUS, SPACING} from '../../../shared/constants';
 import {useBoop} from '../../../shared/hooks';
 
 export type FormLayout = 'stacked' | 'tabbed';
@@ -99,7 +99,7 @@ function CategoryHeader({stepRange, label, accent, compact}: {stepRange: string;
       <span style={{fontSize: FONT_SIZES.xs, fontWeight: 700, color: accent, background: `${accent}1a`, padding: '2px 8px', borderRadius: 10, fontFamily: FONTS.body}}>
         {stepRange}
       </span>
-      <span style={{fontSize: FONT_SIZES.sm, color: COLORS.textDim, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONTS.body}}>
+      <span style={{fontSize: FONT_SIZES.sm, color: COLORS.textDim, fontWeight: 500, textTransform: 'uppercase', letterSpacing: LETTER_SPACING.eyebrow, fontFamily: FONTS.body}}>
         {label}
       </span>
     </div>

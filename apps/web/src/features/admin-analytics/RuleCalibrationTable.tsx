@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {CAP_LABEL_XS, COLORS, FONTS, FONT_SIZES, LETTER_SPACING, RADIUS, SPACING} from '../../shared/constants';
+import {CAP_LABEL_XS, COLORS, FONT_SIZES, FONTS, LETTER_SPACING, RADIUS, SPACING, TABULAR} from '../../shared/constants';
 import type {RuleStat} from './voteAnalyticsTypes';
 
 interface RuleCalibrationTableProps {
@@ -97,7 +97,7 @@ const CELL: React.CSSProperties = {padding: `${SPACING.sm}px ${SPACING.md}px`, v
 const NUMERIC_CELL: React.CSSProperties = {
   ...CELL,
   textAlign: 'right',
-  fontVariantNumeric: 'tabular-nums',
+  ...TABULAR,
   fontSize: FONT_SIZES.base,
 };
 

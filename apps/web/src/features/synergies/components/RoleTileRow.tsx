@@ -1,6 +1,6 @@
 import {useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
-import {COLORS, FONTS, FONT_SIZES, Z_INDEX} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, FONTS, TABULAR, Z_INDEX} from '../../../shared/constants';
 import {useContainerWidth} from '../../../shared/hooks';
 
 export interface RoleTile {
@@ -340,7 +340,7 @@ function RoleTileButton({
           right: 10,
           fontSize: `${FONT_SIZES.md}px`,
           fontWeight: 700,
-          fontVariantNumeric: 'tabular-nums',
+          ...TABULAR,
           // Gold tint (softer than the active accent, so it reads as a count, not a selection).
           color: COLORS.primary500,
         }}>

@@ -1,4 +1,4 @@
-import {COLORS, FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
+import {COLORS, FONT_SIZES, RADIUS, SPACING, TABULAR} from '../../shared/constants';
 import {dimensionStats} from './dimensionStats';
 import type {DimensionFill} from './voteAnalyticsTypes';
 
@@ -22,7 +22,7 @@ export function DimensionParticipation({fill, totalVotes}: {fill: DimensionFill 
             <div style={{flex: 1, height: 8, background: COLORS.surfaceAlt, borderRadius: RADIUS.sm, overflow: 'hidden'}}>
               <div style={{height: '100%', width: `${row.pct}%`, background: COLORS.primary, opacity: 0.7}} />
             </div>
-            <span style={{width: 44, textAlign: 'right', color: COLORS.text, fontVariantNumeric: 'tabular-nums'}}>
+            <span style={{width: 44, textAlign: 'right', color: COLORS.text, ...TABULAR}}>
               {row.pct}%
             </span>
           </div>

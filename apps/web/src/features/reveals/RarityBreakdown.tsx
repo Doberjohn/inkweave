@@ -63,7 +63,7 @@ function RarityChip({
       <div style={{height: dims.symHeight, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
         <RaritySymbol rarity={rarity.key} size={dims.symSize} />
       </div>
-      <div style={{fontWeight: 800, fontSize: dims.count, color: has ? '#f0f0f5' : '#55556e', lineHeight: 1}}>
+      <div style={{fontWeight: 700, fontSize: dims.count, color: has ? '#f0f0f5' : '#55556e', lineHeight: 1}}>
         {revealed}
       </div>
       {!compact && (

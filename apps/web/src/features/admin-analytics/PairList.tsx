@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, TRUNCATE} from '../../shared/constants';
+import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING, TABULAR, TRUNCATE} from '../../shared/constants';
 import type {PairStat} from './voteAnalyticsTypes';
 
 interface PairListProps {
@@ -63,10 +63,10 @@ export function PairList({pairs, selectedPair, onSelectPair}: PairListProps) {
                 <span style={{color: COLORS.textDim}}> × </span>
                 {pair.bName}
               </span>
-              <span style={{fontSize: FONT_SIZES.md, color: COLORS.error, fontVariantNumeric: 'tabular-nums'}}>
+              <span style={{fontSize: FONT_SIZES.md, color: COLORS.error, ...TABULAR}}>
                 {pair.engineScore} → {pair.communityScore}
               </span>
-              <span style={{fontSize: FONT_SIZES.xs, color: COLORS.textDim, fontVariantNumeric: 'tabular-nums'}}>
+              <span style={{fontSize: FONT_SIZES.xs, color: COLORS.textDim, ...TABULAR}}>
                 {pair.scoreVotes}
               </span>
             </button>

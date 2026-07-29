@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import type {CSSProperties} from 'react';
-import {COLORS, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, FONTS, SPACING, TABULAR} from '../../../shared/constants';
 import {CtaButton, DialogShell} from '../../../shared/components';
 import type {HealthAnalyzer, ScoreContribution} from '../types';
 import {dimensionColor} from './dimensionColor';
@@ -45,7 +45,7 @@ const pointsCell = (negative: boolean): CSSProperties => ({
   fontWeight: 700,
   width: 34,
   textAlign: 'right',
-  fontVariantNumeric: 'tabular-nums',
+  ...TABULAR,
   color: negative ? COLORS.error : COLORS.textMuted,
   flexShrink: 0,
 });
@@ -81,7 +81,7 @@ function AnalyzerRow({
           {analyzer.label}
         </span>
         <span style={{flex: 1}} />
-        <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.sm}px`, color: COLORS.textDim, fontVariantNumeric: 'tabular-nums'}}>
+        <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.sm}px`, color: COLORS.textDim, ...TABULAR}}>
           {analyzer.score}
         </span>
         {points && <span style={pointsCell(points.contribution < 0)}>{signed(points.contribution)}</span>}

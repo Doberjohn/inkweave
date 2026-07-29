@@ -1,4 +1,4 @@
-import {COLORS, EASING, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, EASING, FONT_SIZES, FONTS, LETTER_SPACING, RADIUS, SPACING, TABULAR} from '../../../shared/constants';
 import {BetaTag, LinkButton} from '../../../shared/components';
 import type {QualityScore} from '../types';
 import {scoreTier} from './scoreTier';
@@ -20,7 +20,7 @@ export function ScoreGauge({quality, onShowMath}: {quality: QualityScore; onShow
           fontFamily: FONTS.body,
           fontSize: `${FONT_SIZES.md}px`,
           fontWeight: 700,
-          letterSpacing: '0.05em',
+          letterSpacing: LETTER_SPACING.cap,
           textTransform: 'uppercase',
           color: COLORS.textMuted,
           marginBottom: SPACING.md,
@@ -30,7 +30,7 @@ export function ScoreGauge({quality, onShowMath}: {quality: QualityScore; onShow
       </div>
 
       <div style={{display: 'flex', alignItems: 'baseline', gap: SPACING.md, marginBottom: SPACING.md}}>
-        <span style={{fontFamily: FONTS.body, fontWeight: 700, fontSize: FONT_SIZES.displayLg, lineHeight: 1, color: COLORS.text, fontVariantNumeric: 'tabular-nums'}}>{quality.score}</span>
+        <span style={{fontFamily: FONTS.body, fontWeight: 700, fontSize: FONT_SIZES.displayLg, lineHeight: 1, color: COLORS.text, ...TABULAR}}>{quality.score}</span>
         <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.xl}px`, color: COLORS.textDim}}>/100</span>
         <span
           style={{

@@ -31,7 +31,7 @@ const infoBtn: CSSProperties = {
   fontFamily: FONTS.hero,
   fontStyle: 'italic',
   fontSize: FONT_SIZES.lg,
-  fontWeight: 700,
+  fontWeight: 400,
   lineHeight: 1,
   cursor: 'pointer',
   display: 'flex',

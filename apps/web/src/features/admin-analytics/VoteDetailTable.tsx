@@ -1,4 +1,4 @@
-import {CAP_LABEL_XS, COLORS, EMPTY_BOX, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
+import {CAP_LABEL_XS, COLORS, EMPTY_BOX, FONT_SIZES, FONTS, RADIUS, SPACING, TABULAR} from '../../shared/constants';
 import type {VoteLogRow} from './voteLogTypes';
 
 interface VoteDetailTableProps {
@@ -91,7 +91,7 @@ export function VoteDetailTable({pair, votes}: VoteDetailTableProps) {
               </td>
               <td style={{...cell, color: COLORS.textMuted}}>{accuracyLabel(vote.accuracy)}</td>
               <td style={{...cell, color: COLORS.textMuted}}>{wouldPlayLabel(vote.wouldPlay)}</td>
-              <td style={{...cell, color: COLORS.textDim, fontVariantNumeric: 'tabular-nums'}}>{vote.ts.slice(0, 10)}</td>
+              <td style={{...cell, color: COLORS.textDim, ...TABULAR}}>{vote.ts.slice(0, 10)}</td>
             </tr>
           ))}
         </tbody>

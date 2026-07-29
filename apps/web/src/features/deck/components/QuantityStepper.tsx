@@ -65,7 +65,7 @@ function cellStyle(dims: StepperDims): CSSProperties {
     border: 'none',
     background: 'transparent',
     fontFamily: FONTS.body,
-    fontWeight: 800,
+    fontWeight: 700,
     lineHeight: 1,
     display: 'flex',
     alignItems: 'center',

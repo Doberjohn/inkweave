@@ -60,13 +60,13 @@ function BoardHeader({ink, count, compact}: {ink: Ink; count: number; compact: b
         <div style={{fontWeight: 600, fontSize: 11, letterSpacing: 2.4, textTransform: 'uppercase', color: inkText}}>
           Ink board
         </div>
-        <div style={{fontFamily: FONTS.hero, fontWeight: 700, fontSize: compact ? 24 : 32, color: '#f0f0f5', lineHeight: 1.05, marginTop: 3}}>
+        <div style={{fontFamily: FONTS.hero, fontWeight: 400, fontSize: compact ? 24 : 32, color: '#f0f0f5', lineHeight: 1.05, marginTop: 3}}>
           {ink}
         </div>
       </div>
 
       <div style={{marginLeft: 'auto', textAlign: 'right'}}>
-        <div style={{fontWeight: 800, fontSize: compact ? 28 : 38, color: '#f5d877', lineHeight: 1}}>
+        <div style={{fontWeight: 700, fontSize: compact ? 28 : 38, color: '#f5d877', lineHeight: 1}}>
           {count}
           <span style={{fontSize: compact ? 14 : 19, fontWeight: 700, color: '#666680'}}> / {PER_INK[ink]}</span>
         </div>

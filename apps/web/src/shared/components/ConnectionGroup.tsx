@@ -2,7 +2,7 @@ import {useState, useEffect} from 'react';
 import type {LorcanaCard} from '../../features/cards';
 import type {Ink, LocationRole, PairSynergyConnection} from 'inkweave-synergy-engine';
 import {LOCATION_ROLE_CHIP_LABELS, LOCATION_ROLE_DESCRIPTIONS} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, FONT_SIZES, RADIUS} from '../constants';
+import {COLORS, FONTS, FONT_SIZES, LETTER_SPACING, RADIUS} from '../constants';
 import {useResponsive} from '../hooks';
 import type {ConnectionGroupData} from './groupConnections';
 
@@ -354,7 +354,7 @@ function AbilityRow({label, description, cardA, cardB, onHighlight, position = '
           fontFamily: FONTS.body,
           fontWeight: 700,
           fontSize: `${FONT_SIZES.md}px`,
-          letterSpacing: '0.08em',
+          letterSpacing: LETTER_SPACING.eyebrow,
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
           lineHeight: `${FONT_SIZES.md}px`,

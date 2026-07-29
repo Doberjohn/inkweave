@@ -1,4 +1,4 @@
-import {COLORS, FONTS, RADIUS} from '../../../shared/constants';
+import {COLORS, FONTS, LETTER_SPACING, RADIUS} from '../../../shared/constants';
 
 /**
  * Vote-tier colors — mirror the inline values in QuickVoteControl.tsx CHOICE_COLORS.
@@ -128,7 +128,7 @@ const HEADLINE_STYLE: React.CSSProperties = {
 
 const DELTA_NUMBER_STYLE: React.CSSProperties = {
   fontSize: 28,
-  fontWeight: 800,
+  fontWeight: 700,
   letterSpacing: '-0.02em',
   fontFeatureSettings: '"tnum"',
   lineHeight: 1,
@@ -217,7 +217,7 @@ function ScoreMarker({color, position, labelPosition, label}: ScoreMarkerProps) 
           fontSize: 10,
           fontWeight: 700,
           textTransform: 'uppercase',
-          letterSpacing: '0.08em',
+          letterSpacing: LETTER_SPACING.eyebrow,
           whiteSpace: 'nowrap',
           color,
         }}>
