@@ -56,15 +56,16 @@ describe('DeckPanel', () => {
     expect(screen.queryByRole('button', {name: /from deck/i})).not.toBeInTheDocument();
   });
 
-  it('switches the stats view between the cost curve and the deck profile', () => {
+  it('switches the stats view between the cost curve and the deck stats grid', () => {
     renderPanel();
     expect(screen.getByRole('tab', {name: /cost curve/i})).toHaveAttribute('aria-selected', 'true');
-    // Curve first: the profile's ink breakdown is not rendered yet.
-    expect(screen.queryByText('Inkable')).not.toBeInTheDocument();
+    // Curve first: the stats grid's type tiles are not rendered yet.
+    expect(screen.queryByTitle('Inkable cards')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', {name: /deck stats/i}));
     expect(screen.getByRole('tab', {name: /deck stats/i})).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByText('Inkable')).toBeInTheDocument();
+    expect(screen.getByTitle('Inkable cards')).toBeInTheDocument();
+    expect(screen.getByText('Char')).toBeInTheDocument();
   });
 
   it('opens details with the ids in rendered (type-grouped) order, not the given row order', () => {

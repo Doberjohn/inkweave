@@ -1,33 +1,34 @@
-import {ALL_INKS, CAP_LABEL_XS, COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../../../shared/constants';
+import type {ReactNode} from 'react';
+import {ALL_INKS, COLORS, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
 import {InkIcon} from '../../../shared/components/InkIcon';
 import {InkwellIcon} from '../../../shared/components/InkwellIcon';
 import type {CardType, DeckStats} from '../types';
 
-/** Card types in the order the deck list groups them. */
-const TYPE_ORDER: readonly CardType[] = ['Character', 'Action', 'Item', 'Location'];
+/** Card types in the order the deck list groups them, with a short column label. */
+const TYPE_TILES: ReadonlyArray<{type: CardType; label: string}> = [
+  {type: 'Character', label: 'Char'},
+  {type: 'Action', label: 'Action'},
+  {type: 'Item', label: 'Item'},
+  {type: 'Location', label: 'Loc'},
+];
 
-/** One ink's share of the deck: icon, name, proportional bar, count. */
-function InkRow({ink, count, total}: {ink: (typeof ALL_INKS)[number]; count: number; total: number}) {
-  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-  const color = INK_COLORS[ink].border;
+/** How wide a tile column gets before the grid wraps to a new row. */
+const TILE_MIN_WIDTH = 52;
+
+/** One cell: a symbol (or short word) above its count. */
+function StatTile({symbol, count, title}: {symbol: ReactNode; count: number; title: string}) {
   return (
-    <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
-      <InkIcon ink={ink} size={18} />
-      <span style={{color: COLORS.textMuted, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.md}px`, width: 62, flexShrink: 0}}>
-        {ink}
-      </span>
-      <div style={{flex: 1, height: 6, background: COLORS.surfaceAlt, borderRadius: RADIUS.xs, overflow: 'hidden', minWidth: 0}}>
-        <div style={{width: `${pct}%`, height: '100%', background: color}} />
-      </div>
+    <div title={title} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.xs}}>
+      <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: 24}}>{symbol}</div>
       <span
         style={{
-          color: COLORS.text,
+          // Dim a zero so an absent type reads as "none" without extra words.
+          color: count > 0 ? COLORS.text : COLORS.textDim,
           fontFamily: FONTS.body,
-          fontSize: `${FONT_SIZES.md}px`,
+          fontSize: `${FONT_SIZES.xl}px`,
+          fontWeight: 700,
           fontVariantNumeric: 'tabular-nums',
-          width: 26,
-          textAlign: 'right',
-          flexShrink: 0,
+          lineHeight: 1,
         }}>
         {count}
       </span>
@@ -35,26 +36,30 @@ function InkRow({ink, count, total}: {ink: (typeof ALL_INKS)[number]; count: num
   );
 }
 
-/** An inkwell figure: the symbol, its label, and the count. */
-function InkwellStat({value, label, count}: {value: 'inkable' | 'uninkable'; label: string; count: number}) {
+/** A row of tiles that wraps rather than squeezing when a deck runs many inks. */
+function TileRow({children}: {children: ReactNode}) {
   return (
-    <span style={{display: 'flex', alignItems: 'center', gap: 6, color: COLORS.textMuted, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.md}px`}}>
-      <InkwellIcon value={value} size={18} />
-      {label} <strong style={{color: COLORS.text, fontWeight: 700}}>{count}</strong>
-    </span>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(auto-fit, minmax(${TILE_MIN_WIDTH}px, 1fr))`,
+        gap: SPACING.sm,
+      }}>
+      {children}
+    </div>
   );
 }
 
 /**
- * The deck's makeup, as the Profile tab of the deck panel: ink split as
- * proportional bars, the inkable/uninkable balance, and the card-type spread.
- * Reuses the shared InkIcon / InkwellIcon glyphs the old header strip used —
- * this is the same information with room to read it.
+ * The deck's makeup as the Deck stats tab: a symbol-and-number grid rather than
+ * prose. Top row is the deck's inks plus the inkable/uninkable split — all four
+ * carry the game's own glyphs (InkIcon / InkwellIcon), which need no caption for
+ * a Lorcana player. Bottom row is the card-type spread, labelled with short words
+ * because Lorcana has no established glyph for a card type and inventing one
+ * would be guessable at best.
  */
 export function DeckProfile({stats}: {stats: DeckStats}) {
   const inks = ALL_INKS.filter((ink) => (stats.inkDistribution[ink] ?? 0) > 0);
-  const inkTotal = inks.reduce((n, ink) => n + (stats.inkDistribution[ink] ?? 0), 0);
-  const types = TYPE_ORDER.filter((t) => (stats.typeDistribution[t] ?? 0) > 0);
   const uninkable = stats.totalCards - stats.inkableCount;
 
   if (stats.totalCards === 0) {
@@ -66,27 +71,33 @@ export function DeckProfile({stats}: {stats: DeckStats}) {
   }
 
   return (
-    <div style={{padding: `${SPACING.md}px ${SPACING.lg}px`, display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
-      <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
+    <div style={{padding: `${SPACING.lg}px ${SPACING.md}px`, display: 'flex', flexDirection: 'column', gap: SPACING.lg}}>
+      <TileRow>
         {inks.map((ink) => (
-          <InkRow key={ink} ink={ink} count={stats.inkDistribution[ink] ?? 0} total={inkTotal} />
+          <StatTile
+            key={ink}
+            symbol={<InkIcon ink={ink} size={24} />}
+            count={stats.inkDistribution[ink] ?? 0}
+            title={`${ink} cards`}
+          />
         ))}
-      </div>
+        <StatTile symbol={<InkwellIcon value="inkable" size={24} />} count={stats.inkableCount} title="Inkable cards" />
+        <StatTile symbol={<InkwellIcon value="uninkable" size={24} />} count={uninkable} title="Uninkable cards" />
+      </TileRow>
 
-      <div style={{display: 'flex', gap: SPACING.lg, flexWrap: 'wrap', borderTop: `1px solid ${COLORS.surfaceBorder}`, paddingTop: SPACING.md}}>
-        <InkwellStat value="inkable" label="Inkable" count={stats.inkableCount} />
-        <InkwellStat value="uninkable" label="Uninkable" count={uninkable} />
-      </div>
-
-      <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.xs}}>
-        <div style={CAP_LABEL_XS}>Card types</div>
-        <div style={{display: 'flex', gap: SPACING.lg, flexWrap: 'wrap', color: COLORS.textMuted, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.md}px`}}>
-          {types.map((type) => (
-            <span key={type}>
-              {type} <strong style={{color: COLORS.text, fontWeight: 700}}>{stats.typeDistribution[type]}</strong>
-            </span>
+      <div style={{borderTop: `1px solid ${COLORS.surfaceBorder}`, paddingTop: SPACING.lg}}>
+        <TileRow>
+          {TYPE_TILES.map(({type, label}) => (
+            <StatTile
+              key={type}
+              symbol={
+                <span style={{color: COLORS.textMuted, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.sm}px`}}>{label}</span>
+              }
+              count={stats.typeDistribution[type] ?? 0}
+              title={`${type} cards`}
+            />
           ))}
-        </div>
+        </TileRow>
       </div>
     </div>
   );
