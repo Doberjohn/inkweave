@@ -3,6 +3,9 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {useDeck} from '../features/deck/state';
 import type {Deck} from '../features/deck/types';
 import {DeckPanel, DeckPoolGrid, type DeckRow} from '../features/deck/components';
+import {DeckActionsBar} from '../features/deck/components/DeckActionsBar';
+import {ImportDeckDialog} from '../features/deck/components/ImportDeckDialog';
+import {duelsInkUrl, formatDecklist} from '../features/deck/deckTransfer';
 import {useDeckPoolFilters, applyPoolFilters} from '../features/deck/hooks/useDeckPoolFilters';
 import {calculateDeckStats} from '../features/deck/analysis/deckStats';
 import {BrowseToolbar} from '../features/cards';
@@ -61,11 +64,12 @@ function buildDeckRows(deck: Deck, getCardById: (id: string) => LorcanaCard | un
 
 export function DeckBuilderPage() {
   const {isMobile} = useResponsive();
-  const {deck, addCard, setQuantity, renameDeck, markCore} = useDeck();
+  const {deck, addCard, setQuantity, renameDeck, markCore, clearDeck, replaceCards} = useDeck();
   const {cards, isLoading, getCardById, uniqueKeywords, uniqueClassifications, sets} = useCardDataContext();
   const {openCardModal} = useCardModal();
   const pool = useDeckPoolFilters();
   const [showFilters, setShowFilters] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   // The advisor UI is pulled while its design is rethought (no numeric surface, no
   // Analysis tab), so nothing consumes the analysis today. The pipeline is left
   // UNWIRED rather than running unread: it fetches per-card pair data on every deck
@@ -95,6 +99,15 @@ export function DeckBuilderPage() {
   // Opened from the DECK panel: the panel supplies its own rows (in rendered,
   // type-grouped order) so the modal's arrow-nav walks the deck, not the pool.
   const viewDeckDetails = (card: LorcanaCard, siblingIds: string[]) => openCardModal(card.id, siblingIds);
+
+  // Export hands the deck to Duels.ink, which parses the base64 decklist out of the
+  // URL and opens it ready to play. noopener/noreferrer: never give an external tab
+  // a handle back to this window.
+  const exportToDuelsInk = () => {
+    const text = formatDecklist(deck.cards, getCardById);
+    if (text === '') return;
+    window.open(duelsInkUrl(text), '_blank', 'noopener,noreferrer');
+  };
 
   const toolbarProps = {
     onFiltersClick: () => setShowFilters(true),
@@ -165,8 +178,24 @@ export function DeckBuilderPage() {
           onDecrement={(id) => setQuantity(id, (quantities.get(id) ?? 0) - 1)}
           onSetCore={markCore}
           onOpenDetails={viewDeckDetails}
+          actions={
+            <DeckActionsBar
+              cardCount={stats.totalCards}
+              onClear={clearDeck}
+              onImport={() => setShowImport(true)}
+              onExport={exportToDuelsInk}
+            />
+          }
         />
       </div>
+
+      <ImportDeckDialog
+        isOpen={showImport}
+        onClose={() => setShowImport(false)}
+        pool={cards}
+        onImport={replaceCards}
+        currentCardCount={stats.totalCards}
+      />
 
       <FilterDialog
         isOpen={showFilters}

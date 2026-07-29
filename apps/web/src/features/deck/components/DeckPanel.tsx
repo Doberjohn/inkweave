@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState, type CSSProperties} from 'react';
+import {useEffect, useRef, useState, type CSSProperties, type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {DeckStats} from '../types';
@@ -36,6 +36,8 @@ interface DeckPanelProps {
   onDecrement: (cardId: string) => void;
   /** Flags/unflags a card as a deck-core anchor (mirrors DeckContext.markCore). */
   onSetCore?: (cardId: string, isCore: boolean) => void;
+  /** Deck-level toolbar (Clear / Import / Export), rendered under the deck header. */
+  actions?: ReactNode;
   /**
    * Clicking a row's thumbnail/name opens that card's detail modal. `siblingIds` is
    * the deck in the panel's VISUAL (type-grouped) order, so the modal's arrow-nav
@@ -327,7 +329,7 @@ const groupHeader: CSSProperties = {
  * (resolved rows + {@link DeckStats}); all mutations route back through the page's
  * useDeck actions. Removal is deferred so the row can collapse out first.
  */
-export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement, onSetCore, onOpenDetails}: DeckPanelProps) {
+export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement, onSetCore, actions, onOpenDetails}: DeckPanelProps) {
   const [peek, setPeek] = useState<{card: LorcanaCard; anchor: DOMRect} | null>(null);
 
   /** The deck's card ids in the order the panel renders them (grouped by type). */
@@ -378,6 +380,10 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
         <DeckNameField name={name} onRename={onRename} />
         <DeckInfoStrip stats={stats} />
       </div>
+
+      {actions && (
+        <div style={{padding: `${SPACING.sm}px ${SPACING.md}px`, borderBottom: `1px solid ${COLORS.surfaceBorder}`, flexShrink: 0}}>{actions}</div>
+      )}
 
       {totalCopies(stats.costCurve) > 0 && (
         <div style={{display: 'flex', height: STATS_ROW_HEIGHT, flexShrink: 0, borderBottom: `1px solid ${COLORS.surfaceBorder}`}}>

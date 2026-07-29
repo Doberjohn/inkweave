@@ -91,3 +91,11 @@ export function renameDeckName(deck: Deck, name: string): Deck {
 export function clearDeckCards(deck: Deck): Deck {
   return {...deck, cards: [], inks: [], updatedAt: Date.now()};
 }
+
+/**
+ * Swap the whole card list, keeping the deck's identity and name — the import path
+ * (an import REPLACES the deck rather than merging into it).
+ */
+export function replaceDeckCards(deck: Deck, cards: DeckCard[], getCardById: CardResolver): Deck {
+  return withCards(deck, cards, getCardById);
+}

@@ -9,7 +9,7 @@
 // caps out of here avoids duplicating that logic in two places.
 
 import {createContext, useContext, useEffect, useRef, useState, type ReactNode} from 'react';
-import type {Archetype, Deck} from '../types';
+import type {Archetype, Deck, DeckCard} from '../types';
 import {useCardDataContext} from '../../../shared/contexts/CardDataContext';
 import {useSession} from '../../../shared/contexts/SessionContext';
 import {hasMigratedDraft, markDraftMigrated, readDraft, writeDraft} from './deckStorage';
@@ -17,6 +17,7 @@ import {upsertDeck} from './deckRepository';
 import {
   addCardToDeck,
   clearDeckCards,
+  replaceDeckCards,
   deriveInks,
   inksEqual,
   markCardCore,
@@ -73,6 +74,8 @@ interface DeckContextValue {
   renameDeck: (name: string) => void;
   /** Empty the card list, keeping the deck's identity and name. */
   clearDeck: () => void;
+  /** Replace every card — the import path; an import replaces, never merges. */
+  replaceCards: (cards: DeckCard[]) => void;
 }
 
 const DeckContext = createContext<DeckContextValue | null>(null);
@@ -175,6 +178,7 @@ export function DeckProvider({children}: {children: ReactNode}) {
   const renameDeck = (name: string) => setDeck((d) => renameDeckName(d, name));
 
   const clearDeck = () => setDeck((d) => clearDeckCards(d));
+  const replaceCards = (cards: DeckCard[]) => setDeck((d) => replaceDeckCards(d, cards, getCardById));
 
   const value: DeckContextValue = {
     deck: currentDeck,
@@ -185,6 +189,7 @@ export function DeckProvider({children}: {children: ReactNode}) {
     setGameplan,
     renameDeck,
     clearDeck,
+    replaceCards,
   };
 
   return <DeckContext.Provider value={value}>{children}</DeckContext.Provider>;
