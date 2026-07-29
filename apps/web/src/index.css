@@ -1,54 +1,15 @@
 /* Base styles for Inkweave */
 
 /* Self-hosted fonts (woff2 in /public/fonts, precached by the workbox glob).
-   Tinos = hero/serif (weights 400, 700); Plus Jakarta Sans = body (400/500/600/700). */
-@font-face {
-  font-family: 'Tinos';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fonts/tinos-400.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Tinos';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('/fonts/tinos-700.woff2') format('woff2');
-}
+   Marcellus = hero/serif (400 only; bold headings synthesize);
+   Plus Jakarta Sans = body (400/500/600/700). */
 
-/* Hero-face candidates for the serif replacement trial. All variable (one file
-   covering 400-700) except Marcellus, which ships 400 only and synthesizes bold.
-   A candidate is only fetched once the dev font switcher selects it — nothing
-   references these families by default.
-   DELETE the losers (files + blocks) once the replacement is chosen. */
-@font-face {
-  font-family: 'Cinzel';
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('/fonts/cinzel-var.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Cormorant Garamond';
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('/fonts/cormorant-garamond-var.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Playfair Display';
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('/fonts/playfair-display-var.woff2') format('woff2');
-}
 @font-face {
   font-family: 'Marcellus';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/marcellus-var.woff2') format('woff2');
+  src: url('/fonts/marcellus-400.woff2') format('woff2');
 }
 
 

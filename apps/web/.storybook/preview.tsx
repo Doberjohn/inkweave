@@ -1,5 +1,5 @@
 import 'react-loading-skeleton/dist/skeleton.css';
-// Load the app's @font-face (Plus Jakarta Sans + Tinos, served from /public/fonts
+// Load the app's @font-face (Plus Jakarta Sans + Marcellus, served from /public/fonts
 // via staticDirs) so stories render in the real app fonts, not system fallbacks.
 import '../src/index.css';
 import type {Preview} from '@storybook/react-vite';

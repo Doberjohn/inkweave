@@ -30,7 +30,7 @@ const THEME = readFileSync(join(ROOT, 'src', 'shared', 'constants', 'theme.ts'),
 const TOKEN_HEXES = [...new Set((THEME.match(/#[0-9a-fA-F]{6}\b/g) ?? []).map((h) => h.toLowerCase()))];
 // The spring curves: any verbatim copy outside theme.ts is a fork that will drift.
 const EASING_STRINGS = THEME.match(/linear\([^)]+\)/g) ?? [];
-const FONT_NAMES = ['Plus Jakarta Sans', 'Tinos'];
+const FONT_NAMES = ['Plus Jakarta Sans', 'Marcellus'];
 // Tripwires: zero tolerance, no baseline. backdrop-filter matches USAGE
 // (declaration/property form), not the prose warning comments at scrim sites.
 const TRIPWIRES = [

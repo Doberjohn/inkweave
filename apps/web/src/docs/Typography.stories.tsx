@@ -66,7 +66,7 @@ function TypeScale() {
                 fontFamily: FONTS.body,
                 marginBottom: 8,
               }}>
-              <code style={{color: COLORS.descriptionText}}>FONTS.hero</code>: Tinos (serif)
+              <code style={{color: COLORS.descriptionText}}>FONTS.hero</code>: Marcellus (serif)
             </div>
             <div style={{fontSize: 20, fontFamily: FONTS.hero, color: COLORS.text}}>
               The quick brown fox jumps over the lazy dog

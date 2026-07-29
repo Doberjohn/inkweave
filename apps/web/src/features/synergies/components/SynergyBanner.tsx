@@ -248,7 +248,7 @@ function MoreTile({count}: {count: number}) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
       <div style={{position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 42%, rgba(8,8,13,0.82) 0%, rgba(8,8,13,0.95) 92%)'}} />
-      <span style={{position: 'relative', fontFamily: 'Tinos, Georgia, serif', fontSize: 68, fontWeight: 700, color: COLORS.primary, textShadow: '0 2px 12px rgba(0,0,0,0.9)'}}>
+      <span style={{position: 'relative', fontFamily: FONTS.hero, fontSize: 68, fontWeight: 700, color: COLORS.primary, textShadow: '0 2px 12px rgba(0,0,0,0.9)'}}>
         +{count}
       </span>
     </div>

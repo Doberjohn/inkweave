@@ -20,7 +20,7 @@ export const FONTS = {
   // app's serif is swapped in ONE place instead of hunting 18 files (and the dev
   // font switcher can trial candidates at runtime). Safe as a var(): every
   // consumer puts this into CSS (a style prop or a cssText string), never canvas.
-  hero: "var(--font-hero, 'Tinos', 'Georgia', serif)",
+  hero: "var(--font-hero, 'Marcellus', 'Georgia', serif)",
 } as const;
 
 // Layout constants
