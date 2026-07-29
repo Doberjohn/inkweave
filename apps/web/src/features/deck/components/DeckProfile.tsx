@@ -5,10 +5,17 @@ import {InkwellIcon} from '../../../shared/components/InkwellIcon';
 import type {CardType, DeckStats} from '../types';
 
 /** Symbol size for every tile, ink glyphs included. */
-const SYMBOL_SIZE = 32;
+const SYMBOL_SIZE = 40;
 
-/** How narrow a tile column may get before the row wraps. */
-const TILE_MIN_WIDTH = 56;
+/**
+ * How narrow a tile column may get before the row wraps. Sized so four tiles
+ * still share one line: a deck runs at most two inks, so the widest row is
+ * two inks plus the inkable/uninkable pair, matching the four card types below.
+ */
+const TILE_MIN_WIDTH = 48;
+
+/** Symbol-to-count gap. Owner-set; sits between SPACING.sm (8) and md (12). */
+const SYMBOL_GAP = 10;
 
 /**
  * Card-type glyphs. Lorcana prints no type symbol on its cards, so these are the
@@ -63,7 +70,7 @@ const TYPE_TILES: ReadonlyArray<{type: CardType; icon: ReactNode}> = [
 function StatTile({symbol, count, title}: {symbol: ReactNode; count: number; title: string}) {
   const present = count > 0;
   return (
-    <div title={title} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.xs}}>
+    <div title={title} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SYMBOL_GAP}}>
       <div
         style={{
           display: 'flex',
