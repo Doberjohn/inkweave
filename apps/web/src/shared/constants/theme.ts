@@ -3,14 +3,32 @@ import type {Ink, CardType} from 'inkweave-synergy-engine';
 // App branding
 export const APP_NAME = 'Inkweave';
 
-// Ink color styling (vibrant on dark backgrounds)
+/**
+ * Ink color styling. Each ink carries three values off ONE hue:
+ * - `border` is the ink's **canonical solid colour**, and is misnamed: it is read
+ *   as a FILL far more often than as a border (the cost-curve bands' background,
+ *   bar glows, reveals tints via `inkTint.inkRgb`, playstyle accents, spotlight
+ *   gradients). Treat it as "the ink colour"; renaming it is a separate sweep.
+ * - `bg` is the dark chip/surface tint: same hue, L 15%, saturation ~60% of the
+ *   canonical's.
+ * - `text` is the readable-on-`bg` tint: same hue, L 68%, saturation ~95% of the
+ *   canonical's. Every `text`/`bg` pair clears 5.6:1, and every `text` clears
+ *   6.6:1 on `COLORS.background`.
+ *
+ * Values are the official Lorcana ink-symbol tones (2026-07-30 ruling), replacing
+ * the previous bright Tailwind-ish set. Amethyst is the one adjustment: the symbol's
+ * own mid-tone (`#64296b`) rendered at 1.9:1 and looked unlit beside its siblings on
+ * the playstyles gallery, so it is lifted to 3.1:1 — matching Ruby, keeping the hue,
+ * still a deep purple rather than a pastel. Amethyst and Ruby remain the two darkest
+ * canonicals and should not carry small text directly.
+ */
 export const INK_COLORS: Record<Ink, {bg: string; text: string; border: string}> = {
-  Amber: {bg: '#3d2e10', text: '#f5c542', border: '#f59e0b'},
-  Amethyst: {bg: '#2a1a45', text: '#c4a5f5', border: '#8b5cf6'},
-  Emerald: {bg: '#0f2e1f', text: '#6ee7a0', border: '#10b981'},
-  Ruby: {bg: '#3d1515', text: '#f87171', border: '#ef4444'},
-  Sapphire: {bg: '#0f1e3d', text: '#7db5f5', border: '#3b82f6'},
-  Steel: {bg: '#252530', text: '#a0a0b0', border: '#6b7280'},
+  Amber: {bg: '#3d2c0f', text: '#f7c164', border: '#e69200'},
+  Amethyst: {bg: '#2f1c31', text: '#ca8bd0', border: '#933b9b'},
+  Emerald: {bg: '#133a1d', text: '#6bf08e', border: '#0c9d32'},
+  Ruby: {bg: '#371518', text: '#e7747e', border: '#c31d2b'},
+  Sapphire: {bg: '#0f323d', text: '#64d3f7', border: '#0096c7'},
+  Steel: {bg: '#22272b', text: '#a5afb6', border: '#7d8c96'},
 };
 
 // Font families

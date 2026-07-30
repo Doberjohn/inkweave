@@ -1,6 +1,6 @@
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import type {DetailedPairSynergy, Ink, LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONTS} from '../../../shared/constants';
+import {COLORS, FONTS, INK_COLORS} from '../../../shared/constants';
 import {usePairScore} from '../../voting/hooks/usePairScore';
 import {formatScore} from '../../../shared/utils/scoreFormatting';
 import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
@@ -292,8 +292,11 @@ export function MobileComparisonView({pair, engineScore, originRects = null, isE
 function GlowOrbs({style}: {style?: React.CSSProperties}) {
   return (
     <div aria-hidden="true" style={{...GLOW_ORBS_STYLE, ...style}}>
-      <span style={{...ORB_BASE, width: 220, height: 220, background: '#8b5cf6', top: '8%', left: '-12%'}} />
-      <span style={{...ORB_BASE, width: 260, height: 260, background: '#3b82f6', bottom: '12%', right: '-18%'}} />
+      {/* Two orbs read the ink tokens: their copied hexes were the OLD Amethyst and
+          Sapphire values, orphaned by the 2026-07-30 repalette. The teal below was
+          never an ink colour, so it stays literal. */}
+      <span style={{...ORB_BASE, width: 220, height: 220, background: INK_COLORS.Amethyst.border, top: '8%', left: '-12%'}} />
+      <span style={{...ORB_BASE, width: 260, height: 260, background: INK_COLORS.Sapphire.border, bottom: '12%', right: '-18%'}} />
       <span style={{...ORB_BASE, width: 180, height: 180, background: '#14b8a6', top: '48%', left: '55%'}} />
     </div>
   );

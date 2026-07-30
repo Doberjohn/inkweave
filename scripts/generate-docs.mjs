@@ -544,18 +544,26 @@ const TEMPLATE = (title, body) => `<!DOCTYPE html>
 </body>
 </html>`;
 
-/** Inkweave dark theme palette for Chart.js */
+/**
+ * Categorical series palette for Chart.js on the dark docs hub. Chosen for
+ * MUTUAL DISTINGUISHABILITY, not brand fidelity — these are deliberately NOT the
+ * ink colours and must not be synced to `INK_COLORS`. The ink palette is tuned for
+ * Lorcana symbol fidelity, which makes some of it unusable here: Amethyst
+ * (`#64296b`) is only 1.9:1 against a dark canvas and would vanish as a chart
+ * series. The old ink-name comments on these entries were misleading, and one
+ * (steel `#71717a`) never matched the token at all.
+ */
 const CHART_COLORS = [
   '#d4af37', // gold
-  '#8b5cf6', // amethyst
-  '#10b981', // emerald
-  '#ef4444', // ruby
-  '#3b82f6', // sapphire
-  '#71717a', // steel
-  '#f59e0b', // amber
-  '#6ee7a0', // strong green
-  '#60b5f5', // moderate blue
-  '#f59090', // weak red
+  '#8b5cf6', // violet
+  '#10b981', // green
+  '#ef4444', // red
+  '#3b82f6', // blue
+  '#71717a', // grey
+  '#f59e0b', // orange
+  '#6ee7a0', // pale green
+  '#60b5f5', // pale blue
+  '#f59090', // pale red
 ];
 
 /**

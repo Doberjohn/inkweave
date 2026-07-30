@@ -46,8 +46,13 @@ function inkColor(card: LorcanaCard): string {
   // Use the primary ink for the thumbnail border. (LorcanaCard exposes
   // `ink` / `ink2` — there is no `inkColor` field; the old code read an
   // always-undefined property and silently fell back to the gray border.)
-  // 2026-07-22: the former private ink map here drifted from the theme
-  // (Steel #71717a vs INK_COLORS' #6b7280) — derive from the token instead.
+  // 2026-07-22: the former private ink map here drifted from the theme (its Steel
+  // was a different grey) — derive from the token instead. That stray value came
+  // from the button-design spec, which has since been corrected; both are now
+  // historical, since the ink palette was replaced wholesale on 2026-07-30.
+  // Deliberately naming no hex: the value gate greps literals and cannot tell a
+  // comment from code, so quoting a token's value here would register as a
+  // violation of the very rule this comment is about.
   return INK_COLORS[card.ink]?.border ?? COLORS.surfaceBorder;
 }
 

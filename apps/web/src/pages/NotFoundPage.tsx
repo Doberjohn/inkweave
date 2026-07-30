@@ -1,5 +1,5 @@
 import {useLocation, useNavigate} from 'react-router-dom';
-import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, INK_COLORS, SPACING} from '../shared/constants';
 import {CtaButton} from '../shared/components/CtaButton';
 import {Seo} from '../shared/components';
 
@@ -33,13 +33,16 @@ function EtherealGlow() {
   );
 }
 
+// Sparkle accents read from the ink tokens rather than copied hexes: the copies
+// were the OLD Amethyst/Emerald values and were orphaned by the 2026-07-30 ink
+// repalette, leaving decorative colours that belonged to no ink at all.
 const SPARKLES = [
   {x: '19%', y: '22%', size: 3, color: COLORS.primary500, opacity: 0.3},
-  {x: '76%', y: '33%', size: 2, color: '#8b5cf6', opacity: 0.25},
+  {x: '76%', y: '33%', size: 2, color: INK_COLORS.Amethyst.border, opacity: 0.25},
   {x: '24%', y: '75%', size: 4, color: COLORS.primary500, opacity: 0.2},
-  {x: '73%', y: '69%', size: 2.5, color: '#8b5cf6', opacity: 0.2},
+  {x: '73%', y: '69%', size: 2.5, color: INK_COLORS.Amethyst.border, opacity: 0.2},
   {x: '35%', y: '17%', size: 2, color: COLORS.primary500, opacity: 0.3},
-  {x: '64%', y: '20%', size: 3, color: '#10b981', opacity: 0.2},
+  {x: '64%', y: '20%', size: 3, color: INK_COLORS.Emerald.border, opacity: 0.2},
 ];
 
 function SparkleField() {
