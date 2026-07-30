@@ -3,7 +3,8 @@ import {computePhase} from '../useRevealPhase';
 
 const prerelease = new Date(2026, 4, 8, 0, 0, 0, 0); // 2026-05-08 local midnight
 const release = new Date(2026, 4, 15, 0, 0, 0, 0); // 2026-05-15 local midnight
-const dates = {prereleaseDate: prerelease, releaseDate: release};
+// `name` is required on RevealDates, but computePhase ignores it.
+const dates = {prereleaseDate: prerelease, releaseDate: release, name: 'Test Set'};
 
 describe('computePhase', () => {
   it('returns hidden when flag is disabled', () => {
