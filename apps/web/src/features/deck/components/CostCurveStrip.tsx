@@ -1,4 +1,6 @@
-import {COLORS, FONT_SIZES, FONTS, hexRgba, INK_COLORS, SPACING} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, FONTS, hexRgba, ICON_SIZE, INK_COLORS, SPACING} from '../../../shared/constants';
+import {InkIcon} from '../../../shared/components/InkIcon';
+import {Tooltip} from '../../../shared/components/Tooltip';
 import type {Ink} from '../types';
 import {toColumns, totalCopies} from './costCurveColumns';
 
@@ -27,15 +29,27 @@ interface CostCurveStripProps {
   costCurveByInk: Record<number, Partial<Record<Ink, number>>>;
 }
 
+/** Tooltip body for one band: the ink's own glyph, its name, and its copy count. */
+function InkBandTip({ink, count}: {ink: Ink; count: number}) {
+  return (
+    <span style={{display: 'flex', alignItems: 'center', gap: SPACING.xs}}>
+      <InkIcon ink={ink} size={ICON_SIZE.sm} />
+      <span>{ink}</span>
+      <span style={{color: COLORS.text}}>{count}</span>
+    </span>
+  );
+}
+
 /**
  * A compact mana-cost histogram pinned above the Cards-tab deck list — the
  * cost-curve mini-chart + ink split of the DeckStatsBar (#468). Presentation-only:
  * it renders the `costCurve` / `costCurveByInk` from calculateDeckStats, one bar
  * per cost bucket (top bucket labelled "7+"), stacked into design-system ink
- * colors by composition and glowing its dominant ink. Copy counts live on each
- * bar's hover title (kept intentionally minimal — no numeric labels or legend).
- * Hidden while the deck is empty. Bar styling mirrors WeeklyActivityChart (div
- * bars, no SVG).
+ * colors by composition and glowing its dominant ink. Hovering an ink band shows
+ * that ink's glyph, name and copy count in a floating tooltip; the bar carries no
+ * native title, which would double up with it. The chart still shows no numeric
+ * labels or legend at rest. Hidden while the deck is empty. Bar styling mirrors
+ * WeeklyActivityChart (div bars, no SVG).
  */
 export function CostCurveStrip({costCurve, costCurveByInk}: CostCurveStripProps) {
   if (totalCopies(costCurve) === 0) return null;
@@ -68,7 +82,6 @@ export function CostCurveStrip({costCurve, costCurveByInk}: CostCurveStripProps)
             <div
               key={col.bucket}
               data-bucket={col.bucket}
-              title={`${col.count} card${col.count === 1 ? '' : 's'} at cost ${col.label}`}
               style={{
                 flex: 1,
                 height: `${col.heightPct}%`,
@@ -83,18 +96,35 @@ export function CostCurveStrip({costCurve, costCurveByInk}: CostCurveStripProps)
                 boxShadow: col.count > 0 ? `0 0 5px ${hexRgba(glow, 0.5)}, 0 0 12px ${hexRgba(glow, 0.24)}` : 'none',
               }}>
               {col.segments.map((seg) => (
-                <div
+                <Tooltip
                   key={seg.ink}
+                  content={<InkBandTip ink={seg.ink} count={seg.count} />}
+                  // Hover-only by design: 16 focusable bands would be a tab-stop
+                  // wall in a decorative strip, so Tooltip's onFocus path is inert
+                  // here. The band's aria-label carries the same ink/count/cost to
+                  // assistive tech without needing focus, and the deck list below
+                  // repeats it, so nothing is hover-only in the app.
                   // Grow proportionally to the count from a zero basis, but never
                   // below MIN_BAND_PX: flex floors the small bands and shares what
-                  // is left among the rest, which is the sizing rule we want.
-                  style={{
+                  // is left among the rest, which is the sizing rule we want. The
+                  // sizing lives on the Tooltip wrapper because that span becomes
+                  // the flex item; the band inside just fills it.
+                  triggerStyle={{
+                    display: 'flex',
+                    alignItems: 'stretch',
                     flex: `${seg.count} 1 0`,
                     minHeight: MIN_BAND_PX,
                     width: '100%',
-                    background: INK_COLORS[seg.ink].border,
-                  }}
-                />
+                  }}>
+                  {/* "cards" is per-ink and deliberately overlaps: a dual-ink card
+                      counts toward both inks, so two labels in one bucket can sum
+                      above the bucket's own card count. Each is true of its ink. */}
+                  <div
+                    role="img"
+                    aria-label={`${seg.ink}, ${seg.count} card${seg.count === 1 ? '' : 's'} at cost ${col.label}`}
+                    style={{width: '100%', height: '100%', background: INK_COLORS[seg.ink].border}}
+                  />
+                </Tooltip>
               ))}
             </div>
           );
