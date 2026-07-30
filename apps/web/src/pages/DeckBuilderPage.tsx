@@ -53,7 +53,7 @@ function buildDeckRows(deck: Deck, getCardById: (id: string) => LorcanaCard | un
   return deck.cards
     .flatMap((dc) => {
       const card = getCardById(dc.cardId);
-      return card ? [{card, quantity: dc.quantity, isCore: dc.isCore}] : [];
+      return card ? [{card, quantity: dc.quantity}] : [];
     })
     .sort(
       (a, b) =>
@@ -90,7 +90,7 @@ function buildToolbarProps(pool: ReturnType<typeof useDeckPoolFilters>, onFilter
 
 export function DeckBuilderPage() {
   const {isMobile} = useResponsive();
-  const {deck, addCard, setQuantity, renameDeck, markCore, clearDeck, replaceCards} = useDeck();
+  const {deck, addCard, setQuantity, renameDeck, clearDeck, replaceCards} = useDeck();
   const {cards, isLoading, getCardById, uniqueKeywords, uniqueClassifications, sets} = useCardDataContext();
   const {openCardModal} = useCardModal();
   const pool = useDeckPoolFilters();
@@ -174,7 +174,6 @@ export function DeckBuilderPage() {
           stats={stats}
           onIncrement={(id) => addCard(id)}
           onDecrement={(id) => setQuantity(id, (quantities.get(id) ?? 0) - 1)}
-          onSetCore={markCore}
           onOpenDetails={viewDeckDetails}
           actions={
             <DeckActionsBar

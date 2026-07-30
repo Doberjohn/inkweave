@@ -47,8 +47,6 @@ const STATS_TABS: ReadonlyArray<{id: StatsTab; label: string; icon: ReactNode}> 
 export interface DeckRow {
   card: LorcanaCard;
   quantity: number;
-  /** Whether this line is flagged a deck-core anchor (weights suggestions ×2). */
-  isCore?: boolean;
 }
 
 interface DeckPanelProps {
@@ -60,8 +58,6 @@ interface DeckPanelProps {
   onIncrement: (cardId: string) => void;
   /** Removes a copy; the last one drops the card (setCardQuantity at 0). */
   onDecrement: (cardId: string) => void;
-  /** Flags/unflags a card as a deck-core anchor (mirrors DeckContext.markCore). */
-  onSetCore?: (cardId: string, isCore: boolean) => void;
   /** Deck-level toolbar (Clear / Import / Export), rendered under the deck header. */
   actions?: ReactNode;
   /**
@@ -344,7 +340,7 @@ const groupHeader: CSSProperties = {
  * (resolved rows + {@link DeckStats}); all mutations route back through the page's
  * useDeck actions. Removal is deferred so the row can collapse out first.
  */
-export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement, onSetCore, actions, onOpenDetails}: DeckPanelProps) {
+export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement, actions, onOpenDetails}: DeckPanelProps) {
   const [statsTab, setStatsTab] = useState<StatsTab>('curve');
   const [peek, setPeek] = useState<{card: LorcanaCard; anchor: DOMRect} | null>(null);
 
@@ -357,15 +353,13 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
     onOpenDetails?.(clicked, orderedCardIds());
   };
 
-  const renderRow = ({card, quantity, isCore}: DeckRow) => (
+  const renderRow = ({card, quantity}: DeckRow) => (
     <DeckCardRow
       key={card.id}
       card={card}
       quantity={quantity}
       onIncrement={() => onIncrement(card.id)}
       onDecrement={() => onDecrement(card.id)}
-      isCore={isCore}
-      onSetCore={onSetCore ? () => onSetCore(card.id, !isCore) : undefined}
       onPreviewEnter={(previewCard, anchor) => setPeek({card: previewCard, anchor})}
       onPreviewLeave={() => setPeek(null)}
       onOpenDetails={openDetails}

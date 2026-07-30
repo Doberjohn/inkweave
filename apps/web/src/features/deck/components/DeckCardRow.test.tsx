@@ -36,24 +36,12 @@ describe('DeckCardRow', () => {
     expect(screen.queryByRole('button', {name: /from deck/i})).not.toBeInTheDocument();
   });
 
-  it('calls onSetCore when the core star is clicked', () => {
-    const onSetCore = vi.fn();
-    render(
-      <DeckCardRow card={card} quantity={2} onIncrement={vi.fn()} onDecrement={vi.fn()} onSetCore={onSetCore} />,
-    );
-    fireEvent.click(screen.getByRole('button', {name: /mark elsa - snow queen as a core card/i}));
-    expect(onSetCore).toHaveBeenCalledOnce();
-  });
-
-  it('marks the star pressed and offers to unmark once the card is core', () => {
-    render(
-      <DeckCardRow card={card} quantity={2} onIncrement={vi.fn()} onDecrement={vi.fn()} isCore onSetCore={vi.fn()} />,
-    );
-    expect(screen.getByRole('button', {name: /unmark elsa - snow queen as a core card/i})).toHaveAttribute('aria-pressed', 'true');
-  });
-
-  it('omits the core star entirely when onSetCore is not provided', () => {
+  it('has no core-card star — the row is identity plus stepper only', () => {
+    // Removed by owner ruling 2026-07-30. This guards the removal rather than the
+    // old behaviour: the `isCore` data model still exists for a future guided-mode
+    // surface, so a stray star could be re-wired without anything else failing.
     render(<DeckCardRow card={card} quantity={2} onIncrement={vi.fn()} onDecrement={vi.fn()} />);
     expect(screen.queryByRole('button', {name: /core card/i})).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button')).toHaveLength(3); // identity + stepper's − and +
   });
 });

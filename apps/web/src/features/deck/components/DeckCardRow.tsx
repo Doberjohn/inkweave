@@ -1,7 +1,6 @@
 import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, INK_COLORS, RADIUS, SPACING} from '../../../shared/constants';
-import {IconButton} from '../../../shared/components';
+import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../../../shared/constants';
 import {smallImageUrl} from '../../cards/loader';
 import {CostGlyph} from './CostGlyph';
 import {QuantityStepper} from './QuantityStepper';
@@ -14,25 +13,12 @@ interface DeckCardRowProps {
   quantity: number;
   onIncrement: () => void;
   onDecrement: () => void;
-  /** Whether this line is flagged a deck-core anchor (weights suggestions ×2). */
-  isCore?: boolean;
-  /** Toggles the core flag; the star affordance is hidden until hover unless already core. */
-  onSetCore?: () => void;
   /** Fired when the thumbnail/name is hovered; the panel shows a floating preview anchored to `anchor`. */
   onPreviewEnter?: (card: LorcanaCard, anchor: DOMRect) => void;
   /** Fired when the pointer leaves the thumbnail/name; the panel hides the preview. */
   onPreviewLeave?: () => void;
   /** Fired when the thumbnail/name is clicked; opens the card's synergy detail modal. */
   onOpenDetails?: (card: LorcanaCard) => void;
-}
-
-/** Filled when the card is a core anchor, outline otherwise. */
-function StarIcon({filled}: {filled: boolean}) {
-  return (
-    <svg width={15} height={15} viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} aria-hidden="true">
-      <path d="M12 3.5l2.6 5.27 5.82.85-4.21 4.1.99 5.79L12 16.77l-5.2 2.73.99-5.79-4.21-4.1 5.82-.85L12 3.5z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-    </svg>
-  );
 }
 
 /** The row's display name: fullName, then name, then a stable placeholder. */
@@ -85,38 +71,15 @@ function CardIdentity({
   );
 }
 
-/** Core-anchor toggle: hidden until row hover unless the card is already core. */
-function CoreStar({isCore, name, hovered, onToggle}: {isCore: boolean; name: string; hovered: boolean; onToggle: () => void}) {
-  const visible = hovered || isCore;
-  return (
-    <IconButton
-      onClick={onToggle}
-      aria-label={isCore ? `Unmark ${name} as a core card` : `Mark ${name} as a core card`}
-      aria-pressed={isCore}
-      title={isCore ? 'Core card' : 'Mark as core'}
-      size={26}
-      tabIndex={visible ? 0 : -1}
-      style={{
-        flexShrink: 0,
-        color: isCore ? COLORS.primary : COLORS.textDim,
-        opacity: visible ? 1 : 0,
-        pointerEvents: visible ? 'auto' : 'none',
-        boxShadow: isCore ? GOLD_GLOW.shadow : 'none',
-        transition: `opacity 0.15s ${EASING.snappy}, color 0.15s ${EASING.snappy}, box-shadow 0.15s ${EASING.snappy}`,
-      }}>
-      <StarIcon filled={isCore} />
-    </IconButton>
-  );
-}
-
 /**
  * One line in the deck panel: cost-in-inkwell glyph, thumbnail + name (the hover
- * preview target), an always-open [− qty +] stepper, and a core-anchor star. The +
- * disables at MAX_COPIES; the row glows in the card's ink on hover. Removal is the
- * stepper's − at one copy (setCardQuantity drops the line at 0) — there is no
- * separate delete affordance.
+ * preview target), and an always-open [− qty +] stepper. The + disables at
+ * MAX_COPIES; the row glows in the card's ink on hover. Removal is the stepper's −
+ * at one copy (setCardQuantity drops the line at 0) — there is no separate delete
+ * affordance, and no core-anchor star (removed by owner ruling 2026-07-30; the
+ * `isCore` data model survives for a future guided-mode surface).
  */
-export function DeckCardRow({card, quantity, onIncrement, onDecrement, isCore = false, onSetCore, onPreviewEnter, onPreviewLeave, onOpenDetails}: DeckCardRowProps) {
+export function DeckCardRow({card, quantity, onIncrement, onDecrement, onPreviewEnter, onPreviewLeave, onOpenDetails}: DeckCardRowProps) {
   const [hovered, setHovered] = useState(false);
   const ink = INK_COLORS[card.ink];
   const name = resolveCardName(card);
@@ -140,8 +103,8 @@ export function DeckCardRow({card, quantity, onIncrement, onDecrement, isCore = 
         animation: `inkweave-row-enter 0.28s ${EASING.smooth}`,
       }}>
       <CostGlyph cost={card.cost} inkwell={card.inkwell} size={28} />
-      {/* Card identity is scoped to the thumbnail + name so the stepper and star
-          (siblings below) neither preview nor open the detail modal. */}
+      {/* Card identity is scoped to the thumbnail + name so the stepper (its sibling
+          below) neither previews nor opens the detail modal. */}
       <CardIdentity
         card={card}
         name={name}
@@ -158,7 +121,6 @@ export function DeckCardRow({card, quantity, onIncrement, onDecrement, isCore = 
         disabledReason={`Maximum ${MAX_COPIES} copies of ${name}`}
         label={name}
       />
-      {onSetCore && <CoreStar isCore={isCore} name={name} hovered={hovered} onToggle={onSetCore} />}
     </div>
   );
 }
