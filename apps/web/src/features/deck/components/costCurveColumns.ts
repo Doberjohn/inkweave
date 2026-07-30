@@ -13,11 +13,18 @@ import {ALL_INKS} from '../../../shared/constants';
  */
 export const COST_CURVE_CAP = 7;
 
-/** One ink's share of a bucket's bar, as a percent height (segments in a column sum to 100). */
+/**
+ * One ink's share of a bucket's bar: the copies carrying that ink, plus that
+ * ink's band height. The two have DIFFERENT denominators — a dual-ink card
+ * counts toward both of its inks (deckStats' tallyCard), so `count`s can sum
+ * above the bar's own card count while `pct`s still sum to 100.
+ */
 export interface InkSegment {
   ink: Ink;
   /** Share of this bucket's ink units, 0..100. */
   pct: number;
+  /** Copies carrying this ink in this bucket; always >= 1. Not a share of the bar. */
+  count: number;
 }
 
 /** One rendered column of the cost curve: which bucket, its label, copies, bar height, ink split. */
@@ -45,7 +52,7 @@ export function inkSegments(byInk: Partial<Record<Ink, number>> | undefined): In
   const present = ALL_INKS.filter((ink) => (byInk[ink] ?? 0) > 0);
   const total = present.reduce((sum, ink) => sum + (byInk[ink] ?? 0), 0);
   if (total <= 0) return [];
-  return present.map((ink) => ({ink, pct: ((byInk[ink] ?? 0) / total) * 100}));
+  return present.map((ink) => ({ink, pct: ((byInk[ink] ?? 0) / total) * 100, count: byInk[ink] ?? 0}));
 }
 
 /**

@@ -25,6 +25,25 @@ session does not reopen them by accident.
 | Thin bands | Minimum band height, shortfall absorbed from the largest band | Exact proportions with thin targets; a taller `CHART_HEIGHT` |
 | Existing bar total | Removed | Kept as a tooltip second line; moved onto the axis label |
 
+**Dual-ink cards: the plain count ships, and it will not add up.** Owner ruling
+2026-07-30, made after a review surfaced it. `deckStats.tallyCard` counts a
+dual-ink card toward BOTH of its inks, so a bucket of four Amber-Steel cards is
+`{Amber: 4, Steel: 4}`: eight ink units on a bar of four cards, each band at
+`pct: 50` and `count: 4`. The tooltip therefore reports "Amber 4" on a half-height
+band of a four-card bar, and the two bands sum to eight.
+
+Every one of those numbers is true: a dual-ink Amber-Steel card genuinely is an
+Amber card, and "4" answers "how many cards here have Amber in them". The ruling is
+to keep that, on the grounds that the count is honest and the alternative (a
+half-card share matching the band height) would report a card count that does not
+exist in the deck. The accepted risk is that a dual-ink-heavy bucket looks
+arithmetically wrong at a glance. Rejected alternatives: annotating the tooltip
+with a dual-ink tally (needs data `deckStats` does not produce, and a taller
+tooltip); reporting the band's share instead of the count.
+
+`InkSegment`'s doc comment states this explicitly, so the next reader does not
+"fix" it into a share.
+
 **Why segment-level content forced the floating tooltip.** These two decisions are
 coupled. Segment-level content plus a *fixed* readout has an ambiguity hole: when
 bands are only a few pixels tall, the readout gives a number with no way to confirm

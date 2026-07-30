@@ -24,6 +24,15 @@ describe('inkSegments', () => {
     expect(inkSegments(undefined)).toEqual([]);
     expect(inkSegments({})).toEqual([]);
   });
+
+  it('carries each ink its raw count, not a rounded share', () => {
+    // A lopsided bucket: the tooltip must say 1, never a percentage of anything.
+    // pct stays exact in the same breath — rounding it to 89/11 would stop the
+    // bands summing to 100 and leave a seam in the stacked bar.
+    const segs = inkSegments({Amber: 8, Emerald: 1});
+    expect(segs.map((s) => s.count)).toEqual([8, 1]);
+    expect(segs[0].pct).toBeCloseTo(88.889, 3);
+  });
 });
 
 describe('toColumns', () => {
@@ -45,8 +54,8 @@ describe('toColumns', () => {
     const cols = toColumns({1: 10}, {1: {Amber: 5, Emerald: 5}});
     const one = cols.find((c) => c.bucket === 1)!;
     expect(one.segments).toEqual([
-      {ink: 'Amber', pct: 50},
-      {ink: 'Emerald', pct: 50},
+      {ink: 'Amber', pct: 50, count: 5},
+      {ink: 'Emerald', pct: 50, count: 5},
     ]);
   });
 
