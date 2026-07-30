@@ -5,10 +5,13 @@ import {CostCurveStrip} from './CostCurveStrip';
 const meta: Meta<typeof CostCurveStrip> = {
   title: 'Deck/CostCurveStrip',
   component: CostCurveStrip,
-  parameters: {backgrounds: {default: 'dark'}},
   decorators: [
     (Story) => (
-      <div style={{background: COLORS.surface, width: 460, padding: 8}}>
+      // Height matters: the bars size by percentage, so without a definite height
+      // here the chain goes indefinite and every bar collapses onto its minHeight,
+      // rendering a flat chart that hides the very proportions these stories exist
+      // to show. 240 mirrors DeckPanel's STATS_ROW_HEIGHT cost-curve cell.
+      <div style={{background: COLORS.surface, width: 460, height: 240, padding: 8}}>
         <Story />
       </div>
     ),
@@ -85,3 +88,25 @@ export const WithZeroCost: Story = {
 
 // An empty deck: the strip renders nothing (self-hides) so a fresh build stays clean.
 export const Empty: Story = {args: {costCurve: {}, costCurveByInk: {}}};
+
+// A single off-ink copy among many: the ink split's hardest read, and what the
+// per-band hover tooltip is for, since a 1-of is exactly the card whose presence
+// a glance at the bar will miss. Note MIN_BAND_PX does NOT bind here: at this
+// chart height a lone copy is naturally ~8.5px. The floor only engages on a
+// shorter chart or a busier deck (a real 60-card deck puts a 1-of at ~6.7px),
+// where it is a ~1px correction rather than a rescue. It is a layout-independent
+// guarantee, not a visible effect.
+export const LopsidedBucket: Story = {
+  args: {
+    costCurve: {1: 4, 2: 9, 3: 20, 4: 6, 5: 2, 6: 2, 7: 2},
+    costCurveByInk: {
+      1: {Amber: 4},
+      2: {Amber: 8, Emerald: 1},
+      3: {Amber: 19, Emerald: 1},
+      4: {Amber: 5, Emerald: 1},
+      5: {Amber: 1, Emerald: 1},
+      6: {Amber: 2},
+      7: {Amber: 1, Emerald: 1},
+    },
+  },
+};
