@@ -34,6 +34,7 @@ export type {FilterPanelProps} from './FilterContent';
 export {FilterDialog} from './FilterDialog';
 export {FilterSection} from './FilterSection';
 export {Footer} from './Footer';
+export {FullPageNotice} from './FullPageNotice';
 export {Header} from './Header';
 export {LegalPage, legalH2Style, legalLinkStyle} from './LegalPage';
 export {HeroSection} from './HeroSection';
