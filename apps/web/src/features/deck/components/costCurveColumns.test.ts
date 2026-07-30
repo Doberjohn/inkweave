@@ -27,8 +27,8 @@ describe('inkSegments', () => {
 
   it('carries each ink its raw count, not a rounded share', () => {
     // A lopsided bucket: the tooltip must say 1, never a percentage of anything.
-    // pct stays exact in the same breath — rounding it to 89/11 would stop the
-    // bands summing to 100 and leave a seam in the stacked bar.
+    // pct is asserted alongside because it is the glow's dominant-ink input and
+    // must stay exact; every other pct fixture in this file divides cleanly.
     const segs = inkSegments({Amber: 8, Emerald: 1});
     expect(segs.map((s) => s.count)).toEqual([8, 1]);
     expect(segs[0].pct).toBeCloseTo(88.889, 3);

@@ -65,7 +65,8 @@ export function barHeightPct(count: number, maxCount: number): number {
   if (maxCount <= 0) return 0; // empty deck — nothing to scale against
   // Linear against the busiest bucket: the tallest bar fills the strip and the
   // rest read proportionally, so the curve's SHAPE is legible at any deck size.
-  // No % floor — the component's minHeight:2 already keeps a nonzero bar visible.
+  // No % floor — the component floors a nonzero bar at MIN_BAR_PX, or at
+  // MIN_BAND_PX * its band count when it has bands to fit.
   return Math.max(0, Math.min(100, (count / maxCount) * 100));
 }
 

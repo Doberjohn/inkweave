@@ -2,8 +2,23 @@ import {COLORS, FONT_SIZES, FONTS, hexRgba, INK_COLORS, SPACING} from '../../../
 import type {Ink} from '../types';
 import {toColumns, totalCopies} from './costCurveColumns';
 
-/** Fixed chart-area height in px; each bar fills a 0..100% of it. */
+/** Minimum chart-area height in px; each bar fills a 0..100% of it. */
 const CHART_HEIGHT = 52;
+
+/**
+ * Smallest a single ink band may render. This is a hover-target size, not a
+ * spacing step, so it sits outside ICON_SIZE deliberately (same reasoning as
+ * DeckProfile's SYMBOL_SIZE). Flex honours it before distributing the remainder.
+ *
+ * INVARIANT: MIN_BAND_PX * 6 inks (48) must stay <= CHART_HEIGHT (52). A
+ * maximally split bucket's floors have to fit the chart area, which has no
+ * overflow guard: overshoot pushes the bar up through the padding into the tab
+ * strip. Raising this constant means raising CHART_HEIGHT with it.
+ */
+const MIN_BAND_PX = 8;
+
+/** Smallest a nonzero bar may render when it has no bands to fit. */
+const MIN_BAR_PX = 2;
 
 interface CostCurveStripProps {
   /** Cost -> copy count (drives bar heights). */
@@ -52,11 +67,14 @@ export function CostCurveStrip({costCurve, costCurveByInk}: CostCurveStripProps)
           return (
             <div
               key={col.bucket}
+              data-bucket={col.bucket}
               title={`${col.count} card${col.count === 1 ? '' : 's'} at cost ${col.label}`}
               style={{
                 flex: 1,
                 height: `${col.heightPct}%`,
-                minHeight: col.count > 0 ? 2 : 0,
+                // A bar must be tall enough for every band's floor, or the bands
+                // overflow and `overflow: hidden` silently clips an entire ink.
+                minHeight: col.count > 0 ? Math.max(MIN_BAR_PX, MIN_BAND_PX * col.segments.length) : 0,
                 borderRadius: '2px 2px 0 0',
                 overflow: 'hidden',
                 display: 'flex',
@@ -65,7 +83,18 @@ export function CostCurveStrip({costCurve, costCurveByInk}: CostCurveStripProps)
                 boxShadow: col.count > 0 ? `0 0 5px ${hexRgba(glow, 0.5)}, 0 0 12px ${hexRgba(glow, 0.24)}` : 'none',
               }}>
               {col.segments.map((seg) => (
-                <div key={seg.ink} style={{width: '100%', height: `${seg.pct}%`, background: INK_COLORS[seg.ink].border}} />
+                <div
+                  key={seg.ink}
+                  // Grow proportionally to the count from a zero basis, but never
+                  // below MIN_BAND_PX: flex floors the small bands and shares what
+                  // is left among the rest, which is the sizing rule we want.
+                  style={{
+                    flex: `${seg.count} 1 0`,
+                    minHeight: MIN_BAND_PX,
+                    width: '100%',
+                    background: INK_COLORS[seg.ink].border,
+                  }}
+                />
               ))}
             </div>
           );

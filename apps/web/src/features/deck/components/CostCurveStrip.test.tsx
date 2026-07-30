@@ -17,4 +17,15 @@ describe('CostCurveStrip', () => {
     const {container} = render(<CostCurveStrip costCurve={{}} costCurveByInk={{}} />);
     expect(container).toBeEmptyDOMElement();
   });
+
+  it('floors a bar tall enough to fit every band, so no ink is clipped away', () => {
+    // The 2-drop is 10% of the chart (~5px) and cannot hold two 8px bands, so
+    // the bar floors at 2 bands x MIN_BAND_PX = 16px.
+    const {container} = render(
+      <CostCurveStrip costCurve={{1: 20, 2: 2}} costCurveByInk={{1: {Amber: 20}, 2: {Amber: 1, Emerald: 1}}} />,
+    );
+    const twoDrop = container.querySelector<HTMLElement>('[data-bucket="2"]')!;
+    expect(twoDrop.style.minHeight).toBe('16px');
+    expect((twoDrop.firstElementChild as HTMLElement).style.minHeight).toBe('8px');
+  });
 });
