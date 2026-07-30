@@ -9,8 +9,8 @@ const TIP_MAX_WIDTH = 240;
 interface TooltipProps {
   /** Trigger element (e.g. a `?` button). The tooltip is shown on hover/focus of this element. */
   children: ReactNode;
-  /** Tooltip body. Newlines (`\n`) are preserved via `white-space: pre-line`. */
-  content: string;
+  /** Tooltip body. A plain string keeps its newlines via `white-space: pre-line`; nodes render as given. */
+  content: ReactNode;
   /** Optional aria-label for the trigger when its visible text is just an icon ("?"). */
   triggerAriaLabel?: string;
   /** Style overrides for the trigger wrapper (the `<span>` wrapping `children`). */
