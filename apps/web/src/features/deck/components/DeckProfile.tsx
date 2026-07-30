@@ -5,7 +5,7 @@ import {InkwellIcon} from '../../../shared/components/InkwellIcon';
 import type {CardType, DeckStats} from '../types';
 
 /** Symbol size for every tile, ink glyphs included. */
-const SYMBOL_SIZE = 40;
+const SYMBOL_SIZE = 32;
 
 /**
  * How narrow a tile column may get before the row wraps. Sized so four tiles
