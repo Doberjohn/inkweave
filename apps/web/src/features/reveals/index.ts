@@ -7,6 +7,8 @@ export type {CountdownState} from './useCountdown';
 export {fetchRevealDates} from './revealDates';
 export type {RevealDates} from './revealDates';
 export {RevealsGate} from './RevealsGate';
+export {RevealsOffSeason, OffSeasonNotice} from './RevealsOffSeason';
+export {useRevealDates} from './revealDates';
 export {useRevealCards} from './useRevealCards';
 export type {RevealTier, UseRevealCardsReturn} from './useRevealCards';
 export {useRevealProgress} from './useRevealProgress';

@@ -1,10 +1,12 @@
 import type {ReactNode} from 'react';
-import {Navigate} from 'react-router-dom';
+import {RevealsOffSeason} from './RevealsOffSeason';
 import {useRevealPhase} from './useRevealPhase';
 
 /**
- * Renders children during reveal season (`pre-release` / `pre-release-live`).
- * Redirects to `/` when the phase is `hidden` (flag off) or `released` (past wide release).
+ * Renders children during reveal season (`pre-release` / `pre-release-live`) and
+ * an off-season notice when the phase is `hidden` (flag off) or `released` (past
+ * wide release). It used to redirect to `/`, which left anyone arriving from a
+ * bookmark, link or search on the homepage with no explanation.
  */
 export function RevealsGate({children}: {children: ReactNode}) {
   const phase = useRevealPhase();
@@ -12,7 +14,7 @@ export function RevealsGate({children}: {children: ReactNode}) {
   // let children mount (the page handles its own loading state) so we don't
   // race-redirect before dates resolve.
   if (phase === 'hidden' || phase === 'released') {
-    return <Navigate to="/" replace />;
+    return <RevealsOffSeason phase={phase} />;
   }
   return <>{children}</>;
 }

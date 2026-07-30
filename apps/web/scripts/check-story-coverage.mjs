@@ -26,7 +26,7 @@ const EXCLUDED = new Set([
   'EtherealBackground.tsx', // canvas animation, no props
   'RenderProfiler.tsx', // performance utility wrapper, not visual
   'AdminGate.tsx', // route gate: renders children or a redirect, no visual surface
-  'RevealsGate.tsx', // route gate: renders children or a redirect, no visual surface
+  'RevealsGate.tsx', // route gate: renders children or delegates to RevealsOffSeason, which has its own story
   'SynergyBanner.tsx', // marketing-banner generator, rendered only by the dev-only /banner export route
   'Seo.tsx', // head-only: emits <title>/<meta>/<link> via React 19 native metadata, renders no visible UI
 ]);

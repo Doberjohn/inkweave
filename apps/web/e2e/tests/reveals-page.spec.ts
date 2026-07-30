@@ -7,7 +7,9 @@ import {test, expect} from '../fixtures';
  *   1. No revealed cards at all — previewCards.json cards: [] (the primary signal;
  *      once a set graduates its cards move into allCards.json and this file empties).
  *   2. Past the set's releaseDate — useRevealPhase returns 'released', RevealsGate
- *      redirects /reveals -> / and the nav entry / promo modal drop.
+ *      renders the off-season notice instead of the page, and the nav entry /
+ *      promo modal drop. (It redirected to / until 2026-07-30; the skip still
+ *      applies, since the notice is not the page these assertions target.)
  * Returns the skip reason, or null when a reveal season is genuinely active.
  */
 function offSeasonSkipReason(data: unknown): string | null {
