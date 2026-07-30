@@ -107,9 +107,19 @@ remains correct for them.
 5. Update the component's doc comment, which currently states that copy counts
    live on the bar's hover title and that the strip carries no numeric labels.
 
-Anchoring targets the bar's top edge rather than the band, so the tooltip clears
-the chart instead of covering the neighbouring costs. `Tooltip` already flips
-above/below on available headroom.
+**Anchoring: to the band, not the bar's top edge.** An earlier draft of this spec
+said the tooltip should anchor above the bar's top edge so it always clears the
+chart. That is not what the chosen component does: `Tooltip` positions relative to
+its own trigger, and the trigger here is the band. Delivering bar-top anchoring
+would mean adding an anchor-override prop to a shared component.
+
+Band anchoring ships first, for two reasons. The chart area is only ~52px tall, so
+the worst case puts the tooltip about 50px lower than bar-top anchoring would, not
+halfway down the panel; and `Tooltip` already flips above/below on available
+headroom, which handles the top-of-panel case. Whether the remaining occlusion of
+the neighbouring costs actually reads as a problem is a judgement best made from
+the built thing, at the owner visual review, rather than pre-empted with a prop
+nobody has asked for. If it does read badly, add the anchor override then.
 
 ## Verification
 
@@ -125,7 +135,9 @@ test. That is the accepted trade for deleting the measurement machinery. It is
 covered instead by the story below, which is inspected visually, and by the bar's
 `minHeight` expression, which is assertable as a style value.
 
-**Component** (`CostCurveStrip.test.tsx`, new):
+**Component** (`CostCurveStrip.test.tsx`, which already exists and whose four
+`getByTitle` assertions this change breaks; they are migrated to role and axis-label
+queries in the same commit that removes the title):
 - A lopsided deck renders a tooltip whose text contains the ink name and count.
 - No bar carries a `title` attribute.
 - A bar's inline `minHeight` equals `MIN_BAND_PX * bandCount` when that exceeds 2,
