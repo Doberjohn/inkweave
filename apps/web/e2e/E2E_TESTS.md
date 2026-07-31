@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-108 tests across 18 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+109 tests across 18 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
 
@@ -263,13 +263,14 @@ This replaced a version that inferred artifact absence from a *second* 10s UI wa
 |---|---|
 | renders the calibration + activity tabs | `/admin/analytics` shows the `Engine Calibration` h1 and the verdict scale + `Total votes` on the Calibration tab, then switches to the Activity tab and confirms the day-by-day log header |
 
-## `navigation.spec.ts` — 1 test (desktop only)
+## `navigation.spec.ts` — 2 tests (desktop only)
 
 Regression guard for the Decks link being unreachable from the desktop nav — lint, typecheck, and unit tests can't express "no link points here," only an E2E can.
 
 | Test | What it verifies |
 |---|---|
 | Decks is reachable from the main nav | `/browse`'s `Main navigation` has a "Decks" link; clicking it navigates to `/decks` |
+| the header carries a sign-in control on every page | `/browse` and `/playstyles` both show a "Sign in" button inside `compact-header` |
 
 ## Patterns
 

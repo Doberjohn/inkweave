@@ -15,4 +15,18 @@ test.describe('Desktop nav', () => {
     await decksLink.click();
     await expect(page).toHaveURL(/\/decks$/);
   });
+
+  test('the header carries a sign-in control on every page', async ({page}, testInfo) => {
+    // Desktop-only: CompactHeader returns null on mobile, where auth has no entry
+    // point yet (recorded gap in the header-auth design doc).
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+
+    const header = page.getByTestId('compact-header');
+
+    // Two unrelated pages, to prove it is the header carrying this and not the page.
+    for (const path of ['/browse', '/playstyles']) {
+      await page.goto(path);
+      await expect(header.getByRole('button', {name: 'Sign in', exact: true})).toBeVisible();
+    }
+  });
 });
