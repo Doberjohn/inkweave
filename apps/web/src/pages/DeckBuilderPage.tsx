@@ -178,6 +178,7 @@ export function DeckBuilderPage() {
           actions={
             <DeckActionsBar
               cardCount={stats.totalCards}
+              isLegal={stats.isLegal}
               onClear={clearDeck}
               onImport={() => setShowImport(true)}
               onExport={exportToDuelsInk}

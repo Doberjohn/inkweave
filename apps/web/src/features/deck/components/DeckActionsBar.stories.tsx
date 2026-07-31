@@ -19,7 +19,12 @@ const meta: Meta<typeof DeckActionsBar> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WithCards: Story = {args: {cardCount: 56}};
+// The payoff state: a Core-legal deck lights the filled Duels button.
+export const LegalDeck: Story = {args: {cardCount: 60, isLegal: true}};
+
+// Mid-build. Clear is live, but Duels stays disabled until the deck is legal —
+// the common case, since a deck is illegal for most of its life.
+export const WithCards: Story = {args: {cardCount: 56, isLegal: false}};
 
 // An empty deck has nothing to clear or export; only Import stays live.
-export const EmptyDeck: Story = {args: {cardCount: 0}};
+export const EmptyDeck: Story = {args: {cardCount: 0, isLegal: false}};
