@@ -146,6 +146,18 @@ Pure, unit-testable. `analyzeDeck(deck, cards, {precomputedPairs, hosers, collec
 
 ### Phase 1 — v1: Builder + Live Advisor + Quality Score + Auth
 
+**Status (2026-07-31): PIVOT — ship the manual builder, stop trying to finish the advisor.** Owner ruling. The advisor half has been parked since 2026-07-28 (below) and the analysis modules are, in the owner's words, "currently dead code" — `analyzers`, `score`, `suggestions`, `vulnerabilities`, `archetype` and `deckSynergy` are built and tested but rendered by nothing (`DeckBuilderPage.tsx` says so in a comment). Note the exception: **`deckStats.ts` is NOT dead** — it is the spine of the shipped builder, driving the count badge, legality errors, the cost curve, and the Duels export gate.
+
+The v1 headline is therefore **the classic manual builder, made good enough to use**, not builder + advisor + score. Three owner-chosen items define that:
+
+1. **Legibility pass** — muted-grey button text at weight 600, and small font sizes reviewed. A *design* change; distinct from #544, which is a zero-visual-change tokenization. Partly begun: the filled CTA went 500 → 600 and the nav links 13px/500 → 14px/600 (2026-07-31).
+2. **Desktop nav + Decks link** — **DONE 2026-07-31** (`b7e96868`..`de4ad640`). `/decks` was unreachable on desktop; mobile had carried the tab all along. Design + plan: [`2026-07-31-desktop-nav-redesign-design.md`](2026-07-31-desktop-nav-redesign-design.md).
+3. **Dreamborn collection import** — Phase 2 (#452), CSV at `.knowledge/folder/download.csv`. Proposed scope change: ship parser + own/don't-own + "only cards I own" filter against **localStorage first**, deferring the `collections` migration + RLS, so the feature delivers value without a live-DB step.
+
+**Decks is now a PUBLIC destination**, not account-scoped: `/decks` is intended to show community decks with a switch to your own. That is what let the nav treat it as a peer of Browse/Playstyles/Vote. The community-decks page itself is unbuilt and belongs to Phase 4 (#454), not here.
+
+Parked, not deleted: the advisor modules stay in the tree. Do not delete them without a ruling, and do not rebuild a panel without a fresh agreed design.
+
 **Status (2026-07-28): the advisor UI is PARKED, and the builder is two columns.** Two owner rulings supersede the advisor-surface parts of the 2026-07-22 status below. The engine half (archetype, analyzers, vulnerabilities, synergy aggregation, `rankSuggestions`) is built, tested, and unaffected; only the *surface* is unresolved.
 
 - **Advisor parked** (`2b044a9`). Both attempts were rejected by the owner: the numeric panel (0-100 score, per-dimension rings) as "engine vocabulary wearing a UI", and the qualitative rewrite as *"still a huge wall of text. Noone will ever read a single line."* Consequences already applied in code: the Cards/Analysis tab bar and the deck-health cell are **removed**, per-row delete is gone (the stepper's `−` at one copy removes), and `useDeckAnalysis` is **unwired** in `DeckBuilderPage` (it would fetch per-card pair data on every edit for an unread result). The advisor components remain in the codebase, unreachable. **Do not rebuild a panel without a fresh design agreed with the owner.** Rationale plus the 13-tool competitor survey (zero of thirteen ship a working deck score): [`2026-07-24-advisor-tab-redesign-design.md`](2026-07-24-advisor-tab-redesign-design.md).
