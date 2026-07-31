@@ -327,17 +327,12 @@ export const KNOWN_OFFENDERS = {
     'src/pages/InDepthVotePage.tsx', // x7
     'src/shared/components/BackLink.tsx', // x1
     'src/shared/components/CardImage.tsx', // x1
-    'src/shared/components/Chip.tsx', // x1
     'src/shared/components/ConnectionGroup.tsx', // x5
-    'src/shared/components/CtaButton.tsx', // x1
     'src/shared/components/FilterButton.tsx', // x3
     'src/shared/components/HeroSection.tsx', // x1
-    'src/shared/components/IconButton.tsx', // x1
-    'src/shared/components/LinkButton.tsx', // x1
     'src/shared/components/MobileBottomNav.tsx', // x2
     'src/shared/components/SearchAutocomplete.tsx', // x1
     'src/shared/components/SearchBottomSheet.tsx', // x4
     'src/shared/components/SortSelect.tsx', // x2
-    'src/shared/components/TabList.tsx', // x2
   ],
 };
