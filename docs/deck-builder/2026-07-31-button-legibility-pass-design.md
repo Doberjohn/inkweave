@@ -71,12 +71,22 @@ third exception should be treated as evidence the rule is wrong, not as another 
    the active tab's weight cue at exactly the moment its neighbours got heavier.
 2. **`LinkButton size="sm"` (11px) stays.** `size` is an opt-in prop a caller chose
    for a tight space. Overriding it would make the prop a lie.
-3. **`CtaButton`'s filled weight moves out of `CTA_FILLED_STYLE` into the shared
-   base style.** With 600 universal, keeping it in the filled recipe leaves one
-   variant carrying a weight the others inherit — the same split that let the
-   header's Reveals pill drift from the kit before `1da74c47`. Note the pill and
-   the header NavLink both read `CTA_FILLED_STYLE`; both must still land on 600
-   after the move.
+3. **`CTA_FILLED_STYLE` KEEPS its `fontWeight: 600`, and the base gains 600 too.**
+
+   The tempting move is to delete the weight from the filled recipe now that 600 is
+   universal — one variant should not carry what the others inherit. **That would
+   break the header.** `CompactHeader`'s `RevealsPill` is a `NavLink`, not a
+   `CtaButton`: it spreads `CTA_FILLED_STYLE` and sets its own `fontSize`, but no
+   `fontWeight`. It relies entirely on the recipe supplying 600. Removing it drops
+   the pill to `:root`'s 400 silently — no error, no failing test, just a lighter
+   pill nobody notices.
+
+   So the duplication is load-bearing: `CTA_FILLED_STYLE` must stay self-sufficient
+   because a non-button consumes it. Verified 2026-07-31 — the recipe has three
+   consumers: `CtaButton`'s `filled` and `pill` variants, and `CompactHeader:203`.
+
+   *(This corrects an earlier version of this spec, which called for the move. It
+   was wrong.)*
 
 ## Density: measured, not assumed
 
