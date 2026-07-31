@@ -205,7 +205,7 @@ function RevealsPill({isHovered, onMouseEnter, onMouseLeave}: RevealsPillProps) 
         ...CTA_FILLED_STYLE,
         display: 'flex',
         alignItems: 'center',
-        gap: 8,
+        gap: SPACING.sm,
         padding: '0 14px',
         height: 38,
         borderRadius: RADIUS.pill,
@@ -293,7 +293,7 @@ function DesktopNav({isRevealSeason}: DesktopNavProps) {
         transform: 'translate(-50%, -50%)',
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
+        gap: SPACING.md,
       }}>
       <div style={{display: 'flex', alignItems: 'center', gap: SPACING.xxxl}}>
         {items.map(({path, label}) => (
