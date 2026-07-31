@@ -1,9 +1,15 @@
 import {useState} from 'react';
 import {CtaButton} from '../../../shared/components';
-import {FONT_SIZES, SPACING} from '../../../shared/constants';
+import {SPACING} from '../../../shared/constants';
 
-/** Compact toolbar buttons: icon + label, quiet until hovered. */
-const ACTION_STYLE = {minHeight: 32, padding: `0 ${SPACING.md}px`, fontSize: FONT_SIZES.md, gap: 6} as const;
+/**
+ * Compact toolbar buttons: icon + label, quiet until hovered. Height and padding
+ * stay pinned so the bar keeps its tight rhythm, but the font size is deliberately
+ * NOT overridden — it inherits the kit's 14/600 (2026-07-31 legibility ruling).
+ * Pinning it here is exactly what left this bar at 12px while every other button
+ * in the app moved to 14px.
+ */
+const ACTION_STYLE = {minHeight: 32, padding: `0 ${SPACING.md}px`, gap: 6} as const;
 
 function ClearIcon() {
   return (
