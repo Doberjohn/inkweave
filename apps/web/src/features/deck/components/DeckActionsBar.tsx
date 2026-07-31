@@ -2,15 +2,6 @@ import {useState} from 'react';
 import {CtaButton} from '../../../shared/components';
 import {SPACING} from '../../../shared/constants';
 
-/**
- * Compact toolbar buttons: icon + label, quiet until hovered. Height and padding
- * stay pinned so the bar keeps its tight rhythm, but the font size is deliberately
- * NOT overridden — it inherits the kit's 14/600 (2026-07-31 legibility ruling).
- * Pinning it here is exactly what left this bar at 12px while every other button
- * in the app moved to 14px.
- */
-const ACTION_STYLE = {minHeight: 32, padding: `0 ${SPACING.md}px`, gap: 6} as const;
-
 function ClearIcon() {
   return (
     <svg width={14} height={14} viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -71,10 +62,10 @@ export function DeckActionsBar({onClear, onImport, onExport, cardCount, isLegal}
     <div style={{display: 'flex', gap: SPACING.sm, flexWrap: 'wrap'}}>
       {confirmingClear ? (
         <>
-          <CtaButton onClick={clearNow} style={ACTION_STYLE} aria-label={`Clear all ${cardCount} cards`}>
+          <CtaButton onClick={clearNow} aria-label={`Clear all ${cardCount} cards`}>
             Clear {cardCount} cards?
           </CtaButton>
-          <CtaButton variant="neutral" onClick={() => setConfirmingClear(false)} style={ACTION_STYLE}>
+          <CtaButton variant="neutral" onClick={() => setConfirmingClear(false)}>
             Keep
           </CtaButton>
         </>
@@ -82,8 +73,7 @@ export function DeckActionsBar({onClear, onImport, onExport, cardCount, isLegal}
         <CtaButton
           variant="neutral"
           onClick={() => (isEmpty ? undefined : setConfirmingClear(true))}
-          disabled={isEmpty}
-          style={ACTION_STYLE}>
+          disabled={isEmpty}>
           <ClearIcon />
           Clear
         </CtaButton>
@@ -93,7 +83,7 @@ export function DeckActionsBar({onClear, onImport, onExport, cardCount, isLegal}
         Ghost, not neutral: only the destructive Clear stays neutral, so the
         quietest button in the bar is the one with no undo.
       */}
-      <CtaButton variant="ghost" onClick={onImport} style={ACTION_STYLE}>
+      <CtaButton variant="ghost" onClick={onImport}>
         <ImportIcon />
         Import
       </CtaButton>
@@ -110,8 +100,7 @@ export function DeckActionsBar({onClear, onImport, onExport, cardCount, isLegal}
         onClick={onExport}
         disabled={!isLegal}
         title={isLegal ? undefined : ILLEGAL_REASON}
-        aria-label={isLegal ? undefined : ILLEGAL_REASON}
-        style={ACTION_STYLE}>
+        aria-label={isLegal ? undefined : ILLEGAL_REASON}>
         <ExternalLinkIcon />
         Play on Duels
       </CtaButton>

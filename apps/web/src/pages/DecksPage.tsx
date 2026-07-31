@@ -3,8 +3,9 @@ import {Link} from 'react-router-dom';
 import {useSession} from '../shared/contexts/SessionContext';
 import {SignInDialog} from '../shared/components/SignInDialog';
 import {CompactHeader, CtaButton} from '../shared/components';
+import {CTA_BASE_STYLE, CTA_FILLED_STYLE} from '../shared/components/ctaStyles';
 import {useResponsive} from '../shared/hooks';
-import {COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, LAYOUT, SPACING} from '../shared/constants';
 
 /**
  * `/decks` — the user's deck list. Local drafts and cloud decks fill in with #473/#464;
@@ -54,19 +55,21 @@ export function DecksPage() {
         <p style={{fontFamily: FONTS.body, fontSize: FONT_SIZES.base, color: COLORS.textMuted, marginTop: SPACING.sm}}>
           Build a Core-legal deck with live synergy guidance.
         </p>
+        {/*
+          The kit's filled CTA worn by a Link, not a CtaButton. It stays an anchor
+          deliberately: this navigates, so middle-click, open-in-new-tab and
+          crawlability all matter — the same reason CompactHeader's Reveals pill is
+          a NavLink. Spreading BASE + FILLED means it IS the landing page CTA rather
+          than a copy of it (owner ruling 2026-07-31); it previously hand-rolled a
+          flat COLORS.primary with no gradient, shadow, hover or press.
+        */}
         <Link
           to="/decks/new"
           style={{
-            display: 'inline-block',
+            ...CTA_BASE_STYLE,
+            ...CTA_FILLED_STYLE,
+            display: 'inline-flex',
             marginTop: SPACING.lg,
-            padding: `${SPACING.sm}px ${SPACING.lg}px`,
-            background: COLORS.primary,
-            color: COLORS.background,
-            fontFamily: FONTS.body,
-            fontSize: FONT_SIZES.lg,
-            fontWeight: 600,
-            borderRadius: RADIUS.lg,
-            textDecoration: 'none',
           }}>
           + New deck
         </Link>

@@ -140,11 +140,37 @@ typography assertion in the codebase is `AbilityTag.test.tsx:26`
 button, and is out of scope. So no existing test constrains this change; all E2E
 button selectors are text-based (`getByRole('button', {name})`).
 
+## Scope extension (owner ruling, same day — supersedes the note below)
+
+The pass was scoped to the six kit components, with call-site overrides explicitly
+out. After seeing the result the owner extended it:
+
+1. **The deck toolbar loses `ACTION_STYLE` entirely.** Its three buttons become
+   plain kit buttons — 44px, 14/600, kit padding and gap — matching the landing
+   CTAs. The override is not trimmed, it is deleted, so nothing is left to drift.
+2. **`/decks`'s "+ New deck" becomes the same filled CTA.** It stays a `<Link>`,
+   not a `CtaButton`: it navigates, so middle-click, open-in-new-tab and
+   crawlability all matter. It previously hand-rolled a flat `COLORS.primary` with
+   no gradient, shadow, hover or press.
+3. **`CTA_BASE_STYLE` is extracted** into `ctaStyles.ts` beside `CTA_FILLED_STYLE`.
+   Point 2's first attempt hand-copied `CtaButton`'s base metrics into `DecksPage`
+   — lint-clean once tokenised, and still a second copy that would silently stop
+   tracking the kit. The base now lives in one place and both the button and the
+   anchor spread it. `display` stays with each consumer: `CtaButton` needs `flex`
+   (block-level, so `margin: 0 auto` centres it — `AppLayout`'s retry button relies
+   on that), an inline anchor wants `inline-flex`.
+
+**Call-site overrides that remain, deliberately.** Six `CtaButton` call sites still
+pin `fontSize` and so did NOT get 14px: `SuggestionList` (12px — parked advisor
+code, renders nowhere), `DecksPage`'s Sign in (13px) and Sign out (12px), and the
+three admin pages (11px each). The admin pages are internal tools where dense
+buttons are a reasonable choice. `DecksPage`'s two are a live inconsistency on a
+page whose own primary button is now 14px, and are the obvious next candidates.
+
 ## Recorded, not solved
 
-- **`ACTION_STYLE` and any other call-site size override** are untouched by this
-  change and will look small beside the new default. Reviewing them is in scope for
-  *looking*, out of scope for *changing* without a further ruling.
+- **`ACTION_STYLE`** — resolved by the ruling above; the original note read "review
+  it, do not change it", which the owner overrode after seeing it rendered.
 - This is a **design change**, distinct from #544, which tokenizes `fontWeight`
   with explicitly zero visual change. Doing this first means #544 renames the new
   values rather than the old ones — no extra churn, but the two must not be

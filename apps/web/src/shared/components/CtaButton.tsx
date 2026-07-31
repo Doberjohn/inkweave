@@ -1,7 +1,7 @@
 import {useState} from 'react';
-import {COLORS, DISABLED_STYLE, DURATION, EASING, FONTS, FONT_SIZES, PRESS_SCALE, RADIUS, hexRgba} from '../constants';
+import {COLORS, DISABLED_STYLE, DURATION, EASING, PRESS_SCALE, RADIUS, hexRgba} from '../constants';
 import {useBoop} from '../hooks';
-import {CTA_FILLED_STYLE} from './ctaStyles';
+import {CTA_BASE_STYLE, CTA_FILLED_STYLE} from './ctaStyles';
 
 /**
  * The blessed CTA variants (#509, one component per the owner ruling):
@@ -93,22 +93,12 @@ export function CtaButton({
   });
 
   const baseStyle: React.CSSProperties = {
+    ...CTA_BASE_STYLE,
+    // `flex`, not the base's omitted default: block-level, so a caller's
+    // `margin: 0 auto` centres it (AppLayout's retry button relies on this).
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: '0 20px',
-    minHeight: 44,
-    borderRadius: `${RADIUS.lg}px`,
-    fontFamily: FONTS.body,
-    // The kit baseline (2026-07-31 ruling): every button is 14/600. Muted-grey
-    // labels at 13/500 read thin on a dark ground — contrast was never the issue
-    // (textMuted is 6.18-7.36:1, above AA everywhere), stroke weight was.
-    fontSize: `${FONT_SIZES.lg}px`,
-    fontWeight: 600,
     cursor: 'pointer',
     transition: `all ${DURATION.base}ms ${EASING.snappy}`,
-    textDecoration: 'none',
   };
 
   return (
