@@ -1,26 +1,16 @@
 import {type ReactNode, useState} from 'react';
 import {Link, NavLink} from 'react-router-dom';
-import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, DURATION, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../constants';
-import {useAutocomplete} from '../hooks';
+import {COLORS, DURATION, EASING, FONT_SIZES, FONTS, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../constants';
 import {useRevealPhase} from '../../features/reveals';
 import {useIsSignedIn} from '../contexts/SessionContext';
 import {CTA_FILLED_STYLE} from './ctaStyles';
-import {SearchAutocomplete} from './SearchAutocomplete';
 
 interface CompactHeaderProps {
   /** Optional side-effect callback fired before nav. Link handles the route push. */
   onLogoClick?: () => void;
   /** When true, renders "← INKWEAVE" as a back button instead of just "INKWEAVE" */
   showBackArrow?: boolean;
-  /** Search bar props. When provided, renders an inline search bar in the header. */
-  searchQuery?: string;
-  onSearchChange?: (query: string) => void;
-  onSearchSubmit?: () => void;
-  /** Cards for autocomplete suggestions */
-  cards?: LorcanaCard[];
-  onCardSelect?: (card: LorcanaCard) => void;
-  /** Optional actions rendered after the search bar (e.g. filters button on CardPage) */
+  /** Optional actions rendered after the nav (e.g. filters button on CardPage) */
   headerActions?: ReactNode;
   /** Responsive mobile flag */
   isMobile?: boolean;
@@ -61,13 +51,6 @@ interface ViewportConfig {
   isMobile: boolean;
 }
 
-/** All knobs needed to compute the search-input wrapper style. */
-interface SearchInputStyleConfig {
-  focused: boolean;
-  height: number;
-  padding: string;
-}
-
 // =====================================================================
 // Style helpers — module-level so their branches don't roll up to JSX.
 // =====================================================================
@@ -105,44 +88,6 @@ function getNavItemColor(state: InteractionState): string {
   if (state.isActive) return COLORS.primary;
   if (state.isHovered) return COLORS.primary;
   return COLORS.textMuted;
-}
-
-interface SearchSizing {
-  iconSize: number;
-  iconLeft: number;
-  inputHeight: number;
-  inputPadding: string;
-  maxWidth: number | undefined;
-}
-
-function getSearchSizing(viewport: ViewportConfig): SearchSizing {
-  if (viewport.isMobile) {
-    return {iconSize: 14, iconLeft: 10, inputHeight: 34, inputPadding: '0 10px 0 32px', maxWidth: undefined};
-  }
-  return {iconSize: 16, iconLeft: 12, inputHeight: 36, inputPadding: '0 12px 0 36px', maxWidth: 320};
-}
-
-function getSearchInputStyle(config: SearchInputStyleConfig): React.CSSProperties {
-  const borderColor = config.focused ? GOLD_GLOW.activeBorder : COLORS.searchBorder;
-  const boxShadow = config.focused
-    ? GOLD_GLOW.focusRing
-    : 'none';
-  return {
-    width: '100%',
-    height: config.height,
-    padding: config.padding,
-    borderRadius: `${RADIUS.lg}px`,
-    border: `1px solid ${borderColor}`,
-    background: COLORS.searchBg,
-    color: COLORS.text,
-    fontSize: `${FONT_SIZES.lg}px`,
-    fontFamily: FONTS.body,
-    boxSizing: 'border-box',
-    outline: 'none',
-    boxShadow,
-    // Was 0.25s; the scale has three steps and 250 converges to base (2026-07-29 ruling).
-    transition: `border-color ${DURATION.base}ms ${EASING.snappy}, box-shadow ${DURATION.base}ms ${EASING.snappy}`,
-  };
 }
 
 function isPlainLeftClick(e: React.MouseEvent): boolean {
@@ -198,103 +143,6 @@ function HeaderLogo({showBackArrow, viewport, onClick}: HeaderLogoProps) {
         }}
       />
     </Link>
-  );
-}
-
-interface HeaderSearchProps {
-  cards: LorcanaCard[];
-  query: string;
-  onChange: (q: string) => void;
-  onSubmit?: () => void;
-  onCardSelect?: (card: LorcanaCard) => void;
-  viewport: ViewportConfig;
-}
-
-function HeaderSearch({cards, query, onChange, onSubmit, onCardSelect, viewport}: HeaderSearchProps) {
-  const [focused, setFocused] = useState(false);
-  const sizing = getSearchSizing(viewport);
-
-  const handleSelect = (card: LorcanaCard) => {
-    if (onCardSelect) onCardSelect(card);
-  };
-
-  const autocomplete = useAutocomplete({
-    cards,
-    query,
-    onQueryChange: onChange,
-    onSelect: handleSelect,
-  });
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    autocomplete.inputProps.onKeyDown(e);
-    if (e.defaultPrevented) return;
-    if (e.key !== 'Enter') return;
-    if (onSubmit) onSubmit();
-  };
-
-  const handleFocus = () => {
-    autocomplete.inputProps.onFocus();
-    setFocused(true);
-  };
-
-  const handleBlur = () => {
-    autocomplete.inputProps.onBlur();
-    setTimeout(() => setFocused(false), 150);
-  };
-
-  return (
-    <div
-      style={{
-        flex: 1,
-        maxWidth: sizing.maxWidth,
-        position: 'relative',
-        zIndex: Z_INDEX.autocomplete,
-      }}>
-      <svg
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          left: sizing.iconLeft,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          width: sizing.iconSize,
-          height: sizing.iconSize,
-          pointerEvents: 'none',
-          zIndex: 1,
-        }}
-        viewBox="0 0 20 20"
-        fill="none">
-        <circle cx="9" cy="9" r="6" stroke={COLORS.searchIcon} strokeWidth="1.5" />
-        <line
-          x1="13.5"
-          y1="13.5"
-          x2="17"
-          y2="17"
-          stroke={COLORS.searchIcon}
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </svg>
-      <input
-        type="text"
-        aria-label="Search cards"
-        placeholder="Search cards..."
-        {...autocomplete.inputProps}
-        onKeyDown={handleKeyDown}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        data-testid="browse-search"
-        style={getSearchInputStyle({focused, height: sizing.inputHeight, padding: sizing.inputPadding})}
-      />
-      <SearchAutocomplete
-        suggestions={autocomplete.suggestions}
-        isOpen={autocomplete.isOpen}
-        highlightedIndex={autocomplete.highlightedIndex}
-        query={query}
-        listboxProps={autocomplete.listboxProps}
-        getOptionProps={autocomplete.getOptionProps}
-      />
-    </div>
   );
 }
 
@@ -408,7 +256,7 @@ function DesktopNav({isRevealSeason}: DesktopNavProps) {
         alignItems: 'center',
         gap: 12,
       }}>
-      <div style={{display: 'flex', alignItems: 'center', gap: SPACING.xl}}>
+      <div style={{display: 'flex', alignItems: 'center', gap: SPACING.xxxl}}>
         {items.map(({path, label}) => (
           <NavItemLink
             key={path}
@@ -435,17 +283,7 @@ function DesktopNav({isRevealSeason}: DesktopNavProps) {
 // Public component — layout shell that delegates to subcomponents above.
 // =====================================================================
 
-export function CompactHeader({
-  onLogoClick,
-  showBackArrow,
-  searchQuery,
-  onSearchChange,
-  onSearchSubmit,
-  cards = [],
-  onCardSelect,
-  headerActions,
-  isMobile,
-}: CompactHeaderProps) {
+export function CompactHeader({onLogoClick, showBackArrow, headerActions, isMobile}: CompactHeaderProps) {
   // Hooks must run unconditionally — call before the early return below.
   const revealPhase = useRevealPhase();
 
@@ -456,22 +294,11 @@ export function CompactHeader({
 
   const isRevealSeason = revealPhase === 'pre-release' || revealPhase === 'pre-release-live';
   const viewport: ViewportConfig = {isMobile: false};
-  const hasSearch = searchQuery !== undefined && onSearchChange !== undefined;
 
   return (
     <header data-testid="compact-header" style={getHeaderStyle(viewport)}>
       <HeaderLogo viewport={viewport} showBackArrow={showBackArrow} onClick={onLogoClick} />
-      {hasSearch && (
-        <HeaderSearch
-          cards={cards}
-          query={searchQuery}
-          onChange={onSearchChange}
-          onSubmit={onSearchSubmit}
-          onCardSelect={onCardSelect}
-          viewport={viewport}
-        />
-      )}
-      {!viewport.isMobile && <DesktopNav isRevealSeason={isRevealSeason} />}
+      <DesktopNav isRevealSeason={isRevealSeason} />
       {headerActions}
     </header>
   );

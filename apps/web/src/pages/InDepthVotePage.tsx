@@ -1,10 +1,8 @@
 import type {ReactNode} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CompactHeader, CtaButton, BackLink, EtherealBackground, Sparkles} from '../shared/components';
 import {CardDetailSkeleton} from '../features/cards';
 import {useResponsive} from '../shared/hooks';
-import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {PairDisplay, VoteStatusBanner, InDepthVoteForm, VoteFormSkeleton} from '../features/voting';
 import {useSpecificPair} from '../features/voting/hooks/useSpecificPair';
@@ -400,16 +398,12 @@ const pageShellOuter = {
 
 type PageHeaderProps = {
   isMobile: boolean;
-  cards: LorcanaCard[];
   onLogoClick: () => void;
-  onCardSelect: (card: {id: string}) => void;
 };
 
 function InDepthPageShell({
   isMobile,
-  cards,
   onLogoClick,
-  onCardSelect,
   ariaBusy,
   ariaLabel,
   children,
@@ -424,8 +418,6 @@ function InDepthPageShell({
       <CompactHeader
         onLogoClick={onLogoClick}
         isMobile={isMobile}
-        cards={cards}
-        onCardSelect={onCardSelect}
       />
       <main
         style={{
@@ -488,15 +480,13 @@ function LoadingPairs({
   );
 }
 
-function InDepthLoadingView({isMobile, cards, onLogoClick, onCardSelect}: PageHeaderProps) {
+function InDepthLoadingView({isMobile, onLogoClick}: PageHeaderProps) {
   const pairImageWidth = isMobile ? 150 : 298;
   const pairCardWidth = isMobile ? 170 : 340;
   return (
     <InDepthPageShell
       isMobile={isMobile}
-      cards={cards}
       onLogoClick={onLogoClick}
-      onCardSelect={onCardSelect}
       ariaBusy
       ariaLabel="Loading vote pair and form">
       <LoadingPairs isMobile={isMobile} pairImageWidth={pairImageWidth} pairCardWidth={pairCardWidth} />
@@ -506,18 +496,14 @@ function InDepthLoadingView({isMobile, cards, onLogoClick, onCardSelect}: PageHe
 
 function InDepthErrorView({
   isMobile,
-  cards,
   error,
   onLogoClick,
-  onCardSelect,
 }: PageHeaderProps & {error: string | null}) {
   return (
     <div style={{minHeight: '100vh', display: 'flex', flexDirection: 'column'}}>
       <CompactHeader
         onLogoClick={onLogoClick}
         isMobile={isMobile}
-        cards={cards}
-        onCardSelect={onCardSelect}
       />
       <div
         style={{
@@ -551,9 +537,7 @@ type ActiveViewProps = PageHeaderProps & {
 function InDepthMobileView({
   pair,
   session,
-  cards,
   onLogoClick,
-  onCardSelect,
   onBack,
   onVoteMore,
 }: ActiveViewProps) {
@@ -563,7 +547,7 @@ function InDepthMobileView({
   const formProps = getFormProps(session, pair);
 
   return (
-    <InDepthPageShell isMobile cards={cards} onLogoClick={onLogoClick} onCardSelect={onCardSelect}>
+    <InDepthPageShell isMobile onLogoClick={onLogoClick}>
       <div style={{width: '100%', maxWidth: 560}}>
         <BackLink onClick={onBack} label="Back to synergy" style={{marginBottom: SPACING.lg}} />
       </div>
@@ -595,9 +579,7 @@ function InDepthMobileView({
 function InDepthDesktopView({
   pair,
   session,
-  cards,
   onLogoClick,
-  onCardSelect,
   onBack,
   onVoteMore,
 }: ActiveViewProps) {
@@ -609,9 +591,7 @@ function InDepthDesktopView({
   return (
     <InDepthPageShell
       isMobile={false}
-      cards={cards}
-      onLogoClick={onLogoClick}
-      onCardSelect={onCardSelect}>
+      onLogoClick={onLogoClick}>
       <div style={{width: '100%', maxWidth: 1320}}>
         <BackLink onClick={onBack} label="Back to synergy" style={{marginBottom: SPACING.lg}} />
       </div>
@@ -670,13 +650,11 @@ export function InDepthVotePage() {
   const navigate = useNavigate();
   const {cardAId, cardBId} = useParams<{cardAId: string; cardBId: string}>();
   const {isMobile} = useResponsive();
-  const {cards} = useCardDataContext();
   const {openCardModal} = useCardModal();
   const {pair, isLoading, error} = useSpecificPair(cardAId, cardBId);
   const session = useInDepthVoteSession(pair);
 
   const goHome = () => navigate('/');
-  const onCardSelect = (card: {id: string}) => openCardModal(card.id);
   const onVoteMore = () => navigate('/vote');
   const onBack = () => {
     if (window.history.length > 1) {
@@ -688,25 +666,10 @@ export function InDepthVotePage() {
   };
 
   if (isLoading) {
-    return (
-      <InDepthLoadingView
-        isMobile={isMobile}
-        cards={cards}
-        onLogoClick={goHome}
-        onCardSelect={onCardSelect}
-      />
-    );
+    return <InDepthLoadingView isMobile={isMobile} onLogoClick={goHome} />;
   }
   if (error || !pair) {
-    return (
-      <InDepthErrorView
-        isMobile={isMobile}
-        cards={cards}
-        error={error}
-        onLogoClick={goHome}
-        onCardSelect={onCardSelect}
-      />
-    );
+    return <InDepthErrorView isMobile={isMobile} error={error} onLogoClick={goHome} />;
   }
   if (isMobile) {
     return (
@@ -714,9 +677,7 @@ export function InDepthVotePage() {
         isMobile={isMobile}
         pair={pair}
         session={session}
-        cards={cards}
         onLogoClick={goHome}
-        onCardSelect={onCardSelect}
         onBack={onBack}
         onVoteMore={onVoteMore}
       />
@@ -727,9 +688,7 @@ export function InDepthVotePage() {
       isMobile={isMobile}
       pair={pair}
       session={session}
-      cards={cards}
       onLogoClick={goHome}
-      onCardSelect={onCardSelect}
       onBack={onBack}
       onVoteMore={onVoteMore}
     />

@@ -1,12 +1,9 @@
 import {useEffect, useRef, useState, type ReactNode} from 'react';
 import {useNavigate} from 'react-router-dom';
 import Skeleton from 'react-loading-skeleton';
-import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CompactHeader, CtaButton, EtherealBackground, Seo} from '../shared/components';
 import {CardDetailSkeleton} from '../features/cards';
 import {useResponsive} from '../shared/hooks';
-import {useCardDataContext} from '../shared/contexts/CardDataContext';
-import {useCardModal} from '../shared/contexts/CardModalContext';
 import {PairDisplay, ScorePicker, VoteToast, VoteStatusBanner} from '../features/voting';
 import type {VoteToastData} from '../features/voting';
 import {usePairQueue} from '../features/voting/hooks/usePairQueue';
@@ -151,17 +148,13 @@ const pageShellOuter = {
 
 type PageHeaderProps = {
   isMobile: boolean;
-  cards: LorcanaCard[];
   onLogoClick: () => void;
-  onCardSelect: (card: {id: string}) => void;
 };
 
 function VotePageShell({
   isMobile,
-  cards,
   compactLayout,
   onLogoClick,
-  onCardSelect,
   ariaBusy,
   ariaLabel,
   mainGap = 12,
@@ -181,8 +174,6 @@ function VotePageShell({
       <CompactHeader
         onLogoClick={onLogoClick}
         isMobile={isMobile}
-        cards={cards}
-        onCardSelect={onCardSelect}
       />
       <main
         style={{
@@ -250,18 +241,14 @@ function VoteSkeletonPicker() {
 
 function VoteLoadingView({
   isMobile,
-  cards,
   compactLayout,
   onLogoClick,
-  onCardSelect,
 }: PageHeaderProps & {compactLayout: boolean}) {
   return (
     <VotePageShell
       isMobile={isMobile}
-      cards={cards}
       compactLayout={compactLayout}
       onLogoClick={onLogoClick}
-      onCardSelect={onCardSelect}
       mainGap={24}
       ariaBusy
       ariaLabel="Loading vote pair">
@@ -271,14 +258,12 @@ function VoteLoadingView({
   );
 }
 
-function VoteErrorView({isMobile, cards, onLogoClick, onCardSelect}: PageHeaderProps) {
+function VoteErrorView({isMobile, onLogoClick}: PageHeaderProps) {
   return (
     <div style={{minHeight: '100vh', display: 'flex', flexDirection: 'column'}}>
       <CompactHeader
         onLogoClick={onLogoClick}
         isMobile={isMobile}
-        cards={cards}
-        onCardSelect={onCardSelect}
       />
       <div
         style={{
@@ -428,14 +413,12 @@ type Handlers = ReturnType<typeof useVoteHandlers>;
 
 function VotePageMainView({
   isMobile,
-  cards,
   compactLayout,
   showStacks,
   queue,
   voteSession,
   handlers,
   onLogoClick,
-  onCardSelect,
 }: PageHeaderProps & {
   compactLayout: boolean;
   showStacks: boolean;
@@ -447,10 +430,8 @@ function VotePageMainView({
   return (
     <VotePageShell
       isMobile={isMobile}
-      cards={cards}
       compactLayout={compactLayout}
       onLogoClick={onLogoClick}
-      onCardSelect={onCardSelect}
       tail={
         toastData && (
           <VoteToast
@@ -491,13 +472,10 @@ export function VotePage() {
   const compactLayout = isMobile || windowWidth < 900;
   // Side stacks need ~350px each beyond the card pair (first tier = 286px + margin)
   const showStacks = !compactLayout && windowWidth >= 1500;
-  const {cards} = useCardDataContext();
-  const {openCardModal} = useCardModal();
   const queue = usePairQueue();
   const voteSession = useVoteSession(queue.currentPair);
 
   const goHome = () => navigate('/');
-  const onCardSelect = (card: {id: string}) => openCardModal(card.id);
 
   const handlers = useVoteHandlers({
     currentPair: queue.currentPair,
@@ -534,10 +512,8 @@ export function VotePage() {
         {seo}
         <VoteLoadingView
           isMobile={isMobile}
-          cards={cards}
           compactLayout={compactLayout}
           onLogoClick={goHome}
-          onCardSelect={onCardSelect}
         />
       </>
     );
@@ -549,9 +525,7 @@ export function VotePage() {
         {seo}
         <VoteErrorView
           isMobile={isMobile}
-          cards={cards}
           onLogoClick={goHome}
-          onCardSelect={onCardSelect}
         />
       </>
     );
@@ -562,14 +536,12 @@ export function VotePage() {
       {seo}
       <VotePageMainView
         isMobile={isMobile}
-        cards={cards}
         compactLayout={compactLayout}
         showStacks={showStacks}
         queue={queue}
         voteSession={voteSession}
         handlers={handlers}
         onLogoClick={goHome}
-        onCardSelect={onCardSelect}
       />
     </>
   );

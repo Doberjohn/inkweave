@@ -45,7 +45,9 @@ export const FONTS = {
 export const LAYOUT = {
   sidebarWidth: 480,
   headerHeight: 56,
-  compactHeaderHeight: 52,
+  // Desktop only. Seven other sites derive sticky offsets and calc(100vh - …)
+  // from this, so the single token is the whole change.
+  compactHeaderHeight: 70,
   compactHeaderHeightMobile: 48,
   cardDetailWidth: 330,
   selectedCardImageWidth: 120,

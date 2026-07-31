@@ -1,4 +1,3 @@
-import {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {
   getAllPlaystyles,
@@ -21,9 +20,7 @@ import {
   type PlaystyleUiMeta,
 } from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
-import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {trackEvent} from '../shared/lib/analytics';
-import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive} from '../shared/hooks';
 
 // ── Layout config (computed once, passed as concrete values) ──
@@ -234,22 +231,10 @@ function PlaystyleGalleryGrid({
 
 export function PlaystyleGalleryPage() {
   const navigate = useNavigate();
-  const {openCardModal} = useCardModal();
-  const {cards, isLoading, error, retryLoad, getCardById} = useCardDataContext();
-  const [searchQuery, setSearchQuery] = useState('');
+  const {isLoading, error, retryLoad, getCardById} = useCardDataContext();
   const {isMobile} = useResponsive();
 
   const layout = isMobile ? MOBILE_LAYOUT : DESKTOP_LAYOUT;
-
-  const handleSearchSubmit = () => {
-    const q = searchQuery.trim();
-    if (q) trackEvent('search_submitted', {query: q, source: 'gallery'});
-    navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
-  };
-  const handleCardSelect = (card: {id: string}) => {
-    trackCardSelected(getCardById(card.id), 'playstyle_gallery');
-    openCardModal(card.id);
-  };
 
   const {data: playstyleCardData} = useAllPlaystyleCards();
   const activePlaystyles = buildActivePlaystyles(playstyleCardData);
@@ -275,16 +260,7 @@ export function PlaystyleGalleryPage() {
         canonicalPath="/playstyles"
       />
       <EtherealBackground />
-      <CompactHeader
-        {...(!isMobile && {
-          searchQuery,
-          onSearchChange: setSearchQuery,
-          onSearchSubmit: handleSearchSubmit,
-          cards,
-          onCardSelect: handleCardSelect,
-        })}
-        isMobile={isMobile}
-      />
+      <CompactHeader isMobile={isMobile} />
 
       <div style={{position: 'relative', zIndex: 1}}>
         <PageIntro layout={layout} />

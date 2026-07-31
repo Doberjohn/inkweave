@@ -28,14 +28,6 @@ export const WithBackArrow: Story = {
   args: {showBackArrow: true},
 };
 
-export const WithSearch: Story = {
-  args: {
-    searchQuery: '',
-    onSearchChange: fn(),
-    onSearchSubmit: fn(),
-  },
-};
-
 export const Mobile: Story = {
   args: {isMobile: true},
 };
