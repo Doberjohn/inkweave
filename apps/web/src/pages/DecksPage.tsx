@@ -34,19 +34,13 @@ export function DecksPage() {
               <span style={{fontFamily: FONTS.body, fontSize: FONT_SIZES.md, color: COLORS.textMuted}}>
                 {user.email ?? 'Signed in'}
               </span>
-              <CtaButton
-                variant="neutral"
-                onClick={() => void signOut()}
-                style={{minHeight: 0, padding: `4px ${SPACING.md}px`, fontSize: FONT_SIZES.md}}>
+              <CtaButton variant="neutral" onClick={() => void signOut()}>
                 Sign out
               </CtaButton>
             </div>
           )}
           {enabled && !loading && !user && (
-            <CtaButton
-              variant="ghost"
-              onClick={() => setSignInOpen(true)}
-              style={{minHeight: 0, padding: `6px ${SPACING.lg}px`, fontSize: FONT_SIZES.base}}>
+            <CtaButton variant="ghost" onClick={() => setSignInOpen(true)}>
               Sign in
             </CtaButton>
           )}
