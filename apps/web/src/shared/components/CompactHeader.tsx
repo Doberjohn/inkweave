@@ -4,6 +4,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, DURATION, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../constants';
 import {useAutocomplete} from '../hooks';
 import {useRevealPhase} from '../../features/reveals';
+import {useIsSignedIn} from '../contexts/SessionContext';
 import {CTA_FILLED_STYLE} from './ctaStyles';
 import {SearchAutocomplete} from './SearchAutocomplete';
 
@@ -28,12 +29,17 @@ interface CompactHeaderProps {
 interface NavItem {
   path: string;
   label: string;
+  /** Hide unless signed in. No item uses this yet — Collection (#452) is the
+   *  first, once /collection exists. Until then the filter is a no-op. */
+  requiresAuth?: boolean;
 }
 
 const NAV_ITEMS: readonly NavItem[] = [
   {path: '/browse', label: 'Browse'},
   {path: '/playstyles', label: 'Playstyles'},
   {path: '/vote', label: 'Vote'},
+  // Public, not personal: /decks shows community decks with a switch to your own.
+  {path: '/decks', label: 'Decks'},
 ];
 
 const REVEALS_PATH = '/reveals';
@@ -398,6 +404,8 @@ interface DesktopNavProps {
 
 function DesktopNav({isRevealSeason}: DesktopNavProps) {
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
+  const isSignedIn = useIsSignedIn();
+  const items = NAV_ITEMS.filter((item) => !item.requiresAuth || isSignedIn);
 
   return (
     <nav
@@ -421,7 +429,7 @@ function DesktopNav({isRevealSeason}: DesktopNavProps) {
           background: COLORS.background,
           overflow: 'hidden',
         }}>
-        {NAV_ITEMS.map(({path, label}) => (
+        {items.map(({path, label}) => (
           <NavItemLink
             key={path}
             path={path}
