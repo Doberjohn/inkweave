@@ -328,7 +328,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/BackLink.tsx', // x1
     'src/shared/components/CardImage.tsx', // x1
     'src/shared/components/Chip.tsx', // x1
-    'src/shared/components/CompactHeader.tsx', // x7
     'src/shared/components/ConnectionGroup.tsx', // x5
     'src/shared/components/CtaButton.tsx', // x1
     'src/shared/components/FilterButton.tsx', // x3

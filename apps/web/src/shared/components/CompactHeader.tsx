@@ -1,7 +1,7 @@
 import {type ReactNode, useState} from 'react';
 import {Link, NavLink} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../constants';
+import {COLORS, DURATION, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../constants';
 import {useAutocomplete} from '../hooks';
 import {useRevealPhase} from '../../features/reveals';
 import {CTA_FILLED_STYLE} from './ctaStyles';
@@ -146,7 +146,8 @@ function getSearchInputStyle(config: SearchInputStyleConfig): React.CSSPropertie
     boxSizing: 'border-box',
     outline: 'none',
     boxShadow,
-    transition: `border-color 0.25s ${EASING.snappy}, box-shadow 0.25s ${EASING.snappy}`,
+    // Was 0.25s; the scale has three steps and 250 converges to base (2026-07-29 ruling).
+    transition: `border-color ${DURATION.base}ms ${EASING.snappy}, box-shadow ${DURATION.base}ms ${EASING.snappy}`,
   };
 }
 
@@ -331,7 +332,7 @@ function NavItemLink({path, label, isHovered, onMouseEnter, onMouseLeave}: NavIt
           fontSize: `${FONT_SIZES.base}px`,
           fontWeight: isActive ? 600 : 500,
           textDecoration: 'none',
-          transition: `background 0.2s ${EASING.snappy}, color 0.2s ${EASING.snappy}, box-shadow 0.2s ${EASING.snappy}`,
+          transition: `background ${DURATION.base}ms ${EASING.snappy}, color ${DURATION.base}ms ${EASING.snappy}, box-shadow ${DURATION.base}ms ${EASING.snappy}`,
           boxShadow: getNavItemBoxShadow(state),
           cursor: 'pointer',
         };
@@ -365,10 +366,9 @@ function RevealsPill({isHovered, onMouseEnter, onMouseLeave}: RevealsPillProps) 
         borderRadius: RADIUS.pill,
         fontFamily: FONTS.body,
         fontSize: `${FONT_SIZES.base}px`,
-        fontWeight: 600,
         textDecoration: 'none',
         transform: isHovered ? 'translateY(-1px)' : 'translateY(0)',
-        transition: `transform 0.2s ${EASING.snappy}, box-shadow 0.2s ${EASING.snappy}`,
+        transition: `transform ${DURATION.base}ms ${EASING.snappy}, box-shadow ${DURATION.base}ms ${EASING.snappy}`,
         cursor: 'pointer',
         ...(isActive || isHovered
           ? {boxShadow: `${COLORS.filterShadow}, ${SHADOWS.glowSm}`}
