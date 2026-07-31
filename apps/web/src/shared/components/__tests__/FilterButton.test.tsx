@@ -1,6 +1,12 @@
 import {describe, it, expect} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
+import {COLORS, hexToRgb, INK_COLORS} from '../../constants';
 import {FilterButton} from '../FilterButton';
+
+// The styling assertions read jsdom's normalized `rgb(r, g, b)` form, so both the
+// prop and its expectation derive from the SAME token: a hand-written hex/rgb pair
+// silently rots when the palette moves (the ink repalette orphaned the old ones).
+const AMBER = INK_COLORS.Amber;
 
 describe('FilterButton', () => {
   it('should render children', () => {
@@ -50,27 +56,25 @@ describe('FilterButton', () => {
         <FilterButton
           active={true}
           onClick={() => {}}
-          activeColor="#f59e0b"
-          activeBgColor="#3d2e10">
+          activeColor={AMBER.border}
+          activeBgColor={AMBER.bg}>
           Test
         </FilterButton>,
       );
 
       const button = screen.getByRole('button');
-      // jsdom normalizes hex to rgb: #3d2e10 → rgb(61, 46, 16)
-      expect(button.style.background).toContain('61, 46, 16');
+      expect(button.style.background).toContain(hexToRgb(AMBER.bg));
     });
 
     it('should fall back to activeColor for background when activeBgColor not provided', () => {
       render(
-        <FilterButton active={true} onClick={() => {}} activeColor="#d4af37">
+        <FilterButton active={true} onClick={() => {}} activeColor={COLORS.primary}>
           Test
         </FilterButton>,
       );
 
       const button = screen.getByRole('button');
-      // #d4af37 → rgb(212, 175, 55)
-      expect(button.style.background).toContain('212, 175, 55');
+      expect(button.style.background).toContain(hexToRgb(COLORS.primary));
     });
 
     it('should use activeColor for border when active', () => {
@@ -78,20 +82,20 @@ describe('FilterButton', () => {
         <FilterButton
           active={true}
           onClick={() => {}}
-          activeColor="#f59e0b"
-          activeBgColor="#3d2e10">
+          activeColor={AMBER.border}
+          activeBgColor={AMBER.bg}>
           Test
         </FilterButton>,
       );
 
       const button = screen.getByRole('button');
       // Border should reference the activeColor (bright accent), not the bg color
-      expect(button.style.border).toContain('245, 158, 11');
+      expect(button.style.border).toContain(hexToRgb(AMBER.border));
     });
 
     it('should have a box-shadow when active', () => {
       render(
-        <FilterButton active={true} onClick={() => {}} activeColor="#f59e0b">
+        <FilterButton active={true} onClick={() => {}} activeColor={AMBER.border}>
           Test
         </FilterButton>,
       );
@@ -114,14 +118,13 @@ describe('FilterButton', () => {
 
     it('should use inactiveColor for background when not active', () => {
       render(
-        <FilterButton active={false} onClick={() => {}} inactiveColor="#1e1e35">
+        <FilterButton active={false} onClick={() => {}} inactiveColor={COLORS.gray100}>
           Test
         </FilterButton>,
       );
 
       const button = screen.getByRole('button');
-      // #1e1e35 → rgb(30, 30, 53)
-      expect(button.style.background).toContain('30, 30, 53');
+      expect(button.style.background).toContain(hexToRgb(COLORS.gray100));
     });
 
     it('should have transparent border when inactive', () => {

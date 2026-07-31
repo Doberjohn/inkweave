@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
+import {hexRgba, INK_COLORS} from '../constants';
 import {FilterButton} from './FilterButton';
 
 const meta: Meta<typeof FilterButton> = {
@@ -32,8 +33,8 @@ export const CustomColors: Story = {
   args: {
     active: true,
     children: 'Emerald',
-    activeColor: '#10b981',
-    activeBgColor: 'rgba(16, 185, 129, 0.2)',
+    activeColor: INK_COLORS.Emerald.border,
+    activeBgColor: hexRgba(INK_COLORS.Emerald.border, 0.2),
   },
 };
 

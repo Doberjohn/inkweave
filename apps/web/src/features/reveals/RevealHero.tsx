@@ -1,3 +1,4 @@
+import {INK_COLORS} from '../../shared/constants';
 import {SET_TOTAL} from './setComposition';
 
 const SET_LOGO = '/art/sets/attack-of-the-vine.png';
@@ -109,7 +110,7 @@ export function RevealHero({
             <div style={labelStyle}>Cards revealed</div>
           </div>
           <div style={{padding: '16px 22px', textAlign: 'left', borderLeft: '1px solid #2a2a40'}}>
-            <div style={{...bigStat, color: '#c4a5f5'}}>{franchiseCount}</div>
+            <div style={{...bigStat, color: INK_COLORS.Amethyst.text}}>{franchiseCount}</div>
             <div style={labelStyle}>New franchises</div>
           </div>
         </div>

@@ -13,15 +13,13 @@ export const KNOWN_OFFENDERS = {
   'no-raw-hex-colors': [
     'src/features/cards/components/CardDetailSkeleton.stories.tsx', // x1
     'src/features/cards/components/CardGridSkeleton.stories.tsx', // x1
-    'src/features/playstyles/PlaystyleFanTile.stories.tsx', // x2
     'src/features/playstyles/PlaystyleFanTile.tsx', // x2
-    'src/features/playstyles/PlaystyleSection.stories.tsx', // x2
     'src/features/reveals/InkBoard.tsx', // x7
     'src/features/reveals/NewFranchises.tsx', // x5
     'src/features/reveals/ProgressRing.tsx', // x2
     'src/features/reveals/RarityBreakdown.tsx', // x6
     'src/features/reveals/RaritySymbol.stories.tsx', // x1
-    'src/features/reveals/RevealHero.tsx', // x10
+    'src/features/reveals/RevealHero.tsx', // x9
     'src/features/reveals/RevealsPromoCard.tsx', // x1
     'src/features/reveals/SpotlightHero.tsx', // x6
     'src/features/reveals/WhatsNewSection.tsx', // x3
@@ -58,7 +56,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/ConnectionGroup.tsx', // x13
     'src/shared/components/CountBadge.tsx', // x1
     'src/shared/components/EtherealBackground.tsx', // x1
-    'src/shared/components/FilterButton.stories.tsx', // x1
     'src/shared/components/FilterContent.stories.tsx', // x3
     'src/shared/components/FilterSection.stories.tsx', // x2
     'src/shared/components/Footer.stories.tsx', // x1
@@ -100,7 +97,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/ConnectionGroup.tsx', // x5
     'src/shared/components/CountBadge.tsx', // x1
     'src/shared/components/EtherealBackground.tsx', // x4
-    'src/shared/components/FilterButton.stories.tsx', // x1
     'src/shared/components/HeroSection.tsx', // x2
     'src/shared/components/Sparkles.stories.tsx', // x2
     'src/shared/components/Tooltip.stories.tsx', // x3

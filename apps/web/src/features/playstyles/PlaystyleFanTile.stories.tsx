@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
+import {PLAYSTYLE_UI} from '../../shared/constants';
 import {PlaystyleFanTile, type FanCardData} from './PlaystyleFanTile';
 
 const card = (id: number, fullName: string): FanCardData => ({
@@ -26,8 +27,8 @@ export const Floodborns: Story = {
   args: {
     playstyleId: 'floodborn',
     name: 'Floodborns',
-    accentColor: '#6b7280',
-    accentRgb: '107, 114, 128',
+    accentColor: PLAYSTYLE_UI.floodborn.accentColor,
+    accentRgb: PLAYSTYLE_UI.floodborn.accentRgb,
     heroCard: card(3168, 'The Vine - Towering Stalk'),
     supportCards: [
       card(3086, 'Gaston - Created by the Vine'),
@@ -42,8 +43,8 @@ export const RedPanda: Story = {
   args: {
     playstyleId: 'red-panda',
     name: 'Red Panda',
-    accentColor: '#ef4444',
-    accentRgb: '239, 68, 68',
+    accentColor: PLAYSTYLE_UI['red-panda'].accentColor,
+    accentRgb: PLAYSTYLE_UI['red-panda'].accentRgb,
     heroCard: card(3096, 'Meilin Lee - Popular Red Panda'),
     supportCards: [
       card(2978, 'Meilin Lee - Lead Vocalist'),
