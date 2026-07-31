@@ -2,8 +2,10 @@ import {type ReactNode, useState} from 'react';
 import {Link, NavLink} from 'react-router-dom';
 import {COLORS, DURATION, EASING, FONT_SIZES, FONTS, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../constants';
 import {useRevealPhase} from '../../features/reveals';
-import {useIsSignedIn} from '../contexts/SessionContext';
+import {useIsSignedIn, useSession} from '../contexts/SessionContext';
 import {CTA_FILLED_STYLE} from './ctaStyles';
+import {CtaButton} from './CtaButton';
+import {SignInDialog} from './SignInDialog';
 
 interface CompactHeaderProps {
   /** Optional side-effect callback fired before nav. Link handles the route push. */
@@ -235,6 +237,43 @@ function RevealsPill({isHovered, onMouseEnter, onMouseLeave}: RevealsPillProps) 
   );
 }
 
+/**
+ * The header's rightmost slot: sign in when signed out, sign out when signed in.
+ *
+ * Renders NOTHING while `loading`, and that is deliberate. `user` is null during
+ * that window, so the naive version shows "Sign in" and then swaps to "Sign out"
+ * once auth resolves — the wrong state, flashed on every page load for every
+ * returning user. Also renders nothing when auth is not configured at all
+ * (`enabled: false`), which is how the app degrades without Supabase env.
+ *
+ * Calls useSession() directly rather than taking props. CompactHeader now RENDERS
+ * auth, so depending on SessionProvider is honest — a throw outside one reports a
+ * real mounting error. (Contrast useIsSignedIn, added the same day for DesktopNav,
+ * which only REACTS to auth and must not demand a provider.) All 18 CompactHeader
+ * call sites already sit under AppLayout's provider; the stories get a decorator.
+ */
+function HeaderAuth() {
+  const {user, enabled, loading, signOut} = useSession();
+  const [signInOpen, setSignInOpen] = useState(false);
+
+  if (!enabled || loading) return null;
+
+  return (
+    <div style={{marginLeft: 'auto'}}>
+      {user ? (
+        <CtaButton variant="neutral" onClick={() => void signOut()}>
+          Sign out
+        </CtaButton>
+      ) : (
+        <CtaButton variant="ghost" onClick={() => setSignInOpen(true)}>
+          Sign in
+        </CtaButton>
+      )}
+      <SignInDialog isOpen={signInOpen} onClose={() => setSignInOpen(false)} />
+    </div>
+  );
+}
+
 interface DesktopNavProps {
   isRevealSeason: boolean;
 }
@@ -299,6 +338,7 @@ export function CompactHeader({onLogoClick, showBackArrow, headerActions, isMobi
     <header data-testid="compact-header" style={getHeaderStyle(viewport)}>
       <HeaderLogo viewport={viewport} showBackArrow={showBackArrow} onClick={onLogoClick} />
       <DesktopNav isRevealSeason={isRevealSeason} />
+      <HeaderAuth />
       {headerActions}
     </header>
   );

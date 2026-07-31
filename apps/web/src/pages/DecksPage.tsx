@@ -1,20 +1,19 @@
-import {useState} from 'react';
 import {Link} from 'react-router-dom';
-import {useSession} from '../shared/contexts/SessionContext';
-import {SignInDialog} from '../shared/components/SignInDialog';
-import {CompactHeader, CtaButton} from '../shared/components';
+import {CompactHeader} from '../shared/components';
 import {CTA_BASE_STYLE, CTA_FILLED_STYLE} from '../shared/components/ctaStyles';
 import {useResponsive} from '../shared/hooks';
 import {COLORS, FONTS, FONT_SIZES, LAYOUT, SPACING} from '../shared/constants';
 
 /**
- * `/decks` — the user's deck list. Local drafts and cloud decks fill in with #473/#464;
- * this scaffold (#466) also carries the auth entry point (#463): sign in to save decks.
+ * `/decks` — the user's deck list. Local drafts and cloud decks fill in with #473/#464.
+ *
+ * This scaffold (#466) used to carry the app's auth entry point (#463). It no longer
+ * does: sign in / sign out moved to the header's rightmost slot on 2026-07-31, so the
+ * control is reachable from every page rather than only this one. See `HeaderAuth` in
+ * `CompactHeader.tsx`.
  */
 export function DecksPage() {
-  const {user, enabled, loading, signOut} = useSession();
   const {isMobile} = useResponsive();
-  const [signInOpen, setSignInOpen] = useState(false);
 
   return (
     <>
@@ -29,21 +28,6 @@ export function DecksPage() {
         }}>
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SPACING.md}}>
           <h1 style={{fontFamily: FONTS.hero, fontSize: FONT_SIZES.xxl, color: COLORS.text, margin: 0}}>Your Decks</h1>
-          {enabled && !loading && user && (
-            <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
-              <span style={{fontFamily: FONTS.body, fontSize: FONT_SIZES.md, color: COLORS.textMuted}}>
-                {user.email ?? 'Signed in'}
-              </span>
-              <CtaButton variant="neutral" onClick={() => void signOut()}>
-                Sign out
-              </CtaButton>
-            </div>
-          )}
-          {enabled && !loading && !user && (
-            <CtaButton variant="ghost" onClick={() => setSignInOpen(true)}>
-              Sign in
-            </CtaButton>
-          )}
         </div>
 
         <p style={{fontFamily: FONTS.body, fontSize: FONT_SIZES.base, color: COLORS.textMuted, marginTop: SPACING.sm}}>
@@ -67,8 +51,6 @@ export function DecksPage() {
           }}>
           + New deck
         </Link>
-
-        <SignInDialog isOpen={signInOpen} onClose={() => setSignInOpen(false)} />
       </main>
     </>
   );
