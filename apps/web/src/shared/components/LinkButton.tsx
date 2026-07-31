@@ -1,4 +1,4 @@
-import {COLORS, EASING, FONTS, FONT_SIZES} from '../constants';
+import {COLORS, DURATION, EASING, FONTS, FONT_SIZES} from '../constants';
 import {useHover} from '../hooks/useHover';
 
 interface LinkButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -8,6 +8,14 @@ interface LinkButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
   /** Underline on hover for prose-adjacent placements. */
   underlineOnHover?: boolean;
 }
+
+/**
+ * `size` names the KIT role, not a FONT_SIZES key. `base` is the kit baseline
+ * (14px, 2026-07-31 ruling); `sm` is an opt-in smaller size a caller chose for a
+ * tight space, deliberately left at 11px so the prop does not become a lie.
+ * Indexing FONT_SIZES by `size` directly would silently pin `base` back to 13.
+ */
+const LINK_BUTTON_SIZE_PX = {sm: FONT_SIZES.sm, base: FONT_SIZES.lg} as const;
 
 /**
  * The link-style text button (#509): bare text, no border or background — the
@@ -38,12 +46,12 @@ export function LinkButton({
         border: 'none',
         padding: '2px 0',
         fontFamily: FONTS.body,
-        fontSize: `${FONT_SIZES[size]}px`,
-        fontWeight: 500,
+        fontSize: `${LINK_BUTTON_SIZE_PX[size]}px`,
+        fontWeight: 600,
         color,
         cursor: 'pointer',
         textDecoration: hot && underlineOnHover ? 'underline' : 'none',
-        transition: `color 0.15s ${EASING.snappy}`,
+        transition: `color ${DURATION.fast}ms ${EASING.snappy}`,
         ...(disabled ? {opacity: 0.4, cursor: 'not-allowed'} : {}),
         ...style,
       }}>

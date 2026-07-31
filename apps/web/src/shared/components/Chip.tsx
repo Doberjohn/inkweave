@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, hexRgba} from '../constants';
+import {COLORS, DURATION, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, hexRgba} from '../constants';
 
 interface ChipBaseProps {
   label: string;
@@ -58,11 +58,11 @@ export function Chip(props: ChipProps) {
             ? '8px 14px'
             : '6px 14px',
         borderRadius: RADIUS.pill,
-        fontSize: `${FONT_SIZES.base}px`,
-        fontWeight: 500,
+        fontSize: `${FONT_SIZES.lg}px`,
+        fontWeight: 600,
         cursor: 'pointer',
         fontFamily: FONTS.body,
-        transition: `all 0.25s ${EASING.snappy}`,
+        transition: `all ${DURATION.base}ms ${EASING.snappy}`,
         border: active
           ? `1px solid ${GOLD_GLOW.activeBorder}`
           : hovered
@@ -89,7 +89,7 @@ export function Chip(props: ChipProps) {
       {isDismiss && (
         <span
           style={{
-            fontSize: `${FONT_SIZES.base}px`,
+            fontSize: `${FONT_SIZES.lg}px`,
             color: hovered ? COLORS.text : COLORS.textMuted,
             fontWeight: 600,
             lineHeight: 1,

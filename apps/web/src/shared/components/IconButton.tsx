@@ -1,4 +1,4 @@
-import {COLORS, EASING, RADIUS} from '../constants';
+import {COLORS, DURATION, EASING, RADIUS} from '../constants';
 import {useHover} from '../hooks/useHover';
 
 interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -36,7 +36,7 @@ export function IconButton({size = 44, style, children, disabled, ...rest}: Icon
         background: hot ? COLORS.surfaceHover : 'transparent',
         color: hot ? COLORS.text : COLORS.textMuted,
         cursor: 'pointer',
-        transition: `all 0.15s ${EASING.snappy}`,
+        transition: `all ${DURATION.fast}ms ${EASING.snappy}`,
         ...(disabled ? {opacity: 0.4, cursor: 'not-allowed'} : {}),
         ...style,
       }}>

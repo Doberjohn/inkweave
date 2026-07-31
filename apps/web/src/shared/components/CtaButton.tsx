@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, DISABLED_STYLE, EASING, FONTS, FONT_SIZES, PRESS_SCALE, RADIUS, hexRgba} from '../constants';
+import {COLORS, DISABLED_STYLE, DURATION, EASING, FONTS, FONT_SIZES, PRESS_SCALE, RADIUS, hexRgba} from '../constants';
 import {useBoop} from '../hooks';
 import {CTA_FILLED_STYLE} from './ctaStyles';
 
@@ -101,10 +101,13 @@ export function CtaButton({
     minHeight: 44,
     borderRadius: `${RADIUS.lg}px`,
     fontFamily: FONTS.body,
-    fontSize: `${FONT_SIZES.base}px`,
-    fontWeight: 500,
+    // The kit baseline (2026-07-31 ruling): every button is 14/600. Muted-grey
+    // labels at 13/500 read thin on a dark ground — contrast was never the issue
+    // (textMuted is 6.18-7.36:1, above AA everywhere), stroke weight was.
+    fontSize: `${FONT_SIZES.lg}px`,
+    fontWeight: 600,
     cursor: 'pointer',
-    transition: `all 0.25s ${EASING.snappy}`,
+    transition: `all ${DURATION.base}ms ${EASING.snappy}`,
     textDecoration: 'none',
   };
 

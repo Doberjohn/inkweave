@@ -1,5 +1,5 @@
 import {useRef, useState, type ReactNode} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW} from '../constants';
+import {COLORS, DURATION, EASING, FONTS, FONT_SIZES, GOLD_GLOW} from '../constants';
 
 interface TabListProps<T extends string> {
   tabs: ReadonlyArray<{id: T; label: string; icon?: ReactNode}>;
@@ -25,10 +25,12 @@ function segmentStyle(isActive: boolean, isHovered: boolean): React.CSSPropertie
     boxShadow: isActive ? `inset 0 -2px 0 ${COLORS.primary}` : 'none',
     color: isActive || isHovered ? COLORS.primary : COLORS.textMuted,
     fontFamily: FONTS.body,
-    fontSize: `${FONT_SIZES.md}px`,
-    fontWeight: isActive ? 700 : 500,
+    fontSize: `${FONT_SIZES.lg}px`,
+    // Active keeps 700: it sits one step above its siblings, and flattening it to
+    // the kit's 600 would delete the active cue exactly as the neighbours got heavier.
+    fontWeight: isActive ? 700 : 600,
     cursor: 'pointer',
-    transition: `background 0.2s ${EASING.snappy}, color 0.2s ${EASING.snappy}`,
+    transition: `background ${DURATION.base}ms ${EASING.snappy}, color ${DURATION.base}ms ${EASING.snappy}`,
     minWidth: 0,
   };
 }
