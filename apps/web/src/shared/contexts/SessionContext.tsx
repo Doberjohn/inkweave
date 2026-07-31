@@ -87,3 +87,21 @@ export function useSession(): SessionContextValue {
   }
   return context;
 }
+
+/**
+ * Signed-in state for components that REACT to auth without REQUIRING it.
+ *
+ * Unlike `useSession`, this returns false outside a SessionProvider rather than
+ * throwing. The desktop nav needs it: CompactHeader is rendered at 18 call sites
+ * and by Storybook stories that wrap in MemoryRouter alone, so demanding a
+ * provider there would break all of them for a single boolean.
+ *
+ * Returns false during the auth-loading window, so a returning signed-in user
+ * reads as signed out for a beat on page load. Accepted: nothing is auth-gated
+ * yet. When the first gated nav item ships (#452), decide then whether to gate
+ * on `!loading` or reserve the item's width to avoid a layout shift.
+ */
+export function useIsSignedIn(): boolean {
+  const context = useContext(SessionContext);
+  return context?.user != null;
+}
