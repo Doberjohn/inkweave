@@ -45,6 +45,16 @@ One source per retyped idiom, in `theme.ts` (Storybook: Docs/MicroPatterns). Spr
 
 ## Related
 
-- Spacing rule exists but is `'off'` until the convergence sweep (#508 Step 6; #511 owns the sweep).
+- **`no-raw-spacing` is `'off'`.** While it is off, spacing has **zero** enforcement,
+  including on new code: see [[reference_disabled_lint_rule_is_invisible]]. **#548**
+  converts the quoted shorthands the rule structurally cannot read, then **#549**
+  seeds a ledger and flips it to `'error'`. That order is load-bearing, because
+  seeding first would force new ledger entries, which shrink-only forbids.
+  Measured 2026-07-31: 314 violations across 134 files the rule can see, plus 86
+  off-scale values hidden inside quoted shorthands (`padding: '0 14px'`) that it
+  cannot. This line previously said "#508 Step 6; #511 owns the sweep": both were
+  closed, and #511's scope was the micro-pattern consts, never a spacing sweep. That
+  misdirection cost real time. Do not re-add a pointer without checking the issue is
+  open and actually says so.
 - Token declaration sites (`theme.ts`, `playstyleUi.ts`), `src/docs/` stories, tests, and the five SVG icon components are permanently exempt from the color rules.
 - Import tokens through the barrel (`shared/constants`), never the theme files directly (`no-restricted-imports` enforces).
