@@ -101,22 +101,10 @@ function getHeaderStyle(viewport: ViewportConfig): React.CSSProperties {
   };
 }
 
-function getNavItemBackground(state: InteractionState): string {
-  if (state.isActive) return COLORS.surfaceHover;
-  if (state.isHovered) return GOLD_GLOW.hoverBg;
-  return 'transparent';
-}
-
 function getNavItemColor(state: InteractionState): string {
   if (state.isActive) return COLORS.primary;
   if (state.isHovered) return COLORS.primary;
   return COLORS.textMuted;
-}
-
-function getNavItemBoxShadow(state: InteractionState): string {
-  if (!state.isHovered) return 'none';
-  if (state.isActive) return 'none';
-  return GOLD_GLOW.shadow;
 }
 
 interface SearchSizing {
@@ -327,19 +315,20 @@ function NavItemLink({path, label, isHovered, onMouseEnter, onMouseLeave}: NavIt
       style={({isActive}) => {
         const state: InteractionState = {isActive, isHovered};
         return {
+          position: 'relative',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '0 20px',
-          height: '100%',
-          background: getNavItemBackground(state),
+          padding: `${SPACING.xs}px 0`,
           color: getNavItemColor(state),
           fontFamily: FONTS.body,
-          fontSize: `${FONT_SIZES.base}px`,
-          fontWeight: isActive ? 600 : 500,
+          fontSize: `${FONT_SIZES.lg}px`,
+          fontWeight: 600,
           textDecoration: 'none',
-          transition: `background ${DURATION.base}ms ${EASING.snappy}, color ${DURATION.base}ms ${EASING.snappy}, box-shadow ${DURATION.base}ms ${EASING.snappy}`,
-          boxShadow: getNavItemBoxShadow(state),
+          // The active page's only structural cue now that the capsule is gone.
+          // Colour alone would fail WCAG 1.4.1 and read as decoration.
+          borderBottom: `2px solid ${isActive ? COLORS.primary : 'transparent'}`,
+          transition: `color ${DURATION.base}ms ${EASING.snappy}, border-color ${DURATION.base}ms ${EASING.snappy}`,
           cursor: 'pointer',
         };
       }}>
@@ -419,16 +408,7 @@ function DesktopNav({isRevealSeason}: DesktopNavProps) {
         alignItems: 'center',
         gap: 12,
       }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          height: 38,
-          borderRadius: RADIUS.lg,
-          border: `1px solid ${COLORS.surfaceBorder}`,
-          background: COLORS.background,
-          overflow: 'hidden',
-        }}>
+      <div style={{display: 'flex', alignItems: 'center', gap: SPACING.xl}}>
         {items.map(({path, label}) => (
           <NavItemLink
             key={path}
