@@ -219,13 +219,13 @@ export const COLORS = {
   // Hero section
   heroTitle: '#ffffff',
   heroSubtitle: '#cad5e2',
-  heroSubtitleSecondary: '#90a1b9',
   heroGradient: 'linear-gradient(90deg, #bedBff 0%, #e9d4ff 50%, #fcCEe8 100%)',
 
   // Search / Filter bar
   searchBg: 'rgba(15, 23, 43, 0.5)',
   searchBorder: 'rgba(49, 65, 88, 0.5)',
-  searchPlaceholder: '#90a1b9',
+  /** Magnifier-glyph stroke. Placeholder TEXT is styled in index.css, not here. */
+  searchIcon: '#90a1b9',
   filterGradient: 'linear-gradient(90deg, #fe9a00, #e17100)',
   filterText: '#0f172b',
   filterShadow: '0px 10px 15px 0px rgba(254,154,0,0.2), 0px 4px 6px 0px rgba(254,154,0,0.2)',

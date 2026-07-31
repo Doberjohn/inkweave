@@ -187,7 +187,7 @@ export function HeroSection({
       <div style={styles.searchRow}>
         <div style={{flex: 1, position: 'relative', zIndex: Z_INDEX.autocomplete}}>
           <div style={styles.searchIconPosition}>
-            <SearchIcon color={COLORS.searchPlaceholder} />
+            <SearchIcon color={COLORS.searchIcon} />
           </div>
           <input
             type="text"

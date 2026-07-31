@@ -270,13 +270,13 @@ function HeaderSearch({cards, query, onChange, onSubmit, onCardSelect, viewport}
         }}
         viewBox="0 0 20 20"
         fill="none">
-        <circle cx="9" cy="9" r="6" stroke={COLORS.searchPlaceholder} strokeWidth="1.5" />
+        <circle cx="9" cy="9" r="6" stroke={COLORS.searchIcon} strokeWidth="1.5" />
         <line
           x1="13.5"
           y1="13.5"
           x2="17"
           y2="17"
-          stroke={COLORS.searchPlaceholder}
+          stroke={COLORS.searchIcon}
           strokeWidth="1.5"
           strokeLinecap="round"
         />

@@ -146,7 +146,7 @@ const PALETTE_GROUPS = [
         {name: 'textMuted', value: COLORS.textMuted},
         {name: 'textDim', value: COLORS.textDim},
         {name: 'descriptionText', value: COLORS.descriptionText},
-        {name: 'searchPlaceholder', value: COLORS.searchPlaceholder},
+        {name: 'searchIcon', value: COLORS.searchIcon},
       ],
     },
     {

@@ -203,7 +203,7 @@ function ToolbarSearch({query, onChange}: {query: string; onChange: (q: string) 
           display: 'flex',
           pointerEvents: 'none',
         }}>
-        <SearchIcon size={16} color={COLORS.searchPlaceholder} />
+        <SearchIcon size={16} color={COLORS.searchIcon} />
       </span>
       <input
         type="text"
