@@ -6,15 +6,18 @@ Delete this file when Phase 2 task issues exist and #452 is underway.
 Read alongside [`PLAN.md`](PLAN.md) Phase 1 (the v1 three items) and Part B
 "Collection & migration (Phase 2)", plus the latest #474 comment.
 
-**Recommended order: A, then B, then C.** A is a five-minute cleanup that removes a
-false lead. B is an owner decision that C depends on. C is the build.
+**Order: A, then B, then C. A is already done** (#208 closed). B is an owner
+decision that C depends on. C is the build. **Start at Thread B.**
 
 ---
 
-## Thread A: reconcile #208 (five minutes, do it first)
+## Thread A: reconcile #208 — DONE
 
-**Verdict: #208 is fully shipped and should be closed.** Verified 2026-07-31, not
-assumed.
+**#208 was closed as completed** after both open spot-checks below passed. Kept
+here for the mapping and for the one deviation worth knowing about. Nothing left to
+do; skip to Thread B.
+
+**Verdict: fully shipped under #473.** Verified against the tree, not assumed.
 
 #208 "Dreamborn Import / Text Export" describes **decklist** import/export. Every
 line of its checklist landed under #473:
@@ -28,11 +31,18 @@ line of its checklist landed under #473:
 | Import UI + summary | `ImportDeckDialog.tsx`, `DeckActionsBar.tsx` |
 | 4-copy / 2-ink validation | `deckStats.ts` (drives the legality errors and the Duels gate) |
 
-Two things to check before closing, because they are the only requirements not
-directly visible in the export list: **duplicate-entry merging** and **comment /
-blank-line handling** in `parseDecklist`, and whether the dialog actually shows an
-"X imported, Y errors" summary. `deckTransfer.test.ts` is the fastest place to
-confirm.
+Both items that needed checking passed:
+
+- **Duplicate merging**: `resolveDecklist` sums repeated lines per card, then clamps
+  with `Math.min(MAX_COPIES, ...)`.
+- **Comments and blank lines**: `isDecklistChrome()` skips blanks plus `//` and `#`
+  headers silently. `unparsed` is deliberately reserved for lines that *look* like
+  cards but are not, so section headers never surface as errors.
+
+**One deliberate deviation, worth knowing.** #208 asked for "X imported, Y errors".
+The dialog shows a receipt **only when something was skipped**; a clean import
+closes silently, because the deck itself is the receipt. The success-path counter
+was dropped on purpose, not missed.
 
 Note the stale file path: #208 names `deck/utils/deckParser.ts`, which never
 existed. The real module is `deck/deckTransfer.ts`.
@@ -162,8 +172,7 @@ part of this scope. Import plus own/don't-own is the shippable slice.
 
 1. `git status` clean, on `deck-builder`. Last commit should be `cf3b300a`.
 2. Read the latest #474 comment and this file.
-3. **Thread A**: verify the two open items above, then close #208 with a comment
-   pointing at #473 and `deckTransfer.ts`.
+3. ~~**Thread A**: close #208.~~ **Done.**
 4. **Thread B**: get the owner's ruling on mobile auth placement. Do not build
    until they choose.
 5. **Thread C**: read #452 and PLAN Part B, settle the two product questions, then
