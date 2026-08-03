@@ -13,6 +13,15 @@ import type {Deck} from '../types';
 /** Single active local draft. The `*` in the issue's `inkweave:deck:*` namespace
  *  is realized as this draft key plus the per-user migration-guard keys below. */
 export const DRAFT_KEY = 'inkweave:deck:draft';
+
+/**
+ * Whether the working draft carries edits not yet pushed to the cloud. Separate
+ * from DRAFT_KEY deliberately: this is client-only state, and folding it into
+ * the Deck shape would force a DRAFT_SCHEMA_VERSION bump (discarding every
+ * stored draft) and leak an edit flag into the decks.cards jsonb column.
+ */
+export const DIRTY_KEY = 'inkweave:deck:dirty';
+
 const MIGRATED_PREFIX = 'inkweave:deck:migrated';
 
 /** Persisted-shape version; a stored draft whose `schemaVersion` differs is
@@ -72,7 +81,10 @@ export function readDraft(): Deck | null {
   } catch (e) {
     console.error('[deckStorage] Corrupted draft JSON, clearing key:', DRAFT_KEY, e);
   }
-  safeRemove(DRAFT_KEY);
+  // Route through clearDraft (not a bare safeRemove(DRAFT_KEY)) so a discarded
+  // corrupt draft can't leave a stale dirty flag behind for whatever fresh
+  // draft comes next.
+  clearDraft();
   return null;
 }
 
@@ -84,6 +96,16 @@ export function writeDraft(deck: Deck): void {
 /** Drop the working draft entirely (e.g. after it migrates to the cloud). */
 export function clearDraft(): void {
   safeRemove(DRAFT_KEY);
+  safeRemove(DIRTY_KEY);
+}
+
+/** Unsaved-changes flag. Anything other than a stored `true` reads as clean. */
+export function readDirty(): boolean {
+  return safeRead(DIRTY_KEY) === 'true';
+}
+
+export function writeDirty(isDirty: boolean): void {
+  safeWrite(DIRTY_KEY, String(isDirty));
 }
 
 // ── First-sign-in draft->cloud migration guard ──

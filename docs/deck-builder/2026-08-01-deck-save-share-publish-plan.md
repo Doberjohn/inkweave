@@ -397,6 +397,32 @@ it('clears the draft when a signed-in user signs out', () => {
 });
 ```
 
+- [ ] **Step 6a: Clear the flag when the first-sign-in migration succeeds**
+
+Found during Task 2's review. `useFirstSignInMigration` currently does:
+
+```ts
+    void upsertDeck({...snapshot, ownerId: uid}, uid).then(({error}) => {
+      if (!error) markDraftMigrated(uid);
+    });
+```
+
+That upsert **is** a successful push to the cloud, so once edits set the flag, a
+freshly migrated draft would still read as unsaved. Clear it on success:
+
+```ts
+    void upsertDeck({...snapshot, ownerId: uid}, uid).then(({error}) => {
+      if (error) return;
+      markDraftMigrated(uid);
+      writeDirty(false); // the draft IS in the cloud now; do not keep nagging
+    });
+```
+
+Write it through `writeDirty` rather than `setIsDirty`, because this runs inside a
+hook that has no access to the provider's state setter, and the flag is read from
+storage on next mount. Add a test asserting the flag is clear after a successful
+migration.
+
 - [ ] **Step 7: Run tests, confirm green**
 
 Run: `pnpm --filter inkweave-web exec vitest run src/features/deck/state`
