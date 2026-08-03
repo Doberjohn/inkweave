@@ -17,12 +17,13 @@ vi.mock('../../../shared/contexts/CardDataContext', () => ({
   }),
 }));
 
-// DeckProvider reads useSession for the first-sign-in cloud migrator (#464). These
-// tests cover the LOCAL draft, so stub a signed-out session: uid is null, the
-// migrator effect returns early, and nothing touches Supabase.
+// DeckProvider reads useSession for the first-sign-in cloud migrator (#464) and the
+// sign-out draft clear (#473). Defaults to signed out — the migrator returns early and
+// nothing touches Supabase — while `sessionCtl.userId` lets a test drive a sign-out.
+const sessionCtl = vi.hoisted(() => ({userId: null as string | null}));
 vi.mock('../../../shared/contexts/SessionContext', () => ({
   useSession: () => ({
-    user: null,
+    user: sessionCtl.userId ? {id: sessionCtl.userId} : null,
     session: null,
     loading: false,
     enabled: false,
@@ -41,6 +42,7 @@ beforeEach(() => {
   localStorage.clear();
   fixtureCards.clear();
   mockCtl.loading = false;
+  sessionCtl.userId = null;
   fixtureCards.set('amber', createCard({id: 'amber', fullName: 'Amber Card', ink: 'Amber'}));
   fixtureCards.set('steel', createCard({id: 'steel', fullName: 'Steel Card', ink: 'Steel'}));
   // Dual-ink is two typed fields (ink + ink2), not a hyphenated string — that's what getInks reads.
@@ -178,6 +180,76 @@ describe('DeckContext', () => {
     writeDraft(loading);
     const {result} = render();
     expect(result.current.deck.inks).toEqual(['Amber']);
+  });
+
+  it('starts clean, goes dirty on an edit, and is clean again after markSaved', () => {
+    const {result} = render();
+    expect(result.current.isDirty).toBe(false);
+    act(() => result.current.addCard('amber'));
+    expect(result.current.isDirty).toBe(true);
+    act(() => result.current.markSaved({...result.current.deck, ownerId: 'u1'}));
+    expect(result.current.isDirty).toBe(false);
+    expect(result.current.deck.ownerId).toBe('u1');
+  });
+
+  it('startNewDeck empties the deck, unbinds it, and records the visibility', () => {
+    const {result} = render();
+    act(() => result.current.addCard('amber'));
+    const previousId = result.current.deck.id;
+    act(() => result.current.startNewDeck('public'));
+    expect(result.current.deck.cards).toHaveLength(0);
+    expect(result.current.deck.id).not.toBe(previousId);
+    expect(result.current.deck.ownerId).toBeNull();
+    expect(result.current.deck.isPublic).toBe(true);
+    expect(result.current.isDirty).toBe(false);
+  });
+
+  it('loadDeck replaces the draft and marks it clean', () => {
+    const {result} = render();
+    act(() => result.current.addCard('amber'));
+    const saved = {...result.current.deck, id: 'cloud-1', name: 'Saved', cards: [], ownerId: 'u1'};
+    act(() => result.current.loadDeck(saved));
+    expect(result.current.deck.id).toBe('cloud-1');
+    expect(result.current.deck.name).toBe('Saved');
+    expect(result.current.isDirty).toBe(false);
+  });
+
+  it('clears the draft when a signed-in user signs out', () => {
+    sessionCtl.userId = 'u1';
+    const {result, rerender} = render();
+    act(() => result.current.addCard('amber'));
+    sessionCtl.userId = null;
+    rerender();
+    expect(readDraft()).toBeNull();
+  });
+
+  // The clear above is worthless on its own: the deck is still in React state, and
+  // BOTH writers would put it straight back, handing it to the next person on a
+  // shared browser. Teardown fires on unmount and on pagehide (tab close).
+  it('does not resurrect the departed deck on unmount', () => {
+    sessionCtl.userId = 'u1';
+    const {result, rerender, unmount} = render();
+    act(() => result.current.addCard('amber'));
+    sessionCtl.userId = null;
+    rerender();
+
+    unmount();
+
+    expect(readDraft()).toBeNull();
+  });
+
+  it('does not resurrect the departed deck on pagehide', () => {
+    sessionCtl.userId = 'u1';
+    const {result, rerender} = render();
+    act(() => result.current.addCard('amber'));
+    sessionCtl.userId = null;
+    rerender();
+
+    act(() => {
+      window.dispatchEvent(new Event('pagehide'));
+    });
+
+    expect(readDraft()).toBeNull();
   });
 });
 

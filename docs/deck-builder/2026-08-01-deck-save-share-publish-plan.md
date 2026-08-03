@@ -229,14 +229,16 @@ Read `DeckContext.tsx` fully first. Three constraints there are load-bearing:
 
 - [ ] **Step 1: Write the failing tests**
 
-Append to `DeckContext.test.tsx`, following its existing render helper:
+Append to `DeckContext.test.tsx`. **The helper is `render()`, takes no arguments,
+and the card fixtures are `'amber'` and `'steel'`, not card ids like `'1936'`.**
+Read the top of that file before writing.
 
 ```ts
 it('starts clean, goes dirty on an edit, and is clean again after markSaved', () => {
-  const {result} = renderDeck();
+  const {result} = render();
   expect(result.current.isDirty).toBe(false);
 
-  act(() => result.current.addCard('1936'));
+  act(() => result.current.addCard('amber'));
   expect(result.current.isDirty).toBe(true);
 
   act(() => result.current.markSaved({...result.current.deck, ownerId: 'u1'}));
@@ -245,8 +247,8 @@ it('starts clean, goes dirty on an edit, and is clean again after markSaved', ()
 });
 
 it('startNewDeck empties the deck, unbinds it, and records the visibility', () => {
-  const {result} = renderDeck();
-  act(() => result.current.addCard('1936'));
+  const {result} = render();
+  act(() => result.current.addCard('amber'));
   const previousId = result.current.deck.id;
 
   act(() => result.current.startNewDeck('public'));
@@ -259,8 +261,8 @@ it('startNewDeck empties the deck, unbinds it, and records the visibility', () =
 });
 
 it('loadDeck replaces the draft and marks it clean', () => {
-  const {result} = renderDeck();
-  act(() => result.current.addCard('1936'));
+  const {result} = render();
+  act(() => result.current.addCard('amber'));
 
   const saved = {...result.current.deck, id: 'cloud-1', name: 'Saved', cards: [], ownerId: 'u1'};
   act(() => result.current.loadDeck(saved));
@@ -345,27 +347,36 @@ Persist the flag alongside the existing debounced draft write, in its own effect
 
 Add all four to the `value` object.
 
-- [ ] **Step 5: Add `createEmptyDeck`**
+- [ ] **Step 5: Give the existing `createEmptyDraft` a visibility parameter**
 
-`loadOrCreateDraft` already builds a fresh deck. Extract that construction into an exported helper in `deckStorage.ts` so both paths share one definition, taking the visibility:
+**Do not create a new helper and do not move anything to `deckStorage`.**
+`createEmptyDraft()` already exists at the top of `DeckContext.tsx` and is already
+used by `loadOrCreateDraft`. It currently emits no `isPublic` and no `ownerId`.
+Add the parameter in place:
 
 ```ts
-export function createEmptyDeck(isPublic = false): Deck {
+function createEmptyDraft(isPublic = false): Deck {
+  const now = Date.now();
   return {
-    id: crypto.randomUUID(),
-    name: '',
+    id: newDeckId(),
+    name: 'New Deck',
     cards: [],
     inks: [],
     isPublic,
     ownerId: null,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    createdAt: now,
+    updatedAt: now,
     schemaVersion: 1,
   };
 }
 ```
 
-Then have `loadOrCreateDraft` call `createEmptyDeck()` instead of inlining the object.
+Keep `newDeckId()` (it has a crypto-availability fallback for exotic environments)
+and keep the `'New Deck'` default name; other code and tests may rely on both.
+`loadOrCreateDraft()` keeps calling `createEmptyDraft()` with no argument, so its
+behaviour is unchanged.
+
+`startNewDeck` then becomes `setDeck(createEmptyDraft(visibility === 'public'))`.
 
 - [ ] **Step 6: Clear the draft on sign-out**
 
@@ -384,18 +395,45 @@ Inside `useFirstSignInMigration`, in the branch that detects a real sign-out:
     }
 ```
 
-Add a test for it:
+**Testing this needs a change to the file's mocking setup first.** `useSession` is
+currently mocked module-level as permanently signed out, so no test can simulate a
+sign-out. Make it controllable, mirroring how `mockCtl.loading` already controls
+the card DB in the same file:
+
+```ts
+const sessionCtl = vi.hoisted(() => ({userId: null as string | null}));
+vi.mock('../../../shared/contexts/SessionContext', () => ({
+  useSession: () => ({
+    user: sessionCtl.userId ? {id: sessionCtl.userId} : null,
+    session: null,
+    loading: false,
+    enabled: false,
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+  }),
+}));
+```
+
+Reset it in `beforeEach` alongside the existing resets: `sessionCtl.userId = null;`
+
+Every existing test keeps passing unchanged, because the default is still
+signed out. Then:
 
 ```ts
 it('clears the draft when a signed-in user signs out', () => {
-  const {result, rerender} = renderDeck({userId: 'u1'});
-  act(() => result.current.addCard('1936'));
+  sessionCtl.userId = 'u1';
+  const {result, rerender} = render();
+  act(() => result.current.addCard('amber'));
 
-  rerender({userId: null});
+  sessionCtl.userId = null;
+  rerender();
 
   expect(readDraft()).toBeNull();
 });
 ```
+
+Note `enabled: false` in the mock means the migrator's upsert path stays inert, so
+this test exercises the sign-out branch without touching Supabase.
 
 - [ ] **Step 6a: Clear the flag when the first-sign-in migration succeeds**
 
