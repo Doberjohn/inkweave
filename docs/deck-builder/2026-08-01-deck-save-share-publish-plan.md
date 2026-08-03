@@ -45,31 +45,52 @@ Tasks are ordered so each leaves the tree green and commitable. Tasks 1-3 are pu
 
 Open `deckRepository.ts` and read the header comment plus `listDecks`. Every call goes through the `run(async (c) => ...)` shell, returns `RepoResult<T>` (`{data, error}`), and maps rows with `rowToDeck`. Follow that exactly; do not add a new error style.
 
-- [ ] **Step 2: Write the failing test**
+- [ ] **Step 2: Teach the test harness about `.limit`**
 
-Append to `apps/web/src/features/deck/state/deckRepository.test.ts`, matching how the existing tests in that file mock the client:
+The file uses one shared chainable stand-in, `makeQuery`, whose method list is
+`['select', 'insert', 'update', 'delete', 'upsert', 'eq', 'order']`. **It has no
+`limit`**, so a `.limit()` call would throw inside the mock. Add it:
+
+```ts
+  for (const method of ['select', 'insert', 'update', 'delete', 'upsert', 'eq', 'order', 'limit']) {
+```
+
+Awaiting the builder already resolves via the harness's `then`, so no other change
+is needed: `listPublicDecks` ends on `.limit()` and is awaited, exactly like
+`listDecks` ends on `.order()`.
+
+- [ ] **Step 3: Write the failing test**
+
+Append to `apps/web/src/features/deck/state/deckRepository.test.ts`, using the
+file's existing `prime` / `from` / `makeRow` helpers rather than hand-rolled mocks:
 
 ```ts
 describe('listPublicDecks', () => {
-  it('queries is_public rows newest-touched first, capped by limit', async () => {
-    const order = vi.fn().mockReturnValue({
-      limit: vi.fn().mockResolvedValue({data: [], error: null}),
-    });
-    const eq = vi.fn().mockReturnValue({order});
-    const select = vi.fn().mockReturnValue({eq});
-    mockClient.from.mockReturnValue({select});
+  it('reads is_public rows newest-touched first, capped by limit', async () => {
+    const q = prime({data: [makeRow({is_public: true})], error: null});
 
-    const result = await listPublicDecks(24);
+    const {data, error} = await listPublicDecks(24);
 
-    expect(select).toHaveBeenCalledWith('*');
-    expect(eq).toHaveBeenCalledWith('is_public', true);
-    expect(order).toHaveBeenCalledWith('updated_at', {ascending: false});
-    expect(result.error).toBeNull();
+    expect(from).toHaveBeenCalledWith('decks');
+    expect(q.select).toHaveBeenCalledWith('*');
+    expect(q.eq).toHaveBeenCalledWith('is_public', true);
+    expect(q.order).toHaveBeenCalledWith('updated_at', {ascending: false});
+    expect(q.limit).toHaveBeenCalledWith(24);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it('returns null data when the query errors', async () => {
+    prime({data: null, error: {message: 'boom'}});
+    const {data, error} = await listPublicDecks();
+    expect(data).toBeNull();
+    expect(error).toBe('boom');
   });
 });
 ```
 
-Add `listPublicDecks` to the import at the top of the test file.
+Add `listPublicDecks` to the existing import from `./deckRepository` at the top of
+the file. `beforeEach` already wires `mockGetSupabase`, so do not re-wire it.
 
 - [ ] **Step 3: Run it and confirm it fails**
 

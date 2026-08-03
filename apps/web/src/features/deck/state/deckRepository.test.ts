@@ -3,7 +3,7 @@ import type {Deck} from '../types';
 
 vi.mock('../../../shared/lib/supabase', () => ({getSupabase: vi.fn()}));
 import {getSupabase} from '../../../shared/lib/supabase';
-import {listDecks, getDeck, createDeck, updateDeck, deleteDeck, upsertDeck} from './deckRepository';
+import {listDecks, getDeck, createDeck, updateDeck, deleteDeck, upsertDeck, listPublicDecks} from './deckRepository';
 
 const mockGetSupabase = vi.mocked(getSupabase);
 
@@ -13,7 +13,7 @@ const mockGetSupabase = vi.mocked(getSupabase);
 type QueryResult = {data: unknown; error: {code?: string; message: string} | null};
 function makeQuery(result: QueryResult) {
   const q: Record<string, ReturnType<typeof vi.fn>> & {then?: unknown} = {};
-  for (const method of ['select', 'insert', 'update', 'delete', 'upsert', 'eq', 'order']) {
+  for (const method of ['select', 'insert', 'update', 'delete', 'upsert', 'eq', 'order', 'limit']) {
     q[method] = vi.fn(() => q);
   }
   q.maybeSingle = vi.fn(() => Promise.resolve(result));
@@ -193,5 +193,33 @@ describe('env gate (Supabase not configured)', () => {
   it('createDeck no-ops without the client', async () => {
     expect((await createDeck(makeDeck(), 'user-1')).error).toBe('Supabase not configured');
     expect(from).not.toHaveBeenCalled();
+  });
+});
+
+describe('listPublicDecks', () => {
+  it('reads is_public rows newest-touched first, capped by limit', async () => {
+    const q = prime({data: [makeRow({is_public: true})], error: null});
+
+    const {data, error} = await listPublicDecks(24);
+
+    expect(from).toHaveBeenCalledWith('decks');
+    expect(q.select).toHaveBeenCalledWith('*');
+    expect(q.eq).toHaveBeenCalledWith('is_public', true);
+    expect(q.order).toHaveBeenCalledWith('updated_at', {ascending: false});
+    expect(q.limit).toHaveBeenCalledWith(24);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it('defaults to a 50-row cap, and returns null data and logs on a query error', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const q = prime({data: null, error: {message: 'boom'}});
+
+    const {data, error} = await listPublicDecks();
+
+    // Pins the default: an uncapped public feed would grow unbounded over time.
+    expect(q.limit).toHaveBeenCalledWith(50);
+    expect(data).toBeNull();
+    expect(error).toBe('boom');
   });
 });

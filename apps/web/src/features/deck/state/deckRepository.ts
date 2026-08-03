@@ -142,6 +142,28 @@ export function listDecks(ownerId: string): Promise<RepoResult<Deck[]>> {
   });
 }
 
+/**
+ * Up to `limit` public decks, newest-touched first. Ordered to match the partial
+ * index `decks_public_updated_idx on (updated_at desc) where is_public`, so this
+ * stays on the index rather than falling back to a heap sort.
+ *
+ * RLS already permits anon reads of is_public rows, so this works signed out and
+ * is the community list's data source. Legality filtering is deliberately NOT
+ * done here: it needs per-card ink data that lives in allCards.json, not in the
+ * row, which stores only {cardId, quantity}.
+ */
+export function listPublicDecks(limit = 50): Promise<RepoResult<Deck[]>> {
+  return run(async (c) => {
+    const {data, error} = await c
+      .from('decks')
+      .select('*')
+      .eq('is_public', true)
+      .order('updated_at', {ascending: false})
+      .limit(limit);
+    return {data: data ? data.map(rowToDeck) : null, error};
+  });
+}
+
 /** One deck by id. RLS returns it when it is the caller's own or is_public. */
 export function getDeck(id: string): Promise<RepoResult<Deck>> {
   return run(async (c) => {
