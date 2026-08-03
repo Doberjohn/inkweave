@@ -6,8 +6,11 @@ Delete this file when Phase 2 task issues exist and #452 is underway.
 Read alongside [`PLAN.md`](PLAN.md) Phase 1 (the v1 three items) and Part B
 "Collection & migration (Phase 2)", plus the latest #474 comment.
 
-**Order: A, then B, then C. A is already done** (#208 closed). B is an owner
-decision that C depends on. C is the build. **Start at Thread B.**
+**A and B are both done.** A closed #208; B was decided 2026-08-01 (see below).
+**C is the remaining work**, and it no longer depends on B: signing in is optional
+everywhere, so nothing gates the collection import. **Start at Thread C**, after
+applying B's consequences (the `/decks` rename and tabs, the `MobileBottomNav`
+label, and #454's route change).
 
 ---
 
@@ -54,7 +57,32 @@ think collection import is half-done when it has not started.
 
 ---
 
-## Thread B: the mobile sign-in gap (needs an owner decision)
+## Thread B: the mobile sign-in gap — DECIDED 2026-08-01
+
+**Both rulings are in `PLAN.md` Phase 1. Summary:**
+
+- **`/decks` is the community hub with a "Yours" tab.** Not personal. So there is
+  no `/decks/feed`; **#454 needs its task line updated.** Interim, show only the
+  Yours tab until Phase 4 has content.
+- **Sign-in is contextual plus the header.** `HeaderAuth` stays; `/decks` also
+  explains what signing in buys. That **closes the mobile regression**, because
+  `/decks` renders on mobile and `CompactHeader` does not.
+
+**The reframing that settled it:** signing in is an **upgrade, not a gate**. The
+builder already works fully signed out (localStorage drafts via `deckStorage`, and
+`useFirstSignInMigration` lifts the anonymous draft into the account on first
+sign-in). Nothing in v1 needs auth, **including #452** under its localStorage-first
+scope. An earlier note in this file said the mobile gap blocked #452. It does not.
+
+Also now wrong and needing a copy change: `MobileBottomNav` labels the tab
+**"Build a deck"**, which is both personal and an action, while `/decks` is a
+destination and `/decks/new` is the builder.
+
+The original analysis is kept below for the constraints it records.
+
+---
+
+### Original analysis (superseded by the ruling above)
 
 **The regression.** `7dfb4dd3` moved auth into `HeaderAuth`, which lives in
 `CompactHeader`, which returns `null` when `isMobile`. The `/decks` block it
@@ -173,8 +201,11 @@ part of this scope. Import plus own/don't-own is the shippable slice.
 1. `git status` clean, on `deck-builder`. Last commit should be `cf3b300a`.
 2. Read the latest #474 comment and this file.
 3. ~~**Thread A**: close #208.~~ **Done.**
-4. **Thread B**: get the owner's ruling on mobile auth placement. Do not build
-   until they choose.
+4. ~~**Thread B**: get the owner's ruling on mobile auth placement.~~ **Done.**
+   Apply its consequences: `/decks` renamed to "Decks" with a `TabList` (Yours only
+   until Phase 4), a contextual sign-in explainer on `/decks`, the
+   `MobileBottomNav` label off "Build a deck", and #454's `/decks/feed` task line
+   corrected.
 5. **Thread C**: read #452 and PLAN Part B, settle the two product questions, then
    `/draft-issue` the parser task. Stay on `deck-builder`; do not cut a
    `feature/` branch (this epic's commits are unmerged to production).
