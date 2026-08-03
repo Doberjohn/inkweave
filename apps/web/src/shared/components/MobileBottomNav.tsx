@@ -24,12 +24,15 @@ interface TabDef {
   hasNewDot?: boolean;
 }
 
+// Labels name DESTINATIONS, not actions. "Browse decks" (not "Build a deck")
+// because /decks is the deck hub (owner ruling 2026-08-01) while /decks/new is
+// the builder; the old label pointed at the wrong one.
 const TABS_REVEAL_SEASON: readonly TabDef[] = [
   {kind: 'browse', label: 'Browse collection', href: '/browse'},
   {kind: 'search', label: 'Search cards', action: 'search'},
   {kind: 'reveals', label: 'Set 13 reveals', href: '/reveals', hasNewDot: true},
   {kind: 'playstyles', label: 'Explore playstyles', href: '/playstyles'},
-  {kind: 'decks', label: 'Build a deck', href: '/decks'},
+  {kind: 'decks', label: 'Browse decks', href: '/decks'},
 ];
 
 const TABS_OFF_SEASON: readonly TabDef[] = [
@@ -37,7 +40,7 @@ const TABS_OFF_SEASON: readonly TabDef[] = [
   {kind: 'search', label: 'Search cards', action: 'search'},
   {kind: 'playstyles', label: 'Explore playstyles', href: '/playstyles'},
   {kind: 'vote', label: 'Rate synergies', href: '/vote'},
-  {kind: 'decks', label: 'Build a deck', href: '/decks'},
+  {kind: 'decks', label: 'Browse decks', href: '/decks'},
 ];
 
 /**
