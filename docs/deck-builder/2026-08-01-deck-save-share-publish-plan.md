@@ -509,28 +509,25 @@ Add near the top of the component:
 
 - [ ] **Step 2: Render the not-found state**
 
-RLS returns no row for both "does not exist" and "private and not yours", and that is deliberate: do not leak which. Render one state for both:
+RLS returns no row for both "does not exist" and "private and not yours", and that
+is deliberate: do not leak which. Render ONE state for both.
+
+**Reuse the `CenteredNotice` component already defined at the top of this file.**
+Do not invent new style constants; the file already uses this for its
+desktop-only and "Loading cards…" states, and a third message belongs in the
+same shape:
 
 ```tsx
   if (loadError) {
-    return (
-      <>
-        <CompactHeader isMobile={isMobile} />
-        <main style={NOT_FOUND_MAIN_STYLE}>
-          <h1 style={NOT_FOUND_TITLE_STYLE}>Deck not found</h1>
-          <p style={NOT_FOUND_TEXT_STYLE}>
-            This deck does not exist, or it is private.
-          </p>
-          <Link to="/decks" style={{...CTA_BASE_STYLE, ...CTA_FILLED_STYLE, display: 'inline-flex'}}>
-            Back to decks
-          </Link>
-        </main>
-      </>
-    );
+    return <CenteredNotice>Deck not found. It may not exist, or it may be private.</CenteredNotice>;
   }
 ```
 
-Define the three style consts at module scope using `FONTS`, `FONT_SIZES`, `COLORS` and `SPACING` tokens; do not inline raw values.
+**Guard order matters.** The existing guards run `isMobile` first, then
+`isLoading`. Put the not-found check AFTER both: the builder is desktop-only
+today, so a mobile visitor should see the desktop-only notice rather than a
+fetch result, and there is no point reporting not-found while the card DB is
+still resolving.
 
 - [ ] **Step 3: Verify by hand**
 

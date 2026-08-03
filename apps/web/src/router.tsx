@@ -1,5 +1,5 @@
 import {lazy, Suspense} from 'react';
-import {createBrowserRouter, Navigate} from 'react-router-dom';
+import {createBrowserRouter, Navigate, useParams} from 'react-router-dom';
 import Skeleton from 'react-loading-skeleton';
 import {AppLayout} from './AppLayout';
 import {AdminGate} from './features/admin-analytics/AdminGate';
@@ -112,6 +112,23 @@ function GenericFallback() {
 
 function SuspenseWrapper({children, fallback}: {children: React.ReactNode; fallback?: React.ReactNode}) {
   return <Suspense fallback={fallback ?? <GenericFallback />}>{children}</Suspense>;
+}
+
+/**
+ * `/decks/new` and `/decks/:id/edit` render the same element at the same position
+ * in the tree, so React reconciles them as ONE instance and every `useState` in
+ * `DeckBuilderPage` survives navigation between them. That stranded a freshly
+ * started deck behind a stale "Deck not found" notice (#473). Keying by the routed
+ * id remounts the builder per deck, so page-local state (dialogs, pool filters,
+ * fetch results) cannot leak from one deck to the next.
+ *
+ * The draft itself is untouched by the remount: it lives in `DeckProvider`, which
+ * `DeckLayout` mounts ABOVE this. Both routes must go through this wrapper, or the
+ * differing element types defeat the point.
+ */
+function KeyedDeckBuilder() {
+  const {id} = useParams();
+  return <DeckBuilderPage key={id ?? 'new'} />;
 }
 
 export const router = createBrowserRouter([
@@ -296,7 +313,7 @@ export const router = createBrowserRouter([
             path: 'new',
             element: (
               <SuspenseWrapper>
-                <DeckBuilderPage />
+                <KeyedDeckBuilder />
               </SuspenseWrapper>
             ),
           },
@@ -312,7 +329,7 @@ export const router = createBrowserRouter([
             path: ':id/edit',
             element: (
               <SuspenseWrapper>
-                <DeckBuilderPage />
+                <KeyedDeckBuilder />
               </SuspenseWrapper>
             ),
           },
