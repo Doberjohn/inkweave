@@ -19,6 +19,15 @@ function ImportIcon() {
   );
 }
 
+/** ImportIcon mirrored, per the note above it: the arrow leaves the tray, i.e. upload. */
+function SaveIcon() {
+  return (
+    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 15V3m0 0L8 7m4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 /** Box with an arrow escaping it: the convention for "this leaves the site". */
 function ExternalLinkIcon() {
   return (
@@ -36,20 +45,26 @@ interface DeckActionsBarProps {
   /** Empties the deck. */
   onClear: () => void;
   onImport: () => void;
+  /** Opens the save dialog: the cloud copy, which never changes on its own. */
+  onSave: () => void;
   /** Opens the deck in Duels.ink; disabled until the deck is Core legal. */
   onExport: () => void;
   /** Drives the clear confirmation and disables Clear on an empty deck. */
   cardCount: number;
   /** `DeckStats.isLegal` — Tier-1 hard rules (size / copies / inks). Gates export. */
   isLegal: boolean;
+  /** The draft has edits the cloud copy does not; changes Save's LABEL, not just its paint. */
+  isDirty: boolean;
 }
 
 /**
- * Deck toolbar (#473): Clear / Import / Play on Duels above the deck list. Clear is a
+ * Deck toolbar (#473): Clear / Import / Save / Play on Duels above the deck list. Clear is a
  * two-step confirm when the deck has cards — the deck is a working draft with no
- * undo, so a stray click must not wipe it. Save arrives with account decks.
+ * undo, so a stray click must not wipe it. Save is explicit and always available:
+ * the draft already auto-persists locally on every edit, so this button is only ever
+ * about the cloud copy, which a publishable deck must never update behind the user.
  */
-export function DeckActionsBar({onClear, onImport, onExport, cardCount, isLegal}: DeckActionsBarProps) {
+export function DeckActionsBar({onClear, onImport, onSave, onExport, cardCount, isLegal, isDirty}: DeckActionsBarProps) {
   const [confirmingClear, setConfirmingClear] = useState(false);
   const isEmpty = cardCount === 0;
 
@@ -86,6 +101,19 @@ export function DeckActionsBar({onClear, onImport, onExport, cardCount, isLegal}
       <CtaButton variant="ghost" onClick={onImport}>
         <ImportIcon />
         Import
+      </CtaButton>
+
+      {/*
+        Ghost, matching Import: Duels below is the bar's ONE filled button, and a
+        second one would cost that distinction the meaning it was given.
+
+        The unsaved marker is the LABEL, not a dot or a tint. A colour-only cue is
+        invisible to a screen reader and to anyone who cannot separate the two
+        golds, and "Save changes" says the same thing to everybody.
+      */}
+      <CtaButton variant="ghost" onClick={onSave}>
+        <SaveIcon />
+        {isDirty ? 'Save changes' : 'Save'}
       </CtaButton>
 
       {/*

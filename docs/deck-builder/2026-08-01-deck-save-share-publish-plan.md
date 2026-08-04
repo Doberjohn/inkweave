@@ -667,12 +667,12 @@ export function SaveDeckDialog({isOpen, onClose}: {isOpen: boolean; onClose: () 
   if (!user) {
     return (
       <DialogShell isOpen={isOpen} onClose={onClose} size="sm" ariaLabel="Save deck">
-        <h2 style={DIALOG_TITLE_STYLE}>Save to account</h2>
-        <p style={DIALOG_TEXT_STYLE}>
+        <h2>Save to account</h2>
+        <p>
           Your deck is saved on this device. Sign in to keep more than one, reach them from any
           device, and publish them.
         </p>
-        <SignInButtons />
+        <CtaButton variant="filled" onClick={onSignIn}>Sign in</CtaButton>
       </DialogShell>
     );
   }
