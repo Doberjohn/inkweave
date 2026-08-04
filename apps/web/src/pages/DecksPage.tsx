@@ -1,12 +1,253 @@
-import {useState} from 'react';
+import {useEffect, useState, type ReactNode} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {CompactHeader, CtaButton} from '../shared/components';
+import {CompactHeader, CtaButton, TabList} from '../shared/components';
 import {SignInDialog} from '../shared/components/SignInDialog';
+import {DeckSummaryCard} from '../features/deck/components/DeckSummaryCard';
 import {NewDeckDialog} from '../features/deck/components/NewDeckDialog';
-import {useDeck} from '../features/deck/state';
+import {calculateDeckStats} from '../features/deck/analysis/deckStats';
+import {listDecks, listPublicDecks, useDeck, type RepoResult} from '../features/deck/state';
+import type {Deck} from '../features/deck/types';
+import type {LorcanaCard} from '../features/cards';
+import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive} from '../shared/hooks';
 import {useSession} from '../shared/contexts/SessionContext';
-import {COLORS, FONTS, FONT_SIZES, LAYOUT, SPACING} from '../shared/constants';
+import {COLORS, EMPTY_BOX, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING} from '../shared/constants';
+
+type CardLookup = (id: string) => LorcanaCard | undefined;
+
+// Labels follow the owner's 2026-08-01 wording ("Yours / community"): the strip
+// sits under the page's own "Decks" heading, so neither label repeats the noun.
+const TABS = [
+  {id: 'community', label: 'Community'},
+  {id: 'mine', label: 'Yours'},
+] as const;
+
+type DecksTab = (typeof TABS)[number]['id'];
+
+/** Copies in a deck. Cheaper than full stats, and needs no card database. */
+function countCards(deck: Deck): number {
+  return deck.cards.reduce((total, card) => total + card.quantity, 0);
+}
+
+// ── Reading a deck list ────────────────────────────────────────────────────
+
+/**
+ * A deck-list read, in the three states that must stay distinguishable. Folding
+ * `failed` into an empty `decks` would render a network failure as "nobody has
+ * published yet" — a lie, and one the reader cannot act on.
+ */
+interface DeckListState {
+  /** The rows, or null while the read is in flight or has failed. */
+  decks: Deck[] | null;
+  failed: boolean;
+}
+
+const LOADING: DeckListState = {decks: null, failed: false};
+
+/** A finished read, tagged with the read it answers (owner + attempt). */
+interface KeyedResult {
+  key: string;
+  state: DeckListState;
+}
+
+function toListState({data, error}: RepoResult<Deck[]>): DeckListState {
+  return error || !data ? {decks: null, failed: true} : {decks: data, failed: false};
+}
+
+/**
+ * A stored result counts only for the read it came from; against any other key the
+ * list is loading again. Deriving that at render is what lets a retry (or a change
+ * of owner) return to the loading state without a synchronous setState inside the
+ * effect, which cascades renders and `react-hooks/set-state-in-effect` rejects.
+ */
+function stateFor(result: KeyedResult | null, key: string): DeckListState {
+  return result?.key === key ? result.state : LOADING;
+}
+
+/**
+ * Which list to read, as a plain string so it can be an effect dependency without
+ * the identity churn an object literal would bring: the community feed, one owner's
+ * saved decks, or nothing at all (a signed-out visitor has no saved decks to read).
+ */
+type DeckSource = 'public' | `own:${string}` | '';
+
+function readDecks(source: DeckSource): Promise<RepoResult<Deck[]>> | null {
+  if (source === 'public') return listPublicDecks();
+  return source === '' ? null : listDecks(source.slice('own:'.length));
+}
+
+/** A counter whose bump re-runs a fetching effect — what makes a retry possible. */
+function useReload(): [number, () => void] {
+  const [attempt, setAttempt] = useState(0);
+  return [attempt, () => setAttempt((n) => n + 1)];
+}
+
+/**
+ * One deck list, read once per `source` (and once more per retry). Both tabs share
+ * this: the reads differ only in which repository call they make, and the loading /
+ * loaded / failed bookkeeping around them is identical.
+ *
+ * The community read works signed out — RLS already permits anon on public rows.
+ */
+function useDeckList(source: DeckSource): DeckListState & {retry: () => void} {
+  const [attempt, retry] = useReload();
+  const [result, setResult] = useState<KeyedResult | null>(null);
+  const key = `${source}#${attempt}`;
+
+  useEffect(() => {
+    const request = readDecks(source);
+    if (!request) return;
+    let active = true;
+    void request.then((repoResult) => {
+      if (active) setResult({key, state: toListState(repoResult)});
+    });
+    return () => {
+      active = false;
+    };
+  }, [source, key]);
+
+  return {...stateFor(result, key), retry};
+}
+
+// ── List states ────────────────────────────────────────────────────────────
+
+/** The house empty-state recipe, sized for a full-width list slot. */
+function EmptyNote({children}: {children: ReactNode}) {
+  return (
+    <div
+      style={{
+        ...EMPTY_BOX,
+        padding: SPACING.xxxl,
+        fontFamily: FONTS.body,
+        fontSize: `${FONT_SIZES.base}px`,
+        lineHeight: 1.6,
+      }}>
+      {/* One child on purpose: EMPTY_BOX centers with flex, so a sentence mixing
+          text and <strong> would otherwise become several flex items side by side
+          instead of one wrapping paragraph. */}
+      <span style={{maxWidth: 420}}>{children}</span>
+    </div>
+  );
+}
+
+function LoadingNote({label}: {label: string}) {
+  return (
+    <p
+      style={{
+        margin: 0,
+        padding: SPACING.xxxl,
+        textAlign: 'center',
+        fontFamily: FONTS.body,
+        fontSize: `${FONT_SIZES.base}px`,
+        color: COLORS.textMuted,
+      }}>
+      {label}
+    </p>
+  );
+}
+
+/**
+ * A failed read, deliberately NOT the empty box: solid and error-tinted where the
+ * empty state is dashed and muted, and carrying the retry an empty list has no use
+ * for. "Nothing here" and "we could not look" must never render the same.
+ */
+function LoadFailure({what, onRetry}: {what: string; onRetry: () => void}) {
+  return (
+    <div
+      role="alert"
+      style={{
+        background: COLORS.errorBg,
+        border: `1px solid ${COLORS.errorBorder}`,
+        borderRadius: `${RADIUS.lg}px`,
+        padding: SPACING.xl,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: SPACING.lg,
+        textAlign: 'center',
+        fontFamily: FONTS.body,
+        fontSize: `${FONT_SIZES.base}px`,
+        color: COLORS.text,
+      }}>
+      <span>We could not load {what}. Check your connection and try again.</span>
+      <CtaButton variant="neutral" onClick={onRetry}>
+        Try again
+      </CtaButton>
+    </div>
+  );
+}
+
+/** The list itself: one summary row per deck. */
+function DeckList({decks, hrefFor}: {decks: Deck[]; hrefFor?: (deck: Deck) => string}) {
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
+      {decks.map((deck) => (
+        <DeckSummaryCard key={deck.id} deck={deck} cardCount={countCards(deck)} to={hrefFor?.(deck)} />
+      ))}
+    </div>
+  );
+}
+
+// ── The two tabs ───────────────────────────────────────────────────────────
+
+interface CommunityTabProps {
+  list: DeckListState & {retry: () => void};
+  /** False while the card database is still resolving. */
+  cardsReady: boolean;
+  getCardById: CardLookup;
+}
+
+/**
+ * Public decks, filtered to the legal ones for display.
+ *
+ * The filter is client-side because legality needs per-card ink and identity from
+ * `allCards.json`, and a `decks` row stores only `{cardId, quantity}` — there is
+ * nothing in the database to filter on. It waits for the card database, since
+ * every deck reads as illegal while `getCardById` still resolves nothing.
+ */
+function CommunityTab({list, cardsReady, getCardById}: CommunityTabProps) {
+  if (list.failed) return <LoadFailure what="community decks" onRetry={list.retry} />;
+  if (list.decks === null || !cardsReady) return <LoadingNote label="Loading decks…" />;
+
+  const legal = list.decks.filter((deck) => calculateDeckStats(deck, getCardById).isLegal);
+  if (legal.length === 0) {
+    return (
+      <EmptyNote>
+        No decks have been shared yet. Build one with <strong>+ New deck</strong> above and set it to public when you
+        save, and it lands here for everyone.
+      </EmptyNote>
+    );
+  }
+  return <DeckList decks={legal} />;
+}
+
+/** The signed-in half of "Yours": whatever the account has saved. */
+function SavedDecks({list}: {list: DeckListState & {retry: () => void}}) {
+  if (list.failed) return <LoadFailure what="your decks" onRetry={list.retry} />;
+  if (list.decks === null) return <LoadingNote label="Loading your decks…" />;
+  if (list.decks.length === 0) {
+    return <EmptyNote>Nothing saved yet. Decks you save appear here, on every device you sign in on.</EmptyNote>;
+  }
+  return <DeckList decks={list.decks} />;
+}
+
+/**
+ * Signed in, this is the account's saved decks. Signed out, it is the one local
+ * draft — the builder works fully without an account, so a guest still has decks
+ * to list, they just live in this browser.
+ */
+function MyDecksTab({list, signedIn, draft}: {list: DeckListState & {retry: () => void}; signedIn: boolean; draft: Deck}) {
+  if (signedIn) return <SavedDecks list={list} />;
+  // An unsaved draft has no cloud row, so /decks/:id would find nothing; the
+  // builder holds it in context already and is the honest destination.
+  if (draft.cards.length > 0) return <DeckList decks={[draft]} hrefFor={() => '/decks/new'} />;
+  return (
+    <EmptyNote>
+      Decks you build are kept in this browser. Start one with <strong>+ New deck</strong> above; signing in later keeps
+      it and carries it to your other devices.
+    </EmptyNote>
+  );
+}
 
 /**
  * `/decks` — the community deck hub, with your own decks as a tab within it
@@ -14,19 +255,20 @@ import {COLORS, FONTS, FONT_SIZES, LAYOUT, SPACING} from '../shared/constants';
  * reading is what put Decks in the desktop nav beside Browse/Playstyles/Vote,
  * and it is why there is no `/decks/feed` (#454's route moved here).
  *
- * The community feed does not exist until Phase 4 (#454), so there is no tab
- * strip yet: a `TabList` carrying one tab is chrome that explains nothing. The
- * second tab arrives with the content behind it, and the feed becomes default.
- *
- * Deck lists themselves fill in with #473/#464.
+ * Community is the default tab for everyone, signed in or not: the page's identity
+ * is the shared feed, and "yours" is the detour.
  */
 export function DecksPage() {
   const {isMobile} = useResponsive();
   const {deck, isDirty, startNewDeck} = useDeck();
   const {user} = useSession();
+  const {getCardById, isLoading} = useCardDataContext();
   const navigate = useNavigate();
+  const [tab, setTab] = useState<DecksTab>('community');
   const [newDeckOpen, setNewDeckOpen] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
+  const community = useDeckList('public');
+  const own = useDeckList(user ? `own:${user.id}` : '');
 
   const openBuilder = (visibility: 'private' | 'public') => {
     startNewDeck(visibility);
@@ -83,6 +325,17 @@ export function DecksPage() {
         <CtaButton onClick={startNew} style={{display: 'inline-flex', marginTop: SPACING.lg}}>
           + New deck
         </CtaButton>
+
+        <div style={{marginTop: SPACING.xxl, borderRadius: `${RADIUS.lg}px`, overflow: 'hidden'}}>
+          <TabList tabs={TABS} active={tab} onChange={setTab} ariaLabel="Deck lists" />
+        </div>
+        <div style={{marginTop: SPACING.lg}}>
+          {tab === 'community' ? (
+            <CommunityTab list={community} cardsReady={!isLoading} getCardById={getCardById} />
+          ) : (
+            <MyDecksTab list={own} signedIn={Boolean(user)} draft={deck} />
+          )}
+        </div>
       </main>
 
       <NewDeckDialog

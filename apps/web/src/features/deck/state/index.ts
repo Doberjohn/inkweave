@@ -11,6 +11,7 @@ export {
 // Cloud persistence (#464).
 export {
   listDecks,
+  listPublicDecks,
   getDeck,
   createDeck,
   updateDeck,
