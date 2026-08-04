@@ -2,6 +2,7 @@ import {useEffect, useRef} from 'react';
 import {createPortal} from 'react-dom';
 import {COLORS, RADIUS, SHADOWS, Z_INDEX} from '../constants';
 import {useDialogFocus, useScrollLock, useTransitionPresence} from '../hooks';
+import {IconButton} from './IconButton';
 
 /** Size presets → panel maxWidth (#510 ruling: one gutter, one maxHeight). */
 const SIZE_MAX_WIDTH = {sm: 360, md: 440, lg: 960} as const;
@@ -49,6 +50,13 @@ interface DialogShellProps {
    * requires a written justification comment at the call site (overlays.md).
    */
   disableBackdropClose?: boolean;
+  /**
+   * The close × in the panel's top-right. ON by default: Escape needs a keyboard
+   * and backdrop-tap is undiscoverable, so without it a touch user has no visible
+   * way out. Opt out only when the content supplies its own dismissal (a lightbox
+   * whose whole surface closes), and say why at the call site.
+   */
+  showClose?: boolean;
   /** E2E contract hooks: existing specs target backdrops/panels by testid. */
   scrimTestId?: string;
   panelTestId?: string;
@@ -150,6 +158,32 @@ function panelChrome(size: keyof typeof SIZE_MAX_WIDTH, goldRing: boolean): Reac
   };
 }
 
+/**
+ * Sticky rather than absolute, in a ZERO-height row: the panel is the scroll
+ * container, so an absolutely positioned × scrolls away in a long dialog, and a
+ * normal-flow row would push every existing dialog's content down. Height 0 keeps
+ * the layout untouched while sticky keeps the × reachable at any scroll position.
+ */
+function CloseButton({onClose}: {onClose: () => void}) {
+  return (
+    <div
+      style={{
+        position: 'sticky',
+        top: 0,
+        height: 0,
+        zIndex: 1,
+        display: 'flex',
+        justifyContent: 'flex-end',
+      }}>
+      <IconButton aria-label="Close" size={36} onClick={onClose}>
+        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      </IconButton>
+    </div>
+  );
+}
+
 export function DialogShell({
   isOpen,
   onClose,
@@ -161,6 +195,7 @@ export function DialogShell({
   transition = 'scale',
   initialFocusRef,
   disableBackdropClose = false,
+  showClose = true,
   scrimTestId,
   panelTestId,
   panelStyle,
@@ -223,6 +258,7 @@ export function DialogShell({
           className={panelClass}
           onTransitionEnd={handleTransitionEnd}
           style={{...panelChrome(size, goldRing), ...panelStyle}}>
+          {showClose && <CloseButton onClose={onClose} />}
           {children}
         </div>
       </div>

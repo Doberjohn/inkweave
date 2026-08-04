@@ -430,6 +430,27 @@ export const TIER_COLORS = {
 /** Letter-spacing scale: `cap` for uppercase section labels, `eyebrow` for hero kickers. */
 export const LETTER_SPACING = {cap: '0.05em', eyebrow: '0.08em'} as const;
 
+/**
+ * Dialog copy, so weight is decided ONCE rather than per overlay (owner ruling
+ * 2026-08-02). Every dialog previously set its own inline font, which meant
+ * "make dialog text 600" was an eleven-file edit with a twelfth waiting to
+ * diverge. Spread these; override only where a dialog genuinely differs.
+ */
+export const DIALOG_TITLE: React.CSSProperties = {
+  fontFamily: FONTS.hero,
+  fontSize: FONT_SIZES.xxl,
+  color: COLORS.text,
+  margin: 0,
+};
+
+export const DIALOG_BODY: React.CSSProperties = {
+  fontFamily: FONTS.body,
+  fontSize: FONT_SIZES.base,
+  fontWeight: 600,
+  color: COLORS.textMuted,
+  margin: 0,
+};
+
 /** Uppercase section label (the 51-site idiom): md size, bold, tracked, muted. */
 export const CAP_LABEL: React.CSSProperties = {
   fontSize: FONT_SIZES.md,

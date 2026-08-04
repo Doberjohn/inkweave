@@ -27,6 +27,18 @@ mechanically: `aria-modal` in a file that imports neither `DialogShell` /
 
 ## Rulings (binding)
 
+- **Every centered dialog shows a close ×**, supplied by `DialogShell` itself
+  (`showClose`, default true). Escape needs a keyboard and backdrop-tap is
+  undiscoverable, so a touch user otherwise has no visible way out. It is STICKY
+  in a zero-height row: reachable at any scroll position without shifting the
+  content below it. Opt out only when the content already carries one in a
+  designed header (`FranchiseCardsModal`), with a comment saying so.
+  - Do NOT add a second dismissal named "Close" beside it. Two controls sharing
+    one accessible name read as two different actions; `ScoreMathModal`'s
+    full-width Close was removed for exactly this.
+- **Dialog copy uses `DIALOG_TITLE` / `DIALOG_BODY`** from `theme.ts`, not
+  per-dialog inline fonts. Weight is a house decision, and eleven inline copies
+  meant changing it was an eleven-file edit with a twelfth waiting to diverge.
 - **Backdrop click ALWAYS closes.** `disableBackdropClose` exists as an escape
   hatch but requires a written justification comment at the call site.
 - **No `backdrop-filter` on scrims, ever** (WebKit E2E repaint hang, #444/#445).

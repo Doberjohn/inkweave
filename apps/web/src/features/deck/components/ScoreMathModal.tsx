@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import type {CSSProperties} from 'react';
 import {COLORS, FONT_SIZES, FONTS, SPACING, TABULAR} from '../../../shared/constants';
-import {CtaButton, DialogShell} from '../../../shared/components';
+import {DialogShell} from '../../../shared/components';
 import type {HealthAnalyzer, ScoreContribution} from '../types';
 import {dimensionColor} from './dimensionColor';
 import {orderAnalyzers} from './HealthGrid';
@@ -197,12 +197,16 @@ export function ScoreMathModal({score, configVersion, analyzers, breakdown, onCl
         {penalty && <PenaltyRow penalty={penalty} />}
       </div>
 
+      {/*
+        The full-width "Close" that used to sit here is gone: DialogShell now
+        supplies the × for every dialog, and two controls both named "Close" read
+        as two different actions to a screen reader. The × is STICKY, so it stays
+        reachable at the bottom of a long breakdown, which is the only thing this
+        button did that Escape and the backdrop did not.
+      */}
       <p style={{fontSize: `${FONT_SIZES.xs}px`, color: COLORS.textDim, margin: `${SPACING.md}px 0 0`}}>
         Inkweave Engine Score · config {configVersion} · transparent weighted formula
       </p>
-      <CtaButton variant="neutral" onClick={onClose} style={{marginTop: SPACING.md, width: '100%'}}>
-        Close
-      </CtaButton>
     </DialogShell>
   );
 }

@@ -31,6 +31,10 @@ export function FranchiseCardsModal({source, cards, onClose, onCardClick}: Franc
       ariaLabel={`${source.label} cards`}
       size="lg"
       layer="underModal"
+      // Opts out of the shell's × because this modal has a designed header row that
+      // already carries one beside the card count; the shell's sticky × would land
+      // on top of that count.
+      showClose={false}
       panelStyle={{
         display: 'flex',
         flexDirection: 'column',
