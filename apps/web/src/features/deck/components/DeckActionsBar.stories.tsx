@@ -14,7 +14,7 @@ const meta: Meta<typeof DeckActionsBar> = {
     ),
   ],
   tags: ['autodocs'],
-  args: {onClear: fn(), onImport: fn(), onSave: fn(), onExport: fn(), isDirty: false},
+  args: {onClear: fn(), onImport: fn(), onSave: fn(), onExport: fn(), saveState: 'idle', isDirty: true},
 };
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -29,6 +29,16 @@ export const WithCards: Story = {args: {cardCount: 56, isLegal: false}};
 // An empty deck has nothing to clear or export; only Import and Save stay live.
 export const EmptyDeck: Story = {args: {cardCount: 0, isLegal: false}};
 
-// The state the bar is in for most of a build: Save reads "Save changes", so the
-// unsaved cue survives a screen reader and a grayscale monitor alike.
-export const UnsavedChanges: Story = {args: {cardCount: 56, isLegal: false, isDirty: true}};
+// Nothing to save: the cloud copy already matches, so Save dims rather than
+// vanishing. The bar keeping its shape is the point — Clear beside it already
+// teaches that a dim button means "no work to do here".
+export const NothingToSave: Story = {args: {cardCount: 60, isLegal: true, isDirty: false}};
+
+// Mid-write: Save goes inert and says why, so the pause is never mistaken for a
+// dead button.
+export const Saving: Story = {args: {cardCount: 56, isLegal: false, saveState: 'saving'}};
+
+// The only surface a failed save has, now that the confirm dialog is gone. The
+// full reason rides the tooltip and aria-label; the label alone must still tell
+// the user the action did not happen.
+export const SaveFailed: Story = {args: {cardCount: 56, isLegal: false, saveState: 'error'}};

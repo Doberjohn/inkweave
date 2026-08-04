@@ -6,7 +6,7 @@ import type {Deck} from '../features/deck/types';
 import {DeckPanel, DeckPoolGrid, type DeckRow} from '../features/deck/components';
 import {DeckActionsBar} from '../features/deck/components/DeckActionsBar';
 import {ImportDeckDialog} from '../features/deck/components/ImportDeckDialog';
-import {SaveDeckDialog} from '../features/deck/components/SaveDeckDialog';
+import {useDeckSave} from '../features/deck/hooks/useDeckSave';
 import {duelsInkUrl, formatDecklist} from '../features/deck/deckTransfer';
 import {useDeckPoolFilters, applyPoolFilters} from '../features/deck/hooks/useDeckPoolFilters';
 import {useRoutedDeck} from '../features/deck/hooks/useRoutedDeck';
@@ -92,28 +92,6 @@ function buildToolbarProps(pool: ReturnType<typeof useDeckPoolFilters>, onFilter
   } as const;
 }
 
-/**
- * Save, plus the sign-in it can escalate into. Extracted from the page rather than
- * inlined for two reasons: it keeps `SignInDialog` structurally single (one mounted
- * copy, so one OAuth redirect has one open-state, the /decks precedent), and it keeps
- * the sign-in open-state out of a page that already sits at its complexity ceiling.
- */
-function SaveFlow({isOpen, onClose}: {isOpen: boolean; onClose: () => void}) {
-  const [signInOpen, setSignInOpen] = useState(false);
-  return (
-    <>
-      <SaveDeckDialog
-        isOpen={isOpen}
-        onClose={onClose}
-        onSignIn={() => {
-          onClose();
-          setSignInOpen(true);
-        }}
-      />
-      <SignInDialog isOpen={signInOpen} onClose={() => setSignInOpen(false)} />
-    </>
-  );
-}
 
 export function DeckBuilderPage() {
   const {isMobile} = useResponsive();
@@ -124,7 +102,8 @@ export function DeckBuilderPage() {
   const {id} = useParams();
   const [showFilters, setShowFilters] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [showSave, setShowSave] = useState(false);
+  const [showSignIn, setShowSignIn] = useState(false);
+  const {saveState, save, canSave} = useDeckSave();
   // /decks/:id/edit opens a SAVED deck; /decks/new has no id and loads nothing.
   const loadError = useRoutedDeck(id, deck.id, loadDeck);
   // The advisor UI is pulled while its design is rethought (no numeric surface, no
@@ -216,9 +195,12 @@ export function DeckBuilderPage() {
               cardCount={stats.totalCards}
               isLegal={stats.isLegal}
               isDirty={isDirty}
+              saveState={saveState}
               onClear={clearDeck}
               onImport={() => setShowImport(true)}
-              onSave={() => setShowSave(true)}
+              // Save just saves (owner ruling 2026-08-02); a guest has nothing to
+              // save TO, so for them the same press offers the account instead.
+              onSave={() => (canSave ? void save() : setShowSignIn(true))}
               onExport={exportToDuelsInk}
             />
           }
@@ -233,7 +215,7 @@ export function DeckBuilderPage() {
         currentCardCount={stats.totalCards}
       />
 
-      <SaveFlow isOpen={showSave} onClose={() => setShowSave(false)} />
+      <SignInDialog isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
 
       <FilterDialog
         isOpen={showFilters}

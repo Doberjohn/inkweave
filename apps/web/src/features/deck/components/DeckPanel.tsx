@@ -10,8 +10,6 @@ import {DeckProfile} from './DeckProfile';
 import {TabList} from '../../../shared/components/TabList';
 import {blackRgba, COLORS, EASING, FONT_SIZES, FONTS, INK_COLORS, LETTER_SPACING, RADIUS, SPACING, Z_INDEX} from '../../../shared/constants';
 
-/** Competitive Core deck size — the count badge + progress bar target. */
-const DECK_TARGET = 60;
 
 /** Fixed height (px) of the stats row. Fixed rather than content-driven so switching
  *  tabs never reflows the card list under it, and the curve chart has room to breathe. */
@@ -85,28 +83,12 @@ function rowGroup(card: LorcanaCard): RowGroup {
   return card.isSong ? 'Song' : card.type;
 }
 
-/**
- * The deck's card count, colored by legality — the one figure worth a permanent
- * slot in the header (it is checked after every add). The rest of the old info
- * strip (ink symbols, inkable/uninkable) moved into the Profile tab.
- */
-function DeckCardCount({stats}: {stats: DeckStats}) {
-  const reached = stats.totalCards >= DECK_TARGET;
-  const countColor = stats.isLegal ? COLORS.primary : reached ? COLORS.error : COLORS.text;
-  return (
-    <span
-      style={{
-        flexShrink: 0,
-        whiteSpace: 'nowrap',
-        color: countColor,
-        fontFamily: FONTS.body,
-        fontSize: `${FONT_SIZES.lg}px`,
-        fontWeight: 700,
-      }}>
-      {stats.totalCards} <span style={{color: COLORS.textMuted, fontWeight: 500}}>cards</span>
-    </span>
-  );
-}
+// The header card count was removed by owner request (2026-08-02): the name row
+// reads cleaner without it. Deck size is now carried by LegalityErrors instead,
+// which no longer filters the "(minimum 60)" shortfall — see ruleViolations. That
+// swap is deliberate, not incidental: with the badge gone and the shortfall still
+// filtered, a 44-card deck would have had NO size feedback anywhere except the
+// disabled Duels button's tooltip.
 
 /**
  * Deck name field — pencil-to-edit (#472). Shows the deck name as a heading with a
@@ -157,7 +139,9 @@ function DeckNameInput({
         padding: '2px 8px',
         color: COLORS.text,
         fontFamily: FONTS.hero,
-        fontSize: `${FONT_SIZES.xxl}px`,
+        // Must match DeckNameButton exactly, or the name jumps size the moment
+        // you click to edit it.
+        fontSize: `${FONT_SIZES.xl}px`,
       }}
     />
   );
@@ -194,7 +178,8 @@ function DeckNameButton({name, justSaved, onEdit}: {name: string; justSaved: boo
           whiteSpace: 'nowrap',
           color: name ? COLORS.text : COLORS.textDim,
           fontFamily: FONTS.hero,
-          fontSize: `${FONT_SIZES.xxl}px`,
+          // Kept in step with DeckNameInput above; the two must not diverge.
+          fontSize: `${FONT_SIZES.xl}px`,
         }}>
         {name || 'Untitled deck'}
       </span>
@@ -256,13 +241,21 @@ function DeckNameField({name, onRename}: {name: string; onRename: (name: string)
 }
 
 /**
- * Real rule violations only. The header count badge already tracks deck size
- * (e.g. 44/60), so the "still under 60 cards" shortfall (`(minimum 60)`) is
- * filtered out — otherwise the strip would nag for the whole build. What's left
- * is the genuine problems the badge's color can't explain: too many copies / inks.
+ * Legality problems, plus the "still under 60" shortfall once a build is actually
+ * under way.
+ *
+ * The shortfall used to be filtered unconditionally, because the header count badge
+ * carried deck size. That badge was removed on 2026-08-02, so dropping the filter
+ * entirely would have left a 44-card deck with no size feedback anywhere except a
+ * tooltip on a disabled button nobody hovers.
+ *
+ * But restoring it unconditionally just moved the problem: an EMPTY deck then opens
+ * with "Deck has 0 cards (minimum 60)", which is the nagging the original filter
+ * existed to prevent, and it tells someone who just opened the builder nothing they
+ * do not already know. So the shortfall appears once the first card is in.
  */
-function ruleViolations(errors: string[]): string[] {
-  return errors.filter((e) => !e.includes('(minimum '));
+function ruleViolations(errors: string[], totalCards: number): string[] {
+  return totalCards === 0 ? errors.filter((e) => !e.includes('(minimum ')) : errors;
 }
 
 /**
@@ -272,7 +265,7 @@ function ruleViolations(errors: string[]): string[] {
  * the header count badge, which already conveys size + legal state.
  */
 function LegalityErrors({stats}: {stats: DeckStats}) {
-  const problems = ruleViolations(stats.legalityErrors);
+  const problems = ruleViolations(stats.legalityErrors, stats.totalCards);
   if (problems.length === 0) return null;
 
   return (
@@ -388,7 +381,6 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
           flexShrink: 0,
         }}>
         <DeckNameField name={name} onRename={onRename} />
-        <DeckCardCount stats={stats} />
         {actions}
       </div>
 
