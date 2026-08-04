@@ -15,12 +15,19 @@ import type {Deck} from '../types';
 export const DRAFT_KEY = 'inkweave:deck:draft';
 
 /**
- * Whether the working draft carries edits not yet pushed to the cloud. Separate
- * from DRAFT_KEY deliberately: this is client-only state, and folding it into
- * the Deck shape would force a DRAFT_SCHEMA_VERSION bump (discarding every
- * stored draft) and leak an edit flag into the decks.cards jsonb column.
+ * Fingerprint of the draft AS LAST SAVED (or loaded) from the cloud. Absent means
+ * this deck has never reached an account.
+ *
+ * Unsaved-ness is DERIVED by comparing this against the live draft, rather than
+ * stored as a boolean, so it cannot drift: a flag can be left raised after an edit
+ * is undone, or forgotten by a new mutation, and it now gates a destructive
+ * confirm where both failures cost real work.
+ *
+ * Separate from DRAFT_KEY deliberately: client-only state, and folding it into the
+ * Deck shape would force a DRAFT_SCHEMA_VERSION bump (discarding every stored
+ * draft) and leak bookkeeping into the decks.cards jsonb column.
  */
-export const DIRTY_KEY = 'inkweave:deck:dirty';
+export const SAVED_KEY = 'inkweave:deck:saved';
 
 const MIGRATED_PREFIX = 'inkweave:deck:migrated';
 
@@ -96,16 +103,18 @@ export function writeDraft(deck: Deck): void {
 /** Drop the working draft entirely (e.g. after it migrates to the cloud). */
 export function clearDraft(): void {
   safeRemove(DRAFT_KEY);
-  safeRemove(DIRTY_KEY);
+  safeRemove(SAVED_KEY);
 }
 
-/** Unsaved-changes flag. Anything other than a stored `true` reads as clean. */
-export function readDirty(): boolean {
-  return safeRead(DIRTY_KEY) === 'true';
+/** The saved fingerprint, or null when this deck has never reached an account. */
+export function readSavedFingerprint(): string | null {
+  return safeRead(SAVED_KEY);
 }
 
-export function writeDirty(isDirty: boolean): void {
-  safeWrite(DIRTY_KEY, String(isDirty));
+/** Null clears the key, so "never saved" round-trips instead of sticking. */
+export function writeSavedFingerprint(fingerprint: string | null): void {
+  if (fingerprint === null) return safeRemove(SAVED_KEY);
+  safeWrite(SAVED_KEY, fingerprint);
 }
 
 // ── First-sign-in draft->cloud migration guard ──

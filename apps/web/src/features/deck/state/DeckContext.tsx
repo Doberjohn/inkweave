@@ -16,15 +16,17 @@ import {
   clearDraft,
   hasMigratedDraft,
   markDraftMigrated,
-  readDirty,
   readDraft,
-  writeDirty,
+  readSavedFingerprint,
   writeDraft,
+  writeSavedFingerprint,
 } from './deckStorage';
 import {upsertDeck} from './deckRepository';
 import {
   addCardToDeck,
   clearDeckCards,
+  deckFingerprint,
+  isDeckUnsaved,
   replaceDeckCards,
   deriveInks,
   inksEqual,
@@ -136,7 +138,10 @@ function useFirstSignInMigration(uid: string | null, isLoading: boolean, latestD
     void upsertDeck({...snapshot, ownerId: uid}, uid).then(({error}) => {
       if (error) return;
       markDraftMigrated(uid);
-      writeDirty(false); // the draft IS in the cloud now; do not keep nagging
+      // The draft IS in the cloud now, so record what landed there. Written to
+      // storage rather than state because this hook has no setter, and the
+      // provider re-seeds from storage on the next mount.
+      writeSavedFingerprint(deckFingerprint(snapshot));
     });
   }, [uid, isLoading, latestDeck]);
 
@@ -147,8 +152,9 @@ export function DeckProvider({children}: {children: ReactNode}) {
   const {getCardById, isLoading} = useCardDataContext();
   const {user} = useSession();
   const [deck, setDeck] = useState<Deck>(loadOrCreateDraft);
-  // Seeded from storage so a reload doesn't forget that the draft owes the cloud a save.
-  const [isDirty, setIsDirty] = useState<boolean>(readDirty);
+  // The draft AS LAST SAVED, seeded from storage so a reload does not forget what the
+  // cloud already has. Null means this deck has never reached an account.
+  const [savedFingerprint, setSavedFingerprint] = useState<string | null>(readSavedFingerprint);
 
   // Inks are DERIVED in render, never stored as authoritative state — so they
   // self-correct once the async card DB resolves (getCardById changes identity) and
@@ -201,52 +207,54 @@ export function DeckProvider({children}: {children: ReactNode}) {
     // satisfy exhaustive-deps, which cannot prove stability across a hook return.
   }, [blockedAfterSignOutRef]);
 
-  // Mirror the flag to storage so it survives a reload. A write in an effect, NOT a
-  // setState — the latter is banned here under the React Compiler.
+  // Mirror the snapshot to storage so it survives a reload. A write in an effect,
+  // NOT a setState — the latter is banned here under the React Compiler. Null
+  // clears the key, so "never saved" round-trips rather than sticking.
   useEffect(() => {
-    writeDirty(isDirty);
-  }, [isDirty]);
+    writeSavedFingerprint(savedFingerprint);
+  }, [savedFingerprint]);
+
+  // DERIVED, never stored. See isDeckUnsaved for what counts as a difference.
+  const isDirty = isDeckUnsaved(currentDeck, savedFingerprint);
 
 
-  // Every mutation marks the draft dirty. Wrapped once here rather than at each
-  // call site so a future mutation cannot silently skip it.
-  const edit = (next: (d: Deck) => Deck) => {
-    setDeck(next);
-    setIsDirty(true);
-  };
+  // Mutations no longer touch a flag; dirtiness is derived above. That is the whole
+  // point of the snapshot: nothing here CAN forget to mark the deck unsaved.
+  const addCard = (cardId: string) => setDeck((d) => addCardToDeck(d, cardId, getCardById));
 
-  const addCard = (cardId: string) => edit((d) => addCardToDeck(d, cardId, getCardById));
-
-  const removeCard = (cardId: string) => edit((d) => removeCardFromDeck(d, cardId, getCardById));
+  const removeCard = (cardId: string) => setDeck((d) => removeCardFromDeck(d, cardId, getCardById));
 
   const setQuantity = (cardId: string, quantity: number) =>
-    edit((d) => setCardQuantity(d, cardId, quantity, getCardById));
+    setDeck((d) => setCardQuantity(d, cardId, quantity, getCardById));
 
-  const markCore = (cardId: string, isCore: boolean) => edit((d) => markCardCore(d, cardId, isCore));
+  const markCore = (cardId: string, isCore: boolean) => setDeck((d) => markCardCore(d, cardId, isCore));
 
-  const setGameplan = (gameplan: Archetype | undefined) => edit((d) => setDeckGameplan(d, gameplan));
+  const setGameplan = (gameplan: Archetype | undefined) => setDeck((d) => setDeckGameplan(d, gameplan));
 
-  const renameDeck = (name: string) => edit((d) => renameDeckName(d, name));
+  const renameDeck = (name: string) => setDeck((d) => renameDeckName(d, name));
 
-  const clearDeck = () => edit((d) => clearDeckCards(d));
-  const replaceCards = (cards: DeckCard[]) => edit((d) => replaceDeckCards(d, cards, getCardById));
+  const clearDeck = () => setDeck((d) => clearDeckCards(d));
+  const replaceCards = (cards: DeckCard[]) => setDeck((d) => replaceDeckCards(d, cards, getCardById));
 
-  // The three lifecycle ops all land a deck that matches the cloud, so each clears
-  // the flag: `markSaved` binds the row the upsert just wrote, `loadDeck` adopts a
-  // fetched one, and `startNewDeck` starts from nothing worth saving.
+  // The three lifecycle ops all land a deck that matches the cloud, so each adopts
+  // the incoming deck AS the snapshot: `markSaved` takes the row the upsert just
+  // wrote, `loadDeck` a fetched one, and `startNewDeck` an empty deck that has
+  // nothing worth saving yet.
   const markSaved = (saved: Deck) => {
     setDeck(saved);
-    setIsDirty(false);
+    setSavedFingerprint(deckFingerprint(saved));
   };
 
   const loadDeck = (incoming: Deck) => {
     setDeck(incoming);
-    setIsDirty(false);
+    setSavedFingerprint(deckFingerprint(incoming));
   };
 
   const startNewDeck = (visibility: 'private' | 'public') => {
+    // null, not a fingerprint: a brand-new deck has never reached an account, so
+    // it becomes unsaved the moment it holds a card.
     setDeck(createEmptyDraft(visibility === 'public'));
-    setIsDirty(false);
+    setSavedFingerprint(null);
   };
 
   const value: DeckContextValue = {

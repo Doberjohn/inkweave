@@ -4,8 +4,10 @@ import {createCard} from '../../../shared/test-utils';
 import {
   addCardToDeck,
   clearDeckCards,
+  deckFingerprint,
   deriveInks,
   inksEqual,
+  isDeckUnsaved,
   markCardCore,
   removeCardFromDeck,
   renameDeckName,
@@ -117,5 +119,63 @@ describe('setDeckGameplan / renameDeckName / clearDeckCards', () => {
     expect(cleared.id).toBe('keep');
     expect(cleared.cards).toEqual([]);
     expect(cleared.inks).toEqual([]);
+  });
+});
+
+describe('deckFingerprint', () => {
+  // The whole reason dirtiness is derived: a hand-set flag stays raised here, so
+  // the user is warned about discarding changes they already undid.
+  it('is unchanged when an edit is reverted', () => {
+    const start = deck();
+    const added = addCardToDeck(start, 'amber', resolve);
+    const reverted = removeCardFromDeck(added, 'amber', resolve);
+    expect(deckFingerprint(reverted)).toBe(deckFingerprint(start));
+  });
+
+  it('ignores card ORDER, which is an artifact of edit history', () => {
+    const a = deck({cards: [{cardId: 'amber', quantity: 2}, {cardId: 'steel', quantity: 1}]});
+    const b = deck({cards: [{cardId: 'steel', quantity: 1}, {cardId: 'amber', quantity: 2}]});
+    expect(deckFingerprint(a)).toBe(deckFingerprint(b));
+  });
+
+  // updatedAt moves on every keystroke; including it would make every deck
+  // permanently unsaved. inks are derived from cards, so they add nothing.
+  it('ignores updatedAt and derived inks', () => {
+    const a = deck({updatedAt: 1, inks: []});
+    const b = deck({updatedAt: 999_999, inks: ['Amber']});
+    expect(deckFingerprint(a)).toBe(deckFingerprint(b));
+  });
+
+  it('changes on quantity, name, core flag, gameplan and visibility', () => {
+    const base = deck({cards: [{cardId: 'amber', quantity: 2}]});
+    const fp = deckFingerprint(base);
+    expect(deckFingerprint({...base, cards: [{cardId: 'amber', quantity: 3}]})).not.toBe(fp);
+    expect(deckFingerprint({...base, cards: [{cardId: 'amber', quantity: 2, isCore: true}]})).not.toBe(fp);
+    expect(deckFingerprint({...base, name: 'Renamed'})).not.toBe(fp);
+    expect(deckFingerprint({...base, gameplan: 'ramp'})).not.toBe(fp);
+    expect(deckFingerprint({...base, isPublic: true})).not.toBe(fp);
+  });
+});
+
+describe('isDeckUnsaved', () => {
+  it('treats a never-saved EMPTY deck as clean, so Save stays dim on a fresh deck', () => {
+    expect(isDeckUnsaved(deck(), null)).toBe(false);
+  });
+
+  it('treats a never-saved deck WITH cards as unsaved', () => {
+    expect(isDeckUnsaved(deck({cards: [{cardId: 'amber', quantity: 1}]}), null)).toBe(true);
+  });
+
+  it('is clean when the deck still matches what the cloud took', () => {
+    const d = deck({cards: [{cardId: 'amber', quantity: 2}]});
+    expect(isDeckUnsaved(d, deckFingerprint(d))).toBe(false);
+  });
+
+  it('is unsaved once an edit lands, and clean again when it is undone', () => {
+    const saved = deck({cards: [{cardId: 'amber', quantity: 2}]});
+    const fp = deckFingerprint(saved);
+    const edited = addCardToDeck(saved, 'steel', resolve);
+    expect(isDeckUnsaved(edited, fp)).toBe(true);
+    expect(isDeckUnsaved(removeCardFromDeck(edited, 'steel', resolve), fp)).toBe(false);
   });
 });

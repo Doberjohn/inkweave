@@ -1,12 +1,11 @@
 import {describe, it, expect, beforeEach} from 'vitest';
 import {
   DRAFT_KEY,
-  DIRTY_KEY,
   readDraft,
   writeDraft,
   clearDraft,
-  readDirty,
-  writeDirty,
+  readSavedFingerprint,
+  writeSavedFingerprint,
   hasMigratedDraft,
   markDraftMigrated,
 } from './deckStorage';
@@ -66,31 +65,28 @@ describe('deckStorage', () => {
     expect(hasMigratedDraft('uid-b')).toBe(false); // other users unaffected
   });
 
-  describe('dirty flag', () => {
+  describe('saved fingerprint', () => {
     it('round-trips through localStorage', () => {
-      expect(readDirty()).toBe(false);
-      writeDirty(true);
-      expect(readDirty()).toBe(true);
-      writeDirty(false);
-      expect(readDirty()).toBe(false);
+      expect(readSavedFingerprint()).toBeNull();
+      writeSavedFingerprint('abc');
+      expect(readSavedFingerprint()).toBe('abc');
     });
 
-    it('reads false when the key holds junk', () => {
-      localStorage.setItem(DIRTY_KEY, 'not-a-bool');
-      expect(readDirty()).toBe(false);
+    it('reads null when nothing was ever saved, which is what makes a deck unsaved', () => {
+      expect(readSavedFingerprint()).toBeNull();
     });
 
-    it('clearDraft drops the flag too, so a fresh draft never starts dirty', () => {
-      writeDirty(true);
+    it('clearDraft drops it too, so a fresh draft is never measured against a stale save', () => {
+      writeSavedFingerprint('abc');
       clearDraft();
-      expect(readDirty()).toBe(false);
+      expect(readSavedFingerprint()).toBeNull();
     });
 
-    it('a discarded corrupt draft also drops the flag', () => {
+    it('a discarded corrupt draft also drops it', () => {
       localStorage.setItem(DRAFT_KEY, '{not json');
-      writeDirty(true);
+      writeSavedFingerprint('abc');
       expect(readDraft()).toBeNull();
-      expect(readDirty()).toBe(false);
+      expect(readSavedFingerprint()).toBeNull();
     });
   });
 });

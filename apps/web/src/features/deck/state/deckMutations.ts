@@ -11,6 +11,49 @@ import {ALL_INKS} from '../../../shared/constants';
 type CardResolver = (id: string) => LorcanaCard | undefined;
 
 /**
+ * A stable string standing for "what a save would write". Comparing two of these
+ * answers whether the deck differs from its saved copy, which is how `isDirty` is
+ * DERIVED rather than set by hand. Deriving matters because the flag now gates a
+ * destructive confirm: a hand-set flag that a future mutation forgets to raise
+ * would discard work silently, and one that stays raised after an edit is undone
+ * trains people to click through the warning.
+ *
+ * Only the fields a save actually persists are included. Deliberately excluded:
+ * `updatedAt` (changes on every keystroke, so it would make everything dirty
+ * forever), `inks` (derived in render from `cards`), and `id` / `ownerId` /
+ * `createdAt` / `schemaVersion` (identity, not content).
+ *
+ * Cards are sorted by id so that removing a card and adding it back reads as
+ * unchanged; array order is an artifact of edit history, not of the deck.
+ */
+/**
+ * Whether the deck differs from what the cloud last took.
+ *
+ * A deck that has never been saved (`savedFingerprint === null`) is unsaved only
+ * once it holds a card: an empty new deck has nothing worth writing, and Save
+ * should not invite anyone to create an empty row.
+ *
+ * Lives here rather than inline in the provider so it is unit-testable and so
+ * DeckProvider stays under its complexity ceiling.
+ */
+export function isDeckUnsaved(deck: Deck, savedFingerprint: string | null): boolean {
+  if (savedFingerprint === null) return deck.cards.length > 0;
+  return deckFingerprint(deck) !== savedFingerprint;
+}
+
+export function deckFingerprint(deck: Deck): string {
+  const cards = [...deck.cards]
+    .sort((a, b) => a.cardId.localeCompare(b.cardId))
+    .map((c) => `${c.cardId}:${c.quantity}:${c.isCore ? 1 : 0}`);
+  return JSON.stringify({
+    name: deck.name,
+    gameplan: deck.gameplan ?? null,
+    isPublic: deck.isPublic ?? false,
+    cards,
+  });
+}
+
+/**
  * Derive the deck's ink set from its cards. A dual-ink card contributes BOTH of
  * its inks (the engine's `getInks` returns 1 or 2). Ids that no longer resolve
  * (rotated out of Core) are skipped. The result must be DEDUPED and returned in
