@@ -610,7 +610,17 @@ export function NewDeckDialog({isOpen, onClose, onConfirm, showReplaceWarning, c
 }
 ```
 
-Define every `*_STYLE` const at module scope from design tokens.
+**Styling convention:** this feature's dialogs use **inline styles built from
+tokens**, not module-scope `*_STYLE` consts. Follow `ImportDeckDialog.tsx`, the
+sibling in the same folder: it imports `{CtaButton, DialogShell}` from
+`'../../../shared/components'` and `{COLORS, FONTS, FONT_SIZES, RADIUS, SPACING}`
+from `'../../../shared/constants'`, then writes styles inline at each element. It
+also splits multi-state dialogs into small sub-step components (`PasteStep`), which
+is the pattern to copy if this one grows.
+
+`DialogShell` requires an `ariaLabel` (axe enforces the accessible name) and takes
+`size`, `initialFocusRef`, and `scrimTestId`. Give every form control its own
+`aria-label`, as the textarea in `ImportDeckDialog` does.
 
 - [ ] **Step 2: Add the story**
 
