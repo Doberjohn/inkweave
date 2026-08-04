@@ -30,14 +30,14 @@ test.describe('Desktop nav', () => {
     }
   });
 
-  test('mobile can reach sign-in from /decks', async ({page}, testInfo) => {
-    // The regression guard for 7dfb4dd3, which moved auth into CompactHeader and
-    // so deleted mobile's only sign-in path. The header test above cannot catch
-    // that, because it skips mobile precisely where the hole was.
-    if (!testInfo.project.name.startsWith('mobile-')) test.skip();
-
-    await page.goto('/decks');
-    await expect(page.getByTestId('compact-header')).toHaveCount(0);
-    await expect(page.getByRole('button', {name: 'Sign in', exact: true})).toBeVisible();
-  });
+  // REMOVED 2026-08-02, and worth knowing why rather than wondering later. This
+  // guarded the /decks account panel, which was mobile's only sign-in path after
+  // 7dfb4dd3 moved auth into the desktop-only header. The owner removed that panel
+  // deliberately, so the behaviour it guarded no longer exists and the test would
+  // assert a feature that was cut, not a regression.
+  //
+  // The hole it covered is REAL and now open again: on mobile there is no way to
+  // sign in or out anywhere in the app. Restore a guard here the moment mobile auth
+  // finds a home, because the desktop test above skips mobile precisely where the
+  // gap is.
 });

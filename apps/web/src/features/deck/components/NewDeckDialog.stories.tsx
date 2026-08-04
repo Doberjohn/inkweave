@@ -12,19 +12,29 @@ const meta: Meta<typeof NewDeckDialog> = {
     onConfirm: fn(),
     onSignIn: fn(),
     showReplaceWarning: false,
+    canKeepBoth: false,
     canPublish: true,
   },
 };
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Signed in: both visibility options live, and there is a cloud deck to fall back on. */
+/** Signed in with nothing to lose: the visibility choice is the whole dialog. */
 export const Default: Story = {};
 
-/** A guest with work in progress — starting over destroys it, so the offer to sign in rides along. */
-export const WithReplaceWarning: Story = {args: {showReplaceWarning: true, canPublish: false}};
+/**
+ * A guest with work in progress. No visibility choice, since they cannot save and so
+ * cannot publish, and the warning carries the offer that would have prevented the
+ * loss. This is the ONLY shape a guest ever sees: with nothing to lose there is
+ * nothing to say, so DecksPage skips the dialog and opens the builder directly.
+ */
+export const GuestAboutToLoseWork: Story = {
+  args: {showReplaceWarning: true, canKeepBoth: true, canPublish: false},
+};
 
-/** Public stays visible while signed out so the missing capability explains itself. */
-export const GuestCannotPublish: Story = {args: {canPublish: false}};
+/** Signed in with unsaved work: warned, but not offered an account they already have. */
+export const SignedInAboutToLoseWork: Story = {
+  args: {showReplaceWarning: true, canKeepBoth: false, canPublish: true},
+};
 
 export const Closed: Story = {args: {isOpen: false}};

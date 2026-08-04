@@ -2,7 +2,8 @@ import {useState} from 'react';
 import {CtaButton, DialogShell, LinkButton} from '../../../shared/components';
 import {
   COLORS,
-  DISABLED_STYLE,
+  DIALOG_BODY,
+  DIALOG_TITLE,
   FONTS,
   FONT_SIZES,
   GOLD_GLOW,
@@ -16,9 +17,11 @@ interface NewDeckDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (visibility: DeckVisibility) => void;
-  /** Guests get one local deck, so starting another destroys the current one. */
+  /** The working draft has unsaved work that starting fresh would discard. */
   showReplaceWarning: boolean;
-  /** Publishing needs an account. */
+  /** Guests only: an account is what would have made the loss avoidable. */
+  canKeepBoth: boolean;
+  /** Publishing needs an account, so a guest is not asked about visibility. */
   canPublish: boolean;
   onSignIn: () => void;
 }
@@ -29,15 +32,14 @@ interface NewDeckDialogProps {
  */
 const VISIBILITY_GROUP = 'new-deck-visibility';
 
-/** One string, read out with the disabled Public option and shown beneath the group. */
-const PUBLISH_NEEDS_ACCOUNT = 'Sign in to publish.';
-
 /**
- * The warning is also the offer. A guest is about to lose work precisely because
- * there is no account behind it, so the remedy belongs at the moment of loss, not
- * in a banner they already scrolled past.
+ * For a guest the warning is also the OFFER: they are about to lose work precisely
+ * because there is no account behind it, so the remedy belongs at the moment of
+ * loss rather than in a banner they already scrolled past. A signed-in user gets
+ * the warning without the offer, because they already have the account and simply
+ * needed to press Save.
  */
-function ReplaceWarning({onSignIn}: {onSignIn: () => void}) {
+function ReplaceWarning({canKeepBoth, onSignIn}: {canKeepBoth: boolean; onSignIn: () => void}) {
   return (
     <div
       style={{
@@ -47,12 +49,14 @@ function ReplaceWarning({onSignIn}: {onSignIn: () => void}) {
         border: `1px solid ${COLORS.surfaceBorder}`,
         borderRadius: RADIUS.lg,
       }}>
-      <p style={{margin: 0, color: COLORS.textMuted, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.base}px`}}>
-        Starting a new deck replaces your current one, which isn't saved to an account yet.
+      <p style={DIALOG_BODY}>
+        You already have started building a deck. Starting a new one replaces your previous.
       </p>
-      <LinkButton onClick={onSignIn} underlineOnHover style={{marginTop: SPACING.xs}}>
-        Sign in to keep both
-      </LinkButton>
+      {canKeepBoth && (
+        <LinkButton onClick={onSignIn} underlineOnHover style={{marginTop: SPACING.xs}}>
+          Sign in to keep both
+        </LinkButton>
+      )}
     </div>
   );
 }
@@ -61,14 +65,7 @@ interface VisibilityOptionProps {
   value: DeckVisibility;
   title: string;
   description: string;
-  /**
-   * Why the option cannot be picked. Announced with the option, but rendered by the
-   * PARENT outside the row: DISABLED_STYLE dims the whole label to 0.4, which would
-   * bury the one line the user actually needs to read.
-   */
-  disabledReason?: string;
   selected: boolean;
-  disabled?: boolean;
   onSelect: (value: DeckVisibility) => void;
 }
 
@@ -77,7 +74,7 @@ interface VisibilityOptionProps {
  * behavior, the surrounding row carries the selection styling. `aria-label` repeats
  * the whole row so the description is announced with the choice rather than skipped.
  */
-function VisibilityOption({value, title, description, disabledReason, selected, disabled, onSelect}: VisibilityOptionProps) {
+function VisibilityOption({value, title, description, selected, onSelect}: VisibilityOptionProps) {
   return (
     <label
       style={{
@@ -89,15 +86,13 @@ function VisibilityOption({value, title, description, disabledReason, selected, 
         border: `1px solid ${selected ? GOLD_GLOW.activeBorder : COLORS.surfaceBorder}`,
         borderRadius: RADIUS.lg,
         cursor: 'pointer',
-        ...(disabled ? DISABLED_STYLE : {}),
       }}>
       <input
         type="radio"
         name={VISIBILITY_GROUP}
         value={value}
         checked={selected}
-        disabled={disabled}
-        aria-label={disabledReason ? `${title}. ${description} ${disabledReason}` : `${title}. ${description}`}
+        aria-label={`${title}. ${description}`}
         onChange={() => onSelect(value)}
         style={{marginTop: SPACING.xxs, accentColor: COLORS.primary}}
       />
@@ -137,15 +132,20 @@ function VisibilityOption({value, title, description, disabledReason, selected, 
  *    one. That is worth a warning, and the warning is the natural place to offer the
  *    account that would make the loss unnecessary.
  *
- * Public stays VISIBLE but disabled for a guest rather than being hidden: a hidden
- * option cannot explain why publishing is unavailable, and silently downgrading a
- * chosen "public" to private at save time would be worse than refusing it up front.
+ * The visibility choice is hidden entirely from a guest (owner ruling 2026-08-02):
+ * they cannot save, so it could never take effect, and a disabled control that needs
+ * a line of explanation beneath it is worse than not asking.
+ *
+ * Which means this dialog opens only when it has something to SAY. `DecksPage` skips
+ * it when neither half applies, so a guest with an empty deck goes straight to the
+ * builder rather than through an empty box.
  */
 export function NewDeckDialog({
   isOpen,
   onClose,
   onConfirm,
   showReplaceWarning,
+  canKeepBoth,
   canPublish,
   onSignIn,
 }: NewDeckDialogProps) {
@@ -175,52 +175,43 @@ export function NewDeckDialog({
       size="md"
       scrimTestId="new-deck-backdrop"
       panelStyle={{padding: SPACING.xl, fontFamily: FONTS.body}}>
-      <h2 style={{fontFamily: FONTS.hero, fontSize: FONT_SIZES.xxl, color: COLORS.text, margin: 0}}>New deck</h2>
+      <h2 style={DIALOG_TITLE}>New deck</h2>
 
-      {showReplaceWarning && <ReplaceWarning onSignIn={onSignIn} />}
+      {showReplaceWarning && <ReplaceWarning canKeepBoth={canKeepBoth} onSignIn={onSignIn} />}
 
-      <div
-        role="radiogroup"
-        aria-label="Deck visibility"
-        style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm, marginTop: SPACING.lg}}>
-        <VisibilityOption
-          value="private"
-          title="Private"
-          description="Only you can see it."
-          selected={visibility === 'private'}
-          onSelect={setVisibility}
-        />
-        <VisibilityOption
-          value="public"
-          title="Public"
-          description="Anyone can see it and it appears in community decks."
-          disabledReason={canPublish ? undefined : PUBLISH_NEEDS_ACCOUNT}
-          selected={visibility === 'public'}
-          disabled={!canPublish}
-          onSelect={setVisibility}
-        />
-      </div>
-
-      {/* Outside the radiogroup on purpose: a non-radio child would break the role's
-          owned-elements contract, and out here it escapes the row's disabled dimming. */}
-      {!canPublish && (
-        <p
-          style={{
-            margin: `${SPACING.sm}px 0 0`,
-            color: COLORS.primary,
-            fontFamily: FONTS.body,
-            fontSize: `${FONT_SIZES.base}px`,
-          }}>
-          {PUBLISH_NEEDS_ACCOUNT}
-        </p>
+      {/* Shown only to someone who can act on it. A guest cannot save, so cannot
+          publish, so the choice could never take effect: offering it disabled meant
+          a dead control plus a line apologising for it. */}
+      {canPublish && (
+        <div
+          role="radiogroup"
+          aria-label="Deck visibility"
+          style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm, marginTop: SPACING.lg}}>
+          <VisibilityOption
+            value="private"
+            title="Private"
+            description="Only you can see it."
+            selected={visibility === 'private'}
+            onSelect={setVisibility}
+          />
+          <VisibilityOption
+            value="public"
+            title="Public"
+            description="Anyone can see it and it appears in community decks."
+            selected={visibility === 'public'}
+            onSelect={setVisibility}
+          />
+        </div>
       )}
 
       <div style={{display: 'flex', gap: SPACING.sm, marginTop: SPACING.lg}}>
-        <CtaButton variant="filled" onClick={startBuilding} style={{flex: 1}}>
-          Start building
-        </CtaButton>
+        {/* Cancel first, confirm last: the destructive-adjacent action sits where the
+            eye finishes, not where it lands. */}
         <CtaButton variant="neutral" onClick={close} style={{flex: 1}}>
           Cancel
+        </CtaButton>
+        <CtaButton variant="filled" onClick={startBuilding} style={{flex: 1}}>
+          Build a new deck
         </CtaButton>
       </div>
     </DialogShell>
