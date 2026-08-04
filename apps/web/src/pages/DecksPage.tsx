@@ -1,8 +1,9 @@
 import {useState} from 'react';
-import {Link} from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import {CompactHeader, CtaButton} from '../shared/components';
 import {SignInDialog} from '../shared/components/SignInDialog';
-import {CTA_BASE_STYLE, CTA_FILLED_STYLE} from '../shared/components/ctaStyles';
+import {NewDeckDialog} from '../features/deck/components/NewDeckDialog';
+import {useDeck} from '../features/deck/state';
 import {useResponsive} from '../shared/hooks';
 import {useSession} from '../shared/contexts/SessionContext';
 import {COLORS, FONTS, FONT_SIZES, LAYOUT, SPACING, SURFACE_CARD} from '../shared/constants';
@@ -21,6 +22,22 @@ import {COLORS, FONTS, FONT_SIZES, LAYOUT, SPACING, SURFACE_CARD} from '../share
  */
 export function DecksPage() {
   const {isMobile} = useResponsive();
+  const {deck, startNewDeck} = useDeck();
+  const {user} = useSession();
+  const navigate = useNavigate();
+  const [newDeckOpen, setNewDeckOpen] = useState(false);
+  // One instance for the page, shared by the account panel and the new-deck dialog's
+  // "keep both" offer. Two mounted SignInDialogs would be two independent open-states
+  // for one OAuth redirect, and the second is only ever reachable by accident.
+  const [signInOpen, setSignInOpen] = useState(false);
+
+  // Visibility rides the draft as a pending intent and the first save applies it, so
+  // the choice has to be made before the builder opens, not after.
+  const confirmNewDeck = (visibility: 'private' | 'public') => {
+    startNewDeck(visibility);
+    setNewDeckOpen(false);
+    navigate('/decks/new');
+  };
 
   return (
     <>
@@ -39,26 +56,40 @@ export function DecksPage() {
           Build a Core-legal deck with live synergy guidance.
         </p>
         {/*
-          The kit's filled CTA worn by a Link, not a CtaButton. It stays an anchor
-          deliberately: this navigates, so middle-click, open-in-new-tab and
-          crawlability all matter — the same reason CompactHeader's Reveals pill is
-          a NavLink. Spreading BASE + FILLED means it IS the landing page CTA rather
-          than a copy of it (owner ruling 2026-07-31); it previously hand-rolled a
-          flat COLORS.primary with no gradient, shadow, hover or press.
-        */}
-        <Link
-          to="/decks/new"
-          style={{
-            ...CTA_BASE_STYLE,
-            ...CTA_FILLED_STYLE,
-            display: 'inline-flex',
-            marginTop: SPACING.lg,
-          }}>
-          + New deck
-        </Link>
+          This was a <Link> spreading the kit's filled CTA, and the anchor was
+          deliberate: middle-click, open-in-new-tab and crawlability all mattered.
+          Creating a deck now asks two questions first (visibility, and whether a
+          guest is about to overwrite their one local deck), and a dialog cannot
+          intervene in a native navigation. Those anchor affordances are therefore
+          given up here deliberately, not overlooked. /decks/new is still directly
+          reachable by URL; it just starts from whatever draft already exists.
 
-        <DeckAccountPanel isMobile={isMobile} />
+          inline-flex because CtaButton's own `display: flex` is block-level and
+          would stretch this across the 900px column the Link never filled.
+        */}
+        <CtaButton
+          onClick={() => setNewDeckOpen(true)}
+          style={{display: 'inline-flex', marginTop: SPACING.lg}}>
+          + New deck
+        </CtaButton>
+
+        <DeckAccountPanel isMobile={isMobile} onSignIn={() => setSignInOpen(true)} />
       </main>
+
+      <NewDeckDialog
+        isOpen={newDeckOpen}
+        onClose={() => setNewDeckOpen(false)}
+        onConfirm={confirmNewDeck}
+        // A signed-in draft is recoverable from the cloud; a guest's is not, and a
+        // guest gets exactly one local deck, so only they can lose work here.
+        showReplaceWarning={!user && deck.cards.length > 0}
+        canPublish={Boolean(user)}
+        onSignIn={() => {
+          setNewDeckOpen(false);
+          setSignInOpen(true);
+        }}
+      />
+      <SignInDialog isOpen={signInOpen} onClose={() => setSignInOpen(false)} />
     </>
   );
 }
@@ -82,6 +113,10 @@ export function DecksPage() {
  * Renders nothing while `loading` or when auth is unconfigured, matching
  * `HeaderAuth`: `user` is null during load, so the naive version flashes the
  * signed-out prompt at every returning user on every visit.
+ *
+ * The SignInDialog itself is the PAGE's, not this panel's (#473): NewDeckDialog's
+ * "keep both" offer opens the same dialog, so a second mounted copy would be a
+ * second open-state for one OAuth redirect.
  */
 const PANEL_STYLE: React.CSSProperties = {...SURFACE_CARD, marginTop: SPACING.xxl, padding: SPACING.lg};
 
@@ -93,9 +128,8 @@ const PANEL_TEXT_STYLE: React.CSSProperties = {
   marginBottom: SPACING.md,
 };
 
-function DeckAccountPanel({isMobile}: {isMobile: boolean}) {
+function DeckAccountPanel({isMobile, onSignIn}: {isMobile: boolean; onSignIn: () => void}) {
   const {user, enabled, loading, signOut} = useSession();
-  const [signInOpen, setSignInOpen] = useState(false);
 
   if (!enabled || loading) return null;
 
@@ -118,10 +152,9 @@ function DeckAccountPanel({isMobile}: {isMobile: boolean}) {
       <p style={PANEL_TEXT_STYLE}>
         Your decks are saved on this device. Sign in to keep them on your phone and computer both.
       </p>
-      <CtaButton variant="ghost" onClick={() => setSignInOpen(true)}>
+      <CtaButton variant="ghost" onClick={onSignIn}>
         Sign in
       </CtaButton>
-      <SignInDialog isOpen={signInOpen} onClose={() => setSignInOpen(false)} />
     </div>
   );
 }

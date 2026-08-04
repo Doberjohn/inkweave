@@ -3,13 +3,15 @@ import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, TOUCH_TARGET} from '../const
 /**
  * The CtaButton BASE recipe (#509): metrics and typography, with no colour and no
  * interaction. Housed here beside the filled recipe so a non-button that must stay
- * a crawlable anchor can wear the WHOLE button, not just its paint — DecksPage's
- * "+ New deck" Link and CompactHeader's Reveals pill are both anchors by design
- * (middle-click, open-in-new-tab, crawlability), so neither can be a <button>.
+ * a crawlable anchor can wear the WHOLE button, not just its paint. CompactHeader's
+ * Reveals pill is the standing case: an anchor by design (middle-click,
+ * open-in-new-tab, crawlability), so it cannot be a <button>.
  *
- * Before this existed, sharing only CTA_FILLED_STYLE meant anchors re-typed the
- * metrics by hand, which is the same copy-and-drift that let the header's font
- * weight diverge from the kit until 1da74c47.
+ * DecksPage's "+ New deck" WAS the other one, until #473 made creating a deck ask
+ * about visibility first and a dialog cannot intervene in a native navigation. So
+ * this currently has one anchor consumer rather than two. Kept split anyway: the
+ * next crawlable CTA is a matter of when, and the alternative is the hand-copied
+ * metrics that let the header's font weight drift from the kit until 1da74c47.
  *
  * `display` is deliberately NOT here. CtaButton needs `flex` (block-level, so
  * `margin: 0 auto` centres it — AppLayout's retry button relies on exactly that),
