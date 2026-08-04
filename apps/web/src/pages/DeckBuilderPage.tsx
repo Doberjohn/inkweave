@@ -1,13 +1,14 @@
-import {useEffect, useState, type ReactNode} from 'react';
+import {useState, type ReactNode} from 'react';
 import {useParams} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {getDeck, useDeck} from '../features/deck/state';
+import {useDeck} from '../features/deck/state';
 import type {Deck} from '../features/deck/types';
 import {DeckPanel, DeckPoolGrid, type DeckRow} from '../features/deck/components';
 import {DeckActionsBar} from '../features/deck/components/DeckActionsBar';
 import {ImportDeckDialog} from '../features/deck/components/ImportDeckDialog';
 import {duelsInkUrl, formatDecklist} from '../features/deck/deckTransfer';
 import {useDeckPoolFilters, applyPoolFilters} from '../features/deck/hooks/useDeckPoolFilters';
+import {useRoutedDeck} from '../features/deck/hooks/useRoutedDeck';
 import {calculateDeckStats} from '../features/deck/analysis/deckStats';
 import {BrowseToolbar} from '../features/cards';
 import {CompactHeader, FilterDialog, PageTitle} from '../shared/components';
@@ -98,30 +99,8 @@ export function DeckBuilderPage() {
   const {id} = useParams();
   const [showFilters, setShowFilters] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  // WHICH id failed, not a boolean "it failed". Both routes render this same
-  // component at the same position in the tree, so React keeps the instance alive
-  // across /decks/:id/edit -> /decks/new; a boolean would survive that navigation
-  // and strand the new deck behind a stale not-found notice. Deriving from `id`
-  // clears itself during render, with no reset effect and no wrong-content frame.
-  const [notFoundId, setNotFoundId] = useState<string | null>(null);
-  const loadError = !!id && notFoundId === id;
-
-  // /decks/:id/edit opens a SAVED deck. Skip the fetch when the draft is already
-  // that deck, which is the common case straight after saving or after arriving
-  // from the deck list.
-  useEffect(() => {
-    if (!id || deck.id === id) return;
-    let cancelled = false;
-    void getDeck(id).then(({data}) => {
-      // Without the flag, navigating away mid-fetch sets state after unmount.
-      if (cancelled) return;
-      if (data) loadDeck(data);
-      else setNotFoundId(id);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [id, deck.id, loadDeck]);
+  // /decks/:id/edit opens a SAVED deck; /decks/new has no id and loads nothing.
+  const loadError = useRoutedDeck(id, deck.id, loadDeck);
   // The advisor UI is pulled while its design is rethought (no numeric surface, no
   // Analysis tab), so nothing consumes the analysis today. The pipeline is left
   // UNWIRED rather than running unread: it fetches per-card pair data on every deck

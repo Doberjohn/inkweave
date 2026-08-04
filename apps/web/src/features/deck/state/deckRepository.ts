@@ -130,22 +130,32 @@ function deckToInsert(deck: Deck): Omit<DeckInsert, 'owner_id'> {
 // CRUD (each is a single mapped query inside the shared `run` shell)
 // -------------------------------------------------------------------
 
-/** All of the caller's own decks, newest-touched first. RLS scopes to owner. */
-export function listDecks(ownerId: string): Promise<RepoResult<Deck[]>> {
+/**
+ * Every deck list shares one query: same projection, same recency ordering, same
+ * row mapping. Callers vary only the filter column and an optional cap. Ordering
+ * is not cosmetic — `updated_at desc` is what keeps the public list on the partial
+ * index `decks_public_updated_idx on (updated_at desc) where is_public` instead of
+ * falling back to a heap sort.
+ */
+function listDecksWhere(
+  column: 'owner_id' | 'is_public',
+  value: string | boolean,
+  limit?: number,
+): Promise<RepoResult<Deck[]>> {
   return run(async (c) => {
-    const {data, error} = await c
-      .from('decks')
-      .select('*')
-      .eq('owner_id', ownerId)
-      .order('updated_at', {ascending: false});
+    const base = c.from('decks').select('*').eq(column, value).order('updated_at', {ascending: false});
+    const {data, error} = await (limit === undefined ? base : base.limit(limit));
     return {data: data ? data.map(rowToDeck) : null, error};
   });
 }
 
+/** All of the caller's own decks, newest-touched first. RLS scopes to owner. */
+export function listDecks(ownerId: string): Promise<RepoResult<Deck[]>> {
+  return listDecksWhere('owner_id', ownerId);
+}
+
 /**
- * Up to `limit` public decks, newest-touched first. Ordered to match the partial
- * index `decks_public_updated_idx on (updated_at desc) where is_public`, so this
- * stays on the index rather than falling back to a heap sort.
+ * Up to `limit` public decks, newest-touched first.
  *
  * RLS already permits anon reads of is_public rows, so this works signed out and
  * is the community list's data source. Legality filtering is deliberately NOT
@@ -153,15 +163,7 @@ export function listDecks(ownerId: string): Promise<RepoResult<Deck[]>> {
  * row, which stores only {cardId, quantity}.
  */
 export function listPublicDecks(limit = 50): Promise<RepoResult<Deck[]>> {
-  return run(async (c) => {
-    const {data, error} = await c
-      .from('decks')
-      .select('*')
-      .eq('is_public', true)
-      .order('updated_at', {ascending: false})
-      .limit(limit);
-    return {data: data ? data.map(rowToDeck) : null, error};
-  });
+  return listDecksWhere('is_public', true, limit);
 }
 
 /** One deck by id. RLS returns it when it is the caller's own or is_public. */
