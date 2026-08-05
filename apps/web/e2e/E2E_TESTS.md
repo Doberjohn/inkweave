@@ -263,14 +263,17 @@ This replaced a version that inferred artifact absence from a *second* 10s UI wa
 |---|---|
 | renders the calibration + activity tabs | `/admin/analytics` shows the `Engine Calibration` h1 and the verdict scale + `Total votes` on the Calibration tab, then switches to the Activity tab and confirms the day-by-day log header |
 
-## `navigation.spec.ts` — 2 tests (desktop only)
+## `navigation.spec.ts` — 5 tests (3 desktop, 2 mobile)
 
-Regression guard for the Decks link being unreachable from the desktop nav — lint, typecheck, and unit tests can't express "no link points here," only an E2E can.
+Regression guard for chrome that is unreachable or doubled. Lint, typecheck, and unit tests can't express "no link points here" or "this bar renders on the wrong viewport"; only an E2E can. Every test skips on the projects it does not apply to, so each viewport's rule is asserted exactly where it holds.
 
-| Test | What it verifies |
-|---|---|
-| Decks is reachable from the main nav | `/browse`'s `Main navigation` has a "Decks" link; clicking it navigates to `/decks` |
-| the header carries a sign-in control on every page | `/browse` and `/playstyles` both show a "Sign in" button inside `compact-header` |
+| Test | Projects | What it verifies |
+|---|---|---|
+| Decks is reachable from the main nav | desktop | `/browse`'s `Main navigation` has a "Decks" link; clicking it navigates to `/decks` |
+| the header carries a sign-in control on every page | desktop | `/browse` and `/playstyles` both show a "Sign in" button inside `compact-header` |
+| /decks does not double up on the header sign-in control | desktop | `/decks` has exactly ONE "Sign in" button and it lives in `compact-header`, so the page's own mobile fallback stays mobile-only |
+| /decks carries the only mobile sign-in control | mobile | `/decks` has no `compact-header` yet still shows a "Sign in" button (the 2026-08-05 ruling's fallback) |
+| ink hubs do not paint the desktop header on a phone | mobile | `/inks` and `/ink/steel` render no `compact-header`, guarding the optional-`isMobile` bug that painted the 70px desktop bar over the mobile bottom nav |
 
 ## Patterns
 

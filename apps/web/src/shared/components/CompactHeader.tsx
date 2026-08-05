@@ -2,9 +2,10 @@ import {type ReactNode, useState} from 'react';
 import {Link, NavLink} from 'react-router-dom';
 import {COLORS, DURATION, EASING, FONT_SIZES, FONTS, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../constants';
 import {useRevealPhase} from '../../features/reveals';
-import {useIsSignedIn, useSession} from '../contexts/SessionContext';
+import {useIsSignedIn} from '../contexts/SessionContext';
+import {AuthButton} from './AuthButton';
 import {CTA_FILLED_STYLE} from './ctaStyles';
-import {CtaButton} from './CtaButton';
+import {headerCarriesAuth, type ViewportConfig} from './headerChrome';
 import {SignInDialog} from './SignInDialog';
 
 interface CompactHeaderProps {
@@ -48,10 +49,8 @@ interface InteractionState {
   isHovered: boolean;
 }
 
-/** Responsive viewport config. Derived from the parent's `isMobile` prop. */
-interface ViewportConfig {
-  isMobile: boolean;
-}
+// ViewportConfig and headerCarriesAuth live in ./headerChrome, so /decks can read
+// the same rule without importing a component.
 
 // =====================================================================
 // Style helpers — module-level so their branches don't roll up to JSX.
@@ -238,37 +237,26 @@ function RevealsPill({isHovered, onMouseEnter, onMouseLeave}: RevealsPillProps) 
 }
 
 /**
- * The header's rightmost slot: sign in when signed out, sign out when signed in.
+ * The header's rightmost slot: the shared `AuthButton` plus the dialog it opens.
  *
- * Renders NOTHING while `loading`, and that is deliberate. `user` is null during
- * that window, so the naive version shows "Sign in" and then swaps to "Sign out"
- * once auth resolves — the wrong state, flashed on every page load for every
- * returning user. Also renders nothing when auth is not configured at all
- * (`enabled: false`), which is how the app degrades without Supabase env.
+ * The button rule (which label, and rendering nothing while `loading` or when auth
+ * is unconfigured) lives in `AuthButton`, because `/decks` needs the same rule on
+ * mobile where this header does not render. What stays here is placement: the
+ * `marginLeft: 'auto'` that pins it right, and ownership of this header's dialog.
  *
- * Calls useSession() directly rather than taking props. CompactHeader now RENDERS
- * auth, so depending on SessionProvider is honest — a throw outside one reports a
- * real mounting error. (Contrast useIsSignedIn, added the same day for DesktopNav,
- * which only REACTS to auth and must not demand a provider.) All 18 CompactHeader
- * call sites already sit under AppLayout's provider; the stories get a decorator.
+ * `AuthButton` calls useSession() directly rather than taking props. CompactHeader
+ * RENDERS auth, so depending on SessionProvider is honest: a throw outside one
+ * reports a real mounting error. (Contrast useIsSignedIn, added the same day for
+ * DesktopNav, which only REACTS to auth and must not demand a provider.) All 18
+ * CompactHeader call sites already sit under AppLayout's provider; stories get a
+ * decorator.
  */
 function HeaderAuth() {
-  const {user, enabled, loading, signOut} = useSession();
   const [signInOpen, setSignInOpen] = useState(false);
-
-  if (!enabled || loading) return null;
 
   return (
     <div style={{marginLeft: 'auto'}}>
-      {user ? (
-        <CtaButton variant="neutral" onClick={() => void signOut()}>
-          Sign out
-        </CtaButton>
-      ) : (
-        <CtaButton variant="ghost" onClick={() => setSignInOpen(true)}>
-          Sign in
-        </CtaButton>
-      )}
+      <AuthButton onSignIn={() => setSignInOpen(true)} />
       <SignInDialog isOpen={signInOpen} onClose={() => setSignInOpen(false)} />
     </div>
   );
@@ -329,7 +317,12 @@ export function CompactHeader({onLogoClick, showBackArrow, headerActions, isMobi
   // Mobile chrome lives in MobileBottomNav + SearchBottomSheet (from AppLayout).
   // The top header is desktop-only; render nothing on mobile so callers don't
   // need per-viewport conditionals at every call site.
-  if (isMobile) return null;
+  //
+  // `isMobile` is OPTIONAL, so omitting it reads as desktop. That is not a
+  // friendly default, it is a silent one: InkGalleryPage and InkHubPage both
+  // omitted it and painted this 70px bar over the mobile bottom nav, with the
+  // absolutely-centered nav overlapping the logo. Pass it explicitly.
+  if (!headerCarriesAuth({isMobile: isMobile === true})) return null;
 
   const isRevealSeason = revealPhase === 'pre-release' || revealPhase === 'pre-release-live';
   const viewport: ViewportConfig = {isMobile: false};

@@ -2,6 +2,7 @@ import {Link, useNavigate} from 'react-router-dom';
 import {INK_HUBS, INK_HUB_BLURBS, cardsForInk} from '../features/cards';
 import {CompactHeader, EtherealBackground, PageTitle, Seo} from '../shared/components';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
+import {useResponsive} from '../shared/hooks';
 import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../shared/constants';
 
 /**
@@ -13,6 +14,7 @@ import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../shared/
  */
 export function InkGalleryPage() {
   const navigate = useNavigate();
+  const {isMobile} = useResponsive();
   const {cards, isLoading} = useCardDataContext();
 
   return (
@@ -31,7 +33,7 @@ export function InkGalleryPage() {
         canonicalPath="/inks"
       />
       <EtherealBackground />
-      <CompactHeader onLogoClick={() => navigate('/')} />
+      <CompactHeader isMobile={isMobile} onLogoClick={() => navigate('/')} />
 
       <div
         style={{

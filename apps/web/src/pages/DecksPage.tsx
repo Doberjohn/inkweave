@@ -1,6 +1,7 @@
 import {useEffect, useState, type ReactNode} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {CompactHeader, CtaButton, TabList} from '../shared/components';
+import {AuthButton, CompactHeader, CtaButton, TabList, headerCarriesAuth} from '../shared/components';
+import type {ViewportConfig} from '../shared/components';
 import {SignInDialog} from '../shared/components/SignInDialog';
 import {DeckSummaryCard} from '../features/deck/components/DeckSummaryCard';
 import {NewDeckDialog} from '../features/deck/components/NewDeckDialog';
@@ -27,6 +28,23 @@ type DecksTab = (typeof TABS)[number]['id'];
 /** Copies in a deck. Cheaper than full stats, and needs no card database. */
 function countCards(deck: Deck): number {
   return deck.cards.reduce((total, card) => total + card.quantity, 0);
+}
+
+/**
+ * Whether /decks renders its OWN sign in / sign out control beside the heading.
+ *
+ * Owner ruling 2026-08-05: mobile auth lives here, as one button, because
+ * `CompactHeader` renders nothing on mobile and takes its `AuthButton` with it.
+ * This page is the fallback for exactly the viewports the header abandons.
+ *
+ * Written as the negation of `headerCarriesAuth` rather than as `isMobile`, which
+ * is the same value today. The trap: on a viewport where the header DOES carry
+ * auth, returning true here puts two controls both named "Sign in" on one page,
+ * and nothing in the suite would catch it. Deriving from the header's own rule
+ * makes that state unreachable instead of merely unlikely.
+ */
+function showsOwnAuthControl(viewport: ViewportConfig): boolean {
+  return !headerCarriesAuth(viewport);
 }
 
 // ── Reading a deck list ────────────────────────────────────────────────────
@@ -307,7 +325,21 @@ export function DecksPage() {
           maxWidth: 900,
           margin: '0 auto',
         }}>
-        <h1 style={{fontFamily: FONTS.hero, fontSize: FONT_SIZES.xxl, color: COLORS.text, margin: 0}}>Decks</h1>
+        {/*
+          The heading shares its row with the mobile auth control. Baseline is
+          deliberately NOT aligned: the hero-serif heading and a 44px button have
+          nothing in common to align on, so they center against each other.
+        */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: SPACING.md,
+          }}>
+          <h1 style={{fontFamily: FONTS.hero, fontSize: FONT_SIZES.xxl, color: COLORS.text, margin: 0}}>Decks</h1>
+          {showsOwnAuthControl({isMobile}) && <AuthButton onSignIn={() => setSignInOpen(true)} />}
+        </div>
 
         <p style={{fontFamily: FONTS.body, fontSize: FONT_SIZES.base, color: COLORS.textMuted, marginTop: SPACING.sm}}>
           Build a Core-legal deck with live synergy guidance.

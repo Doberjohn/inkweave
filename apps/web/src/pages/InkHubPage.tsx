@@ -4,6 +4,7 @@ import {CardGrid, CardGridSkeleton, INK_HUB_BLURBS, cardsForInk, getInkHub} from
 import {CompactHeader, EtherealBackground, PageTitle, Seo} from '../shared/components';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
+import {useResponsive} from '../shared/hooks';
 import {sortBySetThenNumber} from '../features/cards';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 import {NotFoundPage} from './NotFoundPage';
@@ -23,6 +24,7 @@ import {NotFoundPage} from './NotFoundPage';
 export function InkHubPage() {
   const {inkSlug} = useParams<{inkSlug: string}>();
   const navigate = useNavigate();
+  const {isMobile} = useResponsive();
   const {cards, isLoading} = useCardDataContext();
   const {openCardModal} = useCardModal();
 
@@ -49,7 +51,7 @@ export function InkHubPage() {
         canonicalPath={`/ink/${hub.slug}`}
       />
       <EtherealBackground />
-      <CompactHeader onLogoClick={() => navigate('/')} />
+      <CompactHeader isMobile={isMobile} onLogoClick={() => navigate('/')} />
 
       <div
         style={{
