@@ -1,5 +1,6 @@
 import {useState} from 'react';
 import {Link} from 'react-router-dom';
+import {InkChip} from './InkChip';
 import {
   COLORS,
   DURATION,
@@ -7,14 +8,12 @@ import {
   FONTS,
   FONT_SIZES,
   GOLD_GLOW,
-  INK_COLORS,
-  RADIUS,
   SPACING,
   SURFACE_CARD,
   TABULAR,
   TRUNCATE,
 } from '../../../shared/constants';
-import type {Deck, Ink} from '../types';
+import type {Deck} from '../types';
 
 interface DeckSummaryCardProps {
   deck: Deck;
@@ -30,27 +29,6 @@ interface DeckSummaryCardProps {
 
 /** A deck can be saved before it is named; the row still needs something to read. */
 const FALLBACK_NAME = 'Untitled deck';
-
-/** One ink chip, wearing that ink's own colors. */
-function InkChip({ink}: {ink: Ink}) {
-  const {bg, text, border} = INK_COLORS[ink];
-  return (
-    <span
-      style={{
-        background: bg,
-        color: text,
-        border: `1px solid ${border}`,
-        borderRadius: `${RADIUS.pill}px`,
-        padding: `${SPACING.xxs}px ${SPACING.sm}px`,
-        fontFamily: FONTS.body,
-        fontSize: `${FONT_SIZES.sm}px`,
-        fontWeight: 600,
-        whiteSpace: 'nowrap',
-      }}>
-      {ink}
-    </span>
-  );
-}
 
 /**
  * One deck in either `/decks` list: name, inks, size.
