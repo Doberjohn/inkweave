@@ -4,9 +4,9 @@ import {calculateDeckStats} from '../features/deck/analysis/deckStats';
 import {CostGlyph} from '../features/deck/components/CostGlyph';
 import {InkChip} from '../features/deck/components/InkChip';
 import {ShareDeckButton} from '../features/deck/components/ShareDeckButton';
-import {getDeck, updateDeck} from '../features/deck/state';
+import {getDeck} from '../features/deck/state';
 import type {Deck, DeckStats, LorcanaCard} from '../features/deck/types';
-import {CompactHeader, CtaButton} from '../shared/components';
+import {CompactHeader} from '../shared/components';
 import {CTA_BASE_STYLE} from '../shared/components/ctaStyles';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useSession} from '../shared/contexts/SessionContext';
@@ -30,14 +30,13 @@ import {
 const FALLBACK_NAME = 'Untitled deck';
 
 /**
- * Each half says what the OFFERED action would do, not just which state the deck
- * is in. A switch labelled "public" tells an owner nothing about who is about to
- * be able to read their deck.
+ * Stated, not offered. Visibility is changed in the builder now (owner ruling
+ * 2026-08-05), because it is a property of the deck that Save persists, and a
+ * second writer here was quietly un-publishing decks.
  */
 const VISIBILITY_COPY = {
-  public: 'Public. Anyone can see this deck, and it appears in community decks. Making it private hides it again.',
-  private:
-    'Private. Only you can see this deck. Publishing it means anyone can see it, and it appears in community decks.',
+  public: 'Public. Anyone can see this deck, and it appears in community decks.',
+  private: 'Private. Only you can see this deck. Change this in Edit deck, then save.',
 } as const;
 
 // ── Reading the routed deck ────────────────────────────────────────────────
@@ -91,51 +90,7 @@ function useDeckRead(id: string | undefined) {
     deck: current?.deck ?? null,
     failed: current?.failed ?? false,
     isLoading: id !== undefined && current === null,
-    /** Adopt a row the server just returned, so a visibility write shows immediately. */
-    adopt: (next: Deck) => setRead({id: next.id, deck: next, failed: false}),
   };
-}
-
-/** Where a visibility write stands: nothing in flight, one in flight, or one that failed. */
-type SaveState = 'idle' | 'saving' | 'failed';
-
-/** A visibility write, tagged with the deck it was made against. */
-interface SaveAttempt {
-  deckId: string;
-  state: SaveState;
-}
-
-/**
- * The visibility write, shared by the toggle and the share button's publish offer
- * so those two can never disagree about what the deck is.
- *
- * A failed write leaves the deck on screen exactly as the server still has it. A
- * publish that did not land must not read as published, or the owner hands out a
- * link to a deck nobody else can open.
- */
-function useVisibility(deck: Deck | null, adopt: (deck: Deck) => void) {
-  const [attempt, setAttempt] = useState<SaveAttempt | null>(null);
-
-  const setPublic = async (isPublic: boolean): Promise<boolean> => {
-    if (!deck) return false;
-    setAttempt({deckId: deck.id, state: 'saving'});
-    const {data} = await updateDeck({...deck, isPublic});
-    // A null row with no error counts as failure too: there is no confirmed new
-    // state to show, so claiming one would be a guess.
-    if (!data) {
-      setAttempt({deckId: deck.id, state: 'failed'});
-      return false;
-    }
-    adopt(data);
-    setAttempt(null);
-    return true;
-  };
-
-  // Tagged with its deck for the same reason the read is: this page is NOT
-  // remounted when `:id` changes, so an untagged failure would follow the reader
-  // to the next deck and complain about a write that deck never saw.
-  const saveState: SaveState = attempt?.deckId === deck?.id ? (attempt?.state ?? 'idle') : 'idle';
-  return {saveState, setPublic};
 }
 
 // ── Page states ────────────────────────────────────────────────────────────
@@ -190,7 +145,20 @@ function NotFound() {
 function DeckHeading({deck, totalCards}: {deck: Deck; totalCards: number}) {
   return (
     <header>
-      <h1 style={{fontFamily: FONTS.hero, fontSize: FONT_SIZES.xxl, color: COLORS.text, margin: 0}}>
+      {/*
+        Body font, not the hero serif (owner ruling 2026-08-06), matching the deck
+        tiles. Weight 700 here rather than the tiles' 600: this IS the page's own
+        h1, so it takes PageTitle's weight, while a tile is a card heading inside
+        a page whose h1 is "Decks".
+      */}
+      <h1
+        style={{
+          fontFamily: FONTS.body,
+          fontWeight: 700,
+          fontSize: FONT_SIZES.xxl,
+          color: COLORS.text,
+          margin: 0,
+        }}>
         {deck.name.trim() || FALLBACK_NAME}
       </h1>
       <div
@@ -377,58 +345,16 @@ function EditLink({deckId}: {deckId: string}) {
   );
 }
 
-/** The button's label: the write in flight is the only thing that displaces it. */
-function visibilityAction(isPublic: boolean, saving: boolean): string {
-  if (saving) return 'Saving…';
-  return isPublic ? 'Make private' : 'Publish deck';
-}
-
-interface VisibilityControlProps {
-  isPublic: boolean;
-  saveState: SaveState;
-  onSetPublic: (isPublic: boolean) => Promise<boolean>;
-}
-
-/** Who can see this deck, in a sentence, with the one control that changes it. */
-function VisibilityControl({isPublic, saveState, onSetPublic}: VisibilityControlProps) {
-  const saving = saveState === 'saving';
-  return (
-    <div>
-      <p style={{margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.base}px`, lineHeight: 1.6}}>
-        {isPublic ? VISIBILITY_COPY.public : VISIBILITY_COPY.private}
-      </p>
-      <CtaButton
-        variant="neutral"
-        onClick={() => void onSetPublic(!isPublic)}
-        disabled={saving}
-        style={{display: 'inline-flex', marginTop: SPACING.sm}}>
-        {visibilityAction(isPublic, saving)}
-      </CtaButton>
-      {/* The deck above still reads the way the server has it, so this says what
-          did NOT happen rather than leaving a silently unchanged toggle. */}
-      {saveState === 'failed' && (
-        <p
-          role="alert"
-          style={{margin: `${SPACING.sm}px 0 0`, color: COLORS.error, fontSize: `${FONT_SIZES.base}px`}}>
-          Could not change who can see this deck. Nothing changed, so it is still {isPublic ? 'public' : 'private'}. Try
-          again in a moment.
-        </p>
-      )}
-    </div>
-  );
-}
-
-interface OwnerControlsProps {
-  deck: Deck;
-  saveState: SaveState;
-  onSetPublic: (isPublic: boolean) => Promise<boolean>;
-}
-
 /**
- * Everything only an owner may do, on one surface with the share button, so that
- * "who can see this" sits beside the control that hands the link out.
+ * Everything only an owner may do.
+ *
+ * This page no longer WRITES anything (owner ruling 2026-08-05). Visibility is a
+ * property of the deck, changed in the builder and persisted by Save, so the two
+ * controls here both lead elsewhere: one hands out the link, one opens the deck
+ * for editing. The visibility line beneath them states the current state and says
+ * where to change it.
  */
-function OwnerControls({deck, saveState, onSetPublic}: OwnerControlsProps) {
+function OwnerControls({deck}: {deck: Deck}) {
   return (
     <section
       aria-label="Deck owner controls"
@@ -440,10 +366,13 @@ function OwnerControls({deck, saveState, onSetPublic}: OwnerControlsProps) {
         gap: SPACING.lg,
       }}>
       <div style={{display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: SPACING.sm}}>
-        <ShareDeckButton deck={deck} onPublish={() => onSetPublic(true)} />
+        {/* No onPublish: copying a link never publishes, and never did belong to it. */}
+        <ShareDeckButton deck={deck} />
         <EditLink deckId={deck.id} />
       </div>
-      <VisibilityControl isPublic={Boolean(deck.isPublic)} saveState={saveState} onSetPublic={onSetPublic} />
+      <p style={{margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.base}px`, lineHeight: 1.6}}>
+        {deck.isPublic ? VISIBILITY_COPY.public : VISIBILITY_COPY.private}
+      </p>
     </section>
   );
 }
@@ -499,8 +428,7 @@ export function DeckViewPage() {
   const {id} = useParams();
   const {user, loading: authLoading} = useSession();
   const {getCardById, isLoading: cardsLoading} = useCardDataContext();
-  const {deck, failed, isLoading, adopt} = useDeckRead(id);
-  const {saveState, setPublic} = useVisibility(deck, adopt);
+  const {deck, failed, isLoading} = useDeckRead(id);
 
   if (isResolving({deck: isLoading, cards: cardsLoading, session: authLoading})) {
     return (
@@ -533,7 +461,7 @@ export function DeckViewPage() {
       <DeckHeading deck={deck} totalCards={stats.totalCards} />
       <Legality stats={stats} />
       {ownsDeck(deck, user?.id) ? (
-        <OwnerControls deck={deck} saveState={saveState} onSetPublic={setPublic} />
+        <OwnerControls deck={deck} />
       ) : (
         <div style={{marginTop: SPACING.xl}}>
           <ShareDeckButton deck={deck} />

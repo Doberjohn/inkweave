@@ -32,6 +32,8 @@ function renderPanel(over: Partial<Props> = {}) {
     stats,
     onIncrement: vi.fn(),
     onDecrement: vi.fn(),
+    isPublic: false,
+    onVisibilityChange: vi.fn(),
     ...over,
   };
   return {props, ...render(<DeckPanel {...props} />)};

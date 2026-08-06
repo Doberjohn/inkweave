@@ -103,7 +103,7 @@ export function DeckBuilderPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
-  const {saveState, save, canSave} = useDeckSave();
+  const {saveState, save, changeVisibility, canSave} = useDeckSave();
   // /decks/:id/edit opens a SAVED deck; /decks/new has no id and loads nothing.
   const loadError = useRoutedDeck(id, deck.id, loadDeck);
   // The advisor UI is pulled while its design is rethought (no numeric surface, no
@@ -190,6 +190,8 @@ export function DeckBuilderPage() {
           onIncrement={(id) => addCard(id)}
           onDecrement={(id) => setQuantity(id, (quantities.get(id) ?? 0) - 1)}
           onOpenDetails={viewDeckDetails}
+          isPublic={Boolean(deck.isPublic)}
+          onVisibilityChange={changeVisibility}
           actions={
             <DeckActionsBar
               cardCount={stats.totalCards}

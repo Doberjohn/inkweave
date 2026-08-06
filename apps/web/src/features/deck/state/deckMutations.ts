@@ -130,6 +130,20 @@ export function renameDeckName(deck: Deck, name: string): Deck {
   return {...deck, name, updatedAt: Date.now()};
 }
 
+/**
+ * Who can see the deck. A property of the deck like its name, NOT a separate act
+ * (owner ruling 2026-08-05).
+ *
+ * It used to be changed by its own write straight to the row, which meant two
+ * writers for one column: this mutation plus the builder's Save. The builder held
+ * whatever visibility the deck had when it loaded, so publishing and then saving
+ * an edit wrote the stale value back and quietly un-published the deck. Going
+ * through the draft, and letting Save be the only writer, makes that unreachable.
+ */
+export function setDeckVisibility(deck: Deck, isPublic: boolean): Deck {
+  return {...deck, isPublic, updatedAt: Date.now()};
+}
+
 /** Empty the card list, keeping the deck's identity and name. */
 export function clearDeckCards(deck: Deck): Deck {
   return {...deck, cards: [], inks: [], updatedAt: Date.now()};

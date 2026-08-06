@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {CtaButton} from '../../../shared/components';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
 import type {Deck} from '../types';
 
 /**
@@ -9,6 +9,16 @@ import type {Deck} from '../types';
  * the scale is three steps of animation timing.
  */
 const COPIED_VISIBLE_MS = 2000;
+
+/**
+ * Why the button is inert, following the QuantityStepper convention the Duels and
+ * Save buttons already use: a disabled button's `title` is not reliably announced,
+ * so the same string rides `aria-label`.
+ *
+ * No positional wording ("below", "on the right"): this component does not own
+ * the layout it sits in, and the visibility control could move.
+ */
+const PRIVATE_REASON = 'Only a public deck has a link to share. Make this deck public first.';
 
 /** The deck's public address. Same shape the router serves at `/decks/:id`. */
 function deckUrl(deckId: string): string {
@@ -31,22 +41,7 @@ async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
-/**
- * `working` covers the publish round trip. The three terminal states are kept
- * apart because they need different words: a copy that failed still has a link
- * to hand over, a publish that failed has nothing to share yet.
- */
-type ShareState = 'idle' | 'confirming' | 'working' | 'copied' | 'copy-failed' | 'publish-failed';
-
-interface ShareDeckButtonProps {
-  deck: Deck;
-  /**
-   * Publishes the deck, resolving true when the write landed. Supplied only by
-   * the owner: nobody else may publish, and RLS means nobody else ever sees a
-   * private deck to want to.
-   */
-  onPublish?: () => Promise<boolean>;
-}
+type ShareState = 'idle' | 'copied' | 'copy-failed';
 
 /** Arrow leaving a tray: the mirrored import glyph, and the house share mark. */
 function ShareIcon() {
@@ -64,48 +59,9 @@ function ShareIcon() {
 }
 
 /**
- * The offer, never the act. Sharing a link and publishing to a community feed
- * are different intentions, so a private deck states what publishing would mean
- * and waits: copying a link that silently made the deck public would be a
- * decision taken on the owner's behalf.
- */
-function PublishPrompt({onConfirm, onCancel}: {onConfirm: () => void; onCancel: () => void}) {
-  return (
-    <div
-      style={{
-        background: COLORS.surfaceAlt,
-        border: `1px solid ${COLORS.surfaceBorder}`,
-        borderRadius: `${RADIUS.lg}px`,
-        padding: SPACING.md,
-        maxWidth: 420,
-      }}>
-      <p
-        style={{
-          margin: 0,
-          fontFamily: FONTS.body,
-          fontSize: `${FONT_SIZES.base}px`,
-          lineHeight: 1.6,
-          color: COLORS.text,
-        }}>
-        This deck is private, so a link to it shows nothing to anyone else. Publishing it means anyone can see the
-        deck, and it appears in community decks.
-      </p>
-      <div style={{display: 'flex', gap: SPACING.sm, marginTop: SPACING.md, flexWrap: 'wrap'}}>
-        <CtaButton variant="neutral" onClick={onCancel}>
-          Keep it private
-        </CtaButton>
-        <CtaButton variant="filled" onClick={onConfirm}>
-          Publish and copy link
-        </CtaButton>
-      </div>
-    </div>
-  );
-}
-
-/**
  * What just happened, in words. `role` differs by kind: the confirmation is a
- * polite status, the two failures are assertive alerts, because a reader who
- * believes they copied a link will not look back at this line.
+ * polite status, the failure is an assertive alert, because a reader who believes
+ * they copied a link will not look back at this line.
  */
 function ShareNotice({state, url}: {state: ShareState; url: string}) {
   if (state === 'copied') {
@@ -120,16 +76,6 @@ function ShareNotice({state, url}: {state: ShareState; url: string}) {
           color: COLORS.primary,
         }}>
         ✓ Copied
-      </p>
-    );
-  }
-
-  if (state === 'publish-failed') {
-    return (
-      <p
-        role="alert"
-        style={{margin: 0, fontFamily: FONTS.body, fontSize: `${FONT_SIZES.base}px`, color: COLORS.error}}>
-        Could not publish the deck. It is still private and nothing was copied. Try again in a moment.
       </p>
     );
   }
@@ -157,25 +103,28 @@ function ShareNotice({state, url}: {state: ShareState; url: string}) {
   return null;
 }
 
-/** Label for the resting button: the publish round trip is the only busy state. */
-function shareLabel(working: boolean): string {
-  return working ? 'Publishing…' : 'Copy link';
-}
-
 /**
- * Copies `/decks/:id` to the clipboard, and is the one place a deck becomes
- * public by accident, so it is the one place that refuses to (#473).
+ * Copies `/decks/:id` to the clipboard, and does nothing else (owner ruling
+ * 2026-08-05).
  *
- * A public deck copies straight away. A private deck the viewer OWNS is met
- * with the offer above, confirmed before anything is published or copied. A
- * private deck the viewer does not own cannot occur, since RLS returns no row.
+ * A private deck's link resolves to nothing for everyone but its owner, so this
+ * REFUSES to copy one: the button is disabled and says why. It used to offer to
+ * publish first, which made this the one place a deck could become public as a
+ * side effect of wanting a link. Publishing is now only ever chosen outright,
+ * either as the visibility picked when the deck is created (that choice reaches
+ * the row on the next Save, with no separate publish step) or through the
+ * visibility control on this page.
+ *
+ * Non-owners never see the disabled state: RLS means a private deck returns no
+ * row, so any deck a stranger is looking at is public by definition.
  *
  * Filled, not ghost: on `/decks/:id` this is the payoff, and the owner controls
  * beside it are deliberately quieter.
  */
-export function ShareDeckButton({deck, onPublish}: ShareDeckButtonProps) {
+export function ShareDeckButton({deck}: {deck: Deck}) {
   const [state, setState] = useState<ShareState>('idle');
   const url = deckUrl(deck.id);
+  const isPublic = Boolean(deck.isPublic);
 
   // The confirmation is transient by design: it reports a moment, and a "Copied"
   // that never leaves stops describing the last press.
@@ -189,36 +138,17 @@ export function ShareDeckButton({deck, onPublish}: ShareDeckButtonProps) {
     setState((await copyToClipboard(url)) ? 'copied' : 'copy-failed');
   };
 
-  const publishThenCopy = async () => {
-    if (!onPublish) return;
-    setState('working');
-    // A failed publish stops here. Copying anyway would hand out a link that
-    // resolves to nothing, which is the failure wearing the success's clothes.
-    if (!(await onPublish())) {
-      setState('publish-failed');
-      return;
-    }
-    await copyNow();
-  };
-
-  const share = () => {
-    if (!deck.isPublic && onPublish) {
-      setState('confirming');
-      return;
-    }
-    void copyNow();
-  };
-
   return (
     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: SPACING.sm}}>
-      {state === 'confirming' ? (
-        <PublishPrompt onConfirm={() => void publishThenCopy()} onCancel={() => setState('idle')} />
-      ) : (
-        <CtaButton variant="filled" onClick={share} disabled={state === 'working'}>
-          <ShareIcon />
-          {shareLabel(state === 'working')}
-        </CtaButton>
-      )}
+      <CtaButton
+        variant="filled"
+        onClick={() => void copyNow()}
+        disabled={!isPublic}
+        title={isPublic ? undefined : PRIVATE_REASON}
+        aria-label={isPublic ? undefined : PRIVATE_REASON}>
+        <ShareIcon />
+        Copy link
+      </CtaButton>
       <ShareNotice state={state} url={url} />
     </div>
   );

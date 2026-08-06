@@ -7,6 +7,7 @@ import {CostCurveStrip} from './CostCurveStrip';
 import {totalCopies} from './costCurveColumns';
 import {previewGeometry} from './previewGeometry';
 import {DeckProfile} from './DeckProfile';
+import {DeckVisibilityToggle} from './DeckVisibilityToggle';
 import {TabList} from '../../../shared/components/TabList';
 import {blackRgba, COLORS, EASING, FONT_SIZES, FONTS, INK_COLORS, LETTER_SPACING, RADIUS, SPACING, Z_INDEX} from '../../../shared/constants';
 
@@ -58,6 +59,9 @@ interface DeckPanelProps {
   onDecrement: (cardId: string) => void;
   /** Deck-level toolbar (Clear / Import / Export), rendered under the deck header. */
   actions?: ReactNode;
+  /** Who can see the deck. A property of the deck, so it sits with the name, not the actions. */
+  isPublic: boolean;
+  onVisibilityChange: (isPublic: boolean) => void;
   /**
    * Clicking a row's thumbnail/name opens that card's detail modal. `siblingIds` is
    * the deck in the panel's VISUAL (type-grouped) order, so the modal's arrow-nav
@@ -327,13 +331,61 @@ const groupHeader: CSSProperties = {
 };
 
 /**
+ * The panel's identity row, then its toolbar.
+ *
+ * Two rows, not one. The name and the actions shared a line and the name lost
+ * every time: at panel width it collapsed to a bare pencil, so the deck you were
+ * building was the one thing you could not read. Visibility joins the name
+ * because it is a property of the deck rather than an action on it.
+ *
+ * Extracted rather than inlined because DeckPanel sits at CodeScene's 120-line
+ * ceiling; this is the piece that reads as a unit on its own.
+ */
+function PanelHeader({
+  name,
+  onRename,
+  isPublic,
+  onVisibilityChange,
+  actions,
+}: Pick<DeckPanelProps, 'name' | 'onRename' | 'isPublic' | 'onVisibilityChange' | 'actions'>) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: SPACING.sm,
+        padding: SPACING.md,
+        borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+        flexShrink: 0,
+      }}>
+      <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
+        <DeckNameField name={name} onRename={onRename} />
+        <DeckVisibilityToggle isPublic={isPublic} onChange={onVisibilityChange} />
+      </div>
+      {actions}
+    </div>
+  );
+}
+
+/**
  * The right-hand deck pane: an inline-editable name + count badge, Cards / Analysis
  * tabs, the type-grouped list of {@link DeckCardRow}s (with a floating hover
  * preview), and a persistent legality/progress footer. Purely prop-driven
  * (resolved rows + {@link DeckStats}); all mutations route back through the page's
  * useDeck actions. Removal is deferred so the row can collapse out first.
  */
-export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement, actions, onOpenDetails}: DeckPanelProps) {
+export function DeckPanel({
+  name,
+  onRename,
+  rows,
+  stats,
+  onIncrement,
+  onDecrement,
+  actions,
+  isPublic,
+  onVisibilityChange,
+  onOpenDetails,
+}: DeckPanelProps) {
   const [statsTab, setStatsTab] = useState<StatsTab>('curve');
   const [peek, setPeek] = useState<{card: LorcanaCard; anchor: DOMRect} | null>(null);
 
@@ -371,18 +423,13 @@ export function DeckPanel({name, onRename, rows, stats, onIncrement, onDecrement
         background: COLORS.surface,
         borderLeft: `1px solid ${COLORS.surfaceBorder}`,
       }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: SPACING.sm,
-          padding: SPACING.md,
-          borderBottom: `1px solid ${COLORS.surfaceBorder}`,
-          flexShrink: 0,
-        }}>
-        <DeckNameField name={name} onRename={onRename} />
-        {actions}
-      </div>
+      <PanelHeader
+        name={name}
+        onRename={onRename}
+        isPublic={isPublic}
+        onVisibilityChange={onVisibilityChange}
+        actions={actions}
+      />
 
       {totalCopies(stats.costCurve) > 0 && (
         <div style={{display: 'flex', height: STATS_ROW_HEIGHT, flexShrink: 0, borderBottom: `1px solid ${COLORS.surfaceBorder}`}}>

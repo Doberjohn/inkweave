@@ -33,6 +33,7 @@ import {
   markCardCore,
   removeCardFromDeck,
   renameDeckName,
+  setDeckVisibility,
   setCardQuantity,
   setDeckGameplan,
 } from './deckMutations';
@@ -84,6 +85,8 @@ interface DeckContextValue {
   setGameplan: (gameplan: Archetype | undefined) => void;
   /** Rename the deck. */
   renameDeck: (name: string) => void;
+  /** Who can see the deck. A property of the draft; Save is what persists it. */
+  setVisibility: (isPublic: boolean) => void;
   /** Empty the card list, keeping the deck's identity and name. */
   clearDeck: () => void;
   /** Replace every card — the import path; an import replaces, never merges. */
@@ -232,6 +235,7 @@ export function DeckProvider({children}: {children: ReactNode}) {
   const setGameplan = (gameplan: Archetype | undefined) => setDeck((d) => setDeckGameplan(d, gameplan));
 
   const renameDeck = (name: string) => setDeck((d) => renameDeckName(d, name));
+  const setVisibility = (isPublic: boolean) => setDeck((d) => setDeckVisibility(d, isPublic));
 
   const clearDeck = () => setDeck((d) => clearDeckCards(d));
   const replaceCards = (cards: DeckCard[]) => setDeck((d) => replaceDeckCards(d, cards, getCardById));
@@ -265,6 +269,7 @@ export function DeckProvider({children}: {children: ReactNode}) {
     markCore,
     setGameplan,
     renameDeck,
+    setVisibility,
     clearDeck,
     replaceCards,
     isDirty,

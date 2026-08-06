@@ -14,7 +14,14 @@ const meta: Meta<typeof DeckActionsBar> = {
     ),
   ],
   tags: ['autodocs'],
-  args: {onClear: fn(), onImport: fn(), onSave: fn(), onExport: fn(), saveState: 'idle', isDirty: true},
+  args: {
+    onClear: fn(),
+    onImport: fn(),
+    onSave: fn(),
+    onExport: fn(),
+    saveState: 'idle',
+    isDirty: true,
+  },
 };
 export default meta;
 type Story = StoryObj<typeof meta>;

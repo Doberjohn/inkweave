@@ -61,7 +61,7 @@ const meta: Meta<typeof DeckPanel> = {
     ),
   ],
   tags: ['autodocs'],
-  args: {onRename: fn(), onIncrement: fn(), onDecrement: fn(), onOpenDetails: fn()},
+  args: {onRename: fn(), onIncrement: fn(), onDecrement: fn(), onOpenDetails: fn(), isPublic: false, onVisibilityChange: fn()},
 };
 export default meta;
 type Story = StoryObj<typeof meta>;
