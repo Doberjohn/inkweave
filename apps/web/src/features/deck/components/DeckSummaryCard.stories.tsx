@@ -3,6 +3,18 @@ import {MemoryRouter} from 'react-router-dom';
 import {DeckSummaryCard} from './DeckSummaryCard';
 import type {Deck} from '../types';
 
+/**
+ * The narrow end of the real `/decks` grid, where names clamp first. A tile
+ * rendered full-width in Storybook says nothing about the case it is meant to
+ * demonstrate, so every story here is measured at the width that hurts.
+ */
+const GRID_COLUMN_WIDTH = 300;
+
+/**
+ * The tile reads exactly three fields: `name`, `inks`, and `id` for the href.
+ * `cards` stays empty on purpose, because the copy count arrives as the separate
+ * `cardCount` prop and a fixture list here would only invite the two to disagree.
+ */
 const baseDeck: Deck = {
   id: 'd1e2c3k4-0000-4000-8000-000000000001',
   name: 'Amber Steel Aggro',
@@ -18,11 +30,11 @@ const meta: Meta<typeof DeckSummaryCard> = {
   title: 'Deck/DeckSummaryCard',
   component: DeckSummaryCard,
   tags: ['autodocs'],
-  // It renders a <Link>, so it needs a router above it.
   decorators: [
     (Story) => (
+      // The tile is a react-router <Link>, which throws without a router above it.
       <MemoryRouter>
-        <div style={{maxWidth: 640}}>
+        <div style={{width: GRID_COLUMN_WIDTH}}>
           <Story />
         </div>
       </MemoryRouter>
@@ -33,23 +45,84 @@ const meta: Meta<typeof DeckSummaryCard> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The everyday row: a named, legal, two-ink deck. */
-export const Default: Story = {};
+/**
+ * The everyday tile. Both gradient stops differ, so the deck's ink pair reads as
+ * colour before a single symbol is decoded, which is the entire reason the flat
+ * row became a tile.
+ */
+export const TwoInks: Story = {};
 
-/** A deck saved before it was named still has to be readable and clickable. */
-export const Untitled: Story = {args: {deck: {...baseDeck, name: ''}}};
-
-/** A long name truncates rather than pushing the inks and the count off the row. */
-export const LongName: Story = {
-  args: {deck: {...baseDeck, name: 'Sapphire Steel Ramp into Big Late-Game Locations and Friends'}},
+/**
+ * Mono-ink. `deckTint` repeats the one ink into both stops rather than branching,
+ * so this has to render as a flat panel. A visible diagonal here means a stop
+ * drifted, and a stop that renders as nothing means `inks[1]` leaked `undefined`
+ * into the gradient string.
+ */
+export const OneInk: Story = {
+  args: {deck: {...baseDeck, name: 'Ruby Rush', inks: ['Ruby']}, cardCount: 42},
 };
 
-/** A single-ink deck, and the singular card label. */
-export const SingleInkOneCard: Story = {
-  args: {deck: {...baseDeck, name: 'Ruby Rush', inks: ['Ruby']}, cardCount: 1},
-};
-
-/** An empty draft has no inks derived yet — the chips row simply disappears. */
-export const EmptyDraft: Story = {
+/**
+ * A fresh draft, which has not earned a colour identity: plain surface, no
+ * gradient, no ink symbols to sit on it. A tint appearing here would be an empty
+ * deck claiming inks it does not have.
+ */
+export const NoInks: Story = {
   args: {deck: {...baseDeck, name: 'New deck', inks: []}, cardCount: 0},
 };
+
+/**
+ * Whitespace, not an empty string. The fallback is guarded by `.trim()`, and a
+ * bare `''` fixture would still pass if that trim were dropped, shipping a
+ * spacebar name as a title that renders as nothing at all.
+ */
+export const UnnamedDeck: Story = {args: {deck: {...baseDeck, name: '   '}}};
+
+/**
+ * The longest real deck name in the wild, 71 characters. It must clamp to two
+ * lines and ellipsize while the inks and the count hold their row: the tile is a
+ * grid item, so a name that refuses to clamp widens the whole track, not just
+ * itself. Nothing caps deck-name length, so this is the floor, not the ceiling.
+ */
+export const LongName: Story = {
+  args: {
+    deck: {
+      ...baseDeck,
+      name: 'Set 13 BS! Justin Told Me Terror That Flaps In the Night Is a Good Card',
+    },
+  },
+};
+
+/**
+ * One copy, one label. The count pluralizes inline, and "1 cards" is exactly the
+ * kind of thing that ships, because nobody builds a one-card deck by hand.
+ */
+export const SingleCard: Story = {args: {cardCount: 1}};
+
+/**
+ * The community list, where whose deck this is matters. The author groups with the
+ * name rather than joining the ink/count row: the tile is `space-between` over two
+ * children, so a third would land in the middle instead of under the title.
+ */
+export const WithAuthor: Story = {args: {authorName: 'Doberjohn'}};
+
+/**
+ * A display name at the column's 60-character cap, on the longest real deck name.
+ * Both must ellipsize independently — the author on one line, the title on two —
+ * without either widening the grid track they share.
+ */
+export const LongNameAndLongAuthor: Story = {
+  args: {
+    deck: {
+      ...baseDeck,
+      name: 'Set 13 BS! Justin Told Me Terror That Flaps In the Night Is a Good Card',
+    },
+    authorName: 'A Very Long Deck Building Name That Reaches Sixty Characters!',
+  },
+};
+
+/**
+ * Your own list passes no author, because every deck there is yours and repeating
+ * that per tile is noise. The title block must collapse cleanly to one child.
+ */
+export const NoAuthor: Story = {args: {authorName: undefined}};

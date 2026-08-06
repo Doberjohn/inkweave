@@ -22,14 +22,25 @@ interface InkIconProps {
   size?: number;
   /** Set to false when icon is used without adjacent text label */
   decorative?: boolean;
+  /**
+   * Native hover tooltip. Off by default, because most icons here sit beside the
+   * ink's name already and a tooltip repeating it is noise.
+   *
+   * Turn it on where the symbol is the ONLY thing naming the ink, as on the deck
+   * tiles: `alt` is announced by a screen reader but produces no tooltip in any
+   * current browser, so a sighted reader who does not recognise the hexagon has
+   * nothing to hover.
+   */
+  showTooltip?: boolean;
 }
 
-export function InkIcon({ink, size = 20, decorative = true}: InkIconProps) {
+export function InkIcon({ink, size = 20, decorative = true, showTooltip = false}: InkIconProps) {
   return (
     <img
       src={INK_ICONS[ink]}
       alt={decorative ? '' : ink}
       aria-hidden={decorative}
+      title={showTooltip ? ink : undefined}
       width={size}
       height={size}
       style={{display: 'block', flexShrink: 0}}

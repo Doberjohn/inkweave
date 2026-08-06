@@ -7,6 +7,7 @@ import {DeckSummaryCard} from '../features/deck/components/DeckSummaryCard';
 import {NewDeckDialog} from '../features/deck/components/NewDeckDialog';
 import {calculateDeckStats} from '../features/deck/analysis/deckStats';
 import {listDecks, listPublicDecks, useDeck, type RepoResult} from '../features/deck/state';
+import {DisplayNameDialog, getAuthorNames, useProfile} from '../features/profile';
 import type {Deck} from '../features/deck/types';
 import type {LorcanaCard} from '../features/cards';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
@@ -99,6 +100,39 @@ function useReload(): [number, () => void] {
   const [attempt, setAttempt] = useState(0);
   return [attempt, () => setAttempt((n) => n + 1)];
 }
+
+/**
+ * The display name of each deck's owner, keyed by owner id.
+ *
+ * A second read rather than a join. `decks.owner_id` references `auth.users`, not
+ * `profiles`, so PostgREST has no foreign key to embed across — and adding one would
+ * fail against the accounts that predate the profiles table and still have no row.
+ *
+ * Keyed on the joined owner ids, so it refetches when the LIST changes rather than on
+ * every render, and the empty map it starts from is why the tiles render immediately
+ * and gain their authors a beat later instead of blocking on this.
+ */
+function useAuthorNames(decks: Deck[] | null): Map<string, string> {
+  const [names, setNames] = useState<Map<string, string>>(EMPTY_NAMES);
+  const ownerIds = decks ? [...new Set(decks.map((deck) => deck.ownerId).filter((id): id is string => Boolean(id)))] : [];
+  const key = ownerIds.join(',');
+
+  useEffect(() => {
+    if (key === '') return;
+    let active = true;
+    void getAuthorNames(key.split(',')).then(({data}) => {
+      if (active && data) setNames(data);
+    });
+    return () => {
+      active = false;
+    };
+  }, [key]);
+
+  return names;
+}
+
+/** Module-level so the initial state is referentially stable across renders. */
+const EMPTY_NAMES: Map<string, string> = new Map();
 
 /**
  * One deck list, read once per `source` (and once more per retry). Both tabs share
@@ -196,11 +230,48 @@ function LoadFailure({what, onRetry}: {what: string; onRetry: () => void}) {
 }
 
 /** The list itself: one summary row per deck. */
-function DeckList({decks, hrefFor}: {decks: Deck[]; hrefFor?: (deck: Deck) => string}) {
+/**
+ * Minimum tile width before the grid drops a column. 270px is what keeps a
+ * two-line deck name readable; below that the names clamp on almost every deck.
+ */
+const TILE_MIN_WIDTH = 270;
+
+/**
+ * Wider than the 900px its sibling pages use, deliberately.
+ *
+ * 900 is a reading measure and it is right for `DeckViewPage`, which is a
+ * 60-line card list you read top to bottom. This page is a browse grid, where
+ * the measure caps how many decks you can compare at once: at 900 it is three
+ * tiles per row on any monitor, at 1200 it is four. Raised by owner request
+ * once the rows became tiles.
+ */
+const PAGE_MAX_WIDTH = 1200;
+
+function DeckList({
+  decks,
+  hrefFor,
+  names,
+}: {
+  decks: Deck[];
+  hrefFor?: (deck: Deck) => string;
+  /** Owner id -> display name. Absent on your own list, where every deck is yours. */
+  names?: Map<string, string>;
+}) {
   return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(auto-fill, minmax(${TILE_MIN_WIDTH}px, 1fr))`,
+        gap: SPACING.lg,
+      }}>
       {decks.map((deck) => (
-        <DeckSummaryCard key={deck.id} deck={deck} cardCount={countCards(deck)} to={hrefFor?.(deck)} />
+        <DeckSummaryCard
+          key={deck.id}
+          deck={deck}
+          cardCount={countCards(deck)}
+          to={hrefFor?.(deck)}
+          authorName={deck.ownerId ? names?.get(deck.ownerId) : undefined}
+        />
       ))}
     </div>
   );
@@ -213,6 +284,8 @@ interface CommunityTabProps {
   /** False while the card database is still resolving. */
   cardsReady: boolean;
   getCardById: CardLookup;
+  /** Owner id -> display name, filled in a beat after the tiles render. */
+  names: Map<string, string>;
 }
 
 /**
@@ -223,7 +296,7 @@ interface CommunityTabProps {
  * nothing in the database to filter on. It waits for the card database, since
  * every deck reads as illegal while `getCardById` still resolves nothing.
  */
-function CommunityTab({list, cardsReady, getCardById}: CommunityTabProps) {
+function CommunityTab({list, cardsReady, getCardById, names}: CommunityTabProps) {
   if (list.failed) return <LoadFailure what="community decks" onRetry={list.retry} />;
   if (list.decks === null || !cardsReady) return <LoadingNote label="Loading decks…" />;
 
@@ -231,12 +304,62 @@ function CommunityTab({list, cardsReady, getCardById}: CommunityTabProps) {
   if (legal.length === 0) {
     return (
       <EmptyNote>
-        No decks have been shared yet. Build one with <strong>+ New deck</strong> above and set it to public when you
-        save, and it lands here for everyone.
+        No decks have been shared yet. Build one with <strong>+ New deck</strong>, set it to{' '}
+        <strong>Public</strong> while you build, and it lands here once you save a Core-legal 60.
       </EmptyNote>
     );
   }
-  return <DeckList decks={legal} />;
+  return <DeckList decks={legal} names={names} />;
+}
+
+/**
+ * Who your published decks appear as, with the way to change it.
+ *
+ * It lives in "Yours" rather than the header because that is where it is TRUE: this
+ * tab is the only place the name is yours rather than someone else's. It also has to
+ * work on mobile, and `CompactHeader` renders nothing there.
+ *
+ * Renders nothing until the identity resolves. A placeholder would be worse than an
+ * absence: the row exists to tell you a specific name, and briefly showing a
+ * different one is the one thing it must not do.
+ */
+function PublishingAs({userId}: {userId: string}) {
+  const {identity, adoptDisplayName} = useProfile();
+  const [open, setOpen] = useState(false);
+  if (!identity) return null;
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: SPACING.sm,
+        marginBottom: SPACING.lg,
+        fontFamily: FONTS.body,
+        fontSize: `${FONT_SIZES.sm}px`,
+        color: COLORS.textMuted,
+      }}>
+      {/*
+        The DISPLAY name, which is what a reader of your decks sees. The handle is
+        not shown: nothing renders it yet, and putting an identifier beside the name
+        here would imply the two are interchangeable when only one is unique.
+      */}
+      <span>
+        You publish as <strong style={{color: COLORS.text}}>{identity.displayName}</strong>
+      </span>
+      <CtaButton variant="ghost" onClick={() => setOpen(true)}>
+        Change
+      </CtaButton>
+      <DisplayNameDialog
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        userId={userId}
+        current={identity.displayName}
+        onSaved={adoptDisplayName}
+      />
+    </div>
+  );
 }
 
 /** The signed-in half of "Yours": whatever the account has saved. */
@@ -254,8 +377,24 @@ function SavedDecks({list}: {list: DeckListState & {retry: () => void}}) {
  * draft — the builder works fully without an account, so a guest still has decks
  * to list, they just live in this browser.
  */
-function MyDecksTab({list, signedIn, draft}: {list: DeckListState & {retry: () => void}; signedIn: boolean; draft: Deck}) {
-  if (signedIn) return <SavedDecks list={list} />;
+function MyDecksTab({
+  list,
+  userId,
+  draft,
+}: {
+  list: DeckListState & {retry: () => void};
+  /** The signed-in user, or null for a guest working from a local draft. */
+  userId: string | null;
+  draft: Deck;
+}) {
+  if (userId) {
+    return (
+      <>
+        <PublishingAs userId={userId} />
+        <SavedDecks list={list} />
+      </>
+    );
+  }
   // An unsaved draft has no cloud row, so /decks/:id would find nothing; the
   // builder holds it in context already and is the honest destination.
   if (draft.cards.length > 0) return <DeckList decks={[draft]} hrefFor={() => '/decks/new'} />;
@@ -287,6 +426,9 @@ export function DecksPage() {
   const [signInOpen, setSignInOpen] = useState(false);
   const community = useDeckList('public');
   const own = useDeckList(user ? `own:${user.id}` : '');
+  // Community only. On "Yours" every deck is yours, so stamping each tile with your
+  // own name is noise — and skipping it also skips the query.
+  const authorNames = useAuthorNames(community.decks);
 
   const openBuilder = (visibility: 'private' | 'public') => {
     startNewDeck(visibility);
@@ -322,50 +464,59 @@ export function DecksPage() {
           minHeight: `calc(100vh - ${LAYOUT.compactHeaderHeight}px)`,
           background: COLORS.background,
           padding: SPACING.xl,
-          maxWidth: 900,
+          maxWidth: PAGE_MAX_WIDTH,
           margin: '0 auto',
         }}>
         {/*
-          The heading shares its row with the mobile auth control. Baseline is
+          The heading shares its row with the page's actions. Baseline is
           deliberately NOT aligned: the hero-serif heading and a 44px button have
           nothing in common to align on, so they center against each other.
+
+          The action cluster wraps rather than shrinks, because at narrow widths
+          two buttons beside a serif heading run out of room before either button
+          can afford to lose a word.
         */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexWrap: 'wrap',
             gap: SPACING.md,
           }}>
           <h1 style={{fontFamily: FONTS.hero, fontSize: FONT_SIZES.xxl, color: COLORS.text, margin: 0}}>Decks</h1>
-          {showsOwnAuthControl({isMobile}) && <AuthButton onSignIn={() => setSignInOpen(true)} />}
+          <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
+            {/* Auth first, so the filled primary stays rightmost, as it is in the deck toolbar. */}
+            {showsOwnAuthControl({isMobile}) && <AuthButton onSignIn={() => setSignInOpen(true)} />}
+            {/*
+              This was a <Link> spreading the kit's filled CTA, and the anchor was
+              deliberate: middle-click, open-in-new-tab and crawlability all
+              mattered. Creating a deck can now stop to ask a question, and a
+              dialog cannot intervene in a native navigation, so those affordances
+              are given up here deliberately rather than overlooked. /decks/new
+              stays reachable by URL.
+
+              inline-flex because CtaButton's own `display: flex` is block-level
+              and would stretch this across the row.
+            */}
+            <CtaButton onClick={startNew} style={{display: 'inline-flex'}}>
+              + New deck
+            </CtaButton>
+          </div>
         </div>
 
         <p style={{fontFamily: FONTS.body, fontSize: FONT_SIZES.base, color: COLORS.textMuted, marginTop: SPACING.sm}}>
           Build a Core-legal deck with live synergy guidance.
         </p>
-        {/*
-          This was a <Link> spreading the kit's filled CTA, and the anchor was
-          deliberate: middle-click, open-in-new-tab and crawlability all mattered.
-          Creating a deck can now stop to ask a question, and a dialog cannot
-          intervene in a native navigation, so those affordances are given up here
-          deliberately rather than overlooked. /decks/new stays reachable by URL.
-
-          inline-flex because CtaButton's own `display: flex` is block-level and
-          would stretch this across the 900px column the Link never filled.
-        */}
-        <CtaButton onClick={startNew} style={{display: 'inline-flex', marginTop: SPACING.lg}}>
-          + New deck
-        </CtaButton>
 
         <div style={{marginTop: SPACING.xxl, borderRadius: `${RADIUS.lg}px`, overflow: 'hidden'}}>
           <TabList tabs={TABS} active={tab} onChange={setTab} ariaLabel="Deck lists" />
         </div>
         <div style={{marginTop: SPACING.lg}}>
           {tab === 'community' ? (
-            <CommunityTab list={community} cardsReady={!isLoading} getCardById={getCardById} />
+            <CommunityTab list={community} cardsReady={!isLoading} getCardById={getCardById} names={authorNames} />
           ) : (
-            <MyDecksTab list={own} signedIn={Boolean(user)} draft={deck} />
+            <MyDecksTab list={own} userId={user?.id ?? null} draft={deck} />
           )}
         </div>
       </main>
