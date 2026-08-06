@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-109 tests across 18 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+132 tests across 20 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
 
@@ -262,6 +262,42 @@ This replaced a version that inferred artifact absence from a *second* 10s UI wa
 | Test | What it verifies |
 |---|---|
 | renders the calibration + activity tabs | `/admin/analytics` shows the `Engine Calibration` h1 and the verdict scale + `Total votes` on the Calibration tab, then switches to the Activity tab and confirms the day-by-day log header |
+
+## `deck-save-share.spec.ts` — 4 tests (desktop only)
+
+The #473 acceptance flow, and the **first coverage of the deck save WRITE path**. Everything before it asserted rendering and reads, so a save that silently failed left the suite green.
+
+Desktop only because `DeckBuilderPage` renders a "not on mobile" notice instead of the builder.
+
+**What is stubbed**, in `e2e/helpers/deckBackend.ts`:
+
+- `signInAs(context)` writes a session into `localStorage['inkweave:auth']` via `addInitScript`, before any page script runs. Real sign-in is an OAuth redirect and cannot run in CI. auth-js persists the whole session at that key (no `userStorage` is configured) and only checks `expires_at * 1000 - Date.now() < 90s`, so a one-year expiry resolves from storage with no network call and no refresh timer. It also seeds `inkweave:deck:migrated:<uid>`, because `useFirstSignInMigration` otherwise upserts any non-empty draft the instant a uid appears, which would save the deck before the spec ever pressed Save.
+- `DeckBackend` is an in-memory `decks` table served through `context.route('**/rest/v1/decks*')`. **Every response is a JSON array**: in postgrest-js 2.108.2 `maybeSingle()` does NOT set the `vnd.pgrst.object+json` Accept header that `single()` does, it unwraps client-side, so one array shape serves lists, single reads and writes alike.
+- One store, several contexts, each with its own `viewerId`. That is what lets a deck saved while signed in be read by a genuinely separate anonymous context. The store enforces `is_public or auth.uid() = owner_id`, mirroring `decks_select_public_or_own`, and rejects anonymous writes.
+
+**What these specs therefore do NOT prove:** RLS itself, or that Postgres accepts the write. That half belongs in `scripts/test-supabase-integration.mjs`, which today covers voting only and has no deck coverage at all.
+
+**Owner ruling 2026-08-05: publish is not a separate concept.** Visibility is a property of the deck, chosen in the New deck dialog and changed any time in the builder, and **Save is the only thing that writes it**. `/decks/:id` states the current visibility and cannot change it. Copying a link never publishes, and on a private deck Copy link is disabled, because that link resolves to nothing for anyone else.
+
+That single-writer rule is not a style choice: two writers (the builder's Save and a control on the deck page) is what caused a REPRODUCED bug where publishing a deck and then saving any later edit silently un-published it, dropping the deck out of community decks. The fourth test below is that bug's regression guard.
+
+Assertions go through **buttons and their disabled reasons**, never internal state. A disabled button's `aria-label` REPLACES its text as the accessible name, which is what makes each reason addressable:
+
+| Signal | Asserted as |
+|---|---|
+| the deck is Core legal | `Play on Duels` is enabled. It is gated on `DeckStats.isLegal`, so this covers the 60-card, 4-copy and 2-ink rules at once |
+| the deck is saved | a button named `No changes to save` (the rested, disabled Save) |
+| the deck is private | a button named `Only a public deck has a link to share. Make this deck public first.`, and NO button named `Copy link` |
+| visibility is changed | the `Deck visibility` group in the builder, then Save. There is no control for it anywhere else |
+
+| Test | What it verifies |
+|---|---|
+| a deck created public is live for a stranger as soon as it is saved | creates the deck as **Public** in the New deck dialog → imports a Core-legal 60 → Save writes one row owned by the test user, 60 copies, `is_public: true` with no second step → Copy link is enabled → a separate anonymous context renders the deck with 60 cards and NO owner controls |
+| a private deck refuses to hand out a link until the builder makes it public | created Private → saved `is_public: false` → Copy link disabled and saying why → an anonymous context gets "Deck not found" → the deck page has NO publish control → Edit deck, flip to Public, Save → Copy link enables and the stranger now sees the deck |
+| saving a later edit does not quietly un-publish the deck | created Public and saved → leave the builder, return via the deck page, Edit deck, remove one copy, Save → still `is_public: true`. Guards a bug that was reproduced end to end before the fix |
+| an unsaved deck is not written to the cloud on its own | after importing 60 cards while signed in, Save is live and the backend has received nothing: nothing reaches the cloud until the user asks |
+
+The visibility assertion was mutation-tested (forcing `visibleTo` to true fails the "Deck not found" step), so it is known to bite rather than merely pass.
 
 ## `navigation.spec.ts` — 5 tests (3 desktop, 2 mobile)
 
