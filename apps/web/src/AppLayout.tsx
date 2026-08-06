@@ -3,6 +3,7 @@ import {Outlet, useLocation} from 'react-router-dom';
 import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
 import {SkeletonTheme} from 'react-loading-skeleton';
+import {ProfileProvider} from './features/profile';
 import {RevealsPromoCard, useRevealPhase, type RevealPhase} from './features/reveals';
 import {
   BetaNotice,
@@ -108,14 +109,18 @@ export function AppLayout() {
   return (
     <ErrorBoundary>
       <SessionProvider>
-        {/* One SkeletonTheme for the whole app (#511) — the 11 per-feature wrappers collapse into this. */}
-        <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
-          <CardDataProvider>
-            <CardModalProvider>
-              <AppContent />
-            </CardModalProvider>
-          </CardDataProvider>
-        </SkeletonTheme>
+        {/* Inside SessionProvider, which it reads: it claims a handle when a user
+            appears and clears it when they leave. */}
+        <ProfileProvider>
+          {/* One SkeletonTheme for the whole app (#511) — the 11 per-feature wrappers collapse into this. */}
+          <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+            <CardDataProvider>
+              <CardModalProvider>
+                <AppContent />
+              </CardModalProvider>
+            </CardDataProvider>
+          </SkeletonTheme>
+        </ProfileProvider>
       </SessionProvider>
       <Analytics />
       <SpeedInsights />

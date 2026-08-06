@@ -12,6 +12,7 @@
 // writes so the WITH CHECK passes and the domain<->row mapping stays unit-testable.
 
 import type {Database, Json} from '../../../shared/lib/database.types';
+import {NOT_CONFIGURED, type RepoResult} from '../../../shared/lib/repoResult';
 import {getSupabase} from '../../../shared/lib/supabase';
 import type {Archetype, Deck, DeckCard, Ink} from '../types';
 
@@ -22,13 +23,12 @@ type DeckRow = Database['public']['Tables']['decks']['Row'];
 type DeckInsert = Database['public']['Tables']['decks']['Insert'];
 type DecksClient = NonNullable<ReturnType<typeof getSupabase>>;
 
-/** Uniform read/write result. `data` is null on any failure or empty read. */
-export interface RepoResult<T> {
-  data: T | null;
-  error: string | null;
-}
+// The result contract moved to shared/lib when the profile repository landed: two
+// features that both talk to Supabase should agree on one shape without importing
+// each other. Re-exported here so every existing `from './deckRepository'` still
+// resolves, including the deck-state barrel.
+export type {RepoResult} from '../../../shared/lib/repoResult';
 
-const NOT_CONFIGURED = 'Supabase not configured';
 const SCHEMA_VERSION = 1 as const;
 
 const VALID_ARCHETYPES = new Set<Archetype>(['aggro', 'tempo', 'midrange', 'control', 'combo', 'ramp']);

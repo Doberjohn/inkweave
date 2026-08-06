@@ -148,6 +148,15 @@ export type Database = {
       }
     }
     Functions: {
+      claim_handle: {
+        Args: never
+        Returns: {
+          display_name: string
+          handle: string
+        }[]
+      }
+      pretty_handle: { Args: { handle: string }; Returns: string }
+      random_handle: { Args: never; Returns: string }
       submit_vote: {
         Args: {
           p_accuracy?: number
