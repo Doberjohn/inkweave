@@ -1,14 +1,10 @@
-import {useState} from 'react';
 import {Link} from 'react-router-dom';
 import {InkIcon} from '../../../shared/components/InkIcon';
 import {
   blackRgba,
   COLORS,
-  DURATION,
-  EASING,
   FONTS,
   FONT_SIZES,
-  GOLD_GLOW,
   RADIUS,
   SHADOWS,
   TRUNCATE,
@@ -295,15 +291,12 @@ function ClassificationStrip({deck, authorName}: {deck: Deck; authorName?: strin
  * Dropped deliberately rather than squeezed in; the parchment is where it would go.
  */
 export function DeckSummaryCard({deck, to, authorName, artUrl}: DeckSummaryCardProps) {
-  const [hovered, setHovered] = useState(false);
   const name = deck.name.trim() || FALLBACK_NAME;
 
   return (
     <Link
       to={to ?? `/decks/${deck.id}`}
       aria-label={authorName ? `${name}, by ${authorName}` : name}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       style={{
         containerType: 'inline-size',
         position: 'relative',
@@ -313,10 +306,15 @@ export function DeckSummaryCard({deck, to, authorName, artUrl}: DeckSummaryCardP
         borderRadius: `${RADIUS.xl}px`,
         overflow: 'hidden',
         textDecoration: 'none',
-        boxShadow: hovered ? SHADOWS.panel : SHADOWS.card,
-        outline: hovered ? `1px solid ${GOLD_GLOW.hoverBorder}` : undefined,
-        transition: `transform ${DURATION.fast}ms ${EASING.snappy}, box-shadow ${DURATION.fast}ms ${EASING.snappy}`,
-        transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
+        // No hover lift, glow or border (owner ruling 2026-08-07). The house tile
+        // recipe announced itself as a UI control; a card is an object, and the
+        // printed frame already reads as clickable without chrome asserting it.
+        //
+        // The KEYBOARD focus ring is untouched — it is the browser default here, and
+        // suppressing it is what the design-system rule forbids without a visible
+        // replacement. Hover is a mouse affordance; focus is the only way a keyboard
+        // user can see where they are.
+        boxShadow: SHADOWS.card,
       }}>
       <FrameBackdrop deck={deck} />
       <FrameArt artUrl={artUrl} deckName={name} />
