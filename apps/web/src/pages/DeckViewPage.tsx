@@ -115,7 +115,6 @@ function NotFound() {
       <p style={{margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.base}px`}}>
         Deck not found. It may not exist, or it may be private.
       </p>
-      <BackLink to="/decks" label="Back to decks" style={{marginTop: SPACING.lg}} />
     </div>
   );
 }
@@ -298,6 +297,17 @@ function PageShell({children}: {children: ReactNode}) {
           margin: '0 auto',
           fontFamily: FONTS.body,
         }}>
+        {/*
+          The way out, rendered by the SHELL rather than by the loaded deck.
+          It depends on no data, so putting it here means it paints with the first
+          frame instead of pushing the page down 44px when the deck arrives — which
+          is exactly what it did, measured, once it was added after the skeleton was
+          tuned to 0px.
+          
+          It also means the failed-read and not-found states get a way out, which
+          the error state did not have at all.
+        */}
+        <BackLink to="/decks" label="Back to decks" />
         {children}
       </main>
     </>
@@ -367,13 +377,6 @@ export function DeckViewPage() {
 
   return (
     <PageShell>
-      {/*
-        The way out. A shared link lands people here cold, with the header's nav as
-        their only route onward and nothing saying where "here" sits — so the deck
-        list gets named explicitly rather than left to the browser's back button,
-        which a first-time visitor does not have a history for.
-      */}
-      <BackLink to="/decks" label="Back to decks" />
       <DeckHeading
         deck={deck}
         totalCards={stats.totalCards}
