@@ -21,6 +21,16 @@ import type {BrowserContext, Route} from '@playwright/test';
 /** A stable, valid v4 UUID. The column is uuid, so a "test-user" string would not do. */
 export const TEST_USER_ID = '3f7a1c52-9d84-4b1e-8f0a-2c6d5e4b7a90';
 
+/**
+ * The public identity the stubbed backend hands out.
+ *
+ * A handle matching the schema's `^[a-z0-9_]{3,30}$` and a display name derived from
+ * it the way `pretty_handle` does, so a spec asserting on the author sees the shape
+ * production produces rather than a placeholder that could never exist.
+ */
+export const TEST_HANDLE = 'emerald_dreamborn_434';
+export const TEST_DISPLAY_NAME = 'Emerald Dreamborn 434';
+
 /** Storage key from `shared/lib/supabase.ts`. Not the supabase-js default. */
 const AUTH_STORAGE_KEY = 'inkweave:auth';
 
@@ -156,6 +166,27 @@ export class DeckBackend {
    */
   async attach(context: BrowserContext, viewerId: string | null = null): Promise<void> {
     await context.route('**/rest/v1/decks*', (route) => this.handle(route, viewerId));
+
+    /*
+      Identity, stubbed alongside the decks.
+
+      `ProfileProvider` claims a handle on every sign-in, and the stubbed session
+      carries a fake JWT that a real Supabase rejects with "No suitable key or wrong
+      key type". That surfaced as a console error the fixture's guard treats as fatal,
+      which failed four specs that had nothing to do with identity.
+
+      Anonymous contexts get an empty profile set rather than no route at all: the
+      community list asks for author names whether or not anyone is signed in, and an
+      unrouted request would reach the network for real.
+    */
+    await context.route('**/rest/v1/rpc/claim_handle', (route) =>
+      route.fulfill({json: viewerId ? [{handle: TEST_HANDLE, display_name: TEST_DISPLAY_NAME}] : []}),
+    );
+    await context.route('**/rest/v1/profiles*', (route) =>
+      route.fulfill({
+        json: viewerId ? [{id: viewerId, handle: TEST_HANDLE, display_name: TEST_DISPLAY_NAME}] : [],
+      }),
+    );
   }
 
   private handle(route: Route, viewerId: string | null): Promise<void> {

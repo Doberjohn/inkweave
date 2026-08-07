@@ -293,7 +293,7 @@ Assertions go through **buttons and their disabled reasons**, never internal sta
 | Test | What it verifies |
 |---|---|
 | a deck created public is live for a stranger as soon as it is saved | creates the deck as **Public** in the New deck dialog → imports a Core-legal 60 → Save writes one row owned by the test user, 60 copies, `is_public: true` with no second step → Copy link is enabled → a separate anonymous context renders the deck with 60 cards and NO owner controls |
-| a private deck refuses to hand out a link until the builder makes it public | created Private → saved `is_public: false` → Copy link disabled and saying why → an anonymous context gets "Deck not found" → the deck page has NO publish control → Edit deck, flip to Public, Save → Copy link enables and the stranger now sees the deck |
+| a private deck is invisible to strangers until the builder makes it public | created Private → saved `is_public: false` → an anonymous context gets "Deck not found" → the deck page has NO publish control and no share affordance at all → Edit deck, flip to Public → the flip writes on its own → the stranger now sees the deck. Renamed 2026-08-07: Copy link was deleted, so the guard is now that the affordance does not exist rather than that it refuses |
 | saving a later edit does not quietly un-publish the deck | created Public and saved → leave the builder, return via the deck page, Edit deck, remove one copy, Save → still `is_public: true`. Guards a bug that was reproduced end to end before the fix |
 | an unsaved deck is not written to the cloud on its own | after importing 60 cards while signed in, Save is live and the backend has received nothing: nothing reaches the cloud until the user asks |
 

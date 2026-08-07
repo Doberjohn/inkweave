@@ -86,9 +86,10 @@ test.describe('Deck save and share', () => {
     // No second step ran between createDeck and saveDeck.
     expect(saved.is_public).toBe(true);
 
-    // The owner can hand the link out, because there is now something to open.
+    // The owner's own view of it. Copy link is gone (owner ruling 2026-08-07), so
+    // Edit is what distinguishes owner from visitor here.
     await page.goto(`/decks/${saved.id}`);
-    await expect(page.getByRole('button', {name: 'Copy link'})).toBeEnabled();
+    await expect(page.getByRole('link', {name: 'Edit deck'})).toBeVisible({timeout: 15000});
 
     // And a stranger, in a genuinely separate context with no session, can open it.
     const anon = await browser.newContext();
@@ -100,12 +101,14 @@ test.describe('Deck save and share', () => {
     // is a default this spec should not pin, but 60 cards had to survive the trip.
     await expect(stranger.getByRole('heading', {level: 1})).toBeVisible({timeout: 15000});
     await expect(stranger.getByText('60 cards')).toBeVisible();
-    // Reading someone's deck is not owning it.
-    await expect(stranger.getByRole('region', {name: 'Deck owner controls'})).toHaveCount(0);
+    // Reading someone's deck is not owning it. Asserted on Edit rather than the old
+    // "Deck owner controls" region, which no longer exists — a toHaveCount(0) against
+    // a deleted element passes for the wrong reason and proves nothing.
+    await expect(stranger.getByRole('link', {name: 'Edit deck'})).toHaveCount(0);
     await anon.close();
   });
 
-  test('a private deck refuses to hand out a link until the builder makes it public', async ({
+  test('a private deck is invisible to strangers until the builder makes it public', async ({
     page,
     context,
     browser,
@@ -125,14 +128,11 @@ test.describe('Deck save and share', () => {
 
     await page.goto(`/decks/${saved.id}`);
 
-    // Copy link is inert and says why. Its aria-label replaces "Copy link" as the
-    // accessible name, exactly as the disabled Save does, so the reason IS the name.
-    const refused = page.getByRole('button', {
-      name: 'Only a public deck has a link to share. Make this deck public first.',
-    });
-    await expect(refused).toBeVisible();
-    await expect(refused).toBeDisabled();
-    await expect(page.getByRole('button', {name: 'Copy link'})).toHaveCount(0);
+    // The deck loads for its owner. What it no longer carries is any way to share
+    // it — Copy link was deleted (owner ruling 2026-08-07), so the guard against
+    // handing out a private link is now that the affordance does not exist at all.
+    await expect(page.getByRole('heading', {level: 1})).toBeVisible({timeout: 15000});
+    await expect(page.getByRole('button', {name: /copy link/i})).toHaveCount(0);
 
     // Proven before publishing, so the assertion after it means something: the
     // mock enforces `is_public or auth.uid() = owner_id`, exactly as RLS does.
@@ -156,9 +156,6 @@ test.describe('Deck save and share', () => {
     await expect.poll(() => backend.rows.get(saved.id)?.is_public, {timeout: 15000}).toBe(true);
     await expect(page.getByRole('button', {name: 'No changes to save'})).toBeVisible({timeout: 15000});
 
-    // Now the link is worth handing out, and the button stops refusing.
-    await page.goto(`/decks/${saved.id}`);
-    await expect(page.getByRole('button', {name: 'Copy link'})).toBeEnabled();
 
     const anon = await browser.newContext();
     await backend.attach(anon, null);
