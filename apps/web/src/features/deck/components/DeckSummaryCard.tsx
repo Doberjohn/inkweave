@@ -15,7 +15,7 @@ import {
 } from '../../../shared/constants';
 import {ART_OFFSET, ART_SCALE, FRAME, frameFor} from './deckFrame';
 import {deckTint} from './deckTint';
-import type {Deck} from '../types';
+import type {Deck, Ink} from '../types';
 
 interface DeckSummaryCardProps {
   deck: Deck;
@@ -132,7 +132,32 @@ function FrameArt({artUrl, deckName}: {artUrl?: string; deckName: string}) {
  * geometry, so a wrapped name would spill onto the strip below it. The longest real
  * deck name in the wild is 71 characters; truncation is the only honest option.
  */
-function NamePlate({name}: {name: string}) {
+/**
+ * How far to darken the name plate, by ink.
+ *
+ * A flat scrim across all 21 was wrong: it darkened fifteen frames that had no
+ * problem to rescue six, and the cards stopped reading as Lorcana cards (owner,
+ * 2026-08-07). Measured, the failures are not spread out — they are a cliff. White on
+ * the raw plate scores 2.01-2.59 on every Amber frame and 3.82-6.37 on every other
+ * one, with nothing in between.
+ *
+ * So only Amber is corrected, and only as far as the rest already sit. Untouched, the
+ * other frames measure 3.82-4.27; 25% puts Amber at 3.65, which lands it among them
+ * rather than past them — 30% read visibly deeper than the cards beside it. Fifteen
+ * frames render exactly as printed.
+ *
+ * This deliberately does NOT reach WCAG's 4.5 body-text bar. The plate is a
+ * decorative card face carrying a dark text shadow WCAG does not model, and the
+ * alternative measured 40% everywhere — which is the version that lost the look.
+ */
+const AMBER_PLATE_SCRIM = 0.25;
+
+function plateScrim(inks: readonly Ink[]): number {
+  return inks.includes('Amber') ? AMBER_PLATE_SCRIM : 0;
+}
+
+function NamePlate({name, inks}: {name: string; inks: readonly Ink[]}) {
+  const scrim = plateScrim(inks);
   return (
     <span
       style={{
@@ -156,19 +181,14 @@ function NamePlate({name}: {name: string}) {
         ...TRUNCATE,
       }}>
       {/*
-        The plate, darkened. MEASURED: white text on the raw band fails the WCAG
-        body-text bar (4.5) on 16 of the 21 frames, worst 2.01 — every failure is an
-        Amber frame, and every other ink clears it. At 35% the worst lands exactly on
-        4.5; 40% puts it at 5.14.
-
-        The bar is 4.5 rather than the 3.0 large-text one because the name renders
-        10-17px at real tile widths, and WCAG's large-text floor is 18.66px at bold.
-
-        A scrim on the PLATE, not opacity on the whole frame: opacity would dim the
-        parchment and art that have no problem, and it composites against whatever is
-        behind the card, so the correction would silently invert on a light surface.
+        Amber only — see AMBER_PLATE_SCRIM. On the PLATE rather than `opacity` on the
+        frame: opacity dims the parchment and art too, and it composites against
+        whatever is behind the card, so the correction would silently invert on a
+        light surface.
       */}
-      <span aria-hidden style={{position: 'absolute', inset: 0, background: blackRgba(0.4), zIndex: -1}} />
+      {scrim > 0 && (
+        <span aria-hidden style={{position: 'absolute', inset: 0, background: blackRgba(scrim), zIndex: -1}} />
+      )}
       <span style={TRUNCATE}>{name}</span>
     </span>
   );
@@ -198,6 +218,12 @@ function ClassificationStrip({deck, authorName}: {deck: Deck; authorName?: strin
         fontSize: `clamp(${FONT_SIZES.xs}px, 3.8cqw, ${FONT_SIZES.lg}px)`,
         color: COLORS.heroTitle,
         textShadow: `0 1px 2px ${blackRgba(0.9)}`,
+        // Owner setting, on the STRIP rather than on the author, so whatever else
+        // lands in this line later is tracked the same way without restating it.
+        // Absolute rather than em: tracking corrects for the font's tightness at
+        // small sizes, which is a property of the rendering, not of the type size —
+        // so unlike the optical nudge below, it must NOT grow with the card.
+        letterSpacing: '0.5px',
         // NOT hidden: the symbols are deliberately taller than this band so they sit
         // proud of it, as an ink symbol does on a printed card. Clipping here sliced
         // their tops and bottoms off; the text does its own clipping instead.
@@ -294,7 +320,7 @@ export function DeckSummaryCard({deck, to, authorName, artUrl}: DeckSummaryCardP
       }}>
       <FrameBackdrop deck={deck} />
       <FrameArt artUrl={artUrl} deckName={name} />
-      <NamePlate name={name} />
+      <NamePlate name={name} inks={deck.inks} />
       <ClassificationStrip deck={deck} authorName={authorName} />
     </Link>
   );
