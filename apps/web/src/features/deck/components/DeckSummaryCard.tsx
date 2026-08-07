@@ -9,19 +9,16 @@ import {
   FONTS,
   FONT_SIZES,
   GOLD_GLOW,
-  ICON_SIZE,
   RADIUS,
-  SPACING,
-  TABULAR,
+  SHADOWS,
   TRUNCATE,
 } from '../../../shared/constants';
+import {ART_OFFSET, ART_SCALE, FRAME, frameFor} from './deckFrame';
 import {deckTint} from './deckTint';
 import type {Deck} from '../types';
 
 interface DeckSummaryCardProps {
   deck: Deck;
-  /** Total copies in the deck (every `DeckCard.quantity` summed). */
-  cardCount: number;
   /**
    * Destination override. Defaults to the deck's own URL, which is correct for
    * anything that exists in the cloud. The signed-out local draft has no row to
@@ -32,162 +29,273 @@ interface DeckSummaryCardProps {
    * The publisher's display name, on lists where authorship is the point.
    *
    * The DISPLAY name, not the handle: the handle is a unique slug nothing renders,
-   * and a card shows a name. Omitted rather than defaulted, and the tile renders
-   * nothing when it is missing. Both ways of having none are honest: your own list,
-   * where every deck is yours and repeating that per tile is noise, and an account
-   * with no profile row yet.
+   * and a card shows a name. Omitted on your own list, where every deck is yours.
    */
   authorName?: string;
+  /**
+   * Art for the frame's window — the deck's signature card, chosen by
+   * {@link signatureCard}. Resolved by the caller because that needs the card
+   * database, and a tile should not reach for it.
+   */
+  artUrl?: string;
 }
 
-/** A deck can be saved before it is named; the tile still needs something to read. */
+/** A deck can be saved before it is named; the card still needs something to read. */
 const FALLBACK_NAME = 'Untitled deck';
 
-/**
- * Tile height floor. Deliberately taller than the content needs: it reserves the
- * row where the playstyle line will go, so adding that later does not reflow the
- * whole grid. Not a spacing token, because this is a height, not a gap.
- */
-const TILE_MIN_HEIGHT = 148;
+const pct = (n: number) => `${n}%`;
 
 /**
- * One deck in either `/decks` list, as a tile carrying its own ink identity.
+ * The frame bitmap, or the placeholder for a deck that has no ink identity yet.
  *
- * It is an anchor, not a button, because these are real URLs and a list of decks
- * is exactly where middle-click and open-in-new-tab earn their keep.
- *
- * The inks appear as SYMBOLS, not named chips. On a gradient built from those
- * same two inks, a pill reading "Amber" on an amber background says the same
- * thing twice. Dropping the words costs a sighted reader the ability to name an
- * unfamiliar hexagon, so both replacements are wired explicitly: `decorative={false}`
- * puts the name in `alt` for a screen reader, and `showTooltip` puts it in `title`
- * for a mouse. `alt` alone gives no tooltip in any current browser.
+ * A draft with no cards has no inks, so `frameFor` returns null. It gets a plain
+ * panel at the SAME aspect and with the same plate drawn in CSS, rather than the old
+ * short tile: a grid mixing a 377px portrait card with a 148px landscape one reads as
+ * broken, and the empty state is not the place to spend that.
  */
-export function DeckSummaryCard({deck, cardCount, to, authorName}: DeckSummaryCardProps) {
+function FrameBackdrop({deck}: {deck: Deck}) {
+  const src = frameFor(deck.inks);
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt=""
+        style={{position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block'}}
+      />
+    );
+  }
+  return (
+    <span aria-hidden style={{position: 'absolute', inset: 0, background: deckTint(deck.inks)}}>
+      <span
+        style={{
+          position: 'absolute',
+          left: pct(FRAME.art.left),
+          width: pct(FRAME.art.width),
+          top: pct(FRAME.bandTop),
+          height: pct(FRAME.bandHeight),
+          background: COLORS.surfaceAlt,
+        }}
+      />
+    </span>
+  );
+}
+
+/**
+ * The card art, in the frame's blanked window.
+ *
+ * The window is OPAQUE white in the bitmap, not transparent, so the art cannot sit
+ * behind the frame — it has to be placed on top, exactly filling the hole.
+ *
+ * Sized as a percentage rather than left at natural size (which is what the mockup
+ * did): card images are a uniform 337x470, so natural sizing framed correctly at
+ * exactly one tile width, tightening the crop below it and leaving a gap above ~390px.
+ */
+function FrameArt({artUrl, deckName}: {artUrl?: string; deckName: string}) {
+  return (
+    <span
+      style={{
+        position: 'absolute',
+        overflow: 'hidden',
+        left: pct(FRAME.art.left),
+        top: pct(FRAME.art.top),
+        width: pct(FRAME.art.width),
+        height: pct(FRAME.art.height),
+        // Fills the window while the art loads, and stands in permanently for a deck
+        // with no characters in it yet.
+        background: COLORS.surfaceAlt,
+      }}>
+      {artUrl && (
+        <img
+          src={artUrl}
+          // Decorative: the deck name is right below it and names the same thing.
+          alt=""
+          loading="lazy"
+          style={{
+            position: 'absolute',
+            top: 0,
+            width: pct(ART_SCALE),
+            height: 'auto',
+            display: 'block',
+            transform: `translate(${ART_OFFSET.x}%, ${ART_OFFSET.y}%)`,
+          }}
+          data-deck={deckName}
+        />
+      )}
+    </span>
+  );
+}
+
+/**
+ * The deck name, on the frame's coloured plate.
+ *
+ * ONE line, always. The plate is a fixed 9.28% of the card and the bitmap owns that
+ * geometry, so a wrapped name would spill onto the strip below it. The longest real
+ * deck name in the wild is 71 characters; truncation is the only honest option.
+ */
+function NamePlate({name}: {name: string}) {
+  return (
+    <span
+      style={{
+        position: 'absolute',
+        isolation: 'isolate',
+        left: pct(FRAME.art.left),
+        width: pct(FRAME.art.width),
+        top: pct(FRAME.bandTop),
+        height: pct(FRAME.bandHeight),
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: `0 ${pct(6)}`,
+        fontFamily: FONTS.body,
+        fontWeight: 700,
+        fontSize: `clamp(${FONT_SIZES.sm}px, 5.6cqw, ${FONT_SIZES.xxxl}px)`,
+        // Pure white, not the house off-white. The contrast below is tuned for it:
+        // COLORS.white would drop the worst frame from 5.14 to 4.10 and fail AA.
+        color: COLORS.heroTitle,
+        textShadow: `0 1px 2px ${blackRgba(0.85)}`,
+        ...TRUNCATE,
+      }}>
+      {/*
+        The plate, darkened. MEASURED: white text on the raw band fails the WCAG
+        body-text bar (4.5) on 16 of the 21 frames, worst 2.01 — every failure is an
+        Amber frame, and every other ink clears it. At 35% the worst lands exactly on
+        4.5; 40% puts it at 5.14.
+
+        The bar is 4.5 rather than the 3.0 large-text one because the name renders
+        10-17px at real tile widths, and WCAG's large-text floor is 18.66px at bold.
+
+        A scrim on the PLATE, not opacity on the whole frame: opacity would dim the
+        parchment and art that have no problem, and it composites against whatever is
+        behind the card, so the correction would silently invert on a light surface.
+      */}
+      <span aria-hidden style={{position: 'absolute', inset: 0, background: blackRgba(0.4), zIndex: -1}} />
+      <span style={TRUNCATE}>{name}</span>
+    </span>
+  );
+}
+
+/**
+ * The classification strip: ink symbols, then the deck's author.
+ *
+ * On a printed card this line is "Storyborn - Villain - Hero". Here it carries who
+ * made the deck, which is the nearest true equivalent and, unlike playstyle tags,
+ * exists for every deck.
+ */
+function ClassificationStrip({deck, authorName}: {deck: Deck; authorName?: string}) {
+  return (
+    <span
+      style={{
+        position: 'absolute',
+        left: pct(FRAME.art.left),
+        width: pct(FRAME.art.width),
+        top: pct(FRAME.stripTop),
+        height: pct(FRAME.stripHeight),
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: FONTS.body,
+        fontWeight: 700,
+        fontSize: `clamp(${FONT_SIZES.xs}px, 3.8cqw, ${FONT_SIZES.lg}px)`,
+        color: COLORS.heroTitle,
+        textShadow: `0 1px 2px ${blackRgba(0.9)}`,
+        // NOT hidden: the symbols are deliberately taller than this band so they sit
+        // proud of it, as an ink symbol does on a printed card. Clipping here sliced
+        // their tops and bottoms off; the text does its own clipping instead.
+        overflow: 'visible',
+      }}>
+      {/*
+        Pinned left and taken OUT of the flex flow, so the author centres against the
+        CARD rather than against the space the symbols leave. `height: 100%` and not a
+        translate: the symbols size themselves as a percentage of this box, and a
+        percentage height needs a definite ancestor — with auto height they fell back
+        to the SVG's natural size and buried the text.
+      */}
+      <span
+        style={{
+          position: 'absolute',
+          left: pct(1.5),
+          top: 0,
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          filter: `drop-shadow(0 1px 2px ${blackRgba(0.85)})`,
+        }}>
+        {deck.inks.map((ink, i) => (
+          <InkIcon
+            key={ink}
+            ink={ink}
+            decorative={false}
+            showTooltip
+            // Every ink SVG carries 10% transparent padding a side, so touching
+            // hexagons need the second pulled back by 20% of its own width.
+            style={{height: '7.5cqw', width: 'auto', marginLeft: i === 0 ? 0 : '-1.5cqw'}}
+          />
+        ))}
+      </span>
+      {authorName && (
+        <span
+          style={{
+            ...TRUNCATE,
+            maxWidth: pct(70),
+            // Optically centred. Flex centres the LINE BOX, and at line-height normal
+            // that box is ~1.23x the font size with the leading split unevenly, which
+            // left the ink up to 2.6px low. The nudge is in em so it holds at every
+            // tile width; ~1px is the floor, because a descender is real ink and moves
+            // the ink centre down (measured: "Doberjohn" and "Anna" sit 1px apart at
+            // any setting).
+            lineHeight: 1,
+            position: 'relative',
+            top: '-0.04em',
+          }}>
+          {authorName}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/**
+ * One deck in either `/decks` list, as a Lorcana-style card.
+ *
+ * It is an anchor, not a button, because these are real URLs and a list of decks is
+ * exactly where middle-click and open-in-new-tab earn their keep.
+ *
+ * `container-type: inline-size` is what makes the overlays work: every position and
+ * type size here is a percentage or a `cqw` of the card, so one set of measured
+ * constants serves the card at any width in the grid.
+ *
+ * NOTE: the card count the old tile showed has no home on the frame. The strip
+ * carries the author by owner ruling, and the parchment box below it is undesigned.
+ * Dropped deliberately rather than squeezed in; the parchment is where it would go.
+ */
+export function DeckSummaryCard({deck, to, authorName, artUrl}: DeckSummaryCardProps) {
   const [hovered, setHovered] = useState(false);
+  const name = deck.name.trim() || FALLBACK_NAME;
 
   return (
     <Link
       to={to ?? `/decks/${deck.id}`}
+      aria-label={authorName ? `${name}, by ${authorName}` : name}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        gap: SPACING.md,
-        minHeight: TILE_MIN_HEIGHT,
-        padding: SPACING.lg,
-        borderRadius: `${RADIUS.card}px`,
-        border: `1px solid ${hovered ? GOLD_GLOW.hoverBorder : COLORS.surfaceBorder}`,
-        background: deckTint(deck.inks),
+        containerType: 'inline-size',
+        position: 'relative',
+        display: 'block',
+        width: '100%',
+        aspectRatio: `${FRAME.aspect}`,
+        borderRadius: `${RADIUS.xl}px`,
+        overflow: 'hidden',
         textDecoration: 'none',
-        transition: `border-color ${DURATION.fast}ms ${EASING.snappy}, transform ${DURATION.fast}ms ${EASING.snappy}`,
-        transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
+        boxShadow: hovered ? SHADOWS.panel : SHADOWS.card,
+        outline: hovered ? `1px solid ${GOLD_GLOW.hoverBorder}` : undefined,
+        transition: `transform ${DURATION.fast}ms ${EASING.snappy}, box-shadow ${DURATION.fast}ms ${EASING.snappy}`,
+        transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
       }}>
-      {/*
-        Name and author are ONE flex child, not two.
-
-        The tile is `justify-content: space-between` over two children — title block
-        at the top, ink/count row pinned to the bottom. A third child would land in
-        the middle by definition, so the author has to be grouped with the name it
-        belongs to rather than added alongside it.
-      */}
-      <span style={{display: 'flex', flexDirection: 'column', gap: SPACING.xs, minWidth: 0}}>
-        {/*
-          Two lines, then ellipsis. The longest real deck name in the wild is 71
-          characters and does truncate; accepted rather than shrinking the type.
-
-          `overflowWrap: 'anywhere'` is load-bearing, not belt-and-braces. A grid
-          item's `min-width` resolves to min-content, so a name with no break
-          opportunity (a pasted URL: nothing caps deck-name length) would push the
-          track wider instead of clamping, and a single unbreakable word never
-          reaches line 2 to earn its ellipsis. `anywhere` rather than `break-word`
-          because only `anywhere` also shrinks the min-content contribution.
-        */}
-        <span
-          style={{
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            overflowWrap: 'anywhere',
-            color: COLORS.text,
-          // Body font, not the hero serif (owner ruling 2026-08-06). Weight 600
-          // rather than the serif's regular: the display serif carries a title at
-          // its normal weight and the body sans does not, so dropping the serif
-          // without adding weight would leave the name reading as body copy.
-          // 600 not 700, because 700 is a page's own h1 (see PageTitle).
-          //
-            // Font names stay out of this comment on purpose: `check:design` greps
-            // the literal values behind FONTS.*, comments included.
-            fontFamily: FONTS.body,
-            fontWeight: 600,
-            fontSize: `${FONT_SIZES.xxl}px`,
-            lineHeight: 1.25,
-          }}>
-          {deck.name.trim() || FALLBACK_NAME}
-        </span>
-
-        {/*
-          The author reads as part of the title, not as another stat in the bottom
-          row. The inks and the count answer "what is this deck"; the handle answers
-          "whose is it", and putting it here is what makes the community list feel
-          like a list of people's decks rather than a list of decks.
-
-          No @ prefix: this is a name, not a handle, and an @ would imply an
-          addressable identifier that this string is not (display names are not
-          unique — profiles.handle is).
-        */}
-        {authorName && (
-          <span
-            style={{
-              ...TRUNCATE,
-              color: COLORS.textMuted,
-              fontFamily: FONTS.body,
-              fontSize: `${FONT_SIZES.sm}px`,
-            }}>
-            {authorName}
-          </span>
-        )}
-      </span>
-
-      <span style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.sm}}>
-        {/*
-          The drop shadow is not decoration. Each symbol carries its own fill and
-          stroke in its ink's colour, so an Amber hexagon on the amber end of an
-          Amber gradient sits flush against the background it is supposed to be
-          read against. The shadow lifts it off without needing a pill.
-        */}
-        <span
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: SPACING.xs,
-            filter: `drop-shadow(0 1px 3px ${blackRgba(0.75)})`,
-          }}>
-          {deck.inks.map((ink) => (
-            <InkIcon key={ink} ink={ink} size={ICON_SIZE.lg} decorative={false} showTooltip />
-          ))}
-        </span>
-
-        {/*
-          Gold, not the muted grey the row used. Owner's call on how it looks; both
-          clear AA. Worst case is Emerald, the lightest of the six ink tints, where
-          the grey measures 4.84 and gold 7.39.
-        */}
-        <span
-          style={{
-            ...TABULAR,
-            flexShrink: 0,
-            color: COLORS.primary,
-            fontFamily: FONTS.body,
-            fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 600,
-          }}>
-          {cardCount} {cardCount === 1 ? 'card' : 'cards'}
-        </span>
-      </span>
+      <FrameBackdrop deck={deck} />
+      <FrameArt artUrl={artUrl} deckName={name} />
+      <NamePlate name={name} />
+      <ClassificationStrip deck={deck} authorName={authorName} />
     </Link>
   );
 }

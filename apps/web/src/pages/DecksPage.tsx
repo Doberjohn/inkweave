@@ -7,6 +7,7 @@ import {DeckSummaryCard} from '../features/deck/components/DeckSummaryCard';
 import {NewDeckDialog} from '../features/deck/components/NewDeckDialog';
 import {calculateDeckStats} from '../features/deck/analysis/deckStats';
 import {listDecks, listPublicDecks, useDeck, type RepoResult} from '../features/deck/state';
+import {signatureCard} from '../features/deck/components/signatureCard';
 import {DisplayNameDialog, getAuthorNames, useProfile} from '../features/profile';
 import type {Deck} from '../features/deck/types';
 import type {LorcanaCard} from '../features/cards';
@@ -25,11 +26,6 @@ const TABS = [
 ] as const;
 
 type DecksTab = (typeof TABS)[number]['id'];
-
-/** Copies in a deck. Cheaper than full stats, and needs no card database. */
-function countCards(deck: Deck): number {
-  return deck.cards.reduce((total, card) => total + card.quantity, 0);
-}
 
 /**
  * Whether /decks renders its OWN sign in / sign out control beside the heading.
@@ -231,10 +227,14 @@ function LoadFailure({what, onRetry}: {what: string; onRetry: () => void}) {
 
 /** The list itself: one summary row per deck. */
 /**
- * Minimum tile width before the grid drops a column. 270px is what keeps a
- * two-line deck name readable; below that the names clamp on almost every deck.
+ * Minimum card width before the grid drops a column.
+ *
+ * The cards are Lorcana-proportioned now (0.7168), so width buys height at 1.4x:
+ * a 240px card is 335px tall against the old tile's 148. 240 is the floor where the
+ * name plate still renders above the clamp's 11px minimum and the strip above its
+ * 10px one — below that both bottom out and the card stops scaling honestly.
  */
-const TILE_MIN_WIDTH = 270;
+const TILE_MIN_WIDTH = 240;
 
 /**
  * Wider than the 900px its sibling pages use, deliberately.
@@ -251,11 +251,18 @@ function DeckList({
   decks,
   hrefFor,
   names,
+  getCardById,
 }: {
   decks: Deck[];
   hrefFor?: (deck: Deck) => string;
   /** Owner id -> display name. Absent on your own list, where every deck is yours. */
   names?: Map<string, string>;
+  /**
+   * Resolves the deck's signature card for the frame's art window. Optional because
+   * the card database may still be loading, and a card with an empty window is a
+   * better intermediate state than no card at all.
+   */
+  getCardById?: CardLookup;
 }) {
   return (
     <div
@@ -268,9 +275,9 @@ function DeckList({
         <DeckSummaryCard
           key={deck.id}
           deck={deck}
-          cardCount={countCards(deck)}
           to={hrefFor?.(deck)}
           authorName={deck.ownerId ? names?.get(deck.ownerId) : undefined}
+          artUrl={getCardById && signatureCard(deck, getCardById)?.imageUrl}
         />
       ))}
     </div>
@@ -309,7 +316,7 @@ function CommunityTab({list, cardsReady, getCardById, names}: CommunityTabProps)
       </EmptyNote>
     );
   }
-  return <DeckList decks={legal} names={names} />;
+  return <DeckList decks={legal} names={names} getCardById={getCardById} />;
 }
 
 /**

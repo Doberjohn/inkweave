@@ -223,15 +223,24 @@ export class DeckBackend {
 
     const now = new Date().toISOString();
     const existing = this.rows.get(id);
+
+    // One precedence rule for every writable column: the body wins, then whatever the
+    // row already held, then a default. Written once rather than per column — as a
+    // chain of `??` per field it was the same rule restated eight times, and each
+    // restatement was a branch nothing tested independently.
+    const merged = <K extends keyof DeckRow>(key: K, fallback: DeckRow[K]): DeckRow[K] =>
+      payload[key] ?? existing?.[key] ?? fallback;
+
     const row: DeckRow = {
       id,
-      owner_id: payload.owner_id ?? existing?.owner_id ?? viewerId,
-      name: payload.name ?? existing?.name ?? 'Untitled deck',
-      gameplan: payload.gameplan ?? existing?.gameplan ?? null,
-      inks: payload.inks ?? existing?.inks ?? [],
-      cards: payload.cards ?? existing?.cards ?? [],
-      is_public: payload.is_public ?? existing?.is_public ?? false,
-      // created_at is immutable once set, matching the real table.
+      owner_id: merged('owner_id', viewerId),
+      name: merged('name', 'Untitled deck'),
+      gameplan: merged('gameplan', null),
+      inks: merged('inks', []),
+      cards: merged('cards', []),
+      is_public: merged('is_public', false),
+      // created_at is immutable once set, matching the real table — so it reads the
+      // EXISTING value first, the one column where the body does not win.
       created_at: existing?.created_at ?? payload.created_at ?? now,
       updated_at: now,
     };

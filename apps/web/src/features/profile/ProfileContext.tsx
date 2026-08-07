@@ -31,6 +31,30 @@ interface ClaimedIdentity {
   identity: PublicIdentity | null;
 }
 
+/**
+ * What the caller sees, given the last claim and who is signed in now.
+ *
+ * A stored claim counts only for the user it came from; against anyone else there is
+ * no identity and the state is loading again. Deriving that instead of clearing it in
+ * an effect is what keeps sign-out from needing a synchronous setState, which cascades
+ * renders and `react-hooks/set-state-in-effect` rejects. Same shape as DecksPage's
+ * keyed deck-list reads, for the same reason.
+ */
+function resolveClaim(claimed: ClaimedIdentity | null, userId: string | null) {
+  const resolved = claimed?.userId === userId ? claimed : null;
+  return {identity: resolved?.identity ?? null, loading: userId !== null && resolved === null};
+}
+
+/**
+ * Rename in place. The handle is carried through unchanged: renaming yourself changes
+ * what people READ, never the identity the uniqueness index and future /u/ URLs are
+ * built on. A claim that has not landed yet has nothing to rename.
+ */
+function withDisplayName(displayName: string) {
+  return (prev: ClaimedIdentity | null): ClaimedIdentity | null =>
+    prev?.identity ? {...prev, identity: {...prev.identity, displayName}} : prev;
+}
+
 export function ProfileProvider({children}: {children: ReactNode}) {
   const {user} = useSession();
   const userId = user?.id ?? null;
@@ -51,23 +75,9 @@ export function ProfileProvider({children}: {children: ReactNode}) {
     };
   }, [userId]);
 
-  /*
-    A stored claim counts only for the user it came from; against anyone else there is
-    no identity and the state is loading again. Deriving that instead of clearing it in
-    the effect is what keeps sign-out from needing a synchronous setState, which
-    cascades renders and `react-hooks/set-state-in-effect` rejects. Same shape as
-    DecksPage's keyed deck-list reads, for the same reason.
-  */
-  const resolved = claimed?.userId === userId ? claimed : null;
-
   const value: ProfileContextValue = {
-    identity: resolved?.identity ?? null,
-    loading: userId !== null && resolved === null,
-    // The handle is carried through unchanged: renaming yourself changes what people
-    // READ, never the identity the uniqueness index and future /u/ URLs are built on.
-    adoptDisplayName: (displayName: string) => {
-      setClaimed((prev) => (prev?.identity ? {...prev, identity: {...prev.identity, displayName}} : prev));
-    },
+    ...resolveClaim(claimed, userId),
+    adoptDisplayName: (displayName: string) => setClaimed(withDisplayName(displayName)),
   };
   return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;
 }

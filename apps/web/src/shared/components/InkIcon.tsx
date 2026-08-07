@@ -32,9 +32,16 @@ interface InkIconProps {
    * nothing to hover.
    */
   showTooltip?: boolean;
+  /**
+   * Escape hatch from the pixel `size` prop, for a caller that must size the symbol
+   * relative to its container rather than absolutely. The deck card needs it: its
+   * symbols are `cqw` of the card so they scale with the grid, and they overlap by a
+   * negative margin so two hexagons touch.
+   */
+  style?: React.CSSProperties;
 }
 
-export function InkIcon({ink, size = 20, decorative = true, showTooltip = false}: InkIconProps) {
+export function InkIcon({ink, size = 20, decorative = true, showTooltip = false, style}: InkIconProps) {
   return (
     <img
       src={INK_ICONS[ink]}
@@ -43,7 +50,7 @@ export function InkIcon({ink, size = 20, decorative = true, showTooltip = false}
       title={showTooltip ? ink : undefined}
       width={size}
       height={size}
-      style={{display: 'block', flexShrink: 0}}
+      style={{display: 'block', flexShrink: 0, ...style}}
     />
   );
 }

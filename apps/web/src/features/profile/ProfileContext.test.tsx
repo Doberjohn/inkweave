@@ -49,31 +49,26 @@ describe('ProfileProvider', () => {
   /*
     The reason the claim is stored keyed by user rather than as a bare value. Signing
     out has to drop the identity, and doing that by clearing state inside the effect is
-    a synchronous setState the lint rule rejects — so it is DERIVED, and these two are
-    the tests that would catch a regression to the naive version, which leaves a stale
-    name on screen for the next visitor.
+    a synchronous setState the lint rule rejects — so it is DERIVED. Both rows below
+    would catch a regression to the naive version, which leaves a stale name on screen
+    for whoever arrives next. They differ only in what `loading` should settle to.
   */
-  it('drops the identity when the user goes away', async () => {
-    mockSession.user = {id: 'u1'};
-    const {result, rerender} = render();
-    await waitFor(() => expect(result.current.identity).toEqual(IDENTITY));
-
-    mockSession.user = null;
-    rerender();
-    expect(result.current.identity).toBeNull();
-    expect(result.current.loading).toBe(false);
-  });
-
-  it('does not show one user’s name to the next', async () => {
+  it.each([
+    // Signed out. Nobody is waiting on a claim, so this must settle, not hang.
+    ['the user signs out', null, {loading: false}],
+    // A different user on the same machine. Their claim is in flight, so loading.
+    ['a different user arrives', {id: 'u2'}, {loading: true}],
+  ])('drops the identity when %s', async (_case, nextUser, expected) => {
     mockSession.user = {id: 'u1'};
     const {result, rerender} = render();
     await waitFor(() => expect(result.current.identity).toEqual(IDENTITY));
 
     mockClaim.mockReturnValue(new Promise(() => {}));
-    mockSession.user = {id: 'u2'};
+    mockSession.user = nextUser;
     rerender();
+
     expect(result.current.identity).toBeNull();
-    expect(result.current.loading).toBe(true);
+    expect(result.current.loading).toBe(expected.loading);
   });
 
   it('adopts a saved display name without refetching', async () => {
