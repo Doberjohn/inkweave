@@ -441,19 +441,32 @@ const noUnshelledDialogs = {
  *   pattern, so it needs no exemption — noted so nobody adds one.
  */
 const BACK_LINK_EXEMPT = [
-  /src[\/]shared[\/]components[\/](BackLink|Breadcrumb|CompactHeader)\.tsx$/,
+  /src[\\/]shared[\\/]components[\\/](BackLink|Breadcrumb|CompactHeader)\.tsx$/,
   // Terminal screens: the one remaining action is a CTA, not a quiet return.
-  /src[\/]pages[\/](VotePage|InDepthVotePage|AuthCallbackPage)\.tsx$/,
-  // In-OVERLAY state reversal, not page navigation: CardOverviewModal's "← Back"
-  // steps from the comparison state to the default one inside the same modal, and
-  // it is cased and sized to match that modal's own header chrome. Converting it
-  // would make the header inconsistent with itself to match pages it never sits on.
+  /src[\\/]pages[\\/](VotePage|InDepthVotePage|AuthCallbackPage)\.tsx$/,
+  // In-OVERLAY state reversal, not page navigation: CardOverviewModal's back control
+  // steps between states inside one modal, and is cased to match that modal's own
+  // header chrome. Converting it would make the header inconsistent with itself to
+  // match pages it never sits on.
   /CardOverviewModal\.tsx$/,
   /\.stories\.tsx$/,
   /\.test\.(ts|tsx)$/,
 ];
-/** Matches the visible label, not the destination: "Back to decks", "← Back". */
-const BACK_LABEL = /(^|>)\s*(←|&larr;|Back to)/;
+/**
+ * Matches the visible LABEL, not the destination.
+ *
+ * Two patterns, because the label reaches the AST two ways: as JSXText between tags,
+ * and as a string Literal in a prop (label=, aria-label=). Three of the eleven census
+ * sites were the second shape, so a JSXText-only rule would have missed them.
+ *
+ * Named predicates so each visitor below stays ONE condition, which is what keeps
+ * create() under the complexity gate.
+ */
+const BACK_TEXT = /(^|>)\s*(\u2190|&larr;|Back to\b)/;
+const BACK_STRING = /^\s*(\u2190\s*)?Back to\b/;
+const isBackText = (node) => BACK_TEXT.test(node.value);
+const isBackString = (node) => typeof node.value === 'string' && BACK_STRING.test(node.value);
+const importsBackLink = (context, node) => /BackLink/.test(context.sourceCode.getText(node));
 const BACK_LINK_MESSAGE =
   'Hand-rolled back navigation. Use <BackLink to=... /> or <BackLink onClick=... /> so every ' +
   'return looks the same (.claude/rules/navigation.md). On a terminal screen the last ' +
@@ -468,18 +481,20 @@ const noAdhocBackLinks = {
     if (isExempt(context, BACK_LINK_EXEMPT) || isKnownOffender(context, 'no-adhoc-back-links')) return {};
     let sanctioned = false;
     let firstBackLabel = null;
+    // First match only: a file with four hand-rolled back links has one problem, not
+    // four, and four reports would bury the one that matters.
+    const record = (node, matches) => {
+      if (!firstBackLabel && matches(node)) firstBackLabel = node;
+    };
     return {
       ImportDeclaration(node) {
-        if (/BackLink/.test(context.sourceCode.getText(node))) sanctioned = true;
+        if (importsBackLink(context, node)) sanctioned = true;
       },
       JSXText(node) {
-        if (!firstBackLabel && BACK_LABEL.test(node.value)) firstBackLabel = node;
+        record(node, isBackText);
       },
       Literal(node) {
-        // Catches `label="Back to decks"` and aria-label alike.
-        if (!firstBackLabel && typeof node.value === 'string' && /^\s*(←\s*)?Back to/.test(node.value)) {
-          firstBackLabel = node;
-        }
+        record(node, isBackString);
       },
       'Program:exit'() {
         if (firstBackLabel && !sanctioned) context.report({node: firstBackLabel, message: BACK_LINK_MESSAGE});
@@ -487,7 +502,6 @@ const noAdhocBackLinks = {
     };
   },
 };
-
 export const inkweave = {
   meta: {name: 'eslint-plugin-inkweave', version: '1.0.0'},
   rules: {

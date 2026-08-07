@@ -3,7 +3,9 @@ import {useNavigate} from 'react-router-dom';
 import {AuthButton, CompactHeader, CtaButton, TabList, headerCarriesAuth} from '../shared/components';
 import type {ViewportConfig} from '../shared/components';
 import {SignInDialog} from '../shared/components/SignInDialog';
+import {DeckListSkeleton} from '../features/deck/components/DeckListSkeleton';
 import {DeckSummaryCard} from '../features/deck/components/DeckSummaryCard';
+import {DECK_TILE_GAP, DECK_TILE_MIN_WIDTH} from '../features/deck/components/deckGrid';
 import {NewDeckDialog} from '../features/deck/components/NewDeckDialog';
 import {calculateDeckStats} from '../features/deck/analysis/deckStats';
 import {listDecks, listPublicDecks, useDeck, type RepoResult} from '../features/deck/state';
@@ -178,22 +180,6 @@ function EmptyNote({children}: {children: ReactNode}) {
   );
 }
 
-function LoadingNote({label}: {label: string}) {
-  return (
-    <p
-      style={{
-        margin: 0,
-        padding: SPACING.xxxl,
-        textAlign: 'center',
-        fontFamily: FONTS.body,
-        fontSize: `${FONT_SIZES.base}px`,
-        color: COLORS.textMuted,
-      }}>
-      {label}
-    </p>
-  );
-}
-
 /**
  * A failed read, deliberately NOT the empty box: solid and error-tinted where the
  * empty state is dashed and muted, and carrying the retry an empty list has no use
@@ -226,15 +212,6 @@ function LoadFailure({what, onRetry}: {what: string; onRetry: () => void}) {
 }
 
 /** The list itself: one summary row per deck. */
-/**
- * Minimum card width before the grid drops a column.
- *
- * The cards are Lorcana-proportioned now (0.7168), so width buys height at 1.4x:
- * a 240px card is 335px tall against the old tile's 148. 240 is the floor where the
- * name plate still renders above the clamp's 11px minimum and the strip above its
- * 10px one — below that both bottom out and the card stops scaling honestly.
- */
-const TILE_MIN_WIDTH = 240;
 
 /**
  * Wider than the 900px its sibling pages use, deliberately.
@@ -268,8 +245,8 @@ function DeckList({
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: `repeat(auto-fill, minmax(${TILE_MIN_WIDTH}px, 1fr))`,
-        gap: SPACING.lg,
+        gridTemplateColumns: `repeat(auto-fill, minmax(${DECK_TILE_MIN_WIDTH}px, 1fr))`,
+        gap: DECK_TILE_GAP,
       }}>
       {decks.map((deck) => (
         <DeckSummaryCard
@@ -305,7 +282,7 @@ interface CommunityTabProps {
  */
 function CommunityTab({list, cardsReady, getCardById, names}: CommunityTabProps) {
   if (list.failed) return <LoadFailure what="community decks" onRetry={list.retry} />;
-  if (list.decks === null || !cardsReady) return <LoadingNote label="Loading decks…" />;
+  if (list.decks === null || !cardsReady) return <DeckListSkeleton ariaLabel="Loading community decks" />;
 
   const legal = list.decks.filter((deck) => calculateDeckStats(deck, getCardById).isLegal);
   if (legal.length === 0) {
@@ -372,7 +349,9 @@ function PublishingAs({userId}: {userId: string}) {
 /** The signed-in half of "Yours": whatever the account has saved. */
 function SavedDecks({list}: {list: DeckListState & {retry: () => void}}) {
   if (list.failed) return <LoadFailure what="your decks" onRetry={list.retry} />;
-  if (list.decks === null) return <LoadingNote label="Loading your decks…" />;
+  // Four, not eight: your own list is usually short, and a screenful of
+  // placeholders for two decks promises more than arrives.
+  if (list.decks === null) return <DeckListSkeleton count={4} ariaLabel="Loading your decks" />;
   if (list.decks.length === 0) {
     return <EmptyNote>Nothing saved yet. Decks you save appear here, on every device you sign in on.</EmptyNote>;
   }
