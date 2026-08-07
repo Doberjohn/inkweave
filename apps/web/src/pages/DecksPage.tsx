@@ -10,7 +10,7 @@ import {NewDeckDialog} from '../features/deck/components/NewDeckDialog';
 import {calculateDeckStats} from '../features/deck/analysis/deckStats';
 import {listDecks, listPublicDecks, useDeck, type RepoResult} from '../features/deck/state';
 import {signatureCard} from '../features/deck/components/signatureCard';
-import {DisplayNameDialog, getAuthorNames, useProfile} from '../features/profile';
+import {getAuthorNames} from '../features/profile';
 import type {Deck} from '../features/deck/types';
 import type {LorcanaCard} from '../features/cards';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
@@ -235,11 +235,15 @@ function DeckList({
   /** Owner id -> display name. Absent on your own list, where every deck is yours. */
   names?: Map<string, string>;
   /**
-   * Resolves the deck's signature card for the frame's art window. Optional because
-   * the card database may still be loading, and a card with an empty window is a
-   * better intermediate state than no card at all.
+   * Resolves the deck's signature card for the frame's art window.
+   *
+   * REQUIRED, deliberately. It was optional, and the Yours tab simply did not pass it
+   * — so every card there rendered with an empty art window while the community tab
+   * looked fine, because that one already needed the card database for its legality
+   * filter. Optional made a whole tab's art a silent no-op; required makes it a
+   * compile error.
    */
-  getCardById?: CardLookup;
+  getCardById: CardLookup;
 }) {
   return (
     <div
@@ -254,7 +258,7 @@ function DeckList({
           deck={deck}
           to={hrefFor?.(deck)}
           authorName={deck.ownerId ? names?.get(deck.ownerId) : undefined}
-          artUrl={getCardById && signatureCard(deck, getCardById)?.imageUrl}
+          artUrl={signatureCard(deck, getCardById)?.imageUrl}
         />
       ))}
     </div>
@@ -296,58 +300,19 @@ function CommunityTab({list, cardsReady, getCardById, names}: CommunityTabProps)
   return <DeckList decks={legal} names={names} getCardById={getCardById} />;
 }
 
-/**
- * Who your published decks appear as, with the way to change it.
- *
- * It lives in "Yours" rather than the header because that is where it is TRUE: this
- * tab is the only place the name is yours rather than someone else's. It also has to
- * work on mobile, and `CompactHeader` renders nothing there.
- *
- * Renders nothing until the identity resolves. A placeholder would be worse than an
- * absence: the row exists to tell you a specific name, and briefly showing a
- * different one is the one thing it must not do.
- */
-function PublishingAs({userId}: {userId: string}) {
-  const {identity, adoptDisplayName} = useProfile();
-  const [open, setOpen] = useState(false);
-  if (!identity) return null;
-
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: SPACING.sm,
-        marginBottom: SPACING.lg,
-        fontFamily: FONTS.body,
-        fontSize: `${FONT_SIZES.sm}px`,
-        color: COLORS.textMuted,
-      }}>
-      {/*
-        The DISPLAY name, which is what a reader of your decks sees. The handle is
-        not shown: nothing renders it yet, and putting an identifier beside the name
-        here would imply the two are interchangeable when only one is unique.
-      */}
-      <span>
-        You publish as <strong style={{color: COLORS.text}}>{identity.displayName}</strong>
-      </span>
-      <CtaButton variant="ghost" onClick={() => setOpen(true)}>
-        Change
-      </CtaButton>
-      <DisplayNameDialog
-        isOpen={open}
-        onClose={() => setOpen(false)}
-        userId={userId}
-        current={identity.displayName}
-        onSaved={adoptDisplayName}
-      />
-    </div>
-  );
-}
-
 /** The signed-in half of "Yours": whatever the account has saved. */
-function SavedDecks({list}: {list: DeckListState & {retry: () => void}}) {
+function SavedDecks({
+  list,
+  getCardById,
+}: {
+  list: DeckListState & {retry: () => void};
+  /**
+   * Required here, not optional. The community tab happened to have it already — it
+   * needs the card database for the legality filter — so the frame art worked on that
+   * path and silently did not on this one, leaving every card with an empty window.
+   */
+  getCardById: CardLookup;
+}) {
   if (list.failed) return <LoadFailure what="your decks" onRetry={list.retry} />;
   // Four, not eight: your own list is usually short, and a screenful of
   // placeholders for two decks promises more than arrives.
@@ -355,7 +320,7 @@ function SavedDecks({list}: {list: DeckListState & {retry: () => void}}) {
   if (list.decks.length === 0) {
     return <EmptyNote>Nothing saved yet. Decks you save appear here, on every device you sign in on.</EmptyNote>;
   }
-  return <DeckList decks={list.decks} />;
+  return <DeckList decks={list.decks} getCardById={getCardById} />;
 }
 
 /**
@@ -367,23 +332,19 @@ function MyDecksTab({
   list,
   userId,
   draft,
+  getCardById,
 }: {
   list: DeckListState & {retry: () => void};
   /** The signed-in user, or null for a guest working from a local draft. */
   userId: string | null;
   draft: Deck;
+  getCardById: CardLookup;
 }) {
-  if (userId) {
-    return (
-      <>
-        <PublishingAs userId={userId} />
-        <SavedDecks list={list} />
-      </>
-    );
-  }
+  if (userId) return <SavedDecks list={list} getCardById={getCardById} />;
   // An unsaved draft has no cloud row, so /decks/:id would find nothing; the
   // builder holds it in context already and is the honest destination.
-  if (draft.cards.length > 0) return <DeckList decks={[draft]} hrefFor={() => '/decks/new'} />;
+  if (draft.cards.length > 0)
+    return <DeckList decks={[draft]} hrefFor={() => '/decks/new'} getCardById={getCardById} />;
   return (
     <EmptyNote>
       Decks you build are kept in this browser. Start one with <strong>+ New deck</strong> above; signing in later keeps
@@ -506,7 +467,7 @@ export function DecksPage() {
           {tab === 'community' ? (
             <CommunityTab list={community} cardsReady={!isLoading} getCardById={getCardById} names={authorNames} />
           ) : (
-            <MyDecksTab list={own} userId={user?.id ?? null} draft={deck} />
+            <MyDecksTab list={own} userId={user?.id ?? null} draft={deck} getCardById={getCardById} />
           )}
         </div>
       </main>
