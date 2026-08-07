@@ -8,7 +8,9 @@ paths:
 
 Two mechanisms enforce the token system; both run automatically:
 
-1. **`inkweave/*` ESLint rules** (`apps/web/eslint-rules/index.js`, per-commit + CI): no raw hex colors, `rgba()`, font-family strings, font sizes, radii, app-layer z-indexes (≥50), keyword/bezier easings, `backdrop-filter` (WebKit E2E trap, #444/#445), or **legacy gold** (`no-legacy-gold`: `COLORS.primary500/600/700`). Every message names the replacement token. **`no-adhoc-buttons`** (#509) additionally blocks any `<button style={…}>` in feature code: buttons come from the kit (`CtaButton` filled/ghost/neutral/pill, `LinkButton`, `TabList`, `IconButton`, `FiltersButton`, `Chip`); the exempt domain families (steppers, vote pickers, tile toggles) are listed in the rule itself.
+1. **`inkweave/*` ESLint rules** (`apps/web/eslint-rules/index.js`, per-commit + CI): no raw hex colors, `rgba()`, font-family strings, font sizes, radii, app-layer z-indexes (≥50), keyword/bezier easings, `backdrop-filter` (WebKit E2E trap, #444/#445), or **legacy gold** (`no-legacy-gold`: `COLORS.primary500/600/700`). Every message names the replacement token. **`no-adhoc-back-links`** (2026-08-07) blocks a hand-rolled `← ` / `Back to …` in a file that
+does not import `BackLink` — see [`navigation.md`](navigation.md) for the census that motivated it and
+the three exemption families. **`no-adhoc-buttons`** (#509) additionally blocks any `<button style={…}>` in feature code: buttons come from the kit (`CtaButton` filled/ghost/neutral/pill, `LinkButton`, `TabList`, `IconButton`, `FiltersButton`, `Chip`); the exempt domain families (steppers, vote pickers, tile toggles) are listed in the rule itself.
 2. **Value-grep gate** (`check:design` → `scripts/check-design-tokens.mjs`, pre-push + CI): greps the LITERAL values of the tokens (theme hexes, EASING strings, font names) across ts/tsx/css/html — it catches `cssText` strings and quoted shorthands the AST cannot see. `'Barlow'` and `backdrop-filter:` usage are zero-tolerance tripwires.
 
 ## When a rule fires on you

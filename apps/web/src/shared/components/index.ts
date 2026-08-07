@@ -4,6 +4,7 @@ export {AbilityTag} from './AbilityTag';
 export type {AbilityTagVariant} from './AbilityTag';
 export {AuthButton} from './AuthButton';
 export {BackLink} from './BackLink';
+export {Breadcrumb, type Crumb} from './Breadcrumb';
 export {BetaNotice} from './BetaNotice';
 export {CardImage} from './CardImage';
 export {CardTextBlock} from './CardTextBlock';

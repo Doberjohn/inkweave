@@ -273,7 +273,6 @@ export const KNOWN_OFFENDERS = {
     'src/pages/InDepthVotePage.tsx', // x6
     'src/pages/PlaystyleDetailPage.tsx', // x1
     'src/pages/RevealAdminPage.tsx', // x1
-    'src/shared/components/BackLink.tsx', // x1
     'src/shared/components/CardLightbox.tsx', // x3
     'src/shared/components/ErrorBoundary.tsx', // x1
     'src/shared/components/FilterButton.tsx', // x1
@@ -325,7 +324,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/VoteConfirmation.tsx', // x2
     'src/features/voting/components/VotingCardDisplay.tsx', // x4
     'src/pages/InDepthVotePage.tsx', // x7
-    'src/shared/components/BackLink.tsx', // x1
     'src/shared/components/CardImage.tsx', // x1
     'src/shared/components/ConnectionGroup.tsx', // x5
     'src/shared/components/FilterButton.tsx', // x3

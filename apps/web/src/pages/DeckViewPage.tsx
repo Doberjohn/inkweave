@@ -1,14 +1,15 @@
 import {useEffect, useState, type ReactNode} from 'react';
 import {Link, useParams} from 'react-router-dom';
 import {calculateDeckStats} from '../features/deck/analysis/deckStats';
-import {CostGlyph} from '../features/deck/components/CostGlyph';
-import {InkChip} from '../features/deck/components/InkChip';
-import {ShareDeckButton} from '../features/deck/components/ShareDeckButton';
+import {DeckCardGrid} from '../features/deck/components/DeckCardGrid';
+import {DeckViewSkeleton} from '../features/deck/components/DeckViewSkeleton';
+import {InkIcon} from '../shared/components/InkIcon';
 import {getDeck} from '../features/deck/state';
 import type {Deck, DeckStats, LorcanaCard} from '../features/deck/types';
-import {CompactHeader} from '../shared/components';
-import {CTA_BASE_STYLE} from '../shared/components/ctaStyles';
+import {BackLink, CompactHeader} from '../shared/components';
+import {CTA_BASE_STYLE, CTA_FILLED_STYLE} from '../shared/components/ctaStyles';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
+import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useSession} from '../shared/contexts/SessionContext';
 import {useResponsive} from '../shared/hooks';
 import {
@@ -16,28 +17,18 @@ import {
   EMPTY_BOX,
   FONTS,
   FONT_SIZES,
-  INK_COLORS,
+  ICON_SIZE,
   LAYOUT,
-  RADIUS,
   SPACING,
-  SURFACE_CARD,
   TABULAR,
-  TRUNCATE,
-  hexRgba,
+  TOUCH_TARGET,
 } from '../shared/constants';
 
 /** A deck can be saved before it is named; the page still needs something to read. */
 const FALLBACK_NAME = 'Untitled deck';
 
-/**
- * Stated, not offered. Visibility is changed in the builder now (owner ruling
- * 2026-08-05), because it is a property of the deck that Save persists, and a
- * second writer here was quietly un-publishing decks.
- */
-const VISIBILITY_COPY = {
-  public: 'Public. Anyone can see this deck, and it appears in community decks.',
-  private: 'Private. Only you can see this deck. Change this in Edit deck, then save.',
-} as const;
+/** Shared with /decks, so the two pages frame their content identically. */
+const PAGE_MAX_WIDTH = 1200;
 
 // ── Reading the routed deck ────────────────────────────────────────────────
 
@@ -124,27 +115,35 @@ function NotFound() {
       <p style={{margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.base}px`}}>
         Deck not found. It may not exist, or it may be private.
       </p>
-      <Link
-        to="/decks"
-        style={{
-          display: 'inline-block',
-          marginTop: SPACING.lg,
-          color: COLORS.primary,
-          fontFamily: FONTS.body,
-          fontSize: `${FONT_SIZES.base}px`,
-          fontWeight: 600,
-        }}>
-        Back to decks
-      </Link>
+      <BackLink to="/decks" label="Back to decks" style={{marginTop: SPACING.lg}} />
     </div>
   );
 }
 
 // ── The deck itself ────────────────────────────────────────────────────────
 
-function DeckHeading({deck, totalCards}: {deck: Deck; totalCards: number}) {
+function DeckHeading({deck, totalCards, action}: {deck: Deck; totalCards: number; action?: ReactNode}) {
   return (
-    <header>
+    <header
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: SPACING.md,
+        // The action slot is RESERVED whether or not there is an action. Two things
+        // depend on it: the skeleton draws a button and would otherwise hand over an
+        // 18px shorter header, and the session resolves after the deck does — so an
+        // owner's header would grow under them the moment Edit appeared.
+        minHeight: TOUCH_TARGET,
+      }}>
+      {/*
+        Name, inks and count on ONE line (owner ruling 2026-08-07). They were a
+        heading with a metadata row beneath, which spent two rows saying what fits
+        in one — and the ink CHIPS spelled out "Amethyst" and "Steel" beside symbols
+        that already say it on every other surface.
+      */}
+      <div style={{display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: SPACING.sm, minWidth: 0}}>
       {/*
         Body font, not the hero serif (owner ruling 2026-08-06), matching the deck
         tiles. Weight 700 here rather than the tiles' 600: this IS the page's own
@@ -159,54 +158,36 @@ function DeckHeading({deck, totalCards}: {deck: Deck; totalCards: number}) {
           color: COLORS.text,
           margin: 0,
         }}>
-        {deck.name.trim() || FALLBACK_NAME}
-      </h1>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: SPACING.sm,
-          marginTop: SPACING.sm,
-        }}>
-        {deck.inks.map((ink) => (
-          <InkChip key={ink} ink={ink} />
-        ))}
-        <span
-          style={{
-            ...TABULAR,
-            color: COLORS.textMuted,
-            fontSize: `${FONT_SIZES.lg}px`,
-            fontWeight: 600,
-          }}>
+          {deck.name.trim() || FALLBACK_NAME}
+        </h1>
+        {/*
+          `decorative={false}` + `showTooltip` because the symbol is now the ONLY
+          thing naming the ink here: alt for a screen reader, title for a mouse.
+        */}
+        <span style={{display: 'flex', alignItems: 'center', gap: SPACING.xs}}>
+          {deck.inks.map((ink) => (
+            <InkIcon key={ink} ink={ink} size={ICON_SIZE.md} decorative={false} showTooltip />
+          ))}
+        </span>
+        <span style={{...TABULAR, color: COLORS.textMuted, fontSize: `${FONT_SIZES.lg}px`, fontWeight: 600}}>
           {totalCards} {totalCards === 1 ? 'card' : 'cards'}
         </span>
       </div>
+      {action}
     </header>
   );
 }
 
 /**
- * Legality, stated either way.
+ * Legality, but only when it is BAD news.
  *
- * The builder stays silent on a legal deck, because there the absence of a
- * complaint means "fine" to the person who just built it. A reader who did not
- * build this one has no such context, so the happy case says so out loud.
+ * The "Core legal" confirmation is gone (owner ruling 2026-08-07): a legal deck is
+ * the overwhelming default, so the line was permanent furniture that said nothing on
+ * almost every page it appeared on. A legality PROBLEM still speaks up, because that
+ * is the case a reader cannot see for themselves by counting cards.
  */
 function Legality({stats}: {stats: DeckStats}) {
-  if (stats.isLegal) {
-    return (
-      <p
-        style={{
-          margin: `${SPACING.lg}px 0 0`,
-          fontSize: `${FONT_SIZES.base}px`,
-          fontWeight: 600,
-          color: COLORS.success,
-        }}>
-        Core legal
-      </p>
-    );
-  }
+  if (stats.isLegal) return null;
   return (
     <div style={{marginTop: SPACING.lg}}>
       <p style={{margin: 0, fontSize: `${FONT_SIZES.base}px`, fontWeight: 600, color: COLORS.error}}>Not Core legal</p>
@@ -251,44 +232,14 @@ function buildCardLines(deck: Deck, getCardById: (id: string) => LorcanaCard | u
 }
 
 /**
- * One read-only line: copies, cost, name. Deliberately NOT DeckCardRow, which is
- * the builder's editable row and requires increment/decrement handlers. Passing
- * it no-op handlers would render a stepper that quietly does nothing.
+ * The deck itself, as cards.
+ *
+ * Was a text list of names, which is a lookup table — you read it. The grid is the
+ * deck: a player recognises their own list from the art long before they could read
+ * twenty names, and the copies badge is the only fact the deck knows that the printed
+ * card does not.
  */
-function DeckLine({card, quantity}: CardLine) {
-  return (
-    <li
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: SPACING.md,
-        minWidth: 0,
-        padding: `${SPACING.xs}px ${SPACING.sm}px`,
-        borderRadius: `${RADIUS.sm}px`,
-        // The card's own ink as a left edge: the list's only grouping cue, now
-        // that there is no stepper anchoring the right-hand side.
-        borderLeft: `3px solid ${INK_COLORS[card.ink].border}`,
-        background: COLORS.surfaceAlt,
-      }}>
-      <span
-        style={{
-          ...TABULAR,
-          flexShrink: 0,
-          color: COLORS.textMuted,
-          fontSize: `${FONT_SIZES.lg}px`,
-          fontWeight: 600,
-        }}>
-        {quantity}x
-      </span>
-      <CostGlyph cost={card.cost} inkwell={card.inkwell} size={24} />
-      <span style={{...TRUNCATE, flex: 1, minWidth: 0, color: COLORS.text, fontSize: `${FONT_SIZES.lg}px`}}>
-        {cardName(card)}
-      </span>
-    </li>
-  );
-}
-
-function DeckCardList({lines}: {lines: CardLine[]}) {
+function DeckCardList({lines, onSelectCard}: {lines: CardLine[]; onSelectCard: (card: LorcanaCard) => void}) {
   if (lines.length === 0) {
     return (
       <div
@@ -303,77 +254,27 @@ function DeckCardList({lines}: {lines: CardLine[]}) {
       </div>
     );
   }
-  return (
-    <ul
-      aria-label="Deck list"
-      style={{
-        listStyle: 'none',
-        margin: `${SPACING.xxl}px 0 0`,
-        padding: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: SPACING.xs,
-      }}>
-      {lines.map((line) => (
-        <DeckLine key={line.card.id} card={line.card} quantity={line.quantity} />
-      ))}
-    </ul>
-  );
+  return <DeckCardGrid lines={lines} onSelectCard={onSelectCard} />;
 }
 
 // ── Owner controls ─────────────────────────────────────────────────────────
 
 /**
  * An anchor, not a button: `/decks/:id/edit` is a real URL, and middle-click plus
- * open-in-new-tab are exactly what an owner reaches for on their own deck. It
- * wears the kit's base recipe with the ghost paint by hand, because CtaButton is
- * a `<button>` by construction and so can never be this.
+ * open-in-new-tab are exactly what an owner reaches for on their own deck. It wears
+ * the kit's base AND filled recipes by hand, because CtaButton is a `<button>` by
+ * construction and so can never be this.
+ *
+ * Filled rather than ghost (owner ruling 2026-08-07): it is now the only action on
+ * the page, and the primary action wears the primary paint. It sits in the heading
+ * row for the same reason "+ New deck" does on /decks — the page's one verb, level
+ * with the page's name.
  */
 function EditLink({deckId}: {deckId: string}) {
   return (
-    <Link
-      to={`/decks/${deckId}/edit`}
-      style={{
-        ...CTA_BASE_STYLE,
-        display: 'inline-flex',
-        background: 'transparent',
-        color: COLORS.primary,
-        border: `1px solid ${hexRgba(COLORS.primary, 0.4)}`,
-      }}>
+    <Link to={`/decks/${deckId}/edit`} style={{...CTA_BASE_STYLE, ...CTA_FILLED_STYLE, display: 'inline-flex'}}>
       Edit deck
     </Link>
-  );
-}
-
-/**
- * Everything only an owner may do.
- *
- * This page no longer WRITES anything (owner ruling 2026-08-05). Visibility is a
- * property of the deck, changed in the builder and persisted by Save, so the two
- * controls here both lead elsewhere: one hands out the link, one opens the deck
- * for editing. The visibility line beneath them states the current state and says
- * where to change it.
- */
-function OwnerControls({deck}: {deck: Deck}) {
-  return (
-    <section
-      aria-label="Deck owner controls"
-      style={{
-        ...SURFACE_CARD,
-        marginTop: SPACING.xl,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: SPACING.lg,
-      }}>
-      <div style={{display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: SPACING.sm}}>
-        {/* No onPublish: copying a link never publishes, and never did belong to it. */}
-        <ShareDeckButton deck={deck} />
-        <EditLink deckId={deck.id} />
-      </div>
-      <p style={{margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.base}px`, lineHeight: 1.6}}>
-        {deck.isPublic ? VISIBILITY_COPY.public : VISIBILITY_COPY.private}
-      </p>
-    </section>
   );
 }
 
@@ -390,7 +291,10 @@ function PageShell({children}: {children: ReactNode}) {
           minHeight: `calc(100vh - ${LAYOUT.compactHeaderHeight}px)`,
           background: COLORS.background,
           padding: SPACING.xl,
-          maxWidth: 900,
+          // Matches /decks (owner ruling 2026-08-07). The old 900 was a reading
+        // measure for the text decklist this page used to be; it is a card grid now,
+        // and the measure caps how many cards you can take in at once.
+        maxWidth: PAGE_MAX_WIDTH,
           margin: '0 auto',
           fontFamily: FONTS.body,
         }}>
@@ -428,12 +332,13 @@ export function DeckViewPage() {
   const {id} = useParams();
   const {user, loading: authLoading} = useSession();
   const {getCardById, isLoading: cardsLoading} = useCardDataContext();
+  const {openCardModal} = useCardModal();
   const {deck, failed, isLoading} = useDeckRead(id);
 
   if (isResolving({deck: isLoading, cards: cardsLoading, session: authLoading})) {
     return (
       <PageShell>
-        <Notice>Loading deck…</Notice>
+        <DeckViewSkeleton />
       </PageShell>
     );
   }
@@ -455,19 +360,36 @@ export function DeckViewPage() {
   }
 
   const stats = calculateDeckStats(deck, getCardById);
+  // Resolved once: the grid renders this order and the modal walks the same one, so
+  // "next card" means what the eye just saw rather than a second, private ordering.
+  const lines = buildCardLines(deck, getCardById);
+  const isOwner = ownsDeck(deck, user?.id);
 
   return (
     <PageShell>
-      <DeckHeading deck={deck} totalCards={stats.totalCards} />
+      {/*
+        The way out. A shared link lands people here cold, with the header's nav as
+        their only route onward and nothing saying where "here" sits — so the deck
+        list gets named explicitly rather than left to the browser's back button,
+        which a first-time visitor does not have a history for.
+      */}
+      <BackLink to="/decks" label="Back to decks" />
+      <DeckHeading
+        deck={deck}
+        totalCards={stats.totalCards}
+        action={isOwner ? <EditLink deckId={deck.id} /> : undefined}
+      />
       <Legality stats={stats} />
-      {ownsDeck(deck, user?.id) ? (
-        <OwnerControls deck={deck} />
-      ) : (
-        <div style={{marginTop: SPACING.xl}}>
-          <ShareDeckButton deck={deck} />
-        </div>
-      )}
-      <DeckCardList lines={buildCardLines(deck, getCardById)} />
+      {/*
+        The modal is given the whole deck as siblings, so its prev/next walks the
+        deck in the order shown rather than dropping you on an island. That is what
+        makes tapping into a card cheap: you can read the whole list without going
+        back to the grid between each one.
+      */}
+      <DeckCardList
+        lines={lines}
+        onSelectCard={(card) => openCardModal(card.id, lines.map((line) => line.card.id))}
+      />
     </PageShell>
   );
 }

@@ -421,6 +421,73 @@ const noUnshelledDialogs = {
   },
 };
 
+/**
+ * Back navigation, one shape (#473 follow-up, owner ruling 2026-08-07).
+ *
+ * A census found ELEVEN back affordances in five shapes, with the shared BackLink
+ * used at three of them — including one file that rendered the same destination as a
+ * BackLink twice and a CtaButton once. The component existed the whole time; what did
+ * not exist was anything stopping the next person from hand-rolling another.
+ *
+ * Two exemption families, both deliberate:
+ *
+ *   TERMINAL CTAs. "Back to Home" on a finished vote and "Back to decks" on a failed
+ *   sign-in are the only action left on a dead-end screen, so they are primary buttons
+ *   that happen to say back. Converting them would end those screens on a muted grey
+ *   link. Named here rather than left to judgement.
+ *
+ *   BREADCRUMBS. `Playstyles / Lore Denial` answers "where am I", not "how do I
+ *   leave", and Breadcrumb is its own component. It never matches this rule's text
+ *   pattern, so it needs no exemption — noted so nobody adds one.
+ */
+const BACK_LINK_EXEMPT = [
+  /src[\/]shared[\/]components[\/](BackLink|Breadcrumb|CompactHeader)\.tsx$/,
+  // Terminal screens: the one remaining action is a CTA, not a quiet return.
+  /src[\/]pages[\/](VotePage|InDepthVotePage|AuthCallbackPage)\.tsx$/,
+  // In-OVERLAY state reversal, not page navigation: CardOverviewModal's "← Back"
+  // steps from the comparison state to the default one inside the same modal, and
+  // it is cased and sized to match that modal's own header chrome. Converting it
+  // would make the header inconsistent with itself to match pages it never sits on.
+  /CardOverviewModal\.tsx$/,
+  /\.stories\.tsx$/,
+  /\.test\.(ts|tsx)$/,
+];
+/** Matches the visible label, not the destination: "Back to decks", "← Back". */
+const BACK_LABEL = /(^|>)\s*(←|&larr;|Back to)/;
+const BACK_LINK_MESSAGE =
+  'Hand-rolled back navigation. Use <BackLink to=... /> or <BackLink onClick=... /> so every ' +
+  'return looks the same (.claude/rules/navigation.md). On a terminal screen the last ' +
+  'remaining action stays a CtaButton.';
+const noAdhocBackLinks = {
+  meta: {
+    type: 'problem',
+    docs: {description: 'back navigation must render through BackLink'},
+    schema: [],
+  },
+  create(context) {
+    if (isExempt(context, BACK_LINK_EXEMPT) || isKnownOffender(context, 'no-adhoc-back-links')) return {};
+    let sanctioned = false;
+    let firstBackLabel = null;
+    return {
+      ImportDeclaration(node) {
+        if (/BackLink/.test(context.sourceCode.getText(node))) sanctioned = true;
+      },
+      JSXText(node) {
+        if (!firstBackLabel && BACK_LABEL.test(node.value)) firstBackLabel = node;
+      },
+      Literal(node) {
+        // Catches `label="Back to decks"` and aria-label alike.
+        if (!firstBackLabel && typeof node.value === 'string' && /^\s*(←\s*)?Back to/.test(node.value)) {
+          firstBackLabel = node;
+        }
+      },
+      'Program:exit'() {
+        if (firstBackLabel && !sanctioned) context.report({node: firstBackLabel, message: BACK_LINK_MESSAGE});
+      },
+    };
+  },
+};
+
 export const inkweave = {
   meta: {name: 'eslint-plugin-inkweave', version: '1.0.0'},
   rules: {
@@ -438,5 +505,6 @@ export const inkweave = {
     'no-raw-spacing': noRawSpacing,
     'no-adhoc-buttons': noAdhocButtons,
     'no-unshelled-dialogs': noUnshelledDialogs,
+    'no-adhoc-back-links': noAdhocBackLinks,
   },
 };

@@ -491,7 +491,14 @@ export function DecksPage() {
             flexWrap: 'wrap',
             gap: SPACING.md,
           }}>
-          <h1 style={{fontFamily: FONTS.hero, fontSize: FONT_SIZES.xxl, color: COLORS.text, margin: 0}}>Decks</h1>
+          {/*
+            Body font at 700, matching DeckViewPage's heading (owner ruling
+            2026-08-07). The hero serif made the two pages read as different
+            products when one is just a detail view of the other.
+          */}
+          <h1 style={{fontFamily: FONTS.body, fontWeight: 700, fontSize: FONT_SIZES.xxl, color: COLORS.text, margin: 0}}>
+            Decks
+          </h1>
           <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
             {/* Auth first, so the filled primary stays rightmost, as it is in the deck toolbar. */}
             {showsOwnAuthControl({isMobile}) && <AuthButton onSignIn={() => setSignInOpen(true)} />}
@@ -512,9 +519,6 @@ export function DecksPage() {
           </div>
         </div>
 
-        <p style={{fontFamily: FONTS.body, fontSize: FONT_SIZES.base, color: COLORS.textMuted, marginTop: SPACING.sm}}>
-          Build a Core-legal deck with live synergy guidance.
-        </p>
 
         <div style={{marginTop: SPACING.xxl, borderRadius: `${RADIUS.lg}px`, overflow: 'hidden'}}>
           <TabList tabs={TABS} active={tab} onChange={setTab} ariaLabel="Deck lists" />

@@ -166,6 +166,7 @@ Convention files that auto-load only when editing files matching their `paths:` 
 | `engine.md` | `packages/synergy-engine/src/**` | engine rule pattern, 5-baseline scoring anchors, doc-sync, auto-rebuild |
 | `design-tokens.md` | `apps/web/src/**/*.ts(x)` | design-token lint rules (#508): the `inkweave/*` ESLint rules + value-grep gate, the shrink-only grandfather ledgers, and what to do when a rule fires |
 | `overlays.md` | `apps/web/src/**/*.tsx` | overlay contract (#510): DialogShell/BottomSheet + hook trio, backdrop-always-closes, scrim tokens, the FilterDialog Radix exception, E2E backdrop/unmount invariants |
+| `navigation.md` | `apps/web/src/**/*.tsx` | back-navigation contract (#473 follow-up): BackLink / Breadcrumb / terminal CTA, the `no-adhoc-back-links` rule and why each exemption is exempt |
 | `mockups.md` | `apps/web/public/mockups/**` | design-session workflow, mockup token set, audit passes |
 
 ### Agents (`.claude/agents/`)

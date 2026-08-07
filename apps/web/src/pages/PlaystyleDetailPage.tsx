@@ -30,6 +30,7 @@ import {usePrecomputedPlaystyleCards} from '../features/synergies/hooks';
 import {RoleTileRow, type RoleTile} from '../features/synergies/components/RoleTileRow';
 import {MechanicsBottomSheet} from '../features/synergies/components/MechanicsBottomSheet';
 import {MechanicsButton} from '../features/synergies/components/MechanicsButton';
+import {Breadcrumb} from '../shared/components/Breadcrumb';
 import {Chip} from '../shared/components/Chip';
 import Skeleton from 'react-loading-skeleton';
 import {BrowseToolbar, CardGrid, CardGridSkeleton} from '../features/cards';
@@ -86,14 +87,12 @@ function PlaystyleHero({
   accentColor,
   accentRgb,
   layout,
-  onPlaystylesBreadcrumb,
 }: {
   name: string;
   tagline: string;
   accentColor: string;
   accentRgb: string;
   layout: HeroLayout;
-  onPlaystylesBreadcrumb: () => void;
 }) {
   return (
     <section
@@ -125,34 +124,12 @@ function PlaystyleHero({
           flexDirection: 'column',
           gap: layout.contentGap,
         }}>
-        {/* Breadcrumb */}
-        <nav
-          style={{
-            fontSize: `${FONT_SIZES.base}px`,
-            color: COLORS.textMuted,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}>
-          <a
-            href="/playstyles"
-            onClick={(e) => {
-              e.preventDefault();
-              onPlaystylesBreadcrumb();
-            }}
-            style={{
-              color: COLORS.textMuted,
-              textDecoration: 'none',
-              cursor: 'pointer',
-              minHeight: layout.breadcrumbLinkMinHeight,
-              display: 'flex',
-              alignItems: 'center',
-            }}>
-            Playstyles
-          </a>
-          <span style={{fontSize: `${FONT_SIZES.xs}px`, color: COLORS.textDim}}>/</span>
-          <span style={{color: COLORS.text, fontWeight: 500}}>{name}</span>
-        </nav>
+        {/*
+          A real <Link>, where this used to be an anchor that preventDefault()'d and
+          then routed by hand through a prop threaded down three components. Same
+          destination, minus the threading, and middle-click works again.
+        */}
+        <Breadcrumb crumbs={[{label: 'Playstyles', to: '/playstyles'}, {label: name}]} />
 
         {/* Header: accent dot + name */}
         <div style={{display: 'flex', alignItems: 'center', gap: layout.headerGap}}>
@@ -510,7 +487,6 @@ export function PlaystyleDetailPage() {
   const displayedCards = roleFilteredCards.slice(0, LAYOUT.maxDisplayedCards);
 
   const goHome = () => navigate('/');
-  const goPlaystyles = () => navigate('/playstyles');
   const handleCardSelect = (card: {id: string}) => {
     trackCardSelected(getCardById(card.id), 'playstyle');
     openCardModal(card.id, displayedCards.map((c) => c.id));
@@ -557,7 +533,6 @@ export function PlaystyleDetailPage() {
         ui={ui}
         heroLayout={heroLayout}
         goHome={goHome}
-        goPlaystyles={goPlaystyles}
         handleCardSelect={handleCardSelect}
         roleChips={roleChips}
         activeRoles={activeRoles}
@@ -577,7 +552,6 @@ export function PlaystyleDetailPage() {
       ui={ui}
       heroLayout={heroLayout}
       goHome={goHome}
-      goPlaystyles={goPlaystyles}
       handleCardSelect={handleCardSelect}
       roleChips={roleChips}
       activeRoles={activeRoles}
@@ -725,7 +699,6 @@ function PlaystyleDetailMobileView({
   ui,
   heroLayout,
   goHome,
-  goPlaystyles,
   handleCardSelect,
   roleChips,
   activeRoles,
@@ -740,7 +713,6 @@ function PlaystyleDetailMobileView({
   ui: PlaystyleUIValue;
   heroLayout: HeroLayout;
   goHome: () => void;
-  goPlaystyles: () => void;
   handleCardSelect: (card: {id: string}) => void;
   roleChips: RoleChip[];
   activeRoles: ReadonlySet<string>;
@@ -797,7 +769,6 @@ function PlaystyleDetailMobileView({
           accentColor={ui.accentColor}
           accentRgb={ui.accentRgb}
           layout={heroLayout}
-          onPlaystylesBreadcrumb={goPlaystyles}
         />
         <BrowseToolbar {...toolbarProps} isMobile extraChips={toolbarExtras} />
         <ErrorBoundary>
@@ -828,7 +799,6 @@ function PlaystyleDetailDesktopView({
   ui,
   heroLayout,
   goHome,
-  goPlaystyles,
   handleCardSelect,
   roleChips,
   activeRoles,
@@ -842,7 +812,6 @@ function PlaystyleDetailDesktopView({
   ui: PlaystyleUIValue;
   heroLayout: HeroLayout;
   goHome: () => void;
-  goPlaystyles: () => void;
   handleCardSelect: (card: {id: string}) => void;
   roleChips: RoleChip[];
   activeRoles: ReadonlySet<string>;
@@ -878,7 +847,6 @@ function PlaystyleDetailDesktopView({
           accentColor={ui.accentColor}
           accentRgb={ui.accentRgb}
           layout={heroLayout}
-          onPlaystylesBreadcrumb={goPlaystyles}
         />
         <BrowseToolbar {...toolbarProps} isMobile={false} />
         {roleChips.length > 0 && (
