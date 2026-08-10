@@ -43,6 +43,16 @@ const OUTPUT_DIR = path.join(ROOT, 'apps/web/public/card-images');
 const PREVIEW_AVIFS_DIR = path.join(ROOT, 'apps/web/public/card-images-preview');
 /** The deployed card data — already the record of what production is serving. */
 const PROD_DATA_PATH = '/data/allCards.json';
+/**
+ * Collection detail chunks (#553): the 2,218 cards Inkweave shows but never
+ * analyses. Imaged here because a binder without art is pointless.
+ *
+ * The INDEX is deliberately not read. It carries no image fields — the binder
+ * renders one set at a time from that set's chunk, so the chunk is where hashes
+ * belong. If cross-set filtered results ever render from the index, it needs
+ * `imageHashSm` and this list has to grow.
+ */
+const COLLECTION_DIR = path.join(ROOT, 'apps/web/public/data/collection');
 
 const CONCURRENCY = 20;
 const IMAGE_QUALITY = 50;
@@ -225,14 +235,10 @@ async function processTask(task, manifest) {
   return outcome;
 }
 
-/**
- * Mutate a card data file (allCards.json or previewCards.json) in-place to
- * add `imageHash` + `imageHashSm` fields per card from the manifest.
- */
-function injectManifest(filePath, manifest) {
-  const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+/** Stamp `imageHash` + `imageHashSm` onto each card the manifest knows. */
+function stampHashes(cards, manifest) {
   let updated = 0;
-  for (const card of data.cards) {
+  for (const card of cards) {
     const hashes = manifest[card.id];
     if (hashes) {
       card.imageHash = hashes.full;
@@ -240,7 +246,42 @@ function injectManifest(filePath, manifest) {
       updated++;
     }
   }
+  return updated;
+}
+
+/**
+ * Mutate a card data file (allCards.json or previewCards.json) in-place to
+ * add `imageHash` + `imageHashSm` fields per card from the manifest.
+ */
+function injectManifest(filePath, manifest) {
+  const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  const updated = stampHashes(data.cards, manifest);
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n');
+  return updated;
+}
+
+/** Every collection detail chunk, or [] before Phase B has been generated. */
+function collectionChunkFiles() {
+  if (!fs.existsSync(COLLECTION_DIR)) return [];
+  return fs
+    .readdirSync(COLLECTION_DIR)
+    .filter((file) => file.endsWith('.json') && file !== 'index.json')
+    .map((file) => path.join(COLLECTION_DIR, file));
+}
+
+function readChunk(filePath) {
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
+/**
+ * Same job as injectManifest, but a chunk is a bare ARRAY rather than `{cards}`,
+ * and is written compact — the generator emits it that way, and pretty-printing
+ * here would turn every rebuild into a 2,000-line diff.
+ */
+function injectManifestIntoChunk(filePath, manifest) {
+  const cards = readChunk(filePath);
+  const updated = stampHashes(cards, manifest);
+  fs.writeFileSync(filePath, `${JSON.stringify(cards)}\n`);
   return updated;
 }
 
@@ -251,8 +292,7 @@ function injectManifest(filePath, manifest) {
  * every card in that set renders empty in the production build. Scattered rot across
  * a set stays green (matches the non-fatal per-image warning above).
  */
-function assertImageCoverage(dataFile, manifest) {
-  const {cards} = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+function assertImageCoverage(cards, manifest) {
   const bySet = new Map();
   for (const card of cards) {
     const set = String(card.setCode ?? 'unknown');
@@ -365,7 +405,22 @@ async function fetchDeployedCards() {
   try {
     const res = await fetch(`${RESTORE_ORIGIN}${PROD_DATA_PATH}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return indexById((await res.json()).cards);
+    const deployed = indexById((await res.json()).cards);
+    // Collection chunks publish their hashes the same way, so they restore too.
+    // Fetched per set rather than as one file because that is how they deploy;
+    // a chunk absent from production (a set added since the last deploy) simply
+    // means those cards download, which is the correct answer.
+    for (const file of collectionChunkFiles()) {
+      const name = path.basename(file);
+      try {
+        const chunkRes = await fetch(`${RESTORE_ORIGIN}/data/collection/${name}`);
+        if (!chunkRes.ok) continue;
+        for (const card of await chunkRes.json()) deployed.set(String(card.id), card);
+      } catch {
+        // One unreachable chunk costs that set a download, not the build.
+      }
+    }
+    return deployed;
   } catch (err) {
     console.warn(`  ! Could not read ${RESTORE_ORIGIN}${PROD_DATA_PATH} (${err.message}) — downloading everything.\n`);
     return new Map();
@@ -397,7 +452,12 @@ async function main() {
 
   // Manifest: { [cardId]: { full: hash, sm: hash } }, populated as images are emitted
   const manifest = {};
-  const allCards = loadAllCards(data);
+  // Core pool + the collection cards, imaged together: one cache, one manifest,
+  // one coverage guard. They stay separate everywhere else, but an image is an
+  // image, and splitting the pipeline would mean two of everything here.
+  const chunkFiles = collectionChunkFiles();
+  const collectionCards = chunkFiles.flatMap(readChunk);
+  const allCards = [...loadAllCards(data), ...collectionCards];
   // What production is serving right now. Fetched only when something could use
   // it, so a fully warm build makes no network requests at all.
   const cacheIncomplete = anyCacheMiss(allCards);
@@ -441,16 +501,21 @@ async function main() {
   // surface as broken images on the affected cards.
   const mainUpdated = injectManifest(DATA_FILE, manifest);
   const previewUpdated = fs.existsSync(PREVIEW_DATA_FILE) ? injectManifest(PREVIEW_DATA_FILE, manifest) : 0;
+  let chunkUpdated = 0;
+  for (const file of chunkFiles) chunkUpdated += injectManifestIntoChunk(file, manifest);
   console.log(
-    `  Injected hashes into card data: ${mainUpdated} in allCards.json, ${previewUpdated} in previewCards.json\n`,
+    `  Injected hashes into card data: ${mainUpdated} in allCards.json, ${previewUpdated} in previewCards.json,` +
+      ` ${chunkUpdated} across ${chunkFiles.length} collection chunk(s)\n`,
   );
 
   // No manifest is written: the hashes injected into allCards.json above ARE the
   // record, and they ship with the deployment. The next build reads them back
   // from the live site (#554).
 
-  // Guard: refuse to finish green if a whole set failed to image (would ship blank).
-  assertImageCoverage(DATA_FILE, manifest);
+  // Guard: refuse to finish green if a whole set failed to image (would ship
+  // blank). Covers the collection sets too — a binder page of empty frames is
+  // the same failure as a blank Browse page.
+  assertImageCoverage(allCards, manifest);
 }
 
 main().catch((err) => {
