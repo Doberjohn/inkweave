@@ -281,7 +281,29 @@ script and a bundled React component should not share a module. That leaves two
 declarations that must agree with nothing enforcing it — a real, smaller problem,
 tracked separately.
 
-### Phase B — the collection dataset
+### Phase B — the collection dataset · **SHIPPED (`3291abb`, `b834257`)**
+
+> **Two corrections to what follows, both found by building it.**
+>
+> **1. The projection was incomplete and 4× too small.** Chunks feed the engine's
+> `transformCard`, whose `LorcanaJSONCard` interface reads nine fields the list
+> below omits — `name`, `version`, `strength`, `willpower`, `lore`, `abilities`,
+> `keywordAbilities`, `fullTextSections`, `images`. Cards built from it would
+> render nameless and statless. Complete, it measures **445 KB gzip, not 118 KB**.
+> The mistake was sizing an invented projection instead of the consumer's contract.
+>
+> **2. Therefore two tiers, not one.** 445 KB voided Section 2's "load everything
+> when the mode turns on", which was argued *because* the payload was smaller than
+> the Core file. Shipped: `index.json` at **71 KB** (all 2,218 cards — grid,
+> filters, name search) loaded once in collection mode, plus per-set detail chunks
+> at **5–42 KB** loaded for the set being viewed. That is the binder's own page
+> unit, so the data chunks where the UI already pages.
+>
+> Also: `foilMask` dropped (read by nothing, 72 KB); `previewCards.json` ids
+> excluded alongside `allCards.json`; the images half took the deploy artifact from
+> 27.5 MB to **88 MB**, with 2,218 downloaded and **0 failed**.
+
+
 
 `scripts/generate-collection-data.mjs` reads the full export, subtracts every id
 present in `allCards.json`, and writes the remaining 2,218 as per-set chunks:

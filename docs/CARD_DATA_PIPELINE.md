@@ -756,6 +756,43 @@ flowchart TD
 
 No SW cache rule for `previewCards.json` itself — its graceful 404 path is browser-native.
 
+### The collection dataset (#553)
+
+A **third** card dataset lives at `apps/web/public/data/collection/`: the 2,218
+cards Inkweave can SHOW but never analyses — sets 1-8, Q1/Q2, and the
+Enchanted/Epic/Iconic/Special printings inside Core sets.
+
+**No card id appears in both it and `allCards.json`.** That is what makes the Core
+boundary structural: every script listed in this document reads `allCards.json`
+and never opens these files, so a set-1 card cannot reach a synergy calculation
+even by mistake. `scripts/generate-collection-data.mjs` asserts it and aborts
+otherwise.
+
+| File | Contents | gzip |
+|---|---|---|
+| `collection/index.json` | all 2,218, light projection — grid, filters, name search | 71 KB |
+| `collection/{set}.json` | one per set: card text, stats, abilities, image URLs | 5-42 KB |
+
+**Source is manual**, like `allCards.json`: download the full export from
+LorcanaJSON.org and pass its path to the generator. `previewCards.json` ids are
+excluded alongside `allCards.json`, because the runtime loader admits a preview
+card whose id is absent from the primary file — a card in both would otherwise
+appear twice.
+
+**A detail chunk must satisfy `LorcanaJSONCard`** (`cardTransformer.ts:7-44`),
+because chunks are transformed at runtime exactly like `allCards.json`. That
+interface is the contract: if it gains a field, `DETAIL_FIELDS` in
+`scripts/lib/collectionData.mjs` must follow, or collection cards render
+incomplete. An earlier design sized this projection against an invented field list
+and came out 4x too small AND missing `name`, `strength`, `willpower` and
+`abilities`.
+
+`download-card-images.mjs` images these cards alongside the Core pool — one cache,
+one manifest, one coverage guard — and injects hashes into the chunks. The
+**index is deliberately not imaged**: the binder renders one set at a time from
+that set's chunk. Adding 2,218 cards took the output from 27.5 MB / 2,048 files to
+**88 MB / 6,484 files**.
+
 ### CDN restore on a cache miss (#554)
 
 Before falling back to Ravensburger, a cache miss tries to fetch the
