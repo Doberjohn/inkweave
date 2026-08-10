@@ -14,6 +14,11 @@ Folded in by owner decision: an **incremental image pipeline**, because this
 feature triples the image count and the current pipeline cannot tell "unchanged"
 from "unknown".
 
+**Phase A shipped 2026-08-10 as #554 (`c4f4038`), and it differs from what this
+document first specified** — the committed manifest could not work, because AVIF
+encoding is not reproducible across machines. Phase A below carries the corrected
+design and why the original was wrong. Phases B and C are unbuilt.
+
 ## Why now
 
 Two thirds of a real collection is invisible in Inkweave. Measured against the
@@ -188,8 +193,10 @@ accessor. Collapsing later is possible; un-collapsing is not.
 
 ### H. The image pipeline becomes incremental, in the same effort
 
-Manifest plus CDN restore. Folded in rather than sequenced separately, by owner
-decision, on the grounds that this feature is what makes it urgent.
+CDN restore, folded in rather than sequenced separately, by owner decision, on the
+grounds that this feature is what makes it urgent. **Shipped as #554** — the
+committed manifest this originally specified turned out to be unworkable; see
+Phase A.
 
 ## Architecture
 
@@ -200,53 +207,79 @@ triples. Phases B and C are one plan: the feature.
 Folding A into this document was an owner decision (H). Keeping it a separate
 *plan* is how the coupling stays documentary rather than tangled in the code.
 
-### Phase A — incremental image pipeline
+### Phase A — incremental image pipeline · **SHIPPED as #554 (`c4f4038`)**
 
-A committed manifest at `data/image-manifest.json` — repo root, **not** `public/`,
-because at ~390 KB for 3,242 cards it must never reach a browser:
+> **The design below was wrong and the shipped version differs.** Kept, corrected
+> in place, because the reason it was wrong is the most useful thing here.
 
-```json
-{ "version": 1,
-  "cards": { "1936": { "src": "056fe7b7…", "full": "dbd7b742…", "sm": "ed258896…" } } }
-```
+**What was designed:** a committed manifest at `data/image-manifest.json` recording
+`{src, full, sm}` per card — the upstream source hash beside our two AVIF output
+hashes — so a build could diff `src` to find the real change set.
 
-`src` is the hash lifted from the Ravensburger URL. `full`/`sm` are our AVIF output
-hashes — the values already injected into `allCards.json`, now recorded where they
-survive the build container.
+**Why it cannot work.** AVIF encoding is **not reproducible across machines**.
+Different `sharp`/libvips versions and platforms produce different bytes from the
+same JPEG, so the output hash is a property of the builder, not of the input.
+Measured 2026-08-10: **0 of 1024** hashes from a local Windows run matched
+production's Linux build. A manifest committed from a developer's machine would
+describe bytes CI never produces, so every restore would 404 and fall through —
+the feature inert, plus ~2,000 futile requests per cold build.
 
-Per-card decision in `download-card-images.mjs`:
+The mistaken step was treating content-addressing as implying reproducibility. It
+guarantees *the same bytes get the same name*; it says nothing about *the same
+input producing the same bytes*. For a lossy encoder those are very different
+claims, and the cross-machine protocol was built on the stronger one.
 
-| Manifest state | Action |
+**What shipped instead: the deployed `allCards.json` is already the manifest.** The
+build injects `imageHash`/`imageHashSm` into it and it ships, so the live site
+publishes both the hashes it serves and the `images.full` source URLs they came
+from. No new committed file, and no cross-machine hash problem, because the hashes
+are read from the deployment that actually holds those bytes.
+
+Per-card decision in `download-card-images.mjs`, against `{ORIGIN}/data/allCards.json`:
+
+| State | Action |
 |---|---|
-| `src` matches current URL, cache hit | skip (today's behaviour) |
-| `src` matches, cache miss | **restore from our own CDN** — no download, no `sharp` conversion |
-| `src` differs, or card absent from manifest | download from Ravensburger, convert |
+| All size variants cached | skip (unchanged behaviour) |
+| Cache miss, prod serves the same source art, both hashes published | **restore** — no download, no `sharp` |
+| Cache miss, art changed / card new / prod unreachable | download from Ravensburger, convert |
 
-**Restore is verified, not trusted.** Fetch `{ORIGIN}/card-images/{id}.{full}.avif`,
-hash the returned bytes, and require them to equal the hash requested. A mismatch
-is discarded and falls through. Content-addressing turns "fetch a build input over
-the network" from a supply-chain smell into a checksum.
+**Restore is verified, not trusted.** The expected hash is known before the
+request, so a stale, truncated or substituted response is arithmetically
+detectable and discarded. Known limit, accepted and documented in
+`scripts/lib/imageRestore.mjs`: this proves the bytes match the hash asked for, not
+that the hash belongs to the right card — that binding comes from the deployed
+file, so a compromised deployment could swap one card's art for another's.
 
 Origin resolution, first match wins:
 
 ```
 PROD_IMAGE_ORIGIN                (manual override, local testing)
 VERCEL_PROJECT_PRODUCTION_URL    (automatic on Vercel, no setup)
-https://inkweave.ink             (the constant already in generate-sitemap.mjs)
-(none)                           → skip restore, download from Ravensburger
+https://inkweave.ink             (scripts/lib/siteOrigin.mjs)
 ```
 
-**Restore is an optimisation and never a dependency.** If no origin resolves, or
-the fetch fails, or the bytes mismatch, the build is exactly as slow as today and
-no slower. Nothing new can break it.
+**Restore is an optimisation and never a dependency.** Disabled, cache-complete,
+origin-unreachable and active are reported as four distinct states, because the
+first three all print `0 restored` and mean different things. Every failure path
+falls through to the existing download; `SKIP_IMAGE_RESTORE=1` reverts the
+behaviour with no code change or deploy.
 
-Two consequences: once a card's bytes have been fetched once, **upstream rot stops
-mattering for it**; and an upstream re-upload becomes *visible*, as a `src` diff in
-review rather than a silent art change.
+**A benefit that was not designed for:** restoring prod's bytes makes the emitted
+hash equal prod's hash, so an unchanged card deploys under a byte-identical
+filename and its `immutable` CDN entry survives the release instead of being
+invalidated by a re-encode that changed nothing visible.
 
-`SITE_ORIGIN` is currently duplicated in `generate-sitemap.mjs` and
-`check-rendered-html.mjs`. Restore would be a third copy — lift it to one shared
-module.
+**Measured on a cold cache** (all 3,679 cache files wiped): **1024 restored, 0
+downloaded, 0 failed, 33.5s**, with all 1024 resulting hashes identical to
+production's. A warm build now makes **zero** network requests — the deployed file
+is fetched only when something could use it.
+
+`SITE_ORIGIN` was declared three times (`generate-sitemap.mjs`,
+`check-rendered-html.mjs`, `ping-indexnow.mjs`) and is now one module,
+`scripts/lib/siteOrigin.mjs`. `Seo.tsx` deliberately keeps its own: a root build
+script and a bundled React component should not share a module. That leaves two
+declarations that must agree with nothing enforcing it — a real, smaller problem,
+tracked separately.
 
 ### Phase B — the collection dataset
 
