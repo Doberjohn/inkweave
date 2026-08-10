@@ -193,10 +193,9 @@ decision, on the grounds that this feature is what makes it urgent.
 
 ## Architecture
 
-Three phases. **Phase A stands alone and wants its own implementation plan and
-issue** — it is a build-pipeline change with no user-facing surface, it improves
-things at today's 1,024 cards, and it should land before the count triples.
-Phases B and C are one plan: the feature.
+Three phases. **Phase A is #554** — a build-pipeline change with no user-facing
+surface, worth doing at today's 1,024 cards, and it should land before the count
+triples. Phases B and C are one plan: the feature.
 
 Folding A into this document was an owner decision (H). Keeping it a separate
 *plan* is how the coupling stays documentary rather than tangled in the code.
