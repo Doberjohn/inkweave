@@ -132,7 +132,7 @@ Claude Code hooks, skills, agents, and path-scoped rules enforce workflow rules 
 ### Hooks (`.claude/hooks/`)
 | Hook | Event | What it does |
 |------|-------|-------------|
-| `git-write-protection.sh` | PreToolUse/Bash | Soft-blocks commit/push (`USER_APPROVED=1` bypass), hard-blocks destructive ops |
+| `git-write-protection.sh` | PreToolUse/Bash | Soft-blocks commit/push (`USER_APPROVED=1` bypass), hard-blocks destructive ops, and hard-blocks **piping** a commit/push (the pipeline's exit status hides a rejected hook — no bypass, not even `USER_APPROVED=1`) |
 | `branch-verification.sh` | PreToolUse/Edit\|Write | Blocks source file edits on master/main |
 | `engine-auto-rebuild.sh` | PostToolUse/Edit\|Write | Auto `pnpm build:engine` + `pnpm precompute-synergies` after engine file edits |
 | `preview-images-auto-convert.sh` | PostToolUse/Edit\|Write | Auto `pnpm convert-preview-images` after writes inside `apps/web/public/card-images-raw/` (raw → AVIF pipeline) |
@@ -278,6 +278,7 @@ Dark fantasy theme inspired by Lorcana:
 
 ### Git Workflow
 - **Git safety enforced by hooks** — `git-write-protection` hook blocks commit, push, and destructive ops (checkout --, restore, reset --hard, clean -f, worktree remove/prune). Commit/push use `USER_APPROVED=1` prefix after explicit user approval. Destructive ops are hard-blocked — run manually.
+- **Never pipe a commit or push.** Hard-blocked by the same hook, with no bypass. A pipeline reports the LAST command's exit status, so `git push | tail` returns tail's success even when the pre-push hook rejected the push — the branch silently does not move. Run unpiped and read the output; for the multi-minute hook chains use a background run and read its output file. `set -o pipefail` is not an escape: `USER_APPROVED=1` must be the literal first characters, so a `pipefail` prefix breaks approval instead.
 - **Branch verification enforced by hook** — `branch-verification` hook blocks source file edits on master/main.
 - Feature branches: `feature/<issue-number>-<description>` (e.g., `feature/5-deck-builder-tests`)
 - Commit messages: Use semantic commit notation with issue reference (e.g., `test(deck): add tests (#5)`)
