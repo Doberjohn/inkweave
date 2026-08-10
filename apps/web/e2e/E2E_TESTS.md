@@ -277,7 +277,9 @@ Desktop only because `DeckBuilderPage` renders a "not on mobile" notice instead 
 
 **What these specs therefore do NOT prove:** RLS itself, or that Postgres accepts the write. That half belongs in `scripts/test-supabase-integration.mjs`, which today covers voting only and has no deck coverage at all.
 
-**Owner ruling 2026-08-05: publish is not a separate concept.** Visibility is a property of the deck, chosen in the New deck dialog and changed any time in the builder, and **Save is the only thing that writes it**. `/decks/:id` states the current visibility and cannot change it. Copying a link never publishes, and on a private deck Copy link is disabled, because that link resolves to nothing for anyone else.
+**Owner ruling 2026-08-05: publish is not a separate concept.** Visibility is a property of the deck, chosen in the New deck dialog and changed any time in the builder, and **Save is the only thing that writes it**. `/decks/:id` states the current visibility and cannot change it.
+
+**Owner ruling 2026-08-07: there is no share control.** `ShareDeckButton` was removed from `DeckViewPage` by the back-navigation rework and deleted outright on 2026-08-10; the URL in the address bar is the share link. So a private deck is not guarded by a Copy link that refuses — it is guarded by RLS, which is what the second test below actually asserts.
 
 That single-writer rule is not a style choice: two writers (the builder's Save and a control on the deck page) is what caused a REPRODUCED bug where publishing a deck and then saving any later edit silently un-published it, dropping the deck out of community decks. The fourth test below is that bug's regression guard.
 
@@ -287,12 +289,12 @@ Assertions go through **buttons and their disabled reasons**, never internal sta
 |---|---|
 | the deck is Core legal | `Play on Duels` is enabled. It is gated on `DeckStats.isLegal`, so this covers the 60-card, 4-copy and 2-ink rules at once |
 | the deck is saved | a button named `No changes to save` (the rested, disabled Save) |
-| the deck is private | a button named `Only a public deck has a link to share. Make this deck public first.`, and NO button named `Copy link` |
+| the deck is private | an anonymous context gets "Deck not found" at `/decks/:id`. There is no longer a control to read it off, so the RLS behaviour IS the signal |
 | visibility is changed | the `Deck visibility` group in the builder, then Save. There is no control for it anywhere else |
 
 | Test | What it verifies |
 |---|---|
-| a deck created public is live for a stranger as soon as it is saved | creates the deck as **Public** in the New deck dialog → imports a Core-legal 60 → Save writes one row owned by the test user, 60 copies, `is_public: true` with no second step → Copy link is enabled → a separate anonymous context renders the deck with 60 cards and NO owner controls |
+| a deck created public is live for a stranger as soon as it is saved | creates the deck as **Public** in the New deck dialog → imports a Core-legal 60 → Save writes one row owned by the test user, 60 copies, `is_public: true` with no second step → the owner's view carries Edit deck → a separate anonymous context renders the deck with 60 cards and no Edit link |
 | a private deck is invisible to strangers until the builder makes it public | created Private → saved `is_public: false` → an anonymous context gets "Deck not found" → the deck page has NO publish control and no share affordance at all → Edit deck, flip to Public → the flip writes on its own → the stranger now sees the deck. Renamed 2026-08-07: Copy link was deleted, so the guard is now that the affordance does not exist rather than that it refuses |
 | saving a later edit does not quietly un-publish the deck | created Public and saved → leave the builder, return via the deck page, Edit deck, remove one copy, Save → still `is_public: true`. Guards a bug that was reproduced end to end before the fix |
 | an unsaved deck is not written to the cloud on its own | after importing 60 cards while signed in, Save is live and the backend has received nothing: nothing reaches the cloud until the user asks |

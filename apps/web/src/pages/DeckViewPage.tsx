@@ -334,9 +334,10 @@ function isResolving(gates: {deck: boolean; cards: boolean; session: boolean}): 
 /**
  * `/decks/:id` (#473) — the read-only deck, and the page a shared link lands on.
  *
- * A visitor gets the deck and the share button. Its owner also gets Edit and the
- * visibility control, which is the point of the whole page: it is what turns a
- * saved deck into one anybody can open.
+ * Everyone gets the deck. Its owner also gets Edit, which is the only thing that
+ * distinguishes the two views: visibility is a property of the deck and changes in
+ * the builder (ruling 2026-08-05), and there is no share control, because the URL
+ * in the address bar already is the link (ruling 2026-08-07).
  */
 export function DeckViewPage() {
   const {id} = useParams();
