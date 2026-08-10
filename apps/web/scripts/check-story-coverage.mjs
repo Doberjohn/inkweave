@@ -33,6 +33,10 @@ const EXCLUDED = new Set([
   // shared/contexts (which this script does not scan). It lives under features/
   // because it reads a repository, and shared/ must not import a feature.
   'ProfileContext.tsx',
+  // Same case (#553): renders only its children. Note DeckContext.tsx needs no
+  // entry because it sits in features/deck/state/, which is not a scanned root —
+  // so this list is about FILE LOCATION as much as about the component.
+  'CollectionContext.tsx',
 ]);
 
 // Pages are route compositions of already-storied components; stories exist
