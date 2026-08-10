@@ -177,43 +177,48 @@ function copyPreviewAvifs(cardId, manifest) {
   }
 }
 
-async function processTask(task, manifest) {
-  // Cache check — only trust if ALL size variants exist (prevents partial-write poisoning)
-  const allCached =
-    !FORCE &&
-    SIZES.every((size) => fs.existsSync(path.join(CACHE_DIR, `${task.id}${size.suffix}.avif`)));
+/** Every size variant present. Partial sets are never trusted (write poisoning). */
+function isFullyCached(cardId) {
+  return SIZES.every((size) => fs.existsSync(path.join(CACHE_DIR, `${cardId}${size.suffix}.avif`)));
+}
 
-  let outcome = 'cached';
-  if (!allCached) {
-    // Restore fills the CACHE, not the output, so the emit path below is unchanged
-    // and output still always comes from cache. The restored bytes ARE the cache
-    // bytes that produced the CDN filename, so re-hashing them reproduces the
-    // same hash by construction.
-    const restored = RESTORE_ENABLED && task.plan.action === 'restore' && (await restoreIntoCache(task));
-    if (restored) {
-      outcome = 'restored';
-    } else {
-      outcome = 'downloaded';
-      // Download JPEG from Ravensburger, convert to AVIF, store unhashed in cache
-      const buffer = await downloadWithRetry(task.url);
-      for (const size of SIZES) {
-        const cachePath = path.join(CACHE_DIR, `${task.id}${size.suffix}.avif`);
-        try {
-          await sharp(buffer)
-            .resize(size.width, size.height, {fit: 'cover'})
-            .avif({quality: IMAGE_QUALITY})
-            .toFile(cachePath);
-        } catch (err) {
-          throw new Error(`Failed to generate ${task.id}${size.suffix}.avif: ${err.message}`);
-        }
-      }
+/** Download the JPEG once and convert it into every cached size. */
+async function convertIntoCache(task) {
+  const buffer = await downloadWithRetry(task.url);
+  for (const size of SIZES) {
+    const cachePath = path.join(CACHE_DIR, `${task.id}${size.suffix}.avif`);
+    try {
+      await sharp(buffer)
+        .resize(size.width, size.height, {fit: 'cover'})
+        .avif({quality: IMAGE_QUALITY})
+        .toFile(cachePath);
+    } catch (err) {
+      throw new Error(`Failed to generate ${task.id}${size.suffix}.avif: ${err.message}`);
     }
   }
+}
+
+/**
+ * Populate the cache for one card, preferring restore. Returns how it got there.
+ *
+ * Both paths fill the CACHE, never the output, so the emit step stays a single
+ * unconditional loop and output always comes from cache. Restored bytes ARE the
+ * cache bytes that produced the CDN filename, so re-hashing them reproduces the
+ * same hash by construction.
+ */
+async function fillCache(task) {
+  const canRestore = RESTORE_ENABLED && task.plan.action === 'restore';
+  if (canRestore && (await restoreIntoCache(task))) return 'restored';
+  await convertIntoCache(task);
+  return 'downloaded';
+}
+
+async function processTask(task, manifest) {
+  const outcome = !FORCE && isFullyCached(task.id) ? 'cached' : await fillCache(task);
 
   // Hash + write hashed filename to OUTPUT_DIR for every size
   for (const size of SIZES) {
-    const cachePath = path.join(CACHE_DIR, `${task.id}${size.suffix}.avif`);
-    const bytes = fs.readFileSync(cachePath);
+    const bytes = fs.readFileSync(path.join(CACHE_DIR, `${task.id}${size.suffix}.avif`));
     emitHashed(bytes, task.id, size.suffix, manifest);
   }
 
@@ -333,12 +338,13 @@ function partitionCards(allCards, manifest, deployed) {
  * requests, which is also what makes its "0 downloaded" report honest.
  */
 function anyCacheMiss(allCards) {
-  return allCards.some(
-    (card) =>
-      !hasPreviewAvifs(card.id) &&
-      (card.images?.full ?? card.images?.thumbnail) &&
-      !SIZES.every((size) => fs.existsSync(path.join(CACHE_DIR, `${card.id}${size.suffix}.avif`))),
-  );
+  return allCards.some((card) => needsFetch(card) && !isFullyCached(card.id));
+}
+
+/** A card the download path is responsible for: has a URL, has no preview AVIFs. */
+function needsFetch(card) {
+  if (hasPreviewAvifs(card.id)) return false;
+  return Boolean(card.images?.full ?? card.images?.thumbnail);
 }
 
 /**

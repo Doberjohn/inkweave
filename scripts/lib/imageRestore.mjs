@@ -105,6 +105,8 @@ export function planFor(localCard, prodCard) {
  * would otherwise "verify" against its own hash and write an empty file.
  */
 export function verifyRestored(bytes, expectedHash) {
-  if (!bytes || bytes.length === 0 || !expectedHash) return false;
+  if (!expectedHash) return false;
+  if (!bytes) return false;
+  if (bytes.length === 0) return false;
   return deriveHash(bytes) === expectedHash;
 }
