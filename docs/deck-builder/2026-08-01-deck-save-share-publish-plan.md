@@ -14,6 +14,41 @@
 
 ---
 
+## Status: COMPLETE (2026-08-10)
+
+All nine tasks shipped between 2026-08-03 and 2026-08-04. The checkboxes below were
+never ticked as the work went, so they were reconciled against the log afterwards;
+the mapping is one commit per task, which is what makes that reconciliation
+trustworthy rather than a guess.
+
+| Task | Commit |
+|---|---|
+| 1 — `listPublicDecks` | `11d35366` |
+| 2 — the dirty flag's storage | `16a40035` |
+| 3 — deck lifecycle in `DeckContext` | `7d9d95aa` |
+| 4 — builder routes mean what they say | `4543733c` |
+| 5 — `NewDeckDialog` | `2e9197fe` |
+| 6 — `SaveDeckDialog` and the save action | `e9992969` |
+| 7 — the two lists on `/decks` | `30035bc7` |
+| 8 — `DeckViewPage`, sharing and publishing | `5b213d14` |
+| 9 — E2E session stubbing and the acceptance test | `210eabbc` |
+
+**Three owner rulings landed after the plan was written and moved it.** Read them
+before treating any task body below as a description of the shipped code:
+
+1. **Save without a dialog** (`f64ced20`, `28c0d277`). Task 6 built `SaveDeckDialog`,
+   and it was then reduced: Save writes directly, and unsaved state is derived from a
+   saved snapshot rather than tracked as a flag.
+2. **Publish is not a separate concept** (2026-08-05). Visibility is a property of the
+   deck; **Save is its only writer.** Task 8's visibility control on `/decks/:id` was
+   removed, because two writers for one column silently un-published decks — a bug
+   reproduced end to end. `updateDeck` now has no caller.
+3. **There is no share control** (2026-08-07). Task 8's `ShareDeckButton` was dropped
+   from `DeckViewPage` by the back-navigation rework (`8c62710c`) and the component was
+   deleted on 2026-08-10. The URL is the share link.
+
+---
+
 ## File Structure
 
 | File | Responsibility |
@@ -23,12 +58,12 @@
 | `apps/web/src/features/deck/state/DeckContext.tsx` | **Modify.** Add `isDirty`, `markSaved`, `loadDeck`, `startNewDeck`; clear draft on sign-out. |
 | `apps/web/src/features/deck/components/NewDeckDialog.tsx` | **Create.** Name + visibility + guest replace warning. |
 | `apps/web/src/features/deck/components/SaveDeckDialog.tsx` | **Create.** Name + visibility + save, or sign-in prompt. |
-| `apps/web/src/features/deck/components/ShareDeckButton.tsx` | **Create.** Copy link; offer publish when private. |
+| ~~`apps/web/src/features/deck/components/ShareDeckButton.tsx`~~ | **Created, then deleted 2026-08-10.** See ruling 3 above. |
 | `apps/web/src/features/deck/components/DeckSummaryCard.tsx` | **Create.** One row in either deck list. |
 | `apps/web/src/pages/DecksPage.tsx` | **Modify.** TabList, both lists, empty states. |
 | `apps/web/src/pages/DeckViewPage.tsx` | **Modify.** Replace the placeholder with a real read-only view. |
 | `apps/web/src/pages/DeckBuilderPage.tsx` | **Modify.** Reset on `/new`, load by `:id` on `/:id/edit`. |
-| `apps/web/e2e/fixtures/session.ts` | **Create.** Session stubbing; none exists in the suite today. |
+| `apps/web/e2e/helpers/deckBackend.ts` | **Create.** Session stubbing (`signInAs`) plus the in-memory `decks` backend. Planned as `e2e/fixtures/session.ts`; the two belong together, because the stubbed JWT and the routed backend have to agree on the viewer. |
 | `apps/web/e2e/tests/deck-save-share.spec.ts` | **Create.** The issue's acceptance contract. |
 
 Tasks are ordered so each leaves the tree green and commitable. Tasks 1-3 are pure logic and carry the subtlety; 4-8 are UI over them; 9 is the acceptance gate.
@@ -41,11 +76,11 @@ Tasks are ordered so each leaves the tree green and commitable. Tasks 1-3 are pu
 - Modify: `apps/web/src/features/deck/state/deckRepository.ts`
 - Test: `apps/web/src/features/deck/state/deckRepository.test.ts`
 
-- [ ] **Step 1: Read the existing conventions**
+- [x] **Step 1: Read the existing conventions**
 
 Open `deckRepository.ts` and read the header comment plus `listDecks`. Every call goes through the `run(async (c) => ...)` shell, returns `RepoResult<T>` (`{data, error}`), and maps rows with `rowToDeck`. Follow that exactly; do not add a new error style.
 
-- [ ] **Step 2: Teach the test harness about `.limit`**
+- [x] **Step 2: Teach the test harness about `.limit`**
 
 The file uses one shared chainable stand-in, `makeQuery`, whose method list is
 `['select', 'insert', 'update', 'delete', 'upsert', 'eq', 'order']`. **It has no
@@ -59,7 +94,7 @@ Awaiting the builder already resolves via the harness's `then`, so no other chan
 is needed: `listPublicDecks` ends on `.limit()` and is awaited, exactly like
 `listDecks` ends on `.order()`.
 
-- [ ] **Step 3: Write the failing test**
+- [x] **Step 3: Write the failing test**
 
 Append to `apps/web/src/features/deck/state/deckRepository.test.ts`, using the
 file's existing `prime` / `from` / `makeRow` helpers rather than hand-rolled mocks:
@@ -92,12 +127,12 @@ describe('listPublicDecks', () => {
 Add `listPublicDecks` to the existing import from `./deckRepository` at the top of
 the file. `beforeEach` already wires `mockGetSupabase`, so do not re-wire it.
 
-- [ ] **Step 3: Run it and confirm it fails**
+- [x] **Step 3: Run it and confirm it fails**
 
 Run: `pnpm --filter inkweave-web exec vitest run src/features/deck/state/deckRepository.test.ts`
 Expected: FAIL, `listPublicDecks is not a function` or an import error.
 
-- [ ] **Step 4: Implement**
+- [x] **Step 4: Implement**
 
 Add directly below `listDecks` in `deckRepository.ts`:
 
@@ -124,12 +159,12 @@ export function listPublicDecks(limit = 50): Promise<RepoResult<Deck[]>> {
 }
 ```
 
-- [ ] **Step 5: Run tests, confirm green**
+- [x] **Step 5: Run tests, confirm green**
 
 Run: `pnpm --filter inkweave-web exec vitest run src/features/deck/state/deckRepository.test.ts`
 Expected: PASS, existing tests unchanged.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 USER_APPROVED=1 git add apps/web/src/features/deck/state/deckRepository.ts apps/web/src/features/deck/state/deckRepository.test.ts
@@ -146,7 +181,7 @@ USER_APPROVED=1 git commit -m "feat(deck): listPublicDecks, the community tab's 
 
 The flag lives under its own key, NOT on `Deck`. Putting it on `Deck` would change the persisted shape (forcing a `schemaVersion` bump) and would be written into the `decks.cards` jsonb column, where a client-side edit flag has no business being.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `deckStorage.test.ts`:
 
@@ -169,12 +204,12 @@ describe('dirty flag', () => {
 
 Add `DIRTY_KEY`, `readDirty`, `writeDirty` to the file's import.
 
-- [ ] **Step 2: Run it and confirm it fails**
+- [x] **Step 2: Run it and confirm it fails**
 
 Run: `pnpm --filter inkweave-web exec vitest run src/features/deck/state/deckStorage.test.ts`
 Expected: FAIL on the missing exports.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `deckStorage.ts`, below the existing `DRAFT_KEY`:
 
@@ -204,12 +239,12 @@ export function clearDraft(): void {
 }
 ```
 
-- [ ] **Step 4: Run tests, confirm green**
+- [x] **Step 4: Run tests, confirm green**
 
 Run: `pnpm --filter inkweave-web exec vitest run src/features/deck/state/deckStorage.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 USER_APPROVED=1 git add apps/web/src/features/deck/state/deckStorage.ts apps/web/src/features/deck/state/deckStorage.test.ts
@@ -227,7 +262,7 @@ USER_APPROVED=1 git commit -m "feat(deck): persist the unsaved-changes flag unde
 Read `DeckContext.tsx` fully first. Three constraints there are load-bearing:
 `setState`-in-effect is banned under the React Compiler; inks are derived in render, never stored; and the teardown flush must keep working.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `DeckContext.test.tsx`. **The helper is `render()`, takes no arguments,
 and the card fixtures are `'amber'` and `'steel'`, not card ids like `'1936'`.**
@@ -273,12 +308,12 @@ it('loadDeck replaces the draft and marks it clean', () => {
 });
 ```
 
-- [ ] **Step 2: Run and confirm failure**
+- [x] **Step 2: Run and confirm failure**
 
 Run: `pnpm --filter inkweave-web exec vitest run src/features/deck/state/DeckContext.test.tsx`
 Expected: FAIL, `isDirty`/`markSaved`/`startNewDeck`/`loadDeck` undefined.
 
-- [ ] **Step 3: Extend the context type**
+- [x] **Step 3: Extend the context type**
 
 In `DeckContext.tsx`, add to `DeckContextValue`:
 
@@ -293,7 +328,7 @@ In `DeckContext.tsx`, add to `DeckContextValue`:
   startNewDeck: (visibility: 'private' | 'public') => void;
 ```
 
-- [ ] **Step 4: Implement in `DeckProvider`**
+- [x] **Step 4: Implement in `DeckProvider`**
 
 Add the state, seeded from storage, next to the existing `deck` state:
 
@@ -347,7 +382,7 @@ Persist the flag alongside the existing debounced draft write, in its own effect
 
 Add all four to the `value` object.
 
-- [ ] **Step 5: Give the existing `createEmptyDraft` a visibility parameter**
+- [x] **Step 5: Give the existing `createEmptyDraft` a visibility parameter**
 
 **Do not create a new helper and do not move anything to `deckStorage`.**
 `createEmptyDraft()` already exists at the top of `DeckContext.tsx` and is already
@@ -378,7 +413,7 @@ behaviour is unchanged.
 
 `startNewDeck` then becomes `setDeck(createEmptyDraft(visibility === 'public'))`.
 
-- [ ] **Step 6: Clear the draft on sign-out**
+- [x] **Step 6: Clear the draft on sign-out**
 
 `DeckContext.tsx` already carries this note: *"The rarer reload-then-different-user path is left to #473's saved-deck model, which will clear the draft on sign-out."* Honor it, so one person's deck never greets the next account on a shared browser.
 
@@ -435,7 +470,7 @@ it('clears the draft when a signed-in user signs out', () => {
 Note `enabled: false` in the mock means the migrator's upsert path stays inert, so
 this test exercises the sign-out branch without touching Supabase.
 
-- [ ] **Step 6a: Clear the flag when the first-sign-in migration succeeds**
+- [x] **Step 6a: Clear the flag when the first-sign-in migration succeeds**
 
 Found during Task 2's review. `useFirstSignInMigration` currently does:
 
@@ -461,12 +496,12 @@ hook that has no access to the provider's state setter, and the flag is read fro
 storage on next mount. Add a test asserting the flag is clear after a successful
 migration.
 
-- [ ] **Step 7: Run tests, confirm green**
+- [x] **Step 7: Run tests, confirm green**
 
 Run: `pnpm --filter inkweave-web exec vitest run src/features/deck/state`
 Expected: PASS, including the existing `deckMigration.test.tsx`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 USER_APPROVED=1 git add apps/web/src/features/deck/state
@@ -482,7 +517,7 @@ USER_APPROVED=1 git commit -m "feat(deck): draft lifecycle, dirty tracking, and 
 
 Today `DeckBuilderPage` has no reset on mount and never reads `:id`, so `/decks/new` and `/decks/:id/edit` are the same page over the same draft: **"+ New deck" creates nothing and a saved deck cannot be opened.** Everything downstream depends on this.
 
-- [ ] **Step 1: Load the routed deck when editing**
+- [x] **Step 1: Load the routed deck when editing**
 
 Add near the top of the component:
 
@@ -507,7 +542,7 @@ Add near the top of the component:
   }, [id, deck.id, loadDeck]);
 ```
 
-- [ ] **Step 2: Render the not-found state**
+- [x] **Step 2: Render the not-found state**
 
 RLS returns no row for both "does not exist" and "private and not yours", and that
 is deliberate: do not leak which. Render ONE state for both.
@@ -529,14 +564,14 @@ today, so a mobile visitor should see the desktop-only notice rather than a
 fetch result, and there is no point reporting not-found while the card DB is
 still resolving.
 
-- [ ] **Step 3: Verify by hand**
+- [x] **Step 3: Verify by hand**
 
 Run `pnpm dev`, then:
 - `/decks/new` shows the current draft (creation is Task 5's dialog; this route no longer needs to reset by itself).
 - `/decks/<a-real-id>/edit` loads that deck.
 - `/decks/does-not-exist/edit` shows "Deck not found".
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 USER_APPROVED=1 git add apps/web/src/pages/DeckBuilderPage.tsx
@@ -554,7 +589,7 @@ USER_APPROVED=1 git commit -m "fix(deck): /decks/:id/edit actually opens that de
 
 Use `DialogShell`; the overlay contract is enforced by the `inkweave/no-unshelled-dialogs` lint rule. Read `.claude/rules/overlays.md` before writing it.
 
-- [ ] **Step 1: Build the dialog**
+- [x] **Step 1: Build the dialog**
 
 ```tsx
 interface NewDeckDialogProps {
@@ -622,21 +657,21 @@ is the pattern to copy if this one grows.
 `size`, `initialFocusRef`, and `scrimTestId`. Give every form control its own
 `aria-label`, as the textarea in `ImportDeckDialog` does.
 
-- [ ] **Step 2: Add the story**
+- [x] **Step 2: Add the story**
 
 Four exports, per `.claude/rules/stories.md`: `Default`, `WithReplaceWarning`, `GuestCannotPublish`, `SignedIn`.
 
-- [ ] **Step 3: Wire it into `DecksPage`**
+- [x] **Step 3: Wire it into `DecksPage`**
 
 "+ New deck" becomes a button opening this dialog. On confirm: `startNewDeck(visibility)` then `navigate('/decks/new')`.
 
 `showReplaceWarning` is `!user && deck.cards.length > 0`. `canPublish` is `!!user`.
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 `pnpm --filter inkweave-web exec vitest run` and `pnpm --filter inkweave-web lint` both clean. Check the dialog by hand signed out (warning appears with a non-empty draft, Public disabled) and signed in (no warning, Public selectable).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 USER_APPROVED=1 git add apps/web/src/features/deck/components/NewDeckDialog.tsx apps/web/src/features/deck/components/NewDeckDialog.stories.tsx apps/web/src/pages/DecksPage.tsx
@@ -652,7 +687,7 @@ USER_APPROVED=1 git commit -m "feat(deck): NewDeckDialog picks visibility up fro
 - Create: `apps/web/src/features/deck/components/SaveDeckDialog.stories.tsx`
 - Modify: `apps/web/src/features/deck/components/DeckActionsBar.tsx`
 
-- [ ] **Step 1: Build the dialog**
+- [x] **Step 1: Build the dialog**
 
 Signed out it is the conversion point, so it does not show a form:
 
@@ -709,11 +744,11 @@ export function SaveDeckDialog({isOpen, onClose}: {isOpen: boolean; onClose: () 
 
 On failure the draft is untouched and stays dirty. Never discard local work on a failed save.
 
-- [ ] **Step 2: Add the story**
+- [x] **Step 2: Add the story**
 
 Exports: `SignedOut`, `SignedIn`, `Saving`, `SaveFailed`.
 
-- [ ] **Step 3: Add the toolbar button**
+- [x] **Step 3: Add the toolbar button**
 
 In `DeckActionsBar`, add a `Save to account` button (variant `ghost`) that opens the dialog, showing an unsaved marker when `isDirty`:
 
@@ -721,7 +756,7 @@ In `DeckActionsBar`, add a `Save to account` button (variant `ghost`) that opens
 {isDirty ? 'Save to account •' : 'Save to account'}
 ```
 
-- [ ] **Step 4: Verify, then commit**
+- [x] **Step 4: Verify, then commit**
 
 ```bash
 USER_APPROVED=1 git add apps/web/src/features/deck/components
@@ -736,15 +771,15 @@ USER_APPROVED=1 git commit -m "feat(deck): SaveDeckDialog, and Save is the guest
 - Create: `apps/web/src/features/deck/components/DeckSummaryCard.tsx` + story
 - Modify: `apps/web/src/pages/DecksPage.tsx`
 
-- [ ] **Step 1: `DeckSummaryCard`**
+- [x] **Step 1: `DeckSummaryCard`**
 
 Name, ink pips, card count, and a `Link` to `/decks/:id`. Use `SURFACE_CARD`. It is a `Link`, not a button, so middle-click and open-in-new-tab work, matching the "+ New deck" precedent.
 
-- [ ] **Step 2: Add the tabs**
+- [x] **Step 2: Add the tabs**
 
 `TabList` with `community` (default) and `mine`. Community is default for everyone, signed in or not: that is the page's ruled identity.
 
-- [ ] **Step 3: Community list**
+- [x] **Step 3: Community list**
 
 ```tsx
 const [publicDecks, setPublicDecks] = useState<Deck[] | null>(null);
@@ -760,18 +795,18 @@ useEffect(() => {
 
 A failure must render a retryable error, never an empty list: "no decks exist" and "the request failed" must not look the same.
 
-- [ ] **Step 4: My-decks list**
+- [x] **Step 4: My-decks list**
 
 Signed in, `listDecks(user.id)`. Signed out, render the single local draft if it has cards, else the empty state.
 
-- [ ] **Step 5: Empty states**
+- [x] **Step 5: Empty states**
 
 Three, all using `EMPTY_BOX`:
 - Community, nothing published: "No decks have been shared yet." plus a build invitation.
 - Mine, signed in, none: "You haven't saved a deck yet."
 - Mine, guest, no draft: the same invitation.
 
-- [ ] **Step 6: Verify, then commit**
+- [x] **Step 6: Verify, then commit**
 
 ```bash
 USER_APPROVED=1 git add apps/web/src/features/deck/components apps/web/src/pages/DecksPage.tsx
@@ -786,17 +821,17 @@ USER_APPROVED=1 git commit -m "feat(decks): community and my-decks tabs with rea
 - Modify: `apps/web/src/pages/DeckViewPage.tsx`
 - Create: `apps/web/src/features/deck/components/ShareDeckButton.tsx` + story
 
-- [ ] **Step 1: Fetch and render**
+- [x] **Step 1: Fetch and render**
 
 Replace the 31-line placeholder: `getDeck(id)`, then a read-only card list plus `DeckStatsBar`. One "Deck not found. This deck does not exist, or it is private." state covers both cases, deliberately.
 
-- [ ] **Step 2: Owner controls**
+- [x] **Step 2: Owner controls**
 
 When `deck.ownerId === user?.id`, show `Edit` (to `/decks/:id/edit`), `ShareDeckButton`, and a visibility toggle calling `updateDeck({...deck, isPublic: next})`.
 
 The toggle states the consequence in words: "Anyone can see this deck and it appears in community decks."
 
-- [ ] **Step 3: `ShareDeckButton`**
+- [x] **Step 3: `ShareDeckButton`**
 
 ```tsx
 const share = async () => {
@@ -808,7 +843,7 @@ const share = async () => {
 
 Private decks never publish silently: the button offers it and the owner confirms.
 
-- [ ] **Step 4: Verify, then commit**
+- [x] **Step 4: Verify, then commit**
 
 ```bash
 USER_APPROVED=1 git add apps/web/src/pages/DeckViewPage.tsx apps/web/src/features/deck/components
@@ -826,7 +861,7 @@ USER_APPROVED=1 git commit -m "feat(deck): deck view, share link, and explicit p
 
 **No session stubbing exists anywhere in the suite today.** It has to be built here, and it gates every assertion in this task.
 
-- [ ] **Step 1: Build the fixture**
+- [x] **Step 1: Build the fixture**
 
 Seed a Supabase session into `localStorage` before the app boots, using `page.addInitScript` so it is present on first paint:
 
@@ -845,7 +880,7 @@ export async function signInAs(page: Page, userId = 'e2e-user-1') {
 
 Also intercept `**/rest/v1/decks*` so the spec never depends on the live backend, matching how `in-depth-vote.spec.ts` stays off the live-backend flake path.
 
-- [ ] **Step 2: Write the acceptance spec**
+- [x] **Step 2: Write the acceptance spec**
 
 The contract from the issue body:
 
@@ -872,18 +907,18 @@ test('build, save, then open the share link anonymously', async ({page, browser}
 
 Reach 60 cards through the existing import dialog rather than 60 clicks: `deckTransfer` already parses `4 Name (9-201)` lines.
 
-- [ ] **Step 3: Run it**
+- [x] **Step 3: Run it**
 
 Run: `pnpm --filter inkweave-web exec playwright test e2e/tests/deck-save-share.spec.ts --project=chromium`
 Expected: PASS.
 
 **Ensure no dev server is running first.** A `pnpm dev` server on any port starves the workers and produces `page.goto` timeouts unrelated to the test.
 
-- [ ] **Step 4: Update the inventory**
+- [x] **Step 4: Update the inventory**
 
 Add the spec to `apps/web/e2e/E2E_TESTS.md`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 USER_APPROVED=1 git add apps/web/e2e
