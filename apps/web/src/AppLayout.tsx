@@ -4,6 +4,7 @@ import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
 import {SkeletonTheme} from 'react-loading-skeleton';
 import {ProfileProvider} from './features/profile';
+import {CollectionProvider} from './features/collection';
 import {RevealsPromoCard, useRevealPhase, type RevealPhase} from './features/reveals';
 import {
   BetaNotice,
@@ -115,9 +116,16 @@ export function AppLayout() {
           {/* One SkeletonTheme for the whole app (#511) — the 11 per-feature wrappers collapse into this. */}
           <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
             <CardDataProvider>
-              <CardModalProvider>
-                <AppContent />
-              </CardModalProvider>
+              {/* App-wide, unlike DeckProvider, which DeckLayout scopes to /decks/*.
+                  The collection is read by the builder pool AND by /collection, two
+                  disjoint subtrees, and each instance reads localStorage only at
+                  mount — so two providers would silently disagree after an import
+                  until one of them remounted. It depends on no other context. */}
+              <CollectionProvider>
+                <CardModalProvider>
+                  <AppContent />
+                </CardModalProvider>
+              </CollectionProvider>
             </CardDataProvider>
           </SkeletonTheme>
         </ProfileProvider>
