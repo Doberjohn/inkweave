@@ -33,11 +33,13 @@
 import {readFileSync, existsSync} from 'node:fs';
 import {join, dirname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {SITE_ORIGIN} from './lib/siteOrigin.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-/** Apex host — must match <Seo>'s SITE_ORIGIN and generate-sitemap.mjs (#488). */
-export const SITE_ORIGIN = 'https://inkweave.ink';
+// Re-exported because this module's test imports it from here (#554 moved the
+// declaration into scripts/lib/siteOrigin.mjs; the import site stays).
+export {SITE_ORIGIN};
 
 /**
  * Load the BUILT engine dist. A root script can't resolve the workspace package

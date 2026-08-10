@@ -15,11 +15,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {HOST, SITE_ORIGIN} from './lib/siteOrigin.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const HOST = 'inkweave.ink';
-const SITE_ORIGIN = `https://${HOST}`;
 const PUBLIC_DIR = path.join(ROOT, 'apps/web/public');
 const ENDPOINT = 'https://api.indexnow.org/indexnow';
 
