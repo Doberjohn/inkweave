@@ -7,5 +7,7 @@ export {collectionAction, type CollectionAction} from './collectionAction';
 export {CollectionBinder, binderCardsForSet, type Finish} from './CollectionBinder';
 export {parseCollectionCsv, totalOwned} from './collectionParser';
 export type {CollectionEntries, CollectionEntry, CollectionSummary, ParsedCollection} from './collectionParser';
+export {getCollection, upsertCollection, deleteCollection} from './collectionRepository';
+export {resolveCollectionSync, type CollectionSyncPlan} from './collectionSync';
 export {clearCollection, readCollection, writeCollection, COLLECTION_KEY} from './collectionStorage';
 export type {StoredCollection} from './collectionStorage';
