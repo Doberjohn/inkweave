@@ -97,3 +97,12 @@ docs/SECURITY_AUDIT.md
 .claude/skills/supabase-postgres-best-practices/
 docs/superpowers/
 docs/SECURITY_AUDIT.md
+
+# design-sync (claude.ai/design import) — build artifacts + verification state.
+# Durable, committed: .design-sync/{config.json,NOTES.md,conventions.md,previews/,overrides/}
+.design-sync/sb-reference/
+.design-sync/learnings/
+.design-sync/.cache/
+.design-sync/node_modules
+.ds-sync/
+ds-bundle/

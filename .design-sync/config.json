@@ -1,0 +1,110 @@
+{
+  "projectId": "a0ed7aa8-a3a4-4663-bb98-7a13b43de7dc",
+  "shape": "storybook",
+  "pkg": "inkweave-web",
+  "globalName": "Inkweave",
+
+  "entry": ".design-sync/entry.tsx",
+  "buildCmd": "node .design-sync/gen-entry.mjs && pnpm --filter inkweave-web exec tsc -p ../../.design-sync/tsconfig.dts.json",
+
+  "storybookConfigDir": "apps/web/.storybook",
+  "storybookStatic": ".design-sync/sb-reference",
+
+  "srcDir": "apps/web/src",
+  "cssEntry": "apps/web/src/index.css",
+  "extraFonts": [".design-sync/fonts.css"],
+
+  "extraEntries": [
+    "./.design-sync/entry.tsx",
+    "./.design-sync/providers.tsx",
+    "react-router-dom"
+  ],
+
+  "storyImports": {
+    "shim": ["shared/contexts/"]
+  },
+
+  "readmeHeader": ".design-sync/conventions.md",
+
+  "guidelinesGlob": [
+    "docs/UX_REFERENCE.md",
+    "docs/UX_AUDIT.md",
+    "docs/TECH_STACK.md",
+    "docs/DESIGN_SYSTEM_MIRROR.md"
+  ],
+
+  "provider": {
+    "component": "InkweaveDesignRoot",
+    "inner": {"component": "SessionProvider"}
+  },
+
+  "titleMap": {
+    "Colors": null,
+    "MicroPatterns": null,
+    "Spacing&Layout": null,
+    "Typography": null,
+    "HealthVariants": "PrioritiesView"
+  },
+
+  "overrides": {
+    "ArchetypeBadge": {"cardMode": "column"},
+    "BrowseToolbar": {"cardMode": "column"},
+    "CardDetail": {"cardMode": "column"},
+    "CardDetailSkeleton": {"cardMode": "column"},
+    "CardSlot": {"cardMode": "column"},
+    "CardTextBlock": {"cardMode": "column"},
+    "CarriesPicker": {"cardMode": "column"},
+    "ColumnHeader": {"cardMode": "column"},
+    "ConnectionGroup": {"cardMode": "column"},
+    "CostCurveStrip": {"cardMode": "column"},
+    "CtaButton": {"cardMode": "column"},
+    "DeckActionsBar": {"cardMode": "column"},
+    "DeckAdvisorPanel": {"cardMode": "column"},
+    "DeckCardRow": {"cardMode": "column"},
+    "DeckPanel": {"cardMode": "column"},
+    "DeckProfile": {"cardMode": "column"},
+    "DistributionBar": {"cardMode": "column"},
+    "EngineColumn": {"cardMode": "column"},
+    "FilterContent": {"cardMode": "column"},
+    "HealthGlance": {"cardMode": "column"},
+    "HealthGrid": {"cardMode": "column"},
+    "ImageComparePanel": {"cardMode": "column"},
+    "InDepthVoteForm": {"cardMode": "column"},
+    "OptionPicker": {"cardMode": "column"},
+    "PageTitle": {"cardMode": "column"},
+    "PairDisplay": {"cardMode": "column"},
+    "PairStack": {"cardMode": "column"},
+    "QuickVoteControl": {"cardMode": "column"},
+    "RarityBreakdown": {"cardMode": "column"},
+    "RaritySymbol": {"cardMode": "column"},
+    "ScoreGauge": {"cardMode": "column"},
+    "ScorePicker": {"cardMode": "column"},
+    "SearchAutocomplete": {"cardMode": "column"},
+    "Sparkles": {"cardMode": "column"},
+    "SuggestionList": {"cardMode": "column"},
+    "SynergySurface": {"cardMode": "column"},
+    "SynergyToolbar": {"cardMode": "column"},
+    "UploadColumn": {"cardMode": "column"},
+    "VerdictLine": {"cardMode": "column"},
+    "VotingCardDisplay": {"cardMode": "column"},
+    "VoteStatusBanner": {"cardMode": "column"},
+    "VulnerabilityBox": {"cardMode": "column"},
+
+    "BetaNotice": {"cardMode": "single"},
+    "BottomSheet": {"cardMode": "single"},
+    "CardLightbox": {"cardMode": "single"},
+    "CardOverviewModal": {"cardMode": "single"},
+    "DialogShell": {"cardMode": "single"},
+    "DisplayNameDialog": {"cardMode": "single"},
+    "FilterDialog": {"cardMode": "single"},
+    "FranchiseCardsModal": {"cardMode": "single"},
+    "ImportCollectionDialog": {"cardMode": "single"},
+    "ImportDeckDialog": {"cardMode": "single"},
+    "MechanicsBottomSheet": {"cardMode": "single"},
+    "MobileLightbox": {"cardMode": "single"},
+    "NewDeckDialog": {"cardMode": "single"},
+    "ScoreMathModal": {"cardMode": "single"},
+    "VoteConfirmation": {"cardMode": "single"},
+    "VoteToast": {"cardMode": "single"}
+  }
+}

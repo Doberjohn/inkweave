@@ -1,0 +1,23 @@
+{
+  "extends": "../apps/web/tsconfig.app.json",
+  "compilerOptions": {
+    "types": [],
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": false,
+    "outDir": "../dist/types",
+    "rootDir": "../apps/web/src",
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "tsBuildInfoFile": null,
+    "composite": false,
+    "incremental": false
+  },
+  "include": ["../apps/web/src"],
+  "exclude": [
+    "../apps/web/src/**/*.stories.tsx",
+    "../apps/web/src/**/*.test.ts",
+    "../apps/web/src/**/*.test.tsx"
+  ]
+}

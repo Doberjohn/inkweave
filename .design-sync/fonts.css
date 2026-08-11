@@ -1,0 +1,56 @@
+/* design-sync font shim.
+ *
+ * apps/web/src/index.css declares these faces with ABSOLUTE urls
+ * (url('/fonts/…')) because Vite serves them from public/. The converter
+ * resolves @font-face url()s relative to the stylesheet's own directory, so
+ * those absolute refs resolve nowhere and all five faces are dropped as dead
+ * (`5 dead @font-face block(s) dropped`). Both panels then fall back to the
+ * same chromium default, which the compare loop CANNOT see — so this file is
+ * the only thing standing between the sync and silently shipping the wrong
+ * typography to every design built with Inkweave.
+ *
+ * Declared here with repo-relative urls, wired via cfg.extraFonts. Keep in
+ * lockstep with the @font-face blocks in apps/web/src/index.css: this repo
+ * sets `font-synthesis: none` on :root, so a weight with no loaded face does
+ * not synthesize — it silently renders as the nearest face that exists.
+ */
+
+@font-face {
+  font-family: 'Marcellus';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../apps/web/public/fonts/marcellus-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../apps/web/public/fonts/plus-jakarta-sans-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../apps/web/public/fonts/plus-jakarta-sans-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../apps/web/public/fonts/plus-jakarta-sans-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../apps/web/public/fonts/plus-jakarta-sans-700.woff2') format('woff2');
+}
