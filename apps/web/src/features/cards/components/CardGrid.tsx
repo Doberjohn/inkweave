@@ -26,8 +26,10 @@ interface CardGridProps {
  * Layout: CSS Grid auto-fill + minmax. Column count emerges from viewport,
  * matching BrowseCardGrid (which uses VirtuosoGrid with the same min values).
  *
- * - Mobile MIN: `LAYOUT.cardGridMinWidthMobile` (140) — 2 cols on iPhone 14
- *   (393px) and Pixel 7 (412px); 3 cols on Plus/Pro Max (≥466px content).
+ * - Mobile MIN: `LAYOUT.cardGridMinWidthMobile` (96) — 3 cols from a 352px
+ *   viewport up, so 360px Android, iPhone 14 (393px), Pixel 7 (412px) and Pro Max
+ *   (430px) all get 3; 2 cols only at 320px. Lowered from 140 (which gave 2
+ *   everywhere) by owner ruling 2026-08-11.
  * - Desktop MIN: `LAYOUT.cardGridMinWidth` (180) — varies by viewport.
  *
  * Padding is the caller's responsibility — wrap this component in your own

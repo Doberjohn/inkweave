@@ -54,8 +54,22 @@ export const LAYOUT = {
   maxDisplayedCards: 204,
   /** CardGrid auto-fill minimum column width on desktop. Used by BrowseCardGrid + the shared CardGrid component. */
   cardGridMinWidth: 180,
-  /** CardGrid auto-fill minimum column width on mobile. Lower so phones ≥360px viewport fit 2 columns. */
-  cardGridMinWidthMobile: 140,
+  /**
+   * CardGrid auto-fill minimum column width on mobile: 3 columns on every common
+   * phone (owner ruling 2026-08-11, raised from 140 which gave 2).
+   *
+   * Columns are `floor((content + gap) / (min + gap))` with a 12px gap. 96 puts
+   * the 3-column threshold at a 352px viewport, which is the value that matters:
+   * consumers pad differently (Browse 16px a side, the ink hubs 20px), and 100
+   * was MEASURED to give 360px Android phones only 2 columns while 375px got 3.
+   * 96 clears 360 on both paddings. 4 columns stay held back until ~460px, so a
+   * 430px Pro Max still gets 3 rather than four 87px slivers; 320px falls back to
+   * 2, the graceful end of the range.
+   *
+   * Tiles are `variant="minimal"` (art only, no text), so ~104×144px is a
+   * thumbnail rather than a cramped label.
+   */
+  cardGridMinWidthMobile: 96,
   synergyCardMinWidth: 160,
 } as const;
 
