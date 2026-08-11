@@ -29,6 +29,17 @@ interface BrowseToolbarProps {
   sortOrder: BrowseSortOrder;
   onSortChange: (order: BrowseSortOrder) => void;
   isMobile: boolean;
+  /**
+   * Optional slot rendered immediately after the filters button — the pool being
+   * looked at (all cards vs my collection). It pairs with Filters because both
+   * decide what you are looking at, but it follows rather than leads so the
+   * toolbar still opens on its one filled gold primary.
+   *
+   * Living in the toolbar at all is what lets it survive the binder's compact
+   * chrome, where the page title is dropped to buy card size — anything in its
+   * own row would have gone with it.
+   */
+  modeSwitch?: React.ReactNode;
   /** Optional slot rendered after the filters button (e.g., role filter chips) */
   extraChips?: React.ReactNode;
   /**
@@ -301,6 +312,7 @@ export function BrowseToolbar({
   sortOrder,
   onSortChange,
   isMobile,
+  modeSwitch,
   extraChips,
   searchQuery,
   onSearchChange,
@@ -329,6 +341,7 @@ export function BrowseToolbar({
         activeCount={activeFilterCount}
         isMobile={isMobile}
       />
+      {modeSwitch}
       {!isMobile && searchQuery !== undefined && onSearchChange !== undefined && (
         <ToolbarSearch query={searchQuery} onChange={onSearchChange} />
       )}

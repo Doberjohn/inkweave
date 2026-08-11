@@ -399,6 +399,14 @@ option {
 .card-tile:hover {
   transform: scale(1.04) translateY(-3px);
 }
+/* Cards in a binder sit IN a pocket, so they cannot lift out of it or grow past
+   their neighbours — the grid's hover lift reads as the card floating off the
+   page. Scoped here rather than removed because that lift is the right hover
+   everywhere the tile is a free-standing object. `transform: none` also cancels
+   the translateY; overriding only `scale` would leave the card drifting up. */
+.binder-page .card-tile:hover {
+  transform: none;
+}
 .card-tile:active {
   transform: scale(0.97);
 }

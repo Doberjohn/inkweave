@@ -1,27 +1,24 @@
 import {useState, type CSSProperties} from 'react';
 import type {LorcanaCard} from '../deck/types';
 import {CardTile} from '../cards/components/CardTile';
-import {CtaButton} from '../../shared/components';
+import {BinderSpread, PER_SPREAD} from '../cards/components/BinderSpread';
 import {COLORS, DURATION, EASING, FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
 
 /**
- * The collection binder (#553 Phase C): a set's cards in collector order, as two
- * facing pages of twelve.
+ * The collection binder (#553 Phase C): a set's cards in collector order.
  *
- * WHY A BINDER AND NOT THE BROWSE GRID. A grid answers "which cards match?"; a
- * binder answers "what am I missing?", and it can only do that if a card's
- * position never moves. So filtering DIMS in place rather than reflowing, and an
- * unowned card is shown greyed rather than as an empty slot — you cannot tell
- * which card is missing from a blank rectangle.
+ * FIXED SLOTS, the opposite of `BrowseBinder`'s compacting fill. A grid answers
+ * "which cards match?"; a binder answers "what am I missing?", and it can only do
+ * that if a card's position never moves. So filtering DIMS in place rather than
+ * reflowing, and an unowned card is shown greyed rather than as an empty slot —
+ * you cannot tell which card is missing from a blank rectangle.
  *
- * Positions are only meaningful because Special-rarity promos are excluded from
- * the dataset: they reuse base collector numbers, 160 contested slots across the
- * pool, five cards claiming Set 1's slot #1. See `scripts/lib/collectionData.mjs`.
+ * The parchment, spine and pager come from `BinderSpread`, shared with Browse.
+ *
+ * Positions are only meaningful because Special-rarity promos are excluded: they
+ * reuse base collector numbers, 160 contested slots across the pool, five cards
+ * claiming Set 1's slot #1. See `binderCardsForSet`.
  */
-
-/** Four columns × three rows, per page. A spread is two of these. */
-const PER_PAGE = 12;
-const PER_SPREAD = PER_PAGE * 2;
 
 export type Finish = 'normal' | 'foil';
 
@@ -60,30 +57,6 @@ interface CollectionBinderProps {
   onSelect: (card: LorcanaCard) => void;
 }
 
-const pageStyle = (side: 'left' | 'right'): CSSProperties => ({
-  background: COLORS.surface,
-  border: `1px solid ${COLORS.surfaceBorder}`,
-  padding: SPACING.md,
-  display: 'grid',
-  gridTemplateColumns: 'repeat(4, 1fr)',
-  gap: SPACING.sm,
-  alignContent: 'start',
-  borderRadius:
-    side === 'left'
-      ? `${RADIUS.card}px ${RADIUS.sm}px ${RADIUS.sm}px ${RADIUS.card}px`
-      : `${RADIUS.sm}px ${RADIUS.card}px ${RADIUS.card}px ${RADIUS.sm}px`,
-  ...(side === 'left' ? {borderRight: 'none'} : {borderLeft: 'none'}),
-});
-
-/** The gutter. Without it the spread reads as one eight-column grid, not a book. */
-const spineStyle: CSSProperties = {
-  width: SPACING.lg,
-  alignSelf: 'stretch',
-  background: COLORS.background,
-  borderTop: `1px solid ${COLORS.surfaceBorder}`,
-  borderBottom: `1px solid ${COLORS.surfaceBorder}`,
-};
-
 const badgeStyle: CSSProperties = {
   position: 'absolute',
   top: SPACING.xxs,
@@ -114,40 +87,43 @@ const numberStyle: CSSProperties = {
   borderRadius: `${RADIUS.sm}px`,
 };
 
-/** An empty position at the end of the last spread. Keeps the grid square. */
-function EmptySlot() {
-  return <div aria-hidden="true" />;
-}
-
-interface SlotProps {
-  card: LorcanaCard;
-  owned: number;
-  dimmed: boolean;
-  onSelect: (card: LorcanaCard) => void;
-}
-
 /**
- * One position in the binder. Wraps the app's own `CardTile` rather than
- * re-rendering a card, so image loading, skeletons and the ink border stay in
- * one place; the binder only adds state on top.
+ * One position in the binder.
  *
  * The two "absent" states are deliberately different: UNOWNED is desaturated
  * (the card exists, you don't have it) while FILTERED OUT is faded (the card is
  * there, it just isn't what you asked for). Collapsing them would make a filter
  * look like a gap in the collection.
  */
-function BinderSlot({card, owned, dimmed, onSelect}: SlotProps) {
-  const unowned = owned === 0;
+function BinderSlot({
+  card,
+  owned,
+  dimmed,
+  onSelect,
+}: {
+  card: LorcanaCard;
+  owned: number;
+  dimmed: boolean;
+  onSelect: (card: LorcanaCard) => void;
+}) {
   return (
     <div
       style={{
         position: 'relative',
+        height: '100%',
         opacity: dimmed ? 0.16 : 1,
-        filter: unowned ? 'grayscale(1) brightness(0.45)' : undefined,
+        filter: owned === 0 ? 'grayscale(1) brightness(0.45)' : undefined,
         transition: `opacity ${DURATION.base}ms ${EASING.smooth}`,
         pointerEvents: dimmed ? 'none' : undefined,
       }}>
-      <CardTile card={card} onSelect={onSelect} isSelected={false} variant="minimal" useSmallImage />
+      <CardTile
+        card={card}
+        onSelect={onSelect}
+        isSelected={false}
+        variant="minimal"
+        borderRadius={0}
+        useSmallImage
+      />
       {owned > 1 && <span style={badgeStyle}>{owned}</span>}
       <span style={numberStyle}>{card.setNumber}</span>
     </div>
@@ -163,7 +139,13 @@ function spreadsWithMatches(cards: LorcanaCard[], matchedIds: Set<string>): numb
   return hits;
 }
 
-export function CollectionBinder({cards, matchedIds, ownedCount, finish, onSelect}: CollectionBinderProps) {
+export function CollectionBinder({
+  cards,
+  matchedIds,
+  ownedCount,
+  finish,
+  onSelect,
+}: CollectionBinderProps) {
   const [spread, setSpread] = useState(0);
   const total = Math.max(1, Math.ceil(cards.length / PER_SPREAD));
   const current = Math.min(spread, total - 1);
@@ -171,7 +153,7 @@ export function CollectionBinder({cards, matchedIds, ownedCount, finish, onSelec
   /**
    * Counted WITHIN this set, never as `matchedIds.size`. That set spans the whole
    * merged pool, so its size is the match count across all 3,242 cards — it read
-   * "3176 match" on a 216-card binder, and `matchedIds.size !== cards.length` was
+   * "3176 match" on a 216-card binder, and comparing it to `cards.length` was
    * true even with no filters applied, permanently arming the skip-ahead pager.
    */
   const matchesHere = cards.filter((card) => matchedIds.has(card.id)).length;
@@ -183,7 +165,7 @@ export function CollectionBinder({cards, matchedIds, ownedCount, finish, onSelec
    * `24 10 0 0 0 0 0 0 2`. Stepping one at a time would page through blanks.
    * Cost, keyword, text and inkwell filters interleave instead and hit every
    * spread, where this is a no-op. The label always reports the TRUE spread
-   * number, so a jump from 1 to 5 stays visible.
+   * number, so a jump from 2 to 9 stays visible.
    */
   function step(direction: 1 | -1) {
     if (!filtering) {
@@ -196,59 +178,37 @@ export function CollectionBinder({cards, matchedIds, ownedCount, finish, onSelec
     if (next !== undefined) setSpread(next);
   }
 
-  const page = (from: number, side: 'left' | 'right') => (
-    <section style={pageStyle(side)} aria-label={`${side} page`}>
-      {Array.from({length: PER_PAGE}, (_, i) => {
-        const card = cards[from + i];
-        if (!card) return <EmptySlot key={`empty-${from + i}`} />;
+  return (
+    <BinderSpread
+      start={start}
+      label={
+        `Spread ${current + 1} of ${total}` +
+        (filtering
+          ? ` · ${matchesHere} match${matchesHere === 1 ? '' : 'es'} in this set`
+          : ` · cards ${start + 1}–${Math.min(start + PER_SPREAD, cards.length)}`)
+      }
+      onPrev={() => step(-1)}
+      onNext={() => step(1)}
+      canPrev={current > 0}
+      canNext={current < total - 1}
+      footnote={
+        <>
+          Showing <strong>{finish}</strong> copies. Greyed cards are ones you do not own; faded
+          cards are filtered out but keep their place.
+        </>
+      }
+      renderSlot={(index) => {
+        const card = cards[index];
+        if (!card) return null;
         return (
           <BinderSlot
-            key={card.id}
             card={card}
             owned={ownedCount(card.id)}
             dimmed={!matchedIds.has(card.id)}
             onSelect={onSelect}
           />
         );
-      })}
-    </section>
-  );
-
-  return (
-    <div>
-      <div style={{display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'start'}}>
-        {page(start, 'left')}
-        <div style={spineStyle} aria-hidden="true" />
-        {page(start + PER_PAGE, 'right')}
-      </div>
-
-      <nav
-        aria-label="Binder pages"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: SPACING.md,
-          marginTop: SPACING.md,
-        }}>
-        <CtaButton variant="neutral" onClick={() => step(-1)} disabled={current === 0}>
-          Previous
-        </CtaButton>
-        <span style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.sm}px`, minWidth: '24ch', textAlign: 'center'}}>
-          {`Spread ${current + 1} of ${total}`}
-          {filtering
-            ? ` · ${matchesHere} match${matchesHere === 1 ? '' : 'es'} in this set`
-            : ` · cards ${start + 1}–${Math.min(start + PER_SPREAD, cards.length)}`}
-        </span>
-        <CtaButton variant="neutral" onClick={() => step(1)} disabled={current >= total - 1}>
-          Next
-        </CtaButton>
-      </nav>
-
-      <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.xs}px`, textAlign: 'center', marginTop: SPACING.sm}}>
-        Showing <strong>{finish}</strong> copies. Greyed cards are ones you do not own; faded cards
-        are filtered out but keep their place.
-      </p>
-    </div>
+      }}
+    />
   );
 }

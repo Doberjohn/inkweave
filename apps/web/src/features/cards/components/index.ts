@@ -1,3 +1,5 @@
+export {BinderSpread, PER_PAGE, PER_SPREAD} from './BinderSpread';
+export {BrowseBinder} from './BrowseBinder';
 export {BrowseCardGrid} from './BrowseCardGrid';
 export {BrowseToolbar} from './BrowseToolbar';
 export {CardGrid} from './CardGrid';

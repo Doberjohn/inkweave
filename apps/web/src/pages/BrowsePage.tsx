@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import {useSearchParams} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {BrowseCardGrid, BrowseToolbar, type Ink} from '../features/cards';
+import {BrowseBinder, BrowseCardGrid, BrowseToolbar, type Ink} from '../features/cards';
 import {
   searchCardsByName,
   filterCards,
@@ -9,23 +9,69 @@ import {
   type CardFilterOptions,
 } from '../features/cards/loader';
 import {CompactHeader, CtaButton, ErrorBoundary, EtherealBackground, FilterDialog, MOBILE_NAV_HEIGHT, PageTitle, Seo} from '../shared/components';
+import {SignInDialog} from '../shared/components/SignInDialog';
 import {
   COLORS,
   FONTS,
   FONT_SIZES,
+  GOLD_GLOW,
   SPACING,
   type BrowseSortOrder,
   type CardTypeFilter,
 } from '../shared/constants';
-import {useCollection, useCollectionPool, CollectionBinderSection, BrowseModeBar} from '../features/collection';
+import {
+  useCollection,
+  useCollectionPool,
+  collectionAction,
+  CollectionBinderSection,
+  ImportCollectionDialog,
+} from '../features/collection';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
+import {useSession} from '../shared/contexts/SessionContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
 
 // =====================================================================
 // Module-level helpers — keep BrowsePage's CC low by hoisting branches.
 // =====================================================================
+
+/**
+ * The pool toggle, sitting beside Filters.
+ *
+ * A toggle button rather than a two-tab list: the modes are not peers. "All
+ * cards" is the page's resting state and "Collection" is a lens you put on, so
+ * one pressable control says that where two tabs imply an even choice — and it
+ * costs a fraction of the toolbar width, which the binder spends on card size.
+ *
+ * GHOST when off, matching the home page's "Explore playstyles" CTA, and the
+ * GOLD_GLOW selection recipe when on — never `filled`: Filters is already the
+ * toolbar's one filled gold button, and a second would make two competing
+ * primaries. `aria-pressed` carries the state for anyone not seeing the glow.
+ */
+function CollectionToggle({active, onToggle}: {active: boolean; onToggle: () => void}) {
+  return (
+    <CtaButton
+      variant="ghost"
+      onClick={onToggle}
+      aria-pressed={active}
+      aria-label="Show my collection"
+      style={{
+        height: 34,
+        minHeight: 34,
+        padding: '0 14px',
+        flexShrink: 0,
+        ...(active && {
+          borderColor: GOLD_GLOW.activeBorder,
+          background: GOLD_GLOW.activeBg,
+          color: COLORS.primary,
+          boxShadow: GOLD_GLOW.shadow,
+        }),
+      }}>
+      Collection
+    </CtaButton>
+  );
+}
 
 function buildCombinedFilters(
   base: CardFilterOptions,
@@ -94,15 +140,16 @@ interface BrowseContentSectionProps {
   cards: LorcanaCard[];
   isLoading: boolean;
   onCardSelect: (card: {id: string}) => void;
-  /**
-   * The mode row: grid/binder switch plus the collection import. Always
-   * rendered — `BrowseModeBar` decides internally what to show, hiding the
-   * switch until a collection exists (a binder of 3,242 cards nobody has marked
-   * as owned is a page of grey rectangles) while keeping the import reachable.
-   */
-  modeTabs?: React.ReactNode;
   /** Collection mode's content. When set, it replaces the grid entirely. */
   binder?: React.ReactNode;
+  /**
+   * Drop the page title. The binder is not being decorative here: a spread has
+   * to fit the viewport WITHOUT scrolling or it stops being a spread, and cards
+   * derive from the height budget, so every band of chrome comes straight out of
+   * the card size. The binder is also its own page identity, which makes
+   * "Browse Cards" above it a label for something already obvious.
+   */
+  compactChrome?: boolean;
 }
 
 function BrowseContentSection({
@@ -111,8 +158,8 @@ function BrowseContentSection({
   cards,
   isLoading,
   onCardSelect,
-  modeTabs,
   binder,
+  compactChrome,
 }: BrowseContentSectionProps) {
   const titlePadding = isMobile
     ? `${SPACING.lg}px ${SPACING.lg}px 0`
@@ -127,8 +174,9 @@ function BrowseContentSection({
         position: 'relative',
         zIndex: 1,
       }}>
-      <PageTitle style={{padding: titlePadding, flexShrink: 0}}>Browse Cards</PageTitle>
-      {modeTabs}
+      {!compactChrome && (
+        <PageTitle style={{padding: titlePadding, flexShrink: 0}}>Browse Cards</PageTitle>
+      )}
       {/* The toolbar serves BOTH modes: in binder mode its filters drive which
           slots stay lit rather than which cards are listed. Sort is the one
           control it keeps that the binder ignores — collector order IS the
@@ -176,14 +224,15 @@ export function BrowsePage() {
   const [showFilters, setShowFilters] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [collectionMode, setCollectionMode] = useState(false);
+  const [showSignIn, setShowSignIn] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const {entries} = useCollection();
+  const {user} = useSession();
+  const {entries, hasCollection, importCollection} = useCollection();
   // MUST sit above the `if (error)` return below — it is a hook, and an early
   // return before it would change the hook order between renders.
   //
-  // Widened for the IMPORT as well as for the binder: the CSV is joined against
-  // this pool, and against the Core-only one every non-Core row is counted and
-  // discarded — which is exactly two thirds of a real collection.
+  // Only collection mode widens the pool, so a visitor who never switches pays
+  // nothing: the 15 non-Core chunks are not fetched at all.
   const {pool, isLoading: poolLoading, error: poolError} = useCollectionPool(
     cards,
     collectionMode || showImport,
@@ -228,6 +277,30 @@ export function BrowsePage() {
     isMobile,
     searchQuery,
     onSearchChange: setSearchQuery,
+    // Only once a collection exists. Offering the switch without one leads to a
+    // binder of cards nobody has marked as owned — a page of grey rectangles,
+    // which reads as a broken screen rather than an empty state.
+    /**
+     * ALWAYS shown, never gated on having a collection. The button is now the
+     * entry point to the whole feature, so hiding it until you already had a
+     * collection made it unreachable — the state it was meant to protect against
+     * is exactly the state that needs the invitation.
+     *
+     * The three outcomes and their precedence live in `collectionAction`, which
+     * is pure so the two branches needing a real OAuth session are covered by
+     * assertions rather than by signing in and clicking.
+     */
+    modeSwitch: (
+      <CollectionToggle
+        active={collectionMode}
+        onToggle={() => {
+          const next = collectionAction({signedIn: user !== null, hasCollection});
+          if (next === 'sign-in') return setShowSignIn(true);
+          if (next === 'import') return setShowImport(true);
+          setCollectionMode(!collectionMode);
+        }}
+      />
+    ),
   } as const;
 
   const filterDialogProps = {
@@ -243,27 +316,18 @@ export function BrowsePage() {
     sets,
   };
 
-  // The pool is complete only once the lazy non-Core chunks have landed. Parsing
-  // a CSV before then silently drops every non-Core row, so the import is gated
-  // on this rather than on the dialog merely being open.
-  const isPoolReady = !poolLoading && poolError === null;
+  // DESIGN SPIKE (#553): `?view=binder` swaps the grid for the paginated binder.
+  // A URL flag rather than a toggle or a feature flag — it changes nothing by
+  // default, survives a reload, and is one query param to delete once the design
+  // is settled. Desktop only: the mobile ruling is that phones keep the scrolling
+  // list (now 3-across), so a 4x3 twin spread must never reach one.
+  const binderView = !isMobile && searchParams.get('view') === 'binder';
   const contentProps = {
     isMobile,
     toolbarProps,
     cards: sortedCards,
     isLoading,
     onCardSelect: selectCard,
-    modeTabs: (
-      <BrowseModeBar
-        mode={collectionMode ? 'collection' : 'all'}
-        onModeChange={(m) => setCollectionMode(m === 'collection')}
-        pool={pool}
-        isPoolReady={isPoolReady}
-        isImportOpen={showImport}
-        onImportOpen={() => setShowImport(true)}
-        onImportClose={() => setShowImport(false)}
-      />
-    ),
     // `matchedIds` is built inside this branch, not above it: in grid mode it
     // would be a Set of up to 3,242 strings rebuilt every render for nobody.
     binder: collectionMode ? (
@@ -275,8 +339,42 @@ export function BrowsePage() {
         error={poolError}
         onCardSelect={selectCard}
       />
+    ) : binderView ? (
+      <BrowseBinder cards={sortedCards} onCardSelect={selectCard} />
     ) : null,
+    compactChrome: binderView,
   };
+
+  /**
+   * Rendered in BOTH branches from one definition. Two dialogs that are mutually
+   * exclusive by construction — you cannot lack an account and lack a collection
+   * at the same decision point, because the sign-in check runs first.
+   */
+  const collectionPrompts = (
+    <>
+      <SignInDialog isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
+      <ImportCollectionDialog
+        isOpen={showImport}
+        onClose={() => setShowImport(false)}
+        pool={pool}
+        // Blocks a parse against the Core-only pool while the 15 non-Core chunks
+        // are still landing; that parse does not fail, it silently drops two
+        // thirds of a real collection.
+        isPoolReady={!poolLoading && poolError === null}
+        // Land in collection mode on success. The reader pressed "Collection"
+        // and was diverted through an import to get there; leaving them on the
+        // all-cards grid afterwards makes a successful import look like nothing
+        // happened. Only on success — `importCollection` returns a message when
+        // storage refused the write, and switching then would show an empty
+        // binder as if it had worked.
+        onImport={(imported, at) => {
+          const storageError = importCollection(imported, at);
+          if (storageError === null) setCollectionMode(true);
+          return storageError;
+        }}
+      />
+    </>
+  );
 
   if (isMobile) {
     return (
@@ -295,6 +393,7 @@ export function BrowsePage() {
         <CompactHeader onLogoClick={goHome} isMobile />
         <BrowseContentSection {...contentProps} />
         <FilterDialog {...filterDialogProps} variant="drawer" />
+        {collectionPrompts}
       </main>
     );
   }
@@ -315,6 +414,7 @@ export function BrowsePage() {
       <CompactHeader onLogoClick={goHome} />
       <BrowseContentSection {...contentProps} />
       <FilterDialog {...filterDialogProps} variant="modal" />
+      {collectionPrompts}
     </main>
   );
 }
