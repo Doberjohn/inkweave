@@ -330,7 +330,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/HeroSection.tsx', // x1
     'src/shared/components/MobileBottomNav.tsx', // x2
     'src/shared/components/SearchAutocomplete.tsx', // x1
-    'src/shared/components/SearchBottomSheet.tsx', // x4
     'src/shared/components/SortSelect.tsx', // x2
   ],
 };

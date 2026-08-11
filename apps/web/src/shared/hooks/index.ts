@@ -12,3 +12,5 @@ export {useRovingTabIndex} from './useRovingTabIndex';
 export {useScrollLock} from './useScrollLock';
 export {useTransitionPresence} from './useTransitionPresence';
 export {useBoop} from './useBoop';
+export {useVisualViewport} from './useVisualViewport';
+export type {VisualViewportState} from './useVisualViewport';

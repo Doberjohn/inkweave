@@ -1,13 +1,20 @@
 import {forwardRef, useImperativeHandle, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SET_ABBREVIATIONS, SHADOWS, SPACING, TRUNCATE} from '../constants';
+import {COLORS, DURATION, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SET_ABBREVIATIONS, SHADOWS, SPACING, TRUNCATE} from '../constants';
 import {BottomSheet} from './BottomSheet';
 import {LinkButton} from './LinkButton';
+import {searchSheetGeometry} from './searchSheetGeometry';
 import {useCardDataContext} from '../contexts/CardDataContext';
 import {useCardModal} from '../contexts/CardModalContext';
 import {smallImageUrl} from '../../features/cards/loader';
-import {useAutocomplete, useDialogFocus, useScrollLock, useTransitionPresence} from '../hooks';
+import {
+  useAutocomplete,
+  useDialogFocus,
+  useScrollLock,
+  useTransitionPresence,
+  useVisualViewport,
+} from '../hooks';
 import {trackEvent} from '../lib/analytics';
 
 // =====================================================================
@@ -260,7 +267,7 @@ function SearchResultRow({card, isHighlighted, isLast, query, optionProps}: Sear
           minHeight: 60,
           cursor: 'pointer',
           background: isHighlighted ? COLORS.surfaceHover : 'transparent',
-          transition: `background 0.1s ${EASING.snappy}`,
+          transition: `background ${DURATION.fast}ms ${EASING.snappy}`,
         }}>
         {/* Thumbnail */}
         <div
@@ -460,7 +467,11 @@ function Divider() {
 interface SearchSheetProps {
   sheetRef: React.RefObject<HTMLDivElement | null>;
   visible: boolean;
-  sheetTop: number;
+  /**
+   * Both edges, from `searchSheetGeometry`. `bottom` is not always 0: it rides
+   * on top of the on-screen keyboard so the sheet is never partly behind it.
+   */
+  geometry: {top: number; bottom: number};
   hasResults: boolean;
   onKeyDown: React.KeyboardEventHandler<HTMLDivElement>;
   onTransitionEnd: React.TransitionEventHandler<HTMLDivElement>;
@@ -478,7 +489,7 @@ interface SearchSheetProps {
 function SearchSheet({
   sheetRef,
   visible,
-  sheetTop,
+  geometry,
   hasResults,
   onKeyDown,
   onTransitionEnd,
@@ -502,8 +513,13 @@ function SearchSheet({
       sheetRef={sheetRef}
       onKeyDown={onKeyDown}
       sheetStyle={{
-        top: sheetTop,
-        transition: `top 0.25s ${EASING.smooth}, opacity 0.25s ${EASING.smooth}, transform 0.25s ${EASING.smooth}`,
+        top: geometry.top,
+        // Overrides BottomSheet's `bottom: 0`. Both edges are set so the sheet
+        // has a DEFINITE height for its `flex: 1` results list to scroll inside.
+        bottom: geometry.bottom,
+        // `bottom` is in the transition because the keyboard animates open; without
+        // it the sheet's lower edge would jump to the keyboard while its top slid.
+        transition: `top ${DURATION.slow}ms ${EASING.smooth}, bottom ${DURATION.slow}ms ${EASING.smooth}, opacity ${DURATION.slow}ms ${EASING.smooth}, transform ${DURATION.slow}ms ${EASING.smooth}`,
       }}>
       <SearchSheetInput
         query={query}
@@ -563,6 +579,11 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
     const [query, setQuery] = useState('');
     const [recentSearches, setRecentSearches] = useState<string[]>([]);
     const {mounted, visible, onTransitionEnd} = useTransitionPresence(isOpen);
+    // Subscribed unconditionally, not gated on `isOpen`: the keyboard is often
+    // already animating open when the sheet mounts (openSearch focuses a proxy
+    // input inside the tap call stack), so a listener attached later would miss
+    // the resize that matters most.
+    const viewport = useVisualViewport();
 
     const handleSelect = (card: LorcanaCard) => {
       addRecentSearch(card.fullName);
@@ -635,7 +656,16 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
     if (!mounted) return proxyInput;
 
     const hasResults = autocomplete.suggestions.length > 0 && query.length >= 2;
-    const sheetTop = hasResults ? 100 : 244;
+    // Sized against the VISIBLE viewport, not the layout one. The previous
+    // hardcoded `top: 100 / 244` measured the layout viewport, which does not
+    // shrink for the keyboard — so on an 812px phone only ~232px of a 568px
+    // sheet was above the keys. See `searchSheetGeometry`.
+    const geometry = searchSheetGeometry({
+      layoutHeight: window.innerHeight,
+      visibleHeight: viewport.height,
+      keyboardInset: viewport.keyboardInset,
+      hasResults,
+    });
 
     return (
       <>
@@ -643,7 +673,7 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
         <SearchSheet
           sheetRef={sheetRef}
           visible={visible}
-          sheetTop={sheetTop}
+          geometry={geometry}
           hasResults={hasResults}
           onKeyDown={handleDialogKeyDown}
           onTransitionEnd={onTransitionEnd}
