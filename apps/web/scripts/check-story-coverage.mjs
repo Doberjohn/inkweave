@@ -37,6 +37,9 @@ const EXCLUDED = new Set([
   // entry because it sits in features/deck/state/, which is not a scanned root —
   // so this list is about FILE LOCATION as much as about the component.
   'CollectionContext.tsx',
+  // Same case again (#553 Phase C): a provider that renders only its children,
+  // plus the `useCollectionPool` hook. Nothing visual to put in a story.
+  'CollectionCardsContext.tsx',
 ]);
 
 // Pages are route compositions of already-storied components; stories exist

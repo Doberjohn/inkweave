@@ -7,8 +7,17 @@ import {parseCollectionCsv, type CollectionEntries, type CollectionSummary} from
 interface ImportCollectionDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  /** The Core card pool the CSV rows are joined against. */
+  /** The card pool the CSV rows are joined against. */
   pool: readonly LorcanaCard[];
+  /**
+   * Whether {@link pool} is COMPLETE. Required, not optional-defaulting-true, on
+   * purpose: the non-Core sets load lazily, so for the first few hundred ms after
+   * the dialog opens `pool` holds only the 1,024 Core cards. Parsing against that
+   * partial pool does not fail — it silently reclassifies every non-Core row as
+   * "outside Core" and drops it, which is roughly two thirds of a real
+   * collection. A caller that has not thought about this should not compile.
+   */
+  isPoolReady: boolean;
   /**
    * Store the parsed collection. Returns null on success, or a message to show.
    * Wired to `useCollection().importCollection` by the page; taken as a prop so
@@ -90,7 +99,15 @@ const VISUALLY_HIDDEN: React.CSSProperties = {
 };
 
 /** What to upload, and where it comes from. */
-function ChooseStep({onPick, busy}: {onPick: (file: File) => void; busy: boolean}) {
+function ChooseStep({
+  onPick,
+  busy,
+  isPoolReady,
+}: {
+  onPick: (file: File) => void;
+  busy: boolean;
+  isPoolReady: boolean;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
   return (
     <>
@@ -114,10 +131,10 @@ function ChooseStep({onPick, busy}: {onPick: (file: File) => void; busy: boolean
       />
       <CtaButton
         variant="ghost"
-        disabled={busy}
+        disabled={busy || !isPoolReady}
         onClick={() => inputRef.current?.click()}
         style={{marginTop: SPACING.md, width: '100%'}}>
-        {busy ? 'Reading…' : 'Choose a CSV file'}
+        {busy ? 'Reading…' : isPoolReady ? 'Choose a CSV file' : 'Loading card list…'}
       </CtaButton>
     </>
   );
@@ -131,7 +148,13 @@ function ChooseStep({onPick, busy}: {onPick: (file: File) => void; busy: boolean
  * collection export is a census of every printed card, 5329 rows and 300 KB, so
  * a textarea would be the wrong instrument by two orders of magnitude.
  */
-export function ImportCollectionDialog({isOpen, onClose, pool, onImport}: ImportCollectionDialogProps) {
+export function ImportCollectionDialog({
+  isOpen,
+  onClose,
+  pool,
+  isPoolReady,
+  onImport,
+}: ImportCollectionDialogProps) {
   const [summary, setSummary] = useState<CollectionSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -144,6 +167,13 @@ export function ImportCollectionDialog({isOpen, onClose, pool, onImport}: Import
   };
 
   const runImport = async (file: File) => {
+    // The one funnel every import passes through, so the incomplete-pool guard
+    // lives here rather than only on the button: a disabled button still leaves
+    // drag-drop and programmatic paths open, and getting this wrong is silent.
+    if (!isPoolReady) {
+      setError('Still loading the full card list. Try again in a moment.');
+      return;
+    }
     setBusy(true);
     setError(null);
     let text: string;
@@ -187,7 +217,7 @@ export function ImportCollectionDialog({isOpen, onClose, pool, onImport}: Import
       {summary ? (
         <SummaryStep summary={summary} />
       ) : (
-        <ChooseStep onPick={(file) => void runImport(file)} busy={busy} />
+        <ChooseStep onPick={(file) => void runImport(file)} busy={busy} isPoolReady={isPoolReady} />
       )}
 
       {error !== null && (

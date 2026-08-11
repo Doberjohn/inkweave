@@ -29,12 +29,25 @@ const meta: Meta<typeof ImportCollectionDialog> = {
   title: 'Collection/ImportCollectionDialog',
   component: ImportCollectionDialog,
   tags: ['autodocs'],
-  args: {isOpen: true, onClose: fn(), onImport: fn(() => null), pool},
+  args: {isOpen: true, onClose: fn(), onImport: fn(() => null), pool, isPoolReady: true},
 };
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const ChooseAFile: Story = {};
+
+/**
+ * The non-Core sets load lazily, so for a moment after opening, `pool` holds
+ * only the Core cards. Importing against that partial pool does not error — it
+ * silently reclassifies two thirds of a real collection as "outside Core" and
+ * drops it, so the picker is closed until the pool is whole.
+ *
+ * Note `Meta.args` is PARTIAL, so leaving `isPoolReady` unset compiles cleanly
+ * and lands here by accident. That is how this state was first reached.
+ */
+export const PoolStillLoading: Story = {
+  args: {isPoolReady: false},
+};
 
 /**
  * The receipt, which is always shown on success — unlike the decklist import,

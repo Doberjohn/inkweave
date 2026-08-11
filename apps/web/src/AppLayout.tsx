@@ -4,7 +4,7 @@ import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
 import {SkeletonTheme} from 'react-loading-skeleton';
 import {ProfileProvider} from './features/profile';
-import {CollectionProvider} from './features/collection';
+import {CollectionProvider, CollectionCardsProvider} from './features/collection';
 import {RevealsPromoCard, useRevealPhase, type RevealPhase} from './features/reveals';
 import {
   BetaNotice,
@@ -117,14 +117,23 @@ export function AppLayout() {
           <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
             <CardDataProvider>
               {/* App-wide, unlike DeckProvider, which DeckLayout scopes to /decks/*.
-                  The collection is read by the builder pool AND by /collection, two
-                  disjoint subtrees, and each instance reads localStorage only at
-                  mount — so two providers would silently disagree after an import
-                  until one of them remounted. It depends on no other context. */}
+                  Ownership is read by the builder pool AND by Browse's collection
+                  mode, two disjoint subtrees, and each instance reads localStorage
+                  only at mount — so two providers would silently disagree after an
+                  import until one of them remounted. Depends on no other context.
+                  (Originally this said "/collection"; that route was dropped on
+                  2026-08-10 when collection viewing moved into Browse.) */}
               <CollectionProvider>
-                <CardModalProvider>
-                  <AppContent />
-                </CardModalProvider>
+                {/* The non-Core VIEWING pool, deliberately not inside
+                    CardDataProvider's data: nothing that asks CardDataContext for
+                    cards can receive a collection card, so the deck builder stays
+                    Core-only by construction rather than by filtering. Fetches
+                    nothing until collection mode asks (#553). */}
+                <CollectionCardsProvider>
+                  <CardModalProvider>
+                    <AppContent />
+                  </CardModalProvider>
+                </CollectionCardsProvider>
               </CollectionProvider>
             </CardDataProvider>
           </SkeletonTheme>

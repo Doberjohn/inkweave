@@ -17,6 +17,7 @@ import {
   type BrowseSortOrder,
   type CardTypeFilter,
 } from '../shared/constants';
+import {useCollection, useCollectionPool, CollectionBinderSection, BrowseModeBar} from '../features/collection';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
@@ -93,6 +94,15 @@ interface BrowseContentSectionProps {
   cards: LorcanaCard[];
   isLoading: boolean;
   onCardSelect: (card: {id: string}) => void;
+  /**
+   * The mode row: grid/binder switch plus the collection import. Always
+   * rendered — `BrowseModeBar` decides internally what to show, hiding the
+   * switch until a collection exists (a binder of 3,242 cards nobody has marked
+   * as owned is a page of grey rectangles) while keeping the import reachable.
+   */
+  modeTabs?: React.ReactNode;
+  /** Collection mode's content. When set, it replaces the grid entirely. */
+  binder?: React.ReactNode;
 }
 
 function BrowseContentSection({
@@ -101,6 +111,8 @@ function BrowseContentSection({
   cards,
   isLoading,
   onCardSelect,
+  modeTabs,
+  binder,
 }: BrowseContentSectionProps) {
   const titlePadding = isMobile
     ? `${SPACING.lg}px ${SPACING.lg}px 0`
@@ -116,11 +128,16 @@ function BrowseContentSection({
         zIndex: 1,
       }}>
       <PageTitle style={{padding: titlePadding, flexShrink: 0}}>Browse Cards</PageTitle>
+      {modeTabs}
+      {/* The toolbar serves BOTH modes: in binder mode its filters drive which
+          slots stay lit rather than which cards are listed. Sort is the one
+          control it keeps that the binder ignores — collector order IS the
+          binder, so a sort would dismantle the thing being read. */}
       <BrowseToolbar {...toolbarProps} />
       {/* Card grid — flex-fills remaining space; VirtuosoGrid scrolls inside */}
       <div style={{flex: 1, minHeight: 0, position: 'relative'}}>
         <ErrorBoundary>
-          <BrowseCardGrid cards={cards} isLoading={isLoading} onCardSelect={onCardSelect} />
+          {binder ?? <BrowseCardGrid cards={cards} isLoading={isLoading} onCardSelect={onCardSelect} />}
         </ErrorBoundary>
       </div>
     </div>
@@ -158,6 +175,19 @@ export function BrowsePage() {
   } = useFilterParams();
   const [showFilters, setShowFilters] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [collectionMode, setCollectionMode] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const {entries} = useCollection();
+  // MUST sit above the `if (error)` return below — it is a hook, and an early
+  // return before it would change the hook order between renders.
+  //
+  // Widened for the IMPORT as well as for the binder: the CSV is joined against
+  // this pool, and against the Core-only one every non-Core row is counted and
+  // discarded — which is exactly two thirds of a real collection.
+  const {pool, isLoading: poolLoading, error: poolError} = useCollectionPool(
+    cards,
+    collectionMode || showImport,
+  );
 
   // Auto-focus search when navigating with ?focus=search (desktop only; mobile uses bottom sheet)
   useEffect(() => {
@@ -174,7 +204,7 @@ export function BrowsePage() {
   if (error) return <BrowsePageError onRetry={retryLoad} />;
 
   const combinedFilters = buildCombinedFilters(filters, inkFilters, typeFilters, costFilters);
-  const sortedCards = applyFiltersAndSort(cards, searchQuery, combinedFilters, sortOrder);
+  const sortedCards = applyFiltersAndSort(pool, searchQuery, combinedFilters, sortOrder);
   const goHome = clearAllFilters;
   const selectCard = (card: {id: string}) => {
     trackCardSelected(getCardById(card.id), 'browse');
@@ -213,12 +243,39 @@ export function BrowsePage() {
     sets,
   };
 
+  // The pool is complete only once the lazy non-Core chunks have landed. Parsing
+  // a CSV before then silently drops every non-Core row, so the import is gated
+  // on this rather than on the dialog merely being open.
+  const isPoolReady = !poolLoading && poolError === null;
   const contentProps = {
     isMobile,
     toolbarProps,
     cards: sortedCards,
     isLoading,
     onCardSelect: selectCard,
+    modeTabs: (
+      <BrowseModeBar
+        mode={collectionMode ? 'collection' : 'all'}
+        onModeChange={(m) => setCollectionMode(m === 'collection')}
+        pool={pool}
+        isPoolReady={isPoolReady}
+        isImportOpen={showImport}
+        onImportOpen={() => setShowImport(true)}
+        onImportClose={() => setShowImport(false)}
+      />
+    ),
+    // `matchedIds` is built inside this branch, not above it: in grid mode it
+    // would be a Set of up to 3,242 strings rebuilt every render for nobody.
+    binder: collectionMode ? (
+      <CollectionBinderSection
+        cards={pool}
+        matchedIds={new Set(sortedCards.map((card) => card.id))}
+        entries={entries}
+        isLoading={poolLoading}
+        error={poolError}
+        onCardSelect={selectCard}
+      />
+    ) : null,
   };
 
   if (isMobile) {
