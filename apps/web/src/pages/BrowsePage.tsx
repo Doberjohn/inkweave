@@ -25,6 +25,7 @@ import {
   collectionAction,
   CollectionBinderSection,
   ImportCollectionDialog,
+  type CollectionEntries,
 } from '../features/collection';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
@@ -71,6 +72,187 @@ function CollectionToggle({active, onToggle}: {active: boolean; onToggle: () => 
       Collection
     </CtaButton>
   );
+}
+
+/**
+ * Consume `?focus=search` by focusing the desktop inline input once.
+ *
+ * A hook rather than an inline effect purely to keep the page function's
+ * branches down — CodeScene counts a nested callback's conditionals against its
+ * enclosing function, so an effect body is not free.
+ */
+function useSearchFocusParam(
+  isMobile: boolean,
+  searchParams: URLSearchParams,
+  setSearchParams: (next: URLSearchParams, opts?: {replace?: boolean}) => void,
+) {
+  useEffect(() => {
+    // Desktop only; mobile searches through the bottom sheet.
+    if (isMobile || searchParams.get('focus') !== 'search') return;
+    requestAnimationFrame(() => {
+      document.querySelector<HTMLInputElement>('[data-testid="browse-search"]')?.focus();
+    });
+    searchParams.delete('focus');
+    setSearchParams(searchParams, {replace: true});
+  }, [isMobile, searchParams, setSearchParams]);
+}
+
+/**
+ * Both prompts the Collection button can raise. Mutually exclusive by
+ * construction — the sign-in check runs first, so you can never reach the import
+ * without an account — which is why they can mount unconditionally together.
+ */
+function CollectionPrompts({
+  showSignIn,
+  onSignInClose,
+  showImport,
+  onImportClose,
+  pool,
+  poolLoading,
+  poolError,
+  importCollection,
+  onImported,
+}: {
+  showSignIn: boolean;
+  onSignInClose: () => void;
+  showImport: boolean;
+  onImportClose: () => void;
+  pool: LorcanaCard[];
+  poolLoading: boolean;
+  poolError: string | null;
+  importCollection: (entries: CollectionEntries, importedAt: number) => string | null;
+  onImported: () => void;
+}) {
+  return (
+    <>
+      <SignInDialog isOpen={showSignIn} onClose={onSignInClose} />
+      <ImportCollectionDialog
+        isOpen={showImport}
+        onClose={onImportClose}
+        pool={pool}
+        // Blocks a parse against the Core-only pool while the 15 non-Core chunks
+        // are still landing; that parse does not fail, it silently drops two
+        // thirds of a real collection.
+        isPoolReady={!poolLoading && poolError === null}
+        // Land in collection mode on success. The reader pressed "Collection"
+        // and was diverted through an import to get there; leaving them on the
+        // all-cards grid afterwards makes a successful import look like nothing
+        // happened. Only on success — `importCollection` returns a message when
+        // storage refused the write, and switching then would show an empty
+        // binder as if it had worked.
+        onImport={(imported, at) => {
+          const storageError = importCollection(imported, at);
+          if (storageError === null) onImported();
+          return storageError;
+        }}
+      />
+    </>
+  );
+}
+
+/**
+ * The Collection button's click behaviour, built outside the page so its
+ * three-way branch is not counted against the page's complexity.
+ */
+function makeCollectionClick(deps: {
+  signedIn: boolean;
+  hasCollection: boolean;
+  collectionMode: boolean;
+  setShowSignIn: (v: boolean) => void;
+  setShowImport: (v: boolean) => void;
+  setCollectionMode: (v: boolean) => void;
+}): () => void {
+  return () => {
+    const next = collectionAction({signedIn: deps.signedIn, hasCollection: deps.hasCollection});
+    if (next === 'sign-in') return deps.setShowSignIn(true);
+    if (next === 'import') return deps.setShowImport(true);
+    deps.setCollectionMode(!deps.collectionMode);
+  };
+}
+
+interface BinderChoice {
+  collectionMode: boolean;
+  binderView: boolean;
+  pool: LorcanaCard[];
+  sortedCards: LorcanaCard[];
+  entries: CollectionEntries;
+  poolLoading: boolean;
+  poolError: string | null;
+  onCardSelect: (card: LorcanaCard) => void;
+}
+
+/**
+ * Which binder, if any, replaces the grid. Hoisted out of the page because the
+ * three-way choice is the page's own complexity, not the content's.
+ *
+ * `matchedIds` is built INSIDE the collection branch: in grid mode it would be a
+ * Set of up to 3,242 strings rebuilt on every render for nobody.
+ */
+function pickBinder({
+  collectionMode,
+  binderView,
+  pool,
+  sortedCards,
+  entries,
+  poolLoading,
+  poolError,
+  onCardSelect,
+}: BinderChoice): React.ReactNode {
+  if (collectionMode) {
+    return (
+      <CollectionBinderSection
+        cards={pool}
+        matchedIds={new Set(sortedCards.map((card) => card.id))}
+        entries={entries}
+        isLoading={poolLoading}
+        error={poolError}
+        onCardSelect={onCardSelect}
+      />
+    );
+  }
+  if (binderView) return <BrowseBinder cards={sortedCards} onCardSelect={onCardSelect} />;
+  return null;
+}
+
+/**
+ * The toolbar's props, assembled outside the page.
+ *
+ * Almost every field is a straight forward of `useFilterParams`, so building it
+ * here lets the page hold the hook's result as ONE value instead of a
+ * sixteen-name destructure — which is what pushed the page function past the
+ * size gate. Only the three genuinely page-owned props are passed in.
+ */
+function buildToolbarProps(
+  fp: ReturnType<typeof useFilterParams>,
+  own: {isMobile: boolean; onFiltersClick: () => void; modeSwitch: React.ReactNode},
+) {
+  return {
+    onFiltersClick: own.onFiltersClick,
+    activeFilterCount: fp.activeFilterCount,
+    inkFilters: fp.inkFilters,
+    typeFilters: fp.typeFilters,
+    costFilters: fp.costFilters,
+    filters: fp.filters,
+    onToggleInk: fp.toggleInk,
+    onToggleType: fp.toggleType,
+    onToggleCost: fp.toggleCost,
+    onClearCosts: fp.clearCosts,
+    onFiltersChange: fp.setFilters,
+    sortOrder: fp.sortOrder,
+    onSortChange: fp.setSortOrder,
+    isMobile: own.isMobile,
+    searchQuery: fp.searchQuery,
+    onSearchChange: fp.setSearchQuery,
+    /**
+     * ALWAYS shown, never gated on having a collection. The button is the entry
+     * point to the whole feature, so hiding it until you already had one made it
+     * unreachable — the state it was meant to protect against is exactly the
+     * state that needs the invitation. The three outcomes and their precedence
+     * live in `collectionAction`, which is pure so the two branches needing a
+     * real OAuth session are covered by assertions rather than by clicking.
+     */
+    modeSwitch: own.modeSwitch,
+  } as const;
 }
 
 function buildCombinedFilters(
@@ -192,6 +374,49 @@ function BrowseContentSection({
   );
 }
 
+/**
+ * The viewport-bounded shell, one definition for both widths.
+ *
+ * The two branches differed only in height (mobile subtracts the bottom nav so
+ * AppLayout's padding does not push past the viewport and re-introduce page
+ * scroll) and in the filter dialog's variant. Keeping them as two literal
+ * returns meant every shell change had to be made twice, and made the page
+ * function long enough to trip the size gate on its own.
+ */
+function BrowseShell({
+  isMobile,
+  goHome,
+  contentProps,
+  filterDialogProps,
+  prompts,
+}: {
+  isMobile: boolean;
+  goHome: () => void;
+  contentProps: React.ComponentProps<typeof BrowseContentSection>;
+  filterDialogProps: Omit<React.ComponentProps<typeof FilterDialog>, 'variant'>;
+  prompts: React.ReactNode;
+}) {
+  return (
+    <main
+      style={{
+        height: isMobile ? `calc(100dvh - ${MOBILE_NAV_HEIGHT}px)` : '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: COLORS.background,
+        fontFamily: FONTS.body,
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+      <BrowseSeo />
+      <EtherealBackground />
+      <CompactHeader onLogoClick={goHome} isMobile={isMobile} />
+      <BrowseContentSection {...contentProps} />
+      <FilterDialog {...filterDialogProps} variant={isMobile ? 'drawer' : 'modal'} />
+      {prompts}
+    </main>
+  );
+}
+
 // =====================================================================
 // Page component — viewport-bounded shell + shared content section.
 // Mobile subtracts the bottom-nav height so AppLayout's padding-bottom
@@ -203,24 +428,7 @@ export function BrowsePage() {
   const {isMobile} = useResponsive();
   const {cards, isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, sets, getCardById} =
     useCardDataContext();
-  const {
-    searchQuery,
-    setSearchQuery,
-    inkFilters,
-    toggleInk,
-    typeFilters,
-    toggleType,
-    costFilters,
-    toggleCost,
-    clearCosts,
-    filters,
-    setFilters,
-    replaceFilters,
-    clearAllFilters,
-    activeFilterCount,
-    sortOrder,
-    setSortOrder,
-  } = useFilterParams();
+  const filterParams = useFilterParams();
   const [showFilters, setShowFilters] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [collectionMode, setCollectionMode] = useState(false);
@@ -238,75 +446,43 @@ export function BrowsePage() {
     collectionMode || showImport,
   );
 
-  // Auto-focus search when navigating with ?focus=search (desktop only; mobile uses bottom sheet)
-  useEffect(() => {
-    if (!isMobile && searchParams.get('focus') === 'search') {
-      requestAnimationFrame(() => {
-        const input = document.querySelector<HTMLInputElement>('[data-testid="browse-search"]');
-        input?.focus();
-      });
-      searchParams.delete('focus');
-      setSearchParams(searchParams, {replace: true});
-    }
-  }, [isMobile, searchParams, setSearchParams]);
+  useSearchFocusParam(isMobile, searchParams, setSearchParams);
 
   if (error) return <BrowsePageError onRetry={retryLoad} />;
 
+  const {filters, inkFilters, typeFilters, costFilters} = filterParams;
   const combinedFilters = buildCombinedFilters(filters, inkFilters, typeFilters, costFilters);
-  const sortedCards = applyFiltersAndSort(pool, searchQuery, combinedFilters, sortOrder);
-  const goHome = clearAllFilters;
+  const sortedCards = applyFiltersAndSort(
+    pool,
+    filterParams.searchQuery,
+    combinedFilters,
+    filterParams.sortOrder,
+  );
+  const goHome = filterParams.clearAllFilters;
   const selectCard = (card: {id: string}) => {
     trackCardSelected(getCardById(card.id), 'browse');
     openCardModal(card.id, sortedCards.map((c) => c.id));
   };
 
-  const toolbarProps = {
-    onFiltersClick: () => setShowFilters(true),
-    activeFilterCount,
-    inkFilters,
-    typeFilters,
-    costFilters,
-    filters,
-    onToggleInk: toggleInk,
-    onToggleType: toggleType,
-    onToggleCost: toggleCost,
-    onClearCosts: clearCosts,
-    onFiltersChange: setFilters,
-    sortOrder,
-    onSortChange: setSortOrder,
+  const onCollectionClick = makeCollectionClick({
+    signedIn: user !== null,
+    hasCollection,
+    collectionMode,
+    setShowSignIn,
+    setShowImport,
+    setCollectionMode,
+  });
+
+  const toolbarProps = buildToolbarProps(filterParams, {
     isMobile,
-    searchQuery,
-    onSearchChange: setSearchQuery,
-    // Only once a collection exists. Offering the switch without one leads to a
-    // binder of cards nobody has marked as owned — a page of grey rectangles,
-    // which reads as a broken screen rather than an empty state.
-    /**
-     * ALWAYS shown, never gated on having a collection. The button is now the
-     * entry point to the whole feature, so hiding it until you already had a
-     * collection made it unreachable — the state it was meant to protect against
-     * is exactly the state that needs the invitation.
-     *
-     * The three outcomes and their precedence live in `collectionAction`, which
-     * is pure so the two branches needing a real OAuth session are covered by
-     * assertions rather than by signing in and clicking.
-     */
-    modeSwitch: (
-      <CollectionToggle
-        active={collectionMode}
-        onToggle={() => {
-          const next = collectionAction({signedIn: user !== null, hasCollection});
-          if (next === 'sign-in') return setShowSignIn(true);
-          if (next === 'import') return setShowImport(true);
-          setCollectionMode(!collectionMode);
-        }}
-      />
-    ),
-  } as const;
+    onFiltersClick: () => setShowFilters(true),
+    modeSwitch: <CollectionToggle active={collectionMode} onToggle={onCollectionClick} />,
+  });
 
   const filterDialogProps = {
     isOpen: showFilters,
     onClose: () => setShowFilters(false),
-    onApply: replaceFilters,
+    onApply: filterParams.replaceFilters,
     inkFilters,
     typeFilters,
     costFilters,
@@ -328,20 +504,16 @@ export function BrowsePage() {
     cards: sortedCards,
     isLoading,
     onCardSelect: selectCard,
-    // `matchedIds` is built inside this branch, not above it: in grid mode it
-    // would be a Set of up to 3,242 strings rebuilt every render for nobody.
-    binder: collectionMode ? (
-      <CollectionBinderSection
-        cards={pool}
-        matchedIds={new Set(sortedCards.map((card) => card.id))}
-        entries={entries}
-        isLoading={poolLoading}
-        error={poolError}
-        onCardSelect={selectCard}
-      />
-    ) : binderView ? (
-      <BrowseBinder cards={sortedCards} onCardSelect={selectCard} />
-    ) : null,
+    binder: pickBinder({
+      collectionMode,
+      binderView,
+      pool,
+      sortedCards,
+      entries,
+      poolLoading,
+      poolError,
+      onCardSelect: selectCard,
+    }),
     compactChrome: binderView,
   };
 
@@ -351,70 +523,26 @@ export function BrowsePage() {
    * at the same decision point, because the sign-in check runs first.
    */
   const collectionPrompts = (
-    <>
-      <SignInDialog isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
-      <ImportCollectionDialog
-        isOpen={showImport}
-        onClose={() => setShowImport(false)}
-        pool={pool}
-        // Blocks a parse against the Core-only pool while the 15 non-Core chunks
-        // are still landing; that parse does not fail, it silently drops two
-        // thirds of a real collection.
-        isPoolReady={!poolLoading && poolError === null}
-        // Land in collection mode on success. The reader pressed "Collection"
-        // and was diverted through an import to get there; leaving them on the
-        // all-cards grid afterwards makes a successful import look like nothing
-        // happened. Only on success — `importCollection` returns a message when
-        // storage refused the write, and switching then would show an empty
-        // binder as if it had worked.
-        onImport={(imported, at) => {
-          const storageError = importCollection(imported, at);
-          if (storageError === null) setCollectionMode(true);
-          return storageError;
-        }}
-      />
-    </>
+    <CollectionPrompts
+      showSignIn={showSignIn}
+      onSignInClose={() => setShowSignIn(false)}
+      showImport={showImport}
+      onImportClose={() => setShowImport(false)}
+      pool={pool}
+      poolLoading={poolLoading}
+      poolError={poolError}
+      importCollection={importCollection}
+      onImported={() => setCollectionMode(true)}
+    />
   );
 
-  if (isMobile) {
-    return (
-      <main
-        style={{
-          height: `calc(100dvh - ${MOBILE_NAV_HEIGHT}px)`,
-          display: 'flex',
-          flexDirection: 'column',
-          background: COLORS.background,
-          fontFamily: FONTS.body,
-          position: 'relative',
-          overflow: 'hidden',
-        }}>
-        <BrowseSeo />
-        <EtherealBackground />
-        <CompactHeader onLogoClick={goHome} isMobile />
-        <BrowseContentSection {...contentProps} />
-        <FilterDialog {...filterDialogProps} variant="drawer" />
-        {collectionPrompts}
-      </main>
-    );
-  }
-
   return (
-    <main
-      style={{
-        height: '100vh',
-        background: COLORS.background,
-        fontFamily: FONTS.body,
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-      <BrowseSeo />
-      <EtherealBackground />
-      <CompactHeader onLogoClick={goHome} />
-      <BrowseContentSection {...contentProps} />
-      <FilterDialog {...filterDialogProps} variant="modal" />
-      {collectionPrompts}
-    </main>
+    <BrowseShell
+      isMobile={isMobile}
+      goHome={goHome}
+      contentProps={contentProps}
+      filterDialogProps={filterDialogProps}
+      prompts={collectionPrompts}
+    />
   );
 }

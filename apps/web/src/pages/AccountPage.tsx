@@ -9,7 +9,7 @@ import {
   Seo,
 } from '../shared/components';
 import {SignInDialog} from '../shared/components/SignInDialog';
-import {DisplayNameDialog, useProfile} from '../features/profile';
+import {DisplayNameDialog, useProfile, type PublicIdentity} from '../features/profile';
 import {
   useCollection,
   useCollectionPool,
@@ -61,6 +61,147 @@ function Row({label, value, action}: {label: string; value: string; action?: Rea
   );
 }
 
+/** Locale date, or a dash. Hoisted so the page function carries one fewer branch. */
+function formatImported(importedAt: number | null): string {
+  if (importedAt === null) return '—';
+  return new Date(importedAt).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function IdentitySection({
+  identity,
+  onChange,
+}: {
+  identity: PublicIdentity | null;
+  onChange: () => void;
+}) {
+  return (
+    <Section title="Identity">
+      {/* Read-only BY CONSTRUCTION: uniqueness is enforced by the index, so
+          claiming a handle is a server-side write-and-catch-23505. An edit field
+          would need a whole availability flow. The display name is editable
+          precisely because it carries no uniqueness constraint. */}
+      <Row label="Handle" value={identity ? `@${identity.handle}` : '—'} />
+      <Row
+        label="Display name"
+        value={identity?.displayName ?? '—'}
+        action={
+          identity && (
+            <CtaButton variant="ghost" onClick={onChange}>
+              Change
+            </CtaButton>
+          )
+        }
+      />
+      <p
+        style={{
+          color: COLORS.textMuted,
+          fontSize: `${FONT_SIZES.xs}px`,
+          margin: `${SPACING.sm}px 0 0`,
+        }}>
+        Your display name appears on every deck you publish. Your handle is permanent.
+      </p>
+    </Section>
+  );
+}
+
+/** The destructive half, split out so its three states do not land on the page. */
+function ClearControls({
+  confirming,
+  onAsk,
+  onConfirm,
+  onCancel,
+}: {
+  confirming: boolean;
+  onAsk: () => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!confirming) {
+    return (
+      <CtaButton variant="neutral" onClick={onAsk}>
+        Clear
+      </CtaButton>
+    );
+  }
+  // Confirm in place rather than a dialog: one destructive action with no undo,
+  // and a second overlay for a single yes/no is heavier than the decision.
+  return (
+    <>
+      <CtaButton variant="neutral" onClick={onConfirm}>
+        Delete my collection
+      </CtaButton>
+      <CtaButton variant="ghost" onClick={onCancel}>
+        Cancel
+      </CtaButton>
+    </>
+  );
+}
+
+interface CollectionSectionProps {
+  hasCollection: boolean;
+  owned: number;
+  importedAt: number | null;
+  confirming: boolean;
+  onImport: () => void;
+  onAskClear: () => void;
+  onConfirmClear: () => void;
+  onCancelClear: () => void;
+}
+
+function CollectionSection({
+  hasCollection,
+  owned,
+  importedAt,
+  confirming,
+  onImport,
+  onAskClear,
+  onConfirmClear,
+  onCancelClear,
+}: CollectionSectionProps) {
+  return (
+    <Section title="Collection">
+      {hasCollection ? (
+        <>
+          <Row label="Cards owned" value={owned.toLocaleString()} />
+          <Row label="Imported" value={formatImported(importedAt)} />
+        </>
+      ) : (
+        <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.md}px`, margin: 0}}>
+          Import a Dreamborn CSV export to see what you own while you browse.
+        </p>
+      )}
+      <div style={{display: 'flex', gap: SPACING.md, marginTop: SPACING.lg, flexWrap: 'wrap'}}>
+        <CtaButton variant="ghost" onClick={onImport}>
+          {hasCollection ? 'Re-import' : 'Import collection'}
+        </CtaButton>
+        {hasCollection && (
+          <ClearControls
+            confirming={confirming}
+            onAsk={onAskClear}
+            onConfirm={onConfirmClear}
+            onCancel={onCancelClear}
+          />
+        )}
+      </div>
+      {confirming && (
+        <p
+          role="alert"
+          style={{
+            color: COLORS.textMuted,
+            fontSize: `${FONT_SIZES.xs}px`,
+            margin: `${SPACING.md}px 0 0`,
+          }}>
+          This removes your imported collection from this browser. It cannot be undone.
+        </p>
+      )}
+    </Section>
+  );
+}
+
 /** Signed-out state. A prompt, NOT a redirect: a redirect discards the URL, so a
  *  shared or bookmarked /account link would look broken rather than gated. */
 function SignedOut({onSignIn}: {onSignIn: () => void}) {
@@ -93,12 +234,6 @@ export function AccountPage() {
   const {pool, isLoading: poolLoading, error: poolError} = useCollectionPool(cards, showImport);
 
   const owned = Object.keys(entries).filter((id) => ownedCount(id) > 0).length;
-  const imported =
-    importedAt === null ? null : new Date(importedAt).toLocaleDateString(undefined, {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
 
   return (
     <main
@@ -133,85 +268,20 @@ export function AccountPage() {
           <SignedOut onSignIn={() => setShowSignIn(true)} />
         ) : (
           <>
-            <Section title="Identity">
-              {/* Read-only BY CONSTRUCTION: uniqueness is enforced by the index, so
-                  claiming a handle is a server-side write-and-catch-23505. An edit
-                  field would need a whole availability flow. The display name is
-                  editable precisely because it carries no uniqueness constraint. */}
-              <Row label="Handle" value={identity ? `@${identity.handle}` : '—'} />
-              <Row
-                label="Display name"
-                value={identity?.displayName ?? '—'}
-                action={
-                  identity && (
-                    <CtaButton variant="ghost" onClick={() => setShowName(true)}>
-                      Change
-                    </CtaButton>
-                  )
-                }
-              />
-              <p
-                style={{
-                  color: COLORS.textMuted,
-                  fontSize: `${FONT_SIZES.xs}px`,
-                  margin: `${SPACING.sm}px 0 0`,
-                }}>
-                Your display name appears on every deck you publish. Your handle is permanent.
-              </p>
-            </Section>
-
-            <Section title="Collection">
-              {hasCollection ? (
-                <>
-                  <Row label="Cards owned" value={owned.toLocaleString()} />
-                  <Row label="Imported" value={imported ?? '—'} />
-                </>
-              ) : (
-                <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.md}px`, margin: 0}}>
-                  Import a Dreamborn CSV export to see what you own while you browse.
-                </p>
-              )}
-              <div style={{display: 'flex', gap: SPACING.md, marginTop: SPACING.lg, flexWrap: 'wrap'}}>
-                <CtaButton variant="ghost" onClick={() => setShowImport(true)}>
-                  {hasCollection ? 'Re-import' : 'Import collection'}
-                </CtaButton>
-                {hasCollection && !confirmClear && (
-                  <CtaButton variant="neutral" onClick={() => setConfirmClear(true)}>
-                    Clear
-                  </CtaButton>
-                )}
-                {/* Confirm in place rather than a dialog: it is one destructive
-                    action with no undo, and a second overlay for a single yes/no
-                    is heavier than the decision deserves. */}
-                {confirmClear && (
-                  <>
-                    <CtaButton
-                      variant="neutral"
-                      onClick={() => {
-                        clearImported();
-                        setConfirmClear(false);
-                      }}>
-                      Delete my collection
-                    </CtaButton>
-                    <CtaButton variant="ghost" onClick={() => setConfirmClear(false)}>
-                      Cancel
-                    </CtaButton>
-                  </>
-                )}
-              </div>
-              {confirmClear && (
-                <p
-                  role="alert"
-                  style={{
-                    color: COLORS.textMuted,
-                    fontSize: `${FONT_SIZES.xs}px`,
-                    margin: `${SPACING.md}px 0 0`,
-                  }}>
-                  This removes your imported collection from this browser. It cannot be undone.
-                </p>
-              )}
-            </Section>
-
+            <IdentitySection identity={identity} onChange={() => setShowName(true)} />
+            <CollectionSection
+              hasCollection={hasCollection}
+              owned={owned}
+              importedAt={importedAt}
+              confirming={confirmClear}
+              onImport={() => setShowImport(true)}
+              onAskClear={() => setConfirmClear(true)}
+              onConfirmClear={() => {
+                clearImported();
+                setConfirmClear(false);
+              }}
+              onCancelClear={() => setConfirmClear(false)}
+            />
             <Section title="Session">
               <CtaButton variant="neutral" onClick={() => void signOut()}>
                 Sign out
