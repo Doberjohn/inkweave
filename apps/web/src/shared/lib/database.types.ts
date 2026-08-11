@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      collections: {
+        Row: {
+          created_at: string
+          entries: Json
+          imported_at: string
+          owner_id: string
+          schema_version: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entries?: Json
+          imported_at: string
+          owner_id: string
+          schema_version?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entries?: Json
+          imported_at?: string
+          owner_id?: string
+          schema_version?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       decks: {
         Row: {
           cards: Json
