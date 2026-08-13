@@ -106,3 +106,5 @@ docs/SECURITY_AUDIT.md
 .design-sync/node_modules
 .ds-sync/
 ds-bundle/
+
+.design-sync/styles-entry.css

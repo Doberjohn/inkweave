@@ -5,13 +5,13 @@
   "globalName": "Inkweave",
 
   "entry": ".design-sync/entry.tsx",
-  "buildCmd": "node .design-sync/gen-entry.mjs && pnpm --filter inkweave-web exec tsc -p ../../.design-sync/tsconfig.dts.json",
+  "buildCmd": "node .design-sync/gen-entry.mjs && node .design-sync/gen-css.mjs && pnpm --filter inkweave-web exec tsc -p ../../.design-sync/tsconfig.dts.json",
 
   "storybookConfigDir": "apps/web/.storybook",
   "storybookStatic": ".design-sync/sb-reference",
 
   "srcDir": "apps/web/src",
-  "cssEntry": "apps/web/src/index.css",
+  "cssEntry": ".design-sync/styles-entry.css",
   "extraFonts": [".design-sync/fonts.css"],
 
   "extraEntries": [
@@ -47,6 +47,13 @@
   },
 
   "overrides": {
+    "CountBadge": {"skip": ["components-countbadge--zero"]},
+    "PairStack": {"skip": ["voting-pairstack--empty"]},
+    "SignInDialog": {"cardMode": "single"},
+    "SynergyBreakdown": {"skip": ["features-synergybreakdown--empty"]},
+    "CardTile": {"skip": ["components-cardtile--default", "components-cardtile--selected", "components-cardtile--minimal", "components-cardtile--crawlable-link", "components-cardtile--priority", "components-cardtile--small-image", "components-cardtile--action-card", "components-cardtile--item-card", "components-cardtile--all-ink-colors"]},
+    "CardGrid": {"skip": ["cards-cardgrid--default", "cards-cardgrid--minimal-variant", "cards-cardgrid--empty", "cards-cardgrid--few-cards", "cards-cardgrid--many-cards"]},
+
     "ArchetypeBadge": {"cardMode": "column"},
     "BrowseToolbar": {"cardMode": "column"},
     "CardDetail": {"cardMode": "column"},

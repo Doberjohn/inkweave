@@ -38,11 +38,10 @@ import * as React from 'react';
 export function InkweaveDesignRoot({children}: {children?: React.ReactNode}) {
   return (
     <div
+      className="inkweave-ds-root"
       style={{
         background: '#0d0d14',
         color: '#e8e8e8',
-        padding: 16,
-        minHeight: '100%',
         boxSizing: 'border-box',
         // Containing block for `position: fixed` DESCENDANTS, so in-tree fixed
         // content lands on this dark surface rather than the scaffold's white
@@ -58,6 +57,9 @@ export function InkweaveDesignRoot({children}: {children?: React.ReactNode}) {
     </div>
   );
 }
+// Height and padding are NOT set inline: they must differ between a grid cell
+// and a full-bleed single card, which needs a descendant selector. The rules
+// live in .design-sync/gen-css.mjs — see NOTES.md "in-tree fixed overlays".
 
 export {SessionProvider} from '../apps/web/src/shared/contexts/SessionContext';
 export {CardDataProvider} from '../apps/web/src/shared/contexts/CardDataContext';

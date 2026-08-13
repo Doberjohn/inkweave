@@ -104,24 +104,63 @@ stretch every cell in the product card.
 **Do not "simplify" this away by trusting `body{background}` from `index.css`.** That rule
 does ship (it is in `_ds_bundle.css`), it just loses to the scaffold's inline style.
 
-### Portalled scrims read grey — known, accepted, do not re-litigate
+### The provider needs a DEFINITE height — one fix, three symptoms
 
-Overlay backdrops (`FilterDialog`, `DialogShell`, `BottomSheet`, the 16 `cardMode: single`
-components) render **grey** in previews where storybook shows near-black. The dialog panel
-itself matches exactly; only the scrim tone differs.
+**This section supersedes an earlier claim that grey scrims were unfixable. They were not;
+the cause was mis-diagnosed as "portal escapes the provider" when it was actually the
+provider having no height.**
 
-Cause: these overlays portal to `document.body`, which is OUTSIDE the provider tree, so
-their `position: fixed` scrim composites over the scaffold's white body. Nothing in
-`cfg.provider` can reach a portal, and `emit.mjs` (which owns that white body) is
-app-contract surface that must never be forked.
+`InkweaveDesignRoot` originally set `minHeight: '100%'`. A percentage height against an
+auto-height ancestor chain is **indefinite**, so it collapsed to CONTENT height — and for a
+component whose entire render is `position: fixed`, that content height is zero (plus the
+wrapper's own padding, doubled: 32px). Because the wrapper is transformed
+(`translateZ(0)`), that 32px box became the containing block for every in-tree fixed
+descendant. `inset: 0` therefore resolved to 900x32 instead of 900x675.
 
-`InkweaveDesignRoot` does set `transform: translateZ(0)` — a containing block for
-**in-tree** fixed descendants, which is genuinely useful — but **it was measured and it did
-NOT fix the portalled case.** Don't re-try it expecting a different result.
+This is the repo's own %-height-needs-a-definite-ancestor trap, walked into from the design
+-sync side.
 
-This is cosmetic to the preview card only: in a real design the scrim overlays the
-design's own dark page, so the shipped component is correct. Grade these `close` with a
-note, per the rubric's acceptance bar.
+Three separately-reported symptoms all came from it, and all three were fixed by giving the
+wrapper a definite height:
+
+1. **In-tree fixed overlays clipped off-screen.** `CardOverviewModal` (shifted ~302px, header
+   gone), `MechanicsBottomSheet` (only ~50px on screen), `VoteConfirmation` (checkmark +
+   Sparkles clipped), `VoteToast` (`Mobile` rendered nothing at all).
+2. **The 40px inset on full-viewport components**, which clipped `FullPageNotice`'s own
+   bottom-anchored watermark. Gone with `padding: 0`.
+3. **Grey overlay scrims.** A viewport-tall dark surface now sits behind the portalled scrim
+   instead of the scaffold's white body, so it composites near-black exactly like storybook.
+   `FilterDialog` was re-verified and upgraded from `close` to `match`.
+
+The rules live in `.design-sync/gen-css.mjs`, not inline on the component, because they need
+a descendant selector:
+```css
+.inkweave-ds-root { min-height: 100vh; padding: 0; }
+.ds-cell .inkweave-ds-root { min-height: 100%; }
+```
+The `.ds-cell` scope is load-bearing: a viewport-tall wrapper inside a grid cell would
+stretch every cell in the product card. That was the original, correct objection to setting
+`100vh` globally — scoping it off in cells removes the objection while fixing the
+`cardMode: single` cards, which never sit in a cell. This exactly matches the storybook
+decorator (`{background:'#0d0d14', minHeight:'100vh', padding:0}`), which is the render
+being compared against.
+
+Verified after the change: `VoteConfirmation` (single/fixed) now renders in full;
+`FilterDialog` (portalled scrim) now composites dark; `Chip` (grid cell) and
+`HomePageSkeleton` (full-viewport) unchanged — no cell stretching.
+
+### Editing `providers.tsx` does NOT clear grades — force the recapture yourself
+
+`[GENERAL]` The grade contract hashes the **`cfg.provider` config value**, not the provider
+MODULE. Rewriting `InkweaveDesignRoot` changed how every preview mounts while
+`cfg.provider` stayed `{"component":"InkweaveDesignRoot", …}` — so all 98 grades carried
+forward silently, against renders that no longer existed. Convenient here, dangerous in
+general.
+
+**After any edit to `providers.tsx`, spot-check one component per render mode** — grid cell,
+`cardMode: single`, and full-viewport — with
+`compare.mjs --components A,B,C --spot-check-components A,B,C` (recaptures, keeps grades).
+Do not assume the carried grades still describe what ships.
 
 `cfg.provider.inner` is `SessionProvider`. Storybook does NOT provide it globally, so
 `AboutPage`, `LegalPage`, `PrivacyPage`, `TermsPage`, `DisclaimerPage`, `AuthButton` and
@@ -171,6 +210,88 @@ extractor flattens the props body without carrying the source's
 rather than type-checks. Left as-is deliberately: intent is still legible to the agent, and
 the alternative is 15 hand-written `cfg.dtsPropsFor` bodies that would then rot.
 
+## Stories importing SIBLING exports — the worst defect this sync found
+
+`[GENERAL]` `gen-entry.mjs` originally emitted one export per **storied** component. But a
+story can import more than the component it documents: `Scorecard.stories.tsx` does
+`import {Scorecard, ScorecardRow} from './Scorecard'`. `story-imports.mjs` rewrites that
+specifier to `window.Inkweave`, so `ScorecardRow` resolved to `undefined` and React threw
+`Element type is invalid`.
+
+**This was a PRODUCT defect, not preview-only.** The generated `Scorecard.prompt.md`
+reproduces the story verbatim as its `Row` usage example — so the SHIPPED documentation told
+the design agent to use a symbol that was not on the global. Every design built from the
+documented example would crash identically. An owned preview could not fix it and would have
+hidden it.
+
+**Fixed:** `gen-entry.mjs` now also exports every PascalCase binding a story pulls from its
+own impl module. 163 → 170 exports. Three were true siblings (`ScorecardRow`,
+`RadarMedallion`, `VitalsView`); the other four were the newly-committed Phase C binder
+components.
+
+**How to recognise this class:**
+- The failing story renders **pure WHITE**, not an error string — React 19's `render` is
+  async so the scaffold's `try/catch` cannot catch the throw. (Contrast the `return null`
+  guard pattern below, which renders DARK on *both* panels.)
+- The `(page)` row errors while every `?story=` row looks fine: with `MODE: "grid"` the card
+  mounts all stories together, so one throwing story takes the whole page down. Read it as
+  "one of these stories throws", then find it by its blank panel.
+- **Before dismissing such a throw as harness noise, grep `<Name>.prompt.md` for the missing
+  symbol.** If the shipped example uses it, it is a product defect.
+
+## `/brand/logo.svg` is missing from the bundle — add it to the `/art/**` decision
+
+`[GENERAL]` `CompactHeader.tsx` requests root-relative `/brand/logo.svg` (and `HeroSection` /
+`HomePageSkeleton` use `/brand/logo-animated.svg`). The files exist in `apps/web/public/brand/`,
+which storybook mounts via `staticDirs`, but `ds-bundle` ships no `brand/` — so the wordmark
+renders as a broken-image box in every preview. Same one-static-root class as `/art/**`, and
+it reaches the product: any design-agent page composing `CompactHeader` gets the same box.
+**Blast radius: `AboutPage`, `PrivacyPage`, `TermsPage`, `DisclaimerPage`, `LegalPage` all
+graded `close` for this and nothing else.** Ship it alongside `art/**`.
+
+## An `sb-error` kills the PREVIEW capture too
+
+`[GENERAL]` `compare.mjs` does `const sb = await captureStory(...); if (sb.err) { … continue }`
+— the `continue` lands BEFORE the DS shot, so a reference-only failure produces `(no shot)` in
+**both** columns. This makes NOTES' own instruction to "judge the preview on its own merit"
+impossible from the sheet for the seven `SessionProvider`-gated components. Workaround used in
+batch Q: capture the DS side directly — serve `ds-bundle` with `.ds-sync/storybook/http-serve.mjs`,
+drive playwright at the same 900x700 viewport, shoot `<card>.html?story=<Export>`.
+**A `cfg.overrides.skip` is the WRONG tool here** — it would hide seven components that render
+correctly in the product. The real fixes are a `SessionProvider` decorator on the storybook
+side, or teaching compare to keep capturing after an `sb-error`.
+
+## Probe gotchas (all three cost real time)
+
+- **`?story=` takes the preview EXPORT name, not the sheet label or the story id.**
+  `?story=With Errors` → `⚠ no export named With Errors`; `?story=WithErrors` renders. The
+  sheet and the `grade keys` line both print the humanised label, so transcribing a grade key
+  into a probe URL yields a blank page that looks exactly like the defect you were checking
+  for. Read the real keys from `ds-bundle/_preview/<Name>.js`.
+- **A probe script outside `.ds-sync/` needs two different `createRequire` anchors:**
+  `playwright` resolves only from `<repo>/.ds-sync/package.json`; `sharp` only from the
+  **repo root** `package.json`. Easy to cross-wire. Import `http-serve.mjs` by absolute
+  `file:///` URL, not a relative path.
+- **When cropping a raw PAIR, offset the `__ds` crop by +24,+24.** Preview content sits at
+  (24,24) inside the scaffold's white ring; storybook's sits at (0,0). Cropping both at the
+  same origin puts white rim in the preview crop and shifts its content down — reading as an
+  alignment delta that does not exist.
+
+## The `return null` guard pattern — check for it before filing a defect
+
+`[GENERAL]` Four components now render nothing on BOTH panels because they early-return
+`null` for an empty/zero input: `CountBadge` (`count <= 0`), `SynergyBreakdown`
+(`synergies.length === 0`), `PairStack` (`pairs.length === 0`), and any future sibling. The
+tell is uniform: `sb-error: no storybook root content` with `(no shot)` in **both** columns.
+
+**Rule: before filing a render-nothing story as a defect, grep the component for a
+top-of-function `return null` guard.** If one exists and the story's args satisfy it, it is a
+`cfg.overrides.<Name>.skip` candidate, never a preview bug. Until the skip lands, the
+component's `pendingGrade` stays true even when all its real stories grade `match`.
+
+Applied so far: `CountBadge`, `SynergyBreakdown`. **Still owed:
+`cfg.overrides.PairStack.skip: ["voting-pairstack--empty"]`.**
+
 ## Grading technique: the shrunk contact sheet LIES about small elements
 
 `[GENERAL]` The sheet scales the two panels by very different factors (a ~76px-wide
@@ -181,23 +302,77 @@ wave 1: `IconButton/Disabled` looked like it had lost its `opacity: 0.4`, and
 — disabled `rgb(65,72,79)` vs enabled `rgb(144,161,169)` on both sides, fill `rgb(26,61,26)`
 on both sides.
 
+Three confirmed instances now: `IconButton/Disabled` (looked to have lost `opacity: 0.4`),
+`StrengthBadge/Small` (looked brighter green), `UploadColumn`'s heading numeral (looked gold
+in one panel, white in the other — a 4x crop showed white on BOTH). **A useful extra tell:
+when the lie is INCONSISTENT across sibling stories of the same component, that inconsistency
+IS the giveaway** — one component cannot style the same heading two ways in three siblings.
+
 For small glyphs, badges and swatches: open the full-res `raw/*__sb.png` / `*__ds.png` pair,
-and when still unsure sample the actual pixels with a playwright + canvas `getImageData`
-probe. Two gotchas if you write that probe: run it from `.ds-sync/` (playwright is only
-installed there), and load the PNG as a `data:` URL — a `file://` image on an `about:blank`
-page fails `decode()` with `EncodingError`.
+and when still unsure sample the actual pixels.
 
-## Two accepted preview artifacts (deliberate, do not "fix" per component)
+**Cheapest probe — an 8x nearest-neighbour crop with `sharp`** (already in the repo root's
+pnpm store, no browser needed):
+```js
+sharp(raw).extract({left, top, width, height}).resize({width: width * 8, kernel: 'nearest'})
+```
+Import it via `createRequire('<repo-root>/package.json')` from a scratchpad script — a bare
+`import 'sharp'` fails from outside the repo tree under pnpm's isolated layout. This is what
+made `VoteProgress`'s ~11px line gradeable.
 
-- `[GENERAL]` **Full-viewport (`100vh`) components sit 40px low and clip bottom-anchored
-  content.** The mount is inset by 24px (`emit.mjs` scaffold `body{padding:24px}`, unforkable)
-  plus 16px (`InkweaveDesignRoot` padding), so a 700px-tall `<main>` spans y40..y740 and
-  `bottom`-anchored content lands off-screen — `FullPageNotice` loses its own `INKWEAVE`
-  watermark, and the `src/pages/*` components render the same way. **The fix is to set
-  `InkweaveDesignRoot`'s `padding` to 0**, which also matches the storybook decorator exactly
-  (it uses `padding: 0`). Not applied in the first sync: `provider` is in the grade contract,
-  so it clears every earned grade. **Apply it at the START of the next sync, before any
-  grading.**
+Alternative (heavier): a playwright + canvas `getImageData` probe. Two gotchas — run it from
+`.ds-sync/` (playwright is only installed there), and load the PNG as a `data:` URL, because
+a `file://` image on an `about:blank` page fails `decode()` with `EncodingError`.
+
+## The 8 residual validator warnings are all explained — do not re-chase them
+
+Final validate exits 0 with `157/163 clean`. Every flag is accounted for:
+
+| Flagged | Why |
+|---|---|
+| `CardTile`, `CardGrid` | deliberately skipped (they crash the storybook page); floor/blank cards by construction |
+| `FilterDialog`, `SignInDialog`, `NewDeckDialog`, `MechanicsBottomSheet` | `blank` CARD only. Their first export IS the open state, so this is not a `primaryStory` problem — the overlay portals outside the card's measured root. **All four hold per-story `match` grades from real pairs** via the `?story=` full-page path; the component is correct and only the picker thumbnail is empty. |
+| `AuthButton` | `thin` + router error — the STORY lacks a `MemoryRouter` decorator (repo-side gap, see below) |
+| `SearchAutocomplete` | `thin` in the grid-card path only: absolute positioning inside a zero-height decorator. All 4 stories graded `match`. |
+
+**No `[FONT_MISSING]`** — the one warning the compare oracle structurally cannot see.
+
+## Accepted preview artifacts (deliberate, do not "fix" per component)
+
+- **Half of the old 40px inset is FIXED; 24px of it remains BY DESIGN.** The provider's own
+  16px went with `padding: 0` (see "The provider needs a DEFINITE height"), which unclipped
+  `FullPageNotice`'s watermark. The scaffold's `body{margin:0;padding:24px}` stays for
+  `?story=` captures — `emit.mjs` only zeroes it on the default single render
+  (`if(!q)document.body.style.padding='0'`), deliberately, so graded framing stays
+  byte-identical to what existing verdicts were minted on. **So preview content boxes are
+  852x700 at (24,24) while storybook's are 900x700 at (0,0).** Measured, not inferred.
+  Two consequences a grader must NOT file as component defects:
+  1. **Width-sensitive flex rows reflow.** Anything within ~48px of a wrap threshold wraps in
+     the preview and not in storybook (`BrowseToolbar/With Active Filters`'s cost chip).
+  2. **`position: absolute; inset: 0` roots get a smaller containing block**, because
+     `.inkweave-ds-root`'s transform makes it the containing block for `absolute` descendants
+     too — `MobileComparisonView`'s root resolves to `24,24,852x700` vs the viewport.
+  Also: **judge a scrim by sampling INSIDE the mount, never by the card's rim.** The 24px rim
+  is white and tints under an overlay (`~230,230,230` in-tree, `74,74,78` portalled); the
+  scrim itself reads `6,6,12` on both sides. A grey frame is the rim, not a scrim regression.
+- **A `[RENDER_THIN]` flag can be a capture-mode artifact.** `SearchAutocomplete`'s panel is
+  `position: absolute; top: 100%` inside a decorator with no height, so the mount measured
+  0px under the old grid-cell crop. The per-story `?story=` path takes a full-page shot and
+  picks it up — all four stories now render. **Check for absolute positioning inside a
+  zero-height decorator before calling a thin render a component defect.**
+- `[GENERAL]` **Pre-filter tall-component false alarms with raw PNG DIMENSIONS — one cheap
+  call, no DOM probe.** Every preview shot is exactly 900x700. A storybook shot TALLER than
+  700 (947, 796, 1337 were all seen in one batch) is by definition a component the preview
+  viewport clipped, so a "missing section" there is truncation, not a defect. If the sb shot
+  is also ~900x700 the panels are height-comparable and a content difference is REAL. Run
+  `sharp().metadata()` over the whole raw set BEFORE opening any full-res image — it
+  classifies every tall-component alarm in a batch in one command. This supersedes reaching
+  straight for the DOM probe below, which is now the fallback for ambiguous cases.
+- `[GENERAL]` **The capture viewport is 900x675, so components taller than that look
+  truncated.** `InDepthVoteForm`'s cells are 1036px (1462px mobile) and the panel ends
+  mid-component — but the content IS there (`innerText` carries the later sections; page
+  `scrollHeight` was 4678px). Storybook shoots at natural height, the preview at a fixed
+  viewport. **Check the DOM before reporting missing sections on any tall component.**
 - `[GENERAL]` **`parameters: {layout: 'centered'}` is not replicated.** The generated preview
   wrapper composes `meta.decorators` + `story.render` but ignores `parameters.layout`, so a
   story whose decorator has a VISIBLE background (e.g. `Tooltip`'s `#1a1a2e` padded box)
@@ -329,6 +504,52 @@ loaded-image path is never compared. `CardImage`'s grade is a **fallback-path gr
 image-path grade — the note says so. Re-run from a shell with egress to compare the real
 image path.
 
+## `fn(impl)` discards its impl — patch `story-imports.mjs` EVERY sync
+
+`[GENERAL]` The `sb-stub:storybook/test` shim mapped `fn` to the inert Proxy, whose `apply`
+trap returns `inert`. So `fn(() => null)` returns `inert`, **never `null`** — the
+implementation is silently discarded. Harmless for `onClick: fn()` spies; **fatal for any
+component that BRANCHES on the callback's return value.** `ImportCollectionDialog.tsx:198`
+takes its error branch and never calls `setSummary`, so two stories rendered the failure
+path instead of the success path.
+
+**The tell is a panel slightly TALLER than the base story with nothing extra visible** — an
+empty node holding its margin.
+
+Patched locally: `m.fn` now returns a wrapper that invokes the implementation when one is
+passed, and stays inert for the no-arg spy case. Like the `http-serve.mjs` MIME patch,
+**`.ds-sync/` is re-copied every sync, so re-apply this after staging.**
+
+Related, unpatched: **the generated preview's `compose()` ignores `play`**, so play-driven
+stories capture their PRE-play state. Only one story file in this repo uses `play`;
+`.design-sync/previews/ImportCollectionDialog.tsx` is an owned preview that replays the file
+upload manually (set `input.files` from a `DataTransfer`, dispatch a bubbling native
+`change` — React exempts file inputs from value-tracking dedupe — from `useEffect` + one
+`requestAnimationFrame`). A repo with many `play` stories would want the generator to run it.
+
+## SVG in the reference: patch `http-serve.mjs`'s MIME table EVERY sync
+
+`[GENERAL]` `.ds-sync/storybook/http-serve.mjs` shipped a MIME table of
+`{.html,.js,.mjs,.css,.json,.png}` and fell back to `application/octet-stream`. **SVG is
+deliberately absent from the MIME Sniffing spec's image-pattern table**, so an `<img>`
+cannot sniff an octet-stream SVG and fails — silently breaking the **REFERENCE** side of
+every comparison involving one. `.png` was in the table, which is why raster assets never
+exposed it.
+
+Proof (batch N, by size correlation): Vite inlines assets under 4096 B as data URIs and
+emits larger ones as files. `common.svg` (1452 B) and `uncommon.svg` (937 B) are inlined and
+render on both panels; `rare.svg` (5006 B), `super_rare.svg` (10942 B) and `legendary.svg`
+(66658 B) are emitted as files, go through the static server, and break. Perfect correlation.
+It hit `RaritySymbol`, `RarityBreakdown`, `InkBoard`, and the `/brand/logo.svg` wordmark in
+`CompactHeader` / `HeroSection`.
+
+**Nothing ships broken** — the bundle inlines these as data URIs, so the product is correct
+and only the harness lies. But a broken reference makes the preview look wrong.
+
+Patched locally with `.svg`, `.webp`, `.avif`, `.jpg`, `.jpeg`, `.gif`, `.woff2`, `.woff`.
+**`.ds-sync/` is re-copied from the skill bundle at the start of every sync, so this patch
+is transient — re-apply it after the `cp -r` staging step**, before any grading.
+
 ## The preview server has ONE static root — `/art/**` 404s (a PRODUCT gap, not just a preview one)
 
 `[GENERAL]` `compare.mjs` serves only `ds-bundle`; `apps/web/.storybook/main.ts` mounts the
@@ -343,11 +564,45 @@ loads in exactly ONE panel. Grading `DeckSummaryCard` as "known stale hash" woul
 a real defect.
 
 **It matters beyond the harness:** the design agent's own pages issue the same root-relative
-request, so every deck card it builds gets a broken-image box unless the assets ship. Fixing
-it bundle-side (ship `art/**` at the project root, or inline the frames as data URIs) fixes
-the product AND the preview; a second static root would fix only the preview. Deferred in the
-first sync because `art/**` is not in the approved upload plan. Minor related bug:
-`http-serve.mjs`'s MIME table has no `.webp`/`.avif`/`.jpg` entry.
+request, so every deck card and reveal hero it builds gets a broken-image box unless the
+assets ship. Fixing it bundle-side (ship `art/**` at the project root, or inline as data
+URIs) fixes the product AND the preview; a second static root would fix only the preview.
+
+### Full inventory of the asymmetry (loads in storybook, 404s in preview)
+
+| Component(s) | Asset |
+|---|---|
+| `DeckSummaryCard` | `/art/frames/<slug>.webp` — 21 files, 172 KB |
+| `RevealHero`, `RevealsPromoCard` | `/art/sets/attack-of-the-vine.png` |
+| `NewFranchises` | `/art/franchises/{monsters-inc,up,turning-red}.webp` — 6 files, 148 KB |
+| `SynergyBanner` | `/art/banner/*` (2.0 MB — the one worth excluding) |
+
+Dir sizes: `frames` 172 KB, `franchises` 148 KB, `sets` 748 KB, `backgrounds` 64 KB,
+`banner` 2.0 MB. **Shipping `art/**` minus `banner/` is ~1.1 MB and clears every blocked
+component.** These four are `close`/blocked purely for this reason and are provably
+unfixable from a preview `.tsx` — each builds its URL from a module constant inside the
+component, never a prop, so mirroring the story JSX runs the identical code path.
+
+### Symmetric (404s on BOTH panels — NOT this class, do not conflate)
+
+`/card-images-preview/{id}.avif`, mocked by four story files (~30 ids). **That directory does
+not exist in `apps/web/public/` at all** — it is generated by `pnpm convert-preview-images`
+and gitignored. Repo story-mock rot in the same family as the `CardTile` stale hashes, and it
+should be fixed in the same pass. Compare cannot surface it because both sides fall back
+identically.
+
+### The 24px scaffold ring is white and cannot be reached
+
+Measured with `sharp` at pixel (5,5) across 16 raw shots: 14 read `255,255,255`. The
+scaffold's `body{padding:24px;background:#fff}` sits OUTSIDE `.inkweave-ds-root`, so the
+wrapper's `padding: 0` cannot reach it. **This is not a regression from the definite-height
+fix** — interiors composite correctly dark (`6,6,12`). Side effects are framing only: ~24px
+offset and an 852 vs 868px content width that changes tight-line wrapping.
+
+### `CardTile` only crashes as a story, not in composition
+
+`FranchiseCardsModal/Default` captured 11 `CardTile`s normally on both panels. The
+`CardTile`/`CardGrid` skips do NOT need widening to components that compose them.
 
 ## `[STORY_CAP]` silently caps compare at 6 stories — sweep the log for it
 
@@ -403,26 +658,38 @@ carries forward, which is the correct and safe outcome.
 
 ## Re-sync risks
 
-**State at the end of the first sync (2026-08-11):** 163 components build; **60 verified**
-against real screenshot pairs (58 `match`, 2 `close`) and uploaded; 6 graded-but-blocked;
-~79 kit components and 24 admin components never captured (owner scoped the run to the
-reusable kit and stopped before wave 3). Zero owned previews were needed — every fix was
+**State at the end of the first sync (2026-08-11): COMPLETE.** 163 components build;
+**160 verified** against real screenshot pairs and uploaded. 1 blocked (`DeckSummaryCard`,
+`/art/frames` 404), 2 skipped (`CardTile`, `CardGrid` — they crash the storybook page).
+Exactly **one** owned preview was needed across the whole roster
+(`ImportCollectionDialog`, to replay a `play` interaction); every other fix was
 config-level, which is the strongest available evidence the config is right.
 
 ### Start the next sync with these, in this order, from a CLEAN tree
 
-1. **`cfg.cssEntry` → a wrapper that `@import`s `react-loading-skeleton/dist/skeleton.css`
-   before `index.css`.** Highest-impact known defect; ships broken loading states today.
-   CSS is in the styling slice, so grades carry.
-2. **`InkweaveDesignRoot` `padding: 16` → `0`.** Matches the storybook decorator exactly and
-   removes the 40px inset that clips bottom-anchored content on every `100vh` component.
-   Provider is in the grade contract, so do it BEFORE grading anything.
-3. **`cfg.overrides`: `CountBadge.skip` + `SynergyBreakdown.skip`** (both render `null` by
-   design), and give `CardGrid` the same treatment as `CardTile`.
-4. **Build `sb-reference` with the Supabase env unset**, so the reference stops rendering
-   live vote data and becomes deterministic.
-5. Decide on shipping `art/**` (172 KB of frames) so `DeckSummaryCard` and the reveal
-   components stop rendering broken images — this one needs the upload plan widened.
+1. **Re-apply the two `.ds-sync/` patches** after the `cp -r` staging step — they are wiped
+   every sync: `http-serve.mjs`'s MIME table (`.svg` et al.) and `story-imports.mjs`'s
+   `m.fn` implementation-passthrough. Both are documented above with their symptoms.
+2. **Build `sb-reference` with the Supabase env unset.** Four components
+   (`CommunityColumn`, `EngineColumn`, `MobileComparisonView`, `SignInDialog`) hold `close`
+   verdicts purely because the reference was built with `.env.local` present, and the
+   reference is non-deterministic while it is.
+3. **Ship `art/**` and `brand/**`** (~1.1 MB excluding `art/banner/`) so `DeckSummaryCard`,
+   `RevealHero`, `RevealsPromoCard`, `NewFranchises` and the five legal pages stop rendering
+   broken images. **Needs the upload plan widened** — `art/`/`brand/` are not in the
+   approved writes today. This also fixes the PRODUCT, not just previews.
+4. **Rebuild the reference** so the four Phase C binder components
+   (`BinderSpread`, `BrowseBinder`, `CollectionBinder`, `CollectionBinderSection`) enter the
+   roster. They are bundle exports today but have no cards, so the design agent cannot
+   discover them — harmless, but they are unverified.
+5. Consider teaching `compare.mjs` to keep capturing the preview after an `sb-error`
+   (see that section) so reference-only failures produce a readable one-sided sheet.
+
+### Already fixed in the first sync — do NOT re-do these
+
+`skeleton.css` in the bundle; the provider's definite height (which fixed clipped overlays,
+the 40px inset AND grey scrims together); `CountBadge`/`SynergyBreakdown`/`PairStack` skips;
+`CardTile`/`CardGrid` skips; sibling exports in `gen-entry.mjs`.
 
 ### What goes stale silently
 

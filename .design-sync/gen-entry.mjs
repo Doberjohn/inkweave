@@ -89,6 +89,27 @@ for (const story of stories) {
   if (rosterName !== name) titleMap[rosterName] = name;
 
   entries.push({ name, impl });
+
+  // SIBLING EXPORTS. A story may import more than the component it documents —
+  // Scorecard.stories.tsx does `import {Scorecard, ScorecardRow} from './Scorecard'`.
+  // story-imports.mjs rewrites that specifier to window.Inkweave, so any name the
+  // barrel omits resolves to `undefined` and React throws "Element type is invalid".
+  // Worse, the generated <Name>.prompt.md reproduces the story verbatim, so the
+  // SHIPPED usage example tells the design agent to use a symbol that is not on the
+  // global — every design built from the documented example crashes the same way.
+  // Export every PascalCase binding a story pulls from its own impl module.
+  const implBase = basename(impl).replace(/\.(tsx|ts)$/, '');
+  const importRx = new RegExp(
+    `import\\s*\\{([^}]*)\\}\\s*from\\s*['"][^'"]*/${implBase}['"]`,
+    'g',
+  );
+  for (const m of txt.matchAll(importRx)) {
+    for (const raw of m[1].split(',')) {
+      const sib = raw.trim().split(/\s+as\s+/).pop().trim();
+      if (!/^[A-Z][A-Za-z0-9]*$/.test(sib) || sib === name) continue;
+      if (declares(sib) || reexports(sib)) entries.push({ name: sib, impl });
+    }
+  }
 }
 
 // Dedupe by exported name (several stories can target one component).
