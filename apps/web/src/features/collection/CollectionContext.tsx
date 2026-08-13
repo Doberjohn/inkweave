@@ -1,22 +1,36 @@
-// Imported-collection state (#553): what the user owns, read from localStorage
-// once on mount and replaced wholesale by an import.
+// Imported-collection state (#553, cloud-backed since #555): what the user owns.
 //
-// Far simpler than `DeckContext`, and deliberately so. A draft is mutated
-// continuously, which is why that provider carries a debounce, a dirty
-// fingerprint, and a sign-out latch. A collection is written ONCE per import and
-// read on every pool tile, so none of that applies: no debounce (there is no
-// stream of edits to coalesce), no dirty tracking (there is no unsaved state -
-// an import either landed or reported why not), and no first-sign-in migration
-// (the cloud half is deferred with the `collections` table).
+// Reads localStorage on mount, then reconciles with the `collections` table once
+// a uid appears. Still far simpler than `DeckContext`, and deliberately so: a
+// draft is mutated continuously, which is why that provider carries a debounce
+// and a dirty fingerprint. A collection is written ONCE per import, so there is
+// no stream of edits to coalesce and no unsaved state to track — an import
+// either landed or reported why not.
 //
-// It takes no other context. Entries are keyed by card id, and resolving those to
-// cards is the consumer's job, so this does not depend on `CardDataContext` and
-// can mount anywhere.
+// TWO PLACES IT DIVERGES FROM `DeckContext`, both owner rulings (2026-08-11):
+//   - SIGN-OUT KEEPS the local copy. `DeckContext` calls `clearDraft()`; a deck
+//     draft is cheap to recreate, a collection costs a 300KB export.
+//   - SERVER WINS on conflict, because a collection is ONE row per user, so an
+//     upload over an existing one destroys a remote import with no undo.
+// The decision itself lives in `resolveCollectionSync`, pure and tested, because
+// its branches need a real session AND a seeded row to reach.
+//
+// It still takes no other context beyond the session. Entries are keyed by card
+// id, and resolving those to cards is the consumer's job.
 
-import {createContext, useContext, useState, type ReactNode} from 'react';
+import {createContext, useContext, useEffect, useRef, useState, type ReactNode} from 'react';
 import type {CollectionEntries} from './collectionParser';
 import {totalOwned} from './collectionParser';
-import {clearCollection, readCollection, writeCollection} from './collectionStorage';
+import {
+  clearCollection,
+  hasMigratedCollection,
+  markCollectionMigrated,
+  readCollection,
+  writeCollection,
+} from './collectionStorage';
+import {deleteCollection, getCollection, upsertCollection} from './collectionRepository';
+import {resolveCollectionSync} from './collectionSync';
+import {useSession} from '../../shared/contexts/SessionContext';
 
 interface CollectionContextValue {
   /** Owned copies per card id. Empty when nothing has been imported. */
@@ -55,23 +69,113 @@ function loadStored(): {entries: CollectionEntries; importedAt: number | null} {
   return stored ? {entries: stored.entries, importedAt: stored.importedAt} : {entries: {}, importedAt: null};
 }
 
+type CollectionState = {entries: CollectionEntries; importedAt: number | null};
+
+/**
+ * Reconcile this browser's collection with the account's, once per uid.
+ *
+ * `claimedUid` is a REF, not state, and claimed before the first await: two
+ * renders in the same tick would both see a stale `null` and fire the fetch
+ * twice — the same guard `useFirstSignInMigration` uses, for the same reason.
+ *
+ * Deliberately NOT gated on `state`: the effect must run on the sign-in moment,
+ * not on every import. `latest` carries the current value in without making it
+ * a dependency, so importing a collection cannot re-trigger a sync of it.
+ *
+ * Fire-and-forget on failure. If the network is down the local copy still
+ * stands and the next load retries, so a failed sync degrades to exactly the
+ * pre-#555 behaviour rather than to an error the user must act on.
+ */
+function useCollectionSync(
+  uid: string | null,
+  state: CollectionState,
+  setState: (next: CollectionState) => void,
+) {
+  const claimedUid = useRef<string | null>(null);
+  // Synced in an unkeyed effect, never mutated in render — the React Compiler
+  // forbids the latter, and `DeckContext`'s `latestDeck` does exactly this.
+  const latest = useRef(state);
+  useEffect(() => {
+    latest.current = state;
+  });
+
+  useEffect(() => {
+    if (uid === null) {
+      // A real sign-out. Release the claim so signing back in re-syncs, and
+      // deliberately DO NOT clear the local collection — see the header.
+      claimedUid.current = null;
+      return;
+    }
+    if (claimedUid.current === uid) return;
+    claimedUid.current = uid;
+
+    let cancelled = false;
+    void getCollection(uid).then(({data: server, error}) => {
+      if (cancelled) return;
+      // A failed READ must not be mistaken for "the server has none", which
+      // would upload over a row we simply could not see.
+      if (error !== null) return;
+
+      const local = latest.current;
+      const plan = resolveCollectionSync({
+        hasLocal: local.importedAt !== null,
+        hasServer: server !== null,
+        alreadyMigrated: hasMigratedCollection(uid),
+      });
+
+      if (plan === 'adopt-server' && server !== null) {
+        // Mirror it into localStorage too, so a later signed-out visit sees the
+        // collection this account actually holds rather than a stale import.
+        writeCollection(server.entries, server.importedAt);
+        markCollectionMigrated(uid);
+        setState({entries: server.entries, importedAt: server.importedAt});
+        return;
+      }
+      if (plan === 'upload' && local.importedAt !== null) {
+        void upsertCollection(uid, local.entries, local.importedAt).then(({error: wrote}) => {
+          if (wrote === null) markCollectionMigrated(uid);
+        });
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, setState]);
+}
+
 export function CollectionProvider({children}: {children: ReactNode}) {
   const [state, setState] = useState(loadStored);
+  const {user} = useSession();
+  const uid = user?.id ?? null;
+  useCollectionSync(uid, state, setState);
 
   // No useMemo/useCallback anywhere below: the React Compiler memoizes this file
   // (#291), and the repo's lint forbids hand-rolling it.
   function importCollection(entries: CollectionEntries, importedAt: number): string | null {
     const {error} = writeCollection(entries, importedAt);
-    // State moves only on a successful write, so what is on screen and what
-    // survives a reload cannot disagree.
+    // State moves only on a successful LOCAL write, so what is on screen and
+    // what survives a reload cannot disagree. The cloud write is deliberately
+    // fire-and-forget after that: a network failure must not make a successful
+    // import report failure, and the next sign-in re-runs the sync anyway.
     if (error !== null) return error;
     setState({entries, importedAt});
+    if (uid) {
+      void upsertCollection(uid, entries, importedAt).then(({error: remote}) => {
+        if (remote === null) markCollectionMigrated(uid);
+      });
+    }
     return null;
   }
 
   function clearImported() {
     clearCollection();
     setState({entries: {}, importedAt: null});
+    // Clearing while signed in must clear it EVERYWHERE, or the collection
+    // reappears from another device and reads as the delete having failed. The
+    // migrated marker stays set on purpose: it is what stops this browser's
+    // now-absent local copy from being re-uploaded later.
+    if (uid) void deleteCollection(uid);
   }
 
   const ownedCount = (cardId: string) => totalOwned(state.entries[cardId]);

@@ -114,3 +114,41 @@ export function clearCollection(): void {
     console.warn('[collectionStorage] localStorage cleanup failed:', e);
   }
 }
+
+/**
+ * Per-uid "this browser's collection has been uploaded" marker (#555), mirroring
+ * `deckStorage`'s `hasMigratedDraft`.
+ *
+ * NOT merely an optimisation, unlike the decks one. Sign-out deliberately KEEPS
+ * the local collection (owner ruling 2026-08-11, because re-importing costs a
+ * 300KB export), so without this marker the rule "no server row, upload the
+ * local one" would resurrect a collection the user deleted from another device.
+ * See `resolveCollectionSync`.
+ *
+ * Keyed by uid so two accounts on one browser never read each other's marker.
+ */
+const MIGRATED_PREFIX = 'inkweave:collection:migrated';
+
+function migratedKey(uid: string): string {
+  return `${MIGRATED_PREFIX}:${uid}`;
+}
+
+export function hasMigratedCollection(uid: string): boolean {
+  try {
+    return localStorage.getItem(migratedKey(uid)) === '1';
+  } catch (e) {
+    // Read denied (private mode, blocked storage). Treat as NOT migrated: the
+    // cost is one redundant upsert, where guessing the other way would skip a
+    // real first upload and lose the import.
+    console.warn('[collectionStorage] migrated-flag read denied:', e);
+    return false;
+  }
+}
+
+export function markCollectionMigrated(uid: string): void {
+  try {
+    localStorage.setItem(migratedKey(uid), '1');
+  } catch (e) {
+    console.warn('[collectionStorage] migrated-flag write failed:', e);
+  }
+}
