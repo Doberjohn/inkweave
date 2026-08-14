@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-132 tests across 20 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+136 tests across 21 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
 
@@ -262,6 +262,29 @@ This replaced a version that inferred artifact absence from a *second* 10s UI wa
 | Test | What it verifies |
 |---|---|
 | renders the calibration + activity tabs | `/admin/analytics` shows the `Engine Calibration` h1 and the verdict scale + `Total votes` on the Calibration tab, then switches to the Activity tab and confirms the day-by-day log header |
+
+## `collection-sync.spec.ts` — 4 tests
+
+**#555's acceptance criterion**: a signed-in user's collection survives moving to a different browser. Nothing else tests it — the other checks are unit tests against a stubbed repository, which can only show the decision function is right, never that the app calls it at the right moment with the right data.
+
+**What is stubbed**, in `e2e/helpers/collectionBackend.ts`:
+
+- `CollectionBackend` is an in-memory `collections` table served through `context.route('**/rest/v1/collections*')`. One row per user, keyed by `owner_id` — a map, not a list, because the primary key IS the owner, so a write is always an upsert with no id to generate.
+- **Two contexts share ONE backend.** That is what makes "device A" and "device B" mean anything: same account, same table, different `localStorage`. Device B has no other source for the collection, so the assertion cannot pass by accident.
+- Anonymous writes are rejected with 401, mirroring the owner-scoped policies. Without that a spec could pass while the app wrote a collection signed out.
+
+**What these specs therefore do NOT prove:** RLS. Playwright intercepts before the network, so `owner_id` scoping is enforced by the helper's own bookkeeping, not by Postgres. That half was proven separately with a JWT-simulated probe (`set local role authenticated` + `request.jwt.claims`) against the live database — user A saw 1 row, its own, and 0 of user B's.
+
+**Two owner rulings (2026-08-11) are what these assert.** Server wins on conflict, because a collection is one row and an upload over it destroys a remote import with no undo. And sign-out KEEPS the local copy, unlike `DeckContext`'s `clearDraft()` — which is precisely why `alreadyMigrated` exists, or clearing the collection from another device would be resurrected by this browser's leftover copy.
+
+| Test | Asserts |
+|---|---|
+| a collection imported on one device is readable on another | device A signs in with `alreadyMigrated: false` so the upload runs, then device B with EMPTY localStorage shows the same count on `/account` |
+| the account copy wins over a stale local one | server row and a different local one; `/account` shows the server's, and the stored row is unchanged |
+| a signed-out visitor never writes to the account | seeded local collection, signed out: `writeCount === 0`. Asserted on the store rather than the UI, because an anonymous upload would be silent |
+| a cleared collection does not come back from the account | Clear → Delete removes the row, and a reload still shows the import prompt |
+
+`/account` is the surface under test because it states ownership as a plain number, so the assertion does not depend on the binder's layout.
 
 ## `deck-save-share.spec.ts` — 4 tests (desktop only)
 

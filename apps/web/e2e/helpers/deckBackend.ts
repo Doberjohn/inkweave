@@ -187,6 +187,21 @@ export class DeckBackend {
         json: viewerId ? [{id: viewerId, handle: TEST_HANDLE, display_name: TEST_DISPLAY_NAME}] : [],
       }),
     );
+
+    /*
+      Collections, stubbed for the SAME reason and discovered the same way (#555).
+
+      `CollectionProvider` is mounted app-wide, so the moment a uid appears it
+      reads the `collections` table — on every page, in every signed-in spec,
+      whether or not the spec has anything to do with collections. Unrouted, that
+      request reaches a real Supabase, is rejected by the fake JWT with "No
+      suitable key or wrong key type", and the fixture's console-error guard
+      fails the test. It took out all four deck-save-share specs.
+
+      Empty array = "this user has no collection", which is the right default for
+      a spec about decks. A spec that cares uses `CollectionBackend` instead.
+    */
+    await context.route('**/rest/v1/collections*', (route) => route.fulfill({json: []}));
   }
 
   private handle(route: Route, viewerId: string | null): Promise<void> {
