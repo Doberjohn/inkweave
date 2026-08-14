@@ -46,33 +46,41 @@ function plural(n: number, one: string, many: string): string {
  * of 2476 distinct cards, measured), so an import that said nothing would look
  * like it had lost most of the file. Naming the remainder is the whole point.
  *
- * THE NON-CORE SENTENCE INVERTS WHEN COLLECTION VIEWING LANDS. It currently says
- * those cards are not part of your collection here, which is true today: the
- * parser stores only Core cards. Once Browse can show every set (Phase C of
- * `docs/deck-builder/2026-08-10-collection-view-and-image-pipeline-design.md`)
- * they ARE in the collection, just unavailable for deck building, and this copy
- * becomes a lie. Change it in the same commit that makes them visible.
+ * THE NON-CORE SENTENCE IS GONE, as this comment used to say it must be once
+ * collection viewing landed. It read "another N cards you own are from sets 1 to
+ * 8, which the Core format does not use" — true when the parser stored Core only,
+ * a lie afterwards, and worse than a lie in practice: a real import lost five
+ * owned cards (Set 3's Dalmatian Puppy, numbered 4a-4e) and reported them with
+ * that reassuring sentence. Every set is stored now, so the only thing worth
+ * reporting is what we could NOT identify — and it is named, not counted, because
+ * five card numbers are something a person can look up.
  */
+
+/** Enough to act on; beyond this the list stops being readable. */
+const MAX_LISTED = 8;
+
 function SummaryStep({summary}: {summary: CollectionSummary}) {
-  const problems = summary.unmatched.length + summary.unparsed.length;
+  const {unidentified, unparsed} = summary;
   return (
     <>
       <p style={{...DIALOG_BODY, marginTop: SPACING.xs}}>
-        {plural(summary.coreCardsOwned, 'Core card', 'Core cards')},{' '}
-        {plural(summary.coreCopiesOwned, 'copy', 'copies')} in all.
+        {plural(summary.cardsOwned, 'card', 'cards')}, {plural(summary.copiesOwned, 'copy', 'copies')}{' '}
+        in all.
       </p>
-      {summary.nonCoreCardsOwned > 0 && (
+      {unidentified.length > 0 && (
         <p style={{...DIALOG_BODY, fontWeight: 400, marginTop: SPACING.sm}}>
-          {summary.nonCoreCardsOwned === 1
-            ? 'Another card you own is'
-            : `Another ${count(summary.nonCoreCardsOwned)} cards you own are`}{' '}
-          from sets 1 to 8, which the Core format does not use.
+          {unidentified.length === 1
+            ? 'One card could not be matched to our data'
+            : `${count(unidentified.length)} cards could not be matched to our data`}{' '}
+          and {unidentified.length === 1 ? 'was' : 'were'} not imported:{' '}
+          {unidentified.slice(0, MAX_LISTED).join(', ')}
+          {unidentified.length > MAX_LISTED && ` and ${count(unidentified.length - MAX_LISTED)} more`}.
         </p>
       )}
-      {problems > 0 && (
+      {unparsed.length > 0 && (
         <p style={{...DIALOG_BODY, fontWeight: 400, marginTop: SPACING.sm}}>
-          {plural(problems, 'row', 'rows')} could not be read, and {problems === 1 ? 'was' : 'were'}{' '}
-          skipped.
+          {plural(unparsed.length, 'row', 'rows')} could not be read, and{' '}
+          {unparsed.length === 1 ? 'was' : 'were'} skipped.
         </p>
       )}
     </>
@@ -190,7 +198,7 @@ export function ImportCollectionDialog({
 
     // Nothing owned is not a storage failure, and must not be reported as one:
     // the likeliest cause is the wrong file, so say that instead.
-    if (parsed.coreCardsOwned === 0 && parsed.nonCoreCardsOwned === 0) {
+    if (parsed.cardsOwned === 0) {
       setError('No owned cards were found in that file. Is it a Dreamborn collection export?');
       return;
     }

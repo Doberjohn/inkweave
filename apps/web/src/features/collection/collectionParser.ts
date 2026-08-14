@@ -33,12 +33,12 @@
 //      NORMALIZED STRINGS here, never integers. Set numbers are always numeric
 //      (verified across all 5329 rows) and stay parsed, because they are padded.
 //
-// Rows below the Core floor are COUNTED but not stored: the builder's pool is
-// Core-only, and roughly two thirds of a real collection sits outside it. Saying
-// so is the difference between an honest summary and one that reads as a broken
-// import.
+// The pool this parses against SPANS EVERY SET (since #553 Phase C), so a card
+// from set 3 is stored like any other and there is no "below the floor" branch.
+// It was Core-only once, and the summary still described misses as "sets the Core
+// format does not use" long after that stopped being true — which reported five
+// genuinely lost cards as a routine fact about the format.
 
-import {isCoreSet} from 'inkweave-synergy-engine';
 import type {LorcanaCard} from '../deck/types';
 
 /** Owned copies of one card, split by finish. */
@@ -61,16 +61,28 @@ export function totalOwned(entry: CollectionEntry | undefined): number {
   return entry ? entry.normal + entry.foil : 0;
 }
 
-/** What an import is worth reporting back to the person who ran it. */
+/**
+ * What an import is worth reporting back to the person who ran it.
+ *
+ * RENAMED 2026-08-14, because the old names had become lies. They dated from
+ * when the pool was Core-only and roughly two thirds of a real collection was
+ * legitimately discarded, so a miss meant "older set" and was worth explaining.
+ * The pool now spans every set, so a card from set 3 is stored like any other
+ * and a miss means only one thing: we could not identify the row. Reporting that
+ * as "sets the Core format does not use" described a failure as routine — a real
+ * import lost five owned cards behind that sentence.
+ */
 export interface CollectionSummary {
-  /** Distinct Core cards owned at one copy or more. */
-  coreCardsOwned: number;
-  /** Total Core copies, both finishes. */
-  coreCopiesOwned: number;
-  /** Distinct owned cards from below the Core floor. Expected, not an error. */
-  nonCoreCardsOwned: number;
-  /** `set-number` refs from a Core set that matched no card in the pool. */
-  unmatched: string[];
+  /** Distinct cards owned at one copy or more, across every set. */
+  cardsOwned: number;
+  /** Total copies of those, both finishes. */
+  copiesOwned: number;
+  /**
+   * `set-number` refs that matched no card in the pool, deduped and capped for
+   * display. A LIST rather than a count: five unidentified cards is a thing
+   * someone can act on, where "another 5 cards" is only a thing to worry about.
+   */
+  unidentified: string[];
   /** Rows that could not be read at all, verbatim. */
   unparsed: string[];
 }
@@ -90,10 +102,7 @@ interface CollectionRow {
 }
 
 /** What a row turned out to be. Drives both `entries` and the summary. */
-export type RowOutcome =
-  | {kind: 'owned'; cardId: string}
-  | {kind: 'non-core'}
-  | {kind: 'unmatched'};
+export type RowOutcome = {kind: 'owned'; cardId: string} | {kind: 'unidentified'};
 
 /**
  * Split one CSV line. Fields may be quoted and a quoted field may contain commas
@@ -175,20 +184,37 @@ function buildPoolIndex(pool: readonly LorcanaCard[]): Map<string, string> {
  * oppositely by the summary: one is the expected bulk of a real collection, the
  * other is a genuine failure worth showing someone.
  */
+/**
+ * Strip a trailing variant letter: `4a` -> `4`. Empty when there is none.
+ *
+ * Dreamborn numbers a card's printing variants with a letter suffix — Set 3's
+ * Dalmatian Puppy is 4a through 4e — while our data carries the printed card
+ * once, as plain `4`. They are the same card, and `totalOwned` already folds
+ * copies, so five variant rows correctly become five copies of one card.
+ */
+function printedNumber(number: string): string {
+  const match = /^(\d+)[a-z]$/.exec(number);
+  return match ? match[1] : '';
+}
+
 function classifyRow(row: CollectionRow, index: Map<string, string>): RowOutcome {
   const cardId = index.get(`${row.set}:${row.number}`);
   if (cardId !== undefined) return {kind: 'owned', cardId};
 
-  // A miss below the rotation floor is the expected bulk of a real collection —
-  // roughly two thirds of one — so reporting those as failures would show 1600
-  // errors for a perfectly good file. A miss AT or above the floor is a real gap
-  // worth surfacing: a set newer than our data, or a hand-edited file.
-  //
-  // The usual worry with this shape is that a garbled set number falls through to
-  // the quiet branch and a broken file reads as clean. It cannot here: `readRow`
-  // accepts a set only if it is all digits, so such a row became `unparsed` before
-  // ever reaching this function.
-  return isCoreSet(row.set) ? {kind: 'unmatched'} : {kind: 'non-core'};
+  // Exact first, always: the fallback must never shadow a real key. Only after a
+  // genuine miss do we ask whether this was a lettered variant of a card we have.
+  const printed = printedNumber(row.number);
+  if (printed !== '') {
+    const variantOf = index.get(`${row.set}:${printed}`);
+    if (variantOf !== undefined) return {kind: 'owned', cardId: variantOf};
+  }
+
+  // Everything else is simply unidentified. There is no longer a quiet branch for
+  // "below the rotation floor": the pool spans every set, so a set-3 card is
+  // stored like any other and a miss is a miss. Splitting them was right when the
+  // pool was Core-only and two thirds of a collection was discarded by design; it
+  // now hides real losses behind a routine-sounding explanation.
+  return {kind: 'unidentified'};
 }
 
 /**
@@ -200,8 +226,7 @@ function classifyRow(row: CollectionRow, index: Map<string, string>): RowOutcome
 export function parseCollectionCsv(csv: string, pool: readonly LorcanaCard[]): ParsedCollection {
   const index = buildPoolIndex(pool);
   const entries: CollectionEntries = {};
-  const nonCore = new Set<string>();
-  const unmatched: string[] = [];
+  const unidentified = new Set<string>();
   const unparsed: string[] = [];
 
   // Skip the header only when there IS one. An unconditional `.slice(1)` would
@@ -218,10 +243,10 @@ export function parseCollectionCsv(csv: string, pool: readonly LorcanaCard[]): P
     if (row.count <= 0) continue;
 
     const outcome = classifyRow(row, index);
-    if (outcome.kind === 'non-core') {
-      nonCore.add(`${row.set}:${row.number}`);
-    } else if (outcome.kind === 'unmatched') {
-      unmatched.push(`${row.set}-${row.number}`);
+    if (outcome.kind === 'unidentified') {
+      // A Set, because the census lists each card twice (normal + foil) and one
+      // unidentified card must not be reported as two.
+      unidentified.add(`${row.set}-${row.number}`);
     } else {
       const entry = entries[outcome.cardId] ?? {normal: 0, foil: 0};
       entry[row.variant] += row.count;
@@ -233,10 +258,9 @@ export function parseCollectionCsv(csv: string, pool: readonly LorcanaCard[]): P
   return {
     entries,
     summary: {
-      coreCardsOwned: owned.length,
-      coreCopiesOwned: owned.reduce((total, entry) => total + totalOwned(entry), 0),
-      nonCoreCardsOwned: nonCore.size,
-      unmatched,
+      cardsOwned: owned.length,
+      copiesOwned: owned.reduce((total, entry) => total + totalOwned(entry), 0),
+      unidentified: [...unidentified],
       unparsed,
     },
   };

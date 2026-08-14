@@ -38,7 +38,7 @@ describe('parseCollectionCsv', () => {
       pool,
     );
     expect(entries['2001']).toBeUndefined();
-    expect(summary.coreCardsOwned).toBe(0);
+    expect(summary.cardsOwned).toBe(0);
   });
 
   it('keeps a quantity above a playset intact — a collection count is not a deck count', () => {
@@ -52,7 +52,7 @@ describe('parseCollectionCsv', () => {
       pool,
     );
     expect(entries['1936']).toEqual({normal: 1, foil: 0});
-    expect(summary.unmatched).toEqual([]);
+    expect(summary.unidentified).toEqual([]);
   });
 
   it('reads a card that ships in one finish only', () => {
@@ -60,19 +60,26 @@ describe('parseCollectionCsv', () => {
     expect(entries['2002']).toEqual({normal: 0, foil: 2});
   });
 
-  it('counts owned cards from below the Core floor without calling them unmatched', () => {
+  it('stores a card from an older set like any other, now the pool spans every set', () => {
+    // This used to assert the opposite — that a set-4 card was counted and
+    // discarded. It was right when the pool was Core-only; keeping it would pin
+    // the behaviour that lost five owned cards behind a reassuring message.
+    const withOld = [
+      ...pool,
+      createCard({id: '4223', fullName: 'Some Old Promo', setCode: '4', setNumber: 223}),
+    ];
     const {entries, summary} = parseCollectionCsv(
       csv('004,223,foil,1,"Some Old Promo",Ruby,Promo'),
-      pool,
+      withOld,
     );
-    expect(entries).toEqual({});
-    expect(summary.nonCoreCardsOwned).toBe(1);
-    expect(summary.unmatched).toEqual([]);
+    expect(entries['4223']).toEqual({normal: 0, foil: 1});
+    expect(summary.cardsOwned).toBe(1);
+    expect(summary.unidentified).toEqual([]);
   });
 
   it('reports a Core-set row that matches no card as unmatched', () => {
     const {summary} = parseCollectionCsv(csv('014,7,normal,1,"A Card From Next Set",Steel,Rare'), pool);
-    expect(summary.unmatched).toEqual(['14-7']);
+    expect(summary.unidentified).toEqual(['14-7']);
   });
 
   it('reports rows it cannot read as unparsed, without losing the rest', () => {
@@ -84,18 +91,38 @@ describe('parseCollectionCsv', () => {
     expect(summary.unparsed).toEqual(['not,a,row']);
   });
 
-  it('keeps suffixed collector numbers distinct, which parseInt would merge', () => {
-    // Set 3's Dalmatian Puppy ships as 4a-4e. All five read as 4 under parseInt,
-    // so a numeric key would count five owned cards as one.
-    const {summary} = parseCollectionCsv(
+  it('resolves a lettered variant to the printed card it is a variant of', () => {
+    // Dreamborn numbers Set 3's Dalmatian Puppy 4a-4e; our data carries it once,
+    // as plain 4. Without a fallback all five read as unidentified, which is how
+    // a real import reported five owned cards as "sets Core does not use".
+    const withPuppy = [
+      ...pool,
+      createCard({id: '3004', fullName: 'Dalmatian Puppy - Tail Wagger', setCode: '3', setNumber: 4}),
+    ];
+    const {entries, summary} = parseCollectionCsv(
       csv(
         '003,4a,normal,1,"Dalmatian Puppy - Tail Wagger",Amber,Common',
-        '003,4b,normal,1,"Dalmatian Puppy - Tail Wagger",Amber,Common',
-        '003,4,normal,1,"Some Other Card",Amber,Common',
+        '003,4b,normal,2,"Dalmatian Puppy - Tail Wagger",Amber,Common',
+      ),
+      withPuppy,
+    );
+    // One printed card, so the variants fold into its copy count.
+    expect(entries['3004']).toEqual({normal: 3, foil: 0});
+    expect(summary.unidentified).toEqual([]);
+  });
+
+  it('reports each unidentified card once, not once per finish', () => {
+    // The export is a census with a row per finish, so a card we cannot place
+    // appears twice. Counting rows would tell someone they had lost twice as
+    // many cards as they had.
+    const {summary} = parseCollectionCsv(
+      csv(
+        '003,999,normal,1,"Nothing We Carry",Amber,Common',
+        '003,999,foil,1,"Nothing We Carry",Amber,Common',
       ),
       pool,
     );
-    expect(summary.nonCoreCardsOwned).toBe(3);
+    expect(summary.unidentified).toEqual(['3-999']);
   });
 
   it('reads a quoted name containing a comma', () => {
@@ -113,8 +140,8 @@ describe('parseCollectionCsv', () => {
       ),
       pool,
     );
-    expect(summary.coreCardsOwned).toBe(2);
-    expect(summary.coreCopiesOwned).toBe(6);
+    expect(summary.cardsOwned).toBe(2);
+    expect(summary.copiesOwned).toBe(6);
   });
 
   it('reads a file pasted without its header rather than eating the first card', () => {
