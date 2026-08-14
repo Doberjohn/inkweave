@@ -76,37 +76,41 @@ export class CollectionBackend {
     );
   }
 
+  /** Verb dispatch only. Each branch's own conditionals live with the branch. */
   private handle(route: Route, viewerId: string | null): Promise<void> {
-    const request = route.request();
+    const method = route.request().method();
+    if (method === 'GET') return route.fulfill({json: this.read(viewerId)});
+    if (method === 'POST' || method === 'PATCH') return this.write(route, viewerId);
+    if (method === 'DELETE') return this.remove(route, viewerId);
+    // Surface an unexpected verb loudly rather than silently returning [].
+    return route.fulfill({status: 405, json: {message: `unmocked ${method}`}});
+  }
 
-    switch (request.method()) {
-      case 'GET': {
-        // `maybeSingle` accepts an array and takes the first element, so an empty
-        // array is the honest encoding of "this user has no row".
-        const row = viewerId ? this.rows.get(viewerId) : undefined;
-        return route.fulfill({json: row ? [row] : []});
-      }
-      case 'POST':
-      case 'PATCH': {
-        // Mirrors the owner-scoped policies: an anonymous write is rejected
-        // rather than quietly stored. Without this a spec could pass while the
-        // app wrote a collection signed out.
-        if (viewerId === null) {
-          return route.fulfill({status: 401, json: {message: 'anonymous write rejected'}});
-        }
-        const body = request.postDataJSON() as CollectionRow | CollectionRow[];
-        const incoming = Array.isArray(body) ? body[0] : body;
-        this.writes += 1;
-        this.rows.set(viewerId, {...incoming, owner_id: viewerId});
-        return route.fulfill({json: []});
-      }
-      case 'DELETE': {
-        if (viewerId !== null) this.rows.delete(viewerId);
-        return route.fulfill({json: []});
-      }
-      default:
-        // Surface an unexpected verb loudly rather than silently returning [].
-        return route.fulfill({status: 405, json: {message: `unmocked ${request.method()}`}});
+  /**
+   * `maybeSingle` accepts an array and takes the first element, so an empty
+   * array is the honest encoding of "this user has no row".
+   */
+  private read(viewerId: string | null): CollectionRow[] {
+    const row = viewerId ? this.rows.get(viewerId) : undefined;
+    return row ? [row] : [];
+  }
+
+  private write(route: Route, viewerId: string | null): Promise<void> {
+    // Mirrors the owner-scoped policies: an anonymous write is rejected rather
+    // than quietly stored. Without this a spec could pass while the app wrote a
+    // collection signed out.
+    if (viewerId === null) {
+      return route.fulfill({status: 401, json: {message: 'anonymous write rejected'}});
     }
+    const body = route.request().postDataJSON() as CollectionRow | CollectionRow[];
+    const incoming = Array.isArray(body) ? body[0] : body;
+    this.writes += 1;
+    this.rows.set(viewerId, {...incoming, owner_id: viewerId});
+    return route.fulfill({json: []});
+  }
+
+  private remove(route: Route, viewerId: string | null): Promise<void> {
+    if (viewerId !== null) this.rows.delete(viewerId);
+    return route.fulfill({json: []});
   }
 }
