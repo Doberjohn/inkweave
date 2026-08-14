@@ -678,10 +678,20 @@ carries forward, which is the correct and safe outcome.
 
 ## Re-sync risks
 
-**State at the end of the first sync (2026-08-11): COMPLETE.** 163 components build;
-**161 verified** against real screenshot pairs and uploaded (468 `match` / 23 `close` story
-verdicts). **Nothing blocked.** 2 skipped (`CardTile`, `CardGrid` — they crash the storybook
-page and therefore have no reference to compare against).
+**State at the end of the first sync (2026-08-11): COMPLETE.** 163 components build and
+**all 163 are uploaded**; **161 verified** against real screenshot pairs (468 `match` /
+23 `close` story verdicts). **Nothing blocked.** `_ds_sync.json` IS uploaded, so the next
+sync can carry verified components forward.
+
+`CardTile` and `CardGrid` ship **unverified** — they crash the storybook page, so no
+reference exists to compare against. They are complete otherwise (bundle export, real
+`.d.ts`, real `.prompt.md`); only their preview card is blank, because all their stories are
+skipped. **This is deliberate: "cannot be verified" is not "should not ship".**
+
+`[GENERAL]` **Reconcile `list_files` against the final build before declaring done.** An
+incremental push that filters on "has a clean grade" silently omits components that are
+unverifiABLE rather than unverifiED — that is how these two were missed on the first pass,
+along with the `_ds_sync.json` anchor. The close-out reconciliation exists for exactly this.
 Exactly **one** owned preview was needed across the whole roster
 (`ImportCollectionDialog`, to replay a `play` interaction); every other fix was
 config-level, which is the strongest available evidence the config is right.
