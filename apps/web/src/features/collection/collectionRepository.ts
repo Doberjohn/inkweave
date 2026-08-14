@@ -44,10 +44,23 @@ async function run<T>(
   }
 }
 
-/** Shape guard: `entries` is `jsonb`, so the row's type is only a promise. */
+/**
+ * Shape guard: `entries` is `jsonb`, so the row's TYPE is only a promise — the
+ * column's CHECK enforces "object" in the database, but nothing enforces it
+ * between there and here.
+ *
+ * Three separate returns rather than one `||` chain: each rejects a different
+ * thing (absent, scalar, array), and the array case is the one that would
+ * otherwise slip through `typeof raw === 'object'`.
+ */
+function isEntriesObject(raw: unknown): raw is CollectionEntries {
+  if (raw === null) return false;
+  if (typeof raw !== 'object') return false;
+  return !Array.isArray(raw);
+}
+
 function toEntries(raw: unknown): CollectionEntries {
-  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return {};
-  return raw as CollectionEntries;
+  return isEntriesObject(raw) ? raw : {};
 }
 
 /**

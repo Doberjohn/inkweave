@@ -27,6 +27,7 @@ import {
   markCollectionMigrated,
   readCollection,
   writeCollection,
+  type StoredCollection,
 } from './collectionStorage';
 import {deleteCollection, getCollection, upsertCollection} from './collectionRepository';
 import {resolveCollectionSync} from './collectionSync';
@@ -70,6 +71,38 @@ function loadStored(): {entries: CollectionEntries; importedAt: number | null} {
 }
 
 type CollectionState = {entries: CollectionEntries; importedAt: number | null};
+
+/**
+ * Act on a resolved sync plan. Hoisted out of the effect so the hook holds the
+ * subscription concerns (claim, cancel, read-failure) and this holds the
+ * outcome — they change for unrelated reasons.
+ */
+function applySyncPlan(
+  uid: string,
+  server: StoredCollection | null,
+  local: CollectionState,
+  setState: (next: CollectionState) => void,
+): void {
+  const plan = resolveCollectionSync({
+    hasLocal: local.importedAt !== null,
+    hasServer: server !== null,
+    alreadyMigrated: hasMigratedCollection(uid),
+  });
+
+  if (plan === 'adopt-server' && server !== null) {
+    // Mirrored into localStorage too, so a later signed-out visit sees the
+    // collection this account actually holds rather than a stale import.
+    writeCollection(server.entries, server.importedAt);
+    markCollectionMigrated(uid);
+    setState({entries: server.entries, importedAt: server.importedAt});
+    return;
+  }
+  if (plan === 'upload' && local.importedAt !== null) {
+    void upsertCollection(uid, local.entries, local.importedAt).then(({error}) => {
+      if (error === null) markCollectionMigrated(uid);
+    });
+  }
+}
 
 /**
  * Reconcile this browser's collection with the account's, once per uid.
@@ -116,26 +149,7 @@ function useCollectionSync(
       // would upload over a row we simply could not see.
       if (error !== null) return;
 
-      const local = latest.current;
-      const plan = resolveCollectionSync({
-        hasLocal: local.importedAt !== null,
-        hasServer: server !== null,
-        alreadyMigrated: hasMigratedCollection(uid),
-      });
-
-      if (plan === 'adopt-server' && server !== null) {
-        // Mirror it into localStorage too, so a later signed-out visit sees the
-        // collection this account actually holds rather than a stale import.
-        writeCollection(server.entries, server.importedAt);
-        markCollectionMigrated(uid);
-        setState({entries: server.entries, importedAt: server.importedAt});
-        return;
-      }
-      if (plan === 'upload' && local.importedAt !== null) {
-        void upsertCollection(uid, local.entries, local.importedAt).then(({error: wrote}) => {
-          if (wrote === null) markCollectionMigrated(uid);
-        });
-      }
+      applySyncPlan(uid, server, latest.current, setState);
     });
 
     return () => {
