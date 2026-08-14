@@ -27,6 +27,8 @@ import {
   ImportCollectionDialog,
   type CollectionEntries,
   type StepperVariant,
+  type StatsMode,
+  DEFAULT_SET,
 } from '../features/collection';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
@@ -180,6 +182,8 @@ interface BinderChoice {
   poolLoading: boolean;
   poolError: string | null;
   stepperVariant: StepperVariant;
+  statsMode: StatsMode;
+  setCode: string;
   onCardSelect: (card: LorcanaCard) => void;
 }
 
@@ -199,6 +203,8 @@ function pickBinder({
   poolLoading,
   poolError,
   stepperVariant,
+  statsMode,
+  setCode,
   onCardSelect,
 }: BinderChoice): React.ReactNode {
   if (collectionMode) {
@@ -210,6 +216,8 @@ function pickBinder({
         isLoading={poolLoading}
         error={poolError}
         stepperVariant={stepperVariant}
+        statsMode={statsMode}
+        setCode={setCode}
         onCardSelect={onCardSelect}
       />
     );
@@ -508,6 +516,14 @@ export function BrowsePage() {
   // and a URL flag does that without a setting anyone has to live with. `zeros`
   // is the default because it is the one that works on touch.
   const stepperVariant: StepperVariant = searchParams.get('steppers') === 'plus' ? 'plus' : 'zeros';
+  // DESIGN SPIKE: `?stats=fixed|rail|auto|off` for the set-stats panel. Default
+  // `off`, so nothing changes for anyone not comparing.
+  const statsParam = searchParams.get('stats');
+  const statsMode: StatsMode =
+    statsParam === 'fixed' || statsParam === 'rail' || statsParam === 'auto' ? statsParam : 'off';
+  // `binder`, NOT `set` — the filter params already own `set`, so reusing it
+  // silently applied a set FILTER as well and put a chip in the toolbar.
+  const setCode = searchParams.get('binder') ?? DEFAULT_SET;
   const contentProps = {
     isMobile,
     toolbarProps,
@@ -523,6 +539,8 @@ export function BrowsePage() {
       poolLoading,
       poolError,
       stepperVariant,
+      statsMode,
+      setCode,
       onCardSelect: selectCard,
     }),
     compactChrome: binderView,
