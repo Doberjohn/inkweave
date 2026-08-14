@@ -550,7 +550,27 @@ Patched locally with `.svg`, `.webp`, `.avif`, `.jpg`, `.jpeg`, `.gif`, `.woff2`
 **`.ds-sync/` is re-copied from the skill bundle at the start of every sync, so this patch
 is transient — re-apply it after the `cp -r` staging step**, before any grading.
 
-## The preview server has ONE static root — `/art/**` 404s (a PRODUCT gap, not just a preview one)
+## Root-relative assets: FIXED by `copy-assets.mjs` — run it AFTER every build
+
+**`node .design-sync/copy-assets.mjs` is a MANDATORY post-build step.** It cannot be
+`cfg.buildCmd`, because that runs BEFORE `package-build.mjs`, which wipes its `--out` dir.
+Forget it and every deck frame, set logo, franchise tile and app wordmark 404s again — in
+previews AND in every design the agent builds.
+
+Ships 32 files / 1.10 MB into `ds-bundle/`: `art/frames` (21), `art/sets` (2),
+`art/franchises` (6), `art/backgrounds` (1), `brand` (2).
+**`art/banner/` is deliberately excluded** — 2.0 MB, and its only consumer is `SynergyBanner`,
+which has no story and is therefore not a synced component. Re-check if that changes.
+
+The upload plan must include `art/**` and `brand/**` in BOTH writes and deletes.
+
+Verified after shipping: `DeckSummaryCard` went from 8-of-9 mismatch to 9-of-9 `match` (the
+ink-pair frames render); `RevealHero`, `RevealsPromoCard`, `NewFranchises` went `close` →
+`match`; `CompactHeader`'s wordmark renders. The `.svg`/`.webp` entries in the
+`http-serve.mjs` MIME patch are load-bearing for this — without them the assets are reachable
+but served as `application/octet-stream` and still will not decode.
+
+### Historical: why they were missing (keep for diagnosis)
 
 `[GENERAL]` `compare.mjs` serves only `ds-bundle`; `apps/web/.storybook/main.ts` mounts the
 app's `public/` via `staticDirs`. Components requesting **root-relative** public assets
@@ -659,8 +679,9 @@ carries forward, which is the correct and safe outcome.
 ## Re-sync risks
 
 **State at the end of the first sync (2026-08-11): COMPLETE.** 163 components build;
-**160 verified** against real screenshot pairs and uploaded. 1 blocked (`DeckSummaryCard`,
-`/art/frames` 404), 2 skipped (`CardTile`, `CardGrid` — they crash the storybook page).
+**161 verified** against real screenshot pairs and uploaded (468 `match` / 23 `close` story
+verdicts). **Nothing blocked.** 2 skipped (`CardTile`, `CardGrid` — they crash the storybook
+page and therefore have no reference to compare against).
 Exactly **one** owned preview was needed across the whole roster
 (`ImportCollectionDialog`, to replay a `play` interaction); every other fix was
 config-level, which is the strongest available evidence the config is right.
@@ -674,10 +695,9 @@ config-level, which is the strongest available evidence the config is right.
    (`CommunityColumn`, `EngineColumn`, `MobileComparisonView`, `SignInDialog`) hold `close`
    verdicts purely because the reference was built with `.env.local` present, and the
    reference is non-deterministic while it is.
-3. **Ship `art/**` and `brand/**`** (~1.1 MB excluding `art/banner/`) so `DeckSummaryCard`,
-   `RevealHero`, `RevealsPromoCard`, `NewFranchises` and the five legal pages stop rendering
-   broken images. **Needs the upload plan widened** — `art/`/`brand/` are not in the
-   approved writes today. This also fixes the PRODUCT, not just previews.
+3. **Run `node .design-sync/copy-assets.mjs` after the build** — see its section above. Done
+   in the first sync; it is a step, not a one-off, and the upload plan must keep `art/**`
+   and `brand/**` in writes and deletes.
 4. **Rebuild the reference** so the four Phase C binder components
    (`BinderSpread`, `BrowseBinder`, `CollectionBinder`, `CollectionBinderSection`) enter the
    roster. They are bundle exports today but have no cards, so the design agent cannot
