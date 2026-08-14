@@ -41,13 +41,16 @@
 
 import type {LorcanaCard} from '../deck/types';
 
+/** The two ways a card is printed. `CollectionEntry` is keyed by it. */
+export type Finish = 'normal' | 'foil';
+
 /** Owned copies of one card, split by finish. */
 export interface CollectionEntry {
   normal: number;
   foil: number;
 }
 
-/** Card id (`LorcanaCard.id`) to owned copies. Core cards only. */
+/** Card id (`LorcanaCard.id`) to owned copies, across every set. */
 export type CollectionEntries = Record<string, CollectionEntry>;
 
 /**
@@ -160,9 +163,29 @@ function readRow(line: string): CollectionRow | null {
   return {set: parseInt(rawSet, 10), number, variant: rawVariant, count};
 }
 
-/** `set:number` to card id, for every pool card that carries both. */
+/**
+ * `set:number` to card id, for every pool card that carries both.
+ *
+ * THE KEY IS NOT UNIQUE OUTSIDE CORE (fact 7). Special-rarity promos reuse base
+ * collector numbers: 98 contested numbers across the non-Core sets, with five
+ * cards claiming Set 1's slot #1. So this cannot be a plain `set()` — whichever
+ * card happened to be last would win, and a Special won 97 of the 98.
+ *
+ * THE BASE CARD WINS, because that is what the CSV row means: `001,1` is the card
+ * printed in Set 1's first slot, not a promo reprinted with the same number. When
+ * a Special took the key, ownership was recorded against a card the binder does
+ * not even render — it excludes Specials, or five would fight for one pocket — so
+ * a card the user owned showed as unowned. Measured on a real import: 18 of Set
+ * 1's 30 apparent gaps.
+ *
+ * Order must not decide it, so this is first-wins EXCEPT that a base card evicts
+ * a Special. One of the 98 lists the Special first.
+ */
 function buildPoolIndex(pool: readonly LorcanaCard[]): Map<string, string> {
   const index = new Map<string, string>();
+  /** Keys currently held by a Special, i.e. still open to eviction. */
+  const heldBySpecial = new Set<string>();
+
   for (const card of pool) {
     // Explicitly against undefined: `setNumber` is legitimately 0 (fact 4).
     if (card.setCode === undefined || card.setNumber === undefined) continue;
@@ -170,7 +193,21 @@ function buildPoolIndex(pool: readonly LorcanaCard[]): Map<string, string> {
     if (!Number.isFinite(set)) continue;
     // `setNumber` is numeric, so stringifying it is already normalized — 0 stays
     // "0", which is a real card (fact 4) rather than an absent one.
-    index.set(`${set}:${card.setNumber}`, card.id);
+    const key = `${set}:${card.setNumber}`;
+    const isSpecial = card.rarity === 'Special';
+
+    if (!index.has(key)) {
+      index.set(key, card.id);
+      if (isSpecial) heldBySpecial.add(key);
+      continue;
+    }
+    // Taken. Only a base card displacing a Special may overwrite; two base cards
+    // sharing a number would be a data fault, and silently swapping them on
+    // load order would make it unreproducible.
+    if (!isSpecial && heldBySpecial.has(key)) {
+      index.set(key, card.id);
+      heldBySpecial.delete(key);
+    }
   }
   return index;
 }

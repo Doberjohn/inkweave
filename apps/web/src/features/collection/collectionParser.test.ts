@@ -91,6 +91,35 @@ describe('parseCollectionCsv', () => {
     expect(summary.unparsed).toEqual(['not,a,row']);
   });
 
+  it('gives a contested collector number to the base card, not a Special reprint', () => {
+    // Special-rarity promos REUSE base collector numbers — 98 contested numbers
+    // across the non-Core sets, and a Special is listed last in 97 of them. Set 1
+    // #1 is both "Ariel - On Human Legs" (Uncommon) and, later in the file,
+    // "Ariel - Spectacular Singer" (Special).
+    //
+    // The CSV row `001,1` means the card printed in that slot. Letting the
+    // Special win recorded ownership against a card the binder does not even
+    // render (it excludes Specials, or five would fight for one pocket), so a
+    // card the user owns showed as unowned. Measured: 18 of Set 1's 30 gaps.
+    const contested = [
+      createCard({id: '1', fullName: 'Ariel - On Human Legs', setCode: '1', setNumber: 1, rarity: 'Uncommon'}),
+      createCard({id: '3237', fullName: 'Ariel - Spectacular Singer', setCode: '1', setNumber: 1, rarity: 'Special'}),
+    ];
+    const {entries} = parseCollectionCsv(csv('001,1,normal,2,"Ariel - On Human Legs",Amber,Uncommon'), contested);
+    expect(entries['1']).toEqual({normal: 2, foil: 0});
+    expect(entries['3237']).toBeUndefined();
+  });
+
+  it('lets the base card win even when the Special is listed first', () => {
+    // Order must not decide it: 1 of the 98 has the Special first.
+    const contested = [
+      createCard({id: '3237', fullName: 'Ariel - Spectacular Singer', setCode: '1', setNumber: 1, rarity: 'Special'}),
+      createCard({id: '1', fullName: 'Ariel - On Human Legs', setCode: '1', setNumber: 1, rarity: 'Uncommon'}),
+    ];
+    const {entries} = parseCollectionCsv(csv('001,1,normal,1,"Ariel - On Human Legs",Amber,Uncommon'), contested);
+    expect(entries['1']).toEqual({normal: 1, foil: 0});
+  });
+
   it('resolves a lettered variant to the printed card it is a variant of', () => {
     // Dreamborn numbers Set 3's Dalmatian Puppy 4a-4e; our data carries it once,
     // as plain 4. Without a fallback all five read as unidentified, which is how
