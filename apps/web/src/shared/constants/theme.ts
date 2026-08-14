@@ -523,6 +523,65 @@ export const GOLD_GLOW = {
   focusRing: `0 0 0 2px ${hexRgba(COLORS.primary, 0.15)}, 0 0 12px ${hexRgba(COLORS.primary, 0.08)}`,
 } as const;
 
+/**
+ * The FOIL marker: brushed gold, for anything reporting foil copies.
+ *
+ * A SIX-INK RAINBOW WAS TRIED FIRST AND REJECTED (owner, 2026-08-14). It was the
+ * literal convention other Lorcana tools use and it was defensible on paper, but
+ * on a 20px pill six hues compress into a smear that reads as noise rather than
+ * as foil, and it fought every card behind it. Gold says "premium" with one hue
+ * and it is already the app's own accent.
+ *
+ * ONE SURFACE, NOT A REST/HOVER PAIR (owner, 2026-08-14). A quieter flat variant
+ * for the resting state was tried and dropped: rest and hover are the same object
+ * at two widths, and giving them two different fills made hovering look like a
+ * substitution rather than an expansion.
+ *
+ * THREE LAYERS, in paint order: the light band, the gold, the ground. The gold is
+ * SEMI-TRANSPARENT over that ground rather than replacing it, which is what holds
+ * the count legible — flat `COLORS.primary` behind white bold text is 3.0:1 and
+ * fails; over this ground it is 6.4:1. Recompute before raising it.
+ *
+ * The band is a separate layer sized to a fraction of the pill precisely so it can
+ * travel: `.inkweave-foil-shimmer` in index.css animates the FIRST layer's
+ * `background-position` and leaves the other two pinned, so the layer order is
+ * load-bearing. Only the hovered control sweeps.
+ */
+const GOLD_EDGE = hexRgba(COLORS.primary, 0.2);
+const GOLD_PEAK = hexRgba(COLORS.primary, 0.45);
+const SHINE = whiteRgba(0.3);
+
+export const FOIL_SHEEN = {
+  /**
+   * The foil surface over `ground`. The CALLER supplies the ground because how
+   * opaque it must be is a property of where the control sits, not of the foil:
+   * the deck pool lets a sliver of card art through, the binder does not.
+   *
+   * `band` is the light stripe, and it belongs to MOTION only (owner,
+   * 2026-08-14). Narrowing it and parking it on the left shoulder was tried
+   * first; a stripe that never moves still reads as a defect on a resting chip,
+   * so the resting surface is plain gold and the band exists only while the
+   * pill is open and sweeping. Pass `false` and the layer is not painted at all
+   * — the size/position lists shrink with it.
+   */
+  surface: (ground: string, band = true): React.CSSProperties => ({
+    backgroundImage: [
+      ...(band ? [`linear-gradient(100deg, transparent 0%, ${SHINE} 50%, transparent 100%)`] : []),
+      `linear-gradient(100deg, ${GOLD_EDGE} 0%, ${GOLD_PEAK} 50%, ${GOLD_EDGE} 100%)`,
+      `linear-gradient(${ground}, ${ground})`,
+    ].join(', '),
+    // The band starts OFF the left edge so the sweep enters from outside the
+    // pill rather than fading in over the count. `.inkweave-foil-shimmer`
+    // animates this first position; the other two stay pinned.
+    backgroundSize: band ? '36% 100%, 100% 100%, 100% 100%' : '100% 100%, 100% 100%',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: band ? '-20% 0, 0 0, 0 0' : '0 0, 0 0',
+  }),
+
+  /** index.css owns the keyframes so `prefers-reduced-motion` can kill them. */
+  shimmerClass: 'inkweave-foil-shimmer',
+} as const;
+
 /** Minimum touch-target square (px) — the a11y floor for tap surfaces. */
 export const TOUCH_TARGET = 44;
 

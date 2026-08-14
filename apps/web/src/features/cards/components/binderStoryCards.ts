@@ -21,6 +21,13 @@ import type {LorcanaCard} from '../types';
  *
  * Names and inks are real Set 9 cards in collector order, so the ink runs are
  * the genuine ones a binder page would show.
+ *
+ * WHAT THESE STORIES THEREFORE CANNOT JUDGE: anything overlaying a tile against
+ * real artwork. The fallback is a flat, dark, ink-tinted rectangle, so a
+ * semi-transparent chrome element looks solid here and dissolves in the app —
+ * which is exactly how a 30%-opaque foil badge with no ground under it passed a
+ * screenshot review. Chrome that sits ON a card must be checked for its own
+ * opaque ground by reading the CSS, not by looking at these.
  */
 const SET_9: ReadonlyArray<[number, string, LorcanaCard['ink'], number]> = [
   [1936, 'Bruno Madrigal - Undetected Uncle', 'Amethyst', 4],

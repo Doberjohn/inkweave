@@ -33,7 +33,6 @@ export function BrowseBinder({cards, onCardSelect}: BrowseBinderProps) {
   return (
     <BinderSpread
       start={start}
-      label={`Spread ${current + 1} of ${total} · cards ${start + 1}–${Math.min(start + PER_SPREAD, cards.length)} of ${cards.length}`}
       onPrev={() => setSpread(current - 1)}
       onNext={() => setSpread(current + 1)}
       canPrev={current > 0}

@@ -1,37 +1,44 @@
 import {useState} from 'react';
 import type {LorcanaCard} from '../deck/types';
-import type {CollectionEntries} from './collectionParser';
-import {CollectionBinder, binderCardsForSet, type Finish} from './CollectionBinder';
-import {TabList} from '../../shared/components';
-import {COLORS, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../shared/constants';
+import type {CollectionEntries, CollectionEntry, Finish} from './collectionParser';
+import {CollectionBinder, binderCardsForSet} from './CollectionBinder';
+import {BinderSpread, BinderSlotSkeleton} from '../cards/components/BinderSpread';
+import type {StepperVariant} from './CollectionSlotSteppers';
+import {COLORS, FONT_SIZES, SPACING} from '../../shared/constants';
 
 /**
- * Collection mode's content: pick a set, pick a finish, read the binder.
+ * Collection mode's content: pick a set, read the binder, edit what you hold.
  *
- * Set and finish live HERE rather than in the URL, unlike the filters. Filters
- * are shareable state — a link to "Amber, cost 1" means something to someone
- * else. Which page of which binder you happen to be on is not; it is where you
- * are standing, and putting it in the URL would push a history entry on every
- * page turn and hijack the back button.
+ * THE SET PICKER AND THE "X of Y owned" COUNT ARE GONE (owner, 2026-08-14),
+ * along with the toolbar row that held them: the stats are being redesigned and
+ * will bring their own home. Until they land the binder is PINNED TO SET 1 —
+ * there is no other entry point, so nobody can reach Sets 2-13 or the Quests.
+ * That is a deliberate gap, not an oversight; restoring it is one `useState` and
+ * whatever control the new design puts it in.
+ *
+ * THE FINISH TOGGLE IS GONE (owner, 2026-08-14). It made the binder answer
+ * "which normals do I have?" and forced a mode change to ask the same question
+ * about foils. Two per-slot steppers show both numbers at once, so the question
+ * never needs asking.
+ *
+ * EDITS ARE LOCAL AND UNSAVED while `?steppers=` is picking a variant. The write
+ * path is genuinely unsettled: `CollectionContext` still documents itself as
+ * "written ONCE per import … no debounce (there is no stream of edits to
+ * coalesce)", which stepper editing invalidates — every tap would otherwise
+ * rewrite the whole ~14 KB entries map to localStorage AND upsert the entire
+ * Supabase row. Comparing the two affordances does not need that solved; adding
+ * it to make the spike feel finished would ship a write path nobody chose.
  */
 
-/** Every set with a binder, newest first — the sets people are opening now. */
-const SETS = ['13', '12', '11', '10', '9', '8', '7', '6', '5', '4', '3', '2', '1', 'Q1', 'Q2'];
+const ZERO: CollectionEntry = {normal: 0, foil: 0};
 
-const FINISHES = [
-  {id: 'normal' as const, label: 'Normal'},
-  {id: 'foil' as const, label: 'Foil'},
-];
+/** The only set reachable until the stats design brings a picker back. */
+const PINNED_SET = '1';
 
-const selectStyle = {
-  background: COLORS.surfaceAlt,
-  color: COLORS.text,
-  border: `1px solid ${COLORS.surfaceBorder}`,
-  borderRadius: `${RADIUS.lg}px`,
-  padding: `${SPACING.sm}px ${SPACING.md}px`,
-  fontFamily: FONTS.body,
-  fontSize: `${FONT_SIZES.sm}px`,
-};
+const NOOP = () => {};
+
+/** Shared by the loading and loaded branches, so the box around them matches. */
+const SECTION_STYLE = {padding: `0 ${SPACING.xxl}px ${SPACING.xxl}px`, height: '100%'};
 
 interface CollectionBinderSectionProps {
   /** The merged pool — Core plus collection. Filtered to one set here. */
@@ -44,6 +51,8 @@ interface CollectionBinderSectionProps {
   isLoading: boolean;
   /** Set when they failed to load. */
   error: string | null;
+  /** Which resting affordance an unowned slot shows. From `?steppers=`. */
+  stepperVariant: StepperVariant;
   onCardSelect: (card: LorcanaCard) => void;
 }
 
@@ -53,10 +62,11 @@ export function CollectionBinderSection({
   entries,
   isLoading,
   error,
+  stepperVariant,
   onCardSelect,
 }: CollectionBinderSectionProps) {
-  const [setCode, setSetCode] = useState('1');
-  const [finish, setFinish] = useState<Finish>('normal');
+  /** Spike-only edits, layered over `entries`. Deliberately not persisted. */
+  const [edits, setEdits] = useState<CollectionEntries>({});
 
   // Both states are rendered rather than falling through to an empty binder.
   // A binder of blank slots is indistinguishable from "you own none of this
@@ -68,60 +78,43 @@ export function CollectionBinderSection({
       </p>
     );
   }
+  // The SAME chrome, with shimmer in the pockets. A message in place of the
+  // binder was a whole-layout swap — the parchment, spine, arrows and footnote
+  // all appeared at once when the chunks landed. Rendering the spread either way
+  // makes the arrival a change of slot contents and nothing else.
   if (isLoading) {
     return (
-      <p style={{padding: SPACING.xxl, color: COLORS.textMuted, fontSize: `${FONT_SIZES.sm}px`}}>
-        Loading your collection…
-      </p>
+      <div style={SECTION_STYLE}>
+        <BinderSpread
+          start={0}
+          renderSlot={() => <BinderSlotSkeleton />}
+          onPrev={NOOP}
+          onNext={NOOP}
+          canPrev={false}
+          canNext={false}
+        />
+      </div>
     );
   }
 
-  const setCards = binderCardsForSet(cards, setCode);
-  // Per-finish, so the two views answer different questions: "which do I have?"
-  // versus "which have I got foiled?". `ownedCount` from the context folds the
-  // two together and would make every foil page identical to its normal one.
-  const ownedCount = (cardId: string) => entries[cardId]?.[finish] ?? 0;
-  const owned = setCards.filter((card) => ownedCount(card.id) > 0).length;
+  const setCards = binderCardsForSet(cards, PINNED_SET);
+  const countsFor = (cardId: string): CollectionEntry => edits[cardId] ?? entries[cardId] ?? ZERO;
+
+  function changeCount(cardId: string, finish: Finish, next: number) {
+    setEdits((prev) => {
+      const current = prev[cardId] ?? entries[cardId] ?? ZERO;
+      return {...prev, [cardId]: {...current, [finish]: Math.max(0, next)}};
+    });
+  }
 
   return (
-    <div style={{padding: `0 ${SPACING.xxl}px ${SPACING.xxl}px`, overflowY: 'auto', height: '100%'}}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: SPACING.lg,
-          flexWrap: 'wrap',
-          padding: `${SPACING.md}px 0`,
-        }}>
-        <label style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
-          <span style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.sm}px`}}>Set</span>
-          <select
-            value={setCode}
-            onChange={(e) => setSetCode(e.target.value)}
-            style={selectStyle}
-            aria-label="Binder set">
-            {SETS.map((code) => (
-              <option key={code} value={code}>
-                {code.startsWith('Q') ? `Quest ${code.slice(1)}` : `Set ${code}`}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <div style={{minWidth: 200}}>
-          <TabList tabs={FINISHES} active={finish} onChange={setFinish} ariaLabel="Card finish" />
-        </div>
-
-        <span style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.sm}px`, marginLeft: 'auto'}}>
-          {`${owned} of ${setCards.length} owned`}
-        </span>
-      </div>
-
+    <div style={SECTION_STYLE}>
       <CollectionBinder
         cards={setCards}
         matchedIds={matchedIds}
-        ownedCount={ownedCount}
-        finish={finish}
+        countsFor={countsFor}
+        onChangeCount={changeCount}
+        variant={stepperVariant}
         onSelect={onCardSelect}
       />
     </div>

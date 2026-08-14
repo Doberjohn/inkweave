@@ -26,6 +26,7 @@ import {
   CollectionBinderSection,
   ImportCollectionDialog,
   type CollectionEntries,
+  type StepperVariant,
 } from '../features/collection';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
@@ -178,6 +179,7 @@ interface BinderChoice {
   entries: CollectionEntries;
   poolLoading: boolean;
   poolError: string | null;
+  stepperVariant: StepperVariant;
   onCardSelect: (card: LorcanaCard) => void;
 }
 
@@ -196,6 +198,7 @@ function pickBinder({
   entries,
   poolLoading,
   poolError,
+  stepperVariant,
   onCardSelect,
 }: BinderChoice): React.ReactNode {
   if (collectionMode) {
@@ -206,6 +209,7 @@ function pickBinder({
         entries={entries}
         isLoading={poolLoading}
         error={poolError}
+        stepperVariant={stepperVariant}
         onCardSelect={onCardSelect}
       />
     );
@@ -498,6 +502,12 @@ export function BrowsePage() {
   // is settled. Desktop only: the mobile ruling is that phones keep the scrolling
   // list (now 3-across), so a 4x3 twin spread must never reach one.
   const binderView = !isMobile && searchParams.get('view') === 'binder';
+  // DESIGN SPIKE (#555 follow-on): `?steppers=zeros|plus` picks which resting
+  // affordance an UNOWNED binder slot shows. Same reasoning as `?view=` — the two
+  // candidates need comparing on real tiles at real sizes with a real collection,
+  // and a URL flag does that without a setting anyone has to live with. `zeros`
+  // is the default because it is the one that works on touch.
+  const stepperVariant: StepperVariant = searchParams.get('steppers') === 'plus' ? 'plus' : 'zeros';
   const contentProps = {
     isMobile,
     toolbarProps,
@@ -512,6 +522,7 @@ export function BrowsePage() {
       entries,
       poolLoading,
       poolError,
+      stepperVariant,
       onCardSelect: selectCard,
     }),
     compactChrome: binderView,

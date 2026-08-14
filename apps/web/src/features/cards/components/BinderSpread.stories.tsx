@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {MemoryRouter} from 'react-router-dom';
 import {fn} from 'storybook/test';
-import {BinderSpread} from './BinderSpread';
+import {BinderSlotSkeleton, BinderSpread} from './BinderSpread';
 import {CardTile} from './CardTile';
 import {BINDER_CARDS} from './binderStoryCards';
 import {COLORS} from '../../../shared/constants';
@@ -31,7 +31,6 @@ const meta: Meta<typeof BinderSpread> = {
   tags: ['autodocs'],
   args: {
     start: 0,
-    label: 'Spread 1 of 43 · cards 1–24 of 1024',
     onPrev: fn(),
     onNext: fn(),
     canPrev: false,
@@ -66,7 +65,6 @@ export const Default: Story = {};
 export const PartlyFilled: Story = {
   args: {
     start: 0,
-    label: 'Spread 2 of 2 · cards 25–26 of 26',
     canPrev: true,
     canNext: false,
     renderSlot: (index: number) => {
@@ -86,25 +84,23 @@ export const PartlyFilled: Story = {
   },
 };
 
-/** Mid-book: both pager directions live. */
-export const MidBook: Story = {
-  args: {label: 'Spread 12 of 43 · cards 265–288 of 1024', canPrev: true, canNext: true},
+/**
+ * Loading. IDENTICAL chrome to every other story — parchment, spine, arrows and
+ * footnote — with shimmer in the pockets, which is what makes the arrival of
+ * real cards a change of contents rather than a change of layout. Measured after
+ * the change: page geometry is byte-identical from 0 images loaded to 24.
+ */
+export const Loading: Story = {
+  args: {
+    canPrev: false,
+    canNext: false,
+    renderSlot: () => <BinderSlotSkeleton />,
+  },
 };
 
-/**
- * With a footnote, which only the collection binder uses — it needs a legend
- * because two of its card states mean different kinds of absence.
- */
-export const WithFootnote: Story = {
-  args: {
-    label: 'Spread 1 of 9 · cards 1–24',
-    footnote: (
-      <>
-        Showing <strong>normal</strong> copies. Greyed cards are ones you do not own; faded cards
-        are filtered out but keep their place.
-      </>
-    ),
-  },
+/** Mid-book: both arrows live. */
+export const MidBook: Story = {
+  args: {canPrev: true, canNext: true},
 };
 
 /**

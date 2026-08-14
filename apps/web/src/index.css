@@ -289,6 +289,18 @@ option {
   100% { background-position: -200% 0; }
 }
 
+/* Foil sweep for the collection binder's foil stepper (#553 Phase C). Moves ONLY
+   the first background layer — the light band — and pins the gold and the ground
+   beneath it, which is why the layer order in `FOIL_SHEEN` is load-bearing.
+   Declared as a class so the prefers-reduced-motion block below can stop it. */
+@keyframes inkweave-foil-sweep {
+  0%   { background-position: -60% 0, 0 0, 0 0; }
+  100% { background-position: 160% 0, 0 0, 0 0; }
+}
+.inkweave-foil-shimmer {
+  animation: inkweave-foil-sweep 3.5s linear infinite;
+}
+
 /* Card-slot shimmer tile — used by FeaturedCardsSkeleton and HomePageSkeleton.
    Declared as a class (not inline) so the prefers-reduced-motion override below
    can disable the animation for users who request reduced motion. */
@@ -366,6 +378,13 @@ option {
      visible at its base color (no shimmer sweep), still signalling "loading"
      via its placeholder shape but without continuous motion. */
   .inkweave-shimmer-tile {
+    animation: none !important;
+  }
+  /* Park the foil sweep. The band's resting position is OFF the left edge (so
+     the sweep enters from outside rather than fading in over the count), which
+     means parking it leaves plain gold — exactly the resting foil surface, and
+     still visibly the foil one. Purely decorative; nothing is encoded in it. */
+  .inkweave-foil-shimmer {
     animation: none !important;
   }
   /* Skip the engine-score pulse — score appears with the panel; no transient

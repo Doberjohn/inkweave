@@ -7,7 +7,7 @@ import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';
 import {MobileComparisonView, type ComparisonOriginRects} from './MobileComparisonView';
 import {ExpandedGroupView} from './ExpandedGroupView';
-import {CardImage, RenderProfiler} from '../../../shared/components';
+import {CardImage, NavArrowButton, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
@@ -552,39 +552,21 @@ function ModalContentRegion({
   );
 }
 
-const SIBLING_BTN_BASE: React.CSSProperties = {
+// Hung HALF OUTSIDE the panel (-22 on a 44px button). The whole overlay
+// treatment lives here rather than in `NavArrowButton`, because the binder lays
+// the same control out INLINE beside its spread instead of over it.
+const SIBLING_OVERLAY: React.CSSProperties = {
   position: 'absolute',
   top: '50%',
   transform: 'translateY(-50%)',
   zIndex: 4,
-  width: 44,
-  height: 44,
-  borderRadius: '50%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  // Match the landing page's "Browse all cards" CTA treatment (orange gradient + dark glyph).
-  background: COLORS.filterGradient,
-  border: 'none',
-  color: COLORS.filterText,
-  boxShadow: COLORS.filterShadow,
-  cursor: 'pointer',
-  pointerEvents: 'auto',
 };
 
 function SiblingNavButtons({onPrev, onNext}: {onPrev: () => void; onNext: () => void}) {
   return (
     <>
-      <button type="button" aria-label="Previous card" onClick={onPrev} style={{...SIBLING_BTN_BASE, left: -22}}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-      <button type="button" aria-label="Next card" onClick={onNext} style={{...SIBLING_BTN_BASE, right: -22}}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
+      <NavArrowButton direction="prev" label="Previous card" onClick={onPrev} style={{...SIBLING_OVERLAY, left: -22}} />
+      <NavArrowButton direction="next" label="Next card" onClick={onNext} style={{...SIBLING_OVERLAY, right: -22}} />
     </>
   );
 }

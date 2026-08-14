@@ -1,8 +1,11 @@
-import {useState, type CSSProperties} from 'react';
+import {useState} from 'react';
 import type {LorcanaCard} from '../deck/types';
 import {CardTile} from '../cards/components/CardTile';
+import {CollectionSlotSteppers, type StepperVariant} from './CollectionSlotSteppers';
+import {useHover} from '../../shared/hooks/useHover';
+import type {CollectionEntry, Finish} from './collectionParser';
 import {BinderSpread, PER_SPREAD} from '../cards/components/BinderSpread';
-import {COLORS, DURATION, EASING, FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
+import {DURATION, EASING} from '../../shared/constants';
 
 /**
  * The collection binder (#553 Phase C): a set's cards in collector order.
@@ -19,8 +22,6 @@ import {COLORS, DURATION, EASING, FONT_SIZES, RADIUS, SPACING} from '../../share
  * reuse base collector numbers, 160 contested slots across the pool, five cards
  * claiming Set 1's slot #1. See `binderCardsForSet`.
  */
-
-export type Finish = 'normal' | 'foil';
 
 /**
  * One set's cards as the binder needs them: Special promos dropped, collector
@@ -51,41 +52,14 @@ interface CollectionBinderProps {
    * by construction, instead of by two implementations agreeing.
    */
   matchedIds: Set<string>;
-  /** Copies held of this card in the finish on show. */
-  ownedCount: (cardId: string) => number;
-  finish: Finish;
+  /** Copies held of this card, per finish. */
+  countsFor: (cardId: string) => CollectionEntry;
+  /** Edit one finish's count. Spike-local until the write path is settled. */
+  onChangeCount: (cardId: string, finish: Finish, next: number) => void;
+  /** Which resting affordance an unowned slot shows. `?steppers=` picks it. */
+  variant: StepperVariant;
   onSelect: (card: LorcanaCard) => void;
 }
-
-const badgeStyle: CSSProperties = {
-  position: 'absolute',
-  top: SPACING.xxs,
-  right: SPACING.xxs,
-  zIndex: 2,
-  minWidth: 18,
-  height: 18,
-  padding: `0 ${SPACING.xxs}px`,
-  borderRadius: `${RADIUS.pill}px`,
-  background: COLORS.primary,
-  color: COLORS.background,
-  fontSize: `${FONT_SIZES.xs}px`,
-  fontWeight: 700,
-  lineHeight: '18px',
-  textAlign: 'center',
-};
-
-const numberStyle: CSSProperties = {
-  position: 'absolute',
-  left: SPACING.xxs,
-  bottom: SPACING.xxs,
-  zIndex: 2,
-  fontSize: `${FONT_SIZES.xs}px`,
-  fontWeight: 700,
-  color: COLORS.text,
-  background: COLORS.scrim,
-  padding: `1px ${SPACING.xxs}px`,
-  borderRadius: `${RADIUS.sm}px`,
-};
 
 /**
  * One position in the binder.
@@ -97,35 +71,66 @@ const numberStyle: CSSProperties = {
  */
 function BinderSlot({
   card,
-  owned,
+  counts,
   dimmed,
+  variant,
+  onChangeCount,
   onSelect,
 }: {
   card: LorcanaCard;
-  owned: number;
+  counts: CollectionEntry;
   dimmed: boolean;
+  variant: StepperVariant;
+  onChangeCount: (cardId: string, finish: Finish, next: number) => void;
   onSelect: (card: LorcanaCard) => void;
 }) {
+  // Grey on the TOTAL, not on one finish. Grey now means "I do not have this
+  // card" rather than "not in the finish you happen to be viewing" — the change
+  // the toggle's removal makes possible. Measured on a real collection: zero
+  // cards are foil-only, so nothing changes state today, but a first foil pull
+  // would have read as unowned under the old rule.
+  const owned = counts.normal + counts.foil;
+  // The whole tile is the hover target, matching the deck pool. Scoped to the
+  // steppers it was a ~20px strip at the bottom of the card, so moving the
+  // pointer onto a card did nothing at all.
+  const {hovered, hoverProps} = useHover();
   return (
     <div
+      {...hoverProps}
       style={{
         position: 'relative',
         height: '100%',
         opacity: dimmed ? 0.16 : 1,
-        filter: owned === 0 ? 'grayscale(1) brightness(0.45)' : undefined,
         transition: `opacity ${DURATION.base}ms ${EASING.smooth}`,
         pointerEvents: dimmed ? 'none' : undefined,
       }}>
-      <CardTile
-        card={card}
-        onSelect={onSelect}
-        isSelected={false}
-        variant="minimal"
-        borderRadius={0}
-        useSmallImage
+      {/*
+        The unowned treatment wraps ONLY the art. `filter` inherits down the
+        whole subtree, so on the slot itself it greyed and dimmed the steppers
+        too — leaving the `+` on an unowned card, the one control that card
+        exists to offer, nearly invisible.
+      */}
+      <div
+        style={{
+          height: '100%',
+          filter: owned === 0 ? 'grayscale(1) brightness(0.45)' : undefined,
+        }}>
+        <CardTile
+          card={card}
+          onSelect={onSelect}
+          isSelected={false}
+          variant="minimal"
+          borderRadius={0}
+          useSmallImage
+        />
+      </div>
+      <CollectionSlotSteppers
+        counts={counts}
+        variant={variant}
+        hovered={hovered}
+        label={card.fullName || card.name}
+        onChange={(finish, next) => onChangeCount(card.id, finish, next)}
       />
-      {owned > 1 && <span style={badgeStyle}>{owned}</span>}
-      <span style={numberStyle}>{card.setNumber}</span>
     </div>
   );
 }
@@ -142,8 +147,9 @@ function spreadsWithMatches(cards: LorcanaCard[], matchedIds: Set<string>): numb
 export function CollectionBinder({
   cards,
   matchedIds,
-  ownedCount,
-  finish,
+  countsFor,
+  onChangeCount,
+  variant,
   onSelect,
 }: CollectionBinderProps) {
   const [spread, setSpread] = useState(0);
@@ -181,30 +187,20 @@ export function CollectionBinder({
   return (
     <BinderSpread
       start={start}
-      label={
-        `Spread ${current + 1} of ${total}` +
-        (filtering
-          ? ` · ${matchesHere} match${matchesHere === 1 ? '' : 'es'} in this set`
-          : ` · cards ${start + 1}–${Math.min(start + PER_SPREAD, cards.length)}`)
-      }
       onPrev={() => step(-1)}
       onNext={() => step(1)}
       canPrev={current > 0}
       canNext={current < total - 1}
-      footnote={
-        <>
-          Showing <strong>{finish}</strong> copies. Greyed cards are ones you do not own; faded
-          cards are filtered out but keep their place.
-        </>
-      }
       renderSlot={(index) => {
         const card = cards[index];
         if (!card) return null;
         return (
           <BinderSlot
             card={card}
-            owned={ownedCount(card.id)}
+            counts={countsFor(card.id)}
             dimmed={!matchedIds.has(card.id)}
+            variant={variant}
+            onChangeCount={onChangeCount}
             onSelect={onSelect}
           />
         );

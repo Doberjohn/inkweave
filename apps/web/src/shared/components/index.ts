@@ -27,6 +27,7 @@ export {LinkButton} from './LinkButton';
 export {PageTitle} from './PageTitle';
 export {TabList} from './TabList';
 export {IconButton} from './IconButton';
+export {NavArrowButton} from './NavArrowButton';
 export {EtherealBackground} from './EtherealBackground';
 export {FilterButton} from './FilterButton';
 export {Chip} from './Chip';

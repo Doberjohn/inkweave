@@ -7,7 +7,7 @@ import type {CollectionEntries} from './collectionParser';
 import {COLORS} from '../../shared/constants';
 
 /**
- * Collection mode's content: the set picker and finish toggle above the binder.
+ * Collection mode's content: the set picker above the binder.
  *
  * The fixture cards are Set 9, so the picker starts on Set 1 with nothing in it.
  * Each story sets the set explicitly through the component's own control rather
@@ -41,6 +41,7 @@ const meta: Meta<typeof CollectionBinderSection> = {
     entries,
     isLoading: false,
     error: null,
+    stepperVariant: 'zeros',
     onCardSelect: fn(),
   },
 };
