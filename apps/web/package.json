@@ -27,16 +27,16 @@
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.23",
-    "@sentry/react": "^10.68.0",
-    "@supabase/supabase-js": "^2.110.8",
+    "@sentry/react": "^10.70.0",
+    "@supabase/supabase-js": "^2.112.3",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "inkweave-synergy-engine": "workspace:*",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-loading-skeleton": "^3.5.0",
-    "react-router-dom": "^7.18.1",
-    "react-virtuoso": "^4.18.11"
+    "react-router-dom": "^7.18.2",
+    "react-virtuoso": "^4.18.12"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
