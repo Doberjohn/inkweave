@@ -269,15 +269,15 @@ To add a new condition matcher:
 
 ---
 
-## Conditional Shift Detection in the Loader
+## Conditional Shift Detection in the Card Transformer
 
-**Source**: `apps/web/src/features/cards/loader.ts`
+**Source**: `packages/synergy-engine/src/utils/cardTransformer.ts` (`collectKeywords`)
 
-Some cards don't have Shift as a native keyword — they gain it conditionally from ability text. The web loader detects these during card data import.
+Some cards don't have Shift as a native keyword: they gain it conditionally from ability text. The engine's `transformCard` synthesizes these while building `LorcanaCard`s; the web loader wraps `transformCard`, so the app sees the same keywords. The same mechanism synthesizes conditional Singer (see `SINGER_SONGS_RULE.md`).
 
 ### How it works
 
-For each card ability, the loader scans the `effect` or `fullText` field for the pattern:
+For each ability's `effect` or `fullText`, and then the card's own `fullText` (reveal-form preview cards carry only keyword-type abilities, so their named-ability text lives solely there), the transformer scans for the pattern:
 
 ```regex
 /gains?\s+Shift\s+(\d+)/i
@@ -298,7 +298,7 @@ If no native Shift exists, the conditional value is added to the card's keywords
 **Anna - Soothing Sister** has no native Shift keyword, but her ability text says:
 > "If a card left a player's discard this turn, this card gains Shift 0."
 
-The loader extracts `Shift 0` and adds it to her keywords. The engine then treats her as a Shift card and finds same-named base characters.
+The transformer extracts `Shift 0` and adds it to her keywords. The engine then treats her as a Shift card and finds same-named base characters.
 
 ---
 
@@ -369,11 +369,12 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | Free Shift onto mid-cost base | 7 | Shift 0, base cost 4 |
 | Free Shift onto expensive base | 5 | Shift 0, base cost 7 |
 
-### Loader tests
-Located in `apps/web/src/features/cards/__tests__/loader.test.ts`:
+### Transformer tests
+Located in `packages/synergy-engine/src/__tests__/cardTransformer.test.ts` (plus a mirror in `apps/web/src/features/cards/__tests__/loader.test.ts`):
 | Test | What it verifies |
 |------|-----------------|
-| Conditional Shift extraction | "gains Shift 0" in ability text adds `Shift 0` to keywords |
+| Conditional Shift from an ability effect | "gains Shift 0" in ability text adds `Shift 0` to keywords |
+| Conditional Shift from `fullText` | the same read works for a card with no abilities array |
 
 ---
 

@@ -287,15 +287,6 @@ function buildSelfDiscardPairCtx(
 }
 
 /**
- * Score a self-discard pair (5-baseline convention, mirrors the Sacrifice shape):
- *   - enabler ↔ payoff (reanimator or state) = 8  (win-condition: discard, then cash it)
- *   - reanimator ↔ reanimator                = 6  (two recursion engines share one bin)
- *   - all other same-axis pairs              = 5  (parallel density)
- *
- * `_card` is the searcher (token {A}); `other` is the partner (token {B}). The token-swap keeps
- * the enabler side reading as the actor regardless of which card is the searcher.
- */
-/**
  * Build the 8-score self-discard combo result: an enabler on one side, a payoff on the
  * other. Token-swap keeps the enabler reading as {A} when the searcher is the enabler; the
  * explanation branches on whether the payoff side is a reanimator or a discard-state payoff.
@@ -316,6 +307,61 @@ function scoreSelfDiscardCombo(
   };
 }
 
+/** The bin-filling combos: a filler role on one side, the payoff it feeds on the other. */
+const SELF_DISCARD_FILL_COMBOS: ReadonlyArray<{
+  filler: SelfDiscardRole;
+  payoff: SelfDiscardRole;
+  explain: (filler: string, payoff: string) => string;
+}> = [
+  {
+    filler: 'enabler',
+    payoff: 'zone-payoff',
+    explain: (f, p) => `${f} fills your discard from hand, switching on ${p}'s discard-count payoff.`,
+  },
+  {
+    filler: 'mill',
+    payoff: 'zone-payoff',
+    explain: (f, p) => `${f} mills your deck into the discard, feeding ${p}'s discard-count payoff.`,
+  },
+  {
+    filler: 'mill',
+    payoff: 'reanimator',
+    explain: (f, p) => `${f} mills cards into your discard for ${p} to replay.`,
+  },
+];
+
+/**
+ * The 7-score fill combo, or null: a bin-filler (hand-discard enabler or mill) on one side and
+ * the discard-count / recursion payoff it feeds on the other. Token-swap keeps the filler
+ * reading as the actor regardless of which card is the searcher. The first matching row wins,
+ * so a card that both loots and mills reads as the hand-discard outlet.
+ */
+function scoreSelfDiscardFillCombo(
+  cardRoles: SelfDiscardRole[],
+  otherRoles: SelfDiscardRole[],
+): {score: number; explanation: string} | null {
+  for (const combo of SELF_DISCARD_FILL_COMBOS) {
+    const cardFills = cardRoles.includes(combo.filler) && otherRoles.includes(combo.payoff);
+    const otherFills = otherRoles.includes(combo.filler) && cardRoles.includes(combo.payoff);
+    if (!cardFills && !otherFills) continue;
+    const [filler, payoff] = cardFills ? ['{A}', '{B}'] : ['{B}', '{A}'];
+    return {score: 7, explanation: combo.explain(filler, payoff)};
+  }
+  return null;
+}
+
+/**
+ * Score a self-discard pair (5-baseline convention, mirrors the Sacrifice shape):
+ *   - enabler ↔ payoff (reanimator or state) = 8  (win-condition: discard, then cash it)
+ *   - bin-filler ↔ zone payoff, mill ↔ reanimator = 7  (mechanical compounding: the filler feeds
+ *                                                 a discard-count payoff or a recursion engine)
+ *   - reanimator ↔ reanimator                = 6  (two recursion engines share one bin)
+ *   - all other same-axis pairs              = 5  (parallel density; includes mill ↔ state,
+ *                                                 since milling is not a discard event)
+ *
+ * `_card` is the searcher (token {A}); `_other` is the partner (token {B}). The token-swap keeps
+ * the enabler side reading as the actor regardless of which card is the searcher.
+ */
 export function scoreSelfDiscardPair(
   _card: LorcanaCard,
   cardRoles: SelfDiscardRole[],
@@ -328,6 +374,10 @@ export function scoreSelfDiscardPair(
   if (ctx.isCombo) {
     return scoreSelfDiscardCombo(ctx, cardRoles, otherRoles);
   }
+
+  // 7 — a bin-filler feeding a discard-count payoff, or mill feeding a recursion engine.
+  const fill = scoreSelfDiscardFillCombo(cardRoles, otherRoles);
+  if (fill) return fill;
 
   // 6 — two recursion engines mining the same discard pile.
   if (ctx.bothReanimator) {

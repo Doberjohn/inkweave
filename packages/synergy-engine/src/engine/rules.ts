@@ -1399,9 +1399,10 @@ export const synergyRules: SynergyRule[] = [
     matches: isBounceCard,
 
     // Payoff-anchored: scoreBouncePair returns null for enabler↔enabler and payoff↔payoff
-    // density, which tribalFindSynergies drops.
+    // density, and for a re-buy the enabler's target gate cannot reach (cost cap /
+    // classification), which pairFindSynergies drops. Card-aware so the gate can read cost.
     findSynergies: (card, allCards) =>
-      tribalFindSynergies(card, allCards, getBounceRoles, scoreBouncePair),
+      pairFindSynergies(card, allCards, getBounceRoles, scoreBouncePair),
   },
 ];
 

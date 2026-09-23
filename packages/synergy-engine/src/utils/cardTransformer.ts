@@ -71,6 +71,59 @@ function nonEmptySections(sections?: string[]): string[] | undefined {
 }
 
 /**
+ * Conditional keywords a card gains on ITSELF in ability text ("gains Shift 0", "this
+ * character gets +1 ◊ and gains Singer 3"), synthesized into `keywords` so the Shift Targets
+ * and Singer + Songs rules see them. The Singer read is anchored on "this character" with a
+ * bounded gap that may not name another character, so "this character quests, chosen
+ * character gains Singer 5" and "your characters gain Singer 4" never count. A native keyword
+ * of the same name always wins.
+ */
+const CONDITIONAL_KEYWORD_PATTERNS: ReadonlyArray<[keyword: string, pattern: RegExp]> = [
+  ['Shift', /gains?\s+Shift\s+(\d+)/i],
+  ['Singer', /this\s+character\b(?:(?!\bcharacters?\b)[^.]){0,60}?\bgains\s+Singer\s+(\d+)/i],
+];
+
+/** Keyword abilities as the data states them ("Singer 5", "Evasive"). */
+function nativeKeywords(raw: LorcanaJSONCard): string[] {
+  return (raw.abilities ?? []).flatMap((a) => {
+    if (a.type !== 'keyword' || !a.keyword) return [];
+    return [a.keywordValue ? `${a.keyword} ${a.keywordValue}` : a.keyword];
+  });
+}
+
+/**
+ * Every text a conditional keyword may sit in: each ability's effect or fullText, then the
+ * card text itself. The card text matters because reveal-form preview cards carry only
+ * keyword-type abilities, so their named-ability text lives solely in `fullText`.
+ */
+function conditionalTexts(raw: LorcanaJSONCard): string[] {
+  const texts = (raw.abilities ?? []).map((a) => a.effect || a.fullText || '');
+  if (raw.fullText) texts.push(raw.fullText);
+  return texts;
+}
+
+/** The first "gains <keyword> N" read across `texts` as a keyword string, or null. */
+function conditionalKeyword(texts: string[], keyword: string, pattern: RegExp): string | null {
+  for (const text of texts) {
+    const match = text.match(pattern);
+    if (match) return `${keyword} ${match[1]}`;
+  }
+  return null;
+}
+
+/** Native keywords first; a conditional one joins only when no native keyword of that name exists. */
+function collectKeywords(raw: LorcanaJSONCard): string[] {
+  const keywords = nativeKeywords(raw);
+  const texts = conditionalTexts(raw);
+  for (const [keyword, pattern] of CONDITIONAL_KEYWORD_PATTERNS) {
+    if (keywords.some((k) => k.startsWith(keyword))) continue;
+    const found = conditionalKeyword(texts, keyword, pattern);
+    if (found) keywords.push(found);
+  }
+  return keywords;
+}
+
+/**
  * Transform a raw LorcanaJSON card into a LorcanaCard.
  * Returns null if the card has an invalid ink or type.
  *
@@ -84,25 +137,7 @@ export function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
   const type = raw.type as CardType;
   if (!VALID_TYPES.includes(type)) return null;
 
-  // Extract keywords from abilities
-  const keywords: string[] = [];
-  if (raw.abilities) {
-    for (const ability of raw.abilities) {
-      if (ability.type === 'keyword' && ability.keyword) {
-        keywords.push(
-          ability.keywordValue ? `${ability.keyword} ${ability.keywordValue}` : ability.keyword,
-        );
-      }
-
-      // Detect conditional keywords granted in ability text (e.g. "gains Shift 0")
-      const text = ability.effect || ability.fullText || '';
-      const shiftMatch = text.match(/gains?\s+Shift\s+(\d+)/i);
-      if (shiftMatch) {
-        const hasNativeShift = keywords.some((k) => k.startsWith('Shift'));
-        if (!hasNativeShift) keywords.push(`Shift ${shiftMatch[1]}`);
-      }
-    }
-  }
+  const keywords = collectKeywords(raw);
 
   const isSong = raw.subtypes?.includes('Song') ?? false;
   const classifications = raw.subtypes?.filter((s) => s !== 'Song') ?? [];
