@@ -170,10 +170,20 @@ async function processTask(task, manifest) {
 }
 
 /**
- * Mutate a card data file (allCards.json or previewCards.json) in-place to
- * add `imageHash` + `imageHashSm` fields per card from the manifest.
+ * Mutate a card data file (allCards.json or previewCards.json) in-place so its
+ * `imageHash` / `imageHashSm` fields describe exactly the images THIS build emitted.
+ *
+ * Clearing is as important as setting. OUTPUT_DIR is wiped at the start of every run
+ * and the manifest starts empty, so a hash left over from a previous build names a
+ * file that no longer exists: the app then renders an <img> pointing at a dead URL,
+ * on a path served with `immutable`. Dropping the field instead routes the card to
+ * the same fallback UI a never-hashed card gets, which is the honest degradation.
+ *
+ * Found live on 2026-09-23: seven cards whose art had 404'd upstream were shipping
+ * broken images this way, while the one card that had never been hashed rendered its
+ * fallback correctly.
  */
-function injectManifest(filePath, manifest) {
+export function injectManifest(filePath, manifest) {
   const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   let updated = 0;
   for (const card of data.cards) {
@@ -182,6 +192,9 @@ function injectManifest(filePath, manifest) {
       card.imageHash = hashes.full;
       card.imageHashSm = hashes.sm;
       updated++;
+    } else {
+      delete card.imageHash;
+      delete card.imageHashSm;
     }
   }
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n');
@@ -337,7 +350,10 @@ async function main() {
   assertImageCoverage(DATA_FILE, manifest);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Run only when invoked directly (never when imported by the test).
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
