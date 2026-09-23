@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
-import {CompactHeader, ErrorBoundary, EtherealBackground} from '../shared/components';
+import {CompactHeader, ErrorBoundary, EtherealBackground, Seo} from '../shared/components';
 import {COLORS, FONTS, FONT_SIZES, REVEAL_SET_CODE, REVEAL_SET_NUMBER, SET_NAMES, SPACING} from '../shared/constants';
 import {useResponsive} from '../shared/hooks';
 import {useCardModal} from '../shared/contexts/CardModalContext';
@@ -133,6 +133,11 @@ export function RevealsPage() {
 
   return (
     <ErrorBoundary>
+      <Seo
+        title={`${SET_NAMES[REVEAL_SET_CODE]} (Set ${REVEAL_SET_NUMBER}) Card Reveals | Inkweave`}
+        description={`Every Disney Lorcana ${SET_NAMES[REVEAL_SET_CODE]} card revealed so far, tracked by ink with synergies for each new card.`}
+        canonicalPath="/reveals"
+      />
       <EtherealBackground />
       <CompactHeader isMobile={isMobile} />
       <main style={{minHeight: '100vh', paddingTop: SPACING.lg, paddingBottom: 110, position: 'relative', zIndex: 1}}>
