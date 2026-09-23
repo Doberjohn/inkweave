@@ -15,6 +15,11 @@ interface RevealHeroProps {
   compact?: boolean;
 }
 
+/** The label under the debut-franchise count, singular for a one-franchise set. */
+function franchiseLabel(count: number): string {
+  return count === 1 ? 'New franchise' : 'New franchises';
+}
+
 /**
  * The reveals page header: the set logo over two stat panels (a gold countdown
  * panel and a neutral revealed/franchises panel). Deliberately minimal — no
@@ -37,6 +42,8 @@ export function RevealHero({
     marginTop: 5,
   };
   const bigStat = {fontWeight: 700, fontSize: compact ? 24 : 30, lineHeight: 1};
+  /** The small unit suffix riding beside a big stat ("days", "/ 204"). */
+  const unitStyle = {fontSize: compact ? 12 : 15, fontWeight: 600};
 
   return (
     <header style={{textAlign: 'center', padding: compact ? '24px 16px 8px' : '40px 36px 12px'}}>
@@ -78,7 +85,7 @@ export function RevealHero({
           <div style={{textAlign: 'left'}}>
             <div style={{...bigStat, color: '#f5d877'}}>
               {countdownDays}
-              <span style={{fontSize: compact ? 12 : 15, fontWeight: 600, color: '#d4af37', letterSpacing: 0.5}}> days</span>
+              <span style={{...unitStyle, color: '#d4af37', letterSpacing: 0.5}}> days</span>
             </div>
             <div style={labelStyle}>Until pre-release</div>
           </div>
@@ -103,13 +110,13 @@ export function RevealHero({
           <div style={{padding: '16px 22px', textAlign: 'left'}}>
             <div style={{...bigStat, color: '#e8e8e8'}}>
               {totalRevealed}
-              <span style={{fontSize: compact ? 12 : 15, fontWeight: 600, color: '#666680'}}> / {totalCards}</span>
+              <span style={{...unitStyle, color: '#666680'}}> / {totalCards}</span>
             </div>
             <div style={labelStyle}>Cards revealed</div>
           </div>
           <div style={{padding: '16px 22px', textAlign: 'left', borderLeft: '1px solid #2a2a40'}}>
             <div style={{...bigStat, color: '#c4a5f5'}}>{franchiseCount}</div>
-            <div style={labelStyle}>{franchiseCount === 1 ? 'New franchise' : 'New franchises'}</div>
+            <div style={labelStyle}>{franchiseLabel(franchiseCount)}</div>
           </div>
         </div>
       </div>

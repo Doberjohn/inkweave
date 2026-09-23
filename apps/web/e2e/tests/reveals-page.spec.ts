@@ -11,11 +11,17 @@ interface RevealSet {
  * releaseDate. Read from the data the app itself reads, so this spec names no set
  * and needs no edit when a new season starts.
  */
-function latestRevealSet(data: {sets?: Record<string, Partial<RevealSet> | undefined>}): RevealSet | null {
-  const dated = Object.values(data?.sets ?? {}).filter(
-    (s): s is RevealSet =>
-      typeof s?.name === 'string' && typeof s?.number === 'number' && typeof s?.releaseDate === 'string',
+/** A set block is usable here only once it carries the three fields the assertions read. */
+function isRevealSet(set: Partial<RevealSet> | undefined): set is RevealSet {
+  return (
+    typeof set?.name === 'string' &&
+    typeof set?.number === 'number' &&
+    typeof set?.releaseDate === 'string'
   );
+}
+
+function latestRevealSet(data: {sets?: Record<string, Partial<RevealSet> | undefined>}): RevealSet | null {
+  const dated = Object.values(data?.sets ?? {}).filter(isRevealSet);
   if (dated.length === 0) return null;
   return dated.reduce((a, b) => (new Date(b.releaseDate) > new Date(a.releaseDate) ? b : a));
 }

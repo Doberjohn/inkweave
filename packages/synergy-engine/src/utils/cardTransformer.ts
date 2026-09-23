@@ -97,9 +97,8 @@ function nativeKeywords(raw: LorcanaJSONCard): string[] {
  * keyword-type abilities, so their named-ability text lives solely in `fullText`.
  */
 function conditionalTexts(raw: LorcanaJSONCard): string[] {
-  const texts = (raw.abilities ?? []).map((a) => a.effect || a.fullText || '');
-  if (raw.fullText) texts.push(raw.fullText);
-  return texts;
+  const abilityTexts = (raw.abilities ?? []).map((a) => a.effect ?? a.fullText);
+  return [...abilityTexts, raw.fullText ?? ''];
 }
 
 /** The first "gains <keyword> N" read across `texts` as a keyword string, or null. */
@@ -124,6 +123,22 @@ function collectKeywords(raw: LorcanaJSONCard): string[] {
 }
 
 /**
+ * Split the raw subtypes: `Song` is a flag on Action cards, not a classification,
+ * so it is lifted out and the remainder becomes `classifications`. Both fields are
+ * omitted rather than emitted empty, which is what the card shape expects.
+ */
+function parseSubtypes(subtypes?: string[]): {
+  isSong: true | undefined;
+  classifications: string[] | undefined;
+} {
+  const classifications = subtypes?.filter((s) => s !== 'Song') ?? [];
+  return {
+    isSong: subtypes?.includes('Song') ? true : undefined,
+    classifications: classifications.length > 0 ? classifications : undefined,
+  };
+}
+
+/**
  * Transform a raw LorcanaJSON card into a LorcanaCard.
  * Returns null if the card has an invalid ink or type.
  *
@@ -138,9 +153,7 @@ export function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
   if (!VALID_TYPES.includes(type)) return null;
 
   const keywords = collectKeywords(raw);
-
-  const isSong = raw.subtypes?.includes('Song') ?? false;
-  const classifications = raw.subtypes?.filter((s) => s !== 'Song') ?? [];
+  const {isSong, classifications} = parseSubtypes(raw.subtypes);
 
   return {
     id: String(raw.id),
@@ -152,8 +165,8 @@ export function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
     ink2: inks.ink2,
     inkwell: raw.inkwell,
     type,
-    isSong: isSong || undefined,
-    classifications: classifications.length > 0 ? classifications : undefined,
+    isSong,
+    classifications,
     text: raw.fullText,
     textSections: nonEmptySections(raw.fullTextSections),
     moveCost: raw.moveCost,
