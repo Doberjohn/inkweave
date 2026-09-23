@@ -1,6 +1,5 @@
 import {SET_TOTAL} from './setComposition';
-
-const SET_LOGO = '/art/sets/attack-of-the-vine.png';
+import {REVEAL_SET_CODE, REVEAL_SET_LOGO, SET_NAMES} from '../../shared/constants';
 
 interface RevealHeroProps {
   /** Days until pre-release. */
@@ -42,8 +41,8 @@ export function RevealHero({
   return (
     <header style={{textAlign: 'center', padding: compact ? '24px 16px 8px' : '40px 36px 12px'}}>
       <img
-        src={SET_LOGO}
-        alt="Attack of the Vine!"
+        src={REVEAL_SET_LOGO}
+        alt={SET_NAMES[REVEAL_SET_CODE]}
         style={{
           maxWidth: compact ? 240 : 300,
           width: '100%',
@@ -110,7 +109,7 @@ export function RevealHero({
           </div>
           <div style={{padding: '16px 22px', textAlign: 'left', borderLeft: '1px solid #2a2a40'}}>
             <div style={{...bigStat, color: '#c4a5f5'}}>{franchiseCount}</div>
-            <div style={labelStyle}>New franchises</div>
+            <div style={labelStyle}>{franchiseCount === 1 ? 'New franchise' : 'New franchises'}</div>
           </div>
         </div>
       </div>

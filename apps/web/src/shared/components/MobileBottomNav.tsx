@@ -1,5 +1,5 @@
 import {NavLink, useLocation} from 'react-router-dom';
-import {COLORS, FONTS} from '../constants';
+import {COLORS, FONTS, REVEAL_SET_NUMBER} from '../constants';
 import {useRevealPhase, type RevealPhase} from '../../features/reveals';
 
 /** Height of the nav bar in CSS px. Used for bottom padding on page content. */
@@ -27,7 +27,7 @@ interface TabDef {
 const TABS_REVEAL_SEASON: readonly TabDef[] = [
   {kind: 'browse', label: 'Browse collection', href: '/browse'},
   {kind: 'search', label: 'Search cards', action: 'search'},
-  {kind: 'reveals', label: 'Set 13 reveals', href: '/reveals', hasNewDot: true},
+  {kind: 'reveals', label: `Set ${REVEAL_SET_NUMBER} reveals`, href: '/reveals', hasNewDot: true},
   {kind: 'playstyles', label: 'Explore playstyles', href: '/playstyles'},
   {kind: 'vote', label: 'Rate synergies', href: '/vote'},
 ];

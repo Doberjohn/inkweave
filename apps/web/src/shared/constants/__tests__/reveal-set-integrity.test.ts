@@ -1,0 +1,86 @@
+import {describe, it, expect} from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+import {ALL_INKS, REVEAL_ID_BASE, REVEAL_SET_CODE, REVEAL_SET_NUMBER, SET_NAMES, SET_TOTAL, inkBlock} from '..';
+import {FRANCHISE_SPOTLIGHTS, SET_SPOTLIGHTS} from '../../../features/reveals/setSpotlights';
+
+// Guards the reveal season's one-constant switch (revealSet.ts) against the data
+// it must agree with. A half-done switch is otherwise silent: the page renders,
+// but the trackers read zero, or the gate never opens, with no error anywhere.
+//
+// Invariants only. CI runs this on every /admin/reveal publish commit, which lands
+// a card BEFORE its AVIFs (the convert workflow commits those afterwards), so
+// nothing here may depend on image files existing.
+
+interface PreviewCard {
+  id: number;
+  number?: number;
+  setCode?: string;
+  fullName?: string;
+}
+
+interface PreviewFile {
+  sets: Record<string, {name?: string; number?: number; prereleaseDate?: string; releaseDate?: string} | undefined>;
+  cards: PreviewCard[];
+}
+
+function readData<T>(file: string): T {
+  return JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'public/data', file), 'utf8')) as T;
+}
+
+/** Numbered cards are base + collector number; numberless ones use the reserved +900..+999 band. */
+function hasWellFormedId(card: PreviewCard): boolean {
+  if (card.setCode !== REVEAL_SET_CODE) return false;
+  if (card.number == null) return card.id >= REVEAL_ID_BASE + 900 && card.id <= REVEAL_ID_BASE + 999;
+  return card.id === REVEAL_ID_BASE + card.number;
+}
+
+/** The preview-card ids a spotlight's art points at. */
+function spotlightCardIds(): number[] {
+  const srcs = [...FRANCHISE_SPOTLIGHTS.map((s) => s.data), ...SET_SPOTLIGHTS.flatMap((g) => g.items)].flatMap((data) => [
+    data.heroImage,
+    ...data.support.map((s) => s.src),
+  ]);
+  return srcs.flatMap((src) => {
+    const id = /\/card-images-preview\/(\d+)\.avif$/.exec(src)?.[1];
+    return id ? [Number(id)] : [];
+  });
+}
+
+describe('reveal-set integrity', () => {
+  const preview = readData<PreviewFile>('previewCards.json');
+
+  it('previewCards.json has a dated entry for the reveal set', () => {
+    const set = preview.sets[REVEAL_SET_CODE];
+    expect(set?.number).toBe(REVEAL_SET_NUMBER);
+    // The page's copy reads theme.ts; the E2E spec reads this file. They must agree.
+    expect(set?.name).toBe(SET_NAMES[REVEAL_SET_CODE]);
+    expect(set?.prereleaseDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(set?.releaseDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('every preview card belongs to the reveal set and has a well-formed id', () => {
+    const malformed = preview.cards.filter((c) => !hasWellFormedId(c)).map((c) => `${c.id} ${c.fullName}`);
+    expect(malformed).toEqual([]);
+  });
+
+  it('no preview card id collides with a canonical card (the loader would silently drop it)', () => {
+    const canonical = new Set(readData<{cards: {id: number}[]}>('allCards.json').cards.map((c) => c.id));
+    expect(preview.cards.filter((c) => canonical.has(c.id)).map((c) => c.id)).toEqual([]);
+  });
+
+  it('every card a spotlight shows has been revealed', () => {
+    const revealed = new Set(preview.cards.map((c) => c.id));
+    expect(spotlightCardIds().filter((id) => !revealed.has(id))).toEqual([]);
+  });
+
+  it('ink blocks tile the set from 1 to SET_TOTAL with no gap or overlap', () => {
+    let next = 1;
+    for (const ink of ALL_INKS) {
+      const {first, last} = inkBlock(ink);
+      expect(first).toBe(next);
+      next = last + 1;
+    }
+    expect(next - 1).toBe(SET_TOTAL);
+  });
+});

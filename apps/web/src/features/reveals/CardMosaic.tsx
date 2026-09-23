@@ -4,32 +4,34 @@ import {CardSlot} from './CardSlot';
 import {isSlotDimmed} from './rarity';
 import {mobileSlotWidth} from './mosaicSizing';
 import {PER_INK} from './setComposition';
+import {INK_BASE} from '../../shared/constants';
 import {useContainerWidth} from '../../shared/hooks';
 
 /**
- * Per-ink diamond row layouts. Each ink's rows sum to its PER_INK total — Set 13
- * splits 207 cards as Amber 37 · Amethyst 36 · Emerald 35 · Ruby 34 · Sapphire 33
- * · Steel 32 — so every ink board renders exactly that many slots. Desktop peaks
- * at 8 columns; mobile peaks at 6 so the widest row fits a phone. The
- * `cardMosaic.test.ts` "layouts" suite asserts each row set sums to PER_INK[ink],
- * so a hand-edited layout that drifts from the composition fails the build.
+ * Per-ink diamond row layouts. Each ink's rows sum to its PER_INK total, so every
+ * ink board renders exactly that many slots. Set 14 is an even 34 per ink, so all
+ * six boards share one shape; the table stays per-ink because a set can split
+ * unevenly (Set 13 ran 37 down to 32). Desktop peaks at 7 columns; mobile peaks at
+ * 5 so the widest row fits a phone. The `cardMosaic.test.ts` "layouts" suite
+ * asserts each row set sums to PER_INK[ink], so a hand-edited layout that drifts
+ * from the composition fails the build.
  */
 export const ROWS: Record<Ink, readonly number[]> = {
-  Amber: [4, 6, 8, 8, 7, 4], // 37
-  Amethyst: [4, 6, 8, 8, 6, 4], // 36
-  Emerald: [4, 6, 8, 7, 6, 4], // 35
+  Amber: [4, 6, 7, 7, 6, 4], // 34
+  Amethyst: [4, 6, 7, 7, 6, 4], // 34
+  Emerald: [4, 6, 7, 7, 6, 4], // 34
   Ruby: [4, 6, 7, 7, 6, 4], // 34
-  Sapphire: [4, 6, 7, 6, 6, 4], // 33
-  Steel: [4, 6, 6, 6, 6, 4], // 32
+  Sapphire: [4, 6, 7, 7, 6, 4], // 34
+  Steel: [4, 6, 7, 7, 6, 4], // 34
 };
-/** Mobile diamonds — narrower (peak 6) and taller so the widest row fits a phone. */
+/** Mobile diamonds: narrower (peak 5) and taller so the widest row fits a phone. */
 export const ROWS_MOBILE: Record<Ink, readonly number[]> = {
-  Amber: [3, 4, 6, 6, 6, 5, 4, 3], // 37
-  Amethyst: [3, 4, 5, 6, 6, 5, 4, 3], // 36
-  Emerald: [3, 4, 5, 6, 5, 5, 4, 3], // 35
+  Amber: [3, 4, 5, 5, 5, 5, 4, 3], // 34
+  Amethyst: [3, 4, 5, 5, 5, 5, 4, 3], // 34
+  Emerald: [3, 4, 5, 5, 5, 5, 4, 3], // 34
   Ruby: [3, 4, 5, 5, 5, 5, 4, 3], // 34
-  Sapphire: [3, 4, 5, 5, 5, 4, 4, 3], // 33
-  Steel: [3, 4, 4, 5, 5, 4, 4, 3], // 32
+  Sapphire: [3, 4, 5, 5, 5, 5, 4, 3], // 34
+  Steel: [3, 4, 5, 5, 5, 5, 4, 3], // 34
 };
 
 /** Card slot proportion (height / width) — preserved when the mobile slot auto-fits. */
@@ -38,23 +40,10 @@ const CARD_RATIO = 64 / 46;
 /** How many random revealed slots burst in on each ink switch. */
 const POP_COUNT = 5;
 
-/**
- * First collector number of each ink's block. A card's slot is `number - base`,
- * so cards read across in true set order, leaving fallback gaps for unrevealed
- * numbers. Each base is the cumulative block start — Amber #1, then offset by the
- * preceding inks' PER_INK totals: 1, 38, 74, 109, 143, 176 — so every board spans
- * its true set range and unrevealed numbers show as gaps in the right place
- * (e.g. Sapphire #148 Belle sits 5 slots in, after 143-147) rather than trailing
- * off the end.
- */
-const INK_BASE: Record<Ink, number> = {
-  Amber: 1,
-  Amethyst: 38,
-  Emerald: 74,
-  Ruby: 109,
-  Sapphire: 143,
-  Steel: 176,
-};
+// A card's slot is `number - INK_BASE[ink]` (the first collector number of the
+// ink's block, derived from PER_INK in shared/constants/revealSet.ts), so cards
+// read across in true set order and unrevealed numbers show as gaps in the right
+// place rather than trailing off the end.
 
 function pickRandom(pool: number[], n: number): Set<number> {
   const a = [...pool];
@@ -123,8 +112,8 @@ interface CardMosaicProps {
 }
 
 /**
- * The featured ink board's diamond of CardSlots, sized to the ink's PER_INK total
- * (37 for Amber … 32 for Steel). Desktop uses the wider `ROWS[ink]`; mobile uses
+ * The featured ink board's diamond of CardSlots, sized to the ink's PER_INK
+ * total. Desktop uses the wider `ROWS[ink]`; mobile uses
  * the narrower/taller `ROWS_MOBILE[ink]` and auto-fits the slot size to the
  * measured rail width so all cards fit with no horizontal scroll. Each revealed
  * card sits at its true collector-number slot (see placeCards), so unrevealed

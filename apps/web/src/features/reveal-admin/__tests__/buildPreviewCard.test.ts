@@ -1,5 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import {buildPreviewCard, parseKeyword, type RevealCardForm} from '../buildPreviewCard';
+import {REVEAL_ID_BASE, REVEAL_SET_CODE} from '../../../shared/constants';
 
 function form(overrides: Partial<RevealCardForm> = {}): RevealCardForm {
   return {
@@ -42,9 +43,9 @@ describe('parseKeyword', () => {
 describe('buildPreviewCard', () => {
   it('derives id, fullName, color, sections and keyword abilities', () => {
     const card = buildPreviewCard(form());
-    expect(card.id).toBe(13050);
+    expect(card.id).toBe(REVEAL_ID_BASE + 50);
     expect(card.number).toBe(50);
-    expect(card.setCode).toBe('13');
+    expect(card.setCode).toBe(REVEAL_SET_CODE);
     expect(card.fullName).toBe('Mei - Red Panda');
     expect(card.color).toBe('Ruby');
     expect(card.subtypes).toEqual(['Hero', 'Red Panda']);

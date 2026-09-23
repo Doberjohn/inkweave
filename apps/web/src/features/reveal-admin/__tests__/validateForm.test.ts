@@ -1,10 +1,14 @@
 import {describe, it, expect} from 'vitest';
 import {validateRevealCardForm} from '../validateForm';
 import type {RevealCardForm} from '../buildPreviewCard';
+import {REVEAL_ID_BASE, SET_TOTAL, inkBlock} from '../../../shared/constants';
+
+// Taken from the season's constants so these fixtures stay valid every season.
+const RUBY_NUMBER = inkBlock('Ruby').first;
 
 function form(overrides: Partial<RevealCardForm> = {}): RevealCardForm {
   return {
-    collectorNumber: '50',
+    collectorNumber: String(RUBY_NUMBER),
     name: 'Mei',
     version: 'Red Panda',
     rarity: 'Rare',
@@ -35,9 +39,27 @@ describe('validateRevealCardForm', () => {
   });
 
   it('flags a duplicate id', () => {
-    const r = validateRevealCardForm(form(), new Set([13050]), 'mei.png');
+    const r = validateRevealCardForm(form(), new Set([REVEAL_ID_BASE + RUBY_NUMBER]), 'mei.png');
     expect(r.ok).toBe(false);
     expect(r.errors.collectorNumber).toMatch(/already exists/);
+  });
+
+  // A set is numbered ink by ink, so the number implies the ink. Both wrong-ink
+  // publishes last season were the form's default ink left unchanged.
+  it('rejects an ink that does not own the collector number, naming the one that does', () => {
+    const r = validateRevealCardForm(form({ink: 'Amber'}), NO_IDS, 'mei.png');
+    expect(r.ok).toBe(false);
+    expect(r.errors.ink).toMatch(/Ruby block/);
+  });
+
+  it('checks a dual-ink card against its first ink only', () => {
+    expect(validateRevealCardForm(form({ink2: 'Sapphire'}), NO_IDS, 'mei.png').ok).toBe(true);
+    expect(validateRevealCardForm(form({ink: 'Sapphire', ink2: 'Ruby'}), NO_IDS, 'mei.png').errors.ink).toBeDefined();
+  });
+
+  it('skips the ink check past the numbered set (promos, enchanteds)', () => {
+    const r = validateRevealCardForm(form({ink: 'Amber', collectorNumber: String(SET_TOTAL + 5)}), NO_IDS, 'mei.png');
+    expect(r.ok).toBe(true);
   });
 
   it('requires a positive collector number', () => {

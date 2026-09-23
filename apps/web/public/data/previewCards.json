@@ -1,27 +1,413 @@
 {
   "metadata": {
     "formatVersion": "2.3.2",
-    "generatedOn": "2026-07-07T12:08:21",
+    "generatedOn": "2026-09-21T12:00:00",
     "language": "en"
   },
   "sets": {
-    "13": {
-      "name": "Attack of the Vine!",
-      "number": 13,
+    "14": {
+      "name": "Hyperia City",
+      "number": 14,
       "type": "expansion",
-      "prereleaseDate": "2026-07-17",
-      "releaseDate": "2026-07-24",
-      "hasAllCards": true,
+      "prereleaseDate": "2026-10-16",
+      "releaseDate": "2026-10-23",
+      "hasAllCards": false,
       "allowedInFormats": {
         "Core": {
-          "allowed": false,
+          "allowed": true,
           "rotationGroup": 4
-        },
-        "Infinity": {
-          "allowed": false
         }
       }
     }
   },
-  "cards": []
+  "cards": [
+    {
+      "id": 14021,
+      "name": "Miguel Rivera",
+      "fullName": "Miguel Rivera - Street Musician",
+      "cost": 1,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 21,
+      "version": "Street Musician",
+      "rarity": "Rare",
+      "franchise": "Coco",
+      "subtypes": [
+        "Storyborn",
+        "Hero"
+      ],
+      "fullText": "SHARE THE MUSIC While you have a song card in your discard, this character gets +1 ◊ and gains Singer 3. (They count as cost 3 to sing songs.)",
+      "fullTextSections": [
+        "SHARE THE MUSIC While you have a song card in your discard, this character gets +1 ◊ and gains Singer 3. (They count as cost 3 to sing songs.)"
+      ],
+      "strength": 1,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 14023,
+      "name": "Mickey Mouse",
+      "fullName": "Mickey Mouse - Best in Town",
+      "cost": 1,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 23,
+      "version": "Best in Town",
+      "rarity": "Super Rare",
+      "franchise": "Mickey Mouse & Friends",
+      "subtypes": [
+        "Dreamborn",
+        "Hero"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Adventurous",
+          "fullText": "Adventurous"
+        }
+      ],
+      "fullText": "Adventurous (This character can't challenge and must quest each turn if able.)\nHOT DOG! At the end of your turn, if this character is exerted, each player gets 1 ink drop. (Each ink drop may be removed to pay 1 ⬡.)",
+      "fullTextSections": [
+        "Adventurous (This character can't challenge and must quest each turn if able.)",
+        "HOT DOG! At the end of your turn, if this character is exerted, each player gets 1 ink drop. (Each ink drop may be removed to pay 1 ⬡.)"
+      ],
+      "strength": 0,
+      "willpower": 4,
+      "lore": 2
+    },
+    {
+      "id": 14034,
+      "name": "Port Authority",
+      "fullName": "Port Authority - Center Hub",
+      "cost": 4,
+      "color": "Amber",
+      "inkwell": false,
+      "type": "Location",
+      "setCode": "14",
+      "number": 34,
+      "version": "Center Hub",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Hyperia City"
+      ],
+      "fullText": "WELCOME TO TOWN Once during your turn, whenever a character moves here, each player gets 1 ink drop and gains 1 lore. (Each ink drop may be removed to pay 1 ⬡.)",
+      "fullTextSections": [
+        "WELCOME TO TOWN Once during your turn, whenever a character moves here, each player gets 1 ink drop and gains 1 lore. (Each ink drop may be removed to pay 1 ⬡.)"
+      ],
+      "willpower": 8,
+      "lore": 2,
+      "moveCost": 1
+    },
+    {
+      "id": 14059,
+      "name": "Madam Mim",
+      "fullName": "Madam Mim - Resourceful Trickster",
+      "cost": 8,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 59,
+      "version": "Resourceful Trickster",
+      "rarity": "Legendary",
+      "franchise": "The Sword in the Stone",
+      "subtypes": [
+        "Dreamborn",
+        "Villain",
+        "Sorcerer"
+      ],
+      "fullText": "UPPER HAND When you play this character, if you removed an ink drop to play her, draw 2 cards.\nBAUBLE GAME Once during your turn, whenever you remove an ink drop, draw a card.",
+      "fullTextSections": [
+        "UPPER HAND When you play this character, if you removed an ink drop to play her, draw 2 cards.",
+        "BAUBLE GAME Once during your turn, whenever you remove an ink drop, draw a card."
+      ],
+      "strength": 7,
+      "willpower": 5,
+      "lore": 3
+    },
+    {
+      "id": 14062,
+      "name": "Higitus Figitus",
+      "fullName": "Higitus Figitus",
+      "cost": 6,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "14",
+      "number": 62,
+      "rarity": "Common",
+      "franchise": "The Sword in the Stone",
+      "subtypes": [
+        "Song"
+      ],
+      "fullText": "(A character with cost 6 or more can ⟳ to sing this song for free.)\nGet 3 ink drops. (Each ink drop may be removed to pay 1 ⬡.)",
+      "fullTextSections": [
+        "(A character with cost 6 or more can ⟳ to sing this song for free.)",
+        "Get 3 ink drops. (Each ink drop may be removed to pay 1 ⬡.)"
+      ]
+    },
+    {
+      "id": 14063,
+      "name": "Un Poco Loco",
+      "fullName": "Un Poco Loco",
+      "cost": 3,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "14",
+      "number": 63,
+      "rarity": "Rare",
+      "franchise": "Coco",
+      "subtypes": [
+        "Song"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Sing Together",
+          "keywordValue": "3",
+          "fullText": "Sing Together 3"
+        }
+      ],
+      "fullText": "Sing Together 3 (Any number of your or your teammates' characters with total cost 3 or more may ⟳ to sing this song for free.)\nChoose 2 characters of yours. If one of them is cost 3 or less, return both to your hand.",
+      "fullTextSections": [
+        "Sing Together 3 (Any number of your or your teammates' characters with total cost 3 or more may ⟳ to sing this song for free.)",
+        "Choose 2 characters of yours. If one of them is cost 3 or less, return both to your hand."
+      ]
+    },
+    {
+      "id": 14068,
+      "name": "Merlin's Shop and Smithy",
+      "fullName": "Merlin's Shop and Smithy - Magical Market",
+      "cost": 2,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Location",
+      "setCode": "14",
+      "number": 68,
+      "version": "Magical Market",
+      "rarity": "Uncommon",
+      "franchise": "The Sword in the Stone",
+      "subtypes": [
+        "Hyperia City"
+      ],
+      "fullText": "OPEN FOR BUSINESS Once during your turn, whenever a character moves here, draw a card and gain 1 lore.",
+      "fullTextSections": [
+        "OPEN FOR BUSINESS Once during your turn, whenever a character moves here, draw a card and gain 1 lore."
+      ],
+      "willpower": 6,
+      "lore": 0,
+      "moveCost": 2
+    },
+    {
+      "id": 14093,
+      "name": "Honey Lemon",
+      "fullName": "Honey Lemon - Testing the Limits",
+      "cost": 3,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 93,
+      "version": "Testing the Limits",
+      "rarity": "Rare",
+      "franchise": "Big Hero 6",
+      "subtypes": [
+        "Storyborn",
+        "Super",
+        "Hero",
+        "Inventor"
+      ],
+      "fullText": "ADVANCED CHEMISTRY When you play this character and whenever she quests, you may banish chosen item of yours. If you do, draw a card and get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "ADVANCED CHEMISTRY When you play this character and whenever she quests, you may banish chosen item of yours. If you do, draw a card and get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 14109,
+      "name": "Pepita",
+      "fullName": "Pepita - Sweet Kitty",
+      "cost": 1,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 109,
+      "version": "Sweet Kitty",
+      "rarity": "Common",
+      "franchise": "Coco",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "strength": 1,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 14117,
+      "name": "Hector Rivera",
+      "fullName": "Hector Rivera - Street Musician",
+      "cost": 1,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 117,
+      "version": "Street Musician",
+      "rarity": "Uncommon",
+      "franchise": "Coco",
+      "subtypes": [
+        "Storyborn",
+        "Mentor"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Singer",
+          "keywordValue": "2",
+          "fullText": "Singer 2"
+        }
+      ],
+      "fullText": "Singer 2 (This character counts as cost 2 to sing songs.)\nSTRIKE A CHORD When you play this character, you may put the top card of your deck into your discard.",
+      "fullTextSections": [
+        "Singer 2 (This character counts as cost 2 to sing songs.)",
+        "STRIKE A CHORD When you play this character, you may put the top card of your deck into your discard."
+      ],
+      "strength": 2,
+      "willpower": 1,
+      "lore": 1
+    },
+    {
+      "id": 14119,
+      "name": "Pepita",
+      "fullName": "Pepita - Imelda's Right Hand",
+      "cost": 5,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 119,
+      "version": "Imelda's Right Hand",
+      "rarity": "Super Rare",
+      "franchise": "Coco",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "3",
+          "fullText": "Shift 3"
+        }
+      ],
+      "fullText": "Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one of your characters named Pepita.)\nANCESTRAL WISDOM While you have 10 or more cards in your discard, this character gets +2 ¤ and +2 ◊.",
+      "fullTextSections": [
+        "Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one of your characters named Pepita.)",
+        "ANCESTRAL WISDOM While you have 10 or more cards in your discard, this character gets +2 ¤ and +2 ◊."
+      ],
+      "strength": 4,
+      "willpower": 6,
+      "lore": 1
+    },
+    {
+      "id": 14135,
+      "name": "Land of the Dead",
+      "fullName": "Land of the Dead - Marigold Bridge",
+      "cost": 4,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Location",
+      "setCode": "14",
+      "number": 135,
+      "version": "Marigold Bridge",
+      "rarity": "Uncommon",
+      "franchise": "Coco",
+      "fullText": "HONORED OFFERINGS While you have 10 or more cards in your discard, this location gets +2 ◊.",
+      "fullTextSections": [
+        "HONORED OFFERINGS While you have 10 or more cards in your discard, this location gets +2 ◊."
+      ],
+      "willpower": 8,
+      "lore": 1,
+      "moveCost": 1
+    },
+    {
+      "id": 14136,
+      "name": "Khan Stadium",
+      "fullName": "Khan Stadium - State of the Art",
+      "cost": 1,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Location",
+      "setCode": "14",
+      "number": 136,
+      "version": "State of the Art",
+      "rarity": "Common",
+      "franchise": "TaleSpin",
+      "subtypes": [
+        "Hyperia City"
+      ],
+      "fullText": "BIG SHOW Characters get +2 ¤ while here.",
+      "fullTextSections": [
+        "BIG SHOW Characters get +2 ¤ while here."
+      ],
+      "willpower": 4,
+      "lore": 1,
+      "moveCost": 1
+    },
+    {
+      "id": 14170,
+      "name": "Institute of Technology",
+      "fullName": "Institute of Technology - Honey Lemon's Lab",
+      "cost": 2,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Location",
+      "setCode": "14",
+      "number": 170,
+      "version": "Honey Lemon's Lab",
+      "rarity": "Uncommon",
+      "franchise": "Big Hero 6",
+      "fullText": "BREAK TIME Once during your turn, whenever a Super character quests while here, return an item card from your discard to your hand.",
+      "fullTextSections": [
+        "BREAK TIME Once during your turn, whenever a Super character quests while here, return an item card from your discard to your hand."
+      ],
+      "willpower": 5,
+      "lore": 1,
+      "moveCost": 1
+    },
+    {
+      "id": 14204,
+      "name": "Khan Industries",
+      "fullName": "Khan Industries - Greenway Landmark",
+      "cost": 5,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Location",
+      "setCode": "14",
+      "number": 204,
+      "version": "Greenway Landmark",
+      "rarity": "Rare",
+      "franchise": "TaleSpin",
+      "subtypes": [
+        "Hyperia City"
+      ],
+      "fullText": "HIGH SECURITY Characters can't be challenged while here.",
+      "fullTextSections": [
+        "HIGH SECURITY Characters can't be challenged while here."
+      ],
+      "willpower": 8,
+      "lore": 2,
+      "moveCost": 2
+    }
+  ]
 }
