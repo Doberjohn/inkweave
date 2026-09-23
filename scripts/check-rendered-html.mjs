@@ -51,6 +51,24 @@ function loadEngine() {
 }
 
 /**
+ * Read the canonical href out of prerendered HTML, whatever order the attributes
+ * come in: find the tag by its `rel`, then read its `href` separately.
+ *
+ * Attribute order is NOT a contract here. This guard reads markup React hoisted
+ * from `<Seo>`, and React emits attributes in JSX prop order, so adding one prop
+ * ahead of `rel` reorders the output. That is exactly what happened: #535 stamped
+ * `data-seo` on every tag `<Seo>` owns, React emitted
+ * `<link data-seo="" rel="canonical" href="...">`, and a reader anchored on
+ * `<link rel="canonical"` stopped matching. The canonical was present and correct,
+ * but this guard reported "(none)" and blocked every production deploy from
+ * 2026-07-28 until it was found on 2026-09-23. Keep both orders covered by tests.
+ */
+export function readCanonical(html) {
+  const tag = html.match(/<link\b[^>]*\brel="canonical"[^>]*>/i)?.[0];
+  return tag?.match(/\bhref="([^"]*)"/i)?.[1];
+}
+
+/**
  * Choose which card pages this guard verifies.
  *
  * The prerender already aborts on a >2% route failure rate, so this guard is not
@@ -108,7 +126,7 @@ function findCardPageOffenders(targetDir, card, route) {
   }
 
   const html = readFileSync(file, 'utf8');
-  const canonical = html.match(/<link\s+rel="canonical"\s+href="([^"]+)"/)?.[1];
+  const canonical = readCanonical(html);
   const expectedCanonical = `${SITE_ORIGIN}${route}`;
 
   // Each entry is one assertion: [failed?, why]. A table rather than a chain of ifs

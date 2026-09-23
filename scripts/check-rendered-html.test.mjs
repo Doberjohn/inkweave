@@ -2,7 +2,12 @@ import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {selectSampleCards, findOffenders, SITE_ORIGIN} from './check-rendered-html.mjs';
+import {
+  selectSampleCards,
+  findOffenders,
+  readCanonical,
+  SITE_ORIGIN,
+} from './check-rendered-html.mjs';
 
 /** Stand-in for the engine's cardPath — same shape, no engine dist needed. */
 const cardPath = (c) => `/card/${c.id}/${c.slug}`;
@@ -13,6 +18,18 @@ const CARD = {id: 1989, slug: 'elsa-snow-queen', fullName: 'Elsa - Snow Queen'};
 const goodCardHtml = (card) =>
   `<!doctype html><html><head><title>${card.fullName} | Lorcana Synergies | Inkweave</title>` +
   `<link rel="canonical" href="${SITE_ORIGIN}${cardPath(card)}"/></head>` +
+  `<body><h1>${card.fullName}</h1></body></html>`;
+
+/**
+ * The same page as React actually hoists it since #535: `<Seo>` stamps `data-seo`
+ * on every tag it owns, and React emits attributes in JSX order, so `rel` is no
+ * longer first. This exact shape shipped on 2026-07-28 and silently blocked every
+ * production deploy for two months, because the guard's reader required `rel` to
+ * lead. The canonical was present and correct the whole time.
+ */
+const goodCardHtmlWithSeoMarker = (card) =>
+  `<!doctype html><html><head><title data-seo="">${card.fullName} | Lorcana Synergies | Inkweave</title>` +
+  `<link data-seo="" rel="canonical" href="${SITE_ORIGIN}${cardPath(card)}"/></head>` +
   `<body><h1>${card.fullName}</h1></body></html>`;
 
 /** The SPA shell Vercel's rewrite serves when no prerendered file exists. */
@@ -72,9 +89,34 @@ describe('selectSampleCards', () => {
   });
 });
 
+describe('readCanonical', () => {
+  // Attribute order is not a contract: React emits them in JSX prop order, so a new
+  // prop ahead of `rel` reorders the markup. Both shapes below have shipped.
+  it.each([
+    ['rel first', `<link rel="canonical" href="${SITE_ORIGIN}/x">`],
+    ['a marker first', `<link data-seo="" rel="canonical" href="${SITE_ORIGIN}/x">`],
+    ['href first', `<link href="${SITE_ORIGIN}/x" rel="canonical">`],
+  ])('reads the href with %s', (_label, tag) => {
+    expect(readCanonical(`<head>${tag}</head>`)).toBe(`${SITE_ORIGIN}/x`);
+  });
+
+  it('returns undefined when the page carries no canonical at all', () => {
+    expect(readCanonical('<head><link rel="icon" href="/favicon.png"></head>')).toBeUndefined();
+  });
+});
+
 describe('findOffenders', () => {
   it('passes a well-formed build', () => {
     seedGoodBuild();
+    expect(findOffenders(dist, [CARD], cardPath)).toEqual([]);
+  });
+
+  it('reads the canonical whatever order its attributes come in', () => {
+    seedGoodBuild();
+    fs.writeFileSync(
+      path.join(dist, 'card', '1989', 'elsa-snow-queen', 'index.html'),
+      goodCardHtmlWithSeoMarker(CARD),
+    );
     expect(findOffenders(dist, [CARD], cardPath)).toEqual([]);
   });
 
