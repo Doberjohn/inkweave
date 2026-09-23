@@ -408,6 +408,31 @@
       "willpower": 8,
       "lore": 2,
       "moveCost": 2
+    },
+    {
+      "id": 14010,
+      "name": "Miguel Rivera",
+      "fullName": "Miguel Rivera - Promising Musician",
+      "cost": 3,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 10,
+      "version": "Promising Musician",
+      "rarity": "Common",
+      "franchise": "Coco",
+      "subtypes": [
+        "Storyborn",
+        "Hero"
+      ],
+      "fullText": "CROWD PLEASER Whenever this character sings a song, gain 1 lore.",
+      "fullTextSections": [
+        "CROWD PLEASER Whenever this character sings a song, gain 1 lore."
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 1
     }
   ]
 }
