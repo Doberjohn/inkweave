@@ -41,6 +41,29 @@ test.describe('SEO', () => {
   }
 
   /**
+   * /reveals is NOT in INDEXABLE_ROUTES because it is season-gated: off-season the
+   * route redirects to '/', and a hard assertion would fail for a reason unrelated
+   * to SEO. It gets its own self-gating test because it is the one route with no
+   * prerendered file of its own, so in production Vercel's rewrite answers it with
+   * the HOME page's prerendered HTML. Those tags carry `data-seo`, the sweep in
+   * main.tsx removes them, and before this page rendered a <Seo> nothing replaced
+   * them: production served /reveals with no title and no canonical at all.
+   */
+  test('reveals page owns its title and canonical when in season', async ({page}) => {
+    await gotoWithRetry(page, '/reveals');
+    test.skip(new URL(page.url()).pathname !== '/reveals', 'reveal season is over');
+
+    await expect
+      .poll(() => page.title(), {message: '<Seo> never replaced the shell title on /reveals'})
+      .not.toBe(SHELL_TITLE);
+
+    const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
+    expect(canonical, '/reveals must self-reference, not inherit the homepage canonical').toBe(
+      `${SITE_ORIGIN}/reveals`,
+    );
+  });
+
+  /**
    * #535 duplication guard.
    *
    * The prerender crawl bakes React's hoisted <Seo> tags into the static HTML; on a real

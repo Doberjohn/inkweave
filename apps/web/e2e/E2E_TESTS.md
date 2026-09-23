@@ -120,7 +120,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should close dropdown on Escape | Escape key dismisses autocomplete dropdown |
 | should NOT show autocomplete on browse page search | Typing in browse page search does NOT show autocomplete (browse filters inline) |
 
-## `seo.spec.ts` — 17 tests (both viewports)
+## `seo.spec.ts` — 18 tests (both viewports)
 
 Route-level metadata coverage (#524). Before this, the file asserted only home-page
 properties, so #486's central acceptance criterion — every route self-references its own
@@ -148,6 +148,7 @@ against the dev server, where both are present.
 | card page links to all six ink hubs at a mobile viewport | The footer's ink nav is what puts every hub one click from all 1,024 card pages (#530) |
 | ink hub emits one crawlable anchor per card, identically on mobile | `CardGrid`, not the Virtuoso-windowed `BrowseCardGrid` — windowing would emit a fraction of the anchors to a crawler (#530) |
 | unknown ink slug renders the 404 page, not an empty hub | Junk URLs under `/ink/` declare themselves unindexable instead of returning a thin 200 (#525) |
+| reveals page owns its title and canonical when in season | Self-gating (skips off-season, when `/reveals` redirects to `/`). `/reveals` has no prerendered file, so production answers it with the HOME page's HTML; those tags carry `data-seo`, the sweep strips them, and with no `<Seo>` of its own the page shipped with no title and no canonical at all |
 | every tag `<Seo>` emits carries the data-seo sweep marker | #535 — an unmarked tag escapes `sweepPrerenderedSeoTags()` and silently duplicates on every real visit |
 | client navigation swaps metadata in place instead of accumulating it | #535 — two `<link rel="canonical">` makes Google ignore canonicalisation entirely, which is worse than emitting none |
 | sweep preserves index.html site-level constants | #535 — `og:type` / `og:locale` / `og:image:width` / `og:image:height` / `twitter:card` are not emitted by `<Seo>`; widening the sweep selector would strip them on every load |
