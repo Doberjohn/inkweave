@@ -70,6 +70,7 @@ ready-to-paste JSON entry before LorcanaJSON.org publishes the canonical set.
 const SET_NAME_TO_CODE = {
   'The Wilds Unknown': '12',
   'Attack of the Vine!': '13',
+  'Hyperia City': '14',
   // Add the next set's display name → numeric code each reveal season.
 };
 

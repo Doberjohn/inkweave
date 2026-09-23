@@ -567,17 +567,21 @@ export function isSacrificeCard(card: LorcanaCard): boolean {
 
 /**
  * Self-Discard is the player-side mirror of the opponent-facing Discard rule (Rule 4):
- * you discard your OWN cards from hand, then benefit. Three roles:
+ * you fill your OWN discard, then benefit. Five roles:
  *  - 'enabler'      — a hand-discard outlet (loot, discard-your-hand, discard-as-cost)
+ *  - 'mill'         — fills the bin from the DECK ("put the top N cards of your deck into your
+ *                     discard"). A bin-filler for zone payoffs and reanimators, never a
+ *                     hand-discard enabler: it does not trigger a "when you discard" payoff.
  *  - 'reanimator'   — plays / returns a card FROM YOUR DISCARD (recursion). `makeSearchPattern`
  *                     deliberately excludes "from your discard" and defers recursion to this role.
  *  - 'state-payoff' — rewards the discard EVENT ("discarded a card this turn") or an empty hand.
+ *  - 'zone-payoff'  — rewards the discard as a countable ZONE ("10 or more cards in your discard",
+ *                     "a song card in your discard", "cards were put into your discard this turn").
  *
- * Mill ("put the top N of your deck into your discard") is deliberately NOT an enabler: it fills
- * the bin from the deck, not the hand, so it never triggers a "when you discard" payoff. The
- * opponent-exclusion keeps the enabler disjoint from the Discard rule.
+ * The opponent-exclusion keeps the enabler disjoint from the Discard rule. Songs are not
+ * bin-fillers here: a sung song lands in the discard, but that is the Singer rule's axis.
  */
-export type SelfDiscardRole = 'enabler' | 'reanimator' | 'state-payoff';
+export type SelfDiscardRole = 'enabler' | 'reanimator' | 'state-payoff' | 'zone-payoff' | 'mill';
 
 /** Loot — "draw a card, then choose and discard a card": the dominant self-discard outlet. */
 const SELF_DISCARD_LOOT_PATTERN = /draw\s+(?:a|an|\d+)\s+cards?,?\s+then\s+(?:choose and\s+)?discard/i;
@@ -595,9 +599,26 @@ const SELF_DISCARD_OPPONENT_PATTERN = /opponent|each player|challenging player|t
 const SELF_DISCARD_REANIMATOR_PATTERN = /(?:play|return|put)\b[^.]{0,60}\bfrom your discard\b/i;
 /** State payoff — rewards the discard EVENT (discarded this turn) or an empty hand (Hellbent). */
 const SELF_DISCARD_STATE_PATTERN = /discarded\s+a\s+card\s+this\s+turn|no cards in (?:your )?hand/i;
+/**
+ * Zone payoff — counts or checks cards sitting IN your discard ("10 or more cards in your
+ * discard", "for each Alien character card in your discard", "a song card in your discard").
+ * "in your discard" keeps it disjoint from the reanimator's "from your discard".
+ */
+const SELF_DISCARD_ZONE_IN_PATTERN =
+  /\b(?:a|an|\d+\s+or\s+more|for\s+each)\s+(?:\w+\s+){0,3}?cards?\s+(?:named\s+\w+\s+)?in\s+your\s+discard\b/i;
+/** Zone payoff — the "N or more cards were put into your discard this turn" trigger family. */
+const SELF_DISCARD_ZONE_PUT_PATTERN = /cards?\s+were\s+put\s+into\s+your\s+discard\s+this\s+turn/i;
+/** Mill — fills the bin from the top of the deck. Kept tight: "put the rest / put it into your discard" is not mill. */
+const SELF_DISCARD_MILL_PATTERN =
+  /put\s+the\s+top\s+(?:card|\d+\s+cards)\s+of\s+your\s+deck\s+into\s+your\s+discard/i;
 
 /** Fast pre-filter: every self-discard pattern contains "discard" or "no cards in". */
 const HAS_SELF_DISCARD_KEYWORD = /discard|no cards in/i;
+
+/** Zone payoff: either the "in your discard" count/check shape or the "put into your discard this turn" trigger. */
+function isSelfDiscardZonePayoff(text: string): boolean {
+  return SELF_DISCARD_ZONE_IN_PATTERN.test(text) || SELF_DISCARD_ZONE_PUT_PATTERN.test(text);
+}
 
 /**
  * Enabler: a hand-discard OUTLET (loot / discard-your-hand / discard-as-cost) that is NOT
@@ -622,10 +643,12 @@ export function getSelfDiscardRoles(card: LorcanaCard): SelfDiscardRole[] {
   if (isSelfDiscardEnabler(text)) roles.push('enabler');
   if (SELF_DISCARD_REANIMATOR_PATTERN.test(text)) roles.push('reanimator');
   if (SELF_DISCARD_STATE_PATTERN.test(text)) roles.push('state-payoff');
+  if (isSelfDiscardZonePayoff(text)) roles.push('zone-payoff');
+  if (SELF_DISCARD_MILL_PATTERN.test(text)) roles.push('mill');
   return roles;
 }
 
-/** Check if a card participates in the self-discard axis (enabler, reanimator, or state payoff). */
+/** Check if a card participates in the self-discard axis (any of the five roles). */
 export function isSelfDiscardCard(card: LorcanaCard): boolean {
   return getSelfDiscardRoles(card).length > 0;
 }
@@ -1866,6 +1889,45 @@ const BOUNCE_REBUY_EFFECT_PATTERN =
  * "return", so a return-only prefilter would silently drop the whole rebuy-payoff pool.
  */
 const HAS_BOUNCE_KEYWORD = /return|is returned|when you play this character/i;
+
+/**
+ * Cost cap on the RETURN clause only ("return … chosen … with cost N [or less] … to your/their
+ * hand"). The `(?!\s+or\s+more)` guard keeps a song's "cost N or more" sing reminder from reading
+ * as a cap; `[^.]` keeps both reads inside the one sentence.
+ */
+const BOUNCE_COST_CAP_PATTERN =
+  /return\s+(?:up to \d+\s+)?(?:another\s+)?chosen\s+[^.]*?\bwith\s+cost\s+(\d+)(?!\s+or\s+more)(?:\s+or\s+less)?\b[^.]*?to\s+(?:your|their\s+player'?s?)\s+hand/i;
+/**
+ * Classification gate ("return chosen Seven Dwarfs character of yours"). Case-sensitive on purpose:
+ * a capitalised run is a classification, a lowercase adjective ("exerted", "another") is not. Only
+ * the verb is case-flexible (`[Rr]eturn`), since it can open a sentence or sit inside one.
+ */
+const BOUNCE_CLASS_GATE_PATTERN =
+  /[Rr]eturn\s+(?:another\s+)?chosen\s+([A-Z][\w']*(?:\s+[A-Z][\w']*)*)\s+characters?\s+of\s+yours\b/;
+
+/** What a bounce enabler may legally return: a cost ceiling and/or a required classification (null = unrestricted). */
+export interface BounceTargetGate {
+  costCap: number | null;
+  classification: string | null;
+}
+
+/** Read the target gate off a bounce enabler's return clause. */
+export function getBounceTargetGate(card: LorcanaCard): BounceTargetGate {
+  const text = normalizeCardText(card);
+  const capMatch = BOUNCE_COST_CAP_PATTERN.exec(text);
+  const classMatch = BOUNCE_CLASS_GATE_PATTERN.exec(text);
+  return {
+    costCap: capMatch ? Number.parseInt(capMatch[1], 10) : null,
+    classification: classMatch ? classMatch[1] : null,
+  };
+}
+
+/** True when the enabler behind `gate` can legally return `target` (uncapped gates admit everything). */
+export function bounceGateAdmits(gate: BounceTargetGate, target: LorcanaCard): boolean {
+  const costOk = gate.costCap === null || target.cost <= gate.costCap;
+  const classOk = gate.classification === null || hasClassification(target, gate.classification);
+  return costOk && classOk;
+}
 
 /**
  * A re-buyable ETB body: a "when you play this character" enter-play with unambiguous re-fire

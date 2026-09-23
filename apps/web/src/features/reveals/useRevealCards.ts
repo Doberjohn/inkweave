@@ -1,5 +1,6 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {useCardDataContext} from '../../shared/contexts/CardDataContext';
+import {REVEAL_SET_CODE, SET_NAMES} from '../../shared/constants';
 import {FRANCHISES, matchesFranchise, type FranchiseId} from './franchise';
 
 export interface RevealTier {
@@ -15,8 +16,7 @@ export interface UseRevealCardsReturn {
   error: Error | null;
 }
 
-const REVEAL_SET_CODE = '13';
-const RETURNING_LABEL = 'Returning franchises in Attack of the Vine!';
+const RETURNING_LABEL = `Returning franchises in ${SET_NAMES[REVEAL_SET_CODE]}`;
 
 export function useRevealCards(): UseRevealCardsReturn {
   const {cards, isLoading, error} = useCardDataContext();

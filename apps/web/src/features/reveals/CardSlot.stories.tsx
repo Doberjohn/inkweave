@@ -10,6 +10,10 @@ const meta: Meta<typeof CardSlot> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// Season-independent art (stories.md #512): preview AVIFs are deleted when a set
+// graduates, so a story pointed at them rots every season.
+const SAMPLE_IMG = '/card-images/en/set6/35_b9afe49519236b60d7d6eca0359905ef44cecae9.jpg';
+
 function card(id: number, ink: Ink, cost: number, rarity: string): LorcanaCard {
   return {
     id: String(id),
@@ -19,14 +23,14 @@ function card(id: number, ink: Ink, cost: number, rarity: string): LorcanaCard {
     ink,
     inkwell: true,
     type: 'Character',
-    imageUrl: `/card-images-preview/${id}.avif`,
+    imageUrl: SAMPLE_IMG,
     rarity,
-    setCode: '13',
+    setCode: '9',
   } as LorcanaCard;
 }
 
 export const Revealed: Story = {
-  args: {ink: 'Amber', card: card(2973, 'Amber', 3, 'Rare'), onOpen: () => {}},
+  args: {ink: 'Amber', card: card(1, 'Amber', 3, 'Rare'), onOpen: () => {}},
 };
 
 export const Unrevealed: Story = {
@@ -34,20 +38,20 @@ export const Unrevealed: Story = {
 };
 
 export const Mobile: Story = {
-  args: {ink: 'Ruby', card: card(3100, 'Ruby', 7, 'Super Rare'), width: 46, height: 64, onOpen: () => {}},
+  args: {ink: 'Ruby', card: card(2, 'Ruby', 7, 'Super Rare'), width: 46, height: 64, onOpen: () => {}},
 };
 
 // A mosaic row mixing revealed (varied rarities) and unrevealed slots.
 export const Row: Story = {
   render: () => (
     <div style={{display: 'flex', gap: 7, padding: 16}}>
-      <CardSlot ink="Amber" card={card(2973, 'Amber', 3, 'Common')} onOpen={() => {}} />
-      <CardSlot ink="Amber" card={card(2988, 'Amber', 5, 'Super Rare')} onOpen={() => {}} />
+      <CardSlot ink="Amber" card={card(1, 'Amber', 3, 'Common')} onOpen={() => {}} />
+      <CardSlot ink="Amber" card={card(2, 'Amber', 5, 'Super Rare')} onOpen={() => {}} />
       <CardSlot ink="Amber" />
-      <CardSlot ink="Amber" card={card(2995, 'Amber', 6, 'Legendary')} onOpen={() => {}} />
+      <CardSlot ink="Amber" card={card(3, 'Amber', 6, 'Legendary')} onOpen={() => {}} />
       <CardSlot ink="Amber" />
-      <CardSlot ink="Amber" card={card(2980, 'Amber', 2, 'Uncommon')} onOpen={() => {}} />
-      <CardSlot ink="Amber" card={card(2976, 'Amber', 4, 'Rare')} onOpen={() => {}} />
+      <CardSlot ink="Amber" card={card(4, 'Amber', 2, 'Uncommon')} onOpen={() => {}} />
+      <CardSlot ink="Amber" card={card(5, 'Amber', 4, 'Rare')} onOpen={() => {}} />
     </div>
   ),
 };

@@ -2,6 +2,7 @@ import {describe, it, expect, vi} from 'vitest';
 import {renderHook} from '@testing-library/react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {useRevealProgress} from '../useRevealProgress';
+import {REVEAL_SET_CODE, SET_TOTAL} from '../../../shared/constants';
 
 vi.mock('../../../shared/contexts/CardDataContext', () => ({
   useCardDataContext: () => ({cards: mockCards, isLoading: false, error: null}),
@@ -24,7 +25,7 @@ function make(id: string, overrides: Partial<LorcanaCard> = {}): LorcanaCard {
     willpower: 1,
     lore: 1,
     imageUrl: '',
-    setCode: '13',
+    setCode: REVEAL_SET_CODE,
     setNumber: 1,
     ...overrides,
   };
@@ -36,11 +37,11 @@ const mockCards: LorcanaCard[] = [
   make('e1', {ink: 'Emerald', rarity: 'Rare'}),
   make('d1', {ink: 'Amber', ink2: 'Emerald', rarity: 'Legendary'}), // dual-ink
   make('s1', {ink: 'Steel', rarity: undefined}), // revealed but no rarity yet
-  make('x1', {ink: 'Ruby', setCode: '11'}), // not Set 13 → excluded
+  make('x1', {ink: 'Ruby', setCode: '11'}), // not the reveal set → excluded
 ];
 
 describe('useRevealProgress', () => {
-  it('sums per-ink counts to the unique total revealed (Set 13 only)', () => {
+  it('sums per-ink counts to the unique total revealed (reveal set only)', () => {
     const {result} = renderHook(() => useRevealProgress());
     const {inks, totalRevealed} = result.current;
     expect(totalRevealed).toBe(5); // a1, a2, e1, d1, s1 — x1 excluded
@@ -65,8 +66,8 @@ describe('useRevealProgress', () => {
     expect(result.current.byInk.Steel.rarityCounts).toEqual({}); // s1 has no rarity
   });
 
-  it('derives overallPct from the unique total against the 207-card set', () => {
+  it('derives overallPct from the unique total against the whole set', () => {
     const {result} = renderHook(() => useRevealProgress());
-    expect(result.current.overallPct).toBe(Math.round((5 / 207) * 100)); // 2
+    expect(result.current.overallPct).toBe(Math.round((5 / SET_TOTAL) * 100));
   });
 });

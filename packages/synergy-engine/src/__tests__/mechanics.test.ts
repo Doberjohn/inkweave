@@ -96,6 +96,8 @@ describe('mechanics catalog', () => {
       expect(mechanicLabel('enabler')).toBe('Discard then Draw');
       expect(mechanicLabel('reanimator')).toBe('Play from Discard');
       expect(mechanicLabel('state-payoff')).toBe('Discard Benefits');
+      expect(mechanicLabel('zone-payoff')).toBe('Discard Count');
+      expect(mechanicLabel('mill')).toBe('Mill');
     });
   });
 

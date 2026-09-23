@@ -58,7 +58,7 @@ const MECHANICS = [
   {anchor: /\bdraws?\b/, payoff: /\bwhenever you draw\b|\bif you (?:have )?draw/i},
   {anchor: /\bexert(?:ed|s)?\b/, payoff: /\bwhile (?:this character is )?exerted\b/i},
   {anchor: /\bchallenges?\b/, payoff: /\bwhile challenging\b|\bwhenever[^.]{0,40}challenges?\b/i},
-  {anchor: /\bdiscards?\b/, payoff: /\bmore cards in your hand\b/i},
+  {anchor: /\bdiscards?\b/, payoff: /\bmore cards in your hand\b|\bcards? in your discard\b|\bput into your discard this turn\b/i},
   {anchor: /into your inkwell/, payoff: /\bwhenever[^.]{0,40}(?:into|enters) your inkwell\b/i},
   {anchor: /\bready\b|\breadie[ds]\b/, payoff: null},
   {anchor: /\bgains?\b/, payoff: null},

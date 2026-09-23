@@ -2,6 +2,7 @@ import type {Meta, StoryObj} from '@storybook/react-vite';
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {InkBoard} from './InkBoard';
 import type {InkProgress} from './useRevealProgress';
+import {INK_BASE} from '../../shared/constants';
 
 const meta: Meta<typeof InkBoard> = {
   title: 'Features/Reveals/InkBoard',
@@ -21,36 +22,26 @@ const meta: Meta<typeof InkBoard> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const IMG_IDS = [
-  2973, 2976, 2977, 2978, 2980, 2988, 2992, 2995, 2997, 2999, 3000, 3001, 3002, 3004,
-  3005, 3008, 3009, 3011, 3015, 3020, 3022, 3023, 3029, 3030, 3031, 3032, 3036, 3038,
-  3039, 3045, 3046, 3050, 3053, 3054,
-];
-
-// Each ink's first collector number (mirrors CardMosaic's INK_BASE), so mock
-// setNumbers land in-range and the cards place on the 38-slot board.
-const INK_BASE: Record<Ink, number> = {
-  Amber: 1,
-  Amethyst: 38,
-  Emerald: 74,
-  Ruby: 113,
-  Sapphire: 148,
-  Steel: 178,
-};
+// Season-independent art (stories.md #512): preview AVIFs are deleted when a set
+// graduates, so a story pointed at them rots every season.
+const SAMPLE_IMG = '/card-images/en/set6/35_b9afe49519236b60d7d6eca0359905ef44cecae9.jpg';
 
 function progress(ink: Ink, count: number, rarityCounts: Record<string, number>): InkProgress {
-  const cards = IMG_IDS.slice(0, count).map(
-    (id, i) =>
+  const cards = Array.from(
+    {length: count},
+    (_, i) =>
       ({
-        id: String(id),
+        id: `${ink}-${i}`,
         name: 'Card',
-        fullName: `Card ${id}`,
+        fullName: `Card ${i + 1}`,
         cost: (i % 9) + 1,
         ink,
         inkwell: true,
         type: 'Character',
-        imageUrl: `/card-images-preview/${id}.avif`,
-        setCode: '13',
+        imageUrl: SAMPLE_IMG,
+        setCode: '9',
+        // The season's real INK_BASE (not a private copy that can drift), so mock
+        // setNumbers land in-range and the cards place on the board.
         setNumber: INK_BASE[ink] + i,
       }) as LorcanaCard,
   );

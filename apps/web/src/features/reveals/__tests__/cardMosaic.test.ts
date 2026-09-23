@@ -6,7 +6,11 @@ import {ALL_INKS} from '../../../shared/constants';
 
 const sum = (a: readonly number[]) => a.reduce((x, y) => x + y, 0);
 
-// The mobile mosaic's widest row (ROWS_MOBILE) has 6 slots; the mobile gap is 5px.
+// MAX_COLS is the widest mobile row the sizing math is proven for, a fixed ceiling
+// rather than the season's peak: the layouts suite below requires every
+// ROWS_MOBILE to peak at or under it. Overflow can only happen when the 38px MIN
+// clamp bites, and that row width grows with the column count, so a narrower
+// layout always fits too. The mobile gap is 5px.
 const MAX_COLS = 6;
 const GAP = 5;
 const widestRowWidth = (slotW: number) => slotW * MAX_COLS + (MAX_COLS - 1) * GAP;

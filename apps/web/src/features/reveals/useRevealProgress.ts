@@ -1,10 +1,8 @@
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {useCardDataContext} from '../../shared/contexts/CardDataContext';
-import {ALL_INKS} from '../../shared/constants';
+import {ALL_INKS, REVEAL_SET_CODE} from '../../shared/constants';
 import {PER_INK, SET_TOTAL} from './setComposition';
 import {rarityConfigOf} from './rarity';
-
-const REVEAL_SET_CODE = '13';
 
 export interface InkProgress {
   ink: Ink;
@@ -30,10 +28,11 @@ export interface RevealProgress {
 /**
  * Which ink board(s) a card counts toward.
  *
- * Primary-ink only: a dual-ink card (e.g. the Set 13 Team cards "Amber-Emerald")
- * counts toward its first ink alone. This keeps the six per-ink boards summing
- * cleanly to SET_TOTAL (the per-ink totals in setComposition add to 207) and each
- * revealed card in exactly one board. To instead show dual-ink cards in both
+ * Primary-ink only: a dual-ink card (e.g. "Amber-Emerald") counts toward its
+ * first ink alone. This keeps the six per-ink boards summing cleanly to SET_TOTAL
+ * and each revealed card in exactly one board, and it matches how a set is
+ * numbered (a dual-ink card sits in its first ink's collector-number block, see
+ * `inkBlock`). To instead show dual-ink cards in both
  * boards, return `card.ink2 ? [card.ink, card.ink2] : [card.ink]` — but note that
  * breaks the per-ink denominators and double-counts in per-ink sums.
  */
@@ -42,7 +41,7 @@ function cardInks(card: LorcanaCard): Ink[] {
 }
 
 /**
- * Per-ink Set 13 reveal progress derived from the real card data. Replaces the
+ * Per-ink reveal progress for the season's set, derived from the real card data. Replaces the
  * prototype's synthetic `revealPct`. Drives the rings, the diamond mosaic fill,
  * the rarity breakdown, the hero stat, and the overall progress bar — all from
  * one source so they never disagree.

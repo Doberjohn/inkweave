@@ -1,6 +1,37 @@
 import {test, expect} from '../fixtures';
 
+interface RevealSet {
+  name: string;
+  number: number;
+  releaseDate: string;
+}
+
+/**
+ * The set in reveal season: the previewCards.json entry with the latest
+ * releaseDate. Read from the data the app itself reads, so this spec names no set
+ * and needs no edit when a new season starts.
+ */
+/** A set block is usable here only once it carries the three fields the assertions read. */
+function isRevealSet(set: Partial<RevealSet> | undefined): set is RevealSet {
+  return (
+    typeof set?.name === 'string' &&
+    typeof set?.number === 'number' &&
+    typeof set?.releaseDate === 'string'
+  );
+}
+
+function latestRevealSet(data: {sets?: Record<string, Partial<RevealSet> | undefined>}): RevealSet | null {
+  const dated = Object.values(data?.sets ?? {}).filter(isRevealSet);
+  if (dated.length === 0) return null;
+  return dated.reduce((a, b) => (new Date(b.releaseDate) > new Date(a.releaseDate) ? b : a));
+}
+
+/** A debut franchise's spotlight tile: an action button labelled "View <franchise> cards". */
+const FRANCHISE_BUTTON = /^View .+ cards$/;
+
 test.describe('Reveals page (flag on)', () => {
+  let revealSet: RevealSet;
+
   test.beforeEach(async ({page}, testInfo) => {
     // Clear the daily-dismiss key so the promo modal reliably appears.
     await page.addInitScript(() => {
@@ -19,30 +50,26 @@ test.describe('Reveals page (flag on)', () => {
     // After each set graduates and previewCards.json is refreshed with the
     // NEXT set's dates, these tests pick back up automatically.
     const resp = await page.request.get('/data/previewCards.json');
-    if (resp.ok()) {
-      const data = await resp.json();
-      const sets = (data?.sets ?? {}) as Record<string, {releaseDate?: string} | undefined>;
-      const dates = Object.values(sets)
-        .map((s) => s?.releaseDate)
-        .filter((d): d is string => typeof d === 'string');
-      const latestRelease = dates.length ? Math.max(...dates.map((d) => new Date(d).getTime())) : 0;
-      if (latestRelease > 0 && Date.now() >= latestRelease) {
-        test.skip(
-          true,
-          `Reveal season ended (latest releaseDate ${new Date(latestRelease).toISOString().slice(0, 10)})`,
-        );
-      }
+    const set = resp.ok() ? latestRevealSet(await resp.json()) : null;
+    if (!set) {
+      test.skip(true, 'previewCards.json has no dated reveal set.');
+      return;
     }
+    if (Date.now() >= new Date(set.releaseDate).getTime()) {
+      test.skip(true, `Reveal season ended (latest releaseDate ${set.releaseDate})`);
+      return;
+    }
+    revealSet = set;
   });
 
-  test('renders the tracker: hero, six ink trackers, and franchise cards', async ({page}, testInfo) => {
+  test('renders the tracker: hero, six ink trackers, and the debut franchises', async ({page}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 
     await page.goto('/reveals');
 
     // Page identity (the visible title is the set logo image; the h1 is sr-only).
-    await expect(page.getByRole('heading', {level: 1, name: /Attack of the Vine/i})).toHaveCount(1);
-    await expect(page.getByAltText('Attack of the Vine!')).toBeVisible();
+    await expect(page.getByRole('heading', {level: 1, name: revealSet.name})).toHaveCount(1);
+    await expect(page.getByAltText(revealSet.name, {exact: true})).toBeVisible();
 
     // Six ink tracker tiles (one per ink).
     await expect(page.getByTestId('ink-tracker-tile')).toHaveCount(6);
@@ -50,10 +77,8 @@ test.describe('Reveals page (flag on)', () => {
     // The featured ink board.
     await expect(page.getByText('Ink board', {exact: true})).toBeVisible();
 
-    // The three new-franchise cards (open their cards modal on click).
-    await expect(page.getByRole('button', {name: 'View Monsters, Inc. cards'})).toBeVisible();
-    await expect(page.getByRole('button', {name: 'View Up cards'})).toBeVisible();
-    await expect(page.getByRole('button', {name: 'View Turning Red cards'})).toBeVisible();
+    // At least one debut-franchise card (each opens its cards modal on click).
+    await expect(page.getByRole('button', {name: FRANCHISE_BUTTON}).first()).toBeVisible();
   });
 
   test('desktop nav shows Reveals entry with NEW badge', async ({page}, testInfo) => {
@@ -74,22 +99,20 @@ test.describe('Reveals page (flag on)', () => {
     await page.goto('/browse');
     const mobileNav = page.getByRole('navigation', {name: 'Mobile navigation'});
     // aria-label is the descriptive form after the Option B accessible-name refactor.
-    const revealsLink = mobileNav.getByRole('link', {name: 'Set 13 reveals', exact: true});
+    const revealsLink = mobileNav.getByRole('link', {name: `Set ${revealSet.number} reveals`, exact: true});
     await expect(revealsLink).toBeVisible();
   });
 
   test('promo modal appears on landing page and not on /reveals', async ({page}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 
+    const promo = page.getByRole('complementary', {name: `Set ${revealSet.number} reveals`});
+
     await page.goto('/');
-    await expect(
-      page.getByRole('complementary', {name: /Set 13 reveals/i}),
-    ).toBeVisible();
+    await expect(promo).toBeVisible();
 
     await page.goto('/reveals');
-    await expect(
-      page.getByRole('complementary', {name: /Set 13 reveals/i}),
-    ).toHaveCount(0);
+    await expect(promo).toHaveCount(0);
   });
 
   test('mosaic card click opens the card overview modal', async ({page}, testInfo) => {
@@ -117,9 +140,13 @@ test.describe('Reveals page (flag on)', () => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 
     await page.goto('/reveals');
-    await page.getByRole('button', {name: 'View Monsters, Inc. cards'}).click();
+    // The tile's own label names the franchise ("View Coco cards"), and its modal
+    // is "<franchise> cards", so the franchise is read off the page, not hardcoded.
+    const tile = page.getByRole('button', {name: FRANCHISE_BUTTON}).first();
+    const label = (await tile.getAttribute('aria-label')) ?? '';
+    await tile.click();
 
-    const modal = page.getByRole('dialog', {name: 'Monsters, Inc. cards'});
+    const modal = page.getByRole('dialog', {name: label.replace(/^View /, ''), exact: true});
     await expect(modal).toBeVisible({timeout: 15000});
 
     // A card inside the franchise modal opens the shared card overview modal on top.

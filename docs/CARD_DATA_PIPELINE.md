@@ -99,7 +99,7 @@ flowchart TB
 
     subgraph Reveals["🎴 Reveal-phase (UI-only gate)"]
         direction TB
-        RD["revealDates.ts<br/>reads sets[12] dates"]
+        RD["revealDates.ts<br/>reads sets[REVEAL_SET_CODE] dates"]
         Phase["useRevealPhase"]
         Gate["RevealsGate<br/>redirects /reveals → /"]
         RD --> Phase --> Gate
@@ -143,7 +143,7 @@ The expected card shape is the LorcanaJSON format defined in `packages/synergy-e
 - `id: number` (becomes `string` after transformation, line 111)
 - `color: string` (parsed into `ink` + optional `ink2` for dual-ink cards, lines 53-65)
 - `subtypes: string[]` — `Song` is split out into `isSong` (line 107) and removed from `classifications`; everything else goes into `classifications`
-- `abilities: Array<{type, keyword, keywordValue, ...}>` — `transformCard` extracts `keywords` and also detects conditional Shift (`gains? Shift N` in effect text, lines 99-103)
+- `abilities: Array<{type, keyword, keywordValue, ...}>` — `transformCard` extracts native `keywords` and, via `collectKeywords`, synthesizes the conditional Shift and Singer a card grants to itself in ability text or in the card's own `fullText` (see [SHIFT_TARGET_RULE.md](../packages/synergy-engine/SHIFT_TARGET_RULE.md) and [SINGER_SONGS_RULE.md](../packages/synergy-engine/SINGER_SONGS_RULE.md))
 - `franchise?: string` — **set only on preview cards** (e.g., `"Toy Story"`, `"The Incredibles"`, `"Brave"`). Used by `useRevealCards` to tier the reveal grid.
 - `imageHash?: string` / `imageHashSm?: string` — content-addressed hash suffixes injected at build time by `download-card-images.mjs`. Used by `loader.ts:42-43` to build immutable image URLs in production.
 
@@ -155,7 +155,7 @@ The expected card shape is the LorcanaJSON format defined in `packages/synergy-e
 | Schema | Same LorcanaJSON format | `previewCards.json:1-22` |
 | Origin | Manual curation | `docs/superpowers/specs/2026-04-17-set12-preview-cards-design.md:20` (explicit Non-goal: no admin UI) |
 | Tracked in git? | Yes | Not present in `.gitignore` |
-| Current contents | Empty (`cards: []`, `sets: {}`) — Set 12 graduated 2026-05-13 | Direct inspection |
+| Current contents | In season: `sets[REVEAL_SET_CODE]` plus the cards revealed so far. Off season: `cards: []` with the graduated set's `sets` entry **preserved** (never `sets: {}`), so the reveal dates keep resolving | Direct inspection |
 | Updated when | A new card is revealed publicly before the canonical source publishes the set | Manual `previewCards.json` edits |
 
 Two side-effects when `previewCards.json` changes:
@@ -182,7 +182,7 @@ Per the original design (`docs/superpowers/specs/2026-04-17-set12-preview-cards-
 2. Empty `previewCards.json` ✅
 3. Deactivate the `/reveals` route ✅ (handled via `VITE_IS_REVEAL_SEASON=false` flag flip in production)
 
-All three steps executed cleanly. `previewCards.json` now carries the empty template (`sets: {}, cards: []`) ready for Set 13 reveal-season curation — see the schema reference under [Updating `previewCards.json`](#updating-previewcardsjson) for the shape Set 13 entries should follow.
+All three steps executed cleanly. After a graduation `previewCards.json` carries `cards: []` and keeps the graduated set's `sets` entry (not `sets: {}`), ready for the next reveal season. **To start that season, follow [`reveals/START_REVEAL_SEASON.md`](reveals/START_REVEAL_SEASON.md)**; the schema reference under [Updating `previewCards.json`](#updating-previewcardsjson) gives the shape new entries should follow.
 
 ---
 
@@ -243,7 +243,7 @@ The file lives at `apps/web/public/data/previewCards.json`. Post-Set-12 graduati
 }
 ```
 
-`cards: []` is empty after graduation but `sets[setCode]` metadata is **preserved** — `revealDates.ts:30` reads dates from this file, so emptying `sets` entirely would break `useRevealPhase` for the just-graduated set. The next graduation overwrites `sets` with the next set's metadata, naturally retiring the previous entry.
+`cards: []` is empty after graduation but `sets[setCode]` metadata is **preserved** — `fetchRevealDates` (`revealDates.ts`) reads dates from this file, so emptying `sets` entirely would break `useRevealPhase` for the just-graduated set. The next graduation overwrites `sets` with the next set's metadata, naturally retiring the previous entry.
 
 **Top-level fields:**
 
@@ -252,7 +252,7 @@ The file lives at `apps/web/public/data/previewCards.json`. Post-Set-12 graduati
 | `metadata.formatVersion` | Yes | LorcanaJSON schema version — match what's in `allCards.json` so it's a single conceptual format |
 | `metadata.generatedOn` | Yes | ISO timestamp. Refresh on each edit (the Vite plugin's staleness check looks at file mtime; the timestamp inside is for human-readable provenance) |
 | `metadata.language` | Yes | Always `"en"` |
-| `sets` | Yes | Set metadata keyed by string set code (e.g., `"13"`). `revealDates.ts:30` reads `sets[REVEAL_SET_CODE]` for the `/reveals` page dates |
+| `sets` | Yes | Set metadata keyed by string set code (e.g., `"14"`). `fetchRevealDates` (`revealDates.ts`) reads `sets[REVEAL_SET_CODE]` for the `/reveals` page dates |
 | `cards` | Yes | Array of preview card entries |
 
 **`sets[code]` entry — set metadata:**
@@ -284,7 +284,7 @@ The file lives at `apps/web/public/data/previewCards.json`. Post-Set-12 graduati
 
 ```json
 {
-  "id": 131204,
+  "id": 14001,
   "name": "Sample Card",
   "version": "Subtitle Description",
   "fullName": "Sample Card - Subtitle Description",
@@ -328,7 +328,7 @@ The file lives at `apps/web/public/data/previewCards.json`. Post-Set-12 graduati
 
 | Field | Required | Notes |
 |---|---|---|
-| `id` | Yes | Numeric. Custom convention during preview (e.g., `{setNum}{cardNum}{totalCards}` → `131204` for Set 13 card #1 of 204). Graduation replaces these with canonical LorcanaJSON ids. Must be unique across the file. |
+| `id` | Yes | Numeric: `REVEAL_ID_BASE + collector number`, i.e. `setNumber * 1000 + number` (Set 14 #1 → `14001`). A card revealed without a collector number takes an id in the reserved `+900..+999` band and omits `number`. Enforced by `reveal-set-integrity.test.ts`, which also rejects an id that collides with `allCards.json`. Graduation replaces these with canonical LorcanaJSON ids. |
 | `name` | Yes | Card's primary name (e.g., `"Mickey Mouse"`) |
 | `version` | Optional | Subtitle (e.g., `"Brave Little Tailor"`) |
 | `fullName` | Yes | `"{name} - {version}"` when version present, else just `name`. Used for many lookups. |
@@ -337,7 +337,7 @@ The file lives at `apps/web/public/data/previewCards.json`. Post-Set-12 graduati
 | `inkwell` | Yes | Boolean — can this card be inked? |
 | `type` | Yes | `"Character"`, `"Action"`, `"Item"`, or `"Location"` (`cardTransformer.ts:47`) |
 | `subtypes` | Optional | Array of classifications. `"Song"` here marks Action cards as singable (transformer pulls it out into `isSong`). |
-| `abilities` | Optional | Array of ability objects. Each has `type` (`"static"`, `"triggered"`, `"keyword"`, `"activated"`, etc.). Keyword abilities use the `{type: "keyword", keyword: "Singer", keywordValue: "5"}` shape — transformer at `cardTransformer.ts:88-104` reads these. |
+| `abilities` | Optional | Array of ability objects. Each has `type` (`"static"`, `"triggered"`, `"keyword"`, `"activated"`, etc.). Keyword abilities use the `{type: "keyword", keyword: "Singer", keywordValue: "5"}` shape — the transformer's `nativeKeywords` reads these. |
 | `fullText` | Optional | Combined ability text — searchable |
 | `fullTextSections` | Optional | Array of ability text blocks — preserves card layout for UI rendering |
 | `strength` / `willpower` / `lore` | Conditional | Required for Characters. Other types vary. Missing `strength` defaults to 0 for Characters per `cardTransformer.ts:127`. |
@@ -351,7 +351,7 @@ The file lives at `apps/web/public/data/previewCards.json`. Post-Set-12 graduati
 
 **Source of truth:** `packages/synergy-engine/src/utils/cardTransformer.ts:7-44` defines `LorcanaJSONCard`. Anything outside that interface is ignored at runtime; the table above is the practical subset that drives app behavior.
 
-**ID convention reminder:** preview ids are placeholders until LorcanaJSON publishes canonical ids. Don't worry about format elegance — graduation via `pnpm graduate-set` replaces them wholesale with canonical sequential ids. Pick something unique within the file.
+**ID convention reminder:** preview ids are placeholders until LorcanaJSON publishes canonical ids, and graduation via `pnpm graduate-set` replaces them wholesale with canonical sequential ids. The format is still test-enforced (`REVEAL_ID_BASE + number`, see the `id` row above): it keeps preview ids clear of `allCards.json`, where a collision makes the loader silently drop the preview card.
 
 </details>
 
@@ -424,7 +424,7 @@ Synergy engine runs across the full merged card pool.
 |---|---|---|
 | Engine import | `precompute-synergies.mjs:33-39` | Dynamic `import` of `packages/synergy-engine/dist/index.js`; exits if not built |
 | Load + merge | `precompute-synergies.mjs:42-53` | Reads `allCards.json`; reads `previewCards.json` if present; filters preview cards to those whose id is not in `mainIds`; concatenates into `mergedRaw` |
-| Transform | `precompute-synergies.mjs:56` | Calls engine's `transformCards(mergedRaw)` — same transformer the web loader uses (single source of truth in `cardTransformer.ts:80-135`) |
+| Transform | `precompute-synergies.mjs:56` | Calls engine's `transformCards(mergedRaw)` — same transformer the web loader uses (single source of truth in `cardTransformer.ts`) |
 | Per-card synergies | `precompute-synergies.mjs:122-138` | For every transformed card, runs `synergyEngine.findSynergies(card, cards)`, serializes via `serializeCardData(card, groups)` to `{groups, pairs}`, writes `apps/web/public/data/synergies/{cardId}.json` |
 | Aggregate files | `precompute-synergies.mjs:140-166` | Writes `_playstyles.json` (playstyleId → cardId[]), `_manifest.json` (cardIds that have synergies — the staleness marker), `_pairs_index.json` (sorted unique pairs for the voting page) |
 | Cleanup | `precompute-synergies.mjs:168-179` | Deletes any file in `synergies/` not in the new manifest |
@@ -576,6 +576,8 @@ Only `allCards.json` is prefetched; `previewCards.json` is not.
 
 Critical separation to understand: the data merge is unconditional. The reveal-phase machinery gates **UI surfaces only** — the `/reveals` route, nav strip links, and the reveals home-page promo.
 
+> **Starting a season?** The flag alone does nothing: the phase also needs a future `releaseDate` under `sets[REVEAL_SET_CODE]`. The full procedure, including the one constant that names the reveal set (`apps/web/src/shared/constants/revealSet.ts`), is in [`reveals/START_REVEAL_SEASON.md`](reveals/START_REVEAL_SEASON.md).
+
 ```mermaid
 stateDiagram-v2
     [*] --> hidden: VITE_IS_REVEAL_SEASON !== 'true'
@@ -606,7 +608,7 @@ stateDiagram-v2
 ```
 
 <blockquote class="callout callout-info">
-<strong>The phase machinery is observed, not controlled</strong> — It reads <em>dates</em> from <code>previewCards.json</code>'s <code>sets["12"]</code> metadata (<code>revealDates.ts:30</code>) and the <code>VITE_IS_REVEAL_SEASON</code> env flag. It does not gate any data fetching. To change phase behavior in production: flip the Vercel env var, or edit the dates in <code>previewCards.json</code>.
+<strong>The phase machinery is observed, not controlled</strong> — It reads <em>dates</em> from <code>previewCards.json</code>'s <code>sets[REVEAL_SET_CODE]</code> metadata (<code>revealDates.ts</code>) and the <code>VITE_IS_REVEAL_SEASON</code> env flag. It does not gate any data fetching. To change phase behavior in production: flip the Vercel env var <strong>and redeploy</strong> (Vite inlines it at build time, and <code>deploy.yml</code> has no manual trigger: re-run the latest Deploy run), or edit the dates in <code>previewCards.json</code>.
 </blockquote>
 
 ### Phase determination
@@ -625,12 +627,12 @@ Phase recomputes at the next local midnight via `setTimeout` (line 62). The hook
 
 ### Dates source
 
-`apps/web/src/features/reveals/revealDates.ts:21-43` (`fetchRevealDates`):
+`fetchRevealDates` in `apps/web/src/features/reveals/revealDates.ts`:
 
 - Fetches `/data/previewCards.json`
-- Reads `data.sets["12"].prereleaseDate` and `releaseDate` (line 30)
+- Reads `data.sets[REVEAL_SET_CODE].prereleaseDate` and `releaseDate` (`REVEAL_SET_CODE` comes from `shared/constants/revealSet.ts`)
 - Returns `null` if the file is missing, set is missing, or either date is missing
-- Module-level cache (line 13-14) so the file is fetched once per page load
+- Module-level cache (`cache` / `pending`) so the file is fetched once per page load
 
 This is the **only** place in the app that reads `previewCards.json` for non-card data. The cards array is ignored here.
 
@@ -638,7 +640,7 @@ This is the **only** place in the app that reads `previewCards.json` for non-car
 
 `apps/web/src/features/reveals/RevealsGate.tsx:13-17` wraps the `/reveals` route. Redirects to `/` when phase is `'hidden'` or `'released'`. Lets children mount when phase is `'loading'`, `'pre-release'`, or `'pre-release-live'`.
 
-The flag is `VITE_IS_REVEAL_SEASON` (env-var, read at `useRevealPhase.ts:37-39`). Set in `apps/web/.env.local` per developer; in production, set via Vercel env UI.
+The flag is `VITE_IS_REVEAL_SEASON` (env-var, read at `useRevealPhase.ts:37-39`). Set in `apps/web/.env.local` per developer; in production, set via the Vercel env UI (Production, and Preview if PR previews should show the page). It is pulled by `vercel pull` inside `.github/workflows/deploy.yml`; it is not a GitHub Actions variable.
 
 ### What the gate does NOT do
 
@@ -782,8 +784,8 @@ Not part of this pipeline: `codescene-gate.mjs`, `test-supabase-integration.mjs`
 
 | File | Role |
 |---|---|
-| `src/utils/cardTransformer.ts:7-44` | `LorcanaJSONCard` interface — the schema both JSON files conform to |
-| `src/utils/cardTransformer.ts:80-147` | `transformCard()` + `transformCards()` — single source of truth, used by web loader and precompute script |
+| `src/utils/cardTransformer.ts` → `LorcanaJSONCard` | The schema both JSON files conform to |
+| `src/utils/cardTransformer.ts` → `transformCard()` / `transformCards()` | Single source of truth, used by the web loader and the precompute script |
 | `src/types/card.ts` | `LorcanaCard` (post-transformation) shape |
 
 </details>
@@ -856,10 +858,10 @@ flowchart TD
     Check -->|not yet| S0
     Check -->|yes| Step1
     Step1["Step 1 — Update allCards.json<br/>(replace with new export from lorcanajson.org)"]
-    Step2["Step 2 — Empty previewCards.json<br/>{metadata, sets:{}, cards:[]} OR delete file"]
+    Step2["Step 2: Empty previewCards.json<br/>cards: [] and KEEP sets[graduated set]<br/>(pnpm graduate-set does this; never sets:{} or delete the file)"]
     Step3["Step 3 — Rebuild + deploy<br/>(precompute-synergies merges new pool)"]
     Step4{Repurposing /reveals<br/>for next set?}
-    Step5["Update REVEAL_SET_CODE<br/>(useRevealCards.ts:19)<br/>+ refresh franchise constants"]
+    Step5["Move REVEAL_SET_CODE<br/>(shared/constants/revealSet.ts)<br/>see reveals/START_REVEAL_SEASON.md"]
     Step6["Remove /reveals route<br/>(apps/web/src/router.tsx)"]
     Done["✓ Graduation complete"]
 
@@ -877,7 +879,7 @@ flowchart TD
 
 **Two graduation modes:**
 
-- **Wholesale replace** — LorcanaJSON publishes a new master `allCards.json` that includes the graduated set. Download → drop in place → empty `previewCards.json`. Simplest path when you can re-pull the master file.
+- **Wholesale replace** — LorcanaJSON publishes a new master `allCards.json` that includes the graduated set. Download → drop in place → reset `previewCards.json`'s `cards` to `[]`, keeping the graduated set's `sets` entry. Simplest path when you can re-pull the master file.
 - **Set-only canonical merge** — you have just the new set's canonical file (e.g., `set013.json` from LorcanaJSON's per-set release stream). Use the generic `pnpm graduate-set` script.
 
 **Concrete steps (set-only canonical merge):**
