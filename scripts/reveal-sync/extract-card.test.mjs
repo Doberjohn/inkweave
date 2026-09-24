@@ -1,11 +1,11 @@
 import {describe, it, expect} from 'vitest';
 import {parseCardLines, SiteRecordError} from './extract-card.mjs';
 import {
-  CAPTAIN_HOOK,
   HARBOR_LOCATION,
-  HONEY_LEMON,
   LIONHEART,
   ON_THE_OPEN_ROAD,
+  TEST_CAPTAIN,
+  TEST_INVENTOR,
   page,
 } from './__fixtures__/cards.mjs';
 
@@ -46,8 +46,8 @@ describe('parseCardLines', () => {
   });
 
   it("repairs the site's known rendering gaps", () => {
-    expect(parse(HONEY_LEMON).text[0]).toMatch(/^Shift 5 ⬡ \(/);
-    expect(parse(HONEY_LEMON).text[1]).toMatch(/pay 1 ⬡\.\)$/);
+    expect(parse(TEST_INVENTOR).text[0]).toMatch(/^Shift 5 ⬡ \(/);
+    expect(parse(TEST_INVENTOR).text[1]).toMatch(/pay 1 ⬡\.\)$/);
   });
 
   it('reads an action song with no version or stats', () => {
@@ -77,7 +77,7 @@ describe('parseCardLines', () => {
   });
 
   it('reports a missing collector number and empty text as absent rather than guessing', () => {
-    expect(parse(CAPTAIN_HOOK)).toMatchObject({collector: null, text: [], keywordsField: 'None'});
+    expect(parse(TEST_CAPTAIN)).toMatchObject({collector: null, text: [], keywordsField: 'None'});
   });
 
   it('throws when a label every card carries is missing: the markup changed', () => {

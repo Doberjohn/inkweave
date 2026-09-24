@@ -2,13 +2,13 @@ import {describe, it, expect} from 'vitest';
 import {existingVerdict, gateCard, scanLanguage} from './gates.mjs';
 import {parseCardLines} from './extract-card.mjs';
 import {
-  CAPTAIN_HOOK,
   ERNESTO,
   HARBOR_LOCATION,
   LIONHEART,
   MULAN,
   ON_THE_OPEN_ROAD,
   SET14,
+  TEST_CAPTAIN,
   page,
 } from './__fixtures__/cards.mjs';
 
@@ -20,7 +20,7 @@ describe('scanLanguage', () => {
   it("reads the scan's language from the uploaded image's filename", () => {
     expect(scanLanguage(LIONHEART.imageFile, 14)).toBe('EN');
     expect(scanLanguage(ON_THE_OPEN_ROAD.imageFile, 14)).toBe('JA');
-    expect(scanLanguage(CAPTAIN_HOOK.imageFile, 14)).toBe('EN');
+    expect(scanLanguage(TEST_CAPTAIN.imageFile, 14)).toBe('EN');
   });
 
   it('returns null when the filename carries no language marker', () => {
@@ -75,9 +75,9 @@ describe('gateCard', () => {
   });
 
   it('lets a genuinely vanilla card through the completeness gate', () => {
-    // Captain Hook reads "None" with no text: vanilla, not incomplete. He stops at the
-    // next gate, for his missing number, not here.
-    expect(gate(CAPTAIN_HOOK)).not.toMatchObject({reason: 'site-record-incomplete'});
+    // The card reads "None" with no text: vanilla, not incomplete. It stops at the next
+    // gate, for its missing number, not here.
+    expect(gate(TEST_CAPTAIN)).not.toMatchObject({reason: 'site-record-incomplete'});
   });
 
   it('defers a card whose inkable status the site does not know', () => {
@@ -88,7 +88,7 @@ describe('gateCard', () => {
   });
 
   it('flags a card with no readable collector number for the reserved band', () => {
-    expect(gate(CAPTAIN_HOOK)).toMatchObject({status: 'conflict', reason: 'needs-reserved-band'});
+    expect(gate(TEST_CAPTAIN)).toMatchObject({status: 'conflict', reason: 'needs-reserved-band'});
   });
 
   it('skips a number past the end of the set', () => {
@@ -175,9 +175,9 @@ describe('existingVerdict', () => {
   });
 
   it('recognises a numberless site card that is already in Inkweave by name', () => {
-    const hook = site(CAPTAIN_HOOK);
+    const numberless = site(TEST_CAPTAIN);
     expect(
-      existingVerdict(hook, [card(null, 'Captain Hook - Concerned Captain', 14901)]),
+      existingVerdict(numberless, [card(null, 'Test Captain - Harbor Watch', 14901)]),
     ).toMatchObject({
       reason: 'in-reserved-band',
     });

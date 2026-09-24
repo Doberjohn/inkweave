@@ -12,6 +12,15 @@ describe('installSnippet', () => {
     expect(Object.keys(fakeWindow.__revealSync)).toEqual(['version', 'discover', 'fetchCards']);
   });
 
+  it('never downloads a card scan: the official list supplies it (issue #574)', () => {
+    const snippet = installSnippet();
+    expect(BROWSER_API_VERSION).toBe('reveal-sync/2');
+    expect(snippet).not.toContain('fetchImage');
+    expect(snippet).not.toContain('readAsDataURL');
+    // The scan's filename still travels: it carries lorcanaplayer's language marker.
+    expect(snippet).toContain('imageFile');
+  });
+
   it('maps every glyph image the site uses to the character the card data uses', () => {
     const snippet = installSnippet();
     for (const [alt, glyph] of [

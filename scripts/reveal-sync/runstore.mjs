@@ -9,6 +9,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import {UsageError} from './cli.mjs';
 import {ROOT} from './web.mjs';
 import {serializeState} from './state.mjs';
 
@@ -42,16 +43,49 @@ export function newRunId(now = new Date()) {
 /** YYYY-MM-DD in local time. */
 export const localDate = (now = new Date()) => now.toLocaleDateString('en-CA');
 
+const writeJson = (file, value) => fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
+const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
+
 export function writeRun(run) {
   fs.mkdirSync(runDir(run.runId), {recursive: true});
-  fs.writeFileSync(path.join(runDir(run.runId), 'run.json'), `${JSON.stringify(run, null, 2)}\n`);
+  writeJson(path.join(runDir(run.runId), 'run.json'), run);
 }
 
 export function readRun(runId) {
   const file = path.join(runDir(runId ?? ''), 'run.json');
   if (!runId || !fs.existsSync(file)) throw new Error(`no run "${runId}" under ${RUNS}`);
-  return JSON.parse(fs.readFileSync(file, 'utf8'));
+  return readJson(file);
 }
+
+const officialFile = (runId) => path.join(runDir(runId), 'official.json');
+const siteFile = (runId, slug) => path.join(cardDir(runId, slug), 'site.json');
+
+/** A file an earlier step of the run wrote. Missing or unreadable, the run cannot go on. */
+function readRunFile(file, what) {
+  if (!fs.existsSync(file)) throw new UsageError(`${what} is missing (${file}). Start a new run.`);
+  try {
+    return readJson(file);
+  } catch (error) {
+    throw new UsageError(`${what} is not valid JSON (${file}: ${error.message}). Start a new run.`);
+  }
+}
+
+/** The official list as `start` read it: every later step of the run judges against this one snapshot. */
+export const writeOfficial = (runId, official) => writeJson(officialFile(runId), official);
+export const readOfficial = (runId) =>
+  readRunFile(officialFile(runId), `run ${runId}'s official list`);
+
+/**
+ * The record a card is judged on: lorcanaplayer's page as parsed, plus any collector number
+ * the official list supplied and any ruling the owner made on the two sites' disagreements.
+ */
+export function writeSite(runId, slug, site) {
+  fs.mkdirSync(cardDir(runId, slug), {recursive: true});
+  writeJson(siteFile(runId, slug), site);
+}
+
+export const readSite = (runId, slug) =>
+  readRunFile(siteFile(runId, slug), `the site record for ${slug}`);
 
 export function readState() {
   return fs.existsSync(STATE_FILE) ? JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')) : {sets: {}};

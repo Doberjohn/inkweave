@@ -4,9 +4,9 @@
       "indexTotal": 81,
       "cards": {
         "captain-hook-concerned-captain": {
-          "status": "skipped",
+          "status": "deferred",
           "reason": "not-officially-revealed",
-          "detail": "leak: not on illumineertales.com as of 2026-09-24",
+          "detail": "illumineertales.com has no card by this name",
           "firstSeen": "2026-09-24"
         },
         "ernesto-de-la-cruz-idol-of-millions": {
@@ -16,9 +16,9 @@
         },
         "honey-lemon-ingenious-researcher": {
           "number": 144,
-          "status": "skipped",
+          "status": "deferred",
           "reason": "not-officially-revealed",
-          "detail": "leak: not on illumineertales.com as of 2026-09-24; written 2026-09-24 and removed the same day",
+          "detail": "illumineertales.com has not revealed #144",
           "firstSeen": "2026-09-24"
         },
         "lionheart-cleaning-up-the-city": {
