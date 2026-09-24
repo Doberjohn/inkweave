@@ -10,11 +10,13 @@ import {spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const ROOT = path.resolve(__dirname, '../..');
-const SYNERGY_DIR = path.resolve(__dirname, 'public/data/synergies');
+// import.meta.dirname, not __dirname: under Vite's native config loader (the planned
+// default) this file runs as plain ESM, where __dirname does not exist.
+const ROOT = path.resolve(import.meta.dirname, '../..');
+const SYNERGY_DIR = path.resolve(import.meta.dirname, 'public/data/synergies');
 const MANIFEST = path.join(SYNERGY_DIR, '_manifest.json');
 const ENGINE_SRC = path.join(ROOT, 'packages/synergy-engine/src');
-const CARD_DATA = path.resolve(__dirname, 'public/data/allCards.json');
+const CARD_DATA = path.resolve(import.meta.dirname, 'public/data/allCards.json');
 
 /**
  * Rebuilds the engine and regenerates pre-computed synergies on dev server start
