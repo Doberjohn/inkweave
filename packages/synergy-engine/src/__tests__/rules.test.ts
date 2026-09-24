@@ -565,6 +565,40 @@ describe('Synergy Rules', () => {
         expect(synergies[0].score).toBe(expected);
       });
     });
+
+    describe('ink-drop Shift scoring', () => {
+      // Baymax - Amped Up: "Shift Remove 2 ink drops". Drops are their own payment, so the pair
+      // scores by who supplies them, never on the ink curve or as a free Shift.
+      function inkDropSetup(baseCost: number, baseText: string) {
+        return shiftSetup({
+          shiftId: 'baymax-shift',
+          shiftName: 'Baymax',
+          shiftFullName: 'Baymax - Amped Up',
+          shiftKeyword: 'Shift Remove 2 ink drops',
+          baseId: 'baymax-base',
+          baseName: 'Baymax',
+          baseFullName: 'Baymax - Lab Assistant',
+          baseCost,
+          baseText,
+        });
+      }
+
+      it('scores 8 both ways when the base gets the drops itself (Baymax - Lab Assistant)', () => {
+        const {shiftCard, base} = inkDropSetup(
+          4,
+          'RESUPPLY When you play this character, if you have 2 or more items in play, get 2 ink drops.',
+        );
+        const pool = [shiftCard, base];
+        expect(shiftRule.findSynergies(shiftCard, pool)[0].score).toBe(8);
+        expect(shiftRule.findSynergies(base, pool)[0].score).toBe(8);
+      });
+
+      it('scores 5, not a free Shift, when the base gets fewer drops than the Shift removes', () => {
+        // A cost-1 base scores 9 both on the ink curve (gap 1) and on the free-Shift path.
+        const {shiftCard, base} = inkDropSetup(1, 'When you play this character, get 1 ink drop.');
+        expect(shiftRule.findSynergies(shiftCard, [shiftCard, base])[0].score).toBe(5);
+      });
+    });
   });
 
   describe('Puppy Shift', () => {

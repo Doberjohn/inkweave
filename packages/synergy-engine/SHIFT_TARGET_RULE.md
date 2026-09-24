@@ -26,10 +26,10 @@ Both directions use the same scoring function (`calculateShiftSynergy`), so scor
 ```chart
 {
   "type": "doughnut",
-  "title": "Shift Group Sizes (644 cards)",
+  "title": "Shift Group Sizes (376 cards)",
   "data": {
-    "labels": ["1-4 targets (93.0%)", "5-9 targets (5.3%)", "10-14 targets (1.2%)", "15+ targets (0.5%)"],
-    "values": [599, 34, 8, 3]
+    "labels": ["1-4 targets (90.4%)", "5-9 targets (7.7%)", "10-14 targets (1.3%)", "15+ targets (0.5%)"],
+    "values": [340, 29, 5, 2]
   }
 }
 ```
@@ -44,7 +44,7 @@ Selecting **Elsa - Snow Queen** (cost 4) finds:
 
 ### Shift Variants
 
-`getShiftType` (`utils/cardHelpers.ts`) classifies the Shift keyword into four target kinds so the rule knows what counts as a valid target:
+`getShiftType` (`utils/cardHelpers.ts`) classifies the Shift keyword into four target kinds so the rule knows what counts as a valid target. Each variant also carries its `cost` and a `payment`: `ink` for every keyword below, or `ink-drops` for a Shift paid in ink drops (last row), where `cost` counts drops. Payment is independent of the target kind:
 
 | Keyword | Kind | Valid targets |
 |---|---|---|
@@ -54,6 +54,7 @@ Selecting **Elsa - Snow Queen** (cost 4) finds:
 | `X Shift N` (e.g. `Puppy Shift`, `Madrigal Shift`, `Temporary Red Panda Shift`) | `classification` | characters with classification `X` (the prefix may be multiple words) |
 | `Universal Shift N` | `universal` | any character |
 | `X Shift N` with an "items named X" reminder (e.g. `Potato Shift N`) | `named-item` | the **item** named `X` — identified by the reminder text, not the keyword prefix (see below) |
+| `Shift Remove N ink drops` (Set 14, Baymax - Amped Up) | `standard`, payment `ink-drops` | same base name; the cost is N ink drops, not ink (see [Ink-drop Shift](#ink-drop-shift-drop-based-scoring)) |
 
 `classifyShiftKeyword` resolves a keyword in this order: **Universal** → **Team** (card name contains `&`, so any shift label routes to `standard`) → strip a leading **`Temporary`** modifier → **`<classification> Shift N`** → plain **`Shift N`**. Two consequences:
 
@@ -81,7 +82,7 @@ Scoring is split into two phases:
 
 ### Phase 1: Base Score (`calculateShiftBaseScore`)
 
-Computes a score from **curve alignment** — how naturally the base card's cost flows into the Shift cost.
+Computes a score from **curve alignment** — how naturally the base card's cost flows into the Shift cost. A Shift paid in ink drops skips the curve entirely and scores on who supplies the drops (see [Ink-drop Shift](#ink-drop-shift-drop-based-scoring)); a Shift 0 scores on base cost (see [Free Shift](#free-shift-shift-0-cost-based-scoring)).
 
 The key metric is **curve gap**: `shiftCost - baseCost`
 
@@ -121,7 +122,10 @@ Some cards have **conditional Shift** — they only gain the Shift keyword when 
 ```
 calculateShiftSynergy(shiftCard, baseCard)
   |
-  +-- calculateShiftBaseScore(shiftCard, baseCard, shiftCost)  --> {score, reason}
+  +-- calculateShiftBaseScore(shiftCard, baseCard, shiftCost, payment)  --> {score, reason}
+  |     payment 'ink-drops' -> inkDropShiftScore (who supplies the drops)
+  |     shiftCost 0         -> freeShiftScore (base cost tiers)
+  |     otherwise           -> curveAlignmentScore (curve gap)
   |
   +-- baseActivatesShiftCondition(shiftCard, baseCard)         --> boolean
   |
@@ -149,12 +153,12 @@ calculateShiftSynergy(shiftCard, baseCard)
 ```chart
 {
   "type": "bar",
-  "title": "Shift Target Score Distribution (1,385 matches)",
+  "title": "Shift Target Score Distribution (855 matches)",
   "data": {
     "labels": ["3", "5", "7", "8", "9", "10"],
     "datasets": [{
       "label": "Matches",
-      "data": [347, 359, 298, 211, 168, 2],
+      "data": [234, 212, 168, 47, 192, 2],
       "backgroundColor": ["#f59090", "#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#fbbf24"]
     }]
   }
@@ -207,6 +211,22 @@ A free Shift is only as good as how quickly you can set it up:
 - **Cheap base (cost 1-3)**: Play the base on turns 1-3, free Shift on the very next turn. Extremely powerful — you get a 5+ cost character for free.
 - **Mid base (cost 4-5)**: Takes until mid-game to deploy the base. Still strong, but the opponent has time to respond.
 - **Expensive base (cost 6+)**: By the time you can play the base, the free Shift advantage matters less — you're deep into the game where ink is plentiful.
+
+### Ink-drop Shift (drop-based scoring)
+
+Set 14 introduced a Shift paid in ink drops: Baymax - Amped Up prints "Shift Remove 2 ink drops (You may remove 2 ink drops to play this on top of one of your characters named Baymax.)". An ink drop is a resource that card effects give you ("get 2 ink drops"), and each one "may be removed to pay 1 ⬡". Rule 8.10.1 makes any Shift cost an alternate cost, so this is an ordinary Shift paid in a different currency.
+
+Neither ink path fits. Read as 2 ink on the curve, a cost-4 base gives a negative gap and scores 3, the opposite of reality. Read as a free Shift, a cheap base with no drop source would score 9, although the drops are a real cost that must come from somewhere. What matters is **who supplies the drops**:
+
+| Score | Base gets the drops? | Explanation Template | Example |
+|-------|----------------------|---------------------|---------|
+| **8** | Yes: at least as many as the Shift removes | "Ink-drop Shift. {base} gets the drops that pay for the Shift." | Baymax - Lab Assistant (cost 4, "get 2 ink drops") + Baymax - Amped Up |
+| **5** | No | "Ink-drop Shift. Other cards must supply the drops." | A Baymax base with no drop source, or one that gets fewer drops than the Shift removes |
+
+- **Why 8.** The base pays the other card's alternate cost: play Lab Assistant, get 2 ink drops, and shift a 7-cost Baymax onto it the same turn for no ink. Per rule 8.10.4 the shifted character enters play drying, since its base was played that turn. The rule's own analog, a free Shift onto a mid-cost base that also enables the condition, is 8 too.
+- **Why 5.** The base is a valid landing spot, but the pair cannot pay for the Shift on its own. That is same-deck density, the 5 baseline.
+- **Detection.** `getInkDropGain` (`utils/cardHelpers.ts`) reads the most ink drops any one of the base's effects gets ("get 2 ink drops", "each player gets 1 ink drop"). "If you would get an ink drop" and "remove 2 ink drops" are not gains. The base's own conditions are not modeled (Lab Assistant needs 2 or more items in play), the same way the condition bonus ignores them.
+- **Tuning.** Both tiers live in `data/tuning.json` (`drops.basePays`, `drops.outside`), so `/admin/tuning` edits them like the other Shift tiers.
 
 ---
 
@@ -273,7 +293,7 @@ To add a new condition matcher:
 
 **Source**: `packages/synergy-engine/src/utils/cardTransformer.ts` (`collectKeywords`)
 
-Some cards don't have Shift as a native keyword: they gain it conditionally from ability text. The engine's `transformCard` synthesizes these while building `LorcanaCard`s; the web loader wraps `transformCard`, so the app sees the same keywords. The same mechanism synthesizes conditional Singer (see `SINGER_SONGS_RULE.md`).
+Some cards don't have Shift as a native keyword: they gain it conditionally from ability text, or print a Shift cost the reveal parser cannot encode (see [Printed Shift paid in ink drops](#printed-shift-paid-in-ink-drops)). The engine's `transformCard` synthesizes these while building `LorcanaCard`s; the web loader wraps `transformCard`, so the app sees the same keywords. The same mechanism synthesizes conditional Singer (see `SINGER_SONGS_RULE.md`).
 
 ### How it works
 
@@ -299,6 +319,16 @@ If no native Shift exists, the conditional value is added to the card's keywords
 > "If a card left a player's discard this turn, this card gains Shift 0."
 
 The transformer extracts `Shift 0` and adds it to her keywords. The engine then treats her as a Shift card and finds same-named base characters.
+
+### Printed Shift paid in ink drops
+
+A printed Shift whose cost is not a number never reaches `abilities`: the `/fetch-reveals` keyword reader (`scripts/reveal-sync/text.mjs`) accepts only numeric keyword values, so Baymax - Amped Up arrived with no abilities array at all. The transformer reads its keyword line from `fullText` with a second Shift pattern, anchored to a line start so only the keyword line itself counts:
+
+```regex
+/^Shift\s+(Remove\s+\d+\s+ink\s+drops?)\b/im
+```
+
+It yields `"Shift Remove 2 ink drops"`: the same string a reveal-admin entry or a LorcanaJSON `keywordValue` of "Remove 2 ink drops" would produce, so the keyword does not change when the set graduates. `getShiftType` reads it as `{kind: 'standard', cost: 2, payment: 'ink-drops'}`. Both Shift patterns sit in `TEXT_KEYWORD_PATTERNS`; a native Shift keyword, or an earlier "gains Shift N" read, still wins.
 
 ---
 
@@ -368,6 +398,8 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | Free Shift onto cheap base | 9 | Shift 0, base cost 2 |
 | Free Shift onto mid-cost base | 7 | Shift 0, base cost 4 |
 | Free Shift onto expensive base | 5 | Shift 0, base cost 7 |
+| Ink-drop Shift, base gets the drops | 8 | "Shift Remove 2 ink drops" onto a cost-4 base that gets 2 ink drops; forward and reverse |
+| Ink-drop Shift, base gets too few drops | 5 | Cost-1 base that gets 1 ink drop (the ink curve and the free path would both give 9) |
 
 ### Transformer tests
 Located in `packages/synergy-engine/src/__tests__/cardTransformer.test.ts` (plus a mirror in `apps/web/src/features/cards/__tests__/loader.test.ts`):
@@ -375,6 +407,16 @@ Located in `packages/synergy-engine/src/__tests__/cardTransformer.test.ts` (plus
 |------|-----------------|
 | Conditional Shift from an ability effect | "gains Shift 0" in ability text adds `Shift 0` to keywords |
 | Conditional Shift from `fullText` | the same read works for a card with no abilities array |
+| Printed Shift paid in ink drops | "Shift Remove 2 ink drops" is read from `fullText` on a card with no abilities array |
+
+On the web side, `loader.test.ts` also pins that `Shift Remove 2 ink drops` collapses to the single "Shift" Keyword-filter option, like every other Shift variant.
+
+### Helper tests
+Located in `packages/synergy-engine/src/__tests__/cardHelpers.test.ts`:
+| Test | What it verifies |
+|------|-----------------|
+| `getShiftType` reads ink drops | "Shift Remove 2 ink drops" is `{kind: 'standard', cost: 2, payment: 'ink-drops'}`, never a free Shift; every other variant carries `payment: 'ink'` |
+| `getInkDropGain` | the largest gain among a card's effects (2 for "get 1 ink drop ... get 2 ink drops instead"); 0 for "If you would get an ink drop" |
 
 ---
 

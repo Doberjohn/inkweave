@@ -128,22 +128,34 @@ export function getShiftBaseNames(card: LorcanaCard): string[] {
 }
 
 /**
- * Shift variant type. Each variant carries its cost (parsed from the keyword).
+ * How a Shift cost is paid: ink from the inkwell ("Shift 5"), or ink drops you remove
+ * ("Shift Remove 2 ink drops", Set 14). A ShiftType's `cost` counts in that unit.
+ */
+export type ShiftPayment = 'ink' | 'ink-drops';
+
+/**
+ * Shift variant type. `kind` is where the Shift lands; `cost` and `payment` are how it is paid.
  * - 'standard': targets same-name characters (e.g., "Shift 5")
  * - 'classification': targets characters with a specific classification (e.g., "Puppy Shift 3")
  * - 'universal': targets any character (e.g., "Universal Shift 4")
  * - 'named-item': targets an ITEM by name (e.g., "Potato Shift 5" → items named Potato)
  */
-export type ShiftType =
-  | {kind: 'standard'; cost: number}
-  | {kind: 'classification'; classification: string; cost: number}
-  | {kind: 'universal'; cost: number}
-  | {kind: 'named-item'; itemName: string; cost: number};
+export type ShiftType = (
+  | {kind: 'standard'}
+  | {kind: 'classification'; classification: string}
+  | {kind: 'universal'}
+  | {kind: 'named-item'; itemName: string}
+) & {cost: number; payment: ShiftPayment};
 
-/** Parse the numeric cost from a Shift keyword string like "Shift 5" or "Puppy Shift 3". */
-function parseShiftCost(keyword: string): number {
-  const match = keyword.match(/(\d+)\s*$/);
-  return match ? parseInt(match[1], 10) : 0;
+/**
+ * Parse a Shift keyword's cost. Ink drops are read first: that keyword ends in "drops", not a
+ * number, so the ink read would fall through to 0 and score it as a free Shift.
+ */
+function parseShiftCost(keyword: string): {cost: number; payment: ShiftPayment} {
+  const drops = keyword.match(/(\d+)\s+ink\s+drops?\s*$/i);
+  if (drops) return {cost: parseInt(drops[1], 10), payment: 'ink-drops'};
+  const ink = keyword.match(/(\d+)\s*$/);
+  return {cost: ink ? parseInt(ink[1], 10) : 0, payment: 'ink'};
 }
 
 /**
@@ -161,13 +173,13 @@ function classifyShiftKeyword(kw: string, isTeam = false): ShiftType | null {
   // Universal Shift targets any character — checked first so a team card that somehow has
   // Universal Shift still keeps every target rather than being narrowed to its named halves.
   if (lower.startsWith('universal shift')) {
-    return {kind: 'universal', cost: parseShiftCost(kw)};
+    return {kind: 'universal', ...parseShiftCost(kw)};
   }
   // Team cards shift onto either half of their compound name. "Combo Shift" / "Duo Shift"
   // read like classification prefixes but aren't — the '&' name is the real signal, and
   // getShiftBaseNames (used by the matcher) splits it. Routes plain/Combo/Duo team shifts alike.
   if (isTeam) {
-    return {kind: 'standard', cost: parseShiftCost(kw)};
+    return {kind: 'standard', ...parseShiftCost(kw)};
   }
   // Strip a leading "Temporary " modifier: it bounces the card to hand at end of turn but
   // doesn't change WHO it shifts onto. "Temporary Shift N" → standard; "Temporary Red Panda
@@ -177,11 +189,12 @@ function classifyShiftKeyword(kw: string, isTeam = false): ShiftType | null {
   // may be multiple words ("Red Panda Shift 2"), so match lazily up to the trailing " Shift".
   const classMatch = core.match(/^(.+?)\s+shift(?:\s+\d+)?$/i);
   if (classMatch) {
-    return {kind: 'classification', classification: classMatch[1].trim(), cost: parseShiftCost(kw)};
+    return {kind: 'classification', classification: classMatch[1].trim(), ...parseShiftCost(kw)};
   }
-  // Plain "Shift N" (including a "Temporary Shift N" reduced to "Shift N") → standard.
+  // Plain "Shift N" (including a "Temporary Shift N" reduced to "Shift N") → standard. A Shift
+  // paid in ink drops ("Shift Remove 2 ink drops") lands here too: only its payment differs.
   if (core.toLowerCase().startsWith('shift')) {
-    return {kind: 'standard', cost: parseShiftCost(kw)};
+    return {kind: 'standard', ...parseShiftCost(kw)};
   }
   return null;
 }
@@ -222,7 +235,8 @@ export function getShiftType(card: LorcanaCard): ShiftType | null {
   for (const kw of card.keywords) {
     const variant = classifyShiftKeyword(kw, isTeam);
     if (!variant) continue;
-    return itemName ? {kind: 'named-item', itemName, cost: variant.cost} : variant;
+    const {cost, payment} = variant;
+    return itemName ? {kind: 'named-item', itemName, cost, payment} : variant;
   }
   return null;
 }
@@ -232,6 +246,21 @@ export function getShiftType(card: LorcanaCard): ShiftType | null {
  */
 export function hasAnyShift(card: LorcanaCard): boolean {
   return getShiftType(card) !== null;
+}
+
+/** An effect that gets ink drops: "get 2 ink drops", "each player gets 1 ink drop". */
+const INK_DROP_GAIN = /\bgets?\s+(\d+)\s+ink\s+drops?\b/gi;
+
+/**
+ * The most ink drops any one of the card's effects gets, or 0: 2 for Baymax - Lab Assistant's
+ * RESUPPLY. "If you would get an ink drop" and "remove 2 ink drops" are not gains.
+ */
+export function getInkDropGain(card: LorcanaCard): number {
+  let most = 0;
+  for (const [, count] of normalizeCardText(card).matchAll(INK_DROP_GAIN)) {
+    most = Math.max(most, parseInt(count, 10));
+  }
+  return most;
 }
 
 /**

@@ -170,8 +170,9 @@ import {
   getInks,           // Get array of card's inks
   canShareDeck,      // Check if two cards can be in the same deck
   isCardType,        // Type-safe card type check
-  getShiftType,      // Get Shift type (standard/named/any)
+  getShiftType,      // Get Shift type (target kind, cost, and payment: ink or ink drops)
   hasAnyShift,       // Check if card has any Shift ability
+  getInkDropGain,    // Most ink drops any one of a card's effects gets
   getNamedReferences, // Extract named entity references from card text
   classifyNamedEffect, // Classify effect tier for named companions
   NAMED_EFFECT_SCORES, // Score lookup by effect tier

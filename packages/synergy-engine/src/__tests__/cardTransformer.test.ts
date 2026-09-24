@@ -30,6 +30,16 @@ describe('transformCard', () => {
       expect(card?.keywords).toEqual(['Shift 2']);
     });
 
+    it('reads a printed Shift paid in ink drops from fullText (Baymax - Amped Up)', () => {
+      const card = transformCard(
+        raw({
+          fullText:
+            'Shift Remove 2 ink drops (You may remove 2 ink drops to play this on top of one of your characters named Baymax.)\nSUPERCHARGE If you would get an ink drop, you may put the top card of your deck into your inkwell facedown and exerted instead.',
+        }),
+      );
+      expect(card?.keywords).toEqual(['Shift Remove 2 ink drops']);
+    });
+
     it('synthesizes conditional Singer from fullText when the card has no abilities array (Miguel)', () => {
       const card = transformCard(
         raw({fullText: 'SHARE THE MUSIC While you have a song card in your discard, this character gets +1 ◊ and gains Singer 3. (They count as cost 3 to sing songs.)'}),

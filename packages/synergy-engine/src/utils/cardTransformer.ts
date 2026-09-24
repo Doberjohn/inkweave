@@ -71,15 +71,20 @@ function nonEmptySections(sections?: string[]): string[] | undefined {
 }
 
 /**
- * Conditional keywords a card gains on ITSELF in ability text ("gains Shift 0", "this
- * character gets +1 ◊ and gains Singer 3"), synthesized into `keywords` so the Shift Targets
- * and Singer + Songs rules see them. The Singer read is anchored on "this character" with a
- * bounded gap that may not name another character, so "this character quests, chosen
- * character gains Singer 5" and "your characters gain Singer 4" never count. A native keyword
- * of the same name always wins.
+ * Keywords a card carries in its text but not in its keyword abilities, synthesized into
+ * `keywords` so the Shift Targets and Singer + Songs rules see them:
+ * - conditional keywords a card gains on ITSELF ("gains Shift 0", "this character gets +1 ◊
+ *   and gains Singer 3"). The Singer read is anchored on "this character" with a bounded gap
+ *   that may not name another character, so "this character quests, chosen character gains
+ *   Singer 5" and "your characters gain Singer 4" never count.
+ * - a printed Shift paid in ink drops ("Shift Remove 2 ink drops"). Its cost is not a number,
+ *   so the reveal keyword reader skips the line; the read is anchored to a line start so only
+ *   the keyword line itself counts.
+ * A native keyword of the same name always wins, and so does an earlier entry.
  */
-const CONDITIONAL_KEYWORD_PATTERNS: ReadonlyArray<[keyword: string, pattern: RegExp]> = [
+const TEXT_KEYWORD_PATTERNS: ReadonlyArray<[keyword: string, pattern: RegExp]> = [
   ['Shift', /gains?\s+Shift\s+(\d+)/i],
+  ['Shift', /^Shift\s+(Remove\s+\d+\s+ink\s+drops?)\b/im],
   ['Singer', /this\s+character\b(?:(?!\bcharacters?\b)[^.]){0,60}?\bgains\s+Singer\s+(\d+)/i],
 ];
 
@@ -101,7 +106,7 @@ function conditionalTexts(raw: LorcanaJSONCard): string[] {
   return [...abilityTexts, raw.fullText ?? ''];
 }
 
-/** The first "gains <keyword> N" read across `texts` as a keyword string, or null. */
+/** The first read of `pattern` across `texts` as a keyword string ("Shift 0"), or null. */
 function conditionalKeyword(texts: string[], keyword: string, pattern: RegExp): string | null {
   for (const text of texts) {
     const match = text.match(pattern);
@@ -110,11 +115,11 @@ function conditionalKeyword(texts: string[], keyword: string, pattern: RegExp): 
   return null;
 }
 
-/** Native keywords first; a conditional one joins only when no native keyword of that name exists. */
+/** Native keywords first; a text one joins only when no keyword of that name exists yet. */
 function collectKeywords(raw: LorcanaJSONCard): string[] {
   const keywords = nativeKeywords(raw);
   const texts = conditionalTexts(raw);
-  for (const [keyword, pattern] of CONDITIONAL_KEYWORD_PATTERNS) {
+  for (const [keyword, pattern] of TEXT_KEYWORD_PATTERNS) {
     if (keywords.some((k) => k.startsWith(keyword))) continue;
     const found = conditionalKeyword(texts, keyword, pattern);
     if (found) keywords.push(found);

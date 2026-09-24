@@ -209,6 +209,7 @@ describe('Unique Extractors', () => {
         createCard({id: 's3', keywords: ['Combo Shift 4']}),
         createCard({id: 's4', keywords: ['Temporary Shift 3']}),
         createCard({id: 's5', keywords: ['Shift 5']}),
+        createCard({id: 's6', keywords: ['Shift Remove 2 ink drops']}),
       ];
       // The classification/team prefixes must NOT leak as bogus keyword options:
       // "Floodborn" is a classification, findable via the Classification filter.
