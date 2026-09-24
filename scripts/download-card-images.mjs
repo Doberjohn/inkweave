@@ -13,9 +13,11 @@
  * `apps/web/public/data/allCards.json` and `previewCards.json` as
  * `imageHash` + `imageHashSm` fields. The web loader reads those at runtime.
  *
- * Cache: `node_modules/.cache/card-images/` keeps unhashed filenames — it's a
- * build-speed cache that skips re-conversion across deploys (preserved by
- * pnpm). Hashing happens at the cache → output boundary.
+ * Cache: `node_modules/.cache/card-images/` keeps unhashed filenames. It is a
+ * build-speed cache that skips re-conversion across deploys: Vercel's build
+ * servers keep node_modules between builds, and the production deploy in
+ * .github/workflows/deploy.yml restores it with actions/cache. Hashing happens
+ * at the cache → output boundary.
  *
  * Usage:
  *   pnpm download-images          # Download all missing images
