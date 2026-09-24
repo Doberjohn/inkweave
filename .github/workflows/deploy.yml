@@ -25,6 +25,17 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false
 
+# Vercel CLI version for the pull, build and deploy steps. Pinned because unpinned
+# `npx vercel` re-resolved @latest in each step, so one job could straddle two CLI
+# versions: on 2026-09-24 pull and build ran 59.26.0, then deploy fetched the
+# just-published 60.0.0, whose @vercel/ruby@12.0.0 dependency was not on npm yet
+# (notarget), failing that deploy. 60.0.0 has deployed cleanly since.
+# To upgrade, bump it in a PR. PR CI never runs this workflow, so a new version's
+# first real test is the deploy after merge. Steps expand it as ${VERCEL_CLI_VERSION:?}
+# so a missing value fails the step instead of quietly falling back to @latest.
+env:
+  VERCEL_CLI_VERSION: '60.0.0'
+
 jobs:
   deploy:
     if: vars.DEPLOY_VIA_CI == 'true'
@@ -49,10 +60,10 @@ jobs:
         run: pnpm --filter inkweave-web exec playwright install --with-deps chromium
 
       - name: Pull Vercel production environment
-        run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx "vercel@${VERCEL_CLI_VERSION:?}" pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build (runs build:vercel → the prerender crawl renders on Ubuntu)
-        run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx "vercel@${VERCEL_CLI_VERSION:?}" build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       # Fatal here and ONLY here (#524). build:vercel deliberately swallows a failed
       # crawl with `|| echo` so Vercel-native preview builds — which cannot
@@ -65,7 +76,7 @@ jobs:
         run: node scripts/check-rendered-html.mjs .vercel/output/static
 
       - name: Deploy prebuilt output to production
-        run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx "vercel@${VERCEL_CLI_VERSION:?}" deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       # Push the hub URLs to IndexNow (Bing/DuckDuckGo) for near-instant re-crawl (#496).
       # Non-fatal: a ping failure must never fail the production deploy.
