@@ -113,6 +113,17 @@ git ls-files apps/web/public/card-images-preview | wc -l
 
 Production serves a preview image only when BOTH variants are committed, and it resolves them through a different path (`/card-images/{id}.{hash}.avif`) than dev (`/card-images-preview/{id}.avif`). A missing AVIF is blank in production and invisible locally.
 
+### New reveals in bulk: `/fetch-reveals`
+
+When a batch of cards appears on lorcanaplayer.com, run the `/fetch-reveals` skill (`.claude/skills/fetch-reveals/SKILL.md`, design in issue #571). It finds the cards Inkweave does not have yet, verifies each against a blind read of its own image, and stages the verified ones, with their AVIFs, on a branch for a normal PR. It never commits.
+
+- **Nothing to update per season.** It reads the set from `revealSet.ts` and `SET_NAMES`, and keeps each season's history in its own section of `scripts/reveal-sync/state.json`.
+- **Needs the owner's Chrome** with the Claude in Chrome extension: lorcanaplayer.com answers `curl` and automated browsers with 403.
+- **What it will not write, by design:** non-English scans (deferred and retried every run until an English scan appears), cards the site lists with `Keywords: Unknown`, cards with no readable collector number (these still go in by PR with a reserved-band id), cards already in Inkweave under another number or in the reserved band, and any field the readers and the site cannot settle, whether they disagree or the image cannot show it. Each lands in the run's report instead, and a field can be ruled on with one command.
+- **It races `/admin/reveal` safely:** it records `previewCards.json`'s blob on `origin/master` at the start and writes nothing if that changed by the end.
+
+Use `/admin/reveal` for a single card, or one lorcanaplayer does not have yet.
+
 ### Every card after that: `/admin/reveal`
 
 1. Read the scan with the `scan-reveal-card` skill (user-level, `~/.claude/skills/scan-reveal-card/`; update its set number, id base and featured franchises each season).
