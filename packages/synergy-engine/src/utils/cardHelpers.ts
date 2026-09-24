@@ -837,8 +837,13 @@ export function costReductionTargetsOverlap(cardA: LorcanaCard, cardB: LorcanaCa
 // NAMED COMPANION DETECTION
 // ============================================
 
-/** Regex to strip Shift parentheticals from card text before scanning for named references */
-const SHIFT_PARENTHETICAL = /Shift \d+[^(]*\([^)]*\)/gi;
+/**
+ * A Shift reminder, whatever its cost: "(You may pay 5 ⬡ to play this on top of one of your
+ * characters named Elsa.)", "(You may remove 2 ink drops to play this on top of ...)". Its
+ * "named X" is a Shift target, which Shift Targets handles, so getNamedReferences strips it.
+ * Keyed on the reminder's wording, not the keyword, so any cost shape is stripped.
+ */
+const SHIFT_REMINDER = /\([^)]*\bto play this on top of\b[^)]*\)/gi;
 
 /**
  * Game-mechanic terminator pattern (as regex source string) that signals the
@@ -881,8 +886,8 @@ const NAMED_PATTERN = new RegExp(
 export function getNamedReferences(card: LorcanaCard): string[] {
   if (!card.text || !HAS_NAMED.test(card.text)) return [];
 
-  // Strip Shift parentheticals and normalize newlines
-  const cleanText = normalizeCardText(card).replace(SHIFT_PARENTHETICAL, '');
+  // Strip Shift reminders and normalize newlines
+  const cleanText = normalizeCardText(card).replace(SHIFT_REMINDER, '');
 
   const names = new Set<string>();
 

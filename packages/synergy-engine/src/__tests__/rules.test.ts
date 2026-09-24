@@ -921,6 +921,17 @@ describe('Named Companions', () => {
     expect(synergies.map((s) => s.card.id)).toContain('pull-lever');
     expect(synergies.map((s) => s.card.id)).toContain('wrong-lever');
   });
+
+  it('should ignore the character named in an ink-drop Shift reminder (Baymax - Amped Up)', () => {
+    const ampedUp = createCard({
+      id: 'baymax-amped-up',
+      name: 'Baymax',
+      fullName: 'Baymax - Amped Up',
+      cost: 7,
+      text: 'Shift Remove 2 ink drops (You may remove 2 ink drops to play this on top of one of your characters named Baymax.)',
+    });
+    expect(namedRule.matches(ampedUp)).toBe(false);
+  });
 });
 
 describe('Location Synergy Rules', () => {

@@ -55,7 +55,7 @@ This handles names with:
 
 ### Pre-Processing
 
-Before scanning, Shift parentheticals are stripped (e.g., `Shift 5 (You may pay 5 to play this on top of one of your characters named Elsa)`) because Shift references are handled by Rule 1.
+Before scanning, every Shift reminder is stripped, whatever its cost: `(You may pay 5 ⬡ to play this on top of one of your characters named Elsa.)` or `(You may remove 2 ink drops to play this on top of one of your characters named Baymax.)`. A Shift target belongs to Shift Targets, not here. The strip (`SHIFT_REMINDER` in `cardHelpers.ts`) is keyed on the reminder's own wording, "to play this on top of", rather than on the keyword, so a Shift cost of any shape is covered. The earlier strip required a digit after "Shift", so it missed the ink-drop Shift of Baymax - Amped Up and scored that card's own Shift target as a companion.
 
 ### Conjunction Handling
 
@@ -118,12 +118,12 @@ Scores are mapped via `NAMED_EFFECT_SCORES` in `cardHelpers.ts`.
 ```chart
 {
   "type": "bar",
-  "title": "Named Companions — Effect Tier Distribution (330 matches)",
+  "title": "Named Companions — Effect Tier Distribution (148 matches)",
   "data": {
     "labels": ["Hostile (4)", "Minor (5)", "Moderate (6)", "Strong (7)", "Game-winning (8)"],
     "datasets": [{
       "label": "Matches",
-      "data": [18, 130, 83, 64, 35],
+      "data": [0, 59, 31, 42, 16],
       "backgroundColor": ["#f59090", "#60b5f5", "#60b5f5", "#6ee7a0", "#6ee7a0"]
     }]
   }
@@ -138,17 +138,18 @@ Named companion synergies cap at 8 (not 9-10) because they're **one-sided depend
 
 ## Coverage
 
-- ~106 cards with named references in the Core format database
-- 78 unique referenced names
-- 100% match rate (every referenced name exists as at least one card in the database)
+- 44 cards with named references in the Core pool (1,124 cards: sets 9 to 13 plus the Set 14 previews)
+- 38 unique referenced names
+- 34 of 38 names match a card. The 4 misses are extraction gaps, not missing cards: "Mor'du. ROOTED BY FEAR", "Buzz Lightyear was banished", "Kevin or an item card" and "Belle’s City Guide or an action card"
+- 40 cards have a Companions group. The other 4 find no target: three reference only an extraction gap above, and Alien - True Believer names the only Alien in the pool, itself
 
 ```chart
 {
   "type": "doughnut",
   "title": "Group Sizes — Cards by Number of Targets",
   "data": {
-    "labels": ["1-4 targets (56.1%)", "5-9 targets (28.8%)", "10-14 targets (12.1%)", "15+ targets (3.0%)"],
-    "values": [37, 19, 8, 2]
+    "labels": ["1-4 targets (57.5%)", "5-9 targets (40.0%)", "10-14 targets (2.5%)", "15+ targets (0.0%)"],
+    "values": [23, 16, 1, 0]
   }
 }
 ```
@@ -165,6 +166,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 |------|-----------------|
 | Match cards that reference named entities | Forward detection: "named Elsa" triggers match |
 | Not match cards without named references | Cards without "named" in text don't match |
+| Ignore the character named in an ink-drop Shift reminder | "named Baymax" in Baymax - Amped Up's "(You may remove 2 ink drops to play this on top of ...)" is a Shift target, not a companion |
 
 ### Synergy Tests
 
@@ -190,7 +192,7 @@ Note: `bidirectional: true` is still set on matches (for deduplication in the en
 
 ### Why Terminator-Based Regex Instead of a Name Dictionary?
 
-A dictionary approach would require updating a lookup table every time a new set releases new card names. The terminator approach works with any name — including names from future sets — because it stops at game-mechanic words, not at known names. The tradeoff is occasional false positives on unusual card text, but in practice the 100% match rate shows this isn't an issue.
+A dictionary approach would require updating a lookup table every time a new set releases new card names. The terminator approach works with any name — including names from future sets — because it stops at game-mechanic words, not at known names. The tradeoff is occasional misreads on unusual card text: 4 of the 38 names extracted today match no card (see Coverage), so those references find no companion.
 
 ### Why 40-Character Window for Hostile Detection?
 
