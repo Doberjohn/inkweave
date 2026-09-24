@@ -137,6 +137,11 @@ export function RevealsPage() {
         title={`${SET_NAMES[REVEAL_SET_CODE]} (Set ${REVEAL_SET_NUMBER}) Card Reveals | Inkweave`}
         description={`Every Disney Lorcana ${SET_NAMES[REVEAL_SET_CODE]} card revealed so far, tracked by ink with synergies for each new card.`}
         canonicalPath="/reveals"
+        // Deliberately unindexed: the page is live for a few weeks a year and redirects
+        // to '/' the rest, and reveal card ids are renumbered when the set graduates, so
+        // anything indexed now becomes a dead URL at rotation. The tags exist for link
+        // unfurls and for the page to stop claiming to be the homepage, not for search.
+        noindex
       />
       <EtherealBackground />
       <CompactHeader isMobile={isMobile} />

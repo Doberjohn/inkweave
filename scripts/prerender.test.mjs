@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {cleanPrerenderedHtml, isCleanShell} from './prerender.mjs';
+import {cleanPrerenderedHtml, isCleanShell, isRevealSeasonActive} from './prerender.mjs';
 
 const SHELL = 'Inkweave — Master Lorcana Synergies';
 const ORIGIN = 'http://localhost:4179';
@@ -101,5 +101,35 @@ describe('isCleanShell', () => {
       `<!doctype html><html><head><!-- <title> above is a fallback for routes without <Seo> -->` +
       `<title>${SHELL}</title></head><body><div id="root"></div></body></html>`;
     expect(isCleanShell(shell, SHELL)).toBe(true);
+  });
+});
+
+/**
+ * Gates whether `/reveals` is crawled. Off-season the route redirects to '/', so
+ * crawling it then would write the HOME page's render to /reveals/index.html — the
+ * exact failure prerendering it is meant to fix.
+ */
+describe('isRevealSeasonActive', () => {
+  const NOW = new Date('2026-09-23T00:00:00Z');
+
+  it('is active while a set is still unreleased', () => {
+    const preview = {sets: {14: {releaseDate: '2026-10-23'}}};
+    expect(isRevealSeasonActive(preview, NOW)).toBe(true);
+  });
+
+  it('is over once the release date has passed', () => {
+    const preview = {sets: {13: {releaseDate: '2026-07-24'}}};
+    expect(isRevealSeasonActive(preview, NOW)).toBe(false);
+  });
+
+  it('stays active when any one set is still unreleased', () => {
+    const preview = {sets: {13: {releaseDate: '2026-07-24'}, 14: {releaseDate: '2026-10-23'}}};
+    expect(isRevealSeasonActive(preview, NOW)).toBe(true);
+  });
+
+  it('treats absent, empty or dateless preview data as no season', () => {
+    expect(isRevealSeasonActive(undefined, NOW)).toBe(false);
+    expect(isRevealSeasonActive({sets: {}}, NOW)).toBe(false);
+    expect(isRevealSeasonActive({sets: {14: {}}}, NOW)).toBe(false);
   });
 });
