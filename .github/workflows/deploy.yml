@@ -56,6 +56,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # download-card-images.mjs skips any card already converted in
+      # node_modules/.cache/card-images. Vercel's build servers kept node_modules
+      # between builds; a fresh Actions runner does not, so without this step every
+      # deploy re-downloads and re-encodes all ~1,024 images (~15 min, #579). The key
+      # follows the card data, so a deploy with new cards saves a fresh cache;
+      # restore-keys falls back to the newest earlier one. A cache written by an older
+      # CACHE_VERSION is wiped by the script itself (its .version file).
+      - name: Restore card image cache
+        uses: actions/cache@v6
+        with:
+          path: node_modules/.cache/card-images
+          key: card-images-${{ runner.os }}-${{ hashFiles('apps/web/public/data/allCards.json', 'apps/web/public/data/previewCards.json') }}
+          restore-keys: |
+            card-images-${{ runner.os }}-
+
       - name: Install Playwright chromium (with system deps — this is what Vercel's AL build can't do)
         run: pnpm --filter inkweave-web exec playwright install --with-deps chromium
 
