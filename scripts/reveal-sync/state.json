@@ -1,0 +1,49 @@
+{
+  "sets": {
+    "14": {
+      "indexTotal": 81,
+      "cards": {
+        "captain-hook-concerned-captain": {
+          "status": "conflict",
+          "reason": "needs-reserved-band",
+          "detail": "no readable collector number",
+          "firstSeen": "2026-09-24"
+        },
+        "ernesto-de-la-cruz-idol-of-millions": {
+          "number": 118,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "honey-lemon-ingenious-researcher": {
+          "number": 144,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "lionheart-cleaning-up-the-city": {
+          "number": 147,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "miguel-rivera-street-musician": {
+          "number": 21,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "mulan-martial-arts-master": {
+          "number": 127,
+          "status": "deferred",
+          "reason": "site-record-incomplete",
+          "detail": "abilities listed as Unknown",
+          "firstSeen": "2026-09-24"
+        },
+        "on-the-open-road": {
+          "number": 27,
+          "status": "deferred",
+          "reason": "scan-not-english",
+          "detail": "JA",
+          "firstSeen": "2026-09-24"
+        }
+      }
+    }
+  }
+}
