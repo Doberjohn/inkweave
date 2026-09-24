@@ -2709,6 +2709,32 @@
       "strength": 2,
       "willpower": 1,
       "lore": 1
+    },
+    {
+      "id": 14148,
+      "name": "Priscilla",
+      "fullName": "Priscilla - Fastest Employee",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 148,
+      "version": "Fastest Employee",
+      "rarity": "Rare",
+      "franchise": "Zootopia",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "OBVIOUS CRUSH This character enters play exerted.\nFILING SYSTEM Whenever this character quests, you may look at the top 2 cards of your deck. Put one into your hand and the other into your inkwell facedown and exerted.",
+      "fullTextSections": [
+        "OBVIOUS CRUSH This character enters play exerted.",
+        "FILING SYSTEM Whenever this character quests, you may look at the top 2 cards of your deck. Put one into your hand and the other into your inkwell facedown and exerted."
+      ],
+      "strength": 0,
+      "willpower": 4,
+      "lore": 2
     }
   ]
 }

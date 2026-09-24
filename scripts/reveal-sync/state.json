@@ -452,6 +452,13 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "priscilla-fastest-employee": {
+          "number": 148,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
+          "firstSeen": "2026-09-24"
+        },
         "remember-me": {
           "number": 29,
           "status": "written",
