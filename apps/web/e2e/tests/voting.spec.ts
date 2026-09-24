@@ -117,7 +117,7 @@ test.describe('Voting Page — Desktop', () => {
     await gotoWithRetry(page, '/browse');
     await page.waitForTimeout(500);
 
-    const voteLink = page.getByRole('link', {name: 'Vote'});
+    const voteLink = page.getByRole('link', {name: 'Vote', exact: true});
     await expect(voteLink).toBeVisible();
     await voteLink.click();
 
@@ -131,7 +131,7 @@ test.describe('Voting Page — Desktop', () => {
     await expect(header).toBeVisible();
 
     await expect(page.getByRole('link', {name: 'Browse'})).toBeVisible();
-    await expect(page.getByRole('link', {name: 'Vote'})).toBeVisible();
+    await expect(page.getByRole('link', {name: 'Vote', exact: true})).toBeVisible();
   });
 });
 

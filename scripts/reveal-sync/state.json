@@ -1,12 +1,145 @@
 {
   "sets": {
     "14": {
-      "indexTotal": 81,
+      "indexTotal": 104,
       "cards": {
+        "abby-park-intense-fan": {
+          "number": 104,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "above-the-crowd": {
+          "number": 95,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "ancestral-guitar": {
+          "number": 31,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
+          "firstSeen": "2026-09-24"
+        },
+        "another-tale-to-spin": {
+          "number": 96,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "archimedes-messenger-owl": {
+          "number": 58,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "arthur-novice-blacksmith": {
+          "number": 185,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "aurora-delightful-musician": {
+          "number": 19,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "baymax-amped-up": {
+          "number": 158,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "baymax-lab-assistant": {
+          "number": 85,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "belle-exceptional-writer": {
+          "number": 90,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "belle-reflective-writer": {
+          "number": 75,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "bellwether-super-capable": {
+          "number": 159,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
+          "firstSeen": "2026-09-24"
+        },
+        "berlioz-tiny-rascal": {
+          "number": 186,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
         "captain-hook-concerned-captain": {
-          "status": "deferred",
-          "reason": "not-officially-revealed",
-          "detail": "illumineertales.com has no card by this name",
+          "status": "skipped",
+          "reason": "owner-excluded",
+          "detail": "owner, 2026-09-24: not to be added",
+          "firstSeen": "2026-09-24"
+        },
+        "chief-bogo-police-commissioner": {
+          "number": 183,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "cinderella-unintentional-icon": {
+          "number": 157,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "clawhauser-traffic-safety-officer": {
+          "number": 15,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
+          "firstSeen": "2026-09-24"
+        },
+        "cruella-de-vil-dodging-traffic": {
+          "number": 113,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "daisy-duck-savvy-investor": {
+          "number": 149,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "dante-enthusiastic-stray": {
+          "number": 43,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "dante-loyal-alebrije": {
+          "number": 54,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
+          "firstSeen": "2026-09-24"
+        },
+        "dante-strange-and-endearing": {
+          "number": 48,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "david-xanatos-arcane-industrialist": {
+          "number": 37,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "donald-duck-taxi-driver": {
+          "number": 110,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "doug-lying-in-wait": {
+          "number": 161,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "duchess-cosmopolitan-cat": {
+          "number": 153,
+          "status": "written",
           "firstSeen": "2026-09-24"
         },
         "ernesto-de-la-cruz-idol-of-millions": {
@@ -14,15 +147,225 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "ernesto-de-la-cruz-ruthless-musician": {
+          "number": 120,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "everyone-knows-juanita": {
+          "number": 60,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "flash-fastest-employee": {
+          "number": 171,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
+          "firstSeen": "2026-09-24"
+        },
+        "fred-big-stomper": {
+          "number": 91,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "go-go-tomago-extended-investigation": {
+          "number": 145,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
+          "firstSeen": "2026-09-24"
+        },
+        "go-go-tomago-extreme-tester": {
+          "number": 72,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "goofy-dancing-superstar": {
+          "number": 105,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "goofy-with-the-band": {
+          "number": 22,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
+          "firstSeen": "2026-09-24"
+        },
+        "hector-rivera-gone-to-pieces": {
+          "number": 121,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
+          "firstSeen": "2026-09-24"
+        },
+        "hector-rivera-street-musician": {
+          "number": 117,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "hector-rivera-worldwide-sensation": {
+          "number": 106,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "higitus-figitus": {
+          "number": 62,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
         "honey-lemon-ingenious-researcher": {
           "number": 144,
-          "status": "deferred",
-          "reason": "not-officially-revealed",
-          "detail": "illumineertales.com has not revealed #144",
+          "status": "skipped",
+          "reason": "owner-excluded",
+          "detail": "owner, 2026-09-24: not to be added",
+          "firstSeen": "2026-09-24"
+        },
+        "honey-lemon-testing-the-limits": {
+          "number": 93,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "ink-explosion": {
+          "number": 198,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "institute-of-technology-honey-lemons-lab": {
+          "number": 170,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "intense-research": {
+          "number": 164,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "jasper-dodgy-boater": {
+          "number": 114,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "jock-enjoying-the-sights": {
+          "number": 78,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "jousting-match": {
+          "number": 197,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "judy-hopps-day-camp-instructor": {
+          "number": 154,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "khan-industries-greenway-landmark": {
+          "number": 204,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "khan-stadium-state-of-the-art": {
+          "number": 136,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "lady-taking-it-easy": {
+          "number": 79,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
+          "firstSeen": "2026-09-24"
+        },
+        "lafayette-all-ears": {
+          "number": 142,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "land-of-the-dead-marigold-bridge": {
+          "number": 135,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "lexington-fearless-flier": {
+          "number": 38,
+          "status": "written",
           "firstSeen": "2026-09-24"
         },
         "lionheart-cleaning-up-the-city": {
           "number": 147,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "lionheart-incumbent-mayor": {
+          "number": 18,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "madam-mim-nosy-neighbor": {
+          "number": 146,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "madam-mim-resourceful-trickster": {
+          "number": 59,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "magnificent-marvelous": {
+          "number": 64,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "mama-coco-visiting-the-park": {
+          "number": 44,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "marie-caught-in-the-act": {
+          "number": 187,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "max-goof-karaoke-star": {
+          "number": 89,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "merlin-bauble-expert": {
+          "number": 39,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "merlin-ink-drop-tinkerer": {
+          "number": 52,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "merlin-profoundly-curious": {
+          "number": 57,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "merlins-shop-and-smithy-magical-market": {
+          "number": 68,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "mickey-mouse-best-in-town": {
+          "number": 23,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "miguel-rivera-accomplished-musician": {
+          "number": 26,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "miguel-rivera-promising-musician": {
+          "number": 10,
           "status": "written",
           "firstSeen": "2026-09-24"
         },
@@ -31,18 +374,183 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "minnie-mouse-busy-go-getter": {
+          "number": 92,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
+          "firstSeen": "2026-09-24"
+        },
+        "minnie-mouse-urban-visionary": {
+          "number": 155,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "molly-cunningham-remembers-to-share": {
+          "number": 73,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
         "mulan-martial-arts-master": {
           "number": 127,
-          "status": "deferred",
-          "reason": "site-record-incomplete",
-          "detail": "abilities listed as Unknown",
+          "status": "skipped",
+          "reason": "owner-excluded",
+          "detail": "owner, 2026-09-24: not to be added",
+          "firstSeen": "2026-09-24"
+        },
+        "nick-wilde-inquisitive-harbormaster": {
+          "number": 11,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "nick-wilde-providing-backup": {
+          "number": 25,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "nick-wilde-toy-drive-volunteer": {
+          "number": 14,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
           "firstSeen": "2026-09-24"
         },
         "on-the-open-road": {
           "number": 27,
-          "status": "deferred",
-          "reason": "scan-not-english",
-          "detail": "JA",
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
+          "firstSeen": "2026-09-24"
+        },
+        "owen-burnett-xanatoss-assistant": {
+          "number": 35,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "p-j-pete-devoted-fan": {
+          "number": 12,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "pepita-imeldas-right-hand": {
+          "number": 119,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "pepita-sweet-kitty": {
+          "number": 109,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "port-authority-center-hub": {
+          "number": 34,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "powerline-megastar": {
+          "number": 17,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "priscilla-fastest-employee": {
+          "number": 148,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
+          "firstSeen": "2026-09-24"
+        },
+        "remember-me": {
+          "number": 29,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "rivera-family-photo": {
+          "number": 132,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
+          "firstSeen": "2026-09-24"
+        },
+        "scuttle-directing-traffic": {
+          "number": 36,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "shere-khan-khan-industries-ceo": {
+          "number": 195,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "shere-khan-opportunistic-tycoon": {
+          "number": 81,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "shere-khan-ruthless-entrepreneur": {
+          "number": 83,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "stacey-powerline-superfan": {
+          "number": 116,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "this-is-business": {
+          "number": 97,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "thomas-omalley-savvy-vagabond": {
+          "number": 152,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "though-i-have-to-say-goodbye": {
+          "number": 131,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "tiana-party-hostess": {
+          "number": 196,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "torn-scrap": {
+          "number": 133,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
+          "firstSeen": "2026-09-24"
+        },
+        "toulouse-rough-and-tumble": {
+          "number": 182,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "tramp-quick-on-his-feet": {
+          "number": 122,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "un-poco-loco": {
+          "number": 63,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "wasabi-called-into-battle": {
+          "number": 125,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "wasabi-future-thinker": {
+          "number": 139,
+          "status": "written",
+          "firstSeen": "2026-09-24"
+        },
+        "yama-notorious-criminal": {
+          "number": 107,
+          "status": "written",
           "firstSeen": "2026-09-24"
         }
       }
