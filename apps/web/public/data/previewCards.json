@@ -433,6 +433,108 @@
       "strength": 3,
       "willpower": 4,
       "lore": 1
+    },
+    {
+      "id": 14118,
+      "name": "Ernesto de la Cruz",
+      "fullName": "Ernesto de la Cruz - Idol of Millions",
+      "cost": 3,
+      "color": "Ruby",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "14",
+      "number": 118,
+      "version": "Idol of Millions",
+      "rarity": "Common",
+      "franchise": "Coco",
+      "subtypes": [
+        "Storyborn",
+        "Villain"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Singer",
+          "keywordValue": "5",
+          "fullText": "Singer 5"
+        }
+      ],
+      "fullText": "Singer 5 (This character counts as cost 5 to sing songs.)\nTOP THE CHARTS While an opponent has a song card in their discard, this character gets +1 ◊.",
+      "fullTextSections": [
+        "Singer 5 (This character counts as cost 5 to sing songs.)",
+        "TOP THE CHARTS While an opponent has a song card in their discard, this character gets +1 ◊."
+      ],
+      "strength": 5,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 14144,
+      "name": "Honey Lemon",
+      "fullName": "Honey Lemon - Ingenious Researcher",
+      "cost": 7,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 144,
+      "version": "Ingenious Researcher",
+      "rarity": "Uncommon",
+      "franchise": "Big Hero 6",
+      "subtypes": [
+        "Dreamborn",
+        "Super",
+        "Hero",
+        "Inventor"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "5",
+          "fullText": "Shift 5"
+        }
+      ],
+      "fullText": "Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Honey Lemon.)\nSYNTHESIZE Whenever this character quests, you may return an item card from your discard to your hand. If you do, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Honey Lemon.)",
+        "SYNTHESIZE Whenever this character quests, you may return an item card from your discard to your hand. If you do, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+      ],
+      "strength": 4,
+      "willpower": 6,
+      "lore": 2
+    },
+    {
+      "id": 14147,
+      "name": "Lionheart",
+      "fullName": "Lionheart - Cleaning Up the City",
+      "cost": 4,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 147,
+      "version": "Cleaning Up the City",
+      "rarity": "Uncommon",
+      "franchise": "Zootopia",
+      "subtypes": [
+        "Storyborn"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Alert",
+          "fullText": "Alert"
+        }
+      ],
+      "fullText": "Alert (This character can challenge as if they had Evasive.)\nCIVIC DUTY 6 ⬡ — Remove all damage from chosen character or location.",
+      "fullTextSections": [
+        "Alert (This character can challenge as if they had Evasive.)",
+        "CIVIC DUTY 6 ⬡ — Remove all damage from chosen character or location."
+      ],
+      "strength": 3,
+      "willpower": 5,
+      "lore": 1
     }
   ]
 }
