@@ -115,14 +115,16 @@ Production serves a preview image only when BOTH variants are committed, and it 
 
 ### New reveals in bulk: `/fetch-reveals`
 
-When a batch of cards appears on lorcanaplayer.com, run the `/fetch-reveals` skill (`.claude/skills/fetch-reveals/SKILL.md`, design in issue #571). It finds the cards Inkweave does not have yet, verifies each against a blind read of its own image, and stages the verified ones, with their AVIFs, on a branch for a normal PR. It never commits.
+When a batch of cards appears on lorcanaplayer.com, run the `/fetch-reveals` skill (`.claude/skills/fetch-reveals/SKILL.md`, design in issues #571 and #574). It finds the cards Inkweave does not have yet, keeps only the ones illumineertales.com lists as officially revealed, verifies each against a blind read of its official scan, and stages the verified ones, with their AVIFs, on a branch for a normal PR. It never commits.
 
-- **Nothing to update per season.** It reads the set from `revealSet.ts` and `SET_NAMES`, and keeps each season's history in its own section of `scripts/reveal-sync/state.json`.
-- **Needs the owner's Chrome** with the Claude in Chrome extension: lorcanaplayer.com answers `curl` and automated browsers with 403.
-- **What it will not write, by design:** non-English scans (deferred and retried every run until an English scan appears), cards the site lists with `Keywords: Unknown`, cards with no readable collector number (these still go in by PR with a reserved-band id), cards already in Inkweave under another number or in the reserved band, and any field the readers and the site cannot settle, whether they disagree or the image cannot show it. Each lands in the run's report instead, and a field can be ruled on with one command.
+- **Official cards only.** lorcanaplayer.com also lists leaks: cards never officially revealed. illumineertales.com is the owner's reference for what is official, so a card is written only when it shows there, and the scan Inkweave ships comes from there too. A leak waits in the report as "not officially revealed" and is written the day it becomes official. If the official list cannot be read, the run stops at its first step and writes nothing.
+- **Nothing to update per season, with one check.** It reads the set from `revealSet.ts` and `SET_NAMES`, and keeps each season's history in its own section of `scripts/reveal-sync/state.json`. At the start of a season, confirm `https://illumineertales.com/cards.json` has a `set-<N>-<slug>` section for the new set (`set-14-hyperia-city` for Set 14); without it, every run stops at `start`.
+- **Needs the owner's Chrome** with the Claude in Chrome extension: lorcanaplayer.com answers `curl` and automated browsers with 403. The official list is plain HTTPS and needs no browser.
+- **What it will not write, by design:** cards the official list does not show as revealed (leaks), non-English cards (a translation link on the official list, a non-English marker on lorcanaplayer's scan, or a reader reading a language code other than EN on the card; each deferred and retried every run; a code no reader can read goes to the owner), cards the site lists with `Keywords: Unknown`, cards with no collector number on either site (these still go in by PR with a reserved-band id), cards already in Inkweave under another number or in the reserved band, a card whose name, ink, type or rarity differs between the two sites, and any field the readers and the site cannot settle. Each lands in the run's report instead, and a field can be ruled on with one command.
+- **Every report also lists** this set's Inkweave cards that the official list does not show as revealed (a leak that got in by hand, for example), and the official cards lorcanaplayer has not added yet. Removing a card is always the owner's call.
 - **It races `/admin/reveal` safely:** it records `previewCards.json`'s blob on `origin/master` at the start and writes nothing if that changed by the end.
 
-Use `/admin/reveal` for a single card, or one lorcanaplayer does not have yet.
+Use `/admin/reveal` for a single card, or one lorcanaplayer does not have yet, and check the official list first.
 
 ### Every card after that: `/admin/reveal`
 
@@ -165,6 +167,7 @@ Use `/admin/reveal` for a single card, or one lorcanaplayer does not have yet.
 - [ ] `setSpotlights.ts` cleared of last season's content
 - [ ] Set logo + franchise logos added
 - [ ] `scan-reveal-card` skill and `PREVIEW_CARD_PARSER.md` `SET_NAME_TO_CODE` updated
+- [ ] `https://illumineertales.com/cards.json` has a `set-<N>-<slug>` section for the new set (`/fetch-reveals` stops without it)
 - [ ] `pnpm lint`, `pnpm test`, `tsc -b`, `check:stories`, `check:design`, full chromium E2E
 - [ ] Visual check-in with the owner: hero, boards (desktop + mobile), What's New band, home promo
 - [ ] Vercel flag on Production AND Preview; `DEPLOY_VIA_CI` is `true`
