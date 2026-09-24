@@ -469,42 +469,6 @@
       "lore": 1
     },
     {
-      "id": 14144,
-      "name": "Honey Lemon",
-      "fullName": "Honey Lemon - Ingenious Researcher",
-      "cost": 7,
-      "color": "Sapphire",
-      "inkwell": true,
-      "type": "Character",
-      "setCode": "14",
-      "number": 144,
-      "version": "Ingenious Researcher",
-      "rarity": "Uncommon",
-      "franchise": "Big Hero 6",
-      "subtypes": [
-        "Dreamborn",
-        "Super",
-        "Hero",
-        "Inventor"
-      ],
-      "abilities": [
-        {
-          "type": "keyword",
-          "keyword": "Shift",
-          "keywordValue": "5",
-          "fullText": "Shift 5"
-        }
-      ],
-      "fullText": "Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Honey Lemon.)\nSYNTHESIZE Whenever this character quests, you may return an item card from your discard to your hand. If you do, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
-      "fullTextSections": [
-        "Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Honey Lemon.)",
-        "SYNTHESIZE Whenever this character quests, you may return an item card from your discard to your hand. If you do, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
-      ],
-      "strength": 4,
-      "willpower": 6,
-      "lore": 2
-    },
-    {
       "id": 14147,
       "name": "Lionheart",
       "fullName": "Lionheart - Cleaning Up the City",
