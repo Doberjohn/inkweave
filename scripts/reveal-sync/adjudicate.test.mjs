@@ -1,11 +1,11 @@
 import {describe, it, expect} from 'vitest';
-import {adjudicate, parseReaderResult, toRevealForm} from './adjudicate.mjs';
+import {RulingError, adjudicate, parseReaderResult, toRevealForm} from './adjudicate.mjs';
 import {parseCardLines} from './extract-card.mjs';
 import {
   ERNESTO,
-  HONEY_LEMON,
   LIONHEART,
   ON_THE_OPEN_ROAD,
+  TEST_INVENTOR,
   page,
   readerFor,
 } from './__fixtures__/cards.mjs';
@@ -37,15 +37,15 @@ describe('adjudicate: one reader', () => {
   });
 
   it("agrees on a Shift line once the site's missing glyph is restored", () => {
-    const {decision, card} = adjudicate(site(HONEY_LEMON), [readerFor.honeyLemon()]);
+    const {decision, card} = adjudicate(site(TEST_INVENTOR), [readerFor.testInventor()]);
     expect(decision).toBe('write');
     expect(card.text[0]).toMatch(/^Shift 5 ⬡ \(/);
     expect(card.keywords).toEqual(['Shift 5']);
   });
 
   it('keeps the printed subtype order and lets the site fill a term the image could not read', () => {
-    const result = adjudicate(site(HONEY_LEMON), [readerFor.honeyLemon()]);
-    expect(result.card.subtypes).toEqual(['Dreamborn', 'Super', 'Hero', 'Inventor']);
+    const result = adjudicate(site(TEST_INVENTOR), [readerFor.testInventor()]);
+    expect(result.card.subtypes).toEqual(['Storyborn', 'Ally', 'Hero', 'Inventor']);
     expect(result.notes.join(' ')).toMatch(/subtypes/);
   });
 
@@ -184,6 +184,7 @@ describe('adjudicate: readings that must never count as agreement', () => {
         'Chosen opponent reveals their hand and discards all non-character cards.',
       ],
       collectorNumber: '27/204',
+      language: 'EN',
       unreadable: [],
     };
     const result = adjudicate(site(ON_THE_OPEN_ROAD), [reader]);
@@ -211,14 +212,14 @@ describe('adjudicate: readings that must never count as agreement', () => {
 
 describe('adjudicate: fields no reader could read', () => {
   it('sends unreadable classifications straight to the owner, with the site value shown', () => {
-    const reader = withReader(readerFor.honeyLemon, {
+    const reader = withReader(readerFor.testInventor, {
       classifications: null,
       unreadable: ['classifications'],
     });
-    const result = adjudicate(site(HONEY_LEMON), [reader]);
+    const result = adjudicate(site(TEST_INVENTOR), [reader]);
     expect(result).toMatchObject({decision: 'conflict', needReaders: 0});
     expect(result.conflicts).toEqual([
-      {field: 'subtypes', site: ['Dreamborn', 'Hero', 'Inventor', 'Super'], readers: [null]},
+      {field: 'subtypes', site: ['Storyborn', 'Hero', 'Inventor', 'Ally'], readers: [null]},
     ]);
   });
 
@@ -262,9 +263,10 @@ describe("adjudicate: the owner's rulings", () => {
   ];
 
   it('refuses a ruling that does not parse, rather than writing the field blank', () => {
-    expect(() => adjudicate(site(LIONHEART), split(), {overrides: {strength: 'seven'}})).toThrow(
-      /cannot read the ruling "seven" as a strength/,
-    );
+    const rule = () => adjudicate(site(LIONHEART), split(), {overrides: {strength: 'seven'}});
+    expect(rule).toThrow(/cannot read the ruling "seven" as a strength/);
+    // A RulingError is the owner's to fix; the command line prints it as a message.
+    expect(rule).toThrow(RulingError);
   });
 
   it('records the parsed value in the note', () => {
@@ -282,6 +284,171 @@ describe("adjudicate: the owner's rulings", () => {
     });
     expect(result.card.text).toEqual(['Alert (reminder.)', 'CIVIC DUTY 6 ⬡ — Remove all damage.']);
     expect(result.card.keywords).toEqual(['Alert']);
+  });
+});
+
+describe('adjudicate: the printed language', () => {
+  it('defers a card a reader reads as not English, before comparing anything', () => {
+    const reader = withReader(readerFor.lionheart, {language: 'FR'});
+    expect(adjudicate(site(LIONHEART), [reader])).toMatchObject({
+      decision: 'defer',
+      reason: 'scan-not-english',
+      detail: 'printed language FR',
+      card: null,
+    });
+  });
+
+  it('defers on any other language, however the reader wrote it', () => {
+    for (const [language, printed] of [
+      ['French', 'FRENCH'],
+      ['fr-FR', 'FR-FR'],
+      ['ja', 'JA'],
+    ]) {
+      const reader = withReader(readerFor.lionheart, {language});
+      expect(adjudicate(site(LIONHEART), [reader])).toMatchObject({
+        decision: 'defer',
+        detail: `printed language ${printed}`,
+      });
+    }
+  });
+
+  it('reads English in any spelling', () => {
+    for (const language of ['en', 'EN', 'en-US', 'English', 'eng']) {
+      const reader = withReader(readerFor.lionheart, {language});
+      expect(adjudicate(site(LIONHEART), [reader]).decision).toBe('write');
+    }
+  });
+
+  it('asks two more readers when the reader could not read the language', () => {
+    for (const language of [null, undefined, '']) {
+      const reader = withReader(readerFor.lionheart, {language});
+      expect(adjudicate(site(LIONHEART), [reader])).toMatchObject({
+        decision: 'escalate',
+        needReaders: 2,
+      });
+    }
+  });
+
+  it('leaves a language no reader could read to the owner, who can rule the card English', () => {
+    const unread = () => withReader(readerFor.lionheart, {language: null});
+    const readers = [unread(), unread(), unread()];
+    const result = adjudicate(site(LIONHEART), readers);
+    expect(result.decision).toBe('conflict');
+    expect(result.conflicts).toEqual([
+      {field: 'language', site: 'EN', readers: [null, null, null]},
+    ]);
+    const ruled = adjudicate(site(LIONHEART), readers, {overrides: {language: 'site'}});
+    expect(ruled.decision).toBe('write');
+  });
+});
+
+describe('adjudicate: the official list as a second source for the version', () => {
+  // lorcanaplayer prints "Great Stomper"; the official list and the card say "Big Stomper".
+  const fred = () =>
+    site(LIONHEART, {
+      'Card ID': '91/204',
+      Name: 'Fred',
+      Version: 'Great Stomper',
+      'Ink Color': 'Emerald',
+    });
+  const official = {name: 'Fred', version: 'Big Stomper', number: 91};
+  const reading = (version) =>
+    withReader(readerFor.lionheart, {
+      name: 'Fred',
+      version,
+      inkColor: 'Emerald',
+      collectorNumber: '91/204',
+    });
+
+  it('asks for three readers when the two sites disagree, even if the first agrees with one', () => {
+    expect(adjudicate(fred(), [reading('Great Stomper')], {official})).toMatchObject({
+      decision: 'escalate',
+      needReaders: 2,
+    });
+  });
+
+  it('writes the version two of three readers read, noting what lorcanaplayer had', () => {
+    const result = adjudicate(
+      fred(),
+      [reading('Big Stomper'), reading('Big Stomper'), reading('Great Stomper')],
+      {official},
+    );
+    expect(result.decision).toBe('write');
+    expect(result.card.version).toBe('Big Stomper');
+    expect(result.notes).toContain(
+      'version: from the official list and the card; lorcanaplayer had "Great Stomper"',
+    );
+  });
+
+  it("keeps lorcanaplayer's version when two of three readers read that, noting the official one", () => {
+    const result = adjudicate(
+      fred(),
+      [reading('Great Stomper'), reading('Great Stomper'), reading('Great Stomper')],
+      {official},
+    );
+    expect(result.card.version).toBe('Great Stomper');
+    expect(result.notes).toContain(
+      'version: the card and lorcanaplayer agree on "Great Stomper"; the official list has "Big Stomper"',
+    );
+  });
+
+  it('leaves the version to the owner when the readers split, showing both sites', () => {
+    const result = adjudicate(
+      fred(),
+      [reading('Big Stomper'), reading('Great Stomper'), reading('Mighty Stomper')],
+      {official},
+    );
+    expect(result.decision).toBe('conflict');
+    expect(result.conflicts).toContainEqual({
+      field: 'version',
+      site: 'Great Stomper',
+      official: 'Big Stomper',
+      readers: ['Big Stomper', 'Great Stomper', 'Mighty Stomper'],
+    });
+  });
+
+  it('takes a ruling of "official" for the official value', () => {
+    const result = adjudicate(
+      fred(),
+      [reading('Big Stomper'), reading('Great Stomper'), reading('Mighty Stomper')],
+      {official, overrides: {version: 'official'}},
+    );
+    expect(result.card.version).toBe('Big Stomper');
+    expect(result.notes.join(' ')).toContain(
+      "version: resolved by the owner (the official list's value)",
+    );
+  });
+
+  it('refuses a ruling of "official" on a field the official list does not carry', () => {
+    const split = [4, 6, 7].map((strength) => withReader(readerFor.lionheart, {strength}));
+    expect(() =>
+      adjudicate(site(LIONHEART), split, {official, overrides: {strength: 'official'}}),
+    ).toThrow(/the official list has no strength/);
+  });
+
+  it('takes a ruling of "official" for the ink and type it carries', () => {
+    const inks = ['Amber', 'Ruby', 'Steel'].map((inkColor) =>
+      withReader(readerFor.lionheart, {inkColor}),
+    );
+    const withInk = {
+      name: 'Lionheart',
+      version: 'Cleaning Up the City',
+      number: 147,
+      ink: ['Sapphire'],
+      type: 'Character',
+    };
+    const result = adjudicate(site(LIONHEART), inks, {
+      official: withInk,
+      overrides: {ink: 'official'},
+    });
+    expect(result.card.inks).toEqual(['Sapphire']);
+  });
+
+  it('keeps the one-reader rule when the two sites agree', () => {
+    const agreeing = {name: 'Lionheart', version: 'Cleaning Up the City', number: 147};
+    expect(
+      adjudicate(site(LIONHEART), [readerFor.lionheart()], {official: agreeing}).decision,
+    ).toBe('write');
   });
 });
 

@@ -9,7 +9,7 @@ import {buildPreviewCard} from '../../apps/web/src/features/reveal-admin/buildPr
 import {insertCardIntoPreviewJson} from '../../apps/web/src/features/reveal-admin/insertCardIntoPreviewJson.ts';
 import {adjudicate, toRevealForm} from './adjudicate.mjs';
 import {parseCardLines} from './extract-card.mjs';
-import {ERNESTO, HONEY_LEMON, LIONHEART, page, readerFor} from './__fixtures__/cards.mjs';
+import {ERNESTO, LIONHEART, TEST_INVENTOR, page, readerFor} from './__fixtures__/cards.mjs';
 
 const formFor = (card, reader) => {
   const site = parseCardLines(page(card), {slug: card.slug, imageFile: card.imageFile});
@@ -20,7 +20,7 @@ describe('the reveal write chain accepts adjudicated cards', () => {
   it('validates each adjudicated form', () => {
     for (const [card, reader] of [
       [ERNESTO, readerFor.ernesto()],
-      [HONEY_LEMON, readerFor.honeyLemon()],
+      [TEST_INVENTOR, readerFor.testInventor()],
       [LIONHEART, readerFor.lionheart()],
     ]) {
       expect(validateRevealCardForm(formFor(card, reader), new Set(), 'card.jpg')).toEqual({
@@ -60,13 +60,13 @@ describe('the reveal write chain accepts adjudicated cards', () => {
     const after = JSON.parse(
       insertCardIntoPreviewJson(
         before,
-        buildPreviewCard(formFor(HONEY_LEMON, readerFor.honeyLemon())),
+        buildPreviewCard(formFor(TEST_INVENTOR, readerFor.testInventor())),
       ),
     );
     expect(after.cards).toHaveLength(1);
     expect(after.cards[0]).toMatchObject({
-      id: 14144,
-      subtypes: ['Dreamborn', 'Super', 'Hero', 'Inventor'],
+      id: 14150,
+      subtypes: ['Storyborn', 'Ally', 'Hero', 'Inventor'],
     });
   });
 });

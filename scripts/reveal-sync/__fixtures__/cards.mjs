@@ -3,11 +3,15 @@
  *
  * `page()` builds the line array the browser flattener produces for a lorcanaplayer card
  * page: a header, the label/value table, then retailer and share links. The values come
- * from cards processed in the 2026-09-23 trial run. Flavour text is never included; the
- * one fixture that has a flavour line uses a placeholder to prove it is ignored.
+ * from cards processed in the 2026-09-23 trial run, except the cards named "Test ...",
+ * which are invented. Two of the trial's cards turned out to be leaks, never officially
+ * revealed; invented cards with the same quirks replace them, so no leaked card text lives
+ * in the repo. Flavour text is never included; the one fixture that has a flavour line
+ * uses a placeholder to prove it is ignored.
  *
  * The reader objects are the JSON the vision agents returned in that trial, including
- * their real quirks (◆ for ◊, an illegible classification term).
+ * their real quirks (◆ for ◊, an illegible classification term). Their `language` key was
+ * added when the reader prompt gained it (issue #574); every trial card was English.
  */
 
 const HEADER = (title) => [
@@ -111,59 +115,61 @@ export const ERNESTO = {
   ],
 };
 
-export const HONEY_LEMON = {
-  slug: 'honey-lemon-ingenious-researcher',
-  imageFile: '144-204-EN-14-Honey-Lemon-Ingenious-Researcher-LQ-Lorcana-Player.jpg',
-  title: 'Honey Lemon – Ingenious Researcher',
+/** Invented. Keeps two rendering gaps the site really has: a Shift header without its ⬡, and a space before ".)". */
+export const TEST_INVENTOR = {
+  slug: 'test-inventor-gadget-tinkerer',
+  imageFile: '150-204-EN-14-Test-Inventor-Gadget-Tinkerer-LQ-Lorcana-Player.jpg',
+  title: 'Test Inventor – Gadget Tinkerer',
   fields: [
-    ['Name', 'Honey Lemon'],
+    ['Name', 'Test Inventor'],
     ['Card Type', 'Character'],
-    ['Version', 'Ingenious Researcher'],
-    ['Ink Cost', '7'],
+    ['Version', 'Gadget Tinkerer'],
+    ['Ink Cost', '6'],
     ['Inkwell', 'Yes'],
-    ['Strength', '4'],
-    ['Willpower', '6'],
+    ['Strength', '3'],
+    ['Willpower', '5'],
     ['Lore', '2'],
     ['Ink Color', 'Sapphire'],
     ['Rarity', 'Uncommon'],
-    ['Card ID', '144/204'],
+    ['Card ID', '150/204'],
     ['Set', 'Hyperia City'],
-    ['Keywords + Abilities', 'Return From Discard Shift Gain Ink Drop'],
-    ['Classifications', 'Dreamborn • Hero • Inventor • Super'],
+    ['Keywords + Abilities', 'Shift Gain Ink Drop'],
+    ['Classifications', 'Storyborn • Hero • Inventor • Ally'],
     [
       'Card Text',
       [
         // lorcanaplayer drops the ⬡ after "Shift 5"; the card and the data print it.
-        'Shift 5 (You may pay 5 ⬡ to play this on top of one of your characters named Honey Lemon.)',
-        'SYNTHESIZE Whenever this character quests, you may return an item card from your discard to your hand. If you do, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡ .)',
+        'Shift 5 (You may pay 5 ⬡ to play this on top of one of your characters named Test Inventor.)',
+        'WORKSHOP HOURS When you play this character, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡ .)',
       ],
     ],
     ['Flavor Text', ''],
-    ['Illustrator', 'Fahed Alrajil'],
-    ['Franchise', 'Big Hero 6'],
+    ['Illustrator', 'Test Artist'],
+    ['Franchise', 'Zootopia'],
     ...dates,
   ],
 };
 
-export const CAPTAIN_HOOK = {
-  slug: 'captain-hook-concerned-captain',
-  imageFile: 'HC-EN-14-Captain-Hook-Concerned-Captain-LQ-Lorcana-Player.jpg',
-  title: 'Captain Hook – Concerned Captain',
+/** Invented. A vanilla card whose page shows no collector number. */
+export const TEST_CAPTAIN = {
+  slug: 'test-captain-harbor-watch',
+  imageFile: 'HC-EN-14-Test-Captain-Harbor-Watch-LQ-Lorcana-Player.jpg',
+  title: 'Test Captain – Harbor Watch',
   fields: [
-    ['Name', 'Captain Hook'],
+    ['Name', 'Test Captain'],
     ['Card Type', 'Character'],
-    ['Version', 'Concerned Captain'],
-    ['Ink Cost', '8'],
+    ['Version', 'Harbor Watch'],
+    ['Ink Cost', '7'],
     ['Inkwell', 'Yes'],
-    ['Strength', '9'],
-    ['Willpower', '9'],
+    ['Strength', '6'],
+    ['Willpower', '7'],
     ['Lore', '2'],
     ['Ink Color', 'Emerald'],
     ['Rarity', 'Uncommon'],
     ['Card ID', ''],
     ['Set', 'Hyperia City'],
     ['Keywords + Abilities', 'None'],
-    ['Classifications', 'Dreamborn • Captain • Pirate • Villain'],
+    ['Classifications', 'Dreamborn • Captain • Pirate'],
     ['Card Text', ''],
     ['Flavor Text', ''],
     ['Illustrator', 'Unknown'],
@@ -273,29 +279,32 @@ export const readerFor = {
       'TOP THE CHARTS While an opponent has a song card in their discard, this character gets +1 ◆.',
     ],
     collectorNumber: '118/204',
+    language: 'EN',
     illustrator: 'Mariana Moreno',
     // Both trial readers said inkable and guessed Uncommon; the card is neither.
     inkable: true,
     rarityGuess: 'a partly shaded circle, likely Uncommon',
     unreadable: [],
   }),
-  honeyLemon: () => ({
-    name: 'Honey Lemon',
-    version: 'Ingenious Researcher',
-    cost: 7,
-    strength: 4,
-    willpower: 6,
+  // Printed order differs from the site's, and the last term was illegible in the trial.
+  testInventor: () => ({
+    name: 'Test Inventor',
+    version: 'Gadget Tinkerer',
+    cost: 6,
+    strength: 3,
+    willpower: 5,
     lore: 2,
     inkColor: 'Sapphire',
     type: 'Character',
-    classifications: 'Dreamborn • Super • Hero • [4th term illegible]',
+    classifications: 'Storyborn • Ally • Hero • [4th term illegible]',
     keywords: ['Shift 5'],
     cardText: [
-      'Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Honey Lemon.)',
-      'SYNTHESIZE Whenever this character quests, you may return an item card from your discard to your hand. If you do, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)',
+      'Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Test Inventor.)',
+      'WORKSHOP HOURS When you play this character, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)',
     ],
-    collectorNumber: '144/204',
-    illustrator: 'Fahed Alrajil',
+    collectorNumber: '150/204',
+    language: 'EN',
+    illustrator: 'Test Artist',
     inkable: true,
     rarityGuess: 'open book icon',
     unreadable: ['classifications'],
@@ -316,6 +325,7 @@ export const readerFor = {
       'CIVIC DUTY 6 ⬡ – Remove all damage from chosen character or location.',
     ],
     collectorNumber: '147/204',
+    language: 'EN',
     illustrator: 'Alice Pisoni',
     inkable: true,
     rarityGuess: null,

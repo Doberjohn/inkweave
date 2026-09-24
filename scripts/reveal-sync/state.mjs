@@ -9,7 +9,9 @@
  *   skipped   final: not part of this set's reveal data
  *   gone      the slug left the site, usually because a translated name was replaced;
  *             fetched again if it ever reappears, so a truncated index cannot lose a card
- *   deferred  retried every run
+ *   deferred  retried every run; this includes a card the official list does not show as
+ *             revealed yet (reason not-officially-revealed), so a leak is written the day
+ *             it becomes official, never before
  *   conflict  retried every run, and waiting on the owner
  */
 export const RETRYABLE = new Set(['deferred', 'conflict']);

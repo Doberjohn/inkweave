@@ -4,13 +4,15 @@
  * (.claude/skills/fetch-reveals/SKILL.md) runs them in order and does the browser and vision
  * work in between.
  *
- *   start [--allow-non-master-base]    check the branch, record the base, open a run
+ *   start [--allow-non-master-base]    check the branch, read the official list, open a run
  *   snippet                            print the in-page code to install in the site's tab
  *   candidates <run> [--only a,b]      read the discovered index, list the cards to fetch;
  *                                      --only fetches the named cards whatever their state
- *   ingest <run>                       read the fetched pages, apply the gates, list reader jobs
+ *   ingest <run>                       read the fetched pages, apply the gates, fetch the
+ *                                      official scans, list reader jobs
  *   adjudicate <run>                   read the readers' results, decide, list any escalations
- *   resolve <run> <slug> <field>=<v>   record the owner's ruling on a field the readers disputed
+ *   resolve <run> <slug> <field>=<v>   record the owner's ruling on a field the readers
+ *                                      disputed, or one the two sites disagree on
  *   write <run>                        write verified cards, stage their art, update state
  *   report <run>                       print the report
  *
@@ -19,13 +21,26 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {adjudicate} from './adjudicate.mjs';
+import {RulingError, adjudicate} from './adjudicate.mjs';
 import {BROWSER_API_VERSION, installSnippet} from './browser.mjs';
 import {UsageError, entries, git, say} from './cli.mjs';
 import {SiteRecordError, parseCardLines} from './extract-card.mjs';
 import {RARITIES, existingVerdict, gateCard} from './gates.mjs';
+import {
+  OFFICIAL_IMAGE,
+  OfficialListError,
+  applyOfficialRulings,
+  downloadOfficialImage,
+  fetchOfficialList,
+  leakAudit,
+  officialFullName,
+  officialIdentity,
+  officialSummary,
+  officialVerdict,
+  waitingForSite,
+} from './official.mjs';
 import {assignReaders, outstandingJobs, readResults} from './readers.mjs';
-import {formatReport} from './report.mjs';
+import {auditLines, formatReport, officialLines} from './report.mjs';
 import {selectCandidates, setSection, shrinkWarning} from './state.mjs';
 import {fullName} from './text.mjs';
 import {loadSeason, loadWriteChain} from './web.mjs';
@@ -35,11 +50,15 @@ import {
   cardDir,
   localDate,
   newRunId,
+  readOfficial,
   readPreviewText,
   readRun,
+  readSite,
   readState,
   takeDownload,
+  writeOfficial,
   writeRun,
+  writeSite,
 } from './runstore.mjs';
 
 const BATCH_SIZE = 15;
@@ -48,18 +67,36 @@ const PROTECTED_BRANCHES = ['master', 'main'];
 const RARITY_FACET = RARITIES.map((r) => r.toLowerCase().replace(/ /g, '-'))
   .sort()
   .join(';');
-const IMAGE_EXT = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp'};
 const CLEARANCE_EXPIRED =
   'HTTP 403: the Cloudflare clearance expired; reload the tab and fetch again';
 
+/**
+ * A browser download, from this run's copy. One made by older browser code is removed, so
+ * the retry takes the fresh download instead of finding the stale copy again.
+ */
 function readBundle(file) {
   const bundle = JSON.parse(fs.readFileSync(file, 'utf8'));
   if (bundle.version !== BROWSER_API_VERSION) {
+    fs.rmSync(file, {force: true});
     throw new UsageError(
-      `${path.basename(file)} came from browser code ${bundle.version}; expected ${BROWSER_API_VERSION}. Re-install the snippet.`,
+      `${path.basename(file)} came from browser code ${bundle.version}; expected ${BROWSER_API_VERSION}. It was removed: re-install the snippet, run that browser step again, then rerun this command.`,
     );
   }
   return bundle;
+}
+
+/**
+ * A run for every step after `start`. A run opened before the official gate (issue #574)
+ * never had its cards checked against the official list, so it cannot go on.
+ */
+function openRun(runId) {
+  const run = readRun(runId);
+  if (!run.official) {
+    throw new UsageError(
+      `run ${runId} was opened before the official gate (issue #574), so its cards were never checked against the official list. Start a new run.`,
+    );
+  }
+  return run;
 }
 
 /** This set's cards already in previewCards.json, as {id, number, name}. */
@@ -92,6 +129,16 @@ function assertFreshBase(args) {
   }
 }
 
+/** The official list, or a UsageError that ends the run before it opens: no list, no run. */
+async function loadOfficialList(season) {
+  try {
+    return await fetchOfficialList(season);
+  } catch (error) {
+    if (!(error instanceof OfficialListError)) throw error;
+    throw new UsageError(`official list unavailable: ${error.message}`);
+  }
+}
+
 async function start(args) {
   const branch = assertCleanBranch();
   assertFreshBase(args);
@@ -100,6 +147,7 @@ async function start(args) {
     throw new UsageError('previewCards.json differs from origin/master');
   }
   const season = await loadSeason();
+  const official = await loadOfficialList(season);
   const run = {
     runId: newRunId(),
     startedAt: new Date().toISOString(),
@@ -107,12 +155,19 @@ async function start(args) {
     season,
     branch,
     baseBlob,
+    official: officialSummary(official, season.setTotal),
+    audit: leakAudit(presentCards(season.setCode), official),
     cards: {},
   };
   writeRun(run);
+  writeOfficial(run.runId, official);
   const discover = {setSlug: season.setSlug, rarities: RARITY_FACET, runId: run.runId};
+  const findings = run.audit.length;
   say(
     `Run ${run.runId} opened for Set ${season.setCode} (${season.setName}) on ${branch}.`,
+    ...officialLines(run),
+    `Leak audit: ${findings} finding${findings === 1 ? '' : 's'}.`,
+    ...auditLines(run),
     '',
     'In the lorcanaplayer tab: install the snippet, then discover the set:',
     `  await __revealSync.discover(${JSON.stringify(discover)})`,
@@ -139,8 +194,33 @@ function chooseCandidates(slugs, section, only) {
   return {chosen: only.filter((s) => onSite.has(s)), absent: only.filter((s) => !onSite.has(s))};
 }
 
+/** An official card lorcanaplayer has not got yet, as the report lists it. */
+function waitingRecord(entry) {
+  return {
+    number: entry.set_number,
+    name: officialFullName(entry),
+    revealedOn: entry.reveal_timestamp.slice(0, 10),
+    revealedBy: entry.revealed_by,
+  };
+}
+
+/**
+ * Official main-set cards lorcanaplayer has not got yet: no card in Inkweave, in state or in
+ * this run accounts for their number, and no slug on the site carries their name.
+ */
+function refreshWaiting(run, section) {
+  const numbers = [
+    ...presentCards(run.season.setCode).map((card) => card.number),
+    ...run.site.slugs.map((slug) => section.cards[slug]?.number),
+    ...Object.values(run.cards).map((card) => card.number),
+  ].filter((n) => n != null);
+  const coverage = {slugs: run.site.slugs, numbers};
+  const waiting = waitingForSite(readOfficial(run.runId), coverage, run.season.setTotal);
+  run.waiting = waiting.map(waitingRecord);
+}
+
 async function candidates([runId, ...args]) {
-  const run = readRun(runId);
+  const run = openRun(runId);
   const index = readBundle(await takeDownload(`reveal-sync-${runId}-index.json`, runId));
   if (!index.slugs.length) {
     throw new UsageError(
@@ -154,17 +234,18 @@ async function candidates([runId, ...args]) {
   if (absent.length) say(`Not in the site's index, so not fetched: ${absent.join(', ')}`);
   run.site = {pages: index.pages, total: index.slugs.length, slugs: index.slugs};
   run.candidates = chosen;
-  run.knownNumbers = presentCards(run.season.setCode)
-    .map((c) => c.number)
-    .filter((n) => n != null);
+  refreshWaiting(run, section);
   writeRun(run);
   say(
     `Site: ${run.site.total} cards on ${index.pages.length} pages (${index.pages.join(', ')}). To fetch: ${chosen.length}.`,
   );
-  if (!chosen.length) return say('Nothing new or retryable. Done.');
+  if (!chosen.length) {
+    summarize(run);
+    return say('Nothing new or retryable. Done.');
+  }
   say('', 'Fetch each batch in the lorcanaplayer tab:');
   for (let i = 0; i < chosen.length; i += BATCH_SIZE) {
-    const options = {runId, batch: i / BATCH_SIZE + 1, knownNumbers: run.knownNumbers};
+    const options = {runId, batch: i / BATCH_SIZE + 1};
     say(
       `  await __revealSync.fetchCards(${JSON.stringify(chosen.slice(i, i + BATCH_SIZE))}, ${JSON.stringify(options)})`,
     );
@@ -191,37 +272,43 @@ function parseSite(fetched) {
   }
 }
 
-function imageProblem(image) {
-  if (!image) return {reason: 'image-missing', detail: 'the page has no card image'};
-  if (image.error === 403) return {reason: 'image-fetch-failed', detail: CLEARANCE_EXPIRED};
-  if (image.error) return {reason: 'image-fetch-failed', detail: `HTTP ${image.error}`};
-  if (!IMAGE_EXT[image.type])
-    return {reason: 'image-unsupported', detail: `content type ${image.type}`};
-  return null;
+/**
+ * A card the official list lets through: the official number when lorcanaplayer showed none,
+ * then lorcanaplayer's own gates, then the official scan. Ends 'reading', ready for its first
+ * reader, or with the reason it stopped. `base` is the run card so far ({number, title}).
+ */
+async function admitCard(run, slug, {site, base, verdict}) {
+  const card = {...base};
+  if (verdict.adoptedNumber != null) {
+    site.collector = {number: verdict.adoptedNumber, total: run.season.setTotal};
+    writeSite(run.runId, slug, site);
+    card.number = verdict.adoptedNumber;
+    card.gateNotes = ['collector number from the official list'];
+  }
+  const gate = gateCard(site, run.season);
+  if (gate.status !== 'pass') return {...card, ...gate};
+  const scan = await downloadOfficialImage(verdict.entry, slug, cardDir(run.runId, slug));
+  if (scan.status) return {...card, ...scan};
+  if (scan.fallback) {
+    const note = `scan from ${scan.url}: the official list's own filename for it was missing`;
+    card.gateNotes = [...(card.gateNotes ?? []), note];
+  }
+  const official = officialIdentity(verdict.entry);
+  return {...card, status: 'reading', image: OFFICIAL_IMAGE, official};
 }
 
-function readyForReaders(base, dir, image) {
-  const problem = imageProblem(image);
-  if (problem) return {...base, status: 'error', ...problem};
-  const file = `image.${IMAGE_EXT[image.type]}`;
-  fs.writeFileSync(path.join(dir, file), Buffer.from(image.base64, 'base64'));
-  return {...base, status: 'reading', image: file};
-}
-
-/** Identity first: a card already in Inkweave is known whatever its scan's language. */
-function ingestCard(run, fetched, present) {
+/** Identity first: a card already in Inkweave is known, whatever the official list says of it. */
+async function ingestCard(run, fetched, present, official) {
   if (fetched.status !== 200 || fetched.error) {
     return {status: 'error', reason: 'fetch-failed', detail: pageFailure(fetched)};
   }
   const {site, failure} = parseSite(fetched);
   if (failure) return failure;
-  const dir = cardDir(run.runId, fetched.slug);
-  fs.mkdirSync(dir, {recursive: true});
-  fs.writeFileSync(path.join(dir, 'site.json'), `${JSON.stringify(site, null, 2)}\n`);
+  writeSite(run.runId, fetched.slug, site);
   const base = {number: site.collector?.number ?? null, title: fullName(site.name, site.version)};
-  const verdict = existingVerdict(site, present) ?? gateCard(site, run.season);
+  const verdict = existingVerdict(site, present) ?? officialVerdict(site, official);
   if (verdict.status !== 'pass') return {...base, ...verdict};
-  return readyForReaders(base, dir, fetched.image);
+  return admitCard(run, fetched.slug, {site, base, verdict});
 }
 
 /** Candidates no batch covered become errors, so they show in the report and are retried. */
@@ -235,9 +322,17 @@ function markUnfetched(run) {
   }
 }
 
+/** Every card waiting for its first reader gets one. */
+function assignFirstReaders(run) {
+  for (const [slug, card] of entries(run, 'reading')) {
+    if (!card.jobs?.length) assignReaders(run, slug, 1);
+  }
+}
+
 async function ingest([runId]) {
-  const run = readRun(runId);
+  const run = openRun(runId);
   const present = presentCards(run.season.setCode);
+  const official = readOfficial(runId);
   run.ingested ??= [];
   const batches = Math.ceil(run.candidates.length / BATCH_SIZE);
   for (let batch = 1; batch <= batches; batch++) {
@@ -245,14 +340,15 @@ async function ingest([runId]) {
     const bundle = readBundle(
       await takeDownload(`reveal-sync-${runId}-cards-${batch}.json`, runId),
     );
-    for (const fetched of bundle.cards) run.cards[fetched.slug] = ingestCard(run, fetched, present);
+    for (const fetched of bundle.cards) {
+      run.cards[fetched.slug] = await ingestCard(run, fetched, present, official);
+    }
     run.ingested.push(batch);
     writeRun(run);
   }
   markUnfetched(run);
-  for (const [slug, card] of entries(run, 'reading')) {
-    if (!card.jobs?.length) assignReaders(run, slug, 1);
-  }
+  assignFirstReaders(run);
+  refreshWaiting(run, setSection(readState(), run.season.setCode));
   writeRun(run);
   summarize(run);
   printJobs(run);
@@ -261,15 +357,22 @@ async function ingest([runId]) {
 /* ------------------------------------------------------------- adjudicate */
 
 function decideCard(run, slug, card, readers) {
-  const site = JSON.parse(
-    fs.readFileSync(path.join(cardDir(run.runId, slug), 'site.json'), 'utf8'),
-  );
-  const result = adjudicate(site, readers, {overrides: card.overrides});
+  const site = readSite(run.runId, slug);
+  const result = adjudicate(site, readers, {overrides: card.overrides, official: card.official});
   if (result.decision === 'escalate') {
     assignReaders(run, slug, result.needReaders);
     return {status: 'reading'};
   }
-  const settled = {readers: readers.length, notes: result.notes, conflicts: result.conflicts};
+  if (result.decision === 'defer') {
+    return {
+      status: 'deferred',
+      reason: result.reason,
+      detail: result.detail,
+      readers: readers.length,
+    };
+  }
+  const notes = [...(card.gateNotes ?? []), ...result.notes];
+  const settled = {readers: readers.length, notes, conflicts: result.conflicts};
   // "unsettled": the site and the readers could not settle a field, because they disagree
   // or because the image cannot show it. The owner rules on it with `resolve`.
   if (result.decision === 'conflict') return {...settled, status: 'conflict', reason: 'unsettled'};
@@ -277,7 +380,7 @@ function decideCard(run, slug, card, readers) {
 }
 
 async function adjudicateRun([runId]) {
-  const run = readRun(runId);
+  const run = openRun(runId);
   for (const [slug, card] of entries(run, 'reading')) {
     const {readers, missing, invalid} = readResults(run, card);
     if (!missing.length && !invalid.length)
@@ -290,36 +393,78 @@ async function adjudicateRun([runId]) {
 
 /* ---------------------------------------------------------------- resolve */
 
-function resolve([runId, slug, assignment = '']) {
-  const run = readRun(runId);
+/**
+ * Runs `action`, turning a RulingError into a UsageError: a ruling that cannot be applied is
+ * a message for the owner. Any other error is a bug, and keeps its stack trace.
+ */
+function asUsageError(action) {
+  try {
+    return action();
+  } catch (error) {
+    if (!(error instanceof RulingError)) throw error;
+    throw new UsageError(error.message);
+  }
+}
+
+/** Prints the card's status after a ruling, naming any field still disputed. */
+function sayStatus(slug, card) {
+  const disputed = card.conflicts?.map((c) => c.field).join(', ');
+  say(`${slug}: ${card.status}${disputed ? ` (still disputed: ${disputed})` : ''}`);
+}
+
+/**
+ * The owner's ruling on a field the two sites disagree on ("site", "official" or a value).
+ * Every ruling so far is applied to the card's record and the official check runs again;
+ * once nothing is disputed the card goes on to its scan and a reader, in this run.
+ */
+async function resolveSites(run, slug, field, ruling) {
+  const card = run.cards[slug];
+  const official = readOfficial(run.runId);
+  const rulings = {...card.officialRulings, [field]: ruling};
+  const ruled = asUsageError(() =>
+    applyOfficialRulings(readSite(run.runId, slug), official, rulings),
+  );
+  writeSite(run.runId, slug, ruled.site);
+  const title = fullName(ruled.site.name, ruled.site.version);
+  const base = {number: card.number, title, officialRulings: rulings};
+  const verdict = officialVerdict(ruled.site, official, {accepted: ruled.accepted});
+  run.cards[slug] =
+    verdict.status === 'pass'
+      ? await admitCard(run, slug, {site: ruled.site, base, verdict})
+      : {...base, ...verdict};
+  assignFirstReaders(run);
+  writeRun(run);
+  sayStatus(slug, run.cards[slug]);
+  printJobs(run);
+}
+
+async function resolve([runId, slug, assignment = '']) {
+  const run = openRun(runId);
   const card = run.cards[slug];
   const [field, ...value] = assignment.split('=');
   if (!card || !field || !value.length)
-    throw new UsageError('usage: resolve <run> <slug> <field>=<site|value>');
+    throw new UsageError('usage: resolve <run> <slug> <field>=<site|official|value>');
+  const ruling = value.join('=');
+  if (card.reason === 'official-mismatch') return resolveSites(run, slug, field, ruling);
   if (card.reason !== 'unsettled') {
     throw new UsageError(
-      `${slug} is ${card.status} (${card.reason}); only a field the site and the readers could not settle can be ruled on here`,
+      `${slug} is ${card.status} (${card.reason}); only a field the site and the readers could not settle, or one the two sites disagree on, can be ruled on here`,
     );
   }
   const {readers, missing, invalid} = readResults(run, card);
   if (missing.length || invalid.length) {
     throw new UsageError(`${slug} has reader results missing or unusable; run adjudicate first`);
   }
-  card.overrides = {...card.overrides, [field]: value.join('=')};
-  try {
-    Object.assign(card, decideCard(run, slug, card, readers));
-  } catch (error) {
-    throw new UsageError(error.message);
-  }
+  card.overrides = {...card.overrides, [field]: ruling};
+  asUsageError(() => Object.assign(card, decideCard(run, slug, card, readers)));
   writeRun(run);
-  const disputed = card.conflicts?.map((c) => c.field).join(', ');
-  say(`${slug}: ${card.status}${disputed ? ` (still disputed: ${disputed})` : ''}`);
+  sayStatus(slug, card);
 }
 
 /* ------------------------------------------------------------------ write */
 
 async function write([runId]) {
-  const run = readRun(runId);
+  const run = openRun(runId);
   const reading = entries(run, 'reading');
   if (reading.length)
     throw new UsageError(`${reading.length} card(s) still need readers; run adjudicate first`);
@@ -360,7 +505,11 @@ function printJobs(run) {
 }
 
 function report([runId]) {
-  summarize(readRun(runId));
+  const run = readRun(runId);
+  if (!run.official) {
+    say('warning: this run was opened before the official gate (issue #574); start a new run', '');
+  }
+  summarize(run);
 }
 
 function snippet() {

@@ -30,10 +30,10 @@ describe('canonicalizeLine', () => {
   it('restores the ink glyph lorcanaplayer drops from a Shift header', () => {
     expect(
       canonicalizeLine(
-        'Shift 5 (You may pay 5 ⬡ to play this on top of one of your characters named Honey Lemon.)',
+        'Shift 5 (You may pay 5 ⬡ to play this on top of one of your characters named Test Inventor.)',
       ),
     ).toBe(
-      'Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Honey Lemon.)',
+      'Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Test Inventor.)',
     );
   });
 

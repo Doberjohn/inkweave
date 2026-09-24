@@ -10,13 +10,15 @@
  * check fails loudly if this flattener ever produces the wrong shape.
  *
  * Results leave the page as a downloaded JSON file, never as the tool's return value: the
- * browser tool truncates results after roughly a kilobyte. Card images travel inside that
- * file as base64, so each batch is one download.
+ * browser tool truncates results after roughly a kilobyte.
+ *
+ * No card scan is fetched here. Scans come from the official list (official.mjs), which
+ * needs no browser; only the scan's filename is kept, for lorcanaplayer's language marker.
  */
 
-export const BROWSER_API_VERSION = 'reveal-sync/1';
+export const BROWSER_API_VERSION = 'reveal-sync/2';
 
-/* global window, document, location, fetch, DOMParser, NodeFilter, Node, Blob, URL, FileReader */
+/* global window, document, location, fetch, DOMParser, NodeFilter, Node, Blob, URL */
 function install(version) {
   const GLYPH = {Ink: '⬡', Lore: '◊', Exert: '⟳', Strength: '¤', Willpower: '⛉'};
   const BLOCK = new Set([
@@ -66,7 +68,8 @@ function install(version) {
       .filter(Boolean);
   }
 
-  // The card scan: the first raster upload in the article, at full size.
+  // The card scan's URL: the first raster upload in the article, at full size. Only its
+  // filename is kept, for the language marker in it.
   function cardImageUrl(article) {
     const src = [...article.querySelectorAll('img')]
       .map((img) => img.getAttribute('src') || '')
@@ -82,14 +85,6 @@ function install(version) {
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   }
-
-  const toBase64 = (blob) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result).split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
 
   // One page of the set's faceted index as card slugs, or null once past the last page.
   // Scoped to #primary: the sidebar's "latest cards" links repeat on every page and are
@@ -123,59 +118,34 @@ function install(version) {
     return {file, pages, total: slugs.size};
   }
 
-  // The collector number from the "Card ID" row, or NaN when the page has none.
-  const collectorNumber = (lines) =>
-    Number(((lines[lines.indexOf('Card ID') + 1] || '').match(/^(\d+)\s*\//) || [])[1]);
-
-  async function fetchImage(url) {
-    const image = await get(url);
-    if (!image.ok) return {error: image.status};
-    return {type: image.headers.get('content-type'), base64: await toBase64(await image.blob())};
-  }
-
-  async function fetchCard(slug, knownNumbers) {
+  async function fetchCard(slug) {
     const response = await get(`/card/${slug}/`);
     if (!response.ok) return {slug, status: response.status};
     const article = (await parse(response)).querySelector('article');
     if (!article) return {slug, status: response.status, error: 'page has no <article>'};
-    const lines = flatten(article);
     const imageUrl = cardImageUrl(article);
-    const card = {
+    return {
       slug,
       status: response.status,
-      lines,
+      lines: flatten(article),
       imageFile: imageUrl && imageUrl.split('/').pop(),
     };
-    if (imageUrl && !knownNumbers.includes(collectorNumber(lines))) {
-      await sleep(PAUSE_MS);
-      card.image = await fetchImage(imageUrl);
-    }
-    return card;
   }
 
-  // "slug:403" for a failed page, "slug:image-403" for a failed scan, or null.
-  function failureOf(card) {
-    if (card.status !== 200 || card.error) return `${card.slug}:${card.status}`;
-    if (card.image && card.image.error) return `${card.slug}:image-${card.image.error}`;
-    return null;
-  }
+  // "slug:403" for a page that failed, or null.
+  const failureOf = (card) =>
+    card.status !== 200 || card.error ? `${card.slug}:${card.status}` : null;
 
-  // Fetch each card page (and its scan, unless the card is already in Inkweave) and save
-  // the batch as one file.
-  async function fetchCards(slugs, {runId, batch, knownNumbers = []}) {
+  // Fetch each card page and save the batch as one file.
+  async function fetchCards(slugs, {runId, batch}) {
     const cards = [];
     for (const slug of slugs) {
-      cards.push(await fetchCard(slug, knownNumbers));
+      cards.push(await fetchCard(slug));
       await sleep(PAUSE_MS);
     }
     const file = `reveal-sync-${runId}-cards-${batch}.json`;
     save(file, {version, runId, batch, cards});
-    return {
-      file,
-      fetched: cards.length,
-      images: cards.filter((c) => c.image && c.image.base64).length,
-      failed: cards.map(failureOf).filter(Boolean),
-    };
+    return {file, fetched: cards.length, failed: cards.map(failureOf).filter(Boolean)};
   }
 
   window.__revealSync = {version, discover, fetchCards};

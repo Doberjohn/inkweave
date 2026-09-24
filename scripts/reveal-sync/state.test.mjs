@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import {describe, it, expect} from 'vitest';
 import {
   markVanished,
@@ -22,6 +23,27 @@ describe('selectCandidates', () => {
     expect(selectCandidates(['written', 'waiting', 'disputed', 'dropped', 'brand-new'], s)).toEqual(
       ['waiting', 'disputed', 'brand-new'],
     );
+  });
+});
+
+describe('selectCandidates for a card not officially revealed', () => {
+  it('checks it again every run, so it is written the day the official list shows it', () => {
+    const s = section({
+      leak: {
+        number: 144,
+        status: 'deferred',
+        reason: 'not-officially-revealed',
+        firstSeen: '2026-09-24',
+      },
+    });
+    expect(selectCandidates(['leak'], s)).toEqual(['leak']);
+  });
+});
+
+describe('the committed state file', () => {
+  it('is stored exactly as serializeState writes it', () => {
+    const raw = fs.readFileSync(new URL('./state.json', import.meta.url), 'utf8');
+    expect(serializeState(JSON.parse(raw))).toBe(raw);
   });
 });
 

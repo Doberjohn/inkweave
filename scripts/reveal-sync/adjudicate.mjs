@@ -6,7 +6,9 @@
  *
  *   identity (name, version, collector number, ink, type)
  *       must agree. Readers can confirm the site but never overrule it: disagreement that
- *       survives escalation is a conflict for the owner.
+ *       survives escalation is a conflict for the owner. The one exception is a version the
+ *       official list (issue #574) gives differently: then three readers decide between the
+ *       two sites' values, since the card they read is the official scan.
  *   image (cost, printed stats, card text, subtypes)
  *       printed on the card. The site's value is written when readers confirm it; a
  *       majority of readers may overrule it.
@@ -25,6 +27,11 @@
  * reads. Classifications and stats go straight to the owner with the site's value shown
  * (owner's call, 2026-09-24): more readers of the same pixels rarely recover them, and each
  * extra read on a hard card costs ten minutes or more.
+ *
+ * The language code in the card's footer is checked like an identity field that must read
+ * EN: the scan is what Inkweave ships, and a card is never translated. A reader who reads any
+ * other language defers the card before anything else is compared; a code no reader could
+ * read gets two more readers, then goes to the owner.
  */
 import {
   baseType,
@@ -40,7 +47,7 @@ import {
   toInt,
 } from './text.mjs';
 
-const IDENTITY = ['name', 'version', 'collector', 'ink', 'type'];
+const IDENTITY = ['name', 'version', 'collector', 'ink', 'type', 'language'];
 const STATS = {
   Character: ['cost', 'strength', 'willpower', 'lore'],
   Location: ['cost', 'willpower', 'lore', 'moveCost'],
@@ -78,6 +85,7 @@ const KEYS = {
   version: comparableName,
   collector: same,
   type: same,
+  language: same,
   cost: same,
   strength: same,
   willpower: same,
@@ -106,9 +114,21 @@ function subtypeReading(raw) {
   return {subtypes: terms, partialSubtypes};
 }
 
+/**
+ * The language a reader read in the card's footer: "EN" for English in any spelling ("en",
+ * "en-US", "English"), any other value as written, so "French" defers the card just as "FR"
+ * does, or null when the reader could not read it.
+ */
+function readLanguage(value) {
+  const text = String(value ?? '').trim();
+  if (!text) return null;
+  return /^en(?:g|glish)?(?:[-_ ].*)?$/i.test(text) ? 'EN' : text.toUpperCase();
+}
+
 /** A reader's JSON as a record comparable with the site's, for a card of the site's type. */
 export function readerRecord(raw, siteType) {
   return {
+    language: readLanguage(raw.language),
     name: raw.name ?? null,
     version: VERSIONLESS.has(siteType) ? '' : (raw.version ?? null),
     collector: parseCollector(raw.collectorNumber)?.number ?? null,
@@ -125,9 +145,16 @@ export function readerRecord(raw, siteType) {
   };
 }
 
+/** The site's record in the readers' shape. Every card the pipeline writes must read English. */
 function siteRecord(site) {
   const version = VERSIONLESS.has(site.type) ? '' : site.version;
-  return {...site, version, collector: site.collector?.number ?? null, ink: site.inks};
+  return {
+    ...site,
+    version,
+    collector: site.collector?.number ?? null,
+    ink: site.inks,
+    language: 'EN',
+  };
 }
 
 /** A reader who could not read every term agrees when what it did read is on the site's list. */
@@ -208,7 +235,40 @@ function askOwnerNow(field, readers, agreeing) {
   return readers.every((r) => r[field] == null);
 }
 
-function resolveField(field, site, readers) {
+/**
+ * The official list's version when it differs from lorcanaplayer's, else null. Only the
+ * version is settled here: the official gate already sent every other difference between the
+ * two sites (name, ink, type, rarity) to the owner.
+ */
+function officialAlternative(field, site, official) {
+  if (field !== 'version' || VERSIONLESS.has(site.type)) return null;
+  const value = official?.version;
+  if (!value || keyOf(field, value) === keyOf(field, site[field])) return null;
+  return value;
+}
+
+/**
+ * A version the two sites give differently. Three readers read the official scan, and the
+ * site's value two of them read is written, whichever site it came from; otherwise the
+ * owner decides, with both values shown.
+ */
+function resolveBetweenSites(field, site, readers, alternative) {
+  if (readers.length < SETTLED) return {field, status: 'escalate'};
+  const withSite = readers.filter((r) => agrees(field, site, r));
+  if (withSite.length >= AGREEMENT) {
+    const dissent = readers.length - withSite.length;
+    return {...agreed(field, site, withSite, dissent), officialHad: alternative};
+  }
+  const asOfficial = {...site, [field]: alternative};
+  const withOfficial = readers.filter((r) => agrees(field, asOfficial, r));
+  if (withOfficial.length >= AGREEMENT)
+    return {field, status: 'official', value: alternative, site: site[field]};
+  return {...conflictOn(field, site, readers), official: alternative};
+}
+
+function resolveField(field, site, readers, official) {
+  const alternative = officialAlternative(field, site, official);
+  if (alternative !== null) return resolveBetweenSites(field, site, readers, alternative);
   const agreeing = readers.filter((r) => agrees(field, site, r));
   if (askOwnerNow(field, readers, agreeing)) return conflictOn(field, site, readers);
   if (readers.length === 1)
@@ -222,6 +282,12 @@ function resolveField(field, site, readers) {
 
 const orNull = (value) => (value && value.length ? value : null);
 
+/**
+ * A ruling the owner typed that cannot be applied. The command line shows its message and
+ * nothing else; any other error is a bug, and keeps its stack trace.
+ */
+export class RulingError extends Error {}
+
 /** How a typed ruling becomes a field value; each returns null when it cannot. */
 const LITERAL = {
   name: (v) => orNull(v.trim()),
@@ -229,6 +295,8 @@ const LITERAL = {
   collector: toInt,
   type: baseType,
   ink: (v) => orNull(parseInks(v)),
+  // Only English is ever written: any other language is a reason to wait, not a value.
+  language: (v) => (readLanguage(v) === 'EN' ? 'EN' : null),
   // A literal "\n" typed in a shell stays two characters; accept it as a line break.
   text: (v) => orNull(canonicalizeText(v.replace(/\\n/g, '\n').split('\n'))),
   subtypes: (v) => orNull(parseSubtypes(v)),
@@ -237,21 +305,50 @@ const LITERAL = {
 /** The owner's ruling as a value. Anything that does not parse is refused, never written as blank. */
 function parseRuling(field, ruling) {
   const value = (LITERAL[field] ?? toInt)(String(ruling));
-  if (value == null) throw new Error(`cannot read the ruling "${ruling}" as a ${field}`);
+  const article = /^[aeiou]/.test(field) ? 'an' : 'a';
+  if (value == null) {
+    throw new RulingError(`cannot read the ruling "${ruling}" as ${article} ${field}`);
+  }
   return value;
 }
 
-/** The owner's ruling on a field: "site" takes the site's value, anything else is the value itself. */
-function applyOverride(outcome, ruling, site) {
+/** The official list's value for the fields it carries: name, version, number, ink and type. */
+function officialValue(field, official) {
+  const carried = {
+    name: official?.name,
+    version: official?.version,
+    collector: official?.number,
+    ink: official?.ink,
+    type: official?.type,
+  };
+  const value = carried[field];
+  if (value == null) throw new RulingError(`the official list has no ${field} to rule with`);
+  return value;
+}
+
+/** A ruling as a value, and how the note shows it: "site", "official", or the value itself. */
+function ruledValue(field, ruling, site, official) {
+  if (ruling === 'site') return {value: site[field], shown: "the site's value"};
+  if (ruling === 'official')
+    return {value: officialValue(field, official), shown: "the official list's value"};
+  const value = parseRuling(field, ruling);
+  return {value, shown: JSON.stringify(value)};
+}
+
+/** The owner's ruling on a field the readers could not settle. */
+function applyOverride(outcome, ruling, site, official) {
   if (ruling === undefined || outcome.status === 'agree') return outcome;
-  const value = ruling === 'site' ? site[outcome.field] : parseRuling(outcome.field, ruling);
-  const shown = ruling === 'site' ? "the site's value" : JSON.stringify(value);
+  const {value, shown} = ruledValue(outcome.field, ruling, site, official);
   return {field: outcome.field, status: 'agree', value, dissent: 0, ruling: shown};
 }
 
 function noteFor(outcome, readerCount) {
   if (outcome.ruling !== undefined)
     return `${outcome.field}: resolved by the owner (${outcome.ruling})`;
+  if (outcome.status === 'official')
+    return `${outcome.field}: from the official list and the card; lorcanaplayer had ${JSON.stringify(outcome.site)}`;
+  if (outcome.officialHad !== undefined)
+    return `${outcome.field}: the card and lorcanaplayer agree on ${JSON.stringify(outcome.value)}; the official list has ${JSON.stringify(outcome.officialHad)}`;
   if (outcome.status === 'image')
     return `${outcome.field}: readers overrode the site (site had ${JSON.stringify(outcome.site)})`;
   if (outcome.dissent) {
@@ -303,26 +400,46 @@ function decide(outcomes) {
   return 'write';
 }
 
+/** A conflict as the report shows it, with the official value when the official list differed too. */
+function conflictView({field, site, readers, official}) {
+  return official === undefined ? {field, site, readers} : {field, site, official, readers};
+}
+
+/** The result for a card a reader read in another language: deferred, never translated. */
+function notEnglish(language) {
+  return {
+    decision: 'defer',
+    reason: 'scan-not-english',
+    detail: `printed language ${language}`,
+    needReaders: 0,
+    conflicts: [],
+    notes: [],
+    card: null,
+  };
+}
+
 /**
  * Compare a site record (from parseCardLines) with the readers' JSON.
- * `overrides` maps a field to the owner's ruling for it.
+ * `overrides` maps a field to the owner's ruling for it. `official` is the official list's
+ * {name, version, number, ink, type} for the card (officialIdentity), when the run has one.
  */
-export function adjudicate(site, rawReaders, {overrides = {}} = {}) {
+export function adjudicate(site, rawReaders, {overrides = {}, official = null} = {}) {
   if (!rawReaders.length)
     return {decision: 'escalate', needReaders: 1, conflicts: [], notes: [], card: null};
-  const record = siteRecord(site);
   const readers = rawReaders.map((raw) => readerRecord(raw, site.type));
-  const outcomes = fieldsFor(site.type).map((field) =>
-    applyOverride(resolveField(field, record, readers), overrides[field], record),
-  );
+  const foreign = readers.find((r) => r.language && r.language !== 'EN');
+  if (foreign) return notEnglish(foreign.language);
+  const record = siteRecord(site);
+  const outcomes = fieldsFor(site.type).map((field) => {
+    const outcome = resolveField(field, record, readers, official);
+    return applyOverride(outcome, overrides[field], record, official);
+  });
   const decision = decide(outcomes);
   const card = decision === 'write' ? buildCard(site, outcomes) : null;
   return {
     decision,
     needReaders: decision === 'escalate' ? SETTLED - readers.length : 0,
-    conflicts: outcomes
-      .filter((o) => o.status === 'conflict')
-      .map(({field, site: s, readers: r}) => ({field, site: s, readers: r})),
+    conflicts: outcomes.filter((o) => o.status === 'conflict').map(conflictView),
     notes: notesFor(outcomes, readers, card),
     card,
   };
