@@ -63,10 +63,12 @@ export function unaccented(value) {
 }
 
 /**
- * A "named X" reference, from "named" to the end of its clause. A period does not end it,
- * because one can sit inside a name ("named Mr. Incredible").
+ * A "named X" reference, from "named" to the end of its clause or sentence: a comma,
+ * semicolon, colon, parenthesis or line end, or a period followed by a space. A period after
+ * a title or an initial sits inside the name instead ("Mr. Incredible", "P.J. Pete"): every
+ * period in a shipped card name follows one.
  */
-const NAMED_REFERENCE = /\bnamed [^,;:()\n]+/g;
+const NAMED_REFERENCE = /\bnamed (?:[^.,;:()\n]|\.(?!\s)|(?<=\b(?:[A-Z]|Mrs?|Ms|Dr|St|Jr|Sr))\.)+/g;
 
 /** An ability line with its "named X" references unaccented; the rest stays as printed. */
 export function unaccentReferences(line) {

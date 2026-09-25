@@ -62,8 +62,9 @@ describe('adjudicate: one reader', () => {
     });
   });
 
-  it('asks for two more readers when the scan shows a Strength the missing row did not', () => {
-    // A page with no Strength row reads as 0; the scan is what checks that 0.
+  it('checks the 0 a missing Strength row reads as against the scan', () => {
+    // A reader who sees 0 confirms it; one who sees anything else asks for two more readers.
+    expect(adjudicate(site(TEST_PUP), [readerFor.testPup()]).decision).toBe('write');
     const reader = withReader(readerFor.testPup, {strength: 2});
     expect(adjudicate(site(TEST_PUP), [reader])).toMatchObject({
       decision: 'escalate',

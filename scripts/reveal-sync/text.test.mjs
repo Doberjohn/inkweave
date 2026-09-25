@@ -206,9 +206,18 @@ describe('names without accents', () => {
     expect(
       unaccentReferences('Whenever you play a character named Test Chloé or Test Zoë, gain 1 lore.'),
     ).toBe('Whenever you play a character named Test Chloe or Test Zoe, gain 1 lore.');
-    // A period can sit inside a name ("named Mr. Incredible"), so it does not end the reference.
+    // A period after a title or an initial sits inside the name ("Mr. Incredible", "P.J. Pete").
     expect(unaccentReferences('on top of one of your characters named Dr. Tést Chloé.)')).toBe(
       'on top of one of your characters named Dr. Test Chloe.)',
+    );
+    expect(unaccentReferences('Whenever you play a character named T.J. Chloé, gain 1 lore.')).toBe(
+      'Whenever you play a character named T.J. Chloe, gain 1 lore.',
+    );
+  });
+
+  it('ends a reference with its sentence, so an accent after it stays as printed', () => {
+    expect(unaccentReferences('Your characters named Test Chloé get +1 ◊. ¡OLÉ! Draw a card.')).toBe(
+      'Your characters named Test Chloe get +1 ◊. ¡OLÉ! Draw a card.',
     );
   });
 

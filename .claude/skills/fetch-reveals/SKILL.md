@@ -276,9 +276,11 @@ A card whose art fails becomes a conflict and is retried next run. Last, it upda
 **Card names carry no accents** (the owner's rule: "Hector Rivera", "Mama Coco"). lorcanaplayer
 and the readers agree on printed accents, so `write` drops them itself: it strips the
 combining marks (NFD, then every `\p{M}`) from each card's name and version, and from every
-"named X" reference in its text, so a Shift line names the card as Inkweave spells it. Nothing
-else changes: every other accent in the text stays as printed, and so does punctuation such as
-"…". The report lists each card under the name it was written with. Never strip accents by hand after `write`. A later run still recognises the
+"named X" reference in its text, so a Shift line names the card as Inkweave spells it. A
+reference ends with its clause or sentence; a period after a title or an initial ("Mr.",
+"P.J.") stays part of the name. Nothing else changes: every other accent in the text stays as
+printed, and so does punctuation such as "…". The report's READY TO WRITE and WRITTEN lists
+show each card under the name it is written with; other lists keep lorcanaplayer's spelling. Never strip accents by hand after `write`. A later run still recognises the
 card: existing-card matching and the leak audit ignore accents.
 
 Show the owner the full report, then stop. They review `git status` and run `/commit-and-push`.
