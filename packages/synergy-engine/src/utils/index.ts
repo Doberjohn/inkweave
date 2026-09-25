@@ -22,6 +22,7 @@ export {
   LOCATION_PATTERNS,
   getShiftType,
   hasAnyShift,
+  getInkDropGain,
   getNamedReferences,
   classifyNamedEffect,
   NAMED_EFFECT_SCORES,
@@ -76,6 +77,7 @@ export {
 export type {
   LocationRole,
   ShiftType,
+  ShiftPayment,
   NamedEffectTier,
   DiscardRole,
   SacrificeRole,

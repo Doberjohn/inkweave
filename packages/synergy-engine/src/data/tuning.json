@@ -133,6 +133,14 @@
         "score": 3,
         "text": "The cost gap makes it hard to set up <BASE> in time to Shift."
       },
+      "drops.basePays": {
+        "score": 8,
+        "text": "Ink-drop Shift. <BASE> gets the drops that pay for the Shift."
+      },
+      "drops.outside": {
+        "score": 5,
+        "text": "Ink-drop Shift. Other cards must supply the drops."
+      },
       "activationBonus": {
         "text": "Same target. Also unlocks the free Shift condition."
       }

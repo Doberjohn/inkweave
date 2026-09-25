@@ -64,6 +64,7 @@ export {
   isCardType,
   getShiftType,
   hasAnyShift,
+  getInkDropGain,
   getNamedReferences,
   classifyNamedEffect,
   NAMED_EFFECT_SCORES,
@@ -126,6 +127,7 @@ export {TUNING, type TuningConfig, type TierText} from './data/tuning';
 export type {
   LocationRole,
   ShiftType,
+  ShiftPayment,
   NamedEffectTier,
   DiscardRole,
   SacrificeRole,

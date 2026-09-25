@@ -4,6 +4,7 @@ import {
   getBaseName,
   getShiftBaseNames,
   getDiscardRoles,
+  getInkDropGain,
   getKeywordValue,
   getLocationRoles,
   getNamedReferences,
@@ -55,6 +56,7 @@ import {
   NAMED_EFFECT_SCORES,
   normalizeCardText,
   type LocationRole,
+  type ShiftPayment,
   type ShiftType,
   type BeckonEnablerTier,
 } from '../utils';
@@ -126,8 +128,8 @@ function baseActivatesShiftCondition(shiftCard: LorcanaCard, baseCard: LorcanaCa
 }
 
 /**
- * Calculate Shift synergy score and explanation based on curve alignment,
- * inkwell flexibility, free Shift tiers, and condition activation.
+ * Calculate Shift synergy score and explanation based on the payment (ink drops),
+ * curve alignment, inkwell flexibility, free Shift tiers, and condition activation.
  *
  * Uses the Shift keyword cost (not the card's hard-cast cost) to determine how
  * naturally the base curves into the shift play. Inkable cards (base and/or shift)
@@ -139,11 +141,13 @@ function calculateShiftSynergy(
   shiftCard: LorcanaCard,
   baseCard: LorcanaCard,
 ): {score: number; reason: string} {
-  const shiftType = getShiftType(shiftCard);
-  const shiftCost = shiftType?.cost ?? shiftCard.cost;
+  const {cost, payment} = getShiftType(shiftCard) ?? {
+    cost: shiftCard.cost,
+    payment: 'ink' as const,
+  };
 
-  // Compute base score and reason from curve math
-  const base = calculateShiftBaseScore(shiftCard, baseCard, shiftCost);
+  // Compute base score and reason from the payment: ink drops, a free Shift, or the ink curve
+  const base = calculateShiftBaseScore(shiftCard, baseCard, cost, payment);
 
   // +1 bonus if the base card activates a conditional Shift condition
   const activates = baseActivatesShiftCondition(shiftCard, baseCard);
@@ -165,6 +169,20 @@ function freeShiftScore(
   if (baseCard.cost <= 3) return shiftTier('free.cheapBase');
   if (baseCard.cost <= 5) return shiftTier('free.midBase');
   return shiftTier('free.expensiveBase');
+}
+
+/**
+ * Score a Shift paid in ink drops. It spends no ink, so curve gap does not apply; what matters
+ * is who supplies the drops. A base that gets at least as many as the Shift removes pays for it
+ * itself (Baymax - Lab Assistant gets the 2 that Baymax - Amped Up removes). Otherwise other
+ * cards must supply them, and the pair sits at the neutral 5.
+ */
+function inkDropShiftScore(
+  baseCard: LorcanaCard,
+  dropCost: number,
+): {score: number; reason: string} {
+  if (getInkDropGain(baseCard) >= dropCost) return shiftTier('drops.basePays');
+  return shiftTier('drops.outside');
 }
 
 /** Score the gap=1 case based on inkable fallback flexibility (both / one / neither). */
@@ -195,7 +213,9 @@ function calculateShiftBaseScore(
   shiftCard: LorcanaCard,
   baseCard: LorcanaCard,
   shiftCost: number,
+  payment: ShiftPayment,
 ): {score: number; reason: string} {
+  if (payment === 'ink-drops') return inkDropShiftScore(baseCard, shiftCost);
   if (shiftCost === 0) return freeShiftScore(shiftCard, baseCard);
   return curveAlignmentScore(shiftCard, baseCard, shiftCost - baseCard.cost);
 }
