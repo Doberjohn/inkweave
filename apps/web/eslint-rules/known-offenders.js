@@ -23,7 +23,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/reveals/RevealsPromoCard.tsx', // x1
     'src/features/reveals/SpotlightHero.tsx', // x6
     'src/features/reveals/WhatsNewSection.tsx', // x3
-    'src/features/reveals/setSpotlights.ts', // x1
     'src/features/synergies/components/ColumnHeader.stories.tsx', // x3
     'src/features/synergies/components/CommunityEmptyState.stories.tsx', // x1
     'src/features/synergies/components/CommunityEmptyState.tsx', // x2

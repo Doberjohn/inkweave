@@ -22,7 +22,7 @@ export const Mobile: Story = {
   args: {ink: 'Amber', count: 20, size: 64},
 };
 
-// Representative live Set 13 counts across all six inks.
+// Representative mid-season counts across all six inks.
 const COUNTS: Record<string, number> = {
   Amber: 20,
   Amethyst: 15,

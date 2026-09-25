@@ -13,9 +13,11 @@
  * `apps/web/public/data/allCards.json` and `previewCards.json` as
  * `imageHash` + `imageHashSm` fields. The web loader reads those at runtime.
  *
- * Cache: `node_modules/.cache/card-images/` keeps unhashed filenames — it's a
- * build-speed cache that skips re-conversion across deploys (preserved by
- * pnpm). Hashing happens at the cache → output boundary.
+ * Cache: `node_modules/.cache/card-images/` keeps unhashed filenames. It is a
+ * build-speed cache that skips re-conversion across deploys: Vercel's build
+ * servers keep node_modules between builds, and the production deploy in
+ * .github/workflows/deploy.yml restores it with actions/cache. Hashing happens
+ * at the cache → output boundary.
  *
  * Usage:
  *   pnpm download-images          # Download all missing images
@@ -235,7 +237,16 @@ async function processTask(task, manifest) {
   return outcome;
 }
 
-/** Stamp `imageHash` + `imageHashSm` onto each card the manifest knows. */
+/**
+ * Stamp `imageHash` + `imageHashSm` onto each card the manifest knows, and CLEAR
+ * them from every card it does not.
+ *
+ * The clearing half is the load-bearing one. OUTPUT_DIR is wiped at the start of
+ * every run, so a hash carried over from a previous build names a file that no
+ * longer exists, and the app renders an <img> at a dead URL on a path served
+ * `immutable`. Dropping the field routes the card to the same fallback a
+ * never-hashed card gets, which is the honest degradation.
+ */
 function stampHashes(cards, manifest) {
   let updated = 0;
   for (const card of cards) {
@@ -244,16 +255,29 @@ function stampHashes(cards, manifest) {
       card.imageHash = hashes.full;
       card.imageHashSm = hashes.sm;
       updated++;
+    } else {
+      delete card.imageHash;
+      delete card.imageHashSm;
     }
   }
   return updated;
 }
 
 /**
- * Mutate a card data file (allCards.json or previewCards.json) in-place to
- * add `imageHash` + `imageHashSm` fields per card from the manifest.
+ * Mutate a card data file (allCards.json or previewCards.json) in-place so its
+ * `imageHash` / `imageHashSm` fields describe exactly the images THIS build emitted.
+ *
+ * Clearing is as important as setting. OUTPUT_DIR is wiped at the start of every run
+ * and the manifest starts empty, so a hash left over from a previous build names a
+ * file that no longer exists: the app then renders an <img> pointing at a dead URL,
+ * on a path served with `immutable`. Dropping the field instead routes the card to
+ * the same fallback UI a never-hashed card gets, which is the honest degradation.
+ *
+ * Found live on 2026-09-23: seven cards whose art had 404'd upstream were shipping
+ * broken images this way, while the one card that had never been hashed rendered its
+ * fallback correctly.
  */
-function injectManifest(filePath, manifest) {
+export function injectManifest(filePath, manifest) {
   const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   const updated = stampHashes(data.cards, manifest);
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n');
@@ -518,7 +542,10 @@ async function main() {
   assertImageCoverage(allCards, manifest);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Run only when invoked directly (never when imported by the test).
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

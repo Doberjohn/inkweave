@@ -1,5 +1,6 @@
+import type {Ink} from 'inkweave-synergy-engine';
 import type {RevealCardForm} from './buildPreviewCard';
-import {ALL_INKS} from '../../shared/constants';
+import {ALL_INKS, inkBlock} from '../../shared/constants';
 import {CARD_TYPES, REVEAL_ID_BASE} from './constants';
 
 const VALID_EXT = new Set(['jpg', 'jpeg', 'png', 'webp']);
@@ -38,6 +39,29 @@ function checkCostAndInk(form: RevealCardForm, errors: Errors): void {
   if (!CARD_TYPES.includes(form.type)) errors.type = 'Choose a card type';
 }
 
+/** The ink whose block holds this collector number, or undefined past the numbered set. */
+function inkOwning(collector: number): Ink | undefined {
+  return ALL_INKS.find((ink) => {
+    const {first, last} = inkBlock(ink);
+    return collector >= first && collector <= last;
+  });
+}
+
+/**
+ * A set is numbered ink by ink, so the collector number implies the card's (first)
+ * ink. Catches the form's default ink being left unchanged, which caused both of
+ * last season's wrong-ink publishes. Numbers past the numbered set (promos,
+ * enchanteds) belong to no block and are not checked.
+ */
+function checkInkBlock(form: RevealCardForm, errors: Errors): void {
+  if (errors.ink) return;
+  const collector = intField(form.collectorNumber);
+  const owner = collector === null ? undefined : inkOwning(collector);
+  if (!owner || owner === form.ink) return;
+  const {first, last} = inkBlock(owner);
+  errors.ink = `#${collector} is in the ${owner} block (${first}-${last}), not ${form.ink}`;
+}
+
 /** strength / willpower / lore are required (non-negative ints) only for Characters. */
 function checkCharacterStats(form: RevealCardForm, errors: Errors): void {
   if (form.type !== 'Character') return;
@@ -69,6 +93,7 @@ export function validateRevealCardForm(
   const errors: Errors = {};
   checkIdentity(form, existingIds, errors);
   checkCostAndInk(form, errors);
+  checkInkBlock(form, errors);
   checkCharacterStats(form, errors);
   checkImage(imageName, errors);
   return {ok: Object.keys(errors).length === 0, errors};

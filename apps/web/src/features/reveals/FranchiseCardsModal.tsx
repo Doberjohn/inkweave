@@ -5,7 +5,7 @@ import {DialogShell, IconButton} from '../../shared/components';
 import {inkRgba} from './inkTint';
 
 interface FranchiseCardsModalProps {
-  /** Heading + aria label for the showcase (a franchise name, or "Team Characters"). */
+  /** Heading + aria label for the showcase (e.g. a franchise name), plus its tint ink. */
   source: {label: string; ink: Ink};
   /** The revealed cards to list. */
   cards: LorcanaCard[];
@@ -15,8 +15,9 @@ interface FranchiseCardsModalProps {
 }
 
 /**
- * A focused overlay listing one Set 13 showcase's revealed cards in a grid — a
- * franchise (Monsters, Inc. / Up / Turning Red) or the Team characters. Rides
+ * A focused overlay listing one showcase's revealed cards in a grid, e.g. a
+ * debut franchise's. The source is just a label + tint ink, so any curated group
+ * can ride it. Rides
  * DialogShell (#510) on the `underModal` layer: one z-index below the shared
  * card-detail modal's backdrop so clicking a card layers its detail cleanly on
  * top while this stays behind.

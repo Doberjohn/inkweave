@@ -1,0 +1,158 @@
+/**
+ * Code that runs inside a lorcanaplayer.com tab in the owner's Chrome.
+ *
+ * Only that browser gets past Cloudflare (curl and automated browsers get 403 on pages and
+ * images alike), so the skill injects `install` once per run and then calls the small
+ * functions it leaves on `window.__revealSync`.
+ *
+ * The page code stays deliberately dumb: fetch, flatten, download. All interpretation lives
+ * in the tested Node modules (extract-card.mjs, gates.mjs), and the parser's strict label
+ * check fails loudly if this flattener ever produces the wrong shape.
+ *
+ * Results leave the page as a downloaded JSON file, never as the tool's return value: the
+ * browser tool truncates results after roughly a kilobyte.
+ *
+ * No card scan is fetched here. Scans come from the official list (official.mjs), which
+ * needs no browser; only the scan's filename is kept, for lorcanaplayer's language marker.
+ */
+
+export const BROWSER_API_VERSION = 'reveal-sync/2';
+
+/* global window, document, location, fetch, DOMParser, NodeFilter, Node, Blob, URL */
+function install(version) {
+  const GLYPH = {Ink: '⬡', Lore: '◊', Exert: '⟳', Strength: '¤', Willpower: '⛉'};
+  const BLOCK = new Set([
+    'DIV',
+    'P',
+    'LI',
+    'TR',
+    'TD',
+    'TH',
+    'H1',
+    'H2',
+    'H3',
+    'H4',
+    'SECTION',
+    'BR',
+    'TABLE',
+  ]);
+  const PAUSE_MS = 250;
+  const MAX_INDEX_PAGES = 40;
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const get = (url) => fetch(url, {credentials: 'same-origin'});
+  const parse = async (response) =>
+    new DOMParser().parseFromString(await response.text(), 'text/html');
+  const slugOf = (href) => new URL(href, location.origin).pathname.replace(/^\/card\/|\/$/g, '');
+
+  // What one node adds to the flattened text: its text, its glyph, or a line break.
+  function textOf(node) {
+    if (node.nodeType === Node.TEXT_NODE) return node.nodeValue;
+    if (node.tagName === 'IMG') {
+      const glyph = GLYPH[node.getAttribute('alt')];
+      return glyph ? ` ${glyph} ` : '';
+    }
+    return BLOCK.has(node.tagName) ? '\n' : '';
+  }
+
+  // One line per block element; glyph images become their card characters.
+  function flatten(root) {
+    const walker = root.ownerDocument.createTreeWalker(
+      root,
+      NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
+    );
+    let out = '';
+    while (walker.nextNode()) out += textOf(walker.currentNode);
+    return out
+      .split('\n')
+      .map((line) => line.replace(/\s+/g, ' ').trim())
+      .filter(Boolean);
+  }
+
+  // The card scan's URL: the first raster upload in the article, at full size. Only its
+  // filename is kept, for the language marker in it.
+  function cardImageUrl(article) {
+    const src = [...article.querySelectorAll('img')]
+      .map((img) => img.getAttribute('src') || '')
+      .find((s) => /\/wp-content\/uploads\/.+\.(jpe?g|png|webp)$/i.test(s));
+    return src ? new URL(src.replace(/-\d+x\d+(\.\w+)$/, '$1'), location.origin).href : null;
+  }
+
+  function save(name, data) {
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data)], {type: 'application/json'}));
+    const link = Object.assign(document.createElement('a'), {href: url, download: name});
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+
+  // One page of the set's faceted index as card slugs, or null once past the last page.
+  // Scoped to #primary: the sidebar's "latest cards" links repeat on every page and are
+  // not results.
+  async function indexPage(n, setSlug, rarities) {
+    const path = n === 1 ? '/cards/' : `/cards/page/${n}/`;
+    const response = await get(`${path}?cardset=${setSlug}&rarity=${encodeURIComponent(rarities)}`);
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error(`index page ${n}: HTTP ${response.status}`);
+    const scope = (await parse(response)).querySelector('#primary');
+    if (!scope) throw new Error(`index page ${n} has no #primary: the markup changed`);
+    const links = [...scope.querySelectorAll('a[href*="/card/"]')];
+    return [...new Set(links.map((a) => slugOf(a.getAttribute('href'))))];
+  }
+
+  // Walk the index until a page 404s.
+  async function discover({setSlug, rarities, runId}) {
+    const slugs = new Set();
+    const pages = [];
+    for (let n = 1; ; n++) {
+      if (n > MAX_INDEX_PAGES)
+        throw new Error(`index never returned 404 in ${MAX_INDEX_PAGES} pages`);
+      const found = await indexPage(n, setSlug, rarities);
+      if (!found) break;
+      pages.push(found.length);
+      found.forEach((slug) => slugs.add(slug));
+      await sleep(PAUSE_MS);
+    }
+    const file = `reveal-sync-${runId}-index.json`;
+    save(file, {version, runId, setSlug, pages, slugs: [...slugs]});
+    return {file, pages, total: slugs.size};
+  }
+
+  async function fetchCard(slug) {
+    const response = await get(`/card/${slug}/`);
+    if (!response.ok) return {slug, status: response.status};
+    const article = (await parse(response)).querySelector('article');
+    if (!article) return {slug, status: response.status, error: 'page has no <article>'};
+    const imageUrl = cardImageUrl(article);
+    return {
+      slug,
+      status: response.status,
+      lines: flatten(article),
+      imageFile: imageUrl && imageUrl.split('/').pop(),
+    };
+  }
+
+  // "slug:403" for a page that failed, or null.
+  const failureOf = (card) =>
+    card.status !== 200 || card.error ? `${card.slug}:${card.status}` : null;
+
+  // Fetch each card page and save the batch as one file.
+  async function fetchCards(slugs, {runId, batch}) {
+    const cards = [];
+    for (const slug of slugs) {
+      cards.push(await fetchCard(slug));
+      await sleep(PAUSE_MS);
+    }
+    const file = `reveal-sync-${runId}-cards-${batch}.json`;
+    save(file, {version, runId, batch, cards});
+    return {file, fetched: cards.length, failed: cards.map(failureOf).filter(Boolean)};
+  }
+
+  window.__revealSync = {version, discover, fetchCards};
+  return version;
+}
+
+/** The JavaScript to pass to the browser tool once per run; it returns the API version. */
+export function installSnippet() {
+  return `(${install.toString()})(${JSON.stringify(BROWSER_API_VERSION)})`;
+}

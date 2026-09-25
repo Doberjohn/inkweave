@@ -151,6 +151,7 @@ Claude Code hooks, skills, agents, and path-scoped rules enforce workflow rules 
 | `/inkweave-add-rule <name>` | mechanic name | Discovery → design → implement → validate |
 | `/mine-rules [dry-run]` | optional dry-run | Run the miner → pick top candidate (dedup vs existing rules + open candidates; previously-removed mechanics are flagged, not skipped) → draft 5-baseline proposal → open one `rule-candidate` issue (`dry-run` drafts without publishing) |
 | `/inkweave-explore [focus]` | optional focus area | Read-only, fork-isolated codebase/architecture map (workspace, engine API + rule registry, web data flow, precompute); verbose output stays in the fork |
+| `/fetch-reveals` | — | Reveal season: find new cards on lorcanaplayer.com (through Claude in Chrome), keep only those illumineertales.com lists as officially revealed (leaks wait), verify each against blind reads of its official scan, stage the verified cards + AVIFs on a branch, report conflicts, deferrals and a leak audit. Pipeline in `scripts/reveal-sync/`. Never commits |
 | `/design <what>` | what to design | Design or update UI layouts, screens, and components with Pencil (`.pen` files) |
 | `/supabase-postgres-best-practices` | — | Vendored Supabase reference: Postgres query, schema, and index best practices |
 

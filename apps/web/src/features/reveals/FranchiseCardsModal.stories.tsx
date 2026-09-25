@@ -12,20 +12,23 @@ const meta: Meta<typeof FranchiseCardsModal> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const IMG_IDS = [3045, 3046, 3050, 3053, 3054, 3059, 3064, 3066, 3073, 3074, 3079];
+// Season-independent art (stories.md #512): preview AVIFs are deleted when a set
+// graduates, so a story pointed at them rots every season.
+const SAMPLE_IMG = '/card-images/en/set6/35_b9afe49519236b60d7d6eca0359905ef44cecae9.jpg';
 
-const cards: LorcanaCard[] = IMG_IDS.map(
-  (id, i) =>
+const cards: LorcanaCard[] = Array.from(
+  {length: 11},
+  (_, i) =>
     ({
-      id: String(id),
+      id: String(i + 1),
       name: 'Card',
-      fullName: `Monsters Card ${id}`,
+      fullName: `Showcase Card ${i + 1}`,
       cost: (i % 9) + 1,
       ink: 'Emerald',
       inkwell: true,
       type: 'Character',
-      imageUrl: `/card-images-preview/${id}.avif`,
-      setCode: '13',
+      imageUrl: SAMPLE_IMG,
+      setCode: '9',
       setNumber: i + 1,
     }) as LorcanaCard,
 );
@@ -41,7 +44,7 @@ export const Default: Story = {
 
 export const Empty: Story = {
   args: {
-    source: FRANCHISES[2],
+    source: FRANCHISES[0],
     cards: [],
     onClose: () => {},
     onCardClick: () => {},

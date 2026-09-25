@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
-import {CompactHeader, ErrorBoundary, EtherealBackground} from '../shared/components';
-import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
+import {CompactHeader, ErrorBoundary, EtherealBackground, Seo} from '../shared/components';
+import {COLORS, FONTS, FONT_SIZES, REVEAL_SET_CODE, REVEAL_SET_NUMBER, SET_NAMES, SPACING} from '../shared/constants';
 import {useResponsive} from '../shared/hooks';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {trackEvent} from '../shared/lib/analytics';
@@ -62,7 +62,6 @@ interface RevealsBodyProps {
   onSelectInk: (ink: Ink) => void;
   onOpen: (card: LorcanaCard) => void;
   onSelectFranchise: (franchise: FranchiseConfig) => void;
-  onSelectTeam: () => void;
   compact: boolean;
 }
 
@@ -71,7 +70,7 @@ interface RevealsBodyProps {
  * strip + featured board + new-franchises). Early returns keep its branches off
  * RevealsPage.
  */
-function RevealsBody({loading, error, progress, selectedInk, onSelectInk, onOpen, onSelectFranchise, onSelectTeam, compact}: RevealsBodyProps) {
+function RevealsBody({loading, error, progress, selectedInk, onSelectInk, onOpen, onSelectFranchise, compact}: RevealsBodyProps) {
   if (error) {
     return (
       <p role="alert" style={{...messageStyle, color: COLORS.error}}>
@@ -91,7 +90,7 @@ function RevealsBody({loading, error, progress, selectedInk, onSelectInk, onOpen
         <InkBoard key={selectedInk} progress={progress.byInk[selectedInk]} onOpen={onOpen} compact={compact} />
       </div>
       <div style={{marginTop: 64}}>
-        <WhatsNewSection onSelectFranchise={onSelectFranchise} onSelectTeam={onSelectTeam} compact={compact} />
+        <WhatsNewSection onSelectFranchise={onSelectFranchise} compact={compact} />
       </div>
     </>
   );
@@ -131,14 +130,25 @@ export function RevealsPage() {
     openCardModal(card.id);
   };
   const sidePad = isMobile ? SPACING.lg : 36;
-  const teamCards = tiers.flatMap((t) => t.cards).filter((c) => c.classifications?.includes('Team'));
 
   return (
     <ErrorBoundary>
+      <Seo
+        title={`${SET_NAMES[REVEAL_SET_CODE]} (Set ${REVEAL_SET_NUMBER}) Card Reveals | Inkweave`}
+        description={`Every Disney Lorcana ${SET_NAMES[REVEAL_SET_CODE]} card revealed so far, tracked by ink with synergies for each new card.`}
+        canonicalPath="/reveals"
+        // Deliberately unindexed: the page is live for a few weeks a year and redirects
+        // to '/' the rest, and reveal card ids are renumbered when the set graduates, so
+        // anything indexed now becomes a dead URL at rotation. The tags exist for link
+        // unfurls and for the page to stop claiming to be the homepage, not for search.
+        noindex
+      />
       <EtherealBackground />
       <CompactHeader isMobile={isMobile} />
       <main style={{minHeight: '100vh', paddingTop: SPACING.lg, paddingBottom: 110, position: 'relative', zIndex: 1}}>
-        <h1 style={srOnly}>Attack of the Vine — Set 13 reveals</h1>
+        <h1 style={srOnly}>
+          {SET_NAMES[REVEAL_SET_CODE]}: Set {REVEAL_SET_NUMBER} reveals
+        </h1>
         <div style={{maxWidth: CONTENT_MAX_WIDTH, margin: '0 auto', padding: `0 ${sidePad}px`}}>
           <RevealHero
             countdownDays={days}
@@ -155,7 +165,6 @@ export function RevealsPage() {
             onSelectInk={selectInk}
             onOpen={(card) => openAndTrack(card, 'mosaic')}
             onSelectFranchise={(f) => setShowcase({label: f.label, ink: f.ink, cards: cardsForFranchise(tiers, f)})}
-            onSelectTeam={() => setShowcase({label: 'Team Characters', ink: 'Ruby', cards: teamCards})}
             compact={isMobile}
           />
         </div>

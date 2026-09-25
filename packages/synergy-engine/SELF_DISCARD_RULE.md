@@ -11,13 +11,22 @@ Detailed documentation for the Self-Discard rule, a playstyle synergy that detec
 
 ## Overview
 
-Self-Discard is the **player-side mirror** of the opponent-facing Discard rule (Rule 4). Where that rule attacks the *opponent's* hand, this one discards your *own* cards on purpose and turns the discard pile into a resource. Three roles:
+Self-Discard is the **player-side mirror** of the opponent-facing Discard rule (Rule 4). Where that rule attacks the *opponent's* hand, this one fills your *own* discard on purpose and turns the pile into a resource. Five roles, in two groups.
+
+Bin-fillers:
 
 - **enabler** — a hand-discard outlet (loot, discard-your-hand, discard-as-cost) that fills your own discard.
+- **mill** — fills the bin from the *deck* ("put the top N cards of your deck into your discard").
+
+Payoffs:
+
 - **reanimator** — plays or returns a card *from your discard* (the deep recursion payoff).
 - **state-payoff** — rewards the discard *event* ("if you discarded a card this turn") or an empty hand (Hellbent).
+- **zone-payoff** — rewards the discard as a countable *zone* ("while you have 10 or more cards in your discard", "a song card in your discard", "if 2 or more cards were put into your discard this turn").
 
-Like Sacrifice, it is an asymmetric-role playstyle: the enabler *creates* the fuel that the payoffs *exploit*. A deck of all reanimators has an empty bin; a deck of all loot has nothing to bring back. The combo is the rule. This rule fills the "recursion role" that `makeSearchPattern` in `cardHelpers.ts` deliberately deferred ("from your discard ... Recursion deserves its own role; see Phase 3").
+The two filler roles are not interchangeable: a hand discard *is* a discard event, so it switches on every payoff; milling never triggers a "when you discard" payoff, so it feeds only the payoffs that read the pile itself. That distinction is what the score matrix encodes.
+
+Like Sacrifice, it is an asymmetric-role playstyle: the fillers *create* the fuel that the payoffs *exploit*. A deck of all reanimators has an empty bin; a deck of all loot has nothing to bring back. The combo is the rule. This rule fills the "recursion role" that `makeSearchPattern` in `cardHelpers.ts` deliberately deferred ("from your discard ... Recursion deserves its own role; see Phase 3").
 
 ### Example
 
@@ -84,12 +93,42 @@ The `[^.]{0,60}` window keeps the verb and "from your discard" inside one clause
 | Discarded this turn | "**If you discarded a card this turn**, ..." | Maximus - Relentless Stallion, Discarded Armor |
 | Hellbent | "**While you have no cards in your hand**, ..." | Megavolt - Electrical Menace, Gizmoduck |
 
+### zone-payoff (the discard as a countable zone)
+
+```regex
+in:  /\b(?:a|an|\d+\s+or\s+more|for\s+each)\s+(?:\w+\s+){0,3}?cards?\s+(?:named\s+\w+\s+)?in\s+your\s+discard\b/i
+put: /cards?\s+were\s+put\s+into\s+your\s+discard\s+this\s+turn/i
+```
+
+The `in your discard` wording keeps this disjoint from the reanimator's `from your discard`: a zone payoff *reads* the pile, a reanimator *empties* it. The `put` pattern covers the trigger family that counts what arrived this turn regardless of how it got there.
+
+| Shape | Example card text | Card |
+|-------|-------------------|------|
+| Discard count | "While you have **10 or more cards in your discard**, ..." | Pepita - Imelda's Right Hand, Land of the Dead - Marigold Bridge |
+| Card-type check | "if there's **a song card in your discard**, ..." | Priya Mangal - Serious Music Lover, Miguel Rivera - Street Musician |
+| For-each scaling | "**For each** Alien character **card in your discard**, ..." | Dr. Hamsterviel - Infamous Scientist, Coldstone - Reincarnated Cyborg |
+| Put this turn | "If **2 or more cards were put into your discard this turn**, ..." | Helga Sinclair - No Backup Needed, Kida - Discovering the Unknown |
+
+### mill (deck → discard)
+
+```regex
+/put\s+the\s+top\s+(?:card|\d+\s+cards)\s+of\s+your\s+deck\s+into\s+your\s+discard/i
+```
+
+Deliberately tight: it reads the top-of-deck phrasing only. "Put the rest into your discard" (a look-and-filter effect) and the ambiguous "put it into your discard" stay out, because neither reliably fills the bin.
+
+| Example card text | Card |
+|-------------------|------|
+| "**put the top 4 cards of your deck into your discard**." | Quackerjack - Loony Toymaker |
+| "**put the top card of your deck into your discard**." | Hector Rivera - Street Musician, Jack-Jack Parr - Incredible Potential |
+
 ### What's Excluded
 
 | Excluded | Pattern / reason |
 |----------|------------------|
 | **Opponent discard** | Anything matching `opponent` / `each player` is the Discard rule's domain (attacking *their* hand). The gate keeps the two axes disjoint, exactly the boundary the Discard rule's doc calls out ("self-discard ... belongs to a separate axis"). |
-| **Mill (deck → discard)** | "put the top N of your deck **into** your discard" fills the bin from the *deck*, not the hand, and never triggers a "when you discard" payoff. It matches neither `enabler` (no hand-discard) nor `reanimator` (the pattern requires "**from** your discard", not "into"). Mill is a distinct, currently-thin mechanic (3 cards in the 9-13 rotation). |
+| **Songs as bin-fillers** | A sung song lands in the discard, so in principle every Song feeds a zone payoff. It is not modelled: that would make all 66 Songs bin-fillers and drown the axis in near-baseline pairs, and the Song half of the interaction already has a home in the Singer + Songs rule. |
+| **Mill as a hand-discard enabler** | Mill *is* tagged (role `mill`) but is never an `enabler`: it fills the bin from the deck, so it cannot switch on a payoff that needs an actual hand discard. `mill ↔ state-payoff` therefore stays at the 5 baseline, while `enabler ↔ state-payoff` scores 8. |
 
 ---
 
@@ -102,32 +141,44 @@ Real cards the `getSelfDiscardRoles` detector tags for each role (names from the
 | **enabler** | Maleficent - Vexed Partygoer (Amethyst), Doc - Bold Knight (Steel), Calhoun - Battle-Tested (Amber) | Discard your own cards from hand: loot, discard-your-hand, or discard-as-cost |
 | **reanimator** | Wreck-It Ralph - Admiral Underpants (Amber), Merlin's Carpetbag (Sapphire), Stitch - Alien Buccaneer (Emerald) | Play or return a card *from your discard*: the deep recursion payoff |
 | **state-payoff** | Jasmine - Inspired Researcher (Sapphire-Steel), Desperate Plan (Steel), Beast's Mirror (Steel) | Rewards the discard event ("discarded a card this turn") or an empty hand (Hellbent) |
+| **zone-payoff** | Priya Mangal - Serious Music Lover (Amber), Pain - Running with Scissors (Amethyst), Helga Sinclair - No Backup Needed (Emerald) | Reads the pile itself: a count, a card type sitting there, or what was put there this turn |
+| **mill** | Quackerjack - Loony Toymaker (Sapphire), Preston Whitmore - Expedition Financier (Ruby), Remote Inklands - Desert Ruins (Ruby) | Puts cards from the top of your deck into your discard |
 
 ---
 
-## Scoring (8/6/5 matrix)
+## Scoring (8/7/6/5 matrix)
 
-Applies the project-wide **5-baseline convention** and mirrors the Sacrifice shape (asymmetric combo at peak, same-axis density at floor), with a `6` for the recursion-density case.
+Applies the project-wide **5-baseline convention** and mirrors the Sacrifice shape (asymmetric combo at peak, same-axis density at floor), with a `7` for a bin-filler feeding the payoff it fuels and a `6` for the recursion-density case.
 
 ### Score Table
 
 | Pair Type | Score | Display Tier | Explanation |
 |-----------|-------|-------------|-------------|
 | enabler ↔ payoff (reanimator or state) | **8** | Strong | Win-condition combo: discard a card, then replay it from the bin (reanimator) or flip the "discarded this turn" / empty-hand payoff (state) on demand |
+| enabler ↔ zone-payoff | **7** | Strong | Mechanical compounding: every hand discard raises the count the payoff reads |
+| mill ↔ zone-payoff | **7** | Strong | The deck-side filler stocks the pile the payoff counts, several cards at a time |
+| mill ↔ reanimator | **7** | Strong | Mill buries targets the recursion engine then replays |
 | reanimator ↔ reanimator | **6** | Moderate | Two recursion engines mining the same discard pile, complementary but not a single combo |
-| enabler ↔ enabler / reanimator ↔ state / state ↔ state | **5** | Weak/Moderate | Same-axis density: parallel outlets, or two payoffs that don't amplify each other |
+| enabler ↔ enabler / mill ↔ state-payoff / reanimator ↔ state / state ↔ state | **5** | Weak/Moderate | Same-axis density: parallel fillers, or two payoffs that don't amplify each other |
+
+A fill combo sits at 7 rather than 8 because it is compounding, not a closed loop: the filler makes the payoff bigger, but the payoff does not cash the specific card that was filled. That is the difference between "discard Mother Gothel, replay Mother Gothel" (8) and "mill 4, your count-payoff gets bigger" (7).
 
 ### Live distribution
 
-142 tagged cards (59 enabler, 78 reanimator, 8 state-payoff; roles overlap on multi-role cards). After the engine's ink-compatibility filter (`canShareDeck`), **7,613 unique pairs**:
+Generated from the live engine over the current Core pool (sets 9-13 plus the Set 14 preview): **113 tagged cards** (38 enabler, 49 reanimator, 6 state-payoff, 21 zone-payoff, 6 mill; roles overlap on multi-role cards such as Lyle Tiberius Rourke, who mills *and* reanimates). After the engine's ink-compatibility filter (`canShareDeck`), **5,969 unique pairs**:
 
 | Pair shape | Count | Score | Share |
 |------------|-------|-------|-------|
-| enabler ↔ payoff | 4,213 | 8 | 55.3% |
-| reanimator ↔ reanimator | 2,031 | 6 | 26.7% |
-| other same-axis | 1,369 | 5 | 18.0% |
+| enabler ↔ payoff (reanimator or state) | 1,995 | 8 | 33.4% |
+| enabler ↔ zone-payoff | 704 | 7 | 11.8% |
+| mill ↔ reanimator | 267 | 7 | 4.5% |
+| mill ↔ zone-payoff | 125 | 7 | 2.1% |
+| reanimator ↔ reanimator | 973 | 6 | 16.3% |
+| other same-axis | 1,905 | 5 | 31.9% |
 
-The score-8 share (~55%) runs high, like Sacrifice's, and for the same structural reason: recursion is one of the deepest payoff pools in the game (78 reanimators), so a handful of enablers pair against a large payoff side. The combo *is* the archetype.
+The score-8 share runs high, like Sacrifice's, and for the same structural reason: recursion is one of the deepest payoff pools in the game (49 reanimators), so a handful of enablers pair against a large payoff side. The combo *is* the archetype.
+
+Note on ordering: the 7 guard runs before the 6, so a card that both mills and reanimates (Lyle Tiberius Rourke) scores 7 against another reanimator rather than 6. That is deliberate: he does not merely share the bin with it, he fills the bin for it.
 
 ### Token-swapped explanation
 
@@ -140,27 +191,35 @@ const payoffToken = cardEnabler ? '{B}' : '{A}';
 // state payoff:      `${enablerToken}'s self-discard switches on ${payoffToken}'s discard payoff.`
 ```
 
+The fill combos follow the same convention, with the **filler** as the actor:
+
+- enabler ↔ zone-payoff: `"{A} fills your discard from hand, switching on {B}'s discard-count payoff."`
+- mill ↔ zone-payoff: `"{A} mills your deck into the discard, feeding {B}'s discard-count payoff."`
+- mill ↔ reanimator: `"{A} mills cards into your discard for {B} to replay."`
+
 Same-axis pairs use distinct sentences:
 
 - enabler ↔ enabler: `"Both fill your own discard: parallel self-discard outlets."`
 - reanimator ↔ reanimator: `"Both replay cards from your discard: two recursion engines sharing one bin."`
-- other: `"Same discard-matters axis, no compounding."`
+- other: `"Same discard-matters axis without compounding."`
 
 ---
 
 ## Coverage
 
-- **59 enablers** (loot / discard-hand / discard-cost), every ink.
-- **78 reanimators** ("from your discard"), the deepest side, peaks in Set 12.
-- **8 state-payoffs** (discarded-this-turn + Hellbent), thin and mostly Set 13.
+- **38 enablers** (loot / discard-hand / discard-cost), every ink.
+- **49 reanimators** ("from your discard"), the deepest side.
+- **21 zone-payoffs** (count / card-type / put-this-turn), added in the Set 14 pass.
+- **6 state-payoffs** (discarded-this-turn + Hellbent), the thinnest side.
+- **6 mill cards**, the deck-side filler.
 
 ```chart
 {
   "type": "doughnut",
-  "title": "Role Composition (142 cards; multi-role overlap)",
+  "title": "Role Composition (113 cards; multi-role overlap)",
   "data": {
-    "labels": ["Reanimator (78)", "Enabler (59)", "State-payoff (8)"],
-    "values": [78, 59, 8]
+    "labels": ["Reanimator (49)", "Enabler (38)", "Zone-payoff (21)", "State-payoff (6)", "Mill (6)"],
+    "values": [49, 38, 21, 6, 6]
   }
 }
 ```
@@ -171,7 +230,7 @@ Same-axis pairs use distinct sentences:
 
 Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Self-Discard rule (Discard Matters)')`.
 
-### Role Detection (9 tests)
+### Role Detection (10 tests)
 
 | Test | What it verifies |
 |------|------------------|
@@ -180,18 +239,21 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | reanimator | "play ... from your discard" (Mother Gothel) |
 | state-payoff from discarded-this-turn | "discarded a card this turn" (Maximus) |
 | state-payoff from Hellbent | "no cards in your hand" (Megavolt) |
+| zone-payoff | a count, a card type in the pile, and "put into your discard this turn" all tag `['zone-payoff']` |
+| mill | "put the top N cards of your deck into your discard" → `['mill']`, and mill + recursion on one card → `['reanimator','mill']` |
 | multi-role | loot + reanimate on one card (Rapunzel & Flynn) → `['enabler','reanimator']` |
 | excludes opponent discard | "each opponent ... discards" → no role |
-| excludes mill | "into your discard" (Quackerjack) → no role |
 | no roles for unrelated / text-less cards | empty arrays |
 
-### Scoring (3 tests)
+### Scoring (5 tests)
 
 | Test | What it verifies |
 |------|------------------|
 | enabler ↔ reanimator → 8 | win-condition combo, enabler-as-actor explanation |
 | enabler ↔ state-payoff → 8 | loot flips the discard-state payoff |
 | enabler ↔ enabler → 5 | parallel outlets |
+| fill combos → 7 | all three shapes, with the filler as the actor and the token-swap when the payoff is the searcher |
+| mill ↔ state-payoff → 5 | milling is not a discard event, so it stays at the baseline |
 
 ---
 
@@ -201,9 +263,11 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 
 The Discard rule is opponent-facing (make *them* discard, reward *your* hand-size advantage). Self-Discard is the opposite direction (discard *your own*, empty *your* hand). A card that is a payoff in one is an anti-payoff in the other (Hellbent wants an empty hand; Discard's payoff wants a full one). Folding them together would blur two opposite archetypes, so this is a separate playstyle that mirrors Sacrifice.
 
-### Why mill is excluded
+### Why mill is a bin-filler, not an enabler
 
-Mill fills the bin from the deck, not the hand. It feeds reanimators that *pull* from the discard, but it does **not** trigger "when you discard" payoffs (Mother Gothel, Maximus) which need an actual hand-discard. With only 3 mill cards in the current rotation, lumping it in would add almost nothing while blurring the rule's identity. Mill can earn its own axis if it ever grows.
+Mill fills the bin from the deck, not the hand. It feeds anything that *reads* or *pulls from* the pile (zone payoffs, reanimators), but it does **not** trigger "when you discard" payoffs (Mother Gothel, Maximus), which need an actual hand discard. So it carries its own role rather than joining `enabler`: it scores 7 against zone payoffs and reanimators, and stays at the 5 baseline against state payoffs.
+
+It was excluded outright until the Set 14 pass, on the grounds that the pool was thin and mill had no payoff to point at. The zone-payoff role is that payoff: once the engine could see "10 or more cards in your discard", a mechanic whose entire job is raising that number could no longer be a non-participant.
 
 ### Why reanimator ↔ reanimator sits at 6, not 5
 

@@ -141,6 +141,12 @@ const DOCS = [
     category: 'Architecture',
     label: 'Card Data Pipeline',
   },
+  {
+    src: 'docs/reveals/START_REVEAL_SEASON.md',
+    out: 'START_REVEAL_SEASON.html',
+    category: 'Architecture',
+    label: 'Start a Reveal Season',
+  },
   {src: 'docs/TECH_STACK.md', out: 'TECH_STACK.html', category: 'Project', label: 'Tech Stack'},
   {
     src: 'docs/V1_LAUNCH_PLAN.md',

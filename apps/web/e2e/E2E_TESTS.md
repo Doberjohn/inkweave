@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-136 tests across 21 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+107 tests across 17 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
 
@@ -120,7 +120,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should close dropdown on Escape | Escape key dismisses autocomplete dropdown |
 | should NOT show autocomplete on browse page search | Typing in browse page search does NOT show autocomplete (browse filters inline) |
 
-## `seo.spec.ts` — 17 tests (both viewports)
+## `seo.spec.ts` — 18 tests (both viewports)
 
 Route-level metadata coverage (#524). Before this, the file asserted only home-page
 properties, so #486's central acceptance criterion — every route self-references its own
@@ -148,6 +148,7 @@ against the dev server, where both are present.
 | card page links to all six ink hubs at a mobile viewport | The footer's ink nav is what puts every hub one click from all 1,024 card pages (#530) |
 | ink hub emits one crawlable anchor per card, identically on mobile | `CardGrid`, not the Virtuoso-windowed `BrowseCardGrid` — windowing would emit a fraction of the anchors to a crawler (#530) |
 | unknown ink slug renders the 404 page, not an empty hub | Junk URLs under `/ink/` declare themselves unindexable instead of returning a thin 200 (#525) |
+| reveals page owns its title and canonical when in season | Self-gating (skips off-season, when `/reveals` redirects to `/`). `/reveals` has no prerendered file, so production answers it with the HOME page's HTML; those tags carry `data-seo`, the sweep strips them, and with no `<Seo>` of its own the page shipped with no title and no canonical at all |
 | every tag `<Seo>` emits carries the data-seo sweep marker | #535 — an unmarked tag escapes `sweepPrerenderedSeoTags()` and silently duplicates on every real visit |
 | client navigation swaps metadata in place instead of accumulating it | #535 — two `<link rel="canonical">` makes Google ignore canonicalisation entirely, which is worse than emitting none |
 | sweep preserves index.html site-level constants | #535 — `og:type` / `og:locale` / `og:image:width` / `og:image:height` / `twitter:card` are not emitted by `<Seo>`; widening the sweep selector would strip them on every load |
@@ -238,103 +239,26 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 
 ## `reveals-page.spec.ts` — 8 tests (7 desktop, 1 mobile)
 
-**Seasonal — the whole suite auto-skips off-season.** `beforeEach` reads `/data/previewCards.json` and `test.skip`s when there are no revealed cards (`cards: []`, e.g. after a set graduates into `allCards.json`) or the release date has passed. Skipping happens before any 30s-timeout wait, so the suite is dormant (not failing) whenever there is nothing to reveal, and resumes automatically once the next set's reveal data is populated.
+**Season-independent by design.** The `beforeEach` reads the reveal set (the `previewCards.json` entry with the latest `releaseDate`) and the tests build their matchers from its `name` and `number`; the franchise label is read off the tile's own `aria-label`. Starting a new season needs no edit here. The suite skips itself once `releaseDate` has passed, and resumes when the next set's dates land. Three tests additionally skip while `cards` is empty.
 
 | Test | What it verifies |
 |---|---|
-| renders the tracker: hero, six ink trackers, and franchise cards | sr-only `h1`, the "Attack of the Vine!" logo, 6 `ink-tracker-tile`s, the "Ink board" section, and the 3 "View … cards" franchise buttons all render |
-| desktop nav shows Reveals entry with NEW badge | `/` has a Reveals link with a "NEW" badge child |
-| mobile nav shows Reveals tab | On mobile, `/browse`'s bottom nav has a "Set 13 reveals" link |
-| promo modal appears on landing page and not on /reveals | `role="complementary" name=/Set 13 reveals/` visible on `/`, absent on `/reveals` |
-| mosaic card click opens the card overview modal | Clicking a `reveal-card-slot` on `/reveals` opens the modal; URL stays `/reveals` |
-| franchise card click opens the franchise cards modal | Clicking "View Monsters, Inc. cards" opens the `dialog`; a card-tile inside opens the overview modal on top |
+| renders the tracker: hero, six ink trackers, and the debut franchises | sr-only `h1` containing the set name, the set logo (alt = set name), 6 `ink-tracker-tile`s, the "Ink board" section, and at least one "View … cards" franchise button all render |
+| desktop nav shows Reveals entry with NEW badge | `/browse` has a Reveals link with a "NEW" badge child |
+| mobile nav shows Reveals tab | On mobile, `/browse`'s bottom nav has a "Set N reveals" link |
+| promo modal appears on landing page and not on /reveals | `role="complementary" name="Set N reveals"` visible on `/`, absent on `/reveals` |
+| mosaic card click opens the card overview modal | Clicking a `reveal-card-slot` on `/reveals` opens the modal; URL stays `/reveals` (skips with no cards) |
+| franchise card click opens the franchise cards modal | Clicking the first "View … cards" tile opens the `dialog` named "<franchise> cards"; a card-tile inside opens the overview modal on top (card click skips with no cards) |
 | ?ink= param selects the starting mosaic ink | `/reveals?ink=emerald` makes the Emerald `ink-tracker-tile` the `aria-pressed` (featured) one |
 | clicking a rarity chip dims the other revealed cards | A "Highlight ... cards" chip toggles `aria-pressed`; other-rarity slots get `data-dimmed`; clicking again clears it (skips when <2 rarities revealed) |
 
 ## `admin-analytics.spec.ts` — 1 test (flag-gated, self-skipping)
 
-Requires `VITE_SHOW_ADMIN_ANALYTICS=true` (playwright `webServer.env` + `apps/web/.env.local`) and the build-time `vote-analytics.json` artifact.
-
-Gating order matters here. The artifact is probed directly with `request.get` **before navigating**, and judged on **content-type, not status** — Vite dev serves the SPA shell with HTTP 200 for a missing file, which is why the app's own fetch fails on `Unexpected token '<'` rather than on a 404. The flag is gated second, on the `Engine Calibration` h1. Past both gates the tabs are **asserted, not skipped**: a missing tab there is a real failure, not an environment gap.
-
-This replaced a version that inferred artifact absence from a *second* 10s UI wait. With `goto` on a cold Vite compile plus 10s plus 10s, it overran Playwright's 30s default and **timed out instead of reaching its own skip** — a gate that cannot be reached is not a gate. Flag-off redirect is also covered by `AdminGate` unit tests.
+Requires `VITE_SHOW_ADMIN_ANALYTICS=true` (playwright `webServer.env` + `apps/web/.env.local`) and the build-time `vote-analytics.json` artifact. The test skips gracefully when the flag is off (route redirects home) or the artifact is absent, so it never false-fails an unset environment. Flag-off redirect is also covered by `AdminGate` unit tests.
 
 | Test | What it verifies |
 |---|---|
 | renders the calibration + activity tabs | `/admin/analytics` shows the `Engine Calibration` h1 and the verdict scale + `Total votes` on the Calibration tab, then switches to the Activity tab and confirms the day-by-day log header |
-
-## `collection-sync.spec.ts` — 4 tests
-
-**#555's acceptance criterion**: a signed-in user's collection survives moving to a different browser. Nothing else tests it — the other checks are unit tests against a stubbed repository, which can only show the decision function is right, never that the app calls it at the right moment with the right data.
-
-**What is stubbed**, in `e2e/helpers/collectionBackend.ts`:
-
-- `CollectionBackend` is an in-memory `collections` table served through `context.route('**/rest/v1/collections*')`. One row per user, keyed by `owner_id` — a map, not a list, because the primary key IS the owner, so a write is always an upsert with no id to generate.
-- **Two contexts share ONE backend.** That is what makes "device A" and "device B" mean anything: same account, same table, different `localStorage`. Device B has no other source for the collection, so the assertion cannot pass by accident.
-- Anonymous writes are rejected with 401, mirroring the owner-scoped policies. Without that a spec could pass while the app wrote a collection signed out.
-
-**What these specs therefore do NOT prove:** RLS. Playwright intercepts before the network, so `owner_id` scoping is enforced by the helper's own bookkeeping, not by Postgres. That half was proven separately with a JWT-simulated probe (`set local role authenticated` + `request.jwt.claims`) against the live database — user A saw 1 row, its own, and 0 of user B's.
-
-**Two owner rulings (2026-08-11) are what these assert.** Server wins on conflict, because a collection is one row and an upload over it destroys a remote import with no undo. And sign-out KEEPS the local copy, unlike `DeckContext`'s `clearDraft()` — which is precisely why `alreadyMigrated` exists, or clearing the collection from another device would be resurrected by this browser's leftover copy.
-
-| Test | Asserts |
-|---|---|
-| a collection imported on one device is readable on another | device A signs in with `alreadyMigrated: false` so the upload runs, then device B with EMPTY localStorage shows the same count on `/account` |
-| the account copy wins over a stale local one | server row and a different local one; `/account` shows the server's, and the stored row is unchanged |
-| a signed-out visitor never writes to the account | seeded local collection, signed out: `writeCount === 0`. Asserted on the store rather than the UI, because an anonymous upload would be silent |
-| a cleared collection does not come back from the account | Clear → Delete removes the row, and a reload still shows the import prompt |
-
-`/account` is the surface under test because it states ownership as a plain number, so the assertion does not depend on the binder's layout.
-
-## `deck-save-share.spec.ts` — 4 tests (desktop only)
-
-The #473 acceptance flow, and the **first coverage of the deck save WRITE path**. Everything before it asserted rendering and reads, so a save that silently failed left the suite green.
-
-Desktop only because `DeckBuilderPage` renders a "not on mobile" notice instead of the builder.
-
-**What is stubbed**, in `e2e/helpers/deckBackend.ts`:
-
-- `signInAs(context)` writes a session into `localStorage['inkweave:auth']` via `addInitScript`, before any page script runs. Real sign-in is an OAuth redirect and cannot run in CI. auth-js persists the whole session at that key (no `userStorage` is configured) and only checks `expires_at * 1000 - Date.now() < 90s`, so a one-year expiry resolves from storage with no network call and no refresh timer. It also seeds `inkweave:deck:migrated:<uid>`, because `useFirstSignInMigration` otherwise upserts any non-empty draft the instant a uid appears, which would save the deck before the spec ever pressed Save.
-- `DeckBackend` is an in-memory `decks` table served through `context.route('**/rest/v1/decks*')`. **Every response is a JSON array**: in postgrest-js 2.108.2 `maybeSingle()` does NOT set the `vnd.pgrst.object+json` Accept header that `single()` does, it unwraps client-side, so one array shape serves lists, single reads and writes alike.
-- One store, several contexts, each with its own `viewerId`. That is what lets a deck saved while signed in be read by a genuinely separate anonymous context. The store enforces `is_public or auth.uid() = owner_id`, mirroring `decks_select_public_or_own`, and rejects anonymous writes.
-
-**What these specs therefore do NOT prove:** RLS itself, or that Postgres accepts the write. That half belongs in `scripts/test-supabase-integration.mjs`, which today covers voting only and has no deck coverage at all.
-
-**Owner ruling 2026-08-05: publish is not a separate concept.** Visibility is a property of the deck, chosen in the New deck dialog and changed any time in the builder, and **Save is the only thing that writes it**. `/decks/:id` states the current visibility and cannot change it.
-
-**Owner ruling 2026-08-07: there is no share control.** `ShareDeckButton` was removed from `DeckViewPage` by the back-navigation rework and deleted outright on 2026-08-10; the URL in the address bar is the share link. So a private deck is not guarded by a Copy link that refuses — it is guarded by RLS, which is what the second test below actually asserts.
-
-That single-writer rule is not a style choice: two writers (the builder's Save and a control on the deck page) is what caused a REPRODUCED bug where publishing a deck and then saving any later edit silently un-published it, dropping the deck out of community decks. The fourth test below is that bug's regression guard.
-
-Assertions go through **buttons and their disabled reasons**, never internal state. A disabled button's `aria-label` REPLACES its text as the accessible name, which is what makes each reason addressable:
-
-| Signal | Asserted as |
-|---|---|
-| the deck is Core legal | `Play on Duels` is enabled. It is gated on `DeckStats.isLegal`, so this covers the 60-card, 4-copy and 2-ink rules at once |
-| the deck is saved | a button named `No changes to save` (the rested, disabled Save) |
-| the deck is private | an anonymous context gets "Deck not found" at `/decks/:id`. There is no longer a control to read it off, so the RLS behaviour IS the signal |
-| visibility is changed | the `Deck visibility` group in the builder, then Save. There is no control for it anywhere else |
-
-| Test | What it verifies |
-|---|---|
-| a deck created public is live for a stranger as soon as it is saved | creates the deck as **Public** in the New deck dialog → imports a Core-legal 60 → Save writes one row owned by the test user, 60 copies, `is_public: true` with no second step → the owner's view carries Edit deck → a separate anonymous context renders the deck with 60 cards and no Edit link |
-| a private deck is invisible to strangers until the builder makes it public | created Private → saved `is_public: false` → an anonymous context gets "Deck not found" → the deck page has NO publish control and no share affordance at all → Edit deck, flip to Public → the flip writes on its own → the stranger now sees the deck. Renamed 2026-08-07: Copy link was deleted, so the guard is now that the affordance does not exist rather than that it refuses |
-| saving a later edit does not quietly un-publish the deck | created Public and saved → leave the builder, return via the deck page, Edit deck, remove one copy, Save → still `is_public: true`. Guards a bug that was reproduced end to end before the fix |
-| an unsaved deck is not written to the cloud on its own | after importing 60 cards while signed in, Save is live and the backend has received nothing: nothing reaches the cloud until the user asks |
-
-The visibility assertion was mutation-tested (forcing `visibleTo` to true fails the "Deck not found" step), so it is known to bite rather than merely pass.
-
-## `navigation.spec.ts` — 5 tests (3 desktop, 2 mobile)
-
-Regression guard for chrome that is unreachable or doubled. Lint, typecheck, and unit tests can't express "no link points here" or "this bar renders on the wrong viewport"; only an E2E can. Every test skips on the projects it does not apply to, so each viewport's rule is asserted exactly where it holds.
-
-| Test | Projects | What it verifies |
-|---|---|---|
-| Decks is reachable from the main nav | desktop | `/browse`'s `Main navigation` has a "Decks" link; clicking it navigates to `/decks` |
-| the header carries a sign-in control on every page | desktop | `/browse` and `/playstyles` both show a "Sign in" button inside `compact-header` |
-| /decks does not double up on the header sign-in control | desktop | `/decks` has exactly ONE "Sign in" button and it lives in `compact-header`, so the page's own mobile fallback stays mobile-only |
-| /decks carries the only mobile sign-in control | mobile | `/decks` has no `compact-header` yet still shows a "Sign in" button (the 2026-08-05 ruling's fallback) |
-| ink hubs do not paint the desktop header on a phone | mobile | `/inks` and `/ink/steel` render no `compact-header`, guarding the optional-`isMobile` bug that painted the 70px desktop bar over the mobile bottom nav |
 
 ## Patterns
 
@@ -350,6 +274,6 @@ Regression guard for chrome that is unreachable or doubled. Lint, typecheck, and
 
 - **Read the failure screenshot before theorizing.** Playwright writes one per failed test to `apps/web/test-results/{test-name}-chromium/test-failed-1.png`. It shows the rendered DOM at the moment of failure, the fastest way to distinguish "test is stale" / "UI refactored" / "route gate fired" / "feature flag off."
 - Common patterns visible in the screenshot:
-  - **Unexpected page** (e.g., home rendered where the test navigated, or the off-season notice rendered at `/reveals`) → a route gate fired; check the corresponding phase/flag hook. `AdminGate` still redirects; `RevealsGate` renders `RevealsOffSeason` instead of redirecting as of 2026-07-30, so an off-season `/reveals` shows a notice rather than the homepage.
+  - **Unexpected page** (e.g., home rendered when the test navigated to `/reveals`) → a route gate redirected; check the corresponding phase/flag hook.
   - **Correct page but expected text missing** → the UI may have been refactored (element moved to `<img alt>`, or hidden via `position: absolute; left: -10000` for screen readers, which `toBeVisible()` excludes). Query the `<section>` by role/name instead, or use `.toHaveCount(1)`.
   - **Flash of initial state** → async state (fetch, localStorage) had not resolved; check what the page is waiting for before asserting.

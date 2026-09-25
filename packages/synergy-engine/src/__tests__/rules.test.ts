@@ -12,6 +12,7 @@ import {
   getExertRoles,
   isExertCard,
   getBounceRoles,
+  getBounceTargetGate,
   isBounceCard,
   getSelfDiscardRoles,
   isSelfDiscardCard,
@@ -36,6 +37,8 @@ import {
   getTribalRoles,
   isTribalCard,
   TRIBAL_SPECS,
+  getNamedReferences,
+  transformCard,
 } from '../utils';
 import {createCard} from './fixtures.js';
 
@@ -563,6 +566,40 @@ describe('Synergy Rules', () => {
         expect(synergies[0].score).toBe(expected);
       });
     });
+
+    describe('ink-drop Shift scoring', () => {
+      // Baymax - Amped Up: "Shift Remove 2 ink drops". Drops are their own payment, so the pair
+      // scores by who supplies them, never on the ink curve or as a free Shift.
+      function inkDropSetup(baseCost: number, baseText: string) {
+        return shiftSetup({
+          shiftId: 'baymax-shift',
+          shiftName: 'Baymax',
+          shiftFullName: 'Baymax - Amped Up',
+          shiftKeyword: 'Shift Remove 2 ink drops',
+          baseId: 'baymax-base',
+          baseName: 'Baymax',
+          baseFullName: 'Baymax - Lab Assistant',
+          baseCost,
+          baseText,
+        });
+      }
+
+      it('scores 8 both ways when the base gets the drops itself (Baymax - Lab Assistant)', () => {
+        const {shiftCard, base} = inkDropSetup(
+          4,
+          'RESUPPLY When you play this character, if you have 2 or more items in play, get 2 ink drops.',
+        );
+        const pool = [shiftCard, base];
+        expect(shiftRule.findSynergies(shiftCard, pool)[0].score).toBe(8);
+        expect(shiftRule.findSynergies(base, pool)[0].score).toBe(8);
+      });
+
+      it('scores 5, not a free Shift, when the base gets fewer drops than the Shift removes', () => {
+        // A cost-1 base scores 9 both on the ink curve (gap 1) and on the free-Shift path.
+        const {shiftCard, base} = inkDropSetup(1, 'When you play this character, get 1 ink drop.');
+        expect(shiftRule.findSynergies(shiftCard, [shiftCard, base])[0].score).toBe(5);
+      });
+    });
   });
 
   describe('Puppy Shift', () => {
@@ -918,6 +955,67 @@ describe('Named Companions', () => {
     expect(synergies).toHaveLength(2);
     expect(synergies.map((s) => s.card.id)).toContain('pull-lever');
     expect(synergies.map((s) => s.card.id)).toContain('wrong-lever');
+  });
+
+  it('should ignore the character named in an ink-drop Shift reminder (Baymax - Amped Up)', () => {
+    const ampedUp = createCard({
+      id: 'baymax-amped-up',
+      name: 'Baymax',
+      fullName: 'Baymax - Amped Up',
+      cost: 7,
+      text: 'Shift Remove 2 ink drops (You may remove 2 ink drops to play this on top of one of your characters named Baymax.)',
+    });
+    expect(namedRule.matches(ampedUp)).toBe(false);
+  });
+
+  it("should end a name at the sentence end before an ability title (Mor'du)", () => {
+    const mordu = createCard({
+      id: 'mordu-savage',
+      name: "Mor'du",
+      fullName: "Mor'du - Savage Cursed Prince",
+      // The real second ability also says "not named Mor'du", which would mask a lost first capture
+      text: "FEROCIOUS ROAR When you play this character,\nexert all your characters not named Mor'du.\nROOTED BY FEAR Your characters can't ready at the start of your turn.",
+    });
+    expect(getNamedReferences(mordu)).toEqual(["Mor'du"]);
+  });
+
+  it('should end a name before "was" and score the free play at 8 (Buzz\'s Arm)', () => {
+    const buzzArm = createCard({
+      id: 'buzz-arm',
+      name: "Buzz's Arm",
+      fullName: "Buzz's Arm",
+      type: 'Item',
+      cost: 2,
+      text: 'MISSING PIECE If a character named Buzz Lightyear\nwas banished this turn, you may play this item for free.',
+    });
+    const buzz = createCard({id: 'buzz', name: 'Buzz Lightyear'});
+    const synergies = namedRule.findSynergies(buzzArm, [buzzArm, buzz]);
+    expect(synergies.map((s) => [s.card.id, s.score])).toEqual([['buzz', 8]]);
+  });
+
+  it('should end a name before a generic alternative (Focused Search: "Kevin or an item card")', () => {
+    const focusedSearch = createCard({
+      id: 'focused-search',
+      name: 'Focused Search',
+      fullName: 'Focused Search',
+      type: 'Action',
+      text: 'Look at the top 4 cards of your deck. You may reveal\na character card named Kevin or an item card and put\nit into your hand.',
+    });
+    const kevin = createCard({id: 'kevin', name: 'Kevin'});
+    const synergies = namedRule.findSynergies(focusedSearch, [focusedSearch, kevin]);
+    expect(synergies.map((s) => [s.card.id, s.score])).toEqual([['kevin', 5]]);
+  });
+
+  it("should match a name printed with a typographic apostrophe (Belle's City Guide)", () => {
+    const belle = createCard({
+      id: 'belle-writer',
+      name: 'Belle',
+      fullName: 'Belle - Reflective Writer',
+      text: 'CITY ADVENTURES When you play this character, reveal the top card of your deck. If it’s an item card named Belle’s City Guide or an action card, you may put it into your hand.',
+    });
+    const cityGuide = createCard({id: 'city-guide', name: "Belle's City Guide", type: 'Item'});
+    const synergies = namedRule.findSynergies(belle, [belle, cityGuide]);
+    expect(synergies.map((s) => [s.card.id, s.score])).toEqual([['city-guide', 5]]);
   });
 });
 
@@ -1508,6 +1606,22 @@ describe('Card Helper Functions', () => {
     it('should not match non-Singer characters', () => {
       const regular = createCard({id: 'char-1', name: 'Elsa'});
       expect(singerRule.matches(regular)).toBe(false);
+    });
+
+    it('pairs a conditional Singer ("gains Singer 3" in text only) with the songs it can sing', () => {
+      const miguel = transformCard({
+        id: 14021,
+        name: 'Miguel Rivera',
+        fullName: 'Miguel Rivera - Street Musician',
+        cost: 1,
+        color: 'Amber',
+        inkwell: true,
+        type: 'Character',
+        fullText: 'SHARE THE MUSIC While you have a song card in your discard, this character gets +1 ◊ and gains Singer 3.',
+      })!;
+      const {song} = makeSingerSongPair({songCost: 3});
+      const match = singerRule.findSynergies(miguel, [miguel, song]).find((m) => m.card.id === song.id);
+      expect(match?.score).toBe(8);
     });
 
     it('should match Song cards for reverse lookup', () => {
@@ -2551,6 +2665,40 @@ describe('Self-Discard rule (Discard Matters)', () => {
     text: 'CLEVER SWAP Whenever this character quests, you may draw a card, then choose and discard a card. FRESH START Whenever you discard a character card, you may play that character from your discard.',
   });
 
+  // Zone payoffs — the discard as a countable zone, not an event.
+  const discardCount = createCard({
+    id: 'pepita-zone',
+    fullName: "Pepita - Imelda's Right Hand",
+    ink: 'Ruby',
+    text: 'ANCESTRAL WISDOM While you have 10 or more cards in your discard, this character gets +2 ¤ and +2 ◊.',
+  });
+  const songInDiscard = createCard({
+    id: 'miguel-zone',
+    fullName: 'Miguel Rivera - Street Musician',
+    ink: 'Amber',
+    text: 'SHARE THE MUSIC While you have a song card in your discard, this character gets +1 ◊ and gains Singer 3.',
+  });
+  const putThisTurn = createCard({
+    id: 'helga-zone',
+    fullName: 'Helga Sinclair - No Backup Needed',
+    ink: 'Ruby',
+    text: 'If 2 or more cards were put into your discard this turn, this character gets +2 ¤.',
+  });
+
+  // Mill — fills the bin from the deck: a bin-filler, never a hand-discard enabler.
+  const mill = createCard({
+    id: 'quackerjack-mill',
+    fullName: 'Quackerjack - Loony Toymaker',
+    ink: 'Sapphire',
+    text: 'EVIL DESIGN When you play this character, put the top 4 cards of your deck into your discard.',
+  });
+  const millReanimate = createCard({
+    id: 'lyle-mill',
+    fullName: 'Lyle Tiberius Rourke - Crystallized Commander',
+    ink: 'Sapphire',
+    text: 'When you play this character, put the top 3 cards of your deck into your discard. Then you may return an action card from your discard to your hand.',
+  });
+
   // Excluded cases.
   const opponentDiscard = createCard({
     id: 'opp-discard',
@@ -2558,12 +2706,6 @@ describe('Self-Discard rule (Discard Matters)', () => {
     ink: 'Amethyst',
     type: 'Action',
     text: 'Each opponent chooses and discards a card.',
-  });
-  const mill = createCard({
-    id: 'quackerjack-mill',
-    fullName: 'Quackerjack - Loony Toymaker',
-    ink: 'Sapphire',
-    text: 'EVIL DESIGN When you play this character, put the top 4 cards of your deck into your discard.',
   });
   const unrelated = createCard({id: 'unrelated-sd', fullName: 'Anna', text: 'Gain 1 lore.'});
 
@@ -2596,8 +2738,15 @@ describe('Self-Discard rule (Discard Matters)', () => {
       expect(getSelfDiscardRoles(opponentDiscard)).toEqual([]);
     });
 
-    it('excludes mill (deck to discard, not hand)', () => {
-      expect(getSelfDiscardRoles(mill)).toEqual([]);
+    it('detects zone-payoff from a discard count, a card type in the discard, or cards put there this turn', () => {
+      expect(getSelfDiscardRoles(discardCount)).toEqual(['zone-payoff']);
+      expect(getSelfDiscardRoles(songInDiscard)).toEqual(['zone-payoff']);
+      expect(getSelfDiscardRoles(putThisTurn)).toEqual(['zone-payoff']);
+    });
+
+    it('tags mill as a deck-side bin-filler, never as a hand-discard enabler', () => {
+      expect(getSelfDiscardRoles(mill)).toEqual(['mill']);
+      expect(getSelfDiscardRoles(millReanimate)).toEqual(['reanimator', 'mill']);
     });
 
     it('returns no roles for unrelated or text-less cards', () => {
@@ -2632,6 +2781,32 @@ describe('Self-Discard rule (Discard Matters)', () => {
       const match = selfDiscardRule
         .findSynergies(loot, allCards)
         .find((s) => s.card.id === 'dump-hand');
+      expect(match!.score).toBe(5);
+    });
+
+    it('fill combos score 7 with the bin-filler as the actor', () => {
+      const pool = [loot, mill, reanimator, discardCount];
+      const find = (from: typeof loot, to: string) =>
+        selfDiscardRule.findSynergies(from, pool).find((s) => s.card.id === to);
+      expect(find(loot, 'pepita-zone')).toMatchObject({
+        score: 7,
+        explanation: "{A} fills your discard from hand, switching on {B}'s discard-count payoff.",
+      });
+      expect(find(mill, 'pepita-zone')).toMatchObject({
+        score: 7,
+        explanation: "{A} mills your deck into the discard, feeding {B}'s discard-count payoff.",
+      });
+      // The payoff is the searcher here, so the filler reads as {B}.
+      expect(find(reanimator, 'quackerjack-mill')).toMatchObject({
+        score: 7,
+        explanation: '{B} mills cards into your discard for {A} to replay.',
+      });
+    });
+
+    it('mill ↔ state-payoff stays at 5 (mill is not a discard event)', () => {
+      const match = selfDiscardRule
+        .findSynergies(mill, [mill, discardedThisTurn])
+        .find((s) => s.card.id === 'maximus-state');
       expect(match!.score).toBe(5);
     });
   });
@@ -3055,7 +3230,29 @@ describe('Bounce rule (return from play to hand)', () => {
   // Excluded shapes.
   const discardReanimator = createCard({id: 'reani', fullName: 'Reanimator', ink: 'Amethyst', text: 'When you play this character, return a character card from your discard to your hand.'});
   const shiftBody = createCard({id: 'shift-etb', fullName: 'Shifted Body', ink: 'Amethyst', keywords: ['Shift 4'], text: 'Shift 4 When you play this character, draw 2 cards.'});
+  // Target-gated enablers: a cost cap on the return clause (the sing reminder's "cost 2 or more" is not a cap), a classification gate.
+  const pus = createCard({id: 'pus', fullName: 'Poor Unfortunate Souls', type: 'Action', ink: 'Amethyst', text: "(A character with cost 2 or more can ⟳ to sing this song for free.)\nReturn chosen character, item, or location with cost 2 or less to their player's hand."});
+  const meeko = createCard({id: 'p-and-m', fullName: 'Pocahontas & Meeko - Adventurous Friends', ink: 'Amethyst', text: 'WELCOME RETURN Whenever this character quests, you may return chosen character of yours with cost 1 to your hand.'});
+  const snowWhite = createCard({id: 'snow-white', fullName: 'Snow White - Merry as the Morning', ink: 'Amethyst', text: 'CLARION CALL Whenever this character quests, you may return chosen Seven Dwarfs character of yours to your hand to draw a card.'});
+  const cheapRebuy = createCard({id: 'cheap-etb', fullName: 'Cheap ETB Body', ink: 'Amethyst', cost: 2, text: 'When you play this character, draw 2 cards.'});
+  const dwarfRebuy = createCard({id: 'doc', fullName: 'Doc - Bold Knight', ink: 'Amethyst', classifications: ['Seven Dwarfs'], text: 'When you play this character, draw 2 cards.'});
   const scoreWith = (a: typeof selfBounce, b: typeof rebuy) => bounceRule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+  describe('target gates', () => {
+    it('reads the cost cap from the return clause ("cost N or less" or bare "cost N"), null when uncapped', () => {
+      expect(getBounceTargetGate(flexible)).toEqual({costCap: 2, classification: null});
+      expect(getBounceTargetGate(meeko).costCap).toBe(1);
+      expect(getBounceTargetGate(selfBounce)).toEqual({costCap: null, classification: null});
+    });
+    it('ignores a "cost N or more" sing reminder', () => {
+      expect(getBounceTargetGate(pus).costCap).toBe(2);
+      const orMore = createCard({id: 'or-more', fullName: 'Or More', text: "Return chosen character with cost 2 or more to their player's hand."});
+      expect(getBounceTargetGate(orMore).costCap).toBeNull();
+    });
+    it('reads a classification gate', () => {
+      expect(getBounceTargetGate(snowWhite).classification).toBe('Seven Dwarfs');
+    });
+  });
 
   describe('role detection', () => {
     it('detects self-bounce, flexible, opponent-bounce, return-payoff, rebuy-payoff', () => {
@@ -3087,7 +3284,24 @@ describe('Bounce rule (return from play to hand)', () => {
       expect(match!.explanation).toBe('{B} returns {A} to your hand, re-firing its enter-play ability.');
     });
     it('flexible ↔ rebuy-payoff also scores 8 (flexible acts as an enabler)', () => {
-      expect(scoreWith(flexible, rebuy)?.score).toBe(8);
+      expect(scoreWith(flexible, cheapRebuy)?.score).toBe(8);
+    });
+    it("drops a re-buy body above the bouncer's cost cap, in either direction", () => {
+      expect(scoreWith(flexible, rebuy)).toBeUndefined(); // cap 2, the body costs 3
+      expect(scoreWith(rebuy, flexible)).toBeUndefined();
+    });
+    it("drops a re-buy body outside the bouncer's classification gate, in either direction", () => {
+      expect(scoreWith(snowWhite, rebuy)).toBeUndefined();
+      expect(scoreWith(rebuy, snowWhite)).toBeUndefined();
+    });
+    it('admits a re-buy body that carries the gated classification', () => {
+      expect(scoreWith(snowWhite, dwarfRebuy)?.score).toBe(8);
+    });
+    it('keeps a two-enabler pair when only one direction passes its gate', () => {
+      // `both` (uncapped) can return this cost-3 body; the body's own cap 2 cannot return `both`.
+      const cappedBoth = createCard({id: 'capped-both', fullName: 'Capped Bouncer With ETB', ink: 'Amethyst', text: "When you play this character, draw 2 cards. Return chosen character with cost 2 or less to their player's hand."});
+      expect(scoreWith(both, cappedBoth)?.explanation).toBe('{A} returns {B} to your hand, re-firing its enter-play ability.');
+      expect(scoreWith(cappedBoth, both)?.explanation).toBe('{B} returns {A} to your hand, re-firing its enter-play ability.');
     });
     it('opponent-side ↔ return-payoff scores 6', () => {
       expect(scoreWith(opponentBounce, returnPayoff)?.score).toBe(6);

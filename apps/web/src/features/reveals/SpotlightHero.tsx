@@ -21,8 +21,10 @@ export interface SpotlightHeroData {
   cta?: string;
   href?: string;
   heroImage: string;
+  /** How the hero image fills its card frame. Defaults to 'cover' (card art); 'contain' suits a logo. */
+  heroFit?: 'cover' | 'contain';
   heroAlt: string;
-  /** 2-3 supporting cards fanned on the opposite side. */
+  /** Up to 3 supporting cards fanned on the opposite side; none renders no fan. */
   support: SupportCard[];
 }
 
@@ -179,7 +181,7 @@ function SpotlightInner({data, dims, onActivate, compact}: {data: SpotlightHeroD
             } as CSSProperties
           }
         >
-          <img src={data.heroImage} alt={data.heroAlt} style={{width: '100%', height: '100%', objectFit: 'cover', display: 'block'}} />
+          <img src={data.heroImage} alt={data.heroAlt} style={{width: '100%', height: '100%', objectFit: data.heroFit ?? 'cover', display: 'block'}} />
         </div>
       </div>
 
@@ -197,7 +199,7 @@ function SpotlightInner({data, dims, onActivate, compact}: {data: SpotlightHeroD
         )}
       </div>
 
-      <SupportFan cards={data.support} accent={data.accent} compact={compact} />
+      {data.support.length > 0 && <SupportFan cards={data.support} accent={data.accent} compact={compact} />}
     </div>
   );
 }

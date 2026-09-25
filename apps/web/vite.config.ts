@@ -10,11 +10,13 @@ import {spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const ROOT = path.resolve(__dirname, '../..');
-const SYNERGY_DIR = path.resolve(__dirname, 'public/data/synergies');
+// import.meta.dirname, not __dirname: under Vite's native config loader (the planned
+// default) this file runs as plain ESM, where __dirname does not exist.
+const ROOT = path.resolve(import.meta.dirname, '../..');
+const SYNERGY_DIR = path.resolve(import.meta.dirname, 'public/data/synergies');
 const MANIFEST = path.join(SYNERGY_DIR, '_manifest.json');
 const ENGINE_SRC = path.join(ROOT, 'packages/synergy-engine/src');
-const CARD_DATA = path.resolve(__dirname, 'public/data/allCards.json');
+const CARD_DATA = path.resolve(import.meta.dirname, 'public/data/allCards.json');
 
 /**
  * Rebuilds the engine and regenerates pre-computed synergies on dev server start
@@ -24,8 +26,13 @@ const CARD_DATA = path.resolve(__dirname, 'public/data/allCards.json');
 function ensureSynergiesPlugin(): Plugin {
   return {
     name: 'ensure-synergies',
-    apply: 'serve',
-    configureServer() {
+    // Dev server only. `vite preview` also resolves with command 'serve', but it serves the
+    // built dist/, so regenerating public/ there would be wasted work.
+    apply: (_config, {command, isPreview}) => command === 'serve' && !isPreview,
+    // configResolved, not configureServer: the dev server snapshots public/ between the two
+    // hooks, and its watcher only reports files created after its initial scan. Files written
+    // in configureServer missed both, so they were served as index.html until a restart.
+    configResolved() {
       const missing = !fs.existsSync(MANIFEST);
       let stale = false;
 
@@ -40,18 +47,16 @@ function ensureSynergiesPlugin(): Plugin {
         const reason = missing ? 'missing' : 'stale (engine source or card data changed)';
         console.log(`\n⚙ Synergy data ${reason} — regenerating...`);
         try {
-          // shell: true needed for pnpm (Windows .cmd shim); args are hardcoded constants
-          const build = spawnSync('pnpm', ['build:engine'], {
-            cwd: ROOT,
-            stdio: 'inherit',
-            shell: true,
-          });
+          // A single command string: with shell: true, Node 24 deprecates passing args
+          // (DEP0190), since the shell joins them unescaped. The shell is only there so
+          // Windows can run pnpm's .cmd shim.
+          const build = spawnSync('pnpm build:engine', {cwd: ROOT, stdio: 'inherit', shell: true});
           if (build.error) throw build.error;
           if (build.status !== 0) throw new Error(`Engine build failed (exit ${build.status})`);
-          const precompute = spawnSync('node', ['scripts/precompute-synergies.mjs'], {
+          // process.execPath is the running Node binary, so this needs no shell or PATH lookup.
+          const precompute = spawnSync(process.execPath, ['scripts/precompute-synergies.mjs'], {
             cwd: ROOT,
             stdio: 'inherit',
-            shell: true,
           });
           if (precompute.error) throw precompute.error;
           if (precompute.status !== 0)

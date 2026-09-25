@@ -1,6 +1,6 @@
 import {useState, type ReactNode} from 'react';
 import './reveals.css';
-import {COLORS, FONTS} from '../../shared/constants';
+import {COLORS, FONTS, REVEAL_SET_NUMBER} from '../../shared/constants';
 import type {FranchiseConfig} from './franchise';
 import {SpotlightHero} from './SpotlightHero';
 import {SET_SPOTLIGHTS, FRANCHISE_SPOTLIGHTS} from './setSpotlights';
@@ -9,8 +9,6 @@ interface WhatsNewSectionProps {
   compact?: boolean;
   /** Opens a franchise's cards modal when its spotlight is clicked. */
   onSelectFranchise?: (franchise: FranchiseConfig) => void;
-  /** Opens the Team-characters cards modal when the Team spotlight is clicked. */
-  onSelectTeam?: () => void;
 }
 
 interface TabDef {
@@ -19,16 +17,16 @@ interface TabDef {
   cards: ReactNode[];
 }
 
-/** Build the tab set: debut franchises first, then one tab per set-spotlight group. */
-function buildTabs(
-  compact: boolean,
-  onSelectFranchise?: (franchise: FranchiseConfig) => void,
-  onSelectTeam?: () => void,
-): TabDef[] {
-  return [
+/**
+ * Build the tab set: debut franchises first, then one tab per set-spotlight
+ * group. A group with nothing in it yet is dropped, so early in a season (before
+ * the set's mechanics are revealed) the band is just the franchises.
+ */
+function buildTabs(compact: boolean, onSelectFranchise?: (franchise: FranchiseConfig) => void): TabDef[] {
+  const tabs: TabDef[] = [
     {
       key: 'franchises',
-      label: 'New franchises',
+      label: FRANCHISE_SPOTLIGHTS.length === 1 ? 'New franchise' : 'New franchises',
       cards: FRANCHISE_SPOTLIGHTS.map(({config, data}) => (
         <SpotlightHero key={config.id} data={data} compact={compact} onActivate={() => onSelectFranchise?.(config)} />
       )),
@@ -36,11 +34,10 @@ function buildTabs(
     ...SET_SPOTLIGHTS.map((group) => ({
       key: group.eyebrow,
       label: group.eyebrow,
-      cards: group.items.map((item) => (
-        <SpotlightHero key={item.id} data={item} compact={compact} onActivate={item.id === 'team' ? onSelectTeam : undefined} />
-      )),
+      cards: group.items.map((item) => <SpotlightHero key={item.id} data={item} compact={compact} />),
     })),
   ];
+  return tabs.filter((t) => t.cards.length > 0);
 }
 
 /** One pill in the What's-New tab bar; active state drives colour, glow, and border. */
@@ -102,19 +99,27 @@ const FULL_SECTION: SectionDims = {headerMargin: 22, eyebrowSize: 12, eyebrowSpa
 const COMPACT_SECTION: SectionDims = {headerMargin: 16, eyebrowSize: 10, eyebrowSpacing: 2.2, titleSize: 23, tablistGap: 6, tablistMargin: 18, panelGap: 14};
 
 /**
- * The reveals "What's New in Set 13" band. A tab bar (debut franchises, new
- * mechanics, tribe spotlights) keeps the section compact by showing one group of
- * cinematic SpotlightHero cards at a time. Slots below the ink board in the
- * reveals Tracker view (replacing the separate new-franchises section).
+ * The reveals "What's New" band. A tab bar (debut franchises, new mechanics,
+ * tribe spotlights) keeps the section compact by showing one group of cinematic
+ * SpotlightHero cards at a time. With a single group there is nothing to switch
+ * between, so the tab bar is dropped and the cards render as a plain panel. Slots
+ * below the ink board in the reveals Tracker view.
  */
-export function WhatsNewSection({compact = false, onSelectFranchise, onSelectTeam}: WhatsNewSectionProps) {
+export function WhatsNewSection({compact = false, onSelectFranchise}: WhatsNewSectionProps) {
   const [active, setActive] = useState(0);
-  const tabs = buildTabs(compact, onSelectFranchise, onSelectTeam);
+  const tabs = buildTabs(compact, onSelectFranchise);
   const s = compact ? COMPACT_SECTION : FULL_SECTION;
+  if (tabs.length === 0) return null;
+
+  const hasTabBar = tabs.length > 1;
+  const current = Math.min(active, tabs.length - 1);
+  const panelA11y = hasTabBar
+    ? ({role: 'tabpanel', id: 'whatsnew-panel', 'aria-labelledby': `whatsnew-tab-${current}`, tabIndex: 0} as const)
+    : {};
 
   return (
     <section>
-      <div style={{textAlign: 'center', marginBottom: s.headerMargin}}>
+      <div style={{textAlign: 'center', marginBottom: hasTabBar ? s.headerMargin : s.tablistMargin}}>
         <div
           style={{
             fontWeight: 600,
@@ -127,36 +132,32 @@ export function WhatsNewSection({compact = false, onSelectFranchise, onSelectTea
           New this set
         </div>
         <h2 style={{fontFamily: FONTS.hero, fontWeight: 400, fontSize: s.titleSize, color: '#ececf2', margin: '10px 0 0'}}>
-          What&apos;s new in Set 13
+          What&apos;s new in Set {REVEAL_SET_NUMBER}
         </h2>
       </div>
 
-      <div
-        role="tablist"
-        aria-label="What's new categories"
-        style={{display: 'flex', justifyContent: 'center', gap: s.tablistGap, flexWrap: 'wrap', marginBottom: s.tablistMargin}}
-      >
-        {tabs.map((t, i) => (
-          <WhatsNewTab
-            key={t.key}
-            id={`whatsnew-tab-${i}`}
-            controls="whatsnew-panel"
-            label={t.label}
-            isActive={i === active}
-            compact={compact}
-            onSelect={() => setActive(i)}
-          />
-        ))}
-      </div>
+      {hasTabBar && (
+        <div
+          role="tablist"
+          aria-label="What's new categories"
+          style={{display: 'flex', justifyContent: 'center', gap: s.tablistGap, flexWrap: 'wrap', marginBottom: s.tablistMargin}}
+        >
+          {tabs.map((t, i) => (
+            <WhatsNewTab
+              key={t.key}
+              id={`whatsnew-tab-${i}`}
+              controls="whatsnew-panel"
+              label={t.label}
+              isActive={i === current}
+              compact={compact}
+              onSelect={() => setActive(i)}
+            />
+          ))}
+        </div>
+      )}
 
-      <div
-        role="tabpanel"
-        id="whatsnew-panel"
-        aria-labelledby={`whatsnew-tab-${active}`}
-        tabIndex={0}
-        style={{display: 'flex', flexDirection: 'column', gap: s.panelGap}}
-      >
-        {tabs[active].cards}
+      <div {...panelA11y} style={{display: 'flex', flexDirection: 'column', gap: s.panelGap}}>
+        {tabs[current].cards}
       </div>
     </section>
   );

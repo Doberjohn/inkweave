@@ -3,6 +3,7 @@ import {
   isDualInk,
   getInks,
   canShareDeck,
+  getInkDropGain,
   getShiftType,
   hasAnyShift,
   getShiftBaseNames,
@@ -26,7 +27,7 @@ describe('shift type utilities', () => {
 
     it('returns standard with cost for regular Shift', () => {
       const card = createCard({keywords: ['Shift 5']});
-      expect(getShiftType(card)).toEqual({kind: 'standard', cost: 5});
+      expect(getShiftType(card)).toEqual({kind: 'standard', cost: 5, payment: 'ink'});
     });
 
     it('returns classification with cost for Puppy Shift', () => {
@@ -35,24 +36,25 @@ describe('shift type utilities', () => {
         kind: 'classification',
         classification: 'Puppy',
         cost: 3,
+        payment: 'ink',
       });
     });
 
     it('returns universal with cost for Universal Shift', () => {
       const card = createCard({keywords: ['Universal Shift 4']});
-      expect(getShiftType(card)).toEqual({kind: 'universal', cost: 4});
+      expect(getShiftType(card)).toEqual({kind: 'universal', cost: 4, payment: 'ink'});
     });
 
     it('returns standard for Temporary Shift (same-name shift, not a "Temporary" classification)', () => {
       const card = createCard({keywords: ['Temporary Shift 7']});
-      expect(getShiftType(card)).toEqual({kind: 'standard', cost: 7});
+      expect(getShiftType(card)).toEqual({kind: 'standard', cost: 7, payment: 'ink'});
     });
 
     it('routes Combo/Duo Shift on a compound-name team card to standard', () => {
       const combo = createCard({name: 'Sulley & Boo', keywords: ['Combo Shift 4']});
-      expect(getShiftType(combo)).toEqual({kind: 'standard', cost: 4});
+      expect(getShiftType(combo)).toEqual({kind: 'standard', cost: 4, payment: 'ink'});
       const duo = createCard({name: 'Mickey Mouse & Minnie Mouse', keywords: ['Duo Shift 0']});
-      expect(getShiftType(duo)).toEqual({kind: 'standard', cost: 0});
+      expect(getShiftType(duo)).toEqual({kind: 'standard', cost: 0, payment: 'ink'});
     });
 
     it('returns multi-word classification for Temporary Red Panda Shift', () => {
@@ -61,6 +63,7 @@ describe('shift type utilities', () => {
         kind: 'classification',
         classification: 'Red Panda',
         cost: 2,
+        payment: 'ink',
       });
     });
 
@@ -69,10 +72,11 @@ describe('shift type utilities', () => {
         kind: 'classification',
         classification: 'Floodborn',
         cost: 7,
+        payment: 'ink',
       });
       expect(
         getShiftType(createCard({name: 'The Madrigal Family', keywords: ['Madrigal Shift 3']})),
-      ).toEqual({kind: 'classification', classification: 'Madrigal', cost: 3});
+      ).toEqual({kind: 'classification', classification: 'Madrigal', cost: 3, payment: 'ink'});
     });
 
     it('returns named-item for an item-target Shift ("items named X" reminder)', () => {
@@ -81,7 +85,12 @@ describe('shift type utilities', () => {
         keywords: ['Potato Shift 5'],
         text: 'Potato Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your items named Potato.)',
       });
-      expect(getShiftType(posey)).toEqual({kind: 'named-item', itemName: 'Potato', cost: 5});
+      expect(getShiftType(posey)).toEqual({
+        kind: 'named-item',
+        itemName: 'Potato',
+        cost: 5,
+        payment: 'ink',
+      });
     });
 
     it('captures a full item name with internal periods (does not truncate at "Mr.")', () => {
@@ -90,7 +99,17 @@ describe('shift type utilities', () => {
         keywords: ['Spud Shift 3'],
         text: 'Spud Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one of your items named Mr. Potato Head.)',
       });
-      expect(getShiftType(card)).toEqual({kind: 'named-item', itemName: 'Mr. Potato Head', cost: 3});
+      expect(getShiftType(card)).toEqual({
+        kind: 'named-item',
+        itemName: 'Mr. Potato Head',
+        cost: 3,
+        payment: 'ink',
+      });
+    });
+
+    it('reads a Shift paid in ink drops as its own payment, never a free Shift (Baymax - Amped Up)', () => {
+      const card = createCard({name: 'Baymax', keywords: ['Shift Remove 2 ink drops']});
+      expect(getShiftType(card)).toEqual({kind: 'standard', cost: 2, payment: 'ink-drops'});
     });
   });
 
@@ -105,6 +124,22 @@ describe('shift type utilities', () => {
     it('returns false for non-Shift cards', () => {
       expect(hasAnyShift(createCard({keywords: ['Bodyguard']}))).toBe(false);
       expect(hasAnyShift(createCard({}))).toBe(false);
+    });
+  });
+
+  describe('getInkDropGain', () => {
+    it("returns the largest ink-drop gain among the card's effects (Merlin - Ink Drop Tinkerer)", () => {
+      const merlin = createCard({
+        text: 'WHAT A DISCOVERY! When you play this character, get 1 ink drop. If you used Shift to play him, get 2 ink drops instead.',
+      });
+      expect(getInkDropGain(merlin)).toBe(2);
+    });
+
+    it('returns 0 when the card mentions ink drops without getting any (Baymax - Amped Up)', () => {
+      const ampedUp = createCard({
+        text: 'SUPERCHARGE If you would get an ink drop, you may put the top card of your deck into your inkwell facedown and exerted instead.',
+      });
+      expect(getInkDropGain(ampedUp)).toBe(0);
     });
   });
 });
@@ -226,6 +261,11 @@ describe('named companion utilities', () => {
         text: 'While you have a character named Mr. Smee in play, this character gains Resist +1.',
       });
       expect(getNamedReferences(card)).toEqual(['Mr. Smee']);
+    });
+
+    it('keeps spaced initials inside a name (P. J. Pete)', () => {
+      const card = createCard({text: 'Your characters named P. J. Pete get +1 strength.'});
+      expect(getNamedReferences(card)).toEqual(['P. J. Pete']);
     });
 
     it('extracts names with lowercase articles (Queen of Hearts)', () => {
@@ -405,6 +445,13 @@ describe('named companion utilities', () => {
       });
       // "banish" and "named" are >40 chars apart — should NOT be hostile
       expect(classifyNamedEffect(card)).not.toBe('hostile');
+    });
+
+    it('does not read a passive "was banished" condition as hostile', () => {
+      const card = createCard({
+        text: 'If a character named Buzz Lightyear was banished this turn, you may play this item for free.',
+      });
+      expect(classifyNamedEffect(card)).toBe('game-winning');
     });
 
     it('returns minor for generic effects', () => {

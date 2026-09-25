@@ -45,5 +45,15 @@ export {
   PRESS_SCALE,
   DISABLED_STYLE,
 } from './theme';
+export {
+  REVEAL_SET_CODE,
+  REVEAL_SET_NUMBER,
+  REVEAL_ID_BASE,
+  REVEAL_SET_LOGO,
+  PER_INK,
+  SET_TOTAL,
+  INK_BASE,
+  inkBlock,
+} from './revealSet';
 export type {PlaystyleUiMeta, ComingSoonPlaystyle} from './playstyleUi';
 export {PLAYSTYLE_UI, COMING_SOON_PLAYSTYLES, accentRgba} from './playstyleUi';

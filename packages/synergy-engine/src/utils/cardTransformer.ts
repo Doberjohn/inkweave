@@ -71,6 +71,79 @@ function nonEmptySections(sections?: string[]): string[] | undefined {
 }
 
 /**
+ * Keywords a card carries in its text but not in its keyword abilities, synthesized into
+ * `keywords` so the Shift Targets and Singer + Songs rules see them:
+ * - conditional keywords a card gains on ITSELF ("gains Shift 0", "this character gets +1 ◊
+ *   and gains Singer 3"). The Singer read is anchored on "this character" with a bounded gap
+ *   that may not name another character, so "this character quests, chosen character gains
+ *   Singer 5" and "your characters gain Singer 4" never count.
+ * - a printed Shift paid in ink drops ("Shift Remove 2 ink drops"). Its cost is not a number,
+ *   so the reveal keyword reader skips the line; the read is anchored to a line start so only
+ *   the keyword line itself counts.
+ * A native keyword of the same name always wins, and so does an earlier entry.
+ */
+const TEXT_KEYWORD_PATTERNS: ReadonlyArray<[keyword: string, pattern: RegExp]> = [
+  ['Shift', /gains?\s+Shift\s+(\d+)/i],
+  ['Shift', /^Shift\s+(Remove\s+\d+\s+ink\s+drops?)\b/im],
+  ['Singer', /this\s+character\b(?:(?!\bcharacters?\b)[^.]){0,60}?\bgains\s+Singer\s+(\d+)/i],
+];
+
+/** Keyword abilities as the data states them ("Singer 5", "Evasive"). */
+function nativeKeywords(raw: LorcanaJSONCard): string[] {
+  return (raw.abilities ?? []).flatMap((a) => {
+    if (a.type !== 'keyword' || !a.keyword) return [];
+    return [a.keywordValue ? `${a.keyword} ${a.keywordValue}` : a.keyword];
+  });
+}
+
+/**
+ * Every text a conditional keyword may sit in: each ability's effect or fullText, then the
+ * card text itself. The card text matters because reveal-form preview cards carry only
+ * keyword-type abilities, so their named-ability text lives solely in `fullText`.
+ */
+function conditionalTexts(raw: LorcanaJSONCard): string[] {
+  const abilityTexts = (raw.abilities ?? []).map((a) => a.effect ?? a.fullText);
+  return [...abilityTexts, raw.fullText ?? ''];
+}
+
+/** The first read of `pattern` across `texts` as a keyword string ("Shift 0"), or null. */
+function conditionalKeyword(texts: string[], keyword: string, pattern: RegExp): string | null {
+  for (const text of texts) {
+    const match = text.match(pattern);
+    if (match) return `${keyword} ${match[1]}`;
+  }
+  return null;
+}
+
+/** Native keywords first; a text one joins only when no keyword of that name exists yet. */
+function collectKeywords(raw: LorcanaJSONCard): string[] {
+  const keywords = nativeKeywords(raw);
+  const texts = conditionalTexts(raw);
+  for (const [keyword, pattern] of TEXT_KEYWORD_PATTERNS) {
+    if (keywords.some((k) => k.startsWith(keyword))) continue;
+    const found = conditionalKeyword(texts, keyword, pattern);
+    if (found) keywords.push(found);
+  }
+  return keywords;
+}
+
+/**
+ * Split the raw subtypes: `Song` is a flag on Action cards, not a classification,
+ * so it is lifted out and the remainder becomes `classifications`. Both fields are
+ * omitted rather than emitted empty, which is what the card shape expects.
+ */
+function parseSubtypes(subtypes?: string[]): {
+  isSong: true | undefined;
+  classifications: string[] | undefined;
+} {
+  const classifications = subtypes?.filter((s) => s !== 'Song') ?? [];
+  return {
+    isSong: subtypes?.includes('Song') ? true : undefined,
+    classifications: classifications.length > 0 ? classifications : undefined,
+  };
+}
+
+/**
  * Transform a raw LorcanaJSON card into a LorcanaCard.
  * Returns null if the card has an invalid ink or type.
  *
@@ -84,28 +157,8 @@ export function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
   const type = raw.type as CardType;
   if (!VALID_TYPES.includes(type)) return null;
 
-  // Extract keywords from abilities
-  const keywords: string[] = [];
-  if (raw.abilities) {
-    for (const ability of raw.abilities) {
-      if (ability.type === 'keyword' && ability.keyword) {
-        keywords.push(
-          ability.keywordValue ? `${ability.keyword} ${ability.keywordValue}` : ability.keyword,
-        );
-      }
-
-      // Detect conditional keywords granted in ability text (e.g. "gains Shift 0")
-      const text = ability.effect || ability.fullText || '';
-      const shiftMatch = text.match(/gains?\s+Shift\s+(\d+)/i);
-      if (shiftMatch) {
-        const hasNativeShift = keywords.some((k) => k.startsWith('Shift'));
-        if (!hasNativeShift) keywords.push(`Shift ${shiftMatch[1]}`);
-      }
-    }
-  }
-
-  const isSong = raw.subtypes?.includes('Song') ?? false;
-  const classifications = raw.subtypes?.filter((s) => s !== 'Song') ?? [];
+  const keywords = collectKeywords(raw);
+  const {isSong, classifications} = parseSubtypes(raw.subtypes);
 
   return {
     id: String(raw.id),
@@ -117,8 +170,8 @@ export function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
     ink2: inks.ink2,
     inkwell: raw.inkwell,
     type,
-    isSong: isSong || undefined,
-    classifications: classifications.length > 0 ? classifications : undefined,
+    isSong,
+    classifications,
     text: raw.fullText,
     textSections: nonEmptySections(raw.fullTextSections),
     moveCost: raw.moveCost,

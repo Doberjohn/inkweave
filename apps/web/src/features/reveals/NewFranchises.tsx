@@ -95,7 +95,7 @@ export function NewFranchises({onSelect, compact = false}: NewFranchisesProps) {
           New to the Inkverse
         </div>
         <h2 style={{fontFamily: FONTS.hero, fontWeight: 400, fontSize: compact ? 23 : 32, color: '#ececf2', margin: '10px 0 0'}}>
-          Three new franchises
+          {FRANCHISES.length === 1 ? 'A new franchise' : `${FRANCHISES.length} new franchises`}
         </h2>
       </div>
 

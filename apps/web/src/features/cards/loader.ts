@@ -47,10 +47,12 @@ function resolveImageUrl(raw: LorcanaJSONCard): string | undefined {
     return raw.imageHash ? `/card-images/${raw.id}.${raw.imageHash}.avif` : undefined;
   }
   const rawUrl = raw.images?.thumbnail;
-  // Reveal-admin Set 13 preview cards may carry no remote thumbnail (only a raw
-  // scan + pre-converted AVIF). Fall back to the local preview path so they show
-  // in dev. (Production uses the injected imageHash branch above.)
-  if (!rawUrl) return raw.setCode === '13' ? `/card-images-preview/${raw.id}.avif` : undefined;
+  // Hand-built reveal cards (reveal-admin, or a season's first batch) carry no
+  // remote thumbnail, only a raw scan + its pre-converted AVIF. Every canonical
+  // card has a thumbnail, so a missing one identifies a reveal card without
+  // naming the season's set. Fall back to the local preview path so they show in
+  // dev. (Production uses the injected imageHash branch above.)
+  if (!rawUrl) return `/card-images-preview/${raw.id}.avif`;
   // Ravensburger: proxy through same-origin rewrite (dev Vite proxy + Vercel rewrite).
   if (rawUrl.startsWith(IMAGE_CDN_ORIGIN)) return rawUrl.replace(IMAGE_CDN_ORIGIN, '/card-images/');
   // Set 12 previews: lorcanaplayer.com is behind Cloudflare bot protection so we can't
@@ -205,8 +207,14 @@ export async function fetchCardsFromLocal(
   // search, and synergies only ever see Core-legal cards (see engine constants.ts).
   const mergedCards = [...primary.cards, ...previewCards].filter((c) => isCoreSet(c.setCode));
 
+  // A reveal season declares its set (dates and all) before its first card lands.
+  // The set list feeds the Set filter for every user regardless of the reveal
+  // flag, so a preview set only joins it once a card actually belongs to it.
+  const setCodesWithCards = new Set(mergedCards.map((c) => c.setCode));
+  const previewSets = Object.entries(preview?.sets ?? {}).filter(([code]) => setCodesWithCards.has(code));
+
   const mergedSets: Record<string, LorcanaJSONSet> = Object.fromEntries(
-    Object.entries({...(primary.sets ?? {}), ...(preview?.sets ?? {})}).filter(([code]) =>
+    Object.entries({...(primary.sets ?? {}), ...Object.fromEntries(previewSets)}).filter(([code]) =>
       isCoreSet(code),
     ),
   );
@@ -338,6 +346,7 @@ export function filterCards(cards: LorcanaCard[], options: CardFilterOptions): L
  * intentionally omitted here.
  */
 const KNOWN_KEYWORD_BASES = new Set<string>([
+  'Adventurous',
   'Alert',
   'Bodyguard',
   'Boost',

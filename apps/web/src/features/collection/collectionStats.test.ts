@@ -1,9 +1,10 @@
 import {describe, expect, it} from 'vitest';
+import type {Ink} from 'inkweave-synergy-engine';
 import {createCard} from '../../shared/test-utils';
 import {tallySet} from './collectionStats';
 import type {CollectionEntries} from './collectionParser';
 
-const card = (id: string, rarity: string, ink = 'Amber', ink2?: string) =>
+const card = (id: string, rarity: string, ink: Ink = 'Amber', ink2?: Ink) =>
   createCard({id, setCode: '1', rarity, ink, ...(ink2 === undefined ? {} : {ink2})});
 
 describe('tallySet', () => {

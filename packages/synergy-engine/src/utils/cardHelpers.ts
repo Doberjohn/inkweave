@@ -128,22 +128,34 @@ export function getShiftBaseNames(card: LorcanaCard): string[] {
 }
 
 /**
- * Shift variant type. Each variant carries its cost (parsed from the keyword).
+ * How a Shift cost is paid: ink from the inkwell ("Shift 5"), or ink drops you remove
+ * ("Shift Remove 2 ink drops", Set 14). A ShiftType's `cost` counts in that unit.
+ */
+export type ShiftPayment = 'ink' | 'ink-drops';
+
+/**
+ * Shift variant type. `kind` is where the Shift lands; `cost` and `payment` are how it is paid.
  * - 'standard': targets same-name characters (e.g., "Shift 5")
  * - 'classification': targets characters with a specific classification (e.g., "Puppy Shift 3")
  * - 'universal': targets any character (e.g., "Universal Shift 4")
  * - 'named-item': targets an ITEM by name (e.g., "Potato Shift 5" → items named Potato)
  */
-export type ShiftType =
-  | {kind: 'standard'; cost: number}
-  | {kind: 'classification'; classification: string; cost: number}
-  | {kind: 'universal'; cost: number}
-  | {kind: 'named-item'; itemName: string; cost: number};
+export type ShiftType = (
+  | {kind: 'standard'}
+  | {kind: 'classification'; classification: string}
+  | {kind: 'universal'}
+  | {kind: 'named-item'; itemName: string}
+) & {cost: number; payment: ShiftPayment};
 
-/** Parse the numeric cost from a Shift keyword string like "Shift 5" or "Puppy Shift 3". */
-function parseShiftCost(keyword: string): number {
-  const match = keyword.match(/(\d+)\s*$/);
-  return match ? parseInt(match[1], 10) : 0;
+/**
+ * Parse a Shift keyword's cost. Ink drops are read first: that keyword ends in "drops", not a
+ * number, so the ink read would fall through to 0 and score it as a free Shift.
+ */
+function parseShiftCost(keyword: string): {cost: number; payment: ShiftPayment} {
+  const drops = keyword.match(/(\d+)\s+ink\s+drops?\s*$/i);
+  if (drops) return {cost: parseInt(drops[1], 10), payment: 'ink-drops'};
+  const ink = keyword.match(/(\d+)\s*$/);
+  return {cost: ink ? parseInt(ink[1], 10) : 0, payment: 'ink'};
 }
 
 /**
@@ -161,13 +173,13 @@ function classifyShiftKeyword(kw: string, isTeam = false): ShiftType | null {
   // Universal Shift targets any character — checked first so a team card that somehow has
   // Universal Shift still keeps every target rather than being narrowed to its named halves.
   if (lower.startsWith('universal shift')) {
-    return {kind: 'universal', cost: parseShiftCost(kw)};
+    return {kind: 'universal', ...parseShiftCost(kw)};
   }
   // Team cards shift onto either half of their compound name. "Combo Shift" / "Duo Shift"
   // read like classification prefixes but aren't — the '&' name is the real signal, and
   // getShiftBaseNames (used by the matcher) splits it. Routes plain/Combo/Duo team shifts alike.
   if (isTeam) {
-    return {kind: 'standard', cost: parseShiftCost(kw)};
+    return {kind: 'standard', ...parseShiftCost(kw)};
   }
   // Strip a leading "Temporary " modifier: it bounces the card to hand at end of turn but
   // doesn't change WHO it shifts onto. "Temporary Shift N" → standard; "Temporary Red Panda
@@ -177,11 +189,12 @@ function classifyShiftKeyword(kw: string, isTeam = false): ShiftType | null {
   // may be multiple words ("Red Panda Shift 2"), so match lazily up to the trailing " Shift".
   const classMatch = core.match(/^(.+?)\s+shift(?:\s+\d+)?$/i);
   if (classMatch) {
-    return {kind: 'classification', classification: classMatch[1].trim(), cost: parseShiftCost(kw)};
+    return {kind: 'classification', classification: classMatch[1].trim(), ...parseShiftCost(kw)};
   }
-  // Plain "Shift N" (including a "Temporary Shift N" reduced to "Shift N") → standard.
+  // Plain "Shift N" (including a "Temporary Shift N" reduced to "Shift N") → standard. A Shift
+  // paid in ink drops ("Shift Remove 2 ink drops") lands here too: only its payment differs.
   if (core.toLowerCase().startsWith('shift')) {
-    return {kind: 'standard', cost: parseShiftCost(kw)};
+    return {kind: 'standard', ...parseShiftCost(kw)};
   }
   return null;
 }
@@ -222,7 +235,8 @@ export function getShiftType(card: LorcanaCard): ShiftType | null {
   for (const kw of card.keywords) {
     const variant = classifyShiftKeyword(kw, isTeam);
     if (!variant) continue;
-    return itemName ? {kind: 'named-item', itemName, cost: variant.cost} : variant;
+    const {cost, payment} = variant;
+    return itemName ? {kind: 'named-item', itemName, cost, payment} : variant;
   }
   return null;
 }
@@ -232,6 +246,21 @@ export function getShiftType(card: LorcanaCard): ShiftType | null {
  */
 export function hasAnyShift(card: LorcanaCard): boolean {
   return getShiftType(card) !== null;
+}
+
+/** An effect that gets ink drops: "get 2 ink drops", "each player gets 1 ink drop". */
+const INK_DROP_GAIN = /\bgets?\s+(\d+)\s+ink\s+drops?\b/gi;
+
+/**
+ * The most ink drops any one of the card's effects gets, or 0: 2 for Baymax - Lab Assistant's
+ * RESUPPLY. "If you would get an ink drop" and "remove 2 ink drops" are not gains.
+ */
+export function getInkDropGain(card: LorcanaCard): number {
+  let most = 0;
+  for (const [, count] of normalizeCardText(card).matchAll(INK_DROP_GAIN)) {
+    most = Math.max(most, parseInt(count, 10));
+  }
+  return most;
 }
 
 /**
@@ -567,17 +596,21 @@ export function isSacrificeCard(card: LorcanaCard): boolean {
 
 /**
  * Self-Discard is the player-side mirror of the opponent-facing Discard rule (Rule 4):
- * you discard your OWN cards from hand, then benefit. Three roles:
+ * you fill your OWN discard, then benefit. Five roles:
  *  - 'enabler'      — a hand-discard outlet (loot, discard-your-hand, discard-as-cost)
+ *  - 'mill'         — fills the bin from the DECK ("put the top N cards of your deck into your
+ *                     discard"). A bin-filler for zone payoffs and reanimators, never a
+ *                     hand-discard enabler: it does not trigger a "when you discard" payoff.
  *  - 'reanimator'   — plays / returns a card FROM YOUR DISCARD (recursion). `makeSearchPattern`
  *                     deliberately excludes "from your discard" and defers recursion to this role.
  *  - 'state-payoff' — rewards the discard EVENT ("discarded a card this turn") or an empty hand.
+ *  - 'zone-payoff'  — rewards the discard as a countable ZONE ("10 or more cards in your discard",
+ *                     "a song card in your discard", "cards were put into your discard this turn").
  *
- * Mill ("put the top N of your deck into your discard") is deliberately NOT an enabler: it fills
- * the bin from the deck, not the hand, so it never triggers a "when you discard" payoff. The
- * opponent-exclusion keeps the enabler disjoint from the Discard rule.
+ * The opponent-exclusion keeps the enabler disjoint from the Discard rule. Songs are not
+ * bin-fillers here: a sung song lands in the discard, but that is the Singer rule's axis.
  */
-export type SelfDiscardRole = 'enabler' | 'reanimator' | 'state-payoff';
+export type SelfDiscardRole = 'enabler' | 'reanimator' | 'state-payoff' | 'zone-payoff' | 'mill';
 
 /** Loot — "draw a card, then choose and discard a card": the dominant self-discard outlet. */
 const SELF_DISCARD_LOOT_PATTERN = /draw\s+(?:a|an|\d+)\s+cards?,?\s+then\s+(?:choose and\s+)?discard/i;
@@ -595,9 +628,26 @@ const SELF_DISCARD_OPPONENT_PATTERN = /opponent|each player|challenging player|t
 const SELF_DISCARD_REANIMATOR_PATTERN = /(?:play|return|put)\b[^.]{0,60}\bfrom your discard\b/i;
 /** State payoff — rewards the discard EVENT (discarded this turn) or an empty hand (Hellbent). */
 const SELF_DISCARD_STATE_PATTERN = /discarded\s+a\s+card\s+this\s+turn|no cards in (?:your )?hand/i;
+/**
+ * Zone payoff — counts or checks cards sitting IN your discard ("10 or more cards in your
+ * discard", "for each Alien character card in your discard", "a song card in your discard").
+ * "in your discard" keeps it disjoint from the reanimator's "from your discard".
+ */
+const SELF_DISCARD_ZONE_IN_PATTERN =
+  /\b(?:a|an|\d+\s+or\s+more|for\s+each)\s+(?:\w+\s+){0,3}?cards?\s+(?:named\s+\w+\s+)?in\s+your\s+discard\b/i;
+/** Zone payoff — the "N or more cards were put into your discard this turn" trigger family. */
+const SELF_DISCARD_ZONE_PUT_PATTERN = /cards?\s+were\s+put\s+into\s+your\s+discard\s+this\s+turn/i;
+/** Mill — fills the bin from the top of the deck. Kept tight: "put the rest / put it into your discard" is not mill. */
+const SELF_DISCARD_MILL_PATTERN =
+  /put\s+the\s+top\s+(?:card|\d+\s+cards)\s+of\s+your\s+deck\s+into\s+your\s+discard/i;
 
 /** Fast pre-filter: every self-discard pattern contains "discard" or "no cards in". */
 const HAS_SELF_DISCARD_KEYWORD = /discard|no cards in/i;
+
+/** Zone payoff: either the "in your discard" count/check shape or the "put into your discard this turn" trigger. */
+function isSelfDiscardZonePayoff(text: string): boolean {
+  return SELF_DISCARD_ZONE_IN_PATTERN.test(text) || SELF_DISCARD_ZONE_PUT_PATTERN.test(text);
+}
 
 /**
  * Enabler: a hand-discard OUTLET (loot / discard-your-hand / discard-as-cost) that is NOT
@@ -622,10 +672,12 @@ export function getSelfDiscardRoles(card: LorcanaCard): SelfDiscardRole[] {
   if (isSelfDiscardEnabler(text)) roles.push('enabler');
   if (SELF_DISCARD_REANIMATOR_PATTERN.test(text)) roles.push('reanimator');
   if (SELF_DISCARD_STATE_PATTERN.test(text)) roles.push('state-payoff');
+  if (isSelfDiscardZonePayoff(text)) roles.push('zone-payoff');
+  if (SELF_DISCARD_MILL_PATTERN.test(text)) roles.push('mill');
   return roles;
 }
 
-/** Check if a card participates in the self-discard axis (enabler, reanimator, or state payoff). */
+/** Check if a card participates in the self-discard axis (any of the five roles). */
 export function isSelfDiscardCard(card: LorcanaCard): boolean {
   return getSelfDiscardRoles(card).length > 0;
 }
@@ -814,8 +866,29 @@ export function costReductionTargetsOverlap(cardA: LorcanaCard, cardB: LorcanaCa
 // NAMED COMPANION DETECTION
 // ============================================
 
-/** Regex to strip Shift parentheticals from card text before scanning for named references */
-const SHIFT_PARENTHETICAL = /Shift \d+[^(]*\([^)]*\)/gi;
+/**
+ * A Shift reminder, whatever its cost: "(You may pay 5 ⬡ to play this on top of one of your
+ * characters named Elsa.)", "(You may remove 2 ink drops to play this on top of ...)". Its
+ * "named X" is a Shift target, which Shift Targets handles, so getNamedReferences strips it.
+ * Keyed on the reminder's wording, not the keyword, so any cost shape is stripped.
+ */
+const SHIFT_REMINDER = /\([^)]*\bto play this on top of\b[^)]*\)/gi;
+
+/**
+ * A sentence end followed by an ALL-CAPS word: the title of the card's next ability, as in
+ * "not named Mor'du. ROOTED BY FEAR". Case-sensitive on purpose: NAMED_PATTERN's 'i' flag
+ * makes its [A-Z] match any letter, so it cannot tell this title from the "Smee" in
+ * "Mr. Smee". A lone initial ("P. J. Pete") is not a title. getNamedReferences scans the
+ * text between two titles on its own, so a name ends where the next ability begins.
+ */
+const ABILITY_TITLE_START = /\.\s+(?![A-Z]\.\s)(?=[^\sa-z]*[A-Z][^\sa-z]*(?:\s|$))/;
+
+/**
+ * Typographic apostrophes (U+2018, U+2019). Set 14 reveal text prints "Belle’s City Guide",
+ * while every card name uses the straight apostrophe, so getNamedReferences reads names in
+ * that spelling.
+ */
+const TYPOGRAPHIC_APOSTROPHE = /[‘’]/g;
 
 /**
  * Game-mechanic terminator pattern (as regex source string) that signals the
@@ -823,15 +896,19 @@ const SHIFT_PARENTHETICAL = /Shift \d+[^(]*\([^)]*\)/gi;
  * periods ("Mr."), hyphens ("Fix-It"), and exclamation marks ("Pull the
  * Lever!"), so we stop at words that clearly belong to game rules text.
  *
- * Also terminates on comma (handles "named Pete, you may...") and on
- * "and/or" followed by a non-capitalized word (game text continuation).
+ * Also terminates on comma (handles "named Pete, you may..."), and on "and/or"
+ * followed by a game verb or by a generic card description ("named Kevin or an
+ * item card"), neither of which continues a name.
  */
 const NAME_TERMINATOR_SOURCE = [
   // Game-mechanic verbs and prepositions
   "\\s+(?:in\\b|can\\b|can't\\b|may\\b|gets?\\b|gains?\\b|here\\b|for\\b|from\\b|at\\b|on\\b",
-  '|you\\b|your\\b|their\\b|this\\b|that\\b|challenges?\\b|has\\b|have\\b|is\\b|are\\b|moves?\\b|costs?\\b)',
+  '|you\\b|your\\b|their\\b|this\\b|that\\b|challenges?\\b|has\\b|have\\b|is\\b|are\\b',
+  '|was\\b|were\\b|moves?\\b|costs?\\b)',
   // "and/or" followed by a verb (not a proper name continuation)
   '|\\s+(?:and|or)\\s+(?:reveal|put|return|play|exert|banish|deal|draw|give|pay|reduce|shuffle|the\\s+[a-z])',
+  // "and/or" followed by a generic card description, not a second name ("or an item card")
+  '|\\s+(?:and|or)\\s+(?:an?|another)\\s+(?:[a-z]+\\s+)?(?:card|character|item|location|action)s?\\b',
   // Comma boundary (e.g., "named Pete, you may")
   '|,',
 ].join('');
@@ -852,21 +929,29 @@ const NAMED_PATTERN = new RegExp(
  * Extract all entity names referenced by "named X" patterns in a card's text.
  * Strips Shift text first (handled by Shift Targets rule).
  * Uses a terminator-based approach: captures everything after "named" until
- * hitting a game-mechanic word (in, can, may, etc.), sentence boundary, or end of text.
+ * hitting a game-mechanic word (in, can, may, etc.), sentence boundary, ability
+ * title, or end of text.
  * Returns an array of unique referenced names, or empty if none found.
  */
 export function getNamedReferences(card: LorcanaCard): string[] {
   if (!card.text || !HAS_NAMED.test(card.text)) return [];
 
-  // Strip Shift parentheticals and normalize newlines
-  const cleanText = normalizeCardText(card).replace(SHIFT_PARENTHETICAL, '');
+  // Strip Shift reminders and spell apostrophes as card names do
+  const cleanText = normalizeCardText(card)
+    .replace(SHIFT_REMINDER, '')
+    .replace(TYPOGRAPHIC_APOSTROPHE, "'");
 
   const names = new Set<string>();
 
   // Reset lastIndex for global regex reuse
   NAMED_PATTERN.lastIndex = 0;
 
-  for (const match of cleanText.matchAll(NAMED_PATTERN)) {
+  // Scan the text between ability titles piece by piece, so a name never runs into a title
+  const matches = cleanText
+    .split(ABILITY_TITLE_START)
+    .flatMap((piece) => [...piece.matchAll(NAMED_PATTERN)]);
+
+  for (const match of matches) {
     let name = match[1].trim();
 
     // Strip trailing punctuation (sentence-end periods, commas) but keep internal ones like "Mr."
@@ -901,18 +986,21 @@ export function getNamedReferences(card: LorcanaCard): string[] {
   return [...names];
 }
 
+/** Effect tier of a named reference; NAMED_EFFECT_SCORES maps each tier to its score. */
+export type NamedEffectTier = 'game-winning' | 'strong' | 'moderate' | 'minor' | 'hostile';
+
 /**
  * Classify the effect of a named reference for scoring purposes.
  * Returns a tier based on the game effect described in the card text.
  */
-export type NamedEffectTier = 'game-winning' | 'strong' | 'moderate' | 'minor' | 'hostile';
-
 export function classifyNamedEffect(card: LorcanaCard): NamedEffectTier {
   if (!card.text) return 'minor';
   const text = normalizeCardText(card).toLowerCase();
 
-  // Hostile: banish/exert/damage the named character (limit distance to same clause)
-  if (/banish.{0,40}named|named.{0,40}banish/.test(text)) return 'hostile';
+  // Hostile: a "banish" within 40 characters of "named" (the same clause), read as the card
+  // banishing the named character. A passive "banished" does not count: "named Buzz Lightyear
+  // was banished" is a condition the card waits for, not an attack.
+  if (/banish(?!ed).{0,40}named|named.{0,40}banish(?!ed)/.test(text)) return 'hostile';
 
   // Game-winning: free play, draw multiple, deck search
   if (/play.*for free|for free|play.*without paying/.test(text)) return 'game-winning';
@@ -1866,6 +1954,45 @@ const BOUNCE_REBUY_EFFECT_PATTERN =
  * "return", so a return-only prefilter would silently drop the whole rebuy-payoff pool.
  */
 const HAS_BOUNCE_KEYWORD = /return|is returned|when you play this character/i;
+
+/**
+ * Cost cap on the RETURN clause only ("return … chosen … with cost N [or less] … to your/their
+ * hand"). The `(?!\s+or\s+more)` guard keeps a song's "cost N or more" sing reminder from reading
+ * as a cap; `[^.]` keeps both reads inside the one sentence.
+ */
+const BOUNCE_COST_CAP_PATTERN =
+  /return\s+(?:up to \d+\s+)?(?:another\s+)?chosen\s+[^.]*?\bwith\s+cost\s+(\d+)(?!\s+or\s+more)(?:\s+or\s+less)?\b[^.]*?to\s+(?:your|their\s+player'?s?)\s+hand/i;
+/**
+ * Classification gate ("return chosen Seven Dwarfs character of yours"). Case-sensitive on purpose:
+ * a capitalised run is a classification, a lowercase adjective ("exerted", "another") is not. Only
+ * the verb is case-flexible (`[Rr]eturn`), since it can open a sentence or sit inside one.
+ */
+const BOUNCE_CLASS_GATE_PATTERN =
+  /[Rr]eturn\s+(?:another\s+)?chosen\s+([A-Z][\w']*(?:\s+[A-Z][\w']*)*)\s+characters?\s+of\s+yours\b/;
+
+/** What a bounce enabler may legally return: a cost ceiling and/or a required classification (null = unrestricted). */
+export interface BounceTargetGate {
+  costCap: number | null;
+  classification: string | null;
+}
+
+/** Read the target gate off a bounce enabler's return clause. */
+export function getBounceTargetGate(card: LorcanaCard): BounceTargetGate {
+  const text = normalizeCardText(card);
+  const capMatch = BOUNCE_COST_CAP_PATTERN.exec(text);
+  const classMatch = BOUNCE_CLASS_GATE_PATTERN.exec(text);
+  return {
+    costCap: capMatch ? Number.parseInt(capMatch[1], 10) : null,
+    classification: classMatch ? classMatch[1] : null,
+  };
+}
+
+/** True when the enabler behind `gate` can legally return `target` (uncapped gates admit everything). */
+export function bounceGateAdmits(gate: BounceTargetGate, target: LorcanaCard): boolean {
+  const costOk = gate.costCap === null || target.cost <= gate.costCap;
+  const classOk = gate.classification === null || hasClassification(target, gate.classification);
+  return costOk && classOk;
+}
 
 /**
  * A re-buyable ETB body: a "when you play this character" enter-play with unambiguous re-fire

@@ -1,32 +1,37 @@
 import {test, expect} from '../fixtures';
 
-/**
- * Why the reveals suite is off-season-gated: the whole page only exists during a
- * reveal season, so off-season the assertions cannot pass. Two off-season signals,
- * either of which means "skip cleanly", checked BEFORE any 30s-timeout-prone wait:
- *   1. No revealed cards at all — previewCards.json cards: [] (the primary signal;
- *      once a set graduates its cards move into allCards.json and this file empties).
- *   2. Past the set's releaseDate — useRevealPhase returns 'released', RevealsGate
- *      renders the off-season notice instead of the page, and the nav entry /
- *      promo modal drop. (It redirected to / until 2026-07-30; the skip still
- *      applies, since the notice is not the page these assertions target.)
- * Returns the skip reason, or null when a reveal season is genuinely active.
- */
-function offSeasonSkipReason(data: unknown): string | null {
-  const d = (data ?? {}) as {cards?: unknown; sets?: Record<string, {releaseDate?: string} | undefined>};
-  const revealCount = Array.isArray(d.cards) ? d.cards.length : 0;
-  if (revealCount === 0) return 'No active reveal season (previewCards.json has no revealed cards).';
-  const dates = Object.values(d.sets ?? {})
-    .map((s) => s?.releaseDate)
-    .filter((x): x is string => typeof x === 'string');
-  const latestRelease = dates.length ? Math.max(...dates.map((x) => new Date(x).getTime())) : 0;
-  if (latestRelease > 0 && Date.now() >= latestRelease) {
-    return `Reveal season ended (latest releaseDate ${new Date(latestRelease).toISOString().slice(0, 10)}).`;
-  }
-  return null;
+interface RevealSet {
+  name: string;
+  number: number;
+  releaseDate: string;
 }
 
+/**
+ * The set in reveal season: the previewCards.json entry with the latest
+ * releaseDate. Read from the data the app itself reads, so this spec names no set
+ * and needs no edit when a new season starts.
+ */
+/** A set block is usable here only once it carries the three fields the assertions read. */
+function isRevealSet(set: Partial<RevealSet> | undefined): set is RevealSet {
+  return (
+    typeof set?.name === 'string' &&
+    typeof set?.number === 'number' &&
+    typeof set?.releaseDate === 'string'
+  );
+}
+
+function latestRevealSet(data: {sets?: Record<string, Partial<RevealSet> | undefined>}): RevealSet | null {
+  const dated = Object.values(data?.sets ?? {}).filter(isRevealSet);
+  if (dated.length === 0) return null;
+  return dated.reduce((a, b) => (new Date(b.releaseDate) > new Date(a.releaseDate) ? b : a));
+}
+
+/** A debut franchise's spotlight tile: an action button labelled "View <franchise> cards". */
+const FRANCHISE_BUTTON = /^View .+ cards$/;
+
 test.describe('Reveals page (flag on)', () => {
+  let revealSet: RevealSet;
+
   test.beforeEach(async ({page}, testInfo) => {
     // Clear the daily-dismiss key so the promo modal reliably appears.
     await page.addInitScript(() => {
@@ -38,20 +43,33 @@ test.describe('Reveals page (flag on)', () => {
     });
     testInfo.annotations.push({type: 'requires', description: 'VITE_IS_REVEAL_SEASON=true'});
 
-    // Skip the whole suite off-season (see offSeasonSkipReason), before any wait.
+    // Skip when reveal season has ended (today is past the set's releaseDate).
+    // useRevealPhase returns 'released' once now >= releaseDate, RevealsGate
+    // redirects /reveals -> /, and the Reveals nav entry / promo modal no
+    // longer render — so these reveal-season-only assertions can't pass.
+    // After each set graduates and previewCards.json is refreshed with the
+    // NEXT set's dates, these tests pick back up automatically.
     const resp = await page.request.get('/data/previewCards.json');
-    const reason = resp.ok() ? offSeasonSkipReason(await resp.json()) : null;
-    test.skip(reason !== null, reason ?? '');
+    const set = resp.ok() ? latestRevealSet(await resp.json()) : null;
+    if (!set) {
+      test.skip(true, 'previewCards.json has no dated reveal set.');
+      return;
+    }
+    if (Date.now() >= new Date(set.releaseDate).getTime()) {
+      test.skip(true, `Reveal season ended (latest releaseDate ${set.releaseDate})`);
+      return;
+    }
+    revealSet = set;
   });
 
-  test('renders the tracker: hero, six ink trackers, and franchise cards', async ({page}, testInfo) => {
+  test('renders the tracker: hero, six ink trackers, and the debut franchises', async ({page}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 
     await page.goto('/reveals');
 
     // Page identity (the visible title is the set logo image; the h1 is sr-only).
-    await expect(page.getByRole('heading', {level: 1, name: /Attack of the Vine/i})).toHaveCount(1);
-    await expect(page.getByAltText('Attack of the Vine!')).toBeVisible();
+    await expect(page.getByRole('heading', {level: 1, name: revealSet.name})).toHaveCount(1);
+    await expect(page.getByAltText(revealSet.name, {exact: true})).toBeVisible();
 
     // Six ink tracker tiles (one per ink).
     await expect(page.getByTestId('ink-tracker-tile')).toHaveCount(6);
@@ -59,10 +77,8 @@ test.describe('Reveals page (flag on)', () => {
     // The featured ink board.
     await expect(page.getByText('Ink board', {exact: true})).toBeVisible();
 
-    // The three new-franchise cards (open their cards modal on click).
-    await expect(page.getByRole('button', {name: 'View Monsters, Inc. cards'})).toBeVisible();
-    await expect(page.getByRole('button', {name: 'View Up cards'})).toBeVisible();
-    await expect(page.getByRole('button', {name: 'View Turning Red cards'})).toBeVisible();
+    // At least one debut-franchise card (each opens its cards modal on click).
+    await expect(page.getByRole('button', {name: FRANCHISE_BUTTON}).first()).toBeVisible();
   });
 
   test('desktop nav shows Reveals entry with NEW badge', async ({page}, testInfo) => {
@@ -83,22 +99,20 @@ test.describe('Reveals page (flag on)', () => {
     await page.goto('/browse');
     const mobileNav = page.getByRole('navigation', {name: 'Mobile navigation'});
     // aria-label is the descriptive form after the Option B accessible-name refactor.
-    const revealsLink = mobileNav.getByRole('link', {name: 'Set 13 reveals', exact: true});
+    const revealsLink = mobileNav.getByRole('link', {name: `Set ${revealSet.number} reveals`, exact: true});
     await expect(revealsLink).toBeVisible();
   });
 
   test('promo modal appears on landing page and not on /reveals', async ({page}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 
+    const promo = page.getByRole('complementary', {name: `Set ${revealSet.number} reveals`});
+
     await page.goto('/');
-    await expect(
-      page.getByRole('complementary', {name: /Set 13 reveals/i}),
-    ).toBeVisible();
+    await expect(promo).toBeVisible();
 
     await page.goto('/reveals');
-    await expect(
-      page.getByRole('complementary', {name: /Set 13 reveals/i}),
-    ).toHaveCount(0);
+    await expect(promo).toHaveCount(0);
   });
 
   test('mosaic card click opens the card overview modal', async ({page}, testInfo) => {
@@ -126,9 +140,13 @@ test.describe('Reveals page (flag on)', () => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 
     await page.goto('/reveals');
-    await page.getByRole('button', {name: 'View Monsters, Inc. cards'}).click();
+    // The tile's own label names the franchise ("View Coco cards"), and its modal
+    // is "<franchise> cards", so the franchise is read off the page, not hardcoded.
+    const tile = page.getByRole('button', {name: FRANCHISE_BUTTON}).first();
+    const label = (await tile.getAttribute('aria-label')) ?? '';
+    await tile.click();
 
-    const modal = page.getByRole('dialog', {name: 'Monsters, Inc. cards'});
+    const modal = page.getByRole('dialog', {name: label.replace(/^View /, ''), exact: true});
     await expect(modal).toBeVisible({timeout: 15000});
 
     // A card inside the franchise modal opens the shared card overview modal on top.

@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
+import {REVEAL_SET_CODE} from '../../shared/constants';
 
 const PREVIEW_CARDS_PATH = '/data/previewCards.json';
-const REVEAL_SET_CODE = '13';
 
 export interface RevealDates {
   prereleaseDate: Date;

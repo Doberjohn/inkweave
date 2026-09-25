@@ -1,10 +1,16 @@
 import {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, Z_INDEX} from '../../shared/constants';
+import {
+  COLORS,
+  FONTS,
+  FONT_SIZES,
+  RADIUS,
+  REVEAL_SET_LOGO,
+  REVEAL_SET_NUMBER,
+  Z_INDEX,
+} from '../../shared/constants';
 import {useResponsive} from '../../shared/hooks';
 import {prefersReducedMotion} from '../../shared/utils/prefersReducedMotion';
-
-const SET_LOGO = '/art/sets/attack-of-the-vine.png';
 
 /** Staggered firefly configs — stable across renders so animations stay in sync. */
 const FIREFLY_SEEDS: ReadonlyArray<{left: string; delay: string; drift: string}> = [
@@ -256,10 +262,10 @@ export function RevealsPromoCard() {
   }, [reduced]);
 
   return (
-    <aside aria-label="Set 13 reveals" className="rpc-card" style={getAsideStyle(viewport, mounted)}>
+    <aside aria-label={`Set ${REVEAL_SET_NUMBER} reveals`} className="rpc-card" style={getAsideStyle(viewport, mounted)}>
       <button type="button" onClick={() => navigate('/reveals')} style={getButtonStyle(viewport)}>
         <img
-          src={SET_LOGO}
+          src={REVEAL_SET_LOGO}
           alt=""
           aria-hidden="true"
           draggable={false}
@@ -267,7 +273,7 @@ export function RevealsPromoCard() {
         />
         <span style={getCopyBlockStyle(viewport)}>
           <span style={NEW_BADGE_STYLE}>NEW</span>
-          <span style={getTitleStyle(viewport)}>Set 13 reveals are here!</span>
+          <span style={getTitleStyle(viewport)}>Set {REVEAL_SET_NUMBER} reveals are here!</span>
         </span>
       </button>
       {!reduced && <FireflyField />}

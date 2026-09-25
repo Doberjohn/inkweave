@@ -53,6 +53,31 @@ const MIME = {
   '.xml': 'application/xml',
 };
 
+/**
+ * Is a reveal season live?
+ *
+ * `/reveals` redirects to '/' off-season, so crawling it then would capture the HOME
+ * page under a /reveals URL — the exact failure this route is being added to fix.
+ * Mirrors the app's data gate: a set in previewCards.json whose releaseDate is still
+ * in the future. The season also needs VITE_IS_REVEAL_SEASON at build time, but that
+ * is inlined into the bundle and not visible here; the runbook sets both together, and
+ * a mismatch only costs one wasted route, which is today's behaviour anyway.
+ */
+export function isRevealSeasonActive(preview, now = new Date()) {
+  return Object.values(preview?.sets ?? {}).some(
+    (set) => set?.releaseDate && new Date(set.releaseDate) > now,
+  );
+}
+
+async function hasActiveRevealSeason() {
+  try {
+    const preview = JSON.parse(await readFile(join(DIST, 'data', 'previewCards.json'), 'utf8'));
+    return isRevealSeasonActive(preview);
+  } catch {
+    return false; // no preview data shipped means no season
+  }
+}
+
 /** Enumerate every route worth prerendering, grouped so sampling can cover each kind. */
 async function enumerateRoutes() {
   // Import the built engine from its dist path (matches scripts/precompute-synergies.mjs);
@@ -83,6 +108,12 @@ async function enumerateRoutes() {
       '/privacy',
       '/terms',
       '/disclaimer',
+      // In season only. Deliberately NOT in generate-sitemap.mjs's STATIC_ROUTES: the
+      // page is noindex, because it is live for a few weeks a year and redirects the
+      // rest, and reveal card ids are renumbered at graduation. Prerendering it is for
+      // link unfurls, not search — without it, sharing /reveals anywhere that does not
+      // run JS (Discord, Slack, iMessage) shows the homepage's title and description.
+      ...(await hasActiveRevealSeason() ? ['/reveals'] : []),
     ],
     playstyleRoutes: getAllPlaystyles().map((p) => `/playstyles/${p.id}`),
     cardRoutes: cardData.cards.map((c) => cardPath(c)),

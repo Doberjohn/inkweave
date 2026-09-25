@@ -209,6 +209,7 @@ describe('Unique Extractors', () => {
         createCard({id: 's3', keywords: ['Combo Shift 4']}),
         createCard({id: 's4', keywords: ['Temporary Shift 3']}),
         createCard({id: 's5', keywords: ['Shift 5']}),
+        createCard({id: 's6', keywords: ['Shift Remove 2 ink drops']}),
       ];
       // The classification/team prefixes must NOT leak as bogus keyword options:
       // "Floodborn" is a classification, findable via the Classification filter.
@@ -226,6 +227,11 @@ describe('Unique Extractors', () => {
         createCard({id: 'n', keywords: ['THIS', 'gain', 'if', 'Bodyguard']}),
       ]);
       expect(keywords).toEqual(['Bodyguard']);
+    });
+
+    it('offers Adventurous (new in Set 14) as a filter option', () => {
+      const keywords = getUniqueKeywords([createCard({id: 'adv', keywords: ['Adventurous']})]);
+      expect(keywords).toEqual(['Adventurous']);
     });
   });
 
@@ -286,6 +292,14 @@ describe('loadCardsFromJSON', () => {
       setCode: '5',
       setNumber: 42,
     });
+  });
+
+  // Every canonical card carries a remote thumbnail, so a card without one is a
+  // hand-built reveal card whose only art is its locally converted AVIF. Keyed on
+  // the missing thumbnail, not the set code, so it needs no per-season edit.
+  it('should fall back to the local preview AVIF when a card has no remote thumbnail', () => {
+    const cards = loadCardsFromJSON(makeJsonData({id: 14050}));
+    expect(cards[0].imageUrl).toBe('/card-images-preview/14050.avif');
   });
 
   it('should preserve both inks for dual-ink cards', () => {
@@ -513,12 +527,38 @@ describe('fetchCardsFromLocal', () => {
           Promise.resolve({
             metadata: {formatVersion: '1.0', generatedOn: '2026-04-17', language: 'en'},
             sets: {'12': {name: 'The Wilds Unknown', number: 12, type: 'expansion'}},
-            cards: [],
+            cards: makeJsonData({id: 12001, setCode: '12'}).cards,
           }),
       });
 
     const result = await fetchCardsFromLocal();
     expect(result.sets.map((s) => s.code).sort()).toEqual(['11', '12']);
+  });
+
+  // A reveal season declares its set (with dates) before the first card lands. The
+  // set list feeds the Set filter for every user, whatever the reveal flag says.
+  it('should not offer a preview set that has no cards yet', async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            ...makeJsonData({id: 1, setCode: '11'}),
+            sets: {'11': {name: 'Winterspell', number: 11, type: 'expansion'}},
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            metadata: {formatVersion: '1.0', generatedOn: '2026-09-21', language: 'en'},
+            sets: {'14': {name: 'Hyperia City', number: 14, type: 'expansion'}},
+            cards: [],
+          }),
+      });
+
+    const result = await fetchCardsFromLocal();
+    expect(result.sets.map((s) => s.code)).toEqual(['11']);
   });
 });
 
