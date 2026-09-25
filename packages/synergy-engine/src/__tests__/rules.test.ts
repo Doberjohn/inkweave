@@ -37,6 +37,7 @@ import {
   getTribalRoles,
   isTribalCard,
   TRIBAL_SPECS,
+  getNamedReferences,
   transformCard,
 } from '../utils';
 import {createCard} from './fixtures.js';
@@ -965,6 +966,56 @@ describe('Named Companions', () => {
       text: 'Shift Remove 2 ink drops (You may remove 2 ink drops to play this on top of one of your characters named Baymax.)',
     });
     expect(namedRule.matches(ampedUp)).toBe(false);
+  });
+
+  it("should end a name at the sentence end before an ability title (Mor'du)", () => {
+    const mordu = createCard({
+      id: 'mordu-savage',
+      name: "Mor'du",
+      fullName: "Mor'du - Savage Cursed Prince",
+      // The real second ability also says "not named Mor'du", which would mask a lost first capture
+      text: "FEROCIOUS ROAR When you play this character,\nexert all your characters not named Mor'du.\nROOTED BY FEAR Your characters can't ready at the start of your turn.",
+    });
+    expect(getNamedReferences(mordu)).toEqual(["Mor'du"]);
+  });
+
+  it('should end a name before "was" and score the free play at 8 (Buzz\'s Arm)', () => {
+    const buzzArm = createCard({
+      id: 'buzz-arm',
+      name: "Buzz's Arm",
+      fullName: "Buzz's Arm",
+      type: 'Item',
+      cost: 2,
+      text: 'MISSING PIECE If a character named Buzz Lightyear\nwas banished this turn, you may play this item for free.',
+    });
+    const buzz = createCard({id: 'buzz', name: 'Buzz Lightyear'});
+    const synergies = namedRule.findSynergies(buzzArm, [buzzArm, buzz]);
+    expect(synergies.map((s) => [s.card.id, s.score])).toEqual([['buzz', 8]]);
+  });
+
+  it('should end a name before a generic alternative (Focused Search: "Kevin or an item card")', () => {
+    const focusedSearch = createCard({
+      id: 'focused-search',
+      name: 'Focused Search',
+      fullName: 'Focused Search',
+      type: 'Action',
+      text: 'Look at the top 4 cards of your deck. You may reveal\na character card named Kevin or an item card and put\nit into your hand.',
+    });
+    const kevin = createCard({id: 'kevin', name: 'Kevin'});
+    const synergies = namedRule.findSynergies(focusedSearch, [focusedSearch, kevin]);
+    expect(synergies.map((s) => [s.card.id, s.score])).toEqual([['kevin', 5]]);
+  });
+
+  it("should match a name printed with a typographic apostrophe (Belle's City Guide)", () => {
+    const belle = createCard({
+      id: 'belle-writer',
+      name: 'Belle',
+      fullName: 'Belle - Reflective Writer',
+      text: 'CITY ADVENTURES When you play this character, reveal the top card of your deck. If it’s an item card named Belle’s City Guide or an action card, you may put it into your hand.',
+    });
+    const cityGuide = createCard({id: 'city-guide', name: "Belle's City Guide", type: 'Item'});
+    const synergies = namedRule.findSynergies(belle, [belle, cityGuide]);
+    expect(synergies.map((s) => [s.card.id, s.score])).toEqual([['city-guide', 5]]);
   });
 });
 

@@ -875,20 +875,40 @@ export function costReductionTargetsOverlap(cardA: LorcanaCard, cardB: LorcanaCa
 const SHIFT_REMINDER = /\([^)]*\bto play this on top of\b[^)]*\)/gi;
 
 /**
+ * A sentence end followed by an ALL-CAPS word: the title of the card's next ability, as in
+ * "not named Mor'du. ROOTED BY FEAR". Case-sensitive on purpose: NAMED_PATTERN's 'i' flag
+ * makes its [A-Z] match any letter, so it cannot tell this title from the "Smee" in
+ * "Mr. Smee". A lone initial ("P. J. Pete") is not a title. getNamedReferences scans the
+ * text between two titles on its own, so a name ends where the next ability begins.
+ */
+const ABILITY_TITLE_START = /\.\s+(?![A-Z]\.\s)(?=[^\sa-z]*[A-Z][^\sa-z]*(?:\s|$))/;
+
+/**
+ * Typographic apostrophes (U+2018, U+2019). Set 14 reveal text prints "Belle’s City Guide",
+ * while every card name uses the straight apostrophe, so getNamedReferences reads names in
+ * that spelling.
+ */
+const TYPOGRAPHIC_APOSTROPHE = /[‘’]/g;
+
+/**
  * Game-mechanic terminator pattern (as regex source string) that signals the
  * end of a card name. Names can contain lowercase articles ("the", "of"),
  * periods ("Mr."), hyphens ("Fix-It"), and exclamation marks ("Pull the
  * Lever!"), so we stop at words that clearly belong to game rules text.
  *
- * Also terminates on comma (handles "named Pete, you may...") and on
- * "and/or" followed by a non-capitalized word (game text continuation).
+ * Also terminates on comma (handles "named Pete, you may..."), and on "and/or"
+ * followed by a game verb or by a generic card description ("named Kevin or an
+ * item card"), neither of which continues a name.
  */
 const NAME_TERMINATOR_SOURCE = [
   // Game-mechanic verbs and prepositions
   "\\s+(?:in\\b|can\\b|can't\\b|may\\b|gets?\\b|gains?\\b|here\\b|for\\b|from\\b|at\\b|on\\b",
-  '|you\\b|your\\b|their\\b|this\\b|that\\b|challenges?\\b|has\\b|have\\b|is\\b|are\\b|moves?\\b|costs?\\b)',
+  '|you\\b|your\\b|their\\b|this\\b|that\\b|challenges?\\b|has\\b|have\\b|is\\b|are\\b',
+  '|was\\b|were\\b|moves?\\b|costs?\\b)',
   // "and/or" followed by a verb (not a proper name continuation)
   '|\\s+(?:and|or)\\s+(?:reveal|put|return|play|exert|banish|deal|draw|give|pay|reduce|shuffle|the\\s+[a-z])',
+  // "and/or" followed by a generic card description, not a second name ("or an item card")
+  '|\\s+(?:and|or)\\s+(?:an?|another)\\s+(?:[a-z]+\\s+)?(?:card|character|item|location|action)s?\\b',
   // Comma boundary (e.g., "named Pete, you may")
   '|,',
 ].join('');
@@ -909,21 +929,29 @@ const NAMED_PATTERN = new RegExp(
  * Extract all entity names referenced by "named X" patterns in a card's text.
  * Strips Shift text first (handled by Shift Targets rule).
  * Uses a terminator-based approach: captures everything after "named" until
- * hitting a game-mechanic word (in, can, may, etc.), sentence boundary, or end of text.
+ * hitting a game-mechanic word (in, can, may, etc.), sentence boundary, ability
+ * title, or end of text.
  * Returns an array of unique referenced names, or empty if none found.
  */
 export function getNamedReferences(card: LorcanaCard): string[] {
   if (!card.text || !HAS_NAMED.test(card.text)) return [];
 
-  // Strip Shift reminders and normalize newlines
-  const cleanText = normalizeCardText(card).replace(SHIFT_REMINDER, '');
+  // Strip Shift reminders and spell apostrophes as card names do
+  const cleanText = normalizeCardText(card)
+    .replace(SHIFT_REMINDER, '')
+    .replace(TYPOGRAPHIC_APOSTROPHE, "'");
 
   const names = new Set<string>();
 
   // Reset lastIndex for global regex reuse
   NAMED_PATTERN.lastIndex = 0;
 
-  for (const match of cleanText.matchAll(NAMED_PATTERN)) {
+  // Scan the text between ability titles piece by piece, so a name never runs into a title
+  const matches = cleanText
+    .split(ABILITY_TITLE_START)
+    .flatMap((piece) => [...piece.matchAll(NAMED_PATTERN)]);
+
+  for (const match of matches) {
     let name = match[1].trim();
 
     // Strip trailing punctuation (sentence-end periods, commas) but keep internal ones like "Mr."
@@ -958,18 +986,21 @@ export function getNamedReferences(card: LorcanaCard): string[] {
   return [...names];
 }
 
+/** Effect tier of a named reference; NAMED_EFFECT_SCORES maps each tier to its score. */
+export type NamedEffectTier = 'game-winning' | 'strong' | 'moderate' | 'minor' | 'hostile';
+
 /**
  * Classify the effect of a named reference for scoring purposes.
  * Returns a tier based on the game effect described in the card text.
  */
-export type NamedEffectTier = 'game-winning' | 'strong' | 'moderate' | 'minor' | 'hostile';
-
 export function classifyNamedEffect(card: LorcanaCard): NamedEffectTier {
   if (!card.text) return 'minor';
   const text = normalizeCardText(card).toLowerCase();
 
-  // Hostile: banish/exert/damage the named character (limit distance to same clause)
-  if (/banish.{0,40}named|named.{0,40}banish/.test(text)) return 'hostile';
+  // Hostile: a "banish" within 40 characters of "named" (the same clause), read as the card
+  // banishing the named character. A passive "banished" does not count: "named Buzz Lightyear
+  // was banished" is a condition the card waits for, not an attack.
+  if (/banish(?!ed).{0,40}named|named.{0,40}banish(?!ed)/.test(text)) return 'hostile';
 
   // Game-winning: free play, draw multiple, deck search
   if (/play.*for free|for free|play.*without paying/.test(text)) return 'game-winning';
