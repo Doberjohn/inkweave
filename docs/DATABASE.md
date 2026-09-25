@@ -272,22 +272,22 @@ end;
 
 Rate limiting is enforced server-side in the `submit_vote()` function:
 
-- **Limit**: 30 distinct card pairs per IP per hour
+- **Limit**: 200 distinct card pairs per IP per day
 - **Error code**: `P0429` (custom PostgreSQL error code, mirrors HTTP 429)
 - **Scope**: Per unique IP hash, counted by distinct `(card_a_id, card_b_id)` pairs
-- **Window**: Rolling 1-hour window (`created_at > now() - interval '1 hour'`)
+- **Window**: Rolling 1-day window (`created_at > now() - interval '1 day'`)
 
 ```sql
 select count(distinct (card_a_id, card_b_id)) into v_rate_count
 from public.votes
-where ip_hash = v_ip_hash and created_at > now() - interval '1 hour';
+where ip_hash = v_ip_hash and created_at > now() - interval '1 day';
 
-if v_rate_count >= 30 then
+if v_rate_count >= 200 then
   raise exception 'Rate limit exceeded' using errcode = 'P0429';
 end if;
 ```
 
-**Why 30/hour?** Balances engagement (a user can vote on ~1 pair every 2 minutes for an hour) with abuse prevention. The limit counts distinct pairs, so re-voting on the same pair (enriching with additional dimensions) doesn't consume quota.
+**Why 200/day?** Migration `20260622000000` (#302) replaced the original 30-pairs-per-hour throttle, which got in the way of power-voters, with a daily ceiling that still stops a single anonymous IP from flooding the vote distributions. The limit counts distinct pairs, so re-voting on the same pair (enriching it with more dimensions) doesn't use quota. It holds only because the IP hash can't be forged: `hash_client_ip()` ignores the client-controlled first X-Forwarded-For entry (see IP Hashing).
 
 ---
 
