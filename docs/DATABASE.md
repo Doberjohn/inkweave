@@ -18,7 +18,7 @@ public (exposed via PostgREST API)
 
 internal (hidden from PostgREST API)
 ├── rate_limit_config   table   — stores IP hash salt
-├── hash_client_ip()    func    — extracts + hashes X-Forwarded-For
+├── hash_client_ip()    func    — hashes the client IP (cf-connecting-ip, else the last X-Forwarded-For entry)
 └── trimmed_mean()      func    — statistical aggregation (drops outliers)
 ```
 
@@ -94,7 +94,7 @@ create index idx_votes_rate on votes (ip_hash, created_at);
 
 ## Pair Scores View
 
-The `pair_scores` view aggregates votes into per-pair community scores. It uses `security_invoker = true` so it runs with the caller's permissions (anon), which means RLS on the `votes` table is respected.
+The `pair_scores` view aggregates votes into per-pair community scores. It uses `security_invoker = true` so it runs with the caller's permissions (anon), which means RLS on the `votes` table is respected. For that to work, anon holds column-level SELECT on exactly the eight columns the view reads (`card_a_id`, `card_b_id`, `score`, `accuracy`, `is_real`, `would_play`, `difficulty`, `who_carries`). `id`, `ip_hash` and `created_at` are not readable through the API.
 
 ```sql
 create view pair_scores with (security_invoker = true) as
@@ -138,7 +138,7 @@ group by card_a_id, card_b_id;
 
 ## Submit Vote RPC
 
-`submit_vote()` is the **only write path** to the database. It's a `security definer` function, meaning it runs with the function owner's elevated permissions — not the caller's anon role. This lets it INSERT into the `votes` table even though anon has no direct INSERT policy.
+`submit_vote()` is the **only write path** to the database. It's a `security definer` function, meaning it runs with the function owner's elevated permissions — not the caller's anon role. This lets it INSERT into the `votes` table even though anon has neither an INSERT privilege nor an INSERT policy on it.
 
 ```sql
 create or replace function public.submit_vote(
@@ -221,7 +221,7 @@ This means PostgREST cannot expose any `internal` objects — they're invisible 
 
 | Object | anon can... |
 |--------|------------|
-| `votes` table | SELECT only (via RLS policy) |
+| `votes` table | SELECT on the eight columns `pair_scores` reads (column-level GRANT; not `id`, `ip_hash` or `created_at`). No write privileges |
 | `pair_scores` view | SELECT (explicit GRANT) |
 | `submit_vote()` | EXECUTE (explicit GRANT) |
 | `internal.*` | Nothing (schema-level REVOKE) |
@@ -236,19 +236,24 @@ User identity is based on IP address hashing — there is no user authentication
 create or replace function internal.hash_client_ip()
 returns text as $$
 declare
+  headers json;
+  xff_parts text[];
   client_ip text;
   salt text;
 begin
-  -- Extract IP from Supabase/PostgREST header
-  client_ip := coalesce(
-    current_setting('request.headers', true)::json->>'x-forwarded-for',
+  headers := coalesce(current_setting('request.headers', true), '{}')::json;
+  xff_parts := string_to_array(headers->>'x-forwarded-for', ',');
+  -- cf-connecting-ip cannot be forged; the LAST x-forwarded-for entry is the
+  -- one the edge appended (the first is client-controlled)
+  client_ip := lower(btrim(coalesce(
+    headers->>'cf-connecting-ip',
+    xff_parts[array_length(xff_parts, 1)],
     'unknown'
-  );
-  -- Take first IP (before any comma-separated proxies), strip port
-  client_ip := split_part(split_part(client_ip, ',', 1), ':', 1);
-  -- Load static salt
+  )));
+  -- Strip a port without truncating IPv6: only [v6]:port and a.b.c.d:port
+  -- (abridged here; the exact patterns are in 20260925000000_harden_votes_access.sql)
+  -- Load static salt, then SHA-256 (non-reversible)
   select value into salt from internal.rate_limit_config where key = 'static_salt';
-  -- SHA-256 hash (non-reversible)
   return encode(extensions.digest(client_ip || salt, 'sha256'), 'hex');
 end;
 ```
@@ -257,8 +262,9 @@ end;
 
 - **Static salt** (not rotating): Stored in `internal.rate_limit_config`. A rotating salt would break the unique constraint deduplication — the same user would appear as a different hash after rotation, allowing double-voting.
 - **Non-reversible**: SHA-256 with a salt means even with database access, IPs cannot be recovered (assuming the salt remains secret).
-- **'unknown' fallback**: If the `x-forwarded-for` header is missing (shouldn't happen behind Supabase's proxy), all such requests share the same hash. This is acceptable — it's a defensive fallback, not a normal path.
-- **First IP only**: `x-forwarded-for` can contain a chain of proxies (`client, proxy1, proxy2`). We take the first one (the actual client IP).
+- **'unknown' fallback**: If neither `cf-connecting-ip` nor `x-forwarded-for` is present (shouldn't happen behind Supabase's proxy), all such requests share the same hash. This is acceptable: it's a defensive fallback, not a normal path.
+- **Never the first X-Forwarded-For entry**: that entry is whatever the client sends, and a forged header arrives there (probed live on 2026-09-25). `cf-connecting-ip` is set by Cloudflare, which rejects a client-sent one at the edge, and the last X-Forwarded-For entry is the one the edge appended. For an honest client all three agree, so switching sources left existing hashes unchanged.
+- **IPv6-safe port stripping**: only `[v6]:port` and `a.b.c.d:port` are stripped, and addresses are lowercased. Until 2026-09-25, `split_part(ip, ':', 1)` cut every IPv6 address to its first hextet (and an IPv4-mapped one to an empty string), merging those voters into one hash; votes merged before then cannot be split.
 
 ---
 
@@ -485,6 +491,10 @@ All migrations live in `supabase/migrations/` and are applied via the Supabase M
 | `20260330000005` | Review fixes: grants SELECT on `pair_scores` to anon, adds `carries_neither` column to view, renames `daily_salt` to `static_salt` |
 | `20260330000006` | Fully qualifies `digest()` as `extensions.digest()` for search path safety |
 | `20260330000007` | Fully qualifies `public.votes` in `submit_vote()` for search path safety |
+| `20260406000001` | Recreates `pair_scores` with the accuracy distribution columns (`accuracy_lower`, `accuracy_right`, `accuracy_higher`) |
+| `20260409000001` | Re-applies `security_invoker = on` to `pair_scores` (lost when the view was recreated outside migrations) |
+| `20260622000000` | Relaxes the vote rate limit to 200 distinct pairs per IP per day |
+| `20260925000000` | Hardens votes access: column-level SELECT for anon and authenticated (no `id`, `ip_hash` or `created_at`, no write grants); `hash_client_ip()` takes `cf-connecting-ip`, else the last X-Forwarded-For entry, and strips ports IPv6-safely |
 
 ### Migration Workflow
 

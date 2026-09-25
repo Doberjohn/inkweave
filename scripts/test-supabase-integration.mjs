@@ -181,6 +181,14 @@ async function run() {
       : fail('direct DELETE', `total_votes=${data?.total_votes}, expected 1`);
   }
 
+  // --- Test 9: Raw vote identity is not readable (only the pair_scores aggregate is) ---
+  {
+    const { data, error } = await supabase.from('votes').select('ip_hash').limit(1);
+    error
+      ? pass(`ip_hash not readable (${error.code})`)
+      : fail('ip_hash readable', `anon read ${data?.length ?? 0} row(s)`);
+  }
+
   // --- Summary ---
   console.log('');
   console.log(`${passed + failed} tests: ${passed} passed, ${failed} failed`);
