@@ -6,6 +6,7 @@ import {
   ON_THE_OPEN_ROAD,
   TEST_CAPTAIN,
   TEST_INVENTOR,
+  TEST_PUP,
   page,
 } from './__fixtures__/cards.mjs';
 
@@ -72,6 +73,11 @@ describe('parseCardLines', () => {
     });
   });
 
+  it('reads a character page with no Strength row as Strength 0', () => {
+    // The site leaves the row out when Strength is 0: Inkwell is followed by Willpower.
+    expect(parse(TEST_PUP)).toMatchObject({strength: 0, willpower: 2, lore: 1});
+  });
+
   it('reads a dual-ink card in printed order', () => {
     expect(parse(LIONHEART, {'Ink Color': 'Amber / Amethyst'}).inks).toEqual(['Amber', 'Amethyst']);
   });
@@ -86,7 +92,8 @@ describe('parseCardLines', () => {
   });
 
   it('throws when a label its card type requires is missing', () => {
-    expect(() => parse(LIONHEART, {Strength: undefined})).toThrow(/Strength/);
+    expect(() => parse(LIONHEART, {Willpower: undefined})).toThrow(/Willpower/);
+    expect(() => parse(LIONHEART, {Lore: undefined})).toThrow(/Lore/);
   });
 
   it('throws on a card type it does not recognise', () => {

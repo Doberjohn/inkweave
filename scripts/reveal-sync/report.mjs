@@ -3,6 +3,7 @@
  * state section, so it can be tested without a browser or a repo.
  */
 import {waitingDays} from './state.mjs';
+import {fullName, unaccented} from './text.mjs';
 
 const REASONS = {
   'not-officially-revealed': (d) => `not officially revealed (${d})`,
@@ -42,9 +43,16 @@ const pad = (s, n) => String(s).padEnd(n);
 const label = (card) => (card.number == null ? '--' : `#${card.number}`);
 const row = (tag, name, detail) => `  ${pad(tag, 7)}${pad(name, 46)}${detail}`;
 
+/**
+ * The name a ready or written card goes in under: its own name and version, rulings
+ * included, spelled without accents as `write` spells them.
+ */
+const writtenTitle = ({name, version}) => fullName(unaccented(name), unaccented(version));
+
 function writtenRow(slug, card) {
   const ink = card.card.inks.join('-');
-  const lines = [row(card.id ?? label(card), card.title, `${pad(ink, 18)}${card.card.rarity}`)];
+  const title = writtenTitle(card.card);
+  const lines = [row(card.id ?? label(card), title, `${pad(ink, 18)}${card.card.rarity}`)];
   for (const note of card.notes ?? []) lines.push(`         note: ${note}`);
   return lines;
 }

@@ -6,6 +6,7 @@ import {
   LIONHEART,
   ON_THE_OPEN_ROAD,
   TEST_INVENTOR,
+  TEST_PUP,
   page,
   readerFor,
 } from './__fixtures__/cards.mjs';
@@ -56,6 +57,16 @@ describe('adjudicate: one reader', () => {
   it('asks for two more readers when the reader disagrees on a checked field', () => {
     const reader = withReader(readerFor.lionheart, {version: 'Tidying Up the Town'});
     expect(adjudicate(site(LIONHEART), [reader])).toMatchObject({
+      decision: 'escalate',
+      needReaders: 2,
+    });
+  });
+
+  it('checks the 0 a missing Strength row reads as against the scan', () => {
+    // A reader who sees 0 confirms it; one who sees anything else asks for two more readers.
+    expect(adjudicate(site(TEST_PUP), [readerFor.testPup()]).decision).toBe('write');
+    const reader = withReader(readerFor.testPup, {strength: 2});
+    expect(adjudicate(site(TEST_PUP), [reader])).toMatchObject({
       decision: 'escalate',
       needReaders: 2,
     });

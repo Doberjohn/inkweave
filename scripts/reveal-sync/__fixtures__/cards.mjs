@@ -11,7 +11,8 @@
  *
  * The reader objects are the JSON the vision agents returned in that trial, including
  * their real quirks (◆ for ◊, an illegible classification term). Their `language` key was
- * added when the reader prompt gained it (issue #574); every trial card was English.
+ * added when the reader prompt gained it (issue #574); every trial card was English. The
+ * readers of the other invented cards are invented too.
  */
 
 const HEADER = (title) => [
@@ -178,6 +179,103 @@ export const TEST_CAPTAIN = {
   ],
 };
 
+/** Invented. A Strength-0 character: the site leaves the Strength row out of its page (issue #582). */
+export const TEST_PUP = {
+  slug: 'test-pup-tiny-troublemaker',
+  imageFile: '40-204-EN-14-Test-Pup-Tiny-Troublemaker-LQ-Lorcana-Player.jpg',
+  title: 'Test Pup – Tiny Troublemaker',
+  fields: [
+    ['Name', 'Test Pup'],
+    ['Card Type', 'Character'],
+    ['Version', 'Tiny Troublemaker'],
+    ['Ink Cost', '1'],
+    ['Inkwell', 'Yes'],
+    ['Willpower', '2'],
+    ['Lore', '1'],
+    ['Ink Color', 'Amethyst'],
+    ['Rarity', 'Common'],
+    ['Card ID', '40/204'],
+    ['Set', 'Hyperia City'],
+    ['Keywords + Abilities', 'Evasive'],
+    ['Classifications', 'Storyborn • Ally'],
+    ['Card Text', ['Evasive (Only characters with Evasive can challenge this character.)']],
+    ['Flavor Text', ''],
+    ['Illustrator', 'Test Artist'],
+    ['Franchise', 'Zootopia'],
+    ...dates,
+  ],
+};
+
+/** Invented. Its text is complete, but the site's ability tags read "Unknown" (issue #582). */
+export const TEST_SLEUTH = {
+  slug: 'test-sleuth-caught-snooping',
+  imageFile: '190-204-EN-14-Test-Sleuth-Caught-Snooping-LQ-Lorcana-Player.jpg',
+  title: 'Test Sleuth – Caught Snooping',
+  fields: [
+    ['Name', 'Test Sleuth'],
+    ['Card Type', 'Character'],
+    ['Version', 'Caught Snooping'],
+    ['Ink Cost', '2'],
+    ['Inkwell', 'Yes'],
+    ['Strength', '2'],
+    ['Willpower', '2'],
+    ['Lore', '1'],
+    ['Ink Color', 'Steel'],
+    ['Rarity', 'Uncommon'],
+    ['Card ID', '190/204'],
+    ['Set', 'Hyperia City'],
+    ['Keywords + Abilities', 'Unknown'],
+    ['Classifications', 'Storyborn • Detective'],
+    [
+      'Card Text',
+      [
+        'KEEN EYE When you play this character, look at the top card of your deck. You may put it on the bottom of your deck.',
+      ],
+    ],
+    ['Flavor Text', ''],
+    ['Illustrator', 'Test Artist'],
+    ['Franchise', 'Zootopia'],
+    ...dates,
+  ],
+};
+
+/**
+ * Invented. Printed with accents, which the write step drops from names and from the names
+ * the text refers to (issue #582), but not from the ability title.
+ */
+export const TEST_CHLOE = {
+  slug: 'test-chloe-cafe-owner',
+  imageFile: '9-204-EN-14-Test-Chloe-Cafe-Owner-LQ-Lorcana-Player.jpg',
+  title: 'Test Chloé – Café Owner',
+  fields: [
+    ['Name', 'Test Chloé'],
+    ['Card Type', 'Character'],
+    ['Version', 'Café Owner'],
+    ['Ink Cost', '4'],
+    ['Inkwell', 'Yes'],
+    ['Strength', '2'],
+    ['Willpower', '4'],
+    ['Lore', '2'],
+    ['Ink Color', 'Amber'],
+    ['Rarity', 'Rare'],
+    ['Card ID', '9/204'],
+    ['Set', 'Hyperia City'],
+    ['Keywords + Abilities', 'Shift Gain Lore'],
+    ['Classifications', 'Floodborn • Ally'],
+    [
+      'Card Text',
+      [
+        'Shift 4 (You may pay 4 ⬡ to play this on top of one of your characters named Test Chloé.)',
+        '¡OLÉ! Whenever you play a character named Test Chloé or Test Zoë, gain 1 lore.',
+      ],
+    ],
+    ['Flavor Text', ''],
+    ['Illustrator', 'Test Artist'],
+    ['Franchise', 'Coco'],
+    ...dates,
+  ],
+};
+
 export const MULAN = {
   slug: 'mulan-martial-arts-master',
   imageFile: '127-204-EN-14-Mulan-Martial-Arts-Master-LQ-Lorcana-Player.jpg',
@@ -329,6 +427,47 @@ export const readerFor = {
     illustrator: 'Alice Pisoni',
     inkable: true,
     rarityGuess: null,
+    unreadable: [],
+  }),
+  testPup: () => ({
+    name: 'Test Pup',
+    version: 'Tiny Troublemaker',
+    cost: 1,
+    strength: 0,
+    willpower: 2,
+    lore: 1,
+    inkColor: 'Amethyst',
+    type: 'Character',
+    classifications: 'Storyborn • Ally',
+    keywords: ['Evasive'],
+    cardText: ['Evasive (Only characters with Evasive can challenge this character.)'],
+    collectorNumber: '40/204',
+    language: 'EN',
+    illustrator: 'Test Artist',
+    inkable: true,
+    rarityGuess: 'a plain circle, likely Common',
+    unreadable: [],
+  }),
+  testChloe: () => ({
+    name: 'Test Chloé',
+    version: 'Café Owner',
+    cost: 4,
+    strength: 2,
+    willpower: 4,
+    lore: 2,
+    inkColor: 'Amber',
+    type: 'Character',
+    classifications: 'Floodborn • Ally',
+    keywords: ['Shift 4'],
+    cardText: [
+      'Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Test Chloé.)',
+      '¡OLÉ! Whenever you play a character named Test Chloé or Test Zoë, gain 1 lore.',
+    ],
+    collectorNumber: '9/204',
+    language: 'EN',
+    illustrator: 'Test Artist',
+    inkable: true,
+    rarityGuess: 'a filled hexagon, likely Rare',
     unreadable: [],
   }),
 };

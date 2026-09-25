@@ -9,6 +9,7 @@ import {
   ON_THE_OPEN_ROAD,
   SET14,
   TEST_CAPTAIN,
+  TEST_SLEUTH,
   page,
 } from './__fixtures__/cards.mjs';
 
@@ -63,8 +64,17 @@ describe('gateCard', () => {
     });
   });
 
-  it('defers a card the site lists with Unknown abilities', () => {
-    expect(gate(MULAN)).toMatchObject({status: 'deferred', reason: 'site-record-incomplete'});
+  it('defers a card whose ability tags read Unknown and whose text is missing', () => {
+    expect(gate(MULAN)).toMatchObject({
+      status: 'deferred',
+      reason: 'site-record-incomplete',
+      detail: 'no card text',
+    });
+  });
+
+  it('passes a card whose ability tags read Unknown when its text is complete', () => {
+    // The tags are the site's own list, not the card's keywords; the reader checks the text.
+    expect(gate(TEST_SLEUTH)).toEqual({status: 'pass'});
   });
 
   it('defers a card with no card text unless the site says it has no abilities', () => {
