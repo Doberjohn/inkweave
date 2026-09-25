@@ -11,7 +11,8 @@
  *
  * The reader objects are the JSON the vision agents returned in that trial, including
  * their real quirks (◆ for ◊, an illegible classification term). Their `language` key was
- * added when the reader prompt gained it (issue #574); every trial card was English.
+ * added when the reader prompt gained it (issue #574); every trial card was English. The
+ * readers of the other invented cards are invented too.
  */
 
 const HEADER = (title) => [
@@ -178,6 +179,33 @@ export const TEST_CAPTAIN = {
   ],
 };
 
+/** Invented. A Strength-0 character: the site leaves the Strength row out of its page (issue #582). */
+export const TEST_PUP = {
+  slug: 'test-pup-tiny-troublemaker',
+  imageFile: '40-204-EN-14-Test-Pup-Tiny-Troublemaker-LQ-Lorcana-Player.jpg',
+  title: 'Test Pup – Tiny Troublemaker',
+  fields: [
+    ['Name', 'Test Pup'],
+    ['Card Type', 'Character'],
+    ['Version', 'Tiny Troublemaker'],
+    ['Ink Cost', '1'],
+    ['Inkwell', 'Yes'],
+    ['Willpower', '2'],
+    ['Lore', '1'],
+    ['Ink Color', 'Amethyst'],
+    ['Rarity', 'Common'],
+    ['Card ID', '40/204'],
+    ['Set', 'Hyperia City'],
+    ['Keywords + Abilities', 'Evasive'],
+    ['Classifications', 'Storyborn • Ally'],
+    ['Card Text', ['Evasive (Only characters with Evasive can challenge this character.)']],
+    ['Flavor Text', ''],
+    ['Illustrator', 'Test Artist'],
+    ['Franchise', 'Zootopia'],
+    ...dates,
+  ],
+};
+
 export const MULAN = {
   slug: 'mulan-martial-arts-master',
   imageFile: '127-204-EN-14-Mulan-Martial-Arts-Master-LQ-Lorcana-Player.jpg',
@@ -329,6 +357,25 @@ export const readerFor = {
     illustrator: 'Alice Pisoni',
     inkable: true,
     rarityGuess: null,
+    unreadable: [],
+  }),
+  testPup: () => ({
+    name: 'Test Pup',
+    version: 'Tiny Troublemaker',
+    cost: 1,
+    strength: 0,
+    willpower: 2,
+    lore: 1,
+    inkColor: 'Amethyst',
+    type: 'Character',
+    classifications: 'Storyborn • Ally',
+    keywords: ['Evasive'],
+    cardText: ['Evasive (Only characters with Evasive can challenge this character.)'],
+    collectorNumber: '40/204',
+    language: 'EN',
+    illustrator: 'Test Artist',
+    inkable: true,
+    rarityGuess: 'a plain circle, likely Common',
     unreadable: [],
   }),
 };

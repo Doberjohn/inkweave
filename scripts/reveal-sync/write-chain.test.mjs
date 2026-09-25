@@ -9,7 +9,14 @@ import {buildPreviewCard} from '../../apps/web/src/features/reveal-admin/buildPr
 import {insertCardIntoPreviewJson} from '../../apps/web/src/features/reveal-admin/insertCardIntoPreviewJson.ts';
 import {adjudicate, toRevealForm} from './adjudicate.mjs';
 import {parseCardLines} from './extract-card.mjs';
-import {ERNESTO, LIONHEART, TEST_INVENTOR, page, readerFor} from './__fixtures__/cards.mjs';
+import {
+  ERNESTO,
+  LIONHEART,
+  TEST_INVENTOR,
+  TEST_PUP,
+  page,
+  readerFor,
+} from './__fixtures__/cards.mjs';
 
 const formFor = (card, reader) => {
   const site = parseCardLines(page(card), {slug: card.slug, imageFile: card.imageFile});
@@ -44,6 +51,12 @@ describe('the reveal write chain accepts adjudicated cards', () => {
       willpower: 3,
       lore: 1,
     });
+  });
+
+  it('writes a character whose page had no Strength row with Strength 0', () => {
+    const form = formFor(TEST_PUP, readerFor.testPup());
+    expect(validateRevealCardForm(form, new Set(), 'card.jpg').ok).toBe(true);
+    expect(buildPreviewCard(form)).toMatchObject({id: 14040, strength: 0, willpower: 2, lore: 1});
   });
 
   it('refuses a card whose id is already in the preview data', () => {

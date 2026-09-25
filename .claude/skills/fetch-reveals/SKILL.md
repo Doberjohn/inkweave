@@ -117,6 +117,11 @@ Navigating the tab wipes the installed code. After any navigation, reinstall bef
    job per card that needs a blind read. It saves after every batch, so rerunning it after a
    timeout picks up where it stopped.
 
+A character page with no Strength row reads as Strength 0: lorcanaplayer leaves the row out
+when Strength is 0. The reader checks that 0 against the scan like any other stat, so a wrong
+one gets more readers and never reaches the data. Any other missing row (Willpower, Lore)
+means the site's markup changed, and the card lands in ERRORS as `page-unreadable`.
+
 Before any reader runs, each card is checked, in this order:
 
 1. **Against what Inkweave already holds**, by number **and** name: a number already used by

@@ -55,9 +55,12 @@ const UNIVERSAL = [
   'Card Text',
 ];
 
-/** Present only for some types: actions and items carry no version and no stats. */
+/**
+ * Present only for some types: actions and items carry no version and no stats. A
+ * character's Strength row is not required: the site leaves it out when Strength is 0.
+ */
 const BY_TYPE = {
-  Character: ['Version', 'Strength', 'Willpower', 'Lore'],
+  Character: ['Version', 'Willpower', 'Lore'],
   Location: ['Version', 'Willpower', 'Lore', 'Move Cost'],
   Action: [],
   Item: [],
@@ -99,6 +102,16 @@ function valuesAfter(lines, index, label) {
   return values;
 }
 
+/**
+ * lorcanaplayer leaves the Strength row out of a character page when Strength is 0, so a
+ * missing row reads as 0. The blind readers check every stat against the official scan, so
+ * a wrong 0 gets more readers and is never written silently.
+ */
+function strengthOf(type, index, one) {
+  if (type === 'Character' && !index.has('Strength')) return 0;
+  return toInt(one('Strength'));
+}
+
 function yesNo(value) {
   if (value === 'Yes') return true;
   if (value === 'No') return false;
@@ -127,7 +140,7 @@ export function parseCardLines(lines, {slug = '?', imageFile = null} = {}) {
     type,
     cost: toInt(one('Ink Cost')),
     inkwell: yesNo(one('Inkwell')),
-    strength: toInt(one('Strength')),
+    strength: strengthOf(type, index, one),
     willpower: toInt(one('Willpower')),
     lore: toInt(one('Lore')),
     moveCost: toInt(one('Move Cost')),
