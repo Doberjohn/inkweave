@@ -263,6 +263,11 @@ describe('named companion utilities', () => {
       expect(getNamedReferences(card)).toEqual(['Mr. Smee']);
     });
 
+    it('keeps spaced initials inside a name (P. J. Pete)', () => {
+      const card = createCard({text: 'Your characters named P. J. Pete get +1 strength.'});
+      expect(getNamedReferences(card)).toEqual(['P. J. Pete']);
+    });
+
     it('extracts names with lowercase articles (Queen of Hearts)', () => {
       const card = createCard({
         text: 'While you have a character named Queen of Hearts in play, draw a card.',
@@ -440,6 +445,13 @@ describe('named companion utilities', () => {
       });
       // "banish" and "named" are >40 chars apart — should NOT be hostile
       expect(classifyNamedEffect(card)).not.toBe('hostile');
+    });
+
+    it('does not read a passive "was banished" condition as hostile', () => {
+      const card = createCard({
+        text: 'If a character named Buzz Lightyear was banished this turn, you may play this item for free.',
+      });
+      expect(classifyNamedEffect(card)).toBe('game-winning');
     });
 
     it('returns minor for generic effects', () => {
