@@ -13,6 +13,11 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "air-drop": {
+          "number": 94,
+          "status": "written",
+          "firstSeen": "2026-09-25"
+        },
         "ancestral-guitar": {
           "number": 31,
           "status": "written",
@@ -30,15 +35,33 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "arthur-merlins-assistant": {
+          "number": 172,
+          "status": "written",
+          "detail": "art: owner-supplied scan, no official scan yet",
+          "firstSeen": "2026-09-25"
+        },
         "arthur-novice-blacksmith": {
           "number": 185,
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "arthur-tournament-knight": {
+          "number": 193,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: German scan as art (owner-supplied), English text translated from it",
+          "firstSeen": "2026-09-25"
+        },
         "aurora-delightful-musician": {
           "number": 19,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "baloo-freight-pilot": {
+          "number": 191,
+          "status": "written",
+          "firstSeen": "2026-09-25"
         },
         "baymax-amped-up": {
           "number": 158,
@@ -72,6 +95,18 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "bobby-zimuruski-soundboard-whiz": {
+          "number": 84,
+          "status": "written",
+          "detail": "art: owner-supplied scan, no official scan yet",
+          "firstSeen": "2026-09-25"
+        },
+        "brooklyn-full-throttle": {
+          "number": 50,
+          "status": "written",
+          "detail": "art: owner-supplied scan, no official scan yet",
+          "firstSeen": "2026-09-25"
+        },
         "captain-hook-concerned-captain": {
           "status": "skipped",
           "reason": "owner-excluded",
@@ -82,6 +117,11 @@
           "number": 183,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "cinderella-homespun-dressmaker": {
+          "number": 138,
+          "status": "written",
+          "firstSeen": "2026-09-25"
         },
         "cinderella-unintentional-icon": {
           "number": 157,
@@ -142,6 +182,12 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "elisa-maza-hardworking-detective": {
+          "number": 16,
+          "status": "written",
+          "detail": "art: owner-supplied scan, no official scan yet",
+          "firstSeen": "2026-09-25"
+        },
         "ernesto-de-la-cruz-idol-of-millions": {
           "number": 118,
           "status": "written",
@@ -163,6 +209,12 @@
           "reason": "provisional-translation",
           "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
           "firstSeen": "2026-09-24"
+        },
+        "fox-xanatos-charismatic-outlaw": {
+          "number": 49,
+          "status": "written",
+          "detail": "art: owner-supplied scan, no official scan yet",
+          "firstSeen": "2026-09-25"
         },
         "fred-big-stomper": {
           "number": 91,
@@ -210,6 +262,11 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "heihei-at-the-crosswalk": {
+          "number": 103,
+          "status": "written",
+          "firstSeen": "2026-09-25"
+        },
         "higitus-figitus": {
           "number": 62,
           "status": "written",
@@ -227,10 +284,20 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "hyperia-city-express": {
+          "number": 201,
+          "status": "written",
+          "firstSeen": "2026-09-25"
+        },
         "ink-explosion": {
           "number": 198,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "inkcaster-skates": {
+          "number": 67,
+          "status": "written",
+          "firstSeen": "2026-09-25"
         },
         "institute-of-technology-honey-lemons-lab": {
           "number": 170,
@@ -262,6 +329,11 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "jukebox": {
+          "number": 134,
+          "status": "written",
+          "firstSeen": "2026-09-25"
+        },
         "khan-industries-greenway-landmark": {
           "number": 204,
           "status": "written",
@@ -271,6 +343,12 @@
           "number": 136,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "kit-cloudkicker-unpredictable-courier": {
+          "number": 174,
+          "status": "written",
+          "detail": "art: owner-supplied scan, no official scan yet",
+          "firstSeen": "2026-09-25"
         },
         "lady-taking-it-easy": {
           "number": 79,
@@ -288,6 +366,11 @@
           "number": 135,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "leaning-tower-of-cheese-a": {
+          "number": 101,
+          "status": "written",
+          "firstSeen": "2026-09-25"
         },
         "lexington-fearless-flier": {
           "number": 38,
@@ -323,6 +406,11 @@
           "number": 44,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "mama-imeldas-blessing": {
+          "number": 33,
+          "status": "written",
+          "firstSeen": "2026-09-25"
         },
         "marie-caught-in-the-act": {
           "number": 187,
@@ -432,6 +520,12 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "peg-late-night-vocalist": {
+          "number": 115,
+          "status": "written",
+          "detail": "art: owner-supplied scan, no official scan yet",
+          "firstSeen": "2026-09-25"
+        },
         "pepita-imeldas-right-hand": {
           "number": 119,
           "status": "written",
@@ -459,6 +553,16 @@
           "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
           "firstSeen": "2026-09-24"
         },
+        "priya-mangal-immovable-fan": {
+          "number": 7,
+          "status": "written",
+          "firstSeen": "2026-09-25"
+        },
+        "rapunzel-outgoing-artist": {
+          "number": 55,
+          "status": "written",
+          "firstSeen": "2026-09-25"
+        },
         "remember-me": {
           "number": 29,
           "status": "written",
@@ -470,6 +574,17 @@
           "reason": "provisional-translation",
           "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
           "firstSeen": "2026-09-24"
+        },
+        "russell-finding-adventure": {
+          "number": 20,
+          "status": "written",
+          "detail": "art: owner-supplied scan, no official scan yet",
+          "firstSeen": "2026-09-25"
+        },
+        "scram": {
+          "number": 165,
+          "status": "written",
+          "firstSeen": "2026-09-25"
         },
         "scuttle-directing-traffic": {
           "number": 36,
@@ -537,6 +652,11 @@
           "number": 63,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "upgraded-chem-purse": {
+          "number": 169,
+          "status": "written",
+          "firstSeen": "2026-09-25"
         },
         "wasabi-called-into-battle": {
           "number": 125,
