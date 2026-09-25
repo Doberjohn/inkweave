@@ -1,17 +1,20 @@
 /**
  * The skill writes through the same chain /admin/reveal uses. These tests run adjudicated
- * cards through the real TypeScript modules, so a change to the reveal form's shape or its
- * validation breaks here rather than silently producing bad records.
+ * cards through the write step's own form (writtenForm) and the real TypeScript modules, so
+ * a change to the reveal form's shape or its validation breaks here rather than silently
+ * producing bad records.
  */
 import {describe, it, expect} from 'vitest';
 import {validateRevealCardForm} from '../../apps/web/src/features/reveal-admin/validateForm.ts';
 import {buildPreviewCard} from '../../apps/web/src/features/reveal-admin/buildPreviewCard.ts';
 import {insertCardIntoPreviewJson} from '../../apps/web/src/features/reveal-admin/insertCardIntoPreviewJson.ts';
-import {adjudicate, toRevealForm} from './adjudicate.mjs';
+import {adjudicate} from './adjudicate.mjs';
 import {parseCardLines} from './extract-card.mjs';
+import {writtenForm} from './write.mjs';
 import {
   ERNESTO,
   LIONHEART,
+  TEST_CHLOE,
   TEST_INVENTOR,
   TEST_PUP,
   page,
@@ -20,7 +23,7 @@ import {
 
 const formFor = (card, reader) => {
   const site = parseCardLines(page(card), {slug: card.slug, imageFile: card.imageFile});
-  return toRevealForm(adjudicate(site, [reader]).card);
+  return writtenForm(adjudicate(site, [reader]).card);
 };
 
 describe('the reveal write chain accepts adjudicated cards', () => {
@@ -57,6 +60,19 @@ describe('the reveal write chain accepts adjudicated cards', () => {
     const form = formFor(TEST_PUP, readerFor.testPup());
     expect(validateRevealCardForm(form, new Set(), 'card.jpg').ok).toBe(true);
     expect(buildPreviewCard(form)).toMatchObject({id: 14040, strength: 0, willpower: 2, lore: 1});
+  });
+
+  it('writes names, and the names its text refers to, without accents', () => {
+    expect(buildPreviewCard(formFor(TEST_CHLOE, readerFor.testChloe()))).toMatchObject({
+      name: 'Test Chloe',
+      version: 'Cafe Owner',
+      fullName: 'Test Chloe - Cafe Owner',
+      fullTextSections: [
+        'Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Test Chloe.)',
+        '¡OLÉ! Whenever you play a character named Test Chloe or Test Zoe, gain 1 lore.',
+      ],
+      abilities: [{type: 'keyword', keyword: 'Shift', keywordValue: '4', fullText: 'Shift 4'}],
+    });
   });
 
   it('refuses a card whose id is already in the preview data', () => {

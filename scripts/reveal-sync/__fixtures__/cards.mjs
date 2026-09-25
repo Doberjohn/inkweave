@@ -239,6 +239,43 @@ export const TEST_SLEUTH = {
   ],
 };
 
+/**
+ * Invented. Printed with accents, which the write step drops from names and from the names
+ * the text refers to (issue #582), but not from the ability title.
+ */
+export const TEST_CHLOE = {
+  slug: 'test-chloe-cafe-owner',
+  imageFile: '9-204-EN-14-Test-Chloe-Cafe-Owner-LQ-Lorcana-Player.jpg',
+  title: 'Test Chloé – Café Owner',
+  fields: [
+    ['Name', 'Test Chloé'],
+    ['Card Type', 'Character'],
+    ['Version', 'Café Owner'],
+    ['Ink Cost', '4'],
+    ['Inkwell', 'Yes'],
+    ['Strength', '2'],
+    ['Willpower', '4'],
+    ['Lore', '2'],
+    ['Ink Color', 'Amber'],
+    ['Rarity', 'Rare'],
+    ['Card ID', '9/204'],
+    ['Set', 'Hyperia City'],
+    ['Keywords + Abilities', 'Shift Gain Lore'],
+    ['Classifications', 'Floodborn • Ally'],
+    [
+      'Card Text',
+      [
+        'Shift 4 (You may pay 4 ⬡ to play this on top of one of your characters named Test Chloé.)',
+        '¡OLÉ! Whenever you play a character named Test Chloé or Test Zoë, gain 1 lore.',
+      ],
+    ],
+    ['Flavor Text', ''],
+    ['Illustrator', 'Test Artist'],
+    ['Franchise', 'Coco'],
+    ...dates,
+  ],
+};
+
 export const MULAN = {
   slug: 'mulan-martial-arts-master',
   imageFile: '127-204-EN-14-Mulan-Martial-Arts-Master-LQ-Lorcana-Player.jpg',
@@ -409,6 +446,28 @@ export const readerFor = {
     illustrator: 'Test Artist',
     inkable: true,
     rarityGuess: 'a plain circle, likely Common',
+    unreadable: [],
+  }),
+  testChloe: () => ({
+    name: 'Test Chloé',
+    version: 'Café Owner',
+    cost: 4,
+    strength: 2,
+    willpower: 4,
+    lore: 2,
+    inkColor: 'Amber',
+    type: 'Character',
+    classifications: 'Floodborn • Ally',
+    keywords: ['Shift 4'],
+    cardText: [
+      'Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Test Chloé.)',
+      '¡OLÉ! Whenever you play a character named Test Chloé or Test Zoë, gain 1 lore.',
+    ],
+    collectorNumber: '9/204',
+    language: 'EN',
+    illustrator: 'Test Artist',
+    inkable: true,
+    rarityGuess: 'a filled hexagon, likely Rare',
     unreadable: [],
   }),
 };

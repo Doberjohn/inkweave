@@ -14,6 +14,8 @@ import {
   readClassifications,
   fullName,
   toInt,
+  unaccentReferences,
+  unaccented,
 } from './text.mjs';
 
 const DATA = path.resolve(
@@ -191,5 +193,44 @@ describe('fullName', () => {
   it('joins a name and version the way the data does, or keeps a versionless name', () => {
     expect(fullName('Lionheart', 'Cleaning Up the City')).toBe('Lionheart - Cleaning Up the City');
     expect(fullName('On the Open Road', null)).toBe('On the Open Road');
+  });
+});
+
+describe('names without accents', () => {
+  it('drops every accent from a name', () => {
+    expect(unaccented('Test Chloé - Café Owner')).toBe('Test Chloe - Cafe Owner');
+    expect(unaccented('Zoë Ñandú')).toBe('Zoe Nandu');
+  });
+
+  it('drops the accents from every name a "named" reference holds', () => {
+    expect(
+      unaccentReferences('Whenever you play a character named Test Chloé or Test Zoë, gain 1 lore.'),
+    ).toBe('Whenever you play a character named Test Chloe or Test Zoe, gain 1 lore.');
+    // A period can sit inside a name ("named Mr. Incredible"), so it does not end the reference.
+    expect(unaccentReferences('on top of one of your characters named Dr. Tést Chloé.)')).toBe(
+      'on top of one of your characters named Dr. Test Chloe.)',
+    );
+  });
+
+  it('leaves accents and glyphs outside a reference as printed', () => {
+    expect(unaccentReferences('¡OLÉ! WAIT… Your characters named Test Chloé get +1 ◊.')).toBe(
+      '¡OLÉ! WAIT… Your characters named Test Chloe get +1 ◊.',
+    );
+  });
+
+  it('changes nothing but the accents, even inside a name or a reference', () => {
+    // NFKD would also rewrite "…" as "...": only the accents may go.
+    expect(unaccented('Wait… Chloé')).toBe('Wait… Chloe');
+    expect(unaccentReferences('Your characters named Test Chloé get +1 ◊ this turn…')).toBe(
+      'Your characters named Test Chloe get +1 ◊ this turn…',
+    );
+  });
+
+  it('changes nothing in a shipped line that carries no accent', () => {
+    const hasAccent = (line) => /\p{M}/u.test(line.normalize('NFD'));
+    const changed = realCards()
+      .flatMap((c) => (c.fullText ?? '').split('\n'))
+      .filter((line) => !hasAccent(line) && unaccentReferences(line) !== line);
+    expect(changed).toEqual([]);
   });
 });
