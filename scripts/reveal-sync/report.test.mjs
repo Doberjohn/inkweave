@@ -70,13 +70,13 @@ describe('formatReport', () => {
       mulan: {
         status: 'deferred',
         reason: 'site-record-incomplete',
-        detail: 'abilities listed as Unknown',
+        detail: 'classifications missing',
         number: 127,
         title: 'Mulan - Martial Arts Master',
       },
     };
     expect(formatReport(run(cards), {cards: {}}, '2026-09-26')).toMatch(
-      /waiting 0 days\s+site record incomplete: abilities listed as Unknown$/m,
+      /waiting 0 days\s+site record incomplete: classifications missing$/m,
     );
   });
 

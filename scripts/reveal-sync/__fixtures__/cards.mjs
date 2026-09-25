@@ -206,6 +206,39 @@ export const TEST_PUP = {
   ],
 };
 
+/** Invented. Its text is complete, but the site's ability tags read "Unknown" (issue #582). */
+export const TEST_SLEUTH = {
+  slug: 'test-sleuth-caught-snooping',
+  imageFile: '190-204-EN-14-Test-Sleuth-Caught-Snooping-LQ-Lorcana-Player.jpg',
+  title: 'Test Sleuth – Caught Snooping',
+  fields: [
+    ['Name', 'Test Sleuth'],
+    ['Card Type', 'Character'],
+    ['Version', 'Caught Snooping'],
+    ['Ink Cost', '2'],
+    ['Inkwell', 'Yes'],
+    ['Strength', '2'],
+    ['Willpower', '2'],
+    ['Lore', '1'],
+    ['Ink Color', 'Steel'],
+    ['Rarity', 'Uncommon'],
+    ['Card ID', '190/204'],
+    ['Set', 'Hyperia City'],
+    ['Keywords + Abilities', 'Unknown'],
+    ['Classifications', 'Storyborn • Detective'],
+    [
+      'Card Text',
+      [
+        'KEEN EYE When you play this character, look at the top card of your deck. You may put it on the bottom of your deck.',
+      ],
+    ],
+    ['Flavor Text', ''],
+    ['Illustrator', 'Test Artist'],
+    ['Franchise', 'Zootopia'],
+    ...dates,
+  ],
+};
+
 export const MULAN = {
   slug: 'mulan-martial-arts-master',
   imageFile: '127-204-EN-14-Mulan-Martial-Arts-Master-LQ-Lorcana-Player.jpg',

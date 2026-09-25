@@ -139,9 +139,11 @@ Before any reader runs, each card is checked, in this order:
    stop the card: three readers settle it (Step 4). The official rarity counts only when it
    is one of the five; a blank or `PROMO` rarity there is no opinion.
 3. **lorcanaplayer's own gates**: other sets, rarities outside the five, a non-English scan
-   marker in the page's image filename, incomplete site records (`Keywords: Unknown`, a blank
-   version, no classifications), cards with no readable collector number, and inks that
-   contradict their collector-number block.
+   marker in the page's image filename, incomplete site records (no card text unless the
+   site's ability tags say `None`, a blank version, no classifications), cards with no
+   readable collector number, and inks that contradict their collector-number block. The
+   ability tags (`Keywords + Abilities`) are lorcanaplayer's own list, not the card's
+   keywords, so `Unknown` there holds a card back only when its text is missing too.
 4. **The official scan** is downloaded. If the site has no scan at the URL its own page
    builds, nor under lorcanaplayer's name for the card (a renamed card keeps its old
    filename), the card is deferred as `official-image-missing` and retried next run.

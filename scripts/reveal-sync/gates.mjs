@@ -47,14 +47,16 @@ function checkLanguage(site, ctx) {
 const VERSIONED = new Set(['Character', 'Location']);
 
 /**
- * Why the site's record cannot be written yet. "None" is a real vanilla card; "Unknown"
- * means the site has stats but not abilities, and writing that as vanilla would give the
- * card zero synergies with no error anywhere. Every one of the 776 characters and 43
- * locations in the shipped data has a version, and every character has classifications, so
- * a record missing either is unfinished rather than unusual.
+ * Why the site's record cannot be written yet. A card with no text is vanilla only when the
+ * site's ability tags say "None"; under any other tags ("Unknown" included) its text is
+ * still to come, and writing it as vanilla would give the card zero synergies with no error
+ * anywhere. The tags are the site's own list ("Bottom Deck Draw Look At Top X"), not the
+ * card's keywords, so "Unknown" says nothing against a complete text, which the reader checks
+ * against the scan anyway (issue #582). Every one of the 776 characters and 43 locations in
+ * the shipped data has a version, and every character has classifications, so a record
+ * missing either is unfinished rather than unusual.
  */
 const INCOMPLETE = [
-  [(s) => s.keywordsField === 'Unknown', 'abilities listed as Unknown'],
   [(s) => !s.text.length && s.keywordsField !== 'None', 'no card text'],
   [(s) => s.inkwell === null, 'inkwell unknown'],
   [(s) => s.cost === null, 'ink cost unknown'],
