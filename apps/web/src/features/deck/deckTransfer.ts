@@ -124,34 +124,51 @@ function nameKey(name: string): string {
   return name.toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
+/** Pool cards keyed by their normalised full name, for decklist lookup. */
+function indexByName(pool: readonly LorcanaCard[]): Map<string, LorcanaCard> {
+  const byName = new Map<string, LorcanaCard>();
+  for (const card of pool) {
+    const full = card.fullName || card.name;
+    if (full) byName.set(nameKey(full), card);
+  }
+  return byName;
+}
+
+/** Quantities keyed by card id, plus the first-seen order to emit them in. */
+interface DeckTally {
+  quantities: Map<string, number>;
+  order: string[];
+}
+
+/**
+ * Folds one line into the running tally, preserving first-seen order. A decklist
+ * may name the same card twice (two printings, or a hand-edited list), so the
+ * quantities ADD and then clamp — taking the last line would silently drop copies.
+ */
+function tallyLine(tally: DeckTally, card: LorcanaCard, quantity: number): void {
+  const current = tally.quantities.get(card.id);
+  if (current === undefined) tally.order.push(card.id);
+  tally.quantities.set(card.id, Math.min(MAX_COPIES, (current ?? 0) + quantity));
+}
+
 /**
  * Match parsed lines to card ids by name. Duplicate lines for the same card are
  * summed, and the total is clamped to the 4-copy Core ceiling. Unmatched lines are
  * returned verbatim so the UI can tell the user exactly what it skipped.
  */
 export function resolveDecklist(lines: readonly ParsedDeckLine[], pool: readonly LorcanaCard[]): ResolvedDecklist {
-  const byName = new Map<string, LorcanaCard>();
-  for (const card of pool) {
-    const full = card.fullName || card.name;
-    if (full) byName.set(nameKey(full), card);
-  }
-
-  const quantities = new Map<string, number>();
-  const order: string[] = [];
+  const byName = indexByName(pool);
+  const tally: DeckTally = {quantities: new Map(), order: []};
   const unmatched: string[] = [];
 
   for (const line of lines) {
     const card = byName.get(nameKey(line.name));
-    if (!card) {
-      unmatched.push(line.raw);
-      continue;
-    }
-    if (!quantities.has(card.id)) order.push(card.id);
-    quantities.set(card.id, Math.min(MAX_COPIES, (quantities.get(card.id) ?? 0) + line.quantity));
+    if (card) tallyLine(tally, card, line.quantity);
+    else unmatched.push(line.raw);
   }
 
   return {
-    cards: order.map((cardId) => ({cardId, quantity: quantities.get(cardId) ?? 0})),
+    cards: tally.order.map((cardId) => ({cardId, quantity: tally.quantities.get(cardId) ?? 0})),
     unmatched,
   };
 }

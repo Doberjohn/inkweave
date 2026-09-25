@@ -164,6 +164,50 @@ function readRow(line: string): CollectionRow | null {
 }
 
 /**
+ * A card's `set:number` index key, or null when it cannot have one.
+ *
+ * Set numbering is 1-based, so ONE comparison rejects every non-key: a missing
+ * setCode and a non-numeric one ("Q1" and friends, which the binder does not index)
+ * are both NaN, and `NaN > 0` is false; an empty setCode is 0, which matters because
+ * `Number('')` is 0 where the `parseInt` this replaced gave NaN.
+ *
+ * `setNumber`, by contrast, is checked explicitly against undefined rather than
+ * falsily, because 0 is a real collector number (fact 4). It is numeric, so
+ * stringifying it is already normalized.
+ */
+function poolKey(card: LorcanaCard): string | null {
+  const set = Number(card.setCode);
+  if (!(set > 0) || card.setNumber === undefined) return null;
+  return `${set}:${card.setNumber}`;
+}
+
+/**
+ * Award one `set:number` key to a card, resolving a contested one.
+ *
+ * FIRST WINS, EXCEPT that a base card evicts a Special. See `buildPoolIndex` for
+ * why: order must not decide it, and one of the 98 contested numbers lists its
+ * Special first. Two base cards sharing a number stay a data fault rather than a
+ * silent load-order swap.
+ */
+function claimKey(
+  index: Map<string, string>,
+  heldBySpecial: Set<string>,
+  key: string,
+  card: LorcanaCard,
+): void {
+  const isSpecial = card.rarity === 'Special';
+  if (!index.has(key)) {
+    index.set(key, card.id);
+    if (isSpecial) heldBySpecial.add(key);
+    return;
+  }
+  if (!isSpecial && heldBySpecial.has(key)) {
+    index.set(key, card.id);
+    heldBySpecial.delete(key);
+  }
+}
+
+/**
  * `set:number` to card id, for every pool card that carries both.
  *
  * THE KEY IS NOT UNIQUE OUTSIDE CORE (fact 7). Special-rarity promos reuse base
@@ -187,27 +231,8 @@ function buildPoolIndex(pool: readonly LorcanaCard[]): Map<string, string> {
   const heldBySpecial = new Set<string>();
 
   for (const card of pool) {
-    // Explicitly against undefined: `setNumber` is legitimately 0 (fact 4).
-    if (card.setCode === undefined || card.setNumber === undefined) continue;
-    const set = parseInt(card.setCode, 10);
-    if (!Number.isFinite(set)) continue;
-    // `setNumber` is numeric, so stringifying it is already normalized — 0 stays
-    // "0", which is a real card (fact 4) rather than an absent one.
-    const key = `${set}:${card.setNumber}`;
-    const isSpecial = card.rarity === 'Special';
-
-    if (!index.has(key)) {
-      index.set(key, card.id);
-      if (isSpecial) heldBySpecial.add(key);
-      continue;
-    }
-    // Taken. Only a base card displacing a Special may overwrite; two base cards
-    // sharing a number would be a data fault, and silently swapping them on
-    // load order would make it unreproducible.
-    if (!isSpecial && heldBySpecial.has(key)) {
-      index.set(key, card.id);
-      heldBySpecial.delete(key);
-    }
+    const key = poolKey(card);
+    if (key !== null) claimKey(index, heldBySpecial, key, card);
   }
   return index;
 }

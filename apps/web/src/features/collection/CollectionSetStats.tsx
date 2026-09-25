@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import type {CSSProperties} from 'react';
+import type {CSSProperties, ReactNode} from 'react';
 import type {LorcanaCard} from '../deck/types';
 import type {CollectionEntries} from './collectionParser';
 import {tallySet} from './collectionStats';
@@ -182,22 +182,31 @@ interface Props {
   containerWidth: number;
 }
 
-export function CollectionSetStats({cards, entries, setCode, mode, containerWidth}: Props) {
-  const [railOpen, setRailOpen] = useState(false);
-  if (mode === 'off') return null;
+/** Which axis the breakdowns follow. See `CollectionSetStats`. */
+type Axis = 'complete' | 'master';
 
-  const t = tallySet(cards, entries);
-  const open = mode === 'fixed' || (mode === 'auto' && containerWidth >= AUTO_OPEN_MIN_WIDTH);
-  /**
-   * The breakdowns follow whichever axis you still have work on (owner,
-   * 2026-08-14). On a finished set every complete-bar reads 100% and the panel
-   * becomes a wall of identical gold telling you nothing — Set 1 looked exactly
-   * like that. Switching to master once complete is done keeps it answering a
-   * live question instead of congratulating you six times.
-   */
-  const axis: 'complete' | 'master' = t.complete === t.importable && t.importable > 0 ? 'master' : 'complete';
+/**
+ * The breakdowns follow whichever axis you still have work on (owner,
+ * 2026-08-14). On a finished set every complete-bar reads 100% and the panel
+ * becomes a wall of identical gold telling you nothing — Set 1 looked exactly
+ * like that. Switching to master once complete is done keeps it answering a live
+ * question instead of congratulating you six times.
+ */
+function axisFor(t: ReturnType<typeof tallySet>): Axis {
+  return t.complete === t.importable && t.importable > 0 ? 'master' : 'complete';
+}
 
-  const body = (
+/** Everything inside the panel. Rendered identically whether open or overlaid. */
+function PanelBody({
+  t,
+  axis,
+  setCode,
+}: {
+  t: ReturnType<typeof tallySet>;
+  axis: Axis;
+  setCode: string;
+}) {
+  return (
     <>
       <SetHeader setCode={setCode} />
       <Headline label="Complete set" value={t.complete} total={t.importable} />
@@ -209,9 +218,7 @@ export function CollectionSetStats({cards, entries, setCode, mode, containerWidt
         </span>
       )}
       <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
-        <span style={{...CAP_LABEL_XS, color: COLORS.textMuted}}>
-          By ink · {axis}
-        </span>
+        <span style={{...CAP_LABEL_XS, color: COLORS.textMuted}}>By ink · {axis}</span>
         {t.byInk.map((r) => (
           <Row
             key={r.ink}
@@ -223,41 +230,50 @@ export function CollectionSetStats({cards, entries, setCode, mode, containerWidt
         ))}
       </div>
       <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
-        <span style={{...CAP_LABEL_XS, color: COLORS.textMuted}}>
-          By rarity · {axis}
-        </span>
+        <span style={{...CAP_LABEL_XS, color: COLORS.textMuted}}>By rarity · {axis}</span>
         {t.byRarity.map((r) => (
-          <Row key={r.rarity} label={r.rarity} value={r[axis]} total={r.total} color={COLORS.success} />
+          <Row
+            key={r.rarity}
+            label={r.rarity}
+            value={r[axis]}
+            total={r.total}
+            color={COLORS.success}
+          />
         ))}
       </div>
     </>
   );
+}
 
-  if (open) return <aside style={panelStyle}>{body}</aside>;
+const railStyle: CSSProperties = {
+  width: RAIL_WIDTH,
+  flexShrink: 0,
+  position: 'relative',
+  background: COLORS.surface,
+  border: `1px solid ${COLORS.surfaceBorder}`,
+  borderRadius: `${RADIUS.card}px`,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: SPACING.sm,
+  padding: `${SPACING.sm}px 0`,
+};
 
-  // Collapsed: the two headline numbers stay readable sideways, and opening
-  // overlays the binder rather than resizing it — so the cards never move.
+/**
+ * The collapsed form: the two headline numbers readable sideways, expanding to
+ * the full panel OVER the binder rather than beside it, so opening it never
+ * resizes the cards.
+ */
+function StatsRail({t, children}: {t: ReturnType<typeof tallySet>; children: ReactNode}) {
+  const [open, setOpen] = useState(false);
   return (
-    <aside
-      style={{
-        width: RAIL_WIDTH,
-        flexShrink: 0,
-        position: 'relative',
-        background: COLORS.surface,
-        border: `1px solid ${COLORS.surfaceBorder}`,
-        borderRadius: `${RADIUS.card}px`,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: SPACING.sm,
-        padding: `${SPACING.sm}px 0`,
-      }}>
+    <aside style={railStyle}>
       <IconButton
-        aria-label={railOpen ? 'Hide set stats' : 'Show set stats'}
+        aria-label={open ? 'Hide set stats' : 'Show set stats'}
         size={28}
-        onClick={() => setRailOpen((v) => !v)}
+        onClick={() => setOpen((v) => !v)}
         style={{color: COLORS.primary}}>
-        {railOpen ? '‹' : '›'}
+        {open ? '‹' : '›'}
       </IconButton>
       <span
         style={{
@@ -269,7 +285,7 @@ export function CollectionSetStats({cards, entries, setCode, mode, containerWidt
         }}>
         {pct(t.complete, t.importable)}% complete · {pct(t.master, t.importable)}% master
       </span>
-      {railOpen && (
+      {open && (
         <div
           style={{
             ...panelStyle,
@@ -279,9 +295,20 @@ export function CollectionSetStats({cards, entries, setCode, mode, containerWidt
             maxHeight: '100%',
             zIndex: 5,
           }}>
-          {body}
+          {children}
         </div>
       )}
     </aside>
   );
+}
+
+export function CollectionSetStats({cards, entries, setCode, mode, containerWidth}: Props) {
+  if (mode === 'off') return null;
+
+  const t = tallySet(cards, entries);
+  const body = <PanelBody t={t} axis={axisFor(t)} setCode={setCode} />;
+  const open = mode === 'fixed' || (mode === 'auto' && containerWidth >= AUTO_OPEN_MIN_WIDTH);
+
+  if (open) return <aside style={panelStyle}>{body}</aside>;
+  return <StatsRail t={t}>{body}</StatsRail>;
 }
