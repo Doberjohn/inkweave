@@ -117,6 +117,11 @@ Navigating the tab wipes the installed code. After any navigation, reinstall bef
    job per card that needs a blind read. It saves after every batch, so rerunning it after a
    timeout picks up where it stopped.
 
+A character page with no Strength row reads as Strength 0: lorcanaplayer leaves the row out
+when Strength is 0. The reader checks that 0 against the scan like any other stat, so a wrong
+one gets more readers and never reaches the data. Any other missing row (Willpower, Lore)
+means the site's markup changed, and the card lands in ERRORS as `page-unreadable`.
+
 Before any reader runs, each card is checked, in this order:
 
 1. **Against what Inkweave already holds**, by number **and** name: a number already used by
@@ -134,9 +139,11 @@ Before any reader runs, each card is checked, in this order:
    stop the card: three readers settle it (Step 4). The official rarity counts only when it
    is one of the five; a blank or `PROMO` rarity there is no opinion.
 3. **lorcanaplayer's own gates**: other sets, rarities outside the five, a non-English scan
-   marker in the page's image filename, incomplete site records (`Keywords: Unknown`, a blank
-   version, no classifications), cards with no readable collector number, and inks that
-   contradict their collector-number block.
+   marker in the page's image filename, incomplete site records (no card text unless the
+   site's ability tags say `None`, a blank version, no classifications), cards with no
+   readable collector number, and inks that contradict their collector-number block. The
+   ability tags (`Keywords + Abilities`) are lorcanaplayer's own list, not the card's
+   keywords, so `Unknown` there holds a card back only when its text is missing too.
 4. **The official scan** is downloaded. If the site has no scan at the URL its own page
    builds, nor under lorcanaplayer's name for the card (a renamed card keeps its old
    filename), the card is deferred as `official-image-missing` and retried next run.
@@ -265,6 +272,16 @@ accepted cards' scans to the committed AVIFs (never replacing art that already e
 and only then inserts the cards whose art converted and writes `previewCards.json` once.
 A card whose art fails becomes a conflict and is retried next run. Last, it updates
 `scripts/reveal-sync/state.json` and prints the final report.
+
+**Card names carry no accents** (the owner's rule: "Hector Rivera", "Mama Coco"). lorcanaplayer
+and the readers agree on printed accents, so `write` drops them itself: it strips the
+combining marks (NFD, then every `\p{M}`) from each card's name and version, and from every
+"named X" reference in its text, so a Shift line names the card as Inkweave spells it. A
+reference ends with its clause or sentence; a period after a title or an initial ("Mr.",
+"P.J.") stays part of the name. Nothing else changes: every other accent in the text stays as
+printed, and so does punctuation such as "…". The report's READY TO WRITE and WRITTEN lists
+show each card under the name it is written with; other lists keep lorcanaplayer's spelling. Never strip accents by hand after `write`. A later run still recognises the
+card: existing-card matching and the leak audit ignore accents.
 
 Show the owner the full report, then stop. They review `git status` and run `/commit-and-push`.
 

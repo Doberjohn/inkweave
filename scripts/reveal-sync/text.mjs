@@ -4,7 +4,7 @@
  * Two jobs, kept apart on purpose:
  * - canonicalize*: text in the house style previewCards.json already uses (the ⬡ ◊ ⟳ ¤ ⛉
  *   glyphs, an em dash after an activated ability's cost, "Shift N ⬡ ("). This is what
- *   gets WRITTEN.
+ *   gets WRITTEN, and the write step also spells names without accents (unaccented*).
  * - comparable*: a lossy key for deciding whether two readings agree. Never written.
  */
 
@@ -49,6 +49,30 @@ export function canonicalizeLine(line) {
 /** Canonical ability lines, blanks dropped. */
 export function canonicalizeText(lines) {
   return (lines ?? []).map(canonicalizeLine).filter(Boolean);
+}
+
+/**
+ * Without accents, as the owner rules card names ("Hector Rivera", "Mama Coco"): NFD, then
+ * every combining mark dropped. Canonical decomposition only: the NFKD fold nameSlug uses for
+ * matching would also rewrite "…" as "...", and this text is written.
+ */
+export function unaccented(value) {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+}
+
+/**
+ * A "named X" reference, from "named" to the end of its clause or sentence: a comma,
+ * semicolon, colon, parenthesis or line end, or a period followed by a space. A period after
+ * a title or an initial sits inside the name instead ("Mr. Incredible", "P.J. Pete"): every
+ * period in a shipped card name follows one.
+ */
+const NAMED_REFERENCE = /\bnamed (?:[^.,;:()\n]|\.(?!\s)|(?<=\b(?:[A-Z]|Mrs?|Ms|Dr|St|Jr|Sr))\.)+/g;
+
+/** An ability line with its "named X" references unaccented; the rest stays as printed. */
+export function unaccentReferences(line) {
+  return line.replace(NAMED_REFERENCE, unaccented);
 }
 
 /** Strip accents, unify quotes and dashes, lowercase: the comparison key for one line. */

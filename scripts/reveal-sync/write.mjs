@@ -16,7 +16,7 @@ import {spawnSync} from 'node:child_process';
 import {toRevealForm} from './adjudicate.mjs';
 import {UsageError, byNumber, entries, git, say} from './cli.mjs';
 import {markVanished, recordOutcome, setSection} from './state.mjs';
-import {comparableName, fullName} from './text.mjs';
+import {comparableName, fullName, unaccentReferences, unaccented} from './text.mjs';
 import {ROOT} from './web.mjs';
 import {
   AVIF_DIR,
@@ -60,6 +60,20 @@ function assertNoRace(run) {
 
 const nameKey = (form) => comparableName(fullName(form.name, form.version));
 
+/**
+ * A ready card as the reveal form, spelled the way Inkweave spells names: without accents
+ * (the owner's rule, issue #582). The name, the version and every "named X" reference in the
+ * text lose theirs, so a Shift line names the card as written; the rest stays as printed.
+ */
+export function writtenForm(card) {
+  return toRevealForm({
+    ...card,
+    name: unaccented(card.name),
+    version: unaccented(card.version),
+    text: card.text.map(unaccentReferences),
+  });
+}
+
 /** Why the chain or the preview data refuses this card, or null. `seen` holds ids and names. */
 function problemWith(chain, form, image, seen) {
   const check = chain.validateRevealCardForm(form, seen.ids, image);
@@ -78,7 +92,7 @@ function acceptReady(run, chain, previewText) {
   };
   const accepted = [];
   for (const [slug, entry] of entries(run, 'ready').sort(byNumber)) {
-    const form = toRevealForm(entry.card);
+    const form = writtenForm(entry.card);
     const problem = problemWith(chain, form, entry.image, seen);
     if (problem) {
       Object.assign(entry, {status: 'conflict', reason: 'validation-failed', detail: problem});

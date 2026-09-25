@@ -14,7 +14,7 @@ const ernesto = {
   id: 14118,
   number: 118,
   title: 'Ernesto de la Cruz - Idol of Millions',
-  card: {inks: ['Ruby'], rarity: 'Common'},
+  card: {name: 'Ernesto de la Cruz', version: 'Idol of Millions', inks: ['Ruby'], rarity: 'Common'},
   notes: [],
 };
 
@@ -40,6 +40,19 @@ describe('formatReport', () => {
       /WRITTEN \(1\)\n\s+14118\s+Ernesto de la Cruz - Idol of Millions\s+Ruby\s+Common/,
     );
     expect(text).not.toContain('Miguel Rivera');
+  });
+
+  it('lists a written card under the name it was written with, without accents', () => {
+    const chloe = {
+      status: 'written',
+      id: 14009,
+      number: 9,
+      title: 'Test Chloé - Café Owner',
+      card: {name: 'Test Chloé', version: 'Café Owner', inks: ['Amber'], rarity: 'Rare'},
+    };
+    expect(formatReport(run({chloe}), {cards: {}}, '2026-09-26')).toMatch(
+      /14009\s+Test Chloe - Cafe Owner\s+Amber\s+Rare/,
+    );
   });
 
   it('calls a card ready to write before the write step has run', () => {
@@ -70,13 +83,13 @@ describe('formatReport', () => {
       mulan: {
         status: 'deferred',
         reason: 'site-record-incomplete',
-        detail: 'abilities listed as Unknown',
+        detail: 'classifications missing',
         number: 127,
         title: 'Mulan - Martial Arts Master',
       },
     };
     expect(formatReport(run(cards), {cards: {}}, '2026-09-26')).toMatch(
-      /waiting 0 days\s+site record incomplete: abilities listed as Unknown$/m,
+      /waiting 0 days\s+site record incomplete: classifications missing$/m,
     );
   });
 
