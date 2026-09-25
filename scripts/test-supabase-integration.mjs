@@ -64,6 +64,23 @@ function fail(name, detail) {
   console.error(`  ✗ ${name}: ${detail}`);
 }
 
+/**
+ * Test 9: anon must not read raw vote identity (only the pair_scores aggregate is
+ * public). Passes only on 42501 (insufficient_privilege): any other error proves
+ * nothing about permissions, so it fails. Kept out of run() so run()'s complexity
+ * does not grow (CodeScene gate).
+ */
+async function checkIpHashNotReadable() {
+  const { data, error } = await supabase.from('votes').select('ip_hash').limit(1);
+  if (error?.code === '42501') {
+    pass(`ip_hash not readable (${error.code})`);
+  } else if (error) {
+    fail('ip_hash check', `unexpected error ${error.code ?? 'unknown'}: ${error.message}`);
+  } else {
+    fail('ip_hash readable', `anon read ${data?.length ?? 0} row(s)`);
+  }
+}
+
 async function run() {
   console.log('Supabase Integration Tests');
   console.log(`  URL: ${url}`);
@@ -180,6 +197,9 @@ async function run() {
       ? pass('direct DELETE has no effect (row still exists)')
       : fail('direct DELETE', `total_votes=${data?.total_votes}, expected 1`);
   }
+
+  // --- Test 9: Raw vote identity is not readable (only the pair_scores aggregate is) ---
+  await checkIpHashNotReadable();
 
   // --- Summary ---
   console.log('');
