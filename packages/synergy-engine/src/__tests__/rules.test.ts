@@ -1003,7 +1003,7 @@ describe('Named Companions', () => {
     });
     const kevin = createCard({id: 'kevin', name: 'Kevin'});
     const synergies = namedRule.findSynergies(focusedSearch, [focusedSearch, kevin]);
-    expect(synergies.map((s) => s.card.id)).toEqual(['kevin']);
+    expect(synergies.map((s) => [s.card.id, s.score])).toEqual([['kevin', 5]]);
   });
 
   it("should match a name printed with a typographic apostrophe (Belle's City Guide)", () => {
@@ -1015,7 +1015,7 @@ describe('Named Companions', () => {
     });
     const cityGuide = createCard({id: 'city-guide', name: "Belle's City Guide", type: 'Item'});
     const synergies = namedRule.findSynergies(belle, [belle, cityGuide]);
-    expect(synergies.map((s) => s.card.id)).toEqual(['city-guide']);
+    expect(synergies.map((s) => [s.card.id, s.score])).toEqual([['city-guide', 5]]);
   });
 });
 

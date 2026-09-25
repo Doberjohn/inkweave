@@ -986,12 +986,13 @@ export function getNamedReferences(card: LorcanaCard): string[] {
   return [...names];
 }
 
+/** Effect tier of a named reference; NAMED_EFFECT_SCORES maps each tier to its score. */
+export type NamedEffectTier = 'game-winning' | 'strong' | 'moderate' | 'minor' | 'hostile';
+
 /**
  * Classify the effect of a named reference for scoring purposes.
  * Returns a tier based on the game effect described in the card text.
  */
-export type NamedEffectTier = 'game-winning' | 'strong' | 'moderate' | 'minor' | 'hostile';
-
 export function classifyNamedEffect(card: LorcanaCard): NamedEffectTier {
   if (!card.text) return 'minor';
   const text = normalizeCardText(card).toLowerCase();

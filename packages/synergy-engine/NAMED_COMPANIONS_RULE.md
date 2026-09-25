@@ -60,7 +60,7 @@ This handles names with:
 
 A name also ends at a sentence end, but not at every period, since "Mr. Smee" has one. `NAMED_PATTERN` ends a name at a period and space followed by something other than a letter. It cannot look at the case of the next word: the pattern is case-insensitive (the `i` flag, which the capitalized terminators after a sentence, such as "Your", rely on), so its `[A-Z]` matches any letter.
 
-The next ability's title is caught before matching instead. Ability titles are ALL-CAPS, so a separate case-sensitive pattern, `ABILITY_TITLE_START`, finds each sentence end followed by an ALL-CAPS word, and the text is split there; each piece is scanned on its own. "exert all your characters not named Mor'du. ROOTED BY FEAR" reads "Mor'du", while "Mr. Smee" stays whole, and so does a name with spaced initials such as "P. J. Pete" (a lone capital with a period is not a title). Ending the capture at the split, rather than trimming the name afterwards, also keeps a long capture from swallowing a second "named" later in the same text.
+The next ability's title is caught before matching instead. Ability titles are ALL-CAPS, so a separate case-sensitive pattern, `ABILITY_TITLE_START`, finds each sentence end followed by an ALL-CAPS word, and the text is split there; each piece is scanned on its own. "exert all your characters not named Mor'du. ROOTED BY FEAR" reads "Mor'du", while "Mr. Smee" stays whole, and so does a name with spaced initials such as "P. J. Pete" (a lone capital with a period is not a title). Ending the capture at the split, rather than trimming the name afterward, also keeps a long capture from swallowing a second "named" later in the same text.
 
 ### Pre-Processing
 
@@ -201,8 +201,8 @@ One per name the extractor once misread (#586), each seen failing before its fix
 |------|-----------------|
 | End a name at the sentence end before an ability title | Mor'du - Savage Cursed Prince's "not named Mor'du. ROOTED BY FEAR" reads "Mor'du" (the card's second ability, which names Mor'du again, is left out so it cannot mask a lost first capture) |
 | End a name before "was" and score the free play at 8 | Buzz's Arm's "named Buzz Lightyear was banished" finds Buzz Lightyear at 8, not a hostile 4 |
-| End a name before a generic alternative | Focused Search's "named Kevin or an item card" finds Kevin |
-| Match a name printed with a typographic apostrophe | Belle - Reflective Writer's "named Belle’s City Guide or an action card" finds an item named "Belle's City Guide" |
+| End a name before a generic alternative | Focused Search's "named Kevin or an item card" finds Kevin at 5 |
+| Match a name printed with a typographic apostrophe | Belle - Reflective Writer's "named Belle’s City Guide or an action card" finds an item named "Belle's City Guide" at 5 |
 
 Two tests in `cardHelpers.test.ts` pin the helpers directly: `describe('classifyNamedEffect')` reads "If a character named Buzz Lightyear was banished this turn" as game-winning, not hostile, and `describe('getNamedReferences')` keeps the spaced initials of "P. J. Pete" inside the name.
 
