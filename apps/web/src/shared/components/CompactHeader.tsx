@@ -216,7 +216,6 @@ interface HeaderSearchProps {
 }
 
 function HeaderSearch({cards, query, onChange, onSubmit, onCardSelect, viewport}: HeaderSearchProps) {
-  const [focused, setFocused] = useState(false);
   const sizing = getSearchSizing(viewport);
 
   const handleSelect = (card: LorcanaCard) => {
@@ -229,22 +228,14 @@ function HeaderSearch({cards, query, onChange, onSubmit, onCardSelect, viewport}
     onQueryChange: onChange,
     onSelect: handleSelect,
   });
+  // The hook's focus state carries the blur delay and cancels it on refocus and unmount.
+  const focused = autocomplete.isFocused;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     autocomplete.inputProps.onKeyDown(e);
     if (e.defaultPrevented) return;
     if (e.key !== 'Enter') return;
     if (onSubmit) onSubmit();
-  };
-
-  const handleFocus = () => {
-    autocomplete.inputProps.onFocus();
-    setFocused(true);
-  };
-
-  const handleBlur = () => {
-    autocomplete.inputProps.onBlur();
-    setTimeout(() => setFocused(false), 150);
   };
 
   return (
@@ -286,8 +277,6 @@ function HeaderSearch({cards, query, onChange, onSubmit, onCardSelect, viewport}
         placeholder="Search cards..."
         {...autocomplete.inputProps}
         onKeyDown={handleKeyDown}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
         data-testid="browse-search"
         style={getSearchInputStyle({focused, height: sizing.inputHeight, padding: sizing.inputPadding})}
       />

@@ -1,4 +1,4 @@
-import {forwardRef, useImperativeHandle, useRef, useState} from 'react';
+import {forwardRef, useEffect, useImperativeHandle, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SET_ABBREVIATIONS, SHADOWS, SPACING, TRUNCATE} from '../constants';
@@ -134,6 +134,45 @@ function useSheetLifecycle({isOpen, onOpen, onClose}: SheetLifecycleInput): void
     setPrevIsOpen(false);
     onClose();
   }
+}
+
+// =====================================================================
+// Delayed modal open: the card modal waits a beat so the sheet's close
+// animation starts first. Module-level so the pending-open bookkeeping
+// stays out of the main component's CC.
+// =====================================================================
+
+const MODAL_OPEN_DELAY_MS = 50;
+
+interface PendingModalOpen {
+  timer: ReturnType<typeof setTimeout>;
+  open: () => void;
+}
+
+function useDelayedModalOpen(openCardModal: (cardId: string) => void): (cardId: string) => void {
+  const pendingRef = useRef<PendingModalOpen | null>(null);
+
+  // No timer may outlive the sheet: one firing after teardown sets state in a torn-down tree
+  // (CI's "window is not defined" crash). If the sheet unmounts mid-delay while the app stays
+  // up (the viewport leaving the mobile breakpoint), the pending card opens right away instead.
+  useEffect(
+    () => () => {
+      const pending = pendingRef.current;
+      if (!pending) return;
+      clearTimeout(pending.timer);
+      pending.open();
+    },
+    [],
+  );
+
+  return (cardId: string) => {
+    clearTimeout(pendingRef.current?.timer);
+    const open = () => {
+      pendingRef.current = null;
+      openCardModal(cardId);
+    };
+    pendingRef.current = {timer: setTimeout(open, MODAL_OPEN_DELAY_MS), open};
+  };
 }
 
 // =====================================================================
@@ -558,12 +597,13 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
     const [query, setQuery] = useState('');
     const [recentSearches, setRecentSearches] = useState<string[]>([]);
     const {mounted, visible, onTransitionEnd} = useTransitionPresence(isOpen);
+    const openCardModalDelayed = useDelayedModalOpen(openCardModal);
 
     const handleSelect = (card: LorcanaCard) => {
       addRecentSearch(card.fullName);
       onClose();
       // Small delay so close animation starts before opening modal
-      setTimeout(() => openCardModal(card.id), 50);
+      openCardModalDelayed(card.id);
     };
 
     const autocomplete = useAutocomplete({

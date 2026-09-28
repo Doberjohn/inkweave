@@ -235,6 +235,36 @@ describe('useAutocomplete', () => {
     expect(result.current.isOpen).toBe(false);
   });
 
+  it('keeps isFocused through a refocus within the blur delay', () => {
+    const {result} = renderHook(() => useAutocomplete(defaultOptions()));
+    act(() => {
+      result.current.inputProps.onFocus();
+    });
+    act(() => {
+      result.current.inputProps.onBlur();
+    });
+    act(() => {
+      result.current.inputProps.onFocus();
+    });
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    // The refocus cancelled the pending blur, so focus styling must not drop out.
+    expect(result.current.isFocused).toBe(true);
+  });
+
+  it('does not leak a blur timer when blurred twice before unmount', () => {
+    const {result, unmount} = renderHook(() => useAutocomplete(defaultOptions()));
+    act(() => {
+      result.current.inputProps.onBlur();
+    });
+    act(() => {
+      result.current.inputProps.onBlur();
+    });
+    unmount();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it('mouseEnter on option updates highlightedIndex', () => {
     const {result} = renderHook(() => useAutocomplete({...defaultOptions(), query: 'Elsa'}));
     act(() => {

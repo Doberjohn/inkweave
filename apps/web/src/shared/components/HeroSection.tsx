@@ -1,4 +1,3 @@
-import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, Z_INDEX} from '../constants';
 import {useAutocomplete} from '../hooks';
@@ -152,7 +151,6 @@ export function HeroSection({
   onVote,
   isMobile,
 }: HeroSectionProps) {
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const styles = getStyles(!!isMobile);
 
   const handleAutoSelect = (card: LorcanaCard) => onCardSelect?.(card);
@@ -163,6 +161,8 @@ export function HeroSection({
     onQueryChange: onSearchChange,
     onSelect: handleAutoSelect,
   });
+  // The hook's focus state carries the blur delay and cancels it on refocus and unmount.
+  const isSearchFocused = autocomplete.isFocused;
 
   const mobile = !!isMobile;
   const ctaHeight = mobile ? 48 : 44;
@@ -199,14 +199,6 @@ export function HeroSection({
               if (!e.defaultPrevented && e.key === 'Enter') {
                 onSearchSubmit?.();
               }
-            }}
-            onFocus={() => {
-              autocomplete.inputProps.onFocus();
-              setIsSearchFocused(true);
-            }}
-            onBlur={() => {
-              autocomplete.inputProps.onBlur();
-              setTimeout(() => setIsSearchFocused(false), 150);
             }}
             data-testid="hero-search"
             style={{
