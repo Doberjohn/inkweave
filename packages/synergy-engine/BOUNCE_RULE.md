@@ -56,7 +56,7 @@ class gate: /[Rr]eturn\s+(?:another\s+)?chosen\s+([A-Z][\w']*(?:\s+[A-Z][\w']*)*
 - The classification read is case-sensitive on purpose: a capitalised run ("Seven Dwarfs") is a classification, a lowercase adjective ("exerted", "another") is not.
 - `bounceGateAdmits(gate, body)` = `body.cost <= costCap` (null = uncapped, admits everything) AND `hasClassification(body, classification)` when one is gated. Precedents for cost-gating a pairing: the Free Play rule's hard `card.cost === 1` filter and the Singer rule's `song.cost <= singerValue`.
 
-Gated enablers in the current pool (8 of 16): Pocahontas & Meeko - Adventurous Friends (cap 1); Poor Unfortunate Souls, Nana - Canine Caregiver, Tigger - Bouncing All the Way, Vixey - Expert Fisher, Narrow Escape (cap 2); Begone! (cap 3); Snow White - Merry as the Morning (Seven Dwarfs).
+Gated enablers in the current pool (9 of 17): Pocahontas & Meeko - Adventurous Friends (cap 1); Poor Unfortunate Souls, Nana - Canine Caregiver, Tigger - Bouncing All the Way, Vixey - Expert Fisher, Narrow Escape, Owen Burnett - Xanatos's Assistant (cap 2); Begone! (cap 3); Snow White - Merry as the Morning (Seven Dwarfs).
 
 **Known limitation:** the gate is read from the card's first matching return clause, not from the specific clause that granted the enabler role, so a card carrying a *capped opponent-side* bounce and a separate *uncapped self-bounce* would have the cap applied to its re-buy pairs. No card in the current pool has that shape (all 17 enablers carry exactly one gate-bearing return clause), and role detection is whole-text for the same reason, so scoping both to a clause is deferred until a card needs it.
 
