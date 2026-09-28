@@ -128,6 +128,7 @@ const CASES = [
     'powershell -Exec, an abbreviated value parameter',
   ],
   [B, 'powershell -Win Hidden -Command "git reset --hard"', HARD, OK, 'powershell -Win Hidden'],
+  [B, 'pwsh -Win Hidden -c "gh issue create"', OK, ISSUE, 'pwsh -Win Hidden before gh'],
   [B, 'pwsh -WorkingDir x -Command "git push"', PUSH, OK, 'pwsh -WorkingDir'],
   [B, 'pwsh -i -c "git push"', PUSH, OK, 'pwsh -i is a flag, not a value'],
   [B, `powershell -EncodedCommand ${encoded('git push')}`, PUSH, OK, 'powershell -EncodedCommand'],
