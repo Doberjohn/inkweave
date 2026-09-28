@@ -15,6 +15,11 @@ interface UseAutocompleteOptions {
 export interface UseAutocompleteReturn {
   suggestions: LorcanaCard[];
   isOpen: boolean;
+  /**
+   * True while the input has focus (searchImmediate also sets it) and for the blur delay after;
+   * a refocus cancels that delay.
+   */
+  isFocused: boolean;
   highlightedIndex: number;
   inputProps: {
     value: string;
@@ -156,7 +161,9 @@ export function useAutocomplete({
   };
 
   const handleBlur = () => {
-    // Delay blur to allow mousedown on suggestion items to fire before dropdown closes
+    // Delay blur to allow mousedown on suggestion items to fire before dropdown closes.
+    // Clear first: an orphaned timer would escape the unmount cleanup, which only sees the ref.
+    clearTimeout(blurTimeoutRef.current);
     blurTimeoutRef.current = setTimeout(() => {
       setIsFocused(false);
       setHighlightedIndex(-1);
@@ -185,6 +192,7 @@ export function useAutocomplete({
   return {
     suggestions,
     isOpen,
+    isFocused,
     highlightedIndex,
     inputProps: {
       value: query,

@@ -76,4 +76,21 @@ describe('HeroSection', () => {
     const section = screen.getByTestId('hero-section');
     expect(section.tagName).toBe('SECTION');
   });
+
+  it('cancels the search blur timer on unmount (no leaked timer)', () => {
+    vi.useFakeTimers();
+    try {
+      const {unmount} = render(<HeroSection {...defaultProps} />);
+      const input = screen.getByTestId('hero-search');
+      fireEvent.focus(input);
+      fireEvent.blur(input);
+      expect(vi.getTimerCount()).toBe(1); // only the hook's 150ms blur timer is pending
+      unmount();
+      // A leaked timer firing setState into a torn-down tree crashed CI's coverage run
+      // with "window is not defined"; the cleanup must cancel it on unmount.
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
