@@ -3785,6 +3785,81 @@
       "strength": 0,
       "willpower": 2,
       "lore": 1
+    },
+    {
+      "id": 14006,
+      "name": "Miriam Mendelsohn",
+      "fullName": "Miriam Mendelsohn - Front Row Fan",
+      "cost": 1,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 6,
+      "version": "Front Row Fan",
+      "rarity": "Uncommon",
+      "franchise": "Turning Red",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Support",
+          "fullText": "Support"
+        }
+      ],
+      "fullText": "Support (Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn.)",
+      "fullTextSections": [
+        "Support (Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn.)"
+      ],
+      "strength": 1,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 14098,
+      "name": "Irritating Provocation",
+      "fullName": "Irritating Provocation",
+      "cost": 1,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "14",
+      "number": 98,
+      "rarity": "Common",
+      "franchise": "TaleSpin",
+      "fullText": "Until the start of your next turn, chosen opposing character gains Reckless and, if you have 2 or more opponents, can’t challenge your characters or locations. (They can’t quest and must challenge if able.)",
+      "fullTextSections": [
+        "Until the start of your next turn, chosen opposing character gains Reckless and, if you have 2 or more opponents, can’t challenge your characters or locations. (They can’t quest and must challenge if able.)"
+      ]
+    },
+    {
+      "id": 14126,
+      "name": "Lady Tremaine",
+      "fullName": "Lady Tremaine - Scornful Snob",
+      "cost": 3,
+      "color": "Ruby",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "14",
+      "number": 126,
+      "version": "Scornful Snob",
+      "rarity": "Super Rare",
+      "franchise": "Cinderella",
+      "subtypes": [
+        "Storyborn",
+        "Villain"
+      ],
+      "fullText": "DELICATE SENSIBILITIES Once during your turn, whenever you play a song, you may deal 1 damage to this character. If you do, draw a card.\nHARSH CRITIQUE Opposing characters with Singer enter play with 1 damage.",
+      "fullTextSections": [
+        "DELICATE SENSIBILITIES Once during your turn, whenever you play a song, you may deal 1 damage to this character. If you do, draw a card.",
+        "HARSH CRITIQUE Opposing characters with Singer enter play with 1 damage."
+      ],
+      "strength": 0,
+      "willpower": 3,
+      "lore": 2
     }
   ]
 }

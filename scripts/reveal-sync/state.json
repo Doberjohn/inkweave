@@ -1,7 +1,7 @@
 {
   "sets": {
     "14": {
-      "indexTotal": 148,
+      "indexTotal": 149,
       "cards": {
         "a-dark-age-no-more": {
           "number": 162,
@@ -364,6 +364,13 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "irritating-provocation": {
+          "number": 98,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: Italian scan as art, lorcanaplayer English name and text",
+          "firstSeen": "2026-09-28"
+        },
         "jasper-dodgy-boater": {
           "number": 114,
           "status": "written",
@@ -429,9 +436,8 @@
         },
         "lady-tremaine-scornful-snob": {
           "number": 126,
-          "status": "deferred",
-          "reason": "scan-not-english",
-          "detail": "printed language IT",
+          "status": "written",
+          "detail": "art: lorcanaplayer's English scan (the official scan is Italian); a reader checked every field against it",
           "firstSeen": "2026-09-28"
         },
         "lafayette-all-ears": {
@@ -553,9 +559,9 @@
         },
         "miriam-mendelsohn-front-row-fan": {
           "number": 6,
-          "status": "deferred",
-          "reason": "scan-not-english",
-          "detail": "official reveal is not in English",
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: German scan as art, lorcanaplayer English name and text",
           "firstSeen": "2026-09-28"
         },
         "molly-cunningham-remembers-to-share": {
