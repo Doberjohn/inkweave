@@ -1,12 +1,22 @@
 {
   "sets": {
     "14": {
-      "indexTotal": 104,
+      "indexTotal": 148,
       "cards": {
+        "a-dark-age-no-more": {
+          "number": 162,
+          "status": "written",
+          "firstSeen": "2026-09-28"
+        },
         "abby-park-intense-fan": {
           "number": 104,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "abigail-amelia-gossiping-geese": {
+          "number": 143,
+          "status": "written",
+          "firstSeen": "2026-09-28"
         },
         "above-the-crowd": {
           "number": 95,
@@ -30,10 +40,22 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "archimedes-has-had-enough": {
+          "number": 41,
+          "status": "written",
+          "firstSeen": "2026-09-28"
+        },
         "archimedes-messenger-owl": {
           "number": 58,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "arthur-jousting-knight": {
+          "number": 193,
+          "status": "conflict",
+          "reason": "number-taken",
+          "detail": "#193 is already in Inkweave as \"Arthur - Tournament Knight\"",
+          "firstSeen": "2026-09-28"
         },
         "arthur-merlins-assistant": {
           "number": 172,
@@ -72,6 +94,11 @@
           "number": 85,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "baymax-qualified-physician": {
+          "number": 140,
+          "status": "written",
+          "firstSeen": "2026-09-28"
         },
         "belle-exceptional-writer": {
           "number": 90,
@@ -113,6 +140,11 @@
           "detail": "owner, 2026-09-24: not to be added",
           "firstSeen": "2026-09-24"
         },
+        "carl-fredricksen-wilderness-guide": {
+          "number": 137,
+          "status": "written",
+          "firstSeen": "2026-09-28"
+        },
         "chief-bogo-police-commissioner": {
           "number": 183,
           "status": "written",
@@ -134,6 +166,11 @@
           "reason": "provisional-translation",
           "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
           "firstSeen": "2026-09-24"
+        },
+        "creative-inspiration": {
+          "number": 65,
+          "status": "written",
+          "firstSeen": "2026-09-28"
         },
         "cruella-de-vil-dodging-traffic": {
           "number": 113,
@@ -221,6 +258,11 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "fru-fru-vip-guest": {
+          "number": 1,
+          "status": "written",
+          "firstSeen": "2026-09-28"
+        },
         "go-go-tomago-extended-investigation": {
           "number": 145,
           "status": "written",
@@ -237,6 +279,11 @@
           "number": 105,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "goofy-enthusiastic-tourist": {
+          "number": 111,
+          "status": "written",
+          "firstSeen": "2026-09-28"
         },
         "goofy-with-the-band": {
           "number": 22,
@@ -284,10 +331,20 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "horace-clumsy-clod": {
+          "number": 82,
+          "status": "written",
+          "firstSeen": "2026-09-28"
+        },
         "hyperia-city-express": {
           "number": 201,
           "status": "written",
           "firstSeen": "2026-09-25"
+        },
+        "if-she-doesnt-scare-you": {
+          "number": 130,
+          "status": "written",
+          "firstSeen": "2026-09-28"
         },
         "ink-explosion": {
           "number": 198,
@@ -344,11 +401,26 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "king-louie-ice-cream-virtuoso": {
+          "number": 141,
+          "status": "written",
+          "firstSeen": "2026-09-28"
+        },
+        "kit-cloudkicker-irrepressible-bear": {
+          "number": 74,
+          "status": "written",
+          "firstSeen": "2026-09-28"
+        },
         "kit-cloudkicker-unpredictable-courier": {
           "number": 174,
           "status": "written",
           "detail": "art: owner-supplied scan, no official scan yet",
           "firstSeen": "2026-09-25"
+        },
+        "koslov-imposing-enforcer": {
+          "number": 189,
+          "status": "written",
+          "firstSeen": "2026-09-28"
         },
         "lady-taking-it-easy": {
           "number": 79,
@@ -356,6 +428,13 @@
           "reason": "provisional-translation",
           "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
           "firstSeen": "2026-09-24"
+        },
+        "lady-tremaine-scornful-snob": {
+          "number": 126,
+          "status": "deferred",
+          "reason": "scan-not-english",
+          "detail": "printed language IT",
+          "firstSeen": "2026-09-28"
         },
         "lafayette-all-ears": {
           "number": 142,
@@ -474,10 +553,22 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "miriam-mendelsohn-front-row-fan": {
+          "number": 6,
+          "status": "deferred",
+          "reason": "scan-not-english",
+          "detail": "official reveal is not in English",
+          "firstSeen": "2026-09-28"
+        },
         "molly-cunningham-remembers-to-share": {
           "number": 73,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "mr-big-distribution-magnate": {
+          "number": 194,
+          "status": "written",
+          "firstSeen": "2026-09-28"
         },
         "mulan-martial-arts-master": {
           "number": 127,
@@ -485,6 +576,11 @@
           "reason": "owner-excluded",
           "detail": "owner, 2026-09-24: not to be added",
           "firstSeen": "2026-09-24"
+        },
+        "never-gonna-let-you-cry": {
+          "number": 30,
+          "status": "written",
+          "firstSeen": "2026-09-28"
         },
         "nick-wilde-inquisitive-harbormaster": {
           "number": 11,
@@ -536,6 +632,11 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "pete-suave-showoff": {
+          "number": 5,
+          "status": "written",
+          "firstSeen": "2026-09-28"
+        },
         "port-authority-center-hub": {
           "number": 34,
           "status": "written",
@@ -562,6 +663,11 @@
           "number": 55,
           "status": "written",
           "firstSeen": "2026-09-25"
+        },
+        "rebecca-cunningham-savvy-manager": {
+          "number": 80,
+          "status": "written",
+          "firstSeen": "2026-09-28"
         },
         "remember-me": {
           "number": 29,
@@ -606,6 +712,16 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "sir-kay-determined-to-win": {
+          "number": 181,
+          "status": "written",
+          "firstSeen": "2026-09-28"
+        },
+        "sir-pellinore-tougher-than-he-looks": {
+          "number": 184,
+          "status": "written",
+          "firstSeen": "2026-09-28"
+        },
         "stacey-powerline-superfan": {
           "number": 116,
           "status": "written",
@@ -630,6 +746,16 @@
           "number": 196,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "tick-tock-canal-croc": {
+          "number": 175,
+          "status": "written",
+          "firstSeen": "2026-09-28"
+        },
+        "tinker-bell-curious-fairy": {
+          "number": 45,
+          "status": "written",
+          "firstSeen": "2026-09-28"
         },
         "torn-scrap": {
           "number": 133,
