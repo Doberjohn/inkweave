@@ -119,8 +119,8 @@ const SHIFT_CONDITION_MATCHERS: ShiftConditionMatcher[] = [
 /** Check if a base card can satisfy the conditional Shift requirement of a Shift card */
 function baseActivatesShiftCondition(shiftCard: LorcanaCard, baseCard: LorcanaCard): boolean {
   if (!shiftCard.text || !baseCard.text) return false;
-  const shiftText = shiftCard.text.replace(/\n/g, ' ');
-  const baseText = baseCard.text.replace(/\n/g, ' ');
+  const shiftText = normalizeCardText(shiftCard);
+  const baseText = normalizeCardText(baseCard);
 
   return SHIFT_CONDITION_MATCHERS.some(
     (matcher) => matcher.condition.test(shiftText) && matcher.satisfiedBy.test(baseText),

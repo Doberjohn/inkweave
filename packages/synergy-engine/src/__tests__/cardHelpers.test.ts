@@ -10,6 +10,7 @@ import {
   getNamedReferences,
   classifyNamedEffect,
   NAMED_EFFECT_SCORES,
+  normalizeCardText,
 } from '../utils';
 import {createCard} from './fixtures.js';
 
@@ -432,6 +433,13 @@ describe('named companion utilities', () => {
       expect(classifyNamedEffect(card)).toBe('moderate');
     });
 
+    it('reads "can’t be challenged" printed with a typographic apostrophe as moderate', () => {
+      const card = createCard({
+        text: 'Your characters named Pete can’t be challenged.',
+      });
+      expect(classifyNamedEffect(card)).toBe('moderate');
+    });
+
     it('detects hostile: banish near named (same clause)', () => {
       const card = createCard({
         text: 'You may banish chosen character named Elsa.',
@@ -470,5 +478,12 @@ describe('named companion utilities', () => {
       expect(NAMED_EFFECT_SCORES.minor).toBe(5);
       expect(NAMED_EFFECT_SCORES.hostile).toBe(4);
     });
+  });
+});
+
+describe('normalizeCardText', () => {
+  it('joins lines and straightens typographic apostrophes', () => {
+    const card = createCard({text: 'They can’t ready.\nGET ‘EM'});
+    expect(normalizeCardText(card)).toBe("They can't ready. GET 'EM");
   });
 });

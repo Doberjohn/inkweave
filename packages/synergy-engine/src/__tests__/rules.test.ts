@@ -557,6 +557,13 @@ describe('Synergy Rules', () => {
           shiftText: conditionText,
           baseText: conditionBaseText,
         },
+        {
+          label: 'base activates a condition printed with typographic apostrophes → 10',
+          baseCost: 2,
+          expected: 10,
+          shiftText: conditionText.replace("'", '’'),
+          baseText: conditionBaseText.replace("'", '’'),
+        },
         {label: 'cheap base (cost <= 3) → 9', baseCost: 2, expected: 9},
         {label: 'mid-cost base (cost 4-5) → 7', baseCost: 4, expected: 7},
         {label: 'expensive base (cost 6+) → 5', baseCost: 7, expected: 5},
@@ -1105,6 +1112,11 @@ describe('Location Synergy Rules', () => {
 
     it('should detect buff on Felix Steward', () => {
       expect(getLocationRoles(felixSteward)).toContain('buff');
+    });
+
+    it('reads a location buff printed with a typographic apostrophe', () => {
+      const card = createCard({text: 'Chosen location can’t be challenged until the start of your next turn.'});
+      expect(getLocationRoles(card)).toContain('buff');
     });
 
     it('splits move-trigger (moves to a location) apart from play-trigger', () => {
@@ -3251,6 +3263,11 @@ describe('Bounce rule (return from play to hand)', () => {
     });
     it('reads a classification gate', () => {
       expect(getBounceTargetGate(snowWhite).classification).toBe('Seven Dwarfs');
+    });
+    it('reads a flexible bounce and its cap from typographic-apostrophe text (Owen Burnett, Set 14)', () => {
+      const owen = createCard({id: 'owen', fullName: "Owen Burnett - Xanatos's Assistant", text: 'CUT YOUR LOSSES When you play this character, you may return chosen character, item, or location with cost 2 or less to their player’s hand.'});
+      expect(getBounceRoles(owen)).toEqual(['flexible']);
+      expect(getBounceTargetGate(owen)).toEqual({costCap: 2, classification: null});
     });
   });
 
