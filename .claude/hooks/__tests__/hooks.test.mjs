@@ -320,6 +320,28 @@ const CASES = [
   [B, 'USER_APPROVED=1 git status; for r in a; do git push; done | tail', PIPE, OK, 'piped loop'],
   [B, 'USER_APPROVED=1 git status; time (git push) 2>&1 | tail', PIPE, OK, 'piped timed subshell'],
   [B, 'USER_APPROVED=1 git status; ! { git push; } | tail', PIPE, OK, 'piped negated brace group'],
+  [B, 'USER_APPROVED=1 echo "$(git push 2>&1)" | tail -5', PIPE, OK, 'substitution output piped'],
+  [
+    B,
+    'USER_APPROVED=1 powershell -Command "(git push) | Out-Null"',
+    PIPE,
+    OK,
+    'PS group piped inside an approved call',
+  ],
+  [
+    B,
+    'USER_APPROVED=1 powershell -Command "& { git push } | Out-Null"',
+    PIPE,
+    OK,
+    'PS script block piped inside an approved call',
+  ],
+  [
+    B,
+    'USER_APPROVED=1 powershell -Command "$(git push) | Out-Null"',
+    PIPE,
+    OK,
+    'PS subexpression piped inside an approved call',
+  ],
   [
     B,
     'USER_APPROVED=1 git add -A && if true; then { git commit -m x && git push; } 2>&1 | tail -20; fi',
@@ -382,6 +404,9 @@ const CASES = [
   [B, 'git clean -xdf', HARD, OK, 'clean -xdf'],
   [B, 'git clean -d -f', HARD, OK, 'clean -d -f'],
   [B, 'git clean --force', HARD, OK, 'clean --force'],
+  [B, 'git clean --dry-run -- -f', OK, OK, 'a -f path after -- is not force'],
+  [B, 'git reset -- --hard', OK, OK, 'a --hard path after -- is not a mode'],
+  [B, 'git clean -f -- build', HARD, OK, 'clean -f before a path'],
   [B, 'git -C . clean -fdx', HARD, OK, 'clean behind -C'],
   [B, 'git reset --har HEAD~1', HARD, OK, 'abbreviated --hard'],
   [B, 'git reset --mix HEAD~1', HARD, OK, 'abbreviated --mixed'],
@@ -519,6 +544,21 @@ const CASES = [
     'PS escaped subexpression',
   ],
   [P, '<#\ngit push\ngit reset --hard\n#>\ngit status', OK, OK, 'PS block comment'],
+  [P, 'Write-Output "<#"; git reset --hard #>', HARD, OK, 'PS <# inside a string hides nothing'],
+  [
+    P,
+    'Write-Output hi # note <#\ngit reset --hard\n# #>',
+    HARD,
+    OK,
+    'PS <# inside a line comment hides nothing',
+  ],
+  [
+    P,
+    'Invoke-Command { git push } -NoNewScope | Out-Null',
+    PIPE,
+    OK,
+    'PS script block argument piped',
+  ],
   [P, 'cmd /c "git push"', PUSH, OK, 'PS cmd /c with the whole command quoted'],
   [P, 'cmd /c "gh issue create --title x"', OK, ISSUE, 'PS cmd /c with quoted gh issue create'],
   [P, "cmd /c git status '&&' git push", PUSH, OK, 'PS hands && to cmd unquoted'],
@@ -741,6 +781,18 @@ describe('hook wrappers', {timeout: SPAWN_TIMEOUT}, () => {
     expect(gitUpper.code, 'the fallback match ignores case').toBe(2);
     expect(gitOther.code, gitOther.stderr).toBe(0);
     expect(issue.code, issue.stderr).toBe(2);
+  });
+
+  it('fail closed on the command field alone, with git as a whole word', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'hook-wrapper-'));
+    copyFileSync(path.join(HOOKS_DIR, GIT_HOOK), path.join(dir, GIT_HOOK));
+    const inGitDir = {tool_name: B, cwd: 'D:/git/repo', tool_input: {command: 'echo legitimate'}};
+    const [legitimate, afterNewline] = await Promise.all([
+      runHook(path.join(dir, GIT_HOOK), inGitDir),
+      runHook(path.join(dir, GIT_HOOK), payload(B, 'echo hi\ngit push')),
+    ]);
+    expect(legitimate.code, 'git inside a word or the cwd does not count').toBe(0);
+    expect(afterNewline.code, 'a JSON line-break escape counts as a space').toBe(2);
   });
 });
 

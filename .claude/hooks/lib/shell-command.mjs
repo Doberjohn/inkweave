@@ -58,9 +58,15 @@ export function commandsIn(source, dialect = BASH, depth = 0) {
   const {segments, subs} = new Tokenizer(stripped.text, dialect, stripped.docs).run();
   const own = segments.flatMap((segment) => expand(segment, dialect, depth));
   const nested = [...stripped.subs, ...subs].flatMap((sub) =>
-    commandsIn(sub.text, sub.dialect, depth + 1),
+    pipedWhen(segments[sub.owner]?.piped, commandsIn(sub.text, sub.dialect, depth + 1)),
   );
   return [...own, ...nested];
+}
+
+// A substitution's output goes where its command's output goes: echo "$(git push)" | tail
+// hides the push's status just as git push | tail does.
+function pipedWhen(piped, commands) {
+  return piped ? commands.map((command) => ({...command, piped: true})) : commands;
 }
 
 // Nesting this deep is not an accident. Throwing makes the guards fail closed.
@@ -133,25 +139,58 @@ export function ghInvocation(argv) {
  * unquoted heredoc or an expandable here-string still runs.
  */
 function stripDocs(source, dialect) {
-  if (dialect === POWERSHELL) return stripHereStrings(source);
+  if (dialect === POWERSHELL) return stripPowerShellDocs(source);
   if (dialect === BASH && source.includes('<<')) return stripHeredocs(source);
   return {text: source, docs: [], subs: []};
 }
 
-// A PowerShell here-string, or a <# #> block comment. A here-string opens a token, so
-// the @' that ends a string like 'someone@' does not count.
-const HERE_STRING_OR_COMMENT =
-  /(?<=^|[\s=(,;|&])@(['"])[ \t]*\r?\n([\s\S]*?)\r?\n\1@|<#[\s\S]*?#>/g;
+// PowerShell comments go and here-strings become one literal argument. A scan, not a
+// regex, so a "<#" inside a string or a `# ... <#` line comment hides nothing.
+function stripPowerShellDocs(source) {
+  const st = {src: source, i: 0, out: '', subs: []};
+  while (st.i < source.length) {
+    if (!PS_DOC_CHAR[source[st.i]]?.(st)) copy(st, 1);
+  }
+  return {text: st.out, docs: [], subs: st.subs};
+}
 
-function stripHereStrings(source) {
-  const subs = [];
-  const text = source.replace(HERE_STRING_OR_COMMENT, (match, quote, body) => {
-    if (!quote) return ' '; // a block comment
-    if (quote === '"') subs.push(...substitutionsIn(body, POWERSHELL));
-    // The same text as one literal argument, so Invoke-Expression @'...'@ still reads it.
-    return `'${body.replace(/'/g, "''")}'`;
-  });
-  return {text, docs: [], subs};
+const copyString = (st) => copied(st, closingQuote(st.src, st.i, POWERSHELL) + 1 - st.i);
+const PS_DOC_CHAR = {
+  '`': (st) => copied(st, 2),
+  "'": copyString,
+  '"': copyString,
+  '@': (st) => takeHereString(st),
+  '<': (st) => st.src[st.i + 1] === '#' && skipBlockComment(st),
+  '#': (st) => startsWordAt(st.src, st.i) && skipComment(st),
+};
+
+function copied(st, length) {
+  copy(st, length);
+  return true;
+}
+
+// A here-string opens a token (so the @' ending a string like 'someone@' is none) and
+// ends at a line starting with its quote and @. It becomes the same text as one literal
+// argument, so Invoke-Expression @'...'@ still reads it.
+const HERE_STRING = /@(['"])[ \t]*\r?\n([\s\S]*?)\r?\n\1@/y;
+
+function takeHereString(st) {
+  if (!/^$|[\s=(,;|&]/.test(st.src[st.i - 1] ?? '')) return false;
+  HERE_STRING.lastIndex = st.i;
+  const match = HERE_STRING.exec(st.src);
+  if (!match) return false;
+  const [whole, quote, body] = match;
+  if (quote === '"') st.subs.push(...substitutionsIn(body, POWERSHELL));
+  st.out += `'${body.replace(/'/g, "''")}'`;
+  st.i += whole.length;
+  return true;
+}
+
+function skipBlockComment(st) {
+  const end = st.src.indexOf('#>', st.i + 2);
+  st.i = end === -1 ? st.src.length : end + 2;
+  st.out += ' ';
+  return true;
 }
 
 /** The $(...) command substitutions in a text, plus backtick ones in bash. Escaped ones do not run. */
@@ -407,9 +446,9 @@ const CHARS = {
   [POWERSHELL]: {
     ...COMMON_CHARS,
     '(': 'psParen',
-    ')': 'separator',
-    '{': 'separator',
-    '}': 'separator',
+    ')': 'closeGroup',
+    '{': 'openBlock',
+    '}': 'closeGroup',
     '`': 'escape',
     $: 'dollar',
     '@': 'at',
@@ -600,7 +639,7 @@ class Tokenizer {
   // in the current word, and its inside is analyzed as a command line of its own.
   substitution(open = this.i + 1) {
     const end = closingParen(this.src, open, this.dialect);
-    this.subs.push({text: this.src.slice(open + 1, end), dialect: this.dialect});
+    this.addSubs([{text: this.src.slice(open + 1, end), dialect: this.dialect}]);
     this.append(this.src.slice(this.i, end + 1));
     this.i = end;
   }
@@ -610,7 +649,7 @@ class Tokenizer {
   dataSpan(open) {
     const end = closingParen(this.src, open, this.dialect);
     const span = this.src.slice(this.i, end + 1);
-    this.subs.push(...substitutionsIn(span, this.dialect));
+    this.addSubs(substitutionsIn(span, this.dialect));
     this.append(span);
     this.i = end;
   }
@@ -618,15 +657,29 @@ class Tokenizer {
   backtick(c) {
     const end = closingBacktick(this.src, this.i);
     if (end === -1) return this.append(c);
-    this.subs.push({text: this.src.slice(this.i + 1, end), dialect: BASH});
+    this.addSubs([{text: this.src.slice(this.i + 1, end), dialect: BASH}]);
     this.append(this.src.slice(this.i, end + 1));
     this.i = end;
+  }
+
+  // Each substitution belongs to the command being read, which gets the next segment index.
+  addSubs(subs) {
+    const owner = this.segments.length;
+    this.subs.push(...subs.map((sub) => ({...sub, owner})));
   }
 
   openGroup() {
     if (this.hasWord && this.word.endsWith('=')) return this.dataSpan(this.i); // name=( ) array
     // A subshell starts a command, possibly after `time`, `!` or a keyword like `then`.
-    const subshell = !this.hasWord && this.words.every((word) => GROUP_PREFIXES.has(word));
+    this.startGroup(!this.hasWord && this.words.every((word) => GROUP_PREFIXES.has(word)));
+  }
+
+  // PowerShell { } script block: its output goes wherever the block goes.
+  openBlock() {
+    this.startGroup(true);
+  }
+
+  startGroup(subshell) {
     this.endCommand(false);
     this.groups.push({start: this.segments.length, subshell});
   }
@@ -641,7 +694,7 @@ class Tokenizer {
   // (Write-Output (git push), -ArgumentList ('a','b')). At the start it groups one.
   psParen() {
     if (this.hasWord || this.words.length) return this.substitution(this.i);
-    this.endCommand(false);
+    this.startGroup(true);
   }
 
   endWord() {
@@ -656,20 +709,16 @@ class Tokenizer {
     this.redirect = null;
   }
 
+  // A pipe right after a group pipes the group, even with words in between in PowerShell
+  // (Invoke-Command { git push } -NoNewScope | Out-Null). A redirect-only command
+  // (`| > out.txt`) consumes the pipe; a bare line break after `|` continues it.
   endCommand(piped) {
     this.endWord();
+    if (piped && this.lastGroup) this.markPiped(this.lastGroup.start, this.lastGroup.end);
     if (this.words.length) this.pushSegment(piped);
-    else this.endEmptyCommand(piped);
+    else if (this.redirected) this.feed = null;
     this.lastGroup = null;
     this.resetCommand();
-  }
-
-  // Nothing to run. A pipe after a ( ) group pipes the group. A redirect-only command
-  // (`| > out.txt`) consumes the pipe; a bare line break after `|` continues it, and a
-  // subshell `( )` still reads it.
-  endEmptyCommand(piped) {
-    if (piped && this.lastGroup) this.markPiped(this.lastGroup.start, this.lastGroup.end);
-    else if (this.redirected) this.feed = null;
   }
 
   pushSegment(piped) {

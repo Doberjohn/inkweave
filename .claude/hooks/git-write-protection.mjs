@@ -27,6 +27,12 @@ function isForce(arg) {
   return longOption(arg, 'force') || /^-[A-Za-z]*f[A-Za-z]*$/.test(arg);
 }
 
+// Words after `--` are paths, not options: `git clean -n -- -f` deletes nothing.
+function optionsOf(args) {
+  const end = args.indexOf('--');
+  return end === -1 ? args : args.slice(0, end);
+}
+
 // Never bypassable, USER_APPROVED=1 included.
 const HARD_RULES = [
   {
@@ -42,12 +48,13 @@ const HARD_RULES = [
   },
   {
     verb: 'reset',
-    matches: (args) => args.some((arg) => longOption(arg, 'hard') || longOption(arg, 'mixed')),
+    matches: (args) =>
+      optionsOf(args).some((arg) => longOption(arg, 'hard') || longOption(arg, 'mixed')),
     message: 'Destructive git reset detected. This can lose commits/changes. Run this manually.',
   },
   {
     verb: 'clean',
-    matches: (args) => args.some(isForce),
+    matches: (args) => optionsOf(args).some(isForce),
     message: 'git clean -f detected. This permanently deletes untracked files. Run this manually.',
   },
   {

@@ -26,12 +26,16 @@ STATUS=$?
 case $STATUS in 0 | 2) exit "$STATUS" ;; esac
 
 # The policy could not run at all (node or a module missing, a syntax error): fail
-# closed for a command that mentions git (GIT too), open for everything else.
+# closed for a command that has git as a word (GIT too), open for everything else. The
+# command is the payload's "command" field, with JSON line-break and tab escapes read
+# as spaces; without one, the whole payload is checked.
 shopt -s nocasematch
-case $INPUT in
-  *git*)
-    echo "git-write-protection failed to run its policy (exit $STATUS), so this git command is blocked to be safe. Fix the hook, or run the command manually." >&2
-    exit 2
-    ;;
-esac
+FIELD='"command"[[:space:]]*:[[:space:]]*"(([^"\\]|\\.)*)"'
+if [[ $INPUT =~ $FIELD ]]; then COMMAND=${BASH_REMATCH[1]}; else COMMAND=$INPUT; fi
+COMMAND=${COMMAND//\\[nrt]/ }
+GIT_WORD='(^|[^[:alnum:]_-])git([^[:alnum:]_]|$)'
+if [[ $COMMAND =~ $GIT_WORD ]]; then
+  echo "git-write-protection failed to run its policy (exit $STATUS), so this git command is blocked to be safe. Fix the hook, or run the command manually." >&2
+  exit 2
+fi
 exit 0
