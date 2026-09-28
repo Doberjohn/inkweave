@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.23",
-    "@sentry/react": "^10.75.1",
+    "@sentry/react": "^11.0.0",
     "@supabase/supabase-js": "^2.117.2",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
