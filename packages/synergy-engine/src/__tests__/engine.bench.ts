@@ -1,4 +1,4 @@
-import {bench, describe} from 'vitest';
+import {test} from 'vitest';
 import {SynergyEngine} from '../engine/SynergyEngine';
 import {getAllRules} from '../engine/rules';
 import {createCard} from './fixtures';
@@ -93,38 +93,38 @@ const shiftCard = createCard({
   text: 'When you play this character, each opponent chooses and discards a card.',
 });
 
-describe('SynergyEngine.findSynergies', () => {
-  bench('500 cards', () => {
-    engine.findSynergies(shiftCard, pool500);
-  });
+const targetCard = pool500[42];
 
-  bench('1000 cards', () => {
-    engine.findSynergies(shiftCard, pool1000);
-  });
-
-  bench('1500 cards', () => {
-    engine.findSynergies(shiftCard, pool1500);
-  });
+// Vitest 5: `bench` is a test-context fixture, run only by `vitest bench`.
+// bench.compare interleaves the pool sizes and prints one scaling table.
+test('SynergyEngine.findSynergies', async ({bench}) => {
+  await bench.compare(
+    bench('500 cards', () => {
+      engine.findSynergies(shiftCard, pool500);
+    }),
+    bench('1000 cards', () => {
+      engine.findSynergies(shiftCard, pool1000);
+    }),
+    bench('1500 cards', () => {
+      engine.findSynergies(shiftCard, pool1500);
+    }),
+  );
 });
 
-describe('SynergyEngine.checkSynergy', () => {
-  const targetCard = pool500[42];
-
-  bench('single pair check', () => {
+test('SynergyEngine.checkSynergy', async ({bench}) => {
+  await bench('single pair check', () => {
     engine.checkSynergy(shiftCard, targetCard);
-  });
+  }).run();
 });
 
-describe('SynergyEngine.getPairSynergies', () => {
-  const targetCard = pool500[42];
-
-  bench('bidirectional pair detail', () => {
+test('SynergyEngine.getPairSynergies', async ({bench}) => {
+  await bench('bidirectional pair detail', () => {
     engine.getPairSynergies(shiftCard, targetCard);
-  });
+  }).run();
 });
 
-describe('Rule initialization', () => {
-  bench('getAllRules', () => {
+test('Rule initialization', async ({bench}) => {
+  await bench('getAllRules', () => {
     getAllRules();
-  });
+  }).run();
 });
