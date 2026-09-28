@@ -13,8 +13,8 @@
  * - Commands nested in $(...), backticks, <(...), PowerShell (...) arguments,
  *   bash|sh -c, powershell|pwsh -Command|-EncodedCommand, cmd /c, eval,
  *   Invoke-Expression, Start-Process, find -exec, git submodule foreach, git
- *   rebase -x and runner prefixes (env, timeout, xargs, ...) are expanded, and so
- *   is a PowerShell assignment's pipeline ($x = git push).
+ *   rebase -x, watch and runner prefixes (env and its -S string, timeout, xargs,
+ *   ...) are expanded, and so is a PowerShell assignment's pipeline ($x = git push).
  * - `piped` marks a command whose stdout feeds a pipe, directly or through a
  *   ( ) or { } group, a loop, an if or a case.
  * - Nesting deeper than MAX_DEPTH throws, so the guards fail closed on it.
@@ -851,17 +851,23 @@ function stripAssignment(words) {
   return rest ? [rest, ...words.slice(1)] : words.slice(1);
 }
 
-const runner = (values = [], positionals = 0, split = false) => ({
-  values: new Set(values),
+const runner = (values = [], positionals = 0, split = []) => ({
+  values: new Set([...values, ...split]),
   positionals,
-  split,
+  split: new Set(split),
 });
 
-// Programs that run their argument words as another command: option words that
-// take a value, leading positionals to skip (timeout's duration), and whether an
-// option carries the whole command as one string (env -S).
+// Programs that run their argument words as another command: options that take a
+// value, leading positionals to skip (timeout's duration), and options whose value is
+// the whole command as one string (env -S).
 const RUNNERS = new Map([
-  ['env', runner(['-u', '--unset', '-C', '--chdir'], 0, true)],
+  [
+    'env',
+    runner(['-u', '--unset', '-C', '--chdir', '-a', '--argv0', '--env0-from'], 0, [
+      '-S',
+      '--split-string',
+    ]),
+  ],
   ['timeout', runner(['-s', '--signal', '-k', '--kill-after'], 1)],
   ['nice', runner(['-n', '--adjustment'])],
   ['nohup', runner()],
@@ -901,29 +907,123 @@ function afterRunner(argv) {
   const words = argv.slice(1);
   let positionals = spec.positionals;
   let i = 0;
-  for (; i < words.length; i++) {
-    const split = spec.split ? splitStringAt(words, i) : null;
-    if (split) return split;
-    const kind = runnerWordKind(words[i], spec);
-    if (kind === 'value') i++;
-    else if (kind === 'positional' && positionals-- <= 0) break;
+  while (i < words.length) {
+    const word = runnerWord(words, i, spec);
+    // env starts over on the split words, so they may hold options: env -S '-i git push'.
+    if (word.split !== undefined) {
+      return [argv[0], ...splitEnvString(word.split), ...words.slice(word.next)];
+    }
+    if (word.positional && positionals-- <= 0) break;
+    i = word.next;
   }
   return words.slice(i);
 }
 
-// env -S 'git push', -S'git push' and --split-string='git push' split one string into
-// the command's words.
-function splitStringAt(words, i) {
-  const match = /^(?:-S|--split-string=?)([\s\S]*)$/.exec(words[i]);
-  if (!match) return null;
-  const text = match[1] || (words[i + 1] ?? '');
-  const rest = words.slice(match[1] ? i + 1 : i + 2);
-  return [...text.split(/\s+/).filter(Boolean), ...rest];
+// The runner word at i: whether it is a positional, where the next word starts (past
+// an option's value), and the string an option such as env -S splits into the command.
+function runnerWord(words, i, spec) {
+  const word = words[i];
+  if (!word.startsWith('-')) return {positional: !ASSIGNMENT.test(word), next: i + 1};
+  const option = valueOption(word, spec);
+  if (!option) return {next: i + 1};
+  const next = option.value === undefined ? i + 2 : i + 1;
+  const value = option.value ?? words[i + 1] ?? '';
+  return spec.split.has(option.name) ? {split: value, next} : {next};
 }
 
-function runnerWordKind(word, spec) {
-  if (word.startsWith('-')) return spec.values.has(word) ? 'value' : 'flag';
-  return ASSIGNMENT.test(word) ? 'assignment' : 'positional';
+/**
+ * The option in a word that takes a value, as {name, value}: value is the rest of the
+ * word, or undefined when the value is the next word. Short options cluster, and a
+ * cluster ends at its first letter that takes a value (-iu NAME, -uNAME). Long ones
+ * take =VALUE and may be abbreviated (--un NAME). Null for flags and other words.
+ */
+function valueOption(word, spec) {
+  if (word.startsWith('--')) return longValueOption(word, spec);
+  return word.startsWith('-') ? shortValueOption(word, spec) : null;
+}
+
+function shortValueOption(word, spec) {
+  for (let k = 1; k < word.length; k++) {
+    const name = `-${word[k]}`;
+    if (spec.values.has(name)) return optionValue(name, word.slice(k + 1) || undefined, spec);
+  }
+  return null;
+}
+
+function longValueOption(word, spec) {
+  const [typed, ...value] = word.split('=');
+  if (typed.length < 3) return null; // a bare -- ends the options
+  const name = [...spec.values].find((option) => option.startsWith(typed));
+  return name ? optionValue(name, value.length ? value.join('=') : undefined, spec) : null;
+}
+
+// An optional value is never the next word: watch -d alone has none.
+function optionValue(name, value, spec) {
+  return {name, value: value ?? (spec.optional?.has(name) ? '' : undefined)};
+}
+
+// GNU env -S splits its string with rules of its own (coreutils env.c): blanks
+// separate words, '...' and "..." group, a backslash escapes " # $ ' \ (inside '...'
+// only \\ and \'), \_ separates words (a space inside "..."), \f \n \r \t \v are
+// control characters, and \c or a # that starts a word ends the string. ${NAME} stays
+// as written: variables are not resolved. Newlines separate words too, as in current
+// coreutils; env 8.32 (Git for Windows) keeps them inside a word.
+function splitEnvString(text) {
+  const st = {text, i: 0, words: [], word: null, sq: false, dq: false};
+  for (; st.i < text.length; st.i++) {
+    if (!envChar(st, text[st.i])) break;
+  }
+  endEnvWord(st);
+  return st.words;
+}
+
+const ENV_BLANK = /[ \t\n\v\f\r]/;
+const ENV_CONTROLS = {f: '\f', n: '\n', r: '\r', t: '\t', v: '\v'};
+const SINGLE_QUOTED_ESCAPES = new Set(['\\', "'"]);
+
+// Each handler returns false where the string ends early.
+const ENV_CHAR = {
+  "'": (st, c) => envQuote(st, c, 'sq', 'dq'),
+  '"': (st, c) => envQuote(st, c, 'dq', 'sq'),
+  '#': (st, c) => st.word !== null && appendEnv(st, c),
+  '\\': envEscape,
+};
+
+function envChar(st, c) {
+  const handler = ENV_CHAR[c] ?? (ENV_BLANK.test(c) ? envBlank : appendEnv);
+  return handler(st, c);
+}
+
+function envQuote(st, c, own, other) {
+  if (st[other]) return appendEnv(st, c);
+  st[own] = !st[own];
+  st.word ??= ''; // a quote starts a word, so "" is an empty argument
+  return true;
+}
+
+function envBlank(st, c) {
+  if (st.sq || st.dq) return appendEnv(st, c);
+  endEnvWord(st);
+  return true;
+}
+
+function envEscape(st, c) {
+  const next = st.text[st.i + 1];
+  if (st.sq && !SINGLE_QUOTED_ESCAPES.has(next)) return appendEnv(st, c);
+  st.i++;
+  if (next === '_') return st.dq ? appendEnv(st, ' ') : envBlank(st, ' ');
+  if (next === undefined) return false; // env rejects a trailing backslash
+  return next !== 'c' && appendEnv(st, ENV_CONTROLS[next] ?? next);
+}
+
+function appendEnv(st, text) {
+  st.word = (st.word ?? '') + text;
+  return true;
+}
+
+function endEnvWord(st) {
+  if (st.word !== null) st.words.push(st.word);
+  st.word = null;
 }
 
 // --- Command lines inside commands ----------------------------------------------------
@@ -1186,13 +1286,45 @@ function rebaseExec(args) {
   return found;
 }
 
-const WATCH_VALUE_OPTIONS = new Set(['-n', '--interval', '-q', '--equexit', '-s', '--shell']);
+// procps-ng watch: -n, -q and -s take a value, and -d an optional one inside its word.
+const WATCH_OPTIONS = {
+  values: new Set([
+    '-n',
+    '--interval',
+    '-q',
+    '--equexit',
+    '-s',
+    '--shotsdir',
+    '-d',
+    '--differences',
+  ]),
+  optional: new Set(['-d', '--differences']),
+};
 
-// watch [options] <command...> joins the command's words and runs them through sh -c.
+// watch [options] <command...> joins its command words into one line for sh -c. With
+// -x or --exec it runs the words as they are, so an argument like 'my repo' stays one.
 function watchCommand(args) {
+  let exec = false;
   let i = 0;
-  while (i < args.length && args[i].startsWith('-')) i += WATCH_VALUE_OPTIONS.has(args[i]) ? 2 : 1;
-  return nestedCommand(args.slice(i).join(' '), BASH);
+  while (i < args.length && args[i].startsWith('-')) {
+    exec ||= isWatchExec(args[i]);
+    i = optionEnd(args, i, WATCH_OPTIONS);
+  }
+  const command = args.slice(i);
+  return exec ? {words: command} : nestedCommand(command.join(' '), BASH);
+}
+
+// -x, --exec or an abbreviation such as --ex, or an x in a cluster before any letter
+// that takes a value (-tx, but not -nx, where x is the interval).
+function isWatchExec(word) {
+  if (word.startsWith('--')) return word.length > 3 && '--exec'.startsWith(word);
+  return /^-[^nqsd]*x/.test(word);
+}
+
+// The index after an option word, and after its value when that is the next word.
+function optionEnd(words, i, spec) {
+  const option = valueOption(words[i], spec);
+  return option && option.value === undefined ? i + 2 : i + 1;
 }
 
 const NESTED = new Map([
