@@ -1,5 +1,5 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, Z_INDEX} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, Z_INDEX} from '../constants';
 import {useAutocomplete} from '../hooks';
 import {SearchAutocomplete} from './SearchAutocomplete';
 import {SearchIcon} from './SearchIcon';
@@ -206,16 +206,14 @@ export function HeroSection({
               height: mobile ? 48 : 56,
               padding: mobile ? '0 12px 0 44px' : '0 12px 0 48px',
               borderRadius: `${RADIUS.lg}px`,
-              border: `1px solid ${isSearchFocused ? 'rgba(212, 175, 55, 0.5)' : COLORS.searchBorder}`,
+              border: `1px solid ${isSearchFocused ? GOLD_GLOW.activeBorder : COLORS.searchBorder}`,
               background: COLORS.searchBg,
               color: COLORS.text,
               fontFamily: FONTS.body,
               fontSize: `${FONT_SIZES.xl}px`,
               boxSizing: 'border-box',
-              boxShadow: isSearchFocused
-                ? '0 0 0 3px rgba(212, 175, 55, 0.15), 0 0 20px rgba(212, 175, 55, 0.1)'
-                : 'none',
-              transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
+              boxShadow: isSearchFocused ? GOLD_GLOW.focusRing : 'none',
+              transition: `border-color 0.25s ${EASING.snappy}, box-shadow 0.25s ${EASING.snappy}`,
               outline: 'none',
             }}
           />

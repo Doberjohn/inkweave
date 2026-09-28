@@ -102,7 +102,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/CountBadge.tsx', // x1
     'src/shared/components/EtherealBackground.tsx', // x4
     'src/shared/components/FilterButton.stories.tsx', // x1
-    'src/shared/components/HeroSection.tsx', // x2
     'src/shared/components/Sparkles.stories.tsx', // x2
     'src/shared/components/Tooltip.stories.tsx', // x3
   ],
@@ -207,7 +206,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/QuickVoteControl.tsx', // x6
     'src/shared/components/CardImage.tsx', // x1
     'src/shared/components/ConnectionGroup.tsx', // x5
-    'src/shared/components/HeroSection.tsx', // x1
   ],
   // 0 files, 0 violations at seeding
   'no-raw-spacing': [
