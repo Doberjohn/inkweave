@@ -80,7 +80,7 @@ Gated enablers in the current pool (9 of 17): Pocahontas & Meeko - Adventurous F
 ## Coverage (generated from the live engine, sets 9-14 preview)
 
 - **Roles**: self-bounce 6, flexible 11, opponent-bounce 2, return-payoff 0, rebuy-payoff 24; **43 participating cards**.
-- **201 ink-compatible pairs, all at 8**; 39 cards carry a Bounce group. Before the target gates, 322 pairs were generated and 148 of them (46%) were legally impossible: 127 fell to cost caps, 21 to Snow White's Seven Dwarfs gate. Every one of the 21 re-buy bodies of that time was affected (Madam Mim - Resourceful Trickster, cost 8, listed the cap-1 Pocahontas & Meeko).
+- **201 ink-compatible pairs, all at 8**; 39 cards carry a Bounce group. Without the target gates, 391 pairs would qualify and 190 of them (49%) are legally impossible: 166 fall to cost caps, 24 to Snow White's Seven Dwarfs gate. Every one of the 24 re-buy bodies loses at least one pair (Madam Mim - Resourceful Trickster, cost 8, would otherwise list the cap-1 Pocahontas & Meeko).
 - The capped enablers now pair only with bodies they can reach: Tigger, Poor Unfortunate Souls, Nana, Vixey, Narrow Escape and Owen Burnett - Xanatos's Assistant keep one partner each (Pocahontas - Guiding the Tribe, the lone cost-2 re-buy body), Begone! keeps eight, Pocahontas & Meeko and Snow White keep none here (they still surface through Free Play / Shift Targets and Dwarfs / Hero / Princess respectively).
 
 ---
