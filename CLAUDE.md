@@ -97,12 +97,12 @@ Claude Code hooks, skills, agents, and path-scoped rules enforce workflow rules 
 ### Hooks (`.claude/hooks/`)
 | Hook | Event | What it does |
 |------|-------|-------------|
-| `git-write-protection.sh` | PreToolUse/Bash | Soft-blocks commit/push (`USER_APPROVED=1` bypass), hard-blocks destructive ops |
+| `git-write-protection.sh` | PreToolUse/Bash\|PowerShell\|Monitor | Soft-blocks commit/push (`USER_APPROVED=1` bypass, Bash only: PowerShell and Monitor can't carry it, so there they always block), hard-blocks destructive ops and piped commit/push. Parses the command (`lib/shell-command.mjs`), so git options, cd chains and nested shells don't slip past; case table in `__tests__/hooks.test.mjs` |
 | `branch-verification.sh` | PreToolUse/Edit\|Write | Blocks source file edits on master/main |
 | `engine-auto-rebuild.sh` | PostToolUse/Edit\|Write | Auto `pnpm build:engine` + `pnpm precompute-synergies` after engine file edits |
 | `preview-images-auto-convert.sh` | PostToolUse/Edit\|Write | Auto `pnpm convert-preview-images` after writes inside `apps/web/public/card-images-raw/` (raw → AVIF pipeline) |
 | `preview-data-auto-precompute.sh` | PostToolUse/Edit\|Write | Auto `pnpm precompute-synergies` after `apps/web/public/data/previewCards.json` writes (engine hook already covers engine-src changes) |
-| `issue-create-guard.sh` | PreToolUse/Bash | Redirects direct `gh issue create` to `/draft-issue` skill (`SKILL_APPROVED=1` bypass) |
+| `issue-create-guard.sh` | PreToolUse/Bash\|PowerShell\|Monitor | Redirects direct `gh issue create` to `/draft-issue` skill (`SKILL_APPROVED=1` bypass, Bash only) |
 | `agent-tool-substitution-guard.sh` | PostToolUse/Agent | Halts when a subagent reports a missing tool, so the fix lands in that agent's `tools:` frontmatter instead of the main session silently substituting |
 | Husky pre-push | git push | Runs `typecheck` (`tsc -b`), `check:stories` (story coverage), `check:design` (design-token value gate, #508), E2E, then the CodeScene gate. **On Windows only chromium runs** (webkit + mobile-chrome workers hang past Playwright's stop timeout); set `PRE_PUSH_FULL=1` to force them. Elsewhere: chromium + webkit + mobile-chrome. Full 5-browser matrix in CI |
 
@@ -242,7 +242,7 @@ Dark fantasy theme inspired by Lorcana:
 ## Workflow Preferences
 
 ### Git Workflow
-- **Git safety enforced by hooks** — `git-write-protection` hook blocks commit, push, and destructive ops (checkout --, restore, reset --hard, clean -f, worktree remove/prune). Commit/push use `USER_APPROVED=1` prefix after explicit user approval. Destructive ops are hard-blocked — run manually.
+- **Git safety enforced by hooks** — `git-write-protection` hook blocks commit, push, and destructive ops (checkout --, restore, reset --hard, clean -f, worktree remove/prune). Commit/push use `USER_APPROVED=1` prefix after explicit user approval. Destructive ops are hard-blocked — run manually. Commit and push go through the Bash tool (in PowerShell or Monitor the hook always blocks them), and piping either one (`| tail`) is always blocked.
 - **Branch verification enforced by hook** — `branch-verification` hook blocks source file edits on master/main.
 - Feature branches: `feature/<issue-number>-<description>` (e.g., `feature/5-deck-builder-tests`)
 - Commit messages: Use semantic commit notation with issue reference (e.g., `test(deck): add tests (#5)`)
