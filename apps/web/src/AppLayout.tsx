@@ -61,6 +61,7 @@ function AppContent() {
   const showRevealsPromo = shouldShowRevealsPromo({isHome, phase});
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchRef = useRef<SearchBottomSheetHandle>(null);
+  const searchButtonRef = useRef<HTMLButtonElement>(null);
 
   // Scroll to top on route change
   useEffect(() => {
@@ -91,9 +92,16 @@ function AppContent() {
       <div style={showBottomNav ? {paddingBottom: MOBILE_NAV_HEIGHT} : undefined}>
         <Outlet />
       </div>
-      {showBottomNav && <MobileBottomNav onSearchClick={openSearch} />}
+      {showBottomNav && (
+        <MobileBottomNav onSearchClick={openSearch} searchButtonRef={searchButtonRef} />
+      )}
       {isMobile && (
-        <SearchBottomSheet ref={searchRef} isOpen={isSearchOpen} onClose={closeSearch} />
+        <SearchBottomSheet
+          ref={searchRef}
+          isOpen={isSearchOpen}
+          onClose={closeSearch}
+          returnFocusRef={searchButtonRef}
+        />
       )}
       {showRevealsPromo && (
         <RevealsPromoCard />

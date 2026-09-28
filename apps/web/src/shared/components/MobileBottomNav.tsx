@@ -7,6 +7,8 @@ export const MOBILE_NAV_HEIGHT = 110;
 
 interface MobileBottomNavProps {
   onSearchClick?: () => void;
+  /** Attached to the Search tab's button; the search sheet returns focus there on close. */
+  searchButtonRef?: React.Ref<HTMLButtonElement>;
   /** Bypass `useRevealPhase` (Storybook / tests). */
   phaseOverride?: RevealPhase;
 }
@@ -259,9 +261,10 @@ interface NavTabProps {
   tab: TabDef;
   paddingTop: number;
   onSearchClick?: () => void;
+  searchButtonRef?: React.Ref<HTMLButtonElement>;
 }
 
-function NavTab({tab, paddingTop, onSearchClick}: NavTabProps) {
+function NavTab({tab, paddingTop, onSearchClick, searchButtonRef}: NavTabProps) {
   const tabStyle: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
@@ -310,6 +313,7 @@ function NavTab({tab, paddingTop, onSearchClick}: NavTabProps) {
   if (tab.action === 'search') {
     return (
       <button
+        ref={searchButtonRef}
         type="button"
         className="mbn-tab"
         aria-label={tab.label}
@@ -365,7 +369,11 @@ function ActiveLabelStrip({label, visible}: ActiveLabelStripProps) {
 // Public component.
 // =====================================================================
 
-export function MobileBottomNav({onSearchClick, phaseOverride}: MobileBottomNavProps) {
+export function MobileBottomNav({
+  onSearchClick,
+  searchButtonRef,
+  phaseOverride,
+}: MobileBottomNavProps) {
   const {pathname} = useLocation();
   const hookPhase = useRevealPhase();
   const phase = phaseOverride ?? hookPhase;
@@ -415,6 +423,7 @@ export function MobileBottomNav({onSearchClick, phaseOverride}: MobileBottomNavP
             tab={tab}
             paddingTop={positions.paddingTop[i]}
             onSearchClick={onSearchClick}
+            searchButtonRef={searchButtonRef}
           />
         ))}
       </div>

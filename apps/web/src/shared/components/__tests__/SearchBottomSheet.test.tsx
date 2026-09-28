@@ -1,8 +1,9 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {render, screen, fireEvent, act} from '@testing-library/react';
+import {createRef, useRef, useState} from 'react';
+import {render, screen, fireEvent, act, createEvent} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {SearchBottomSheet} from '../SearchBottomSheet';
+import {SearchBottomSheet, type SearchBottomSheetHandle} from '../SearchBottomSheet';
 
 const {mockOpenCardModal, mockSearchCardsByName} = vi.hoisted(() => ({
   mockOpenCardModal: vi.fn(),
@@ -50,10 +51,44 @@ describe('SearchBottomSheet', () => {
     const onClose = vi.fn();
     const {unmount} = render(
       <MemoryRouter>
-        <SearchBottomSheet isOpen={isOpen} onClose={onClose} />
+        <SearchBottomSheet isOpen={isOpen} onClose={onClose} returnFocusRef={createRef()} />
       </MemoryRouter>,
     );
     return {onClose, unmount};
+  };
+
+  /** AppLayout's wiring: the trigger focuses the proxy in its tap handler, then opens the sheet. */
+  function SheetWithTrigger() {
+    const [isOpen, setIsOpen] = useState(false);
+    const sheetRef = useRef<SearchBottomSheetHandle>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const open = () => {
+      sheetRef.current?.focusProxy();
+      setIsOpen(true);
+    };
+    return (
+      <MemoryRouter>
+        <button ref={triggerRef} onClick={open}>
+          Search cards
+        </button>
+        <SearchBottomSheet
+          ref={sheetRef}
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          returnFocusRef={triggerRef}
+        />
+      </MemoryRouter>
+    );
+  }
+
+  /** Tap the trigger and let the sheet's delayed initial focus land on its input. */
+  const openFromTrigger = () => {
+    render(<SheetWithTrigger />);
+    fireEvent.click(screen.getByRole('button', {name: 'Search cards'}));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    return screen.getByRole('button', {name: 'Search cards'});
   };
 
   /** Type a query, let the autocomplete debounce settle, then pick ELSA from the results. */
@@ -144,6 +179,53 @@ describe('SearchBottomSheet', () => {
       // defined" crash), so unmounting flushes the pending open instead of leaving it running.
       expect(vi.getTimerCount()).toBe(0);
       expect(mockOpenCardModal).toHaveBeenCalledWith('elsa-1');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('returns focus to the trigger, not the hidden proxy input, when closed', () => {
+    vi.useFakeTimers();
+    try {
+      const trigger = openFromTrigger();
+      fireEvent.keyDown(document, {key: 'Escape'});
+      expect(trigger).toHaveFocus();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('consumes the submitting Enter so it cannot press the trigger that regains focus', () => {
+    vi.useFakeTimers();
+    try {
+      const trigger = openFromTrigger();
+      const input = screen.getByTestId('search-sheet-input');
+      fireEvent.change(input, {target: {value: 'Elsa'}});
+      // Focus returns to the trigger while this keydown is still dispatching. A browser then
+      // runs Enter's default action on the trigger (a click), which would reopen the sheet.
+      const enter = createEvent.keyDown(input, {key: 'Enter'});
+      fireEvent(input, enter);
+      expect(trigger).toHaveFocus();
+      expect(enter.defaultPrevented).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('leaves focus on the trigger when a card picked from the results opens its modal', () => {
+    vi.useFakeTimers();
+    try {
+      // The card modal saves whatever holds focus when it opens as its own focus-return target.
+      let focusedWhenModalOpened: Element | null = null;
+      mockOpenCardModal.mockImplementationOnce(() => {
+        focusedWhenModalOpened = document.activeElement;
+      });
+      const trigger = openFromTrigger();
+      selectElsa();
+      act(() => {
+        vi.advanceTimersByTime(50);
+      });
+      expect(focusedWhenModalOpened).toBe(trigger);
     } finally {
       vi.useRealTimers();
     }

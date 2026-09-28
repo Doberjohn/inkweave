@@ -82,8 +82,8 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should navigate to browse when searching from hero | Typing "Elsa" + Enter navigates to `/browse?q=Elsa`, hero hidden, browse heading visible |
 | should navigate to browsing view via Browse all cards CTA | "Browse all cards" CTA navigates away from hero, shows browse heading |
 | should open search bottom sheet and focus input when tapping search icon | Tap search icon in bottom nav, sheet opens with focused input |
-| should close search bottom sheet on backdrop click | Open search sheet, click backdrop, sheet dismisses |
-| should navigate to browse when pressing Enter in search bottom sheet | Type query in search sheet, press Enter, navigates to `/browse?q=Elsa` |
+| should close search bottom sheet on backdrop click | Open search sheet, click backdrop, sheet dismisses, focus returns to the Search nav button (not the hidden iOS proxy input) |
+| should navigate to browse when pressing Enter in search bottom sheet | Type query in search sheet, press Enter, navigates to `/browse?q=Elsa`, sheet stays closed (the Enter must not also click the refocused Search button) |
 | should show sort dropdown in browse toolbar | Sort select and Filters button both visible in browse toolbar |
 | should lock background scroll when filter drawer is open | Opening filter drawer sets body overflow to hidden |
 | should open filter drawer in mobile browsing view | From browsing view, tap Filters button, drawer shows Amber/Sapphire/Steel ink buttons |

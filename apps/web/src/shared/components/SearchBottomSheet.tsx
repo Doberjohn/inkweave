@@ -193,6 +193,9 @@ function SearchSheetInput({query, autocomplete, inputRef, onSubmit, onClear}: Se
     if (e.defaultPrevented) return;
     if (e.key !== 'Enter') return;
     if (!query.trim()) return;
+    // Closing returns focus to the trigger button mid-keydown; an unconsumed Enter
+    // would then click that button and reopen the sheet.
+    e.preventDefault();
     onSubmit();
   };
 
@@ -579,10 +582,16 @@ export interface SearchBottomSheetHandle {
 interface SearchBottomSheetProps {
   isOpen: boolean;
   onClose: () => void;
+  /**
+   * The control that opened the sheet; focus returns to it on close. Required because
+   * the proxy input holds focus as the sheet opens, and returning focus there would
+   * strand it on a hidden, aria-hidden element.
+   */
+  returnFocusRef: React.RefObject<HTMLElement | null>;
 }
 
 export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBottomSheetProps>(
-  function SearchBottomSheet({isOpen, onClose}, ref) {
+  function SearchBottomSheet({isOpen, onClose, returnFocusRef}, ref) {
     const navigate = useNavigate();
     const {openCardModal} = useCardModal();
     const {cards} = useCardDataContext();
@@ -649,10 +658,12 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
     // Focus trap + Escape key handling.
     // useDialogFocus focuses inputRef after 100ms (isOpen=true), which fires after
     // useTransitionPresence's rAF sets visible=true, so the element is focusable.
+    // On close, focus returns to returnFocusRef, not to the proxy that held it at open.
     const {handleKeyDown: handleDialogKeyDown} = useDialogFocus({
       isOpen,
       containerRef: sheetRef,
       initialFocusRef: inputRef,
+      returnFocusRef,
       onClose,
     });
 

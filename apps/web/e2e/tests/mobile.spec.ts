@@ -116,6 +116,10 @@ test.describe('Mobile Viewport', () => {
 
     // Sheet should be gone after exit transition
     await expect(page.getByRole('dialog', {name: 'Search cards'})).not.toBeVisible({timeout: 5000});
+
+    // Focus returns to the Search button, not to the hidden proxy input the tap
+    // handler focuses to raise the iOS keyboard.
+    await expect(page.getByRole('button', {name: 'Search cards'})).toBeFocused();
   });
 
   test('should navigate to browse when pressing Enter in search bottom sheet', async ({page}) => {
@@ -139,6 +143,10 @@ test.describe('Mobile Viewport', () => {
     // Should navigate to browse with query param
     await expect(page).toHaveURL(/\/browse\?q=Elsa/, {timeout: 10000});
     await expect(page.getByRole('heading', {name: 'Browse Cards'})).toBeVisible({timeout: 10000});
+
+    // The sheet stays closed: focus returns to the Search button mid-keypress, and an
+    // Enter that reached it would click it and reopen the sheet.
+    await expect(page.getByRole('dialog', {name: 'Search cards'})).not.toBeVisible();
   });
 
   test('should show sort dropdown in browse toolbar', async ({page}) => {
