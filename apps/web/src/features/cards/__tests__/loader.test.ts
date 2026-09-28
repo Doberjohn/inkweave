@@ -39,6 +39,8 @@ describe('Card Search', () => {
     createCard({id: '2', name: 'Anna', fullName: 'Anna - Heir to Arendelle'}),
     createCard({id: '3', name: 'Elsa', fullName: 'Elsa - Ice Maker', version: 'Ice Maker'}),
     createCard({id: '4', name: 'Mickey Mouse', fullName: 'Mickey Mouse - Brave Little Tailor'}),
+    createCard({id: '5', name: "Bruno's Return", fullName: "Bruno's Return"}),
+    createCard({id: '6', name: 'Curly’s Card', fullName: 'Curly’s Card'}),
   ];
 
   it.each([
@@ -46,6 +48,8 @@ describe('Card Search', () => {
     ['fullName', 'Snow Queen', 1],
     ['version', 'Ice Maker', 1],
     ['no match', 'Donald', 0],
+    ['a typographic apostrophe against a straight name', 'bruno’s', 1],
+    ['a straight apostrophe against a typographic name', "curly's", 1],
   ])('should search by %s', (_label, query, expectedCount) => {
     expect(searchCardsByName(cards, query)).toHaveLength(expectedCount);
   });
@@ -143,6 +147,17 @@ describe('Card Filtering', () => {
     expect(filterCards(textCards, {textSearch: 'draw'})).toHaveLength(1);
     expect(filterCards(textCards, {textSearch: 'Mouse'})).toHaveLength(1);
     expect(filterCards(textCards, {textSearch: 'ability'})).toHaveLength(0);
+  });
+
+  it('should match text search across apostrophe styles', () => {
+    const textCards = [
+      createCard({
+        id: '1',
+        fullName: 'Warded',
+        text: 'Opponents can’t choose this character except to challenge.',
+      }),
+    ];
+    expect(filterCards(textCards, {textSearch: "can't choose"})).toHaveLength(1);
   });
 
   it('should return empty for missing keywords/classifications', () => {
