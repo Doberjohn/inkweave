@@ -851,12 +851,17 @@ function stripAssignment(words) {
   return rest ? [rest, ...words.slice(1)] : words.slice(1);
 }
 
-const runner = (values = [], positionals = 0) => ({values: new Set(values), positionals});
+const runner = (values = [], positionals = 0, split = false) => ({
+  values: new Set(values),
+  positionals,
+  split,
+});
 
 // Programs that run their argument words as another command: option words that
-// take a value, and leading positionals to skip (timeout's duration).
+// take a value, leading positionals to skip (timeout's duration), and whether an
+// option carries the whole command as one string (env -S).
 const RUNNERS = new Map([
-  ['env', runner(['-u', '--unset', '-C', '--chdir', '-S', '--split-string'])],
+  ['env', runner(['-u', '--unset', '-C', '--chdir'], 0, true)],
   ['timeout', runner(['-s', '--signal', '-k', '--kill-after'], 1)],
   ['nice', runner(['-n', '--adjustment'])],
   ['nohup', runner()],
@@ -888,7 +893,6 @@ const RUNNERS = new Map([
   ['sudo', runner(['-u', '--user', '-g', '--group', '-C', '-D', '--chdir'])],
   ['doas', runner(['-u', '-C'])],
   ['wsl', runner(['-d', '--distribution', '-u', '--user', '--cd'])],
-  ['watch', runner(['-n', '--interval'])],
   ['call', runner()], // cmd: call git push
 ]);
 
@@ -898,11 +902,23 @@ function afterRunner(argv) {
   let positionals = spec.positionals;
   let i = 0;
   for (; i < words.length; i++) {
+    const split = spec.split ? splitStringAt(words, i) : null;
+    if (split) return split;
     const kind = runnerWordKind(words[i], spec);
     if (kind === 'value') i++;
     else if (kind === 'positional' && positionals-- <= 0) break;
   }
   return words.slice(i);
+}
+
+// env -S 'git push', -S'git push' and --split-string='git push' split one string into
+// the command's words.
+function splitStringAt(words, i) {
+  const match = /^(?:-S|--split-string=?)([\s\S]*)$/.exec(words[i]);
+  if (!match) return null;
+  const text = match[1] || (words[i + 1] ?? '');
+  const rest = words.slice(match[1] ? i + 1 : i + 2);
+  return [...text.split(/\s+/).filter(Boolean), ...rest];
 }
 
 function runnerWordKind(word, spec) {
@@ -965,27 +981,28 @@ function shellOptions(args) {
   return {command, noRun, index: i};
 }
 
-const POWERSHELL_VALUE_PARAMETERS = new Set([
-  'ex',
-  'ep',
+// Parameters that take a value, and their short aliases. PowerShell also accepts any
+// unique prefix (-Exec Bypass); prefixes count from three letters, so a one-letter
+// flag such as pwsh's -i never swallows the next word.
+const POWERSHELL_VALUE_ALIASES = new Set(['ex', 'ep', 'w', 'if', 'of', 'v', 'wd', 'config']);
+const POWERSHELL_VALUE_PARAMETERS = [
   'executionpolicy',
-  'w',
   'windowstyle',
-  'if',
   'inputformat',
-  'of',
   'outputformat',
-  'v',
   'version',
   'psconsolefile',
-  'config',
   'configurationname',
-  'wd',
   'workingdirectory',
   'settingsfile',
   'custompipename',
-]);
+];
 const ENCODED_ALIASES = new Set(['e', 'ec', 'en', 'enc']);
+
+function takesValue(name) {
+  if (POWERSHELL_VALUE_ALIASES.has(name)) return true;
+  return name.length >= 3 && POWERSHELL_VALUE_PARAMETERS.some((full) => full.startsWith(name));
+}
 
 // powershell -Command <words>, -EncodedCommand <base64>, a bare first argument, or
 // commands read from stdin (`-Command -`, or no command at all).
@@ -1014,7 +1031,7 @@ function powershellParameter(word) {
   if ('command'.startsWith(name)) return 'command';
   if (ENCODED_ALIASES.has(name) || 'encodedcommand'.startsWith(name)) return 'encoded';
   if ('file'.startsWith(name)) return 'file';
-  return POWERSHELL_VALUE_PARAMETERS.has(name) ? 'value' : 'flag';
+  return takesValue(name) ? 'value' : 'flag';
 }
 
 function decodeCommand(text) {
@@ -1169,7 +1186,17 @@ function rebaseExec(args) {
   return found;
 }
 
+const WATCH_VALUE_OPTIONS = new Set(['-n', '--interval', '-q', '--equexit', '-s', '--shell']);
+
+// watch [options] <command...> joins the command's words and runs them through sh -c.
+function watchCommand(args) {
+  let i = 0;
+  while (i < args.length && args[i].startsWith('-')) i += WATCH_VALUE_OPTIONS.has(args[i]) ? 2 : 1;
+  return nestedCommand(args.slice(i).join(' '), BASH);
+}
+
 const NESTED = new Map([
+  ['watch', watchCommand],
   ['bash', posixShell],
   ['sh', posixShell],
   ['zsh', posixShell],
