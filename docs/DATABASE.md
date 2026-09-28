@@ -287,7 +287,11 @@ if v_rate_count >= 200 then
 end if;
 ```
 
-**Why 200/day?** Migration `20260622000000` (#302) replaced the original 30-pairs-per-hour throttle, which got in the way of power-voters, with a daily ceiling that still stops a single anonymous IP from flooding the vote distributions. The limit counts distinct pairs, so re-voting on the same pair (enriching it with more dimensions) doesn't use quota. It holds only because the IP hash can't be forged: `hash_client_ip()` ignores the client-controlled first X-Forwarded-For entry (see IP Hashing).
+**Why 200/day?** Migration `20260622000000` (#302) replaced the original 30-pairs-per-hour throttle, which got in the way of power-voters, with a daily ceiling that still stops a single anonymous IP from flooding the vote distributions. The limit counts distinct pairs voted in the last day, so re-voting a pair already voted on in that window (enriching it with more dimensions) adds nothing to the count. Two caveats:
+- Once an IP is at the limit, every vote is refused, re-votes included, because the check runs before the upsert.
+- A re-vote resets the row's `created_at`, so re-voting a pair last voted more than a day ago counts toward the next 24 hours again.
+
+The limit holds only because the IP hash can't be forged: `hash_client_ip()` ignores the client-controlled first X-Forwarded-For entry (see IP Hashing).
 
 ---
 
