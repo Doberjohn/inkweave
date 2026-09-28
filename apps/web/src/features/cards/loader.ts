@@ -216,15 +216,27 @@ export async function fetchCardsFromLocal(
 }
 
 /**
- * Search cards by name (case-insensitive substring match)
+ * Typographic single quotes (U+2018, U+2019). iOS Smart Punctuation types ’ for ', and
+ * Set 14 preview text prints it. Global flag: use with .replace only.
+ */
+const TYPOGRAPHIC_APOSTROPHE = /[‘’]/g;
+
+/** A string as search compares it: lowercase, with typographic apostrophes spelled '. */
+function searchKey(value: string): string {
+  return value.toLowerCase().replace(TYPOGRAPHIC_APOSTROPHE, "'");
+}
+
+/**
+ * Search cards by name (case-insensitive substring match). Apostrophe styles match each
+ * other, so a query typed with ’ finds a name spelled with ', and the reverse.
  */
 export function searchCardsByName(cards: LorcanaCard[], query: string): LorcanaCard[] {
-  const lowerQuery = query.toLowerCase();
+  const q = searchKey(query);
   return cards.filter(
     (card) =>
-      card.name.toLowerCase().includes(lowerQuery) ||
-      card.fullName.toLowerCase().includes(lowerQuery) ||
-      card.version?.toLowerCase().includes(lowerQuery),
+      searchKey(card.name).includes(q) ||
+      searchKey(card.fullName).includes(q) ||
+      searchKey(card.version ?? '').includes(q),
   );
 }
 
@@ -300,8 +312,8 @@ function matchesInkwell(card: LorcanaCard, options: CardFilterOptions): boolean 
 
 function matchesTextSearch(card: LorcanaCard, options: CardFilterOptions): boolean {
   if (!options.textSearch) return true;
-  const q = options.textSearch.toLowerCase();
-  return !!card.text?.toLowerCase().includes(q) || card.fullName.toLowerCase().includes(q);
+  const q = searchKey(options.textSearch);
+  return searchKey(card.text ?? '').includes(q) || searchKey(card.fullName).includes(q);
 }
 
 const CARD_FILTER_PREDICATES: CardFilterPredicate[] = [
