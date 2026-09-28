@@ -41,11 +41,28 @@ if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
       integrations.push(Sentry.supabaseIntegration({supabaseClient: SupabaseClient}));
     }
 
+    // Sentry 11 collects user info, cookies, request/response bodies and query data by
+    // default (v10 did not), and bodies here could include Supabase sign-in and vote
+    // payloads. This is the migration guide's block for restoring v10's restrictive
+    // defaults; piiDeny drops IP, proxy and user identifiers from headers and query params.
+    const piiDeny = {deny: ['forwarded', '-ip', 'remote-', 'via', '-user']};
+
     Sentry.init({
       dsn: import.meta.env.VITE_SENTRY_DSN,
       environment: 'production',
       integrations,
       tracesSampleRate: 0.1,
+      dataCollection: {
+        userInfo: false,
+        cookies: false,
+        httpHeaders: {request: piiDeny, response: piiDeny},
+        httpBodies: [],
+        urlQueryParams: piiDeny,
+        genAI: {inputs: false, outputs: false},
+        databaseQueryData: false,
+        queues: false,
+        graphQL: {document: false, variables: false},
+      },
       // Stale-deploy chunk mismatches are auto-recovered via reload (see the
       // vite:preloadError handler above), so they're noise, not bugs. Drop the
       // whole family — the preload re-throw plus the dynamic-import variants.
