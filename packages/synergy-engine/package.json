@@ -21,8 +21,8 @@
     "dev": "tsup --watch",
     "test": "vitest",
     "test:run": "vitest run",
-    "bench": "vitest bench",
-    "bench:run": "vitest bench --run",
+    "bench": "vitest bench --reporter=verbose",
+    "bench:run": "vitest bench --run --reporter=verbose",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit"
   },
@@ -40,6 +40,6 @@
     "tsup": "^8.0.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.1",
-    "vitest": "~4.1.10"
+    "vitest": "~5.0.2"
   }
 }

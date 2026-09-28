@@ -6,9 +6,12 @@ import * as matchers from 'vitest-axe/matchers';
 // vitest-axe ships the matcher but not its type; declare the one we use so it
 // type-checks (runtime wiring is the expect.extend(matchers) call below). A
 // bare `interface extends AxeMatchers {}` would trip no-empty-object-type.
+// Vitest 5 reads custom matchers from Matchers<R, T>; augmenting Assertion
+// directly must repeat its exact type parameters (TS2428).
 declare module 'vitest' {
-  interface Assertion {
-    toHaveNoViolations(): void;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- T must be declared for the merge
+  interface Matchers<R, T> {
+    toHaveNoViolations(): R;
   }
 }
 import {Chip} from '../Chip';
