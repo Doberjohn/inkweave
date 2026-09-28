@@ -89,10 +89,13 @@ jobs:
       - name: Build engine (base)
         run: pnpm build:engine
 
+      # Tolerated failure: when a PR changes the benchmark harness itself (e.g. a
+      # Vitest major), base's toolchain cannot run the PR's bench files. The PR
+      # comment then reports no comparable base and skips the regression check.
       - name: Run benchmarks (base)
         run: |
           cd packages/synergy-engine
-          npx vitest bench --run --outputJson /tmp/bench-base.json || true
+          npx vitest bench --run --reporter=verbose --reporter=json --outputFile.json=/tmp/bench-base.json || true
 
       # --- Now run PR branch (warm runner) ---
       - name: Checkout PR branch
@@ -109,7 +112,7 @@ jobs:
       - name: Run benchmarks (PR)
         run: |
           cd packages/synergy-engine
-          npx vitest bench --run --outputJson /tmp/bench-pr.json
+          npx vitest bench --run --reporter=verbose --reporter=json --outputFile.json=/tmp/bench-pr.json
 
       - name: Post benchmark results to PR
         if: always()
@@ -133,18 +136,21 @@ jobs:
             }
 
             // --- Extract benchmarks into a flat map: "group > name" → { hz, mean, rme } ---
+            // Vitest 5 JSON reporter: testResults[].assertionResults[].benchmarks[].tasks[].
+            // A bench group is named after its test(), so keys match the pre-v5 format.
+            // hz is throughput.mean, the ops/s figure Vitest's own table prints.
             function extractBenchmarks(data) {
               const map = new Map();
-              for (const file of data.files || []) {
-                for (const group of file.groups || []) {
-                  // Use short group name (last segment after " > ")
-                  const groupName = group.fullName.split(' > ').pop();
-                  for (const b of group.benchmarks || []) {
-                    map.set(`${groupName} > ${b.name}`, {
-                      hz: b.hz,
-                      mean: b.mean,
-                      rme: b.rme,
-                    });
+              for (const file of data.testResults || []) {
+                for (const test of file.assertionResults || []) {
+                  for (const group of test.benchmarks || []) {
+                    for (const task of group.tasks || []) {
+                      map.set(`${group.name} > ${task.name}`, {
+                        hz: task.throughput.mean,
+                        mean: task.latency.mean,
+                        rme: task.latency.rme,
+                      });
+                    }
                   }
                 }
               }
@@ -152,7 +158,16 @@ jobs:
             }
 
             const prMap = extractBenchmarks(pr);
-            const baseMap = base ? extractBenchmarks(base) : null;
+            if (prMap.size === 0) {
+              core.setFailed('PR benchmark run produced no results: check the bench files and the Vitest JSON shape');
+              return;
+            }
+            // An empty base map means the base run produced nothing comparable; treat it as absent.
+            const baseRaw = base ? extractBenchmarks(base) : null;
+            if (baseRaw && baseRaw.size === 0) {
+              core.warning('Base benchmark run produced no comparable results; regression check skipped');
+            }
+            const baseMap = baseRaw && baseRaw.size > 0 ? baseRaw : null;
 
             // --- Build markdown table ---
             // Each new synergy rule adds an O(n) scan to findSynergies for matching cards.
@@ -197,7 +212,7 @@ jobs:
               '',
               baseMap
                 ? '_Compared against base branch. \ud83d\udfe2 >10% faster \u00b7 \u26aa within 10% \u00b7 \ud83d\udd34 >10% slower \u00b7 Fails at >70% regression._'
-                : '_No base branch results available for comparison._',
+                : '_No comparable base branch results (the base run failed, or this PR changes the benchmark harness itself), so the regression check was skipped._',
               statusLine,
             ].join('\n');
 
