@@ -3216,14 +3216,14 @@
     {
       "id": 14193,
       "name": "Arthur",
-      "fullName": "Arthur - Tournament Knight",
+      "fullName": "Arthur - Jousting Knight",
       "cost": 6,
       "color": "Steel",
       "inkwell": true,
       "type": "Character",
       "setCode": "14",
       "number": 193,
-      "version": "Tournament Knight",
+      "version": "Jousting Knight",
       "rarity": "Super Rare",
       "franchise": "The Sword in the Stone",
       "subtypes": [
@@ -3245,11 +3245,11 @@
           "fullText": "Challenger +2"
         }
       ],
-      "fullText": "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Arthur.)\nChallenger +2 (While challenging, this character gets +2 ¤.)\nVICTORY BONUS During your turn, whenever this character banishes another character in a challenge, draw a card and get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullText": "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Arthur.)\nChallenger +2 (While challenging, this character gets +2 ¤.)\nVICTORY PURSE During your turn, whenever this character banishes another character in a challenge, draw a card and get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
       "fullTextSections": [
         "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Arthur.)",
         "Challenger +2 (While challenging, this character gets +2 ¤.)",
-        "VICTORY BONUS During your turn, whenever this character banishes another character in a challenge, draw a card and get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+        "VICTORY PURSE During your turn, whenever this character banishes another character in a challenge, draw a card and get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
       ],
       "strength": 3,
       "willpower": 6,

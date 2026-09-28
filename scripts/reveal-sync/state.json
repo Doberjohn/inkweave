@@ -52,9 +52,8 @@
         },
         "arthur-jousting-knight": {
           "number": 193,
-          "status": "conflict",
-          "reason": "number-taken",
-          "detail": "#193 is already in Inkweave as \"Arthur - Tournament Knight\"",
+          "status": "written",
+          "detail": "English version of the provisional arthur-tournament-knight: official English scan as art, lorcanaplayer name and text",
           "firstSeen": "2026-09-28"
         },
         "arthur-merlins-assistant": {
@@ -70,9 +69,8 @@
         },
         "arthur-tournament-knight": {
           "number": 193,
-          "status": "written",
-          "reason": "provisional-translation",
-          "detail": "provisional: German scan as art (owner-supplied), English text translated from it",
+          "status": "gone",
+          "reason": "replaced by its English version, arthur-jousting-knight",
           "firstSeen": "2026-09-25"
         },
         "aurora-delightful-musician": {
