@@ -86,6 +86,13 @@ describe('parseCardLines', () => {
     expect(parse(TEST_CAPTAIN)).toMatchObject({collector: null, text: [], keywordsField: 'None'});
   });
 
+  it('reads the franchise "Lorcana", which the site gives an original card, as none', () => {
+    // The official list labels the same cards "Disney Lorcana".
+    for (const franchise of ['Lorcana', 'Disney Lorcana', ' disney LORCANA ']) {
+      expect(parse(HARBOR_LOCATION, {Franchise: franchise}).franchise).toBeNull();
+    }
+  });
+
   it('throws when a label every card carries is missing: the markup changed', () => {
     expect(() => parse(LIONHEART, {'Card Text': undefined})).toThrow(SiteRecordError);
     expect(() => parse(LIONHEART, {'Card Text': undefined})).toThrow(/Card Text/);

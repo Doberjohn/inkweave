@@ -119,6 +119,16 @@ function yesNo(value) {
 }
 
 /**
+ * lorcanaplayer files an original card, one from no Disney story, under the franchise
+ * "Lorcana"; the official list calls the same cards "Disney Lorcana". Inkweave's original
+ * cards carry no franchise (owner's ruling, 2026-09-28), so either label reads as a page
+ * with no Franchise row: null.
+ */
+function franchiseOf(value) {
+  return /^\s*(?:disney\s+)?lorcana\s*$/i.test(value ?? '') ? null : value;
+}
+
+/**
  * Parse one card page. `slug` and `imageFile` ride along for error messages and the
  * language gate; neither is read from the lines.
  */
@@ -151,7 +161,7 @@ export function parseCardLines(lines, {slug = '?', imageFile = null} = {}) {
     keywordsField: one('Keywords + Abilities'),
     subtypes: parseSubtypes(one('Classifications')),
     text: canonicalizeText(valuesAfter(lines, index, 'Card Text')),
-    franchise: one('Franchise'),
+    franchise: franchiseOf(one('Franchise')),
     illustrator: one('Illustrator'),
   };
 }
