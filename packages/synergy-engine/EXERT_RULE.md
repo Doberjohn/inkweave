@@ -39,8 +39,8 @@ Detection uses a fast pre-filter (`HAS_EXERT = /exert/i`) before running the pat
 ### exert-enabler (an effect that exerts an OPPOSING character)
 
 ```regex
-EXERT_OPPOSING_VERB = /\bexerts?\b\s+(?:up to \d+ )?(?:all |each )?(?:chosen |target )?(?:opposing|opponent['’]?s)/i
-HAS_OPPOSING_CHAR   = /opposing (?:\w+ ){0,2}character|opponent['’]?s (?:\w+ ){0,2}character/i
+EXERT_OPPOSING_VERB = /\bexerts?\b\s+(?:up to \d+ )?(?:all |each )?(?:chosen |target )?(?:opposing|opponent'?s)/i
+HAS_OPPOSING_CHAR   = /opposing (?:\w+ ){0,2}character|opponent'?s (?:\w+ ){0,2}character/i
 ```
 
 Both must match, and the card must NOT be an item-exert. The `(?:\w+ ){0,2}` slot in `HAS_OPPOSING_CHAR` admits an adjective ("exert chosen opposing **ready** character", Ursula - Voice Stealer).
@@ -60,9 +60,9 @@ Five sub-patterns, split into two **tiers** that drive the score against an enab
 **Consume tier** (score 8 vs an enabler): the payoff turns the exerted body into a kill or hard lock.
 
 ```regex
-P_TRIGGER        = /when(?:ever)?\s+(?:an?\s+)?(?:opposing|opponent['’]?s)[^.]{0,40}(?:is|are|gets?|becomes?)\s+exerted/i
+P_TRIGGER        = /when(?:ever)?\s+(?:an?\s+)?(?:opposing|opponent'?s)[^.]{0,40}(?:is|are|gets?|becomes?)\s+exerted/i
 P_BANISH_EXERTED = /banish (?:chosen |an? )?exerted (?:opposing )?character/i
-P_CANT_READY     = /chosen (?:opposing )?exerted character[^.]{0,30}can['’]?t ready|exerted character can['’]?t ready at the start of (?:their|its) next turn/i
+P_CANT_READY     = /chosen (?:opposing )?exerted character[^.]{0,30}can'?t ready|exerted character can'?t ready at the start of (?:their|its) next turn/i
 ```
 
 **State tier** (score 6 vs an enabler): the payoff scales off an opponent having an exerted body, without hard-punishing it.
@@ -81,7 +81,7 @@ P_LORE_OFF_EXERTED = /gain lore equal to[^.]{0,40}chosen exerted character|anoth
 | state | opp-exert-count | "**For each exerted character opponents have** in play, you pay 1 ⬡ less." | Olaf - Happy Passenger |
 | state | lore-off-exerted | "gain lore equal to **another chosen exerted character**'s ◊." | Pocahontas - Following the Wind |
 
-The `['’]?` apostrophe class is load-bearing: Set 13 text (Ming Lee - Overprotective Parent) uses a curly quote (`can’t`), which a straight-apostrophe pattern would silently drop.
+Card text reaches these patterns through `normalizeCardText`, which straightens typographic apostrophes, so the curly `can’t` of Set 13's Ming Lee - Overprotective Parent matches the straight spelling.
 
 ### What's Excluded
 

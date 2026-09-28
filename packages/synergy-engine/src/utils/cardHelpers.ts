@@ -43,17 +43,26 @@ export function canShareDeck(cardA: LorcanaCard, cardB: LorcanaCard): boolean {
 }
 
 /**
- * Normalize card text for regex matching by stripping newlines.
+ * Typographic single quotes (U+2018, U+2019). Reveal-season preview text prints them
+ * ("can’t", "player’s"), while LorcanaJSON text and every engine pattern use the straight '.
+ * Global flag: use it with .replace only, since a /g regex's .test() keeps lastIndex state.
+ */
+const TYPOGRAPHIC_APOSTROPHE = /[‘’]/g;
+
+/**
+ * Normalize card text for regex matching: newlines become spaces, typographic apostrophes
+ * become the straight '.
  *
- * Lorcana card text spans multiple lines, and JS regex `.*` does not cross
- * newlines by default — so a phrase like "reveal\na location card" silently
- * fails to match `reveal.*location card`. Always route card-text patterns
- * through this helper so detection and rule-`matches` agree.
+ * Lorcana card text spans multiple lines, and JS regex `.*` does not cross newlines by
+ * default, so "reveal\na location card" silently fails `reveal.*location card`. Preview text
+ * prints ’ where every pattern spells ', so "their player’s hand" would fail each
+ * `player'?s?` pattern. Always route card-text patterns through this helper so detection and
+ * rule `matches` agree. It feeds matching only; displayed text keeps its printed form.
  *
  * Returns an empty string when the card has no text, so callers can chain safely.
  */
 export function normalizeCardText(card: LorcanaCard): string {
-  return (card.text ?? '').replace(/\n/g, ' ');
+  return (card.text ?? '').replace(/\n/g, ' ').replace(TYPOGRAPHIC_APOSTROPHE, "'");
 }
 
 /**
@@ -884,13 +893,6 @@ const SHIFT_REMINDER = /\([^)]*\bto play this on top of\b[^)]*\)/gi;
 const ABILITY_TITLE_START = /\.\s+(?![A-Z]\.\s)(?=[^\sa-z]*[A-Z][^\sa-z]*(?:\s|$))/;
 
 /**
- * Typographic apostrophes (U+2018, U+2019). Set 14 reveal text prints "Belle’s City Guide",
- * while every card name uses the straight apostrophe, so getNamedReferences reads names in
- * that spelling.
- */
-const TYPOGRAPHIC_APOSTROPHE = /[‘’]/g;
-
-/**
  * Game-mechanic terminator pattern (as regex source string) that signals the
  * end of a card name. Names can contain lowercase articles ("the", "of"),
  * periods ("Mr."), hyphens ("Fix-It"), and exclamation marks ("Pull the
@@ -936,10 +938,8 @@ const NAMED_PATTERN = new RegExp(
 export function getNamedReferences(card: LorcanaCard): string[] {
   if (!card.text || !HAS_NAMED.test(card.text)) return [];
 
-  // Strip Shift reminders and spell apostrophes as card names do
-  const cleanText = normalizeCardText(card)
-    .replace(SHIFT_REMINDER, '')
-    .replace(TYPOGRAPHIC_APOSTROPHE, "'");
+  // Strip Shift reminders (normalizeCardText already spells apostrophes as card names do)
+  const cleanText = normalizeCardText(card).replace(SHIFT_REMINDER, '');
 
   const names = new Set<string>();
 
@@ -1751,12 +1751,11 @@ export type ExertRole = 'exert-enabler' | 'exert-payoff';
  * enabler — an effect that exerts an OPPOSING character. Both the verb pattern and the
  * opposing-character reference must match. The `(?:\w+ ){0,2}` slot in HAS_OPPOSING_CHAR
  * admits an adjective ("exert chosen opposing READY character", Ursula - Voice Stealer).
- * The `['’]?` apostrophe class handles "opponent's character" in either quote style.
  */
 const EXERT_OPPOSING_VERB =
-  /\bexerts?\b\s+(?:up to \d+ )?(?:all |each )?(?:chosen |target )?(?:opposing|opponent['’]?s)/i;
+  /\bexerts?\b\s+(?:up to \d+ )?(?:all |each )?(?:chosen |target )?(?:opposing|opponent'?s)/i;
 const EXERT_HAS_OPPOSING_CHAR =
-  /opposing (?:\w+ ){0,2}character|opponent['’]?s (?:\w+ ){0,2}character/i;
+  /opposing (?:\w+ ){0,2}character|opponent'?s (?:\w+ ){0,2}character/i;
 /** Exert-an-ITEM effect ("exert chosen opposing item") — a different axis; excluded from both roles. */
 const EXERT_ITEM_ONLY = /\bexerts?\b[^.]{0,25}\bitems?\b/i;
 
@@ -1770,14 +1769,12 @@ const EXERT_SELF_STATE = /while this character is exerted|if this character is e
 /**
  * Consume-tier payoffs (score 8 vs an enabler): turn the exerted body into a kill or
  * hard lock — an exert-trigger, a banish-of-an-exerted-body, or a can't-ready lock.
- * The `['’]?` apostrophe class is load-bearing for Set 13 curly-quote text (Ming Lee's
- * "can’t ready"), which a straight-apostrophe pattern would silently drop.
  */
 const EXERT_PAYOFF_TRIGGER =
-  /when(?:ever)?\s+(?:an?\s+)?(?:opposing|opponent['’]?s)[^.]{0,40}(?:is|are|gets?|becomes?)\s+exerted/i;
+  /when(?:ever)?\s+(?:an?\s+)?(?:opposing|opponent'?s)[^.]{0,40}(?:is|are|gets?|becomes?)\s+exerted/i;
 const EXERT_PAYOFF_BANISH = /banish (?:chosen |an? )?exerted (?:opposing )?character/i;
 const EXERT_PAYOFF_CANT_READY =
-  /chosen (?:opposing )?exerted character[^.]{0,30}can['’]?t ready|exerted character can['’]?t ready at the start of (?:their|its) next turn/i;
+  /chosen (?:opposing )?exerted character[^.]{0,30}can'?t ready|exerted character can'?t ready at the start of (?:their|its) next turn/i;
 
 /**
  * State-tier payoffs (score 6 vs an enabler): scale off an opponent HAVING an exerted

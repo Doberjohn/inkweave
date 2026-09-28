@@ -66,7 +66,7 @@ The next ability's title is caught before matching instead. Ability titles are A
 
 Before scanning, every Shift reminder is stripped, whatever its cost: `(You may pay 5 ⬡ to play this on top of one of your characters named Elsa.)` or `(You may remove 2 ink drops to play this on top of one of your characters named Baymax.)`. A Shift target belongs to Shift Targets, not here. The strip (`SHIFT_REMINDER` in `cardHelpers.ts`) is keyed on the reminder's own wording, "to play this on top of", rather than on the keyword, so a Shift cost of any shape is covered. The earlier strip required a digit after "Shift", so it missed the ink-drop Shift of Baymax - Amped Up and scored that card's own Shift target as a companion.
 
-Typographic apostrophes (`’`, `‘`) then become the straight `'` that every card name in the data uses, so the Set 14 reveal text "an item card named Belle’s City Guide" reads "Belle's City Guide". Finally the text is split at each ability title (`ABILITY_TITLE_START`, see Sentence Ends and Ability Titles). The card's printed line breaks can't mark abilities: they fall mid-sentence, even inside a name, so `normalizeCardText` joins them before any of this.
+`normalizeCardText` runs before all of this, for every rule: it joins the card's printed line breaks and turns typographic apostrophes (`’`, `‘`) into the straight `'` that every card name in the data uses, so the Set 14 reveal text "an item card named Belle’s City Guide" reads "Belle's City Guide". Finally the text is split at each ability title (`ABILITY_TITLE_START`, see Sentence Ends and Ability Titles). The printed line breaks can't mark abilities: they fall mid-sentence, even inside a name.
 
 ### Conjunction Handling
 
