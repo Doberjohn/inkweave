@@ -16,14 +16,25 @@ interface E2ESynergyGroup {
 interface E2ESynergyData {
   groups: E2ESynergyGroup[];
 }
-const expandData: E2ESynergyData = JSON.parse(
-  fs.readFileSync(path.resolve(process.cwd(), 'public/data/synergies', `${EXPAND_CARD_ID}.json`), 'utf8'),
-);
+const readSynergyData = (cardId: string): E2ESynergyData =>
+  JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'public/data/synergies', `${cardId}.json`), 'utf8'));
+const expandData = readSynergyData(EXPAND_CARD_ID);
 const expandGroup = (expandData.groups ?? []).find((g) => g.groupKey === EXPAND_GROUP);
 if (!expandGroup || expandGroup.synergies.length <= 3) {
   throw new Error(
     `Fixture broken: card ${EXPAND_CARD_ID} must have a '${EXPAND_GROUP}' group with >3 synergies ` +
       `(so the default view truncates it and renders a "+N more" tile). Is the card still in the pool?`,
+  );
+}
+
+// Card 2978 (Meilin Lee - Lead Vocalist) has 6 synergy groups, so its mobile group chip row ("All" plus
+// one chip per group) is far wider than a phone viewport: the #631 horizontal-overflow case.
+const OVERFLOW_CARD_ID = '2978';
+const overflowGroupCount = (readSynergyData(OVERFLOW_CARD_ID).groups ?? []).length;
+if (overflowGroupCount < 5) {
+  throw new Error(
+    `Fixture broken: card ${OVERFLOW_CARD_ID} must have >=5 synergy groups (found ${overflowGroupCount}) ` +
+      `so its mobile chip row overflows a 390px viewport. Is the card still in the pool?`,
   );
 }
 
@@ -176,5 +187,32 @@ test.describe('Card Detail: Show More and sibling navigation (desktop)', () => {
     // border), so query them at the page level rather than scoped to the modal element.
     await page.getByRole('button', {name: 'Next card'}).click();
     await expect(modal.locator('h1')).not.toHaveText(firstName ?? '');
+  });
+});
+
+test.describe('Card page (mobile layout)', () => {
+  // Runs on every project, not just mobile-*: isMobile is width-based (useResponsive), so a forced
+  // phone viewport renders the mobile layout anywhere, including the chromium-only Windows pre-push.
+  test('a card with many synergy groups does not scroll the page sideways (#631)', async ({page}) => {
+    await page.setViewportSize({width: 390, height: 844});
+    await page.goto(`/card/${OVERFLOW_CARD_ID}`);
+
+    const chipRow = page.getByTestId('synergy-group-toolbar');
+    await expect(chipRow.getByRole('button', {name: 'All', exact: true})).toBeVisible({timeout: 10000});
+
+    // documentElement.clientWidth, not window.innerWidth: mobile emulation zooms out to fit an
+    // overflowing page, which inflates innerWidth to the overflowed width.
+    const widths = await chipRow.evaluate((row) => ({
+      pageScroll: document.documentElement.scrollWidth,
+      pageClient: document.documentElement.clientWidth,
+      rowScroll: row.scrollWidth,
+      rowClient: row.clientWidth,
+    }));
+    // Precondition: the chips really are wider than the page, so this card exercises the bug.
+    expect(widths.rowScroll).toBeGreaterThan(widths.pageClient);
+    // The page never scrolls sideways (the results section is a flex item that must be free to shrink)...
+    expect(widths.pageScroll).toBeLessThanOrEqual(widths.pageClient);
+    // ...the chip row scrolls inside its own overflow box instead.
+    expect(widths.rowScroll).toBeGreaterThan(widths.rowClient);
   });
 });

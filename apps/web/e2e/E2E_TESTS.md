@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-107 tests across 17 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+131 tests across 18 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
 
@@ -27,12 +27,16 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should show featured cards after loading | Featured cards grid has 1-12 card tiles |
 | should open the overview modal when a card is selected | Clicking a featured card opens the modal overlay-style; URL stays `/`, no compact header |
 
-## `card-detail.spec.ts` — 10 tests (desktop only)
+## `card-detail.spec.ts` — 11 tests (10 desktop only, 1 on every project at a 390px viewport)
 
 Two surfaces: the crawlable `/card/:id` **page** (#486 — renders, not-found, empty state; slug URLs `/card/:id/:slug` with the id as the lookup key and the slug decorative, #498) and the
 CardOverviewModal opened from a tile (render, close, empty, scroll lock, show-all, sibling nav). The
 modal is opened via `appPage.openCardOverview(name)` (Browse `?q=` + tile click) since `/card/:id`
 is a real page now, not a modal shortcut.
+
+The page's mobile-layout guard (#631) forces a 390px viewport with `setViewportSize` instead of
+skipping `mobile-*`: `isMobile` is width-based, so it renders the mobile layout on every project and
+also runs in the chromium-only Windows pre-push.
 
 | Test | What it verifies |
 |---|---|
@@ -46,6 +50,7 @@ is a real page now, not a modal shortcut.
 | should lock background scroll while the modal is open | `document.body` overflow is `hidden` while open, restored on close |
 | Show More reveals the full expanded group, and Back returns to default | Modal opened on card 2095 via Browse (`openCardOverview`); ramp group: one "+N more" click → `data-state="expanded"` with a "Back to all synergies" link; Back → `data-state="default"` |
 | arrows navigate to a sibling card from the Browse grid | Opening a card from `/browse` shows prev/next arrows; clicking "Next card" changes the modal's h1 to the adjacent grid card |
+| a card with many synergy groups does not scroll the page sideways (#631) | At 390px, `/card/2978` (6 groups, fixture-guarded from its synergy JSON): the chip row's content is wider than the page (precondition), `document.documentElement.scrollWidth <= clientWidth` (no page-level horizontal overflow), and the chip row scrolls inside its own box (`scrollWidth > clientWidth`). Compares against `clientWidth`, not `innerWidth`, because mobile emulation zooms out to fit an overflowing page |
 
 ## `card-search.spec.ts` — 7 tests (desktop only)
 
