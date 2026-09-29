@@ -86,6 +86,7 @@ export {
   canonicalizeCardText,
   canonicalizeCardFullText,
   findGlyphWords,
+  findSpelledGlyphWords,
   NAMED_REFERENCE,
   getToyRoles,
   isToyCard,

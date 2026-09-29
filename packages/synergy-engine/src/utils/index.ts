@@ -135,5 +135,6 @@ export {
   canonicalizeCardText,
   canonicalizeCardFullText,
   findGlyphWords,
+  findSpelledGlyphWords,
   NAMED_REFERENCE,
 } from './cardTextStyle.js';

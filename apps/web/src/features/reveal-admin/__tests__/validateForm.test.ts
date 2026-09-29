@@ -36,6 +36,11 @@ function fullTextError(fullText: string): string | undefined {
   return validateRevealCardForm(form({fullText}), NO_IDS, 'mei.png').errors.fullText;
 }
 
+/** The Keywords error for these chips, on an otherwise valid form. */
+function keywordsError(keywords: string): string | undefined {
+  return validateRevealCardForm(form({keywords}), NO_IDS, 'mei.png').errors.keywords;
+}
+
 describe('validateRevealCardForm', () => {
   it('passes a complete character with an image', () => {
     const r = validateRevealCardForm(form(), NO_IDS, 'mei.png');
@@ -112,5 +117,14 @@ describe('validateRevealCardForm', () => {
   // "gain 2 ◊" would pass every check and read as no lore gain; released text says "gain 2 lore".
   it('points a capitalized gained Lore to the lowercase word, not the glyph', () => {
     expect(fullTextError('Gain 2 Lore.')).toMatch(/"gain 2 lore"/);
+  });
+
+  // Keyword chips become ability text as typed; the build rewrites nothing there.
+  it('refuses a glyph word in a keyword chip, naming it', () => {
+    expect(keywordsError('Challenger +2 Strength')).toMatch(/"Strength"/);
+  });
+
+  it('accepts real keyword chips', () => {
+    expect(keywordsError('Singer 5\nShift 3\nResist +1')).toBeUndefined();
   });
 });

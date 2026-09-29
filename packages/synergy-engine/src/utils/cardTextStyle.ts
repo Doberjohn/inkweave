@@ -45,15 +45,22 @@ const GLYPH_WORDS: ReadonlyArray<readonly [RegExp, string]> = [
  * A "named X" reference, from "named" to the end of its clause or sentence: a comma,
  * semicolon, colon, parenthesis or line end, or a period followed by a space. A period after
  * a title or an initial sits inside the name instead ("Mr. Incredible", "P.J. Pete"): every
- * period in a shipped card name follows one. Card names keep their printed words ("named Ink
- * Amplifier"). Global flag: use it with replace or matchAll, never test or exec, which keep
- * lastIndex between calls.
+ * period in a shipped card name follows one. The reveal scripts unaccent everything it spans.
+ * Global flag: use it with replace or matchAll, never test or exec, which keep lastIndex
+ * between calls.
  */
 export const NAMED_REFERENCE =
   /\bnamed (?:[^.,;:()\n]|\.(?!\s)|(?<=\b(?:[A-Z]|Mrs?|Ms|Dr|St|Jr|Sr))\.)+/g;
 
-/** A capitalized glyph word left in text; card data never prints one outside a name. */
+/** A capitalized glyph word; card data prints one only inside a card name. */
 const GLYPH_WORD = /\b(?:Ink|Strength|Willpower|Lore)\b/g;
+
+/**
+ * Text that ends inside a card name: "named " and then only capitalized tokens ("named Ink
+ * Amplifier", "named Mr. Incredible"). Narrower than NAMED_REFERENCE on purpose: in "named
+ * Ink Amplifier and your Strength" the second glyph word is not part of the name.
+ */
+const ENDS_IN_CARD_NAME = /\bnamed (?:[A-Z0-9][^\s,;:()]* )*$/;
 
 function unifyGlyphs(line: string): string {
   let s = line.replaceAll(VARIATION_SELECTOR_16, '');
@@ -84,10 +91,19 @@ export function canonicalizeCardFullText(text: string): string {
 }
 
 /**
- * Capitalized glyph words left after canonicalizing, outside a "named X" reference: a shape
- * the rules above do not know ("Your Strength wins."). reveal-admin refuses to publish these.
+ * Capitalized glyph words in text exactly as written, except inside a card name after
+ * "named". For text that reaches card data unrewritten, such as reveal-admin's keyword chips.
+ */
+export function findSpelledGlyphWords(text: string): string[] {
+  return [...text.matchAll(GLYPH_WORD)]
+    .filter((match) => !ENDS_IN_CARD_NAME.test(text.slice(0, match.index)))
+    .map(([word]) => word);
+}
+
+/**
+ * Capitalized glyph words left after canonicalizing: a shape the rules above do not know
+ * ("Your Strength wins."). reveal-admin refuses to publish these.
  */
 export function findGlyphWords(text: string): string[] {
-  const unnamed = canonicalizeCardFullText(text).replace(NAMED_REFERENCE, '');
-  return unnamed.match(GLYPH_WORD) ?? [];
+  return findSpelledGlyphWords(canonicalizeCardFullText(text));
 }

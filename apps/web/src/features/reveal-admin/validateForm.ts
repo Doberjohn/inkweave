@@ -1,4 +1,4 @@
-import {findGlyphWords, type Ink} from 'inkweave-synergy-engine';
+import {findGlyphWords, findSpelledGlyphWords, type Ink} from 'inkweave-synergy-engine';
 import type {RevealCardForm} from './buildPreviewCard';
 import {ALL_INKS, inkBlock} from '../../shared/constants';
 import {CARD_TYPES, REVEAL_ID_BASE} from './constants';
@@ -82,10 +82,16 @@ function checkCharacterStats(form: RevealCardForm, errors: Errors): void {
  * Card text must reach the data in house style (#635): the engine matches glyphs, so a
  * spelled-out "1 Ink" silently costs a card its mechanics. buildPreviewCard rewrites the
  * shapes it knows; a capitalized word still left is one it cannot place, so publish waits.
+ * Keyword chips reach the ability text as typed, with no rewrite, so any glyph word there
+ * is refused; no real keyword holds one.
  */
 function checkCardText(form: RevealCardForm, errors: Errors): void {
   const [word] = findGlyphWords(form.fullText);
   if (word) errors.fullText = `"${word}" is spelled out: ${GLYPH_HINTS[word] ?? 'use its glyph'}`;
+  const [chipWord] = findSpelledGlyphWords(form.keywords);
+  if (chipWord) {
+    errors.keywords = `Keywords take a name and a number only ("Shift 3"): remove "${chipWord}"`;
+  }
 }
 
 function checkImage(imageName: string | null, errors: Errors): void {
