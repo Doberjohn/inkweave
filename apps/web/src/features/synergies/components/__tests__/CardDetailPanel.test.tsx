@@ -64,6 +64,25 @@ describe('CardDetailPanel printings', () => {
     expect(within(lightbox).getByRole('img')).toHaveAttribute('src', '/card-images/2141.avif');
   });
 
+  it('closes the lightbox when the page moves on to another card', () => {
+    const {rerender} = renderPanel(gosalyn);
+    fireEvent.click(screen.getByRole('button', {name: 'Enlarge card image'}));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    // The card page stays mounted across /card/:id navigations, a browser Back for one.
+    const showCard = (card: typeof pongo) =>
+      rerender(
+        <MemoryRouter>
+          <CardDetailPanel card={card} />
+        </MemoryRouter>,
+      );
+    showCard(pongo);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    // Nor does it reopen when the first card comes back.
+    showCard(gosalyn);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('records which alternate printing was viewed', () => {
     renderPanel();
 

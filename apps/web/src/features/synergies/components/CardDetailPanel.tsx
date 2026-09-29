@@ -349,6 +349,22 @@ function SynergyBreakdownBox({
   );
 }
 
+/**
+ * Which printing's lightbox is open (an index into the card's printings), or null. Tied to the
+ * card: the card page stays mounted across /card/:id navigations, so a browser Back taken with
+ * the lightbox open closes it instead of carrying the index over to the next card. Same
+ * render-time reset as usePrintingSelection.
+ */
+function useCardLightbox(cardId: string) {
+  const [shown, setShown] = useState<{cardId: string; index: number} | null>(null);
+  if (shown && shown.cardId !== cardId) setShown(null);
+  return {
+    index: shown?.cardId === cardId ? shown.index : null,
+    open: (index: number) => setShown({cardId, index}),
+    close: () => setShown(null),
+  };
+}
+
 // ── Main panel ──
 
 export function CardDetailPanel({
@@ -357,8 +373,7 @@ export function CardDetailPanel({
   onGroupClick,
   activeGroupKey,
 }: CardDetailPanelProps) {
-  // Which printing's lightbox is open (index into `printings`), or null when closed.
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const lightbox = useCardLightbox(card.id);
   const {printings, index, select} = usePrintingSelection(card);
   const selectPrinting = (next: number) => {
     select(next);
@@ -386,15 +401,15 @@ export function CardDetailPanel({
         <PrintingsHero
           card={card}
           selection={{printings, index, onSelect: selectPrinting}}
-          onEnlarge={setLightboxIndex}
+          onEnlarge={lightbox.open}
         />
       ) : (
-        <CardImageBox card={card} onOpenLightbox={() => setLightboxIndex(0)} />
+        <CardImageBox card={card} onOpenLightbox={() => lightbox.open(0)} />
       )}
       <CardLightboxGate
         card={card}
-        printing={lightboxIndex === null ? null : (printings[lightboxIndex] ?? null)}
-        onClose={() => setLightboxIndex(null)}
+        printing={lightbox.index === null ? null : (printings[lightbox.index] ?? null)}
+        onClose={lightbox.close}
       />
       <CardTitleBlock card={card} />
       {hasCardText(card) && <CardTextBox card={card} />}
