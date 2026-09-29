@@ -4070,6 +4070,31 @@
       "strength": 3,
       "willpower": 6,
       "lore": 1
+    },
+    {
+      "id": 14009,
+      "name": "Judy Hopps",
+      "fullName": "Judy Hopps - Helpful Officer",
+      "cost": 1,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 9,
+      "version": "Helpful Officer",
+      "franchise": "Zootopia",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Detective"
+      ],
+      "fullText": "When you play this character, remove up to 2 damage from chosen character",
+      "fullTextSections": [
+        "When you play this character, remove up to 2 damage from chosen character"
+      ],
+      "strength": 2,
+      "willpower": 1,
+      "lore": 1
     }
   ]
 }
