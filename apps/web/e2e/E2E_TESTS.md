@@ -42,7 +42,7 @@ layout on every project and also run in the chromium-only Windows pre-push.
 
 | Test | What it verifies |
 |---|---|
-| should render card name and image inside the overview modal | Modal shows card image + h1 with the card name |
+| should render card name and image inside the overview modal | Modal shows an h1 with the card name and the card art named after it (found by name, not as the first `<img>`: a card with an alternate printing puts the pills' decorative rarity symbols first) |
 | should show synergy chips or empty state once data loads | Modal renders synergy groups, empty state, or error after async load |
 | renders the crawlable card page when deep-linking to /card/:id | `/card/1947` renders the real page (#486): URL stays, `<title>` baked in, canonical is the slug URL (#498), synergy section visible, no modal |
 | a wrong slug still renders the card by id and canonicalizes to the correct slug (#498) | `/card/1947/wrong-slug-here` resolves card 1947 by id (slug decorative); canonical rewritten to the derived slug, not the URL's |
@@ -62,7 +62,7 @@ The alternate-printing switcher (#625) on card 1938 (Pongo - Determined Father),
 | Test | What it verifies |
 |---|---|
 | the card page switches to the Enchanted printing, and enlarges that one | `/card/1938`: Standard is checked first; the Enchanted pill's rarity symbol loads (`naturalWidth > 0`, it is a separate `?no-inline` file); clicking the pill checks it and lands the art strip on slide 1; "Enlarge Enchanted printing" opens the lightbox named for the Enchanted printing, not the card's own scan |
-| the modal's arrow keys move between printings, not to the next card | Modal opened on Pongo from `/browse?q=father` (four matches, so "Next card" exists). Waits for the dialog's initial focus on its × first (`useDialogFocus` moves it there 100ms after opening, and would otherwise take the focus back from the pills mid-test). ArrowRight on the focused Standard pill checks and focuses Enchanted, and the modal's h1 is still Pongo (the radio group owns the arrow keys) |
+| the modal's arrow keys move between printings, not to the next card | Modal opened on Pongo from `/browse?q=father` (four matches, so "Next card" exists). First lets the dialog's initial-focus timer run (`useDialogFocus` moves focus to the × 100ms after opening, and would otherwise take it back from the pills mid-test) by awaiting a 100ms timer of its own in the page, which runs after the dialog's. It does not wait for the × to be focused: headless WebKit has not started the enter transition by then, so the dialog is still hidden and the focus call does nothing. ArrowRight on the focused Standard pill checks and focuses Enchanted, and the modal's h1 is still Pongo (the radio group owns the arrow keys) |
 | four printings fit a 360px phone as symbols, and jumping to the last checks only it | `page.route` adds Epic and Iconic printings to card 1938 (no real card has more than one yet): four pills; the Epic pill has no text but keeps its name (`aria-label`) and `title`; the row and the page fit `documentElement.clientWidth`. Clicking Iconic lands the strip on slide 3 while a MutationObserver records the checked pill: exactly `['Iconic']`, since the strip's own scroll past Enchanted and Epic must not read as swipes (each would check its pill in passing and count as a view) |
 
 ## `card-search.spec.ts` — 7 tests (desktop only)
@@ -125,7 +125,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 |---|---|
 | should use eager loading for above-fold featured cards | Featured card images have `loading="eager"` + `decoding="sync"` |
 | should render images in featured cards grid | Featured grid has images with valid `src` attributes |
-| should render image in the card overview modal | The modal's primary card image renders with a valid `src` |
+| should render image in the card overview modal | The modal's card art (the image named after the card) renders with a valid `src` |
 | should use lazy loading for synergy card images | Synergy card images (below fold) use `loading="lazy"` |
 
 ## `search-autocomplete.spec.ts` — 5 tests (desktop only)

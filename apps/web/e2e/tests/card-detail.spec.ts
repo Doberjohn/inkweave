@@ -52,17 +52,17 @@ test.describe('Card Detail (modal)', () => {
 
     await expect(appPage.cardOverviewModal).toBeVisible();
 
-    // Card image — first <img> inside the modal is the primary card art
-    const img = appPage.cardOverviewModal.locator('img').first();
-    await expect(img).toBeVisible();
-    const alt = await img.getAttribute('alt');
-    expect(alt).toBeTruthy();
-
     // Card name in h1 inside the modal header
     const heading = appPage.cardOverviewModal.locator('h1');
     await expect(heading).toBeVisible();
     const name = await heading.textContent();
     expect(name!.length).toBeGreaterThan(0);
+
+    // Card image, named after the card. Not the modal's first <img>: for a card with an
+    // alternate printing (#625) that is a pill's rarity symbol, which is decorative (alt="").
+    await expect(
+      appPage.cardOverviewModal.getByRole('img', {name: name!, exact: true}),
+    ).toBeVisible();
   });
 
   test('should show synergy chips or empty state once data loads', async ({appPage, page}) => {

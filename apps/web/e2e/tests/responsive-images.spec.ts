@@ -36,7 +36,10 @@ test.describe('Responsive Images', () => {
 
     await expect(appPage.cardOverviewModal).toBeVisible();
 
-    const detailImg = appPage.cardOverviewModal.locator('img').first();
+    // The card art, named after the card (the h1). Not the modal's first <img>: for a card with
+    // an alternate printing (#625) that is a pill's decorative rarity symbol.
+    const name = await appPage.cardOverviewModal.locator('h1').textContent();
+    const detailImg = appPage.cardOverviewModal.getByRole('img', {name: name!, exact: true});
     await expect(detailImg).toBeVisible();
     expect(await detailImg.getAttribute('src')).toBeTruthy();
     // Note: the modal's primary card image uses CardImage's default `lazy=true`. The image

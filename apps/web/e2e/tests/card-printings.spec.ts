@@ -81,11 +81,15 @@ test.describe('Card printings (desktop)', () => {
     const modal = appPage.cardOverviewModal;
     await expect(modal.locator('h1')).toHaveText(CARD_NAME, {timeout: 10000});
     await expect(page.getByRole('button', {name: 'Next card'})).toBeVisible();
-    // The dialog moves focus to its × 100ms after opening; let it land first, or it can take
-    // the focus back from the pills mid-test.
-    await expect(modal.getByRole('button', {name: 'Close'})).toBeFocused();
+    // The dialog moves focus to its × 100ms after opening, which would take the focus back from
+    // the pills mid-test. A 100ms timer set now runs after that one (timers run in due-time
+    // order). Waiting for the × to be focused is no good: headless WebKit has not started the
+    // enter transition by then, so the dialog is still hidden and the call does nothing.
+    await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 100)));
 
-    await modal.getByRole('radio', {name: 'Standard'}).focus();
+    const standard = modal.getByRole('radio', {name: 'Standard'});
+    await expect(standard).toBeVisible();
+    await standard.focus();
     await page.keyboard.press('ArrowRight');
 
     await expect(modal.getByRole('radio', {name: 'Enchanted'})).toHaveAttribute(
