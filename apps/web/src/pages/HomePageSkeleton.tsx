@@ -72,7 +72,7 @@ const DESKTOP_HERO_STYLES: HeroSkeletonStyles = {
     boxSizing: 'border-box',
   },
   heading: {margin: 0, marginBottom: 20, lineHeight: 0},
-  logo: {display: 'block', width: '100%', maxWidth: 600, height: 'auto', userSelect: 'none'},
+  logo: {display: 'block', width: 600, maxWidth: '100%', height: 'auto', userSelect: 'none'},
   subtitleContainer: {textAlign: 'center', marginBottom: 32, padding: undefined},
   subtitleText: {
     fontSize: '20px',
@@ -104,7 +104,7 @@ const MOBILE_HERO_STYLES: HeroSkeletonStyles = {
     boxSizing: 'border-box',
   },
   heading: {margin: 0, marginBottom: 16, lineHeight: 0},
-  logo: {display: 'block', width: '100%', maxWidth: 380, height: 'auto', userSelect: 'none'},
+  logo: {display: 'block', width: 380, maxWidth: '100%', height: 'auto', userSelect: 'none'},
   subtitleContainer: {textAlign: 'center', marginBottom: 24, padding: '0 8px'},
   subtitleText: {
     fontSize: '16px',
@@ -137,7 +137,8 @@ function HeroSkeleton({isMobile}: HeroSkeletonProps) {
   return (
     <section aria-label="Hero" style={s.section}>
       <h1 style={s.heading}>
-        {/* Same attributes as HeroSection's logo: this fallback renders first on the client. */}
+        {/* Same attributes and definite width as HeroSection's logo: this fallback renders
+            first on the client, and must reserve the same box (#627). */}
         <img
           src="/brand/logo-animated.svg"
           alt="Inkweave"

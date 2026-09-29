@@ -34,10 +34,14 @@ function getStyles(isMobile: boolean) {
       marginBottom: isMobile ? 16 : 20,
       lineHeight: 0,
     } as React.CSSProperties,
+    // A definite width (clamped by maxWidth) is what lets the img's width/height attributes
+    // reserve its box before the SVG arrives. The <h1> shrink-wraps its content, so the old
+    // `width: '100%'` resolved against a 0-wide parent until the image loaded, and the hero
+    // then grew by 192 px, moving the whole centered page (#627).
     logo: {
       display: 'block',
-      width: '100%',
-      maxWidth: isMobile ? 380 : 600,
+      width: isMobile ? 380 : 600,
+      maxWidth: '100%',
       height: 'auto',
       userSelect: 'none',
     } as React.CSSProperties,
@@ -172,9 +176,9 @@ export function HeroSection({
       {/* Logo — animated SVG with self-contained CSS animations (honors prefers-reduced-motion).
           Wrapping in h1 preserves a single top-level heading for a11y; alt provides the name. */}
       <h1 style={styles.heading}>
-        {/* width/height are the SVG's intrinsic size: they reserve the logo's box before the
-            file arrives, so the vertically centered <main> does not shift (#627). CSS still
-            sets the rendered size. fetchPriority: this is the page's LCP element. */}
+        {/* width/height are the SVG's intrinsic size: with styles.logo's definite width they
+            reserve the logo's box before the file arrives, so the vertically centered <main>
+            does not shift (#627). fetchPriority: this is the page's LCP element. */}
         <img
           src="/brand/logo-animated.svg"
           alt="Inkweave"
