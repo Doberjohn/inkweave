@@ -50,9 +50,10 @@ function resolvePort(): number {
  * CI runs one worker. Local Windows runs cap at 3: Playwright's default (half the logical CPUs,
  * 6 on the dev box) needs an estimated 4.4 GB of commit memory against the 2.7 GB measured for 3,
  * and with other sessions open this machine often lacks it, so headless Chrome crashed out of
- * memory mid-run. The cap lives here rather than in the pre-push hook because a push from a
- * worktree runs the main checkout's copy of the hook, while this file always comes from the
- * branch under test. `--workers` (or PRE_PUSH_E2E_WORKERS in the hook) overrides it.
+ * memory mid-run. The cap lives here rather than in the pre-push hook because this file always
+ * comes from the branch under test, whichever copy of the hook runs (a worktree's push enters
+ * through the main checkout's copy; see .husky/handoff.sh), and it also covers runs outside the
+ * hook. `--workers` (or PRE_PUSH_E2E_WORKERS in the hook) overrides it.
  */
 function resolveWorkers(): number | undefined {
   if (process.env.CI) return 1;
