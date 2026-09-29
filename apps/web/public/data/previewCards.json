@@ -3957,6 +3957,26 @@
       "strength": 2,
       "willpower": 2,
       "lore": 1
+    },
+    {
+      "id": 14069,
+      "name": "Trusty",
+      "fullName": "Trusty - Along for the ride",
+      "cost": 5,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 69,
+      "version": "Along for the ride",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "strength": 4,
+      "willpower": 7,
+      "lore": 2
     }
   ]
 }
