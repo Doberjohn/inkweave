@@ -4111,6 +4111,32 @@
       "fullTextSections": [
         "Banish chosen character with 2 Strength or less."
       ]
+    },
+    {
+      "id": 14053,
+      "name": "Goliath",
+      "fullName": "Goliath - Transformed Warrior",
+      "cost": 4,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 53,
+      "version": "Transformed Warrior",
+      "rarity": "Rare",
+      "subtypes": [
+        "Dreamborn",
+        "Gargoyle",
+        "Hero"
+      ],
+      "fullText": "WHEN NIGHT FALLS Once during your turn, you may choose and discard a card. If you do, move up to 2 damage from this character to chosen opposing character.\n\nSTONE BY DAY If you have 3 or more cards in your hand, this character can’t ready.",
+      "fullTextSections": [
+        "WHEN NIGHT FALLS Once during your turn, you may choose and discard a card. If you do, move up to 2 damage from this character to chosen opposing character.",
+        "STONE BY DAY If you have 3 or more cards in your hand, this character can’t ready."
+      ],
+      "strength": 5,
+      "willpower": 5,
+      "lore": 1
     }
   ]
 }
