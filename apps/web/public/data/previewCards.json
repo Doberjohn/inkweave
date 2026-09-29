@@ -4002,6 +4002,30 @@
       "strength": 4,
       "willpower": 3,
       "lore": 3
+    },
+    {
+      "id": 14124,
+      "name": "Roxanne",
+      "fullName": "Roxanne - Concert Lover",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 124,
+      "version": "Concert Lover",
+      "rarity": "Rare",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "TODAY’S THE DAY When you play this character, you may move her and one of your other characters to the same location for free. If you do, the other character gets +1 Lore this turn.",
+      "fullTextSections": [
+        "TODAY’S THE DAY When you play this character, you may move her and one of your other characters to the same location for free. If you do, the other character gets +1 Lore this turn."
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1
     }
   ]
 }
