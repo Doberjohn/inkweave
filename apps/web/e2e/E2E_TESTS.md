@@ -8,7 +8,7 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 
 **Global console-error guard:** the shared `page` fixture (`e2e/fixtures/test-fixtures.ts`) fails any test that logs a `console.error` or throws an uncaught exception, except messages matching the documented `BENIGN_CONSOLE` allowlist. This turns silent runtime faults — most importantly React's "Maximum update depth exceeded" render loop, which a loading-skeleton assertion otherwise passes through — into red builds across every spec.
 
-## `accessibility.spec.ts` — 5 tests (desktop only)
+## `accessibility.spec.ts` — 7 tests (desktop only)
 
 | Test | What it verifies |
 |---|---|
@@ -17,6 +17,8 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | card detail page should have no axe violations | `/card/1939` passes axe-core audit |
 | playstyle gallery should have no axe violations | `/playstyles` passes axe-core audit |
 | playstyle detail should have no axe violations | `/playstyles/discard` passes axe-core audit |
+| ink gallery should have no axe violations | `/inks` passes axe-core audit (#530: a card-count contrast violation there shipped because the ink pages had no axe coverage) |
+| ink hub should have no axe violations | `/ink/steel` passes axe-core audit (#530) |
 
 ## `app-load.spec.ts` — 4 tests (desktop only)
 
@@ -50,7 +52,7 @@ also runs in the chromium-only Windows pre-push.
 | should lock background scroll while the modal is open | `document.body` overflow is `hidden` while open, restored on close |
 | Show More reveals the full expanded group, and Back returns to default | Modal opened on card 2095 via Browse (`openCardOverview`); ramp group: one "+N more" click → `data-state="expanded"` with a "Back to all synergies" link; Back → `data-state="default"` |
 | arrows navigate to a sibling card from the Browse grid | Opening a card from `/browse` shows prev/next arrows; clicking "Next card" changes the modal's h1 to the adjacent grid card |
-| a card with many synergy groups does not scroll the page sideways (#631) | At 390px, `/card/2978` (6 groups, fixture-guarded from its synergy JSON): the chip row's content is wider than the page (precondition), `document.documentElement.scrollWidth <= clientWidth` (no page-level horizontal overflow), and the chip row scrolls inside its own box (`scrollWidth > clientWidth`). Compares against `clientWidth`, not `innerWidth`, because mobile emulation zooms out to fit an overflowing page |
+| a card with many synergy groups does not scroll the page sideways (#631) | At 390px, `/card/2978` (6 groups, fixture-guarded from its synergy JSON): the chip row's content is wider than the page (precondition), `document.documentElement.scrollWidth <= clientWidth` (no page-level horizontal overflow), and the chip row scrolls inside its own box (`scrollWidth > clientWidth`, with computed `overflow-x` `auto` or `scroll`, since `hidden`/`clip` would pass the width checks while stranding the off-screen chips). Compares against `clientWidth`, not `innerWidth`, because mobile emulation zooms out to fit an overflowing page |
 
 ## `card-search.spec.ts` — 7 tests (desktop only)
 

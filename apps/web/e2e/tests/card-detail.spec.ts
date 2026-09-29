@@ -202,17 +202,20 @@ test.describe('Card page (mobile layout)', () => {
 
     // documentElement.clientWidth, not window.innerWidth: mobile emulation zooms out to fit an
     // overflowing page, which inflates innerWidth to the overflowed width.
-    const widths = await chipRow.evaluate((row) => ({
+    const layout = await chipRow.evaluate((row) => ({
       pageScroll: document.documentElement.scrollWidth,
       pageClient: document.documentElement.clientWidth,
       rowScroll: row.scrollWidth,
       rowClient: row.clientWidth,
+      rowOverflowX: getComputedStyle(row).overflowX,
     }));
     // Precondition: the chips really are wider than the page, so this card exercises the bug.
-    expect(widths.rowScroll).toBeGreaterThan(widths.pageClient);
+    expect(layout.rowScroll).toBeGreaterThan(layout.pageClient);
     // The page never scrolls sideways (the results section is a flex item that must be free to shrink)...
-    expect(widths.pageScroll).toBeLessThanOrEqual(widths.pageClient);
-    // ...the chip row scrolls inside its own overflow box instead.
-    expect(widths.rowScroll).toBeGreaterThan(widths.rowClient);
+    expect(layout.pageScroll).toBeLessThanOrEqual(layout.pageClient);
+    // ...the chip row scrolls inside its own overflow box instead. Width alone is not enough: with
+    // overflow-x hidden or clip the row still measures wider, but the off-screen chips are unreachable.
+    expect(layout.rowScroll).toBeGreaterThan(layout.rowClient);
+    expect(layout.rowOverflowX).toMatch(/^(auto|scroll)$/);
   });
 });
