@@ -16,7 +16,7 @@ Research for GitHub issue **#219 "Legal & Product Pages"** (state OPEN, label `f
 | Tagline (title) | "Inkweave — Master Lorcana Synergies" | `apps/web/index.html:12` |
 | One-line description | "A synergy finder for Disney Lorcana TCG focused on Core format. Select any card to discover what synergizes with it through pattern-based rules and archetype detection." | `README.md:5` |
 | Meta description | "Discover powerful card synergies for Disney Lorcana. Inkweave analyzes every card interaction to help you build stronger decks in Core format." | `apps/web/index.html:13-15`, repeated in OG/Twitter/JSON-LD (`index.html:31-46,62-72`) |
-| Live URL | **https://inkweave.ink/** (`www` 308-redirects to the apex, #634) | `README.md:7`; `apps/web/index.html:26,34` |
+| Live URL | **https://inkweave.ink/** (`www` 308-redirects to the apex for normal routes; `/sw.js` is the retirement worker, #634) | `README.md:7`; `vercel.json:7-18`; `apps/web/index.html:59-69` |
 | Repo (public) | **Doberjohn/inkweave** on GitHub | `README.md:3` (CI badge URL `github.com/Doberjohn/inkweave`); git remote `git@github-personal:Doberjohn/inkweave.git` |
 | Format scope | Core format only (sets 5+; currently sets **9–13** live post-rotation per MEMORY) | `README.md:15`; CLAUDE.md "Current State" |
 | Feature list | Card Browser, Synergy Detection, Playstyle Archetypes, Synergy Scoring (1–10), Deep Linking, PWA, Responsive | `README.md:9-18` |
