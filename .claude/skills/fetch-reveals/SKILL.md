@@ -55,9 +55,13 @@ so the skill follows a season rotation with no edits.
    ```bash
    git fetch origin master
    git switch -c feature/set<SET>-reveals-<YYYY-MM-DD> origin/master
+   pnpm build:engine
    ```
 
    `<SET>` is `REVEAL_SET_CODE` from `revealSet.ts`. If the branch exists, append `-2`.
+   The build is not optional: the house-style rules and the write chain load the engine's
+   build output (#635), and a branch switch never rebuilds it. A stale build fails at import
+   with "does not provide an export named".
 4. Open the run:
 
    ```bash

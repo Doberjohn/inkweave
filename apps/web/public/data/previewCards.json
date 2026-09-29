@@ -3892,9 +3892,9 @@
       "subtypes": [
         "Item"
       ],
-      "fullText": "PUMP IT UP Your characters with Singer get +1 Strength and +1 Willpower.",
+      "fullText": "PUMP IT UP Your characters with Singer get +1 ¤ and +1 ⛉.",
       "fullTextSections": [
-        "PUMP IT UP Your characters with Singer get +1 Strength and +1 Willpower."
+        "PUMP IT UP Your characters with Singer get +1 ¤ and +1 ⛉."
       ]
     },
     {
@@ -4013,9 +4013,9 @@
         "Inventor",
         "Mentor"
       ],
-      "fullText": "URGENT DELIVERY When this character is banished, get 2 ink drops. (Each ink drop may be removed to pay 1 Ink.)",
+      "fullText": "URGENT DELIVERY When this character is banished, get 2 ink drops. (Each ink drop may be removed to pay 1 ⬡.)",
       "fullTextSections": [
-        "URGENT DELIVERY When this character is banished, get 2 ink drops. (Each ink drop may be removed to pay 1 Ink.)"
+        "URGENT DELIVERY When this character is banished, get 2 ink drops. (Each ink drop may be removed to pay 1 ⬡.)"
       ],
       "strength": 4,
       "willpower": 3,
@@ -4037,9 +4037,9 @@
         "Storyborn",
         "Ally"
       ],
-      "fullText": "TODAY’S THE DAY When you play this character, you may move her and one of your other characters to the same location for free. If you do, the other character gets +1 Lore this turn.",
+      "fullText": "TODAY’S THE DAY When you play this character, you may move her and one of your other characters to the same location for free. If you do, the other character gets +1 ◊ this turn.",
       "fullTextSections": [
-        "TODAY’S THE DAY When you play this character, you may move her and one of your other characters to the same location for free. If you do, the other character gets +1 Lore this turn."
+        "TODAY’S THE DAY When you play this character, you may move her and one of your other characters to the same location for free. If you do, the other character gets +1 ◊ this turn."
       ],
       "strength": 3,
       "willpower": 2,
@@ -4063,9 +4063,9 @@
         "Inventor",
         "Super"
       ],
-      "fullText": "NIFTY TECH While you have an item in play, this character gets +1 Lore.",
+      "fullText": "NIFTY TECH While you have an item in play, this character gets +1 ◊.",
       "fullTextSections": [
-        "NIFTY TECH While you have an item in play, this character gets +1 Lore."
+        "NIFTY TECH While you have an item in play, this character gets +1 ◊."
       ],
       "strength": 3,
       "willpower": 6,
@@ -4107,9 +4107,9 @@
       "setCode": "14",
       "number": 128,
       "rarity": "Uncommon",
-      "fullText": "Banish chosen character with 2 Strength or less.",
+      "fullText": "Banish chosen character with 2 ¤ or less.",
       "fullTextSections": [
-        "Banish chosen character with 2 Strength or less."
+        "Banish chosen character with 2 ¤ or less."
       ]
     },
     {
@@ -4167,10 +4167,10 @@
           "fullText": "Challenger +2"
         }
       ],
-      "fullText": "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)\n\nChallenger +2 (While challenging, this character gets +2 Strength.)",
+      "fullText": "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)\n\nChallenger +2 (While challenging, this character gets +2 ¤.)",
       "fullTextSections": [
         "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
-        "Challenger +2 (While challenging, this character gets +2 Strength.)"
+        "Challenger +2 (While challenging, this character gets +2 ¤.)"
       ],
       "strength": 4,
       "willpower": 4,
@@ -4229,9 +4229,9 @@
         "Inventor",
         "Super"
       ],
-      "fullText": "SHOCKING BREAKTHROUGH Whenever this character quests, you pay 1 Ink less for the next item you play this turn.",
+      "fullText": "SHOCKING BREAKTHROUGH Whenever this character quests, you pay 1 ⬡ less for the next item you play this turn.",
       "fullTextSections": [
-        "SHOCKING BREAKTHROUGH Whenever this character quests, you pay 1 Ink less for the next item you play this turn."
+        "SHOCKING BREAKTHROUGH Whenever this character quests, you pay 1 ⬡ less for the next item you play this turn."
       ],
       "strength": 1,
       "willpower": 2,

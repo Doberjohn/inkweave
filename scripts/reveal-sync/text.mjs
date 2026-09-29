@@ -3,53 +3,27 @@
  *
  * Two jobs, kept apart on purpose:
  * - canonicalize*: text in the house style previewCards.json already uses (the ⬡ ◊ ⟳ ¤ ⛉
- *   glyphs, an em dash after an activated ability's cost, "Shift N ⬡ ("). This is what
+ *   glyphs, an em dash after an activated ability's cost, "Shift N ⬡ (", glyphs for ink and
+ *   stat words). The rules live in the engine's cardTextStyle, re-exported here. This is what
  *   gets WRITTEN, and the write step also spells names without accents (unaccented*).
  * - comparable*: a lossy key for deciding whether two readings agree. Never written.
  */
 
+// House style lives in the engine so reveal-admin (browser) and these scripts share one
+// source, as cardPath does (#635). Needs the engine built: pnpm build:engine.
+import {
+  canonicalizeCardLine as canonicalizeLine,
+  canonicalizeCardText as canonicalizeText,
+  NAMED_REFERENCE,
+} from '../../packages/synergy-engine/dist/index.js';
+
+export {canonicalizeLine, canonicalizeText};
+
 export const INKS = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
 export const CARD_TYPES = ['Character', 'Action', 'Item', 'Location'];
 
-/** Vision readers emit near-miss glyphs; map each to the one the card data uses. */
-const GLYPH_VARIANTS = [
-  [/[◆◇⬥⬦◈♦]/gu, '◊'],
-  [/[⬢⬣⎔⏣]/gu, '⬡'],
-  [/[↻⟲⤾⭮🔄]/gu, '⟳'],
-  [/[⚔🗡]/gu, '¤'],
-  [/[⛨⛊🛡]/gu, '⛉'],
-];
-
-/**
- * lorcanaplayer prints keyword headers as "Shift 5 (" where the card, and every one of the
- * 78 Shift lines in allCards.json, prints "Shift 5 ⬡ (". Boost follows the same shape.
- */
-const INK_COST_KEYWORD = /^((?:[A-Z][a-z]+ )*(?:Shift|Boost)) (\d+) \(/;
-
 /** A keyword ability line: "Singer 5 (...)", "Alert (...)", "Puppy Shift 3 ⬡ (...)", "Rush". */
 const KEYWORD_LINE = /^((?:[A-Z][a-z]+ ){0,3}[A-Z][a-z]+)(?: ([+-]?\d+))?(?: ⬡)?(?: \(.*\))?$/;
-
-function unifyGlyphs(line) {
-  let s = String(line).replace(/️/g, '');
-  for (const [pattern, glyph] of GLYPH_VARIANTS) s = s.replace(pattern, glyph);
-  return s;
-}
-
-/** One ability line in house style. Idempotent: canonical text passes through unchanged. */
-export function canonicalizeLine(line) {
-  return unifyGlyphs(line)
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\s+([.,;:!?)])/g, '$1')
-    .replace(/\(\s+/g, '(')
-    .replace(/ [–-] /g, ' — ')
-    .replace(INK_COST_KEYWORD, '$1 $2 ⬡ (');
-}
-
-/** Canonical ability lines, blanks dropped. */
-export function canonicalizeText(lines) {
-  return (lines ?? []).map(canonicalizeLine).filter(Boolean);
-}
 
 /**
  * Without accents, as the owner rules card names ("Hector Rivera", "Mama Coco"): NFD, then
@@ -61,14 +35,6 @@ export function unaccented(value) {
     .normalize('NFD')
     .replace(/\p{M}/gu, '');
 }
-
-/**
- * A "named X" reference, from "named" to the end of its clause or sentence: a comma,
- * semicolon, colon, parenthesis or line end, or a period followed by a space. A period after
- * a title or an initial sits inside the name instead ("Mr. Incredible", "P.J. Pete"): every
- * period in a shipped card name follows one.
- */
-const NAMED_REFERENCE = /\bnamed (?:[^.,;:()\n]|\.(?!\s)|(?<=\b(?:[A-Z]|Mrs?|Ms|Dr|St|Jr|Sr))\.)+/g;
 
 /** An ability line with its "named X" references unaccented; the rest stays as printed. */
 export function unaccentReferences(line) {

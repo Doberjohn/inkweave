@@ -55,11 +55,21 @@ describe('canonicalizeLine', () => {
     expect(canonicalizeLine('gets +1 ◇.')).toBe('gets +1 ◊.');
   });
 
-  it('leaves every line of the shipped card data unchanged (house style is a fixed point)', () => {
-    const changed = realCards()
-      .flatMap((c) => (c.fullText ?? '').split('\n'))
-      .filter((line) => canonicalizeLine(line) !== line.trim());
-    expect(changed).toEqual([]);
+  // The data fixed-point check lives app-side now (card-text-house-style.test.ts, #635):
+  // this folder leaves the app repo at the admin cutover.
+  it('writes the ink glyph for a spelled-out Ink, as reveal-admin once shipped it', () => {
+    expect(
+      canonicalizeLine(
+        'Shift 3 (You may pay 3 Ink to play this on top of one of your characters named Kit Cloudkicker.)',
+      ),
+    ).toBe(
+      'Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one of your characters named Kit Cloudkicker.)',
+    );
+  });
+
+  it('writes stat and signed lore glyphs for their words', () => {
+    expect(canonicalizeLine('get +1 Strength and +1 Willpower.')).toBe('get +1 ¤ and +1 ⛉.');
+    expect(canonicalizeLine('this character gets +1 Lore.')).toBe('this character gets +1 ◊.');
   });
 });
 
