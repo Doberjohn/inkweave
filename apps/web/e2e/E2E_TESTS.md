@@ -152,7 +152,7 @@ against the dev server, where both are present.
 |---|---|
 | should have valid JSON-LD structured data on home page | `@graph` carries Organization + WebSite + WebApplication, cross-linked by `@id`, with the WebSite's SearchAction |
 | should have correct heading hierarchy on home page | Exactly one h1; its accessible name comes from the logo img's `alt` |
-| should preload self-hosted fonts | `link[rel=preload][as=font]` for plus-jakarta-sans-400 and tinos-400 (self-hosted, not a CDN) |
+| should preload the self-hosted body font only | `link[rel=preload][as=font]` for plus-jakarta-sans-400 (self-hosted, not a CDN), and none for tinos-400, which `/` never renders (#640) |
 | should own its title and canonical: `/` | Title leaves the shell fallback; canonical self-references |
 | should own its title and canonical: `/browse` | As above |
 | should own its title and canonical: `/playstyles` | As above |
