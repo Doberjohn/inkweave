@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {HERO_LOGO_ANIMATED_SRC, HERO_LOGO_IMG} from '../constants';
-import {prefersReducedMotion} from '../utils/prefersReducedMotion';
+import {usePrefersReducedMotion} from '../utils/prefersReducedMotion';
 
 /** Where `requestIdleCallback` is missing (Safari), swap this long after `load` instead. */
 const IDLE_FALLBACK_MS = 200;
@@ -17,14 +17,19 @@ let animatedLogoShown = false;
  * every frame, so running it from first paint competes with page load for the main thread.
  * Visitors who prefer reduced motion keep the static logo and never download the animated one.
  *
+ * The preference is read live, not once: turning it on mid-session cancels a pending swap and
+ * puts the static logo back. An animated SVG already on screen can't be trusted to stop by
+ * itself, because the browser may not re-evaluate the file's own reduced-motion rule.
+ *
  * The prerender crawl captures the page after this swap, so scripts/prerender.mjs rewrites the
  * animated src back to the static one: the shipped HTML must paint the static logo first.
  */
 export function useHeroLogoSrc(): string {
   const [animated, setAnimated] = useState(animatedLogoShown);
+  const reduceMotion = usePrefersReducedMotion();
 
   useEffect(() => {
-    if (animated || prefersReducedMotion()) return;
+    if (animated || reduceMotion) return;
     let idleId: number | undefined;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const swap = () => {
@@ -45,7 +50,7 @@ export function useHeroLogoSrc(): string {
       if (idleId !== undefined) window.cancelIdleCallback(idleId);
       if (timeoutId !== undefined) clearTimeout(timeoutId);
     };
-  }, [animated]);
+  }, [animated, reduceMotion]);
 
-  return animated ? HERO_LOGO_ANIMATED_SRC : HERO_LOGO_IMG.src;
+  return animated && !reduceMotion ? HERO_LOGO_ANIMATED_SRC : HERO_LOGO_IMG.src;
 }

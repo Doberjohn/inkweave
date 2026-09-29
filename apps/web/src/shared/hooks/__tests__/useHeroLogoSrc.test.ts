@@ -10,14 +10,25 @@ async function loadHook() {
   return (await import('../useHeroLogoSrc')).useHeroLogoSrc;
 }
 
-function mockReducedMotion(reduce: boolean) {
+// A prefers-reduced-motion query the test can flip mid-session: the returned setter updates
+// `matches` and notifies the hook's change subscription, like the OS setting changing.
+function mockReducedMotion(initial: boolean) {
+  let matches = initial;
+  const listeners = new Set<() => void>();
   vi.stubGlobal(
     'matchMedia',
-    vi.fn((query: string) => ({
-      matches: reduce && query.includes('reduce'),
-      addEventListener() {},
+    vi.fn(() => ({
+      get matches() {
+        return matches;
+      },
+      addEventListener: (_type: string, onChange: () => void) => listeners.add(onChange),
+      removeEventListener: (_type: string, onChange: () => void) => listeners.delete(onChange),
     })),
   );
+  return (reduce: boolean) => {
+    matches = reduce;
+    listeners.forEach((onChange) => onChange());
+  };
 }
 
 describe('useHeroLogoSrc', () => {
@@ -61,6 +72,28 @@ describe('useHeroLogoSrc', () => {
     const {result} = renderHook(() => useHeroLogoSrc());
 
     act(() => vi.runAllTimers());
+    expect(result.current).toBe(STATIC);
+  });
+
+  it('cancels a pending swap when reduced motion turns on before it fires', async () => {
+    const setReduce = mockReducedMotion(false);
+    const useHeroLogoSrc = await loadHook();
+    const {result} = renderHook(() => useHeroLogoSrc());
+    expect(vi.getTimerCount()).toBe(1);
+
+    act(() => setReduce(true));
+    expect(vi.getTimerCount()).toBe(0);
+    expect(result.current).toBe(STATIC);
+  });
+
+  it('puts the static logo back when reduced motion turns on after the swap', async () => {
+    const setReduce = mockReducedMotion(false);
+    const useHeroLogoSrc = await loadHook();
+    const {result} = renderHook(() => useHeroLogoSrc());
+    act(() => vi.runAllTimers());
+    expect(result.current).toBe(ANIMATED);
+
+    act(() => setReduce(true));
     expect(result.current).toBe(STATIC);
   });
 
