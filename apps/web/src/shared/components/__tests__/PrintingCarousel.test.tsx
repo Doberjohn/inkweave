@@ -1,6 +1,6 @@
 import {useState} from 'react';
-import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {render, screen, fireEvent, act} from '@testing-library/react';
+import {describe, it, expect, vi, beforeEach, afterEach, type MockInstance} from 'vitest';
+import {render, screen, fireEvent, act, waitFor} from '@testing-library/react';
 import {createCard} from '../../test-utils';
 import type {Printing} from '../../hooks';
 import {PrintingCarousel} from '../PrintingCarousel';
@@ -133,5 +133,54 @@ describe('PrintingCarousel', () => {
     });
 
     expect(screen.getByRole('button', {name: 'Enlarge Enchanted printing'})).toHaveFocus();
+  });
+});
+
+// Lazy loading can't hold the next slide back (it sits inside the browsers' lazy-load
+// distance), so the variant's art would otherwise compete with the Standard art: the card
+// page's LCP image.
+describe('PrintingCarousel variant art', () => {
+  let complete: MockInstance;
+  beforeEach(() => {
+    complete = vi.spyOn(HTMLImageElement.prototype, 'complete', 'get').mockReturnValue(false);
+  });
+  afterEach(() => {
+    complete.mockRestore();
+  });
+  const variantArt = () =>
+    screen.getByRole('img', {name: 'Pongo - Determined Father, Enchanted printing', hidden: true});
+
+  it('holds the variant art back until the Standard art has loaded', async () => {
+    renderCarousel();
+    expect(variantArt()).not.toHaveAttribute('src');
+
+    fireEvent.load(screen.getByRole('img', {name: 'Pongo - Determined Father'}));
+
+    await waitFor(() => expect(variantArt()).toHaveAttribute('src', '/card-images/2141.avif'));
+  });
+
+  it('loads the variant art at once when a swipe starts', () => {
+    renderCarousel();
+
+    fireEvent.touchStart(screen.getByRole('group', {name: 'Pongo - Determined Father printings'}));
+
+    expect(variantArt()).toHaveAttribute('src', '/card-images/2141.avif');
+  });
+
+  it('loads the variant art at once when the variant is picked', () => {
+    const {rerender} = renderCarousel();
+
+    rerender(
+      <PrintingCarousel
+        card={card}
+        printings={PRINTINGS}
+        index={1}
+        onIndexChange={() => {}}
+        width={298}
+        height={417}
+      />,
+    );
+
+    expect(variantArt()).toHaveAttribute('src', '/card-images/2141.avif');
   });
 });
