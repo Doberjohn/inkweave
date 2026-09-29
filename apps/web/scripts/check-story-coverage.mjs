@@ -23,7 +23,7 @@ const EXCLUDED = new Set([
   'FilterIcon.tsx', // tiny SVG icon
   'CostIcon.tsx', // tiny SVG icon
   'InkIcon.tsx', // tiny SVG icon
-  'EtherealBackground.tsx', // canvas animation, no props
+  'EtherealBackground.tsx', // decorative static backdrop (blurred glow orbs), not animated
   'RenderProfiler.tsx', // performance utility wrapper, not visual
   'AdminGate.tsx', // route gate: renders children or a redirect, no visual surface
   'RevealsGate.tsx', // route gate: renders children or a redirect, no visual surface
