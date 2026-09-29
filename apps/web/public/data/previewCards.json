@@ -4210,6 +4210,32 @@
       "strength": 4,
       "willpower": 4,
       "lore": 2
+    },
+    {
+      "id": 14151,
+      "name": "Honey Lemon",
+      "fullName": "Honey Lemon - Endlessly Curious",
+      "cost": 1,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 151,
+      "version": "Endlessly Curious",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Inventor",
+        "Super"
+      ],
+      "fullText": "SHOCKING BREAKTHROUGH Whenever this character quests, you pay 1 Ink less for the next item you play this turn.",
+      "fullTextSections": [
+        "SHOCKING BREAKTHROUGH Whenever this character quests, you pay 1 Ink less for the next item you play this turn."
+      ],
+      "strength": 1,
+      "willpower": 2,
+      "lore": 1
     }
   ]
 }
