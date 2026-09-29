@@ -5,6 +5,18 @@
   "framework": "vite",
   "git": {"deploymentEnabled": {"master": false}},
   "redirects": [
+    {
+      "source": "/((?!sw[.]js$).*)",
+      "has": [{"type": "host", "value": "www.inkweave.ink"}],
+      "destination": "https://inkweave.ink/$1",
+      "statusCode": 308
+    },
+    {
+      "source": "/((?!sw[.]js$).*)",
+      "has": [{"type": "host", "value": "lorcana-synergy-finder.vercel.app"}],
+      "destination": "https://inkweave.ink/$1",
+      "statusCode": 308
+    },
     {"source": "/mockups/:path*", "statusCode": 308, "destination": "/"},
     {"source": "/reveal-admin", "statusCode": 308, "destination": "/admin/reveal"},
     {"source": "/playstyles/vinelings", "statusCode": 308, "destination": "/playstyles/floodborn"}

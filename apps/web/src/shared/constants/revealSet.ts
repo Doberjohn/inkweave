@@ -23,6 +23,19 @@ export const REVEAL_ID_BASE = REVEAL_SET_NUMBER * 1000;
 export const REVEAL_SET_LOGO = '/art/sets/hyperia-city.webp';
 
 /**
+ * 320px-wide REVEAL_SET_LOGO for the promo card, which renders it at 100 to 160 CSS px
+ * on every page during reveal season. The full-size file stays for RevealHero (up to
+ * 300 CSS px). width/height are the file's pixel size: the card uses them to reserve its
+ * box before the image loads, so they live here with the path and change with it each
+ * season (runbook, #627).
+ */
+export const REVEAL_SET_LOGO_SM = {
+  src: '/art/sets/hyperia-city-sm.webp',
+  width: 320,
+  height: 237,
+} as const;
+
+/**
  * Cards per ink. These are fixed denominators: an ink board renders all of its
  * slots and fills them as cards reveal, so the page works mid-season with only
  * part of the set out. Never derive them from the live, incomplete card data.

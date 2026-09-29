@@ -4159,6 +4159,105 @@
       "strength": 5,
       "willpower": 5,
       "lore": 1
+    },
+    {
+      "id": 14178,
+      "name": "Woolter & Jesse",
+      "fullName": "Woolter & Jesse - Bellwether’s Henchmen",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 178,
+      "version": "Bellwether’s Henchmen",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Bodyguard",
+          "fullText": "Bodyguard"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Challenger",
+          "keywordValue": "+2",
+          "fullText": "Challenger +2"
+        }
+      ],
+      "fullText": "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)\n\nChallenger +2 (While challenging, this character gets +2 Strength.)",
+      "fullTextSections": [
+        "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
+        "Challenger +2 (While challenging, this character gets +2 Strength.)"
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 1
+    },
+    {
+      "id": 14192,
+      "name": "Kit Cloudkicker",
+      "fullName": "Kit Cloudkicker - Sure Shot",
+      "cost": 5,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 192,
+      "version": "Sure Shot",
+      "rarity": "Super Rare",
+      "subtypes": [
+        "Dreamborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "3",
+          "fullText": "Shift 3"
+        }
+      ],
+      "fullText": "Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one of your characters named Kit Cloudkicker.)\n\nAERIAL ACROBATICS Whenever this character quests, choose one:\n• Get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)\n• Deal 1 damage to chosen character.",
+      "fullTextSections": [
+        "Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one of your characters named Kit Cloudkicker.)",
+        "AERIAL ACROBATICS Whenever this character quests, choose one:",
+        "• Get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+        "• Deal 1 damage to chosen character."
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 2
+    },
+    {
+      "id": 14151,
+      "name": "Honey Lemon",
+      "fullName": "Honey Lemon - Endlessly Curious",
+      "cost": 1,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 151,
+      "version": "Endlessly Curious",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Inventor",
+        "Super"
+      ],
+      "fullText": "SHOCKING BREAKTHROUGH Whenever this character quests, you pay 1 Ink less for the next item you play this turn.",
+      "fullTextSections": [
+        "SHOCKING BREAKTHROUGH Whenever this character quests, you pay 1 Ink less for the next item you play this turn."
+      ],
+      "strength": 1,
+      "willpower": 2,
+      "lore": 1
     }
   ]
 }

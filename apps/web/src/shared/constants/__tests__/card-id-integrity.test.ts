@@ -14,10 +14,17 @@ import {DEFAULT_FEATURED_IDS} from '../../../features/cards/components/FeaturedC
 // test imports the real config OBJECTS instead, so it validates resolved values and
 // cannot miss a form. Add every config that hard-codes a card id here.
 describe('hard-coded card-id integrity', () => {
-  const {cards} = JSON.parse(
-    fs.readFileSync(path.resolve(process.cwd(), 'public/data/allCards.json'), 'utf8'),
-  ) as {cards: Array<{id: number | string}>};
-  const pool = new Set(cards.map((c) => String(c.id)));
+  // Preview cards count too: the app merges previewCards.json into the pool at runtime, and
+  // scripts/graduate-canonical-set.mjs retargets these ids when their set graduates.
+  const readCards = (file: string) =>
+    (
+      JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'public/data', file), 'utf8')) as {
+        cards: Array<{id: number | string}>;
+      }
+    ).cards;
+  const pool = new Set(
+    [...readCards('allCards.json'), ...readCards('previewCards.json')].map((c) => String(c.id)),
+  );
 
   it('every PLAYSTYLE_UI heroCardId resolves to a card in the pool', () => {
     const dangling = Object.entries(PLAYSTYLE_UI)

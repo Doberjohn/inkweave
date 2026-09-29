@@ -1,7 +1,6 @@
 export {useAutocomplete} from './useAutocomplete';
 export type {UseAutocompleteReturn} from './useAutocomplete';
 export {useContainerWidth} from './useContainerWidth';
-export {usePreloadImages} from './usePreloadImages';
 export {useDialogFocus} from './useDialogFocus';
 export {useDraftFilters} from './useDraftFilters';
 export {useFilterParams} from './useFilterParams';

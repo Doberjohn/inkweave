@@ -86,6 +86,7 @@ const BANNER_BLURBS: Record<string, string> = {
   'free-play': 'Play a 1-cost character for free.',
   'shift-targets': 'Cheap Shift targets to upgrade into.',
   bounce: 'Bounce bodies to reuse their triggers.',
+  'ink-drops': 'Bank ink drops, then cash them in.',
   hero: 'Payoffs that reward the Hero tribe.',
   princess: 'Reward going wide on Princesses.',
   'singer-songs': 'Singers belt out songs for free.',

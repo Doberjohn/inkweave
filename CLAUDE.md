@@ -6,7 +6,7 @@ Lorcana synergy finder for Core format with archetype-based synergy detection.
 
 - **Scope**: Core format only (sets 9+), community voting, deck builder
 - **UI**: Dark fantasy theme (deep purple, gold accents)
-- **Synergies**: 6 direct rules + 21 playstyles, indexed in the [Synergy Rules registry](#synergy-rules)
+- **Synergies**: 7 direct rules + 22 playstyles, indexed in the [Synergy Rules registry](#synergy-rules)
 
 See [GitHub Issues](https://github.com/Doberjohn/inkweave/issues) for full backlog.
 
@@ -86,7 +86,7 @@ React web application that consumes the synergy engine package.
 
 **Synergy Categories**: direct (pair-specific, e.g. Shift), playstyle (strategy-reinforcing, e.g. Lore Denial)
 
-**Playstyles**: 21 implemented, listed with their `PlaystyleId` and spec doc in the [Synergy Rules registry](#synergy-rules) below. The canonical union is `PlaystyleId` in `packages/synergy-engine/src/types/playstyle.ts`.
+**Playstyles**: 22 implemented, listed with their `PlaystyleId` and spec doc in the [Synergy Rules registry](#synergy-rules) below. The canonical union is `PlaystyleId` in `packages/synergy-engine/src/types/playstyle.ts`.
 
 **Synergy Score**: 1-10 numeric scale (all integers valid). Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4)
 
@@ -194,6 +194,7 @@ Rules live in `packages/synergy-engine/src/engine/rules/` and run at build time 
 | Healing | `healing` | [HEALING_RULE.md](packages/synergy-engine/HEALING_RULE.md) |
 | Exert | `exert` | [EXERT_RULE.md](packages/synergy-engine/EXERT_RULE.md) |
 | Bounce | `bounce` | [BOUNCE_RULE.md](packages/synergy-engine/BOUNCE_RULE.md) |
+| Ink Drops | `ink-drops` | [INK_DROPS_RULE.md](packages/synergy-engine/INK_DROPS_RULE.md) |
 | Classification Tribes | `monster` `princess` `hero` `super` `royalty` `detective` | [TRIBES_RULE.md](packages/synergy-engine/TRIBES_RULE.md) |
 
 Royalty is Queen/King/Prince and deliberately excludes Princess. All six tribes come from one shared payoff-anchored factory.
@@ -226,6 +227,7 @@ pnpm test:supabase    # Run Supabase integration tests (requires .env.local)
 - **react-grab**: Dev-only inspection tool. The `dev` script runs `pnpm dlx @react-grab/claude-code@latest && vite`. Playwright's webServer runs `npx vite`, which is still DEV mode, so `index.html`'s `import.meta.env.DEV` gate loads react-grab during E2E as well; its `ws://localhost:4722` connection error must stay allowlisted in the E2E console-error guard (#405). If a dev server is already running, Playwright reuses it (`reuseExistingServer: true` locally) — which means `playwright.config.ts`'s `webServer.env` only applies when Playwright launches its own Vite. Set branch-specific env vars in `apps/web/.env.local` for determinism; see **Feature Flags & Local Dev**.
 - **useContainerWidth**: ResizeObserver hook guards against 0-width observations from detached elements (`if (w > 0)`) — required for React Strict Mode double-mount resilience
 - **Source-map leak guard** (#358): `scripts/check-sourcemaps.mjs` fails the build if any `.map` in a dir inlines original code via non-empty `sourcesContent`; `SKIP_SOURCEMAP_GUARD=1` bypasses. Wired ONLY into `vercel.json`'s `buildCommand` (the deploy boundary), plus `apps/web/vite.config.ts` sets `workbox.sourcemap:false` so VitePWA stops emitting `sw.js.map`. **Do NOT add the guard to CI or a `postbuild` hook** — CI/local builds run without `SENTRY_AUTH_TOKEN` (the Sentry plugin only uploads+deletes app maps where the token exists, i.e. the Vercel build), so they legitimately produce content-bearing maps that never deploy; gating those paths would false-fail safe artifacts and break forked PRs.
+- **Retired hosts** (#634): `www.inkweave.ink` serves Production so `vercel.json`'s host redirect can 308 every path except `/sw.js` to the apex, and `middleware.ts` answers `/sw.js` with a self-unregistering worker that heals www-era service workers. Never put a dashboard-level redirect back on `www` (it blocks `/sw.js` again), and never Instant Rollback to a pre-#634 deployment while `www` serves Production: switch it to Redirect first. `lorcana-synergy-finder.vercel.app` keeps its dashboard redirect on purpose: Standard Deployment Protection puts any `*.vercel.app` Production domain behind a 302 to `vercel.com/sso-api`, `/sw.js` included, so flipping it would wall off visitors and heal nothing. Its code paths stay dormant.
 - **Supabase**: Community voting backend (project: `ttyidjyaxnycbpxwngqr`, eu-central-1). Client SDK in `apps/web/src/shared/lib/supabase.ts`; migrations in `supabase/migrations/`. The MCP-driven migration workflow (apply, verify, regenerate types, advisors) lives in [`.claude/rules/migrations.md`](.claude/rules/migrations.md), auto-loaded when editing `supabase/migrations/**`.
 - **Card images**: production is content-addressed and self-hosted (`{id}.{sha256prefix}.avif`); dev falls back to proxies. All URLs route through `resolveImageUrl` / `smallImageUrl` in `apps/web/src/features/cards/loader.ts`. Pipeline, dev proxy rules, SW caching, and the debugging playbook: [`apps/web/src/features/cards/IMAGES.md`](apps/web/src/features/cards/IMAGES.md).
   - **Never put `immutable` on a URL that is not content-addressed.** Issue #323 was a year-long cache-poisoning bug from exactly that. Content addressing is what makes `max-age=31536000, immutable` truthful.

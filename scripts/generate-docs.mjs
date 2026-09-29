@@ -56,6 +56,7 @@ const RULE_ORDER = [
   'HEALING_RULE.md',
   'EXERT_RULE.md',
   'BOUNCE_RULE.md',
+  'INK_DROPS_RULE.md',
   'DWARFS_RULE.md',
   'VINELINGS_RULE.md',
   'HUNNY_RULE.md',

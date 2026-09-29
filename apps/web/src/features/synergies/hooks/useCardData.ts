@@ -2,7 +2,6 @@ import {useState, useEffect} from 'react';
 import type {LorcanaCard, SetInfo} from '../../cards';
 import {
   fetchCardsFromLocal,
-  smallImageUrl,
   getUniqueKeywords,
   getUniqueClassifications,
   getUniqueSets,
@@ -44,7 +43,6 @@ export function useCardData(): UseCardDataReturn {
         setError(null);
         const data = await fetchCardsFromLocal();
         if (!cancelled) {
-          preloadFirstThumbnails(data.cards, 6);
           setCards(data.cards);
           setSets(data.sets);
         }
@@ -80,17 +78,4 @@ export function useCardData(): UseCardDataReturn {
     sets,
     retryLoad,
   };
-}
-
-/** Inject preload link tags for the first N card images (small grid size) to jumpstart loading. */
-function preloadFirstThumbnails(cards: LorcanaCard[], count: number) {
-  for (let i = 0; i < Math.min(count, cards.length); i++) {
-    const href = smallImageUrl(cards[i]);
-    if (!href) continue;
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.as = 'image';
-    link.href = href;
-    document.head.appendChild(link);
-  }
 }

@@ -30,6 +30,20 @@ describe('HeroSection', () => {
     ).toBeInTheDocument();
   });
 
+  it('should request the logo at high fetch priority', () => {
+    render(<HeroSection {...defaultProps} />);
+
+    expect(screen.getByAltText('Inkweave')).toHaveAttribute('fetchpriority', 'high');
+  });
+
+  it("should reserve the logo's space before the image loads", () => {
+    render(<HeroSection {...defaultProps} />);
+
+    const logo = screen.getByAltText('Inkweave');
+    expect(logo).toHaveAttribute('width', '977');
+    expect(logo).toHaveAttribute('height', '313');
+  });
+
   it('should render search input', () => {
     render(<HeroSection {...defaultProps} />);
 

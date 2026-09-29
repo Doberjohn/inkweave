@@ -45,6 +45,8 @@ import {
   isExertCard,
   getBounceRoles,
   isBounceCard,
+  getInkDropRoles,
+  isInkDropCard,
   isLoreDenialCard,
   getLoreDenialRoles,
   getSacrificeRoles,
@@ -84,6 +86,7 @@ import {
   makeTribalRule,
 } from './ruleScoring';
 import {scoreBouncePair} from './bounceScoring';
+import {scoreInkDropPair} from './inkDropScoring';
 import {TUNING} from '../data/tuning';
 
 // ============================================
@@ -1423,6 +1426,25 @@ export const synergyRules: SynergyRule[] = [
     // classification), which pairFindSynergies drops. Card-aware so the gate can read cost.
     findSynergies: (card, allCards) =>
       pairFindSynergies(card, allCards, getBounceRoles, scoreBouncePair),
+  },
+
+  // --------------------------------------------
+  // INK DROPS (Set 14, payoff-anchored)
+  // --------------------------------------------
+  {
+    id: 'ink-drops',
+    name: 'Ink Drops',
+    category: 'playstyle',
+    playstyleId: 'ink-drops',
+    description:
+      'Cards that make ink drops pair with the cards that spend, hold, or convert them. Payoff-anchored: two drop makers do not synergize with each other.',
+
+    matches: isInkDropCard,
+
+    // Payoff-anchored: scoreInkDropPair returns null for maker↔maker density and for payoffs that
+    // compete for the same drops, which pairFindSynergies drops.
+    findSynergies: (card, allCards) =>
+      pairFindSynergies(card, allCards, getInkDropRoles, scoreInkDropPair),
   },
 ];
 

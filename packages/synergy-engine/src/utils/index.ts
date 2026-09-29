@@ -100,6 +100,18 @@ export type {
   LoreDenialRole,
 } from './cardHelpers.js';
 
+export {
+  getInkDropRoles,
+  isInkDropCard,
+  isDropSpendRider,
+  isDropRemoveTrigger,
+  isDropHoldPayoff,
+  isDropSink,
+  isRepeatingDropMaker,
+  isOpponentGatedDrop,
+} from './inkDrops.js';
+export type {InkDropRole} from './inkDrops.js';
+
 export {isCardType} from './typeGuards.js';
 
 export {
