@@ -3860,6 +3860,25 @@
       "strength": 0,
       "willpower": 3,
       "lore": 2
+    },
+    {
+      "id": 14032,
+      "name": "Speaker Stack",
+      "fullName": "Speaker Stack",
+      "cost": 2,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "14",
+      "number": 32,
+      "rarity": "Common",
+      "subtypes": [
+        "Item"
+      ],
+      "fullText": "PUMP IT UP Your characters with Singer get +1 Strength and +1 Willpower.",
+      "fullTextSections": [
+        "PUMP IT UP Your characters with Singer get +1 Strength and +1 Willpower."
+      ]
     }
   ]
 }
