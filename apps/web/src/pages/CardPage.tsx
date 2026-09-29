@@ -8,7 +8,7 @@ import {CardDetailPanel} from '../features/synergies/components/CardDetailPanel'
 import {CardDetailSkeleton} from '../features/cards';
 import {SynergyResults} from '../features/synergies/components/SynergyResults';
 import {CompactHeader, Footer, Seo} from '../shared/components';
-import {useResponsive} from '../shared/hooks';
+import {useBackOrNavigate, useResponsive} from '../shared/hooks';
 import {COLORS, FONTS, FONT_SIZES, LAYOUT, SPACING} from '../shared/constants';
 
 /**
@@ -73,6 +73,9 @@ export function CardPage() {
   const {synergies} = usePrecomputedSynergies(card ?? null);
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  // The mobile card's ×, like the card modal's: back to where the user came from inside
+  // Inkweave (e.g. the card whose synergy they tapped), or Browse when they entered here.
+  const closeCard = useBackOrNavigate('/browse');
 
   // React Router reuses this component across /card/:cardId navigations (clicking a synergy
   // partner routes here again), so the group filter/expansion would otherwise carry over from
@@ -133,7 +136,7 @@ export function CardPage() {
           selectedCard={card}
           synergies={synergies}
           totalSynergyCount={totalCount}
-          onClearSelection={() => navigate('/browse')}
+          onClearSelection={closeCard}
           isMobile={isMobile}
           showCardDetail={isMobile}
           activeGroupFilter={activeGroup}

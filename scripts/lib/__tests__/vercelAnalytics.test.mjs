@@ -187,7 +187,7 @@ describe('emptyVercelAnalytics', () => {
 });
 
 describe('EVENT_QUERIES', () => {
-  it('covers all 10 catalog events with stable names', () => {
+  it('covers all 11 catalog events with stable names', () => {
     expect(EVENT_QUERIES.map((q) => q.name)).toEqual([
       'reveal_card_click',
       'vote_submitted',
@@ -199,6 +199,7 @@ describe('EVENT_QUERIES', () => {
       'filter_applied',
       'sort_changed',
       'synergy_group_viewed',
+      'card_printing_view',
     ]);
   });
 });

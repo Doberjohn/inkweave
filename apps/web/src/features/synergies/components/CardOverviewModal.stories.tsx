@@ -165,6 +165,36 @@ export const ForeignScanMobile: Story = {
   globals: {viewport: {value: 'mobile1'}},
 };
 
+/**
+ * A card with an alternate printing (#625): the Standard | Iconic switcher sits in the header on
+ * desktop and under the card on mobile, and the art swipes between the printings.
+ */
+const alternatePrintingCard: LorcanaCard = {
+  ...cardA,
+  id: '14023',
+  name: 'Mickey Mouse',
+  fullName: 'Mickey Mouse - Best in Town',
+  version: 'Best in Town',
+  imageUrl: '/card-images-preview/14023.avif',
+  variants: [
+    {
+      id: '14241',
+      rarity: 'Iconic',
+      number: 241,
+      imageUrl: '/card-images/en/set14/241_bcae8ffa04289d85442a384f9982570a224f61ba.jpg',
+    },
+  ],
+};
+
+export const AlternatePrinting: Story = {
+  args: {card: alternatePrintingCard},
+};
+
+export const AlternatePrintingMobile: Story = {
+  args: {card: alternatePrintingCard, isMobile: true},
+  globals: {viewport: {value: 'mobile1'}},
+};
+
 export const ComparisonMode: Story = {
   args: {initialComparison: samplePair},
   decorators: [

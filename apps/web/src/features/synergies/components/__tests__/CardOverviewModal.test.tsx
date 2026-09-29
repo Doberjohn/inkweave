@@ -6,6 +6,9 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {SynergyGroup as SynergyGroupData} from '../../types';
 import {CardOverviewModal} from '../CardOverviewModal';
 import {CardDataProvider} from '../../../../shared/contexts/CardDataContext';
+import {trackEvent} from '../../../../shared/lib/analytics';
+
+vi.mock('../../../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 
 function makeCard(id: string): LorcanaCard {
   return {
@@ -171,4 +174,88 @@ test('ArrowRight / ArrowLeft navigate siblings', async () => {
   expect(onGoToSibling).toHaveBeenCalledWith(1);
   await user.keyboard('{ArrowLeft}');
   expect(onGoToSibling).toHaveBeenCalledWith(-1);
+});
+
+/** A card with an Enchanted printing (#625). */
+function withEnchanted(card: LorcanaCard): LorcanaCard {
+  return {
+    ...card,
+    imageUrl: `/card-images/${card.id}.avif`,
+    variants: [
+      {id: `${card.id}-e`, rarity: 'Enchanted', number: 223, imageUrl: '/card-images/2141.avif'},
+    ],
+  };
+}
+
+function renderPrintingModal(card: LorcanaCard, opts: {onGoToSibling?: (d: 1 | -1) => void} = {}) {
+  const tree = (c: LorcanaCard) => (
+    <MemoryRouter>
+      <CardOverviewModal
+        isOpen
+        card={c}
+        synergies={[]}
+        getPairSynergies={() => null}
+        onClose={() => {}}
+        siblingCardIds={['a', 'b', 'c']}
+        onGoToSibling={opts.onGoToSibling ?? (() => {})}
+      />
+    </MemoryRouter>
+  );
+  const utils = render(tree(card));
+  return {...utils, rerenderCard: (c: LorcanaCard) => utils.rerender(tree(c))};
+}
+
+test('a card with an alternate printing shows the one picked, and records it', async () => {
+  Element.prototype.scrollTo = vi.fn();
+  const user = userEvent.setup();
+  renderPrintingModal(withEnchanted(makeCard('b')));
+
+  await user.click(screen.getByRole('radio', {name: 'Enchanted'}));
+
+  expect(screen.getByRole('img', {name: 'Card b - Test, Enchanted printing'})).toBeInTheDocument();
+  expect(trackEvent).toHaveBeenCalledWith('card_printing_view', {
+    cardId: 'b',
+    rarity: 'Enchanted',
+    surface: 'modal',
+  });
+});
+
+test('arrow keys inside the printing switcher change the printing, not the card', async () => {
+  Element.prototype.scrollTo = vi.fn();
+  const user = userEvent.setup();
+  const onGoToSibling = vi.fn();
+  renderPrintingModal(withEnchanted(makeCard('b')), {onGoToSibling});
+  screen.getByRole('radio', {name: 'Standard'}).focus();
+
+  await user.keyboard('{ArrowRight}');
+
+  expect(screen.getByRole('radio', {name: 'Enchanted'})).toHaveAttribute('aria-checked', 'true');
+  expect(onGoToSibling).not.toHaveBeenCalled();
+});
+
+test('every card opens on its Standard printing', async () => {
+  Element.prototype.scrollTo = vi.fn();
+  const user = userEvent.setup();
+  const {rerenderCard} = renderPrintingModal(withEnchanted(makeCard('b')));
+  await user.click(screen.getByRole('radio', {name: 'Enchanted'}));
+
+  rerenderCard(withEnchanted(makeCard('c')));
+
+  expect(screen.getByRole('radio', {name: 'Standard'})).toHaveAttribute('aria-checked', 'true');
+});
+
+test('a variant printing turns the translation off and hides its toggle: the art is an English printing', async () => {
+  Element.prototype.scrollTo = vi.fn();
+  const user = userEvent.setup();
+  renderPrintingModal({
+    ...withEnchanted(makeCard('jp')),
+    scanLanguage: 'ja',
+    textSections: ['Draw a card.'],
+  });
+  await user.click(screen.getByRole('button', {name: 'See translation'}));
+
+  await user.click(screen.getByRole('radio', {name: 'Enchanted'}));
+
+  expect(screen.queryByTestId('card-translation')).toBeNull();
+  expect(screen.getByText('See translation')).not.toBeVisible();
 });

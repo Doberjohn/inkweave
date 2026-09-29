@@ -13,17 +13,27 @@ import path from 'node:path';
 interface RawCard {
   id: number | string;
   fullName: string;
+  variants?: {rarity: string}[];
 }
 
 const allCards = JSON.parse(
   fs.readFileSync(path.resolve(process.cwd(), 'public/data/allCards.json'), 'utf8'),
 ) as {cards: RawCard[]};
 
-/** The unique fullName ("Name - Version") for a card id. Throws if the card left the pool. */
-export function cardFullNameById(id: string): string {
+function cardById(id: string): RawCard {
   const card = allCards.cards.find((c) => String(c.id) === id);
   if (!card) {
     throw new Error(`Fixture broken: card ${id} is not in allCards.json (did it leave the pool?)`);
   }
-  return card.fullName;
+  return card;
+}
+
+/** The unique fullName ("Name - Version") for a card id. Throws if the card left the pool. */
+export function cardFullNameById(id: string): string {
+  return cardById(id).fullName;
+}
+
+/** The rarities of a card's alternate printings (#625), e.g. ['Enchanted']; [] for none. */
+export function cardVariantRarities(id: string): string[] {
+  return (cardById(id).variants ?? []).map((v) => v.rarity);
 }

@@ -218,4 +218,23 @@ test.describe('Card page (mobile layout)', () => {
     expect(layout.rowScroll).toBeGreaterThan(layout.rowClient);
     expect(layout.rowOverflowX).toMatch(/^(auto|scroll)$/);
   });
+
+  test('× returns to the card before, and opens Browse on the page the visit started on', async ({
+    page,
+  }) => {
+    await page.setViewportSize({width: 390, height: 844});
+    // Any card with synergy tiles to tap: 2095's ramp group is fixture-guarded above.
+    await page.goto(`/card/${EXPAND_CARD_ID}`);
+    const close = page.getByRole('button', {name: 'Close', exact: true});
+
+    // A synergy card opens its own page, so × goes back to the card it came from...
+    await page.locator('a.card-tile').first().click();
+    await expect(page).not.toHaveURL(new RegExp(`/card/${EXPAND_CARD_ID}$`));
+    await close.click();
+    await expect(page).toHaveURL(new RegExp(`/card/${EXPAND_CARD_ID}$`));
+
+    // ...but on the entry page, going back would leave the app, so × opens Browse instead.
+    await close.click();
+    await expect(page).toHaveURL(/\/browse$/);
+  });
 });

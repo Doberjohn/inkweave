@@ -98,4 +98,10 @@ describe('trackEvent', () => {
     trackEvent('synergy_group_viewed', props);
     expect(track).toHaveBeenCalledWith('synergy_group_viewed', props);
   });
+
+  it('forwards a card_printing_view event', () => {
+    const props = {cardId: '1938', rarity: 'Enchanted', surface: 'card_page'} as const;
+    trackEvent('card_printing_view', props);
+    expect(track).toHaveBeenCalledWith('card_printing_view', props);
+  });
 });
