@@ -71,7 +71,16 @@ function printReport(label, result) {
 }
 
 const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
-const writeJson = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n');
+
+/**
+ * Replaces `file` whole: the JSON goes to a temporary file beside it, then a rename swaps it in,
+ * so an interrupted run leaves the old file rather than half-written JSON.
+ */
+function writeJson(file, data) {
+  const tmp = `${file}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2) + '\n');
+  fs.renameSync(tmp, file);
+}
 
 async function main() {
   const [sourceArg] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
