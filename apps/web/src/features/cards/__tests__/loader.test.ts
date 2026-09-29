@@ -324,6 +324,33 @@ describe('loadCardsFromJSON', () => {
     expect(english.scanLanguage).toBeUndefined();
   });
 
+  it('should map variant printings, resolving each image like a card image', () => {
+    const [card] = loadCardsFromJSON(
+      makeJsonData({
+        id: 1938,
+        variants: [
+          {
+            id: 2141,
+            rarity: 'Enchanted',
+            number: 223,
+            images: {thumbnail: 'https://api.lorcana.ravensburger.com/images/en/set9/223_t.jpg'},
+            imageHashSm: 'smhash',
+          },
+          {id: 14241, rarity: 'Iconic', number: 241},
+        ],
+      }),
+    );
+    expect(card.variants).toEqual([
+      {id: '2141', rarity: 'Enchanted', number: 223, imageUrl: '/card-images/en/set9/223_t.jpg', imageHashSm: 'smhash'},
+      {id: '14241', rarity: 'Iconic', number: 241, imageUrl: '/card-images-preview/14241.avif', imageHashSm: undefined},
+    ]);
+  });
+
+  it('should leave variants undefined on a card with no alternate printing', () => {
+    const [card] = loadCardsFromJSON(makeJsonData({id: 2716}));
+    expect(card.variants).toBeUndefined();
+  });
+
   it('should preserve both inks for dual-ink cards', () => {
     const cards = loadCardsFromJSON(makeJsonData({color: 'Amethyst-Sapphire'}));
     expect(cards[0].ink).toBe('Amethyst');

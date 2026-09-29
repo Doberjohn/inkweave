@@ -2,7 +2,7 @@ import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {injectManifest} from './download-card-images.mjs';
+import {imageSubjects, injectManifest, missingVariantHashes} from './download-card-images.mjs';
 
 let dir;
 let dataFile;
@@ -63,5 +63,43 @@ describe('injectManifest', () => {
     const updated = injectManifest(dataFile, {1: {full: 'f1', sm: 's1'}, 2: {full: 'f2', sm: 's2'}});
 
     expect(updated).toBe(2);
+  });
+});
+
+describe('variant printings', () => {
+  const enchanted = {
+    id: 2141,
+    rarity: 'Enchanted',
+    number: 223,
+    images: {full: 'e-full.jpg', thumbnail: 'e-thumb.jpg'},
+  };
+
+  it('gives each variant its own image subject, keyed by the variant id', () => {
+    const card = {id: 1938, images: {full: 'b-full.jpg'}, variants: [enchanted]};
+
+    expect(imageSubjects([card])).toEqual([
+      {id: 1938, images: {full: 'b-full.jpg'}},
+      {id: 2141, images: enchanted.images},
+    ]);
+  });
+
+  it('writes a variant hash into its nested entry', () => {
+    seed([{id: 1938, variants: [{...enchanted}]}]);
+    injectManifest(dataFile, {2141: {full: 'vfull', sm: 'vsm'}});
+
+    expect(read()[0].variants[0]).toMatchObject({imageHash: 'vfull', imageHashSm: 'vsm'});
+  });
+
+  it('clears a stale variant hash when this build emitted no image for it', () => {
+    seed([{id: 1938, variants: [{...enchanted, imageHash: 'old', imageHashSm: 'oldsm'}]}]);
+    injectManifest(dataFile, {});
+
+    expect(read()[0].variants[0]).toEqual(enchanted);
+  });
+
+  it('lists the variants this build could not image, so the build can warn without failing', () => {
+    const cards = [{id: 1938, variants: [enchanted, {id: 2200, rarity: 'Iconic', number: 240}]}];
+
+    expect(missingVariantHashes(cards, {2141: {full: 'f', sm: 's'}})).toEqual([2200]);
   });
 });
