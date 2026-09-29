@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   SynergyEngine,
+  canShareDeck,
   getInkDropRoles,
   isCoreSet,
   isDropRemoveTrigger,
@@ -84,6 +85,8 @@ describe('Ink Drops data coverage', () => {
     expect(getInkDropRoles(baymax)).toEqual(['drop-payoff']);
 
     expect(isOpponentGatedDrop(byFullName('This Is Business'))).toBe(true);
+    // Its drop is one option of a "Whenever this character quests, choose one:" ability.
+    expect(isRepeatingDropMaker(byFullName('Kit Cloudkicker - Sure Shot'))).toBe(true);
   });
 
   it('only uses payoff wordings the scoring copy describes', () => {
@@ -128,8 +131,14 @@ describe('Ink Drops pairs on the live pool', () => {
     for (const payoff of [byFullName('Madam Mim - Resourceful Trickster'), byFullName('Baymax - Amped Up')]) {
       const partners = inkDropGroups.get(payoff.id)!;
       const eights = partners.filter((s) => s.score === 8).map((s) => s.card.fullName).sort();
-      const steady = makers.filter((m) => isRepeatingDropMaker(m) && !isOpponentGatedDrop(m)).map((m) => m.fullName).sort();
+      const steady = makers
+        .filter((m) => canShareDeck(m, payoff) && isRepeatingDropMaker(m) && !isOpponentGatedDrop(m))
+        .map((m) => m.fullName)
+        .sort();
       expect(eights).toEqual(steady);
+      // Named anchors: both lists come from the same detectors, so a detector regression would
+      // shrink them together and still match.
+      expect(eights).toEqual(expect.arrayContaining(['Arthur - Jousting Knight', 'Kit Cloudkicker - Sure Shot']));
       expect(partners.every((s) => s.score <= 8)).toBe(true);
     }
   });
