@@ -51,6 +51,9 @@ interface SynergyResultsProps {
 function buildSectionStyle(isMobile: boolean, flowInPage: boolean): CSSProperties {
   return {
     flex: 1,
+    // Flex item of CardPage's <main>: min-width:auto would let the nowrap mobile chip row widen the
+    // whole section (and page) instead of scrolling inside its own overflow box (#631).
+    minWidth: 0,
     padding: isMobile ? `${SPACING.md}px` : `${SPACING.xl}px`,
     overflowY: flowInPage ? undefined : 'auto',
     maxHeight: flowInPage
@@ -131,6 +134,7 @@ function SynergyGroupToolbar({
     : {flexWrap: 'wrap'};
   return (
     <div
+      data-testid="synergy-group-toolbar"
       style={{
         display: 'flex',
         alignItems: 'center',
