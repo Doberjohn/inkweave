@@ -132,3 +132,12 @@ export {transformCard, transformCards} from './cardTransformer.js';
 export type {LorcanaJSONCard} from './cardTransformer.js';
 
 export {cardSlug, cardPath} from './cardSlug.js';
+
+export {
+  canonicalizeCardLine,
+  canonicalizeCardText,
+  canonicalizeCardFullText,
+  findGlyphWords,
+  findSpelledGlyphWords,
+  NAMED_REFERENCE,
+} from './cardTextStyle.js';

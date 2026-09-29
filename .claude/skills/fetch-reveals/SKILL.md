@@ -55,9 +55,13 @@ so the skill follows a season rotation with no edits.
    ```bash
    git fetch origin master
    git switch -c feature/set<SET>-reveals-<YYYY-MM-DD> origin/master
+   pnpm build:engine
    ```
 
    `<SET>` is `REVEAL_SET_CODE` from `revealSet.ts`. If the branch exists, append `-2`.
+   The build is not optional: the house-style rules and the write chain load the engine's
+   build output (#635), and a branch switch never rebuilds it. A stale build fails at import
+   with "does not provide an export named".
 4. Open the run:
 
    ```bash
@@ -254,6 +258,10 @@ words `resolve` takes.
   It stays in the report and is retried on every run. A card with no collector number is
   added with a reserved-band id (see `docs/PREVIEW_CARD_PARSER.md`), and renumbered once the
   site shows its number.
+- A card the write chain refuses (`validation-failed`) carries the validator's message as its
+  detail, for example `"Strength" is spelled out: use ¤ ("their ¤")` for a glyph word house
+  style cannot place (#635). `resolve` cannot rule on it, and it is retried on every run. Add
+  it by hand in `/admin/reveal`, writing the text the way the detail says.
 
 Anything unresolved is simply not written, and is retried next run.
 
