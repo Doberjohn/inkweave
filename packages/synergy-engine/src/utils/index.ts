@@ -19,6 +19,8 @@ export {
   hasPositiveClassificationEffect,
   isLocationSupportCard,
   getLocationRoles,
+  getLocationBuffClassifications,
+  locationBuffReaches,
   LOCATION_PATTERNS,
   getShiftType,
   hasAnyShift,

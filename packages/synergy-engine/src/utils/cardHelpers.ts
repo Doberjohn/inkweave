@@ -451,6 +451,35 @@ export function isLocationSupportCard(card: LorcanaCard): boolean {
   return getLocationRoles(card).length > 0;
 }
 
+/**
+ * A location buff limited to one location classification:
+ * "Your Hyperia City locations get +2 ⛉." (Hyperia City Express).
+ * Case-sensitive on purpose: the classification must be Title Case after "your", so lowercase
+ * shapes like "Your characters and locations gain Resist +1" (We'll Save Our Village) and
+ * "Your characters at locations get +1 ¤" (Russell) never match.
+ * Global flag: use only with matchAll/replace, never .test().
+ */
+const CLASSIFIED_LOCATION_BUFF = /\b[Yy]our ((?:[A-Z][a-z'-]+ )+)locations\b/g;
+
+/**
+ * Location classifications a card's buff is limited to (['Hyperia City'] for Hyperia City
+ * Express). Bound to the buff clause, not the whole card: returns [] when the text still reads
+ * as a buff after the classified clauses are removed, meaning the card also buffs every location.
+ */
+export function getLocationBuffClassifications(card: LorcanaCard): string[] {
+  const text = normalizeCardText(card);
+  const scoped = [...text.matchAll(CLASSIFIED_LOCATION_BUFF)].map((m) => m[1].trim());
+  if (scoped.length === 0) return [];
+  const unscoped = text.replace(CLASSIFIED_LOCATION_BUFF, '');
+  return LOCATION_PATTERNS.buff.test(unscoped) ? [] : scoped;
+}
+
+/** Whether a card's location buff reaches `location`. A classified buff reaches only its own locations. */
+export function locationBuffReaches(card: LorcanaCard, location: LorcanaCard): boolean {
+  const scoped = getLocationBuffClassifications(card);
+  return scoped.length === 0 || scoped.some((c) => hasClassification(location, c));
+}
+
 // ============================================
 // DISCARD CONTROL DETECTION
 // ============================================
