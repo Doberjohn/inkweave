@@ -3941,7 +3941,8 @@
       ],
       "strength": 2,
       "willpower": 1,
-      "lore": 1
+      "lore": 1,
+      "scanLanguage": "de"
     },
     {
       "id": 14047,

@@ -306,7 +306,8 @@ lorcanaplayer's English name and text. Its `state.json` entry carries
 "See translation" toggle in the card modal and the lightbox. When its English scan is out and
 the card is refreshed to it, delete `scanLanguage`, and leave no `written` state entry for its
 number still marked `provisional-translation`. `reveal-set-integrity.test.ts` fails while the
-two records disagree.
+two records disagree. `/admin/reveal` has no field for either yet, so a card published there
+with a non-English scan needs both added by hand (Madam Mim 14046 came in that way, German).
 
 ## Where things live
 
