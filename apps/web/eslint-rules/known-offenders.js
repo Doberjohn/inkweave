@@ -220,7 +220,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/admin-analytics/WebAnalyticsView.tsx', // x1
     'src/features/synergies/components/CardDetailPanel.tsx', // x1
     'src/features/synergies/components/ColumnHeader.tsx', // x1
-    'src/features/synergies/components/MobileCardDetail.tsx', // x1
     'src/features/image-admin/components/CardImagePicker.tsx', // x1
     'src/features/reveals/NewFranchises.tsx', // x1
     'src/features/reveals/RarityBreakdown.tsx', // x1
