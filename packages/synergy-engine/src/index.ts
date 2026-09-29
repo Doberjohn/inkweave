@@ -4,6 +4,8 @@ export type {
   GameMode,
   CardType,
   LorcanaCard,
+  VariantRarity,
+  CardPrinting,
   SynergyCategory,
   PlaystyleId,
   Playstyle,
@@ -148,4 +150,5 @@ export type {
   TribalRole,
   TribalSpec,
   LorcanaJSONCard,
+  RawCardVariant,
 } from './utils';

@@ -77,7 +77,18 @@
       ],
       "strength": 0,
       "willpower": 4,
-      "lore": 2
+      "lore": 2,
+      "variants": [
+        {
+          "id": 14241,
+          "rarity": "Iconic",
+          "number": 241,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set14/241_9443b5b400d9e82770f1fffef5effb5f967ab321.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set14/241_bcae8ffa04289d85442a384f9982570a224f61ba.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 14034,
@@ -1996,7 +2007,18 @@
       ],
       "strength": 4,
       "willpower": 6,
-      "lore": 3
+      "lore": 3,
+      "variants": [
+        {
+          "id": 14242,
+          "rarity": "Iconic",
+          "number": 242,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set14/242_ea48ff58c5f1efd0a8ef4abed3a970446ec27207.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set14/242_92579f77a13caddf161852c918849c0e114b0088.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 14158,

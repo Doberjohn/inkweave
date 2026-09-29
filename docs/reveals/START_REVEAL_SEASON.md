@@ -105,7 +105,7 @@ pnpm precompute-synergies
 
 Commit `previewCards.json` plus the generated `apps/web/public/card-images-preview/{id}.avif` and `{id}-sm.avif`. Raws stay git-ignored.
 
-**Check before committing:** tracked AVIF count must be twice the card count.
+**Check before committing:** tracked AVIF count must be twice the card count (plus twice the number of hand-scanned variant printings, see below).
 
 ```bash
 git ls-files apps/web/public/card-images-preview | wc -l
@@ -135,6 +135,30 @@ Use `/admin/reveal` for a single card, or one lorcanaplayer does not have yet, a
 5. The card commit triggers `deploy.yml`. **Allow 15 to 20 minutes** (the prerender crawl). The concurrency group keeps at most one deploy running and one pending, so rapid publishes collapse.
 
 **Merge the season switch before publishing anything.** `/admin/reveal` commits to a hardcoded `master`, and the convert workflow only fires there.
+
+### Variant printings (Epic, Enchanted, Iconic)
+
+A variant printing is alternate art for a card that is already in, not a card of its own: it goes in the base card's `variants` array, and the app shows it as a `Standard | <Rarity>` switcher (#625). Never add one as its own entry. `/fetch-reveals` and `/admin/reveal` do not handle variants (the fetch pipeline's rarity gate rejects them), so use one of these two paths. Both give the variant the id `REVEAL_ID_BASE + collector number` (Iconic #241 is `14241`), so they converge on one id, and `reveal-set-integrity.test.ts` enforces it.
+
+**Official art, once LorcanaJSON lists the variant** (preferred):
+
+```bash
+curl -sSL -o lorcanajson.zip https://lorcanajson.org/files/current/en/allCards.json.zip
+unzip -o lorcanajson.zip -d <scratch dir outside the repo>
+pnpm sync-variants <scratch dir>/allCards.json            # dry run: prints what it would fold
+pnpm sync-variants <scratch dir>/allCards.json --write
+pnpm precompute-synergies
+```
+
+It matches the preview card on set + full name, so the base card must already be in. Run it again any time: it only adds or updates.
+
+**Manual scan, before LorcanaJSON lists it** (English scans only; the translation toggle does not apply to variants):
+
+1. Save the scan as `apps/web/public/card-images-raw/{REVEAL_ID_BASE + number}.jpg` (e.g. `14221.jpg`) and run `pnpm convert-preview-images`.
+2. Add `{"id": 14221, "rarity": "Enchanted", "number": 221}` to the base card's `variants` (create the array if needed; keep it in collector-number order).
+3. `pnpm precompute-synergies`, then commit the entry plus both AVIFs.
+
+When a later `pnpm sync-variants` prints `! 14221 now has official art, but card-images-preview/14221.avif shadows it`, delete `14221.avif` and `14221-sm.avif` from `card-images-preview/`: a committed preview AVIF always wins over the official URL.
 
 ## Production
 

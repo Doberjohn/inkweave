@@ -189,18 +189,46 @@ export function injectManifest(filePath, manifest) {
   const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   let updated = 0;
   for (const card of data.cards) {
-    const hashes = manifest[card.id];
-    if (hashes) {
-      card.imageHash = hashes.full;
-      card.imageHashSm = hashes.sm;
-      updated++;
-    } else {
-      delete card.imageHash;
-      delete card.imageHashSm;
-    }
+    if (applyHashes(card, manifest[card.id])) updated++;
+    // Variant printings (#625) carry their own art, hashed under the variant's id.
+    for (const variant of card.variants ?? []) applyHashes(variant, manifest[variant.id]);
   }
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n');
   return updated;
+}
+
+/** Set a card's (or variant's) hashes from this build's manifest entry, or clear stale ones. */
+function applyHashes(target, hashes) {
+  if (hashes) {
+    target.imageHash = hashes.full;
+    target.imageHashSm = hashes.sm;
+    return true;
+  }
+  delete target.imageHash;
+  delete target.imageHashSm;
+  return false;
+}
+
+/**
+ * Everything that needs an image this build: each card, then each of its variant printings
+ * (#625) under the variant's own id, so a variant gets its own content-addressed AVIF.
+ */
+export function imageSubjects(cards) {
+  return cards.flatMap((card) => [
+    {id: card.id, images: card.images},
+    ...(card.variants ?? []).map((v) => ({id: v.id, images: v.images})),
+  ]);
+}
+
+/**
+ * Variant ids this build emitted no image for. Reported as a warning, never fatal: a single
+ * dead upstream variant URL must not block a deploy, and the switcher simply shows a broken
+ * image for that printing (the same honest degradation an unhashed card gets, #323).
+ */
+export function missingVariantHashes(cards, manifest) {
+  return cards.flatMap((card) =>
+    (card.variants ?? []).filter((v) => !manifest[v.id]).map((v) => v.id),
+  );
 }
 
 /**
@@ -269,14 +297,14 @@ function loadAllCards(primaryData) {
 function partitionCards(allCards, manifest) {
   const tasks = [];
   let previewCopied = 0;
-  for (const card of allCards) {
-    if (hasPreviewAvifs(card.id)) {
-      copyPreviewAvifs(card.id, manifest);
+  for (const subject of imageSubjects(allCards)) {
+    if (hasPreviewAvifs(subject.id)) {
+      copyPreviewAvifs(subject.id, manifest);
       previewCopied++;
       continue;
     }
-    const url = card.images?.full ?? card.images?.thumbnail;
-    if (url) tasks.push({id: card.id, url});
+    const url = subject.images?.full ?? subject.images?.thumbnail;
+    if (url) tasks.push({id: subject.id, url});
   }
   return {tasks, previewCopied};
 }
@@ -350,6 +378,13 @@ async function main() {
 
   // Guard: refuse to finish green if a whole set failed to image (would ship blank).
   assertImageCoverage(DATA_FILE, manifest);
+
+  const unimaged = missingVariantHashes(allCards, manifest);
+  if (unimaged.length > 0) {
+    console.warn(
+      `  Warning: ${unimaged.length} variant printing(s) have no image: ${unimaged.join(', ')}\n`,
+    );
+  }
 }
 
 // Run only when invoked directly (never when imported by the test).
