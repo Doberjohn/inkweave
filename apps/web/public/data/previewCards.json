@@ -4137,6 +4137,44 @@
       "strength": 5,
       "willpower": 5,
       "lore": 1
+    },
+    {
+      "id": 14178,
+      "name": "Woolter & Jesse",
+      "fullName": "Woolter & Jesse - Bellwether’s Henchmen",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 178,
+      "version": "Bellwether’s Henchmen",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Bodyguard",
+          "fullText": "Bodyguard"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Challenger",
+          "keywordValue": "+2",
+          "fullText": "Challenger +2"
+        }
+      ],
+      "fullText": "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)\n\nChallenger +2 (While challenging, this character gets +2 Strength.)",
+      "fullTextSections": [
+        "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
+        "Challenger +2 (While challenging, this character gets +2 Strength.)"
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 1
     }
   ]
 }
