@@ -4026,6 +4026,32 @@
       "strength": 3,
       "willpower": 2,
       "lore": 1
+    },
+    {
+      "id": 14150,
+      "name": "Hiro Hamada",
+      "fullName": "Hiro Hamada - Pioneering Inventor",
+      "cost": 4,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 150,
+      "version": "Pioneering Inventor",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Inventor",
+        "Super"
+      ],
+      "fullText": "NIFTY TECH While you have an item in play, this character gets +1 Lore.",
+      "fullTextSections": [
+        "NIFTY TECH While you have an item in play, this character gets +1 Lore."
+      ],
+      "strength": 3,
+      "willpower": 6,
+      "lore": 1
     }
   ]
 }
