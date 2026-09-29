@@ -22,7 +22,11 @@ If `$ARGUMENTS` is provided, use it as context for what was accomplished.
 
 Check each and report findings:
 
-- **Dev servers**: Check ports 5173-5175 for running processes. On Windows: `netstat -ano | findstr ":5173 "`, then read the owning process's command line (PowerShell: `(Get-CimInstance Win32_Process -Filter "ProcessId=<pid>").CommandLine`). Stop only servers this session started (the command line points into this checkout). A server from another checkout is another session's live work: report it instead of killing it.
+- **Dev servers**: List every listener on the dev ports (5173-5175) and the local E2E range (5200-5299) with its owner's command line. On Windows, through Bash (the project settings already allow `powershell`):
+  ```bash
+  powershell -NoProfile -Command 'Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -in (@(5173..5175) + @(5200..5299)) } | Sort-Object LocalPort -Unique | ForEach-Object { "{0} pid={1} {2}" -f $_.LocalPort, $_.OwningProcess, (Get-CimInstance Win32_Process -Filter "ProcessId=$($_.OwningProcess)").CommandLine }'
+  ```
+  Stop only servers this session started (the command line points into this checkout), with `powershell -NoProfile -Command 'Stop-Process -Id <pid> -Force'`. A server from another checkout is another session's live work: report it instead of killing it. An E2E server lives only as long as its run, so one from this checkout at session end is a leftover from a run that was killed.
 - **Worktrees**: `git worktree list`. If worktrees exist beyond main, remind user to clean up (NEVER remove without explicit confirmation).
 - **Stashes**: `git stash list`. Warn about unlabeled or stale stashes.
 - **Merged branches**: Run `git branch --merged master | grep -v '^\*'` to find branches already merged. If any exist, list them and ask whether to delete. On confirmation, run `git branch -d <branch>` for each. If no merged branches found, skip silently.
