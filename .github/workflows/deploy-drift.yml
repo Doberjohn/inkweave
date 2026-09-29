@@ -1,0 +1,69 @@
+name: deploy-drift
+
+# Opens one `deploy-drift` issue when production stops serving master (#569). Production's
+# commit comes from /version.json (written by scripts/write-version.mjs), and
+# scripts/deploy-drift.mjs does the comparing. Three triggers:
+#   - a failed Deploy run is reported at once (a successful one skips the job, billing nothing);
+#   - a daily check catches deploys that never ran or never went live, and closes the issue
+#     once production has caught up;
+#   - a manual run tests the alarm, e.g. `gh workflow run deploy-drift.yml -f dry_run=true`.
+#     With `deployed_sha` set, it works on a separate `deploy-drift-test` issue.
+
+on:
+  workflow_run:
+    workflows: [Deploy]
+    types: [completed]
+  schedule:
+    # Daily, off the top of the hour, where GitHub queues scheduled jobs late.
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+    inputs:
+      threshold_hours:
+        description: 'Grace period in hours before drift alerts'
+        default: '3'
+      deployed_sha:
+        description: "Test only: simulate production's commit (uses a separate deploy-drift-test issue)"
+        default: ''
+      dry_run:
+        description: 'Print the verdict without opening, updating or closing an issue'
+        type: boolean
+        default: false
+
+permissions:
+  issues: write
+  contents: read
+
+concurrency:
+  group: deploy-drift
+  cancel-in-progress: false
+
+jobs:
+  check:
+    # Only a failed or timed-out Deploy needs a report.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      contains(fromJSON('["failure", "timed_out"]'), github.event.workflow_run.conclusion)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            scripts/deploy-drift.mjs
+            .nvmrc
+          sparse-checkout-cone-mode: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Compare production with master
+        env:
+          GH_TOKEN: ${{ github.token }}
+          THRESHOLD_HOURS: ${{ inputs.threshold_hours || '3' }}
+          DEPLOYED_SHA: ${{ inputs.deployed_sha }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+          DEPLOY_FAILED_RUN_URL: ${{ github.event.workflow_run.html_url }}
+        run: node scripts/deploy-drift.mjs
