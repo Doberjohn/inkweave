@@ -1,4 +1,4 @@
-import {render, screen} from '@testing-library/react';
+import {render, screen, waitFor} from '@testing-library/react';
 import {test, expect, vi} from 'vitest';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
@@ -113,6 +113,9 @@ test('paging away from a focused translation toggle keeps focus in the dialog', 
     </MemoryRouter>
   );
   const {rerender} = render(tree({...makeCard('jp'), scanLanguage: 'ja'}));
+  // The dialog moves focus to its × 100ms after opening. Let that land first: whenever the
+  // test runs past 100ms, it would otherwise take the focus back from the toggle.
+  await waitFor(() => expect(screen.getByRole('button', {name: 'Close'})).toHaveFocus());
   await user.click(screen.getByRole('button', {name: 'See translation'}));
   expect(screen.getByRole('button', {name: 'See card'})).toHaveFocus();
 
