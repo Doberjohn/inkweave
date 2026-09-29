@@ -4175,6 +4175,41 @@
       "strength": 4,
       "willpower": 4,
       "lore": 1
+    },
+    {
+      "id": 14192,
+      "name": "Kit Cloudkicker",
+      "fullName": "Kit Cloudkicker - Sure Shot",
+      "cost": 5,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 192,
+      "version": "Sure Shot",
+      "rarity": "Super Rare",
+      "subtypes": [
+        "Dreamborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "3",
+          "fullText": "Shift 3"
+        }
+      ],
+      "fullText": "Shift 3 (You may pay 3 Ink to play this on top of one of your characters named Kit Cloudkicker.)\n\nAERIAL ACROBATICS Whenever this character quests, choose one:\n• Get 1 ink drop. (You may remove an ink drop to pay 1 Ink.)\n• Deal 1 damage to chosen character.",
+      "fullTextSections": [
+        "Shift 3 (You may pay 3 Ink to play this on top of one of your characters named Kit Cloudkicker.)",
+        "AERIAL ACROBATICS Whenever this character quests, choose one:",
+        "• Get 1 ink drop. (You may remove an ink drop to pay 1 Ink.)",
+        "• Deal 1 damage to chosen character."
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 2
     }
   ]
 }
