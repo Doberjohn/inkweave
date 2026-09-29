@@ -46,6 +46,19 @@ function resolvePort(): number {
   return port;
 }
 
+/**
+ * CI runs one worker. Local Windows runs cap at 3: Playwright's default (half the logical CPUs,
+ * 6 on the dev box) needs an estimated 4.4 GB of commit memory against the 2.7 GB measured for 3,
+ * and with other sessions open this machine often lacks it, so headless Chrome crashed out of
+ * memory mid-run. The cap lives here rather than in the pre-push hook because a push from a
+ * worktree runs the main checkout's copy of the hook, while this file always comes from the
+ * branch under test. `--workers` (or PRE_PUSH_E2E_WORKERS in the hook) overrides it.
+ */
+function resolveWorkers(): number | undefined {
+  if (process.env.CI) return 1;
+  return process.platform === 'win32' ? 3 : undefined;
+}
+
 const port = resolvePort();
 const origin = `http://localhost:${port}`;
 
@@ -54,7 +67,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: resolveWorkers(),
   reporter: process.env.CI ? [['github'], ['html']] : 'html',
   use: {
     baseURL: origin,
