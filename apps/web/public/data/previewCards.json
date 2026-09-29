@@ -3879,6 +3879,27 @@
       "fullTextSections": [
         "PUMP IT UP Your characters with Singer get +1 Strength and +1 Willpower."
       ]
+    },
+    {
+      "id": 14008,
+      "name": "Yax",
+      "fullName": "Yax - Concert Goer",
+      "cost": 7,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 8,
+      "version": "Concert Goer",
+      "rarity": "Uncommon",
+      "franchise": "Zootopia",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "strength": 7,
+      "willpower": 9,
+      "lore": 2
     }
   ]
 }
