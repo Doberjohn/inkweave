@@ -635,6 +635,24 @@ const SELF_DISCARD_OPPONENT_PATTERN = /opponent|each player|challenging player|t
 
 /** Reanimator — play / return / put a card FROM YOUR DISCARD (recursion payoff). */
 const SELF_DISCARD_REANIMATOR_PATTERN = /(?:play|return|put)\b[^.]{0,60}\bfrom your discard\b/i;
+/**
+ * Recursion that can only ever return the card itself or a card it just handled
+ * ("return this card from your discard", "a song card you played this turn … from your
+ * discard", "If you discarded a location card this way, you may play it from your discard").
+ * No hand-discard or mill enabler feeds it, so its sentence is stripped before the reanimator test.
+ */
+const SELF_CONTAINED_RECURSION_PATTERN =
+  /\b(?:this|that)\s+(?:card|item|character|location)\b[^.]{0,20}\bfrom your discard\b|\bthose\s+characters\s+from your discard\b|\byou played this turn\b[^.]{0,60}\bfrom your discard\b|\bthis way, you may (?:play|return) it from your discard\b/i;
+/** Self-recursion that fires when YOU discard the card is fed by hand discard, so it stays. */
+const DISCARD_FED_RECURSION_PATTERN = /\bwhen(?:ever)?\s+you\s+discard\b/i;
+
+/** The text without its self-contained recursion sentences (see SELF_CONTAINED_RECURSION_PATTERN). */
+function stripSelfContainedRecursion(text: string): string {
+  return text
+    .split(/(?<=[.!?])\s+/)
+    .filter((s) => !(SELF_CONTAINED_RECURSION_PATTERN.test(s) && !DISCARD_FED_RECURSION_PATTERN.test(s)))
+    .join(' ');
+}
 /** State payoff — rewards the discard EVENT (discarded this turn) or an empty hand (Hellbent). */
 const SELF_DISCARD_STATE_PATTERN = /discarded\s+a\s+card\s+this\s+turn|no cards in (?:your )?hand/i;
 /**
@@ -679,7 +697,7 @@ export function getSelfDiscardRoles(card: LorcanaCard): SelfDiscardRole[] {
 
   const roles: SelfDiscardRole[] = [];
   if (isSelfDiscardEnabler(text)) roles.push('enabler');
-  if (SELF_DISCARD_REANIMATOR_PATTERN.test(text)) roles.push('reanimator');
+  if (SELF_DISCARD_REANIMATOR_PATTERN.test(stripSelfContainedRecursion(text))) roles.push('reanimator');
   if (SELF_DISCARD_STATE_PATTERN.test(text)) roles.push('state-payoff');
   if (isSelfDiscardZonePayoff(text)) roles.push('zone-payoff');
   if (SELF_DISCARD_MILL_PATTERN.test(text)) roles.push('mill');
