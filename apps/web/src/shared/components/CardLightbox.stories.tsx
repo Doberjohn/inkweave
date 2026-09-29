@@ -20,6 +20,30 @@ export const WithImage: Story = {
   },
 };
 
+/** A card revealed abroad first: its only scan is Japanese, so the lightbox offers the English text. */
+export const WithTranslation: Story = {
+  args: {
+    src: '/card-images-preview/14014.avif',
+    alt: 'Elsa - Snow Queen',
+    card: {
+      id: '14901',
+      name: 'Elsa',
+      version: 'Snow Queen',
+      fullName: 'Elsa - Snow Queen',
+      cost: 5,
+      ink: 'Sapphire',
+      inkwell: true,
+      type: 'Character',
+      setCode: '14',
+      scanLanguage: 'ja',
+      textSections: [
+        'FROZEN STILLNESS At the end of your turn, if you’ve played 2 or more characters this turn, draw a card.',
+      ],
+    },
+    onClose: () => {},
+  },
+};
+
 export const WithBrokenImage: Story = {
   args: {
     src: 'https://invalid-url.example/missing.webp',

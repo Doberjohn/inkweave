@@ -37,4 +37,8 @@ export interface LorcanaCard {
   setNumber?: number;
   franchise?: string; // Set only on preview cards (e.g., "Toy Story", "The Incredibles", "Brave")
   rarity?: string; // "Common" | "Uncommon" | "Rare" | "Super Rare" | "Legendary" | "Enchanted"
+  // Language code ("ja", "de") of the card's only scan when that scan is not in English:
+  // a preview card revealed abroad first, whose name and text are an unofficial translation.
+  // Absent means the scan is English. Set by the web loader; engine never reads it.
+  scanLanguage?: string;
 }

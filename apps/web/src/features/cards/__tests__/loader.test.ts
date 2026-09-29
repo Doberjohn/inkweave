@@ -317,6 +317,13 @@ describe('loadCardsFromJSON', () => {
     expect(cards[0].imageUrl).toBe('/card-images-preview/14050.avif');
   });
 
+  it('should carry a foreign scan language through, and leave English cards without one', () => {
+    const [translated] = loadCardsFromJSON(makeJsonData({id: 14014, scanLanguage: 'ja'}));
+    const [english] = loadCardsFromJSON(makeJsonData({id: 14015}));
+    expect(translated.scanLanguage).toBe('ja');
+    expect(english.scanLanguage).toBeUndefined();
+  });
+
   it('should preserve both inks for dual-ink cards', () => {
     const cards = loadCardsFromJSON(makeJsonData({color: 'Amethyst-Sapphire'}));
     expect(cards[0].ink).toBe('Amethyst');

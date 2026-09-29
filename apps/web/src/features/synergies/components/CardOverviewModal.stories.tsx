@@ -153,6 +153,18 @@ export const Mobile: Story = {
   globals: {viewport: {value: 'mobile1'}},
 };
 
+/** A card revealed abroad first: its only scan is Japanese, so the header offers its English text. */
+const foreignScanCard = {...cardA, scanLanguage: 'ja', textSections: ['FAIR DEAL Whenever this character quests, draw a card.']};
+
+export const ForeignScan: Story = {
+  args: {card: foreignScanCard},
+};
+
+export const ForeignScanMobile: Story = {
+  args: {card: foreignScanCard, isMobile: true},
+  globals: {viewport: {value: 'mobile1'}},
+};
+
 export const ComparisonMode: Story = {
   args: {initialComparison: samplePair},
   decorators: [

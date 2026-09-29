@@ -1,4 +1,4 @@
-import {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {createContext, useContext, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import type {SynergyGroup as SynergyGroupData} from '../types';
@@ -7,13 +7,13 @@ import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';
 import {MobileComparisonView, type ComparisonOriginRects} from './MobileComparisonView';
 import {ExpandedGroupView} from './ExpandedGroupView';
-import {CardImage, RenderProfiler} from '../../../shared/components';
+import {CardImage, CardTranslationPanel, CardTranslationToggle, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {trackEvent} from '../../../shared/lib/analytics';
-import {COLORS, EASING, FONTS, FONT_SIZES, LETTER_SPACING, RADIUS, SHADOWS, Z_INDEX, hexRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, LETTER_SPACING, RADIUS, SHADOWS, SPACING, Z_INDEX, hexRgba} from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
 import {IconButton} from '../../../shared/components/IconButton';
 import {LinkButton} from '../../../shared/components/LinkButton';
@@ -28,6 +28,41 @@ const FLIP_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
  * (ResizeObserver) — for now it's a constant tuned to the current shell width.
  */
 const COMPARISON_CARD_INSET = 42;
+
+/** A foreign-scan card's "See translation" state; null when the card's scan is English. */
+interface CardTranslationState {
+  shown: boolean;
+  toggle: () => void;
+}
+
+/** Shared by the header (desktop toggle) and the card image (panel, mobile toggle). */
+const CardTranslationContext = createContext<CardTranslationState | null>(null);
+
+/**
+ * Every card opens on its scan: paging away clears the translation (so paging back starts on
+ * the scan too), and so does closing, for a host that keeps the modal mounted.
+ */
+function useCardTranslation(card: LorcanaCard, isOpen: boolean): CardTranslationState | null {
+  const [translatedId, setTranslatedId] = useState<string | null>(null);
+  const keepId = isOpen ? card.id : null;
+  if (translatedId !== null && translatedId !== keepId) setTranslatedId(null);
+  if (!card.scanLanguage) return null;
+  const shown = translatedId === card.id;
+  return {shown, toggle: () => setTranslatedId(shown ? null : card.id)};
+}
+
+/**
+ * Paging to a sibling can unmount the focused control (the translation toggle, when the next
+ * card's scan is English), which drops focus to <body>, outside the frame's arrow-key handler.
+ * Put it back on the close button so the arrow keys keep paging.
+ */
+function useFocusSurvivesPaging(cardId: string, fallbackRef: React.RefObject<HTMLElement | null>) {
+  const prevCardId = useRef(cardId);
+  useLayoutEffect(() => {
+    if (prevCardId.current !== cardId && document.activeElement === document.body) fallbackRef.current?.focus();
+    prevCardId.current = cardId;
+  }, [cardId, fallbackRef]);
+}
 
 interface CardOverviewModalProps {
   isOpen: boolean;
@@ -314,6 +349,8 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
   } = useCardOverviewModalState(props);
   const {mounted} = useTransitionPresence(isOpen);
   useScrollLock(isOpen);
+  const translation = useCardTranslation(card, isOpen);
+  useFocusSurvivesPaging(card.id, initialFocusRef);
 
   if (!mounted) return null;
 
@@ -358,6 +395,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
             data-highlighted={highlightedCard ?? undefined}
             onTransitionEnd={onTransitionEnd}
             style={pickModalShellStyle(isMobile)}>
+            <CardTranslationContext.Provider value={translation}>
             <ModalHeader
               card={card}
               isMobile={isMobile}
@@ -366,6 +404,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               onClose={onClose}
               exitComparison={exitComparison}
               initialFocusRef={initialFocusRef}
+              showExpanded={showExpanded}
             />
             <ModalContentRegion
               showExpanded={showExpanded}
@@ -390,6 +429,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               handleShowAll={handleShowAll}
               setHighlightedCard={setHighlightedCard}
             />
+            </CardTranslationContext.Provider>
           </div>
           {showSiblingNav && (
             <SiblingNavButtons onPrev={() => onGoToSibling?.(-1)} onNext={() => onGoToSibling?.(1)} />
@@ -953,17 +993,35 @@ interface ModalHeaderProps {
   exitComparison: () => void;
   /** useDialogFocus's initial-focus target — attached to the close × (#510: it was created but never attached). */
   initialFocusRef: React.RefObject<HTMLButtonElement | null>;
+  /** The expanded group view shows no card image, so it has nothing to translate. */
+  showExpanded: boolean;
 }
 
-function ModalHeader({card, isMobile, inComparison, hideBackButton, onClose, exitComparison, initialFocusRef}: ModalHeaderProps) {
+function ModalHeader({card, isMobile, inComparison, hideBackButton, onClose, exitComparison, initialFocusRef, showExpanded}: ModalHeaderProps) {
   const showBack = inComparison && !hideBackButton;
   return (
     <header style={{padding: '20px 24px 0', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap'}}>
       {showBack ? <BackButton onClick={exitComparison} /> : <ModalTitle card={card} isMobile={isMobile} />}
       {/* Spacer pushes close button to the right when BACK is in the slot (BACK doesn't have flex:1) */}
       {inComparison && <div style={{flex: 1}} />}
+      {!isMobile && <HeaderTranslationToggle hidden={inComparison || showExpanded} />}
       <CloseButton onClose={onClose} focusRef={initialFocusRef} />
     </header>
+  );
+}
+
+/**
+ * Desktop's translation toggle (mobile's sits under the card, in CardImageDisplay). Where the
+ * card image is gone (comparison, an expanded group) it hides but keeps its place, so the
+ * header keeps its height and the modal does not jump.
+ */
+function HeaderTranslationToggle({hidden}: {hidden: boolean}) {
+  const translation = useContext(CardTranslationContext);
+  if (!translation) return null;
+  return (
+    <span style={{visibility: hidden ? 'hidden' : undefined}}>
+      <CardTranslationToggle shown={translation.shown} onToggle={translation.toggle} />
+    </span>
   );
 }
 
@@ -1337,6 +1395,7 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
   // aura around the card. Setting borderRadius=14 on the wrapper makes the shadow follow
   // the card's rounded corners instead of drawing against a rectangular bounding box.
   const useGlow = !isMobile && inComparison;
+  const translation = useContext(CardTranslationContext);
   return (
     <div
       className={useGlow ? 'focused-card-glow' : undefined}
@@ -1344,7 +1403,7 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
       {/* Shrink-wrap span carrying the `data-comparison-card-a` marker — its rect is exactly
           the card image (not the full-width flex wrapper), so the click handler captures the
           correct FLIP origin for Card A's mobile comparison transition (#332 #5). */}
-      <span data-comparison-card-a style={{display: 'inline-block', lineHeight: 0}}>
+      <span data-comparison-card-a style={{display: 'inline-block', lineHeight: 0, position: 'relative'}}>
         <CardImage
           src={card.imageUrl}
           alt={card.fullName}
@@ -1361,10 +1420,24 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
           priority
           lazy={false}
         />
+        {translation?.shown && !inComparison && (
+          <CardTranslationPanel card={card} size={isMobile ? 'compact' : 'regular'} style={OVER_MODAL_SCAN} />
+        )}
       </span>
+      {/* Mobile only: desktop keeps the toggle in the header, since its body never scrolls and
+          a short viewport would clip anything under the card. Mobile keeps it through comparison
+          too, because its hidden default body must not reflow under the comparison overlay. */}
+      {isMobile && translation && <CardTranslationToggle shown={translation.shown} onToggle={translation.toggle} />}
     </div>
   );
 }
+
+/** The translation covers the scan exactly, rounded like CardImage. */
+const OVER_MODAL_SCAN: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  borderRadius: `${RADIUS.xl}px`,
+};
 
 function pickCardWrapperStyle({isMobile, highlightedCard, inComparison}: {isMobile: boolean; highlightedCard: 'a' | 'b' | null; inComparison: boolean}): React.CSSProperties {
   // In comparison mode, pull Card A inward so its right edge touches the
@@ -1372,9 +1445,11 @@ function pickCardWrapperStyle({isMobile, highlightedCard, inComparison}: {isMobi
   // cards slide into position together.
   const inset = !isMobile && inComparison ? COMPARISON_CARD_INSET : 0;
   return {
+    // A column, so the mobile translation toggle sits under the card.
     display: 'flex',
-    justifyContent: isMobile ? 'center' : 'flex-start',
-    alignItems: 'flex-start',
+    flexDirection: 'column',
+    alignItems: isMobile ? 'center' : 'flex-start',
+    gap: SPACING.md,
     flexShrink: 0,
     transform: inset ? `translateX(${inset}px)` : undefined,
     transition: `opacity 0.2s ${EASING.smooth}, filter 0.2s ${EASING.smooth}, transform ${FLIP_DURATION}ms ${FLIP_EASING}`,

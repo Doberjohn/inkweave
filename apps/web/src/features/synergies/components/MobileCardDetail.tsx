@@ -417,6 +417,7 @@ export function MobileCardDetail({
           src={card.imageUrl}
           alt={card.fullName}
           isLocation={card.type === 'Location'}
+          card={card}
           onClose={() => setLightboxOpen(false)}
         />
       )}

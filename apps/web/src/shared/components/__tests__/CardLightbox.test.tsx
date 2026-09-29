@@ -1,5 +1,6 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardLightbox} from '../CardLightbox';
 
 describe('CardLightbox', () => {
@@ -64,6 +65,38 @@ describe('CardLightbox', () => {
     render(<CardLightbox {...defaultProps} />);
     const img = screen.getByRole('img');
     expect(img.style.transform).toBe('');
+  });
+
+  describe('translation', () => {
+    const card = {
+      id: '14014',
+      name: 'Elsa',
+      version: 'Snow Queen',
+      fullName: 'Elsa - Snow Queen',
+      cost: 5,
+      ink: 'Sapphire',
+      inkwell: true,
+      type: 'Character',
+      textSections: ['FROZEN STILLNESS Draw a card.'],
+    } satisfies LorcanaCard;
+
+    it('should offer no translation for a card with an English scan', () => {
+      render(<CardLightbox {...defaultProps} card={card} />);
+      expect(screen.queryByRole('button', {name: 'See translation'})).not.toBeInTheDocument();
+    });
+
+    it('should toggle the English text over a foreign scan without closing', () => {
+      render(<CardLightbox {...defaultProps} card={{...card, scanLanguage: 'ja'}} />);
+
+      fireEvent.click(screen.getByRole('button', {name: 'See translation'}));
+      const panel = screen.getByRole('region', {name: 'English translation of Elsa - Snow Queen'});
+      expect(panel).toHaveTextContent('FROZEN STILLNESS Draw a card.');
+      expect(panel).toHaveTextContent('Translated from the Japanese card.');
+      expect(defaultProps.onClose).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole('button', {name: 'See card'}));
+      expect(screen.queryByTestId('card-translation')).not.toBeInTheDocument();
+    });
   });
 
   it('should lock body scroll when open', () => {

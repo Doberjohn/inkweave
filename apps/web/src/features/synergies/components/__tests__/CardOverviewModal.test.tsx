@@ -77,6 +77,67 @@ test('changing the card resets the expanded view', async () => {
   expect(screen.getByRole('button', {name: /more/i})).toBeVisible();
 });
 
+test('a foreign-scan card toggles its English text; the next card starts on its scan', async () => {
+  const user = userEvent.setup();
+  const japanese = (id: string) => ({...makeCard(id), scanLanguage: 'ja', textSections: ['Draw a card.']});
+  const tree = (card: LorcanaCard) => (
+    <MemoryRouter>
+      <CardOverviewModal isOpen card={card} synergies={[]} getPairSynergies={() => null} onClose={() => {}} />
+    </MemoryRouter>
+  );
+  const {rerender} = render(tree(japanese('jp1')));
+
+  await user.click(screen.getByRole('button', {name: 'See translation'}));
+  expect(screen.getByRole('region', {name: 'English translation of Card jp1 - Test'})).toHaveTextContent('Draw a card.');
+
+  rerender(tree(japanese('jp2')));
+  expect(screen.queryByTestId('card-translation')).toBeNull();
+  expect(screen.getByRole('button', {name: 'See translation'})).toBeVisible();
+
+  rerender(tree(makeCard('en')));
+  expect(screen.queryByRole('button', {name: /see (translation|card)/i})).toBeNull();
+
+  // Paging back to a card whose translation was open starts on its scan again.
+  rerender(tree(japanese('jp1')));
+  expect(screen.queryByTestId('card-translation')).toBeNull();
+});
+
+test('paging away from a focused translation toggle keeps focus in the dialog', async () => {
+  const user = userEvent.setup();
+  const tree = (card: LorcanaCard) => (
+    <MemoryRouter>
+      <CardOverviewModal isOpen card={card} synergies={[]} getPairSynergies={() => null} onClose={() => {}} />
+    </MemoryRouter>
+  );
+  const {rerender} = render(tree({...makeCard('jp'), scanLanguage: 'ja'}));
+  await user.click(screen.getByRole('button', {name: 'See translation'}));
+  expect(screen.getByRole('button', {name: 'See card'})).toHaveFocus();
+
+  rerender(tree(makeCard('en')));
+  expect(screen.getByRole('dialog')).toContainElement(document.activeElement as HTMLElement);
+});
+
+test('the expanded group view hides the translation toggle, which has no card image to cover', async () => {
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter>
+      <CardDataProvider>
+        <CardOverviewModal
+          isOpen
+          card={{...makeCard('jp'), scanLanguage: 'ja'}}
+          synergies={[makeGroup('singer-songs', 'Singer + Songs', 20)]}
+          getPairSynergies={() => null}
+          onClose={() => {}}
+        />
+      </CardDataProvider>
+    </MemoryRouter>,
+  );
+  expect(screen.getByRole('button', {name: 'See translation'})).toBeVisible();
+  await user.click(screen.getByRole('button', {name: /more/i}));
+  // Hidden, not removed, so the header keeps its height (a hidden button has no accessible name).
+  expect(screen.getByText('See translation')).not.toBeVisible();
+});
+
 function renderWithSiblings(opts: {onGoToSibling?: (d: 1 | -1) => void; siblingCardIds?: string[]} = {}) {
   return render(
     <MemoryRouter>

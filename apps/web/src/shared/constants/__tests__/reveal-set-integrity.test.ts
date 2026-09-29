@@ -17,6 +17,14 @@ interface PreviewCard {
   number?: number;
   setCode?: string;
   fullName?: string;
+  scanLanguage?: string;
+}
+
+/** One card's record in scripts/reveal-sync/state.json. */
+interface StateEntry {
+  number?: number;
+  status?: string;
+  reason?: string;
 }
 
 interface PreviewFile {
@@ -82,5 +90,25 @@ describe('reveal-set integrity', () => {
       next = last + 1;
     }
     expect(next - 1).toBe(SET_TOTAL);
+  });
+
+  // A card written from a non-English official scan is recorded in the reveal pipeline's
+  // state as a provisional translation, and CardLightbox offers its English text only when
+  // the card carries `scanLanguage`. Adding one, or refreshing it to its English scan, must
+  // update both, or the lightbox hides the translation or offers one for an English card.
+  it('scanLanguage marks exactly the cards written as provisional translations', () => {
+    const state = JSON.parse(
+      fs.readFileSync(path.resolve(process.cwd(), '../../scripts/reveal-sync/state.json'), 'utf8'),
+    ) as {sets: Record<string, {cards: Record<string, StateEntry>} | undefined>};
+    const provisional = new Set(
+      Object.values(state.sets[REVEAL_SET_CODE]?.cards ?? {})
+        .filter((e) => e.status === 'written' && e.reason === 'provisional-translation')
+        .map((e) => REVEAL_ID_BASE + (e.number ?? NaN)),
+    );
+    const label = (c: PreviewCard) => `${c.id} ${c.fullName}`;
+    expect(preview.cards.filter((c) => c.scanLanguage && !provisional.has(c.id)).map(label)).toEqual([]);
+    expect(preview.cards.filter((c) => !c.scanLanguage && provisional.has(c.id)).map(label)).toEqual([]);
+    const badCodes = preview.cards.filter((c) => c.scanLanguage && !/^(?!en$)[a-z]{2}$/.test(c.scanLanguage));
+    expect(badCodes.map(label)).toEqual([]);
   });
 });

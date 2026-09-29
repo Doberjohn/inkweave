@@ -109,6 +109,7 @@ function CardLightboxGate({
       src={card.imageUrl}
       alt={card.fullName}
       isLocation={card.type === 'Location'}
+      card={card}
       onClose={onClose}
     />
   );
