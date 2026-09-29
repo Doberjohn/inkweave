@@ -25,6 +25,14 @@ const heiHei = createCard({
   fullName: 'HeiHei - Persistent Presence',
   text: "HE'S BACK! When this character is banished in a\nchallenge, return this card from your discard to\nyour hand.",
 });
+const belle = createCard({
+  fullName: 'Belle - Snowfield Strategist',
+  text: 'WINTER STOCKPILE Whenever one of your characters is banished, you may put that card from your discard into your inkwell facedown and exerted.',
+});
+const sulleyAndBoo = createCard({
+  fullName: 'Sulley & Boo - Scare Buddies',
+  text: 'Combo Shift 4 ⬡ (You may pay 4 ⬡ to play this on top\nof one of your characters named Sulley, one named Boo,\nor one of each.)\nTHE POWER OF FRIENDSHIP When this character is\nbanished, if any of the cards that were under them are\ncharacter cards, you may play those characters from\nyour discard for free.',
+});
 
 // Recursion that fires when you discard the card: hand discard really feeds it.
 const gothel = createCard({
@@ -44,6 +52,8 @@ describe('Self-Discard roles: self-contained recursion', () => {
   it('does not read recursion of the card itself, or of a card it just handled, as a reanimator', () => {
     expect(getSelfDiscardRoles(aurora)).not.toContain('reanimator');
     expect(getSelfDiscardRoles(heiHei)).toEqual([]);
+    expect(getSelfDiscardRoles(belle)).toEqual([]);
+    expect(getSelfDiscardRoles(sulleyAndBoo)).toEqual([]);
   });
 
   it("keeps a card's other roles when its recursion is self-contained", () => {
@@ -54,6 +64,11 @@ describe('Self-Discard roles: self-contained recursion', () => {
   it('keeps self-recursion that fires when you discard the card', () => {
     expect(getSelfDiscardRoles(gothel)).toContain('reanimator');
     expect(getSelfDiscardRoles(lookWhatYouveDone)).toContain('reanimator');
+  });
+
+  it('keeps enter-play recursion whose trigger names this character', () => {
+    const onPlay = createCard({text: 'When you play this character, return a card from your discard to your hand.'});
+    expect(getSelfDiscardRoles(onPlay)).toContain('reanimator');
   });
 });
 

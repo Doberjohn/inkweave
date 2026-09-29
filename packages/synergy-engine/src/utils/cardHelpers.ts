@@ -668,10 +668,13 @@ const SELF_DISCARD_REANIMATOR_PATTERN = /(?:play|return|put)\b[^.]{0,60}\bfrom y
  * Recursion that can only ever return the card itself or a card it just handled
  * ("return this card from your discard", "a song card you played this turn … from your
  * discard", "If you discarded a location card this way, you may play it from your discard").
- * No hand-discard or mill enabler feeds it, so its sentence is stripped before the reanimator test.
+ * A hand-discard outlet never feeds it (a mill can only by luck), so its sentence is stripped
+ * before the reanimator test. The first branch needs the verb to take "this/that X from your
+ * discard" directly, so an enter-play trigger ("When you play this character, return a card
+ * from your discard") stays recursion.
  */
 const SELF_CONTAINED_RECURSION_PATTERN =
-  /\b(?:this|that)\s+(?:card|item|character|location)\b[^.]{0,20}\bfrom your discard\b|\bthose\s+characters\s+from your discard\b|\byou played this turn\b[^.]{0,60}\bfrom your discard\b|\bthis way, you may (?:play|return) it from your discard\b/i;
+  /\b(?:play|return|put)\s+(?:this|that)\s+(?:card|item|character|location)\s+from your discard\b|\bthose\s+characters\s+from your discard\b|\byou played this turn\b[^.]{0,60}\bfrom your discard\b|\bthis way, you may (?:play|return) it from your discard\b/i;
 /** Self-recursion that fires when YOU discard the card is fed by hand discard, so it stays. */
 const DISCARD_FED_RECURSION_PATTERN = /\bwhen(?:ever)?\s+you\s+discard\b/i;
 

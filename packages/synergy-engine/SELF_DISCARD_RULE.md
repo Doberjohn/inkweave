@@ -82,7 +82,7 @@ Matches playing, returning, or putting a card **from your discard**:
 
 The `[^.]{0,60}` window keeps the verb and "from your discard" inside one clause, so a card can't match by having "play" in one sentence and "from your discard" in an unrelated one.
 
-**Self-contained recursion is stripped first** (`stripSelfContainedRecursion`). Some recursion can only ever return the card itself or a card it just handled, so no hand-discard or mill enabler feeds it. Its sentence is removed before the reanimator test:
+**Self-contained recursion is stripped first** (`stripSelfContainedRecursion`). Some recursion can only ever return the card itself or a card it just handled, so no hand-discard outlet feeds it (a mill only by luck). Its sentence is removed before the reanimator test. The verb has to take "this/that X from your discard" directly, so an enter-play trigger such as "When you play this character, return a card from your discard" stays recursion:
 
 | Shape | Example card text | Card |
 |-------|-------------------|------|
@@ -287,13 +287,14 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | fill combos → 7 | all three shapes, with the filler as the actor and the token-swap when the payoff is the searcher |
 | mill ↔ state-payoff → 5 | milling is not a discard event, so it stays at the baseline |
 
-### Self-contained recursion and feed check (8 tests, `selfDiscard.test.ts`)
+### Self-contained recursion and feed check (9 tests, `selfDiscard.test.ts`)
 
 | Test | What it verifies |
 |------|------------------|
-| self-contained recursion | Aurora - Delightful Musician is no reanimator; HeiHei - Persistent Presence has no roles |
+| self-contained recursion | Aurora - Delightful Musician is no reanimator; HeiHei - Persistent Presence ("this card"), Belle - Snowfield Strategist ("that card") and Sulley & Boo ("those characters") have no roles |
 | other roles kept | Tiana - Party Hostess stays `['enabler']`; Torn Scrap stays `['zone-payoff']` |
 | discard-fed recursion kept | Mother Gothel - Evil as Ever and Look What You've Done keep `reanimator` |
+| enter-play recursion kept | "When you play this character, return a card from your discard" stays a reanimator |
 | song-only outlet → 8 | Max Goof - Karaoke Star with song (Max Goof - Rebellious Teen), action (Buzz Lightyear - Jungle Ranger) and any-card (Jiminy Cricket - Ghost of Christmas Past) recursion |
 | song-only outlet → 5 | with Circle of Life (from both searchers), Salvage Operation, Look What You've Done and Merida - Formidable Archer |
 | state payoffs | Max Goof feeds Maximus (8) but not Megavolt (5); You Broke My Smolder and Kronk still feed Megavolt (8) |
