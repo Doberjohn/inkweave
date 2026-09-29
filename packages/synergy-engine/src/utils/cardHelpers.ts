@@ -1653,7 +1653,7 @@ export type ItemRole = 'member' | 'item-engine' | 'payoff-trigger' | 'payoff-sta
 
 const ITEM_PLAY_TRIGGER = /whenever you play an item/i;
 const ITEM_STATIC_PAYOFF =
-  /for each (?:of your )?items?\b|(?:while|if) you have (?:an?|\d+ or more) items?(?:\s+named [^.]+?)?(?: in play)?|each item you have in play/i;
+  /for each (?:of your )?items?\b|(?:while|if) you have (?:an?|\d+ or more) items?(?!\s+named)(?: in play)?|each item you have in play|\bready chosen item\b/i;
 /** Search/tutor/free-play an item from deck, hand, or discard. */
 const ITEM_SEARCH =
   /reveal[^.]{0,40}\bitem card|\bplay (?:a|an|that|chosen)[^.]{0,30}\bitem\b[^.]{0,30}(?:for free|from your (?:hand|discard))/i;

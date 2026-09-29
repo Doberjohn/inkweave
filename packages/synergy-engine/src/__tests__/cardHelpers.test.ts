@@ -11,6 +11,7 @@ import {
   classifyNamedEffect,
   NAMED_EFFECT_SCORES,
   normalizeCardText,
+  getItemRoles,
 } from '../utils';
 import {createCard} from './fixtures.js';
 
@@ -485,5 +486,35 @@ describe('normalizeCardText', () => {
   it('joins lines and straightens typographic apostrophes', () => {
     const card = createCard({text: 'They can’t ready.\nGET ‘EM'});
     expect(normalizeCardText(card)).toBe("They can't ready. GET 'EM");
+  });
+});
+
+// #628: a condition on one named item ("if you have an item named X") is not an item payoff.
+describe('getItemRoles: named-item conditions', () => {
+  const tornScrap = createCard({
+    fullName: 'Torn Scrap',
+    type: 'Item',
+    text: 'FOND MEMORIES ⟳, 1 ⬡ — If you have 10 or more cards in your discard, draw a card.\nTOGETHER AGAIN When this card is put into your discard from your deck, if you have an item named Rivera Family Photo in play, you may play this item from your discard for free.',
+  });
+  const edna = createCard({
+    fullName: 'Edna Mode - Super Suit Designer',
+    text: "KEY ACCESSORY ⟳ — Ready chosen item.\nALL THE BASICS While you have an item\nnamed Super Suit in play, this character gains\nWard. (Opponents can't choose them except to\nchallenge.)",
+  });
+  const castle = createCard({
+    fullName: 'Castle of the Horned King - Bastion of Evil',
+    type: 'Location',
+    text: 'INTO THE GLOOM Once during your turn, whenever a character quests\nwhile here, you may ready chosen item.',
+  });
+
+  it('does not read a condition on one named item as an item payoff', () => {
+    expect(getItemRoles(tornScrap)).not.toContain('payoff-static');
+    expect(getItemRoles(createCard({text: 'If you have an item named Magic Mirror in play, draw a card.'}))).toEqual([]);
+  });
+
+  it('reads an item count, or readying an item, as an item payoff', () => {
+    const itemCount = createCard({text: 'While you have 2 or more items in play, this character gets +1 ◊.'});
+    expect(getItemRoles(itemCount)).toContain('payoff-static');
+    expect(getItemRoles(edna)).toContain('payoff-static');
+    expect(getItemRoles(castle)).toContain('payoff-static');
   });
 });
