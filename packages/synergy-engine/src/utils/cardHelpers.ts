@@ -707,6 +707,17 @@ function isSelfDiscardZonePayoff(text: string): boolean {
   return SELF_DISCARD_ZONE_IN_PATTERN.test(text) || SELF_DISCARD_ZONE_PUT_PATTERN.test(text);
 }
 
+/**
+ * Reanimator: recursion that is not self-contained. The raw test runs first, so the sentence
+ * split only happens for the few cards that recur anything at all.
+ */
+function isSelfDiscardReanimator(text: string): boolean {
+  return (
+    SELF_DISCARD_REANIMATOR_PATTERN.test(text) &&
+    SELF_DISCARD_REANIMATOR_PATTERN.test(stripSelfContainedRecursion(text))
+  );
+}
+
 /** State payoff: the discard event ("discarded a card this turn") or an empty hand. */
 function isSelfDiscardStatePayoff(text: string): boolean {
   return SELF_DISCARD_EVENT_PATTERN.test(text) || SELF_DISCARD_HELLBENT_PATTERN.test(text);
@@ -733,7 +744,7 @@ export function getSelfDiscardRoles(card: LorcanaCard): SelfDiscardRole[] {
 
   const roles: SelfDiscardRole[] = [];
   if (isSelfDiscardEnabler(text)) roles.push('enabler');
-  if (SELF_DISCARD_REANIMATOR_PATTERN.test(stripSelfContainedRecursion(text))) roles.push('reanimator');
+  if (isSelfDiscardReanimator(text)) roles.push('reanimator');
   if (isSelfDiscardStatePayoff(text)) roles.push('state-payoff');
   if (isSelfDiscardZonePayoff(text)) roles.push('zone-payoff');
   if (SELF_DISCARD_MILL_PATTERN.test(text)) roles.push('mill');
@@ -820,6 +831,35 @@ function selfDiscardKindsMeet(a: Set<SelfDiscardKind> | null, b: Set<SelfDiscard
   return a === null || b === null || [...a].some((kind) => b.has(kind));
 }
 
+/** What a card's discard or recursion can reach. Fixed per card, while the feed check runs per pair. */
+interface SelfDiscardFeedProfile {
+  /** Kinds the card discards as an outlet; null when it can discard any card. */
+  outletKinds: Set<SelfDiscardKind> | null;
+  /** The outlet refills the hand as it discards ("discard a card. If you do, draw 2 cards"). */
+  refills: boolean;
+  /** Kinds the card's recursion pulls, self-contained recursion stripped; null when it takes any card. */
+  recursionKinds: Set<SelfDiscardKind> | null;
+  /** The state payoff rewards the discard event ("discarded a card this turn"), not an empty hand. */
+  rewardsEvent: boolean;
+}
+
+const selfDiscardFeedProfiles = new WeakMap<LorcanaCard, SelfDiscardFeedProfile>();
+
+/** The card's feed profile, computed once per card object. */
+function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
+  const cached = selfDiscardFeedProfiles.get(card);
+  if (cached) return cached;
+  const text = normalizeCardText(card);
+  const profile: SelfDiscardFeedProfile = {
+    outletKinds: selfDiscardOutletKinds(text),
+    refills: SELF_DISCARD_REFILL_PATTERN.test(text),
+    recursionKinds: selfDiscardRecursionKinds(card, stripSelfContainedRecursion(text)),
+    rewardsEvent: SELF_DISCARD_EVENT_PATTERN.test(text),
+  };
+  selfDiscardFeedProfiles.set(card, profile);
+  return profile;
+}
+
 /**
  * Whether `enabler`'s hand discard can switch on `payoff`'s reanimator or state payoff:
  *  - recursion: the outlet's discard kinds meet the recursion kinds, so a typed outlet ("discard
@@ -833,17 +873,11 @@ export function selfDiscardOutletFeeds(
   payoff: LorcanaCard,
   payoffRoles: SelfDiscardRole[],
 ): boolean {
-  const outletText = normalizeCardText(enabler);
-  const payoffText = normalizeCardText(payoff);
+  const outlet = selfDiscardFeedProfile(enabler);
+  const target = selfDiscardFeedProfile(payoff);
   const feedsRecursion =
-    payoffRoles.includes('reanimator') &&
-    selfDiscardKindsMeet(
-      selfDiscardOutletKinds(outletText),
-      selfDiscardRecursionKinds(payoff, stripSelfContainedRecursion(payoffText)),
-    );
-  const feedsState =
-    payoffRoles.includes('state-payoff') &&
-    (SELF_DISCARD_EVENT_PATTERN.test(payoffText) || !SELF_DISCARD_REFILL_PATTERN.test(outletText));
+    payoffRoles.includes('reanimator') && selfDiscardKindsMeet(outlet.outletKinds, target.recursionKinds);
+  const feedsState = payoffRoles.includes('state-payoff') && (target.rewardsEvent || !outlet.refills);
   return feedsRecursion || feedsState;
 }
 
