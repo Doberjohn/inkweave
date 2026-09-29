@@ -3877,6 +3877,198 @@
       "strength": 0,
       "willpower": 3,
       "lore": 2
+    },
+    {
+      "id": 14032,
+      "name": "Speaker Stack",
+      "fullName": "Speaker Stack",
+      "cost": 2,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "14",
+      "number": 32,
+      "rarity": "Common",
+      "subtypes": [
+        "Item"
+      ],
+      "fullText": "PUMP IT UP Your characters with Singer get +1 Strength and +1 Willpower.",
+      "fullTextSections": [
+        "PUMP IT UP Your characters with Singer get +1 Strength and +1 Willpower."
+      ]
+    },
+    {
+      "id": 14008,
+      "name": "Yax",
+      "fullName": "Yax - Concert Goer",
+      "cost": 7,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 8,
+      "version": "Concert Goer",
+      "rarity": "Uncommon",
+      "franchise": "Zootopia",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "strength": 7,
+      "willpower": 9,
+      "lore": 2
+    },
+    {
+      "id": 14046,
+      "name": "Madam Mim",
+      "fullName": "Madam Mim - Trinket Hunter",
+      "cost": 1,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 46,
+      "version": "Trinket Hunter",
+      "rarity": "Common",
+      "subtypes": [
+        "Dreamborn",
+        "Sorcerer",
+        "Villain"
+      ],
+      "fullText": "HARD TO HANDLE While you have an ink drop, this character gains Evasive. (Only characters with Evasive can challenge them.)",
+      "fullTextSections": [
+        "HARD TO HANDLE While you have an ink drop, this character gains Evasive. (Only characters with Evasive can challenge them.)"
+      ],
+      "strength": 2,
+      "willpower": 1,
+      "lore": 1
+    },
+    {
+      "id": 14047,
+      "name": "Peter Pan’s Shadow",
+      "fullName": "Peter Pan’s Shadow - Elusive Prankster",
+      "cost": 3,
+      "color": "Amethyst",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "14",
+      "number": 47,
+      "version": "Elusive Prankster",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        }
+      ],
+      "fullText": "Evasive (Only characters with Evasive can challenge this character.)\n\nFAVORITE TRICK When you play this character, you may exert chosen opposing character.",
+      "fullTextSections": [
+        "Evasive (Only characters with Evasive can challenge this character.)",
+        "FAVORITE TRICK When you play this character, you may exert chosen opposing character."
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 14069,
+      "name": "Trusty",
+      "fullName": "Trusty - Along for the ride",
+      "cost": 5,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 69,
+      "version": "Along for the ride",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "strength": 4,
+      "willpower": 7,
+      "lore": 2
+    },
+    {
+      "id": 14112,
+      "name": "Tadashi Hamada",
+      "fullName": "Tadashi Hamada - Making Waves",
+      "cost": 5,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 112,
+      "version": "Making Waves",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "Inventor",
+        "Mentor"
+      ],
+      "fullText": "URGENT DELIVERY When this character is banished, get 2 ink drops. (Each ink drop may be removed to pay 1 Ink.)",
+      "fullTextSections": [
+        "URGENT DELIVERY When this character is banished, get 2 ink drops. (Each ink drop may be removed to pay 1 Ink.)"
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 3
+    },
+    {
+      "id": 14124,
+      "name": "Roxanne",
+      "fullName": "Roxanne - Concert Lover",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 124,
+      "version": "Concert Lover",
+      "rarity": "Rare",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "TODAY’S THE DAY When you play this character, you may move her and one of your other characters to the same location for free. If you do, the other character gets +1 Lore this turn.",
+      "fullTextSections": [
+        "TODAY’S THE DAY When you play this character, you may move her and one of your other characters to the same location for free. If you do, the other character gets +1 Lore this turn."
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 14150,
+      "name": "Hiro Hamada",
+      "fullName": "Hiro Hamada - Pioneering Inventor",
+      "cost": 4,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 150,
+      "version": "Pioneering Inventor",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Inventor",
+        "Super"
+      ],
+      "fullText": "NIFTY TECH While you have an item in play, this character gets +1 Lore.",
+      "fullTextSections": [
+        "NIFTY TECH While you have an item in play, this character gets +1 Lore."
+      ],
+      "strength": 3,
+      "willpower": 6,
+      "lore": 1
     }
   ]
 }
