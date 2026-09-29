@@ -23,7 +23,8 @@ export type PlaystyleId =
   | 'super'
   | 'royalty'
   | 'detective'
-  | 'bounce';
+  | 'bounce'
+  | 'ink-drops';
 
 // A playstyle groups related synergy rules that reinforce the same way of playing.
 // The more cards supporting a playstyle, the more consistent the deck becomes.

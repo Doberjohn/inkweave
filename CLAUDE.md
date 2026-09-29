@@ -6,7 +6,7 @@ Lorcana synergy finder for Core format with archetype-based synergy detection.
 
 - **Scope**: Core format only (sets 9+), community voting, deck builder
 - **UI**: Dark fantasy theme (deep purple, gold accents)
-- **Synergies**: 6 direct rules + 21 playstyles, indexed in the [Synergy Rules registry](#synergy-rules)
+- **Synergies**: 7 direct rules + 22 playstyles, indexed in the [Synergy Rules registry](#synergy-rules)
 
 See [GitHub Issues](https://github.com/Doberjohn/inkweave/issues) for full backlog.
 
@@ -86,7 +86,7 @@ React web application that consumes the synergy engine package.
 
 **Synergy Categories**: direct (pair-specific, e.g. Shift), playstyle (strategy-reinforcing, e.g. Lore Denial)
 
-**Playstyles**: 21 implemented, listed with their `PlaystyleId` and spec doc in the [Synergy Rules registry](#synergy-rules) below. The canonical union is `PlaystyleId` in `packages/synergy-engine/src/types/playstyle.ts`.
+**Playstyles**: 22 implemented, listed with their `PlaystyleId` and spec doc in the [Synergy Rules registry](#synergy-rules) below. The canonical union is `PlaystyleId` in `packages/synergy-engine/src/types/playstyle.ts`.
 
 **Synergy Score**: 1-10 numeric scale (all integers valid). Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4)
 
@@ -194,6 +194,7 @@ Rules live in `packages/synergy-engine/src/engine/rules/` and run at build time 
 | Healing | `healing` | [HEALING_RULE.md](packages/synergy-engine/HEALING_RULE.md) |
 | Exert | `exert` | [EXERT_RULE.md](packages/synergy-engine/EXERT_RULE.md) |
 | Bounce | `bounce` | [BOUNCE_RULE.md](packages/synergy-engine/BOUNCE_RULE.md) |
+| Ink Drops | `ink-drops` | [INK_DROPS_RULE.md](packages/synergy-engine/INK_DROPS_RULE.md) |
 | Classification Tribes | `monster` `princess` `hero` `super` `royalty` `detective` | [TRIBES_RULE.md](packages/synergy-engine/TRIBES_RULE.md) |
 
 Royalty is Queen/King/Prince and deliberately excludes Princess. All six tribes come from one shared payoff-anchored factory.
