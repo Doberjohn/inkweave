@@ -3925,6 +3925,38 @@
       "strength": 2,
       "willpower": 1,
       "lore": 1
+    },
+    {
+      "id": 14047,
+      "name": "Peter Pan’s Shadow",
+      "fullName": "Peter Pan’s Shadow - Elusive Prankster",
+      "cost": 3,
+      "color": "Amethyst",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "14",
+      "number": 47,
+      "version": "Elusive Prankster",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        }
+      ],
+      "fullText": "Evasive (Only characters with Evasive can challenge this character.)\n\nFAVORITE TRICK When you play this character, you may exert chosen opposing character.",
+      "fullTextSections": [
+        "Evasive (Only characters with Evasive can challenge this character.)",
+        "FAVORITE TRICK When you play this character, you may exert chosen opposing character."
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1
     }
   ]
 }
