@@ -104,7 +104,7 @@ Claude Code hooks, skills, agents, and path-scoped rules enforce workflow rules 
 | `preview-data-auto-precompute.sh` | PostToolUse/Edit\|Write | Auto `pnpm precompute-synergies` after `apps/web/public/data/previewCards.json` writes (engine hook already covers engine-src changes) |
 | `issue-create-guard.sh` | PreToolUse/Bash\|PowerShell\|Monitor | Redirects direct `gh issue create` to `/draft-issue` skill (`SKILL_APPROVED=1` bypass, Bash only) |
 | `agent-tool-substitution-guard.sh` | PostToolUse/Agent | Halts when a subagent reports a missing tool, so the fix lands in that agent's `tools:` frontmatter instead of the main session silently substituting |
-| Husky pre-push | git push | Runs `typecheck` (`tsc -b`), `check:stories` (story coverage), `check:design` (design-token value gate, #508), E2E, then the CodeScene gate. **On Windows only chromium runs** (webkit + mobile-chrome workers hang past Playwright's stop timeout); set `PRE_PUSH_FULL=1` to force them. Elsewhere: chromium + webkit + mobile-chrome. Full 5-browser matrix in CI |
+| Husky pre-push | git push | Runs `typecheck` (`tsc -b`), `check:stories` (story coverage), `check:design` (design-token value gate, #508), E2E, then the CodeScene gate. E2E starts its own Vite on a free port in 5200-5299 and never reuses a running server. **On Windows only chromium runs** (webkit + mobile-chrome workers hang past Playwright's stop timeout), with 3 workers (`PRE_PUSH_E2E_WORKERS` overrides) after logging free commit memory; set `PRE_PUSH_FULL=1` to force webkit + mobile-chrome. Elsewhere: chromium + webkit + mobile-chrome. Full 5-browser matrix in CI |
 
 ### Skills (`.claude/skills/`)
 | Skill | Arg | What it does |
@@ -223,7 +223,7 @@ pnpm test:supabase    # Run Supabase integration tests (requires .env.local)
 - Card data pre-deduplicated in `allCards.json` (same card in multiple sets appears once); loader expects clean data
 - Multi-page SPA via react-router (home, browse, card detail, playstyles, deck builder, voting, admin). Routes in `router.tsx`; `AppLayout` mounts the providers plus `<Outlet />`
 - Core format only (sets 9+)
-- **react-grab**: Dev-only inspection tool. The `dev` script runs `pnpm dlx @react-grab/claude-code@latest && vite`. Playwright's webServer runs `npx vite`, which is still DEV mode, so `index.html`'s `import.meta.env.DEV` gate loads react-grab during E2E as well; its `ws://localhost:4722` connection error must stay allowlisted in the E2E console-error guard (#405). If a dev server is already running, Playwright reuses it (`reuseExistingServer: true` locally) — which means `playwright.config.ts`'s `webServer.env` only applies when Playwright launches its own Vite. Set branch-specific env vars in `apps/web/.env.local` for determinism; see **Feature Flags & Local Dev**.
+- **react-grab**: Dev-only inspection tool. The `dev` script runs `pnpm dlx @react-grab/claude-code@latest && vite`. Playwright's webServer runs `npx vite`, which is still DEV mode, so `index.html`'s `import.meta.env.DEV` gate loads react-grab during E2E as well; its `ws://localhost:4722` connection error must stay allowlisted in the E2E console-error guard (#405). Local E2E runs never reuse a running dev server: each starts its own Vite on a free port in 5200-5299, so `playwright.config.ts`'s `webServer.env` always applies; see **Feature Flags & Local Dev**.
 - **useContainerWidth**: ResizeObserver hook guards against 0-width observations from detached elements (`if (w > 0)`) — required for React Strict Mode double-mount resilience
 - **Source-map leak guard** (#358): `scripts/check-sourcemaps.mjs` fails the build if any `.map` in a dir inlines original code via non-empty `sourcesContent`; `SKIP_SOURCEMAP_GUARD=1` bypasses. Wired ONLY into `vercel.json`'s `buildCommand` (the deploy boundary), plus `apps/web/vite.config.ts` sets `workbox.sourcemap:false` so VitePWA stops emitting `sw.js.map`. **Do NOT add the guard to CI or a `postbuild` hook** — CI/local builds run without `SENTRY_AUTH_TOKEN` (the Sentry plugin only uploads+deletes app maps where the token exists, i.e. the Vercel build), so they legitimately produce content-bearing maps that never deploy; gating those paths would false-fail safe artifacts and break forked PRs.
 - **Retired hosts** (#634): `www.inkweave.ink` and `lorcana-synergy-finder.vercel.app` 308 to the apex via `vercel.json` host redirects, and `middleware.ts` answers their `/sw.js` with a self-unregistering worker so www-era service workers can heal. Never restore a dashboard-level domain redirect on them (it blocks `/sw.js` again), and never Instant Rollback to a pre-#634 deployment while either serves Production: switch the domain to Redirect first.
@@ -271,7 +271,7 @@ Dark fantasy theme inspired by Lorcana:
 
 ### Feature Flags & Local Dev
 - Before `pnpm dev` on a feature branch, check `apps/web/.env.example` for flags that gate the feature being built. If the branch needs a flag on, add it to `apps/web/.env.local` (git-ignored, per-developer).
-- **Do not rely on `playwright.config.ts`'s `webServer.env`.** With `reuseExistingServer: !process.env.CI` (true locally), Playwright grabs any existing Vite on port 5173 without re-injecting env vars — so a dev server started without the flag silently fails feature-gated tests in pre-push. `.env.local` is loaded by Vite at boot regardless of who started it, making flag state deterministic across `pnpm dev`, `pnpm test:e2e`, and husky pre-push.
+- **E2E always starts its own Vite.** Locally it takes a free port in 5200-5299 and never reuses a running server (`reuseExistingServer: false`), so a dev server started without a flag can no longer stand in for it. That Vite loads `.env.local` at boot like `pnpm dev` does, and `playwright.config.ts`'s `webServer.env` overrides it for the four flags it pins. Branch flags still go in `.env.local`, which keeps them the same across `pnpm dev`, `pnpm test:e2e`, and husky pre-push.
 - Example: on `feature/285-reveals-page`, `VITE_IS_REVEAL_SEASON=true` must be in `.env.local` or the `/reveals` route redirects to `/` and the nav omits the Reveals entry.
 
 ### Synergy Rule Documentation
@@ -343,7 +343,7 @@ The boundary is drawn on what a loop may **do**, not on whether a human is watch
 - **Same-session cleanup.** Every worktree created in a session must be cleaned up in that session (or explicitly flagged for next session in MEMORY.md).
 - **Never leave orphan branches.** After merging a PR, delete the local branch and worktree immediately.
 - **Pre-commit timeout.** Always use `timeout: 600000` for git commit (pre-commit hooks run lint + test + E2E, ~2-3 min).
-- **Port conflicts.** Before starting a dev server or running E2E tests, check ports 5173-5175 and kill stale processes.
+- **Port conflicts.** E2E needs no free dev port: every local run starts its own Vite on a free port in 5200-5299 (set `E2E_PORT` to pin one). Before starting a dev server, check your assigned port. Stop only servers whose command line points into your own checkout; a server from another checkout is another session's live work, so ask the owner first.
 
 ## Design system mirror
 

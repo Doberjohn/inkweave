@@ -28,10 +28,28 @@ pnpm --filter inkweave-web check:design || exit $?
 # Ubuntu containers don't have this teardown issue and still run the full
 # 5-browser matrix as the canonical gate. Set PRE_PUSH_FULL=1 to force
 # webkit + mobile-chrome locally when you suspect cross-browser issues.
-if { [ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ] || [ -n "$WINDIR" ]; } && [ "${PRE_PUSH_FULL:-0}" != "1" ]; then
-  pnpm --filter inkweave-web test:e2e --project chromium || exit $?
+#
+# Windows also caps the E2E workers at 3 (Playwright's default is half the
+# logical CPUs, 6 on the dev box) and logs the free commit memory first. On
+# 2026-09-29 several local runs died when headless Chrome ran out of commit
+# memory (Application log: chrome-headless-shell.exe, 0xe0000008) while other
+# sessions loaded the machine. Fewer browsers make that less likely, and the
+# log line puts the headroom in the push output. PRE_PUSH_E2E_WORKERS
+# overrides the cap. Each run starts its own Vite on a private port (see
+# apps/web/playwright.config.ts), so no other server can stand in for it.
+IS_WINDOWS=0
+if [ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ] || [ -n "$WINDIR" ]; then
+  IS_WINDOWS=1
+fi
+WORKERS_ARG=
+if [ "$IS_WINDOWS" = "1" ]; then
+  WORKERS_ARG="--workers=${PRE_PUSH_E2E_WORKERS:-3}"
+  powershell.exe -NoProfile -Command '$o = Get-CimInstance Win32_OperatingSystem; "pre-push: {0:N1} of {1:N1} GB commit free before E2E" -f ($o.FreeVirtualMemory / 1MB), ($o.TotalVirtualMemorySize / 1MB)' || true
+fi
+if [ "$IS_WINDOWS" = "1" ] && [ "${PRE_PUSH_FULL:-0}" != "1" ]; then
+  pnpm --filter inkweave-web test:e2e --project chromium $WORKERS_ARG || exit $?
 else
-  pnpm --filter inkweave-web test:e2e --project chromium --project webkit --project mobile-chrome || exit $?
+  pnpm --filter inkweave-web test:e2e --project chromium --project webkit --project mobile-chrome $WORKERS_ARG || exit $?
 fi
 
 # CodeScene quality gate — mirrors the CI check so failed branches never reach origin.
