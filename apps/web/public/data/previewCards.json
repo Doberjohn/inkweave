@@ -3977,6 +3977,31 @@
       "strength": 4,
       "willpower": 7,
       "lore": 2
+    },
+    {
+      "id": 14112,
+      "name": "Tadashi Hamada",
+      "fullName": "Tadashi Hamada - Making Waves",
+      "cost": 5,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 112,
+      "version": "Making Waves",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "Inventor",
+        "Mentor"
+      ],
+      "fullText": "URGENT DELIVERY When this character is banished, get 2 ink drops. (Each ink drop may be removed to pay 1 Ink.)",
+      "fullTextSections": [
+        "URGENT DELIVERY When this character is banished, get 2 ink drops. (Each ink drop may be removed to pay 1 Ink.)"
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 3
     }
   ]
 }
