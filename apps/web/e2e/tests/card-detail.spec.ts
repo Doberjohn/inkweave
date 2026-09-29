@@ -52,17 +52,17 @@ test.describe('Card Detail (modal)', () => {
 
     await expect(appPage.cardOverviewModal).toBeVisible();
 
-    // Card image — first <img> inside the modal is the primary card art
-    const img = appPage.cardOverviewModal.locator('img').first();
-    await expect(img).toBeVisible();
-    const alt = await img.getAttribute('alt');
-    expect(alt).toBeTruthy();
-
     // Card name in h1 inside the modal header
     const heading = appPage.cardOverviewModal.locator('h1');
     await expect(heading).toBeVisible();
     const name = await heading.textContent();
     expect(name!.length).toBeGreaterThan(0);
+
+    // Card image, named after the card. Not the modal's first <img>: for a card with an
+    // alternate printing (#625) that is a pill's rarity symbol, which is decorative (alt="").
+    await expect(
+      appPage.cardOverviewModal.getByRole('img', {name: name!, exact: true}),
+    ).toBeVisible();
   });
 
   test('should show synergy chips or empty state once data loads', async ({appPage, page}) => {
@@ -217,5 +217,24 @@ test.describe('Card page (mobile layout)', () => {
     // overflow-x hidden or clip the row still measures wider, but the off-screen chips are unreachable.
     expect(layout.rowScroll).toBeGreaterThan(layout.rowClient);
     expect(layout.rowOverflowX).toMatch(/^(auto|scroll)$/);
+  });
+
+  test('× returns to the card before, and opens Browse on the page the visit started on', async ({
+    page,
+  }) => {
+    await page.setViewportSize({width: 390, height: 844});
+    // Any card with synergy tiles to tap: 2095's ramp group is fixture-guarded above.
+    await page.goto(`/card/${EXPAND_CARD_ID}`);
+    const close = page.getByRole('button', {name: 'Close', exact: true});
+
+    // A synergy card opens its own page, so × goes back to the card it came from...
+    await page.locator('a.card-tile').first().click();
+    await expect(page).not.toHaveURL(new RegExp(`/card/${EXPAND_CARD_ID}$`));
+    await close.click();
+    await expect(page).toHaveURL(new RegExp(`/card/${EXPAND_CARD_ID}$`));
+
+    // ...but on the entry page, going back would leave the app, so × opens Browse instead.
+    await close.click();
+    await expect(page).toHaveURL(/\/browse$/);
   });
 });

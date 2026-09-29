@@ -1,4 +1,4 @@
-import {createContext, useContext, useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {useContext, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
@@ -6,7 +6,9 @@ import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';
 import {MobileComparisonView, type ComparisonOriginRects} from './MobileComparisonView';
 import {ExpandedGroupView} from './ExpandedGroupView';
-import {CardImage, CardTranslationPanel, CardTranslationToggle, RenderProfiler} from '../../../shared/components';
+import {HeaderPrintingPills, HeaderTranslationToggle, MobileArtControls, ModalCardArt} from './ModalCardArt';
+import {CardPrintingContext, CardTranslationContext, useCardTranslation, useModalPrinting} from './modalArtState';
+import {CardTranslationPanel, CtaButton, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
@@ -40,28 +42,6 @@ const FLIP_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
  * (ResizeObserver) — for now it's a constant tuned to the current shell width.
  */
 const COMPARISON_CARD_INSET = 42;
-
-/** A foreign-scan card's "See translation" state; null when the card's scan is English. */
-interface CardTranslationState {
-  shown: boolean;
-  toggle: () => void;
-}
-
-/** Shared by the header (desktop toggle) and the card image (panel, mobile toggle). */
-const CardTranslationContext = createContext<CardTranslationState | null>(null);
-
-/**
- * Every card opens on its scan: paging away clears the translation (so paging back starts on
- * the scan too), and so does closing, for a host that keeps the modal mounted.
- */
-function useCardTranslation(card: LorcanaCard, isOpen: boolean): CardTranslationState | null {
-  const [translatedId, setTranslatedId] = useState<string | null>(null);
-  const keepId = isOpen ? card.id : null;
-  if (translatedId !== null && translatedId !== keepId) setTranslatedId(null);
-  if (!card.scanLanguage) return null;
-  const shown = translatedId === card.id;
-  return {shown, toggle: () => setTranslatedId(shown ? null : card.id)};
-}
 
 /**
  * Paging to a sibling can unmount the focused control (the translation toggle, when the next
@@ -369,6 +349,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
   const {mounted} = useTransitionPresence(isOpen);
   useScrollLock(isOpen);
   const translation = useCardTranslation(card, isOpen);
+  const printing = useModalPrinting(card, {isOpen, inComparison, translation});
   useFocusSurvivesPaging(card.id, initialFocusRef);
 
   if (!mounted) return null;
@@ -410,6 +391,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
             onTransitionEnd={onTransitionEnd}
             style={pickModalShellStyle(isMobile)}>
             <CardTranslationContext.Provider value={translation}>
+            <CardPrintingContext.Provider value={printing}>
             <ModalHeader
               card={card}
               isMobile={isMobile}
@@ -443,6 +425,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               handleShowAll={handleShowAll}
               setHighlightedCard={setHighlightedCard}
             />
+            </CardPrintingContext.Provider>
             </CardTranslationContext.Provider>
           </div>
           {showSiblingNav && (
@@ -461,6 +444,15 @@ function isTextEntryTarget(target: EventTarget | null): boolean {
   if (!el) return false;
   const tag = el.tagName;
   return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable;
+}
+
+/**
+ * Controls that use the arrow keys themselves: text entry, and radio groups such as the
+ * printing switcher (#625), whose arrows move its selection. There they are not "next card".
+ */
+function ownsArrowKeys(target: EventTarget | null): boolean {
+  if (isTextEntryTarget(target)) return true;
+  return target instanceof Element && target.closest('[role="radiogroup"]') !== null;
 }
 
 interface ModalFlags {
@@ -496,7 +488,7 @@ function handleSiblingArrowKey(
   showSiblingNav: boolean,
   onGoToSibling?: (d: 1 | -1) => void,
 ): boolean {
-  if (!showSiblingNav || isTextEntryTarget(e.target)) return false;
+  if (!showSiblingNav || ownsArrowKeys(e.target)) return false;
   if (e.key === 'ArrowLeft') {
     onGoToSibling?.(-1);
     return true;
@@ -606,39 +598,44 @@ function ModalContentRegion({
   );
 }
 
-const SIBLING_BTN_BASE: React.CSSProperties = {
+/**
+ * The kit's pill CTA (the landing page's "Browse all cards" treatment: orange gradient, dark
+ * glyph) as a 44px circle straddling the modal border. Centered with `top: calc()`, not a
+ * translateY transform, which would override the CTA's hover boop and press scale.
+ */
+const SIBLING_BTN_STYLE: React.CSSProperties = {
   position: 'absolute',
-  top: '50%',
-  transform: 'translateY(-50%)',
+  top: 'calc(50% - 22px)',
   zIndex: 4,
   width: 44,
   height: 44,
-  borderRadius: '50%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  // Match the landing page's "Browse all cards" CTA treatment (orange gradient + dark glyph).
-  background: COLORS.filterGradient,
-  border: 'none',
-  color: COLORS.filterText,
-  boxShadow: COLORS.filterShadow,
-  cursor: 'pointer',
+  padding: 0,
   pointerEvents: 'auto',
 };
 
 function SiblingNavButtons({onPrev, onNext}: {onPrev: () => void; onNext: () => void}) {
   return (
     <>
-      <button type="button" aria-label="Previous card" onClick={onPrev} style={{...SIBLING_BTN_BASE, left: -22}}>
+      <CtaButton
+        type="button"
+        variant="pill"
+        aria-label="Previous card"
+        onClick={onPrev}
+        style={{...SIBLING_BTN_STYLE, left: -22}}>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-      </button>
-      <button type="button" aria-label="Next card" onClick={onNext} style={{...SIBLING_BTN_BASE, right: -22}}>
+      </CtaButton>
+      <CtaButton
+        type="button"
+        variant="pill"
+        aria-label="Next card"
+        onClick={onNext}
+        style={{...SIBLING_BTN_STYLE, right: -22}}>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-      </button>
+      </CtaButton>
     </>
   );
 }
@@ -840,8 +837,6 @@ interface SynergyCardClickInput {
 
 const CLICK_ACK_DURATION_MS = 90;
 
-/** Whether the user has set OS-level "reduce motion." Returns false in non-browser contexts. */
-
 /** A pair is click-actionable when it exists AND has at least one connection to display. */
 function isPairClickActionable(pair: DetailedPairSynergy | null): pair is DetailedPairSynergy {
   return !!pair && pair.connections.length > 0;
@@ -972,24 +967,10 @@ function ModalHeader({card, isMobile, inComparison, hideBackButton, onClose, exi
       {showBack ? <BackButton onClick={exitComparison} /> : <ModalTitle card={card} isMobile={isMobile} />}
       {/* Spacer pushes close button to the right when BACK is in the slot (BACK doesn't have flex:1) */}
       {inComparison && <div style={{flex: 1}} />}
+      {!isMobile && <HeaderPrintingPills hidden={inComparison || showExpanded} />}
       {!isMobile && <HeaderTranslationToggle hidden={inComparison || showExpanded} />}
       <CloseButton onClose={onClose} focusRef={initialFocusRef} />
     </header>
-  );
-}
-
-/**
- * Desktop's translation toggle (mobile's sits under the card, in CardImageDisplay). Where the
- * card image is gone (comparison, an expanded group) it hides but keeps its place, so the
- * header keeps its height and the modal does not jump.
- */
-function HeaderTranslationToggle({hidden}: {hidden: boolean}) {
-  const translation = useContext(CardTranslationContext);
-  if (!translation) return null;
-  return (
-    <span style={{visibility: hidden ? 'hidden' : undefined}}>
-      <CardTranslationToggle shown={translation.shown} onToggle={translation.toggle} />
-    </span>
   );
 }
 
@@ -1334,30 +1315,13 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
           the card image (not the full-width flex wrapper), so the click handler captures the
           correct FLIP origin for Card A's mobile comparison transition (#332 #5). */}
       <span data-comparison-card-a style={{display: 'inline-block', lineHeight: 0, position: 'relative'}}>
-        <CardImage
-          src={card.imageUrl}
-          alt={card.fullName}
-          width={cardWidth}
-          height={cardHeight}
-          inkColor={card.ink}
-          cost={card.cost}
-          borderRadius={14}
-          // No style override: CardImage's root container already sets
-          // width/height in pixels, which reserves space before the image
-          // loads. The previous `style={{height:'auto'}}` collapsed that
-          // reservation and produced CLS=0.13 on /card/957 — above Google's
-          // 0.1 "good" CLS threshold — see commit 8fbe93c.
-          priority
-          lazy={false}
-        />
+        <ModalCardArt card={card} cardWidth={cardWidth} cardHeight={cardHeight} />
         {translation?.shown && !inComparison && (
           <CardTranslationPanel card={card} size={isMobile ? 'compact' : 'regular'} style={OVER_MODAL_SCAN} />
         )}
       </span>
-      {/* Mobile only: desktop keeps the toggle in the header, since its body never scrolls and
-          a short viewport would clip anything under the card. Mobile keeps it through comparison
-          too, because its hidden default body must not reflow under the comparison overlay. */}
-      {isMobile && translation && <CardTranslationToggle shown={translation.shown} onToggle={translation.toggle} />}
+      {/* Outside the span, whose rect is the FLIP origin above. */}
+      {isMobile && <MobileArtControls />}
     </div>
   );
 }

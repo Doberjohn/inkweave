@@ -4,7 +4,17 @@ import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup} from '../types';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, TRUNCATE, hexRgba} from '../../../shared/constants';
-import {CardImage, CardLightbox, CardTextBlock, TierCircle} from '../../../shared/components';
+import {
+  CardImage,
+  CardImageButton,
+  CardLightbox,
+  CardTextBlock,
+  PrintingCarousel,
+  PrintingPills,
+  TierCircle,
+} from '../../../shared/components';
+import {printingAlt, usePrintingSelection, type Printing} from '../../../shared/hooks';
+import {trackEvent} from '../../../shared/lib/analytics';
 
 interface CardDetailPanelProps {
   card: LorcanaCard;
@@ -60,56 +70,99 @@ function buildNameLinkStyle(hovered: boolean): CSSProperties {
 
 // ── Sub-components ──
 
+const HERO_WIDTH = 298;
+const HERO_HEIGHT = 417;
+
+interface PrintingSelection {
+  printings: Printing[];
+  index: number;
+  onSelect: (index: number) => void;
+}
+
+/**
+ * The hero art of a card with an alternate printing (#625): the swipeable printings strip,
+ * with the Standard | <rarity> pills under it. The page scrolls, so nothing here clips.
+ */
+function PrintingsHero({
+  card,
+  selection,
+  onEnlarge,
+}: {
+  card: LorcanaCard;
+  selection: PrintingSelection;
+  onEnlarge: (index: number) => void;
+}) {
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.sm}}>
+      <PrintingCarousel
+        key={card.id}
+        card={card}
+        printings={selection.printings}
+        index={selection.index}
+        onIndexChange={selection.onSelect}
+        onEnlarge={onEnlarge}
+        width={HERO_WIDTH}
+        height={HERO_HEIGHT}
+        borderRadius={RADIUS.xl}
+        priority
+      />
+      <PrintingPills
+        printings={selection.printings}
+        index={selection.index}
+        onSelect={selection.onSelect}
+      />
+    </div>
+  );
+}
+
 function CardImageBox({card, onOpenLightbox}: {card: LorcanaCard; onOpenLightbox: () => void}) {
   const handleClick = () => {
     if (card.imageUrl) onOpenLightbox();
   };
   return (
     <div style={{display: 'flex', justifyContent: 'center'}}>
-      <button
-        type="button"
-        aria-label="Enlarge card image"
+      <CardImageButton
+        ariaLabel="Enlarge card image"
         onClick={handleClick}
-        style={{
-          border: 'none',
-          background: 'none',
-          padding: 0,
-          borderRadius: RADIUS.xl,
-          overflow: 'hidden',
-          cursor: card.imageUrl ? 'pointer' : 'default',
-        }}>
+        borderRadius={RADIUS.xl}
+        enlargeable={!!card.imageUrl}>
         <CardImage
           src={card.imageUrl}
           alt={card.fullName}
-          width={298}
-          height={417}
+          width={HERO_WIDTH}
+          height={HERO_HEIGHT}
           inkColor={card.ink}
           cost={card.cost}
           lazy={false}
           priority
           borderRadius={RADIUS.xl}
         />
-      </button>
+      </CardImageButton>
     </div>
   );
 }
 
+/**
+ * The enlarged view of the printing that was clicked. Only the Standard printing carries the
+ * card's own scan, so only it gets the "See translation" toggle (`card`); a variant's art is
+ * an official English printing.
+ */
 function CardLightboxGate({
   card,
-  isOpen,
+  printing,
   onClose,
 }: {
   card: LorcanaCard;
-  isOpen: boolean;
+  printing: Printing | null;
   onClose: () => void;
 }) {
-  if (!isOpen || !card.imageUrl) return null;
+  if (!printing?.imageUrl) return null;
   return (
     <CardLightbox
-      src={card.imageUrl}
-      alt={card.fullName}
+      src={printing.imageUrl}
+      alt={printingAlt(card, printing)}
       isLocation={card.type === 'Location'}
-      card={card}
+      card={printing.rarity ? undefined : card}
       onClose={onClose}
     />
   );
@@ -296,6 +349,22 @@ function SynergyBreakdownBox({
   );
 }
 
+/**
+ * Which printing's lightbox is open (an index into the card's printings), or null. Tied to the
+ * card: the card page stays mounted across /card/:id navigations, so a browser Back taken with
+ * the lightbox open closes it instead of carrying the index over to the next card. Same
+ * render-time reset as usePrintingSelection.
+ */
+function useCardLightbox(cardId: string) {
+  const [shown, setShown] = useState<{cardId: string; index: number} | null>(null);
+  if (shown && shown.cardId !== cardId) setShown(null);
+  return {
+    index: shown?.cardId === cardId ? shown.index : null,
+    open: (index: number) => setShown({cardId, index}),
+    close: () => setShown(null),
+  };
+}
+
 // ── Main panel ──
 
 export function CardDetailPanel({
@@ -304,7 +373,13 @@ export function CardDetailPanel({
   onGroupClick,
   activeGroupKey,
 }: CardDetailPanelProps) {
-  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const lightbox = useCardLightbox(card.id);
+  const {printings, index, select} = usePrintingSelection(card);
+  const selectPrinting = (next: number) => {
+    select(next);
+    const {rarity} = printings[next];
+    if (rarity) trackEvent('card_printing_view', {cardId: card.id, rarity, surface: 'card_page'});
+  };
 
   return (
     <article
@@ -322,11 +397,19 @@ export function CardDetailPanel({
         gap: `${SPACING.lg}px`,
         boxSizing: 'border-box',
       }}>
-      <CardImageBox card={card} onOpenLightbox={() => setLightboxOpen(true)} />
+      {printings.length > 1 ? (
+        <PrintingsHero
+          card={card}
+          selection={{printings, index, onSelect: selectPrinting}}
+          onEnlarge={lightbox.open}
+        />
+      ) : (
+        <CardImageBox card={card} onOpenLightbox={() => lightbox.open(0)} />
+      )}
       <CardLightboxGate
         card={card}
-        isOpen={lightboxOpen}
-        onClose={() => setLightboxOpen(false)}
+        printing={lightbox.index === null ? null : (printings[lightbox.index] ?? null)}
+        onClose={lightbox.close}
       />
       <CardTitleBlock card={card} />
       {hasCardText(card) && <CardTextBox card={card} />}

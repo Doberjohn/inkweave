@@ -15,6 +15,7 @@
 # CI deploys — but note Vercel git-deploy for master is off, so to fully hand deploys back to
 # Vercel you must also revert the vercel.json git.deploymentEnabled change.
 
+# deploy-drift.yml's workflow_run trigger matches this name: rename both together (#569).
 name: Deploy
 
 on:

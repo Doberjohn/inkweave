@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-133 tests across 19 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+137 tests across 20 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
 
@@ -29,20 +29,20 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should show featured cards after loading | Featured cards grid has 1-12 card tiles |
 | should open the overview modal when a card is selected | Clicking a featured card opens the modal overlay-style; URL stays `/`, no compact header |
 
-## `card-detail.spec.ts` — 11 tests (10 desktop only, 1 on every project at a 390px viewport)
+## `card-detail.spec.ts` — 12 tests (10 desktop only, 2 on every project at a 390px viewport)
 
 Two surfaces: the crawlable `/card/:id` **page** (#486 — renders, not-found, empty state; slug URLs `/card/:id/:slug` with the id as the lookup key and the slug decorative, #498) and the
 CardOverviewModal opened from a tile (render, close, empty, scroll lock, show-all, sibling nav). The
 modal is opened via `appPage.openCardOverview(name)` (Browse `?q=` + tile click) since `/card/:id`
 is a real page now, not a modal shortcut.
 
-The page's mobile-layout guard (#631) forces a 390px viewport with `setViewportSize` instead of
-skipping `mobile-*`: `isMobile` is width-based, so it renders the mobile layout on every project and
-also runs in the chromium-only Windows pre-push.
+The page's mobile-layout tests (the #631 overflow guard, the × back flow) force a 390px viewport with
+`setViewportSize` instead of skipping `mobile-*`: `isMobile` is width-based, so they render the mobile
+layout on every project and also run in the chromium-only Windows pre-push.
 
 | Test | What it verifies |
 |---|---|
-| should render card name and image inside the overview modal | Modal shows card image + h1 with the card name |
+| should render card name and image inside the overview modal | Modal shows an h1 with the card name and the card art named after it (found by name, not as the first `<img>`: a card with an alternate printing puts the pills' decorative rarity symbols first) |
 | should show synergy chips or empty state once data loads | Modal renders synergy groups, empty state, or error after async load |
 | renders the crawlable card page when deep-linking to /card/:id | `/card/1947` renders the real page (#486): URL stays, `<title>` baked in, canonical is the slug URL (#498), synergy section visible, no modal |
 | a wrong slug still renders the card by id and canonicalizes to the correct slug (#498) | `/card/1947/wrong-slug-here` resolves card 1947 by id (slug decorative); canonical rewritten to the derived slug, not the URL's |
@@ -53,8 +53,19 @@ also runs in the chromium-only Windows pre-push.
 | Show More reveals the full expanded group, and Back returns to default | Modal opened on card 2095 via Browse (`openCardOverview`); ramp group: one "+N more" click → `data-state="expanded"` with a "Back to all synergies" link; Back → `data-state="default"` |
 | arrows navigate to a sibling card from the Browse grid | Opening a card from `/browse` shows prev/next arrows; clicking "Next card" changes the modal's h1 to the adjacent grid card |
 | a card with many synergy groups does not scroll the page sideways (#631) | At 390px, `/card/2978` (6 groups, fixture-guarded from its synergy JSON): the chip row's content is wider than the page (precondition), `document.documentElement.scrollWidth <= clientWidth` (no page-level horizontal overflow), and the chip row scrolls inside its own box (`scrollWidth > clientWidth`, with computed `overflow-x` `auto` or `scroll`, since `hidden`/`clip` would pass the width checks while stranding the off-screen chips). Compares against `clientWidth`, not `innerWidth`, because mobile emulation zooms out to fit an overflowing page |
+| × returns to the card before, and opens Browse on the page the visit started on | At 390px, `/card/2095`: tapping a synergy tile opens that card's page, × returns to `/card/2095` (history back); × again, on the page the visit started on, navigates to `/browse` instead of leaving the app (`useBackOrNavigate`: an entry page has `location.key === 'default'`) |
 
-## `card-modal-on-demand.spec.ts` — 2 tests (every project)
+## `card-printings.spec.ts`: 3 tests (2 desktop only, 1 on every project at a 360px viewport)
+
+The alternate-printing switcher (#625) on card 1938 (Pongo - Determined Father), whose one alternate printing is Enchanted; a module-level guard reads that from `allCards.json` and throws "Fixture broken" if the pool changes. The 360px test forces its viewport like card-detail's mobile-layout tests, so it also runs in the chromium-only Windows pre-push.
+
+| Test | What it verifies |
+|---|---|
+| the card page switches to the Enchanted printing, and enlarges that one | `/card/1938`: Standard is checked first; the Enchanted pill's rarity symbol loads (`naturalWidth > 0`, it is a separate `?no-inline` file); clicking the pill checks it and lands the art strip on slide 1; "Enlarge Enchanted printing" opens the lightbox named for the Enchanted printing, not the card's own scan |
+| the modal's arrow keys move between printings, not to the next card | Modal opened on Pongo from `/browse?q=father` (four matches, so "Next card" exists). First lets the dialog's initial-focus timer run (`useDialogFocus` moves focus to the × 100ms after opening, and would otherwise take it back from the pills mid-test) by awaiting a 100ms timer of its own in the page, which runs after the dialog's. It does not wait for the × to be focused: headless WebKit has not started the enter transition by then, so the dialog is still hidden and the focus call does nothing. ArrowRight on the focused Standard pill checks and focuses Enchanted, and the modal's h1 is still Pongo (the radio group owns the arrow keys) |
+| four printings fit a 360px phone as symbols, and jumping to the last checks only it | `page.route` adds Epic and Iconic printings to card 1938 (no real card has more than one yet): four pills; the Epic pill has no text but keeps its name (`aria-label`) and `title`; the row and the page fit `documentElement.clientWidth`. Clicking Iconic lands the strip on slide 3 while a MutationObserver records the checked pill: exactly `['Iconic']`, since the strip's own scroll past Enchanted and Epic must not read as swipes (each would check its pill in passing and count as a view) |
+
+## `card-modal-on-demand.spec.ts`: 2 tests (every project)
 
 The card overview modal loads on demand (#640). Both tests hold the modal's module request (`**/components/CardOverviewModal.tsx*`, the dev server's source path) so the cold path is deterministic.
 
@@ -123,7 +134,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 |---|---|
 | should use eager loading for above-fold featured cards | Featured card images have `loading="eager"` + `decoding="sync"` |
 | should render images in featured cards grid | Featured grid has images with valid `src` attributes |
-| should render image in the card overview modal | The modal's primary card image renders with a valid `src` |
+| should render image in the card overview modal | The modal's card art (the image named after the card) renders with a valid `src` |
 | should use lazy loading for synergy card images | Synergy card images (below fold) use `loading="lazy"` |
 
 ## `search-autocomplete.spec.ts` — 5 tests (desktop only)

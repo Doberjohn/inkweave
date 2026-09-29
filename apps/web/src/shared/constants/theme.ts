@@ -26,7 +26,6 @@ export const LAYOUT = {
   compactHeaderHeight: 52,
   compactHeaderHeightMobile: 48,
   cardDetailWidth: 330,
-  selectedCardImageWidth: 120,
   maxDisplayedCards: 204,
   /** CardGrid auto-fill minimum column width on desktop. Used by BrowseCardGrid + the shared CardGrid component. */
   cardGridMinWidth: 180,
