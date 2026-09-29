@@ -172,7 +172,17 @@ export function HeroSection({
       {/* Logo — animated SVG with self-contained CSS animations (honors prefers-reduced-motion).
           Wrapping in h1 preserves a single top-level heading for a11y; alt provides the name. */}
       <h1 style={styles.heading}>
-        <img src="/brand/logo-animated.svg" alt="Inkweave" style={styles.logo} />
+        {/* width/height are the SVG's intrinsic size: they reserve the logo's box before the
+            file arrives, so the vertically centered <main> does not shift (#627). CSS still
+            sets the rendered size. fetchPriority: this is the page's LCP element. */}
+        <img
+          src="/brand/logo-animated.svg"
+          alt="Inkweave"
+          width={977}
+          height={313}
+          fetchPriority="high"
+          style={styles.logo}
+        />
         <span style={styles.srOnly}>Disney Lorcana Card Synergy Finder for Core format</span>
       </h1>
 

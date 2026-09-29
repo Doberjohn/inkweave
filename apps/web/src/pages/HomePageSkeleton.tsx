@@ -137,7 +137,15 @@ function HeroSkeleton({isMobile}: HeroSkeletonProps) {
   return (
     <section aria-label="Hero" style={s.section}>
       <h1 style={s.heading}>
-        <img src="/brand/logo-animated.svg" alt="Inkweave" style={s.logo} />
+        {/* Same attributes as HeroSection's logo: this fallback renders first on the client. */}
+        <img
+          src="/brand/logo-animated.svg"
+          alt="Inkweave"
+          width={977}
+          height={313}
+          fetchPriority="high"
+          style={s.logo}
+        />
       </h1>
       <div style={s.subtitleContainer}>
         <p style={s.subtitleText}>
