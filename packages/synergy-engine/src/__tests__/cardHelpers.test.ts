@@ -512,6 +512,7 @@ describe('getItemRoles: named-item conditions', () => {
   it('does not read a condition on one named item as an item payoff', () => {
     expect(getItemRoles(tornScrap)).not.toContain('payoff-static');
     expect(getItemRoles(createCard({text: 'If you have an item named Magic Mirror in play, draw a card.'}))).toEqual([]);
+    expect(getItemRoles(createCard({text: 'If you have 2 or more items named Magic Mirror in play, draw a card.'}))).toEqual([]);
   });
 
   it('reads an item count, or readying an item, as an item payoff', () => {

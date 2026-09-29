@@ -21,7 +21,7 @@ A card can hold several roles at once (Philoctetes is `member` + `buff` + `trigg
 - **buff** — benefits the tribe: a team buff (`your [other] X characters get/gain/can…`), a single-target buff (`chosen X character … gets/gains/can`, or a give-form `+N` stat buff `chosen X character … +\d`), or a tribal ready (`ready your/chosen … X characters`).
 - **trigger** — a repeating trigger tied to the tribe: `whenever you play a X`, or `whenever … your X character(s) … quest/challenge`.
 - **search** — deck dig: `search your deck for a X character` / `reveal a X character`.
-- **in-play-check** — a conditional gated on the tribe: `while/if you have a X in play`, `if a [Y or] X character is in play/chosen`, `if you played/returned a X this turn`, or `if that card is a X character card`. A tribe word inside a card name never counts: a `(?<!named )` guard keeps "while you have an item named Super Suit in play" (Edna Mode - Super Suit Designer) from reading as a Super check.
+- **in-play-check** — a conditional gated on the tribe: `while/if you have a X in play`, `if a [Y or] X character is in play/chosen`, `if you played/returned a X this turn`, or `if that card is a X character card`. A tribe word right after "named" does not count: a `(?<!named )` guard keeps "while you have an item named Super Suit in play" (Edna Mode - Super Suit Designer) from reading as a Super check. A name with the tribe word later in it ("named Mega Super Suit") would still match; no card has that shape today.
 
 Payoff detection runs on the card's whitespace-normalized text (card text carries embedded newlines, so the phrase "Princess character" is only found after collapsing `\s+` to a single space).
 
