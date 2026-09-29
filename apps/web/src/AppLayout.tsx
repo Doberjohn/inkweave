@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import {Suspense, useEffect, useRef, useState} from 'react';
 import {Outlet, useLocation} from 'react-router-dom';
 import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
@@ -10,7 +10,6 @@ import {
   ErrorBoundary,
   MobileBottomNav,
   MOBILE_NAV_HEIGHT,
-  SearchBottomSheet,
 } from './shared/components';
 import type {SearchBottomSheetHandle} from './shared/components/SearchBottomSheet';
 import {CardDataProvider} from './shared/contexts/CardDataContext';
@@ -18,6 +17,15 @@ import {CardModalProvider} from './shared/contexts/CardModalContext';
 import {COLORS} from './shared/constants';
 import {useCardDataContext} from './shared/contexts/CardDataContext';
 import {useResponsive} from './shared/hooks';
+import {lazyWithRetry} from './shared/lib/lazyWithRetry';
+
+// Mobile-only, so it stays out of the entry chunk desktop visitors download (#640). On a phone
+// it loads right after the first render. A search tap in the moment before it arrives still
+// opens the sheet once the chunk lands, but focusProxy can't summon the iOS keyboard for that tap.
+const SearchBottomSheet = lazyWithRetry(
+  () => import('./shared/components/SearchBottomSheet'),
+  'SearchBottomSheet',
+);
 
 // Feature flag: gates the desktop-only beta notice card on the landing page.
 // Off at v1.0.0 launch via Vercel env. Default on locally via .env.local.
@@ -96,12 +104,14 @@ function AppContent() {
         <MobileBottomNav onSearchClick={openSearch} searchButtonRef={searchButtonRef} />
       )}
       {isMobile && (
-        <SearchBottomSheet
-          ref={searchRef}
-          isOpen={isSearchOpen}
-          onClose={closeSearch}
-          returnFocusRef={searchButtonRef}
-        />
+        <Suspense fallback={null}>
+          <SearchBottomSheet
+            ref={searchRef}
+            isOpen={isSearchOpen}
+            onClose={closeSearch}
+            returnFocusRef={searchButtonRef}
+          />
+        </Suspense>
       )}
       {showRevealsPromo && (
         <RevealsPromoCard />

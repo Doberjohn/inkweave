@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-131 tests across 18 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+133 tests across 19 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
 
@@ -53,6 +53,15 @@ also runs in the chromium-only Windows pre-push.
 | Show More reveals the full expanded group, and Back returns to default | Modal opened on card 2095 via Browse (`openCardOverview`); ramp group: one "+N more" click → `data-state="expanded"` with a "Back to all synergies" link; Back → `data-state="default"` |
 | arrows navigate to a sibling card from the Browse grid | Opening a card from `/browse` shows prev/next arrows; clicking "Next card" changes the modal's h1 to the adjacent grid card |
 | a card with many synergy groups does not scroll the page sideways (#631) | At 390px, `/card/2978` (6 groups, fixture-guarded from its synergy JSON): the chip row's content is wider than the page (precondition), `document.documentElement.scrollWidth <= clientWidth` (no page-level horizontal overflow), and the chip row scrolls inside its own box (`scrollWidth > clientWidth`, with computed `overflow-x` `auto` or `scroll`, since `hidden`/`clip` would pass the width checks while stranding the off-screen chips). Compares against `clientWidth`, not `innerWidth`, because mobile emulation zooms out to fit an overflowing page |
+
+## `card-modal-on-demand.spec.ts` — 2 tests (every project)
+
+The card overview modal loads on demand (#640). Both tests hold the modal's module request (`**/components/CardOverviewModal.tsx*`, the dev server's source path) so the cold path is deterministic.
+
+| Test | What it verifies |
+|---|---|
+| a cold open shows the loading shell, then the modal takes over | Clicking a featured card while the modal's chunk is held shows `card-overview-fallback` and no modal; releasing the chunk shows the modal and removes the shell |
+| the loading shell closes on a scrim click, like the modal | A click on `card-overview-fallback-backdrop` removes the shell, and the chunk arriving afterwards opens no modal |
 
 ## `card-search.spec.ts` — 7 tests (desktop only)
 

@@ -1,4 +1,4 @@
-import {lazy, Suspense} from 'react';
+import {Suspense} from 'react';
 import {createBrowserRouter, Navigate} from 'react-router-dom';
 import Skeleton from 'react-loading-skeleton';
 import {AppLayout} from './AppLayout';
@@ -6,28 +6,7 @@ import {AdminGate} from './features/admin-analytics/AdminGate';
 import {RevealsGate} from './features/reveals';
 import {HomePageSkeleton} from './pages/HomePageSkeleton';
 import {COLORS, RADIUS, SPACING} from './shared/constants';
-import {reloadForStaleChunk} from './shared/lib/staleChunkReload';
-
-/** Retry a dynamic import up to `retries` times, then force-reload on stale chunks (e.g. iOS home screen cache). */
-function lazyWithRetry(
-  importFn: () => Promise<{[key: string]: React.ComponentType}>,
-  exportName: string,
-  retries = 2,
-) {
-  return lazy(() => {
-    const load = (attempt: number): Promise<{default: React.ComponentType}> =>
-      importFn()
-        .then((m) => ({default: m[exportName]}))
-        .catch((err) => {
-          if (attempt < retries) return load(attempt + 1);
-          // All retries exhausted. Likely stale chunks after deploy — reload to
-          // fetch a new index.html with current chunk hashes (loop-guarded).
-          reloadForStaleChunk();
-          throw err;
-        });
-    return load(0);
-  });
-}
+import {lazyWithRetry} from './shared/lib/lazyWithRetry';
 
 // Lazy-load page components for code splitting (with retry on chunk load failure)
 const HomePage = lazyWithRetry(() => import('./pages/HomePage'), 'HomePage');

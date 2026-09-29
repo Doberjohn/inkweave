@@ -4,6 +4,7 @@ import type {LorcanaCard} from '../types';
 import {INK_COLORS, COLORS, EASING, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {smallImageUrl} from '../loader';
 import {isModifiedClick} from '../../../shared/utils/touchGuard';
+import {preloadCardOverviewModal} from '../../../shared/contexts/cardOverviewModalLoader';
 
 type InkColors = (typeof INK_COLORS)[keyof typeof INK_COLORS];
 
@@ -160,6 +161,8 @@ function CardTileLink({
       href={href}
       tabIndex={tabIndex}
       onClick={handleClick}
+      onPointerEnter={preloadCardOverviewModal}
+      onFocus={preloadCardOverviewModal}
       aria-label={label}
       style={{...style, display: 'block', textDecoration: 'none', color: 'inherit'}}>
       {children}

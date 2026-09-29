@@ -1,10 +1,30 @@
-import {createContext, useContext, useState, type ReactNode} from 'react';
+import {
+  createContext,
+  Suspense,
+  useContext,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import {useNavigate, useLocation} from 'react-router-dom';
 import type {DetailedPairSynergy} from 'inkweave-synergy-engine';
-import {CardOverviewModal} from '../../features/synergies';
 import {usePrecomputedSynergies} from '../../features/synergies/hooks';
+import {CardOverviewModalFallback} from '../../features/synergies/components/CardOverviewModalFallback';
 import {useCardDataContext} from './CardDataContext';
 import {useResponsive} from '../hooks';
+import {lazyWithRetry} from '../lib/lazyWithRetry';
+import {
+  getLoadedCardOverviewModal,
+  loadCardOverviewModal,
+  subscribeToCardOverviewModal,
+  warmCardOverviewModalOnFirstInteraction,
+} from './cardOverviewModalLoader';
+
+// Loaded on demand (#640): warmed by the first interaction and by card tile hover or focus. An
+// open that beats the chunk renders this lazy wrapper and shows CardOverviewModalFallback until
+// the chunk arrives; later opens render the loaded component directly (useModalForOpen).
+const LazyCardOverviewModal = lazyWithRetry(loadCardOverviewModal, 'CardOverviewModal');
 
 interface CardModalContextValue {
   selectedCardId: string | null;
@@ -68,6 +88,8 @@ export function CardModalProvider({children}: {children: ReactNode}) {
   const [siblingCardIds, setSiblingCardIds] = useState<string[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => warmCardOverviewModalOnFirstInteraction(), []);
 
   // Detect default-state entry via render-time setState (no useEffect lag, matches the
   // pattern used elsewhere in the modal). The `&& !hasUserSeenDefaultState` guard prevents
@@ -213,6 +235,7 @@ function CardModalRoot({onEnterComparison, onExitComparison}: CardModalRootProps
   const card = selectedCardId ? (getCardById(selectedCardId) ?? null) : null;
   const partnerCard = comparisonPartnerId ? (getCardById(comparisonPartnerId) ?? null) : null;
   const {synergies, getPairSynergies, isLoading: synergiesLoading} = usePrecomputedSynergies(card);
+  const {Modal, openedBeforeModalReady} = useModalForOpen(card !== null);
 
   if (!card) return null;
 
@@ -235,22 +258,52 @@ function CardModalRoot({onEnterComparison, onExitComparison}: CardModalRootProps
     : null;
 
   return (
-    <CardOverviewModal
-      isOpen
-      card={card}
-      synergies={synergies}
-      synergiesLoading={synergiesLoading}
-      onClose={closeCardModal}
-      getPairSynergies={getPairSynergies}
-      isMobile={isMobile}
-      initialComparison={initialComparison}
-      onEnterComparison={onEnterComparison}
-      onExitComparison={onExitComparison}
-      hideBackButton={hideBackButton}
-      siblingCardIds={siblingCardIds}
-      onGoToSibling={goToSibling}
-    />
+    <Suspense
+      fallback={<CardOverviewModalFallback card={card} isMobile={isMobile} onClose={closeCardModal} />}>
+      <Modal
+        skipEnterTransition={openedBeforeModalReady}
+        isOpen
+        card={card}
+        synergies={synergies}
+        synergiesLoading={synergiesLoading}
+        onClose={closeCardModal}
+        getPairSynergies={getPairSynergies}
+        isMobile={isMobile}
+        initialComparison={initialComparison}
+        onEnterComparison={onEnterComparison}
+        onExitComparison={onExitComparison}
+        hideBackButton={hideBackButton}
+        siblingCardIds={siblingCardIds}
+        onGoToSibling={goToSibling}
+      />
+    </Suspense>
   );
+}
+
+/**
+ * Which modal component this open renders, decided once when it opens (#640):
+ * - chunk not arrived: the lazy wrapper. It suspends, CardOverviewModalFallback plays the
+ *   entrance, and the modal then mounts already visible (`openedBeforeModalReady`).
+ * - chunk arrived: the loaded component itself, which renders without suspending and plays its
+ *   own entrance. Going through the lazy wrapper would still suspend once and flash the fallback.
+ * Held for the whole open: switching components mid-open would remount the modal, losing its
+ * state and the element its focus returns to. Render-time setState, like the provider's
+ * default-state flag.
+ */
+function useModalForOpen(isOpen: boolean) {
+  const loadedModal = useSyncExternalStore(
+    subscribeToCardOverviewModal,
+    getLoadedCardOverviewModal,
+    () => null,
+  );
+  const [open, setOpen] = useState({isOpen: false, early: false});
+  let {early} = open;
+  if (open.isOpen !== isOpen) {
+    early = isOpen && loadedModal === null;
+    setOpen({isOpen, early});
+  }
+  const Modal = early || !loadedModal ? LazyCardOverviewModal : loadedModal;
+  return {Modal, openedBeforeModalReady: early};
 }
 
 export function useCardModal(): CardModalContextValue {

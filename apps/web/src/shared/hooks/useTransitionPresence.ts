@@ -5,12 +5,15 @@ import {useEffect, useState} from 'react';
  * Keeps the element mounted during its CSS exit transition, then unmounts it.
  *
  * @param isOpen - Whether the element should be visible
+ * @param options.startVisible - Render the first frame already in the "visible" state, so no
+ *   enter transition runs. For an element taking over from a stand-in that already played the
+ *   entrance (CardOverviewModal after CardOverviewModalFallback, #640). Exits still animate.
  * @returns { mounted, visible, onTransitionEnd }
  *   - mounted: whether to render the element in the DOM
  *   - visible: whether to apply the "visible" CSS state
  *   - onTransitionEnd: attach to the animated element to unmount after exit
  */
-export function useTransitionPresence(isOpen: boolean) {
+export function useTransitionPresence(isOpen: boolean, {startVisible = false} = {}) {
   // Track whether the element should remain in the DOM
   const [mounted, setMounted] = useState(isOpen);
 
@@ -24,7 +27,7 @@ export function useTransitionPresence(isOpen: boolean) {
   // mounted just became true but isOpen was already true. The browser needs
   // one paint with the "enter" state before we apply "visible".
   // We use a second state to delay visibility by one render.
-  const [visibleDeferred, setVisibleDeferred] = useState(false);
+  const [visibleDeferred, setVisibleDeferred] = useState(startVisible && isOpen);
 
   useEffect(() => {
     if (isOpen && mounted && !visibleDeferred) {
