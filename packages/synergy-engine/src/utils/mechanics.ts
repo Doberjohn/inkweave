@@ -17,11 +17,13 @@ import type {
   BounceRole,
   TribalRole,
 } from './cardHelpers.js';
+import type {InkDropRole} from './inkDrops.js';
 import {
   normalizeCardText,
   getLoreDenialRoles,
   getDiscardRoles,
   getRampRoles,
+  getInkDropGain,
   DRAW_PATTERN,
 } from './cardHelpers.js';
 
@@ -69,8 +71,9 @@ const matchesText = (card: LorcanaCard, re: RegExp): boolean =>
 
 /**
  * The generic mechanics catalog — the single source of truth for cross-playstyle
- * mechanics. The first nine delegate to existing role detectors (no duplicated
- * regex); the last three are new gap-fillers validated against the live database.
+ * mechanics. Entries either delegate to a shared detector or regex in cardHelpers
+ * (draw through inkwell/cost-reduction, ink-drop-gain) or are gap-filler regexes
+ * validated against the live database (lore-buff, stat-buff, keyword-grant).
  *
  * Adding a mechanic = one entry here; it auto-applies to every playstyle's tiles.
  */
@@ -147,6 +150,12 @@ export const MECHANICS: Mechanic[] = [
     description: 'Grant a keyword like Rush or Evasive',
     detect: (c) => matchesText(c, KEYWORD_GRANT_PATTERN),
   },
+  {
+    id: 'ink-drop-gain',
+    label: 'Creates Ink Drops',
+    description: 'Get ink drops you can remove later to pay 1 ⬡ each',
+    detect: (c) => getInkDropGain(c) > 0,
+  },
 ];
 
 /**
@@ -183,6 +192,9 @@ export const STRUCTURAL_MECHANICS: Mechanic[] = [
   {id: 'opponent-bounce', category: 'structural', label: 'Opponent Bounce', description: 'Return an opponent’s card to their hand for tempo'},
   {id: 'return-payoff', category: 'structural', label: 'Return Payoff', description: 'Get a benefit whenever a card is returned to hand from play'},
   {id: 'rebuy-payoff', category: 'structural', label: 'Re-buy Target', description: 'A strong enter-play ability worth re-firing by bouncing this character'},
+  // Ink Drops ('drop-maker' aliases to the generic 'ink-drop-gain' tile)
+  {id: 'drop-payoff', category: 'structural', label: 'Uses Ink Drops', description: 'Spend or hold ink drops for a bonus, or pay a cost with them'},
+  {id: 'drop-shared', category: 'structural', label: 'Shares Ink Drops', description: 'Also gives an opponent ink drops'},
   // Floodborns
   {id: 'trigger', category: 'structural', label: 'Trigger', description: 'Get a repeating benefit when your Floodborn characters quest, play, or are banished'},
   // Tribal (Toy / Dwarfs)
@@ -242,6 +254,7 @@ export const STRUCTURAL_ROLE_TO_MECHANIC: Record<string, string> = {
   'inkwell-ramp': 'inkwell-ramp',
   'inkwell-trigger': 'inkwell-trigger',
   'cost-reduction': 'cost-reduction',
+  'drop-maker': 'ink-drop-gain',
 };
 
 /**
@@ -265,6 +278,7 @@ type StructuralRoleId =
   | HealRole
   | ExertRole
   | BounceRole
+  | InkDropRole
   | TribalRole;
 
 /**
@@ -306,6 +320,9 @@ export const STRUCTURAL_ROLE_DISPLAY: Record<StructuralRoleId, boolean> = {
   'opponent-bounce': true,
   'return-payoff': true,
   'rebuy-payoff': true,
+  'drop-maker': true,
+  'drop-payoff': true,
+  'drop-shared': true,
   'at-payoff': true,
   move: true,
   'play-trigger': true,

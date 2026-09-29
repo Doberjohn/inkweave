@@ -43,6 +43,7 @@ export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
   healing: makeUiMeta('#3b82f6', 'mechanic', '2086'), // Grand Pabbie - Oldest and Wisest (Sapphire)
   exert: makeUiMeta('#8b5cf6', 'mechanic', '2244'), // Demona - Scourge of the Wyvern Clan (Amethyst)
   bounce: makeUiMeta('#8b5cf6', 'mechanic', '2500'), // Tigger - Bouncing All the Way (Amethyst)
+  'ink-drops': makeUiMeta('#6b7280', 'mechanic', '14193'), // Arthur - Jousting Knight (Steel)
   // Tribes
   toy: makeUiMeta('#f59e0b', 'tribe', '2730'), // Woody - Jungle Guide (Amber)
   dwarfs: makeUiMeta('#8b5cf6', 'tribe', '2752'), // Snow White - Merry as the Morning (Amethyst)
