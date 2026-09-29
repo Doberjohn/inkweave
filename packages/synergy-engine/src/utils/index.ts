@@ -32,6 +32,7 @@ export {
   isSacrificeCard,
   getSelfDiscardRoles,
   isSelfDiscardCard,
+  selfDiscardOutletFeeds,
   getRampRoles,
   isRampCard,
   isDeckRamp,

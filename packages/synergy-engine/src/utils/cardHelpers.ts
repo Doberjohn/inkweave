@@ -653,8 +653,10 @@ function stripSelfContainedRecursion(text: string): string {
     .filter((s) => !(SELF_CONTAINED_RECURSION_PATTERN.test(s) && !DISCARD_FED_RECURSION_PATTERN.test(s)))
     .join(' ');
 }
-/** State payoff — rewards the discard EVENT (discarded this turn) or an empty hand (Hellbent). */
-const SELF_DISCARD_STATE_PATTERN = /discarded\s+a\s+card\s+this\s+turn|no cards in (?:your )?hand/i;
+/** State payoff, event half: rewards the discard EVENT ("if you discarded a card this turn"). */
+const SELF_DISCARD_EVENT_PATTERN = /discarded\s+a\s+card\s+this\s+turn/i;
+/** State payoff, empty-hand half: rewards an empty hand ("while you have no cards in your hand"). */
+const SELF_DISCARD_HELLBENT_PATTERN = /no cards in (?:your )?hand/i;
 /**
  * Zone payoff — counts or checks cards sitting IN your discard ("10 or more cards in your
  * discard", "for each Alien character card in your discard", "a song card in your discard").
@@ -674,6 +676,11 @@ const HAS_SELF_DISCARD_KEYWORD = /discard|no cards in/i;
 /** Zone payoff: either the "in your discard" count/check shape or the "put into your discard this turn" trigger. */
 function isSelfDiscardZonePayoff(text: string): boolean {
   return SELF_DISCARD_ZONE_IN_PATTERN.test(text) || SELF_DISCARD_ZONE_PUT_PATTERN.test(text);
+}
+
+/** State payoff: the discard event ("discarded a card this turn") or an empty hand. */
+function isSelfDiscardStatePayoff(text: string): boolean {
+  return SELF_DISCARD_EVENT_PATTERN.test(text) || SELF_DISCARD_HELLBENT_PATTERN.test(text);
 }
 
 /**
@@ -698,7 +705,7 @@ export function getSelfDiscardRoles(card: LorcanaCard): SelfDiscardRole[] {
   const roles: SelfDiscardRole[] = [];
   if (isSelfDiscardEnabler(text)) roles.push('enabler');
   if (SELF_DISCARD_REANIMATOR_PATTERN.test(stripSelfContainedRecursion(text))) roles.push('reanimator');
-  if (SELF_DISCARD_STATE_PATTERN.test(text)) roles.push('state-payoff');
+  if (isSelfDiscardStatePayoff(text)) roles.push('state-payoff');
   if (isSelfDiscardZonePayoff(text)) roles.push('zone-payoff');
   if (SELF_DISCARD_MILL_PATTERN.test(text)) roles.push('mill');
   return roles;
@@ -707,6 +714,108 @@ export function getSelfDiscardRoles(card: LorcanaCard): SelfDiscardRole[] {
 /** Check if a card participates in the self-discard axis (any of the five roles). */
 export function isSelfDiscardCard(card: LorcanaCard): boolean {
   return getSelfDiscardRoles(card).length > 0;
+}
+
+// --------------------------------------------
+// Self-discard feed check: can this outlet's discard switch on that payoff?
+// --------------------------------------------
+
+/** A card kind a typed discard or recursion clause names. A song is an action (CR 5.4.4.1). */
+type SelfDiscardKind = 'character' | 'action' | 'song' | 'item' | 'location';
+
+/** Kind word → the kinds it admits. "action" admits songs too; "song" admits only songs. */
+const SELF_DISCARD_KIND_WORDS: ReadonlyArray<readonly [RegExp, readonly SelfDiscardKind[]]> = [
+  [/\bsongs?\b/i, ['song']],
+  [/\bactions?\b/i, ['action', 'song']],
+  [/\bcharacters?\b/i, ['character']],
+  [/\bitems?\b/i, ['item']],
+  [/\blocations?\b/i, ['location']],
+];
+/** An outlet that can discard any card: a generic "discard a card" (loot, cost) or the whole hand. */
+const SELF_DISCARD_ANY_OUTLET_PATTERN = /discard\s+(?:a|an|another|\d+)\s+cards?\b|discard\s+your\s+hand/i;
+/** A typed outlet: "discard a song card", "discard an Alien character card or a location card". */
+const SELF_DISCARD_TYPED_OUTLET_PATTERN =
+  /discard\s+an?\s+(?:\w+\s+){1,2}?cards?(?:\s+or\s+an?\s+(?:\w+\s+){1,2}?cards?)?/i;
+/** A recursion clause's object: the words between its nearest play/return/put and "from your discard". */
+const SELF_DISCARD_RECURSION_OBJECT_PATTERN =
+  /\b(?:play|return|put)\b((?:(?!\b(?:play|return|put)\b)[^.]){0,60}?)\bfrom your discard\b/i;
+/** A recursion object restricted to one named card: "an action card named Three Arrows". */
+const SELF_DISCARD_NAMED_OBJECT_PATTERN = /\bnamed\s+(.+?)\s*$/i;
+/** A recursion object that takes any card: "a card", "another card", "2 cards". */
+const SELF_DISCARD_ANY_OBJECT_PATTERN = /\b(?:a|an|another|any|\d+)\s+cards?\b/i;
+/**
+ * An outlet that discards one card and then draws 2+ ("discard a song card. If you do, draw
+ * 2 cards"), so its hand is never empty when it resolves. Deliberately narrow (Max Goof -
+ * Karaoke Star only today); general empty-hand scoring is a separate decision.
+ */
+const SELF_DISCARD_REFILL_PATTERN =
+  /discard\s+an?\s+(?:\w+\s+){0,2}?card\.\s*if you do,\s*draw\s+[2-9]\s+cards/i;
+
+/** The kinds the kind words in `fragment` admit (empty when it names none). */
+function selfDiscardKindsIn(fragment: string): Set<SelfDiscardKind> {
+  const kinds = new Set<SelfDiscardKind>();
+  for (const [word, admits] of SELF_DISCARD_KIND_WORDS) {
+    if (word.test(fragment)) admits.forEach((kind) => kinds.add(kind));
+  }
+  return kinds;
+}
+
+/** What an outlet can put in the bin; null when it can discard any card (or names no known kind). */
+function selfDiscardOutletKinds(text: string): Set<SelfDiscardKind> | null {
+  if (SELF_DISCARD_ANY_OUTLET_PATTERN.test(text)) return null;
+  const kinds = selfDiscardKindsIn(SELF_DISCARD_TYPED_OUTLET_PATTERN.exec(text)?.[0] ?? '');
+  return kinds.size > 0 ? kinds : null;
+}
+
+/** A self-reference ("this card", "it", a card named like itself) recurs the card's own kind. */
+function ownSelfDiscardKinds(card: LorcanaCard): Set<SelfDiscardKind> {
+  return new Set([isSong(card) ? 'song' : (card.type.toLowerCase() as SelfDiscardKind)]);
+}
+
+/**
+ * What a reanimator pulls from the bin; null when it takes any card. A named other card
+ * ("an action card named Three Arrows") admits no kind, since no typed outlet is known to
+ * discard it; an object with no kind word and no generic card ("this card", "it") is a self-reference.
+ */
+function selfDiscardRecursionKinds(card: LorcanaCard, text: string): Set<SelfDiscardKind> | null {
+  const object = SELF_DISCARD_RECURSION_OBJECT_PATTERN.exec(text)?.[1] ?? 'a card';
+  const named = SELF_DISCARD_NAMED_OBJECT_PATTERN.exec(object)?.[1];
+  if (named !== undefined) return named === card.name ? ownSelfDiscardKinds(card) : new Set();
+  const kinds = selfDiscardKindsIn(object);
+  if (kinds.size > 0) return kinds;
+  return SELF_DISCARD_ANY_OBJECT_PATTERN.test(object) ? null : ownSelfDiscardKinds(card);
+}
+
+/** Two kind sets can meet in one card: either side takes any card, or they share a kind. */
+function selfDiscardKindsMeet(a: Set<SelfDiscardKind> | null, b: Set<SelfDiscardKind> | null): boolean {
+  return a === null || b === null || [...a].some((kind) => b.has(kind));
+}
+
+/**
+ * Whether `enabler`'s hand discard can switch on `payoff`'s reanimator or state payoff:
+ *  - recursion: the outlet's discard kinds meet the recursion kinds, so a typed outlet ("discard
+ *    a song card") feeds song, action and any-card recursion, never character or item recursion;
+ *  - state: any discard is a "discarded a card this turn" event, but a refill outlet never
+ *    leaves the empty hand a "no cards in hand" payoff needs.
+ * Reads the payoff's text with self-contained recursion stripped, like getSelfDiscardRoles.
+ */
+export function selfDiscardOutletFeeds(
+  enabler: LorcanaCard,
+  payoff: LorcanaCard,
+  payoffRoles: SelfDiscardRole[],
+): boolean {
+  const outletText = normalizeCardText(enabler);
+  const payoffText = normalizeCardText(payoff);
+  const feedsRecursion =
+    payoffRoles.includes('reanimator') &&
+    selfDiscardKindsMeet(
+      selfDiscardOutletKinds(outletText),
+      selfDiscardRecursionKinds(payoff, stripSelfContainedRecursion(payoffText)),
+    );
+  const feedsState =
+    payoffRoles.includes('state-payoff') &&
+    (SELF_DISCARD_EVENT_PATTERN.test(payoffText) || !SELF_DISCARD_REFILL_PATTERN.test(outletText));
+  return feedsRecursion || feedsState;
 }
 
 // ============================================
