@@ -2,13 +2,13 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-107 tests across 17 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+131 tests across 18 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
 
 **Global console-error guard:** the shared `page` fixture (`e2e/fixtures/test-fixtures.ts`) fails any test that logs a `console.error` or throws an uncaught exception, except messages matching the documented `BENIGN_CONSOLE` allowlist. This turns silent runtime faults — most importantly React's "Maximum update depth exceeded" render loop, which a loading-skeleton assertion otherwise passes through — into red builds across every spec.
 
-## `accessibility.spec.ts` — 5 tests (desktop only)
+## `accessibility.spec.ts` — 7 tests (desktop only)
 
 | Test | What it verifies |
 |---|---|
@@ -17,6 +17,8 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | card detail page should have no axe violations | `/card/1939` passes axe-core audit |
 | playstyle gallery should have no axe violations | `/playstyles` passes axe-core audit |
 | playstyle detail should have no axe violations | `/playstyles/discard` passes axe-core audit |
+| ink gallery should have no axe violations | `/inks` passes axe-core audit (#530: a card-count contrast violation there shipped because the ink pages had no axe coverage) |
+| ink hub should have no axe violations | `/ink/steel` passes axe-core audit (#530) |
 
 ## `app-load.spec.ts` — 4 tests (desktop only)
 
@@ -27,12 +29,16 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should show featured cards after loading | Featured cards grid has 1-12 card tiles |
 | should open the overview modal when a card is selected | Clicking a featured card opens the modal overlay-style; URL stays `/`, no compact header |
 
-## `card-detail.spec.ts` — 10 tests (desktop only)
+## `card-detail.spec.ts` — 11 tests (10 desktop only, 1 on every project at a 390px viewport)
 
 Two surfaces: the crawlable `/card/:id` **page** (#486 — renders, not-found, empty state; slug URLs `/card/:id/:slug` with the id as the lookup key and the slug decorative, #498) and the
 CardOverviewModal opened from a tile (render, close, empty, scroll lock, show-all, sibling nav). The
 modal is opened via `appPage.openCardOverview(name)` (Browse `?q=` + tile click) since `/card/:id`
 is a real page now, not a modal shortcut.
+
+The page's mobile-layout guard (#631) forces a 390px viewport with `setViewportSize` instead of
+skipping `mobile-*`: `isMobile` is width-based, so it renders the mobile layout on every project and
+also runs in the chromium-only Windows pre-push.
 
 | Test | What it verifies |
 |---|---|
@@ -46,6 +52,7 @@ is a real page now, not a modal shortcut.
 | should lock background scroll while the modal is open | `document.body` overflow is `hidden` while open, restored on close |
 | Show More reveals the full expanded group, and Back returns to default | Modal opened on card 2095 via Browse (`openCardOverview`); ramp group: one "+N more" click → `data-state="expanded"` with a "Back to all synergies" link; Back → `data-state="default"` |
 | arrows navigate to a sibling card from the Browse grid | Opening a card from `/browse` shows prev/next arrows; clicking "Next card" changes the modal's h1 to the adjacent grid card |
+| a card with many synergy groups does not scroll the page sideways (#631) | At 390px, `/card/2978` (6 groups, fixture-guarded from its synergy JSON): the chip row's content is wider than the page (precondition), `document.documentElement.scrollWidth <= clientWidth` (no page-level horizontal overflow), and the chip row scrolls inside its own box (`scrollWidth > clientWidth`, with computed `overflow-x` `auto` or `scroll`, since `hidden`/`clip` would pass the width checks while stranding the off-screen chips). Compares against `clientWidth`, not `innerWidth`, because mobile emulation zooms out to fit an overflowing page |
 
 ## `card-search.spec.ts` — 7 tests (desktop only)
 
@@ -277,3 +284,5 @@ Requires `VITE_SHOW_ADMIN_ANALYTICS=true` (playwright `webServer.env` + `apps/we
   - **Unexpected page** (e.g., home rendered when the test navigated to `/reveals`) → a route gate redirected; check the corresponding phase/flag hook.
   - **Correct page but expected text missing** → the UI may have been refactored (element moved to `<img alt>`, or hidden via `position: absolute; left: -10000` for screen readers, which `toBeVisible()` excludes). Query the `<section>` by role/name instead, or use `.toHaveCount(1)`.
   - **Flash of initial state** → async state (fetch, localStorage) had not resolved; check what the page is waiting for before asserting.
+- **`ERR_CONNECTION_REFUSED` on most tests means the run's Vite died mid-run.** A local run always starts its own Vite, on a free port in 5200-5299 unless `E2E_PORT` pins one (`playwright.config.ts`), and never reuses another server. Its `[WebServer]` lines show that server's banner and port. Playwright stops watching the server once it is up, so nothing else reports the death. On Windows, check the Application log for headless Chrome out-of-memory crashes at the same time (Event 1000, `chrome-headless-shell.exe`, exception `0xe0000008`). They mean the machine ran out of commit memory under other load, not a code bug: retry once there is headroom, or lower the worker count (`PRE_PUSH_E2E_WORKERS` for the pre-push, `--workers` otherwise; local Windows runs default to 3).
+- **`[WebServer] ... hmr update` followed by `Failed to load url .../synergy-engine/dist/index.js`** means something rebuilt the engine in the same checkout mid-run (the engine auto-rebuild hook after an engine edit, or another typecheck or pre-push), and pages loading at that moment failed. Re-run once the other build is done.

@@ -16,7 +16,7 @@ Research for GitHub issue **#219 "Legal & Product Pages"** (state OPEN, label `f
 | Tagline (title) | "Inkweave — Master Lorcana Synergies" | `apps/web/index.html:12` |
 | One-line description | "A synergy finder for Disney Lorcana TCG focused on Core format. Select any card to discover what synergizes with it through pattern-based rules and archetype detection." | `README.md:5` |
 | Meta description | "Discover powerful card synergies for Disney Lorcana. Inkweave analyzes every card interaction to help you build stronger decks in Core format." | `apps/web/index.html:13-15`, repeated in OG/Twitter/JSON-LD (`index.html:31-46,62-72`) |
-| Live URL | **https://www.inkweave.ink/** (canonical `https://inkweave.ink`) | `README.md:7`; `apps/web/index.html:26,34` |
+| Live URL | **https://inkweave.ink/** (`www` 308-redirects to the apex for normal routes; `/sw.js` is the retirement worker, #634) | `README.md:7`; `vercel.json:7-18`; `apps/web/index.html:59-69` |
 | Repo (public) | **Doberjohn/inkweave** on GitHub | `README.md:3` (CI badge URL `github.com/Doberjohn/inkweave`); git remote `git@github-personal:Doberjohn/inkweave.git` |
 | Format scope | Core format only (sets 5+; currently sets **9–13** live post-rotation per MEMORY) | `README.md:15`; CLAUDE.md "Current State" |
 | Feature list | Card Browser, Synergy Detection, Playstyle Archetypes, Synergy Scoring (1–10), Deep Linking, PWA, Responsive | `README.md:9-18` |
@@ -153,7 +153,7 @@ And notes: *"IP Disclaimer (could be footer text + dedicated page)"* — i.e., t
   });
   ```
   Assert on **route + `<h1>` + `<main>` landmark + footer link navigates** (use `getByRole('link', {name: /privacy/i})` from the footer, click, `toHaveURL('/privacy')`), not on exact prose (prose will churn).
-- **Pre-push gate:** husky pre-push runs `check:stories` + E2E on chromium + webkit + mobile-chrome (CLAUDE.md hooks table). Keep port 5173 free (MEMORY `[reference_pre_push_e2e_server_reuse]`).
+- **Pre-push gate:** husky pre-push runs `check:stories` + E2E on chromium + webkit + mobile-chrome, chromium only on Windows (CLAUDE.md hooks table). E2E starts its own Vite on a free port in 5200-5299, so no dev port needs to be free.
 
 ### 4b. Unit tests (Vitest + Testing Library)
 

@@ -81,4 +81,18 @@ describe('buildPreviewCard', () => {
     const card = buildPreviewCard(form({fullText: 'LINE ONE\r\nLINE TWO'}));
     expect(card.fullTextSections).toEqual(['LINE ONE', 'LINE TWO']);
   });
+
+  // Kit Cloudkicker - Sure Shot (14192) as it was typed in; the engine reads glyphs only (#635).
+  it('writes card text in house style, glyphs for the words', () => {
+    const card = buildPreviewCard(
+      form({
+        fullText:
+          'Shift 3 (You may pay 3 Ink to play this on top of one of your characters named Kit Cloudkicker.)',
+      }),
+    );
+    const canonical =
+      'Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one of your characters named Kit Cloudkicker.)';
+    expect(card.fullText).toBe(canonical);
+    expect(card.fullTextSections).toEqual([canonical]);
+  });
 });

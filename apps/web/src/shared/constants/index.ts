@@ -41,11 +41,13 @@ export {
   PRESS_SCALE,
   DISABLED_STYLE,
 } from './theme';
+export {HERO_LOGO_ANIMATED_SRC, HERO_LOGO_IMG} from './heroLogo';
 export {
   REVEAL_SET_CODE,
   REVEAL_SET_NUMBER,
   REVEAL_ID_BASE,
   REVEAL_SET_LOGO,
+  REVEAL_SET_LOGO_SM,
   PER_INK,
   SET_TOTAL,
   INK_BASE,

@@ -1,6 +1,6 @@
 import Skeleton from 'react-loading-skeleton';
 import {FeaturedCardsSkeleton} from '../features/cards/components/FeaturedCardsSkeleton';
-import {COLORS, RADIUS, SPACING, Z_INDEX} from '../shared/constants';
+import {COLORS, HERO_LOGO_IMG, RADIUS, SPACING, Z_INDEX} from '../shared/constants';
 
 /**
  * Suspense fallback for the `/` route. Mirrors the final HomePage layout:
@@ -8,7 +8,7 @@ import {COLORS, RADIUS, SPACING, Z_INDEX} from '../shared/constants';
  * search bar + CTA buttons, and the shared FeaturedCardsSkeleton row.
  *
  * Once HomePage mounts, FeaturedCards itself renders the same skeleton row
- * while the cards JSON is loading — that hand-off keeps the shimmer
+ * while the cards JSON is loading: that hand-off keeps the placeholder row
  * continuous across the Suspense boundary, so there's no flash of an empty
  * card section between page-chunk-load and data-fetch.
  *
@@ -72,7 +72,7 @@ const DESKTOP_HERO_STYLES: HeroSkeletonStyles = {
     boxSizing: 'border-box',
   },
   heading: {margin: 0, marginBottom: 20, lineHeight: 0},
-  logo: {display: 'block', width: '100%', maxWidth: 600, height: 'auto', userSelect: 'none'},
+  logo: {display: 'block', width: 600, maxWidth: '100%', height: 'auto', userSelect: 'none'},
   subtitleContainer: {textAlign: 'center', marginBottom: 32, padding: undefined},
   subtitleText: {
     fontSize: '20px',
@@ -104,7 +104,7 @@ const MOBILE_HERO_STYLES: HeroSkeletonStyles = {
     boxSizing: 'border-box',
   },
   heading: {margin: 0, marginBottom: 16, lineHeight: 0},
-  logo: {display: 'block', width: '100%', maxWidth: 380, height: 'auto', userSelect: 'none'},
+  logo: {display: 'block', width: 380, maxWidth: '100%', height: 'auto', userSelect: 'none'},
   subtitleContainer: {textAlign: 'center', marginBottom: 24, padding: '0 8px'},
   subtitleText: {
     fontSize: '16px',
@@ -137,7 +137,9 @@ function HeroSkeleton({isMobile}: HeroSkeletonProps) {
   return (
     <section aria-label="Hero" style={s.section}>
       <h1 style={s.heading}>
-        <img src="/brand/logo-animated.svg" alt="Inkweave" style={s.logo} />
+        {/* Same attributes and definite width as HeroSection's logo: this fallback renders
+            first on the client, and must reserve the same box (#627). */}
+        <img {...HERO_LOGO_IMG} alt="Inkweave" style={s.logo} />
       </h1>
       <div style={s.subtitleContainer}>
         <p style={s.subtitleText}>

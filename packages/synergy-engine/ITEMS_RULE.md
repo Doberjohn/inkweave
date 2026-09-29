@@ -25,7 +25,7 @@ getItemRoles(card: LorcanaCard): ItemRole[]  // any subset of ['member','item-en
 
 - **member** — any Item card (`card.type === 'Item'`), the thing that gets played.
 - **payoff-trigger** — a repeating `/whenever you play an item/i` reward (Norton Nimnul, Charles Muntz, Alpha).
-- **payoff-static** — a conditional/count reward: `for each item`, `while/if you have an item in play`, item-count (Dug, Edna, Stegmutt, Quackerjack).
+- **payoff-static** — a conditional/count reward: `for each item`, `while/if you have an item in play`, item-count (Dug, Stegmutt, Quackerjack), or readying an item (`ready chosen item`: Edna Mode - Super Suit Designer, Castle of the Horned King). A condition on one **named** item is not a payoff: "if you have an item named Rivera Family Photo in play" (Torn Scrap) rewards one specific card, not playing items, so the pattern refuses `item named` with a negative lookahead.
 - **item-engine** — the item engine: tutor/search an item, return an item from your discard, or discount OTHER items. Self-discount ("pay 1 less to play **this** item") is gated OUT, so a self-discounting item like Blue Smoke stays a plain member.
 
 Cards are multi-role: an item that recurs items (Shepherd's Journal) is `member` + `item-engine`.
@@ -48,7 +48,7 @@ Cards are multi-role: an item that recurs items (Shepherd's Journal) is `member`
 
 ### Live distribution
 
-**3,443 unique pairs** after the ink filter: 8 = 514 (15%), 7 = 850 (25%), 6 = 2,079 (60%). The 6-heavy shape is structural: every item satisfies a static "have an item" check, so `member ↔ payoff-static` dominates, the same pattern as Floodborn's `member ↔ buff`.
+**1,085 unique pairs** after the ink filter (Core pool, sets 9-13 plus the Set 14 preview): 8 = 159 (15%), 7 = 303 (28%), 6 = 623 (57%). The 6-heavy shape is structural: every item satisfies a static "have an item" check, so `member ↔ payoff-static` dominates, the same pattern as Floodborn's `member ↔ buff`.
 
 ---
 
@@ -59,9 +59,9 @@ Real cards the `getItemRoles` detector tags for each role (names from the live d
 | Role | Real cards | What they do |
 |------|-----------|--------------|
 | **member** | Blue Smoke (Sapphire), Shepherd's Journal (Sapphire), Super Suit (Amethyst) | Item cards, the bodies you flood the board with |
-| **item-engine** | Gadget Hackwrench - Resourceful Mechanic (Sapphire), Pluto - Clever Cluefinder (Sapphire), Salvage Operation (Emerald) | Free-play, recur from discard, or discount other items to keep the flood going |
-| **payoff-trigger** | Norton Nimnul - Misanthropic Genius (Sapphire), Charles Muntz - Bird-Obsessed Adventurer (Sapphire), Alpha - Leader of the Pack (Sapphire) | Fire an effect whenever you play an item |
-| **payoff-static** | Dug - Good Boy (Sapphire), Edna Mode - Super Suit Designer (Sapphire), Stegmutt - Clumsy Dinosaur (Emerald) | Reward having items in play or scale with your item count |
+| **item-engine** | Gadget Hackwrench - Resourceful Mechanic (Sapphire), Pluto - Clever Cluefinder (Sapphire), Salvage Operation (Sapphire) | Free-play, recur from discard, or discount other items to keep the flood going |
+| **payoff-trigger** | Norton Nimnul - Misanthropic Genius (Sapphire), Charles Muntz - Obsessive Explorer (Sapphire), Alpha - Pack Leader (Sapphire) | Fire an effect whenever you play an item |
+| **payoff-static** | Dug - Good Boy (Sapphire), Edna Mode - Super Suit Designer (Sapphire), Stegmutt - Clumsy Dinosaur (Emerald) | Reward having items in play, scale with your item count, or ready an item |
 
 ---
 
@@ -79,4 +79,4 @@ Users still see those connections, just under the rule that owns them.
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Items detection')` (6 role tests) and `describe('Items rule (payoff-anchored)')` (6 scoring tests, including the two drop cases that prove the payoff gate).
+Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Items detection')` (6 role tests) and `describe('Items rule (payoff-anchored)')` (6 scoring tests, including the two drop cases that prove the payoff gate). `cardHelpers.test.ts` → `describe('getItemRoles: named-item conditions')` (2 tests) covers the named-item exclusion (Torn Scrap and a fixture) and the item-count and ready-an-item payoffs (a fixture, Edna Mode - Super Suit Designer, Castle of the Horned King).

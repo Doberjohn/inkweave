@@ -9,10 +9,10 @@ import {COLORS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
  *
  * Bridging both phases with the same component eliminates the visible gap
  * where FeaturedCards used to render `null` between Suspense resolving and
- * the cards data arriving — the shimmer is continuous.
+ * the cards data arriving: the placeholder row is continuous.
  *
  * Renders the section's full chrome: divider lines + label + 6 aspect-ratio
- * 0.72 shimmer tiles in the same 6-col desktop / 3-col mobile grid as the
+ * 0.72 placeholder tiles in the same 6-col desktop / 3-col mobile grid as the
  * loaded FeaturedCards layout.
  */
 interface FeaturedCardsSkeletonProps {

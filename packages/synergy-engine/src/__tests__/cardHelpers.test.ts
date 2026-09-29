@@ -11,6 +11,10 @@ import {
   classifyNamedEffect,
   NAMED_EFFECT_SCORES,
   normalizeCardText,
+  getItemRoles,
+  getTribalRoles,
+  TRIBAL_SPECS,
+  getBounceRoles,
 } from '../utils';
 import {createCard} from './fixtures.js';
 
@@ -485,5 +489,81 @@ describe('normalizeCardText', () => {
   it('joins lines and straightens typographic apostrophes', () => {
     const card = createCard({text: 'They can’t ready.\nGET ‘EM'});
     expect(normalizeCardText(card)).toBe("They can't ready. GET 'EM");
+  });
+});
+
+// #628: a condition on one named item ("if you have an item named X") is not an item payoff.
+describe('getItemRoles: named-item conditions', () => {
+  const tornScrap = createCard({
+    fullName: 'Torn Scrap',
+    type: 'Item',
+    text: 'FOND MEMORIES ⟳, 1 ⬡ — If you have 10 or more cards in your discard, draw a card.\nTOGETHER AGAIN When this card is put into your discard from your deck, if you have an item named Rivera Family Photo in play, you may play this item from your discard for free.',
+  });
+  const edna = createCard({
+    fullName: 'Edna Mode - Super Suit Designer',
+    text: "KEY ACCESSORY ⟳ — Ready chosen item.\nALL THE BASICS While you have an item\nnamed Super Suit in play, this character gains\nWard. (Opponents can't choose them except to\nchallenge.)",
+  });
+  const castle = createCard({
+    fullName: 'Castle of the Horned King - Bastion of Evil',
+    type: 'Location',
+    text: 'INTO THE GLOOM Once during your turn, whenever a character quests\nwhile here, you may ready chosen item.',
+  });
+
+  it('does not read a condition on one named item as an item payoff', () => {
+    expect(getItemRoles(tornScrap)).not.toContain('payoff-static');
+    expect(getItemRoles(createCard({text: 'If you have an item named Magic Mirror in play, draw a card.'}))).toEqual([]);
+    expect(getItemRoles(createCard({text: 'If you have 2 or more items named Magic Mirror in play, draw a card.'}))).toEqual([]);
+  });
+
+  it('reads an item count, or readying an item, as an item payoff', () => {
+    const itemCount = createCard({text: 'While you have 2 or more items in play, this character gets +1 ◊.'});
+    expect(getItemRoles(itemCount)).toContain('payoff-static');
+    expect(getItemRoles(edna)).toContain('payoff-static');
+    expect(getItemRoles(castle)).toContain('payoff-static');
+  });
+});
+
+// #628: a tribe word inside a card name ("an item named Super Suit") is not a tribe check.
+describe('getTribalRoles: tribe words inside card names', () => {
+  it('does not read a named card as a tribe presence check', () => {
+    const edna = createCard({
+      fullName: 'Edna Mode - Super Suit Designer',
+      text: "KEY ACCESSORY ⟳ — Ready chosen item.\nALL THE BASICS While you have an item\nnamed Super Suit in play, this character gains\nWard. (Opponents can't choose them except to\nchallenge.)",
+    });
+    expect(getTribalRoles(edna, TRIBAL_SPECS.super)).toEqual([]);
+  });
+
+  it('still reads a tribe character in play as a presence check', () => {
+    const superCheck = createCard({text: 'While you have a Super character in play, this character gets +1 ◊.'});
+    expect(getTribalRoles(superCheck, TRIBAL_SPECS.super)).toContain('in-play-check');
+  });
+});
+
+// #628: moving a character "for free" when it enters play is not playing a card for free.
+describe('getBounceRoles: re-buy value on entering play', () => {
+  it('does not read a free move as re-buy value', () => {
+    const arthur = createCard({
+      fullName: "Arthur - Merlin's Assistant",
+      text: 'MAGICAL TRAVEL When you play this character, you may move him to a location for free.\nARCANE DELIVERIES Once during your turn, whenever this character moves to a location, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)',
+    });
+    expect(getBounceRoles(arthur)).not.toContain('rebuy-payoff');
+  });
+
+  it('keeps a free play, and a gated draw, as re-buy value', () => {
+    const freePlay = createCard({
+      text: 'When you play this character, you may play a character with cost 2 or less for free.',
+    });
+    // Owner ruling: enter-play abilities gated on a condition stay replay targets.
+    const mim = createCard({
+      fullName: 'Madam Mim - Resourceful Trickster',
+      text: 'UPPER HAND When you play this character, if you removed an ink drop to play her, draw 2 cards.\nBAUBLE GAME Once during your turn, whenever you remove an ink drop, draw a card.',
+    });
+    const stitch = createCard({
+      fullName: 'Stitch - Carefree Surfer',
+      text: 'OHANA When you play this character, if you have 2 or\nmore other characters in play, you may draw 2 cards.',
+    });
+    expect(getBounceRoles(freePlay)).toContain('rebuy-payoff');
+    expect(getBounceRoles(mim)).toContain('rebuy-payoff');
+    expect(getBounceRoles(stitch)).toContain('rebuy-payoff');
   });
 });

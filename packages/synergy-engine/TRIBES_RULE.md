@@ -21,7 +21,7 @@ A card can hold several roles at once (Philoctetes is `member` + `buff` + `trigg
 - **buff** — benefits the tribe: a team buff (`your [other] X characters get/gain/can…`), a single-target buff (`chosen X character … gets/gains/can`, or a give-form `+N` stat buff `chosen X character … +\d`), or a tribal ready (`ready your/chosen … X characters`).
 - **trigger** — a repeating trigger tied to the tribe: `whenever you play a X`, or `whenever … your X character(s) … quest/challenge`.
 - **search** — deck dig: `search your deck for a X character` / `reveal a X character`.
-- **in-play-check** — a conditional gated on the tribe: `while/if you have a X in play`, `if a [Y or] X character is in play/chosen`, `if you played/returned a X this turn`, or `if that card is a X character card`.
+- **in-play-check** — a conditional gated on the tribe: `while/if you have a X in play`, `if a [Y or] X character is in play/chosen`, `if you played/returned a X this turn`, or `if that card is a X character card`. A tribe word right after "named" does not count: a `(?<!named )` guard keeps "while you have an item named Super Suit in play" (Edna Mode - Super Suit Designer) from reading as a Super check. A name with the tribe word later in it ("named Mega Super Suit") would still match; no card has that shape today.
 
 Payoff detection runs on the card's whitespace-normalized text (card text carries embedded newlines, so the phrase "Princess character" is only found after collapsing `\s+` to a single space).
 
@@ -41,14 +41,16 @@ Buff scores 6 (a static stat grant) while trigger scores 7 (a repeating engine) 
 
 ## Coverage (live pair counts)
 
+Regenerated for #628 from the live engine over the Core pool (sets 9-13 plus the Set 14 preview). The design notes below keep the counts from when the tribes were built.
+
 | Tribe | Members | Payoff cards | Unique pairs | Score dist (6 / 7 / 8) |
 |-------|---------|--------------|--------------|------------------------|
 | Monsters | 15 | 1 | 15 | 15 / 0 / 0 |
-| Princesses | 102 | 14 | 1,366 | 912 / 145 / 309 |
-| Heroes | 495 | 14 | 6,449 | 5,451 / 998 / 0 |
-| Supers | 42 | 6 | 241 | 188 / 53 / 0 |
-| Royalty | 150 | 7 | 950 | 929 / 21 / 0 |
-| Detectives | 39 | 9 | 331 | 229 / 61 / 41 |
+| Princesses | 70 | 10 | 695 | 520 / 28 / 147 |
+| Heroes | 326 | 13 | 4,129 | 3,429 / 700 / 0 |
+| Supers | 53 | 5 | 253 | 194 / 59 / 0 |
+| Royalty | 82 | 3 | 236 | 233 / 3 / 0 |
+| Detectives | 38 | 11 | 381 | 266 / 75 / 40 |
 
 ## Design notes
 

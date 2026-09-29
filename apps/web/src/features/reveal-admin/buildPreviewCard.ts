@@ -1,4 +1,9 @@
-import type {Ink, CardType, LorcanaJSONCard} from 'inkweave-synergy-engine';
+import {
+  canonicalizeCardFullText,
+  type Ink,
+  type CardType,
+  type LorcanaJSONCard,
+} from 'inkweave-synergy-engine';
 import {REVEAL_SET_CODE, REVEAL_ID_BASE} from './constants';
 
 export interface RevealCardForm {
@@ -65,7 +70,8 @@ function describe(form: RevealCardForm, version: string): Partial<LorcanaJSONCar
   const abilities = buildAbilities(form.keywords);
   if (abilities.length) out.abilities = abilities;
 
-  const fullText = form.fullText.replace(/\r\n/g, '\n').trim();
+  // House style (#635): the engine matches glyphs, not "1 Ink", so write the glyphs.
+  const fullText = canonicalizeCardFullText(form.fullText);
   if (fullText) {
     out.fullText = fullText;
     out.fullTextSections = fullText

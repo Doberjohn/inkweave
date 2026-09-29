@@ -106,6 +106,7 @@ function CardTileImage({
         />
       )}
       <img
+        className="card-tile-img"
         src={imgSrc}
         alt={card.fullName || card.name || ''}
         loading={loading}

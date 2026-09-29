@@ -24,10 +24,25 @@ describe('HeroSection', () => {
       name: 'Inkweave Disney Lorcana Card Synergy Finder for Core format',
     });
     expect(heading).toBeInTheDocument();
-    expect(heading.querySelector('img')).toHaveAttribute('src', '/brand/logo-animated.svg');
+    // Static first: useHeroLogoSrc swaps in the animated logo only after load (#639).
+    expect(heading.querySelector('img')).toHaveAttribute('src', '/brand/logo-static.svg');
     expect(
       screen.getByText('Select any Lorcana card and instantly discover powerful synergies.'),
     ).toBeInTheDocument();
+  });
+
+  it('should request the logo at high fetch priority', () => {
+    render(<HeroSection {...defaultProps} />);
+
+    expect(screen.getByAltText('Inkweave')).toHaveAttribute('fetchpriority', 'high');
+  });
+
+  it("should reserve the logo's space before the image loads", () => {
+    render(<HeroSection {...defaultProps} />);
+
+    const logo = screen.getByAltText('Inkweave');
+    expect(logo).toHaveAttribute('width', '977');
+    expect(logo).toHaveAttribute('height', '313');
   });
 
   it('should render search input', () => {
@@ -77,14 +92,15 @@ describe('HeroSection', () => {
     expect(section.tagName).toBe('SECTION');
   });
 
-  it('cancels the search blur timer on unmount (no leaked timer)', () => {
+  it('cancels its pending timers on unmount (no leaked timer)', () => {
     vi.useFakeTimers();
     try {
       const {unmount} = render(<HeroSection {...defaultProps} />);
+      const pendingBeforeBlur = vi.getTimerCount(); // the logo's not-yet-fired swap (#639)
       const input = screen.getByTestId('hero-search');
       fireEvent.focus(input);
       fireEvent.blur(input);
-      expect(vi.getTimerCount()).toBe(1); // only the hook's 150ms blur timer is pending
+      expect(vi.getTimerCount()).toBe(pendingBeforeBlur + 1); // plus the 150ms blur timer
       unmount();
       // A leaked timer firing setState into a torn-down tree crashed CI's coverage run
       // with "window is not defined"; the cleanup must cancel it on unmount.
