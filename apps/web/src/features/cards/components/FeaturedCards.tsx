@@ -43,7 +43,7 @@ interface FeaturedCardsProps {
   isMobile?: boolean;
   /**
    * True while the cards JSON is still being fetched. Renders
-   * `<FeaturedCardsSkeleton>` so the shimmer is continuous from the Suspense
+   * `<FeaturedCardsSkeleton>` so the placeholder row is continuous from the Suspense
    * fallback through to the real card art (no flash of empty section).
    */
   isLoading?: boolean;
@@ -120,7 +120,7 @@ export function FeaturedCards({
   const styles = getStyles(!!isMobile);
 
   // While the cards JSON is in flight, render the same skeleton row the
-  // Suspense fallback uses so the shimmer is visually continuous from page
+  // Suspense fallback uses so the placeholder row is visually continuous from page
   // load through to real card art. Only return null if loading has completed
   // and we still have no matches (curated IDs unknown, or empty data).
   if (isLoading) return <FeaturedCardsSkeleton isMobile={!!isMobile} />;

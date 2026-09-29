@@ -8,7 +8,7 @@ import {COLORS, HERO_LOGO_IMG, RADIUS, SPACING, Z_INDEX} from '../shared/constan
  * search bar + CTA buttons, and the shared FeaturedCardsSkeleton row.
  *
  * Once HomePage mounts, FeaturedCards itself renders the same skeleton row
- * while the cards JSON is loading — that hand-off keeps the shimmer
+ * while the cards JSON is loading: that hand-off keeps the placeholder row
  * continuous across the Suspense boundary, so there's no flash of an empty
  * card section between page-chunk-load and data-fetch.
  *

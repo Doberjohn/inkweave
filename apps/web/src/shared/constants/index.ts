@@ -41,7 +41,7 @@ export {
   PRESS_SCALE,
   DISABLED_STYLE,
 } from './theme';
-export {HERO_LOGO_IMG} from './heroLogo';
+export {HERO_LOGO_ANIMATED_SRC, HERO_LOGO_IMG} from './heroLogo';
 export {
   REVEAL_SET_CODE,
   REVEAL_SET_NUMBER,

@@ -55,6 +55,17 @@ describe('cleanPrerenderedHtml', () => {
     const html = `<html><head><title>Real</title></head><body>x</body></html>`;
     expect(cleanPrerenderedHtml(html, SHELL, ORIGIN)).toBe(html);
   });
+
+  it('ships the static hero logo even though the crawl captured the animated one', () => {
+    // The capture happens after `load`, when HeroSection has already swapped to the
+    // animated logo (#639). The shipped page must paint the static file first.
+    const html =
+      `<html><head><title>Real</title></head><body><h1>` +
+      `<img src="/brand/logo-animated.svg" alt="Inkweave"></h1></body></html>`;
+    const out = cleanPrerenderedHtml(html, SHELL, ORIGIN);
+    expect(out).toContain('<img src="/brand/logo-static.svg" alt="Inkweave">');
+    expect(out).not.toContain('logo-animated');
+  });
 });
 
 describe('isCleanShell', () => {
