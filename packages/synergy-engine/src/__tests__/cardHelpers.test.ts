@@ -14,6 +14,7 @@ import {
   getItemRoles,
   getTribalRoles,
   TRIBAL_SPECS,
+  getBounceRoles,
 } from '../utils';
 import {createCard} from './fixtures.js';
 
@@ -534,5 +535,34 @@ describe('getTribalRoles: tribe words inside card names', () => {
   it('still reads a tribe character in play as a presence check', () => {
     const superCheck = createCard({text: 'While you have a Super character in play, this character gets +1 ◊.'});
     expect(getTribalRoles(superCheck, TRIBAL_SPECS.super)).toContain('in-play-check');
+  });
+});
+
+// #628: moving a character "for free" when it enters play is not playing a card for free.
+describe('getBounceRoles: re-buy value on entering play', () => {
+  it('does not read a free move as re-buy value', () => {
+    const arthur = createCard({
+      fullName: "Arthur - Merlin's Assistant",
+      text: 'MAGICAL TRAVEL When you play this character, you may move him to a location for free.\nARCANE DELIVERIES Once during your turn, whenever this character moves to a location, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)',
+    });
+    expect(getBounceRoles(arthur)).not.toContain('rebuy-payoff');
+  });
+
+  it('keeps a free play, and a gated draw, as re-buy value', () => {
+    const freePlay = createCard({
+      text: 'When you play this character, you may play a character with cost 2 or less for free.',
+    });
+    // Owner ruling: enter-play abilities gated on a condition stay replay targets.
+    const mim = createCard({
+      fullName: 'Madam Mim - Resourceful Trickster',
+      text: 'UPPER HAND When you play this character, if you removed an ink drop to play her, draw 2 cards.\nBAUBLE GAME Once during your turn, whenever you remove an ink drop, draw a card.',
+    });
+    const stitch = createCard({
+      fullName: 'Stitch - Carefree Surfer',
+      text: 'OHANA When you play this character, if you have 2 or\nmore other characters in play, you may draw 2 cards.',
+    });
+    expect(getBounceRoles(freePlay)).toContain('rebuy-payoff');
+    expect(getBounceRoles(mim)).toContain('rebuy-payoff');
+    expect(getBounceRoles(stitch)).toContain('rebuy-payoff');
   });
 });
