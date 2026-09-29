@@ -7,6 +7,7 @@ export {BetaNotice} from './BetaNotice';
 export {CardImage} from './CardImage';
 export {CardTextBlock} from './CardTextBlock';
 export {CardLightbox} from './CardLightbox';
+export {CardTranslationPanel, CardTranslationToggle} from './CardTranslationPanel';
 export {CollapsibleSection} from './CollapsibleSection';
 export {ConnectionGroup} from './ConnectionGroup';
 export {groupConnections} from './groupConnections';

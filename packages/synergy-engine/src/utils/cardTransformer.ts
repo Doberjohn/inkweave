@@ -41,6 +41,7 @@ export interface LorcanaJSONCard {
   number?: number;
   rarity?: string;
   franchise?: string; // Set only on preview cards (e.g., "Toy Story", "The Incredibles", "Brave")
+  scanLanguage?: string; // Set only on preview cards whose only scan is not in English (e.g. "ja")
 }
 
 const VALID_INKS: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];

@@ -95,6 +95,8 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
   // engine deliberately does not set these (image fields are a web concern).
   card.imageHash = raw.imageHash;
   card.imageHashSm = raw.imageHashSm;
+  // Only preview cards shown with a foreign-language scan carry this (the "See translation" toggle).
+  card.scanLanguage = raw.scanLanguage;
   return card;
 }
 

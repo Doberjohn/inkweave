@@ -204,6 +204,7 @@ function MaybeLightbox({card, lightboxOpen, setLightboxOpen}: {card: LorcanaCard
       src={card.imageUrl}
       alt={card.fullName}
       isLocation={card.type === 'Location'}
+      card={card}
       onClose={() => setLightboxOpen(false)}
     />
   );

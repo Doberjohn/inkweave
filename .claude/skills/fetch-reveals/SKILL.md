@@ -296,6 +296,19 @@ Besides the card sections, the report ends with two lists the owner should see:
 
 `node scripts/reveal-sync/run.mjs report RUN` reprints the report at any point.
 
+## Cards shown with a non-English scan
+
+The pipeline never writes these, but the owner can have one added by hand: an official reveal
+whose only scan is Japanese, German or Italian, shown with that scan as its art and
+lorcanaplayer's English name and text. Its `state.json` entry carries
+`reason: provisional-translation`, and its card in `previewCards.json` carries
+`scanLanguage` (the scan's two-letter code: `"ja"`, `"de"`, `"it"`), which gives it a
+"See translation" toggle in the card modal and the lightbox. When its English scan is out and
+the card is refreshed to it, delete `scanLanguage`, and leave no `written` state entry for its
+number still marked `provisional-translation`. `reveal-set-integrity.test.ts` fails while the
+two records disagree. `/admin/reveal` has no field for either yet, so a card published there
+with a non-English scan needs both added by hand (Madam Mim 14046 came in that way, German).
+
 ## Where things live
 
 | What | Where |

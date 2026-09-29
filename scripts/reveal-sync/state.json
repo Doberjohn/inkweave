@@ -480,6 +480,13 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "madam-mim-trinket-hunter": {
+          "number": 46,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: German scan as art, English name and text; added through /admin/reveal",
+          "firstSeen": "2026-09-29"
+        },
         "magnificent-marvelous": {
           "number": 64,
           "status": "written",

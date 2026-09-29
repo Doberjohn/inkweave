@@ -3,6 +3,8 @@ import {COLORS, FONT_SIZES, SPACING} from '../constants';
 
 interface CardTextBlockProps {
   card: LorcanaCard;
+  /** Defaults to FONT_SIZES.sm, the card-detail sidebar size. */
+  fontSize?: number;
 }
 
 /**
@@ -58,7 +60,7 @@ function formatSection(text: string): React.ReactNode {
 }
 
 /** Renders card ability text with visual separation between sections. */
-export function CardTextBlock({card}: CardTextBlockProps) {
+export function CardTextBlock({card, fontSize = FONT_SIZES.sm}: CardTextBlockProps) {
   const sections = card.textSections;
   const fallbackText = card.text;
 
@@ -74,7 +76,7 @@ export function CardTextBlock({card}: CardTextBlockProps) {
           style={{
             margin: 0,
             padding: 0,
-            fontSize: FONT_SIZES.sm,
+            fontSize,
             lineHeight: 1.5,
             color: COLORS.text,
             ...(i < textBlocks.length - 1
