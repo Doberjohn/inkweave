@@ -26,8 +26,10 @@ function formatSection(text: string): React.ReactNode {
 
   const abilityName = ABILITY_NAME.exec(text)?.[0];
   if (abilityName) {
+    // The margin widens the word gap after the name; at small sizes a bare space between bold
+    // capitals and the effect's first word reads as one run ("SERVICEAt").
     parts.push(
-      <span key="ability" style={{fontWeight: 700}}>
+      <span key="ability" style={{fontWeight: 700, marginRight: SPACING.xxs}}>
         {abilityName}
       </span>,
     );
