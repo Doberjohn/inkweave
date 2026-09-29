@@ -144,7 +144,7 @@ against the dev server, where both are present.
 | should own its title and canonical: `/card/1989/elsa-snow-queen` | As above, on a slug card route (#498) |
 | should own its title and canonical: `/inks` | As above, on the ink gallery (#530) |
 | should own its title and canonical: `/ink/steel` | As above, on an ink hub (#530) |
-| card page has exactly one h1 at a mobile viewport | 412×915 — CardPage gates the desktop `CardDetailPanel` behind `!isMobile` while `MobileCardDetail` owns the h1 below it. Googlebot renders mobile, so a regression in either branch is invisible at desktop width |
+| card page has exactly one h1 at a mobile viewport | 412×915 — CardPage gates the desktop `CardDetailPanel` behind `!isMobile` while `CardDetail` owns the h1 below it (`headingLevel="h1"`, set by `SynergyResults` from `flowInPage`). Googlebot renders mobile, so a regression in either branch is invisible at desktop width |
 | card page links to all six ink hubs at a mobile viewport | The footer's ink nav is what puts every hub one click from all 1,024 card pages (#530) |
 | ink hub emits one crawlable anchor per card, identically on mobile | `CardGrid`, not the Virtuoso-windowed `BrowseCardGrid` — windowing would emit a fraction of the anchors to a crawler (#530) |
 | unknown ink slug renders the 404 page, not an empty hub | Junk URLs under `/ink/` declare themselves unindexable instead of returning a thin 200 (#525) |
