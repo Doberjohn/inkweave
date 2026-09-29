@@ -1,6 +1,6 @@
 import Skeleton from 'react-loading-skeleton';
 import {FeaturedCardsSkeleton} from '../features/cards/components/FeaturedCardsSkeleton';
-import {COLORS, RADIUS, SPACING, Z_INDEX} from '../shared/constants';
+import {COLORS, HERO_LOGO_IMG, RADIUS, SPACING, Z_INDEX} from '../shared/constants';
 
 /**
  * Suspense fallback for the `/` route. Mirrors the final HomePage layout:
@@ -139,14 +139,7 @@ function HeroSkeleton({isMobile}: HeroSkeletonProps) {
       <h1 style={s.heading}>
         {/* Same attributes and definite width as HeroSection's logo: this fallback renders
             first on the client, and must reserve the same box (#627). */}
-        <img
-          src="/brand/logo-animated.svg"
-          alt="Inkweave"
-          width={977}
-          height={313}
-          fetchPriority="high"
-          style={s.logo}
-        />
+        <img {...HERO_LOGO_IMG} alt="Inkweave" style={s.logo} />
       </h1>
       <div style={s.subtitleContainer}>
         <p style={s.subtitleText}>

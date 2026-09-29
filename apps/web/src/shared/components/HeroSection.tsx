@@ -1,5 +1,15 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, Z_INDEX} from '../constants';
+import {
+  COLORS,
+  EASING,
+  FONTS,
+  FONT_SIZES,
+  GOLD_GLOW,
+  HERO_LOGO_IMG,
+  RADIUS,
+  SPACING,
+  Z_INDEX,
+} from '../constants';
 import {useAutocomplete} from '../hooks';
 import {SearchAutocomplete} from './SearchAutocomplete';
 import {SearchIcon} from './SearchIcon';
@@ -176,17 +186,7 @@ export function HeroSection({
       {/* Logo — animated SVG with self-contained CSS animations (honors prefers-reduced-motion).
           Wrapping in h1 preserves a single top-level heading for a11y; alt provides the name. */}
       <h1 style={styles.heading}>
-        {/* width/height are the SVG's intrinsic size: with styles.logo's definite width they
-            reserve the logo's box before the file arrives, so the vertically centered <main>
-            does not shift (#627). fetchPriority: this is the page's LCP element. */}
-        <img
-          src="/brand/logo-animated.svg"
-          alt="Inkweave"
-          width={977}
-          height={313}
-          fetchPriority="high"
-          style={styles.logo}
-        />
+        <img {...HERO_LOGO_IMG} alt="Inkweave" style={styles.logo} />
         <span style={styles.srOnly}>Disney Lorcana Card Synergy Finder for Core format</span>
       </h1>
 
