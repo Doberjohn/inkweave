@@ -3900,6 +3900,31 @@
       "strength": 7,
       "willpower": 9,
       "lore": 2
+    },
+    {
+      "id": 14046,
+      "name": "Madam Mim",
+      "fullName": "Madam Mim - Trinket Hunter",
+      "cost": 1,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 46,
+      "version": "Trinket Hunter",
+      "rarity": "Common",
+      "subtypes": [
+        "Dreamborn",
+        "Sorcerer",
+        "Villain"
+      ],
+      "fullText": "HARD TO HANDLE While you have an ink drop, this character gains Evasive. (Only characters with Evasive can challenge them.)",
+      "fullTextSections": [
+        "HARD TO HANDLE While you have an ink drop, this character gains Evasive. (Only characters with Evasive can challenge them.)"
+      ],
+      "strength": 2,
+      "willpower": 1,
+      "lore": 1
     }
   ]
 }
