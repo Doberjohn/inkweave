@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, REVEAL_SET_LOGO, REVEAL_SET_NUMBER} from '../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, REVEAL_SET_LOGO_SM, REVEAL_SET_NUMBER} from '../../shared/constants';
 import {useResponsive} from '../../shared/hooks';
 import {prefersReducedMotion} from '../../shared/utils/prefersReducedMotion';
 
@@ -257,7 +257,9 @@ export function RevealsPromoCard() {
     <aside aria-label={`Set ${REVEAL_SET_NUMBER} reveals`} className="rpc-card" style={getAsideStyle(viewport, mounted)}>
       <button type="button" onClick={() => navigate('/reveals')} style={getButtonStyle(viewport)}>
         <img
-          src={REVEAL_SET_LOGO}
+          src={REVEAL_SET_LOGO_SM.src}
+          width={REVEAL_SET_LOGO_SM.width}
+          height={REVEAL_SET_LOGO_SM.height}
           alt=""
           aria-hidden="true"
           draggable={false}
