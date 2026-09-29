@@ -55,7 +55,7 @@ export function pickModalShellStyle(isMobile: boolean): CSSProperties {
   };
 }
 
-/** The close (×) button's size. It sets the header row's height, so the fallback reserves it. */
+/** The close (×) button's size. It sets the header row's height (see ModalCloseButton). */
 export const CLOSE_BUTTON_SIZE = 28;
 
 /**

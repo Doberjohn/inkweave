@@ -25,6 +25,14 @@ describe('CardOverviewModalFallback', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  it('closes from its × button, which anyone can reach, like the modal', () => {
+    const onClose = vi.fn();
+    render(<CardOverviewModalFallback card={card} isMobile={false} onClose={onClose} />);
+
+    fireEvent.click(screen.getByRole('button', {name: 'Close'}));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
   it('closes on Escape', () => {
     const onClose = vi.fn();
     render(<CardOverviewModalFallback card={card} isMobile onClose={onClose} />);
@@ -52,12 +60,12 @@ describe('CardOverviewModalFallback', () => {
   });
 
   it('holds the space for the translation toggle out of sight for a foreign-language scan', () => {
-    const {container} = render(
+    render(
       <CardOverviewModalFallback card={{...card, scanLanguage: 'ja'} as LorcanaCard} isMobile onClose={vi.fn()} />,
     );
 
-    expect(container.querySelector('button')).not.toBeNull();
-    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getByText('See translation')).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'See translation'})).toBeNull();
   });
 
   it('leaves focus on the tile that opened it, for the modal to restore later', () => {

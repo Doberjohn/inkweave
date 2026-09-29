@@ -16,12 +16,10 @@ import {getDominantScore, getStrengthTier} from '../utils';
 import {trackEvent} from '../../../shared/lib/analytics';
 import {COLORS, EASING, FONT_SIZES, LETTER_SPACING, RADIUS, hexRgba} from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
-import {IconButton} from '../../../shared/components/IconButton';
 import {LinkButton} from '../../../shared/components/LinkButton';
-import {SynergiesLoadingSkeleton} from './CardOverviewModalFallback';
+import {ModalCloseButton, SynergiesLoadingSkeleton} from './CardOverviewModalFallback';
 import {
   CENTERING_WRAPPER_STYLE,
-  CLOSE_BUTTON_SIZE,
   DEFAULT_BODY_STYLE,
   MODAL_BACKDROP_STYLE,
   MODAL_FRAME_STYLE,
@@ -971,7 +969,7 @@ function ModalHeader({card, isMobile, inComparison, hideBackButton, onClose, exi
       {inComparison && <div style={{flex: 1}} />}
       {!isMobile && <HeaderPrintingPills hidden={inComparison || showExpanded} />}
       {!isMobile && <HeaderTranslationToggle hidden={inComparison || showExpanded} />}
-      <CloseButton onClose={onClose} focusRef={initialFocusRef} />
+      <ModalCloseButton onClose={onClose} focusRef={initialFocusRef} />
     </header>
   );
 }
@@ -1586,26 +1584,6 @@ function PairConnector({cardHeight, exiting}: PairConnectorProps) {
         }}
       />
     </div>
-  );
-}
-
-/** Close (×) button — the shared IconButton in its circular-bordered form (#509). */
-function CloseButton({onClose, focusRef}: {onClose: () => void; focusRef?: React.RefObject<HTMLButtonElement | null>}) {
-  return (
-    <IconButton
-      type="button"
-      aria-label="Close"
-      onClick={onClose}
-      ref={focusRef}
-      size={CLOSE_BUTTON_SIZE}
-      style={{
-        borderRadius: '50%',
-        border: `1px solid ${COLORS.surfaceBorder}`,
-        fontSize: FONT_SIZES.xl,
-        flexShrink: 0,
-      }}>
-      ×
-    </IconButton>
   );
 }
 

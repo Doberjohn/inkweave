@@ -1,7 +1,8 @@
-import {useEffect, type CSSProperties} from 'react';
+import {useEffect, type CSSProperties, type RefObject} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {RADIUS} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
+import {IconButton} from '../../../shared/components/IconButton';
 import {usePrintingSelection, useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {CardTranslationToggle} from '../../../shared/components/CardTranslationToggle';
 import {PrintingPills} from '../../../shared/components/PrintingPills';
@@ -62,11 +63,30 @@ export function SynergiesLoadingSkeleton() {
   );
 }
 
-const CLOSE_BUTTON_SLOT_STYLE: CSSProperties = {
-  width: CLOSE_BUTTON_SIZE,
-  height: CLOSE_BUTTON_SIZE,
+const CLOSE_BUTTON_STYLE: CSSProperties = {
+  borderRadius: '50%',
+  border: `1px solid ${COLORS.surfaceBorder}`,
+  fontSize: FONT_SIZES.xl,
   flexShrink: 0,
 };
+
+/**
+ * The modal's close (×) button. The loading shell renders it too, so it can be dismissed the
+ * same way, by anyone (a real button, reachable by screen readers), from the same spot.
+ */
+export function ModalCloseButton({onClose, focusRef}: {onClose: () => void; focusRef?: RefObject<HTMLButtonElement | null>}) {
+  return (
+    <IconButton
+      type="button"
+      aria-label="Close"
+      onClick={onClose}
+      ref={focusRef}
+      size={CLOSE_BUTTON_SIZE}
+      style={CLOSE_BUTTON_STYLE}>
+      ×
+    </IconButton>
+  );
+}
 
 const BODY_STYLE: CSSProperties = {...DEFAULT_BODY_STYLE, overflow: 'hidden'};
 
@@ -119,8 +139,9 @@ interface CardOverviewModalFallbackProps {
  * `skipEnterTransition`) and replaces this without a second entrance.
  *
  * It is a loading status, not a dialog. It never takes focus, so the modal's useDialogFocus still
- * records the card tile as the element to return focus to. Clicking the scrim or pressing Escape
- * closes it, like the modal.
+ * records the card tile as the element to return focus to: moving focus in here would bounce it
+ * three times in the few hundred milliseconds the shell usually lasts (shell, tile, modal).
+ * Clicking the scrim or its ×, or pressing Escape, closes it, like the modal.
  */
 export function CardOverviewModalFallback({card, isMobile, onClose}: CardOverviewModalFallbackProps) {
   const {visible} = useTransitionPresence(true);
@@ -155,9 +176,9 @@ export function CardOverviewModalFallback({card, isMobile, onClose}: CardOvervie
             <div style={MODAL_HEADER_STYLE}>
               <div style={pickModalTitleStyle(isMobile)}>{card.fullName}</div>
               {!isMobile && <ReservedArtControls card={card} isMobile={false} />}
-              {/* Holds the close button's place: it sets the header's height, so everything
-                  below sits exactly where the modal's will. */}
-              <div aria-hidden="true" style={CLOSE_BUTTON_SLOT_STYLE} />
+              {/* The modal's own ×: it sets the header's height, so everything below sits
+                  exactly where the modal's will. It never takes focus (see above). */}
+              <ModalCloseButton onClose={onClose} />
             </div>
             <div style={BODY_STYLE}>
               <div style={pickCardsRowStyle({isMobile, cardWidth, cardHeight})}>
