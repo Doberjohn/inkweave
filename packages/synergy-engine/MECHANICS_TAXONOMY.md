@@ -50,6 +50,7 @@ A mechanic can be a **structural role in its home playstyle** *and* a **generic 
 | Sacrifice | `self-banish`, `banish-trigger` | `SACRIFICE_*_PATTERN` |
 | Toy | `member`, `search`, `banish-trigger`, `self-discount` | classification + Toy-scoped regex |
 | Seven Dwarfs | `member`, `density`, `recruit`, `return` | classification + `DWARFS_*_PATTERN` |
+| Ink Drops | `drop-maker` (alias of the generic `ink-drop-gain`), `drop-payoff`, `drop-shared` (display-only) | `getInkDropRoles` in `utils/inkDrops.ts` |
 
 > Note the overlaps: Lore Denial's `burn`/`steal`, Ramp's three roles, and Discard's three disruption roles are **also generic mechanics** (§5). They stay structural for *scoring* in their home; the catalog supplies the *tile* everywhere.
 
@@ -73,6 +74,7 @@ Each entry becomes one `MECHANICS` registry record: `{ id, label, description, d
 | `lore-buff` | Lore Boost | Give a character +◊ (lore) for the turn | `/gets?\s*\+\d+\s*◊/i` | **NEW (gap)** |
 | `stat-buff` | Stat Boost | Give +¤ / +⛉ (strength / willpower) | `/gets?\s*\+\d+\s*[¤⛉]/i` | **NEW (gap)** |
 | `keyword-grant` | Keyword Grant | Grant Rush / Evasive / Resist / … | `/gains?\s+(Rush\|Evasive\|Bodyguard\|Ward\|Resist\|Challenger\|Reckless\|Support\|Singer)\b/i` | **NEW (gap)** |
+| `ink-drop-gain` | Creates Ink Drops | Get ink drops you can remove later to pay 1 ⬡ each | `getInkDropGain(card) > 0` | `INK_DROP_GAIN` (Shift rule); Ink Drops `drop-maker` aliases to it (#624) |
 
 ---
 

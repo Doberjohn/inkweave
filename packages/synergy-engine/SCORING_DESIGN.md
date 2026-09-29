@@ -63,6 +63,7 @@ Playstyle pairs are no longer flat-7. Each rule now applies a role-driven matrix
 - **Ramp**: 5 / 6 / 7 / 8 / 9 — density floor + chain ladder for deck-ramp + repeating-trigger combos
 - **Toy**: 5 / 7 / 8 — same-deck baseline + tribal compounding + peak chains
 - **Location Control**: tiered by role pair (8 sub-rules — see `LOCATION_CONTROL_RULE.md`)
+- **Ink Drops**: 5 / 6 / 7 / 8, payoff-anchored (maker ↔ maker never emitted). A one-shot drop switching a payoff on is 6-7; 8 is kept for a steady maker feeding a per-turn payoff; an opponent-gated maker takes -1, floored at 5 (see `INK_DROPS_RULE.md`)
 
 Differentiation *within* a playstyle comes from the role matrix the rule defines, not from card potency.
 Card potency (#136) is still planned as a separate axis measuring individual card importance, but the rule scoring itself encodes mechanical role differences.
