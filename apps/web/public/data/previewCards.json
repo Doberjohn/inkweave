@@ -4095,6 +4095,22 @@
       "strength": 2,
       "willpower": 1,
       "lore": 1
+    },
+    {
+      "id": 14128,
+      "name": "Intimidation Tactics",
+      "fullName": "Intimidation Tactics",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": false,
+      "type": "Action",
+      "setCode": "14",
+      "number": 128,
+      "rarity": "Uncommon",
+      "fullText": "Banish chosen character with 2 Strength or less.",
+      "fullTextSections": [
+        "Banish chosen character with 2 Strength or less."
+      ]
     }
   ]
 }
