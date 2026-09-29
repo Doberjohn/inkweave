@@ -25,6 +25,12 @@ describe('useTransitionPresence', () => {
     expect(result.current).toMatchObject({mounted: true, visible: true});
   });
 
+  it('with startVisible but closed, stays unmounted and not visible', () => {
+    const {result} = renderHook(() => useTransitionPresence(false, {startVisible: true}));
+
+    expect(result.current).toMatchObject({mounted: false, visible: false});
+  });
+
   it('stays mounted after closing until the exit transition ends', () => {
     const {result, rerender} = renderHook(({isOpen}) => useTransitionPresence(isOpen, {startVisible: true}), {
       initialProps: {isOpen: true},
