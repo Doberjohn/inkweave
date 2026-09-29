@@ -496,7 +496,7 @@ sequenceDiagram
 ```
 
 <blockquote class="callout callout-info">
-<strong>One fetch path for the entire app</strong> — Every consumer reads from <code>useCardDataContext()</code>. Adding a new consumer means importing the hook, not fetching anything. This is enforced architecturally: <code>fetchCardsFromLocal</code> has only one caller in app code (<code>useCardData.ts:45</code>).
+<strong>One fetch path for the entire app</strong> — Every consumer reads from <code>useCardDataContext()</code>. Adding a new consumer means importing the hook, not fetching anything. This is enforced architecturally: <code>fetchCardsFromLocal</code> has only one caller in app code (<code>useCardData.ts:44</code>).
 </blockquote>
 
 ### Provider centralization
@@ -521,14 +521,15 @@ Every consumer in the app — 28 files including pages, hooks, stories, and `use
 
 ### The single fetch
 
-`useCardData` (`apps/web/src/features/synergies/hooks/useCardData.ts:27-83`) does the actual fetch:
+`useCardData` (`apps/web/src/features/synergies/hooks/useCardData.ts:26-81`) does the actual fetch:
 
 ```ts
-const data = await fetchCardsFromLocal();  // line 45
-preloadFirstThumbnails(data.cards, 6);     // line 47 — inject <link rel="preload"> tags
+const data = await fetchCardsFromLocal();  // line 44
 setCards(data.cards);
 setSets(data.sets);
 ```
+
+It deliberately injects no `<link rel="preload" as="image">` tags. It used to preload the first six cards' thumbnails, but the prerender crawl bakes runtime `<head>` tags into every page's static HTML, so those preloads shipped on routes that never showed those cards (#627). `scripts/check-rendered-html.mjs` now fails a deploy when a sampled card page, `/`, or `/browse` bakes in an image preload with no matching `<img>`. Other routes are not checked.
 
 `fetchCardsFromLocal` (`apps/web/src/features/cards/loader.ts:143-198`) is where the merge lives:
 

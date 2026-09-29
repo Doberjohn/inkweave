@@ -5,6 +5,7 @@ import path from 'node:path';
 import {
   selectSampleCards,
   findOffenders,
+  findOrphanImagePreloads,
   readCanonical,
   SITE_ORIGIN,
 } from './check-rendered-html.mjs';
@@ -105,6 +106,29 @@ describe('readCanonical', () => {
   });
 });
 
+describe('findOrphanImagePreloads', () => {
+  const STALE = '/card-images/1936.0f8a7611d75f31a7-sm.avif';
+
+  // Same attribute-order lesson as readCanonical: read the tag either way round.
+  it.each([
+    ['rel first', `<link rel="preload" as="image" href="${STALE}">`],
+    ['as first', `<link as="image" rel="preload" href="${STALE}">`],
+  ])('flags an image preload the page never renders, with %s', (_label, tag) => {
+    expect(findOrphanImagePreloads(`<head>${tag}</head><body></body>`)).toEqual([STALE]);
+  });
+
+  it('passes an image preload whose image the page renders', () => {
+    const html = `<head><link rel="preload" as="image" href="${STALE}"></head><body><img alt="" src="${STALE}"></body>`;
+    expect(findOrphanImagePreloads(html)).toEqual([]);
+  });
+
+  it('ignores font preloads, which index.html ships on purpose', () => {
+    const html =
+      '<head><link rel="preload" href="/fonts/plus-jakarta-sans-400.woff2" as="font" type="font/woff2" crossorigin=""></head>';
+    expect(findOrphanImagePreloads(html)).toEqual([]);
+  });
+});
+
 describe('findOffenders', () => {
   it('passes a well-formed build', () => {
     seedGoodBuild();
@@ -163,6 +187,32 @@ describe('findOffenders', () => {
     const offenders = findOffenders(dist, [CARD], cardPath);
     expect(offenders).toHaveLength(1);
     expect(offenders[0].reason).toMatch(/localhost/);
+  });
+
+  it('fails when a card page preloads an image it never renders (#627)', () => {
+    seedGoodBuild();
+    const cardFile = path.join(dist, 'card', '1989', 'elsa-snow-queen', 'index.html');
+    fs.writeFileSync(
+      cardFile,
+      goodCardHtml(CARD).replace(
+        '</head>',
+        '<link rel="preload" as="image" href="/card-images/1936.a-sm.avif"></head>',
+      ),
+    );
+    const offenders = findOffenders(dist, [CARD], cardPath);
+    expect(offenders).toHaveLength(1);
+    expect(offenders[0].reason).toMatch(/1936\.a-sm\.avif/);
+  });
+
+  it('checks the homepage for orphan image preloads too, not only card pages', () => {
+    seedGoodBuild();
+    fs.writeFileSync(
+      path.join(dist, 'index.html'),
+      '<!doctype html><html><head><link rel="preload" as="image" href="/card-images/1936.a-sm.avif"></head><body></body></html>',
+    );
+    const offenders = findOffenders(dist, [CARD], cardPath);
+    expect(offenders).toHaveLength(1);
+    expect(offenders[0].file).toBe(path.join(dist, 'index.html'));
   });
 
   it('distinguishes a wrong target path from a failed crawl', () => {

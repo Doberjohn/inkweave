@@ -25,7 +25,14 @@ After a graduation the data still names the OLD set, whose release date has pass
 |---|---|
 | `REVEAL_SET_CODE` | The new set code, e.g. `'15'` |
 | `REVEAL_SET_LOGO` | Path of the new logo under `public/art/sets/` |
+| `REVEAL_SET_LOGO_SM` | The promo card's 320px copy of that logo: its `src`, `width` and `height` (see below) |
 | `PER_INK` | Cards per ink. Fixed denominators, never derived from live data |
+
+The promo card shows the set logo at 100 to 160 CSS px on every page during the season, so it loads a 320px copy rather than the full-size file (#627). Generate it from the new logo, then copy the printed size into `REVEAL_SET_LOGO_SM`:
+
+```bash
+node -e "require('sharp')('apps/web/public/art/sets/<slug>.webp').resize({width:320}).webp({quality:85,alphaQuality:90,effort:6}).toFile('apps/web/public/art/sets/<slug>-sm.webp').then(i=>console.log(i.width+'x'+i.height,i.size))"
+```
 
 `REVEAL_SET_NUMBER`, `REVEAL_ID_BASE`, `SET_TOTAL`, `INK_BASE` and `inkBlock()` are all derived. Do not hand-type them.
 
@@ -59,7 +66,7 @@ Dates are local midnight. Drop the old set's entry: nothing reads it once the co
 | `features/reveal-admin/constants.ts` | `FEATURED_FRANCHISE_HINT`, the form's hint text |
 | `features/reveals/CardMosaic.tsx` | `ROWS` / `ROWS_MOBILE`: each ink's rows must sum to `PER_INK[ink]` (a test enforces it) |
 | `features/reveals/setSpotlights.ts` | `SET_SPOTLIGHTS` (new mechanics, tribes) and `FRANCHISE_ART` (hero + support card ids) |
-| `public/art/sets/`, `public/art/franchises/<id>.webp` | The set logo and one logo per debut franchise |
+| `public/art/sets/`, `public/art/franchises/<id>.webp` | The set logo, its 320px `-sm` copy for the promo card, and one logo per debut franchise |
 
 `SET_SPOTLIGHTS` can start empty. The What's New band drops empty groups and, with a single group, drops its tab bar. `FRANCHISE_ART` is optional per franchise: without an entry the franchise card shows its logo (`/art/franchises/<id>.webp`) instead of card art. Fill both in as cards are revealed, using preview ids (`REVEAL_ID_BASE + number`) of cards that already have committed AVIFs. `reveal-set-integrity.test.ts` fails if a spotlight points at an unrevealed id.
 
@@ -159,7 +166,7 @@ Use `/admin/reveal` for a single card, or one lorcanaplayer does not have yet, a
 
 ## Checklist
 
-- [ ] `revealSet.ts`: `REVEAL_SET_CODE`, `REVEAL_SET_LOGO`, `PER_INK`
+- [ ] `revealSet.ts`: `REVEAL_SET_CODE`, `REVEAL_SET_LOGO`, `REVEAL_SET_LOGO_SM` (with the `-sm` file generated), `PER_INK`
 - [ ] `theme.ts`: `SetCode`, `SET_ABBREVIATIONS`, `SET_NAMES`
 - [ ] `previewCards.json`: new `sets[code]` with future dates, old entry dropped
 - [ ] `franchise.ts` + `FEATURED_FRANCHISE_HINT`
