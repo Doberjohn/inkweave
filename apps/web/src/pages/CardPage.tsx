@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import {cardPath, type LorcanaCard} from 'inkweave-synergy-engine';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
+import {cardPath} from 'inkweave-synergy-engine/card';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {usePrecomputedSynergies} from '../features/synergies/hooks';
 import {cardSynergySummary} from '../features/synergies/cardSynergySummary';

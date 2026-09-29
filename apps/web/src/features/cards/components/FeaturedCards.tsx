@@ -1,5 +1,5 @@
 import type {LorcanaCard} from '../types';
-import {cardPath} from 'inkweave-synergy-engine';
+import {cardPath} from 'inkweave-synergy-engine/card';
 import {CardTile} from './CardTile';
 import {FeaturedCardsSkeleton} from './FeaturedCardsSkeleton';
 import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
