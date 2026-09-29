@@ -1,10 +1,17 @@
-import type {Ink} from 'inkweave-synergy-engine';
+import {findGlyphWords, type Ink} from 'inkweave-synergy-engine';
 import type {RevealCardForm} from './buildPreviewCard';
 import {ALL_INKS, inkBlock} from '../../shared/constants';
 import {CARD_TYPES, REVEAL_ID_BASE} from './constants';
 
 const VALID_EXT = new Set(['jpg', 'jpeg', 'png', 'webp']);
 const CHARACTER_STATS = ['strength', 'willpower', 'lore'] as const;
+/** How card data writes each glyph word, with a released example. Lore is a word when gained. */
+const GLYPH_HINTS: Record<string, string> = {
+  Ink: 'use ⬡ ("pay 2 ⬡")',
+  Strength: 'use ¤ ("their ¤")',
+  Willpower: 'use ⛉ ("+1 ⛉")',
+  Lore: 'use ◊ for the stat ("+1 ◊"), or lowercase "lore" to gain it ("gain 2 lore")',
+};
 
 export interface ValidationResult {
   ok: boolean;
@@ -71,6 +78,16 @@ function checkCharacterStats(form: RevealCardForm, errors: Errors): void {
   }
 }
 
+/**
+ * Card text must reach the data in house style (#635): the engine matches glyphs, so a
+ * spelled-out "1 Ink" silently costs a card its mechanics. buildPreviewCard rewrites the
+ * shapes it knows; a capitalized word still left is one it cannot place, so publish waits.
+ */
+function checkCardText(form: RevealCardForm, errors: Errors): void {
+  const [word] = findGlyphWords(form.fullText);
+  if (word) errors.fullText = `"${word}" is spelled out: ${GLYPH_HINTS[word] ?? 'use its glyph'}`;
+}
+
 function checkImage(imageName: string | null, errors: Errors): void {
   if (!imageName) {
     errors.image = 'Upload a card image';
@@ -95,6 +112,7 @@ export function validateRevealCardForm(
   checkCostAndInk(form, errors);
   checkInkBlock(form, errors);
   checkCharacterStats(form, errors);
+  checkCardText(form, errors);
   checkImage(imageName, errors);
   return {ok: Object.keys(errors).length === 0, errors};
 }

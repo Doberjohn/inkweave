@@ -258,6 +258,10 @@ words `resolve` takes.
   It stays in the report and is retried on every run. A card with no collector number is
   added with a reserved-band id (see `docs/PREVIEW_CARD_PARSER.md`), and renumbered once the
   site shows its number.
+- A card the write chain refuses (`validation-failed`) carries the validator's message as its
+  detail, for example `"Strength" is spelled out: use ¤ ("their ¤")` for a glyph word house
+  style cannot place (#635). `resolve` cannot rule on it, and it is retried on every run. Add
+  it by hand in `/admin/reveal`, writing the text the way the detail says.
 
 Anything unresolved is simply not written, and is retried next run.
 
