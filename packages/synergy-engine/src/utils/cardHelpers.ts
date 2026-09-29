@@ -1826,7 +1826,7 @@ function tribalPatterns(spec: TribalSpec) {
     search: new RegExp(`(?:search your deck for|reveal) (?:a|an) ${T} character`, 'i'),
     // Conditional gated on tribe presence or a tribe event this turn.
     check: new RegExp(
-      `(?:while|if) you have (?:a|an|another|\\d+ or more)[^.]{0,30}${T}\\b` + // "while you have a [Dwarfs or a] X character in play"
+      `(?:while|if) you have (?:a|an|another|\\d+ or more)[^.]{0,30}(?<!named )${T}\\b` + // "while you have a [Dwarfs or a] X character in play", never "an item named X"
         `|if (?:a|an) (?:\\w+ or (?:a )?)?${T}(?: or \\w+)? character (?:is|card)` + // "if a [Y or] X [or Y] character is in play/chosen"
         `|if you (?:played|returned)[^.]{0,20}${T} character` + // "if you played a X character this turn"
         `|if (?:that card|the \\w+) is (?:a|an) ${T} character card`, // "if that card is a X character card"

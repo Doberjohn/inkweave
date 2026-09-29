@@ -12,6 +12,8 @@ import {
   NAMED_EFFECT_SCORES,
   normalizeCardText,
   getItemRoles,
+  getTribalRoles,
+  TRIBAL_SPECS,
 } from '../utils';
 import {createCard} from './fixtures.js';
 
@@ -516,5 +518,21 @@ describe('getItemRoles: named-item conditions', () => {
     expect(getItemRoles(itemCount)).toContain('payoff-static');
     expect(getItemRoles(edna)).toContain('payoff-static');
     expect(getItemRoles(castle)).toContain('payoff-static');
+  });
+});
+
+// #628: a tribe word inside a card name ("an item named Super Suit") is not a tribe check.
+describe('getTribalRoles: tribe words inside card names', () => {
+  it('does not read a named card as a tribe presence check', () => {
+    const edna = createCard({
+      fullName: 'Edna Mode - Super Suit Designer',
+      text: "KEY ACCESSORY ⟳ — Ready chosen item.\nALL THE BASICS While you have an item\nnamed Super Suit in play, this character gains\nWard. (Opponents can't choose them except to\nchallenge.)",
+    });
+    expect(getTribalRoles(edna, TRIBAL_SPECS.super)).toEqual([]);
+  });
+
+  it('still reads a tribe character in play as a presence check', () => {
+    const superCheck = createCard({text: 'While you have a Super character in play, this character gets +1 ◊.'});
+    expect(getTribalRoles(superCheck, TRIBAL_SPECS.super)).toContain('in-play-check');
   });
 });
