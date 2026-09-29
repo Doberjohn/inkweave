@@ -175,7 +175,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/1_d58ab2c3b088b56c38d51210cd624de41cbbdbe0.jpg"
       },
       "imageHash": "866a4c3b93589e44",
-      "imageHashSm": "c51702f5d779bd7c"
+      "imageHashSm": "c51702f5d779bd7c",
+      "variants": [
+        {
+          "id": 2159,
+          "rarity": "Epic",
+          "number": 205,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/205_62acc44798cda182710f8be20268c233d776cf58.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/205_f26be77b70ccc0716edb22b65d2b8932e4e8a495.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1938,
@@ -213,7 +224,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/2_0b0970a05e4343a6d1f2aedf1458dc45add07a0c.jpg"
       },
       "imageHash": "7103d42452ac674f",
-      "imageHashSm": "dd8c7b2e374e257f"
+      "imageHashSm": "dd8c7b2e374e257f",
+      "variants": [
+        {
+          "id": 2141,
+          "rarity": "Enchanted",
+          "number": 223,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/223_266d5db47a85a82ff24f5a21348b1e0e12e6c9f5.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/223_c672e85899a21fd3cdca02490b1b79c58ae488d6.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1939,
@@ -300,7 +322,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/4_ba9aa6fc55449cefeb4afcc19c1a9e0e80b6fbc1.jpg"
       },
       "imageHash": "5f529cbe1c328bb7",
-      "imageHashSm": "1e5b81f6ff90fe24"
+      "imageHashSm": "1e5b81f6ff90fe24",
+      "variants": [
+        {
+          "id": 2142,
+          "rarity": "Enchanted",
+          "number": 224,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/224_7f17c04013ed08ca46ff1a029608cc2fb8c5a3cb.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/224_2523f25f178e7ea29a2a61d92a55e0e447cc87a3.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1941,
@@ -346,7 +379,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/5_ec67c18527d4a2e80bf8eb4240c7539b955d18b3.jpg"
       },
       "imageHash": "2908bc2ff5023b72",
-      "imageHashSm": "71fb2494047f1d8c"
+      "imageHashSm": "71fb2494047f1d8c",
+      "variants": [
+        {
+          "id": 2177,
+          "rarity": "Iconic",
+          "number": 241,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/241_d01293c17e2cb0a97a66ffc326ee15171fecac3b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/241_472a6ed46ef4ea486e496b3e3671246fe62a933a.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1942,
@@ -385,7 +429,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/6_f0adcc6403c345d3eed4d0feb17b99be5d7d25f4.jpg"
       },
       "imageHash": "5b1405e4c6982b67",
-      "imageHashSm": "406c7dc5c8badaa6"
+      "imageHashSm": "406c7dc5c8badaa6",
+      "variants": [
+        {
+          "id": 2160,
+          "rarity": "Epic",
+          "number": 206,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/206_b2fedcc9340d991225ed866315f4696a56a060c4.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/206_dc80e35bde3a9a757c0437850d1c6a436ba8d3b4.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1943,
@@ -486,7 +541,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/9_9faccbb7b37ca8119678c222949f22d5225e0e98.jpg"
       },
       "imageHash": "b85215dfc63ad0f1",
-      "imageHashSm": "b835dc5872e8fd44"
+      "imageHashSm": "b835dc5872e8fd44",
+      "variants": [
+        {
+          "id": 2161,
+          "rarity": "Epic",
+          "number": 207,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/207_360197402bc466b102f44ad30056419357a8d919.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/207_c82c4129713230777d05f8e1585e6d2970af46f7.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1946,
@@ -1165,7 +1231,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/26_9c4fdfaaa46d5be868e25f85c9c6d1a867a6321b.jpg"
       },
       "imageHash": "b5859cdd809bcc7d",
-      "imageHashSm": "8f03db63568d6e42"
+      "imageHashSm": "8f03db63568d6e42",
+      "variants": [
+        {
+          "id": 2143,
+          "rarity": "Enchanted",
+          "number": 225,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/225_7a15e243fac264b0cfd7d6f0a68763b037046493.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/225_ae54d727215d4a14d32943eb28798e4f3c064788.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1963,
@@ -1547,7 +1624,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/37_e26b68e73ba8995d7a5bb1ed0bfc4667a23b4d5e.jpg"
       },
       "imageHash": "8cdc09ddd6e9c622",
-      "imageHashSm": "d88fb4c0c1c693e4"
+      "imageHashSm": "d88fb4c0c1c693e4",
+      "variants": [
+        {
+          "id": 2162,
+          "rarity": "Epic",
+          "number": 208,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/208_e7866d21220eaa349a038f30e45b12c85bf1263b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/208_090503af0a282ff76494a20052e162c1082539c5.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1974,
@@ -1674,7 +1762,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/40_44550e224f4ef7bcbfd0830d280094f6bcc90865.jpg"
       },
       "imageHash": "b11ea4b2adb548c3",
-      "imageHashSm": "12823205448b7811"
+      "imageHashSm": "12823205448b7811",
+      "variants": [
+        {
+          "id": 2144,
+          "rarity": "Enchanted",
+          "number": 226,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/226_4494bc166cb5d3e42f1f28e93d08a20149aacf76.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/226_36626b6e99f7310893d970ff390968981f15088b.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1977,
@@ -1704,7 +1803,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/41_f6b2b42a935837e22159a5d9ea545a4a5e8e0528.jpg"
       },
       "imageHash": "18d24f2d2670ed83",
-      "imageHashSm": "28dcd42be9a758a6"
+      "imageHashSm": "28dcd42be9a758a6",
+      "variants": [
+        {
+          "id": 2145,
+          "rarity": "Enchanted",
+          "number": 227,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/227_9c603911404aecc8ec7deee226370fe5f1e6166b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/227_9d26f372c9026737557f572e9d98d2352138da1a.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1978,
@@ -1901,7 +2011,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/45_6e544899ae7ed6842b52197b317826cf8b241cbc.jpg"
       },
       "imageHash": "0258aeea213a4d1d",
-      "imageHashSm": "2b31e81585708f0c"
+      "imageHashSm": "2b31e81585708f0c",
+      "variants": [
+        {
+          "id": 2146,
+          "rarity": "Enchanted",
+          "number": 228,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/228_2ef80c526bccfc40cd2954e20236f32128b6fe9f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/228_8afb0850c77584f42c98d817ce63ab85941a3eb6.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1982,
@@ -2064,7 +2185,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/49_3df66d20197408d34a8bdd8dfabbb588a926e451.jpg"
       },
       "imageHash": "b6452424d8a300ce",
-      "imageHashSm": "21e564674a5032d7"
+      "imageHashSm": "21e564674a5032d7",
+      "variants": [
+        {
+          "id": 2163,
+          "rarity": "Epic",
+          "number": 209,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/209_4941ea93437898a0a308082b336a40abac01f678.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/209_d5b3d7432ae56d44ba9c0a5be32a36c8d0eb9a19.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1986,
@@ -2224,7 +2356,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/53_94f8295d6c2fe7a701470200b49db09246958def.jpg"
       },
       "imageHash": "44d4d2172638c857",
-      "imageHashSm": "459d7d6c7cfd1106"
+      "imageHashSm": "459d7d6c7cfd1106",
+      "variants": [
+        {
+          "id": 2164,
+          "rarity": "Epic",
+          "number": 210,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/210_e0764be325c23f7e5486ce8a04a0777664d60fb2.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/210_4fb5bd2aba548cbd69295d3f8fc2b05d5660cd1f.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1990,
@@ -2970,7 +3113,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/74_87b2b25d595c2ea917c4f31481b1851453cc8395.jpg"
       },
       "imageHash": "525837433a198fab",
-      "imageHashSm": "89f0ad5eda707816"
+      "imageHashSm": "89f0ad5eda707816",
+      "variants": [
+        {
+          "id": 2165,
+          "rarity": "Epic",
+          "number": 211,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/211_a6274a911f061d0370e0df7a80ea16d04d36d72d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/211_e175f93c40fc575c5f17dbfcd83746cd4be70075.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2011,
@@ -3053,7 +3207,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/76_4f61e4da1fe5f0439d6221f6cdad981864a09072.jpg"
       },
       "imageHash": "8c66aac5399decc7",
-      "imageHashSm": "84331911c5224524"
+      "imageHashSm": "84331911c5224524",
+      "variants": [
+        {
+          "id": 2147,
+          "rarity": "Enchanted",
+          "number": 229,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/229_096f0832e6479e59e857ef88e18d3f577da64389.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/229_555d9287a49bbda7051bbd857d1f2d930f8e27bc.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2013,
@@ -3100,7 +3265,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/77_8169a2ef57d7bcf315417fc5102f987335064324.jpg"
       },
       "imageHash": "b87533bcaa6227e5",
-      "imageHashSm": "4b4a351c60d47072"
+      "imageHashSm": "4b4a351c60d47072",
+      "variants": [
+        {
+          "id": 2148,
+          "rarity": "Enchanted",
+          "number": 230,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/230_90e407afbd9868f9197e8c27e6e163d17585b2d9.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/230_c853b0bb7c0a1cad219d76199ed04acb3e4ccfef.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2014,
@@ -3205,7 +3381,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/80_fa2bf47f15ba6202d5655abf0dd92614ef0d429d.jpg"
       },
       "imageHash": "3ad1298e6bd17fb6",
-      "imageHashSm": "93c77261772f4bca"
+      "imageHashSm": "93c77261772f4bca",
+      "variants": [
+        {
+          "id": 2149,
+          "rarity": "Enchanted",
+          "number": 231,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/231_ae2b33896812186447d97be30a60e6d2264aa58b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/231_3d97bc325c051cc7417cdf60b097b0043b0880e3.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2017,
@@ -3347,7 +3534,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/84_53592abcfa55a9f32d2fbd95471376378511e6d3.jpg"
       },
       "imageHash": "767561f80ab70fe9",
-      "imageHashSm": "751b2f9f728ef1f6"
+      "imageHashSm": "751b2f9f728ef1f6",
+      "variants": [
+        {
+          "id": 2166,
+          "rarity": "Epic",
+          "number": 212,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/212_6e398db56b8125ad68125dda1162063f76c2dbc8.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/212_c432540b81fbff6691a9d3c4e325df2611217834.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2021,
@@ -3763,7 +3961,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/94_54140617cef40bc6aa27978087ae66524e8fcffa.jpg"
       },
       "imageHash": "cd4b51f4ef82227a",
-      "imageHashSm": "63e624ee91abaca2"
+      "imageHashSm": "63e624ee91abaca2",
+      "variants": [
+        {
+          "id": 2167,
+          "rarity": "Epic",
+          "number": 213,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/213_dc0545757a750aa3c20aadd84553e31206b2d8b5.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/213_a9556fd1d00197ee49d8cacb0b77f996e0d03125.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2031,
@@ -4217,7 +4426,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/107_7bd66c5d93ee758d53ab7ce11999a690797d07f9.jpg"
       },
       "imageHash": "8f100a3bb42ba6d8",
-      "imageHashSm": "d7a4195faa73929b"
+      "imageHashSm": "d7a4195faa73929b",
+      "variants": [
+        {
+          "id": 2150,
+          "rarity": "Enchanted",
+          "number": 232,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/232_609b09576f51f300156f08a4b4639db915428cda.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/232_77887c8257f67ce1b8ad9f82958084321600c0c5.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2044,
@@ -4349,7 +4569,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/110_c7127177487cdda1b4001c75e41b6cba8e0c5f73.jpg"
       },
       "imageHash": "a1e08b4084019be8",
-      "imageHashSm": "0d13e0644b7b3962"
+      "imageHashSm": "0d13e0644b7b3962",
+      "variants": [
+        {
+          "id": 2151,
+          "rarity": "Enchanted",
+          "number": 233,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/233_28a239da6116acca1b2073b0aecb175cc16025fb.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/233_3e1a8caf4f7585ab6239caea46f41b5e2b80b9a4.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2047,
@@ -4404,7 +4635,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/111_fc83a63669bace91d4de7d711d22c3ed67f3afa8.jpg"
       },
       "imageHash": "6262d5595ce5e66e",
-      "imageHashSm": "18e07d77b0609334"
+      "imageHashSm": "18e07d77b0609334",
+      "variants": [
+        {
+          "id": 2178,
+          "rarity": "Iconic",
+          "number": 242,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/242_ac6ccdc52438b8f3dcc434df23fa9483d02b3ff8.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/242_05fd1d65021aa88c94d035fb5ce3ca7b04acbfae.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2048,
@@ -4451,7 +4693,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/112_65f02407a175b1d793474baa84e5cce8d81b4524.jpg"
       },
       "imageHash": "4fd4c6fba413ca67",
-      "imageHashSm": "32d2863db255cf2e"
+      "imageHashSm": "32d2863db255cf2e",
+      "variants": [
+        {
+          "id": 2168,
+          "rarity": "Epic",
+          "number": 214,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/214_fccdad4304264c006418611666e7f443303f9f6d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/214_ca0cc3cbbb22d381001dfa77fff535b5f0468f8c.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2049,
@@ -4641,7 +4894,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/117_905695d3a5f58f37eb5c2ef4d771b2710cc48f7c.jpg"
       },
       "imageHash": "a18227fd2651b455",
-      "imageHashSm": "62771af9611b8591"
+      "imageHashSm": "62771af9611b8591",
+      "variants": [
+        {
+          "id": 2169,
+          "rarity": "Epic",
+          "number": 215,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/215_29baf0fc19981d36a8126bbe21b5ca2be209228a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/215_b2a7d1f375e8ced07b14a31aa595e5773c348204.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2054,
@@ -5162,7 +5426,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/130_dd958c2002139344b9e23e2a7f4c0d957aefa268.jpg"
       },
       "imageHash": "2628654b74f7bf56",
-      "imageHashSm": "52be051008d89bf2"
+      "imageHashSm": "52be051008d89bf2",
+      "variants": [
+        {
+          "id": 2152,
+          "rarity": "Enchanted",
+          "number": 234,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/234_3c969d28b1180856c8d7627c1f3120c052f93001.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/234_036c10f1ef13a627640282fcff8a26529adc5de9.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2067,
@@ -5264,7 +5539,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/133_435642c246b2f0e21dc7c73ca94c0e865b90f8ef.jpg"
       },
       "imageHash": "1893b636ec82dc85",
-      "imageHashSm": "1630e8dbf89e33b3"
+      "imageHashSm": "1630e8dbf89e33b3",
+      "variants": [
+        {
+          "id": 2170,
+          "rarity": "Epic",
+          "number": 216,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/216_439a90edef4880f24bdc8473685d216ecc54ee81.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/216_569aaeae03af59eee41aa4ef61279583698b6d39.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2070,
@@ -5564,7 +5850,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/141_341c433864a4ce43b4a054dc092428e185b90f44.jpg"
       },
       "imageHash": "84ba4ecfd9c0e1dd",
-      "imageHashSm": "e60a9f8c89ef09f1"
+      "imageHashSm": "e60a9f8c89ef09f1",
+      "variants": [
+        {
+          "id": 2171,
+          "rarity": "Epic",
+          "number": 217,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/217_6901b9d89b3dc94f8bce64ce77331832e8ceeb9a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/217_d220ea2db9f5270e9a69fedd46aa65e9533008f3.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2078,
@@ -5603,7 +5900,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/142_7a23d28ca4130be640d497658c73253c8946a3ed.jpg"
       },
       "imageHash": "2395eb05e0ad910b",
-      "imageHashSm": "7a86aca500eccdc7"
+      "imageHashSm": "7a86aca500eccdc7",
+      "variants": [
+        {
+          "id": 2153,
+          "rarity": "Enchanted",
+          "number": 235,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/235_474426233730eb363b8e15b53b787fb4bcdcdde4.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/235_cd8b88448a22c8d64a2dd685f5269c03e8967dd5.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2079,
@@ -5648,7 +5956,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/143_4630767f9b0648ce25e687f7ad885e4efd4baa8a.jpg"
       },
       "imageHash": "753d27987212ca13",
-      "imageHashSm": "a6a8e4588c236144"
+      "imageHashSm": "a6a8e4588c236144",
+      "variants": [
+        {
+          "id": 2154,
+          "rarity": "Enchanted",
+          "number": 236,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/236_2a2cfa3fe7a961566d3d433f355ac616fc35f490.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/236_a7e2550e508442c84671df9a23aec0879d045e66.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2080,
@@ -5754,7 +6073,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/146_ed628e7be9264fca6b00dfde8a714a38abb329fe.jpg"
       },
       "imageHash": "f211b8fc076aa038",
-      "imageHashSm": "bbfdce2abe2b04dc"
+      "imageHashSm": "bbfdce2abe2b04dc",
+      "variants": [
+        {
+          "id": 2172,
+          "rarity": "Epic",
+          "number": 218,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/218_fb765eaca4bc4b620c3da3639928544d82fa4a4e.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/218_271d41d5e650fe685daa9b9545897e3bc3a2e031.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2083,
@@ -5861,7 +6191,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/149_070547b24760c4078c903ee170103e30a016af0d.jpg"
       },
       "imageHash": "15b57cebbeba6629",
-      "imageHashSm": "4c9a4e487335dffb"
+      "imageHashSm": "4c9a4e487335dffb",
+      "variants": [
+        {
+          "id": 2173,
+          "rarity": "Epic",
+          "number": 219,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/219_93ec9b6b2b11b2e6adf396a8fae89ae660498a68.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/219_66d70c36328b4db3644279b953fbd70335d617ee.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2086,
@@ -5938,7 +6279,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/151_5bba92401fe041adc7648524da9db3f71adff1a5.jpg"
       },
       "imageHash": "1d22ed6c2c064c5d",
-      "imageHashSm": "a829dc0defa3853e"
+      "imageHashSm": "a829dc0defa3853e",
+      "variants": [
+        {
+          "id": 2155,
+          "rarity": "Enchanted",
+          "number": 237,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/237_724187c3fb4b3f3710d4996d4c77301884717e70.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/237_2523939f5a5b3a28556e912c61213a31c5c5e5fe.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2088,
@@ -6799,7 +7151,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/174_c0e0bda04ec895d21fd17276e75fb34350cd9df5.jpg"
       },
       "imageHash": "a0c9203f14e09145",
-      "imageHashSm": "be7c18d7e756b59a"
+      "imageHashSm": "be7c18d7e756b59a",
+      "variants": [
+        {
+          "id": 2156,
+          "rarity": "Enchanted",
+          "number": 238,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/238_c5d330f00540fd6028a3ce2aaf6d5785b6bdc16c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/238_9cb9c5c041e3955eb11621a93c2903a6bd38f252.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2111,
@@ -6845,7 +7208,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/175_a36e50ae37db0f816406604eefe69b2eb596660c.jpg"
       },
       "imageHash": "e13041a0310e2015",
-      "imageHashSm": "e21e8616659cf603"
+      "imageHashSm": "e21e8616659cf603",
+      "variants": [
+        {
+          "id": 2157,
+          "rarity": "Enchanted",
+          "number": 239,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/239_58bdc0a1ed65b9f521a25f63d36835389ecde70d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/239_cb179255142cfef989e5ead57abd07abca7b4f2f.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2112,
@@ -6987,7 +7361,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/178_af4a0de2a0b3d25d07ec258bd15c6ba43b63d0fb.jpg"
       },
       "imageHash": "223d713c86b650be",
-      "imageHashSm": "ac8869b46c052cf3"
+      "imageHashSm": "ac8869b46c052cf3",
+      "variants": [
+        {
+          "id": 2158,
+          "rarity": "Enchanted",
+          "number": 240,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/240_5ee59eac373081ac35d95ece6219eb817e6ba8d2.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/240_3a71c0e42fa1fc20cad8c5de93f0429b160e19bb.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2115,
@@ -7204,7 +7589,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/184_f4ef877668ab698a94185d475c25bab9eca8443a.jpg"
       },
       "imageHash": "c737e267175d3c9f",
-      "imageHashSm": "aef4b17254a79483"
+      "imageHashSm": "aef4b17254a79483",
+      "variants": [
+        {
+          "id": 2174,
+          "rarity": "Epic",
+          "number": 220,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/220_0848254c21face478619c6d5560554b4e0a8b438.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/220_41be0a97e03d8558c8471a00b3456f9e52d6bc5c.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2121,
@@ -7242,7 +7638,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/185_b4bf2a89bf57fa75677eb0647b2e7ec25b664710.jpg"
       },
       "imageHash": "f284cad39a8e55fb",
-      "imageHashSm": "3e6c63be0a737b14"
+      "imageHashSm": "3e6c63be0a737b14",
+      "variants": [
+        {
+          "id": 2175,
+          "rarity": "Epic",
+          "number": 221,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/221_d0904ec5dd682278c6673b2c537c5fb3465e9dbd.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/221_79d4badc084f163d6cf313716710bc3d1900ebc5.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2122,
@@ -7736,7 +8143,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/197_646a76970a031e8307b6b3d4aa006c9099334844.jpg"
       },
       "imageHash": "23c8a82aac866b88",
-      "imageHashSm": "42712d921fcbb3d9"
+      "imageHashSm": "42712d921fcbb3d9",
+      "variants": [
+        {
+          "id": 2176,
+          "rarity": "Epic",
+          "number": 222,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set9/222_dcf9d994ba59f50f5ce22c43cbef49e0696b37cd.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/222_b77956e217c590bd20819a49c1c26a7b664c0f99.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2134,
@@ -8044,7 +8462,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/2_578e7dda619dc0479e37b3cb09c5ecf37b15a79a.jpg"
       },
       "imageHash": "fa3bedaa8ceb2178",
-      "imageHashSm": "d92ef984f5357689"
+      "imageHashSm": "d92ef984f5357689",
+      "variants": [
+        {
+          "id": 2395,
+          "rarity": "Epic",
+          "number": 206,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/206_8c77e26a4d86fe4f3fd3e400af576d8b8615c447.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/206_bdf964502b7e24c7d785c9b38727c521f8918a58.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2192,
@@ -8611,7 +9040,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/17_9a23d1c5002322039b67dfd18cba571473332bf9.jpg"
       },
       "imageHash": "ec75ad3c696ae844",
-      "imageHashSm": "154ca390062abb58"
+      "imageHashSm": "154ca390062abb58",
+      "variants": [
+        {
+          "id": 2430,
+          "rarity": "Iconic",
+          "number": 241,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/241_58578db9ee64f96a66ec752d3ef374da2dc983da.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/241_11ff90bef5951347ca953bf9b74f59071b4811ed.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2207,
@@ -8745,7 +9185,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/20_5c8b57b285d96c92d116a7383984ac2d1fe324c1.jpg"
       },
       "imageHash": "007b8939914b7b7c",
-      "imageHashSm": "082eea721d8058b5"
+      "imageHashSm": "082eea721d8058b5",
+      "variants": [
+        {
+          "id": 2413,
+          "rarity": "Enchanted",
+          "number": 224,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/224_fc4f7b56f24cfdbaf6a3592c1e1328c0df971bae.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/224_f49b25c21a195a10b2aa6135c3a07ce434b050d0.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2210,
@@ -8784,7 +9235,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/21_90e2cca148f9196d92a5cf91c37ff77f34fe7bf2.jpg"
       },
       "imageHash": "9132b336b01cf9aa",
-      "imageHashSm": "212594df8358ac1d"
+      "imageHashSm": "212594df8358ac1d",
+      "variants": [
+        {
+          "id": 2394,
+          "rarity": "Epic",
+          "number": 205,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/205_c8155f8eb7a6f9006ca31b46f8840b6514a09b78.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/205_48b0b298efe3263334136c6068b68fa3306d95aa.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2211,
@@ -8915,7 +9377,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/24_8a721ebe465f5ce960b10197b39dc87f8ceb859a.jpg"
       },
       "imageHash": "298a20d6720f25c8",
-      "imageHashSm": "1c77c4cd6de6aa85"
+      "imageHashSm": "1c77c4cd6de6aa85",
+      "variants": [
+        {
+          "id": 2412,
+          "rarity": "Enchanted",
+          "number": 223,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/223_91f040573a2260a617ebd035991c33373701ca1e.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/223_e1ddced681c3ba79d2daf59c6e60f22ac616e28e.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2214,
@@ -9072,7 +9545,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/29_398cd26320fd1903d8291e0e2f7d36cba2c72eb8.jpg"
       },
       "imageHash": "b9df6f1f0bde42bc",
-      "imageHashSm": "ccd611dab3ca7911"
+      "imageHashSm": "ccd611dab3ca7911",
+      "variants": [
+        {
+          "id": 2396,
+          "rarity": "Epic",
+          "number": 207,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/207_bcec9c3b633be01dc3a9eef0eb432134ad8b79e6.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/207_12a6fc8205c864ced28579638acb4b419869f0a5.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2219,
@@ -9191,7 +9675,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/32_c046ddff8d5b9967cdbdc4ef674539a441d451ad.jpg"
       },
       "imageHash": "606dc85f47991185",
-      "imageHashSm": "9c7664856bc359b1"
+      "imageHashSm": "9c7664856bc359b1",
+      "variants": [
+        {
+          "id": 2414,
+          "rarity": "Enchanted",
+          "number": 225,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/225_93a72dee2c81ec12a40403a1cec156d8beed79b5.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/225_6f2e618a538638a33eae205f2455d616dc49c1b0.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2222,
@@ -9353,7 +9848,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/36_bcd79165e69407dc9c10e375e75fedd59ed329ea.jpg"
       },
       "imageHash": "575057e747b86cc3",
-      "imageHashSm": "10202809645529c2"
+      "imageHashSm": "10202809645529c2",
+      "variants": [
+        {
+          "id": 2415,
+          "rarity": "Enchanted",
+          "number": 226,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/226_edb9219ed07d16b280b56910bf31e953bc2d3044.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/226_0bdca336e98093b5ef94e4e42d3204aaf545d737.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2226,
@@ -9701,7 +10207,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/45_c7a6faccadcf745884e130897be0002dc382d967.jpg"
       },
       "imageHash": "811256ddc663c59b",
-      "imageHashSm": "433a43bc8af96b27"
+      "imageHashSm": "433a43bc8af96b27",
+      "variants": [
+        {
+          "id": 2397,
+          "rarity": "Epic",
+          "number": 208,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/208_853f1eb6483b35818bb3f2abcd2d73ed3e6d555a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/208_a097b76c5c05b5ae641c93fabe65de6a85c5ccc7.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2235,
@@ -9854,7 +10371,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/49_e60881faefdef07ea469cfd7493b74753f0a99ec.jpg"
       },
       "imageHash": "352e2e90d862f8f6",
-      "imageHashSm": "06af37ae5fa00e5e"
+      "imageHashSm": "06af37ae5fa00e5e",
+      "variants": [
+        {
+          "id": 2399,
+          "rarity": "Epic",
+          "number": 210,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/210_d20dc0fdf50c283405676fb6ff15961ca8026ecf.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/210_f5417d7e168ae82cbabcd794108e04a15626bb9c.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2239,
@@ -10093,7 +10621,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/55_151723f186d73ed6952e22783cac041e2acfd50a.jpg"
       },
       "imageHash": "1e1b2b6cbbc3e7fc",
-      "imageHashSm": "12c6ac26f3c1a439"
+      "imageHashSm": "12c6ac26f3c1a439",
+      "variants": [
+        {
+          "id": 2416,
+          "rarity": "Enchanted",
+          "number": 227,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/227_cade0c5eceac4422c09c657ab725ca886c638d4a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/227_80002c615aae20ff39a1686a9a40cdad0cadcbc4.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2245,
@@ -10132,7 +10671,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/56_f953ad3207f4a7f3bb549511d48ddf33d3f8ea8f.jpg"
       },
       "imageHash": "8bef400034d7bdcc",
-      "imageHashSm": "6bf0c3d80ada121d"
+      "imageHashSm": "6bf0c3d80ada121d",
+      "variants": [
+        {
+          "id": 2431,
+          "rarity": "Iconic",
+          "number": 242,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/242_b687650c2f7dfc464ab8f54b7b044962018ac4ff.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/242_33750739288ada12ee936b583c7aff6ade0510b1.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2246,
@@ -10219,7 +10769,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/58_7069520af6d9e30c00156a48a752dec71a142165.jpg"
       },
       "imageHash": "f82cfc65cab10fc7",
-      "imageHashSm": "67c67658ded7edcc"
+      "imageHashSm": "67c67658ded7edcc",
+      "variants": [
+        {
+          "id": 2398,
+          "rarity": "Epic",
+          "number": 209,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/209_81c7cf8f9fa4d51b5512bffbb350df5b29156f84.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/209_64b56b3572962844b5db08f7f2dc84ed5643c2c6.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2248,
@@ -10370,7 +10931,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/62_6b5c885afc206fc6bd3b715820365e1c88993c89.jpg"
       },
       "imageHash": "b332cb2bd61b6d28",
-      "imageHashSm": "574dc920fd98024c"
+      "imageHashSm": "574dc920fd98024c",
+      "variants": [
+        {
+          "id": 2417,
+          "rarity": "Enchanted",
+          "number": 228,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/228_67bdb5cec6b46b4e800b5ef09e1737f5507c5ab0.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/228_a7eac702db811b8a4f33a9a5d6dd319c337e17af.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2252,
@@ -10724,7 +11296,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/73_dcd0fd3ccc2fe58466ba74f81bfa38d55b7640f5.jpg"
       },
       "imageHash": "54bb66cc346af2a6",
-      "imageHashSm": "ec1df205b73e9f7b"
+      "imageHashSm": "ec1df205b73e9f7b",
+      "variants": [
+        {
+          "id": 2400,
+          "rarity": "Epic",
+          "number": 211,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/211_6b952a0779490eb30f47425d6aaf16f7e3ce2c53.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/211_181b891b9c1c08a5727ed8e9afc615d85c60f90a.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2263,
@@ -10942,7 +11525,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/79_9812bf7025c7af4586c10c89a616abd500663199.jpg"
       },
       "imageHash": "a559be20eb017ca0",
-      "imageHashSm": "419daf230ad212a8"
+      "imageHashSm": "419daf230ad212a8",
+      "variants": [
+        {
+          "id": 2401,
+          "rarity": "Epic",
+          "number": 212,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/212_7d3dd2991d80ae0ab25cc2a7f7a46ea103329620.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/212_9b254002eaa4b1c2565e2fe1644ac03d179c1f8f.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2269,
@@ -11180,7 +11774,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/85_102d084c935e0d96fe7b2b998629cfeaca03de72.jpg"
       },
       "imageHash": "8734b314c7419b50",
-      "imageHashSm": "8f6afd2194b41f29"
+      "imageHashSm": "8f6afd2194b41f29",
+      "variants": [
+        {
+          "id": 2419,
+          "rarity": "Enchanted",
+          "number": 230,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/230_b72b295dcf60ef9ae3bb0b95d7f4290acbda7723.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/230_ef0d03f190f8e4a2f412accc597021965a0a0ce3.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2275,
@@ -11228,7 +11833,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/86_c20331ae12e5e812997ba8587f6c7970ef19d10e.jpg"
       },
       "imageHash": "5ac8849cf289f347",
-      "imageHashSm": "d78ef00a204f4605"
+      "imageHashSm": "d78ef00a204f4605",
+      "variants": [
+        {
+          "id": 2402,
+          "rarity": "Epic",
+          "number": 213,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/213_ee7c7778d0cdbf0cafa101958a02317b75059322.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/213_4c158e0e07930b654e04de768c71dcda1f26032c.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2276,
@@ -11550,7 +12166,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/93_66169bcf6a8afc83d644ac0e3231ea2163e2c333.jpg"
       },
       "imageHash": "da680bf87419aea8",
-      "imageHashSm": "87f39208fae35b48"
+      "imageHashSm": "87f39208fae35b48",
+      "variants": [
+        {
+          "id": 2418,
+          "rarity": "Enchanted",
+          "number": 229,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/229_ce9f26058950468601780162c729d6c7cc2a9bc1.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/229_172d10d69ae0b9c506c80d7d8155667ef8922c7f.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2283,
@@ -11660,7 +12287,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/97_9373b26c403245a4d79db6a88554d80d3536b666.jpg"
       },
       "imageHash": "cb682b01a0ca7510",
-      "imageHashSm": "0710363e59d215db"
+      "imageHashSm": "0710363e59d215db",
+      "variants": [
+        {
+          "id": 2420,
+          "rarity": "Enchanted",
+          "number": 231,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/231_6962c810e4b2d0e5f006bb91eda183a79e4bce54.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/231_7fd1eef500ac8b3eb6fbab4d023e664f0687574d.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2287,
@@ -11987,7 +12625,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/106_373c1685d19f7fd5de1daf89f6ea66b093cc04f0.jpg"
       },
       "imageHash": "ca316b30e496b27f",
-      "imageHashSm": "2175502f5975548c"
+      "imageHashSm": "2175502f5975548c",
+      "variants": [
+        {
+          "id": 2403,
+          "rarity": "Epic",
+          "number": 214,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/214_d273ef7e75643a6b6b744b57bc63cac9e8def649.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/214_d22e333d82044b094dbfe0ed6a989bb73d9ec97f.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2296,
@@ -12707,7 +13356,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/123_d76508c76e78e45f3c22cd01376e9d0247727f5e.jpg"
       },
       "imageHash": "4a442cf825f05a2e",
-      "imageHashSm": "70e78907c5359627"
+      "imageHashSm": "70e78907c5359627",
+      "variants": [
+        {
+          "id": 2405,
+          "rarity": "Epic",
+          "number": 216,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/216_28045a98d207ba73fd5f48a63941745a25d82d79.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/216_b98a5571f7eb1c25a0891ded89eb5cfb5abc449c.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2313,
@@ -12755,7 +13415,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/124_be7e248d7fda7b5523634e20f686544ce97e74b0.jpg"
       },
       "imageHash": "1b18b060ab18144d",
-      "imageHashSm": "0acbc9d2e472ce51"
+      "imageHashSm": "0acbc9d2e472ce51",
+      "variants": [
+        {
+          "id": 2422,
+          "rarity": "Enchanted",
+          "number": 233,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/233_4ef3047dde5fba58de5be865ea811ac1745faeab.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/233_3a94b4cc9e382c66b34d6a251d93feca0b40a540.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2314,
@@ -12800,7 +13471,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/125_9972a2635cc3e30a59272aabab81b5f17aa25ee2.jpg"
       },
       "imageHash": "ba319b49698302a9",
-      "imageHashSm": "0ea4b7db92d5fa2d"
+      "imageHashSm": "0ea4b7db92d5fa2d",
+      "variants": [
+        {
+          "id": 2421,
+          "rarity": "Enchanted",
+          "number": 232,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/232_2765a41e86eb9c1c322c63e52df856dc3c903022.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/232_40649e83c49726ccc64ef1dcce552ca3067e3399.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2315,
@@ -12839,7 +13521,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/126_2db4f9490bc5ee2f1a8c6fc13b3863bb49080e7d.jpg"
       },
       "imageHash": "9b3af4f0dc287396",
-      "imageHashSm": "a8500bd2e4c92a7d"
+      "imageHashSm": "a8500bd2e4c92a7d",
+      "variants": [
+        {
+          "id": 2404,
+          "rarity": "Epic",
+          "number": 215,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/215_321583b28483d59255209a4b3466e4514a487edf.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/215_f4becd2d9f4aa164d2e1fab27c8e1b307b8c623d.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2316,
@@ -12958,7 +13651,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/129_e63d0c254ce7749330b4727a4143b122531c1247.jpg"
       },
       "imageHash": "01d3b5dbd4ce8587",
-      "imageHashSm": "32de17d413526b95"
+      "imageHashSm": "32de17d413526b95",
+      "variants": [
+        {
+          "id": 2423,
+          "rarity": "Enchanted",
+          "number": 234,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/234_6545c078081de97a7ae8b605daa265ebea40d35e.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/234_36381d4ea5e9f452965928bb355ce2c44350e87e.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2319,
@@ -13338,7 +14042,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/141_d783e50e319f3658d30a9b68cb6e0a936cbff8e0.jpg"
       },
       "imageHash": "ac71e5294a11793d",
-      "imageHashSm": "eecd8027cd79e013"
+      "imageHashSm": "eecd8027cd79e013",
+      "variants": [
+        {
+          "id": 2406,
+          "rarity": "Epic",
+          "number": 217,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/217_e9e22f4094c0918bab08c5be32488d69a0c2dd70.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/217_feb961e8661cca7d37eaa615d5c38b7c6d06a08d.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2331,
@@ -13684,7 +14399,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/150_722eaaa57d6bd69ab2ae31afc40958db763fb56c.jpg"
       },
       "imageHash": "02f4d1fccb924f74",
-      "imageHashSm": "40f63704b61ee767"
+      "imageHashSm": "40f63704b61ee767",
+      "variants": [
+        {
+          "id": 2424,
+          "rarity": "Enchanted",
+          "number": 235,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/235_ef49880f720fba0c2f56d318389c06af0729e130.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/235_0f42d49b9800affd8dfc8b989de46f8813abd6eb.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2340,
@@ -13893,7 +14619,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/155_a0de4c4761627b712b187a85945066668e2cd982.jpg"
       },
       "imageHash": "013d8076767dd59c",
-      "imageHashSm": "20e81c811fa3ec76"
+      "imageHashSm": "20e81c811fa3ec76",
+      "variants": [
+        {
+          "id": 2425,
+          "rarity": "Enchanted",
+          "number": 236,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/236_abdef5f502c738af78297e1ec2f620e3a7463a92.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/236_23807f05136c231ceecc13a2da79975d552b2204.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2345,
@@ -14067,7 +14804,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/159_28c903fa6f7fa76494f161d0592d75e939071eea.jpg"
       },
       "imageHash": "430e68037fd8aed7",
-      "imageHashSm": "3dffc4598da0e895"
+      "imageHashSm": "3dffc4598da0e895",
+      "variants": [
+        {
+          "id": 2407,
+          "rarity": "Epic",
+          "number": 218,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/218_cf9acc5de66cf6311286e7d64c5063160f05837a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/218_ecaa31053c07c1ebcd1944703d4eb533bf8a8c97.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2349,
@@ -14205,7 +14953,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/164_a6d7b9cf07685d86cce7da9095cd265662687a89.jpg"
       },
       "imageHash": "c2143a08cdd143a6",
-      "imageHashSm": "0c842ec1ac78204d"
+      "imageHashSm": "0c842ec1ac78204d",
+      "variants": [
+        {
+          "id": 2408,
+          "rarity": "Epic",
+          "number": 219,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/219_2a3af5f25454d0e9fdef4b83a3a310fa14c1c983.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/219_7ff67cc51febebac7c9361cb65981340fb113521.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2354,
@@ -14227,7 +14986,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/165_850002a114cf26e39a381404685658c8dd594299.jpg"
       },
       "imageHash": "1dac40f9ca1e8ebd",
-      "imageHashSm": "9ef62cc81cf2f300"
+      "imageHashSm": "9ef62cc81cf2f300",
+      "variants": [
+        {
+          "id": 2426,
+          "rarity": "Enchanted",
+          "number": 237,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/237_0aac51a20896098c6a6b7fbfd1c157d1ccda3eb4.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/237_a93aef7a7d2661207afe950aa48a7632090139e7.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2355,
@@ -14446,7 +15216,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/171_afb346bcfef50614e3d7b7e51bb61098d0ad4d2c.jpg"
       },
       "imageHash": "7658a26a8d57a6c3",
-      "imageHashSm": "efa2578ac22bb6f9"
+      "imageHashSm": "efa2578ac22bb6f9",
+      "variants": [
+        {
+          "id": 2410,
+          "rarity": "Epic",
+          "number": 221,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/221_a59d60cf23311bb932fcc1a3572e975973de9ff7.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/221_04e212bcd0075140fa3b7b4aeea04975eb4c72b4.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2361,
@@ -14531,7 +15312,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/173_02446272102753bbd8c707e080e6e2bb110cb0ca.jpg"
       },
       "imageHash": "73f77221e7ba73e4",
-      "imageHashSm": "9fe04eddff63e234"
+      "imageHashSm": "9fe04eddff63e234",
+      "variants": [
+        {
+          "id": 2427,
+          "rarity": "Enchanted",
+          "number": 238,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/238_77b42aa777fedfa20df29da74024e0241389c2f8.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/238_b8772baf840c1d336b7581080dd8506df6d375c6.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2363,
@@ -14852,7 +15644,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/181_bd75c4906fb7d992b91c698fba9dd4bda9d12cc5.jpg"
       },
       "imageHash": "6b1e13e719b33751",
-      "imageHashSm": "177de7669750e175"
+      "imageHashSm": "177de7669750e175",
+      "variants": [
+        {
+          "id": 2409,
+          "rarity": "Epic",
+          "number": 220,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/220_1ba50181ae318cc2fa3cf9cff849a6254c829a9b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/220_9c1160d41a715c08f8fb65a640fc3dded952d089.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2371,
@@ -15094,7 +15897,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/187_6e4ce4d8cafb64ea4eacb1036d63a5449c36b1b8.jpg"
       },
       "imageHash": "bc034ba4d0b33c22",
-      "imageHashSm": "e4a0bb309d9ba826"
+      "imageHashSm": "e4a0bb309d9ba826",
+      "variants": [
+        {
+          "id": 2428,
+          "rarity": "Enchanted",
+          "number": 239,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/239_c53adf08577166cab4cbafe8d61c8c5ccce82c5c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/239_6536c0ee4b838ce7e66a4e666bc883b1e484ec44.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2377,
@@ -15483,7 +16297,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/197_ec1eb456aca1ae2049c4278e7e87adef27244bf5.jpg"
       },
       "imageHash": "3e136b186fe958eb",
-      "imageHashSm": "8e103760437af3aa"
+      "imageHashSm": "8e103760437af3aa",
+      "variants": [
+        {
+          "id": 2411,
+          "rarity": "Epic",
+          "number": 222,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/222_a46de86b2214bcc286d34d32c069b91eee1fbad4.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/222_ce0ac26f481ed1380910d46fe10555b626359164.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2387,
@@ -15572,7 +16397,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/200_19f755e16019eb17dda0e4c3b7d1652cdfb94b9e.jpg"
       },
       "imageHash": "7127fff3a18ecf65",
-      "imageHashSm": "a56f055cd187157f"
+      "imageHashSm": "a56f055cd187157f",
+      "variants": [
+        {
+          "id": 2429,
+          "rarity": "Enchanted",
+          "number": 240,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set10/240_dbdd57190bb4ce914e7c3807af4481ea72990538.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/240_09cdd3d1b053ffc7c9915a6c0eeed229200373f2.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2390,
@@ -15905,7 +16741,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/5_3a99e63297dd2ac0ab190a571a46bb0fba925333.jpg"
       },
       "imageHash": "984a4eb1e450d6e2",
-      "imageHashSm": "1364a8fe5bfc1377"
+      "imageHashSm": "1364a8fe5bfc1377",
+      "variants": [
+        {
+          "id": 2668,
+          "rarity": "Epic",
+          "number": 205,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/205_8443184e5cb986452d3b62b7b7dc46dafaa77ccb.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/205_3ee9876ef95826d877e7b38948a73343703a103d.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2469,
@@ -15972,7 +16819,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/7_42f319b1e8e9747f0b21732d8c05354a4d0d0935.jpg"
       },
       "imageHash": "7ba023e0e065cf07",
-      "imageHashSm": "181ce703cb9d9fa3"
+      "imageHashSm": "181ce703cb9d9fa3",
+      "variants": [
+        {
+          "id": 2670,
+          "rarity": "Epic",
+          "number": 207,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/207_3dea5f7f0298319aceb25d9c8d0b4cfc66c16839.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/207_ffabfbff5f3505bc907950f9d9e7750b40d3634b.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2471,
@@ -16215,7 +17073,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/13_029a39d6457c988e3c450a7e3c49417d9b3bbca8.jpg"
       },
       "imageHash": "e43583b7449729b6",
-      "imageHashSm": "09778f43428544ac"
+      "imageHashSm": "09778f43428544ac",
+      "variants": [
+        {
+          "id": 2669,
+          "rarity": "Epic",
+          "number": 206,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/206_e07dabf14752a76a8cc3cf4b16a140741c0d0dfc.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/206_7c3b2cb8ad30683971b41f3e3250b1f57628998e.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2477,
@@ -16376,7 +17245,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/17_ad8dccd68b53f5d8437138fb55b1d8fb124a7e93.jpg"
       },
       "imageHash": "e4681f06c93602d1",
-      "imageHashSm": "4295ed1bd63c1edd"
+      "imageHashSm": "4295ed1bd63c1edd",
+      "variants": [
+        {
+          "id": 2686,
+          "rarity": "Enchanted",
+          "number": 223,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/223_488ba872f5899a5448d6486fc58b3b4ec4dee566.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/223_e92a6b640398c035e3b07011b029be3d610b045b.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2481,
@@ -16591,7 +17471,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/22_e196eff470b7530713f5aac72742ec590514ec07.jpg"
       },
       "imageHash": "93219106d9771409",
-      "imageHashSm": "01c4dcd9cd4cffd2"
+      "imageHashSm": "01c4dcd9cd4cffd2",
+      "variants": [
+        {
+          "id": 2704,
+          "rarity": "Iconic",
+          "number": 241,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/241_c48adafb4cb6e87c73caa08720550175c978c839.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/241_496f44d48e5b9e8b76350fd5be303b9acd3b2183.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2486,
@@ -16825,7 +17716,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/28_442af4c97e4283ec89194170368098cf5360ed61.jpg"
       },
       "imageHash": "8cd29c2ca80206df",
-      "imageHashSm": "f4b305754bc3ee66"
+      "imageHashSm": "f4b305754bc3ee66",
+      "variants": [
+        {
+          "id": 2688,
+          "rarity": "Enchanted",
+          "number": 225,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/225_62bd1edbc6df8530da20dad9b8006d209bdbb4fd.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/225_adcf318d2ef3e12e04c810197ad48287dbbd3275.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2492,
@@ -16935,7 +17837,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/32_1c1943b16c06c96d2dd26be08816cf7082a30544.jpg"
       },
       "imageHash": "138732fab1021480",
-      "imageHashSm": "75cec44ab3ab512e"
+      "imageHashSm": "75cec44ab3ab512e",
+      "variants": [
+        {
+          "id": 2687,
+          "rarity": "Enchanted",
+          "number": 224,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/224_face6cebc1848935d7768d44be66222e51696e7a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/224_b5d426fccf6a732b077b8bab61612ebee92a83fa.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2496,
@@ -17120,7 +18033,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/37_770b9917e407a5c86a0ca591a909447bd796ce3a.jpg"
       },
       "imageHash": "e4d923243d9dc9e5",
-      "imageHashSm": "1333f9b5fbaa975a"
+      "imageHashSm": "1333f9b5fbaa975a",
+      "variants": [
+        {
+          "id": 2671,
+          "rarity": "Epic",
+          "number": 208,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/208_4f547ec091d4f489c222831f14f5506414d7a726.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/208_07d5642f6051f38a26f0697ad265eb2d36baf407.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2501,
@@ -17436,7 +18360,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/45_b3cdfb12fc7188d5bf904aae6722f7f4db93ab44.jpg"
       },
       "imageHash": "e53a9154ee120e3f",
-      "imageHashSm": "61e5f854f65bce40"
+      "imageHashSm": "61e5f854f65bce40",
+      "variants": [
+        {
+          "id": 2689,
+          "rarity": "Enchanted",
+          "number": 226,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/226_bc197bb1f0d815655b5892354689fd78ef3def6f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/226_dcaf95b9c46a15314374b837377a81f0218193ae.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2509,
@@ -17624,7 +18559,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/49_32a21cc784a3cb919a0563191ca0631d340fdb2c.jpg"
       },
       "imageHash": "b29c1475ea869dee",
-      "imageHashSm": "91fb09ab3d0a9132"
+      "imageHashSm": "91fb09ab3d0a9132",
+      "variants": [
+        {
+          "id": 2673,
+          "rarity": "Epic",
+          "number": 210,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/210_d60cd4ba33be7b62aafc51a86db38d0b889c3fb1.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/210_a64cc540619edc39727e5068c7c6babd5158e38d.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2513,
@@ -17670,7 +18616,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/50_6e65881329b48f2c0e51f2d9f1c95b9b008d4085.jpg"
       },
       "imageHash": "ec9c59704b456aae",
-      "imageHashSm": "5e1f68f3d6dd8117"
+      "imageHashSm": "5e1f68f3d6dd8117",
+      "variants": [
+        {
+          "id": 2690,
+          "rarity": "Enchanted",
+          "number": 227,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/227_f8d28117357d9e1713e11e250f15b5130502fb00.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/227_927b5ddc7389e65ae3f2a164f326b5521421030f.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2514,
@@ -17754,7 +18711,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/52_c5284192e7d0ef2c2a829355d81880de2e56f547.jpg"
       },
       "imageHash": "02eaac64af75faba",
-      "imageHashSm": "727844d00acc347a"
+      "imageHashSm": "727844d00acc347a",
+      "variants": [
+        {
+          "id": 2672,
+          "rarity": "Epic",
+          "number": 209,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/209_b412d66520e262a276e1bedac05f8e27b1e73c4e.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/209_124e6ee0b6214bc352202dc576db83c02e438ab6.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2516,
@@ -18166,7 +19134,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/64_4ae67a62c4588701ba78c2d196b593788d89072d.jpg"
       },
       "imageHash": "5fadab0a6055dd30",
-      "imageHashSm": "9009bc7578333232"
+      "imageHashSm": "9009bc7578333232",
+      "variants": [
+        {
+          "id": 2691,
+          "rarity": "Enchanted",
+          "number": 228,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/228_2b28e693a13fbd80fb31b24c59ea334f1c7fcf72.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/228_d942ccda0f85c899106b7f492ec8390d10653da6.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2528,
@@ -18338,7 +19317,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/69_91df9e7415098be058050f459f22463a3213fb20.jpg"
       },
       "imageHash": "7ae561d521377133",
-      "imageHashSm": "62f08835ed5b3ea0"
+      "imageHashSm": "62f08835ed5b3ea0",
+      "variants": [
+        {
+          "id": 2692,
+          "rarity": "Enchanted",
+          "number": 229,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/229_11ef687182293e556172f0e3a32c0746de52c77a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/229_98f29c417a3a2a2afb364a76c8bf77c06e8b0471.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2533,
@@ -18790,7 +19780,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/81_7c75dd312cbccf9c24d704faaa17039b51409ca6.jpg"
       },
       "imageHash": "c2a81401e2142f14",
-      "imageHashSm": "0fae8e4aeb43f082"
+      "imageHashSm": "0fae8e4aeb43f082",
+      "variants": [
+        {
+          "id": 2674,
+          "rarity": "Epic",
+          "number": 211,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/211_d4727d412a1f02e8c019e4411f154a566f37939a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/211_6ed988a73876bb979a7e1d7c9130cee37f6d7431.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2545,
@@ -18829,7 +19830,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/82_39d0bbc2b30477843d05a8c3506d2a8fc8bf4c52.jpg"
       },
       "imageHash": "80e3747c13ccce93",
-      "imageHashSm": "712975bd336c1c7f"
+      "imageHashSm": "712975bd336c1c7f",
+      "variants": [
+        {
+          "id": 2675,
+          "rarity": "Epic",
+          "number": 212,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/212_2d6f0fa1d6cd1c07107317f64562ed97544d8da0.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/212_b42e81cf3bd81e8c3350bb0e1e33fe02adf485d7.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2546,
@@ -19081,7 +20093,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/88_105c8642cf2dfe44a5ae18e2afd4cccb729ddfe2.jpg"
       },
       "imageHash": "562a6edcb2516cfb",
-      "imageHashSm": "4972e9cf03e30835"
+      "imageHashSm": "4972e9cf03e30835",
+      "variants": [
+        {
+          "id": 2676,
+          "rarity": "Epic",
+          "number": 213,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/213_305c586e25cc42765a78f699a52cbf4ee523eab7.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/213_e65f929da2b2587cd67c5d872b051fdc0c6d7388.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2552,
@@ -19256,7 +20279,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/92_c28f305f63ff7a56ee5df4fb5a1ac49d1cca6bd0.jpg"
       },
       "imageHash": "4336fede5a5d0174",
-      "imageHashSm": "b3cce02dae2eda43"
+      "imageHashSm": "b3cce02dae2eda43",
+      "variants": [
+        {
+          "id": 2693,
+          "rarity": "Enchanted",
+          "number": 230,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/230_b7e8c0b77dd13291ddb501be94bbc569f2a62567.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/230_fda61138fd17c9bcd33dbd7267420282e96b3dcf.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2556,
@@ -19378,7 +20412,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/96_a7cd4fa8fcce7ec85133cdece8163f9651757e4c.jpg"
       },
       "imageHash": "e32a4d5665603092",
-      "imageHashSm": "fdbbd794e6bbf658"
+      "imageHashSm": "fdbbd794e6bbf658",
+      "variants": [
+        {
+          "id": 2694,
+          "rarity": "Enchanted",
+          "number": 231,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/231_098973298ca5fbbba26069ad83710b0740850705.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/231_21b5ed0271a3f8627255609da6391404cea0a17a.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2560,
@@ -20187,7 +21232,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/116_aab04b37c2e25af97a5aa7dfac52247314b0a4d9.jpg"
       },
       "imageHash": "920fdc151c15690e",
-      "imageHashSm": "4fc1c4b2bcc50665"
+      "imageHashSm": "4fc1c4b2bcc50665",
+      "variants": [
+        {
+          "id": 2695,
+          "rarity": "Enchanted",
+          "number": 232,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/232_8233fc7ecfbd8f86d09e4cf7a23a52b9c303e21f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/232_99af63c7060de98c9f027a92ba64557661d8fd86.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2580,
@@ -20237,7 +21293,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/117_4e9858ac5f9ad17952668fe21e91cbf9982650b3.jpg"
       },
       "imageHash": "a4c22692604d2386",
-      "imageHashSm": "78aed9ebd4b9cea7"
+      "imageHashSm": "78aed9ebd4b9cea7",
+      "variants": [
+        {
+          "id": 2677,
+          "rarity": "Epic",
+          "number": 214,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/214_7b60a60e68304aaeb68a68773bbb0d7ea79483fb.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/214_7dcec24a0db4bbde6b0412ffbe0c5f2d33cb45e1.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2581,
@@ -20403,7 +21470,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/121_e3b48e5efe9c0429c3cfca078e18d6fb4519c0b3.jpg"
       },
       "imageHash": "dddfb3dcf082c6b0",
-      "imageHashSm": "bcb0b4bc027864f0"
+      "imageHashSm": "bcb0b4bc027864f0",
+      "variants": [
+        {
+          "id": 2679,
+          "rarity": "Epic",
+          "number": 216,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/216_5afa06d4563579f59b97ce7a060a1bde9a2a99cc.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/216_4922e1fe4ebe4fe8b0340bbd2c604e6a642a93f9.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2585,
@@ -20504,7 +21582,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/123_f91e842e5e16bf6c82d245560cd4c8cac99d77bf.jpg"
       },
       "imageHash": "debddd5d2131e94b",
-      "imageHashSm": "e8cf5836be340687"
+      "imageHashSm": "e8cf5836be340687",
+      "variants": [
+        {
+          "id": 2696,
+          "rarity": "Enchanted",
+          "number": 233,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/233_9976ce443fc2c5d3019e2da31bc3c1e0cd4081a8.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/233_6ce867f93f22ae81990688569b23542b13c43490.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2587,
@@ -20589,7 +21678,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/125_5282986b139f66e882a503b2e00bacb299cc3b13.jpg"
       },
       "imageHash": "cb1ce421042f4586",
-      "imageHashSm": "ebce3bc420a09821"
+      "imageHashSm": "ebce3bc420a09821",
+      "variants": [
+        {
+          "id": 2678,
+          "rarity": "Epic",
+          "number": 215,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/215_c19180ba7469b63dd9a0e8331b830e4baf9d155a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/215_1ea5d316378aa1815a44c4069fe3740884958d58.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2589,
@@ -20759,7 +21859,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/130_8baa751cf41ccf000001bcdb1526678a42ec712c.jpg"
       },
       "imageHash": "09fa6ef2f0aa389b",
-      "imageHashSm": "6dda6d71da5559fe"
+      "imageHashSm": "6dda6d71da5559fe",
+      "variants": [
+        {
+          "id": 2697,
+          "rarity": "Enchanted",
+          "number": 234,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/234_83f2d60dab0e0bb5be999702c72c15f6ed70a61c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/234_ef67b209e76c0b6893ba1deff2810ed13a1e5e3a.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2594,
@@ -21358,7 +22469,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/146_ed1ac93a7f4f11c4bd8a38484583076c114bb410.jpg"
       },
       "imageHash": "13bd688e11d5a1ef",
-      "imageHashSm": "9fde0d8717176c2a"
+      "imageHashSm": "9fde0d8717176c2a",
+      "variants": [
+        {
+          "id": 2681,
+          "rarity": "Epic",
+          "number": 218,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/218_e00f29fbdecda0e8eaf552d21ff4579053d41a02.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/218_7acc503d7fd8934e81407282718e7eb16e712c67.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2610,
@@ -21559,7 +22681,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/151_349c46542653bc0cb5e28584d578872d441f7e6d.jpg"
       },
       "imageHash": "a31fb7fcc1228a26",
-      "imageHashSm": "21857c859fe55351"
+      "imageHashSm": "21857c859fe55351",
+      "variants": [
+        {
+          "id": 2680,
+          "rarity": "Epic",
+          "number": 217,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/217_272c48c5faf6200f9b1027620d111fdd58178fd4.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/217_883f50c23cfe354c88bf2dca17bf3af7c554b7f8.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2615,
@@ -21606,7 +22739,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/152_4df9a458522477da75b290db0da6f5ef4e8049a8.jpg"
       },
       "imageHash": "cf27477fefae0caa",
-      "imageHashSm": "16f71950c8d8fe5f"
+      "imageHashSm": "16f71950c8d8fe5f",
+      "variants": [
+        {
+          "id": 2698,
+          "rarity": "Enchanted",
+          "number": 235,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/235_62f87524f178a25f9add90fbeaaaae3f6696bdfd.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/235_74ac0f0daa1a48b5d0dd1856af5120c99c2d5b92.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2616,
@@ -21739,7 +22883,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/155_02c48a20c00faeccae34b1d0cee3e82fcfd1b5ba.jpg"
       },
       "imageHash": "12184d0046a6e065",
-      "imageHashSm": "c724964761d3bb84"
+      "imageHashSm": "c724964761d3bb84",
+      "variants": [
+        {
+          "id": 2705,
+          "rarity": "Iconic",
+          "number": 242,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/242_d36ee48dfb107513b7db72d5ab318c0dd542b58a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/242_3360eee2e7f891187e73a31dcdb2cb53ad5ac8f2.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2619,
@@ -21794,7 +22949,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/156_8424cc4138447629d30fcb825fc7ae4b7bfa5fbb.jpg"
       },
       "imageHash": "b31400b68ce703b0",
-      "imageHashSm": "6f41dc7c9ed5f36d"
+      "imageHashSm": "6f41dc7c9ed5f36d",
+      "variants": [
+        {
+          "id": 2700,
+          "rarity": "Enchanted",
+          "number": 237,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/237_286182c43884d2d3b94ea6aeeb8d4ff6c12cc5e6.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/237_50efda1a22d239cd88ad1cbd93a26b608d1c8615.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2620,
@@ -21878,7 +23044,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/158_ee0a74e8b18d50b81454c90f494a802848f0ae8c.jpg"
       },
       "imageHash": "6c46169268df2f8b",
-      "imageHashSm": "2078a851dc2e8a3f"
+      "imageHashSm": "2078a851dc2e8a3f",
+      "variants": [
+        {
+          "id": 2699,
+          "rarity": "Enchanted",
+          "number": 236,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/236_67cf6d2ec20cac7c617b6f10af9fa4919e50ba45.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/236_525886da24618c15c19585974d4c4ede160ff3a6.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2622,
@@ -21923,7 +23100,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/159_1f927c80fa25433eeb283aafd51e8f49254a9b7a.jpg"
       },
       "imageHash": "d62b674b32ee58ba",
-      "imageHashSm": "1f0868c85dea4375"
+      "imageHashSm": "1f0868c85dea4375",
+      "variants": [
+        {
+          "id": 2682,
+          "rarity": "Epic",
+          "number": 219,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/219_95152312be2d5ad6631502fb3a16cee0761b0101.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/219_2f83ae46b5eaab2c39c71913b430505326bdd68b.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2623,
@@ -22342,7 +23530,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/171_83f2daa6f014d495f31bb821df5a48e6f55d81eb.jpg"
       },
       "imageHash": "72016a1133d2cd49",
-      "imageHashSm": "4d497425f8336483"
+      "imageHashSm": "4d497425f8336483",
+      "variants": [
+        {
+          "id": 2685,
+          "rarity": "Epic",
+          "number": 222,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/222_7603f731b68c56ddb0b1d641e2cb250496d0a489.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/222_d591dee1ccba4ae382857984eb1f0870a873ab78.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2635,
@@ -22599,7 +23798,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/178_0faa66ff768b94ab08b3862ce9f0b688661627ac.jpg"
       },
       "imageHash": "af31cd23b54e01ec",
-      "imageHashSm": "0f2f83344575361e"
+      "imageHashSm": "0f2f83344575361e",
+      "variants": [
+        {
+          "id": 2683,
+          "rarity": "Epic",
+          "number": 220,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/220_06702237d69f7995055cd17fa695adf4c7d1c580.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/220_02b5d6b2e2031b6647aac0cea80f8a1deea9cd2d.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2642,
@@ -23132,7 +24342,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/191_23a8bb61dde11e6f7940ef61d8ffb1f2308e7594.jpg"
       },
       "imageHash": "6eb943dd5b0325ef",
-      "imageHashSm": "5e928c53b14331f9"
+      "imageHashSm": "5e928c53b14331f9",
+      "variants": [
+        {
+          "id": 2701,
+          "rarity": "Enchanted",
+          "number": 238,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/238_c7854f67fe1c7295b4735dfab1edebd07507730f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/238_ba41a26d7573b7b9d09b5f13e62cbcb9c9bc1677.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2655,
@@ -23188,7 +24409,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/192_062634948e2cd2c4b65df582bffc25383b6a33db.jpg"
       },
       "imageHash": "f41a9c294ec2cd7c",
-      "imageHashSm": "11e89866304ac0d0"
+      "imageHashSm": "11e89866304ac0d0",
+      "variants": [
+        {
+          "id": 2702,
+          "rarity": "Enchanted",
+          "number": 239,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/239_4feae65886c813ed868822c4c93cab0941a28618.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/239_e066488fb61d8834cb52a9dd06abfaadb1315140.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2656,
@@ -23281,7 +24513,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/194_aad83c5d00e2018635d8f825108f1ddb469e8a0d.jpg"
       },
       "imageHash": "2ae0e03594fba9f2",
-      "imageHashSm": "a82e6fc9e748d2c2"
+      "imageHashSm": "a82e6fc9e748d2c2",
+      "variants": [
+        {
+          "id": 2684,
+          "rarity": "Epic",
+          "number": 221,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/221_dd51b5e751e4396f94959a0437aa279038ea0375.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/221_77b65a336e301b42ab7c0665a5ec549b727ac0ed.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2658,
@@ -23407,7 +24650,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/198_025e7834ba29b73ef7e06a9e1fab26c235a133f1.jpg"
       },
       "imageHash": "648a7fe89cd00c25",
-      "imageHashSm": "b4501e596e84a053"
+      "imageHashSm": "b4501e596e84a053",
+      "variants": [
+        {
+          "id": 2703,
+          "rarity": "Enchanted",
+          "number": 240,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/240_dc71c8df57f4aa805c79c7c9fdecfbf84cbb7554.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/240_df8e054b19ebfddb7b47d29c2533cb41840ba3b2.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2662,
@@ -23704,7 +24958,18 @@
       },
       "number": 3,
       "rarity": "Common",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2920,
+          "rarity": "Epic",
+          "number": 205,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/205_67915aba241e867f3577595f55ec10305945839b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/205_6547308acc60850f21526ca2189f2a7adc35f8b3.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2719,
@@ -23977,7 +25242,18 @@
       },
       "number": 10,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2921,
+          "rarity": "Epic",
+          "number": 206,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/206_ad48c11aeba8c4f6b887d53546d7b95002366e4d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/206_db18db928b2077c593826258c8708c5aedc04064.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2726,
@@ -24239,7 +25515,18 @@
       },
       "number": 16,
       "rarity": "Uncommon",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2922,
+          "rarity": "Epic",
+          "number": 207,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/207_e3ec9cb1eb4101560025e4fcd701ca6270f2660f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/207_050a4c0d12f12cd1f3f5a51f530adb15c74cd715.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2732,
@@ -24362,7 +25649,18 @@
       },
       "number": 19,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2939,
+          "rarity": "Enchanted",
+          "number": 224,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/224_9e87c3271c69a4cab9757a1381fa0a84c949acde.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/224_8c61d3750c41d841c64f98b7ebe49fadd847524e.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2735,
@@ -24406,7 +25704,18 @@
       },
       "number": 20,
       "rarity": "Super Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2938,
+          "rarity": "Enchanted",
+          "number": 223,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/223_dccc687c5c023b04a947948c70cade32fdf740b9.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/223_0d536b0f947327a7d69a1283c8e2cb6dfb98e352.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2736,
@@ -24740,7 +26049,18 @@
       },
       "number": 30,
       "rarity": "Super Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2940,
+          "rarity": "Enchanted",
+          "number": 225,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/225_9633a5a18e148e243fe5e503484a4fd2022a2296.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/225_ae94fa3b2b0fd2e2043a2d4082ab76e1bd699e75.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2746,
@@ -25100,7 +26420,18 @@
       },
       "number": 40,
       "rarity": "Uncommon",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2925,
+          "rarity": "Epic",
+          "number": 210,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/210_79e6f8da2b697ae63df718f2eaa46697d843902b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/210_6e0056f7b7bc71dbed9adec3eb3b550b7900a0a2.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2756,
@@ -25582,7 +26913,18 @@
       },
       "number": 53,
       "rarity": "Common",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2923,
+          "rarity": "Epic",
+          "number": 208,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/208_7545fef34ab03d19c4a4b8db9d489f4f0c815a09.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/208_6488e3d57739a42bf611109f53fc5d34209a6030.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2769,
@@ -25626,7 +26968,18 @@
       },
       "number": 54,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2924,
+          "rarity": "Epic",
+          "number": 209,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/209_c03007045c2c0a9fa1163be5e67d5001a1089150.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/209_be4d45ee32b3f2373ad058fdfff8206be114b1ef.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2770,
@@ -25847,7 +27200,18 @@
       },
       "number": 59,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2941,
+          "rarity": "Enchanted",
+          "number": 226,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/226_d92830b874e6b3b36bae92665b0cbf137382591a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/226_968ee87d4e06a4618824d53983c561e202c8418a.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2775,
@@ -25900,7 +27264,18 @@
       },
       "number": 60,
       "rarity": "Legendary",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2942,
+          "rarity": "Enchanted",
+          "number": 227,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/227_3808d04feabe3bfbfa555154fb812642219c4e87.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/227_82e6b51137ed4c134c30e99036782b3305fea913.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2776,
@@ -26129,7 +27504,18 @@
       },
       "number": 67,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2943,
+          "rarity": "Enchanted",
+          "number": 228,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/228_cf3992b9716a4b2061283bf62fefb6a486d2bdbf.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/228_5bc22b31bf4ae5af209562bb4d9ed0f23c7c6371.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2783,
@@ -26451,7 +27837,18 @@
       },
       "number": 76,
       "rarity": "Common",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2926,
+          "rarity": "Epic",
+          "number": 211,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/211_2dee75b4b1d8c64ea188d291781cd75ae0b6432c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/211_bb1b0b8c83da6f3d7d3b2e83ca932cacc28452e1.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2792,
@@ -26693,7 +28090,18 @@
       },
       "number": 82,
       "rarity": "Super Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2945,
+          "rarity": "Enchanted",
+          "number": 230,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/230_0abf805db2c0fa1fb99f07e6d17421c85e53eff6.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/230_f68bf126891747ddba39eb566750d152ca28581c.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2798,
@@ -26738,7 +28146,18 @@
       },
       "number": 83,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2944,
+          "rarity": "Enchanted",
+          "number": 229,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/229_0853805f33e667fa0e3ef520fe2d8a1bb6236bca.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/229_f33a7cf88df686cb62e13feffe2fb9619332450c.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2799,
@@ -26774,7 +28193,18 @@
       },
       "number": 84,
       "rarity": "Uncommon",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2927,
+          "rarity": "Epic",
+          "number": 212,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/212_6acba0b0f1a84ba7b789ef70abc89b974dfe8660.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/212_ada41c68f0f207d4231d701645469c745de2a304.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2800,
@@ -26984,7 +28414,18 @@
       },
       "number": 89,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2928,
+          "rarity": "Epic",
+          "number": 213,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/213_c049823c135740133983029360b4512c7d62fa16.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/213_2dd07f326710c58a12702c7f7eb678fdd7919252.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2805,
@@ -27086,7 +28527,18 @@
       },
       "number": 91,
       "rarity": "Legendary",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2956,
+          "rarity": "Iconic",
+          "number": 241,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/241_559b96824c7e1bc8ca0cac221eed38e2a89f0aa1.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/241_c5d4c646b67e7088fe3c22ee90e4e2eba1badd19.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2807,
@@ -27268,7 +28720,18 @@
       },
       "number": 97,
       "rarity": "Super Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2946,
+          "rarity": "Enchanted",
+          "number": 231,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/231_41d6911b0b18f984aca7940542c94eefe91d0c6a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/231_400ec53c3875a3fc7233cea4f8c218b7500c2e60.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2813,
@@ -27513,7 +28976,18 @@
       },
       "number": 103,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2929,
+          "rarity": "Epic",
+          "number": 214,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/214_c0be2042491031fd8bb4c348c87919b68950c2ba.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/214_487be706f479a339a52e5a55cba5311b28bb81e1.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2819,
@@ -27540,7 +29014,18 @@
       },
       "number": 104,
       "rarity": "Common",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2930,
+          "rarity": "Epic",
+          "number": 215,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/215_65c1d372d1046eabdb608b3243d46d422fcf2c51.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/215_284acdca80b38a05493c74ef210159215076890f.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2820,
@@ -27937,7 +29422,18 @@
       },
       "number": 115,
       "rarity": "Uncommon",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2931,
+          "rarity": "Epic",
+          "number": 216,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/216_6a674b21f22b7a779d2a8eff0eb6af56ffe35070.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/216_36dc24059fe6e4cd375a4273a9d68697dae89ac2.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2831,
@@ -28175,7 +29671,18 @@
       },
       "number": 121,
       "rarity": "Super Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2947,
+          "rarity": "Enchanted",
+          "number": 232,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/232_087e77730b575f70cfa5ee3835f844b2ceb28b5b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/232_c2e9972f2cae7b2c39950b85efb06169f370ceba.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2837,
@@ -28332,7 +29839,18 @@
       },
       "number": 125,
       "rarity": "Super Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2948,
+          "rarity": "Enchanted",
+          "number": 233,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/233_758393e5c42a3070820c7230186a0fba74158e78.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/233_f943f52445e986cf9ad52687a90b5ca4fbee3072.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2841,
@@ -28431,7 +29949,18 @@
       },
       "number": 127,
       "rarity": "Legendary",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2949,
+          "rarity": "Enchanted",
+          "number": 234,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/234_3f946381982ae80e97cf6442390e6137ae7b2343.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/234_a363783be904f3f5e460dac0ae177a6469ff23c0.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2843,
@@ -28968,7 +30497,18 @@
       },
       "number": 144,
       "rarity": "Common",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2932,
+          "rarity": "Epic",
+          "number": 217,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/217_9a69d88c6e68ad7fc7b9d931cf3eac3303bcdff7.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/217_3fd2f9647c58055e71f652ec04fb51b42ccc7b25.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2860,
@@ -29208,7 +30748,18 @@
       },
       "number": 150,
       "rarity": "Super Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2950,
+          "rarity": "Enchanted",
+          "number": 235,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/235_5bb4c22c4fee7c03518704a0ef63282f37b60f3c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/235_a2fd793d5777eefa4def3c8cf2c2e9d0ceafb7ed.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2866,
@@ -29370,7 +30921,18 @@
       },
       "number": 154,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2933,
+          "rarity": "Epic",
+          "number": 218,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/218_01979c551cd701f658c142cb350a65d5e8e0ece1.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/218_56dbc8d46def301da6be7277a22c210bc45a30dd.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2870,
@@ -29553,7 +31115,18 @@
       },
       "number": 159,
       "rarity": "Uncommon",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2934,
+          "rarity": "Epic",
+          "number": 219,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/219_9c68f136651a70965c1d8dad69f6ad8820a16fa3.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/219_63fb5ad9a331dcad35d5456aacc958dedd6f547b.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2875,
@@ -29612,7 +31185,18 @@
       },
       "number": 160,
       "rarity": "Legendary",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2951,
+          "rarity": "Enchanted",
+          "number": 236,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/236_3f44b3017f6d3f25364c38fa430c32b902009ddf.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/236_e22d91ee01cd74e79b6208a07b28806a8eb20344.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2876,
@@ -29718,7 +31302,18 @@
       },
       "number": 163,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2952,
+          "rarity": "Enchanted",
+          "number": 237,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/237_b184429a1820819ac6e304ba57bf88fe439d66f1.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/237_f6adda9dcd3e4a876fa116af900810ec1a5c6ea3.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2879,
@@ -29986,7 +31581,18 @@
       },
       "number": 171,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2935,
+          "rarity": "Epic",
+          "number": 220,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/220_8c954d2a24a70e4af750eca1865b1228f03579af.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/220_8a8009fb8fa87614d6b83a26f49fdc5a6ce1c5b6.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2887,
@@ -30036,7 +31642,18 @@
       },
       "number": 172,
       "rarity": "Super Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2953,
+          "rarity": "Enchanted",
+          "number": 238,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/238_1099704b0caa4f1b01d45cd17621cc160fb51ca8.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/238_1d724e9530d2a28feec9865e411f53971a3aac29.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2888,
@@ -30222,7 +31839,18 @@
       },
       "number": 177,
       "rarity": "Common",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2936,
+          "rarity": "Epic",
+          "number": 221,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/221_a0cbea95aa0eb01650f1fbbae34fd8741f27359d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/221_3e65d3d03cb8051810636a2149de29cf00d8e9f3.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2893,
@@ -30763,7 +32391,18 @@
       },
       "number": 191,
       "rarity": "Legendary",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2957,
+          "rarity": "Iconic",
+          "number": 242,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/242_8495fac30ca0449150a7d301fbcbe71cc92e5979.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/242_37a63fcc625e9b285889e70618cb85c801848afc.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2907,
@@ -30938,7 +32577,18 @@
       },
       "number": 195,
       "rarity": "Legendary",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2954,
+          "rarity": "Enchanted",
+          "number": 239,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/239_7e825043a20a9f3d0cc2cbb3ce7456cbaf31633d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/239_3642f26fb475c36a089c35eecc669e02c9d1f195.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2911,
@@ -31001,7 +32651,18 @@
       },
       "number": 197,
       "rarity": "Uncommon",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2937,
+          "rarity": "Epic",
+          "number": 222,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/222_e94076f21a95ccb2eb12bcb06ebfa27081c6ad62.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/222_812eebd4fd25b4e666e1c526e7e3ff1ed24e95ab.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2913,
@@ -31052,7 +32713,18 @@
       },
       "number": 199,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2955,
+          "rarity": "Enchanted",
+          "number": 240,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/240_185d89307de4161437257494a507c87eb14c2a6f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/240_94b39652e4014271d51fee161e54f99c2506882d.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2915,
@@ -31822,7 +33494,18 @@
       },
       "number": 16,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3181,
+          "rarity": "Epic",
+          "number": 210,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/210_f179204ce448e99f550502350cfa467386110017.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/210_870fcfca9f72806cddbc0f6ba480a45aef043b87.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2988,
@@ -31906,7 +33589,18 @@
       },
       "number": 18,
       "rarity": "Super Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3197,
+          "rarity": "Enchanted",
+          "number": 226,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/226_08614c6a29be9185d7f2a615e5111524dcf55801.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/226_75fc93e5446ba6fd052e4c0b8653f136c31bc1aa.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2990,
@@ -31943,7 +33637,18 @@
       },
       "number": 19,
       "rarity": "Uncommon",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3180,
+          "rarity": "Epic",
+          "number": 209,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/209_06cd57a836bc59e97bb2daeecc1ed089985e5589.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/209_90621ba4a1d9536044c7d76846375ba4fca13078.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2991,
@@ -31980,7 +33685,18 @@
       },
       "number": 20,
       "rarity": "Common",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3179,
+          "rarity": "Epic",
+          "number": 208,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/208_ba14e62cb97c30513bdc5418b3bdf37a0890a4ad.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/208_cadd606ac637de3ae01f6ae78ca534aced29588b.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2992,
@@ -32274,7 +33990,18 @@
       },
       "number": 27,
       "rarity": "Legendary",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3198,
+          "rarity": "Enchanted",
+          "number": 227,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/227_6b93ad7d82636b71a439bdecc8a0f2e0049df46e.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/227_e2ef9741568aa2555ae5be97320fd82303b385ea.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2999,
@@ -32332,7 +34059,18 @@
       },
       "number": 28,
       "rarity": "Legendary",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3199,
+          "rarity": "Enchanted",
+          "number": 228,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/228_95433e3725a1fe64ad6d09a115dc460fdc46a9ba.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/228_8076596cddbbb970c11c5ff2548a4a9fd4cea63d.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3000,
@@ -32382,7 +34120,18 @@
       },
       "number": 29,
       "rarity": "Super Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3200,
+          "rarity": "Enchanted",
+          "number": 229,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/229_f1c593b593ea309771e24bf8fecbc6c7872cace0.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/229_4ff4e11ac80e8019ab26bebb84e71fa7d1bdf6e9.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3001,
@@ -32431,7 +34180,18 @@
       },
       "number": 30,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3201,
+          "rarity": "Enchanted",
+          "number": 230,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/230_0fa35e34b158b3d132cacc873ddbdb307955b89d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/230_6d5a7c70c5be7abec64a7f5b7ef39e02a1023285.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3002,
@@ -32492,7 +34252,18 @@
       },
       "number": 31,
       "rarity": "Super Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3215,
+          "rarity": "Iconic",
+          "number": 244,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/244_f9111e7a4dede5dc5cd5378b5bb83134d4002e1d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/244_c745b8aa88c2a3e0b282b4133eee7c35159e26ee.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3003,
@@ -32783,7 +34554,18 @@
       },
       "number": 40,
       "rarity": "Common",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3183,
+          "rarity": "Epic",
+          "number": 212,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/212_9a81da89d2fbc2b7d3b6a0ef0829eec6615658b6.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/212_2fa625e6868410cc4b4bbea467fe8c8324594689.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3012,
@@ -33151,7 +34933,18 @@
       },
       "number": 50,
       "rarity": "Legendary",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3202,
+          "rarity": "Enchanted",
+          "number": 231,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/231_514aee0d45652e2fdf5c4e687d1618212abad652.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/231_f402a9f60c7c1c792861b6aeee8e09c6a2534a1f.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3022,
@@ -33188,7 +34981,18 @@
       },
       "number": 51,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3184,
+          "rarity": "Epic",
+          "number": 213,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/213_af2ae013c58e64d8cb71f731023da177aa69dd21.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/213_e55481341feda69adfe194fbcd4d60143ae60a3f.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3023,
@@ -33309,7 +35113,18 @@
       },
       "number": 54,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3182,
+          "rarity": "Epic",
+          "number": 211,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/211_2b57fa4247d76af9aec012ec3e29569163aa6bbd.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/211_c4a081e00401ddac94a09a6c83af70456435eeda.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3026,
@@ -33496,7 +35311,18 @@
       },
       "number": 59,
       "rarity": "Super Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3203,
+          "rarity": "Enchanted",
+          "number": 232,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/232_38db009b8066395e389a3ca562393acdf6913a66.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/232_d9250ee2341c5b06ce7a37594e1e597ddb2011a9.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3031,
@@ -33546,7 +35372,18 @@
       },
       "number": 60,
       "rarity": "Super Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3204,
+          "rarity": "Enchanted",
+          "number": 233,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/233_2fcb80f5291d23be00657f2e1d04bc0deb3a637f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/233_c9154dec6821e526911d03ec096d63fed6a10f11.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3032,
@@ -33641,7 +35478,18 @@
       },
       "number": 62,
       "rarity": "Super Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3205,
+          "rarity": "Enchanted",
+          "number": 234,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/234_e7777e193f47cfd07396f85fc8dbffdb9350d1bd.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/234_628a8b95f68db5a5261bb9a8ff0842f37ec13f58.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3034,
@@ -33698,7 +35546,18 @@
       },
       "number": 63,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3206,
+          "rarity": "Enchanted",
+          "number": 235,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/235_48c4ba11ab2ff0f3c1a6b0aabff1f304c196c4fd.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/235_f7bf6b7dfeb6c3039e9cb3b27ea39cca0569cad1.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3035,
@@ -34581,7 +36440,18 @@
       },
       "number": 88,
       "rarity": "Uncommon",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3186,
+          "rarity": "Epic",
+          "number": 215,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/215_4173d957ce9355c2aa47b67d837bec1cbad0827b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/215_4855c0ceecd529c3b3ffd4f807f32df5e5c2f361.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3060,
@@ -34617,7 +36487,18 @@
       },
       "number": 89,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3187,
+          "rarity": "Epic",
+          "number": 216,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/216_394255f90de17bf29f51eeaab41e689c1e1d266c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/216_dff74885ea08e79f7d9e6fb7523b847caa036178.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3061,
@@ -34768,7 +36649,18 @@
       },
       "number": 93,
       "rarity": "Common",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3185,
+          "rarity": "Epic",
+          "number": 214,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/214_bcef9058e45c33e57312c99b91b349e915ec8c5e.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/214_281c9bfd98ff1d3cffa89ec04c2c894f274b23e9.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3065,
@@ -34819,7 +36711,18 @@
       },
       "number": 94,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3207,
+          "rarity": "Enchanted",
+          "number": 236,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/236_50764ca6cd2e2f920ae53e92a923d83b8e0b07e4.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/236_ce2ef594d2c9f12849cff88c1da93b62d4458fd2.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3066,
@@ -34978,7 +36881,18 @@
       },
       "number": 98,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3208,
+          "rarity": "Enchanted",
+          "number": 237,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/237_3a5d7218284117295a6cff1aef1b4031852cb7d9.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/237_1e628b7b6fd2285c832adf71cbb96f10f1451d8d.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3070,
@@ -35027,7 +36941,18 @@
       },
       "number": 99,
       "rarity": "Legendary",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3209,
+          "rarity": "Enchanted",
+          "number": 238,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/238_bbc5cfe06474615656dcc3053826ea1aeddd2393.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/238_0d06c1e080d66727ac4a3a66dbe21946794fb8c3.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3071,
@@ -35085,7 +37010,18 @@
       },
       "number": 100,
       "rarity": "Legendary",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3210,
+          "rarity": "Enchanted",
+          "number": 239,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/239_d88abf5d4ced335cc3017c2f2abeda23b7e9fb7f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/239_6f15ad23251b4f608474c339f98b4eae75d8e1a8.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3072,
@@ -35559,7 +37495,18 @@
       },
       "number": 114,
       "rarity": "Common",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3190,
+          "rarity": "Epic",
+          "number": 219,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/219_4b7b3d67505904da843fe920f14eadf47e14958c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/219_b9e8839b99ff303f94b9fd7a753b80e4b11a3cce.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3086,
@@ -35744,7 +37691,18 @@
       },
       "number": 119,
       "rarity": "Uncommon",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3189,
+          "rarity": "Epic",
+          "number": 218,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/218_98d7626dc3b5eead268f4ead5006100dbc287e93.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/218_6fdb3a8065d5421ceea1542e66b509b9984d9c32.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3091,
@@ -35918,7 +37876,18 @@
       },
       "number": 123,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3188,
+          "rarity": "Epic",
+          "number": 217,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/217_8a78737c91542b04eb527ef56da7b620edc876aa.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/217_598279433185df3004e4a7a48665377e0290bae1.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3095,
@@ -36006,7 +37975,18 @@
       },
       "number": 125,
       "rarity": "Legendary",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3211,
+          "rarity": "Enchanted",
+          "number": 240,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/240_a5e3822c8706dda26eb91bd0e2c0f0fd7f83d7bf.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/240_f3872706929decd469f5b4dd57ceaccc672af06e.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3097,
@@ -36320,7 +38300,18 @@
       },
       "number": 132,
       "rarity": "Super Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3216,
+          "rarity": "Iconic",
+          "number": 245,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/245_bd7b519b182ce1d62fcab575e0358623b9aeb140.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/245_edb7d9f0d1808b13d78e8d01b94b1377e5e021d1.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3104,
@@ -36385,7 +38376,18 @@
       },
       "number": 133,
       "rarity": "Legendary",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3212,
+          "rarity": "Enchanted",
+          "number": 241,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/241_9bdd4e7169a7c51b3cc565c38d86749de429297f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/241_dc69c1bf17ec6c2af3a3480cbefb96c0d6da7025.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3105,
@@ -36761,7 +38763,18 @@
       },
       "number": 145,
       "rarity": "Common",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3192,
+          "rarity": "Epic",
+          "number": 221,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/221_4f45d9831cfb64705747a7d9e5c42873a33915b9.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/221_bbddff04552c91968fcf4a7f8414204a1e14a47f.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3117,
@@ -37418,7 +39431,18 @@
       },
       "number": 163,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3191,
+          "rarity": "Epic",
+          "number": 220,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/220_8869e6c88649b3b166e1e987346ef9aa8e000d7e.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/220_7b6554c09ac15ee1a9691dd0ebf39ce4709fd432.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3135,
@@ -37514,7 +39538,18 @@
       },
       "number": 165,
       "rarity": "Super Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3213,
+          "rarity": "Enchanted",
+          "number": 242,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/242_db491c08f5de8edc137823304d6a8130d1a81f37.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/242_73ba27ef2f878d8d0038e4d2084109aa4f3e8d28.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3137,
@@ -37820,7 +39855,18 @@
       },
       "number": 175,
       "rarity": "Uncommon",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3193,
+          "rarity": "Epic",
+          "number": 222,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/222_f6360e40b0858ec59a825810d573fc9841e66b52.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/222_526befa5da93a928911d3c8510f4c3849de15b02.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3147,
@@ -38250,7 +40296,18 @@
       },
       "number": 186,
       "rarity": "Uncommon",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3196,
+          "rarity": "Epic",
+          "number": 225,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/225_5f3ccde0bc3abd5564ae21735349ec9e5298b562.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/225_54fc39f0d3c37e249b15e112082d8d2b9d58f8fb.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3158,
@@ -38434,7 +40491,18 @@
       },
       "number": 191,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3194,
+          "rarity": "Epic",
+          "number": 223,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/223_d6e8eadec9ccb694423f630212fb3b27b4173c66.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/223_a21606cccbace109a610af0a3a29947128a692b3.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3163,
@@ -38471,7 +40539,18 @@
       },
       "number": 192,
       "rarity": "Common",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3195,
+          "rarity": "Epic",
+          "number": 224,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/224_d1e0fbaa0f31f87e28744318c811d517321426dc.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/224_86202de0f97688a6cf66d30c7f341776aa06201c.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3164,
@@ -38550,7 +40629,18 @@
       },
       "number": 194,
       "rarity": "Legendary",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3214,
+          "rarity": "Enchanted",
+          "number": 243,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/243_735369ee8fa292a31ecd16cb78c4e9171a13babe.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/243_3114169ec79d991a2fcb3329ed849a7aad287409.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3166,

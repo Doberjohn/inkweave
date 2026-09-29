@@ -1,7 +1,9 @@
 import {
   transformCard as baseTransformCard,
   isCoreSet,
+  type CardPrinting,
   type LorcanaJSONCard,
+  type RawCardVariant,
 } from 'inkweave-synergy-engine';
 import type {LorcanaCard, Ink, CardType} from './types';
 import {ALL_INKS, type BrowseSortOrder} from '../../shared/constants';
@@ -38,7 +40,10 @@ const USE_LOCAL_IMAGES = import.meta.env.VITE_LOCAL_IMAGES === 'true';
 const IMAGE_CDN_ORIGIN = 'https://api.lorcana.ravensburger.com/images/';
 const PREVIEW_IMAGE_CDN_ORIGIN = 'https://lorcanaplayer.com/wp-content/uploads/';
 
-function resolveImageUrl(raw: LorcanaJSONCard): string | undefined {
+/** A card, or one of its variant printings (#625): anything with its own id and art. */
+type ImageSource = Pick<LorcanaJSONCard, 'id' | 'images' | 'imageHash'>;
+
+function resolveImageUrl(raw: ImageSource): string | undefined {
   // Production: content-addressed URL using the hash injected into the data
   // file by scripts/download-card-images.mjs. Returning undefined when no
   // hash is present is intentional — surfaces a build mismatch as a broken
@@ -97,7 +102,19 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
   card.imageHashSm = raw.imageHashSm;
   // Only preview cards shown with a foreign-language scan carry this (the "See translation" toggle).
   card.scanLanguage = raw.scanLanguage;
+  card.variants = raw.variants?.map(toPrinting);
   return card;
+}
+
+/** A variant printing's art resolves exactly like a card's, under the variant's own id. */
+function toPrinting(variant: RawCardVariant): CardPrinting {
+  return {
+    id: String(variant.id),
+    rarity: variant.rarity,
+    number: variant.number,
+    imageUrl: resolveImageUrl(variant),
+    imageHashSm: variant.imageHashSm,
+  };
 }
 
 /**

@@ -12,12 +12,20 @@ import {FRANCHISE_SPOTLIGHTS, SET_SPOTLIGHTS} from '../../../features/reveals/se
 // a card BEFORE its AVIFs (the convert workflow commits those afterwards), so
 // nothing here may depend on image files existing.
 
+/** An alternate printing folded into its base card (#625). */
+interface VariantEntry {
+  id: number;
+  rarity: string;
+  number: number;
+}
+
 interface PreviewCard {
   id: number;
   number?: number;
   setCode?: string;
   fullName?: string;
   scanLanguage?: string;
+  variants?: VariantEntry[];
 }
 
 /** One card's record in scripts/reveal-sync/state.json. */
@@ -75,6 +83,30 @@ describe('reveal-set integrity', () => {
   it('no preview card id collides with a canonical card (the loader would silently drop it)', () => {
     const canonical = new Set(readData<{cards: {id: number}[]}>('allCards.json').cards.map((c) => c.id));
     expect(preview.cards.filter((c) => canonical.has(c.id)).map((c) => c.id)).toEqual([]);
+  });
+
+  // Variant printings (Epic/Enchanted/Iconic) are numbered after the set's base cards, and
+  // take the same REVEAL_ID_BASE + number id whether they came from a manual scan or from
+  // `pnpm sync-variants`, so the two paths land on one id.
+  it('every variant printing has a reveal-convention id, numbered after the base cards', () => {
+    const malformed = preview.cards.flatMap((c) =>
+      (c.variants ?? [])
+        .filter(
+          (v) =>
+            v.id !== REVEAL_ID_BASE + v.number ||
+            v.number <= SET_TOTAL ||
+            !['Enchanted', 'Epic', 'Iconic'].includes(v.rarity),
+        )
+        .map((v) => `${v.id} (${v.rarity} #${v.number}) on ${c.fullName}`),
+    );
+    expect(malformed).toEqual([]);
+  });
+
+  it('no variant printing id collides with a card or another printing (they share one image namespace)', () => {
+    const canonical = readData<{cards: PreviewCard[]}>('allCards.json').cards;
+    const cards = [...canonical, ...preview.cards];
+    const ids = [...cards.map((c) => c.id), ...cards.flatMap((c) => (c.variants ?? []).map((v) => v.id))];
+    expect(ids.filter((id, i) => ids.indexOf(id) !== i)).toEqual([]);
   });
 
   it('every card a spotlight shows has been revealed', () => {

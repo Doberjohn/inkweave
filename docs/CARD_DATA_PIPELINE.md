@@ -169,7 +169,7 @@ Two side-effects when `previewCards.json` changes:
 <strong>Verified complete</strong> — Set 12 was migrated from hand-curated preview entries to canonical LorcanaJSON data. <code>allCards.json</code> now carries 204 canonical Set 12 cards (permanent LorcanaJSON ids 2716–2919); <code>previewCards.json</code> is reset to empty. The migration ran through <code>scripts/graduate-canonical-set.mjs</code>, which is the reusable reference implementation for all future set graduations.
 </blockquote>
 
-**Historical context:** From 2026-04-17 to 2026-05-13 both files carried the same 204 hand-curated Set 12 entries with composite preview ids like `121204` (`<set><number><total>`). The dedup logic in `loader.ts:179-180` silently masked the `previewCards.json` entries. The 2026-05-13 migration replaced all entries with canonical data atomically, dropping 51 variant-rarity printings (Epic / Iconic / Enchanted / Special) per [Rule 1](#rules-during-canonical-integration) and stripping extra LorcanaJSON metadata fields per Rules 4-6.
+**Historical context:** From 2026-04-17 to 2026-05-13 both files carried the same 204 hand-curated Set 12 entries with composite preview ids like `121204` (`<set><number><total>`). The dedup logic in `loader.ts:179-180` silently masked the `previewCards.json` entries. The 2026-05-13 migration replaced all entries with canonical data atomically, dropping 51 variant-rarity printings (Epic / Iconic / Enchanted / Special) per [Rule 1](#rules-during-canonical-integration) and stripping extra LorcanaJSON metadata fields per Rules 4-6. (Since #625, Rule 1 folds Epic / Iconic / Enchanted into the base card's `variants` instead; `pnpm sync-variants` backfilled them for sets 9-13.)
 
 Effect of the graduation:
 - Set 12 card ids changed from composite preview ids (`121204`, `122204`, ...) to LorcanaJSON sequential ids (`2716`, `2717`, ...) — any shared pre-graduation URLs break by design
@@ -345,7 +345,8 @@ The file lives at `apps/web/public/data/previewCards.json`. Post-Set-12 graduati
 | `keywordAbilities` | Optional | Array of keyword name strings — alternative to embedding in `abilities` |
 | `setCode` | Yes | Set code as string (e.g., `"13"`). Critical — used everywhere for filtering. Must match the key in `sets[code]`. |
 | `number` | Yes | Card number within set (1 to total cards in set) |
-| `rarity` | Yes | `"Common"`, `"Uncommon"`, `"Rare"`, `"Super Rare"`, `"Legendary"`. Variant rarities (`Epic`, `Iconic`, `Enchanted`, `Special`) are stripped at graduation per [Rule 1](#rules-during-canonical-integration) — don't bother adding them to preview entries. |
+| `rarity` | Yes | `"Common"`, `"Uncommon"`, `"Rare"`, `"Super Rare"`, `"Legendary"`. Never add an Epic, Iconic, Enchanted or Special printing as its own entry: the first three go in the base card's `variants` (next row), and Special is out of scope. |
+| `variants` | Optional | The card's Epic/Enchanted/Iconic printings (#625), sorted by collector number: `[{"id": 14241, "rarity": "Iconic", "number": 241, "images": {"full": "...", "thumbnail": "..."}}]`. In reveal season the id is `REVEAL_ID_BASE + number` and the number is above the set's base total (both test-enforced). `images` is absent for a hand-supplied scan, whose art is `card-images-preview/{id}.avif`. Written by `pnpm sync-variants` or by hand ([START_REVEAL_SEASON.md](reveals/START_REVEAL_SEASON.md)); canonical cards get theirs from [Rule 1](#rules-during-canonical-integration). The engine never reads it. |
 | `franchise` | **Preview-only** | Drives the `/reveals` page franchise tiering. Set to a value matching one of `FRANCHISES.match` in `apps/web/src/features/reveals/franchise.ts` (currently `"Toy Story"`, `"The Incredibles"`, `"Brave"`). Cards without a matching franchise fall into the "Returning franchises" tier. Stripped at graduation per [Rule 4](#rules-during-canonical-integration). For Set 13+, update `FRANCHISES` if new IPs join. |
 | `images.thumbnail` / `images.full` | Optional but recommended | Preview URLs from lorcanaplayer.com. The loader at `loader.ts:52` rewrites `lorcanaplayer.com/*` → `/card-images-preview/{id}.avif` automatically; AVIFs come from `convert-preview-images.mjs` reading raw JPGs in `card-images-raw/`. |
 
@@ -403,10 +404,10 @@ Image conversion + content-addressed hashing.
 |---|---|---|
 | Load primary | `download-card-images.mjs:241` | Reads `allCards.json` |
 | Merge previews | `download-card-images.mjs:196-205` (`loadAllCards`) | Reads `previewCards.json` if present, appends cards whose id is not in `allCards.json` (primary wins) |
-| Partition | `download-card-images.mjs:212-225` (`partitionCards`) | For each merged card: if pre-converted preview AVIFs exist in `card-images-preview/{id}*.avif`, copy + hash. Else enqueue for Ravensburger download. |
+| Partition | `download-card-images.mjs` (`partitionCards`, `imageSubjects`) | For each merged card, and each of its `variants` under the variant's own id: if pre-converted preview AVIFs exist in `card-images-preview/{id}*.avif`, copy + hash. Else enqueue for Ravensburger download. |
 | Download + convert | `download-card-images.mjs:130-160` (`processTask`) | Fetch JPEG → Sharp resize → AVIF (quality 50) → write to `node_modules/.cache/card-images/` (unhashed cache); concurrency 20, 2 retries |
 | Emit hashed | `download-card-images.mjs:104-111` (`emitHashed`) | sha256-16 hash of AVIF bytes → write `apps/web/public/card-images/{id}.{hash}.avif` and `{id}.{hash}-sm.avif`. Two sizes: 337×470 (full) and 191×266 (small). |
-| Inject hashes | `download-card-images.mjs:166-179` + `285-292` (`injectManifest`) | **Mutates `allCards.json` AND `previewCards.json` in-place** to set `imageHash` + `imageHashSm` on every card. The runtime loader reads these to build `/card-images/{id}.{hash}.avif` URLs. |
+| Inject hashes | `download-card-images.mjs` (`injectManifest`) | **Mutates `allCards.json` AND `previewCards.json` in-place** to set `imageHash` + `imageHashSm` on every card and every nested variant. The runtime loader reads these to build `/card-images/{id}.{hash}.avif` URLs. A variant left without an image is a warning (`missingVariantHashes`), never a failed build. Keep locally injected hashes out of commits. |
 
 Why content-addressed: any change to AVIF bytes produces a new hash → new URL → new cache entry everywhere (browser, Vercel Edge, service worker). Makes the `Cache-Control: max-age=31536000, immutable` header at `vercel.json:14-23` truthful. Was the year-long footgun fixed in issue #323 / PR #324.
 
@@ -736,6 +737,7 @@ flowchart TD
 1. **Preview source images** (optional): JPGs / PNGs in `apps/web/public/card-images-raw/` (git-ignored, `.gitignore:56`)
 2. **Convert preview images** (`scripts/convert-preview-images.mjs:35-43`): Sharp resize → AVIF (quality 50). Two sizes: 337×470 full, 191×266 small. Output to `apps/web/public/card-images-preview/{id}.avif` and `{id}-sm.avif`. These are **committed** to git.
 3. **Build-time hashing** (`scripts/download-card-images.mjs`):
+   - Every card and every variant printing is an image subject under its own id (`imageSubjects`)
    - For cards with pre-converted preview AVIFs (`hasPreviewAvifs(id)`, lines 113-119): read bytes → hash → emit
    - For cards needing download: fetch from Ravensburger → Sharp resize → AVIF → cache → hash → emit
    - Hash: sha256, first 16 hex chars = 64 bits (line 72)
@@ -930,7 +932,7 @@ Six rules apply when integrating canonical LorcanaJSON data into `allCards.json`
 
 | # | Rule | Why |
 |---|------|-----|
-| 1 | **Strip variant-rarity cards** — `Epic`, `Iconic`, `Enchanted`, `Special` | App doesn't render multi-variant cards yet (51 such printings in Set 12). Remove this filter once multi-variant support ships. |
+| 1 | **Fold variant printings into their base card**: `Epic`, `Iconic`, `Enchanted` become entries in the base card's `variants` (matched on LorcanaJSON `baseId`, via `scripts/lib/fold-variants.mjs`). **Strip `Special`** promos. A printing graduation would drop stops the run before it writes anything (`--allow-missing-variants` drops it on purpose): a variant hand-scanned during the reveal season but missing from the canonical source (`previewCards.json` is its only copy), or a canonical printing whose base card isn't in the set's file. | Variants are rules-identical alternate art, not new cards: they're stored on their base card for the #625 printing switcher (card page and modal), never as separate cards. Special promos (several per base, each needing its own label) stay out of scope. Before #625 all four rarities were stripped (51 printings in Set 12). |
 | 2 | **Adopt canonical IDs unconditionally** | LorcanaJSON's sequential ids (`2716`...) are the permanent identity; preview composite ids (`121204`...) are placeholders. Pre-graduation URLs break — acceptable in beta. |
 | 3 | **Adopt canonical names** | LorcanaJSON is source of truth; preview curation can have typos / wording corrections. Rule 2 makes this automatic since canonical entries fully replace preview entries. |
 | 4 | **Strip `franchise` field** | Only needed during reveal season for franchise-logo tiering on `/reveals`. Post-graduation, deactivate the page via `VITE_IS_REVEAL_SEASON=false`. Next set's preview re-adds it. |
