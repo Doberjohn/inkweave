@@ -106,6 +106,15 @@ export const EVENT_QUERIES = [
       {prop: 'groupKey', label: 'By synergy group', limit: 10},
     ],
   },
+  {
+    name: 'card_printing_view',
+    label: 'Alternate printings viewed',
+    breakdowns: [
+      {prop: 'rarity', label: 'By rarity'},
+      {prop: 'surface', label: 'By surface'},
+      {prop: 'cardId', label: 'By card', limit: 10},
+    ],
+  },
 ];
 
 /** Fallback top-N when a breakdown does not set its own `limit`. */

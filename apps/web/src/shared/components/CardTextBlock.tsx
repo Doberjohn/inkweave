@@ -72,26 +72,27 @@ export function CardTextBlock({card, fontSize = FONT_SIZES.sm}: CardTextBlockPro
 
   return (
     <div data-testid="card-text-block">
-      {textBlocks.map((section, i) => (
-        <p
-          key={i}
-          style={{
-            margin: 0,
-            padding: 0,
-            fontSize,
-            lineHeight: 1.5,
-            color: COLORS.text,
-            ...(i < textBlocks.length - 1
-              ? {
-                  marginBottom: SPACING.sm,
-                  paddingBottom: SPACING.sm,
-                  borderBottom: `1px solid ${COLORS.surfaceBorder}`,
-                }
-              : {}),
-          }}>
-          {formatSection(section)}
-        </p>
-      ))}
+      {textBlocks.map((section, i) => {
+        const divided = i < textBlocks.length - 1;
+        // One shorthand each, never `margin: 0` plus a marginBottom: paragraphs are keyed by
+        // position, and when a card with fewer sections makes this one the last, React would
+        // unset that longhand instead of zeroing it, restoring the browser's 1em margin.
+        const spacing = divided ? `0 0 ${SPACING.sm}px` : 0;
+        return (
+          <p
+            key={i}
+            style={{
+              margin: spacing,
+              padding: spacing,
+              fontSize,
+              lineHeight: 1.5,
+              color: COLORS.text,
+              borderBottom: divided ? `1px solid ${COLORS.surfaceBorder}` : undefined,
+            }}>
+            {formatSection(section)}
+          </p>
+        );
+      })}
     </div>
   );
 }

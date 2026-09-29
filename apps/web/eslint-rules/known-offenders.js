@@ -82,7 +82,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/reveals/SpotlightHero.tsx', // x13
     'src/features/reveals/WhatsNewSection.tsx', // x4
     'src/features/reveals/inkTint.ts', // x2
-    'src/features/synergies/components/CardDetail.tsx', // x1
     'src/features/synergies/components/CommunityEmptyState.tsx', // x3
     'src/features/synergies/components/DeltaPanel.tsx', // x4
     'src/features/synergies/components/MechanicsButton.tsx', // x5
@@ -218,7 +217,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/admin-analytics/PairList.tsx', // x1
     'src/features/admin-analytics/RuleCalibrationTable.tsx', // x1
     'src/features/admin-analytics/WebAnalyticsView.tsx', // x1
-    'src/features/synergies/components/CardDetailPanel.tsx', // x1
     'src/features/synergies/components/ColumnHeader.tsx', // x1
     'src/features/image-admin/components/CardImagePicker.tsx', // x1
     'src/features/reveals/NewFranchises.tsx', // x1
@@ -226,8 +224,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/reveals/RevealsPromoCard.tsx', // x1
     'src/features/reveals/SpotlightHero.tsx', // x1
     'src/features/reveals/WhatsNewSection.tsx', // x1
-    'src/features/synergies/components/CardDetail.tsx', // x1
-    'src/features/synergies/components/CardOverviewModal.tsx', // x2
     'src/features/synergies/components/MechanicsButton.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.tsx', // x2
     'src/features/synergies/components/SynergyGroup.tsx', // x1

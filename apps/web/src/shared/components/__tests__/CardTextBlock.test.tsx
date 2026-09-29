@@ -135,4 +135,19 @@ describe('CardTextBlock', () => {
     expect(paragraphs[0].style.borderBottom).toContain('1px solid');
     expect(paragraphs[2].style.borderBottom).toBe('');
   });
+
+  // Paragraphs are keyed by position, so paging to a card with fewer sections makes a middle
+  // paragraph the last one. Its bottom spacing must go to zero, not be unset: the browser's
+  // default 1em paragraph margin would come back.
+  it('should keep the new last paragraph flush when the card changes to fewer sections', () => {
+    const {rerender} = render(
+      <CardTextBlock card={createCard({textSections: ['Ability one', 'Ability two']})} />,
+    );
+
+    rerender(<CardTextBlock card={createCard({textSections: ['Ability one']})} />);
+
+    const last = screen.getByTestId('card-text-block').querySelector('p')!;
+    expect(last.style.marginBottom).toBe('0px');
+    expect(last.style.paddingBottom).toBe('0px');
+  });
 });
