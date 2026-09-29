@@ -90,7 +90,11 @@ async function main() {
     previewData,
     source: exported.cards ?? exported,
     season,
-    previewAvifExists: (id) => fs.existsSync(path.join(PREVIEW_AVIFS_DIR, `${id}.avif`)),
+    // Both sizes: download-card-images' hasPreviewAvifs prefers a scan over the official art
+    // only when the full and the small AVIF both exist, so a half-finished conversion
+    // shadows nothing.
+    previewAvifExists: (id) =>
+      ['', '-sm'].every((s) => fs.existsSync(path.join(PREVIEW_AVIFS_DIR, `${id}${s}.avif`))),
   });
 
   console.log(`\n  Variant sync from ${sourceArg}${write ? '' : ' (dry run, nothing written)'}\n`);

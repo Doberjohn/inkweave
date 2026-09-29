@@ -14,12 +14,16 @@
  *   memory/feedback_lorcanajson_graduation_rules.md
  *
  * Usage:
- *   node scripts/graduate-canonical-set.mjs <set-code> [source-path]
+ *   node scripts/graduate-canonical-set.mjs <set-code> [source-path] [--allow-missing-variants]
  *
  *   set-code      Set code as it appears on cards (e.g. "12", "13", "Q1").
  *                 Must match the `setCode` value the app uses for filtering.
  *   source-path   Path to the canonical per-set LorcanaJSON file.
  *                 Defaults to: apps/web/public/data/set{set-code}data.json
+ *   --allow-missing-variants
+ *                 Graduate even if a preview variant (a hand-scanned Epic/Enchanted/
+ *                 Iconic) is missing from the canonical source, dropping it. Without
+ *                 this flag the script stops before writing anything.
  *
  * Examples:
  *   node scripts/graduate-canonical-set.mjs 12
@@ -142,6 +146,22 @@ export function applyCardRules(sourceCards, setCode) {
 }
 
 /**
+ * The graduating set's preview variants that the canonical cards don't carry. A variant
+ * hand-scanned during the reveal season (#625) lives only in previewCards.json, which
+ * graduation empties, so any of these would be lost. Preview and canonical ids differ, so
+ * the match is on rarity + collector number.
+ */
+export function previewVariantsMissingFrom(previewCards, canonicalCards, setCode) {
+  const canonical = new Set(
+    canonicalCards.flatMap((c) => (c.variants ?? []).map((v) => `${v.rarity}#${v.number}`)),
+  );
+  return previewCards
+    .filter((c) => String(c.setCode) === String(setCode))
+    .flatMap((c) => (c.variants ?? []).map((v) => ({...v, base: c.fullName})))
+    .filter((v) => !canonical.has(`${v.rarity}#${v.number}`));
+}
+
+/**
  * Step 7 — retarget hardcoded card-id references from the graduating set's PREVIEW
  * ids to their new canonical ids.
  *
@@ -219,9 +239,13 @@ function printFeaturedVercelHint() {
 }
 
 function parseArgs(argv) {
-  const [, , setCode, sourceArg] = argv;
+  const args = argv.slice(2);
+  const allowMissingVariants = args.includes('--allow-missing-variants');
+  const [setCode, sourceArg] = args.filter((a) => !a.startsWith('--'));
   if (!setCode) {
-    console.error('Usage: graduate-canonical-set.mjs <set-code> [source-path]');
+    console.error(
+      'Usage: graduate-canonical-set.mjs <set-code> [source-path] [--allow-missing-variants]',
+    );
     console.error('Example: graduate-canonical-set.mjs 13');
     process.exit(2);
   }
@@ -233,11 +257,31 @@ function parseArgs(argv) {
     console.error(`Place the per-set LorcanaJSON file there, or pass an explicit path.`);
     process.exit(2);
   }
-  return {setCode: String(setCode), source};
+  return {setCode: String(setCode), source, allowMissingVariants};
+}
+
+/** Stops the run, before anything is written, when graduating would lose a preview variant. */
+function guardPreviewVariants(previewCards, canonicalCards, setCode, allowMissingVariants) {
+  const missing = previewVariantsMissingFrom(previewCards, canonicalCards, setCode);
+  if (missing.length === 0) return;
+  for (const v of missing) {
+    console.error(
+      `    ! preview-only ${v.rarity} #${v.number} of ${v.base} is not in the canonical source`,
+    );
+  }
+  if (allowMissingVariants) {
+    console.warn(`  --allow-missing-variants: dropping ${missing.length} preview variant(s).\n`);
+    return;
+  }
+  console.error(
+    '  Stopped before writing anything. Re-export once LorcanaJSON has these printings,',
+  );
+  console.error('  or rerun with --allow-missing-variants to drop them.');
+  process.exit(1);
 }
 
 function main() {
-  const {setCode, source} = parseArgs(process.argv);
+  const {setCode, source, allowMissingVariants} = parseArgs(process.argv);
   console.log(`\n  Graduating Set ${setCode} from preview to canonical\n`);
   console.log(`  Source: ${source}\n`);
 
@@ -263,6 +307,7 @@ function main() {
   for (const v of fold.unmatched) {
     console.warn(`    ! no base card for ${v.rarity} #${v.number} ${v.fullName}`);
   }
+  guardPreviewVariants(existingPreview.cards ?? [], stripped, setCode, allowMissingVariants);
   console.log(`  Base cards after rule 1:    ${stripped.length}`);
 
   // Rules 2 + 3 — replace preview entries wholesale (canonical ids + names win)
