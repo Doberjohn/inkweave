@@ -4,7 +4,7 @@
 
 A synergy finder for [Disney Lorcana TCG](https://www.disneylorcana.com/en-US/) focused on Core format. Select any card to discover what synergizes with it through pattern-based rules and archetype detection.
 
-**Live at [inkweave.ink](https://www.inkweave.ink/)**
+**Live at [inkweave.ink](https://inkweave.ink/)**
 
 ## Features
 
