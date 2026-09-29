@@ -153,7 +153,7 @@ And notes: *"IP Disclaimer (could be footer text + dedicated page)"* — i.e., t
   });
   ```
   Assert on **route + `<h1>` + `<main>` landmark + footer link navigates** (use `getByRole('link', {name: /privacy/i})` from the footer, click, `toHaveURL('/privacy')`), not on exact prose (prose will churn).
-- **Pre-push gate:** husky pre-push runs `check:stories` + E2E on chromium + webkit + mobile-chrome (CLAUDE.md hooks table). Keep port 5173 free (MEMORY `[reference_pre_push_e2e_server_reuse]`).
+- **Pre-push gate:** husky pre-push runs `check:stories` + E2E on chromium + webkit + mobile-chrome, chromium only on Windows (CLAUDE.md hooks table). E2E starts its own Vite on a free port in 5200-5299, so no dev port needs to be free.
 
 ### 4b. Unit tests (Vitest + Testing Library)
 
