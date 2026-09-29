@@ -529,7 +529,7 @@ setCards(data.cards);
 setSets(data.sets);
 ```
 
-It deliberately injects no `<link rel="preload" as="image">` tags. It used to preload the first six cards' thumbnails, but the prerender crawl bakes runtime `<head>` tags into every page's static HTML, so those preloads shipped on routes that never showed those cards (#627). `scripts/check-rendered-html.mjs` now fails a deploy that bakes in an image preload with no matching `<img>`.
+It deliberately injects no `<link rel="preload" as="image">` tags. It used to preload the first six cards' thumbnails, but the prerender crawl bakes runtime `<head>` tags into every page's static HTML, so those preloads shipped on routes that never showed those cards (#627). `scripts/check-rendered-html.mjs` now fails a deploy when a sampled card page, `/`, or `/browse` bakes in an image preload with no matching `<img>`. Other routes are not checked.
 
 `fetchCardsFromLocal` (`apps/web/src/features/cards/loader.ts:143-198`) is where the merge lives:
 
