@@ -14,12 +14,17 @@
  *   memory/feedback_lorcanajson_graduation_rules.md
  *
  * Usage:
- *   node scripts/graduate-canonical-set.mjs <set-code> [source-path]
+ *   node scripts/graduate-canonical-set.mjs <set-code> [source-path] [--allow-missing-variants]
  *
  *   set-code      Set code as it appears on cards (e.g. "12", "13", "Q1").
  *                 Must match the `setCode` value the app uses for filtering.
  *   source-path   Path to the canonical per-set LorcanaJSON file.
  *                 Defaults to: apps/web/public/data/set{set-code}data.json
+ *   --allow-missing-variants
+ *                 Graduate even if an Epic/Enchanted/Iconic printing would be dropped:
+ *                 a hand-scanned preview variant missing from the canonical source, or a
+ *                 canonical printing with no base card in it. Without this flag the
+ *                 script stops before writing anything.
  *
  * Examples:
  *   node scripts/graduate-canonical-set.mjs 12
@@ -142,6 +147,43 @@ export function applyCardRules(sourceCards, setCode) {
 }
 
 /**
+ * The graduating set's preview variants that the canonical cards don't carry. A variant
+ * hand-scanned during the reveal season (#625) lives only in previewCards.json, which
+ * graduation empties, so any of these would be lost. Preview and canonical ids differ, so
+ * the match is on rarity + collector number.
+ */
+export function previewVariantsMissingFrom(previewCards, canonicalCards, setCode) {
+  const canonical = new Set(
+    canonicalCards.flatMap((c) => (c.variants ?? []).map((v) => `${v.rarity}#${v.number}`)),
+  );
+  return previewCards
+    .filter((c) => String(c.setCode) === String(setCode))
+    .flatMap((c) => (c.variants ?? []).map((v) => ({...v, base: c.fullName})))
+    .filter((v) => !canonical.has(`${v.rarity}#${v.number}`));
+}
+
+/**
+ * Every variant graduating would drop: canonical printings whose base card isn't in the source
+ * (a data anomaly, since a set's file carries its own base cards) and the preview-only ones.
+ */
+export function droppedVariants(previewCards, {cards, fold}, setCode) {
+  return [
+    ...fold.unmatched.map((v) => ({
+      rarity: v.rarity,
+      number: v.number,
+      base: v.fullName,
+      reason: 'has no base card in the canonical source',
+    })),
+    ...previewVariantsMissingFrom(previewCards, cards, setCode).map((v) => ({
+      rarity: v.rarity,
+      number: v.number,
+      base: v.base,
+      reason: 'is only in previewCards.json',
+    })),
+  ];
+}
+
+/**
  * Step 7 — retarget hardcoded card-id references from the graduating set's PREVIEW
  * ids to their new canonical ids.
  *
@@ -219,9 +261,13 @@ function printFeaturedVercelHint() {
 }
 
 function parseArgs(argv) {
-  const [, , setCode, sourceArg] = argv;
+  const args = argv.slice(2);
+  const allowMissingVariants = args.includes('--allow-missing-variants');
+  const [setCode, sourceArg] = args.filter((a) => !a.startsWith('--'));
   if (!setCode) {
-    console.error('Usage: graduate-canonical-set.mjs <set-code> [source-path]');
+    console.error(
+      'Usage: graduate-canonical-set.mjs <set-code> [source-path] [--allow-missing-variants]',
+    );
     console.error('Example: graduate-canonical-set.mjs 13');
     process.exit(2);
   }
@@ -233,11 +279,24 @@ function parseArgs(argv) {
     console.error(`Place the per-set LorcanaJSON file there, or pass an explicit path.`);
     process.exit(2);
   }
-  return {setCode: String(setCode), source};
+  return {setCode: String(setCode), source, allowMissingVariants};
+}
+
+/** Stops the run, before anything is written, when graduating would drop a variant. */
+function guardDroppedVariants(dropped, allowMissingVariants) {
+  if (dropped.length === 0) return;
+  for (const v of dropped) console.error(`    ! ${v.rarity} #${v.number} of ${v.base} ${v.reason}`);
+  if (allowMissingVariants) {
+    console.warn(`  --allow-missing-variants: dropping ${dropped.length} variant(s).\n`);
+    return;
+  }
+  console.error('  Stopped before writing anything. Fix the source (or wait for LorcanaJSON),');
+  console.error('  or rerun with --allow-missing-variants to drop these printings.');
+  process.exit(1);
 }
 
 function main() {
-  const {setCode, source} = parseArgs(process.argv);
+  const {setCode, source, allowMissingVariants} = parseArgs(process.argv);
   console.log(`\n  Graduating Set ${setCode} from preview to canonical\n`);
   console.log(`  Source: ${source}\n`);
 
@@ -260,9 +319,8 @@ function main() {
   console.log(
     `  Rule 1 - fold variants:    +${fold.folded.length + fold.replaced.length} (Epic/Enchanted/Iconic), strip Special: -${specialCount}`,
   );
-  for (const v of fold.unmatched) {
-    console.warn(`    ! no base card for ${v.rarity} #${v.number} ${v.fullName}`);
-  }
+  const dropped = droppedVariants(existingPreview.cards ?? [], {cards: stripped, fold}, setCode);
+  guardDroppedVariants(dropped, allowMissingVariants);
   console.log(`  Base cards after rule 1:    ${stripped.length}`);
 
   // Rules 2 + 3 — replace preview entries wholesale (canonical ids + names win)

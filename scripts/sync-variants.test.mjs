@@ -71,8 +71,11 @@ describe('syncVariants', () => {
     expect(report.preview.unmatched).toEqual([]);
   });
 
-  it('reports nothing for previewCards once the reveal set has graduated and it is empty', () => {
-    const {report} = run({previewCards: []});
+  // previewCards folds only the reveal season's set: an earlier set's card there (Pongo, set 9)
+  // must not pick up its variant from the source, even though the name would match.
+  it("folds only the reveal season's set into previewCards", () => {
+    const {report} = run({previewCards: [pongo()]});
+    expect(report.preview.folded).toEqual([]);
     expect(report.preview.unmatched).toEqual([]);
   });
 

@@ -31,6 +31,16 @@ function form(overrides: Partial<RevealCardForm> = {}): RevealCardForm {
 
 const NO_IDS = new Set<number>();
 
+/** The Card Text error for this text, on an otherwise valid form. */
+function fullTextError(fullText: string): string | undefined {
+  return validateRevealCardForm(form({fullText}), NO_IDS, 'mei.png').errors.fullText;
+}
+
+/** The Keywords error for these chips, on an otherwise valid form. */
+function keywordsError(keywords: string): string | undefined {
+  return validateRevealCardForm(form({keywords}), NO_IDS, 'mei.png').errors.keywords;
+}
+
 describe('validateRevealCardForm', () => {
   it('passes a complete character with an image', () => {
     const r = validateRevealCardForm(form(), NO_IDS, 'mei.png');
@@ -87,5 +97,34 @@ describe('validateRevealCardForm', () => {
   it('rejects a second ink equal to the first', () => {
     const r = validateRevealCardForm(form({ink2: 'Ruby'}), NO_IDS, 'mei.png');
     expect(r.errors.ink2).toBeDefined();
+  });
+
+  // House style (#635): a word the build cannot turn into a glyph must not reach the data.
+  it('refuses a capitalized glyph word house style cannot place, naming it', () => {
+    const r = validateRevealCardForm(form({fullText: 'Your Strength wins.'}), NO_IDS, 'mei.png');
+    expect(r.ok).toBe(false);
+    expect(r.errors.fullText).toMatch(/"Strength"/);
+  });
+
+  it('accepts glyph words the build rewrites, such as "pay 1 Ink less"', () => {
+    expect(fullTextError('you pay 1 Ink less for the next item.')).toBeUndefined();
+  });
+
+  it('accepts a card name that holds a glyph word', () => {
+    expect(fullTextError('Play an item named Ink Amplifier.')).toBeUndefined();
+  });
+
+  // "gain 2 ◊" would pass every check and read as no lore gain; released text says "gain 2 lore".
+  it('points a capitalized gained Lore to the lowercase word, not the glyph', () => {
+    expect(fullTextError('Gain 2 Lore.')).toMatch(/"gain 2 lore"/);
+  });
+
+  // Keyword chips become ability text as typed; the build rewrites nothing there.
+  it('refuses a glyph word in a keyword chip, naming it', () => {
+    expect(keywordsError('Challenger +2 Strength')).toMatch(/"Strength"/);
+  });
+
+  it('accepts real keyword chips', () => {
+    expect(keywordsError('Singer 5\nShift 3\nResist +1')).toBeUndefined();
   });
 });

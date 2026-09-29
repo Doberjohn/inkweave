@@ -1,2 +1,3 @@
 #!/bin/sh
+. "$(dirname "$0")/handoff.sh"
 pnpm run lint && pnpm run test

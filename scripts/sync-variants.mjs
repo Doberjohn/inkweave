@@ -71,7 +71,16 @@ function printReport(label, result) {
 }
 
 const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
-const writeJson = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n');
+
+/**
+ * Replaces `file` whole: the JSON goes to a temporary file beside it, then a rename swaps it in,
+ * so an interrupted run leaves the old file rather than half-written JSON.
+ */
+function writeJson(file, data) {
+  const tmp = `${file}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2) + '\n');
+  fs.renameSync(tmp, file);
+}
 
 async function main() {
   const [sourceArg] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
@@ -90,7 +99,11 @@ async function main() {
     previewData,
     source: exported.cards ?? exported,
     season,
-    previewAvifExists: (id) => fs.existsSync(path.join(PREVIEW_AVIFS_DIR, `${id}.avif`)),
+    // Both sizes: download-card-images' hasPreviewAvifs prefers a scan over the official art
+    // only when the full and the small AVIF both exist, so a half-finished conversion
+    // shadows nothing.
+    previewAvifExists: (id) =>
+      ['', '-sm'].every((s) => fs.existsSync(path.join(PREVIEW_AVIFS_DIR, `${id}${s}.avif`))),
   });
 
   console.log(`\n  Variant sync from ${sourceArg}${write ? '' : ' (dry run, nothing written)'}\n`);

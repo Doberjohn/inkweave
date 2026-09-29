@@ -451,6 +451,35 @@ export function isLocationSupportCard(card: LorcanaCard): boolean {
   return getLocationRoles(card).length > 0;
 }
 
+/**
+ * A location buff limited to one location classification:
+ * "Your Hyperia City locations get +2 ⛉." (Hyperia City Express).
+ * Case-sensitive on purpose: the classification must be Title Case after "your", so lowercase
+ * shapes like "Your characters and locations gain Resist +1" (We'll Save Our Village) and
+ * "Your characters at locations get +1 ¤" (Russell) never match.
+ * Global flag: use only with matchAll/replace, never .test().
+ */
+const CLASSIFIED_LOCATION_BUFF = /\b[Yy]our ((?:[A-Z][a-z'-]+ )+)locations\b/g;
+
+/**
+ * Location classifications a card's buff is limited to (['Hyperia City'] for Hyperia City
+ * Express). Bound to the buff clause, not the whole card: returns [] when the text still reads
+ * as a buff after the classified clauses are removed, meaning the card also buffs every location.
+ */
+export function getLocationBuffClassifications(card: LorcanaCard): string[] {
+  const text = normalizeCardText(card);
+  const scoped = [...text.matchAll(CLASSIFIED_LOCATION_BUFF)].map((m) => m[1].trim());
+  if (scoped.length === 0) return [];
+  const unscoped = text.replace(CLASSIFIED_LOCATION_BUFF, '');
+  return LOCATION_PATTERNS.buff.test(unscoped) ? [] : scoped;
+}
+
+/** Whether a card's location buff reaches `location`. A classified buff reaches only its own locations. */
+export function locationBuffReaches(card: LorcanaCard, location: LorcanaCard): boolean {
+  const scoped = getLocationBuffClassifications(card);
+  return scoped.length === 0 || scoped.some((c) => hasClassification(location, c));
+}
+
 // ============================================
 // DISCARD CONTROL DETECTION
 // ============================================
@@ -635,8 +664,31 @@ const SELF_DISCARD_OPPONENT_PATTERN = /opponent|each player|challenging player|t
 
 /** Reanimator — play / return / put a card FROM YOUR DISCARD (recursion payoff). */
 const SELF_DISCARD_REANIMATOR_PATTERN = /(?:play|return|put)\b[^.]{0,60}\bfrom your discard\b/i;
-/** State payoff — rewards the discard EVENT (discarded this turn) or an empty hand (Hellbent). */
-const SELF_DISCARD_STATE_PATTERN = /discarded\s+a\s+card\s+this\s+turn|no cards in (?:your )?hand/i;
+/**
+ * Recursion that can only ever return the card itself or a card it just handled
+ * ("return this card from your discard", "a song card you played this turn … from your
+ * discard", "If you discarded a location card this way, you may play it from your discard").
+ * A hand-discard outlet never feeds it (a mill can only by luck), so its sentence is stripped
+ * before the reanimator test. The first branch needs the verb to take "this/that X from your
+ * discard" directly, so an enter-play trigger ("When you play this character, return a card
+ * from your discard") stays recursion.
+ */
+const SELF_CONTAINED_RECURSION_PATTERN =
+  /\b(?:play|return|put)\s+(?:this|that)\s+(?:card|item|character|location)\s+from your discard\b|\bthose\s+characters\s+from your discard\b|\byou played this turn\b[^.]{0,60}\bfrom your discard\b|\bthis way, you may (?:play|return) it from your discard\b/i;
+/** Self-recursion that fires when YOU discard the card is fed by hand discard, so it stays. */
+const DISCARD_FED_RECURSION_PATTERN = /\bwhen(?:ever)?\s+you\s+discard\b/i;
+
+/** The text without its self-contained recursion sentences (see SELF_CONTAINED_RECURSION_PATTERN). */
+function stripSelfContainedRecursion(text: string): string {
+  return text
+    .split(/(?<=[.!?])\s+/)
+    .filter((s) => !(SELF_CONTAINED_RECURSION_PATTERN.test(s) && !DISCARD_FED_RECURSION_PATTERN.test(s)))
+    .join(' ');
+}
+/** State payoff, event half: rewards the discard EVENT ("if you discarded a card this turn"). */
+const SELF_DISCARD_EVENT_PATTERN = /discarded\s+a\s+card\s+this\s+turn/i;
+/** State payoff, empty-hand half: rewards an empty hand ("while you have no cards in your hand"). */
+const SELF_DISCARD_HELLBENT_PATTERN = /no cards in (?:your )?hand/i;
 /**
  * Zone payoff — counts or checks cards sitting IN your discard ("10 or more cards in your
  * discard", "for each Alien character card in your discard", "a song card in your discard").
@@ -656,6 +708,22 @@ const HAS_SELF_DISCARD_KEYWORD = /discard|no cards in/i;
 /** Zone payoff: either the "in your discard" count/check shape or the "put into your discard this turn" trigger. */
 function isSelfDiscardZonePayoff(text: string): boolean {
   return SELF_DISCARD_ZONE_IN_PATTERN.test(text) || SELF_DISCARD_ZONE_PUT_PATTERN.test(text);
+}
+
+/**
+ * Reanimator: recursion that is not self-contained. The raw test runs first, so the sentence
+ * split only happens for the few cards that recur anything at all.
+ */
+function isSelfDiscardReanimator(text: string): boolean {
+  return (
+    SELF_DISCARD_REANIMATOR_PATTERN.test(text) &&
+    SELF_DISCARD_REANIMATOR_PATTERN.test(stripSelfContainedRecursion(text))
+  );
+}
+
+/** State payoff: the discard event ("discarded a card this turn") or an empty hand. */
+function isSelfDiscardStatePayoff(text: string): boolean {
+  return SELF_DISCARD_EVENT_PATTERN.test(text) || SELF_DISCARD_HELLBENT_PATTERN.test(text);
 }
 
 /**
@@ -679,8 +747,8 @@ export function getSelfDiscardRoles(card: LorcanaCard): SelfDiscardRole[] {
 
   const roles: SelfDiscardRole[] = [];
   if (isSelfDiscardEnabler(text)) roles.push('enabler');
-  if (SELF_DISCARD_REANIMATOR_PATTERN.test(text)) roles.push('reanimator');
-  if (SELF_DISCARD_STATE_PATTERN.test(text)) roles.push('state-payoff');
+  if (isSelfDiscardReanimator(text)) roles.push('reanimator');
+  if (isSelfDiscardStatePayoff(text)) roles.push('state-payoff');
   if (isSelfDiscardZonePayoff(text)) roles.push('zone-payoff');
   if (SELF_DISCARD_MILL_PATTERN.test(text)) roles.push('mill');
   return roles;
@@ -689,6 +757,131 @@ export function getSelfDiscardRoles(card: LorcanaCard): SelfDiscardRole[] {
 /** Check if a card participates in the self-discard axis (any of the five roles). */
 export function isSelfDiscardCard(card: LorcanaCard): boolean {
   return getSelfDiscardRoles(card).length > 0;
+}
+
+// --------------------------------------------
+// Self-discard feed check: can this outlet's discard switch on that payoff?
+// --------------------------------------------
+
+/** A card kind a typed discard or recursion clause names. A song is an action (CR 5.4.4.1). */
+type SelfDiscardKind = 'character' | 'action' | 'song' | 'item' | 'location';
+
+/** Kind word → the kinds it admits. "action" admits songs too; "song" admits only songs. */
+const SELF_DISCARD_KIND_WORDS: ReadonlyArray<readonly [RegExp, readonly SelfDiscardKind[]]> = [
+  [/\bsongs?\b/i, ['song']],
+  [/\bactions?\b/i, ['action', 'song']],
+  [/\bcharacters?\b/i, ['character']],
+  [/\bitems?\b/i, ['item']],
+  [/\blocations?\b/i, ['location']],
+];
+/** An outlet that can discard any card: a generic "discard a card" (loot, cost) or the whole hand. */
+const SELF_DISCARD_ANY_OUTLET_PATTERN = /discard\s+(?:a|an|another|\d+)\s+cards?\b|discard\s+your\s+hand/i;
+/** A typed outlet: "discard a song card", "discard an Alien character card or a location card". */
+const SELF_DISCARD_TYPED_OUTLET_PATTERN =
+  /discard\s+an?\s+(?:\w+\s+){1,2}?cards?(?:\s+or\s+an?\s+(?:\w+\s+){1,2}?cards?)?/i;
+/** A recursion clause's object: the words between its nearest play/return/put and "from your discard". */
+const SELF_DISCARD_RECURSION_OBJECT_PATTERN =
+  /\b(?:play|return|put)\b((?:(?!\b(?:play|return|put)\b)[^.]){0,60}?)\bfrom your discard\b/i;
+/** A recursion object restricted to one named card: "an action card named Three Arrows". */
+const SELF_DISCARD_NAMED_OBJECT_PATTERN = /\bnamed\s+(.+?)\s*$/i;
+/** A recursion object that takes any card: "a card", "another card", "2 cards". */
+const SELF_DISCARD_ANY_OBJECT_PATTERN = /\b(?:a|an|another|any|\d+)\s+cards?\b/i;
+/**
+ * An outlet that discards one card and then draws 2+ ("discard a song card. If you do, draw
+ * 2 cards"), so its hand is never empty when it resolves. Deliberately narrow (Max Goof -
+ * Karaoke Star only today); general empty-hand scoring is a separate decision.
+ */
+const SELF_DISCARD_REFILL_PATTERN =
+  /discard\s+an?\s+(?:\w+\s+){0,2}?card\.\s*if you do,\s*draw\s+[2-9]\s+cards/i;
+
+/** The kinds the kind words in `fragment` admit (empty when it names none). */
+function selfDiscardKindsIn(fragment: string): Set<SelfDiscardKind> {
+  const kinds = new Set<SelfDiscardKind>();
+  for (const [word, admits] of SELF_DISCARD_KIND_WORDS) {
+    if (word.test(fragment)) admits.forEach((kind) => kinds.add(kind));
+  }
+  return kinds;
+}
+
+/** What an outlet can put in the bin; null when it can discard any card (or names no known kind). */
+function selfDiscardOutletKinds(text: string): Set<SelfDiscardKind> | null {
+  if (SELF_DISCARD_ANY_OUTLET_PATTERN.test(text)) return null;
+  const kinds = selfDiscardKindsIn(SELF_DISCARD_TYPED_OUTLET_PATTERN.exec(text)?.[0] ?? '');
+  return kinds.size > 0 ? kinds : null;
+}
+
+/** A self-reference ("this card", "it", a card named like itself) recurs the card's own kind. */
+function ownSelfDiscardKinds(card: LorcanaCard): Set<SelfDiscardKind> {
+  return new Set([isSong(card) ? 'song' : (card.type.toLowerCase() as SelfDiscardKind)]);
+}
+
+/**
+ * What a reanimator pulls from the bin; null when it takes any card. A named other card
+ * ("an action card named Three Arrows") admits no kind, since no typed outlet is known to
+ * discard it; an object with no kind word and no generic card ("this card", "it") is a self-reference.
+ */
+function selfDiscardRecursionKinds(card: LorcanaCard, text: string): Set<SelfDiscardKind> | null {
+  const object = SELF_DISCARD_RECURSION_OBJECT_PATTERN.exec(text)?.[1] ?? 'a card';
+  const named = SELF_DISCARD_NAMED_OBJECT_PATTERN.exec(object)?.[1];
+  if (named !== undefined) return named === card.name ? ownSelfDiscardKinds(card) : new Set();
+  const kinds = selfDiscardKindsIn(object);
+  if (kinds.size > 0) return kinds;
+  return SELF_DISCARD_ANY_OBJECT_PATTERN.test(object) ? null : ownSelfDiscardKinds(card);
+}
+
+/** Two kind sets can meet in one card: either side takes any card, or they share a kind. */
+function selfDiscardKindsMeet(a: Set<SelfDiscardKind> | null, b: Set<SelfDiscardKind> | null): boolean {
+  return a === null || b === null || [...a].some((kind) => b.has(kind));
+}
+
+/** What a card's discard or recursion can reach. Fixed per card, while the feed check runs per pair. */
+interface SelfDiscardFeedProfile {
+  /** Kinds the card discards as an outlet; null when it can discard any card. */
+  outletKinds: Set<SelfDiscardKind> | null;
+  /** The outlet refills the hand as it discards ("discard a card. If you do, draw 2 cards"). */
+  refills: boolean;
+  /** Kinds the card's recursion pulls, self-contained recursion stripped; null when it takes any card. */
+  recursionKinds: Set<SelfDiscardKind> | null;
+  /** The state payoff rewards the discard event ("discarded a card this turn"), not an empty hand. */
+  rewardsEvent: boolean;
+}
+
+const selfDiscardFeedProfiles = new WeakMap<LorcanaCard, SelfDiscardFeedProfile>();
+
+/** The card's feed profile, computed once per card object. */
+function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
+  const cached = selfDiscardFeedProfiles.get(card);
+  if (cached) return cached;
+  const text = normalizeCardText(card);
+  const profile: SelfDiscardFeedProfile = {
+    outletKinds: selfDiscardOutletKinds(text),
+    refills: SELF_DISCARD_REFILL_PATTERN.test(text),
+    recursionKinds: selfDiscardRecursionKinds(card, stripSelfContainedRecursion(text)),
+    rewardsEvent: SELF_DISCARD_EVENT_PATTERN.test(text),
+  };
+  selfDiscardFeedProfiles.set(card, profile);
+  return profile;
+}
+
+/**
+ * Whether `enabler`'s hand discard can switch on `payoff`'s reanimator or state payoff:
+ *  - recursion: the outlet's discard kinds meet the recursion kinds, so a typed outlet ("discard
+ *    a song card") feeds song, action and any-card recursion, never character or item recursion;
+ *  - state: any discard is a "discarded a card this turn" event, but a refill outlet never
+ *    leaves the empty hand a "no cards in hand" payoff needs.
+ * Reads the payoff's text with self-contained recursion stripped, like getSelfDiscardRoles.
+ */
+export function selfDiscardOutletFeeds(
+  enabler: LorcanaCard,
+  payoff: LorcanaCard,
+  payoffRoles: SelfDiscardRole[],
+): boolean {
+  const outlet = selfDiscardFeedProfile(enabler);
+  const target = selfDiscardFeedProfile(payoff);
+  const feedsRecursion =
+    payoffRoles.includes('reanimator') && selfDiscardKindsMeet(outlet.outletKinds, target.recursionKinds);
+  const feedsState = payoffRoles.includes('state-payoff') && (target.rewardsEvent || !outlet.refills);
+  return feedsRecursion || feedsState;
 }
 
 // ============================================
@@ -1526,7 +1719,7 @@ export type ItemRole = 'member' | 'item-engine' | 'payoff-trigger' | 'payoff-sta
 
 const ITEM_PLAY_TRIGGER = /whenever you play an item/i;
 const ITEM_STATIC_PAYOFF =
-  /for each (?:of your )?items?\b|(?:while|if) you have (?:an?|\d+ or more) items?(?:\s+named [^.]+?)?(?: in play)?|each item you have in play/i;
+  /for each (?:of your )?items?\b|(?:while|if) you have (?:an?|\d+ or more) items?\b(?!\s+named)(?: in play)?|each item you have in play|\bready chosen item\b/i;
 /** Search/tutor/free-play an item from deck, hand, or discard. */
 const ITEM_SEARCH =
   /reveal[^.]{0,40}\bitem card|\bplay (?:a|an|that|chosen)[^.]{0,30}\bitem\b[^.]{0,30}(?:for free|from your (?:hand|discard))/i;
@@ -1699,7 +1892,7 @@ function tribalPatterns(spec: TribalSpec) {
     search: new RegExp(`(?:search your deck for|reveal) (?:a|an) ${T} character`, 'i'),
     // Conditional gated on tribe presence or a tribe event this turn.
     check: new RegExp(
-      `(?:while|if) you have (?:a|an|another|\\d+ or more)[^.]{0,30}${T}\\b` + // "while you have a [Dwarfs or a] X character in play"
+      `(?:while|if) you have (?:a|an|another|\\d+ or more)[^.]{0,30}(?<!named )${T}\\b` + // "while you have a [Dwarfs or a] X character in play", never "an item named X"
         `|if (?:a|an) (?:\\w+ or (?:a )?)?${T}(?: or \\w+)? character (?:is|card)` + // "if a [Y or] X [or Y] character is in play/chosen"
         `|if you (?:played|returned)[^.]{0,20}${T} character` + // "if you played a X character this turn"
         `|if (?:that card|the \\w+) is (?:a|an) ${T} character card`, // "if that card is a X character card"
@@ -1944,7 +2137,7 @@ const BOUNCE_RETURN_PAYOFF_PATTERN =
 /** rebuy-payoff — a "when you play this character" ETB whose effect is unambiguous re-fire value. */
 const BOUNCE_ETB_PATTERN = /when\s+you\s+play\s+this\s+character/i;
 const BOUNCE_REBUY_EFFECT_PATTERN =
-  /draw\s+(?:\d+|two|three)\s+cards?|search\s+your\s+(?:deck|library)|look at the top \d+ cards of your deck|banish\s+(?:a|an|another\s+)?chosen\s+character|(?:play|put)\b[^.]{0,50}for free|without paying/i;
+  /draw\s+(?:\d+|two|three)\s+cards?|search\s+your\s+(?:deck|library)|look at the top \d+ cards of your deck|banish\s+(?:a|an|another\s+)?chosen\s+character|(?:play|put)\s+(?!this\s+character)[^.]{0,50}?for free|without paying/i;
 /**
  * Fast pre-filter. Admits BOTH the "return … to hand" bounce shapes AND the enter-play bodies
  * the re-buy payoff keys on — a rebuy body (e.g. Merlin - Turtle's deck-dig ETB) need not contain

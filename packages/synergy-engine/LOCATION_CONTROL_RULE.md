@@ -103,6 +103,8 @@ Triggers effects when a character **moves onto** a location (Taffyta, Goofy). Sp
 
 Strengthens locations (resist, willpower, protection).
 
+A buff limited to one location classification reaches only locations of that classification (`getLocationBuffClassifications`, `locationBuffReaches`). Hyperia City Express's "Your Hyperia City locations get +2 ⛉." scores its buff 7 with the Hyperia City locations only; with any other location it still pairs at 5, through its move ability. The classification is read as the Title Case words between "your" and "locations", case-sensitively, so lowercase shapes stay global: "Your characters and locations gain Resist +1" (We'll Save Our Village) and "Your characters at locations get +1 ¤" (Russell - Senior Wilderness Explorer). A card that also buffs every location ("Your Hyperia City locations get +2 ⛉. Your locations gain Resist +1.") stays global too.
+
 #### Location Ramp (Score 7)
 
 | Support | Location |
@@ -196,6 +198,11 @@ Two exclusion mechanisms prevent false positives:
 1. **Anti-location exclusion** (`LOCATION_PATTERNS['anti-location']`): Cards that banish or remove locations are excluded from ALL roles. Pattern: `banish (?:chosen |all )(?:item or )?location|shuffle.*location into`
 
 2. **Move-specific exclusion** (`LOCATION_PATTERNS['move-exclude']`): Cards mentioning "move" in a damage context (e.g., "move damage") are excluded from the move role. Pattern: `move.*damage`
+
+Two location-side gates then decide which locations a matched support card pairs with. Each is applied from both directions, so a pair scores the same whichever card is selected:
+
+1. **Boost gate** (`isBoostBeneficiaryLocation`): a `boost` card pairs only with locations that actually use cards put under them. Applied in `buildLocationDirectMatch` when the support card searches, and in the boost rule's `matches` when a location searches.
+2. **Classified-buff gate** (`locationBuffReaches`): a `buff` limited to one location classification ("Your Hyperia City locations get +2 ⛉.") pairs only with locations of that classification. Applied in `buildLocationDirectMatch` and in `findLocationCardSynergiesForRole`. See Buff above.
 
 ### Multi-Role Cards
 
@@ -304,7 +311,7 @@ These are used in the synergy detail modal and vote screen to explain *why* a ca
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Location Synergy Rules')`.
+Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Location Synergy Rules')`. The classified-buff gate is tested in `packages/synergy-engine/src/__tests__/locationControl.test.ts` (4 tests): Hyperia City Express scores 7 with a Hyperia City location and 5 with any other, from both sides; a buff-only card has no match outside its classification; and We'll Save Our Village, Russell - Senior Wilderness Explorer and a mixed buff still reach every location.
 
 ### Role Detection Tests (5 tests)
 

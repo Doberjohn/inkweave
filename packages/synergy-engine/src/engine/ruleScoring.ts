@@ -12,6 +12,7 @@ import {
   isRepeatingTrigger,
   costReductionTargetsOverlap,
   isExertConsumePayoff,
+  selfDiscardOutletFeeds,
   type DiscardRole,
   type LoreDenialRole,
   type RampRole,
@@ -269,8 +270,27 @@ interface SelfDiscardPairCtx {
   bothEnabler: boolean;
 }
 
+/**
+ * One direction of the 8 combo: `enabler` is a hand-discard outlet, `payoff` a reanimator or
+ * state payoff, and the outlet's discard can actually switch that payoff on.
+ */
+function feedsSelfDiscardPayoff(
+  enabler: LorcanaCard,
+  enablerRoles: SelfDiscardRole[],
+  payoff: LorcanaCard,
+  payoffRoles: SelfDiscardRole[],
+): boolean {
+  return (
+    enablerRoles.includes('enabler') &&
+    isSelfDiscardPayoff(payoffRoles) &&
+    selfDiscardOutletFeeds(enabler, payoff, payoffRoles)
+  );
+}
+
 function buildSelfDiscardPairCtx(
+  card: LorcanaCard,
   cardRoles: SelfDiscardRole[],
+  other: LorcanaCard,
   otherRoles: SelfDiscardRole[],
 ): SelfDiscardPairCtx {
   const cardEnabler = cardRoles.includes('enabler');
@@ -279,8 +299,8 @@ function buildSelfDiscardPairCtx(
     cardEnabler,
     otherEnabler,
     isCombo:
-      (cardEnabler && isSelfDiscardPayoff(otherRoles)) ||
-      (otherEnabler && isSelfDiscardPayoff(cardRoles)),
+      feedsSelfDiscardPayoff(card, cardRoles, other, otherRoles) ||
+      feedsSelfDiscardPayoff(other, otherRoles, card, cardRoles),
     bothReanimator: cardRoles.includes('reanimator') && otherRoles.includes('reanimator'),
     bothEnabler: cardEnabler && otherEnabler,
   };
@@ -352,23 +372,24 @@ function scoreSelfDiscardFillCombo(
 
 /**
  * Score a self-discard pair (5-baseline convention, mirrors the Sacrifice shape):
- *   - enabler ↔ payoff (reanimator or state) = 8  (win-condition: discard, then cash it)
+ *   - enabler ↔ payoff (reanimator or state) = 8  (win-condition: discard, then cash it; only
+ *                                                 when the outlet's discard can switch it on)
  *   - bin-filler ↔ zone payoff, mill ↔ reanimator = 7  (mechanical compounding: the filler feeds
  *                                                 a discard-count payoff or a recursion engine)
  *   - reanimator ↔ reanimator                = 6  (two recursion engines share one bin)
  *   - all other same-axis pairs              = 5  (parallel density; includes mill ↔ state,
  *                                                 since milling is not a discard event)
  *
- * `_card` is the searcher (token {A}); `_other` is the partner (token {B}). The token-swap keeps
+ * `card` is the searcher (token {A}); `other` is the partner (token {B}). The token-swap keeps
  * the enabler side reading as the actor regardless of which card is the searcher.
  */
 export function scoreSelfDiscardPair(
-  _card: LorcanaCard,
+  card: LorcanaCard,
   cardRoles: SelfDiscardRole[],
-  _other: LorcanaCard,
+  other: LorcanaCard,
   otherRoles: SelfDiscardRole[],
 ): {score: number; explanation: string} {
-  const ctx = buildSelfDiscardPairCtx(cardRoles, otherRoles);
+  const ctx = buildSelfDiscardPairCtx(card, cardRoles, other, otherRoles);
 
   // 8 — win-condition combo: an enabler on one side, a payoff (reanimator or state) on the other.
   if (ctx.isCombo) {

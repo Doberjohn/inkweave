@@ -10,7 +10,7 @@ import {
   SPACING,
   Z_INDEX,
 } from '../constants';
-import {useAutocomplete} from '../hooks';
+import {useAutocomplete, useHeroLogoSrc} from '../hooks';
 import {SearchAutocomplete} from './SearchAutocomplete';
 import {SearchIcon} from './SearchIcon';
 import {CtaButton} from './CtaButton';
@@ -177,16 +177,18 @@ export function HeroSection({
   });
   // The hook's focus state carries the blur delay and cancels it on refocus and unmount.
   const isSearchFocused = autocomplete.isFocused;
+  const logoSrc = useHeroLogoSrc();
 
   const mobile = !!isMobile;
   const ctaHeight = mobile ? 48 : 44;
 
   return (
     <section data-testid="hero-section" aria-label="Hero" style={styles.container}>
-      {/* Logo — animated SVG with self-contained CSS animations (honors prefers-reduced-motion).
-          Wrapping in h1 preserves a single top-level heading for a11y; alt provides the name. */}
+      {/* Logo: static first, animated after load (useHeroLogoSrc, #639). The SVG's own CSS
+          honors prefers-reduced-motion. Wrapping in h1 preserves a single top-level heading
+          for a11y; alt provides the name. */}
       <h1 style={styles.heading}>
-        <img {...HERO_LOGO_IMG} alt="Inkweave" style={styles.logo} />
+        <img {...HERO_LOGO_IMG} src={logoSrc} alt="Inkweave" style={styles.logo} />
         <span style={styles.srOnly}>Disney Lorcana Card Synergy Finder for Core format</span>
       </h1>
 

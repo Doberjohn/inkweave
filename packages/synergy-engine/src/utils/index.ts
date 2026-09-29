@@ -19,6 +19,8 @@ export {
   hasPositiveClassificationEffect,
   isLocationSupportCard,
   getLocationRoles,
+  getLocationBuffClassifications,
+  locationBuffReaches,
   LOCATION_PATTERNS,
   getShiftType,
   hasAnyShift,
@@ -32,6 +34,7 @@ export {
   isSacrificeCard,
   getSelfDiscardRoles,
   isSelfDiscardCard,
+  selfDiscardOutletFeeds,
   getRampRoles,
   isRampCard,
   isDeckRamp,
@@ -129,3 +132,12 @@ export {transformCard, transformCards} from './cardTransformer.js';
 export type {LorcanaJSONCard, RawCardVariant} from './cardTransformer.js';
 
 export {cardSlug, cardPath} from './cardSlug.js';
+
+export {
+  canonicalizeCardLine,
+  canonicalizeCardText,
+  canonicalizeCardFullText,
+  findGlyphWords,
+  findSpelledGlyphWords,
+  NAMED_REFERENCE,
+} from './cardTextStyle.js';

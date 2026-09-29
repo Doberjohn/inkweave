@@ -1,5 +1,5 @@
-import type {ChangeEvent} from 'react';
-import type {Ink} from 'inkweave-synergy-engine';
+import type {ChangeEvent, FocusEvent} from 'react';
+import {canonicalizeCardFullText, type Ink} from 'inkweave-synergy-engine';
 import type {RevealCardForm} from '../buildPreviewCard';
 import {ALL_INKS, COLORS, SPACING, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {CARD_TYPES, RARITIES, FEATURED_FRANCHISE_HINT} from '../constants';
@@ -48,6 +48,15 @@ function Field({
 export function RevealAdminForm({form, errors, onChange}: RevealAdminFormProps) {
   const text = (name: keyof RevealCardForm) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     onChange({[name]: e.target.value} as Partial<RevealCardForm>);
+
+  // Show the house-style rewrite (#635) when the owner moves on within the page. Not when the
+  // window or tab loses focus (alt-tab to copy the next ability): the field is still the active
+  // element then, and trimming its trailing newline would glue the next paste onto this line.
+  const canonicalizeOnLeave = (e: FocusEvent<HTMLTextAreaElement>) => {
+    const field = e.currentTarget;
+    if (field.ownerDocument.activeElement === field) return;
+    onChange({fullText: canonicalizeCardFullText(field.value)});
+  };
 
   return (
     <div>
@@ -127,7 +136,13 @@ export function RevealAdminForm({form, errors, onChange}: RevealAdminFormProps) 
         <textarea id="field-keywords" style={{...fieldStyle, minHeight: 60}} value={form.keywords} onChange={text('keywords')} />
       </Field>
       <Field label="Full card text (one ability per line)" name="fullText" errors={errors}>
-        <textarea id="field-fullText" style={{...fieldStyle, minHeight: 100}} value={form.fullText} onChange={text('fullText')} />
+        <textarea
+          id="field-fullText"
+          style={{...fieldStyle, minHeight: 100}}
+          value={form.fullText}
+          onChange={text('fullText')}
+          onBlur={canonicalizeOnLeave}
+        />
       </Field>
     </div>
   );
