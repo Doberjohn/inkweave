@@ -50,6 +50,8 @@ const PAID_ACTIVATION_GAIN = /\d+\s*⬡\s*[—–-][^()]{0,120}?\bgets?\s+\d+\s+
 /** The opponent decides whether you get the drop (This Is Business, Shere Khan's ONE-SIDED DEAL, Go Go Tomago). */
 const OPPONENT_GATED =
   /\bchosen opponent chooses one\b|\bfor each opponent who doesn't\b|\bwhenever this character is challenged\b/i;
+/** One option of a modal ability, kept as its own section in preview data ("• Get 1 ink drop."). */
+const MODAL_OPTION = /^\s*•/;
 
 /** Normalized text of a card that mentions ink drops, or null (cheap raw-text pre-filter first). */
 function inkDropText(card: LorcanaCard): string | null {
@@ -76,10 +78,26 @@ export const isDropHoldPayoff = (card: LorcanaCard): boolean => dropTextMatches(
 /** Drop sink: pays a cost with drops, or converts drops you would get into something else. */
 export const isDropSink = (card: LorcanaCard): boolean => dropTextMatches(card, DROP_SINK);
 
-/** Each ability block's normalized text; the whole text when a card carries no sections. */
+/**
+ * Each ability block's normalized text; the whole text when a card carries no sections. Preview
+ * data (the reveal form) splits every "•" option of a modal ability into its own section, so an
+ * option is read with the line that offers it: Kit Cloudkicker - Sure Shot's "Whenever this
+ * character quests, choose one:" still reaches its "• Get 1 ink drop." allCards.json keeps the
+ * options inside the ability's section, where this changes nothing.
+ */
 function abilityTexts(card: LorcanaCard): string[] {
   const sections = card.textSections?.length ? card.textSections : [card.text ?? ''];
-  return sections.map((section) => normalizeCardText({...card, text: section}));
+  const blocks: string[] = [];
+  let offeringLine = '';
+  for (const section of sections) {
+    if (MODAL_OPTION.test(section)) {
+      blocks.push(`${offeringLine} ${section}`);
+    } else {
+      offeringLine = section;
+      blocks.push(section);
+    }
+  }
+  return blocks.map((text) => normalizeCardText({...card, text}));
 }
 
 /**

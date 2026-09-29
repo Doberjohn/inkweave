@@ -186,6 +186,30 @@ describe('Ink Drops role detection', () => {
     expect(isRepeatingDropMaker(questThenPlay)).toBe(false);
   });
 
+  it('reads a modal option with the line that offers it', () => {
+    // Preview data keeps each "•" option in its own section, apart from its trigger line.
+    const onQuest = createCard({
+      text: 'Whenever this character quests, choose one:\n• Deal 1 damage to chosen character.\n• Get 1 ink drop.',
+      textSections: [
+        'Whenever this character quests, choose one:',
+        '• Deal 1 damage to chosen character.',
+        '• Get 1 ink drop.',
+      ],
+    });
+    // The quest trigger of the ability before must not reach a play-triggered option.
+    const onPlay = createCard({
+      text: 'Whenever this character quests, draw a card.\nWhen you play this character, choose one:\n• Draw a card.\n• Get 1 ink drop.',
+      textSections: [
+        'Whenever this character quests, draw a card.',
+        'When you play this character, choose one:',
+        '• Draw a card.',
+        '• Get 1 ink drop.',
+      ],
+    });
+    expect(isRepeatingDropMaker(onQuest)).toBe(true);
+    expect(isRepeatingDropMaker(onPlay)).toBe(false);
+  });
+
   it('marks a maker whose drop the opponent can deny as opponent-gated', () => {
     expect(isOpponentGatedDrop(thisIsBusiness)).toBe(true);
     expect(isOpponentGatedDrop(molly)).toBe(false);

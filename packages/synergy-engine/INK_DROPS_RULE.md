@@ -76,7 +76,7 @@ Flags a maker whose drops also (or only) reach an opponent: Mickey Mouse - Best 
 
 | Helper | Pattern | Cards |
 |--------|---------|-------|
-| `isRepeatingDropMaker` | Judged one ability at a time (`textSections`): some ability matches `REPEATING_GAIN` (a gain inside "whenever …", "at the end of your turn", or a ⟳ ability) and not `PAID_ACTIVATION_GAIN` (a gain behind an ink-cost activation) | Arthur - Jousting Knight, Arthur - Merlin's Assistant, Go Go Tomago - Extreme Tester, Honey Lemon - Testing the Limits, Inkcaster Skates, Marie - Caught in the Act, Mickey Mouse - Best in Town, Port Authority - Center Hub, Shere Khan - Khan Industries CEO, Sir Pellinore - Tougher Than He Looks |
+| `isRepeatingDropMaker` | Judged one ability at a time (`textSections`, where each "•" option of a modal ability is read with the line that offers it): some ability matches `REPEATING_GAIN` (a gain inside "whenever …", "at the end of your turn", or a ⟳ ability) and not `PAID_ACTIVATION_GAIN` (a gain behind an ink-cost activation) | Arthur - Jousting Knight, Arthur - Merlin's Assistant, Go Go Tomago - Extreme Tester, Honey Lemon - Testing the Limits, Inkcaster Skates, Kit Cloudkicker - Sure Shot, Marie - Caught in the Act, Mickey Mouse - Best in Town, Port Authority - Center Hub, Shere Khan - Khan Industries CEO, Sir Pellinore - Tougher Than He Looks |
 | `isOpponentGatedDrop` | `OPPONENT_GATED` ("chosen opponent chooses one", "for each opponent who doesn't", "whenever this character is challenged") | Go Go Tomago - Extreme Tester, Shere Khan - Opportunistic Tycoon, This Is Business |
 | burst | `getInkDropGain(card) >= 2` | Baymax - Lab Assistant (2), Higitus Figitus (3), Merlin - Ink Drop Tinkerer (2), Tadashi Hamada - Making Waves (2), This Is Business (2) |
 
@@ -141,43 +141,43 @@ Applies the project-wide **5-baseline convention**. For each maker ↔ payoff pa
 
 ### Live distribution
 
-Measured on `origin/master` 2db40580 (35 drop cards, all Set 14). After the engine's ink-compatibility filter (`canShareDeck`, which admits every pair here), **219 unique pairs**:
+Measured after merging `origin/master` c8b1d2ba (36 drop cards, all Set 14). After the engine's ink-compatibility filter (`canShareDeck`, which admits every pair here), **227 unique pairs**:
 
 | Pair shape | Pairs | Score |
 |------------|-------|-------|
-| maker ↔ spend rider | 87 | 7 |
+| maker ↔ spend rider | 90 | 7 |
 | maker ↔ spend rider, gated | 11 | 6 |
-| repeating maker ↔ remove trigger | 9 | 8 |
+| repeating maker ↔ remove trigger | 10 | 8 |
 | repeating maker ↔ remove trigger, gated | 1 | 7 |
 | one-shot maker ↔ hold | 45 | 6 |
 | one-shot maker ↔ hold, gated | 6 | 5 |
-| repeating maker ↔ hold | 27 | 7 |
+| repeating maker ↔ hold | 30 | 7 |
 | repeating maker ↔ hold, gated | 3 | 6 |
 | one-shot maker ↔ sink | 11 | 6 |
 | one-shot maker ↔ sink, gated | 1 | 5 |
 | burst maker ↔ sink | 4 | 7 |
 | burst maker ↔ sink, gated | 1 | 6 |
-| repeating maker ↔ sink | 9 | 8 |
+| repeating maker ↔ sink | 10 | 8 |
 | repeating maker ↔ sink, gated | 1 | 7 |
 | hold ↔ hold | 3 | 6 |
 
-Totals: **5: 7, 6: 74, 7: 120, 8: 18**. Every drop card gets at least one partner, and the 7 drop cards that had no synergies before this rule (Archimedes - Messenger Owl, Molly Cunningham, Kit Cloudkicker, This Is Business, Yama, Intense Research, Sir Kay) now have an Ink Drops group.
+Totals: **5: 7, 6: 74, 7: 126, 8: 20**. Every drop card gets at least one partner, and for 6 of them (Archimedes - Messenger Owl, Intense Research, Molly Cunningham - Remembers to Share, Sir Kay - Determined to Win, This Is Business, Yama - Notorious Criminal) the Ink Drops group is their only synergy group.
 
 ---
 
 ## Coverage
 
-- **27 makers** (Emerald 9, Steel 7, Amethyst 6, Amber 2, Ruby 2, Sapphire 1): A Dark Age No More, Another Tale to Spin, Archimedes - Messenger Owl, Arthur - Jousting Knight, Arthur - Merlin's Assistant, Arthur - Novice Blacksmith, Baymax - Lab Assistant, Bobby Zimuruski - Soundboard Whiz, Go Go Tomago - Extreme Tester, Higitus Figitus, Honey Lemon - Testing the Limits, Ink Explosion, Inkcaster Skates, Kit Cloudkicker - Irrepressible Bear, Marie - Caught in the Act, Merlin - Bauble Expert, Merlin - Ink Drop Tinkerer, Merlin - Profoundly Curious, Mickey Mouse - Best in Town, Molly Cunningham - Remembers to Share, Port Authority - Center Hub, Shere Khan - Khan Industries CEO, Shere Khan - Opportunistic Tycoon, Sir Pellinore - Tougher Than He Looks, Tadashi Hamada - Making Waves, This Is Business, Yama - Notorious Criminal
+- **28 makers** (Emerald 9, Steel 8, Amethyst 6, Amber 2, Ruby 2, Sapphire 1): A Dark Age No More, Another Tale to Spin, Archimedes - Messenger Owl, Arthur - Jousting Knight, Arthur - Merlin's Assistant, Arthur - Novice Blacksmith, Baymax - Lab Assistant, Bobby Zimuruski - Soundboard Whiz, Go Go Tomago - Extreme Tester, Higitus Figitus, Honey Lemon - Testing the Limits, Ink Explosion, Inkcaster Skates, Kit Cloudkicker - Irrepressible Bear, Kit Cloudkicker - Sure Shot, Marie - Caught in the Act, Merlin - Bauble Expert, Merlin - Ink Drop Tinkerer, Merlin - Profoundly Curious, Mickey Mouse - Best in Town, Molly Cunningham - Remembers to Share, Port Authority - Center Hub, Shere Khan - Khan Industries CEO, Shere Khan - Opportunistic Tycoon, Sir Pellinore - Tougher Than He Looks, Tadashi Hamada - Making Waves, This Is Business, Yama - Notorious Criminal
 - **8 payoffs** (Sapphire 3, Amethyst 2, Steel 2, Ruby 1): **spend** Intense Research, Jousting Match, Wasabi - Future Thinker, Madam Mim - Resourceful Trickster (also the only remove trigger); **hold** Sir Kay - Determined to Win, Wasabi - Called into Battle, Madam Mim - Trinket Hunter; **sink** Baymax - Amped Up
 - **6 shared makers** (Emerald 4, Amber 2): Another Tale to Spin, Kit Cloudkicker - Irrepressible Bear, Mickey Mouse - Best in Town, Molly Cunningham - Remembers to Share, Port Authority - Center Hub, This Is Business
 
 ```chart
 {
   "type": "doughnut",
-  "title": "Role Composition (35 cards)",
+  "title": "Role Composition (36 cards)",
   "data": {
-    "labels": ["Makers (27)", "Spend payoffs (4)", "Hold payoffs (3)", "Sink (1)"],
-    "values": [27, 4, 3, 1]
+    "labels": ["Makers (28)", "Spend payoffs (4)", "Hold payoffs (3)", "Sink (1)"],
+    "values": [28, 4, 3, 1]
   }
 }
 ```
@@ -210,6 +210,7 @@ Unit and rule tests live in `packages/synergy-engine/src/__tests__/inkDrops.test
 | pre-filter | a card with no drop text gets no role |
 | steady supply | Inkcaster Skates and Arthur - Jousting Knight repeat; Merlin, Yama and Bobby do not |
 | steady supply, per ability | a quest trigger in one ability does not make a one-shot gain in another repeat |
+| steady supply, modal option | a "•" option is read with the line that offers it: under a quest trigger it repeats, under a play trigger it does not |
 | opponent gate | This Is Business is gated; Molly is not |
 | catalog tile | a maker surfaces the `ink-drop-gain` (Creates Ink Drops) tile; Amped Up does not |
 | rule registration | registered as the `ink-drops` playstyle; `matches` only drop cards; `findSynergies` drops maker ↔ maker |
@@ -223,7 +224,7 @@ Unit and rule tests live in `packages/synergy-engine/src/__tests__/inkDrops.test
 | payoff ↔ payoff | hold ↔ hold 6; Mim ↔ Jousting Match and Mim ↔ Amped Up null |
 | data guard: coverage | every pool card mentioning ink drops has a role; no dual-role card; key cards stay in their designed roles |
 | data guard: copy fit | every remove trigger draws a card, every sink is the Shift-plus-conversion shape, and no gain goes only to opponents, so a new wording fails CI until the table gets a row and copy for it |
-| data guard: live pairs | on the real pool, every drop card has partners, no two makers pair, and the 8s with Mim and Amped Up are exactly the steady makers the opponent cannot deny |
+| data guard: live pairs | on the real pool, every drop card has partners, no two makers pair, and the 8s with Mim and Amped Up are exactly the steady makers the opponent cannot deny that can share a deck with them, including Arthur - Jousting Knight and Kit Cloudkicker - Sure Shot by name |
 
 ---
 
@@ -235,7 +236,7 @@ Drops are temporary ink, not inkwell growth: they never fire inkwell triggers (e
 
 ### Why 7 for spend riders and 8 only for steady makers?
 
-A spend rider needs one drop once, and any of the 27 makers supplies it; the drop switches a bonus on (7). The 8s are the peak chains the anchors reserve that score for: a maker that keeps producing drops feeding a payoff that pays off turn after turn (Mim's draw each turn, a permanent inkwell card per drop through Amped Up). Scoring Madam Mim - Resourceful Trickster and Wasabi - Future Thinker at 8 with every maker, because their riders do nothing without a drop, would have put both at 8 with nearly every maker and erased the ranking.
+A spend rider needs one drop once, and any maker supplies it; the drop switches a bonus on (7). The 8s are the peak chains the anchors reserve that score for: a maker that keeps producing drops feeding a payoff that pays off turn after turn (Mim's draw each turn, a permanent inkwell card per drop through Amped Up). Scoring Madam Mim - Resourceful Trickster and Wasabi - Future Thinker at 8 with every maker, because their riders do nothing without a drop, would have put both at 8 with nearly every maker and erased the ranking.
 
 ### Why -1 for opponent-gated makers but nothing for shared ones?
 
