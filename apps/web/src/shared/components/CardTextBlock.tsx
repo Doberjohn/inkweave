@@ -5,20 +5,31 @@ interface CardTextBlockProps {
   card: LorcanaCard;
 }
 
+/**
+ * Leading ALL-CAPS ability name, e.g. "COMMUNITY SERVICE" in "COMMUNITY SERVICE At the end of
+ * your turn, ..." or "TAKE… YOUR… TIME". The name ends at the first point where the effect
+ * starts: a capitalized word ("At"), a one-letter word opening a sentence ("A Princess ...",
+ * "A character ..."), or an activated cost ("⟳", "6 ⬡", "—"). The match is lazy, so that first
+ * boundary wins and "CIVIC DUTY 6 ⬡ — ..." stops before the cost's digit. The leading lookahead
+ * needs two adjacent capitals before the first lowercase letter, so plain text opening on "A" or
+ * "I" is never read as a name.
+ */
+const ABILITY_NAME =
+  /^(?=[^a-z]*[A-Z]{2})[.…'‘’]*[A-Z][A-Z0-9 .…'‘’!?,&-]*?(?=\s+(?:[A-Z][a-z]|[AI] [A-Z]?[a-z]|[⟳⬡—]|\d+\s*⬡))/;
+
 /** Formats a single ability text: bolds leading ALL-CAPS names, italicizes parenthesized reminders. */
 function formatSection(text: string): React.ReactNode {
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
 
-  // Extract leading ALL-CAPS ability name (e.g. "FREEZE ↷ — " or "A WONDERFUL DREAM ↷ — ")
-  const abilityMatch = text.match(/^([A-Z][A-Z ']+(?:\s*[↷⬡]+)?(?:\s*—\s*))/);
-  if (abilityMatch) {
+  const abilityName = ABILITY_NAME.exec(text)?.[0];
+  if (abilityName) {
     parts.push(
       <span key="ability" style={{fontWeight: 700}}>
-        {abilityMatch[1]}
+        {abilityName}
       </span>,
     );
-    lastIndex = abilityMatch[1].length;
+    lastIndex = abilityName.length;
   }
 
   // Find parenthesized reminder text in the remainder
