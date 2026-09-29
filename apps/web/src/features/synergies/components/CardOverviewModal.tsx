@@ -14,7 +14,7 @@ import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {trackEvent} from '../../../shared/lib/analytics';
-import {COLORS, EASING, FONT_SIZES, LETTER_SPACING, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONT_SIZES, LETTER_SPACING, RADIUS, hexRgba} from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
 import {IconButton} from '../../../shared/components/IconButton';
 import {LinkButton} from '../../../shared/components/LinkButton';
@@ -27,9 +27,11 @@ import {
   MODAL_FRAME_STYLE,
   MODAL_HEADER_STYLE,
   modalCardSize,
+  pickCardColumnLayout,
   pickCardsRowStyle,
   pickModalShellStyle,
   pickModalTitleStyle,
+  pickSynergyColumnLayout,
 } from './cardOverviewModalStyles';
 
 const FLIP_DURATION = 480;
@@ -1339,12 +1341,7 @@ function pickCardWrapperStyle({isMobile, highlightedCard, inComparison}: {isMobi
   // cards slide into position together.
   const inset = !isMobile && inComparison ? COMPARISON_CARD_INSET : 0;
   return {
-    // A column, so the mobile translation toggle sits under the card.
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: isMobile ? 'center' : 'flex-start',
-    gap: SPACING.md,
-    flexShrink: 0,
+    ...pickCardColumnLayout(isMobile),
     transform: inset ? `translateX(${inset}px)` : undefined,
     transition: `opacity 0.2s ${EASING.smooth}, filter 0.2s ${EASING.smooth}, transform ${FLIP_DURATION}ms ${FLIP_EASING}`,
     opacity: highlightedCard === 'b' ? 0.4 : 1,
@@ -1376,14 +1373,7 @@ function DefaultInfoColumn({synergies, synergiesLoading, visibleGroups, activeGr
       // mode — opacity:0 + pointer-events:none would still leave them tab-reachable.
       inert={inComparison}
       style={{
-        minWidth: 0,
-        minHeight: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 18,
-        maxHeight: isMobile ? undefined : cardHeight,
-        overflowY: isMobile ? 'visible' : 'auto',
-        padding: isMobile ? 0 : '0 14px',
+        ...pickSynergyColumnLayout(isMobile, cardHeight),
         opacity: inComparison ? 0 : 1,
         pointerEvents: inComparison ? 'none' : 'auto',
         transition: `opacity 250ms ${EASING.smooth}`,

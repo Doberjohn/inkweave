@@ -1,7 +1,10 @@
-import {useEffect} from 'react';
+import {useEffect, type CSSProperties} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
+import {RADIUS} from '../../../shared/constants';
+import {usePrintingSelection, useScrollLock, useTransitionPresence} from '../../../shared/hooks';
+import {CardTranslationToggle} from '../../../shared/components/CardTranslationToggle';
+import {PrintingPills} from '../../../shared/components/PrintingPills';
 import {
   CENTERING_WRAPPER_STYLE,
   CLOSE_BUTTON_SIZE,
@@ -10,9 +13,11 @@ import {
   MODAL_FRAME_STYLE,
   MODAL_HEADER_STYLE,
   modalCardSize,
+  pickCardColumnLayout,
   pickCardsRowStyle,
   pickModalShellStyle,
   pickModalTitleStyle,
+  pickSynergyColumnLayout,
 } from './cardOverviewModalStyles';
 
 /**
@@ -57,13 +62,49 @@ export function SynergiesLoadingSkeleton() {
   );
 }
 
-const CLOSE_BUTTON_SLOT_STYLE: React.CSSProperties = {
+const CLOSE_BUTTON_SLOT_STYLE: CSSProperties = {
   width: CLOSE_BUTTON_SIZE,
   height: CLOSE_BUTTON_SIZE,
   flexShrink: 0,
 };
 
-const BODY_STYLE: React.CSSProperties = {...DEFAULT_BODY_STYLE, overflow: 'hidden'};
+const BODY_STYLE: CSSProperties = {...DEFAULT_BODY_STYLE, overflow: 'hidden'};
+
+const HIDDEN: CSSProperties = {visibility: 'hidden'};
+const noop = () => {};
+
+/**
+ * The modal's printing pills and translation toggle (ModalCardArt.tsx), invisible: rendered
+ * only where the modal renders them and in the same wrappers (the header on desktop, under the
+ * card on mobile), they hold exactly the space the real controls take, so nothing moves at the
+ * handoff. visibility:hidden also keeps them out of the focus order and the accessibility tree.
+ */
+function ReservedArtControls({card, isMobile}: {card: LorcanaCard; isMobile: boolean}) {
+  const {printings} = usePrintingSelection(card);
+  const toggle = card.scanLanguage ? (
+    <span style={HIDDEN}>
+      <CardTranslationToggle shown={false} onToggle={noop} />
+    </span>
+  ) : null;
+  if (isMobile) {
+    return (
+      <>
+        <PrintingPills printings={printings} index={0} onSelect={noop} isMobile style={HIDDEN} />
+        {toggle}
+      </>
+    );
+  }
+  return (
+    <>
+      {printings.length > 1 && (
+        <span style={HIDDEN}>
+          <PrintingPills printings={printings} index={0} onSelect={noop} />
+        </span>
+      )}
+      {toggle}
+    </>
+  );
+}
 
 interface CardOverviewModalFallbackProps {
   card: LorcanaCard;
@@ -113,16 +154,26 @@ export function CardOverviewModalFallback({card, isMobile, onClose}: CardOvervie
             style={pickModalShellStyle(isMobile)}>
             <div style={MODAL_HEADER_STYLE}>
               <div style={pickModalTitleStyle(isMobile)}>{card.fullName}</div>
+              {!isMobile && <ReservedArtControls card={card} isMobile={false} />}
               {/* Holds the close button's place: it sets the header's height, so everything
                   below sits exactly where the modal's will. */}
               <div aria-hidden="true" style={CLOSE_BUTTON_SLOT_STYLE} />
             </div>
             <div style={BODY_STYLE}>
               <div style={pickCardsRowStyle({isMobile, cardWidth, cardHeight})}>
-                {/* inline + block: no trailing <br> or line box, so the placeholder is exactly
-                    the card's height and the synergy column below it lines up (mobile). */}
-                <Skeleton width={cardWidth} height={cardHeight} borderRadius={14} inline style={{display: 'block'}} />
-                <div style={{minWidth: 0}}>
+                <div style={pickCardColumnLayout(isMobile)}>
+                  {/* inline + block: no trailing <br> or line box, so the placeholder is exactly
+                      the card's height and the synergy column below it lines up (mobile). */}
+                  <Skeleton
+                    width={cardWidth}
+                    height={cardHeight}
+                    borderRadius={RADIUS.xl}
+                    inline
+                    style={{display: 'block'}}
+                  />
+                  {isMobile && <ReservedArtControls card={card} isMobile />}
+                </div>
+                <div style={pickSynergyColumnLayout(isMobile, cardHeight)}>
                   <SynergiesLoadingSkeleton />
                 </div>
               </div>

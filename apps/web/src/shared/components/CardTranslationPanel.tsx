@@ -1,7 +1,6 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CAP_LABEL_XS, COLORS, FONT_SIZES, SPACING} from '../constants';
 import {CardTextBlock} from './CardTextBlock';
-import {CtaButton} from './CtaButton';
 
 /** Panel spacing and type sizes. */
 const SIZES = {
@@ -15,20 +14,6 @@ interface CardTranslationPanelProps {
   size?: keyof typeof SIZES;
   /** Merged onto the panel, e.g. CardLightbox's absolute placement over the scan. */
   style?: React.CSSProperties;
-}
-
-interface CardTranslationToggleProps {
-  shown: boolean;
-  onToggle: () => void;
-}
-
-/** The "See translation" / "See card" switch that shows and hides the panel. */
-export function CardTranslationToggle({shown, onToggle}: CardTranslationToggleProps) {
-  return (
-    <CtaButton variant="ghost" onClick={onToggle}>
-      {shown ? 'See card' : 'See translation'}
-    </CtaButton>
-  );
 }
 
 /** The English name of a language code ("ja" → "Japanese"); the code itself if the runtime has none. */

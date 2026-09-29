@@ -1,5 +1,5 @@
 import type {CSSProperties} from 'react';
-import {COLORS, FONTS, RADIUS, SHADOWS, Z_INDEX} from '../../../shared/constants';
+import {COLORS, FONTS, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../../../shared/constants';
 
 /*
  * The card modal's chrome, shared by CardOverviewModal and CardOverviewModalFallback (#640). The
@@ -122,5 +122,33 @@ export function pickCardsRowStyle({isMobile, cardWidth, cardHeight}: PickCardsRo
     flexShrink: 0,
     overflow: 'visible',
     position: 'relative',
+  };
+}
+
+/**
+ * The card column: a column, so mobile's printing pills and translation toggle (ModalCardArt.tsx)
+ * sit under the card, which is centered on mobile. The modal adds its comparison styles.
+ */
+export function pickCardColumnLayout(isMobile: boolean): CSSProperties {
+  return {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: isMobile ? 'center' : 'flex-start',
+    gap: SPACING.md,
+    flexShrink: 0,
+  };
+}
+
+/** The synergy column beside (desktop) or under (mobile) the card. The modal adds its fade. */
+export function pickSynergyColumnLayout(isMobile: boolean, cardHeight: number): CSSProperties {
+  return {
+    minWidth: 0,
+    minHeight: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 18,
+    maxHeight: isMobile ? undefined : cardHeight,
+    overflowY: isMobile ? 'visible' : 'auto',
+    padding: isMobile ? 0 : '0 14px',
   };
 }
