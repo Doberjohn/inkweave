@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
-import {render, act, fireEvent, screen} from '@testing-library/react';
+import {render, act, createEvent, fireEvent, screen} from '@testing-library/react';
 import {useScrollSnapIndex} from '../useScrollSnapIndex';
 
 /** A four-slide strip, the shape PrintingCarousel renders, exposing the hook through the DOM. */
@@ -188,6 +188,7 @@ describe('useScrollSnapIndex settling', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    delete (window as {onscrollend?: unknown}).onscrollend;
   });
 
   /** Let the strip sit still long enough to count as at rest without a scrollend event. */
@@ -195,6 +196,13 @@ describe('useScrollSnapIndex settling', () => {
     act(() => {
       vi.advanceTimersByTime(200);
     });
+  };
+
+  /** A finger lifts, leaving `fingersLeft` on the screen. */
+  const liftFinger = (el: HTMLElement, fingersLeft: number) => {
+    const end = createEvent.touchEnd(el);
+    Object.defineProperty(end, 'touches', {value: {length: fingersLeft}});
+    fireEvent(el, end);
   };
 
   it('reports the slide a swipe comes to rest on, once', () => {
@@ -227,20 +235,54 @@ describe('useScrollSnapIndex settling', () => {
     expect(onSettle).not.toHaveBeenCalled();
   });
 
-  // Without scrollend (Safari), rest is a pause in scroll events, and a finger held still on
-  // the strip pauses them too.
-  it('waits for the finger to lift before taking a pause for rest', () => {
+  // Without scrollend (older Safari), rest is a pause in scroll events, and a finger held still
+  // on the strip pauses them too, so every finger must be up first.
+  it('waits for every finger to lift before taking a pause for rest', () => {
+    const onSettle = vi.fn();
+    render(<Strip onSettle={onSettle} />);
+    const viewport = screen.getByTestId('viewport');
+
+    fireEvent.touchStart(viewport);
+    fireEvent.touchStart(viewport);
+    scrollTo(300);
+    liftFinger(viewport, 1);
+    pause();
+    expect(onSettle).not.toHaveBeenCalled();
+
+    liftFinger(viewport, 0);
+    pause();
+    expect(onSettle).toHaveBeenCalledWith(1);
+  });
+
+  // Where scrollend exists, it alone marks rest: a trackpad swipe held mid-way pauses the
+  // scroll events too, with no finger on the strip to tell.
+  it('does not take a trackpad swipe held mid-way for rest, where the browser has scrollend', () => {
+    Object.defineProperty(window, 'onscrollend', {value: null, configurable: true, writable: true});
+    const onSettle = vi.fn();
+    render(<Strip onSettle={onSettle} />);
+    const viewport = screen.getByTestId('viewport');
+
+    fireEvent.wheel(viewport);
+    scrollTo(300);
+    pause();
+    expect(onSettle).not.toHaveBeenCalled();
+
+    fireEvent(viewport, new Event('scrollend'));
+    expect(onSettle).toHaveBeenCalledWith(1);
+  });
+
+  // scrollend comes only once the gesture is over. A touch whose element left the page
+  // mid-swipe (CardImage's loading skeleton) never reports its end to the strip, so scrollend
+  // must not wait for that.
+  it('takes scrollend for rest even when a touch never reported its end', () => {
     const onSettle = vi.fn();
     render(<Strip onSettle={onSettle} />);
     const viewport = screen.getByTestId('viewport');
 
     fireEvent.touchStart(viewport);
     scrollTo(300);
-    pause();
-    expect(onSettle).not.toHaveBeenCalled();
+    fireEvent(viewport, new Event('scrollend'));
 
-    fireEvent.touchEnd(viewport);
-    pause();
     expect(onSettle).toHaveBeenCalledWith(1);
   });
 

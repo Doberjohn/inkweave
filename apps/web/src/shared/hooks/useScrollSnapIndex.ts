@@ -11,34 +11,46 @@ function indexFromScroll(root: HTMLElement): number | null {
 /** Input that moves the strip itself, taking over from a `scrollToIndex` still in flight. */
 const TAKE_OVER_EVENTS = ['touchstart', 'wheel', 'keydown'] as const;
 
-/** Where a browser lacks `scrollend` (Safari), the strip is at rest once scroll events stop this long. */
+/** Where a browser lacks `scrollend`, the strip is at rest once scroll events stop this long. */
 const SETTLE_QUIET_MS = 150;
 
 /**
- * Calls `onRest` each time the strip stops moving: at `scrollend`, or where a browser lacks
- * it, once scroll events have stopped for SETTLE_QUIET_MS with no finger on the strip (a
- * finger held still stops them too). Returns the cleanup.
+ * Calls `onRest` each time the strip stops moving. Chrome, Firefox and Safari 26.2+ fire
+ * `scrollend` once a scroll is over: the gesture ended (every finger up, or the trackpad
+ * released) and any fling or snap finished. Older Safari lacks it, so there a pause of
+ * SETTLE_QUIET_MS in scroll events with no finger down stands in. Only there: a trackpad
+ * swipe held mid-way pauses the events too, with no finger to tell, and one of its touches
+ * can fail to report its end (a touch whose element left the page no longer reaches the
+ * strip), which is why `scrollend` never waits on `touching`. A lift also counts, so a tap
+ * that moved nothing still ends. Returns the cleanup.
  */
 function watchForRest(root: HTMLElement, onRest: () => void): () => void {
+  const pauseMeansRest = !('onscrollend' in window);
   let touching = false;
   let quiet: ReturnType<typeof setTimeout> | undefined;
   const rest = () => {
     clearTimeout(quiet);
-    if (!touching) onRest();
+    onRest();
   };
-  const restLater = () => {
+  const restAfterPause = () => {
     clearTimeout(quiet);
-    quiet = setTimeout(rest, SETTLE_QUIET_MS);
+    quiet = setTimeout(() => {
+      if (!touching) onRest();
+    }, SETTLE_QUIET_MS);
+  };
+  const scrolled = () => {
+    if (pauseMeansRest) restAfterPause();
+    else clearTimeout(quiet);
   };
   const press = () => {
     touching = true;
   };
-  const lift = () => {
-    touching = false;
-    restLater();
+  const lift = (e: Event) => {
+    touching = (e as TouchEvent).touches.length > 0;
+    restAfterPause();
   };
-  const listeners: [string, () => void][] = [
-    ['scroll', restLater],
+  const listeners: [string, (e: Event) => void][] = [
+    ['scroll', scrolled],
     ['scrollend', rest],
     ['touchstart', press],
     ['touchend', lift],
