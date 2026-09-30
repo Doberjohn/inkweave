@@ -193,7 +193,7 @@ export const STRUCTURAL_MECHANICS: Mechanic[] = [
   {id: 'return-payoff', category: 'structural', label: 'Return Payoff', description: 'Get a benefit whenever a card is returned to hand from play'},
   {id: 'rebuy-payoff', category: 'structural', label: 'Re-buy Target', description: 'A strong enter-play ability worth re-firing by bouncing this character'},
   // Ink Drops ('drop-maker' aliases to the generic 'ink-drop-gain' tile)
-  {id: 'drop-payoff', category: 'structural', label: 'Uses Ink Drops', description: 'Spend or hold ink drops for a bonus, or pay a cost with them'},
+  {id: 'drop-payoff', category: 'structural', label: 'Uses Ink Drops', description: 'Spend or hold ink drops for a bonus, pay a cost with them, or need one gained this turn'},
   {id: 'drop-shared', category: 'structural', label: 'Shares Ink Drops', description: 'Also gives an opponent ink drops'},
   // Floodborns
   {id: 'trigger', category: 'structural', label: 'Trigger', description: 'Get a repeating benefit when your Floodborn characters quest, play, or are banished'},

@@ -6,6 +6,7 @@ import {
   canShareDeck,
   getInkDropRoles,
   isCoreSet,
+  isDropGainGate,
   isDropRemoveTrigger,
   isDropSink,
   isOpponentGatedDrop,
@@ -91,7 +92,8 @@ describe('Ink Drops data coverage', () => {
 
   it('only uses payoff wordings the scoring copy describes', () => {
     // The remove-trigger copy says the payoff draws a card; the sink copy covers a drop-paid Shift
-    // AND an "if you would get an ink drop" conversion. A new shape needs its own row and copy.
+    // AND an "if you would get an ink drop" conversion; the gain-gate copy says the gated card can
+    // quest and challenge. A new shape needs its own row and copy.
     const removeTriggersThatDoNotDraw = dropCards
       .filter((c) => isDropRemoveTrigger(c) && !/whenever you remove[^.]*ink drops?[^.]*\bdraw\b/i.test(flatText(c)))
       .map((c) => c.fullName);
@@ -101,13 +103,17 @@ describe('Ink Drops data coverage', () => {
         return isDropSink(c) && !(/\bshift remove \d+ ink drops?\b/i.test(t) && /\bif you would get an ink drop\b/i.test(t));
       })
       .map((c) => c.fullName);
+    const gatesOfAnotherShape = dropCards
+      .filter((c) => isDropGainGate(c) && !/\bcan['’]t quest or challenge unless you gained\b/i.test(flatText(c)))
+      .map((c) => c.fullName);
     // A gain that goes ONLY to opponents would read as a maker for its controller.
     const opponentOnlyGains = dropCards
       .filter((c) => /\b(?:each opponent|opponents|an opponent|chosen opponent) (?:gets?|each get)\s+\d+\s+ink\s+drops?\b/i.test(flatText(c)))
       .map((c) => c.fullName);
-    expect({removeTriggersThatDoNotDraw, sinksOfAnotherShape, opponentOnlyGains}).toEqual({
+    expect({removeTriggersThatDoNotDraw, sinksOfAnotherShape, gatesOfAnotherShape, opponentOnlyGains}).toEqual({
       removeTriggersThatDoNotDraw: [],
       sinksOfAnotherShape: [],
+      gatesOfAnotherShape: [],
       opponentOnlyGains: [],
     });
   });

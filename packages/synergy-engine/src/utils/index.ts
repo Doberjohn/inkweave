@@ -110,7 +110,9 @@ export {
   isDropRemoveTrigger,
   isDropHoldPayoff,
   isDropSink,
+  isDropGainGate,
   isRepeatingDropMaker,
+  isLateDropMaker,
   isOpponentGatedDrop,
 } from './inkDrops.js';
 export type {InkDropRole} from './inkDrops.js';

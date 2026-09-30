@@ -2,10 +2,12 @@ import type {LorcanaCard} from '../types';
 import {
   type InkDropRole,
   getInkDropGain,
+  isDropGainGate,
   isDropHoldPayoff,
   isDropRemoveTrigger,
   isDropSink,
   isDropSpendRider,
+  isLateDropMaker,
   isOpponentGatedDrop,
   isRepeatingDropMaker,
 } from '../utils';
@@ -46,6 +48,10 @@ function buildInkDropPairCtx(
   return null;
 }
 
+/** The maker's drop can arrive on your turn before the gate card quests or challenges. */
+const opensGainGate = (maker: LorcanaCard, payoff: LorcanaCard): boolean =>
+  isDropGainGate(payoff) && !isLateDropMaker(maker);
+
 /** One maker↔payoff scoring row. `{M}` / `{P}` in the template are the maker / payoff tokens. */
 interface InkDropTier {
   applies: (maker: LorcanaCard, payoff: LorcanaCard) => boolean;
@@ -56,7 +62,8 @@ interface InkDropTier {
 /**
  * The maker↔payoff matrix; the highest applicable row wins. Every row above 5 states its one-sentence
  * interaction in the template. 8 is kept for a steady maker feeding a per-turn payoff (a draw each
- * turn, a permanent inkwell card per drop); a one-shot drop that switches a rider on is 7.
+ * turn, a permanent inkwell card per drop); a one-shot drop that switches a rider on is 7. A gain gate
+ * tops out at 7: the drop only lifts the gate card's drawback, it adds no card or ink of its own.
  */
 const INK_DROP_TIERS: readonly InkDropTier[] = [
   {
@@ -98,6 +105,16 @@ const INK_DROP_TIERS: readonly InkDropTier[] = [
     applies: (maker, payoff) => isDropSink(payoff) && isRepeatingDropMaker(maker),
     score: 8,
     template: 'Each drop {M} makes becomes a permanent inkwell card through {P}.',
+  },
+  {
+    applies: (maker, payoff) => opensGainGate(maker, payoff) && !isRepeatingDropMaker(maker),
+    score: 6,
+    template: "{M}'s ink drop lets {P} quest and challenge that turn.",
+  },
+  {
+    applies: (maker, payoff) => opensGainGate(maker, payoff) && isRepeatingDropMaker(maker),
+    score: 7,
+    template: '{M} can get you an ink drop every turn, so {P} can quest and challenge.',
   },
 ];
 

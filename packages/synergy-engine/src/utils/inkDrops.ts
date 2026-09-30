@@ -8,8 +8,9 @@ import {getInkDropGain, normalizeCardText} from './cardHelpers.js';
 /**
  * Ink Drops roles (payoff-anchored, see engine/inkDropScoring.ts):
  *  - 'drop-maker': gets ink drops ("get 1 ink drop", "each player gets 1 ink drop").
- *  - 'drop-payoff' uses them, in one of four ways: a bonus for removing a drop to play the
- *    card, a trigger on removing one, a bonus while you hold one, or a cost paid with drops.
+ *  - 'drop-payoff' uses them, in one of five ways: a bonus for removing a drop to play the
+ *    card, a trigger on removing one, a bonus while you hold one, a cost paid with drops, or a
+ *    gate that opens only on a turn you gained one.
  *  - 'drop-shared': the gain also (or only) feeds an opponent. Display-only: it tells players
  *    the downside but never changes a pair score.
  *
@@ -39,6 +40,18 @@ const HOLD = /\b(?:while|if) you have (?:an|\d+ or more) ink drops?\b|\bfor each
  * reminder, printed on most makers, never reads as a payoff.
  */
 const DROP_SINK = /\bshift remove \d+ ink drops?\b|\bif you would get an ink drop\b/i;
+/** Gain gate: the card acts only on a turn you gained a drop (Baloo - Delivery Pilot's CASH PAYMENT). */
+const GAIN_GATE = /\bunless you gained (?:an|\d+(?: or more)?) ink drops? this turn\b/i;
+/** The payoff shapes: a card matching any of them uses drops. */
+const PAYOFF_SHAPES = [SPEND_RIDER, REMOVE_TRIGGER, HOLD, DROP_SINK, GAIN_GATE];
+/** Any gain of drops, for judging a maker one ability at a time. */
+const GAIN = /\bgets?\s+\d+\s+ink\s+drops?\b/i;
+/**
+ * A gain that lands after your quests and challenges: at the end of your turn (Mickey Mouse - Best in
+ * Town), or when this character is challenged, on the opponent's turn (Go Go Tomago).
+ */
+const LATE_GAIN =
+  /(?:\bat the end of your turn\b|\bwhenever this character is challenged\b)[^()]{0,120}?\bgets?\s+\d+\s+ink\s+drops?\b/i;
 /** A gain inside a repeatable trigger ("whenever …", "at the end of your turn", a ⟳ ability). */
 const REPEATING_GAIN =
   /(?:\bwhenever\b|\bat the end of your turn\b|⟳)[^()]{0,120}?\bgets?\s+\d+\s+ink\s+drops?\b/i;
@@ -78,6 +91,9 @@ export const isDropHoldPayoff = (card: LorcanaCard): boolean => dropTextMatches(
 /** Drop sink: pays a cost with drops, or converts drops you would get into something else. */
 export const isDropSink = (card: LorcanaCard): boolean => dropTextMatches(card, DROP_SINK);
 
+/** Gain gate: the card can act only on a turn you gained a drop. */
+export const isDropGainGate = (card: LorcanaCard): boolean => dropTextMatches(card, GAIN_GATE);
+
 /**
  * Each ability block's normalized text; the whole text when a card carries no sections. Preview
  * data (the reveal form) splits every "•" option of a modal ability into its own section, so an
@@ -111,14 +127,22 @@ export function isRepeatingDropMaker(card: LorcanaCard): boolean {
   return abilityTexts(card).some((t) => REPEATING_GAIN.test(t) && !PAID_ACTIVATION_GAIN.test(t));
 }
 
+/**
+ * Every drop this maker gets arrives too late to open a gain gate that turn: at the end of your turn,
+ * or on the opponent's. Judged one ability at a time, like isRepeatingDropMaker.
+ */
+export function isLateDropMaker(card: LorcanaCard): boolean {
+  if (inkDropText(card) === null) return false;
+  const gains = abilityTexts(card).filter((t) => GAIN.test(t));
+  return gains.length > 0 && gains.every((t) => LATE_GAIN.test(t));
+}
+
 /** The opponent decides whether this card's drop reaches you. */
 export const isOpponentGatedDrop = (card: LorcanaCard): boolean =>
   dropTextMatches(card, OPPONENT_GATED);
 
-/** Payoff: any of the four ways a card uses ink drops. */
-function isDropPayoffText(t: string): boolean {
-  return SPEND_RIDER.test(t) || REMOVE_TRIGGER.test(t) || HOLD.test(t) || DROP_SINK.test(t);
-}
+/** Payoff: any of the five ways a card uses ink drops. */
+const isDropPayoffText = (t: string): boolean => PAYOFF_SHAPES.some((shape) => shape.test(t));
 
 /**
  * Determine the ink-drop role(s) a card fulfills. Maker and payoff are independent gates, so a
