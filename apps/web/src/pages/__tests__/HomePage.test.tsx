@@ -2,6 +2,7 @@ import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import {HomePage} from '../HomePage';
+import {trackCardSelected} from '../../features/cards/lib/cardAnalytics';
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -14,7 +15,7 @@ vi.mock('../../shared/hooks', () => ({
 }));
 
 vi.mock('../../shared/contexts/CardDataContext', () => ({
-  useCardDataContext: () => ({cards: []}),
+  useCardDataContext: () => ({cards: [], getCardById: () => undefined}),
 }));
 
 vi.mock('../../shared/contexts/CardModalContext', () => ({
@@ -47,9 +48,18 @@ vi.mock('../../shared/components', async () => {
   };
 });
 
+// A featured card the full card list doesn't hold yet (#641): the context mock has no cards.
+const FEATURED_CARD = vi.hoisted(() => ({id: '2999', fullName: 'Woody & Buzz Lightyear - Best Buddies'}));
+
 vi.mock('../../features/cards', () => ({
-  FeaturedCards: () => <div data-testid="featured-cards" />,
+  FeaturedCards: (props: {onCardSelect: (card: typeof FEATURED_CARD) => void}) => (
+    <button data-testid="featured-cards" onClick={() => props.onCardSelect(FEATURED_CARD)}>
+      Featured card
+    </button>
+  ),
 }));
+
+vi.mock('../../features/cards/lib/cardAnalytics', () => ({trackCardSelected: vi.fn()}));
 
 describe('HomePage', () => {
   beforeEach(() => {
@@ -99,5 +109,16 @@ describe('HomePage', () => {
 
     fireEvent.click(screen.getByTestId('mock-playstyles'));
     expect(mockNavigate).toHaveBeenCalledWith('/playstyles');
+  });
+
+  it('tracks a featured card pressed before the full card list has it (#641)', () => {
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByTestId('featured-cards'));
+    expect(trackCardSelected).toHaveBeenCalledWith(FEATURED_CARD, 'home');
   });
 });
