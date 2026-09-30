@@ -35,6 +35,13 @@ describe('buildFeaturedCards', () => {
     expect(out.cards).toEqual([card(2999)]);
   });
 
+  it('builds from allCards.json alone when there is no preview file', () => {
+    const out = buildFeaturedCards({main, preview: null, ids: ['2999', '14001'], isCoreSet});
+
+    expect(out.cards).toEqual([card(2999)]);
+    expect(Object.keys(out.sets)).toEqual(['13']);
+  });
+
   it("records the environment's own setting, so the dev server can tell when it changes", () => {
     const out = buildFeaturedCards({main, preview, ids: ['2999'], isCoreSet, envSetting: '2999'});
 
