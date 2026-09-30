@@ -114,6 +114,8 @@ describe('findOrphanImagePreloads', () => {
   it.each([
     ['rel first', `<link rel="preload" as="image" href="${STALE}">`],
     ['as first', `<link as="image" rel="preload" href="${STALE}">`],
+    // rel is a token list: padding and case don't stop the browser from preloading.
+    ['a padded, mixed-case rel', `<link rel=" Preload " as="image" href="${STALE}">`],
   ])('flags an image preload the page never renders, with %s', (_label, tag) => {
     expect(findOrphanImagePreloads(`<head>${tag}</head><body></body>`)).toEqual([STALE]);
   });
@@ -143,6 +145,11 @@ describe('findSentryPreloads', () => {
   it('passes a page whose modulepreloads are all ordinary chunks', () => {
     const html = '<head><link rel="modulepreload" crossorigin="" href="/assets/loader-BeYgltdQ.js"></head>';
     expect(findSentryPreloads(html, SENTRY_CHUNKS)).toEqual([]);
+  });
+
+  it('reads rel as a token list, so rel="modulepreload " still counts', () => {
+    const html = '<head><link rel="modulepreload " href="/assets/esm-D3E0E-l0.js"></head>';
+    expect(findSentryPreloads(html, SENTRY_CHUNKS)).toEqual(['/assets/esm-D3E0E-l0.js']);
   });
 });
 

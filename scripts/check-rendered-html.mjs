@@ -76,6 +76,12 @@ export function readCanonical(html) {
 const attr = (tag, name) => tag.match(new RegExp(`\\s${name}="([^"]*)"`, 'i'))?.[1];
 
 /**
+ * Whether a tag's rel lists `token`. rel is a set of space-separated, case-insensitive tokens,
+ * so `rel="modulepreload "` is still a modulepreload to the browser.
+ */
+const hasRel = (tag, token) => (attr(tag, 'rel') ?? '').toLowerCase().split(/\s+/).includes(token);
+
+/**
  * Image preloads the page never renders (#627). The crawl captures the live DOM, so a
  * `<link rel="preload" as="image">` injected at runtime is baked into the static HTML,
  * where the parser fetches it ahead of everything else on every visit. The stale
@@ -94,7 +100,7 @@ const attr = (tag, name) => tag.match(new RegExp(`\\s${name}="([^"]*)"`, 'i'))?.
 export function findOrphanImagePreloads(html) {
   const rendered = new Set([...html.matchAll(/<img\b[^>]*\ssrc="([^"]*)"/gi)].map((m) => m[1]));
   return (html.match(/<link\b[^>]*>/gi) ?? [])
-    .filter((tag) => attr(tag, 'rel') === 'preload' && attr(tag, 'as') === 'image')
+    .filter((tag) => hasRel(tag, 'preload') && attr(tag, 'as') === 'image')
     .map((tag) => attr(tag, 'href'))
     .filter((href) => href && !rendered.has(href));
 }
@@ -132,7 +138,7 @@ export function findSentryChunks(targetDir) {
  */
 export function findSentryPreloads(html, sentryChunks) {
   return (html.match(/<link\b[^>]*>/gi) ?? [])
-    .filter((tag) => attr(tag, 'rel') === 'modulepreload')
+    .filter((tag) => hasRel(tag, 'modulepreload'))
     .map((tag) => attr(tag, 'href'))
     .filter((href) => href && sentryChunks.has(href.split('/').pop()));
 }
