@@ -226,7 +226,7 @@ Neither ink path fits. Read as 2 ink on the curve, a cost-4 base gives a negativ
 - **Why 8.** The base pays the other card's alternate cost: play Lab Assistant, get 2 ink drops, and shift a 7-cost Baymax onto it the same turn for no ink. Per rule 8.10.4 the shifted character enters play drying, since its base was played that turn. The rule's own analog, a free Shift onto a mid-cost base that also enables the condition, is 8 too.
 - **Why 5.** The base is a valid landing spot, but the pair cannot pay for the Shift on its own. That is same-deck density, the 5 baseline.
 - **Detection.** `getInkDropGain` (`utils/cardHelpers.ts`) reads the most ink drops any one of the base's effects gets ("get 2 ink drops", "each player gets 1 ink drop"). "If you would get an ink drop" and "remove 2 ink drops" are not gains. The base's own conditions are not modeled (Lab Assistant needs 2 or more items in play), the same way the condition bonus ignores them.
-- **Tuning.** Both tiers live in `data/tuning.json` (`drops.basePays`, `drops.outside`), so `/admin/tuning` edits them like the other Shift tiers.
+- **Tuning.** Both tiers live in `data/tuning.json` (`drops.basePays`, `drops.outside`), so admin's tuning editor (Doberjohn/inkweave-admin) edits them like the other Shift tiers.
 
 ---
 
@@ -322,13 +322,13 @@ The transformer extracts `Shift 0` and adds it to her keywords. The engine then 
 
 ### Printed Shift paid in ink drops
 
-A printed Shift whose cost is not a number never reaches `abilities`: the `/fetch-reveals` keyword reader (`scripts/reveal-sync/text.mjs`) accepts only numeric keyword values, so Baymax - Amped Up arrived with no abilities array at all. The transformer reads its keyword line from `fullText` with a second Shift pattern, anchored to a line start so only the keyword line itself counts:
+A printed Shift whose cost is not a number never reaches `abilities`: admin's `/fetch-reveals` keyword reader (`scripts/reveal-sync/text.mjs` in Doberjohn/inkweave-admin) accepts only numeric keyword values, so Baymax - Amped Up arrived with no abilities array at all. The transformer reads its keyword line from `fullText` with a second Shift pattern, anchored to a line start so only the keyword line itself counts:
 
 ```regex
 /^Shift\s+(Remove\s+\d+\s+ink\s+drops?)\b/im
 ```
 
-It yields `"Shift Remove 2 ink drops"`: the same string a reveal-admin entry or a LorcanaJSON `keywordValue` of "Remove 2 ink drops" would produce, so the keyword does not change when the set graduates. `getShiftType` reads it as `{kind: 'standard', cost: 2, payment: 'ink-drops'}`. Both Shift patterns sit in `TEXT_KEYWORD_PATTERNS`; a native Shift keyword, or an earlier "gains Shift N" read, still wins.
+It yields `"Shift Remove 2 ink drops"`: the same string a reveal-publisher entry or a LorcanaJSON `keywordValue` of "Remove 2 ink drops" would produce, so the keyword does not change when the set graduates. `getShiftType` reads it as `{kind: 'standard', cost: 2, payment: 'ink-drops'}`. Both Shift patterns sit in `TEXT_KEYWORD_PATTERNS`; a native Shift keyword, or an earlier "gains Shift N" read, still wins.
 
 ---
 

@@ -208,7 +208,7 @@ Negative-claim evidence:
 
 ### Updating `previewCards.json`
 
-1. Edit `apps/web/public/data/previewCards.json` directly — append new cards in the LorcanaJSON shape (full schema in the collapsible below). To scrape a revealed card straight from its source page into this shape, paste the browser-console parser from [`docs/PREVIEW_CARD_PARSER.md`](PREVIEW_CARD_PARSER.md) into devtools — it downloads a ready-to-paste `{id}-{slug}.json`.
+1. Edit `apps/web/public/data/previewCards.json` directly — append new cards in the LorcanaJSON shape (full schema in the collapsible below). To scrape a revealed card straight from its source page into this shape, paste the browser-console parser from [`docs/PREVIEW_CARD_PARSER.md`](https://github.com/Doberjohn/inkweave-admin/blob/main/docs/PREVIEW_CARD_PARSER.md) in Doberjohn/inkweave-admin into devtools — it downloads a ready-to-paste `{id}-{slug}.json`.
 2. (Optional) Drop raw JPGs in `apps/web/public/card-images-raw/` named `{id}.jpg` (or `.jpeg`/`.png`/`.webp`). The `preview-images-auto-convert.sh` hook fires `pnpm convert-preview-images` which produces the AVIFs at `apps/web/public/card-images-preview/{id}.avif` + `{id}-sm.avif`.
 3. The `preview-data-auto-precompute.sh` hook fires `pnpm precompute-synergies`
 4. Commit
@@ -924,7 +924,7 @@ pnpm test
 
 The script is idempotent on dry-run safety: if you run it twice with the same source, the second run replaces what the first wrote (since canonical entries are stripped to a stable shape).
 
-The script also retargets hardcoded card-id references (`retargetHardcodedIds`, run before the `previewCards.json` reset): a set graduation renumbers ids, dangling every place that hardcodes a real card id by its preview id. The step rewrites a curated `ID_REFERENCE_FILES` list — `FeaturedCards.tsx` + its test, `playstyleUi.ts` gallery hero cards, `setSpotlights.ts`, and the reveals/playstyle Storybook demos — and deliberately skips self-contained mock-fixture tests (analytics, reveal-admin, card-analytics) whose `13xxx` ids are arbitrary. The blast radius is wide and mostly not test-guarded (only the `FeaturedCards` fixtures fail loudly); grep `\b13[0-9]{3}\b` across `apps/web/src` after graduating to confirm nothing was missed. Add a file to `ID_REFERENCE_FILES` only if it references real graduated cards.
+The script also retargets hardcoded card-id references (`retargetHardcodedIds`, run before the `previewCards.json` reset): a set graduation renumbers ids, dangling every place that hardcodes a real card id by its preview id. The step rewrites a curated `ID_REFERENCE_FILES` list — `FeaturedCards.tsx` + its test, `playstyleUi.ts` gallery hero cards, `setSpotlights.ts`, and the reveals/playstyle Storybook demos — and deliberately skips self-contained mock-fixture tests (analytics, card-analytics) whose `13xxx` ids are arbitrary. The blast radius is wide and mostly not test-guarded (only the `FeaturedCards` fixtures fail loudly); grep `\b13[0-9]{3}\b` across `apps/web/src` after graduating to confirm nothing was missed. Add a file to `ID_REFERENCE_FILES` only if it references real graduated cards.
 
 ### Rules during canonical integration
 

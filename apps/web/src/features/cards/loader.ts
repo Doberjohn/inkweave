@@ -47,7 +47,7 @@ function resolveImageUrl(raw: ImageSource): string | undefined {
     return raw.imageHash ? `/card-images/${raw.id}.${raw.imageHash}.avif` : undefined;
   }
   const rawUrl = raw.images?.thumbnail;
-  // Hand-built reveal cards (reveal-admin, or a season's first batch) carry no
+  // Hand-built reveal cards (admin's reveal publisher, or a season's first batch) carry no
   // remote thumbnail, only a raw scan + its pre-converted AVIF. Every canonical
   // card has a thumbnail, so a missing one identifies a reveal card without
   // naming the season's set. Fall back to the local preview path so they show in

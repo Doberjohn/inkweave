@@ -1,5 +1,7 @@
 # Issue #219 — Legal & Product Pages: Research & Implementation Plan
 
+> **Since #593 (2026-09-30):** the admin tools moved to `Doberjohn/inkweave-admin`. The app no longer has `/admin/*` routes, `AdminGate`, the GitHub PAT in `localStorage` (`inkweave.reveal-admin.gh-token`), `githubCommit.ts`, the admin pages, or `api.github.com` in its CSP `connect-src`. Mentions of them below describe the app as researched.
+
 **Status:** Research complete (read-only session, 2026-07-09). No code changed.
 **Issue:** [#219 "Legal & Product Pages"](https://github.com/Doberjohn/inkweave/issues/219) (label `feature`, no milestone).
 **Goal:** ship four static content pages before public launch: Privacy Policy, Terms of Use, IP Disclaimer, About/Who-We-Are. Wire them into routing, make them reachable from a footer/nav, style them to the theme, keep them accessible and static.

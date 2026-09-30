@@ -49,7 +49,7 @@ inkweave/
             ├── router.tsx    # Route definitions
             ├── AppLayout.tsx # Provider + <Outlet /> shell
             ├── pages/        # Route page components
-            ├── features/     # cards, synergies, playstyles, voting, reveals, admin panes
+            ├── features/     # cards, synergies, playstyles, voting, reveals
             └── shared/       # Constants, utilities, shared components
 ```
 
@@ -116,7 +116,6 @@ Claude Code hooks, skills, agents, and path-scoped rules enforce workflow rules 
 | `/inkweave-add-rule <name>` | mechanic name | Discovery → design → implement → validate |
 | `/mine-rules [dry-run]` | optional dry-run | Run the miner → pick top candidate (dedup vs existing rules + open candidates; previously-removed mechanics are flagged, not skipped) → draft 5-baseline proposal → open one `rule-candidate` issue (`dry-run` drafts without publishing) |
 | `/inkweave-explore [focus]` | optional focus area | Read-only, fork-isolated codebase/architecture map (workspace, engine API + rule registry, web data flow, precompute); verbose output stays in the fork |
-| `/fetch-reveals` | — | Reveal season: find new cards on lorcanaplayer.com (through Claude in Chrome), keep only those illumineertales.com lists as officially revealed (leaks wait), verify each against blind reads of its official scan, stage the verified cards + AVIFs on a branch, report conflicts, deferrals and a leak audit. Pipeline in `scripts/reveal-sync/`. Never commits |
 | `/design <what>` | what to design | Design or update UI layouts, screens, and components with Pencil (`.pen` files) |
 | `/supabase-postgres-best-practices` | — | Vendored Supabase reference: Postgres query, schema, and index best practices |
 
@@ -222,7 +221,8 @@ pnpm test:supabase    # Run Supabase integration tests (requires .env.local)
 - Synergies pre-computed at build time via `scripts/precompute-synergies.mjs`, fetched on demand per card selection
 - Card data loaded once on init from `allCards.json`; synergy data lazy-loaded per card from `/data/synergies/{cardId}.json`
 - Card data pre-deduplicated in `allCards.json` (same card in multiple sets appears once); loader expects clean data
-- Multi-page SPA via react-router (home, browse, card detail, playstyles, deck builder, voting, admin). Routes in `router.tsx`; `AppLayout` mounts the providers plus `<Outlet />`
+- Multi-page SPA via react-router (home, browse, card detail, playstyles, deck builder, voting). Routes in `router.tsx`; `AppLayout` mounts the providers plus `<Outlet />`
+- **Admin tools live in `Doberjohn/inkweave-admin`** (#593), deployed behind Vercel login at inkweave-admin.vercel.app: the reveal publisher, image tool, tuning editor, analytics, banner generator and the `/fetch-reveals` skill. They write here only through the GitHub API (reveal, image and tuning commit to `master`; `/fetch-reveals` opens PRs from `reveals/…` branches). Admin builds against a pinned submodule of this repo and re-exports what it uses from `src/app-bridge.ts` there: `shared/constants`, `shared/hooks`, `shared/components/{CtaButton,LinkButton,TabList}`, `shared/contexts/CardDataContext`, `features/cards/{components/CardTile,loader}`, `features/synergies/hooks/usePrecomputedSynergies`, `src/index.css`, `public/data/previewCards.json` and `eslint-rules/`. Renaming or removing one breaks admin's next pin bump, whose CI is the contract test. Admin's deploy also builds analytics from this repo's `master` with `scripts/precompute-synergies.mjs` and the engine, and `convert-reveal-images.yml` converts the raw scans its reveal publisher commits
 - Core format only (sets 9+)
 - **react-grab**: Dev-only inspection tool. The `dev` script runs `pnpm dlx @react-grab/claude-code@latest && vite`. Playwright's webServer runs `npx vite`, which is still DEV mode, so `index.html`'s `import.meta.env.DEV` gate loads react-grab during E2E as well; its `ws://localhost:4722` connection error must stay allowlisted in the E2E console-error guard (#405). Local E2E runs never reuse a running dev server: each starts its own Vite (by default on a free port in 5200-5299), so `playwright.config.ts`'s `webServer.env` always applies; see **Feature Flags & Local Dev**.
 - **useContainerWidth**: ResizeObserver hook guards against 0-width observations from detached elements (`if (w > 0)`) — required for React Strict Mode double-mount resilience
@@ -273,7 +273,7 @@ Dark fantasy theme inspired by Lorcana:
 
 ### Feature Flags & Local Dev
 - Before `pnpm dev` on a feature branch, check `apps/web/.env.example` for flags that gate the feature being built. If the branch needs a flag on, add it to `apps/web/.env.local` (git-ignored, per-developer).
-- **E2E always starts its own Vite.** Locally it never reuses a running server (`reuseExistingServer: false`), so a dev server started without a flag can no longer stand in for it. That Vite loads `.env.local` at boot like `pnpm dev` does, except for the four flags `playwright.config.ts`'s `webServer.env` pins to test values (`VITE_IS_REVEAL_SEASON`, `VITE_SHOW_STRATEGY_TIPS`, `VITE_SHOW_BETA_NOTICE`, `VITE_SHOW_ADMIN_ANALYTICS`): E2E always uses those, whatever `.env.local` says. Any other branch flag goes in `.env.local`, which keeps it the same across `pnpm dev`, `pnpm test:e2e`, and husky pre-push.
+- **E2E always starts its own Vite.** Locally it never reuses a running server (`reuseExistingServer: false`), so a dev server started without a flag can no longer stand in for it. That Vite loads `.env.local` at boot like `pnpm dev` does, except for the three flags `playwright.config.ts`'s `webServer.env` pins to test values (`VITE_IS_REVEAL_SEASON`, `VITE_SHOW_STRATEGY_TIPS`, `VITE_SHOW_BETA_NOTICE`): E2E always uses those, whatever `.env.local` says. Any other branch flag goes in `.env.local`, which keeps it the same across `pnpm dev`, `pnpm test:e2e`, and husky pre-push.
 - Example: on `feature/285-reveals-page`, `VITE_IS_REVEAL_SEASON=true` must be in `.env.local` or the `/reveals` route redirects to `/` and the nav omits the Reveals entry.
 
 ### Synergy Rule Documentation

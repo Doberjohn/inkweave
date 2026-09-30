@@ -23,7 +23,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {foldVariants} from './lib/fold-variants.mjs';
-import {loadSeason} from './reveal-sync/web.mjs';
+import {loadSeason} from './lib/season.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ALL_CARDS = path.join(ROOT, 'apps/web/public/data/allCards.json');

@@ -2,7 +2,6 @@ import {Suspense} from 'react';
 import {createBrowserRouter, Navigate} from 'react-router-dom';
 import Skeleton from 'react-loading-skeleton';
 import {AppLayout} from './AppLayout';
-import {AdminGate} from './features/admin-analytics/AdminGate';
 import {RevealsGate} from './features/reveals';
 import {HomePageSkeleton} from './pages/HomePageSkeleton';
 import {COLORS, RADIUS, SPACING} from './shared/constants';
@@ -30,26 +29,10 @@ const InkHubPage = lazyWithRetry(() => import('./pages/InkHubPage'), 'InkHubPage
 const InkGalleryPage = lazyWithRetry(() => import('./pages/InkGalleryPage'), 'InkGalleryPage');
 const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'), 'NotFoundPage');
 const RevealsPage = lazyWithRetry(() => import('./pages/RevealsPage'), 'RevealsPage');
-const RevealAdminPage = lazyWithRetry(() => import('./pages/RevealAdminPage'), 'RevealAdminPage');
-const ImageAdminPage = lazyWithRetry(() => import('./pages/ImageAdminPage'), 'ImageAdminPage');
-const TuningAdminPage = lazyWithRetry(
-  () => import('./pages/TuningAdminPage'),
-  'TuningAdminPage',
-);
-const AdminAnalyticsPage = lazyWithRetry(
-  () => import('./pages/AdminAnalyticsPage'),
-  'AdminAnalyticsPage',
-);
 const PrivacyPage = lazyWithRetry(() => import('./pages/PrivacyPage'), 'PrivacyPage');
 const TermsPage = lazyWithRetry(() => import('./pages/TermsPage'), 'TermsPage');
 const DisclaimerPage = lazyWithRetry(() => import('./pages/DisclaimerPage'), 'DisclaimerPage');
 const AboutPage = lazyWithRetry(() => import('./pages/AboutPage'), 'AboutPage');
-// Dev-only: the /banner marketing-image generator exists solely for `pnpm banner`, which runs
-// against the Vite dev server. Gating the dynamic import behind import.meta.env.DEV lets the
-// production build tree-shake BannerPage (and SynergyBanner) out of the bundle entirely.
-const BannerPage = import.meta.env.DEV
-  ? lazyWithRetry(() => import('./pages/BannerPage'), 'BannerPage')
-  : null;
 
 /** Generic 3-line fallback used by every route except `/`. */
 function GenericFallback() {
@@ -210,45 +193,6 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'admin/reveal',
-        element: (
-          <SuspenseWrapper>
-            <RevealAdminPage />
-          </SuspenseWrapper>
-        ),
-      },
-      {
-        path: 'admin/image',
-        element: (
-          <SuspenseWrapper>
-            <ImageAdminPage />
-          </SuspenseWrapper>
-        ),
-      },
-      {
-        path: 'admin/tuning',
-        element: (
-          <SuspenseWrapper>
-            <TuningAdminPage />
-          </SuspenseWrapper>
-        ),
-      },
-      {
-        // Preserve old bookmarks / the scan-reveal-card workflow.
-        path: 'reveal-admin',
-        element: <Navigate to="/admin/reveal" replace />,
-      },
-      {
-        path: 'admin/analytics',
-        element: (
-          <AdminGate>
-            <SuspenseWrapper>
-              <AdminAnalyticsPage />
-            </SuspenseWrapper>
-          </AdminGate>
-        ),
-      },
-      {
         path: 'privacy',
         element: (
           <SuspenseWrapper>
@@ -280,18 +224,6 @@ export const router = createBrowserRouter([
           </SuspenseWrapper>
         ),
       },
-      ...(BannerPage
-        ? [
-            {
-              path: 'banner/:cardId',
-              element: (
-                <SuspenseWrapper>
-                  <BannerPage />
-                </SuspenseWrapper>
-              ),
-            },
-          ]
-        : []),
       {
         path: '*',
         element: (
