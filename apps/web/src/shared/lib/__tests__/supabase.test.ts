@@ -18,6 +18,16 @@ const mockRpc = vi.fn();
 
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({rpc: mockRpc, from: mockFrom})),
+  SupabaseClient: class SupabaseClient {},
+}));
+
+vi.mock('@sentry/react', () => ({
+  init: vi.fn(),
+  browserTracingIntegration: vi.fn(),
+  captureException: vi.fn(),
+  startSpan: vi.fn(),
+  addIntegration: vi.fn(),
+  supabaseIntegration: vi.fn((options: unknown) => ({name: 'Supabase', options})),
 }));
 
 beforeEach(() => {
@@ -56,6 +66,42 @@ describe('getSupabase', () => {
     expect(a).toBe(b);
 
     vi.unstubAllEnvs();
+  });
+});
+
+describe("Sentry's Supabase integration (#640)", () => {
+  // Fresh copies: sentry.ts and the client singleton keep their state at module level.
+  async function loadFresh() {
+    vi.resetModules();
+    vi.stubEnv('PROD', true);
+    vi.stubEnv('VITE_SENTRY_DSN', 'http://public@127.0.0.1:9/1');
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
+    const supabase = await import('../supabase');
+    const {loadSentry} = await import('../sentry');
+    const Sentry = await import('@sentry/react');
+    const {SupabaseClient} = await import('@supabase/supabase-js');
+    return {getSupabase: supabase.getSupabase, loadSentry, Sentry, SupabaseClient};
+  }
+
+  it('is added when Sentry loads after the client exists', async () => {
+    const {getSupabase, loadSentry, Sentry, SupabaseClient} = await loadFresh();
+
+    getSupabase();
+    expect(Sentry.addIntegration).not.toHaveBeenCalled();
+
+    await loadSentry();
+    expect(Sentry.supabaseIntegration).toHaveBeenCalledWith({supabaseClient: SupabaseClient});
+    expect(Sentry.addIntegration).toHaveBeenCalledOnce();
+  });
+
+  it('is added at once when Sentry loaded before the client', async () => {
+    const {getSupabase, loadSentry, Sentry} = await loadFresh();
+
+    await loadSentry();
+    getSupabase();
+
+    expect(Sentry.addIntegration).toHaveBeenCalledOnce();
   });
 });
 
