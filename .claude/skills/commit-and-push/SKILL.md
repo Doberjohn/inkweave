@@ -67,9 +67,7 @@ Stage relevant files (prefer explicit file names over `git add -A`), then commit
 
 ```bash
 USER_APPROVED=1 git add <files>
-USER_APPROVED=1 git commit -m "<message>
-
-Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
+USER_APPROVED=1 git commit -m "<message>"
 ```
 
 Use `timeout: 600000` for the commit command (pre-commit hooks run lint + test).
@@ -90,6 +88,21 @@ If on a feature branch and no PR exists for it:
 - Check: `gh pr list --head <branch>`
 - If none, ask: "Want me to create a PR?"
 - If yes, create with `gh pr create` including `Closes #<issue>` in the body.
+
+## Step 4b: Confirm the PR will close the right issues
+
+A `Closes #N` in the body does not guarantee GitHub links it: #663 carried `Closes #653` from creation, GitHub never linked it (no cause found), and the merge left #653 open. Whenever the branch has an open PR (just created, or from an earlier push), compare the issues GitHub will close with the ones the body means to close:
+
+```bash
+gh pr view <number> --json closingIssuesReferences --jq '[.closingIssuesReferences[].number]'
+```
+
+If the list is empty straight after `gh pr create`, check once more a few seconds later before calling the link missing. Then:
+
+- **An intended issue is missing:** tell the user in the push report, and plan to close it by hand after the merge, once they agree (`gh issue close <issue> --comment "Done in #<number>"`). Editing the body again did not fix #663.
+- **A listed issue must stay open:** the body puts a closing keyword next to it, and a negated one counts too ("does not close #N" still closes: #503, #540). Reword it to `Part of #N` or `Refs #N` with `gh pr edit`, then check again.
+
+Run the check again before you call the PR ready to merge, because bots such as cubic edit the body after each new commit.
 
 ## Step 5: CI monitoring
 
