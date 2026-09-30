@@ -1,10 +1,25 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
+import {REVEAL_SET_CODE} from '../../../shared/constants';
 import {fetchPreviewCards, _resetPreviewCardsCache} from '../previewCards';
 import {fetchCardsFromLocal} from '../loader';
 import {fetchRevealDates, _resetRevealDatesCache} from '../../reveals/revealDates';
 
 const METADATA = {formatVersion: '1.0', generatedOn: '2026-09-30', language: 'en'};
-const PREVIEW = {metadata: METADATA, sets: {}, cards: []};
+const PREVIEW_CARD = {
+  id: 14001,
+  name: 'Preview',
+  fullName: 'Preview Card',
+  cost: 3,
+  color: 'Amber',
+  inkwell: true,
+  type: 'Character',
+  setCode: REVEAL_SET_CODE,
+};
+const PREVIEW = {
+  metadata: METADATA,
+  sets: {[REVEAL_SET_CODE]: {name: 'Reveal set', prereleaseDate: '2026-10-10', releaseDate: '2026-10-24'}},
+  cards: [PREVIEW_CARD],
+};
 const ALL_CARDS = {metadata: METADATA, sets: {}, cards: []};
 
 const mockFetch = vi.fn();
@@ -27,10 +42,12 @@ describe('fetchPreviewCards', () => {
       Promise.resolve(respond(url === '/data/previewCards.json' ? PREVIEW : ALL_CARDS)),
     );
 
-    await Promise.all([fetchCardsFromLocal(), fetchRevealDates()]);
+    const [loaded, dates] = await Promise.all([fetchCardsFromLocal(), fetchRevealDates()]);
 
     const previewRequests = mockFetch.mock.calls.filter(([url]) => url === '/data/previewCards.json');
     expect(previewRequests).toHaveLength(1);
+    expect(loaded.cards.map((card) => card.fullName)).toEqual(['Preview Card']);
+    expect(dates?.releaseDate).toEqual(new Date(2026, 9, 24));
   });
 
   it('forgets a failed request, so the next caller tries again', async () => {

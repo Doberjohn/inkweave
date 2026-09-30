@@ -52,4 +52,24 @@ describe('fetchFeaturedCards', () => {
     setUp();
     await expect(fetchFeaturedCards()).resolves.toBeNull();
   });
+
+  it('forgets a server error, so the next call fetches the file again', async () => {
+    mockFetch
+      .mockResolvedValueOnce({ok: false, status: 503})
+      .mockResolvedValueOnce(respond(featuredFile(DEFAULT_FEATURED_IDS)));
+
+    await expect(fetchFeaturedCards()).resolves.toBeNull();
+    const featured = await fetchFeaturedCards();
+
+    expect(featured?.map((card) => card.id)).toEqual(DEFAULT_FEATURED_IDS);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps a missing file missing for the page, in one request', async () => {
+    mockFetch.mockResolvedValue({ok: false, status: 404});
+
+    await fetchFeaturedCards();
+    await expect(fetchFeaturedCards()).resolves.toBeNull();
+    expect(mockFetch).toHaveBeenCalledOnce();
+  });
 });

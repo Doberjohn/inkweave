@@ -15,10 +15,23 @@
 export function featuredIdsSetting(env, readEnvFile) {
   if (env.VITE_FEATURED_CARD_IDS !== undefined) return env.VITE_FEATURED_CARD_IDS;
   for (const name of ['.env.local', '.env']) {
-    const match = readEnvFile(name)?.match(/^\s*VITE_FEATURED_CARD_IDS\s*=\s*(.*?)\s*$/m);
-    if (match) return match[1].replace(/^(['"])(.*)\1$/, '$2');
+    const lines = [...(readEnvFile(name) ?? '').matchAll(/^\s*(?:export\s+)?VITE_FEATURED_CARD_IDS\s*=(.*)$/gm)];
+    // dotenv, which Vite uses, lets the last line that sets a key win.
+    if (lines.length > 0) return envFileValue(lines.at(-1)[1]);
   }
   return undefined;
+}
+
+/**
+ * A value as dotenv reads it: the text inside matching quotes, else everything before an inline
+ * `#` comment, trimmed.
+ *
+ * @param {string} raw - the text after `=`
+ * @returns {string}
+ */
+function envFileValue(raw) {
+  const quoted = raw.match(/^\s*(['"`])(.*?)\1/);
+  return quoted ? quoted[2] : raw.split('#')[0].trim();
 }
 
 /**
@@ -45,10 +58,10 @@ export function resolveFeaturedIds(raw, defaults) {
  * an id conflict, as in the app's loader), stay whole, and keep the display order; `sets` keeps
  * only the sets they belong to. Cards below the Core floor are dropped, as the app drops them.
  *
- * @param {{main: object, preview: object | null, ids: string[], isCoreSet: (setCode: string) => boolean}} input
+ * @param {{main: object, preview: object | null, ids: string[], isCoreSet: (setCode: string) => boolean, envSetting?: string | null}} input
  * @returns {{metadata: object, sets: Record<string, object>, cards: object[]}}
  */
-export function buildFeaturedCards({main, preview, ids, isCoreSet}) {
+export function buildFeaturedCards({main, preview, ids, isCoreSet, envSetting = null}) {
   const byId = new Map();
   for (const card of preview?.cards ?? []) byId.set(String(card.id), card);
   for (const card of main.cards) byId.set(String(card.id), card);
@@ -58,5 +71,7 @@ export function buildFeaturedCards({main, preview, ids, isCoreSet}) {
   const allSets = {...(preview?.sets ?? {}), ...(main.sets ?? {})};
   const sets = Object.fromEntries(Object.entries(allSets).filter(([code]) => setCodes.has(code)));
 
-  return {metadata: main.metadata, sets, cards};
+  // envFeaturedIds: the environment's own VITE_FEATURED_CARD_IDS at build time (null when unset).
+  // apps/web/vite.config.ts compares it with the shell's, since it checks the env files by date.
+  return {metadata: {...main.metadata, envFeaturedIds: envSetting ?? null}, sets, cards};
 }

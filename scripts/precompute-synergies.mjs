@@ -169,7 +169,13 @@ async function main() {
     return fs.existsSync(file) ? fs.readFileSync(file, 'utf-8') : null;
   };
   const featuredIds = resolveFeaturedIds(featuredIdsSetting(process.env, readWebEnvFile), defaultFeaturedIds);
-  const featured = buildFeaturedCards({main: mainData, preview: previewData, ids: featuredIds, isCoreSet});
+  const featured = buildFeaturedCards({
+    main: mainData,
+    preview: previewData,
+    ids: featuredIds,
+    isCoreSet,
+    envSetting: process.env.VITE_FEATURED_CARD_IDS,
+  });
   fs.writeFileSync(FEATURED_OUTPUT, JSON.stringify(featured));
   if (featured.cards.length < featuredIds.length) {
     console.warn(`  ⚠ featuredCards.json holds ${featured.cards.length}/${featuredIds.length} featured cards; the homepage falls back to the full list`);

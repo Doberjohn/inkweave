@@ -19,15 +19,18 @@ export async function fetchRevealDates(): Promise<RevealDates | null> {
   if (pending) return pending;
 
   // The same request the card loader makes (#641), so previewCards.json loads once per page.
-  pending = fetchPreviewCards().then((data) => {
-    const set = data?.sets?.[REVEAL_SET_CODE];
-    if (!set?.prereleaseDate || !set?.releaseDate) return null;
-    cache = {
-      prereleaseDate: parseLocalMidnight(set.prereleaseDate),
-      releaseDate: parseLocalMidnight(set.releaseDate),
-    };
-    return cache;
-  });
+  // Malformed dates resolve null, as a failed request does, rather than rejecting.
+  pending = fetchPreviewCards()
+    .then((data) => {
+      const set = data?.sets?.[REVEAL_SET_CODE];
+      if (!set?.prereleaseDate || !set?.releaseDate) return null;
+      cache = {
+        prereleaseDate: parseLocalMidnight(set.prereleaseDate),
+        releaseDate: parseLocalMidnight(set.releaseDate),
+      };
+      return cache;
+    })
+    .catch(() => null);
 
   return pending;
 }

@@ -9,6 +9,7 @@ import {
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {RADIUS} from '../constants';
 import {printingAlt, useScrollSnapIndex, type Printing} from '../hooks';
+import {whenIdle} from '../lib/whenLoadedAndIdle';
 import {CardImage} from './CardImage';
 import {CardImageButton} from './CardImageButton';
 
@@ -38,21 +39,6 @@ const SLIDE_STYLE: CSSProperties = {
   scrollSnapAlign: 'start',
   scrollSnapStop: 'always',
 };
-
-/** Where `requestIdleCallback` is missing (Safari), wait this long instead. */
-const IDLE_FALLBACK_MS = 200;
-/** Upper bound on the idle wait, so a page that never goes idle still gets there. */
-const IDLE_TIMEOUT_MS = 2000;
-
-/** Runs `callback` once the main thread is idle. Returns a function that cancels it. */
-function whenIdle(callback: () => void): () => void {
-  if (typeof window.requestIdleCallback === 'function') {
-    const id = window.requestIdleCallback(callback, {timeout: IDLE_TIMEOUT_MS});
-    return () => window.cancelIdleCallback(id);
-  }
-  const id = setTimeout(callback, IDLE_FALLBACK_MS);
-  return () => clearTimeout(id);
-}
 
 /**
  * Whether the variant slides may load their art yet: not until the Standard art has loaded

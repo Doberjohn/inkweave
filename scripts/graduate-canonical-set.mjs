@@ -47,18 +47,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const ALL_CARDS = path.join(ROOT, 'apps/web/public/data/allCards.json');
 const PREVIEW = path.join(ROOT, 'apps/web/public/data/previewCards.json');
-const FEATURED_TSX = path.join(ROOT, 'apps/web/src/features/cards/components/FeaturedCards.tsx');
+const FEATURED_IDS_JSON = path.join(ROOT, 'apps/web/src/features/cards/featuredCardIds.json');
 
 /**
  * Committed source that hardcodes REAL card ids from a set: the landing-page
- * featured cards + their test, the playstyle-gallery hero cards, and the reveals /
+ * featured-card list (featuredCardIds.json, #641) + the FeaturedCards test, the
+ * playstyle-gallery hero cards, and the reveals /
  * playstyle Storybook demos. When a set graduates its ids change, so these are
  * retargeted preview->canonical. Deliberately EXCLUDES self-contained mock-fixture
  * tests (analytics, card-analytics) whose 13xxx ids are arbitrary and
  * must not move — add a new file here only if it references real graduated cards.
  */
 const ID_REFERENCE_FILES = [
-  'apps/web/src/features/cards/components/FeaturedCards.tsx',
+  'apps/web/src/features/cards/featuredCardIds.json',
   'apps/web/src/features/cards/components/__tests__/FeaturedCards.test.tsx',
   'apps/web/src/shared/constants/playstyleUi.ts',
   'apps/web/.env.example',
@@ -186,7 +187,7 @@ export function droppedVariants(previewCards, {cards, fold}, setCode) {
  * ids to their new canonical ids.
  *
  * Committed source hardcodes real card ids in a few spots: the landing-page
- * featured cards + their test, the playstyle-gallery hero cards, and the reveals /
+ * featured-card list + its test, the playstyle-gallery hero cards, and the reveals /
  * playstyle Storybook demos (ID_REFERENCE_FILES). Graduation renumbers those cards,
  * so every such reference would otherwise dangle. This maps each graduating-set
  * preview id -> canonical id (previewCards' id<->number joined to the canonical
@@ -251,8 +252,7 @@ function retargetIdsInFiles(previewToCanonical) {
 
 /** Print the ordered canonical featured ids for the manual Vercel env update. */
 function printFeaturedVercelHint() {
-  const block = fs.readFileSync(FEATURED_TSX, 'utf8').match(/DEFAULT_FEATURED_IDS\s*=\s*\[([\s\S]*?)]/);
-  const ordered = block ? [...block[1].matchAll(/'(\d+)'/g)].map((m) => m[1]) : [];
+  const ordered = JSON.parse(fs.readFileSync(FEATURED_IDS_JSON, 'utf8')).map((entry) => entry.id);
   if (ordered.length === 0) return;
   console.log(`\n  ⚠ Set the Vercel env var (external to repo — paste + redeploy):`);
   console.log(`    VITE_FEATURED_CARD_IDS=${ordered.join(',')}\n`);

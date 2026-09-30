@@ -20,13 +20,25 @@ describe('buildFeaturedCards', () => {
 
     expect(out.cards.map((c) => c.id)).toEqual([14001, 2999]);
     expect(Object.keys(out.sets).sort()).toEqual(['13', '14']);
-    expect(out.metadata).toBe(main.metadata);
+    expect(out.metadata).toEqual({...main.metadata, envFeaturedIds: null});
   });
 
   it('prefers allCards.json on an id conflict and drops a card below the Core floor', () => {
     const out = buildFeaturedCards({main, preview, ids: ['3022', '1000'], isCoreSet});
 
     expect(out.cards).toEqual([card(3022)]);
+  });
+
+  it('leaves out an ID neither file has, so the file comes out short and the app falls back', () => {
+    const out = buildFeaturedCards({main, preview, ids: ['2999', '99999'], isCoreSet});
+
+    expect(out.cards).toEqual([card(2999)]);
+  });
+
+  it("records the environment's own setting, so the dev server can tell when it changes", () => {
+    const out = buildFeaturedCards({main, preview, ids: ['2999'], isCoreSet, envSetting: '2999'});
+
+    expect(out.metadata.envFeaturedIds).toBe('2999');
   });
 });
 
@@ -36,11 +48,14 @@ describe('featuredIdsSetting', () => {
     '.env': 'VITE_FEATURED_CARD_IDS=3\n',
   };
   const readEnvFile = (name) => files[name] ?? null;
+  const readLocal = (text) => (name) => (name === '.env.local' ? text : null);
 
   it.each([
     ['the environment first, as Vite does, even when empty', {VITE_FEATURED_CARD_IDS: ''}, readEnvFile, ''],
     ['.env.local before .env, unquoted', {}, readEnvFile, '1,2'],
     ['nothing when no file sets it', {}, () => null, undefined],
+    ['a value without its inline comment, as dotenv does', {}, readLocal('VITE_FEATURED_CARD_IDS=1,2 # homepage\n'), '1,2'],
+    ['the last line when a file sets it twice, as dotenv does', {}, readLocal('VITE_FEATURED_CARD_IDS=1\nVITE_FEATURED_CARD_IDS=2\n'), '2'],
   ])('reads %s', (_label, env, read, expected) => {
     expect(featuredIdsSetting(env, read)).toBe(expected);
   });
