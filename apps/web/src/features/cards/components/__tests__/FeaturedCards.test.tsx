@@ -1,7 +1,14 @@
-import {describe, it, expect, vi} from 'vitest';
+import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {render, screen} from '@testing-library/react';
 import {FeaturedCards} from '../FeaturedCards';
+import {useFeaturedCardsFile} from '../../featured';
 import type {LorcanaCard} from '../../types';
+
+// The small featured-cards file (#641): stubbed so each test picks what it holds.
+vi.mock('../../featured', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../featured')>()),
+  useFeaturedCardsFile: vi.fn(),
+}));
 
 // Mock CardTile to avoid complex rendering
 vi.mock('../CardTile', () => ({
@@ -92,5 +99,36 @@ describe('FeaturedCards', () => {
 
     const section = screen.getByTestId('featured-cards');
     expect(section.tagName).toBe('SECTION');
+  });
+});
+
+describe('FeaturedCards before the full list arrives (#641)', () => {
+  beforeEach(() => {
+    vi.mocked(useFeaturedCardsFile).mockReset();
+  });
+
+  it('renders the tiles from the featured-cards file', () => {
+    vi.mocked(useFeaturedCardsFile).mockReturnValue(mockCards);
+    render(<FeaturedCards cards={[]} isLoading onCardSelect={vi.fn()} />);
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(6);
+    expect(useFeaturedCardsFile).toHaveBeenCalledWith(true);
+  });
+
+  it.each([
+    ['still loading', undefined],
+    ['unusable', null],
+  ])('keeps the skeleton while the file is %s and the list loads', (_label, fromFile) => {
+    vi.mocked(useFeaturedCardsFile).mockReturnValue(fromFile);
+    render(<FeaturedCards cards={[]} isLoading onCardSelect={vi.fn()} />);
+
+    expect(screen.getByLabelText('Popular Synergy Starters loading')).toBeInTheDocument();
+  });
+
+  it('leaves the file alone once the full list has the cards', () => {
+    render(<FeaturedCards cards={mockCards} isLoading onCardSelect={vi.fn()} />);
+
+    expect(useFeaturedCardsFile).toHaveBeenCalledWith(false);
+    expect(screen.getAllByRole('listitem')).toHaveLength(6);
   });
 });

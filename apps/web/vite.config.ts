@@ -17,11 +17,17 @@ const SYNERGY_DIR = path.resolve(import.meta.dirname, 'public/data/synergies');
 const MANIFEST = path.join(SYNERGY_DIR, '_manifest.json');
 const ENGINE_SRC = path.join(ROOT, 'packages/synergy-engine/src');
 const CARD_DATA = path.resolve(import.meta.dirname, 'public/data/allCards.json');
+// Precompute also writes the homepage's featured cards (#641), from this list or the env files'
+// VITE_FEATURED_CARD_IDS.
+const FEATURED_CARDS = path.resolve(import.meta.dirname, 'public/data/featuredCards.json');
+const FEATURED_INPUTS = ['src/features/cards/featuredCardIds.json', '.env.local', '.env'].map((file) =>
+  path.resolve(import.meta.dirname, file),
+);
 
 /**
  * Rebuilds the engine and regenerates pre-computed synergies on dev server start
- * when missing or stale. Compares engine source and card data mtime against
- * _manifest.json to detect staleness.
+ * when missing or stale. Compares engine source, card data and the featured-card
+ * list's mtimes against _manifest.json to detect staleness.
  */
 function ensureSynergiesPlugin(): Plugin {
   return {
@@ -33,18 +39,8 @@ function ensureSynergiesPlugin(): Plugin {
     // hooks, and its watcher only reports files created after its initial scan. Files written
     // in configureServer missed both, so they were served as index.html until a restart.
     configResolved() {
-      const missing = !fs.existsSync(MANIFEST);
-      let stale = false;
-
-      if (!missing) {
-        const manifestMtime = fs.statSync(MANIFEST).mtimeMs;
-        stale =
-          isNewerRecursive(ENGINE_SRC, manifestMtime) ||
-          (fs.existsSync(CARD_DATA) && fs.statSync(CARD_DATA).mtimeMs > manifestMtime);
-      }
-
-      if (missing || stale) {
-        const reason = missing ? 'missing' : 'stale (engine source or card data changed)';
+      const reason = synergyDataRefreshReason();
+      if (reason) {
         console.log(`\n⚙ Synergy data ${reason} — regenerating...`);
         try {
           // A single command string: with shell: true, Node 24 deprecates passing args
@@ -68,6 +64,18 @@ function ensureSynergiesPlugin(): Plugin {
       }
     },
   };
+}
+
+/** Why the synergy data needs regenerating: 'missing', 'stale (...)', or null when it's current. */
+function synergyDataRefreshReason(): string | null {
+  if (!fs.existsSync(MANIFEST) || !fs.existsSync(FEATURED_CARDS)) return 'missing';
+  const manifestMtime = fs.statSync(MANIFEST).mtimeMs;
+  const newerThanManifest = (file: string) =>
+    fs.existsSync(file) && fs.statSync(file).mtimeMs > manifestMtime;
+  const stale =
+    isNewerRecursive(ENGINE_SRC, manifestMtime) ||
+    [CARD_DATA, ...FEATURED_INPUTS].some(newerThanManifest);
+  return stale ? 'stale (engine source, card data or featured cards changed)' : null;
 }
 
 /** Check if any file under `dir` has mtime newer than `threshold`. */

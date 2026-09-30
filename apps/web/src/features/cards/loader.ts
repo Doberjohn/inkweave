@@ -10,7 +10,7 @@ interface LorcanaJSONSet {
   releaseDate?: string;
 }
 
-interface LorcanaJSONData {
+export interface LorcanaJSONData {
   metadata: {
     formatVersion: string;
     generatedOn: string;

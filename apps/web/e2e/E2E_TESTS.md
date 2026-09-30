@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-138 tests across 19 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+139 tests across 20 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
 
@@ -74,6 +74,14 @@ The card overview modal loads on demand (#640). Both tests hold the modal's modu
 |---|---|
 | a cold open shows the loading shell, then the modal takes over | Clicking a featured card while the modal's chunk is held shows `card-overview-fallback` and no modal; releasing the chunk shows the modal and removes the shell |
 | the loading shell closes on a scrim click, like the modal | A click on `card-overview-fallback-backdrop` removes the shell, and the chunk arriving afterwards opens no modal |
+
+## `card-data-loading.spec.ts`: 1 test (every project)
+
+The homepage renders its featured cards from a small prebuilt file, `/data/featuredCards.json` (#641), so they never wait on the full card database. The tests hold `**/data/allCards.json` with `page.route` to keep that database from arriving.
+
+| Test | What it verifies |
+|---|---|
+| the featured cards render, each linking to its card page, while the card list is held | With `allCards.json` held, six `card-tile` links render in the featured section, each `href` a `/card/<id>/<slug>` path |
 
 ## `card-search.spec.ts` — 7 tests (desktop only)
 
