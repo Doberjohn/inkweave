@@ -1,7 +1,7 @@
 {
   "sets": {
     "14": {
-      "indexTotal": 149,
+      "indexTotal": 170,
       "cards": {
         "a-dark-age-no-more": {
           "number": 162,
@@ -202,6 +202,13 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "don-karnage-charming-pirate": {
+          "number": 88,
+          "status": "written",
+          "reason": "provisional-translation",
+          "detail": "provisional: German official scan as art, English name and text from lorcanaplayer (its own translation); a blind reader matched every language-independent field",
+          "firstSeen": "2026-09-30"
+        },
         "donald-duck-taxi-driver": {
           "number": 110,
           "status": "written",
@@ -245,11 +252,22 @@
           "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
           "firstSeen": "2026-09-24"
         },
+        "flippant-taunt": {
+          "number": 98,
+          "status": "written",
+          "detail": "refreshed 14098 from its Italian-first provisional card (irritating-provocation): English name and official English scan; stats and text unchanged",
+          "firstSeen": "2026-09-30"
+        },
         "fox-xanatos-charismatic-outlaw": {
           "number": 49,
           "status": "written",
           "detail": "art: owner-supplied scan, no official scan yet",
           "firstSeen": "2026-09-25"
+        },
+        "fred-awesome-boss": {
+          "number": 86,
+          "status": "written",
+          "firstSeen": "2026-09-30"
         },
         "fred-big-stomper": {
           "number": 91,
@@ -272,6 +290,11 @@
           "number": 72,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "goliath-transformed-warrior": {
+          "number": 53,
+          "status": "written",
+          "firstSeen": "2026-09-30"
         },
         "goofy-dancing-superstar": {
           "number": 105,
@@ -316,6 +339,21 @@
           "number": 62,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "hiro-hamada-pioneering-inventor": {
+          "number": 150,
+          "status": "written",
+          "firstSeen": "2026-09-30"
+        },
+        "hiro-hamada-versatile-inventor": {
+          "number": 71,
+          "status": "written",
+          "firstSeen": "2026-09-30"
+        },
+        "honey-lemon-endlessly-curious": {
+          "number": 151,
+          "status": "written",
+          "firstSeen": "2026-09-30"
         },
         "honey-lemon-ingenious-researcher": {
           "number": 144,
@@ -364,11 +402,15 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "intimidation-tactics": {
+          "number": 128,
+          "status": "written",
+          "firstSeen": "2026-09-30"
+        },
         "irritating-provocation": {
           "number": 98,
-          "status": "written",
-          "reason": "provisional-translation",
-          "detail": "provisional: Italian scan as art, lorcanaplayer English name and text",
+          "status": "gone",
+          "reason": "replaced by its English version, flippant-taunt",
           "firstSeen": "2026-09-28"
         },
         "jasper-dodgy-boater": {
@@ -386,10 +428,20 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "judy-hopps-always-vigilant": {
+          "number": 24,
+          "status": "written",
+          "firstSeen": "2026-09-30"
+        },
         "judy-hopps-day-camp-instructor": {
           "number": 154,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "judy-hopps-helpful-officer": {
+          "number": 9,
+          "status": "written",
+          "firstSeen": "2026-09-30"
         },
         "jukebox": {
           "number": 134,
@@ -406,6 +458,11 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "khan-transport-delivery": {
+          "number": 199,
+          "status": "written",
+          "firstSeen": "2026-09-30"
+        },
         "king-louie-ice-cream-virtuoso": {
           "number": 141,
           "status": "written",
@@ -415,6 +472,11 @@
           "number": 74,
           "status": "written",
           "firstSeen": "2026-09-28"
+        },
+        "kit-cloudkicker-sure-shot": {
+          "number": 192,
+          "status": "written",
+          "firstSeen": "2026-09-30"
         },
         "kit-cloudkicker-unpredictable-courier": {
           "number": 174,
@@ -470,6 +532,12 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "madam-mim-bauble-chaser": {
+          "number": 46,
+          "status": "written",
+          "detail": "refreshed 14046 from its German-first provisional card (madam-mim-trinket-hunter): English name, official English scan and franchise; stats and text unchanged",
+          "firstSeen": "2026-09-30"
+        },
         "madam-mim-nosy-neighbor": {
           "number": 146,
           "status": "written",
@@ -482,9 +550,8 @@
         },
         "madam-mim-trinket-hunter": {
           "number": 46,
-          "status": "written",
-          "reason": "provisional-translation",
-          "detail": "provisional: German scan as art, English name and text; added through /admin/reveal",
+          "status": "gone",
+          "reason": "replaced by its English version, madam-mim-bauble-chaser",
           "firstSeen": "2026-09-29"
         },
         "magnificent-marvelous": {
@@ -648,6 +715,11 @@
           "status": "written",
           "firstSeen": "2026-09-28"
         },
+        "peter-pans-shadow-elusive-prankster": {
+          "number": 47,
+          "status": "written",
+          "firstSeen": "2026-09-30"
+        },
         "port-authority-center-hub": {
           "number": 34,
           "status": "written",
@@ -670,6 +742,11 @@
           "status": "written",
           "firstSeen": "2026-09-25"
         },
+        "pushing-boundaries": {
+          "number": 129,
+          "status": "written",
+          "firstSeen": "2026-09-30"
+        },
         "rapunzel-outgoing-artist": {
           "number": 55,
           "status": "written",
@@ -691,6 +768,11 @@
           "reason": "provisional-translation",
           "detail": "provisional: Japanese scan as art, lorcanaplayer English name and text",
           "firstSeen": "2026-09-24"
+        },
+        "roxanne-concert-lover": {
+          "number": 124,
+          "status": "written",
+          "firstSeen": "2026-09-30"
         },
         "russell-finding-adventure": {
           "number": 20,
@@ -733,10 +815,25 @@
           "status": "written",
           "firstSeen": "2026-09-28"
         },
+        "speaker-stack": {
+          "number": 32,
+          "status": "written",
+          "firstSeen": "2026-09-30"
+        },
+        "spyglass-hat": {
+          "number": 168,
+          "status": "written",
+          "firstSeen": "2026-09-30"
+        },
         "stacey-powerline-superfan": {
           "number": 116,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "tadashi-hamada-making-waves": {
+          "number": 112,
+          "status": "written",
+          "firstSeen": "2026-09-30"
         },
         "this-is-business": {
           "number": 97,
@@ -785,6 +882,11 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "trusty-along-for-the-ride": {
+          "number": 69,
+          "status": "written",
+          "firstSeen": "2026-09-30"
+        },
         "un-poco-loco": {
           "number": 63,
           "status": "written",
@@ -805,10 +907,20 @@
           "status": "written",
           "firstSeen": "2026-09-24"
         },
+        "woolter-jesse-bellwethers-henchmen": {
+          "number": 178,
+          "status": "written",
+          "firstSeen": "2026-09-30"
+        },
         "yama-notorious-criminal": {
           "number": 107,
           "status": "written",
           "firstSeen": "2026-09-24"
+        },
+        "yax-concert-goer": {
+          "number": 8,
+          "status": "written",
+          "firstSeen": "2026-09-30"
         }
       }
     }
