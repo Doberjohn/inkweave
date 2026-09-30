@@ -6,7 +6,14 @@ import {
   getUniqueClassifications,
   getUniqueSets,
 } from '../../cards';
-import {whenIdle} from '../../../shared/lib/whenLoadedAndIdle';
+import {whenLoadedAndIdle} from '../../../shared/lib/whenLoadedAndIdle';
+
+/**
+ * How long a deferred load waits, after `load` and an idle moment, before it starts on its own
+ * (#641). The homepage's LCP is the hero logo, swapped in at load and idle (#639), and a card
+ * list requested in that same moment competes with it for bandwidth. Measurements are on #641.
+ */
+const DEFERRED_LOAD_DELAY_MS = 2000;
 
 export interface UseCardDataReturn {
   cards: LorcanaCard[];
@@ -25,19 +32,27 @@ export interface UseCardDataReturn {
 
 export interface UseCardDataOptions {
   /**
-   * Hold the load until requestLoad() or the first idle moment after the first render (#641).
-   * Read once, at mount. The homepage defers: its featured cards come from a small file, and
-   * nothing else there needs the full list until someone searches, presses a card or leaves.
+   * Hold the load until requestLoad(), or DEFERRED_LOAD_DELAY_MS after the page has loaded and
+   * gone idle (#641). Read once, at mount. The homepage defers: its featured cards come from a
+   * small file, and nothing else there needs the full list until someone searches, presses a
+   * card or leaves.
    */
   deferInitialLoad?: boolean;
 }
 
-/** Whether the load may start: at once, or when deferred, at requestLoad() or the next idle moment. */
+/** Whether the load may start: at once, or when deferred, at requestLoad() or once the delay ends. */
 function useLoadRequest(deferInitialLoad: boolean): [boolean, () => void] {
   const [requested, setRequested] = useState(!deferInitialLoad);
   useEffect(() => {
     if (requested) return;
-    return whenIdle(() => setRequested(true));
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const cancelWait = whenLoadedAndIdle(() => {
+      timer = setTimeout(() => setRequested(true), DEFERRED_LOAD_DELAY_MS);
+    });
+    return () => {
+      cancelWait();
+      clearTimeout(timer);
+    };
   }, [requested]);
   return [requested, () => setRequested(true)];
 }

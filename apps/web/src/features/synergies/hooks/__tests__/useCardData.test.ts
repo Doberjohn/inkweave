@@ -40,13 +40,15 @@ describe('useCardData', () => {
     await settle();
   });
 
-  it('starts a deferred load on its own at the next idle moment', async () => {
+  it('starts a deferred load on its own 2 s after load and idle', async () => {
     renderHook(() => useCardData({deferInitialLoad: true}));
+
+    // jsdom has already fired load and has no requestIdleCallback, so the idle wait falls back
+    // to a 200 ms timer, and the 2 s delay runs after it.
+    await act(() => vi.advanceTimersByTimeAsync(2150));
     expect(fetchCardsFromLocal).not.toHaveBeenCalled();
 
-    // jsdom has no requestIdleCallback, so whenIdle falls back to a 200 ms timer.
-    await act(() => vi.advanceTimersByTimeAsync(250));
-
+    await act(() => vi.advanceTimersByTimeAsync(100));
     expect(fetchCardsFromLocal).toHaveBeenCalledOnce();
   });
 });

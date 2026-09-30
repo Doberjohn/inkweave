@@ -77,7 +77,7 @@ The card overview modal loads on demand (#640). Both tests hold the modal's modu
 
 ## `card-data-loading.spec.ts`: 6 tests (every project; the search test desktop only)
 
-The homepage renders its featured cards from a small prebuilt file, `/data/featuredCards.json`, and loads the full card database only when an idle moment comes or something needs it (#641). The card loader and the reveal dates share one `previewCards.json` request. Some tests hold `**/data/allCards.json` with `page.route` to keep that database from arriving; others replace `requestIdleCallback` (and `cancelIdleCallback`) with a version that never runs, so the deferred load waits for a trigger.
+The homepage renders its featured cards from a small prebuilt file, `/data/featuredCards.json`, and loads the full card database only when something needs it, or on its own 2 s after the page has loaded and gone idle (#641). The card loader and the reveal dates share one `previewCards.json` request. Some tests hold `**/data/allCards.json` with `page.route` to keep that database from arriving; others replace `requestIdleCallback` (and `cancelIdleCallback`) with a version that never runs, so the deferred load waits for a trigger.
 
 | Test | What it verifies |
 |---|---|
