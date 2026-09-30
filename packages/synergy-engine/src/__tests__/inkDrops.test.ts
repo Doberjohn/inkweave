@@ -3,6 +3,7 @@ import {
   getCardMechanics,
   getInkDropRoles,
   isInkDropCard,
+  isLateDropMaker,
   isOpponentGatedDrop,
   isRepeatingDropMaker,
 } from '../utils';
@@ -136,6 +137,22 @@ const inkExplosion = createCard({
   cost: 4,
   text: 'Deal 4 damage to chosen character. Get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)',
 });
+const baloo = createCard({
+  id: 'baloo-delivery-pilot',
+  name: 'Baloo',
+  fullName: 'Baloo - Delivery Pilot',
+  ink: 'Steel',
+  cost: 2,
+  text: "CASH PAYMENT This character can't quest or challenge unless you gained an ink drop this turn.",
+});
+const goGoTomago = createCard({
+  id: 'go-go-tomago',
+  name: 'Go Go Tomago',
+  fullName: 'Go Go Tomago - Extreme Tester',
+  ink: 'Emerald',
+  cost: 2,
+  text: 'GATHERING DATA Whenever this character is challenged, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)',
+});
 
 /** Score a pair the way the rule does: roles from the detector, then the card-aware scorer. */
 const score = (card: LorcanaCard, other: LorcanaCard) =>
@@ -147,10 +164,11 @@ describe('Ink Drops role detection', () => {
     expect(getInkDropRoles(merlinCurious)).toEqual(['drop-maker']);
   });
 
-  it('tags spend, remove, hold and sink payoffs, and never reads a drop sink as a maker', () => {
+  it('tags spend, remove, hold, sink and gain-gate payoffs, and never reads a drop sink as a maker', () => {
     expect(getInkDropRoles(madamMim)).toEqual(['drop-payoff']);
     expect(getInkDropRoles(sirKay)).toEqual(['drop-payoff']);
     expect(getInkDropRoles(baymaxAmpedUp)).toEqual(['drop-payoff']);
+    expect(getInkDropRoles(baloo)).toEqual(['drop-payoff']);
   });
 
   it('flags a maker whose drops also reach an opponent as shared', () => {
@@ -208,6 +226,13 @@ describe('Ink Drops role detection', () => {
     });
     expect(isRepeatingDropMaker(onQuest)).toBe(true);
     expect(isRepeatingDropMaker(onPlay)).toBe(false);
+  });
+
+  it('marks a maker whose drops all arrive after your quests and challenges as late', () => {
+    expect(isLateDropMaker(mickey)).toBe(true);
+    expect(isLateDropMaker(goGoTomago)).toBe(true);
+    expect(isLateDropMaker(inkcasterSkates)).toBe(false);
+    expect(isLateDropMaker(merlinCurious)).toBe(false);
   });
 
   it('marks a maker whose drop the opponent can deny as opponent-gated', () => {
@@ -277,6 +302,22 @@ describe('Ink Drops pair scoring', () => {
 
   it('does not penalize a maker for also feeding the opponent', () => {
     expect(score(molly, joustingMatch)?.score).toBe(7);
+  });
+
+  it('scores a gain gate 6 with a one-shot maker and 7 with a steady one, with the maker as the actor', () => {
+    expect(score(inkExplosion, baloo)).toEqual({
+      score: 6,
+      explanation: "{A}'s ink drop lets {B} quest and challenge that turn.",
+    });
+    expect(score(baloo, inkcasterSkates)).toEqual({
+      score: 7,
+      explanation: '{B} can get you an ink drop every turn, so {A} can quest and challenge.',
+    });
+  });
+
+  it('never pairs a gain gate with a maker whose drop arrives too late to open it', () => {
+    expect(score(mickey, baloo)).toBeNull();
+    expect(score(goGoTomago, baloo)).toBeNull();
   });
 
   it('pairs two hold payoffs at 6 and drops payoffs that compete for the same drops', () => {
