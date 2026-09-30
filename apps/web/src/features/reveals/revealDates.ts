@@ -19,7 +19,9 @@ export async function fetchRevealDates(): Promise<RevealDates | null> {
   if (pending) return pending;
 
   // The same request the card loader makes (#641), so previewCards.json loads once per page.
-  // Malformed dates resolve null, as a failed request does, rather than rejecting.
+  // Malformed dates resolve null, as a failed request does, rather than rejecting. Once settled,
+  // `pending` clears: dates found stay in `cache`, and after a failed request the next call reads
+  // the preview cards again (fetchPreviewCards keeps a missing file's answer, so no refetch).
   pending = fetchPreviewCards()
     .then((data) => {
       const set = data?.sets?.[REVEAL_SET_CODE];
@@ -30,7 +32,10 @@ export async function fetchRevealDates(): Promise<RevealDates | null> {
       };
       return cache;
     })
-    .catch(() => null);
+    .catch(() => null)
+    .finally(() => {
+      pending = null;
+    });
 
   return pending;
 }
