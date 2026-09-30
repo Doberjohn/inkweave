@@ -120,6 +120,9 @@ export default defineConfig({
       // unexpected floating card. If a future test covers the notice itself, flip
       // to 'true' and clear localStorage in beforeEach.
       VITE_SHOW_BETA_NOTICE: 'false',
+      // Keep the react-grab dev inspector (index.html) out of E2E: on every page load it fetches
+      // react-grab.com and @imports a Google Fonts stylesheet, which delays WebKit's `load` (#673).
+      VITE_DISABLE_REACT_GRAB: 'true',
     },
   },
 });
