@@ -5,12 +5,18 @@ import {useScrollSnapIndex} from '../useScrollSnapIndex';
 /** A four-slide strip, the shape PrintingCarousel renders, exposing the hook through the DOM. */
 function Strip({
   onIndexChange,
+  onSettle,
   initialIndex,
 }: {
   onIndexChange?: (index: number) => void;
+  onSettle?: (index: number) => void;
   initialIndex?: number;
 }) {
-  const {viewportRef, activeIndex, scrollToIndex} = useScrollSnapIndex(onIndexChange, initialIndex);
+  const {viewportRef, activeIndex, scrollToIndex} = useScrollSnapIndex({
+    onIndexChange,
+    onSettle,
+    initialIndex,
+  });
   return (
     <>
       <output data-testid="active">{activeIndex}</output>
@@ -172,5 +178,87 @@ describe('useScrollSnapIndex', () => {
 
     expect(activeIndex()).toBe(0);
     expect(onIndexChange).toHaveBeenCalledWith(0);
+  });
+});
+
+describe('useScrollSnapIndex settling', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Let the strip sit still long enough to count as at rest without a scrollend event. */
+  const pause = () => {
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+  };
+
+  it('reports the slide a swipe comes to rest on, once', () => {
+    const onSettle = vi.fn();
+    render(<Strip onSettle={onSettle} />);
+    const viewport = screen.getByTestId('viewport');
+
+    fireEvent.touchStart(viewport);
+    scrollTo(160);
+    scrollTo(300);
+    fireEvent.touchEnd(viewport);
+    fireEvent(viewport, new Event('scrollend'));
+    pause();
+
+    expect(onSettle).toHaveBeenCalledTimes(1);
+    expect(onSettle).toHaveBeenCalledWith(1);
+  });
+
+  it('stays quiet when a swipe is released back onto the slide it started from', () => {
+    const onSettle = vi.fn();
+    render(<Strip onSettle={onSettle} />);
+    const viewport = screen.getByTestId('viewport');
+
+    fireEvent.touchStart(viewport);
+    scrollTo(160);
+    scrollTo(0);
+    fireEvent.touchEnd(viewport);
+    pause();
+
+    expect(onSettle).not.toHaveBeenCalled();
+  });
+
+  // Without scrollend (Safari), rest is a pause in scroll events, and a finger held still on
+  // the strip pauses them too.
+  it('waits for the finger to lift before taking a pause for rest', () => {
+    const onSettle = vi.fn();
+    render(<Strip onSettle={onSettle} />);
+    const viewport = screen.getByTestId('viewport');
+
+    fireEvent.touchStart(viewport);
+    scrollTo(300);
+    pause();
+    expect(onSettle).not.toHaveBeenCalled();
+
+    fireEvent.touchEnd(viewport);
+    pause();
+    expect(onSettle).toHaveBeenCalledWith(1);
+  });
+
+  // Callers record a pill pick themselves, so reporting where its scroll lands would count
+  // the pick twice. An earlier tap must not make that scroll look like the user's.
+  it('never reports its own scroll, even right after a tap on the strip', () => {
+    const onSettle = vi.fn();
+    render(<Strip onSettle={onSettle} />);
+    const viewport = screen.getByTestId('viewport');
+    fireEvent.touchStart(viewport);
+    fireEvent.touchEnd(viewport);
+
+    goToSlide(2);
+    scrollTo(160);
+    scrollTo(300);
+    fireEvent(viewport, new Event('scrollend'));
+    pause();
+
+    expect(onSettle).not.toHaveBeenCalled();
   });
 });

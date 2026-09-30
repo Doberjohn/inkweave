@@ -18,8 +18,12 @@ interface PrintingCarouselProps {
   printings: Printing[];
   /** The printing shown; the strip scrolls to it when it changes (e.g. from the pills). */
   index: number;
-  /** A swipe landed on another printing. */
+  /** A swipe crossed into another printing (the pills follow it live). */
   onIndexChange: (index: number) => void;
+  /** A swipe came to rest on another printing: a printing the visitor stopped to look at. */
+  onSettle?: (index: number) => void;
+  /** Hold the strip still: a comparison shows the base art, so it can't be swiped. */
+  locked?: boolean;
   width: number;
   height: number;
   borderRadius?: number;
@@ -95,6 +99,8 @@ export function PrintingCarousel({
   printings,
   index,
   onIndexChange,
+  onSettle,
+  locked,
   width,
   height,
   borderRadius = RADIUS.xl,
@@ -106,10 +112,14 @@ export function PrintingCarousel({
   // to <body>, so the focus follows the swipe instead.
   const focusWithinRef = useRef(false);
   const focusFollowsRef = useRef<number | null>(null);
-  const {viewportRef, activeIndex, scrollToIndex} = useScrollSnapIndex((next) => {
-    focusFollowsRef.current = focusWithinRef.current ? next : null;
-    onIndexChange(next);
-  }, index);
+  const {viewportRef, activeIndex, scrollToIndex} = useScrollSnapIndex({
+    onIndexChange: (next) => {
+      focusFollowsRef.current = focusWithinRef.current ? next : null;
+      onIndexChange(next);
+    },
+    onSettle,
+    initialIndex: index,
+  });
 
   useEffect(() => {
     if (index !== activeIndex) scrollToIndex(index);
@@ -142,7 +152,7 @@ export function PrintingCarousel({
         display: 'flex',
         width,
         height,
-        overflowX: 'auto',
+        overflowX: locked ? 'hidden' : 'auto',
         overflowY: 'hidden',
         scrollSnapType: 'x mandatory',
         scrollbarWidth: 'none',

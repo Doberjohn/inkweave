@@ -16,7 +16,6 @@ import {
   PrintingPills,
 } from '../../../shared/components';
 import {usePrintingSelection} from '../../../shared/hooks';
-import {trackEvent} from '../../../shared/lib/analytics';
 
 /** The card at the size the card modal shows it on mobile (CardOverviewModal). */
 const ART_WIDTH = 240;
@@ -118,15 +117,13 @@ function CardDetailChips({card}: {card: LorcanaCard}) {
 
 /**
  * The card art, centered. A card with an alternate printing (#625) gets the swipeable
- * printings strip with the Standard | <rarity> pills under it.
+ * printings strip with the Standard | <rarity> pills under it. The pills pick a printing; the
+ * strip follows a swipe live and records it once it comes to rest.
  */
 function CardDetailArt({card}: {card: LorcanaCard}) {
-  const {printings, index, select} = usePrintingSelection(card);
-  const selectPrinting = (next: number) => {
-    select(next);
-    const {rarity} = printings[next];
-    if (rarity) trackEvent('card_printing_view', {cardId: card.id, rarity, surface: 'card_page'});
-  };
+  const {printings, index, select, pick, settle} = usePrintingSelection(card, {
+    surface: 'card_page',
+  });
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.sm}}>
@@ -149,13 +146,14 @@ function CardDetailArt({card}: {card: LorcanaCard}) {
             card={card}
             printings={printings}
             index={index}
-            onIndexChange={selectPrinting}
+            onIndexChange={select}
+            onSettle={settle}
             width={ART_WIDTH}
             height={ART_HEIGHT}
             borderRadius={RADIUS.lg}
             priority
           />
-          <PrintingPills printings={printings} index={index} onSelect={selectPrinting} isMobile />
+          <PrintingPills printings={printings} index={index} onSelect={pick} isMobile />
         </>
       )}
     </div>
