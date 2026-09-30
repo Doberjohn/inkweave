@@ -73,7 +73,7 @@ function shouldShowBetaNotice({isHome, isMobile}: BetaNoticeVisibility): boolean
 }
 
 function AppContent() {
-  const {error, retryLoad} = useCardDataContext();
+  const {error, retryLoad, requestLoad} = useCardDataContext();
   const {isMobile} = useResponsive();
   const {pathname} = useLocation();
   const isHome = pathname === '/';
@@ -89,6 +89,11 @@ function AppContent() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
+
+  // The card list may wait on the homepage (#641); every other page needs it at once.
+  useEffect(() => {
+    if (!isHome) requestLoad();
+  }, [isHome, requestLoad]);
 
   const openSearch = () => {
     focusSearchProxy(searchRef.current, earlyProxyRef.current);
@@ -138,11 +143,13 @@ function AppContent() {
 }
 
 export function AppLayout() {
+  // Only the page the app starts on decides; the provider reads this once, at mount.
+  const startsOnHome = useLocation().pathname === '/';
   return (
     <ErrorBoundary>
       {/* One SkeletonTheme for the whole app (#511) — the 11 per-feature wrappers collapse into this. */}
       <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
-        <CardDataProvider>
+        <CardDataProvider deferInitialLoad={startsOnHome}>
           <CardModalProvider>
             <AppContent />
           </CardModalProvider>

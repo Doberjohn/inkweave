@@ -20,7 +20,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const {openCardModal} = useCardModal();
   const {isMobile} = useResponsive();
-  const {cards, isLoading, getCardById} = useCardDataContext();
+  const {cards, isLoading, getCardById, requestLoad} = useCardDataContext();
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearchSubmit = () => {
@@ -43,7 +43,12 @@ export function HomePage() {
         description="Free Disney Lorcana synergy finder for Core format. Discover the strongest card combos and archetype pairings, with community-voted synergy scores, and build better decks."
         canonicalPath="/"
       />
-      <main style={{...mainStyle, justifyContent: isMobile ? undefined : 'center'}}>
+      {/* The card list waits for an idle moment here (#641); a press or focus anywhere in the
+          page (the search box, a featured card) starts it at once, since both need it. */}
+      <main
+        style={{...mainStyle, justifyContent: isMobile ? undefined : 'center'}}
+        onPointerDownCapture={requestLoad}
+        onFocusCapture={requestLoad}>
         <EtherealBackground isMobile={isMobile} />
 
         <ErrorBoundary>
