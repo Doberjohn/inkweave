@@ -18,7 +18,7 @@ import {FRANCHISE_SPOTLIGHTS, SET_SPOTLIGHTS} from '../../../features/reveals/se
 // it must agree with. A half-done switch is otherwise silent: the page renders,
 // but the trackers read zero, or the gate never opens, with no error anywhere.
 //
-// Invariants only. CI runs this on every /admin/reveal publish commit, which lands
+// Invariants only. CI runs this on every reveal-publisher commit from admin, which lands
 // a card BEFORE its AVIFs (the convert workflow commits those afterwards), so
 // nothing here may depend on image files existing.
 
@@ -38,13 +38,6 @@ interface PreviewCard {
   color?: string;
   scanLanguage?: string;
   variants?: VariantEntry[];
-}
-
-/** One card's record in scripts/reveal-sync/state.json. */
-interface StateEntry {
-  number?: number;
-  status?: string;
-  reason?: string;
 }
 
 interface PreviewFile {
@@ -155,22 +148,11 @@ describe('reveal-set integrity', () => {
     expect(next - 1).toBe(SET_TOTAL);
   });
 
-  // A card written from a non-English official scan is recorded in the reveal pipeline's
-  // state as a provisional translation, and CardLightbox offers its English text only when
-  // the card carries `scanLanguage`. Adding one, or refreshing it to its English scan, must
-  // update both, or the lightbox hides the translation or offers one for an English card.
-  it('scanLanguage marks exactly the cards written as provisional translations', () => {
-    const state = JSON.parse(
-      fs.readFileSync(path.resolve(process.cwd(), '../../scripts/reveal-sync/state.json'), 'utf8'),
-    ) as {sets: Record<string, {cards: Record<string, StateEntry>} | undefined>};
-    const provisional = new Set(
-      Object.values(state.sets[REVEAL_SET_CODE]?.cards ?? {})
-        .filter((e) => e.status === 'written' && e.reason === 'provisional-translation')
-        .map((e) => REVEAL_ID_BASE + (e.number ?? NaN)),
-    );
+  // `scanLanguage` marks a card written from a non-English official scan, and is the mark's
+  // only record: CardLightbox offers the card's English text as a provisional translation
+  // only when it is set. An "en" or malformed code would offer one for an English card.
+  it('every scanLanguage is a two-letter code other than en', () => {
     const label = (c: PreviewCard) => `${c.id} ${c.fullName}`;
-    expect(preview.cards.filter((c) => c.scanLanguage && !provisional.has(c.id)).map(label)).toEqual([]);
-    expect(preview.cards.filter((c) => !c.scanLanguage && provisional.has(c.id)).map(label)).toEqual([]);
     const badCodes = preview.cards.filter((c) => c.scanLanguage && !/^(?!en$)[a-z]{2}$/.test(c.scanLanguage));
     expect(badCodes.map(label)).toEqual([]);
   });

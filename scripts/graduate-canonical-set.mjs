@@ -54,7 +54,7 @@ const FEATURED_TSX = path.join(ROOT, 'apps/web/src/features/cards/components/Fea
  * featured cards + their test, the playstyle-gallery hero cards, and the reveals /
  * playstyle Storybook demos. When a set graduates its ids change, so these are
  * retargeted preview->canonical. Deliberately EXCLUDES self-contained mock-fixture
- * tests (analytics, reveal-admin, card-analytics) whose 13xxx ids are arbitrary and
+ * tests (analytics, card-analytics) whose 13xxx ids are arbitrary and
  * must not move — add a new file here only if it references real graduated cards.
  */
 const ID_REFERENCE_FILES = [
@@ -69,8 +69,6 @@ const ID_REFERENCE_FILES = [
   'apps/web/src/features/reveals/CardSlot.stories.tsx',
   'apps/web/src/features/playstyles/PlaystyleFanTile.stories.tsx',
   'apps/web/src/features/playstyles/PlaystyleSection.stories.tsx',
-  'apps/web/src/features/reveal-admin/components/CardPreviewPanel.stories.tsx',
-  'apps/web/src/features/reveal-admin/components/RevealAdminForm.stories.tsx',
 ].map((p) => path.join(ROOT, p));
 
 /**

@@ -9,9 +9,16 @@ interface ImportMetaEnv {
   readonly VITE_SHOW_STRATEGY_TIPS?: string;
   readonly VITE_SHOW_BETA_NOTICE?: string;
   readonly VITE_FEATURED_CARD_IDS?: string;
-  readonly VITE_SHOW_ADMIN_ANALYTICS?: string;
 }
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
+}
+
+interface Window {
+  /**
+   * Set only by our own prerender crawl (scripts/prerender.mjs), so the captured pages never
+   * load Sentry or bake in its modulepreload (#640). Real visitors and PageSpeed never have it.
+   */
+  __INKWEAVE_PRERENDER__?: boolean;
 }

@@ -1,5 +1,7 @@
 # Area 2 — Navigation, Footer & Layout Research (Issue #219 Legal & Product Pages)
 
+> **Since #593 (2026-09-30):** the admin tools moved to `Doberjohn/inkweave-admin`. The app no longer has `/admin/*` routes, `AdminGate`, the GitHub PAT in `localStorage` (`inkweave.reveal-admin.gh-token`), `githubCommit.ts`, the admin pages, or `api.github.com` in its CSP `connect-src`. Mentions of them below describe the app as researched.
+
 ## Scope
 
 Where do the four legal/product pages (Privacy, Terms, IP Disclaimer, About) get *surfaced* to

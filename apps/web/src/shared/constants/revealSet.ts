@@ -16,7 +16,8 @@ export const REVEAL_SET_NUMBER = Number(REVEAL_SET_CODE);
  * Preview card ids are `setNumber * 1000 + collector number`, which stays clear
  * of allCards.json's sequential ids (the loader silently drops a preview card
  * whose id collides). Cards revealed without a collector number take an id in
- * the reserved `+900..+999` band instead (docs/PREVIEW_CARD_PARSER.md).
+ * the reserved `+900..+999` band instead (docs/PREVIEW_CARD_PARSER.md in
+ * Doberjohn/inkweave-admin).
  */
 export const REVEAL_ID_BASE = REVEAL_SET_NUMBER * 1000;
 
