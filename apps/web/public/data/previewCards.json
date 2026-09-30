@@ -4258,6 +4258,36 @@
       "strength": 1,
       "willpower": 2,
       "lore": 1
+    },
+    {
+      "id": 14179,
+      "name": "Napoleon",
+      "fullName": "Napoleon - Patient Watchdog",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 179,
+      "version": "Patient Watchdog",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Alert",
+          "fullText": "Alert"
+        }
+      ],
+      "fullText": "Alert (This character can challenge as if they had Evasive.)",
+      "fullTextSections": [
+        "Alert (This character can challenge as if they had Evasive.)"
+      ],
+      "strength": 5,
+      "willpower": 2,
+      "lore": 1
     }
   ]
 }
