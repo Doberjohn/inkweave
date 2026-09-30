@@ -65,6 +65,9 @@ const origin = `http://localhost:${port}`;
 
 export default defineConfig({
   testDir: './e2e',
+  // Opens the first spec's pages on the fresh server before any test starts, so the app shell and
+  // those pages compile outside the first wave's timeouts (#664).
+  globalSetup: './e2e/global-setup.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -109,7 +112,10 @@ export default defineConfig({
     // server that dies mid-run leaves nothing behind but connection errors. stderr is piped by
     // default.
     stdout: process.env.CI ? 'ignore' : 'pipe',
-    timeout: 120000,
+    // Startup can include ensureSynergiesPlugin's engine rebuild and precompute (28 s measured),
+    // and the first `GET /` on a cold server took 17 to 19 s; both run slower while other
+    // sessions load this machine (#664).
+    timeout: 240000,
     env: {
       // Exercise the reveal-season active code paths in E2E.
       VITE_IS_REVEAL_SEASON: 'true',
