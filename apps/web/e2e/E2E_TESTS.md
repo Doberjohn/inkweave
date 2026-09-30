@@ -200,7 +200,7 @@ Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #48
 | should switch comparison pairs across exit and re-entry | (desktop) Enter → BACK → enter a different pair; consecutive comparisons work cleanly |
 | should enter comparison mode on mobile | (mobile) Tapping a synergy tile shows the BACK button |
 | should render the tabbed comparison layout on mobile | (mobile) MobileComparisonView's Engine/Community section-switch pill buttons render |
-| should switch to the Community tab on mobile | (mobile) Tapping the Community pill moves `aria-current="true"` onto it |
+| should switch to the Community tab on mobile | (mobile) Tapping the Community pill moves `aria-current="true"` onto it, and scrolls only the tab strip: the page and every scroll container around the strip keep their positions (#653, the strip now uses `useScrollSnapIndex` instead of `scrollIntoView`, which also scrolls ancestors; the old code did not move them in this layout either, so this guards the outcome) |
 | should open and dismiss the card lightbox on mobile | (mobile) Tapping a comparison card opens the portal-to-body `Enlarged:` dialog; its close button dismisses it |
 | should exit comparison mode via BACK on mobile | (mobile) BACK returns the modal to `data-mode="default"` |
 | opens directly in comparison with no BACK button (desktop) | (deep link) `/compare/A/B/groupKey` opens straight into comparison; BACK button suppressed (hideBackButton) |

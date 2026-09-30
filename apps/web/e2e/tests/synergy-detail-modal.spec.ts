@@ -144,10 +144,22 @@ test.describe('Synergy comparison — Mobile', () => {
     const communityTab = modal.getByRole('button', {name: /^Community/});
     // The active section pill carries aria-current="true".
     await expect(engineTab).toHaveAttribute('aria-current', 'true', {timeout: 3000});
+    // Where the page and every scroll container around the tab strip sit: switching tabs
+    // scrolls the strip alone (#653).
+    const aroundStrip = () =>
+      modal.locator('.mobile-tab-viewport').evaluate((strip) => {
+        const positions = [`page ${Math.round(window.scrollX)},${Math.round(window.scrollY)}`];
+        for (let el = strip.parentElement; el; el = el.parentElement) {
+          positions.push(`${el.tagName} ${Math.round(el.scrollLeft)},${Math.round(el.scrollTop)}`);
+        }
+        return positions;
+      });
+    const before = await aroundStrip();
 
     await communityTab.click();
     await expect(communityTab).toHaveAttribute('aria-current', 'true', {timeout: 3000});
     await expect(engineTab).toHaveAttribute('aria-current', 'false');
+    expect(await aroundStrip()).toEqual(before);
   });
 
   test('should open and dismiss the card lightbox on mobile', async ({appPage, page}) => {
