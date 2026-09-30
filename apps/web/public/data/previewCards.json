@@ -4288,6 +4288,27 @@
       "strength": 5,
       "willpower": 2,
       "lore": 1
+    },
+    {
+      "id": 14163,
+      "name": "Everything else is obsolete",
+      "fullName": "Everything else is obsolete",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "14",
+      "number": 163,
+      "rarity": "Common",
+      "subtypes": [
+        "Action",
+        "Song"
+      ],
+      "fullText": "(A character with cost 3 or more can ⟳ to sing this song for free.)\n\nLook at the top 3 cards of your deck. Put one into your inkwell facedown and exerted, one on the top of your deck, and one on the bottom of your deck.",
+      "fullTextSections": [
+        "(A character with cost 3 or more can ⟳ to sing this song for free.)",
+        "Look at the top 3 cards of your deck. Put one into your inkwell facedown and exerted, one on the top of your deck, and one on the bottom of your deck."
+      ]
     }
   ]
 }
