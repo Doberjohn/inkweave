@@ -16,7 +16,7 @@ import {
 } from 'inkweave-synergy-engine';
 
 // Data guard for the Ink Drops playstyle (#624). New Set 14 reveals keep landing on master through
-// /admin/reveal, and a drop wording the detectors have never seen would silently drop that card from
+// admin's reveal publisher, and a drop wording the detectors have never seen would silently drop that card from
 // the playstyle, or get scoring copy written for a different card. CI runs this on every push to
 // master, reveal publishes included, so an unmodeled wording turns CI red until utils/inkDrops.ts (or
 // the scoring table in engine/inkDropScoring.ts) learns it; deploys are unaffected. That alarm is

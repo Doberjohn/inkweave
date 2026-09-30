@@ -18,7 +18,6 @@
       "statusCode": 308
     },
     {"source": "/mockups/:path*", "statusCode": 308, "destination": "/"},
-    {"source": "/reveal-admin", "statusCode": 308, "destination": "/admin/reveal"},
     {"source": "/playstyles/vinelings", "statusCode": 308, "destination": "/playstyles/floodborn"}
   ],
   "rewrites": [
@@ -57,38 +56,11 @@
       ]
     },
     {
-      "source": "/data/vote-analytics.json",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600, stale-while-revalidate=86400"
-        }
-      ]
-    },
-    {
-      "source": "/data/vote-log.json",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600, stale-while-revalidate=86400"
-        }
-      ]
-    },
-    {
       "source": "/version.json",
       "headers": [
         {
           "key": "Cache-Control",
           "value": "no-store"
-        }
-      ]
-    },
-    {
-      "source": "/admin/(.*)",
-      "headers": [
-        {
-          "key": "X-Robots-Tag",
-          "value": "noindex, nofollow"
         }
       ]
     },
@@ -121,7 +93,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://*.vercel-scripts.com https://vercel.live; connect-src 'self' https://api.github.com https://*.supabase.co https://*.sentry.io https://va.vercel-analytics.com https://vitals.vercel-insights.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; font-src 'self' https://vercel.live; frame-src 'self' https://vercel.live; frame-ancestors 'none'"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://*.vercel-scripts.com https://vercel.live; connect-src 'self' https://*.supabase.co https://*.sentry.io https://va.vercel-analytics.com https://vitals.vercel-insights.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; font-src 'self' https://vercel.live; frame-src 'self' https://vercel.live; frame-ancestors 'none'"
         }
       ]
     }

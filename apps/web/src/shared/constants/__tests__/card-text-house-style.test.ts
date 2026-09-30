@@ -4,8 +4,8 @@ import path from 'node:path';
 import {canonicalizeCardLine, findGlyphWords} from 'inkweave-synergy-engine';
 
 // Card text must already be in house style (#635): the engine's text patterns match glyphs
-// only, so "pay 1 Ink less" silently cost Honey Lemon 14151 its Ramp group. reveal-admin and
-// /fetch-reveals canonicalize before they commit, through the engine's cardTextStyle; this is
+// only, so "pay 1 Ink less" silently cost Honey Lemon 14151 its Ramp group. Admin's reveal
+// publisher and /fetch-reveals (Doberjohn/inkweave-admin) canonicalize before they commit, through the engine's cardTextStyle; this is
 // the net behind them, and each failure names the card id, field and line.
 //
 // Every field is split into lines first: released fullTextSections hold line-wrap newlines

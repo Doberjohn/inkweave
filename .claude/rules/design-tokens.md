@@ -31,7 +31,7 @@ One source per retyped idiom, in `theme.ts` (Storybook: Docs/MicroPatterns). Spr
 - **Disabled** = `DISABLED_STYLE`, everywhere. **Press** = `scale(${PRESS_SCALE})`.
 - **EASING intent**: `snappy` hover/fast, `bounce` selection/press, `smooth` fades/progress.
 - **Reduced motion**: one source — `shared/utils/prefersReducedMotion` (fn for trigger-time, hook for render gating). No new hand-rolled `matchMedia` checks; new infinite animations MUST have a class in index.css's reduced-motion block. `useBoop` is already guarded.
-- **Loading states**: skeleton for layout-known surfaces (one app-level `SkeletonTheme` in AppLayout — never add local wrappers), text for admin/unknown shapes, spinner only for the SW toast.
+- **Loading states**: skeleton for layout-known surfaces (one app-level `SkeletonTheme` in AppLayout — never add local wrappers), text for unknown shapes, spinner only for the SW toast.
 - **`surfaceHover` is overloaded** (six jobs); do not add new ones — aliases are deferred to a future ruling.
 
 ## Related

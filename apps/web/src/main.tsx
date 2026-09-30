@@ -7,6 +7,7 @@ import './index.css';
 import {router} from './router';
 import {showUpdateToast} from './shared/lib/swUpdateToast';
 import {reloadForStaleChunk} from './shared/lib/staleChunkReload';
+import {loadSentryWhenIdle} from './shared/lib/sentry';
 
 // Recover from stale-deploy chunk mismatches. After a new deploy, a tab still
 // running the old bundle references hashed CSS/JS chunks the deploy has purged;
@@ -20,61 +21,8 @@ if (import.meta.env.PROD) {
   });
 }
 
-// Lazy-load Sentry to keep it off the critical path (~150 KB gzip)
-if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
-  import('@sentry/react').then(async (Sentry) => {
-    // Widen the array so both browserTracing and supabase integrations fit. A
-    // prior `ReturnType<typeof Sentry.supabaseIntegration>[]` annotation stopped
-    // widening once @sentry/react 10.67 narrowed supabaseIntegration()'s `name`
-    // to the literal "Supabase" (TS2322 on push). @sentry/react doesn't re-export
-    // the base `Integration` type, so union the two integration return types.
-    const integrations: (
-      | ReturnType<typeof Sentry.browserTracingIntegration>
-      | ReturnType<typeof Sentry.supabaseIntegration>
-    )[] = [Sentry.browserTracingIntegration()];
-
-    // Add Supabase monitoring when configured. supabaseIntegration (v10) takes the
-    // SupabaseClient constructor so it can instrument every client instance; lazily
-    // imported here to keep @supabase/supabase-js off the critical path.
-    if (import.meta.env.VITE_SUPABASE_URL) {
-      const {SupabaseClient} = await import('@supabase/supabase-js');
-      integrations.push(Sentry.supabaseIntegration({supabaseClient: SupabaseClient}));
-    }
-
-    // Sentry 11 collects user info, cookies, request/response bodies and query data by
-    // default (v10 did not), and bodies here could include Supabase sign-in and vote
-    // payloads. This is the migration guide's block for restoring v10's restrictive
-    // defaults; piiDeny drops IP, proxy and user identifiers from headers and query params.
-    const piiDeny = {deny: ['forwarded', '-ip', 'remote-', 'via', '-user']};
-
-    Sentry.init({
-      dsn: import.meta.env.VITE_SENTRY_DSN,
-      environment: 'production',
-      integrations,
-      tracesSampleRate: 0.1,
-      dataCollection: {
-        userInfo: false,
-        cookies: false,
-        httpHeaders: {request: piiDeny, response: piiDeny},
-        httpBodies: [],
-        urlQueryParams: piiDeny,
-        genAI: {inputs: false, outputs: false},
-        databaseQueryData: false,
-        queues: false,
-        graphQL: {document: false, variables: false},
-      },
-      // Stale-deploy chunk mismatches are auto-recovered via reload (see the
-      // vite:preloadError handler above), so they're noise, not bugs. Drop the
-      // whole family — the preload re-throw plus the dynamic-import variants.
-      ignoreErrors: [
-        'Unable to preload CSS',
-        'Failed to fetch dynamically imported module',
-        'Importing a module script failed',
-        'error loading dynamically imported module',
-      ],
-    });
-  });
-}
+// Sentry loads after `load`, off the critical path (#640); see shared/lib/sentry.ts.
+loadSentryWhenIdle();
 
 // Register service worker with auto-update flow: when a new SW reaches
 // `waiting` state, show a bottom-right toast for ~600ms so the user sees the

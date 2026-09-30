@@ -1,7 +1,7 @@
 // Story coverage checker — finds React components without Storybook stories,
 // and orphaned stories without components (#512: reverse direction).
 // Scans shared/components, features/*/components, feature ROOTS (reveals,
-// admin-analytics, playstyles, ...), and src/pages.
+// playstyles, ...), and src/pages.
 //
 // Fails CI only when NEW components are added without stories (or a story's
 // component vanishes). Pre-existing gaps are tracked in KNOWN_MISSING and
@@ -25,9 +25,7 @@ const EXCLUDED = new Set([
   'InkIcon.tsx', // tiny SVG icon
   'EtherealBackground.tsx', // decorative static backdrop (blurred glow orbs), not animated
   'RenderProfiler.tsx', // performance utility wrapper, not visual
-  'AdminGate.tsx', // route gate: renders children or a redirect, no visual surface
   'RevealsGate.tsx', // route gate: renders children or a redirect, no visual surface
-  'SynergyBanner.tsx', // marketing-banner generator, rendered only by the dev-only /banner export route
   'Seo.tsx', // head-only: emits <title>/<meta>/<link> via React 19 native metadata, renders no visible UI
 ]);
 
@@ -44,8 +42,6 @@ const KNOWN_MISSING = new Set([
   '/src/features/synergies/components/ExpandedGroupView.tsx',
   '/src/features/synergies/components/SynergyResults.tsx',
   '/src/shared/components/SearchBottomSheet.tsx',
-  // #512 gate-widening seed: newly in scope, lacks a story today.
-  '/src/features/admin-analytics/AdminAnalyticsDashboard.tsx',
 ]);
 
 /** True when the file default- or named-exports a component-looking symbol. */

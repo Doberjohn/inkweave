@@ -16,7 +16,7 @@
  * it to `build:vercel` — that would break preview deploys, which is the exact
  * failure the `|| echo` exists to prevent.
  *
- * Checks, against a sample of card pages plus the /browse hub (and, for check 6, the homepage):
+ * Checks, against a sample of card pages plus the /browse hub (and, for checks 6 and 7, the homepage):
  *   1. dist/card/<id>/<slug>/index.html exists
  *   2. it contains the card's fullName as visible content (not just an SPA shell)
  *   3. its <link rel="canonical"> is self-referential (the slug URL), not the homepage
@@ -28,11 +28,13 @@
  *      cleanPrerenderedHtml() strips it; this asserts the strip actually ran.
  *   6. no sampled card page, and neither / nor /browse, preloads an image it never
  *      renders (#627): see findOrphanImagePreloads.
+ *   7. no sampled card page, and neither / nor /browse, modulepreloads a Sentry chunk
+ *      (#640): see findSentryPreloads.
  *
  * Usage: node scripts/check-rendered-html.mjs [targetDir]   (default: apps/web/dist)
  * Bypass: SKIP_RENDER_GUARD=1  (emergency escape hatch)
  */
-import {readFileSync, existsSync} from 'node:fs';
+import {readFileSync, readdirSync, existsSync} from 'node:fs';
 import {join, dirname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -70,6 +72,15 @@ export function readCanonical(html) {
   return tag?.match(/\bhref="([^"]*)"/i)?.[1];
 }
 
+/** One attribute of a tag, whatever order its attributes come in (see readCanonical). */
+const attr = (tag, name) => tag.match(new RegExp(`\\s${name}="([^"]*)"`, 'i'))?.[1];
+
+/**
+ * Whether a tag's rel lists `token`. rel is a set of space-separated, case-insensitive tokens,
+ * so `rel="modulepreload "` is still a modulepreload to the browser.
+ */
+const hasRel = (tag, token) => (attr(tag, 'rel') ?? '').toLowerCase().split(/\s+/).includes(token);
+
 /**
  * Image preloads the page never renders (#627). The crawl captures the live DOM, so a
  * `<link rel="preload" as="image">` injected at runtime is baked into the static HTML,
@@ -87,10 +98,9 @@ export function readCanonical(html) {
  * @returns {string[]} hrefs of image preloads with no matching `<img src>`
  */
 export function findOrphanImagePreloads(html) {
-  const attr = (tag, name) => tag.match(new RegExp(`\\s${name}="([^"]*)"`, 'i'))?.[1];
   const rendered = new Set([...html.matchAll(/<img\b[^>]*\ssrc="([^"]*)"/gi)].map((m) => m[1]));
   return (html.match(/<link\b[^>]*>/gi) ?? [])
-    .filter((tag) => attr(tag, 'rel') === 'preload' && attr(tag, 'as') === 'image')
+    .filter((tag) => hasRel(tag, 'preload') && attr(tag, 'as') === 'image')
     .map((tag) => attr(tag, 'href'))
     .filter((href) => href && !rendered.has(href));
 }
@@ -98,6 +108,44 @@ export function findOrphanImagePreloads(html) {
 /** The offender reason shared by every page the orphan-preload check covers. */
 const orphanPreloadReason = (hrefs) =>
   `preloads ${hrefs.join(', ')} but renders no <img> with that src (runtime <head> tag baked into the capture)`;
+
+/** The Sentry SDK's own name string, present in the chunk that carries the SDK. */
+const SENTRY_SIGNATURE = 'sentry.javascript';
+
+/**
+ * The built chunks that carry the Sentry SDK (#640), found by the SDK's name string rather than
+ * a file name: chunk names follow whichever module Rolldown groups first.
+ *
+ * @param {string} targetDir - build output root
+ * @returns {Set<string>} file names under assets/
+ */
+export function findSentryChunks(targetDir) {
+  const assets = join(targetDir, 'assets');
+  if (!existsSync(assets)) return new Set();
+  const chunks = readdirSync(assets).filter((name) => name.endsWith('.js'));
+  return new Set(chunks.filter((name) => readFileSync(join(assets, name), 'utf8').includes(SENTRY_SIGNATURE)));
+}
+
+/**
+ * Sentry chunks a page modulepreloads (#640). Sentry loads after `load`, and our crawl never
+ * loads it (prerender.mjs sets `__INKWEAVE_PRERENDER__`), so no captured page may carry its
+ * modulepreload: baked into the HTML, it fetches the SDK in the critical window on every visit.
+ * The same capture-bakes-runtime-state class of bug as #525, #535 and #627.
+ *
+ * @param {string} html - one captured page
+ * @param {Set<string>} sentryChunks - from findSentryChunks
+ * @returns {string[]} hrefs of modulepreloads that point at a Sentry chunk
+ */
+export function findSentryPreloads(html, sentryChunks) {
+  return (html.match(/<link\b[^>]*>/gi) ?? [])
+    .filter((tag) => hasRel(tag, 'modulepreload'))
+    .map((tag) => attr(tag, 'href'))
+    .filter((href) => href && sentryChunks.has(href.split('/').pop()));
+}
+
+/** The offender reason shared by every page the Sentry-preload check covers. */
+const sentryPreloadReason = (hrefs) =>
+  `modulepreloads the Sentry SDK (${hrefs.join(', ')}), which must load only after \`load\` (#640)`;
 
 /**
  * Choose which card pages this guard verifies.
@@ -148,9 +196,10 @@ export function selectSampleCards(cards) {
  * @param {string} targetDir - build output root to inspect
  * @param {{id: number, fullName: string}} card - the sampled card
  * @param {string} route - the card's slug path, from the engine's cardPath
+ * @param {Set<string>} sentryChunks - from findSentryChunks
  * @returns {Array<{file: string, reason: string}>} empty when the page is sound
  */
-function findCardPageOffenders(targetDir, card, route) {
+function findCardPageOffenders(targetDir, card, route, sentryChunks) {
   const file = join(targetDir, route, 'index.html');
   if (!existsSync(file)) {
     return [{file, reason: 'prerendered card page missing (crawl did not run?)'}];
@@ -160,6 +209,7 @@ function findCardPageOffenders(targetDir, card, route) {
   const canonical = readCanonical(html);
   const expectedCanonical = `${SITE_ORIGIN}${route}`;
   const orphanPreloads = findOrphanImagePreloads(html);
+  const sentryPreloads = findSentryPreloads(html, sentryChunks);
 
   // Each entry is one assertion: [failed?, why]. A table rather than a chain of ifs
   // so a new check is one row, not another branch in an already-dense function.
@@ -193,6 +243,9 @@ function findCardPageOffenders(targetDir, card, route) {
     // A runtime image preload baked into the capture (#627): fetched first on every
     // visit, for an image this page never shows.
     [orphanPreloads.length > 0, orphanPreloadReason(orphanPreloads)],
+    // Sentry's modulepreload baked into the capture (#640): the SDK fetched in the critical
+    // window on every visit, when it should load only after `load`.
+    [sentryPreloads.length > 0, sentryPreloadReason(sentryPreloads)],
   ]
     .filter(([failed]) => failed)
     .map(([, reason]) => ({file, reason}));
@@ -209,17 +262,22 @@ function findBrowseHubOffenders(targetDir) {
 }
 
 /**
- * The orphan-preload check (#627) on the two entry pages the card sample does not
- * cover: `/`, the page PSI measured when the stale preloads were found, and `/browse`.
- * A missing file is skipped: findBrowseHubOffenders already reports a missing /browse,
- * and the build always writes a root index.html (the Vite shell).
+ * The orphan-preload (#627) and Sentry-preload (#640) checks on the two entry pages the card
+ * sample does not cover: `/`, the page PSI measures, and `/browse`. A missing file is
+ * skipped: findBrowseHubOffenders already reports a missing /browse, and the build always
+ * writes a root index.html (the Vite shell).
  */
-function findEntryPageOffenders(targetDir) {
+function findEntryPageOffenders(targetDir, sentryChunks) {
   return ['index.html', join('browse', 'index.html')].flatMap((rel) => {
     const file = join(targetDir, rel);
     if (!existsSync(file)) return [];
-    const orphans = findOrphanImagePreloads(readFileSync(file, 'utf8'));
-    return orphans.length > 0 ? [{file, reason: orphanPreloadReason(orphans)}] : [];
+    const html = readFileSync(file, 'utf8');
+    const orphans = findOrphanImagePreloads(html);
+    const sentry = findSentryPreloads(html, sentryChunks);
+    return [
+      ...(orphans.length > 0 ? [{file, reason: orphanPreloadReason(orphans)}] : []),
+      ...(sentry.length > 0 ? [{file, reason: sentryPreloadReason(sentry)}] : []),
+    ];
   });
 }
 
@@ -232,9 +290,10 @@ function findEntryPageOffenders(targetDir) {
  * @param {string} targetDir - build output root to inspect
  * @param {Array<{id: number, fullName: string}>} samples - card pages to verify
  * @param {(card: object) => string} cardPath - the engine's slug-path builder
+ * @param {Set<string>} [sentryChunks] - the build's Sentry chunks (default: read from targetDir)
  * @returns {Array<{file: string, reason: string}>} empty when the build is sound
  */
-export function findOffenders(targetDir, samples, cardPath) {
+export function findOffenders(targetDir, samples, cardPath, sentryChunks = findSentryChunks(targetDir)) {
   // Distinguish "wrong path" from "bad crawl" before anything else. Without this,
   // a mistyped targetDir reports every sampled page as missing and blocks the
   // deploy for a reason that has nothing to do with the prerender — the most
@@ -246,9 +305,9 @@ export function findOffenders(targetDir, samples, cardPath) {
   }
 
   return [
-    ...samples.flatMap((card) => findCardPageOffenders(targetDir, card, cardPath(card))),
+    ...samples.flatMap((card) => findCardPageOffenders(targetDir, card, cardPath(card), sentryChunks)),
     ...findBrowseHubOffenders(targetDir),
-    ...findEntryPageOffenders(targetDir),
+    ...findEntryPageOffenders(targetDir, sentryChunks),
   ];
 }
 
@@ -271,7 +330,8 @@ async function main() {
     process.exit(1);
   }
 
-  const offenders = findOffenders(targetDir, samples, cardPath);
+  const sentryChunks = findSentryChunks(targetDir);
+  const offenders = findOffenders(targetDir, samples, cardPath, sentryChunks);
 
   if (offenders.length > 0) {
     console.error(`✖ Render guard failed in "${targetDir}":`);
@@ -285,8 +345,10 @@ async function main() {
     process.exit(1);
   }
 
+  // The Sentry chunk count makes a vacuous check 7 visible: 0 means it had nothing to look for.
   console.log(
-    `✓ Prerendered HTML verified in "${targetDir}" (${samples.length} card page(s), /browse and /).`,
+    `✓ Prerendered HTML verified in "${targetDir}" (${samples.length} card page(s), /browse and /; ` +
+      `${sentryChunks.size} Sentry chunk(s) checked).`,
   );
 }
 

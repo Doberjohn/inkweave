@@ -1,5 +1,7 @@
 # Issue #219 — Legal & Product Pages: Research & Implementation Plan
 
+> **Since #593 (2026-09-30):** the admin tools moved to `Doberjohn/inkweave-admin`. The app no longer has `/admin/*` routes, `AdminGate`, the GitHub PAT in `localStorage` (`inkweave.reveal-admin.gh-token`), `githubCommit.ts`, the admin pages, or `api.github.com` in its CSP `connect-src`. Mentions of them below describe the app as researched.
+
 **Status:** Research complete (read-only session, 2026-07-09). No code changed.
 **Issue:** [#219 "Legal & Product Pages"](https://github.com/Doberjohn/inkweave/issues/219) (label `feature`, no milestone).
 **Goal:** ship four static content pages before public launch: Privacy Policy, Terms of Use, IP Disclaimer, About/Who-We-Are. Wire them into routing, make them reachable from a footer/nav, style them to the theme, keep them accessible and static.
@@ -119,7 +121,7 @@ Every row is source-anchored in docs 03/04. "PII?" is a factual read, not legal 
 | OAuth identity (email, provider id, tokens) | Deck sign-in (Google/Discord) | Supabase `auth.users`, EU | Yes (signed-in users only) | `shared/contexts/SessionContext.tsx:51-58`; `shared/lib/supabase.ts:29-39` |
 | Product analytics events (card ids/enums, search query string) | Usage analytics | Vercel Web Analytics, cookieless, no account id | Search text is free-form | `shared/lib/analytics.ts:11-64`; `AppLayout.tsx:126` |
 | Core Web Vitals | Performance monitoring | Vercel Speed Insights, cookieless | No | `AppLayout.tsx:127` |
-| Error diagnostics (stack, URL, UA, breadcrumbs) | Prod error monitoring | Sentry, region unverified (§7) | May incidentally capture IP; no `setUser`, no `beforeSend` scrub | `main.tsx:24-55` |
+| Error diagnostics (stack, URL, UA, breadcrumbs) | Prod error monitoring | Sentry, region unverified (§7) | May incidentally capture IP; no `setUser`, no `beforeSend` scrub | `shared/lib/sentry.ts` (`sentryOptions`) |
 | localStorage keys (`inkweave:deck:draft`, `inkweave:vote:*`, `inkweave:voted-pairs`, `inkweave-recent-searches`, `inkweave:auth`, admin PAT) | Device-local app state | Browser only, never transmitted (except auth session used against Supabase) | Auth session is sensitive | doc 03 §"Eight browser-storage keys" |
 
 Facts to state plainly: **no cookies are set** (localStorage + cookieless analytics); **no `decks` table exists** (cloud sync deferred to #464), so no deck content is server-side today; **fonts and card images are self-hosted** in production (no Google Fonts / no Ravensburger runtime fetch); network egress is bounded by the CSP `connect-src` (self, `api.github.com` admin-only, `*.supabase.co`, `*.sentry.io`, two Vercel analytics hosts).
