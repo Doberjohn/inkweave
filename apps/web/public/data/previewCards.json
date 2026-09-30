@@ -4258,6 +4258,74 @@
       "strength": 1,
       "willpower": 2,
       "lore": 1
+    },
+    {
+      "id": 14179,
+      "name": "Napoleon",
+      "fullName": "Napoleon - Patient Watchdog",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 179,
+      "version": "Patient Watchdog",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Alert",
+          "fullText": "Alert"
+        }
+      ],
+      "fullText": "Alert (This character can challenge as if they had Evasive.)",
+      "fullTextSections": [
+        "Alert (This character can challenge as if they had Evasive.)"
+      ],
+      "strength": 5,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 14163,
+      "name": "Everything else is obsolete",
+      "fullName": "Everything else is obsolete",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "14",
+      "number": 163,
+      "rarity": "Common",
+      "subtypes": [
+        "Action",
+        "Song"
+      ],
+      "fullText": "(A character with cost 3 or more can ⟳ to sing this song for free.)\n\nLook at the top 3 cards of your deck. Put one into your inkwell facedown and exerted, one on the top of your deck, and one on the bottom of your deck.",
+      "fullTextSections": [
+        "(A character with cost 3 or more can ⟳ to sing this song for free.)",
+        "Look at the top 3 cards of your deck. Put one into your inkwell facedown and exerted, one on the top of your deck, and one on the bottom of your deck."
+      ]
+    },
+    {
+      "id": 14202,
+      "name": "Pirate Plane",
+      "fullName": "Pirate Plane",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "14",
+      "number": 202,
+      "rarity": "Uncommon",
+      "fullText": "DODGE THIS! When you play this item, you may deal 1 damage to chosen character.\n\nBARREL ROLL ⟳, 1 ⬡ — Chosen character gains Alert this turn. (They can challenge as if they had Evasive.)",
+      "fullTextSections": [
+        "DODGE THIS! When you play this item, you may deal 1 damage to chosen character.",
+        "BARREL ROLL ⟳, 1 ⬡ — Chosen character gains Alert this turn. (They can challenge as if they had Evasive.)"
+      ]
     }
   ]
 }

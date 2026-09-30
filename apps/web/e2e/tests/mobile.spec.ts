@@ -97,14 +97,16 @@ test.describe('Mobile Viewport', () => {
   });
 
   test('a search tap that beats the sheet chunk opens it, with a proxy input holding focus', async ({page}) => {
-    // Hold the lazily loaded sheet (#640), then load a page with the bottom nav from scratch.
+    // Hold the lazily loaded sheet (#640), then load a page with the bottom nav from scratch. On a
+    // phone the app requests the sheet in its first render, and WebKit holds the load event until
+    // that request ends, so wait for DOMContentLoaded: a `load` wait could wait on the hold itself.
     let release!: () => void;
     const held = new Promise<void>((resolve) => (release = resolve));
     await page.route('**/components/SearchBottomSheet.tsx*', async (route) => {
       await held;
       await route.continue();
     });
-    await page.goto('/browse');
+    await page.goto('/browse', {waitUntil: 'domcontentloaded'});
     await page.getByRole('button', {name: 'Search cards'}).click();
     await expect(page.getByRole('dialog', {name: 'Search cards'})).toHaveCount(0);
 

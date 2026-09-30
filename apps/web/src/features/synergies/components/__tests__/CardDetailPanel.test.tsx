@@ -1,7 +1,7 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {render, screen, fireEvent, within} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
-import {createCard} from '../../../../shared/test-utils';
+import {createCard, restStrip, swipeStrip} from '../../../../shared/test-utils';
 import {trackEvent} from '../../../../shared/lib/analytics';
 import {CardDetailPanel} from '../CardDetailPanel';
 
@@ -88,10 +88,22 @@ describe('CardDetailPanel printings', () => {
 
     fireEvent.click(screen.getByRole('radio', {name: 'Enchanted'}));
 
+    expect(trackEvent).toHaveBeenCalledTimes(1);
     expect(trackEvent).toHaveBeenCalledWith('card_printing_view', {
       cardId: '1938',
       rarity: 'Enchanted',
       surface: 'card_page',
     });
+  });
+
+  it('records a swiped printing once it comes to rest, not as the swipe crosses it', () => {
+    renderPanel();
+    const strip = screen.getByRole('group', {name: 'Pongo - Determined Father printings'});
+
+    swipeStrip(strip, 1);
+    expect(trackEvent).not.toHaveBeenCalled();
+
+    restStrip(strip);
+    expect(trackEvent).toHaveBeenCalledTimes(1);
   });
 });

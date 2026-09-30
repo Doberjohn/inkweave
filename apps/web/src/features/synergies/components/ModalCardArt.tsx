@@ -33,6 +33,8 @@ export function ModalCardArt({
         printings={printing.printings}
         index={printing.index}
         onIndexChange={printing.select}
+        onSettle={printing.settle}
+        locked={printing.locked}
         width={cardWidth}
         height={cardHeight}
         borderRadius={RADIUS.xl}
@@ -72,7 +74,7 @@ export function HeaderPrintingPills({hidden}: {hidden: boolean}) {
       <PrintingPills
         printings={printing.printings}
         index={printing.index}
-        onSelect={printing.select}
+        onSelect={printing.pick}
       />
     </span>
   );
@@ -111,7 +113,7 @@ export function MobileArtControls() {
         <PrintingPills
           printings={printing.printings}
           index={printing.index}
-          onSelect={printing.select}
+          onSelect={printing.pick}
           isMobile
         />
       )}

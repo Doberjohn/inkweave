@@ -38,7 +38,9 @@ const mickey: LorcanaCard = {
 
 /** The pairing every surface uses: the swipeable strip, with the pills as its indicator. */
 function Demo({card}: {card: LorcanaCard}) {
-  const {printings, index, select} = usePrintingSelection(card);
+  const {printings, index, select, pick, settle} = usePrintingSelection(card, {
+    surface: 'card_page',
+  });
   const [enlarged, setEnlarged] = useState<string | null>(null);
   return (
     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.md}}>
@@ -47,12 +49,13 @@ function Demo({card}: {card: LorcanaCard}) {
         printings={printings}
         index={index}
         onIndexChange={select}
+        onSettle={settle}
         onEnlarge={(i) => setEnlarged(printings[i].label)}
         width={298}
         height={417}
         priority
       />
-      <PrintingPills printings={printings} index={index} onSelect={select} />
+      <PrintingPills printings={printings} index={index} onSelect={pick} />
       {enlarged && <span style={{color: COLORS.text}}>Enlarge: {enlarged}</span>}
     </div>
   );
