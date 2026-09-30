@@ -205,7 +205,7 @@ test.describe('SEO', () => {
     await expect(page.locator('h1 img')).toHaveAttribute('alt', 'Inkweave');
   });
 
-  test('should preload self-hosted fonts', async ({page, appPage}) => {
+  test('should preload the self-hosted body font only', async ({page, appPage}) => {
     await appPage.goto();
 
     const preloads = await page.evaluate(() => {
@@ -214,7 +214,8 @@ test.describe('SEO', () => {
     });
 
     expect(preloads).toContain('/fonts/plus-jakarta-sans-400.woff2');
-    expect(preloads).toContain('/fonts/tinos-400.woff2');
+    // The homepage renders no Tinos, so a preload would only compete with the entry chunk (#640).
+    expect(preloads).not.toContain('/fonts/tinos-400.woff2');
   });
 
   /**

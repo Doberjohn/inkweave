@@ -36,15 +36,16 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://inkweave.ink/og-image.png" />
 
-    <!-- Fonts (self-hosted; @font-face declared in index.css). Preload the two
-         above-the-fold weights so first paint doesn't wait on the CSS to parse. -->
+    <!-- Fonts (self-hosted; @font-face declared in index.css). Preload the body weight
+         so first paint doesn't wait on the CSS to parse. The hero serif isn't preloaded:
+         neither the homepage nor a card page renders its 400 weight, so the preload only
+         competed with the entry chunk for bandwidth (#640). -->
     <link
       rel="preload"
       href="/fonts/plus-jakarta-sans-400.woff2"
       as="font"
       type="font/woff2"
       crossorigin />
-    <link rel="preload" href="/fonts/tinos-400.woff2" as="font" type="font/woff2" crossorigin />
 
     <!-- Prefetch card data (loaded on app mount) -->
     <link rel="prefetch" href="/data/allCards.json" as="fetch" crossorigin />

@@ -1,10 +1,5 @@
-import {
-  transformCard as baseTransformCard,
-  isCoreSet,
-  type CardPrinting,
-  type LorcanaJSONCard,
-  type RawCardVariant,
-} from 'inkweave-synergy-engine';
+import type {CardPrinting, LorcanaJSONCard, RawCardVariant} from 'inkweave-synergy-engine';
+import {transformCard as baseTransformCard, isCoreSet} from 'inkweave-synergy-engine/card';
 import type {LorcanaCard, Ink, CardType} from './types';
 import {ALL_INKS, type BrowseSortOrder} from '../../shared/constants';
 

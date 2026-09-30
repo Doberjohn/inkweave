@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-135 tests across 19 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+138 tests across 20 spec files — all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
 
@@ -65,6 +65,15 @@ The alternate-printing switcher (#625) on card 1938 (Pongo - Determined Father),
 | the modal's arrow keys move between printings, not to the next card | Modal opened on Pongo from `/browse?q=father` (four matches, so "Next card" exists). First lets the dialog's initial-focus timer run (`useDialogFocus` moves focus to the × 100ms after opening, and would otherwise take it back from the pills mid-test) by awaiting a 100ms timer of its own in the page, which runs after the dialog's. It does not wait for the × to be focused: headless WebKit has not started the enter transition by then, so the dialog is still hidden and the focus call does nothing. ArrowRight on the focused Standard pill checks and focuses Enchanted, and the modal's h1 is still Pongo (the radio group owns the arrow keys) |
 | four printings fit a 360px phone as symbols, and jumping to the last checks only it | `page.route` adds Epic and Iconic printings to card 1938 (no real card has more than one yet): four pills; the Epic pill has no text but keeps its name (`aria-label`) and `title`; the row and the page fit `documentElement.clientWidth`. Clicking Iconic lands the strip on slide 3 while a MutationObserver records the checked pill: exactly `['Iconic']`, since the strip's own scroll past Enchanted and Epic must not read as swipes (each would check its pill in passing and count as a view) |
 
+## `card-modal-on-demand.spec.ts`: 2 tests (every project)
+
+The card overview modal loads on demand (#640). Both tests hold the modal's module request (`**/components/CardOverviewModal.tsx*`, the dev server's source path) so the cold path is deterministic.
+
+| Test | What it verifies |
+|---|---|
+| a cold open shows the loading shell, then the modal takes over | Clicking a featured card while the modal's chunk is held shows `card-overview-fallback` and no modal; releasing the chunk shows the modal and removes the shell |
+| the loading shell closes on a scrim click, like the modal | A click on `card-overview-fallback-backdrop` removes the shell, and the chunk arriving afterwards opens no modal |
+
 ## `card-search.spec.ts` — 7 tests (desktop only)
 
 The browse/playstyle search input lives in the toolbar (next to Filters), not the header. Both pages filter the grid in place.
@@ -89,7 +98,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should clear selection by closing the modal | ✕ button closes the modal; hero reachable, URL stays `/` |
 | should close the modal when the backdrop is clicked | Backdrop click closes the modal; hero reachable, URL stays `/` |
 
-## `mobile.spec.ts` — 15 tests (mobile only)
+## `mobile.spec.ts` — 16 tests (mobile only)
 
 | Test | What it verifies |
 |---|---|
@@ -100,6 +109,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should navigate to browse when searching from hero | Typing "Elsa" + Enter navigates to `/browse?q=Elsa`, hero hidden, browse heading visible |
 | should navigate to browsing view via Browse all cards CTA | "Browse all cards" CTA navigates away from hero, shows browse heading |
 | should open search bottom sheet and focus input when tapping search icon | Tap search icon in bottom nav, sheet opens with focused input |
+| a search tap that beats the sheet chunk opens it, with a proxy input holding focus | With the lazy sheet's module held (#640), a Search tap focuses AppLayout's hidden proxy input (what raises the iOS keyboard); once released, the sheet opens |
 | should close search bottom sheet on backdrop click | Open search sheet, click backdrop, sheet dismisses, focus returns to the Search nav button (not the hidden iOS proxy input) |
 | should navigate to browse when pressing Enter in search bottom sheet | Type query in search sheet, press Enter, navigates to `/browse?q=Elsa`, sheet stays closed (the Enter must not also click the refocused Search button) |
 | should show sort dropdown in browse toolbar | Sort select and Filters button both visible in browse toolbar |
@@ -154,7 +164,7 @@ against the dev server, where both are present.
 |---|---|
 | should have valid JSON-LD structured data on home page | `@graph` carries Organization + WebSite + WebApplication, cross-linked by `@id`, with the WebSite's SearchAction |
 | should have correct heading hierarchy on home page | Exactly one h1; its accessible name comes from the logo img's `alt` |
-| should preload self-hosted fonts | `link[rel=preload][as=font]` for plus-jakarta-sans-400 and tinos-400 (self-hosted, not a CDN) |
+| should preload the self-hosted body font only | `link[rel=preload][as=font]` for plus-jakarta-sans-400 (self-hosted, not a CDN), and none for tinos-400, which `/` never renders (#640) |
 | should own its title and canonical: `/` | Title leaves the shell fallback; canonical self-references |
 | should own its title and canonical: `/browse` | As above |
 | should own its title and canonical: `/playstyles` | As above |
