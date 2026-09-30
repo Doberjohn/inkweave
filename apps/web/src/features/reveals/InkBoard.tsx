@@ -111,6 +111,7 @@ function BoardHeader({ink, count, compact}: {ink: Ink; count: number; compact: b
 export function InkBoard({progress, onOpen, compact = false}: InkBoardProps) {
   const {ink, count, cards, rarityCounts} = progress;
   const fill = count / PER_INK[ink];
+  const bloomColor = inkRgba(ink, 0.1 + fill * 0.14);
   const [selectedRarity, setSelectedRarity] = useState<string | null>(null);
   // Toggle: click the active rarity to clear it, click another to switch.
   const toggleRarity = (key: string) => setSelectedRarity((prev) => (prev === key ? null : key));
@@ -127,16 +128,21 @@ export function InkBoard({progress, onOpen, compact = false}: InkBoardProps) {
         boxShadow: `0 18px 60px rgba(0, 0, 0, 0.5), 0 0 ${30 + fill * 60}px ${inkRgba(ink, 0.06 + fill * 0.16)}`,
       }}
     >
-      {/* Radial bloom behind the header; intensity scales with fill. */}
+      {/* Radial bloom behind the header; intensity scales with fill. The phone board
+          is tall and narrow, where a circle in a 70%-wide box overflows the box and
+          gets cut off with hard vertical edges. There the bloom spans the whole
+          panel and its ellipse fits the box (closest-side), fading out at every edge. */}
       <div
         style={{
           position: 'absolute',
           top: '-30%',
           left: '50%',
-          width: '70%',
+          width: compact ? '100%' : '70%',
           height: '60%',
           transform: 'translateX(-50%)',
-          background: `radial-gradient(circle, ${inkRgba(ink, 0.1 + fill * 0.14)}, transparent 70%)`,
+          background: compact
+            ? `radial-gradient(ellipse closest-side, ${bloomColor}, transparent)`
+            : `radial-gradient(circle, ${bloomColor}, transparent 70%)`,
           pointerEvents: 'none',
         }}
       />
