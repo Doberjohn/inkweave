@@ -14,13 +14,13 @@ const slots: SpecialSlot[] = specialSlotsFor('Amber').map((spec) =>
 describe('SpecialPrintings', () => {
   it('counts the revealed printings against the ink lineup', () => {
     render(<SpecialPrintings ink="Amber" slots={slots} />);
-    expect(screen.getByRole('group', {name: 'Special printings'})).toHaveTextContent('1 / 7');
+    expect(screen.getByRole('group', {name: 'Alt arts'})).toHaveTextContent('1 / 7');
   });
 
   it('opens a revealed printing with its base card', () => {
     const onOpenPrinting = vi.fn();
     render(<SpecialPrintings ink="Amber" slots={slots} onOpenPrinting={onOpenPrinting} />);
-    fireEvent.click(screen.getByRole('button', {name: 'View Aurora - Delightful Musician, Enchanted printing'}));
+    fireEvent.click(screen.getByRole('button', {name: 'View Aurora - Delightful Musician, Enchanted alt art'}));
     expect(onOpenPrinting).toHaveBeenCalledWith(card, printing);
   });
 
@@ -33,6 +33,6 @@ describe('SpecialPrintings', () => {
     const stray: SpecialSlot = {number: 299, rarity: 'Enchanted', card, printing: {...printing, id: '14299', number: 299}};
     render(<SpecialPrintings ink="Amber" slots={[...slots, stray]} />);
     expect(screen.getAllByText('Enchanted')).toHaveLength(1);
-    expect(screen.getByRole('group', {name: 'Special printings'})).toHaveTextContent('2 / 8');
+    expect(screen.getByRole('group', {name: 'Alt arts'})).toHaveTextContent('2 / 8');
   });
 });

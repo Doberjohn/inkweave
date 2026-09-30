@@ -94,11 +94,11 @@ function RaritySlots({ink, group, size, onOpenPrinting, selectedRarity}: RarityS
 }
 
 /**
- * The ink board's special printings (#625): a slot for each of the ink's Epic, Enchanted and
- * Iconic printings, filled with its art once revealed. They are alternate art of cards on the
- * board, not cards of their own, so they sit in their own row with their own count and leave
- * the board's "N / 34" alone. Slots match the diamond's size, and a revealed one opens the card
- * modal on that printing.
+ * The ink board's special printings (#625), labelled "Alt arts" for players: a slot for each of
+ * the ink's Epic, Enchanted and Iconic printings, filled with its art once revealed. They are
+ * alternate art of cards on the board, not cards of their own, so they sit in their own row with
+ * their own count and leave the board's "N / 34" alone. Slots match the diamond's size, and a
+ * revealed one opens the card modal on that printing.
  */
 export function SpecialPrintings({ink, slots, onOpenPrinting, compact = false, selectedRarity = null}: SpecialPrintingsProps) {
   const railRef = useRef<HTMLDivElement>(null);
@@ -111,12 +111,12 @@ export function SpecialPrintings({ink, slots, onOpenPrinting, compact = false, s
   return (
     <div
       role="group"
-      aria-label="Special printings"
+      aria-label="Alt arts"
       data-testid="special-printings"
       style={{marginTop: SPACING.xxl, paddingTop: SPACING.lg, borderTop: `1px solid ${hexRgba(COLORS.surfaceBorder, 0.6)}`}}
     >
       <div style={{display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: SPACING.md}}>
-        <span style={CAP_LABEL_XS}>Special printings</span>
+        <span style={CAP_LABEL_XS}>Alt arts</span>
         <span style={{...TABULAR, fontSize: FONT_SIZES.base, fontWeight: 700, color: COLORS.text}}>
           {revealed}
           <span style={{color: COLORS.textDim}}> / {slots.length}</span>

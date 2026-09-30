@@ -57,9 +57,9 @@ function slotDimStyle(dimmed: boolean): CSSProperties {
   return {opacity: dimmed ? 0.22 : 1, transition: `opacity 0.25s ${EASING.smooth}`};
 }
 
-/** The slot's accessible name: the card, plus the rarity for a special printing. */
+/** The slot's accessible name: the card, plus the rarity for an alt art (a special printing). */
 function slotLabel(card: LorcanaCard, printing: CardSlotProps['printing']): string {
-  return printing ? `View ${card.fullName}, ${printing.rarity} printing` : `View ${card.fullName}`;
+  return printing ? `View ${card.fullName}, ${printing.rarity} alt art` : `View ${card.fullName}`;
 }
 
 interface SlotFaceProps {

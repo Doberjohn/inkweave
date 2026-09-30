@@ -205,7 +205,7 @@ test.describe('Reveals page (flag on)', () => {
     await expect(page.locator('[data-dimmed="true"]')).toHaveCount(0);
   });
 
-  test('a special printing opens the card modal on that printing', async ({page}, testInfo) => {
+  test('an alt art opens the card modal on that printing', async ({page}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 
     // Amber's lineup: 3 Epic, 3 Enchanted and an Iconic slot; skip until one is revealed.
@@ -215,11 +215,11 @@ test.describe('Reveals page (flag on)', () => {
       .waitFor({state: 'visible', timeout: 10000})
       .then(() => true)
       .catch(() => false);
-    test.skip(!hasPrinting, 'No special printing revealed on the Amber board yet.');
+    test.skip(!hasPrinting, 'No alt art revealed on the Amber board yet.');
 
-    // The slot names its rarity ("View <card>, Enchanted printing"); the modal must open on it.
+    // The slot names its rarity ("View <card>, Enchanted alt art"); the modal must open on it.
     const label = (await printing.getAttribute('aria-label')) ?? '';
-    const rarity = /, (Epic|Enchanted|Iconic) printing$/.exec(label)?.[1] ?? '';
+    const rarity = /, (Epic|Enchanted|Iconic) alt art$/.exec(label)?.[1] ?? '';
     expect(rarity).not.toBe('');
     await printing.click();
 
