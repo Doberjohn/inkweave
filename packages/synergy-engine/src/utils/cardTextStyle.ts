@@ -2,8 +2,9 @@
  * Card text in the house style card data uses: the ⬡ ◊ ⟳ ¤ ⛉ glyphs, an em dash after an
  * activated ability's cost, "Shift N ⬡ (", and glyphs (not words) for ink amounts and stats.
  *
- * SINGLE SOURCE OF TRUTH (#635), as cardPath is: the /fetch-reveals scripts consume it through
- * the built engine, and reveal-admin through the package. This is what gets WRITTEN. The
+ * SINGLE SOURCE OF TRUTH (#635), as cardPath is: admin's /fetch-reveals scripts consume it
+ * through the built engine, and admin's reveal publisher through the package
+ * (Doberjohn/inkweave-admin, both from its pinned copy of this repo). This is what gets WRITTEN. The
  * engine's own text patterns stay strict, so a word form that slips past here costs a card its
  * mechanic tags (Honey Lemon 14151 lost its Ramp group to "pay 1 Ink less").
  */
@@ -98,7 +99,7 @@ export function canonicalizeCardFullText(text: string): string {
 
 /**
  * Capitalized glyph words in text exactly as written, except inside a card name after
- * "named". For text that reaches card data unrewritten, such as reveal-admin's keyword chips.
+ * "named". For text that reaches card data unrewritten, such as the reveal publisher's keyword chips.
  */
 export function findSpelledGlyphWords(text: string): string[] {
   return [...text.matchAll(GLYPH_WORD)]
@@ -108,7 +109,7 @@ export function findSpelledGlyphWords(text: string): string[] {
 
 /**
  * Capitalized glyph words left after canonicalizing: a shape the rules above do not know
- * ("Your Strength wins."). reveal-admin refuses to publish these.
+ * ("Your Strength wins."). Admin's reveal publisher refuses to publish these.
  */
 export function findGlyphWords(text: string): string[] {
   return findSpelledGlyphWords(canonicalizeCardFullText(text));

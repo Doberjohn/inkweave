@@ -9,7 +9,6 @@ interface ImportMetaEnv {
   readonly VITE_SHOW_STRATEGY_TIPS?: string;
   readonly VITE_SHOW_BETA_NOTICE?: string;
   readonly VITE_FEATURED_CARD_IDS?: string;
-  readonly VITE_SHOW_ADMIN_ANALYTICS?: string;
 }
 
 interface ImportMeta {

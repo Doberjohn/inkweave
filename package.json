@@ -24,8 +24,6 @@
     "download-images": "node scripts/download-card-images.mjs",
     "convert-preview-images": "node scripts/convert-preview-images.mjs",
     "precompute-synergies": "node scripts/precompute-synergies.mjs",
-    "precompute-vote-analytics": "node scripts/precompute-vote-analytics.mjs",
-    "precompute-vercel-analytics": "node scripts/precompute-vercel-analytics.mjs",
     "generate-sitemap": "node scripts/generate-sitemap.mjs",
     "generate-card-slug-map": "node scripts/generate-card-slug-map.mjs",
     "prerender": "node scripts/prerender.mjs",
@@ -33,7 +31,6 @@
     "mine-rules": "pnpm build:engine && node scripts/mine-rule-candidates.mjs",
     "graduate-set": "node scripts/graduate-canonical-set.mjs",
     "sync-variants": "node scripts/sync-variants.mjs",
-    "banner": "node scripts/export-banner.mjs",
     "docs": "node scripts/generate-docs.mjs",
     "analyze": "ANALYZE=true pnpm build:web",
     "prepare": "husky"
@@ -43,11 +40,7 @@
       "name": "User-facing JS",
       "path": [
         "apps/web/dist/assets/*.js",
-        "!apps/web/dist/assets/RevealsPage-*.js",
-        "!apps/web/dist/assets/RevealAdminPage-*.js",
-        "!apps/web/dist/assets/AdminAnalyticsPage-*.js",
-        "!apps/web/dist/assets/ImageAdminPage-*.js",
-        "!apps/web/dist/assets/TuningAdminPage-*.js"
+        "!apps/web/dist/assets/RevealsPage-*.js"
       ],
       "limit": "370 kB",
       "gzip": true
@@ -59,13 +52,9 @@
       "gzip": true
     },
     {
-      "name": "Admin & flag-gated JS",
+      "name": "Flag-gated JS",
       "path": [
-        "apps/web/dist/assets/RevealsPage-*.js",
-        "apps/web/dist/assets/RevealAdminPage-*.js",
-        "apps/web/dist/assets/AdminAnalyticsPage-*.js",
-        "apps/web/dist/assets/ImageAdminPage-*.js",
-        "apps/web/dist/assets/TuningAdminPage-*.js"
+        "apps/web/dist/assets/RevealsPage-*.js"
       ],
       "limit": "60 kB",
       "gzip": true
