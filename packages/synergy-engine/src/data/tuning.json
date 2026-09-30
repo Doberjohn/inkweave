@@ -92,7 +92,7 @@
   "directRules": {
     "shift-targets": {
       "name": "Shift Targets",
-      "description": "Characters with Shift and their valid targets"
+      "description": "Characters with Shift and their shift targets"
     }
   },
   "ruleTexts": {
