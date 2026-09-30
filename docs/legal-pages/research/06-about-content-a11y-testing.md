@@ -118,7 +118,7 @@ And notes: *"IP Disclaimer (could be footer text + dedicated page)"* — i.e., t
 
 ### 3c. Automated a11y enforcement (two gates)
 
-1. **axe-core E2E audit** — `apps/web/e2e/tests/accessibility.spec.ts` runs `AxeBuilder(...).analyze()` and asserts `results.violations` is empty for `/`, `/browse`, `/card/1939`, `/playstyles`, `/playstyles/discard` (desktop only; mobile skipped via `startsWith('mobile-')`). **A new legal page should be added here** as another `test('X page should have no axe violations', ...)` following the same shape (`.exclude('[data-react-grab]')`, `waitForSelector('h1')`).
+1. **axe-core E2E audit** — `apps/web/e2e/tests/accessibility.spec.ts` runs `AxeBuilder(...).analyze()` and asserts `results.violations` is empty for `/`, `/browse`, `/card/1939`, `/playstyles`, `/playstyles/discard` (desktop only; mobile skipped via `startsWith('mobile-')`). **A new legal page should be added here** as another `test('X page should have no axe violations', ...)` following the same shape (plain `new AxeBuilder({page}).analyze()`, `waitForSelector('h1')`). E2E no longer loads react-grab, so no `[data-react-grab]` exclusion is needed (#673).
 2. **ESLint `jsx-a11y`** — `eslint-plugin-jsx-a11y ^6.10.2` is a devDependency (`apps/web/package.json:65`); lint runs in the pre-commit hook. Storybook `@storybook/addon-a11y` (`:48`) and `vitest-axe` (`:81`) give component-level a11y too.
 
 ### 3d. Reveals-page landmark gotcha (from MEMORY / E2E_TESTS.md)
@@ -149,7 +149,7 @@ And notes: *"IP Disclaimer (could be footer text + dedicated page)"* — i.e., t
     test('privacy page has no axe violations', async ({page}) => {
       await page.goto('/privacy');
       await page.waitForSelector('h1');
-      const results = await new AxeBuilder({page}).exclude('[data-react-grab]').analyze();
+      const results = await new AxeBuilder({page}).analyze();
       expect(results.violations).toEqual([]);
     });
   });

@@ -38,14 +38,16 @@ export function printingsOf(card: LorcanaCard): Printing[] {
 }
 
 /**
- * The printing index selected for `cardId`, 0 (Standard) until one is selected. Every card
- * starts on its Standard printing: paging to another card drops the selection, and so does
- * `resetWhen` (the modal closing, or entering a comparison, which always shows base art), so
- * the Standard printing is back once it clears. The render-time reset is the same pattern as
- * the modal's `useCardTranslation`.
+ * The printing index selected for `cardId`, 0 (Standard) until one is selected. A card starts
+ * on its Standard printing, or on `initialIndex` (read once on mount). Paging to another card
+ * drops the selection, and so does `resetWhen` (the modal closing, or entering a comparison,
+ * which always shows base art), so the Standard printing is back once it clears. The
+ * render-time reset is the same pattern as the modal's `useCardTranslation`.
  */
-function useCardSelection(cardId: string, resetWhen: boolean) {
-  const [selected, setSelected] = useState<{cardId: string; index: number} | null>(null);
+function useCardSelection(cardId: string, resetWhen: boolean, initialIndex: number) {
+  const [selected, setSelected] = useState<{cardId: string; index: number} | null>(() =>
+    initialIndex > 0 ? {cardId, index: initialIndex} : null,
+  );
   const keep = !resetWhen && selected?.cardId === cardId;
   if (selected && !keep) setSelected(null);
   const select = (next: number) => setSelected(next === 0 ? null : {cardId, index: next});
@@ -57,14 +59,20 @@ function useCardSelection(cardId: string, resetWhen: boolean) {
  * and the `card_printing_view` it records, once per variant a visitor settles on: `pick` (a
  * pill, already settled) records, and so does `settle` (the strip at rest after a swipe, from
  * PrintingCarousel's `onSettle`). `select` only follows the strip's live index as a swipe
- * crosses printings, so it records nothing.
+ * crosses printings, so it records nothing. `initialKey` (a variant's id) starts the card on
+ * that printing instead of Standard: the reveals board opens its special slots that way.
  */
 export function usePrintingSelection(
   card: LorcanaCard,
-  {resetWhen = false, surface}: {resetWhen?: boolean; surface: 'card_page' | 'modal'},
+  {
+    resetWhen = false,
+    surface,
+    initialKey = null,
+  }: {resetWhen?: boolean; surface: 'card_page' | 'modal'; initialKey?: string | null},
 ) {
-  const {selectedIndex, select} = useCardSelection(card.id, resetWhen);
   const printings = printingsOf(card);
+  const initialIndex = printings.findIndex((printing) => printing.key === initialKey);
+  const {selectedIndex, select} = useCardSelection(card.id, resetWhen, initialIndex);
   // A selection past this card's printings falls back to Standard.
   const index = selectedIndex < printings.length ? selectedIndex : 0;
   const settle = (at: number) => recordView(card, printings[at], surface);

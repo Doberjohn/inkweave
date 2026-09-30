@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
+import type {CardPrinting, Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {CompactHeader, ErrorBoundary, EtherealBackground, Seo} from '../shared/components';
 import {COLORS, FONTS, FONT_SIZES, REVEAL_SET_CODE, REVEAL_SET_NUMBER, SET_NAMES, SPACING} from '../shared/constants';
 import {useResponsive} from '../shared/hooks';
@@ -61,6 +61,7 @@ interface RevealsBodyProps {
   selectedInk: Ink;
   onSelectInk: (ink: Ink) => void;
   onOpen: (card: LorcanaCard) => void;
+  onOpenPrinting: (card: LorcanaCard, printing: CardPrinting) => void;
   onSelectFranchise: (franchise: FranchiseConfig) => void;
   compact: boolean;
 }
@@ -70,7 +71,7 @@ interface RevealsBodyProps {
  * strip + featured board + new-franchises). Early returns keep its branches off
  * RevealsPage.
  */
-function RevealsBody({loading, error, progress, selectedInk, onSelectInk, onOpen, onSelectFranchise, compact}: RevealsBodyProps) {
+function RevealsBody({loading, error, progress, selectedInk, onSelectInk, onOpen, onOpenPrinting, onSelectFranchise, compact}: RevealsBodyProps) {
   if (error) {
     return (
       <p role="alert" style={{...messageStyle, color: COLORS.error}}>
@@ -87,7 +88,13 @@ function RevealsBody({loading, error, progress, selectedInk, onSelectInk, onOpen
         <InkTrackerStrip inks={progress.inks} selected={selectedInk} onSelect={onSelectInk} compact={compact} />
       </div>
       <div style={{marginTop: SPACING.xxl}}>
-        <InkBoard key={selectedInk} progress={progress.byInk[selectedInk]} onOpen={onOpen} compact={compact} />
+        <InkBoard
+          key={selectedInk}
+          progress={progress.byInk[selectedInk]}
+          onOpen={onOpen}
+          onOpenPrinting={onOpenPrinting}
+          compact={compact}
+        />
       </div>
       <div style={{marginTop: 64}}>
         <WhatsNewSection onSelectFranchise={onSelectFranchise} compact={compact} />
@@ -117,17 +124,22 @@ export function RevealsPage() {
 
   const {days} = useCountdown(dates?.prereleaseDate ?? null);
   const releaseDate = dates ? formatReleaseDate(dates.releaseDate) : '';
-  const openAndTrack = (card: LorcanaCard, source: 'mosaic' | 'franchise_modal') => {
+  // A special printing opens the modal on that printing, and reports its rarity.
+  const openAndTrack = (
+    card: LorcanaCard,
+    source: 'mosaic' | 'franchise_modal' | 'special_printings',
+    printing?: CardPrinting,
+  ) => {
     trackEvent('reveal_card_click', {
       cardName: card.fullName,
       cardId: card.id,
       source,
       ink: card.ink,
       type: card.type,
-      rarity: card.rarity ?? null,
+      rarity: printing?.rarity ?? card.rarity ?? null,
       franchise: card.franchise ?? null,
     });
-    openCardModal(card.id);
+    openCardModal(card.id, [], {printingId: printing?.id});
   };
   const sidePad = isMobile ? SPACING.lg : 36;
 
@@ -164,6 +176,7 @@ export function RevealsPage() {
             selectedInk={selectedInk}
             onSelectInk={selectInk}
             onOpen={(card) => openAndTrack(card, 'mosaic')}
+            onOpenPrinting={(card, printing) => openAndTrack(card, 'special_printings', printing)}
             onSelectFranchise={(f) => setShowcase({label: f.label, ink: f.ink, cards: cardsForFranchise(tiers, f)})}
             compact={isMobile}
           />

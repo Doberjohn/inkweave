@@ -188,9 +188,9 @@ test.describe('Reveals page (flag on)', () => {
     test.skip(!hasSlots, 'No reveal cards curated yet (previewCards.json cards: []).');
 
     // Dimming is only observable when the featured board has at least two revealed
-    // rarities (one chip highlighted, the others fade). Each interactive chip is a
-    // "Highlight ... cards" button.
-    const chips = page.getByRole('button', {name: /^Highlight .* cards$/});
+    // rarities (one chip highlighted, the others fade). Each chip is a kit toggle in
+    // the "Highlight a rarity" group, one per rarity with revealed cards.
+    const chips = page.getByRole('group', {name: 'Highlight a rarity'}).getByRole('button');
     const chipCount = await chips.count();
     test.skip(chipCount < 2, 'Need at least two revealed rarities to observe dimming.');
 
@@ -203,5 +203,32 @@ test.describe('Reveals page (flag on)', () => {
     await chip.click();
     await expect(chip).toHaveAttribute('aria-pressed', 'false');
     await expect(page.locator('[data-dimmed="true"]')).toHaveCount(0);
+  });
+
+  test('an alt art opens the card modal on that printing', async ({page}, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+
+    // Amber's lineup: 3 Epic, 3 Enchanted and an Iconic slot; skip until one is revealed.
+    await page.goto('/reveals?ink=amber');
+    const printing = page.getByTestId('reveal-printing-slot').first();
+    const hasPrinting = await printing
+      .waitFor({state: 'visible', timeout: 10000})
+      .then(() => true)
+      .catch(() => false);
+    test.skip(!hasPrinting, 'No alt art revealed on the Amber board yet.');
+
+    // The slot names its rarity ("View <card>, Enchanted alt art"); the modal must open on it.
+    const label = (await printing.getAttribute('aria-label')) ?? '';
+    const rarity = /, (Epic|Enchanted|Iconic) alt art$/.exec(label)?.[1] ?? '';
+    expect(rarity).not.toBe('');
+    await printing.click();
+
+    const modal = page.getByTestId('card-overview-modal');
+    await expect(modal).toBeVisible({timeout: 15000});
+    const pill = modal
+      .getByRole('radiogroup', {name: 'Card printing'})
+      .first()
+      .getByRole('radio', {name: rarity, exact: true});
+    await expect(pill).toHaveAttribute('aria-checked', 'true');
   });
 });

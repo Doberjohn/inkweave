@@ -44,7 +44,14 @@
       ],
       "strength": 1,
       "willpower": 2,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14224,
+          "rarity": "Enchanted",
+          "number": 224
+        }
+      ]
     },
     {
       "id": 14023,
@@ -328,7 +335,14 @@
       ],
       "strength": 4,
       "willpower": 6,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14233,
+          "rarity": "Enchanted",
+          "number": 233
+        }
+      ]
     },
     {
       "id": 14135,
@@ -662,7 +676,14 @@
       ],
       "strength": 2,
       "willpower": 3,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14223,
+          "rarity": "Enchanted",
+          "number": 223
+        }
+      ]
     },
     {
       "id": 14025,
@@ -1879,7 +1900,14 @@
       ],
       "strength": 2,
       "willpower": 3,
-      "lore": 2
+      "lore": 2,
+      "variants": [
+        {
+          "id": 14235,
+          "rarity": "Enchanted",
+          "number": 235
+        }
+      ]
     },
     {
       "id": 14153,
@@ -2744,7 +2772,14 @@
       ],
       "strength": 2,
       "willpower": 1,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14238,
+          "rarity": "Enchanted",
+          "number": 238
+        }
+      ]
     },
     {
       "id": 14148,

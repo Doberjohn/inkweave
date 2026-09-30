@@ -2,7 +2,7 @@ import {useRef, useState} from 'react';
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {CardSlot} from './CardSlot';
 import {isSlotDimmed} from './rarity';
-import {mobileSlotWidth} from './mosaicSizing';
+import {slotSize} from './mosaicSizing';
 import {PER_INK} from './setComposition';
 import {INK_BASE} from '../../shared/constants';
 import {useContainerWidth} from '../../shared/hooks';
@@ -33,9 +33,6 @@ export const ROWS_MOBILE: Record<Ink, readonly number[]> = {
   Sapphire: [3, 4, 5, 5, 5, 5, 4, 3], // 34
   Steel: [3, 4, 5, 5, 5, 5, 4, 3], // 34
 };
-
-/** Card slot proportion (height / width) — preserved when the mobile slot auto-fits. */
-const CARD_RATIO = 64 / 46;
 
 /** How many random revealed slots burst in on each ink switch. */
 const POP_COUNT = 5;
@@ -125,11 +122,7 @@ export function CardMosaic({ink, cards, onOpen, compact = false, selectedRarity 
   const placed = placeCards(ink, cards, slotCount);
   const railRef = useRef<HTMLDivElement>(null);
   const containerW = useContainerWidth(railRef);
-  const maxCols = Math.max(...rowWidths);
-  const gap = compact ? 5 : 7;
-
-  const slotW = compact ? mobileSlotWidth(containerW, maxCols, gap) : 58;
-  const slotH = compact ? Math.round(slotW * CARD_RATIO) : 80;
+  const {width: slotW, height: slotH, gap} = slotSize(compact, containerW, Math.max(...rowWidths));
 
   // Pick the random slots to pop once per mount. The parent keys this component
   // by ink, so switching colors re-mounts it and a fresh set bursts in each time.

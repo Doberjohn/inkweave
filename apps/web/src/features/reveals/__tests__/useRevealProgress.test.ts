@@ -34,7 +34,15 @@ function make(id: string, overrides: Partial<LorcanaCard> = {}): LorcanaCard {
 const mockCards: LorcanaCard[] = [
   make('a1', {ink: 'Amber', rarity: 'Common'}),
   make('a2', {ink: 'Amber', rarity: 'Super Rare'}),
-  make('e1', {ink: 'Emerald', rarity: 'Rare'}),
+  // An Epic in Emerald's lineup (#211-213), and a stray numbered outside it.
+  make('e1', {
+    ink: 'Emerald',
+    rarity: 'Rare',
+    variants: [
+      {id: '14213', rarity: 'Epic', number: 213},
+      {id: '14299', rarity: 'Enchanted', number: 299},
+    ],
+  }),
   make('d1', {ink: 'Amber', ink2: 'Emerald', rarity: 'Legendary'}), // dual-ink
   make('s1', {ink: 'Steel', rarity: undefined}), // revealed but no rarity yet
   make('x1', {ink: 'Ruby', setCode: '11'}), // not the reveal set → excluded
@@ -64,6 +72,21 @@ describe('useRevealProgress', () => {
       legendary: 1,
     });
     expect(result.current.byInk.Steel.rarityCounts).toEqual({}); // s1 has no rarity
+  });
+
+  it('fills a revealed printing into its ink lineup slot and tallies its rarity', () => {
+    const {result} = renderHook(() => useRevealProgress());
+    const {specials, rarityCounts, count} = result.current.byInk.Emerald;
+    expect(specials.find((slot) => slot.number === 213)?.printing?.id).toBe('14213');
+    expect(rarityCounts.epic).toBe(1);
+    expect(count).toBe(1); // printings never count toward the board's N / 34
+  });
+
+  it('appends a printing numbered outside its ink lineup instead of dropping it', () => {
+    const {result} = renderHook(() => useRevealProgress());
+    const {specials} = result.current.byInk.Emerald;
+    expect(specials).toHaveLength(7); // Emerald's 3 Epic + 3 Enchanted slots, plus the stray
+    expect(specials.at(-1)?.number).toBe(299);
   });
 
   it('derives overallPct from the unique total against the whole set', () => {

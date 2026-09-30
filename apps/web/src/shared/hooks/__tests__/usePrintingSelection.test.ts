@@ -62,6 +62,28 @@ describe('usePrintingSelection', () => {
     expect(result.current.index).toBe(0);
   });
 
+  it('starts on the printing initialKey names, or on Standard when it names none', () => {
+    const opened = renderHook(() => usePrintingSelection(pongo, {surface: 'modal', initialKey: '2141'}));
+    expect(opened.result.current.current.label).toBe('Enchanted');
+
+    const unknown = renderHook(() =>
+      usePrintingSelection(pongo, {surface: 'modal', initialKey: 'no-such-printing'}),
+    );
+    expect(unknown.result.current.index).toBe(0);
+  });
+
+  it('reads initialKey once: resetWhen drops that printing for good', () => {
+    const {result, rerender} = renderHook(
+      ({resetWhen}) => usePrintingSelection(pongo, {resetWhen, surface: 'modal', initialKey: '2141'}),
+      {initialProps: {resetWhen: false}},
+    );
+    expect(result.current.index).toBe(1);
+
+    rerender({resetWhen: true});
+    rerender({resetWhen: false});
+    expect(result.current.index).toBe(0);
+  });
+
   it('returns to Standard while resetWhen holds, and stays there once it clears', () => {
     const {result, rerender} = renderSelection(pongo);
     act(() => result.current.select(1));

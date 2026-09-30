@@ -97,6 +97,8 @@ interface CardOverviewModalProps {
    * this chunk downloaded (#640), so animating again would flash the page behind the scrim.
    */
   skipEnterTransition?: boolean;
+  /** Open on this Epic/Enchanted/Iconic printing (a variant id) instead of the Standard art. */
+  initialPrintingId?: string | null;
 }
 
 interface ModalState {
@@ -349,7 +351,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
   const {mounted} = useTransitionPresence(isOpen);
   useScrollLock(isOpen);
   const translation = useCardTranslation(card, isOpen);
-  const printing = useModalPrinting(card, {isOpen, inComparison, translation});
+  const printing = useModalPrinting(card, {isOpen, inComparison, translation, initialPrintingId: props.initialPrintingId});
   useFocusSurvivesPaging(card.id, initialFocusRef);
 
   if (!mounted) return null;

@@ -2,9 +2,11 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-144 tests across 20 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+145 tests across 20 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
-The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
+The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673).
+
+**Warm-up before the first test (#664):** `e2e/global-setup.ts` opens the 7 pages `accessibility.spec.ts` visits, up to 3 at a time (never more than the run's workers), on the run's fresh Vite, and waits until no module request has been in flight for 1 s. So the app shell every page shares and those pages compile before any test (every module on its first request, every TSX file through the React Compiler's Babel pass), not inside the first wave's 30 s, and the run log shows `E2E warm-up: 7 routes in N s`. A page that fails to load, or takes over 180 s, stops the run with an `E2E warm-up:` error naming it. What stays cold still compiles on first use, inside a test: the card modal (loaded on the first interaction), the mobile-only search sheet, and pages the warm-up doesn't open (`/compare`, `/vote`, `/reveals`, `/admin/analytics`). The mobile projects skip `accessibility.spec.ts`, so their first tests start on such pages, with only the shell warm. Skipped under `PWDEBUG`, whose Inspector would otherwise pause on the warm-up's own browser.
 
 **Global console-error guard:** the shared `page` fixture (`e2e/fixtures/test-fixtures.ts`) fails any test that logs a `console.error` or throws an uncaught exception, except messages matching the documented `BENIGN_CONSOLE` allowlist. This turns silent runtime faults — most importantly React's "Maximum update depth exceeded" render loop, which a loading-skeleton assertion otherwise passes through — into red builds across every spec.
 
@@ -279,7 +281,7 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 |---|---|
 | loads the pair and renders the interactive vote form | Navigates to `/vote/2730/2718`; the `[aria-label="Loading vote pair and form"]` skeleton becomes hidden, then "Is this synergy real?" + the "Yes" radio are visible (a loop/hang fails by timeout) |
 
-## `reveals-page.spec.ts` — 8 tests (7 desktop, 1 mobile)
+## `reveals-page.spec.ts` — 9 tests (8 desktop, 1 mobile)
 
 **Season-independent by design.** The `beforeEach` reads the reveal set (the `previewCards.json` entry with the latest `releaseDate`) and the tests build their matchers from its `name` and `number`; the franchise label is read off the tile's own `aria-label`. Starting a new season needs no edit here. The suite skips itself once `releaseDate` has passed, and resumes when the next set's dates land. Three tests additionally skip while `cards` is empty.
 
@@ -292,7 +294,8 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 | mosaic card click opens the card overview modal | Clicking a `reveal-card-slot` on `/reveals` opens the modal; URL stays `/reveals` (skips with no cards) |
 | franchise card click opens the franchise cards modal | Clicking the first "View … cards" tile opens the `dialog` named "<franchise> cards"; a card-tile inside opens the overview modal on top (card click skips with no cards) |
 | ?ink= param selects the starting mosaic ink | `/reveals?ink=emerald` makes the Emerald `ink-tracker-tile` the `aria-pressed` (featured) one |
-| clicking a rarity chip dims the other revealed cards | A "Highlight ... cards" chip toggles `aria-pressed`; other-rarity slots get `data-dimmed`; clicking again clears it (skips when <2 rarities revealed) |
+| clicking a rarity chip dims the other revealed cards | A kit chip in the "Highlight a rarity" group toggles `aria-pressed`; other-rarity slots get `data-dimmed`; clicking again clears it (skips when <2 rarities revealed) |
+| an alt art opens the card modal on that printing | On `/reveals?ink=amber`, clicking the first `reveal-printing-slot` opens the modal with that rarity's radio `aria-checked` in the "Card printing" group (skips until the Amber board has a revealed Epic/Enchanted/Iconic) |
 
 ## Patterns
 
@@ -313,4 +316,5 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
   - **Correct page but expected text missing** → the UI may have been refactored (element moved to `<img alt>`, or hidden via `position: absolute; left: -10000` for screen readers, which `toBeVisible()` excludes). Query the `<section>` by role/name instead, or use `.toHaveCount(1)`.
   - **Flash of initial state** → async state (fetch, localStorage) had not resolved; check what the page is waiting for before asserting.
 - **`ERR_CONNECTION_REFUSED` on most tests means the run's Vite died mid-run.** A local run always starts its own Vite, on a free port in 5200-5299 unless `E2E_PORT` pins one (`playwright.config.ts`), and never reuses another server. Its `[WebServer]` lines show that server's banner and port. Playwright stops watching the server once it is up, so nothing else reports the death. On Windows, check the Application log for headless Chrome out-of-memory crashes at the same time (Event 1000, `chrome-headless-shell.exe`, exception `0xe0000008`). They mean the machine ran out of commit memory under other load, not a code bug: retry once there is headroom, or lower the worker count (`PRE_PUSH_E2E_WORKERS` for the pre-push, `--workers` otherwise; local Windows runs default to 3).
+- **The first tests time out with blank white screenshots and `page.goto: net::ERR_ABORTED; maybe frame was detached?`, while every later test passes**: the cold-compile signature. A fresh Vite compiles each module on its first request, and before the warm-up (#664) the first wave paid that whole compile inside its 30 s; `ERR_ABORTED` is Playwright tearing the page down at the timeout, not a reload. Check the `E2E warm-up` line in the run log: if it is missing, the run predates #664 or the warm-up did not run. With the line present, a cold compile can still slow a test that opens something the warm-up leaves cold (listed above), most likely the first mobile tests.
 - **`[WebServer] ... hmr update` followed by `Failed to load url .../synergy-engine/dist/index.js`** means something rebuilt the engine in the same checkout mid-run (the engine auto-rebuild hook after an engine edit, or another typecheck or pre-push), and pages loading at that moment failed. Re-run once the other build is done.
