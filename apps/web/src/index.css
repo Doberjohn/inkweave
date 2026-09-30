@@ -46,6 +46,48 @@
   src: url('/fonts/plus-jakarta-sans-700.woff2') format('woff2');
 }
 
+/* Local Arial (or a metric twin) scaled to the body font's metrics, so text laid out before it
+   arrives doesn't reflow when it swaps in (#643; measured on the homepage text for #627). One face
+   per weight: font-synthesis is off, so the bold weights need Arial Bold of their own. The 400
+   face is tuned to the hero subtitle, the largest text in view (#643): one scale can't fit both
+   lowercase and capitals, and size-adjust also scales the ascent and descent overrides. */
+@font-face {
+  font-family: 'Inkweave Sans Fallback';
+  font-weight: 400;
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('Arimo');
+  size-adjust: 105.3%;
+  ascent-override: 98.6%;
+  descent-override: 21.1%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Inkweave Sans Fallback';
+  font-weight: 500;
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('Arimo');
+  size-adjust: 104.6%;
+  ascent-override: 99.2%;
+  descent-override: 21.2%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Inkweave Sans Fallback';
+  font-weight: 600;
+  src: local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'), local('Arimo Bold');
+  size-adjust: 98.7%;
+  ascent-override: 105.2%;
+  descent-override: 22.5%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Inkweave Sans Fallback';
+  font-weight: 700;
+  src: local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'), local('Arimo Bold');
+  size-adjust: 99.9%;
+  ascent-override: 104%;
+  descent-override: 22.2%;
+  line-gap-override: 0%;
+}
+
 *,
 *::before,
 *::after {
@@ -55,6 +97,7 @@
 :root {
   font-family:
     'Plus Jakarta Sans',
+    'Inkweave Sans Fallback',
     -apple-system,
     BlinkMacSystemFont,
     'Segoe UI',
