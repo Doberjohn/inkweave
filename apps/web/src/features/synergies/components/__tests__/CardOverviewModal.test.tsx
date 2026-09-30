@@ -7,6 +7,7 @@ import type {SynergyGroup as SynergyGroupData} from '../../types';
 import {CardOverviewModal} from '../CardOverviewModal';
 import {CardDataProvider} from '../../../../shared/contexts/CardDataContext';
 import {trackEvent} from '../../../../shared/lib/analytics';
+import {restStrip, swipeStrip} from '../../../../shared/test-utils';
 
 vi.mock('../../../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 
@@ -210,17 +211,32 @@ function renderPrintingModal(card: LorcanaCard, opts: {onGoToSibling?: (d: 1 | -
 
 test('a card with an alternate printing shows the one picked, and records it', async () => {
   Element.prototype.scrollTo = vi.fn();
+  vi.mocked(trackEvent).mockClear();
   const user = userEvent.setup();
   renderPrintingModal(withEnchanted(makeCard('b')));
 
   await user.click(screen.getByRole('radio', {name: 'Enchanted'}));
 
   expect(screen.getByRole('img', {name: 'Card b - Test, Enchanted printing'})).toBeInTheDocument();
+  expect(trackEvent).toHaveBeenCalledTimes(1);
   expect(trackEvent).toHaveBeenCalledWith('card_printing_view', {
     cardId: 'b',
     rarity: 'Enchanted',
     surface: 'modal',
   });
+});
+
+test('a swiped printing is recorded once it comes to rest, not as the swipe crosses it', () => {
+  Element.prototype.scrollTo = vi.fn();
+  vi.mocked(trackEvent).mockClear();
+  renderPrintingModal(withEnchanted(makeCard('b')));
+  const strip = screen.getByRole('group', {name: 'Card b - Test printings'});
+
+  swipeStrip(strip, 1);
+  expect(trackEvent).not.toHaveBeenCalled();
+
+  restStrip(strip);
+  expect(trackEvent).toHaveBeenCalledTimes(1);
 });
 
 test('arrow keys inside the printing switcher change the printing, not the card', async () => {
