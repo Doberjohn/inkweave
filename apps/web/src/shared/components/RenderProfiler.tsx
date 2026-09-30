@@ -2,14 +2,21 @@ import {Profiler, type ProfilerOnRenderCallback, type ReactNode} from 'react';
 import {onSentryReady} from '../lib/sentry';
 
 const SLOW_RENDER_MS = 16; // 1 frame at 60fps
+/** Reports that may wait for Sentry at once; past this, new ones are dropped. */
+const MAX_PENDING_REPORTS = 50;
+let pendingReports = 0;
 
 /**
  * Sends render timing to Sentry as a custom metric span, once Sentry has loaded: never loads it
  * itself, so a slow first render can't pull Sentry onto the critical path (#640). If Sentry
- * never loads (blocked, offline), the report is dropped.
+ * never loads (blocked, offline), the report is dropped. At most MAX_PENDING_REPORTS wait at
+ * once, so a hung import can't grow the queue without bound or flush it as one burst.
  */
 function reportToSentry(id: string, phase: string, actualDurationMs: number) {
+  if (pendingReports >= MAX_PENDING_REPORTS) return;
+  pendingReports++;
   onSentryReady((sentry) => {
+    pendingReports--;
     sentry.startSpan(
       {
         name: `react.render.${id}`,
