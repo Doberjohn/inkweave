@@ -47,6 +47,18 @@ test.describe('Card data on the homepage (#641)', () => {
     await expect.poll(() => requests.length).toBe(1);
   });
 
+  test('previewCards.json loads once per page', async ({page}) => {
+    const previewRequests: string[] = [];
+    page.on('request', (request) => {
+      if (request.url().includes('/data/previewCards.json')) previewRequests.push(request.url());
+    });
+    await page.goto('/browse');
+    await expect(page.getByTestId('card-tile').first()).toBeVisible({timeout: 15000});
+    await page.waitForTimeout(1000);
+
+    expect(previewRequests).toHaveLength(1);
+  });
+
   test('every other page requests the card list at once', async ({page}) => {
     await neverIdle(page);
     const request = page.waitForRequest('**/data/allCards.json');

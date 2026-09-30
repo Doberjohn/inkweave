@@ -10,6 +10,7 @@ import {
   smallImageUrl,
   applySortOrder,
 } from '../loader';
+import {_resetPreviewCardsCache} from '../previewCards';
 import type {LorcanaCard} from '../types';
 import {createCard} from '../../../shared/test-utils';
 
@@ -429,7 +430,10 @@ describe('fetchCardsFromLocal', () => {
   const originalFetch = global.fetch;
 
   beforeEach(() => {
+    _resetPreviewCardsCache();
     global.fetch = mockFetch;
+    // A request a test doesn't script is a 404, like a missing previewCards.json.
+    mockFetch.mockResolvedValue({ok: false, status: 404});
   });
 
   afterEach(() => {
@@ -487,6 +491,17 @@ describe('fetchCardsFromLocal', () => {
     expect(mockFetch).toHaveBeenCalledWith('/data/previewCards.json');
     expect(result.cards).toHaveLength(2);
     expect(result.cards.map((c) => c.fullName).sort()).toEqual(['Main Card', 'Preview Card']);
+  });
+
+  it('requests previewCards.json together with the card list, not after it (#641)', async () => {
+    let resolvePrimary!: (response: unknown) => void;
+    mockFetch.mockImplementationOnce(() => new Promise((resolve) => (resolvePrimary = resolve)));
+
+    const result = fetchCardsFromLocal();
+    expect(mockFetch).toHaveBeenCalledWith('/data/previewCards.json');
+
+    resolvePrimary({ok: true, json: () => Promise.resolve(makeJsonData({}))});
+    expect((await result).cards).toHaveLength(1);
   });
 
   it('should gracefully handle missing previewCards.json (404)', async () => {

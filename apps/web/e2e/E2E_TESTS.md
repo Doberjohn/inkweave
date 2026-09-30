@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-143 tests across 20 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+144 tests across 20 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate).
 
@@ -75,14 +75,15 @@ The card overview modal loads on demand (#640). Both tests hold the modal's modu
 | a cold open shows the loading shell, then the modal takes over | Clicking a featured card while the modal's chunk is held shows `card-overview-fallback` and no modal; releasing the chunk shows the modal and removes the shell |
 | the loading shell closes on a scrim click, like the modal | A click on `card-overview-fallback-backdrop` removes the shell, and the chunk arriving afterwards opens no modal |
 
-## `card-data-loading.spec.ts`: 5 tests (every project; the search test desktop only)
+## `card-data-loading.spec.ts`: 6 tests (every project; the search test desktop only)
 
-The homepage renders its featured cards from a small prebuilt file, `/data/featuredCards.json`, and loads the full card database only when an idle moment comes or something needs it (#641). Some tests hold `**/data/allCards.json` with `page.route` to keep that database from arriving; others replace `requestIdleCallback` (and `cancelIdleCallback`) with a version that never runs, so the deferred load waits for a trigger.
+The homepage renders its featured cards from a small prebuilt file, `/data/featuredCards.json`, and loads the full card database only when an idle moment comes or something needs it (#641). The card loader and the reveal dates share one `previewCards.json` request. Some tests hold `**/data/allCards.json` with `page.route` to keep that database from arriving; others replace `requestIdleCallback` (and `cancelIdleCallback`) with a version that never runs, so the deferred load waits for a trigger.
 
 | Test | What it verifies |
 |---|---|
 | the featured cards render, each linking to its card page, while the card list is held | With `allCards.json` held, six `card-tile` links render in the featured section, each `href` a `/card/<id>/<slug>` path |
 | the homepage requests the card list only once something needs it | With idle callbacks never running, `/` shows its six tiles and makes no `allCards.json` request within 1s; focusing `hero-search` makes exactly one |
+| previewCards.json loads once per page | `/browse` (reveal flag on, so the reveal dates read the file too) makes exactly one `previewCards.json` request by the time its card tiles show, plus 1s |
 | every other page requests the card list at once | With idle callbacks never running, `/browse` still requests `allCards.json` |
 | a featured card pressed before the card list lands opens once it does | With `allCards.json` held, a featured-card click shows no modal; releasing the file opens `card-overview-modal` |
 | a search typed before the card list lands keeps its text and gets suggestions | Desktop only. With `allCards.json` held, "Elsa" typed into `hero-search` stays; releasing the file shows the autocomplete `listbox` with an option, and the text is unchanged |

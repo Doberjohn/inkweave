@@ -1,14 +1,9 @@
 import {REVEAL_SET_CODE} from '../../shared/constants';
-
-const PREVIEW_CARDS_PATH = '/data/previewCards.json';
+import {fetchPreviewCards} from '../cards/previewCards';
 
 export interface RevealDates {
   prereleaseDate: Date;
   releaseDate: Date;
-}
-
-interface PreviewCardsJSON {
-  sets?: Record<string, {prereleaseDate?: string; releaseDate?: string}>;
 }
 
 let cache: RevealDates | null = null;
@@ -23,22 +18,16 @@ export async function fetchRevealDates(): Promise<RevealDates | null> {
   if (cache) return cache;
   if (pending) return pending;
 
-  pending = (async () => {
-    try {
-      const response = await fetch(PREVIEW_CARDS_PATH);
-      if (!response.ok) return null;
-      const data: PreviewCardsJSON = await response.json();
-      const set = data.sets?.[REVEAL_SET_CODE];
-      if (!set?.prereleaseDate || !set?.releaseDate) return null;
-      cache = {
-        prereleaseDate: parseLocalMidnight(set.prereleaseDate),
-        releaseDate: parseLocalMidnight(set.releaseDate),
-      };
-      return cache;
-    } catch {
-      return null;
-    }
-  })();
+  // The same request the card loader makes (#641), so previewCards.json loads once per page.
+  pending = fetchPreviewCards().then((data) => {
+    const set = data?.sets?.[REVEAL_SET_CODE];
+    if (!set?.prereleaseDate || !set?.releaseDate) return null;
+    cache = {
+      prereleaseDate: parseLocalMidnight(set.prereleaseDate),
+      releaseDate: parseLocalMidnight(set.releaseDate),
+    };
+    return cache;
+  });
 
   return pending;
 }

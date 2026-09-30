@@ -1,6 +1,7 @@
 import type {CardPrinting, LorcanaJSONCard, RawCardVariant} from 'inkweave-synergy-engine';
 import {transformCard as baseTransformCard, isCoreSet} from 'inkweave-synergy-engine/card';
 import type {LorcanaCard, Ink, CardType} from './types';
+import {fetchPreviewCards} from './previewCards';
 import {ALL_INKS, type BrowseSortOrder} from '../../shared/constants';
 
 interface LorcanaJSONSet {
@@ -8,6 +9,8 @@ interface LorcanaJSONSet {
   number: number;
   type: string;
   releaseDate?: string;
+  /** Preview sets only: the reveal season's prerelease date. */
+  prereleaseDate?: string;
 }
 
 export interface LorcanaJSONData {
@@ -163,8 +166,6 @@ export interface CardDataResult {
   sets: SetInfo[];
 }
 
-const PREVIEW_PATH = '/data/previewCards.json';
-
 /**
  * Fetch cards from a local file, merged with optional preview cards.
  * Preview cards are loaded from /data/previewCards.json if present (graceful 404).
@@ -173,7 +174,8 @@ const PREVIEW_PATH = '/data/previewCards.json';
 export async function fetchCardsFromLocal(
   path: string = '/data/allCards.json',
 ): Promise<CardDataResult> {
-  const primaryResponse = await fetch(path);
+  // Both files at once (#641): the preview file used to wait until allCards.json had parsed.
+  const [primaryResponse, preview] = await Promise.all([fetch(path), fetchPreviewCards()]);
 
   if (!primaryResponse.ok) {
     throw new Error(`Failed to fetch local cards: ${primaryResponse.status}`);
@@ -187,16 +189,6 @@ export async function fetchCardsFromLocal(
       `Failed to parse card data: ${parseError instanceof Error ? parseError.message : 'Invalid JSON'}`,
       {cause: parseError},
     );
-  }
-
-  const previewResponse = await fetch(PREVIEW_PATH);
-  let preview: LorcanaJSONData | null = null;
-  if (previewResponse.ok) {
-    try {
-      preview = await previewResponse.json();
-    } catch {
-      preview = null;
-    }
   }
 
   const primaryIds = new Set(primary.cards.map((c) => c.id));
