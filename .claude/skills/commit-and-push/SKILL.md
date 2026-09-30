@@ -91,10 +91,10 @@ If on a feature branch and no PR exists for it:
 
 ## Step 4b: Confirm the PR will close the right issues
 
-A `Closes #N` in the body does not guarantee GitHub links it: #663 carried `Closes #653` from creation, GitHub never linked it (no cause found), and the merge left #653 open. Whenever the branch has an open PR (just created, or from an earlier push), compare the issues GitHub will close with the ones the body means to close:
+A `Closes #N` in the body does not guarantee GitHub links it: #663 carried `Closes #653` from creation, GitHub never linked it (no cause found), and the merge left #653 open. Whenever the branch has an open PR (just created, or from an earlier push), compare the issues GitHub will close with the ones the body means to close. With no number, `gh pr view` reads the current branch's PR, and the check prints that PR's number:
 
 ```bash
-gh pr view <number> --json closingIssuesReferences --jq '[.closingIssuesReferences[].number]'
+gh pr view --json number,closingIssuesReferences --jq '"#\(.number) will close: \([.closingIssuesReferences[].number])"'
 ```
 
 If the list is empty straight after `gh pr create`, check once more a few seconds later before calling the link missing. Then:
