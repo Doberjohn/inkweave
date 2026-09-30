@@ -4258,6 +4258,38 @@
       "strength": 1,
       "willpower": 2,
       "lore": 1
+    },
+    {
+      "id": 14040,
+      "name": "Test Pup",
+      "fullName": "Test Pup - Tiny Troublemaker",
+      "cost": 1,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 40,
+      "version": "Tiny Troublemaker",
+      "rarity": "Common",
+      "franchise": "Zootopia",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        }
+      ],
+      "fullText": "Evasive (Only characters with Evasive can challenge this character.)",
+      "fullTextSections": [
+        "Evasive (Only characters with Evasive can challenge this character.)"
+      ],
+      "strength": 0,
+      "willpower": 2,
+      "lore": 1
     }
   ]
 }
