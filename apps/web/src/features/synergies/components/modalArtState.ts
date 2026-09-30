@@ -43,7 +43,8 @@ export interface CardPrintingState {
 export const CardPrintingContext = createContext<CardPrintingState | null>(null);
 
 /**
- * Which printing the modal shows. Every card opens on its Standard printing, and a comparison
+ * Which printing the modal shows. A card opens on its Standard printing, or on the printing it
+ * was opened with (`initialPrintingId`, from a reveals board special slot), and a comparison
  * always shows the base art, so closing, paging and entering a comparison all reset it. A
  * variant's art is an official English printing, so picking one turns the translation off.
  */
@@ -53,10 +54,17 @@ export function useModalPrinting(
     isOpen,
     inComparison,
     translation,
-  }: {isOpen: boolean; inComparison: boolean; translation: CardTranslationState | null},
+    initialPrintingId = null,
+  }: {
+    isOpen: boolean;
+    inComparison: boolean;
+    translation: CardTranslationState | null;
+    initialPrintingId?: string | null;
+  },
 ): CardPrintingState | null {
   const {printings, index, select} = usePrintingSelection(card, {
     resetWhen: !isOpen || inComparison,
+    initialKey: initialPrintingId,
   });
   if (printings.length < 2) return null;
   const selectPrinting = (next: number) => {

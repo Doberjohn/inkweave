@@ -1,7 +1,17 @@
 import {describe, it, expect} from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import {ALL_INKS, REVEAL_ID_BASE, REVEAL_SET_CODE, REVEAL_SET_NUMBER, SET_NAMES, SET_TOTAL, inkBlock} from '..';
+import type {Ink} from 'inkweave-synergy-engine';
+import {
+  ALL_INKS,
+  REVEAL_ID_BASE,
+  REVEAL_SET_CODE,
+  REVEAL_SET_NUMBER,
+  SET_NAMES,
+  SET_TOTAL,
+  inkBlock,
+  specialSlotsFor,
+} from '..';
 import {FRANCHISE_SPOTLIGHTS, SET_SPOTLIGHTS} from '../../../features/reveals/setSpotlights';
 
 // Guards the reveal season's one-constant switch (revealSet.ts) against the data
@@ -24,6 +34,8 @@ interface PreviewCard {
   number?: number;
   setCode?: string;
   fullName?: string;
+  /** Ink, or "First-Second" for a dual-ink card. */
+  color?: string;
   scanLanguage?: string;
   variants?: VariantEntry[];
 }
@@ -107,6 +119,25 @@ describe('reveal-set integrity', () => {
     const cards = [...canonical, ...preview.cards];
     const ids = [...cards.map((c) => c.id), ...cards.flatMap((c) => (c.variants ?? []).map((v) => v.id))];
     expect(ids.filter((id, i) => ids.indexOf(id) !== i)).toEqual([]);
+  });
+
+  // The ink boards give every special printing a slot from SPECIAL_BLOCKS and ICONIC_INKS.
+  it('the special printing lineups number each printing once, after the base cards', () => {
+    const numbers = ALL_INKS.flatMap((ink) => specialSlotsFor(ink).map((slot) => slot.number));
+    expect(new Set(numbers).size).toBe(numbers.length);
+    expect(numbers.filter((n) => n <= SET_TOTAL)).toEqual([]);
+  });
+
+  // A printing sits on its base card's board, so a mistyped number or rarity would land it in a
+  // slot that belongs to another card (or append it as a stray).
+  it('every variant printing fills a special slot of its base card ink, with its rarity', () => {
+    const misplaced = preview.cards.flatMap((c) => {
+      const lineup = specialSlotsFor((c.color ?? '').split('-')[0] as Ink);
+      return (c.variants ?? [])
+        .filter((v) => !lineup.some((slot) => slot.number === v.number && slot.rarity === v.rarity))
+        .map((v) => `${v.id} (${v.rarity} #${v.number}) on ${c.fullName} (${c.color})`);
+    });
+    expect(misplaced).toEqual([]);
   });
 
   it('every card a spotlight shows has been revealed', () => {

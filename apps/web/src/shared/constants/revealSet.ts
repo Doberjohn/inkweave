@@ -1,4 +1,4 @@
-import type {Ink} from 'inkweave-synergy-engine';
+import type {Ink, VariantRarity} from 'inkweave-synergy-engine';
 import {ALL_INKS, type SetCode} from './theme';
 
 /**
@@ -75,4 +75,54 @@ export const INK_BASE = (() => {
  */
 export function inkBlock(ink: Ink): {first: number; last: number} {
   return {first: INK_BASE[ink], last: INK_BASE[ink] + PER_INK[ink] - 1};
+}
+
+/** One rarity's run of special printings: `perInk` of them per ink, in ALL_INKS order from `first`. */
+export interface SpecialBlock {
+  rarity: VariantRarity;
+  first: number;
+  perInk: Record<Ink, number>;
+}
+
+const THREE_PER_INK: Record<Ink, number> = {Amber: 3, Amethyst: 3, Emerald: 3, Ruby: 3, Sapphire: 3, Steel: 3};
+
+/**
+ * The set's special printings (#625): Epic and Enchanted alternate art of its own cards,
+ * numbered after the main set. Each rarity's block runs ink by ink in ALL_INKS order, like
+ * the main set, so an ink's slots follow from the counts. Like PER_INK these are fixed
+ * denominators: the ink boards show a slot for every printing and fill it once revealed.
+ *
+ * Set 14: Epic #205-222 and Enchanted #223-240, 3 per ink (the Set 9-12 pattern; the Epic
+ * Baymax #213 is Emerald).
+ */
+export const SPECIAL_BLOCKS: readonly SpecialBlock[] = [
+  {rarity: 'Epic', first: 205, perInk: THREE_PER_INK},
+  {rarity: 'Enchanted', first: 223, perInk: THREE_PER_INK},
+];
+
+/** Iconic printings are too few for a per-ink block, so each is listed with its ink. Set 14: #241-242. */
+export const ICONIC_INKS: Readonly<Record<number, Ink>> = {241: 'Amber', 242: 'Sapphire'};
+
+/** One special printing slot on an ink board. */
+export interface SpecialSlotSpec {
+  number: number;
+  rarity: VariantRarity;
+}
+
+/** First collector number of `ink`'s run inside a special block. */
+function blockStart({first, perInk}: SpecialBlock, ink: Ink): number {
+  const before = ALL_INKS.slice(0, ALL_INKS.indexOf(ink));
+  return first + before.reduce((sum, other) => sum + perInk[other], 0);
+}
+
+/** An ink's special printing slots in collector-number order: its Epics, its Enchanteds, then any Iconic. */
+export function specialSlotsFor(ink: Ink): SpecialSlotSpec[] {
+  const blockSlots = SPECIAL_BLOCKS.flatMap((block) => {
+    const start = blockStart(block, ink);
+    return Array.from({length: block.perInk[ink]}, (_, i) => ({number: start + i, rarity: block.rarity}));
+  });
+  const iconicSlots = Object.entries(ICONIC_INKS)
+    .filter(([, owner]) => owner === ink)
+    .map(([number]): SpecialSlotSpec => ({number: Number(number), rarity: 'Iconic'}));
+  return [...blockSlots, ...iconicSlots];
 }

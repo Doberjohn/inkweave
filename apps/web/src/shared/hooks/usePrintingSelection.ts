@@ -29,20 +29,25 @@ function printingsOf(card: LorcanaCard): Printing[] {
 }
 
 /**
- * Which printing of `card` is shown. Every card starts on its Standard printing: paging to
- * another card drops the selection, and so does `resetWhen` (the modal closing, or entering a
- * comparison, which always shows base art), so the Standard printing is back once it clears.
- * The render-time reset is the same pattern as the modal's `useCardTranslation`.
+ * Which printing of `card` is shown. A card starts on its Standard printing, or on the one
+ * `initialKey` names (a variant's id: the reveals board opens its special slots that way), read
+ * once on mount. Paging to another card drops the selection, and so does `resetWhen` (the modal
+ * closing, or entering a comparison, which always shows base art), so the Standard printing is
+ * back once it clears. The render-time reset is the same pattern as the modal's
+ * `useCardTranslation`.
  */
 export function usePrintingSelection(
   card: LorcanaCard,
-  {resetWhen = false}: {resetWhen?: boolean} = {},
+  {resetWhen = false, initialKey = null}: {resetWhen?: boolean; initialKey?: string | null} = {},
 ) {
-  const [selected, setSelected] = useState<{cardId: string; index: number} | null>(null);
+  const printings = printingsOf(card);
+  const [selected, setSelected] = useState<{cardId: string; index: number} | null>(() => {
+    const index = printings.findIndex((printing) => printing.key === initialKey);
+    return index > 0 ? {cardId: card.id, index} : null;
+  });
   const keep = !resetWhen && selected?.cardId === card.id;
   if (selected && !keep) setSelected(null);
 
-  const printings = printingsOf(card);
   const index = keep && selected.index < printings.length ? selected.index : 0;
   const select = (next: number) => setSelected(next === 0 ? null : {cardId: card.id, index: next});
   return {printings, index, select, current: printings[index]};
