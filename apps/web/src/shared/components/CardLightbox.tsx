@@ -1,7 +1,8 @@
 import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONT_SIZES, RADIUS, SPACING, hexRgba} from '../constants';
-import {CardTranslationPanel, CardTranslationToggle} from './CardTranslationPanel';
+import {CardTranslationPanel} from './CardTranslationPanel';
+import {CardTranslationToggle} from './CardTranslationToggle';
 import {DialogShell} from './DialogShell';
 
 interface CardLightboxProps {

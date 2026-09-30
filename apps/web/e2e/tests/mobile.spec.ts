@@ -96,6 +96,35 @@ test.describe('Mobile Viewport', () => {
     await expect(searchInput).toBeVisible();
   });
 
+  test('a search tap that beats the sheet chunk opens it, with a proxy input holding focus', async ({page}) => {
+    // Hold the lazily loaded sheet (#640), then load a page with the bottom nav from scratch. On a
+    // phone the app requests the sheet in its first render, and WebKit holds the load event until
+    // that request ends, so wait for DOMContentLoaded: a `load` wait could wait on the hold itself.
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/components/SearchBottomSheet.tsx*', async (route) => {
+      await held;
+      await route.continue();
+    });
+    await page.goto('/browse', {waitUntil: 'domcontentloaded'});
+    await page.getByRole('button', {name: 'Search cards'}).click();
+    await expect(page.getByRole('dialog', {name: 'Search cards'})).toHaveCount(0);
+
+    // The sheet (and its own proxy) doesn't exist yet, so AppLayout's hidden input takes the tap's
+    // focus: on iOS that synchronous focus is what raises the keyboard.
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const el = document.activeElement;
+          return el instanceof HTMLInputElement && el.getAttribute('aria-hidden') === 'true';
+        }),
+      )
+      .toBe(true);
+
+    release();
+    await expect(page.getByRole('dialog', {name: 'Search cards'})).toBeVisible({timeout: 15000});
+  });
+
   test('should close search bottom sheet on backdrop click', async ({page}) => {
     // Navigate to browse so bottom nav appears
     await page.getByTestId('cta-browse').click();

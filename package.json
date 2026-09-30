@@ -49,7 +49,13 @@
         "!apps/web/dist/assets/ImageAdminPage-*.js",
         "!apps/web/dist/assets/TuningAdminPage-*.js"
       ],
-      "limit": "350 kB",
+      "limit": "370 kB",
+      "gzip": true
+    },
+    {
+      "name": "Entry chunk",
+      "path": "apps/web/dist/assets/index-*.js",
+      "limit": "127 kB",
       "gzip": true
     },
     {

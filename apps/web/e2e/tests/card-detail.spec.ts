@@ -237,4 +237,17 @@ test.describe('Card page (mobile layout)', () => {
     await close.click();
     await expect(page).toHaveURL(/\/browse$/);
   });
+
+  // /compare/X/X (one card twice) redirects to /card/X with a replace, which gives the page a
+  // new location key. It is still the page the visit started on, so × must open Browse rather
+  // than step back out of the site (#653).
+  test('× on a card page reached by the /compare/X/X redirect opens Browse', async ({page}) => {
+    await page.setViewportSize({width: 390, height: 844});
+    await page.goto(`/compare/${EXPAND_CARD_ID}/${EXPAND_CARD_ID}`);
+    await expect(page).toHaveURL(new RegExp(`/card/${EXPAND_CARD_ID}$`));
+
+    await page.getByRole('button', {name: 'Close', exact: true}).click();
+
+    await expect(page).toHaveURL(/\/browse$/);
+  });
 });

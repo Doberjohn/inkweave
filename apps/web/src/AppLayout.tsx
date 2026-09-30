@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import {Suspense, useEffect, useRef, useState, type CSSProperties} from 'react';
 import {Outlet, useLocation} from 'react-router-dom';
 import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
@@ -10,7 +10,6 @@ import {
   ErrorBoundary,
   MobileBottomNav,
   MOBILE_NAV_HEIGHT,
-  SearchBottomSheet,
 } from './shared/components';
 import type {SearchBottomSheetHandle} from './shared/components/SearchBottomSheet';
 import {CardDataProvider} from './shared/contexts/CardDataContext';
@@ -18,6 +17,28 @@ import {CardModalProvider} from './shared/contexts/CardModalContext';
 import {COLORS} from './shared/constants';
 import {useCardDataContext} from './shared/contexts/CardDataContext';
 import {useResponsive} from './shared/hooks';
+import {lazyWithRetry} from './shared/lib/lazyWithRetry';
+
+// Mobile-only, so it stays out of the entry chunk desktop visitors download (#640). On a phone
+// it loads right after the first render. A search tap in the moment before it arrives opens the
+// sheet once the chunk lands, and focusSearchProxy keeps the iOS keyboard for that tap too.
+const SearchBottomSheet = lazyWithRetry(
+  () => import('./shared/components/SearchBottomSheet'),
+  'SearchBottomSheet',
+);
+
+/** Invisible and unreachable, like the sheet's own proxy input. */
+const SEARCH_PROXY_STYLE: CSSProperties = {position: 'fixed', opacity: 0, pointerEvents: 'none', left: -9999};
+
+/**
+ * Focus a proxy input synchronously in the tap's call stack, so iOS shows the keyboard. The
+ * sheet's proxy exists only once its chunk has landed; a tap before that focuses the one
+ * AppContent keeps outside the lazy boundary, and the sheet's input takes focus when it mounts.
+ */
+function focusSearchProxy(sheet: SearchBottomSheetHandle | null, earlyProxy: HTMLInputElement | null): void {
+  if (sheet) sheet.focusProxy();
+  else earlyProxy?.focus();
+}
 
 // Feature flag: gates the desktop-only beta notice card on the landing page.
 // Off at v1.0.0 launch via Vercel env. Default on locally via .env.local.
@@ -61,6 +82,7 @@ function AppContent() {
   const showRevealsPromo = shouldShowRevealsPromo({isHome, phase});
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchRef = useRef<SearchBottomSheetHandle>(null);
+  const earlyProxyRef = useRef<HTMLInputElement>(null);
   const searchButtonRef = useRef<HTMLButtonElement>(null);
 
   // Scroll to top on route change
@@ -69,8 +91,7 @@ function AppContent() {
   }, [pathname]);
 
   const openSearch = () => {
-    // Focus the proxy input synchronously in the tap call stack so iOS shows the keyboard
-    searchRef.current?.focusProxy();
+    focusSearchProxy(searchRef.current, earlyProxyRef.current);
     setIsSearchOpen(true);
   };
   const closeSearch = () => setIsSearchOpen(false);
@@ -96,12 +117,17 @@ function AppContent() {
         <MobileBottomNav onSearchClick={openSearch} searchButtonRef={searchButtonRef} />
       )}
       {isMobile && (
-        <SearchBottomSheet
-          ref={searchRef}
-          isOpen={isSearchOpen}
-          onClose={closeSearch}
-          returnFocusRef={searchButtonRef}
-        />
+        <>
+          <input ref={earlyProxyRef} aria-hidden="true" tabIndex={-1} style={SEARCH_PROXY_STYLE} />
+          <Suspense fallback={null}>
+            <SearchBottomSheet
+              ref={searchRef}
+              isOpen={isSearchOpen}
+              onClose={closeSearch}
+              returnFocusRef={searchButtonRef}
+            />
+          </Suspense>
+        </>
       )}
       {showRevealsPromo && (
         <RevealsPromoCard />

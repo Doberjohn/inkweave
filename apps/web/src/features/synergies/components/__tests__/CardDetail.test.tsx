@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {render, screen, fireEvent, within} from '@testing-library/react';
-import {createCard} from '../../../../shared/test-utils';
+import {createCard, restStrip, swipeStrip} from '../../../../shared/test-utils';
 import {trackEvent} from '../../../../shared/lib/analytics';
 import {CardDetail} from '../CardDetail';
 
@@ -64,11 +64,23 @@ describe('CardDetail (mobile card page)', () => {
     fireEvent.click(screen.getByRole('radio', {name: 'Enchanted'}));
 
     expect(screen.getByRole('radio', {name: 'Enchanted'})).toHaveAttribute('aria-checked', 'true');
+    expect(trackEvent).toHaveBeenCalledTimes(1);
     expect(trackEvent).toHaveBeenCalledWith('card_printing_view', {
       cardId: '1938',
       rarity: 'Enchanted',
       surface: 'card_page',
     });
+  });
+
+  it('records a swiped printing once it comes to rest, not as the swipe crosses it', () => {
+    render(<CardDetail card={pongo} onClear={() => {}} />);
+    const strip = screen.getByRole('group', {name: 'Pongo - Determined Father printings'});
+
+    swipeStrip(strip, 1);
+    expect(trackEvent).not.toHaveBeenCalled();
+
+    restStrip(strip);
+    expect(trackEvent).toHaveBeenCalledTimes(1);
   });
 
   it('closes from its × button, as the modal does', () => {

@@ -61,7 +61,8 @@ type AnalyticsEvents = {
   sort_changed: {sortOrder: string; previousSort: string};
   // A synergy group was isolated (chip) or expanded (show-all) inside the card modal.
   synergy_group_viewed: {sourceCardId: string; groupKey: string; action: 'isolate' | 'show_all'};
-  // An alternate printing (Epic/Enchanted/Iconic, #625) was brought into view, by pill or swipe.
+  // A visitor settled on an alternate printing (Epic/Enchanted/Iconic, #625): a pill pick, or
+  // the art strip at rest after a swipe. Printings a swipe only passes through don't count (#653).
   card_printing_view: {cardId: string; rarity: string; surface: 'card_page' | 'modal'};
 };
 

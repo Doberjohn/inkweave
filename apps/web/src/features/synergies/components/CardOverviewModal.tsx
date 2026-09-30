@@ -1,5 +1,4 @@
 import {useContext, useEffect, useLayoutEffect, useRef, useState} from 'react';
-import Skeleton from 'react-loading-skeleton';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
@@ -15,10 +14,23 @@ import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {trackEvent} from '../../../shared/lib/analytics';
-import {COLORS, EASING, FONTS, FONT_SIZES, LETTER_SPACING, RADIUS, SHADOWS, SPACING, Z_INDEX, hexRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONT_SIZES, LETTER_SPACING, RADIUS, hexRgba} from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
-import {IconButton} from '../../../shared/components/IconButton';
 import {LinkButton} from '../../../shared/components/LinkButton';
+import {ModalCloseButton, SynergiesLoadingSkeleton} from './CardOverviewModalFallback';
+import {
+  CENTERING_WRAPPER_STYLE,
+  DEFAULT_BODY_STYLE,
+  MODAL_BACKDROP_STYLE,
+  MODAL_FRAME_STYLE,
+  MODAL_HEADER_STYLE,
+  modalCardSize,
+  pickCardColumnLayout,
+  pickCardsRowStyle,
+  pickModalShellStyle,
+  pickModalTitleStyle,
+  pickSynergyColumnLayout,
+} from './cardOverviewModalStyles';
 
 const FLIP_DURATION = 480;
 const FLIP_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
@@ -80,6 +92,11 @@ interface CardOverviewModalProps {
   siblingCardIds?: string[];
   /** Navigate to the previous (-1) or next (1) sibling card. */
   onGoToSibling?: (direction: 1 | -1) => void;
+  /**
+   * Mount already visible, with no entrance: CardOverviewModalFallback has just played it while
+   * this chunk downloaded (#640), so animating again would flash the page behind the scrim.
+   */
+  skipEnterTransition?: boolean;
 }
 
 interface ModalState {
@@ -124,7 +141,9 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   const modalRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const initialFocusRef = useRef<HTMLButtonElement>(null);
-  const {visible, onTransitionEnd} = useTransitionPresence(isOpen);
+  const {visible, onTransitionEnd} = useTransitionPresence(isOpen, {
+    startVisible: props.skipEnterTransition,
+  });
 
   const [activeGroupFilter, setActiveGroupFilter] = useState<string | null>(null);
   const [expandedGroupKey, setExpandedGroupKey] = useState<string | null>(null);
@@ -335,12 +354,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
 
   if (!mounted) return null;
 
-  // 337px matches the full-size AVIF's intrinsic width (see scripts/download-card-images.mjs).
-  // Rendering at native size avoids browser upscaling (was 380 → ~1.13× zoom on the AVIF).
-  // The Lorcana card aspect ratio 264:368 is the same as the AVIF's 337:470, so cardHeight
-  // resolves to 470 — a clean 1:1 mapping for the LCP image.
-  const cardWidth = isMobile ? 240 : 337;
-  const cardHeight = Math.round((cardWidth * 368) / 264);
+  const {cardWidth, cardHeight} = modalCardSize(isMobile);
   const dataMode = inComparison ? 'comparison' : 'default';
   const {expandedGroup, showExpanded, showSiblingNav, dataState} = deriveModalFlags({
     expandedGroupKey,
@@ -910,41 +924,6 @@ const SR_ONLY_STYLE: React.CSSProperties = {
   border: 0,
 };
 
-const CENTERING_WRAPPER_STYLE: React.CSSProperties = {
-  position: 'fixed',
-  inset: 0,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: Z_INDEX.modal,
-  pointerEvents: 'none',
-  padding: '24px',
-};
-
-/** Shrink-wraps the modal shell so the sibling nav arrows can be positioned against its edges. */
-const MODAL_FRAME_STYLE: React.CSSProperties = {
-  position: 'relative',
-  pointerEvents: 'none',
-};
-
-function pickModalShellStyle(isMobile: boolean): React.CSSProperties {
-  return {
-    width: isMobile ? '100%' : 1000,
-    maxWidth: isMobile ? 580 : 'calc(100vw - 48px)',
-    maxHeight: 'calc(100vh - 48px)',
-    background: COLORS.surface,
-    borderRadius: `${RADIUS.card}px`,
-    border: `1px solid ${COLORS.surfaceBorder}`,
-    boxShadow: `${SHADOWS.overlay}, ${SHADOWS.goldRing}`,
-    position: 'relative',
-    pointerEvents: 'auto',
-    fontFamily: FONTS.body,
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
-  };
-}
-
 // ── Sub-components ──
 
 function ModalBackdrop({
@@ -963,18 +942,7 @@ function ModalBackdrop({
       onClick={onClose}
       data-testid="card-overview-backdrop"
       onTransitionEnd={onTransitionEnd}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        // Solid scrim only — NO backdrop-filter. The comparison view animates continuously behind
-        // this backdrop (the 1s PairConnector reveal + the infinite focused-card glow), and on
-        // WebKit a blurred backdrop over animating content re-rasterizes every frame, wedging the
-        // compositor so BACK/switch clicks and the overlay-visibility flip never settle (#444).
-        // The deeper 0.72-alpha black preserves the "page recedes" separation the blur provided.
-        background: COLORS.scrim,
-        zIndex: Z_INDEX.modalBackdrop,
-        cursor: 'pointer',
-      }}
+      style={MODAL_BACKDROP_STYLE}
     />
   );
 }
@@ -995,32 +963,20 @@ interface ModalHeaderProps {
 function ModalHeader({card, isMobile, inComparison, hideBackButton, onClose, exitComparison, initialFocusRef, showExpanded}: ModalHeaderProps) {
   const showBack = inComparison && !hideBackButton;
   return (
-    <header style={{padding: '20px 24px 0', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap'}}>
+    <header style={MODAL_HEADER_STYLE}>
       {showBack ? <BackButton onClick={exitComparison} /> : <ModalTitle card={card} isMobile={isMobile} />}
       {/* Spacer pushes close button to the right when BACK is in the slot (BACK doesn't have flex:1) */}
       {inComparison && <div style={{flex: 1}} />}
       {!isMobile && <HeaderPrintingPills hidden={inComparison || showExpanded} />}
       {!isMobile && <HeaderTranslationToggle hidden={inComparison || showExpanded} />}
-      <CloseButton onClose={onClose} focusRef={initialFocusRef} />
+      <ModalCloseButton onClose={onClose} focusRef={initialFocusRef} />
     </header>
   );
 }
 
 function ModalTitle({card, isMobile}: {card: LorcanaCard; isMobile: boolean}) {
   return (
-    <h1
-      style={{
-        margin: 0,
-        fontFamily: FONTS.body,
-        fontSize: isMobile ? 18 : 22,
-        fontWeight: 700,
-        color: COLORS.text,
-        lineHeight: 1.2,
-        flex: 1,
-        minWidth: 0,
-      }}>
-      {card.fullName}
-    </h1>
+    <h1 style={pickModalTitleStyle(isMobile)}>{card.fullName}</h1>
   );
 }
 
@@ -1209,14 +1165,8 @@ function MobileOrDesktopBody(props: MobileOrDesktopBodyProps) {
     <div
       key="default-body"
       style={{
-        flex: 1,
-        minHeight: 0,
-        position: 'relative',
+        ...DEFAULT_BODY_STYLE,
         overflowY: isMobile || inComparison ? 'auto' : 'hidden',
-        padding: '20px 24px 24px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 16,
         ...scrollAreaRevealStyle,
       }}>
       <CardsRow
@@ -1314,26 +1264,6 @@ function CardsRow(props: CardsRowProps) {
   );
 }
 
-interface PickCardsRowStyleInput {
-  isMobile: boolean;
-  cardWidth: number;
-  cardHeight: number;
-}
-
-function pickCardsRowStyle({isMobile, cardWidth, cardHeight}: PickCardsRowStyleInput): React.CSSProperties {
-  return {
-    display: isMobile ? 'flex' : 'grid',
-    flexDirection: isMobile ? 'column' : undefined,
-    gridTemplateColumns: isMobile ? undefined : `${cardWidth}px 1fr`,
-    gap: 28,
-    alignItems: 'stretch',
-    height: isMobile ? undefined : cardHeight,
-    flexShrink: 0,
-    overflow: 'visible',
-    position: 'relative',
-  };
-}
-
 interface ComparisonOverlaysProps {
   pair: DetailedPairSynergy | null;
   isMobile: boolean;
@@ -1409,12 +1339,7 @@ function pickCardWrapperStyle({isMobile, highlightedCard, inComparison}: {isMobi
   // cards slide into position together.
   const inset = !isMobile && inComparison ? COMPARISON_CARD_INSET : 0;
   return {
-    // A column, so the mobile translation toggle sits under the card.
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: isMobile ? 'center' : 'flex-start',
-    gap: SPACING.md,
-    flexShrink: 0,
+    ...pickCardColumnLayout(isMobile),
     transform: inset ? `translateX(${inset}px)` : undefined,
     transition: `opacity 0.2s ${EASING.smooth}, filter 0.2s ${EASING.smooth}, transform ${FLIP_DURATION}ms ${FLIP_EASING}`,
     opacity: highlightedCard === 'b' ? 0.4 : 1,
@@ -1446,14 +1371,7 @@ function DefaultInfoColumn({synergies, synergiesLoading, visibleGroups, activeGr
       // mode — opacity:0 + pointer-events:none would still leave them tab-reachable.
       inert={inComparison}
       style={{
-        minWidth: 0,
-        minHeight: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 18,
-        maxHeight: isMobile ? undefined : cardHeight,
-        overflowY: isMobile ? 'visible' : 'auto',
-        padding: isMobile ? 0 : '0 14px',
+        ...pickSynergyColumnLayout(isMobile, cardHeight),
         opacity: inComparison ? 0 : 1,
         pointerEvents: inComparison ? 'none' : 'auto',
         transition: `opacity 250ms ${EASING.smooth}`,
@@ -1484,48 +1402,6 @@ function DefaultInfoColumn({synergies, synergiesLoading, visibleGroups, activeGr
         ))
       )}
     </section>
-  );
-}
-
-/**
- * Right-column placeholder shown while the per-card synergy JSON is in flight
- * (usePrecomputedSynergies.isLoading === true). Mirrors the post-load layout:
- * 2 group sections, each with a small label rect + 2-line description rect +
- * 3-tile mini-card grid. Without this, slow connections (3G + Set 12-sized
- * synergy files) made the modal show "No synergies yet" during load — which
- * read as a true empty state and disappeared once data arrived. The skeleton
- * makes the loading transition obvious instead of misleading.
- */
-function SynergiesLoadingSkeleton() {
-  return (
-    <>
-      <div
-        data-testid="card-overview-loading"
-        aria-busy="true"
-        aria-label="Loading synergies"
-        style={{display: 'flex', flexDirection: 'column', gap: 20}}>
-        {Array.from({length: 2}).map((_, groupIdx) => (
-          <div key={groupIdx} style={{display: 'flex', flexDirection: 'column', gap: 8}}>
-            {/* Label tag */}
-            <Skeleton width={92} height={20} borderRadius={2} />
-            {/* Cream callout description (2 lines suggested) */}
-            <Skeleton height={36} borderRadius={4} />
-            {/* Mini-card tile grid — matches modal's gridColumns={4}, 3 visible per group */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: 8,
-                marginTop: 4,
-              }}>
-              {Array.from({length: 3}).map((_, tileIdx) => (
-                <Skeleton key={tileIdx} height={170} borderRadius={5} />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </>
   );
 }
 
@@ -1708,26 +1584,6 @@ function PairConnector({cardHeight, exiting}: PairConnectorProps) {
         }}
       />
     </div>
-  );
-}
-
-/** Close (×) button — the shared IconButton in its circular-bordered form (#509). */
-function CloseButton({onClose, focusRef}: {onClose: () => void; focusRef?: React.RefObject<HTMLButtonElement | null>}) {
-  return (
-    <IconButton
-      type="button"
-      aria-label="Close"
-      onClick={onClose}
-      ref={focusRef}
-      size={28}
-      style={{
-        borderRadius: '50%',
-        border: `1px solid ${COLORS.surfaceBorder}`,
-        fontSize: FONT_SIZES.xl,
-        flexShrink: 0,
-      }}>
-      ×
-    </IconButton>
   );
 }
 
