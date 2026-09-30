@@ -4553,6 +4553,298 @@
         "DODGE THIS! When you play this item, you may deal 1 damage to chosen character.",
         "BARREL ROLL ⟳, 1 ⬡ — Chosen character gains Alert this turn. (They can challenge as if they had Evasive.)"
       ]
+    },
+    {
+      "id": 14028,
+      "name": "Never Too Far Apart",
+      "fullName": "Never Too Far Apart",
+      "cost": 9,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "14",
+      "number": 28,
+      "rarity": "Rare",
+      "franchise": "A Goofy Movie",
+      "subtypes": [
+        "Song"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Sing Together",
+          "keywordValue": "9",
+          "fullText": "Sing Together 9"
+        }
+      ],
+      "fullText": "Sing Together 9 (Any number of your or your teammates' characters with total cost 9 or more may ⟳ to sing this song for free.)\nLook at the top 9 cards of your deck. Reveal up to 3 character cards with Singer and put them into your hand. Put the rest on the bottom of your deck in any order.",
+      "fullTextSections": [
+        "Sing Together 9 (Any number of your or your teammates' characters with total cost 9 or more may ⟳ to sing this song for free.)",
+        "Look at the top 9 cards of your deck. Reveal up to 3 character cards with Singer and put them into your hand. Put the rest on the bottom of your deck in any order."
+      ]
+    },
+    {
+      "id": 14056,
+      "name": "Demona",
+      "fullName": "Demona - Imperious Spellcaster",
+      "cost": 3,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 56,
+      "version": "Imperious Spellcaster",
+      "rarity": "Super Rare",
+      "franchise": "Gargoyles",
+      "subtypes": [
+        "Dreamborn",
+        "Villain",
+        "Gargoyle",
+        "Sorcerer"
+      ],
+      "fullText": "IMPETUS IMPROVISUS Choose and discard a card — Chosen Gargoyle character gains Rush and Evasive until the start of your next turn. (They can challenge the turn they're played. Only characters with Evasive can challenge them.)\nSTONE BY DAY If you have 3 or more cards in your hand, this character can't ready.",
+      "fullTextSections": [
+        "IMPETUS IMPROVISUS Choose and discard a card — Chosen Gargoyle character gains Rush and Evasive until the start of your next turn. (They can challenge the turn they're played. Only characters with Evasive can challenge them.)",
+        "STONE BY DAY If you have 3 or more cards in your hand, this character can't ready."
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 14123,
+      "name": "Meilin Lee",
+      "fullName": "Meilin Lee - Ecstatic Fan",
+      "cost": 3,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 123,
+      "version": "Ecstatic Fan",
+      "rarity": "Common",
+      "franchise": "Turning Red",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Red Panda"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Singer",
+          "keywordValue": "5",
+          "fullText": "Singer 5"
+        }
+      ],
+      "fullText": "Singer 5 (This character counts as cost 5 to sing songs.)\nSUPER STOKED Once during your turn, whenever you play a song, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "Singer 5 (This character counts as cost 5 to sing songs.)",
+        "SUPER STOKED Once during your turn, whenever you play a song, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 14144,
+      "name": "Honey Lemon",
+      "fullName": "Honey Lemon - Ingenious Researcher",
+      "cost": 7,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 144,
+      "version": "Ingenious Researcher",
+      "rarity": "Uncommon",
+      "franchise": "Big Hero 6",
+      "subtypes": [
+        "Dreamborn",
+        "Super",
+        "Hero",
+        "Inventor"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "5",
+          "fullText": "Shift 5"
+        }
+      ],
+      "fullText": "Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Honey Lemon.)\nSYNTHESIZE Whenever this character quests, you may return an item card from your discard to your hand. If you do, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Honey Lemon.)",
+        "SYNTHESIZE Whenever this character quests, you may return an item card from your discard to your hand. If you do, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+      ],
+      "strength": 4,
+      "willpower": 6,
+      "lore": 2
+    },
+    {
+      "id": 14156,
+      "name": "Ariel",
+      "fullName": "Ariel - Collector of Oddities",
+      "cost": 5,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 156,
+      "version": "Collector of Oddities",
+      "rarity": "Legendary",
+      "franchise": "The Little Mermaid",
+      "subtypes": [
+        "Dreamborn",
+        "Hero",
+        "Princess"
+      ],
+      "fullText": "ONE OF A KIND Whenever you play an item, if the item you played has a different name than each other item you have in play, draw a card.\nPERSONAL COLLECTION For each item with a different name you have in play, this character gets +1 ◊.",
+      "fullTextSections": [
+        "ONE OF A KIND Whenever you play an item, if the item you played has a different name than each other item you have in play, draw a card.",
+        "PERSONAL COLLECTION For each item with a different name you have in play, this character gets +1 ◊."
+      ],
+      "strength": 3,
+      "willpower": 5,
+      "lore": 1
+    },
+    {
+      "id": 14166,
+      "name": "Blinding Chem Ball",
+      "fullName": "Blinding Chem Ball",
+      "cost": 1,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "14",
+      "number": 166,
+      "rarity": "Uncommon",
+      "franchise": "Big Hero 6",
+      "fullText": "DESTABILIZE ⟳, 2 ⬡ — Banish this item.\nBRILLIANT BURST During your turn, when this item is banished, you may get 1 ink drop. If you do, chosen character gets -2 ¤ this turn. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "DESTABILIZE ⟳, 2 ⬡ — Banish this item.",
+        "BRILLIANT BURST During your turn, when this item is banished, you may get 1 ink drop. If you do, chosen character gets -2 ¤ this turn. (You may remove an ink drop to pay 1 ⬡.)"
+      ]
+    },
+    {
+      "id": 14167,
+      "name": "Prototype Chem Ball",
+      "fullName": "Prototype Chem Ball",
+      "cost": 1,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "14",
+      "number": 167,
+      "rarity": "Common",
+      "franchise": "Big Hero 6",
+      "fullText": "DESTABILIZE ⟳, 2 ⬡ — Banish this item.\nENIGMA BURST During your turn, when this item is banished, you may get 1 ink drop. If you do, chosen character of yours gains Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1. You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "DESTABILIZE ⟳, 2 ⬡ — Banish this item.",
+        "ENIGMA BURST During your turn, when this item is banished, you may get 1 ink drop. If you do, chosen character of yours gains Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1. You may remove an ink drop to pay 1 ⬡.)"
+      ]
+    },
+    {
+      "id": 14177,
+      "name": "Raya",
+      "fullName": "Raya - Determined Explorer",
+      "cost": 1,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 177,
+      "version": "Determined Explorer",
+      "rarity": "Rare",
+      "franchise": "Raya and the Last Dragon",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Princess"
+      ],
+      "fullText": "TO THE ENDS OF THE REALM This character gets +1 ◊ for each location you have in play.",
+      "fullTextSections": [
+        "TO THE ENDS OF THE REALM This character gets +1 ◊ for each location you have in play."
+      ],
+      "strength": 2,
+      "willpower": 1,
+      "lore": 1
+    },
+    {
+      "id": 14188,
+      "name": "Baloo",
+      "fullName": "Baloo - Delivery Pilot",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 188,
+      "version": "Delivery Pilot",
+      "rarity": "Uncommon",
+      "franchise": "TaleSpin",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Captain"
+      ],
+      "fullText": "CASH PAYMENT This character can't quest or challenge unless you gained an ink drop this turn.",
+      "fullTextSections": [
+        "CASH PAYMENT This character can't quest or challenge unless you gained an ink drop this turn."
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 2,
+      "scanLanguage": "fr"
+    },
+    {
+      "id": 14200,
+      "name": "People Gonna Come Here",
+      "fullName": "People Gonna Come Here",
+      "cost": 7,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "14",
+      "number": 200,
+      "rarity": "Rare",
+      "franchise": "The Princess and the Frog",
+      "subtypes": [
+        "Song"
+      ],
+      "fullText": "(A character with cost 7 or more can ⟳ to sing this song for free.)\nPlay a location from your hand or discard for free. If a character sang this song, you may move them to that location for free.",
+      "fullTextSections": [
+        "(A character with cost 7 or more can ⟳ to sing this song for free.)",
+        "Play a location from your hand or discard for free. If a character sang this song, you may move them to that location for free."
+      ]
+    },
+    {
+      "id": 14127,
+      "name": "Mulan",
+      "fullName": "Mulan - Martial Arts Master",
+      "cost": 4,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 127,
+      "version": "Martial Arts Master",
+      "rarity": "Legendary",
+      "franchise": "Mulan",
+      "subtypes": [
+        "Dreamborn",
+        "Hero",
+        "Princess"
+      ],
+      "fullText": "WAY OF THE HERO When you play this character, chosen character gets +2 ¤ and gains “Whenever this character challenges another character, draw a card” this turn.\nWARRIOR SPIRIT Whenever this character quests, chosen character gains Rush this turn. (They can challenge the turn they're played.)",
+      "fullTextSections": [
+        "WAY OF THE HERO When you play this character, chosen character gets +2 ¤ and gains “Whenever this character challenges another character, draw a card” this turn.",
+        "WARRIOR SPIRIT Whenever this character quests, chosen character gains Rush this turn. (They can challenge the turn they're played.)"
+      ],
+      "strength": 2,
+      "willpower": 3,
+      "lore": 2
     }
   ]
 }
