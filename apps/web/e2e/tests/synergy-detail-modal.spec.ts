@@ -159,6 +159,12 @@ test.describe('Synergy comparison — Mobile', () => {
     await communityTab.click();
     await expect(communityTab).toHaveAttribute('aria-current', 'true', {timeout: 3000});
     await expect(engineTab).toHaveAttribute('aria-current', 'false');
+    // The pill turns at once; compare only after the strip has landed, when any scroll the
+    // switch set off is over.
+    const strip = modal.locator('.mobile-tab-viewport');
+    await expect
+      .poll(() => strip.evaluate((s) => Math.round(s.scrollLeft / s.clientWidth)))
+      .toBe(1);
     expect(await aroundStrip()).toEqual(before);
   });
 
