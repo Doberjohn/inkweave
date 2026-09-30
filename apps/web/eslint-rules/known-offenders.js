@@ -16,10 +16,8 @@ export const KNOWN_OFFENDERS = {
     'src/features/playstyles/PlaystyleFanTile.stories.tsx', // x2
     'src/features/playstyles/PlaystyleFanTile.tsx', // x2
     'src/features/playstyles/PlaystyleSection.stories.tsx', // x2
-    'src/features/reveals/InkBoard.tsx', // x7
     'src/features/reveals/NewFranchises.tsx', // x5
     'src/features/reveals/ProgressRing.tsx', // x2
-    'src/features/reveals/RarityBreakdown.tsx', // x6
     'src/features/reveals/RaritySymbol.stories.tsx', // x1
     'src/features/reveals/RevealHero.tsx', // x10
     'src/features/reveals/RevealsPromoCard.tsx', // x1
@@ -71,10 +69,7 @@ export const KNOWN_OFFENDERS = {
     'src/features/cards/components/BrowseToolbar.tsx', // x2
     'src/features/cards/components/CardTile.tsx', // x2
     'src/features/playstyles/PlaystyleFanTile.tsx', // x6
-    'src/features/reveals/CardSlot.tsx', // x5
-    'src/features/reveals/InkBoard.tsx', // x2
     'src/features/reveals/ProgressRing.tsx', // x1
-    'src/features/reveals/RarityBreakdown.tsx', // x3
     'src/features/reveals/RevealHero.tsx', // x5
     'src/features/reveals/RevealsPromoCard.tsx', // x1
     'src/features/reveals/SpotlightHero.tsx', // x13
@@ -111,9 +106,7 @@ export const KNOWN_OFFENDERS = {
     'src/docs/Colors.stories.tsx', // x10
     'src/docs/SpacingLayout.stories.tsx', // x2
     'src/docs/Typography.stories.tsx', // x5
-    'src/features/reveals/InkBoard.tsx', // x3
     'src/features/reveals/NewFranchises.tsx', // x1
-    'src/features/reveals/RarityBreakdown.tsx', // x1
     'src/features/reveals/RaritySymbol.stories.tsx', // x1
     'src/features/reveals/RevealHero.tsx', // x1
     'src/features/reveals/SpotlightHero.tsx', // x3
@@ -140,10 +133,7 @@ export const KNOWN_OFFENDERS = {
     'src/docs/Colors.stories.tsx', // x2
     'src/docs/SpacingLayout.stories.tsx', // x4
     'src/features/playstyles/PlaystyleFanTile.tsx', // x2
-    'src/features/reveals/CardSlot.tsx', // x1
-    'src/features/reveals/InkBoard.tsx', // x1
     'src/features/reveals/NewFranchises.tsx', // x2
-    'src/features/reveals/RarityBreakdown.tsx', // x1
     'src/features/reveals/RevealHero.tsx', // x2
     'src/features/reveals/SpotlightHero.tsx', // x4
     'src/features/reveals/WhatsNewSection.tsx', // x1
@@ -185,9 +175,6 @@ export const KNOWN_OFFENDERS = {
   // 23 files, 54 violations at seeding
   'no-raw-easing': [
     'src/features/cards/components/BrowseToolbar.tsx', // x1
-    'src/features/reveals/CardSlot.tsx', // x1
-    'src/features/reveals/InkBoard.tsx', // x1
-    'src/features/reveals/RarityBreakdown.tsx', // x1
     'src/features/reveals/WhatsNewSection.tsx', // x1
     'src/features/synergies/components/CommunityEmptyState.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.tsx', // x4
@@ -207,7 +194,6 @@ export const KNOWN_OFFENDERS = {
   'no-adhoc-buttons': [
     'src/features/synergies/components/ColumnHeader.tsx', // x1
     'src/features/reveals/NewFranchises.tsx', // x1
-    'src/features/reveals/RarityBreakdown.tsx', // x1
     'src/features/reveals/RevealsPromoCard.tsx', // x1
     'src/features/reveals/SpotlightHero.tsx', // x1
     'src/features/reveals/WhatsNewSection.tsx', // x1

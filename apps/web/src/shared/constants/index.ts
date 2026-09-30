@@ -52,6 +52,10 @@ export {
   SET_TOTAL,
   INK_BASE,
   inkBlock,
+  SPECIAL_BLOCKS,
+  ICONIC_INKS,
+  specialSlotsFor,
 } from './revealSet';
+export type {SpecialBlock, SpecialSlotSpec} from './revealSet';
 export type {PlaystyleUiMeta, ComingSoonPlaystyle} from './playstyleUi';
 export {PLAYSTYLE_UI, COMING_SOON_PLAYSTYLES, accentRgba} from './playstyleUi';

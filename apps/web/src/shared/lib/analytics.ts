@@ -12,9 +12,10 @@ type AnalyticsEvents = {
   reveal_card_click: {
     cardName: string;
     cardId: string;
-    source: 'mosaic' | 'franchise_modal';
+    source: 'mosaic' | 'franchise_modal' | 'special_printings';
     ink: Ink;
     type: CardType;
+    /** The clicked card's rarity; for a special printing, the printing's (Epic, Enchanted, Iconic). */
     rarity: string | null;
     franchise: string | null;
   };

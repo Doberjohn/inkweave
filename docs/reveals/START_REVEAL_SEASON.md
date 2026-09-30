@@ -27,6 +27,7 @@ After a graduation the data still names the OLD set, whose release date has pass
 | `REVEAL_SET_LOGO` | Path of the new logo under `public/art/sets/` |
 | `REVEAL_SET_LOGO_SM` | The promo card's 320px copy of that logo: its `src`, `width` and `height` (see below) |
 | `PER_INK` | Cards per ink. Fixed denominators, never derived from live data |
+| `SPECIAL_BLOCKS`, `ICONIC_INKS` | The special printings the ink boards give a slot to: each Epic/Enchanted block's first number and count per ink (runs in ink order), and each Iconic's number and ink. Read them off the official list's numbers after the main set (Sets 9-12 and 14: 3 Epic + 3 Enchanted per ink; Set 13 was uneven) |
 
 The promo card shows the set logo at 100 to 160 CSS px on every page during the season, so it loads a 320px copy rather than the full-size file (#627). Generate it from the new logo, then copy the printed size into `REVEAL_SET_LOGO_SM`:
 
@@ -178,7 +179,7 @@ When a later `pnpm sync-variants` prints `! 14221 now has official art, but card
 
 ## Checklist
 
-- [ ] `revealSet.ts`: `REVEAL_SET_CODE`, `REVEAL_SET_LOGO`, `REVEAL_SET_LOGO_SM` (with the `-sm` file generated), `PER_INK`
+- [ ] `revealSet.ts`: `REVEAL_SET_CODE`, `REVEAL_SET_LOGO`, `REVEAL_SET_LOGO_SM` (with the `-sm` file generated), `PER_INK`, `SPECIAL_BLOCKS`, `ICONIC_INKS`
 - [ ] `theme.ts`: `SetCode`, `SET_ABBREVIATIONS`, `SET_NAMES`
 - [ ] `previewCards.json`: new `sets[code]` with future dates, old entry dropped
 - [ ] `franchise.ts`, plus admin's `FEATURED_FRANCHISE_HINT`

@@ -26,6 +26,11 @@ import {
 // the chunk arrives; later opens render the loaded component directly (useModalForOpen).
 const LazyCardOverviewModal = lazyWithRetry(loadCardOverviewModal, 'CardOverviewModal');
 
+interface OpenCardModalOptions {
+  /** Open on this Epic/Enchanted/Iconic printing (a variant id) instead of the Standard art. */
+  printingId?: string;
+}
+
 interface CardModalContextValue {
   selectedCardId: string | null;
   comparisonPartnerId: string | null;
@@ -35,7 +40,9 @@ interface CardModalContextValue {
   hasUserSeenDefaultState: boolean;
   /** Ordered snapshot of the grid the modal was opened from, for prev/next navigation. */
   siblingCardIds: string[];
-  openCardModal: (cardId: string, siblingIds?: string[]) => void;
+  /** The printing this open started on (see OpenCardModalOptions), or null for the Standard art. */
+  initialPrintingId: string | null;
+  openCardModal: (cardId: string, siblingIds?: string[], options?: OpenCardModalOptions) => void;
   /**
    * Open the modal directly in comparison state. Optional `groupKey` filters connections to
    * that rule, mirroring the click-from-group flow (`/compare/A/B/shift-targets`). Omit for the
@@ -86,6 +93,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
   // Drives `hideBackButton` — there's no default state to step back to if the user never saw one.
   const [hasUserSeenDefaultState, setHasUserSeenDefaultState] = useState(false);
   const [siblingCardIds, setSiblingCardIds] = useState<string[]>([]);
+  const [initialPrintingId, setInitialPrintingId] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -99,11 +107,12 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setHasUserSeenDefaultState(true);
   }
 
-  const openCardModal = (cardId: string, siblingIds: string[] = []) => {
+  const openCardModal = (cardId: string, siblingIds: string[] = [], options: OpenCardModalOptions = {}) => {
     setSelectedCardId(cardId);
     setComparisonPartnerId(null);
     setComparisonGroupKey(null);
     setSiblingCardIds(siblingIds);
+    setInitialPrintingId(options.printingId ?? null);
     // hasUserSeenDefaultState will flip true on the next render via the guard above.
   };
 
@@ -112,6 +121,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setComparisonPartnerId(partnerId);
     setComparisonGroupKey(groupKey ?? null);
     setSiblingCardIds([]);
+    setInitialPrintingId(null);
     // Don't touch hasUserSeenDefaultState here — its value is determined by whether the user
     // had previously been in default state for this session. Click flow: openCardModal was
     // called first, flag is already true. Deep link: openComparison is the first call, flag
@@ -124,6 +134,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setComparisonGroupKey(null);
     setHasUserSeenDefaultState(false);
     setSiblingCardIds([]);
+    setInitialPrintingId(null);
     if (location.pathname.startsWith('/compare/')) {
       navigate('/');
     }
@@ -138,6 +149,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setSelectedCardId(nextId);
     setComparisonPartnerId(null);
     setComparisonGroupKey(null);
+    setInitialPrintingId(null);
   };
 
   const {enterComparisonRoute, exitComparisonRoute} = useComparisonRouteSync({
@@ -152,6 +164,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     comparisonGroupKey,
     hasUserSeenDefaultState,
     siblingCardIds,
+    initialPrintingId,
     openCardModal,
     openComparison,
     closeCardModal,
@@ -227,6 +240,7 @@ function CardModalRoot({onEnterComparison, onExitComparison}: CardModalRootProps
     comparisonGroupKey,
     hasUserSeenDefaultState,
     siblingCardIds,
+    initialPrintingId,
     closeCardModal,
     goToSibling,
   } = useCardModal();
@@ -275,6 +289,7 @@ function CardModalRoot({onEnterComparison, onExitComparison}: CardModalRootProps
         hideBackButton={hideBackButton}
         siblingCardIds={siblingCardIds}
         onGoToSibling={goToSibling}
+        initialPrintingId={initialPrintingId}
       />
     </Suspense>
   );

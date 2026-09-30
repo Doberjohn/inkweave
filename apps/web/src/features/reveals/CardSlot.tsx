@@ -1,17 +1,21 @@
-import {useState, type CSSProperties} from 'react';
-import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
+import {useState, type CSSProperties, type ReactNode} from 'react';
+import type {CardPrinting, Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {InkIcon} from '../../shared/components/InkIcon';
+import {COLORS, EASING, RADIUS, blackRgba, hexRgba, whiteRgba} from '../../shared/constants';
 import {smallImageUrl} from '../cards/loader';
 import {inkRgba} from './inkTint';
+import {isNarrowSlot} from './mosaicSizing';
 import './reveals.css';
 
 interface CardSlotProps {
   ink: Ink;
   /** The revealed card. Omit for an unrevealed (placeholder) slot. */
   card?: LorcanaCard;
-  /** Slot width in px — 58 on desktop, 46 on mobile. */
+  /** An Epic/Enchanted/Iconic printing of `card`: the slot shows its art and names it. */
+  printing?: Pick<CardPrinting, 'id' | 'imageUrl' | 'imageHashSm' | 'rarity'>;
+  /** Slot width in px: 58 on desktop; phones auto-fit it (see slotSize in mosaicSizing). */
   width?: number;
-  /** Slot height in px — 80 on desktop, 64 on mobile. */
+  /** Slot height in px: 80 on desktop; phones keep the card proportion. */
   height?: number;
   /** Called when a revealed slot is activated (opens the card modal). */
   onOpen?: (card: LorcanaCard) => void;
@@ -19,6 +23,8 @@ interface CardSlotProps {
   animate?: boolean;
   /** When true, the slot fades (a rarity highlight is active and this card is not it). */
   dimmed?: boolean;
+  /** The unrevealed slot's symbol. Defaults to the ink's. */
+  emblem?: ReactNode;
 }
 
 /**
@@ -30,14 +36,14 @@ function slotTileStyle(ink: Ink, revealed: boolean, width: number, height: numbe
   return {
     width,
     height,
-    borderRadius: 6,
+    borderRadius: RADIUS.md,
     position: 'relative',
     overflow: 'hidden',
     flex: '0 0 auto',
     border: `1.5px solid ${inkRgba(ink, revealed ? 0.85 : 0.3)}`,
     boxShadow: revealed
-      ? `0 2px 7px rgba(0, 0, 0, 0.45), 0 0 9px ${inkRgba(ink, 0.4)}`
-      : 'inset 0 2px 8px rgba(0, 0, 0, 0.55)',
+      ? `0 2px 7px ${blackRgba(0.45)}, 0 0 9px ${inkRgba(ink, 0.4)}`
+      : `inset 0 2px 8px ${blackRgba(0.55)}`,
   };
 }
 
@@ -48,14 +54,28 @@ function slotTileStyle(ink: Ink, revealed: boolean, width: number, height: numbe
  * in either direction. Pulled out so its `dimmed` branch doesn't add to CardSlot.
  */
 function slotDimStyle(dimmed: boolean): CSSProperties {
-  return {opacity: dimmed ? 0.22 : 1, transition: 'opacity 0.25s ease'};
+  return {opacity: dimmed ? 0.22 : 1, transition: `opacity 0.25s ${EASING.smooth}`};
 }
 
-/** The tile contents: ink-art base, the real image (or ink-symbol fallback), and a top sheen. */
-function SlotFace({ink, revealed, imgUrl, compact, onImgError}: {ink: Ink; revealed: boolean; imgUrl?: string; compact: boolean; onImgError: () => void}) {
+/** The slot's accessible name: the card, plus the rarity for an alt art (a special printing). */
+function slotLabel(card: LorcanaCard, printing: CardSlotProps['printing']): string {
+  return printing ? `View ${card.fullName}, ${printing.rarity} alt art` : `View ${card.fullName}`;
+}
+
+interface SlotFaceProps {
+  ink: Ink;
+  revealed: boolean;
+  imgUrl?: string;
+  compact: boolean;
+  emblem?: ReactNode;
+  onImgError: () => void;
+}
+
+/** The tile contents: ink-art base, the real image (or placeholder symbol), and a top sheen. */
+function SlotFace({ink, revealed, imgUrl, compact, emblem, onImgError}: SlotFaceProps) {
   const art = revealed
-    ? `radial-gradient(120% 80% at 50% 18%, ${inkRgba(ink, 0.62)}, ${inkRgba(ink, 0.14)} 70%, rgba(8, 8, 14, 0.9))`
-    : `radial-gradient(120% 80% at 50% 18%, ${inkRgba(ink, 0.26)}, ${inkRgba(ink, 0.06)} 70%, rgba(8, 8, 14, 0.95))`;
+    ? `radial-gradient(120% 80% at 50% 18%, ${inkRgba(ink, 0.62)}, ${inkRgba(ink, 0.14)} 70%, ${hexRgba(COLORS.background, 0.9)})`
+    : `radial-gradient(120% 80% at 50% 18%, ${inkRgba(ink, 0.26)}, ${inkRgba(ink, 0.06)} 70%, ${hexRgba(COLORS.background, 0.95)})`;
   return (
     <>
       {/* Ink-art base (also the graceful fallback behind a revealed image). */}
@@ -78,7 +98,7 @@ function SlotFace({ink, revealed, imgUrl, compact, onImgError}: {ink: Ink; revea
             filter: `drop-shadow(0 1px 4px ${inkRgba(ink, 0.8)})`,
           }}
         >
-          <InkIcon ink={ink} size={compact ? 27 : 34} />
+          {emblem ?? <InkIcon ink={ink} size={compact ? 27 : 34} />}
         </span>
       )}
       {/* Top sheen. */}
@@ -89,7 +109,7 @@ function SlotFace({ink, revealed, imgUrl, compact, onImgError}: {ink: Ink; revea
           left: 0,
           right: 0,
           height: '46%',
-          background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent)',
+          background: `linear-gradient(180deg, ${whiteRgba(0.16)}, transparent)`,
           pointerEvents: 'none',
         }}
       />
@@ -98,32 +118,33 @@ function SlotFace({ink, revealed, imgUrl, compact, onImgError}: {ink: Ink; revea
 }
 
 /**
- * One slot in the diamond mosaic. Every slot is an ink-art tile (radial gradient
- * + ink border + glow + top sheen). A revealed slot fills the tile with the real
- * card image and opens the card modal on click; an unrevealed slot shows the ink
- * symbol. No cost or rarity pips — the slot stays clean.
+ * One slot in an ink board. Every slot is an ink-art tile (radial gradient + ink
+ * border + glow + top sheen). A revealed slot fills the tile with the real card
+ * image, or with a special printing's art when given one, and opens the card
+ * modal on click; an unrevealed slot shows the ink symbol, or `emblem`. No cost
+ * or rarity pips: the slot stays clean.
  */
-export function CardSlot({ink, card, width = 58, height = 80, onOpen, animate = false, dimmed = false}: CardSlotProps) {
+export function CardSlot({ink, card, printing, width = 58, height = 80, onOpen, animate = false, dimmed = false, emblem}: CardSlotProps) {
   const [imgFailed, setImgFailed] = useState(false);
-  const compact = width < 54;
+  const compact = isNarrowSlot(width);
   const revealed = !!card;
-  const imgUrl = card && !imgFailed ? smallImageUrl(card) : undefined;
+  const imgUrl = card && !imgFailed ? smallImageUrl(printing ?? card) : undefined;
   const popClass = animate ? 'reveal-cellpop' : undefined;
   const tileStyle = slotTileStyle(ink, revealed, width, height);
   const dimStyle = slotDimStyle(dimmed);
   const face = (
-    <SlotFace ink={ink} revealed={revealed} imgUrl={imgUrl} compact={compact} onImgError={() => setImgFailed(true)} />
+    <SlotFace ink={ink} revealed={revealed} imgUrl={imgUrl} compact={compact} emblem={emblem} onImgError={() => setImgFailed(true)} />
   );
 
   if (card && onOpen) {
     return (
       <button
         type="button"
-        data-testid="reveal-card-slot"
+        data-testid={printing ? 'reveal-printing-slot' : 'reveal-card-slot'}
         data-dimmed={dimmed || undefined}
         className={popClass}
         onClick={() => onOpen(card)}
-        aria-label={`View ${card.fullName}`}
+        aria-label={slotLabel(card, printing)}
         style={{...tileStyle, ...dimStyle, padding: 0, font: 'inherit', cursor: 'pointer', background: 'none'}}
       >
         {face}

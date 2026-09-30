@@ -1,4 +1,4 @@
-import type {LorcanaCard} from 'inkweave-synergy-engine';
+import type {LorcanaCard, VariantRarity} from 'inkweave-synergy-engine';
 
 export interface RarityConfig {
   /** Lowercased match key against `card.rarity` (e.g. "super rare"). */
@@ -7,12 +7,12 @@ export interface RarityConfig {
 }
 
 /**
- * The five in-app rarities, in display order. Enchanted and Iconic exist in print
- * but are not in the Inkweave card database, so they are excluded from the board
- * and breakdown. `key` is compared case-insensitively against `card.rarity`; the
- * glyph is rendered by RaritySymbol from the vendored SVGs. The board's breakdown
- * shows actual revealed counts per rarity (the set's real composition differs
- * from the old 12/9/8/3/2 assumption), so no per-rarity total is stored here.
+ * The five main-set rarities, in display order. `key` is compared case-insensitively
+ * against `card.rarity`; the glyph is rendered by RaritySymbol from the vendored SVGs.
+ * The board's breakdown shows actual revealed counts per rarity (the set's real
+ * composition differs from the old 12/9/8/3/2 assumption), so no per-rarity total is
+ * stored here. Epic, Enchanted and Iconic are printings of these cards rather than
+ * cards of their own: see SPECIAL_RARITIES.
  */
 export const RARITIES: readonly RarityConfig[] = [
   {key: 'common', name: 'Common'},
@@ -21,6 +21,17 @@ export const RARITIES: readonly RarityConfig[] = [
   {key: 'super rare', name: 'Super rare'},
   {key: 'legendary', name: 'Legendary'},
 ];
+
+/**
+ * The special printings (#625), shown in their own row under the board's diamond. Keyed by
+ * the printing's rarity; `key` is that rarity lowercased, in the same key space as RARITIES,
+ * so one highlight state covers both.
+ */
+export const SPECIAL_RARITIES: Readonly<Record<VariantRarity, RarityConfig>> = {
+  Epic: {key: 'epic', name: 'Epic'},
+  Enchanted: {key: 'enchanted', name: 'Enchanted'},
+  Iconic: {key: 'iconic', name: 'Iconic'},
+};
 
 /** Look up a rarity config from a raw `card.rarity` string (case-insensitive). */
 export function rarityConfigOf(rarity: string | undefined): RarityConfig | undefined {
@@ -39,4 +50,9 @@ export function rarityConfigOf(rarity: string | undefined): RarityConfig | undef
 export function isSlotDimmed(card: LorcanaCard | undefined, selectedRarity: string | null): boolean {
   if (selectedRarity == null) return false;
   return rarityConfigOf(card?.rarity)?.key !== selectedRarity;
+}
+
+/** A special printing slot dims unless its own rarity is the highlighted one, revealed or not. */
+export function isSpecialSlotDimmed(rarity: VariantRarity, selectedRarity: string | null): boolean {
+  return selectedRarity != null && SPECIAL_RARITIES[rarity].key !== selectedRarity;
 }

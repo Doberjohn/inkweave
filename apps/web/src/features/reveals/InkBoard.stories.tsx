@@ -1,8 +1,8 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {InkBoard} from './InkBoard';
-import type {InkProgress} from './useRevealProgress';
-import {INK_BASE} from '../../shared/constants';
+import type {InkProgress, SpecialSlot} from './useRevealProgress';
+import {INK_BASE, specialSlotsFor} from '../../shared/constants';
 
 const meta: Meta<typeof InkBoard> = {
   title: 'Features/Reveals/InkBoard',
@@ -26,7 +26,13 @@ type Story = StoryObj<typeof meta>;
 // graduates, so a story pointed at them rots every season.
 const SAMPLE_IMG = '/card-images/en/set6/35_b9afe49519236b60d7d6eca0359905ef44cecae9.jpg';
 
-function progress(ink: Ink, count: number, rarityCounts: Record<string, number>): InkProgress {
+/** `revealedPrintings` are collector numbers from the ink's special lineup (specialSlotsFor). */
+function progress(
+  ink: Ink,
+  count: number,
+  rarityCounts: Record<string, number>,
+  revealedPrintings: number[] = [],
+): InkProgress {
   const cards = Array.from(
     {length: count},
     (_, i) =>
@@ -45,20 +51,33 @@ function progress(ink: Ink, count: number, rarityCounts: Record<string, number>)
         setNumber: INK_BASE[ink] + i,
       }) as LorcanaCard,
   );
-  return {ink, count, cards, rarityCounts};
+  const specials = specialSlotsFor(ink).map(
+    (spec): SpecialSlot =>
+      revealedPrintings.includes(spec.number)
+        ? {...spec, card: cards[0], printing: {id: `${ink}-${spec.number}`, rarity: spec.rarity, number: spec.number, imageUrl: SAMPLE_IMG}}
+        : {...spec},
+  );
+  return {ink, count, cards, rarityCounts, specials};
 }
 
 export const Partial: Story = {
   args: {
-    progress: progress('Amber', 20, {common: 6, uncommon: 5, rare: 6, 'super rare': 3, legendary: 1}),
+    progress: progress(
+      'Amber',
+      20,
+      {common: 6, uncommon: 5, rare: 6, 'super rare': 3, legendary: 1, enchanted: 2, iconic: 1},
+      [223, 224, 241],
+    ),
     onOpen: () => {},
+    onOpenPrinting: () => {},
   },
 };
 
 export const Complete: Story = {
   args: {
-    progress: progress('Emerald', 34, {common: 12, uncommon: 9, rare: 8, 'super rare': 3, legendary: 2}),
+    progress: progress('Emerald', 34, {common: 12, uncommon: 9, rare: 8, 'super rare': 3, legendary: 2, epic: 1}, [213]),
     onOpen: () => {},
+    onOpenPrinting: () => {},
   },
 };
 
@@ -66,13 +85,15 @@ export const Early: Story = {
   args: {
     progress: progress('Steel', 8, {common: 2, uncommon: 4, rare: 1, 'super rare': 1, legendary: 0}),
     onOpen: () => {},
+    onOpenPrinting: () => {},
   },
 };
 
 export const Mobile: Story = {
   args: {
-    progress: progress('Ruby', 15, {common: 3, uncommon: 3, rare: 5, 'super rare': 3, legendary: 1}),
+    progress: progress('Ruby', 15, {common: 3, uncommon: 3, rare: 5, 'super rare': 3, legendary: 1, enchanted: 1}, [233]),
     compact: true,
     onOpen: () => {},
+    onOpenPrinting: () => {},
   },
 };

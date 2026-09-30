@@ -266,7 +266,7 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 |---|---|
 | loads the pair and renders the interactive vote form | Navigates to `/vote/2730/2718`; the `[aria-label="Loading vote pair and form"]` skeleton becomes hidden, then "Is this synergy real?" + the "Yes" radio are visible (a loop/hang fails by timeout) |
 
-## `reveals-page.spec.ts` — 8 tests (7 desktop, 1 mobile)
+## `reveals-page.spec.ts` — 9 tests (8 desktop, 1 mobile)
 
 **Season-independent by design.** The `beforeEach` reads the reveal set (the `previewCards.json` entry with the latest `releaseDate`) and the tests build their matchers from its `name` and `number`; the franchise label is read off the tile's own `aria-label`. Starting a new season needs no edit here. The suite skips itself once `releaseDate` has passed, and resumes when the next set's dates land. Three tests additionally skip while `cards` is empty.
 
@@ -279,7 +279,8 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 | mosaic card click opens the card overview modal | Clicking a `reveal-card-slot` on `/reveals` opens the modal; URL stays `/reveals` (skips with no cards) |
 | franchise card click opens the franchise cards modal | Clicking the first "View … cards" tile opens the `dialog` named "<franchise> cards"; a card-tile inside opens the overview modal on top (card click skips with no cards) |
 | ?ink= param selects the starting mosaic ink | `/reveals?ink=emerald` makes the Emerald `ink-tracker-tile` the `aria-pressed` (featured) one |
-| clicking a rarity chip dims the other revealed cards | A "Highlight ... cards" chip toggles `aria-pressed`; other-rarity slots get `data-dimmed`; clicking again clears it (skips when <2 rarities revealed) |
+| clicking a rarity chip dims the other revealed cards | A kit chip in the "Highlight a rarity" group toggles `aria-pressed`; other-rarity slots get `data-dimmed`; clicking again clears it (skips when <2 rarities revealed) |
+| an alt art opens the card modal on that printing | On `/reveals?ink=amber`, clicking the first `reveal-printing-slot` opens the modal with that rarity's radio `aria-checked` in the "Card printing" group (skips until the Amber board has a revealed Epic/Enchanted/Iconic) |
 
 ## Patterns
 
