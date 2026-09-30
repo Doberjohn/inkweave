@@ -25,7 +25,8 @@ function recordView(card: LorcanaCard, printing: Printing, surface: 'card_page' 
   }
 }
 
-function printingsOf(card: LorcanaCard): Printing[] {
+/** A card's printings: its Standard art first, then each Epic/Enchanted/Iconic variant. */
+export function printingsOf(card: LorcanaCard): Printing[] {
   const standard: Printing = {key: 'standard', label: 'Standard', imageUrl: card.imageUrl};
   const variants = (card.variants ?? []).map((v): Printing => ({
     key: v.id,

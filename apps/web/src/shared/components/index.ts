@@ -7,7 +7,8 @@ export {BetaNotice} from './BetaNotice';
 export {CardImage} from './CardImage';
 export {CardTextBlock} from './CardTextBlock';
 export {CardLightbox} from './CardLightbox';
-export {CardTranslationPanel, CardTranslationToggle} from './CardTranslationPanel';
+export {CardTranslationPanel} from './CardTranslationPanel';
+export {CardTranslationToggle} from './CardTranslationToggle';
 export {CollapsibleSection} from './CollapsibleSection';
 export {ConnectionGroup} from './ConnectionGroup';
 export {groupConnections} from './groupConnections';
@@ -44,7 +45,8 @@ export {InkIcon} from './InkIcon';
 export {Seo} from './Seo';
 export type {SeoProps} from './Seo';
 export {SearchAutocomplete} from './SearchAutocomplete';
-export {SearchBottomSheet} from './SearchBottomSheet';
+// No SearchBottomSheet here: AppLayout loads it on demand (#640), and a barrel re-export would
+// load it eagerly in dev, where nothing tree-shakes it away.
 export {SearchIcon} from './SearchIcon';
 export {SortSelect} from './SortSelect';
 export {StrengthBadge} from './StrengthBadge';
