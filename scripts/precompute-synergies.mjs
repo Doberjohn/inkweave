@@ -10,6 +10,9 @@
  *   apps/web/public/data/synergies/_playstyles.json  — playstyleId → cardId[]
  *   apps/web/public/data/synergies/_manifest.json    — cardIds with synergy files
  *
+ * And the homepage's featured cards (#641):
+ *   apps/web/public/data/featuredCards.json: those few cards in allCards.json's shape
+ *
  * Usage:
  *   node scripts/precompute-synergies.mjs           # Normal run
  *   node scripts/precompute-synergies.mjs --verbose  # Show per-card output
@@ -17,12 +20,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {buildFeaturedCards, featuredIdsSetting, resolveFeaturedIds} from './featured-cards.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const MAIN_DATA_FILE = path.join(ROOT, 'apps/web/public/data/allCards.json');
 const PREVIEW_DATA_FILE = path.join(ROOT, 'apps/web/public/data/previewCards.json');
 const OUTPUT_DIR = path.join(ROOT, 'apps/web/public/data/synergies');
+const FEATURED_IDS_FILE = path.join(ROOT, 'apps/web/src/features/cards/featuredCardIds.json');
+const FEATURED_OUTPUT = path.join(ROOT, 'apps/web/public/data/featuredCards.json');
 const VERBOSE = process.argv.includes('--verbose');
 
 async function main() {
@@ -45,8 +51,9 @@ async function main() {
 
   let previewCount = 0;
   let mergedRaw = mainData.cards;
+  let previewData = null;
   if (fs.existsSync(PREVIEW_DATA_FILE)) {
-    const previewData = JSON.parse(fs.readFileSync(PREVIEW_DATA_FILE, 'utf-8'));
+    previewData = JSON.parse(fs.readFileSync(PREVIEW_DATA_FILE, 'utf-8'));
     // Dedup: main wins on id conflict
     const previewFiltered = previewData.cards.filter((c) => !mainIds.has(c.id));
     previewCount = previewFiltered.length;
@@ -154,6 +161,26 @@ async function main() {
   }
   fs.writeFileSync(path.join(OUTPUT_DIR, '_playstyles.json'), JSON.stringify(playstyles));
 
+  // The homepage's featured cards (#641). Written before the manifest, so the manifest stays the
+  // newest file the Vite plugin's staleness check compares against.
+  const defaultFeaturedIds = JSON.parse(fs.readFileSync(FEATURED_IDS_FILE, 'utf-8')).map((entry) => entry.id);
+  const readWebEnvFile = (name) => {
+    const file = path.join(ROOT, 'apps/web', name);
+    return fs.existsSync(file) ? fs.readFileSync(file, 'utf-8') : null;
+  };
+  const featuredIds = resolveFeaturedIds(featuredIdsSetting(process.env, readWebEnvFile), defaultFeaturedIds);
+  const featured = buildFeaturedCards({
+    main: mainData,
+    preview: previewData,
+    ids: featuredIds,
+    isCoreSet,
+    envSetting: process.env.VITE_FEATURED_CARD_IDS,
+  });
+  fs.writeFileSync(FEATURED_OUTPUT, JSON.stringify(featured));
+  if (featured.cards.length < featuredIds.length) {
+    console.warn(`  ⚠ featuredCards.json holds ${featured.cards.length}/${featuredIds.length} featured cards; the homepage falls back to the full list`);
+  }
+
   // Write manifest (last — used as staleness marker by Vite plugin)
   fs.writeFileSync(path.join(OUTPUT_DIR, '_manifest.json'), JSON.stringify(manifest));
 
@@ -193,6 +220,7 @@ async function main() {
   console.log(`  ${totalGroups} groups, ${totalMatches} total matches`);
   console.log(`  ${Object.keys(playstyles).length} playstyles`);
   console.log(`  ${pairsIndex.length} unique pairs indexed`);
+  console.log(`  ${featured.cards.length} featured cards in featuredCards.json`);
   console.log(`  Output: ${OUTPUT_DIR}`);
 }
 

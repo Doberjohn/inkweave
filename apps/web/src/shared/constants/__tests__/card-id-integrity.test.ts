@@ -2,7 +2,7 @@ import {describe, it, expect} from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import {PLAYSTYLE_UI} from '../playstyleUi';
-import {DEFAULT_FEATURED_IDS} from '../../../features/cards/components/FeaturedCards';
+import {DEFAULT_FEATURED_IDS} from '../../../features/cards/featured';
 
 // Referential-integrity guard for hard-coded card ids in prod-facing config.
 //

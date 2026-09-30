@@ -17,11 +17,19 @@ const SYNERGY_DIR = path.resolve(import.meta.dirname, 'public/data/synergies');
 const MANIFEST = path.join(SYNERGY_DIR, '_manifest.json');
 const ENGINE_SRC = path.join(ROOT, 'packages/synergy-engine/src');
 const CARD_DATA = path.resolve(import.meta.dirname, 'public/data/allCards.json');
+const PREVIEW_DATA = path.resolve(import.meta.dirname, 'public/data/previewCards.json');
+// Precompute also writes the homepage's featured cards (#641), from this list or the env files'
+// VITE_FEATURED_CARD_IDS.
+const FEATURED_CARDS = path.resolve(import.meta.dirname, 'public/data/featuredCards.json');
+const FEATURED_INPUTS = ['src/features/cards/featuredCardIds.json', '.env.local', '.env'].map((file) =>
+  path.resolve(import.meta.dirname, file),
+);
 
 /**
  * Rebuilds the engine and regenerates pre-computed synergies on dev server start
- * when missing or stale. Compares engine source and card data mtime against
- * _manifest.json to detect staleness.
+ * when missing or stale. Compares engine source, card and preview data and the
+ * featured-card inputs' mtimes against _manifest.json, and a shell
+ * VITE_FEATURED_CARD_IDS against the one featuredCards.json was built with.
  */
 function ensureSynergiesPlugin(): Plugin {
   return {
@@ -33,41 +41,78 @@ function ensureSynergiesPlugin(): Plugin {
     // hooks, and its watcher only reports files created after its initial scan. Files written
     // in configureServer missed both, so they were served as index.html until a restart.
     configResolved() {
-      const missing = !fs.existsSync(MANIFEST);
-      let stale = false;
-
-      if (!missing) {
-        const manifestMtime = fs.statSync(MANIFEST).mtimeMs;
-        stale =
-          isNewerRecursive(ENGINE_SRC, manifestMtime) ||
-          (fs.existsSync(CARD_DATA) && fs.statSync(CARD_DATA).mtimeMs > manifestMtime);
-      }
-
-      if (missing || stale) {
-        const reason = missing ? 'missing' : 'stale (engine source or card data changed)';
-        console.log(`\n⚙ Synergy data ${reason} — regenerating...`);
-        try {
-          // A single command string: with shell: true, Node 24 deprecates passing args
-          // (DEP0190), since the shell joins them unescaped. The shell is only there so
-          // Windows can run pnpm's .cmd shim.
-          const build = spawnSync('pnpm build:engine', {cwd: ROOT, stdio: 'inherit', shell: true});
-          if (build.error) throw build.error;
-          if (build.status !== 0) throw new Error(`Engine build failed (exit ${build.status})`);
-          // process.execPath is the running Node binary, so this needs no shell or PATH lookup.
-          const precompute = spawnSync(process.execPath, ['scripts/precompute-synergies.mjs'], {
-            cwd: ROOT,
-            stdio: 'inherit',
-          });
-          if (precompute.error) throw precompute.error;
-          if (precompute.status !== 0)
-            throw new Error(`Precompute failed (exit ${precompute.status})`);
-        } catch (err) {
-          console.error('⚠ Failed to pre-compute synergies:', err);
-          console.error('  Run manually: pnpm build:engine && pnpm precompute-synergies\n');
-        }
+      const reason = synergyDataRefreshReason();
+      if (!reason) return;
+      console.log(`\n⚙ Synergy data ${reason} — regenerating...`);
+      try {
+        regenerateSynergyData();
+      } catch (err) {
+        console.error('⚠ Failed to pre-compute synergies:', err);
+        console.error('  Run manually: pnpm build:engine && pnpm precompute-synergies\n');
       }
     },
   };
+}
+
+/** Rebuilds the engine, then reruns precompute (synergies and the featured cards). Throws on failure. */
+function regenerateSynergyData(): void {
+  // A single command string: with shell: true, Node 24 deprecates passing args
+  // (DEP0190), since the shell joins them unescaped. The shell is only there so
+  // Windows can run pnpm's .cmd shim.
+  checkStep('Engine build', spawnSync('pnpm build:engine', {cwd: ROOT, stdio: 'inherit', shell: true}));
+  // process.execPath is the running Node binary, so this needs no shell or PATH lookup.
+  checkStep(
+    'Precompute',
+    spawnSync(process.execPath, ['scripts/precompute-synergies.mjs'], {cwd: ROOT, stdio: 'inherit'}),
+  );
+}
+
+/** Throws when a step couldn't start or exited non-zero. */
+function checkStep(label: string, {error, status}: {error?: Error; status: number | null}): void {
+  if (error) throw error;
+  if (status !== 0) throw new Error(`${label} failed (exit ${status})`);
+}
+
+/** Why the synergy data needs regenerating: 'missing', 'stale (...)', or null when it's current. */
+function synergyDataRefreshReason(): string | null {
+  if (!fs.existsSync(MANIFEST) || !fs.existsSync(FEATURED_CARDS)) return 'missing';
+  if (inputsNewerThanManifest()) return 'stale (engine source, card data or featured cards changed)';
+  if (featuredEnvChanged()) return 'stale (VITE_FEATURED_CARD_IDS changed in the environment)';
+  return null;
+}
+
+/** Whether the engine source or any data input changed after precompute last wrote the manifest. */
+function inputsNewerThanManifest(): boolean {
+  const manifestMtime = fs.statSync(MANIFEST).mtimeMs;
+  const newerThanManifest = (file: string) =>
+    fs.existsSync(file) && fs.statSync(file).mtimeMs > manifestMtime;
+  return (
+    isNewerRecursive(ENGINE_SRC, manifestMtime) ||
+    [CARD_DATA, PREVIEW_DATA, ...FEATURED_INPUTS].some(newerThanManifest)
+  );
+}
+
+/**
+ * Whether the shell's VITE_FEATURED_CARD_IDS differs from the value featuredCards.json was built
+ * with. Env files are checked by date instead.
+ */
+function featuredEnvChanged(): boolean {
+  return recordedFeaturedEnv() !== (process.env.VITE_FEATURED_CARD_IDS ?? null);
+}
+
+/**
+ * The shell VITE_FEATURED_CARD_IDS featuredCards.json was built with, which precompute records as
+ * metadata.envFeaturedIds (null when unset); undefined when the file can't be read, so it rebuilds.
+ */
+function recordedFeaturedEnv(): string | null | undefined {
+  try {
+    const file = JSON.parse(fs.readFileSync(FEATURED_CARDS, 'utf8')) as {
+      metadata?: {envFeaturedIds?: string | null};
+    };
+    return file.metadata?.envFeaturedIds ?? null;
+  } catch {
+    return undefined;
+  }
 }
 
 /** Check if any file under `dir` has mtime newer than `threshold`. */

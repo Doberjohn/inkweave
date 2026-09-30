@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {FeaturedCards} from '../features/cards';
+import {FeaturedCards, type LorcanaCard} from '../features/cards';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {trackEvent} from '../shared/lib/analytics';
 import {HeroSection, EtherealBackground, ErrorBoundary, Footer, Seo} from '../shared/components';
@@ -20,7 +20,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const {openCardModal} = useCardModal();
   const {isMobile} = useResponsive();
-  const {cards, isLoading, getCardById} = useCardDataContext();
+  const {cards, isLoading, requestLoad} = useCardDataContext();
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearchSubmit = () => {
@@ -28,8 +28,10 @@ export function HomePage() {
     if (q) trackEvent('search_submitted', {query: q, source: 'home'});
     navigate(q ? `/browse?q=${encodeURIComponent(q)}` : '/browse');
   };
-  const handleCardSelect = (card: {id: string}) => {
-    trackCardSelected(getCardById(card.id), 'home');
+  // The chosen card itself, not a lookup in the full list: a featured card can be pressed
+  // before that list has loaded (#641), and the lookup would drop the analytics event.
+  const handleCardSelect = (card: LorcanaCard) => {
+    trackCardSelected(card, 'home');
     openCardModal(card.id);
   };
   const handleBrowse = () => navigate('/browse');
@@ -43,7 +45,13 @@ export function HomePage() {
         description="Free Disney Lorcana synergy finder for Core format. Discover the strongest card combos and archetype pairings, with community-voted synergy scores, and build better decks."
         canonicalPath="/"
       />
-      <main style={{...mainStyle, justifyContent: isMobile ? undefined : 'center'}}>
+      {/* The card list waits here until 2 s after the page has loaded (#641); a press or focus
+          anywhere in the page (the search box, a featured card) starts it at once, since both
+          need it. */}
+      <main
+        style={{...mainStyle, justifyContent: isMobile ? undefined : 'center'}}
+        onPointerDownCapture={requestLoad}
+        onFocusCapture={requestLoad}>
         <EtherealBackground isMobile={isMobile} />
 
         <ErrorBoundary>
