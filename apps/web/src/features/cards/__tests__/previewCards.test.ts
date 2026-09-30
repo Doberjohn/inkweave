@@ -40,4 +40,20 @@ describe('fetchPreviewCards', () => {
     await expect(fetchPreviewCards()).resolves.toEqual(PREVIEW);
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
+
+  it('forgets a server error too, so a retry gets the preview cards', async () => {
+    mockFetch.mockResolvedValueOnce({ok: false, status: 503}).mockResolvedValueOnce(respond(PREVIEW));
+
+    await expect(fetchPreviewCards()).resolves.toBeNull();
+    await expect(fetchPreviewCards()).resolves.toEqual(PREVIEW);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps a missing file missing for the page, in one request', async () => {
+    mockFetch.mockResolvedValue({ok: false, status: 404});
+
+    await expect(fetchPreviewCards()).resolves.toBeNull();
+    await expect(fetchPreviewCards()).resolves.toBeNull();
+    expect(mockFetch).toHaveBeenCalledOnce();
+  });
 });

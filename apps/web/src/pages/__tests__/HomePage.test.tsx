@@ -14,8 +14,9 @@ vi.mock('../../shared/hooks', () => ({
   useResponsive: () => ({isMobile: false, isTablet: false, isDesktop: true, windowWidth: 1280}),
 }));
 
+const mockRequestLoad = vi.fn();
 vi.mock('../../shared/contexts/CardDataContext', () => ({
-  useCardDataContext: () => ({cards: [], getCardById: () => undefined}),
+  useCardDataContext: () => ({cards: [], getCardById: () => undefined, requestLoad: mockRequestLoad}),
 }));
 
 vi.mock('../../shared/contexts/CardModalContext', () => ({
@@ -64,6 +65,7 @@ vi.mock('../../features/cards/lib/cardAnalytics', () => ({trackCardSelected: vi.
 describe('HomePage', () => {
   beforeEach(() => {
     mockNavigate.mockClear();
+    mockRequestLoad.mockClear();
   });
 
   it('should render hero section and featured cards', () => {
@@ -120,5 +122,16 @@ describe('HomePage', () => {
 
     fireEvent.click(screen.getByTestId('featured-cards'));
     expect(trackCardSelected).toHaveBeenCalledWith(FEATURED_CARD, 'home');
+  });
+
+  it('starts loading the card list when the page is pressed (#641)', () => {
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.pointerDown(screen.getByTestId('featured-cards'));
+    expect(mockRequestLoad).toHaveBeenCalledOnce();
   });
 });
