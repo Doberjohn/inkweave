@@ -29,7 +29,7 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should show featured cards after loading | Featured cards grid has 1-12 card tiles |
 | should open the overview modal when a card is selected | Clicking a featured card opens the modal overlay-style; URL stays `/`, no compact header |
 
-## `card-detail.spec.ts` — 12 tests (10 desktop only, 2 on every project at a 390px viewport)
+## `card-detail.spec.ts` — 13 tests (10 desktop only, 3 on every project at a 390px viewport)
 
 Two surfaces: the crawlable `/card/:id` **page** (#486 — renders, not-found, empty state; slug URLs `/card/:id/:slug` with the id as the lookup key and the slug decorative, #498) and the
 CardOverviewModal opened from a tile (render, close, empty, scroll lock, show-all, sibling nav). The
@@ -53,7 +53,8 @@ layout on every project and also run in the chromium-only Windows pre-push.
 | Show More reveals the full expanded group, and Back returns to default | Modal opened on card 2095 via Browse (`openCardOverview`); ramp group: one "+N more" click → `data-state="expanded"` with a "Back to all synergies" link; Back → `data-state="default"` |
 | arrows navigate to a sibling card from the Browse grid | Opening a card from `/browse` shows prev/next arrows; clicking "Next card" changes the modal's h1 to the adjacent grid card |
 | a card with many synergy groups does not scroll the page sideways (#631) | At 390px, `/card/2978` (6 groups, fixture-guarded from its synergy JSON): the chip row's content is wider than the page (precondition), `document.documentElement.scrollWidth <= clientWidth` (no page-level horizontal overflow), and the chip row scrolls inside its own box (`scrollWidth > clientWidth`, with computed `overflow-x` `auto` or `scroll`, since `hidden`/`clip` would pass the width checks while stranding the off-screen chips). Compares against `clientWidth`, not `innerWidth`, because mobile emulation zooms out to fit an overflowing page |
-| × returns to the card before, and opens Browse on the page the visit started on | At 390px, `/card/2095`: tapping a synergy tile opens that card's page, × returns to `/card/2095` (history back); × again, on the page the visit started on, navigates to `/browse` instead of leaving the app (`useBackOrNavigate`: an entry page has `location.key === 'default'`) |
+| × returns to the card before, and opens Browse on the page the visit started on | At 390px, `/card/2095`: tapping a synergy tile opens that card's page, × returns to `/card/2095` (history back); × again, on the page the visit started on, navigates to `/browse` instead of leaving the app (`useBackOrNavigate`: the entry page has React Router's `history.state.idx === 0`) |
+| × on a card page reached by the /compare/X/X redirect opens Browse | At 390px, `/compare/2095/2095` redirects (a replace, so a new location key) to `/card/2095`; × still counts it as the page the visit started on and navigates to `/browse`. Without #653's `history.state.idx` check it stepped back to `about:blank`, out of the site |
 
 ## `card-printings.spec.ts`: 3 tests (2 desktop only, 1 on every project at a 360px viewport)
 
@@ -109,7 +110,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should navigate to browse when searching from hero | Typing "Elsa" + Enter navigates to `/browse?q=Elsa`, hero hidden, browse heading visible |
 | should navigate to browsing view via Browse all cards CTA | "Browse all cards" CTA navigates away from hero, shows browse heading |
 | should open search bottom sheet and focus input when tapping search icon | Tap search icon in bottom nav, sheet opens with focused input |
-| a search tap that beats the sheet chunk opens it, with a proxy input holding focus | With the lazy sheet's module held (#640), a Search tap focuses AppLayout's hidden proxy input (what raises the iOS keyboard); once released, the sheet opens |
+| a search tap that beats the sheet chunk opens it, with a proxy input holding focus | With the lazy sheet's module held (#640), a Search tap focuses AppLayout's hidden proxy input (what raises the iOS keyboard); once released, the sheet opens. The navigation waits for DOMContentLoaded, not `load` (see Patterns) |
 | should close search bottom sheet on backdrop click | Open search sheet, click backdrop, sheet dismisses, focus returns to the Search nav button (not the hidden iOS proxy input) |
 | should navigate to browse when pressing Enter in search bottom sheet | Type query in search sheet, press Enter, navigates to `/browse?q=Elsa`, sheet stays closed (the Enter must not also click the refocused Search button) |
 | should show sort dropdown in browse toolbar | Sort select and Filters button both visible in browse toolbar |
@@ -209,7 +210,7 @@ Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #48
 | should switch comparison pairs across exit and re-entry | (desktop) Enter → BACK → enter a different pair; consecutive comparisons work cleanly |
 | should enter comparison mode on mobile | (mobile) Tapping a synergy tile shows the BACK button |
 | should render the tabbed comparison layout on mobile | (mobile) MobileComparisonView's Engine/Community section-switch pill buttons render |
-| should switch to the Community tab on mobile | (mobile) Tapping the Community pill moves `aria-current="true"` onto it |
+| should switch to the Community tab on mobile | (mobile) Tapping the Community pill moves `aria-current="true"` onto it, and scrolls only the tab strip: once the strip has landed on Community, the page and every scroll container around it are where they were before the tap (#653, the strip now uses `useScrollSnapIndex` instead of `scrollIntoView`, which also scrolls ancestors; the old code did not move them in this layout either, so this guards the outcome) |
 | should open and dismiss the card lightbox on mobile | (mobile) Tapping a comparison card opens the portal-to-body `Enlarged:` dialog; its close button dismisses it |
 | should exit comparison mode via BACK on mobile | (mobile) BACK returns the modal to `data-mode="default"` |
 | opens directly in comparison with no BACK button (desktop) | (deep link) `/compare/A/B/groupKey` opens straight into comparison; BACK button suppressed (hideBackButton) |
@@ -298,6 +299,7 @@ Requires `VITE_SHOW_ADMIN_ANALYTICS=true` (playwright `webServer.env` + `apps/we
 - **Synergy card tiles** render as crawlable `a.card-tile` anchors (#486), not `button.card-tile` — plain-click is intercepted for in-app behavior (comparison in the modal, page-to-page nav on the card page), modified/middle-click follows the link.
 - **Navigation back** is tested via both clear/back button and logo click
 - **Image loading** is verified via `loading` and `decoding` attributes (not `src` URLs, which differ between dev proxy and production AVIF)
+- **Holding a request the page makes while it loads** (a lazy chunk behind `page.route`): navigate with `waitUntil: 'domcontentloaded'`. WebKit holds the `load` event until a pending module request ends (Chromium does not), so a `load` wait can wait on the held request and time out. Whether the page makes that request before `load` is a race, so mobile-safari fails some runs and passes others (#663)
 
 ## Debugging a failed E2E run
 

@@ -14,7 +14,6 @@ import {
   TierCircle,
 } from '../../../shared/components';
 import {printingAlt, usePrintingSelection, type Printing} from '../../../shared/hooks';
-import {trackEvent} from '../../../shared/lib/analytics';
 
 interface CardDetailPanelProps {
   card: LorcanaCard;
@@ -73,15 +72,12 @@ function buildNameLinkStyle(hovered: boolean): CSSProperties {
 const HERO_WIDTH = 298;
 const HERO_HEIGHT = 417;
 
-interface PrintingSelection {
-  printings: Printing[];
-  index: number;
-  onSelect: (index: number) => void;
-}
+type PrintingSelection = ReturnType<typeof usePrintingSelection>;
 
 /**
  * The hero art of a card with an alternate printing (#625): the swipeable printings strip,
- * with the Standard | <rarity> pills under it. The page scrolls, so nothing here clips.
+ * with the Standard | <rarity> pills under it. The page scrolls, so nothing here clips. The
+ * pills pick a printing; the strip follows a swipe live and records it once it comes to rest.
  */
 function PrintingsHero({
   card,
@@ -99,7 +95,8 @@ function PrintingsHero({
         card={card}
         printings={selection.printings}
         index={selection.index}
-        onIndexChange={selection.onSelect}
+        onIndexChange={selection.select}
+        onSettle={selection.settle}
         onEnlarge={onEnlarge}
         width={HERO_WIDTH}
         height={HERO_HEIGHT}
@@ -109,7 +106,7 @@ function PrintingsHero({
       <PrintingPills
         printings={selection.printings}
         index={selection.index}
-        onSelect={selection.onSelect}
+        onSelect={selection.pick}
       />
     </div>
   );
@@ -374,12 +371,8 @@ export function CardDetailPanel({
   activeGroupKey,
 }: CardDetailPanelProps) {
   const lightbox = useCardLightbox(card.id);
-  const {printings, index, select} = usePrintingSelection(card);
-  const selectPrinting = (next: number) => {
-    select(next);
-    const {rarity} = printings[next];
-    if (rarity) trackEvent('card_printing_view', {cardId: card.id, rarity, surface: 'card_page'});
-  };
+  const selection = usePrintingSelection(card, {surface: 'card_page'});
+  const {printings} = selection;
 
   return (
     <article
@@ -398,11 +391,7 @@ export function CardDetailPanel({
         boxSizing: 'border-box',
       }}>
       {printings.length > 1 ? (
-        <PrintingsHero
-          card={card}
-          selection={{printings, index, onSelect: selectPrinting}}
-          onEnlarge={lightbox.open}
-        />
+        <PrintingsHero card={card} selection={selection} onEnlarge={lightbox.open} />
       ) : (
         <CardImageBox card={card} onOpenLightbox={() => lightbox.open(0)} />
       )}

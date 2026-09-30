@@ -12,7 +12,7 @@ export {useRovingTabIndex} from './useRovingTabIndex';
 export {useScrollLock} from './useScrollLock';
 export {useScrollSnapIndex} from './useScrollSnapIndex';
 export {useBackOrNavigate} from './useBackOrNavigate';
-export {usePrintingSelection, printingAlt} from './usePrintingSelection';
+export {usePrintingSelection, printingAlt, printingsOf} from './usePrintingSelection';
 export type {Printing} from './usePrintingSelection';
 export {useTransitionPresence} from './useTransitionPresence';
 export {useBoop} from './useBoop';

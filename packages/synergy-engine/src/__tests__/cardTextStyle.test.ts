@@ -31,6 +31,26 @@ describe('canonicalizeCardLine', () => {
     expect(canonicalizeCardLine('get 2 ink drops.')).toBe('get 2 ink drops.');
   });
 
+  it('writes an exert cost as the ⟳ glyph (Pirate Plane 14202)', () => {
+    expect(canonicalizeCardLine('BARREL ROLL Exert, 1 ⬡ — Chosen character gains Alert this turn.')).toBe(
+      'BARREL ROLL ⟳, 1 ⬡ — Chosen character gains Alert this turn.',
+    );
+    expect(canonicalizeCardLine('FREEZE Exert — Exert chosen opposing character.')).toBe(
+      'FREEZE ⟳ — Exert chosen opposing character.',
+    );
+    expect(canonicalizeCardLine('LOOK Exert, 2 Ink - Draw a card.')).toBe('LOOK ⟳, 2 ⬡ — Draw a card.');
+  });
+
+  it('keeps Exert a word where it is the verb, not the cost', () => {
+    for (const line of [
+      'Exert chosen opposing character.',
+      'ERRATIC SCREAMS ⟳, 2 ⬡ — Exert all cards in your inkwell.',
+      'When you play this character, exert chosen character.',
+    ]) {
+      expect(canonicalizeCardLine(line)).toBe(line);
+    }
+  });
+
   it('maps near-miss glyphs and strips the invisible U+FE0F a pasted glyph carries', () => {
     const selector = String.fromCodePoint(0xfe0f);
     expect(canonicalizeCardLine('pay 2 ⬢ less')).toBe('pay 2 ⬡ less');

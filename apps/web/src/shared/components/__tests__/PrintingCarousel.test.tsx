@@ -18,6 +18,23 @@ beforeEach(() => {
   Element.prototype.scrollTo = stripScrollTo as unknown as Element['scrollTo'];
 });
 
+/** A carousel whose index follows its swipes, as the hosts wire it (usePrintingSelection). */
+function Swipeable({onSettle}: {onSettle?: (index: number) => void}) {
+  const [index, setIndex] = useState(0);
+  return (
+    <PrintingCarousel
+      card={card}
+      printings={PRINTINGS}
+      index={index}
+      onIndexChange={setIndex}
+      onSettle={onSettle}
+      onEnlarge={() => {}}
+      width={298}
+      height={417}
+    />
+  );
+}
+
 function renderCarousel(props: Partial<Parameters<typeof PrintingCarousel>[0]> = {}) {
   const onIndexChange = vi.fn();
   const onEnlarge = vi.fn();
@@ -97,6 +114,32 @@ describe('PrintingCarousel', () => {
     expect(onIndexChange).toHaveBeenCalledWith(1);
   });
 
+  it('reports the printing a swipe comes to rest on', () => {
+    const onSettle = vi.fn();
+    render(<Swipeable onSettle={onSettle} />);
+    const viewport = screen.getByRole('group', {name: 'Pongo - Determined Father printings'});
+    Object.defineProperty(viewport, 'clientWidth', {value: 298, configurable: true});
+
+    fireEvent.touchStart(viewport);
+    viewport.scrollLeft = 298;
+    act(() => {
+      fireEvent.scroll(viewport);
+    });
+    fireEvent.touchEnd(viewport);
+    fireEvent(viewport, new Event('scrollend'));
+
+    expect(onSettle).toHaveBeenCalledWith(1);
+  });
+
+  // A comparison shows the base art, so the strip must not be swiped off it.
+  it('cannot be swiped while locked', () => {
+    renderCarousel({locked: true});
+
+    expect(
+      screen.getByRole('group', {name: 'Pongo - Determined Father printings'}),
+    ).toHaveStyle({overflowX: 'hidden'});
+  });
+
   // The modal's expanded group view unmounts the strip; coming back must not show the
   // Standard art first and slide across to the printing still picked.
   it('mounts on the printing it is given, without animating from the first', () => {
@@ -108,20 +151,6 @@ describe('PrintingCarousel', () => {
   // A swipe (or arrow keys scrolling the strip) inerts the slide it leaves; focus on that
   // slide's Enlarge button would otherwise fall to <body>.
   it('hands keyboard focus to the slide a swipe brings in', () => {
-    function Swipeable() {
-      const [index, setIndex] = useState(0);
-      return (
-        <PrintingCarousel
-          card={card}
-          printings={PRINTINGS}
-          index={index}
-          onIndexChange={setIndex}
-          onEnlarge={() => {}}
-          width={298}
-          height={417}
-        />
-      );
-    }
     render(<Swipeable />);
     screen.getByRole('button', {name: 'Enlarge Standard printing'}).focus();
     const viewport = screen.getByRole('group', {name: 'Pongo - Determined Father printings'});

@@ -4548,10 +4548,10 @@
       "setCode": "14",
       "number": 202,
       "rarity": "Uncommon",
-      "fullText": "DODGE THIS! When you play this item, you may deal 1 damage to chosen character.\n\nBARREL ROLL Exert, 1 ⬡ — Chosen character gains Alert this turn. (They can challenge as if they had Evasive.)",
+      "fullText": "DODGE THIS! When you play this item, you may deal 1 damage to chosen character.\n\nBARREL ROLL ⟳, 1 ⬡ — Chosen character gains Alert this turn. (They can challenge as if they had Evasive.)",
       "fullTextSections": [
         "DODGE THIS! When you play this item, you may deal 1 damage to chosen character.",
-        "BARREL ROLL Exert, 1 ⬡ — Chosen character gains Alert this turn. (They can challenge as if they had Evasive.)"
+        "BARREL ROLL ⟳, 1 ⬡ — Chosen character gains Alert this turn. (They can challenge as if they had Evasive.)"
       ]
     }
   ]

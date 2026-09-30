@@ -3,7 +3,7 @@ import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {IconButton} from '../../../shared/components/IconButton';
-import {usePrintingSelection, useScrollLock, useTransitionPresence} from '../../../shared/hooks';
+import {printingsOf, useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {CardTranslationToggle} from '../../../shared/components/CardTranslationToggle';
 import {PrintingPills} from '../../../shared/components/PrintingPills';
 import {
@@ -100,7 +100,7 @@ const noop = () => {};
  * handoff. visibility:hidden also keeps them out of the focus order and the accessibility tree.
  */
 function ReservedArtControls({card, isMobile}: {card: LorcanaCard; isMobile: boolean}) {
-  const {printings} = usePrintingSelection(card);
+  const printings = printingsOf(card);
   const toggle = card.scanLanguage ? (
     <span style={HIDDEN}>
       <CardTranslationToggle shown={false} onToggle={noop} />

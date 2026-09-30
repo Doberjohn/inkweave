@@ -1,8 +1,15 @@
-import {describe, it, expect} from 'vitest';
+import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {renderHook, act} from '@testing-library/react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {createCard} from '../../test-utils';
+import {trackEvent} from '../../lib/analytics';
 import {printingAlt, usePrintingSelection} from '../usePrintingSelection';
+
+vi.mock('../../lib/analytics', () => ({trackEvent: vi.fn()}));
+
+beforeEach(() => {
+  vi.mocked(trackEvent).mockClear();
+});
 
 const pongo: LorcanaCard = createCard({
   id: '1938',
@@ -16,9 +23,10 @@ const gosalyn: LorcanaCard = createCard({
 });
 
 function renderSelection(card: LorcanaCard, resetWhen = false) {
-  return renderHook(({card, resetWhen}) => usePrintingSelection(card, {resetWhen}), {
-    initialProps: {card, resetWhen},
-  });
+  return renderHook(
+    ({card, resetWhen}) => usePrintingSelection(card, {resetWhen, surface: 'card_page'}),
+    {initialProps: {card, resetWhen}},
+  );
 }
 
 describe('usePrintingSelection', () => {
@@ -55,16 +63,18 @@ describe('usePrintingSelection', () => {
   });
 
   it('starts on the printing initialKey names, or on Standard when it names none', () => {
-    const opened = renderHook(() => usePrintingSelection(pongo, {initialKey: '2141'}));
+    const opened = renderHook(() => usePrintingSelection(pongo, {surface: 'modal', initialKey: '2141'}));
     expect(opened.result.current.current.label).toBe('Enchanted');
 
-    const unknown = renderHook(() => usePrintingSelection(pongo, {initialKey: 'no-such-printing'}));
+    const unknown = renderHook(() =>
+      usePrintingSelection(pongo, {surface: 'modal', initialKey: 'no-such-printing'}),
+    );
     expect(unknown.result.current.index).toBe(0);
   });
 
   it('reads initialKey once: resetWhen drops that printing for good', () => {
     const {result, rerender} = renderHook(
-      ({resetWhen}) => usePrintingSelection(pongo, {resetWhen, initialKey: '2141'}),
+      ({resetWhen}) => usePrintingSelection(pongo, {resetWhen, surface: 'modal', initialKey: '2141'}),
       {initialProps: {resetWhen: false}},
     );
     expect(result.current.index).toBe(1);
@@ -83,6 +93,58 @@ describe('usePrintingSelection', () => {
 
     rerender({card: pongo, resetWhen: false});
     expect(result.current.index).toBe(0);
+  });
+});
+
+// card_printing_view counts settled views: a pill pick, or the strip at rest on a printing.
+describe('usePrintingSelection views', () => {
+  it('records a picked printing once', () => {
+    const {result} = renderSelection(pongo);
+
+    act(() => result.current.pick(1));
+
+    expect(result.current.index).toBe(1);
+    expect(trackEvent).toHaveBeenCalledTimes(1);
+    expect(trackEvent).toHaveBeenCalledWith('card_printing_view', {
+      cardId: '1938',
+      rarity: 'Enchanted',
+      surface: 'card_page',
+    });
+  });
+
+  it('records nothing for a printing the strip only passes through', () => {
+    const {result} = renderSelection(pongo);
+
+    act(() => result.current.select(1));
+
+    expect(trackEvent).not.toHaveBeenCalled();
+  });
+
+  it('records the printing the strip comes to rest on', () => {
+    const {result} = renderSelection(pongo);
+
+    act(() => result.current.settle(1));
+
+    expect(trackEvent).toHaveBeenCalledTimes(1);
+  });
+
+  it('never records the Standard printing', () => {
+    const {result} = renderSelection(pongo);
+
+    act(() => result.current.settle(0));
+    act(() => result.current.pick(1));
+    act(() => result.current.pick(0));
+
+    expect(trackEvent).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not record a pick of the printing already shown', () => {
+    const {result} = renderSelection(pongo);
+
+    act(() => result.current.pick(1));
+    act(() => result.current.pick(1));
+
+    expect(trackEvent).toHaveBeenCalledTimes(1);
   });
 });
 
