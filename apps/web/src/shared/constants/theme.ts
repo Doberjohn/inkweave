@@ -15,7 +15,7 @@ export const INK_COLORS: Record<Ink, {bg: string; text: string; border: string}>
 
 // Font families
 export const FONTS = {
-  body: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif",
+  body: "'Plus Jakarta Sans', 'Inkweave Sans Fallback', -apple-system, BlinkMacSystemFont, sans-serif",
   hero: "'Tinos', 'Georgia', serif",
 } as const;
 
