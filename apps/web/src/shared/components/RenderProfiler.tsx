@@ -1,32 +1,30 @@
 import {Profiler, type ProfilerOnRenderCallback, type ReactNode} from 'react';
+import {onSentryReady} from '../lib/sentry';
 
 const SLOW_RENDER_MS = 16; // 1 frame at 60fps
 
 /**
- * Sends render timing to Sentry as a custom metric span.
- * Only runs in production when Sentry is loaded.
+ * Sends render timing to Sentry as a custom metric span, once Sentry has loaded: never loads it
+ * itself, so a slow first render can't pull Sentry onto the critical path (#640). If Sentry
+ * never loads (blocked, offline), the report is dropped.
  */
 function reportToSentry(id: string, phase: string, actualDurationMs: number) {
-  import('@sentry/react')
-    .then((Sentry) => {
-      Sentry.startSpan(
-        {
-          name: `react.render.${id}`,
-          op: 'ui.react.render',
-          attributes: {
-            'react.component': id,
-            'react.phase': phase,
-            'react.duration_ms': actualDurationMs,
-          },
+  onSentryReady((sentry) => {
+    sentry.startSpan(
+      {
+        name: `react.render.${id}`,
+        op: 'ui.react.render',
+        attributes: {
+          'react.component': id,
+          'react.phase': phase,
+          'react.duration_ms': actualDurationMs,
         },
-        () => {
-          // Span auto-closes; the attributes carry the data
-        },
-      );
-    })
-    .catch(() => {
-      // Sentry unavailable (blocked, failed to load, etc.). Silently skip.
-    });
+      },
+      () => {
+        // Span auto-closes; the attributes carry the data
+      },
+    );
+  });
 }
 
 /**

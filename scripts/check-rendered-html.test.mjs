@@ -6,6 +6,7 @@ import {
   selectSampleCards,
   findOffenders,
   findOrphanImagePreloads,
+  findSentryPreloads,
   readCanonical,
   SITE_ORIGIN,
 } from './check-rendered-html.mjs';
@@ -129,6 +130,22 @@ describe('findOrphanImagePreloads', () => {
   });
 });
 
+describe('findSentryPreloads', () => {
+  const SENTRY_CHUNKS = new Set(['esm-D3E0E-l0.js']);
+
+  it('flags a modulepreload of a Sentry chunk, whatever order its attributes come in', () => {
+    const html =
+      '<head><link as="script" rel="modulepreload" href="/assets/esm-D3E0E-l0.js">' +
+      '<link rel="modulepreload" href="/assets/HomePage-QCEVrDYP.js"></head>';
+    expect(findSentryPreloads(html, SENTRY_CHUNKS)).toEqual(['/assets/esm-D3E0E-l0.js']);
+  });
+
+  it('passes a page whose modulepreloads are all ordinary chunks', () => {
+    const html = '<head><link rel="modulepreload" crossorigin="" href="/assets/loader-BeYgltdQ.js"></head>';
+    expect(findSentryPreloads(html, SENTRY_CHUNKS)).toEqual([]);
+  });
+});
+
 describe('findOffenders', () => {
   it('passes a well-formed build', () => {
     seedGoodBuild();
@@ -213,6 +230,22 @@ describe('findOffenders', () => {
     const offenders = findOffenders(dist, [CARD], cardPath);
     expect(offenders).toHaveLength(1);
     expect(offenders[0].file).toBe(path.join(dist, 'index.html'));
+  });
+
+  it('fails when a crawled page modulepreloads the Sentry SDK, found by its name string (#640)', () => {
+    seedGoodBuild();
+    fs.mkdirSync(path.join(dist, 'assets'));
+    fs.writeFileSync(path.join(dist, 'assets', 'esm-abc12345.js'), 'const sdk = {name: "sentry.javascript.react"};');
+    fs.writeFileSync(path.join(dist, 'assets', 'loader-def67890.js'), 'export const load = 1;');
+    fs.writeFileSync(
+      path.join(dist, 'index.html'),
+      '<!doctype html><html><head><link rel="modulepreload" href="/assets/loader-def67890.js">' +
+        '<link rel="modulepreload" as="script" href="/assets/esm-abc12345.js"></head><body></body></html>',
+    );
+    const offenders = findOffenders(dist, [CARD], cardPath);
+    expect(offenders).toHaveLength(1);
+    expect(offenders[0].file).toBe(path.join(dist, 'index.html'));
+    expect(offenders[0].reason).toMatch(/esm-abc12345\.js/);
   });
 
   it('distinguishes a wrong target path from a failed crawl', () => {

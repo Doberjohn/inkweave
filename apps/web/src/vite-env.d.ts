@@ -15,3 +15,11 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+interface Window {
+  /**
+   * Set only by our own prerender crawl (scripts/prerender.mjs), so the captured pages never
+   * load Sentry or bake in its modulepreload (#640). Real visitors and PageSpeed never have it.
+   */
+  __INKWEAVE_PRERENDER__?: boolean;
+}

@@ -285,6 +285,11 @@ async function crawlRouteOnce(browser, route, selector) {
   let page;
   try {
     page = await browser.newPage();
+    // Tells the app it is being crawled, so it never loads Sentry: its modulepreload would be
+    // baked into the captured HTML (#640; deploy check 7 in check-rendered-html.mjs).
+    await page.addInitScript(() => {
+      window.__INKWEAVE_PRERENDER__ = true;
+    });
     await applyCpuThrottle(page);
     await page.goto(`http://localhost:${PORT}${route}`, {waitUntil: 'networkidle', timeout: 30000});
     // A route is "rendered" once its <Seo> has replaced the shell <title>, i.e. the real content

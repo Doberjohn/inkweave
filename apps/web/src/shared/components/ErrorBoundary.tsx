@@ -1,5 +1,6 @@
 import {Component, type ReactNode} from 'react';
 import {COLORS, FONT_SIZES, SPACING, RADIUS} from '../constants';
+import {loadSentry} from '../lib/sentry';
 
 interface Props {
   children: ReactNode;
@@ -23,13 +24,13 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    if (import.meta.env.PROD) {
-      import('@sentry/react').then((Sentry) => {
-        Sentry.captureException(error, {
-          contexts: {react: {componentStack: errorInfo.componentStack ?? ''}},
-        });
+    // Loads and initializes Sentry at once if it hasn't yet (#640), so an error caught before
+    // `load` is still reported. A no-op where Sentry is off (dev, no DSN, the prerender crawl).
+    void loadSentry().then((sentry) => {
+      sentry?.captureException(error, {
+        contexts: {react: {componentStack: errorInfo.componentStack ?? ''}},
       });
-    }
+    });
   }
 
   render() {
