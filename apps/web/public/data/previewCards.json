@@ -3858,8 +3858,8 @@
     },
     {
       "id": 14098,
-      "name": "Irritating Provocation",
-      "fullName": "Irritating Provocation",
+      "name": "Flippant Taunt",
+      "fullName": "Flippant Taunt",
       "cost": 1,
       "color": "Emerald",
       "inkwell": true,
@@ -3871,8 +3871,7 @@
       "fullText": "Until the start of your next turn, chosen opposing character gains Reckless and, if you have 2 or more opponents, can’t challenge your characters or locations. (They can’t quest and must challenge if able.)",
       "fullTextSections": [
         "Until the start of your next turn, chosen opposing character gains Reckless and, if you have 2 or more opponents, can’t challenge your characters or locations. (They can’t quest and must challenge if able.)"
-      ],
-      "scanLanguage": "it"
+      ]
     },
     {
       "id": 14126,
@@ -3943,15 +3942,16 @@
     {
       "id": 14046,
       "name": "Madam Mim",
-      "fullName": "Madam Mim - Trinket Hunter",
+      "fullName": "Madam Mim - Bauble Chaser",
       "cost": 1,
       "color": "Amethyst",
       "inkwell": true,
       "type": "Character",
       "setCode": "14",
       "number": 46,
-      "version": "Trinket Hunter",
+      "version": "Bauble Chaser",
       "rarity": "Common",
+      "franchise": "The Sword in the Stone",
       "subtypes": [
         "Dreamborn",
         "Sorcerer",
@@ -3963,8 +3963,7 @@
       ],
       "strength": 2,
       "willpower": 1,
-      "lore": 1,
-      "scanLanguage": "de"
+      "lore": 1
     },
     {
       "id": 14047,
@@ -4308,6 +4307,199 @@
       "fullTextSections": [
         "(A character with cost 3 or more can ⟳ to sing this song for free.)",
         "Look at the top 3 cards of your deck. Put one into your inkwell facedown and exerted, one on the top of your deck, and one on the bottom of your deck."
+      ]
+    },
+    {
+      "id": 14024,
+      "name": "Judy Hopps",
+      "fullName": "Judy Hopps - Always Vigilant",
+      "cost": 4,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 24,
+      "version": "Always Vigilant",
+      "rarity": "Rare",
+      "franchise": "Zootopia",
+      "subtypes": [
+        "Dreamborn",
+        "Hero",
+        "Detective"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "2",
+          "fullText": "Shift 2"
+        }
+      ],
+      "fullText": "Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your characters named Judy Hopps.)\nGOT YOU NOW When you play this character, if you played another character this turn, you may banish chosen character with 5 ¤ or more.",
+      "fullTextSections": [
+        "Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your characters named Judy Hopps.)",
+        "GOT YOU NOW When you play this character, if you played another character this turn, you may banish chosen character with 5 ¤ or more."
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 1
+    },
+    {
+      "id": 14071,
+      "name": "Hiro Hamada",
+      "fullName": "Hiro Hamada - Versatile Inventor",
+      "cost": 2,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 71,
+      "version": "Versatile Inventor",
+      "rarity": "Uncommon",
+      "franchise": "Big Hero 6",
+      "subtypes": [
+        "Dreamborn",
+        "Super",
+        "Hero",
+        "Inventor"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        }
+      ],
+      "fullText": "Evasive (Only characters with Evasive can challenge this character.)\nTURBO THRUSTERS When you play this character, you may pay 1 ⬡ to give chosen character of yours Evasive until the start of your next turn.",
+      "fullTextSections": [
+        "Evasive (Only characters with Evasive can challenge this character.)",
+        "TURBO THRUSTERS When you play this character, you may pay 1 ⬡ to give chosen character of yours Evasive until the start of your next turn."
+      ],
+      "strength": 3,
+      "willpower": 1,
+      "lore": 1
+    },
+    {
+      "id": 14086,
+      "name": "Fred",
+      "fullName": "Fred - Awesome Boss",
+      "cost": 6,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 86,
+      "version": "Awesome Boss",
+      "rarity": "Rare",
+      "franchise": "Big Hero 6",
+      "subtypes": [
+        "Dreamborn",
+        "Super",
+        "Hero"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "4",
+          "fullText": "Shift 4"
+        }
+      ],
+      "fullText": "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Fred.)\nRADICAL RESOURCES Whenever you play this or another Super character, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Fred.)",
+        "RADICAL RESOURCES Whenever you play this or another Super character, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+      ],
+      "strength": 6,
+      "willpower": 5,
+      "lore": 2
+    },
+    {
+      "id": 14088,
+      "name": "Don Karnage",
+      "fullName": "Don Karnage - Charming Pirate",
+      "cost": 6,
+      "color": "Emerald",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "14",
+      "number": 88,
+      "version": "Charming Pirate",
+      "rarity": "Super Rare",
+      "franchise": "TaleSpin",
+      "subtypes": [
+        "Dreamborn",
+        "Pirate",
+        "Prince",
+        "Villain"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "4",
+          "fullText": "Shift 4"
+        }
+      ],
+      "fullText": "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Don Karnage.)\nLASTING IMPRESSION When you play this character, deal 1 damage to each opposing character. This damage can’t be reduced by Resist.\nSO SMOOTH While this character is exerted, opposing damaged characters get -1 ◊.",
+      "fullTextSections": [
+        "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Don Karnage.)",
+        "LASTING IMPRESSION When you play this character, deal 1 damage to each opposing character. This damage can’t be reduced by Resist.",
+        "SO SMOOTH While this character is exerted, opposing damaged characters get -1 ◊."
+      ],
+      "strength": 3,
+      "willpower": 6,
+      "lore": 2,
+      "scanLanguage": "de"
+    },
+    {
+      "id": 14129,
+      "name": "Pushing Boundaries",
+      "fullName": "Pushing Boundaries",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": false,
+      "type": "Action",
+      "setCode": "14",
+      "number": 129,
+      "rarity": "Uncommon",
+      "franchise": "Big Hero 6",
+      "fullText": "Chosen character of yours takes no damage while challenging this turn. Get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "Chosen character of yours takes no damage while challenging this turn. Get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+      ]
+    },
+    {
+      "id": 14168,
+      "name": "Spyglass Hat",
+      "fullName": "Spyglass Hat",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "14",
+      "number": 168,
+      "rarity": "Rare",
+      "fullText": "HAT COUTURE Whenever you play this or another item, if the item you played has a different name than each other item you have in play, you may put a card from your hand into your inkwell facedown and exerted.",
+      "fullTextSections": [
+        "HAT COUTURE Whenever you play this or another item, if the item you played has a different name than each other item you have in play, you may put a card from your hand into your inkwell facedown and exerted."
+      ]
+    },
+    {
+      "id": 14199,
+      "name": "Khan Transport Delivery",
+      "fullName": "Khan Transport Delivery",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": false,
+      "type": "Action",
+      "setCode": "14",
+      "number": 199,
+      "rarity": "Common",
+      "franchise": "TaleSpin",
+      "fullText": "Draw a card. Get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "Draw a card. Get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
       ]
     },
     {
