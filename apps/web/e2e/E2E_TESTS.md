@@ -110,7 +110,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should navigate to browse when searching from hero | Typing "Elsa" + Enter navigates to `/browse?q=Elsa`, hero hidden, browse heading visible |
 | should navigate to browsing view via Browse all cards CTA | "Browse all cards" CTA navigates away from hero, shows browse heading |
 | should open search bottom sheet and focus input when tapping search icon | Tap search icon in bottom nav, sheet opens with focused input |
-| a search tap that beats the sheet chunk opens it, with a proxy input holding focus | With the lazy sheet's module held (#640), a Search tap focuses AppLayout's hidden proxy input (what raises the iOS keyboard); once released, the sheet opens |
+| a search tap that beats the sheet chunk opens it, with a proxy input holding focus | With the lazy sheet's module held (#640), a Search tap focuses AppLayout's hidden proxy input (what raises the iOS keyboard); once released, the sheet opens. The navigation waits for DOMContentLoaded, not `load` (see Patterns) |
 | should close search bottom sheet on backdrop click | Open search sheet, click backdrop, sheet dismisses, focus returns to the Search nav button (not the hidden iOS proxy input) |
 | should navigate to browse when pressing Enter in search bottom sheet | Type query in search sheet, press Enter, navigates to `/browse?q=Elsa`, sheet stays closed (the Enter must not also click the refocused Search button) |
 | should show sort dropdown in browse toolbar | Sort select and Filters button both visible in browse toolbar |
@@ -298,6 +298,7 @@ Requires `VITE_SHOW_ADMIN_ANALYTICS=true` (playwright `webServer.env` + `apps/we
 - **Synergy card tiles** render as crawlable `a.card-tile` anchors (#486), not `button.card-tile` — plain-click is intercepted for in-app behavior (comparison in the modal, page-to-page nav on the card page), modified/middle-click follows the link.
 - **Navigation back** is tested via both clear/back button and logo click
 - **Image loading** is verified via `loading` and `decoding` attributes (not `src` URLs, which differ between dev proxy and production AVIF)
+- **Holding a request the page makes while it loads** (a lazy chunk behind `page.route`): navigate with `waitUntil: 'domcontentloaded'`. WebKit holds the `load` event until a pending module request ends (Chromium does not), so a `load` wait can wait on the held request and time out. Whether the page makes that request before `load` is a race, so mobile-safari fails some runs and passes others (#663)
 
 ## Debugging a failed E2E run
 
