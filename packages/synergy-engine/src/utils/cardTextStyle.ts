@@ -33,12 +33,18 @@ const INK_COST_KEYWORD = /^((?:[A-Z][a-z]+ )*(?:Shift|Boost)) (\d+) \(/;
  * Ink amounts and stats spelled out as words; released data always writes the glyph (0 word
  * forms in allCards.json). Case-sensitive: lowercase "N ink drops" is Set 14's mechanic word and
  * must stay. Lore is signed-only: released data keeps "gain N lore" as a lowercase word.
+ *
+ * An exert cost spelled "Exert" (Pirate Plane 14202, #667) becomes ⟳ only in cost position,
+ * right before the em dash or a comma-separated cost that ends in one. Released data also uses
+ * "Exert" as the verb ("Exert chosen opposing character."), never before a dash. The dash
+ * normalization runs first, so "Exert, 2 Ink -" is covered.
  */
 const GLYPH_WORDS: ReadonlyArray<readonly [RegExp, string]> = [
   [/\b(\d+) Ink\b/g, '$1 ⬡'],
   [/([+-]?\b\d+) Strength\b/g, '$1 ¤'],
   [/([+-]?\b\d+) Willpower\b/g, '$1 ⛉'],
   [/([+-]\d+) Lore\b/g, '$1 ◊'],
+  [/\bExert(?=(?:, [^—.\n]*)? —)/g, '⟳'],
 ];
 
 /**
