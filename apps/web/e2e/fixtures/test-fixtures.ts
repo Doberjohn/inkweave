@@ -35,11 +35,6 @@ const BENIGN_CONSOLE: readonly RegExp[] = [
   // HTTP status ("...: 404") or "received HTML instead of JSON", which are NOT
   // matched here and still fail the guard.
   /TypeError: Failed to fetch/,
-  // React Grab (dev inspector) is imported ONLY in Vite dev mode (index.html,
-  // gated on `import.meta.env.DEV`) and its client connects to ws://localhost:4722.
-  // E2E runs under `npx vite` (dev) with no react-grab daemon, so the connection is
-  // refused and logged. Pure dev-tooling noise — it never exists in a prod build.
-  /ws:\/\/localhost:4722/,
   // Firefox-only: a self-hosted @font-face weight that ISN'T preloaded (index.html
   // preloads only the 400 weights) can still be in-flight when a test navigates or
   // tears down — e.g. the compact header renders weight-500 text, then the spec moves
