@@ -124,6 +124,9 @@ export default defineConfig({
       // stays off via .env.example). The spec still skips gracefully if the
       // vote-analytics artifact was not generated in the environment.
       VITE_SHOW_ADMIN_ANALYTICS: 'true',
+      // Keep the react-grab dev inspector (index.html) out of E2E: on every page load it fetches
+      // react-grab.com and @imports a Google Fonts stylesheet, which delays WebKit's `load` (#673).
+      VITE_DISABLE_REACT_GRAB: 'true',
     },
   },
 });
