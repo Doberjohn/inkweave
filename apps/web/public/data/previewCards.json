@@ -4309,6 +4309,23 @@
         "(A character with cost 3 or more can ⟳ to sing this song for free.)",
         "Look at the top 3 cards of your deck. Put one into your inkwell facedown and exerted, one on the top of your deck, and one on the bottom of your deck."
       ]
+    },
+    {
+      "id": 14202,
+      "name": "Pirate Plane",
+      "fullName": "Pirate Plane",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "14",
+      "number": 202,
+      "rarity": "Uncommon",
+      "fullText": "DODGE THIS! When you play this item, you may deal 1 damage to chosen character.\n\nBARREL ROLL Exert, 1 ⬡ — Chosen character gains Alert this turn. (They can challenge as if they had Evasive.)",
+      "fullTextSections": [
+        "DODGE THIS! When you play this item, you may deal 1 damage to chosen character.",
+        "BARREL ROLL Exert, 1 ⬡ — Chosen character gains Alert this turn. (They can challenge as if they had Evasive.)"
+      ]
     }
   ]
 }
