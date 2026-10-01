@@ -1350,7 +1350,14 @@
       ],
       "strength": 4,
       "willpower": 5,
-      "lore": 2
+      "lore": 2,
+      "variants": [
+        {
+          "id": 14230,
+          "rarity": "Enchanted",
+          "number": 230
+        }
+      ]
     },
     {
       "id": 14091,
@@ -2089,7 +2096,14 @@
       ],
       "strength": 5,
       "willpower": 8,
-      "lore": 2
+      "lore": 2,
+      "variants": [
+        {
+          "id": 14237,
+          "rarity": "Enchanted",
+          "number": 237
+        }
+      ]
     },
     {
       "id": 14161,
@@ -4376,7 +4390,14 @@
       ],
       "strength": 4,
       "willpower": 4,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14206,
+          "rarity": "Epic",
+          "number": 206
+        }
+      ]
     },
     {
       "id": 14071,
