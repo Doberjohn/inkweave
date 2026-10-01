@@ -17,8 +17,8 @@ import {CardModalProvider} from './shared/contexts/CardModalContext';
 import {COLORS} from './shared/constants';
 import {useCardDataContext} from './shared/contexts/CardDataContext';
 import {useResponsive} from './shared/hooks';
-import {useSpeedInsightsRoute} from './shared/hooks/useSpeedInsightsRoute';
 import {lazyWithRetry} from './shared/lib/lazyWithRetry';
+import {useSpeedInsightsRoute} from './shared/lib/speedInsightsRoute';
 
 // Mobile-only, so it stays out of the entry chunk desktop visitors download (#640). On a phone
 // it loads right after the first render. A search tap in the moment before it arrives opens the
