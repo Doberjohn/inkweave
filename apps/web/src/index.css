@@ -71,6 +71,8 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
 /* Local Arial (or a metric twin) scaled to the body font's metrics, so text laid out before it
    arrives doesn't reflow when it swaps in (#643; measured on the homepage text for #627). One face
    per weight: font-synthesis is off, so the bold weights need Arial Bold of their own. The 400
