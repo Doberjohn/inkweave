@@ -117,6 +117,20 @@ export default defineConfig({
     // sessions load this machine (#664).
     timeout: 240000,
     env: {
+      // Exercise the accounts surface in E2E; production default stays off via .env.example.
+      VITE_SHOW_ACCOUNTS: 'true',
+      // Placeholder Supabase config, so `enabled` is true and the auth control RENDERS.
+      // Two reasons this is pinned rather than inherited:
+      //   1. CI supplies no Supabase env, so `getSupabase()` returns null, `enabled` is
+      //      false and AuthButton renders nothing. Without this the 5-browser matrix
+      //      exercises none of the auth surface, and axe never scans it.
+      //   2. Process env beats .env files, so a developer's real credentials in
+      //      .env.local cannot change what E2E sees. Same state everywhere.
+      // Nothing reaches the network: with no stored session and no code in the URL,
+      // getSession() resolves locally. Signing IN is not covered here and cannot be,
+      // since it needs a real provider round-trip.
+      VITE_SUPABASE_URL: 'https://e2e.placeholder.supabase.co',
+      VITE_SUPABASE_ANON_KEY: 'e2e-placeholder-anon-key',
       // Exercise the reveal-season active code paths in E2E.
       VITE_IS_REVEAL_SEASON: 'true',
       // Show Strategy Tips block so the `playstyle-detail.spec.ts` toggle test has

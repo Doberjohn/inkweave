@@ -41,6 +41,16 @@ const NAV_ITEMS: readonly NavItem[] = [
 
 const REVEALS_PATH = '/reveals';
 
+/**
+ * Accounts ship dark until there is something to do with one (#474, 2026-10-01).
+ *
+ * This gates the control, NOT the routes. `/account` and `/auth/callback` stay
+ * mounted: the callback is an OAuth redirect TARGET, so unmounting it would turn a
+ * provider round-trip into a 404 for anyone mid-flight, and leaving both reachable
+ * by URL is what makes the feature testable in production without being findable.
+ */
+const SHOW_ACCOUNTS = import.meta.env.VITE_SHOW_ACCOUNTS === 'true';
+
 // =====================================================================
 // Domain types — encapsulate related flags so function signatures carry
 // semantics, not bare primitives. Also prevents arg-order swaps between
@@ -498,7 +508,7 @@ export function CompactHeader({
       )}
       {!viewport.isMobile && <DesktopNav isRevealSeason={isRevealSeason} />}
       {headerActions}
-      <HeaderAuth />
+      {SHOW_ACCOUNTS && <HeaderAuth />}
     </header>
   );
 }
