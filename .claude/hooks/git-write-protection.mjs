@@ -69,13 +69,13 @@ const HARD_RULES = [
 // it is the owner's to run: no prefix bypasses this, and --dry-run is blocked too. Reading,
 // linting or formatting its source stays allowed.
 const PACKAGE_MANAGERS = new Set(['pnpm', 'npm', 'yarn']);
-// Programs that run another one: `npx x`, `corepack pnpm`, and `pnpm exec x` / `pnpm dlx x`.
+// Programs that only run another one: `npx x`, `corepack pnpm`.
 const LAUNCHERS = new Set(['npx', 'pnpx', 'bunx', 'corepack']);
-const EXEC_VERBS = new Set(['exec', 'dlx']);
 const SCRIPT_RUNTIMES = new Set(['node', 'bun', 'deno']);
+const KNOWN_PROGRAMS = new Set([...PACKAGE_MANAGERS, ...LAUNCHERS, ...SCRIPT_RUNTIMES]);
 const REMOVER_TASK = 'worktree:remove';
 const REMOVER_SCRIPT = /remove-worktree\.mjs$/i;
-const MAX_LAUNCHES = 4;
+const MAX_LAUNCHES = 6;
 const REMOVER_MESSAGE =
   "Worktree deletion is the owner's job: run `pnpm worktree:remove <name>` yourself. " +
   'No prefix bypasses this.';
@@ -84,37 +84,45 @@ const MENTIONS_REMOVER = /worktree:remove|remove-worktree\.mjs/i;
 // pnpm.ps1 is how PowerShell finds pnpm when its execution policy allows scripts.
 const toolName = (word) => programName(word).replace(/\.ps1$/, '');
 
-// Checked at every hop, so a launcher's own words (a worktree named `exec`) cannot hide it.
+// The task by name: `pnpm worktree:remove`, `node --run worktree:remove`, `--run=worktree:remove`.
+const namesTask = (words) =>
+  words.some((word) => word === REMOVER_TASK || word.endsWith(`=${REMOVER_TASK}`));
+
+// Each hop follows a package manager or launcher to the next program it runs, and every hop is
+// checked, so neither a launcher's own words (a worktree named `exec`) nor an option value
+// (`npx --package foo node ...`) can hide the remover.
 function runsRemover(argv) {
   let words = argv;
   for (let hop = 0; words?.length && hop < MAX_LAUNCHES; hop++) {
     if (namesRemover(words)) return true;
-    words = launched(words);
+    const rest = launchedWords(words);
+    // `npm exec -c '...'` and `pnpm exec -c '...'` pass the command as one string.
+    if (rest?.some((word) => /\s/.test(word) && MENTIONS_REMOVER.test(word))) return true;
+    words = rest && fromNextProgram(rest);
   }
   return false;
 }
 
 function namesRemover([program, ...words]) {
   const name = toolName(program);
-  if (PACKAGE_MANAGERS.has(name)) return words.includes(REMOVER_TASK);
+  if (PACKAGE_MANAGERS.has(name)) return namesTask(words);
   if (!SCRIPT_RUNTIMES.has(name)) return false;
   // node --run, bun run and deno task run package scripts by name.
-  if (words.includes(REMOVER_TASK)) return true;
+  if (namesTask(words)) return true;
   const checksOnly = name === 'node' && (words.includes('--check') || words.includes('-c'));
   return !checksOnly && words.some((word) => REMOVER_SCRIPT.test(word));
 }
 
-// The command a launcher runs, or null for any other program.
-function launched([program, ...words]) {
+// The words a package manager or launcher passes on (`pnpm exec x`, `yarn node x`, `npx x`).
+function launchedWords([program, ...words]) {
   const name = toolName(program);
-  if (LAUNCHERS.has(name)) return withoutLeadingOptions(words);
-  const at = PACKAGE_MANAGERS.has(name) ? words.findIndex((word) => EXEC_VERBS.has(word)) : -1;
-  return at === -1 ? null : withoutLeadingOptions(words.slice(at + 1));
+  return PACKAGE_MANAGERS.has(name) || LAUNCHERS.has(name) ? words : null;
 }
 
-function withoutLeadingOptions(words) {
-  const at = words.findIndex((word) => !word.startsWith('-'));
-  return at === -1 ? [] : words.slice(at);
+// The next program this guard can read; options and their values before it are skipped.
+function fromNextProgram(words) {
+  const at = words.findIndex((word) => KNOWN_PROGRAMS.has(toolName(word)));
+  return at === -1 ? null : words.slice(at);
 }
 
 // A pipeline reports its LAST command's exit status, so `git push | tail` looks

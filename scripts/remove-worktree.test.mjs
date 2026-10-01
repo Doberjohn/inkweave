@@ -357,6 +357,18 @@ describe('remove-worktree', {timeout: 60_000}, () => {
       expect(output).toMatch(/kept/);
     });
 
+    it('keeps a branch that another worktree also has checked out', () => {
+      const repo = makeRepo();
+      addWorktree(repo, 'first');
+      const second = join(repo.root, 'second');
+      git(repo.main, 'worktree', 'add', '-q', '--force', second, 'wt/first'); // same branch
+      const {code, output} = remove(repo, ['first']);
+      expect(code).toBe(0);
+      expect(branchExists(repo, 'wt/first')).toBe(true);
+      expect(output).toMatch(/kept/);
+      expect(existsSync(join(second, 'README.md'))).toBe(true);
+    });
+
     it('removes a detached worktree, which has no branch to delete', () => {
       const repo = makeRepo();
       const wt = addWorktree(repo, 'parked', {detach: true});
@@ -409,6 +421,15 @@ describe('remove-worktree', {timeout: 60_000}, () => {
       plant(repo, orphan);
       expect(remove(repo, ['--leftovers']).code).toBe(1);
       expect(existsSync(join(orphan, 'README.md'))).toBe(true);
+    });
+
+    it('finishes a removal stopped between its rename and its prune', () => {
+      const repo = makeRepo();
+      const wt = addWorktree(repo, 'halfway');
+      renameSync(wt, `${wt}.removing`); // the in-use rename happened; the prune did not
+      expect(remove(repo, ['--leftovers']).code).toBe(0);
+      expect(existsSync(`${wt}.removing`)).toBe(false);
+      expect(registered(repo)).not.toContain(norm(wt));
     });
 
     it('knows committed files checked out with CRLF line endings', () => {

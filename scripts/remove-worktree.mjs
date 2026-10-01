@@ -58,6 +58,9 @@ Removes a linked worktree completely: its folder, its registry entry, and its br
 ${BASE} contains it. Refuses, changing nothing, when it has uncommitted work, a HEAD on no
 origin/* ref, ignored files that are not build output, or a process inside it.
 
+--dry-run prints the plan and deletes or unregisters nothing. It still fetches origin, so it
+answers exactly as a real run would.
+
 --leftovers deletes folders under .claude/worktrees/ that git no longer knows about, and
 finishes removals that were interrupted. It refuses a folder holding a repository, or a file
 outside build output whose content git does not have and the main checkout does not match.`;
@@ -369,6 +372,11 @@ function branchPlan(repo, worktree, keepBranch) {
   if (`origin/${branch}` === BASE) {
     return {remove: false, note: `branch ${branch} kept: it is the base branch`};
   }
+  // `git worktree add --force` can check one branch out twice, and -D refuses while it is.
+  const elsewhere = repo.all.find((other) => other !== worktree && other.branch === branch);
+  if (elsewhere) {
+    return {remove: false, note: `branch ${branch} kept: also checked out at ${elsewhere.path}`};
+  }
   if (!gitSucceeds(repo.main, ['merge-base', '--is-ancestor', `refs/heads/${branch}`, BASE])) {
     return {remove: false, note: `branch ${branch} kept: ${BASE} does not contain it`};
   }
@@ -536,7 +544,20 @@ function sweepOne(repo, {path, marker}, {dryRun, log, rm, rename}) {
   }
   // A `.removing` folder passed the gates before its rename; anything else takes the in-use check.
   const dir = path.endsWith(REMOVING) ? path : claimLeftover(path, rename);
+  unregisterLeftover(repo, dir.slice(0, -REMOVING.length), log);
   destroy(dir, marker, rm, log);
+}
+
+// A removal stopped between its rename and its prune leaves the original path registered. Its
+// folder is already missing, so prune it now, before the delete, and make sure it went. A
+// worktree living at that path again is a newer one, and its entry is not this removal's.
+function unregisterLeftover(repo, path, log) {
+  const isRegistered = () =>
+    worktreesOf(repo.main).some((entry) => pathKey(entry.path) === pathKey(path));
+  if (existsSync(path) || !isRegistered()) return;
+  git(repo.main, ['worktree', 'prune']);
+  if (isRegistered()) refuse(`git worktree prune left ${path} registered; nothing was deleted`);
+  log(`ok      unregistered ${path}`);
 }
 
 function claimLeftover(path, rename) {
