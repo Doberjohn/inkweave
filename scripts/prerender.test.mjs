@@ -250,8 +250,10 @@ describe('crawlRoute', () => {
     const route = '/card/1989/elsa-snow-queen';
     const crawlOnce = attemptsReturning({ok: false, error: `content never rendered (${CARD_READY_SELECTOR})`}, {ok: true});
     expect(await crawlRoute(route, crawlOnce)).toEqual({route, ok: true});
-    expect(crawlOnce).toHaveBeenCalledTimes(2);
-    expect(crawlOnce).toHaveBeenNthCalledWith(2, route, CARD_READY_SELECTOR);
+    expect(crawlOnce.mock.calls).toEqual([
+      [route, CARD_READY_SELECTOR],
+      [route, CARD_READY_SELECTOR],
+    ]);
   });
 
   it('crawls a route without a ready selector once, even if a retry would succeed', async () => {

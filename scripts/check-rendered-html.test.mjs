@@ -275,6 +275,17 @@ describe('findOffenders', () => {
     expect(offenders[0].reason).toMatch(/links 0 of the 6 ink hubs/);
   });
 
+  it('does not count a misspelled ink hub link as one of the six', () => {
+    seedGoodBuild();
+    fs.writeFileSync(
+      path.join(dist, 'card', '1989', 'elsa-snow-queen', 'index.html'),
+      goodCardHtml(CARD).replace('href="/ink/steel"', 'href="/ink/steeel"'),
+    );
+    const offenders = findOffenders(dist, [CARD], cardPath);
+    expect(offenders).toHaveLength(1);
+    expect(offenders[0].reason).toMatch(/links 5 of the 6 ink hubs/);
+  });
+
   it('distinguishes a wrong target path from a failed crawl', () => {
     const offenders = findOffenders(path.join(dist, 'no-such-dir'), [CARD], cardPath);
     expect(offenders).toHaveLength(1);

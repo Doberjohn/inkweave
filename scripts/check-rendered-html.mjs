@@ -149,18 +149,20 @@ export function findSentryPreloads(html, sentryChunks) {
 const sentryPreloadReason = (hrefs) =>
   `modulepreloads the Sentry SDK (${hrefs.join(', ')}), which must load only after \`load\` (#640)`;
 
-/** The ink hubs the site footer links from every page (#530). */
-export const INK_HUB_COUNT = 6;
+/** The six ink hubs the site footer links from every page (#530): Lorcana's six inks. */
+const INK_HUB_SLUGS = ['amber', 'amethyst', 'emerald', 'ruby', 'sapphire', 'steel'];
+export const INK_HUB_COUNT = INK_HUB_SLUGS.length;
 
 /**
- * How many distinct ink hubs a page links. On a card page only the footer links them, all six,
- * so a card page short of six shipped without its footer.
+ * How many of the six ink hubs a page links, each counted once. On a card page only the footer
+ * links them, so a card page short of six shipped without its footer. A misspelled hub link
+ * doesn't count, so a broken link can't stand in for a real hub.
  *
  * @param {string} html - one captured page
- * @returns {number} distinct `/ink/<ink>` hrefs
+ * @returns {number} the hubs out of INK_HUB_SLUGS the page links
  */
 export function countInkHubLinks(html) {
-  return new Set(html.match(/href="\/ink\/[a-z]+"/g) ?? []).size;
+  return INK_HUB_SLUGS.filter((slug) => html.includes(`href="/ink/${slug}"`)).length;
 }
 
 /**
