@@ -560,24 +560,26 @@ function contentGitLacks(repo, root) {
 
 // Links are never followed: Dirent reports a junction or symlink as neither file nor folder.
 function walkContent(root) {
-  const files = [];
-  const repositories = [];
+  const found = {file: [], repository: []};
   const walk = (dir) => {
     for (const entry of readdirSync(dir, {withFileTypes: true})) {
       const path = join(dir, entry.name);
       const rel = relative(root, path).replace(/\\/g, '/');
-      if (entry.name === '.git') {
-        // A worktree's own .git file only points at its registry entry; any other .git is a repo.
-        if (dir !== root || entry.isDirectory()) repositories.push(rel);
-      } else if (entry.isDirectory()) {
-        if (!isBuildOutput(`${rel}/`)) walk(path);
-      } else if (entry.isFile() && !isBuildOutput(rel)) {
-        files.push(rel);
-      }
+      const kind = entryKind(entry, rel, dir === root);
+      if (kind === 'folder') walk(path);
+      else found[kind]?.push(rel);
     }
   };
   walk(root);
-  return {files, repositories};
+  return {files: found.file, repositories: found.repository};
+}
+
+// What the content walk does with one entry: 'folder' (descend), 'file', 'repository' or 'skip'.
+function entryKind(entry, rel, atRoot) {
+  // A worktree's own .git file only points at its registry entry; any other .git is a repo.
+  if (entry.name === '.git') return atRoot && !entry.isDirectory() ? 'skip' : 'repository';
+  if (entry.isDirectory()) return isBuildOutput(`${rel}/`) ? 'skip' : 'folder';
+  return entry.isFile() && !isBuildOutput(rel) ? 'file' : 'skip';
 }
 
 // Two batched calls. hash-object reads the leftover as a work tree of this repository, so it
