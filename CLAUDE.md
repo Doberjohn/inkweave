@@ -21,7 +21,7 @@ The flagship multi-session initiative. **Read these before starting any deck-bui
 _Start:_
 1. **Audit the previous session's close-out first.** Is `git status` clean and on `deck-builder`? Does the latest #474 comment exist and end with a `Next:` line? Do the issues touched last time have a note? If anything is missing, surface it to the user before starting new work.
 2. Read `docs/deck-builder/PLAN.md` and the latest #474 entry (its `Next:` line names your task).
-3. `gh issue list --milestone "Deck Builder & Engine Score" --state open`, then pick the next unblocked task. Any task that applies a live-DB Supabase migration or configures OAuth apps needs the user's authorization, so skip it when running headless (next up: the Phase-2 `collections` migration under #452, Phase-3 `analysis_cases` under #453; the #463 auth + #464 migrations that first surfaced this rule are already done).
+3. `gh issue list --milestone "Deck Builder & Engine Score" --state open`, then pick the next unblocked task. Any task that applies a live-DB Supabase migration or configures OAuth apps needs the user's authorization, so skip it when running headless (next up: Phase-3 `analysis_cases` under #453; the #463 auth, #464 decks and Phase-2 `collections` migrations are all applied already).
 4. `/implement-issue <num>`.
 
 _End or any pause (the close-out contract, in order, all of it):_
