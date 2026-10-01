@@ -4860,6 +4860,22 @@
       "strength": 2,
       "willpower": 3,
       "lore": 2
+    },
+    {
+      "id": 14099,
+      "name": "Chemical Reaction",
+      "fullName": "Chemical Reaction",
+      "cost": 2,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "14",
+      "number": 99,
+      "rarity": "Uncommon",
+      "fullText": "Draw a card. You may banish chosen item of yours. If you do, chosen opponent chooses and discards a card.",
+      "fullTextSections": [
+        "Draw a card. You may banish chosen item of yours. If you do, chosen opponent chooses and discards a card."
+      ]
     }
   ]
 }
