@@ -58,8 +58,9 @@ Removes a linked worktree completely: its folder, its registry entry, and its br
 ${BASE} contains it. Refuses, changing nothing, when it has uncommitted work, a HEAD on no
 origin/* ref, ignored files that are not build output, or a process inside it.
 
---dry-run prints the plan and deletes or unregisters nothing. It still fetches origin, so it
-answers exactly as a real run would.
+--dry-run prints the plan and deletes or unregisters nothing. It still fetches origin, so its
+gates and branch plan match a real run's, but it cannot tell whether the worktree is in use:
+that check is the rename a real run makes.
 
 --leftovers deletes folders under .claude/worktrees/ that git no longer knows about, and
 finishes removals that were interrupted. It refuses a folder holding a repository, or a file
