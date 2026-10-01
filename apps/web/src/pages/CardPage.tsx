@@ -27,7 +27,13 @@ function buildDescription(card: LorcanaCard): string {
   return `${card.fullName}: a ${card.cost}-cost ${inks} ${card.type}${cls}. See its strongest Disney Lorcana synergies and combos in Core format.`;
 }
 
-function PageShell({children}: {children: React.ReactNode}) {
+/**
+ * `showFooter` is false until the page's content has loaded (#532). Rendered under a loading
+ * page, the footer sits inside the viewport, and the arriving card and synergies push it past
+ * the fold: that push was the card page's whole layout shift. A footer that first appears
+ * below the loaded content is a new node, and new nodes aren't layout shifts.
+ */
+function PageShell({children, showFooter = true}: {children: React.ReactNode; showFooter?: boolean}) {
   const {isMobile} = useResponsive();
   return (
     <div
@@ -39,7 +45,7 @@ function PageShell({children}: {children: React.ReactNode}) {
       }}>
       <CompactHeader isMobile={isMobile} />
       {children}
-      <Footer />
+      {showFooter && <Footer />}
     </div>
   );
 }
@@ -71,7 +77,7 @@ export function CardPage() {
   const {isMobile} = useResponsive();
   const {getCardById, isLoading: cardsLoading} = useCardDataContext();
   const card = cardId ? getCardById(cardId) : undefined;
-  const {synergies} = usePrecomputedSynergies(card ?? null);
+  const {synergies, isLoading: synergiesLoading} = usePrecomputedSynergies(card ?? null);
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   // The mobile card's ×, like the card modal's: back to where the user came from inside
@@ -93,7 +99,7 @@ export function CardPage() {
     if (cardsLoading) {
       // #511 loading rule: skeleton for layout-known surfaces (no text flash).
       return (
-        <PageShell>
+        <PageShell showFooter={false}>
           <div style={{display: 'flex', justifyContent: 'center'}}>
             <CardDetailSkeleton ariaLabel="Loading card" />
           </div>
@@ -116,7 +122,7 @@ export function CardPage() {
   };
 
   return (
-    <PageShell>
+    <PageShell showFooter={!synergiesLoading}>
       <Seo
         title={`${card.fullName} | Lorcana Synergies | Inkweave`}
         description={summary || buildDescription(card)}
