@@ -29,6 +29,12 @@ on:
     paths:
       - '.github/workflows/deploy.yml'
 
+# Only actions/checkout uses GITHUB_TOKEN here: Vercel authenticates with VERCEL_TOKEN, and
+# actions/cache with the runner's own token. Declared, so PR dry runs (#694) stay read-only
+# whatever the repo's default token permissions become.
+permissions:
+  contents: read
+
 concurrency:
   # Production deploys queue one at a time and never cancel. A PR's dry run gets its own
   # group, so it never waits behind or blocks production, and a newer push replaces it.
@@ -53,9 +59,13 @@ jobs:
   # so the version has to come from an earlier job. It reads what pnpm-lock.yaml pins, which
   # the deploy job's frozen install then installs, so a Playwright bump moves the image tag in
   # the same commit. Anything but X.Y.Z fails here, not as an unpullable image.
-  # Dependabot PRs get no Actions secrets, so both jobs skip on them instead of failing.
+  # PRs from forks and from Dependabot get no Actions secrets, so both jobs skip on them
+  # instead of failing at `vercel pull`.
   playwright-version:
-    if: vars.DEPLOY_VIA_CI == 'true' && (github.event_name == 'push' || github.event.pull_request.user.login != 'dependabot[bot]')
+    if: >-
+      vars.DEPLOY_VIA_CI == 'true' && (github.event_name == 'push' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -80,7 +90,10 @@ jobs:
 
   deploy:
     needs: playwright-version
-    if: vars.DEPLOY_VIA_CI == 'true' && (github.event_name == 'push' || github.event.pull_request.user.login != 'dependabot[bot]')
+    if: >-
+      vars.DEPLOY_VIA_CI == 'true' && (github.event_name == 'push' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]'))
     runs-on: ubuntu-latest
     # A normal deploy takes 6 to 16 min. A cold card-image cache adds about 15 min (#579).
     # Without a cap a hung step could run to GitHub's 360-min default while every later
