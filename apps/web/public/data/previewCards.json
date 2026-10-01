@@ -2296,14 +2296,14 @@
     {
       "id": 14014,
       "name": "Nick Wilde",
-      "fullName": "Nick Wilde - Toy Drive Volunteer",
+      "fullName": "Nick Wilde - Toy Drive Officer",
       "cost": 4,
       "color": "Amber",
       "inkwell": false,
       "type": "Character",
       "setCode": "14",
       "number": 14,
-      "version": "Toy Drive Volunteer",
+      "version": "Toy Drive Officer",
       "rarity": "Super Rare",
       "franchise": "Zootopia",
       "subtypes": [
@@ -2318,27 +2318,26 @@
           "fullText": "Support"
         }
       ],
-      "fullText": "Support (Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn.)\nCOMMUNITY SERVICE At the end of your turn, if you’ve played 2 or more characters this turn, draw a card.",
+      "fullText": "Support (Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn.)\nCOMMUNITY OUTREACH At the end of your turn, if you played 2 or more characters this turn, draw a card.",
       "fullTextSections": [
         "Support (Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn.)",
-        "COMMUNITY SERVICE At the end of your turn, if you’ve played 2 or more characters this turn, draw a card."
+        "COMMUNITY OUTREACH At the end of your turn, if you played 2 or more characters this turn, draw a card."
       ],
       "strength": 2,
       "willpower": 4,
-      "lore": 1,
-      "scanLanguage": "ja"
+      "lore": 1
     },
     {
       "id": 14015,
       "name": "Clawhauser",
-      "fullName": "Clawhauser - Traffic Safety Officer",
+      "fullName": "Clawhauser - Safety Officer",
       "cost": 3,
       "color": "Amber",
       "inkwell": true,
       "type": "Character",
       "setCode": "14",
       "number": 15,
-      "version": "Traffic Safety Officer",
+      "version": "Safety Officer",
       "rarity": "Uncommon",
       "franchise": "Zootopia",
       "subtypes": [
@@ -2353,46 +2352,44 @@
           "fullText": "Bodyguard"
         }
       ],
-      "fullText": "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)\nEVERYONE’S FRIEND You can’t play this character unless you’ve played another character this turn.",
+      "fullText": "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)\nEVERYONE’S BUDDY You can’t play this character unless you played another character this turn.",
       "fullTextSections": [
         "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
-        "EVERYONE’S FRIEND You can’t play this character unless you’ve played another character this turn."
+        "EVERYONE’S BUDDY You can’t play this character unless you played another character this turn."
       ],
       "strength": 3,
       "willpower": 5,
-      "lore": 1,
-      "scanLanguage": "ja"
+      "lore": 1
     },
     {
       "id": 14022,
       "name": "Goofy",
-      "fullName": "Goofy - With the Band",
+      "fullName": "Goofy - Knows the Band",
       "cost": 4,
       "color": "Amber",
       "inkwell": true,
       "type": "Character",
       "setCode": "14",
       "number": 22,
-      "version": "With the Band",
+      "version": "Knows the Band",
       "rarity": "Rare",
       "franchise": "A Goofy Movie / Mickey Mouse & Friends",
       "subtypes": [
         "Dreamborn",
         "Hero"
       ],
-      "fullText": "VIP ENTRANCE When you play this character, if you have a character with Singer in play, draw a card.",
+      "fullText": "VIP ACCESS When you play this character, if you have a character with Singer in play, draw a card.",
       "fullTextSections": [
-        "VIP ENTRANCE When you play this character, if you have a character with Singer in play, draw a card."
+        "VIP ACCESS When you play this character, if you have a character with Singer in play, draw a card."
       ],
       "strength": 3,
       "willpower": 2,
-      "lore": 2,
-      "scanLanguage": "ja"
+      "lore": 2
     },
     {
       "id": 14027,
-      "name": "On the Open Road",
-      "fullName": "On the Open Road",
+      "name": "Shed Your Weary Load",
+      "fullName": "Shed Your Weary Load",
       "cost": 5,
       "color": "Amber",
       "inkwell": false,
@@ -2404,12 +2401,11 @@
       "subtypes": [
         "Song"
       ],
-      "fullText": "(A character with cost 5 or more can ⟳ to sing this song for free.)\nChosen opponent reveals their hand and discards all non-character cards.",
+      "fullText": "(A character with cost 5 or more can ⟳ to sing this song for free.)\nChosen opponent reveals their hand and discards each non-character card revealed this way.",
       "fullTextSections": [
         "(A character with cost 5 or more can ⟳ to sing this song for free.)",
-        "Chosen opponent reveals their hand and discards all non-character cards."
-      ],
-      "scanLanguage": "ja"
+        "Chosen opponent reveals their hand and discards each non-character card revealed this way."
+      ]
     },
     {
       "id": 14031,
@@ -2427,8 +2423,7 @@
       "fullTextSections": [
         "MUSICAL LEGACY When you play this item, draw a card.",
         "FROM THE HEART ⟳, 1 ⬡ — Chosen character gains Singer and counts as having +2 cost to sing songs this turn."
-      ],
-      "scanLanguage": "ja"
+      ]
     },
     {
       "id": 14054,
@@ -2460,28 +2455,27 @@
           "fullText": "Evasive"
         }
       ],
-      "fullText": "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Dante.)\nEvasive (Only characters with Evasive can challenge this character.)\nJUNK IS TREASURE While you have 10 or more cards in your discard, this character gets +2 ◊.",
+      "fullText": "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Dante.)\nEvasive (Only characters with Evasive can challenge this character.)\nTRASH TO TREASURE While you have 10 or more cards in your discard, this character gets +2 ◊.",
       "fullTextSections": [
         "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Dante.)",
         "Evasive (Only characters with Evasive can challenge this character.)",
-        "JUNK IS TREASURE While you have 10 or more cards in your discard, this character gets +2 ◊."
+        "TRASH TO TREASURE While you have 10 or more cards in your discard, this character gets +2 ◊."
       ],
       "strength": 6,
       "willpower": 4,
-      "lore": 2,
-      "scanLanguage": "ja"
+      "lore": 2
     },
     {
       "id": 14079,
       "name": "Lady",
-      "fullName": "Lady - Taking It Easy",
+      "fullName": "Lady - Relaxed and Rested",
       "cost": 1,
       "color": "Emerald",
       "inkwell": false,
       "type": "Character",
       "setCode": "14",
       "number": 79,
-      "version": "Taking It Easy",
+      "version": "Relaxed and Rested",
       "rarity": "Uncommon",
       "franchise": "Lady and the Tramp",
       "subtypes": [
@@ -2501,8 +2495,7 @@
       ],
       "strength": 3,
       "willpower": 1,
-      "lore": 1,
-      "scanLanguage": "ja"
+      "lore": 1
     },
     {
       "id": 14092,
@@ -2521,14 +2514,13 @@
         "Storyborn",
         "Hero"
       ],
-      "fullText": "SO MANY LOVELY THINGS During opponents’ turns, this character gains Resist +2. (Damage dealt to them is reduced by 2.)",
+      "fullText": "GREAT FIND During each opponent’s turn, this character gains Resist +2. (Damage dealt to them is reduced by 2.)",
       "fullTextSections": [
-        "SO MANY LOVELY THINGS During opponents’ turns, this character gains Resist +2. (Damage dealt to them is reduced by 2.)"
+        "GREAT FIND During each opponent’s turn, this character gains Resist +2. (Damage dealt to them is reduced by 2.)"
       ],
       "strength": 1,
       "willpower": 2,
-      "lore": 2,
-      "scanLanguage": "ja"
+      "lore": 2
     },
     {
       "id": 14121,
@@ -2562,8 +2554,7 @@
       ],
       "strength": 5,
       "willpower": 3,
-      "lore": 1,
-      "scanLanguage": "ja"
+      "lore": 1
     },
     {
       "id": 14132,
@@ -2577,18 +2568,17 @@
       "number": 132,
       "rarity": "Common",
       "franchise": "Coco",
-      "fullText": "RESPECT FOR THE PAST ⟳, 1 ⬡ — Choose one:\n• Put the top 2 cards of your deck into your discard.\n• If you have 10 or more cards in your discard, gain 1 lore.",
+      "fullText": "HONOR THE PAST ⟳, 1 ⬡ — Choose one:\n• Put the top 2 cards of your deck into your discard.\n• If you have 10 or more cards in your discard, gain 1 lore.",
       "fullTextSections": [
-        "RESPECT FOR THE PAST ⟳, 1 ⬡ — Choose one:",
+        "HONOR THE PAST ⟳, 1 ⬡ — Choose one:",
         "• Put the top 2 cards of your deck into your discard.",
         "• If you have 10 or more cards in your discard, gain 1 lore."
-      ],
-      "scanLanguage": "ja"
+      ]
     },
     {
       "id": 14133,
-      "name": "Torn Scrap",
-      "fullName": "Torn Scrap",
+      "name": "The Torn Corner",
+      "fullName": "The Torn Corner",
       "cost": 3,
       "color": "Ruby",
       "inkwell": true,
@@ -2597,48 +2587,46 @@
       "number": 133,
       "rarity": "Rare",
       "franchise": "Coco",
-      "fullText": "FOND MEMORIES ⟳, 1 ⬡ — If you have 10 or more cards in your discard, draw a card.\nTOGETHER AGAIN When this card is put into your discard from your deck, if you have an item named Rivera Family Photo in play, you may play this item from your discard for free.",
+      "fullText": "FOND MEMORIES ⟳, 1 ⬡ — If you have 10 or more cards in your discard, draw a card.\nMEND THE PHOTO When this card is put into your discard from your deck, if you have an item named Rivera Family Photo in play, you may play this card from your discard for free.",
       "fullTextSections": [
         "FOND MEMORIES ⟳, 1 ⬡ — If you have 10 or more cards in your discard, draw a card.",
-        "TOGETHER AGAIN When this card is put into your discard from your deck, if you have an item named Rivera Family Photo in play, you may play this item from your discard for free."
-      ],
-      "scanLanguage": "ja"
+        "MEND THE PHOTO When this card is put into your discard from your deck, if you have an item named Rivera Family Photo in play, you may play this card from your discard for free."
+      ]
     },
     {
       "id": 14145,
       "name": "Go Go Tomago",
-      "fullName": "Go Go Tomago - Extended Investigation",
+      "fullName": "Go Go Tomago - Working Late",
       "cost": 3,
       "color": "Sapphire",
       "inkwell": true,
       "type": "Character",
       "setCode": "14",
       "number": 145,
-      "version": "Extended Investigation",
+      "version": "Working Late",
       "rarity": "Uncommon",
       "franchise": "Big Hero 6",
       "subtypes": [
         "Storyborn",
+        "Super",
         "Hero",
-        "Inventor",
-        "Super"
+        "Inventor"
       ],
       "strength": 2,
       "willpower": 6,
-      "lore": 1,
-      "scanLanguage": "ja"
+      "lore": 1
     },
     {
       "id": 14159,
       "name": "Bellwether",
-      "fullName": "Bellwether - Super Capable",
+      "fullName": "Bellwether - Highly Qualified",
       "cost": 4,
       "color": "Sapphire",
       "inkwell": false,
       "type": "Character",
       "setCode": "14",
       "number": 159,
-      "version": "Super Capable",
+      "version": "Highly Qualified",
       "rarity": "Rare",
       "franchise": "Zootopia",
       "subtypes": [
@@ -2651,20 +2639,19 @@
       ],
       "strength": 2,
       "willpower": 2,
-      "lore": 2,
-      "scanLanguage": "ja"
+      "lore": 2
     },
     {
       "id": 14171,
       "name": "Flash",
-      "fullName": "Flash - Fastest Employee",
+      "fullName": "Flash - Efficient Clerk",
       "cost": 2,
       "color": "Steel",
       "inkwell": false,
       "type": "Character",
       "setCode": "14",
       "number": 171,
-      "version": "Fastest Employee",
+      "version": "Efficient Clerk",
       "rarity": "Rare",
       "franchise": "Zootopia",
       "subtypes": [
@@ -2679,15 +2666,14 @@
           "fullText": "Resist +1"
         }
       ],
-      "fullText": "Resist +1 (Damage dealt to this character is reduced by 1.)\nTAKE… YOUR… TIME Characters lose Rush and can’t gain Rush.",
+      "fullText": "Resist +1 (Damage dealt to this character is reduced by 1.)\nTAKE… YOUR… TIME All characters lose Rush and can’t gain Rush.",
       "fullTextSections": [
         "Resist +1 (Damage dealt to this character is reduced by 1.)",
-        "TAKE… YOUR… TIME Characters lose Rush and can’t gain Rush."
+        "TAKE… YOUR… TIME All characters lose Rush and can’t gain Rush."
       ],
       "strength": 3,
       "willpower": 2,
-      "lore": 2,
-      "scanLanguage": "ja"
+      "lore": 2
     },
     {
       "id": 14048,
@@ -2799,29 +2785,28 @@
     {
       "id": 14148,
       "name": "Priscilla",
-      "fullName": "Priscilla - Fastest Employee",
+      "fullName": "Priscilla - Efficient Clerk",
       "cost": 3,
       "color": "Sapphire",
       "inkwell": true,
       "type": "Character",
       "setCode": "14",
       "number": 148,
-      "version": "Fastest Employee",
+      "version": "Efficient Clerk",
       "rarity": "Rare",
       "franchise": "Zootopia",
       "subtypes": [
         "Storyborn",
         "Ally"
       ],
-      "fullText": "OBVIOUS CRUSH This character enters play exerted.\nFILING SYSTEM Whenever this character quests, you may look at the top 2 cards of your deck. Put one into your hand and the other into your inkwell facedown and exerted.",
+      "fullText": "NOT-SO-SECRET CRUSH This character enters play exerted.\nFILING SYSTEM Whenever this character quests, you may look at the top 2 cards of your deck. Put one into your hand and the other into your inkwell facedown and exerted.",
       "fullTextSections": [
-        "OBVIOUS CRUSH This character enters play exerted.",
+        "NOT-SO-SECRET CRUSH This character enters play exerted.",
         "FILING SYSTEM Whenever this character quests, you may look at the top 2 cards of your deck. Put one into your hand and the other into your inkwell facedown and exerted."
       ],
       "strength": 0,
       "willpower": 4,
-      "lore": 2,
-      "scanLanguage": "ja"
+      "lore": 2
     },
     {
       "id": 14007,
@@ -3903,8 +3888,7 @@
       ],
       "strength": 1,
       "willpower": 2,
-      "lore": 1,
-      "scanLanguage": "de"
+      "lore": 1
     },
     {
       "id": 14098,
@@ -4467,21 +4451,21 @@
     {
       "id": 14088,
       "name": "Don Karnage",
-      "fullName": "Don Karnage - Charming Pirate",
+      "fullName": "Don Karnage - Debonair Pirate",
       "cost": 6,
       "color": "Emerald",
       "inkwell": false,
       "type": "Character",
       "setCode": "14",
       "number": 88,
-      "version": "Charming Pirate",
+      "version": "Debonair Pirate",
       "rarity": "Super Rare",
       "franchise": "TaleSpin",
       "subtypes": [
         "Dreamborn",
-        "Pirate",
+        "Villain",
         "Prince",
-        "Villain"
+        "Pirate"
       ],
       "abilities": [
         {
@@ -4491,16 +4475,15 @@
           "fullText": "Shift 4"
         }
       ],
-      "fullText": "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Don Karnage.)\nLASTING IMPRESSION When you play this character, deal 1 damage to each opposing character. This damage can’t be reduced by Resist.\nSO SMOOTH While this character is exerted, opposing damaged characters get -1 ◊.",
+      "fullText": "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Don Karnage.)\nLASTING IMPRESSION When you play this character, deal 1 damage to each opposing character. This damage can’t be reduced by Resist.\nSO SUAVE While this character is exerted, each opposing damaged character gets -1 ◊.",
       "fullTextSections": [
         "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Don Karnage.)",
         "LASTING IMPRESSION When you play this character, deal 1 damage to each opposing character. This damage can’t be reduced by Resist.",
-        "SO SMOOTH While this character is exerted, opposing damaged characters get -1 ◊."
+        "SO SUAVE While this character is exerted, each opposing damaged character gets -1 ◊."
       ],
       "strength": 3,
       "willpower": 6,
-      "lore": 2,
-      "scanLanguage": "de"
+      "lore": 2
     },
     {
       "id": 14129,
@@ -4804,14 +4787,13 @@
         "Hero",
         "Captain"
       ],
-      "fullText": "CASH PAYMENT This character can't quest or challenge unless you gained an ink drop this turn.",
+      "fullText": "PAYMENT UP FRONT This character can’t quest or challenge unless you got an ink drop this turn.",
       "fullTextSections": [
-        "CASH PAYMENT This character can't quest or challenge unless you gained an ink drop this turn."
+        "PAYMENT UP FRONT This character can’t quest or challenge unless you got an ink drop this turn."
       ],
       "strength": 4,
       "willpower": 4,
-      "lore": 2,
-      "scanLanguage": "fr"
+      "lore": 2
     },
     {
       "id": 14200,
