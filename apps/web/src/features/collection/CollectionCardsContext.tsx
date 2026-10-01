@@ -20,7 +20,7 @@
 import {createContext, useContext, useEffect, useRef, useState, type ReactNode} from 'react';
 import type {LorcanaJSONCard} from 'inkweave-synergy-engine';
 import {transformRawCards} from '../cards/loader';
-import type {LorcanaCard} from '../deck/types';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 
 /** Every set with a collection chunk. Ordered as a binder would be. */
 const COLLECTION_SETS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', 'Q1', 'Q2'];

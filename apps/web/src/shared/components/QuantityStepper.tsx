@@ -1,5 +1,5 @@
 import {useState, type CSSProperties} from 'react';
-import {COLORS, EASING, FOIL_SHEEN, FONTS, FONT_SIZES, hexRgba} from '../../../shared/constants';
+import {COLORS, DURATION, EASING, FOIL_SHEEN, FONTS, FONT_SIZES, hexRgba} from '../constants';
 
 interface QuantityStepperProps {
   value: number;
@@ -155,7 +155,7 @@ function sideButtonStyle(
     color: disabled ? COLORS.textDim : color,
     cursor: disabled ? 'default' : 'pointer',
     overflow: 'hidden',
-    transition: `width 0.2s ${EASING.snappy}, opacity 0.18s ${EASING.snappy}, color 0.15s ${EASING.snappy}`,
+    transition: `width ${DURATION.base}ms ${EASING.snappy}, opacity ${DURATION.base}ms ${EASING.snappy}, color ${DURATION.fast}ms ${EASING.snappy}`,
   };
 }
 
@@ -245,7 +245,7 @@ export function QuantityStepper({
       </button>
       <span
         onAnimationEnd={handlePopEnd}
-        style={{...cell, color: COLORS.text, fontSize: dims.countFontSize, animation: shouldPop ? 'inkweave-qty-pop 0.22s ease-out' : undefined}}>
+        style={{...cell, color: COLORS.text, fontSize: dims.countFontSize, animation: shouldPop ? `inkweave-qty-pop ${DURATION.base}ms ${EASING.smooth}` : undefined}}>
         {value}
       </span>
       <button

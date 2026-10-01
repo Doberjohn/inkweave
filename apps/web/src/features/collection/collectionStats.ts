@@ -1,5 +1,5 @@
 import type {Ink} from 'inkweave-synergy-engine';
-import type {LorcanaCard} from '../deck/types';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries} from './collectionParser';
 
 /**

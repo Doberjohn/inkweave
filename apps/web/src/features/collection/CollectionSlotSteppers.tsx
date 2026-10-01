@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {QuantityStepper} from '../deck/components/QuantityStepper';
+import {QuantityStepper} from '../../shared/components';
 import type {CollectionEntry, Finish} from './collectionParser';
 import {IconButton} from '../../shared/components';
 import {COLORS, DURATION, EASING, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../shared/constants';

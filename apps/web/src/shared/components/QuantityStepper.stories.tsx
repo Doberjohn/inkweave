@@ -1,10 +1,10 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
-import {COLORS} from '../../../shared/constants';
+import {COLORS} from '../constants';
 import {QuantityStepper} from './QuantityStepper';
 
 const meta: Meta<typeof QuantityStepper> = {
-  title: 'Deck/QuantityStepper',
+  title: 'Shared/QuantityStepper',
   component: QuantityStepper,
   tags: ['autodocs'],
   decorators: [

@@ -1,5 +1,5 @@
 import {useRef, useState} from 'react';
-import type {LorcanaCard} from '../deck/types';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries, CollectionEntry, Finish} from './collectionParser';
 import {CollectionBinder, binderCardsForSet} from './CollectionBinder';
 import {BinderSpread, BinderSlotSkeleton} from '../cards/components/BinderSpread';

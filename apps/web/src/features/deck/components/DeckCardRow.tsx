@@ -3,7 +3,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../../../shared/constants';
 import {smallImageUrl} from '../../cards/loader';
 import {CostGlyph} from './CostGlyph';
-import {QuantityStepper} from './QuantityStepper';
+import {QuantityStepper} from '../../../shared/components';
 
 /** Core copy limit — the + is disabled once a line reaches it. */
 const MAX_COPIES = 4;

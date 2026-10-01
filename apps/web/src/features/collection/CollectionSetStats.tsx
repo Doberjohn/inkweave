@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import type {CSSProperties, ReactNode} from 'react';
-import type {LorcanaCard} from '../deck/types';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries} from './collectionParser';
 import {tallySet} from './collectionStats';
 import {IconButton} from '../../shared/components';

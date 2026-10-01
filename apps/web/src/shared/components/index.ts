@@ -31,6 +31,7 @@ export {TabList} from './TabList';
 export {CardImageButton} from './CardImageButton';
 export {PrintingPills} from './PrintingPills';
 export {PrintingCarousel} from './PrintingCarousel';
+export {QuantityStepper} from './QuantityStepper';
 export {IconButton} from './IconButton';
 export {NavArrowButton} from './NavArrowButton';
 export {EtherealBackground} from './EtherealBackground';

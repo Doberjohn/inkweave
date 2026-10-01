@@ -1,7 +1,7 @@
 import {useState, type CSSProperties} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from '../../cards/components/CardTile';
-import {QuantityStepper} from './QuantityStepper';
+import {QuantityStepper} from '../../../shared/components';
 import {getPoolTileState} from './poolTileState';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, blackRgba, hexRgba} from '../../../shared/constants';
 

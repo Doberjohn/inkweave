@@ -1,7 +1,7 @@
 import {useRef, useState} from 'react';
 import {CtaButton, DialogShell} from '../../shared/components';
 import {COLORS, DIALOG_BODY, DIALOG_TITLE, FONTS, FONT_SIZES, SPACING} from '../../shared/constants';
-import type {LorcanaCard} from '../deck/types';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {parseCollectionCsv, type CollectionEntries, type CollectionSummary} from './collectionParser';
 
 interface ImportCollectionDialogProps {

@@ -39,7 +39,7 @@
 // format does not use" long after that stopped being true — which reported five
 // genuinely lost cards as a routine fact about the format.
 
-import type {LorcanaCard} from '../deck/types';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 
 /** The two ways a card is printed. `CollectionEntry` is keyed by it. */
 export type Finish = 'normal' | 'foil';

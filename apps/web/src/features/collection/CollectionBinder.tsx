@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import type {LorcanaCard} from '../deck/types';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from '../cards/components/CardTile';
 import {CollectionSlotSteppers, type StepperVariant} from './CollectionSlotSteppers';
 import {useHover} from '../../shared/hooks/useHover';
