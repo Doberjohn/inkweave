@@ -3,7 +3,8 @@ name: deploy-drift
 # Opens one `deploy-drift` issue when production stops serving master (#569). Production's
 # commit comes from /version.json (written by scripts/write-version.mjs), and
 # scripts/deploy-drift.mjs does the comparing. Three triggers:
-#   - a failed Deploy run is reported at once (a successful one skips the job, billing nothing);
+#   - a failed Deploy run on master is reported at once (a successful one skips the job,
+#     billing nothing);
 #   - a daily check catches deploys that never ran or never went live, and closes the issue
 #     once production has caught up;
 #   - a manual run tests the alarm, e.g. `gh workflow run deploy-drift.yml -f dry_run=true`.
@@ -13,6 +14,9 @@ on:
   workflow_run:
     workflows: [Deploy]
     types: [completed]
+    # Production deploys only. deploy.yml also dry-runs PRs that change it (#694),
+    # and a failed dry run says nothing about production.
+    branches: [master]
   schedule:
     # Daily, off the top of the hour, where GitHub queues scheduled jobs late.
     - cron: '17 6 * * *'
