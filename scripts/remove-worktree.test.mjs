@@ -4,6 +4,7 @@ import {
   linkSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   realpathSync,
   renameSync,
@@ -271,6 +272,24 @@ describe('remove-worktree', {timeout: 60_000}, () => {
       const {code, output} = remove(repo, ['target']);
       expect(code).toBe(0);
       expect(output).toContain('worktrees/gone');
+    });
+
+    it('says how to recover when the rename back after a failed prune fails', () => {
+      const repo = makeRepo();
+      addWorktree(repo, 'stuck');
+      // The claim "renames" without moving anything, so the prune keeps the entry; the rename
+      // back then fails, as when a process grabs the folder mid-run.
+      let renames = 0;
+      const rename = () => {
+        renames++;
+        if (renames > 1) throw Object.assign(new Error('EBUSY: resource busy'), {code: 'EBUSY'});
+      };
+      const {code, output} = remove(repo, ['stuck'], {rename});
+      expect(code).toBe(1);
+      expect(output).toMatch(/rename it back by hand/i);
+      expect(output).toContain('stuck.removing');
+      // The marker stays, so --leftovers can still finish the removal.
+      expect(readdirSync(join(repo.main, '.git', 'worktree-removals'))).toHaveLength(1);
     });
 
     it('--dry-run deletes and unregisters nothing', () => {

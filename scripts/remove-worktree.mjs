@@ -105,10 +105,14 @@ function fail(message) {
 
 /**
  * Runs the command line `args` and returns its exit code: 0 only when everything it set out
- * to do is done. `cwd` resolves the repository and relative paths; `rm` deletes a folder
- * (fs.rmSync's signature). Exported for scripts/remove-worktree.test.mjs.
+ * to do is done. `cwd` resolves the repository and relative paths; `rm` deletes a folder and
+ * `rename` moves one (fs.rmSync's and fs.renameSync's signatures). Exported for
+ * scripts/remove-worktree.test.mjs.
  */
-export function run(args, {cwd = process.cwd(), log = console.log, rm = rmSync} = {}) {
+export function run(
+  args,
+  {cwd = process.cwd(), log = console.log, rm = rmSync, rename = renameSync} = {},
+) {
   const options = parse(args);
   if (options.help) {
     log(USAGE);
@@ -120,7 +124,7 @@ export function run(args, {cwd = process.cwd(), log = console.log, rm = rmSync} 
   }
   try {
     const repo = repoAt(cwd);
-    const context = {...options, cwd, log, rm};
+    const context = {...options, cwd, log, rm, rename};
     return options.leftovers ? sweepLeftovers(repo, context) : removeWorktree(repo, context);
   } catch (error) {
     log(error instanceof Stop ? error.message : `failed: ${error.message}`);
@@ -247,8 +251,8 @@ function removeWorktree(repo, context) {
     log(`would   ${branch.remove ? `delete branch ${worktree.branch}` : branch.note}`);
     return 0;
   }
-  const marker = claim(repo, worktree.path);
-  unregister(repo, worktree, marker, log);
+  const marker = claim(repo, worktree.path, context.rename);
+  unregister(repo, worktree, marker, context);
   destroy(`${worktree.path}${REMOVING}`, marker, context.rm, log);
   if (branch.remove) git(repo.main, ['branch', '-D', worktree.branch]);
   log(`removed ${worktree.path} (${branch.note})`);
@@ -382,14 +386,14 @@ function markerFor(repo, path) {
  * The in-use check: rename `path` to `path.removing`, which Windows refuses while a process has
  * its working directory or an open file inside. Writes the marker first and returns it.
  */
-function claim(repo, path) {
+function claim(repo, path, rename) {
   const removing = `${path}${REMOVING}`;
   if (existsSync(removing)) refuse(`${removing} already exists: finish it with --leftovers first`);
   const marker = markerFor(repo, path);
   mkdirSync(join(repo.common, MARKERS), {recursive: true});
   writeFileSync(marker, `${JSON.stringify({path})}\n`);
   try {
-    renameSync(path, removing);
+    rename(path, removing);
   } catch (error) {
     rmSync(marker, {force: true});
     if (['EBUSY', 'EPERM', 'EACCES'].includes(error.code)) {
@@ -402,26 +406,35 @@ function claim(repo, path) {
   return marker;
 }
 
-function unregister(repo, worktree, marker, log) {
+function unregister(repo, worktree, marker, {log, rename}) {
   const missing = repo.all
     .slice(1)
     .filter((other) => other !== worktree && !other.locked && !existsSync(other.path));
   const pruned =
     gitSucceeds(repo.main, ['worktree', 'prune']) &&
     !worktreesOf(repo.main).some((entry) => pathKey(entry.path) === pathKey(worktree.path));
-  if (!pruned) {
-    renameSync(`${worktree.path}${REMOVING}`, worktree.path);
-    rmSync(marker, {force: true});
-    refuse(
-      `git worktree prune left ${worktree.path} registered; it was renamed back, so nothing changed`,
-    );
-  }
+  if (!pruned) undoClaim(worktree.path, marker, rename);
   log('ok      unregistered');
   if (missing.length) {
     log(
       `ok      the prune also unregistered worktrees whose folder was missing:\n${indent(missing.map((w) => w.path))}`,
     );
   }
+}
+
+// After a failed prune: rename the folder back, or say exactly where things stand. The marker
+// stays on failure, so --leftovers can still find the .removing folder.
+function undoClaim(path, marker, rename) {
+  const removing = `${path}${REMOVING}`;
+  try {
+    rename(removing, path);
+  } catch (error) {
+    fail(
+      `git worktree prune left ${path} registered, and renaming ${removing} back failed (${error.code ?? error.message}). Rename it back by hand to keep the worktree, or run pnpm worktree:remove --leftovers to finish removing it`,
+    );
+  }
+  rmSync(marker, {force: true});
+  refuse(`git worktree prune left ${path} registered; it was renamed back, so nothing changed`);
 }
 
 function destroy(dir, marker, rm, log) {
@@ -510,7 +523,7 @@ function readMarkers(repo) {
   });
 }
 
-function sweepOne(repo, {path, marker}, {dryRun, log, rm}) {
+function sweepOne(repo, {path, marker}, {dryRun, log, rm, rename}) {
   const unique = contentGitLacks(repo, path);
   if (unique.length) {
     refuse(
@@ -522,15 +535,15 @@ function sweepOne(repo, {path, marker}, {dryRun, log, rm}) {
     return;
   }
   // A `.removing` folder passed the gates before its rename; anything else takes the in-use check.
-  const dir = path.endsWith(REMOVING) ? path : claimLeftover(path);
+  const dir = path.endsWith(REMOVING) ? path : claimLeftover(path, rename);
   destroy(dir, marker, rm, log);
 }
 
-function claimLeftover(path) {
+function claimLeftover(path, rename) {
   const removing = `${path}${REMOVING}`;
   if (existsSync(removing)) refuse(`${removing} already exists; it is swept on its own`);
   try {
-    renameSync(path, removing);
+    rename(path, removing);
   } catch (error) {
     if (['EBUSY', 'EPERM', 'EACCES'].includes(error.code))
       refuse(`${path} is in use; close whatever holds it and retry`);
