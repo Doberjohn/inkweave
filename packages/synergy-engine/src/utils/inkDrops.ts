@@ -40,8 +40,11 @@ const HOLD = /\b(?:while|if) you have (?:an|\d+ or more) ink drops?\b|\bfor each
  * reminder, printed on most makers, never reads as a payoff.
  */
 const DROP_SINK = /\bshift remove \d+ ink drops?\b|\bif you would get an ink drop\b/i;
-/** Gain gate: the card acts only on a turn you gained a drop (Baloo - Delivery Pilot's CASH PAYMENT). */
-const GAIN_GATE = /\bunless you gained (?:an|\d+(?: or more)?) ink drops? this turn\b/i;
+/**
+ * Gain gate: the card acts only on a turn you got a drop (Baloo - Delivery Pilot's PAYMENT UP FRONT).
+ * "gained" is the wording of the translated scan his preview carried before the English printing.
+ */
+const GAIN_GATE = /\bunless you (?:gained|got) (?:an|\d+(?: or more)?) ink drops? this turn\b/i;
 /** The payoff shapes: a card matching any of them uses drops. */
 const PAYOFF_SHAPES = [SPEND_RIDER, REMOVE_TRIGGER, HOLD, DROP_SINK, GAIN_GATE];
 /** Any gain of drops, for judging a maker one ability at a time. */

@@ -4858,6 +4858,541 @@
       "fullTextSections": [
         "Draw a card. You may banish chosen item of yours. If you do, chosen opponent chooses and discards a card."
       ]
+    },
+    {
+      "id": 14002,
+      "name": "Abuelita",
+      "fullName": "Abuelita - Loving Grandmother",
+      "cost": 3,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 2,
+      "version": "Loving Grandmother",
+      "rarity": "Common",
+      "franchise": "Coco",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 2
+    },
+    {
+      "id": 14003,
+      "name": "Max Goof",
+      "fullName": "Max Goof - Music Lover",
+      "cost": 3,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 3,
+      "version": "Music Lover",
+      "rarity": "Uncommon",
+      "franchise": "A Goofy Movie",
+      "subtypes": [
+        "Storyborn",
+        "Hero"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Singer",
+          "keywordValue": "5",
+          "fullText": "Singer 5"
+        }
+      ],
+      "fullText": "Singer 5 (This character counts as cost 5 to sing songs.)\nBEST NIGHT EVER While you have another character with Singer in play, this character gets +1 ◊.",
+      "fullTextSections": [
+        "Singer 5 (This character counts as cost 5 to sing songs.)",
+        "BEST NIGHT EVER While you have another character with Singer in play, this character gets +1 ◊."
+      ],
+      "strength": 3,
+      "willpower": 4,
+      "lore": 1
+    },
+    {
+      "id": 14004,
+      "name": "Gazelle",
+      "fullName": "Gazelle - Pop Diva",
+      "cost": 2,
+      "color": "Amber",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "14",
+      "number": 4,
+      "version": "Pop Diva",
+      "rarity": "Common",
+      "franchise": "Zootopia",
+      "subtypes": [
+        "Dreamborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Singer",
+          "keywordValue": "4",
+          "fullText": "Singer 4"
+        }
+      ],
+      "fullText": "Singer 4 (This character counts as cost 4 to sing songs.)",
+      "fullTextSections": [
+        "Singer 4 (This character counts as cost 4 to sing songs.)"
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 14013,
+      "name": "Mr. Manchas",
+      "fullName": "Mr. Manchas - Service with a Smile",
+      "cost": 3,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 13,
+      "version": "Service with a Smile",
+      "rarity": "Common",
+      "franchise": "Zootopia",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "ALWAYS ON TIME Whenever this character quests, you pay 1 ⬡ less for the next character you play this turn.",
+      "fullTextSections": [
+        "ALWAYS ON TIME Whenever this character quests, you pay 1 ⬡ less for the next character you play this turn."
+      ],
+      "strength": 1,
+      "willpower": 4,
+      "lore": 2
+    },
+    {
+      "id": 14040,
+      "name": "Pepita",
+      "fullName": "Pepita - Watchful Alebrije",
+      "cost": 2,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 40,
+      "version": "Watchful Alebrije",
+      "rarity": "Uncommon",
+      "franchise": "Coco",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Challenger",
+          "keywordValue": "+2",
+          "fullText": "Challenger +2"
+        }
+      ],
+      "fullText": "Challenger +2 (While challenging, this character gets +2 ¤.)",
+      "fullTextSections": [
+        "Challenger +2 (While challenging, this character gets +2 ¤.)"
+      ],
+      "strength": 2,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 14042,
+      "name": "Tia Victoria",
+      "fullName": "Tia Victoria - Disapproving Ancestor",
+      "cost": 6,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 42,
+      "version": "Disapproving Ancestor",
+      "rarity": "Common",
+      "franchise": "Coco",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "WITHERING GLARE When you play this character, chosen opposing character can’t ready at the start of their next turn.",
+      "fullTextSections": [
+        "WITHERING GLARE When you play this character, chosen opposing character can’t ready at the start of their next turn."
+      ],
+      "strength": 4,
+      "willpower": 7,
+      "lore": 2
+    },
+    {
+      "id": 14051,
+      "name": "Mama Imelda",
+      "fullName": "Mama Imelda - No-Nonsense Ancestor",
+      "cost": 4,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 51,
+      "version": "No-Nonsense Ancestor",
+      "rarity": "Rare",
+      "franchise": "Coco",
+      "subtypes": [
+        "Storyborn",
+        "Mentor"
+      ],
+      "fullText": "LET ME THROUGH When you play this character, put 3 cards from your discard on the bottom of your deck in any order or banish her.",
+      "fullTextSections": [
+        "LET ME THROUGH When you play this character, put 3 cards from your discard on the bottom of your deck in any order or banish her."
+      ],
+      "strength": 5,
+      "willpower": 5,
+      "lore": 2
+    },
+    {
+      "id": 14061,
+      "name": "Mim's Malice",
+      "fullName": "Mim's Malice",
+      "cost": 2,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "14",
+      "number": 61,
+      "rarity": "Common",
+      "franchise": "The Sword in the Stone",
+      "fullText": "Move up to 3 damage from chosen character to chosen opposing character.",
+      "fullTextSections": [
+        "Move up to 3 damage from chosen character to chosen opposing character."
+      ]
+    },
+    {
+      "id": 14066,
+      "name": "Merlin's Wand",
+      "fullName": "Merlin's Wand",
+      "cost": 2,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "14",
+      "number": 66,
+      "rarity": "Uncommon",
+      "franchise": "The Sword in the Stone",
+      "fullText": "MAGIC TOUCH ⟳, Reveal 2 cards with the same name in your hand — You pay 1 ⬡ less for the next card you play with that name this turn.",
+      "fullTextSections": [
+        "MAGIC TOUCH ⟳, Reveal 2 cards with the same name in your hand — You pay 1 ⬡ less for the next card you play with that name this turn."
+      ]
+    },
+    {
+      "id": 14076,
+      "name": "Fred",
+      "fullName": "Fred - Assembling the Team",
+      "cost": 3,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 76,
+      "version": "Assembling the Team",
+      "rarity": "Uncommon",
+      "franchise": "Big Hero 6",
+      "subtypes": [
+        "Storyborn",
+        "Super",
+        "Hero"
+      ],
+      "fullText": "BRAIN TRUST When you play this character, look at the top 4 cards of your deck. You may reveal a Super character card or an item card and put it into your hand. Put the rest on the bottom of your deck in any order.",
+      "fullTextSections": [
+        "BRAIN TRUST When you play this character, look at the top 4 cards of your deck. You may reveal a Super character card or an item card and put it into your hand. Put the rest on the bottom of your deck in any order."
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 14077,
+      "name": "Captain Hook",
+      "fullName": "Captain Hook - Concerned Captain",
+      "cost": 8,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 77,
+      "version": "Concerned Captain",
+      "rarity": "Uncommon",
+      "franchise": "Peter Pan",
+      "subtypes": [
+        "Dreamborn",
+        "Villain",
+        "Pirate",
+        "Captain"
+      ],
+      "strength": 9,
+      "willpower": 9,
+      "lore": 3
+    },
+    {
+      "id": 14087,
+      "name": "Lester the Possum",
+      "fullName": "Lester the Possum - Park Mascot",
+      "cost": 2,
+      "color": "Emerald",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "14",
+      "number": 87,
+      "version": "Park Mascot",
+      "rarity": "Uncommon",
+      "franchise": "A Goofy Movie",
+      "subtypes": [
+        "Storyborn"
+      ],
+      "fullText": "BEAT IT, DOOFUS! When this character is challenged and banished, each opponent loses 2 lore.\nMAXIMUM CRINGE 6 ⬡ — Chosen opposing character gains Reckless until the start of your next turn. (They can’t quest and must challenge if able.)",
+      "fullTextSections": [
+        "BEAT IT, DOOFUS! When this character is challenged and banished, each opponent loses 2 lore.",
+        "MAXIMUM CRINGE 6 ⬡ — Chosen opposing character gains Reckless until the start of your next turn. (They can’t quest and must challenge if able.)"
+      ],
+      "strength": 0,
+      "willpower": 3,
+      "lore": 2
+    },
+    {
+      "id": 14100,
+      "name": "Belle's City Guide",
+      "fullName": "Belle's City Guide",
+      "cost": 2,
+      "color": "Emerald",
+      "inkwell": false,
+      "type": "Item",
+      "setCode": "14",
+      "number": 100,
+      "rarity": "Rare",
+      "franchise": "Beauty and the Beast",
+      "fullText": "INSIDER INFO ⟳ — If you played an action this turn, gain 1 lore.",
+      "fullTextSections": [
+        "INSIDER INFO ⟳ — If you played an action this turn, gain 1 lore."
+      ]
+    },
+    {
+      "id": 14102,
+      "name": "The Beanstalk",
+      "fullName": "The Beanstalk - Onward and Upward",
+      "cost": 1,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Location",
+      "setCode": "14",
+      "number": 102,
+      "version": "Onward and Upward",
+      "rarity": "Rare",
+      "franchise": "Mickey Mouse & Friends",
+      "fullText": "THE DISTANT REACHES Characters get +1 ¤ and gain Evasive while here. (Only characters with Evasive can challenge them.)",
+      "fullTextSections": [
+        "THE DISTANT REACHES Characters get +1 ¤ and gain Evasive while here. (Only characters with Evasive can challenge them.)"
+      ],
+      "moveCost": 1,
+      "willpower": 6,
+      "lore": 0
+    },
+    {
+      "id": 14108,
+      "name": "Abigail Callaghan",
+      "fullName": "Abigail Callaghan - Seasoned Test Pilot",
+      "cost": 5,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 108,
+      "version": "Seasoned Test Pilot",
+      "rarity": "Common",
+      "franchise": "Big Hero 6",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "strength": 7,
+      "willpower": 6,
+      "lore": 1
+    },
+    {
+      "id": 14160,
+      "name": "Clarabelle",
+      "fullName": "Clarabelle - Out for a Stroll",
+      "cost": 6,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 160,
+      "version": "Out for a Stroll",
+      "rarity": "Uncommon",
+      "franchise": "Mickey Mouse & Friends",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "IMPROVE THE VIEW When you play this character, you may banish chosen item. If you do, its player puts the top card of their deck into their inkwell facedown and exerted.",
+      "fullTextSections": [
+        "IMPROVE THE VIEW When you play this character, you may banish chosen item. If you do, its player puts the top card of their deck into their inkwell facedown and exerted."
+      ],
+      "strength": 5,
+      "willpower": 7,
+      "lore": 2
+    },
+    {
+      "id": 14070,
+      "name": "Don Karnage",
+      "fullName": "Don Karnage - Khan's Courier",
+      "cost": 1,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 70,
+      "version": "Khan's Courier",
+      "rarity": "Common",
+      "franchise": "TaleSpin",
+      "subtypes": [
+        "Storyborn",
+        "Villain",
+        "Prince",
+        "Pirate"
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 14173,
+      "name": "Edgar Balthazar",
+      "fullName": "Edgar Balthazar - Long-Suffering Butler",
+      "cost": 5,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 173,
+      "version": "Long-Suffering Butler",
+      "rarity": "Common",
+      "franchise": "The Aristocats",
+      "subtypes": [
+        "Storyborn",
+        "Villain"
+      ],
+      "fullText": "TRUSTY UMBRELLA While this character has no damage, he gains Resist +2. (Damage dealt to them is reduced by 2.)",
+      "fullTextSections": [
+        "TRUSTY UMBRELLA While this character has no damage, he gains Resist +2. (Damage dealt to them is reduced by 2.)"
+      ],
+      "strength": 4,
+      "willpower": 6,
+      "lore": 2
+    },
+    {
+      "id": 14176,
+      "name": "Tiana",
+      "fullName": "Tiana - Restaurateur",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 176,
+      "version": "Restaurateur",
+      "rarity": "Common",
+      "franchise": "The Princess and the Frog",
+      "subtypes": [
+        "Dreamborn",
+        "Hero",
+        "Princess"
+      ],
+      "fullText": "HANDPICKED When you play this character, you may draw a card, then choose and discard a card.",
+      "fullTextSections": [
+        "HANDPICKED When you play this character, you may draw a card, then choose and discard a card."
+      ],
+      "strength": 1,
+      "willpower": 4,
+      "lore": 1
+    },
+    {
+      "id": 14180,
+      "name": "Wildcat",
+      "fullName": "Wildcat - Unconventional Mechanic",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 180,
+      "version": "Unconventional Mechanic",
+      "rarity": "Common",
+      "franchise": "TaleSpin",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "WELL, THAT’S BROKEN When you play this character, you may banish chosen item.",
+      "fullTextSections": [
+        "WELL, THAT’S BROKEN When you play this character, you may banish chosen item."
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 14190,
+      "name": "Sir Ector",
+      "fullName": "Sir Ector - Blustery Knight",
+      "cost": 5,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 190,
+      "version": "Blustery Knight",
+      "rarity": "Uncommon",
+      "franchise": "The Sword in the Stone",
+      "subtypes": [
+        "Storyborn",
+        "Knight"
+      ],
+      "fullText": "WELL DESERVED During your turn, whenever this character banishes another character in a challenge, draw a card.",
+      "fullTextSections": [
+        "WELL DESERVED During your turn, whenever this character banishes another character in a challenge, draw a card."
+      ],
+      "strength": 6,
+      "willpower": 4,
+      "lore": 2
+    },
+    {
+      "id": 14203,
+      "name": "Central Station",
+      "fullName": "Central Station - Transportation Hub",
+      "cost": 1,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Location",
+      "setCode": "14",
+      "number": 203,
+      "version": "Transportation Hub",
+      "rarity": "Common",
+      "subtypes": [
+        "Hyperia City"
+      ],
+      "fullText": "FREE SOUVENIR Once during your turn, whenever a character moves here, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "FREE SOUVENIR Once during your turn, whenever a character moves here, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+      ],
+      "moveCost": 1,
+      "willpower": 2,
+      "lore": 0
     }
   ]
 }

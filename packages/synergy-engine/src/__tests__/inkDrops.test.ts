@@ -2,6 +2,7 @@ import {describe, it, expect} from 'vitest';
 import {
   getCardMechanics,
   getInkDropRoles,
+  isDropGainGate,
   isInkDropCard,
   isLateDropMaker,
   isOpponentGatedDrop,
@@ -143,7 +144,7 @@ const baloo = createCard({
   fullName: 'Baloo - Delivery Pilot',
   ink: 'Steel',
   cost: 2,
-  text: "CASH PAYMENT This character can't quest or challenge unless you gained an ink drop this turn.",
+  text: 'PAYMENT UP FRONT This character can’t quest or challenge unless you got an ink drop this turn.',
 });
 const goGoTomago = createCard({
   id: 'go-go-tomago',
@@ -169,6 +170,15 @@ describe('Ink Drops role detection', () => {
     expect(getInkDropRoles(sirKay)).toEqual(['drop-payoff']);
     expect(getInkDropRoles(baymaxAmpedUp)).toEqual(['drop-payoff']);
     expect(getInkDropRoles(baloo)).toEqual(['drop-payoff']);
+  });
+
+  it('reads a gain gate whether it says "got" or "gained"', () => {
+    // Baloo's English printing says "got"; the translated scan his preview first carried said "gained".
+    const translatedBaloo = createCard({
+      text: "CASH PAYMENT This character can't quest or challenge unless you gained an ink drop this turn.",
+    });
+    expect(isDropGainGate(baloo)).toBe(true);
+    expect(isDropGainGate(translatedBaloo)).toBe(true);
   });
 
   it('flags a maker whose drops also reach an opponent as shared', () => {
