@@ -38,6 +38,9 @@ const SHELL_TITLE = 'Inkweave — Master Lorcana Synergies';
 // captures the animated one, and cleanPrerenderedHtml ships the static one.
 const STATIC_LOGO_SRC = '/brand/logo-static.svg';
 const ANIMATED_LOGO_SRC = '/brand/logo-animated.svg';
+// The script tag <SpeedInsights /> adds to <head> at runtime, matched by its SDK name rather
+// than its src, which varies by environment. cleanPrerenderedHtml drops it.
+const SPEED_INSIGHTS_SCRIPT = /<script\b[^>]*\bdata-sdkn="@vercel\/speed-insights[^"]*"[^>]*><\/script>/g;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -178,6 +181,12 @@ function startServer(shellHtml) {
  *    `networkidle`, which comes after that swap, so without this rewrite every shipped page
  *    would paint the animated logo from first paint, running per-frame work during load.
  *
+ * 4. Drops the Speed Insights script tag. <SpeedInsights /> adds it at runtime, so the crawl
+ *    captures it, and vercel.json serves the captured homepage as index.html for every route
+ *    that isn't prerendered. A shipped tag makes the live component skip adding its own, and
+ *    only that one carries the page's route pattern (useSpeedInsightsRoute) and follows
+ *    client-side navigation. Left in, every non-prerendered route would report as `/`.
+ *
  * Exported for scripts/prerender.test.mjs. The origin rewrite MUST remove every
  * occurrence — a single-replace regression would leave 6-13 per page and be invisible
  * in a spot check of the built output.
@@ -186,7 +195,8 @@ export function cleanPrerenderedHtml(html, shellTitle, origin) {
   return html
     .replace(`<title>${shellTitle}</title>`, '')
     .replaceAll(origin, '')
-    .replaceAll(ANIMATED_LOGO_SRC, STATIC_LOGO_SRC);
+    .replaceAll(ANIMATED_LOGO_SRC, STATIC_LOGO_SRC)
+    .replaceAll(SPEED_INSIGHTS_SCRIPT, '');
 }
 
 /**

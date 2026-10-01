@@ -75,6 +75,20 @@ describe('cleanPrerenderedHtml', () => {
     expect(out).toContain('<img src="/brand/logo-static.svg" alt="Inkweave">');
     expect(out).not.toContain('logo-animated');
   });
+
+  it('drops the Speed Insights tag but keeps the Analytics one', () => {
+    // A shipped Speed Insights tag stops the live component from adding its own, the only
+    // one that carries the route, so the captured homepage would label every fallback route `/`.
+    const analytics =
+      '<script src="/_vercel/insights/script.js" data-sdkn="@vercel/analytics/react" data-sdkv="2.0.1" defer=""></script>';
+    const speedInsights =
+      '<script src="/_vercel/speed-insights/script.js" defer="" data-sdkn="@vercel/speed-insights/react" ' +
+      'data-sdkv="2.0.0" data-route="/"></script>';
+    const html = `<html><head><title>Real</title>${analytics}${speedInsights}</head><body>x</body></html>`;
+    expect(cleanPrerenderedHtml(html, SHELL, ORIGIN)).toBe(
+      `<html><head><title>Real</title>${analytics}</head><body>x</body></html>`,
+    );
+  });
 });
 
 describe('isCleanShell', () => {
