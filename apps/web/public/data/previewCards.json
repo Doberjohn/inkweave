@@ -1164,7 +1164,14 @@
       ],
       "strength": 2,
       "willpower": 3,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14212,
+          "rarity": "Epic",
+          "number": 212
+        }
+      ]
     },
     {
       "id": 14078,
