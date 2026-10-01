@@ -22,7 +22,7 @@ See [GitHub Issues](https://github.com/Doberjohn/inkweave/issues) for full backl
 
 - **OS**: Windows 11. **Shell**: Windows PowerShell 5.1 (`powershell.exe`). **pwsh 7 is not installed** - never assume it. Git Bash is available for POSIX scripts; each takes its own syntax.
 - PowerShell 5.1 has no `&&`/`||` chain operators, no ternary, no null-coalescing. Use `A; if ($?) { B }`.
-- Long paths are not enabled (`core.longpaths` unset), so deep `node_modules` trees under `.claude/worktrees/` can exceed `MAX_PATH` and resist deletion.
+- Windows long paths are enabled, but git's own delete still fails on pnpm's deep `node_modules`: `git worktree remove` unregisters the worktree, then stops at the first long path and leaves a half-deleted folder. Remove worktrees with `pnpm worktree:remove` (see **Worktree & Agent Workflow**).
 - Node 24, pnpm workspaces. `claude` must be on PATH for the scheduled rule-candidate miner.
 
 ## Project Structure
@@ -97,7 +97,7 @@ Claude Code hooks, skills, agents, and path-scoped rules enforce workflow rules 
 ### Hooks (`.claude/hooks/`)
 | Hook | Event | What it does |
 |------|-------|-------------|
-| `git-write-protection.sh` | PreToolUse/Bash\|PowerShell\|Monitor | Soft-blocks commit/push (`USER_APPROVED=1` bypass, Bash only: PowerShell and Monitor can't carry it, so there they always block), hard-blocks destructive ops and piped commit/push. Parses the command (`lib/shell-command.mjs`), so git options, cd chains and nested shells don't slip past; case table in `__tests__/hooks.test.mjs` |
+| `git-write-protection.sh` | PreToolUse/Bash\|PowerShell\|Monitor | Soft-blocks commit/push (`USER_APPROVED=1` bypass, Bash only: PowerShell and Monitor can't carry it, so there they always block), hard-blocks destructive ops and piped commit/push, plus the worktree remover (`pnpm worktree:remove`, `scripts/remove-worktree.mjs`, dry runs included). Parses the command (`lib/shell-command.mjs`), so git options, cd chains and nested shells don't slip past; case table in `__tests__/hooks.test.mjs` |
 | `branch-verification.sh` | PreToolUse/Edit\|Write | Blocks source file edits on master/main |
 | `engine-auto-rebuild.sh` | PostToolUse/Edit\|Write | Auto `pnpm build:engine` + `pnpm precompute-synergies` after engine file edits |
 | `preview-images-auto-convert.sh` | PostToolUse/Edit\|Write | Auto `pnpm convert-preview-images` after writes inside `apps/web/public/card-images-raw/` (raw → AVIF pipeline) |
@@ -245,7 +245,7 @@ Dark fantasy theme inspired by Lorcana:
 ## Workflow Preferences
 
 ### Git Workflow
-- **Git safety enforced by hooks** — `git-write-protection` hook blocks commit, push, and destructive ops (checkout --, restore, reset --hard, clean -f, worktree remove/prune). Commit/push use `USER_APPROVED=1` prefix after explicit user approval. Destructive ops are hard-blocked — run manually. Commit and push go through the Bash tool (in PowerShell or Monitor the hook always blocks them), and piping either one (`| tail`) is always blocked.
+- **Git safety enforced by hooks**: the `git-write-protection` hook blocks commit, push, and destructive ops (checkout --, restore, reset --hard, clean -f, worktree remove/prune, and the worktree remover `pnpm worktree:remove`). Commit/push use `USER_APPROVED=1` prefix after explicit user approval. Destructive ops are hard-blocked: the owner runs them. Commit and push go through the Bash tool (in PowerShell or Monitor the hook always blocks them), and piping either one (`| tail`) is always blocked.
 - **Branch verification enforced by hook** — `branch-verification` hook blocks source file edits on master/main.
 - Feature branches: `feature/<issue-number>-<description>` (e.g., `feature/5-deck-builder-tests`)
 - Commit messages: Use semantic commit notation with issue reference (e.g., `test(deck): add tests (#5)`)
@@ -342,7 +342,8 @@ The boundary is drawn on what a loop may **do**, not on whether a human is watch
 - **Default: sequential, one agent at a time.** Use parallel agents only for read-only research/exploration or trivially independent tasks with clear specs.
 - **Prefer feature branches over worktrees.** Only use worktrees when you need to pause mid-task and switch context, or run concurrent dev servers.
 - **Max 2 active worktrees.** Port assignments: main=5173, worktree-1=5174, worktree-2=5175.
-- **Same-session cleanup.** Every worktree created in a session must be cleaned up in that session (or explicitly flagged for next session in MEMORY.md).
+- **Same-session cleanup.** Every worktree created in a session must be removed in that session (or explicitly flagged for next session in MEMORY.md).
+- **Removing a worktree is the owner's job.** From the main checkout, `pnpm worktree:remove <name|path>` deletes the folder, its registry entry, and its branch once `origin/master` contains it. It refuses and changes nothing when the worktree has uncommitted work, a HEAD on no `origin/*` ref, ignored files that are neither build output nor copies of the main checkout's, or a process inside it. `--dry-run` shows the plan; `pnpm worktree:remove --leftovers` sweeps half-deleted folders under `.claude/worktrees/` and finishes interrupted removals. Claude sessions are hook-blocked from running it, so hand the owner the command. To discard a dirty worktree on purpose, run `git worktree remove --force <path>`, then `--leftovers` for what it leaves under `.claude/worktrees/`.
 - **Never leave orphan branches.** After merging a PR, delete the local branch and worktree immediately.
 - **Pre-commit timeout.** Always use `timeout: 600000` for git commit (pre-commit hooks run lint + test + E2E, ~2-3 min).
 - **Port conflicts.** E2E needs no free dev port: by default every local run starts its own Vite on a free port it picks in 5200-5299. `E2E_PORT` pins a specific port instead (1024-65535), which must be free, or the run stops at startup with "already used". Before starting a dev server, check your assigned port. Stop only servers whose command line points into your own checkout; a server from another checkout is another session's live work, so ask the owner first.

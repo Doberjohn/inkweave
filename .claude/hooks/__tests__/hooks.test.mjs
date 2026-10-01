@@ -32,9 +32,11 @@ const COMMIT = 'commit';
 const PUSH = 'push';
 const ISSUE = 'issue';
 const PARSE = 'parse';
+const REMOVER = 'remover';
 
 const MESSAGES = {
   [HARD]: /Run this manually/,
+  [REMOVER]: /Worktree deletion is the owner's job/,
   [PIPE]: /Piped git commit\/push detected/,
   [COMMIT]: /Git commit detected/,
   [PUSH]: /Git push detected/,
@@ -446,6 +448,93 @@ const CASES = [
   [B, 'git worktree remove ../x', HARD, OK, 'worktree remove'],
   [B, 'git worktree prune', HARD, OK, 'worktree prune'],
   [B, 'git --no-pager worktree remove x', HARD, OK, 'worktree remove behind an option'],
+
+  // --- the worktree remover (#686) is owner-run: no prefix bypasses it, dry runs included ---
+  [B, 'pnpm worktree:remove inkweave-686', REMOVER, OK, 'worktree remover'],
+  [
+    B,
+    'USER_APPROVED=1 pnpm worktree:remove inkweave-686',
+    REMOVER,
+    OK,
+    'the prefix never bypasses the worktree remover',
+  ],
+  [B, 'pnpm run worktree:remove --leftovers', REMOVER, OK, 'worktree remover via pnpm run'],
+  [B, 'pnpm worktree:remove x --dry-run', REMOVER, OK, 'worktree remover dry run'],
+  [B, 'npm run worktree:remove x', REMOVER, OK, 'worktree remover via npm'],
+  [B, 'pnpm --dir D:/x worktree:remove y', REMOVER, OK, 'worktree remover behind --dir'],
+  [B, 'cd D:/johnn && pnpm worktree:remove x', REMOVER, OK, 'worktree remover after cd'],
+  [B, 'bash -c "pnpm worktree:remove x"', REMOVER, OK, 'worktree remover in nested bash'],
+  [B, 'node scripts/remove-worktree.mjs x', REMOVER, OK, 'worktree remover script via node'],
+  [
+    B,
+    'USER_APPROVED=1 node D:/johnn/Projects/inkweave/scripts/remove-worktree.mjs --leftovers',
+    REMOVER,
+    OK,
+    'worktree remover script by absolute path, approved',
+  ],
+  [
+    B,
+    'pnpm exec node scripts/remove-worktree.mjs x',
+    REMOVER,
+    OK,
+    'worktree remover script via pnpm exec',
+  ],
+  [
+    B,
+    `${'eval '.repeat(10)}pnpm worktree:remove x`,
+    PARSE,
+    OK,
+    'nesting past the depth limit fails closed on the worktree remover',
+  ],
+  [P, 'pnpm worktree:remove inkweave-686', REMOVER, OK, 'PS worktree remover'],
+  [P, 'USER_APPROVED=1 pnpm worktree:remove x', REMOVER, OK, 'PS worktree remover with the prefix'],
+  [
+    P,
+    `node scripts${BS}remove-worktree.mjs --leftovers`,
+    REMOVER,
+    OK,
+    'PS worktree remover script',
+  ],
+  [B, 'node --run worktree:remove -- x', REMOVER, OK, 'worktree remover via node --run'],
+  [B, 'deno task worktree:remove x', REMOVER, OK, 'worktree remover via deno task'],
+  [B, 'bun run worktree:remove x', REMOVER, OK, 'worktree remover via bun run'],
+  [B, 'corepack pnpm worktree:remove x', REMOVER, OK, 'worktree remover via corepack'],
+  [B, 'pnpm worktree:remove exec', REMOVER, OK, 'a worktree named exec'],
+  [
+    B,
+    'pnpm --filter web exec node scripts/remove-worktree.mjs x',
+    REMOVER,
+    OK,
+    'worktree remover script behind --filter and exec',
+  ],
+  [B, 'npx node scripts/remove-worktree.mjs x', REMOVER, OK, 'worktree remover script via npx'],
+  [P, 'pnpm.ps1 worktree:remove x', REMOVER, OK, 'PS worktree remover via pnpm.ps1'],
+  [B, 'cat scripts/remove-worktree.mjs', OK, OK, 'reading the worktree remover'],
+  [B, 'pnpm exec eslint scripts/remove-worktree.mjs', OK, OK, 'linting the worktree remover'],
+  [
+    B,
+    'npx prettier --write scripts/remove-worktree.mjs',
+    OK,
+    OK,
+    'formatting the worktree remover',
+  ],
+  [B, 'node --check scripts/remove-worktree.mjs', OK, OK, 'syntax-checking the worktree remover'],
+  [
+    B,
+    'pnpm exec vitest run --config vitest.scripts.config.mjs scripts/remove-worktree.test.mjs',
+    OK,
+    OK,
+    'testing the worktree remover',
+  ],
+  [B, 'git add scripts/remove-worktree.mjs', OK, OK, 'staging the worktree remover'],
+  [B, 'echo "run pnpm worktree:remove x"', OK, OK, 'quoted mention of the worktree remover'],
+  [
+    B,
+    'USER_APPROVED=1 git commit -m "feat: pnpm worktree:remove (#686)"',
+    OK,
+    OK,
+    'commit message naming the worktree remover',
+  ],
   [B, 'bash -c "git reset --hard"', HARD, OK, 'nested reset --hard'],
   [B, 'USER_APPROVED=1 git reset --hard', HARD, OK, 'the prefix never bypasses a hard block'],
   [B, 'USER_APPROVED=1 bash -c "git clean -fdx"', HARD, OK, 'prefix and a nested hard block'],
@@ -809,29 +898,35 @@ describe('hook wrappers', {timeout: SPAWN_TIMEOUT}, () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'hook-wrapper-'));
     copyFileSync(path.join(HOOKS_DIR, GIT_HOOK), path.join(dir, GIT_HOOK));
     copyFileSync(path.join(HOOKS_DIR, ISSUE_HOOK), path.join(dir, ISSUE_HOOK));
-    const [git, gitUpper, gitOther, issue] = await Promise.all([
+    const [git, gitUpper, gitOther, issue, remover, removerScript] = await Promise.all([
       runHook(path.join(dir, GIT_HOOK), push),
       runHook(path.join(dir, GIT_HOOK), payload(B, 'GIT push')),
       runHook(path.join(dir, GIT_HOOK), payload(B, 'ls -la')),
       runHook(path.join(dir, ISSUE_HOOK), payload(B, 'gh issue create --title x')),
+      runHook(path.join(dir, GIT_HOOK), payload(B, 'pnpm worktree:remove x')),
+      runHook(path.join(dir, GIT_HOOK), payload(P, `node scripts${BS}remove-worktree.mjs x`)),
     ]);
     expect(git.code, git.stderr).toBe(2);
     expect(git.stderr).toMatch(/failed to run/);
     expect(gitUpper.code, 'the fallback match ignores case').toBe(2);
     expect(gitOther.code, gitOther.stderr).toBe(0);
     expect(issue.code, issue.stderr).toBe(2);
+    expect(remover.code, 'the worktree remover fails closed too').toBe(2);
+    expect(removerScript.code, 'so does its script, by a backslash path').toBe(2);
   });
 
   it('fail closed on the command field alone, with git as a whole word', async () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'hook-wrapper-'));
     copyFileSync(path.join(HOOKS_DIR, GIT_HOOK), path.join(dir, GIT_HOOK));
     const inGitDir = {tool_name: B, cwd: 'D:/git/repo', tool_input: {command: 'echo legitimate'}};
-    const [legitimate, afterNewline] = await Promise.all([
+    const [legitimate, afterNewline, afterLiteralNewline] = await Promise.all([
       runHook(path.join(dir, GIT_HOOK), inGitDir),
       runHook(path.join(dir, GIT_HOOK), payload(B, 'echo hi\ngit push')),
+      runHook(path.join(dir, GIT_HOOK), payload(B, `bash -c $'cd x${BS}ngit push'`)),
     ]);
     expect(legitimate.code, 'git inside a word or the cwd does not count').toBe(0);
     expect(afterNewline.code, 'a JSON line-break escape counts as a space').toBe(2);
+    expect(afterLiteralNewline.code, "so does a literal \\n, as in $'...'").toBe(2);
   });
 });
 
