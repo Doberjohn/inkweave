@@ -42,7 +42,7 @@ One source per retyped idiom, in `theme.ts` (Storybook: Docs/MicroPatterns). Spr
 - **EASING intent**: `snappy` hover/fast, `bounce` selection/press, `smooth` fades/progress.
 - **DURATION** (2026-07-29 ruling) is the other half of the transition: `fast` 150 hover/press, `base` 200 default, `slow` 300 panels/expands, in ms. Three steps only — 250ms converges to `base`/`slow` on touch. `no-raw-duration` is bounded to the UI band (sub-second decimals, ≤3-digit ms), so decorative infinite loops and FLIP/handoff choreography never match: those stay literal behind a NAMED local const (`FLIP_DURATION`, `*_MS`), never forced onto the scale.
 - **Reduced motion**: one source — `shared/utils/prefersReducedMotion` (fn for trigger-time, hook for render gating). No new hand-rolled `matchMedia` checks; new infinite animations MUST have a class in index.css's reduced-motion block. `useBoop` is already guarded.
-- **Loading states**: skeleton for layout-known surfaces (one app-level `SkeletonTheme` in AppLayout — never add local wrappers), text for admin/unknown shapes, spinner only for the SW toast.
+- **Loading states**: skeleton for layout-known surfaces (one app-level `SkeletonTheme` in AppLayout — never add local wrappers), text for unknown shapes, spinner only for the SW toast.
 - **`surfaceHover` is overloaded** (six jobs); do not add new ones — aliases are deferred to a future ruling.
 
 ## Related

@@ -4,11 +4,14 @@ import {COLORS, FONTS, INK_COLORS} from '../../../shared/constants';
 import {usePairScore} from '../../voting/hooks/usePairScore';
 import {formatScore} from '../../../shared/utils/scoreFormatting';
 import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
+import {useScrollSnapIndex} from '../../../shared/hooks';
 import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';
 import {MobileLightbox} from './MobileLightbox';
 
 type TabName = 'engine' | 'community';
+/** The tabs in strip order: each is one full-width panel of the scroll-snap strip. */
+const TABS: readonly TabName[] = ['engine', 'community'];
 
 /** FLIP timings for the comparison entry/exit. Exit is shorter than the modal's 480ms
  *  `exitingPair` unmount window so the card lands before the view is torn down. */
@@ -92,13 +95,6 @@ function cancelAnim(anim: Animation | null): void {
   if (anim) anim.cancel();
 }
 
-/** Which tab the scroll-snap viewport is centered on, or null if it has no width yet. */
-function tabFromScroll(root: HTMLDivElement): TabName | null {
-  const cw = root.clientWidth;
-  if (!cw) return null;
-  return root.scrollLeft > cw / 2 ? 'community' : 'engine';
-}
-
 /** The card backing the open lightbox preview, or null when no preview is open. */
 function pickPreviewCard(
   preview: PreviewState | null,
@@ -151,43 +147,6 @@ function useComparisonFlip(originRects: ComparisonOriginRects | null, isExiting:
   return {cardARef, cardBRef};
 }
 
-/**
- * Wires the scroll-snap viewport to the active-tab indicator. Swiping the strip updates the
- * indicator; tapping a tab smooth-scrolls the strip — both converge on the same `activeTab`.
- * The `last` guard skips redundant setState for in-progress swipes that don't cross the midpoint.
- */
-function useTabScrollSync() {
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState<TabName>('engine');
-
-  useEffect(() => {
-    const root = viewportRef.current;
-    if (!root) return;
-    let last: TabName | null = null;
-    const update = () => {
-      const next = tabFromScroll(root);
-      if (next && next !== last) {
-        last = next;
-        setActiveTab(next);
-      }
-    };
-    update();
-    root.addEventListener('scroll', update, {passive: true});
-    return () => root.removeEventListener('scroll', update);
-  }, []);
-
-  const scrollToTab = (name: TabName) => {
-    const root = viewportRef.current;
-    if (!root) return;
-    const target = root.querySelector<HTMLDivElement>(`[data-panel="${name}"]`);
-    if (!target) return;
-    setActiveTab(name); // optimistic — observer confirms once the smooth-scroll lands
-    target.scrollIntoView({behavior: 'smooth', inline: 'start', block: 'nearest'});
-  };
-
-  return {viewportRef, activeTab, scrollToTab};
-}
-
 /** Entry fade-in driver: false on mount, flips true after the first frame. */
 function useRevealedAfterMount(): boolean {
   const [revealed, setRevealed] = useState(false);
@@ -205,7 +164,8 @@ function useRevealedAfterMount(): boolean {
  * the engine + community panels.
  *
  * Tabs are an *indicator* over the scroll position, not a switch — tap a pill OR swipe the
- * strip; both paths converge on the same active-tab state. Tapping a card opens a lightbox
+ * strip; both paths converge on the same active-tab state (useScrollSnapIndex, which scrolls
+ * only the strip, never the modal or the page around it). Tapping a card opens a lightbox
  * inside the modal (NOT a portal-to-body) so the modal frame stays visible.
  *
  * Sister components: {@link MobileLightbox}, {@link DeltaPanel}, and the `compact` mode on
@@ -221,7 +181,9 @@ export function MobileComparisonView({pair, engineScore, originRects = null, isE
   const {cardA, cardB} = pair;
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const {cardARef, cardBRef} = useComparisonFlip(originRects, isExiting);
-  const {viewportRef, activeTab, scrollToTab} = useTabScrollSync();
+  const {viewportRef, activeIndex, scrollToIndex} = useScrollSnapIndex();
+  const activeTab = TABS[activeIndex];
+  const scrollToTab = (name: TabName) => scrollToIndex(TABS.indexOf(name));
   const revealed = useRevealedAfterMount();
 
   // pair-score is shared with CommunityColumn's call via the module-level cache — duplicate
@@ -264,10 +226,10 @@ export function MobileComparisonView({pair, engineScore, originRects = null, isE
 
         <div ref={viewportRef} role="presentation" style={{...VIEWPORT_STYLE, ...chromeExitStyle}} className="mobile-tab-viewport">
           <div style={PANEL_STRIP_STYLE}>
-            <div data-panel="engine" style={PANEL_WRAP_STYLE} className="mobile-tab-panel-wrap">
+            <div style={PANEL_WRAP_STYLE} className="mobile-tab-panel-wrap">
               <EngineColumn pair={pair} engineScore={engineScore} compact />
             </div>
-            <div data-panel="community" style={PANEL_WRAP_STYLE} className="mobile-tab-panel-wrap">
+            <div style={PANEL_WRAP_STYLE} className="mobile-tab-panel-wrap">
               <CommunityColumn pair={pair} engineScore={engineScore} compact />
             </div>
           </div>
@@ -598,7 +560,6 @@ const VIEWPORT_STYLE: React.CSSProperties = {
   overflowX: 'auto',
   overflowY: 'hidden',
   scrollSnapType: 'x mandatory',
-  scrollBehavior: 'smooth',
   scrollbarWidth: 'none',
   WebkitOverflowScrolling: 'touch',
   overscrollBehaviorX: 'contain',

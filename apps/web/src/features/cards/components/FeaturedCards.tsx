@@ -1,40 +1,11 @@
 import type {LorcanaCard} from '../types';
-import {cardPath} from 'inkweave-synergy-engine';
+import {cardPath} from 'inkweave-synergy-engine/card';
 import {CardTile} from './CardTile';
 import {FeaturedCardsSkeleton} from './FeaturedCardsSkeleton';
+import {FEATURED_IDS, pickFeatured, useFeaturedCardsFile} from '../featured';
 import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
 import {RenderProfiler} from '../../../shared/components';
 
-/**
- * Default featured card IDs — a Set 13 showcase spanning all six inks, chosen for
- * visual appeal. Used as the fallback when `VITE_FEATURED_CARD_IDS` is unset or
- * empty. Recommend keeping exactly 6 IDs so the desktop 6-col / mobile 3×2 grid
- * stays symmetrical.
- */
-export const DEFAULT_FEATURED_IDS = [
-  '2999', // Amber-Emerald: Woody & Buzz Lightyear - Best Buddies
-  '3022', // Amethyst:      Mrs. Incredible - Created by the Vine
-  '3053', // Emerald:       Russell - Junior Wilderness Explorer
-  '3096', // Ruby:          Meilin Lee - Popular Red Panda
-  '3129', // Sapphire:      Maid Marian - Created by the Vine
-  '3168', // Steel:         The Vine - Towering Stalk
-];
-
-/**
- * Resolve the featured card IDs from the build-time env var, with a graceful
- * fallback to the in-code defaults. Vite inlines env vars at build time, so
- * changing this on Vercel requires a redeploy — that's the intended workflow.
- */
-function resolveFeaturedIds(raw: string | undefined): string[] {
-  if (!raw) return DEFAULT_FEATURED_IDS;
-  const parsed = raw
-    .split(',')
-    .map((id) => id.trim())
-    .filter(Boolean);
-  return parsed.length > 0 ? parsed : DEFAULT_FEATURED_IDS;
-}
-
-const FEATURED_IDS = resolveFeaturedIds(import.meta.env.VITE_FEATURED_CARD_IDS);
 const FEATURED_COUNT = FEATURED_IDS.length;
 
 interface FeaturedCardsProps {
@@ -42,19 +13,11 @@ interface FeaturedCardsProps {
   onCardSelect: (card: LorcanaCard) => void;
   isMobile?: boolean;
   /**
-   * True while the cards JSON is still being fetched. Renders
-   * `<FeaturedCardsSkeleton>` so the shimmer is continuous from the Suspense
-   * fallback through to the real card art (no flash of empty section).
+   * True while the full card list is still loading. The tiles then come from the small
+   * featured-cards file (#641); until that arrives, `<FeaturedCardsSkeleton>` keeps the
+   * placeholder row continuous from the Suspense fallback through to the real card art.
    */
   isLoading?: boolean;
-}
-
-/** Look up curated featured cards by ID, preserving display order. */
-function pickFeatured(cards: LorcanaCard[]): LorcanaCard[] {
-  const byId = new Map(cards.map((c) => [c.id, c]));
-  return FEATURED_IDS.map((id) => byId.get(id)).filter(
-    (c): c is LorcanaCard => c != null && !!c.imageUrl,
-  );
 }
 
 function getStyles(isMobile: boolean) {
@@ -115,16 +78,20 @@ export function FeaturedCards({
   isMobile,
   isLoading,
 }: FeaturedCardsProps) {
-  const featured = pickFeatured(cards);
+  const fromList = pickFeatured(cards);
+  // The full list is the source of truth once it has the cards. Until then, the small file
+  // renders the tiles, so they don't wait on the whole database (#641).
+  const fromFile = useFeaturedCardsFile(fromList.length === 0 && !!isLoading);
+  const featured = fromList.length > 0 ? fromList : (fromFile ?? []);
 
   const styles = getStyles(!!isMobile);
 
-  // While the cards JSON is in flight, render the same skeleton row the
-  // Suspense fallback uses so the shimmer is visually continuous from page
-  // load through to real card art. Only return null if loading has completed
-  // and we still have no matches (curated IDs unknown, or empty data).
-  if (isLoading) return <FeaturedCardsSkeleton isMobile={!!isMobile} />;
-  if (featured.length === 0) return null;
+  // Nothing to show yet: keep the same skeleton row the Suspense fallback uses, so the
+  // placeholder is continuous from page load to real card art. Only return null once the
+  // list has loaded and still has no matches (curated IDs unknown, or empty data).
+  if (featured.length === 0) {
+    return isLoading ? <FeaturedCardsSkeleton isMobile={!!isMobile} /> : null;
+  }
 
   return (
     <RenderProfiler id="FeaturedCards">

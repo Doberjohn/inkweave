@@ -1,7 +1,7 @@
 import {useState, type MouseEvent} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from '../../cards';
-import {cardPath} from 'inkweave-synergy-engine';
+import {cardPath} from 'inkweave-synergy-engine/card';
 import {smallImageUrl} from '../../cards';
 import {INK_COLORS, COLORS, EASING, FONT_SIZES, RADIUS} from '../../../shared/constants';
 import {CardLightbox, StrengthBadge} from '../../../shared/components';
@@ -204,6 +204,7 @@ function MaybeLightbox({card, lightboxOpen, setLightboxOpen}: {card: LorcanaCard
       src={card.imageUrl}
       alt={card.fullName}
       isLocation={card.type === 'Location'}
+      card={card}
       onClose={() => setLightboxOpen(false)}
     />
   );

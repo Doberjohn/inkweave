@@ -1,5 +1,6 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
+import { onSentryReady } from './sentry';
 
 let client: SupabaseClient<Database> | null = null;
 let envWarningLogged = false;
@@ -37,6 +38,11 @@ export function getSupabase(): SupabaseClient<Database> | null {
       storageKey: 'inkweave:auth',
     },
   });
+  client = createClient<Database>(url, key);
+  // Sentry's Supabase integration instruments the SupabaseClient class, so it covers this client
+  // whether Sentry loads before or after it exists. Registered here, where supabase-js is already
+  // loaded, rather than in Sentry's init, which would download it on every page (#640).
+  onSentryReady((sentry) => sentry.addSupabaseIntegration(SupabaseClient));
   return client;
 }
 

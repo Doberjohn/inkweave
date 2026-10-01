@@ -3,7 +3,8 @@
  * Graduate a single set from preview curation to canonical LorcanaJSON data.
  *
  * Reads a per-set LorcanaJSON file (the format LorcanaJSON.org publishes for
- * each set, e.g. `set012.json`), strips it per the 6 graduation rules,
+ * each set, e.g. `set012.json`), applies the 6 graduation rules (Rule 1 folds
+ * Epic/Enchanted/Iconic printings into their base card's `variants`),
  * replaces any existing entries for that set in `allCards.json`, retargets
  * hardcoded card-id references (featured, playstyle heroes, reveals demos) from
  * preview to canonical, and empties `previewCards.json`.
@@ -13,12 +14,17 @@
  *   memory/feedback_lorcanajson_graduation_rules.md
  *
  * Usage:
- *   node scripts/graduate-canonical-set.mjs <set-code> [source-path]
+ *   node scripts/graduate-canonical-set.mjs <set-code> [source-path] [--allow-missing-variants]
  *
  *   set-code      Set code as it appears on cards (e.g. "12", "13", "Q1").
  *                 Must match the `setCode` value the app uses for filtering.
  *   source-path   Path to the canonical per-set LorcanaJSON file.
  *                 Defaults to: apps/web/public/data/set{set-code}data.json
+ *   --allow-missing-variants
+ *                 Graduate even if an Epic/Enchanted/Iconic printing would be dropped:
+ *                 a hand-scanned preview variant missing from the canonical source, or a
+ *                 canonical printing with no base card in it. Without this flag the
+ *                 script stops before writing anything.
  *
  * Examples:
  *   node scripts/graduate-canonical-set.mjs 12
@@ -35,23 +41,25 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {foldVariants} from './lib/fold-variants.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const ALL_CARDS = path.join(ROOT, 'apps/web/public/data/allCards.json');
 const PREVIEW = path.join(ROOT, 'apps/web/public/data/previewCards.json');
-const FEATURED_TSX = path.join(ROOT, 'apps/web/src/features/cards/components/FeaturedCards.tsx');
+const FEATURED_IDS_JSON = path.join(ROOT, 'apps/web/src/features/cards/featuredCardIds.json');
 
 /**
  * Committed source that hardcodes REAL card ids from a set: the landing-page
- * featured cards + their test, the playstyle-gallery hero cards, and the reveals /
+ * featured-card list (featuredCardIds.json, #641) + the FeaturedCards test, the
+ * playstyle-gallery hero cards, and the reveals /
  * playstyle Storybook demos. When a set graduates its ids change, so these are
  * retargeted preview->canonical. Deliberately EXCLUDES self-contained mock-fixture
- * tests (analytics, reveal-admin, card-analytics) whose 13xxx ids are arbitrary and
+ * tests (analytics, card-analytics) whose 13xxx ids are arbitrary and
  * must not move — add a new file here only if it references real graduated cards.
  */
 const ID_REFERENCE_FILES = [
-  'apps/web/src/features/cards/components/FeaturedCards.tsx',
+  'apps/web/src/features/cards/featuredCardIds.json',
   'apps/web/src/features/cards/components/__tests__/FeaturedCards.test.tsx',
   'apps/web/src/shared/constants/playstyleUi.ts',
   'apps/web/.env.example',
@@ -62,8 +70,6 @@ const ID_REFERENCE_FILES = [
   'apps/web/src/features/reveals/CardSlot.stories.tsx',
   'apps/web/src/features/playstyles/PlaystyleFanTile.stories.tsx',
   'apps/web/src/features/playstyles/PlaystyleSection.stories.tsx',
-  'apps/web/src/features/reveal-admin/components/CardPreviewPanel.stories.tsx',
-  'apps/web/src/features/reveal-admin/components/RevealAdminForm.stories.tsx',
 ].map((p) => path.join(ROOT, p));
 
 /**
@@ -100,9 +106,9 @@ const KEEP_FIELDS = [
 ];
 
 /**
- * Rule 1 — variant printings the app doesn't currently render. These are
- * alternate-art versions of base cards, not new cards. Remove this filter
- * once multi-variant support ships in the app.
+ * Rule 1 — variant printings are alternate-art versions of base cards, not new cards.
+ * Epic/Enchanted/Iconic fold into their base card's `variants` (the printing switcher,
+ * #625); Special promos are still stripped.
  */
 const VARIANT_RARITIES = new Set(['Epic', 'Iconic', 'Enchanted', 'Special']);
 
@@ -128,11 +134,60 @@ function stripCard(card, setCode) {
 }
 
 /**
+ * Rules 1, 4, 5, 6 applied to one set's canonical cards: base printings stripped to the kept
+ * fields, with their Epic/Enchanted/Iconic printings folded in by `baseId`; Special dropped.
+ */
+export function applyCardRules(sourceCards, setCode) {
+  const baseCards = sourceCards.filter((c) => !VARIANT_RARITIES.has(c.rarity));
+  const cards = baseCards.map((c) => stripCard(c, setCode));
+  const fold = foldVariants(cards, sourceCards, {matchBy: 'baseId', idFor: (v) => v.id});
+  const specialCount = sourceCards.filter((c) => c.rarity === 'Special').length;
+  return {cards, fold, specialCount};
+}
+
+/**
+ * The graduating set's preview variants that the canonical cards don't carry. A variant
+ * hand-scanned during the reveal season (#625) lives only in previewCards.json, which
+ * graduation empties, so any of these would be lost. Preview and canonical ids differ, so
+ * the match is on rarity + collector number.
+ */
+export function previewVariantsMissingFrom(previewCards, canonicalCards, setCode) {
+  const canonical = new Set(
+    canonicalCards.flatMap((c) => (c.variants ?? []).map((v) => `${v.rarity}#${v.number}`)),
+  );
+  return previewCards
+    .filter((c) => String(c.setCode) === String(setCode))
+    .flatMap((c) => (c.variants ?? []).map((v) => ({...v, base: c.fullName})))
+    .filter((v) => !canonical.has(`${v.rarity}#${v.number}`));
+}
+
+/**
+ * Every variant graduating would drop: canonical printings whose base card isn't in the source
+ * (a data anomaly, since a set's file carries its own base cards) and the preview-only ones.
+ */
+export function droppedVariants(previewCards, {cards, fold}, setCode) {
+  return [
+    ...fold.unmatched.map((v) => ({
+      rarity: v.rarity,
+      number: v.number,
+      base: v.fullName,
+      reason: 'has no base card in the canonical source',
+    })),
+    ...previewVariantsMissingFrom(previewCards, cards, setCode).map((v) => ({
+      rarity: v.rarity,
+      number: v.number,
+      base: v.base,
+      reason: 'is only in previewCards.json',
+    })),
+  ];
+}
+
+/**
  * Step 7 — retarget hardcoded card-id references from the graduating set's PREVIEW
  * ids to their new canonical ids.
  *
  * Committed source hardcodes real card ids in a few spots: the landing-page
- * featured cards + their test, the playstyle-gallery hero cards, and the reveals /
+ * featured-card list + its test, the playstyle-gallery hero cards, and the reveals /
  * playstyle Storybook demos (ID_REFERENCE_FILES). Graduation renumbers those cards,
  * so every such reference would otherwise dangle. This maps each graduating-set
  * preview id -> canonical id (previewCards' id<->number joined to the canonical
@@ -197,17 +252,20 @@ function retargetIdsInFiles(previewToCanonical) {
 
 /** Print the ordered canonical featured ids for the manual Vercel env update. */
 function printFeaturedVercelHint() {
-  const block = fs.readFileSync(FEATURED_TSX, 'utf8').match(/DEFAULT_FEATURED_IDS\s*=\s*\[([\s\S]*?)]/);
-  const ordered = block ? [...block[1].matchAll(/'(\d+)'/g)].map((m) => m[1]) : [];
+  const ordered = JSON.parse(fs.readFileSync(FEATURED_IDS_JSON, 'utf8')).map((entry) => entry.id);
   if (ordered.length === 0) return;
   console.log(`\n  ⚠ Set the Vercel env var (external to repo — paste + redeploy):`);
   console.log(`    VITE_FEATURED_CARD_IDS=${ordered.join(',')}\n`);
 }
 
 function parseArgs(argv) {
-  const [, , setCode, sourceArg] = argv;
+  const args = argv.slice(2);
+  const allowMissingVariants = args.includes('--allow-missing-variants');
+  const [setCode, sourceArg] = args.filter((a) => !a.startsWith('--'));
   if (!setCode) {
-    console.error('Usage: graduate-canonical-set.mjs <set-code> [source-path]');
+    console.error(
+      'Usage: graduate-canonical-set.mjs <set-code> [source-path] [--allow-missing-variants]',
+    );
     console.error('Example: graduate-canonical-set.mjs 13');
     process.exit(2);
   }
@@ -219,11 +277,24 @@ function parseArgs(argv) {
     console.error(`Place the per-set LorcanaJSON file there, or pass an explicit path.`);
     process.exit(2);
   }
-  return {setCode: String(setCode), source};
+  return {setCode: String(setCode), source, allowMissingVariants};
+}
+
+/** Stops the run, before anything is written, when graduating would drop a variant. */
+function guardDroppedVariants(dropped, allowMissingVariants) {
+  if (dropped.length === 0) return;
+  for (const v of dropped) console.error(`    ! ${v.rarity} #${v.number} of ${v.base} ${v.reason}`);
+  if (allowMissingVariants) {
+    console.warn(`  --allow-missing-variants: dropping ${dropped.length} variant(s).\n`);
+    return;
+  }
+  console.error('  Stopped before writing anything. Fix the source (or wait for LorcanaJSON),');
+  console.error('  or rerun with --allow-missing-variants to drop these printings.');
+  process.exit(1);
 }
 
 function main() {
-  const {setCode, source} = parseArgs(process.argv);
+  const {setCode, source, allowMissingVariants} = parseArgs(process.argv);
   console.log(`\n  Graduating Set ${setCode} from preview to canonical\n`);
   console.log(`  Source: ${source}\n`);
 
@@ -240,15 +311,15 @@ function main() {
     process.exit(2);
   }
 
-  // Rule 1 — drop variant rarities
-  const variantCount = sourceCards.filter((c) => VARIANT_RARITIES.has(c.rarity)).length;
-  const baseCards = sourceCards.filter((c) => !VARIANT_RARITIES.has(c.rarity));
+  // Rule 1 — fold Epic/Enchanted/Iconic into their base, strip Special; Rules 4, 5, 6 — strip per-card
+  const {cards: stripped, fold, specialCount} = applyCardRules(sourceCards, setCode);
   console.log(`  Canonical input:           ${sourceCards.length} cards`);
-  console.log(`  Rule 1 - strip variants:   -${variantCount} (Epic/Iconic/Enchanted/Special)`);
-  console.log(`  Base cards after rule 1:    ${baseCards.length}`);
-
-  // Rules 4, 5, 6 — strip per-card
-  const stripped = baseCards.map((c) => stripCard(c, setCode));
+  console.log(
+    `  Rule 1 - fold variants:    +${fold.folded.length + fold.replaced.length} (Epic/Enchanted/Iconic), strip Special: -${specialCount}`,
+  );
+  const dropped = droppedVariants(existingPreview.cards ?? [], {cards: stripped, fold}, setCode);
+  guardDroppedVariants(dropped, allowMissingVariants);
+  console.log(`  Base cards after rule 1:    ${stripped.length}`);
 
   // Rules 2 + 3 — replace preview entries wholesale (canonical ids + names win)
   const beforeReplace = all.cards.length;
@@ -310,4 +381,7 @@ function main() {
   console.log(`    4. Flip VITE_IS_REVEAL_SEASON=false   # in .env.local + Vercel env\n`);
 }
 
-main();
+// Run only when invoked directly (never when imported by the test).
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main();
+}

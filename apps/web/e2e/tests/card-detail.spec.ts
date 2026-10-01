@@ -16,14 +16,25 @@ interface E2ESynergyGroup {
 interface E2ESynergyData {
   groups: E2ESynergyGroup[];
 }
-const expandData: E2ESynergyData = JSON.parse(
-  fs.readFileSync(path.resolve(process.cwd(), 'public/data/synergies', `${EXPAND_CARD_ID}.json`), 'utf8'),
-);
+const readSynergyData = (cardId: string): E2ESynergyData =>
+  JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'public/data/synergies', `${cardId}.json`), 'utf8'));
+const expandData = readSynergyData(EXPAND_CARD_ID);
 const expandGroup = (expandData.groups ?? []).find((g) => g.groupKey === EXPAND_GROUP);
 if (!expandGroup || expandGroup.synergies.length <= 3) {
   throw new Error(
     `Fixture broken: card ${EXPAND_CARD_ID} must have a '${EXPAND_GROUP}' group with >3 synergies ` +
       `(so the default view truncates it and renders a "+N more" tile). Is the card still in the pool?`,
+  );
+}
+
+// Card 2978 (Meilin Lee - Lead Vocalist) has 6 synergy groups, so its mobile group chip row ("All" plus
+// one chip per group) is far wider than a phone viewport: the #631 horizontal-overflow case.
+const OVERFLOW_CARD_ID = '2978';
+const overflowGroupCount = (readSynergyData(OVERFLOW_CARD_ID).groups ?? []).length;
+if (overflowGroupCount < 5) {
+  throw new Error(
+    `Fixture broken: card ${OVERFLOW_CARD_ID} must have >=5 synergy groups (found ${overflowGroupCount}) ` +
+      `so its mobile chip row overflows a 390px viewport. Is the card still in the pool?`,
   );
 }
 
@@ -41,17 +52,17 @@ test.describe('Card Detail (modal)', () => {
 
     await expect(appPage.cardOverviewModal).toBeVisible();
 
-    // Card image — first <img> inside the modal is the primary card art
-    const img = appPage.cardOverviewModal.locator('img').first();
-    await expect(img).toBeVisible();
-    const alt = await img.getAttribute('alt');
-    expect(alt).toBeTruthy();
-
     // Card name in h1 inside the modal header
     const heading = appPage.cardOverviewModal.locator('h1');
     await expect(heading).toBeVisible();
     const name = await heading.textContent();
     expect(name!.length).toBeGreaterThan(0);
+
+    // Card image, named after the card. Not the modal's first <img>: for a card with an
+    // alternate printing (#625) that is a pill's rarity symbol, which is decorative (alt="").
+    await expect(
+      appPage.cardOverviewModal.getByRole('img', {name: name!, exact: true}),
+    ).toBeVisible();
   });
 
   test('should show synergy chips or empty state once data loads', async ({appPage, page}) => {
@@ -176,5 +187,67 @@ test.describe('Card Detail: Show More and sibling navigation (desktop)', () => {
     // border), so query them at the page level rather than scoped to the modal element.
     await page.getByRole('button', {name: 'Next card'}).click();
     await expect(modal.locator('h1')).not.toHaveText(firstName ?? '');
+  });
+});
+
+test.describe('Card page (mobile layout)', () => {
+  // Runs on every project, not just mobile-*: isMobile is width-based (useResponsive), so a forced
+  // phone viewport renders the mobile layout anywhere, including the chromium-only Windows pre-push.
+  test('a card with many synergy groups does not scroll the page sideways (#631)', async ({page}) => {
+    await page.setViewportSize({width: 390, height: 844});
+    await page.goto(`/card/${OVERFLOW_CARD_ID}`);
+
+    const chipRow = page.getByTestId('synergy-group-toolbar');
+    await expect(chipRow.getByRole('button', {name: 'All', exact: true})).toBeVisible({timeout: 10000});
+
+    // documentElement.clientWidth, not window.innerWidth: mobile emulation zooms out to fit an
+    // overflowing page, which inflates innerWidth to the overflowed width.
+    const layout = await chipRow.evaluate((row) => ({
+      pageScroll: document.documentElement.scrollWidth,
+      pageClient: document.documentElement.clientWidth,
+      rowScroll: row.scrollWidth,
+      rowClient: row.clientWidth,
+      rowOverflowX: getComputedStyle(row).overflowX,
+    }));
+    // Precondition: the chips really are wider than the page, so this card exercises the bug.
+    expect(layout.rowScroll).toBeGreaterThan(layout.pageClient);
+    // The page never scrolls sideways (the results section is a flex item that must be free to shrink)...
+    expect(layout.pageScroll).toBeLessThanOrEqual(layout.pageClient);
+    // ...the chip row scrolls inside its own overflow box instead. Width alone is not enough: with
+    // overflow-x hidden or clip the row still measures wider, but the off-screen chips are unreachable.
+    expect(layout.rowScroll).toBeGreaterThan(layout.rowClient);
+    expect(layout.rowOverflowX).toMatch(/^(auto|scroll)$/);
+  });
+
+  test('× returns to the card before, and opens Browse on the page the visit started on', async ({
+    page,
+  }) => {
+    await page.setViewportSize({width: 390, height: 844});
+    // Any card with synergy tiles to tap: 2095's ramp group is fixture-guarded above.
+    await page.goto(`/card/${EXPAND_CARD_ID}`);
+    const close = page.getByRole('button', {name: 'Close', exact: true});
+
+    // A synergy card opens its own page, so × goes back to the card it came from...
+    await page.locator('a.card-tile').first().click();
+    await expect(page).not.toHaveURL(new RegExp(`/card/${EXPAND_CARD_ID}$`));
+    await close.click();
+    await expect(page).toHaveURL(new RegExp(`/card/${EXPAND_CARD_ID}$`));
+
+    // ...but on the entry page, going back would leave the app, so × opens Browse instead.
+    await close.click();
+    await expect(page).toHaveURL(/\/browse$/);
+  });
+
+  // /compare/X/X (one card twice) redirects to /card/X with a replace, which gives the page a
+  // new location key. It is still the page the visit started on, so × must open Browse rather
+  // than step back out of the site (#653).
+  test('× on a card page reached by the /compare/X/X redirect opens Browse', async ({page}) => {
+    await page.setViewportSize({width: 390, height: 844});
+    await page.goto(`/compare/${EXPAND_CARD_ID}/${EXPAND_CARD_ID}`);
+    await expect(page).toHaveURL(new RegExp(`/card/${EXPAND_CARD_ID}$`));
+
+    await page.getByRole('button', {name: 'Close', exact: true}).click();
+
+    await expect(page).toHaveURL(/\/browse$/);
   });
 });

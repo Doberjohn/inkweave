@@ -1,8 +1,16 @@
-import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
+import type {CardPrinting, Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {useCardDataContext} from '../../shared/contexts/CardDataContext';
-import {ALL_INKS, REVEAL_SET_CODE} from '../../shared/constants';
+import {ALL_INKS, REVEAL_SET_CODE, specialSlotsFor, type SpecialSlotSpec} from '../../shared/constants';
 import {PER_INK, SET_TOTAL} from './setComposition';
-import {rarityConfigOf} from './rarity';
+import {rarityConfigOf, SPECIAL_RARITIES} from './rarity';
+
+/** One special printing slot on an ink board, filled once that printing is revealed. */
+export interface SpecialSlot extends SpecialSlotSpec {
+  /** The printing's base card, once revealed. */
+  card?: LorcanaCard;
+  /** The revealed printing itself. */
+  printing?: CardPrinting;
+}
 
 export interface InkProgress {
   ink: Ink;
@@ -10,8 +18,13 @@ export interface InkProgress {
   count: number;
   /** The revealed cards bucketed to this ink (uncapped; drives the mosaic slots). */
   cards: LorcanaCard[];
-  /** Revealed count per rarity key (see rarity.ts), from each card's real rarity. */
+  /**
+   * Revealed count per rarity key (see rarity.ts): each card's real rarity, plus each revealed
+   * special printing under its own rarity.
+   */
   rarityCounts: Record<string, number>;
+  /** The ink's Epic, Enchanted and Iconic slots in collector order (see specialSlotsFor). */
+  specials: SpecialSlot[];
 }
 
 export interface RevealProgress {
@@ -41,6 +54,31 @@ function cardInks(card: LorcanaCard): Ink[] {
 }
 
 /**
+ * An ink's special printing slots, each filled with its revealed printing. A printing is
+ * alternate art of a card, so it sits on its base card's board. One numbered outside the ink's
+ * lineup is appended rather than dropped, so a data slip never hides art.
+ */
+function placeSpecials(ink: Ink, cards: LorcanaCard[]): SpecialSlot[] {
+  const slots: SpecialSlot[] = specialSlotsFor(ink).map((spec) => ({...spec}));
+  const revealed = cards.flatMap((card) => (card.variants ?? []).map((printing) => ({card, printing})));
+  for (const {card, printing} of revealed) {
+    const slot = slots.find((s) => s.number === printing.number && !s.printing);
+    if (slot) Object.assign(slot, {card, printing});
+    else slots.push({number: printing.number, rarity: printing.rarity, card, printing});
+  }
+  return slots;
+}
+
+/** Add an ink's revealed special printings to its rarity tally, keyed like the main-set rarities. */
+function tallySpecials(bucket: InkProgress): void {
+  for (const slot of bucket.specials) {
+    if (!slot.printing) continue;
+    const {key} = SPECIAL_RARITIES[slot.rarity];
+    bucket.rarityCounts[key] = (bucket.rarityCounts[key] ?? 0) + 1;
+  }
+}
+
+/**
  * Per-ink reveal progress for the season's set, derived from the real card data. Replaces the
  * prototype's synthetic `revealPct`. Drives the rings, the diamond mosaic fill,
  * the rarity breakdown, the hero stat, and the overall progress bar — all from
@@ -53,7 +91,7 @@ export function useRevealProgress(): RevealProgress {
 
   const byInk = {} as Record<Ink, InkProgress>;
   for (const ink of ALL_INKS) {
-    byInk[ink] = {ink, count: 0, cards: [], rarityCounts: {}};
+    byInk[ink] = {ink, count: 0, cards: [], rarityCounts: {}, specials: []};
   }
 
   for (const card of revealed) {
@@ -68,7 +106,10 @@ export function useRevealProgress(): RevealProgress {
     }
   }
   for (const ink of ALL_INKS) {
-    byInk[ink].count = Math.min(byInk[ink].cards.length, PER_INK[ink]);
+    const bucket = byInk[ink];
+    bucket.count = Math.min(bucket.cards.length, PER_INK[ink]);
+    bucket.specials = placeSpecials(ink, bucket.cards);
+    tallySpecials(bucket);
   }
 
   const inks = ALL_INKS.map((ink) => byInk[ink]);

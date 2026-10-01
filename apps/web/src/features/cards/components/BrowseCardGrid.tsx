@@ -1,6 +1,7 @@
 import {forwardRef, type CSSProperties, type ReactNode} from 'react';
 import {VirtuosoGrid} from 'react-virtuoso';
-import {cardPath, type LorcanaCard} from 'inkweave-synergy-engine';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
+import {cardPath} from 'inkweave-synergy-engine/card';
 import {CardTile} from './CardTile';
 import {COLORS, FONT_SIZES, LAYOUT, SPACING} from '../../../shared/constants';
 import {RenderProfiler} from '../../../shared/components';

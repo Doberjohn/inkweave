@@ -9,8 +9,14 @@ interface CardDataContextValue extends UseCardDataReturn {
 
 const CardDataContext = createContext<CardDataContextValue | null>(null);
 
-export function CardDataProvider({children}: {children: ReactNode}) {
-  const cardData = useCardData();
+interface CardDataProviderProps {
+  children: ReactNode;
+  /** Hold the card list's load on the page the app starts on (#641); see useCardData. */
+  deferInitialLoad?: boolean;
+}
+
+export function CardDataProvider({children, deferInitialLoad}: CardDataProviderProps) {
+  const cardData = useCardData({deferInitialLoad});
 
   const cardMap = (() => {
     const map = new Map<string, LorcanaCard>();

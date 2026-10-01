@@ -1,5 +1,7 @@
 # Area 5 — Theme, Prose Styling & Storybook (Legal & Product Pages, issue #219)
 
+> **Since #593 (2026-09-30):** the admin tools moved to `Doberjohn/inkweave-admin`. The app no longer has `/admin/*` routes, `AdminGate`, the GitHub PAT in `localStorage` (`inkweave.reveal-admin.gh-token`), `githubCommit.ts`, the admin pages, or `api.github.com` in its CSP `connect-src`. Mentions of them below describe the app as researched.
+
 ## Scope
 
 How to render long-form legal/product prose (Privacy, Terms, IP Disclaimer, About) so it looks native to Inkweave's dark-fantasy theme and passes the story-coverage gate. Covers: the exact design tokens in `theme.ts` and how CLAUDE.md's "Design Token Reference" maps onto them; the styling mechanism (inline styles with tokens, no CSS-modules / no markdown renderer); a recommended readable-prose container and heading rhythm; the Storybook conventions and a copy-paste story scaffold; and the WCAG-AA color rules long text must follow. Everything below is evidence-cited to real files. Open design decisions (chiefly: the type scale tops out body text at 13px, small for multi-paragraph reading) are flagged, not guessed.

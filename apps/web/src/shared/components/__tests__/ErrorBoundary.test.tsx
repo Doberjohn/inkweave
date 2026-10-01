@@ -1,6 +1,12 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {render, screen, fireEvent} from '@testing-library/react';
+import {render, screen, fireEvent, waitFor} from '@testing-library/react';
 import {ErrorBoundary} from '../ErrorBoundary';
+import {loadSentry} from '../../lib/sentry';
+
+const captureException = vi.hoisted(() => vi.fn());
+vi.mock('../../lib/sentry', () => ({
+  loadSentry: vi.fn(() => Promise.resolve({captureException})),
+}));
 
 // Component that throws an error
 function ThrowError({shouldThrow}: {shouldThrow: boolean}) {
@@ -46,6 +52,22 @@ describe('ErrorBoundary', () => {
 
     expect(screen.getByText('Custom error fallback')).toBeInTheDocument();
     expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument();
+  });
+
+  it('reports the error through loadSentry, which loads Sentry if it has not yet (#640)', async () => {
+    render(
+      <ErrorBoundary>
+        <ThrowError shouldThrow={true} />
+      </ErrorBoundary>,
+    );
+
+    expect(loadSentry).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(captureException).toHaveBeenCalledWith(
+        expect.objectContaining({message: 'Test error message'}),
+        {contexts: {react: {componentStack: expect.any(String)}}},
+      ),
+    );
   });
 
   it('should call setState when Try Again is clicked', () => {

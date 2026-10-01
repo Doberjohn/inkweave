@@ -238,32 +238,6 @@ async function processTask(task, manifest) {
 }
 
 /**
- * Stamp `imageHash` + `imageHashSm` onto each card the manifest knows, and CLEAR
- * them from every card it does not.
- *
- * The clearing half is the load-bearing one. OUTPUT_DIR is wiped at the start of
- * every run, so a hash carried over from a previous build names a file that no
- * longer exists, and the app renders an <img> at a dead URL on a path served
- * `immutable`. Dropping the field routes the card to the same fallback a
- * never-hashed card gets, which is the honest degradation.
- */
-function stampHashes(cards, manifest) {
-  let updated = 0;
-  for (const card of cards) {
-    const hashes = manifest[card.id];
-    if (hashes) {
-      card.imageHash = hashes.full;
-      card.imageHashSm = hashes.sm;
-      updated++;
-    } else {
-      delete card.imageHash;
-      delete card.imageHashSm;
-    }
-  }
-  return updated;
-}
-
-/**
  * Mutate a card data file (allCards.json or previewCards.json) in-place so its
  * `imageHash` / `imageHashSm` fields describe exactly the images THIS build emitted.
  *
@@ -279,7 +253,12 @@ function stampHashes(cards, manifest) {
  */
 export function injectManifest(filePath, manifest) {
   const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  const updated = stampHashes(data.cards, manifest);
+  let updated = 0;
+  for (const card of data.cards) {
+    if (applyHashes(card, manifest[card.id])) updated++;
+    // Variant printings (#625) carry their own art, hashed under the variant's id.
+    for (const variant of card.variants ?? []) applyHashes(variant, manifest[variant.id]);
+  }
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n');
   return updated;
 }
@@ -304,9 +283,48 @@ function readChunk(filePath) {
  */
 function injectManifestIntoChunk(filePath, manifest) {
   const cards = readChunk(filePath);
-  const updated = stampHashes(cards, manifest);
+  let updated = 0;
+  for (const card of cards) {
+    if (applyHashes(card, manifest[card.id])) updated++;
+    // Variant printings (#625) hash under their own id, exactly as injectManifest does.
+    for (const variant of card.variants ?? []) applyHashes(variant, manifest[variant.id]);
+  }
   fs.writeFileSync(filePath, `${JSON.stringify(cards)}\n`);
   return updated;
+}
+
+/** Set a card's (or variant's) hashes from this build's manifest entry, or clear stale ones. */
+function applyHashes(target, hashes) {
+  if (hashes) {
+    target.imageHash = hashes.full;
+    target.imageHashSm = hashes.sm;
+    return true;
+  }
+  delete target.imageHash;
+  delete target.imageHashSm;
+  return false;
+}
+
+/**
+ * Everything that needs an image this build: each card, then each of its variant printings
+ * (#625) under the variant's own id, so a variant gets its own content-addressed AVIF.
+ */
+export function imageSubjects(cards) {
+  return cards.flatMap((card) => [
+    {id: card.id, images: card.images},
+    ...(card.variants ?? []).map((v) => ({id: v.id, images: v.images})),
+  ]);
+}
+
+/**
+ * Variant ids this build emitted no image for. Reported as a warning, never fatal: a single
+ * dead upstream variant URL must not block a deploy, and the switcher simply shows a broken
+ * image for that printing (the same honest degradation an unhashed card gets, #323).
+ */
+export function missingVariantHashes(cards, manifest) {
+  return cards.flatMap((card) =>
+    (card.variants ?? []).filter((v) => !manifest[v.id]).map((v) => v.id),
+  );
 }
 
 /**
@@ -374,16 +392,17 @@ function loadAllCards(primaryData) {
 function partitionCards(allCards, manifest, deployed) {
   const tasks = [];
   let previewCopied = 0;
-  for (const card of allCards) {
-    if (hasPreviewAvifs(card.id)) {
-      copyPreviewAvifs(card.id, manifest);
+  for (const subject of imageSubjects(allCards)) {
+    if (hasPreviewAvifs(subject.id)) {
+      copyPreviewAvifs(subject.id, manifest);
       previewCopied++;
       continue;
     }
-    const url = card.images?.full ?? card.images?.thumbnail;
-    // The plan is decided HERE, where the card (and so its source URL) is in
-    // scope; `processTask` only ever sees the task.
-    if (url) tasks.push({id: card.id, url, plan: planFor(card, deployed.get(String(card.id)))});
+    const url = subject.images?.full ?? subject.images?.thumbnail;
+    // The plan is decided HERE, where the subject (and so its source URL) is in
+    // scope; `processTask` only ever sees the task. Variant printings get their own
+    // plan, so a variant can restore while its base card downloads.
+    if (url) tasks.push({id: subject.id, url, plan: planFor(subject, deployed.get(String(subject.id)))});
   }
   return {tasks, previewCopied};
 }
@@ -540,6 +559,12 @@ async function main() {
   // blank). Covers the collection sets too — a binder page of empty frames is
   // the same failure as a blank Browse page.
   assertImageCoverage(allCards, manifest);
+  const unimaged = missingVariantHashes(allCards, manifest);
+  if (unimaged.length > 0) {
+    console.warn(
+      `  Warning: ${unimaged.length} variant printing(s) have no image: ${unimaged.join(', ')}\n`,
+    );
+  }
 }
 
 // Run only when invoked directly (never when imported by the test).

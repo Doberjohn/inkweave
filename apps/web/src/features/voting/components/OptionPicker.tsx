@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, hexRgba, whiteRgba} from '../../../shared/constants';
 
 export interface OptionPickerOption<T> {
@@ -67,6 +67,16 @@ export function OptionPicker<T>({ariaLabel, options, value, onChange, isMobile, 
   const [pressedKey, setPressedKey] = useState<string | null>(null);
   const [pulsingKey, setPulsingKey] = useState<string | null>(null);
 
+  // Clear the click pulse 300ms after it starts. The cleanup cancels the timer on
+  // unmount (or when another option starts pulsing), so a stray timer can't fire
+  // setState into a torn-down tree, which crashed CI's coverage run with
+  // "window is not defined".
+  useEffect(() => {
+    if (pulsingKey === null) return;
+    const id = setTimeout(() => setPulsingKey(null), 300);
+    return () => clearTimeout(id);
+  }, [pulsingKey]);
+
   const hasSelection = value !== null;
   const height = isMobile ? 44 : 48;
 
@@ -75,7 +85,6 @@ export function OptionPicker<T>({ariaLabel, options, value, onChange, isMobile, 
   const handleClick = (key: string, optValue: T) => {
     setPulsingKey(key);
     onChange(optValue);
-    setTimeout(() => setPulsingKey(null), 300);
   };
 
   const renderButton = (opt: OptionPickerOption<T>, index: number) => {

@@ -1,17 +1,12 @@
 import {useEffect, useState} from 'react';
 import {REVEAL_SET_CODE} from '../../shared/constants';
-
-const PREVIEW_CARDS_PATH = '/data/previewCards.json';
+import {fetchPreviewCards} from '../cards/previewCards';
 
 export interface RevealDates {
   prereleaseDate: Date;
   releaseDate: Date;
   /** The set's display name, e.g. "Attack of the Vine!". Empty string when the JSON omits it. */
   name: string;
-}
-
-interface PreviewCardsJSON {
-  sets?: Record<string, {prereleaseDate?: string; releaseDate?: string; name?: string}>;
 }
 
 let cache: RevealDates | null = null;
@@ -26,12 +21,13 @@ export async function fetchRevealDates(): Promise<RevealDates | null> {
   if (cache) return cache;
   if (pending) return pending;
 
-  pending = (async () => {
-    try {
-      const response = await fetch(PREVIEW_CARDS_PATH);
-      if (!response.ok) return null;
-      const data: PreviewCardsJSON = await response.json();
-      const set = data.sets?.[REVEAL_SET_CODE];
+  // The same request the card loader makes (#641), so previewCards.json loads once per page.
+  // Malformed dates resolve null, as a failed request does, rather than rejecting. Once settled,
+  // `pending` clears: dates found stay in `cache`, and after a failed request the next call reads
+  // the preview cards again (fetchPreviewCards keeps a missing file's answer, so no refetch).
+  pending = fetchPreviewCards()
+    .then((data) => {
+      const set = data?.sets?.[REVEAL_SET_CODE];
       if (!set?.prereleaseDate || !set?.releaseDate) return null;
       cache = {
         prereleaseDate: parseLocalMidnight(set.prereleaseDate),
@@ -41,15 +37,11 @@ export async function fetchRevealDates(): Promise<RevealDates | null> {
         name: set.name ?? '',
       };
       return cache;
-    } catch {
-      return null;
-    } finally {
-      // Only the SUCCESS path memoises, via `cache`. Clearing `pending` on failure
-      // lets the next call retry instead of a single transient error poisoning the
-      // rest of the session.
-      if (!cache) pending = null;
-    }
-  })();
+    })
+    .catch(() => null)
+    .finally(() => {
+      pending = null;
+    });
 
   return pending;
 }

@@ -1,7 +1,16 @@
-import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, Z_INDEX} from '../constants';
-import {useAutocomplete} from '../hooks';
+import {
+  COLORS,
+  EASING,
+  FONTS,
+  FONT_SIZES,
+  GOLD_GLOW,
+  HERO_LOGO_IMG,
+  RADIUS,
+  SPACING,
+  Z_INDEX,
+} from '../constants';
+import {useAutocomplete, useHeroLogoSrc} from '../hooks';
 import {SearchAutocomplete} from './SearchAutocomplete';
 import {SearchIcon} from './SearchIcon';
 import {CtaButton} from './CtaButton';
@@ -35,10 +44,14 @@ function getStyles(isMobile: boolean) {
       marginBottom: isMobile ? 16 : 20,
       lineHeight: 0,
     } as React.CSSProperties,
+    // A definite width (clamped by maxWidth) is what lets the img's width/height attributes
+    // reserve its box before the SVG arrives. The <h1> shrink-wraps its content, so the old
+    // `width: '100%'` resolved against a 0-wide parent until the image loaded, and the hero
+    // then grew by 192 px, moving the whole centered page (#627).
     logo: {
       display: 'block',
-      width: '100%',
-      maxWidth: isMobile ? 380 : 600,
+      width: isMobile ? 380 : 600,
+      maxWidth: '100%',
       height: 'auto',
       userSelect: 'none',
     } as React.CSSProperties,
@@ -152,7 +165,6 @@ export function HeroSection({
   onVote,
   isMobile,
 }: HeroSectionProps) {
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const styles = getStyles(!!isMobile);
 
   const handleAutoSelect = (card: LorcanaCard) => onCardSelect?.(card);
@@ -163,16 +175,20 @@ export function HeroSection({
     onQueryChange: onSearchChange,
     onSelect: handleAutoSelect,
   });
+  // The hook's focus state carries the blur delay and cancels it on refocus and unmount.
+  const isSearchFocused = autocomplete.isFocused;
+  const logoSrc = useHeroLogoSrc();
 
   const mobile = !!isMobile;
   const ctaHeight = mobile ? 48 : 44;
 
   return (
     <section data-testid="hero-section" aria-label="Hero" style={styles.container}>
-      {/* Logo — animated SVG with self-contained CSS animations (honors prefers-reduced-motion).
-          Wrapping in h1 preserves a single top-level heading for a11y; alt provides the name. */}
+      {/* Logo: static first, animated after load (useHeroLogoSrc, #639). The SVG's own CSS
+          honors prefers-reduced-motion. Wrapping in h1 preserves a single top-level heading
+          for a11y; alt provides the name. */}
       <h1 style={styles.heading}>
-        <img src="/brand/logo-animated.svg" alt="Inkweave" style={styles.logo} />
+        <img {...HERO_LOGO_IMG} src={logoSrc} alt="Inkweave" style={styles.logo} />
         <span style={styles.srOnly}>Disney Lorcana Card Synergy Finder for Core format</span>
       </h1>
 
@@ -200,30 +216,20 @@ export function HeroSection({
                 onSearchSubmit?.();
               }
             }}
-            onFocus={() => {
-              autocomplete.inputProps.onFocus();
-              setIsSearchFocused(true);
-            }}
-            onBlur={() => {
-              autocomplete.inputProps.onBlur();
-              setTimeout(() => setIsSearchFocused(false), 150);
-            }}
             data-testid="hero-search"
             style={{
               width: '100%',
               height: mobile ? 48 : 56,
               padding: mobile ? '0 12px 0 44px' : '0 12px 0 48px',
               borderRadius: `${RADIUS.lg}px`,
-              border: `1px solid ${isSearchFocused ? 'rgba(212, 175, 55, 0.5)' : COLORS.searchBorder}`,
+              border: `1px solid ${isSearchFocused ? GOLD_GLOW.activeBorder : COLORS.searchBorder}`,
               background: COLORS.searchBg,
               color: COLORS.text,
               fontFamily: FONTS.body,
               fontSize: `${FONT_SIZES.xl}px`,
               boxSizing: 'border-box',
-              boxShadow: isSearchFocused
-                ? '0 0 0 3px rgba(212, 175, 55, 0.15), 0 0 20px rgba(212, 175, 55, 0.1)'
-                : 'none',
-              transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
+              boxShadow: isSearchFocused ? GOLD_GLOW.focusRing : 'none',
+              transition: `border-color 0.25s ${EASING.snappy}, box-shadow 0.25s ${EASING.snappy}`,
               outline: 'none',
             }}
           />

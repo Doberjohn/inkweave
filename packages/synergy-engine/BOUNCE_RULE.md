@@ -34,10 +34,14 @@ Multi-role allowed (a self-bounce enabler that is itself a re-buyable ETB body c
 | Role | Count | What it is | Detection |
 |------|-------|------------|-----------|
 | `self-bounce` | 6 | Return a chosen OWN body to your hand (enabler) | `return … chosen … characters of yours … to your hand` |
-| `flexible` | 10 | Un-restricted "return chosen … to their player's hand" — both sides | flex pattern gated `!of yours` `!opposing/opponent's` |
+| `flexible` | 11 | Un-restricted "return chosen … to their player's hand" — both sides | flex pattern gated `!of yours` `!opposing/opponent's` |
 | `opponent-bounce` | 2 | Return a body to their player's hand (tempo/removal) | `return … to their player's hand` AND not flexible |
 | `return-payoff` | 0 | Lore whenever a card is returned to hand from play (Maleficent's Staff, rotated out of Core) | `when(ever) … is returned to … hand` |
-| `rebuy-payoff` | 21 | A "when you play this character" ETB worth re-firing (draw 2+, search, free-play, banish-chosen); Shift bodies excluded | ETB pattern AND re-fire-value pattern AND `isCharacter` AND `!hasAnyShift` |
+| `rebuy-payoff` | 23 | A "when you play this character" ETB worth re-firing (draw 2+, search, free-play, banish-chosen); Shift bodies excluded | ETB pattern AND re-fire-value pattern AND `isCharacter` AND `!hasAnyShift` |
+
+**A free play, not a free move.** The re-fire value pattern counts a free play ("you may play a character with cost 2 or less for free") but skips the card's own "play this character". Before #628, Arthur - Merlin's Assistant's "When you play this character, you may move him to a location for free" read as free-play value and made him a replay target.
+
+**Gated enter-play abilities stay replay targets** (owner ruling, #628). Stitch - Carefree Surfer draws only with 2 other characters in play, and Madam Mim - Resourceful Trickster only when an ink drop paid for her. A bounce lets you replay them once the condition holds, so both keep `rebuy-payoff`.
 
 **Disjointness (by construction):** kept out of Self-Discard's "from your discard" reanimator (a bounce returns from *play*, not the bin) and Challenge Matters' "banished in a challenge" combat-recursion (no `banish` verb participates). Shift re-buy bodies are excluded because the Shift Targets rule already surfaces that connection.
 
@@ -56,9 +60,9 @@ class gate: /[Rr]eturn\s+(?:another\s+)?chosen\s+([A-Z][\w']*(?:\s+[A-Z][\w']*)*
 - The classification read is case-sensitive on purpose: a capitalised run ("Seven Dwarfs") is a classification, a lowercase adjective ("exerted", "another") is not.
 - `bounceGateAdmits(gate, body)` = `body.cost <= costCap` (null = uncapped, admits everything) AND `hasClassification(body, classification)` when one is gated. Precedents for cost-gating a pairing: the Free Play rule's hard `card.cost === 1` filter and the Singer rule's `song.cost <= singerValue`.
 
-Gated enablers in the current pool (8 of 16): Pocahontas & Meeko - Adventurous Friends (cap 1); Poor Unfortunate Souls, Nana - Canine Caregiver, Tigger - Bouncing All the Way, Vixey - Expert Fisher, Narrow Escape (cap 2); Begone! (cap 3); Snow White - Merry as the Morning (Seven Dwarfs).
+Gated enablers in the current pool (9 of 17): Pocahontas & Meeko - Adventurous Friends (cap 1); Poor Unfortunate Souls, Nana - Canine Caregiver, Tigger - Bouncing All the Way, Vixey - Expert Fisher, Narrow Escape, Owen Burnett - Xanatos's Assistant (cap 2); Begone! (cap 3); Snow White - Merry as the Morning (Seven Dwarfs).
 
-**Known limitation:** the gate is read from the card's first matching return clause, not from the specific clause that granted the enabler role, so a card carrying a *capped opponent-side* bounce and a separate *uncapped self-bounce* would have the cap applied to its re-buy pairs. No card in the current pool has that shape (all 16 enablers carry exactly one gate-bearing return clause), and role detection is whole-text for the same reason, so scoping both to a clause is deferred until a card needs it.
+**Known limitation:** the gate is read from the card's first matching return clause, not from the specific clause that granted the enabler role, so a card carrying a *capped opponent-side* bounce and a separate *uncapped self-bounce* would have the cap applied to its re-buy pairs. No card in the current pool has that shape (all 17 enablers carry exactly one gate-bearing return clause), and role detection is whole-text for the same reason, so scoping both to a clause is deferred until a card needs it.
 
 ---
 
@@ -79,12 +83,12 @@ Gated enablers in the current pool (8 of 16): Pocahontas & Meeko - Adventurous F
 
 ## Coverage (generated from the live engine, sets 9-14 preview)
 
-- **Roles**: self-bounce 6, flexible 10, opponent-bounce 2, return-payoff 0, rebuy-payoff 21; **39 participating cards**.
-- **174 ink-compatible pairs, all at 8**; 35 cards carry a Bounce group. Before the target gates, 322 pairs were generated and 148 of them (46%) were legally impossible: 127 fell to cost caps, 21 to Snow White's Seven Dwarfs gate. Every one of the 21 re-buy bodies was affected (Madam Mim - Resourceful Trickster, cost 8, listed the cap-1 Pocahontas & Meeko).
-- The capped enablers now pair only with bodies they can reach: Tigger, Poor Unfortunate Souls, Nana, Vixey and Narrow Escape keep one partner each (Pocahontas - Guiding the Tribe, the lone cost-2 re-buy body), Begone! keeps six, Pocahontas & Meeko and Snow White keep none here (they still surface through Free Play / Shift Targets and Dwarfs / Hero / Princess respectively).
+- **Roles**: self-bounce 6, flexible 11, opponent-bounce 2, return-payoff 0, rebuy-payoff 23; **42 participating cards**.
+- **192 ink-compatible pairs, all at 8**; 38 cards carry a Bounce group. Without the target gates, 375 pairs would qualify and 183 of them (49%) are legally impossible: 160 fall to cost caps, 23 to Snow White's Seven Dwarfs gate. Every one of the 23 re-buy bodies loses at least one pair (Madam Mim - Resourceful Trickster, cost 8, would otherwise list the cap-1 Pocahontas & Meeko).
+- The capped enablers now pair only with bodies they can reach: Tigger, Poor Unfortunate Souls, Nana, Vixey, Narrow Escape and Owen Burnett - Xanatos's Assistant keep one partner each (Pocahontas - Guiding the Tribe, the lone cost-2 re-buy body), Begone! keeps seven, Pocahontas & Meeko and Snow White keep none here (they still surface through Free Play / Shift Targets and Dwarfs / Hero / Princess respectively).
 
 ---
 
 ## Test coverage
 
-`packages/synergy-engine/src/__tests__/rules.test.ts` → `describe('Bounce rule (return from play to hand)')`: target-gate parsing (cost cap, uncapped, the "cost N or more" reminder guard, classification), role detection (all 5 roles + the multi-role self+rebuy body), exclusions (from-discard recursion, Shift ETB bodies), and scoring (enabler↔rebuy=8 with the token-swap, flexible-as-enabler against an in-cap body, cap and classification rejections in both directions, a two-enabler pair kept when only one direction passes, opponent↔Staff=6, and the payoff-anchored drop).
+`packages/synergy-engine/src/__tests__/rules.test.ts` → `describe('Bounce rule (return from play to hand)')`: target-gate parsing (cost cap, uncapped, the "cost N or more" reminder guard, classification), role detection (all 5 roles + the multi-role self+rebuy body), exclusions (from-discard recursion, Shift ETB bodies), and scoring (enabler↔rebuy=8 with the token-swap, flexible-as-enabler against an in-cap body, cap and classification rejections in both directions, a two-enabler pair kept when only one direction passes, opponent↔Staff=6, and the payoff-anchored drop). `cardHelpers.test.ts` → `describe('getBounceRoles: re-buy value on entering play')` (2 tests): Arthur - Merlin's Assistant's free move is not re-buy value, while a free play and the gated draws of Madam Mim - Resourceful Trickster and Stitch - Carefree Surfer are.

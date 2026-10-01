@@ -17,6 +17,8 @@ Gated on `VITE_LOCAL_IMAGES=true`, set in `vercel.json`'s build command.
 
 It also injects `imageHash` and `imageHashSm` into `allCards.json` and `previewCards.json`. `resolveImageUrl` then builds `/card-images/{id}.{imageHash}.avif`; `smallImageUrl` builds `/card-images/{id}.{imageHashSm}-sm.avif`.
 
+Variant printings (a card's Epic/Enchanted/Iconic art in its `variants`, #625) go through the same path under their own id: each is its own image subject, its hashes land on the nested entry, and the loader resolves it with the same `resolveImageUrl`. A committed preview AVIF beats a remote URL for a variant exactly as for a card. A variant the build could not image is a warning in the build log, not a failure; it renders as a broken image, like any unhashed card.
+
 The Ravensburger rewrite in `vercel.json` is now a dev-only fallback, dead in prod since every card has a hashed URL.
 
 ## Dev / CI

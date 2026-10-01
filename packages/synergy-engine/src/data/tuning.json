@@ -60,6 +60,10 @@
       "name": "Bounce",
       "tagline": "Return characters from play to hand to re-fire enter-play abilities or buy tempo."
     },
+    "ink-drops": {
+      "name": "Ink Drops",
+      "tagline": "Create ink drops, then spend them to play cards ahead of curve."
+    },
     "monster": {
       "name": "Monsters",
       "tagline": "Monster characters and the payoffs that reward fielding the tribe."
@@ -88,7 +92,7 @@
   "directRules": {
     "shift-targets": {
       "name": "Shift Targets",
-      "description": "Characters with Shift and their valid targets"
+      "description": "Characters with Shift and their shift targets"
     }
   },
   "ruleTexts": {

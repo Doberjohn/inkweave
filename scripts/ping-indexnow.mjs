@@ -6,7 +6,7 @@
  *
  * Wired into .github/workflows/deploy.yml as a NON-FATAL post-deploy step, so a ping failure
  * never fails the deploy. By default it pings the hub URLs; the `buildPayload` export takes an
- * explicit list so the future reveal-admin flow can ping only newly-revealed cards.
+ * explicit list so a reveal flow can ping only newly-revealed cards.
  *
  * Usage:
  *   node scripts/ping-indexnow.mjs            # ping the hub URLs

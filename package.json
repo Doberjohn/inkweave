@@ -9,7 +9,7 @@
     "build": "pnpm -r build",
     "build:engine": "pnpm --filter inkweave-synergy-engine build",
     "build:web": "pnpm --filter inkweave-web build",
-    "build:vercel": "node scripts/convert-preview-images.mjs && node scripts/download-card-images.mjs && pnpm build:engine && node scripts/precompute-synergies.mjs && node scripts/precompute-hosers.mjs && node scripts/precompute-vote-analytics.mjs && node scripts/precompute-vercel-analytics.mjs && node scripts/generate-sitemap.mjs && node scripts/generate-card-slug-map.mjs && VITE_LOCAL_IMAGES=true pnpm build:web && (pnpm --filter inkweave-web exec playwright install chromium && node scripts/prerender.mjs || echo '[prerender] crawl failed or unavailable in this environment — shipping SPA-only (safe fallback, no regression)')",
+    "build:vercel": "node scripts/write-version.mjs && node scripts/convert-preview-images.mjs && node scripts/download-card-images.mjs && pnpm build:engine && node scripts/precompute-synergies.mjs && node scripts/precompute-hosers.mjs && node scripts/generate-sitemap.mjs && node scripts/generate-card-slug-map.mjs && VITE_LOCAL_IMAGES=true pnpm build:web && (pnpm --filter inkweave-web exec playwright install chromium && node scripts/prerender.mjs || echo '[prerender] crawl failed or unavailable in this environment \u2014 shipping SPA-only (safe fallback, no regression)')",
     "test": "pnpm -r test:run",
     "test:engine": "pnpm --filter inkweave-synergy-engine test:run",
     "test:web": "pnpm --filter inkweave-web test:run",
@@ -25,15 +25,13 @@
     "convert-preview-images": "node scripts/convert-preview-images.mjs",
     "precompute-synergies": "node scripts/precompute-synergies.mjs",
     "precompute-hosers": "node scripts/precompute-hosers.mjs",
-    "precompute-vote-analytics": "node scripts/precompute-vote-analytics.mjs",
-    "precompute-vercel-analytics": "node scripts/precompute-vercel-analytics.mjs",
     "generate-sitemap": "node scripts/generate-sitemap.mjs",
     "generate-card-slug-map": "node scripts/generate-card-slug-map.mjs",
     "prerender": "node scripts/prerender.mjs",
     "test:scripts": "vitest run --config vitest.scripts.config.mjs",
     "mine-rules": "pnpm build:engine && node scripts/mine-rule-candidates.mjs",
     "graduate-set": "node scripts/graduate-canonical-set.mjs",
-    "banner": "node scripts/export-banner.mjs",
+    "sync-variants": "node scripts/sync-variants.mjs",
     "docs": "node scripts/generate-docs.mjs",
     "analyze": "ANALYZE=true pnpm build:web",
     "prepare": "husky"
@@ -43,23 +41,21 @@
       "name": "User-facing JS",
       "path": [
         "apps/web/dist/assets/*.js",
-        "!apps/web/dist/assets/RevealsPage-*.js",
-        "!apps/web/dist/assets/RevealAdminPage-*.js",
-        "!apps/web/dist/assets/AdminAnalyticsPage-*.js",
-        "!apps/web/dist/assets/ImageAdminPage-*.js",
-        "!apps/web/dist/assets/TuningAdminPage-*.js"
+        "!apps/web/dist/assets/RevealsPage-*.js"
       ],
-      "limit": "350 kB",
+      "limit": "370 kB",
       "gzip": true
     },
     {
-      "name": "Admin & flag-gated JS",
+      "name": "Entry chunk",
+      "path": "apps/web/dist/assets/index-*.js",
+      "limit": "127 kB",
+      "gzip": true
+    },
+    {
+      "name": "Flag-gated JS",
       "path": [
-        "apps/web/dist/assets/RevealsPage-*.js",
-        "apps/web/dist/assets/RevealAdminPage-*.js",
-        "apps/web/dist/assets/AdminAnalyticsPage-*.js",
-        "apps/web/dist/assets/ImageAdminPage-*.js",
-        "apps/web/dist/assets/TuningAdminPage-*.js"
+        "apps/web/dist/assets/RevealsPage-*.js"
       ],
       "limit": "60 kB",
       "gzip": true
@@ -72,12 +68,12 @@
     }
   ],
   "devDependencies": {
-    "vitest": "^4.1.10",
-    "@size-limit/file": "^14.0.0",
+    "vitest": "^5.0.2",
+    "@size-limit/file": "^14.0.1",
     "husky": "^9.1.7",
-    "prettier": "^3.9.8",
+    "prettier": "^3.9.9",
     "sharp": "^0.35.4",
-    "size-limit": "^14.0.0",
+    "size-limit": "^14.0.1",
     "typescript": "^6.0.3"
   },
   "packageManager": "pnpm@9.0.0",

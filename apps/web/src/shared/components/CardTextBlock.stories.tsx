@@ -41,10 +41,10 @@ export const SingleAbility: Story = {
 export const MultipleAbilities: Story = {
   args: {
     card: card({
-      text: 'FREEZE ↷ — Exert chosen opposing character.\nA WONDERFUL DREAM ↷ — Draw a card.',
+      text: 'FREEZE ⟳ — Exert chosen opposing character.\nCOMMUNITY SERVICE At the end of your turn, draw a card.',
       textSections: [
-        'FREEZE ↷ — Exert chosen opposing character.',
-        'A WONDERFUL DREAM ↷ — Draw a card.',
+        'FREEZE ⟳ — Exert chosen opposing character.',
+        'COMMUNITY SERVICE At the end of your turn, draw a card.',
       ],
     }),
   },

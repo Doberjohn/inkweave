@@ -33,7 +33,7 @@ export const INK_COLORS: Record<Ink, {bg: string; text: string; border: string}>
 
 // Font families
 export const FONTS = {
-  body: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif",
+  body: "'Plus Jakarta Sans', 'Inkweave Sans Fallback', -apple-system, BlinkMacSystemFont, sans-serif",
   // Resolves to the `--font-hero` custom property declared in index.css, so the
   // app's serif is swapped in ONE place instead of hunting 18 files (and the dev
   // font switcher can trial candidates at runtime). Safe as a var(): every
@@ -50,7 +50,6 @@ export const LAYOUT = {
   compactHeaderHeight: 70,
   compactHeaderHeightMobile: 48,
   cardDetailWidth: 330,
-  selectedCardImageWidth: 120,
   maxDisplayedCards: 204,
   /** CardGrid auto-fill minimum column width on desktop. Used by BrowseCardGrid + the shared CardGrid component. */
   cardGridMinWidth: 180,

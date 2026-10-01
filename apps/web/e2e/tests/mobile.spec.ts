@@ -96,6 +96,35 @@ test.describe('Mobile Viewport', () => {
     await expect(searchInput).toBeVisible();
   });
 
+  test('a search tap that beats the sheet chunk opens it, with a proxy input holding focus', async ({page}) => {
+    // Hold the lazily loaded sheet (#640), then load a page with the bottom nav from scratch. On a
+    // phone the app requests the sheet in its first render, and WebKit holds the load event until
+    // that request ends, so wait for DOMContentLoaded: a `load` wait could wait on the hold itself.
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/components/SearchBottomSheet.tsx*', async (route) => {
+      await held;
+      await route.continue();
+    });
+    await page.goto('/browse', {waitUntil: 'domcontentloaded'});
+    await page.getByRole('button', {name: 'Search cards'}).click();
+    await expect(page.getByRole('dialog', {name: 'Search cards'})).toHaveCount(0);
+
+    // The sheet (and its own proxy) doesn't exist yet, so AppLayout's hidden input takes the tap's
+    // focus: on iOS that synchronous focus is what raises the keyboard.
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const el = document.activeElement;
+          return el instanceof HTMLInputElement && el.getAttribute('aria-hidden') === 'true';
+        }),
+      )
+      .toBe(true);
+
+    release();
+    await expect(page.getByRole('dialog', {name: 'Search cards'})).toBeVisible({timeout: 15000});
+  });
+
   test('should close search bottom sheet on backdrop click', async ({page}) => {
     // Navigate to browse so bottom nav appears
     await page.getByTestId('cta-browse').click();
@@ -116,6 +145,10 @@ test.describe('Mobile Viewport', () => {
 
     // Sheet should be gone after exit transition
     await expect(page.getByRole('dialog', {name: 'Search cards'})).not.toBeVisible({timeout: 5000});
+
+    // Focus returns to the Search button, not to the hidden proxy input the tap
+    // handler focuses to raise the iOS keyboard.
+    await expect(page.getByRole('button', {name: 'Search cards'})).toBeFocused();
   });
 
   test('should navigate to browse when pressing Enter in search bottom sheet', async ({page}) => {
@@ -139,6 +172,10 @@ test.describe('Mobile Viewport', () => {
     // Should navigate to browse with query param
     await expect(page).toHaveURL(/\/browse\?q=Elsa/, {timeout: 10000});
     await expect(page.getByRole('heading', {name: 'Browse Cards'})).toBeVisible({timeout: 10000});
+
+    // The sheet stays closed: focus returns to the Search button mid-keypress, and an
+    // Enter that reached it would click it and reopen the sheet.
+    await expect(page.getByRole('dialog', {name: 'Search cards'})).not.toBeVisible();
   });
 
   test('should show sort dropdown in browse toolbar', async ({page}) => {

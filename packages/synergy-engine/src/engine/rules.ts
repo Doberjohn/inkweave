@@ -18,6 +18,7 @@ import {
   isItem,
   isLocation,
   isLocationSupportCard,
+  locationBuffReaches,
   isRampCard,
   isSong,
   isToyCard,
@@ -45,6 +46,8 @@ import {
   isExertCard,
   getBounceRoles,
   isBounceCard,
+  getInkDropRoles,
+  isInkDropCard,
   isLoreDenialCard,
   getLoreDenialRoles,
   getSacrificeRoles,
@@ -84,6 +87,7 @@ import {
   makeTribalRule,
 } from './ruleScoring';
 import {scoreBouncePair} from './bounceScoring';
+import {scoreInkDropPair} from './inkDropScoring';
 import {TUNING} from '../data/tuning';
 
 // ============================================
@@ -119,8 +123,8 @@ const SHIFT_CONDITION_MATCHERS: ShiftConditionMatcher[] = [
 /** Check if a base card can satisfy the conditional Shift requirement of a Shift card */
 function baseActivatesShiftCondition(shiftCard: LorcanaCard, baseCard: LorcanaCard): boolean {
   if (!shiftCard.text || !baseCard.text) return false;
-  const shiftText = shiftCard.text.replace(/\n/g, ' ');
-  const baseText = baseCard.text.replace(/\n/g, ' ');
+  const shiftText = normalizeCardText(shiftCard);
+  const baseText = normalizeCardText(baseCard);
 
   return SHIFT_CONDITION_MATCHERS.some(
     (matcher) => matcher.condition.test(shiftText) && matcher.satisfiedBy.test(baseText),
@@ -381,6 +385,8 @@ function buildLocationDirectMatch(
   role: LocationRole,
 ): SynergyMatch | null {
   if (role === 'boost' && !isBoostBeneficiaryLocation(location)) return null;
+  // A classified buff ("Your Hyperia City locations get ...") reaches only its own locations.
+  if (role === 'buff' && !locationBuffReaches(card, location)) return null;
   return {
     card: location,
     score: LOCATION_ROLE_SCORE[role],
@@ -444,6 +450,7 @@ function findLocationCardSynergiesForRole(
 
     const roles = getLocationRoles(other);
     if (!roles.includes(role)) continue;
+    if (role === 'buff' && !locationBuffReaches(other, card)) continue;
 
     matches.push({
       card: other,
@@ -1423,6 +1430,25 @@ export const synergyRules: SynergyRule[] = [
     // classification), which pairFindSynergies drops. Card-aware so the gate can read cost.
     findSynergies: (card, allCards) =>
       pairFindSynergies(card, allCards, getBounceRoles, scoreBouncePair),
+  },
+
+  // --------------------------------------------
+  // INK DROPS (Set 14, payoff-anchored)
+  // --------------------------------------------
+  {
+    id: 'ink-drops',
+    name: 'Ink Drops',
+    category: 'playstyle',
+    playstyleId: 'ink-drops',
+    description:
+      'Cards that make ink drops pair with the cards that spend, hold, or convert them. Payoff-anchored: two drop makers do not synergize with each other.',
+
+    matches: isInkDropCard,
+
+    // Payoff-anchored: scoreInkDropPair returns null for maker↔maker density and for payoffs that
+    // compete for the same drops, which pairFindSynergies drops.
+    findSynergies: (card, allCards) =>
+      pairFindSynergies(card, allCards, getInkDropRoles, scoreInkDropPair),
   },
 ];
 

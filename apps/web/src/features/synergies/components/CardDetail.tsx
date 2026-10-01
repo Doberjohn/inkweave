@@ -1,6 +1,31 @@
 import type {LorcanaCard} from '../../cards';
-import {INK_COLORS, COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT} from '../../../shared/constants';
-import {CardImage, CardTextBlock, InkIcon} from '../../../shared/components';
+import {
+  INK_COLORS,
+  COLORS,
+  FONT_SIZES,
+  RADIUS,
+  SPACING,
+  blackRgba,
+} from '../../../shared/constants';
+import {
+  CardImage,
+  CardTextBlock,
+  IconButton,
+  InkIcon,
+  PrintingCarousel,
+  PrintingPills,
+} from '../../../shared/components';
+import {usePrintingSelection} from '../../../shared/hooks';
+
+/** The card at the size the card modal shows it on mobile (CardOverviewModal). */
+const ART_WIDTH = 240;
+const ART_HEIGHT = Math.round((ART_WIDTH * 368) / 264);
+
+const CHIP_STYLE = {
+  padding: '4px 10px',
+  borderRadius: `${RADIUS.md}px`,
+  fontSize: `${FONT_SIZES.base}px`,
+} as const;
 
 interface CardDetailProps {
   card: LorcanaCard;
@@ -17,10 +42,129 @@ interface CardDetailProps {
   headingLevel?: 'h1' | 'h2';
 }
 
-export function CardDetail({card, onClear, headingLevel = 'h2'}: CardDetailProps) {
-  const inkColors = INK_COLORS[card.ink];
+/** The card name with the × that leaves the card, laid out like the card modal's header. */
+function CardDetailHeader({
+  card,
+  onClear,
+  headingLevel,
+}: {
+  card: LorcanaCard;
+  onClear: () => void;
+  headingLevel: 'h1' | 'h2';
+}) {
   const Heading = headingLevel;
+  return (
+    <div style={{display: 'flex', alignItems: 'flex-start', gap: SPACING.md}}>
+      <Heading
+        style={{
+          flex: 1,
+          minWidth: 0,
+          margin: 0,
+          fontSize: `${FONT_SIZES.xxl}px`,
+          fontWeight: 700,
+          lineHeight: 1.2,
+          color: COLORS.text,
+        }}>
+        {card.fullName}
+      </Heading>
+      <IconButton
+        aria-label="Close"
+        onClick={onClear}
+        size={28}
+        style={{
+          borderRadius: RADIUS.pill,
+          border: `1px solid ${COLORS.surfaceBorder}`,
+          fontSize: FONT_SIZES.xl,
+          flexShrink: 0,
+        }}>
+        ×
+      </IconButton>
+    </div>
+  );
+}
 
+/** Ink, cost and keywords. */
+function CardDetailChips({card}: {card: LorcanaCard}) {
+  const inkColors = INK_COLORS[card.ink];
+  return (
+    <div style={{display: 'flex', gap: `${SPACING.sm}px`, flexWrap: 'wrap'}}>
+      <span
+        style={{
+          ...CHIP_STYLE,
+          background: inkColors.bg,
+          color: inkColors.text,
+          fontWeight: 500,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '5px',
+        }}>
+        <InkIcon ink={card.ink} size={16} />
+        {card.ink}
+      </span>
+      <span style={{...CHIP_STYLE, background: COLORS.gray100, color: COLORS.gray700}}>
+        Cost {card.cost}
+      </span>
+      {card.keywords?.map((k) => (
+        <span
+          key={k}
+          style={{...CHIP_STYLE, background: COLORS.surfaceAlt, color: COLORS.textMuted}}>
+          {k}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The card art, centered. A card with an alternate printing (#625) gets the swipeable
+ * printings strip with the Standard | <rarity> pills under it. The pills pick a printing; the
+ * strip follows a swipe live and records it once it comes to rest.
+ */
+function CardDetailArt({card}: {card: LorcanaCard}) {
+  const {printings, index, select, pick, settle} = usePrintingSelection(card, {
+    surface: 'card_page',
+  });
+
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.sm}}>
+      {printings.length < 2 ? (
+        <CardImage
+          src={card.imageUrl}
+          alt={card.fullName}
+          width={ART_WIDTH}
+          height={ART_HEIGHT}
+          inkColor={card.ink}
+          cost={card.cost}
+          lazy={false}
+          priority
+          borderRadius={RADIUS.lg}
+        />
+      ) : (
+        <>
+          <PrintingCarousel
+            key={card.id}
+            card={card}
+            printings={printings}
+            index={index}
+            onIndexChange={select}
+            onSettle={settle}
+            width={ART_WIDTH}
+            height={ART_HEIGHT}
+            borderRadius={RADIUS.lg}
+            priority
+          />
+          <PrintingPills printings={printings} index={index} onSelect={pick} isMobile />
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The card on the mobile card page, read top to bottom in the card modal's order: name and
+ * ×, details, the card, its printings, then its text.
+ */
+export function CardDetail({card, onClear, headingLevel = 'h2'}: CardDetailProps) {
   return (
     <article
       style={{
@@ -28,105 +172,19 @@ export function CardDetail({card, onClear, headingLevel = 'h2'}: CardDetailProps
         borderRadius: `${RADIUS.xl}px`,
         padding: `${SPACING.xl}px`,
         marginBottom: `${SPACING.xl}px`,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+        boxShadow: `0 1px 3px ${blackRgba(0.3)}`,
         display: 'flex',
-        gap: `${SPACING.xl}px`,
+        flexDirection: 'column',
+        gap: `${SPACING.lg}px`,
       }}>
-      <CardImage
-        src={card.imageUrl}
-        alt={card.fullName}
-        width={LAYOUT.selectedCardImageWidth}
-        height={Math.round(LAYOUT.selectedCardImageWidth * 1.4)}
-        inkColor={card.ink}
-        cost={card.cost}
-        lazy={false}
-        borderRadius={RADIUS.lg}
-      />
-      <div style={{flex: 1}}>
-        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
-          <div>
-            <Heading
-              style={{
-                fontSize: `${FONT_SIZES.xxl}px`,
-                fontWeight: 700,
-                color: COLORS.gray800,
-                margin: 0,
-              }}>
-              {card.fullName}
-            </Heading>
-            <div
-              style={{
-                display: 'flex',
-                gap: `${SPACING.sm}px`,
-                marginTop: `${SPACING.sm}px`,
-                flexWrap: 'wrap',
-              }}>
-              <span
-                style={{
-                  background: inkColors.bg,
-                  color: inkColors.text,
-                  padding: '4px 10px',
-                  borderRadius: `${RADIUS.md}px`,
-                  fontSize: `${FONT_SIZES.base}px`,
-                  fontWeight: 500,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                }}>
-                <InkIcon ink={card.ink} size={16} />
-                {card.ink}
-              </span>
-              <span
-                style={{
-                  background: COLORS.gray100,
-                  color: COLORS.gray700,
-                  padding: '4px 10px',
-                  borderRadius: `${RADIUS.md}px`,
-                  fontSize: `${FONT_SIZES.base}px`,
-                }}>
-                Cost {card.cost}
-              </span>
-              {card.keywords?.map((k) => (
-                <span
-                  key={k}
-                  style={{
-                    background: COLORS.surfaceAlt,
-                    color: COLORS.textMuted,
-                    padding: '4px 10px',
-                    borderRadius: `${RADIUS.md}px`,
-                    fontSize: `${FONT_SIZES.base}px`,
-                  }}>
-                  {k}
-                </span>
-              ))}
-            </div>
-          </div>
-          <button
-            onClick={onClear}
-            style={{
-              background: COLORS.gray100,
-              border: 'none',
-              borderRadius: `${RADIUS.md}px`,
-              padding: '8px 12px',
-              cursor: 'pointer',
-              fontSize: `${FONT_SIZES.base}px`,
-              color: COLORS.gray700,
-            }}>
-            Clear
-          </button>
+      <CardDetailHeader card={card} onClear={onClear} headingLevel={headingLevel} />
+      <CardDetailChips card={card} />
+      <CardDetailArt card={card} />
+      {(card.textSections?.length || card.text) && (
+        <div style={{padding: '12px', background: COLORS.gray50, borderRadius: `${RADIUS.md}px`}}>
+          <CardTextBlock card={card} />
         </div>
-        {(card.textSections?.length || card.text) && (
-          <div
-            style={{
-              marginTop: '12px',
-              padding: '12px',
-              background: COLORS.gray50,
-              borderRadius: `${RADIUS.md}px`,
-            }}>
-            <CardTextBlock card={card} />
-          </div>
-        )}
-      </div>
+      )}
     </article>
   );
 }

@@ -41,7 +41,7 @@ _End or any pause (the close-out contract, in order, all of it):_
 
 - **Scope**: Core format only (sets 9+), community voting, deck builder
 - **UI**: Dark fantasy theme (deep purple, gold accents)
-- **Synergies**: 6 direct rules + 21 playstyles, indexed in the [Synergy Rules registry](#synergy-rules)
+- **Synergies**: 7 direct rules + 22 playstyles, indexed in the [Synergy Rules registry](#synergy-rules)
 
 See [GitHub Issues](https://github.com/Doberjohn/inkweave/issues) for full backlog.
 
@@ -84,7 +84,7 @@ inkweave/
             ├── router.tsx    # Route definitions
             ├── AppLayout.tsx # Provider + <Outlet /> shell
             ├── pages/        # Route page components
-            ├── features/     # cards, synergies, playstyles, voting, reveals, admin panes
+            ├── features/     # cards, synergies, playstyles, voting, reveals
             └── shared/       # Constants, utilities, shared components
 ```
 
@@ -121,7 +121,7 @@ React web application that consumes the synergy engine package.
 
 **Synergy Categories**: direct (pair-specific, e.g. Shift), playstyle (strategy-reinforcing, e.g. Lore Denial)
 
-**Playstyles**: 21 implemented, listed with their `PlaystyleId` and spec doc in the [Synergy Rules registry](#synergy-rules) below. The canonical union is `PlaystyleId` in `packages/synergy-engine/src/types/playstyle.ts`.
+**Playstyles**: 22 implemented, listed with their `PlaystyleId` and spec doc in the [Synergy Rules registry](#synergy-rules) below. The canonical union is `PlaystyleId` in `packages/synergy-engine/src/types/playstyle.ts`.
 
 **Synergy Score**: 1-10 numeric scale (all integers valid). Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4)
 
@@ -132,14 +132,14 @@ Claude Code hooks, skills, agents, and path-scoped rules enforce workflow rules 
 ### Hooks (`.claude/hooks/`)
 | Hook | Event | What it does |
 |------|-------|-------------|
-| `git-write-protection.sh` | PreToolUse/Bash | Soft-blocks commit/push (`USER_APPROVED=1` bypass), hard-blocks destructive ops, and hard-blocks **piping** a commit/push (the pipeline's exit status hides a rejected hook — no bypass, not even `USER_APPROVED=1`) |
+| `git-write-protection.sh` | PreToolUse/Bash\|PowerShell\|Monitor | Soft-blocks commit/push (`USER_APPROVED=1` bypass, Bash only: PowerShell and Monitor can't carry it, so there they always block), hard-blocks destructive ops and piped commit/push. Parses the command (`lib/shell-command.mjs`), so git options, cd chains and nested shells don't slip past; case table in `__tests__/hooks.test.mjs` |
 | `branch-verification.sh` | PreToolUse/Edit\|Write | Blocks source file edits on master/main |
 | `engine-auto-rebuild.sh` | PostToolUse/Edit\|Write | Auto `pnpm build:engine` + `pnpm precompute-synergies` after engine file edits |
 | `preview-images-auto-convert.sh` | PostToolUse/Edit\|Write | Auto `pnpm convert-preview-images` after writes inside `apps/web/public/card-images-raw/` (raw → AVIF pipeline) |
 | `preview-data-auto-precompute.sh` | PostToolUse/Edit\|Write | Auto `pnpm precompute-synergies` after `apps/web/public/data/previewCards.json` writes (engine hook already covers engine-src changes) |
-| `issue-create-guard.sh` | PreToolUse/Bash | Redirects direct `gh issue create` to `/draft-issue` skill (`SKILL_APPROVED=1` bypass) |
+| `issue-create-guard.sh` | PreToolUse/Bash\|PowerShell\|Monitor | Redirects direct `gh issue create` to `/draft-issue` skill (`SKILL_APPROVED=1` bypass, Bash only) |
 | `agent-tool-substitution-guard.sh` | PostToolUse/Agent | Halts when a subagent reports a missing tool, so the fix lands in that agent's `tools:` frontmatter instead of the main session silently substituting |
-| Husky pre-push | git push | Runs `typecheck` (`tsc -b`), `check:stories` (story coverage), `check:design` (design-token value gate, #508), E2E, then the CodeScene gate. **On Windows only chromium runs** (webkit + mobile-chrome workers hang past Playwright's stop timeout); set `PRE_PUSH_FULL=1` to force them. Elsewhere: chromium + webkit + mobile-chrome. Full 5-browser matrix in CI |
+| Husky pre-push | git push | Runs `typecheck` (`tsc -b`), `check:stories` (story coverage), `check:design` (design-token value gate, #508), E2E, then the CodeScene gate. E2E starts its own Vite (by default on a free port in 5200-5299), never reuses a running server, and warms it up before the first test (`e2e/global-setup.ts`, #664); local Windows runs use 3 workers (set in `playwright.config.ts`; `PRE_PUSH_E2E_WORKERS` overrides). **On Windows only chromium runs** (webkit + mobile-chrome workers hang past Playwright's stop timeout), after logging free commit memory; set `PRE_PUSH_FULL=1` to force webkit + mobile-chrome. Elsewhere: chromium + webkit + mobile-chrome. Full 5-browser matrix in CI. Worktree commits and pushes enter through the main checkout's `.husky` (`core.hooksPath`); once the main checkout's branch has `.husky/handoff.sh`, it runs the worktree's own `pre-commit`/`pre-push` (skip with `INKWEAVE_HOOK_HANDOFF=1`, written after `USER_APPROVED=1` in a Claude session) |
 
 ### Skills (`.claude/skills/`)
 | Skill | Arg | What it does |
@@ -151,7 +151,6 @@ Claude Code hooks, skills, agents, and path-scoped rules enforce workflow rules 
 | `/inkweave-add-rule <name>` | mechanic name | Discovery → design → implement → validate |
 | `/mine-rules [dry-run]` | optional dry-run | Run the miner → pick top candidate (dedup vs existing rules + open candidates; previously-removed mechanics are flagged, not skipped) → draft 5-baseline proposal → open one `rule-candidate` issue (`dry-run` drafts without publishing) |
 | `/inkweave-explore [focus]` | optional focus area | Read-only, fork-isolated codebase/architecture map (workspace, engine API + rule registry, web data flow, precompute); verbose output stays in the fork |
-| `/fetch-reveals` | — | Reveal season: find new cards on lorcanaplayer.com (through Claude in Chrome), keep only those illumineertales.com lists as officially revealed (leaks wait), verify each against blind reads of its official scan, stage the verified cards + AVIFs on a branch, report conflicts, deferrals and a leak audit. Pipeline in `scripts/reveal-sync/`. Never commits |
 | `/design <what>` | what to design | Design or update UI layouts, screens, and components with Pencil (`.pen` files) |
 | `/supabase-postgres-best-practices` | — | Vendored Supabase reference: Postgres query, schema, and index best practices |
 
@@ -230,6 +229,7 @@ Rules live in `packages/synergy-engine/src/engine/rules/` and run at build time 
 | Healing | `healing` | [HEALING_RULE.md](packages/synergy-engine/HEALING_RULE.md) |
 | Exert | `exert` | [EXERT_RULE.md](packages/synergy-engine/EXERT_RULE.md) |
 | Bounce | `bounce` | [BOUNCE_RULE.md](packages/synergy-engine/BOUNCE_RULE.md) |
+| Ink Drops | `ink-drops` | [INK_DROPS_RULE.md](packages/synergy-engine/INK_DROPS_RULE.md) |
 | Classification Tribes | `monster` `princess` `hero` `super` `royalty` `detective` | [TRIBES_RULE.md](packages/synergy-engine/TRIBES_RULE.md) |
 
 Royalty is Queen/King/Prince and deliberately excludes Princess. All six tribes come from one shared payoff-anchored factory.
@@ -257,11 +257,14 @@ pnpm test:supabase    # Run Supabase integration tests (requires .env.local)
 - Synergies pre-computed at build time via `scripts/precompute-synergies.mjs`, fetched on demand per card selection
 - Card data loaded once on init from `allCards.json`; synergy data lazy-loaded per card from `/data/synergies/{cardId}.json`
 - Card data pre-deduplicated in `allCards.json` (same card in multiple sets appears once); loader expects clean data
-- Multi-page SPA via react-router (home, browse, card detail, playstyles, deck builder, voting, admin). Routes in `router.tsx`; `AppLayout` mounts the providers plus `<Outlet />`
+- Multi-page SPA via react-router (home, browse, card detail, playstyles, deck builder, voting). Routes in `router.tsx`; `AppLayout` mounts the providers plus `<Outlet />`
+- **Admin tools live in `Doberjohn/inkweave-admin`** (#593), deployed behind Vercel login at inkweave-admin.vercel.app: the reveal publisher, image tool, tuning editor, analytics, banner generator and the `/fetch-reveals` skill. They write here only through the GitHub API (reveal, image and tuning commit to `master`; `/fetch-reveals` opens PRs from `reveals/…` branches). Admin builds against a pinned submodule of this repo and re-exports what it uses from `src/app-bridge.ts` there: `shared/constants`, `shared/hooks`, `shared/components/{CtaButton,LinkButton,TabList}`, `shared/contexts/CardDataContext`, `features/cards/{components/CardTile,loader}`, `features/synergies/hooks/usePrecomputedSynergies`, `src/index.css`, `public/data/previewCards.json` and `eslint-rules/`. Renaming or removing one breaks admin's next pin bump, whose CI is the contract test. Admin's deploy also builds analytics from this repo's `master` with `scripts/precompute-synergies.mjs` and the engine, and `convert-reveal-images.yml` converts the raw scans its reveal publisher commits
 - Core format only (sets 9+)
-- **react-grab**: Dev-only inspection tool. The `dev` script runs `pnpm dlx @react-grab/claude-code@latest && vite`. Playwright's webServer runs `npx vite`, which is still DEV mode, so `index.html`'s `import.meta.env.DEV` gate loads react-grab during E2E as well; its `ws://localhost:4722` connection error must stay allowlisted in the E2E console-error guard (#405). If a dev server is already running, Playwright reuses it (`reuseExistingServer: true` locally) — which means `playwright.config.ts`'s `webServer.env` only applies when Playwright launches its own Vite. Set branch-specific env vars in `apps/web/.env.local` for determinism; see **Feature Flags & Local Dev**.
+- **react-grab**: Dev-only inspection tool. The `dev` script runs `pnpm dlx @react-grab/claude-code@latest && vite`. Playwright's webServer runs `npx vite` (still DEV mode) but pins `VITE_DISABLE_REACT_GRAB=true`, which `index.html` also checks, so E2E pages never load react-grab (#673). Local E2E runs never reuse a running dev server: each starts its own Vite (by default on a free port in 5200-5299), so `playwright.config.ts`'s `webServer.env` always applies; see **Feature Flags & Local Dev**.
 - **useContainerWidth**: ResizeObserver hook guards against 0-width observations from detached elements (`if (w > 0)`) — required for React Strict Mode double-mount resilience
 - **Source-map leak guard** (#358): `scripts/check-sourcemaps.mjs` fails the build if any `.map` in a dir inlines original code via non-empty `sourcesContent`; `SKIP_SOURCEMAP_GUARD=1` bypasses. Wired ONLY into `vercel.json`'s `buildCommand` (the deploy boundary), plus `apps/web/vite.config.ts` sets `workbox.sourcemap:false` so VitePWA stops emitting `sw.js.map`. **Do NOT add the guard to CI or a `postbuild` hook** — CI/local builds run without `SENTRY_AUTH_TOKEN` (the Sentry plugin only uploads+deletes app maps where the token exists, i.e. the Vercel build), so they legitimately produce content-bearing maps that never deploy; gating those paths would false-fail safe artifacts and break forked PRs.
+- **Retired hosts** (#634): `www.inkweave.ink` serves Production so `vercel.json`'s host redirect can 308 every path except `/sw.js` to the apex, and `middleware.ts` answers `/sw.js` with a self-unregistering worker that heals www-era service workers. Never put a dashboard-level redirect back on `www` (it blocks `/sw.js` again), and never Instant Rollback to a pre-#634 deployment while `www` serves Production: switch it to Redirect first. `lorcana-synergy-finder.vercel.app` keeps its dashboard redirect on purpose: Standard Deployment Protection puts any `*.vercel.app` Production domain behind a 302 to `vercel.com/sso-api`, `/sw.js` included, so flipping it would wall off visitors and heal nothing. Its code paths stay dormant.
+- **Deploy drift alarm** (#569): `build:vercel` first stamps `/version.json` with the build's commit (`scripts/write-version.mjs`, which never fails the build). `.github/workflows/deploy-drift.yml` opens one `deploy-drift` issue, assigned to the owner, when production stops serving master: at once when a Deploy run fails, otherwise at the daily 06:17 UTC check after a 3-hour grace that starts at the oldest undeployed master commit (`[skip ci]` commits don't count). The daily check closes it once production catches up. `/version.json` is served `no-store`; keep it out of every cache.
 - **Supabase**: Community voting backend (project: `ttyidjyaxnycbpxwngqr`, eu-central-1). Client SDK in `apps/web/src/shared/lib/supabase.ts`; migrations in `supabase/migrations/`. The MCP-driven migration workflow (apply, verify, regenerate types, advisors) lives in [`.claude/rules/migrations.md`](.claude/rules/migrations.md), auto-loaded when editing `supabase/migrations/**`.
 - **Card images**: production is content-addressed and self-hosted (`{id}.{sha256prefix}.avif`); dev falls back to proxies. All URLs route through `resolveImageUrl` / `smallImageUrl` in `apps/web/src/features/cards/loader.ts`. Pipeline, dev proxy rules, SW caching, and the debugging playbook: [`apps/web/src/features/cards/IMAGES.md`](apps/web/src/features/cards/IMAGES.md).
   - **Never put `immutable` on a URL that is not content-addressed.** Issue #323 was a year-long cache-poisoning bug from exactly that. Content addressing is what makes `max-age=31536000, immutable` truthful.
@@ -278,8 +281,7 @@ Dark fantasy theme inspired by Lorcana:
 ## Workflow Preferences
 
 ### Git Workflow
-- **Git safety enforced by hooks** — `git-write-protection` hook blocks commit, push, and destructive ops (checkout --, restore, reset --hard, clean -f, worktree remove/prune). Commit/push use `USER_APPROVED=1` prefix after explicit user approval. Destructive ops are hard-blocked — run manually.
-- **Never pipe a commit or push.** Hard-blocked by the same hook, with no bypass. A pipeline reports the LAST command's exit status, so `git push | tail` returns tail's success even when the pre-push hook rejected the push — the branch silently does not move. Run unpiped and read the output; for the multi-minute hook chains use a background run and read its output file. `set -o pipefail` is not an escape: `USER_APPROVED=1` must be the literal first characters, so a `pipefail` prefix breaks approval instead.
+- **Git safety enforced by hooks** — `git-write-protection` hook blocks commit, push, and destructive ops (checkout --, restore, reset --hard, clean -f, worktree remove/prune). Commit/push use `USER_APPROVED=1` prefix after explicit user approval. Destructive ops are hard-blocked — run manually. Commit and push go through the Bash tool (in PowerShell or Monitor the hook always blocks them), and piping either one (`| tail`) is always blocked.
 - **Branch verification enforced by hook** — `branch-verification` hook blocks source file edits on master/main.
 - Feature branches: `feature/<issue-number>-<description>` (e.g., `feature/5-deck-builder-tests`)
 - Commit messages: Use semantic commit notation with issue reference (e.g., `test(deck): add tests (#5)`)
@@ -307,7 +309,7 @@ Dark fantasy theme inspired by Lorcana:
 
 ### Feature Flags & Local Dev
 - Before `pnpm dev` on a feature branch, check `apps/web/.env.example` for flags that gate the feature being built. If the branch needs a flag on, add it to `apps/web/.env.local` (git-ignored, per-developer).
-- **Do not rely on `playwright.config.ts`'s `webServer.env`.** With `reuseExistingServer: !process.env.CI` (true locally), Playwright grabs any existing Vite on port 5173 without re-injecting env vars — so a dev server started without the flag silently fails feature-gated tests in pre-push. `.env.local` is loaded by Vite at boot regardless of who started it, making flag state deterministic across `pnpm dev`, `pnpm test:e2e`, and husky pre-push.
+- **E2E always starts its own Vite.** Locally it never reuses a running server (`reuseExistingServer: false`), so a dev server started without a flag can no longer stand in for it. That Vite loads `.env.local` at boot like `pnpm dev` does, except for the four flags `playwright.config.ts`'s `webServer.env` pins to test values (`VITE_IS_REVEAL_SEASON`, `VITE_SHOW_STRATEGY_TIPS`, `VITE_SHOW_BETA_NOTICE`, `VITE_DISABLE_REACT_GRAB`): E2E always uses those, whatever `.env.local` says. Any other branch flag goes in `.env.local`, which keeps it the same across `pnpm dev`, `pnpm test:e2e`, and husky pre-push.
 - Example: on `feature/285-reveals-page`, `VITE_IS_REVEAL_SEASON=true` must be in `.env.local` or the `/reveals` route redirects to `/` and the nav omits the Reveals entry.
 
 ### Synergy Rule Documentation
@@ -379,7 +381,7 @@ The boundary is drawn on what a loop may **do**, not on whether a human is watch
 - **Same-session cleanup.** Every worktree created in a session must be cleaned up in that session (or explicitly flagged for next session in MEMORY.md).
 - **Never leave orphan branches.** After merging a PR, delete the local branch and worktree immediately.
 - **Pre-commit timeout.** Always use `timeout: 600000` for git commit (pre-commit hooks run lint + test + E2E, ~2-3 min).
-- **Port conflicts.** Before starting a dev server or running E2E tests, check ports 5173-5175 and kill stale processes.
+- **Port conflicts.** E2E needs no free dev port: by default every local run starts its own Vite on a free port it picks in 5200-5299. `E2E_PORT` pins a specific port instead (1024-65535), which must be free, or the run stops at startup with "already used". Before starting a dev server, check your assigned port. Stop only servers whose command line points into your own checkout; a server from another checkout is another session's live work, so ask the owner first.
 
 ## Design system mirror
 

@@ -1,22 +1,43 @@
 import {describe, it, expect} from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import {ALL_INKS, REVEAL_ID_BASE, REVEAL_SET_CODE, REVEAL_SET_NUMBER, SET_NAMES, SET_TOTAL, inkBlock} from '..';
+import type {Ink} from 'inkweave-synergy-engine';
+import {
+  ALL_INKS,
+  REVEAL_ID_BASE,
+  REVEAL_SET_CODE,
+  REVEAL_SET_NUMBER,
+  SET_NAMES,
+  SET_TOTAL,
+  inkBlock,
+  specialSlotsFor,
+} from '..';
 import {FRANCHISE_SPOTLIGHTS, SET_SPOTLIGHTS} from '../../../features/reveals/setSpotlights';
 
 // Guards the reveal season's one-constant switch (revealSet.ts) against the data
 // it must agree with. A half-done switch is otherwise silent: the page renders,
 // but the trackers read zero, or the gate never opens, with no error anywhere.
 //
-// Invariants only. CI runs this on every /admin/reveal publish commit, which lands
+// Invariants only. CI runs this on every reveal-publisher commit from admin, which lands
 // a card BEFORE its AVIFs (the convert workflow commits those afterwards), so
 // nothing here may depend on image files existing.
+
+/** An alternate printing folded into its base card (#625). */
+interface VariantEntry {
+  id: number;
+  rarity: string;
+  number: number;
+}
 
 interface PreviewCard {
   id: number;
   number?: number;
   setCode?: string;
   fullName?: string;
+  /** Ink, or "First-Second" for a dual-ink card. */
+  color?: string;
+  scanLanguage?: string;
+  variants?: VariantEntry[];
 }
 
 interface PreviewFile {
@@ -69,6 +90,49 @@ describe('reveal-set integrity', () => {
     expect(preview.cards.filter((c) => canonical.has(c.id)).map((c) => c.id)).toEqual([]);
   });
 
+  // Variant printings (Epic/Enchanted/Iconic) are numbered after the set's base cards, and
+  // take the same REVEAL_ID_BASE + number id whether they came from a manual scan or from
+  // `pnpm sync-variants`, so the two paths land on one id.
+  it('every variant printing has a reveal-convention id, numbered after the base cards', () => {
+    const malformed = preview.cards.flatMap((c) =>
+      (c.variants ?? [])
+        .filter(
+          (v) =>
+            v.id !== REVEAL_ID_BASE + v.number ||
+            v.number <= SET_TOTAL ||
+            !['Enchanted', 'Epic', 'Iconic'].includes(v.rarity),
+        )
+        .map((v) => `${v.id} (${v.rarity} #${v.number}) on ${c.fullName}`),
+    );
+    expect(malformed).toEqual([]);
+  });
+
+  it('no variant printing id collides with a card or another printing (they share one image namespace)', () => {
+    const canonical = readData<{cards: PreviewCard[]}>('allCards.json').cards;
+    const cards = [...canonical, ...preview.cards];
+    const ids = [...cards.map((c) => c.id), ...cards.flatMap((c) => (c.variants ?? []).map((v) => v.id))];
+    expect(ids.filter((id, i) => ids.indexOf(id) !== i)).toEqual([]);
+  });
+
+  // The ink boards give every special printing a slot from SPECIAL_BLOCKS and ICONIC_INKS.
+  it('the special printing lineups number each printing once, after the base cards', () => {
+    const numbers = ALL_INKS.flatMap((ink) => specialSlotsFor(ink).map((slot) => slot.number));
+    expect(new Set(numbers).size).toBe(numbers.length);
+    expect(numbers.filter((n) => n <= SET_TOTAL)).toEqual([]);
+  });
+
+  // A printing sits on its base card's board, so a mistyped number or rarity would land it in a
+  // slot that belongs to another card (or append it as a stray).
+  it('every variant printing fills a special slot of its base card ink, with its rarity', () => {
+    const misplaced = preview.cards.flatMap((c) => {
+      const lineup = specialSlotsFor((c.color ?? '').split('-')[0] as Ink);
+      return (c.variants ?? [])
+        .filter((v) => !lineup.some((slot) => slot.number === v.number && slot.rarity === v.rarity))
+        .map((v) => `${v.id} (${v.rarity} #${v.number}) on ${c.fullName} (${c.color})`);
+    });
+    expect(misplaced).toEqual([]);
+  });
+
   it('every card a spotlight shows has been revealed', () => {
     const revealed = new Set(preview.cards.map((c) => c.id));
     expect(spotlightCardIds().filter((id) => !revealed.has(id))).toEqual([]);
@@ -82,5 +146,14 @@ describe('reveal-set integrity', () => {
       next = last + 1;
     }
     expect(next - 1).toBe(SET_TOTAL);
+  });
+
+  // `scanLanguage` marks a card written from a non-English official scan, and is the mark's
+  // only record: CardLightbox offers the card's English text as a provisional translation
+  // only when it is set. An "en" or malformed code would offer one for an English card.
+  it('every scanLanguage is a two-letter code other than en', () => {
+    const label = (c: PreviewCard) => `${c.id} ${c.fullName}`;
+    const badCodes = preview.cards.filter((c) => c.scanLanguage && !/^(?!en$)[a-z]{2}$/.test(c.scanLanguage));
+    expect(badCodes.map(label)).toEqual([]);
   });
 });

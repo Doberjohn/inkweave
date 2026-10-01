@@ -12,32 +12,21 @@ describe('useDialogFocus', () => {
     vi.useRealTimers();
   });
 
-  it('should close on Escape key', () => {
+  it.each([
+    {isOpen: true, calls: 1},
+    {isOpen: false, calls: 0},
+  ])('should call onClose on Escape only while open (isOpen: $isOpen)', ({isOpen, calls}) => {
     const onClose = vi.fn();
     const containerRef = createRef<HTMLElement>();
     const initialFocusRef = createRef<HTMLElement>();
 
-    renderHook(() => useDialogFocus({isOpen: true, containerRef, initialFocusRef, onClose}));
+    renderHook(() => useDialogFocus({isOpen, containerRef, initialFocusRef, onClose}));
 
     act(() => {
       document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'}));
     });
 
-    expect(onClose).toHaveBeenCalledOnce();
-  });
-
-  it('should not listen for Escape when closed', () => {
-    const onClose = vi.fn();
-    const containerRef = createRef<HTMLElement>();
-    const initialFocusRef = createRef<HTMLElement>();
-
-    renderHook(() => useDialogFocus({isOpen: false, containerRef, initialFocusRef, onClose}));
-
-    act(() => {
-      document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'}));
-    });
-
-    expect(onClose).not.toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalledTimes(calls);
   });
 
   it('should focus initialFocusRef after timeout when opened', () => {
@@ -56,6 +45,53 @@ describe('useDialogFocus', () => {
 
     expect(focusSpy).toHaveBeenCalled();
     document.body.removeChild(focusEl);
+  });
+
+  it('should restore focus to the element focused at open when closed', () => {
+    const trigger = document.createElement('button');
+    const inside = document.createElement('button');
+    document.body.appendChild(trigger);
+    document.body.appendChild(inside);
+    trigger.focus();
+    const containerRef = createRef<HTMLElement>();
+    const initialFocusRef = {current: inside};
+
+    const {rerender} = renderHook(
+      ({isOpen}) => useDialogFocus({isOpen, containerRef, initialFocusRef, onClose: vi.fn()}),
+      {initialProps: {isOpen: true}},
+    );
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    rerender({isOpen: false});
+
+    expect(document.activeElement).toBe(trigger);
+    document.body.removeChild(trigger);
+    document.body.removeChild(inside);
+  });
+
+  it('should return focus to returnFocusRef instead of the element focused at open', () => {
+    // SearchBottomSheet focuses a hidden proxy input just before opening (the iOS
+    // keyboard trick), so the element focused at open is the wrong place to return to.
+    const trigger = document.createElement('button');
+    const proxy = document.createElement('input');
+    document.body.appendChild(trigger);
+    document.body.appendChild(proxy);
+    proxy.focus();
+    const containerRef = createRef<HTMLElement>();
+    const initialFocusRef = createRef<HTMLElement>();
+    const returnFocusRef = {current: trigger};
+
+    const {rerender} = renderHook(
+      ({isOpen}) =>
+        useDialogFocus({isOpen, containerRef, initialFocusRef, returnFocusRef, onClose: vi.fn()}),
+      {initialProps: {isOpen: true}},
+    );
+    rerender({isOpen: false});
+
+    expect(document.activeElement).toBe(trigger);
+    document.body.removeChild(trigger);
+    document.body.removeChild(proxy);
   });
 
   it('should wrap focus from last to first element on Tab', () => {

@@ -38,6 +38,16 @@ if (result.hasSynergy) {
 }
 ```
 
+### Card utilities without the rules
+
+The root builds into a single module, so importing anything from it brings the whole rule set along. `inkweave-synergy-engine/card` exports the three card utilities with no rule dependencies on their own. The web app imports them from there, which keeps the rules out of its page bundles (#640).
+
+```typescript
+import { cardPath, isCoreSet, transformCard } from "inkweave-synergy-engine/card";
+```
+
+Types stay on the root: `import type { LorcanaCard } from "inkweave-synergy-engine"` costs nothing at runtime.
+
 ## API
 
 ### SynergyEngine

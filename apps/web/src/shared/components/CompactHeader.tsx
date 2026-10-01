@@ -147,6 +147,7 @@ function HeaderLogo({showBackArrow, viewport, onClick}: HeaderLogoProps) {
   );
 }
 
+
 interface NavItemLinkProps {
   path: string;
   label: string;

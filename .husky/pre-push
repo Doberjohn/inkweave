@@ -1,4 +1,7 @@
 #!/bin/sh
+# Run the pushing checkout's own copy of this hook (see handoff.sh).
+. "$(dirname "$0")/handoff.sh"
+
 # TypeScript gate — fails fast if `tsc -b` finds a type error, so they surface
 # at push time instead of only in CI's build step (see issue #329).
 pnpm --filter inkweave-web typecheck || exit $?
@@ -28,10 +31,29 @@ pnpm --filter inkweave-web check:design || exit $?
 # Ubuntu containers don't have this teardown issue and still run the full
 # 5-browser matrix as the canonical gate. Set PRE_PUSH_FULL=1 to force
 # webkit + mobile-chrome locally when you suspect cross-browser issues.
-if { [ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ] || [ -n "$WINDIR" ]; } && [ "${PRE_PUSH_FULL:-0}" != "1" ]; then
-  pnpm --filter inkweave-web test:e2e --project chromium || exit $?
+#
+# On 2026-09-29 several local runs died when headless Chrome ran out of commit
+# memory (Application log: chrome-headless-shell.exe, 0xe0000008) while other
+# sessions loaded the machine. apps/web/playwright.config.ts therefore caps
+# local Windows runs at 3 workers. The cap lives there, not here, so it holds
+# whichever copy of this hook git runs: a worktree's push enters through the
+# main checkout's copy (core.hooksPath), and only a copy with handoff.sh
+# passes it on to the worktree's own. The same config starts each run's own
+# Vite on a private port, so no other server can stand in for it.
+# PRE_PUSH_E2E_WORKERS overrides the worker count, and on Windows the hook
+# logs the free commit memory before E2E.
+IS_WINDOWS=0
+if [ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ] || [ -n "$WINDIR" ]; then
+  IS_WINDOWS=1
+fi
+WORKERS_ARG=${PRE_PUSH_E2E_WORKERS:+--workers=$PRE_PUSH_E2E_WORKERS}
+if [ "$IS_WINDOWS" = "1" ]; then
+  powershell.exe -NoProfile -Command '$o = Get-CimInstance Win32_OperatingSystem; "pre-push: {0:N1} of {1:N1} GB commit free before E2E" -f ($o.FreeVirtualMemory / 1MB), ($o.TotalVirtualMemorySize / 1MB)' || true
+fi
+if [ "$IS_WINDOWS" = "1" ] && [ "${PRE_PUSH_FULL:-0}" != "1" ]; then
+  pnpm --filter inkweave-web test:e2e --project chromium $WORKERS_ARG || exit $?
 else
-  pnpm --filter inkweave-web test:e2e --project chromium --project webkit --project mobile-chrome || exit $?
+  pnpm --filter inkweave-web test:e2e --project chromium --project webkit --project mobile-chrome $WORKERS_ARG || exit $?
 fi
 
 # CodeScene quality gate — mirrors the CI check so failed branches never reach origin.

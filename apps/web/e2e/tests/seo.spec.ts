@@ -159,8 +159,8 @@ test.describe('SEO', () => {
   });
 
   // Googlebot renders mobile, and CardPage gates the desktop CardDetailPanel behind
-  // !isMobile while MobileCardDetail owns the h1 on small viewports. A regression in
-  // either branch is invisible at desktop width.
+  // !isMobile while CardDetail (headingLevel 'h1', via SynergyResults' flowInPage) owns
+  // the h1 on small viewports. A regression in either branch is invisible at desktop width.
   test('card page has exactly one h1 at a mobile viewport', async ({page}) => {
     await page.setViewportSize({width: 412, height: 915});
     await gotoWithRetry(page, '/card/1989/elsa-snow-queen');
@@ -205,7 +205,7 @@ test.describe('SEO', () => {
     await expect(page.locator('h1 img')).toHaveAttribute('alt', 'Inkweave');
   });
 
-  test('should preload self-hosted fonts', async ({page, appPage}) => {
+  test('should preload the self-hosted body font only', async ({page, appPage}) => {
     await appPage.goto();
 
     const preloads = await page.evaluate(() => {
@@ -214,7 +214,8 @@ test.describe('SEO', () => {
     });
 
     expect(preloads).toContain('/fonts/plus-jakarta-sans-400.woff2');
-    expect(preloads).toContain('/fonts/tinos-400.woff2');
+    // The homepage renders no Tinos, so a preload would only compete with the entry chunk (#640).
+    expect(preloads).not.toContain('/fonts/tinos-400.woff2');
   });
 
   /**

@@ -5,7 +5,7 @@
  *
  * Emits, on the apex host, with <lastmod> and NO <priority>/<changefreq> (Google ignores both):
  *   - every card:      /card/:id/:slug      (× ~1,024)
- *   - every playstyle: /playstyles/:id      (× 21)
+ *   - every playstyle: /playstyles/:id      (× 22)
  *   - static hubs:     /, /browse, /playstyles, /vote, /about, /privacy, /terms, /disclaimer
  *
  * The combinatorial /compare/:a/:b and /vote/:a/:b pair routes are deliberately EXCLUDED and are

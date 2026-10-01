@@ -92,6 +92,20 @@ function TapToEnlarge({
   );
 }
 
+/** The enlarged card, with its "See translation" toggle when its only scan is not in English. */
+function VotingCardLightbox({card, open, onClose}: {card: LorcanaCard; open: boolean; onClose: () => void}) {
+  if (!open || !card.imageUrl) return null;
+  return (
+    <CardLightbox
+      src={card.imageUrl}
+      alt={card.fullName}
+      isLocation={card.type === 'Location'}
+      card={card}
+      onClose={onClose}
+    />
+  );
+}
+
 export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingCardDisplayProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const isLocation = card.type === 'Location';
@@ -139,14 +153,7 @@ export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingC
             </span>
           )}
         </div>
-        {lightboxOpen && card.imageUrl && (
-          <CardLightbox
-            src={card.imageUrl}
-            alt={card.fullName}
-            isLocation={card.type === 'Location'}
-            onClose={() => setLightboxOpen(false)}
-          />
-        )}
+        <VotingCardLightbox card={card} open={lightboxOpen} onClose={() => setLightboxOpen(false)} />
       </div>
     );
   }

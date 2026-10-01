@@ -91,7 +91,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Bash|PowerShell|Monitor",
         "hooks": [
           {
             "type": "command",
@@ -150,6 +150,5 @@
       }
     ]
   },
-  "enabledPlugins": {},
-  "outputStyle": "Learning"
+  "enabledPlugins": {}
 }

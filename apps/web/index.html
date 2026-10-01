@@ -2,7 +2,9 @@
 <html lang="en">
   <head>
     <script type="module">
-      if (import.meta.env.DEV) {
+      // Dev-only inspector. E2E pins VITE_DISABLE_REACT_GRAB=true (playwright.config.ts):
+      // there it only adds internet requests, a refused ws://localhost:4722 client and injected UI.
+      if (import.meta.env.DEV && import.meta.env.VITE_DISABLE_REACT_GRAB !== 'true') {
         import("react-grab");
         import("@react-grab/claude-code/client");
       }
@@ -36,18 +38,16 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://inkweave.ink/og-image.png" />
 
-    <!-- Fonts (self-hosted; @font-face declared in index.css). Preload the two
-         above-the-fold weights so first paint doesn't wait on the CSS to parse. -->
+    <!-- Fonts (self-hosted; @font-face declared in index.css). Preload the body weight
+         so first paint doesn't wait on the CSS to parse. The hero serif isn't preloaded:
+         neither the homepage nor a card page renders its 400 weight, so the preload only
+         competed with the entry chunk for bandwidth (#640). -->
     <link
       rel="preload"
       href="/fonts/plus-jakarta-sans-400.woff2"
       as="font"
       type="font/woff2"
       crossorigin />
-    <link rel="preload" href="/fonts/tinos-400.woff2" as="font" type="font/woff2" crossorigin />
-
-    <!-- Prefetch card data (loaded on app mount) -->
-    <link rel="prefetch" href="/data/allCards.json" as="fetch" crossorigin />
 
     <!-- Structured Data: site-entity @graph (Organization + WebSite + WebApplication). #496 -->
     <script type="application/ld+json">

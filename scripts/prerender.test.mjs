@@ -1,5 +1,12 @@
-import {describe, it, expect} from 'vitest';
-import {cleanPrerenderedHtml, isCleanShell, isRevealSeasonActive} from './prerender.mjs';
+import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
+import {
+  cleanPrerenderedHtml,
+  crawlRoute,
+  hasReadyContent,
+  isCleanShell,
+  isRevealSeasonActive,
+  READY_SELECTORS,
+} from './prerender.mjs';
 
 const SHELL = 'Inkweave — Master Lorcana Synergies';
 const ORIGIN = 'http://localhost:4179';
@@ -54,6 +61,17 @@ describe('cleanPrerenderedHtml', () => {
   it('is a no-op when the shell title is absent (already-clean input)', () => {
     const html = `<html><head><title>Real</title></head><body>x</body></html>`;
     expect(cleanPrerenderedHtml(html, SHELL, ORIGIN)).toBe(html);
+  });
+
+  it('ships the static hero logo even though the crawl captured the animated one', () => {
+    // The capture happens after `load`, when HeroSection has already swapped to the
+    // animated logo (#639). The shipped page must paint the static file first.
+    const html =
+      `<html><head><title>Real</title></head><body><h1>` +
+      `<img src="/brand/logo-animated.svg" alt="Inkweave"></h1></body></html>`;
+    const out = cleanPrerenderedHtml(html, SHELL, ORIGIN);
+    expect(out).toContain('<img src="/brand/logo-static.svg" alt="Inkweave">');
+    expect(out).not.toContain('logo-animated');
   });
 });
 
@@ -131,5 +149,106 @@ describe('isRevealSeasonActive', () => {
     expect(isRevealSeasonActive(undefined, NOW)).toBe(false);
     expect(isRevealSeasonActive({sets: {}}, NOW)).toBe(false);
     expect(isRevealSeasonActive({sets: {14: {}}}, NOW)).toBe(false);
+  });
+});
+
+describe('READY_SELECTORS', () => {
+  it('makes /browse wait for the card links the render guard requires', () => {
+    // check-rendered-html fails the deploy unless browse/index.html contains href="/card/
+    expect(READY_SELECTORS['/browse']).toBe('a[href^="/card/"]');
+  });
+
+  it('keeps every other route on the title check alone', () => {
+    expect(Object.keys(READY_SELECTORS)).toEqual(['/browse']);
+  });
+});
+
+/**
+ * The content wait inside one attempt (#584), against a stand-in page. A route without a
+ * ready selector must never wait, and a wait that times out must report "no content"
+ * instead of throwing out of the attempt.
+ */
+describe('hasReadyContent', () => {
+  const pageWhoseWait = (outcome) => ({waitForSelector: vi.fn(outcome)});
+
+  it('passes a route without a ready selector at once, without waiting', async () => {
+    const page = pageWhoseWait(async () => {});
+    expect(await hasReadyContent(page, undefined)).toBe(true);
+    expect(page.waitForSelector).not.toHaveBeenCalled();
+  });
+
+  it('reports content once the selector attaches', async () => {
+    const page = pageWhoseWait(async () => ({}));
+    expect(await hasReadyContent(page, READY_SELECTORS['/browse'])).toBe(true);
+    expect(page.waitForSelector).toHaveBeenCalledWith(
+      READY_SELECTORS['/browse'],
+      expect.objectContaining({state: 'attached'}),
+    );
+  });
+
+  it('reports no content when the wait times out, instead of throwing', async () => {
+    const page = pageWhoseWait(async () => {
+      throw new Error('page.waitForSelector: Timeout 15000ms exceeded.');
+    });
+    expect(await hasReadyContent(page, READY_SELECTORS['/browse'])).toBe(false);
+  });
+});
+
+/**
+ * The re-crawl around a single attempt (#584). The attempt is a stand-in that returns
+ * scripted outcomes in order, so the retry rules are checked without a browser.
+ */
+describe('crawlRoute', () => {
+  const MISS = {ok: false, error: 'content never rendered (a[href^="/card/"])'};
+  const attemptsReturning = (...outcomes) => vi.fn(async (route) => ({route, ...outcomes.shift()}));
+
+  let warn;
+  beforeEach(() => {
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    warn.mockRestore();
+  });
+
+  it('re-crawls /browse after a miss and stops at the first success', async () => {
+    const crawlOnce = attemptsReturning(MISS, {ok: true}, {ok: true});
+    expect(await crawlRoute('/browse', crawlOnce)).toEqual({route: '/browse', ok: true});
+    expect(crawlOnce).toHaveBeenCalledTimes(2);
+    expect(crawlOnce).toHaveBeenCalledWith('/browse', READY_SELECTORS['/browse']);
+  });
+
+  it('gives up after 3 misses and returns the last failure', async () => {
+    const crawlOnce = attemptsReturning(
+      {ok: false, error: 'first'},
+      {ok: false, error: 'second'},
+      {ok: false, error: 'third'},
+      {ok: true},
+    );
+    expect(await crawlRoute('/browse', crawlOnce)).toEqual({
+      route: '/browse',
+      ok: false,
+      error: 'third',
+    });
+    expect(crawlOnce).toHaveBeenCalledTimes(3);
+  });
+
+  it('crawls a route without a ready selector once, even if a retry would succeed', async () => {
+    // Blanket retries would make a genuinely broken crawl take up to 3x longer to reach
+    // main()'s failure-rate guard.
+    const crawlOnce = attemptsReturning(
+      {ok: false, error: 'title never left the shell'},
+      {ok: true},
+    );
+    expect((await crawlRoute('/about', crawlOnce)).ok).toBe(false);
+    expect(crawlOnce).toHaveBeenCalledTimes(1);
+    expect(crawlOnce).toHaveBeenCalledWith('/about', undefined);
+  });
+
+  it('logs each retry, leaving the final failure for main() to report', async () => {
+    await crawlRoute('/browse', attemptsReturning(MISS, MISS, MISS));
+    expect(warn.mock.calls.map(([line]) => line)).toEqual([
+      `[prerender] retry /browse (1/3): ${MISS.error}`,
+      `[prerender] retry /browse (2/3): ${MISS.error}`,
+    ]);
   });
 });

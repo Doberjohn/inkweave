@@ -43,6 +43,7 @@ export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
   healing: makeUiMeta(INK_COLORS.Sapphire.border, 'mechanic', '2086'), // Grand Pabbie - Oldest and Wisest (Sapphire)
   exert: makeUiMeta(INK_COLORS.Amethyst.border, 'mechanic', '2244'), // Demona - Scourge of the Wyvern Clan (Amethyst)
   bounce: makeUiMeta(INK_COLORS.Amethyst.border, 'mechanic', '2500'), // Tigger - Bouncing All the Way (Amethyst)
+  'ink-drops': makeUiMeta(INK_COLORS.Steel.border, 'mechanic', '14193'), // Arthur - Jousting Knight (Steel)
   // Tribes
   toy: makeUiMeta(INK_COLORS.Amber.border, 'tribe', '2730'), // Woody - Jungle Guide (Amber)
   dwarfs: makeUiMeta(INK_COLORS.Amethyst.border, 'tribe', '2752'), // Snow White - Merry as the Morning (Amethyst)

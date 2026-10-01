@@ -10,6 +10,7 @@ import {
   smallImageUrl,
   applySortOrder,
 } from '../loader';
+import {_resetPreviewCardsCache} from '../previewCards';
 import type {LorcanaCard} from '../types';
 import {createCard} from '../../../shared/test-utils';
 
@@ -39,6 +40,8 @@ describe('Card Search', () => {
     createCard({id: '2', name: 'Anna', fullName: 'Anna - Heir to Arendelle'}),
     createCard({id: '3', name: 'Elsa', fullName: 'Elsa - Ice Maker', version: 'Ice Maker'}),
     createCard({id: '4', name: 'Mickey Mouse', fullName: 'Mickey Mouse - Brave Little Tailor'}),
+    createCard({id: '5', name: "Bruno's Return", fullName: "Bruno's Return"}),
+    createCard({id: '6', name: 'Curly’s Card', fullName: 'Curly’s Card'}),
   ];
 
   it.each([
@@ -46,6 +49,8 @@ describe('Card Search', () => {
     ['fullName', 'Snow Queen', 1],
     ['version', 'Ice Maker', 1],
     ['no match', 'Donald', 0],
+    ['a typographic apostrophe against a straight name', 'bruno’s', 1],
+    ['a straight apostrophe against a typographic name', "curly's", 1],
   ])('should search by %s', (_label, query, expectedCount) => {
     expect(searchCardsByName(cards, query)).toHaveLength(expectedCount);
   });
@@ -143,6 +148,17 @@ describe('Card Filtering', () => {
     expect(filterCards(textCards, {textSearch: 'draw'})).toHaveLength(1);
     expect(filterCards(textCards, {textSearch: 'Mouse'})).toHaveLength(1);
     expect(filterCards(textCards, {textSearch: 'ability'})).toHaveLength(0);
+  });
+
+  it('should match text search across apostrophe styles', () => {
+    const textCards = [
+      createCard({
+        id: '1',
+        fullName: 'Warded',
+        text: 'Opponents can’t choose this character except to challenge.',
+      }),
+    ];
+    expect(filterCards(textCards, {textSearch: "can't choose"})).toHaveLength(1);
   });
 
   it('should return empty for missing keywords/classifications', () => {
@@ -302,6 +318,40 @@ describe('loadCardsFromJSON', () => {
     expect(cards[0].imageUrl).toBe('/card-images-preview/14050.avif');
   });
 
+  it('should carry a foreign scan language through, and leave English cards without one', () => {
+    const [translated] = loadCardsFromJSON(makeJsonData({id: 14014, scanLanguage: 'ja'}));
+    const [english] = loadCardsFromJSON(makeJsonData({id: 14015}));
+    expect(translated.scanLanguage).toBe('ja');
+    expect(english.scanLanguage).toBeUndefined();
+  });
+
+  it('should map variant printings, resolving each image like a card image', () => {
+    const [card] = loadCardsFromJSON(
+      makeJsonData({
+        id: 1938,
+        variants: [
+          {
+            id: 2141,
+            rarity: 'Enchanted',
+            number: 223,
+            images: {thumbnail: 'https://api.lorcana.ravensburger.com/images/en/set9/223_t.jpg'},
+            imageHashSm: 'smhash',
+          },
+          {id: 14241, rarity: 'Iconic', number: 241},
+        ],
+      }),
+    );
+    expect(card.variants).toEqual([
+      {id: '2141', rarity: 'Enchanted', number: 223, imageUrl: '/card-images/en/set9/223_t.jpg', imageHashSm: 'smhash'},
+      {id: '14241', rarity: 'Iconic', number: 241, imageUrl: '/card-images-preview/14241.avif', imageHashSm: undefined},
+    ]);
+  });
+
+  it('should leave variants undefined on a card with no alternate printing', () => {
+    const [card] = loadCardsFromJSON(makeJsonData({id: 2716}));
+    expect(card.variants).toBeUndefined();
+  });
+
   it('should preserve both inks for dual-ink cards', () => {
     const cards = loadCardsFromJSON(makeJsonData({color: 'Amethyst-Sapphire'}));
     expect(cards[0].ink).toBe('Amethyst');
@@ -380,7 +430,10 @@ describe('fetchCardsFromLocal', () => {
   const originalFetch = global.fetch;
 
   beforeEach(() => {
+    _resetPreviewCardsCache();
     global.fetch = mockFetch;
+    // A request a test doesn't script is a 404, like a missing previewCards.json.
+    mockFetch.mockResolvedValue({ok: false, status: 404});
   });
 
   afterEach(() => {
@@ -438,6 +491,17 @@ describe('fetchCardsFromLocal', () => {
     expect(mockFetch).toHaveBeenCalledWith('/data/previewCards.json');
     expect(result.cards).toHaveLength(2);
     expect(result.cards.map((c) => c.fullName).sort()).toEqual(['Main Card', 'Preview Card']);
+  });
+
+  it('requests previewCards.json together with the card list, not after it (#641)', async () => {
+    let resolvePrimary!: (response: unknown) => void;
+    mockFetch.mockImplementationOnce(() => new Promise((resolve) => (resolvePrimary = resolve)));
+
+    const result = fetchCardsFromLocal();
+    expect(mockFetch).toHaveBeenCalledWith('/data/previewCards.json');
+
+    resolvePrimary({ok: true, json: () => Promise.resolve(makeJsonData({}))});
+    expect((await result).cards).toHaveLength(1);
   });
 
   it('should gracefully handle missing previewCards.json (404)', async () => {

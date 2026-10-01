@@ -1,6 +1,6 @@
 import type {SpotlightHeroData} from './SpotlightHero';
 import {FRANCHISES, type FranchiseConfig, type FranchiseId} from './franchise';
-import {INK_COLORS} from '../../shared/constants';
+import {INK_COLORS, PLAYSTYLE_UI} from '../../shared/constants';
 
 /** A reveal-set spotlight, rendered as a SpotlightHero card in the What's New band. */
 export interface Spotlight extends SpotlightHeroData {
@@ -28,7 +28,29 @@ const art = (id: number): string => `/card-images-preview/${id}.avif`;
  * To add one, give it an `id`, an `accent` token (a playstyle's PLAYSTYLE_UI
  * accent, or an INK_COLORS border), and `art()` ids of cards already revealed.
  */
-export const SET_SPOTLIGHTS: SpotlightGroup[] = [];
+export const SET_SPOTLIGHTS: SpotlightGroup[] = [
+  {
+    eyebrow: 'Mechanics',
+    items: [
+      {
+        id: 'ink-drops',
+        accent: PLAYSTYLE_UI['ink-drops'].accentColor,
+        isNew: true,
+        count: 'New mechanic',
+        title: 'Ink Drops',
+        summary: 'Bank ink drops now and spend them later. Each one pays 1 ink.',
+        href: '/playstyles/ink-drops',
+        heroImage: art(14193),
+        heroAlt: 'Arthur - Jousting Knight',
+        support: [
+          {src: art(14052), alt: 'Merlin - Ink Drop Tinkerer'},
+          {src: art(14059), alt: 'Madam Mim - Resourceful Trickster'},
+          {src: art(14158), alt: 'Baymax - Amped Up'},
+        ],
+      },
+    ],
+  },
+];
 
 /**
  * Representative hero + fan card art for a debut franchise, by preview-card id.

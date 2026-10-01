@@ -1,9 +1,7 @@
-import {
-  transformCard as baseTransformCard,
-  isCoreSet,
-  type LorcanaJSONCard,
-} from 'inkweave-synergy-engine';
+import type {CardPrinting, LorcanaJSONCard, RawCardVariant} from 'inkweave-synergy-engine';
+import {transformCard as baseTransformCard, isCoreSet} from 'inkweave-synergy-engine/card';
 import type {LorcanaCard, Ink, CardType} from './types';
+import {fetchPreviewCards} from './previewCards';
 import {ALL_INKS, type BrowseSortOrder} from '../../shared/constants';
 
 interface LorcanaJSONSet {
@@ -11,9 +9,11 @@ interface LorcanaJSONSet {
   number: number;
   type: string;
   releaseDate?: string;
+  /** Preview sets only: the reveal season's prerelease date. */
+  prereleaseDate?: string;
 }
 
-interface LorcanaJSONData {
+export interface LorcanaJSONData {
   metadata: {
     formatVersion: string;
     generatedOn: string;
@@ -38,7 +38,10 @@ const USE_LOCAL_IMAGES = import.meta.env.VITE_LOCAL_IMAGES === 'true';
 const IMAGE_CDN_ORIGIN = 'https://api.lorcana.ravensburger.com/images/';
 const PREVIEW_IMAGE_CDN_ORIGIN = 'https://lorcanaplayer.com/wp-content/uploads/';
 
-function resolveImageUrl(raw: LorcanaJSONCard): string | undefined {
+/** A card, or one of its variant printings (#625): anything with its own id and art. */
+type ImageSource = Pick<LorcanaJSONCard, 'id' | 'images' | 'imageHash'>;
+
+function resolveImageUrl(raw: ImageSource): string | undefined {
   // Production: content-addressed URL using the hash injected into the data
   // file by scripts/download-card-images.mjs. Returning undefined when no
   // hash is present is intentional — surfaces a build mismatch as a broken
@@ -47,7 +50,7 @@ function resolveImageUrl(raw: LorcanaJSONCard): string | undefined {
     return raw.imageHash ? `/card-images/${raw.id}.${raw.imageHash}.avif` : undefined;
   }
   const rawUrl = raw.images?.thumbnail;
-  // Hand-built reveal cards (reveal-admin, or a season's first batch) carry no
+  // Hand-built reveal cards (admin's reveal publisher, or a season's first batch) carry no
   // remote thumbnail, only a raw scan + its pre-converted AVIF. Every canonical
   // card has a thumbnail, so a missing one identifies a reveal card without
   // naming the season's set. Fall back to the local preview path so they show in
@@ -95,7 +98,21 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
   // engine deliberately does not set these (image fields are a web concern).
   card.imageHash = raw.imageHash;
   card.imageHashSm = raw.imageHashSm;
+  // Only preview cards shown with a foreign-language scan carry this (the "See translation" toggle).
+  card.scanLanguage = raw.scanLanguage;
+  card.variants = raw.variants?.map(toPrinting);
   return card;
+}
+
+/** A variant printing's art resolves exactly like a card's, under the variant's own id. */
+function toPrinting(variant: RawCardVariant): CardPrinting {
+  return {
+    id: String(variant.id),
+    rarity: variant.rarity,
+    number: variant.number,
+    imageUrl: resolveImageUrl(variant),
+    imageHashSm: variant.imageHashSm,
+  };
 }
 
 /**
@@ -165,8 +182,6 @@ export interface CardDataResult {
   sets: SetInfo[];
 }
 
-const PREVIEW_PATH = '/data/previewCards.json';
-
 /**
  * Fetch cards from a local file, merged with optional preview cards.
  * Preview cards are loaded from /data/previewCards.json if present (graceful 404).
@@ -175,7 +190,8 @@ const PREVIEW_PATH = '/data/previewCards.json';
 export async function fetchCardsFromLocal(
   path: string = '/data/allCards.json',
 ): Promise<CardDataResult> {
-  const primaryResponse = await fetch(path);
+  // Both files at once (#641): the preview file used to wait until allCards.json had parsed.
+  const [primaryResponse, preview] = await Promise.all([fetch(path), fetchPreviewCards()]);
 
   if (!primaryResponse.ok) {
     throw new Error(`Failed to fetch local cards: ${primaryResponse.status}`);
@@ -189,16 +205,6 @@ export async function fetchCardsFromLocal(
       `Failed to parse card data: ${parseError instanceof Error ? parseError.message : 'Invalid JSON'}`,
       {cause: parseError},
     );
-  }
-
-  const previewResponse = await fetch(PREVIEW_PATH);
-  let preview: LorcanaJSONData | null = null;
-  if (previewResponse.ok) {
-    try {
-      preview = await previewResponse.json();
-    } catch {
-      preview = null;
-    }
   }
 
   const primaryIds = new Set(primary.cards.map((c) => c.id));
@@ -232,15 +238,27 @@ export async function fetchCardsFromLocal(
 }
 
 /**
- * Search cards by name (case-insensitive substring match)
+ * Typographic single quotes (U+2018, U+2019). iOS Smart Punctuation types ’ for ', and
+ * Set 14 preview text prints it. Global flag: use with .replace only.
+ */
+const TYPOGRAPHIC_APOSTROPHE = /[‘’]/g;
+
+/** A string as search compares it: lowercase, with typographic apostrophes spelled '. */
+function searchKey(value: string): string {
+  return value.toLowerCase().replace(TYPOGRAPHIC_APOSTROPHE, "'");
+}
+
+/**
+ * Search cards by name (case-insensitive substring match). Apostrophe styles match each
+ * other, so a query typed with ’ finds a name spelled with ', and the reverse.
  */
 export function searchCardsByName(cards: LorcanaCard[], query: string): LorcanaCard[] {
-  const lowerQuery = query.toLowerCase();
+  const q = searchKey(query);
   return cards.filter(
     (card) =>
-      card.name.toLowerCase().includes(lowerQuery) ||
-      card.fullName.toLowerCase().includes(lowerQuery) ||
-      card.version?.toLowerCase().includes(lowerQuery),
+      searchKey(card.name).includes(q) ||
+      searchKey(card.fullName).includes(q) ||
+      searchKey(card.version ?? '').includes(q),
   );
 }
 
@@ -316,8 +334,8 @@ function matchesInkwell(card: LorcanaCard, options: CardFilterOptions): boolean 
 
 function matchesTextSearch(card: LorcanaCard, options: CardFilterOptions): boolean {
   if (!options.textSearch) return true;
-  const q = options.textSearch.toLowerCase();
-  return !!card.text?.toLowerCase().includes(q) || card.fullName.toLowerCase().includes(q);
+  const q = searchKey(options.textSearch);
+  return searchKey(card.text ?? '').includes(q) || searchKey(card.fullName).includes(q);
 }
 
 const CARD_FILTER_PREDICATES: CardFilterPredicate[] = [

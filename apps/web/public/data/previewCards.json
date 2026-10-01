@@ -44,7 +44,14 @@
       ],
       "strength": 1,
       "willpower": 2,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14224,
+          "rarity": "Enchanted",
+          "number": 224
+        }
+      ]
     },
     {
       "id": 14023,
@@ -77,7 +84,18 @@
       ],
       "strength": 0,
       "willpower": 4,
-      "lore": 2
+      "lore": 2,
+      "variants": [
+        {
+          "id": 14241,
+          "rarity": "Iconic",
+          "number": 241,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set14/241_9443b5b400d9e82770f1fffef5effb5f967ab321.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set14/241_bcae8ffa04289d85442a384f9982570a224f61ba.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 14034,
@@ -317,7 +335,14 @@
       ],
       "strength": 4,
       "willpower": 6,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14233,
+          "rarity": "Enchanted",
+          "number": 233
+        }
+      ]
     },
     {
       "id": 14135,
@@ -651,7 +676,14 @@
       ],
       "strength": 2,
       "willpower": 3,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14223,
+          "rarity": "Enchanted",
+          "number": 223
+        }
+      ]
     },
     {
       "id": 14025,
@@ -1868,7 +1900,14 @@
       ],
       "strength": 2,
       "willpower": 3,
-      "lore": 2
+      "lore": 2,
+      "variants": [
+        {
+          "id": 14235,
+          "rarity": "Enchanted",
+          "number": 235
+        }
+      ]
     },
     {
       "id": 14153,
@@ -1996,7 +2035,18 @@
       ],
       "strength": 4,
       "willpower": 6,
-      "lore": 3
+      "lore": 3,
+      "variants": [
+        {
+          "id": 14242,
+          "rarity": "Iconic",
+          "number": 242,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set14/242_ea48ff58c5f1efd0a8ef4abed3a970446ec27207.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set14/242_92579f77a13caddf161852c918849c0e114b0088.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 14158,
@@ -2260,7 +2310,8 @@
       ],
       "strength": 2,
       "willpower": 4,
-      "lore": 1
+      "lore": 1,
+      "scanLanguage": "ja"
     },
     {
       "id": 14015,
@@ -2294,7 +2345,8 @@
       ],
       "strength": 3,
       "willpower": 5,
-      "lore": 1
+      "lore": 1,
+      "scanLanguage": "ja"
     },
     {
       "id": 14022,
@@ -2319,7 +2371,8 @@
       ],
       "strength": 3,
       "willpower": 2,
-      "lore": 2
+      "lore": 2,
+      "scanLanguage": "ja"
     },
     {
       "id": 14027,
@@ -2340,7 +2393,8 @@
       "fullTextSections": [
         "(A character with cost 5 or more can ⟳ to sing this song for free.)",
         "Chosen opponent reveals their hand and discards all non-character cards."
-      ]
+      ],
+      "scanLanguage": "ja"
     },
     {
       "id": 14031,
@@ -2358,7 +2412,8 @@
       "fullTextSections": [
         "MUSICAL LEGACY When you play this item, draw a card.",
         "FROM THE HEART ⟳, 1 ⬡ — Chosen character gains Singer and counts as having +2 cost to sing songs this turn."
-      ]
+      ],
+      "scanLanguage": "ja"
     },
     {
       "id": 14054,
@@ -2398,7 +2453,8 @@
       ],
       "strength": 6,
       "willpower": 4,
-      "lore": 2
+      "lore": 2,
+      "scanLanguage": "ja"
     },
     {
       "id": 14079,
@@ -2430,7 +2486,8 @@
       ],
       "strength": 3,
       "willpower": 1,
-      "lore": 1
+      "lore": 1,
+      "scanLanguage": "ja"
     },
     {
       "id": 14092,
@@ -2455,7 +2512,8 @@
       ],
       "strength": 1,
       "willpower": 2,
-      "lore": 2
+      "lore": 2,
+      "scanLanguage": "ja"
     },
     {
       "id": 14121,
@@ -2489,7 +2547,8 @@
       ],
       "strength": 5,
       "willpower": 3,
-      "lore": 1
+      "lore": 1,
+      "scanLanguage": "ja"
     },
     {
       "id": 14132,
@@ -2508,7 +2567,8 @@
         "RESPECT FOR THE PAST ⟳, 1 ⬡ — Choose one:",
         "• Put the top 2 cards of your deck into your discard.",
         "• If you have 10 or more cards in your discard, gain 1 lore."
-      ]
+      ],
+      "scanLanguage": "ja"
     },
     {
       "id": 14133,
@@ -2526,7 +2586,8 @@
       "fullTextSections": [
         "FOND MEMORIES ⟳, 1 ⬡ — If you have 10 or more cards in your discard, draw a card.",
         "TOGETHER AGAIN When this card is put into your discard from your deck, if you have an item named Rivera Family Photo in play, you may play this item from your discard for free."
-      ]
+      ],
+      "scanLanguage": "ja"
     },
     {
       "id": 14145,
@@ -2549,7 +2610,8 @@
       ],
       "strength": 2,
       "willpower": 6,
-      "lore": 1
+      "lore": 1,
+      "scanLanguage": "ja"
     },
     {
       "id": 14159,
@@ -2574,7 +2636,8 @@
       ],
       "strength": 2,
       "willpower": 2,
-      "lore": 2
+      "lore": 2,
+      "scanLanguage": "ja"
     },
     {
       "id": 14171,
@@ -2608,7 +2671,8 @@
       ],
       "strength": 3,
       "willpower": 2,
-      "lore": 2
+      "lore": 2,
+      "scanLanguage": "ja"
     },
     {
       "id": 14048,
@@ -2708,7 +2772,14 @@
       ],
       "strength": 2,
       "willpower": 1,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14238,
+          "rarity": "Enchanted",
+          "number": 238
+        }
+      ]
     },
     {
       "id": 14148,
@@ -2734,7 +2805,8 @@
       ],
       "strength": 0,
       "willpower": 4,
-      "lore": 2
+      "lore": 2,
+      "scanLanguage": "ja"
     },
     {
       "id": 14007,
@@ -3216,14 +3288,14 @@
     {
       "id": 14193,
       "name": "Arthur",
-      "fullName": "Arthur - Tournament Knight",
+      "fullName": "Arthur - Jousting Knight",
       "cost": 6,
       "color": "Steel",
       "inkwell": true,
       "type": "Character",
       "setCode": "14",
       "number": 193,
-      "version": "Tournament Knight",
+      "version": "Jousting Knight",
       "rarity": "Super Rare",
       "franchise": "The Sword in the Stone",
       "subtypes": [
@@ -3245,11 +3317,11 @@
           "fullText": "Challenger +2"
         }
       ],
-      "fullText": "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Arthur.)\nChallenger +2 (While challenging, this character gets +2 ¤.)\nVICTORY BONUS During your turn, whenever this character banishes another character in a challenge, draw a card and get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullText": "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Arthur.)\nChallenger +2 (While challenging, this character gets +2 ¤.)\nVICTORY PURSE During your turn, whenever this character banishes another character in a challenge, draw a card and get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
       "fullTextSections": [
         "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Arthur.)",
         "Challenger +2 (While challenging, this character gets +2 ¤.)",
-        "VICTORY BONUS During your turn, whenever this character banishes another character in a challenge, draw a card and get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+        "VICTORY PURSE During your turn, whenever this character banishes another character in a challenge, draw a card and get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
       ],
       "strength": 3,
       "willpower": 6,
@@ -3271,6 +3343,1508 @@
         "EASY COMMUTE ⟳ — Move a character of yours to a location for free.",
         "STYLISH CONVENIENCE Your Hyperia City locations get +2 ⛉."
       ]
+    },
+    {
+      "id": 14001,
+      "name": "Fru Fru",
+      "fullName": "Fru Fru - VIP Guest",
+      "cost": 1,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 1,
+      "version": "VIP Guest",
+      "rarity": "Common",
+      "franchise": "Zootopia",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "strength": 1,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 14005,
+      "name": "Pete",
+      "fullName": "Pete - Suave Showoff",
+      "cost": 4,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 5,
+      "version": "Suave Showoff",
+      "rarity": "Common",
+      "franchise": "A Goofy Movie",
+      "subtypes": [
+        "Storyborn"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Bodyguard",
+          "fullText": "Bodyguard"
+        }
+      ],
+      "fullText": "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
+      "fullTextSections": [
+        "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)"
+      ],
+      "strength": 1,
+      "willpower": 6,
+      "lore": 2
+    },
+    {
+      "id": 14030,
+      "name": "Never Gonna Let You Cry",
+      "fullName": "Never Gonna Let You Cry",
+      "cost": 5,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "14",
+      "number": 30,
+      "rarity": "Uncommon",
+      "franchise": "Turning Red",
+      "subtypes": [
+        "Song"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Sing Together",
+          "keywordValue": "5",
+          "fullText": "Sing Together 5"
+        }
+      ],
+      "fullText": "Sing Together 5 (Any number of your or your teammates’ characters with total cost 5 or more may ⟳ to sing this song for free.)\nReturn up to 2 character cards with cost 2 or less each from your discard to your hand.",
+      "fullTextSections": [
+        "Sing Together 5 (Any number of your or your teammates’ characters with total cost 5 or more may ⟳ to sing this song for free.)",
+        "Return up to 2 character cards with cost 2 or less each from your discard to your hand."
+      ]
+    },
+    {
+      "id": 14041,
+      "name": "Archimedes",
+      "fullName": "Archimedes - Has Had Enough",
+      "cost": 4,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 41,
+      "version": "Has Had Enough",
+      "rarity": "Common",
+      "franchise": "The Sword in the Stone",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        }
+      ],
+      "fullText": "Evasive (Only characters with Evasive can challenge this character.)",
+      "fullTextSections": [
+        "Evasive (Only characters with Evasive can challenge this character.)"
+      ],
+      "strength": 2,
+      "willpower": 4,
+      "lore": 2
+    },
+    {
+      "id": 14045,
+      "name": "Tinker Bell",
+      "fullName": "Tinker Bell - Curious Fairy",
+      "cost": 1,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 45,
+      "version": "Curious Fairy",
+      "rarity": "Common",
+      "franchise": "Peter Pan",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "Fairy"
+      ],
+      "strength": 0,
+      "willpower": 4,
+      "lore": 1
+    },
+    {
+      "id": 14065,
+      "name": "Creative Inspiration",
+      "fullName": "Creative Inspiration",
+      "cost": 7,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "14",
+      "number": 65,
+      "rarity": "Rare",
+      "fullText": "Draw 4 cards.",
+      "fullTextSections": [
+        "Draw 4 cards."
+      ]
+    },
+    {
+      "id": 14074,
+      "name": "Kit Cloudkicker",
+      "fullName": "Kit Cloudkicker - Irrepressible Bear",
+      "cost": 3,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 74,
+      "version": "Irrepressible Bear",
+      "rarity": "Common",
+      "franchise": "TaleSpin",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "LUCKY DAY When you play this character, you and another chosen player each get 1 ink drop. (Each ink drop may be removed to pay 1 ⬡.)",
+      "fullTextSections": [
+        "LUCKY DAY When you play this character, you and another chosen player each get 1 ink drop. (Each ink drop may be removed to pay 1 ⬡.)"
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 1
+    },
+    {
+      "id": 14080,
+      "name": "Rebecca Cunningham",
+      "fullName": "Rebecca Cunningham - Savvy Manager",
+      "cost": 3,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 80,
+      "version": "Savvy Manager",
+      "rarity": "Common",
+      "franchise": "TaleSpin",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "DUE DILIGENCE When you play this character, you may draw a card, then choose and discard a card.",
+      "fullTextSections": [
+        "DUE DILIGENCE When you play this character, you may draw a card, then choose and discard a card."
+      ],
+      "strength": 2,
+      "willpower": 3,
+      "lore": 2
+    },
+    {
+      "id": 14082,
+      "name": "Horace",
+      "fullName": "Horace - Clumsy Clod",
+      "cost": 3,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 82,
+      "version": "Clumsy Clod",
+      "rarity": "Common",
+      "franchise": "101 Dalmatians",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "BUNGLED IT When you play this character, deal 1 damage to chosen opposing damaged character.",
+      "fullTextSections": [
+        "BUNGLED IT When you play this character, deal 1 damage to chosen opposing damaged character."
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 14111,
+      "name": "Goofy",
+      "fullName": "Goofy - Enthusiastic Tourist",
+      "cost": 1,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 111,
+      "version": "Enthusiastic Tourist",
+      "rarity": "Common",
+      "franchise": "A Goofy Movie / Mickey Mouse & Friends",
+      "subtypes": [
+        "Storyborn",
+        "Hero"
+      ],
+      "fullText": "CAPTURE THE MOMENT While you have a character with Singer in play, this character gets +3 ¤.",
+      "fullTextSections": [
+        "CAPTURE THE MOMENT While you have a character with Singer in play, this character gets +3 ¤."
+      ],
+      "strength": 0,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 14130,
+      "name": "If She Doesn't Scare You",
+      "fullName": "If She Doesn't Scare You",
+      "cost": 4,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "14",
+      "number": 130,
+      "rarity": "Uncommon",
+      "franchise": "101 Dalmatians",
+      "subtypes": [
+        "Song"
+      ],
+      "fullText": "(A character with cost 4 or more can ⟳ to sing this song for free.)\nBanish chosen character of yours to banish chosen character.",
+      "fullTextSections": [
+        "(A character with cost 4 or more can ⟳ to sing this song for free.)",
+        "Banish chosen character of yours to banish chosen character."
+      ]
+    },
+    {
+      "id": 14137,
+      "name": "Carl Fredricksen",
+      "fullName": "Carl Fredricksen - Wilderness Guide",
+      "cost": 6,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 137,
+      "version": "Wilderness Guide",
+      "rarity": "Common",
+      "franchise": "Up",
+      "subtypes": [
+        "Dreamborn",
+        "Hero"
+      ],
+      "strength": 5,
+      "willpower": 6,
+      "lore": 3
+    },
+    {
+      "id": 14140,
+      "name": "Baymax",
+      "fullName": "Baymax - Qualified Physician",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 140,
+      "version": "Qualified Physician",
+      "rarity": "Common",
+      "franchise": "Big Hero 6",
+      "subtypes": [
+        "Dreamborn",
+        "Super",
+        "Hero",
+        "Robot"
+      ],
+      "fullText": "MEDICAL ASSISTANCE Whenever this character quests, remove up to 2 damage from chosen character.",
+      "fullTextSections": [
+        "MEDICAL ASSISTANCE Whenever this character quests, remove up to 2 damage from chosen character."
+      ],
+      "strength": 2,
+      "willpower": 5,
+      "lore": 1
+    },
+    {
+      "id": 14141,
+      "name": "King Louie",
+      "fullName": "King Louie - Ice Cream Virtuoso",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 141,
+      "version": "Ice Cream Virtuoso",
+      "rarity": "Common",
+      "franchise": "The Jungle Book",
+      "subtypes": [
+        "Storyborn",
+        "Ally",
+        "King"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Support",
+          "fullText": "Support"
+        }
+      ],
+      "fullText": "Support (Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn.)",
+      "fullTextSections": [
+        "Support (Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn.)"
+      ],
+      "strength": 1,
+      "willpower": 4,
+      "lore": 2
+    },
+    {
+      "id": 14143,
+      "name": "Abigail & Amelia",
+      "fullName": "Abigail & Amelia - Gossiping Geese",
+      "cost": 2,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 143,
+      "version": "Gossiping Geese",
+      "rarity": "Common",
+      "franchise": "The Aristocats",
+      "subtypes": [
+        "Storyborn"
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 2
+    },
+    {
+      "id": 14162,
+      "name": "A Dark Age No More",
+      "fullName": "A Dark Age No More",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": false,
+      "type": "Action",
+      "setCode": "14",
+      "number": 162,
+      "rarity": "Rare",
+      "franchise": "The Sword in the Stone",
+      "fullText": "Put the top card of your deck into your inkwell facedown and exerted. Get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "Put the top card of your deck into your inkwell facedown and exerted. Get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+      ]
+    },
+    {
+      "id": 14175,
+      "name": "Tick-Tock",
+      "fullName": "Tick-Tock - Canal Croc",
+      "cost": 8,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 175,
+      "version": "Canal Croc",
+      "rarity": "Uncommon",
+      "franchise": "Peter Pan",
+      "subtypes": [
+        "Storyborn"
+      ],
+      "strength": 9,
+      "willpower": 9,
+      "lore": 3
+    },
+    {
+      "id": 14181,
+      "name": "Sir Kay",
+      "fullName": "Sir Kay - Determined to Win",
+      "cost": 5,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 181,
+      "version": "Determined to Win",
+      "rarity": "Common",
+      "franchise": "The Sword in the Stone",
+      "subtypes": [
+        "Storyborn",
+        "Knight"
+      ],
+      "fullText": "COMPETITIVE EDGE While you have an ink drop, this character gains Challenger +3. (They get +3 ¤ while challenging.)",
+      "fullTextSections": [
+        "COMPETITIVE EDGE While you have an ink drop, this character gains Challenger +3. (They get +3 ¤ while challenging.)"
+      ],
+      "strength": 4,
+      "willpower": 6,
+      "lore": 2
+    },
+    {
+      "id": 14184,
+      "name": "Sir Pellinore",
+      "fullName": "Sir Pellinore - Tougher Than He Looks",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 184,
+      "version": "Tougher Than He Looks",
+      "rarity": "Uncommon",
+      "franchise": "The Sword in the Stone",
+      "subtypes": [
+        "Dreamborn",
+        "Knight"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Challenger",
+          "keywordValue": "+2",
+          "fullText": "Challenger +2"
+        }
+      ],
+      "fullText": "Challenger +2 (While challenging, this character gets +2 ¤.)\nSPOILS OF VICTORY During your turn, whenever this character banishes another character in a challenge, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "Challenger +2 (While challenging, this character gets +2 ¤.)",
+        "SPOILS OF VICTORY During your turn, whenever this character banishes another character in a challenge, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+      ],
+      "strength": 1,
+      "willpower": 5,
+      "lore": 1
+    },
+    {
+      "id": 14189,
+      "name": "Koslov",
+      "fullName": "Koslov - Imposing Enforcer",
+      "cost": 4,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 189,
+      "version": "Imposing Enforcer",
+      "rarity": "Common",
+      "franchise": "Zootopia",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 2
+    },
+    {
+      "id": 14194,
+      "name": "Mr. Big",
+      "fullName": "Mr. Big - Distribution Magnate",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 194,
+      "version": "Distribution Magnate",
+      "rarity": "Super Rare",
+      "franchise": "Zootopia",
+      "subtypes": [
+        "Storyborn"
+      ],
+      "fullText": "ICE OUT At the end of your turn, if all cards in your inkwell are exerted, chosen opposing character can’t challenge until the start of your next turn.",
+      "fullTextSections": [
+        "ICE OUT At the end of your turn, if all cards in your inkwell are exerted, chosen opposing character can’t challenge until the start of your next turn."
+      ],
+      "strength": 0,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 14006,
+      "name": "Miriam Mendelsohn",
+      "fullName": "Miriam Mendelsohn - Front Row Fan",
+      "cost": 1,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 6,
+      "version": "Front Row Fan",
+      "rarity": "Uncommon",
+      "franchise": "Turning Red",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Support",
+          "fullText": "Support"
+        }
+      ],
+      "fullText": "Support (Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn.)",
+      "fullTextSections": [
+        "Support (Whenever this character quests, you may add their ¤ to another chosen character’s ¤ this turn.)"
+      ],
+      "strength": 1,
+      "willpower": 2,
+      "lore": 1,
+      "scanLanguage": "de"
+    },
+    {
+      "id": 14098,
+      "name": "Flippant Taunt",
+      "fullName": "Flippant Taunt",
+      "cost": 1,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "14",
+      "number": 98,
+      "rarity": "Common",
+      "franchise": "TaleSpin",
+      "fullText": "Until the start of your next turn, chosen opposing character gains Reckless and, if you have 2 or more opponents, can’t challenge your characters or locations. (They can’t quest and must challenge if able.)",
+      "fullTextSections": [
+        "Until the start of your next turn, chosen opposing character gains Reckless and, if you have 2 or more opponents, can’t challenge your characters or locations. (They can’t quest and must challenge if able.)"
+      ]
+    },
+    {
+      "id": 14126,
+      "name": "Lady Tremaine",
+      "fullName": "Lady Tremaine - Scornful Snob",
+      "cost": 3,
+      "color": "Ruby",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "14",
+      "number": 126,
+      "version": "Scornful Snob",
+      "rarity": "Super Rare",
+      "franchise": "Cinderella",
+      "subtypes": [
+        "Storyborn",
+        "Villain"
+      ],
+      "fullText": "DELICATE SENSIBILITIES Once during your turn, whenever you play a song, you may deal 1 damage to this character. If you do, draw a card.\nHARSH CRITIQUE Opposing characters with Singer enter play with 1 damage.",
+      "fullTextSections": [
+        "DELICATE SENSIBILITIES Once during your turn, whenever you play a song, you may deal 1 damage to this character. If you do, draw a card.",
+        "HARSH CRITIQUE Opposing characters with Singer enter play with 1 damage."
+      ],
+      "strength": 0,
+      "willpower": 3,
+      "lore": 2
+    },
+    {
+      "id": 14032,
+      "name": "Speaker Stack",
+      "fullName": "Speaker Stack",
+      "cost": 2,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "14",
+      "number": 32,
+      "rarity": "Common",
+      "subtypes": [
+        "Item"
+      ],
+      "fullText": "PUMP IT UP Your characters with Singer get +1 ¤ and +1 ⛉.",
+      "fullTextSections": [
+        "PUMP IT UP Your characters with Singer get +1 ¤ and +1 ⛉."
+      ]
+    },
+    {
+      "id": 14008,
+      "name": "Yax",
+      "fullName": "Yax - Concert Goer",
+      "cost": 7,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 8,
+      "version": "Concert Goer",
+      "rarity": "Uncommon",
+      "franchise": "Zootopia",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "strength": 7,
+      "willpower": 9,
+      "lore": 2
+    },
+    {
+      "id": 14046,
+      "name": "Madam Mim",
+      "fullName": "Madam Mim - Bauble Chaser",
+      "cost": 1,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 46,
+      "version": "Bauble Chaser",
+      "rarity": "Common",
+      "franchise": "The Sword in the Stone",
+      "subtypes": [
+        "Dreamborn",
+        "Sorcerer",
+        "Villain"
+      ],
+      "fullText": "HARD TO HANDLE While you have an ink drop, this character gains Evasive. (Only characters with Evasive can challenge them.)",
+      "fullTextSections": [
+        "HARD TO HANDLE While you have an ink drop, this character gains Evasive. (Only characters with Evasive can challenge them.)"
+      ],
+      "strength": 2,
+      "willpower": 1,
+      "lore": 1
+    },
+    {
+      "id": 14047,
+      "name": "Peter Pan’s Shadow",
+      "fullName": "Peter Pan’s Shadow - Elusive Prankster",
+      "cost": 3,
+      "color": "Amethyst",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "14",
+      "number": 47,
+      "version": "Elusive Prankster",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        }
+      ],
+      "fullText": "Evasive (Only characters with Evasive can challenge this character.)\n\nFAVORITE TRICK When you play this character, you may exert chosen opposing character.",
+      "fullTextSections": [
+        "Evasive (Only characters with Evasive can challenge this character.)",
+        "FAVORITE TRICK When you play this character, you may exert chosen opposing character."
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 14069,
+      "name": "Trusty",
+      "fullName": "Trusty - Along for the ride",
+      "cost": 5,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 69,
+      "version": "Along for the ride",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "strength": 4,
+      "willpower": 7,
+      "lore": 2
+    },
+    {
+      "id": 14112,
+      "name": "Tadashi Hamada",
+      "fullName": "Tadashi Hamada - Making Waves",
+      "cost": 5,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 112,
+      "version": "Making Waves",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "Inventor",
+        "Mentor"
+      ],
+      "fullText": "URGENT DELIVERY When this character is banished, get 2 ink drops. (Each ink drop may be removed to pay 1 ⬡.)",
+      "fullTextSections": [
+        "URGENT DELIVERY When this character is banished, get 2 ink drops. (Each ink drop may be removed to pay 1 ⬡.)"
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 3
+    },
+    {
+      "id": 14124,
+      "name": "Roxanne",
+      "fullName": "Roxanne - Concert Lover",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 124,
+      "version": "Concert Lover",
+      "rarity": "Rare",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "TODAY’S THE DAY When you play this character, you may move her and one of your other characters to the same location for free. If you do, the other character gets +1 ◊ this turn.",
+      "fullTextSections": [
+        "TODAY’S THE DAY When you play this character, you may move her and one of your other characters to the same location for free. If you do, the other character gets +1 ◊ this turn."
+      ],
+      "strength": 3,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 14150,
+      "name": "Hiro Hamada",
+      "fullName": "Hiro Hamada - Pioneering Inventor",
+      "cost": 4,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 150,
+      "version": "Pioneering Inventor",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Inventor",
+        "Super"
+      ],
+      "fullText": "NIFTY TECH While you have an item in play, this character gets +1 ◊.",
+      "fullTextSections": [
+        "NIFTY TECH While you have an item in play, this character gets +1 ◊."
+      ],
+      "strength": 3,
+      "willpower": 6,
+      "lore": 1
+    },
+    {
+      "id": 14009,
+      "name": "Judy Hopps",
+      "fullName": "Judy Hopps - Helpful Officer",
+      "cost": 1,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 9,
+      "version": "Helpful Officer",
+      "franchise": "Zootopia",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Detective"
+      ],
+      "fullText": "When you play this character, remove up to 2 damage from chosen character",
+      "fullTextSections": [
+        "When you play this character, remove up to 2 damage from chosen character"
+      ],
+      "strength": 2,
+      "willpower": 1,
+      "lore": 1
+    },
+    {
+      "id": 14128,
+      "name": "Intimidation Tactics",
+      "fullName": "Intimidation Tactics",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": false,
+      "type": "Action",
+      "setCode": "14",
+      "number": 128,
+      "rarity": "Uncommon",
+      "fullText": "Banish chosen character with 2 ¤ or less.",
+      "fullTextSections": [
+        "Banish chosen character with 2 ¤ or less."
+      ]
+    },
+    {
+      "id": 14053,
+      "name": "Goliath",
+      "fullName": "Goliath - Transformed Warrior",
+      "cost": 4,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 53,
+      "version": "Transformed Warrior",
+      "rarity": "Rare",
+      "subtypes": [
+        "Dreamborn",
+        "Gargoyle",
+        "Hero"
+      ],
+      "fullText": "WHEN NIGHT FALLS Once during your turn, you may choose and discard a card. If you do, move up to 2 damage from this character to chosen opposing character.\n\nSTONE BY DAY If you have 3 or more cards in your hand, this character can’t ready.",
+      "fullTextSections": [
+        "WHEN NIGHT FALLS Once during your turn, you may choose and discard a card. If you do, move up to 2 damage from this character to chosen opposing character.",
+        "STONE BY DAY If you have 3 or more cards in your hand, this character can’t ready."
+      ],
+      "strength": 5,
+      "willpower": 5,
+      "lore": 1
+    },
+    {
+      "id": 14178,
+      "name": "Woolter & Jesse",
+      "fullName": "Woolter & Jesse - Bellwether’s Henchmen",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 178,
+      "version": "Bellwether’s Henchmen",
+      "rarity": "Uncommon",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Bodyguard",
+          "fullText": "Bodyguard"
+        },
+        {
+          "type": "keyword",
+          "keyword": "Challenger",
+          "keywordValue": "+2",
+          "fullText": "Challenger +2"
+        }
+      ],
+      "fullText": "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)\n\nChallenger +2 (While challenging, this character gets +2 ¤.)",
+      "fullTextSections": [
+        "Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
+        "Challenger +2 (While challenging, this character gets +2 ¤.)"
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 1
+    },
+    {
+      "id": 14192,
+      "name": "Kit Cloudkicker",
+      "fullName": "Kit Cloudkicker - Sure Shot",
+      "cost": 5,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 192,
+      "version": "Sure Shot",
+      "rarity": "Super Rare",
+      "subtypes": [
+        "Dreamborn",
+        "Ally"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "3",
+          "fullText": "Shift 3"
+        }
+      ],
+      "fullText": "Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one of your characters named Kit Cloudkicker.)\n\nAERIAL ACROBATICS Whenever this character quests, choose one:\n• Get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)\n• Deal 1 damage to chosen character.",
+      "fullTextSections": [
+        "Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one of your characters named Kit Cloudkicker.)",
+        "AERIAL ACROBATICS Whenever this character quests, choose one:",
+        "• Get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+        "• Deal 1 damage to chosen character."
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 2
+    },
+    {
+      "id": 14151,
+      "name": "Honey Lemon",
+      "fullName": "Honey Lemon - Endlessly Curious",
+      "cost": 1,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 151,
+      "version": "Endlessly Curious",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Inventor",
+        "Super"
+      ],
+      "fullText": "SHOCKING BREAKTHROUGH Whenever this character quests, you pay 1 ⬡ less for the next item you play this turn.",
+      "fullTextSections": [
+        "SHOCKING BREAKTHROUGH Whenever this character quests, you pay 1 ⬡ less for the next item you play this turn."
+      ],
+      "strength": 1,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 14179,
+      "name": "Napoleon",
+      "fullName": "Napoleon - Patient Watchdog",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 179,
+      "version": "Patient Watchdog",
+      "rarity": "Common",
+      "subtypes": [
+        "Storyborn"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Alert",
+          "fullText": "Alert"
+        }
+      ],
+      "fullText": "Alert (This character can challenge as if they had Evasive.)",
+      "fullTextSections": [
+        "Alert (This character can challenge as if they had Evasive.)"
+      ],
+      "strength": 5,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 14163,
+      "name": "Everything else is obsolete",
+      "fullName": "Everything else is obsolete",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "14",
+      "number": 163,
+      "rarity": "Common",
+      "subtypes": [
+        "Action",
+        "Song"
+      ],
+      "fullText": "(A character with cost 3 or more can ⟳ to sing this song for free.)\n\nLook at the top 3 cards of your deck. Put one into your inkwell facedown and exerted, one on the top of your deck, and one on the bottom of your deck.",
+      "fullTextSections": [
+        "(A character with cost 3 or more can ⟳ to sing this song for free.)",
+        "Look at the top 3 cards of your deck. Put one into your inkwell facedown and exerted, one on the top of your deck, and one on the bottom of your deck."
+      ]
+    },
+    {
+      "id": 14024,
+      "name": "Judy Hopps",
+      "fullName": "Judy Hopps - Always Vigilant",
+      "cost": 4,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 24,
+      "version": "Always Vigilant",
+      "rarity": "Rare",
+      "franchise": "Zootopia",
+      "subtypes": [
+        "Dreamborn",
+        "Hero",
+        "Detective"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "2",
+          "fullText": "Shift 2"
+        }
+      ],
+      "fullText": "Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your characters named Judy Hopps.)\nGOT YOU NOW When you play this character, if you played another character this turn, you may banish chosen character with 5 ¤ or more.",
+      "fullTextSections": [
+        "Shift 2 ⬡ (You may pay 2 ⬡ to play this on top of one of your characters named Judy Hopps.)",
+        "GOT YOU NOW When you play this character, if you played another character this turn, you may banish chosen character with 5 ¤ or more."
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 1
+    },
+    {
+      "id": 14071,
+      "name": "Hiro Hamada",
+      "fullName": "Hiro Hamada - Versatile Inventor",
+      "cost": 2,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 71,
+      "version": "Versatile Inventor",
+      "rarity": "Uncommon",
+      "franchise": "Big Hero 6",
+      "subtypes": [
+        "Dreamborn",
+        "Super",
+        "Hero",
+        "Inventor"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Evasive",
+          "fullText": "Evasive"
+        }
+      ],
+      "fullText": "Evasive (Only characters with Evasive can challenge this character.)\nTURBO THRUSTERS When you play this character, you may pay 1 ⬡ to give chosen character of yours Evasive until the start of your next turn.",
+      "fullTextSections": [
+        "Evasive (Only characters with Evasive can challenge this character.)",
+        "TURBO THRUSTERS When you play this character, you may pay 1 ⬡ to give chosen character of yours Evasive until the start of your next turn."
+      ],
+      "strength": 3,
+      "willpower": 1,
+      "lore": 1
+    },
+    {
+      "id": 14086,
+      "name": "Fred",
+      "fullName": "Fred - Awesome Boss",
+      "cost": 6,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 86,
+      "version": "Awesome Boss",
+      "rarity": "Rare",
+      "franchise": "Big Hero 6",
+      "subtypes": [
+        "Dreamborn",
+        "Super",
+        "Hero"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "4",
+          "fullText": "Shift 4"
+        }
+      ],
+      "fullText": "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Fred.)\nRADICAL RESOURCES Whenever you play this or another Super character, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Fred.)",
+        "RADICAL RESOURCES Whenever you play this or another Super character, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+      ],
+      "strength": 6,
+      "willpower": 5,
+      "lore": 2
+    },
+    {
+      "id": 14088,
+      "name": "Don Karnage",
+      "fullName": "Don Karnage - Charming Pirate",
+      "cost": 6,
+      "color": "Emerald",
+      "inkwell": false,
+      "type": "Character",
+      "setCode": "14",
+      "number": 88,
+      "version": "Charming Pirate",
+      "rarity": "Super Rare",
+      "franchise": "TaleSpin",
+      "subtypes": [
+        "Dreamborn",
+        "Pirate",
+        "Prince",
+        "Villain"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "4",
+          "fullText": "Shift 4"
+        }
+      ],
+      "fullText": "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Don Karnage.)\nLASTING IMPRESSION When you play this character, deal 1 damage to each opposing character. This damage can’t be reduced by Resist.\nSO SMOOTH While this character is exerted, opposing damaged characters get -1 ◊.",
+      "fullTextSections": [
+        "Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Don Karnage.)",
+        "LASTING IMPRESSION When you play this character, deal 1 damage to each opposing character. This damage can’t be reduced by Resist.",
+        "SO SMOOTH While this character is exerted, opposing damaged characters get -1 ◊."
+      ],
+      "strength": 3,
+      "willpower": 6,
+      "lore": 2,
+      "scanLanguage": "de"
+    },
+    {
+      "id": 14129,
+      "name": "Pushing Boundaries",
+      "fullName": "Pushing Boundaries",
+      "cost": 2,
+      "color": "Ruby",
+      "inkwell": false,
+      "type": "Action",
+      "setCode": "14",
+      "number": 129,
+      "rarity": "Uncommon",
+      "franchise": "Big Hero 6",
+      "fullText": "Chosen character of yours takes no damage while challenging this turn. Get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "Chosen character of yours takes no damage while challenging this turn. Get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+      ]
+    },
+    {
+      "id": 14168,
+      "name": "Spyglass Hat",
+      "fullName": "Spyglass Hat",
+      "cost": 3,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "14",
+      "number": 168,
+      "rarity": "Rare",
+      "fullText": "HAT COUTURE Whenever you play this or another item, if the item you played has a different name than each other item you have in play, you may put a card from your hand into your inkwell facedown and exerted.",
+      "fullTextSections": [
+        "HAT COUTURE Whenever you play this or another item, if the item you played has a different name than each other item you have in play, you may put a card from your hand into your inkwell facedown and exerted."
+      ]
+    },
+    {
+      "id": 14199,
+      "name": "Khan Transport Delivery",
+      "fullName": "Khan Transport Delivery",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": false,
+      "type": "Action",
+      "setCode": "14",
+      "number": 199,
+      "rarity": "Common",
+      "franchise": "TaleSpin",
+      "fullText": "Draw a card. Get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "Draw a card. Get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+      ]
+    },
+    {
+      "id": 14202,
+      "name": "Pirate Plane",
+      "fullName": "Pirate Plane",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "14",
+      "number": 202,
+      "rarity": "Uncommon",
+      "fullText": "DODGE THIS! When you play this item, you may deal 1 damage to chosen character.\n\nBARREL ROLL ⟳, 1 ⬡ — Chosen character gains Alert this turn. (They can challenge as if they had Evasive.)",
+      "fullTextSections": [
+        "DODGE THIS! When you play this item, you may deal 1 damage to chosen character.",
+        "BARREL ROLL ⟳, 1 ⬡ — Chosen character gains Alert this turn. (They can challenge as if they had Evasive.)"
+      ]
+    },
+    {
+      "id": 14028,
+      "name": "Never Too Far Apart",
+      "fullName": "Never Too Far Apart",
+      "cost": 9,
+      "color": "Amber",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "14",
+      "number": 28,
+      "rarity": "Rare",
+      "franchise": "A Goofy Movie",
+      "subtypes": [
+        "Song"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Sing Together",
+          "keywordValue": "9",
+          "fullText": "Sing Together 9"
+        }
+      ],
+      "fullText": "Sing Together 9 (Any number of your or your teammates' characters with total cost 9 or more may ⟳ to sing this song for free.)\nLook at the top 9 cards of your deck. Reveal up to 3 character cards with Singer and put them into your hand. Put the rest on the bottom of your deck in any order.",
+      "fullTextSections": [
+        "Sing Together 9 (Any number of your or your teammates' characters with total cost 9 or more may ⟳ to sing this song for free.)",
+        "Look at the top 9 cards of your deck. Reveal up to 3 character cards with Singer and put them into your hand. Put the rest on the bottom of your deck in any order."
+      ]
+    },
+    {
+      "id": 14056,
+      "name": "Demona",
+      "fullName": "Demona - Imperious Spellcaster",
+      "cost": 3,
+      "color": "Amethyst",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 56,
+      "version": "Imperious Spellcaster",
+      "rarity": "Super Rare",
+      "franchise": "Gargoyles",
+      "subtypes": [
+        "Dreamborn",
+        "Villain",
+        "Gargoyle",
+        "Sorcerer"
+      ],
+      "fullText": "IMPETUS IMPROVISUS Choose and discard a card — Chosen Gargoyle character gains Rush and Evasive until the start of your next turn. (They can challenge the turn they're played. Only characters with Evasive can challenge them.)\nSTONE BY DAY If you have 3 or more cards in your hand, this character can't ready.",
+      "fullTextSections": [
+        "IMPETUS IMPROVISUS Choose and discard a card — Chosen Gargoyle character gains Rush and Evasive until the start of your next turn. (They can challenge the turn they're played. Only characters with Evasive can challenge them.)",
+        "STONE BY DAY If you have 3 or more cards in your hand, this character can't ready."
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 14123,
+      "name": "Meilin Lee",
+      "fullName": "Meilin Lee - Ecstatic Fan",
+      "cost": 3,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 123,
+      "version": "Ecstatic Fan",
+      "rarity": "Common",
+      "franchise": "Turning Red",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Red Panda"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Singer",
+          "keywordValue": "5",
+          "fullText": "Singer 5"
+        }
+      ],
+      "fullText": "Singer 5 (This character counts as cost 5 to sing songs.)\nSUPER STOKED Once during your turn, whenever you play a song, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "Singer 5 (This character counts as cost 5 to sing songs.)",
+        "SUPER STOKED Once during your turn, whenever you play a song, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+      ],
+      "strength": 3,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 14144,
+      "name": "Honey Lemon",
+      "fullName": "Honey Lemon - Ingenious Researcher",
+      "cost": 7,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 144,
+      "version": "Ingenious Researcher",
+      "rarity": "Uncommon",
+      "franchise": "Big Hero 6",
+      "subtypes": [
+        "Dreamborn",
+        "Super",
+        "Hero",
+        "Inventor"
+      ],
+      "abilities": [
+        {
+          "type": "keyword",
+          "keyword": "Shift",
+          "keywordValue": "5",
+          "fullText": "Shift 5"
+        }
+      ],
+      "fullText": "Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Honey Lemon.)\nSYNTHESIZE Whenever this character quests, you may return an item card from your discard to your hand. If you do, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "Shift 5 ⬡ (You may pay 5 ⬡ to play this on top of one of your characters named Honey Lemon.)",
+        "SYNTHESIZE Whenever this character quests, you may return an item card from your discard to your hand. If you do, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+      ],
+      "strength": 4,
+      "willpower": 6,
+      "lore": 2
+    },
+    {
+      "id": 14156,
+      "name": "Ariel",
+      "fullName": "Ariel - Collector of Oddities",
+      "cost": 5,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 156,
+      "version": "Collector of Oddities",
+      "rarity": "Legendary",
+      "franchise": "The Little Mermaid",
+      "subtypes": [
+        "Dreamborn",
+        "Hero",
+        "Princess"
+      ],
+      "fullText": "ONE OF A KIND Whenever you play an item, if the item you played has a different name than each other item you have in play, draw a card.\nPERSONAL COLLECTION For each item with a different name you have in play, this character gets +1 ◊.",
+      "fullTextSections": [
+        "ONE OF A KIND Whenever you play an item, if the item you played has a different name than each other item you have in play, draw a card.",
+        "PERSONAL COLLECTION For each item with a different name you have in play, this character gets +1 ◊."
+      ],
+      "strength": 3,
+      "willpower": 5,
+      "lore": 1
+    },
+    {
+      "id": 14166,
+      "name": "Blinding Chem Ball",
+      "fullName": "Blinding Chem Ball",
+      "cost": 1,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "14",
+      "number": 166,
+      "rarity": "Uncommon",
+      "franchise": "Big Hero 6",
+      "fullText": "DESTABILIZE ⟳, 2 ⬡ — Banish this item.\nBRILLIANT BURST During your turn, when this item is banished, you may get 1 ink drop. If you do, chosen character gets -2 ¤ this turn. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "DESTABILIZE ⟳, 2 ⬡ — Banish this item.",
+        "BRILLIANT BURST During your turn, when this item is banished, you may get 1 ink drop. If you do, chosen character gets -2 ¤ this turn. (You may remove an ink drop to pay 1 ⬡.)"
+      ]
+    },
+    {
+      "id": 14167,
+      "name": "Prototype Chem Ball",
+      "fullName": "Prototype Chem Ball",
+      "cost": 1,
+      "color": "Sapphire",
+      "inkwell": true,
+      "type": "Item",
+      "setCode": "14",
+      "number": 167,
+      "rarity": "Common",
+      "franchise": "Big Hero 6",
+      "fullText": "DESTABILIZE ⟳, 2 ⬡ — Banish this item.\nENIGMA BURST During your turn, when this item is banished, you may get 1 ink drop. If you do, chosen character of yours gains Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1. You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "DESTABILIZE ⟳, 2 ⬡ — Banish this item.",
+        "ENIGMA BURST During your turn, when this item is banished, you may get 1 ink drop. If you do, chosen character of yours gains Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1. You may remove an ink drop to pay 1 ⬡.)"
+      ]
+    },
+    {
+      "id": 14177,
+      "name": "Raya",
+      "fullName": "Raya - Determined Explorer",
+      "cost": 1,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 177,
+      "version": "Determined Explorer",
+      "rarity": "Rare",
+      "franchise": "Raya and the Last Dragon",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Princess"
+      ],
+      "fullText": "TO THE ENDS OF THE REALM This character gets +1 ◊ for each location you have in play.",
+      "fullTextSections": [
+        "TO THE ENDS OF THE REALM This character gets +1 ◊ for each location you have in play."
+      ],
+      "strength": 2,
+      "willpower": 1,
+      "lore": 1
+    },
+    {
+      "id": 14188,
+      "name": "Baloo",
+      "fullName": "Baloo - Delivery Pilot",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 188,
+      "version": "Delivery Pilot",
+      "rarity": "Uncommon",
+      "franchise": "TaleSpin",
+      "subtypes": [
+        "Storyborn",
+        "Hero",
+        "Captain"
+      ],
+      "fullText": "CASH PAYMENT This character can't quest or challenge unless you gained an ink drop this turn.",
+      "fullTextSections": [
+        "CASH PAYMENT This character can't quest or challenge unless you gained an ink drop this turn."
+      ],
+      "strength": 4,
+      "willpower": 4,
+      "lore": 2,
+      "scanLanguage": "fr"
+    },
+    {
+      "id": 14200,
+      "name": "People Gonna Come Here",
+      "fullName": "People Gonna Come Here",
+      "cost": 7,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Action",
+      "setCode": "14",
+      "number": 200,
+      "rarity": "Rare",
+      "franchise": "The Princess and the Frog",
+      "subtypes": [
+        "Song"
+      ],
+      "fullText": "(A character with cost 7 or more can ⟳ to sing this song for free.)\nPlay a location from your hand or discard for free. If a character sang this song, you may move them to that location for free.",
+      "fullTextSections": [
+        "(A character with cost 7 or more can ⟳ to sing this song for free.)",
+        "Play a location from your hand or discard for free. If a character sang this song, you may move them to that location for free."
+      ]
+    },
+    {
+      "id": 14127,
+      "name": "Mulan",
+      "fullName": "Mulan - Martial Arts Master",
+      "cost": 4,
+      "color": "Ruby",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 127,
+      "version": "Martial Arts Master",
+      "rarity": "Legendary",
+      "franchise": "Mulan",
+      "subtypes": [
+        "Dreamborn",
+        "Hero",
+        "Princess"
+      ],
+      "fullText": "WAY OF THE HERO When you play this character, chosen character gets +2 ¤ and gains “Whenever this character challenges another character, draw a card” this turn.\nWARRIOR SPIRIT Whenever this character quests, chosen character gains Rush this turn. (They can challenge the turn they're played.)",
+      "fullTextSections": [
+        "WAY OF THE HERO When you play this character, chosen character gets +2 ¤ and gains “Whenever this character challenges another character, draw a card” this turn.",
+        "WARRIOR SPIRIT Whenever this character quests, chosen character gains Rush this turn. (They can challenge the turn they're played.)"
+      ],
+      "strength": 2,
+      "willpower": 3,
+      "lore": 2
     }
   ]
 }
