@@ -104,7 +104,7 @@ describe('Ink Drops data coverage', () => {
       })
       .map((c) => c.fullName);
     const gatesOfAnotherShape = dropCards
-      .filter((c) => isDropGainGate(c) && !/\bcan['’]t quest or challenge unless you gained\b/i.test(flatText(c)))
+      .filter((c) => isDropGainGate(c) && !/\bcan['’]t quest or challenge unless you (?:gained|got)\b/i.test(flatText(c)))
       .map((c) => c.fullName);
     // A gain that goes ONLY to opponents would read as a maker for its controller.
     const opponentOnlyGains = dropCards

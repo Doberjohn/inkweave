@@ -16,11 +16,19 @@ const cardPath = (c) => `/card/${c.id}/${c.slug}`;
 
 const CARD = {id: 1989, slug: 'elsa-snow-queen', fullName: 'Elsa - Snow Queen'};
 
+/** The site footer's ink nav, which every captured card page carries (#530). */
+const FOOTER_HTML =
+  '<footer aria-label="Site footer">' +
+  ['amber', 'amethyst', 'emerald', 'ruby', 'sapphire', 'steel']
+    .map((ink) => `<a href="/ink/${ink}">${ink}</a>`)
+    .join('') +
+  '</footer>';
+
 /** A prerendered card page as the crawl actually writes it. */
 const goodCardHtml = (card) =>
   `<!doctype html><html><head><title>${card.fullName} | Lorcana Synergies | Inkweave</title>` +
   `<link rel="canonical" href="${SITE_ORIGIN}${cardPath(card)}"/></head>` +
-  `<body><h1>${card.fullName}</h1></body></html>`;
+  `<body><h1>${card.fullName}</h1>${FOOTER_HTML}</body></html>`;
 
 /**
  * The same page as React actually hoists it since #535: `<Seo>` stamps `data-seo`
@@ -32,7 +40,7 @@ const goodCardHtml = (card) =>
 const goodCardHtmlWithSeoMarker = (card) =>
   `<!doctype html><html><head><title data-seo="">${card.fullName} | Lorcana Synergies | Inkweave</title>` +
   `<link data-seo="" rel="canonical" href="${SITE_ORIGIN}${cardPath(card)}"/></head>` +
-  `<body><h1>${card.fullName}</h1></body></html>`;
+  `<body><h1>${card.fullName}</h1>${FOOTER_HTML}</body></html>`;
 
 /** The SPA shell Vercel's rewrite serves when no prerendered file exists. */
 const shellHtml =
@@ -253,6 +261,29 @@ describe('findOffenders', () => {
     expect(offenders).toHaveLength(1);
     expect(offenders[0].file).toBe(path.join(dist, 'index.html'));
     expect(offenders[0].reason).toMatch(/esm-abc12345\.js/);
+  });
+
+  it('fails when a card page was captured before its footer rendered (#532)', () => {
+    seedGoodBuild();
+    // The footer is the only thing on a card page that links the ink hubs.
+    fs.writeFileSync(
+      path.join(dist, 'card', '1989', 'elsa-snow-queen', 'index.html'),
+      goodCardHtml(CARD).replace(FOOTER_HTML, ''),
+    );
+    const offenders = findOffenders(dist, [CARD], cardPath);
+    expect(offenders).toHaveLength(1);
+    expect(offenders[0].reason).toMatch(/links 0 of the 6 ink hubs/);
+  });
+
+  it('does not count a misspelled ink hub link as one of the six', () => {
+    seedGoodBuild();
+    fs.writeFileSync(
+      path.join(dist, 'card', '1989', 'elsa-snow-queen', 'index.html'),
+      goodCardHtml(CARD).replace('href="/ink/steel"', 'href="/ink/steeel"'),
+    );
+    const offenders = findOffenders(dist, [CARD], cardPath);
+    expect(offenders).toHaveLength(1);
+    expect(offenders[0].reason).toMatch(/links 5 of the 6 ink hubs/);
   });
 
   it('distinguishes a wrong target path from a failed crawl', () => {

@@ -41,25 +41,24 @@ interface PrecomputedCardData {
 
 const synergyFetchCache = new Map<string, PrecomputedCardData>();
 
+/** Caches and returns an empty result, for a card whose synergy file holds nothing to show. */
+function cacheEmptyResult(cardId: string): PrecomputedCardData {
+  const empty: PrecomputedCardData = {groups: [], pairs: {}};
+  synergyFetchCache.set(cardId, empty);
+  return empty;
+}
+
 export async function fetchCardSynergies(cardId: string): Promise<PrecomputedCardData> {
   const cached = synergyFetchCache.get(cardId);
   if (cached) return cached;
 
   const response = await fetch(`/data/synergies/${cardId}.json`);
-  if (!response.ok) {
-    // Card has no synergies (not in manifest). Cache the empty result.
-    const empty: PrecomputedCardData = {groups: [], pairs: {}};
-    synergyFetchCache.set(cardId, empty);
-    return empty;
-  }
+  // Card has no synergies (not in manifest). Cache the empty result.
+  if (!response.ok) return cacheEmptyResult(cardId);
 
   // Guard against SPA fallback: Vite dev server returns 200 + HTML for missing files
   const contentType = response.headers.get('content-type') ?? '';
-  if (!contentType.includes('application/json')) {
-    const empty: PrecomputedCardData = {groups: [], pairs: {}};
-    synergyFetchCache.set(cardId, empty);
-    return empty;
-  }
+  if (!contentType.includes('application/json')) return cacheEmptyResult(cardId);
 
   const data: PrecomputedCardData = await response.json();
   synergyFetchCache.set(cardId, data);
@@ -185,9 +184,24 @@ const INITIAL_STATE: SynergyState = {
   error: null,
 };
 
+const NO_SYNERGIES: SynergyGroup[] = [];
+const NO_PAIRS: Record<string, PrecomputedPairData> = {};
+
+/**
+ * The state as it applies to `cardId`. The fetch starts in an effect, so on the render where a
+ * card arrives or changes, `state` still describes no card or the previous one. That render
+ * reports loading with nothing loaded, never a settled empty result, and never the previous
+ * card's groups. The card page keeps its footer out until this settles (#532).
+ */
+function stateForCard(state: SynergyState, cardId: string | undefined): SynergyState {
+  if (state.cardId === cardId) return state;
+  return {cardId, synergies: NO_SYNERGIES, pairs: NO_PAIRS, isLoading: cardId !== undefined, error: null};
+}
+
 /**
  * Fetches pre-computed synergies for a card.
  * Replaces client-side engine calls with pre-computed JSON fetches.
+ * `isLoading` is true from the first render with a card until its fetch settles.
  */
 export function usePrecomputedSynergies(
   selectedCard: LorcanaCard | null,
@@ -231,12 +245,13 @@ export function usePrecomputedSynergies(
     };
   }, [cardId, getCardById]);
 
-  const getPairSynergies = buildPairResolver(selectedCard, state.pairs);
+  const current = stateForCard(state, cardId);
+  const getPairSynergies = buildPairResolver(selectedCard, current.pairs);
 
   return {
-    synergies: state.synergies,
-    isLoading: state.isLoading,
-    error: state.error,
+    synergies: current.synergies,
+    isLoading: current.isLoading,
+    error: current.error,
     getPairSynergies,
   };
 }
