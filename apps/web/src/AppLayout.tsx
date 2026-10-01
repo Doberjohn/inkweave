@@ -17,6 +17,7 @@ import {CardModalProvider} from './shared/contexts/CardModalContext';
 import {COLORS} from './shared/constants';
 import {useCardDataContext} from './shared/contexts/CardDataContext';
 import {useResponsive} from './shared/hooks';
+import {useSpeedInsightsRoute} from './shared/hooks/useSpeedInsightsRoute';
 import {lazyWithRetry} from './shared/lib/lazyWithRetry';
 
 // Mobile-only, so it stays out of the entry chunk desktop visitors download (#640). On a phone
@@ -145,6 +146,7 @@ function AppContent() {
 export function AppLayout() {
   // Only the page the app starts on decides; the provider reads this once, at mount.
   const startsOnHome = useLocation().pathname === '/';
+  const speedInsightsRoute = useSpeedInsightsRoute();
   return (
     <ErrorBoundary>
       {/* One SkeletonTheme for the whole app (#511) — the 11 per-feature wrappers collapse into this. */}
@@ -156,7 +158,7 @@ export function AppLayout() {
         </CardDataProvider>
       </SkeletonTheme>
       <Analytics />
-      <SpeedInsights />
+      <SpeedInsights route={speedInsightsRoute} />
     </ErrorBoundary>
   );
 }
