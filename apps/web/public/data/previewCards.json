@@ -5264,6 +5264,153 @@
       "strength": 5,
       "willpower": 7,
       "lore": 2
+    },
+    {
+      "id": 14070,
+      "name": "Don Karnage",
+      "fullName": "Don Karnage - Khan's Courier",
+      "cost": 1,
+      "color": "Emerald",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 70,
+      "version": "Khan's Courier",
+      "rarity": "Common",
+      "franchise": "TaleSpin",
+      "subtypes": [
+        "Storyborn",
+        "Villain",
+        "Prince",
+        "Pirate"
+      ],
+      "strength": 2,
+      "willpower": 2,
+      "lore": 1
+    },
+    {
+      "id": 14173,
+      "name": "Edgar Balthazar",
+      "fullName": "Edgar Balthazar - Long-Suffering Butler",
+      "cost": 5,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 173,
+      "version": "Long-Suffering Butler",
+      "rarity": "Common",
+      "franchise": "The Aristocats",
+      "subtypes": [
+        "Storyborn",
+        "Villain"
+      ],
+      "fullText": "TRUSTY UMBRELLA While this character has no damage, he gains Resist +2. (Damage dealt to them is reduced by 2.)",
+      "fullTextSections": [
+        "TRUSTY UMBRELLA While this character has no damage, he gains Resist +2. (Damage dealt to them is reduced by 2.)"
+      ],
+      "strength": 4,
+      "willpower": 6,
+      "lore": 2
+    },
+    {
+      "id": 14176,
+      "name": "Tiana",
+      "fullName": "Tiana - Restaurateur",
+      "cost": 2,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 176,
+      "version": "Restaurateur",
+      "rarity": "Common",
+      "franchise": "The Princess and the Frog",
+      "subtypes": [
+        "Dreamborn",
+        "Hero",
+        "Princess"
+      ],
+      "fullText": "HANDPICKED When you play this character, you may draw a card, then choose and discard a card.",
+      "fullTextSections": [
+        "HANDPICKED When you play this character, you may draw a card, then choose and discard a card."
+      ],
+      "strength": 1,
+      "willpower": 4,
+      "lore": 1
+    },
+    {
+      "id": 14180,
+      "name": "Wildcat",
+      "fullName": "Wildcat - Unconventional Mechanic",
+      "cost": 3,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 180,
+      "version": "Unconventional Mechanic",
+      "rarity": "Common",
+      "franchise": "TaleSpin",
+      "subtypes": [
+        "Storyborn",
+        "Ally"
+      ],
+      "fullText": "WELL, THAT’S BROKEN When you play this character, you may banish chosen item.",
+      "fullTextSections": [
+        "WELL, THAT’S BROKEN When you play this character, you may banish chosen item."
+      ],
+      "strength": 4,
+      "willpower": 3,
+      "lore": 1
+    },
+    {
+      "id": 14190,
+      "name": "Sir Ector",
+      "fullName": "Sir Ector - Blustery Knight",
+      "cost": 5,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Character",
+      "setCode": "14",
+      "number": 190,
+      "version": "Blustery Knight",
+      "rarity": "Uncommon",
+      "franchise": "The Sword in the Stone",
+      "subtypes": [
+        "Storyborn",
+        "Knight"
+      ],
+      "fullText": "WELL DESERVED During your turn, whenever this character banishes another character in a challenge, draw a card.",
+      "fullTextSections": [
+        "WELL DESERVED During your turn, whenever this character banishes another character in a challenge, draw a card."
+      ],
+      "strength": 6,
+      "willpower": 4,
+      "lore": 2
+    },
+    {
+      "id": 14203,
+      "name": "Central Station",
+      "fullName": "Central Station - Transportation Hub",
+      "cost": 1,
+      "color": "Steel",
+      "inkwell": true,
+      "type": "Location",
+      "setCode": "14",
+      "number": 203,
+      "version": "Transportation Hub",
+      "rarity": "Common",
+      "subtypes": [
+        "Hyperia City"
+      ],
+      "fullText": "FREE SOUVENIR Once during your turn, whenever a character moves here, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)",
+      "fullTextSections": [
+        "FREE SOUVENIR Once during your turn, whenever a character moves here, get 1 ink drop. (You may remove an ink drop to pay 1 ⬡.)"
+      ],
+      "moveCost": 1,
+      "willpower": 2,
+      "lore": 0
     }
   ]
 }
