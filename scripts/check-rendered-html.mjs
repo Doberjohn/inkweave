@@ -30,6 +30,8 @@
  *      renders (#627): see findOrphanImagePreloads.
  *   7. no sampled card page, and neither / nor /browse, modulepreloads a Sentry chunk
  *      (#640): see findSentryPreloads.
+ *   8. every sampled card page links all six ink hubs, which only its footer does (#530).
+ *      The footer waits for the page's synergies (#532): see countInkHubLinks.
  *
  * Usage: node scripts/check-rendered-html.mjs [targetDir]   (default: apps/web/dist)
  * Bypass: SKIP_RENDER_GUARD=1  (emergency escape hatch)
@@ -147,6 +149,20 @@ export function findSentryPreloads(html, sentryChunks) {
 const sentryPreloadReason = (hrefs) =>
   `modulepreloads the Sentry SDK (${hrefs.join(', ')}), which must load only after \`load\` (#640)`;
 
+/** The ink hubs the site footer links from every page (#530). */
+export const INK_HUB_COUNT = 6;
+
+/**
+ * How many distinct ink hubs a page links. On a card page only the footer links them, all six,
+ * so a card page short of six shipped without its footer.
+ *
+ * @param {string} html - one captured page
+ * @returns {number} distinct `/ink/<ink>` hrefs
+ */
+export function countInkHubLinks(html) {
+  return new Set(html.match(/href="\/ink\/[a-z]+"/g) ?? []).size;
+}
+
 /**
  * Choose which card pages this guard verifies.
  *
@@ -210,6 +226,7 @@ function findCardPageOffenders(targetDir, card, route, sentryChunks) {
   const expectedCanonical = `${SITE_ORIGIN}${route}`;
   const orphanPreloads = findOrphanImagePreloads(html);
   const sentryPreloads = findSentryPreloads(html, sentryChunks);
+  const inkHubs = countInkHubLinks(html);
 
   // Each entry is one assertion: [failed?, why]. A table rather than a chain of ifs
   // so a new check is one row, not another branch in an already-dense function.
@@ -246,6 +263,14 @@ function findCardPageOffenders(targetDir, card, route, sentryChunks) {
     // Sentry's modulepreload baked into the capture (#640): the SDK fetched in the critical
     // window on every visit, when it should load only after `load`.
     [sentryPreloads.length > 0, sentryPreloadReason(sentryPreloads)],
+    // The footer's ink-hub links put every card page one click from a hub (#530). The card
+    // page renders its footer only once its synergies have loaded (#532), so a capture taken
+    // before that would ship without them. prerender.mjs waits for the footer on card pages;
+    // this proves the wait worked.
+    [
+      inkHubs < INK_HUB_COUNT,
+      `links ${inkHubs} of the ${INK_HUB_COUNT} ink hubs (footer not rendered when captured? #532)`,
+    ],
   ]
     .filter(([failed]) => failed)
     .map(([, reason]) => ({file, reason}));

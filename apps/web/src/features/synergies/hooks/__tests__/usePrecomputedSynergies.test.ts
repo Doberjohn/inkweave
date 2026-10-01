@@ -1,7 +1,134 @@
-import {describe, it, expect} from 'vitest';
-import type {PairSynergyConnection} from 'inkweave-synergy-engine';
-import {filterPairByGroup} from '../usePrecomputedSynergies';
+import {afterEach, describe, it, expect, vi} from 'vitest';
+import {renderHook, waitFor} from '@testing-library/react';
+import type {LorcanaCard, PairSynergyConnection} from 'inkweave-synergy-engine';
+import {filterPairByGroup, usePrecomputedSynergies} from '../usePrecomputedSynergies';
 import type {PrecomputedPairData} from '../usePrecomputedSynergies';
+
+const mockCardsById: Record<string, LorcanaCard> = {};
+// Stable like the real context's: the hook's fetch effect depends on it, so a fresh function
+// per render would restart the fetch on every render.
+const mockGetCardById = (id: string) => mockCardsById[id];
+
+vi.mock('../../../../shared/contexts/CardDataContext', () => ({
+  useCardDataContext: () => ({getCardById: mockGetCardById}),
+}));
+
+/** Registers a card the mocked card database can resolve. Ids are unique per test, because
+ * the hook's fetch cache is module-level and outlives each test. */
+function card(id: string): LorcanaCard {
+  mockCardsById[id] = {id, fullName: `Card ${id}`} as LorcanaCard;
+  return mockCardsById[id];
+}
+
+/** Holds every synergy fetch until the test releases it with one partner for that card. */
+function holdSynergyFetches(): (cardId: string, partnerId: string) => void {
+  const pending = new Map<string, (data: unknown) => void>();
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      (url: string) =>
+        new Promise((resolve) => {
+          const id = /synergies\/(\w+)\.json/.exec(url)?.[1] ?? '';
+          pending.set(id, (data) =>
+            resolve({ok: true, headers: {get: () => 'application/json'}, json: async () => data}),
+          );
+        }),
+    ),
+  );
+  return (cardId, partnerId) =>
+    pending.get(cardId)?.({
+      groups: [
+        {
+          groupKey: 'shift-targets',
+          category: 'direct',
+          label: 'Shift',
+          tagline: '',
+          description: '',
+          synergies: [{cardId: partnerId, score: 7, explanation: 'Shifts onto it'}],
+        },
+      ],
+      pairs: {},
+    });
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe('usePrecomputedSynergies', () => {
+  it('reports loading from the first render with a card', () => {
+    holdSynergyFetches();
+    const selected = card('9101');
+    const loadingByRender: boolean[] = [];
+
+    renderHook(() => {
+      const result = usePrecomputedSynergies(selected);
+      loadingByRender.push(result.isLoading);
+      return result;
+    });
+
+    // The fetch starts in an effect, after this first render. Reporting "settled" here let the
+    // card page render its footer for a frame, under content still to arrive (#532).
+    expect(loadingByRender[0]).toBe(true);
+  });
+
+  it("settles with the card's groups once its fetch resolves", async () => {
+    const release = holdSynergyFetches();
+    const selected = card('9201');
+    card('9202');
+
+    const {result} = renderHook(() => usePrecomputedSynergies(selected));
+    release('9201', '9202');
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.synergies[0].synergies[0].card.id).toBe('9202');
+  });
+
+  it("reports loading without the previous card's groups when the card changes", async () => {
+    const release = holdSynergyFetches();
+    const first = card('9301');
+    card('9302');
+    const second = card('9303');
+    const renders: {cardId: string; isLoading: boolean; groups: number}[] = [];
+
+    const {result, rerender} = renderHook(
+      ({selected}) => {
+        const hook = usePrecomputedSynergies(selected);
+        renders.push({cardId: selected.id, isLoading: hook.isLoading, groups: hook.synergies.length});
+        return hook;
+      },
+      {initialProps: {selected: first}},
+    );
+    release('9301', '9302');
+    await waitFor(() => expect(result.current.synergies).toHaveLength(1));
+    rerender({selected: second});
+
+    expect(renders.find((r) => r.cardId === '9303')).toEqual({cardId: '9303', isLoading: true, groups: 0});
+  });
+
+  it('stops loading as soon as the card goes away', async () => {
+    // ComparePage shows its loading state while this is true, so losing the card must not hang it.
+    const release = holdSynergyFetches();
+    const selected = card('9401');
+    card('9402');
+    const loadingWithoutCard: boolean[] = [];
+
+    const {result, rerender} = renderHook(
+      ({current}: {current: LorcanaCard | null}) => {
+        const hook = usePrecomputedSynergies(current);
+        if (!current) loadingWithoutCard.push(hook.isLoading);
+        return hook;
+      },
+      {initialProps: {current: selected as LorcanaCard | null}},
+    );
+    release('9401', '9402');
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    rerender({current: null});
+
+    expect(loadingWithoutCard.length).toBeGreaterThan(0);
+    expect(loadingWithoutCard.every((isLoading) => !isLoading)).toBe(true);
+  });
+});
 
 const directConnection = (overrides: Partial<PairSynergyConnection> = {}): PairSynergyConnection => ({
   ruleId: 'shift-targets',

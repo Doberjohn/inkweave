@@ -1,3 +1,4 @@
+import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {cardFullNameById} from '../helpers/cardData';
 import fs from 'node:fs';
@@ -249,5 +250,42 @@ test.describe('Card page (mobile layout)', () => {
     await page.getByRole('button', {name: 'Close', exact: true}).click();
 
     await expect(page).toHaveURL(/\/browse$/);
+  });
+});
+
+/** Holds every request matching `pattern` until the returned function is called. */
+async function holdUntilReleased(page: Page, pattern: string): Promise<() => void> {
+  let release = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(pattern, async (route) => {
+    await held;
+    await route.continue();
+  });
+  return release;
+}
+
+test.describe('Card page footer (#532)', () => {
+  // Rendered under a loading page, the footer was pushed past the fold by the arriving card and
+  // synergies: the card page's whole layout shift. It now waits for both. Any viewport will do.
+  test('keeps the footer out until the card and its synergies have loaded', async ({page}) => {
+    const releaseCards = await holdUntilReleased(page, '**/data/allCards.json');
+    const releaseSynergies = await holdUntilReleased(page, `**/data/synergies/${EXPAND_CARD_ID}.json`);
+    const footer = page.locator('footer[aria-label="Site footer"]');
+
+    await page.goto(`/card/${EXPAND_CARD_ID}`);
+    // The card data is held: the loading skeleton shows, with no footer under it...
+    await expect(page.locator('[aria-label="Loading card"]')).toBeVisible({timeout: 10000});
+    await expect(footer).toHaveCount(0);
+
+    releaseCards();
+    // ...the card renders (its <Seo> title exists only then) while its synergies are held...
+    await expect(page).toHaveTitle(/ \| Lorcana Synergies \| Inkweave$/, {timeout: 10000});
+    await expect(footer).toHaveCount(0);
+
+    // ...and the footer arrives with them.
+    releaseSynergies();
+    await expect(footer).toBeAttached();
   });
 });
