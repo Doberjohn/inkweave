@@ -39,6 +39,9 @@ jobs:
 
   build-and-test:
     runs-on: ubuntu-latest
+    outputs:
+      # Read by e2e-tests to pick its Playwright image tag.
+      playwright-version: ${{ steps.pw-version.outputs.version }}
 
     steps:
       - name: Checkout code
@@ -55,6 +58,22 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
+
+      # e2e-tests runs in Playwright's image for this exact version, because an image's browsers
+      # only work with the matching Playwright. Reading it from what the lockfile installed means
+      # a Playwright bump moves the image tag in the same commit (#690). Anything but X.Y.Z fails
+      # here, not as an unpullable image in five e2e jobs.
+      - name: Resolve Playwright version
+        id: pw-version
+        run: |
+          version="$(pnpm --filter inkweave-web exec playwright --version)"
+          version="${version#Version }"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Unexpected 'playwright --version' output: $version"
+            exit 1
+          fi
+          echo "Playwright $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Type-check
         run: pnpm --filter inkweave-web typecheck
@@ -117,6 +136,16 @@ jobs:
     # alone was timing out runs. Parallel matrix gives each browser its own runner + timeout.
     runs-on: ubuntu-latest
     needs: build-and-test
+    # Playwright's image ships the browsers and their system packages, so this job installs
+    # nothing from apt and downloads no browsers. It used to apt-install about 100 of those
+    # packages per job, and on 2026-10-01 a stalling Ubuntu mirror stretched that step from
+    # under a minute to 19.5 min, cancelling jobs at the timeout (#690). The tag must equal the
+    # installed Playwright version, which build-and-test supplies.
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.build-and-test.outputs.playwright-version }}-noble
+      # As in Playwright's CI docs: run as uid 1001, the runner user that owns $HOME
+      # (/github/home). Run as root, Firefox refuses to start in a home it doesn't own.
+      options: --user 1001
     timeout-minutes: 20
     strategy:
       # Don't cancel sibling browsers when one fails — we want the full per-browser report.
@@ -161,25 +190,6 @@ jobs:
 
       - name: Pre-compute synergy data
         run: pnpm precompute-synergies
-
-      - name: Get Playwright version
-        id: pw-version
-        run: echo "version=$(pnpm --filter inkweave-web exec playwright --version)" >> $GITHUB_OUTPUT
-
-      - name: Cache Playwright browsers
-        id: pw-cache
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ steps.pw-version.outputs.version }}-${{ runner.os }}
-
-      - name: Install Playwright browsers
-        if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: pnpm --filter inkweave-web exec playwright install --with-deps
-
-      - name: Install Playwright system deps (cached browsers)
-        if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: pnpm --filter inkweave-web exec playwright install-deps
 
       - name: Run E2E tests
         run: pnpm --filter inkweave-web test:e2e --project=${{ matrix.project }}
