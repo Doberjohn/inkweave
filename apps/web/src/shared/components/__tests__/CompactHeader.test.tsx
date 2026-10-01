@@ -2,6 +2,7 @@ import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import {CompactHeader} from '../CompactHeader';
+import {SessionProvider} from '../../contexts/SessionContext';
 
 // Pin the reveal phase so the test never depends on VITE_IS_REVEAL_SEASON: with the flag on
 // (e.g. from .env.local), the real hook starts fetching reveal dates in the background.
@@ -13,7 +14,10 @@ describe('CompactHeader', () => {
     try {
       const {unmount} = render(
         <MemoryRouter>
-          <CompactHeader searchQuery="" onSearchChange={vi.fn()} />
+          {/* The header renders the auth control now, so useSession needs a provider. */}
+          <SessionProvider>
+            <CompactHeader searchQuery="" onSearchChange={vi.fn()} />
+          </SessionProvider>
         </MemoryRouter>,
       );
       const input = screen.getByTestId('browse-search');

@@ -3,6 +3,7 @@ import {Outlet, useLocation} from 'react-router-dom';
 import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
 import {SkeletonTheme} from 'react-loading-skeleton';
+import {ProfileProvider} from './features/profile';
 import {RevealsPromoCard, useRevealPhase, type RevealPhase} from './features/reveals';
 import {
   BetaNotice,
@@ -13,6 +14,7 @@ import {
 } from './shared/components';
 import type {SearchBottomSheetHandle} from './shared/components/SearchBottomSheet';
 import {CardDataProvider} from './shared/contexts/CardDataContext';
+import {SessionProvider} from './shared/contexts/SessionContext';
 import {CardModalProvider} from './shared/contexts/CardModalContext';
 import {COLORS} from './shared/constants';
 import {useCardDataContext} from './shared/contexts/CardDataContext';
@@ -147,14 +149,20 @@ export function AppLayout() {
   const startsOnHome = useLocation().pathname === '/';
   return (
     <ErrorBoundary>
-      {/* One SkeletonTheme for the whole app (#511) — the 11 per-feature wrappers collapse into this. */}
-      <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
-        <CardDataProvider deferInitialLoad={startsOnHome}>
-          <CardModalProvider>
-            <AppContent />
-          </CardModalProvider>
-        </CardDataProvider>
-      </SkeletonTheme>
+      <SessionProvider>
+        {/* Inside SessionProvider, which it reads: it claims a handle when a user
+            appears and clears it when they leave. */}
+        <ProfileProvider>
+          {/* One SkeletonTheme for the whole app (#511) — the 11 per-feature wrappers collapse into this. */}
+          <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+            <CardDataProvider deferInitialLoad={startsOnHome}>
+              <CardModalProvider>
+                <AppContent />
+              </CardModalProvider>
+            </CardDataProvider>
+          </SkeletonTheme>
+        </ProfileProvider>
+      </SessionProvider>
       <Analytics />
       <SpeedInsights />
     </ErrorBoundary>

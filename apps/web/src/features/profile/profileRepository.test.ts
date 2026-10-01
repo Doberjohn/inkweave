@@ -1,0 +1,141 @@
+import {describe, it, expect, vi, beforeEach} from 'vitest';
+import {claimIdentity, getAuthorNames, updateDisplayName, isValidDisplayName} from './profileRepository';
+
+// A Supabase double. `mockState.client` swaps between "configured" and "not
+// configured" (getSupabase() === null), matching deckRepository's tests.
+//
+// Stubbed rather than left to the real client on purpose: .env.local puts real
+// Supabase credentials in scope under vitest, so an unmocked provider builds an
+// actual client and the suite passes through the wrong code path.
+const mockRpc = vi.hoisted(() => vi.fn());
+const mockIn = vi.hoisted(() => vi.fn());
+const mockMaybeSingle = vi.hoisted(() => vi.fn());
+const mockUpdate = vi.hoisted(() => vi.fn());
+const mockState = vi.hoisted(() => ({client: null as unknown}));
+
+vi.mock('../../shared/lib/supabase', () => ({getSupabase: () => mockState.client}));
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockState.client = {
+    rpc: mockRpc,
+    from: () => ({
+      select: () => ({in: mockIn}),
+      update: (payload: unknown) => {
+        mockUpdate(payload);
+        return {eq: () => ({select: () => ({maybeSingle: mockMaybeSingle})})};
+      },
+    }),
+  };
+});
+
+describe('isValidDisplayName', () => {
+  // Mirrors profiles_display_name_len plus the rule a length CHECK cannot express: a
+  // name of pure whitespace passes `char_length <= 60` and renders as a blank author.
+  it.each(['Doberjohn', 'Emerald Princess 330', 'Jo', 'x'.repeat(60)])('accepts %s', (name) => {
+    expect(isValidDisplayName(name)).toBe(true);
+  });
+
+  it.each(['', ' ', 'a', '   ', 'x'.repeat(61)])('rejects %s', (name) => {
+    expect(isValidDisplayName(name)).toBe(false);
+  });
+
+  it('measures the TRIMMED name, so padding neither smuggles one over nor under the cap', () => {
+    expect(isValidDisplayName(`  ${'x'.repeat(60)}  `)).toBe(true);
+    expect(isValidDisplayName('  a  ')).toBe(false);
+  });
+});
+
+describe('claimIdentity', () => {
+  it('returns both names from the RPC row', async () => {
+    mockRpc.mockResolvedValue({
+      data: [{handle: 'steel_prince_012', display_name: 'Steel Prince 012'}],
+      error: null,
+    });
+    await expect(claimIdentity()).resolves.toEqual({
+      data: {handle: 'steel_prince_012', displayName: 'Steel Prince 012'},
+      error: null,
+    });
+    expect(mockRpc).toHaveBeenCalledWith('claim_handle');
+  });
+
+  it('degrades to a null identity when Supabase is not configured', async () => {
+    mockState.client = null;
+    const {data, error} = await claimIdentity();
+    expect(data).toBeNull();
+    expect(error).toBe('Supabase not configured');
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  // `claim_handle` is `returns table (...)`, so PostgREST hands back an ARRAY. Anything
+  // other than exactly one complete row is a shape no name should be read out of — a
+  // bare `data[0]` would turn an empty result into `undefined` flowing on as an identity.
+  it.each([
+    ['a bare object', {handle: 'x', display_name: 'X'}],
+    ['an empty array', []],
+    ['two rows', [{handle: 'a', display_name: 'A'}, {handle: 'b', display_name: 'B'}]],
+    ['a row missing the name', [{handle: 'a', display_name: null}]],
+  ])('rejects %s rather than passing it through', async (_label, body) => {
+    mockRpc.mockResolvedValue({data: body, error: null});
+    await expect(claimIdentity()).resolves.toEqual({data: null, error: null});
+  });
+});
+
+describe('getAuthorNames', () => {
+  it('maps rows to id -> name and drops the ones with no name', async () => {
+    mockIn.mockResolvedValue({
+      data: [
+        {id: 'a', display_name: 'Ruby Detective 891'},
+        {id: 'b', display_name: null},
+      ],
+      error: null,
+    });
+    const {data} = await getAuthorNames(['a', 'b']);
+    expect(data?.get('a')).toBe('Ruby Detective 891');
+    // An account with no profile row yet has no name. Absent, not empty-string.
+    expect(data?.has('b')).toBe(false);
+  });
+
+  it('deduplicates ids before querying', async () => {
+    mockIn.mockResolvedValue({data: [], error: null});
+    await getAuthorNames(['a', 'a', 'b']);
+    expect(mockIn).toHaveBeenCalledWith('id', ['a', 'b']);
+  });
+
+  it('makes no request at all for an empty id list', async () => {
+    const {data, error} = await getAuthorNames([]);
+    expect(data?.size).toBe(0);
+    expect(error).toBeNull();
+    expect(mockIn).not.toHaveBeenCalled();
+  });
+});
+
+describe('updateDisplayName', () => {
+  it('returns the saved name', async () => {
+    mockMaybeSingle.mockResolvedValue({data: {display_name: 'Doberjohn'}, error: null});
+    await expect(updateDisplayName('u1', 'Doberjohn')).resolves.toEqual({data: 'Doberjohn', error: null});
+  });
+
+  it('trims before writing, so a padded name is not stored padded', async () => {
+    mockMaybeSingle.mockResolvedValue({data: {display_name: 'Doberjohn'}, error: null});
+    await updateDisplayName('u1', '  Doberjohn  ');
+    expect(mockUpdate).toHaveBeenCalledWith({display_name: 'Doberjohn'});
+  });
+
+  // 23514 is the length CHECK — the only way a well-formed request can fail. There is
+  // deliberately no 23505 case: display names are NOT unique, so nothing can be taken.
+  it('reads a 23514 as the length rule', async () => {
+    mockMaybeSingle.mockResolvedValue({data: null, error: {code: '23514', message: 'check violation'}});
+    const {error} = await updateDisplayName('u1', 'x'.repeat(61));
+    expect(error).toContain('characters');
+  });
+
+  // No row means RLS matched nothing, i.e. not the caller's id. Reporting it matters:
+  // succeeding silently would show the new name while the database kept the old one.
+  it('reports a write that matched no row', async () => {
+    mockMaybeSingle.mockResolvedValue({data: null, error: null});
+    const {data, error} = await updateDisplayName('someone-else', 'Doberjohn');
+    expect(data).toBeNull();
+    expect(error).toBe('Could not save that name. Try again.');
+  });
+});

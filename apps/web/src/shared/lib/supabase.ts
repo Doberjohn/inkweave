@@ -27,7 +27,17 @@ export function getSupabase(): SupabaseClient<Database> | null {
     return null;
   }
 
-  client = createClient<Database>(url, key);
+  client = createClient<Database>(url, key, {
+    auth: {
+      // Persist the session so a signed-in user stays signed in across reloads,
+      // auto-refresh tokens, and complete the OAuth PKCE redirect on /auth/callback.
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+      storageKey: 'inkweave:auth',
+    },
+  });
   // Sentry's Supabase integration instruments the SupabaseClient class, so it covers this client
   // whether Sentry loads before or after it exists. Registered here, where supabase-js is already
   // loaded, rather than in Sentry's init, which would download it on every page (#640).
