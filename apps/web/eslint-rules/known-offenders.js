@@ -270,7 +270,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/cards/components/CardTile.tsx', // x1
     'src/features/deck/components/DeckCardRow.tsx', // x6
     'src/features/deck/components/DeckPanel.tsx', // x2
-    'src/features/deck/components/ScoreGauge.tsx', // x1
     'src/features/reveals/CardSlot.tsx', // x1
     'src/features/reveals/InkTrackerTile.tsx', // x1
     'src/features/reveals/RarityBreakdown.tsx', // x1
