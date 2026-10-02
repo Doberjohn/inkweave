@@ -32,5 +32,7 @@ export const RenamedByTheUser: Story = {
 
 /** The 60-character cap the column enforces; the field stops accepting input here. */
 export const LongestAllowedName: Story = {
-  args: {current: 'A Very Long Deck Building Name That Reaches Sixty Characters!'},
+  // Exactly DISPLAY_NAME_MAX. The previous value was 61, one past the limit it exists
+  // to illustrate, so the story showed a name the dialog would refuse to save.
+  args: {current: 'A Very Long Deck Building Name That Reaches Sixty Characters'},
 };

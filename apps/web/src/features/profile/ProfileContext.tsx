@@ -68,6 +68,20 @@ const CLAIM_RETRIES = 2;
 /** Short on purpose: the account page is rendering a loading state while this runs. */
 const CLAIM_RETRY_MS = 1500;
 
+/**
+ * Is this failure worth another round trip?
+ *
+ * A ladder rather than one compound guard: three `&&` operands tripped CodeScene's
+ * Complex Conditional check, and each rung is a different reason to stop. `NOT_CONFIGURED`
+ * is the interesting one: it means this environment has no credentials at all, which no
+ * amount of retrying changes, so it settles immediately instead of spending the budget.
+ */
+function shouldRetryClaim(error: string | null, retriesLeft: number): boolean {
+  if (retriesLeft <= 0) return false;
+  if (error === null) return false;
+  return error !== NOT_CONFIGURED;
+}
+
 export function ProfileProvider({children}: {children: ReactNode}) {
   const {user} = useSession();
   const userId = user?.id ?? null;
@@ -86,9 +100,7 @@ export function ProfileProvider({children}: {children: ReactNode}) {
     const attempt = (retriesLeft: number) => {
       void claimIdentity().then(({data, error}) => {
         if (!active) return;
-        // NOT_CONFIGURED is a permanent answer (no credentials in this environment),
-        // so it settles immediately rather than burning the budget on a certain failure.
-        if (error !== null && error !== NOT_CONFIGURED && retriesLeft > 0) {
+        if (shouldRetryClaim(error, retriesLeft)) {
           timer = setTimeout(() => attempt(retriesLeft - 1), CLAIM_RETRY_MS);
           return;
         }

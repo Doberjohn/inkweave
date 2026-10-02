@@ -5,7 +5,6 @@ import {
   CompactHeader,
   CtaButton,
   EtherealBackground,
-  MOBILE_NAV_HEIGHT,
   PageTitle,
   Seo,
 } from '../shared/components';
@@ -138,7 +137,9 @@ export function AccountPage() {
         background: COLORS.background,
         fontFamily: FONTS.body,
         position: 'relative',
-        paddingBottom: isMobile ? MOBILE_NAV_HEIGHT : SPACING.xxxl,
+        // AppLayout already pads the Outlet by the bottom-nav height whenever that nav
+        // shows, so repeating it here stacked a second clearance under the content.
+        paddingBottom: isMobile ? 0 : SPACING.xxxl,
       }}>
       <Seo
         title="Your account | Inkweave"

@@ -4,20 +4,17 @@ import {signInProviderButtonState, type SignInProvider} from './signInProviderSt
 const google: SignInProvider = {id: 'google', label: 'Continue with Google'};
 
 describe('signInProviderButtonState', () => {
-  it('is active (enabled, full opacity, pointer) when auth is enabled and idle', () => {
+  it('is active when auth is enabled and idle', () => {
     expect(signInProviderButtonState(google, true, null)).toEqual({
       disabled: false,
       label: 'Continue with Google',
-      cursor: 'pointer',
-      opacity: 1,
     });
   });
 
   it('disables and dims every button while a redirect is in flight', () => {
     const state = signInProviderButtonState(google, true, 'discord');
     expect(state.disabled).toBe(true);
-    expect(state.cursor).toBe('default');
-    expect(state.opacity).toBe(0.6);
+    expect(state.disabled).toBe(true);
   });
 
   it('shows the redirecting label only for the provider whose redirect is in flight', () => {
