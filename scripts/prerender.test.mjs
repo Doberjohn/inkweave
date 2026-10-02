@@ -1,11 +1,13 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {
+  CARD_READY_SELECTOR,
   cleanPrerenderedHtml,
   crawlRoute,
   hasReadyContent,
   isCleanShell,
   isRevealSeasonActive,
   READY_SELECTORS,
+  readySelectorFor,
 } from './prerender.mjs';
 
 const SHELL = 'Inkweave — Master Lorcana Synergies';
@@ -72,6 +74,20 @@ describe('cleanPrerenderedHtml', () => {
     const out = cleanPrerenderedHtml(html, SHELL, ORIGIN);
     expect(out).toContain('<img src="/brand/logo-static.svg" alt="Inkweave">');
     expect(out).not.toContain('logo-animated');
+  });
+
+  it('drops the Speed Insights tag but keeps the Analytics one', () => {
+    // A shipped Speed Insights tag stops the live component from adding its own, the only
+    // one that carries the route, so the captured homepage would label every fallback route `/`.
+    const analytics =
+      '<script src="/_vercel/insights/script.js" data-sdkn="@vercel/analytics/react" data-sdkv="2.0.1" defer=""></script>';
+    const speedInsights =
+      '<script src="/_vercel/speed-insights/script.js" defer="" data-sdkn="@vercel/speed-insights/react" ' +
+      'data-sdkv="2.0.0" data-route="/"></script>';
+    const html = `<html><head><title>Real</title>${analytics}${speedInsights}</head><body>x</body></html>`;
+    expect(cleanPrerenderedHtml(html, SHELL, ORIGIN)).toBe(
+      `<html><head><title>Real</title>${analytics}</head><body>x</body></html>`,
+    );
   });
 });
 
@@ -152,14 +168,26 @@ describe('isRevealSeasonActive', () => {
   });
 });
 
-describe('READY_SELECTORS', () => {
+describe('readySelectorFor', () => {
   it('makes /browse wait for the card links the render guard requires', () => {
     // check-rendered-html fails the deploy unless browse/index.html contains href="/card/
-    expect(READY_SELECTORS['/browse']).toBe('a[href^="/card/"]');
+    expect(readySelectorFor('/browse')).toBe('a[href^="/card/"]');
+  });
+
+  it('makes a card page wait for the footer the render guard requires (#532)', () => {
+    // check-rendered-html fails the deploy unless a card page links all six ink hubs, which only
+    // the footer does, and the footer renders only once the card's synergies have loaded.
+    expect(readySelectorFor('/card/1989/elsa-snow-queen')).toBe(CARD_READY_SELECTOR);
+    expect(CARD_READY_SELECTOR).toBe('footer[aria-label="Site footer"]');
   });
 
   it('keeps every other route on the title check alone', () => {
-    expect(Object.keys(READY_SELECTORS)).toEqual(['/browse']);
+    expect(['/', '/about', '/playstyles', '/ink/steel'].map(readySelectorFor)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]);
   });
 });
 
@@ -230,6 +258,16 @@ describe('crawlRoute', () => {
       error: 'third',
     });
     expect(crawlOnce).toHaveBeenCalledTimes(3);
+  });
+
+  it('re-crawls a card page whose footer never rendered, waiting for it each time (#532)', async () => {
+    const route = '/card/1989/elsa-snow-queen';
+    const crawlOnce = attemptsReturning({ok: false, error: `content never rendered (${CARD_READY_SELECTOR})`}, {ok: true});
+    expect(await crawlRoute(route, crawlOnce)).toEqual({route, ok: true});
+    expect(crawlOnce.mock.calls).toEqual([
+      [route, CARD_READY_SELECTOR],
+      [route, CARD_READY_SELECTOR],
+    ]);
   });
 
   it('crawls a route without a ready selector once, even if a retry would succeed', async () => {

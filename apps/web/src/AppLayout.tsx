@@ -20,6 +20,7 @@ import {COLORS} from './shared/constants';
 import {useCardDataContext} from './shared/contexts/CardDataContext';
 import {useResponsive} from './shared/hooks';
 import {lazyWithRetry} from './shared/lib/lazyWithRetry';
+import {useSpeedInsightsRoute} from './shared/lib/speedInsightsRoute';
 
 // Mobile-only, so it stays out of the entry chunk desktop visitors download (#640). On a phone
 // it loads right after the first render. A search tap in the moment before it arrives opens the
@@ -147,6 +148,7 @@ function AppContent() {
 export function AppLayout() {
   // Only the page the app starts on decides; the provider reads this once, at mount.
   const startsOnHome = useLocation().pathname === '/';
+  const speedInsightsRoute = useSpeedInsightsRoute();
   return (
     <ErrorBoundary>
       <SessionProvider>
@@ -164,7 +166,7 @@ export function AppLayout() {
         </ProfileProvider>
       </SessionProvider>
       <Analytics />
-      <SpeedInsights />
+      <SpeedInsights route={speedInsightsRoute} />
     </ErrorBoundary>
   );
 }

@@ -55,7 +55,7 @@ SPEND_RIDER    = /\bif you removed (?:an|\d+(?: or more)?) ink drops? to play\b/
 REMOVE_TRIGGER = /\bwhenever you remove (?:an|one or more|\d+) ink drops?\b/i
 HOLD           = /\b(?:while|if) you have (?:an|\d+ or more) ink drops?\b|\bfor each ink drop you have\b/i
 DROP_SINK      = /\bshift remove \d+ ink drops?\b|\bif you would get an ink drop\b/i
-GAIN_GATE      = /\bunless you gained (?:an|\d+(?: or more)?) ink drops? this turn\b/i
+GAIN_GATE      = /\bunless you (?:gained|got) (?:an|\d+(?: or more)?) ink drops? this turn\b/i
 ```
 
 | Shape | Example card text | Cards |
@@ -64,7 +64,9 @@ GAIN_GATE      = /\bunless you gained (?:an|\d+(?: or more)?) ink drops? this tu
 | remove trigger | "**whenever you remove an ink drop**, draw a card." | Madam Mim - Resourceful Trickster |
 | hold | "**While you have an ink drop**, this character gains Challenger +3." | Sir Kay - Determined to Win, Wasabi - Called into Battle, Madam Mim - Bauble Chaser |
 | sink | "**Shift Remove 2 ink drops** …", "**If you would get an ink drop**, … into your inkwell … instead." | Baymax - Amped Up |
-| gain gate | "This character can't quest or challenge **unless you gained an ink drop this turn**." | Baloo - Delivery Pilot |
+| gain gate | "This character can't quest or challenge **unless you got an ink drop this turn**." | Baloo - Delivery Pilot |
+
+`GAIN_GATE` also reads "gained", the wording of the translated scan Baloo's preview carried before his English printing.
 
 ### drop-shared (display only)
 
@@ -204,8 +206,7 @@ No official ink-drop rules text exists yet: Comprehensive Rules v2.2.0 predates 
 
 - whether a drop can pay an activated ability's ink cost (Yama's 6 ⬡, Bobby's granted 1 ⬡);
 - whether "Get 3 ink drops" counts as three separate "if you would get" events for Baymax - Amped Up's SUPERCHARGE;
-- whether removing drops for a non-ink cost (Amped Up's Shift) counts as "removed an ink drop to play" for a spend rider;
-- whether every drop you "get" counts as one you "gained" for Baloo - Delivery Pilot's CASH PAYMENT. Makers print "get", and the gain-gate rows assume it does.
+- whether removing drops for a non-ink cost (Amped Up's Shift) counts as "removed an ink drop to play" for a spend rider.
 
 None of these changes a score today.
 
@@ -219,6 +220,7 @@ Unit and rule tests live in `packages/synergy-engine/src/__tests__/inkDrops.test
 |------|------------------|
 | maker despite the reminder text | Arthur - Jousting Knight and Merlin - Profoundly Curious are makers only |
 | payoff shapes | Madam Mim, Sir Kay, Baymax - Amped Up and Baloo - Delivery Pilot are payoffs; Amped Up is not a maker |
+| gain-gate wording | Baloo's printed "got" and the translated "gained" both read as a gain gate |
 | shared | Mickey Mouse - Best in Town and Molly Cunningham carry `drop-shared` |
 | pre-filter | a card with no drop text gets no role |
 | steady supply | Inkcaster Skates and Arthur - Jousting Knight repeat; Merlin, Yama and Bobby do not |
@@ -239,7 +241,7 @@ Unit and rule tests live in `packages/synergy-engine/src/__tests__/inkDrops.test
 | no shared penalty | Molly ↔ Jousting Match = 7 |
 | payoff ↔ payoff | hold ↔ hold 6; Mim ↔ Jousting Match and Mim ↔ Amped Up null |
 | data guard: coverage | every pool card mentioning ink drops has a role; no dual-role card; key cards stay in their designed roles |
-| data guard: copy fit | every remove trigger draws a card, every sink is the Shift-plus-conversion shape, every gain gate is the "can't quest or challenge unless you gained" shape, and no gain goes only to opponents, so a new wording fails CI until the table gets a row and copy for it |
+| data guard: copy fit | every remove trigger draws a card, every sink is the Shift-plus-conversion shape, every gain gate is the "can't quest or challenge unless you got" (or "gained") shape, and no gain goes only to opponents, so a new wording fails CI until the table gets a row and copy for it |
 | data guard: live pairs | on the real pool, every drop card has partners, no two makers pair, and the 8s with Mim and Amped Up are exactly the steady makers the opponent cannot deny that can share a deck with them, including Arthur - Jousting Knight and Kit Cloudkicker - Sure Shot by name |
 
 ---
@@ -256,7 +258,7 @@ A spend rider needs one drop once, and any maker supplies it; the drop switches 
 
 ### Why does a gain gate top out at 7?
 
-Baloo - Delivery Pilot can't quest or challenge unless you gained an ink drop this turn, so a maker only lifts his drawback: the drop adds no card or ink of its own, unlike the 8s (Mim's draw each turn, an inkwell card per drop through Amped Up). A maker that gets a drop every turn keeps him active turn after turn (7); a one-shot drop opens him for one turn (6).
+Baloo - Delivery Pilot can't quest or challenge unless you got an ink drop this turn, so a maker only lifts his drawback: the drop adds no card or ink of its own, unlike the 8s (Mim's draw each turn, an inkwell card per drop through Amped Up). A maker that gets a drop every turn keeps him active turn after turn (7); a one-shot drop opens him for one turn (6).
 
 ### Why do end-of-turn and opponent-turn makers not pair with a gain gate?
 

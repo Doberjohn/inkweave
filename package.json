@@ -31,6 +31,7 @@
     "mine-rules": "pnpm build:engine && node scripts/mine-rule-candidates.mjs",
     "graduate-set": "node scripts/graduate-canonical-set.mjs",
     "sync-variants": "node scripts/sync-variants.mjs",
+    "worktree:remove": "node scripts/remove-worktree.mjs",
     "docs": "node scripts/generate-docs.mjs",
     "analyze": "ANALYZE=true pnpm build:web",
     "prepare": "husky"

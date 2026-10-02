@@ -38,6 +38,9 @@ const SHELL_TITLE = 'Inkweave — Master Lorcana Synergies';
 // captures the animated one, and cleanPrerenderedHtml ships the static one.
 const STATIC_LOGO_SRC = '/brand/logo-static.svg';
 const ANIMATED_LOGO_SRC = '/brand/logo-animated.svg';
+// The script tag <SpeedInsights /> adds to <head> at runtime, matched by its SDK name rather
+// than its src, which varies by environment. cleanPrerenderedHtml drops it.
+const SPEED_INSIGHTS_SCRIPT = /<script\b[^>]*\bdata-sdkn="@vercel\/speed-insights[^"]*"[^>]*><\/script>/g;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -178,6 +181,12 @@ function startServer(shellHtml) {
  *    `networkidle`, which comes after that swap, so without this rewrite every shipped page
  *    would paint the animated logo from first paint, running per-frame work during load.
  *
+ * 4. Drops the Speed Insights script tag. <SpeedInsights /> adds it at runtime, so the crawl
+ *    captures it, and vercel.json serves the captured homepage as index.html for every route
+ *    that isn't prerendered. A shipped tag makes the live component skip adding its own, and
+ *    only that one carries the page's route pattern (useSpeedInsightsRoute) and follows
+ *    client-side navigation. Left in, every non-prerendered route would report as `/`.
+ *
  * Exported for scripts/prerender.test.mjs. The origin rewrite MUST remove every
  * occurrence — a single-replace regression would leave 6-13 per page and be invisible
  * in a spot check of the built output.
@@ -186,7 +195,8 @@ export function cleanPrerenderedHtml(html, shellTitle, origin) {
   return html
     .replace(`<title>${shellTitle}</title>`, '')
     .replaceAll(origin, '')
-    .replaceAll(ANIMATED_LOGO_SRC, STATIC_LOGO_SRC);
+    .replaceAll(ANIMATED_LOGO_SRC, STATIC_LOGO_SRC)
+    .replaceAll(SPEED_INSIGHTS_SCRIPT, '');
 }
 
 /**
@@ -232,6 +242,19 @@ export const READY_SELECTORS = {'/browse': 'a[href^="/card/"]'};
 const READY_ATTEMPTS = 3;
 
 /**
+ * Card pages wait for their footer too (#532). It renders only once the card's synergies have
+ * loaded, and its title passes as soon as the card itself renders, before the synergy request
+ * has even started. check-rendered-html.mjs demands the footer's six ink-hub links of every
+ * sampled card page, and the footer also means the synergy groups are in the capture.
+ */
+export const CARD_READY_SELECTOR = 'footer[aria-label="Site footer"]';
+
+/** The selector `route` waits for before capture, if any. */
+export function readySelectorFor(route) {
+  return READY_SELECTORS[route] ?? (route.startsWith('/card/') ? CARD_READY_SELECTOR : undefined);
+}
+
+/**
  * Crawl `route` through `crawlOnce(route, selector)`. A route with a ready selector is
  * re-crawled until an attempt succeeds or READY_ATTEMPTS run out; every other route gets a
  * single attempt, so a genuinely broken crawl still reaches main()'s failure-rate guard
@@ -239,7 +262,7 @@ const READY_ATTEMPTS = 3;
  * the retries without a browser.
  */
 export async function crawlRoute(route, crawlOnce) {
-  const selector = READY_SELECTORS[route];
+  const selector = readySelectorFor(route);
   const attempts = selector ? READY_ATTEMPTS : 1;
   let result;
   for (let attempt = 1; attempt <= attempts; attempt++) {
@@ -265,10 +288,10 @@ async function applyCpuThrottle(page) {
 }
 
 /**
- * Does the page show the route's real content (#584)? A route in READY_SELECTORS waits up to
- * 15 s for its selector: on /browse the title passes before the virtualized grid has drawn a
- * single card link. Every other route has no selector and passes at once. Exported for
- * scripts/prerender.test.mjs.
+ * Does the page show the route's real content (#584)? A route with a ready selector (see
+ * readySelectorFor) waits up to 15 s for it: on /browse the title passes before the virtualized
+ * grid has drawn a single card link, and on a card page before its footer. Every other route has
+ * no selector and passes at once. Exported for scripts/prerender.test.mjs.
  */
 export async function hasReadyContent(page, selector) {
   if (!selector) return true;
@@ -296,9 +319,9 @@ async function crawlRouteOnce(browser, route, selector) {
     // (not the loading skeleton) is on the page. If that never happens within the timeout, the
     // capture is just the empty shell — return ok:false so the failure-rate guard in main() can
     // catch a broken crawl. Otherwise a timing-out crawl would write content-less shells for
-    // every route and still report success, shipping a hollow "prerender". READY_SELECTORS
-    // routes are the exception: their content lands after the title, so hasReadyContent waits
-    // for it below (#584).
+    // every route and still report success, shipping a hollow "prerender". Routes with a ready
+    // selector are the exception: their content lands after the title, so hasReadyContent waits
+    // for it below (#584, #532).
     const rendered = await page
       .waitForFunction((shell) => document.title && document.title !== shell, SHELL_TITLE, {
         timeout: 15000,

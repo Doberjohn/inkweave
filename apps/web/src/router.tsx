@@ -1,11 +1,12 @@
 import {Suspense} from 'react';
-import {createBrowserRouter, Navigate} from 'react-router-dom';
+import {createBrowserRouter, Navigate, type RouteObject} from 'react-router-dom';
 import Skeleton from 'react-loading-skeleton';
 import {AppLayout} from './AppLayout';
 import {RevealsGate} from './features/reveals';
 import {HomePageSkeleton} from './pages/HomePageSkeleton';
 import {COLORS, RADIUS, SPACING} from './shared/constants';
 import {lazyWithRetry} from './shared/lib/lazyWithRetry';
+import {withSpeedInsightsRoutes} from './shared/lib/speedInsightsRoute';
 
 // Lazy-load page components for code splitting (with retry on chunk load failure)
 const HomePage = lazyWithRetry(() => import('./pages/HomePage'), 'HomePage');
@@ -73,7 +74,7 @@ function SuspenseWrapper({children, fallback}: {children: React.ReactNode; fallb
   return <Suspense fallback={fallback ?? <GenericFallback />}>{children}</Suspense>;
 }
 
-export const router = createBrowserRouter([
+const routes: RouteObject[] = [
   {
     path: '/',
     element: <AppLayout />,
@@ -255,4 +256,7 @@ export const router = createBrowserRouter([
       },
     ],
   },
-]);
+];
+
+// Every route carries the label Speed Insights files its visits under (#688).
+export const router = createBrowserRouter(withSpeedInsightsRoutes(routes));

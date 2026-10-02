@@ -28,12 +28,14 @@ test.describe('Accessibility — axe audits', () => {
 
   test('card detail page should have no axe violations', async ({page}) => {
     // #486: /card/:id is a real, crawlable page (was a modal overlay). Wait for the synergy
-    // results section to render before auditing the whole page.
+    // results section to render before auditing the whole page, and for the footer, which
+    // mounts only once the synergies have loaded (#532): axe should always audit it.
     await page.goto('/card/1939');
     await page.locator('section[aria-label="Synergy results"]').waitFor({
       state: 'visible',
       timeout: 10000,
     });
+    await page.locator('footer[aria-label="Site footer"]').waitFor({timeout: 10000});
 
     const results = await new AxeBuilder({page}).analyze();
     expect(results.violations).toEqual([]);

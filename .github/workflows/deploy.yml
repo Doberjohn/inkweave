@@ -3,13 +3,15 @@
 # WHY: scripts/prerender.mjs (the SSG crawl from #486) can't run in Vercel's own build —
 # Playwright's chromium has no system deps on Amazon Linux, so build:vercel falls back to
 # SPA-only and non-JS crawlers get empty shells. This workflow runs the SAME build (via
-# `vercel build`, which honours vercel.json's buildCommand → build:vercel) on Ubuntu, where
-# `playwright install --with-deps chromium` works, so the crawl renders (verified: 1052/1052,
-# 0 failed). It then ships the prebuilt output with `vercel deploy --prebuilt --prod`.
+# `vercel build`, which honours vercel.json's buildCommand → build:vercel) in Playwright's
+# Ubuntu image, which ships chromium and its system deps, so the crawl renders (verified:
+# 1052/1052, 0 failed). It then ships the prebuilt output with `vercel deploy --prebuilt --prod`.
 #
 # SCOPE: production only. PR previews stay on Vercel's own git integration (fast SPA — previews
 # aren't indexed, so they don't need the crawl). vercel.json sets git.deploymentEnabled.master
 # = false so Vercel does NOT also deploy master (no double / flip-flopping production deploy).
+# One exception: a PR that changes this file gets a dry run (#694). It runs the same pull,
+# build and prerender check, but never deploys and never pings IndexNow.
 #
 # KILL SWITCH: the job only runs when repo variable DEPLOY_VIA_CI == 'true'. Unsetting it stops
 # CI deploys — but note Vercel git-deploy for master is off, so to fully hand deploys back to
@@ -21,26 +23,91 @@ name: Deploy
 on:
   push:
     branches: [master]
+  # A dry run for PRs that change this file: build and verify, never deploy.
+  pull_request:
+    branches: [master]
+    paths:
+      - '.github/workflows/deploy.yml'
+
+# Only actions/checkout uses GITHUB_TOKEN here: Vercel authenticates with VERCEL_TOKEN, and
+# actions/cache with the runner's own token. Declared, so PR dry runs (#694) stay read-only
+# whatever the repo's default token permissions become.
+permissions:
+  contents: read
 
 concurrency:
-  group: deploy-production
-  cancel-in-progress: false
+  # Production deploys queue one at a time and never cancel. A PR's dry run gets its own
+  # group, so it never waits behind or blocks production, and a newer push replaces it.
+  group: ${{ github.event_name == 'push' && 'deploy-production' || format('deploy-dry-run-{0}', github.ref) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Vercel CLI version for the pull, build and deploy steps. Pinned because unpinned
 # `npx vercel` re-resolved @latest in each step, so one job could straddle two CLI
 # versions: on 2026-09-24 pull and build ran 59.26.0, then deploy fetched the
 # just-published 60.0.0, whose @vercel/ruby@12.0.0 dependency was not on npm yet
 # (notarget), failing that deploy. 60.0.0 has deployed cleanly since.
-# To upgrade, bump it in a PR. PR CI never runs this workflow, so a new version's
-# first real test is the deploy after merge. Steps expand it as ${VERCEL_CLI_VERSION:?}
-# so a missing value fails the step instead of quietly falling back to @latest.
+# To upgrade, bump it in a PR. That PR changes this file, so it gets a dry run that runs
+# the new version's `vercel pull` and `vercel build` (#694); only `vercel deploy` waits
+# for the deploy after merge. Steps expand it as ${VERCEL_CLI_VERSION:?} so a missing
+# value fails the step instead of quietly falling back to @latest.
 env:
   VERCEL_CLI_VERSION: '60.0.0'
 
 jobs:
-  deploy:
-    if: vars.DEPLOY_VIA_CI == 'true'
+  # deploy runs in Playwright's image for this exact version, because an image's browsers
+  # only work with the matching Playwright. container.image is resolved before any step runs,
+  # so the version has to come from an earlier job. It reads what pnpm-lock.yaml pins, which
+  # the deploy job's frozen install then installs, so a Playwright bump moves the image tag in
+  # the same commit. Anything but X.Y.Z fails here, not as an unpullable image.
+  # PRs from forks and from Dependabot get no Actions secrets, so both jobs skip on them
+  # instead of failing at `vercel pull`.
+  playwright-version:
+    if: >-
+      vars.DEPLOY_VIA_CI == 'true' && (github.event_name == 'push' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]'))
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.pw.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: pnpm-lock.yaml
+          sparse-checkout-cone-mode: false
+
+      # yq ships on ubuntu-latest.
+      - name: Read the Playwright version from the lockfile
+        id: pw
+        run: |
+          version="$(yq '.importers["apps/web"].devDependencies["@playwright/test"].version' pnpm-lock.yaml)"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Unexpected @playwright/test version in pnpm-lock.yaml: $version"
+            exit 1
+          fi
+          echo "Playwright $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: playwright-version
+    if: >-
+      vars.DEPLOY_VIA_CI == 'true' && (github.event_name == 'push' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]'))
+    runs-on: ubuntu-latest
+    # A normal deploy takes 6 to 16 min. A cold card-image cache adds about 15 min (#579).
+    # Without a cap a hung step could run to GitHub's 360-min default while every later
+    # master push queued behind it in deploy-production (#694).
+    timeout-minutes: 45
+    # Playwright's image ships chromium and its system packages, so nothing comes from apt.
+    # The apt step used to take 18 to 57 s, until a stalling Ubuntu mirror stretched it to
+    # 534 s on 2026-10-01 (#690, #694). build:vercel's own `playwright install chromium`
+    # finds the image's browser instead of downloading one.
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.playwright-version.outputs.version }}-noble
+      # As in ci.yml's e2e jobs and Playwright's CI docs: run as uid 1001, the runner user
+      # that owns $HOME (/github/home).
+      options: --user 1001
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -63,7 +130,8 @@ jobs:
       # deploy re-downloads and re-encodes all ~1,024 images (~15 min, #579). The key
       # follows the card data, so a deploy with new cards saves a fresh cache;
       # restore-keys falls back to the newest earlier one. A cache written by an older
-      # CACHE_VERSION is wiped by the script itself (its .version file).
+      # CACHE_VERSION is wiped by the script itself (its .version file). The image has no
+      # zstd, so this cache is gzip, a separate entry from the host-era zstd ones (#694).
       - name: Restore card image cache
         uses: actions/cache@v6
         with:
@@ -71,9 +139,6 @@ jobs:
           key: card-images-${{ runner.os }}-${{ hashFiles('apps/web/public/data/allCards.json', 'apps/web/public/data/previewCards.json') }}
           restore-keys: |
             card-images-${{ runner.os }}-
-
-      - name: Install Playwright chromium (with system deps — this is what Vercel's AL build can't do)
-        run: pnpm --filter inkweave-web exec playwright install --with-deps chromium
 
       - name: Pull Vercel production environment
         run: npx "vercel@${VERCEL_CLI_VERSION:?}" pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
@@ -91,10 +156,13 @@ jobs:
       - name: Verify the prerender actually produced content
         run: node scripts/check-rendered-html.mjs .vercel/output/static
 
+      # A PR's dry run stops here: only a push to master deploys and pings.
       - name: Deploy prebuilt output to production
+        if: github.event_name == 'push'
         run: npx "vercel@${VERCEL_CLI_VERSION:?}" deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       # Push the hub URLs to IndexNow (Bing/DuckDuckGo) for near-instant re-crawl (#496).
       # Non-fatal: a ping failure must never fail the production deploy.
       - name: Ping IndexNow
+        if: github.event_name == 'push'
         run: node scripts/ping-indexnow.mjs || true

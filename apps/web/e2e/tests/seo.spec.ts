@@ -231,8 +231,9 @@ test.describe('SEO', () => {
     await page.setViewportSize({width: 412, height: 915});
     await gotoWithRetry(page, '/card/1989/elsa-snow-queen');
 
-    // Against the dev server the page renders a skeleton until card data arrives, and the
-    // footer mounts with it — poll rather than assert on the first frame.
+    // Against the dev server the page renders a skeleton until card data arrives, and the footer
+    // mounts only once the card and its synergies have loaded (#532), so poll rather than assert
+    // on the first frame.
     await expect(page.locator('footer a[href^="/ink/"]')).toHaveCount(6);
 
     const hrefs = await page
