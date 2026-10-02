@@ -106,6 +106,39 @@ function Checking() {
   );
 }
 
+/**
+ * Sign-out, with its failure visible.
+ *
+ * Supabase can refuse a logout (an expired refresh token, a dropped connection). The
+ * context used to discard that, so the button appeared to do nothing while the user
+ * stayed signed in, which reads as a broken button rather than a failed request.
+ */
+function SessionSection({onSignOut}: {onSignOut: () => Promise<{error: string | null}>}) {
+  const [error, setError] = useState<string | null>(null);
+  const run = async () => {
+    const {error: failure} = await onSignOut();
+    setError(failure);
+  };
+  return (
+    <Section title="Session">
+      <CtaButton variant="neutral" onClick={() => void run()}>
+        Sign out
+      </CtaButton>
+      {error && (
+        <p
+          role="alert"
+          style={{
+            color: COLORS.error,
+            fontSize: `${FONT_SIZES.md}px`,
+            margin: `${SPACING.md}px 0 0`,
+          }}>
+          {error}
+        </p>
+      )}
+    </Section>
+  );
+}
+
 /** Signed-out state. A prompt, NOT a redirect: a redirect discards the URL, so a
  *  shared or bookmarked /account link would look broken rather than gated. */
 function SignedOut({onSignIn}: {onSignIn: () => void}) {
@@ -168,11 +201,7 @@ export function AccountPage() {
         ) : (
           <>
             <IdentitySection identity={identity} onChange={() => setShowName(true)} />
-            <Section title="Session">
-              <CtaButton variant="neutral" onClick={() => void signOut()}>
-                Sign out
-              </CtaButton>
-            </Section>
+            <SessionSection onSignOut={signOut} />
           </>
         )}
       </div>

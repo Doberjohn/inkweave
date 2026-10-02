@@ -17,10 +17,49 @@ interface SessionContextValue {
   enabled: boolean;
   /** Start an OAuth redirect. Returns `{error}` if it could not be initiated. */
   signIn: (provider: AuthProvider) => Promise<{error: string | null}>;
-  signOut: () => Promise<void>;
+  /** End the session. Returns `{error}` if Supabase refused the logout. */
+  signOut: () => Promise<{error: string | null}>;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
+
+/** The configured client, or null when this environment has no Supabase credentials. */
+type AuthClient = NonNullable<ReturnType<typeof getSupabase>>;
+
+/*
+  signIn and signOut live out here rather than inside SessionProvider. Neither reads
+  React state, and as closures their guards counted toward the provider's cyclomatic
+  complexity, which tipped past CodeScene's threshold when signOut started reporting
+  its error. The provider now just binds them to the client.
+*/
+
+/** Start an OAuth redirect. The provider round-trip returns to `/auth/callback`. */
+async function startOAuth(
+  supabase: AuthClient | null,
+  provider: AuthProvider,
+): Promise<{error: string | null}> {
+  if (!supabase) return {error: 'Sign-in is unavailable (auth not configured).'};
+  const {error} = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {redirectTo: `${window.location.origin}/auth/callback`},
+  });
+  return {error: error?.message ?? null};
+}
+
+/**
+ * End the session, reporting a refusal rather than swallowing it.
+ *
+ * Supabase can decline a logout (an expired refresh token, a dropped connection), and
+ * discarding that left the user pressing a button that appeared to do nothing while
+ * they stayed signed in. With nothing configured there is no session to end, so that is
+ * a vacuous success, not an error; it is unreachable anyway, since the control only
+ * renders for a signed-in user.
+ */
+async function endSession(supabase: AuthClient | null): Promise<{error: string | null}> {
+  if (!supabase) return {error: null};
+  const {error} = await supabase.auth.signOut();
+  return {error: error?.message ?? null};
+}
 
 export function SessionProvider({children}: {children: ReactNode}) {
   const supabase = getSupabase();
@@ -54,27 +93,13 @@ export function SessionProvider({children}: {children: ReactNode}) {
     };
   }, [supabase]);
 
-  const signIn = async (provider: AuthProvider): Promise<{error: string | null}> => {
-    if (!supabase) return {error: 'Sign-in is unavailable (auth not configured).'};
-    const {error} = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {redirectTo: `${window.location.origin}/auth/callback`},
-    });
-    return {error: error?.message ?? null};
-  };
-
-  const signOut = async (): Promise<void> => {
-    if (!supabase) return;
-    await supabase.auth.signOut();
-  };
-
   const value: SessionContextValue = {
     session,
     user: session?.user ?? null,
     loading,
     enabled: supabase !== null,
-    signIn,
-    signOut,
+    signIn: (provider: AuthProvider) => startOAuth(supabase, provider),
+    signOut: () => endSession(supabase),
   };
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

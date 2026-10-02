@@ -39,10 +39,26 @@ export function DisplayNameDialog({isOpen, onClose, userId, current, onSaved}: D
   const trimmed = value.trim();
   const canSave = isValidDisplayName(value) && trimmed !== current.trim() && !saving;
 
-  const close = () => {
+  /** Discard the draft and leave. The only path that actually closes the dialog. */
+  const dismiss = () => {
     setDraft(null);
     setError(null);
     onClose();
+  };
+
+  /**
+   * What the shell, the backdrop, Escape and Cancel all call. Declines while a save is
+   * in flight: this dialog is the only place that write's failure is reported, so
+   * dismissing it loses the answer and leaves the user unsure whether the name stored.
+   *
+   * Guarded here rather than with DialogShell's `disableBackdropClose` because backdrop
+   * AND Escape both arrive through this one handler, while that prop covers only the
+   * backdrop. `save` calls `dismiss` directly, so it never has to out-race this guard,
+   * and `updateDisplayName` always resolves (its repository catches), so `saving`
+   * cannot strand the dialog shut.
+   */
+  const close = () => {
+    if (!saving) dismiss();
   };
 
   const save = async () => {
@@ -55,7 +71,7 @@ export function DisplayNameDialog({isOpen, onClose, userId, current, onSaved}: D
       return;
     }
     onSaved(data);
-    close();
+    dismiss();
   };
 
   return (

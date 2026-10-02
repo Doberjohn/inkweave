@@ -137,6 +137,10 @@ export async function updateDisplayName(userId: string, displayName: string): Pr
   const supabase = getSupabase();
   if (!supabase) return {data: null, error: NOT_CONFIGURED};
   const trimmed = displayName.trim();
+  // Checked here, not just in the dialog. `profiles_display_name_len` caps the length
+  // but sets no minimum, so the database would happily store "" or "a"; this is the
+  // only place the documented 2-character floor is enforced against every caller.
+  if (!isValidDisplayName(trimmed)) return {data: null, error: DISPLAY_NAME_RULE};
   try {
     const {data, error} = await supabase
       .from('profiles')

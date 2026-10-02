@@ -61,6 +61,34 @@ describe('SessionContext', () => {
     expect(mockAuth.signOut).toHaveBeenCalled();
   });
 
+  /*
+    signOut used to return void and discard Supabase's error, so a refused logout (an
+    expired refresh token, a dropped connection) left the user pressing a button that
+    appeared to do nothing. It now reports, and AccountPage renders what it reports.
+  */
+  it('signOut reports a refused logout rather than swallowing it', async () => {
+    mockAuth.signOut.mockResolvedValue({error: {message: 'Logout failed'}});
+    const {result} = render();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let outcome: {error: string | null} | undefined;
+    await act(async () => {
+      outcome = await result.current.signOut();
+    });
+    expect(outcome).toEqual({error: 'Logout failed'});
+  });
+
+  it('signOut reports no error on success', async () => {
+    const {result} = render();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let outcome: {error: string | null} | undefined;
+    await act(async () => {
+      outcome = await result.current.signOut();
+    });
+    expect(outcome).toEqual({error: null});
+  });
+
   it('is disabled and no-ops when Supabase is not configured', async () => {
     mockState.client = null;
     const {result} = render();

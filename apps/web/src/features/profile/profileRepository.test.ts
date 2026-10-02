@@ -1,5 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {
+  DISPLAY_NAME_RULE,
   claimIdentity,
   clampDisplayName,
   getAuthorNames,
@@ -17,6 +18,7 @@ const mockRpc = vi.hoisted(() => vi.fn());
 const mockIn = vi.hoisted(() => vi.fn());
 const mockMaybeSingle = vi.hoisted(() => vi.fn());
 const mockUpdate = vi.hoisted(() => vi.fn());
+const mockEq = vi.hoisted(() => vi.fn());
 const mockState = vi.hoisted(() => ({client: null as unknown}));
 
 vi.mock('../../shared/lib/supabase', () => ({getSupabase: () => mockState.client}));
@@ -29,7 +31,14 @@ beforeEach(() => {
       select: () => ({in: mockIn}),
       update: (payload: unknown) => {
         mockUpdate(payload);
-        return {eq: () => ({select: () => ({maybeSingle: mockMaybeSingle})})};
+        // Records the filter arguments. They used to be discarded, which made the
+        // owner scoping untestable: a build that dropped .eq() looked identical here.
+        return {
+          eq: (column: string, value: unknown) => {
+            mockEq(column, value);
+            return {select: () => ({maybeSingle: mockMaybeSingle})};
+          },
+        };
       },
     }),
   };
@@ -174,5 +183,35 @@ describe('display-name length is counted in code points, as the column counts it
   // The common path must not regress: ASCII has one unit per character either way.
   it('leaves an in-range ASCII name untouched', () => {
     expect(clampDisplayName('Doberjohn')).toBe('Doberjohn');
+  });
+});
+
+describe('updateDisplayName guards the write', () => {
+  beforeEach(() => {
+    mockMaybeSingle.mockResolvedValue({data: {display_name: 'Doberjohn'}, error: null});
+  });
+
+  // RLS is the real boundary, but the filter is what keeps a bug from attempting a
+  // cross-account write at all. Nothing asserted it until the mock recorded the args.
+  it('scopes the update to the caller by id', async () => {
+    await updateDisplayName('u1', 'Doberjohn');
+    expect(mockEq).toHaveBeenCalledWith('id', 'u1');
+  });
+
+  /*
+    The column CHECK is `char_length(display_name) <= 60` with NO minimum, so the
+    database would store "" or "a" happily. The dialog gates on the same rule, but it is
+    not the only caller, so the floor is enforced at the data boundary too.
+  */
+  it.each(['', '   ', 'a'])('refuses %o without sending a request', async (name) => {
+    const result = await updateDisplayName('u1', name);
+    expect(result.error).toBe(DISPLAY_NAME_RULE);
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('still sends a name that satisfies the rule', async () => {
+    const result = await updateDisplayName('u1', '  Doberjohn  ');
+    expect(result.data).toBe('Doberjohn');
+    expect(mockUpdate).toHaveBeenCalledWith({display_name: 'Doberjohn'});
   });
 });
