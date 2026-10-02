@@ -536,7 +536,11 @@ describe('remove-worktree', {timeout: 60_000}, () => {
       const busy = () => {
         throw Object.assign(new Error('EBUSY: resource busy or locked'), {code: 'EBUSY'});
       };
-      expect(remove(repo, [wt], {rm: busy}).code).toBe(1);
+      const interrupted = remove(repo, [wt], {rm: busy});
+      expect(interrupted.code).toBe(1);
+      // It said it was deleting, and never that the delete finished.
+      expect(interrupted.output).toMatch(/^wait {4}deleting /m);
+      expect(interrupted.output).not.toMatch(/^ok {6}deleted /m);
       expect(existsSync(`${wt}.removing`)).toBe(true);
       expect(remove(repo, ['--leftovers']).code).toBe(0);
       expect(existsSync(`${wt}.removing`)).toBe(false);

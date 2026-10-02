@@ -110,12 +110,20 @@ function fail(message) {
 /**
  * Runs the command line `args` and returns its exit code: 0 only when everything it set out
  * to do is done. `cwd` resolves the repository and relative paths; `rm` deletes a folder and
- * `rename` moves one (fs.rmSync's and fs.renameSync's signatures); `now` reads the clock
- * (Date.now's signature). Exported for scripts/remove-worktree.test.mjs.
+ * `rename` moves one (fs.rmSync's and fs.renameSync's signatures); `now` reads a clock in
+ * milliseconds. Exported for scripts/remove-worktree.test.mjs.
  */
 export function run(
   args,
-  {cwd = process.cwd(), log = console.log, rm = rmSync, rename = renameSync, now = Date.now} = {},
+  {
+    cwd = process.cwd(),
+    log = console.log,
+    rm = rmSync,
+    rename = renameSync,
+    // Monotonic, unlike Date.now, so a time sync during a long delete can't make it negative.
+    // An arrow, because an unbound performance.now throws.
+    now = () => performance.now(),
+  } = {},
 ) {
   const options = parse(args);
   if (options.help) {
