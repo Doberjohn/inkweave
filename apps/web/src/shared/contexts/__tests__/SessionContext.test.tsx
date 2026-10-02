@@ -26,7 +26,10 @@ describe('useIsSignedIn', () => {
     expect(screen.getByTestId('probe')).toHaveTextContent('false');
   });
 
-  it('returns false inside a provider when nobody is signed in', () => {
+  // Named for what it actually covers: beforeEach blanks both env vars, so getSupabase()
+  // is null and the provider mounts auth-disabled. The signed-in case needs a client double
+  // and lives in contexts/SessionContext.test.tsx.
+  it('returns false inside a provider when auth is not configured', () => {
     render(
       <SessionProvider>
         <Probe />

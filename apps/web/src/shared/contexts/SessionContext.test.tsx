@@ -1,7 +1,7 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {renderHook, act, waitFor} from '@testing-library/react';
 import type {ReactNode} from 'react';
-import {SessionProvider, useSession} from './SessionContext';
+import {SessionProvider, useIsSignedIn, useSession} from './SessionContext';
 
 // A minimal Supabase auth double; `mockState.client` swaps between "configured" and
 // "not configured" (getSupabase() === null).
@@ -69,5 +69,27 @@ describe('SessionContext', () => {
     const res = await result.current.signIn('google');
     expect(res.error).toBeTruthy();
     expect(mockAuth.signInWithOAuth).not.toHaveBeenCalled();
+  });
+});
+
+/*
+  useIsSignedIn's TRUE branch. It had no coverage anywhere: the two tests in
+  contexts/__tests__/SessionContext.test.tsx both run with the env blanked, so the provider
+  mounts auth-disabled and only the false branch is exercised. A regression hard-coding
+  `false` would have passed every one of them. This file already owns a client double, so
+  the signed-in state is reachable here and nowhere else.
+*/
+describe('useIsSignedIn', () => {
+  it('is true once a stored session resolves', async () => {
+    mockAuth.getSession.mockResolvedValue({data: {session: {user: {id: 'u1'}}}});
+    const {result} = renderHook(() => useIsSignedIn(), {wrapper});
+    await waitFor(() => expect(result.current).toBe(true));
+  });
+
+  // The window the desktop nav must not misread: signed in, but the probe has not landed.
+  it('is false while the session is still resolving', () => {
+    mockAuth.getSession.mockReturnValue(new Promise(() => {}));
+    const {result} = renderHook(() => useIsSignedIn(), {wrapper});
+    expect(result.current).toBe(false);
   });
 });

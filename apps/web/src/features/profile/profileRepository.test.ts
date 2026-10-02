@@ -1,5 +1,11 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {claimIdentity, getAuthorNames, updateDisplayName, isValidDisplayName} from './profileRepository';
+import {
+  claimIdentity,
+  clampDisplayName,
+  getAuthorNames,
+  updateDisplayName,
+  isValidDisplayName,
+} from './profileRepository';
 
 // A Supabase double. `mockState.client` swaps between "configured" and "not
 // configured" (getSupabase() === null), matching deckRepository's tests.
@@ -137,5 +143,36 @@ describe('updateDisplayName', () => {
     const {data, error} = await updateDisplayName('someone-else', 'Doberjohn');
     expect(data).toBeNull();
     expect(error).toBe('Could not save that name. Try again.');
+  });
+});
+
+/*
+  The column's CHECK is `char_length(display_name) <= 60`, which counts CHARACTERS. JS
+  `.length` counts UTF-16 code units, so a non-BMP character scores 2. Measuring with
+  `.length` therefore rejected names the database accepts. These pin the two counts to
+  the same unit; a revert to `.length` fails both.
+*/
+describe('display-name length is counted in code points, as the column counts it', () => {
+  // 60 characters, 120 UTF-16 code units. `char_length` reads 60, so it must be valid.
+  const SIXTY_EMOJI = '\u{1F600}'.repeat(60);
+
+  it('accepts a 60-character emoji name that .length would score as 120', () => {
+    expect(SIXTY_EMOJI).toHaveLength(120);
+    expect(isValidDisplayName(SIXTY_EMOJI)).toBe(true);
+  });
+
+  it('still rejects one character past the limit', () => {
+    expect(isValidDisplayName('\u{1F600}'.repeat(61))).toBe(false);
+  });
+
+  it('clamps to 60 characters rather than 60 code units', () => {
+    const clamped = clampDisplayName('\u{1F600}'.repeat(80));
+    expect([...clamped]).toHaveLength(60);
+    expect(isValidDisplayName(clamped)).toBe(true);
+  });
+
+  // The common path must not regress: ASCII has one unit per character either way.
+  it('leaves an in-range ASCII name untouched', () => {
+    expect(clampDisplayName('Doberjohn')).toBe('Doberjohn');
   });
 });

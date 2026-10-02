@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import {CtaButton, DialogShell} from '../../../shared/components';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
-import {DISPLAY_NAME_MAX, DISPLAY_NAME_RULE, isValidDisplayName, updateDisplayName} from '../profileRepository';
+import {DISPLAY_NAME_RULE, clampDisplayName, isValidDisplayName, updateDisplayName} from '../profileRepository';
 
 interface DisplayNameDialogProps {
   isOpen: boolean;
@@ -80,10 +80,11 @@ export function DisplayNameDialog({isOpen, onClose, userId, current, onSaved}: D
       <input
         aria-label="Display name"
         value={value}
-        onChange={(e) => setDraft(e.target.value)}
-        // Matches the column's CHECK, so the field cannot compose a request the
-        // database is certain to reject.
-        maxLength={DISPLAY_NAME_MAX}
+        // Clamped rather than `maxLength`: the attribute counts UTF-16 code units while the
+        // column's CHECK counts characters, so an emoji name hit the cap at half its length.
+        // Same contract as before, the field still cannot compose a request the database is
+        // certain to reject, just measured in the units the database uses.
+        onChange={(e) => setDraft(clampDisplayName(e.target.value))}
         autoComplete="off"
         style={{
           width: '100%',

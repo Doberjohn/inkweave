@@ -93,6 +93,20 @@ function IdentitySection({
   );
 }
 
+/** The window before the stored session resolves, when `user` is null but nobody is
+ *  signed out yet. Rendering SignedOut here would flash "Sign in" at a returning user
+ *  before their own account replaced it, which is also what they would see for a moment
+ *  on every return from the OAuth callback. */
+function Checking() {
+  return (
+    <Section title="Account">
+      <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.md}px`, margin: 0}}>
+        Checking your session…
+      </p>
+    </Section>
+  );
+}
+
 /** Signed-out state. A prompt, NOT a redirect: a redirect discards the URL, so a
  *  shared or bookmarked /account link would look broken rather than gated. */
 function SignedOut({onSignIn}: {onSignIn: () => void}) {
@@ -111,7 +125,7 @@ function SignedOut({onSignIn}: {onSignIn: () => void}) {
 export function AccountPage() {
   const navigate = useNavigate();
   const {isMobile} = useResponsive();
-  const {user, signOut} = useSession();
+  const {user, loading, signOut} = useSession();
   const {identity, adoptDisplayName} = useProfile();
 
   const [showSignIn, setShowSignIn] = useState(false);
@@ -146,7 +160,9 @@ export function AccountPage() {
         <BackLink onClick={() => void navigate("/browse")} label="Back to browse" />
         <PageTitle style={{padding: `${SPACING.md}px 0 ${SPACING.xl}px`}}>Your account</PageTitle>
 
-        {user === null ? (
+        {loading ? (
+          <Checking />
+        ) : user === null ? (
           <SignedOut onSignIn={() => setShowSignIn(true)} />
         ) : (
           <>

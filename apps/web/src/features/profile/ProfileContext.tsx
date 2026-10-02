@@ -6,6 +6,7 @@
 // other way round.
 import {createContext, useContext, useEffect, useState, type ReactNode} from 'react';
 import {useSession} from '../../shared/contexts/SessionContext';
+import {NOT_CONFIGURED} from '../../shared/lib/repoResult';
 import {claimIdentity, type PublicIdentity} from './profileRepository';
 
 interface ProfileContextValue {
@@ -55,6 +56,18 @@ function withDisplayName(displayName: string) {
     prev?.identity ? {...prev, identity: {...prev.identity, displayName}} : prev;
 }
 
+/**
+ * Retry budget for a failed claim.
+ *
+ * A stored claim is FINAL: the effect only runs again when `userId` changes, so a
+ * network blip recorded as `identity: null` leaves the account page showing "—" with no
+ * Change button until the user signs out and back in. Retrying is safe because
+ * `claim_handle` is idempotent, so the only cost of a redundant call is the round trip.
+ */
+const CLAIM_RETRIES = 2;
+/** Short on purpose: the account page is rendering a loading state while this runs. */
+const CLAIM_RETRY_MS = 1500;
+
 export function ProfileProvider({children}: {children: ReactNode}) {
   const {user} = useSession();
   const userId = user?.id ?? null;
@@ -63,15 +76,30 @@ export function ProfileProvider({children}: {children: ReactNode}) {
   useEffect(() => {
     if (!userId) return;
     let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
     // Safe to fire on every sign-in with no guard: claim_handle returns an existing
     // handle untouched and never overwrites a display name the user chose. That
     // idempotence is why there is no "have I already claimed?" flag here — a flag
     // would be a second source of truth for something the database already answers.
-    void claimIdentity().then(({data}) => {
-      if (active) setClaimed({userId, identity: data});
-    });
+    // It is also what makes the retry free: a repeat call cannot double-claim.
+    const attempt = (retriesLeft: number) => {
+      void claimIdentity().then(({data, error}) => {
+        if (!active) return;
+        // NOT_CONFIGURED is a permanent answer (no credentials in this environment),
+        // so it settles immediately rather than burning the budget on a certain failure.
+        if (error !== null && error !== NOT_CONFIGURED && retriesLeft > 0) {
+          timer = setTimeout(() => attempt(retriesLeft - 1), CLAIM_RETRY_MS);
+          return;
+        }
+        setClaimed({userId, identity: data});
+      });
+    };
+    attempt(CLAIM_RETRIES);
+
     return () => {
       active = false;
+      clearTimeout(timer);
     };
   }, [userId]);
 

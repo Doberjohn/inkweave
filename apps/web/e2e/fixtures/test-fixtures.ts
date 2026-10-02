@@ -4,6 +4,7 @@ import {AppPage} from '../pages/app.page';
 import {CardListPage} from '../pages/card-list.page';
 import {SynergyResultsPage} from '../pages/synergy-results.page';
 import {VotePage} from '../pages/vote.page';
+import {stubSupabase} from './supabaseStub';
 
 // Define fixture types
 type TestFixtures = {
@@ -64,6 +65,10 @@ const BENIGN_CONSOLE: readonly RegExp[] = [
 export const test = base.extend<TestFixtures>({
   // Override the built-in `page` fixture so every spec inherits the guard.
   page: async ({page}, use) => {
+    // Before anything navigates: the placeholder Supabase host does not resolve, and the
+    // guard below would fail on the resulting network errors. See supabaseStub.ts.
+    await stubSupabase(page);
+
     const errors: string[] = [];
     page.on('console', (msg) => {
       if (msg.type() === 'error') errors.push(msg.text());

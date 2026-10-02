@@ -1,6 +1,7 @@
-import {describe, it, expect, vi, beforeEach} from 'vitest';
+import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {renderHook, act, waitFor} from '@testing-library/react';
 import type {ReactNode} from 'react';
+import {NOT_CONFIGURED} from '../../shared/lib/repoResult';
 import {ProfileProvider, useProfile} from './ProfileContext';
 
 const mockClaim = vi.hoisted(() => vi.fn());
@@ -21,6 +22,13 @@ beforeEach(() => {
   mockSession.user = null;
   mockClaim.mockResolvedValue({data: IDENTITY, error: null});
 });
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+/** Longer than the provider's backoff, so one call drains the whole retry schedule. */
+const PAST_ALL_BACKOFF_MS = 10_000;
 
 describe('ProfileProvider', () => {
   it('claims an identity once a user is present', async () => {
@@ -91,6 +99,58 @@ describe('ProfileProvider', () => {
     mockClaim.mockReturnValue(new Promise(() => {}));
     const {result} = render();
     act(() => result.current.adoptDisplayName('Doberjohn'));
+    expect(result.current.identity).toBeNull();
+  });
+
+  /*
+    A stored claim is FINAL — the effect only runs again when userId changes. So a
+    network blip recorded as `identity: null` leaves the account page showing "—" with
+    no Change button until the user signs out and back in. The three rows below are the
+    same branch settling differently: a transient error earns another round trip, a
+    permanent one does not, and the budget has an end.
+  */
+  it('retries a transient failure and keeps the identity it eventually gets', async () => {
+    vi.useFakeTimers();
+    mockSession.user = {id: 'u1'};
+    mockClaim
+      .mockResolvedValueOnce({data: null, error: 'Network error'})
+      .mockResolvedValueOnce({data: IDENTITY, error: null});
+
+    const {result} = render();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(PAST_ALL_BACKOFF_MS);
+    });
+
+    expect(mockClaim).toHaveBeenCalledTimes(2);
+    expect(result.current.identity).toEqual(IDENTITY);
+  });
+
+  // No credentials in this environment is a permanent answer, so spending the budget on
+  // it would only delay the same null by the full backoff.
+  it('does not retry when auth is not configured', async () => {
+    mockSession.user = {id: 'u1'};
+    mockClaim.mockResolvedValue({data: null, error: NOT_CONFIGURED});
+
+    const {result} = render();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(mockClaim).toHaveBeenCalledTimes(1);
+    expect(result.current.identity).toBeNull();
+  });
+
+  it('gives up once the retry budget is spent', async () => {
+    vi.useFakeTimers();
+    mockSession.user = {id: 'u1'};
+    mockClaim.mockResolvedValue({data: null, error: 'Network error'});
+
+    const {result} = render();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(PAST_ALL_BACKOFF_MS);
+    });
+
+    // The initial attempt plus CLAIM_RETRIES. Bounded, so a dead backend cannot leave
+    // the provider calling forever.
+    expect(mockClaim).toHaveBeenCalledTimes(3);
+    expect(result.current.loading).toBe(false);
     expect(result.current.identity).toBeNull();
   });
 });

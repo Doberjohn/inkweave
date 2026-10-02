@@ -29,10 +29,31 @@ export const DISPLAY_NAME_MAX = 60;
 export const DISPLAY_NAME_MIN = 2;
 export const DISPLAY_NAME_RULE = `Between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters.`;
 
-/** True when `name` is worth sending. Prevents a doomed request; never permits one. */
+/**
+ * True when `name` is worth sending. Prevents a doomed request; never permits one.
+ *
+ * Measured in CODE POINTS, because `profiles_display_name_len` uses `char_length`, which
+ * counts characters rather than UTF-16 code units. A non-BMP character such as an emoji
+ * is one `char_length` but two units of `.length`, so measuring with `.length` scores a
+ * 60-character emoji name as 120 and rejects it. That skew was safe (stricter than the
+ * database, never looser) but it capped such names at half the documented limit.
+ * `[...s]` iterates code points, which is exactly what `char_length` counts.
+ */
 export function isValidDisplayName(name: string): boolean {
-  const trimmed = name.trim();
-  return trimmed.length >= DISPLAY_NAME_MIN && trimmed.length <= DISPLAY_NAME_MAX;
+  const points = [...name.trim()].length;
+  return points >= DISPLAY_NAME_MIN && points <= DISPLAY_NAME_MAX;
+}
+
+/**
+ * Cut a draft down to the column's limit, counting the same units as the CHECK.
+ *
+ * The input field used `maxLength`, which the platform counts in UTF-16 code units, so it
+ * truncated an emoji name at 60 units rather than 60 characters. A controlled clamp is the
+ * only way to hold the field to the limit the rule text promises.
+ */
+export function clampDisplayName(value: string): string {
+  const points = [...value];
+  return points.length <= DISPLAY_NAME_MAX ? value : points.slice(0, DISPLAY_NAME_MAX).join('');
 }
 
 async function run<T>(

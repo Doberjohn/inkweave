@@ -41,10 +41,24 @@ export function SignInDialog({isOpen, onClose}: SignInDialogProps) {
     }
   };
 
+  /**
+   * Closing clears the attempt. `busy` is deliberately left set on a successful
+   * `signIn`, because the browser is leaving for the provider and there is no success
+   * state to render — but the component outlives that: only DialogShell's children
+   * unmount, so this state survives every open/close cycle. Without this reset, a user
+   * who comes back via the back button (bfcache) or cancels a slow redirect reopens a
+   * dialog still stuck on "Redirecting…", with no way to retry short of a full reload.
+   */
+  const handleClose = () => {
+    setBusy(null);
+    setError(null);
+    onClose();
+  };
+
   return (
     <DialogShell
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       ariaLabel="Sign in to Inkweave"
       size="sm"
       panelStyle={{padding: SPACING.xl, fontFamily: FONTS.body}}>
@@ -77,7 +91,7 @@ export function SignInDialog({isOpen, onClose}: SignInDialogProps) {
         </p>
       )}
 
-      <CtaButton variant="neutral" onClick={onClose} style={{marginTop: SPACING.lg, width: '100%'}}>
+      <CtaButton variant="neutral" onClick={handleClose} style={{marginTop: SPACING.lg, width: '100%'}}>
         Cancel
       </CtaButton>
     </DialogShell>
