@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from 'vitest';
+import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {
   DISPLAY_NAME_RULE,
   claimIdentity,
@@ -22,6 +22,15 @@ const mockEq = vi.hoisted(() => vi.fn());
 const mockState = vi.hoisted(() => ({client: null as unknown}));
 
 vi.mock('../../shared/lib/supabase', () => ({getSupabase: () => mockState.client}));
+
+// `clearAllMocks` wipes call history but leaves implementations in place, and
+// vite.config.ts sets no `restoreMocks`. So a console.error spy installed inside a test
+// would survive a failing assertion in that test and silence the rest of the file,
+// hiding real errors exactly when something is already going wrong. Same pattern as
+// usePairQueue.test.ts and sentry.test.ts.
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -162,7 +171,6 @@ describe('updateDisplayName', () => {
     expect(data).toBeNull();
     expect(error).toBe('Could not save that name. Try again.');
     expect(logged).toHaveBeenCalled();
-    logged.mockRestore();
   });
 
   // The catch, so a rejected fetch degrades instead of propagating into the dialog.
@@ -176,7 +184,6 @@ describe('updateDisplayName', () => {
     expect(data).toBeNull();
     expect(error).toBe('Network error');
     expect(logged).toHaveBeenCalled();
-    logged.mockRestore();
   });
 });
 
