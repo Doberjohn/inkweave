@@ -15,7 +15,7 @@ import {
 import {tmpdir} from 'node:os';
 import {dirname, join} from 'node:path';
 import {afterEach, describe, expect, it} from 'vitest';
-import {run} from './remove-worktree.mjs';
+import {duration, run} from './remove-worktree.mjs';
 
 const WINDOWS = process.platform === 'win32';
 const roots = [];
@@ -91,6 +91,27 @@ function remove(repo, args, options = {}) {
   return {code, output: lines.join('\n')};
 }
 
+/**
+ * Runs with a clock that reads `times` in turn, and records the log lines and each delete in one
+ * list, so a test can tell what was printed before the delete started.
+ */
+function removeTimed(repo, args, times) {
+  const events = [];
+  const code = run(args, {
+    cwd: repo.main,
+    log: (line) => events.push(line),
+    rm: (dir, options) => {
+      events.push('<rm>');
+      rmSync(dir, options);
+    },
+    now: () => times.shift(),
+  });
+  return {code, events};
+}
+
+// The two lines around a delete: before it starts, and after it ends.
+const DELETE_LINES = /^(wait {4}deleting|ok {6}deleted)/m;
+
 /** node_modules shaped like pnpm's: links inside the tree, a junction and a hard link out of it. */
 function pnpmTree(repo, wt) {
   const outsideDir = join(repo.root, 'canary-dir');
@@ -127,6 +148,16 @@ describe('remove-worktree', {timeout: 60_000}, () => {
   it('prints usage: exit 0 with --help, exit 1 without a target', () => {
     expect(run(['--help'], {log: () => {}})).toBe(0);
     expect(run([], {log: () => {}})).toBe(1);
+  });
+
+  it.each([
+    [0, '0s'],
+    [59_499, '59s'],
+    [59_500, '1m 0s'],
+    [60_000, '1m 0s'],
+    [192_000, '3m 12s'],
+  ])('writes a %i ms delete as %s', (ms, text) => {
+    expect(duration(ms)).toBe(text);
   });
 
   describe('which worktree', () => {
@@ -292,10 +323,25 @@ describe('remove-worktree', {timeout: 60_000}, () => {
       expect(readdirSync(join(repo.main, '.git', 'worktree-removals'))).toHaveLength(1);
     });
 
+    it('says it is deleting before the delete starts, and how long the delete took', () => {
+      const repo = makeRepo();
+      addWorktree(repo, 'slow');
+      const {code, events} = removeTimed(repo, ['slow'], [0, 192_000]);
+      expect(code).toBe(0);
+      const wait = events.findIndex((line) => /^wait {4}deleting .*slow\.removing: /.test(line));
+      expect(wait).toBeGreaterThan(-1);
+      expect(wait).toBeLessThan(events.indexOf('<rm>'));
+      expect(events).toContainEqual(
+        expect.stringMatching(/^ok {6}deleted .*slow\.removing in 3m 12s$/),
+      );
+    });
+
     it('--dry-run deletes and unregisters nothing', () => {
       const repo = makeRepo();
       const wt = addWorktree(repo, 'plan');
-      expect(remove(repo, ['plan', '--dry-run']).code).toBe(0);
+      const {code, output} = remove(repo, ['plan', '--dry-run']);
+      expect(code).toBe(0);
+      expect(output).not.toMatch(DELETE_LINES);
       expect(existsSync(join(wt, 'README.md'))).toBe(true);
       expect(registered(repo)).toContain(norm(wt));
       expect(branchExists(repo, 'wt/plan')).toBe(true);
@@ -462,10 +508,25 @@ describe('remove-worktree', {timeout: 60_000}, () => {
       expect(existsSync(orphan)).toBe(false);
     });
 
+    it('says it is deleting before each delete, and how long it took', () => {
+      const repo = makeRepo();
+      leftover(repo, 'orphan');
+      const {code, events} = removeTimed(repo, ['--leftovers'], [0, 14_000]);
+      expect(code).toBe(0);
+      const wait = events.findIndex((line) => /^wait {4}deleting .*orphan\.removing: /.test(line));
+      expect(wait).toBeGreaterThan(-1);
+      expect(wait).toBeLessThan(events.indexOf('<rm>'));
+      expect(events).toContainEqual(
+        expect.stringMatching(/^ok {6}deleted .*orphan\.removing in 14s$/),
+      );
+    });
+
     it('--dry-run deletes nothing', () => {
       const repo = makeRepo();
       const orphan = leftover(repo, 'orphan');
-      expect(remove(repo, ['--leftovers', '--dry-run']).code).toBe(0);
+      const {code, output} = remove(repo, ['--leftovers', '--dry-run']);
+      expect(code).toBe(0);
+      expect(output).not.toMatch(DELETE_LINES);
       expect(existsSync(join(orphan, 'README.md'))).toBe(true);
     });
 

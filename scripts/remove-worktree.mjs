@@ -110,12 +110,12 @@ function fail(message) {
 /**
  * Runs the command line `args` and returns its exit code: 0 only when everything it set out
  * to do is done. `cwd` resolves the repository and relative paths; `rm` deletes a folder and
- * `rename` moves one (fs.rmSync's and fs.renameSync's signatures). Exported for
- * scripts/remove-worktree.test.mjs.
+ * `rename` moves one (fs.rmSync's and fs.renameSync's signatures); `now` reads the clock
+ * (Date.now's signature). Exported for scripts/remove-worktree.test.mjs.
  */
 export function run(
   args,
-  {cwd = process.cwd(), log = console.log, rm = rmSync, rename = renameSync} = {},
+  {cwd = process.cwd(), log = console.log, rm = rmSync, rename = renameSync, now = Date.now} = {},
 ) {
   const options = parse(args);
   if (options.help) {
@@ -128,7 +128,7 @@ export function run(
   }
   try {
     const repo = repoAt(cwd);
-    const context = {...options, cwd, log, rm, rename};
+    const context = {...options, cwd, log, rm, rename, now};
     return options.leftovers ? sweepLeftovers(repo, context) : removeWorktree(repo, context);
   } catch (error) {
     log(error instanceof Stop ? error.message : `failed: ${error.message}`);
@@ -257,7 +257,7 @@ function removeWorktree(repo, context) {
   }
   const marker = claim(repo, worktree.path, context.rename);
   unregister(repo, worktree, marker, context);
-  destroy(`${worktree.path}${REMOVING}`, marker, context.rm, log);
+  destroy(`${worktree.path}${REMOVING}`, marker, context.rm, log, context.now);
   if (branch.remove) git(repo.main, ['branch', '-D', worktree.branch]);
   log(`removed ${worktree.path} (${branch.note})`);
   return 0;
@@ -446,7 +446,12 @@ function undoClaim(path, marker, rename) {
   refuse(`git worktree prune left ${path} registered; it was renamed back, so nothing changed`);
 }
 
-function destroy(dir, marker, rm, log) {
+// rmSync reports nothing until it returns, and node_modules takes minutes: say so up front.
+function destroy(dir, marker, rm, log, now) {
+  log(
+    `wait    deleting ${dir}: node_modules can take a few minutes, and nothing prints until it ends (to watch it, count the entries left in that folder)`,
+  );
+  const started = now();
   try {
     rm(dir, RM_OPTIONS);
   } catch (error) {
@@ -455,7 +460,14 @@ function destroy(dir, marker, rm, log) {
     );
   }
   if (marker) rmSync(marker, {force: true});
-  log(`ok      deleted ${dir}`);
+  log(`ok      deleted ${dir} in ${duration(now() - started)}`);
+}
+
+// 192000 -> "3m 12s"; 14000 -> "14s". Exported for scripts/remove-worktree.test.mjs.
+export function duration(ms) {
+  const seconds = Math.round(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  return minutes ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
 }
 
 // --- --leftovers -------------------------------------------------------------------------
@@ -532,7 +544,7 @@ function readMarkers(repo) {
   });
 }
 
-function sweepOne(repo, {path, marker}, {dryRun, log, rm, rename}) {
+function sweepOne(repo, {path, marker}, {dryRun, log, rm, rename, now}) {
   const unique = contentGitLacks(repo, path);
   if (unique.length) {
     refuse(
@@ -546,7 +558,7 @@ function sweepOne(repo, {path, marker}, {dryRun, log, rm, rename}) {
   // A `.removing` folder passed the gates before its rename; anything else takes the in-use check.
   const dir = path.endsWith(REMOVING) ? path : claimLeftover(path, rename);
   unregisterLeftover(repo, dir.slice(0, -REMOVING.length), log);
-  destroy(dir, marker, rm, log);
+  destroy(dir, marker, rm, log, now);
 }
 
 // A removal stopped between its rename and its prune leaves the original path registered. Its
