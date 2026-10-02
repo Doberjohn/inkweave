@@ -4,7 +4,10 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../constants';
 import {useAutocomplete} from '../hooks';
 import {useRevealPhase} from '../../features/reveals';
+import {AuthButton} from './AuthButton';
 import {CTA_FILLED_STYLE} from './ctaStyles';
+import {headerCarriesAuth, type ViewportConfig} from './headerChrome';
+import {SignInDialog} from './SignInDialog';
 import {SearchAutocomplete} from './SearchAutocomplete';
 
 interface CompactHeaderProps {
@@ -38,6 +41,16 @@ const NAV_ITEMS: readonly NavItem[] = [
 
 const REVEALS_PATH = '/reveals';
 
+/**
+ * Accounts ship dark until there is something to do with one (#474, 2026-10-01).
+ *
+ * This gates the control, NOT the routes. `/account` and `/auth/callback` stay
+ * mounted: the callback is an OAuth redirect TARGET, so unmounting it would turn a
+ * provider round-trip into a 404 for anyone mid-flight, and leaving both reachable
+ * by URL is what makes the feature testable in production without being findable.
+ */
+const SHOW_ACCOUNTS = import.meta.env.VITE_SHOW_ACCOUNTS === 'true';
+
 // =====================================================================
 // Domain types — encapsulate related flags so function signatures carry
 // semantics, not bare primitives. Also prevents arg-order swaps between
@@ -50,10 +63,8 @@ interface InteractionState {
   isHovered: boolean;
 }
 
-/** Responsive viewport config. Derived from the parent's `isMobile` prop. */
-interface ViewportConfig {
-  isMobile: boolean;
-}
+// ViewportConfig and headerCarriesAuth live in ./headerChrome, so other surfaces
+// can read the same rule without importing a component.
 
 /** All knobs needed to compute the search-input wrapper style. */
 interface SearchInputStyleConfig {
@@ -381,6 +392,29 @@ function RevealsPill({isHovered, onMouseEnter, onMouseLeave}: RevealsPillProps) 
   );
 }
 
+/**
+ * The header's rightmost slot: the shared `AuthButton` plus the dialog it opens.
+ *
+ * The button rule (which label, and rendering nothing while `loading` or when auth
+ * is unconfigured) lives in `AuthButton`. What stays here is placement: the
+ * `marginLeft: 'auto'` that pins it right, and ownership of this header's dialog.
+ *
+ * `AuthButton` calls useSession() directly rather than taking props. CompactHeader
+ * RENDERS auth, so depending on SessionProvider is honest: a throw outside one
+ * reports a real mounting error. Call sites sit under AppLayout's provider;
+ * stories get a decorator.
+ */
+function HeaderAuth() {
+  const [signInOpen, setSignInOpen] = useState(false);
+
+  return (
+    <div style={{marginLeft: 'auto'}}>
+      <AuthButton onSignIn={() => setSignInOpen(true)} />
+      <SignInDialog isOpen={signInOpen} onClose={() => setSignInOpen(false)} />
+    </div>
+  );
+}
+
 interface DesktopNavProps {
   isRevealSeason: boolean;
 }
@@ -453,7 +487,7 @@ export function CompactHeader({
   // Mobile chrome lives in MobileBottomNav + SearchBottomSheet (from AppLayout).
   // The top header is desktop-only; render nothing on mobile so callers don't
   // need per-viewport conditionals at every call site.
-  if (isMobile) return null;
+  if (!headerCarriesAuth({isMobile: isMobile === true})) return null;
 
   const isRevealSeason = revealPhase === 'pre-release' || revealPhase === 'pre-release-live';
   const viewport: ViewportConfig = {isMobile: false};
@@ -474,6 +508,7 @@ export function CompactHeader({
       )}
       {!viewport.isMobile && <DesktopNav isRevealSeason={isRevealSeason} />}
       {headerActions}
+      {SHOW_ACCOUNTS && <HeaderAuth />}
     </header>
   );
 }

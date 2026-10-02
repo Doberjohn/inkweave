@@ -1,5 +1,6 @@
 import {execFileSync} from 'node:child_process';
 import {defineConfig, devices} from '@playwright/test';
+import {E2E_SUPABASE_ANON_KEY, E2E_SUPABASE_ORIGIN} from './e2e/fixtures/supabaseStub';
 
 // Local E2E servers live here, clear of the dev-server ports (5173 and up), Storybook, the
 // react-grab relay and Chrome's blocked ports. Not the OS's own free-port pick: this machine's
@@ -117,6 +118,23 @@ export default defineConfig({
     // sessions load this machine (#664).
     timeout: 240000,
     env: {
+      // Exercise the accounts surface in E2E; production default stays off via .env.example.
+      VITE_SHOW_ACCOUNTS: 'true',
+      // Placeholder Supabase config, so `enabled` is true and the auth control RENDERS.
+      // Two reasons this is pinned rather than inherited:
+      //   1. CI supplies no Supabase env, so `getSupabase()` returns null, `enabled` is
+      //      false and AuthButton renders nothing. Without this the 5-browser matrix
+      //      exercises none of the auth surface, and axe never scans it.
+      //   2. Process env beats .env files, so a developer's real credentials in
+      //      .env.local cannot change what E2E sees. Same state everywhere.
+      // Auth itself reaches no network: with no stored session and no code in the URL,
+      // getSession() resolves locally. Signing IN is not covered here and cannot be,
+      // since it needs a real provider round-trip.
+      // Being configured DOES switch on the other Supabase paths (voting), whose REST
+      // calls would hit a host that does not resolve — `e2e/fixtures/supabaseStub.ts`
+      // answers them in the browser. Keep the origin below in step with that module.
+      VITE_SUPABASE_URL: E2E_SUPABASE_ORIGIN,
+      VITE_SUPABASE_ANON_KEY: E2E_SUPABASE_ANON_KEY,
       // Exercise the reveal-season active code paths in E2E.
       VITE_IS_REVEAL_SEASON: 'true',
       // Show Strategy Tips block so the `playstyle-detail.spec.ts` toggle test has

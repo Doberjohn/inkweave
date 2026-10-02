@@ -27,6 +27,10 @@ const EXCLUDED = new Set([
   'RenderProfiler.tsx', // performance utility wrapper, not visual
   'RevealsGate.tsx', // route gate: renders children or a redirect, no visual surface
   'Seo.tsx', // head-only: emits <title>/<meta>/<link> via React 19 native metadata, renders no visible UI
+  // Context provider: renders only its children, exactly like the providers in
+  // shared/contexts (which this script does not scan). It lives under features/
+  // because it reads a repository, and shared/ must not import a feature.
+  'ProfileContext.tsx',
 ]);
 
 // Pages are route compositions of already-storied components; stories exist

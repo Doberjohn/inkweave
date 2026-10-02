@@ -14,6 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      collections: {
+        Row: {
+          created_at: string
+          entries: Json
+          imported_at: string
+          owner_id: string
+          schema_version: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entries?: Json
+          imported_at: string
+          owner_id: string
+          schema_version?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entries?: Json
+          imported_at?: string
+          owner_id?: string
+          schema_version?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      decks: {
+        Row: {
+          cards: Json
+          created_at: string
+          gameplan: string | null
+          id: string
+          inks: string[]
+          is_public: boolean
+          name: string
+          owner_id: string
+          schema_version: number
+          updated_at: string
+        }
+        Insert: {
+          cards?: Json
+          created_at?: string
+          gameplan?: string | null
+          id?: string
+          inks?: string[]
+          is_public?: boolean
+          name: string
+          owner_id: string
+          schema_version?: number
+          updated_at?: string
+        }
+        Update: {
+          cards?: Json
+          created_at?: string
+          gameplan?: string | null
+          id?: string
+          inks?: string[]
+          is_public?: boolean
+          name?: string
+          owner_id?: string
+          schema_version?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          handle: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          handle?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          handle?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       votes: {
         Row: {
           accuracy: number | null
@@ -82,6 +175,15 @@ export type Database = {
       }
     }
     Functions: {
+      claim_handle: {
+        Args: never
+        Returns: {
+          display_name: string
+          handle: string
+        }[]
+      }
+      pretty_handle: { Args: { handle: string }; Returns: string }
+      random_handle: { Args: never; Returns: string }
       submit_vote: {
         Args: {
           p_accuracy?: number

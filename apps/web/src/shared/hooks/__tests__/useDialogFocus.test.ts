@@ -47,6 +47,37 @@ describe('useDialogFocus', () => {
     document.body.removeChild(focusEl);
   });
 
+  it('leaves focus alone when the user already reached inside before the one-shot fires', () => {
+    // The 100ms wait is long enough to lose a race with a real user: a click or a
+    // key inside the dialog lands first, and focus was then yanked to the close
+    // button. DialogShell's useFocusRetry already guards for this; the one-shot
+    // did not, which is what made CardOverviewModal's arrow-key test flaky.
+    const container = document.createElement('div');
+    const closeButton = document.createElement('button');
+    const pill = document.createElement('button');
+    container.append(closeButton, pill);
+    document.body.appendChild(container);
+    const closeSpy = vi.spyOn(closeButton, 'focus');
+
+    renderHook(() =>
+      useDialogFocus({
+        isOpen: true,
+        containerRef: {current: container},
+        initialFocusRef: {current: closeButton},
+        onClose: vi.fn(),
+      }),
+    );
+
+    pill.focus();
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
+
+    expect(document.activeElement).toBe(pill);
+    expect(closeSpy).not.toHaveBeenCalled();
+    document.body.removeChild(container);
+  });
+
   it('should restore focus to the element focused at open when closed', () => {
     const trigger = document.createElement('button');
     const inside = document.createElement('button');

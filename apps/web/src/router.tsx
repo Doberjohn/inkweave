@@ -11,6 +11,8 @@ import {withSpeedInsightsRoutes} from './shared/lib/speedInsightsRoute';
 // Lazy-load page components for code splitting (with retry on chunk load failure)
 const HomePage = lazyWithRetry(() => import('./pages/HomePage'), 'HomePage');
 const BrowsePage = lazyWithRetry(() => import('./pages/BrowsePage'), 'BrowsePage');
+const AccountPage = lazyWithRetry(() => import('./pages/AccountPage'), 'AccountPage');
+const AuthCallbackPage = lazyWithRetry(() => import('./pages/AuthCallbackPage'), 'AuthCallbackPage');
 const CardPage = lazyWithRetry(() => import('./pages/CardPage'), 'CardPage');
 const ComparePage = lazyWithRetry(() => import('./pages/ComparePage'), 'ComparePage');
 const PlaystyleGalleryPage = lazyWithRetry(
@@ -90,6 +92,17 @@ const routes: RouteObject[] = [
         element: (
           <SuspenseWrapper>
             <BrowsePage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        // Private account settings. NOT gated by a route guard: the page renders
+        // its own sign-in prompt, because a redirect would discard the URL and
+        // make a shared or bookmarked /account link look broken rather than gated.
+        path: 'account',
+        element: (
+          <SuspenseWrapper>
+            <AccountPage />
           </SuspenseWrapper>
         ),
       },
@@ -191,6 +204,14 @@ const routes: RouteObject[] = [
               <RevealsPage />
             </SuspenseWrapper>
           </RevealsGate>
+        ),
+      },
+      {
+        path: 'auth/callback',
+        element: (
+          <SuspenseWrapper>
+            <AuthCallbackPage />
+          </SuspenseWrapper>
         ),
       },
       {

@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-146 tests across 20 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+148 tests across 21 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673).
 
@@ -145,6 +145,15 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should navigate to playstyle detail page | Clicking a playstyle card navigates to `/playstyles/:id`, shows heading |
 | should deep link to playstyle detail page | Direct navigation to `/playstyles/lore-denial` shows heading + card tiles |
 | should navigate back from playstyle detail to gallery | Back link from detail returns to `/playstyles` (or logo to `/`) |
+
+## `account-header.spec.ts` — 2 tests (desktop only)
+
+Covers the accounts surface, which ships behind `VITE_SHOW_ACCOUNTS` (default OFF). `playwright.config.ts` pins the flag ON **and** pins placeholder `VITE_SUPABASE_*` values. Both pins matter: without credentials `getSupabase()` returns null, `enabled` is false and `AuthButton` renders nothing, so these would pass locally off a developer's `.env.local` and fail in CI, which supplies no Supabase env. Pinning makes the state identical everywhere. Nothing reaches the network, because `getSession()` resolves locally with no stored session and no code in the URL.
+
+| Test | What it verifies |
+|---|---|
+| the header carries a sign-in control on every page | `compact-header` shows a "Sign in" button on `/browse` AND `/playstyles`, proving the header carries it rather than the page |
+| the sign-in control opens the provider dialog | Clicking it opens the `SignInDialog`. Stops at the provider choice: signing in needs a real round-trip no placeholder project can serve |
 
 ## `responsive-images.spec.ts` — 4 tests (desktop only)
 
