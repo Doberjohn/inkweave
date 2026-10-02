@@ -150,8 +150,12 @@ export async function updateDisplayName(userId: string, displayName: string): Pr
       .maybeSingle();
 
     if (error) {
-      // 23514: the length CHECK. The only way a well-formed request fails.
-      if (error.code === '23514') return {data: null, error: DISPLAY_NAME_RULE};
+      // No 23514 special case. The guard above mirrors `profiles_display_name_len`
+      // exactly, so a request that gets this far cannot violate it; and a bare 23514
+      // would not prove it was that constraint anyway, since `profiles_handle_format`
+      // sits on the same row and Postgres evaluates every CHECK on an UPDATE. A check
+      // violation here therefore means something unforeseen, which the generic message
+      // reports honestly and the log makes debuggable.
       console.error('[profileRepository] display name update failed:', error.message);
       return {data: null, error: 'Could not save that name. Try again.'};
     }

@@ -137,14 +137,6 @@ describe('updateDisplayName', () => {
     expect(mockUpdate).toHaveBeenCalledWith({display_name: 'Doberjohn'});
   });
 
-  // 23514 is the length CHECK — the only way a well-formed request can fail. There is
-  // deliberately no 23505 case: display names are NOT unique, so nothing can be taken.
-  it('reads a 23514 as the length rule', async () => {
-    mockMaybeSingle.mockResolvedValue({data: null, error: {code: '23514', message: 'check violation'}});
-    const {error} = await updateDisplayName('u1', 'x'.repeat(61));
-    expect(error).toContain('characters');
-  });
-
   // No row means RLS matched nothing, i.e. not the caller's id. Reporting it matters:
   // succeeding silently would show the new name while the database kept the old one.
   it('reports a write that matched no row', async () => {
@@ -203,10 +195,19 @@ describe('updateDisplayName guards the write', () => {
     database would store "" or "a" happily. The dialog gates on the same rule, but it is
     not the only caller, so the floor is enforced at the data boundary too.
   */
-  it.each(['', '   ', 'a'])('refuses %o without sending a request', async (name) => {
+  it.each([
+    ['an empty name', ''],
+    ['whitespace only', '   '],
+    ['one character', 'a'],
+    // This row replaces a test that mapped a 23514 to the length rule. The guard now
+    // rejects 61 characters before any request, so that test asserted the guard's
+    // message while believing it exercised the error branch. The branch is gone.
+    ['61 characters', 'x'.repeat(61)],
+  ])('refuses %s without sending a request', async (_case, name) => {
     const result = await updateDisplayName('u1', name);
     expect(result.error).toBe(DISPLAY_NAME_RULE);
     expect(mockUpdate).not.toHaveBeenCalled();
+    expect(mockMaybeSingle).not.toHaveBeenCalled();
   });
 
   it('still sends a name that satisfies the rule', async () => {
