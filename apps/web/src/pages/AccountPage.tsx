@@ -112,17 +112,31 @@ function Checking() {
  * Supabase can refuse a logout (an expired refresh token, a dropped connection). The
  * context used to discard that, so the button appeared to do nothing while the user
  * stayed signed in, which reads as a broken button rather than a failed request.
+ *
+ * The request is also gated while it is in flight. Without that the button stayed live
+ * through a slow logout, so an impatient second click fired a second `signOut`, and the
+ * previous attempt's error sat on screen the whole time the retry was running.
  */
 function SessionSection({onSignOut}: {onSignOut: () => Promise<{error: string | null}>}) {
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
   const run = async () => {
+    setBusy(true);
+    // Cleared up front, so a retry is not read against the previous attempt's message.
+    setError(null);
     const {error: failure} = await onSignOut();
+    // Only these two lines matter on FAILURE, where the page is still mounted because
+    // the session survived. A success ends the session, so AccountPage swaps in
+    // SignedOut and this component is gone before they land; React drops them.
     setError(failure);
+    setBusy(false);
   };
+
   return (
     <Section title="Session">
-      <CtaButton variant="neutral" onClick={() => void run()}>
-        Sign out
+      <CtaButton variant="neutral" onClick={() => void run()} disabled={busy}>
+        {busy ? 'Signing out…' : 'Sign out'}
       </CtaButton>
       {error && (
         <p
