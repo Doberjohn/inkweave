@@ -33,7 +33,7 @@
  *    Redirect first. The matcher cannot filter by host, so apex /sw.js update checks also run
  *    this middleware; do not narrow it.
  */
-import slugMap from './middleware-data/card-slugs.json';
+import slugMap from './middleware-data/card-slugs.json' with {type: 'json'};
 
 const SLUGS = slugMap as Record<string, string>;
 

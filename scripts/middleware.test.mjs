@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import vm from 'node:vm';
+import ts from 'typescript';
 import middleware, {config} from '../middleware.ts';
 
 // #634: retired hosts must get a 200 self-unregistering worker at /sw.js (a redirect there is what
@@ -122,5 +123,35 @@ describe('vercel.json retired-host redirects', () => {
       expect(source.test('/sw.js')).toBe(false);
       expect(r.statusCode).toBe(308);
     }
+  });
+});
+
+// #709: `vercel build` type-checks this file with @vercel/node, which picks NodeNext when the
+// nearest tsconfig.json (the repo root's) sets no `module`; package.json's "type": "module" then
+// makes it an ES module. Each diagnostic prints as an error annotation on the Deploy run, and no
+// other gate type-checks this file: the root tsconfig.json compiles no files of its own. Building
+// the program took 5.5 s on a loaded machine, past vitest's 5 s default.
+describe('vercel build type-check', {timeout: 60_000}, () => {
+  it('reports no TypeScript errors under the NodeNext defaults vercel build applies', () => {
+    const file = path.join(ROOT, 'middleware.ts');
+    const program = ts.createProgram([file], {
+      module: ts.ModuleKind.NodeNext,
+      moduleResolution: ts.ModuleResolutionKind.NodeNext,
+      target: ts.ScriptTarget.ES2021,
+      esModuleInterop: true,
+      strict: false,
+      noEmit: true,
+    });
+    const source = program.getSourceFile(file);
+    const diagnostics = [
+      ...program.getSyntacticDiagnostics(source),
+      ...program.getSemanticDiagnostics(source),
+    ];
+    const host = {
+      getCanonicalFileName: (f) => f,
+      getCurrentDirectory: () => ROOT,
+      getNewLine: () => ts.sys.newLine,
+    };
+    expect(ts.formatDiagnostics(diagnostics, host)).toBe('');
   });
 });
