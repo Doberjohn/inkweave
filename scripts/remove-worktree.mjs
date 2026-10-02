@@ -257,7 +257,7 @@ function removeWorktree(repo, context) {
   }
   const marker = claim(repo, worktree.path, context.rename);
   unregister(repo, worktree, marker, context);
-  destroy(`${worktree.path}${REMOVING}`, marker, context.rm, log, context.now);
+  destroy(`${worktree.path}${REMOVING}`, marker, context);
   if (branch.remove) git(repo.main, ['branch', '-D', worktree.branch]);
   log(`removed ${worktree.path} (${branch.note})`);
   return 0;
@@ -447,7 +447,7 @@ function undoClaim(path, marker, rename) {
 }
 
 // rmSync reports nothing until it returns, and node_modules takes minutes: say so up front.
-function destroy(dir, marker, rm, log, now) {
+function destroy(dir, marker, {rm, log, now}) {
   log(
     `wait    deleting ${dir}: node_modules can take a few minutes, and nothing prints until it ends (to watch it, count the entries left in that folder)`,
   );
@@ -544,7 +544,8 @@ function readMarkers(repo) {
   });
 }
 
-function sweepOne(repo, {path, marker}, {dryRun, log, rm, rename, now}) {
+function sweepOne(repo, {path, marker}, context) {
+  const {dryRun, log, rename} = context;
   const unique = contentGitLacks(repo, path);
   if (unique.length) {
     refuse(
@@ -558,7 +559,7 @@ function sweepOne(repo, {path, marker}, {dryRun, log, rm, rename, now}) {
   // A `.removing` folder passed the gates before its rename; anything else takes the in-use check.
   const dir = path.endsWith(REMOVING) ? path : claimLeftover(path, rename);
   unregisterLeftover(repo, dir.slice(0, -REMOVING.length), log);
-  destroy(dir, marker, rm, log, now);
+  destroy(dir, marker, context);
 }
 
 // A removal stopped between its rename and its prune leaves the original path registered. Its
