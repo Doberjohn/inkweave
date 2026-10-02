@@ -5,13 +5,16 @@
 # SPA-only and non-JS crawlers get empty shells. This workflow runs the SAME build (via
 # `vercel build`, which honours vercel.json's buildCommand → build:vercel) in Playwright's
 # Ubuntu image, which ships chromium and its system deps, so the crawl renders (verified:
-# 1052/1052, 0 failed). It then ships the prebuilt output with `vercel deploy --prebuilt --prod`.
+# 1052/1052, 0 failed). It then ships the prebuilt output with `vercel deploy --prebuilt --prod`,
+# retried once if it fails (scripts/vercel-deploy.mjs, #698).
 #
 # SCOPE: production only. PR previews stay on Vercel's own git integration (fast SPA — previews
 # aren't indexed, so they don't need the crawl). vercel.json sets git.deploymentEnabled.master
 # = false so Vercel does NOT also deploy master (no double / flip-flopping production deploy).
-# One exception: a PR that changes this file gets a dry run (#694). It runs the same pull,
-# build and prerender check, but never deploys and never pings IndexNow.
+# One exception: a PR that changes this file or scripts/vercel-deploy.mjs gets a dry run
+# (#694, #698). It runs the same pull, build and prerender check, then uploads the build as a
+# staged production deployment that is never promoted and is removed in the same run. It never
+# pings IndexNow.
 #
 # KILL SWITCH: the job only runs when repo variable DEPLOY_VIA_CI == 'true'. Unsetting it stops
 # CI deploys — but note Vercel git-deploy for master is off, so to fully hand deploys back to
@@ -23,11 +26,13 @@ name: Deploy
 on:
   push:
     branches: [master]
-  # A dry run for PRs that change this file: build and verify, never deploy.
+  # A dry run for PRs that change this file or the script that runs `vercel deploy` (#698):
+  # build, verify and stage-deploy, never promote.
   pull_request:
     branches: [master]
     paths:
       - '.github/workflows/deploy.yml'
+      - 'scripts/vercel-deploy.mjs'
 
 # Only actions/checkout uses GITHUB_TOKEN here: Vercel authenticates with VERCEL_TOKEN, and
 # actions/cache with the runner's own token. Declared, so PR dry runs (#694) stay read-only
@@ -46,10 +51,11 @@ concurrency:
 # versions: on 2026-09-24 pull and build ran 59.26.0, then deploy fetched the
 # just-published 60.0.0, whose @vercel/ruby@12.0.0 dependency was not on npm yet
 # (notarget), failing that deploy. 60.0.0 has deployed cleanly since.
-# To upgrade, bump it in a PR. That PR changes this file, so it gets a dry run that runs
-# the new version's `vercel pull` and `vercel build` (#694); only `vercel deploy` waits
-# for the deploy after merge. Steps expand it as ${VERCEL_CLI_VERSION:?} so a missing
-# value fails the step instead of quietly falling back to @latest.
+# To upgrade, bump it in a PR. That PR changes this file, so its dry run exercises the new
+# version's `vercel pull`, `vercel build` and `vercel deploy` (#694, #698); only promotion
+# waits for the deploy after merge. Steps expand it as ${VERCEL_CLI_VERSION:?}, and
+# scripts/vercel-deploy.mjs refuses to start without it, so a missing value fails the step
+# instead of quietly falling back to @latest.
 env:
   VERCEL_CLI_VERSION: '60.0.0'
 
@@ -156,10 +162,27 @@ jobs:
       - name: Verify the prerender actually produced content
         run: node scripts/check-rendered-html.mjs .vercel/output/static
 
-      # A PR's dry run stops here: only a push to master deploys and pings.
+      # One upload error fails a Vercel deploy outright (@vercel/client retries only a fixed
+      # list of error messages, #698); the script retries once.
+      # A PR's dry run never runs this step: only a push to master deploys to production and
+      # pings IndexNow.
       - name: Deploy prebuilt output to production
         if: github.event_name == 'push'
-        run: npx "vercel@${VERCEL_CLI_VERSION:?}" deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: node scripts/vercel-deploy.mjs production
+
+      # A PR's dry run uploads the same build as a staged production deployment, so the upload
+      # path is tested before merge (#698). --skip-domain never promotes it to inkweave.ink, and
+      # the script removes it again. It stays behind, never promoted, when a newer push cancels
+      # the run between the upload and the remove, when a deploy attempt fails after Vercel
+      # created it, or when the remove fails or is refused. All but the cancel turn this step
+      # red. Delete a leftover in the Vercel dashboard when convenient.
+      - name: Upload as a staged production deployment, then delete it (dry run only)
+        if: github.event_name == 'pull_request'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: node scripts/vercel-deploy.mjs staged
 
       # Push the hub URLs to IndexNow (Bing/DuckDuckGo) for near-instant re-crawl (#496).
       # Non-fatal: a ping failure must never fail the production deploy.
