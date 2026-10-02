@@ -1837,6 +1837,13 @@
       "fullTextSections": [
         "(A character with cost 2 or more can ⟳ to sing this song for free.)",
         "Put the top 3 cards of your deck into your discard. Chosen character gets +1 ¤ this turn for each song card in your discard."
+      ],
+      "variants": [
+        {
+          "id": 14216,
+          "rarity": "Epic",
+          "number": 216
+        }
       ]
     },
     {
