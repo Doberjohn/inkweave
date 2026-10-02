@@ -145,6 +145,39 @@ describe('updateDisplayName', () => {
     expect(data).toBeNull();
     expect(error).toBe('Could not save that name. Try again.');
   });
+
+  /*
+    The two failure paths, both of which need a name the guard ACCEPTS so that a request
+    is actually issued. Each asserts `mockUpdate` was called, which is the check the
+    retired 23514 test lacked: it sent 61 characters, the guard answered first, and it
+    passed while reaching nothing.
+  */
+  it('reports a server error with the generic message, and logs it', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockMaybeSingle.mockResolvedValue({data: null, error: {code: '42501', message: 'permission denied'}});
+
+    const {data, error} = await updateDisplayName('u1', 'Doberjohn');
+
+    expect(mockUpdate).toHaveBeenCalled();
+    expect(data).toBeNull();
+    expect(error).toBe('Could not save that name. Try again.');
+    expect(logged).toHaveBeenCalled();
+    logged.mockRestore();
+  });
+
+  // The catch, so a rejected fetch degrades instead of propagating into the dialog.
+  it('degrades to a network error when the request rejects', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockMaybeSingle.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    const {data, error} = await updateDisplayName('u1', 'Doberjohn');
+
+    expect(mockUpdate).toHaveBeenCalled();
+    expect(data).toBeNull();
+    expect(error).toBe('Network error');
+    expect(logged).toHaveBeenCalled();
+    logged.mockRestore();
+  });
 });
 
 /*
