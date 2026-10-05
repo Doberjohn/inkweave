@@ -763,6 +763,49 @@ No SW cache rule for `previewCards.json` itself — its graceful 404 path is bro
 
 ---
 
+### CDN restore on a cache miss (#554)
+
+Before falling back to Ravensburger, a cache miss tries to fetch the
+already-converted AVIF from a live deployment.
+
+**The deployed `allCards.json` is the record of what production serves.** The build
+injects `imageHash`/`imageHashSm` into it (`download-card-images.mjs:262`)
+and it ships, so the live file publishes both the hashes in use AND the
+`images.full` source URLs they were built from. `fetchDeployedCards` reads it back
+from `{ORIGIN}/data/allCards.json`; `planFor` in `scripts/lib/imageRestore.mjs`
+restores only when the source URL still matches and both hashes are present.
+
+| Situation | Action |
+|---|---|
+| All size variants in `node_modules/.cache/card-images/` | skip (unchanged) |
+| Cache miss, prod serves the same source art | **restore** — no download, no `sharp` |
+| Cache miss, art changed / card new / prod unreachable | download from Ravensburger |
+
+**Restore is verified, not trusted.** `verifyRestored` requires the returned bytes
+to hash to the value that was requested, so a stale, truncated or substituted
+response is discarded and falls through. This is what makes fetching a build input
+from a build-time-resolved origin acceptable.
+
+Origin resolution, first match wins: `PROD_IMAGE_ORIGIN` →
+`VERCEL_PROJECT_PRODUCTION_URL` (automatic on Vercel) → `SITE_ORIGIN`
+(`scripts/lib/siteOrigin.mjs`). `SKIP_IMAGE_RESTORE=1` or `--force` disables it.
+**Every failure path degrades to the pre-#554 behaviour**; nothing new can fail a build.
+
+**There is deliberately NO committed manifest.** The first design recorded output
+hashes in a committed file; that cannot work, because AVIF encoding is not
+reproducible across machines. Measured 2026-08-10: **0 of 1024** hashes from a local
+Windows run matched production's Linux build. A locally-committed manifest would
+describe bytes CI never produces, so every restore would 404.
+
+Side effect worth knowing: restoring prod's bytes makes the emitted hash equal
+prod's hash, so unchanged cards deploy under **identical filenames** and their
+`immutable` CDN entries survive the release.
+
+Measured on a cold cache, 2026-08-10: **1024 restored, 0 downloaded, 0 failed, 33.5s**,
+and all 1024 resulting hashes matched production exactly.
+
+---
+
 ## File inventory
 
 Every file that reads or writes either JSON, or participates in the build/runtime pipeline. Sections are collapsible — open the one for the layer you're navigating.

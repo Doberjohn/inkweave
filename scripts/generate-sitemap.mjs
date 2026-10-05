@@ -19,12 +19,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {SITE_ORIGIN} from './lib/siteOrigin.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 
-/** Apex host — MUST match the canonical host emitted by <Seo> (#488 reconciliation). */
-export const SITE_ORIGIN = 'https://inkweave.ink';
+// Re-exported because this module's test imports it from here (#554 moved the
+// declaration into scripts/lib/siteOrigin.mjs; the import site stays).
+export {SITE_ORIGIN};
 const CARDS_FILE = path.join(ROOT, 'apps/web/public/data/allCards.json');
 const OUTPUT_FILE = path.join(ROOT, 'apps/web/public/sitemap.xml');
 
