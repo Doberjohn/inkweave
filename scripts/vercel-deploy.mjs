@@ -11,10 +11,11 @@
  * lacks, since the upload first asks which files it has. Two failures in a row are likely real,
  * so the job fails and the drift alarm (#569) fires.
  *
- * staged uploads the dry run's build as a new production deployment that is never promoted
- * (see MODES), then removes it. Prebuilt output must deploy to the target it was built for, and
- * the dry run builds with --prod, so a preview deploy can't stand in. `vercel deploy` prints only
- * the deployment URL on stdout, and that URL is the one thing `vercel remove` ever receives.
+ * staged uploads the dry run's build as a new production deployment that never receives
+ * inkweave.ink (see MODES), then removes it. Prebuilt output must deploy to the target it was
+ * built for, and the dry run builds with --prod, so a preview deploy can't stand in.
+ * `vercel deploy` prints only the deployment URL on stdout, and that URL is the one thing
+ * `vercel remove` ever receives.
  *
  * Reads VERCEL_CLI_VERSION and VERCEL_TOKEN from the environment. CI only: with a token, it runs
  * the Vercel CLI through npx.
@@ -30,7 +31,8 @@ export const DEPLOYMENT_URL = /^https:\/\/inkweave-[a-z0-9]+-johnfanidis-project
 const RETRY_DELAY_MS = 15_000;
 
 // The flags after `deploy --prebuilt`. Both target production, because the build was --prod.
-// staged adds --skip-domain, so inkweave.ink is never assigned, and --force (the API's
+// staged adds --skip-domain, so inkweave.ink is never assigned (the generated *.vercel.app
+// production URL still moves to it: see deploy.yml's dry-run step), and --force (the API's
 // forceNew). Without it Vercel may hand back a similar earlier deployment instead of creating
 // one (deduplication), and that could be the live production deployment, whose URL the guard
 // above can't tell apart from a staged one.

@@ -13,8 +13,8 @@
 # = false so Vercel does NOT also deploy master (no double / flip-flopping production deploy).
 # One exception: a PR that changes this file or scripts/vercel-deploy.mjs gets a dry run
 # (#694, #698). It runs the same pull, build and prerender check, then uploads the build as a
-# staged production deployment that is never promoted and is removed in the same run. It never
-# pings IndexNow.
+# staged production deployment that never receives inkweave.ink and is removed in the same run.
+# It never pings IndexNow.
 #
 # KILL SWITCH: the job only runs when repo variable DEPLOY_VIA_CI == 'true'. Unsetting it stops
 # CI deploys — but note Vercel git-deploy for master is off, so to fully hand deploys back to
@@ -178,6 +178,10 @@ jobs:
       # the run between the upload and the remove, when a deploy attempt fails after Vercel
       # created it, or when the remove fails or is refused. All but the cancel turn this step
       # red. Delete a leftover in the Vercel dashboard when convenient.
+      # --skip-domain covers custom domains only. Vercel still moves the project's generated
+      # production URL (inkweave-johnfanidis-projects.vercel.app, behind Deployment Protection)
+      # to the staged deployment, so after the remove it answers 404 until the next production
+      # deploy takes it back. inkweave.ink and www.inkweave.ink stay untouched (#708's dry run).
       - name: Upload as a staged production deployment, then delete it (dry run only)
         if: github.event_name == 'pull_request'
         env:
