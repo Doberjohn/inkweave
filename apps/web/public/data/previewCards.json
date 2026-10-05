@@ -793,6 +793,13 @@
       "fullTextSections": [
         "Sing Together 6 (Any number of your or your teammates’ characters with total cost 6 or more may ⟳ to sing this song for free.)",
         "For the rest of this turn, you may play characters from your discard. If you do, they enter play exerted and you can’t play characters with the same name as characters you played this way this turn."
+      ],
+      "variants": [
+        {
+          "id": 14225,
+          "rarity": "Enchanted",
+          "number": 225
+        }
       ]
     },
     {
@@ -1039,7 +1046,14 @@
       ],
       "strength": 2,
       "willpower": 3,
-      "lore": 2
+      "lore": 2,
+      "variants": [
+        {
+          "id": 14227,
+          "rarity": "Enchanted",
+          "number": 227
+        }
+      ]
     },
     {
       "id": 14058,
@@ -1295,7 +1309,14 @@
       ],
       "strength": 7,
       "willpower": 4,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14231,
+          "rarity": "Enchanted",
+          "number": 231
+        }
+      ]
     },
     {
       "id": 14085,
@@ -1593,7 +1614,14 @@
       ],
       "strength": 5,
       "willpower": 5,
-      "lore": 2
+      "lore": 2,
+      "variants": [
+        {
+          "id": 14232,
+          "rarity": "Enchanted",
+          "number": 232
+        }
+      ]
     },
     {
       "id": 14107,
@@ -1960,7 +1988,14 @@
       ],
       "strength": 3,
       "willpower": 3,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14217,
+          "rarity": "Epic",
+          "number": 217
+        }
+      ]
     },
     {
       "id": 14152,
@@ -2223,7 +2258,14 @@
       ],
       "strength": 1,
       "willpower": 2,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14221,
+          "rarity": "Epic",
+          "number": 221
+        }
+      ]
     },
     {
       "id": 14183,
@@ -2507,6 +2549,13 @@
       "fullTextSections": [
         "MUSICAL LEGACY When you play this item, draw a card.",
         "FROM THE HEART ⟳, 1 ⬡ — Chosen character gains Singer and counts as having +2 cost to sing songs this turn."
+      ],
+      "variants": [
+        {
+          "id": 14207,
+          "rarity": "Epic",
+          "number": 207
+        }
       ]
     },
     {
@@ -3082,7 +3131,14 @@
       ],
       "strength": 0,
       "willpower": 1,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14226,
+          "rarity": "Enchanted",
+          "number": 226
+        }
+      ]
     },
     {
       "id": 14067,
@@ -3575,7 +3631,14 @@
       ],
       "strength": 0,
       "willpower": 4,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14209,
+          "rarity": "Epic",
+          "number": 209
+        }
+      ]
     },
     {
       "id": 14065,
@@ -4817,7 +4880,14 @@
       ],
       "strength": 3,
       "willpower": 5,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14236,
+          "rarity": "Enchanted",
+          "number": 236
+        }
+      ]
     },
     {
       "id": 14166,
@@ -4960,7 +5030,14 @@
       ],
       "strength": 2,
       "willpower": 3,
-      "lore": 2
+      "lore": 2,
+      "variants": [
+        {
+          "id": 14234,
+          "rarity": "Enchanted",
+          "number": 234
+        }
+      ]
     },
     {
       "id": 14099,
@@ -5438,7 +5515,14 @@
       ],
       "strength": 1,
       "willpower": 4,
-      "lore": 1
+      "lore": 1,
+      "variants": [
+        {
+          "id": 14220,
+          "rarity": "Epic",
+          "number": 220
+        }
+      ]
     },
     {
       "id": 14180,
