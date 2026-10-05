@@ -49,7 +49,7 @@ function WithPrintings({
   cardWidth: number;
   cardHeight: number;
 }) {
-  const printing = useModalPrinting(card, {isOpen: true, inComparison: false, translation: null});
+  const printing = useModalPrinting(card, {isOpen: true, inComparison: false});
   return (
     <CardPrintingContext.Provider value={printing}>
       <div

@@ -49,6 +49,14 @@ export function printingsOf(card: LorcanaCard): Printing[] {
 }
 
 /**
+ * True when any printing of the card is a non-English scan (#681): the card modal then offers
+ * "See translation", and its loading shell holds the toggle's place.
+ */
+export function hasForeignScan(card: LorcanaCard): boolean {
+  return printingsOf(card).some((p) => p.scanLanguage);
+}
+
+/**
  * The printing index selected for `cardId`, 0 (Standard) until one is selected. A card starts
  * on its Standard printing, or on `initialIndex` (read once on mount). Paging to another card
  * drops the selection, and so does `resetWhen` (the modal closing, or entering a comparison,

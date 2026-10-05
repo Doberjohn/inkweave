@@ -10,6 +10,8 @@ const SIZES = {
 
 interface CardTranslationPanelProps {
   card: LorcanaCard;
+  /** The translated scan's language: a variant printing's (#681), by default the card's own. */
+  language?: string;
   /** `compact` fits the mobile card modal's 240px card; `regular` fills a larger one. */
   size?: keyof typeof SIZES;
   /** Merged onto the panel, e.g. CardLightbox's absolute placement over the scan. */
@@ -26,18 +28,26 @@ function languageName(code: string): string {
 }
 
 /**
- * The English name and rules text of a card whose only scan is in another language
- * (`card.scanLanguage`), labelled as the unofficial translation it is. CardLightbox and the
- * card modal lay it over the scan behind a CardTranslationToggle.
+ * The English name and rules text of a card shown in another language's scan, its own or a
+ * variant printing's (#681; variants are rules-identical, so the card's text serves). A card
+ * whose own scan is foreign has only an unofficial translation, and says so. A card whose own
+ * scan is English, shown in a variant revealed abroad first, has its official English text.
+ * CardLightbox and the card modal lay it over the scan behind a CardTranslationToggle.
  */
-export function CardTranslationPanel({card, size = "regular", style}: CardTranslationPanelProps) {
+export function CardTranslationPanel({
+  card,
+  language = card.scanLanguage,
+  size = 'regular',
+  style,
+}: CardTranslationPanelProps) {
   const sizes = SIZES[size];
-  const language = card.scanLanguage ? languageName(card.scanLanguage) : 'original';
+  const languageLabel = language ? languageName(language) : 'original';
   const hasText = !!(card.textSections?.length || card.text);
+  const official = !card.scanLanguage && !!language;
 
   return (
     <section
-      aria-label={`English translation of ${card.fullName}`}
+      aria-label={`English ${official ? 'text' : 'translation'} of ${card.fullName}`}
       data-testid="card-translation"
       style={{
         display: 'flex',
@@ -52,7 +62,9 @@ export function CardTranslationPanel({card, size = "regular", style}: CardTransl
         lineHeight: 1.4,
         ...style,
       }}>
-      <span style={{...CAP_LABEL_XS, color: COLORS.primary}}>Unofficial translation</span>
+      <span style={{...CAP_LABEL_XS, color: COLORS.primary}}>
+        {official ? 'English text' : 'Unofficial translation'}
+      </span>
       <h2
         style={{
           fontSize: `${sizes.name}px`,
@@ -90,7 +102,9 @@ export function CardTranslationPanel({card, size = "regular", style}: CardTransl
           lineHeight: 1.4,
           color: COLORS.textMuted,
         }}>
-        Translated from the {language} card. The English card&apos;s wording may differ.
+        {official
+          ? `This printing is in ${languageLabel}. The text is the English card's.`
+          : `Translated from the ${languageLabel} card. The English card's wording may differ.`}
       </p>
     </section>
   );

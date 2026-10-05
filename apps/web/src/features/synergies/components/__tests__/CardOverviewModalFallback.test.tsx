@@ -8,6 +8,11 @@ const cardWithPrintings = {
   ...card,
   variants: [{id: '14241', rarity: 'Iconic', number: 241}],
 } as LorcanaCard;
+// #681: a variant can be revealed abroad before its English printing.
+const cardWithForeignVariant = {
+  ...card,
+  variants: [{id: '14213', rarity: 'Epic', number: 213, scanLanguage: 'it'}],
+} as LorcanaCard;
 
 describe('CardOverviewModalFallback', () => {
   it('announces the card it is loading', () => {
@@ -59,13 +64,23 @@ describe('CardOverviewModalFallback', () => {
     expect(container.querySelector('[role="radiogroup"]')).toBeNull();
   });
 
-  it('holds the space for the translation toggle out of sight for a foreign-language scan', () => {
-    render(
-      <CardOverviewModalFallback card={{...card, scanLanguage: 'ja'} as LorcanaCard} isMobile onClose={vi.fn()} />,
-    );
+  it.each([
+    ['its own scan', {...card, scanLanguage: 'ja'} as LorcanaCard],
+    ["a variant printing's scan", cardWithForeignVariant],
+  ])(
+    'holds the space for the translation toggle out of sight when %s is foreign',
+    (_label, foreign) => {
+      render(<CardOverviewModalFallback card={foreign} isMobile onClose={vi.fn()} />);
 
-    expect(screen.getByText('See translation')).toBeInTheDocument();
-    expect(screen.queryByRole('button', {name: 'See translation'})).toBeNull();
+      expect(screen.getByText('See translation')).toBeInTheDocument();
+      expect(screen.queryByRole('button', {name: 'See translation'})).toBeNull();
+    },
+  );
+
+  it('reserves no toggle space for an English card, even one with an alternate printing', () => {
+    render(<CardOverviewModalFallback card={cardWithPrintings} isMobile onClose={vi.fn()} />);
+
+    expect(screen.queryByText('See translation')).toBeNull();
   });
 
   it('leaves focus on the tile that opened it, for the modal to restore later', () => {

@@ -140,9 +140,9 @@ function CardImageBox({card, onOpenLightbox}: {card: LorcanaCard; onOpenLightbox
 }
 
 /**
- * The enlarged view of the printing that was clicked. Only the Standard printing carries the
- * card's own scan, so only it gets the "See translation" toggle (`card`); a variant's art is
- * an official English printing.
+ * The enlarged view of the printing that was clicked. Only a printing whose scan is not in
+ * English gets the "See translation" toggle (`card`): the card's own scan on Standard, or a
+ * variant revealed abroad first (#681).
  */
 function CardLightboxGate({
   card,
@@ -159,7 +159,8 @@ function CardLightboxGate({
       src={printing.imageUrl}
       alt={printingAlt(card, printing)}
       isLocation={card.type === 'Location'}
-      card={printing.rarity ? undefined : card}
+      card={printing.scanLanguage ? card : undefined}
+      language={printing.scanLanguage}
       onClose={onClose}
     />
   );

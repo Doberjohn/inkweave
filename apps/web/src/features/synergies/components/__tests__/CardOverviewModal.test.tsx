@@ -106,7 +106,12 @@ test('a foreign-scan card toggles its English text; the next card starts on its 
   expect(screen.queryByTestId('card-translation')).toBeNull();
 });
 
-test('paging away from a focused translation toggle keeps focus in the dialog', async () => {
+test.each([
+  ['an English card, which unmounts the toggle', makeCard('en')],
+  // #681: a card whose foreign scan is a variant keeps the toggle, hidden on its English Standard.
+  ['a card whose only foreign scan is a variant, which hides it', withItalianEpic(makeCard('en'))],
+])('paging from a focused translation toggle to %s moves focus to the ×', async (_label, next) => {
+  Element.prototype.scrollTo = vi.fn();
   const user = userEvent.setup();
   const tree = (card: LorcanaCard) => (
     <MemoryRouter>
@@ -120,8 +125,8 @@ test('paging away from a focused translation toggle keeps focus in the dialog', 
   await user.click(screen.getByRole('button', {name: 'See translation'}));
   expect(screen.getByRole('button', {name: 'See card'})).toHaveFocus();
 
-  rerender(tree(makeCard('en')));
-  expect(screen.getByRole('dialog')).toContainElement(document.activeElement as HTMLElement);
+  rerender(tree(next));
+  expect(screen.getByRole('button', {name: 'Close'})).toHaveFocus();
 });
 
 test('the expanded group view hides the translation toggle, which has no card image to cover', async () => {
@@ -191,7 +196,10 @@ function withEnchanted(card: LorcanaCard): LorcanaCard {
   };
 }
 
-function renderPrintingModal(card: LorcanaCard, opts: {onGoToSibling?: (d: 1 | -1) => void} = {}) {
+function renderPrintingModal(
+  card: LorcanaCard,
+  opts: {onGoToSibling?: (d: 1 | -1) => void; isMobile?: boolean} = {},
+) {
   const tree = (c: LorcanaCard) => (
     <MemoryRouter>
       <CardOverviewModal
@@ -200,6 +208,7 @@ function renderPrintingModal(card: LorcanaCard, opts: {onGoToSibling?: (d: 1 | -
         synergies={[]}
         getPairSynergies={() => null}
         onClose={() => {}}
+        isMobile={opts.isMobile}
         siblingCardIds={['a', 'b', 'c']}
         onGoToSibling={opts.onGoToSibling ?? (() => {})}
       />
@@ -263,7 +272,7 @@ test('every card opens on its Standard printing', async () => {
   expect(screen.getByRole('radio', {name: 'Standard'})).toHaveAttribute('aria-checked', 'true');
 });
 
-test('a variant printing turns the translation off and hides its toggle: the art is an English printing', async () => {
+test('an English variant printing turns the translation off and hides its toggle', async () => {
   Element.prototype.scrollTo = vi.fn();
   const user = userEvent.setup();
   renderPrintingModal({
@@ -277,4 +286,70 @@ test('a variant printing turns the translation off and hides its toggle: the art
 
   expect(screen.queryByTestId('card-translation')).toBeNull();
   expect(screen.getByText('See translation')).not.toBeVisible();
+});
+
+/** An English card whose Epic is known only from an Italian scan, like Baymax's (#681). */
+function withItalianEpic(card: LorcanaCard): LorcanaCard {
+  return {
+    ...card,
+    textSections: ['Draw a card.'],
+    imageUrl: `/card-images/${card.id}.avif`,
+    variants: [
+      {
+        id: `${card.id}-epic`,
+        rarity: 'Epic',
+        number: 213,
+        imageUrl: '/card-images/14213.avif',
+        scanLanguage: 'it',
+      },
+    ],
+  };
+}
+
+test('an English card with an English variant offers no translation', () => {
+  Element.prototype.scrollTo = vi.fn();
+  renderPrintingModal(withEnchanted(makeCard('b')));
+
+  expect(screen.queryByText('See translation')).toBeNull();
+});
+
+// Desktop's toggle sits in the header, mobile's under the card (MobileArtControls).
+test.each([false, true])(
+  'a foreign-scan variant offers its translation on that printing only (mobile: %s)',
+  async (isMobile) => {
+    Element.prototype.scrollTo = vi.fn();
+    const user = userEvent.setup();
+    renderPrintingModal(withItalianEpic(makeCard('b')), {isMobile});
+    // The Standard scan is English: the toggle holds its place, hidden.
+    expect(screen.getByText('See translation')).not.toBeVisible();
+
+    await user.click(screen.getByRole('radio', {name: 'Epic'}));
+    await user.click(screen.getByRole('button', {name: 'See translation'}));
+    // The card's own scan is English, so the text is its official wording, not a translation.
+    const panel = screen.getByRole('region', {name: 'English text of Card b - Test'});
+    expect(panel).toHaveTextContent('Draw a card.');
+    expect(panel).toHaveTextContent("This printing is in Italian. The text is the English card's.");
+
+    await user.click(screen.getByRole('radio', {name: 'Standard'}));
+    expect(screen.queryByTestId('card-translation')).toBeNull();
+    expect(screen.getByText('See translation')).not.toBeVisible();
+  },
+);
+
+test('a card opened on its foreign-scan printing offers the translation at once', () => {
+  Element.prototype.scrollTo = vi.fn();
+  render(
+    <MemoryRouter>
+      <CardOverviewModal
+        isOpen
+        card={withItalianEpic(makeCard('b'))}
+        initialPrintingId="b-epic"
+        synergies={[]}
+        getPairSynergies={() => null}
+        onClose={() => {}}
+      />
+    </MemoryRouter>,
+  );
+
+  expect(screen.getByRole('button', {name: 'See translation'})).toBeVisible();
 });
