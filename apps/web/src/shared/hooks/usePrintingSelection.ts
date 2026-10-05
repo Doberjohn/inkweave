@@ -11,6 +11,8 @@ export interface Printing {
   /** Absent for the Standard printing. */
   rarity?: VariantRarity;
   imageUrl?: string;
+  /** Language code ("it") of this printing's scan if not English; absent means English. */
+  scanLanguage?: string;
 }
 
 /** Accessible name for a printing's image: the card name, plus the rarity for a variant. */
@@ -25,14 +27,23 @@ function recordView(card: LorcanaCard, printing: Printing, surface: 'card_page' 
   }
 }
 
-/** A card's printings: its Standard art first, then each Epic/Enchanted/Iconic variant. */
+/**
+ * A card's printings: its Standard art first, then each Epic/Enchanted/Iconic variant. Each
+ * carries its own scan's language, since a variant can be revealed abroad first (#681).
+ */
 export function printingsOf(card: LorcanaCard): Printing[] {
-  const standard: Printing = {key: 'standard', label: 'Standard', imageUrl: card.imageUrl};
+  const standard: Printing = {
+    key: 'standard',
+    label: 'Standard',
+    imageUrl: card.imageUrl,
+    scanLanguage: card.scanLanguage,
+  };
   const variants = (card.variants ?? []).map((v): Printing => ({
     key: v.id,
     label: v.rarity,
     rarity: v.rarity,
     imageUrl: v.imageUrl,
+    scanLanguage: v.scanLanguage,
   }));
   return [standard, ...variants];
 }
