@@ -24,10 +24,17 @@
  *   pnpm download-images --force  # Re-download everything
  */
 import sharp from 'sharp';
-import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {SITE_ORIGIN} from './lib/siteOrigin.mjs';
+import {
+  deriveHash,
+  hashedFilename,
+  indexById,
+  planFor,
+  verifyRestored,
+} from './lib/imageRestore.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -36,11 +43,39 @@ const PREVIEW_DATA_FILE = path.join(ROOT, 'apps/web/public/data/previewCards.jso
 const CACHE_DIR = path.join(ROOT, 'node_modules/.cache/card-images');
 const OUTPUT_DIR = path.join(ROOT, 'apps/web/public/card-images');
 const PREVIEW_AVIFS_DIR = path.join(ROOT, 'apps/web/public/card-images-preview');
+/** The deployed card data — already the record of what production is serving. */
+const PROD_DATA_PATH = '/data/allCards.json';
+/**
+ * Collection detail chunks (#553): the 2,218 cards Inkweave shows but never
+ * analyses. Imaged here because a binder without art is pointless.
+ *
+ * The INDEX is deliberately not read. It carries no image fields — the binder
+ * renders one set at a time from that set's chunk, so the chunk is where hashes
+ * belong. If cross-set filtered results ever render from the index, it needs
+ * `imageHashSm` and this list has to grow.
+ */
+const COLLECTION_DIR = path.join(ROOT, 'apps/web/public/data/collection');
 
 const CONCURRENCY = 20;
 const IMAGE_QUALITY = 50;
 const MAX_RETRIES = 2;
 const FORCE = process.argv.includes('--force');
+
+/**
+ * Where a cache miss looks before it falls back to Ravensburger (#554).
+ *
+ * First match wins. `VERCEL_PROJECT_PRODUCTION_URL` is injected automatically on
+ * every Vercel build with no setup and points at the deployment currently serving
+ * production — precisely the one holding the images we want. `SITE_ORIGIN` is the
+ * committed constant, used locally and as the last resort.
+ */
+const RESTORE_ORIGIN =
+  process.env.PROD_IMAGE_ORIGIN ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL && `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`) ||
+  SITE_ORIGIN;
+
+/** Escape hatch: reverts to pure download behaviour with no code change. */
+const RESTORE_ENABLED = process.env.SKIP_IMAGE_RESTORE !== '1' && Boolean(RESTORE_ORIGIN) && !FORCE;
 
 // Bump this to invalidate the entire cache and force re-download.
 // Note: the cache holds unhashed AVIF bytes; output filename hashing happens
@@ -65,34 +100,11 @@ const SIZES = [
   {suffix: '-sm', width: 191, height: 266, key: 'sm'},
 ];
 
-/**
- * Derive a content-addressed hash suffix for an AVIF buffer.
- *
- * Constraints (from issue #323):
- * - sha256 (specified by issue — collision-resistant, widely available)
- * - prefix length >= 12 hex chars (issue minimum); we use 16 (64 bits) to match
- *   the Vite contenthash convention and give a ~1-in-3.4-trillion collision
- *   margin across the current ~3,300-file corpus
- * - hex-encoded, lowercase, no separators (URL-safe, filesystem-safe)
- *
- * Bytes change → hash changes → URL changes → browsers fetch fresh bytes.
- *
- * @param {Buffer} bytes - the raw AVIF buffer
- * @returns {string} hash suffix to embed in `{id}.{hash}.avif`
- */
-function deriveHash(bytes) {
-  return crypto.createHash('sha256').update(bytes).digest('hex').slice(0, 16);
-}
-
-/**
- * Compose the hashed output filename for a given size variant.
- * Full: `{id}.{hash}.avif`
- * Small: `{id}.{hash}-sm.avif` (the `-sm` segment is preserved for downstream
- * `smallImageUrl()` callers in the web loader)
- */
-function hashedFilename(cardId, hash, suffix) {
-  return suffix === '-sm' ? `${cardId}.${hash}-sm.avif` : `${cardId}.${hash}.avif`;
-}
+// `deriveHash` and `hashedFilename` moved to lib/imageManifest.mjs (#554) so the
+// restore path verifies with the exact function the emit path hashes with. Two
+// copies of a hash function is the same bug class as two copies of a URL — and
+// here it would mean verification silently disagreeing with emission. Their
+// constraints (sha256, 16 hex chars, issue #323) are documented there.
 
 async function downloadWithRetry(url, retries = MAX_RETRIES) {
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -122,6 +134,44 @@ function emitHashed(bytes, cardId, suffix, manifest) {
   return hash;
 }
 
+/**
+ * Fetch one already-converted AVIF from our own CDN, or null.
+ *
+ * VERIFIED, NOT TRUSTED. The expected hash is known before the request, so a
+ * stale, truncated or substituted response is arithmetically detectable and
+ * discarded. That is the only reason fetching a build input from a
+ * build-time-resolved origin is acceptable here.
+ */
+async function restoreFromCdn(cardId, expectedHash, suffix) {
+  try {
+    const res = await fetch(`${RESTORE_ORIGIN}/card-images/${hashedFilename(cardId, expectedHash, suffix)}`);
+    if (!res.ok) return null;
+    const bytes = Buffer.from(await res.arrayBuffer());
+    return verifyRestored(bytes, expectedHash) ? bytes : null;
+  } catch {
+    return null; // Restore is an optimisation. A network failure is not a build failure.
+  }
+}
+
+/**
+ * Fill the cache for one card from the CDN. ALL-OR-NOTHING: every size is fetched
+ * and verified before anything is written, because a half-restored card is the
+ * partial-write poisoning the cache check already guards against — and it would
+ * leave one variant restored and the other downloaded, from possibly different art.
+ */
+async function restoreIntoCache(task) {
+  const fetched = [];
+  for (const size of SIZES) {
+    const bytes = await restoreFromCdn(task.id, task.plan[size.key], size.suffix);
+    if (!bytes) return false;
+    fetched.push({size, bytes});
+  }
+  for (const {size, bytes} of fetched) {
+    fs.writeFileSync(path.join(CACHE_DIR, `${task.id}${size.suffix}.avif`), bytes);
+  }
+  return true;
+}
+
 /** Returns true when both full + small preview AVIFs exist for this card. */
 function hasPreviewAvifs(id) {
   if (!fs.existsSync(PREVIEW_AVIFS_DIR)) return false;
@@ -139,36 +189,52 @@ function copyPreviewAvifs(cardId, manifest) {
   }
 }
 
-async function processTask(task, manifest) {
-  // Cache check — only trust if ALL size variants exist (prevents partial-write poisoning)
-  const allCached =
-    !FORCE &&
-    SIZES.every((size) => fs.existsSync(path.join(CACHE_DIR, `${task.id}${size.suffix}.avif`)));
+/** Every size variant present. Partial sets are never trusted (write poisoning). */
+function isFullyCached(cardId) {
+  return SIZES.every((size) => fs.existsSync(path.join(CACHE_DIR, `${cardId}${size.suffix}.avif`)));
+}
 
-  if (!allCached) {
-    // Download JPEG from Ravensburger, convert to AVIF, store unhashed in cache
-    const buffer = await downloadWithRetry(task.url);
-    for (const size of SIZES) {
-      const cachePath = path.join(CACHE_DIR, `${task.id}${size.suffix}.avif`);
-      try {
-        await sharp(buffer)
-          .resize(size.width, size.height, {fit: 'cover'})
-          .avif({quality: IMAGE_QUALITY})
-          .toFile(cachePath);
-      } catch (err) {
-        throw new Error(`Failed to generate ${task.id}${size.suffix}.avif: ${err.message}`);
-      }
+/** Download the JPEG once and convert it into every cached size. */
+async function convertIntoCache(task) {
+  const buffer = await downloadWithRetry(task.url);
+  for (const size of SIZES) {
+    const cachePath = path.join(CACHE_DIR, `${task.id}${size.suffix}.avif`);
+    try {
+      await sharp(buffer)
+        .resize(size.width, size.height, {fit: 'cover'})
+        .avif({quality: IMAGE_QUALITY})
+        .toFile(cachePath);
+    } catch (err) {
+      throw new Error(`Failed to generate ${task.id}${size.suffix}.avif: ${err.message}`);
     }
   }
+}
+
+/**
+ * Populate the cache for one card, preferring restore. Returns how it got there.
+ *
+ * Both paths fill the CACHE, never the output, so the emit step stays a single
+ * unconditional loop and output always comes from cache. Restored bytes ARE the
+ * cache bytes that produced the CDN filename, so re-hashing them reproduces the
+ * same hash by construction.
+ */
+async function fillCache(task) {
+  const canRestore = RESTORE_ENABLED && task.plan.action === 'restore';
+  if (canRestore && (await restoreIntoCache(task))) return 'restored';
+  await convertIntoCache(task);
+  return 'downloaded';
+}
+
+async function processTask(task, manifest) {
+  const outcome = !FORCE && isFullyCached(task.id) ? 'cached' : await fillCache(task);
 
   // Hash + write hashed filename to OUTPUT_DIR for every size
   for (const size of SIZES) {
-    const cachePath = path.join(CACHE_DIR, `${task.id}${size.suffix}.avif`);
-    const bytes = fs.readFileSync(cachePath);
+    const bytes = fs.readFileSync(path.join(CACHE_DIR, `${task.id}${size.suffix}.avif`));
     emitHashed(bytes, task.id, size.suffix, manifest);
   }
 
-  return allCached ? 'cached' : 'downloaded';
+  return outcome;
 }
 
 /**
@@ -194,6 +260,36 @@ export function injectManifest(filePath, manifest) {
     for (const variant of card.variants ?? []) applyHashes(variant, manifest[variant.id]);
   }
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n');
+  return updated;
+}
+
+/** Every collection detail chunk, or [] before Phase B has been generated. */
+function collectionChunkFiles() {
+  if (!fs.existsSync(COLLECTION_DIR)) return [];
+  return fs
+    .readdirSync(COLLECTION_DIR)
+    .filter((file) => file.endsWith('.json') && file !== 'index.json')
+    .map((file) => path.join(COLLECTION_DIR, file));
+}
+
+function readChunk(filePath) {
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
+/**
+ * Same job as injectManifest, but a chunk is a bare ARRAY rather than `{cards}`,
+ * and is written compact — the generator emits it that way, and pretty-printing
+ * here would turn every rebuild into a 2,000-line diff.
+ */
+function injectManifestIntoChunk(filePath, manifest) {
+  const cards = readChunk(filePath);
+  let updated = 0;
+  for (const card of cards) {
+    if (applyHashes(card, manifest[card.id])) updated++;
+    // Variant printings (#625) hash under their own id, exactly as injectManifest does.
+    for (const variant of card.variants ?? []) applyHashes(variant, manifest[variant.id]);
+  }
+  fs.writeFileSync(filePath, `${JSON.stringify(cards)}\n`);
   return updated;
 }
 
@@ -238,8 +334,7 @@ export function missingVariantHashes(cards, manifest) {
  * every card in that set renders empty in the production build. Scattered rot across
  * a set stays green (matches the non-fatal per-image warning above).
  */
-function assertImageCoverage(dataFile, manifest) {
-  const {cards} = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+function assertImageCoverage(cards, manifest) {
   const bySet = new Map();
   for (const card of cards) {
     const set = String(card.setCode ?? 'unknown');
@@ -294,7 +389,7 @@ function loadAllCards(primaryData) {
  * + hashed eagerly here), and those that need a Ravensburger download (returned
  * as a task list for the concurrent batch loop).
  */
-function partitionCards(allCards, manifest) {
+function partitionCards(allCards, manifest, deployed) {
   const tasks = [];
   let previewCopied = 0;
   for (const subject of imageSubjects(allCards)) {
@@ -304,9 +399,75 @@ function partitionCards(allCards, manifest) {
       continue;
     }
     const url = subject.images?.full ?? subject.images?.thumbnail;
-    if (url) tasks.push({id: subject.id, url});
+    // The plan is decided HERE, where the subject (and so its source URL) is in
+    // scope; `processTask` only ever sees the task. Variant printings get their own
+    // plan, so a variant can restore while its base card downloads.
+    if (url) tasks.push({id: subject.id, url, plan: planFor(subject, deployed.get(String(subject.id)))});
   }
   return {tasks, previewCopied};
+}
+
+/**
+ * Fetch the deployed card data, which publishes the hashes production is serving
+ * alongside the source URLs they were built from.
+ *
+ * Returns an empty index on any failure. That is not a degraded mode needing a
+ * warning: with no deployment to restore from, every card downloads, which is
+ * precisely the pre-#554 behaviour.
+ */
+/**
+ * Is any card missing from the cache? Restore data is only worth fetching if
+ * something could actually use it — a fully warm build should make ZERO network
+ * requests, which is also what makes its "0 downloaded" report honest.
+ */
+function anyCacheMiss(allCards) {
+  return allCards.some((card) => needsFetch(card) && !isFullyCached(card.id));
+}
+
+/** A card the download path is responsible for: has a URL, has no preview AVIFs. */
+function needsFetch(card) {
+  if (hasPreviewAvifs(card.id)) return false;
+  return Boolean(card.images?.full ?? card.images?.thumbnail);
+}
+
+/**
+ * One line saying which of the four states this run is in. They are reported
+ * separately on purpose: "nothing to restore" and "could not reach the origin"
+ * produce identical counts and mean opposite things.
+ */
+function describeRestore(cacheIncomplete, deployed, tasks) {
+  if (!RESTORE_ENABLED) return 'disabled (SKIP_IMAGE_RESTORE=1 or --force)';
+  if (!cacheIncomplete) return 'not consulted — cache is already complete';
+  if (deployed.size === 0) return `unavailable — ${RESTORE_ORIGIN} could not be read`;
+  const eligible = tasks.filter((task) => task.plan.action === 'restore').length;
+  return `${RESTORE_ORIGIN} (${eligible} of ${tasks.length} eligible)`;
+}
+
+async function fetchDeployedCards() {
+  if (!RESTORE_ENABLED) return new Map();
+  try {
+    const res = await fetch(`${RESTORE_ORIGIN}${PROD_DATA_PATH}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const deployed = indexById((await res.json()).cards);
+    // Collection chunks publish their hashes the same way, so they restore too.
+    // Fetched per set rather than as one file because that is how they deploy;
+    // a chunk absent from production (a set added since the last deploy) simply
+    // means those cards download, which is the correct answer.
+    for (const file of collectionChunkFiles()) {
+      const name = path.basename(file);
+      try {
+        const chunkRes = await fetch(`${RESTORE_ORIGIN}/data/collection/${name}`);
+        if (!chunkRes.ok) continue;
+        for (const card of await chunkRes.json()) deployed.set(String(card.id), card);
+      } catch {
+        // One unreachable chunk costs that set a download, not the build.
+      }
+    }
+    return deployed;
+  } catch (err) {
+    console.warn(`  ! Could not read ${RESTORE_ORIGIN}${PROD_DATA_PATH} (${err.message}) — downloading everything.\n`);
+    return new Map();
+  }
 }
 
 /** Tally a single batch's settled results into the running counts object. */
@@ -317,8 +478,9 @@ function tallyBatchResults(results, batch, counts) {
       console.error(`  x ${batch[idx].id}: ${result.reason.message}`);
       continue;
     }
-    if (result.value === 'cached') counts.cached++;
-    else counts.downloaded++;
+    // Three outcomes, counted separately: a run reporting only "done" hides
+    // whether restore worked at all, which is the one thing worth knowing.
+    counts[result.value]++;
   }
 }
 
@@ -333,14 +495,24 @@ async function main() {
 
   // Manifest: { [cardId]: { full: hash, sm: hash } }, populated as images are emitted
   const manifest = {};
-  const allCards = loadAllCards(data);
-  const {tasks, previewCopied} = partitionCards(allCards, manifest);
+  // Core pool + the collection cards, imaged together: one cache, one manifest,
+  // one coverage guard. They stay separate everywhere else, but an image is an
+  // image, and splitting the pipeline would mean two of everything here.
+  const chunkFiles = collectionChunkFiles();
+  const collectionCards = chunkFiles.flatMap(readChunk);
+  const allCards = [...loadAllCards(data), ...collectionCards];
+  // What production is serving right now. Fetched only when something could use
+  // it, so a fully warm build makes no network requests at all.
+  const cacheIncomplete = anyCacheMiss(allCards);
+  const deployed = cacheIncomplete ? await fetchDeployedCards() : new Map();
+  const {tasks, previewCopied} = partitionCards(allCards, manifest, deployed);
 
   console.log(
     `\n  ${tasks.length} images (${allCards.length} cards, ${previewCopied} from preview AVIFs)${FORCE ? ' [force re-download]' : ''}`,
   );
+  console.log(`  Restore: ${describeRestore(cacheIncomplete, deployed, tasks)}`);
 
-  const counts = {cached: 0, downloaded: 0, failed: 0};
+  const counts = {cached: 0, restored: 0, downloaded: 0, failed: 0};
   const startTime = Date.now();
 
   // Process in batches with concurrency limit
@@ -349,18 +521,18 @@ async function main() {
     const results = await Promise.allSettled(batch.map((task) => processTask(task, manifest)));
     tallyBatchResults(results, batch, counts);
 
-    const total = counts.cached + counts.downloaded + counts.failed;
+    const total = counts.cached + counts.restored + counts.downloaded + counts.failed;
     if (total % 200 === 0 || i + CONCURRENCY >= tasks.length) {
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
       console.log(
-        `  ${total}/${tasks.length} (${counts.cached} cached, ${counts.downloaded} new, ${counts.failed} failed) [${elapsed}s]`,
+        `  ${total}/${tasks.length} (${counts.cached} cached, ${counts.restored} restored, ${counts.downloaded} new, ${counts.failed} failed) [${elapsed}s]`,
       );
     }
   }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(
-    `\n  Done in ${elapsed}s: ${counts.downloaded} downloaded, ${counts.cached} from cache, ${counts.failed} failed\n`,
+    `\n  Done in ${elapsed}s: ${counts.cached} cached, ${counts.restored} restored, ${counts.downloaded} downloaded, ${counts.failed} failed\n`,
   );
 
   if (counts.failed > 0) {
@@ -372,13 +544,21 @@ async function main() {
   // surface as broken images on the affected cards.
   const mainUpdated = injectManifest(DATA_FILE, manifest);
   const previewUpdated = fs.existsSync(PREVIEW_DATA_FILE) ? injectManifest(PREVIEW_DATA_FILE, manifest) : 0;
+  let chunkUpdated = 0;
+  for (const file of chunkFiles) chunkUpdated += injectManifestIntoChunk(file, manifest);
   console.log(
-    `  Injected hashes into card data: ${mainUpdated} in allCards.json, ${previewUpdated} in previewCards.json\n`,
+    `  Injected hashes into card data: ${mainUpdated} in allCards.json, ${previewUpdated} in previewCards.json,` +
+      ` ${chunkUpdated} across ${chunkFiles.length} collection chunk(s)\n`,
   );
 
-  // Guard: refuse to finish green if a whole set failed to image (would ship blank).
-  assertImageCoverage(DATA_FILE, manifest);
+  // No manifest is written: the hashes injected into allCards.json above ARE the
+  // record, and they ship with the deployment. The next build reads them back
+  // from the live site (#554).
 
+  // Guard: refuse to finish green if a whole set failed to image (would ship
+  // blank). Covers the collection sets too — a binder page of empty frames is
+  // the same failure as a blank Browse page.
+  assertImageCoverage(allCards, manifest);
   const unimaged = missingVariantHashes(allCards, manifest);
   if (unimaged.length > 0) {
     console.warn(
