@@ -801,8 +801,13 @@ Side effect worth knowing: restoring prod's bytes makes the emitted hash equal
 prod's hash, so unchanged cards deploy under **identical filenames** and their
 `immutable` CDN entries survive the release.
 
-Measured on a cold cache, 2026-08-10: **1024 restored, 0 downloaded, 0 failed, 33.5s**,
-and all 1024 resulting hashes matched production exactly.
+Measured on a cold cache, 2026-10-05: **1213 restored, 2 downloaded, 0 failed, 53.7s**
+out of 1215 eligible subjects.
+
+The 2 are not a shortfall. They are variant printings published since the last deploy,
+so production has no bytes to restore and downloading is the correct answer. A cold
+build reaches zero downloads only when nothing has changed upstream, which is rarer
+than it sounds: expect a handful whenever a set has just been revealed.
 
 ---
 
