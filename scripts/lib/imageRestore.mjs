@@ -65,9 +65,24 @@ export function sourceHash(card) {
   return card?.images?.full?.match(SOURCE_HASH_RE)?.[1] ?? null;
 }
 
-/** Index deployed cards by id as strings, so a numeric/string id mismatch cannot miss. */
+/**
+ * Index deployed cards by id as strings, so a numeric/string id mismatch cannot miss.
+ *
+ * VARIANTS ARE INDEXED TOO. `imageSubjects` flattens each card's `variants` into their
+ * own image subjects, so a deployed index holding only top-level cards makes every
+ * variant look absent from production: `planFor` sees `prodCard === undefined` and
+ * returns `download`, and 192 of 1215 subjects re-downloaded from Ravensburger on every
+ * cold build. Production publishes variant hashes alongside the parent's, so there was
+ * nothing to restore FROM only because nothing looked them up. Keep this symmetric with
+ * `imageSubjects`: if one flattens variants, so must the other.
+ */
 export function indexById(cards) {
-  return new Map((cards ?? []).map((card) => [String(card.id), card]));
+  const index = new Map();
+  for (const card of cards ?? []) {
+    index.set(String(card.id), card);
+    for (const variant of card.variants ?? []) index.set(String(variant.id), variant);
+  }
+  return index;
 }
 
 /**

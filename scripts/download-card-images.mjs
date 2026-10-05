@@ -46,6 +46,12 @@ const PREVIEW_AVIFS_DIR = path.join(ROOT, 'apps/web/public/card-images-preview')
 /** The deployed card data — already the record of what production is serving. */
 const PROD_DATA_PATH = '/data/allCards.json';
 /**
+ * Restore is an optimisation, so it must never be able to hold the build open. Node's
+ * fetch has no default timeout: a stalled origin would hang rather than fall through to
+ * Ravensburger, turning the safety net into the failure.
+ */
+const RESTORE_TIMEOUT_MS = 15000;
+/**
  * Collection detail chunks (#553): the 2,218 cards Inkweave shows but never
  * analyses. Imaged here because a binder without art is pointless.
  *
@@ -144,7 +150,9 @@ function emitHashed(bytes, cardId, suffix, manifest) {
  */
 async function restoreFromCdn(cardId, expectedHash, suffix) {
   try {
-    const res = await fetch(`${RESTORE_ORIGIN}/card-images/${hashedFilename(cardId, expectedHash, suffix)}`);
+    const res = await fetch(`${RESTORE_ORIGIN}/card-images/${hashedFilename(cardId, expectedHash, suffix)}`, {
+      signal: AbortSignal.timeout(RESTORE_TIMEOUT_MS),
+    });
     if (!res.ok) return null;
     const bytes = Buffer.from(await res.arrayBuffer());
     return verifyRestored(bytes, expectedHash) ? bytes : null;
@@ -408,20 +416,16 @@ function partitionCards(allCards, manifest, deployed) {
 }
 
 /**
- * Fetch the deployed card data, which publishes the hashes production is serving
- * alongside the source URLs they were built from.
- *
- * Returns an empty index on any failure. That is not a degraded mode needing a
- * warning: with no deployment to restore from, every card downloads, which is
- * precisely the pre-#554 behaviour.
- */
-/**
- * Is any card missing from the cache? Restore data is only worth fetching if
+ * Is any image subject missing from the cache? Restore data is only worth fetching if
  * something could actually use it — a fully warm build should make ZERO network
  * requests, which is also what makes its "0 downloaded" report honest.
+ *
+ * Over SUBJECTS, not cards: a card whose own art is cached can still have an uncached
+ * variant, and counting only top-level cards declared the cache complete, skipped the
+ * manifest fetch, and left that variant unable to restore.
  */
 function anyCacheMiss(allCards) {
-  return allCards.some((card) => needsFetch(card) && !isFullyCached(card.id));
+  return imageSubjects(allCards).some((s) => needsFetch(s) && !isFullyCached(s.id));
 }
 
 /** A card the download path is responsible for: has a URL, has no preview AVIFs. */
@@ -443,10 +447,20 @@ function describeRestore(cacheIncomplete, deployed, tasks) {
   return `${RESTORE_ORIGIN} (${eligible} of ${tasks.length} eligible)`;
 }
 
+/**
+ * Fetch the deployed card data, which publishes the hashes production is serving
+ * alongside the source URLs they were built from.
+ *
+ * Returns an empty index on any failure. That is not a degraded mode needing a
+ * warning: with no deployment to restore from, every card downloads, which is
+ * precisely the pre-#554 behaviour.
+ */
 async function fetchDeployedCards() {
   if (!RESTORE_ENABLED) return new Map();
   try {
-    const res = await fetch(`${RESTORE_ORIGIN}${PROD_DATA_PATH}`);
+    const res = await fetch(`${RESTORE_ORIGIN}${PROD_DATA_PATH}`, {
+      signal: AbortSignal.timeout(RESTORE_TIMEOUT_MS),
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const deployed = indexById((await res.json()).cards);
     // Collection chunks publish their hashes the same way, so they restore too.
@@ -456,7 +470,9 @@ async function fetchDeployedCards() {
     for (const file of collectionChunkFiles()) {
       const name = path.basename(file);
       try {
-        const chunkRes = await fetch(`${RESTORE_ORIGIN}/data/collection/${name}`);
+        const chunkRes = await fetch(`${RESTORE_ORIGIN}/data/collection/${name}`, {
+          signal: AbortSignal.timeout(RESTORE_TIMEOUT_MS),
+        });
         if (!chunkRes.ok) continue;
         for (const card of await chunkRes.json()) deployed.set(String(card.id), card);
       } catch {

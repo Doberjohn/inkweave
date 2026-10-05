@@ -75,9 +75,23 @@ describe('indexById', () => {
 
 describe('verifyRestored', () => {
   const bytes = Buffer.from('some avif bytes');
+  /*
+    A KNOWN ANSWER, not deriveHash's own output. Asserting against deriveHash would only
+    prove internal consistency: a degenerate implementation returning a constant, or the
+    wrong digest length, would satisfy every other test here including the mismatch one,
+    while breaking both the byte-verification guarantee and the 16-hex filename contract
+    the loader's URLs are built on. This literal is sha256('some avif bytes') truncated
+    to 16 hex, so changing the hash function fails the test rather than moving with it.
+  */
+  const KNOWN_HASH = 'ebc887b3eb0ae89e';
+
+  it('derives the documented sha256-prefix hash, pinned to a known answer', () => {
+    expect(deriveHash(bytes)).toBe(KNOWN_HASH);
+    expect(KNOWN_HASH).toHaveLength(16);
+  });
 
   it('accepts bytes that hash to what was asked for', () => {
-    expect(verifyRestored(bytes, deriveHash(bytes))).toBe(true);
+    expect(verifyRestored(bytes, KNOWN_HASH)).toBe(true);
   });
 
   it('REJECTS bytes that do not, which is what makes fetching build inputs safe', () => {

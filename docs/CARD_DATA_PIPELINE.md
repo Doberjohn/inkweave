@@ -769,7 +769,7 @@ Before falling back to Ravensburger, a cache miss tries to fetch the
 already-converted AVIF from a live deployment.
 
 **The deployed `allCards.json` is the record of what production serves.** The build
-injects `imageHash`/`imageHashSm` into it (`download-card-images.mjs:injectManifest`)
+injects `imageHash`/`imageHashSm` into it (`download-card-images.mjs:262`)
 and it ships, so the live file publishes both the hashes in use AND the
 `images.full` source URLs they were built from. `fetchDeployedCards` reads it back
 from `{ORIGIN}/data/allCards.json`; `planFor` in `scripts/lib/imageRestore.mjs`
