@@ -454,7 +454,7 @@ function describeRestore(cacheIncomplete, deployed, tasks) {
  * Goes through `indexById` rather than a bare `set` loop so collection VARIANTS are
  * indexed too. Writing that loop by hand here is what left core variants unrestorable.
  */
-async function fetchChunkIndex(file) {
+export async function fetchChunkIndex(file) {
   const res = await fetch(`${RESTORE_ORIGIN}/data/collection/${path.basename(file)}`, {
     signal: AbortSignal.timeout(RESTORE_TIMEOUT_MS),
   });
