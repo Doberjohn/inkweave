@@ -106,7 +106,7 @@ const SIZES = [
   {suffix: '-sm', width: 191, height: 266, key: 'sm'},
 ];
 
-// `deriveHash` and `hashedFilename` moved to lib/imageManifest.mjs (#554) so the
+// `deriveHash` and `hashedFilename` moved to lib/imageRestore.mjs (#554) so the
 // restore path verifies with the exact function the emit path hashes with. Two
 // copies of a hash function is the same bug class as two copies of a URL — and
 // here it would mean verification silently disagreeing with emission. Their
@@ -448,6 +448,20 @@ function describeRestore(cacheIncomplete, deployed, tasks) {
 }
 
 /**
+ * One collection chunk as a deployed index, or null when production has no such chunk
+ * (a set added since the last deploy), which simply means those cards download.
+ *
+ * Goes through `indexById` rather than a bare `set` loop so collection VARIANTS are
+ * indexed too. Writing that loop by hand here is what left core variants unrestorable.
+ */
+async function fetchChunkIndex(file) {
+  const res = await fetch(`${RESTORE_ORIGIN}/data/collection/${path.basename(file)}`, {
+    signal: AbortSignal.timeout(RESTORE_TIMEOUT_MS),
+  });
+  return res.ok ? indexById(await res.json()) : null;
+}
+
+/**
  * Fetch the deployed card data, which publishes the hashes production is serving
  * alongside the source URLs they were built from.
  *
@@ -464,20 +478,16 @@ async function fetchDeployedCards() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const deployed = indexById((await res.json()).cards);
     // Collection chunks publish their hashes the same way, so they restore too.
-    // Fetched per set rather than as one file because that is how they deploy;
-    // a chunk absent from production (a set added since the last deploy) simply
-    // means those cards download, which is the correct answer.
-    for (const file of collectionChunkFiles()) {
-      const name = path.basename(file);
-      try {
-        const chunkRes = await fetch(`${RESTORE_ORIGIN}/data/collection/${name}`, {
-          signal: AbortSignal.timeout(RESTORE_TIMEOUT_MS),
-        });
-        if (!chunkRes.ok) continue;
-        for (const card of await chunkRes.json()) deployed.set(String(card.id), card);
-      } catch {
-        // One unreachable chunk costs that set a download, not the build.
-      }
+    // Fetched per set rather than as one file because that is how they deploy, and
+    // CONCURRENTLY because a serial loop multiplies RESTORE_TIMEOUT_MS by the chunk
+    // count: thirteen stalled sets would add over three minutes to the build.
+    const chunks = await Promise.allSettled(collectionChunkFiles().map(fetchChunkIndex));
+    // Applied in chunk order rather than completion order, so the result cannot
+    // depend on which request happened to win the race.
+    for (const chunk of chunks) {
+      // One unreachable chunk costs that set a download, not the build.
+      if (chunk.status !== 'fulfilled' || !chunk.value) continue;
+      for (const [id, card] of chunk.value) deployed.set(id, card);
     }
     return deployed;
   } catch (err) {

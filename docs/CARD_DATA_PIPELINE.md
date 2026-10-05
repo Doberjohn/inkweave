@@ -801,8 +801,20 @@ Side effect worth knowing: restoring prod's bytes makes the emitted hash equal
 prod's hash, so unchanged cards deploy under **identical filenames** and their
 `immutable` CDN entries survive the release.
 
-Measured on a cold cache, 2026-08-10: **1024 restored, 0 downloaded, 0 failed, 33.5s**,
-and all 1024 resulting hashes matched production exactly.
+Measured on a cold cache at `ac724f04`: **1207 restored, 2 downloaded, 0 failed, 39.0s**,
+out of 1209 eligible subjects. The figures reconcile exactly: 1207 + 2 = 1209.
+
+**Treat that denominator as a snapshot, not a constant.** It is `image subjects` minus
+`preview-backed subjects`, so every reveal that gains a preview AVIF moves one subject
+off the fetch path onto a local read and the number drops. Six such commits landed
+during a single afternoon of review, taking it from 1215 to 1209. Rather than trusting
+this line, read the run's own first output line, which states all three:
+`N images (M cards, P from preview AVIFs)`.
+
+The 2 downloads are not a shortfall. They are variant printings published since the last
+deploy, so production has no bytes to restore and downloading is the correct answer. A
+cold build reaches zero only when nothing has changed upstream, which is rarer than it
+sounds: expect a handful whenever a set has just been revealed.
 
 ---
 

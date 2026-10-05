@@ -71,6 +71,18 @@ describe('indexById', () => {
   it('tolerates absent input rather than throwing when prod is unreachable', () => {
     expect(indexById(null).size).toBe(0);
   });
+
+  /*
+    The regression guard for the 192-download bug. `imageSubjects` flattens variants into
+    their own subjects, so an index holding only top-level cards makes every variant look
+    absent from production and sends it back to Ravensburger. Without this case the
+    variant line can be deleted and every other test here still passes.
+  */
+  it('indexes variant printings under their own ids, not just the parent card', () => {
+    const index = indexById([{id: 1936, variants: [{id: '1936-ench'}]}]);
+    expect(index.get('1936-ench')).toEqual({id: '1936-ench'});
+    expect(index.get('1936')).toEqual({id: 1936, variants: [{id: '1936-ench'}]});
+  });
 });
 
 describe('verifyRestored', () => {
