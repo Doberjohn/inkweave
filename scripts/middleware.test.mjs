@@ -126,24 +126,29 @@ describe('vercel.json retired-host redirects', () => {
   });
 });
 
-// #709: `vercel build` type-checks this file with @vercel/node, which picks NodeNext when the
-// nearest tsconfig.json (the repo root's) sets no `module`; package.json's "type": "module" then
-// makes it an ES module. Each diagnostic prints as an error annotation on the Deploy run, and no
-// other gate type-checks this file: the root tsconfig.json compiles no files of its own. Building
-// the program took 5.5 s on a loaded machine, past vitest's 5 s default.
+// #709: `vercel build` type-checks this file with @vercel/node, which reads the root tsconfig.json
+// and picks NodeNext when it sets no `module`. Under NodeNext, package.json's "type": "module" makes
+// the JSON import need an import attribute (TS1543), and every diagnostic prints as an error
+// annotation on the Deploy run. The attribute is no fix: Vercel's edge packaging rejects it
+// ('Expected ";" but found "with"'), so the root tsconfig.json sets `module` instead. No other gate
+// type-checks this file. Building the program took 5.5 s on a loaded machine, past vitest's 5 s
+// default.
 describe('vercel build type-check', {timeout: 60_000}, () => {
-  it('reports no TypeScript errors under the NodeNext defaults vercel build applies', () => {
-    const file = path.join(ROOT, 'middleware.ts');
-    const program = ts.createProgram([file], {
-      module: ts.ModuleKind.NodeNext,
-      moduleResolution: ts.ModuleResolutionKind.NodeNext,
-      target: ts.ScriptTarget.ES2021,
-      esModuleInterop: true,
-      strict: false,
-      noEmit: true,
-    });
+  const file = path.join(ROOT, 'middleware.ts');
+
+  it('reports no TypeScript errors under the options vercel build derives', () => {
+    // @vercel/node's fixConfig(): the root tsconfig's options over its defaults, and NodeNext with
+    // strict off when they set no `module`.
+    const {config: tsconfig} = ts.readConfigFile(path.join(ROOT, 'tsconfig.json'), ts.sys.readFile);
+    const settings = {target: 'ES2021', esModuleInterop: true, ...tsconfig.compilerOptions};
+    if (settings.module === undefined) {
+      Object.assign(settings, {module: 'NodeNext', moduleResolution: 'NodeNext', strict: false});
+    }
+    const {options, errors} = ts.convertCompilerOptionsFromJson({...settings, noEmit: true}, ROOT);
+    const program = ts.createProgram([file], options);
     const source = program.getSourceFile(file);
     const diagnostics = [
+      ...errors,
       ...program.getSyntacticDiagnostics(source),
       ...program.getSemanticDiagnostics(source),
     ];
@@ -153,5 +158,14 @@ describe('vercel build type-check', {timeout: 60_000}, () => {
       getNewLine: () => ts.sys.newLine,
     };
     expect(ts.formatDiagnostics(diagnostics, host)).toBe('');
+  });
+
+  // Node's own ESM loader needs `with {type: 'json'}`, so a move to the Node.js runtime flips this.
+  it('uses no import attributes, which Vercel edge packaging cannot parse', () => {
+    const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest);
+    const withAttributes = source.statements.filter(
+      (s) => ts.isImportDeclaration(s) && s.attributes,
+    );
+    expect(withAttributes.map((s) => s.getText(source))).toEqual([]);
   });
 });

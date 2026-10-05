@@ -1,4 +1,11 @@
 {
+  "compilerOptions": {
+    // `vercel build` type-checks the root middleware.ts with @vercel/node, which picks NodeNext
+    // when this sets no `module`. NodeNext wants an import attribute on its JSON import, and
+    // Vercel's edge packaging cannot parse one (#709).
+    "module": "ESNext",
+    "moduleResolution": "bundler"
+  },
   "files": [],
   "references": [{"path": "./packages/synergy-engine"}, {"path": "./apps/web"}]
 }
