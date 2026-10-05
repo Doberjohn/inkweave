@@ -44,6 +44,30 @@ export const WithTranslation: Story = {
   },
 };
 
+/** An English card's Italian-scan Epic (#681): the lightbox offers its English text. */
+export const WithVariantTranslation: Story = {
+  args: {
+    src: '/card-images-preview/14213.avif',
+    alt: 'Baymax - Lab Assistant, Epic printing',
+    card: {
+      id: '14085',
+      name: 'Baymax',
+      version: 'Lab Assistant',
+      fullName: 'Baymax - Lab Assistant',
+      cost: 4,
+      ink: 'Emerald',
+      inkwell: true,
+      type: 'Character',
+      setCode: '14',
+      textSections: [
+        'RESUPPLY When you play this character, if you have 2 or more items in play, get 2 ink drops. (Each ink drop may be removed to pay 1 ⬡.)',
+      ],
+    },
+    language: 'it',
+    onClose: () => {},
+  },
+};
+
 export const WithBrokenImage: Story = {
   args: {
     src: 'https://invalid-url.example/missing.webp',

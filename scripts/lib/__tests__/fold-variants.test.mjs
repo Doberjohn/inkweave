@@ -31,6 +31,9 @@ const variant = (over = {}) => ({
 
 const byBaseId = {matchBy: 'baseId', idFor: (v) => v.id};
 
+/** A variant entry added by hand from a scan revealed abroad first (#681): no art URLs. */
+const italianHandScan = () => ({id: 2141, rarity: 'Enchanted', number: 223, scanLanguage: 'it'});
+
 describe('foldVariants', () => {
   it('folds a variant into its base by baseId, keeping only id, rarity, number and full/thumbnail art', () => {
     const cards = [base()];
@@ -103,5 +106,21 @@ describe('foldVariants', () => {
     foldVariants(cards, [variant({id: 2200, number: 240, rarity: 'Iconic'}), variant()], byBaseId);
 
     expect(cards[0].variants.map((v) => v.number)).toEqual([223, 240]);
+  });
+
+  it("drops a hand scan's scanLanguage once official art replaces the entry", () => {
+    const cards = [base({variants: [italianHandScan()]})];
+    const result = foldVariants(cards, [variant()], byBaseId);
+
+    expect(result.replaced).toHaveLength(1);
+    expect(cards[0].variants[0]).not.toHaveProperty('scanLanguage');
+  });
+
+  it("keeps a hand scan's scanLanguage while the source has no art for the printing yet", () => {
+    const cards = [base({variants: [italianHandScan()]})];
+    const result = foldVariants(cards, [variant({images: undefined})], byBaseId);
+
+    expect(result.unchanged).toHaveLength(1);
+    expect(cards[0].variants[0].scanLanguage).toBe('it');
   });
 });

@@ -27,6 +27,8 @@ interface VariantEntry {
   id: number;
   rarity: string;
   number: number;
+  /** A hand-supplied scan's language when it is not English (#681). */
+  scanLanguage?: string;
 }
 
 interface PreviewCard {
@@ -148,12 +150,15 @@ describe('reveal-set integrity', () => {
     expect(next - 1).toBe(SET_TOTAL);
   });
 
-  // `scanLanguage` marks a card written from a non-English official scan, and is the mark's
-  // only record: CardLightbox offers the card's English text as a provisional translation
-  // only when it is set. An "en" or malformed code would offer one for an English card.
+  // `scanLanguage` marks a non-English official scan, a card's own or a variant printing's
+  // (#681), and is the mark's only record: the app offers the card's English text over a
+  // scan only when it is set. An "en" or malformed code would offer it over an English scan.
   it('every scanLanguage is a two-letter code other than en', () => {
-    const label = (c: PreviewCard) => `${c.id} ${c.fullName}`;
-    const badCodes = preview.cards.filter((c) => c.scanLanguage && !/^(?!en$)[a-z]{2}$/.test(c.scanLanguage));
-    expect(badCodes.map(label)).toEqual([]);
+    const bad = (code?: string) => !!code && !/^(?!en$)[a-z]{2}$/.test(code);
+    const badCodes = preview.cards.flatMap((c) => [
+      ...(bad(c.scanLanguage) ? [`${c.id} ${c.fullName}`] : []),
+      ...(c.variants ?? []).filter((v) => bad(v.scanLanguage)).map((v) => `${v.id} ${c.fullName}`),
+    ]);
+    expect(badCodes).toEqual([]);
   });
 });

@@ -57,3 +57,8 @@ export const GermanAction: Story = {
 export const NoRulesText: Story = {
   args: {card: card({textSections: undefined, scanLanguage: 'it'}), style: {flex: 1}},
 };
+
+/** An English card in a variant revealed abroad first (#681): its own text, not a translation. */
+export const EnglishCardForeignVariant: Story = {
+  args: {card: card({scanLanguage: undefined}), language: 'it', style: {flex: 1}},
+};
