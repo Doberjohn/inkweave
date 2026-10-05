@@ -1,4 +1,3 @@
-export {SynergyResults} from './SynergyResults';
 export {SynergyCard} from './SynergyCard';
 export {SynergyGroup} from './SynergyGroup';
 export {ExpandedGroupView} from './ExpandedGroupView';

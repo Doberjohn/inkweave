@@ -15,10 +15,10 @@ import {COLORS, FONTS, FONT_SIZES, LAYOUT, SPACING} from '../shared/constants';
 /**
  * `/card/:cardId` — a real, crawlable card detail page (issue #486).
  *
- * Reuses the synergy modal's desktop composition — CardDetailPanel (left) + SynergyResults
- * (right, showCardDetail=false) — as a full page instead of a modal overlay. Clicking a
- * synergy partner navigates to that partner's own card page (rather than opening the modal
- * comparison view), turning the synergy graph into a page-to-page link graph.
+ * Desktop: a sticky CardDetailPanel (left) beside SynergyResults (right, showCardDetail=false);
+ * on mobile, SynergyResults renders the CardDetail itself. Clicking a synergy partner navigates
+ * to that partner's own card page (rather than opening the modal comparison view), turning the
+ * synergy graph into a page-to-page link graph.
  */
 
 function buildDescription(card: LorcanaCard): string {
@@ -152,8 +152,6 @@ export function CardPage() {
           onShowAll={setExpandedGroup}
           onBackToAll={() => setExpandedGroup(null)}
           onSynergyCardClick={(partner) => navigate(cardPath(partner))}
-          flowInPage
-          linkPlaystyleHeaders
         />
       </main>
     </PageShell>
