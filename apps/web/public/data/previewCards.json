@@ -5417,14 +5417,14 @@
     {
       "id": 14176,
       "name": "Tiana",
-      "fullName": "Tiana - Restaurateur",
+      "fullName": "Tiana - Restauranteur",
       "cost": 2,
       "color": "Steel",
       "inkwell": true,
       "type": "Character",
       "setCode": "14",
       "number": 176,
-      "version": "Restaurateur",
+      "version": "Restauranteur",
       "rarity": "Common",
       "franchise": "The Princess and the Frog",
       "subtypes": [
