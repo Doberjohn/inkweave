@@ -13,7 +13,8 @@
  *
  * A removal, in order. Nothing changes until every gate has passed:
  * 1. Gates: HEAD is on an origin/* ref (after a fetch), the tree is clean, and every ignored
- *    file is build output or a byte-identical copy of the main checkout's file.
+ *    file or folder is build output or a byte-identical copy of the main checkout's (a folder
+ *    holds the same files, each identical, and no repository).
  * 2. In use? Rename the folder to <path>.removing. Windows refuses while a process has its
  *    working directory (or an open file) inside it, so a refused rename means "in use".
  * 3. Unregister with `git worktree prune`, which drops entries whose folder is missing.
@@ -34,6 +35,7 @@ import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {
   existsSync,
+  lstatSync,
   mkdirSync,
   readdirSync,
   readFileSync,
@@ -56,7 +58,8 @@ const USAGE = `Usage:
 
 Removes a linked worktree completely: its folder, its registry entry, and its branch once
 ${BASE} contains it. Refuses, changing nothing, when it has uncommitted work, a HEAD on no
-origin/* ref, ignored files that are not build output, or a process inside it.
+origin/* ref, ignored files that are neither build output nor copies of the main
+checkout's, or a process inside it.
 
 --dry-run prints the plan and deletes or unregisters nothing. It still fetches origin, so its
 gates and branch plan match a real run's, but it cannot tell whether the worktree is in use:
@@ -345,7 +348,8 @@ function remoteRefsContaining(repo, head) {
     .filter((ref) => ref && ref !== 'origin/HEAD' && ref !== 'origin');
 }
 
-// `--directory` lists an ignored folder as one entry, so node_modules costs one line, not a walk.
+// `--directory` lists an ignored folder as one entry, so node_modules costs one line, not a walk;
+// only a folder outside build output is walked, to compare it with the main checkout's.
 // An untracked folder that only holds ignored files is listed too, ahead of its entries; those
 // entries are judged one by one, and the status gate has already ruled out anything else in it.
 function classifyIgnored(repo, worktree) {
@@ -365,11 +369,37 @@ function classifyIgnored(repo, worktree) {
   const copies = [];
   for (const entry of entries) {
     if (holdsOthers(entry) || isBuildOutput(entry)) continue;
-    const copy =
-      !entry.endsWith('/') && sameBytes(join(worktree.path, entry), join(repo.main, entry));
-    (copy ? copies : unique).push(entry);
+    (isCopyOfMain(repo, worktree.path, entry) ? copies : unique).push(entry);
   }
   return {unique, copies};
+}
+
+// Whether the main checkout has the same ignored entry: a file byte for byte, a folder file by
+// file. The folder's trailing slash goes first, because POSIX lstat follows a link named "x/".
+function isCopyOfMain(repo, root, entry) {
+  if (!entry.endsWith('/')) return sameBytes(join(root, entry), join(repo.main, entry));
+  return sameFolder(root, repo.main, entry.slice(0, -1));
+}
+
+/**
+ * Whether `folder` is the same under `root` and `main`: a real folder in both, never a link (git
+ * for Windows lists an ignored junction as `name/`), no repository in `root`'s, and the same
+ * files, each byte-identical. As in the --leftovers walk, build output is set aside and links
+ * inside are not followed. Anything unreadable counts as different.
+ */
+function sameFolder(root, main, folder) {
+  try {
+    if (![root, main].every((base) => lstatSync(join(base, folder)).isDirectory())) return false;
+    const mine = walkContent(root, folder);
+    if (mine.repositories.length) return false;
+    const listing = (files) => files.sort().join('\0');
+    return (
+      listing(mine.files) === listing(walkContent(main, folder).files) &&
+      mine.files.every((file) => sameBytes(join(root, file), join(main, file)))
+    );
+  } catch {
+    return false;
+  }
 }
 
 // The branch goes only once origin/master has it: merged work is safe on origin, and a branch
@@ -615,25 +645,27 @@ function contentGitLacks(repo, root) {
 }
 
 // Links are never followed: Dirent reports a junction or symlink as neither file nor folder.
-function walkContent(root) {
+// `under` narrows the walk to one folder of `root`; the paths it returns stay relative to root.
+function walkContent(root, under = '') {
   const found = {file: [], repository: []};
   const walk = (dir) => {
     for (const entry of readdirSync(dir, {withFileTypes: true})) {
       const path = join(dir, entry.name);
       const rel = relative(root, path).replace(/\\/g, '/');
-      const kind = entryKind(entry, rel, dir === root);
+      const kind = entryKind(entry, rel);
       if (kind === 'folder') walk(path);
       else found[kind]?.push(rel);
     }
   };
-  walk(root);
+  walk(join(root, under));
   return {files: found.file, repositories: found.repository};
 }
 
 // What the content walk does with one entry: 'folder' (descend), 'file', 'repository' or 'skip'.
-function entryKind(entry, rel, atRoot) {
-  // A worktree's own .git file only points at its registry entry; any other .git is a repo.
-  if (entry.name === '.git') return atRoot && !entry.isDirectory() ? 'skip' : 'repository';
+function entryKind(entry, rel) {
+  // A worktree's own .git file (rel '.git') only points at its registry entry; any other .git is
+  // a repo. Judged by rel, since join() respells a root given in git's forward slashes.
+  if (entry.name === '.git') return rel === '.git' && !entry.isDirectory() ? 'skip' : 'repository';
   if (entry.isDirectory()) return isBuildOutput(`${rel}/`) ? 'skip' : 'folder';
   return entry.isFile() && !isBuildOutput(rel) ? 'file' : 'skip';
 }

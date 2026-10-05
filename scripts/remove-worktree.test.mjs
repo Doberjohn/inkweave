@@ -43,6 +43,18 @@ function norm(path) {
   return WINDOWS ? slashed.toLowerCase() : slashed;
 }
 
+// An ignored folder the Claude app copies from the main checkout into every worktree it makes
+// (#718), ignored by name as in the real .gitignore.
+const SKILL = '.claude/skills/supabase-postgres-best-practices';
+const SKILL_FILES = {'SKILL.md': 'skill\n', 'references/query.md': 'query\n'};
+
+/** Writes `files` into `base`'s copy of the skill folder and returns that folder. */
+function writeSkill(base, files = SKILL_FILES) {
+  const folder = join(base, SKILL);
+  for (const [file, text] of Object.entries(files)) write(join(folder, file), text);
+  return folder;
+}
+
 /** A main checkout with a bare `origin` and one pushed commit on master. */
 function makeRepo() {
   const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'rmwt-')));
@@ -57,6 +69,7 @@ function makeRepo() {
     '.env*.local',
     'apps/web/public/card-images-raw/',
     'reports/',
+    `${SKILL}/`,
   ];
   write(join(main, '.gitignore'), `${[...ignored, '.claude/worktrees/'].join('\n')}\n`);
   write(join(main, 'README.md'), 'readme\n');
@@ -261,6 +274,69 @@ describe('remove-worktree', {timeout: 60_000}, () => {
       write(join(repo.main, 'apps', 'web', '.env.local'), 'VITE_FLAG=true\n');
       expect(remove(repo, ['built']).code).toBe(0);
       expect(existsSync(wt)).toBe(false);
+    });
+
+    it("allows an ignored folder identical to the main checkout's, and names it as a copy", () => {
+      const repo = makeRepo();
+      const wt = addWorktree(repo, 'skill');
+      writeSkill(repo.main);
+      writeSkill(wt);
+      const {code, output} = remove(repo, ['skill']);
+      expect(code).toBe(0);
+      expect(output).toContain(`plus copies of the main checkout's ${SKILL}/`);
+      expect(existsSync(wt)).toBe(false);
+    });
+
+    it.each([
+      ['a file that differs', {...SKILL_FILES, 'SKILL.md': 'edited\n'}],
+      ['an extra file', {...SKILL_FILES, 'notes.md': 'only here\n'}],
+      ['a missing file', {'SKILL.md': 'skill\n'}],
+    ])("refuses an ignored folder that is not the main checkout's copy: %s", (_, files) => {
+      const repo = makeRepo();
+      const wt = addWorktree(repo, 'skill');
+      writeSkill(repo.main);
+      const folder = writeSkill(wt, files);
+      const {code, output} = remove(repo, ['skill']);
+      expect(code).toBe(1);
+      expect(output).toContain(`${SKILL}/`);
+      expect(existsSync(join(folder, 'SKILL.md'))).toBe(true);
+    });
+
+    it('refuses an ignored folder holding a repository, even when the main checkout has the same', () => {
+      const repo = makeRepo();
+      const wt = addWorktree(repo, 'skill');
+      const files = {...SKILL_FILES, '.git/HEAD': 'ref: refs/heads/main\n'};
+      writeSkill(repo.main, files);
+      const folder = writeSkill(wt, files);
+      const {code, output} = remove(repo, ['skill']);
+      expect(code).toBe(1);
+      expect(output).toContain(`${SKILL}/`);
+      expect(existsSync(join(folder, '.git', 'HEAD'))).toBe(true);
+    });
+
+    it('never follows a link inside an ignored folder, even one back into it', () => {
+      const repo = makeRepo();
+      const wt = addWorktree(repo, 'skill');
+      for (const base of [repo.main, wt]) {
+        const folder = writeSkill(base);
+        symlinkSync(folder, join(folder, 'loop'), 'junction');
+      }
+      expect(remove(repo, ['skill']).code).toBe(0);
+      expect(existsSync(wt)).toBe(false);
+    });
+
+    // Git for Windows lists an ignored junction as `name/`, as if it were a folder. Elsewhere git
+    // treats any link as a file, never as a folder entry.
+    it.runIf(WINDOWS)('refuses a junction that git lists as an ignored folder', () => {
+      const repo = makeRepo();
+      const wt = addWorktree(repo, 'skill');
+      const mains = writeSkill(repo.main);
+      mkdirSync(dirname(join(wt, SKILL)), {recursive: true});
+      symlinkSync(mains, join(wt, SKILL), 'junction');
+      const {code, output} = remove(repo, ['skill']);
+      expect(code).toBe(1);
+      expect(output).toContain(`${SKILL}/`);
+      expect(existsSync(join(mains, 'SKILL.md'))).toBe(true);
     });
   });
 
