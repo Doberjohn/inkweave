@@ -1,13 +1,12 @@
+import type {ComponentProps} from 'react';
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {SynergyResults} from '../SynergyResults';
 import type {SynergyGroup as SynergyGroupData} from '../../types';
-import type {LorcanaCard} from '../../../cards';
 import {createCard, createSynergyGroup} from '../../../../shared/test-utils';
 
-// Mock child components. The stub surfaces `playstyleHref` as a data attribute so tests can assert
-// the parent's #498 Phase 3 gating policy (which groups get a /playstyles/:id link) without a router.
-// NOTE: inlined per factory (not a shared const) — vi.mock is hoisted above top-level consts.
+// The stub surfaces `playstyleHref` as a data attribute so tests can assert which groups get a
+// /playstyles/:id hub link (#498 Phase 3) without a router.
 vi.mock('../SynergyGroup', () => ({
   SynergyGroup: ({group, playstyleHref}: {group: SynergyGroupData; playstyleHref?: string}) => (
     <div data-testid="synergy-group" data-playstyle-href={playstyleHref ?? ''}>
@@ -15,23 +14,6 @@ vi.mock('../SynergyGroup', () => ({
     </div>
   ),
 }));
-
-vi.mock('.', () => ({
-  CardDetail: ({card}: {card: LorcanaCard}) => <div data-testid="card-detail">{card.name}</div>,
-  SynergyGroup: ({group, playstyleHref}: {group: SynergyGroupData; playstyleHref?: string}) => (
-    <div data-testid="synergy-group" data-playstyle-href={playstyleHref ?? ''}>
-      {group.label}
-    </div>
-  ),
-}));
-
-vi.mock('../../../../shared/components', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../../shared/components')>();
-  return {
-    ...actual,
-    EmptyState: () => <div data-testid="empty-state" />,
-  };
-});
 
 const mockCard = createCard({
   id: '1',
@@ -57,133 +39,94 @@ const mockSynergies: SynergyGroupData[] = [
   }),
 ];
 
+/** Renders with the full prop set CardPage passes: desktop, no filter, nothing expanded. */
+function renderResults(overrides: Partial<ComponentProps<typeof SynergyResults>> = {}) {
+  return render(
+    <SynergyResults
+      selectedCard={mockCard}
+      synergies={mockSynergies}
+      totalSynergyCount={2}
+      onClearSelection={vi.fn()}
+      isMobile={false}
+      showCardDetail={false}
+      activeGroupFilter={null}
+      onGroupFilterChange={vi.fn()}
+      expandedGroup={null}
+      onShowAll={vi.fn()}
+      onBackToAll={vi.fn()}
+      onSynergyCardClick={vi.fn()}
+      {...overrides}
+    />,
+  );
+}
+
 describe('SynergyResults', () => {
   it('should render synergies title as h2 heading', () => {
-    render(
-      <SynergyResults
-        selectedCard={mockCard}
-        synergies={mockSynergies}
-        totalSynergyCount={2}
-        onClearSelection={vi.fn()}
-      />,
-    );
+    renderResults();
     expect(screen.getByRole('heading', {level: 2})).toHaveTextContent('Synergies');
   });
 
+  // The card page owns the document's single h1 (#524); on mobile that is the inline card detail.
+  it('should render the inline card detail as the h1', () => {
+    renderResults({isMobile: true, showCardDetail: true});
+    expect(screen.getByRole('heading', {level: 1})).toHaveTextContent('Elsa');
+  });
+
   it('should wrap content in a section element', () => {
-    render(
-      <SynergyResults
-        selectedCard={mockCard}
-        synergies={mockSynergies}
-        totalSynergyCount={2}
-        onClearSelection={vi.fn()}
-      />,
-    );
+    renderResults();
     const section = document.querySelector('section');
     expect(section).toBeInTheDocument();
   });
 
   it('should render group filter chips', () => {
-    render(
-      <SynergyResults
-        selectedCard={mockCard}
-        synergies={mockSynergies}
-        totalSynergyCount={2}
-        onClearSelection={vi.fn()}
-      />,
-    );
+    renderResults();
     expect(screen.getByRole('button', {name: 'All'})).toBeTruthy();
     expect(screen.getByRole('button', {name: 'Shift Targets'})).toBeTruthy();
     expect(screen.getByRole('button', {name: 'Lore Steal'})).toBeTruthy();
   });
 
   it('should render sort select', () => {
-    render(
-      <SynergyResults
-        selectedCard={mockCard}
-        synergies={mockSynergies}
-        totalSynergyCount={2}
-        onClearSelection={vi.fn()}
-      />,
-    );
+    renderResults();
     expect(screen.getByRole('combobox', {name: 'Sort synergies'})).toBeTruthy();
   });
 
-  it('should filter groups when chip is clicked', () => {
-    render(
-      <SynergyResults
-        selectedCard={mockCard}
-        synergies={mockSynergies}
-        totalSynergyCount={2}
-        onClearSelection={vi.fn()}
-      />,
-    );
-    // Click "Shift Targets" chip
+  // The filter is controlled: CardPage owns it, so a chip click only reports the group key...
+  it('should report the clicked chip group key', () => {
+    const onGroupFilterChange = vi.fn();
+    renderResults({onGroupFilterChange});
     fireEvent.click(screen.getByRole('button', {name: 'Shift Targets'}));
+    expect(onGroupFilterChange).toHaveBeenCalledWith('shift-targets');
+  });
+
+  // ...and the visible groups follow the activeGroupFilter that comes back down.
+  it('should show only the group named by activeGroupFilter', () => {
+    renderResults({activeGroupFilter: 'shift-targets'});
     const groups = screen.getAllByTestId('synergy-group');
     expect(groups).toHaveLength(1);
     expect(groups[0]).toHaveTextContent('Shift Targets');
   });
 
   it('should hide group chips when only 1 synergy group', () => {
-    const singleGroup = [mockSynergies[0]];
-    render(
-      <SynergyResults
-        selectedCard={mockCard}
-        synergies={singleGroup}
-        totalSynergyCount={1}
-        onClearSelection={vi.fn()}
-      />,
-    );
+    renderResults({synergies: [mockSynergies[0]], totalSynergyCount: 1});
     expect(screen.queryByRole('button', {name: 'All'})).not.toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Shift Targets'})).not.toBeInTheDocument();
   });
 
   it('should still show sort select when only 1 synergy group', () => {
-    const singleGroup = [mockSynergies[0]];
-    render(
-      <SynergyResults
-        selectedCard={mockCard}
-        synergies={singleGroup}
-        totalSynergyCount={1}
-        onClearSelection={vi.fn()}
-      />,
-    );
+    renderResults({synergies: [mockSynergies[0]], totalSynergyCount: 1});
     expect(screen.getByRole('combobox', {name: 'Sort synergies'})).toBeInTheDocument();
   });
 
-  // #498 Phase 3 gating policy: a /playstyles/:id hub link is passed ONLY to playstyle-category
-  // groups, and ONLY when linkPlaystyleHeaders is set (card page). This is the load-bearing rule
-  // the change adds — a regression (dropping either condition) would leak a broken/miscategorised link.
-  it('links only playstyle group headers, and only when linkPlaystyleHeaders is set', () => {
-    const hrefByLabel = () =>
-      Object.fromEntries(
-        screen
-          .getAllByTestId('synergy-group')
-          .map((el) => [el.textContent?.trim(), el.getAttribute('data-playstyle-href')]),
-      );
-
-    const {rerender} = render(
-      <SynergyResults
-        selectedCard={mockCard}
-        synergies={mockSynergies}
-        totalSynergyCount={2}
-        onClearSelection={vi.fn()}
-        linkPlaystyleHeaders
-      />,
+  // #498 Phase 3: a /playstyles/:id hub link goes ONLY to playstyle-category groups. Dropping the
+  // category check would put a broken link on direct groups like Shift Targets.
+  it('links only playstyle group headers', () => {
+    renderResults();
+    const hrefByLabel = Object.fromEntries(
+      screen
+        .getAllByTestId('synergy-group')
+        .map((el) => [el.textContent?.trim(), el.getAttribute('data-playstyle-href')]),
     );
     // groupKey 'lore-denial' (playstyle) gets the hub link; 'shift-targets' (direct) gets none.
-    expect(hrefByLabel()).toEqual({'Lore Steal': '/playstyles/lore-denial', 'Shift Targets': ''});
-
-    // Without the flag (the modal path), no group is linked.
-    rerender(
-      <SynergyResults
-        selectedCard={mockCard}
-        synergies={mockSynergies}
-        totalSynergyCount={2}
-        onClearSelection={vi.fn()}
-      />,
-    );
-    expect(hrefByLabel()).toEqual({'Lore Steal': '', 'Shift Targets': ''});
+    expect(hrefByLabel).toEqual({'Lore Steal': '/playstyles/lore-denial', 'Shift Targets': ''});
   });
 });

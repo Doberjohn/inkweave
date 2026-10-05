@@ -159,7 +159,7 @@ test.describe('SEO', () => {
   });
 
   // Googlebot renders mobile, and CardPage gates the desktop CardDetailPanel behind
-  // !isMobile while CardDetail (headingLevel 'h1', via SynergyResults' flowInPage) owns
+  // !isMobile while CardDetail (headingLevel 'h1', always set by SynergyResults) owns
   // the h1 on small viewports. A regression in either branch is invisible at desktop width.
   test('card page has exactly one h1 at a mobile viewport', async ({page}) => {
     await page.setViewportSize({width: 412, height: 915});

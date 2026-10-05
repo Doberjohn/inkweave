@@ -198,7 +198,7 @@ against the dev server, where both are present.
 | should own its title and canonical: `/card/1989/elsa-snow-queen` | As above, on a slug card route (#498) |
 | should own its title and canonical: `/inks` | As above, on the ink gallery (#530) |
 | should own its title and canonical: `/ink/steel` | As above, on an ink hub (#530) |
-| card page has exactly one h1 at a mobile viewport | 412×915 — CardPage gates the desktop `CardDetailPanel` behind `!isMobile` while `CardDetail` owns the h1 below it (`headingLevel="h1"`, set by `SynergyResults` from `flowInPage`). Googlebot renders mobile, so a regression in either branch is invisible at desktop width |
+| card page has exactly one h1 at a mobile viewport | 412×915 — CardPage gates the desktop `CardDetailPanel` behind `!isMobile` while `CardDetail` owns the h1 below it (`headingLevel="h1"`, always set by `SynergyResults`). Googlebot renders mobile, so a regression in either branch is invisible at desktop width |
 | card page links to all six ink hubs at a mobile viewport | The footer's ink nav is what puts every hub one click from all 1,024 card pages (#530) |
 | ink hub emits one crawlable anchor per card, identically on mobile | `CardGrid`, not the Virtuoso-windowed `BrowseCardGrid` — windowing would emit a fraction of the anchors to a crawler (#530) |
 | unknown ink slug renders the 404 page, not an empty hub | Junk URLs under `/ink/` declare themselves unindexable instead of returning a thin 200 (#525) |
@@ -312,7 +312,7 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 - **URL assertions** (`toHaveURL`) verify route-based navigation on every transition
 - **Hero visibility** is the marker for "home state" vs other pages
 - **Deep linking** is tested via direct navigation to `/browse?q=...&ink=...`, `/card/:id`, `/playstyles/:id`, `/compare/A/B/groupKey`
-- **CardOverviewModal** is the quick-look surface: clicking a card tile (anywhere) opens it overlay-style with the URL unchanged. **`/card/:id` is also a real, crawlable page** (#486) — deep-linking or middle-clicking a tile lands on the routed `CardPage` (which reuses the same `CardDetailPanel` + `SynergyResults` composition). To open the modal on a *specific* card in a test, use `appPage.openCardOverview(name)` (Browse `?q=` + tile click); `/card/:id` no longer opens the modal.
+- **CardOverviewModal** is the quick-look surface: clicking a card tile (anywhere) opens it overlay-style with the URL unchanged. **`/card/:id` is also a real, crawlable page** (#486) — deep-linking or middle-clicking a tile lands on the routed `CardPage` (its own `CardDetailPanel` + `SynergyResults` composition; the modal renders neither). To open the modal on a *specific* card in a test, use `appPage.openCardOverview(name)` (Browse `?q=` + tile click); `/card/:id` no longer opens the modal.
 - **Synergy card tiles** render as crawlable `a.card-tile` anchors (#486), not `button.card-tile` — plain-click is intercepted for in-app behavior (comparison in the modal, page-to-page nav on the card page), modified/middle-click follows the link.
 - **Navigation back** is tested via both clear/back button and logo click
 - **Image loading** is verified via `loading` and `decoding` attributes (not `src` URLs, which differ between dev proxy and production AVIF)

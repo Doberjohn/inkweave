@@ -1,0 +1,13 @@
+-- Applied 2026-10-05 as 20261005150930 (#706). The filename stamp and the applied
+-- version differ by repo convention: the MCP assigns its own timestamp at apply time.
+--
+-- collectionRepository writes with PostgREST's upsert, and PostgREST puts EVERY payload
+-- column in its DO UPDATE SET, the conflict key included:
+--   insert ... on conflict (owner_id) do update set owner_id = excluded.owner_id, ...
+-- Postgres checks UPDATE on each SET column when the statement starts, whether or not a
+-- row conflicts, so the column grant from 20261005000000 (entries, imported_at,
+-- schema_version) refused every upsert with 42501, a first import included.
+--
+-- The grant is safe: collections_update_own's WITH CHECK pins owner_id to auth.uid(), so
+-- the column can only ever be set to the value it already has.
+grant update (owner_id) on public.collections to authenticated;
