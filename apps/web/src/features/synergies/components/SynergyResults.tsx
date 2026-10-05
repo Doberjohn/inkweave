@@ -3,7 +3,7 @@ import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {CardDetail, SynergyGroup} from '.';
 import {ExpandedGroupView} from './ExpandedGroupView';
-import {Chip, EmptyState, RenderProfiler} from '../../../shared/components';
+import {Chip, RenderProfiler} from '../../../shared/components';
 import {SortSelect} from '../../../shared/components/SortSelect';
 import type {SynergySortOrder} from '../../../shared/constants';
 import {
@@ -12,55 +12,41 @@ import {
   LETTER_SPACING,
   SPACING,
   RADIUS,
-  LAYOUT,
   SYNERGY_SORT_OPTIONS,
 } from '../../../shared/constants';
 
 interface SynergyResultsProps {
-  selectedCard: LorcanaCard | null;
+  selectedCard: LorcanaCard;
   synergies: SynergyGroupData[];
   totalSynergyCount: number;
   onClearSelection: () => void;
-  isMobile?: boolean;
-  /** When false, CardDetail is rendered externally (e.g. CardDetailPanel). Default: true for mobile. */
-  showCardDetail?: boolean;
-  /** Controlled group filter. When provided, overrides internal state. */
-  activeGroupFilter?: string | null;
-  /** Callback when group filter changes. Required when activeGroupFilter is controlled. */
-  onGroupFilterChange?: (groupKey: string | null) => void;
+  isMobile: boolean;
+  /** When false, CardDetail is rendered externally (CardPage's desktop CardDetailPanel). */
+  showCardDetail: boolean;
+  /** Group filter (null = All). CardPage owns it so its desktop CardDetailPanel can set it too. */
+  activeGroupFilter: string | null;
+  onGroupFilterChange: (groupKey: string | null) => void;
   /** When set, render single-group expanded view instead of multi-group list */
-  expandedGroup?: string | null;
+  expandedGroup: string | null;
   /** Called when user clicks "+N more" tile on a group */
-  onShowAll?: (groupKey: string) => void;
+  onShowAll: (groupKey: string) => void;
   /** Called when user clicks "← Back to all synergies" in expanded view */
-  onBackToAll?: () => void;
-  /** Called when a synergy card tile is clicked (opens detail modal) */
-  onSynergyCardClick?: (card: LorcanaCard, groupKey?: string) => void;
-  /** When true, flows in the page scroll (no internal max-height/overflow). Used by the full
-   *  card page so the app footer is reachable; default false = modal fixed-height scroll. */
-  flowInPage?: boolean;
-  /** When true, each playstyle group's header renders a crawlable link to its /playstyles/:id hub
-   *  page (#498 Phase 3). Set only by the full card page — the modal stays link-free. Default false. */
-  linkPlaystyleHeaders?: boolean;
+  onBackToAll: () => void;
+  /** Called when a synergy card tile is clicked (CardPage navigates to that card's page) */
+  onSynergyCardClick: (card: LorcanaCard, groupKey?: string) => void;
 }
 
 /**
- * Section chrome. In a modal the section owns its own scroll (fixed max-height + overflow); on the
- * full card page (`flowInPage`) it flows in the document so the page — and its footer — scroll instead.
+ * Section chrome. The section flows in the card page's document scroll, with no max-height or
+ * overflow of its own, so the page and its footer scroll together.
  */
-function buildSectionStyle(isMobile: boolean, flowInPage: boolean): CSSProperties {
+function buildSectionStyle(isMobile: boolean): CSSProperties {
   return {
     flex: 1,
     // Flex item of CardPage's <main>: min-width:auto would let the nowrap mobile chip row widen the
     // whole section (and page) instead of scrolling inside its own overflow box (#631).
     minWidth: 0,
     padding: isMobile ? `${SPACING.md}px` : `${SPACING.xl}px`,
-    overflowY: flowInPage ? undefined : 'auto',
-    maxHeight: flowInPage
-      ? undefined
-      : isMobile
-        ? '100vh'
-        : `calc(100vh - ${LAYOUT.compactHeaderHeight}px)`,
     background: isMobile ? COLORS.background : undefined,
   };
 }
@@ -203,11 +189,8 @@ interface ResultsBodyProps {
   setActiveGroupFilter: (groupKey: string | null) => void;
   sortOrder: SynergySortOrder;
   setSortOrder: (order: SynergySortOrder) => void;
-  onShowAll?: (groupKey: string) => void;
-  onSynergyCardClick?: (card: LorcanaCard, groupKey?: string) => void;
-  linkPlaystyleHeaders?: boolean;
-  /** 'h1' on the standalone card page, 'h2' inside the modal. See CardDetail. */
-  cardDetailHeadingLevel: 'h1' | 'h2';
+  onShowAll: (groupKey: string) => void;
+  onSynergyCardClick: (card: LorcanaCard, groupKey?: string) => void;
 }
 
 /** The default (non-expanded) view: optional card detail, then either the empty notice or the
@@ -225,8 +208,6 @@ function SynergyResultsBody({
   setSortOrder,
   onShowAll,
   onSynergyCardClick,
-  linkPlaystyleHeaders,
-  cardDetailHeadingLevel,
 }: ResultsBodyProps) {
   const visibleGroups = activeGroupFilter
     ? synergies.filter((g) => g.groupKey === activeGroupFilter)
@@ -235,11 +216,8 @@ function SynergyResultsBody({
   return (
     <>
       {renderCardDetail && (
-        <CardDetail
-          card={selectedCard}
-          onClear={onClearSelection}
-          headingLevel={cardDetailHeadingLevel}
-        />
+        // The card page owns the document's single h1 (#524).
+        <CardDetail card={selectedCard} onClear={onClearSelection} headingLevel="h1" />
       )}
       {synergies.length === 0 ? (
         <NoSynergiesNotice />
@@ -264,9 +242,7 @@ function SynergyResultsBody({
               onCardClick={onSynergyCardClick}
               sortOrder={sortOrder}
               playstyleHref={
-                linkPlaystyleHeaders && group.category === 'playstyle'
-                  ? `/playstyles/${group.groupKey}`
-                  : undefined
+                group.category === 'playstyle' ? `/playstyles/${group.groupKey}` : undefined
               }
             />
           ))}
@@ -276,31 +252,19 @@ function SynergyResultsBody({
   );
 }
 
-/** Chooses between the empty state, the single-group expanded view, and the default results body. */
+/** Chooses between the single-group expanded view and the default results body. */
 function SynergyResultsContent(
   props: SynergyResultsProps & {
-    activeGroupFilter: string | null;
-    setActiveGroupFilter: (groupKey: string | null) => void;
     sortOrder: SynergySortOrder;
     setSortOrder: (order: SynergySortOrder) => void;
   },
 ) {
-  const {selectedCard, synergies, expandedGroup, onBackToAll, isMobile = false, onSynergyCardClick} =
-    props;
-
-  if (!selectedCard) {
-    return (
-      <EmptyState
-        title="Select a card to see synergies"
-        subtitle='Try "Elsa" or filter by Amethyst'
-      />
-    );
-  }
+  const {selectedCard, synergies, expandedGroup, onBackToAll, isMobile, onSynergyCardClick} = props;
 
   const expandedGroupData = expandedGroup
     ? synergies.find((g) => g.groupKey === expandedGroup)
     : null;
-  if (expandedGroupData && onBackToAll) {
+  if (expandedGroupData) {
     return (
       <ExpandedGroupView
         key={expandedGroupData.groupKey}
@@ -319,45 +283,24 @@ function SynergyResultsContent(
       totalSynergyCount={props.totalSynergyCount}
       onClearSelection={props.onClearSelection}
       isMobile={isMobile}
-      renderCardDetail={props.showCardDetail ?? isMobile}
+      renderCardDetail={props.showCardDetail}
       activeGroupFilter={props.activeGroupFilter}
-      setActiveGroupFilter={props.setActiveGroupFilter}
+      setActiveGroupFilter={props.onGroupFilterChange}
       sortOrder={props.sortOrder}
       setSortOrder={props.setSortOrder}
       onShowAll={props.onShowAll}
       onSynergyCardClick={onSynergyCardClick}
-      linkPlaystyleHeaders={props.linkPlaystyleHeaders}
-      // flowInPage is only set by CardPage, so it is the page-vs-modal signal: the
-      // standalone card page owns the document's h1, the modal must not (#524).
-      cardDetailHeadingLevel={props.flowInPage ? 'h1' : 'h2'}
     />
   );
 }
 
 export function SynergyResults(props: SynergyResultsProps) {
-  const {
-    isMobile = false,
-    activeGroupFilter: controlledFilter,
-    onGroupFilterChange,
-    flowInPage = false,
-  } = props;
-  const [internalFilter, setInternalFilter] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SynergySortOrder>('ink-cost');
-
-  // Support both controlled (from CardPage) and uncontrolled (standalone) modes
-  const activeGroupFilter = controlledFilter !== undefined ? controlledFilter : internalFilter;
-  const setActiveGroupFilter = onGroupFilterChange ?? setInternalFilter;
 
   return (
     <RenderProfiler id="SynergyResults">
-      <section aria-label="Synergy results" style={buildSectionStyle(isMobile, flowInPage)}>
-        <SynergyResultsContent
-          {...props}
-          activeGroupFilter={activeGroupFilter}
-          setActiveGroupFilter={setActiveGroupFilter}
-          sortOrder={sortOrder}
-          setSortOrder={setSortOrder}
-        />
+      <section aria-label="Synergy results" style={buildSectionStyle(props.isMobile)}>
+        <SynergyResultsContent {...props} sortOrder={sortOrder} setSortOrder={setSortOrder} />
       </section>
     </RenderProfiler>
   );
