@@ -1,7 +1,8 @@
 import {loadSupabase, type InkweaveSupabase} from '../../shared/lib/supabase';
 import type {Json} from '../../shared/lib/database.types';
 import {NOT_CONFIGURED, type RepoResult} from '../../shared/lib/repoResult';
-import {isCollectionEntries, type CollectionEntries} from './collectionParser';
+import type {CollectionEntries} from './collectionParser';
+import {isCollectionEntries} from './collectionEntryGuards';
 import type {StoredCollection} from './collectionStorage';
 
 /**

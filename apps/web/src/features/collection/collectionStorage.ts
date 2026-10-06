@@ -22,7 +22,8 @@
 // because OTHER things share that quota, not because this payload is large.
 
 import type {RepoResult} from '../../shared/lib/repoResult';
-import {isCollectionEntries, type CollectionEntries} from './collectionParser';
+import type {CollectionEntries} from './collectionParser';
+import {isCollectionEntries} from './collectionEntryGuards';
 
 /** The single stored collection. Namespaced alongside `inkweave:deck:*`. */
 export const COLLECTION_KEY = 'inkweave:collection';
