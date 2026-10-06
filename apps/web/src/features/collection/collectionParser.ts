@@ -66,12 +66,21 @@ function isCopyCount(value: unknown): value is number {
   return Number.isSafeInteger(value) && value >= 0;
 }
 
-/** Runtime guard for one {@link CollectionEntry}. */
+/**
+ * Runtime guard for one {@link CollectionEntry}.
+ *
+ * The SUM is checked as well as each field, because `totalOwned` folds the two
+ * and is the accessor every consumer goes through. Two individually safe counts
+ * can add past 2^53, and an entry whose own total is unrepresentable has not
+ * really been validated: the one number it exists to report is already wrong.
+ */
 export function isCollectionEntry(value: unknown): value is CollectionEntry {
   if (value === null) return false;
   if (typeof value !== 'object') return false;
   const entry = value as Partial<CollectionEntry>;
-  return isCopyCount(entry.normal) && isCopyCount(entry.foil);
+  if (!isCopyCount(entry.normal)) return false;
+  if (!isCopyCount(entry.foil)) return false;
+  return Number.isSafeInteger(entry.normal + entry.foil);
 }
 
 /**

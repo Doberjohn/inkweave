@@ -241,6 +241,14 @@ describe('isCollectionEntries', () => {
   it('rejects an entry missing a finish rather than reading it as zero', () => {
     expect(isCollectionEntries({'2001': {normal: 2}})).toBe(false);
   });
+
+  it('rejects two safe counts whose TOTAL is not safe', () => {
+    // Each field passes on its own; `totalOwned` folds them, and that sum is the
+    // number every consumer reads. Validating the fields but not the total
+    // certifies an entry whose own answer is already imprecise.
+    const entries = {'2001': {normal: Number.MAX_SAFE_INTEGER, foil: 2}};
+    expect(isCollectionEntries(entries)).toBe(false);
+  });
 });
 
 describe('totalOwned', () => {
