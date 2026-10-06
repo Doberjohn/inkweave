@@ -20,7 +20,6 @@ const ALL_CARDS = JSON.parse(
 const cards = ALL_CARDS.cards ?? [];
 const cardById = new Map(cards.map((c) => [String(c.id), c]));
 
-const manifest = JSON.parse(readFileSync(join(SYNERGY_DIR, '_manifest.json'), 'utf8'));
 const playstyles = JSON.parse(readFileSync(join(SYNERGY_DIR, '_playstyles.json'), 'utf8'));
 
 const cardFiles = readdirSync(SYNERGY_DIR).filter((f) => /^\d+\.json$/.test(f));
@@ -96,7 +95,7 @@ console.log(``);
 console.log(`| Rule | Matches | Cards | Min | Max | Mean | Median | Spread |`);
 console.log(`|------|---------|-------|-----|-----|------|--------|--------|`);
 const sortedRules = [...ruleStats.entries()].sort((a, b) => b[1].scores.length - a[1].scores.length);
-for (const [ruleId, stat] of sortedRules) {
+for (const [, stat] of sortedRules) {
   const min = Math.min(...stat.scores);
   const max = Math.max(...stat.scores);
   const mean = (stat.scores.reduce((s, n) => s + n, 0) / stat.scores.length).toFixed(2);
