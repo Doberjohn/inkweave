@@ -179,4 +179,23 @@ describe('chunkFilename', () => {
     expect(() => chunkFilename('../secrets')).toThrow();
     expect(() => chunkFilename('a/b')).toThrow();
   });
+
+  /*
+    `index` is a perfectly SAFE filename, so the path check above passes it. It is still
+    wrong: the chunk would be written as index.json and replace the all-cards projection
+    with one set's detail, silently. Path safety and name collisions are different
+    problems and need separate guards, which is why this case gets its own test rather
+    than riding along with the traversal one.
+
+    Case-insensitive because the collision is on the filesystem, not in the string.
+  */
+  it('refuses the reserved index set code, in any case', () => {
+    expect(() => chunkFilename('index')).toThrow(/reserved/i);
+    expect(() => chunkFilename('INDEX')).toThrow(/reserved/i);
+    expect(() => chunkFilename('Index')).toThrow(/reserved/i);
+  });
+
+  it('still accepts set codes that merely contain the reserved word', () => {
+    expect(chunkFilename('index1')).toBe('index1.json');
+  });
 });

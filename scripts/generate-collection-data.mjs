@@ -43,6 +43,8 @@ const CORE_FILE = path.join(ROOT, 'apps/web/public/data/allCards.json');
 const PREVIEW_FILE = path.join(ROOT, 'apps/web/public/data/previewCards.json');
 const OUTPUT_DIR = path.join(ROOT, 'apps/web/public/data/collection');
 const STAGING_DIR = `${OUTPUT_DIR}.staging`;
+/** Holds the previous dataset across the swap, so a failed rename is recoverable. */
+const BACKUP_DIR = `${OUTPUT_DIR}.backup`;
 const INDEX_NAME = 'index.json';
 
 function readCards(filePath, {required = true} = {}) {
@@ -92,20 +94,53 @@ function assertDisjoint(collectionCards, excludedIds) {
 }
 
 /**
- * Replace OUTPUT_DIR with a fully-written STAGING_DIR, as one step.
+ * Install the fully-written STAGING_DIR as OUTPUT_DIR, keeping the old dataset until
+ * the new one is in place.
  *
- * Generation used to clear the output first and write into the hole. Any failure after
- * that point, a full disk or a throw mid-loop, left the committed dataset deleted or
- * half-rewritten, with no copy to fall back to. Staging inverts it: every file is
- * written and verified while the real dataset is still intact, and the swap is the last
- * thing that happens.
+ * Generation used to clear the output first and write into the hole, so any failure
+ * afterwards left the dataset deleted or half-rewritten. Staging fixed the write loop,
+ * but an earlier version of this function still did `rm` then `rename`, which has the
+ * same shape in miniature: if the rename FAILS, and on Windows a transient lock on a
+ * directory is enough, there is no dataset at all and nothing to restore. "The window
+ * is only milliseconds" is not a guarantee, it is a smaller version of the same bug.
  *
- * The rm-then-rename window is milliseconds rather than the whole generation, and a
- * crash inside it leaves the staging directory on disk for the next run to clean.
+ * So the old dataset is moved aside rather than destroyed, and only deleted once the
+ * replacement is installed. A failed rename puts it straight back.
  */
 function commitStaging() {
-  fs.rmSync(OUTPUT_DIR, {recursive: true, force: true});
-  fs.renameSync(STAGING_DIR, OUTPUT_DIR);
+  fs.rmSync(BACKUP_DIR, {recursive: true, force: true});
+  const hadPrevious = fs.existsSync(OUTPUT_DIR);
+  if (hadPrevious) fs.renameSync(OUTPUT_DIR, BACKUP_DIR);
+  try {
+    fs.renameSync(STAGING_DIR, OUTPUT_DIR);
+  } catch (err) {
+    if (hadPrevious) fs.renameSync(BACKUP_DIR, OUTPUT_DIR);
+    throw err;
+  }
+  fs.rmSync(BACKUP_DIR, {recursive: true, force: true});
+}
+
+/**
+ * Undo a commit that was interrupted between its two renames.
+ *
+ * That is the one state the swap cannot defend itself against: the process dies after
+ * the old dataset has moved to BACKUP_DIR and before the new one is installed, leaving
+ * no OUTPUT_DIR. Nothing in the next run would notice, since generation writes to
+ * staging and never reads the output. So the next run checks for it explicitly.
+ *
+ * A backup sitting beside an OUTPUT_DIR that DOES exist just means the final cleanup
+ * did not get to run, so it is discarded rather than restored.
+ */
+function recoverInterruptedCommit() {
+  if (!fs.existsSync(BACKUP_DIR)) return;
+  if (fs.existsSync(OUTPUT_DIR)) {
+    fs.rmSync(BACKUP_DIR, {recursive: true, force: true});
+    return;
+  }
+  fs.renameSync(BACKUP_DIR, OUTPUT_DIR);
+  console.warn(`
+  ! Restored ${path.relative(ROOT, OUTPUT_DIR)} from a previous interrupted run.
+`);
 }
 
 /** Start from a clean staging directory, discarding any a crashed run left behind. */
@@ -115,6 +150,8 @@ function prepareStaging() {
 }
 
 function main() {
+  recoverInterruptedCommit();
+
   const source = process.argv[2] ? path.resolve(process.argv[2]) : DEFAULT_SOURCE;
   const fullCards = readCards(source);
   const coreCards = readCards(CORE_FILE);
