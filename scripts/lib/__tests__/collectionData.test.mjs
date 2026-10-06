@@ -65,8 +65,23 @@ const carriedFrom = (input, fields) => fields.filter((f) => input[f] !== undefin
 describe('buildIndex', () => {
   const [entry] = buildIndex([card()]);
 
-  it('carries what the grid and filters need', () => {
-    for (const field of carriedFrom(card(), INDEX_FIELDS)) expect(entry).toHaveProperty(field);
+  /*
+    Also an independent list, for the same reason as TRANSFORMER_READS below: these are
+    the fields the grid, the filter controls and name search read, named here rather than
+    taken from INDEX_FIELDS, so dropping one from the projection fails a test instead of
+    quietly narrowing the expectation.
+  */
+  const GRID_NEEDS = [
+    'id', 'name', 'fullName', 'cost', 'color', 'inkwell', 'type', 'subtypes', 'setCode',
+    'number', 'rarity',
+  ];
+
+  it('projects what the grid and filters need', () => {
+    expect(INDEX_FIELDS).toEqual(expect.arrayContaining(GRID_NEEDS));
+  });
+
+  it('carries those fields through into a real index entry', () => {
+    for (const field of carriedFrom(card(), GRID_NEEDS)) expect(entry).toHaveProperty(field);
   });
 
   it('carries baseId when the card is an alternate printing', () => {
@@ -104,9 +119,33 @@ describe('buildDetailChunks', () => {
     expect(chunks.get('1')).toHaveLength(2);
   });
 
-  it('carries every field the engine transformer reads', () => {
+  /*
+    AN INDEPENDENT LIST, not derived from DETAIL_FIELDS. Checking the projection against
+    the same constant that drives it proves only that the code agrees with itself: delete
+    a transformer-required field from DETAIL_FIELDS and the expectation shrinks with it,
+    so the test stays green while collection cards render incomplete.
+
+    These names come from reading `transformCard` in
+    packages/synergy-engine/src/utils/cardTransformer.ts and listing every `raw.*` it
+    touches. When that function gains a field, this list fails first and DETAIL_FIELDS
+    must follow.
+
+    `franchise` is deliberately absent: `transformCard` reads it, but it is set only on
+    preview cards, and the collection dataset holds historical sets that never carry one.
+  */
+  const TRANSFORMER_READS = [
+    'color', 'cost', 'fullName', 'fullText', 'fullTextSections', 'id', 'inkwell', 'lore',
+    'moveCost', 'name', 'number', 'rarity', 'setCode', 'strength', 'subtypes', 'type',
+    'version', 'willpower',
+  ];
+
+  it('projects every field the engine transformer reads', () => {
+    expect(DETAIL_FIELDS).toEqual(expect.arrayContaining(TRANSFORMER_READS));
+  });
+
+  it('carries those fields through into a real chunk entry', () => {
     const [detail] = chunks.get('1');
-    for (const field of carriedFrom(card(), DETAIL_FIELDS)) expect(detail).toHaveProperty(field);
+    for (const field of carriedFrom(card(), TRANSFORMER_READS)) expect(detail).toHaveProperty(field);
   });
 
   it('carries the optional fields too when the card has them', () => {

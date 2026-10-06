@@ -79,7 +79,7 @@
         "apps/web/dist/data/collection/*.json",
         "!apps/web/dist/data/collection/index.json"
       ],
-      "limit": "420 kB",
+      "limit": "470 kB",
       "gzip": true
     }
   ],

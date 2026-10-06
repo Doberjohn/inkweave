@@ -771,9 +771,14 @@ cards Inkweave can SHOW but never analyses, namely sets 1-8, Q1/Q2, and the
 Enchanted/Epic/Iconic/Special printings inside Core sets.
 
 **No card id appears in both it and `allCards.json`.** That is what makes the Core
-boundary structural: every script in this document reads `allCards.json` and never
-opens these files, so a set-1 card cannot reach a synergy calculation even by
-mistake. `scripts/generate-collection-data.mjs:66` asserts it and aborts otherwise.
+boundary structural: `precompute-synergies.mjs` reads `allCards.json` and never opens
+these files, so a set-1 card cannot reach a synergy calculation even by mistake.
+`scripts/generate-collection-data.mjs:66` asserts the two sets are disjoint and aborts
+otherwise.
+
+The boundary is about SYNERGY, not about the files being untouched. `download-card-images.mjs`
+does read and rewrite these chunks, to image the cards and inject their hashes, which is
+described below. Nothing it does feeds a synergy calculation.
 
 | File | Contents | gzip |
 |---|---|---|
@@ -786,6 +791,13 @@ visitor ever loads all 460 KB, because collection mode loads the index once plus
 one chunk for the set being viewed. `Collection index JSON` guards that per-visit
 cost; `Collection set chunks` is a growth guard on data nobody loads in full.
 
+**The chunk budget is set against the HASH-INJECTED size, not the committed size.**
+Committed chunks gzip to 382 KB; the build injects two 16-hex hashes per subject, and
+because content-addressed hashes are high-entropy they barely compress, adding **57 KB**
+to reach 439 KB. Measuring the committed files would set a limit against an artifact
+nobody is served, which is the defect [#729](https://github.com/Doberjohn/inkweave/issues/729)
+describes. The index is not imaged, so its budget needs no such allowance.
+
 **Source is manual**, like `allCards.json`: download the full export from
 LorcanaJSON.org and pass its path to `pnpm generate-collection-data`.
 `previewCards.json` ids are excluded alongside `allCards.json`, because the runtime
@@ -797,8 +809,18 @@ both would otherwise appear twice.
 `allCards.json`, and the deployed copies are what the restore path reads back. Do not
 commit a chunk that a local `pnpm download-images` has hashed.
 
-**A detail chunk must satisfy `LorcanaJSONCard`** (`cardTransformer.ts:7-44`), because
-chunks are transformed at runtime exactly like `allCards.json`. That interface is the
+**QUEST CARDS DO NOT ROUND-TRIP THROUGH THE ENGINE TRANSFORMER.** All 66 cards in
+`Q1.json` and `Q2.json` carry `"color": ""`, which is correct: Illumineer's Quest cards
+have no ink. But `parseInks` (`cardTransformer.ts:79`) accepts only the six `VALID_INKS`,
+returns `null` for `""`, and `transformCard:181` then returns `null`, which
+`transformCards:224` silently drops. Loading those chunks through `transformCards` yields
+**zero cards for both Quest sets, with no error**. Phase C must either use a transform
+path that tolerates colorless cards or render Quest sets without the transformer. Do not
+"fix" this by giving them an ink: the data is right and the transformer's contract is
+narrower than this dataset.
+
+**Every other detail chunk satisfies `LorcanaJSONCard`** (`cardTransformer.ts:7-44`),
+because chunks are transformed at runtime exactly like `allCards.json`. That interface is the
 contract: if it gains a field, `DETAIL_FIELDS` in `scripts/lib/collectionData.mjs:56`
 must follow, or collection cards render incomplete. An earlier design sized this
 projection against an invented field list and came out 4x too small AND missing

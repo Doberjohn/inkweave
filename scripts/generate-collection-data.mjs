@@ -53,7 +53,17 @@ function readCards(filePath, {required = true} = {}) {
     }
     return [];
   }
-  return JSON.parse(fs.readFileSync(filePath, 'utf8')).cards ?? [];
+  const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  // `?? []` here would turn a mistyped path, or any JSON that is simply not a card
+  // export, into "0 cards upstream". The run would then clear the output directory,
+  // write an empty index and report success, having deleted the committed dataset.
+  // An export with no `cards` array is never legitimate, so refuse it.
+  if (!Array.isArray(data?.cards)) {
+    console.error(`\n  x ${filePath} has no \`cards\` array, so it is not a LorcanaJSON export.`);
+    console.error('    Refusing to run rather than replace the committed dataset with an empty one.\n');
+    process.exit(1);
+  }
+  return data.cards;
 }
 
 const idSet = (cards) => new Set(cards.map((card) => String(card.id)));
@@ -87,17 +97,23 @@ function main() {
   const collectionCards = selectCollectionCards(fullCards, [excluded]);
   assertDisjoint(collectionCards, excluded);
 
-  clearOutputDir();
-
   const index = buildIndex(collectionCards);
-  fs.writeFileSync(INDEX_FILE, `${JSON.stringify(index)}\n`);
-
   const chunks = buildDetailChunks(collectionCards);
   const bySet = [...chunks.entries()].sort(
     (a, b) => (parseInt(a[0], 10) || 99) - (parseInt(b[0], 10) || 99),
   );
-  for (const [setCode, cards] of bySet) {
-    fs.writeFileSync(path.join(OUTPUT_DIR, chunkFilename(setCode)), `${JSON.stringify(cards)}\n`);
+  // Validate EVERY set code before deleting anything. `chunkFilename` throws on a code
+  // that is unsafe in a path, and set codes come from an external data file. Left until
+  // the write loop, that throw lands AFTER clearOutputDir, leaving the committed dataset
+  // deleted and only partly rewritten.
+  const filenames = bySet.map(([setCode]) => chunkFilename(setCode));
+
+  clearOutputDir();
+
+  fs.writeFileSync(INDEX_FILE, `${JSON.stringify(index)}\n`);
+
+  for (const [i, [setCode, cards]] of bySet.entries()) {
+    fs.writeFileSync(path.join(OUTPUT_DIR, filenames[i]), `${JSON.stringify(cards)}\n`);
   }
 
   const kb = (bytes) => `${(bytes / 1024).toFixed(0)} KB`;
