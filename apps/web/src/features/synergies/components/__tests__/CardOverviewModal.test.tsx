@@ -129,6 +129,31 @@ test.each([
   expect(screen.getByRole('button', {name: 'Close'})).toHaveFocus();
 });
 
+// A swipe leaves focus where it was: on the toggle, which an English printing hides in place.
+test('a swipe that hides the focused translation toggle moves focus to the ×', async () => {
+  Element.prototype.scrollTo = vi.fn();
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter>
+      <CardOverviewModal
+        isOpen
+        card={withItalianEpic(makeCard('b'))}
+        initialPrintingId="b-epic"
+        synergies={[]}
+        getPairSynergies={() => null}
+        onClose={() => {}}
+      />
+    </MemoryRouter>,
+  );
+  await waitFor(() => expect(screen.getByRole('button', {name: 'Close'})).toHaveFocus());
+  await user.click(screen.getByRole('button', {name: 'See translation'}));
+  expect(screen.getByRole('button', {name: 'See card'})).toHaveFocus();
+
+  swipeStrip(screen.getByRole('group', {name: 'Card b - Test printings'}), 0);
+
+  expect(screen.getByRole('button', {name: 'Close'})).toHaveFocus();
+});
+
 test('the expanded group view hides the translation toggle, which has no card image to cover', async () => {
   const user = userEvent.setup();
   render(

@@ -48,21 +48,34 @@ const COMPARISON_CARD_INSET = 42;
  * of the next card is a foreign scan), which drops focus to <body>, outside the frame's
  * arrow-key handler. Or it can hide the control in place (the toggle, when the next card's
  * foreign scan is a variant, #681), leaving focus on a button nobody can see. Either way, put
- * it back on the close button so the arrow keys keep paging.
+ * it back on the close button so the arrow keys keep paging. A swipe to an English printing
+ * hides a focused toggle the same way, but a swipe often leaves focus on <body>, so after a
+ * printing change only a control hidden in place counts as lost.
  */
-function useFocusSurvivesPaging(cardId: string, fallbackRef: React.RefObject<HTMLElement | null>) {
-  const prevCardId = useRef(cardId);
+function useFocusSurvivesPaging(
+  cardId: string,
+  printingIndex: number,
+  fallbackRef: React.RefObject<HTMLElement | null>,
+) {
+  const prev = useRef({cardId, printingIndex});
   useLayoutEffect(() => {
-    if (prevCardId.current !== cardId && focusLost(document.activeElement)) {
-      fallbackRef.current?.focus();
-    }
-    prevCardId.current = cardId;
-  }, [cardId, fallbackRef]);
+    const active = document.activeElement;
+    const cardChanged = prev.current.cardId !== cardId;
+    const printingChanged = prev.current.printingIndex !== printingIndex;
+    prev.current = {cardId, printingIndex};
+    const lost = cardChanged ? focusLost(active) : printingChanged && hiddenInPlace(active);
+    if (lost) fallbackRef.current?.focus();
+  }, [cardId, printingIndex, fallbackRef]);
 }
 
-/** Focus fell to <body>, or sits on an element hidden in place (visibility is inherited). */
+/** Focus sits on an element hidden in place (visibility is inherited from its wrapper). */
+function hiddenInPlace(active: Element | null): boolean {
+  return !!active && getComputedStyle(active).visibility === 'hidden';
+}
+
+/** Focus fell to <body>, or sits on an element hidden in place. */
 function focusLost(active: Element | null): boolean {
-  return active === document.body || (!!active && getComputedStyle(active).visibility === 'hidden');
+  return active === document.body || hiddenInPlace(active);
 }
 
 interface CardOverviewModalProps {
@@ -365,7 +378,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
     initialPrintingId: props.initialPrintingId,
   });
   const translation = useCardTranslation(card, isOpen, printing);
-  useFocusSurvivesPaging(card.id, initialFocusRef);
+  useFocusSurvivesPaging(card.id, printing?.index ?? 0, initialFocusRef);
 
   if (!mounted) return null;
 
