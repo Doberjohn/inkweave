@@ -13,6 +13,9 @@ interface ImportMetaEnv {
   readonly VITE_DISABLE_REACT_GRAB?: string;
 }
 
+/** The Vercel deployment environment the build ran for, or 'unknown' (vite.config.ts, #740). */
+declare const __DEPLOY_ENV__: string;
+
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }

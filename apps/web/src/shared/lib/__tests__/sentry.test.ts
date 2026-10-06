@@ -43,6 +43,15 @@ describe('sentry', () => {
     expect(Sentry.init).toHaveBeenCalledOnce();
   });
 
+  it('reports the build environment, never a hard-coded production', async () => {
+    const {loadSentry, Sentry} = await loadModules();
+
+    await loadSentry();
+
+    // The test build has no VERCEL_ENV, so vite.config.ts bakes in the fallback (#740).
+    expect(Sentry.init).toHaveBeenCalledWith(expect.objectContaining({environment: 'unknown'}));
+  });
+
   it.each([
     ['during the prerender crawl', () => (window.__INKWEAVE_PRERENDER__ = true)],
     ['without a DSN', () => vi.stubEnv('VITE_SENTRY_DSN', '')],
