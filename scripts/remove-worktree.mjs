@@ -14,13 +14,14 @@
  * A removal, in order. Nothing changes until every gate has passed:
  * 1. Gates: HEAD is on an origin/* ref (after a fetch), the tree is clean, and every ignored
  *    file or folder is build output or a byte-identical copy of the main checkout's (a folder
- *    holds the same files, each identical, and no repository).
+ *    holds the same files, each identical, and no repository). A folder that holds no files is
+ *    not checked.
  * 2. In use? Rename the folder to <path>.removing. Windows refuses while a process has its
  *    working directory (or an open file) inside it, so a refused rename means "in use".
  * 3. Unregister with `git worktree prune`, which drops entries whose folder is missing.
  * 4. Delete <path>.removing.
- * 5. Delete the branch once origin/master contains it, unless --keep-branch. The local master
- *    always stays.
+ * 5. Delete the branch once origin/master contains it, unless --keep-branch, and only while it
+ *    still points at the commit that check saw. The local master always stays.
  *
  * Before the rename, a marker under <git common dir>/worktree-removals/ records the path, so
  * --leftovers can finish an interrupted removal wherever the worktree lived. --leftovers
@@ -81,6 +82,9 @@ const BUILD_OUTPUT = [
   /^apps\/web\/public\/(card-images|data\/synergies)\/$/,
   /^apps\/web\/public\/(data\/featuredCards|version)\.json$/,
 ];
+
+// The `git ls-files` arguments that list a worktree's untracked, ignored entries.
+const LIST_IGNORED = ['ls-files', '-z', '-o', '-i', '--exclude-standard', '--directory'];
 
 // The longest list a refusal prints before it summarizes the rest.
 const LIST_LIMIT = 20;
@@ -269,8 +273,8 @@ function removeWorktree(repo, context) {
   const marker = claim(repo, worktree.path, context.rename);
   unregister(repo, worktree, marker, context);
   destroy(`${worktree.path}${REMOVING}`, marker, context);
-  if (branch.remove) git(repo.main, ['branch', '-D', worktree.branch]);
-  log(`removed ${worktree.path} (${branch.note})`);
+  const note = branch.remove ? deleteBranch(repo, worktree.branch, branch.sha) : branch.note;
+  log(`removed ${worktree.path} (${note})`);
   return 0;
 }
 
@@ -352,26 +356,29 @@ function remoteRefsContaining(repo, head) {
 // only a folder outside build output is walked, to compare it with the main checkout's.
 // An untracked folder that only holds ignored files is listed too, ahead of its entries; those
 // entries are judged one by one, and the status gate has already ruled out anything else in it.
+// A folder that holds no files has nothing to lose, so it is not judged.
 function classifyIgnored(repo, worktree) {
-  const entries = git(worktree.path, [
-    'ls-files',
-    '-z',
-    '-o',
-    '-i',
-    '--exclude-standard',
-    '--directory',
-  ])
-    .split('\0')
-    .filter(Boolean);
+  const entries = git(worktree.path, LIST_IGNORED).split('\0').filter(Boolean);
   const holdsOthers = (entry) =>
     entry.endsWith('/') && entries.some((other) => other !== entry && other.startsWith(entry));
   const unique = [];
   const copies = [];
   for (const entry of entries) {
     if (holdsOthers(entry) || isBuildOutput(entry)) continue;
+    if (holdsNoFiles(worktree.path, entry)) continue;
     (isCopyOfMain(repo, worktree.path, entry) ? copies : unique).push(entry);
   }
   return {unique, copies};
+}
+
+// Whether git finds no file in the ignored folder `entry`: the bare skeleton a closed app session
+// leaves of its skill folder, or a junction to an empty or missing folder. Asked per entry with a
+// pathspec, because over the whole worktree --no-empty-directory reports an untracked parent in
+// place of the ignored entries inside it, and that parent would then be judged instead (#727).
+function holdsNoFiles(root, entry) {
+  if (!entry.endsWith('/')) return false;
+  const listing = [...LIST_IGNORED, '--no-empty-directory', '--', `:(literal)${entry}`];
+  return git(root, listing) === '';
 }
 
 // Whether the main checkout has the same ignored entry: a file byte for byte, a folder file by
@@ -419,7 +426,25 @@ function branchPlan(repo, worktree, keepBranch) {
   if (!gitSucceeds(repo.main, ['merge-base', '--is-ancestor', `refs/heads/${branch}`, BASE])) {
     return {remove: false, note: `branch ${branch} kept: ${BASE} does not contain it`};
   }
-  return {remove: true, note: `branch ${branch} deleted`};
+  return {remove: true, sha: git(repo.main, ['rev-parse', `refs/heads/${branch}`])};
+}
+
+// The merge check ran before the folder delete, which takes minutes, and once the worktree is
+// unregistered nothing protects its branch. Delete it only if it still points where the check
+// saw it: another session may have deleted it, or reused the name, meanwhile.
+function deleteBranch(repo, branch, sha) {
+  const ref = `refs/heads/${branch}`;
+  if (!gitSucceeds(repo.main, ['show-ref', '--verify', '--quiet', ref])) {
+    return `branch ${branch} was already deleted`;
+  }
+  const tip = git(repo.main, ['rev-parse', ref]);
+  if (tip !== sha) {
+    return `branch ${branch} kept: it moved to ${tip.slice(0, 8)} during the removal`;
+  }
+  if (!gitSucceeds(repo.main, ['branch', '-D', branch])) {
+    return `branch ${branch} kept: git branch -D refused (is it checked out again?)`;
+  }
+  return `branch ${branch} deleted`;
 }
 
 // --- markers and the destructive steps -------------------------------------------------
