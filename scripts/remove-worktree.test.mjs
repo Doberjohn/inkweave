@@ -501,6 +501,18 @@ describe('remove-worktree', {timeout: 60_000}, () => {
       expect(branchExists(repo, 'wt/merged')).toBe(false);
     });
 
+    // The delete goes through update-ref, which leaves the settings git branch -D would drop.
+    it('drops the upstream settings of a deleted branch, as git branch -D does', () => {
+      const repo = makeRepo();
+      addWorktree(repo, 'tracked');
+      git(repo.main, 'config', 'branch.wt/tracked.remote', 'origin');
+      git(repo.main, 'config', 'branch.wt/tracked.merge', 'refs/heads/wt/tracked');
+      const {code, output} = remove(repo, ['tracked']);
+      expect(code).toBe(0);
+      expect(output).toMatch(/branch wt\/tracked deleted/);
+      expect(git(repo.main, 'config', '--list')).not.toContain('branch.wt/tracked.');
+    });
+
     it('keeps a pushed branch that is not merged, and says so', () => {
       const repo = makeRepo();
       const wt = addWorktree(repo, 'open');

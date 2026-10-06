@@ -423,27 +423,40 @@ function branchPlan(repo, worktree, keepBranch) {
   if (elsewhere) {
     return {remove: false, note: `branch ${branch} kept: also checked out at ${elsewhere.path}`};
   }
-  if (!gitSucceeds(repo.main, ['merge-base', '--is-ancestor', `refs/heads/${branch}`, BASE])) {
+  // One read of the tip, so the merge check and the later delete are about the same commit.
+  const sha = tipOf(repo, branch);
+  if (!sha || !gitSucceeds(repo.main, ['merge-base', '--is-ancestor', sha, BASE])) {
     return {remove: false, note: `branch ${branch} kept: ${BASE} does not contain it`};
   }
-  return {remove: true, sha: git(repo.main, ['rev-parse', `refs/heads/${branch}`])};
+  return {remove: true, sha};
+}
+
+// The commit a branch points at, or null when there is no such branch.
+function tipOf(repo, branch) {
+  try {
+    return git(repo.main, ['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`]);
+  } catch {
+    return null;
+  }
 }
 
 // The merge check ran before the folder delete, which takes minutes, and once the worktree is
-// unregistered nothing protects its branch. Delete it only if it still points where the check
-// saw it: another session may have deleted it, or reused the name, meanwhile.
+// unregistered nothing protects its branch: another session may delete it, move it or check it
+// out again meanwhile. update-ref deletes it only while it still points at `sha`, in one step,
+// but unlike git branch -D it would delete a checked-out branch, so that is checked first.
 function deleteBranch(repo, branch, sha) {
-  const ref = `refs/heads/${branch}`;
-  if (!gitSucceeds(repo.main, ['show-ref', '--verify', '--quiet', ref])) {
-    return `branch ${branch} was already deleted`;
-  }
-  const tip = git(repo.main, ['rev-parse', ref]);
+  const tip = tipOf(repo, branch);
+  if (!tip) return `branch ${branch} was already deleted`;
   if (tip !== sha) {
     return `branch ${branch} kept: it moved to ${tip.slice(0, 8)} during the removal`;
   }
-  if (!gitSucceeds(repo.main, ['branch', '-D', branch])) {
-    return `branch ${branch} kept: git branch -D refused (is it checked out again?)`;
+  const holder = worktreesOf(repo.main).find((other) => other.branch === branch);
+  if (holder) return `branch ${branch} kept: checked out again at ${holder.path}`;
+  if (!gitSucceeds(repo.main, ['update-ref', '-d', `refs/heads/${branch}`, sha])) {
+    return `branch ${branch} kept: it moved during the removal`;
   }
+  // git branch -D also drops the branch's upstream settings; update-ref leaves them.
+  gitSucceeds(repo.main, ['config', '--remove-section', `branch.${branch}`]);
   return `branch ${branch} deleted`;
 }
 
