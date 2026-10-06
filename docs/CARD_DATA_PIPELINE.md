@@ -763,6 +763,53 @@ No SW cache rule for `previewCards.json` itself — its graceful 404 path is bro
 
 ---
 
+### The collection dataset (#553)
+
+A **third** card dataset lives at `apps/web/public/data/collection/`: the 2,218
+cards Inkweave can SHOW but never analyses, namely sets 1-8, Q1/Q2, and the
+Enchanted/Epic/Iconic/Special printings inside Core sets.
+
+**No card id appears in both it and `allCards.json`.** That is what makes the Core
+boundary structural: every script in this document reads `allCards.json` and never
+opens these files, so a set-1 card cannot reach a synergy calculation even by
+mistake. `scripts/generate-collection-data.mjs:66` asserts it and aborts otherwise.
+
+| File | Contents | gzip |
+|---|---|---|
+| `collection/index.json` | all 2,218, light projection: grid, filters, name search | 71 KB |
+| `collection/{set}.json` | one per set: card text, stats, abilities, image URLs | 5-43 KB |
+
+Measured 2026-10-06: 16 files, 3.0 MB on disk, 460 KB gzip in total. Both tiers are
+budgeted in `package.json`, and **deliberately as two entries rather than one**: no
+visitor ever loads all 460 KB, because collection mode loads the index once plus the
+one chunk for the set being viewed. `Collection index JSON` guards that per-visit
+cost; `Collection set chunks` is a growth guard on data nobody loads in full.
+
+**Source is manual**, like `allCards.json`: download the full export from
+LorcanaJSON.org and pass its path to `pnpm generate-collection-data`.
+`previewCards.json` ids are excluded alongside `allCards.json`, because the runtime
+loader admits a preview card whose id is absent from the primary file, and a card in
+both would otherwise appear twice.
+
+**The committed chunks carry no image hashes.** `injectManifestIntoChunk` writes
+`imageHash`/`imageHashSm` into them during the build, the same way it does for
+`allCards.json`, and the deployed copies are what the restore path reads back. Do not
+commit a chunk that a local `pnpm download-images` has hashed.
+
+**A detail chunk must satisfy `LorcanaJSONCard`** (`cardTransformer.ts:7-44`), because
+chunks are transformed at runtime exactly like `allCards.json`. That interface is the
+contract: if it gains a field, `DETAIL_FIELDS` in `scripts/lib/collectionData.mjs:56`
+must follow, or collection cards render incomplete. An earlier design sized this
+projection against an invented field list and came out 4x too small AND missing
+`name`, `strength`, `willpower` and `abilities`.
+
+`download-card-images.mjs` images these cards alongside the Core pool, with one cache,
+one manifest and one coverage guard, and the **index is deliberately not imaged**: the
+binder renders one set at a time from that set's chunk. Measured on `deck-builder`
+when Phase C shipped there, adding 2,218 cards took the image output from 27.5 MB /
+2,048 files to **88 MB / 6,484 files**; that figure is carried over, not re-measured
+here, because re-running the pipeline would inject hashes into the chunks above.
+
 ### CDN restore on a cache miss (#554)
 
 Before falling back to Ravensburger, a cache miss tries to fetch the

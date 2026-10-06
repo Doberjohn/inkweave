@@ -26,6 +26,7 @@
     "precompute-synergies": "node scripts/precompute-synergies.mjs",
     "generate-sitemap": "node scripts/generate-sitemap.mjs",
     "generate-card-slug-map": "node scripts/generate-card-slug-map.mjs",
+    "generate-collection-data": "node scripts/generate-collection-data.mjs",
     "prerender": "node scripts/prerender.mjs",
     "test:scripts": "vitest run --config vitest.scripts.config.mjs",
     "mine-rules": "pnpm build:engine && node scripts/mine-rule-candidates.mjs",
@@ -64,6 +65,21 @@
       "name": "Card data JSON",
       "path": "apps/web/dist/data/allCards.json",
       "limit": "360 kB",
+      "gzip": true
+    },
+    {
+      "name": "Collection index JSON",
+      "path": "apps/web/dist/data/collection/index.json",
+      "limit": "80 kB",
+      "gzip": true
+    },
+    {
+      "name": "Collection set chunks",
+      "path": [
+        "apps/web/dist/data/collection/*.json",
+        "!apps/web/dist/data/collection/index.json"
+      ],
+      "limit": "420 kB",
       "gzip": true
     }
   ],
