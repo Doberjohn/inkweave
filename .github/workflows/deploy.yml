@@ -150,6 +150,10 @@ jobs:
         run: npx "vercel@${VERCEL_CLI_VERSION:?}" pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build (runs build:vercel → the prerender crawl renders on Ubuntu)
+        # Sentry's environment comes from VERCEL_ENV (vite.config.ts, #740). Set here, so this
+        # build never depends on whether `vercel build` exposes it outside Vercel's builders.
+        env:
+          VERCEL_ENV: production
         run: npx "vercel@${VERCEL_CLI_VERSION:?}" build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       # Fatal here and ONLY here (#524). build:vercel deliberately swallows a failed

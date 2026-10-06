@@ -101,7 +101,8 @@ function sentryOptions(
 
   return {
     dsn: import.meta.env.VITE_SENTRY_DSN,
-    environment: 'production',
+    // production, preview or unknown: baked in at build time, so previews never pose as prod.
+    environment: __DEPLOY_ENV__,
     // The Supabase integration joins later, from shared/lib/supabase.ts, once a page creates
     // the client: registering it here would download supabase-js on every page.
     integrations: [browserTracing],
