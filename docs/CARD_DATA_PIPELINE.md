@@ -786,22 +786,30 @@ The boundary is about SYNERGY, not about the files being untouched. `download-ca
 does read and rewrite these chunks, to image the cards and inject their hashes, which is
 described below. Nothing it does feeds a synergy calculation.
 
-| File | Contents | gzip |
-|---|---|---|
-| `collection/index.json` | all 2,152, light projection: grid, filters, name search | 69 KB |
-| `collection/{set}.json` | one per set: card text, stats, abilities, image URLs | 10-43 KB |
+All figures below are **gzip level 6**, which is what `gzip -c` and `size-limit`
+report, and they distinguish COMMITTED from SERVED. The build injects two 16-hex
+hashes per subject into every chunk, so a chunk is larger in production than in git.
+The index is never imaged, so it is served exactly as committed. Mixing the two bases
+is easy and gives numbers that look right and are not.
 
-Measured 2026-10-06: 14 files, 2.9 MB on disk, 447 KB gzip in total. Both tiers are
-budgeted in `package.json`, and **deliberately as two entries rather than one**: no
-visitor ever loads all 447 KB, because collection mode loads the index once plus the
-one chunk for the set being viewed, a real worst case of 112 KB.
-`Collection index JSON` guards that per-visit cost; `Collection set chunks` is a
-growth guard on data nobody loads in full.
+| File | Contents | committed | served |
+|---|---|---|---|
+| `collection/index.json` | all 2,152, light projection: grid, filters, name search | 69 KB | 69 KB |
+| `collection/{set}.json` | one per set: card text, stats, abilities, image URLs | 10-43 KB | 11-49 KB |
+| whole dataset | 14 files, 2.9 MB on disk | 445 KB | 500 KB |
 
-**The chunk budget is set against the HASH-INJECTED size, not the committed size.**
-Committed chunks gzip to 371 KB; the build injects two 16-hex hashes per subject, and
-because content-addressed hashes are high-entropy they barely compress, adding **55 KB**
-to reach 427 KB. Measuring the committed files would set a limit against an artifact
+Both tiers are budgeted in `package.json`, and **deliberately as two entries rather
+than one**: no visitor loads all 500 KB. Collection mode loads the index once plus the
+one chunk for the set being viewed, so the **per-visit worst case is 118 KB** (69 KB
+index plus set 8 at 49 KB served), under a quarter of the total. `Collection index
+JSON` guards that per-visit cost; `Collection set chunks` is a growth guard on data
+nobody loads in full.
+
+**The chunk budget is set against the SERVED size, not the committed size.**
+Committed chunks gzip to 376 KB; because content-addressed hashes are high-entropy
+they barely compress, injection adds **55 KB** to reach 431 KB, against a 470 kB
+limit. Measuring the committed files would set a limit against an artifact nobody is
+served, which is the defect [#729](https://github.com/Doberjohn/inkweave/issues/729) Measuring the committed files would set a limit against an artifact
 nobody is served, which is the defect [#729](https://github.com/Doberjohn/inkweave/issues/729)
 describes. The index is not imaged, so its budget needs no such allowance.
 
