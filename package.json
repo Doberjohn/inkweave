@@ -34,6 +34,7 @@
     "graduate-set": "node scripts/graduate-canonical-set.mjs",
     "sync-variants": "node scripts/sync-variants.mjs",
     "worktree:remove": "node scripts/remove-worktree.mjs",
+    "clean:transient": "node scripts/clean-transient.mjs",
     "docs": "node scripts/generate-docs.mjs",
     "analyze": "ANALYZE=true pnpm build:web",
     "prepare": "husky"

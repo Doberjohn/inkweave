@@ -112,7 +112,7 @@ Claude Code hooks, skills, agents, and path-scoped rules enforce workflow rules 
 | `/draft-issue [title hint]` | optional title hint | Extract scope from conversation → clarifying questions if gaps → 8-section rubric draft → score → publish on approval |
 | `/implement-issue <num>` | issue number | Session hygiene → fetch issue → create branch → summary |
 | `/commit-and-push "msg"` | commit message | PR readiness → review → commit → push → PR → CI |
-| `/close-session [summary]` | work summary | Cleanup (servers/worktrees/branches + transient-file sweep w/ confirmation) → docs update → MEMORY.md → summary |
+| `/close-session [summary]` | work summary | Cleanup (servers/worktrees/branches + `node scripts/clean-transient.mjs`, which deletes guarded throwaway files unasked, lists its `ask` rows and skips protected paths) → docs update → MEMORY.md → summary |
 | `/inkweave-add-rule <name>` | mechanic name | Discovery → design → implement → validate |
 | `/mine-rules [dry-run]` | optional dry-run | Run the miner → pick top candidate (dedup vs existing rules + open candidates; previously-removed mechanics are flagged, not skipped) → draft 5-baseline proposal → open one `rule-candidate` issue (`dry-run` drafts without publishing) |
 | `/inkweave-explore [focus]` | optional focus area | Read-only, fork-isolated codebase/architecture map (workspace, engine API + rule registry, web data flow, precompute); verbose output stays in the fork |
@@ -343,6 +343,7 @@ The boundary is drawn on what a loop may **do**, not on whether a human is watch
 - **Default: sequential, one agent at a time.** Use parallel agents only for read-only research/exploration or trivially independent tasks with clear specs.
 - **Prefer feature branches over worktrees.** Only use worktrees when you need to pause mid-task and switch context, or run concurrent dev servers.
 - **Max 2 active worktrees.** Port assignments: main=5173, worktree-1=5174, worktree-2=5175.
+- **Temporary files go in the session's scratchpad directory**, never `/tmp` or the repo: logs, downloads, probe scripts, dumps. The scratchpad is cleaned automatically; anything left in the repo waits for `/close-session`'s `pnpm clean:transient` tiers (#742), or for the owner.
 - **Same-session cleanup.** Every worktree created in a session must be removed in that session (or explicitly flagged for next session in MEMORY.md).
 - **Removing a worktree is the owner's job.** From the main checkout, `pnpm worktree:remove <name|path>` deletes the folder, its registry entry, and its branch once `origin/master` contains it. It refuses and changes nothing when the worktree has uncommitted work, a HEAD on no `origin/*` ref, ignored files that are neither build output nor copies of the main checkout's, or a process inside it. `--dry-run` shows the plan; `pnpm worktree:remove --leftovers` sweeps half-deleted folders under `.claude/worktrees/` and finishes interrupted removals. Claude sessions are hook-blocked from running it, so hand the owner the command. To discard a dirty worktree on purpose, run `git worktree remove --force <path>`, then `--leftovers` for what it leaves under `.claude/worktrees/`.
 - **Never leave orphan branches.** After merging a PR, delete the local branch and worktree immediately.

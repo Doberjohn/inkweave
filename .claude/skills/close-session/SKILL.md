@@ -2,7 +2,7 @@
 name: close-session
 description: Update docs with today's progress before ending session
 argument-hint: [summary of today's work]
-allowed-tools: Read, Edit, Write, Bash(git:*), Bash(gh:*), Bash(netstat:*), Bash(taskkill:*), Bash(du:*), Bash(find:*), Bash(ls:*), Bash(rm:*)
+allowed-tools: Read, Edit, Write, Bash(git:*), Bash(gh:*), Bash(netstat:*), Bash(taskkill:*), Bash(du:*), Bash(find:*), Bash(ls:*), Bash(rm:*), Bash(node scripts/clean-transient.mjs:*)
 ---
 
 # Close Session
@@ -35,36 +35,28 @@ Check each and report findings:
 
 ## Step 3: Transient file cleanup
 
-Local scratch (ad-hoc screenshots, logs, test-run artifacts, validation dumps) piles up across sessions and is never committed. **List what exists first, then delete only after the user's explicit "go."** Never delete without confirmation.
-
-**Scan these (true throwaway — all git-ignored):**
+Run the cleanup script from the root of this session's checkout. It deletes what passes its guards **without asking**, and lists the rest:
 
 ```bash
-for p in .tmp-*/ tmp-*/ screenshots/ *.log apps/web/*.log \
-         apps/web/test-results apps/web/playwright-report; do
-  [ -e "$p" ] && echo "$(du -sh "$p" 2>/dev/null | cut -f1)	$p ($(find "$p" -type f 2>/dev/null | wc -l | tr -d ' ') files)"
-done
+node scripts/clean-transient.mjs
 ```
 
-Also surface any `/tmp/*.txt` (or similar) scratch dumps created during this session. If nothing exists, report "no transient files found" and skip the rest of this step.
+`scripts/clean-transient.mjs` is the source of truth for the tiers (#742). In short:
 
-**Never touch (protected — exclude from the list entirely):**
+| Tier | Paths | Deleted without asking when |
+|------|-------|-----------------------------|
+| E2E artifacts | `apps/web/test-results/`, `apps/web/playwright-report/` | no E2E run is live anywhere on the machine, the newest file is over 30 minutes old, and git ignores it |
+| Scratch | `.tmp-*/`, `tmp-*/`, `*.log`, `apps/web/*.log` | git ignores it and the newest file is over a day old |
+| Unknown origin | `screenshots/`, and any path above that fails a guard | never: listed as `ask` |
+| Protected | `.knowledge/`, `.worktrees/**`, `.claude/worktrees/**`, `apps/web/public/mockups/`, `dist/`, `coverage/`, `reports/`, `node_modules/` | never, and never listed |
 
-- `.knowledge/` — local reference material
-- `.worktrees/**` — intentional WIP (e.g. #206); skip everything inside, *including* its `screenshots/`
-- `apps/web/public/mockups/` — active design-session scratch (the design workflow treats it as a persistent working reference)
-- `dist/`, `coverage/`, `reports/` — regenerable build outputs; leave intact so the next build/dev/E2E stays fast
-- anything under `node_modules/`
+A tracked or non-ignored path is always `ask`. If the live-run check fails, it counts as a live run. `--dry-run` prints the same plan and deletes nothing.
 
-Delete a protected path **only** if the user explicitly names it.
+Report the `deleted` rows and the `freed` total. Then ask the owner only about the `ask` rows. On their explicit go, delete **only** the paths they approved, one by one, never by glob (`rm -rf <path>`). If they decline or don't answer, leave those paths in place. Delete a protected path **only** if the owner names it.
 
-Present the categorized list with sizes and ask for the go. On explicit confirmation, delete **only** the approved paths (never a broad glob) and report total space freed:
+An E2E folder kept as `E2E run live` may belong to another session's run, since the check is machine-wide. Never delete it by hand to get past the guard.
 
-```bash
-rm -rf <only the paths the user approved>
-```
-
-If the user declines or doesn't respond, leave everything in place.
+Sessions write temporary logs, downloads and probe scripts to their **scratchpad directory**, never to `/tmp` or the repo, so nothing outside the tiers above should need cleaning. If this session wrote scratch anywhere else anyway, list it as well.
 
 ## Step 4: Update documentation
 
