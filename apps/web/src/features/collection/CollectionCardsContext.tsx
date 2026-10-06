@@ -22,8 +22,16 @@ import type {LorcanaJSONCard} from 'inkweave-synergy-engine';
 import {transformRawCards} from '../cards/loader';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 
-/** Every set with a collection chunk. Ordered as a binder would be. */
-const COLLECTION_SETS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', 'Q1', 'Q2'];
+/**
+ * Every set with a collection chunk. Ordered as a binder would be.
+ *
+ * MUST MATCH what `generate-collection-data.mjs` actually emits. Q1/Q2 were here
+ * until the Quest sets were excluded from the dataset (owner ruling, 2026-10-06):
+ * Illumineer's Quest is a separate co-op product, not trading-card boosters. The
+ * stale entries were not harmless, because a missing chunk 404s, `Promise.all`
+ * rejects, and collection mode gets an empty pool rather than a partial one.
+ */
+export const COLLECTION_SETS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13'];
 
 interface CollectionCardsContextValue {
   /** Non-Core cards, transformed. Empty until collection mode asks for them. */
@@ -38,6 +46,11 @@ interface CollectionCardsContextValue {
   error: string | null;
   /** Ask for the pool. Idempotent; safe to call on every render. */
   ensureLoaded: () => void;
+  /**
+   * Try again after a failure. Separate from {@link ensureLoaded} on purpose:
+   * retrying is a user decision, and an automatic one loops (see the provider).
+   */
+  retry: () => void;
 }
 
 const CollectionCardsContext = createContext<CollectionCardsContextValue | null>(null);
@@ -84,13 +97,23 @@ export function CollectionCardsProvider({children}: {children: ReactNode}) {
         // All or nothing, on purpose — see `error` above.
         setCards([]);
         setError(`Could not load the collection (${err.message}).`);
-        // Let a later attempt retry rather than wedging on one failed load.
-        started.current = false;
+        // `started` STAYS true. Resetting it here is what turned a failed load
+        // into an infinite one: the catch sets state, the provider re-renders,
+        // `ensureLoaded` gets a fresh identity, the effect below sees its dep
+        // change and calls it again, and the guard it would have hit is gone.
+        // Fifteen requests per iteration, forever, against a 404. Retrying is
+        // now explicit; see `retry`.
       })
       .finally(() => setIsLoading(false));
   }
 
-  const value: CollectionCardsContextValue = {cards, isLoading, error, ensureLoaded};
+  /** Clear the one-shot guard and load again. Only ever called by a user action. */
+  function retry() {
+    started.current = false;
+    ensureLoaded();
+  }
+
+  const value: CollectionCardsContextValue = {cards, isLoading, error, ensureLoaded, retry};
   return <CollectionCardsContext.Provider value={value}>{children}</CollectionCardsContext.Provider>;
 }
 
@@ -114,8 +137,10 @@ export function useCollectionCards(): CollectionCardsContextValue {
  * two thirds of its cards.
  *
  * `ensureLoaded` in the dep array is safe despite its unstable identity: the ref
- * guard makes every call after the first a no-op that sets no state. The effect
- * may re-run on any render; it cannot loop.
+ * guard makes every call after the first a no-op that sets no state, INCLUDING
+ * after a failure. That last clause is load-bearing and was once false: the catch
+ * used to reset the guard, so a failed load re-rendered, changed this dep, and
+ * fired again without limit. Recovery is `retry`, which a user triggers.
  */
 export function useCollectionPool(coreCards: LorcanaCard[], active: boolean) {
   const {cards, isLoading, error, ensureLoaded} = useCollectionCards();

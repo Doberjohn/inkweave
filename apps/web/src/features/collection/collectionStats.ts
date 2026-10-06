@@ -41,7 +41,15 @@ interface Tally {
   complete: number;
   /** Held in BOTH finishes. */
   master: number;
-  /** Enchanted/Epic/Iconic — in the binder, never in an export. */
+  /**
+   * Everything outside `IMPORTABLE_RARITIES`: in the binder, never in an export.
+   *
+   * Anchored to the constant rather than re-listing, because the obvious list is
+   * wrong. Enchanted/Epic/Iconic is a real typed concept elsewhere (`VariantRarity`,
+   * `SPECIAL_RARITIES`), so naming only those three actively misleads a reader who
+   * knows the type: this bucket is roughly a third `Special`, plus the `Unknown`
+   * fallback.
+   */
   chase: number;
   chaseHeld: number;
   byInk: ({ink: Ink} & Slot)[];

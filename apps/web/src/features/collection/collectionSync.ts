@@ -15,7 +15,13 @@
  *      deliberate import.
  *
  * Ruling 2 is what makes `alreadyMigrated` load-bearing rather than a mere
- * optimisation — see the guard below.
+ * optimisation: see the guard below.
+ *
+ * KNOWN LIMIT. Both rulings say "the local copy" as though that were unambiguous.
+ * This function's inputs are three booleans, so it cannot express WHOSE copy, nor
+ * whether a signed-out import replaced the one a uid already migrated. Two defects
+ * follow from that and are tracked by #739.
+ * The cases below are correct for a single account on a browser.
  */
 export type CollectionSyncPlan = 'adopt-server' | 'upload' | 'none';
 

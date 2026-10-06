@@ -126,6 +126,12 @@ export function clearCollection(): void {
  * See `resolveCollectionSync`.
  *
  * Keyed by uid so two accounts on one browser never read each other's marker.
+ *
+ * NOTE THE ASYMMETRY, which is a known defect rather than a design: the MARKER is
+ * per-uid, the COLLECTION key above is not. So a second account signing in on a
+ * shared browser finds no marker of its own and reads that as "this local copy has
+ * never been uploaded for me", when the truth is "this local copy belongs to someone
+ * else". Tracked by #739.
  */
 const MIGRATED_PREFIX = 'inkweave:collection:migrated';
 

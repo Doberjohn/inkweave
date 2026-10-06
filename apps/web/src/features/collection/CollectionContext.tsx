@@ -108,21 +108,29 @@ function applySyncPlan(
  * Reconcile this browser's collection with the account's, once per uid.
  *
  * `claimedUid` is a REF, not state, and claimed before the first await: two
- * renders in the same tick would both see a stale `null` and fire the fetch
- * twice — the same guard `useFirstSignInMigration` uses, for the same reason.
+ * renders in the same tick would both see a stale `null` and fire the fetch twice.
+ * (This used to cite `useFirstSignInMigration` as precedent. That lives in
+ * `features/deck`, which does not exist on master, so the reference pointed at
+ * nothing here.)
  *
  * Deliberately NOT gated on `state`: the effect must run on the sign-in moment,
  * not on every import. `latest` carries the current value in without making it
  * a dependency, so importing a collection cannot re-trigger a sync of it.
  *
- * Fire-and-forget on failure. If the network is down the local copy still
- * stands and the next load retries, so a failed sync degrades to exactly the
- * pre-#555 behaviour rather than to an error the user must act on.
+ * Fire-and-forget on failure: the local copy still stands, so the user is not
+ * shown an error they cannot act on.
+ *
+ * It does NOT "degrade to pre-#555 behaviour", which this comment used to claim.
+ * A failed upload leaves the migrated marker unset so the next sign-in does retry,
+ * but once that marker IS set, or once a server row exists, the next load resolves
+ * `adopt-server` or `none` and the pending local state is never uploaded. The
+ * remaining gaps are tracked by #739.
  */
 function useCollectionSync(
   uid: string | null,
   state: CollectionState,
   setState: (next: CollectionState) => void,
+  localEpoch: {current: number},
 ) {
   const claimedUid = useRef<string | null>(null);
   // Synced in an unkeyed effect, never mutated in render — the React Compiler
@@ -143,8 +151,17 @@ function useCollectionSync(
     claimedUid.current = uid;
 
     let cancelled = false;
+    // A read goes stale for THREE reasons, and `cancelled` only covers two of them
+    // (uid change, unmount). The third is a local mutation landing mid-flight: a
+    // clear during the fetch would be undone by the adopt-server branch applying a
+    // snapshot taken before it, restoring the collection the user just deleted, and
+    // an import in the same window is overwritten the same way. The epoch is
+    // snapshotted here and compared on arrival, which completes the existing latch
+    // rather than adding a second mechanism beside it.
+    const epochAtRead = localEpoch.current;
     void getCollection(uid).then(({data: server, error}) => {
       if (cancelled) return;
+      if (localEpoch.current !== epochAtRead) return;
       // A failed READ must not be mistaken for "the server has none", which
       // would upload over a row we simply could not see.
       if (error !== null) return;
@@ -155,14 +172,16 @@ function useCollectionSync(
     return () => {
       cancelled = true;
     };
-  }, [uid, setState]);
+  }, [uid, setState, localEpoch]);
 }
 
 export function CollectionProvider({children}: {children: ReactNode}) {
   const [state, setState] = useState(loadStored);
   const {user} = useSession();
   const uid = user?.id ?? null;
-  useCollectionSync(uid, state, setState);
+  /** Bumped by every local mutation, so an in-flight server read can tell it is stale. */
+  const localEpoch = useRef(0);
+  useCollectionSync(uid, state, setState, localEpoch);
 
   // No useMemo/useCallback anywhere below: the React Compiler memoizes this file
   // (#291), and the repo's lint forbids hand-rolling it.
@@ -171,9 +190,15 @@ export function CollectionProvider({children}: {children: ReactNode}) {
     // State moves only on a successful LOCAL write, so what is on screen and
     // what survives a reload cannot disagree. The cloud write is deliberately
     // fire-and-forget after that: a network failure must not make a successful
-    // import report failure, and the next sign-in re-runs the sync anyway.
+    // LOCAL import report failure.
+    //
+    // KNOWN GAP (#739): if this upsert fails while a server row
+    // already exists, the next mount resolves `adopt-server` and overwrites this
+    // import with the older remote one. The next sign-in re-runs the READ, not a
+    // retry of this write, which an earlier version of this comment got wrong.
     if (error !== null) return error;
     setState({entries, importedAt});
+    localEpoch.current += 1;
     if (uid) {
       void upsertCollection(uid, entries, importedAt).then(({error: remote}) => {
         if (remote === null) markCollectionMigrated(uid);
@@ -185,9 +210,14 @@ export function CollectionProvider({children}: {children: ReactNode}) {
   function clearImported() {
     clearCollection();
     setState({entries: {}, importedAt: null});
-    // Clearing while signed in must clear it EVERYWHERE, or the collection
-    // reappears from another device and reads as the delete having failed. The
-    // migrated marker stays set on purpose: it is what stops this browser's
+    localEpoch.current += 1;
+    // Clearing while signed in SHOULD clear it everywhere, or the collection
+    // reappears from another device and reads as the delete having failed. This
+    // is fire-and-forget, so that is an intention and not an invariant: a failed
+    // delete leaves the row, and the next mount adopts it back with no message.
+    // Tracked by #739; surfacing it needs UI that does not exist yet.
+    //
+    // The migrated marker stays set on purpose: it is what stops this browser's
     // now-absent local copy from being re-uploaded later.
     if (uid) void deleteCollection(uid);
   }
