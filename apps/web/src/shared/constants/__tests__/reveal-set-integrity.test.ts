@@ -154,7 +154,7 @@ describe('reveal-set integrity', () => {
   // (#681), and is the mark's only record: the app offers the card's English text over a
   // scan only when it is set. An "en" or malformed code would offer it over an English scan.
   it('every scanLanguage is a two-letter code other than en', () => {
-    const bad = (code?: string) => !!code && !/^(?!en$)[a-z]{2}$/.test(code);
+    const bad = (code?: string) => code !== undefined && !/^(?!en$)[a-z]{2}$/.test(code);
     const badCodes = preview.cards.flatMap((c) => [
       ...(bad(c.scanLanguage) ? [`${c.id} ${c.fullName}`] : []),
       ...(c.variants ?? []).filter((v) => bad(v.scanLanguage)).map((v) => `${v.id} ${c.fullName}`),
