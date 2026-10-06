@@ -90,6 +90,9 @@ const QUEST_SET_CODE = /^Q\d+$/i;
 /** A set code that is safe as a filename: digits, or a letter-prefixed code. */
 const SAFE_SET_CODE = /^[A-Za-z0-9]+$/;
 
+/** The index tier's own filename, which no detail chunk may claim. */
+const RESERVED_SET_CODE = 'index';
+
 /** Copy `fields` that are actually present. Absent stays absent, never null. */
 function pickFields(card, fields) {
   const out = {};
@@ -148,6 +151,13 @@ export function chunkFilename(setCode) {
   const code = String(setCode);
   if (!SAFE_SET_CODE.test(code)) {
     throw new Error(`Unsafe set code for a filename: ${JSON.stringify(setCode)}`);
+  }
+  // `index` is safe as a path but collides with the index tier: a set carrying that
+  // code would write index.json and silently replace the all-cards projection with
+  // one set's detail. Reserved rather than escaped, because a set genuinely named
+  // "index" is upstream data we would want to look at, not quietly rename.
+  if (code.toLowerCase() === RESERVED_SET_CODE) {
+    throw new Error(`Set code "${code}" is reserved: it would overwrite index.json`);
   }
   return `${code}.json`;
 }

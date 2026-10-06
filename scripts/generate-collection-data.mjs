@@ -42,7 +42,8 @@ const DEFAULT_SOURCE = path.join(ROOT, '.knowledge/folder/allCards.json');
 const CORE_FILE = path.join(ROOT, 'apps/web/public/data/allCards.json');
 const PREVIEW_FILE = path.join(ROOT, 'apps/web/public/data/previewCards.json');
 const OUTPUT_DIR = path.join(ROOT, 'apps/web/public/data/collection');
-const INDEX_FILE = path.join(OUTPUT_DIR, 'index.json');
+const STAGING_DIR = `${OUTPUT_DIR}.staging`;
+const INDEX_NAME = 'index.json';
 
 function readCards(filePath, {required = true} = {}) {
   if (!fs.existsSync(filePath)) {
@@ -63,6 +64,15 @@ function readCards(filePath, {required = true} = {}) {
     console.error('    Refusing to run rather than replace the committed dataset with an empty one.\n');
     process.exit(1);
   }
+  // Shape is not enough: `{"cards": []}` is a well-formed export of nothing, and would
+  // atomically swap in an empty dataset while reporting success. `previewCards.json`
+  // legitimately holds zero cards off-season, which is exactly why this is tied to
+  // `required` rather than applied to every read.
+  if (required && data.cards.length === 0) {
+    console.error(`\n  x ${filePath} contains zero cards.`);
+    console.error('    A required export is never legitimately empty. Refusing to run.\n');
+    process.exit(1);
+  }
   return data.cards;
 }
 
@@ -81,10 +91,27 @@ function assertDisjoint(collectionCards, excludedIds) {
   process.exit(1);
 }
 
-/** Remove stale chunks so a rotated-out set does not linger as a served file. */
-function clearOutputDir() {
+/**
+ * Replace OUTPUT_DIR with a fully-written STAGING_DIR, as one step.
+ *
+ * Generation used to clear the output first and write into the hole. Any failure after
+ * that point, a full disk or a throw mid-loop, left the committed dataset deleted or
+ * half-rewritten, with no copy to fall back to. Staging inverts it: every file is
+ * written and verified while the real dataset is still intact, and the swap is the last
+ * thing that happens.
+ *
+ * The rm-then-rename window is milliseconds rather than the whole generation, and a
+ * crash inside it leaves the staging directory on disk for the next run to clean.
+ */
+function commitStaging() {
   fs.rmSync(OUTPUT_DIR, {recursive: true, force: true});
-  fs.mkdirSync(OUTPUT_DIR, {recursive: true});
+  fs.renameSync(STAGING_DIR, OUTPUT_DIR);
+}
+
+/** Start from a clean staging directory, discarding any a crashed run left behind. */
+function prepareStaging() {
+  fs.rmSync(STAGING_DIR, {recursive: true, force: true});
+  fs.mkdirSync(STAGING_DIR, {recursive: true});
 }
 
 function main() {
@@ -108,21 +135,29 @@ function main() {
   // deleted and only partly rewritten.
   const filenames = bySet.map(([setCode]) => chunkFilename(setCode));
 
-  clearOutputDir();
-
-  fs.writeFileSync(INDEX_FILE, `${JSON.stringify(index)}\n`);
-
-  for (const [i, [setCode, cards]] of bySet.entries()) {
-    fs.writeFileSync(path.join(OUTPUT_DIR, filenames[i]), `${JSON.stringify(cards)}\n`);
+  // Everything is written into staging while the committed dataset is still intact.
+  prepareStaging();
+  try {
+    fs.writeFileSync(path.join(STAGING_DIR, INDEX_NAME), `${JSON.stringify(index)}\n`);
+    for (const [i, [, cards]] of bySet.entries()) {
+      fs.writeFileSync(path.join(STAGING_DIR, filenames[i]), `${JSON.stringify(cards)}\n`);
+    }
+  } catch (err) {
+    fs.rmSync(STAGING_DIR, {recursive: true, force: true});
+    console.error(`\n  x Generation failed: ${err.message}`);
+    console.error('    The committed dataset is untouched.\n');
+    process.exit(1);
   }
+
+  commitStaging();
 
   const kb = (bytes) => `${(bytes / 1024).toFixed(0)} KB`;
   console.log(`\n  Source: ${path.relative(ROOT, source)}`);
   console.log(`  ${fullCards.length} cards upstream − ${excluded.size} already served = ${collectionCards.length} for the collection\n`);
-  console.log(`  index.json            ${String(index.length).padStart(4)} cards  ${kb(fs.statSync(INDEX_FILE).size).padStart(8)}`);
-  for (const [setCode, cards] of bySet) {
-    const file = path.join(OUTPUT_DIR, chunkFilename(setCode));
-    console.log(`  ${chunkFilename(setCode).padEnd(21)} ${String(cards.length).padStart(4)} cards  ${kb(fs.statSync(file).size).padStart(8)}`);
+  console.log(`  index.json            ${String(index.length).padStart(4)} cards  ${kb(fs.statSync(path.join(OUTPUT_DIR, INDEX_NAME)).size).padStart(8)}`);
+  for (const [i, [, cards]] of bySet.entries()) {
+    const file = path.join(OUTPUT_DIR, filenames[i]);
+    console.log(`  ${filenames[i].padEnd(21)} ${String(cards.length).padStart(4)} cards  ${kb(fs.statSync(file).size).padStart(8)}`);
   }
   console.log(`\n  Wrote ${bySet.length + 1} files to ${path.relative(ROOT, OUTPUT_DIR)}\n`);
 }
