@@ -347,6 +347,21 @@ describe('loadCardsFromJSON', () => {
     ]);
   });
 
+  // A variant can be revealed abroad before its English printing (#681): its language is its own.
+  it("should carry a variant's foreign scan language through, apart from the card's", () => {
+    const [card] = loadCardsFromJSON(
+      makeJsonData({
+        id: 14085,
+        variants: [
+          {id: 14213, rarity: 'Epic', number: 213, scanLanguage: 'it'},
+          {id: 14241, rarity: 'Iconic', number: 241},
+        ],
+      }),
+    );
+    expect(card.scanLanguage).toBeUndefined();
+    expect(card.variants?.map((v) => v.scanLanguage)).toEqual(['it', undefined]);
+  });
+
   it('should leave variants undefined on a card with no alternate printing', () => {
     const [card] = loadCardsFromJSON(makeJsonData({id: 2716}));
     expect(card.variants).toBeUndefined();

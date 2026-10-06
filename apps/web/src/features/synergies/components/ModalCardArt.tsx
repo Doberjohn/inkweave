@@ -7,7 +7,7 @@ import {
   PrintingPills,
 } from '../../../shared/components';
 import {RADIUS} from '../../../shared/constants';
-import {CardPrintingContext, CardTranslationContext, useVariantShown} from './modalArtState';
+import {CardPrintingContext, CardTranslationContext} from './modalArtState';
 
 /**
  * The card overview modal's card art: its scan, or for a card with an alternate printing
@@ -82,16 +82,15 @@ export function HeaderPrintingPills({hidden}: {hidden: boolean}) {
 
 /**
  * Desktop's translation toggle (mobile's is in MobileArtControls, under the card). Where the
- * card image is gone (comparison, an expanded group), or shows a variant printing whose art is
+ * card image is gone (comparison, an expanded group), or shows a printing whose scan is
  * already English, it hides but keeps its place, so the header keeps its height and the modal
  * does not jump.
  */
 export function HeaderTranslationToggle({hidden}: {hidden: boolean}) {
   const translation = useContext(CardTranslationContext);
-  const variantShown = useVariantShown();
   if (!translation) return null;
   return (
-    <span style={{visibility: hidden || variantShown ? 'hidden' : undefined}}>
+    <span style={{visibility: hidden || !translation.language ? 'hidden' : undefined}}>
       <CardTranslationToggle shown={translation.shown} onToggle={translation.toggle} />
     </span>
   );
@@ -106,7 +105,6 @@ export function HeaderTranslationToggle({hidden}: {hidden: boolean}) {
 export function MobileArtControls() {
   const translation = useContext(CardTranslationContext);
   const printing = useContext(CardPrintingContext);
-  const variantShown = useVariantShown();
   return (
     <>
       {printing && (
@@ -118,7 +116,7 @@ export function MobileArtControls() {
         />
       )}
       {translation && (
-        <span style={{visibility: variantShown ? 'hidden' : undefined}}>
+        <span style={{visibility: translation.language ? undefined : 'hidden'}}>
           <CardTranslationToggle shown={translation.shown} onToggle={translation.toggle} />
         </span>
       )}

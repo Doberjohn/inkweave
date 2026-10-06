@@ -112,6 +112,7 @@ function toPrinting(variant: RawCardVariant): CardPrinting {
     number: variant.number,
     imageUrl: resolveImageUrl(variant),
     imageHashSm: variant.imageHashSm,
+    scanLanguage: variant.scanLanguage,
   };
 }
 

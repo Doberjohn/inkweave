@@ -1,15 +1,17 @@
-import {createContext, useContext, useState} from 'react';
+import {createContext, useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {usePrintingSelection, type Printing} from '../../../shared/hooks';
+import {hasForeignScan, usePrintingSelection, type Printing} from '../../../shared/hooks';
 
 // The card overview modal's art state: the "See translation" overlay (#623) and the printing
 // shown (#625). Each sits in a context because the header (desktop controls) and the card
 // image (art, overlay, mobile controls) both read it; ModalCardArt.tsx holds those views.
 
-/** A foreign-scan card's "See translation" state; null when the card's scan is English. */
+/** "See translation" for a card with a non-English scan among its printings; else null. */
 export interface CardTranslationState {
   shown: boolean;
   toggle: () => void;
+  /** The language of the scan on screen; undefined while it is English, which hides the toggle. */
+  language: string | undefined;
 }
 
 /** Shared by the header (desktop toggle) and the card image (panel, mobile toggle). */
@@ -17,18 +19,22 @@ export const CardTranslationContext = createContext<CardTranslationState | null>
 
 /**
  * Every card opens on its scan: paging away clears the translation (so paging back starts on
- * the scan too), and so does closing, for a host that keeps the modal mounted.
+ * the scan too), and so does closing, for a host that keeps the modal mounted. So does an
+ * English printing coming on screen, whatever brought it (a pill, a swipe, a comparison's
+ * reset): a variant can be a foreign scan too (#681), so the translation follows the printing.
  */
 export function useCardTranslation(
   card: LorcanaCard,
   isOpen: boolean,
+  printing: CardPrintingState | null,
 ): CardTranslationState | null {
   const [translatedId, setTranslatedId] = useState<string | null>(null);
-  const keepId = isOpen ? card.id : null;
+  const language = printing ? printing.printings[printing.index].scanLanguage : card.scanLanguage;
+  const keepId = isOpen && language ? card.id : null;
   if (translatedId !== null && translatedId !== keepId) setTranslatedId(null);
-  if (!card.scanLanguage) return null;
+  if (!hasForeignScan(card)) return null;
   const shown = translatedId === card.id;
-  return {shown, toggle: () => setTranslatedId(shown ? null : card.id)};
+  return {shown, language, toggle: () => setTranslatedId(shown ? null : card.id)};
 }
 
 /** The printing switcher's state (#625); null for a card with a single printing. */
@@ -52,20 +58,18 @@ export const CardPrintingContext = createContext<CardPrintingState | null>(null)
  * Which printing the modal shows. A card opens on its Standard printing, or on the printing it
  * was opened with (`initialPrintingId`, from a reveals board special slot), and a comparison
  * always shows the base art, so closing, paging and entering a comparison all reset it (and a
- * comparison locks the strip). A variant's art is an official English printing, so showing
- * one, picked or swiped to, turns the translation off.
+ * comparison locks the strip). The translation reads it (useCardTranslation), so it is called
+ * first.
  */
 export function useModalPrinting(
   card: LorcanaCard,
   {
     isOpen,
     inComparison,
-    translation,
     initialPrintingId = null,
   }: {
     isOpen: boolean;
     inComparison: boolean;
-    translation: CardTranslationState | null;
     initialPrintingId?: string | null;
   },
 ): CardPrintingState | null {
@@ -75,26 +79,5 @@ export function useModalPrinting(
     initialKey: initialPrintingId,
   });
   if (printings.length < 2) return null;
-  const translationOffFor = (next: number) => {
-    if (printings[next].rarity && translation?.shown) translation.toggle();
-  };
-  return {
-    printings,
-    index,
-    select: (next) => {
-      select(next);
-      translationOffFor(next);
-    },
-    pick: (next) => {
-      pick(next);
-      translationOffFor(next);
-    },
-    settle,
-    locked: inComparison,
-  };
-}
-
-/** True while an Epic/Enchanted/Iconic printing is shown instead of the card's own scan. */
-export function useVariantShown(): boolean {
-  return (useContext(CardPrintingContext)?.index ?? 0) > 0;
+  return {printings, index, select, pick, settle, locked: inComparison};
 }

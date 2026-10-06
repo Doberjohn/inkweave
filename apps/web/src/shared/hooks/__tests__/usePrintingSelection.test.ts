@@ -3,7 +3,7 @@ import {renderHook, act} from '@testing-library/react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {createCard} from '../../test-utils';
 import {trackEvent} from '../../lib/analytics';
-import {printingAlt, usePrintingSelection} from '../usePrintingSelection';
+import {printingAlt, printingsOf, usePrintingSelection} from '../usePrintingSelection';
 
 vi.mock('../../lib/analytics', () => ({trackEvent: vi.fn()}));
 
@@ -155,5 +155,22 @@ describe('printingAlt', () => {
 
     expect(printingAlt(pongo, standard)).toBe('Pongo - Determined Father');
     expect(printingAlt(pongo, enchanted)).toBe('Pongo - Determined Father, Enchanted printing');
+  });
+});
+
+describe('printingsOf', () => {
+  it("gives Standard the card's scan language and each variant its own", () => {
+    const italianEpic = createCard({
+      id: '14085',
+      variants: [{id: '14213', rarity: 'Epic', number: 213, scanLanguage: 'it'}],
+    });
+    const japaneseBase = createCard({
+      id: '14014',
+      scanLanguage: 'ja',
+      variants: [{id: '14241', rarity: 'Iconic', number: 241}],
+    });
+
+    expect(printingsOf(italianEpic).map((p) => p.scanLanguage)).toEqual([undefined, 'it']);
+    expect(printingsOf(japaneseBase).map((p) => p.scanLanguage)).toEqual(['ja', undefined]);
   });
 });

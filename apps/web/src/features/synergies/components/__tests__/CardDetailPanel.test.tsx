@@ -19,6 +19,21 @@ const gosalyn = createCard({
   fullName: 'Gosalyn Mallard - The Quiverwing Quack',
   imageUrl: '/card-images/2716.avif',
 });
+// An English card whose Epic is known only from an Italian scan (#681).
+const baymax = createCard({
+  id: '14085',
+  fullName: 'Baymax - Lab Assistant',
+  imageUrl: '/card-images/14085.avif',
+  variants: [
+    {
+      id: '14213',
+      rarity: 'Epic',
+      number: 213,
+      imageUrl: '/card-images/14213.avif',
+      scanLanguage: 'it',
+    },
+  ],
+});
 
 function renderPanel(card = pongo) {
   return render(
@@ -62,6 +77,27 @@ describe('CardDetailPanel printings', () => {
       name: 'Enlarged view of Pongo - Determined Father, Enchanted printing',
     });
     expect(within(lightbox).getByRole('img')).toHaveAttribute('src', '/card-images/2141.avif');
+  });
+
+  it('offers a translation in the lightbox of a variant revealed in another language', () => {
+    renderPanel(baymax);
+
+    fireEvent.click(screen.getByRole('radio', {name: 'Epic'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Enlarge Epic printing'}));
+    fireEvent.click(screen.getByRole('button', {name: 'See translation'}));
+
+    expect(screen.getByTestId('card-translation')).toHaveTextContent(
+      'This printing is in Italian.',
+    );
+  });
+
+  it("offers no translation in the lightbox of a foreign card's English variant", () => {
+    renderPanel({...pongo, scanLanguage: 'ja'});
+
+    fireEvent.click(screen.getByRole('radio', {name: 'Enchanted'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Enlarge Enchanted printing'}));
+
+    expect(screen.queryByRole('button', {name: 'See translation'})).not.toBeInTheDocument();
   });
 
   it('closes the lightbox when the page moves on to another card', () => {

@@ -44,16 +44,38 @@ const FLIP_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
 const COMPARISON_CARD_INSET = 42;
 
 /**
- * Paging to a sibling can unmount the focused control (the translation toggle, when the next
- * card's scan is English), which drops focus to <body>, outside the frame's arrow-key handler.
- * Put it back on the close button so the arrow keys keep paging.
+ * Paging to a sibling can unmount the focused control (the translation toggle, when no printing
+ * of the next card is a foreign scan), which drops focus to <body>, outside the frame's
+ * arrow-key handler. Or it can hide the control in place (the toggle, when the next card's
+ * foreign scan is a variant, #681), leaving focus on a button nobody can see. Either way, put
+ * it back on the close button so the arrow keys keep paging. A swipe to an English printing
+ * hides a focused toggle the same way, but a swipe often leaves focus on <body>, so after a
+ * printing change only a control hidden in place counts as lost.
  */
-function useFocusSurvivesPaging(cardId: string, fallbackRef: React.RefObject<HTMLElement | null>) {
-  const prevCardId = useRef(cardId);
+function useFocusSurvivesPaging(
+  cardId: string,
+  printingIndex: number,
+  fallbackRef: React.RefObject<HTMLElement | null>,
+) {
+  const prev = useRef({cardId, printingIndex});
   useLayoutEffect(() => {
-    if (prevCardId.current !== cardId && document.activeElement === document.body) fallbackRef.current?.focus();
-    prevCardId.current = cardId;
-  }, [cardId, fallbackRef]);
+    const active = document.activeElement;
+    const cardChanged = prev.current.cardId !== cardId;
+    const printingChanged = prev.current.printingIndex !== printingIndex;
+    prev.current = {cardId, printingIndex};
+    const lost = cardChanged ? focusLost(active) : printingChanged && hiddenInPlace(active);
+    if (lost) fallbackRef.current?.focus();
+  }, [cardId, printingIndex, fallbackRef]);
+}
+
+/** Focus sits on an element hidden in place (visibility is inherited from its wrapper). */
+function hiddenInPlace(active: Element | null): boolean {
+  return !!active && getComputedStyle(active).visibility === 'hidden';
+}
+
+/** Focus fell to <body>, or sits on an element hidden in place. */
+function focusLost(active: Element | null): boolean {
+  return active === document.body || hiddenInPlace(active);
 }
 
 interface CardOverviewModalProps {
@@ -350,9 +372,13 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
   } = useCardOverviewModalState(props);
   const {mounted} = useTransitionPresence(isOpen);
   useScrollLock(isOpen);
-  const translation = useCardTranslation(card, isOpen);
-  const printing = useModalPrinting(card, {isOpen, inComparison, translation, initialPrintingId: props.initialPrintingId});
-  useFocusSurvivesPaging(card.id, initialFocusRef);
+  const printing = useModalPrinting(card, {
+    isOpen,
+    inComparison,
+    initialPrintingId: props.initialPrintingId,
+  });
+  const translation = useCardTranslation(card, isOpen, printing);
+  useFocusSurvivesPaging(card.id, printing?.index ?? 0, initialFocusRef);
 
   if (!mounted) return null;
 
@@ -1319,7 +1345,12 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
       <span data-comparison-card-a style={{display: 'inline-block', lineHeight: 0, position: 'relative'}}>
         <ModalCardArt card={card} cardWidth={cardWidth} cardHeight={cardHeight} />
         {translation?.shown && !inComparison && (
-          <CardTranslationPanel card={card} size={isMobile ? 'compact' : 'regular'} style={OVER_MODAL_SCAN} />
+          <CardTranslationPanel
+            card={card}
+            language={translation.language}
+            size={isMobile ? 'compact' : 'regular'}
+            style={OVER_MODAL_SCAN}
+          />
         )}
       </span>
       {/* Outside the span, whose rect is the FLIP origin above. */}

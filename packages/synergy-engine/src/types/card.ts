@@ -20,6 +20,7 @@ export interface CardPrinting {
   number: number; // collector number, e.g. 241
   imageUrl?: string;
   imageHashSm?: string;
+  scanLanguage?: string; // language code ("it") when this printing's scan is not in English (#681)
 }
 
 // Core card interface (based on LorcanaJSON structure)
