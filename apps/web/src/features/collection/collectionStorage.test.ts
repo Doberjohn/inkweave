@@ -40,23 +40,19 @@ describe('collectionStorage', () => {
   });
 
   /*
-    A null VALUE, not a null container. `holdingOf` in `collectionStats` guards
-    `entry === undefined`, which is correct for a card nobody owns, and null is
-    not undefined: a stored null reaches `entry.normal` and throws, taking the
-    binder down. Validating the container alone let this through.
+    Proves the value guard is WIRED IN here, not that it works: `isCollectionEntries`
+    carries its own cases in `collectionParser.test.ts`, and repeating them would be
+    two suites to update for one rule.
+
+    A stored null is the case worth pinning at this layer, because it is the one that
+    reached production code: `holdingOf` in `collectionStats` guards
+    `entry === undefined`, and null is not undefined, so it hit `entry.normal` and
+    took the binder down.
   */
-  it('discards a collection whose entries hold a null', () => {
+  it('discards a collection whose entry values are malformed', () => {
     localStorage.setItem(
       COLLECTION_KEY,
       JSON.stringify({schemaVersion: 1, importedAt: 1, entries: {'2001': null}}),
-    );
-    expect(readCollection()).toBeNull();
-  });
-
-  it('discards an entry missing a finish count rather than reading it as zero', () => {
-    localStorage.setItem(
-      COLLECTION_KEY,
-      JSON.stringify({schemaVersion: 1, importedAt: 1, entries: {'2001': {normal: 2}}}),
     );
     expect(readCollection()).toBeNull();
   });

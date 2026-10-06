@@ -183,6 +183,34 @@ describe('CollectionContext — signed in', () => {
     expect(result.current.owns('stale')).toBe(false);
   });
 
+  /*
+    THE FAILURE PATH OF THE SAME RULING. Server-wins is easy to honour when the
+    mirror write succeeds. If it fails and the superseded local copy is simply left
+    in place, a later signed-out mount reads it back and presents a collection this
+    sync already decided had lost, with nothing to indicate it is stale.
+
+    Asserting the KEY IS GONE is the point. Asserting only the in-memory state would
+    pass either way, since state is set from the server copy regardless.
+  */
+  it('drops the superseded local copy when the mirror write fails', async () => {
+    writeCollection({stale: {normal: 1, foil: 0}}, 1000);
+    vi.mocked(getCollection).mockResolvedValueOnce({
+      data: {schemaVersion: 1, importedAt: 9000, entries: ENTRIES},
+      error: null,
+    });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('exceeded the quota', 'QuotaExceededError');
+    });
+
+    const {result} = render();
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(localStorage.getItem(COLLECTION_KEY)).toBeNull();
+    expect(result.current.owns('owned')).toBe(true);
+  });
+
   it('does not upload when the account already has a collection', async () => {
     writeCollection(ENTRIES, 5000);
     vi.mocked(getCollection).mockResolvedValueOnce({

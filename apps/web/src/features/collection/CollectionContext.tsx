@@ -89,7 +89,18 @@ function adoptServerCopy(
   setState: (next: CollectionState) => void,
 ): void {
   const {error} = writeCollection(server.entries, server.importedAt);
-  if (error === null) markCollectionMigrated(uid);
+  if (error === null) {
+    markCollectionMigrated(uid);
+  } else {
+    // The mirror failed, so localStorage still holds the copy the server just
+    // SUPERSEDED. Leaving it is worse than holding nothing: a later signed-out
+    // mount would read a collection this very sync decided had lost, and present
+    // it as current. "Server wins on conflict" (owner ruling 2026-08-11) has to
+    // hold on the failure path too, or it only means "server wins when nothing
+    // goes wrong". Best-effort by design: `clearCollection` swallows its own
+    // failure, and there is nothing further to try if removal is denied as well.
+    clearCollection();
+  }
   setState({entries: server.entries, importedAt: server.importedAt});
 }
 

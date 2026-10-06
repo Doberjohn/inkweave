@@ -1,7 +1,7 @@
 import {loadSupabase, type InkweaveSupabase} from '../../shared/lib/supabase';
 import type {Json} from '../../shared/lib/database.types';
 import {NOT_CONFIGURED, type RepoResult} from '../../shared/lib/repoResult';
-import type {CollectionEntries} from './collectionParser';
+import {isCollectionEntries, type CollectionEntries} from './collectionParser';
 import type {StoredCollection} from './collectionStorage';
 
 /**
@@ -53,23 +53,39 @@ async function run<T>(
   }
 }
 
-/**
- * Shape guard: `entries` is `jsonb`, so the row's TYPE is only a promise — the
- * column's CHECK enforces "object" in the database, but nothing enforces it
- * between there and here.
- *
- * Three separate returns rather than one `||` chain: each rejects a different
- * thing (absent, scalar, array), and the array case is the one that would
- * otherwise slip through `typeof raw === 'object'`.
- */
-function isEntriesObject(raw: unknown): raw is CollectionEntries {
-  if (raw === null) return false;
-  if (typeof raw !== 'object') return false;
-  return !Array.isArray(raw);
+/** The three columns a collection row is read back through. */
+interface CollectionRow {
+  entries: unknown;
+  imported_at: string;
+  schema_version: number;
 }
 
-function toEntries(raw: unknown): CollectionEntries {
-  return isEntriesObject(raw) ? raw : {};
+/**
+ * A row we can safely adopt, or null when we cannot.
+ *
+ * The row's TYPE is a promise, not a guarantee: `entries` is `jsonb`, and the
+ * column's CHECK enforces only "object" in the database. Three ways that bites,
+ * each silent in its own way:
+ *
+ *   - A FUTURE `schema_version` would be adopted as version 1.
+ *   - `Date.parse` yields NaN on a malformed timestamp. `writeCollection` then
+ *     serializes NaN as `null`, `readCollection` rejects the mirror on the next
+ *     load and clears it, and the collection vanishes with no error anywhere.
+ *   - `entries: {"2001": null}` passes any container-only check, and
+ *     `adoptServerCopy` puts it straight into React state, where
+ *     `collectionStats` dereferences it. This door was open after the
+ *     localStorage one was closed, which is why the guard is now SHARED
+ *     (`isCollectionEntries`) rather than written once per reader.
+ *
+ * Sequential returns rather than a `&&` chain so the caller can say which check
+ * rejected the row, and so adding a fourth does not deepen anything.
+ */
+function toStoredCollection(row: CollectionRow): StoredCollection | null {
+  if (row.schema_version !== SCHEMA_VERSION) return null;
+  const importedAt = Date.parse(row.imported_at);
+  if (Number.isNaN(importedAt)) return null;
+  if (!isCollectionEntries(row.entries)) return null;
+  return {schemaVersion: row.schema_version, importedAt, entries: row.entries};
 }
 
 /**
@@ -87,29 +103,17 @@ export function getCollection(ownerId: string): Promise<RepoResult<StoredCollect
       .eq('owner_id', ownerId)
       .maybeSingle();
     if (error || data === null) return {data: null, error};
-    // The row's TYPE is a promise, not a guarantee, exactly as for `entries`
-    // above. `Date.parse` yields NaN on a malformed timestamp, and a row written
-    // by a FUTURE schema would be adopted silently as version 1.
-    //
-    // Both end badly and quietly. `writeCollection` serializes NaN as `null`, so
-    // `readCollection`'s shape guard rejects the mirror on the next load and
-    // clears it: the user's collection vanishes with no error anywhere. Failing
-    // here instead keeps an unusable row from displacing a good local copy,
-    // because `useCollectionSync` returns early on a read error rather than
-    // treating it as "the server has none".
-    const importedAt = Date.parse(data.imported_at);
-    if (data.schema_version !== SCHEMA_VERSION || Number.isNaN(importedAt)) {
-      return {
-        data: null,
-        error: {
-          message: `unusable collection row (schema ${String(data.schema_version)}, imported_at ${String(data.imported_at)})`,
-        },
-      };
+    // An unusable row is an ERROR, never empty data. `useCollectionSync` returns
+    // early on a read error rather than treating it as "the server has none", so
+    // failing here keeps a bad row from displacing a good local copy. Returning
+    // `{}` entries instead, which this used to do, would quietly adopt an empty
+    // collection over the user's real one.
+    const collection = toStoredCollection(data);
+    if (collection === null) {
+      const shape = `schema ${String(data.schema_version)}, imported_at ${String(data.imported_at)}`;
+      return {data: null, error: {message: `unusable collection row (${shape})`}};
     }
-    return {
-      data: {schemaVersion: data.schema_version, importedAt, entries: toEntries(data.entries)},
-      error: null,
-    };
+    return {data: collection, error: null};
   });
 }
 

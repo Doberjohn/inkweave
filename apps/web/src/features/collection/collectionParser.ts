@@ -54,6 +54,49 @@ export interface CollectionEntry {
 export type CollectionEntries = Record<string, CollectionEntry>;
 
 /**
+ * A real copy count: a NON-NEGATIVE SAFE INTEGER, not merely a number.
+ *
+ * `typeof n === 'number'` is the check that looks sufficient and is not. `-1`
+ * drives ownership totals negative, `1.5` is not a number of cards, `NaN`
+ * poisons every sum it reaches, and anything past 2^53 has already lost
+ * precision before we see it.
+ */
+function isCopyCount(value: unknown): value is number {
+  if (typeof value !== 'number') return false;
+  return Number.isSafeInteger(value) && value >= 0;
+}
+
+/** Runtime guard for one {@link CollectionEntry}. */
+export function isCollectionEntry(value: unknown): value is CollectionEntry {
+  if (value === null) return false;
+  if (typeof value !== 'object') return false;
+  const entry = value as Partial<CollectionEntry>;
+  return isCopyCount(entry.normal) && isCopyCount(entry.foil);
+}
+
+/**
+ * Runtime guard for a whole {@link CollectionEntries} map, CONTENTS INCLUDED.
+ *
+ * Lives beside the type rather than in either consumer, because the same data
+ * arrives through two doors that had each grown their own half-check: the
+ * localStorage read and the server row. Validating the container and trusting
+ * the values is the mistake both made, and `holdingOf` in `collectionStats`
+ * guards `entry === undefined`, which is correct for an unowned card and does
+ * nothing for a `null` that is present. One definition, both doors.
+ *
+ * Separate returns rather than one `||` chain, because each rejects a DIFFERENT
+ * thing: absent, scalar, array. The array case is the one that slips through a
+ * bare `typeof value === 'object'`, and a stored or returned `[]` would then
+ * read as a perfectly valid empty collection.
+ */
+export function isCollectionEntries(value: unknown): value is CollectionEntries {
+  if (value === null) return false;
+  if (typeof value !== 'object') return false;
+  if (Array.isArray(value)) return false;
+  return Object.values(value).every(isCollectionEntry);
+}
+
+/**
  * Copies owned regardless of finish.
  *
  * THE accessor for the two-field shape, and the reason storing finish separately
@@ -163,9 +206,14 @@ function readRow(line: string): CollectionRow | null {
   // see; a prefix parse routes a malformed count silently around that, which is
   // the one outcome this format should never produce. `normalizeCardNumber`
   // above already tests its whole field for exactly this reason.
+  //
+  // Digits alone are still not enough: `9007199254740993` silently rounds to
+  // ...992, and a long enough run of digits becomes `Infinity`. Both would be
+  // added straight into `copiesOwned`.
   const rawCountTrimmed = rawCount.trim();
   if (!/^\d+$/.test(rawCountTrimmed)) return null;
   const count = parseInt(rawCountTrimmed, 10);
+  if (!Number.isSafeInteger(count)) return null;
   if (rawVariant !== 'normal' && rawVariant !== 'foil') return null;
   return {set: parseInt(rawSet, 10), number, variant: rawVariant, count};
 }

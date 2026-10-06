@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {createCard} from '../../shared/test-utils';
-import {parseCollectionCsv, totalOwned} from './collectionParser';
+import {isCollectionEntries, parseCollectionCsv, totalOwned} from './collectionParser';
 
 const HEADER = 'Set Number,Card Number,Variant,Count,Name,Color,Rarity';
 
@@ -105,6 +105,16 @@ describe('parseCollectionCsv', () => {
     expect(entries['2001']).toBeUndefined();
   });
 
+  it('rejects a digits-only count that has already lost precision', () => {
+    // Digits alone are not enough: this rounds to ...992 before anything sees it,
+    // and a longer run of digits becomes Infinity. Either would be summed into
+    // `copiesOwned` as though it were a real number of cards.
+    const row = '011,191,normal,9007199254740993,"Angel - Experiment 624",Amber,Rare';
+    const {entries, summary} = parseCollectionCsv(csv(row), pool);
+    expect(summary.unparsed).toEqual([row]);
+    expect(entries['2001']).toBeUndefined();
+  });
+
   it('gives a contested collector number to the base card, not a Special reprint', () => {
     // Special-rarity promos REUSE base collector numbers — 98 contested numbers
     // across the non-Core sets, and a Special is listed last in 97 of them. Set 1
@@ -198,6 +208,38 @@ describe('parseCollectionCsv', () => {
       pool,
     );
     expect(entries['2001']).toEqual({normal: 4, foil: 0});
+  });
+});
+
+/*
+  Tested directly because it guards TWO doors onto the same data: the stored
+  collection and the server row. `collectionRepository` has no test file of its
+  own, since there is no Supabase harness, so exercising the shared guard here is
+  what covers the server path's logic.
+*/
+describe('isCollectionEntries', () => {
+  it('accepts a well-formed map, the empty map included', () => {
+    expect(isCollectionEntries({})).toBe(true);
+    expect(isCollectionEntries({'2001': {normal: 2, foil: 0}})).toBe(true);
+  });
+
+  it('rejects a null entry, which an absence guard would pass straight through', () => {
+    expect(isCollectionEntries({'2001': null})).toBe(false);
+  });
+
+  it('rejects an array, which is an object and would read as an empty collection', () => {
+    expect(isCollectionEntries([])).toBe(false);
+  });
+
+  it('rejects counts that are negative, fractional, NaN or beyond safe integers', () => {
+    expect(isCollectionEntries({'2001': {normal: -1, foil: 0}})).toBe(false);
+    expect(isCollectionEntries({'2001': {normal: 1.5, foil: 0}})).toBe(false);
+    expect(isCollectionEntries({'2001': {normal: Number.NaN, foil: 0}})).toBe(false);
+    expect(isCollectionEntries({'2001': {normal: 0, foil: 2 ** 53}})).toBe(false);
+  });
+
+  it('rejects an entry missing a finish rather than reading it as zero', () => {
+    expect(isCollectionEntries({'2001': {normal: 2}})).toBe(false);
   });
 });
 
