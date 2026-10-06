@@ -1,10 +1,15 @@
 // Auth session state for the app (#463). Wraps Supabase Auth: seeds from the stored
 // session, subscribes to auth changes, and exposes sign-in (Google/Discord OAuth) +
-// sign-out. When Supabase env is unset (getSupabase() === null) auth is `enabled: false`
-// and the actions are safe no-ops, so the app degrades gracefully, exactly like voting.
+// sign-out. When Supabase env is unset auth is `enabled: false` and the actions are safe
+// no-ops, so the app degrades gracefully, exactly like voting.
+//
+// supabase-js is downloaded only when there is a session to restore (#729): a stored one, or
+// the OAuth code on /auth/callback. An anonymous visitor never fetches it; their sign-in click
+// loads it on the way to the provider. The accepted cost: a sign-in completed in another tab
+// shows up here only after a reload, since no client is listening for it.
 import {createContext, useContext, useEffect, useState, type ReactNode} from 'react';
 import type {Session, User} from '@supabase/supabase-js';
-import {getSupabase} from '../lib/supabase';
+import {AUTH_STORAGE_KEY, isSupabaseConfigured, loadSupabase} from '../lib/supabase';
 
 export type AuthProvider = 'google' | 'discord';
 
@@ -23,27 +28,46 @@ interface SessionContextValue {
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
-/** The configured client, or null when this environment has no Supabase credentials. */
-type AuthClient = NonNullable<ReturnType<typeof getSupabase>>;
+const AUTH_CALLBACK_PATH = '/auth/callback';
+
+/**
+ * Whether this visit has a session for supabase-js to restore: a stored one, or the OAuth
+ * code the provider just sent back. The code is checked as well as the path because Supabase
+ * falls back to the Site URL (`/?code=…`) when it rejects `redirectTo`. When storage cannot be
+ * read we cannot rule a session out, so the answer is yes and the SDK loads, as it did for
+ * everyone before #729.
+ */
+function hasSessionToRestore(): boolean {
+  if (window.location.pathname === AUTH_CALLBACK_PATH) return true;
+  if (new URLSearchParams(window.location.search).has('code')) return true;
+  try {
+    return window.localStorage.getItem(AUTH_STORAGE_KEY) !== null;
+  } catch {
+    return true;
+  }
+}
 
 /*
   signIn and signOut live out here rather than inside SessionProvider. Neither reads
   React state, and as closures their guards counted toward the provider's cyclomatic
   complexity, which tipped past CodeScene's threshold when signOut started reporting
-  its error. The provider now just binds them to the client.
+  its error. The provider now just exposes them.
 */
 
 /** Start an OAuth redirect. The provider round-trip returns to `/auth/callback`. */
-async function startOAuth(
-  supabase: AuthClient | null,
-  provider: AuthProvider,
-): Promise<{error: string | null}> {
-  if (!supabase) return {error: 'Sign-in is unavailable (auth not configured).'};
-  const {error} = await supabase.auth.signInWithOAuth({
-    provider,
-    options: {redirectTo: `${window.location.origin}/auth/callback`},
-  });
-  return {error: error?.message ?? null};
+async function startOAuth(provider: AuthProvider): Promise<{error: string | null}> {
+  if (!isSupabaseConfigured()) return {error: 'Sign-in is unavailable (auth not configured).'};
+  try {
+    const supabase = await loadSupabase();
+    if (!supabase) return {error: 'Sign-in is unavailable (auth not configured).'};
+    const {error} = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {redirectTo: `${window.location.origin}${AUTH_CALLBACK_PATH}`},
+    });
+    return {error: error?.message ?? null};
+  } catch {
+    return {error: 'Sign-in could not start. Check your connection and try again.'};
+  }
 }
 
 /**
@@ -55,51 +79,75 @@ async function startOAuth(
  * a vacuous success, not an error; it is unreachable anyway, since the control only
  * renders for a signed-in user.
  */
-async function endSession(supabase: AuthClient | null): Promise<{error: string | null}> {
-  if (!supabase) return {error: null};
-  const {error} = await supabase.auth.signOut();
-  return {error: error?.message ?? null};
+async function endSession(): Promise<{error: string | null}> {
+  if (!isSupabaseConfigured()) return {error: null};
+  try {
+    const supabase = await loadSupabase();
+    if (!supabase) return {error: null};
+    const {error} = await supabase.auth.signOut();
+    return {error: error?.message ?? null};
+  } catch {
+    return {error: 'Could not sign out. Check your connection and try again.'};
+  }
 }
 
-export function SessionProvider({children}: {children: ReactNode}) {
-  const supabase = getSupabase();
+/**
+ * The session supabase-js restores, and whether that lookup is still running. With nothing
+ * to restore it downloads nothing and resolves at once: no session, not loading.
+ */
+function useRestoredSession(restoring: boolean): {session: Session | null; loading: boolean} {
   const [session, setSession] = useState<Session | null>(null);
-  // Only "loading" when auth is actually available; otherwise resolve immediately.
-  const [loading, setLoading] = useState(supabase !== null);
+  // Only "loading" while there is a session to look up; otherwise resolve immediately.
+  const [loading, setLoading] = useState(restoring);
 
   useEffect(() => {
-    if (!supabase) return;
+    if (!restoring) return;
     let active = true;
+    let unsubscribe: (() => void) | undefined;
 
-    supabase.auth
-      .getSession()
-      .then(({data}) => {
-        if (active) setSession(data.session);
+    loadSupabase()
+      .then((supabase) => {
+        // Unmounted while the SDK downloaded: subscribing now would leak the listener.
+        if (!active || !supabase) return;
+        const {data} = supabase.auth.onAuthStateChange((_event, next) => {
+          setSession(next);
+        });
+        unsubscribe = () => data.subscription.unsubscribe();
+        return supabase.auth.getSession().then(({data: stored}) => {
+          if (active) setSession(stored.session);
+        });
       })
       .catch(() => {
-        // Network or storage failure: swallow so the loading gate still resolves below.
+        // SDK download, network or storage failure: swallow so the loading gate still
+        // resolves below.
       })
       .finally(() => {
         if (active) setLoading(false);
       });
 
-    const {data} = supabase.auth.onAuthStateChange((_event, next) => {
-      setSession(next);
-    });
-
     return () => {
       active = false;
-      data.subscription.unsubscribe();
+      unsubscribe?.();
     };
-  }, [supabase]);
+  }, [restoring]);
+
+  return {session, loading};
+}
+
+export function SessionProvider({children}: {children: ReactNode}) {
+  const enabled = isSupabaseConfigured();
+  // Decided once per page load: the stored session only appears or disappears through
+  // supabase-js itself, which is already loaded by then.
+  const [restoring] = useState(() => enabled && hasSessionToRestore());
+  const {session, loading} = useRestoredSession(restoring);
 
   const value: SessionContextValue = {
     session,
     user: session?.user ?? null,
     loading,
-    enabled: supabase !== null,
-    signIn: (provider: AuthProvider) => startOAuth(supabase, provider),
-    signOut: () => endSession(supabase),
+    enabled,
+    signIn: startOAuth,
+    signOut: endSession,
   };
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

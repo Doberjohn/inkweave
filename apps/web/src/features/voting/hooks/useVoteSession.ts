@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {getSupabase, submitVote, type Score} from '../../../shared/lib/supabase';
+import {isSupabaseConfigured, submitVote, type Score} from '../../../shared/lib/supabase';
 import type {VoteFormState, VotingPair} from '../types';
 import {trackPairVote} from '../lib/voteAnalytics';
 
@@ -21,7 +21,7 @@ export function useVoteSession(currentPair: VotingPair | null): UseVoteSessionRe
   const [lastResult, setLastResult] = useState<'success' | 'rate_limited' | 'error' | null>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
 
-  const isSupabaseAvailable = getSupabase() !== null;
+  const isSupabaseAvailable = isSupabaseConfigured();
 
   const setScore = (score: Score) => {
     setFormState((prev) => ({...prev, score}));

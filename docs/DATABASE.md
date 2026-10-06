@@ -299,28 +299,31 @@ The limit holds only because the IP hash can't be forged: `hash_client_ip()` ign
 
 The TypeScript client lives at `apps/web/src/shared/lib/supabase.ts`. It provides a thin wrapper over the Supabase JS client.
 
-### Environment Gating
+### Environment Gating and Lazy Loading
+
+supabase-js is **not** in the entry chunk (#729). `supabase.ts` imports only its types; the SDK sits behind a dynamic import of `supabaseClient.ts`, the one module that imports it as a value, and ships as its own `supabaseClient-*.js` chunk with its own size budget.
 
 ```typescript
-export function getSupabase(): SupabaseClient<Database> | null {
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  if (!url || !key) {
-    console.warn('[Supabase] VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY not set — voting features disabled');
-    return null;
-  }
-  // ... singleton creation
-}
+// Synchronous, download-free: is voting/auth available at all?
+export function isSupabaseConfigured(): boolean;
+
+// Imports supabase-js and creates the client, once. Resolves null without credentials;
+// rejects if the SDK fails to download, and the next call retries.
+export function loadSupabase(): Promise<SupabaseClient<Database> | null>;
 ```
 
-When env vars are missing, `getSupabase()` returns `null` and all voting features gracefully degrade. The app works fully without Supabase — you just can't submit votes.
+When env vars are missing, `isSupabaseConfigured()` is false, `loadSupabase()` resolves `null`, and all voting features gracefully degrade. The app works fully without Supabase — you just can't submit votes. Builds without credentials drop the SDK import entirely.
+
+**Who downloads the SDK:** whoever first needs a client (a vote, a pair-score read, a profile call, a sign-in click), plus `SessionContext` when there is a session to restore: an `inkweave:auth` entry in localStorage (`AUTH_STORAGE_KEY`, pinned against the real supabase-js by `supabaseStorageKey.test.ts`) or the OAuth code on `/auth/callback`. An anonymous visitor who does neither never fetches it.
+
+**Never import `@supabase/supabase-js` as a value anywhere else.** A static import puts the SDK back in the entry chunk. Type imports (`import type`) are fine.
 
 ### Vote Submission
 
 ```typescript
 export async function submitVote(vote: QuickVote | InDepthVote): Promise<VoteResult> {
-  const supabase = getSupabase();
-  if (!supabase) return { error: 'Supabase not configured' };
+  if (!isSupabaseConfigured()) return { error: 'Supabase not configured' };
+  const supabase = await loadSupabase();  // inside try: a failed download reads as 'Network error'
 
   const [cardA, cardB] = [vote.cardA, vote.cardB].sort();  // canonical ordering
   const { error } = await supabase.rpc('submit_vote', { p_card_a: cardA, p_card_b: cardB, ... });
@@ -519,7 +522,8 @@ Schema changes follow this process using Supabase MCP tools:
 **File**: `apps/web/src/shared/lib/__tests__/supabase.test.ts`
 
 12 test cases covering:
-- `getSupabase()` — returns null when env vars missing, singleton behavior
+- `isSupabaseConfigured()` / `loadSupabase()` — null without env vars and no client created, singleton behavior, retry after a failed load
+- `supabaseStorageKey.test.ts` — the real supabase-js persists the session under `AUTH_STORAGE_KEY`, which `SessionContext` relies on to skip the SDK for anonymous visitors
 - `submitVote()` — RPC call params, rate limit detection (P0429), network error handling, success path
 - `getPairScore()` — view query, canonical ordering, PGRST116 (no rows) handling
 
@@ -550,9 +554,9 @@ Uses test-data prefix (`inttest_*`) for isolation. Requires `apps/web/.env.local
   "type": "bar",
   "title": "Test Coverage by Category",
   "data": {
-    "labels": ["getSupabase()", "submitVote()", "getPairScore()", "RPC & Upsert", "RLS Security"],
+    "labels": ["Client loading", "submitVote()", "getPairScore()", "RPC & Upsert", "RLS Security"],
     "datasets": [
-      {"label": "Unit (Vitest)", "data": [3, 6, 3, 0, 0], "backgroundColor": "#8b5cf6"},
+      {"label": "Unit (Vitest)", "data": [6, 6, 3, 0, 0], "backgroundColor": "#8b5cf6"},
       {"label": "Integration (Live DB)", "data": [0, 0, 0, 5, 3], "backgroundColor": "#10b981"}
     ]
   }

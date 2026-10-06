@@ -92,8 +92,10 @@ Notes:
 
 Client: `shared/lib/supabase.ts`. Supabase project `ttyidjyaxnycbpxwngqr`, region **eu-central-1**
 (per `CLAUDE.md`). The client is **env-gated** — if `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY`
-are unset, `getSupabase()` returns `null` and all voting/auth degrade to no-ops
-(`supabase.ts:12-27`).
+are unset, `isSupabaseConfigured()` is false, `loadSupabase()` resolves `null`, and all
+voting/auth degrade to no-ops. Since #729 the client is also **lazy**: supabase-js is downloaded
+only when a visitor votes, signs in, or has a stored session to restore, so an anonymous visitor
+who does none of those never loads the Supabase client.
 
 ### 3.1 The `votes` table
 

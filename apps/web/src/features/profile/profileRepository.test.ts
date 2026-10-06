@@ -9,7 +9,7 @@ import {
 } from './profileRepository';
 
 // A Supabase double. `mockState.client` swaps between "configured" and "not
-// configured" (getSupabase() === null), matching deckRepository's tests.
+// configured" (loadSupabase() resolving null), matching deckRepository's tests.
 //
 // Stubbed rather than left to the real client on purpose: .env.local puts real
 // Supabase credentials in scope under vitest, so an unmocked provider builds an
@@ -21,7 +21,10 @@ const mockUpdate = vi.hoisted(() => vi.fn());
 const mockEq = vi.hoisted(() => vi.fn());
 const mockState = vi.hoisted(() => ({client: null as unknown}));
 
-vi.mock('../../shared/lib/supabase', () => ({getSupabase: () => mockState.client}));
+vi.mock('../../shared/lib/supabase', () => ({
+  isSupabaseConfigured: () => mockState.client !== null,
+  loadSupabase: () => Promise.resolve(mockState.client),
+}));
 
 // `clearAllMocks` wipes call history but leaves implementations in place, and
 // vite.config.ts sets no `restoreMocks`. So a console.error spy installed inside a test

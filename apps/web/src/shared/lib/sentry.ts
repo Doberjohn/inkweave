@@ -80,7 +80,7 @@ function onSentryLoaded(api: SentryApi): SentryApi {
   return api;
 }
 
-// Ready callbacks run inside getSupabase() and React's Profiler, so a throw from Sentry's side
+// Ready callbacks run inside loadSupabase() and React's Profiler, so a throw from Sentry's side
 // must not escape into them. It goes to Sentry instead.
 function runReadyCallback(callback: (sentry: SentryApi) => void, api: SentryApi): void {
   try {

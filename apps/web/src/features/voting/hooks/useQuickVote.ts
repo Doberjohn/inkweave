@@ -1,6 +1,6 @@
 import {useState, useEffect, useRef, type MutableRefObject} from 'react';
 import {
-  getSupabase,
+  isSupabaseConfigured,
   submitVote,
   deriveAccuracyDistribution,
   type AccuracyDistribution,
@@ -162,7 +162,7 @@ export function useQuickVote(
   context?: QuickVoteContext,
 ): UseQuickVoteReturn {
   const pair: Pair = {cardA, cardB};
-  const isAvailable = getSupabase() !== null;
+  const isAvailable = isSupabaseConfigured();
   const storedChoice = readQuickVote(pair);
   const slots = useQuickVoteSlots({pair, isAvailable, storedChoice});
   const submittingRef = useRef(false);
