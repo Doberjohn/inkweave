@@ -92,8 +92,16 @@ function applySyncPlan(
   if (plan === 'adopt-server' && server !== null) {
     // Mirrored into localStorage too, so a later signed-out visit sees the
     // collection this account actually holds rather than a stale import.
-    writeCollection(server.entries, server.importedAt);
-    markCollectionMigrated(uid);
+    //
+    // The write's error is CHECKED rather than discarded, which is the whole
+    // point of it having one. The marker records that this uid was reconciled,
+    // so setting it after a failed mirror claims a durable local copy that does
+    // not exist, and the claim is permanent. State still moves, because the
+    // server data in memory is correct and the user should see it; only the
+    // durability claim is withheld, so the next mount reconciles again instead
+    // of trusting a write that failed.
+    const {error: mirrorError} = writeCollection(server.entries, server.importedAt);
+    if (mirrorError === null) markCollectionMigrated(uid);
     setState({entries: server.entries, importedAt: server.importedAt});
     return;
   }

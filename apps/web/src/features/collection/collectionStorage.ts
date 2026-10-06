@@ -22,7 +22,7 @@
 // because OTHER things share that quota, not because this payload is large.
 
 import type {RepoResult} from '../../shared/lib/repoResult';
-import type {CollectionEntries} from './collectionParser';
+import type {CollectionEntries, CollectionEntry} from './collectionParser';
 
 /** The single stored collection. Namespaced alongside `inkweave:deck:*`. */
 export const COLLECTION_KEY = 'inkweave:collection';
@@ -37,6 +37,26 @@ export interface StoredCollection {
   entries: CollectionEntries;
 }
 
+/**
+ * True when every VALUE in `entries` is a real `CollectionEntry`.
+ *
+ * Checking the container alone is not enough, and the gap is not theoretical.
+ * `holdingOf` in `collectionStats` guards `entry === undefined`, which is the
+ * right guard for a card nobody owns, but `null !== undefined`: a stored
+ * `{"1234": null}` sails past the container check, reaches `entry.normal` and
+ * throws, taking the whole binder down. The validator admits a malformed
+ * presence that the consumer's absence guard was never written to catch.
+ */
+function hasValidEntries(entries: object): boolean {
+  return Object.values(entries).every(
+    (e: unknown) =>
+      typeof e === 'object' &&
+      e !== null &&
+      typeof (e as Partial<CollectionEntry>).normal === 'number' &&
+      typeof (e as Partial<CollectionEntry>).foil === 'number',
+  );
+}
+
 /** True when `value` looks like a current-schema {@link StoredCollection}. */
 function isCollectionShape(value: unknown): value is StoredCollection {
   if (typeof value !== 'object' || value === null) return false;
@@ -48,7 +68,8 @@ function isCollectionShape(value: unknown): value is StoredCollection {
     c.entries !== null &&
     // An array is an object, and `entries` is a Record. Without this a stored
     // `[]` round-trips as a valid empty collection instead of being discarded.
-    !Array.isArray(c.entries)
+    !Array.isArray(c.entries) &&
+    hasValidEntries(c.entries)
   );
 }
 

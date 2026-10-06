@@ -91,6 +91,20 @@ describe('parseCollectionCsv', () => {
     expect(summary.unparsed).toEqual(['not,a,row']);
   });
 
+  /*
+    `parseInt` is a PREFIX parser, so "3x" silently imported as 3 copies and
+    "1.5" as 1. The whole point of `unparsed` is to put a row the format cannot
+    describe in front of the user, and a prefix parse routed malformed counts
+    around it. Asserting the entry is ABSENT is what catches it: asserting only
+    that `unparsed` is non-empty would pass while the bad count still imported.
+  */
+  it('reports a malformed count as unparsed instead of importing its numeric prefix', () => {
+    const row = '011,191,normal,3x,"Angel - Experiment 624",Amber,Rare';
+    const {entries, summary} = parseCollectionCsv(csv(row), pool);
+    expect(summary.unparsed).toEqual([row]);
+    expect(entries['2001']).toBeUndefined();
+  });
+
   it('gives a contested collector number to the base card, not a Special reprint', () => {
     // Special-rarity promos REUSE base collector numbers — 98 contested numbers
     // across the non-Core sets, and a Special is listed last in 97 of them. Set 1

@@ -114,7 +114,17 @@ describe('CollectionCardsProvider', () => {
     expect(result.current.cards).toEqual([]);
   });
 
-  it('retry is the explicit way back, and it does re-fetch', async () => {
+  /*
+    A HELD response, because the obvious version of this test cannot fail.
+
+    `retry` calls `ensureLoaded`, which sets `error` to null SYNCHRONOUSLY before
+    a single request settles. So `await waitFor(() => expect(error).toBeNull())`
+    passes on the reset, not on the recovery, and would pass identically if every
+    retried request 404'd again. Holding the responses open lets the test observe
+    the in-flight state first, and only a genuine success produces the settled
+    one: loading false AND error still null.
+  */
+  it('retry is the explicit way back, and the retried load actually recovers', async () => {
     fetchMock.mockImplementation(notFound);
     const {result} = renderHook(() => useCollectionCards(), {wrapper});
 
@@ -122,10 +132,21 @@ describe('CollectionCardsProvider', () => {
     await waitFor(() => expect(result.current.error).not.toBeNull());
     const afterFailure = fetchMock.mock.calls.length;
 
-    fetchMock.mockImplementation(ok);
-    result.current.retry();
-    await waitFor(() => expect(result.current.error).toBeNull());
+    let release = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    fetchMock.mockImplementation(async () => {
+      await held;
+      return {ok: true, json: () => Promise.resolve([])};
+    });
 
+    result.current.retry();
+    await waitFor(() => expect(result.current.isLoading).toBe(true));
     expect(fetchMock.mock.calls.length).toBeGreaterThan(afterFailure);
+
+    release();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.error).toBeNull();
   });
 });

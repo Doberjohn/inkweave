@@ -157,8 +157,15 @@ function readRow(line: string): CollectionRow | null {
   if (!/^\d+$/.test(rawSet.trim())) return null;
   const number = normalizeCardNumber(rawNumber);
   if (number === '') return null;
-  const count = parseInt(rawCount, 10);
-  if (!Number.isFinite(count)) return null;
+  // The WHOLE field, not `parseInt` alone. `parseInt` is a prefix parser, so
+  // "3x" reads as 3, "1.5" as 1 and "-2" as -2, and `Number.isFinite` waves all
+  // three through. A null return puts the line in `unparsed` for the user to
+  // see; a prefix parse routes a malformed count silently around that, which is
+  // the one outcome this format should never produce. `normalizeCardNumber`
+  // above already tests its whole field for exactly this reason.
+  const rawCountTrimmed = rawCount.trim();
+  if (!/^\d+$/.test(rawCountTrimmed)) return null;
+  const count = parseInt(rawCountTrimmed, 10);
   if (rawVariant !== 'normal' && rawVariant !== 'foil') return null;
   return {set: parseInt(rawSet, 10), number, variant: rawVariant, count};
 }

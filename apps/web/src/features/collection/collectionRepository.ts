@@ -87,12 +87,27 @@ export function getCollection(ownerId: string): Promise<RepoResult<StoredCollect
       .eq('owner_id', ownerId)
       .maybeSingle();
     if (error || data === null) return {data: null, error};
+    // The row's TYPE is a promise, not a guarantee, exactly as for `entries`
+    // above. `Date.parse` yields NaN on a malformed timestamp, and a row written
+    // by a FUTURE schema would be adopted silently as version 1.
+    //
+    // Both end badly and quietly. `writeCollection` serializes NaN as `null`, so
+    // `readCollection`'s shape guard rejects the mirror on the next load and
+    // clears it: the user's collection vanishes with no error anywhere. Failing
+    // here instead keeps an unusable row from displacing a good local copy,
+    // because `useCollectionSync` returns early on a read error rather than
+    // treating it as "the server has none".
+    const importedAt = Date.parse(data.imported_at);
+    if (data.schema_version !== SCHEMA_VERSION || Number.isNaN(importedAt)) {
+      return {
+        data: null,
+        error: {
+          message: `unusable collection row (schema ${String(data.schema_version)}, imported_at ${String(data.imported_at)})`,
+        },
+      };
+    }
     return {
-      data: {
-        schemaVersion: data.schema_version,
-        importedAt: Date.parse(data.imported_at),
-        entries: toEntries(data.entries),
-      },
+      data: {schemaVersion: data.schema_version, importedAt, entries: toEntries(data.entries)},
       error: null,
     };
   });
