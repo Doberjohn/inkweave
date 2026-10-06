@@ -112,7 +112,7 @@ Claude Code hooks, skills, agents, and path-scoped rules enforce workflow rules 
 | `/draft-issue [title hint]` | optional title hint | Extract scope from conversation → clarifying questions if gaps → 8-section rubric draft → score → publish on approval |
 | `/implement-issue <num>` | issue number | Session hygiene → fetch issue → create branch → summary |
 | `/commit-and-push "msg"` | commit message | PR readiness → review → commit → push → PR → CI |
-| `/close-session [summary]` | work summary | Cleanup (servers/worktrees/branches + `node scripts/clean-transient.mjs`, which deletes guarded throwaway files unasked and lists the rest) → docs update → MEMORY.md → summary |
+| `/close-session [summary]` | work summary | Cleanup (servers/worktrees/branches + `node scripts/clean-transient.mjs`, which deletes guarded throwaway files unasked, lists its `ask` rows and skips protected paths) → docs update → MEMORY.md → summary |
 | `/inkweave-add-rule <name>` | mechanic name | Discovery → design → implement → validate |
 | `/mine-rules [dry-run]` | optional dry-run | Run the miner → pick top candidate (dedup vs existing rules + open candidates; previously-removed mechanics are flagged, not skipped) → draft 5-baseline proposal → open one `rule-candidate` issue (`dry-run` drafts without publishing) |
 | `/inkweave-explore [focus]` | optional focus area | Read-only, fork-isolated codebase/architecture map (workspace, engine API + rule registry, web data flow, precompute); verbose output stays in the fork |

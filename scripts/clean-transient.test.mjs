@@ -3,6 +3,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   realpathSync,
   renameSync,
   rmSync,
@@ -77,6 +78,11 @@ describe('classify: guards', () => {
 
   it('never deletes a path git does not ignore', () => {
     expect(decide('apps/web/test-results/', 5 * HOUR, {ignored: false})).toBe('ask');
+  });
+
+  it('asks about a scratch folder that holds a protected folder', () => {
+    const holds = {protectedInside: 'tmp-probe/node_modules/'};
+    expect(decide('tmp-probe/', 30 * 24 * HOUR, holds)).toBe('ask');
   });
 
   it('always asks about screenshots/, however old', () => {
@@ -227,6 +233,34 @@ describe('run', {timeout: 60_000}, () => {
     expect(existsSync(fresh)).toBe(true);
     expect(existsSync(join(root, 'apps/web/test-results/old.zip'))).toBe(true);
     expect(lines.join('\n')).toMatch(/ask\s+apps\/web\/test-results\/.*changed since the plan/);
+  });
+
+  it('keeps an old scratch folder that holds node_modules/', () => {
+    const root = makeRepo();
+    write(join(root, 'tmp-probe/node_modules/keep.txt'));
+    const {out} = clean(root);
+    expect(existsSync(join(root, 'tmp-probe/node_modules/keep.txt'))).toBe(true);
+    expect(out).toMatch(/ask\s+tmp-probe\/.*holds tmp-probe\/node_modules\//);
+  });
+
+  it('keeps a log written to after the plan', () => {
+    const root = makeRepo();
+    const log = join(root, 'vite.log');
+    write(log, 'old');
+    let appended = false;
+    run([], {
+      cwd: root,
+      log: () => {},
+      now: later,
+      probeLive: () => QUIET,
+      // A writer appending between the plan and the rename.
+      rename: (from, to) => {
+        if (!appended) writeFileSync(from, 'old\nnew');
+        appended = true;
+        renameSync(from, to);
+      },
+    });
+    expect(readFileSync(log, 'utf8')).toBe('old\nnew');
   });
 
   it('rejects an unknown option', () => {

@@ -18,23 +18,25 @@
  * | Unknown       | screenshots/                                           | never: ask                       |
  * | Protected     | PROTECTED below                                        | never: skip                      |
  *
- * A tracked or non-ignored path is always ask. Parallel sessions share the main checkout, so
- * its E2E artifacts may belong to another session's run, and a failed run's report is the
- * evidence for what broke: hence the live-run check and the 30-minute floor. The live-run check
- * is machine-wide (any Playwright process, any listener on the E2E ports 5200-5299) and a check
- * that fails counts as a live run.
+ * A tracked or non-ignored path is always ask, and so is one holding a protected folder (an
+ * install into tmp-probe/ puts node_modules/ under it). Parallel sessions share the main
+ * checkout, so its E2E artifacts may belong to another session's run, and a failed run's
+ * report is the evidence for what broke: hence the live-run check and the 30-minute floor. The
+ * live-run check is machine-wide (any Playwright process, any listener on the E2E ports
+ * 5200-5299) and a check that fails counts as a live run.
  *
- * A folder is renamed to .tmp-clean-transient-<stamp>/ before it is deleted. The rename is
- * atomic, so a run that starts mid-delete gets a fresh folder; Windows refuses it while a
- * process holds a file inside, which keeps the folder (ask); and a delete that fails leaves an
- * ignored scratch folder that a later run sweeps.
+ * Every path is renamed to .tmp-clean-transient-<stamp>[-name.log] before it is deleted, then
+ * measured again: anything written since the plan puts it back (ask). The rename is atomic, so
+ * a run that starts mid-delete gets a fresh folder; Windows refuses it while a process holds a
+ * file inside, which keeps the path (ask); and a delete that fails leaves ignored scratch that
+ * a later run sweeps.
  *
  * Unlike scripts/remove-worktree.mjs this is not a git operation, so the git-write-protection
  * hook must not block it. Node built-ins only.
  */
 import {execFileSync} from 'node:child_process';
 import {lstatSync, readdirSync, renameSync, rmSync} from 'node:fs';
-import {join, resolve} from 'node:path';
+import {basename, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const MINUTE = 60 * 1000;
@@ -72,8 +74,16 @@ export function tierOf(path) {
   return 'scratch';
 }
 
+// Why a path git or a protected folder vouches for can't be deleted, whatever its age.
+function heldBack({protectedInside, tracked, ignored}) {
+  if (protectedInside) return `holds ${protectedInside}`;
+  if (tracked) return 'tracked by git';
+  return ignored ? null : 'not git-ignored';
+}
+
 /**
- * Decides one path. `entry` is {path, kind, newestMs, ignored, tracked}, with newestMs the
+ * Decides one path. `entry` is {path, kind, newestMs, ignored, tracked, protectedInside}, with
+ * protectedInside the first protected folder under it (or null), and newestMs the
  * mtime of the newest thing inside (or of the file); `env` is {now, e2e}, with e2e.live true,
  * false, or null when the check failed. Returns {action: 'delete' | 'ask' | 'skip', reason}.
  */
@@ -81,8 +91,8 @@ export function classify(entry, {now, e2e}) {
   const tier = tierOf(entry.path);
   if (tier === 'protected') return {action: 'skip', reason: 'protected'};
   if (tier === 'unknown') return {action: 'ask', reason: 'unknown origin'};
-  if (entry.tracked) return {action: 'ask', reason: 'tracked by git'};
-  if (!entry.ignored) return {action: 'ask', reason: 'not git-ignored'};
+  const held = heldBack(entry);
+  if (held) return {action: 'ask', reason: held};
 
   const age = now - entry.newestMs;
   if (tier === 'e2e') {
@@ -197,13 +207,19 @@ function readdirSafe(dir) {
  * Bytes, file count and the newest file's mtime under `path`, without following links. Folder
  * mtimes count only for a folder that holds no files: moving a folder can touch its own.
  */
-function measure(path) {
+function measure(path, rel) {
   const stat = lstatSync(path);
   if (!stat.isDirectory()) return {bytes: stat.size, files: 1, newestMs: stat.mtimeMs};
-  const totals = {bytes: 0, files: 0, newestMs: -Infinity};
+  // A protected folder inside a candidate (an install into tmp-probe/) is not walked, and its
+  // path keeps the whole candidate from being deleted.
+  if (tierOf(`${rel}/`) === 'protected') {
+    return {bytes: 0, files: 0, newestMs: stat.mtimeMs, protectedInside: `${rel}/`};
+  }
+  const totals = {bytes: 0, files: 0, newestMs: -Infinity, protectedInside: null};
   for (const name of readdirSync(path)) {
-    const inner = measure(join(path, name));
+    const inner = measure(join(path, name), `${rel}/${name}`);
     totals.bytes += inner.bytes;
+    totals.protectedInside ??= inner.protectedInside ?? null;
     if (!inner.files) continue;
     totals.files += inner.files;
     totals.newestMs = Math.max(totals.newestMs, inner.newestMs);
@@ -242,11 +258,12 @@ function plan(root, {now, probeLive}) {
   const time = now();
   return paths
     .map((path) => {
-      const facts = measure(join(root, path));
+      const facts = measure(join(root, path), path.replace(/\/$/, ''));
       const entry = {
         path,
         kind: path.endsWith('/') ? 'dir' : 'file',
         newestMs: facts.newestMs,
+        protectedInside: facts.protectedInside ?? null,
         ignored: ignored.has(path),
         tracked: isTracked(root, path),
       };
@@ -262,29 +279,23 @@ const IN_USE = ['EPERM', 'EBUSY', 'EACCES'];
 
 /** Deletes one row. Returns 'deleted', 'kept' (in use or changed) or 'failed', with a note. */
 function remove(root, row, {rename, rm, now}) {
-  const target = join(root, row.path);
-  if (row.kind === 'file') {
-    try {
-      rm(target, {force: false});
-      return {outcome: 'deleted'};
-    } catch (error) {
-      if (IN_USE.includes(error.code)) return {outcome: 'kept', note: 'in use by a process'};
-      return {outcome: 'failed', note: firstLine(error.message)};
-    }
-  }
-  const aside = join(root, `${ASIDE_PREFIX}${now()}-${Math.random().toString(36).slice(2, 8)}`);
+  const target = join(root, row.path.replace(/\/$/, ''));
+  // Files keep their name as a suffix, so a log set aside still matches the *.log ignore rule.
+  const stamp = `${now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const suffix = row.kind === 'file' ? `-${basename(target)}` : '';
+  const aside = join(root, `${ASIDE_PREFIX}${stamp}${suffix}`);
   try {
     rename(target, aside);
   } catch (error) {
-    if (IN_USE.includes(error.code)) {
-      return {outcome: 'kept', note: 'in use: a process holds a file inside'};
-    }
+    if (IN_USE.includes(error.code)) return {outcome: 'kept', note: 'in use by a process'};
     return {outcome: 'failed', note: firstLine(error.message)};
   }
-  // The guards were decided at plan time. A run that started since then may have written into
-  // the folder before the rename; after it, nothing can (Windows refuses the rename while a
-  // handle is open inside), so this measure is final. Anything newer puts the folder back.
-  if (measure(aside).newestMs > row.newestMs) {
+  // The guards were decided at plan time. A run or writer that started since then may have
+  // written to the path before the rename; nothing can reach it there afterwards except a
+  // handle already open on a file (Windows refuses a folder's rename while one is open
+  // inside). Anything newer, or a protected folder that appeared, puts it back.
+  const after = measure(aside, row.path.replace(/\/$/, ''));
+  if (after.newestMs > row.newestMs || after.protectedInside) {
     try {
       rename(aside, target);
       return {outcome: 'kept', note: 'changed since the plan'};
