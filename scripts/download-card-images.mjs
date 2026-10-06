@@ -52,7 +52,7 @@ const PROD_DATA_PATH = '/data/allCards.json';
  */
 const RESTORE_TIMEOUT_MS = 15000;
 /**
- * Collection detail chunks (#553): the 2,218 cards Inkweave shows but never
+ * Collection detail chunks (#553): the 2,152 cards Inkweave shows but never
  * analyses. Imaged here because a binder without art is pointless.
  *
  * The INDEX is deliberately not read. It carries no image fields — the binder

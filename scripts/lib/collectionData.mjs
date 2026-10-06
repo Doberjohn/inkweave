@@ -3,7 +3,7 @@
  *
  * `apps/web/public/data/allCards.json` is the Core pool and the only input to the
  * synergy engine, the deck builder and the playstyle pages. This module builds the
- * OTHER 2,218 cards — sets 1-8, Q1/Q2, and the Enchanted/Epic/Iconic/Special
+ * OTHER 2,152 cards: sets 1-8 and the Enchanted/Epic/Iconic/Special
  * printings inside Core sets — for collection viewing only.
  *
  * **Nothing appears in both datasets.** That is the invariant the whole Core
@@ -18,7 +18,7 @@
  * nameless and statless. Complete, it measures 445 KB gzip, not the 118 KB the
  * design estimated. Hence:
  *
- *   - INDEX (~71 KB gzip, all 2,218 cards): what the grid and every filter need.
+ *   - INDEX (~69 KB gzip, all 2,152 cards): what the grid and every filter need.
  *     Loaded once when collection mode turns on.
  *   - DETAIL (5-42 KB gzip per set): card text, stats, abilities and image URLs.
  *     Loaded for the set being viewed, which is also the binder's page unit.
@@ -73,7 +73,21 @@ export const DETAIL_FIELDS = [
  */
 const DETAIL_IMAGE_KEYS = ['thumbnail', 'full'];
 
-/** A set code that is safe as a filename — digits, or a letter-prefixed code. */
+/**
+ * Illumineer's Quest sets, excluded from the collection dataset entirely (owner ruling,
+ * 2026-10-06). Those are a separate co-op product, not trading-card boosters, so they are
+ * not part of the collection anyone is tracking. Sets 1-8 stay: they are equally outside
+ * Core format, but they are the same product and the whole reason this dataset exists.
+ *
+ * A side effect worth knowing: Quest cards carry `"color": ""`, which `parseInks` rejects,
+ * so `transformCard` returns null and `transformCards` drops them silently. Excluding them
+ * removes that trap rather than leaving it for Phase C to discover.
+ *
+ * Matches a future Q3 box automatically.
+ */
+const QUEST_SET_CODE = /^Q\d+$/i;
+
+/** A set code that is safe as a filename: digits, or a letter-prefixed code. */
 const SAFE_SET_CODE = /^[A-Za-z0-9]+$/;
 
 /** Copy `fields` that are actually present. Absent stays absent, never null. */
@@ -100,7 +114,9 @@ export function selectCollectionCards(fullCards, excludedIdSets) {
   for (const set of excludedIdSets) {
     for (const id of set) excluded.add(String(id));
   }
-  return fullCards.filter((card) => !excluded.has(String(card.id)));
+  return fullCards.filter(
+    (card) => !excluded.has(String(card.id)) && !QUEST_SET_CODE.test(String(card.setCode)),
+  );
 }
 
 /** The light tier: one entry per card, every set. */
