@@ -171,6 +171,20 @@ function inlineCssPlugin(): Plugin {
   };
 }
 
+/**
+ * Local Windows runs cap Vitest at 4 workers (#720). The repo sits on a spinning disk there, and
+ * on a cold file cache the default first wave (11 workers on the 12-thread dev box) needs over
+ * 60 s to start, mostly loading jsdom, past Vitest's hardcoded worker-start limit, so none of its
+ * files run. Four workers measured 35 to 43 s. CI keeps Vitest's default: it has never hit this.
+ * VITEST_MAX_WORKERS overrides the cap.
+ */
+function resolveVitestWorkers(): number | undefined {
+  const override = Number.parseInt(process.env.VITEST_MAX_WORKERS ?? '', 10);
+  if (override > 0) return override;
+  if (process.env.CI) return undefined;
+  return process.platform === 'win32' ? 4 : undefined;
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -290,6 +304,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    maxWorkers: resolveVitestWorkers(),
     setupFiles: ['./src/shared/test-utils/setup.ts'],
     exclude: ['**/node_modules/**', '**/e2e/**'],
     // Pin render-gating feature-flag env vars to their default (unset) state so a

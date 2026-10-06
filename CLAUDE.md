@@ -255,6 +255,7 @@ Dark fantasy theme inspired by Lorcana:
 
 ### Pre-Commit & Pre-Push (automated)
 - **Pre-commit hook** runs lint + tests on every `git commit`. Do not skip.
+- **Local Windows Vitest runs use 4 workers** (`resolveVitestWorkers` in `apps/web/vite.config.ts`, #720): on a cold disk cache, Vitest's default first wave misses its hardcoded 60 s worker-start limit and those files never run. CI keeps Vitest's default; `VITEST_MAX_WORKERS` overrides the cap.
 - **Pre-push hook** (husky) runs E2E chromium on every `git push`. Do not skip.
 - Full 5-browser E2E suite runs in CI as safety net.
 - After pushing, always confirm with clear output (e.g., git log showing commit on origin/master).
