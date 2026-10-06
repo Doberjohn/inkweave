@@ -314,7 +314,7 @@ export function loadSupabase(): Promise<SupabaseClient<Database> | null>;
 
 When env vars are missing, `isSupabaseConfigured()` is false, `loadSupabase()` resolves `null`, and all voting features gracefully degrade. The app works fully without Supabase — you just can't submit votes. Builds without credentials drop the SDK import entirely.
 
-**Who downloads the SDK:** whoever first needs a client (a vote, a pair-score read, a profile call, a sign-in click), plus `SessionContext` when there is a session to restore: an `inkweave:auth` entry in localStorage (`AUTH_STORAGE_KEY`, pinned against the real supabase-js by `supabaseStorageKey.test.ts`) or the OAuth code on `/auth/callback`. An anonymous visitor who does neither never fetches it.
+**Who downloads the SDK:** nobody on page load without a session. It loads on first use: a vote, a pair-score read (opening a synergy pair's comparison), a profile call, a sign-in click; and `SessionContext` loads it at page load when there is a session to restore: an `inkweave:auth` entry in localStorage (`AUTH_STORAGE_KEY`, pinned against the real supabase-js by `supabaseStorageKey.test.ts`), the `/auth/callback` path or an OAuth `code` in the URL, or unreadable storage.
 
 **Never import `@supabase/supabase-js` as a value anywhere else.** A static import puts the SDK back in the entry chunk. Type imports (`import type`) are fine.
 
@@ -323,14 +323,18 @@ When env vars are missing, `isSupabaseConfigured()` is false, `loadSupabase()` r
 ```typescript
 export async function submitVote(vote: QuickVote | InDepthVote): Promise<VoteResult> {
   if (!isSupabaseConfigured()) return { error: 'Supabase not configured' };
-  const supabase = await loadSupabase();  // inside try: a failed download reads as 'Network error'
+  try {
+    // Inside the try: a failed SDK download reads as 'Network error', like a failed fetch.
+    const supabase = await loadSupabase();
+    if (!supabase) return { error: 'Supabase not configured' };
+    // The RPC orders the pair canonically server-side.
+    const { error } = await supabase.rpc('submit_vote', toSubmitVoteArgs(vote));
 
-  const [cardA, cardB] = [vote.cardA, vote.cardB].sort();  // canonical ordering
-  const { error } = await supabase.rpc('submit_vote', { p_card_a: cardA, p_card_b: cardB, ... });
-
-  if (error?.code === 'P0429') return { error: 'rate_limited' };
-  if (error) return { error: error.message };
-  return { error: null };
+    if (error?.code === 'P0429') return { error: 'rate_limited' };
+    return { error: error?.message ?? null };  // RPC errors are also logged with the pair
+  } catch (e) {
+    return { error: 'Network error' };
+  }
 }
 ```
 
@@ -521,9 +525,10 @@ Schema changes follow this process using Supabase MCP tools:
 
 **File**: `apps/web/src/shared/lib/__tests__/supabase.test.ts`
 
-12 test cases covering:
+22 test cases (the chart below counts the 17 for the three client entry points; the rest cover the Sentry integration and `deriveAccuracyDistribution`):
 - `isSupabaseConfigured()` / `loadSupabase()` — null without env vars and no client created, singleton behavior, retry after a failed load
-- `supabaseStorageKey.test.ts` — the real supabase-js persists the session under `AUTH_STORAGE_KEY`, which `SessionContext` relies on to skip the SDK for anonymous visitors
+
+Plus `supabaseStorageKey.test.ts` (1 test): the real supabase-js persists the session under `AUTH_STORAGE_KEY`, which `SessionContext` relies on to skip the SDK at page load when there is no session.
 - `submitVote()` — RPC call params, rate limit detection (P0429), network error handling, success path
 - `getPairScore()` — view query, canonical ordering, PGRST116 (no rows) handling
 
@@ -556,7 +561,7 @@ Uses test-data prefix (`inttest_*`) for isolation. Requires `apps/web/.env.local
   "data": {
     "labels": ["Client loading", "submitVote()", "getPairScore()", "RPC & Upsert", "RLS Security"],
     "datasets": [
-      {"label": "Unit (Vitest)", "data": [6, 6, 3, 0, 0], "backgroundColor": "#8b5cf6"},
+      {"label": "Unit (Vitest)", "data": [5, 7, 5, 0, 0], "backgroundColor": "#8b5cf6"},
       {"label": "Integration (Live DB)", "data": [0, 0, 0, 5, 3], "backgroundColor": "#10b981"}
     ]
   }

@@ -7,10 +7,9 @@ import type {Database} from './database.types';
 
 export {SupabaseClient};
 
-export function createSupabaseClient(
-  url: string,
-  key: string,
-  auth: SupabaseClientOptions<'public'>['auth'],
-): SupabaseClient<Database> {
+/** Required, not optional: omitting it would silently drop the storage key and PKCE flow. */
+type AuthOptions = NonNullable<SupabaseClientOptions<'public'>['auth']>;
+
+export function createSupabaseClient(url: string, key: string, auth: AuthOptions): SupabaseClient<Database> {
   return createClient<Database>(url, key, {auth});
 }

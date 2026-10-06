@@ -37,6 +37,10 @@ jobs:
     # bundle about 110 kB lighter than the one served. Placeholders suffice, since only their
     # presence changes the bundle; none of them is ever contacted. Keep this list in step with
     # every VITE_* that Vercel Production sets, plus VITE_LOCAL_IMAGES from build:vercel.
+    # The boolean flags are set by name from Vercel's list; their production values are not
+    # read here, so they are pinned 'true', which builds the heavier shape: a flag that is off
+    # in production makes the gate over-measure, never under-measure. VITE_FEATURED_CARD_IDS
+    # is left out: it only swaps one six-id array for another, so it is bundle-neutral.
     env:
       VITE_SUPABASE_URL: https://ci.placeholder.supabase.co
       VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
@@ -47,8 +51,18 @@ jobs:
       VITE_SHOW_BETA_NOTICE: 'true'
 
     steps:
+      # The PR path keeps the default persisted token: size-limit-action runs
+      # `git fetch origin <base>` itself to build the base, which this private repo refuses
+      # without it. The master path fetches nothing, so dependency scripts there get no token.
       - name: Checkout code
+        if: github.event_name == 'pull_request'
         uses: actions/checkout@v7
+
+      - name: Checkout code (master)
+        if: github.event_name == 'push'
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6

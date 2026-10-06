@@ -150,7 +150,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 
 Covers the accounts surface, which ships behind `VITE_SHOW_ACCOUNTS` (default OFF). `playwright.config.ts` pins the flag ON **and** pins placeholder `VITE_SUPABASE_*` values. Both pins matter: without credentials `isSupabaseConfigured()` is false, `enabled` is false and `AuthButton` renders nothing, so these would pass locally off a developer's `.env.local` and fail in CI, which supplies no Supabase env. Pinning makes the state identical everywhere.
 
-supabase-js is downloaded only when there is a session to restore (#729): a stored `inkweave:auth` entry or the `/auth/callback` code. The two SDK tests watch the network for it; under Vite dev it arrives as `supabaseClient.ts` plus the prebundled `@supabase_supabase-js` dependency. They pair up: the stored-session test proves the matcher sees the SDK, so the anonymous test's empty list is not a blind spot.
+At page load, supabase-js is downloaded only when there is a session to restore (#729): a stored `inkweave:auth` entry, or an OAuth code (`/auth/callback`, or `?code=` on any path). After that it loads on demand, on first use: sign-in or sign-out, a vote, a pair's community scores, a profile call. The two SDK tests cover the page-load gate and watch the network for it; under Vite dev it arrives as `supabaseClient.ts` plus the prebundled `@supabase_supabase-js` dependency. They pair up: the stored-session test proves the matcher sees the SDK, so the anonymous test's empty list is not a blind spot.
 
 | Test | What it verifies |
 |---|---|

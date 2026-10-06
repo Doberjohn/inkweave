@@ -3,9 +3,10 @@
 // sign-out. When Supabase env is unset auth is `enabled: false` and the actions are safe
 // no-ops, so the app degrades gracefully, exactly like voting.
 //
-// supabase-js is downloaded only when there is a session to restore (#729): a stored one, or
-// the OAuth code on /auth/callback. An anonymous visitor never fetches it; their sign-in click
-// loads it on the way to the provider. The accepted cost: a sign-in completed in another tab
+// This provider downloads supabase-js only when there is a session to restore (#729): a stored
+// one, or an OAuth code on its way back. For an anonymous visitor it fetches nothing; their
+// sign-in click loads the SDK on the way to the provider. (Other features still load it on
+// first use: a vote, a pair's community scores, a profile call.) The accepted cost: a sign-in completed in another tab
 // shows up here only after a reload, since no client is listening for it.
 import {createContext, useContext, useEffect, useState, type ReactNode} from 'react';
 import type {Session, User} from '@supabase/supabase-js';
