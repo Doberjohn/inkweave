@@ -48,7 +48,7 @@ describe('sentry', () => {
 
     await loadSentry();
 
-    // The test build has no VERCEL_ENV, so vite.config.ts bakes in the fallback (#740).
+    // vite.config.ts pins the fallback under Vitest, whatever VERCEL_ENV the shell has (#740).
     expect(Sentry.init).toHaveBeenCalledWith(expect.objectContaining({environment: 'unknown'}));
   });
 

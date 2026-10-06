@@ -189,8 +189,12 @@ function resolveVitestWorkers(): number | undefined {
 export default defineConfig({
   define: {
     // Sentry's `environment` (#740). Vercel sets VERCEL_ENV in every build it runs, previews
-    // included. A build without it says 'unknown' rather than pass as production.
-    __DEPLOY_ENV__: JSON.stringify(process.env.VERCEL_ENV ?? 'unknown'),
+    // included, and deploy.yml sets it for production's CI build. A build without it says
+    // 'unknown' rather than pass as production. Vitest (which sets VITEST before loading this
+    // config) always gets 'unknown', so the shell's VERCEL_ENV can't leak into the tests.
+    __DEPLOY_ENV__: JSON.stringify(
+      process.env.VITEST ? 'unknown' : (process.env.VERCEL_ENV ?? 'unknown'),
+    ),
   },
   plugins: [
     ensureSynergiesPlugin(),
