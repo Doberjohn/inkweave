@@ -9,15 +9,20 @@ on:
   push:
     branches: [master]
 
+# Read-only by default (#738). A job-level block replaces this one rather than merging with
+# it, so each job that needs more restates contents: read alongside its extra scope.
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   detect-changes:
     name: Detect Changes
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    # paths-filter lists the PR's files through the API on pull_request events.
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       engine: ${{ steps.filter.outputs.engine }}
     steps:
@@ -32,6 +37,11 @@ jobs:
   bundle-size:
     name: Bundle Size
     runs-on: ubuntu-latest
+    # Writes the size-limit PR comment. Permissions cannot vary by event, so master pushes
+    # get this grant too; their steps never use the token (see the master checkout below).
+    permissions:
+      contents: read
+      pull-requests: write
     # Build the shape production ships (#729). The app branches on these at build time: without
     # the Supabase and Sentry values their lazy imports are dropped, so the budgets weighed a
     # bundle about 110 kB lighter than the one served. Placeholders suffice, since only their
@@ -100,6 +110,11 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.engine == 'true'
     runs-on: ubuntu-latest
+    # Writes the benchmark PR comment. It goes through the Issues API, which accepts the
+    # pull-requests write scope for comments on a PR.
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       # --- Run base branch FIRST (cold runner) so PR gets warm-runner advantage ---
