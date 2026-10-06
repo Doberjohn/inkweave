@@ -245,3 +245,5 @@ type SynergyRule = DirectSynergyRule | PlaystyleSynergyRule;
 ## License
 
 MIT
+
+<!-- #738 throwaway: triggers Engine Benchmarks on PR #743; reverted before merge -->
