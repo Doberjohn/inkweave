@@ -793,9 +793,10 @@ described below. Nothing it does feeds a synergy calculation.
 
 Measured 2026-10-06: 14 files, 2.9 MB on disk, 447 KB gzip in total. Both tiers are
 budgeted in `package.json`, and **deliberately as two entries rather than one**: no
-visitor ever loads all 460 KB, because collection mode loads the index once plus the
-one chunk for the set being viewed. `Collection index JSON` guards that per-visit
-cost; `Collection set chunks` is a growth guard on data nobody loads in full.
+visitor ever loads all 447 KB, because collection mode loads the index once plus the
+one chunk for the set being viewed, a real worst case of 112 KB.
+`Collection index JSON` guards that per-visit cost; `Collection set chunks` is a
+growth guard on data nobody loads in full.
 
 **The chunk budget is set against the HASH-INJECTED size, not the committed size.**
 Committed chunks gzip to 371 KB; the build injects two 16-hex hashes per subject, and
