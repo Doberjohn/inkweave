@@ -213,7 +213,9 @@ async function convertIntoCache(task) {
         .avif({quality: IMAGE_QUALITY})
         .toFile(cachePath);
     } catch (err) {
-      throw new Error(`Failed to generate ${task.id}${size.suffix}.avif: ${err.message}`);
+      throw new Error(`Failed to generate ${task.id}${size.suffix}.avif: ${err.message}`, {
+        cause: err,
+      });
     }
   }
 }

@@ -17,7 +17,8 @@
     "test:e2e:ui": "pnpm --filter inkweave-web test:e2e:ui",
     "test:supabase": "node scripts/test-supabase-integration.mjs",
     "bench:engine": "pnpm --filter inkweave-synergy-engine bench:run",
-    "lint": "pnpm -r lint",
+    "lint": "pnpm lint:root && pnpm -r lint",
+    "lint:root": "eslint scripts .claude/hooks vitest.scripts.config.mjs middleware.ts && tsc -p tsconfig.middleware.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "size": "size-limit",
@@ -84,13 +85,17 @@
     }
   ],
   "devDependencies": {
-    "vitest": "^5.0.3",
+    "@eslint/js": "^10.0.1",
     "@size-limit/file": "^14.1.0",
+    "eslint": "^10.11.0",
+    "globals": "^17.13.0",
     "husky": "^9.1.7",
     "prettier": "^3.9.9",
     "sharp": "^0.35.5",
     "size-limit": "^14.1.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.3"
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {
