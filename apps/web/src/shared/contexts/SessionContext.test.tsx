@@ -1,20 +1,25 @@
-import {describe, it, expect, vi, beforeEach} from 'vitest';
+import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {renderHook, act, waitFor} from '@testing-library/react';
 import type {ReactNode} from 'react';
 import {SessionProvider, useIsSignedIn, useSession} from './SessionContext';
 
-// A minimal Supabase auth double; `mockState.client` swaps between "configured" and
-// "not configured" (getSupabase() === null).
+// A minimal Supabase auth double. `mockState.configured` is the env check; `mockState.load`
+// is what loadSupabase() does when asked, so a test can count downloads or make one fail.
 const mockAuth = vi.hoisted(() => ({
   getSession: vi.fn(),
   onAuthStateChange: vi.fn(),
   signInWithOAuth: vi.fn(),
   signOut: vi.fn(),
 }));
-const mockState = vi.hoisted(() => ({client: null as unknown}));
+const mockState = vi.hoisted(() => ({
+  configured: true,
+  load: vi.fn(),
+}));
 
 vi.mock('../lib/supabase', () => ({
-  getSupabase: () => mockState.client,
+  AUTH_STORAGE_KEY: 'inkweave:auth',
+  isSupabaseConfigured: () => mockState.configured,
+  loadSupabase: () => mockState.load(),
 }));
 
 function wrapper({children}: {children: ReactNode}) {
@@ -22,43 +27,83 @@ function wrapper({children}: {children: ReactNode}) {
 }
 const render = () => renderHook(() => useSession(), {wrapper});
 
+/** A returning visitor: supabase-js has persisted a session under its storage key. */
+function storeSession() {
+  localStorage.setItem('inkweave:auth', '{"access_token":"stored"}');
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
+  localStorage.clear();
+  window.history.replaceState(null, '', '/');
   mockAuth.getSession.mockResolvedValue({data: {session: null}});
   mockAuth.onAuthStateChange.mockReturnValue({data: {subscription: {unsubscribe: vi.fn()}}});
   mockAuth.signInWithOAuth.mockResolvedValue({error: null});
   mockAuth.signOut.mockResolvedValue({error: null});
-  mockState.client = {auth: mockAuth};
+  mockState.configured = true;
+  mockState.load.mockResolvedValue({auth: mockAuth});
+});
+
+afterEach(() => {
+  localStorage.clear();
 });
 
 describe('SessionContext', () => {
-  it('is enabled and resolves loading when Supabase is configured', async () => {
+  // The point of #729: an anonymous visitor never downloads supabase-js.
+  it('does not load the SDK when there is no session to restore', () => {
     const {result} = render();
-    await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.enabled).toBe(true);
-    expect(result.current.session).toBeNull();
-    expect(result.current.user).toBeNull();
+    expect(result.current.loading).toBe(false);
+    expect(mockState.load).not.toHaveBeenCalled();
   });
 
-  it('signIn starts an OAuth redirect to /auth/callback for the provider', async () => {
+  it('loads the SDK and restores a stored session', async () => {
+    storeSession();
+    mockAuth.getSession.mockResolvedValue({data: {session: {user: {id: 'u1'}}}});
+    const {result} = render();
+    expect(result.current.loading).toBe(true);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.user).toEqual({id: 'u1'});
+    expect(mockAuth.onAuthStateChange).toHaveBeenCalledOnce();
+  });
+
+  // The OAuth return carries a code, not a stored session yet: it must still load. The second
+  // case is Supabase's fallback to the Site URL when it rejects `redirectTo`.
+  it.each(['/auth/callback', '/?code=abc'])('loads the SDK on %s with nothing stored', async (url) => {
+    window.history.replaceState(null, '', url);
     const {result} = render();
     await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(mockState.load).toHaveBeenCalledOnce();
+  });
+
+  it('resolves loading when the SDK fails to download', async () => {
+    storeSession();
+    mockState.load.mockRejectedValue(new Error('offline'));
+    const {result} = render();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.session).toBeNull();
+  });
+
+  it('signIn loads the SDK and starts an OAuth redirect to /auth/callback', async () => {
+    const {result} = render();
     await act(async () => {
       await result.current.signIn('discord');
     });
+    expect(mockState.load).toHaveBeenCalledOnce();
     expect(mockAuth.signInWithOAuth).toHaveBeenCalledWith({
       provider: 'discord',
       options: {redirectTo: expect.stringContaining('/auth/callback')},
     });
   });
 
-  it('signOut calls Supabase signOut', async () => {
+  it('signIn reports an SDK that fails to download', async () => {
+    mockState.load.mockRejectedValue(new Error('offline'));
     const {result} = render();
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    let outcome: {error: string | null} | undefined;
     await act(async () => {
-      await result.current.signOut();
+      outcome = await result.current.signIn('google');
     });
-    expect(mockAuth.signOut).toHaveBeenCalled();
+    expect(outcome?.error).toMatch(/could not start/i);
   });
 
   /*
@@ -67,6 +112,7 @@ describe('SessionContext', () => {
     appeared to do nothing. It now reports, and AccountPage renders what it reports.
   */
   it('signOut reports a refused logout rather than swallowing it', async () => {
+    storeSession();
     mockAuth.signOut.mockResolvedValue({error: {message: 'Logout failed'}});
     const {result} = render();
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -79,6 +125,7 @@ describe('SessionContext', () => {
   });
 
   it('signOut reports no error on success', async () => {
+    storeSession();
     const {result} = render();
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -87,16 +134,18 @@ describe('SessionContext', () => {
       outcome = await result.current.signOut();
     });
     expect(outcome).toEqual({error: null});
+    expect(mockAuth.signOut).toHaveBeenCalled();
   });
 
   it('is disabled and no-ops when Supabase is not configured', async () => {
-    mockState.client = null;
+    mockState.configured = false;
+    storeSession();
     const {result} = render();
     expect(result.current.enabled).toBe(false);
     expect(result.current.loading).toBe(false);
     const res = await result.current.signIn('google');
     expect(res.error).toBeTruthy();
-    expect(mockAuth.signInWithOAuth).not.toHaveBeenCalled();
+    expect(mockState.load).not.toHaveBeenCalled();
   });
 });
 
@@ -109,6 +158,7 @@ describe('SessionContext', () => {
 */
 describe('useIsSignedIn', () => {
   it('is true once a stored session resolves', async () => {
+    storeSession();
     mockAuth.getSession.mockResolvedValue({data: {session: {user: {id: 'u1'}}}});
     const {result} = renderHook(() => useIsSignedIn(), {wrapper});
     await waitFor(() => expect(result.current).toBe(true));
@@ -116,6 +166,7 @@ describe('useIsSignedIn', () => {
 
   // The window the desktop nav must not misread: signed in, but the probe has not landed.
   it('is false while the session is still resolving', () => {
+    storeSession();
     mockAuth.getSession.mockReturnValue(new Promise(() => {}));
     const {result} = renderHook(() => useIsSignedIn(), {wrapper});
     expect(result.current).toBe(false);

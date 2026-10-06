@@ -2,10 +2,10 @@ import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {renderHook, act, waitFor} from '@testing-library/react';
 import {useQuickVote} from '../useQuickVote';
 import {_resetPairScoreCache} from '../usePairScore';
-import {getSupabase, submitVote, getPairScore, type PairScore} from '../../../../shared/lib/supabase';
+import {isSupabaseConfigured, submitVote, getPairScore, type PairScore} from '../../../../shared/lib/supabase';
 
 vi.mock('../../../../shared/lib/supabase', () => ({
-  getSupabase: vi.fn(),
+  isSupabaseConfigured: vi.fn(),
   submitVote: vi.fn(),
   getPairScore: vi.fn(),
   deriveAccuracyDistribution: (score: PairScore | null) => {
@@ -41,19 +41,19 @@ describe('useQuickVote', () => {
   });
 
   it('returns hidden state when Supabase is unavailable', () => {
-    vi.mocked(getSupabase).mockReturnValue(null);
+    vi.mocked(isSupabaseConfigured).mockReturnValue(false);
     const {result} = renderHook(() => useQuickVote(CARD_A, CARD_B));
     expect(result.current.state).toBe('hidden');
   });
 
   it('returns ready state when Supabase is available and no prior vote', () => {
-    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(isSupabaseConfigured).mockReturnValue(true);
     const {result} = renderHook(() => useQuickVote(CARD_A, CARD_B));
     expect(result.current.state).toBe('ready');
   });
 
   it('returns result state when pair found in localStorage', () => {
-    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(isSupabaseConfigured).mockReturnValue(true);
     vi.mocked(getPairScore).mockResolvedValue(makePairScore(3, 10, 2));
     localStorage.setItem(STORAGE_KEY, JSON.stringify({accuracy: 0, timestamp: Date.now()}));
 
@@ -63,7 +63,7 @@ describe('useQuickVote', () => {
   });
 
   it('submits vote, stores in localStorage, and refreshes distribution', async () => {
-    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(isSupabaseConfigured).mockReturnValue(true);
     vi.mocked(submitVote).mockResolvedValue({error: null});
     // Pre-vote aggregate; post-vote refetch returns the same shape (mock is the same).
     vi.mocked(getPairScore).mockResolvedValue(makePairScore(1, 5, 0));
@@ -85,7 +85,7 @@ describe('useQuickVote', () => {
   });
 
   it('transitions to error state on submission failure', async () => {
-    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(isSupabaseConfigured).mockReturnValue(true);
     vi.mocked(submitVote).mockResolvedValue({error: 'Network error'});
 
     const {result} = renderHook(() => useQuickVote(CARD_A, CARD_B));
@@ -101,7 +101,7 @@ describe('useQuickVote', () => {
   });
 
   it('retries successfully from error state', async () => {
-    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(isSupabaseConfigured).mockReturnValue(true);
     vi.mocked(submitVote).mockResolvedValueOnce({error: 'Network error'});
     vi.mocked(submitVote).mockResolvedValueOnce({error: null});
     vi.mocked(getPairScore).mockResolvedValue(makePairScore(0, 3, 1));
@@ -122,7 +122,7 @@ describe('useQuickVote', () => {
   });
 
   it('finds stored vote regardless of card argument order', () => {
-    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(isSupabaseConfigured).mockReturnValue(true);
     vi.mocked(getPairScore).mockResolvedValue(makePairScore(1, 5, 0));
     localStorage.setItem(STORAGE_KEY, JSON.stringify({accuracy: 1, timestamp: Date.now()}));
 
@@ -132,7 +132,7 @@ describe('useQuickVote', () => {
   });
 
   it('transitions to rate-limited state', async () => {
-    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(isSupabaseConfigured).mockReturnValue(true);
     vi.mocked(submitVote).mockResolvedValue({error: 'rate_limited'});
 
     const {result} = renderHook(() => useQuickVote(CARD_A, CARD_B));
@@ -147,7 +147,7 @@ describe('useQuickVote', () => {
   });
 
   it('sets userChoice optimistically during submitting', async () => {
-    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(isSupabaseConfigured).mockReturnValue(true);
     let resolveVote: (v: {error: null}) => void;
     vi.mocked(submitVote).mockReturnValue(new Promise((r) => { resolveVote = r; }));
 
@@ -163,7 +163,7 @@ describe('useQuickVote', () => {
   });
 
   it('resets state when card pair changes', async () => {
-    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(isSupabaseConfigured).mockReturnValue(true);
     vi.mocked(submitVote).mockResolvedValue({error: null});
     vi.mocked(getPairScore).mockResolvedValue(makePairScore(0, 1, 0));
 
@@ -190,7 +190,7 @@ describe('useQuickVote', () => {
 
   it('auto-recovers from rate-limited state after 30 seconds', async () => {
     vi.useFakeTimers();
-    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(isSupabaseConfigured).mockReturnValue(true);
     vi.mocked(submitVote).mockResolvedValue({error: 'rate_limited'});
 
     const {result} = renderHook(() => useQuickVote(CARD_A, CARD_B));
@@ -209,7 +209,7 @@ describe('useQuickVote', () => {
   });
 
   it('prevents concurrent double-submission via ref guard', async () => {
-    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(isSupabaseConfigured).mockReturnValue(true);
     let resolveVote!: (v: {error: null}) => void;
     vi.mocked(submitVote).mockReturnValue(new Promise((r) => { resolveVote = r; }));
 
@@ -225,7 +225,7 @@ describe('useQuickVote', () => {
   });
 
   it('ignores vote() calls from result state (double-submit guard)', async () => {
-    vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    vi.mocked(isSupabaseConfigured).mockReturnValue(true);
     vi.mocked(submitVote).mockResolvedValue({error: null});
     vi.mocked(getPairScore).mockResolvedValue(makePairScore(0, 1, 0));
 

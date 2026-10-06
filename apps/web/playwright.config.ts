@@ -122,7 +122,7 @@ export default defineConfig({
       VITE_SHOW_ACCOUNTS: 'true',
       // Placeholder Supabase config, so `enabled` is true and the auth control RENDERS.
       // Two reasons this is pinned rather than inherited:
-      //   1. CI supplies no Supabase env, so `getSupabase()` returns null, `enabled` is
+      //   1. CI supplies no Supabase env, so `isSupabaseConfigured()` is false, `enabled` is
       //      false and AuthButton renders nothing. Without this the 5-browser matrix
       //      exercises none of the auth surface, and axe never scans it.
       //   2. Process env beats .env files, so a developer's real credentials in

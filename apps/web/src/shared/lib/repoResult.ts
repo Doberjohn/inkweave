@@ -13,5 +13,5 @@ export interface RepoResult<T> {
   error: string | null;
 }
 
-/** Returned by every repository call when `getSupabase()` is null. */
+/** Returned by every repository call when Supabase is not configured. */
 export const NOT_CONFIGURED = 'Supabase not configured';

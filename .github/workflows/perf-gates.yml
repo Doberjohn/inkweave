@@ -3,6 +3,11 @@ name: Performance Gates
 on:
   pull_request:
     branches: [master, main]
+  # Master is measured too, so a regression that arrives by merge shows up on the merge
+  # commit instead of on whichever PR runs next (#729). Only Bundle Size runs here: the
+  # benchmarks compare a PR against its base, and a push has no base.
+  push:
+    branches: [master]
 
 permissions:
   contents: read
@@ -11,6 +16,7 @@ permissions:
 jobs:
   detect-changes:
     name: Detect Changes
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     outputs:
       engine: ${{ steps.filter.outputs.engine }}
@@ -26,10 +32,37 @@ jobs:
   bundle-size:
     name: Bundle Size
     runs-on: ubuntu-latest
+    # Build the shape production ships (#729). The app branches on these at build time: without
+    # the Supabase and Sentry values their lazy imports are dropped, so the budgets weighed a
+    # bundle about 110 kB lighter than the one served. Placeholders suffice, since only their
+    # presence changes the bundle; none of them is ever contacted. Keep this list in step with
+    # every VITE_* that Vercel Production sets, plus VITE_LOCAL_IMAGES from build:vercel.
+    # The boolean flags are set by name from Vercel's list; their production values are not
+    # read here, so they are pinned 'true', which builds the heavier shape: a flag that is off
+    # in production makes the gate over-measure, never under-measure. VITE_FEATURED_CARD_IDS
+    # is left out: it only swaps one six-id array for another, so it is bundle-neutral.
+    env:
+      VITE_SUPABASE_URL: https://ci.placeholder.supabase.co
+      VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+      VITE_SENTRY_DSN: https://public@ci.placeholder.ingest.sentry.io/1
+      VITE_LOCAL_IMAGES: 'true'
+      VITE_SHOW_ACCOUNTS: 'true'
+      VITE_IS_REVEAL_SEASON: 'true'
+      VITE_SHOW_BETA_NOTICE: 'true'
 
     steps:
+      # The PR path keeps the default persisted token: size-limit-action runs
+      # `git fetch origin <base>` itself to build the base, which this private repo refuses
+      # without it. The master path fetches nothing, so dependency scripts there get no token.
       - name: Checkout code
+        if: github.event_name == 'pull_request'
         uses: actions/checkout@v7
+
+      - name: Checkout code (master)
+        if: github.event_name == 'push'
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -43,12 +76,24 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      # Builds the PR and its base and comments the difference.
       - name: Check bundle size
+        if: github.event_name == 'pull_request'
         uses: andresz1/size-limit-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           skip_step: install
           build_script: 'build'
+
+      # The action above throws on anything but a pull_request event, so master runs size-limit
+      # directly: same build, same budgets, a plain pass or fail.
+      - name: Build (master)
+        if: github.event_name == 'push'
+        run: pnpm build
+
+      - name: Check bundle size (master)
+        if: github.event_name == 'push'
+        run: pnpm size
 
   engine-benchmarks:
     name: Engine Benchmarks
