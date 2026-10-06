@@ -73,9 +73,49 @@ function loadStored(): {entries: CollectionEntries; importedAt: number | null} {
 type CollectionState = {entries: CollectionEntries; importedAt: number | null};
 
 /**
+ * Take the server's copy, mirroring it into localStorage so a later signed-out
+ * visit sees what this account actually holds rather than a stale import.
+ *
+ * The mirror's error is CHECKED rather than discarded, which is the whole point
+ * of it having one. The marker records that this uid was reconciled, so setting
+ * it after a failed mirror claims a durable local copy that does not exist, and
+ * the claim is permanent. State still moves, because the server data in memory
+ * is correct and the user should see it; only the durability claim is withheld,
+ * so the next mount reconciles again instead of trusting a write that failed.
+ */
+function adoptServerCopy(
+  uid: string,
+  server: StoredCollection,
+  setState: (next: CollectionState) => void,
+): void {
+  const {error} = writeCollection(server.entries, server.importedAt);
+  if (error === null) markCollectionMigrated(uid);
+  setState({entries: server.entries, importedAt: server.importedAt});
+}
+
+/**
+ * Send this browser's copy up, marking the uid migrated only once it lands.
+ *
+ * Fire-and-forget: a failed upload leaves the marker unset, so the next sign-in
+ * reconciles again rather than reporting an error the user cannot act on. The
+ * gap that leaves is #739 defect 2.
+ */
+function uploadLocalCopy(uid: string, entries: CollectionEntries, importedAt: number): void {
+  void upsertCollection(uid, entries, importedAt).then(({error}) => {
+    if (error === null) markCollectionMigrated(uid);
+  });
+}
+
+/**
  * Act on a resolved sync plan. Hoisted out of the effect so the hook holds the
  * subscription concerns (claim, cancel, read-failure) and this holds the
  * outcome — they change for unrelated reasons.
+ *
+ * The two outcomes live in their own functions rather than inline. Each needs a
+ * nested conditional to decide whether the migrated marker has been earned, and
+ * two of those in one body is a CodeScene "Bumpy Road". Splitting on the plan
+ * also matches how they change: adopting is synchronous and local, uploading is
+ * asynchronous and remote.
  */
 function applySyncPlan(
   uid: string,
@@ -90,25 +130,11 @@ function applySyncPlan(
   });
 
   if (plan === 'adopt-server' && server !== null) {
-    // Mirrored into localStorage too, so a later signed-out visit sees the
-    // collection this account actually holds rather than a stale import.
-    //
-    // The write's error is CHECKED rather than discarded, which is the whole
-    // point of it having one. The marker records that this uid was reconciled,
-    // so setting it after a failed mirror claims a durable local copy that does
-    // not exist, and the claim is permanent. State still moves, because the
-    // server data in memory is correct and the user should see it; only the
-    // durability claim is withheld, so the next mount reconciles again instead
-    // of trusting a write that failed.
-    const {error: mirrorError} = writeCollection(server.entries, server.importedAt);
-    if (mirrorError === null) markCollectionMigrated(uid);
-    setState({entries: server.entries, importedAt: server.importedAt});
+    adoptServerCopy(uid, server, setState);
     return;
   }
   if (plan === 'upload' && local.importedAt !== null) {
-    void upsertCollection(uid, local.entries, local.importedAt).then(({error}) => {
-      if (error === null) markCollectionMigrated(uid);
-    });
+    uploadLocalCopy(uid, local.entries, local.importedAt);
   }
 }
 
