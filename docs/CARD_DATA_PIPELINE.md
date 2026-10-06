@@ -809,9 +809,8 @@ nobody loads in full.
 Committed chunks gzip to 376 KB; because content-addressed hashes are high-entropy
 they barely compress, injection adds **55 KB** to reach 431 KB, against a 470 kB
 limit. Measuring the committed files would set a limit against an artifact nobody is
-served, which is the defect [#729](https://github.com/Doberjohn/inkweave/issues/729) Measuring the committed files would set a limit against an artifact
-nobody is served, which is the defect [#729](https://github.com/Doberjohn/inkweave/issues/729)
-describes. The index is not imaged, so its budget needs no such allowance.
+served, which is the defect [#729](https://github.com/Doberjohn/inkweave/issues/729) describes.
+The index is not imaged, so its budget needs no such allowance.
 
 **Source is manual**, like `allCards.json`: download the full export from
 LorcanaJSON.org and pass its path to `pnpm generate-collection-data`.
