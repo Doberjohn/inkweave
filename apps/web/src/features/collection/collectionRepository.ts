@@ -1,4 +1,4 @@
-import {getSupabase} from '../../shared/lib/supabase';
+import {loadSupabase, type InkweaveSupabase} from '../../shared/lib/supabase';
 import type {Json} from '../../shared/lib/database.types';
 import {NOT_CONFIGURED, type RepoResult} from '../../shared/lib/repoResult';
 import type {CollectionEntries} from './collectionParser';
@@ -23,15 +23,24 @@ export type {RepoResult} from '../../shared/lib/repoResult';
 
 const SCHEMA_VERSION = 1 as const;
 
-/** The same shell deckRepository uses: env-gate, await, normalise to RepoResult. */
+type CollectionsClient = InkweaveSupabase;
+
+/**
+ * Load the client, run the op, normalise everything to a RepoResult.
+ *
+ * `loadSupabase()` is INSIDE the try, and that placement is load-bearing (#729).
+ * It is a cached dynamic import of the SDK chunk, so it can reject on a failed
+ * download, not merely resolve null when unconfigured. Hoisted above the try,
+ * that rejection escapes as an unhandled promise instead of becoming the
+ * 'Network error' every caller already handles. TypeScript flags the call-site
+ * rename but cannot see this, so it has to be remembered rather than checked.
+ */
 async function run<T>(
-  op: (
-    client: NonNullable<ReturnType<typeof getSupabase>>,
-  ) => PromiseLike<{data: T | null; error: {message: string} | null}>,
+  op: (client: CollectionsClient) => PromiseLike<{data: T | null; error: {message: string} | null}>,
 ): Promise<RepoResult<T>> {
-  const supabase = getSupabase();
-  if (!supabase) return {data: null, error: NOT_CONFIGURED};
   try {
+    const supabase = await loadSupabase();
+    if (!supabase) return {data: null, error: NOT_CONFIGURED};
     const {data, error} = await op(supabase);
     if (error) {
       console.error('[collectionRepository] query failed:', error.message);
