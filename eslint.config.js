@@ -12,7 +12,8 @@ export default tseslint.config(
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
-      globals: globals.node,
+      // Not globals.node: its CommonJS wrapper names (require, module, __dirname) are undefined in ESM.
+      globals: globals.nodeBuiltin,
     },
   },
   {
