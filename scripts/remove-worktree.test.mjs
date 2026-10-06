@@ -338,6 +338,61 @@ describe('remove-worktree', {timeout: 60_000}, () => {
       expect(output).toContain(`${SKILL}/`);
       expect(existsSync(join(mains, 'SKILL.md'))).toBe(true);
     });
+
+    // A closed app session empties its worktree's skill folder to a bare skeleton (#727).
+    it.each([
+      ['the main checkout has the skill', true],
+      ['the main checkout has no copy', false],
+    ])('allows an ignored folder that holds only empty folders: %s', (_, mainHasIt) => {
+      const repo = makeRepo();
+      const wt = addWorktree(repo, 'skeleton');
+      if (mainHasIt) writeSkill(repo.main);
+      mkdirSync(join(wt, SKILL, 'references'), {recursive: true});
+      const {code, output} = remove(repo, ['skeleton']);
+      expect(code).toBe(0);
+      expect(output).not.toContain(`${SKILL}/`);
+      expect(existsSync(wt)).toBe(false);
+    });
+
+    it('still refuses an ignored folder whose only file is empty', () => {
+      const repo = makeRepo();
+      const wt = addWorktree(repo, 'zero');
+      const folder = writeSkill(wt, {'notes.md': ''});
+      const {code, output} = remove(repo, ['zero']);
+      expect(code).toBe(1);
+      expect(output).toContain(`${SKILL}/`);
+      expect(existsSync(join(folder, 'notes.md'))).toBe(true);
+    });
+
+    // Git counts a nested repository as content even before its first file, so a folder holding
+    // one is still judged, and refused, however empty it looks.
+    it('still refuses an ignored folder whose only content is a fresh repository', () => {
+      const repo = makeRepo();
+      const wt = addWorktree(repo, 'nested');
+      const nested = join(wt, SKILL, 'sub');
+      mkdirSync(nested, {recursive: true});
+      git(nested, 'init', '-q', '-b', 'main');
+      const {code, output} = remove(repo, ['nested']);
+      expect(code).toBe(1);
+      expect(output).toContain(`${SKILL}/`);
+      expect(existsSync(join(nested, '.git'))).toBe(true);
+    });
+
+    it.runIf(WINDOWS).each([
+      ['an empty folder', false],
+      ['a missing folder', true],
+    ])('removes a junction to %s as a link, never its target', (_, dangling) => {
+      const repo = makeRepo();
+      const wt = addWorktree(repo, 'empty-link');
+      const target = join(repo.root, 'empty-target');
+      mkdirSync(target);
+      mkdirSync(dirname(join(wt, SKILL)), {recursive: true});
+      symlinkSync(target, join(wt, SKILL), 'junction');
+      if (dangling) rmSync(target, {recursive: true});
+      expect(remove(repo, ['empty-link']).code).toBe(0);
+      expect(existsSync(wt)).toBe(false);
+      expect(existsSync(target)).toBe(!dangling);
+    });
   });
 
   describe('removal', () => {
@@ -446,6 +501,18 @@ describe('remove-worktree', {timeout: 60_000}, () => {
       expect(branchExists(repo, 'wt/merged')).toBe(false);
     });
 
+    // The delete goes through update-ref, which leaves the settings git branch -D would drop.
+    it('drops the upstream settings of a deleted branch, as git branch -D does', () => {
+      const repo = makeRepo();
+      addWorktree(repo, 'tracked');
+      git(repo.main, 'config', 'branch.wt/tracked.remote', 'origin');
+      git(repo.main, 'config', 'branch.wt/tracked.merge', 'refs/heads/wt/tracked');
+      const {code, output} = remove(repo, ['tracked']);
+      expect(code).toBe(0);
+      expect(output).toMatch(/branch wt\/tracked deleted/);
+      expect(git(repo.main, 'config', '--list')).not.toContain('branch.wt/tracked.');
+    });
+
     it('keeps a pushed branch that is not merged, and says so', () => {
       const repo = makeRepo();
       const wt = addWorktree(repo, 'open');
@@ -496,6 +563,51 @@ describe('remove-worktree', {timeout: 60_000}, () => {
       const wt = addWorktree(repo, 'parked', {detach: true});
       expect(remove(repo, ['parked']).code).toBe(0);
       expect(existsSync(wt)).toBe(false);
+    });
+
+    // The merge check runs before the folder delete, which takes minutes for node_modules, and
+    // once the worktree is unregistered nothing protects its branch (#727).
+    it('says the branch was already deleted when it goes during the folder delete', () => {
+      const repo = makeRepo();
+      addWorktree(repo, 'raced');
+      // Another session deletes the merged branch while the folder is still being deleted.
+      const rm = (dir, options) => {
+        git(repo.main, 'branch', '-D', 'wt/raced');
+        rmSync(dir, options);
+      };
+      const {code, output} = remove(repo, ['raced'], {rm});
+      expect(code).toBe(0);
+      expect(output).toMatch(/branch wt\/raced was already deleted/);
+    });
+
+    it('keeps a branch that points elsewhere by the time the folder delete ends', () => {
+      const repo = makeRepo();
+      addWorktree(repo, 'reused');
+      // The name comes back during the delete, on a commit origin/master does not have.
+      const rm = (dir, options) => {
+        rmSync(dir, options);
+        git(repo.main, 'commit', '-q', '--allow-empty', '-m', 'new work');
+        git(repo.main, 'branch', '-f', 'wt/reused', 'HEAD');
+      };
+      const {code, output} = remove(repo, ['reused'], {rm});
+      expect(code).toBe(0);
+      expect(output).toMatch(/kept/);
+      expect(git(repo.main, 'rev-parse', 'wt/reused')).toBe(git(repo.main, 'rev-parse', 'HEAD'));
+    });
+
+    it('keeps a branch checked out again by the time the folder delete ends', () => {
+      const repo = makeRepo();
+      addWorktree(repo, 'again');
+      const other = join(repo.root, 'again-2');
+      // The same branch, still at the same commit, goes back into a worktree during the delete.
+      const rm = (dir, options) => {
+        rmSync(dir, options);
+        git(repo.main, 'worktree', 'add', '-q', other, 'wt/again');
+      };
+      const {code, output} = remove(repo, ['again'], {rm});
+      expect(code).toBe(0);
+      expect(output).toMatch(/kept/);
+      expect(branchExists(repo, 'wt/again')).toBe(true);
     });
   });
 
