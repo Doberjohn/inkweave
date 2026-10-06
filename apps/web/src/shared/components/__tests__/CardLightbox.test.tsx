@@ -97,6 +97,16 @@ describe('CardLightbox', () => {
       fireEvent.click(screen.getByRole('button', {name: 'See card'}));
       expect(screen.queryByTestId('card-translation')).not.toBeInTheDocument();
     });
+
+    // #681: a variant printing can be a foreign scan of an English card.
+    it("should translate a scan in the language it is given, over the card's own", () => {
+      render(<CardLightbox {...defaultProps} card={{...card, scanLanguage: 'ja'}} language="it" />);
+
+      fireEvent.click(screen.getByRole('button', {name: 'See translation'}));
+      expect(screen.getByTestId('card-translation')).toHaveTextContent(
+        'Translated from the Italian card.',
+      );
+    });
   });
 
   it('should lock body scroll when open', () => {

@@ -148,13 +148,13 @@ pnpm precompute-synergies
 
 It matches the preview card on set + full name, so the base card must already be in. Run it again any time: it only adds or updates.
 
-**Manual scan, before LorcanaJSON lists it** (English scans only; the translation toggle does not apply to variants):
+**Manual scan, before LorcanaJSON lists it**:
 
 1. Save the scan as `apps/web/public/card-images-raw/{REVEAL_ID_BASE + number}.jpg` (e.g. `14221.jpg`) and run `pnpm convert-preview-images`.
-2. Add `{"id": 14221, "rarity": "Enchanted", "number": 221}` to the base card's `variants` (create the array if needed; keep it in collector-number order).
+2. Add `{"id": 14221, "rarity": "Enchanted", "number": 221}` to the base card's `variants` (create the array if needed; keep it in collector-number order). If the scan is not in English (the printing was revealed abroad first), add its two-letter code too, e.g. `"scanLanguage": "it"` (#681): the app then offers the card's English text over that printing, and `reveal-set-integrity.test.ts` checks the code.
 3. `pnpm precompute-synergies`, then commit the entry plus both AVIFs.
 
-When a later `pnpm sync-variants` prints `! 14221 now has official art, but card-images-preview/14221.avif shadows it`, delete `14221.avif` and `14221-sm.avif` from `card-images-preview/`: a committed preview AVIF always wins over the official URL.
+When a later `pnpm sync-variants` prints `! 14221 now has official art, but card-images-preview/14221.avif shadows it`, delete `14221.avif` and `14221-sm.avif` from `card-images-preview/`: a committed preview AVIF always wins over the official URL. The official entry has no `scanLanguage`, so until those files go, a foreign scan shows without its translation toggle.
 
 ## Production
 

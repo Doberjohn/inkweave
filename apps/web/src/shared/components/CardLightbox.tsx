@@ -10,10 +10,16 @@ interface CardLightboxProps {
   alt: string;
   isLocation?: boolean;
   /**
-   * The card shown. When its only scan is not in English (`scanLanguage`), a
-   * "See translation" toggle lays its English name and text over the scan.
+   * The card shown. When the scan is not in English (`language`), a "See translation" toggle
+   * lays its English name and text over the scan.
    */
   card?: LorcanaCard;
+  /**
+   * The scan's language: a variant printing's own (#681), by default the card's. A host showing
+   * an English printing of a foreign card passes no `card`, since an explicit undefined here
+   * also falls back to the card's language.
+   */
+  language?: string;
   onClose: () => void;
 }
 
@@ -89,7 +95,14 @@ function EnlargedScan({src, alt, isLocation, onError}: {src: string; alt: string
  * (#510) on the `lightbox` layer so it clears an open card modal. Dismiss via
  * backdrop click or Escape; gains the focus trap + restore it never had.
  */
-export function CardLightbox({src, alt, isLocation, card, onClose}: CardLightboxProps) {
+export function CardLightbox({
+  src,
+  alt,
+  isLocation,
+  card,
+  language = card?.scanLanguage,
+  onClose,
+}: CardLightboxProps) {
   const [imgError, setImgError] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);
 
@@ -110,10 +123,14 @@ export function CardLightbox({src, alt, isLocation, card, onClose}: CardLightbox
           )}
           {/* Without a scan to cover, the translation stands below the fallback instead. */}
           {showTranslation && card && (
-            <CardTranslationPanel card={card} style={imgError ? undefined : OVER_SCAN} />
+            <CardTranslationPanel
+              card={card}
+              language={language}
+              style={imgError ? undefined : OVER_SCAN}
+            />
           )}
         </div>
-        {card?.scanLanguage && (
+        {card && language && (
           <CardTranslationToggle shown={showTranslation} onToggle={() => setShowTranslation((shown) => !shown)} />
         )}
       </div>

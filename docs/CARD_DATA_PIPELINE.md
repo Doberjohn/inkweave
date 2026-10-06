@@ -33,7 +33,7 @@ Two JSON files sit at the root of the data layer:
 - `apps/web/public/data/allCards.json` — canonical card pool, sourced manually from [LorcanaJSON.org](https://lorcanajson.org/)
 - `apps/web/public/data/previewCards.json` — reveal-season overlay, manually curated before the canonical source publishes a new set
 
-Both are tracked in git (no `.gitignore` entry for either). Both follow the same LorcanaJSON schema, defined in `packages/synergy-engine/src/utils/cardTransformer.ts:7-44` (the `LorcanaJSONCard` interface).
+Both are tracked in git (no `.gitignore` entry for either). Both follow the same LorcanaJSON schema, defined by the `LorcanaJSONCard` interface in `packages/synergy-engine/src/utils/cardTransformer.ts`.
 
 At build time, three scripts read both files, in this order:
 
@@ -138,7 +138,7 @@ flowchart TB
 | Current contents | 1,633 cards, sets 5–12 (post-Set-12 graduation 2026-05-13) | Direct inspection (Node `cards.length` + `Object.keys(sets)`) |
 | Updated when | Manually, when LorcanaJSON.org publishes a new release | No automation found |
 
-The expected card shape is the LorcanaJSON format defined in `packages/synergy-engine/src/utils/cardTransformer.ts:7-44`. Notably:
+The expected card shape is the LorcanaJSON format defined by `LorcanaJSONCard` in `packages/synergy-engine/src/utils/cardTransformer.ts`. Notably:
 
 - `id: number` (becomes `string` after transformation, line 111)
 - `color: string` (parsed into `ink` + optional `ink2` for dual-ink cards, lines 53-65)
@@ -333,24 +333,25 @@ The file lives at `apps/web/public/data/previewCards.json`. Post-Set-12 graduati
 | `version` | Optional | Subtitle (e.g., `"Brave Little Tailor"`) |
 | `fullName` | Yes | `"{name} - {version}"` when version present, else just `name`. Used for many lookups. |
 | `cost` | Yes | Ink cost (number) |
-| `color` | Yes | Single ink (e.g., `"Amber"`) or dual-ink (`"Amethyst-Sapphire"`). See `cardTransformer.ts:46` for valid inks: Amber, Amethyst, Emerald, Ruby, Sapphire, Steel. |
+| `color` | Yes | Single ink (e.g., `"Amber"`) or dual-ink (`"Amethyst-Sapphire"`). See `VALID_INKS` in `cardTransformer.ts` for valid inks: Amber, Amethyst, Emerald, Ruby, Sapphire, Steel. |
 | `inkwell` | Yes | Boolean — can this card be inked? |
-| `type` | Yes | `"Character"`, `"Action"`, `"Item"`, or `"Location"` (`cardTransformer.ts:47`) |
+| `type` | Yes | `"Character"`, `"Action"`, `"Item"`, or `"Location"` (`VALID_TYPES` in `cardTransformer.ts`) |
 | `subtypes` | Optional | Array of classifications. `"Song"` here marks Action cards as singable (transformer pulls it out into `isSong`). |
 | `abilities` | Optional | Array of ability objects. Each has `type` (`"static"`, `"triggered"`, `"keyword"`, `"activated"`, etc.). Keyword abilities use the `{type: "keyword", keyword: "Singer", keywordValue: "5"}` shape — the transformer's `nativeKeywords` reads these. |
 | `fullText` | Optional | Combined ability text — searchable |
 | `fullTextSections` | Optional | Array of ability text blocks — preserves card layout for UI rendering |
-| `strength` / `willpower` / `lore` | Conditional | Required for Characters. Other types vary. Missing `strength` defaults to 0 for Characters per `cardTransformer.ts:127`. |
+| `strength` / `willpower` / `lore` | Conditional | Required for Characters. Other types vary. Missing `strength` defaults to 0 for Characters per `transformCard` in `cardTransformer.ts`. |
 | `moveCost` | Conditional | Locations only — cost to move characters there |
 | `keywordAbilities` | Optional | Array of keyword name strings — alternative to embedding in `abilities` |
 | `setCode` | Yes | Set code as string (e.g., `"13"`). Critical — used everywhere for filtering. Must match the key in `sets[code]`. |
 | `number` | Yes | Card number within set (1 to total cards in set) |
 | `rarity` | Yes | `"Common"`, `"Uncommon"`, `"Rare"`, `"Super Rare"`, `"Legendary"`. Never add an Epic, Iconic, Enchanted or Special printing as its own entry: the first three go in the base card's `variants` (next row), and Special is out of scope. |
-| `variants` | Optional | The card's Epic/Enchanted/Iconic printings (#625), sorted by collector number: `[{"id": 14241, "rarity": "Iconic", "number": 241, "images": {"full": "...", "thumbnail": "..."}}]`. In reveal season the id is `REVEAL_ID_BASE + number` and the number is above the set's base total (both test-enforced). `images` is absent for a hand-supplied scan, whose art is `card-images-preview/{id}.avif`. Written by `pnpm sync-variants` or by hand ([START_REVEAL_SEASON.md](reveals/START_REVEAL_SEASON.md)); canonical cards get theirs from [Rule 1](#rules-during-canonical-integration). The engine never reads it. |
+| `variants` | Optional | The card's Epic/Enchanted/Iconic printings (#625), sorted by collector number: `[{"id": 14241, "rarity": "Iconic", "number": 241, "images": {"full": "...", "thumbnail": "..."}}]`. In reveal season the id is `REVEAL_ID_BASE + number` and the number is above the set's base total (both test-enforced). `images` is absent for a hand-supplied scan, whose art is `card-images-preview/{id}.avif`. A hand-supplied scan that is not in English also carries its `scanLanguage` (#681), so the app offers the card's English text over that printing; `pnpm sync-variants` drops it when official art replaces the entry. Written by `pnpm sync-variants` or by hand ([START_REVEAL_SEASON.md](reveals/START_REVEAL_SEASON.md)); canonical cards get theirs from [Rule 1](#rules-during-canonical-integration). The engine never reads it. |
 | `franchise` | **Preview-only** | Drives the `/reveals` page franchise tiering. Set to a value matching one of `FRANCHISES.match` in `apps/web/src/features/reveals/franchise.ts` (currently `"Toy Story"`, `"The Incredibles"`, `"Brave"`). Cards without a matching franchise fall into the "Returning franchises" tier. Stripped at graduation per [Rule 4](#rules-during-canonical-integration). For Set 13+, update `FRANCHISES` if new IPs join. |
+| `scanLanguage` | **Preview-only** | Two-letter code (e.g. `"ja"`) of the card's scan when it is not in English: a card revealed abroad first, whose name and text are then an unofficial translation. The app offers that English text over the scan behind "See translation" (#623). A variant entry carries its own for a printing revealed abroad first (#681, see `variants`). Never `"en"`: `reveal-set-integrity.test.ts` checks both. Delete it when the card is refreshed from its English scan. |
 | `images.thumbnail` / `images.full` | Optional but recommended | Preview URLs from lorcanaplayer.com. The loader at `loader.ts:52` rewrites `lorcanaplayer.com/*` → `/card-images-preview/{id}.avif` automatically; AVIFs come from `convert-preview-images.mjs` reading raw JPGs in `card-images-raw/`. |
 
-**Source of truth:** `packages/synergy-engine/src/utils/cardTransformer.ts:7-44` defines `LorcanaJSONCard`. Anything outside that interface is ignored at runtime; the table above is the practical subset that drives app behavior.
+**Source of truth:** `LorcanaJSONCard` in `packages/synergy-engine/src/utils/cardTransformer.ts`. Anything outside that interface is ignored at runtime; the table above is the practical subset that drives app behavior.
 
 **ID convention reminder:** preview ids are placeholders until LorcanaJSON publishes canonical ids, and graduation via `pnpm graduate-set` replaces them wholesale with canonical sequential ids. The format is still test-enforced (`REVEAL_ID_BASE + number`, see the `id` row above): it keeps preview ids clear of `allCards.json`, where a collision makes the loader silently drop the preview card.
 
@@ -660,7 +661,7 @@ Proof: grep `revealPhase|useRevealPhase|isRevealSeason` in `apps/web/src/feature
 const set12 = cards.filter((c) => c.setCode === REVEAL_SET_CODE);  // line 26
 ```
 
-Then groups by franchise using `card.franchise` (set only on preview cards via `cardTransformer.ts:43`):
+Then groups by franchise using `card.franchise` (set only on preview cards; see `LorcanaJSONCard.franchise` in `cardTransformer.ts`):
 
 - `FRANCHISES` array at `franchise.ts:12-16`: `toy-story` / `incredibles` / `brave`
 - `matchesFranchise(card, franchise)` at `franchise.ts:25-30`: literal `card.franchise === config.match`
@@ -994,7 +995,7 @@ Six rules apply when integrating canonical LorcanaJSON data into `allCards.json`
 | 5 | **Strip extra metadata** — `artists`, `flavorText`, `story`, `foilTypes`, `enchantedId`, `iconicId`, `epicId`, `promoIds`, `fullIdentifier`, `simpleName`, etc. | App uses none of these; bloats `size-limit` budget (360 kB gzipped). |
 | 6 | **Strip `images.foilMask`** — keep only `full` + `thumbnail` | App doesn't render foil overlays. |
 
-The "keep" allow-list = `LorcanaJSONCard` in `packages/synergy-engine/src/utils/cardTransformer.ts:7-44`. Everything outside that interface gets stripped at integration time, not at runtime.
+The "keep" allow-list = `LorcanaJSONCard` in `packages/synergy-engine/src/utils/cardTransformer.ts`. Everything outside that interface gets stripped at integration time, not at runtime.
 
 ---
 

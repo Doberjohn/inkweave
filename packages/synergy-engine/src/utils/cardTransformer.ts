@@ -17,6 +17,11 @@ export interface RawCardVariant {
   };
   imageHash?: string;
   imageHashSm?: string;
+  /**
+   * Language code ("it") of a hand-supplied scan that is not in English (#681); absent means
+   * English. fold-variants.mjs never writes it, so official art replacing the entry drops it.
+   */
+  scanLanguage?: string;
 }
 
 /**
