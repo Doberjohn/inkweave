@@ -1,12 +1,12 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {renderHook, act} from '@testing-library/react';
 import {useVoteSession} from '../useVoteSession';
-import {getSupabase, submitVote} from '../../../../shared/lib/supabase';
+import {isSupabaseConfigured, submitVote} from '../../../../shared/lib/supabase';
 import {trackPairVote} from '../../lib/voteAnalytics';
 import {createVotingPair} from '../../../../shared/test-utils';
 
 vi.mock('../../../../shared/lib/supabase', () => ({
-  getSupabase: vi.fn(),
+  isSupabaseConfigured: vi.fn(),
   submitVote: vi.fn(),
 }));
 
@@ -29,7 +29,7 @@ describe('useVoteSession', () => {
 
   describe('initial state', () => {
     it('score is null, whoCarries is both', () => {
-      vi.mocked(getSupabase).mockReturnValue(null);
+      vi.mocked(isSupabaseConfigured).mockReturnValue(false);
       const {result} = renderHook(() => useVoteSession(mockPair));
 
       expect(result.current.formState.score).toBeNull();
@@ -37,14 +37,14 @@ describe('useVoteSession', () => {
     });
 
     it('isSubmitting is false', () => {
-      vi.mocked(getSupabase).mockReturnValue(null);
+      vi.mocked(isSupabaseConfigured).mockReturnValue(false);
       const {result} = renderHook(() => useVoteSession(mockPair));
 
       expect(result.current.isSubmitting).toBe(false);
     });
 
     it('lastResult is null', () => {
-      vi.mocked(getSupabase).mockReturnValue(null);
+      vi.mocked(isSupabaseConfigured).mockReturnValue(false);
       const {result} = renderHook(() => useVoteSession(mockPair));
 
       expect(result.current.lastResult).toBeNull();
@@ -55,7 +55,7 @@ describe('useVoteSession', () => {
 
   describe('setScore', () => {
     it('updates formState.score', () => {
-      vi.mocked(getSupabase).mockReturnValue(null);
+      vi.mocked(isSupabaseConfigured).mockReturnValue(false);
       const {result} = renderHook(() => useVoteSession(mockPair));
 
       act(() => {
@@ -70,7 +70,7 @@ describe('useVoteSession', () => {
 
   describe('resetForm', () => {
     it('clears score and lastResult', async () => {
-      vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+      vi.mocked(isSupabaseConfigured).mockReturnValue(true);
       vi.mocked(submitVote).mockResolvedValue({error: null});
       const {result} = renderHook(() => useVoteSession(mockPair));
 
@@ -103,7 +103,7 @@ describe('useVoteSession', () => {
 
   describe('submitWithScore (Supabase available)', () => {
     beforeEach(() => {
-      vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+      vi.mocked(isSupabaseConfigured).mockReturnValue(true);
     });
 
     it('calls submitVote with correct params', async () => {
@@ -223,7 +223,7 @@ describe('useVoteSession', () => {
 
   describe('submitWithScore (Supabase unavailable)', () => {
     beforeEach(() => {
-      vi.mocked(getSupabase).mockReturnValue(null);
+      vi.mocked(isSupabaseConfigured).mockReturnValue(false);
       vi.mocked(submitVote).mockResolvedValue({error: 'Supabase not configured'});
     });
 
@@ -244,7 +244,7 @@ describe('useVoteSession', () => {
 
   describe('submitWithScore (no current pair)', () => {
     it('does nothing when currentPair is null', async () => {
-      vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+      vi.mocked(isSupabaseConfigured).mockReturnValue(true);
       const {result} = renderHook(() => useVoteSession(null));
 
       await act(async () => {
@@ -260,15 +260,15 @@ describe('useVoteSession', () => {
   // ── isSupabaseAvailable ──
 
   describe('isSupabaseAvailable', () => {
-    it('returns true when getSupabase returns a client', () => {
-      vi.mocked(getSupabase).mockReturnValue({} as ReturnType<typeof getSupabase>);
+    it('returns true when Supabase is configured', () => {
+      vi.mocked(isSupabaseConfigured).mockReturnValue(true);
       const {result} = renderHook(() => useVoteSession(mockPair));
 
       expect(result.current.isSupabaseAvailable).toBe(true);
     });
 
-    it('returns false when getSupabase returns null', () => {
-      vi.mocked(getSupabase).mockReturnValue(null);
+    it('returns false when Supabase is not configured', () => {
+      vi.mocked(isSupabaseConfigured).mockReturnValue(false);
       const {result} = renderHook(() => useVoteSession(mockPair));
 
       expect(result.current.isSupabaseAvailable).toBe(false);

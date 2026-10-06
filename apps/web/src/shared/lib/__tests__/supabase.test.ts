@@ -1,6 +1,8 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
+import {createClient} from '@supabase/supabase-js';
 import {
-  getSupabase,
+  isSupabaseConfigured,
+  loadSupabase,
   submitVote,
   getPairScore,
   deriveAccuracyDistribution,
@@ -42,30 +44,46 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe('getSupabase', () => {
-  it('returns null when env vars are missing', () => {
-    expect(getSupabase()).toBeNull();
+describe('isSupabaseConfigured', () => {
+  it('is false when env vars are missing', () => {
+    expect(isSupabaseConfigured()).toBe(false);
   });
 
-  it('returns a client when env vars are set', () => {
+  it('is true when both env vars are set', () => {
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
+    expect(isSupabaseConfigured()).toBe(true);
+  });
+});
+
+describe('loadSupabase', () => {
+  it('resolves null without creating a client when env vars are missing', async () => {
+    await expect(loadSupabase()).resolves.toBeNull();
+    expect(createClient).not.toHaveBeenCalled();
+  });
+
+  it('creates the client once and returns the same singleton', async () => {
     vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
 
-    const client = getSupabase();
-    expect(client).not.toBeNull();
-
-    vi.unstubAllEnvs();
-  });
-
-  it('returns the same singleton on repeated calls', () => {
-    vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
-    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
-
-    const a = getSupabase();
-    const b = getSupabase();
+    const a = await loadSupabase();
+    const b = await loadSupabase();
+    expect(a).not.toBeNull();
     expect(a).toBe(b);
+    expect(createClient).toHaveBeenCalledOnce();
+  });
 
-    vi.unstubAllEnvs();
+  // A failed download (or, in production, the empty module main.tsx leaves behind) must not
+  // poison the cache: the next vote or sign-in tries again.
+  it('retries after a failed load', async () => {
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
+    vi.mocked(createClient).mockImplementationOnce(() => {
+      throw new TypeError('createClient is not a function');
+    });
+
+    await expect(loadSupabase()).rejects.toThrow(TypeError);
+    await expect(loadSupabase()).resolves.not.toBeNull();
   });
 });
 
@@ -81,13 +99,13 @@ describe("Sentry's Supabase integration (#640)", () => {
     const {loadSentry} = await import('../sentry');
     const Sentry = await import('@sentry/react');
     const {SupabaseClient} = await import('@supabase/supabase-js');
-    return {getSupabase: supabase.getSupabase, loadSentry, Sentry, SupabaseClient};
+    return {loadSupabase: supabase.loadSupabase, loadSentry, Sentry, SupabaseClient};
   }
 
   it('is added when Sentry loads after the client exists', async () => {
-    const {getSupabase, loadSentry, Sentry, SupabaseClient} = await loadFresh();
+    const {loadSupabase, loadSentry, Sentry, SupabaseClient} = await loadFresh();
 
-    getSupabase();
+    await loadSupabase();
     expect(Sentry.addIntegration).not.toHaveBeenCalled();
 
     await loadSentry();
@@ -96,10 +114,10 @@ describe("Sentry's Supabase integration (#640)", () => {
   });
 
   it('is added at once when Sentry loaded before the client', async () => {
-    const {getSupabase, loadSentry, Sentry} = await loadFresh();
+    const {loadSupabase, loadSentry, Sentry} = await loadFresh();
 
     await loadSentry();
-    getSupabase();
+    await loadSupabase();
 
     expect(Sentry.addIntegration).toHaveBeenCalledOnce();
   });

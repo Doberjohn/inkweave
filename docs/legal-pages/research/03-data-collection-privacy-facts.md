@@ -92,8 +92,18 @@ Notes:
 
 Client: `shared/lib/supabase.ts`. Supabase project `ttyidjyaxnycbpxwngqr`, region **eu-central-1**
 (per `CLAUDE.md`). The client is **env-gated** — if `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY`
-are unset, `getSupabase()` returns `null` and all voting/auth degrade to no-ops
-(`supabase.ts:12-27`).
+are unset, `isSupabaseConfigured()` is false, `loadSupabase()` resolves `null`, and all
+voting/auth degrade to no-ops. Since #729 the client is also **lazy**: supabase-js is not part of
+the page load. It is downloaded on first use, by any of:
+- a vote (`submitVote`), or opening a synergy pair's comparison, which reads its community scores
+  (`getPairScore` via `usePairScore`, in `CommunityColumn` / `MobileComparisonView`);
+- a profile call (`profileRepository.ts`) or a sign-in / sign-out click;
+- `SessionContext` finding a session to restore at page load: an `inkweave:auth` entry in
+  `localStorage`, the `/auth/callback` path, or an OAuth `code` in the URL. When `localStorage`
+  cannot be read it loads too, since a session cannot be ruled out (`SessionContext.tsx`,
+  `hasSessionToRestore`).
+
+A visitor who does none of these never loads the Supabase client and sends Supabase nothing.
 
 ### 3.1 The `votes` table
 

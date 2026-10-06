@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {getSupabase, submitVote, type Accuracy, type Score, type InDepthVote} from '../../../shared/lib/supabase';
+import {isSupabaseConfigured, submitVote, type Accuracy, type Score, type InDepthVote} from '../../../shared/lib/supabase';
 import type {InDepthFormState, VotingPair} from '../types';
 import {writeInDepthVote} from '../lib/voteStorage';
 import {trackPairVote} from '../lib/voteAnalytics';
@@ -36,7 +36,7 @@ export function useInDepthVoteSession(currentPair: VotingPair | null): UseInDept
   const [lastResult, setLastResult] = useState<'success' | 'rate_limited' | 'error' | null>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
 
-  const isSupabaseAvailable = getSupabase() !== null;
+  const isSupabaseAvailable = isSupabaseConfigured();
 
   const hasAnyAnswer = hasAnyFormAnswer(formState);
 

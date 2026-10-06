@@ -10,7 +10,7 @@ import {_resetClient} from '../../lib/supabase';
 vi.mock('../../../features/reveals', () => ({useRevealPhase: () => 'hidden'}));
 
 // Same hazard, second source: the header now renders the auth control, so this mounts the
-// REAL SessionProvider. With Supabase credentials in .env.local, getSupabase() would build a
+// REAL SessionProvider. With Supabase credentials in .env.local, loadSupabase() would build a
 // live PKCE client and the provider would call getSession()/onAuthStateChange against it,
 // making the result depend on who is running the test. Blank the vars and drop the memoised
 // client, exactly as contexts/__tests__/SessionContext.test.tsx does.

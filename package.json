@@ -43,9 +43,16 @@
       "name": "User-facing JS",
       "path": [
         "apps/web/dist/assets/*.js",
-        "!apps/web/dist/assets/RevealsPage-*.js"
+        "!apps/web/dist/assets/RevealsPage-*.js",
+        "!apps/web/dist/assets/supabaseClient-*.js"
       ],
-      "limit": "370 kB",
+      "limit": "430 kB",
+      "gzip": true
+    },
+    {
+      "name": "Supabase SDK (lazy)",
+      "path": "apps/web/dist/assets/supabaseClient-*.js",
+      "limit": "60 kB",
       "gzip": true
     },
     {

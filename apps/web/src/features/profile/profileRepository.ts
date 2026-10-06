@@ -6,13 +6,13 @@
 //   * `display_name` — what people read on a deck. Seeded from the handle in title case
 //                      at claim time, then owned by the user. NOT unique.
 //
-// Same house rules as deckRepository: env-gated (getSupabase() may be null), every call
+// Same house rules as deckRepository: env-gated (loadSupabase() may resolve null), every call
 // wrapped so a network failure degrades instead of throwing, owner scoping by RLS.
 
-import {getSupabase} from '../../shared/lib/supabase';
+import {isSupabaseConfigured, loadSupabase, type InkweaveSupabase} from '../../shared/lib/supabase';
 import {NOT_CONFIGURED, type RepoResult} from '../../shared/lib/repoResult';
 
-type ProfilesClient = NonNullable<ReturnType<typeof getSupabase>>;
+type ProfilesClient = InkweaveSupabase;
 
 /** Both names for one account. */
 export interface PublicIdentity {
@@ -59,9 +59,9 @@ export function clampDisplayName(value: string): string {
 async function run<T>(
   op: (client: ProfilesClient) => PromiseLike<{data: T | null; error: {message: string} | null}>,
 ): Promise<RepoResult<T>> {
-  const supabase = getSupabase();
-  if (!supabase) return {data: null, error: NOT_CONFIGURED};
   try {
+    const supabase = await loadSupabase();
+    if (!supabase) return {data: null, error: NOT_CONFIGURED};
     const {data, error} = await op(supabase);
     if (error) {
       console.error('[profileRepository] query failed:', error.message);
@@ -134,14 +134,15 @@ export function getAuthorNames(userIds: readonly string[]): Promise<RepoResult<M
  * a handle there is nothing to collide with and no 23505 to map.
  */
 export async function updateDisplayName(userId: string, displayName: string): Promise<RepoResult<string>> {
-  const supabase = getSupabase();
-  if (!supabase) return {data: null, error: NOT_CONFIGURED};
+  if (!isSupabaseConfigured()) return {data: null, error: NOT_CONFIGURED};
   const trimmed = displayName.trim();
   // Checked here, not just in the dialog. `profiles_display_name_len` caps the length
   // but sets no minimum, so the database would happily store "" or "a"; this is the
   // only place the documented 2-character floor is enforced against every caller.
   if (!isValidDisplayName(trimmed)) return {data: null, error: DISPLAY_NAME_RULE};
   try {
+    const supabase = await loadSupabase();
+    if (!supabase) return {data: null, error: NOT_CONFIGURED};
     const {data, error} = await supabase
       .from('profiles')
       .update({display_name: trimmed})

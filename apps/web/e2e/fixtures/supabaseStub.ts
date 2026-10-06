@@ -3,7 +3,7 @@ import type {Page} from '@playwright/test';
 /**
  * The Supabase origin E2E points at, and the browser-level stub that answers it.
  *
- * `playwright.config.ts` pins `VITE_SUPABASE_URL` to this host so `getSupabase()` returns
+ * `playwright.config.ts` pins `VITE_SUPABASE_URL` to this host so `loadSupabase()` returns
  * a client and the auth control renders. That makes the app genuinely CONFIGURED, which
  * switches on every other Supabase-backed path too: voting reads `pair_scores` and writes
  * `submit_vote`. The host does not resolve, so without this stub those calls fail at DNS.
