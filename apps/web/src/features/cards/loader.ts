@@ -154,12 +154,29 @@ export function loadSetsFromJSON(data: LorcanaJSONData): SetInfo[] {
  * Expects pre-deduplicated data (see cleanup script).
  */
 export function loadCardsFromJSON(data: LorcanaJSONData): LorcanaCard[] {
-  const cards: LorcanaCard[] = [];
-  for (const raw of data.cards) {
+  return transformRawCards(data.cards);
+}
+
+/**
+ * Transform a bare array of raw cards, dropping any that fail.
+ *
+ * Split out of {@link loadCardsFromJSON} for callers holding cards without the
+ * surrounding `metadata` envelope: the collection chunks (#553) are plain arrays.
+ * The alternative was fabricating a metadata object to satisfy a parameter the
+ * function never reads, which would make the fake look load-bearing.
+ *
+ * Use THIS (or `loadCardsFromJSON`) rather than the engine's `transformCard`.
+ * The `transformCard` called here is the LOCAL wrapper above, which attaches
+ * `imageUrl` and the content-addressed hashes; the engine's deliberately does
+ * not, so calling it directly costs every collection card its artwork.
+ */
+export function transformRawCards(cards: readonly LorcanaJSONCard[]): LorcanaCard[] {
+  const out: LorcanaCard[] = [];
+  for (const raw of cards) {
     const card = transformCard(raw);
-    if (card) cards.push(card);
+    if (card) out.push(card);
   }
-  return cards;
+  return out;
 }
 
 export interface CardDataResult {

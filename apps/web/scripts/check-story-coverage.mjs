@@ -31,6 +31,12 @@ const EXCLUDED = new Set([
   // shared/contexts (which this script does not scan). It lives under features/
   // because it reads a repository, and shared/ must not import a feature.
   'ProfileContext.tsx',
+  // Same case (#553). CollectionContext reads collectionRepository and owns the
+  // imported-collection state; CollectionCardsContext lazily loads the non-Core
+  // pool. Both render `children` and nothing else, so a story would show a blank
+  // frame and assert nothing. The binder and dialog they feed DO have stories.
+  'CollectionContext.tsx',
+  'CollectionCardsContext.tsx',
 ]);
 
 // Pages are route compositions of already-storied components; stories exist
