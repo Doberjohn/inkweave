@@ -52,7 +52,7 @@ const PROD_DATA_PATH = '/data/allCards.json';
  */
 const RESTORE_TIMEOUT_MS = 15000;
 /**
- * Collection detail chunks (#553): the 2,218 cards Inkweave shows but never
+ * Collection detail chunks (#553): the 2,152 cards Inkweave shows but never
  * analyses. Imaged here because a binder without art is pointless.
  *
  * The INDEX is deliberately not read. It carries no image fields — the binder
@@ -454,7 +454,7 @@ function describeRestore(cacheIncomplete, deployed, tasks) {
  * Goes through `indexById` rather than a bare `set` loop so collection VARIANTS are
  * indexed too. Writing that loop by hand here is what left core variants unrestorable.
  */
-async function fetchChunkIndex(file) {
+export async function fetchChunkIndex(file) {
   const res = await fetch(`${RESTORE_ORIGIN}/data/collection/${path.basename(file)}`, {
     signal: AbortSignal.timeout(RESTORE_TIMEOUT_MS),
   });

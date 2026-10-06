@@ -764,6 +764,89 @@ No SW cache rule for `previewCards.json` itself — its graceful 404 path is bro
 
 ---
 
+### The collection dataset (#553)
+
+A **third** card dataset lives at `apps/web/public/data/collection/`: the 2,152
+cards Inkweave can SHOW but never analyses, namely sets 1-8 and the
+Enchanted/Epic/Iconic/Special printings inside Core sets.
+
+**Illumineer's Quest sets are excluded entirely** (owner ruling, 2026-10-06). Those
+are a separate co-op product rather than trading-card boosters, so they are not part
+of the collection anyone tracks. Sets 1-8 stay: equally outside Core format, but the
+same product, and the reason this dataset exists. `QUEST_SET_CODE` in
+`scripts/lib/collectionData.mjs` drops them, and matches a future Q3 box automatically.
+
+**No card id appears in both it and `allCards.json`.** That is what makes the Core
+boundary structural: `precompute-synergies.mjs` reads `allCards.json` and never opens
+these files, so a set-1 card cannot reach a synergy calculation even by mistake.
+`scripts/generate-collection-data.mjs:66` asserts the two sets are disjoint and aborts
+otherwise.
+
+The boundary is about SYNERGY, not about the files being untouched. `download-card-images.mjs`
+does read and rewrite these chunks, to image the cards and inject their hashes, which is
+described below. Nothing it does feeds a synergy calculation.
+
+All figures below are **gzip level 6**, which is what `gzip -c` and `size-limit`
+report, and they distinguish COMMITTED from SERVED. The build injects two 16-hex
+hashes per subject into every chunk, so a chunk is larger in production than in git.
+The index is never imaged, so it is served exactly as committed. Mixing the two bases
+is easy and gives numbers that look right and are not.
+
+| File | Contents | committed | served |
+|---|---|---|---|
+| `collection/index.json` | all 2,152, light projection: grid, filters, name search | 69 KB | 69 KB |
+| `collection/{set}.json` | one per set: card text, stats, abilities, image URLs | 10-43 KB | 11-49 KB |
+| whole dataset | 14 files, 2.9 MB on disk | 445 KB | 500 KB |
+
+Both tiers are budgeted in `package.json`, and **deliberately as two entries rather
+than one**: no visitor loads all 500 KB. Collection mode loads the index once plus the
+one chunk for the set being viewed, so the **per-visit worst case is 118 KB** (69 KB
+index plus set 8 at 49 KB served), under a quarter of the total. `Collection index
+JSON` guards that per-visit cost; `Collection set chunks` is a growth guard on data
+nobody loads in full.
+
+**The chunk budget is set against the SERVED size, not the committed size.**
+Committed chunks gzip to 376 KB; because content-addressed hashes are high-entropy
+they barely compress, injection adds **55 KB** to reach 431 KB, against a 470 kB
+limit. Measuring the committed files would set a limit against an artifact nobody is
+served, which is the defect [#729](https://github.com/Doberjohn/inkweave/issues/729) describes.
+The index is not imaged, so its budget needs no such allowance.
+
+**Source is manual**, like `allCards.json`: download the full export from
+LorcanaJSON.org and pass its path to `pnpm generate-collection-data`.
+`previewCards.json` ids are excluded alongside `allCards.json`, because the runtime
+loader admits a preview card whose id is absent from the primary file, and a card in
+both would otherwise appear twice.
+
+**The committed chunks carry no image hashes.** `injectManifestIntoChunk` writes
+`imageHash`/`imageHashSm` into them during the build, the same way it does for
+`allCards.json`, and the deployed copies are what the restore path reads back. Do not
+commit a chunk that a local `pnpm download-images` has hashed.
+
+**The Quest exclusion also removes a silent-drop trap**, which is worth knowing if anyone
+is ever tempted to reinstate those sets. Quest cards carry `"color": ""`, correctly, since
+they have no ink. But `parseInks` (`cardTransformer.ts:79`) accepts only the six
+`VALID_INKS`, returns `null` for `""`, and `transformCard:181` then returns `null`, which
+`transformCards:224` drops without error. Including them would have yielded **zero cards
+for both sets with nothing logged**. If they are ever wanted back, that has to be solved
+first, and not by giving them an ink: the data is right and the transformer's contract is
+simply narrower than Quest cards.
+
+**Every detail chunk satisfies `LorcanaJSONCard`** (`cardTransformer.ts:7-44`),
+because chunks are transformed at runtime exactly like `allCards.json`. That interface is the
+contract: if it gains a field, `DETAIL_FIELDS` in `scripts/lib/collectionData.mjs:56`
+must follow, or collection cards render incomplete. An earlier design sized this
+projection against an invented field list and came out 4x too small AND missing
+`name`, `strength`, `willpower` and `abilities`.
+
+`download-card-images.mjs` images these cards alongside the Core pool, with one cache,
+one manifest and one coverage guard, and the **index is deliberately not imaged**: the
+binder renders one set at a time from that set's chunk. Measured on `deck-builder`
+when Phase C shipped there with Quest sets still included, adding 2,218 cards took the
+image output from 27.5 MB / 2,048 files to **88 MB / 6,484 files**. Carried over rather
+than re-measured, because re-running the pipeline would inject hashes into the chunks
+above; this dataset is 66 cards smaller, so the real figure is slightly below it.
+
 ### CDN restore on a cache miss (#554)
 
 Before falling back to Ravensburger, a cache miss tries to fetch the
