@@ -444,6 +444,41 @@ describe('CollectionContext — #739 cloud-sync defects', () => {
     await flush();
   });
 
+  it('serializes writes under a per-account Web Lock when the browser has one', async () => {
+    // jsdom has no `navigator.locks`; this stub grants each name in request order,
+    // which is the guarantee real browsers give across every tab of the origin.
+    const held = new Map<string, Promise<unknown>>();
+    const request = vi.fn((name: string, callback: () => Promise<unknown>) => {
+      const granted = (held.get(name) ?? Promise.resolve()).then(callback);
+      held.set(name, granted.catch(() => {}));
+      return granted;
+    });
+    Object.defineProperty(navigator, 'locks', {value: {request}, configurable: true});
+    try {
+      signIn('user-a');
+      let settleUpsert: () => void = () => {};
+      vi.mocked(upsertCollection).mockImplementationOnce(
+        () => new Promise((resolve) => (settleUpsert = () => resolve({data: null, error: null}))),
+      );
+      const {result} = render();
+      await flush();
+      act(() => {
+        result.current.importCollection(ENTRIES, 7000);
+        result.current.clearImported();
+      });
+      await flush();
+      expect(deleteCollection).not.toHaveBeenCalled();
+
+      settleUpsert();
+      await flush();
+      expect(deleteCollection).toHaveBeenCalledWith('user-a');
+      expect(request).toHaveBeenCalledTimes(2);
+      expect(request).toHaveBeenCalledWith('inkweave:collection:write:user-a', expect.any(Function));
+    } finally {
+      Reflect.deleteProperty(navigator, 'locks');
+    }
+  });
+
   it('a write that throws does not stall the ones queued after it', async () => {
     signIn('user-a');
     vi.spyOn(console, 'error').mockImplementation(() => {});

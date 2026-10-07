@@ -108,16 +108,33 @@ const NO_ENTRIES: CollectionEntries = {};
  * Deliberately no timeout: a timed-out write is not cancelled, so it could still
  * land after the writes released behind it, which is this defect again. A write
  * that hangs for good is healed by a reload, through the markers.
+ *
+ * ACROSS TABS TOO, through the Web Locks API: an in-memory chain is per tab, so a
+ * clear in one tab could land before an upsert still in flight in another and be
+ * undone by it. A named lock is granted in request order to every tab of this
+ * origin, and released when the write settles, rejected or not. Where the API is
+ * missing (jsdom, Safari before 15.4) the in-memory chain still orders this tab.
+ * Two DEVICES racing the same way is out of reach of any client-side queue; that
+ * needs the server to refuse a superseded write.
  */
+const WRITE_LOCK_PREFIX = 'inkweave:collection:write';
 const writeChains = new Map<Uid, Promise<unknown>>();
 
+function logQueuedFailure(e: unknown): void {
+  console.error('[CollectionContext] queued write threw:', e);
+}
+
 function enqueueWrite<T>(uid: Uid, op: () => Promise<T>): Promise<T> {
+  const locks: LockManager | undefined = globalThis.navigator?.locks;
+  if (locks) {
+    const locked = locks.request(`${WRITE_LOCK_PREFIX}:${uid}`, () => op());
+    // Handled here so a `void` caller never leaks an unhandled rejection.
+    locked.catch(logQueuedFailure);
+    return locked;
+  }
   const run = (writeChains.get(uid) ?? Promise.resolve()).then(op);
   // The chain itself must never reject, or one failed write stalls every later one.
-  writeChains.set(
-    uid,
-    run.catch((e: unknown) => console.error('[CollectionContext] queued write threw:', e)),
-  );
+  writeChains.set(uid, run.catch(logQueuedFailure));
   return run;
 }
 
