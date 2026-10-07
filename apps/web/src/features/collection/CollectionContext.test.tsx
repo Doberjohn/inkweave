@@ -12,7 +12,7 @@ import type {CollectionEntries} from './collectionParser';
  * directly in `collectionSync.test.ts`, where its branches do not need a session
  * and a seeded row to reach.
  */
-const mockSession = {user: null as {id: string} | null};
+const mockSession = {user: null as {id: string} | null, loading: false};
 vi.mock('../../shared/contexts/SessionContext', () => ({
   useSession: () => mockSession,
 }));
@@ -54,7 +54,7 @@ describe('CollectionContext', () => {
   });
 
   it('restores a stored collection on mount', () => {
-    writeCollection(ENTRIES, 5000);
+    writeCollection(ENTRIES, 5000, null, 'import');
     const {result} = render();
     expect(result.current.hasCollection).toBe(true);
     expect(result.current.entries).toEqual(ENTRIES);
@@ -84,7 +84,7 @@ describe('CollectionContext', () => {
   });
 
   it('a fresh import replaces the previous one rather than merging', () => {
-    writeCollection(ENTRIES, 5000);
+    writeCollection(ENTRIES, 5000, null, 'import');
     const {result} = render();
     act(() => {
       result.current.importCollection({other: {normal: 2, foil: 0}}, 9000);
@@ -94,14 +94,14 @@ describe('CollectionContext', () => {
   });
 
   it('ownedCount folds both finishes, and is 0 for a card not in the collection', () => {
-    writeCollection(ENTRIES, 5000);
+    writeCollection(ENTRIES, 5000, null, 'import');
     const {result} = render();
     expect(result.current.ownedCount('owned')).toBe(4);
     expect(result.current.ownedCount('absent')).toBe(0);
   });
 
   it('owns is true at a single copy, not only at a playset', () => {
-    writeCollection(ENTRIES, 5000);
+    writeCollection(ENTRIES, 5000, null, 'import');
     const {result} = render();
     expect(result.current.owns('single')).toBe(true);
   });
@@ -116,7 +116,7 @@ describe('CollectionContext', () => {
   });
 
   it('clearing removes the collection and its stored key', () => {
-    writeCollection(ENTRIES, 5000);
+    writeCollection(ENTRIES, 5000, null, 'import');
     const {result} = render();
     act(() => {
       result.current.clearImported();
@@ -153,7 +153,7 @@ describe('CollectionContext — signed in', () => {
   });
 
   it('deletes the account copy when the collection is cleared', async () => {
-    writeCollection(ENTRIES, 5000);
+    writeCollection(ENTRIES, 5000, null, 'import');
     const {result} = render();
     await act(async () => {
       result.current.clearImported();
@@ -163,7 +163,7 @@ describe('CollectionContext — signed in', () => {
   });
 
   it('adopts the account copy over this browser stale one', async () => {
-    writeCollection({stale: {normal: 1, foil: 0}}, 1000);
+    writeCollection({stale: {normal: 1, foil: 0}}, 1000, null, 'import');
     vi.mocked(getCollection).mockResolvedValueOnce({
       data: {schemaVersion: 1, importedAt: 9000, entries: ENTRIES},
       error: null,
@@ -193,7 +193,7 @@ describe('CollectionContext — signed in', () => {
     pass either way, since state is set from the server copy regardless.
   */
   it('drops the superseded local copy when the mirror write fails', async () => {
-    writeCollection({stale: {normal: 1, foil: 0}}, 1000);
+    writeCollection({stale: {normal: 1, foil: 0}}, 1000, null, 'import');
     vi.mocked(getCollection).mockResolvedValueOnce({
       data: {schemaVersion: 1, importedAt: 9000, entries: ENTRIES},
       error: null,
@@ -212,7 +212,7 @@ describe('CollectionContext — signed in', () => {
   });
 
   it('does not upload when the account already has a collection', async () => {
-    writeCollection(ENTRIES, 5000);
+    writeCollection(ENTRIES, 5000, null, 'import');
     vi.mocked(getCollection).mockResolvedValueOnce({
       data: {schemaVersion: 1, importedAt: 9000, entries: {}},
       error: null,
@@ -223,6 +223,211 @@ describe('CollectionContext — signed in', () => {
       await Promise.resolve();
     });
 
+    expect(upsertCollection).not.toHaveBeenCalled();
+  });
+});
+
+/** Drain the write queue and any sync: the repository mocks all settle in microtasks. */
+const flush = () =>
+  act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+
+const SERVER_ROW = {data: {schemaVersion: 1, importedAt: 1000, entries: {old: {normal: 1, foil: 0}}}, error: null};
+
+function signIn(uid: string | null) {
+  mockSession.user = uid === null ? null : {id: uid};
+}
+
+/** The #739 defects, each at the wiring level the pure table cannot reach. */
+describe('CollectionContext — #739 cloud-sync defects', () => {
+  afterEach(() => signIn(null));
+
+  it("never uploads one account's import into another's row on a shared browser", async () => {
+    signIn('user-a');
+    const {result, rerender} = render();
+    await flush();
+    act(() => {
+      result.current.importCollection(ENTRIES, 7000);
+    });
+    await flush();
+
+    signIn(null);
+    rerender();
+    signIn('user-b');
+    rerender();
+    await flush();
+
+    expect(upsertCollection).not.toHaveBeenCalledWith('user-b', expect.anything(), expect.anything());
+    // Owner ruling 2026-10-06: B sees an empty collection, not A's cards.
+    expect(result.current.hasCollection).toBe(false);
+    expect(result.current.owns('owned')).toBe(false);
+  });
+
+  it('claims a signed-out import for the first account, so a second cannot take it after a reload', async () => {
+    writeCollection(ENTRIES, 7000, null, 'import');
+    signIn('user-a');
+    const first = render();
+    await flush();
+    expect(upsertCollection).toHaveBeenCalledWith('user-a', ENTRIES, 7000);
+    first.unmount();
+
+    signIn('user-b');
+    render();
+    await flush();
+    expect(upsertCollection).not.toHaveBeenCalledWith('user-b', expect.anything(), expect.anything());
+  });
+
+  it('keeps an import whose upload failed, and retries it over the older row', async () => {
+    signIn('user-a');
+    vi.mocked(upsertCollection).mockResolvedValueOnce({data: null, error: 'Network error'});
+    const first = render();
+    await flush();
+    act(() => {
+      first.result.current.importCollection(ENTRIES, 7000);
+    });
+    await flush();
+    first.unmount();
+
+    vi.mocked(getCollection).mockResolvedValueOnce(SERVER_ROW);
+    const {result} = render();
+    await flush();
+
+    expect(result.current.entries).toEqual(ENTRIES);
+    expect(upsertCollection).toHaveBeenLastCalledWith('user-a', ENTRIES, 7000);
+  });
+
+  it('a failed delete never brings the cleared collection back', async () => {
+    signIn('user-a');
+    writeCollection(ENTRIES, 7000, 'user-a', 'import');
+    vi.mocked(getCollection).mockResolvedValueOnce(SERVER_ROW);
+    const first = render();
+    await flush();
+    vi.mocked(deleteCollection).mockResolvedValueOnce({data: null, error: 'Network error'});
+    act(() => {
+      first.result.current.clearImported();
+    });
+    await flush();
+    first.unmount();
+
+    // The row survived. The next mount must retry the delete, not adopt it.
+    vi.mocked(getCollection).mockResolvedValueOnce(SERVER_ROW);
+    const {result} = render();
+    await flush();
+
+    expect(result.current.hasCollection).toBe(false);
+    expect(deleteCollection).toHaveBeenCalledTimes(2);
+  });
+
+  it('a delete whose retry fails again still never adopts the row', async () => {
+    signIn('user-a');
+    const first = render();
+    await flush();
+    const failed = {data: null, error: 'Network error'};
+    vi.mocked(deleteCollection).mockResolvedValueOnce(failed).mockResolvedValueOnce(failed);
+    act(() => {
+      first.result.current.clearImported();
+    });
+    await flush();
+    first.unmount();
+
+    vi.mocked(getCollection).mockResolvedValueOnce(SERVER_ROW);
+    const {result} = render();
+    await flush();
+
+    expect(getCollection).toHaveBeenCalledTimes(1);
+    expect(result.current.hasCollection).toBe(false);
+  });
+
+  it('a confirmed upload is not repeated after a lost migrated marker and a remote delete', async () => {
+    signIn('user-a');
+    const setItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (this: Storage, key, value) {
+      if (key.startsWith('inkweave:collection:migrated')) throw new DOMException('denied', 'SecurityError');
+      setItem.call(this, key, value);
+    });
+    const first = render();
+    await flush();
+    act(() => {
+      first.result.current.importCollection(ENTRIES, 7000);
+    });
+    await flush();
+    first.unmount();
+
+    // The row is then deleted from another device.
+    render();
+    await flush();
+    expect(upsertCollection).toHaveBeenCalledTimes(1);
+  });
+
+  it('a re-import after a failed delete is not deleted by the retry', async () => {
+    signIn('user-a');
+    const first = render();
+    await flush();
+    vi.mocked(deleteCollection).mockResolvedValueOnce({data: null, error: 'Network error'});
+    act(() => {
+      first.result.current.clearImported();
+      first.result.current.importCollection(ENTRIES, 7000);
+    });
+    await flush();
+    first.unmount();
+
+    // The import's upsert replaced the row, so the clear it superseded is not owed.
+    render();
+    await flush();
+    expect(deleteCollection).toHaveBeenCalledTimes(1);
+  });
+
+  it('a clear waits for an upload already in flight, so the upload cannot recreate the row', async () => {
+    signIn('user-a');
+    let settleUpsert: () => void = () => {};
+    vi.mocked(upsertCollection).mockImplementationOnce(
+      () => new Promise((resolve) => (settleUpsert = () => resolve({data: null, error: null}))),
+    );
+    const {result} = render();
+    await flush();
+    act(() => {
+      result.current.importCollection(ENTRIES, 7000);
+      result.current.clearImported();
+    });
+    await flush();
+    expect(deleteCollection).not.toHaveBeenCalled();
+
+    settleUpsert();
+    await flush();
+    expect(deleteCollection).toHaveBeenCalledWith('user-a');
+    expect(upsertCollection).toHaveBeenCalledTimes(1);
+  });
+
+  it('a write that throws does not stall the ones queued after it', async () => {
+    signIn('user-a');
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(upsertCollection).mockRejectedValueOnce(new Error('boom'));
+    const {result} = render();
+    await flush();
+    act(() => {
+      result.current.importCollection(ENTRIES, 7000);
+      result.current.clearImported();
+    });
+    await flush();
+    expect(deleteCollection).toHaveBeenCalledWith('user-a');
+  });
+
+  it('never uploads a mirrored server copy whose migrated marker failed to write', async () => {
+    signIn('user-a');
+    vi.mocked(getCollection).mockResolvedValueOnce(SERVER_ROW);
+    const setItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (this: Storage, key, value) {
+      if (key.startsWith('inkweave:collection:migrated')) throw new DOMException('denied', 'SecurityError');
+      setItem.call(this, key, value);
+    });
+    const first = render();
+    await flush();
+    first.unmount();
+
+    // The row is then deleted from another device.
+    render();
+    await flush();
     expect(upsertCollection).not.toHaveBeenCalled();
   });
 });
