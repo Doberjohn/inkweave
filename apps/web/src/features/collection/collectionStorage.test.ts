@@ -1,5 +1,16 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
-import {COLLECTION_KEY, clearCollection, readCollection, writeCollection} from './collectionStorage';
+import {
+  COLLECTION_KEY,
+  clearCollection,
+  clearDeleteTombstone,
+  clearUploadPending,
+  hasDeleteTombstone,
+  markDeleteTombstone,
+  markUploadPending,
+  pendingUploadImportedAt,
+  readCollection,
+  writeCollection,
+} from './collectionStorage';
 import type {CollectionEntries} from './collectionParser';
 
 const ENTRIES: CollectionEntries = {'2001': {normal: 3, foil: 1}};
@@ -11,8 +22,14 @@ describe('collectionStorage', () => {
   });
 
   it('round-trips a collection under the namespaced key', () => {
-    writeCollection(ENTRIES, 1000);
-    expect(readCollection()).toEqual({schemaVersion: 1, importedAt: 1000, entries: ENTRIES});
+    writeCollection(ENTRIES, 1000, null, 'import');
+    expect(readCollection()).toEqual({
+      schemaVersion: 1,
+      importedAt: 1000,
+      entries: ENTRIES,
+      ownerUid: null,
+      source: 'import',
+    });
   });
 
   it('returns null when nothing is stored', () => {
@@ -58,13 +75,13 @@ describe('collectionStorage', () => {
   });
 
   it('clearCollection removes the key', () => {
-    writeCollection(ENTRIES, 1000);
+    writeCollection(ENTRIES, 1000, null, 'import');
     clearCollection();
     expect(readCollection()).toBeNull();
   });
 
   it('stamps the schema version itself rather than trusting the caller', () => {
-    const {data, error} = writeCollection(ENTRIES, 1000);
+    const {data, error} = writeCollection(ENTRIES, 1000, null, 'import');
     expect(error).toBeNull();
     expect(data?.schemaVersion).toBe(1);
   });
@@ -73,8 +90,40 @@ describe('collectionStorage', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new DOMException('exceeded the quota', 'QuotaExceededError');
     });
-    const {data, error} = writeCollection(ENTRIES, 1000);
+    const {data, error} = writeCollection(ENTRIES, 1000, null, 'import');
     expect(data).toBeNull();
     expect(error).toBeTruthy();
+  });
+
+  it('loads a pre-#739 store as an anonymous import', () => {
+    // Reading it as `'server'` would silently suppress a first upload.
+    localStorage.setItem(COLLECTION_KEY, JSON.stringify({schemaVersion: 1, importedAt: 1, entries: ENTRIES}));
+    expect(readCollection()).toMatchObject({ownerUid: null, source: 'import'});
+  });
+
+  it('discards a store whose source is neither import nor server', () => {
+    localStorage.setItem(
+      COLLECTION_KEY,
+      JSON.stringify({schemaVersion: 1, importedAt: 1, entries: ENTRIES, ownerUid: null, source: 'cloud'}),
+    );
+    expect(readCollection()).toBeNull();
+  });
+});
+
+describe('collection markers', () => {
+  afterEach(() => localStorage.clear());
+
+  it('a pending clear for an older copy keeps the newer copy pending', () => {
+    // Uploads are queued: the first can confirm after a second import re-marked.
+    markUploadPending('u', 2000);
+    clearUploadPending('u', 1000);
+    expect(pendingUploadImportedAt('u')).toBe(2000);
+  });
+
+  it("a tombstone is cleared only by the delete that set it", () => {
+    const first = markDeleteTombstone('u');
+    markDeleteTombstone('u');
+    clearDeleteTombstone('u', first);
+    expect(hasDeleteTombstone('u')).toBe(true);
   });
 });
