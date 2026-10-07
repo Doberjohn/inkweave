@@ -399,6 +399,51 @@ describe('CollectionContext — #739 cloud-sync defects', () => {
     expect(upsertCollection).toHaveBeenCalledTimes(1);
   });
 
+  it('a second import sharing a queued upload timestamp is never overwritten by it', async () => {
+    signIn('user-a');
+    let settleUpsert: () => void = () => {};
+    vi.mocked(upsertCollection).mockImplementationOnce(
+      () => new Promise((resolve) => (settleUpsert = () => resolve({data: null, error: null}))),
+    );
+    const {result} = render();
+    await flush();
+    const newer = {newer: {normal: 1, foil: 0}};
+    act(() => {
+      result.current.importCollection(ENTRIES, 7000);
+      result.current.importCollection(newer, 7000);
+    });
+    await flush();
+    settleUpsert();
+    await flush();
+
+    expect(result.current.entries).toEqual(newer);
+    expect(upsertCollection).toHaveBeenLastCalledWith('user-a', newer, 7001);
+  });
+
+  it("a write hung for one account does not hold up another account's", async () => {
+    signIn('user-a');
+    let settleUpsert: () => void = () => {};
+    vi.mocked(upsertCollection).mockImplementationOnce(
+      () => new Promise((resolve) => (settleUpsert = () => resolve({data: null, error: null}))),
+    );
+    const {result, rerender} = render();
+    await flush();
+    act(() => {
+      result.current.importCollection(ENTRIES, 7000);
+    });
+    signIn('user-b');
+    rerender();
+    await flush();
+    act(() => {
+      result.current.clearImported();
+    });
+    await flush();
+
+    expect(deleteCollection).toHaveBeenCalledWith('user-b');
+    settleUpsert();
+    await flush();
+  });
+
   it('a write that throws does not stall the ones queued after it', async () => {
     signIn('user-a');
     vi.spyOn(console, 'error').mockImplementation(() => {});

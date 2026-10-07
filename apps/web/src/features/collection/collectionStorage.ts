@@ -172,7 +172,7 @@ export function clearCollection(): void {
 }
 
 /** A Supabase auth user id, named so the many string parameters below say which strings are accounts. */
-type Uid = string;
+export type Uid = string;
 
 /*
  * PER-UID MARKERS (#555, #739). Three of them, one fact each, all keyed by uid so

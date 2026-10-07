@@ -45,6 +45,7 @@ import {
   readCollection,
   writeCollection,
   type LocalCollection,
+  type Uid,
   type StoredCollection,
 } from './collectionStorage';
 import {deleteCollection, getCollection, upsertCollection} from './collectionRepository';
@@ -74,6 +75,10 @@ interface CollectionContextValue {
    *
    * Returns null on success, or a message to show the user. An import that could
    * not be stored has not happened, and the caller must not report otherwise.
+   *
+   * `importedAt` is kept unless it would collide with a copy this browser already
+   * holds, in which case it moves just past it; read the stored one back from
+   * {@link importedAt}, not from the argument.
    */
   importCollection: (entries: CollectionEntries, importedAt: number) => string | null;
   /** Drop the collection entirely. */
@@ -97,14 +102,39 @@ const NO_ENTRIES: CollectionEntries = {};
  * remount: a provider that unmounts with an upsert in flight would otherwise leave
  * it free to land after the next provider's delete. Nothing is persisted here; a
  * reload starts an empty chain, and the markers carry anything left undone.
+ *
+ * One chain PER UID: two accounts write two different rows, so they never need
+ * ordering against each other, and a write hung for one must not hold up another.
+ * Deliberately no timeout: a timed-out write is not cancelled, so it could still
+ * land after the writes released behind it, which is this defect again. A write
+ * that hangs for good is healed by a reload, through the markers.
  */
-let writeChain: Promise<unknown> = Promise.resolve();
+const writeChains = new Map<Uid, Promise<unknown>>();
 
-function enqueueWrite<T>(op: () => Promise<T>): Promise<T> {
-  const run = writeChain.then(op);
+function enqueueWrite<T>(uid: Uid, op: () => Promise<T>): Promise<T> {
+  const run = (writeChains.get(uid) ?? Promise.resolve()).then(op);
   // The chain itself must never reject, or one failed write stalls every later one.
-  writeChain = run.catch((e: unknown) => console.error('[CollectionContext] queued write threw:', e));
+  writeChains.set(
+    uid,
+    run.catch((e: unknown) => console.error('[CollectionContext] queued write threw:', e)),
+  );
   return run;
+}
+
+/**
+ * An `importedAt` that names no other copy this browser holds for `uid`.
+ *
+ * `importedAt` is the identity the markers and the re-stamp guard match on, so two
+ * copies sharing one would let a queued upload of the older confirm as the newer:
+ * re-stamping the newer copy with the older's entries, and clearing its pending
+ * marker. The caller's value is kept unless it collides, which human-paced
+ * `Date.now()` stamps practically never do; the contract simply does not promise it.
+ */
+function uniqueImportStamp(requested: number, uid: Uid | null, local: CollectionState): number {
+  const taken = [local?.importedAt ?? null];
+  if (uid !== null) taken.push(pendingUploadImportedAt(uid), migratedImportedAt(uid));
+  const stamps = taken.filter((t): t is number => t !== null);
+  return stamps.includes(requested) ? Math.max(...stamps) + 1 : requested;
 }
 
 /**
@@ -114,9 +144,9 @@ function enqueueWrite<T>(op: () => Promise<T>): Promise<T> {
  * failure anywhere after this line leaves the retry in place (#739 defect 2). It
  * is cleared only for this copy: a later import may already have replaced it.
  */
-function uploadCopy(uid: string, copy: LocalCollection, setState: (next: CollectionState) => void): void {
+function uploadCopy(uid: Uid, copy: LocalCollection, setState: (next: CollectionState) => void): void {
   markUploadPending(uid, copy.importedAt);
-  void enqueueWrite(async () => {
+  void enqueueWrite(uid, async () => {
     const {error} = await upsertCollection(uid, copy.entries, copy.importedAt);
     if (error !== null) return;
     markCollectionMigrated(uid, copy.importedAt);
@@ -137,7 +167,7 @@ function uploadCopy(uid: string, copy: LocalCollection, setState: (next: Collect
  * Only while storage still holds THIS copy: a clear or a newer import may have
  * replaced it while the upload was queued, and neither may be overwritten.
  */
-function restampAsServerCopy(uid: string, copy: LocalCollection, setState: (next: CollectionState) => void): void {
+function restampAsServerCopy(uid: Uid, copy: LocalCollection, setState: (next: CollectionState) => void): void {
   const current = readCollection();
   if (current?.importedAt !== copy.importedAt || current.ownerUid !== uid) return;
   const {data} = writeCollection(copy.entries, copy.importedAt, uid, 'server');
@@ -151,10 +181,10 @@ function restampAsServerCopy(uid: string, copy: LocalCollection, setState: (next
  * Any pending upload is dropped with it: the copy it was owed for has just been
  * cleared, so retrying it later would undo this delete.
  */
-function deleteFromServer(uid: string): Promise<boolean> {
+function deleteFromServer(uid: Uid): Promise<boolean> {
   const token = markDeleteTombstone(uid);
   clearUploadPending(uid);
-  return enqueueWrite(async () => {
+  return enqueueWrite(uid, async () => {
     const {error} = await deleteCollection(uid);
     if (error === null) clearDeleteTombstone(uid, token);
     return error === null;
@@ -174,7 +204,7 @@ function deleteFromServer(uid: string): Promise<boolean> {
  * memory is correct and the user should see it; only the durability claim is
  * withheld, so the next mount reconciles again instead of trusting a failed write.
  */
-function adoptServerCopy(uid: string, server: StoredCollection, setState: (next: CollectionState) => void): void {
+function adoptServerCopy(uid: Uid, server: StoredCollection, setState: (next: CollectionState) => void): void {
   const {error} = writeCollection(server.entries, server.importedAt, uid, 'server');
   if (error === null) {
     markCollectionMigrated(uid, server.importedAt);
@@ -202,7 +232,7 @@ function adoptServerCopy(uid: string, server: StoredCollection, setState: (next:
  * into B's row. If the claim cannot be written, nothing is sent; the copy stays
  * local and anonymous, and the next sign-in tries again.
  */
-function uploadLocalCopy(uid: string, local: LocalCollection, setState: (next: CollectionState) => void): void {
+function uploadLocalCopy(uid: Uid, local: LocalCollection, setState: (next: CollectionState) => void): void {
   let copy = local;
   if (local.ownerUid === null) {
     const {data, error} = writeCollection(local.entries, local.importedAt, uid, 'import');
@@ -226,7 +256,7 @@ interface SyncSnapshot {
   pendingImportedAt: number | null;
 }
 
-function snapshotFor(uid: string, local: CollectionState): SyncSnapshot {
+function snapshotFor(uid: Uid, local: CollectionState): SyncSnapshot {
   return {local, migratedImportedAt: migratedImportedAt(uid), pendingImportedAt: pendingUploadImportedAt(uid)};
 }
 
@@ -236,7 +266,7 @@ function snapshotFor(uid: string, local: CollectionState): SyncSnapshot {
  * they change for unrelated reasons.
  */
 function applySyncPlan(
-  uid: string,
+  uid: Uid,
   server: StoredCollection | null,
   snapshot: SyncSnapshot,
   setState: (next: CollectionState) => void,
@@ -261,7 +291,7 @@ function applySyncPlan(
  * is not the sync stops. Checking the tombstone after resolving the plan would let
  * one mount adopt the very row the user cleared.
  */
-async function serverStateFor(uid: string): Promise<StoredCollection | null | undefined> {
+async function serverStateFor(uid: Uid): Promise<StoredCollection | null | undefined> {
   if (hasDeleteTombstone(uid)) return (await deleteFromServer(uid)) ? null : undefined;
   const {data, error} = await getCollection(uid);
   // A failed READ must not be mistaken for "the server has none", which
@@ -283,7 +313,7 @@ async function serverStateFor(uid: string): Promise<StoredCollection | null | un
  * tombstone left by whichever write failed is what the next sync retries.
  */
 function useCollectionSync(
-  uid: string | null,
+  uid: Uid | null,
   state: CollectionState,
   setState: (next: CollectionState) => void,
   localEpoch: {current: number},
@@ -340,7 +370,8 @@ export function CollectionProvider({children}: {children: ReactNode}) {
   // No useMemo/useCallback anywhere below: the React Compiler memoizes this file
   // (#291), and the repo's lint forbids hand-rolling it.
   function importCollection(entries: CollectionEntries, importedAt: number): string | null {
-    const {data, error} = writeCollection(entries, importedAt, uid, 'import');
+    const stamp = uniqueImportStamp(importedAt, uid, state);
+    const {data, error} = writeCollection(entries, stamp, uid, 'import');
     // State moves only on a successful LOCAL write, so what is on screen and
     // what survives a reload cannot disagree. The cloud write is deliberately
     // silent after that: a network failure must not make a successful LOCAL
