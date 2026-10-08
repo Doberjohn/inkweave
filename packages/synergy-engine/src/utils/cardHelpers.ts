@@ -1892,7 +1892,7 @@ export function getHealRoles(card: LorcanaCard): HealRole[] {
 export const isHealCard = (card: LorcanaCard): boolean => getHealRoles(card).length > 0;
 
 // ============================================
-// TRIBAL PLAYSTYLES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle, Madrigal) — shared detector
+// TRIBAL PLAYSTYLES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle, Madrigal, Villain) — shared detector
 // ============================================
 
 /**
@@ -1911,7 +1911,7 @@ export interface TribalSpec {
   refWords: readonly string[];
 }
 
-/** The eight tribal specs. Royalty deliberately excludes Princess so it complements the Princess rule. */
+/** The nine tribal specs. Royalty deliberately excludes Princess so it complements the Princess rule. */
 export const TRIBAL_SPECS = {
   monster: {playstyleId: 'monster', memberClasses: ['Monster'], refWords: ['Monster']},
   princess: {playstyleId: 'princess', memberClasses: ['Princess'], refWords: ['Princess']},
@@ -1930,6 +1930,11 @@ export const TRIBAL_SPECS = {
   // another Madrigal in play" checks the in-play-check role already catches. Drop-in, no new
   // patterns. The Madrigal Family's "Madrigal Shift" stays with Shift Targets.
   madrigal: {playstyleId: 'madrigal', memberClasses: ['Madrigal'], refWords: ['Madrigal']},
+  // Villains — the widest tribe after Heroes (124 members, every ink, every Core set) but
+  // only 2 payoffs, both caught by the shared patterns. The other cards
+  // that name Villains are Hero-side hate ("deal 2 damage to chosen Villain character") and
+  // stay out of the tribe.
+  villain: {playstyleId: 'villain', memberClasses: ['Villain'], refWords: ['Villain']},
 } as const satisfies Record<string, TribalSpec>;
 
 const tribalPatternCache = new Map<string, {buff: RegExp; trigger: RegExp; search: RegExp; check: RegExp}>();

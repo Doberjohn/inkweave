@@ -1351,7 +1351,7 @@ export const synergyRules: SynergyRule[] = [
   },
 
   // --------------------------------------------
-  // CLASSIFICATION TRIBES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle, Madrigal)
+  // CLASSIFICATION TRIBES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle, Madrigal, Villain)
   // Generated from one shared factory — all payoff-anchored, all 5-baseline. Royalty is
   // Queen / King / Prince, kept distinct from Princess.
   // --------------------------------------------
@@ -1363,6 +1363,7 @@ export const synergyRules: SynergyRule[] = [
   makeTribalRule(TRIBAL_SPECS.detective, 'Detectives', 'Detective'),
   makeTribalRule(TRIBAL_SPECS.gargoyle, 'Gargoyles', 'Gargoyle'),
   makeTribalRule(TRIBAL_SPECS.madrigal, 'Madrigals', 'Madrigal'),
+  makeTribalRule(TRIBAL_SPECS.villain, 'Villains', 'Villain'),
 
   // --------------------------------------------
   // EXERT (Exert Matters, opponent-facing, payoff-anchored)

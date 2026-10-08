@@ -25,6 +25,7 @@ export type PlaystyleId =
   | 'detective'
   | 'gargoyle'
   | 'madrigal'
+  | 'villain'
   | 'bounce'
   | 'ink-drops';
 

@@ -329,6 +329,37 @@ describe('Synergy Rules', () => {
     it('drops member + member (payoff-anchored)', () => { expect(scoreWith(member, member2)).toBeUndefined(); });
   });
 
+  describe('Villains detection', () => {
+    const V = TRIBAL_SPECS.villain;
+    const memberBuff = createCard({id: 'qoh', name: 'Queen of Hearts', fullName: 'Queen of Hearts - Wonderland Empress', cost: 3, classifications: ['Dreamborn', 'Villain', 'Queen'], text: 'ALL WAYS HERE ARE MY WAYS Whenever this character quests, your other Villain characters get +1 ◊ this turn.'});
+    const nonMemberPayoff = createCard({id: 'diablo', name: 'Diablo', fullName: 'Diablo - Stone Servant', cost: 2, classifications: ['Dreamborn', 'Ally'], text: "CRUEL INTENT While you have a Villain character in play, this character gets +2 ¤ and +1 ◊. VILLAINOUS BOND While this character is exerted, your Villain characters can't be challenged."});
+
+    it('detects the team buff on a member', () => {
+      expect(getTribalRoles(memberBuff, V)).toEqual(['member', 'buff']);
+    });
+    it('detects the in-play check and team buff on a non-member', () => {
+      expect(getTribalRoles(nonMemberPayoff, V)).toEqual(['buff', 'in-play-check']);
+    });
+    // Hero-side cards that hurt opposing Villains are hate, not payoffs for a Villain deck.
+    it('ignores removal aimed at Villains', () => {
+      const hate = createCard({id: 'little-john', name: 'Little John', cost: 2, text: 'When you play this character, choose one: • Chosen Hero character gains Resist +2 this turn. • Deal 2 damage to chosen Villain character.'});
+      expect(getTribalRoles(hate, V)).toEqual([]);
+    });
+  });
+
+  describe('Villains rule (payoff-anchored)', () => {
+    const rule = getRuleById('villain')!;
+    const member = createCard({id: 'ursula', name: 'Ursula', classifications: ['Villain'], text: 'Evasive.'});
+    const member2 = createCard({id: 'jafar', name: 'Jafar', classifications: ['Villain'], text: 'Ward.'});
+    const buff = createCard({id: 'qoh', name: 'Queen of Hearts', classifications: ['Villain'], text: 'Whenever this character quests, your other Villain characters get +1 ◊ this turn.'});
+    const check = createCard({id: 'diablo', name: 'Diablo', text: 'While you have a Villain character in play, this character gets +2 ¤ and +1 ◊.'});
+    const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+    it('scores buff + member at 6', () => { expect(scoreWith(buff, member)?.score).toBe(6); });
+    it('scores payoff + payoff at 7', () => { expect(scoreWith(buff, check)?.score).toBe(7); });
+    it('drops member + member (payoff-anchored)', () => { expect(scoreWith(member, member2)).toBeUndefined(); });
+  });
+
   describe('Shift Targets', () => {
     const shiftRule = getRuleById('shift-targets')!;
 

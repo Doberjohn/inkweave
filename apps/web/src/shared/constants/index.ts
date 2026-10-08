@@ -57,5 +57,5 @@ export {
   specialSlotsFor,
 } from './revealSet';
 export type {SpecialBlock, SpecialSlotSpec} from './revealSet';
-export type {PlaystyleUiMeta, ComingSoonPlaystyle} from './playstyleUi';
-export {PLAYSTYLE_UI, COMING_SOON_PLAYSTYLES, accentRgba} from './playstyleUi';
+export type {PlaystyleUiMeta} from './playstyleUi';
+export {PLAYSTYLE_UI, accentRgba} from './playstyleUi';

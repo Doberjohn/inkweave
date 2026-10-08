@@ -268,6 +268,7 @@ const ROLE_CONFIGS: Record<PlaystyleId, RoleConfig> = {
   detective: tribalConfig(TRIBAL_SPECS.detective),
   gargoyle: tribalConfig(TRIBAL_SPECS.gargoyle),
   madrigal: tribalConfig(TRIBAL_SPECS.madrigal),
+  villain: tribalConfig(TRIBAL_SPECS.villain),
 };
 
 /**
