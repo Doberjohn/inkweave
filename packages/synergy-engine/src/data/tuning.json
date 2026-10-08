@@ -14,7 +14,7 @@
     },
     "toy": {
       "name": "Toys",
-      "tagline": "Toy characters and the cards that reward running them."
+      "tagline": "Toy characters and cards that reward including them in your deck."
     },
     "ramp": {
       "name": "Ramp",
@@ -30,19 +30,19 @@
     },
     "dwarfs": {
       "name": "Seven Dwarfs",
-      "tagline": "Seven Dwarfs characters and the cards that reward running them."
+      "tagline": "Seven Dwarfs characters and cards that reward including them in your deck."
     },
     "floodborn": {
       "name": "Floodborns",
-      "tagline": "Flood the board with Floodborn characters and cash in the Vine payoffs."
+      "tagline": "Floodborn characters and cards that reward including them in your deck."
     },
     "hunny": {
       "name": "Hunny",
-      "tagline": "A Hundred Acre Wood adventuring party that rewards going wide on the Hunny tribe."
+      "tagline": "Hunny characters and cards that reward including them in your deck."
     },
     "red-panda": {
       "name": "Red Panda",
-      "tagline": "A small Turning Red tribe built around the Lee family."
+      "tagline": "Red Panda characters and cards that reward including them in your deck."
     },
     "items": {
       "name": "Items",
@@ -66,31 +66,31 @@
     },
     "monster": {
       "name": "Monsters",
-      "tagline": "Monster characters and the payoffs that reward fielding the tribe."
+      "tagline": "Monster characters and cards that reward including them in your deck."
     },
     "princess": {
       "name": "Princesses",
-      "tagline": "Go wide on Princesses and cash in the buffs, searches, and in-play payoffs that reward them."
+      "tagline": "Princess characters and cards that reward including them in your deck."
     },
     "hero": {
       "name": "Heroes",
-      "tagline": "Hero characters and the payoffs that buff or trigger off the tribe."
+      "tagline": "Hero characters and cards that reward including them in your deck."
     },
     "super": {
       "name": "Supers",
-      "tagline": "The Incredibles Super package: Super characters and the payoffs that pump and ready them."
+      "tagline": "Super characters and cards that reward including them in your deck."
     },
     "royalty": {
       "name": "Royalty",
-      "tagline": "Queen, King, and Prince characters and the payoffs that reward the crown."
+      "tagline": "Royalty characters and cards that reward including them in your deck."
     },
     "detective": {
       "name": "Detectives",
-      "tagline": "Detective characters and the payoffs that reward running the tribe."
+      "tagline": "Detective characters and cards that reward including them in your deck."
     },
     "gargoyle": {
       "name": "Gargoyles",
-      "tagline": "Gargoyle characters and the payoffs that buff the clan, reward its challenges, and lift Stone by Day."
+      "tagline": "Gargoyle characters and cards that reward including them in your deck."
     }
   },
   "directRules": {
