@@ -140,6 +140,7 @@ export {
   getCardMechanics,
   mechanicLabel,
   mechanicDescription,
+  tribalMechanicDescription,
 } from './utils';
 export {TUNING, type TuningConfig, type TierText} from './data/tuning';
 export type {

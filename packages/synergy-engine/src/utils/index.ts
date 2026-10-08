@@ -129,6 +129,7 @@ export {
   getCardMechanics,
   mechanicLabel,
   mechanicDescription,
+  tribalMechanicDescription,
 } from './mechanics.js';
 export type {Mechanic} from './mechanics.js';
 
