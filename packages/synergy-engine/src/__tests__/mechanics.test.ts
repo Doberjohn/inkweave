@@ -115,7 +115,7 @@ describe('mechanics catalog', () => {
   describe('tribe-page descriptions', () => {
     it('names the tribe in While in Play and Trigger', () => {
       expect(tribalMechanicDescription('in-play-check', TRIBAL_SPECS.madrigal)).toBe(
-        'Get benefits when you have a Madrigal character in play',
+        'Get benefits tied to a Madrigal character, such as having one in play',
       );
       expect(tribalMechanicDescription('trigger', TRIBAL_SPECS.hero)).toBe(
         'Get a repeating benefit when you play a Hero character or one quests or challenges',
@@ -124,7 +124,7 @@ describe('mechanics catalog', () => {
 
     it('lists every classification of a multi-class tribe', () => {
       expect(tribalMechanicDescription('in-play-check', TRIBAL_SPECS.royalty)).toBe(
-        'Get benefits when you have a Queen, King or Prince character in play',
+        'Get benefits tied to a Queen, King or Prince character, such as having one in play',
       );
     });
 

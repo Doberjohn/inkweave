@@ -242,7 +242,9 @@ export function mechanicDescription(id: string): string {
  * names Floodborn characters. On a classification tribe's page they name the tribe instead.
  */
 const TRIBAL_ROLE_DESCRIPTIONS: Partial<Record<TribalRole, (aTribe: string) => string>> = {
-  'in-play-check': (aTribe) => `Get benefits when you have ${aTribe} character in play`,
+  // Mostly "while you have a X in play", but also "if you played / returned a X" and "if a X is
+  // chosen", so the wording leads with the common case without promising it.
+  'in-play-check': (aTribe) => `Get benefits tied to ${aTribe} character, such as having one in play`,
   trigger: (aTribe) => `Get a repeating benefit when you play ${aTribe} character or one quests or challenges`,
 };
 
