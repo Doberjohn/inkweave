@@ -53,6 +53,8 @@ jobs:
       # this only re-converts those. It is required so admin image-tool re-uploads (and
       # updates to cards that already have a committed preview AVIF, e.g. set 12/13)
       # actually regenerate the AVIF instead of being skipped as "already exists".
+      # This workflow's commit is [skip ci] and deploys nothing, so the Deploy run the
+      # same push starts converts with --force too (build:vercel, #750).
       - name: Convert raws to AVIF and prune
         run: pnpm convert-preview-images --force --prune-raw
 
