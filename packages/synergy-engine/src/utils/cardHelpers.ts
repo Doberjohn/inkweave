@@ -378,8 +378,9 @@ export const LOCATION_PATTERNS = {
   // move a second character first ("move this character and up to 1 of your other characters to
   // that location", Carl Fredricksen), hence the pronouns and the wider second gap.
   move: /\bmove\b[^.]{0,40}?\b(?:characters?|him|her|them)\b[^.]{0,50}?\blocation|to the same location/i,
-  // A damage-moving clause ("move 1 damage counter from ..."), bound to its own clause so a real
-  // mover is not dropped by "damage" in reminder text (The Game's Afoot!) or "remove ... damage".
+  // A damage-moving clause ("move 1 damage counter from ..."). The move role strips these clauses
+  // (stripDamageMoves) rather than dropping the card, so "damage" in reminder text (The Game's
+  // Afoot!) or a separate damage move never hides a real location move.
   'move-exclude': /\bmove\b[^.]{0,20}?\bdamage\b/i,
   // Fires when you PLAY a location (e.g. Elsa - Ice Artisan).
   'play-trigger': /when(?:ever)? you play a location|whenever.*play a location/i,
@@ -388,8 +389,9 @@ export const LOCATION_PATTERNS = {
   'move-trigger': /when(?:ever)?[^.]{0,40}moves? to a location/i,
   'in-play-check': /if you have a location|while you have a.*(location)|for each location/i,
   search: makeSearchPattern('location(?:\\s+cards?)?'),
-  // "to one of your locations" / "to your locations" is a move destination (Colonel Hathi), not a buff.
-  buff: /(?<!\bto (?:one of )?)your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
+  // "move ... to (one of) your locations" is a move destination (Colonel Hathi), not a buff; "give
+  // ... to your locations" still is.
+  buff: /(?<!\bmove\b[^.]{0,60}\bto (?:one of )?)your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
   boost:
     /under.*(?:characters|character) or locations|under.*locations|locations with boost|play a character or location with boost/i,
   'location-ramp':
@@ -400,6 +402,20 @@ export const LOCATION_PATTERNS = {
   'boost-beneficiary':
     /for each card (?:under|beneath)|cards? (?:from )?(?:under|beneath) (?:this|the) (?:location|card)/i,
 } as const;
+
+/**
+ * A damage-moving clause through the end of its sentence (see LOCATION_PATTERNS['move-exclude']).
+ * Global flag: use only with replace, never .test().
+ */
+const DAMAGE_MOVE_CLAUSE = new RegExp(`${LOCATION_PATTERNS['move-exclude'].source}[^.]*`, 'gi');
+
+/** Card text without its damage-moving clauses, so they neither read as a move nor hide one. */
+export function stripDamageMoves(text: string): string {
+  return text.replace(DAMAGE_MOVE_CLAUSE, '');
+}
+
+/** Whether `text` reads as a location move once its damage-moving clauses are stripped. */
+const readsAsLocationMove = (text: string): boolean => LOCATION_PATTERNS.move.test(stripDamageMoves(text));
 
 export type LocationRole =
   | 'at-payoff'
@@ -419,15 +435,15 @@ export type LocationRole =
 /**
  * Ordered role detectors (order = role-array order). A data table instead of an
  * if-ladder keeps `getLocationRoles` flat — adding a role is one row, not one
- * more branch. `exclude` (move only) suppresses a false-positive pattern.
+ * more branch. `prepare` (move only) strips damage-moving clauses before the test.
  */
 const LOCATION_ROLE_DETECTORS: ReadonlyArray<{
   role: LocationRole;
   pattern: RegExp;
-  exclude?: RegExp;
+  prepare?: (text: string) => string;
 }> = [
   {role: 'at-payoff', pattern: LOCATION_PATTERNS['at-payoff']},
-  {role: 'move', pattern: LOCATION_PATTERNS.move, exclude: LOCATION_PATTERNS['move-exclude']},
+  {role: 'move', pattern: LOCATION_PATTERNS.move, prepare: stripDamageMoves},
   {role: 'play-trigger', pattern: LOCATION_PATTERNS['play-trigger']},
   {role: 'move-trigger', pattern: LOCATION_PATTERNS['move-trigger']},
   {role: 'in-play-check', pattern: LOCATION_PATTERNS['in-play-check']},
@@ -445,9 +461,9 @@ export function getLocationRoles(card: LorcanaCard): LocationRole[] {
   // Anti-location cards (banish/remove locations) are excluded entirely
   if (LOCATION_PATTERNS['anti-location'].test(text)) return [];
 
-  return LOCATION_ROLE_DETECTORS.filter(
-    (d) => d.pattern.test(text) && !d.exclude?.test(text),
-  ).map((d) => d.role);
+  return LOCATION_ROLE_DETECTORS.filter((d) => d.pattern.test(d.prepare ? d.prepare(text) : text)).map(
+    (d) => d.role,
+  );
 }
 
 /**
@@ -481,21 +497,25 @@ const CLASSIFIED_LOCATION_MOVE = /\bto (?:a|an|one of your) ((?:[A-Z][a-z'-]+ )+
  * cut as a sentence break, so a stranded "move him" cannot reach a later "that location" in the
  * same sentence and read as a second, global move.
  */
-function classifiedLocationScope(card: LorcanaCard, scopedClause: RegExp, rolePattern: RegExp): string[] {
+function classifiedLocationScope(
+  card: LorcanaCard,
+  scopedClause: RegExp,
+  readsAsRole: (text: string) => boolean,
+): string[] {
   const text = normalizeCardText(card);
   const scoped = [...text.matchAll(scopedClause)].map((m) => m[1].trim());
   if (scoped.length === 0) return [];
-  return rolePattern.test(text.replace(scopedClause, '.')) ? [] : scoped;
+  return readsAsRole(text.replace(scopedClause, '.')) ? [] : scoped;
 }
 
 /** Location classifications a card's buff is limited to (['Hyperia City'] for Hyperia City Express). */
 export function getLocationBuffClassifications(card: LorcanaCard): string[] {
-  return classifiedLocationScope(card, CLASSIFIED_LOCATION_BUFF, LOCATION_PATTERNS.buff);
+  return classifiedLocationScope(card, CLASSIFIED_LOCATION_BUFF, (text) => LOCATION_PATTERNS.buff.test(text));
 }
 
 /** Location classifications a card's move is limited to (['Hyperia City'] for Chief Bogo). */
 export function getLocationMoveClassifications(card: LorcanaCard): string[] {
-  return classifiedLocationScope(card, CLASSIFIED_LOCATION_MOVE, LOCATION_PATTERNS.move);
+  return classifiedLocationScope(card, CLASSIFIED_LOCATION_MOVE, readsAsLocationMove);
 }
 
 /**

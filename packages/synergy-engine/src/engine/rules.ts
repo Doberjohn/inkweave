@@ -19,6 +19,7 @@ import {
   isLocation,
   isLocationSupportCard,
   locationRoleReaches,
+  stripDamageMoves,
   isRampCard,
   isSong,
   isToyCard,
@@ -469,7 +470,8 @@ interface LocationRuleSpec {
   name: string;
   role: LocationRole;
   pattern: RegExp;
-  excludePattern?: RegExp;
+  /** Rewrites the text before the pattern test (move: strip damage-moving clauses). */
+  prepareText?: (text: string) => string;
 }
 
 function locationRuleMatches(spec: LocationRuleSpec, card: LorcanaCard): boolean {
@@ -483,8 +485,7 @@ function locationRuleMatches(spec: LocationRuleSpec, card: LorcanaCard): boolean
   const normalizedText = normalizeCardText(card);
   // Exclude anti-location cards (banish/remove locations)
   if (LOCATION_PATTERNS['anti-location'].test(normalizedText)) return false;
-  if (spec.excludePattern && spec.excludePattern.test(normalizedText)) return false;
-  return spec.pattern.test(normalizedText);
+  return spec.pattern.test(spec.prepareText ? spec.prepareText(normalizedText) : normalizedText);
 }
 
 /** Create a single location rule for a specific pattern */
@@ -535,7 +536,7 @@ const LOCATION_RULE_SPECS: readonly LocationRuleSpec[] = [
     name: 'Move to Location',
     role: 'move',
     pattern: LOCATION_PATTERNS.move,
-    excludePattern: LOCATION_PATTERNS['move-exclude'],
+    prepareText: stripDamageMoves,
   },
   {
     id: 'in-play-check',
