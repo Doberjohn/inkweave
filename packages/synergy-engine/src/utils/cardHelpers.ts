@@ -374,8 +374,13 @@ export function makeBanishTriggerPattern(target: string): RegExp {
 
 export const LOCATION_PATTERNS = {
   'at-payoff': /while\b.{0,60}at a location|if\b.{0,60}at a location|is at a location/i,
-  move: /\bmove\b[^.]{0,40}?\bcharacter[^.]{0,40}?\blocation|to the same location/i,
-  'move-exclude': /move.*damage/i,
+  // The mover may be named by pronoun ("move him to one of your locations", Colonel Hathi) and may
+  // move a second character first ("move this character and up to 1 of your other characters to
+  // that location", Carl Fredricksen), hence the pronouns and the wider second gap.
+  move: /\bmove\b[^.]{0,40}?\b(?:characters?|him|her|them)\b[^.]{0,50}?\blocation|to the same location/i,
+  // A damage-moving clause ("move 1 damage counter from ..."), bound to its own clause so a real
+  // mover is not dropped by "damage" in reminder text (The Game's Afoot!) or "remove ... damage".
+  'move-exclude': /\bmove\b[^.]{0,20}?\bdamage\b/i,
   // Fires when you PLAY a location (e.g. Elsa - Ice Artisan).
   'play-trigger': /when(?:ever)? you play a location|whenever.*play a location/i,
   // Fires when a character MOVES onto a location (e.g. Taffyta, Goofy) — a payoff
@@ -383,7 +388,8 @@ export const LOCATION_PATTERNS = {
   'move-trigger': /when(?:ever)?[^.]{0,40}moves? to a location/i,
   'in-play-check': /if you have a location|while you have a.*(location)|for each location/i,
   search: makeSearchPattern('location(?:\\s+cards?)?'),
-  buff: /your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
+  // "to one of your locations" / "to your locations" is a move destination (Colonel Hathi), not a buff.
+  buff: /(?<!\bto (?:one of )?)your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
   boost:
     /under.*(?:characters|character) or locations|under.*locations|locations with boost|play a character or location with boost/i,
   'location-ramp':
@@ -462,21 +468,47 @@ export function isLocationSupportCard(card: LorcanaCard): boolean {
 const CLASSIFIED_LOCATION_BUFF = /\b[Yy]our ((?:[A-Z][a-z'-]+ )+)locations\b/g;
 
 /**
- * Location classifications a card's buff is limited to (['Hyperia City'] for Hyperia City
- * Express). Bound to the buff clause, not the whole card: returns [] when the text still reads
- * as a buff after the classified clauses are removed, meaning the card also buffs every location.
+ * A move limited to one location classification: "move him to a Hyperia City location"
+ * (Chief Bogo - Police Commissioner). Title Case and case-sensitive like the buff shape, so
+ * "to a location" / "to one of your locations" stay global. Global flag: matchAll/replace only.
  */
-export function getLocationBuffClassifications(card: LorcanaCard): string[] {
+const CLASSIFIED_LOCATION_MOVE = /\bto (?:a|an|one of your) ((?:[A-Z][a-z'-]+ )+)locations?\b/g;
+
+/**
+ * The classifications a role clause is limited to, or [] when it is global. Bound to the clause,
+ * not the whole card: returns [] when the text still reads as the role after the classified
+ * clauses are removed, meaning the card also covers every location. Each classified clause is
+ * cut as a sentence break, so a stranded "move him" cannot reach a later "that location" in the
+ * same sentence and read as a second, global move.
+ */
+function classifiedLocationScope(card: LorcanaCard, scopedClause: RegExp, rolePattern: RegExp): string[] {
   const text = normalizeCardText(card);
-  const scoped = [...text.matchAll(CLASSIFIED_LOCATION_BUFF)].map((m) => m[1].trim());
+  const scoped = [...text.matchAll(scopedClause)].map((m) => m[1].trim());
   if (scoped.length === 0) return [];
-  const unscoped = text.replace(CLASSIFIED_LOCATION_BUFF, '');
-  return LOCATION_PATTERNS.buff.test(unscoped) ? [] : scoped;
+  return rolePattern.test(text.replace(scopedClause, '.')) ? [] : scoped;
 }
 
-/** Whether a card's location buff reaches `location`. A classified buff reaches only its own locations. */
-export function locationBuffReaches(card: LorcanaCard, location: LorcanaCard): boolean {
-  const scoped = getLocationBuffClassifications(card);
+/** Location classifications a card's buff is limited to (['Hyperia City'] for Hyperia City Express). */
+export function getLocationBuffClassifications(card: LorcanaCard): string[] {
+  return classifiedLocationScope(card, CLASSIFIED_LOCATION_BUFF, LOCATION_PATTERNS.buff);
+}
+
+/** Location classifications a card's move is limited to (['Hyperia City'] for Chief Bogo). */
+export function getLocationMoveClassifications(card: LorcanaCard): string[] {
+  return classifiedLocationScope(card, CLASSIFIED_LOCATION_MOVE, LOCATION_PATTERNS.move);
+}
+
+/**
+ * Whether a card's `role` reaches `location`. A classified buff or move reaches only locations of
+ * its own classification; every other role reaches every location.
+ */
+export function locationRoleReaches(card: LorcanaCard, location: LorcanaCard, role: LocationRole): boolean {
+  const scoped =
+    role === 'buff'
+      ? getLocationBuffClassifications(card)
+      : role === 'move'
+        ? getLocationMoveClassifications(card)
+        : [];
   return scoped.length === 0 || scoped.some((c) => hasClassification(location, c));
 }
 

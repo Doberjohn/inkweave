@@ -18,7 +18,7 @@ import {
   isItem,
   isLocation,
   isLocationSupportCard,
-  locationBuffReaches,
+  locationRoleReaches,
   isRampCard,
   isSong,
   isToyCard,
@@ -385,8 +385,9 @@ function buildLocationDirectMatch(
   role: LocationRole,
 ): SynergyMatch | null {
   if (role === 'boost' && !isBoostBeneficiaryLocation(location)) return null;
-  // A classified buff ("Your Hyperia City locations get ...") reaches only its own locations.
-  if (role === 'buff' && !locationBuffReaches(card, location)) return null;
+  // A classified buff or move ("Your Hyperia City locations get ...", "move him to a Hyperia City
+  // location") reaches only its own locations.
+  if (!locationRoleReaches(card, location, role)) return null;
   return {
     card: location,
     score: LOCATION_ROLE_SCORE[role],
@@ -450,7 +451,7 @@ function findLocationCardSynergiesForRole(
 
     const roles = getLocationRoles(other);
     if (!roles.includes(role)) continue;
-    if (role === 'buff' && !locationBuffReaches(other, card)) continue;
+    if (!locationRoleReaches(other, card, role)) continue;
 
     matches.push({
       card: other,
