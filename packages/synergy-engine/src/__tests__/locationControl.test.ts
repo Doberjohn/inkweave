@@ -151,18 +151,28 @@ describe('Location Control: pronoun moves and a move limited to one location cla
     expect(getLocationRoles(gamesAfoot)).toContain('move');
   });
 
-  it('keeps a buff that gives an effect "to your locations"', () => {
+  it('keeps a buff that gives an effect "to your locations", even after a move in its sentence', () => {
     const giveBuff = createCard({id: 'give-to-locations', type: 'Item', text: 'Give Resist +1 to your locations.'});
+    const moveThenBuff = createCard({
+      id: 'move-then-give',
+      text: 'Move him to one of your locations, then give Resist +1 to your locations.',
+    });
     expect(getLocationRoles(giveBuff)).toEqual(['buff']);
     expect(locationScore(giveBuff, plainLocation)).toBe(7);
+    expect(getLocationRoles(moveThenBuff)).toEqual(['move', 'buff']);
   });
 
-  it('keeps a location move written after a damage-moving clause', () => {
-    const both = createCard({
+  it('keeps a location move written after a damage-moving clause, in the next sentence or the same one', () => {
+    const nextSentence = createCard({
       id: 'damage-then-move',
       text: 'Move 1 damage counter from chosen character to chosen opposing character. Move him to one of your locations for free.',
     });
-    expect(getLocationRoles(both)).toContain('move');
+    const sameSentence = createCard({
+      id: 'damage-then-move-same-sentence',
+      text: 'Move 1 damage counter from a character to another character, then move him to a location.',
+    });
+    expect(getLocationRoles(nextSentence)).toContain('move');
+    expect(getLocationRoles(sameSentence)).toContain('move');
   });
 
   it('never reads a damage-moving clause as a location move', () => {

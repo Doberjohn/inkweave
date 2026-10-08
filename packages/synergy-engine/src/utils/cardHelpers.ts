@@ -390,8 +390,9 @@ export const LOCATION_PATTERNS = {
   'in-play-check': /if you have a location|while you have a.*(location)|for each location/i,
   search: makeSearchPattern('location(?:\\s+cards?)?'),
   // "move ... to (one of) your locations" is a move destination (Colonel Hathi), not a buff; "give
-  // ... to your locations" still is.
-  buff: /(?<!\bmove\b[^.]{0,60}\bto (?:one of )?)your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
+  // ... to your locations" still is, even later in the move's sentence. The skip needs that "to" to
+  // be the move's first ("up to N" aside), so it reaches only the move's own destination.
+  buff: /(?<!\bmove\b(?:(?!\bto\b)[^.]|\bup to\b){0,60}\bto (?:one of )?)your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
   boost:
     /under.*(?:characters|character) or locations|under.*locations|locations with boost|play a character or location with boost/i,
   'location-ramp':
@@ -404,10 +405,14 @@ export const LOCATION_PATTERNS = {
 } as const;
 
 /**
- * A damage-moving clause through the end of its sentence (see LOCATION_PATTERNS['move-exclude']).
+ * A damage-moving clause (see LOCATION_PATTERNS['move-exclude']) up to the end of its clause: the
+ * next period, comma or semicolon, or the next "move", so a later move in its sentence survives.
  * Global flag: use only with replace, never .test().
  */
-const DAMAGE_MOVE_CLAUSE = new RegExp(`${LOCATION_PATTERNS['move-exclude'].source}[^.]*`, 'gi');
+const DAMAGE_MOVE_CLAUSE = new RegExp(
+  `${LOCATION_PATTERNS['move-exclude'].source}(?:(?!\\bmove\\b)[^.,;])*`,
+  'gi',
+);
 
 /** Card text without its damage-moving clauses, so they neither read as a move nor hide one. */
 export function stripDamageMoves(text: string): string {
