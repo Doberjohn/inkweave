@@ -1353,7 +1353,7 @@ export const synergyRules: SynergyRule[] = [
   },
 
   // --------------------------------------------
-  // CLASSIFICATION TRIBES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle)
+  // CLASSIFICATION TRIBES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle, Madrigal)
   // Generated from one shared factory — all payoff-anchored, all 5-baseline.
   // --------------------------------------------
   makeTribalRule(
@@ -1397,6 +1397,12 @@ export const synergyRules: SynergyRule[] = [
     'Gargoyles',
     'Gargoyle',
     'The Gargoyles clan: Gargoyle characters and the payoffs that buff them, fire when they challenge, lift their Stone by Day drawback, or count them in your discard.',
+  ),
+  makeTribalRule(
+    TRIBAL_SPECS.madrigal,
+    'Madrigals',
+    'Madrigal',
+    'The Encanto family: Madrigal characters and the payoffs that reward having another Madrigal in play.',
   ),
 
   // --------------------------------------------

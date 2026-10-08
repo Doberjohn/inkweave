@@ -1835,7 +1835,7 @@ export function getHealRoles(card: LorcanaCard): HealRole[] {
 export const isHealCard = (card: LorcanaCard): boolean => getHealRoles(card).length > 0;
 
 // ============================================
-// TRIBAL PLAYSTYLES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle) — shared detector
+// TRIBAL PLAYSTYLES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle, Madrigal) — shared detector
 // ============================================
 
 /**
@@ -1854,7 +1854,7 @@ export interface TribalSpec {
   refWords: readonly string[];
 }
 
-/** The seven tribal specs. Royalty deliberately excludes Princess so it complements the Princess rule. */
+/** The eight tribal specs. Royalty deliberately excludes Princess so it complements the Princess rule. */
 export const TRIBAL_SPECS = {
   monster: {playstyleId: 'monster', memberClasses: ['Monster'], refWords: ['Monster']},
   princess: {playstyleId: 'princess', memberClasses: ['Princess'], refWords: ['Princess']},
@@ -1869,6 +1869,10 @@ export const TRIBAL_SPECS = {
   // members themselves). Drop-in over the shared factory; Angela - Night Warrior's "lose
   // Stone by Day" is caught by the team-buff "lose" verb.
   gargoyle: {playstyleId: 'gargoyle', memberClasses: ['Gargoyle'], refWords: ['Gargoyle']},
+  // Madrigals — the Encanto family (mostly Set 12). 26 members, 3 payoffs, all "if you have
+  // another Madrigal in play" checks the in-play-check role already catches. Drop-in, no new
+  // patterns. The Madrigal Family's "Madrigal Shift" stays with Shift Targets.
+  madrigal: {playstyleId: 'madrigal', memberClasses: ['Madrigal'], refWords: ['Madrigal']},
 } as const satisfies Record<string, TribalSpec>;
 
 const tribalPatternCache = new Map<string, {buff: RegExp; trigger: RegExp; search: RegExp; check: RegExp}>();
@@ -1897,7 +1901,7 @@ function tribalPatterns(spec: TribalSpec) {
     search: new RegExp(`(?:search your deck for|reveal) (?:a|an) ${T} character`, 'i'),
     // Conditional gated on tribe presence or a tribe event this turn.
     check: new RegExp(
-      `(?:while|if) you have (?:a|an|another|\\d+ or more)[^.]{0,30}(?<!named )${T}\\b` + // "while you have a [Dwarfs or a] X character in play", never "an item named X"
+      `(?:while|if) you have (?:a|an|another|\\d+ or more)[^.]{0,30}(?<!named (?:[\\w'-]+ ){0,2})${T}\\b` + // "while you have a [Dwarfs or a] X character in play", never a name ("an item named X", "a character named Mirabel X")
         `|if (?:a|an) (?:\\w+ or (?:a )?)?${T}(?: or \\w+)? character (?:is|card)` + // "if a [Y or] X [or Y] character is in play/chosen"
         `|if you (?:played|returned)[^.]{0,20}${T} character` + // "if you played a X character this turn"
         `|if (?:that card|the \\w+) is (?:a|an) ${T} character card`, // "if that card is a X character card"

@@ -15,7 +15,7 @@ The Heal Matters archetype is a two-role, enabler-to-payoff strategy: **healers*
 
 Like Sacrifice and Discard, this is an asymmetric-role playstyle: the healers *create* the removal event that the payoffs *exploit*. A deck of all payoffs has nothing to trigger them; a deck of all healers has nothing to pay off. The combo is the rule, so it is **payoff-anchored** — two plain healers never synergize with each other.
 
-**Why not a Madrigal tribe?** Encanto is the flavor home of healing, but only ~12% of healers (7 of 58) carry the Madrigal classification, and every payoff is worded generically ("remove damage from one of your characters"). So the rule keys on the mechanic, not a subtype — the same reason Sacrifice keys on "of yours" text rather than a classification.
+**Why key healing on the mechanic, not Madrigals?** Encanto is the flavor home of healing, but only ~12% of healers (7 of 58) carry the Madrigal classification, and every payoff is worded generically ("remove damage from one of your characters"). So this rule keys on the mechanic, not a subtype, the same reason Sacrifice keys on "of yours" text rather than a classification. The family itself is now its own playstyle, the `madrigal` tribe ([TRIBES_RULE.md](TRIBES_RULE.md)), keyed on its "another Madrigal in play" payoffs. The two complement each other: Julieta's Arepas sits in both.
 
 ### Example
 

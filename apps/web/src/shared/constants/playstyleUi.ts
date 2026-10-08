@@ -57,6 +57,7 @@ export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
   royalty: makeUiMeta('#8b5cf6', 'tribe', '1979'), // Elsa - Spirit of Winter (Amethyst)
   detective: makeUiMeta('#3b82f6', 'tribe', '2345'), // Judy Hopps - Uncovering Clues (Sapphire)
   gargoyle: makeUiMeta('#ef4444', 'tribe', '2308'), // Goliath - Guardian of Castle Wyvern (Ruby)
+  madrigal: makeUiMeta('#f59e0b', 'tribe', '3001'), // The Madrigal Family - Every Generation (Amber-Sapphire)
 };
 
 export interface ComingSoonPlaystyle {
@@ -73,5 +74,4 @@ function makeComingSoon(name: string, accentColor: string): ComingSoonPlaystyle 
 export const COMING_SOON_PLAYSTYLES: ComingSoonPlaystyle[] = [
   makeComingSoon('Zombies', '#f59e0b'),
   makeComingSoon('Villains', '#3b82f6'),
-  makeComingSoon('Madrigals', '#8b5cf6'),
 ];

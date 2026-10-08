@@ -290,6 +290,45 @@ describe('Synergy Rules', () => {
     it('drops member + member (payoff-anchored)', () => { expect(scoreWith(member, member2)).toBeUndefined(); });
   });
 
+  describe('Madrigals detection', () => {
+    const M = TRIBAL_SPECS.madrigal;
+    const memberOnly = createCard({id: 'luisa', name: 'Luisa Madrigal', fullName: 'Luisa Madrigal - Pushing Through', cost: 1, classifications: ['Ally', 'Madrigal'], text: 'Challenger +2 (While challenging, this character gets +2 ¤.)'});
+    const check = createCard({id: 'alma', name: 'Alma Madrigal', fullName: 'Alma Madrigal - Leading the Way', cost: 2, classifications: ['Mentor', 'Madrigal'], text: 'PROTECTING THE FAMILY When you play this character, if you have another Madrigal character in play, you may exert chosen opposing character.'});
+    const itemCheck = createCard({id: 'arepas', name: "Julieta's Arepas", type: 'Item', cost: 1, text: 'FLAVORFUL CURE At the start of your turn, if you have a Madrigal character in play, remove up to 2 damage from chosen character.'});
+    // "named Isabela Madrigal" is a Shift name reference, not a classification payoff.
+    const namedShift = createCard({id: 'isabela', name: 'Isabela Madrigal', fullName: 'Isabela Madrigal - Caring Cultivator', cost: 6, classifications: ['Floodborn', 'Ally', 'Madrigal'], text: 'Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of one of your characters named Isabela Madrigal.)'});
+
+    it('tags a member with no payoff text as member only', () => {
+      expect(getTribalRoles(memberOnly, M)).toEqual(['member']);
+    });
+    it('detects the "another Madrigal in play" check on a member', () => {
+      expect(getTribalRoles(check, M)).toEqual(['member', 'in-play-check']);
+    });
+    it('detects the in-play check on a non-member item', () => {
+      expect(getTribalRoles(itemCheck, M)).toEqual(['in-play-check']);
+    });
+    it('ignores a "named X Madrigal" Shift reference', () => {
+      expect(getTribalRoles(namedShift, M)).toEqual(['member']);
+    });
+    it('ignores a name ending in the tribe word inside an in-play clause', () => {
+      const namedCheck = createCard({id: 'named-mirabel', name: 'Antonio', cost: 2, text: 'If you have a character named Mirabel Madrigal in play, draw a card.'});
+      expect(getTribalRoles(namedCheck, M)).toEqual([]);
+    });
+  });
+
+  describe('Madrigals rule (payoff-anchored)', () => {
+    const rule = getRuleById('madrigal')!;
+    const member = createCard({id: 'luisa', name: 'Luisa Madrigal', classifications: ['Madrigal'], text: 'Challenger +2.'});
+    const member2 = createCard({id: 'bruno', name: 'Bruno Madrigal', classifications: ['Madrigal'], text: 'Evasive.'});
+    const check = createCard({id: 'alma', name: 'Alma Madrigal', classifications: ['Madrigal'], text: 'When you play this character, if you have another Madrigal character in play, you may exert chosen opposing character.'});
+    const itemCheck = createCard({id: 'arepas', name: "Julieta's Arepas", type: 'Item', cost: 1, text: 'At the start of your turn, if you have a Madrigal character in play, remove up to 2 damage from chosen character.'});
+    const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+    it('scores in-play-check + member at 6', () => { expect(scoreWith(itemCheck, member)?.score).toBe(6); });
+    it('scores payoff + payoff at 7', () => { expect(scoreWith(check, itemCheck)?.score).toBe(7); });
+    it('drops member + member (payoff-anchored)', () => { expect(scoreWith(member, member2)).toBeUndefined(); });
+  });
+
   describe('Shift Targets', () => {
     const shiftRule = getRuleById('shift-targets')!;
 

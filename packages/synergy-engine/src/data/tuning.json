@@ -91,6 +91,10 @@
     "gargoyle": {
       "name": "Gargoyles",
       "tagline": "Gargoyle characters and cards that reward including them in your deck."
+    },
+    "madrigal": {
+      "name": "Madrigals",
+      "tagline": "Madrigal characters and cards that reward including them in your deck."
     }
   },
   "directRules": {
