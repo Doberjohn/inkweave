@@ -1353,7 +1353,7 @@ export const synergyRules: SynergyRule[] = [
   },
 
   // --------------------------------------------
-  // CLASSIFICATION TRIBES (Monster, Princess, Hero, Super, Royalty)
+  // CLASSIFICATION TRIBES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle)
   // Generated from one shared factory — all payoff-anchored, all 5-baseline.
   // --------------------------------------------
   makeTribalRule(
@@ -1391,6 +1391,12 @@ export const synergyRules: SynergyRule[] = [
     'Detectives',
     'Detective',
     'The Set 10 Detective tribe (Zootopia / Great Mouse Detective): Detective characters and the payoffs that buff them, search them out, or reward having one in play.',
+  ),
+  makeTribalRule(
+    TRIBAL_SPECS.gargoyle,
+    'Gargoyles',
+    'Gargoyle',
+    'The Gargoyles clan: Gargoyle characters and the payoffs that buff them, fire when they challenge, lift their Stone by Day drawback, or count them in your discard.',
   ),
 
   // --------------------------------------------

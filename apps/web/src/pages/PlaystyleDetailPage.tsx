@@ -250,6 +250,7 @@ const ROLE_CONFIGS: Record<PlaystyleId, RoleConfig> = {
   super: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.super).filter((r) => r !== 'member')},
   royalty: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.royalty).filter((r) => r !== 'member')},
   detective: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.detective).filter((r) => r !== 'member')},
+  gargoyle: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.gargoyle).filter((r) => r !== 'member')},
 };
 
 /**

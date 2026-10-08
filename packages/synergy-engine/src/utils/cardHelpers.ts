@@ -1835,7 +1835,7 @@ export function getHealRoles(card: LorcanaCard): HealRole[] {
 export const isHealCard = (card: LorcanaCard): boolean => getHealRoles(card).length > 0;
 
 // ============================================
-// TRIBAL PLAYSTYLES (Monster, Princess, Hero, Super, Royalty) — shared detector
+// TRIBAL PLAYSTYLES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle) — shared detector
 // ============================================
 
 /**
@@ -1854,7 +1854,7 @@ export interface TribalSpec {
   refWords: readonly string[];
 }
 
-/** The six tribal specs. Royalty deliberately excludes Princess so it complements the Princess rule. */
+/** The seven tribal specs. Royalty deliberately excludes Princess so it complements the Princess rule. */
 export const TRIBAL_SPECS = {
   monster: {playstyleId: 'monster', memberClasses: ['Monster'], refWords: ['Monster']},
   princess: {playstyleId: 'princess', memberClasses: ['Princess'], refWords: ['Princess']},
@@ -1865,10 +1865,15 @@ export const TRIBAL_SPECS = {
   // pattern-caught payoffs (all Set 10, Sapphire/Steel-heavy). Drop-in over the shared
   // factory: reuses member/buff/trigger/search/in-play-check, no new roles.
   detective: {playstyleId: 'detective', memberClasses: ['Detective'], refWords: ['Detective']},
+  // Gargoyles — the Sets 10-11 clan plus the Set 14 preview. 16 members, 4 payoffs (all
+  // members themselves). Drop-in over the shared factory; Angela - Night Warrior's "lose
+  // Stone by Day" is caught by the team-buff "lose" verb.
+  gargoyle: {playstyleId: 'gargoyle', memberClasses: ['Gargoyle'], refWords: ['Gargoyle']},
 } as const satisfies Record<string, TribalSpec>;
 
 const tribalPatternCache = new Map<string, {buff: RegExp; trigger: RegExp; search: RegExp; check: RegExp}>();
 
+/** Build (once per spec, then cached) the four payoff-role regexes from the spec's ref words. */
 function tribalPatterns(spec: TribalSpec) {
   const cached = tribalPatternCache.get(spec.playstyleId);
   if (cached) return cached;
@@ -1877,7 +1882,7 @@ function tribalPatterns(spec: TribalSpec) {
   const p = {
     // Benefit the tribe: team buff, single-target buff, or tribal ready (all strengthen/free your bodies).
     buff: new RegExp(
-      `your (?:other )?${T}[^.]{0,18}characters? (?:get|gain|can)` + // team: "your [other] X characters get/gain/can't-be..."
+      `your (?:other )?${T}[^.]{0,18}characters? (?:get|gain|can|lose)` + // team: "your [other] X characters get/gain/can't-be..." or shed a drawback ("lose the Stone by Day ability", Angela - Night Warrior)
         `|chosen ${T} character[^.]{0,12}(?:gets|gains|can|\\+\\d)` + // single-target: "chosen X character gains ..." or a give-form "+N" stat buff (Flash - Records Specialist)
         `|ready (?:your|chosen)[^.]{0,30}${T} characters?`, // tribal ready: "ready your other exerted X characters"
       'i',
