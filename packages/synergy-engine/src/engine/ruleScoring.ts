@@ -1177,17 +1177,26 @@ export function scoreTribalPair(
 }
 
 /**
+ * A tribe rule's description: its playstyle tagline from tuning.json, the line players see, so
+ * every tribe reads the same way and an edit to the tagline reaches the rule too.
+ */
+export function tribeDescription(playstyleId: PlaystyleId): string {
+  return TUNING.playstyles[playstyleId].tagline;
+}
+
+/**
  * Build a payoff-anchored tribal rule from a spec — one line per classification tribe.
  * `name` is the plural display label (e.g. "Princesses"); `noun` is the singular grammar noun
  * (e.g. "Princess") fed to the explanation templates so they read "A Princess search", not "A Princesses search".
  */
-export function makeTribalRule(spec: TribalSpec, name: string, noun: string, description: string): SynergyRule {
+export function makeTribalRule(spec: TribalSpec, name: string, noun: string): SynergyRule {
+  const playstyleId = spec.playstyleId as PlaystyleId;
   return {
     id: spec.playstyleId,
     name,
     category: 'playstyle',
-    playstyleId: spec.playstyleId as PlaystyleId,
-    description,
+    playstyleId,
+    description: tribeDescription(playstyleId),
     matches: (card) => isTribalCard(card, spec),
     findSynergies: (card, allCards) =>
       tribalFindSynergies(card, allCards, (c) => getTribalRoles(c, spec), (cardRoles, otherRoles) =>
