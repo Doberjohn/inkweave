@@ -250,6 +250,46 @@ describe('Synergy Rules', () => {
     it('drops member + member (payoff-anchored)', () => { expect(scoreWith(member, member2)).toBeUndefined(); });
   });
 
+  describe('Gargoyles detection', () => {
+    const G = TRIBAL_SPECS.gargoyle;
+    const memberOnly = createCard({id: 'brooklyn', name: 'Brooklyn', fullName: 'Brooklyn - Second in Command', cost: 2, classifications: ['Gargoyle'], text: 'Evasive STONE BY DAY If you have 3 or more cards in your hand, this character can\'t ready.'});
+    const trigger = createCard({id: 'goliath', name: 'Goliath', fullName: 'Goliath - Guardian of Castle Wyvern', cost: 4, classifications: ['Hero', 'Gargoyle'], text: 'BE CAREFUL, ALL OF YOU Whenever one of your Gargoyle characters challenges another character, gain 1 lore.'});
+    const targetBuff = createCard({id: 'demona', name: 'Demona', fullName: 'Demona - Imperious Spellcaster', cost: 3, classifications: ['Villain', 'Gargoyle'], text: 'IMPETUS IMPROVISUS Choose and discard a card — Chosen Gargoyle character gains Rush and Evasive until the start of your next turn.'});
+    // "lose" team buff: shedding the tribe's Stone by Day drawback (Angela - Night Warrior).
+    const loseBuff = createCard({id: 'angela', name: 'Angela', fullName: 'Angela - Night Warrior', cost: 3, classifications: ['Ally', 'Gargoyle'], text: 'ETERNAL NIGHT Your Gargoyle characters lose the Stone by Day ability.'});
+    const discardCheck = createCard({id: 'coldstone', name: 'Coldstone', fullName: 'Coldstone - Reincarnated Cyborg', cost: 5, classifications: ['Ally', 'Gargoyle'], text: 'THE CANTRIPS HAVE BEEN SPOKEN When you play this character, if you have 2 or more Gargoyle character cards in your discard, gain 2 lore.'});
+
+    it('tags a Stone by Day body with no payoff text as member only', () => {
+      expect(getTribalRoles(memberOnly, G)).toEqual(['member']);
+    });
+    it('detects the tribal challenge trigger', () => {
+      expect(getTribalRoles(trigger, G)).toEqual(['member', 'trigger']);
+    });
+    it('detects a single-target keyword grant', () => {
+      expect(getTribalRoles(targetBuff, G)).toEqual(['member', 'buff']);
+    });
+    it('detects a "lose" team buff that strips the tribal drawback', () => {
+      expect(getTribalRoles(loseBuff, G)).toEqual(['member', 'buff']);
+    });
+    it('detects the Gargoyles-in-discard count as an in-play check', () => {
+      expect(getTribalRoles(discardCheck, G)).toEqual(['member', 'in-play-check']);
+    });
+  });
+
+  describe('Gargoyles rule (payoff-anchored)', () => {
+    const rule = getRuleById('gargoyle')!;
+    const member = createCard({id: 'brooklyn', name: 'Brooklyn', classifications: ['Gargoyle'], text: 'Evasive.'});
+    const member2 = createCard({id: 'lexington', name: 'Lexington', classifications: ['Gargoyle'], text: 'Alert.'});
+    const trigger = createCard({id: 'goliath', name: 'Goliath', classifications: ['Gargoyle'], text: 'Whenever one of your Gargoyle characters challenges another character, gain 1 lore.'});
+    const loseBuff = createCard({id: 'angela', name: 'Angela', classifications: ['Gargoyle'], text: 'Your Gargoyle characters lose the Stone by Day ability.'});
+    const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+    it('scores trigger + member at 7', () => { expect(scoreWith(trigger, member)?.score).toBe(7); });
+    it('scores payoff + payoff at 7', () => { expect(scoreWith(loseBuff, trigger)?.score).toBe(7); });
+    it('scores buff + member at 6', () => { expect(scoreWith(loseBuff, member)?.score).toBe(6); });
+    it('drops member + member (payoff-anchored)', () => { expect(scoreWith(member, member2)).toBeUndefined(); });
+  });
+
   describe('Shift Targets', () => {
     const shiftRule = getRuleById('shift-targets')!;
 

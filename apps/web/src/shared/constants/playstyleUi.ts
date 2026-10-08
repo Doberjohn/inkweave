@@ -56,6 +56,7 @@ export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
   super: makeUiMeta('#8b5cf6', 'tribe', '2774'), // Frozone - Super Cool (Amethyst)
   royalty: makeUiMeta('#8b5cf6', 'tribe', '1979'), // Elsa - Spirit of Winter (Amethyst)
   detective: makeUiMeta('#3b82f6', 'tribe', '2345'), // Judy Hopps - Uncovering Clues (Sapphire)
+  gargoyle: makeUiMeta('#ef4444', 'tribe', '2308'), // Goliath - Guardian of Castle Wyvern (Ruby)
 };
 
 export interface ComingSoonPlaystyle {

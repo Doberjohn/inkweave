@@ -87,6 +87,10 @@
     "detective": {
       "name": "Detectives",
       "tagline": "Detective characters and the payoffs that reward running the tribe."
+    },
+    "gargoyle": {
+      "name": "Gargoyles",
+      "tagline": "Gargoyle characters and the payoffs that buff the clan, reward its challenges, and lift Stone by Day."
     }
   },
   "directRules": {

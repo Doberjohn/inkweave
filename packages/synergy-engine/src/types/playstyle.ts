@@ -23,6 +23,7 @@ export type PlaystyleId =
   | 'super'
   | 'royalty'
   | 'detective'
+  | 'gargoyle'
   | 'bounce'
   | 'ink-drops';
 

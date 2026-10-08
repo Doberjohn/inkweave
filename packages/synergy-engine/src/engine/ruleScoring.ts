@@ -1100,7 +1100,7 @@ export function scoreExertPair(
 }
 
 // ============================================
-// CLASSIFICATION-TRIBE SCORING (Monster/Princess/Hero/Super/Royalty)
+// CLASSIFICATION-TRIBE SCORING (Monster/Princess/Hero/Super/Royalty/Detective/Gargoyle)
 // Shared factory over TRIBAL_SPECS — payoff-anchored, 5-baseline.
 // ============================================
 
